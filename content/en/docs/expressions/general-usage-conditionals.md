@@ -18,11 +18,9 @@ Conditional statements use case syntax. This is the equivalent of simple if-then
 
 ```python
 case(
-    [ 
         (table.first_name.isnot(None), func.concat(table.first_name, table.last_name)), 
-    ], 
-    else_ = table.last_name
-)
+        else_ = table.last_name
+    )
 ```
 
 
@@ -30,24 +28,20 @@ case(
 
 
 ```python
-case(
-    [ 
+case( 
         (order_table.qty > 100, item_table.specialprice), 
-        (order_table.qty > 10, item_table.bulkprice) 
-    ], 
-    else_=item_table.regularprice
-)
+        (order_table.qty > 10, item_table.bulkprice) , 
+        else_=item_table.regularprice
+    )
 ```
 
 
 ```python
 case( 
-    [ 
         (users_table.name == "wendy", "W"), 
-        (users_table.name == "jack", "J") 
-    ], 
-    else_='E'
-)
+        (users_table.name == "jack", "J"), 
+        else_='E'
+    )
 ```
 
 
