@@ -51,9 +51,56 @@ To use this repository, you need the following installed locally:
 - [npm](https://www.npmjs.com/)
 - [Go](https://golang.org/)
 - [Hugo (Extended version)](https://gohugo.io/)
-- A container runtime, like [Docker](https://www.docker.com/).
+
+#### Windows-specific instructions
+It is highly recommended that you take the time to follow the setup of a local Window dev machine.  This will cover necessary setup of, git, ssh keys and an IDE.  Install VS Code at a minimum.
+[Window Dev Environment runbook](https://docs.google.com/document/d/1E7tNj4_-6gEP735n9wzLs84yyfdgd6LSi-VwRDJ4fuM/edit#heading=h.noa01ern07k7)
 
 Before you start, install the dependencies. Clone the repository and navigate to the directory:
+##### npm
+[nodejs.org/en/download](nodejs.org/en/download)
+Get the LTS version.
+Run the wizard.
+
+##### go
+[go.dev/dl](go.dev/dl)
+Download and install.
+
+##### hugo
+[https://github.com/gohugoio/hugo/releases/](https://github.com/gohugoio/hugo/releases/)
+- Go to top (latest) release. (v0.101 as of this writing).
+- Locate the hugo **extended** zip file for Windows 64 bit.  It will look about like this: *hugo_extended_0.101.0_Windows-64bit.zip*
+
+- Create a directory **Hugo** on your local C drive.
+- Create a subdirectory **bin** inside of **Hugo**
+- Unzip the hugo_extended_0.101.0_Windows-64bit.zip file to **C:\Hugo\bin**
+- Add C:\Hugo\bin to Windows system paths.  Go [here](https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/) for help on this.
+- Open Windows command prompt.
+- Type this:
+```bash
+hugo --help
+```
+This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
+
+#### Linux
+
+##### npm
+```bash
+sudo apt install npm
+```
+##### go
+```bash
+sudo apt update
+sudo apt search golang-go
+sudo apt install golang-go
+```
+##### hugo
+[https://computingforgeeks.com/how-to-install-hugo-on-ubuntu-debian/](https://computingforgeeks.com/how-to-install-hugo-on-ubuntu-debian/)
+```bash
+sudo apt update
+	sudo apt -y install hugo
+```
+
 
 ```bash
 git clone https://github.com/PlaidCloud/plaidcloud-docs.git
@@ -84,9 +131,10 @@ npm install
 npm ci
 make serve
 ```
+### Running Hugo
+Using a console, navigate to ```C:\Users\<your_user>\src\plaidcloud_docs```
 
-Now you can just run this command:
-
+Run this:
 ```bash
 hugo serve -D --panicOnWarning
 ```
@@ -94,6 +142,40 @@ hugo serve -D --panicOnWarning
 This will start the local Hugo server on port 1313. Open up your browser to <http://localhost:1313> to view the website. As you make changes to the source files, Hugo updates the website and forces a browser refresh.
 
 Keep in mind that the local server is not recreating all the static content so changes to templates might require a restart of the local hugo server for the template changes to be incorporated in what you see.
+
+### Orientation
+##### Rendered view:
+<http://localhost:1313/tips/test/> corresponds to the following:
+- <https://docs.plaidcloud.io/tips/test/> on the continuous integration site.
+- <https://docs.plaidcloud.com/tips/test/> on the beta site.
+- <https://docs.plaidcloud.com/tips/test/> on the production site.
+
+##### Source View
+```<https://raw.githubusercontent.com/PlaidCloud/plaidcloud-docs/main/content/en/tips/test.md>```
+
+##### Local Source View
+```C:\Users\<your_user>\src\PlaidCloud/plaidcloud-docs/main/content/en/tips/test.md>```
+
+##### Making a change 
+Make a change to an .md file will automatically cause change to be available within the local http://localhost:1313/ site.
+
+Commit the change and push to the **main** branch of the **plaidcloud-docs** repo, and it will appear at <https://docs.plaidcloud.io> within 1 hour.
+
+### Key Points
+- Avoid unnecessary use of screenshots.  They go stale quickly.
+- Structure of repo is important.
+- Don’t forget the _index.md files in each folder.
+- You can set menu priority by weight in frontmatter on _index.md
+- Use includes for common sections among pages.
+- Reference the example template to see syntax and advanced usage options .
+- When you push to main, the docs.plaidcloud.io site is built and deployed automatically.
+- Beta (.net) and Production (.com) are built and deployed by pushing (PR Merge) to respective branches.
+- Always use relative links to pages so they operate correctly within each environment.
+- Multi-language support is built-in but we only have English now.
+- Always start with heading 2 (## Heading 2), never heading 1 since that is automatically added as page title.
+- Copy and paste.  Start a new page by copying from the template or another page.
+- VSCode has several extensions for managing markdown files.
+
 
 
 ### Troubleshooting
