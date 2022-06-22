@@ -58,12 +58,12 @@ It is highly recommended that you take the time to follow the setup of a local W
 
 Before you start, install the dependencies. Clone the repository and navigate to the directory:
 ##### npm
-[https://nodejs.org/en/download/](https://nodejs.org/en/download)
+[nodejs.org/en/download/](https://nodejs.org/en/download)
 Get the LTS version.
 Run the wizard.
 
 ##### go
-[go.dev/dl](go.dev/dl)
+[go.dev/dl/]([go.dev/dl](https://go.dev/dl/))
 Download and install.
 
 ##### hugo
