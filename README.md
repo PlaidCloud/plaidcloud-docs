@@ -63,7 +63,7 @@ Get the LTS version.
 Run the wizard.
 
 ##### go
-[go.dev/dl/]([go.dev/dl](https://go.dev/dl/))
+[go.dev/dl/](https://go.dev/dl/)
 Download and install.
 
 ##### hugo
