@@ -82,7 +82,7 @@ hugo --help
 ```
 This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
 
-#### Linux
+#### Linux-specific instructions
 
 ##### npm
 ```bash
