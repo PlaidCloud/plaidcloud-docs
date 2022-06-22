@@ -114,7 +114,7 @@ The PlaidCloud website uses the [Docsy Hugo theme](https://github.com/google/doc
 git submodule update --init --recursive --depth 1
 ```
 
-### Running the website locally using Hugo
+### Running the website locally using Hugo [OPTIONAL]
 
 To build and test the site locally, run:
 
@@ -131,7 +131,7 @@ npm install
 npm ci
 make serve
 ```
-### Running Hugo
+### Running Hugo [REQUIRED]
 Using a console, navigate to ```C:\Users\<your_user>\src\plaidcloud_docs```
 
 Run this:
