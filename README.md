@@ -58,12 +58,12 @@ It is highly recommended that you take the time to follow the setup of a local W
 
 Before you start, install the dependencies. Clone the repository and navigate to the directory:
 ##### npm
-[/nodejs.org/en/download](nodejs.org/en/download)
+[nodejs.org/en/download/](https://nodejs.org/en/download)
 Get the LTS version.
 Run the wizard.
 
 ##### go
-[go.dev/dl](go.dev/dl)
+[go.dev/dl/](https://go.dev/dl/)
 Download and install.
 
 ##### hugo
@@ -82,7 +82,7 @@ hugo --help
 ```
 This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
 
-#### Linux
+#### Linux-specific instructions
 
 ##### npm
 ```bash
@@ -114,7 +114,7 @@ The PlaidCloud website uses the [Docsy Hugo theme](https://github.com/google/doc
 git submodule update --init --recursive --depth 1
 ```
 
-### Running the website locally using Hugo
+### Running the website locally using Hugo [OPTIONAL]
 
 To build and test the site locally, run:
 
@@ -131,7 +131,7 @@ npm install
 npm ci
 make serve
 ```
-### Running Hugo
+### Running Hugo [REQUIRED]
 Using a console, navigate to ```C:\Users\<your_user>\src\plaidcloud_docs```
 
 Run this:
