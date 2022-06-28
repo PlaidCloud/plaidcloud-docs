@@ -16,7 +16,7 @@ For more details on cross join methodology, see here: [Wikipedia SQL Cross Join]
 
 
 
-## Table A Data Selection
+## Table 1 Data Selection
 
 
 ### Table Source
@@ -31,52 +31,14 @@ Specify the source data table by selecting it from the dropdown menu.
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
 
-
-
-### Duplicates
-
-
-There is a checkbox option to use **Distinct Rows Only**. This is especially helpful in cases where duplicates may exist but are not desired. As experienced modelers know, having non-distinct data in an SQL join can increase expected record count significantly.
-
-
-
-Additionally, there is standard function to **Report Duplicates in Table** elsewhere.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table, which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
 ### Source Columns and Replacements
 
 
 Specify any columns to be included in the Inner Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
 
+![Source Table Cross Join Selection](/images/table_cross_join_1.png)
 
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-## Table B Data Selection
+## Table 2 Data Selection
 
 
 ### Table Source
@@ -94,33 +56,6 @@ Any valid Python expression is acceptable to subset the data. Please see [Expres
 
 for more details and examples.
 
-
-
-### Duplicates
-
-
-There is a checkbox option to use **Distinct Rows Only**. This is especially helpful in cases where duplicates may exist but are not desired. As experienced modelers know, having non-distinct data in an SQL join can increase expected record count significantly.
-
-
-
-Additionally, there is standard functionality to **Report Duplicates in Table** elsewhere. For more details on this capability, see details here:
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
 ### Source Columns and Replacements
 
 
@@ -128,46 +63,25 @@ Specify any columns to be included in the Inner Join here. Selecting the **Inspe
 
 
 
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
 ## Table Output
 
 
-### Target Table
-
-
-Specify the **Target Table** name by either selecting an existing data table from the dropdown menu or typing a new data table name into the same menu. By default, the **Target Table** is automatically populated with the specific transform’s name. Note that data tables must follow Linux naming conventions. As such, we recommend that names only consist of alphanumeric characters. Analyze will automatically scrub any invalid characters from the name.
-
-
-
-### Join Map
-
-
-Specify join conditions. Using the **Guess** button will find all matching columns from both **Table A** as well as **Table B**. To add additional columns manually, right click anywhere in the section and select either **Insert Row** or **Append Row**, to add a row prior to the currently selected row or to add a row at the end, respectively. Then, type the column names to match from **Table A** to **Table B**. To remove a field from the **Join Map**, simply right-click and select **Delete**.
+{{< include "common-target-table-creation.md" >}}
 
 
 
 ### Target Output Columns
 
 
-Specify the columns to appear in the target data table. Selecting the **Propagate** button will insert all columns listed in the **Source Columns and Replacements** section of both **Table A** and **Table B**. Any columns included in the **Join Map** will only be listed a single time.
+Specify the columns to appear in the target data table. Selecting the **Propagate** button will insert all columns listed in the **Source Columns and Replacements** section of both **Table 1** and **Table 2**. Any columns included in the **Join Map** will only be listed a single time.
 
 
 
 To add additional columns manually, right click anywhere in the section and select either **Insert Row** or **Append Row**, to add a row prior to the currently selected row or to add a row at the end, respectively. Then, type the column name. To remove a field, simply right-click and select **Delete**.
 
+![Target Table Cross Join Selection](/images/table_cross_join_output.png)
 
-
-### Select Subset of Final Data
+### Select Subset of Data Based On Aggregations
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
