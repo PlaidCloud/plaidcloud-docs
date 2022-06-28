@@ -27,21 +27,35 @@ There is no functions exclusive to this transform. All sorting, grouping, filter
 
 ## Extract Parameters
 
+![Extract Parameters](/images/extract_parameters.png)
 
 ### Source and Target
 
 
-To establish the source and target, first select the data table to be exported from the **Source Table** dropdown menu. Next, select the target file path from PlaidCloud Document using the dropdown menu to select the appropriate account before navigating to the actual directory in the section immediately below. Finally, provide the target file with a descriptive name.
+To establish the source and target tables, first select the data table to be extracted from using the **Source Table** dropdown menu. Next, select either an existing table as the target table using the **Target Table** dropdown or click on the green **"+"** sign to create a new table as the target. 
+
+#### Table Creation
+When creating a new table you will have the option to either create it as a **View** or as a **Table**. 
+##### Views:
+Views are useful in that the time required for a step to execute is significantly less than when a table is used. The downside of views is they are not a useful for data exploration in the table Details mode.
+
+##### Tables:
+When using a table as the target a step will take longer to execute but data exploration in the Details mode is much quicker than with a view.
+
+{{< note >}}
+Use tables for key steps in your workflows where data validation or the ability to perform ad-hoc analytics will be necessary. For all other steps use views to decrease the overall workflow calculation time. It's possible to change a table to a view and vice versa so you can always update the table target type at a later date.
+{{< /note >}}
+
 
 
 
 ### Table Data Selection
-
+![Table Data Selection](/images/table_data_selection.png)
 
 The Table Data Selection tab is used to map columns from the source data table to the target data table. All source columns on the left side of the window are automatically mapped to the target data table depicted on the right side of the window. Using the **Inspect Source** menu button, there are a few additional ways to map columns from source to target:
 
 
-* Populate Both Mapping Tables: Propagates all values from the source data table into the target data table. This is done by default.
+* Populate Both Mapping Tables: Propagates all values from the source data table into the target data table.
 * Populate Source Mapping Table Only: Maps all values in the source data table only. This is helpful when modifying an existing workflow when source column structure has changed.
 * Populate Target Mapping Table Only: Propagates all values into the target data table only.
 
@@ -115,7 +129,7 @@ For more aggregation details, see the Analyze overview page [here](/docs/workflo
 
 
 ### Data Filters
-
+![Data Filters](/images/table_data_filters.png)
 
 To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source so the remaining operations are performed on a smaller data set.
 
@@ -131,17 +145,7 @@ for more details and examples.
 
 
 
-### Duplicates
 
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
 
 
 
@@ -149,60 +153,6 @@ This will **not** remove the duplicate items from the target data table. To remo
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is not included in count)
-* **End at Row:** Last row of data to include. This is different from simply counting rows at the end to drop
-
-
-
-
 
 
 

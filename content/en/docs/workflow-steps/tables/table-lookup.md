@@ -13,46 +13,55 @@ If you are a regular user of the vlookup function in Microsoft Excel, the Table 
 
 
 
-## Source and Target Parameters
+## Source Tables and Target Parameters
 
 
-### Source and Target
+### Source Tables and Target
+
+### Table 1 Source
+To establish the source table to be extracted from select the **Table 1** tab and using the **Source Table** dropdown menu select the desired table.
+This list includes all *Project* and *Workflow* data tables.
+#### Select Subset of Source Data
 
 
-To establish the source and target, first select the data table to be exported from the 
-dropdown menu. Next, select the target file path from PlaidCloud Document using the dropdown menu to select the appropriate account before navigating to the actual directory in the section immediately below. Finally, provide the target file with a descriptive name.
+Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
+
+
+for more details and examples.
+
+![Lookup Table 1](/images/lookup_table1.png)
 
 
 
-### Lookup Table Source
+### Table 2 Lookup Table Source
 
+Select the **Table 2** tab and using the **Source Table** dropdown menu select the desired table, this is the table that you will be looking up values from. 
+This list includes all *Project* and *Workflow* data tables.
 
-Select the Lookup Table from the dropdown list. This list includes all *Project* and *Workflow* data tables.
-
-
-
-### Select Subset of Lookup Data
-
+#### Select Subset of Lookup Data
 
 Any valid Python expression is acceptable to subset the data. Please see the following section for more details and examples: [Expressions](/docs/expressions)
 
+### Table Output Target Table
+![Lookup Table Output](/images/lookup_output.png)
 
+Select the **Table Output** tab and using the **Target Table** dropdown either select an existing table or click on the green **"+"** sign to create a new table as the target. 
 
-### Lookup Table Slicing (Limit)
+#### Table Creation
+When creating a new table you will have the option to either create it as a **View** or as a **Table**. 
+##### Views:
+Views are useful in that the time required for a step to execute is significantly less than when a table is used. The downside of views is they are not a useful for data exploration in the table Details mode.
 
+##### Tables:
+When using a table as the target a step will take longer to execute but data exploration in the Details mode is much quicker than with a view.
 
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
+{{< note >}}
+Use tables for key steps in your workflows where data validation or the ability to perform ad-hoc analytics will be necessary. For all other steps use views to decrease the overall workflow calculation time. It's possible to change a table to a view and vice versa so you can always update the table target type at a later date.
+{{< /note >}}
+### Table Output Data Selection
 
-
-* **Initial Rows to Skip:** Rows of data to skip (row for column header is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Table Data Selection
-
-
-The Table Data Selection tab is used to map columns from the source data table to the target data table. All source columns on the left side of the window are automatically mapped to the target data table depicted on the right side of the window. Using the **Inspect Source** menu button, there are a few additional ways to map columns from source to target:
+#### Target Output Columns
+The **Target Output Columns** section is used to map columns from the source data table to the target data table. All source columns on the left side of the window are automatically mapped to the target data table depicted on the right side of the window. Using the **Inspect Source** menu button, there are a few additional ways to map columns from source to target:
 
 
 * Populate Both Mapping Tables: Propagates all values from the source data table into the target data table. This is done by default.
@@ -127,98 +136,6 @@ For more aggregation details, see the Analyze overview page [here](/docs/workflo
 
 
 
-### Data Filters
-
-
-To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source so the remaining operations are performed on a smaller data set.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is not included in count)
-* **End at Row:** Last row of data to include. This is different from simply counting rows at the end to drop
-
 
 
 ### Lookup Operation
@@ -235,10 +152,10 @@ By default, the lookup table returns distinct values for all columns. Since a lo
 
 
 
-### Lookup Relationship Map
+### Table Relationship Join Field Map
 
 
-The **Lookup Relationship Map** is used to specify all columns used for matching. By using the **Guess** button, Analyze will populate the relationship map with all columns from the source data table which have a matching name in the lookup data table.
+The **Table Relationship Join Field Map** is used to specify all columns used for matching. By using the **Guess** button, Analyze will populate the relationship map with all columns from the source data table which have a matching name in the lookup data table.
 
 
 
@@ -255,6 +172,11 @@ The **Field Value Map** is used to append columns of data onto the target data t
 
 Additionally, there are options available to rename the mapped columns simply by clicking into the **Update/Add Data Table Field** selection and adjusting the name as desired. Column order can also be adjusted as desired by right-clicking on an item and using the **Move to Top**, **Move Up**, **Move Down**, or **Move to Bottom** options.
 
+
+### Select Subset of Data Based On Aggregations
+
+
+Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
 
 
 
