@@ -8,6 +8,6 @@ weight: 1
 description: Interactive API Documentation
 ---
 
-version 0.5
+version 0.6
 
 {{< swaggerui src="https://atower.plaidcloud.io/openapi.json" >}}
