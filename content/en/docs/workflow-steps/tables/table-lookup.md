@@ -17,7 +17,7 @@ If you are a regular user of the vlookup function in Microsoft Excel, the Table 
 
 
 ### Source Tables and Target
-
+![Lookup Table 1](/images/lookup_table1.png)
 ### Table 1 Source
 To establish the source table to be extracted from select the **Table 1** tab and using the **Source Table** dropdown menu select the desired table.
 This list includes all *Project* and *Workflow* data tables.
@@ -29,7 +29,7 @@ Any valid Python expression is acceptable to subset the data. Please see [Expres
 
 for more details and examples.
 
-![Lookup Table 1](/images/lookup_table1.png)
+
 
 
 
