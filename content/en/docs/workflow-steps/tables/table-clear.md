@@ -22,7 +22,7 @@ The second is to use the ***Tables Matching Search*** option in which you specif
 This option is very useful if you have a workflow that creates a series of commonly named tables that that have been saved appending the date.
 
 
-![Table Drop](/images/table_clear.png)
+![Table Clear](/images/table_clear.png)
 
 
 
