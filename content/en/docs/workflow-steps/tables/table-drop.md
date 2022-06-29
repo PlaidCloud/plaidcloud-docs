@@ -16,6 +16,12 @@ Drop/delete a data table.
 ## Table Selection
 
 
-First, select the “Project” or “Workflow” from the first dropdown list. Then select the table to be cleared from the second dropdown list. The list will include all *Project* or *Workflow* data tables.
+There are two options for selecting the table or in the second option tables to be dropped:
+
+The first option is to use the ***Specific Table*** dropdown to select the table to be dropped.
+
+The second is to use the ***Tables Matching Search*** option in which you specify the **Search Path** and **Search Text** to drop a table or tables that match the search criteria. 
+This option is very useful if you have a workflow that creates a series of commonly named tables that that have been saved appending the date.
 
 
+![Table Drop](/images/table_drop.png)
