@@ -70,10 +70,9 @@ Specify any columns to be included in the Anti Join here. Selecting the **Inspec
 
 ## Table Output
 
+![Table Anti Join 2](/images/table_anti_join_2.png)
 
 ### Target Table
-
-![Table Anti Join 2](/images/table_anti_join_2.png)
 
 
 {{< include "common-target-table-creation.md" >}}
@@ -97,7 +96,7 @@ To add additional columns manually, right click anywhere in the section and sele
 
 
 
-### Select Subset Of Data Based On Aggregations
+## Select Subset Of Data Based On Aggregations
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples

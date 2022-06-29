@@ -130,7 +130,7 @@ for more details and examples.
 
 
 
-### Select Subset of Final Data
+## Select Subset of Final Data
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
@@ -139,50 +139,3 @@ Any valid Python expression is acceptable to subset the data. Please see [Expres
 
 ## **Examples**
 
-
-### Data Filter – Temperature
-
-
-In this example, the **Source Table**, *Import Google Spreadsheet*, is filtered to include only results in which the temperature was listed at 75 degrees Fahrenheit or above. As such, the **Target Table** is named *Filter Results Temp 75+*. 
-
-
-
-All columns are mapped from source to target. No grouping, sorting, or summarization options are specified. 
-
-
-
-In the **Data Filters** tab, the source data is subset with the following expression: *row[‘TemperatureF’] >= 75*. 
-
-
-
-This expression only keeps rows which have a value in the *TemperatureF* column equal to 75 or higher. 
-
-
-
-As expected on an Ohio summer day, the temperature first climbs above 75 degrees around noon and then remains there until nearly 10 PM.
-
-
-
-
-### Table Data Selection – Unique Values
-
-
-In this example, the same **Source Table**, *Import Google Spreadsheet*, is used, but in this case, it will be used to identify distinct conditions reported throughout the day. Accordingly, the **Target Table** is named *Distinct Conditions*. 
-
-
-
-In this case, only a single column from the source data table is mapped to the target data table. Additionally, the **Make Distinct** button has been selected and applied only to the *Conditions* column. This should return only distinct values found in the source data table. 
-
-
-{{< note >}}
-When the target data table contains only a subset of the source data table, select the check box next to only the columns which **are** to be included in the target data table. Selecting all checkboxes could provide output that does not appear to be distinct.
-{{< /note >}}
-
-
-
-
-Since this example is looking for distinct values, it may be helpful to also identify non-distinct duplicate values. As such, any values which exist as duplicates will be added to the *duplicate values from raw data input*
-data table. 
-
-
-On this day, there were 4 unique conditions reported throughout the day. 
