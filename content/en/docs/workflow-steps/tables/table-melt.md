@@ -16,23 +16,14 @@ Perhaps the easiest example to understand is to think of a data table with month
 
 
 
+![Table Melt Input](/images/table_melt_input_data.png)
 
-| Budget Category | Jan | Feb | Mar | Apr | May | June |
-| Electric
-Costs | 54 | 56 | 72 | 65 | 81 | 84 |
 
 Melting this data table would convert all of the month columns into rows.
 
 
+![Table Melt Output](/images/table_melt_output.png)
 
-
-| Budget Category | Month | Cost |
-| Electricity Costs | JAN | 54 |
-| Electricity Costs | FEB | 56 |
-| Electricity Costs | MAR | 72 |
-| Electricity Costs | APR | 65 |
-| Electricity Costs | MAY | 81 |
-| Electricity Costs | JUN | 84 |
 
 By specifying which columns to transpose and which columns to leave alone, this becomes a powerful tool. Making this conversion in other ETL tools could require a dozen more steps.
 
@@ -40,21 +31,23 @@ By specifying which columns to transpose and which columns to leave alone, this 
 
 ## Source and Target Parameters
 
+![Table Melt Source Target](/images/table_melt_1.png)
 
 ### Source and Target
 
 
-To establish the source and target, first select the data table to be exported from the **Source Table** dropdown menu. Next, select the target file path from PlaidCloud Document using the dropdown menu to select the appropriate account before navigating to the actual directory in the section immediately below. Finally, provide the target file with a descriptive name.
+To establish the source and target, first select the data table to be extracted from the **Source Table** dropdown menu. 
+{{< include "common-target-table-creation.md" >}}
 
-{{< note >}}
-Providing a file extension is advised but not required by Analyze. The data table will be exported into the appropriate file format with or without an extension.
-{{< /note >}}
+
+
 
 
 
 
 ## Pre-Melt Table Data Selection
 
+![Table Pre-Melt](/images/table_melt_2.png)
 
 This section is a bit different from the standard Table Data Selection. Basically this is used to specify which columns are to be used in the Melt operation. This includes ID columns and Variable/Value columns.
 
@@ -87,63 +80,7 @@ for more details and examples.
 
 
 
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Select Subset of Final Data
+### Apply Secondary Filter To Result Data
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
@@ -163,6 +100,7 @@ To limit the data, simply check the **Apply Row Slicer** box and then specify th
 
 ## Melt Layout
 
+![Table Melt Layout](/images/table_melt_3.png)
 
 There is a **Guess Layout** button available to allow Analyze a first crack at specifying ID columns. By default, all text (data type of **String**) columns are placed in the **Keys** section. Numeric columns are not placed into **Keys** by default, but they are allowed to be there based on the model’s needs.
 
@@ -205,4 +143,4 @@ There are 2 values to specify. Both of these values will become column names in 
 ## Examples
 
 
-No examples yet...
+In the abouve documentation.
