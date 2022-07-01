@@ -9,7 +9,7 @@ date: 2022-01-25T07:39:49
 ## Description
 
 
-Use to convert short, wide data tables into long, narrow data tables. Select columns are transposed, with the column names converted into values across multiple rows.
+Used to convert short, wide data tables into long, narrow data tables. Selected columns are transposed, with the column names converted into values across multiple rows.
 
 
 Perhaps the easiest example to understand is to think of a data table with months listed as column headers:
