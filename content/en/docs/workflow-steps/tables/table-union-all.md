@@ -14,7 +14,7 @@ Use to combine multiple data tables with the same column structure into a single
 **Union** removes duplicates. If you want to keep all records, use **Union All** instead.
 {{< /note >}}
 
-
+![Table Union All](/images/table_union_all.png)
 ## Sources
 
 
@@ -47,6 +47,8 @@ It is important to remember that the text shown is **not** related to the source
 
 
 By default, the **Target Table** is left blank. Before naming, note that data tables must follow Linux naming conventions. As such, we recommend that names only consist of alphanumeric characters. Analyze will automatically scrub any invalid characters from the name. Additionally, it will limit the length to 256 characters, so be concise!
+
+{{< include "common-target-table-creation.md" >}}
 
 
 
@@ -96,51 +98,15 @@ Any valid Python expression is acceptable to subset the data. Please see [Expres
 for more details and examples.
 
 
-### Duplicates
 
 
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-
-### Select Subset of Final Data
+### Apply Secondary Filter To Result Data
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
 
 
-
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-
-### Source Table Slicing (Limit)
+### Final Data Table Slicing (Limit)
 
 
 To limit the data, check the **Apply Row Slicer** box and then specify the following:
@@ -151,21 +117,3 @@ To limit the data, check the **Apply Row Slicer** box and then specify the follo
 
 
 
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is not included in count)
-* **End at Row:** Last row of data to include. This is different from simply counting rows at the end to drop
