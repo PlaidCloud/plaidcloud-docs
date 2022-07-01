@@ -16,7 +16,35 @@ For more details on outer join methodology, see here: [Wikipedia SQL Full Outer 
 
 
 
-## Table A Data Selection
+## Table 1 Data Selection
+
+![Table Outer Join 1](/images/table_outer_join_1.png)
+### Table Source
+
+
+Specify the source data table by selecting it from the dropdown menu.
+
+
+
+### Select Subset of Source Data
+
+
+Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
+
+
+for more details and examples.
+
+
+
+
+### Source Columns and Replacements
+
+
+Specify any columns to be included in the Outer Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
+
+
+
+## Table 2 Data Selection
 
 
 ### Table Source
@@ -36,119 +64,22 @@ for more details and examples.
 
 
 
-### Duplicates
-
-
-There is a checkbox option to use **Distinct Rows Only**. This is especially helpful in cases where duplicates may exist, but are not desired. As experienced modelers know, having non-distinct data in an SQL join can increase expected record count significantly.
-
-
-
-Additionally, there is standard functionality to **Report Duplicates in Table** elsewhere. For more details on this capability, see details here:
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
 ### Source Columns and Replacements
 
 
 Specify any columns to be included in the Outer Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
 
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-## Table B Data Selection
-
-
-### Table Source
-
-
-Specify the source data table by selecting it from the dropdown menu.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-
-### Duplicates
-
-
-There is a checkbox option to use **Distinct Rows Only**. This is especially helpful in cases where duplicates may exist, but are not desired. As experienced modelers know, having non-distinct data in an SQL join can increase expected record count significantly.
-
-
-
-Additionally, there is standard functionality to **Report Duplicates in Table** elsewhere.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Columns and Replacements
-
-
-Specify any columns to be included in the Outer Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
 
 
 
 ## Table Output
 
+![Table Outer Join 2](/images/table_outer_join_2.png)
 
 ### Target Table
 
 
-Specify the **Target Table** name by either selecting an existing data table from the dropdown menu or typing a new data table name into the same menu. By default, the **Target Table** is automatically populated with the specific transform’s name. Note that data tables must follow Linux naming conventions. As such, we recommend that names only consist of alphanumeric characters. Analyze will automatically scrub any invalid characters from the name.
+{{< include "common-target-table-creation.md" >}}
 
 
 
@@ -169,8 +100,8 @@ Specify the columns to appear in the target data table. Selecting the **Propagat
 To add additional columns manually, right click anywhere in the section and select either **Insert Row** or **Append Row**, to add a row prior to the currently selected row or to add a row at the end, respectively. Then, type the column name. To remove a field, simply right-click and select **Delete**.
 
 
-
-### Select Subset of Final Data
+## Output Filters
+### Select Subset of Data Based on Aggregations
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
@@ -226,11 +157,11 @@ To get a list of models by manufacturer, it makes sense to join on *Mfg_ID*. By 
 
 
 
-First, specify parameters for **Table A Data Selection**. The source data table is selected and all columns are listed.
+First, specify parameters for **Table 1 Data Selection**. The source data table is selected and all columns are listed.
 
 
 
-Next, specify parameters for **Table B Data Selection.** Once again, the source data table is selected and all columns are listed.
+Next, specify parameters for **Table 2 Data Selection.** Once again, the source data table is selected and all columns are listed.
 
 
 
