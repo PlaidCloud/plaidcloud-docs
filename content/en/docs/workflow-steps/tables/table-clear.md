@@ -14,20 +14,16 @@ Clear the contents of an existing data table without deleting the actual data ta
 
 ## Table Selection
 
+There are two options for selecting the table or in the second option tables to be cleared:
 
-First, select the “Project” or “Workflow” from the first dropdown list. Then select the table to be cleared from the second dropdown list. The list will include all *Project* or *Workflow* data tables.
+The first option is to use the ***Specific Table*** dropdown to select the table to be cleared.
 
-
-
-
-
-
-
-## Examples
+The second is to use the ***Tables Matching Search*** option in which you specify the **Search Path** and **Search Text** to clear a table or tables that match the search criteria. 
+This option is very useful if you have a workflow that creates a series of commonly named tables that that have been saved appending the date.
 
 
-In this example, the data table *Append Tables* is cleared to have 0 rows.
+![Table Clear](/images/table_clear.png)
 
 
-The resulting data table has no content but still maintains its structure.
+
 
