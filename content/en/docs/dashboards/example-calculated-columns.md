@@ -12,9 +12,6 @@ Data in dashboards can be augmented with calculated columns.  Each dataset will 
 
 {{< include "dashboards/common-navigate-to-dataset.md" >}}
 
-## Metrics
-Metrics are expressions that are typically used to describe a field, including how it will be consolidated.
-
 ## Examples
 ### count
 ```
