@@ -2,7 +2,7 @@
 title: Data Filter
 ---
 
-### Data Filters
+
 
 ![Table Data Filters](/images/table_data_filters.png)
 
