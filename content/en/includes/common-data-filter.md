@@ -4,6 +4,8 @@ title: Data Filter
 
 ### Data Filters
 
+![Table Data Filters](/images/table_data_filters.png)
+
 To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source so the remaining operations are performed on a smaller data set.
 
 #### Source Data Filter

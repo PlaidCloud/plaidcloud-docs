@@ -27,9 +27,7 @@ There is no functions exclusive to this transform. All sorting, grouping, filter
 
 ## Extract Parameters
 
-![Extract Parameters](/images/extract_parameters.png)
-
-{{< include "common-table_selection-creation.md" >}}
+{{< include "common-table-source-and-target.md" >}}
 ### Table Data Selection
 ![Table Data Selection](/images/table_data_selection.png)
 
