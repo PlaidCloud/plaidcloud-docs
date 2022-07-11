@@ -16,13 +16,10 @@ For more details on cross join methodology, see here: [Wikipedia SQL Cross Join]
 
 
 
-## Table 1 Data Selection
+## Table Data Selection
 
 {{< include "common-table-source-selection.md" >}}
 
-## Table 2 Data Selection
-
-{{< include "common-table-source-selection.md" >}}
 
 ## Table Output
 

@@ -17,19 +17,12 @@ This operation could be accomplished by using outer joins and filtering on null 
 
 
 
-## Table 1 Data Selection
+## Table Data Selection
 
 
 
 
 {{< include "common-table-source-selection.md" >}}
-
-
-
-## Table 2 Data Selection
-
-{{< include "common-table-source-selection.md" >}}
-
 
 
 ## Table Output
