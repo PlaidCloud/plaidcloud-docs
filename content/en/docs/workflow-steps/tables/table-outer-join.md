@@ -26,9 +26,8 @@ For more details on outer join methodology, see here: [Wikipedia SQL Full Outer 
 
 ## Table Output
 
-![Table Join Target](/images/table_join_target.png)
 
-### Target Table
+
 
 
 {{< include "common-target-table-creation.md" >}}
