@@ -11,7 +11,9 @@ Performs an update of existing records and append new ones.
 
 ## Upsert Parameters
 
-{{< include "common-table-source-and-target.md" >}}
+![Source And Target](/images/table_source_and_target_EN.png)
+
+To establish the source and target tables, first select the data table to be extracted from using the **Source Table** dropdown menu. Next, select an existing table as the target table using the **Target Table** dropdown.
 
 
 ## Source Table Data Selection
