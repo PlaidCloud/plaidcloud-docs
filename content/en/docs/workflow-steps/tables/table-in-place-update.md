@@ -26,7 +26,7 @@ Select the **Source** table for updating from the dropdown list. This list inclu
 
 ## Examples
 
-In this example the Account will be set to 41000 when the Account is currently = 42000 in "Ledger Value to be allocated".
+In this example the Account will be set to 41000 when the Version is equal to "Actual" in "Ledger Value to be allocated".
 
 ![Table In-Place Update](/images/table_in-place_update_1.png)
 
