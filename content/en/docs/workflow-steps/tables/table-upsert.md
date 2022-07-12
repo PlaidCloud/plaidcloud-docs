@@ -9,27 +9,16 @@ date: 2022-01-25T07:40:19
 
 Performs an update of existing records and append new ones.
 
-## Source and Target Table Selection
+## Upsert Parameters
 
-![Upsert Tables](/images/table_upsert_1.png)
-
-### Source Table
-
-Specify the source data table by selecting it from the dropdown menu.
-
-### Target Table
-
-To establish the target table select either an existing table as the target table using the **Target Table** dropdown or click on the green **"+"** sign to create a new table as the target. 
-
-{{< note >}}
-For an Upsert the target table must be a table and not a view.
-{{< /note >}}
+{{< include "common-table-source-and-target.md" >}}
 
 
+## Source Table Data Selection
 
-### Source Table Data Selection
+![Table Upsert](/images/table_upsert.png)
 
-![Upsert Key](/images/table_upsert_2.png)
+The Data Mapper is used to map columns from the source data to the target data table.
 
 #### Inspection and Populating the Mapper
 
@@ -50,8 +39,32 @@ If the source and target column options aren’t enough, other columns can be ad
 Selecting *Propagate All* will duplicate columns if they already exist in the target list
 {{< /warning >}}
 
-#### Update Key
+#### Deleting Columns
+
+To delete columns from the target data table, select the desired column(s), then right click and select **Delete**.
+
+#### Chaging Column Order
+
+To rearrange columns in the target data table, select the desired column(s).  You can use either:
+* **Bulk Move Arrows**: Select the desired move option from the arrows in the upper right
+* **Context Menu**: Right clikc and select **Move to Top**, **Move Up**, **Move Down**, or **Move to Bottom**.
+
+#### Reduce Result to Distinct Records Only
+
+To return only distinct options, select the **Distinct** menu option. This will toggle a set of checkboxes for each column in the source. Simply check any box next to the corresponding column to return only distinct results.
+
+Depending on the situation, you may want to consider use of Summarization instead.
+
+The distinct process retains the first unique record found and discards the rest.  You may want to apply a sort on the data if it is important for consistency between runs.
+
+{{< warning >}}
+Selecting all columns to determine distincriveness might make it appear as if it isn't being applied.  Select only the columns you feel define the distictivness of the data.
+{{< /warning >}}
+### Update Key
 
 In order for the Upsert to update the existing and append new records you need to select the columns in the data that create a unique key.
 
 
+## Source Data Filters
+
+{{< include "common-data-filter.md" >}}

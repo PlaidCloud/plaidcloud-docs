@@ -16,101 +16,38 @@ For more details on inner join methodology, see here: [Wikipedia SQL Inner Join]
 
 
 
-## Table 1 Data Selection
-
-![Table Inner Join 1](/images/table_inner_join_1.png)
-
-### Table Source
-
-
-Specify the source data table by selecting it from the dropdown menu.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
+## Table Data Selection
 
 
 
 
-### Source Columns and Replacements
-
-
-Specify any columns to be included in the Inner Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
-
-
-
-## Table 2 Data Selection
-
-
-### Table Source
-
-
-Specify the source data table by selecting it from the dropdown menu.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-### Source Columns and Replacements
-
-
-Specify any columns to be included in the Inner Join here. Selecting the **Inspect Source** and **Populate Source Mapping Table** buttons will make these columns available for the join operation.
+{{< include "common-table-source-selection.md" >}}
 
 
 ## Table Output
 
-![Table Anti Join 2](/images/table_anti_join_2.png)
+![Table Join Target](/images/table_join_target.png)
+
 ### Target Table
+
 
 {{< include "common-target-table-creation.md" >}}
 
 
-
-
 ### Join Map
 
-
-Specify join conditions. Using the **Guess** button will find all matching columns from both **Table 1** as well as **Table 2**. To add additional columns manually, right click anywhere in the section and select either **Insert Row** or **Append Row**, to add a row prior to the currently selected row or to add a row at the end, respectively. Then, type the column names to match from **Table 1** to **Table 2**. To remove a field from the **Join Map**, simply right-click and select **Delete**.
-
-
+{{< include "common-table-join-map.md" >}}
 
 ### Target Output Columns
 
 
-Specify the columns to appear in the target data table. Selecting the **Propagate** button will insert all columns listed in the **Source Columns and Replacements** section of both **Table 1** and **Table 2**. Any columns included in the **Join Map** will only be listed a single time.
+{{< include "common-data-mapper.md" >}}
 
 
-
-To add additional columns manually, right click anywhere in the section and select either **Insert Row** or **Append Row**, to add a row prior to the currently selected row or to add a row at the end, respectively. Then, type the column name. To remove a field, simply right-click and select **Delete**.
-
+## Output Filters
 
 
-## Select Subset Of Data Based On Aggregations
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is not included in count)
-* **End at Row:** Last row of data to include. This is different from simply counting rows at the end to drop
-
+{{< include "common-data-filter.md" >}}
 
 
 

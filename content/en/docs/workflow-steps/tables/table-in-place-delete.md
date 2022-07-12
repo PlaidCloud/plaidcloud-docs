@@ -13,23 +13,22 @@ Performs a delete on the table using the specified filter conditions. The operat
 
 
 
-## Table Selection
+## Delete Parameters
 
 
 Select the **Source** table for deleting from the dropdown list. This list includes all *Project* and *Workflow* data tables.
 
+![Table In-Place Delete](/images/table_in-place_delete_1.png)
 
+## Data Filters for Delete
 
+![Table In-Place Delete](/images/table_in-place_delete_2.png)
 
 
 
 
 ## Examples
 
-In this example the values in "Ledger Value to be allocated" will be deleted where Version = Actual.
 
-![Table In-Place Delete](/images/table_in-place_delete_1.png)
-
-![Table In-Place Delete](/images/table_in-place_delete_2.png)
 
 

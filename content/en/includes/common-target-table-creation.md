@@ -1,5 +1,6 @@
 ### Target Table
 
+![Table Target](/images/table_target_table.png)
 
 To establish the target table select either an existing table as the target table using the **Target Table** dropdown or click on the green **"+"** sign to create a new table as the target. 
 
