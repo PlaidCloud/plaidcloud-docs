@@ -19,5 +19,7 @@ If you want to send rpc requests from here, you'll need to log in:
 7. You can now send rpc requests by going to the method you want and clicking **Try it out**
 8. If you're logged in, you should get a response. If you have not successfully logged in, you'll get a 401 Unauthorized error.
 
+version a
+
 <!-- {{< swaggerui src="https://atower.plaidcloud.io/openapi.json" >}} -->
 {{< swaggerui >}}
