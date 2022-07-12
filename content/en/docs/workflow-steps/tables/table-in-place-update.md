@@ -32,7 +32,7 @@ In this example the Account will be set to 41000 when the Account is currently =
 
 
 
-![Table In-Place Update](/images/table_in-place_update_2.png)
+![Table In-Place Update](/images/table_in-place_table_filter.png)
 
 
 
