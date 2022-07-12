@@ -26,9 +26,7 @@ For more details on inner join methodology, see here: [Wikipedia SQL Inner Join]
 
 ## Table Output
 
-![Table Join Target](/images/table_join_target.png)
 
-### Target Table
 
 
 {{< include "common-target-table-creation.md" >}}
