@@ -12,8 +12,6 @@ Clear the contents of an existing data table without deleting the actual data ta
 
 
 
-## Table Selection
-
 {{< include "common-table-selection-dynamic.md" >}}
 
 
