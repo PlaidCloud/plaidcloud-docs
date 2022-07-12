@@ -27,9 +27,7 @@ This operation could be accomplished by using outer joins and filtering on null 
 
 ## Table Output
 
-![Table Join Target](/images/table_join_target.png)
 
-### Target Table
 
 
 {{< include "common-target-table-creation.md" >}}
