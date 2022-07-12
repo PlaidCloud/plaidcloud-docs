@@ -13,8 +13,6 @@ Create a copy of a data table.
 
 
 
-## Source and Target
-
 
 {{< include "common-table-source-and-target.md" >}}
 
