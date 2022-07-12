@@ -23,9 +23,7 @@ If you are a regular user of the vlookup function in Microsoft Excel, the Table 
 
 ## Table Output
 
-![Table Join Target](/images/table_join_target.png)
 
-### Target Table
 
 
 {{< include "common-target-table-creation.md" >}}
