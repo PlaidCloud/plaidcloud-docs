@@ -12,11 +12,10 @@ date: 2022-01-25T07:39:49
 Use to combine multiple data tables with the same column structure into a single data table. For example, time series data is a prime candidate for this transform. The result is always the distinct set of records after combining the data.
 
 {{< note >}}
-**Union** removes duplicates. If you want to keep all records, use **Union All** instead.
+**Union Distinct** removes duplicates. If you want to keep all records, use **Union All** instead.
 {{< /note >}}
 
 
-![Table Union All](/images/table_union_all.png)
 ## Sources
 
 
@@ -66,56 +65,25 @@ Remember to configure **Table Data Selection** conditions for each data table li
 ### Source Table
 
 
-To set **Source Table**, select the original data table from the dropdown list. Selecting a data table will automatically populate whether it is a *Project* or a *Workflow* table. Additionally, there is an option to preview the data table.
+{{< include "common-table-selection-dynamic.md" >}}
 
 
 
-### Source Columns and Target Columns
+### Source Columns
 
 
-Displays the columns in the source table (**Source Columns**) alongside the column to be used in the resulting new table (**target columns**).
-
-
-
-### Data Filters Tab
-
-{{< note >}}
-Remember to configure **Data Filters** conditions for each data table listed in **Sources**.
-{{< /note >}}
-
+{{< include "common-data-mapper.md" >}}
 
 
 
 ### Data Filters
 
+{{< include "common-data-filter.md" >}}
 
-To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source, so the remaining operations are performed on a smaller data set.
+{{< note >}}
+Remember to configure **Data Filters** conditions for each data table listed in **Sources**.
+{{< /note >}}
 
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-for more details and examples.
-
-
-
-
-### Apply Secondary Filter To Result Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
 
 
 
