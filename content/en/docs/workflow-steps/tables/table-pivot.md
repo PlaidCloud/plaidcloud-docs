@@ -8,17 +8,47 @@ date: 2022-01-25T07:39:49
 ## Description
 
 
-No additional description for Table Rows to Columns (Pivot) yet.
+Used to convert long, narrow data tables into short, wide data tables. Selected columns are transposed, with the column names converted into values across multiple columns.
+
+
+Perhaps the easiest example to understand is to think of a data table with months listed as rows:
+
+
+
+![Table Pivot Input](/images/table_pivot_input_data.png)
+
+
+Pivoting this data table would convert all of the month rows into columns.
+
+
+![Table Pivot Output](/images/table_pivot_output.png)
+
+
+By specifying which columns to transpose and which columns to leave alone, this becomes a powerful tool. Making this conversion in other ETL tools could require a dozen more steps.
 
 
 
 ## Source and Target Parameters
 
+![Table Pivot Source Target](/images/table_pivot_1.png)
+### Source Table Selection
+To establish the source and target, first select the data table to be extracted from using the dropdown menu.
 
-To establish the source and target, first select the data table to be exported from the dropdown menu. Next, select the target file path from PlaidCloud Document using the dropdown menu to select the appropriate account before navigating to the actual directory in the section immediately below. Finally, provide the target file with a descriptive name.
+### Traget Table Selection
+
+{{< include "common-target-table-creation.md" >}}
+
+
+### Pivot Column Selection
+
+The **Category Column to Transform into Column Headers** is where you specigy the column in Source Table that will be pivoted to rows.
+The **Value Column ti Pivot to Column Vales** is the column that containes the values in the Source Table.
+The **Value Aggregation Option** is where you specify how you want the data to aggregate.
 
 
 ## Table Data Selection
+
+![Table Pivot Data Selection](/images/table_pivot_2.png)
 
 
 The Table Data Selection tab is used to map columns from the source data table to the target data table. All source columns on the left side of the window are automatically mapped to the target data table depicted on the right side of the window. Using the **Inspect Source** menu button, there are a few additional ways to map columns from source to target:
@@ -95,14 +125,14 @@ For more aggregation details, see the Analyze overview page [here](/docs/workflo
 
 
 
-### Data Filters
+## Data Filters
 
 
 To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source so the remaining operations are performed on a smaller data set.
 
 
 
-### Select Subset of Source Data
+### Select Subset of Data
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
@@ -112,63 +142,10 @@ for more details and examples.
 
 
 
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
 
 
 
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-
-
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Select Subset of Final Data
+### Apply Secondary Filter To Result Data
 
 
 Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples

@@ -12,22 +12,6 @@ Clear the contents of an existing data table without deleting the actual data ta
 
 
 
-## Table Selection
+{{< include "common-table-selection-dynamic.md" >}}
 
-
-First, select the “Project” or “Workflow” from the first dropdown list. Then select the table to be cleared from the second dropdown list. The list will include all *Project* or *Workflow* data tables.
-
-
-
-
-
-
-
-## Examples
-
-
-In this example, the data table *Append Tables* is cleared to have 0 rows.
-
-
-The resulting data table has no content but still maintains its structure.
 

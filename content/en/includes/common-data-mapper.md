@@ -4,6 +4,7 @@ title: Data Mapper Usage
 
 ### Data Mapper Configuration
 
+![Table Data Mapper](/images/table_data_mapper.png)
 
 The Data Mapper is used to map columns from the source data to the target data table.
 
