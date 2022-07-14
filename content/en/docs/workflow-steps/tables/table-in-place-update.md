@@ -4,7 +4,7 @@ slug: table-in-place-update
 description: Performs an update on the table using the specified filter conditions and value settings
 date: 2022-01-25T07:39:56
 ---
-w
+
 
 ## Description
 
@@ -25,6 +25,15 @@ Select the **Source** table for updating from the dropdown list. This list inclu
 
 
 ## Examples
+
+In this example the Account will be set to 41000 when the Version is equal to "Actual" in "Ledger Value to be allocated".
+
+![Table In-Place Update](/images/table_in-place_update_1.png)
+
+
+
+![Table In-Place Update](/images/table_in-place_table_filter.png)
+
 
 
 

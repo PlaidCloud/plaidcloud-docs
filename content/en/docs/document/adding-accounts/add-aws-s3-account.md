@@ -8,9 +8,7 @@ date: 2022-01-25T07:39:47
 
 ## AWS S3 Setup
 
-
 These steps need to be completed within the AWS console
-
 
 1. Sign into or create an Amazon Web Services (AWS) account
 2. Go to `All services > Storage > S3` in the console
@@ -28,9 +26,7 @@ These steps need to be completed within the AWS console
 You should now have everything you need to add your S3 account to PlaidCloud Document.
 
 
-
 ## PlaidCloud Document Setup
-
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside

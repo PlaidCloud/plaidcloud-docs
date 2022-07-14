@@ -8,12 +8,11 @@ date: 2022-01-25T07:39:49
 ## Description
 
 
-Use to combine multiple data tables with the same column structure into a single data table. For example, time series data is a prime candidate for this transform. The result is always the distinct set of records after combining the data.
+Use to combine multiple data tables with the same column structure into a single data table. For example, time series data is a prime candidate for this transform. The result is all of the records from the combined tables.
 
 {{< note >}}
-**Union** removes duplicates. If you want to keep all records, use **Union All** instead.
+**Union All** dosen't remove duplicates. If you want to remove duplicate records, use **Union Distinct** instead.
 {{< /note >}}
-
 
 ## Sources
 
@@ -48,6 +47,8 @@ It is important to remember that the text shown is **not** related to the source
 
 By default, the **Target Table** is left blank. Before naming, note that data tables must follow Linux naming conventions. As such, we recommend that names only consist of alphanumeric characters. Analyze will automatically scrub any invalid characters from the name. Additionally, it will limit the length to 256 characters, so be concise!
 
+{{< include "common-target-table-creation.md" >}}
+
 
 
 ### Table Data Selection Tab
@@ -62,18 +63,20 @@ Remember to configure **Table Data Selection** conditions for each data table li
 ### Source Table
 
 
-To set **Source Table**, select the original data table from the dropdown list. Selecting a data table will automatically populate whether it is a *Project* or a *Workflow* table. Additionally, there is an option to preview the data table.
+{{< include "common-table-selection-dynamic.md" >}}
 
 
 
-### Source Columns and Target Columns
+### Source Columns
 
 
-Displays the columns in the source table (**Source Columns**) alongside the column to be used in the resulting new table (**target columns**).
+{{< include "common-data-mapper.md" >}}
 
 
 
-### Data Filters Tab
+### Data Filters
+
+{{< include "common-data-filter.md" >}}
 
 {{< note >}}
 Remember to configure **Data Filters** conditions for each data table listed in **Sources**.
@@ -82,90 +85,3 @@ Remember to configure **Data Filters** conditions for each data table listed in 
 
 
 
-### Data Filters
-
-
-To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source, so the remaining operations are performed on a smaller data set.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-for more details and examples.
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples
-
-
-
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions)
-for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-
-### Source Table Slicing (Limit)
-
-
-To limit the data, check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is **not** included in count)
-* **End at Row:** Last row of data to include. Note that this is different from simply counting rows at the end to drop
-
-
-
-### Select Subset of Final Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-To limit the data, simply check the **Apply Row Slicer** box and then specify the following:
-
-
-* **Initial Rows to Skip:** Rows of data to skip (column header row is not included in count)
-* **End at Row:** Last row of data to include. This is different from simply counting rows at the end to drop

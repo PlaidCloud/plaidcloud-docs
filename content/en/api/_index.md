@@ -1,9 +1,21 @@
 ---
 linktitle: API
-title: APIs
+title: "APIs"
+type: swagger
 sitemap:
   priority: 1.0
+weight: 1
+description: Interactive API Documentation
 ---
 
-PlaidCloud provides an extensive set of APIs accessible through JSON-RPC requests.  Eventually, the documentation of these will be in this section but they are currently
-located at our [API Documentation Site](https://api.plaidcloud.com).
+If you want to send RPC requests from here, you'll need to log in:
+
+1. Click the green **Authorize** button (it should have an open padlock icon)
+2. In the **client_id** text field, type the client id `swagger`
+3. Click the green **Authorize** button beneath the scopes
+4. A PlaidCloud login tab should open in your browser. Log in as you normally would.
+5. You should now be logged in. You can close the Available Authorizations window.
+6. You can now send RPC requests by going to the method you want and clicking **Try it out**
+7. If you're logged in, you should get a response. If you have not successfully logged in, you'll get a 401 Unauthorized error.
+
+{{< swaggerui >}}
