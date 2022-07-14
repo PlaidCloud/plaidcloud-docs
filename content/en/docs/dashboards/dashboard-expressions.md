@@ -28,13 +28,20 @@ Metrics are expressions that are typically used to describe a field, including h
 cast
 ```
 cast("MyColumnName" AS datatype)    'Converts a value (of any type) into a specified datatype
+```
 
 Parameter Values
-Parameter                   Description
-MyColumnName                The value to convert
-datatype                    The datatype to convert expression to
 
-Example: cast("MyColumnName" AS NUMERIC)
+|Parameter   |   Description                       |
+|------------|-------------------------------------|
+|MyColumnName|The value to convert                 |
+|------------|-------------------------------------|
+|datatype    |The datatype to convert expression to|
+|------------|-------------------------------------|
+
+Example: 
+```
+cast("MyColumnName" AS NUMERIC)
 ```
 
 coalesce (useful for converting nulls to 0.0, for instance)
