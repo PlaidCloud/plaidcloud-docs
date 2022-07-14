@@ -23,7 +23,13 @@ Import delimited text files from PlaidCloud Document. This includes, but is not 
 
 ---
 
-## Unique Configuration Items
+## Import Parameters
+
+{{< include "common-import-file-source-target-selection.md" >}}
+
+{{< include "common-remove-non-ascii" >}}
+
+{{< include "common-delete-files-after-import" >}}
 
 ### Inspect Selected Source File
 
@@ -72,26 +78,10 @@ The special character inputs control how PlaidCloud handles the presence of cert
 
 For input files with extraneous records, you can specify a number of rows to skip before processing the data.  This is useful if files contain header blocks that must be skipped before arriving at the tabular data.
 
-### Duplicates
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
----
-
-## Common Configuration Items
-
-{{< include "common-remove-non-ascii" >}}
-
-{{< include "common-delete-files-after-import" >}}
-
-{{< include "common-import-file-selection" >}}
-
-{{< include "common-import-target-selection" >}}
+## Table Data Selection
 
 {{< include "common-data-mapper" >}}
+
+## Data Filters
 
 {{< include "common-data-filter" >}}

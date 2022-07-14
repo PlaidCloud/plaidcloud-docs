@@ -3,6 +3,7 @@ title: Using Dashboards
 slug: using-dashboards
 description: Create and edit data tables within dashboard and explore the data
 date: 2022-01-25T07:39:48
+weight: 2.0
 ---
 
 
