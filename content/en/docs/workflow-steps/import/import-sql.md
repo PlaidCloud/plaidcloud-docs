@@ -8,7 +8,7 @@ date: 2022-01-25T07:39:57
 ## Description
 
 
-Import SQL table files from PlaidCloud Document.
+Import SQL table files from remote database
 
 ## Examples
 
@@ -16,22 +16,23 @@ No examples yet...
 
 ---
 
-## Unique Configuration Items
+## Import Parameters
 
-None
+![Import SQL Table](/images/import_remote_sql_table.png)
 
 ---
 
-## Common Configuration Items
+### Source And Target
+#### Database Connection
 
-{{< include "common-remove-non-ascii" >}}
+To establish a **Database Connection** please refer to **PlaidCloud Documentation / Analysis Tools & Connectors / Data Connections**
 
-{{< include "common-delete-files-after-import" >}}
 
-{{< include "common-import-file-selection" >}}
+{{< include "common-import-target-selection.md" >}}
 
-{{< include "common-import-target-selection" >}}
+### SQL Query
+In this section write the SQL query to return the required data. 
 
-{{< include "common-data-mapper" >}}
+---
 
-{{< include "common-data-filter" >}}
+
