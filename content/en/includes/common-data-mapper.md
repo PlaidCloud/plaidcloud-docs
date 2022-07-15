@@ -53,6 +53,25 @@ Selecting all columns to determine distincriveness might make it appear as if it
 
 To aggregate results, select the **Summarize** menu option. This will toggle a set of select boxes for each column in the target data table. Choose an appropriate summarization method for each column.
 
+- Summarize Options
+  - Group By
+  - Sum
+  - Min
+  - Max
+  - First
+  - Last
+  - Count
+  - Count (including nulls)
+  - Mean
+  - Standard Deviation
+  - Sample Standard Deviation
+  - Population Standard Deviation
+  - Variance
+  - Sample Variance
+  - Population Variance
+  - Advanced Non-Group_By
+
+
 {{< note >}}
 When using aggregation, all columns **must** have a summarization type specified
 {{< /note >}}
