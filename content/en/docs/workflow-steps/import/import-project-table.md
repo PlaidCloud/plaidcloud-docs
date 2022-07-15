@@ -26,4 +26,4 @@ Select the **Source Project** and **Source Table** from the drop downs.
 
 ### Write To
 
-{{< include "common-target-table-creation.md" >}}
+{{< include "common-import-target-selection.md" >}}
