@@ -25,7 +25,8 @@ No examples yet...
 ### Source And Target
 #### Database Connection
 
-To establish a **Database Connection** please refer to **PlaidCloud Documentation / Analysis Tools & Connectors / Data Connections**
+To establish a **Database Connection** please refer to 
+[PlaidCloud Data Connections](https://docs.plaidcloud.com/docs/tools/data-connections/)
 
 
 {{< include "common-import-target-selection.md" >}}
