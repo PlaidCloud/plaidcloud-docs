@@ -2,7 +2,7 @@
 title: File Import File Source and Target Selection
 ---
 
-### Import File Selector
+
 
 ![Import Source and Target](/images/import_file_source_target.png)
 

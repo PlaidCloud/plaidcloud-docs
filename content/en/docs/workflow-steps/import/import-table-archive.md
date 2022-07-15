@@ -16,22 +16,10 @@ No examples yet...
 
 ---
 
-## Unique Configuration Items
+## Import Parameters
 
-None
-
----
-
-## Common Configuration Items
+{{< include "common-import-file-source-target-selection.md" >}}
 
 {{< include "common-remove-non-ascii" >}}
 
 {{< include "common-delete-files-after-import" >}}
-
-{{< include "common-import-file-selection" >}}
-
-{{< include "common-import-target-selection" >}}
-
-{{< include "common-data-mapper" >}}
-
-{{< include "common-data-filter" >}}
