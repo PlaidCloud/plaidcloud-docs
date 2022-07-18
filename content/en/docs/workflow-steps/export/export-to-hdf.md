@@ -19,10 +19,7 @@ For more details on HDF5 files, see the HDF Group’s official website here: <ht
 ## Export Parameters
 
 
-### Source and Target
-
-
-See details here: [Source and Target](/docs/workflow-steps/common/table-data-selection)
+{{< include "common-export-file-selection">}}
 
 
 
