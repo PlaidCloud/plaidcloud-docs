@@ -2,7 +2,7 @@
 title: File Import Target Table Selection
 ---
 
-### Import Target Selector
+### Target Table
 
 The target selection for imports is limited to tables only since views do not contain underlying data.
 

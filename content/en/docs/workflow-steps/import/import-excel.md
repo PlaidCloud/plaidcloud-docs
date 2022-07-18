@@ -20,7 +20,13 @@ Import specific worksheets from Microsoft Excel files from PlaidCloud Document. 
 
 ---
 
-## Unique Configuration Items
+## Import Parameters
+
+{{< include "common-import-file-source-target-selection.md" >}}
+
+{{< include "common-remove-non-ascii" >}}
+
+{{< include "common-delete-files-after-import" >}}
 
 ### Header
 
@@ -56,18 +62,11 @@ The find sheets button will open the Excel file and list the worksheets availabl
 When populating the *Data Mapper*, the first worksheet found in the list will be used.  Ensure all worksheets have a similar format that are included in the import step.
 {{< /note >}}
 
----
-
-## Common Configuration Items
-
-{{< include "common-remove-non-ascii" >}}
-
-{{< include "common-delete-files-after-import" >}}
-
-{{< include "common-import-file-selection" >}}
-
-{{< include "common-import-target-selection" >}}
+## Table Data Selection
 
 {{< include "common-data-mapper" >}}
 
+## Data Filters
+
 {{< include "common-data-filter" >}}
+
