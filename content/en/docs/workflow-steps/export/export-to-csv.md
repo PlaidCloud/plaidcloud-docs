@@ -20,13 +20,6 @@ Export an Analyze data table to PlaidCloud Document as a CSV delimited file.
 
 {{< include "common-export-file-selection">}}
 
-
-
-### Data Format
-
-![Export CSV Data Format](/images/export_file_csv_data_format.png)
-
-
 #### Selecting File Compression
 
 All exported files are uncompressed, but the following compression options are available:
@@ -35,6 +28,14 @@ All exported files are uncompressed, but the following compression options are a
 * Zip
 * GZip
 * BZip2
+
+
+
+### Data Format
+
+![Export CSV Data Format](/images/export_file_csv_data_format.png)
+
+
 
 #### Delimiter
 The Export CSV transform is used to export data tables into delimited text files saved in PlaidCloud Document. This includes, but is not limited to, the following delimiter types:
