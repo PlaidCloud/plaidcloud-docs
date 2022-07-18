@@ -11,6 +11,13 @@ date: 2022-01-25T07:39:58
 
 Exports PlaidCloud table archive file.
 
+## Export Parameters
+
+{{< include "common-export-file-selection">}}
+
+{{< note >}}
+When archiving a table there are **No Compression** options.
+{{< /note >}}
 
 
 ## Examples

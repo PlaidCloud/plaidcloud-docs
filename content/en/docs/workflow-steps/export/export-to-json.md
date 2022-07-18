@@ -25,11 +25,7 @@ JSON files do *not* retain column order. The column order in the source data tab
 
 ## Export Parameters
 
-
-### Source and Target
-
-
-See details here: [Source and Target](/docs/workflow-steps/common/table-data-selection)
+{{< include "common-export-file-selection">}}
 
 
 
@@ -41,11 +37,12 @@ Consider the following data set:
 
 
 
-| ID | Name | Gender | State |
-| 1 | Jack | M | MO |
-| 2 | Jill | F | MO |
-| 3 | George | M | VA |
-| 4 | Abe | M | KY |
+| ID |  Name  | Gender | State |
+|----|--------|--------|-------|
+| 1  | Jack   |   M    |   MO  |
+| 2  | Jill   |   F    |   MO  |
+| 3  | George |   M    |   VA  |
+| 4  | Abe    |   M    |   KY  |
 
 JSON files can be exported into one of four data formats:
 
@@ -91,96 +88,19 @@ All exported files are uncompressed, but the following compression options are a
 * BZip2
 
 
-### Table Data Selection
+## Table Data Selection
 
-
-Remember that JSON files do *not* retain column order. Adjustments to column order during this step may not be accurately reflected in the exported JSON file.
-
-
-See details here: [Table Data Selection](/docs/workflow-steps/common/table-data-selection)
-
-
-
-### Data Filters
-
-
-To allow for maximum flexibility, data filters are available on the source data and the target data. For larger data sets, it can be especially beneficial to filter out rows on the source so the remaining operations are performed on a smaller data set.
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
+{{< include "common-data-mapper" >}}
 
 
 
 
-### Select Subset of Final Data
+For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
+## Data Filters
 
-
-
-
-
-
-### Select Subset of Source Data
-
-
-Any valid Python expression is acceptable to subset the data. Please see [Expressions](/docs/expressions) for more details and examples.
-
-
-
-### Duplicates
-
-
-To report duplicates, select the **Report Duplicates in Table** checkbox and then specify an output table which will contain all of the duplicate records.
-
-
-
-{{< caution >}}
-This will **not** remove the duplicate items from the target data table. To remove duplicate items, use the **Distinct** menu options as specified in the [Table Data Selection](../transforms/common_features#table-data-selection) section.
-{{< /caution >}}
-
-
-
-### Source Table Slicing (Limit)
-
-
-See details here: [Source Table Slicing](/docs/workflow-steps/common/source-table-slicing-limit)
-
-
-
-### Select Subset of Final Data
-
-
-See details here: [Select Subset of Final Data](/docs/workflow-steps/common/select-subset-of-final-data)
-
-
-
-### Final Data Table Slicing (Limit)
-
-
-See details here: [Final Data Table Slicing](/docs/workflow-steps/common/final-data-table-slicing)
-
-
-
-
-
-
+{{< include "common-data-filter" >}}
 
 ## Examples
 

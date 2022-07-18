@@ -7,7 +7,19 @@ date: 2022-05-10T14:00:00
 
 ## Description
 
-Imports a project from a project archive file
+Imports PlaidCloud table archive.
 
 
-For informaton on archiving and restoring projects refer to: **PlaidCloud Documentation / Projects / Archive a Project**
+## Examples
+
+No examples yet...
+
+---
+
+## Import Parameters
+
+{{< include "common-import-file-source-target-selection.md" >}}
+
+{{< include "common-remove-non-ascii" >}}
+
+{{< include "common-delete-files-after-import" >}}
