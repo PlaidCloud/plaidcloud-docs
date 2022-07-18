@@ -22,6 +22,16 @@ Export an Analyze data table to PlaidCloud Document as a Microsoft Excel file. P
 #### Target Sheet Name
 Specify the target sheet name, the default is ***Sheet1***
 
+
+#### Selecting File Compression
+
+All exported files are uncompressed, but the following compression options are available:
+
+* No Compression
+* Zip
+* GZip
+* BZip2
+
 #### Write Header To First Row
 If this checkbox is selected the table headers will be exported to the first row. If it is not there will be no headers in the exported file.
 

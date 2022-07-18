@@ -47,11 +47,3 @@ Select the ***Browse*** icon to the right of the ***Target Directory Path*** and
 Specify the name the exported file should be saved as.
 
 
-#### Selecting File Compression
-
-All exported files are uncompressed, but the following compression options are available:
-
-* No Compression
-* Zip
-* GZip
-* BZip2
