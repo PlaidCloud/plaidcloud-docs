@@ -46,9 +46,6 @@ Select the ***Browse*** icon to the right of the ***Target Directory Path*** and
 
 Specify the name the exported file should be saved as.
 
-{{< note >}}
-When exporting a file, no file extension is added automatically.  Add one to the file name if you want one.
-{{< /note >}}
 
 #### Selecting File Compression
 
