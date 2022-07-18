@@ -1,5 +1,5 @@
 ---
-title: Export HTML
+title: Export to HTML
 slug: export-html
 description: Export an Analyze data table to PlaidCloud Document as an HTML file
 date: 2022-01-25T07:39:58

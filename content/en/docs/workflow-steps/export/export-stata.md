@@ -1,5 +1,5 @@
 ---
-title: Export Stata
+title: Export to Stata
 slug: export-stata
 description: Export an Analyze data table to PlaidCloud Document as a Stata file
 date: 2022-01-25T07:39:58

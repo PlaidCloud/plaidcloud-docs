@@ -1,5 +1,5 @@
 ---
-title: Export Quandl
+title: Export to Quandl
 slug: export-quandl
 description: Export an Analyze data table to Quandl’s database
 date: 2022-01-25T07:39:58
