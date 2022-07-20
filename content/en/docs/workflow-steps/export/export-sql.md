@@ -1,5 +1,5 @@
 ---
-title: Export SQL
+title: Export to SQL
 slug: export-sql
 description: Export an Analyze data table to PlaidCloud Document as an SQL
 date: 2022-01-25T07:39:58
