@@ -13,7 +13,7 @@ date: 2022-01-25T07:40:18
 You can either use a specific name for the dimension to be created or include variables for dynamic naming.
 
 
-Variables is useful when dimensions are updated on a periodic basis and retaining the historical view is desired.
+Variables are useful when dimensions are updated on a periodic basis and retaining the historical view is desired.
 
 An example that uses the `current_month` variable to dynamically name the dimension:
 
