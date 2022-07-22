@@ -26,5 +26,5 @@ An example that uses the `current_month` variable to dynamically clear the Mater
 
 ### Use Specific Dimension
 
-Use the dropdown menu to select a specific dimension to clear
+Use the dropdown menu to select a specific dimension to clear.
 
