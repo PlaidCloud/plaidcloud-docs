@@ -4,9 +4,13 @@ slug: dimension-clear
 description: Clears the contents of a dimension including structure, values, aliases, properties, and alternate hierarchies
 date: 2022-01-25T07:40:18
 ---
+## Description
+Clears the contents of a dimension including structure, values, aliases, properties, and alternate hierarchies
 
 
 ![Dimension Clear](/images/dimension_clear.png)
+
+
 
 ## Dimension Selection
 ### Specify Dimension Dynamically
@@ -22,5 +26,5 @@ An example that uses the `current_month` variable to dynamically clear the Mater
 
 ### Use Specific Dimension
 
-Use the dropdown menu to select a specific dimension
+Use the dropdown menu to select a specific dimension to clear
 
