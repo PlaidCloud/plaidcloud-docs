@@ -64,27 +64,29 @@ In this example, consider the following source data tables. First is a list of a
 
 
 | Mfg_ID | Manufacturer |
-| 1 | Aston Martin |
-| 2 | Porsche |
-| 3 | Lamborghini |
-| 4 | Ferrari |
-| 5 | Koenigsegg |
+|--------|--------------|
+| 1      | Aston Martin |
+| 2      | Porsche      |
+| 3      | Lamborghini  |
+| 4      | Ferrari      |
+| 5      | Koenigsegg   |
 
 Next is a list of automobile models with a manufacturer ID. Note that there are several models with no manufacturer.
 
 
 
 
-| ModelName | Mfg_ID |
-| Aventador | 3 |
-| Countach | 3 |
-| DBS | 1 |
-| Enzo | 4 |
-| One-77 | 1 |
-| Optimus Prime |  |
-| Batmobile |  |
-| Agera | 5 |
-| Lightning McQueen |  |
+| ModelName         | Mfg_ID |
+|-------------------|--------|
+| Aventador         |   3    |
+| Countach          |   3    |
+| DBS               |   1    |
+| Enzo              |   4    |
+| One-77            |   1    |
+| Optimus Prime     |        |
+| Batmobile         |        |
+| Agera             |   5    |
+| Lightning McQueen |        |
 
 To get a list of models by manufacturer, it makes sense to join on *Mfg_ID*.
 
