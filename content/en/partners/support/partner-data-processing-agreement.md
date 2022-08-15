@@ -2,6 +2,7 @@
 title: PlaidCloud Business Partner DPA
 description: PlaidCloud Business Partner Data Processing Agreement
 date: 2022-01-25T07:39:47
+weight: 30
 ---
 
 ## PlaidCloud Business Partner Data Processing Agreement 

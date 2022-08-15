@@ -2,6 +2,7 @@
 title: Partner Program Policies
 description: PlaidCloud Solutions Partner Program Policies
 date: 2022-01-25T07:39:47
+weight: 10
 ---
 
 ## Our Solution Partner Program Goals
