@@ -5,6 +5,12 @@ date: 2022-01-25T07:39:47
 weight: 20
 ---
 
+This agreement is intended as a baseline agreement between PlaidCloud and our partners.  
+
+{{< note >}}
+This agreement can be modified to fit each partner's case.
+{{< /note >}}
+
 ## PlaidCloud Solutions Partner Program Agreement
 Last Modified: August 5, 2022
 
@@ -51,7 +57,7 @@ We periodically update these terms. We might also choose to replace these terms 
 
 “Partner Revenue Share” means an amount equal to a specific percentage of Net Revenue paid to us by an End User or Partner for a Qualified Transaction. The percentage and duration of payments is determined by your Partner Tier.
 
-“Partner Eligibility Requirements” mean you 1) have purchased and maintain an active subscription of a Subscription Service; and 2) have completed Partner Onboarding; 3) have completed training and/or certification requirements outlined in the Solutions Partner Program Policies.  For the purposes of this Agreement, the initial commitment to Subscription Service must be at minimum a twelve (12) month period to fulfill the Subscription Service requirement described in 1) above or have received a waiver in writing.  
+“Partner Eligibility Requirements” mean you 1) have completed Partner Onboarding; 2) have completed training and/or certification requirements outlined in the Solutions Partner Program Policies.  For the purposes of this Agreement, the initial commitment to Subscription Service must be at minimum a twelve (12) month period to fulfill the Subscription Service requirement described in 1) above or have received a waiver in writing.  
 
 “Subscription Service” means our web-based analytics software that is subscribed to, and developed, operated, and maintained by us, accessible via https://plaidcloud.com or another designated URL, and any add-on products that are included with such software, but excluding all Other Products. For avoidance of doubt, add-on products alone will not be considered Subscription Services.
 
@@ -74,7 +80,7 @@ You will respect the limits that apply to your use of the PlaidCloud products as
 
 If you use our Application Programming Interfaces (APIs), developer tools, or associated software, you will comply with our Terms at https://plaidcloud.com/terms-of-service/, which are incorporated herein by reference.
 
-c. Program Limits. If you are a Partner, your Capacity Limit and the expiration policy for your registrations are outlined in the Solutions Program Policies for Partners.  Your Capacity Limit as a Partner depends on your partner tier status and will be as set forth in the Program Policies. Any prospect(s) registered in excess of your applicable Capacity Limit will not be considered valid as per Section 3.e. of this Agreement.  It is your responsibility as Partner to maintain the number of registrations within your Capacity Limit. Failure to do so may result in your suspension as Partner and/or the suspension of any payments due to you under this Agreement. 
+c. Program Limits. If you are a Partner, your Capacity Limit and the expiration policy for your registrations are outlined in the Solutions Program Policies for Partners.  Your Capacity Limit as a Partner depends on your partner status and will be as set forth in the Program Policies. Any prospect(s) registered in excess of your applicable Capacity Limit will not be considered valid as per Section 3.e. of this Agreement.  It is your responsibility as Partner to maintain the number of registrations within your Capacity Limit. Failure to do so may result in your suspension as Partner and/or the suspension of any payments due to you under this Agreement. 
 
 d. Other Eligibility Requirements. To be eligible for a Revenue Share, a prospect must be registered, accepted and valid in accordance with the ‘Submission, Acceptance and Validity’ or the ‘Shared Leads’ section. You are not eligible to receive a Revenue Share or any other compensation from us based on transactions for Other Products, based on transactions with a PlaidCloud Lead (as defined below) or if: (i) such compensation is disallowed or limited by federal, state or local law or regulation in the United States or the laws or regulations of your jurisdiction; (ii) the applicable End User objects to or prohibits such compensation or excludes such compensation from its payments to us or our Affiliates; (iii) we determine that you are acting, or have acted, in a way that has or may negatively reflect on or affect us with respect to a given transaction; (iv) the End User has paid or will pay such commissions, referral fees, or other compensation directly to you; (v) the End User participates in this Program, or (vi) for any transactions with End User that precede in time to you becoming a Partner in this Program under this Agreement. In competitive situations with other Partners, we may elect to enable Cross Sell (in situations where the Subscription Service is complementary and Cross Sell is otherwise available) or to provide the Revenue Share to the partner that actually secures the business with the End User, which may result in you being ineligible for Revenue Share, regardless of whether or not you registered the prospect.
 
