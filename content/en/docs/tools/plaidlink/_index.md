@@ -1,8 +1,8 @@
 ---
-linktitle: PlaidLink Documentation
-title: PlaidLink
+linktitle: PlaidLink2
+title: PlaidLink2
 sitemap:
-  priority: 1.0
+  priority: 2.0
 ---
 
 PlaidLink provides indirect access to systems and processes protected by firewalls or behind other restrictions that make direct connections difficult.
