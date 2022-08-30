@@ -5,6 +5,9 @@ date: 2022-01-25T07:39:47
 weight: 30
 ---
 
+The agreement below is to ensure we and our partners are compliant with the privacy and security standards required by different regions of the world.  Unfortunately, it has be written in a legalese but
+the intent is to ensure data is treated properly in accordance with law.
+
 ## PlaidCloud Business Partner Data Processing Agreement 
 Last Modified:  August 5, 2022
 
@@ -36,7 +39,7 @@ PlaidCloud and Partner may each be Processors of a Joint Customer’s European P
 
 “European Personal Data” means Personal Data the sharing of which pursuant to this Agreement is regulated by European Data Protection Laws.
 
- “Joint Customer” means a customer of both Partner and PlaidCloud.
+“Joint Customer” means a customer of both Partner and PlaidCloud.
 
 “Joint Customer Personal Data” means any Personal Data for which a Joint Customer acts as a Controller.
 
