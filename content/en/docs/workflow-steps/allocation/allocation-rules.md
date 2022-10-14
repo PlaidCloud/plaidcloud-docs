@@ -36,10 +36,10 @@ In the above **Assignment Dimension Hierarchy** the ***Values To Allocate Table*
 
 Once the dimensions for the ***Values To Allocate Table*** and the ***Driver Data Table*** have been created the next step is to decide which of the dimensions for the ***Values To Allocate Table*** will serve as the ***Main Hierarchy*** for the **Assignment Dimension Hierarchy**. 
 {{< note >}}
-When allocating ledger values this is often the Account or Cost Center dimensions. 
+When allocating ledger values _Account_ or _Cost Center_ dimensions are normally used. 
 {{< /note >}}
 
-Copy this dimension by navigating to the Dimensions tab in PlaidCloud, clicking on the dimension and then selecting _Actions_ and _Copy Dimension_.
+Copy this dimension by navigating to the Dimensions tab in PlaidCloud, clicking on the dimension and then selecting ***Actions*** and ***Copy Dimension***.
 When you copy the dimension a pop-up will apprear asking you to enter a name for the copied dimension. 
 
 {{< note >}}
