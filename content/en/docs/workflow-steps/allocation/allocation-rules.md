@@ -190,68 +190,91 @@ Setting either or both of the ***Thread Count*** or ***Chunk Size*** to high wil
 ### Example 1
 
 **Values To Allocate Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_source.png)
 
 
 **Driver Data Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_driver.png)
 
 
 **Assignment Dimension Hierarchy**
+
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_assignment.png)
+
+Since the ***Target RC*** dimension is set to ***Current*** the driver data will be filtered by the ***Source RC*** values in the ***Values To Allocation Table***. 
+Since the only value in the ***Source RC*** is **"A"**, only the driver value records where **RC = A** will be used in the allocation step.
 
 
 **Allocation Results Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_result.png)
 
 ### Example 2
 
 **Values To Allocate Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_source.png)
 
 
 **Driver Data Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_1_driver.png)
 
 
 **Assignment Dimension Hierarchy**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_2_assignment.png)
 
+Since the ***Target RC*** dimension is set to ***ALL*** the driver data will include all **RC** values as you can see in the **RC** column in the ***Allocation Results Table***. 
 
 **Allocation Results Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_2_result.png)
 
 ### Example 3
 
 **Values To Allocate Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_source.png)
 
 
 **Driver Data Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_driver.png)
 
 
 **Assignment Dimension Hierarchy**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_assignment.png)
 
+With the ***Context RC*** set to ***ALL*** and the ***Target RC*** set to ***Source*** the driver data will include all the ***RC*** in the driver data. The ***Contect RC*** will override the setting on the ***Target RC***.
 
 **Allocation Results Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_result.png)
 
 
 ### Example 4
 
 **Values To Allocate Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_source.png)
 
 
 **Driver Data Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_3_driver.png)
 
 
 **Assignment Dimension Hierarchy**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_4_assignment.png)
 
+With the ***Context RC*** set to ***ALL*** the driver data will include all the ***RC*** in the driver data. 
 
 **Allocation Results Table**
+
 ![Allocation By Dimension](/images/allocation_by_dimension_example_4_result.png)
