@@ -1,5 +1,5 @@
 ---
 linktitle: Allocation Assignments
 title: Allocation Assignments
-weight: 10.0
+weight: 2.0
 ---

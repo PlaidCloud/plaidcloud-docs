@@ -2,5 +2,5 @@
 linktitle: Configure Allocations
 title: Configure Allocations
 sitemap:
-  priority: 1.0
+priority: 2.0
 ---

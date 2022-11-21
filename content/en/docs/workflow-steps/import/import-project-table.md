@@ -15,7 +15,7 @@ Import table data from a different project.
 
 ![Data Sharing Management](/images/import_external_project_table_1.png)
 
-In order to import a table from another project you must first go to both projects **Home Tab** and allow te projects to share data with each other. To do this select **New Data Share** and select the project and give them **Read** access.
+In order to import a table from another project you must first go to both projects **Home Tab** and allow the projects to share data with each other. To do this select **New Data Share** and select the project and give them **Read** access.
 
 ## Import External Project Table
 

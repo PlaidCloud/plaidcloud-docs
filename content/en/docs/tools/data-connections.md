@@ -164,6 +164,49 @@ For more details on each data connection type, please navigate to the specific d
 | **Connection Type** | Google Spreadsheet |
 | **Reference** | gspread |
 
+
+## Oracle EBS Related
+
+Oracle EBS utilizes the standard Oracle database connection specified above.  This connection provides the connectivity
+to query, load, and execute PL/SQL programs in Oracle.
+
+If the EBS instance has the REST API interface available, this can be accessed using the same approach as Oracle Cloud described below.
+
+
+## Oracle Cloud Related
+
+Oracle Cloud utilizes standard RESTful requests to perform queries, data loading, and other operations.  A REST connection using OAuth2
+tokens is used for these interactions.  This uses the standard oAuth connection specified above.
+
+
+## Workday Related
+
+Workday utilizes standard RESTful requests to perform all operations.  A REST connection using OAuth2
+tokens is used for these interactions.  This uses the standard oAuth connection specified above.
+
+
+## JD Edwards Legacy Version Related
+
+| Parameter | Value |
+|-----------|-------|
+| **Connection Type** | JD Edwards Legacy |
+| **Reference** | jde_legacy |
+
+
+## JD Edwards Related
+
+JD Edwards utilizes the standard Oracle database connection specified above.  This connection provides the connectivity
+to query, load, and execute PL/SQL programs in Oracle.
+
+
+## Infor Related
+
+| Parameter | Value |
+|-----------|-------|
+| **Connection Type** | Infor |
+| **Reference** | infor |
+
+
 ## SAP Related
 
 ### SAP Analytics Cloud
@@ -193,4 +236,3 @@ For more details on each data connection type, please navigate to the specific d
 |-----------|-------|
 | **Connection Type** | SAP PaPM |
 | **Reference** | sap_papm |
-
