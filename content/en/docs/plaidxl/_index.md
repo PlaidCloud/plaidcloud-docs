@@ -1,6 +1,6 @@
 ---
-linktitle: PlaidXL2
-title: PlaidXL2
+linktitle: PlaidXL
+title: PlaidXL
 weight: 18.0
 ---
 

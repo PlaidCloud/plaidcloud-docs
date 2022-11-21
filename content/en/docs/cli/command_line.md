@@ -1,7 +1,7 @@
 ---
-title: Getting Started
-slug: getting-started
-description: Get connected and run APIs from command line or another application
+title: Command Line
+slug: command-line
+description: Interact with PlaidCloud directory from command line
 date: 2022-01-25T07:39:47
 ---
 
@@ -44,11 +44,10 @@ table = rpc.analyze.table.table(
 
 ## What APIs are Available?
 
-There are many APIs available for use that control nearly every aspect of PlaidCloud. All of the APIs, the inputs, and expected outputs are documented in the [APIs documentation](https://api.plaidcloud.com).
+There are many APIs available for use that control nearly every aspect of PlaidCloud. All of the APIs, the inputs, and expected outputs are documented in the [APIs documentation](/api).
+
 
 ## Obtaining an OAuth Token
 
-OAuth tokens are generated from the PlaidCloud app. To view the list of current OAuth tokens assigned to you and generate new ones, navigate to `Analyze > Tools > Registered Systems`.
-
-Once there you can view any existing tokens or choose to create a new one.
+See [OAuth Tokens](/docs/cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
 
