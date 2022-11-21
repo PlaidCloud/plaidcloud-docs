@@ -1,6 +1,6 @@
 ---
 linktitle: Arrays
-title: Arays
+title: Arrays
 sitemap:
   priority: 1.0
 ---
