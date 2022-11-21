@@ -1,6 +1,6 @@
 ---
-linktitle: PlaidLink2
-title: PlaidLink2
+linktitle: PlaidLink
+title: PlaidLink
 sitemap:
   priority: 2.0
 ---
