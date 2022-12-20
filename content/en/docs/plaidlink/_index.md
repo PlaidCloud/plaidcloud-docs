@@ -2,7 +2,7 @@
 linktitle: PlaidLink
 title: PlaidLink
 sitemap:
-  priority: 2.0
+  priority: 19.0
 ---
 
 PlaidLink provides indirect access to systems and processes protected by firewalls or behind other restrictions that make direct connections difficult.
