@@ -179,6 +179,11 @@ Oracle Cloud utilizes standard RESTful requests to perform queries, data loading
 tokens is used for these interactions.  This uses the standard oAuth connection specified above.
 
 
+## Salesforce Related
+
+Salesforce utilizes standard RESTful requests to perform all operations.  A REST connection using OAuth2
+tokens is used for these interactions.  This uses the Salesforce specific connection type.
+
 ## Workday Related
 
 Workday utilizes standard RESTful requests to perform all operations.  A REST connection using OAuth2
