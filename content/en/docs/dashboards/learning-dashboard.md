@@ -10,7 +10,7 @@ weight: 1.0
 ## Description
 
 
-Dashboard is an intricate tool which so much flexibility it is impossible to describe all its uses. You will discover some aspects of Dashboard while using it. Naturally, there will also be times when you run into trouble. A member of the Tartan Support Team is always available to assist you, but we have also compiled some tips below in case you run into a similar problem.
+Dashboards support a wide range of use cases from static reporting to dynamic analysis. Dashboards support complex reporting needs while also providing an intuitive point-and-click interface. There may be times when you run into trouble. A member of the PlaidCloud Support Team is always available to assist you, but we have also compiled some tips below in case you run into a similar problem.
 
 
 
@@ -28,14 +28,14 @@ Due to frequent caching, Google Chrome is usually the best web browser to use wi
 ### Sync Delay
 
 
-* *Problem:* After unpublishing and publishing tables in superset, the data does not appear to be syncing properly.
+* *Problem:* After unpublishing and publishing tables in the Dashboards area, the data does not appear to be syncing properly.
 * *Solutions:* Refresh the dashboard. Currently, old table data is cached, so it is necessary to refresh the dashboard when rebuilding tables.
 
 ### Table Sync Error
 
 
 * *Problem:* After recreating a table using the same published name as a previous table, the table is not syncing, even after hitting refresh on the dashboard, publishing, unpublishing, and republishing the table.
-* *Solutions:* Republish the table with a different name. Superset does not allow a duplicate tables, or tables with the same published name and project ID.
+* *Solutions:* Republish the table with a different name. The Dashboard data model does not allow for duplicate tables, or tables with the same published name and project ID.
 
 ### Cache Warning
 
@@ -73,7 +73,7 @@ As a best practice, any time you create and save a new chart, add all applicable
 
 
 * *Problem:* My number formatting is broken and out of order.
-* *Solutions:* The most likely reason for this break is the use of nulls in a numeric column. Using a filter, eliminate all null numeric columns. Try running it again. If that does not work, review the material provided here: <http://bl.ocks.org/zanarmstrong/05c1e95bf7aa16c4768e> or here: <https://github.com/apache-superset/superset-ui/issues>. Finally, always feel free to reach out to a Tartan Support team member. This problem is known, and a more permanent solution is being developed.
+* *Solutions:* The most likely reason for this break is the use of nulls in a numeric column. Using a filter, eliminate all null numeric columns. Try running it again. If that does not work, review the material provided here: <http://bl.ocks.org/zanarmstrong/05c1e95bf7aa16c4768e> or here: <https://github.com/apache-superset/superset-ui/issues>. Finally, always feel free to reach out to a PlaidCloud Support team member. This problem is known, and a more permanent solution is being developed.
 
 ### Formatting Numbers
 
