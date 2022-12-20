@@ -1,8 +1,7 @@
 ---
 linktitle: Tips & Tricks
 title: Tips & Tricks
-sitemap:
-  priority: 1.0
+
 ---
 
 The Tips & Tricks area is place to share approaches and ideas to solve novel problems you might encounter on your analytics journey.
