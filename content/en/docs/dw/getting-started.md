@@ -28,7 +28,7 @@ This also means there is no first-query delay and no cache to warm up before opt
 
 The PlaidCloud DWS operates like a traditional database so you don't have to decide which instances are read-only or have special processes to load data from a write instance.  All instances support full read and write with no special ETL or data loading processes required.
 
-If you are used to using traditional databases, you don't need to learn any new skills or change your applications.  The DWS is a drop-in replacement for Greenplum and PostgreSQL.  If you are coming from other databases such as Oracle, MySQL or Microsoft SQL Server then some adjustments to your query logic may be necessary but not to the overall process.
+If you are used to using traditional databases, you don't need to learn any new skills or change your applications.  The DWS is a drop-in replacement for Greenplum as well as a replacement for PostgreSQL, CockroachDB, yugabyteDB and other databases that use the [PostgreSQL Wire Protocol](https://www.postgresql.org/docs/current/protocol.html).  If you are coming from other databases such as Oracle, MySQL or Microsoft SQL Server then some adjustments to your query logic may be necessary but not to the overall process.
 
 Since SAP HANA and Amazon Redshift use the PostgreSQL dialect, those seeking a lower cost alternative will find PlaidCloud DWS a straightforward option.
 
@@ -40,24 +40,6 @@ With usage based billing, you only pay for what you use.  There are no per-query
 We eliminate the headache of having to choose different data warehousing tiers based on optimizing storage costs.
 
 When query performance is less critical, data can be stored in `Cost Optimized` table types.  This allows use of cloud storage to reduce the cost of storage for data that does not have the same performance requirements as actively queried data.
-
-
-### Prioritize queries within the warehouse
-
-The PlaidCloud DWS provides a straightforward way to control the priority of queries within a single DWS instance.  Through use of Resource Queues, certain roles can be granted higher priority.  This differs from other warehouse services that require separate warehouse instances to delineate different priority access based on resource isolation/dedication.
-
-By using Resource Queues, you can achieve your business requirements (e.g. high priority dashboards for executives) while using a single DWS instance.  This allows you to control resource usage and eliminates the need to have large amounts of idle resources dedicated to low usage (high importance) scenarios.
-
-
-### Large number of connectors available
-
-Since PlaidCloud DWS is based on [PostgreSQL](https://www.postgresql.org/) technology, virtually all [PostgreSQL](https://www.postgresql.org/) connectors and clients will work out-of-the-box.  With a vibrant [PostgreSQL](https://www.postgresql.org/) community, new capabilities, adapters, and connectors are released frequently.
-
-Some examples:
- - Integration with Microsoft PowerBI using the [NpgSQL built-in connector](https://learn.microsoft.com/en-us/power-query/connectors/postgresql)
- - Connect Tableau using the standard data source setup for [PostgreSQL connections](https://help.tableau.com/current/pro/desktop/en-us/examples_postgresql.htm)
- - Apache Superset integration using [PostgreSQL connection string](https://superset.apache.org/docs/databases/postgres/)
- - Qlik integration using the [PosgreSQL Connector Package](https://help.qlik.com/en-US/connectors/Subsystems/ODBC_connector_help/Content/Connectors_ODBC/PostgresSQL/PostgresSQL-connector.htm)
 
 
 ### Highly performant
@@ -72,28 +54,6 @@ We also extensively tested optimal compute, networking, and RAM configurations t
 One of the more complex processes with data warehouse clusters is backups.  While seemingly simple, achieving a consistent snapshot of data across many nodes while not interfering in the execution of multiple queries is actually quite complex.  Doing this without impacting performance of the database is even harder.
 
 Thankfully, you don't have to worry about all that complexity.  You can set the frequency of backups you desire and it is all handled automatically for you.  While all data is triple redundant, backups are necessary in the event a destructive user action takes place such as accidentally deleting data or dropping a table.  Having a backup allows for recovery of that prior state.
-
-
-### Foreign table access
-
-Already have data in another database or in cloud storage?  No worry, you can connect to it directly and include the data in complex queries such as joins and Common Table Expressions.  Use of foreign tables also include predicate push-down so conditions are applied before the data is moved to the DWS instance.
-
-This enables use of existing data sources which means you can choose to gradually migrate them to a DWS instance or choose to keep the data where it exists forever.
-
-Note that performance will not be as good as having the data in the DWS instance since it is subject to network speeds and the speed of the foreign data source operations.
-
-This capability also enables communication across different PlaidCloud DWS instances.  While it would be ideal to have all data in a single warehouse instance, there are certainly situations where this is not always practical.
-
-
-### Well understood and mature
-
-While much of data warehousing activity is fairly straightforward, there still remains a large body of work that pushes the bounds of a database.  When operating at maximum capacity, many facets come into play including the maturity and optimization of all the underlying processes.  Since PlaidCloud DWS is built on very mature technology in use for decades, substantial performance and stability optimizations are in place.
-
-With a well understood and mature technical foundation, there is a far less likelihood of strange failure modes and when unusual events do occur an answer is likely a Google search away.
-
-Tuning queries is sometimes necessary for highly complex queries.  There are substantial resources available that help explain, analyze, and optimize queries in [PostgreSQL](https://www.postgresql.org/) and Greenplum systems.  We all wish that the days of hand tuning queries were no longer necessary. The questions we ask of our data and required processing to determine a result can often have orders of magnitude time improvements by adjusting aspects of the query where even the most intelligent query planner will struggle.
-
-When trying to squeeze out the best performance you want to rely on known patterns and examples.
 
 
 ### Scale out and scale up capable
@@ -124,6 +84,46 @@ Another important feature is that you can clone a warehouse to a different data 
 ### Restore
 
 A new warehouse instance is easily restored from an existing backup.  The backup frequency is adjustable for each warehouse instance.  Those backups allow for a point-in-time restoration.
+
+
+### Prioritize queries within the warehouse
+
+The PlaidCloud DWS provides a straightforward way to control the priority of queries within a single DWS instance.  Through use of Resource Queues, certain roles can be granted higher priority.  This differs from other warehouse services that require separate warehouse instances to delineate different priority access based on resource isolation/dedication.
+
+By using Resource Queues, you can achieve your business requirements (e.g. high priority dashboards for executives) while using a single DWS instance.  This allows you to control resource usage and eliminates the need to have large amounts of idle resources dedicated to low usage (high importance) scenarios.
+
+
+### Large number of connectors available
+
+Since PlaidCloud DWS is based on [PostgreSQL](https://www.postgresql.org/) technology, virtually all [PostgreSQL](https://www.postgresql.org/) connectors and clients will work out-of-the-box.  With a vibrant [PostgreSQL](https://www.postgresql.org/) community, new capabilities, adapters, and connectors are released frequently.
+
+Some examples:
+ - Integration with Microsoft PowerBI using the [NpgSQL built-in connector](https://learn.microsoft.com/en-us/power-query/connectors/postgresql)
+ - Connect Tableau using the standard data source setup for [PostgreSQL connections](https://help.tableau.com/current/pro/desktop/en-us/examples_postgresql.htm)
+ - Apache Superset integration using [PostgreSQL connection string](https://superset.apache.org/docs/databases/postgres/)
+ - Qlik integration using the [PosgreSQL Connector Package](https://help.qlik.com/en-US/connectors/Subsystems/ODBC_connector_help/Content/Connectors_ODBC/PostgresSQL/PostgresSQL-connector.htm)
+
+
+### Foreign table access
+
+Already have data in another database or in cloud storage?  No worry, you can connect to it directly and include the data in complex queries such as joins and Common Table Expressions.  Use of foreign tables also include predicate push-down so conditions are applied before the data is moved to the DWS instance.
+
+This enables use of existing data sources which means you can choose to gradually migrate them to a DWS instance or choose to keep the data where it exists forever.
+
+Note that performance will not be as good as having the data in the DWS instance since it is subject to network speeds and the speed of the foreign data source operations.
+
+This capability also enables communication across different PlaidCloud DWS instances.  While it would be ideal to have all data in a single warehouse instance, there are certainly situations where this is not always practical.
+
+
+### Well understood and mature
+
+While much of data warehousing activity is fairly straightforward, there still remains a large body of work that pushes the bounds of a database.  When operating at maximum capacity, many facets come into play including the maturity and optimization of all the underlying processes.  Since PlaidCloud DWS is built on very mature technology in use for decades, substantial performance and stability optimizations are in place.
+
+With a well understood and mature technical foundation, there is a far less likelihood of strange failure modes and when unusual events do occur an answer is likely a Google search away.
+
+Tuning queries is sometimes necessary for highly complex queries.  There are substantial resources available that help explain, analyze, and optimize queries in [PostgreSQL](https://www.postgresql.org/) and Greenplum systems.  We all wish that the days of hand tuning queries were no longer necessary. The questions we ask of our data and required processing to determine a result can often have orders of magnitude time improvements by adjusting aspects of the query where even the most intelligent query planner will struggle.
+
+When trying to squeeze out the best performance you want to rely on known patterns and examples.
 
 
 ### Web or Desktop SQL Client Access
