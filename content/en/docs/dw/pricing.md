@@ -19,6 +19,8 @@ The factors that impact cost are:
 
 Storage, backups, and network egress are calculated in gigabytes (GB), where 1 GB is 2^30 bytes. This unit of measurement is also known as a [gibibyte (GiB)](https://en.wikipedia.org/wiki/Byte#Multiple-byte_units).
 
+All prices are in USD.  If you are paying in another currency please convert to your currency using the appropriate rate.
+
 
 ## Controlling Factors
 
@@ -35,7 +37,7 @@ The default concurrency factor is 2, which is a good starting point if you are u
 
 ### Parallelism Factor
 
-There is no additional cost per node.
+There is no additional cost per node.  The compute cost of the DWS instance is the product of concurrency and parallelism plus the master node.
 
 Parallelism determines how many nodes are in the DWS instance.  This is expressed as node count.  The number of nodes determines how much compute power can be applied to any single query.  By increasing the node count, the computational part of the query can be spread out over many CPUs.  In addition, the storage throughput is multiplied by the number of nodes, which is very valuable when dealing with large datasets.
 
@@ -97,3 +99,5 @@ There is no charge for ingress traffic.
 By default, all backups are stored for 30 days free of charge.  Setting the retention period beyond 30 days will incur additional storage retention charges.  Backup retention storage cost is based on the allocated storage size of the DWS instance when the backup was taken and the duration for which you would like to retain each backup beyond 30 days.
 
 For example, if the DWS instance allocated storage is 200GB and the additional retention period is 7 days, the backup storage cost is computed as 200GB x 7 Days = 1,400 GB Days.
+
+1,400 GB days x 24 hours/day x $0.000274 per GB/hr = $9.20
