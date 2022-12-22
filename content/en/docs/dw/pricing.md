@@ -21,6 +21,8 @@ Storage, backups, and network egress are calculated in gigabytes (GB), where 1 G
 
 All prices are in USD.  If you are paying in another currency please convert to your currency using the appropriate rate.
 
+Billing is on an hourly basis.  The monthly prices shown are illustrative based on a 730 hour month.
+
 
 ## Controlling Factors
 
@@ -30,7 +32,7 @@ All prices are in USD.  If you are paying in another currency please convert to 
 |------------------|---------------------|------------------------------|
 | Standard         |          $0.0616438 |                          $45 |
 
-Concurrency determines how many simultaneous queries can be handled by the DWS instance.  This is expressed as a number of CPU cores.  There is not a 1:1 relationship between cores and query capacity since a single core can handle multiple simultaneous queries.  However, as the number of concurrent requests increase, the query duration may exceed the desired response time and an increase in the concurrency factor will help.
+Concurrency determines how many simultaneous queries can be handled by the DWS instance.  This is expressed as a number of vCPU cores.  There is not a 1:1 relationship between cores and query capacity since a single core can handle multiple simultaneous queries.  However, as the number of concurrent requests increase, the query duration may exceed the desired response time and an increase in the concurrency factor will help.
 
 The default concurrency factor is 2, which is a good starting point if you are unsure of your needs.  It can be adjusted from 1 to 14.  If your needs exceed 14, please contact us to increase your concurrency limit.
 
