@@ -28,11 +28,13 @@ Billing is on an hourly basis.  The monthly prices shown are illustrative based 
 
 ### Concurrency Factor
 
-| Compute Type     | Hourly Cost (vCPU/hr) |  Monthly Cost (vCPU/month) |
-|------------------|---------------------|------------------------------|
-| Standard         |          $0.0616438 |                          $45 |
+| Compute Type     | Hourly Cost (streams/hr) |  Monthly Cost (streams/month) |
+|------------------|--------------------------|-------------------------------|
+| Standard         |               $0.0739726 |                           $54 |
 
-Concurrency determines how many simultaneous queries can be handled by the DWS instance.  This is expressed as a number of vCPU cores.  There is not a 1:1 relationship between cores and query capacity since a single core can handle multiple simultaneous queries.  However, as the number of concurrent requests increase, the query duration may exceed the desired response time and an increase in the concurrency factor will help.
+Concurrency determines how many simultaneous queries are handled by the DWS instance.  This is expressed as a number of process streams.  There is not a 1:1 relationship between streams and query capacity since a single stream can handle multiple simultaneous queries.  However, as the number of concurrent requests increase, the query duration may exceed the desired response time and an increase in the concurrency factor will help.
+
+From a conceptual standpoint you can view processing streams as vCPUs used to process queries.
 
 The default concurrency factor is 2, which is a good starting point if you are unsure of your needs.  It can be adjusted from 1 to 14.  If your needs exceed 14, please contact us to increase your concurrency limit.
 
@@ -92,14 +94,27 @@ There is no charge for ingress traffic.
 
 ### Backup Retention Period
 
-| Retention Period           | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
-|----------------------------|---------------------|---------------------------|
-| First 30 Days              |                Free |                      Free |
-| Retention (after 30 days)  |           $0.000274 |                     $0.02 |
+| Retention Period                              | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
+|-----------------------------------------------|---------------------|---------------------------|
+| Schedule Backups - First 30 Days              |                Free |                      Free |
+| Schedule Backups - Retention (after 30 days)  |           $0.000274 |                     $0.02 |
+| On-Demand Backup Snapshots                    |           $0.000274 |                     $0.02 |
 
 
-By default, all backups are stored for 30 days free of charge.  Setting the retention period beyond 30 days will incur additional storage retention charges.  Backup retention storage cost is based on the allocated storage size of the DWS instance when the backup was taken and the duration for which you would like to retain each backup beyond 30 days.
+By default, all scheduled backups are stored for 30 days free of charge.  Setting the retention period beyond 30 days will incur additional storage retention charges.  Backup retention storage cost is based on the allocated storage size of the DWS instance when the backup was taken and the duration for which you would like to retain each backup beyond 30 days.
 
 For example, if the DWS instance allocated storage is 200GB and the additional retention period is 7 days, the backup storage cost is computed as 200GB x 7 Days = 1,400 GB Days.
 
 1,400 GB days x 24 hours/day x $0.000274 per GB/hr = $9.20
+
+On-demand backups can be taken at any time and will incur backup storage fees immediately.  There is a minimum of 30 days billing applied to on-demand backups even if they are deleted within the 30 days.
+
+By default, on-demand backups do not have a retention period set.  If you make on-demand backups without a retention period, you must manually delete the backup or backup storage fees will continue to accrue.
+
+If you put a hold on a backup to prevent deletion when the retention period expires, you must remove that hold or manually delete the backup.  If the hold remains you will continue to incur backup storage fees. 
+
+## Premium Capabilities Included
+
+PlaidCloud DWS provides several additional features as part of each DWS instance that provide valuable capabilities without additional fees.  Each DWS instance includes [MADLib](https://madlib.apache.org/), [PostGIS](https://postgis.net/), and [PXF](https://github.com/greenplum-db/pxf).
+
+The [MADLib](https://madlib.apache.org/) and [PostGIS](https://postgis.net/) libraries allow you to perform machine learning and geospatial analysis without moving your data or using other external tools.  [PXF](https://github.com/greenplum-db/pxf) provides the ability to query external data files, whose metadata is not managed by the database. PXF includes built-in connectors for accessing data that exists inside HDFS files, Hive tables, HBase tables, JDBC-accessible databases and more. Users can also create their own connectors to other data storage or processing engines.
