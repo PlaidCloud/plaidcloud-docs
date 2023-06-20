@@ -43,37 +43,43 @@ The default concurrency factor is 2, which is a good starting point if you are u
 
 There is no additional cost per node.  The compute cost of the DWS instance is the product of concurrency and parallelism plus the master node.
 
-Parallelism determines how many nodes are in the DWS instance.  This is expressed as node count.  The number of nodes determines how much compute power can be applied to any single query.  By increasing the node count, the computational part of the query can be spread out over many CPUs.  In addition, the storage throughput is multiplied by the number of nodes, which is very valuable when dealing with large datasets.
+Parallelism determines how many nodes are in the DWS instance.  This is expressed as node count.  The number of nodes determines how much compute power can be applied to any single query.  By increasing the node count, the computational part of the query can be spread out over many process streams.  In addition, the storage throughput is multiplied by the number of nodes, which is very valuable when dealing with large datasets.
 
-For example, if the maximum theoretical write throughput of a single node was 4 TB/sec, a warehouse with 8 nodes would have a theoretical write throughput of 8 x 4 TB/sec = 32 TB/sec.  There are many factors that impact write speed including compression level, indexes, table storage type, etc... but in general, nodes apply a multiplying factor to data throughput speed.
+For example, if the maximum theoretical write throughput of a single node was 4 TB/sec, a warehouse with 8 nodes would have a theoretical write throughput of 8 x 4 TB/sec = 32 TB/sec.  There are many factors that impact write speed including compression level, indexes, table storage type, network overhead, etc... but in general, nodes apply a multiplying factor to data throughput speed.
 
 
 ### Allocated Storage
 
-There are two types of storage in use by the PlaidCloud DWS:
- - High Performance Storage
- - Cost Optimized Storage
+Three types of table storage options are available in a PlaidCloud DWS:
+ - Hot
+ - Warm
+ - Cold
 
 | Storage Type     | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
 |------------------|---------------------|---------------------------|
-| High Performance |          $0.0004109 |                     $0.30 |
-| Cost Optimized   |          $0.0000685 |                     $0.05 |
+| Hot              |          $0.0006849 |                     $0.50 |
+| Warm             |          $0.0002055 |                     $0.16 |
+| Cold             |          $0.0000685 |                     $0.05 |
 
+These storage options can be applied on a table-by-table basis so you can optimize storage costs within a DWS with no change to existing queries.
 
- #### High Performance Storage
+ #### Hot Storage
 
- This is the most common storage type for a database.  It is the standard storage type for all data in the DWS instance and provides triple redundancy.
+ This is the most common storage type for a database.  It is the default storage type for data in the DWS instance.
 
- Storage cost is computed based on the allocated space for the warehouse instance.  Storage is allocated to the warehouse on-demand up to the specified limit set by you.  The current limit is 4.5TB per node.  If your needs exceed 4.5TB per node, please contact us to increase your node storage limit.
+ Storage cost is computed based on the allocated Hot storage space for the warehouse instance.  Storage is allocated to the warehouse on-demand up to the specified limit set by you.  The current limit is 4.5TB per node.  If your needs exceed 4.5TB per node, please contact us to increase your node storage limit.
 
+ #### Warm Storage
 
- #### Cost Optimized Storage
+Warm Storage provides an excellent trade-off between cost and performance.  Warm storage is ideal for data used in batch processing, infrequently accessed historical data, or other general data that does not have high performance requirements.  Warm storage provides good performance and does not have per node size limits.
 
- Cost Optimized storage is significantly less expensive than the high performance storage but it does have limitations.  It is not included in the backup snapshots.  It has significantly lower performance and is generally not suitable for queries that must be responsive.
+ #### Cold Storage
+
+ Cold storage is significantly less expensive than both Hot and Warm but it does have limitations.  It is not included in the backup snapshots.  It has significantly lower performance and is generally not suitable for queries that must be responsive.
 
  However, for low usage or archival data it can provide a substantial cost savings while still enabling real-time access to the data, albeit at a slower query speed.  This is a significant improvement over using ETL processes to archive table data and then needing to reconstitute it later when required through additional ETL processes.
 
- For example, if the current and prior year financial data is stored in high performance storage to handle the vast majority of queries, prior years could be stored in Cost Optimized storage.  When access to several years is needed, exceeding what is in hot storage, then a simple UNION query of the hot data and the cold data will return the full dataset.  This eliminates complex data archival processes by keeping all the data readily available in the same DWS instance.
+ For example, if the current and prior year financial data is stored in high performance storage to handle the vast majority of queries, prior years could be stored in Cost Optimized storage.  When access to several years is needed, exceeding what is in hot storage, then a simple UNION query of the hot data and the cold data will return the full dataset.  This eliminates complex data archival processes by keeping all the data readily available in the same DWS instance while optimizing storage costs.
  
 
 ### Network Egress
@@ -94,11 +100,11 @@ There is no charge for ingress traffic.
 
 ### Backup Retention Period
 
-| Retention Period                              | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
-|-----------------------------------------------|---------------------|---------------------------|
-| Schedule Backups - First 30 Days              |                Free |                      Free |
-| Schedule Backups - Retention (after 30 days)  |           $0.000274 |                     $0.02 |
-| On-Demand Backup Snapshots                    |           $0.000274 |                     $0.02 |
+| Retention Period                               | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
+|------------------------------------------------|---------------------|---------------------------|
+| Scheduled Backups - First 30 Days              |                Free |                      Free |
+| Scheduled Backups - Retention (after 30 days)  |           $0.000274 |                     $0.02 |
+| On-Demand Backup Snapshots                     |           $0.000274 |                     $0.02 |
 
 
 By default, all scheduled backups are stored for 30 days free of charge.  Setting the retention period beyond 30 days will incur additional storage retention charges.  Backup retention storage cost is based on the allocated storage size of the DWS instance when the backup was taken and the duration for which you would like to retain each backup beyond 30 days.
