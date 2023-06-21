@@ -30,7 +30,7 @@ Billing is on an hourly basis.  The monthly prices shown are illustrative based 
 
 | Compute Type     | Hourly Cost (streams/hr) |  Monthly Cost (streams/month) |
 |------------------|--------------------------|-------------------------------|
-| Standard         |               $0.0739726 |                           $54 |
+| Standard         |               Contact Us |                  Contact Us   |
 
 Concurrency determines how many simultaneous queries are handled by the DWS instance.  This is expressed as a number of process streams.  There is not a 1:1 relationship between streams and query capacity since a single stream can handle multiple simultaneous queries.  However, as the number of concurrent requests increase, the query duration may exceed the desired response time and an increase in the concurrency factor will help.
 
@@ -57,9 +57,9 @@ Three types of table storage options are available in a PlaidCloud DWS:
 
 | Storage Type     | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
 |------------------|---------------------|---------------------------|
-| Hot              |          $0.0006849 |                     $0.50 |
-| Warm             |          $0.0002055 |                     $0.16 |
-| Cold             |          $0.0000685 |                     $0.05 |
+| Hot              |          Contact Us |              Contact Us   |
+| Warm             |          Contact Us |              Contact Us   |
+| Cold             |          Contact Us |              Contact Us   |
 
 These storage options can be applied on a table-by-table basis so you can optimize storage costs within a DWS with no change to existing queries.
 
@@ -79,7 +79,7 @@ Warm Storage provides an excellent trade-off between cost and performance.  Warm
 
  However, for low usage or archival data it can provide a substantial cost savings while still enabling real-time access to the data, albeit at a slower query speed.  This is a significant improvement over using ETL processes to archive table data and then needing to reconstitute it later when required through additional ETL processes.
 
- For example, if the current and prior year financial data is stored in high performance storage to handle the vast majority of queries, prior years could be stored in Cost Optimized storage.  When access to several years is needed, exceeding what is in hot storage, then a simple UNION query of the hot data and the cold data will return the full dataset.  This eliminates complex data archival processes by keeping all the data readily available in the same DWS instance while optimizing storage costs.
+ For example, if the current and prior year financial data is stored in high performance storage to handle the vast majority of queries, prior years could be stored in Cold storage.  When access to several years is needed, exceeding what is in hot storage, then a simple UNION query of the hot data and the cold data will return the full dataset.  This eliminates complex data archival processes by keeping all the data readily available in the same DWS instance while optimizing storage costs.
  
 
 ### Network Egress
