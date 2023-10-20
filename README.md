@@ -2,7 +2,7 @@
 
 This repository contains the assets required to build the [PlaidCloud documentation](https://docs.plaidcloud.com/). We're glad that you want to contribute!
 
-There are also CI and beta versions of the documentation here:
+There are also CI (continuous integration) and beta (pre-release) versions of the documentation here:
  * [PlaidCloud CI Documentation](https://docs.plaidcloud.io)
  * [PlaidCloud Beta Documentation](https://docs.plaidcloud.net)
 
@@ -13,25 +13,39 @@ There are three main ways to contribute to the documentation depending on how mu
 2. Engaged (I need to work on several pages or restructure things) - You will clone the repo and push commits back and wait for the automatic build to see your contributions.
 3. Serious (I plan to contribute significantly) - You will clone the repo and run a local Hugo server to see changes real-time.
 
+
+
 ## Easy
 
 This requires no cloning or any other local setup for you to contribute to documentation.  Simply go to the [PlaidCloud Documentation Github](https://github.com/PlaidCloud/plaidcloud-docs) repo and navigate
-to the page you wish to edit.
+to the page you wish to edit. Note that most of the files you will probably want to edit are in the "content/en" / "docs" directory. (i.e. ["Learning About Dashboards"](https://github.com/PlaidCloud/plaidcloud-docs/blob/main/content/en/docs/dashboards/learning-dashboard.md)). It can be difficult to find the document you are looking for if you are not experienced with the content structure.
 
-Click the `Edit this file` option on the menu and make your edits.
+Note this process is for editing and committing a single page. For committing multiple pages at the same time, see the "Engaged" or "Serious" sections below. 
 
-Upon save, the site will be rebuilt and deployed with your latest change.  Since the entire site is rebuilt each time a save is made in this mode, you will need to wait a few minutes before your changes are visible in the IO documentation.
+To edit and deploy the file directly in GitHub:
+1. Find the file you wish to edit.
+2. Click the `Edit in place` option on the menu (or simply hit the `e` button on your keyboard) and make your edits. If you do not have this option, ask your PlaidCloud/Tartan Solutions representative for access.
+3. Click `Commit changes...`
+4. Add a message, make sure "Create a new branch for this commit and start a pull request" is selected, and type in a request name or use the default that the system generated for you.
+5. Click `Propose Changes`
+6. Select one or more `reviewers` such as Michael Rea or Paul Morel
+7. Click `Create pull request`
+8. After the release process has been completed and reviewed, your changes will be visible in CI at https://docs.plaidcloud.io initially, and will make it to Beta and Production as the releases happen. Note that it may take a few minutes after approval to be visible in CI.
+
+
 
 ## Engaged
 
 This approach requires very little technical setup other than cloning the [PlaidCloud Documentation Github Repo](https://github.com/PlaidCloud/plaidcloud-docs).
 
-Clone the repo using VS Code's Git repo management area.
+Clone the repository using VS Code's Git repo management area.
 
 Once the repo is cloned locally, it is best to make a new branch from `main` so you can make several changes before committing them and triggering the rebuild process.  Once you have your changes completed,
 commit and push them.  Open a pull request to merge them into `main` from your branch.
 
 Once your PR is accepted and your changes merge into `main` then the IO site will be rebuilt within a few minutes.
+
+
 
 ## Serious
 
