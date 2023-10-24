@@ -13,12 +13,13 @@ There are three main ways to contribute to the documentation depending on how mu
 2. Engaged (I need to work on several pages or restructure things) - You will clone the repo and push commits back and wait for the automatic build to see your contributions.
 3. Serious (I plan to contribute significantly) - You will clone the repo and run a local Hugo server to see changes real-time.
 
+To make changes to the PlaidCloud documentation, you will need an account on GitHub.com and access to the PlaidCloud documentation repository. Once you have your account set up, contact your PlaidCloud representative and request access. This is a prerequisite to accessing and modifying the documentation.
+
 
 
 ## Easy
 
-This requires no cloning or any other local setup for you to contribute to documentation.  Simply go to the [PlaidCloud Documentation Github](https://github.com/PlaidCloud/plaidcloud-docs) repo and navigate
-to the page you wish to edit. Note that most of the files you will probably want to edit are in the "content/en" / "docs" directory. (i.e. ["Learning About Dashboards"](https://github.com/PlaidCloud/plaidcloud-docs/blob/main/content/en/docs/dashboards/learning-dashboard.md)). It can be difficult to find the document you are looking for if you are not experienced with the content structure.
+This requires no cloning or any other local setup for you to contribute to documentation.  Simply go to the PlaidCloud documentation repository via GitHub.com [PlaidCloud Documentation Github](https://github.com/PlaidCloud/plaidcloud-docs) and navigate to the page you wish to edit. Note that most of the files you will probably want to edit are in the "content/en" / "docs" directory. (i.e. ["Learning About Dashboards"](https://github.com/PlaidCloud/plaidcloud-docs/blob/main/content/en/docs/dashboards/learning-dashboard.md)). It can be difficult to find the document you are looking for if you are not experienced with the content structure.
 
 Note this process is for editing and committing a single page. For committing multiple pages at the same time, see the "Engaged" or "Serious" sections below. 
 
