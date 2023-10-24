@@ -36,14 +36,44 @@ To edit and deploy the file directly in GitHub:
 
 ## Engaged
 
-This approach requires very little technical setup other than cloning the [PlaidCloud Documentation Github Repo](https://github.com/PlaidCloud/plaidcloud-docs).
+Note for this level you will need broader knowledge of release management, commiting changes, and the like. If you don't want to learn a new system or manage things locally, we suggest you stick to the "Easy" model above. BUT if you plan on editing multiple files, and engaging often, we encourage you to learn a more advanced process for ease of use and other benefits such as previewing the output.
 
-Clone the repository using VS Code's Git repo management area.
+The "Engaged" model allows you to download the repository (all the documentation files) and edit them locally. This is best when you have multiple files to edit. If you edit 1 file at a time (Easy method), then each time you edit and commit a file it rebuilds the code, which will work but is not preferred for multiple files.
 
-Once the repo is cloned locally, it is best to make a new branch from `main` so you can make several changes before committing them and triggering the rebuild process.  Once you have your changes completed,
-commit and push them.  Open a pull request to merge them into `main` from your branch.
+First - set up your local environment:
+1 - Download and install VS Code (Visual Studio Code) from https://code.visualstudio.com/. This is your editor and file manager.
+2 - After installation, run VS Code and select the option to `Clone Git Repository`.
+3 - Type in the repository URL "https://github.com/PlaidCloud/plaidcloud-docs/" and click `Clone from URL`.
+4 - Set a Repository Destination (the location on your PC that will hold the local copy).
+5 - You have to tell VS Code who you are. To do this, go to the terminal. Click the `View` menu and select `Terminal`.
+Type each of the following and hit enter after each. Replace you@example.com with your email and Your Name with your name.
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
 
-Once your PR is accepted and your changes merge into `main` then the IO site will be rebuilt within a few minutes.
+You will now have a copy of the repository the last time the files were approved.
+
+Next - create a new branch to work off of. This makes it so that when you commit the branch back to "main", you have only one rebuild process:
+1 - In the lower left of the VS Code tool, you will see a "branch" icon (a "y" with circles) with `main` next to it.
+2 - Click on it and select `Create new branch...`.
+3 - Type in the name of your branch and hit enter. Something simple but descriptive like "documentation_edits".
+You will now see the branch in the lower left with your new branch name. You can click on it to see both main and your new branch. You will be working in your new branch.
+
+You can now edit the files. Click on the `Explorer` icon in the upper left of VS Code to view all the files. Click `Save` to save the file after editing.
+
+Lastly - You are done editing the files; get them into GitHub to rebuild the documentation.
+TO BE FINALIZED
+1 - Click on the `Source Control` (branch) icon in the upper left. You will see a `Changes` box to the right and see all the files you made changes to. You can click on the file to see the changes.
+2 - If this looks good, click the dropdown next to `Commit` and select `Commit & Push`. Click `Yes` to commit them directly.
+3 - Type in a message for your commit, i.e. "Editing the documentation". Click the checkmark in the upper right - `Accept Commit Message`
+4 - Sign in to GitHub if asked.
+1 - "Push"
+2 - "Pull"
+
+After your changes have been approved, they will be visible in the IO environment first (https://docs.plaidcloud.io) after which they will eventually make their way to the production environment.
+
+Notes:
+- If you want to make sure you have the latest files before you start editing, you can pull the latest version before you create the branch. To do this, make sure you are on the `main` branch (lower left), click on the `Source Control` (branch) icon in the upper right, click the 3 dots (ellipsis) next to `SOURCE CONTROL` and click `Pull`. This will get the latest copy of the documentation off of the server to your main branch. You can now crate a new branch to work off of as per above.
+- Do not worry about working on the most recent copy. When you push/pull the files to GitHub it will show you the changes and allow you to accept them (do a "diff").
 
 
 
