@@ -30,16 +30,17 @@ The PlaidCloud DWS operates like a traditional database so you don't have to dec
 
 If you are used to using traditional databases, you don't need to learn any new skills or change your applications.  The DWS is a drop-in replacement for Greenplum as well as a replacement for PostgreSQL, CockroachDB, yugabyteDB and other databases that use the [PostgreSQL Wire Protocol](https://www.postgresql.org/docs/current/protocol.html).  If you are coming from other databases such as Oracle, MySQL or Microsoft SQL Server then some adjustments to your query logic may be necessary but not to the overall process.
 
-Since SAP HANA and Amazon Redshift use the PostgreSQL dialect, those seeking a lower cost alternative will find PlaidCloud DWS a straightforward option.
+Since SAP HANA and Amazon Redshift use the PostgreSQL dialect, those seeking a portable alternative will find PlaidCloud DWS a straightforward option.
 
 
 ### Economical
 
 With usage based billing, you only pay for what you use.  There are no per-query or extra processing charges.  High performance storage with triple redundancy, incredible IOPS, wide data throughput, and out-of-band backups are all standard at a reasonable price.
 
-We eliminate the headache of having to choose different data warehousing tiers based on optimizing storage costs.
-
-When query performance is less critical, data can be stored in `Cost Optimized` table types.  This allows use of cloud storage to reduce the cost of storage for data that does not have the same performance requirements as actively queried data.
+We eliminate the headache of having to choose different data warehousing tiers based on optimizing storage costs.  We offer three different storage options at a table level which all interoperate and can be used together in queries:
+ - HOT - This is the highest performance storage available and is suitable for analytical data that is frequently accessed or needs to be ultra-responsive
+ - WARM - This provides cost savings over Hot storage while maintaining good performance and no changes to SQL commands
+ - COLD - This is the most economical by utilizing cloud storage
 
 
 ### Highly performant

@@ -33,6 +33,6 @@ You may apply filters using column references.
 | < | Less Than | table.column < 23 |
 | >= | Greater than or equal to | table.column >= 23 |
 | <= | Less than or equal to | table.column <= 23 |
-| == | Equal | table.column == 23 table.column == ‘blue’ |
-| != | Not Equal | table.column != 23 table.column != ‘blue’ |
+| == | Equal to | table.column == 23 table.column == ‘blue’ |
+| != | Not Equal to | table.column != 23 table.column != ‘blue’ |
 

@@ -45,4 +45,4 @@ date: 2022-01-25T07:39:53
 | func.substr(string, from [, count]) | text | Extract substring (same as substring(stri ng from from for count)) | substr(‘al phabet’, 3, 2) | ph |
 | func.to_ascii(string text [, encoding text]) | text | Convert string to ASCII from another encoding (only supports conversion from LATIN1, LATIN2, LATIN9, and WIN1250 encodings) | to_ascii( ‘Karel’) | Karel |
 | func.to_hex(number int or bigint) | text | Convert number to its equivalent hexadecimal representation | to_hex(21 47483647) | 7fffffff |
-| func.translate(string text, from text, to text) | text | Any character in string that matches a character in the from set is replaced by the corresponding character in the to set | translate( ‘12345’, ‘14’, ‘ax’) | a23x5 |
+| func.translate(string text, from text, to text) | text | Any character in the string that matches a character in the from set is replaced by the corresponding character in the to set | translate( ‘12345’, ‘14’, ‘ax’) | a23x5 |
