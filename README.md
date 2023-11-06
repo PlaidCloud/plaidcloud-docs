@@ -48,7 +48,7 @@ Note for this level you will need broader knowledge of release management, commi
 
 The "Engaged" model allows you to download the repository (all the documentation files) and edit them locally. This is best when you have multiple files to edit. If you edit 1 file at a time (Easy method), then each time you edit and commit a file it rebuilds the code, which will work but is not preferred for multiple files.
 
-First - set up your local environment:
+### Set up your local environment:
 1. Make sure you have an account on GitHub and access to the documentation repository as described above.
 2. Download and install VS Code (Visual Studio Code) from https://code.visualstudio.com/. This is your editor and file manager.
 3. After installation, run VS Code and select the option to `Clone Git Repository`.
@@ -61,7 +61,8 @@ git config --global user.name "Your Name"
 
 You will now have a copy of the repository the last time the files were approved.
 
-Next - create a new branch to work off of. This makes it so that when you commit the branch back to "main", you have only one rebuild process:
+### Create a branch of the documentation
+Create a new branch to work off of. This makes it so that when you commit the branch back to "main", you have only one rebuild process:
 1. In the lower left of the VS Code tool, you will see a "branch" icon (a "y" with circles) with `main` next to it.
 2. Click on it and select `Create new branch...`.
 3. Type in the name of your branch and hit enter. Something simple but descriptive like "documentation_edits".
@@ -69,8 +70,10 @@ You will now see the branch in the lower left with your new branch name. You can
 
 You can now edit the files. Click on the `Explorer` icon in the upper left of VS Code to view all the files. Click `Save` to save the file after editing.
 
-Lastly - You are done editing the files; get them into GitHub to rebuild the documentation.
-The `Push`
+### Commit the code to GitHub
+You are done editing the files; get them into GitHub to rebuild the documentation.
+
+#### The `Push`
 1. Click on the `Source Control` (branch) icon in the upper left. You will see a `Changes` box to the right and see all the files you made changes to. You can click on the file to see the changes.
 2. If this looks good, click the dropdown next to `Commit` and select `Commit & Push`. Click `Yes` to commit them directly.
 3. Type in a message for your commit, i.e. "Editing the documentation". Click the checkmark in the upper right - `Accept Commit Message`
@@ -78,6 +81,7 @@ The `Push`
 5. You may have to accept the creation of a remote repository if the branch that you created doesn't exist yet in GitHub
 That should be it for the `Push` to get it to GitHub. You can check the `View` menu and `Output` to check the status if desired.
 
+#### The `Pull`
 Now that you pushed the files to GitHub, you will have to compare the changes and create a `pull request`.
 1. Go to GitHub.com in a browser and log in
 2. Click the "3 bars" in the upper left and select the PlaidCloud/plaidcloud-docs repository
@@ -122,20 +126,30 @@ Download and install the .msi file
 
 ##### hugo - the webserver
 [https://github.com/gohugoio/hugo/releases/](https://github.com/gohugoio/hugo/releases/)
-1) Go to the hugo releases website (above) and go to the top (most recent/highest number) release.
-2) Go to the bottom of "Assets" and click "Show all assets"
-3) Find the hugo **extended** zip file for Windows 64 bit.  It will look similar to: *hugo_extended_0.120.2_windows-amd64.zip* *hugo_extended_0.101.0_Windows-64bit.zip*
-4) Click on it and save the file
-5) Create a **Hugo** directory on your local C drive wherever you want (I put mine in C:\Hugo)
-6) Create a subdirectory **bin** inside of Hugo
-7) Unzip the hugo zip file you downloaded to **C:\Hugo\bin**
-8) Add C:\Hugo\bin to Windows system paths.  Go [here](https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/) for help on this.
+1. Go to the hugo releases website (above) and go to the top (most recent/highest number) release.
+2. Go to the bottom of "Assets" and click "Show all assets"
+3. Find the hugo **extended** zip file for Windows 64 bit.  It will look similar to: *hugo_extended_0.120.2_windows-amd64.zip* *hugo_extended_0.101.0_Windows-64bit.zip*
+4. Click on it and save the file
+5. Create a **Hugo** directory on your local C drive wherever you want (I put mine in C:\Hugo)
+6. Create a subdirectory **bin** inside of Hugo
+7. Unzip the hugo zip file you downloaded to **C:\Hugo\bin**
+8. Add C:\Hugo\bin to Windows system paths.  Go [here](https://helpdeskgeek.com/windows-10/add-windows-path-environment-variable/) for help on this.
 Note for my version of windows, I went to the search bar, searched for "about your pc", clicked on "Advanced system settings", and "Environment variables" to get to the location to edit my path. I then went to "System variables", found "Path", edited it, and added "C:\hugo\bin" to the path.
-9) To test, open Windows command prompt (search for "cmd") and type `hugo --help`
+9. To test, open Windows command prompt (search for "cmd") and type `hugo --help`. This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
 
-This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
+###### Running the server
+1. In the Windows command prompt (search windows for `cmd`), go to the directory of your repository (for me, I type `cd c:\src\plaidcloud-docs\`)
+2. At this point, you have the repository and the software installed (hugo), but you still have to download the themes, which are linked to through the code. The themes provide the look and feel vs. the content which is owned by PlaidCloud. in the Windows command prompt, type `git submodule update --init --recursive --depth 1`. This will download the themes.
+3. Run the server: in Windows command, type `hugo serve -D --panicOnWarning`; this may throw some warnings, but in the end it will end up with "Web Server is available at http://localhost:1313/ (bind address 127.0.0.1). Press Ctrl+C to stop"
+4. View the repository: Go to your web browser and type [http://localhost:1313/](http://localhost:1313/)
+You should now be able to view the repository in your web browser.
+
+At this point, if you edit a file in Visual Studio Code and save it, you will be able to see it immediately in your web browser.
+When you are ready to commit the changes to GitHub and "productionalize" your changes, follow the same steps as ` Commit the code to GitHub` in the Engaged section above.
+
 
 #### Linux-specific instructions
+Note: the Linux instructions have not been recently modified or reviewed. If you are going to use the Linux methodology, please review and update.
 
 ##### npm
 ```bash
@@ -213,6 +227,7 @@ Keep in mind that the local server is not recreating all the static content so c
 Make a change to an .md file will automatically cause change to be available within the local http://localhost:1313/ site.
 
 Commit the change and push to the **main** branch of the **plaidcloud-docs** repo, and it will appear at <https://docs.plaidcloud.io> within 1 hour.
+
 
 ### Key Points
 - Avoid unnecessary use of screenshots.  They go stale quickly.
