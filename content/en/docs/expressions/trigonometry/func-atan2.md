@@ -5,20 +5,9 @@ description: The PostgreSQL atan2() function is used to return the inverse tange
 date: 2022-01-25T07:40:01
 ---
 
+The PostgreSQL atan2() function is used to return the inverse tangent of a division given in the argument
 
 ## Syntax
-
-
-
-```
+```python
 func.atan2(x,y)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.atan2 is coming soon.
 ```

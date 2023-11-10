@@ -1,6 +1,7 @@
 ---
 title: Table Pivot
 slug: table-pivot
+weight: 15.0
 description: Flip rows to columns
 date: 2022-01-25T07:39:49
 ---

@@ -1,6 +1,7 @@
 ---
 title: Export to External Project Table
 slug: export-external-project-table
+weight: 3.0
 description: Export data from a project table to different project's table.
 date: 2022-05-10T14:00:00
 ---

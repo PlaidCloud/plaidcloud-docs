@@ -1,6 +1,7 @@
 ---
 title: Notify via Slack
 slug: notify-via-slack
+weight: 6.0
 description: Send Slack notifications
 date: 2022-01-25T07:39:49
 ---

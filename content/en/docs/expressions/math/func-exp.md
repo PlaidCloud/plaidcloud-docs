@@ -5,20 +5,9 @@ description: The PostgreSQL exp function returns 'e' raised to the power of 'num
 date: 2022-01-25T07:40:00
 ---
 
+The PostgreSQL exp function returns 'e' raised to the power of 'number'
 
 ## Syntax
-
-
-
-```
+```python
 func.exp(numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.exp is coming soon.
 ```

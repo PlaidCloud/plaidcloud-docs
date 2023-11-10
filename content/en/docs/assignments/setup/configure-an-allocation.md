@@ -1,6 +1,7 @@
 ---
 title: Configure an Allocation
 slug: configure-an-allocation
+weight: 1.0
 description: Set up a cost allocation transform and manage assignments
 date: 2022-01-25T07:40:20
 ---

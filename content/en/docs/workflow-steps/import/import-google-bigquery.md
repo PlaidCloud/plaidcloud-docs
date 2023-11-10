@@ -1,6 +1,7 @@
 ---
 title: Import Google BigQuery
 slug: import-google-bigquery
+weight: 6.0
 description: Import Google BigQuery files
 date: 2022-01-25T07:39:58
 ---

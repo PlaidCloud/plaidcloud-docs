@@ -1,6 +1,7 @@
 ---
 title: Import SQL
 slug: import-sql
+weight: 15.0
 description: Import data from a remote SQL database.
 date: 2022-01-25T07:39:57
 ---

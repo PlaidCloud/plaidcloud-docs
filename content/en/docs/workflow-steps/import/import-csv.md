@@ -1,7 +1,7 @@
 ---
 title: Import CSV
 slug: import-csv
-description: Import delimited text files from PlaidCloud Document
+weight: 2.0
 date: 2022-01-25T07:39:55
 ---
 

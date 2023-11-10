@@ -1,6 +1,7 @@
 ---
 title: Dimension Sort
 slug: dimension-sort
+weight: 5.0
 description: Sort dimensions automatically
 date: 2022-01-25T07:40:18
 ---

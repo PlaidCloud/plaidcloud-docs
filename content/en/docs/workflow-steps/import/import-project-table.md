@@ -1,6 +1,7 @@
 ---
 title: Import Project Table
 slug: import-project-table
+weight: 11.0
 description: Import table data from a different project
 date: 2022-05-10T14:00:00
 ---

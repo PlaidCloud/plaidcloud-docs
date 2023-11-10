@@ -1,6 +1,7 @@
 ---
 title: Table Inner Join
 slug: table-inner-join
+weight: 11.0
 description: Use this function to perform an inner join between two data tables
 date: 2022-01-25T07:39:49
 ---

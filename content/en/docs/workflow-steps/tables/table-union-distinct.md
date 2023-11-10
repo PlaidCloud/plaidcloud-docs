@@ -1,6 +1,7 @@
 ---
 title: Table Union Distinct
 slug: table-union-distinct
+weight: 17.0
 description: Consolidate data tables
 date: 2022-01-25T07:39:49
 ---

@@ -3,7 +3,7 @@ title: Using Tables and Views
 slug: tables-views
 description: Using and managing tables and views
 date: 2022-01-25T07:39:48
-weight: 3
+weight: 2.0
 ---
 
 

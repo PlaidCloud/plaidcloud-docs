@@ -1,6 +1,7 @@
 ---
 title: Table Faker
 slug: table-faker
+weight: 8.0
 description: This function generates fake data
 date: 2022-01-25T07:39:50
 ---

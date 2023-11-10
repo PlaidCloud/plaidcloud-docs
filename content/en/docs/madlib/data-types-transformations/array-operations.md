@@ -1,6 +1,7 @@
 ---
 title: Array Operations
 slug: array-operations
+weight: 1.0
 description: Provides support functions enabling fast array operations
 date: 2022-01-25T07:40:19
 ---

@@ -1,6 +1,7 @@
 ---
 title: Path
 slug: path
+weight: 6.0
 description: Performs regular pattern matching over a sequence of rows
 date: 2022-01-25T07:40:19
 ---

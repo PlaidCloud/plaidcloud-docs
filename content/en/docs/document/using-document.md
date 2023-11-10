@@ -1,6 +1,7 @@
 ---
-title: Using Document
-slug: using-document
+title: Using Document Accounts
+slug: using-document-accounts
+weight: 1.0
 description: Upload, download, delete, and view files in Document accounts
 date: 2022-01-25T07:39:48
 ---

@@ -1,6 +1,7 @@
 ---
 title: Notify via Microsoft Teams
 slug: notify-via-microsoft-teams
+weight: 5.0
 description: Send notifications to Microsoft Teams channels
 date: 2022-01-25T07:40:21
 ---

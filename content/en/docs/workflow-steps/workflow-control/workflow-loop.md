@@ -1,6 +1,7 @@
 ---
 title: Worklow Loop
 slug: workflow-loop
+weight: 9.0
 description: Runs a workflow looping over a dataset as Project variables
 date: 2022-01-25T07:39:50
 ---
@@ -24,4 +25,4 @@ Next, select the particular workflow for running from the **Workflow** dropdown 
 
 ## Examples
 
-No examples yet...
+Examples coming soon

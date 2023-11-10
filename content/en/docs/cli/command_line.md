@@ -1,6 +1,7 @@
 ---
 title: Command Line
 slug: command-line
+weight: 2.0
 description: Interact with PlaidCloud directory from command line
 date: 2022-01-25T07:39:47
 ---

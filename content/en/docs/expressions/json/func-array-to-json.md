@@ -5,20 +5,9 @@ description: Returns the array as JSON. A PostgreSQL multidimensional array beco
 date: 2022-01-25T07:39:59
 ---
 
+Returns the array as JSON. A PostgreSQL multidimensional array becomes a JSON array of arrays.
 
 ## Syntax
-
-
-
-```
+```python
 func.array_to_json(array)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for array_to_json is coming soon.
 ```

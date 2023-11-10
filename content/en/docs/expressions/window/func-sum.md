@@ -5,20 +5,9 @@ description: The SUM function adds values. You can add individual values, cell r
 date: 2022-01-25T07:40:01
 ---
 
+The SUM function adds values. You can add individual values, cell references or ranges or a mix of all three
 
 ## Syntax
-
-
-
-```
+```python
 func.sum().over(partition_by=field, order_by=field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.sum is coming soon.
 ```

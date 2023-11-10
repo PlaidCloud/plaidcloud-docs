@@ -1,6 +1,7 @@
 ---
 title: Import HDF
 slug: import-hdf
+weight: 8.0
 description: Import HDF5 files from PlaidCloud Document
 date: 2022-01-25T07:39:58
 ---

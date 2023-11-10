@@ -1,6 +1,7 @@
 ---
 title: Rename Document File
 slug: rename-document-file
+weight: 18.0
 description: Rename an existing file in PlaidCloud Document
 date: 2022-01-25T07:40:18
 ---

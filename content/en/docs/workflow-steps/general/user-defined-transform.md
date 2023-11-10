@@ -1,6 +1,7 @@
 ---
 title: User Defined Transform
 slug: user-defined-transform
+weight: 3.0
 description: Use Python and Pandas directly in a workflow
 date: 2022-01-25T07:39:49
 ---

@@ -1,6 +1,7 @@
 ---
 title: Jupyter Notebooks
 slug: jupyter-notebook
+weight: 1.0
 description: Interact with PlaidCloud directory from Jupyter Notebooks
 date: 2022-01-25T07:39:47
 ---

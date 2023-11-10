@@ -3,7 +3,7 @@ title: Connecting
 slug: connect
 description: Connect Excel with the PlaidCloud Excel Add-in to your PlaidCloud project
 date: 2022-01-25T07:39:47
-weight: 20
+weight: 2.0
 tags:
 - plaidcloud
 - expression

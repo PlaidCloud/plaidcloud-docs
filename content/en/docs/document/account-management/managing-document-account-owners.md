@@ -1,6 +1,7 @@
 ---
 title: Managing Document Account Owners
 slug: managing-document-account-owners
+weight: 4.0
 description: Add and remove Document account owners
 date: 2022-01-25T07:39:47
 ---

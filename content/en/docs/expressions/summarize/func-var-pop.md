@@ -5,20 +5,9 @@ description: VAR_POP returns the population variance of a set of numbers after d
 date: 2022-01-25T07:40:00
 ---
 
+VAR_POP returns the population variance of a set of numbers after discarding the nulls in this set
 
 ## Syntax
-
-
-
-```
+```python
 func.var_pop(field) 
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.var_pop is coming soon.
 ```

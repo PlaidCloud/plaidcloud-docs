@@ -5,20 +5,9 @@ description: Returns JSON object pointed to by path elements. The return value w
 date: 2022-01-25T07:39:58
 ---
 
+Returns JSON object pointed to by path elements. The return value will be a type of text.
 
 ## Syntax
-
-
-
-```
+```python
 func.json_extract_path_text(json, key_1, key_2, ...)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for json_extract_path_text is coming soon.
 ```

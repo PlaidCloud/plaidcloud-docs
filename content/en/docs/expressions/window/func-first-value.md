@@ -5,14 +5,14 @@ description: FIRST_VALUE is an analytic function. It returns the first value in 
 date: 2022-01-25T07:40:02
 ---
 
-## Syntax
+FIRST_VALUE is an analytic function. It returns the first value in an ordered set of values
 
-```
+## Syntax
+```python
 func.first_value(field).over(partition_by=field, order_by=field)
 ```
 
 ## Examples
-
 This is an example of using the `first_value()` capability to calculate the running time of the time series data where each event is on a distinct row.
 
 This assumes you have a table of time series data that looks like this:

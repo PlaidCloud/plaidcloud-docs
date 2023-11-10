@@ -1,6 +1,7 @@
 ---
 title: Table In-Place Update
 slug: table-in-place-update
+weight: 10.0
 description: Performs an update on the table using the specified filter conditions and value settings
 date: 2022-01-25T07:39:56
 ---

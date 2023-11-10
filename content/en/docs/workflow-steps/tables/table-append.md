@@ -1,6 +1,7 @@
 ---
 title: Table Append
 slug: table-append
+weight: 2.0
 description: Used append data to an existing table.
 ---
 

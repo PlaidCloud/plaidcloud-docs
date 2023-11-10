@@ -5,14 +5,14 @@ description: The LAST_VALUE() function is a window function that returns the las
 date: 2022-01-25T07:40:02
 ---
 
-## Syntax
+The LAST_VALUE() function is a window function that returns the last value in an ordered partition of a result set
 
-```
+## Syntax
+```python
 func.last_value(field).over(partition_by=field, order_by=field)
 ```
 
 ## Examples
-
 This is an example of using the `last_value()` capability to calculate the time remaining in time series data where each event is on a distinct row.
 
 This assumes you have a table of time series data that looks like this:

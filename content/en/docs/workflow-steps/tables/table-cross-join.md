@@ -1,6 +1,7 @@
 ---
 title: Table Cross Join
 slug: table-cross-join
+weight: 5.0
 description: Use this function to perform an cross join between two data tables
 date: 2022-05-10T14:00:00
 ---

@@ -1,7 +1,7 @@
 ---
 title: Pricing
 description: PlaidCloud Data Warehouse Service Pricing
-weight: 2
+weight: 2.0
 date: 2022-01-25T07:39:51
 ---
 

@@ -1,6 +1,7 @@
 ---
 title: General Usage PostGIS
 slug: general-usage-postgis
+weight: 6.0
 description: Enhanced 'Analyze' functions for geospatial analysis
 date: 2022-01-25T07:39:53
 ---
@@ -12,8 +13,6 @@ To specify the use of PostGIS functions in expressions, prefix the name with fun
 {{< /note >}}
 
 ## Geometry Constructors
-
-
 | Function | Description |
 |----------|-------------|
 | [ST_BdPolyFromText](http://postgis.net/docs/manual-2.2/ST_BdPolyFromText.html) | Construct a Polygon given an arbitrary collection of closed linestrings as a MultiLineString Well-Known text representation. |

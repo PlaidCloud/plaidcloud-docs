@@ -1,6 +1,7 @@
 ---
 title: Convert Document Encoding
 slug: convert-document-encoding
+weight: 3.0
 description: Concatenates files to form a single file.
 date: 2022-01-25T07:39:55
 ---

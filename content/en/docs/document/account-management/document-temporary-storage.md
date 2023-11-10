@@ -1,6 +1,7 @@
 ---
 title: Document Temporary Storage
 slug: document-temporary-storage
+weight: 2.0
 description: Use Document's temporary storage option to share files or move them without worrying about cleanup later
 date: 2022-01-25T07:39:47
 ---

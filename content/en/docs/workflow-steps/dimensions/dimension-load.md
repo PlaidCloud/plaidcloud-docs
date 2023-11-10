@@ -1,6 +1,7 @@
 ---
 title: Dimension Load
 slug: dimension-load
+weight: 4.0
 description: Load and update dimensions using data
 date: 2022-01-25T07:40:18
 ---

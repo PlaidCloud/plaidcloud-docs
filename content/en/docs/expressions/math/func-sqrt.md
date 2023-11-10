@@ -5,20 +5,9 @@ description: The PostgreSQL sqrt() function is used to return the square root of
 date: 2022-01-25T07:39:59
 ---
 
+The PostgreSQL sqrt() function is used to return the square root of a given positive number.
 
 ## Syntax
-
-
-
-```
+```python
 func.sqrt(numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.sqrt is coming soon.
 ```

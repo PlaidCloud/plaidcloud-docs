@@ -1,6 +1,7 @@
 ---
 title: Sessionize
 slug: sessionize
+weight: 8.0
 description: Performs time-oriented session reconstruction on a data set comprising a sequence of events
 date: 2022-01-25T07:40:19
 ---

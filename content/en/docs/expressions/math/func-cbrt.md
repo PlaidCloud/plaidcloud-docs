@@ -5,20 +5,9 @@ description: This function accepts a number as argument and returns the cube roo
 date: 2022-01-25T07:40:00
 ---
 
+This function accepts a number as argument and returns the cube root of that number
 
 ## Syntax
-
-
-
-```
+```python
 func.cbrt(numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.cbrt is coming soon.
 ```

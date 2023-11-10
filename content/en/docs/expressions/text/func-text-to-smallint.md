@@ -5,20 +5,9 @@ description: A 2-byte integer data type used in CREATE TABLE and ALTER TABLE sta
 date: 2022-01-25T07:40:03
 ---
 
+A 2-byte integer data type used in CREATE TABLE and ALTER TABLE statements
 
 ## Syntax
-
-
-
-```
+```python
 func.text_to_smallint(string)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.text_to_smallint is coming soon.
 ```

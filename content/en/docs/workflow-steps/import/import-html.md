@@ -1,6 +1,7 @@
 ---
 title: Import HTML
 slug: import-html
+weight: 9.0
 description: Import HTML table data from the internet
 date: 2022-01-25T07:39:57
 ---

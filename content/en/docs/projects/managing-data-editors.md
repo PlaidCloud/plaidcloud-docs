@@ -1,6 +1,7 @@
 ---
 title: Managing Data Editors
 slug: managing-data-editors
+weight: 5.0
 description: Create and Edit table data though user interaction
 date: 2022-01-25T07:39:48
 ---

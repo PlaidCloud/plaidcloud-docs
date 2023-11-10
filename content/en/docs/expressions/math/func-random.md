@@ -5,20 +5,9 @@ description: The PostgreSQL random() function is used to return the random value
 date: 2022-01-25T07:39:59
 ---
 
+The PostgreSQL random() function is used to return the random value between 0 and 1.
 
 ## Syntax
-
-
-
-```
+```python
 func.random()
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.random is coming soon.
 ```

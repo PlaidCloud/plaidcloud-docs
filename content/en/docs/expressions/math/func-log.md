@@ -5,25 +5,10 @@ description: The log() function returns the base 10 logarithm of a given number 
 date: 2022-01-25T07:39:59
 ---
 
-
 ## Syntax
-
-
-
-```
+```python
 func.log(numeric)
 ```
-
-
-```
+```python
 func.log(b numeric, x numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.log is coming soon.
 ```

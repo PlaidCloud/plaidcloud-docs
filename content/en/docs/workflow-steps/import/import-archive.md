@@ -1,6 +1,7 @@
 ---
 title: Import Archive
 slug: import-archive
+weight: 1.0
 description: Import an archived project
 date: 2022-05-10T14:00:00
 ---

@@ -1,6 +1,7 @@
 ---
 title: Troubleshooting Allocations
 slug: troubleshooting-allocations
+weight: 2.0
 description: Understand how to troubleshoot allocations when the results are not as expected
 date: 2022-01-25T07:40:20
 ---

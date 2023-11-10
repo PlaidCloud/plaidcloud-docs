@@ -5,20 +5,9 @@ description: VAR_SAMP returns the sample variance of a set of numbers after disc
 date: 2022-01-25T07:40:00
 ---
 
+VAR_SAMP returns the sample variance of a set of numbers after discarding the nulls in this set
 
 ## Syntax
-
-
-
-```
+```python
 func.var_samp(field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.var_samp is coming soon.
 ```

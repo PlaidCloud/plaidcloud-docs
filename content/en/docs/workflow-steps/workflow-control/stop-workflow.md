@@ -1,6 +1,7 @@
 ---
 title: Stop Workflow
 slug: stop-workflow
+weight: 3.0
 description: Stop an existing, running workflow
 date: 2022-01-25T07:39:50
 ---

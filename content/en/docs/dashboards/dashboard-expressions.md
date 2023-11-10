@@ -1,6 +1,7 @@
 ---
 title: Dashboard Example Expressions
 slug: dashboard-expressions
+weight: 5.0
 description: Using common dashboard expressions
 date: 2022-06-07T07:39:48
 ---

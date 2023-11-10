@@ -1,6 +1,7 @@
 ---
 title: Viewing Workflows
 slug: viewing-workflows
+weight: 1.0
 description: Create and Manage your own Workflows
 date: 2022-01-25T07:39:49
 ---

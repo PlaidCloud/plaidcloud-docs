@@ -1,6 +1,7 @@
 ---
 title: Notify Via Log
 slug: notify-via-log
+weight: 4.0
 description: Write a message to the Analyze workflow log
 date: 2022-01-25T07:39:57
 ---

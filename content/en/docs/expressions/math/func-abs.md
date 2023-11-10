@@ -5,20 +5,14 @@ description: Returns the absolute value of a number. The absolute value of a num
 date: 2022-01-25T07:40:00
 ---
 
+Returns the absolute value of a number. The absolute value of a number is the number without its sign
 
 ## Syntax
-
-
-
-```
+```python
 func.abs(x)
 ```
 
-
 ## Examples
-
-
-
-```
-Documentation for func.abs is coming soon.
+```python
+func.abs(get_column(table, 'RPA Value'))
 ```

@@ -5,20 +5,9 @@ description: The PostgreSQL tan() function is used to return the tangent of a gi
 date: 2022-01-25T07:40:01
 ---
 
+The PostgreSQL tan() function is used to return the tangent of a given argument.
 
 ## Syntax
-
-
-
-```
+```python
 func.tan(x)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.tan is coming soon.
 ```

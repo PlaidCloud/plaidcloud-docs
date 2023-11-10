@@ -1,6 +1,7 @@
 ---
 title: Create Workflow
 slug: create-workflow
+weight: 1.0
 description: Create a new workflow in 'Analyze'
 date: 2022-01-25T07:40:17
 ---

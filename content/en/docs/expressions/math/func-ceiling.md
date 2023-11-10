@@ -5,20 +5,9 @@ description: The PostgreSQL ceiling() is used to return the value after rounded 
 date: 2022-01-25T07:40:00
 ---
 
+The PostgreSQL ceiling() is used to return the value after rounded up any positive or negative decimal value as greater than the argument
 
 ## Syntax
-
-
-
-```
+```python
 func.ceiling(numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.ceiling is coming soon.
 ```

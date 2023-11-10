@@ -1,6 +1,7 @@
 ---
 title: Skip steps in a workflow
 slug: skip-steps-in-a-workflow
+weight: 11.0
 description: How to disable steps in a workflow so they are not executed
 date: 2022-01-25T07:40:20
 ---

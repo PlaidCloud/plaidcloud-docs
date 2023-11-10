@@ -1,6 +1,7 @@
 ---
 title: OAuth Tokens
 slug: get-oauth-tokens
+weight: 3.0
 description: Obtaining OAuth tokens to interact with PlaidCloud APIs
 date: 2022-01-25T07:39:47
 ---

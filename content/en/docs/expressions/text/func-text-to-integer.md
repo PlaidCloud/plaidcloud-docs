@@ -5,20 +5,9 @@ description: Convert text to integer
 date: 2022-01-25T07:40:03
 ---
 
+Convert text to integer
 
 ## Syntax
-
-
-
-```
+```python
 func.text_to_integer(string)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.text_to_integer is coming soon.
 ```

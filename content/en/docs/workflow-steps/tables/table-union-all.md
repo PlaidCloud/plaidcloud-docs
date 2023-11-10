@@ -1,6 +1,7 @@
 ---
 title: Table Union All
 slug: table-union-all
+weight: 16.0
 description: Access history to all created workflow data tables
 date: 2022-01-25T07:39:49
 ---
