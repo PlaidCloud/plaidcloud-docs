@@ -3,7 +3,7 @@ title: Publishing Tables
 slug: tables-views-publish
 description: Publishing Tables and Views to allow usage in Dashboard, PlaidXL, and other external reporting
 date: 2022-01-25T07:39:48
-weight: 2
+weight: 4.0
 ---
 
 

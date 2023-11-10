@@ -1,6 +1,7 @@
 ---
 title: Copy Workflow
 slug: copy-workflow
+weight: 4.0
 description: Make a copy of an existing PlaidCloud Analyze workflow
 date: 2022-01-25T07:39:52
 ---

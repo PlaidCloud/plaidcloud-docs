@@ -1,6 +1,7 @@
 ---
 title: Table Anti Join
 slug: table-anti-join
+weight: 1.0
 description: This function provides an unmatched set of data between two tables
 date: 2022-01-25T07:39:50
 ---

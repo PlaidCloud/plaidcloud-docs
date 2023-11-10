@@ -2,7 +2,7 @@
 title: Getting Started
 slug: getting-started
 description: Getting started with the PlaidCloud Data Warehouse Service
-weight: 1
+weight: 1.0
 date: 2022-01-25T07:39:51
 ---
 

@@ -1,13 +1,12 @@
 ---
 title: General Usage Text Expressions
 slug: general-usage-text-expressions
+weight: 7.0
 description: Commonly Used Text Expressions
 date: 2022-01-25T07:39:53
 ---
 
-
-## Common Text Expressions
-
+## Commonly Used Text Expressions
 | Analyze Expression | Return Type | Description | Example | Result |
 |--------------------|-------------|-------------|---------|--------|
 | func.concat(string, string) | text | String concatenation | concat(‘Post’, ‘greSQL’) | PostgreSQL |

@@ -1,6 +1,7 @@
 ---
 title: Archive a Project
 slug: archive-a-project
+weight: 6.0
 description: Create and Restore your project archives
 date: 2022-01-25T07:39:48
 ---

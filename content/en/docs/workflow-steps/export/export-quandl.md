@@ -1,6 +1,7 @@
 ---
 title: Export to Quandl
 slug: export-quandl
+weight: 8.0
 description: Export an Analyze data table to Quandl’s database
 date: 2022-01-25T07:39:58
 ---

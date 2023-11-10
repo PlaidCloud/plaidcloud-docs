@@ -1,6 +1,7 @@
 ---
 title: Table Drop
 slug: table-drop
+weight: 6.0
 description: Drop/Delete a data table
 date: 2022-05-10T14:00:00
 ---

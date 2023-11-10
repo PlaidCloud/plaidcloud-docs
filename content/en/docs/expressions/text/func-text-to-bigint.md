@@ -5,20 +5,9 @@ description: This function allows you to convert a string of character values in
 date: 2022-01-25T07:40:03
 ---
 
+This function allows you to convert a string of character values into a large range integer
 
 ## Syntax
-
-
-
-```
+```python
 func.text_to_bigint(string)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.text_to_bigint is coming soon.
 ```

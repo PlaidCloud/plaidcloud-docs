@@ -1,6 +1,7 @@
 ---
 title: Viewing Workflow Log
 slug: viewing-workflow-log
+weight: 15.0
 description: How to view and analyze the workflow log
 date: 2022-01-25T07:40:20
 ---

@@ -1,6 +1,7 @@
 ---
 title: Delete Workflow
 slug: delete-workflow
+weight: 6.0
 description: Delete an existing PlaidCloud Analyze workflow
 date: 2022-01-25T07:39:56
 ---

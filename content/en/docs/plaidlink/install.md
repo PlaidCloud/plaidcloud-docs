@@ -1,6 +1,7 @@
 ---
 title: Installation
 slug: install
+weight: 2.0
 description: Create a configuration file, Install and run the PlaidLink (Agent)
 date: 2022-01-25T07:40:17
 tags:

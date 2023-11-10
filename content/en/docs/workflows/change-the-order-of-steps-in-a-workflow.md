@@ -1,6 +1,7 @@
 ---
 title: Change the order of steps in a workflow
 slug: change-the-order-of-steps-in-a-workflow
+weight: 5.0
 description: Move steps up and down in a workflow to control the flow of execution
 date: 2022-01-25T07:40:21
 ---

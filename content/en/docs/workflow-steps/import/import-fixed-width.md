@@ -1,6 +1,7 @@
 ---
 title: Import Fixed Width
 slug: import-fixed-width
+weight: 5.0
 description: Import Fixed Width files
 date: 2022-01-25T07:39:55
 ---

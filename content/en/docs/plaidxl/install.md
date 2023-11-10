@@ -3,7 +3,7 @@ title: Installation
 slug: install
 description: Install the PlaidCloud Excel Add-in
 date: 2022-01-25T07:39:47
-weight: 10
+weight: 1.0
 tags:
 - plaidcloud
 - expression

@@ -1,6 +1,7 @@
 ---
 title: Raise Workflow Error
 slug: raise-workflow-error
+weight: 10.0
 description: Raises an error in a workflow
 date: 2022-01-25T07:39:51
 ---

@@ -5,20 +5,9 @@ description: This function returns the average of the values in a group. It igno
 date: 2022-01-25T07:40:02
 ---
 
+This function returns the average of the values in a group. It ignores null values
 
 ## Syntax
-
-
-
-```
+```python
 func.avg().over(partition_by=field, order_by=field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.avg is coming soon.
 ```

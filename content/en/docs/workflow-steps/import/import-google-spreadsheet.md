@@ -1,6 +1,7 @@
 ---
 title: Import Google Spreadsheet
 slug: import-google-spreadsheet
+weight: 7.0
 description: Import specific worksheets from Google Spreadsheet files
 date: 2022-01-25T07:39:58
 ---

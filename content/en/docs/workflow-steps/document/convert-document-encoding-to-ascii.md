@@ -1,6 +1,7 @@
 ---
 title: Convert Document Encoding to ASCII
 slug: convert-document-encoding-to-ascii
+weight: 4.0
 description: Updates file encoding and converts all characters to ASCII
 date: 2022-01-25T07:39:55
 ---

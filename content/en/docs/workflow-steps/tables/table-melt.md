@@ -1,6 +1,7 @@
 ---
 title: Table Melt
 slug: table-melt
+weight: 13.0
 description: Flip columns to rows
 date: 2022-01-25T07:39:49
 ---

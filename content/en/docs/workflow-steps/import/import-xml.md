@@ -1,6 +1,7 @@
 ---
 title: Import XML
 slug: import-xml
+weight: 17.0
 description: Import XML data as an XML file
 date: 2022-01-25T07:39:57
 ---

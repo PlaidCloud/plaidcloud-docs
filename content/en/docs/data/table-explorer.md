@@ -3,7 +3,7 @@ title: Table Explorer
 slug: table-explorer
 description: Table Explorer provides powerful and readily accessible data exploration capabilities
 date: 2022-01-25T07:39:48
-weight: 1
+weight: 1.0
 ---
 
 

@@ -5,20 +5,14 @@ description: The function will return the lowercase version of the text string g
 date: 2022-02-03T09:12:29
 ---
 
+The function will return the lowercase version of the text string given.
 
 ## Syntax
-
-
-
-```
+```python
 func.lower(string)
 ```
 
-
 ## Examples
-
-
-
-```
+```python
 func.lower('PLAIDCLOUD') --> plaidcloud
 ```

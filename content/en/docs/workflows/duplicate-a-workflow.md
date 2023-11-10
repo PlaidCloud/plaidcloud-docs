@@ -1,6 +1,7 @@
 ---
 title: Duplicate a Workflow
 slug: duplicate-a-workflow
+weight: 3.0
 description: Making a duplicate copy of a workflow
 date: 2022-01-25T07:40:20
 ---

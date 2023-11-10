@@ -1,6 +1,7 @@
 ---
 title: Table Outer Join
 slug: table-outer-join
+weight: 14.0
 description: Combine data tables using specified join key(s)
 date: 2022-01-25T07:39:49
 ---

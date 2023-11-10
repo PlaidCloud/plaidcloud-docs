@@ -1,6 +1,7 @@
 ---
 title: Encoding Categorical Variables
 slug: encoding-categorical-variables
+weight: 2.0
 description: Coding categorical variables into one-hot, dummy, effects, orthogonal, and Helmert
 date: 2022-01-25T07:40:19
 ---

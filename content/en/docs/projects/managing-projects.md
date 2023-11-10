@@ -1,6 +1,7 @@
 ---
 title: Managing Projects
 slug: managing-projects
+weight: 2.0
 description: Create and Manage new projects
 date: 2022-01-25T07:39:48
 ---

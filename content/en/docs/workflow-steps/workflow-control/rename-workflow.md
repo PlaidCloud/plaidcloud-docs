@@ -1,6 +1,7 @@
 ---
 title: Rename Workflow
 slug: rename-workflow
+weight: 5.0
 description: Rename an Existing PlaidCloud Analyze Workflow
 date: 2022-01-25T07:39:51
 ---

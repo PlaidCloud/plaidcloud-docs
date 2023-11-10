@@ -1,6 +1,7 @@
 ---
 title: Run Remote Python
 slug: run-remote-python
+weight: 2.0
 description: Run a Python file using PlaidLink
 date: 2022-01-25T07:39:50
 ---

@@ -1,6 +1,7 @@
 ---
 title: Create Workflow
 slug: create-workflow
+weight: 2.0
 description: Creating a new workflow
 date: 2022-01-25T07:40:20
 ---

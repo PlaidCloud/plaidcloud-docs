@@ -1,6 +1,7 @@
 ---
 title: Upgrade
 slug: upgrade
+weight: 4.0
 description: Perform a manual upgrade of the PlaidLink Agent installation
 date: 2022-12-20
 tags:

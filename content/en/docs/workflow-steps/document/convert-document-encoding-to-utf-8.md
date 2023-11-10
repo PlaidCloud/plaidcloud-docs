@@ -1,6 +1,7 @@
 ---
 title: Convert Document Encoding to UTF-8
 slug: convert-document-encoding-to-utf-8
+weight: 5.0
 description: Updates file encoding and converts all characters to UTF-8
 date: 2022-01-25T07:39:56
 ---

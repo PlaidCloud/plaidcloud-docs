@@ -1,6 +1,7 @@
 ---
 title: Document - Remote Import File
 slug: document-remote-import-file
+weight: 6.0
 description: Imports a remote file system file using a PlaidLink agent installed within the firewall.
 date: 2022-01-25T07:39:56
 ---

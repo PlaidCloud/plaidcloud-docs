@@ -1,6 +1,7 @@
 ---
 title: Run a workflow
 slug: run-a-workflow
+weight: 6.0
 description: How to run a workflow from the workflow management area
 date: 2022-01-25T07:40:20
 ---

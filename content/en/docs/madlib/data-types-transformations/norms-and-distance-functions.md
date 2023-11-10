@@ -1,6 +1,7 @@
 ---
 title: Norms and Distance Functions
 slug: norms-and-distance-functions
+weight: 5.0
 description: Useful utility functions for basic linear algebra operations
 date: 2022-01-25T07:40:19
 ---

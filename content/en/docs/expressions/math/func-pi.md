@@ -5,20 +5,9 @@ description: The PostgreSQL pi() function is used to return the constant value o
 date: 2022-01-25T07:39:59
 ---
 
+The PostgreSQL pi() function is used to return the constant value of pi
 
 ## Syntax
-
-
-
-```
+```python
 func.pi()
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.pi is coming soon.
 ```

@@ -5,20 +5,9 @@ description: The STDEV function calculates the standard deviation for a sample s
 date: 2022-01-25T07:40:00
 ---
 
+The STDEV function calculates the standard deviation for a sample set of data
 
 ## Syntax
-
-
-
-```
+```python
 func.stdev(field) 
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.stdev is coming soon.
 ```

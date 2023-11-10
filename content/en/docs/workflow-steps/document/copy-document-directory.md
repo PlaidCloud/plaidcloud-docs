@@ -1,6 +1,7 @@
 ---
 title: Copy Document Directory
 slug: copy-document-directory
+weight: 9.0
 description: Copy entire directory in PlaidCloud Document
 date: 2022-01-25T07:39:55
 ---

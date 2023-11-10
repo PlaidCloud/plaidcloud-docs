@@ -1,5 +1,5 @@
 ---
 linktitle: Data Warehouse Service
 title: Data Warehouse Service
-weight: 8.0
+weight: 9.0
 ---

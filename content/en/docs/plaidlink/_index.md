@@ -1,6 +1,7 @@
 ---
 linktitle: PlaidLink
 title: PlaidLink
+weight: 11.0
 ---
 
 PlaidLink provides indirect access to systems and processes protected by firewalls or behind other restrictions that make direct connections difficult.

@@ -1,10 +1,10 @@
 ---
 title: General Usage Filters
 slug: general-usage-filters
+weight: 4.0
 description: Apply filters using column references
 date: 2022-01-25T07:39:53
 ---
-
 
 You may apply filters using column references.
 
@@ -35,4 +35,3 @@ You may apply filters using column references.
 | <= | Less than or equal to | table.column <= 23 |
 | == | Equal to | table.column == 23 table.column == ‘blue’ |
 | != | Not Equal to | table.column != 23 table.column != ‘blue’ |
-

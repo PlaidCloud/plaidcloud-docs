@@ -1,6 +1,7 @@
 ---
 title: Matrix Operations
 slug: matrix-operations
+weight: 4.0
 description: Provides basic matrix operations for matrices that are too big to fit in memory
 date: 2022-01-25T07:40:19
 ---

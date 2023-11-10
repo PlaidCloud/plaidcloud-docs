@@ -1,10 +1,10 @@
 ---
 title: General Usage Mathematics Expressions
 slug: general-usage-mathematics-expressions
+weight: 5.0
 description: Expression with Enhanced Transformation Capabilities
 date: 2022-01-25T07:39:53
 ---
-
 
 Expressions use Python [SQLAlchemy](https://www.sqlalchemy.org) syntax and provide powerful transformation capabilities.
 
@@ -13,7 +13,6 @@ Always use table.field references in expressions
 {{< /note >}}
 
 ## Common Mathematics Expressions
-
 | Analyze Expression | Operator | Description | Example | Result |
 |--------------------|----------|-------------|---------|--------|
 | + | + | addition | 2 + 3 | 5 |
@@ -32,7 +31,6 @@ Always use table.field references in expressions
 | column.op(‘>>’) | >> | bitwise shift right | 8 >> 2 | 2 |
 
 ## Mathematics Functions
-
 | Analyze Expression | Return Type | Description | Example | Result |  |
 |--------------------|-------------|-------------|---------|--------|--|
 | func.abs(x) | (same as input) | absolute value | abs(-17.4 ) | 17.4 |  |
@@ -63,10 +61,6 @@ Always use table.field references in expressions
 | func.greatest(value …) | (same as input) | Select the largest value from a list. NULL values in the list are ignored. The result will be NULL only if all values are NULL. |  |  |  |
 
 ## Trigonometric Functions
-
-
-
-
 | Analyze Expression | Description |
 |--------------------|-------------|
 | func.acos(x) | inverse cosine |
@@ -77,4 +71,3 @@ Always use table.field references in expressions
 | func.cot(x) | cotangent |
 | func.sin(x) | sine |
 | func.tan(x) | tangent |
-

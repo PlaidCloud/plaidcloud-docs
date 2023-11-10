@@ -3,7 +3,7 @@ title: Using Dimensions (Hierarchies)
 slug: hierarchies
 description: Using and managing hierarchical data
 date: 2022-01-25T07:39:48
-weight: 4
+weight: 3.0
 ---
 
 

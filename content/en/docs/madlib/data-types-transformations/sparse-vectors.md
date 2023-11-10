@@ -1,6 +1,7 @@
 ---
 title: Sparse Vectors
 slug: sparse-vectors
+weight: 10.0
 description: Provides compressed storage of vectors that have many duplicate elements
 date: 2022-01-25T07:40:19
 ---

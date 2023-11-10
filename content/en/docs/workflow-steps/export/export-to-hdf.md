@@ -1,6 +1,7 @@
 ---
 title: Export to HDF
 slug: export-to-hdf
+weight: 5.0
 description: Export an Analyze data table to PlaidCloud Document as an HDF5 file
 date: 2022-01-25T07:39:58
 ---

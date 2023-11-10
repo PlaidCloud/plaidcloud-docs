@@ -1,5 +1,5 @@
 ---
 linktitle: Jupyter and Command Line
 title: Jupyter and Command Line Interactions
-weight: 9.0
+weight: 16.0
 ---

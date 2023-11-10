@@ -1,6 +1,7 @@
 ---
 title: Machine Learning
 slug: machine-learning
+weight: 3.0
 description: Make processing your database tables easier with 'MADlib'
 date: 2022-01-25T07:39:51
 ---

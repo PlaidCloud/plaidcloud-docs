@@ -1,7 +1,7 @@
 ---
 linktitle: PlaidXL
 title: PlaidXL
-weight: 18.0
+weight: 10.0
 ---
 
 The PlaidCloud Office Add-in (PlaidXL) allows for focused analysis interactions directly in Microsoft Excel. 

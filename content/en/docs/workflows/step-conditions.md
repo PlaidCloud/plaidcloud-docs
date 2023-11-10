@@ -1,6 +1,7 @@
 ---
 title: Conditional Step Execution
 slug: step-conditions
+weight: 12.0
 description: Control if a step is executed in a workflow based on a set of conditions
 date: 2023-06-21T07:40:20
 ---

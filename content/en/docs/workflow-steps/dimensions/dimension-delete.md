@@ -1,6 +1,7 @@
 ---
 title: Dimension Delete
 slug: dimension-delete
+weight: 3.0
 description: Deletes a dimension along with all associated structure, values, properties, aliases, and alternate hierarchies
 date: 2022-01-25T07:40:18
 ---

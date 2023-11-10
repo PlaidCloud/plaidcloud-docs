@@ -5,14 +5,14 @@ description: This analytic function lets you query more than one row in a table 
 date: 2022-01-25T07:40:02
 ---
 
-## Syntax
+This analytic function lets you query more than one row in a table at a time without having to join the table to itself
 
-```
+## Syntax
+```python
 func.lag(field, 1).over(partition_by=field, order_by=field)
 ```
 
 ## Examples
-
 This is an example of using the `lag()` capability to calculate the time interval in time series data where each event is on a distinct row.
 
 This assumes you have a table of time series data that looks like this:

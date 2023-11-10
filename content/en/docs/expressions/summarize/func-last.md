@@ -5,20 +5,9 @@ description: This function returns the value of a specified field in the  last r
 date: 2022-01-25T07:40:01
 ---
 
+This function returns the value of a specified field in the  last record of the result set returned by a query
 
 ## Syntax
-
-
-
-```
+```python
 func.last(field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.last is coming soon.
 ```

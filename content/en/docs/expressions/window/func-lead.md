@@ -5,20 +5,9 @@ description: This analytic function provides access to more than one row of a ta
 date: 2022-01-25T07:40:02
 ---
 
+This analytic function provides access to more than one row of a table at the same time without a self join
 
 ## Syntax
-
-
-
-```
+```python
 func.lead(field, 1).over(partition_by=field, order_by=field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.lead is coming soon.
 ```

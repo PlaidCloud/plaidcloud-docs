@@ -1,6 +1,7 @@
 ---
 title: Wait
 slug: wait
+weight: 4.0
 description: Pauses workflow execution for a specified period of time
 date: 2022-01-25T07:39:49
 ---

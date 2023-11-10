@@ -1,6 +1,7 @@
 ---
 title: Rule-Based Tagging
 slug: rule-based-tagging
+weight: 14.0
 description: Tag data based on rules
 date: 2022-05-10T14:00:00
 ---

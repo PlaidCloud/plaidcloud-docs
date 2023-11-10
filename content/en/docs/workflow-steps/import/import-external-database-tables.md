@@ -1,6 +1,7 @@
 ---
 title: Import External Database Tables
 slug: import-external-database-tables
+weight: 4.0
 description: Import all or a subset of tables in an external database
 date: 2022-01-25T07:40:19
 ---

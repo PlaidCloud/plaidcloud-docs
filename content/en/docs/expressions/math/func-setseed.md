@@ -5,20 +5,9 @@ description: The PostgreSQL setseed function can be used to set a seed for the n
 date: 2022-01-25T07:39:59
 ---
 
+The PostgreSQL setseed function can be used to set a seed for the next time that you call the random function
 
 ## Syntax
-
-
-
-```
+```python
 func.setseed(numeric)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.setseed is coming soon.
 ```

@@ -1,6 +1,7 @@
 ---
 title: Viewing the Project Log
 slug: viewing-the-project-log
+weight: 7.0
 description: View, sort and clear your project activities and assignments
 date: 2022-01-25T07:39:48
 ---

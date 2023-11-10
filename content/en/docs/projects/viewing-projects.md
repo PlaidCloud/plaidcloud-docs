@@ -1,6 +1,7 @@
 ---
 title: Viewing Projects
 slug: viewing-projects
+weight: 1.0
 description: Viewing authorized projects
 date: 2022-01-25T07:39:48
 ---

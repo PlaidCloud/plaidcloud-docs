@@ -5,20 +5,9 @@ description: This function calculates the cumulative distribution of a value wit
 date: 2022-01-25T07:40:02
 ---
 
+This function calculates the cumulative distribution of a value within a group of values
 
 ## Syntax
-
-
-
-```
+```python
 func.cume_dist().over(partition_by=field, order_by=field)
-```
-
-
-## Examples
-
-
-
-```
-Documentation for func.cume_dist is coming soon.
 ```

@@ -1,41 +1,37 @@
 ---
 title: General Usage Dates and Time Expressions
 slug: general-usage-dates-and-time-expressions
+weight: 3.0
 description: Common Expression Values for date/time functions
 date: 2022-01-25T07:39:53
 ---
 
-
-
+Common Expression Values for date/time functions
 
 | Analyze Expression | Return Type | Description | Example | Result |
 |--------------------|-------------|-------------|---------|--------|
-| func.age(timestamp, timestamp) | interval | Subtract arguments, producing a “symbolic” result that uses years and months | age (timest amp ‘2001-04-1 0’, timestamp ‘1957-06-1 3’) | 43 years 9 months 27 days |
-| func.age(timestamp) | interval | Subtract from current_date | age(timest amp ‘1957-06-1 3’) | 43 years 8 months 3 days |
-| func.clock_timestamp () | timestamp with time zone | Current date and time (changes during statement execution) |  |  |
-| func.current_date | date | Current date |  |  |
-| func.current_time | time with time zone | Current time of day |  |  |
+| func.age(timestamp, timestamp) | interval | Subtract arguments, producing a “symbolic” result that uses years and months | age (timestamp ‘2001-04-1 0’, timestamp ‘1957-06-1 3’) | 43 years 9 months 27 days |
+| func.age(timestamp) | interval | Subtract from current_date | age(timestamp ‘1957-06-1 3’) | 43 years 8 months 3 days |
+| func.clock_timestamp() | timestamp with time zone | Current date and time (changes during statement execution) |  |  |
+| func.current_date() | date | Current date |  |  |
+| func.current_time() | time with time zone | Current time of day |  |  |
 | func.current_timestamp | timestamp with time zone | Current date and time (start of current transaction) |  |  |
 | func.date_part(text, timestamp) | double precision | Get subfield (equivalent to extract) | date_part (‘hour’, timestamp ‘2001-02-1 6 20:38:40’) | 20 |
 | func.date_part(text, interval) | double precision | Get subfield (equivalent to extract) | date_part (‘month’, interval ‘2 years 3 months’) | 3 |
-| func.date_trunc(text , timestamp) | timestamp | Truncate to specified precision | date_trun c(‘hour’, timestamp ‘2001-02-1 6 20:38:40’) | 36938.833 3333333 |
-| func.extract(field from timestamp) | double precision | Get subfield | extract(ho ur from timestamp ‘2001-02-1 6 20:38:40’) | 20 |
-| func.extract(field from interval) | double precision | Get subfield | extract(mo nth from interval ‘2 years 3 months’) | 3 |
-| func.isfinite(timesta mp) | boolean | Test for finite time stamp (not equal to infinity) | isfinite(t imestamp ‘2001-02-1 6 21:28:30’) | TRUE |
-| func.isfinite(interva l) | boolean | Test for finite interval | isfinite(i nterval ‘4 hours’) | TRUE |
-| func.justify_days(in terval) | interval | Adjust interval so 30-day time periods are represented as months | justify_d ays(interv al ‘30 days’) | 1 month |
-| func.justify_hours(i nterval) | interval | Adjust interval so 24-hour time periods are represented as days | justify_h ours(inter val ‘24 hours’) | 1 day |
-| func.justify_interva l(interval) | interval | Adjust interval using justify_days and justify_hours , with additional sign adjustments | justify_i nterval(in terval ‘1 mon -1 hour’) | 29 days 23:00:00 |
+| func.date_trunc(text, timestamp) | timestamp | Truncate to specified precision | date_trunc(‘hour’, timestamp ‘2001-02-1 6 20:38:40’) | 36938.8333333333 |
+| func.extract(field from timestamp) | double precision | Get subfield | extract(hour from timestamp ‘2001-02-1 6 20:38:40’) | 20 |
+| func.extract(field from interval) | double precision | Get subfield | extract(month from interval ‘2 years 3 months’) | 3 |
+| func.isfinite(timestamp) | boolean | Test for finite time stamp (not equal to infinity) | isfinite(timestamp ‘2001-02-1 6 21:28:30’) | TRUE |
+| func.isfinite(interval) | boolean | Test for finite interval | isfinite(interval ‘4 hours’) | TRUE |
+| func.justify_days(interval) | interval | Adjust interval so 30-day time periods are represented as months | justify_days(interval ‘30 days’) | 1 month |
+| func.justify_hours(interval) | interval | Adjust interval so 24-hour time periods are represented as days | justify_hours(interval ‘24 hours’) | 1 day |
+| func.justify_interval(interval) | interval | Adjust interval using justify_days and justify_hours, with additional sign adjustments | justify_interval(interval ‘1 mon -1 hour’) | 29 days 23:00:00 |
 | func.now() | timestamp with time zone | Current date and time (start of current transaction) |  |  |
-| func.statement_times tamp() | timestamp with time zone | Current date and time (start of current statement) |  |  |
-| func.timeofday() | text | Current date and time (like clock_timesta mp, but as a text string) |  |  |
-| func.transaction_tim estamp() | timestamp with time zone | Current date and time (start of current transaction) |  |  |
+| func.statement_timestamp() | timestamp with time zone | Current date and time (start of current statement) |  |  |
+| func.timeofday() | text | Current date and time (like clock_timestamp, but as a text string) |  |  |
+| func.transaction_timestamp() | timestamp with time zone | Current date and time (start of current transaction) |  |  |
 
 ## Date and Time Formatting Directives
-
-
-
-
 | Pattern | Description |
 |---------|-------------|
 | HH | hour of day (01-12) |
@@ -85,4 +81,3 @@ date: 2022-01-25T07:39:53
 | rm | month in Roman numerals (i-xii; i=January) (lowercase) |
 | TZ | time-zone name (uppercase) |
 | tz | time-zone name (lowercase) |
-

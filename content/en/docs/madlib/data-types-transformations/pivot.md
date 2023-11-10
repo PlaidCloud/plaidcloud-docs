@@ -1,6 +1,7 @@
 ---
 title: Pivot
 slug: pivot
+weight: 7.0
 description: Perform basic OLAP type operations on data
 date: 2022-01-25T07:40:19
 ---

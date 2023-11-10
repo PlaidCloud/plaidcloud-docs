@@ -1,6 +1,7 @@
 ---
 title: Export to Google Spreadsheet
 slug: export-to-google-spreadsheet
+weight: 4.0
 description: Export an Analyze data table to Google Drive as a Google Spreadsheet
 date: 2022-01-25T07:39:58
 ---

@@ -1,6 +1,7 @@
 ---
 title: Manage Workflow Variables
 slug: manage-workflow-variables
+weight: 14.0
 description: Create, view, and set workflow variable values
 date: 2022-01-25T07:40:20
 ---

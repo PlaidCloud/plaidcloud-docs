@@ -1,6 +1,7 @@
 ---
 title: PlaidLink Agents
 slug: plaidlink-agents
+weight: 1.0
 description: Create and manage remote access using lightweight agents
 date: 2022-01-25T07:39:49
 ---

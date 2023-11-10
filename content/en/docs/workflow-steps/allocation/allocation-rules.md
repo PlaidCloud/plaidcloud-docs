@@ -1,6 +1,7 @@
 ---
 title: Allocation By Assignment Dimension
 slug: allocation-rules
+weight: 12.0
 description: Allocate values based on driver data and assignment dimension
 date: 2022-05-10T14:00:00
 ---

@@ -1,6 +1,7 @@
 ---
 title: Delete Document File
 slug: delete-document-file
+weight: 14.0
 description: Delete an existing file from within PlaidCloud Document
 date: 2022-01-25T07:39:56
 ---

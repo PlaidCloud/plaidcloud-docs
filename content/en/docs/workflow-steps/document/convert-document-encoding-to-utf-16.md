@@ -1,6 +1,7 @@
 ---
 title: Convert Document Encoding to UTF-16
 slug: convert-document-encoding-to-utf-16
+weight: 6.0
 description: Updates file encoding and converts all characters to UTF-16
 date: 2022-01-25T07:39:56
 ---
