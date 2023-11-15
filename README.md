@@ -138,9 +138,9 @@ Note for my version of windows, I went to the search bar, searched for "about yo
 9. To test, open Windows command prompt (search for "cmd") and type `hugo --help`. This output should show available hugo commands.  If it did not, then the hugo installation is not complete, or the path variable is not correct.
 
 ###### Running the server
-1. In the Windows command prompt (search windows for `cmd`), go to the directory of your repository (for me, I type `cd c:\src\plaidcloud-docs\`)
+1. In the Windows command prompt (search windows for `cmd`), go to the directory of your repository (for me, I type `cd c:\Hugo\src\plaidcloud-docs\`)
 2. At this point, you have the repository and the software installed (hugo), but you still have to download the themes, which are linked to through the code. The themes provide the look and feel vs. the content which is owned by PlaidCloud. in the Windows command prompt, type `git submodule update --init --recursive --depth 1`. This will download the themes.
-3. Run the server: in Windows command, type `hugo serve -D --panicOnWarning`; this may throw some warnings, but in the end it will end up with "Web Server is available at http://localhost:1313/ (bind address 127.0.0.1). Press Ctrl+C to stop"
+3. Run the server: in Windows command in the repository directory, type `hugo serve -D --panicOnWarning`; this may throw some warnings, but in the end it will end up with "Web Server is available at http://localhost:1313/ (bind address 127.0.0.1). Press Ctrl+C to stop"
 4. View the repository: Go to your web browser and type [http://localhost:1313/](http://localhost:1313/)
 You should now be able to view the repository in your web browser.
 

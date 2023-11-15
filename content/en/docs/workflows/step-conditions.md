@@ -33,11 +33,14 @@ What is also important to note is that you can have multiple conditions that mus
 
 ## Adding and Controlling Conditions
 
-To activate and add conditions, edit the step and select the **Conditions** tab.
-
-Check the **Check Conditions Before Running** checkbox when you are ready to activate the conditions
-
-Add conditions in the **Condition Checks** section.
+To activate and add conditions on a step:
+1) Find the step you want to add a condition on
+2) Click the **Edit Step Details** (pencil) icon
+3) Select the **Conditions** tab.
+4) Check the **Check Conditions Before Running** checkbox to enable the dialog and add conditions.
+5) In the **Condition Checks** section on the left, select the "+" to add a New Condition
+6) Add a condition from the tabbed section on the right
+7) Repeat steps 5,6 as needed to add all your conditions
 
 
 ## Managing Conditions
@@ -77,3 +80,5 @@ For Date or Time selections you can add multiple conditions if a combination of 
  - Day of the week condition set to Monday (1)
  - Hour of the day set to 2
  - Minute of the hour set to 5
+
+For "Use Financial Close Workday", set that to the xth day of the month that your close happens on. For example, if your close happens on the 5th day of the month, have "5".
