@@ -1,11 +1,11 @@
 ---
 title: func.lag
 slug: func-lag
-description: This analytic function lets you query more than one row in a table at a time without having to join the table to itself
+description: This function lets you query more than one row in a table at a time without having to join the table to itself
 date: 2022-01-25T07:40:02
 ---
 
-This analytic function lets you query more than one row in a table at a time without having to join the table to itself
+This function lets you query more than one row in a table at a time without having to join the table to itself
 
 ## Syntax
 ```python
