@@ -1,5 +1,0 @@
----
-linktitle: Conditions
-title: Conditions
-
----

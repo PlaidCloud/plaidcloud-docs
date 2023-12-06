@@ -1,5 +1,0 @@
----
-linktitle: Trigonometry
-title: Trigonometry
-
----

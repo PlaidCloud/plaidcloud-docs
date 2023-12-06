@@ -1,5 +1,0 @@
----
-linktitle: Text
-title: Text
-
----

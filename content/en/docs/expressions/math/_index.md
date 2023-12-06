@@ -1,5 +1,0 @@
----
-linktitle: Math
-title: Math
-
----

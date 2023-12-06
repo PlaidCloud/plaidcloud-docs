@@ -1,6 +1,7 @@
 ---
 title: Configure
 slug: configure
+weight: 3.0
 description: Create and maintain PlaidLink (Agent) documentation and account access for optimal database and file system enhancement
 date: 2022-01-25T07:40:17
 tags:
