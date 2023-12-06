@@ -3,7 +3,7 @@ title: Working with Data
 slug: retrieve
 description: Retrieve and save data using the PlaidCloud Excel Add-in after connecting to a PlaidCloud project
 date: 2022-01-25T07:39:47
-weight: 30
+weight: 3.0
 tags:
 - plaidcloud
 - expression

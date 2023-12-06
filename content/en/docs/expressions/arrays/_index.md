@@ -1,5 +1,0 @@
----
-linktitle: Arrays
-title: Arrays
-
----

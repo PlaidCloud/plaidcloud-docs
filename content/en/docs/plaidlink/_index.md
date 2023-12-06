@@ -1,6 +1,8 @@
 ---
 linktitle: PlaidLink
 title: PlaidLink
+Description: PlaidLink provides indirect access to systems and processes protected by firewalls or behind other restrictions that make direct connections difficult. By using an Agent installed within the isolated area, PlaidCloud can request the agent perform actions like running queries, downloading or uploading files, checking sensor conditions, interacting with SAP, and much more.
+weight: 4.0
 ---
 
 PlaidLink provides indirect access to systems and processes protected by firewalls or behind other restrictions that make direct connections difficult.

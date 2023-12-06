@@ -7,7 +7,7 @@ type: docs
 
 PlaidLink can operate as a Windows service, Unix/Linux/Mac daemon, docker container service, or as a Kubernetes pod.
 
-Follow the [installation instructions](/plaidlink/setup/install) in the PlaidLink documentation to download and install the agent.
+Follow the [installation instructions](/plaidlink/install/) in the PlaidLink documentation to download and install the agent.
 
 
 ## Download PlaidCloud RPC Tools
@@ -19,4 +19,4 @@ we have a set of utilities that make the whole experience a little easier to get
 
 ## Download PlaidXL
 
-Ok, you don't actually download this one but we put it here for reference.  Follow the Microsoft App Store [installation instructions](/plaidxl/setup/install) in the PlaidXL documentation.
+Ok, you don't actually download this one but we put it here for reference.  Follow the Microsoft App Store [installation instructions](/plaidxl/install) in the PlaidXL documentation.
