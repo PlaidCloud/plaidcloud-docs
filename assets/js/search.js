@@ -31,6 +31,8 @@ limitations under the License.
             return;
           }
 
+          console.log("This is the event being processed");
+
           var query = $(this).val();
           document.location = "{{ "search/" | absURL }}?q=" + query;
 
