@@ -3,6 +3,8 @@ title: Markdown Example Page
 main_menu: false
 ---
 
+PlaidCloud Documentation (this page) uses markdown in its construction. For those who would like to contribute to the development of PlaidCloud Documentation, please contact your representative or send an email to info@plaidcloud.com
+
 This page serves two purposes:
 
 - Demonstrate how the PlaidCloud documentation uses Markdown

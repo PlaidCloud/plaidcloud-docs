@@ -1,6 +1,6 @@
 ---
 linktitle: Scheduled Workflows
 title: Scheduled Workflows
-Description: The Event Scheduler allows for ordering and and applying conditionals to a chain of workflow steps.
-weight: 4.0
+Description: There are 2 ways to schedule actions. The first is within the workflow itself by ordering, enabling, and applying conditionals to workflow steps. The second is within the event scheduler, which you can reach through Analyze->Tools menu->Event Scheduler. The Event Scheduler allows for ordering and applying conditionals to one or more workflows.
+weight: 5
 ---
