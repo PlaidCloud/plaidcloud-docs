@@ -6,4 +6,4 @@ weight: 10
 draft: true
 ---
 
-Please contact us for a list of implementation partners.
+Please contact us at info@plaidcloud.com for a list of implementation partners.
