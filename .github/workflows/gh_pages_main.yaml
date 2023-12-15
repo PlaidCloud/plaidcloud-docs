@@ -1,0 +1,68 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive  # Fetch Hugo themes (true OR recursive)
+          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+
+      - name: Install autoprexir and postcss-cli
+        run: npm install --save-dev autoprefixer postcss-cli
+
+      - name: Install docsy level dependencies
+        run: (cd themes/docsy && npm install)
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.GCS_HUGO_SA_CREDENTIALS }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
+
+      - name: Build
+        run: hugo --minify --environment production
+
+      - name: Deploy
+        run: hugo deploy --target="hugo-gcs-io" --invalidateCDN --maxDeletes -1
+
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: documentation
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_ICON: https://storage.googleapis.com/plaidcloud-cdn/email/touch-icon-ipad-76.png
+          SLACK_MESSAGE: "IO - Build and Deploy of Documentation"
+          SLACK_TITLE: Doc Build
+          SLACK_USERNAME: plaidcloud-docs
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
