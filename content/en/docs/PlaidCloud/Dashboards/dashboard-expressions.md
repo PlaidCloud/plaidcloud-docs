@@ -1,5 +1,5 @@
 ---
-title: Dashboard Example Expressions
+title: Dashboard Expression Examples
 slug: dashboard-expressions
 weight: 5.0
 description: Using common dashboard expressions
@@ -8,21 +8,23 @@ date: 2022-06-07T07:39:48
 
 ## Description
 
+An expression is a basic function that does a conversion, calculation, cast to another data type, or other action on data in a column. Examples are `startswith`, `max`, or `current_date`. For a full list of core expressions, see: [Standard Expressions](/docs/plaidcloud/analyze/expressions/)
 
-Data in dashboards can be augmented with expressions.  There are two primary types of expressions, metrics and calculated columns.  Both can be written and modified with PostgreSQL-flavored SQL.
+There are two primary types of expressions - metrics and calculated columns.  Both can be written and modified with PostgreSQL-flavored SQL. Learn more about PostgreSQL [here](https://www.postgresql.org/docs/current/).
 
 ## Navigating to a dataset
-In order to view and edit metrics and calculated expressions, perform the following steps:
-1.  Sign into plaidcloud.com and navigate to Dasboards
-2.  From within visualize.plaidcloud.com, navigate to Data > Datasets
+In order to view and edit metrics and calculated expressions:
+1.  Sign into plaidcloud.com and navigate to Dasboards. Select the dashboard you want to work in.
+2.  Select Data > Datasets from the menu.
 3.  Search for a dataset to view or modify
-4.  Modify the dataset by hovering over the `edit` button beneath `Actions`
+4.  Hover over the dataset with the cursor and you will see icons in the actions column.
+5.  Click the `edit` icon beneath `Actions`
 
-Each dataset will contain a section for Metrics and a section for Calulated Columns.
+Each dataset will contain a tab for Metrics and one for Calulated Columns.
 
 
 ## Metrics
-Metrics are expressions that are typically used to describe a field, including how it will be consolidated.
+Metrics are expressions that are typically used to describe a field, including how it will be consolidated. Examples are below.
 
 ### cast
 ```
