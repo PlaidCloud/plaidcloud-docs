@@ -3,7 +3,7 @@ title: Example Calculated Columns
 slug: dashboard-calculated-columns
 description: Examples of calculated column expressions
 date: 2022-06-07T07:39:48
-weight: 3.0
+weight: 4.0
 ---
 
 ## Description
