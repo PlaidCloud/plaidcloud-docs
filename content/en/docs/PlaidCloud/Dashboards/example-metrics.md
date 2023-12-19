@@ -3,7 +3,7 @@ title: Example Metrics
 slug: dashboard-metrics
 description: Examples of common metrics
 date: 2022-06-07T07:39:48
-weight: 4.0
+weight: 5.0
 ---
 
 ## Description
