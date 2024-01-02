@@ -20,7 +20,7 @@ The default value is `Adaptive formatting`. This will adjust the format based on
 
 ## D3 Formatting - what is it?
 
-D3 Formatting is a structured, formalized means to display data results in a particular format. For example, in certain situations you may wish to display a large value as 3B (3 billion), formatted as `.3s` in D3 format, or as 3,001,238,383, formatted as `,d`. Another common example is the decision to represent dollar values with 2 decimal precision, or to round that to the nearest dollar ($,d) or $,.2f to show dollar sign, commas, 2 decimal precision, and a fixed point notation.
+D3 Formatting is a structured, formalized means to display data results in a particular format. For example, in certain situations you may wish to display a large value as 3B (3 billion), formatted as `.3s` in D3 format, or as 3,001,238,383, formatted as `,d`. Another common example is the decision to represent dollar values with 2 decimal precision, or to round that to the nearest dollar $,d or $,.2f to show dollar sign, commas, 2 decimal precision, and a fixed point notation.
 For a deeper dive into D3, see the following site: [GitHub D3](https://github.com/d3/d3-format)
 
 
@@ -45,7 +45,6 @@ The `sign` can be:
 
 The `symbol` can be:
 `$` - apply currency symbol.
-`#` - for binary, octal, or hexadecimal notation, prefix by 0b, 0o, or 0x, respectively.
 
 The `zero` (0) option enables zero-padding; this implicitly sets fill to 0 and align to =.
 
@@ -53,34 +52,29 @@ The `width` defines the minimum field width; if not specified, then the width wi
 
 The `comma` (,) option enables the use commas as separators (i.e. for thousands).
 
-Depending on the type, the `precision` can either indicate the number of digits that follow the decimal point (types f and %), or the number of significant digits (types ​, e, g, r, s and p). If the precision is not specified, it defaults to 6 for all types except (none), which defaults to 12. Precision is ignored for integer formats (types b, o, d, x, and X) and character data (type c).
+Depending on the type, the `precision` can either indicate the number of digits that follow the decimal point (types f and %), or the number of significant digits (types ​, g, r, s and p). If the precision is not specified, it defaults to 6 for all types except (none), which defaults to 12.
 
-The `tilde` ~ option trims insignificant trailing zeros across all format types. This is most commonly used in conjunction with types r, e, s and %.
+The `tilde` ~ option trims insignificant trailing zeros across all format types. This is most commonly used in conjunction with types r, s and %.
 
 `types`
 |Type |   Description                                                                               |
 |-----|---------------------------------------------------------------------------------------------|
-|e    |exponent notation                                                                            |
-|f    |fixed point notation.
+|f    |fixed point notation. **(common)**
+|d    |decimal notation, rounded to integer. **(common)**
+|%    |multiply by 100, and then decimal notation with a percent sign. **(common)**
 |g    |either decimal or exponent notation, rounded to significant digits.
 |r    |decimal notation, rounded to significant digits.
 |s    |decimal notation with an SI prefix, rounded to significant digits.
-|%    |multiply by 100, and then decimal notation with a percent sign.
 |p    |multiply by 100, round to significant digits, and then decimal notation with a percent sign.
-|b    |binary notation, rounded to integer.
-|o    |octal notation, rounded to integer.
-|d    |decimal notation, rounded to integer.
-|x    |hexadecimal notation, using lower-case letters, rounded to integer.
-|X    |hexadecimal notation, using upper-case letters, rounded to integer.
-|c    |character data, for a string of text.
 
 ## Examples
 |Expression|Input|Output|Notes|
 |----------|-----|------|-----|
 |,d|12345.67|12,346|rounds the value to the nearest integer, adds commas
+|,.2f|12345.678|12,345.68|Adds commas, 2 decimal, rounds to the nearest integer
 |$,.2f|12345.67|$12,345.67|Adds a $ symbol, has commas, 2 digits after the decimal
 |$,d|12345.67|$12,346|
-|.>10,|151925|...151,925|have periods to the left of the value, 10 characters wide, with commas
+|.<10,|151925|151,925...|have periods to the left of the value, 10 characters wide, with commas
+|0>10|12345|0000012345|pad the value with zeroes to the left, 10 characters wide. This works well for fixing the width of a code value 
 |,.2%|13.215|1,321.50%|have commas, 2 digits to the right of a decimal, convert to percentage, and show a % symbol
 |x^+$16,.2f|123456|xx+$123,456.00xx| buffer with "x", centered, have a +/- symbol, $ symbol, 16 characters wide, have commas, 2 digit decimal
- 
