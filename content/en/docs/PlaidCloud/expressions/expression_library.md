@@ -323,7 +323,8 @@ case(
 In this example is from a Table:Lookup step where we are updating the "dock_final" column when the table1. dock_final value is Null.
 ```python
 case(
-    (table1.dock_final == Null, table2.dock_final), else_ = table1.dock_final
+    (table1.dock_final == Null, table2.dock_final),
+    else_ = table1.dock_final
     )
 ```
 
@@ -373,19 +374,25 @@ cast(get_column(table, 'End_Date'),Text)
 | func.to_timestamp(bigfloat) | timestamp with time zone | convert UNIX epoch to time stamp | to_timestamp(200120400) |
 
 **Other Examples**
+```python
 to_char("Sales_Order_w_Status"."WeekName")
+
 func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
+
 func.to_date(get_column(table, 'File Creation Date'), 'YYYYMMDD')
+```
 
 
 
 ## Other Date Time Examples
 ### Date Trunc
+```python
 func.date_trunc('week', get_column(table, 'Date' ))
-func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
-func.to_char(func.date_trunc('week', ((table.Date) - 6)),'MON-DD')
 
-fffffffffffffffffffffffff
+func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
+
+func.to_char(func.date_trunc('week', ((table.Date) - 6)),'MON-DD')
+```
 
 The following patterns can be used to select specific parts of a timestamp or to format date/time as desired.
 
@@ -484,16 +491,15 @@ not_(
 ```
 
 **Other Examples**
-
+```python
 and_(table.origin_plant != '5013',table.origin_plant != '5026')
-
+```
 
 
 ## Not Operator
 ```python
 not_(and_(table.VALUE_FC==0.0, table.VALUE_LC==0.0))
-```
-```python
+
 not_(or_(get_column(table, 'GL Account').startswith('7'), get_column(table, 'GL Account').startswith('8')))
 ```
 
@@ -522,22 +528,20 @@ or_(
 ## Coalesce Examples
 ```python
 func.coalesce(table.UOM,  'none', \n)
-```
 
-```python
 func.coalesce(get_column(table2, 'TECHNOLOGY_RATE'), 0.0)
-```
 
 func.coalesce(table_beta.adjusted_price, table_alpha.override_price, table_alpha.price) * table_beta.quantity_sold
-
+```
 
 ## Regexp Replace Examples
+```python
 func.regexp_replace('plaidcloud', 'p', 'P') --> Plaidcloud
 
 func.regexp_replace('remove12345alphabets','[[:alpha:]]','','g') --> 12345
 
 func.regexp_replace('remove12345digits','[[:digit:]]','','g') --> removedigits
-
+```
 
 ## First Value Examples
 This is an example of using the 'first_value()' capability to calculate the running time of the time series data where each event is on a distinct row.
