@@ -7,7 +7,7 @@ weight: 1
 description: Interactive API Documentation
 ---
 
-If you want to send RPC requests from here, you'll need to log in:
+If you want to send RPC (Remote Procedure Calls), like data reads or writes, you'll need to log in:
 
 1. Click the green **Authorize** button (it should have an open padlock icon)
 2. In the **client_id** text field, type the client id `swagger`
