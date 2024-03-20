@@ -234,7 +234,7 @@ Now that you have located where you want to add an expression, you can use the t
 |JSON|json_extract_path_text|func.json_extract_path_text(json, key_1, key_2, ...)||Returns JSON object pointed to by path elements. The return value will be a type of text.|
 |JSON|json_object_keys|func.json_object_keys(json)||Returns set of keys in the JSON object. Only the "outer" object will be displayed.|
 |Window Functions|avg|func.avg().over(partition_by=field, order_by=field)||This function returns the average of the values in a group. It ignores null values|
-|Window Functions|count|func.count().over(partition_by=field, order_by=field)||An aggregate function that returns the number of rows, or the number of non-NULL rows|
+|Window Functions|count|func.count().over(partition_by=field, order_by=field)|[See Examples](#count-examples)|An aggregate function that returns the number of rows, or the number of non-NULL rows|
 |Window Functions|cume_dist|func.cume_dist().over(partition_by=field, order_by=field)||This function calculates the cumulative distribution of a value within a group of values|
 |Window Functions|dense_rank|func.dense_rank().over(partition_by=field, order_by=field)||The DENSE_RANK() is a window function that assigns a rank to each row within a partition of a result set|
 |Window Functions|first_value|func.first_value(field).over(partition_by=field, order_by=field)|[See Examples](#first-value-examples)|FIRST_VALUE is a function that returns the first value in an ordered set of values|
@@ -246,7 +246,7 @@ Now that you have located where you want to add an expression, you can use the t
 |Window Functions|percent_rank|func.percent_rank().over(partition_by=field, order_by=field)||The PERCENT_RANK() function evaluates the relative standing of a value within a partition of a result set|
 |Window Functions|rank|func.rank().over(partition_by=field, order_by=field)||This is a function that assigns a rank to each row within a partition of a result set|
 |Window Functions|row_number|func.row_number().over(partition_by=field, order_by=field)||This function is used to provide consecutive numbering of the rows in the result by the order selected in the OVER clause for each partition|
-|Window Functions|sum|func.sum().over(partition_by=field, order_by=field)||The SUM function adds values. You can add individual values, cell references or ranges or a mix of all three|
+|Window Functions|sum|func.sum().over(partition_by=field, order_by=field)|[See Examples](#sum-examples)|The SUM function adds values. You can add individual values, cell references or ranges or a mix of all three|
 
 ## Data Types
 
@@ -286,7 +286,6 @@ case(
     )
 ```
 
-
 ### A more complex example with multiple conditions
 This example returns a price based on quantity. "If" the quantity in the order is more than 100, then give the customer the special price. If it doesn't satisfy the first condition, go to the second. If the quantity is greater than 10 (11-100), then give the customer the bulk price. Otherwise give the customer the regular price.
 
@@ -323,7 +322,8 @@ case(
 In this example is from a Table:Lookup step where we are updating the "dock_final" column when the table1. dock_final value is Null.
 ```python
 case(
-    (table1.dock_final == Null, table2.dock_final), else_ = table1.dock_final
+    (table1.dock_final == Null, table2.dock_final),
+    else_ = table1.dock_final
     )
 ```
 
@@ -335,6 +335,33 @@ case(
     (get_column(table2, 'Marketing Channel') != Null, get_column(table2, 'Marketing Channel')), 
     else_ = 'none'
     )
+```
+```python
+CASE WHEN "sol_otif_pod_missing" = 1 THEN
+'POD is missing.'
+ELSE
+'POD exists.'
+END
+```
+
+```python
+CASE WHEN
+SUM("distance_dc_xd") = 0 THEN 0
+ELSE
+sum("XD")/sum("distance_dc_xd")
+END
+```
+
+```python
+sum(CASE WHEN "dc" = 'ALAB' THEN
+("sol_otif_infull" * "sol_otif_pgi_ontime")
+ELSE
+0.0
+END) / sum(CASE WHEN "dc" = 'ALAB' THEN
+1.0
+ELSE
+0.000001
+END)
 ```
 
 
@@ -373,19 +400,27 @@ cast(get_column(table, 'End_Date'),Text)
 | func.to_timestamp(bigfloat) | timestamp with time zone | convert UNIX epoch to time stamp | to_timestamp(200120400) |
 
 **Other Examples**
+```python
 to_char("Sales_Order_w_Status"."WeekName")
+
 func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
+
 func.to_date(get_column(table, 'File Creation Date'), 'YYYYMMDD')
+
+to_char("date_delivery", 'YYYY-mm-dd')
+```
 
 
 
 ## Other Date Time Examples
 ### Date Trunc
+```python
 func.date_trunc('week', get_column(table, 'Date' ))
-func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
-func.to_char(func.date_trunc('week', ((table.Date) - 6)),'MON-DD')
 
-fffffffffffffffffffffffff
+func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
+
+func.to_char(func.date_trunc('week', ((table.Date) - 6)),'MON-DD')
+```
 
 The following patterns can be used to select specific parts of a timestamp or to format date/time as desired.
 
@@ -484,16 +519,15 @@ not_(
 ```
 
 **Other Examples**
-
+```python
 and_(table.origin_plant != '5013',table.origin_plant != '5026')
-
+```
 
 
 ## Not Operator
 ```python
 not_(and_(table.VALUE_FC==0.0, table.VALUE_LC==0.0))
-```
-```python
+
 not_(or_(get_column(table, 'GL Account').startswith('7'), get_column(table, 'GL Account').startswith('8')))
 ```
 
@@ -522,22 +556,20 @@ or_(
 ## Coalesce Examples
 ```python
 func.coalesce(table.UOM,  'none', \n)
-```
 
-```python
 func.coalesce(get_column(table2, 'TECHNOLOGY_RATE'), 0.0)
-```
 
 func.coalesce(table_beta.adjusted_price, table_alpha.override_price, table_alpha.price) * table_beta.quantity_sold
-
+```
 
 ## Regexp Replace Examples
+```python
 func.regexp_replace('plaidcloud', 'p', 'P') --> Plaidcloud
 
 func.regexp_replace('remove12345alphabets','[[:alpha:]]','','g') --> 12345
 
 func.regexp_replace('remove12345digits','[[:digit:]]','','g') --> removedigits
-
+```
 
 ## First Value Examples
 This is an example of using the 'first_value()' capability to calculate the running time of the time series data where each event is on a distinct row.
@@ -614,3 +646,18 @@ Adding the expression above to an **Interval** column called 'remaining' would r
 
 
 
+## Sum Examples
+```python
+(sum("sol_otif_infull" * "sol_otif_pgi_ontime")) / (count(*) + 0.000001)
+
+sum("sol_otif_qty_filled") / (sum("sol_otif_qty_requested") + 0.000001)
+```
+
+
+
+## Count Examples
+```python
+sum("RW")/COUNT(DISTINCT "ship_to_customer")
+
+(sum("sol_otif_infull" * "sol_otif_pgi_ontime")) / (count(*) + 0.000001)
+```
