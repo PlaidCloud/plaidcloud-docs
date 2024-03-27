@@ -2,7 +2,7 @@
 title: Geography Functions
 ---
 
-This section provides reference information for the geography functions in PlaidCloud Lakehouse.
+This section provides reference information for the geography functions in PlaidCloud Lakehouse.  These functions are based on the very innovate H3 system developed by Uber to better calculate geographic relationships.  The explanation of H3 can be found [here](https://www.uber.com/blog/h3/).
 
 ## Coordinate Conversion
 
