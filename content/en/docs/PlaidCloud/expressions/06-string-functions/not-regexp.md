@@ -1,0 +1,22 @@
+---
+title: NOT REGEXP
+---
+
+Returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.
+
+## SQL Syntax
+
+```sql
+<expr> NOT REGEXP <pattern>
+```
+
+## SQL Examples
+
+```sql
+SELECT 'databend' NOT REGEXP 'd*';
++------------------------------+
+| ('databend' not regexp 'd*') |
++------------------------------+
+|                            0 |
++------------------------------+
+```
