@@ -61,21 +61,11 @@ Three types of table storage options are available in a PlaidCloud DLS:
 
  #### Regional
 
- This is the most common storage type for a database.  It is the default storage type for data in the DLS instance.
+ The storage provides triple redundancy across multiple availability zones in a single region.  This is suitable for most workloads that do not need geographically distributed redundancy.
 
- Storage cost is computed based on the allocated Hot storage space for the warehouse instance.  Storage is allocated to the warehouse on-demand up to the specified limit set by you.  The current limit is 4.5TB per node.  If your needs exceed 4.5TB per node, please contact us to increase your node storage limit.
+ #### Multi-Regional
 
- #### Warm Storage
-
-Warm Storage provides an excellent trade-off between cost and performance.  Warm storage is ideal for data used in batch processing, infrequently accessed historical data, or other general data that does not have high performance requirements.  Warm storage provides good performance and does not have per node size limits.
-
- #### Cold Storage
-
- Cold storage is significantly less expensive than both Hot and Warm but it does have limitations.  It is not included in the backup snapshots.  It has significantly lower performance and is generally not suitable for queries that must be responsive.
-
- However, for low usage or archival data it can provide a substantial cost savings while still enabling real-time access to the data, albeit at a slower query speed.  This is a significant improvement over using ETL processes to archive table data and then needing to reconstitute it later when required through additional ETL processes.
-
- For example, if the current and prior year financial data is stored in high performance storage to handle the vast majority of queries, prior years could be stored in Cold storage.  When access to several years is needed, exceeding what is in hot storage, then a simple UNION query of the hot data and the cold data will return the full dataset.  This eliminates complex data archival processes by keeping all the data readily available in the same DLS instance while optimizing storage costs.
+This storage provides triple redundancy in each region and is stored in two regions.  This provides geographical redundancy and fast failover for data requiring the highest availability.
  
 
 ### Network Egress
@@ -92,31 +82,3 @@ Network egress is calculated based on the egress traffic from your PlaidCloud Wo
 If you connect between DLS instances in the same region using internal network routing there are no egress charges.  However, if you connect using the external endpoint then egress charges will apply.
 
 There is no charge for ingress traffic.
-
-
-### Backup Retention Period
-
-| Retention Period                               | Hourly Cost (GB/hr) |  Monthly Cost (GB/month)  |
-|------------------------------------------------|---------------------|---------------------------|
-| Scheduled Backups - First 30 Days              |                Free |                      Free |
-| Scheduled Backups - Retention (after 30 days)  |           $0.000274 |                     $0.02 |
-| On-Demand Backup Snapshots                     |           $0.000274 |                     $0.02 |
-
-
-By default, all scheduled backups are stored for 30 days free of charge.  Setting the retention period beyond 30 days will incur additional storage retention charges.  Backup retention storage cost is based on the allocated storage size of the DLS instance when the backup was taken and the duration for which you would like to retain each backup beyond 30 days.
-
-For example, if the DLS instance allocated storage is 200GB and the additional retention period is 7 days, the backup storage cost is computed as 200GB x 7 Days = 1,400 GB Days.
-
-1,400 GB days x 24 hours/day x $0.000274 per GB/hr = $9.20
-
-On-demand backups can be taken at any time and will incur backup storage fees immediately.  There is a minimum of 30 days billing applied to on-demand backups even if they are deleted within the 30 days.
-
-By default, on-demand backups do not have a retention period set.  If you make on-demand backups without a retention period, you must manually delete the backup or backup storage fees will continue to accrue.
-
-If you put a hold on a backup to prevent deletion when the retention period expires, you must remove that hold or manually delete the backup.  If the hold remains you will continue to incur backup storage fees. 
-
-## Premium Capabilities Included
-
-PlaidCloud DLS provides several additional features as part of each DLS instance that provide valuable capabilities without additional fees.  Each DLS instance includes [MADLib](https://madlib.apache.org/), [PostGIS](https://postgis.net/), and [PXF](https://github.com/greenplum-db/pxf).
-
-The [MADLib](https://madlib.apache.org/) and [PostGIS](https://postgis.net/) libraries allow you to perform machine learning and geospatial analysis without moving your data or using other external tools.  [PXF](https://github.com/greenplum-db/pxf) provides the ability to query external data files, whose metadata is not managed by the database. PXF includes built-in connectors for accessing data that exists inside HDFS files, Hive tables, HBase tables, JDBC-accessible databases and more. Users can also create their own connectors to other data storage or processing engines.
