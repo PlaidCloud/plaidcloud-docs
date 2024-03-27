@@ -22,7 +22,7 @@ KURTOSIS(<expr>)
 
 Nullable Float64.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

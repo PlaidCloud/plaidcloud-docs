@@ -61,7 +61,7 @@ SELECT DATE_FORMAT(TO_DATE('2022-01-02')) AS dt, TYPEOF(dt);
 
 ## SQL Examples
 
-### Example 1: Converting a Timestamp-Format String
+### SQL Examples 1: Converting a Timestamp-Format String
 
 ```sql
 SELECT TO_DATE('2022-01-02T01:12:00+07:00'), STR_TO_DATE('2022-01-02T01:12:00+07:00');
@@ -81,7 +81,7 @@ SELECT TO_DATE('2022-01-02'), STR_TO_DATE('2022-01-02');
 └───────────────────────────────────────────────────┘
 ```
 
-### Example 2: Converting an Integer
+### SQL Examples 2: Converting an Integer
 
 ```sql
 SELECT TO_DATE(1), STR_TO_DATE(1), TO_DATE(-1), STR_TO_DATE(-1);
@@ -94,7 +94,7 @@ SELECT TO_DATE(1), STR_TO_DATE(1), TO_DATE(-1), STR_TO_DATE(-1);
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-### Example 3: Converting a String using the Given Format
+### SQL Examples 3: Converting a String using the Given Format
 
 ```sql
 SELECT TO_DATE('12/25/2022','%m/%d/%Y'), STR_TO_DATE('12/25/2022','%m/%d/%Y');

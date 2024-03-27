@@ -23,7 +23,7 @@ ARG_MAX(<arg>, <val>)
 
  matches `arg` type.
 
-## Example
+## SQL Examples
 
 **Creating a Table and Inserting Sample Data**
 

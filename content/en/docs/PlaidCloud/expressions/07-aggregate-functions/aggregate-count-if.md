@@ -11,7 +11,7 @@ The suffix `_IF` can be appended to the name of any aggregate function. In this 
 COUNT_IF(<column>, <cond>)
 ```
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

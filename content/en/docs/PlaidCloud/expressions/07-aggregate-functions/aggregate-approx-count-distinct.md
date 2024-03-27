@@ -18,7 +18,7 @@ APPROX_COUNT_DISTINCT(<expr>)
 
 Integer.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

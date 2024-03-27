@@ -30,7 +30,7 @@ QUANTILE_TDIGEST_WEIGHTED(<level1>[, <level2>, ...])(<expr>, <weight_expr>)
 
 Returns either a Float64 value or an array of Float64 values, depending on the number of quantile levels specified.
 
-## Example
+## SQL Examples
 
 ```sql
 -- Create a table and insert sample data

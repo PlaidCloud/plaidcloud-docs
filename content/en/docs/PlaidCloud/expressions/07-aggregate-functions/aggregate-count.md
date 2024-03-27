@@ -24,7 +24,7 @@ COUNT(<expr>)
 
 An integer.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

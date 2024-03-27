@@ -22,7 +22,7 @@ MIN(<expr>)
 
 The minimum value, in the type of the value.
 
-## Example
+## SQL Examples
 
 ---
 title: MIN
@@ -48,7 +48,7 @@ MIN(expression)
 
 The minimum value, in the type of the value.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

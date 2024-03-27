@@ -15,7 +15,7 @@ JSON_PATH_QUERY_FIRST(<variant>, '<path_name>')
 
 VARIANT
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 

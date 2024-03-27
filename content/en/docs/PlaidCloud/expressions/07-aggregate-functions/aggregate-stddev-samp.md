@@ -26,7 +26,7 @@ STDDEV_SAMP(<expr>)
 
 double
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

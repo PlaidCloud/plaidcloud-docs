@@ -38,7 +38,7 @@ SELECT string_agg(number::VARCHAR, '|') AS s FROM numbers(5);
 
 the String type
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 

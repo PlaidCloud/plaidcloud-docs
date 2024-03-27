@@ -26,7 +26,7 @@ RETENTION( <cond1> , <cond2> , ..., <cond32> );
 
 The array of 1 or 0.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

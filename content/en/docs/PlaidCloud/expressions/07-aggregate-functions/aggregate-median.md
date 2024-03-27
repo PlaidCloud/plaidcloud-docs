@@ -26,7 +26,7 @@ MEDIAN(<expr>)
 
 the type of the value.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

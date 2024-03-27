@@ -29,7 +29,7 @@ QUANTILE_CONT(level1, level2, ...)(<expr>)
 
 Float64 or float64 array based on level number.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

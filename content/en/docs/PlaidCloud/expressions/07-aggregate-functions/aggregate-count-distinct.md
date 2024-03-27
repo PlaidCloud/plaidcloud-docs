@@ -30,7 +30,7 @@ UNIQ(<expr>)
 
 UInt64
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

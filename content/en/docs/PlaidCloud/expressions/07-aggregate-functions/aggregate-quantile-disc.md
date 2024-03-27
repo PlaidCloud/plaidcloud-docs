@@ -30,7 +30,7 @@ QUANTILE_DISC(level1, level2, ...)(<expr>)
 
 InputType or array of InputType based on level number.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

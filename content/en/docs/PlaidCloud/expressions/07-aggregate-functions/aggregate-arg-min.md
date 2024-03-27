@@ -23,7 +23,7 @@ ARG_MIN(<arg>, <val>)
 
  matches `arg` type.
 
-## Example
+## SQL Examples
 
 Let's create a table students with columns id, name, and score, and insert some data:
 ```sql

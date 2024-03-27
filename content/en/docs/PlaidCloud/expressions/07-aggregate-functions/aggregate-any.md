@@ -22,7 +22,7 @@ ANY(<expr>)
 
 The first encountered (non-NULL) value, in the type of the value. If all values are NULL, the return value is NULL.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data*
 ```sql

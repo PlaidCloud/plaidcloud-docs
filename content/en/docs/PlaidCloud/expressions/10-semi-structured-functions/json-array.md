@@ -19,7 +19,7 @@ JSON array.
 
 ## SQL Examples
 
-### Example 1: Creating JSON Array with Constant Values or Expressions
+### SQL Examples 1: Creating JSON Array with Constant Values or Expressions
 
 ```sql
 SELECT JSON_ARRAY('PlaidCloud Lakehouse', 3.14, NOW(), TRUE, NULL);
@@ -35,7 +35,7 @@ json_array('fruits', json_array('apple', 'banana', 'orange'), json_object('price
 ["fruits",["apple","banana","orange"],{"price":1.2,"quantity":3}]                                      |
 ```
 
-### Example 2: Creating JSON Array from Table Data
+### SQL Examples 2: Creating JSON Array from Table Data
 
 ```sql
 CREATE TABLE products (

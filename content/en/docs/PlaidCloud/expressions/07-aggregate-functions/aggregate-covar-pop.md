@@ -21,7 +21,7 @@ COVAR_POP(<expr1>, <expr2>)
 
 float64
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

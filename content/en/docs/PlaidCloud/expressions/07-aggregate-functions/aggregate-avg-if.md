@@ -11,7 +11,7 @@ The suffix -If can be appended to the name of any aggregate function. In this ca
 AVG_IF(<column>, <cond>)
 ```
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql

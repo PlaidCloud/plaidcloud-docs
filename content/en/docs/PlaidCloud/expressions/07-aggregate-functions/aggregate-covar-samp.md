@@ -27,7 +27,7 @@ COVAR_SAMP(<expr1>, <expr2>)
 
 float64, when n <= 1, returns +∞.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 

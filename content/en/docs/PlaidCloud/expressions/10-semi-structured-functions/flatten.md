@@ -44,7 +44,7 @@ When using the LATERAL keyword with FLATTEN, these output columns may not be exp
 
 ## SQL Examples
 
-### Example 1: Demonstrating PATH, OUTER, RECURSIVE, and MODE Parameters
+### SQL Examples 1: Demonstrating PATH, OUTER, RECURSIVE, and MODE Parameters
 
 This example demonstrates the behavior of the FLATTEN function with respect to the PATH, OUTER, RECURSIVE, and MODE parameters.
 
@@ -147,7 +147,7 @@ FROM
 
 ```
 
-### Example 2: Demonstrating LATERAL FLATTEN
+### SQL Examples 2: Demonstrating LATERAL FLATTEN
 
 This example demonstrates the behavior of the FLATTEN function when used in conjunction with the LATERAL keyword.
 

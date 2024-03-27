@@ -34,7 +34,7 @@ Returns a list containing a continuous sequence of numeric values, dates, or tim
 
 ## SQL Examples
 
-### Example 1: Generating Numeric, Date, and Timestamp Data
+### SQL Examples 1: Generating Numeric, Date, and Timestamp Data
 
 ```sql
 SELECT * FROM GENERATE_SERIES(1, 10, 2);
@@ -68,7 +68,7 @@ generate_series    |
 2023-03-27 00:00:00|
 ```
 
-### Example 2: Filling Query Result Gaps 
+### SQL Examples 2: Filling Query Result Gaps 
 
 This example uses the GENERATE_SERIES function and left join operator to handle gaps in query results caused by missing information in specific ranges.
 

@@ -26,7 +26,7 @@ SUM(<expr>)
 
 A double if the input type is double, otherwise integer.
 
-## Example
+## SQL Examples
 
 **Create a Table and Insert Sample Data**
 ```sql
