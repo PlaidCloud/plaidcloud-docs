@@ -4,6 +4,22 @@ title: REGEXP_SUBSTR
 
 Returns the substring of the string `expr` that matches the regular expression specified by the pattern `pat`, NULL if there is no match. If expr or pat is NULL, the return value is NULL.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

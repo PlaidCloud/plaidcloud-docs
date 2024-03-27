@@ -4,6 +4,22 @@ title: OCTET_LENGTH
 
 OCTET_LENGTH() is a synonym for LENGTH().
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

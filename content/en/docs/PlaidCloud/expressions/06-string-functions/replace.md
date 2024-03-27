@@ -4,6 +4,22 @@ title: REPLACE
 
 Returns the string str with all occurrences of the string from_str replaced by the string to_str.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

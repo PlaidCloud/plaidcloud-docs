@@ -4,6 +4,22 @@ title: RIGHT
 
 Returns the rightmost len characters from the string str, or NULL if any argument is NULL.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

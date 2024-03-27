@@ -7,6 +7,22 @@ import FunctionDescription from '@site/src/components/FunctionDescription';
 
 Transforms a given string by replacing specific characters with corresponding replacements, as defined by the provided mapping.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

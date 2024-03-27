@@ -4,6 +4,22 @@ title: REGEXP_LIKE
 
 REGEXP_LIKE function is used to check that whether the string matches regular expression.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

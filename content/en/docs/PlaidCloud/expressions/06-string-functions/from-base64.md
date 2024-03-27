@@ -5,6 +5,22 @@ title: FROM_BASE64
 Takes a string encoded with the base-64 encoded rules nd returns the decoded result as a binary.
 The result is NULL if the argument is NULL or not a valid base-64 string.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

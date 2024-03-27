@@ -9,6 +9,22 @@ Splits a string using a specified delimiter and returns the resulting parts as a
 
 See also: [SPLIT_PART](split-part)
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -12,7 +12,7 @@ func.ascii(<expr>)
 
 ## Analyze Examples
 ```python
-func.ascii('2');
+func.ascii('2')
 +-----------------+
 | func.ascii('2') |
 +-----------------+

@@ -4,6 +4,22 @@ title: REGEXP_REPLACE
 
 Replaces occurrences in the string `expr` that match the regular expression specified by the pattern `pat` with the replacement string `repl`, and returns the resulting string. If `expr`, `pat`, or `repl` is NULL, the return value is NULL.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

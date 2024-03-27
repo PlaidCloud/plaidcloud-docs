@@ -4,6 +4,22 @@ title: STRCMP
 
 Returns 0 if the strings are the same, -1 if the first argument is smaller than the second, and 1 otherwise.
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

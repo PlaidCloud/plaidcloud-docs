@@ -6,6 +6,22 @@ CONCAT_WS() stands for Concatenate With Separator and is a special form of CONCA
 
 CONCAT_WS() does not skip empty strings. However, it does skip any NULL values after the separator argument.
 
+# Analyze Syntax
+
+```python
+func.concat_ws(<separator>, <expr1>, ...)
+```
+
+## Analyze Examples
+```python
+func.concat_ws(',', 'data', 'fuse', 'labs', '2021')
++-----------------------------------------------------+
+| func.concat_ws(',', 'data', 'fuse', 'labs', '2021') |
++-----------------------------------------------------+
+| data,fuse,labs,2021                                 |
++-----------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

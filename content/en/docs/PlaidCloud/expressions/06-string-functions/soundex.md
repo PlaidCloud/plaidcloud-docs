@@ -16,6 +16,22 @@ Soundex converts an alphanumeric string to a four-character code that is based o
 
 See also: [SOUNDS LIKE](soundslike.md)
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -10,6 +10,22 @@ SOUNDS LIKE is frequently employed in the WHERE clause of SQL queries to narrow 
 While the function can be useful for approximate string matching, it is important to note that it is not always accurate. The Soundex algorithm is based on English pronunciation rules and may not work well for strings from other languages or dialects. 
 :::
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql

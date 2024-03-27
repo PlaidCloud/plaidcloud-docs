@@ -5,6 +5,24 @@ title: TRIM
 Returns the string without leading or trailing occurrences of the specified remove string. If remove string
 is omitted, spaces are removed.
 
+The Analyze function automatically trims both leading and trailing spaces.
+
+# Analyze Syntax
+
+```python
+func.trim(str)
+```
+
+## Analyze Examples
+```python
+func.trim('   plaidcloud   ')
++--------------------------------+
+| func.trim('   plaidcloud   ') |
++--------------------------------+
+| 'plaidcloud'                   |
++--------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -13,6 +13,22 @@ calculated from the numeric values of its constituent bytes using this formula:
 + (3rd byte code * 256^2) ...
 ```
 
+# Analyze Syntax
+
+```python
+func.
+```
+
+## Analyze Examples
+```python
+func.
++-----------------+
+| func. |
++-----------------+
+|              50 |
++-----------------+
+```
+
 ## SQL Syntax
 
 ```sql
