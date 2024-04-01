@@ -12,7 +12,7 @@ SHA(<expr>)
 
 ## Aliases
 
-- [SHA1](sha1.md)
+- [SHA1](sha1)
 
 ## SQL Examples
 

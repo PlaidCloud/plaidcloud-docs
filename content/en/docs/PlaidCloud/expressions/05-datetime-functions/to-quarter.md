@@ -16,7 +16,7 @@ TO_QUARTER( <date_or_time_expr> )
 
 ## Aliases
 
-- [QUARTER](quarter.md)
+- [QUARTER](quarter)
 
 ## Return Type
 

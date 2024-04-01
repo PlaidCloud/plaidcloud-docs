@@ -12,7 +12,7 @@ GEN_RANDOM_UUID()
 
 ## Aliases
 
-- [UUID](uuid.md)
+- [UUID](uuid)
 
 ## SQL Examples
 

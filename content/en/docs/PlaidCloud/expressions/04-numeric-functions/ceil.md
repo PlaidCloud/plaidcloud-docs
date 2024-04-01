@@ -12,7 +12,7 @@ CEIL( <x> )
 
 ## Aliases
 
-- [CEILING](ceiling.md)
+- [CEILING](ceiling)
 
 ## SQL Examples
 

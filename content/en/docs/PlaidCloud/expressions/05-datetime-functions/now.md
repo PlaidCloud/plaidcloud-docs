@@ -16,7 +16,7 @@ TIMESTAMP
 
 ## Aliases
 
-- [CURRENT_TIMESTAMP](current-timestamp.md)
+- [CURRENT_TIMESTAMP](current-timestamp)
 
 ## SQL Examples
 

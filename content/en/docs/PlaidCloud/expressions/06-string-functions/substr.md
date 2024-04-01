@@ -43,8 +43,8 @@ SUBSTR(<str>, <pos>, <len>)
 
 ## Aliases
 
-- [SUBSTRING](substring.md)
-- [MID](mid.md)
+- [SUBSTRING](substring)
+- [MID](mid)
 
 ## Return Type
 

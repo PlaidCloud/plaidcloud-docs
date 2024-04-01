@@ -6,8 +6,8 @@ Returns the quotient by dividing the first number by the second one, rounding do
 
 See also: 
 
-- [DIV0](div0.md)
-- [DIVNULL](divnull.md)
+- [DIV0](div0)
+- [DIVNULL](divnull)
 
 ## SQL Syntax
 
@@ -17,7 +17,7 @@ See also:
 
 ## Aliases
 
-- [INTDIV](intdiv.md)
+- [INTDIV](intdiv)
 
 ## SQL Examples
 

@@ -12,7 +12,7 @@ POW( <x, y> )
 
 ## Aliases
 
-- [POWER](power.md)
+- [POWER](power)
 
 ## SQL Examples
 

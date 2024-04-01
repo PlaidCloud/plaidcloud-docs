@@ -6,22 +6,22 @@ This section provides reference information for the datetime-related functions i
 
 ## Conversion Functions
 
-- [DATE](date.md)
+- [DATE](date)
 - [TO_MONTH](to-month)
-- [MONTH](month.md)
+- [MONTH](month)
 - [TO_DATE](to-date)
 - [TO_DATETIME](to-datetime)
-- [TODAY](today.md)
+- [TODAY](today)
 - [TO_DAY_OF_MONTH](to-day-of-month)
-- [DAY](day.md)
+- [DAY](day)
 - [TO_DAY_OF_WEEK](to-day-of-week)
 - [TO_DAY_OF_YEAR](to-day-of-year)
 - [TO_HOUR](to-hour)
 - [TO_MINUTE](to-minute)
 - [TO_MONDAY](to-monday)
-- [TOMORROW](tomorrow.md)
+- [TOMORROW](tomorrow)
 - [TO_QUARTER](to-quarter)
-- [QUARTER](quarter.md)
+- [QUARTER](quarter)
 - [TO_SECOND](to-second)
 - [TO_START_OF_DAY](to-start-of-day)
 - [TO_START_OF_FIFTEEN_MINUTES](to-start-of-fifteen-minutes)
@@ -38,10 +38,10 @@ This section provides reference information for the datetime-related functions i
 - [TOTIMESTAMP](to-timestamp)
 - [TO_UNIX_TIMESTAMP](to-unix-timestamp)
 - [TO_WEEK_OF_YEAR](to-week-of-year)
-- [WEEK](week.md)
-- [WEEKOFYEAR](weekofyear.md)
+- [WEEK](week)
+- [WEEKOFYEAR](weekofyear)
 - [TO_YEAR](to-year)
-- [YEAR](year.md)
+- [YEAR](year)
 - [TO_YYYYMM](to-yyyymm)
 - [TO_YYYYMMDD](to-yyyymmdd)
 - [TO_YYYYMMDDHH](to-yyyymmddhh)
@@ -49,23 +49,23 @@ This section provides reference information for the datetime-related functions i
 
 ## Date Arithmetic Functions
 
-- [ADD INTERVAL](addinterval.md)
+- [ADD INTERVAL](addinterval)
 - [DATE_ADD](date-add)
 - [DATE_SUB](date-sub)
-- [SUBTRACT INTERVAL](subtractinterval.md)
+- [SUBTRACT INTERVAL](subtractinterval)
 
 ## Date Information Functions
 
-- [DATE_PART](date-part.md)
+- [DATE_PART](date-part)
 - [DATE_DIFF](date-diff)
 - [DATE_FORMAT](date-format)
 - [DATE_TRUNC](date-trunc)
-- [NOW](now.md)
-- [CURRENT_TIMESTAMP](current-timestamp.md)
+- [NOW](now)
+- [CURRENT_TIMESTAMP](current-timestamp)
 
 ## Others
 
-- [EXTRACT](extract.md)
+- [EXTRACT](extract)
 - [TIME_SLOT](time-slot)
-- [TIMEZONE](timezone.md)
-- [YESTERDAY](yesterday.md)
+- [TIMEZONE](timezone)
+- [YESTERDAY](yesterday)

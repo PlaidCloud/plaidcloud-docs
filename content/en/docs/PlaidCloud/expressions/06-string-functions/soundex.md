@@ -5,7 +5,7 @@ title: SOUNDEX
 
 Generates the Soundex code for a string.
 
-- A Soundex code consists of a letter followed by three numerical digits. PlaidCloud Lakehouse's implementation returns more than 4 digits, but you can [SUBSTR](substr.md) the result to get a standard Soundex code.
+- A Soundex code consists of a letter followed by three numerical digits. PlaidCloud Lakehouse's implementation returns more than 4 digits, but you can [SUBSTR](substr) the result to get a standard Soundex code.
 - All non-alphabetic characters in the string are ignored.
 - All international alphabetic characters outside the A-Z range are ignored unless they're the first letter.
 
@@ -14,7 +14,7 @@ Generates the Soundex code for a string.
 Soundex converts an alphanumeric string to a four-character code that is based on how the string sounds when spoken in English. For more information, see https://en.wikipedia.org/wiki/Soundex
 :::
 
-See also: [SOUNDS LIKE](soundslike.md)
+See also: [SOUNDS LIKE](soundslike)
 
 # Analyze Syntax
 

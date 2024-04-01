@@ -18,7 +18,7 @@ TO_YEAR(<expr>)
 
 ## Aliases
 
-- [YEAR](year.md)
+- [YEAR](year)
 
 ## Return Type
 

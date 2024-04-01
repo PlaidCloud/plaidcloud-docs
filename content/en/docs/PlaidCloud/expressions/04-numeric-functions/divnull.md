@@ -9,8 +9,8 @@ Returns the quotient by dividing the first number by the second one. Returns NUL
 
 See also:
 
-- [DIV](div.md)
-- [DIV0](div0.md)
+- [DIV](div)
+- [DIV0](div0)
 
 ## SQL Syntax
 

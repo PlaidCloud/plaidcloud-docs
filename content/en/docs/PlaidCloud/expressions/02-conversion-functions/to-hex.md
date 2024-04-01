@@ -14,7 +14,7 @@ TO_HEX(<expr>)
 
 ## Aliases
 
-- [HEX](../06-string-functions/hex.md)
+- [HEX](../06-string-functions/hex)
 
 ## SQL Examples
 

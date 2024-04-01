@@ -10,8 +10,8 @@ Returns the Nth value from an ordered group of values.
 
 See also:
 
-- [FIRST_VALUE](first-value.md)
-- [LAST_VALUE](last-value.md)
+- [FIRST_VALUE](first-value)
+- [LAST_VALUE](last-value)
 
 ## SQL Syntax
 
@@ -19,7 +19,7 @@ See also:
 NTH_VALUE(expression, n) OVER ([PARTITION BY partition_expression] ORDER BY order_expression [window_frame])
 ```
 
-For the syntax of window frame, see [Window Frame Syntax](index.md#window-frame-syntax).
+For the syntax of window frame, see [Window Frame Syntax](index#window-frame-syntax).
 
 ## SQL Examples
 

@@ -18,7 +18,7 @@ TO_MONTH(<expr>)
 
 ## Aliases
 
-- [MONTH](month.md)
+- [MONTH](month)
 
 ## Return Type
 

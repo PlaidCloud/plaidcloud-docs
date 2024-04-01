@@ -7,7 +7,7 @@ import FunctionDescription from '@site/src/components/FunctionDescription';
 
 Returns the relative rank of a given value within a set of values. The resulting value falls between 0 and 1, inclusive. Please note that the first row in any set has a PERCENT_RANK of 0.
 
-See also: [CUME_DIST](cume-dist.md)
+See also: [CUME_DIST](cume-dist)
 
 ## SQL Syntax
 

@@ -7,16 +7,19 @@ Pattern not matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If eit
 # Analyze Syntax
 
 ```python
-func.
+<column>.not_like(<pattern>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
+my_clothes.not_like('%pants)
 +-----------------+
-| func. |
+| my_clothes      |
 +-----------------+
-|              50 |
+| plaid pants XL  |
+| plaid hat       |
+| plaid shirt     |
 +-----------------+
 ```
 

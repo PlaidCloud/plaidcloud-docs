@@ -9,7 +9,9 @@ date: 2022-01-25T07:39:51
 
 ## About
 
-The PlaidCloud Data Lakehouse Service (DLS) stands on the shoulders of great technology.  The service is based on [Databend](https://github.com/datafuselabs/databend), a lakehouse suitable for big data analytics and traditional data warehouse operations while supporting vast storage as a data lake.  It's extensive analytical optimizations, array of indexing types, high compression makes it ideal for wide array of uses.
+The PlaidCloud Data Lakehouse Service (DLS) stands on the shoulders of great technology.  The service is based on [Databend](https://github.com/PlaidCloud/databend), a lakehouse suitable for big data analytics and traditional data warehouse operations while supporting vast storage as a data lake.  It's extensive analytical optimizations, array of indexing types, high compression, and native time travel capabilities makes it ideal for wide array of uses.
+
+The PlaidCloud DLS also has the ability to integrate with existing data lakes on Apache Hive, Apache Iceberg, and Delta Lake.  This allows for accessing vast amounts of already stored data using a modern and fast query engine without having to move any data.
 
 The PlaidCloud DLS continues our goal of providing the best open source options for our customers to eliminate lock-in while also providing services as turn-key solutions.
 
@@ -39,10 +41,10 @@ With usage based billing, you only pay for what you use.  There are no per-query
 
 We eliminate the headache of having to choose different data warehousing tiers based on optimizing storage costs.  We offer the ability to select how long each table's history is kept live for time travel queries and recovery.
 
-Zero (0) days of time travel creates a transient table that will have no time travel or recovery.  This is suitable for intermediate tables.
+Zero (0) days of time travel creates a transient table that will have no time travel or recovery.  This is suitable for intermediate tables or tables that can be reproduced from other data.
 
 You can set tables to have from one (1) to ninety (90) days of time travel.  During the time travel window you can issue queries to view data at different snapshots or 
-periods along with recovery a table at a point-in-time to a new table.  This is an incredibly powerful capability that surpasses traditional backups because the historical state of a table can be viewed with a simple query.
+periods along with recovery a table at a point-in-time to a new table.  This is an incredibly powerful capability that surpasses traditional backups because the historical state of a table can be viewed with a simple query rather than having to recover a backup.
 
 
 ### Highly performant
@@ -72,14 +74,14 @@ From an Analyze project, you can select any DLS instance.  This also provides th
 
 ### Clone
 
-Making a clone of an existing lakehouse performs a complete copy of the source lakeehouse.  When a clone is made it has nothing shared with the original lakehouse and therefore is a quick way to isolate a complete lakehouse for testing or even a live archive at a specific point in time.
+Making a clone of an existing lakehouse performs a complete copy of the source lakehouse.  When a clone is made it has nothing shared with the original lakehouse and therefore is a quick way to isolate a complete lakehouse for testing or even a live archive at a specific point in time.
 
 Another important feature is that you can clone a lakehouse to a different data center.  This might be desireable if global usage shifts from one region to another or having a copy of a warehouse in various regions for development/testing improves internal processes.
 
 
 ### Web or Desktop SQL Client Access
 
-A web SQL console is provided within PlaidCloud.  It is a full featured SQL client so it supports most use cases.  However, for more advanced use cases, a desktop client or other service may be desired.  The PlaidCloud DWS uses standard security and access controls enabling remote connections and controlled user permissions.
+A web SQL console is provided within PlaidCloud.  It is a full featured SQL client so it supports most use cases.  However, for more advanced use cases, a desktop client or other service may be desired.  The PlaidCloud DLS uses standard security and access controls enabling remote connections and controlled user permissions.
 
 Access options allow quick and easy start-up as well as ongoing query and analytics access.  A firewall allows control over external access.
 

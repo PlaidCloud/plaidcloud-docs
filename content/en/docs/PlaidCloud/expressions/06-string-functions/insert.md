@@ -7,17 +7,17 @@ Returns the string str, with the substring beginning at position pos and len cha
 # Analyze Syntax
 
 ```python
-func.
+func.insert(<str>, <pos>, <len>, <newstr>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.insert('Quadratic', 3, 4, 'What')
++----------------------------------------+
+| func.insert('Quadratic', 3, 4, 'What') |
++----------------------------------------+
+| QuWhattic                              |
++----------------------------------------+
 ```
 
 ## SQL Syntax

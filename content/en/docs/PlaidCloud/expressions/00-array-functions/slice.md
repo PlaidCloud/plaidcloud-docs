@@ -12,7 +12,7 @@ SLICE( <array>, <start>[, <end>] )
 
 ## Aliases
 
-- [ARRAY_SLICE](array-slice.md)
+- [ARRAY_SLICE](array-slice)
 
 ## SQL Examples
 

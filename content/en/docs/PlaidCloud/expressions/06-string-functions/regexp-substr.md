@@ -7,17 +7,17 @@ Returns the substring of the string `expr` that matches the regular expression s
 # Analyze Syntax
 
 ```python
-func.
+func.regexp_substr(<expr>, <pat[, pos[, occurrence[, match_type]]]>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.regexp_substr('abc def ghi', '[a-z]+')
++---------------------------------------------+
+| func.regexp_substr('abc def ghi', '[a-z]+') |
++---------------------------------------------+
+| abc                                         |
++---------------------------------------------+
 ```
 
 ## SQL Syntax

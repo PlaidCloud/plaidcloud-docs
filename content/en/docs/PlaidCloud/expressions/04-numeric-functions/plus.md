@@ -12,7 +12,7 @@ PLUS(<number1>, <number2>)
 
 ## Aliases
 
-- [ADD](add.md)
+- [ADD](add)
 
 ## SQL Examples
 

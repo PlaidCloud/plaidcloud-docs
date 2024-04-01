@@ -10,8 +10,8 @@ Returns the last value from an ordered group of values.
 
 See also:
 
-- [FIRST_VALUE](first-value.md)
-- [NTH_VALUE](nth-value.md)
+- [FIRST_VALUE](first-value)
+- [NTH_VALUE](nth-value)
 
 ## SQL Syntax
 
@@ -19,7 +19,7 @@ See also:
 LAST_VALUE(expression) OVER ([PARTITION BY partition_expression] ORDER BY order_expression [window_frame])
 ```
 
-For the syntax of window frame, see [Window Frame Syntax](index.md#window-frame-syntax).
+For the syntax of window frame, see [Window Frame Syntax](index#window-frame-syntax).
 
 ## SQL Examples
 

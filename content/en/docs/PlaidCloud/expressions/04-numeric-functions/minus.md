@@ -12,9 +12,9 @@ MINUS( <x> )
 
 ## Aliases
 
-- [NEG](neg.md)
-- [NEGATE](negate.md)
-- [SUBTRACT](subtract.md)
+- [NEG](neg)
+- [NEGATE](negate)
+- [SUBTRACT](subtract)
 
 ## SQL Examples
 

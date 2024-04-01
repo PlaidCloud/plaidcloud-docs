@@ -7,16 +7,17 @@ Returns a string representation of the octal value of N.
 # Analyze Syntax
 
 ```python
-func.
+func.oct(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
+func.oct(12)
 +-----------------+
-| func. |
+| func.oct(12)    |
 +-----------------+
-|              50 |
+| 014             |
 +-----------------+
 ```
 

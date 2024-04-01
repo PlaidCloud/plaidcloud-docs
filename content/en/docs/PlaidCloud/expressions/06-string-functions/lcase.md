@@ -2,4 +2,4 @@
 title: LCASE
 ---
 
-Alias for [LOWER](lower.md).
+Alias for [LOWER](lower).

@@ -2,7 +2,7 @@
 title: ARRAY_APPLY
 ---
 
-Alias for [ARRAY_TRANSFORM](array-transform.md).
+Alias for [ARRAY_TRANSFORM](array-transform).
 
 ## SQL Syntax
 

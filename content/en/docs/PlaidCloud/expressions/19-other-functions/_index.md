@@ -4,17 +4,17 @@ title: Other Functions
 
 ## Type Conversion Functions
 
-- [TO_NULLABLE](to-nullable.md)
-- [TYPEOF](typeof.md)
+- [TO_NULLABLE](to-nullable)
+- [TYPEOF](typeof)
 
 ## Utility Functions
 
-- [HUMANIZE-NUMBER](humanize-number.md)
-- [HUMANIZE-SIZE](humanize-size.md)
+- [HUMANIZE-NUMBER](humanize-number)
+- [HUMANIZE-SIZE](humanize-size)
 
 ## Others
 
-- [ASSUME_NOT_NULL](assume-not-null.md)
-- [EXISTS](exists.md)
-- [GROUPING](grouping.md)
-- [IGNORE](ignore.md)
+- [ASSUME_NOT_NULL](assume-not-null)
+- [EXISTS](exists)
+- [GROUPING](grouping)
+- [IGNORE](ignore)

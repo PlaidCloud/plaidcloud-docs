@@ -18,7 +18,7 @@ TO_DAY_OF_MONTH(<expr>)
 
 ## Aliases
 
-- [DAY](day.md)
+- [DAY](day)
 
 ## Return Type
 

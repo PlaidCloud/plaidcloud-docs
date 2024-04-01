@@ -7,17 +7,31 @@ Returns 1 if the string expr doesn't match the regular expression specified by t
 # Analyze Syntax
 
 ```python
-func.
+not_(<column>.regexp_match(<pattern>))
 ```
 
 ## Analyze Examples
 ```python
-func.
+
+With an input table of:
 +-----------------+
-| func. |
+| my_clothes      |
 +-----------------+
-|              50 |
+| plaid pants     |
+| plaid hat       |
+| plaid shirt     |
+| shoes           |
 +-----------------+
+
+not_(my_clothes.regexp_match('p*'))
++-------------------------------------+
+| not_(my_clothes.regexp_match('p*')) |
++-------------------------------------+
+| false                               |
+| false                               |
+| false                               |
+| true                                |
++-------------------------------------+
 ```
 
 ## SQL Syntax

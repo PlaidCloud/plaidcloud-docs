@@ -7,17 +7,31 @@ Returns `true` if the string `<expr>` matches the regular expression specified b
 # Analyze Syntax
 
 ```python
-func.
+<column>.regexp_match(<pattern>)
 ```
 
 ## Analyze Examples
 ```python
-func.
+
+With an input table of:
 +-----------------+
-| func. |
+| my_clothes      |
 +-----------------+
-|              50 |
+| plaid pants     |
+| plaid hat       |
+| plaid shirt     |
+| shoes           |
 +-----------------+
+
+my_clothes.regexp_match('p*')
++-------------------------------+
+| my_clothes.regexp_match('p*') |
++-------------------------------+
+| true                          |
+| true                          |
+| true                          |
+| false                         |
++-------------------------------+
 ```
 
 ## SQL Syntax
@@ -28,7 +42,7 @@ func.
 
 ## Aliases
 
-- [RLIKE](rlike.md)
+- [RLIKE](rlike)
 
 ## SQL Examples
 

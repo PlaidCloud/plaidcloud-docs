@@ -12,7 +12,7 @@ UNHEX(<expr>)
 
 ## Aliases
 
-- [FROM_HEX](from-hex.md)
+- [FROM_HEX](from-hex)
 
 ## SQL Examples
 

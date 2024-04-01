@@ -7,17 +7,17 @@ Returns the starting index of the substring of the string `expr` that matches th
 # Analyze Syntax
 
 ```python
-func.
+func.regexp_instr(<expr>, <pat[, pos[, occurrence[, return_option[, match_type]]]]>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.regexp_instr('dog cat dog', 'dog')
++-----------------------------------------+
+| func.regexp_instr('dog cat dog', 'dog') |
++-----------------------------------------+
+|                                       1 |
++-----------------------------------------+
 ```
 
 ## SQL Syntax

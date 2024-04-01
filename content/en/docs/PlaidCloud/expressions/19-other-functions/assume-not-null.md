@@ -12,7 +12,7 @@ ASSUME_NOT_NULL(<x>)
 
 ## Aliases
 
-- [REMOVE_NULLABLE](remove-nullable.md)
+- [REMOVE_NULLABLE](remove-nullable)
 
 ## Return Type
 

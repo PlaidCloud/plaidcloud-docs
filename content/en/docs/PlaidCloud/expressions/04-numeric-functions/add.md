@@ -2,4 +2,4 @@
 title: ADD
 ---
 
-Alias for [PLUS](plus.md).
+Alias for [PLUS](plus).

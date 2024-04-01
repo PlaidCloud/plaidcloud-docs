@@ -2,22 +2,22 @@
 title: REGEXP_LIKE
 ---
 
-REGEXP_LIKE function is used to check that whether the string matches regular expression.
+REGEXP_LIKE function is used to check that whether the string matches the regular expression.
 
 # Analyze Syntax
 
 ```python
-func.
+func.regexp_like(<expr>, <pat[, match_type]>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.regexp_like('a', '^[a-d]')
++---------------------------------+
+| func.regexp_like('a', '^[a-d]') |
++---------------------------------+
+|                               1 |
++---------------------------------+
 ```
 
 ## SQL Syntax

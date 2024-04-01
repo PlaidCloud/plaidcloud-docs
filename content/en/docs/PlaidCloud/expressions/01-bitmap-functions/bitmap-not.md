@@ -12,7 +12,7 @@ BITMAP_NOT( <bitmap1>, <bitmap2> )
 
 ## Aliases
 
-- [BITMAP_AND_NOT](bitmap-and-not.md)
+- [BITMAP_AND_NOT](bitmap-and-not)
 
 ## SQL Examples
 

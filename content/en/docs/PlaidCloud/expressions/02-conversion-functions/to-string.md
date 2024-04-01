@@ -2,7 +2,7 @@
 title: TO_STRING
 ---
 
-Converts a value to String data type, or converts a Date value to a specific string format. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types.md#formatting-date-and-time).
+Converts a value to String data type, or converts a Date value to a specific string format. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
 
 ## SQL Syntax
 
@@ -14,10 +14,10 @@ TO_STRING( '<date>', '<format>' )
 
 ## Aliases
 
-- [DATE_FORMAT](../05-datetime-functions/date-format.md)
-- [JSON_TO_STRING](../10-semi-structured-functions/json-to-string.md)
-- [TO_TEXT](../02-conversion-functions/to-text.md)
-- [TO_VARCHAR](to-varchar.md)
+- [DATE_FORMAT](../05-datetime-functions/date-format)
+- [JSON_TO_STRING](../10-semi-structured-functions/json-to-string)
+- [TO_TEXT](../02-conversion-functions/to-text)
+- [TO_VARCHAR](to-varchar)
 
 ## Return Type
 

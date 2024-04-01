@@ -7,17 +7,18 @@ Returns the length of a given input string or binary value. In the case of strin
 # Analyze Syntax
 
 ```python
-func.
+func.length(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.length('Hello')
++----------------------+
+| func.length('Hello') |
++----------------------+
+|                    5 |
++----------------------+
 ```
 
 ## SQL Syntax
@@ -28,9 +29,9 @@ LENGTH(<expr>)
 
 ## Aliases
 
-- [CHAR_LENGTH](char-length.md)
-- [CHARACTER_LENGTH](character-length.md)
-- [LENGTH_UTF8](length-utf8.md)
+- [CHAR_LENGTH](char-length)
+- [CHARACTER_LENGTH](character-length)
+- [LENGTH_UTF8](length-utf8)
 
 ## Return Type
 

@@ -12,7 +12,7 @@ UPPER(<str>)
 
 ## Aliases
 
-- [UCASE](ucase.md)
+- [UCASE](ucase)
 
 ## Return Type
 

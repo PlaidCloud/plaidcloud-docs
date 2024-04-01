@@ -12,7 +12,7 @@ BITMAP_COUNT( <bitmap> )
 
 ## Aliases
 
-- [BITMAP_CARDINALITY](bitmap-cardinality.md)
+- [BITMAP_CARDINALITY](bitmap-cardinality)
 
 ## SQL Examples
 

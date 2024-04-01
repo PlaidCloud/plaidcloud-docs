@@ -39,6 +39,8 @@ CHAR(N, ...)
 
 ## SQL Examples
 
+This example shows both the binary value returned as well as the string representation.
+
 ```sql
 SELECT CHAR(77,121,83,81,76) as a, a::String;
 ┌────────────────────────┐

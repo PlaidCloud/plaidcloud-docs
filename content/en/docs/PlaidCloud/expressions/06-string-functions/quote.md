@@ -7,17 +7,17 @@ Quotes a string to produce a result that can be used as a properly escaped data 
 # Analyze Syntax
 
 ```python
-func.
+func.quote(<str>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.quote('Don\'t')
++----------------------+
+| func.quote('Don\'t') |
++----------------------+
+|  Don\'t!             |
++----------------------+
 ```
 
 ## SQL Syntax

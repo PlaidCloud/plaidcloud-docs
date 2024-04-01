@@ -7,16 +7,19 @@ Pattern matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If either 
 # Analyze Syntax
 
 ```python
-func.
+<column>.like('plaid%')
 ```
 
 ## Analyze Examples
+
 ```python
-func.
+my_clothes.like('plaid%)
 +-----------------+
-| func. |
+| my_clothes      |
 +-----------------+
-|              50 |
+| plaid pants     |
+| plaid hat       |
+| plaid shirt     |
 +-----------------+
 ```
 

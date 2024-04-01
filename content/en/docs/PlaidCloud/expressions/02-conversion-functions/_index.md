@@ -44,4 +44,4 @@ Please note the following when converting a value from one type to another:
     | String (Int)   | Int         |
 
 
-- PlaidCloud Lakehouse also offers a variety of functions for converting expressions into different date and time formats. For more information, see [Date & Time Functions](../05-datetime-functions/index.md).
+- PlaidCloud Lakehouse also offers a variety of functions for converting expressions into different date and time formats. For more information, see [Date & Time Functions](../05-datetime-functions).

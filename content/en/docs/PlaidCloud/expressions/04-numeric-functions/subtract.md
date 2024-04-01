@@ -2,4 +2,4 @@
 title: SUBTRACT
 ---
 
-Alias for [MINUS](minus.md).
+Alias for [MINUS](minus).

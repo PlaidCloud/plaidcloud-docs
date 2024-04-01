@@ -2,9 +2,9 @@
 title: TRY_TO_TIMESTAMP
 ---
 
-A variant of [TO_TIMESTAMP](to-timestamp.md) in PlaidCloud Lakehouse that, while performing the same conversion of an input expression to a timestamp, incorporates error-handling support by returning NULL if the conversion fails instead of raising an error.
+A variant of [TO_TIMESTAMP](to-timestamp) in PlaidCloud Lakehouse that, while performing the same conversion of an input expression to a timestamp, incorporates error-handling support by returning NULL if the conversion fails instead of raising an error.
 
-See also: [TO_TIMESTAMP](to-timestamp.md)
+See also: [TO_TIMESTAMP](to-timestamp)
 
 ## SQL Syntax
 
@@ -18,7 +18,7 @@ TRY_TO_TIMESTAMP(<expr, expr>)
 
 ## Aliases
 
-- [TRY_TO_DATETIME](try-to-datetime.md)
+- [TRY_TO_DATETIME](try-to-datetime)
 
 ## SQL Examples
 

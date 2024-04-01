@@ -11,7 +11,7 @@ Converts an expression to a date, including:
 
 - **Converting an integer to a date**: Interprets the integer as the number of days before (for negative numbers) or after (for positive numbers) the Unix epoch (midnight on January 1, 1970). Please note that a Date value ranges from `1000-01-01` to `9999-12-31`. PlaidCloud Lakehouse would return an error if you run "SELECT TO_DATE(9999999999999999999)".
 
-- **Converting a string to a date using the specified format**: The function takes two arguments, converting the first string to a date based on the format specified in the second string. To customize the date and time format in PlaidCloud Lakehouse, specifiers can be used. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types.md#formatting-date-and-time).
+- **Converting a string to a date using the specified format**: The function takes two arguments, converting the first string to a date based on the format specified in the second string. To customize the date and time format in PlaidCloud Lakehouse, specifiers can be used. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
 
 See also: [TO_TIMESTAMP](to-timestamp)
 
@@ -30,8 +30,8 @@ TO_DATE('<string>', '<format>')
 
 ## Aliases
 
-- [DATE](date.md)
-- [STR_TO_DATE](str-to-date.md)
+- [DATE](date)
+- [STR_TO_DATE](str-to-date)
 
 ## Return Type
 
@@ -47,7 +47,7 @@ SELECT TYPEOF(TO_DATE('2022-01-02')), TYPEOF(STR_TO_DATE('2022-01-02'));
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-To convert the returned date back to a string, use the [DATE_FORMAT](date-format.md) function:
+To convert the returned date back to a string, use the [DATE_FORMAT](date-format) function:
 
 ```sql
 SELECT DATE_FORMAT(TO_DATE('2022-01-02')) AS dt, TYPEOF(dt);

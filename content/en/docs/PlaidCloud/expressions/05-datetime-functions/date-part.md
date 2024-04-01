@@ -8,7 +8,7 @@ import FunctionDescription from '@site/src/components/FunctionDescription';
 
 Retrieves the designated portion of a date, time, or timestamp.
 
-See also: [EXTRACT](extract.md)
+See also: [EXTRACT](extract)
 
 ## SQL Syntax
 

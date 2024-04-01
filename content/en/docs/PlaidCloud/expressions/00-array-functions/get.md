@@ -12,7 +12,7 @@ GET( <array>, <index> )
 
 ## Aliases
 
-- [ARRAY_GET](array-get.md)
+- [ARRAY_GET](array-get)
 
 ## SQL Examples
 

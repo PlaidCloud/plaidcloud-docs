@@ -16,17 +16,18 @@ calculated from the numeric values of its constituent bytes using this formula:
 # Analyze Syntax
 
 ```python
-func.
+func.ord(<str>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.ord('2')
++----------------+
+| func.ord('2)   |
++----------------+
+|             50 |
++----------------+
 ```
 
 ## SQL Syntax

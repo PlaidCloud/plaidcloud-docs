@@ -14,8 +14,8 @@ ARG_MIN(<arg>, <val>)
 
 | Arguments | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
-| `<arg>`   | Argument of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types/index.md) |
-| `<val>`   | Value of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types/index.md)    |
+| `<arg>`   | Argument of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types) |
+| `<val>`   | Value of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types)    |
 
 ## Return Type
 

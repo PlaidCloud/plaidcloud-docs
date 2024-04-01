@@ -12,7 +12,7 @@ MODULO( <x>, <y> )
 
 ## Aliases
 
-- [MOD](mod.md)
+- [MOD](mod)
 
 ## SQL Examples
 

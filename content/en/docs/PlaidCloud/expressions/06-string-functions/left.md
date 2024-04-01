@@ -7,17 +7,18 @@ Returns the leftmost len characters from the string str, or NULL if any argument
 # Analyze Syntax
 
 ```python
-func.
+func.left(<str>, <len>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.left('foobarbar', 5)
++---------------------------+
+| func.left('foobarbar', 5) |
++---------------------------+
+| fooba                     |
++---------------------------+
 ```
 
 ## SQL Syntax

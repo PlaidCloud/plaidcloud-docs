@@ -8,7 +8,7 @@ import FunctionDescription from '@site/src/components/FunctionDescription';
 
 LAG allows you to access the value of a column from a preceding row within the same result set. It is typically used to retrieve the value of a column in the previous row, based on a specified ordering.
 
-See also: [LEAD](lead.md)
+See also: [LEAD](lead)
 
 ## SQL Syntax
 
@@ -17,7 +17,7 @@ LAG(expression [, offset [, default]]) OVER (PARTITION BY partition_expression O
 ```
 
 - *offset*: Specifies the number of rows ahead (LEAD) or behind (LAG) the current row within the partition to retrieve the value from. Defaults to 1.
-> Note that setting a negative offset has the same effect as using the [LEAD](lead.md) function.
+> Note that setting a negative offset has the same effect as using the [LEAD](lead) function.
 
 - *default*: Specifies a value to be returned if the LEAD or LAG function encounters a situation where there is no value available due to the offset exceeding the partition's boundaries. Defaults to NULL.
 

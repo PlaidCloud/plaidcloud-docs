@@ -9,17 +9,27 @@ Returns 0 if substr is not in str. Returns NULL if any argument is NULL.
 # Analyze Syntax
 
 ```python
-func.
+func.locate(<substr>, <str>, <pos>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.locate('bar', 'foobarbar')
++------------------------------------+
+| func.locate('bar', 'foobarbar') |
++------------------------------------+
+|                                  5 |
++------------------------------------+
+```
+
+```python
+func.locate('bar', 'foobarbar', 5)
++------------------------------------+
+| func.locate('bar', 'foobarbar', 5) |
++------------------------------------+
+|                                  7 |
++------------------------------------+
 ```
 
 ## SQL Syntax

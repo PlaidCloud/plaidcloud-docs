@@ -23,8 +23,8 @@ TO_WEEK_OF_YEAR(<expr>)
 
 ## Aliases
 
-- [WEEK](week.md)
-- [WEEKOFYEAR](weekofyear.md)
+- [WEEK](week)
+- [WEEKOFYEAR](weekofyear)
 
 ## Return Type
 

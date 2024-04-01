@@ -8,17 +8,17 @@ The result is NULL if the argument is NULL or not a valid base-64 string.
 # Analyze Syntax
 
 ```python
-func.
+func.from_base64(<expr>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.from_base64('YWJj')
++--------------------------+
+| func.from_base64('YWJj') |
++--------------------------+
+| abc                      |
++--------------------------+
 ```
 
 ## SQL Syntax

@@ -7,17 +7,17 @@ Replaces occurrences in the string `expr` that match the regular expression spec
 # Analyze Syntax
 
 ```python
-func.
+func.regexp_replace(<expr>, <pat>, <repl[, pos[, occurrence[, match_type]]]>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.regexp_replace('a b c', 'b', 'X')
++----------------------------------------+
+| func.regexp_replace('a b c', 'b', 'X') |
++----------------------------------------+
+| a X c                                  |
++----------------------------------------+
 ```
 
 ## SQL Syntax

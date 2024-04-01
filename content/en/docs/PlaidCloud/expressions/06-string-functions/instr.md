@@ -8,17 +8,17 @@ This is the same as the two-argument form of LOCATE(), except that the order of 
 # Analyze Syntax
 
 ```python
-func.
+func.instr(<str>, <substr>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.instr('foobarbar', 'bar')
++--------------------------------+
+| func.instr('foobarbar', 'bar') |
++--------------------------------+
+|                              4 |
++--------------------------------+
 ```
 
 ## SQL Syntax
