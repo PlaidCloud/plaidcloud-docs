@@ -11,9 +11,9 @@ This example returns a person's name. It starts off searching to see if the firs
 
 ```python
 case(
-        (table.first_name.isnot(None), func.concat(table.first_name, table.last_name)), 
-        else_ = table.last_name
-    )
+    (table.first_name.is_not(None), func.concat(table.first_name, table.last_name)), 
+    else_ = table.last_name
+)
 ```
 
 ### A more complex example with multiple conditions
@@ -21,20 +21,20 @@ This example returns a price based on quantity. "If" the quantity in the order i
 
 ```python
 case( 
-        (order_table.qty > 100, item_table.specialprice), 
-        (order_table.qty > 10, item_table.bulkprice) , 
-        else_=item_table.regularprice
-    )
+    (order_table.qty > 100, item_table.specialprice), 
+    (order_table.qty > 10, item_table.bulkprice) , 
+    else_=item_table.regularprice
+)
 ```
 
 This example returns the first initial of the person's first name. If the user's name is wendy, return W. Otherwise if the user's name is jack, return J. Otherwise return E.
 
 ```python
 case( 
-        (users_table.name == "wendy", "W"), 
-        (users_table.name == "jack", "J"), 
-        else_='E'
-    )
+    (users_table.name == "wendy", "W"), 
+    (users_table.name == "jack", "J"), 
+    else_='E'
+)
 ```
 
 The above may also be written in shorthand as:
@@ -48,12 +48,12 @@ case(
 ```
 
 ### Other Examples
-In this example is from a Table:Lookup step where we are updating the "dock_final" column when the table1. dock_final value is Null.
+In this example is from a Table:Lookup step where we are updating the "dock_final" column when the table1.dock_final value is Null.
 ```python
 case(
     (table1.dock_final == Null, table2.dock_final),
     else_ = table1.dock_final
-    )
+)
 ```
 
 This example is from a Table:Lookup step where we are updating the "Marketing Channel" column when "Marketing Channel" in table1 is not 'none' or the "Serial Number" contains a '_'.
@@ -61,9 +61,9 @@ This example is from a Table:Lookup step where we are updating the "Marketing Ch
 case(
     (get_column(table1, 'Marketing Channel') != 'none', get_column(table1, 'Marketing Channel')),
     (get_column(table1, 'Serial Number').contains('_'), get_column(table1, 'Marketing Channel')),
-    (get_column(table2, 'Marketing Channel') != Null, get_column(table2, 'Marketing Channel')), 
+    (get_column(table2, 'Marketing Channel').is_not(Null), get_column(table2, 'Marketing Channel')), 
     else_ = 'none'
-    )
+)
 ```
 
 ## SQL Syntax
