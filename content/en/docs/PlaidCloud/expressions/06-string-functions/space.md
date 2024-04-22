@@ -7,16 +7,16 @@ Returns a string consisting of N blank space characters.
 # Analyze Syntax
 
 ```python
-func.
+func.space(<n>)
 ```
 
 ## Analyze Examples
 ```python
-func.
+func.space(20)
 +-----------------+
-| func. |
+| func.space(20)  |
 +-----------------+
-|              50 |
+|                 |
 +-----------------+
 ```
 

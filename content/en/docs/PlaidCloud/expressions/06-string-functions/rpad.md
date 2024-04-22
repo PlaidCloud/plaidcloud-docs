@@ -8,17 +8,24 @@ If str is longer than len, the return value is shortened to len characters.
 # Analyze Syntax
 
 ```python
-func.
+func.rpad(<str>, <len>, <padstr>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.rpad('hi',5,'?')
++-----------------------+
+| func.rpad('hi',5,'?') |
++-----------------------+
+| hi???                 |
++-----------------------+
+
+func.rpad('hi',1,'?')
++-----------------------+
+| func.rpad('hi',1,'?') |
++-----------------------+
+| h                     |
++-----------------------+
 ```
 
 ## SQL Syntax

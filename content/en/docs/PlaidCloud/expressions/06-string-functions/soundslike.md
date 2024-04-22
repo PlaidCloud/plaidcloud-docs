@@ -13,17 +13,17 @@ While the function can be useful for approximate string matching, it is importan
 # Analyze Syntax
 
 ```python
-func.
+func.sounds_like(<str1>, <str2>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func..sounds_like('Monday', 'Sunday')
++---------------------------------------+
+| func..sounds_like('Monday', 'Sunday') |
++---------------------------------------+
+|                                     0 |
++---------------------------------------+
 ```
 
 ## SQL Syntax

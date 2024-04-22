@@ -7,17 +7,17 @@ Returns the string str with all occurrences of the string from_str replaced by t
 # Analyze Syntax
 
 ```python
-func.
+func.replace(<str>, <from_str>, <to_str>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.replace(<str>, <from_str>, <to_str>)
++--------------------------------------+
+| func.replace('plaidCloud', 'p', 'P') |
++--------------------------------------+
+| PlaidCloud                           |
++--------------------------------------+
 ```
 
 ## SQL Syntax

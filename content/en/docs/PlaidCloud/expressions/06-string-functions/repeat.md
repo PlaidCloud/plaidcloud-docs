@@ -7,17 +7,17 @@ Returns a string consisting of the string str repeated count times. If count is 
 # Analyze Syntax
 
 ```python
-func.
+func.repeat(<str>, <count>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.repeat(<str>, <count>)
++-------------------------+
+| func.repeat('plaid', 3) |
++-------------------------+
+| plaidplaidplaid         |
++-------------------------+
 ```
 
 ## SQL Syntax

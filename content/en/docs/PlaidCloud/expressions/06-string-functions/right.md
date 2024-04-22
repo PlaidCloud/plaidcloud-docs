@@ -7,17 +7,17 @@ Returns the rightmost len characters from the string str, or NULL if any argumen
 # Analyze Syntax
 
 ```python
-func.
+func.right(<str>, <len>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.right('foobarbar', 4)
++----------------------------+
+| func.right('foobarbar', 4) |
++----------------------------+
+| rbar                       |
++----------------------------+
 ```
 
 ## SQL Syntax

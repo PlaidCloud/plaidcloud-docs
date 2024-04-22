@@ -9,17 +9,17 @@ The result is NULL if the argument is NULL.
 # Analyze Syntax
 
 ```python
-func.
+func.to_base64(<v>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.to_base64('abc')
++-----------------------+
+| func.to_base64('abc') |
++-----------------------+
+| YWJj                  |
++-----------------------+
 ```
 
 ## SQL Syntax

@@ -2,4 +2,4 @@
 title: FROM_HEX
 ---
 
-Alias for [UNHEX](unhex).
+Alias for [UNHEX](../unhex).

@@ -12,17 +12,17 @@ It is also possible to use a negative value for `pos`. In this case, the beginni
 # Analyze Syntax
 
 ```python
-func.
+func.substr(<str>, <pos>, <len>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.substr('Quadratically', 5, 6)
++------------------------------------+
+| func.substr('Quadratically', 5, 6) |
++------------------------------------+
+| ratica                             |
++------------------------------------+
 ```
 
 ## SQL Syntax

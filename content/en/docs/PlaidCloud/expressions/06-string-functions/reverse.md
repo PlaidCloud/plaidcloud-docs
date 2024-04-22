@@ -7,17 +7,17 @@ Returns the string str with the order of the characters reversed.
 # Analyze Syntax
 
 ```python
-func.
+func.reverse(<str>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.reverse('abc')
++----------------------+
+| func..reverse('abc') |
++----------------------+
+| cba                  |
++----------------------+
 ```
 
 ## SQL Syntax

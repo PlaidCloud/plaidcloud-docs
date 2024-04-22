@@ -12,17 +12,17 @@ See also: [SPLIT](split)
 # Analyze Syntax
 
 ```python
-func.
+func.split_part('<input_string>', '<delimiter>', '<position>')
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.split_part('PlaidCloud Lakehouse', ' ', 1)
++-------------------------------------------------+
+| func.split_part('PlaidCloud Lakehouse', ' ', 1) |
++-------------------------------------------------+
+| PlaidCloud                                      |
++-------------------------------------------------+
 ```
 
 ## SQL Syntax
@@ -46,25 +46,25 @@ String. SPLIT_PART returns NULL when either the input string, the delimiter, or 
 ```sql
 -- Use a space as the delimiter
 -- SPLIT_PART returns a specific part.
-SELECT SPLIT_PART('PlaidCloud Lakehouse Cloud', ' ', 1);
+SELECT SPLIT_PART('PlaidCloud Lakehouse', ' ', 1);
 
-split_part('databend cloud', ' ', 1)|
-------------------------------------+
-PlaidCloud Lakehouse                            |
+split_part('PlaidCloud Lakehouse', ' ', 1)|
+------------------------------------------+
+PlaidCloud Lakehouse                      |
 
 -- Use an empty string as the delimiter or a delimiter that does not exist in the input string
 -- SPLIT_PART returns the entire input string.
 SELECT SPLIT_PART('PlaidCloud Lakehouse Cloud', '', 1);
 
-split_part('databend cloud', '', 1)|
+split_part('PlaidCloud Lakehouse', '', 1)|
 -----------------------------------+
-PlaidCloud Lakehouse Cloud                     |
+PlaidCloud Lakehouse                     |
 
 SELECT SPLIT_PART('PlaidCloud Lakehouse Cloud', ',', 1);
 
-split_part('databend cloud', ',', 1)|
+split_part('PlaidCloud Lakehouse', ',', 1)|
 ------------------------------------+
-PlaidCloud Lakehouse Cloud                      |
+PlaidCloud Lakehouse                      |
 
 -- Use '    ' (tab) as the delimiter
 -- SPLIT_PART returns individual fields.

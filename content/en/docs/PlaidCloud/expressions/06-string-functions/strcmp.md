@@ -7,17 +7,31 @@ Returns 0 if the strings are the same, -1 if the first argument is smaller than 
 # Analyze Syntax
 
 ```python
-func.
+func.strcmp(<expr1> ,<expr2>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.strcmp('text', 'text2')
++------------------------------+
+| func.strcmp('text', 'text2') |
++------------------------------+
+|                           -1 |
++------------------------------+
+
+func.strcmp('text2', 'text')
++------------------------------+
+| func.strcmp('text2', 'text') |
++------------------------------+
+|                            1 |
++------------------------------+
+
+func.strcmp('text', 'text')
++------------------------------+
+| func.strcmp('text', 'text')  |
++------------------------------+
+|                            0 |
++------------------------------+
 ```
 
 ## SQL Syntax

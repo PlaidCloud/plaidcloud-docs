@@ -2,4 +2,4 @@
 title: UCASE
 ---
 
-Alias for [UPPER](upper).
+Alias for [UPPER](../upper).

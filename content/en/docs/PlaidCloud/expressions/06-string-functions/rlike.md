@@ -2,4 +2,4 @@
 title: RLIKE
 ---
 
-Alias for [REGEXP](regexp).
+Alias for [REGEXP](../regexp).

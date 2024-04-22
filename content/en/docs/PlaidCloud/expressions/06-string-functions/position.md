@@ -9,17 +9,18 @@ Returns 0 if substr is not in str. Returns NULL if any argument is NULL.
 # Analyze Syntax
 
 ```python
-func.
+func.position(<substr>, <str>)
 ```
 
 ## Analyze Examples
+
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.position('bar', 'foobarbar')
++-----------------------------------+
+| func.position('bar', 'foobarbar') |
++-----------------------------------+
+|                                 4 |
++-----------------------------------+
 ```
 
 ## SQL Syntax

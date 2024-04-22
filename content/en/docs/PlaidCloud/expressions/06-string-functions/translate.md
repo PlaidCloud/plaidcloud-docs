@@ -10,17 +10,17 @@ Transforms a given string by replacing specific characters with corresponding re
 # Analyze Syntax
 
 ```python
-func.
+func.translate('<inputString>', '<charactersToReplace>', '<replacementCharacters>')
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.translate('databend', 'de', 'DE')
++----------------------------------------+
+| func.translate('databend', 'de', 'DE') |
++----------------------------------------+
+| DatabEnD                               |
++----------------------------------------+
 ```
 
 ## SQL Syntax

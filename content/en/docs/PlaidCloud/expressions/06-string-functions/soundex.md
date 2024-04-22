@@ -14,22 +14,22 @@ Generates the Soundex code for a string.
 Soundex converts an alphanumeric string to a four-character code that is based on how the string sounds when spoken in English. For more information, see https://en.wikipedia.org/wiki/Soundex
 :::
 
-See also: [SOUNDS LIKE](soundslike)
+See also: [SOUNDS LIKE](../soundslike)
 
 # Analyze Syntax
 
 ```python
-func.
+func.soundex(<str>)
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.soundex('PlaidCloud Lakehouse')
++--------------------------------------+
+| func.soundex('PlaidCloud Lakehouse') |
++--------------------------------------+
+| D153                                 |
++--------------------------------------+
 ```
 
 ## SQL Syntax
@@ -57,7 +57,7 @@ SELECT SOUNDEX('PlaidCloud Lakehouse');
 D153
 
 -- All non-alphabetic characters in the string are ignored.
-SELECT SOUNDEX('PlaidCloud Lakehouse!');;
+SELECT SOUNDEX('PlaidCloud Lakehouse!');
 
 ---
 D153

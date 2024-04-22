@@ -12,17 +12,17 @@ See also: [SPLIT_PART](split-part)
 # Analyze Syntax
 
 ```python
-func.
+func.split('<input_string>', '<delimiter>')
 ```
 
 ## Analyze Examples
 ```python
-func.
-+-----------------+
-| func. |
-+-----------------+
-|              50 |
-+-----------------+
+func.split('PlaidCloud Lakehouse', ' ')
++-----------------------------------------+
+| func.split('PlaidCloud Lakehouse', ' ') |
++-----------------------------------------+
+| ['PlaidCloud Lakehouse Cloud']          |
++-----------------------------------------+
 ```
 
 ## SQL Syntax
@@ -40,25 +40,25 @@ Array of strings. SPLIT returns NULL when either the input string or the delimit
 ```sql
 -- Use a space as the delimiter
 -- SPLIT returns an array with two parts.
-SELECT SPLIT('PlaidCloud Lakehouse Cloud', ' ');
+SELECT SPLIT('PlaidCloud Lakehouse', ' ');
 
-split('databend cloud', ' ')|
-----------------------------+
-['PlaidCloud Lakehouse','Cloud']        |
+split('PlaidCloud Lakehouse', ' ')|
+----------------------------------+
+['PlaidCloud','Lakehouse']        |
 
 -- Use an empty string as the delimiter or a delimiter that does not exist in the input string
 -- SPLIT returns an array containing the entire input string as a single part.
 SELECT SPLIT('PlaidCloud Lakehouse Cloud', '');
 
 split('databend cloud', '')|
----------------------------+
-['PlaidCloud Lakehouse Cloud']         |
+----------------------------------+
+['PlaidCloud Lakehouse Cloud']    |
 
 SELECT SPLIT('PlaidCloud Lakehouse Cloud', ',');
 
 split('databend cloud', ',')|
-----------------------------+
-['PlaidCloud Lakehouse Cloud']          |
+----------------------------------+
+['PlaidCloud Lakehouse Cloud']    |
 
 -- Use '	' (tab) as the delimiter
 -- SPLIT returns an array with timestamp, log level, and message.
