@@ -2,4 +2,4 @@
 title: SHA1
 ---
 
-Alias for [SHA](sha).
+Alias for [SHA](../sha).
