@@ -2,4 +2,4 @@
 title: CEILING
 ---
 
-Alias for [CEIL](ceil).
+Alias for [CEIL](../ceil).

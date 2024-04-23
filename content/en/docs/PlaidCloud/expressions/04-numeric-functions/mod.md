@@ -2,4 +2,4 @@
 title: MOD
 ---
 
-Alias for [MODULO](modulo).
+Alias for [MODULO](../modulo).

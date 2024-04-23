@@ -11,13 +11,35 @@ See also:
 
 ## SQL Syntax
 
+```python
+func.div(<numerator>, <denominator>)
+```
+
+## Analyze Examples
+
+```python
+# Equivalent to the division operator "//"
+func.div(6.1, 2)
+
+┌───────────────────────────────┐
+│ func.div(6.1, 2) │ (6.1 // 2) │
+├──────────────────┼────────────┤
+│                3 │          3 │
+└───────────────────────────────┘
+
+# Error when divided by 0
+error: APIError: ResponseError with 1006: divided by zero while evaluating function `div(6.1, 0)`
+```
+
+## Analyze Syntax
+
 ```sql
 <number1> DIV <number2>
 ```
 
 ## Aliases
 
-- [INTDIV](intdiv)
+- [INTDIV](../intdiv)
 
 ## SQL Examples
 

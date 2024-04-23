@@ -2,4 +2,4 @@
 title: INTDIV
 ---
 
-Alias for [DIV](div).
+Alias for [DIV](../div).

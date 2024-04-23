@@ -11,6 +11,24 @@ SELECT ROUND(4/7, 4) - ROUND(3/7, 4); -- Result: 0.14280000000000004
 SELECT ROUND(4/7, 4)::DECIMAL(8,4) - ROUND(3/7, 4)::DECIMAL(8,4); -- Result: 0.1428
 ```
 
+## Analyze Syntax
+
+```python
+func.round( <x, d> )
+```
+
+## Analyze Examples
+
+```python
+func.round(0.123, 2)
+
+┌──────────────────────┐
+│ func.round(0.123, 2) │
+├──────────────────────┤
+│                 0.12 │
+└──────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

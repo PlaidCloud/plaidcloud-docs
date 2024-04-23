@@ -12,6 +12,24 @@ See also:
 - [DIV](div)
 - [DIV0](div0)
 
+## Analyze Syntax
+
+```python
+func.divnull(<numerator>, <denominator>)
+```
+
+## Analyze Examples
+
+```python
+func.divnull(20, 6), func.divnull(20, 0), func.divnull(20, null)
+
+┌───────────────────────────────────────────────────────────────────┐
+│ func.divnull(20, 6)│ func.divnull(20, 0) │ func.divnull(20, null) │
+├────────────────────┼─────────────────────┼────────────────────────┤
+│ 3.3333333333333335 │ NULL                │ NULL                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

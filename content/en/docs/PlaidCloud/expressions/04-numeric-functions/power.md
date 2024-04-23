@@ -2,4 +2,4 @@
 title: POWER
 ---
 
-Alias for [POW](pow).
+Alias for [POW](../pow).

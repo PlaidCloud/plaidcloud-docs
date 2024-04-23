@@ -2,4 +2,4 @@
 title: NEGATE
 ---
 
-Alias for [MINUS](minus).
+Alias for [MINUS](../minus).

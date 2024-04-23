@@ -2,4 +2,4 @@
 title: ADD
 ---
 
-Alias for [PLUS](plus).
+Alias for [PLUS](../plus).

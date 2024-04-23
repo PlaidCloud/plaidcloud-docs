@@ -4,6 +4,24 @@ title: POW
 
 Returns the value of `x` to the power of `y`. 
 
+## Analyze Syntax
+
+```python
+func.pow( <x, y> )
+```
+
+## Analyze Examples
+
+```python
+func.pow(-2, 2)
+
+┌────────────────────┐
+│ func.pow((- 2), 2) │
+├────────────────────┤
+│                  4 │ 
+└────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql
@@ -12,7 +30,7 @@ POW( <x, y> )
 
 ## Aliases
 
-- [POWER](power)
+- [POWER](../power)
 
 ## SQL Examples
 

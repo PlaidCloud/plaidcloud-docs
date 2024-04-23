@@ -2,4 +2,4 @@
 title: SUBTRACT
 ---
 
-Alias for [MINUS](minus).
+Alias for [MINUS](../minus).
