@@ -4,15 +4,33 @@ title: INET_ATON
 
 Converts an IPv4 address to a 32-bit integer.
 
+## Analyze Syntax
+
+```python
+func.inet_aton(<ip>)
+```
+
+## Analyze Examples
+
+```python
+func.inet_aton('1.2.3.4')
+
+┌───────────────────────────────┐
+│ func.inet_aton('1.2.3.4')     │
+├───────────────────────────────┤
+│                      16909060 │
+└───────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql
-INET_ATON( '<ip>' )
+INET_ATON(<ip>)
 ```
 
 ## Aliases
 
-- [IPV4_STRING_TO_NUM](ipv4-string-to-num)
+- [IPV4_STRING_TO_NUM](../ipv4-string-to-num)
 
 ## Return Type
 
