@@ -8,6 +8,23 @@ When you apply this function to a value, it checks if the value is already able 
 
 However, if the value is not able to hold NULL values, the TO_NULLABLE function will modify the value to make it able to hold NULL values. It does this by wrapping the value in a structure that can hold NULL values, which means the value can now hold NULL values in the future.
 
+## Analyze Syntax
+
+```python
+func.to_nullable(x);
+```
+
+## Analyze Examples
+
+```python
+func.typeof(3), func.to_nullable(3), func.typeof(func.to_nullable(3))
+
+func.typeof(3)   | func.to_nullable(3) | func.typeof(func.to_nullable(3)) |
+-----------------+---------------------+----------------------------------+
+TINYINT UNSIGNED |                   3 | TINYINT UNSIGNED NULL            |
+
+```
+
 ## SQL Syntax
 
 ```sql

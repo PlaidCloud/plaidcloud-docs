@@ -4,6 +4,33 @@ title: ASSUME_NOT_NULL
 
 Results in an equivalent non-`Nullable` value for a Nullable type. In case the original value is `NULL` the result is undetermined. 
 
+## Analyze Syntax
+
+```python
+func.assume_not_null(<x>)
+```
+
+## Analyze Examples
+
+```python
+With a table like:
+
+┌────────────────────┐
+│        x  │   y    │
+├────────────────────┤
+│         1 │   NULL │
+│         2 │      3 │
+└────────────────────┘
+
+func.assume_not_null(y)
+┌─────────────────────────┐
+│ func.assume_not_null(y) │
+├─────────────────────────┤
+│                       0 │
+│                       3 │
+└─────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql
@@ -12,7 +39,7 @@ ASSUME_NOT_NULL(<x>)
 
 ## Aliases
 
-- [REMOVE_NULLABLE](remove-nullable)
+- [REMOVE_NULLABLE](../remove-nullable)
 
 ## Return Type
 

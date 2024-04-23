@@ -4,6 +4,23 @@ title: HUMANIZE_NUMBER
 
 Returns a readable number.
 
+## Analyze Syntax
+
+```python
+func.humanize_number(x);
+```
+
+## Analyze Examples
+
+```python
+func.humanize_number(1000 * 1000)
++-------------------------------------+
+| func.humanize_number((1000 * 1000)) |
++-------------------------------------+
+| 1 million                           |
++-------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -9,6 +9,26 @@ Generates a dataset starting from a specified point, ending at another specified
 - Date
 - Timestamp
 
+## Analyze Syntax
+
+```python
+func.generate_series(<start>, <stop>[, <step_interval>])
+```
+
+## Analyze Examples
+
+```python
+func.generate_series(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+```
+
 ## SQL Syntax
 
 ```sql

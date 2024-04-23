@@ -54,13 +54,13 @@ PlaidCloud Lakehouse                      |
 
 -- Use an empty string as the delimiter or a delimiter that does not exist in the input string
 -- SPLIT_PART returns the entire input string.
-SELECT SPLIT_PART('PlaidCloud Lakehouse Cloud', '', 1);
+SELECT SPLIT_PART('PlaidCloud Lakehouse', '', 1);
 
 split_part('PlaidCloud Lakehouse', '', 1)|
 -----------------------------------+
 PlaidCloud Lakehouse                     |
 
-SELECT SPLIT_PART('PlaidCloud Lakehouse Cloud', ',', 1);
+SELECT SPLIT_PART('PlaidCloud Lakehouse', ',', 1);
 
 split_part('PlaidCloud Lakehouse', ',', 1)|
 ------------------------------------+

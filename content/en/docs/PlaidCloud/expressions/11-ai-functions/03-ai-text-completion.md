@@ -26,7 +26,7 @@ PlaidCloud Lakehouse relies on (Azure) OpenAI for `AI_TEXT_COMPLETION` and sends
 
 They will only work when the PlaidCloud Lakehouse configuration includes the `openai_api_key`, otherwise they will be inactive.
 
-This function is available by default on [PlaidCloud Lakehouse Cloud](https://databend.com) using our Azure OpenAI key. If you use them, you acknowledge that your data will be sent to Azure OpenAI by us.
+This function is available by default on PlaidCloud Lakehouse using an Azure OpenAI key. If you use them, you acknowledge that your data will be sent to Azure OpenAI by us.
 :::
 
 

@@ -4,6 +4,23 @@ title: TYPEOF
 
 TYPEOF function is used to return the name of a data type.
 
+## Analyze Syntax
+
+```python
+func.typeof( <expr> )
+```
+
+## Analyze Examples
+
+```python
+func.typeof(1)
++------------------+
+| func.typeof(1)   |
++------------------+
+| INT              |
++------------------+
+```
+
 ## SQL Syntax
 
 ```sql

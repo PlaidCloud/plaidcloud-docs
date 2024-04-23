@@ -15,6 +15,11 @@ The cosine_distance function in PlaidCloud Lakehouse is a built-in function that
 
 Cosine distance is a measure of similarity between two vectors, based on the cosine of the angle between them. The function takes two input vectors and returns a value between 0 and 1, with 0 indicating identical vectors and 1 indicating orthogonal (completely dissimilar) vectors.
 
+## Analyze Syntax
+```python
+func.cosine_distance(<vector1>, <vector2>)
+```
+
 ## SQL Examples
 
 **Creating a Table and Inserting Sample Data**

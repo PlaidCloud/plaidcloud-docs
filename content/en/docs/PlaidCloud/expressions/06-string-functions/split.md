@@ -21,7 +21,7 @@ func.split('PlaidCloud Lakehouse', ' ')
 +-----------------------------------------+
 | func.split('PlaidCloud Lakehouse', ' ') |
 +-----------------------------------------+
-| ['PlaidCloud Lakehouse Cloud']          |
+| ['PlaidCloud Lakehouse']          |
 +-----------------------------------------+
 ```
 
@@ -48,17 +48,17 @@ split('PlaidCloud Lakehouse', ' ')|
 
 -- Use an empty string as the delimiter or a delimiter that does not exist in the input string
 -- SPLIT returns an array containing the entire input string as a single part.
-SELECT SPLIT('PlaidCloud Lakehouse Cloud', '');
+SELECT SPLIT('PlaidCloud Lakehouse', '');
 
 split('databend cloud', '')|
 ----------------------------------+
-['PlaidCloud Lakehouse Cloud']    |
+['PlaidCloud Lakehouse']    |
 
-SELECT SPLIT('PlaidCloud Lakehouse Cloud', ',');
+SELECT SPLIT('PlaidCloud Lakehouse', ',');
 
 split('databend cloud', ',')|
 ----------------------------------+
-['PlaidCloud Lakehouse Cloud']    |
+['PlaidCloud Lakehouse']    |
 
 -- Use '	' (tab) as the delimiter
 -- SPLIT returns an array with timestamp, log level, and message.

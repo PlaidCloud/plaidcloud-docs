@@ -74,7 +74,7 @@ SELECT SOUNDEX('你好，PlaidCloud Lakehouse');
 你3153
 
 -- SUBSTR the result to get a standard Soundex code.
-SELECT SOUNDEX('PlaidCloud Lakehouse Cloud'),SUBSTR(SOUNDEX('PlaidCloud Lakehouse Cloud'),1,4);
+SELECT SOUNDEX('databend cloud'),SUBSTR(SOUNDEX('databend cloud'),1,4);
 
 soundex('databend cloud')|substring(soundex('databend cloud') from 1 for 4)|
 -------------------------+-------------------------------------------------+
