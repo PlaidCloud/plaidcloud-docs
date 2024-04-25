@@ -7,13 +7,14 @@ weight: 4.0
 
 ## Scalar Functions
 
-- [Bitwise Expression Functions](./01-bitmap-functions) Perform bitwise operations and manipulations.
+- [Array Functions](./00-array-functions) Perform array operations (Done)
+- [Bitwise Expression Functions](./01-bitmap-functions) Perform bitwise operations and manipulations
 - [Conditional Expression Functions](./03-conditional-functions) Implement conditional logic and case statements
 - [Context Functions](./15-context-functions) Provide information about the current SQL execution context. (Done)
 - [Conversion Functions](./02-conversion-functions) Convert data types and cast values.
-- [Date & Time Functions](./05-datetime-functions) Manipulate and format dates and times.
+- [Date & Time Functions](./05-datetime-functions) Manipulate and format dates and times
 - [Geospatial Functions](./09-geo-functions) Handle and manipulate geospatial data. (Done)
-- [Numeric Functions](./04-numeric-functions) Perform calculations and numeric operations.
+- [Numeric Functions](./04-numeric-functions) Perform calculations and numeric operations. (Done)
 - [String Functions](./06-string-functions) Manipulate strings and perform regular expression operations. (Done)
 - [Semi-structured and Structured Data Functions](./10-semi-structured-functions) Work with JSON and other structured data formats.
 

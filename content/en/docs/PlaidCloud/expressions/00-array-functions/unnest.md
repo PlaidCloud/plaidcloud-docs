@@ -4,6 +4,25 @@ title: UNNEST
 
 Unnests the array and returns the set of elements.
 
+## Analyze Syntax
+
+```python
+func.unnest( <array> )
+```
+
+## Analyze Examples
+
+```python
+func.unnest([1, 2])
+
+┌──────────────────────┐
+│  func.unnest([1, 2]) │
+├──────────────────────┤
+│                    1 │
+│                    2 │
+└──────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

@@ -2,4 +2,4 @@
 title: ARRAY_GET
 ---
 
-Alias for [GET](get).
+Alias for [GET](../get).

@@ -2,4 +2,4 @@
 title: ARRAY_CONTAINS
 ---
 
-Alias for [CONTAINS](contains).
+Alias for [CONTAINS](../contains).
