@@ -2,4 +2,4 @@
 title: TO_TEXT
 ---
 
-Alias for [TO_STRING](to-string).
+Alias for [TO_STRING](../to-string).

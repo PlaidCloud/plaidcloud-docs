@@ -4,6 +4,24 @@ title: TO_STRING
 
 Converts a value to String data type, or converts a Date value to a specific string format. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
 
+## Analyze Syntax
+
+```python
+func.to_string( '<expr>' )
+```
+
+## Analyze Examples
+
+```python
+func.date_format('1.23'), func.to_string('1.23'), func.to_text('1.23'), func.to_varchar('1.23'), func.json_to_string('1.23')
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.date_format('1.23') │ func.to_string('1.23') │ func.to_text('1.23') │ func.to_varchar('1.23') │ func.json_to_string('1.23') │
+├──────────────────────────┼────────────────────────┼──────────────────────┼─────────────────────────┼─────────────────────────────┤
+│ 1.23                     │ 1.23                   │ 1.23                 │ 1.23                    │ 1.23                        │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ 
+```
+
 ## SQL Syntax
 
 ```sql

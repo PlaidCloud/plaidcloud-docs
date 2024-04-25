@@ -4,6 +4,24 @@ title: TO_INT8
 
 Converts a value to INT8 data type.
 
+## Analyze Syntax
+
+```python
+func.to_int8( <expr> )
+```
+
+## Analyze Examples
+
+```python
+func.to_int8('123')
+
+┌─────────────────────┐
+│ func.to_int8('123') │
+├─────────────────────┤
+│                 123 │
+└─────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

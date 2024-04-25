@@ -6,6 +6,24 @@ For a string argument str, TO_HEX() returns a hexadecimal string representation 
 
 For a numeric argument N, TO_HEX() returns a hexadecimal string representation of the value of N treated as a longlong (BIGINT) number. 
 
+## Analyze Syntax
+
+```python
+func.to_hex(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.to_hex('abc')
+
+┌────────────────────┐
+│ func.to_hex('abc') │
+├────────────────────┤
+│ 616263             │
+└────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

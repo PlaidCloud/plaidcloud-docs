@@ -2,4 +2,4 @@
 title: TO_VARCHAR
 ---
 
-Alias for [TO_STRING](to-string).
+Alias for [TO_STRING](../to-string).
