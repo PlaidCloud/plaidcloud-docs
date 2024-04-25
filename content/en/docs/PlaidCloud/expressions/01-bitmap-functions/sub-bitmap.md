@@ -4,6 +4,24 @@ title: SUB_BITMAP
 
 Generates a sub-bitmap of the source bitmap, beginning from the start index, with a specified size.
 
+## Analyze Syntax
+
+```python
+func.sub_bitmap( <bitmap>, <start>, <size> )
+```
+
+## Analyze Examples
+
+```python
+func.sub_bitmap(func.build_bitmap([1, 2, 3, 4, 5]), 1, 3)
+
+┌───────────────────────────────────────────────────────────┐
+│ func.sub_bitmap(func.build_bitmap([1, 2, 3, 4, 5]), 1, 3) │
+├───────────────────────────────────────────────────────────┤
+│ 2,3,4                                                     │
+└───────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

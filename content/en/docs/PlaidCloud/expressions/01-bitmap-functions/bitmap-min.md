@@ -4,6 +4,24 @@ title: BITMAP_MIN
 
 Gets the minimum value in the bitmap.
 
+## Analyze Syntax
+
+```python
+func.bitmap_min( <bitmap> )
+```
+
+## Analyze Examples
+
+```python
+func.bitmap_min(func.build_bitmap([1, 4, 5]))
+
+┌───────────────────────────────────────────────┐
+│ func.bitmap_min(func.build_bitmap([1, 4, 5])) │
+├───────────────────────────────────────────────┤
+│                                             1 │
+└───────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

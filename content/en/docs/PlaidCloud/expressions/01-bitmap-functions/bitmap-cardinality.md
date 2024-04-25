@@ -2,4 +2,4 @@
 title: BITMAP_CARDINALITY
 ---
 
-Alias for [BITMAP_COUNT](bitmap-count).
+Alias for [BITMAP_COUNT](../bitmap-count).

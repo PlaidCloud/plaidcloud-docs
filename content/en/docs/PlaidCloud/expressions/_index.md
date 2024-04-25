@@ -8,7 +8,7 @@ weight: 4.0
 ## Scalar Functions
 
 - [Array Functions](./00-array-functions) Perform array operations (Done)
-- [Bitwise Expression Functions](./01-bitmap-functions) Perform bitwise operations and manipulations
+- [Bitwise Expression Functions](./01-bitmap-functions) Perform bitwise operations and manipulations (Done)
 - [Conditional Expression Functions](./03-conditional-functions) Implement conditional logic and case statements
 - [Context Functions](./15-context-functions) Provide information about the current SQL execution context. (Done)
 - [Conversion Functions](./02-conversion-functions) Convert data types and cast values.

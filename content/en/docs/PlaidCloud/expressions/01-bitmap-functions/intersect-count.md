@@ -4,6 +4,36 @@ title: INTERSECT_COUNT
 
 Counts the number of intersecting bits between two bitmap columns.
 
+## Analyze Syntax
+
+```python
+func.intersect_count(( '<bitmap1>', '<bitmap2>' ), ( <bitmap_column1>, <bitmap_column2> ))
+```
+
+## Analyze Examples
+
+```python
+# Given a dataset like this:
+
+┌───────────────────────────────────────┐
+│        id       │ tag  │      v       │
+├─────────────────┼─────────────────────┤
+│               1 │   a  │  0, 1        │
+│               3 │   b  │  0, 1, 2     │
+│               2 │   c  │  1, 3, 4     │
+└───────────────────────────────────────┘
+
+# This is produced
+func.intersect_count(('b', 'c'), (v, tag))
+┌──────────────────────────────────────────────────────────┐
+│        id       │ func.intersect_count('b', 'c')(v, tag) │
+├─────────────────┼────────────────────────────────────────┤
+│               1 │                                      0 │
+│               3 │                                      3 │
+│               2 │                                      3 │
+└──────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

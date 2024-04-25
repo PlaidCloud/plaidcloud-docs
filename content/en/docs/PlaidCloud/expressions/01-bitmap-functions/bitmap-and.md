@@ -4,6 +4,24 @@ title: BITMAP_AND
 
 Performs a bitwise AND operation on the two bitmaps.
 
+## Analyze Syntax
+
+```python
+func.bitmap_and( <bitmap1>, <bitmap2> )
+```
+
+## Analyze Examples
+
+```python
+func.bitmap_and(func.build_bitmap([1, 4, 5]), func.cast(build_bitmap([4, 5])), string)
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.bitmap_and(func.build_bitmap([1, 4, 5]), func.cast(build_bitmap([4, 5])), string) │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 4,5                                                                                    │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql
