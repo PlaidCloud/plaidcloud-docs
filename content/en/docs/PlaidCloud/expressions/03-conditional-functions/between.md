@@ -4,6 +4,18 @@ title: "[ NOT ] BETWEEN"
 
 Returns `true` if the given numeric or string ` <expr>` falls inside the defined lower and upper limits.
 
+## Analyze Syntax
+
+```python
+table.column.between(<lower_limit>, <upper_limit>
+```
+
+## Analyze Examples
+
+```python
+table.column.between(0, 5)
+```
+
 ## SQL Syntax
 
 ```sql

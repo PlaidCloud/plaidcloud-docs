@@ -1,11 +1,34 @@
 ---
 title: NVL
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.312"/>
 
 If `<expr1>` is NULL, returns `<expr2>`, otherwise returns `<expr1>`.
+
+## Analyze Syntax
+
+```python
+func.nvl(<expr1>, <expr2>)
+```
+
+## Analyze Examples
+
+```python
+func.nvl(null, 'b'), func.nvl('a', 'b')
+
+┌──────────────────────────────────────────┐
+│ func.nvl(null, 'b') │ func.nvl('a', 'b') │
+├─────────────────────┼────────────────────┤
+│ b                   │ a                  │
+└──────────────────────────────────────────┘
+
+func.nvl(null, 2), func.nvl(1, 2)
+
+┌────────────────────────────────────┐
+│ func.nvl(null, 2) │ func.nvl(1, 2) │
+├───────────────────┼────────────────┤
+│                 2 │              1 │
+└────────────────────────────────────┘
+```
 
 ## SQL Syntax
 
@@ -15,7 +38,7 @@ NVL(<expr1>, <expr2>)
 
 ## Aliases
 
-- [IFNULL](ifnull)
+- [IFNULL](../ifnull)
 
 ## SQL Examples
 

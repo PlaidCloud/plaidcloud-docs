@@ -11,7 +11,7 @@ or_(<expr1>[, <expr2> ...])
 ```
 
 ## Analyze Examples
-```
+```python
 or_(  
     table.color == 'green',  
     table.shape == 'circle',  
@@ -26,3 +26,9 @@ or_(
 ```
 
 ## SQL Examples
+```sql
+SELECT * FROM table WHERE
+    table.color = 'green'
+    OR table.shape = 'circle'  
+    OR table.price >= 1.25;
+```

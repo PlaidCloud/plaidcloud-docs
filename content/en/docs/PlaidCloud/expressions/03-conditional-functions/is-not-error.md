@@ -1,13 +1,38 @@
 ---
 title: IS_NOT_ERROR
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.379"/>
 
 Returns a Boolean value indicating whether an expression is an error value.
 
-See also: [IS_ERROR](is-error)
+See also: [IS_ERROR](../is-error)
+
+## Analyze Syntax
+
+```python
+func.is_error( <expr> )
+```
+
+## Analyze Examples
+
+```python
+# Indicates division by zero, hence an error
+func.is_error((1 / 0)), func.is_not_error((1 / 0))
+
+┌─────────────────────────────────────────────────────┐
+│ func.is_error((1 / 0)) │ func.is_not_error((1 / 0)) │
+├────────────────────────┼────────────────────────────┤
+│ true                   │ false                      │
+└─────────────────────────────────────────────────────┘
+
+# The conversion to DATE is successful, hence not an error
+func.is_error(func.to_date('2024-03-17')), func.is_not_error(func.to_date('2024-03-17'))
+
+┌───────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_error(func.to_date('2024-03-17')) │ func.is_not_error(func.to_date('2024-03-17')) │
+├───────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ false                                     │ true                                          │
+└───────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

@@ -11,7 +11,7 @@ and_(<expr1>[, <expr2> ...])
 ```
 
 ## Analyze Examples
-```
+```python
 and_(  
     table.color == 'green',  
     table.shape == 'circle',  
@@ -27,3 +27,9 @@ and_(
 
 ## SQL Examples
 
+```sql
+SELECT * FROM table WHERE
+    table.color = 'green'
+    AND table.shape = 'circle'  
+    AND table.price >= 1.25;
+```

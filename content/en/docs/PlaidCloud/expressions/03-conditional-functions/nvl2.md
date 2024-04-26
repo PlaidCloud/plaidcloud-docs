@@ -1,11 +1,34 @@
 ---
 title: NVL2
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.312"/>
 
 Returns `<expr2>` if `<expr1>` is not NULL; otherwise, it returns `<expr3>`.
+
+## Analyze Syntax
+
+```python
+func.nvl2(<expr1> , <expr2> , <expr3>)
+```
+
+## Analyze Examples
+
+```python
+func.nvl2('a', 'b', 'c'), func.nvl2(null, 'b', 'c')
+
+┌──────────────────────────────────────────────────────┐
+│ func.nvl2('a', 'b', 'c') │ func.nvl2(null, 'b', 'c') │
+├──────────────────────────┼───────────────────────────┤
+│ b                        │ c                         │
+└──────────────────────────────────────────────────────┘
+
+func.nvl2(1, 2, 3), func.nvl2(null, 2, 3)
+
+┌────────────────────────────────────────────┐
+│ func.nvl2(1, 2, 3) │ func.nvl2(null, 2, 3) │
+├────────────────────┼───────────────────────┤
+│                  2 │                     3 │
+└────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

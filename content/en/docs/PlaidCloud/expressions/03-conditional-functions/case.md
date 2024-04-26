@@ -4,6 +4,17 @@ title: CASE
 
 Handles IF/THEN logic. It is structured with at least one pair of `WHEN` and `THEN` statements. Every `CASE` statement must be concluded with the `END` keyword. The `ELSE` statement is optional, providing a way to capture values not explicitly specified in the `WHEN` and `THEN` statements.
 
+## SQL Syntax
+
+```python
+case(
+    (<condition_1>, <value_1>),
+    (<condition_2>, <value_2>),
+    [ ... ]
+    [ else_=<value_n>]
+)
+```
+
 ## Analyze Examples
 
 ### A simple example
@@ -12,7 +23,7 @@ This example returns a person's name. It starts off searching to see if the firs
 ```python
 case(
     (table.first_name.is_not(None), func.concat(table.first_name, table.last_name)), 
-    else_ = table.last_name
+    else_=table.last_name
 )
 ```
 
@@ -22,7 +33,7 @@ This example returns a price based on quantity. "If" the quantity in the order i
 ```python
 case( 
     (order_table.qty > 100, item_table.specialprice), 
-    (order_table.qty > 10, item_table.bulkprice) , 
+    (order_table.qty > 10, item_table.bulkprice), 
     else_=item_table.regularprice
 )
 ```
