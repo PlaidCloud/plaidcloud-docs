@@ -405,9 +405,3 @@ To add shortcodes to includes.
 ## Embed a custom markdown shortcode section
 
 {{< include "i-am-a-test.md" >}}
-
-
-<script async src="https://js.stripe.com/v3/pricing-table.js"></script>
-<stripe-pricing-table pricing-table-id="prctbl_1PDwNXLvFHJzULgcP7jlhBCL"
-publishable-key="pk_test_j9gszXBGuYP8YiaTZiqIGM8V00m6TBJXzZ">
-</stripe-pricing-table>
