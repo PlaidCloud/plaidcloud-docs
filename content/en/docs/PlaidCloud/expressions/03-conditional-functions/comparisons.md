@@ -5,7 +5,7 @@ title: Comparison Methods
 These comparison methods are available in Analyze expressions.
 
 |Category&nbsp;&nbsp;&nbsp;&nbsp;|Expression|Structure|Example|Description|
-|-----------|----------|---------|-------|-----------|
+|--------------------------------|----------|---------|-------|-----------|
 |General Usage|>|>|table.column > 23|Greater Than|
 |General Usage|<|<|table.column < 23|Less Than|
 |General Usage|>=|>=|table.column >= 23|Greater than or equal to|

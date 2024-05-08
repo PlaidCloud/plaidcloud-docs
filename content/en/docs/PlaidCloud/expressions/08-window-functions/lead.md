@@ -2,13 +2,9 @@
 title: LEAD
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.45"/>
-
 LEAD allows you to access the value of a column from a subsequent row within the same result set. It is typically used to retrieve the value of a column in the next row, based on a specified ordering.
 
-See also: [LAG](lag)
+See also: [LAG](../lag)
 
 ## SQL Syntax
 

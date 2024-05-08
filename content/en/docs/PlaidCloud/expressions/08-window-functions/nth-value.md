@@ -2,16 +2,12 @@
 title: NTH_VALUE
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced: v1.1.50"/>
-
 Returns the Nth value from an ordered group of values.
 
 See also:
 
-- [FIRST_VALUE](first-value)
-- [LAST_VALUE](last-value)
+- [FIRST_VALUE](../first-value)
+- [LAST_VALUE](../last-value)
 
 ## SQL Syntax
 

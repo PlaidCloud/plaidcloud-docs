@@ -2,13 +2,9 @@
 title: LAG
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.45"/>
-
 LAG allows you to access the value of a column from a preceding row within the same result set. It is typically used to retrieve the value of a column in the previous row, based on a specified ordering.
 
-See also: [LEAD](lead)
+See also: [LEAD](../lead)
 
 ## SQL Syntax
 

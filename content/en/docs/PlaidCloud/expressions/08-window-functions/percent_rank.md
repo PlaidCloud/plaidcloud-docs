@@ -1,13 +1,10 @@
 ---
 title: PERCENT_RANK
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced: v1.1.50"/>
 
 Returns the relative rank of a given value within a set of values. The resulting value falls between 0 and 1, inclusive. Please note that the first row in any set has a PERCENT_RANK of 0.
 
-See also: [CUME_DIST](cume-dist)
+See also: [CUME_DIST](../cume-dist)
 
 ## SQL Syntax
 

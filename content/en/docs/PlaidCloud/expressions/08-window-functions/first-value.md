@@ -2,16 +2,12 @@
 title: FIRST_VALUE
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced: v1.1.50"/>
-
 Returns the first value from an ordered group of values.
 
 See also:
 
-- [LAST_VALUE](last-value)
-- [NTH_VALUE](nth-value)
+- [LAST_VALUE](../last-value)
+- [NTH_VALUE](../nth-value)
 
 ## SQL Syntax
 
