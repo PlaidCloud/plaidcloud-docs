@@ -20,4 +20,54 @@ Calculated columns are typically additional columns made by combining logic and 
 to_char("week_ending_sol_del_req", 'YYYY-mm-dd')
 ```
 
+### various SUM examples
+```
+SUM(Value)
 
+SUM(-1*"value_usd_mkp") / (0.0001+SUM(-1*"value_usd_base"))
+
+(SUM("Value_USD_VAT")/SUM("Value_USD_HEADER"))*100
+
+sum(delivery_cases) where Material_Type = Gloves
+
+sum("total_cost") / sum("delivery_count")
+```
+
+
+### various case examples
+```
+CASE WHEN
+SUM("distance_dc_xd") = 0 THEN 0
+ELSE
+sum("XD")/sum("distance_dc_xd")
+END
+
+sum(CASE
+WHEN "FUNCTION" = 'OM' THEN "VALUE__FC"
+ELSE 0.0
+END)
+```
+
+
+### count
+```
+count(*)
+```
+
+
+### First and Cast
+```
+public.first(cast("PRETAX_SEQ" AS NUMERIC))
+```
+
+
+### Round
+```
+round(Sum("GROSS PROFIT"),0)
+```
+
+
+### Concat
+```
+concat("GCOA","CC Code")
+```
