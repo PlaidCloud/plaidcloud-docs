@@ -214,8 +214,8 @@ Now that you have located where you want to add an expression, you can use the t
 |Text Expression|translate|func.translate(string text, from text, to text) returns Text|translate( '12345', '14', 'ax')=a23x5|Any character in the string that matches a character in the from set is replaced by the corresponding character in the to set|
 |Text Expression|trim|func.trim([leading, trailing, both] [characters] from string) returns Text|trim(both 'x' from 'xTomxx')=Tom|Remove the longest string containing only the characters (a space by default) from the start/end/both ends of the string|
 |Text Expression|upper|func.upper(string) returns Text|upper('tom')=TOM|Convert string to uppercase|
-|Arrays|string_to_array|func.string_to_array(text, delimiter)||This function is used to split a string into array elements using supplied delimiter and optional null string|
-|Arrays|unnest|func.unnest(text)||This function is used to expand an array to a set of rows|
+|Arrays|string_to_array|func.string_to_array(text, delimiter)|[Examples](#array-examples)|This function is used to split a string into array elements using supplied delimiter and optional null string|
+|Arrays|unnest|func.unnest(text)|[Examples](#array-examples)|This function is used to expand an array to a set of rows|
 |Grouping / Summarization|first|func.first(field)||This function returns the value of a specified field in the first record of the result set returned by a query|
 |Grouping / Summarization|last|func.last(field)||This function returns the value of a specified field in the last record of the result set returned by a query|
 |Grouping / Summarization|max|func.max(field)||The MAX function is an aggregate function that returns the maximum value in a set of values|
@@ -406,6 +406,8 @@ to_char("Sales_Order_w_Status"."WeekName")
 func.to_char(func.date_trunc('week', get_column(table, 'date_sol_delivery_required')), 'YYYY-MM-DD')
 
 func.to_date(get_column(table, 'File Creation Date'), 'YYYYMMDD')
+
+result.CreateDate<func.to_date('09022022', 'MMDDYYYY')
 
 to_char("date_delivery", 'YYYY-mm-dd')
 ```
@@ -661,3 +663,76 @@ sum("RW")/COUNT(DISTINCT "ship_to_customer")
 
 (sum("sol_otif_infull" * "sol_otif_pgi_ontime")) / (count(*) + 0.000001)
 ```
+
+
+
+## Array Examples
+In the examples below, we will use the following table called contacts with the phones column defined with an array of text.
+
+```python
+CREATE TABLE contacts (
+  id SERIAL PRIMARY KEY, 
+  name VARCHAR (100), 
+  phones TEXT []
+);
+```
+
+The phones column is a one-dimensional array that holds various phone numbers that a contact may have.
+
+To define multiple dimensional array, you add the square brackets.
+
+For example, you can define a two-dimensional array as follows:
+
+```python
+column_name data_type [][]
+```
+
+An example of inserting data into that table
+```python
+INSERT INTO contacts (name, phones)
+VALUES('John Doe',ARRAY [ '(408)-589-5846','(408)-589-5555' ]);
+```
+or
+```python
+INSERT INTO contacts (name, phones)
+VALUES('Lily Bush','{"(408)-589-5841"}'),
+      ('William Gate','{"(408)-589-5842","(408)-589-5843"}');
+```
+
+### Array unnest
+The unnest() function expands an array to a list of rows. For example, the following query expands all phone numbers of the phones array.
+
+```python
+SELECT 
+  name, 
+  unnest(phones) 
+FROM 
+  contacts;
+```
+
+Output:
+|     name     |     unnest     |
+|--------------|----------------|
+| John Doe     | (408)-589-5846 |
+| John Doe     | (408)-589-5555 |
+| Lily Bush    | (408)-589-5841 |
+| William Gate | (408)-589-5843 |
+
+
+### STRING_TO_ARRAY() function
+This function is used to split a string into array elements using supplied delimiter and optional null string.
+
+Syntax:<br>
+string_to_array(text, text [, text])
+
+Return Type:<br>
+text[]
+
+Example:<br>
+```python
+SELECT string_to_array('xx~^~yy~^~zz', '~^~', 'yy');
+```
+
+Output:<br>
+{xx,NULL,zz}
+
