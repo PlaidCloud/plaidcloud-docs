@@ -26,11 +26,11 @@ While PlaidCloud can be accessed using stand OAuth and JSON-RPC requests, it is 
 To install the PlaidCloud Utilities perform the following pip installs:
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.1.4#egg=plaidcloud-rpc
+pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
 ```
 
 ```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.1.9#egg=plaidcloud-utilities
+pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
 ```
 
 ## Obtaining an OAuth Token
