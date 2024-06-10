@@ -9,6 +9,7 @@ date: 2022-01-25T07:39:47
 
 Jupyter Notebooks and Jupyter Lab provide exceptional interactive capabilities to analyze, explore, explain, and report data.  PlaidCloud enables use of information directly in notebooks.
 
+PlaidCloud provides JupyterHub within each tenant workspace if is activated for use.  The documentation below helps with setting up Jupyter separately on a desktop or seperate server.
 
 ## Install Jupyter Notebook
 This assumes you have a working Jupyter Notebook installation.
@@ -26,11 +27,11 @@ While PlaidCloud can be accessed using stand OAuth and JSON-RPC requests, it is 
 To install the PlaidCloud Utilities perform the following pip installs:
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.1.4#egg=plaidcloud-rpc
+pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
 ```
 
 ```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.1.9#egg=plaidcloud-utilities
+pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
 ```
 
 ## Obtaining an OAuth Token
