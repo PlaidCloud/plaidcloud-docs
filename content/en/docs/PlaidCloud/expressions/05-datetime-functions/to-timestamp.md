@@ -84,14 +84,14 @@ SELECT TO_TIMESTAMP(-1);
 1969-12-31 23:59:59.000000
 ```
 
-:::tip
+{{< note >}}
 
 Please note that a Timestamp value ranges from 1000-01-01 00:00:00.000000 to 9999-12-31 23:59:59.999999. PlaidCloud Lakehouse would return an error if you run the following statement:
 
 ```sql
 SELECT TO_TIMESTAMP(9999999999999999999);
 ```
-:::
+{{< /note >}}
 
 ### Given Two Arguments
 
