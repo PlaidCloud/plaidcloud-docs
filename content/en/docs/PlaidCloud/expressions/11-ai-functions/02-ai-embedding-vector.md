@@ -9,7 +9,7 @@ The main code implementation can be found [here](https://github.com/datafuselabs
 
 By default, PlaidCloud Lakehouse leverages the [text-embedding-ada](https://platform.openai.com/docs/models/embeddings) model for generating embeddings.
 
-:::info
+{{< note >}}
 Starting from PlaidCloud Lakehouse v1.1.47, PlaidCloud Lakehouse supports the [Azure OpenAI service](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service).
 
 This integration offers improved data privacy.
@@ -21,16 +21,16 @@ openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<
 openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/"
 openai_api_version = "2023-03-15-preview"
 ```
-:::
+{{< /note >}}
 
-:::caution
+
+{{< caution >}}
 PlaidCloud Lakehouse relies on (Azure) OpenAI for `AI_EMBEDDING_VECTOR` and sends the embedding column data to (Azure) OpenAI.
 
 They will only work when the PlaidCloud Lakehouse configuration includes the `openai_api_key`, otherwise they will be inactive.
 
 This function is available by default on PlaidCloud Lakehouse using an Azure OpenAI key. If you use them, you acknowledge that your data will be sent to Azure OpenAI by us.
-:::
-
+{{< /caution >}}
 
 ## Overview of ai_embedding_vector
 

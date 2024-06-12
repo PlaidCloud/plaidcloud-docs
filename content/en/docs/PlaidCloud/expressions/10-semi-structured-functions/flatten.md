@@ -29,9 +29,9 @@ Transforms nested JSON data into a tabular format, where each element or field i
 
 The following table describes the output columns of the FLATTEN function:
 
-:::note
+{{< note >}}
 When using the LATERAL keyword with FLATTEN, these output columns may not be explicitly provided, as LATERAL introduces dynamic cross-referencing, altering the output structure.
-:::
+{{< /note >}}
 
 | Column | Description                                                                              |
 |--------|------------------------------------------------------------------------------------------|

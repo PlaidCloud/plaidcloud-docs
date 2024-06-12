@@ -8,11 +8,11 @@ PlaidCloud Lakehouse offers an efficient solution for constructing SQL queries b
 
 The main code implementation can be found [here](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs).
 
-:::note
+{{< note >}}
 The SQL query statements generated adhere to the PostgreSQL standards, so they might require manual revisions to align with the syntax of PlaidCloud Lakehouse.
-:::
+{{< /note >}}
 
-:::info
+{{< note >}}
 Starting from PlaidCloud Lakehouse v1.1.47, PlaidCloud Lakehouse supports the [Azure OpenAI service](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service).
 
 This integration offers improved data privacy.
@@ -24,15 +24,15 @@ openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<
 openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/"
 openai_api_version = "2023-03-15-preview"
 ```
-:::
+{{< /note >}}
 
-:::caution
+{{< caution >}}
 PlaidCloud Lakehouse relies on (Azure) OpenAI for `AI_TO_SQL` but only sends the table schema to (Azure) OpenAI, not the data.
 
 They will only work when the PlaidCloud Lakehouse configuration includes the `openai_api_key`, otherwise they will be inactive.
 
 This function is available by default on PlaidCloud Lakehouse using an Azure OpenAI key. If you use them, you acknowledge that your table schema will be sent to Azure OpenAI by us.
-:::
+{{< /caution >}}
 
 ## Analyze Syntax
 
@@ -67,7 +67,8 @@ USE <your-database>;
 SELECT * FROM ai_to_sql('<natural-language-instruction>');
 ```
 
-:::tip Obtain and Config OpenAI API Key
+{{< note >}}
+Obtain and Config OpenAI API Key
 - To obtain your openAI API key, please visit https://platform.openai.com/account/api-keys and generate a new key.
 - Configure the **databend-query.toml** file with the openai_api_key setting.
 
@@ -76,7 +77,7 @@ SELECT * FROM ai_to_sql('<natural-language-instruction>');
 ... ...
 openai_api_key = "<your-key>"
 ```
-:::
+{{< /note >}}
 
 ## SQL Examples
 

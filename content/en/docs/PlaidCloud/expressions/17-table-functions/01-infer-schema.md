@@ -4,12 +4,9 @@ title: INFER_SCHEMA
 
 Automatically detects the file metadata schema and retrieves the column definitions.
 
-
-:::caution
-
+{{< caution >}}
 `infer_schema` currently only supports parquet file format.
-
-:::
+{{< /caution >}}
 
 ## SQL Syntax
 

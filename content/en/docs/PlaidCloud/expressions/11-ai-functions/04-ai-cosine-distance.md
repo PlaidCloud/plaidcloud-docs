@@ -5,11 +5,9 @@ description: 'Measuring similarity using the cosine_distance function in PlaidCl
 
 This document provides an overview of the cosine_distance function in PlaidCloud Lakehouse and demonstrates how to measure document similarity using this function.
 
-:::info
-
+{{< note >}}
 The cosine_distance function performs vector computations within PlaidCloud Lakehouse and does not rely on the (Azure) OpenAI API. 
-
-:::
+{{< /note >}}
 
 The cosine_distance function in PlaidCloud Lakehouse is a built-in function that calculates the cosine distance between two vectors. It is commonly used in natural language processing tasks, such as document similarity and recommendation systems.
 

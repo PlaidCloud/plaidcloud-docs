@@ -105,11 +105,9 @@ FROM
 GROUP BY level ORDER BY level ASC;
 ```
 
-:::tip
-
+{{< note >}}
 The `event_timestamp` type is timestamp, `3600000000` is a hour time window.
-
-:::
+{{< /note >}}
 
 Result:
 

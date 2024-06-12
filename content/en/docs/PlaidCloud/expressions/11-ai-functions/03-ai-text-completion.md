@@ -7,7 +7,7 @@ This document provides an overview of the `ai_text_completion` function in Plaid
 
 The main code implementation can be found [here](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/common/openai/src/completion.rs).
 
-:::info
+{{< caution >}}
 Starting from PlaidCloud Lakehouse v1.1.47, PlaidCloud Lakehouse supports the [Azure OpenAI service](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service).
 
 This integration offers improved data privacy.
@@ -19,15 +19,15 @@ openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<
 openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/"
 openai_api_version = "2023-03-15-preview"
 ```
-:::
+{{< /note >}}
 
-:::caution
+{{< caution >}}
 PlaidCloud Lakehouse relies on (Azure) OpenAI for `AI_TEXT_COMPLETION` and sends the completion prompt data to (Azure) OpenAI.
 
 They will only work when the PlaidCloud Lakehouse configuration includes the `openai_api_key`, otherwise they will be inactive.
 
 This function is available by default on PlaidCloud Lakehouse using an Azure OpenAI key. If you use them, you acknowledge that your data will be sent to Azure OpenAI by us.
-:::
+{{< /caution >}}
 
 
 ## Overview of ai_text_completion

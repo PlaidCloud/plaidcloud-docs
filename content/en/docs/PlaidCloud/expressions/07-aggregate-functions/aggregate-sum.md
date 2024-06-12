@@ -6,9 +6,9 @@ Aggregate function.
 
 The SUM() function calculates the sum of a set of values.
 
-:::caution
+{{< caution >}}
 NULL values are not counted.
-:::
+{{< /caution >}}
 
 
 ## Analyze Syntax

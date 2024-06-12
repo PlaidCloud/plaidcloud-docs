@@ -6,9 +6,9 @@ Aggregate function.
 
 The covar_samp() function returns the sample covariance (Σ((x - x̅)(y - y̅)) / (n - 1)) of two data columns.
 
-:::caution
+{{< caution >}}
 NULL values are not counted.
-:::
+{{< /caution >}}
 
 ## Analyze Syntax
 

@@ -6,9 +6,9 @@ Aggregate function.
 
 The STDDEV_SAMP() function returns the sample standard deviation(the square root of VAR_SAMP()) of an expression.
 
-:::caution
+{{< caution >}}
 NULL values are not counted.
-:::
+{{< /caution >}}
 
 ## Analyze Syntax
 

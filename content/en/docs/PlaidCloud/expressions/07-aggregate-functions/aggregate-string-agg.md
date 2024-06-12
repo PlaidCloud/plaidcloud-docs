@@ -28,7 +28,7 @@ STRING_AGG(<expr>)
 STRING_AGG(<expr> [, delimiter])
 ```
 
-:::info
+{{< note >}}
 If `<expr>` is not a String expression, should use `::VARCHAR` to convert.
 
 For example:
@@ -40,7 +40,7 @@ SELECT string_agg(number::VARCHAR, '|') AS s FROM numbers(5);
 | 0|1|2|3|4 |
 +-----------+
 ```
-:::
+{{< /note >}}
 
 ## Arguments
 

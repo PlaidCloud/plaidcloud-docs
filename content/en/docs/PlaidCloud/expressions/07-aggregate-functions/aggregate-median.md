@@ -6,9 +6,9 @@ Aggregate function.
 
 The MEDIAN() function computes the median of a numeric data sequence.
 
-:::caution
+{{< caution >}}
 NULL values are not counted.
-:::
+{{< /caution >}}
 
 ## Analyze Syntax
 
