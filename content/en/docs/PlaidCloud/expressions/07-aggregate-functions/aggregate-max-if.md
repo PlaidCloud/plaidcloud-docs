@@ -2,9 +2,24 @@
 title: MAX_IF
 ---
 
-## MAX_IF
-
 The suffix `_IF` can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.
+
+## Analyze Syntax
+
+```python
+func.max_if(<column>, <cond>)
+```
+
+## Analyze Examples
+```python
+func.max_if(table.revenue, table.salesperson_id==1).alias('max_revenue_salesperson_1')
+
+| max_revenue_salesperson_1 |
+|---------------------------|
+|           3000            |
+```
+
+## SQL Example
 
 ```sql
 MAX_IF(<column>, <cond>)

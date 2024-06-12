@@ -2,11 +2,24 @@
 title: COUNT_IF
 ---
 
-
-## COUNT_IF 
-
 The suffix `_IF` can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.
 
+## Analyze Syntax
+
+```python
+func.count_if(<column>, <cond>)
+```
+
+## Analyze Examples
+```python
+func.count_if(table.status, table.status=='Completed').alias('completed_orders')
+
+| completed_orders |
+|------------------|
+|        3         |
+```
+
+## SQL Example
 ```sql
 COUNT_IF(<column>, <cond>)
 ```

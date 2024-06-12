@@ -2,10 +2,24 @@
 title: MIN_IF
 ---
 
-
-## MIN_IF 
-
 The suffix `_IF` can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.
+
+## Analyze Syntax
+
+```python
+func.min_if(<column>, <cond>)
+```
+
+## Analyze Examples
+```python
+func.min_if(table.budget, table.departing=='IT').alias('min_it_budget')
+
+| min_it_budget |
+|---------------|
+|     2000      |
+```
+
+## SQL Syntax
 
 ```
 MIN_IF(<column>, <cond>)

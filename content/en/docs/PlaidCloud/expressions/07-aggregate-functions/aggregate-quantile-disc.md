@@ -11,6 +11,21 @@ The `QUANTILE` alias to `QUANTILE_DISC`
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.quantile_disc(<levels>, <expr>)
+```
+
+## Analyze Examples
+```python
+func.quantile_disc([0.25, 0.75], table.salary).alias('salary_quantiles')
+
+|  salary_quantiles   |
+|---------------------|
+| [55000.0, 65000.0]  |
+```
+
 ## SQL Syntax
 
 ```sql

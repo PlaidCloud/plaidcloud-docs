@@ -7,8 +7,6 @@ description: Funnel Analysis
 <img src="https://datafuse-1253727613.cos.ap-hongkong.myqcloud.com/learn/databend-funnel.png" width="550"/>
 </p>
 
-## WINDOW_FUNNEL
-
 Similar to `windowFunnel` in ClickHouse (they were created by the same author), it searches for event chains in a sliding time window and calculates the maximum number of events from the chain.
 
 The function works according to the algorithm:
@@ -20,6 +18,7 @@ The function works according to the algorithm:
 -   If the data has multiple event chains at varying completion points, the function will only output the size of the longest chain.
 
 
+## SQL Syntax
 ```sql
 WINDOW_FUNNEL( <window> )( <timestamp>, <cond1>, <cond2>, ..., <condN> )
 ```

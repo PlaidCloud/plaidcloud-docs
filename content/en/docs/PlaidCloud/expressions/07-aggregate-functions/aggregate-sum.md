@@ -10,6 +10,22 @@ The SUM() function calculates the sum of a set of values.
 NULL values are not counted.
 :::
 
+
+## Analyze Syntax
+
+```python
+func.sum(<column>)
+```
+
+## Analyze Examples
+```python
+func.sum(table.quantity).alias('total_quantity_sold')
+
+| total_quantity_sold |
+|---------------------|
+|         41          |
+```
+
 ## SQL Syntax
 
 ```

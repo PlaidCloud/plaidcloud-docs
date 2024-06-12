@@ -6,8 +6,8 @@ Aggregate functions are essential tools in SQL that allow you to perform calcula
 
 These functions help you extract and summarize data from databases to gain valuable insights. 
 
-| Function Name                                                       | What It Does                                                                 | 
-|---------------------------------------------------------------------|------------------------------------------------------------------------------|
+| Function Name                                                    | What It Does                                                                 | 
+|------------------------------------------------------------------|------------------------------------------------------------------------------|
 | [ANY](aggregate-any)                                             | Checks if any row meets the specified condition                              | 
 | [APPROX_COUNT_DISTINCT](aggregate-approx-count-distinct)         | Estimates the number of distinct values with HyperLogLog                     | 
 | [ARG_MAX](aggregate-arg-max)                                     | Finds the arg value for the maximum val value                                | 
@@ -32,7 +32,7 @@ These functions help you extract and summarize data from databases to gain valua
 | [QUANTILE_CONT](aggregate-quantile-cont)                         | Calculates the interpolated quantile for a specific column                   |
 | [QUANTILE_DISC](aggregate-quantile-disc)                         | Calculates the quantile for a specific column                                | 
 | [QUANTILE_TDIGEST](aggregate-quantile-tdigest)                   | Calculates the quantile using t-digest algorithm                             |
-| [QUANTILE_TDIGEST_WEIGHTED](aggregate-quantile-tdigest-weighted) | Calculates the quantile with weighted using t-digest algorithm       |
+| [QUANTILE_TDIGEST_WEIGHTED](aggregate-quantile-tdigest-weighted) | Calculates the quantile with weighted using t-digest algorithm               |
 | [RETENTION](aggregate-retention)                                 | Calculates retention for a set of events                                     | 
 | [SKEWNESS](aggregate-skewness)                                   | Calculates the skewness of a set of values                                   | 
 | [STDDEV_POP](aggregate-stddev-pop)                               | Calculates the population standard deviation of a column                     | 

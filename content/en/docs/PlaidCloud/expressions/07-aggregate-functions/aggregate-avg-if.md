@@ -2,11 +2,24 @@
 title: AVG_IF
 ---
 
-
-## AVG_IF 
-
 The suffix -If can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.
 
+## Analyze Syntax
+
+```python
+func.avg_if(<column>, <cond>)
+```
+
+## Analyze Examples
+```python
+func.avg_if(table.salary, table.department=='IT').alias('avg_salary_it')
+
+| avg_salary_it   |
+|-----------------|
+|     65000.0     |
+```
+
+## SQL Syntax
 ```sql
 AVG_IF(<column>, <cond>)
 ```

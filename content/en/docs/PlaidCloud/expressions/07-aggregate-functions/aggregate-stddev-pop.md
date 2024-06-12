@@ -15,6 +15,21 @@ STD() or STDDEV() can also be used, which are equivalent but not standard SQL.
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.stddev_pop(<expr>)
+```
+
+## Analyze Examples
+```python
+func.stddev_pop(table.score).alias('test_score_stddev_pop')
+
+| test_score_stddev_pop |
+|-----------------------|
+|        7.07107        |
+```
+
 ## SQL Syntax
 
 ```sql

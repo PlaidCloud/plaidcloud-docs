@@ -10,6 +10,21 @@ The STDDEV_SAMP() function returns the sample standard deviation(the square root
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.stddev_samp(<expr>)
+```
+
+## Analyze Examples
+```python
+func.stddev_samp(table.height).alias('height_stddev_samp')
+
+| height_stddev_samp |
+|--------------------|
+|      0.240         |
+```
+
 ## SQL Syntax
 
 ```sql

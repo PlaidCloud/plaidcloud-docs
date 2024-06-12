@@ -2,10 +2,24 @@
 title: SUM_IF
 ---
 
-
-## SUM_IF 
-
 The suffix -If can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.
+
+## Analyze Syntax
+
+```python
+func.sum_if(<column>, <cond>)
+```
+
+## Analyze Examples
+```python
+func.sum_if(table.amount, table.status=='Completed').alias('total_amount_completed')
+
+| total_amount_completed |
+|------------------------|
+|         270.0          |
+```
+
+## SQL Syntax
 
 ```
 SUM_IF(<column>, <cond>)

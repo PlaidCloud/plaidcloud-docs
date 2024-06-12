@@ -1,15 +1,27 @@
 ---
 title: MEDIAN_TDIGEST
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.41"/>
 
 Computes the median of a numeric data sequence using the [t-digest](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) algorithm.
 
 :::note
 NULL values are not included in the calculation.
 :::
+
+## Analyze Syntax
+
+```python
+func.median_tdigest(<expr>)
+```
+
+## Analyze Examples
+```python
+func.median_tdigest(table.score).alias('median_score')
+
+|  median_score  |
+|----------------|
+|      85.0      |
+```
 
 ## SQL Syntax
 

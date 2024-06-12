@@ -10,6 +10,21 @@ The MEDIAN() function computes the median of a numeric data sequence.
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.median(<expr>)
+```
+
+## Analyze Examples
+```python
+func.median(table.score).alias('median_score')
+
+|  median_score  |
+|----------------|
+|      85.0      |
+```
+
 ## SQL Syntax
 
 ```sql

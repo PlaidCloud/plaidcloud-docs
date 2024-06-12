@@ -5,13 +5,28 @@ title_includes: uniq
 
 Aggregate function.
 
-The count(distinct ...) function calculates the uniq value of a set of values.
+The count(distinct ...) function calculates the unique value of a set of values.
 
 To obtain an estimated result from large data sets with little memory and time, consider using [APPROX_COUNT_DISTINCT](aggregate-approx-count-distinct).
 
 :::caution
  NULL values are not counted.
 :::
+
+## Analyze Syntax
+
+```python
+func.count_distinct(<column>)
+```
+
+## Analyze Examples
+```python
+func.count_distinct(table.category).alias('unique_categories')
+
+| unique_categories |
+|-------------------|
+|         2         |
+```
 
 ## SQL Syntax
 

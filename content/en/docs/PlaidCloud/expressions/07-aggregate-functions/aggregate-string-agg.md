@@ -6,6 +6,21 @@ Aggregate function.
 
 The STRING_AGG() function converts all the non-NULL values of a column to String, separated by the delimiter.
 
+## Analyze Syntax
+
+```python
+func.string_agg(<expr> [, delimiter])
+```
+
+## Analyze Examples
+```python
+func.string_agg(table.language_name).alias('concatenated_languages')
+
+|          concatenated_languages         |
+|-----------------------------------------|
+| Python, JavaScript, Java, C#, Ruby      |
+```
+
 ## SQL Syntax
 
 ```sql

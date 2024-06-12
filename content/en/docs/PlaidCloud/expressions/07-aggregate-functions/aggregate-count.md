@@ -8,6 +8,21 @@ The COUNT() function returns the number of records returned by a SELECT query.
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.count(<column>)
+```
+
+## Analyze Examples
+```python
+func.count(table.grade).alias('count_valid_grades')
+
+| count_valid_grades |
+|--------------------|
+|          4         |
+```
+
 ## SQL Syntax
 
 ```sql

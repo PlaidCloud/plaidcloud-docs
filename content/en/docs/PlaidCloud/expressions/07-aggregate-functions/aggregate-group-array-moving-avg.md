@@ -4,6 +4,23 @@ title: GROUP_ARRAY_MOVING_AVG
 
 The GROUP_ARRAY_MOVING_AVG function calculates the moving average of input values. The function can take the window size as a parameter. If left unspecified, the function takes the window size equal to the number of input values.
 
+## Analyze Syntax
+
+```python
+func.group_array_moving_avg(<expr1>)
+```
+
+## Analyze Examples
+```python
+table.user_id, func.group_array_moving_avg(table.request_num).alias('avg_request_num')
+
+| user_id | avg_request_num  |
+|---------|------------------|
+|       1 | [5.0,11.5,21.5]  |
+|       3 | [10.0,22.5,35.0] |
+|       2 | [7.5,18.0,31.0]  |
+```
+
 ## SQL Syntax
 
 ```sql

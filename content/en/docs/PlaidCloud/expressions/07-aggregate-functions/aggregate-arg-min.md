@@ -4,6 +4,21 @@ title: ARG_MIN
 
 Calculates the `arg` value for a minimum `val` value. If there are several different values of `arg` for minimum values of `val`, returns the first of these values encountered.
 
+## Analyze Syntax
+
+```python
+func.arg_min(<expr>)
+```
+
+## Analyze Examples
+```python
+func.arg_min(table.name, table.score).alias('student_name')
+
+| student_name |
+|--------------|
+| Charlie      |
+```
+
 ## SQL Syntax
 
 ```sql

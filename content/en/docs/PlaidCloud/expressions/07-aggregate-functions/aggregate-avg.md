@@ -8,6 +8,22 @@ The AVG() function returns the average value of an expression.
 
 **Note:** NULL values are not counted.
 
+
+## Analyze Syntax
+
+```python
+func.avg(<column>)
+```
+
+## Analyze Examples
+```python
+func.avg(table.price).alias('avg_price')
+
+| avg_price |
+| --------- |
+| 20.4      |
+```
+
 ## SQL Syntax
 
 ```sql

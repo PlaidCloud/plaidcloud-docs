@@ -6,6 +6,21 @@ Aggregate function.
 
 The `SKEWNESS()` function returns the skewness of all input values.
 
+## Analyze Syntax
+
+```python
+func.skewness(<expr>)
+```
+
+## Analyze Examples
+```python
+func.skewness(table.temperature).alias('temperature_skewness')
+
+| temperature_skewness |
+|----------------------|
+|      0.68            |
+```
+
 ## SQL Syntax
 
 ```sql

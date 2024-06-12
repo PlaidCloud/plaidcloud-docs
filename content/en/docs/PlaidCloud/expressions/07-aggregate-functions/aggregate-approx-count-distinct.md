@@ -8,6 +8,21 @@ The HyperLogLog algorithm provides an approximation of the number of unique elem
 
 To get an accurate result, use [COUNT_DISTINCT](aggregate-count-distinct). See [Examples](#examples) for more explanations.
 
+## Analyze Syntax
+
+```python
+func.approx_count_distinct(<expr>)
+```
+
+## Analyze Examples
+```python
+func.approx_count_distinct(table.user_id).alias('approx_distinct_user_count')
+
+| approx_distinct_user_count |
+|----------------------------|
+|             4              |
+```
+
 ## SQL Syntax
 
 ```sql

@@ -6,6 +6,21 @@ Aggregate function.
 
 The `KURTOSIS()` function returns the excess kurtosis of all input values.
 
+## Analyze Syntax
+
+```python
+func.kurtosis(<expr>)
+```
+
+## Analyze Examples
+```python
+func.kurtosis(table.price).alias('excess_kurtosis')
+
+|     excess_kurtosis     |
+|-------------------------|
+| 0.06818181325581445     |
+```
+
 ## SQL Syntax
 
 ```sql

@@ -10,6 +10,23 @@ Any condition can be specified as an argument (as in WHERE).
 
 The conditions, except the first, apply in pairs: the result of the second will be true if the first and second are true, of the third if the first and third are true, etc.
 
+## Analyze Syntax
+
+```python
+func.retention(<cond1> , <cond2> , ..., <cond32>)
+```
+
+## Analyze Examples
+```python
+table.user_id, func.retention(table.event_type=='signup', table.event_type='login', table.event_type='purchase').alias('sales_amounts')
+
+| user_id | retention |
+|---------|-----------|
+|   1     | [1, 1, 0] |
+|   2     | [1, 0, 1] |
+|   3     | [1, 1, 0] |
+```
+
 ## SQL Syntax
 
 ```sql

@@ -4,6 +4,23 @@ title: GROUP_ARRAY_MOVING_SUM
 
 The GROUP_ARRAY_MOVING_SUM function calculates the moving sum of input values. The function can take the window size as a parameter. If left unspecified, the function takes the window size equal to the number of input values.
 
+## Analyze Syntax
+
+```python
+func.group_array_moving_sum(<expr>)
+```
+
+## Analyze Examples
+```python
+table.user_id, func.group_array_moving_sum(table.request_num)
+
+| user_id | request_num |
+|---------|-------------|
+|       1 | [10,23,43]  |
+|       2 | [20,45,70]  |
+|       3 | [15,36,62]  |
+```
+
 ## SQL Syntax
 
 ```sql

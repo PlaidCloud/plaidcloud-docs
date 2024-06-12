@@ -10,6 +10,21 @@ The covar_samp() function returns the sample covariance (Σ((x - x̅)(y - y̅)) 
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.covar_samp(<expr1>, <expr2>)
+```
+
+## Analyze Examples
+```python
+func.covar_samp(table.items_sold, table.profit).alias('covar_samp_items_profit')
+
+| covar_samp_items_profit |
+|-------------------------|
+|        250000.0         |
+```
+
 ## SQL Syntax
 
 ```sql

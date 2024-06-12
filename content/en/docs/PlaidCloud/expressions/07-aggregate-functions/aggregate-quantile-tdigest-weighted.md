@@ -12,6 +12,21 @@ This function takes into account the weight of each sequence member. Memory cons
 NULL values are not included in the calculation.
 :::
 
+## Analyze Syntax
+
+```python
+func.quantile_tdigest_weighted(<levels>, <expr>, <weight_expr>)
+```
+
+## Analyze Examples
+```python
+func.quantile_tdigest_weighted([0.5, 0.8], table.sales_amount, 1).alias('sales_amounts')
+
+| sales_amounts         |
+|-----------------------+
+| [6000.0,7000.0]       |
+```
+
 ## SQL Syntax
 
 ```sql

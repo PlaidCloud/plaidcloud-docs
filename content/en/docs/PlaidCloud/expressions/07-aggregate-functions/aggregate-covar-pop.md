@@ -4,6 +4,21 @@ title: COVAR_POP
 
 COVAR_POP returns the population covariance of a set of number pairs. 
 
+## Analyze Syntax
+
+```python
+func.covar_pop(<expr1>, <expr2>)
+```
+
+## Analyze Examples
+```python
+func.covar_pop(table.units_sold, table.revenue).alias('covar_pop_units_revenue')
+
+| covar_pop_units_revenue |
+|-------------------------|
+|        20000.0          |
+```
+
 ## SQL Syntax
 
 ```sql

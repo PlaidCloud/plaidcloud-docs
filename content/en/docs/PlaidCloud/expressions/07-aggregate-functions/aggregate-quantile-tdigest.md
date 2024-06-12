@@ -11,6 +11,21 @@ Computes an approximate quantile of a numeric data sequence using the [t-digest]
 NULL values are not included in the calculation.
 :::
 
+## Analyze Syntax
+
+```python
+func.quantile_tdigest(<levels>, <expr>)
+```
+
+## Analyze Examples
+```python
+func.quantile_tdigest([0.5, 0.8], table.sales_amount).alias('sales_amounts')
+
+| sales_amounts         |
+|-----------------------+
+| [6000.0,7000.0]       |
+```
+
 ## SQL Syntax
 
 ```sql

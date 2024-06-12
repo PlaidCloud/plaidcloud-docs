@@ -10,6 +10,21 @@ The QUANTILE_CONT() function computes the interpolated quantile number of a nume
 NULL values are not counted.
 :::
 
+## Analyze Syntax
+
+```python
+func.quantile_cont(<levels>, <expr>)
+```
+
+## Analyze Examples
+```python
+func.quantile_cont(0.5, table.sales_amount).alias('median_sales_amount')
+
+|  median_sales_amount  |
+|-----------------------|
+|        6000.0         |
+```
+
 ## SQL Syntax
 
 ```sql

@@ -4,6 +4,21 @@ title: ARG_MAX
 
 Calculates the `arg` value for a maximum `val` value. If there are several values of `arg` for maximum values of `val`, returns the first of these values encountered.
 
+## Analyze Syntax
+
+```python
+func.arg_max(<expr>)
+```
+
+## Analyze Examples
+```python
+func.arg_max(table.product, table.price).alias('max_price_product')
+
+| max_price_product |
+| ----------------- |
+| Product C         |
+```
+
 ## SQL Syntax
 
 ```sql

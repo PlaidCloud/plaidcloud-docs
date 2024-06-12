@@ -6,6 +6,21 @@ Aggregate function.
 
 The MAX() function returns the maximum value in a set of values.
 
+## Analyze Syntax
+
+```python
+func.max(<column>)
+```
+
+## Analyze Examples
+```python
+table.city, func.max(table.temperature).alias('max_temperature')
+
+|    city    | max_temperature |
+|------------|-----------------|
+| New York   |       32        |
+```
+
 ## SQL Syntax
 
 ```

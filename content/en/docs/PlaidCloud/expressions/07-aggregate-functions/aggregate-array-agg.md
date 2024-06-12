@@ -5,6 +5,21 @@ title_includes: LIST
 
 The ARRAY_AGG function (also known by its alias LIST) transforms all the values, including NULL, of a specific column in a query result into an array.
 
+## Analyze Syntax
+
+```python
+func.array_agg(<expr>)
+```
+
+## Analyze Examples
+```python
+table.movie_title, func.array_agg(table.rating).alias('ratings')
+
+| movie_title |  ratings   |
+|-------------|------------|
+| Inception   | [5, 4, 5]  |
+```
+
 ## SQL Syntax
 
 ```sql

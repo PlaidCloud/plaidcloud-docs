@@ -6,6 +6,21 @@ Aggregate function.
 
 The MIN() function returns the minimum value in a set of values.
 
+## Analyze Syntax
+
+```python
+func.min(<column>)
+```
+
+## Analyze Examples
+```python
+table.station_id, func.min(table.price).alias('min_price')
+
+| station_id | min_price |
+|------------|-----------|
+|     1      |   3.45    |
+```
+
 ## SQL Syntax
 
 ```

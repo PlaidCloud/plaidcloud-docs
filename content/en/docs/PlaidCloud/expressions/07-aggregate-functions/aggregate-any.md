@@ -6,6 +6,21 @@ Aggregate function.
 
 The ANY() function selects the first encountered (non-NULL) value, unless all rows have NULL values in that column. The query can be executed in any order and even in a different order each time, so the result of this function is indeterminate. To get a determinate result, you can use the ‘min’ or ‘max’ function instead of ‘any’.
 
+## Analyze Syntax
+
+```python
+func.any(<expr>)
+```
+
+## Analyze Examples
+```python
+func.any(table.product_name).alias('any_product_name')
+
+| any_product_name |
+|------------------|
+| Laptop           |
+```
+
 ## SQL Syntax
 
 ```sql
@@ -24,7 +39,7 @@ The first encountered (non-NULL) value, in the type of the value. If all values 
 
 ## SQL Examples
 
-**Create a Table and Insert Sample Data*
+**Create a Table and Insert Sample Data**
 ```sql
 CREATE TABLE product_data (
   id INT,
