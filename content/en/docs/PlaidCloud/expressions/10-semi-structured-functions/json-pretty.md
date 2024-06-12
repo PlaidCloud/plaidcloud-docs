@@ -1,11 +1,33 @@
 ---
 title: JSON_PRETTY
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.77"/>
 
 Formats JSON data, making it more readable and presentable. It automatically adds indentation, line breaks, and other formatting to the JSON data for better visual representation.
+
+## Analyze Syntax
+
+```python
+func.json_pretty(<json_string>)
+```
+
+## Analyze Example
+
+```python
+func.json_pretty(func.parse_json('{"person": {"name": "bob", "age": 25}, "location": "city"}'))
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.json_pretty(func.parse_json('{"person": {"name": "bob", "age": 25}, "location": "city"}')) │
+│                                         String                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ {                                                                                               │
+│   "location": "City",                                                                           │
+│   "person": {                                                                                   │
+│     "age": 25,                                                                                  │
+│     "name": "Bob"                                                                               │
+│   }                                                                                             │
+│ }                                                                                               │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

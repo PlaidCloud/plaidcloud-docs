@@ -1,11 +1,23 @@
 ---
 title: JSON_ARRAY
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.98"/>
 
 Creates a JSON array with specified values.
+
+## Analyze Syntax
+
+```python
+func.json_array(value1[, value2[, ...]])
+```
+
+## Analyze Example
+
+```python
+
+func.json_array('fruits', func.json_array('apple', 'banana', 'orange'), func.json_object('price', 1.2, 'quantity', 3)) |
+-----------------------------------------------------------------------------------------------------------------------+
+["fruits",["apple","banana","orange"],{"price":1.2,"quantity":3}]                                                      |
+```
 
 ## SQL Syntax
 

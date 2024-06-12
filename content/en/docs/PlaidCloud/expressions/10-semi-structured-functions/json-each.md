@@ -1,11 +1,28 @@
 ---
 title: JSON_EACH
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.152"/>
 
 Extracts key-value pairs from a JSON object, breaking down the structure into individual rows in the result set. Each row represents a distinct key-value pair derived from the input JSON expression.
+
+## Analyze Syntax
+
+```python
+func.json_each(<json_string>)
+```
+
+## Analyze Example
+
+```python
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.json_each(func.parse_json('{"name": "john", "age": 25, "isstudent": false, "grades": [90, 85, 92]}')) │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ('age','25')                                                                                               │
+│ ('grades','[90,85,92]')                                                                                    │
+│ ('isStudent','false')                                                                                      │
+│ ('name','"John"')                                                                                          │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

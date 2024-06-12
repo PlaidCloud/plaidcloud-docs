@@ -1,11 +1,47 @@
 ---
 title: JSON_TYPEOF
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.91"/>
 
 Returns the type of the main-level of a JSON structure.
+
+## Analyze Syntax
+
+```python
+func.json_typeof(<json_string>)
+```
+
+## Analyze Example
+
+```python
+func.json_typeof(func.parse_json('null'))|
+-----------------------------------------+
+null                                     |
+
+--
+func.json_typeof(func.parse_json('true'))|
+-----------------------------------------+
+boolean                                  |
+
+--
+func.json_typeof(func.parse_json('"plaidcloud"'))|
+-----------------------------------------------+
+string                                         |
+
+--
+func.json_typeof(func.parse_json('-1.23'))|
+------------------------------------------+
+number                                    |
+
+--
+func.json_typeof(func.parse_json('[1,2,3]'))|
+--------------------------------------------+
+array                                       |
+
+--
+func.json_typeof(func.parse_json('{"name": "alice", "age": 30}'))|
+-----------------------------------------------------------------+
+object                                                           |
+```
 
 ## SQL Syntax
 
@@ -24,7 +60,7 @@ The return type of the json_typeof function (or similar) is a string that indica
 SELECT JSON_TYPEOF(PARSE_JSON(NULL));
 
 --
-json_typeof(parse_json(null))|
+func.json_typeof(func.parse_json(null))|
 -----------------------------+
                              |
 
@@ -32,21 +68,21 @@ json_typeof(parse_json(null))|
 SELECT JSON_TYPEOF(PARSE_JSON('null'));
 
 --
-json_typeof(parse_json('null'))|
+func.json_typeof(func.parse_json('null'))|
 -------------------------------+
 null                           |
 
 SELECT JSON_TYPEOF(PARSE_JSON('true'));
 
 --
-json_typeof(parse_json('true'))|
+func.json_typeof(func.parse_json('true'))|
 -------------------------------+
 boolean                        |
 
 SELECT JSON_TYPEOF(PARSE_JSON('"PlaidCloud Lakehouse"'));
 
 --
-json_typeof(parse_json('"databend"'))|
+func.json_typeof(func.parse_json('"databend"'))|
 -------------------------------------+
 string                               |
 
@@ -54,21 +90,21 @@ string                               |
 SELECT JSON_TYPEOF(PARSE_JSON('-1.23'));
 
 --
-json_typeof(parse_json('-1.23'))|
+func.json_typeof(func.parse_json('-1.23'))|
 --------------------------------+
 number                          |
 
 SELECT JSON_TYPEOF(PARSE_JSON('[1,2,3]'));
 
 --
-json_typeof(parse_json('[1,2,3]'))|
+func.json_typeof(func.parse_json('[1,2,3]'))|
 ----------------------------------+
 array                             |
 
 SELECT JSON_TYPEOF(PARSE_JSON('{"name": "Alice", "age": 30}'));
 
 --
-json_typeof(parse_json('{"name": "alice", "age": 30}'))|
+func.json_typeof(func.parse_json('{"name": "alice", "age": 30}'))|
 -------------------------------------------------------+
 object                                                 |
 ```

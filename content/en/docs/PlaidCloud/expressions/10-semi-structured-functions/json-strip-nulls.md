@@ -1,11 +1,27 @@
 ---
 title: JSON_STRIP_NULLS
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.89"/>
 
 Removes all properties with null values from a JSON object. 
+
+## Analyze Syntax
+
+```python
+func.json_strip_nulls(<json_string>)
+```
+
+## Analyze Example
+
+```python
+func.json_strip_nulls(func.parse_json('{"name": "alice", "age": 30, "city": null}'))
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.json_strip_nulls(func.parse_json('{"name": "alice", "age": 30, "city": null}'))            │
+│                                         String                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ {"age":30,"name":"Alice"}                                                                       │
+└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

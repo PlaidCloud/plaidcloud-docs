@@ -4,6 +4,29 @@ title: JSON_PATH_QUERY
 
 Get all JSON items returned by JSON path for the specified JSON value.
 
+## Analyze Syntax
+
+```python
+func.json_path_query(<variant>, <path_name>)
+```
+
+## Analyze Example
+
+```python
+table.name, func.json_path_query(table.details, '$.features.*').alias('all_features')
+
++------------+--------------+
+| name       | all_features |
++------------+--------------+
+| Laptop     | "16GB"       |
+| Laptop     | "512GB"      |
+| Smartphone | "4GB"        |
+| Smartphone | "128GB"      |
+| Headphones | "20h"        |
+| Headphones | "5.0"        |
++------------+--------------+
+```
+
 ## SQL Syntax
 
 ```sql

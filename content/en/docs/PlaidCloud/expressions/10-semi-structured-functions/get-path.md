@@ -7,6 +7,23 @@ The value is returned as a `Variant` or `NULL` if either of the arguments is `NU
 
 `GET_PATH` is equivalent to a chain of `GET` functions, `path_name` consists of a concatenation of field names preceded by periods (.), colons (:) or index operators (`[index]`). The first field name does not require the leading identifier to be specified.
 
+## Analyze Syntax
+
+```python
+func.get_path(<variant>, <path_name>)
+```
+
+## Analyze Example
+
+```python
+func.get_path(func.parse_json('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}'), 'k2.k4')
++---------------------------------------------------------------------------------+
+| func.get_path(func.parse_json('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}'), 'k2.k4') |
++---------------------------------------------------------------------------------+
+| 4                                                                               |
++---------------------------------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -6,6 +6,16 @@ Strict casting `VARIANT` values to other data types.
 If the input data type is not `VARIANT`, the output is `NULL`.
 If the type of value in the `VARIANT` does not match the output value, the output is `NULL`.
 
+## Analyze Syntax
+```python
+func.as_boolean( <variant> )
+func.as_integer( <variant> )
+func.as_float( <variant> )
+func.as_string( <variant> )
+func.as_array( <variant> )
+func.as_object( <variant> )
+```
+
 ## SQL Syntax
 
 ```sql

@@ -4,6 +4,24 @@ title: JSON_PATH_QUERY_ARRAY
 
 Get all JSON items returned by JSON path for the specified JSON value and wrap a result into an array.
 
+## Analyze Syntax
+
+```python
+func.json_path_query_array(<variant>, <path_name>)
+```
+
+## Analyze Example
+
+```python
+table.name, func.json_path_query_array(table.details, '$.features.*').alias('all_features')
+
+   name     |     all_features
+------------+-----------------------
+ Laptop     | ["16GB", "512GB"]
+ Smartphone | ["4GB", "128GB"]
+ Headphones | ["20h", "5.0"]
+```
+
 ## SQL Syntax
 
 ```sql

@@ -1,11 +1,26 @@
 ---
 title: IS_OBJECT
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.368"/>
 
 Checks if the input value is a JSON object.
+
+## Analyze Syntax
+
+```python
+func.is_object(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_object(func.parse_json('{"a":"b"}')), func.is_object(func.parse_json('["a","b","c"]'))
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_object(func.parse_json('{"a":"b"}'))  │ func.is_object(func.parse_json('["a","b","c"]')) │
+├───────────────────────────────────────────────┼──────────────────────────────────────────────────┤
+│ true                                          │ false                                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

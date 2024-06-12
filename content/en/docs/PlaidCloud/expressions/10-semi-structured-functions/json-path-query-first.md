@@ -4,6 +4,30 @@ title: JSON_PATH_QUERY_FIRST
 
 Get the first JSON item returned by JSON path for the specified JSON value. 
 
+
+## Analyze Syntax
+
+```python
+func.json_path_query_first(<variant>, <path_name>)
+```
+
+## Analyze Example
+
+```python
+table.name, func.json_path_query_first(table.details, '$.features.*').alias('first_feature')
+
++------------+---------------+
+| name       | first_feature |
++------------+---------------+
+| Laptop     | "16GB"        |
+| Laptop     | "16GB"        |
+| Smartphone | "4GB"         |
+| Smartphone | "4GB"         |
+| Headphones | "20h"         |
+| Headphones | "20h"         |
++------------+---------------+
+```
+
 ## SQL Syntax
 
 ```sql

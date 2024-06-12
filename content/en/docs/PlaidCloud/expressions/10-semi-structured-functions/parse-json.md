@@ -9,6 +9,36 @@ title_includes: TRY_PARSE_JSON
 
 `try_parse_json` returns a NULL value if an error occurs during parsing.
 
+## Analyze Syntax
+
+```python
+func.parse_json(<json_string>)
+
+or
+
+func.try_parse_json(<json_string>)
+```
+
+## Analyze Example
+
+```python
+func.parse_json('[-1, 12, 289, 2188, false]')
+
++-----------------------------------------------+
+| func.parse_json('[-1, 12, 289, 2188, false]') |
++-----------------------------------------------+
+| [-1,12,289,2188,false]                        |
++-----------------------------------------------+
+
+func.try_parse_json('{ "x" : "abc", "y" : false, "z": 10} ')
+
++--------------------------------------------------------------+
+| func.try_parse_json('{ "x" : "abc", "y" : false, "z": 10} ') |
++--------------------------------------------------------------+
+| {"x":"abc","y":false,"z":10}                                 |
++--------------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -5,6 +5,24 @@ title: JSON_OBJECT_KEYS
 Returns an Array containing the list of keys in the input Variant OBJECT.
 
 
+## Analyze Syntax
+
+```python
+func.json_object_keys(<variant>)
+```
+
+## Analyze Example
+
+```python
+func.json_object_keys(func.parse_json(parse_json('{"a": 1, "b": [1,2,3]}')), func.json_object_keys(func.parse_json(parse_json('{"b": [2,3,4]}'))
+┌─────────────────────────────────────────────────────────────────┐
+│       id       │  json_object_keys(var) │ json_object_keys(var) │
+├────────────────┼────────────────────────┼───────────────────────┤
+│              1 │ ["a","b"]              │ ["a","b"]             │
+│              2 │ ["b"]                  │ ["b"]                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

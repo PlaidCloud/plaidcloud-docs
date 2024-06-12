@@ -1,11 +1,26 @@
 ---
 title: IS_STRING
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.368"/>
 
 Checks if the input JSON value is a string.
+
+## Analyze Syntax
+
+```python
+func.is_string(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_string(func.parse_json('"abc"')), func.is_string(func.parse_json('123'))
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_string(func.parse_json('"abc"'))      │ func.is_string(func.parse_json('123'))           │
+├───────────────────────────────────────────────┼──────────────────────────────────────────────────┤
+│ true                                          │ false                                            │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

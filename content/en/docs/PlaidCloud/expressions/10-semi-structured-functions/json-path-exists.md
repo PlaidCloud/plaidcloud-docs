@@ -1,11 +1,25 @@
 ---
 title: JSON_PATH_EXISTS
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.119"/>
 
 Checks whether a specified path exists in JSON data.
+
+## Analyze Syntax
+
+```python
+func.json_path_exists(<json_data>, <json_path_expression)
+```
+
+## Analyze Example
+
+```python
+func.json_path_exists(parse_json('{"a": 1, "b": 2}'), '$.a ? (@ == 1)'), func.json_path_exists(parse_json('{"a": 1, "b": 2}'), '$.a ? (@ > 1)')
+┌─────────────────────────────┐
+│       Item 1   │  Item 2    │
+├────────────────┼────────────┤
+│       True     │  False     │
+└─────────────────────────────┘
+```
 
 ## SQL Syntax
 

@@ -6,6 +6,23 @@ Extracts value from a Json string by `path_name`.
 The value is returned as a `String` or `NULL` if either of the arguments is `NULL`.
 This function is equivalent to `to_varchar(GET_PATH(PARSE_JSON(JSON), PATH_NAME))`.
 
+## Analyze Syntax
+
+```python
+func.json_extract_path_text(<expr>, <path_name>)
+```
+
+## Analyze Example
+
+```python
+func.json_extract_path_text('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}', 'k2.k4')
++------------------------------------------------------------------------------+
+| func.json_extract_path_text('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}', 'k2.k4') |
++------------------------------------------------------------------------------+
+| 4                                                                            |
++------------------------------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

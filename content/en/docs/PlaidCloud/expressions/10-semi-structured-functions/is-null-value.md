@@ -14,6 +14,24 @@ Checks whether the input value is a JSON `null`. Please note that this function 
 }   
 ```
 
+## Analyze Syntax
+
+```python
+func.is_null_value(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_null_value(func.get_path(func.parse_json('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}'), 'k2.k5'))
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_null_value(func.get_path(func.parse_json('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}'), 'k2.k5')) │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ true                                                                                                │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

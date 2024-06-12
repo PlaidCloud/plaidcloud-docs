@@ -1,11 +1,27 @@
 ---
 title: IS_INTEGER
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.368"/>
 
 Checks if the input JSON value is an integer.
+
+
+## Analyze Syntax
+
+```python
+func.is_integer(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_integer(func.parse_json('123')), func.is_integer(func.parse_json('[1,2,3]'))
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_integer(func.parse_json('123'))  │ func.is_integer(func.parse_json('[1,2,3]')) │
+├──────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ true                                     │ false                                       │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

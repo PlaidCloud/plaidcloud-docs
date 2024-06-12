@@ -1,11 +1,26 @@
 ---
 title: IS_BOOLEAN
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.368"/>
 
 Checks if the input JSON value is a boolean.
+
+## Analyze Syntax
+
+```python
+func.is_boolean(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_boolean(func.parse_json('true')), func.is_boolean(func.parse_json('[1,2,3]'))
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_boolean(func.parse_json('true')) │ func.is_boolean(func.parse_json('[1,2,3]')) │
+├──────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ true                                     │ false                                       │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

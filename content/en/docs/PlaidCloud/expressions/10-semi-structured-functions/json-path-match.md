@@ -1,11 +1,33 @@
 ---
 title: JSON_PATH_MATCH
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.241"/>
 
 Checks whether a specified JSON path expression matches certain conditions within a JSON data. Please note that the `@@` operator is synonymous with this function. For more information, see [JSON Operators](../../10-sql-commands/30-query-operators).
+
+
+## Analyze Syntax
+
+```python
+func.json_path_match(<json_data>, <json_path_expression)
+```
+
+## Analyze Example
+
+```python
+func.json_path_match(func.parse_json('{"a":1,"b":[1,2,3]}'), '$.a == 1')
+┌──────────────────────────────────────────────────────────────────────────┐
+│ func.json_path_match(func.parse_json('{"a":1,"b":[1,2,3]}'), '$.a == 1') │
+├──────────────────────────────────────────────────────────────────────────┤
+│ true                                                                     │
+└──────────────────────────────────────────────────────────────────────────┘
+
+func.json_path_match(func.parse_json('{"a":1,"b":[1,2,3]}'), '$.b[0] > 1')
+┌────────────────────────────────────────────────────────────────────────────┐
+│ func.json_path_match(func.parse_json('{"a":1,"b":[1,2,3]}'), '$.b[0] > 1') │
+├────────────────────────────────────────────────────────────────────────────┤
+│ false                                                                      │
+└────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

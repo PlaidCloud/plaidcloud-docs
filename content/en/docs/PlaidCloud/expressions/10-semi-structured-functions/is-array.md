@@ -1,9 +1,6 @@
 ---
 title: IS_ARRAY
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.368"/>
 
 Checks if the input value is a JSON array. Please note that a JSON array is not the same as the [ARRAY](../../00-sql-reference/10-data-types/40-data-type-array-types) data type. A JSON array is a data structure commonly used in JSON, representing an ordered collection of values enclosed within square brackets `[ ]`. It is a flexible format for organizing and exchanging various data types, including strings, numbers, booleans, objects, and nulls. 
 
@@ -16,6 +13,24 @@ Checks if the input value is a JSON array. Please note that a JSON array is not 
   [1, 2, 3],
   null
 ]
+```
+
+## Analyze Syntax
+
+```python
+func.is_array(<expr>)
+```
+
+## Analyze Example
+
+```python
+
+func.is_array(func.parse_json('true')), func.is_array(func.parse_json('[1,2,3]'))
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ func.is_array(func.parse_json('true')) │ func.is_array(func.parse_json('[1,2,3]')) │
+├────────────────────────────────────────┼───────────────────────────────────────────┤
+│ false                                  │ true                                      │
+└────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## SQL Syntax

@@ -7,6 +7,35 @@ The value is returned as a `Variant` or `NULL` if either of the arguments is `NU
 
 `GET` applies case-sensitive matching to `field_name`. For case-insensitive matching, use `GET_IGNORE_CASE`.
 
+## Analyze Syntax
+
+```python
+func.get(<variant>, <index>)
+
+or
+
+func.get(<variant>, <field_name>)
+```
+
+## Analyze Example
+
+```python
+func.get(func.parse_json('[2.71, 3.14]'), 0);
++----------------------------------------------+
+| func.get(func.parse_json('[2.71, 3.14]'), 0) |
++----------------------------------------------+
+| 2.71                                         |
++----------------------------------------------+
+
+
+func.get(func.parse_json('{"aa":1, "aA":2, "Aa":3}'), 'aa');
++-------------------------------------------------------------+
+| func.get(func.parse_json('{"aa":1, "aA":2, "Aa":3}'), 'aa') |
++-------------------------------------------------------------+
+| 1                                                           |
++-------------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql
