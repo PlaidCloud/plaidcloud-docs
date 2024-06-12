@@ -6,6 +6,30 @@ Returns the relative rank of a given value within a set of values. The resulting
 
 See also: [CUME_DIST](../cume-dist)
 
+## Analyze Syntax
+
+```python
+func.percent_rank().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.name, table.score, table.grade, func.percent_rank().over(partition_by=[table.grade], order_by=table.score).alias('percent_rank')
+
+name    |score|grade|percent_rank      |
+--------+-----+-----+------------------+
+Smith   |   81|A    |               0.0|
+Davies  |   84|A    |0.3333333333333333|
+Evans   |   87|A    |0.6666666666666666|
+Johnson |  100|A    |               1.0|
+Taylor  |   62|B    |               0.0|
+Brown   |   62|B    |               0.0|
+Wilson  |   72|B    |0.6666666666666666|
+Thomas  |   72|B    |0.6666666666666666|
+Jones   |   55|C    |               0.0|
+Williams|   55|C    |               0.0|
+```
+
 ## SQL Syntax
 
 ```sql

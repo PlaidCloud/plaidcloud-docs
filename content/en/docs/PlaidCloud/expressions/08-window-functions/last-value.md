@@ -9,6 +9,25 @@ See also:
 - [FIRST_VALUE](../first-value)
 - [NTH_VALUE](../nth-value)
 
+## Analyze Syntax
+
+```python
+func.last_value(<expr>).over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.employee_id, table.first_name, table.last_name, table.salary, func.last_value(table.first_name).over(order_by=table.salary.desc()).alias('lowest_salary_first_name')
+
+employee_id | first_name | last_name | salary  | lowest_salary_first_name
+------------+------------+-----------+---------+------------------------
+4           | Mary       | Williams  | 7000.00 | Michael
+2           | Jane       | Smith     | 6000.00 | Michael
+3           | David      | Johnson   | 5500.00 | Michael
+1           | John       | Doe       | 5000.00 | Michael
+5           | Michael    | Brown     | 4500.00 | Michael
+```
+
 ## SQL Syntax
 
 ```sql

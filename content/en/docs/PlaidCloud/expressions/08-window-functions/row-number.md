@@ -4,6 +4,27 @@ title: ROW_NUMBER
 
 Assigns a temporary sequential number to each row within a partition of a result set, starting at 1 for the first row in each partition. 
 
+## Analyze Syntax
+
+```python
+func.row_number().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.employee_id, table.first_name, table.last_name, table.department, table.salary, func.row_number().over(partition=table.department, order_by=table.salary).alias('row_num')
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   employee_id   │    first_name    │     last_name    │    department    │      salary     │ row_num │
+├─────────────────┼──────────────────┼──────────────────┼──────────────────┼─────────────────┼─────────┤
+│               2 │ Jane             │ Smith            │ HR               │           85000 │       1 │
+│               5 │ Tom              │ Brown            │ HR               │           75000 │       2 │
+│               1 │ John             │ Doe              │ IT               │           90000 │       1 │
+│               3 │ Mike             │ Johnson          │ IT               │           82000 │       2 │
+│               4 │ Sara             │ Williams         │ Sales            │           77000 │       1 │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

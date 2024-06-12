@@ -8,6 +8,23 @@ The rank value starts at 1 and continues up sequentially.
 
 If two values are the same, they have the same rank.
 
+## Analyze Syntax
+
+```python
+func.dense_rank().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.department, func.sum(salary), func.dense_rank().over(order_by=func.sum(table.salary).desc()).alias('dense_rank')
+
+| department | total_salary | dense_rank |
+|------------|--------------|------------|
+| IT         | 172000       | 1          |
+| HR         | 160000       | 2          |
+| Sales      | 77000        | 3          |
+```
+
 ## SQL Syntax
 
 ```sql

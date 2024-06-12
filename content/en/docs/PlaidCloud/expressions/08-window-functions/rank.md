@@ -6,6 +6,25 @@ The RANK() function assigns a unique rank to each value within an ordered group 
 
 The rank value starts at 1 and continues up sequentially. If two values are the same, they have the same rank.
 
+## Analyze Syntax
+
+```python
+func.rank().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.employee_id, table.first_name, table.last_name, table.department, table.salary, func.rank().over(order_by=table.salary).alias('rank')
+
+| employee_id | first_name | last_name | department | salary | rank |
+|-------------|------------|-----------|------------|--------|------|
+| 1           | John       | Doe       | IT         | 90000  | 1    |
+| 2           | Jane       | Smith     | HR         | 85000  | 2    |
+| 3           | Mike       | Johnson   | IT         | 82000  | 3    |
+| 4           | Sara       | Williams  | Sales      | 77000  | 4    |
+| 5           | Tom        | Brown     | HR         | 75000  | 5    |
+```
+
 ## SQL Syntax
 
 ```sql

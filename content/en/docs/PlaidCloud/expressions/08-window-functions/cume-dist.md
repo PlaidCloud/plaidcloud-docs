@@ -6,6 +6,30 @@ Returns the cumulative distribution of a given value in a set of values. It calc
 
 See also: [PERCENT_RANK](../percent_rank)
 
+## Analyze Syntax
+
+```python
+func.cume_dist().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.name, table.score, table.grade, func.cume_dist().over(partition_by=[table.grade], order_by=table.score).alias('cume_dist_val')
+
+name    |score|grade|cume_dist_val|
+--------+-----+-----+-------------+
+Smith   |   81|A    |         0.25|
+Davies  |   84|A    |          0.5|
+Evans   |   87|A    |         0.75|
+Johnson |  100|A    |          1.0|
+Taylor  |   62|B    |          0.5|
+Brown   |   62|B    |          0.5|
+Wilson  |   72|B    |          1.0|
+Thomas  |   72|B    |          1.0|
+Jones   |   55|C    |          1.0|
+Williams|   55|C    |          1.0|
+```
+
 ## SQL Syntax
 
 ```sql

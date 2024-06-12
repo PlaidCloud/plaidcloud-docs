@@ -6,6 +6,30 @@ Divides the sorted result set into a specified number of buckets or groups. It e
 
 Please note that the NTILE function evenly distributes the rows into buckets based on the sorting order of the rows and ensures that the number of rows in each bucket is as equal as possible. If the number of rows cannot be evenly distributed into the buckets, some buckets may have one extra row compared to the others.
 
+## Analyze Syntax
+
+```python
+func.ntile(<n>).over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.name, table.score, table.grade, func.ntile(3).over(partition_by=[table.grade], order_by=table.score).alias('bucket')
+
+name    |score|grade|bucket|
+--------+-----+-----+------+
+Johnson |  100|A    |     1|
+Evans   |   87|A    |     1|
+Davies  |   84|A    |     2|
+Smith   |   81|A    |     3|
+Wilson  |   72|B    |     1|
+Thomas  |   72|B    |     1|
+Taylor  |   62|B    |     2|
+Brown   |   62|B    |     3|
+Jones   |   55|C    |     1|
+Williams|   55|C    |     2|
+```
+
 ## SQL Syntax
 
 ```sql

@@ -6,6 +6,26 @@ LEAD allows you to access the value of a column from a subsequent row within the
 
 See also: [LAG](../lag)
 
+## Analyze Syntax
+
+```python
+func.lead(<expr>, <offset>).over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.product_name, table.sale_amount, func.lead(table.sale_amount, 1).over(partition_by=table.product_name, order_by=table.sale_id).alias('next_sale_amount')
+
+product_name | sale_amount | next_sale_amount
+----------------------------------------------
+Product A    | 1000.00     | 1500.00
+Product A    | 1500.00     | 2000.00
+Product A    | 2000.00     | NULL
+Product B    | 500.00      | 800.00
+Product B    | 800.00      | 1200.00
+Product B    | 1200.00     | NULL
+```
+
 ## SQL Syntax
 
 ```sql

@@ -6,6 +6,26 @@ LAG allows you to access the value of a column from a preceding row within the s
 
 See also: [LEAD](../lead)
 
+## Analyze Syntax
+
+```python
+func.lag(<expr>, <offset>).over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Analyze Examples
+```python
+table.product_name, table.sale_amount, func.lag(table.sale_amount, 1).over(partition_by=table.product_name, order_by=table.sale_id).alias('previous_sale_amount')
+
+product_name | sale_amount | previous_sale_amount
+-----------------------------------------------
+Product A    | 1000.00     | NULL
+Product A    | 1500.00     | 1000.00
+Product A    | 2000.00     | 1500.00
+Product B    | 500.00      | NULL
+Product B    | 800.00      | 500.00
+Product B    | 1200.00     | 800.00
+```
+
 ## SQL Syntax
 
 ```sql

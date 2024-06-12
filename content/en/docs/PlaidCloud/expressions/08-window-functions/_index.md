@@ -20,39 +20,39 @@ The list below shows all the window functions.
 
 | Function Name                                                         | Category     | Window | Window Frame | Notes |
 |-----------------------------------------------------------------------|--------------|--------|--------------|-------|
-| [ARRAY_AGG](../../07-aggregate-functions/aggregate-array-agg)         | General      | ✔      |              |       |
-| [AVG](../../07-aggregate-functions/aggregate-avg)                     | General      | ✔      | ✔            |       |
-| [AVG_IF](../../07-aggregate-functions/aggregate-avg-if)               | General      | ✔      | ✔            |       |
-| [COUNT](../../07-aggregate-functions/aggregate-count)                 | General      | ✔      | ✔            |       |
-| [COUNT_IF](../../07-aggregate-functions/aggregate-count-if)           | General      | ✔      | ✔            |       |
-| [COVAR_POP](../../07-aggregate-functions/aggregate-covar-pop)         | General      | ✔      |              |       |
-| [COVAR_SAMP](../../07-aggregate-functions/aggregate-covar-samp)       | General      | ✔      |              |       |
-| [MAX](../../07-aggregate-functions/aggregate-max)                     | General      | ✔      | ✔            |       |
-| [MAX_IF](../../07-aggregate-functions/aggregate-max-if)               | General      | ✔      | ✔            |       |
-| [MIN](../../07-aggregate-functions/aggregate-min)                     | General      | ✔      | ✔            |       |
-| [MIN_IF](../../07-aggregate-functions/aggregate-min-if)               | General      | ✔      | ✔            |       |
-| [STDDEV_POP](../../07-aggregate-functions/aggregate-stddev-pop)       | General      | ✔      | ✔            |       |
-| [STDDEV_SAMP](../../07-aggregate-functions/aggregate-stddev-samp)     | General      | ✔      | ✔            |       |
-| [MEDIAN](../../07-aggregate-functions/aggregate-median)               | General      | ✔      | ✔            |       |
-| [QUANTILE_CONT](../../07-aggregate-functions/aggregate-quantile-cont) | General      | ✔      | ✔            |       |
-| [QUANTILE_DISC](../../07-aggregate-functions/aggregate-quantile-disc) | General      | ✔      | ✔            |       |
-| [KURTOSIS](../../07-aggregate-functions/aggregate-kurtosis)           | General      | ✔      | ✔            |       |
-| [SKEWNESS](../../07-aggregate-functions/aggregate-skewness)           | General      | ✔      | ✔            |       |
-| [SUM](../../07-aggregate-functions/aggregate-sum)                     | General      | ✔      | ✔            |       |
-| [SUM_IF](../../07-aggregate-functions/aggregate-sum-if)               | General      | ✔      | ✔            |       |
-| [CUME_DIST](../cume-dist)                                             | Rank-related | ✔      |              |       |
-| [PERCENT_RANK](../percent_rank)                                       | Rank-related | ✔      | ✔            |       |
-| [DENSE_RANK](../dense-rank)                                           | Rank-related | ✔      | ✔            |       |
-| [RANK](../rank)                                                       | Rank-related | ✔      | ✔            |       |
-| [ROW_NUMBER](../row-number)                                           | Rank-related | ✔      |              |       |
-| [NTILE](../ntile)                                                     | Rank-related | ✔      |              |       |
-| [FIRST_VALUE](../first-value)                                         | Rank-related 	| ✔     | ✔            |       |
-| [FIRST](../first)                                                     | Rank-related 	| ✔     | ✔            |       |
-| [LAST_VALUE](../last-value)                                           | Rank-related 	| ✔     | ✔            |       |
-| [LAST](../last)                                                       | Rank-related 	| ✔     | ✔            |       |
-| [NTH_VALUE](../nth-value)                                             | Rank-related 	| ✔     | ✔            |       |
-| [LEAD](../lead)                                                       | Rank-related 	| ✔     |              |       |
-| [LAG](../lag)                                                         | Rank-related 	| ✔     |              |       |
+| [ARRAY_AGG](../07-aggregate-functions/aggregate-array-agg)            | General      | ✔      |              |       |
+| [AVG](../07-aggregate-functions/aggregate-avg)                        | General      | ✔      | ✔            |       |
+| [AVG_IF](../07-aggregate-functions/aggregate-avg-if)                  | General      | ✔      | ✔            |       |
+| [COUNT](../07-aggregate-functions/aggregate-count)                    | General      | ✔      | ✔            |       |
+| [COUNT_IF](../07-aggregate-functions/aggregate-count-if)              | General      | ✔      | ✔            |       |
+| [COVAR_POP](../07-aggregate-functions/aggregate-covar-pop)            | General      | ✔      |              |       |
+| [COVAR_SAMP](../07-aggregate-functions/aggregate-covar-samp)          | General      | ✔      |              |       |
+| [MAX](../07-aggregate-functions/aggregate-max)                        | General      | ✔      | ✔            |       |
+| [MAX_IF](../07-aggregate-functions/aggregate-max-if)                  | General      | ✔      | ✔            |       |
+| [MIN](../07-aggregate-functions/aggregate-min)                        | General      | ✔      | ✔            |       |
+| [MIN_IF](../07-aggregate-functions/aggregate-min-if)                  | General      | ✔      | ✔            |       |
+| [STDDEV_POP](../07-aggregate-functions/aggregate-stddev-pop)          | General      | ✔      | ✔            |       |
+| [STDDEV_SAMP](../07-aggregate-functions/aggregate-stddev-samp)        | General      | ✔      | ✔            |       |
+| [MEDIAN](../07-aggregate-functions/aggregate-median)                  | General      | ✔      | ✔            |       |
+| [QUANTILE_CONT](../07-aggregate-functions/aggregate-quantile-cont)    | General      | ✔      | ✔            |       |
+| [QUANTILE_DISC](../07-aggregate-functions/aggregate-quantile-disc)    | General      | ✔      | ✔            |       |
+| [KURTOSIS](../07-aggregate-functions/aggregate-kurtosis)              | General      | ✔      | ✔            |       |
+| [SKEWNESS](../07-aggregate-functions/aggregate-skewness)              | General      | ✔      | ✔            |       |
+| [SUM](../07-aggregate-functions/aggregate-sum)                        | General      | ✔      | ✔            |       |
+| [SUM_IF](../07-aggregate-functions/aggregate-sum-if)                  | General      | ✔      | ✔            |       |
+| [CUME_DIST](cume-dist)                                                | Rank-related | ✔      |              |       |
+| [PERCENT_RANK](percent_rank)                                          | Rank-related | ✔      | ✔            |       |
+| [DENSE_RANK](dense-rank)                                              | Rank-related | ✔      | ✔            |       |
+| [RANK](rank)                                                          | Rank-related | ✔      | ✔            |       |
+| [ROW_NUMBER](row-number)                                              | Rank-related | ✔      |              |       |
+| [NTILE](ntile)                                                        | Rank-related | ✔      |              |       |
+| [FIRST_VALUE](first-value)                                            | Rank-related  | ✔     | ✔            |       |
+| [FIRST](first)                                                        | Rank-related 	| ✔     | ✔            |       |
+| [LAST_VALUE](last-value)                                              | Rank-related 	| ✔     | ✔            |       |
+| [LAST](last)                                                          | Rank-related 	| ✔     | ✔            |       |
+| [NTH_VALUE](nth-value)                                                | Rank-related 	| ✔     | ✔            |       |
+| [LEAD](lead)                                                          | Rank-related 	| ✔     |              |       |
+| [LAG](lag)                                                            | Rank-related 	| ✔     |              |       |
 
 ## Window Syntax
 
