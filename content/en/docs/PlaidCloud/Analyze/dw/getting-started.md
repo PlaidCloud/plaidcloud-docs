@@ -49,7 +49,7 @@ periods along with recovery a table at a point-in-time to a new table.  This is 
 
 ### Highly performant
 
-While network attached storage has been able to achieve significant performance, it still can't come close to local disk.  Using local disks for storage is complicated while operating in cloud environments but our goal was to provide an uncompromising Data Lakehouse Service that can achieve the same or better performance as a hand-built data warehouse cluster.
+We employ multiple caching strategies to ensure peak performance.
 
 We also extensively tested optimal compute, networking, and RAM configurations to achieve maximum performance.  As new technology and capabilities become available, our goal is to incorporate features that increase performance.
 
@@ -67,9 +67,9 @@ The PlaidCloud DLS allows scale expansion either on-demand or based on pre-defin
 
 ### Integrated with PlaidCloud Analyze for Low/No Code operations
 
-Analyze, Dashboards, Forms, and JupyterLab are quickly connected to any PlaidCloud DLS.  This provides point-and-click operations to automate data related activities as well as building beautiful visualizations for reporting and insightful analysis.
+Analyze, Dashboards, Forms, PlaidXL, and JupyterLab are quickly connected to any PlaidCloud DLS.  This provides point-and-click operations to automate data related activities as well as building beautiful visualizations for reporting and insightful analysis.
 
-From an Analyze project, you can select any DLS instance.  This also provides the ability for Analyze projects to switch among DWS instances to facilitate testing and Blue/Green upgrade processes.  It also allows quickly restoring an Analyze Project from a DLS point-in-time backup.
+From an Analyze project, you can select any DLS instance.  This also provides the ability for Analyze projects to switch among DLS instances to facilitate testing and Blue/Green upgrade processes.  It also allows quickly restoring an Analyze Project from a DLS point-in-time backup.
 
 
 ### Clone

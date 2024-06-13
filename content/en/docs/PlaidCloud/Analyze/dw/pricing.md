@@ -70,12 +70,7 @@ This storage provides triple redundancy in each region and is stored in two regi
 
 ### Network Egress
 
-| Source Geolocation                   | Egress (per GB) |  Ingress (per GB) |
-|--------------------------------------|-----------------|-------------------|
-| Worldwide Locations (Default)        |           $0.13 |              Free |
-| China Locations (excluding Hong Kong)|           $0.26 |              Free |
-| Australia Locations                  |           $0.20 |              Free |
-
+Network Egress and Ingress charges are dependent on the cloud provider, region, and destination for the traffic.  Contact us and we can provide a detailed cost matrix.
 
 Network egress is calculated based on the egress traffic from your PlaidCloud Workspace.  In terms of the egress traffic from a DLS instance, traffic to PlaidCloud applications in the same region such as Analyze and Dashboard are excluded.  However, if you are connecting directly to the DLS instance through the external access point, egress charges will apply.  In addition, if you access DLS instances from different regions using PlaidCloud applications then egress charges will apply.
 

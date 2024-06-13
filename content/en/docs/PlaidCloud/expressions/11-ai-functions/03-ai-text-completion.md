@@ -7,7 +7,7 @@ This document provides an overview of the `ai_text_completion` function in Plaid
 
 The main code implementation can be found [here](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/common/openai/src/completion.rs).
 
-{{< caution >}}
+{{< note >}}
 Starting from PlaidCloud Lakehouse v1.1.47, PlaidCloud Lakehouse supports the [Azure OpenAI service](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service).
 
 This integration offers improved data privacy.
