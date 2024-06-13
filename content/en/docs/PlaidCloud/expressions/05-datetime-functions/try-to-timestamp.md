@@ -6,6 +6,24 @@ A variant of [TO_TIMESTAMP](to-timestamp) in PlaidCloud Lakehouse that, while pe
 
 See also: [TO_TIMESTAMP](to-timestamp)
 
+## Analyze Syntax
+
+```python
+func.try_to_timestamp(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.try_to_timestamp('2022-01-02 02:00:11'), func.try_to_datetime('2022-01-02 02:00:11'), func.try_to_timestamp('plaidcloud')
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.try_to_timestamp('2022-01-02 02:00:11') │ func.try_to_datetime('2022-01-02 02:00:11') │ func.try_to_timestamp('plaidcloud') │
+│                Timestamp                │                Timestamp                         │                                     │
+├─────────────────────────────────────────┼──────────────────────────────────────────────────┤─────────────────────────────────────│
+│ 2022-01-02 02:00:11                     │ 2022-01-02 02:00:11                              │ NULL                                │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

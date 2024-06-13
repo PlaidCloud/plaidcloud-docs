@@ -4,6 +4,23 @@ title: DATE_ADD
 
 Add the time interval or date interval to the provided date or date with time (timestamp/datetime).
 
+## Analyze Syntax
+
+```python
+func.date_add(<unit>, <value>,  <date_or_time_expr>)
+```
+
+## Analyze Examples
+
+```python
+func.date_add('YEAR', 1, func.to_date('2018-01-02'))
++------------------------------------------------------+
+| func.date_add('YEAR', 1, func.to_date('2018-01-02')) |
++------------------------------------------------------+
+| 2019-01-02                                           |
++------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

@@ -1,9 +1,6 @@
 ---
 title: TO_DATE
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.1.39"/>
 
 Converts an expression to a date, including:
 
@@ -14,6 +11,26 @@ Converts an expression to a date, including:
 - **Converting a string to a date using the specified format**: The function takes two arguments, converting the first string to a date based on the format specified in the second string. To customize the date and time format in PlaidCloud Lakehouse, specifiers can be used. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
 
 See also: [TO_TIMESTAMP](to-timestamp)
+
+## Analyze Syntax
+
+```python
+func.to_date('<timestamp_expr>')
+func.to_date(<integer>)
+func.to_date('<string>', '<format>')
+```
+
+## Analyze Examples
+
+```python
+func.typeof(func.to_date('2022-01-02')), func.typeof(func.str_to_date('2022-01-02'))
+
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│ func.typeof(func.to_date('2022-01-02')) │ func.typeof(func.str_to_date('2022-01-02')) │
+├─────────────────────────────────────────┼─────────────────────────────────────────────┤
+│ DATE                                    │ DATE                                        │
+└───────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

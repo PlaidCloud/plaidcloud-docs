@@ -5,6 +5,25 @@ title: TO_START_OF_WEEK
 Returns the first day of the week for a date or a date with time (timestamp/datetime).
 The first day of a week can be Sunday or Monday, which is specified by the argument `mode`.
 
+## Analyze Syntax
+
+```python
+func.to_start_of_week(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.to_start_of_week('2023-11-12 09:38:18.165575')
+
+┌────────────────────────────────────────────────────────────────┐
+│ func.to_start_of_week('2023-11-12 09:38:18.165575')            │
+│                          Date                                  │
+├────────────────────────────────────────────────────────────────┤
+│ 2023-11-12                                                     │
+└────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

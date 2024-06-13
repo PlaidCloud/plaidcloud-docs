@@ -2,11 +2,25 @@
 title: TO_QUARTER
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.153"/>
-
 Retrieves the quarter (1, 2, 3, or 4) from a given date or timestamp.
+
+## Analyze Syntax
+
+```python
+func.to_quarter(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.now(), func.to_quarter(func.now()), func.quarter(func.now())
+
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│       func.now()           │ func.to_quarter(func.now()) │ func.quarter(func.now()) │
+├────────────────────────────┼─────────────────────────────┼──────────────────────────┤
+│ 2024-03-14 23:32:52.743133 │                           3 │                        3 │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

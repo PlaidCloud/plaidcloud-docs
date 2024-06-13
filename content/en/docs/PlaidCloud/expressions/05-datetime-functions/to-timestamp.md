@@ -1,9 +1,6 @@
 ---
 title: TO_TIMESTAMP
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced: v1.1.39"/>
 
 TO_TIMESTAMP converts an expression to a date with time (timestamp/datetime).
 
@@ -19,6 +16,25 @@ If given two arguments, the function converts the first string to a timestamp ba
 - The timezone information must be included in the string you want to convert, otherwise NULL will be returned.
 
 See also: [TO_DATE](to-date)
+
+## Analyze Syntax
+
+```python
+func.to_timestamp(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.to_timestamp('2022-01-02T03:25:02.868894-07:00')
+
+┌────────────────────────────────────────────────────────────────┐
+│ func.to_timestamp('2022-01-02T03:25:02.868894-07:00')          │
+│                          Timestamp                             │
+├────────────────────────────────────────────────────────────────┤
+│ 2022-01-02 10:25:02.868894                                     │
+└────────────────────────────────────────────────────────────────┘
+```
 
 ## SQL Syntax
 

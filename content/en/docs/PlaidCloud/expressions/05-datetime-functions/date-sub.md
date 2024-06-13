@@ -4,6 +4,23 @@ title: DATE_SUB
 
 Subtract the time interval or date interval from the provided date or date with time (timestamp/datetime).
 
+## Analyze Syntax
+
+```python
+func.date_sub(<unit>, <value>,  <date_or_time_expr>)
+```
+
+## Analyze Examples
+
+```python
+func.date_sub('YEAR', 1, func.to_date('2018-01-02'))
++------------------------------------------------------+
+| func.date_sub('YEAR', 1, func.to_date('2018-01-02')) |
++------------------------------------------------------+
+| 2017-01-02                                           |
++------------------------------------------------------+
+```
+
 ## SQL Syntax
 
 ```sql

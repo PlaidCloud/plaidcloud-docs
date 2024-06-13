@@ -3,6 +3,26 @@ title: TO_START_OF_FIVE_MINUTES
 ---
 
 Rounds down a date with time (timestamp/datetime) to the start of the five-minute interval.
+
+## Analyze Syntax
+
+```python
+func.to_start_of_five_minutes(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.to_start_of_five_minutes('2023-11-12 09:38:18.165575')
+
+┌────────────────────────────────────────────────────────────────┐
+│ func.to_start_of_five_minutes('2023-11-12 09:38:18.165575')    │
+│                          Timestamp                             │
+├────────────────────────────────────────────────────────────────┤
+│ 2023-11-12 09:35:00                                            │
+└────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

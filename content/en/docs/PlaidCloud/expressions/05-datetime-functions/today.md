@@ -4,6 +4,23 @@ title: TODAY
 
 Returns current date.
 
+## Analyze Syntax
+
+```python
+func.today()
+```
+
+## Analyze Examples
+
+```python
+func.today()
++--------------+
+| func.today() |
++--------------+
+| 2021-09-03   |
++--------------+
+```
+
 ## SQL Syntax
 
 ```sql

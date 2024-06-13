@@ -4,6 +4,23 @@ title: YESTERDAY
 
 Returns yesterday date, same as `today() - 1`.
 
+## Analyze Syntax
+
+```python
+func.yesterday()
+```
+
+## Analyze Examples
+
+```python
+func.yesterday()
++------------------+
+| func.yesterday() |
++------------------+
+| 2021-09-02       |
++------------------+
+```
+
 ## SQL Syntax
 
 ```sql

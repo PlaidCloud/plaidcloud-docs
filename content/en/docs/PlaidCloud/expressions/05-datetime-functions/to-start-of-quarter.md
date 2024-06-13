@@ -6,6 +6,25 @@ Rounds down a date or date with time (timestamp/datetime) to the first day of th
 The first day of the quarter is either 1 January, 1 April, 1 July, or 1 October.
 Returns the date.
 
+## Analyze Syntax
+
+```python
+func.to_start_of_quarter(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.to_start_of_quarter('2023-11-12 09:38:18.165575')
+
+┌────────────────────────────────────────────────────────────────┐
+│ func.to_start_of_quarter('2023-11-12 09:38:18.165575')         │
+│                          Date                                  │
+├────────────────────────────────────────────────────────────────┤
+│ 2023-10-01                                                     │
+└────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql

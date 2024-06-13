@@ -6,6 +6,23 @@ Returns the timezone for the current connection.
 
 PlaidCloud Lakehouse uses UTC (Coordinated Universal Time) as the default timezone and allows you to change the timezone to your current geographic location. For the available values you can assign to the `timezone` setting, refer to https://docs.rs/chrono-tz/latest/chrono_tz/enum.Tz.html. See the examples below for details.
 
+## Analyze Syntax
+
+```python
+func.timezone()
+```
+
+## Analyze Examples
+
+```python
+func.timezone()
+┌─────────────────────┐
+│ timezone            │
+├─────────────────────┤
+│ UTC                 │
+└─────────────────────┘
+```
+
 ## SQL Syntax
 
 ```

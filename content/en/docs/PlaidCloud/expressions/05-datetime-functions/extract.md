@@ -2,10 +2,6 @@
 title: EXTRACT
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.153"/>
-
 Retrieves the designated portion of a date, time, or timestamp.
 
 See also: [DATE_PART](date-part)

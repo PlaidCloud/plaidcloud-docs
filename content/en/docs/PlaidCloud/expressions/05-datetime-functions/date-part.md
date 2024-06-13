@@ -2,13 +2,29 @@
 title: DATE_PART
 ---
 
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.153"/>
-
 Retrieves the designated portion of a date, time, or timestamp.
 
 See also: [EXTRACT](extract)
+
+## Analyze Syntax
+
+```python
+func.date_part(<unit>, <date_or_time_expr>)
+```
+
+## Analyze Examples
+
+```python
+func.now()           |
+---------------------+
+2023-10-16 02:09:28.0|
+
+func.date_part('day', now())
+
+func.date_part('day', now())|
+----------------------------+
+                         16 |
+```
 
 ## SQL Syntax
 

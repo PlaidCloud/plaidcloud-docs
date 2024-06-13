@@ -4,6 +4,24 @@ title: TO_YEAR
 
 Converts a date or date with time (timestamp/datetime) to a UInt16 number containing the year number (AD).
 
+## Analyze Syntax
+
+```python
+func.to_year(<expr>)
+```
+
+## Analyze Examples
+
+```python
+func.now(), func.to_year(func.now()), func.year(func.now())
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│       func.now()           │ func.to_year(func.now()) │ func.year(func.now()) │
+├────────────────────────────┼──────────────────────────┼───────────────────────┤
+│ 2024-03-14 23:37:03.895166 │                     2024 │                  2024 │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## SQL Syntax
 
 ```sql
