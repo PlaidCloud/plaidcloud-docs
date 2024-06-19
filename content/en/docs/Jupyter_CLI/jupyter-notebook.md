@@ -9,6 +9,7 @@ date: 2022-01-25T07:39:47
 
 Jupyter Notebooks and Jupyter Lab provide exceptional interactive capabilities to analyze, explore, explain, and report data.  PlaidCloud enables use of information directly in notebooks.
 
+PlaidCloud provides JupyterHub within each tenant workspace if is activated for use.  The documentation below helps with setting up Jupyter separately on a desktop or seperate server.
 
 ## Install Jupyter Notebook
 This assumes you have a working Jupyter Notebook installation.

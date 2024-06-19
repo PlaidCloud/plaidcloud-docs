@@ -1,6 +1,6 @@
 ---
-linktitle: Data Warehouse Service
-title: Data Warehouse Service
-Description: The PlaidCloud Data Warehouse Service (DWS) is the platform that PlaidCloud stores its data on. The DWS is based on Greenplum, a warehouse suitable for big data analytics and traditional data warehouse operations. It's extensive analytical optimizations, array of indexing types, highly-flexible compression, and availability of both row-based and columnar storage models makes it ideal for wide array of uses.
+linktitle: Data Lakehouse Service
+title: Data Lakehouse Service
+Description: The PlaidCloud Data Lakehouse Service (DLS) provides the speed of a Data Warehouse combined with the vast storage capability of a Data Lake. The DLS is based on Databend, a Lakehouse suitable for big data analytics and traditional data warehouse operations while having data lake operations and compatibility with Apache Iceberg, Apache Hive, and Delta Lake. It's extensive analytical optimizations, array of indexing types, and high compression makes it ideal for wide array of uses.
 weight: 20
 ---
