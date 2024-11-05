@@ -48,3 +48,7 @@ A better way to do this would be to check for a null or zero denominator and the
 CASE WHEN "Field_A"= 'Foo' THEN max(coalesce("Value_A",0.0)) - max(coalesce("Value_B",0.0)) END
 ```
 
+### concatenate
+```
+concat("Class",' > ',"Product Family",' > ',"Meta Series")
+```
