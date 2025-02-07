@@ -93,3 +93,7 @@ CASE WHEN "module_type" is NULL THEN '---' ELSE "module_type" END
 CASE WHEN "NODE_TYPE" = 'External' THEN '3rd Party' ELSE "ENTITY_LOCATION_DESCRIPTION" END
 ```
 
+### concatenate
+```
+concat("Class",' > ',"Product Family",' > ',"Meta Series")
+```
