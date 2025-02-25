@@ -40,7 +40,7 @@ The Driver Data Table **must** have at least one column with the role **Source R
 
 To delete columns from the target data table, select the desired column(s), then right click and select **Delete**.
 
-#### Chaging Column Order
+#### Changing Column Order
 
 To rearrange columns in the target data table, select the desired column(s).  You can use either:
 * **Bulk Move Arrows**: Select the desired move option from the arrows in the upper right
