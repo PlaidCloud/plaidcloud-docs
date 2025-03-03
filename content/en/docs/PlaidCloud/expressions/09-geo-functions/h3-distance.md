@@ -4,6 +4,10 @@ title: H3_DISTANCE
 
 Returns the grid distance between the the given two [H3](https://eng.uber.com/h3/) indexes.
 
+{{<note>}}
+H3 distance calculations can only calculate distances between hexes that are neighbors.  Trying to use this with non-neighbor hexes will error.
+{{</note>}}
+
 ### Analyze Syntax
 
 ```python
