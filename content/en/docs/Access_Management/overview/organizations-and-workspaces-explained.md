@@ -34,6 +34,10 @@ While this may sound complex, we keep the process as simple as possible, so gett
 
 PlaidCloud is broken down into the following levels of access control:
 
+1. Organization
+2. Workspaces
+3. Projects
 
-![PlaidCloud Organizations, Workspaces, and Projects](https://plaidcloud.intercom-attachments-1.com/i/o/394727361/a87fd8bc7fcbc939968ea23e/b2eb0018-screen-shot-2020-05-20-at-2.34.56-pm.png)Each progressive layer of control enables administrators to apply access controls and permissions for certain operations.
+
+Each progressive layer of control enables administrators to apply access controls and permissions for certain operations.
 
