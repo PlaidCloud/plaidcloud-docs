@@ -1,9 +1,6 @@
 ---
 title: INSPECT_PARQUET
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.180"/>
 
 Retrieves a table of comprehensive metadata from a staged Parquet file, including the following columns:
 

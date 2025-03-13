@@ -1,9 +1,6 @@
 ---
 title: SPLIT
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.164"/>
 
 Splits a string using a specified delimiter and returns the resulting parts as an array.
 
