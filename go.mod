@@ -5,7 +5,7 @@ go 1.17
 require (
     go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0
 	k8s.io/apimachinery v0.23.0
-	k8s.io/kubernetes v0.0.0
+	k8s.io/kubernetes v1.18
 	github.com/FortAwesome/Font-Awesome v4.7.0+incompatible // indirect
 	github.com/twbs/bootstrap v5.3.2+incompatible // indirect
 )
