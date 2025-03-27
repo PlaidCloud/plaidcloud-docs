@@ -3,7 +3,7 @@ module github.com/PlaidCloud/plaidcloud-docs
 go 1.17
 
 require (
-    dependabot/go_modules/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc-0.46.0
+    dependabot/go_modules/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0
 	k8s.io/apimachinery v0.23.0
 	k8s.io/kubernetes v0.0.0
 	github.com/FortAwesome/Font-Awesome v4.7.0+incompatible // indirect
