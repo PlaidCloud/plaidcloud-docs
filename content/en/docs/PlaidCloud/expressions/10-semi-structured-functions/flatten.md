@@ -1,9 +1,6 @@
 ---
 title: FLATTEN
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.213"/>
 
 Transforms nested JSON data into a tabular format, where each element or field is represented as a separate row.
 
