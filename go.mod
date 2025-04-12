@@ -3,10 +3,10 @@ module github.com/PlaidCloud/plaidcloud-docs
 go 1.17
 
 require (
-    go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0
-	k8s.io/apimachinery v0.23.0
 	github.com/FortAwesome/Font-Awesome v0.0.0-20241216213156-af620534bfc3 // indirect
-	github.com/twbs/bootstrap v5.3.2+incompatible // indirect
+	github.com/twbs/bootstrap v5.3.3+incompatible // indirect
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0
+	k8s.io/apimachinery v0.23.0
 )
 
 require (
@@ -24,6 +24,8 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/docsy v0.11.0 // indirect
+	github.com/google/docsy/dependencies v0.7.2 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.3.1 // indirect
@@ -48,7 +50,6 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.5.0 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.0 // indirect
 	go.opentelemetry.io/contrib v0.20.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.46.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0 // indirect
 	go.opentelemetry.io/otel v1.20.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp v0.20.0 // indirect
@@ -88,4 +89,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
-
