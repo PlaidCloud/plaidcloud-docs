@@ -1,9 +1,6 @@
 ---
 title: TRANSLATE
 ---
-import FunctionDescription from '@site/src/components/FunctionDescription';
-
-<FunctionDescription description="Introduced or updated: v1.2.203"/>
 
 Transforms a given string by replacing specific characters with corresponding replacements, as defined by the provided mapping.
 
