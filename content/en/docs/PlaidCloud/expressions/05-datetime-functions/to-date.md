@@ -10,6 +10,8 @@ Converts an expression to a date, including:
 
 - **Converting a string to a date using the specified format**: The function takes two arguments, converting the first string to a date based on the format specified in the second string. To customize the date and time format in PlaidCloud Lakehouse, specifiers can be used. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
 
+Date formats are expressed using the `strftime` specification.  A quick reference is [here](https://devhints.io/strftime).
+
 See also: [TO_TIMESTAMP](to-timestamp)
 
 ## Analyze Syntax
