@@ -30,7 +30,7 @@ Note this process is for editing and committing a single page. For committing mu
 
 To edit and deploy the file directly in GitHub:
 1. Find the file you wish to edit.
-2. Click the `Edit in place` option on the menu (or simply hit the `e` button on your keyboard) and make your edits. If you do not have this option, ask your PlaidCloud/Tartan Solutions representative for access.
+2. Click the `Edit in place` option on the menu (or simply hit the `e` button on your keyboard) and make your edits. If you do not have this option, ask your PlaidCloud/PlaidCloud representative for access.
 3. Click `Commit changes...`
 4. Add a message, make sure "Create a new branch for this commit and start a pull request" is selected, and type in a request name or use the default that the system generated for you.
 5. Click `Propose Changes`
