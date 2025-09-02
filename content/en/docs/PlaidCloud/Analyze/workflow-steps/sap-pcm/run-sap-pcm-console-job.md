@@ -16,7 +16,7 @@ Launches an SAP Profitability and Cost Management (PCM) Console process on the P
 ## Our Credentials
 
 
-Tartan Solutions is an official SAP Partner and a preferred vendor of services related to SAP PCM model design and implementation.
+PlaidCloud is an official SAP Partner and a preferred vendor of services related to SAP PCM model design and implementation.
 
 
 
