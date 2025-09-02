@@ -72,7 +72,7 @@ This is the current list of available loading targets:
 ## Our Credentials
 
 
-Tartan Solutions is an official SAP Partner and a preferred vendor of services related to SAP PCM model design and implementation.
+PlaidCloud is an official SAP Partner and a preferred vendor of services related to SAP PCM model design and implementation.
 
 
 
