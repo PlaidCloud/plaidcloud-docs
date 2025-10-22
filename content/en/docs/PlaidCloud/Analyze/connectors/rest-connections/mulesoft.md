@@ -6,6 +6,9 @@ weight: 1.0
 date: 2025-10-21T07:39:51
 ---
 
+## API Documentation
+The API documentation is for this connector is determined by the service endpoints for which Mulesoft is handling.
+
 ## Security Requirements
 Documentation under development
 

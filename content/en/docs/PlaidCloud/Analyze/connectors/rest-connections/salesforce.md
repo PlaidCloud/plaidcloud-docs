@@ -6,6 +6,9 @@ weight: 1.0
 date: 2025-10-21T07:39:51
 ---
 
+## API Documentation
+The API documentation is for this connector is located [here](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.html).
+
 ## Security Requirements
 Documentation under development
 

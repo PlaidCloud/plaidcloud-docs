@@ -6,6 +6,9 @@ weight: 1.0
 date: 2025-10-21T07:39:51
 ---
 
+## API Documentation
+The API documentation is for this connector is located [here](https://system.netsuite.com/help/helpcenter/en_US/APIs/REST_API_Browser/record/v1/2023.1/index.html).
+
 ## Security Requirements
 Documentation under development
 
