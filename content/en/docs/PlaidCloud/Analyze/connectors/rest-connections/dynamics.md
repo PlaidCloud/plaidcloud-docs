@@ -1,7 +1,7 @@
 ---
-title: Microsoft Dynamics REST Connector
+title: Microsoft Dynamics 365 REST Connector
 slug: dynamics-connector
-description: Connecting to Microsoft Dynamics from PlaidCloud using REST
+description: Connecting to Microsoft Dynamics 365 from PlaidCloud using REST
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---
