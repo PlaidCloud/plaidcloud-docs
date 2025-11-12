@@ -12,9 +12,9 @@ The PlaidCloud Sandbox allows for the deployment of your own custom apps with na
 All custom apps run using Kubernetes deployment processes, therefore a basic understanding of Kubernetes objects is necessary.  A [Hello World example](https://github.com/PlaidCloud/custom-app-template) is available to show you how to deploy a simple application.
 
 ## Available Resources
-There is no current resource limit on the Sandbox apps with the expectation that it will not be use excessive resources.  We can support large amounts of compute if needed but let's discuss before attempting to deploy.
+There is soft resource limit on the Sandbox apps with the expectation that resource usage will not be abused.  We can support large amounts of compute if needed but let's discuss before attempting to deploy.  Contact us if you expect needing significant resources.
 
-The applications running the in the sandbox will have direct access to the Lakehouse and any number of Postgres databases that you desire.  The Postgres database is designed to handle moderate sized data so it is perfect for storing configurations and other meta data.  For primary data storage, use the Lakehouse as it will enable storing large amounts of data and remain performant.
+The applications running the in the sandbox will have direct access to the Lakehouse and any number of Postgres databases that you desire.  Postgres databases are designed to handle moderate sized data so it is perfect for storing configurations and other meta data.  For primary data storage, use the Lakehouse as it will enable storing large amounts of data and remain performant.
 
 All PlaidCloud APIs are also available directly from the Sandbox without using a public URL to help with data transfer speeds.
 
