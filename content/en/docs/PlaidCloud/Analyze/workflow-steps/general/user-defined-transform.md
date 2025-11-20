@@ -130,3 +130,21 @@ my_var = conn.udf.variable_by_name('my_var')
 # All variables as a list
 my_vars = conn.udf.variables()
 ```
+
+### Reading Files from Document
+Accessing files in Document is also straightforward using the PlaidCloud connection.  This is an example of a function that gets the contents of the file and saves it to a local path in the run-time container.
+
+```python
+def get_from_document(conn, document_account, remote_path, local_file_path):
+    # accounts = conn.document.view.shared_accounts()
+    remote_file = base64.b64decode(
+        conn.document.view.download(
+            account_id=document_account,
+            path=remote_path,
+        )
+    )
+    with open(local_file_path, 'wb') as output_file:
+        output_file.write(remote_file)
+
+    return local_file_path
+```
