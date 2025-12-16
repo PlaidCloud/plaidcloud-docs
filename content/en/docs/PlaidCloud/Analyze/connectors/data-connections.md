@@ -15,6 +15,13 @@ For more details on each data connection type, please navigate to the specific d
 ## Relational Databases
 
 
+### Databricks
+
+| Parameter | Value |
+|-----------|-------|
+| **Connection Type** | Database |
+| **Reference** | databricks |
+
 ### Greenplum
 
 | Parameter | Value |
@@ -163,6 +170,22 @@ For more details on each data connection type, please navigate to the specific d
 |-----------|-------|
 | **Connection Type** | Google Spreadsheet |
 | **Reference** | gspread |
+
+
+## Databricks Related
+
+In order to obtain the connection credentials necessary for PlaidCloud to communicate with a Databricks warehouse, follow the steps below:
+ 1. Open the Databricks console
+ 2. Under the User Settings in the upper right, select "Settings"
+ 3. Navigate to the "Developers" section
+ 4. Generate an Access Token with a sufficient lifespan specified
+ 5. Navigate to the "SQL Warehouses" area
+ 6. Select the warehouse required for connecting
+ 7. Capture the connection details including host, and http path
+ 8. Navigate to the warehouse data area
+ 9. Capture the initial catalog and initial schema information
+
+With the information above, the connection form can be completed and tested with the Databricks warehouse
 
 
 ## Oracle EBS Related
