@@ -14,162 +14,98 @@ For more details on each data connection type, please navigate to the specific d
 
 ## Relational Databases
 
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Amazon Redshift | Database | redshift |
+| Databend | Database | databend |
+| Databricks | Database | databricks |
+| Exasol | Database | exasol |
+| Greenplum | Database | greenplum |
+| Hive | Database | hive |
+| IBM DB2 | Database | db2 |
+| Informix | Database | informix |
+| Microsoft SQL Server | Database | sqlserver |
+| MySQL | Database | mysql |
+| ODBC | Database | odbc |
+| Oracle | Database | oracle |
+| PlaidCloud Lakehouse | Database | plaid |
+| Presto | Database | presto |
+| Postgres | Database | postgres |
+| SAP HANA | Database | hana |
+| Spark | Database | spark |
+| StarRocks | Database | starrocks |
 
-### Databricks
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | databricks |
-
-### Greenplum
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | greenplum |
-
-### Microsoft SQL Server
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | sqlserver |
-
-### MySQL
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | mysql |
-
-### ODBC
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | odbc |
-
-### Oracle
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | oracle |
-
-### Postgres
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | postgres |
-
-### Amazon Redshift
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | redshift |
-
-### SAP HANA
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | hana |
-
-### Exasol
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | exasol |
-
-### IBM DB2
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | db2 |
-
-### Informix
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | informix |
-
-## Hadoop Based Databases
-
-### Hive
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | hive |
-
-### Presto
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | presto |
-
-### Spark
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Database |
-| **Reference** | spark |
 
 ## Team Collaboration Tools
 
-### Microsoft Teams
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Microsoft Teams | Notification | teams |
+| Slack | Notification | slack |
 
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Notification |
-| **Reference** | teams |
+## ERP Systems
 
-### Slack
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Notification |
-| **Reference** | slack |
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Infor | ERP | infor |
+| JD Edwards Legacy | ERP | jde_legacy |
+| Oracle EBS| ERP | oracle_ebs |
+| Oracle Fusion | ERP | oracle_fusion |
+| SAP Analytics Cloud | ERP | sap_sac |
+| SAP ECC | ERP | sap_ecc |
+| SAP S/4HANA | ERP | sap_s4 |
+| SAP Profitability and Cost Management (PCM) | ERP | sap_pcm |
+| SAP Profitability and Performance Management (PaPM) | ERP | sap_papm |
 
 
 ## Cloud Services
 
-### OAuth Connection
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Quandl | Cloud Services | quandl |
 
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | oAuth |
-| **Reference** | oauth |
-
-### Quandl
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Quandl |
-| **Reference** | quandl |
 
 ## Google Related
 
-### Google Big Query
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Google Big Query | Google | gbq |
+| Google Spreadsheet | Google | gspread |
 
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Google Big Query |
-| **Reference** | gbq |
+## RESTful Related
 
-### Google Spreadsheet
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Generic | REST | rest |
+| Basic Auth | REST | basic |
+| Salesforce | REST | salesforce |
+| Postman | REST | postman |
+| Sage Intacct | REST | sage |
+| Ramp | REST | ramp |
+| Paycor | REST | paycor |
+| Stripe | REST | stripe |
+| Quickbooks | REST | quickbooks |
+| Bill.com | REST | bill |
+| Microsoft Dynamics | REST | dynamics |
+| Workday | REST | workday |
+| NetSuite | REST | netsuite |
+| Epicore Eclipse | REST | eclipse |
 
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Google Spreadsheet |
-| **Reference** | gspread |
+## Git Repository Related
+
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| GitHub | Git | github |
+| GitLab | Git | gitlab |
+| Bitbucket | Git | bitbucket |
+
+## Open Table Format Related
+
+| Connection | Kind     | Reference  |
+|------------|----------|------------|
+| Delta Lake | Open Table Format | deltalake |
+| Apache Hudi | Open Table Format | hudi |
+| Apache Iceberg | Open Table Format | iceberg |
 
 
 ## Databricks Related
@@ -193,74 +129,4 @@ With the information above, the connection form can be completed and tested with
 Oracle EBS utilizes the standard Oracle database connection specified above.  This connection provides the connectivity
 to query, load, and execute PL/SQL programs in Oracle.
 
-If the EBS instance has the REST API interface available, this can be accessed using the same approach as Oracle Cloud described below.
-
-
-## Oracle Cloud Related
-
-Oracle Cloud utilizes standard RESTful requests to perform queries, data loading, and other operations.  A REST connection using OAuth2
-tokens is used for these interactions.  This uses the standard oAuth connection specified above.
-
-
-## Salesforce Related
-
-Salesforce utilizes standard RESTful requests to perform all operations.  A REST connection using OAuth2
-tokens is used for these interactions.  This uses the Salesforce specific connection type.
-
-## Workday Related
-
-Workday utilizes standard RESTful requests to perform all operations.  A REST connection using OAuth2
-tokens is used for these interactions.  This uses the standard oAuth connection specified above.
-
-
-## JD Edwards Legacy Version Related
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | JD Edwards Legacy |
-| **Reference** | jde_legacy |
-
-
-## JD Edwards Related
-
-JD Edwards utilizes the standard Oracle database connection specified above.  This connection provides the connectivity
-to query, load, and execute PL/SQL programs in Oracle.
-
-
-## Infor Related
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | Infor |
-| **Reference** | infor |
-
-
-## SAP Related
-
-### SAP Analytics Cloud
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | SAP Analytics Cloud |
-| **Reference** | sap_sac |
-
-### SAP ECC
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | SAP ECC |
-| **Reference** | sap_ecc |
-
-### SAP Profitability and Cost Management (PCM)
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | SAP PCM |
-| **Reference** | sap_pcm |
-
-### SAP Profitability and Performance Management (PaPM)
-
-| Parameter | Value |
-|-----------|-------|
-| **Connection Type** | SAP PaPM |
-| **Reference** | sap_papm |
+If the EBS instance has the REST API interface available, this can be accessed using the same approach as Oracle Cloud REST connection too.
