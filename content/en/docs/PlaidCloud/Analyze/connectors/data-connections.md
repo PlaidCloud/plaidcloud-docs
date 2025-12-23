@@ -103,9 +103,10 @@ For more details on each data connection type, please navigate to the specific d
 
 | Connection | Kind     | Reference  |
 |------------|----------|------------|
-| Delta Lake | Open Table Format | deltalake |
+| Apache Hive | Open Table Format | hive |
 | Apache Hudi | Open Table Format | hudi |
 | Apache Iceberg | Open Table Format | iceberg |
+| Delta Lake | Open Table Format | deltalake |
 
 
 ## Databricks Related
