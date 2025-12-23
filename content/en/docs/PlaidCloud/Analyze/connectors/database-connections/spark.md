@@ -1,7 +1,7 @@
 ---
 title: Apache Spark
 slug: spark
-description: Connecting to Apache Spark Database Connector
+description: Connecting to Apache Spark Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

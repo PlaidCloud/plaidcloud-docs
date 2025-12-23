@@ -1,7 +1,7 @@
 ---
 title: Amazon Redshift
 slug: amazon-redshift
-description: Connecting to Amazon Redshift Database Connector
+description: Connecting to Amazon Redshift Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

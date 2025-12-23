@@ -8,7 +8,7 @@ date: 2025-10-21T07:39:51
 
 
 ## Connection Documentation
-Documentation under development
+Slack Admin documentation is [here](https://slack.com/help).
 
 ## Security Requirements
 Documentation under development

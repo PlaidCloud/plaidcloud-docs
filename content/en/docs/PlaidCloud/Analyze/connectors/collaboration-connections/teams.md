@@ -8,7 +8,7 @@ date: 2025-10-21T07:39:51
 
 
 ## Connection Documentation
-Documentation under development
+Microsoft Teams Admin documentation is [here](https://learn.microsoft.com/en-us/microsoftteams/).
 
 ## Security Requirements
 Documentation under development

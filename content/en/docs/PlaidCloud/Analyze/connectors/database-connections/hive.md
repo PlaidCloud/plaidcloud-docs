@@ -1,7 +1,7 @@
 ---
 title: Apache Hive
 slug: hive
-description: Connecting to Apache Hive Data Lake Connector
+description: Connecting to Apache Hive Data Lake
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

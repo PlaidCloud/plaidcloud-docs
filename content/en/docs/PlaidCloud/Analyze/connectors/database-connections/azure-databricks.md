@@ -1,7 +1,7 @@
 ---
 title: Azure Databricks
 slug: azure-databricks
-description: Connecting to Azure Databricks Database Connector
+description: Connecting to Azure Databricks Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

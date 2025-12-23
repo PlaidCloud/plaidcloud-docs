@@ -1,7 +1,7 @@
 ---
 title: ODBC
 slug: odbc
-description: Connecting to ODBC Database Connector
+description: Connecting to a Database using ODBC
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

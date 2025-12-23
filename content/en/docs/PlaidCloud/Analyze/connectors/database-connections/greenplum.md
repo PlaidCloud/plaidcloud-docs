@@ -1,7 +1,7 @@
 ---
 title: Greenplum
 slug: greenplum
-description: Connecting to Greenplum Database Connector
+description: Connecting to Greenplum Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

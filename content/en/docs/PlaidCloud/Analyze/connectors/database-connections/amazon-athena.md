@@ -1,7 +1,7 @@
 ---
 title: Amazon Athena
 slug: amazon-athena
-description: Connecting to Amazon Athena Database Connector
+description: Connecting to Amazon Athena Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

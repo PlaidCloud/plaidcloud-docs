@@ -1,7 +1,7 @@
 ---
 title: Databend
 slug: databend
-description: Connecting to Databend Database Connector
+description: Connecting to Databend Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

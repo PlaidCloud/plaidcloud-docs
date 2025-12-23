@@ -8,7 +8,7 @@ date: 2025-10-21T07:39:51
 
 
 ## Catalog Documentation
-Documentation under development
+Apache Iceberg documentation is [here](https://iceberg.apache.org/docs/latest/).
 
 ## Security Requirements
 Documentation under development

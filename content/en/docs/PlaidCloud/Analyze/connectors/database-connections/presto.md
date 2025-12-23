@@ -1,7 +1,7 @@
 ---
 title: Presto
 slug: presto
-description: Connecting to Presto Database Connector
+description: Connecting to Presto Database
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---
