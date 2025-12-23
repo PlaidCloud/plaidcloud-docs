@@ -8,7 +8,7 @@ date: 2025-10-21T07:39:51
 
 
 ## Catalog Documentation
-Documentation under development
+The Delta Lake documentation is [here](https://docs.delta.io/).
 
 ## Security Requirements
 Documentation under development
