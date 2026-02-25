@@ -1,5 +1,5 @@
 ---
-linktitle: Tabular Data Management
-title: Tabular Data Management
-Description: Within a project, you can create and modify tables, views, and dimensions.
+linktitle: Data Management - Tabular
+title: Data Management - Tabular
+Description: Manage tabular data using tables and views.  The PlaidCloud Lakehouse enables fast execution on any size data.
 ---
