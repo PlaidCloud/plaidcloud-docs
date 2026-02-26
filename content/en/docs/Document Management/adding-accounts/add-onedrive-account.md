@@ -23,11 +23,14 @@ These steps need to be completed within the Azure portal to register an applicat
 6. Leave the **Redirect URI** blank.
 7. Click **Register**.
 
-### Copy the Client ID
+### Copy the Client ID and Tenant ID
 
 After registration, you will land on the application overview page.
 
 1. Copy the **Application (client) ID** — this is your **Client ID**. Save it for the PlaidCloud Document setup below.
+2. Copy the **Directory (tenant) ID** — this is your **Tenant ID**. Save it as well.
+
+Both values are displayed on the application overview page immediately after registration.
 
 ### Create a Client Secret
 
@@ -83,4 +86,5 @@ You should now have everything you need to add your OneDrive account to PlaidClo
 8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
 9. Paste the **Client ID** copied from the Azure app registration into the Public Key/User text field under Auth Credentials
 10. Paste the **Client Secret** copied from the Azure app registration into the Private Key/Password text field under Auth Credentials
-11. Select the Save button and your new Document account is live
+11. Paste the **Tenant ID** copied from the Azure app registration into the Tenant ID field under Auth Credentials
+12. Select the Save button and your new Document account is live
