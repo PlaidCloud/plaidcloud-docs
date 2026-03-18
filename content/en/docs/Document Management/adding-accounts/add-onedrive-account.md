@@ -45,28 +45,37 @@ Both values are displayed on the application overview page immediately after reg
 1. In the left sidebar, select **API permissions** under **Manage**.
 2. Click **+ Add a permission**.
 3. Select **Microsoft Graph**.
-4. Select **Delegated permissions** or **Application permissions** depending on your access model:
-   - Use **Application permissions** for unattended/service access (most common for PlaidCloud Document)
-5. Search for and select the following permissions:
-   - `Files.Read.All` — to read files and folders
-   - `Files.ReadWrite.All` — if PlaidCloud Document needs to write files
-   - `Sites.Read.All` — if accessing SharePoint-backed OneDrive for Business libraries
-6. Click **Add permissions**.
-7. Click **Grant admin consent for [your organization]** and confirm.
+4. Add the following permissions, selecting the type indicated for each:
+   - `Directory.ReadWrite.All` (Application) — Read and write directory data
+   - `Files.Read.All` (Application) — Read files in all site collections
+   - `Files.ReadWrite.All` (Application) — Read and write files in all site collections
+   - `Sites.ReadWrite.All` (Application) — Read and write items in all site collections
+   - `User.Read` (Delegated) — Sign in and read user profile
+   - `User.Read.All` (Application) — Read all users' full profiles
+5. Click **Add permissions**.
+6. Click **Grant admin consent for [your organization]** and confirm.
 
 ---
 
 ### Find the OneDrive Drive Path (Start Path)
 
-The **Start Path** in PlaidCloud Document controls which folder in OneDrive is used as the root for the account. To find the correct path:
+The **Start Path** in PlaidCloud Document controls which drive or folder in OneDrive is used as the root for the account.
 
-1. Open [OneDrive](https://onedrive.live.com) or your organization's SharePoint-based OneDrive for Business in a browser.
-2. Navigate to the folder you want to use as the root for this PlaidCloud Document account.
-3. The path shown in the browser's address bar or the folder breadcrumb reflects the folder hierarchy within OneDrive.
-4. Use the relative path from the root of the drive as the **Start Path** — for example, `/Documents/Finance` or `/Shared/Data`.
+In the most common scenario, the registered application has access to multiple drives or SharePoint sites. In this case the Start Path must begin with the name of the drive or site. For most OneDrive for Business accounts this is simply:
+
+```
+Documents
+```
+
+To target a specific subfolder within that drive, append the folder path:
+
+```
+Documents/Finance
+Documents/Shared/Data
+```
 
 {{< note >}}
-To use the entire OneDrive as the root, leave the Start Path blank. To restrict PlaidCloud Document to a specific folder and its contents, enter the path to that folder.
+If the application only has access to a single drive, the Start Path can be left blank to use the root of that drive. When in doubt, start with `Documents` as the drive name.
 {{< /note >}}
 
 ---
