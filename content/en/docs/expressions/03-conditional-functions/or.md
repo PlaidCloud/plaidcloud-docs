@@ -11,6 +11,7 @@ or_(<expr1>[, <expr2> ...])
 ```
 
 ## Analyze Examples
+
 ```python
 or_(  
     table.color == 'green',  

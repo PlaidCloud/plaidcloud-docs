@@ -12,7 +12,7 @@ ST_ASWKT(<geometry>)
 
 ## Aliases
 
-- [ST_ASTEXT](st-astext.md)
+- [ST_ASTEXT](../st-astext)
 
 ## Arguments
 

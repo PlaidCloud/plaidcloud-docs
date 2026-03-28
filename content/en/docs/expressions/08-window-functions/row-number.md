@@ -11,6 +11,7 @@ func.row_number().over(partition_by=[<columns>], order_by=[<columns>])
 ```
 
 ## Analyze Examples
+
 ```python
 table.employee_id, table.first_name, table.last_name, table.department, table.salary, func.row_number().over(partition=table.department, order_by=table.salary).alias('row_num')
 

@@ -4,20 +4,21 @@ title: TRANSLATE
 
 Transforms a given string by replacing specific characters with corresponding replacements, as defined by the provided mapping.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.translate('<inputString>', '<charactersToReplace>', '<replacementCharacters>')
 ```
 
 ## Analyze Examples
+
 ```python
 func.translate('databend', 'de', 'DE')
-+----------------------------------------+
-| func.translate('databend', 'de', 'DE') |
-+----------------------------------------+
-| DatabEnD                               |
-+----------------------------------------+
+┌────────────────────────────────────────┐
+│ func.translate('databend', 'de', 'DE') │
+├────────────────────────────────────────┤
+│ DatabEnD                               │
+└────────────────────────────────────────┘
 ```
 
 ## SQL Syntax

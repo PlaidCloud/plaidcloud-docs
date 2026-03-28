@@ -2,4 +2,4 @@
 title: MONTH
 ---
 
-Alias for [TO_MONTH](to-month).
+Alias for [TO_MONTH](../to-month).

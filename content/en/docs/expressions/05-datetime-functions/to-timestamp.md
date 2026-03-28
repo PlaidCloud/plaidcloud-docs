@@ -10,14 +10,14 @@ The function can accept one or two arguments. If given one argument, the functio
 - If the integer is greater than or equal to 31,536,000,000 and less than 31,536,000,000,000, it is treated as milliseconds.
 - If the integer is greater than or equal to 31,536,000,000,000, it is treated as microseconds.
 
-If given two arguments, the function converts the first string to a timestamp based on the format specified in the second string. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see [Formatting Date and Time](../../00-sql-reference/10-data-types/20-data-type-time-date-types#formatting-date-and-time).
+If given two arguments, the function converts the first string to a timestamp based on the format specified in the second string. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see Formatting Date and Time.
 
 - The output timestamp reflects your PlaidCloud Lakehouse timezone.
 - The timezone information must be included in the string you want to convert, otherwise NULL will be returned.
 
 Date formats are expressed using the `strftime` specification.  A quick reference is [here](https://devhints.io/strftime).
 
-See also: [TO_DATE](to-date)
+See also: [TO_DATE](../to-date)
 
 ## Analyze Syntax
 
@@ -54,8 +54,8 @@ Returns a timestamp in the format "YYYY-MM-DD hh:mm:ss.ffffff". If the given str
 
 ## Aliases
 
-- [TO_DATETIME](to-datetime)
-- [STR_TO_TIMESTAMP](str-to-timestamp)
+- [TO_DATETIME](../to-datetime)
+- [STR_TO_TIMESTAMP](../str-to-timestamp)
 
 ## SQL Examples
 

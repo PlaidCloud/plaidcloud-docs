@@ -2,4 +2,4 @@
 title: CHARACTER_LENGTH
 ---
 
-Alias for [LENGTH](length).
+Alias for [LENGTH](../length).

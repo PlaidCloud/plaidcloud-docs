@@ -5,7 +5,7 @@ title: MATCH
 Searches for documents containing specified keywords. Please note that the MATCH function can only be used in a WHERE clause.
 
 :::info
-Databend's MATCH function is inspired by Elasticsearch's [MATCH](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-match).
+PlaidCloud Lakehouse's MATCH function is inspired by Elasticsearch's [MATCH](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-match).
 :::
 
 ## SQL Syntax

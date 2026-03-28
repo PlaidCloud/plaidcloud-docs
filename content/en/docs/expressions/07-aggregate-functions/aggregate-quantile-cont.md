@@ -17,6 +17,7 @@ func.quantile_cont(<levels>, <expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.quantile_cont(0.5, table.sales_amount).alias('median_sales_amount')
 

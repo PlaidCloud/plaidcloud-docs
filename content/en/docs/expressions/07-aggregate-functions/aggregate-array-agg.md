@@ -12,6 +12,7 @@ func.array_agg(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 table.movie_title, func.array_agg(table.rating).alias('ratings')
 
@@ -36,7 +37,7 @@ LIST(<expr>)
 
 ## Return Type
 
-Returns an [Array](../../00-sql-reference/10-data-types/40-data-type-array-types) with elements that are of the same type as the original data.
+Returns an Array with elements that are of the same type as the original data.
 
 ## SQL Examples
 

@@ -4,20 +4,21 @@ title: REVERSE
 
 Returns the string str with the order of the characters reversed.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.reverse(<str>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.reverse('abc')
-+----------------------+
-| func..reverse('abc') |
-+----------------------+
-| cba                  |
-+----------------------+
+┌──────────────────────┐
+│ func..reverse('abc') │
+├──────────────────────┤
+│ cba                  │
+└──────────────────────┘
 ```
 
 ## SQL Syntax
@@ -40,9 +41,9 @@ REVERSE(<str>)
 
 ```sql
 SELECT REVERSE('abc');
-+----------------+
-| REVERSE('abc') |
-+----------------+
-| cba            |
-+----------------+
+┌────────────────┐
+│ REVERSE('abc') │
+├────────────────┤
+│ cba            │
+└────────────────┘
 ```

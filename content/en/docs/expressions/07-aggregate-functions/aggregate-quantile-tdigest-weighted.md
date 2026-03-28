@@ -16,6 +16,7 @@ func.quantile_tdigest_weighted(<levels>, <expr>, <weight_expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.quantile_tdigest_weighted([0.5, 0.8], table.sales_amount, 1).alias('sales_amounts')
 

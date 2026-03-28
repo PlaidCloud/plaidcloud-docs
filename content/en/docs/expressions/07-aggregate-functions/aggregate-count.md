@@ -15,6 +15,7 @@ func.count(<column>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.count(table.grade).alias('count_valid_grades')
 

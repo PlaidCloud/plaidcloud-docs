@@ -13,7 +13,7 @@ calculated from the numeric values of its constituent bytes using this formula:
 + (3rd byte code * 256^2) ...
 ```
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.ord(<str>)
@@ -23,11 +23,11 @@ func.ord(<str>)
 
 ```python
 func.ord('2')
-+----------------+
-| func.ord('2)   |
-+----------------+
-|             50 |
-+----------------+
+┌────────────────┐
+│ func.ord('2)   │
+├────────────────┤
+│             50 │
+└────────────────┘
 ```
 
 ## SQL Syntax
@@ -50,9 +50,9 @@ ORD(<str>)
 
 ```sql
 SELECT ORD('2')
-+--------+
-| ORD(2) |
-+--------+
-|     50 |
-+--------+
+┌────────┐
+│ ORD(2) │
+├────────┤
+│     50 │
+└────────┘
 ```

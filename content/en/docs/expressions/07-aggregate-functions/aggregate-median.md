@@ -17,6 +17,7 @@ func.median(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.median(table.score).alias('median_score')
 

@@ -11,13 +11,14 @@ func.jaro_winkler(<string1>, <string2>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.jaro_winkler('databend', 'Databend')
-+-------------------------------------------+
-| func.jaro_winkler('databend', 'Databend') |
-+-------------------------------------------+
-|                        0.9166666666666666 |
-+-------------------------------------------+
+┌───────────────────────────────────────────┐
+│ func.jaro_winkler('databend', 'Databend') │
+├───────────────────────────────────────────┤
+│                        0.9166666666666666 │
+└───────────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -32,7 +33,7 @@ The JARO_WINKLER function returns a FLOAT64 value representing the similarity be
 
 - Similarity Range: The result ranges from 0.0 (completely dissimilar) to 1.0 (identical).
 
-    ```sql title='Examples:'
+    ```sql
     SELECT JARO_WINKLER('databend', 'Databend') AS similarity;
 
     ┌────────────────────┐
@@ -51,7 +52,7 @@ The JARO_WINKLER function returns a FLOAT64 value representing the similarity be
     ```
 - NULL Handling: If either string1 or string2 is NULL, the result is NULL.
 
-    ```sql title='Examples:'
+    ```sql
     SELECT JARO_WINKLER('databend', NULL) AS similarity;
 
     ┌────────────┐
@@ -63,7 +64,7 @@ The JARO_WINKLER function returns a FLOAT64 value representing the similarity be
 - Empty Strings:
     - Comparing two empty strings returns 1.0.
 
-    ```sql title='Examples:'
+    ```sql
     SELECT JARO_WINKLER('', '') AS similarity;
 
     ┌────────────┐
@@ -74,7 +75,7 @@ The JARO_WINKLER function returns a FLOAT64 value representing the similarity be
     ```
     - Comparing an empty string with a non-empty string returns 0.0.
 
-    ```sql title='Examples:'
+    ```sql
     SELECT JARO_WINKLER('databend', '') AS similarity;
 
     ┌────────────┐

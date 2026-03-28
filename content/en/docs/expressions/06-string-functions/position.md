@@ -6,7 +6,7 @@ POSITION(substr IN str) is a synonym for LOCATE(substr,str).
 Returns the position of the first occurrence of substring substr in string str.
 Returns 0 if substr is not in str. Returns NULL if any argument is NULL.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.position(<substr>, <str>)
@@ -16,11 +16,11 @@ func.position(<substr>, <str>)
 
 ```python
 func.position('bar', 'foobarbar')
-+-----------------------------------+
-| func.position('bar', 'foobarbar') |
-+-----------------------------------+
-|                                 4 |
-+-----------------------------------+
+┌───────────────────────────────────┐
+│ func.position('bar', 'foobarbar') │
+├───────────────────────────────────┤
+│                                 4 │
+└───────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -44,16 +44,16 @@ POSITION(<substr> IN <str>)
 
 ```sql
 SELECT POSITION('bar' IN 'foobarbar')
-+----------------------------+
-| POSITION('bar' IN 'foobarbar') |
-+----------------------------+
-|                          4 |
-+----------------------------+
+┌────────────────────────────┐
+│ POSITION('bar' IN 'foobarbar') │
+├────────────────────────────┤
+│                          4 │
+└────────────────────────────┘
 
 SELECT POSITION('xbar' IN 'foobar')
-+--------------------------+
-| POSITION('xbar' IN 'foobar') |
-+--------------------------+
-|                        0 |
-+--------------------------+
+┌──────────────────────────┐
+│ POSITION('xbar' IN 'foobar') │
+├──────────────────────────┤
+│                        0 │
+└──────────────────────────┘
 ```

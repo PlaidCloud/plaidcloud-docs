@@ -15,6 +15,7 @@ func.quantile_tdigest(<levels>, <expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.quantile_tdigest([0.5, 0.8], table.sales_amount).alias('sales_amounts')
 

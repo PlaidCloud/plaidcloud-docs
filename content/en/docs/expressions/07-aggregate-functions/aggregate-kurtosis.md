@@ -13,6 +13,7 @@ func.kurtosis(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.kurtosis(table.price).alias('excess_kurtosis')
 

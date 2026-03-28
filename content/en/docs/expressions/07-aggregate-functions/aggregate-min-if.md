@@ -11,6 +11,7 @@ func.min_if(<column>, <cond>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.min_if(table.budget, table.departing=='IT').alias('min_it_budget')
 

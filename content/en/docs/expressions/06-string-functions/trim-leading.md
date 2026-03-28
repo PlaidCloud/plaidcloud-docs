@@ -6,10 +6,10 @@ Removes all occurrences of the specified trim string from the beginning of the s
 
 See also: 
 
-- [LTRIM](ltrim.md)
-- [TRIM_TRAILING](trim-trailing.md)
+- [LTRIM](../ltrim)
+- [TRIM_TRAILING](../trim-trailing)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.trim_leading(<string>, <trim_string>)
@@ -19,11 +19,11 @@ func.trim_leading(<string>, <trim_string>)
 
 ```python
 func.trim_leading('xxdatabendxx', 'x')
-+------------------------------------------+
-| func.trim_leading('xxdatabendxx', 'x')   |
-+------------------------------------------+
-| databendxx                               |
-+------------------------------------------+
+┌──────────────────────────────────────────┐
+│ func.trim_leading('xxdatabendxx', 'x')   │
+├──────────────────────────────────────────┤
+│ databendxx                               │
+└──────────────────────────────────────────┘
 ```
 
 ## SQL Syntax

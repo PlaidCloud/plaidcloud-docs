@@ -11,6 +11,7 @@ func.covar_pop(<expr1>, <expr2>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.covar_pop(table.units_sold, table.revenue).alias('covar_pop_units_revenue')
 

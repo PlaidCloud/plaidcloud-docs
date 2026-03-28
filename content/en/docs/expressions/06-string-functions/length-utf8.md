@@ -2,4 +2,4 @@
 title: LENGTH_UTF8
 ---
 
-Alias for [LENGTH](length).
+Alias for [LENGTH](../length).

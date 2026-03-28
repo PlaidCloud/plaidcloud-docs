@@ -2,7 +2,7 @@
 title: MAP_FILTER
 ---
 
-Filters key-value pairs from a map using a [lambda expression](../../00-sql-reference/42-lambda-expressions.md) to define the condition.
+Filters key-value pairs from a map using a lambda expression to define the condition.
 
 ## SQL Syntax
 

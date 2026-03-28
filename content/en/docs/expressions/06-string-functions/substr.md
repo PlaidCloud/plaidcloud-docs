@@ -9,20 +9,21 @@ Extracts a string containing a specific number of characters from a particular p
 
 It is also possible to use a negative value for `pos`. In this case, the beginning of the substring is pos characters from the end of the string, rather than the beginning. A negative value may be used for `pos` in any of the forms of this function. A value of 0 for `pos` returns an empty string. The position of the first character in the string from which the substring is to be extracted is reckoned as 1.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.substr(<str>, <pos>, <len>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.substr('Quadratically', 5, 6)
-+------------------------------------+
-| func.substr('Quadratically', 5, 6) |
-+------------------------------------+
-| ratica                             |
-+------------------------------------+
+┌────────────────────────────────────┐
+│ func.substr('Quadratically', 5, 6) │
+├────────────────────────────────────┤
+│ ratica                             │
+└────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -43,8 +44,8 @@ SUBSTR(<str>, <pos>, <len>)
 
 ## Aliases
 
-- [SUBSTRING](substring)
-- [MID](mid)
+- [SUBSTRING](../substring)
+- [MID](../mid)
 
 ## Return Type
 

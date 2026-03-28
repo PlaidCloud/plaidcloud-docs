@@ -13,6 +13,7 @@ func.lead(<expr>, <offset>).over(partition_by=[<columns>], order_by=[<columns>])
 ```
 
 ## Analyze Examples
+
 ```python
 table.product_name, table.sale_amount, func.lead(table.sale_amount, 1).over(partition_by=table.product_name, order_by=table.sale_id).alias('next_sale_amount')
 
@@ -33,7 +34,7 @@ LEAD(expression [, offset [, default]]) OVER (PARTITION BY partition_expression 
 ```
 
 - *offset*: Specifies the number of rows ahead (LEAD) or behind (LAG) the current row within the partition to retrieve the value from. Defaults to 1.
-> Note that setting a negative offset has the same effect as using the [LAG](lag) function.
+> Note that setting a negative offset has the same effect as using the [LAG](../lag) function.
 
 - *default*: Specifies a value to be returned if the LEAD or LAG function encounters a situation where there is no value available due to the offset exceeding the partition's boundaries. Defaults to NULL.
 

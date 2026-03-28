@@ -2,4 +2,4 @@
 title: LCASE
 ---
 
-Alias for [LOWER](lower).
+Alias for [LOWER](../lower).

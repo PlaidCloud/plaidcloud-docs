@@ -6,10 +6,10 @@ Removes all occurrences of the specified trim string from the end of the string.
 
 See also: 
 
-- [RTRIM](rtrim.md)
-- [TRIM_LEADING](trim-leading.md)
+- [RTRIM](../rtrim)
+- [TRIM_LEADING](../trim-leading)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.trim_trailing(<string>, <trim_string>)
@@ -19,11 +19,11 @@ func.trim_trailing(<string>, <trim_string>)
 
 ```python
 func.trim_trailing('xxdatabendxx', 'x')
-+------------------------------------------+
-| func.trim_trailing('xxdatabendxx', 'x')  |
-+------------------------------------------+
-| xxdatabend                               |
-+------------------------------------------+
+┌──────────────────────────────────────────┐
+│ func.trim_trailing('xxdatabendxx', 'x')  │
+├──────────────────────────────────────────┤
+│ xxdatabend                               │
+└──────────────────────────────────────────┘
 ```
 
 ## SQL Syntax

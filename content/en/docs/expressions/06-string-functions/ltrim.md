@@ -9,7 +9,7 @@ See also:
 - [TRIM_LEADING](../trim-leading)
 - [RTRIM](../rtrim)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.ltrim(<string>, <trim_string>)
@@ -19,11 +19,11 @@ func.ltrim(<string>, <trim_string>)
 
 ```python
 func.ltrim('xxdatabend', 'x')
-+--------------------------------+
-| func.ltrim('xxdatabend', 'x')  |
-+--------------------------------+
-| databend                       |
-+--------------------------------+
+┌────────────────────────────────┐
+│ func.ltrim('xxdatabend', 'x')  │
+├────────────────────────────────┤
+│ databend                       │
+└────────────────────────────────┘
 ```
 
 ## SQL Syntax

@@ -7,20 +7,21 @@ is omitted, spaces are removed.
 
 The Analyze function automatically trims both leading and trailing spaces.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.trim(str)
 ```
 
 ## Analyze Examples
+
 ```python
 func.trim('   plaidcloud   ')
-+--------------------------------+
-| func.trim('   plaidcloud   ') |
-+--------------------------------+
-| 'plaidcloud'                   |
-+--------------------------------+
+┌────────────────────────────────┐
+│ func.trim('   plaidcloud   ') │
+├────────────────────────────────┤
+│ 'plaidcloud'                   │
+└────────────────────────────────┘
 ```
 
 ## SQL Syntax

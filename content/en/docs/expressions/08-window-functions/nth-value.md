@@ -16,6 +16,7 @@ func.nth_value(<expr>, <n>).over(partition_by=[<columns>], order_by=[<columns>])
 ```
 
 ## Analyze Examples
+
 ```python
 table.employee_id, table.first_name, table.last_name, table.salary, func.nth_value(table.first_name, 2).over(order_by=table.salary.desc()).alias('second_highest_salary_first_name')
 
@@ -34,7 +35,7 @@ employee_id | first_name | last_name | salary  | second_highest_salary_first_nam
 NTH_VALUE(expression, n) OVER ([PARTITION BY partition_expression] ORDER BY order_expression [window_frame])
 ```
 
-For the syntax of window frame, see [Window Frame Syntax](index#window-frame-syntax).
+For the syntax of window frame, see [Window Frame Syntax](..#window-frame-syntax).
 
 ## SQL Examples
 

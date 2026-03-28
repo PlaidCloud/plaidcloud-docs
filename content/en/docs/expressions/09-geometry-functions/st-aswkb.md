@@ -12,7 +12,7 @@ ST_ASWKB(<geometry>)
 
 ## Aliases
 
-- [ST_ASBINARY](st-asbinary.md)
+- [ST_ASBINARY](../st-asbinary)
 
 ## Arguments
 

@@ -1,5 +1,5 @@
 ---
-title: 'Aggregate Functions'
+title: Aggregate Functions
 ---
 
 Aggregate functions are essential tools in SQL that allow you to perform calculations on a set of values and return a single result.

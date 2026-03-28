@@ -1,6 +1,6 @@
 ---
-title: 'AI_EMBEDDING_VECTOR'
-description: 'Creating embeddings using the ai_embedding_vector function in PlaidCloud Lakehouse'
+title: AI_EMBEDDING_VECTOR
+description: Creating embeddings using the ai_embedding_vector function in PlaidCloud Lakehouse
 ---
 
 This document provides an overview of the ai_embedding_vector function in PlaidCloud Lakehouse and demonstrates how to create document embeddings using this function.
@@ -74,12 +74,12 @@ You can now use these embeddings for various natural language processing tasks, 
 
 ```sql
 SELECT length(embedding) FROM documents;
-+-------------------+
-| length(embedding) |
-+-------------------+
-|              1536 |
-|              1536 |
-|              1536 |
-+-------------------+
+┌───────────────────┐
+│ length(embedding) │
+├───────────────────┤
+│              1536 │
+│              1536 │
+│              1536 │
+└───────────────────┘
 ```
 The query above shows that the generated embeddings have a length of 1536(dimensions) for each document.

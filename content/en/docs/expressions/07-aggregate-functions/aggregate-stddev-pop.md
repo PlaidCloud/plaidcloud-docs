@@ -22,6 +22,7 @@ func.stddev_pop(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.stddev_pop(table.score).alias('test_score_stddev_pop')
 

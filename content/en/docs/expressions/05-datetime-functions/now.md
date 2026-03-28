@@ -32,7 +32,7 @@ TIMESTAMP
 
 ## Aliases
 
-- [CURRENT_TIMESTAMP](current-timestamp)
+- [CURRENT_TIMESTAMP](../current-timestamp)
 
 ## SQL Examples
 

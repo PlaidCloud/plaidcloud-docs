@@ -13,6 +13,7 @@ func.min(<column>)
 ```
 
 ## Analyze Examples
+
 ```python
 table.station_id, func.min(table.price).alias('min_price')
 

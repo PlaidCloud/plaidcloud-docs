@@ -12,7 +12,7 @@ ST_MAKEGEOMPOINT(<longitude>, <latitude>)
 
 ## Aliases
 
-- [ST_GEOM_POINT](st-geom-point.md)
+- [ST_GEOM_POINT](../st-geom-point)
 
 ## Arguments
 

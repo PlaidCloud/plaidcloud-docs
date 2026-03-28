@@ -37,7 +37,7 @@ JSON_OBJECT_KEYS(<variant>)
 
 ## Aliases
 
-- [OBJECT_KEYS](object-keys)
+- [OBJECT_KEYS](../object-keys)
 
 ## Return Type
 

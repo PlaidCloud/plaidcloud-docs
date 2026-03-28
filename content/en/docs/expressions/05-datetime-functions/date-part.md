@@ -4,7 +4,7 @@ title: DATE_PART
 
 Retrieves the designated portion of a date, time, or timestamp.
 
-See also: [EXTRACT](extract)
+See also: [EXTRACT](../extract)
 
 ## Analyze Syntax
 

@@ -11,6 +11,7 @@ func.group_array_moving_avg(<expr1>)
 ```
 
 ## Analyze Examples
+
 ```python
 table.user_id, func.group_array_moving_avg(table.request_num).alias('avg_request_num')
 
@@ -38,7 +39,7 @@ GROUP_ARRAY_MOVING_AVG(<window_size>)(<expr>)
 
 ## Return Type
 
-Returns an [Array](../../00-sql-reference/10-data-types/40-data-type-array-types) with elements of double or decimal depending on the source data type.
+Returns an Array with elements of double or decimal depending on the source data type.
 
 ## SQL Examples
 

@@ -36,7 +36,7 @@ TO_YEAR(<expr>)
 
 ## Aliases
 
-- [YEAR](year)
+- [YEAR](../year)
 
 ## Return Type
 

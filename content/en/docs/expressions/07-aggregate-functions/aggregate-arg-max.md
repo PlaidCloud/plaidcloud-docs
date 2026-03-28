@@ -11,6 +11,7 @@ func.arg_max(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.arg_max(table.product, table.price).alias('max_price_product')
 
@@ -29,8 +30,8 @@ ARG_MAX(<arg>, <val>)
 
 | Arguments | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
-| `<arg>`   | Argument of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types) |
-| `<val>`   | Value of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types)    |
+| `<arg>`   | Argument of any data type that PlaidCloud Lakehouse supports |
+| `<val>`   | Value of any data type that PlaidCloud Lakehouse supports    |
 
 ## Return Type
 

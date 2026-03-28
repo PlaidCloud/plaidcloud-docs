@@ -12,7 +12,7 @@ ST_MAKEPOLYGON(<geometry>)
 
 ## Aliases
 
-- [ST_POLYGON](st-polygon.md)
+- [ST_POLYGON](../st-polygon)
 
 ## Arguments
 

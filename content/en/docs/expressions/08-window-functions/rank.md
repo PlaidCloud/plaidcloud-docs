@@ -13,6 +13,7 @@ func.rank().over(partition_by=[<columns>], order_by=[<columns>])
 ```
 
 ## Analyze Examples
+
 ```python
 table.employee_id, table.first_name, table.last_name, table.department, table.salary, func.rank().over(order_by=table.salary).alias('rank')
 

@@ -11,6 +11,7 @@ func.group_array_moving_sum(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 table.user_id, func.group_array_moving_sum(table.request_num)
 
@@ -38,7 +39,7 @@ GROUP_ARRAY_MOVING_SUM(<window_size>)(<expr>)
 
 ## Return Type
 
-Returns an [Array](../../00-sql-reference/10-data-types/40-data-type-array-types) with elements that are of the same type as the original data.
+Returns an Array with elements that are of the same type as the original data.
 
 ## SQL Examples
 

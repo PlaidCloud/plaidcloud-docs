@@ -2,7 +2,7 @@
 title: ST_TRANSFORM
 ---
 
-Converts a GEOMETRY object from one [spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system) to another. If you just need to change the SRID without changing the coordinates (e.g. if the SRID was incorrect), use [ST_SETSRID](st-setsrid.md) instead.
+Converts a GEOMETRY object from one [spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system) to another. If you just need to change the SRID without changing the coordinates (e.g. if the SRID was incorrect), use [ST_SETSRID](../st-setsrid) instead.
 
 ## SQL Syntax
 

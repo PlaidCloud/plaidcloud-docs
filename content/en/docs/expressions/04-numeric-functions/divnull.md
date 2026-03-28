@@ -6,8 +6,8 @@ Returns the quotient by dividing the first number by the second one. Returns NUL
 
 See also:
 
-- [DIV](div)
-- [DIV0](div0)
+- [DIV](../div)
+- [DIV0](../div0)
 
 ## Analyze Syntax
 

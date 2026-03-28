@@ -16,6 +16,7 @@ func.avg(<column>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.avg(table.price).alias('avg_price')
 

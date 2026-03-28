@@ -14,20 +14,20 @@ func.months_between(<date1>, <date2>)
 
 ```python
 func.months_between(func.to_date('2024-03-15'), func.to_date('2024-02-15'))
-+-------------------------------------------------------------------------------+
-| func.months_between(func.to_date('2024-03-15'), func.to_date('2024-02-15'))   |
-+-------------------------------------------------------------------------------+
-| 1                                                                             |
-+-------------------------------------------------------------------------------+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ func.months_between(func.to_date('2024-03-15'), func.to_date('2024-02-15'))   │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ 1                                                                             │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ```python
 func.months_between(func.to_date('2024-02-15'), func.to_date('2024-03-15'))
-+-------------------------------------------------------------------------------+
-| func.months_between(func.to_date('2024-02-15'), func.to_date('2024-03-15'))   |
-+-------------------------------------------------------------------------------+
-| -1                                                                             |
-+-------------------------------------------------------------------------------+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│ func.months_between(func.to_date('2024-02-15'), func.to_date('2024-03-15'))   │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ -1                                                                             │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -46,7 +46,7 @@ The function returns a FLOAT value based on the following rules:
 
 - If *date1* is earlier than *date2*, the function returns a negative value; otherwise, it returns a positive value.
 
-    ```sql title='Example:'
+    ```sql
     SELECT
         MONTHS_BETWEEN('2024-03-15'::DATE,
                     '2024-02-15'::DATE),
@@ -60,7 +60,7 @@ The function returns a FLOAT value based on the following rules:
 
 - If *date1* and *date2* fall on the same day of their respective months or both are the last day of their respective months, the result is an integer. Otherwise, the function calculates the fractional portion of the result based on a 31-day month.
 
-    ```sql title='Example:'
+    ```sql
     SELECT
         MONTHS_BETWEEN('2024-02-29'::DATE,
                     '2024-01-29'::DATE),
@@ -81,7 +81,7 @@ The function returns a FLOAT value based on the following rules:
 
 - If *date1* and *date2* are the same date, the function ignores any time components and returns 0.
 
-    ```sql title='Example:'
+    ```sql
     SELECT
         MONTHS_BETWEEN('2024-08-05'::DATE,
                     '2024-08-05'::DATE),

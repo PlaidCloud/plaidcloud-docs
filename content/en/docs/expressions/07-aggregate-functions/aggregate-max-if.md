@@ -11,6 +11,7 @@ func.max_if(<column>, <cond>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.max_if(table.revenue, table.salesperson_id==1).alias('max_revenue_salesperson_1')
 

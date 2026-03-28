@@ -1,6 +1,6 @@
 ---
-title: 'AI_TEXT_COMPLETION'
-description: 'Generating text completions using the ai_text_completion function in PlaidCloud Lakehouse'
+title: AI_TEXT_COMPLETION
+description: Generating text completions using the ai_text_completion function in PlaidCloud Lakehouse
 ---
 
 This document provides an overview of the `ai_text_completion` function in PlaidCloud Lakehouse and demonstrates how to generate text completions using this function.
@@ -45,11 +45,11 @@ SELECT ai_text_completion('What is artificial intelligence?') AS completion;
 
 Result:
 ```sql
-+--------------------------------------------------------------------------------------------------------------------+
-| completion                                                                                                          |
-+--------------------------------------------------------------------------------------------------------------------+
-| Artificial intelligence (AI) is the field of study focused on creating machines and software capable of thinking, learning, and solving problems in a way that mimics human intelligence. This includes areas such as machine learning, natural language processing, computer vision, and robotics. |
-+--------------------------------------------------------------------------------------------------------------------+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ completion                                                                                                          │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Artificial intelligence (AI) is the field of study focused on creating machines and software capable of thinking, learning, and solving problems in a way that mimics human intelligence. This includes areas such as machine learning, natural language processing, computer vision, and robotics. │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 In this example, we provide the prompt "What is artificial intelligence?" to the `ai_text_completion` function, and it returns a generated completion that briefly describes artificial intelligence.

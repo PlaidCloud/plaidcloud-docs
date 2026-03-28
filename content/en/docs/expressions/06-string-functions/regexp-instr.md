@@ -4,20 +4,21 @@ title: REGEXP_INSTR
 
 Returns the starting index of the substring of the string `expr` that matches the regular expression specified by the pattern `pat`, `0` if there is no match. If `expr` or `pat` is NULL, the return value is NULL. Character indexes begin at `1`.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.regexp_instr(<expr>, <pat[, pos[, occurrence[, return_option[, match_type]]]]>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.regexp_instr('dog cat dog', 'dog')
-+-----------------------------------------+
-| func.regexp_instr('dog cat dog', 'dog') |
-+-----------------------------------------+
-|                                       1 |
-+-----------------------------------------+
+┌─────────────────────────────────────────┐
+│ func.regexp_instr('dog cat dog', 'dog') │
+├─────────────────────────────────────────┤
+│                                       1 │
+└─────────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -45,30 +46,30 @@ A number data type value.
 
 ```sql
 SELECT REGEXP_INSTR('dog cat dog', 'dog');
-+------------------------------------+
-| REGEXP_INSTR('dog cat dog', 'dog') |
-+------------------------------------+
-|                                  1 |
-+------------------------------------+
+┌────────────────────────────────────┐
+│ REGEXP_INSTR('dog cat dog', 'dog') │
+├────────────────────────────────────┤
+│                                  1 │
+└────────────────────────────────────┘
 
 SELECT REGEXP_INSTR('dog cat dog', 'dog', 2);
-+---------------------------------------+
-| REGEXP_INSTR('dog cat dog', 'dog', 2) |
-+---------------------------------------+
-|                                     9 |
-+---------------------------------------+
+┌───────────────────────────────────────┐
+│ REGEXP_INSTR('dog cat dog', 'dog', 2) │
+├───────────────────────────────────────┤
+│                                     9 │
+└───────────────────────────────────────┘
 
 SELECT REGEXP_INSTR('aa aaa aaaa', 'a{2}');
-+-------------------------------------+
-| REGEXP_INSTR('aa aaa aaaa', 'a{2}') |
-+-------------------------------------+
-|                                   1 |
-+-------------------------------------+
+┌─────────────────────────────────────┐
+│ REGEXP_INSTR('aa aaa aaaa', 'a{2}') │
+├─────────────────────────────────────┤
+│                                   1 │
+└─────────────────────────────────────┘
 
 SELECT REGEXP_INSTR('aa aaa aaaa', 'a{4}');
-+-------------------------------------+
-| REGEXP_INSTR('aa aaa aaaa', 'a{4}') |
-+-------------------------------------+
-|                                   8 |
-+-------------------------------------+
+┌─────────────────────────────────────┐
+│ REGEXP_INSTR('aa aaa aaaa', 'a{4}') │
+├─────────────────────────────────────┤
+│                                   8 │
+└─────────────────────────────────────┘
 ```

@@ -4,20 +4,21 @@ title: UNHEX
 
 For a string argument str, UNHEX(str) interprets each pair of characters in the argument as a hexadecimal number and converts it to the byte represented by the number. The return value is a binary string.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.unhex(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.unhex('6461746162656e64')
-+--------------------------------+
-| func.unhex('6461746162656e64') |
-+--------------------------------+
-| 6461746162656E64               |
-+--------------------------------+
+┌────────────────────────────────┐
+│ func.unhex('6461746162656e64') │
+├────────────────────────────────┤
+│ 6461746162656E64               │
+└────────────────────────────────┘
 ```
 
 ## SQL Syntax

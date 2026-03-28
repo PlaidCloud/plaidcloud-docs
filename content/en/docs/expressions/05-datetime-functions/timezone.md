@@ -34,19 +34,19 @@ SELECT TIMEZONE();
 ```sql
 -- Return the current timezone
 SELECT TIMEZONE();
-+-----------------+
-| TIMEZONE('UTC') |
-+-----------------+
-| UTC             |
-+-----------------+
+┌─────────────────┐
+│ TIMEZONE('UTC') │
+├─────────────────┤
+│ UTC             │
+└─────────────────┘
 
 -- Set the timezone to China Standard Time
 SET timezone='Asia/Shanghai';
 
 SELECT TIMEZONE();
-+---------------------------+
-| TIMEZONE('Asia/Shanghai') |
-+---------------------------+
-| Asia/Shanghai             |
-+---------------------------+
+┌───────────────────────────┐
+│ TIMEZONE('Asia/Shanghai') │
+├───────────────────────────┤
+│ Asia/Shanghai             │
+└───────────────────────────┘
 ```

@@ -17,6 +17,7 @@ func.retention(<cond1> , <cond2> , ..., <cond32>)
 ```
 
 ## Analyze Examples
+
 ```python
 table.user_id, func.retention(table.event_type=='signup', table.event_type='login', table.event_type='purchase').alias('sales_amounts')
 

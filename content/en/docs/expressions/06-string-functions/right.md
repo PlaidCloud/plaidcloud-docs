@@ -4,20 +4,21 @@ title: RIGHT
 
 Returns the rightmost len characters from the string str, or NULL if any argument is NULL.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.right(<str>, <len>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.right('foobarbar', 4)
-+----------------------------+
-| func.right('foobarbar', 4) |
-+----------------------------+
-| rbar                       |
-+----------------------------+
+┌────────────────────────────┐
+│ func.right('foobarbar', 4) │
+├────────────────────────────┤
+│ rbar                       │
+└────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -41,9 +42,9 @@ RIGHT(<str>, <len>);
 
 ```sql
 SELECT RIGHT('foobarbar', 4);
-+-----------------------+
-| RIGHT('foobarbar', 4) |
-+-----------------------+
-| rbar                  |
-+-----------------------+
+┌───────────────────────┐
+│ RIGHT('foobarbar', 4) │
+├───────────────────────┤
+│ rbar                  │
+└───────────────────────┘
 ```

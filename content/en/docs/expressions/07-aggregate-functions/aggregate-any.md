@@ -13,6 +13,7 @@ func.any(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.any(table.product_name).alias('any_product_name')
 

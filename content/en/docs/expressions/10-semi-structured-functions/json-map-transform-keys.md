@@ -2,7 +2,7 @@
 title: JSON_MAP_TRANSFORM_KEYS
 ---
 
-Applies a transformation to each key in a JSON object using a [lambda expression](../../00-sql-reference/42-lambda-expressions).
+Applies a transformation to each key in a JSON object using a lambda expression.
 
 ## SQL Syntax
 

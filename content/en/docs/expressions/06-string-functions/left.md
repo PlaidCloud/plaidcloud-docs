@@ -4,7 +4,7 @@ title: LEFT
 
 Returns the leftmost len characters from the string str, or NULL if any argument is NULL.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.left(<str>, <len>)
@@ -14,11 +14,11 @@ func.left(<str>, <len>)
 
 ```python
 func.left('foobarbar', 5)
-+---------------------------+
-| func.left('foobarbar', 5) |
-+---------------------------+
-| fooba                     |
-+---------------------------+
+┌───────────────────────────┐
+│ func.left('foobarbar', 5) │
+├───────────────────────────┤
+│ fooba                     │
+└───────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -42,9 +42,9 @@ LEFT(<str>, <len>);
 
 ```sql
 SELECT LEFT('foobarbar', 5);
-+----------------------+
-| LEFT('foobarbar', 5) |
-+----------------------+
-| fooba                |
-+----------------------+
+┌──────────────────────┐
+│ LEFT('foobarbar', 5) │
+├──────────────────────┤
+│ fooba                │
+└──────────────────────┘
 ```

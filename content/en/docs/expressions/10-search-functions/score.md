@@ -2,10 +2,10 @@
 title: SCORE
 ---
 
-Returns the relevance of the query string. The higher the score, the more relevant the data. Please note that SCORE function can only be used with the [QUERY](query.md) or [MATCH](match.md) function.
+Returns the relevance of the query string. The higher the score, the more relevant the data. Please note that SCORE function can only be used with the [QUERY](../query) or [MATCH](../match) function.
 
 :::info
-Databend's SCORE function is inspired by Elasticsearch's [SCORE](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-score).
+PlaidCloud Lakehouse's SCORE function is inspired by Elasticsearch's [SCORE](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-score).
 :::
 
 ## SQL Syntax

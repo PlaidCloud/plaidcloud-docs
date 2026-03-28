@@ -13,13 +13,13 @@ WHERE EXISTS ( <subquery> );
 ## SQL Examples
 ```sql
 SELECT number FROM numbers(5) AS A WHERE exists (SELECT * FROM numbers(3) WHERE number=1); 
-+--------+
-| number |
-+--------+
-|      0 |
-|      1 |
-|      2 |
-|      3 |
-|      4 |
-+--------+
+┌────────┐
+│ number │
+├────────┤
+│      0 │
+│      1 │
+│      2 │
+│      3 │
+│      4 │
+└────────┘
 ```

@@ -13,6 +13,7 @@ func.percent_rank().over(partition_by=[<columns>], order_by=[<columns>])
 ```
 
 ## Analyze Examples
+
 ```python
 table.name, table.score, table.grade, func.percent_rank().over(partition_by=[table.grade], order_by=table.score).alias('percent_rank')
 

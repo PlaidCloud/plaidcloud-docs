@@ -2,9 +2,9 @@
 title: TRY_TO_BINARY
 ---
 
-An enhanced version of [TO_BINARY](to-binary.md) that converts an input expression to a binary value, returning `NULL` if the conversion fails instead of raising an error.
+An enhanced version of [TO_BINARY](../to_binary) that converts an input expression to a binary value, returning `NULL` if the conversion fails instead of raising an error.
 
-See also: [TO_BINARY](../to-binary)
+See also: [TO_BINARY](../to_binary)
 
 ## Analyze Syntax
 

@@ -13,6 +13,7 @@ func.string_agg(<expr> [, delimiter])
 ```
 
 ## Analyze Examples
+
 ```python
 func.string_agg(table.language_name).alias('concatenated_languages')
 
@@ -34,11 +35,11 @@ If `<expr>` is not a String expression, should use `::VARCHAR` to convert.
 For example:
 ```sql
 SELECT string_agg(number::VARCHAR, '|') AS s FROM numbers(5);
-+-----------+
-| s         |
-+-----------+
-| 0|1|2|3|4 |
-+-----------+
+┌───────────┐
+│ s         │
+├───────────┤
+│ 0│1│2│3│4 │
+└───────────┘
 ```
 {{< /note >}}
 

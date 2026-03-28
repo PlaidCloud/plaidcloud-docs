@@ -1,6 +1,6 @@
 ---
-title: 'COSINE_DISTANCE'
-description: 'Measuring similarity using the cosine_distance function in PlaidCloud Lakehouse'
+title: COSINE_DISTANCE
+description: Measuring similarity using the cosine_distance function in PlaidCloud Lakehouse
 ---
 
 This document provides an overview of the cosine_distance function in PlaidCloud Lakehouse and demonstrates how to measure document similarity using this function.
@@ -59,11 +59,11 @@ ORDER BY
 
 Result:
 ```sql
-+------+--------------------------+---------------------------------------------------------------------------------------------------------+------------+
-| id   | title                    | content                                                                                                 | similarity |
-+------+--------------------------+---------------------------------------------------------------------------------------------------------+------------+
-|    1 | Python for Data Science  | Python is a versatile programming language widely used in data science...                               |  0.1142081 |
-|    2 | Introduction to R        | R is a popular programming language for statistical computing and graphics...                           | 0.18741018 |
-|    3 | Getting Started with SQL | Structured Query Language (SQL) is a domain-specific language used for managing relational databases... | 0.25137568 |
-+------+--------------------------+---------------------------------------------------------------------------------------------------------+------------+
+┌──────┬──────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────┬────────────┐
+│ id   │ title                    │ content                                                                                                 │ similarity │
+├──────┼──────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────┼────────────┤
+│    1 │ Python for Data Science  │ Python is a versatile programming language widely used in data science...                               │  0.1142081 │
+│    2 │ Introduction to R        │ R is a popular programming language for statistical computing and graphics...                           │ 0.18741018 │
+│    3 │ Getting Started with SQL │ Structured Query Language (SQL) is a domain-specific language used for managing relational databases... │ 0.25137568 │
+└──────┴──────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────┴────────────┘
 ```

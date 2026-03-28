@@ -12,7 +12,7 @@ ST_NPOINTS(<geometry>)
 
 ## Aliases
 
-- [ST_NUMPOINTS](st-numpoints.md)
+- [ST_NUMPOINTS](../st-numpoints)
 
 ## Arguments
 

@@ -2,4 +2,4 @@
 title: QUARTER
 ---
 
-Alias for [TO_QUARTER](to-quarter).
+Alias for [TO_QUARTER](../to-quarter).

@@ -38,8 +38,8 @@ TO_WEEK_OF_YEAR(<expr>)
 
 ## Aliases
 
-- [WEEK](week)
-- [WEEKOFYEAR](weekofyear)
+- [WEEK](../week)
+- [WEEKOFYEAR](../weekofyear)
 
 ## Return Type
 

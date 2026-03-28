@@ -16,16 +16,16 @@ func.json_path_query_first(<variant>, <path_name>)
 ```python
 table.name, func.json_path_query_first(table.details, '$.features.*').alias('first_feature')
 
-+------------+---------------+
-| name       | first_feature |
-+------------+---------------+
-| Laptop     | "16GB"        |
-| Laptop     | "16GB"        |
-| Smartphone | "4GB"         |
-| Smartphone | "4GB"         |
-| Headphones | "20h"         |
-| Headphones | "20h"         |
-+------------+---------------+
+┌────────────┬───────────────┐
+│ name       │ first_feature │
+├────────────┼───────────────┤
+│ Laptop     │ "16GB"        │
+│ Laptop     │ "16GB"        │
+│ Smartphone │ "4GB"         │
+│ Smartphone │ "4GB"         │
+│ Headphones │ "20h"         │
+│ Headphones │ "20h"         │
+└────────────┴───────────────┘
 ```
 
 ## SQL Syntax
@@ -69,14 +69,14 @@ FROM
 **Result**
 
 ```sql
-+------------+--------------+---------------+
-| name       | all_features | first_feature |
-+------------+--------------+---------------+
-| Laptop     | "16GB"       | "16GB"        |
-| Laptop     | "512GB"      | "16GB"        |
-| Smartphone | "4GB"        | "4GB"         |
-| Smartphone | "128GB"      | "4GB"         |
-| Headphones | "20h"        | "20h"         |
-| Headphones | "5.0"        | "20h"         |
-+------------+--------------+---------------+
+┌────────────┬──────────────┬───────────────┐
+│ name       │ all_features │ first_feature │
+├────────────┼──────────────┼───────────────┤
+│ Laptop     │ "16GB"       │ "16GB"        │
+│ Laptop     │ "512GB"      │ "16GB"        │
+│ Smartphone │ "4GB"        │ "4GB"         │
+│ Smartphone │ "128GB"      │ "4GB"         │
+│ Headphones │ "20h"        │ "20h"         │
+│ Headphones │ "5.0"        │ "20h"         │
+└────────────┴──────────────┴───────────────┘
 ```

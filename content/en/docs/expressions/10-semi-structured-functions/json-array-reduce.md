@@ -2,7 +2,7 @@
 title: JSON_ARRAY_REDUCE
 ---
 
-Reduces a JSON array to a single value by applying a specified Lambda expression. For more information about Lambda expression, see [Lambda Expressions](../../00-sql-reference/42-lambda-expressions).
+Reduces a JSON array to a single value by applying a specified Lambda expression. For more information about Lambda expression, see Lambda Expressions.
 
 ## SQL Syntax
 

@@ -18,6 +18,7 @@ func.sum(<column>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.sum(table.quantity).alias('total_quantity_sold')
 

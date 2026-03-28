@@ -17,6 +17,7 @@ func.covar_samp(<expr1>, <expr2>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.covar_samp(table.items_sold, table.profit).alias('covar_samp_items_profit')
 

@@ -5,20 +5,21 @@ title: INSTR
 Returns the position of the first occurrence of substring substr in string str.
 This is the same as the two-argument form of LOCATE(), except that the order of the arguments is reversed.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.instr(<str>, <substr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.instr('foobarbar', 'bar')
-+--------------------------------+
-| func.instr('foobarbar', 'bar') |
-+--------------------------------+
-|                              4 |
-+--------------------------------+
+┌────────────────────────────────┐
+│ func.instr('foobarbar', 'bar') │
+├────────────────────────────────┤
+│                              4 │
+└────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -42,16 +43,16 @@ INSTR(<str>, <substr>)
 
 ```sql
 SELECT INSTR('foobarbar', 'bar');
-+---------------------------+
-| INSTR('foobarbar', 'bar') |
-+---------------------------+
-|                         4 |
-+---------------------------+
+┌───────────────────────────┐
+│ INSTR('foobarbar', 'bar') │
+├───────────────────────────┤
+│                         4 │
+└───────────────────────────┘
 
 SELECT INSTR('xbar', 'foobar');
-+-------------------------+
-| INSTR('xbar', 'foobar') |
-+-------------------------+
-|                       0 |
-+-------------------------+
+┌─────────────────────────┐
+│ INSTR('xbar', 'foobar') │
+├─────────────────────────┤
+│                       0 │
+└─────────────────────────┘
 ```

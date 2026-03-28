@@ -4,34 +4,35 @@ title: REGEXP
 
 Returns `true` if the string `<expr>` matches the regular expression specified by the `<pattern>`, `false` otherwise.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 <column>.regexp_match(<pattern>)
 ```
 
 ## Analyze Examples
+
 ```python
 
 With an input table of:
-+-----------------+
-| my_clothes      |
-+-----------------+
-| plaid pants     |
-| plaid hat       |
-| plaid shirt     |
-| shoes           |
-+-----------------+
+┌─────────────────┐
+│ my_clothes      │
+├─────────────────┤
+│ plaid pants     │
+│ plaid hat       │
+│ plaid shirt     │
+│ shoes           │
+└─────────────────┘
 
 my_clothes.regexp_match('p*')
-+-------------------------------+
-| my_clothes.regexp_match('p*') |
-+-------------------------------+
-| true                          |
-| true                          |
-| true                          |
-| false                         |
-+-------------------------------+
+┌───────────────────────────────┐
+│ my_clothes.regexp_match('p*') │
+├───────────────────────────────┤
+│ true                          │
+│ true                          │
+│ true                          │
+│ false                         │
+└───────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -42,7 +43,7 @@ my_clothes.regexp_match('p*')
 
 ## Aliases
 
-- [RLIKE](rlike)
+- [RLIKE](../rlike)
 
 ## SQL Examples
 

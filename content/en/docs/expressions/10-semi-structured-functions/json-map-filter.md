@@ -2,7 +2,7 @@
 title: JSON_MAP_FILTER
 ---
 
-Filters key-value pairs in a JSON object based on a specified condition, defined using a [lambda expression](../../00-sql-reference/42-lambda-expressions).
+Filters key-value pairs in a JSON object based on a specified condition, defined using a lambda expression.
 
 ## SQL Syntax
 

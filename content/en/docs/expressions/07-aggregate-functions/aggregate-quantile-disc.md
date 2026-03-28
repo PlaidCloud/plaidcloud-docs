@@ -18,6 +18,7 @@ func.quantile_disc(<levels>, <expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.quantile_disc([0.25, 0.75], table.salary).alias('salary_quantiles')
 

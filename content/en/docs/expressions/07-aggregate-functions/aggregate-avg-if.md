@@ -11,6 +11,7 @@ func.avg_if(<column>, <cond>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.avg_if(table.salary, table.department=='IT').alias('avg_salary_it')
 

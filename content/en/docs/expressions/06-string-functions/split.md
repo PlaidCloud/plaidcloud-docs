@@ -4,22 +4,23 @@ title: SPLIT
 
 Splits a string using a specified delimiter and returns the resulting parts as an array.
 
-See also: [SPLIT_PART](split-part)
+See also: [SPLIT_PART](../split-part)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.split('<input_string>', '<delimiter>')
 ```
 
 ## Analyze Examples
+
 ```python
 func.split('PlaidCloud Lakehouse', ' ')
-+-----------------------------------------+
-| func.split('PlaidCloud Lakehouse', ' ') |
-+-----------------------------------------+
-| ['PlaidCloud Lakehouse']          |
-+-----------------------------------------+
+┌─────────────────────────────────────────┐
+│ func.split('PlaidCloud Lakehouse', ' ') │
+├─────────────────────────────────────────┤
+│ ['PlaidCloud Lakehouse']          │
+└─────────────────────────────────────────┘
 ```
 
 ## SQL Syntax

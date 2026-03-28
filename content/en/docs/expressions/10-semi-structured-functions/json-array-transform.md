@@ -2,7 +2,7 @@
 title: JSON_ARRAY_TRANSFORM
 ---
 
-Transforms each element of a JSON array using a specified transformation Lambda expression. For more information about Lambda expression, see [Lambda Expressions](../../00-sql-reference/42-lambda-expressions.md).
+Transforms each element of a JSON array using a specified transformation Lambda expression. For more information about Lambda expression, see Lambda Expressions.
 
 ## SQL Syntax
 
@@ -12,8 +12,8 @@ JSON_ARRAY_TRANSFORM(<json_array>, <lambda_expression>)
 
 ## Aliases
 
-- [JSON_ARRAY_APPLY](json-array-apply.md)
-- [JSON_ARRAY_MAP](json-array-map.md)
+- [JSON_ARRAY_APPLY](../json-array-apply)
+- [JSON_ARRAY_MAP](../json-array-map)
 
 ## Return Type
 

@@ -4,7 +4,7 @@ title: LOWER
 
 Returns a string with all characters changed to lowercase.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.lower(<str>)
@@ -14,11 +14,11 @@ func.lower(<str>)
 
 ```python
 func.lower('Hello, PlaidCloud!')
-+----------------------------------+
-| func.lower('Hello, PlaidCloud!') |
-+----------------------------------+
-| hello, plaidcloud!               |
-+----------------------------------+
+┌──────────────────────────────────┐
+│ func.lower('Hello, PlaidCloud!') │
+├──────────────────────────────────┤
+│ hello, plaidcloud!               │
+└──────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -29,7 +29,7 @@ LOWER(<str>)
 
 ## Aliases
 
-- [LCASE](lcase)
+- [LCASE](../lcase)
 
 ## Return Type
 

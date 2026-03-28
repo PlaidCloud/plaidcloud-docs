@@ -4,7 +4,7 @@ title: LIKE
 
 Pattern matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If either expr or pat is NULL, the result is NULL.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 <column>.like('plaid%')
@@ -14,13 +14,13 @@ Pattern matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If either 
 
 ```python
 my_clothes.like('plaid%)
-+-----------------+
-| my_clothes      |
-+-----------------+
-| plaid pants     |
-| plaid hat       |
-| plaid shirt     |
-+-----------------+
+┌─────────────────┐
+│ my_clothes      │
+├─────────────────┤
+│ plaid pants     │
+│ plaid hat       │
+│ plaid shirt     │
+└─────────────────┘
 ```
 
 ## SQL Syntax
@@ -33,12 +33,12 @@ my_clothes.like('plaid%)
 
 ```sql
 SELECT name, category FROM system.functions WHERE name like 'tou%' ORDER BY name;
-+----------+------------+
-| name     | category   |
-+----------+------------+
-| touint16 | conversion |
-| touint32 | conversion |
-| touint64 | conversion |
-| touint8  | conversion |
-+----------+------------+
+┌──────────┬────────────┐
+│ name     │ category   │
+├──────────┼────────────┤
+│ touint16 │ conversion │
+│ touint32 │ conversion │
+│ touint64 │ conversion │
+│ touint8  │ conversion │
+└──────────┴────────────┘
 ```

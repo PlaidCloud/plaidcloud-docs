@@ -11,6 +11,7 @@ func.sum_if(<column>, <cond>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.sum_if(table.amount, table.status=='Completed').alias('total_amount_completed')
 

@@ -12,7 +12,7 @@ ST_MAKELINE(<geometry1>, <geometry2>)
 
 ## Aliases
 
-- [ST_MAKE_LINE](st-make-line.md)
+- [ST_MAKE_LINE](../st-make-line)
 
 ## Arguments
 

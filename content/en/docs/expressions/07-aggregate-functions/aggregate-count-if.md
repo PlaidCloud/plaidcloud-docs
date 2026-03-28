@@ -11,6 +11,7 @@ func.count_if(<column>, <cond>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.count_if(table.status, table.status=='Completed').alias('completed_orders')
 

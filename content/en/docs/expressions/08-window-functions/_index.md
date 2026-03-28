@@ -1,5 +1,5 @@
 ---
-title: 'Window Functions'
+title: Window Functions
 ---
 
 ## Overview 

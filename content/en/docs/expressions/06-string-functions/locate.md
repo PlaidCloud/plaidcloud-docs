@@ -6,7 +6,7 @@ The first syntax returns the position of the first occurrence of substring subst
 The second syntax returns the position of the first occurrence of substring substr in string str, starting at position pos.
 Returns 0 if substr is not in str. Returns NULL if any argument is NULL.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.locate(<substr>, <str>, <pos>)
@@ -16,20 +16,20 @@ func.locate(<substr>, <str>, <pos>)
 
 ```python
 func.locate('bar', 'foobarbar')
-+------------------------------------+
-| func.locate('bar', 'foobarbar') |
-+------------------------------------+
-|                                  5 |
-+------------------------------------+
+┌────────────────────────────────────┐
+│ func.locate('bar', 'foobarbar') │
+├────────────────────────────────────┤
+│                                  5 │
+└────────────────────────────────────┘
 ```
 
 ```python
 func.locate('bar', 'foobarbar', 5)
-+------------------------------------+
-| func.locate('bar', 'foobarbar', 5) |
-+------------------------------------+
-|                                  7 |
-+------------------------------------+
+┌────────────────────────────────────┐
+│ func.locate('bar', 'foobarbar', 5) │
+├────────────────────────────────────┤
+│                                  7 │
+└────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -55,23 +55,23 @@ LOCATE(<substr>, <str>, <pos>)
 
 ```sql
 SELECT LOCATE('bar', 'foobarbar')
-+----------------------------+
-| LOCATE('bar', 'foobarbar') |
-+----------------------------+
-|                          4 |
-+----------------------------+
+┌────────────────────────────┐
+│ LOCATE('bar', 'foobarbar') │
+├────────────────────────────┤
+│                          4 │
+└────────────────────────────┘
 
 SELECT LOCATE('xbar', 'foobar')
-+--------------------------+
-| LOCATE('xbar', 'foobar') |
-+--------------------------+
-|                        0 |
-+--------------------------+
+┌──────────────────────────┐
+│ LOCATE('xbar', 'foobar') │
+├──────────────────────────┤
+│                        0 │
+└──────────────────────────┘
 
 SELECT LOCATE('bar', 'foobarbar', 5)
-+-------------------------------+
-| LOCATE('bar', 'foobarbar', 5) |
-+-------------------------------+
-|                             7 |
-+-------------------------------+
+┌───────────────────────────────┐
+│ LOCATE('bar', 'foobarbar', 5) │
+├───────────────────────────────┤
+│                             7 │
+└───────────────────────────────┘
 ```

@@ -11,6 +11,7 @@ func.arg_min(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.arg_min(table.name, table.score).alias('student_name')
 
@@ -29,8 +30,8 @@ ARG_MIN(<arg>, <val>)
 
 | Arguments | Description                                                                                       |
 |-----------|---------------------------------------------------------------------------------------------------|
-| `<arg>`   | Argument of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types/index.md) |
-| `<val>`   | Value of [any data type that PlaidCloud Lakehouse supports](../../00-sql-reference/10-data-types/index.md)    |
+| `<arg>`   | Argument of any data type that PlaidCloud Lakehouse supports |
+| `<val>`   | Value of any data type that PlaidCloud Lakehouse supports    |
 
 ## Return Type
 

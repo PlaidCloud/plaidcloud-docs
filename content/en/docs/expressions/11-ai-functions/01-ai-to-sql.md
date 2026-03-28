@@ -1,5 +1,5 @@
 ---
-title: 'AI_TO_SQL'
+title: AI_TO_SQL
 ---
 
 Converts natural language instructions into SQL queries with the latest model `text-davinci-003`.
@@ -142,11 +142,11 @@ generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_
 3. Run the generated SQL statement to get the query results.
 
 ```sql
-+---------+-------------+-------------+
-| name    | order_count | total_spent |
-+---------+-------------+-------------+
-| Bob     |           2 |     2020.00 |
-| Alice   |           2 |     1020.00 |
-| Charlie |           2 |      700.00 |
-+---------+-------------+-------------+
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
 ```

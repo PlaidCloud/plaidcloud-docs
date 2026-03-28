@@ -5,20 +5,21 @@ title: BIT_LENGTH
 
 Return the length of a string in bits.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.bit_length(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.bit_length('Word')
-+-------------------------+
-| func.bit_length('Word') |
-+-------------------------+
-|                      32 |
-+-------------------------+
+┌─────────────────────────┐
+│ func.bit_length('Word') │
+├─────────────────────────┤
+│                      32 │
+└─────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -41,9 +42,9 @@ BIT_LENGTH(<expr>)
 
 ```sql
 SELECT BIT_LENGTH('Word');
-+----------------------------+
-| SELECT BIT_LENGTH('Word'); |
-+----------------------------+
-| 32                         |
-+----------------------------+
+┌────────────────────────────┐
+│ SELECT BIT_LENGTH('Word'); │
+├────────────────────────────┤
+│ 32                         │
+└────────────────────────────┘
 ```

@@ -7,7 +7,7 @@ Aggregate function.
 
 The count(distinct ...) function calculates the unique value of a set of values.
 
-To obtain an estimated result from large data sets with little memory and time, consider using [APPROX_COUNT_DISTINCT](aggregate-approx-count-distinct).
+To obtain an estimated result from large data sets with little memory and time, consider using [APPROX_COUNT_DISTINCT](../aggregate-approx-count-distinct).
 
 {{< caution >}}
 NULL values are not counted.
@@ -20,6 +20,7 @@ func.count_distinct(<column>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.count_distinct(table.category).alias('unique_categories')
 

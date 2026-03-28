@@ -2,7 +2,7 @@
 title: MAP_TRANSFORM_KEYS
 ---
 
-Applies a transformation to each key in a map using a [lambda expression](../../00-sql-reference/42-lambda-expressions.md).
+Applies a transformation to each key in a map using a lambda expression.
 
 ## SQL Syntax
 

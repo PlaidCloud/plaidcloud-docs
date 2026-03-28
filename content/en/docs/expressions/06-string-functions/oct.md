@@ -4,7 +4,7 @@ title: OCT
 
 Returns a string representation of the octal value of N.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.oct(<expr>)
@@ -14,11 +14,11 @@ func.oct(<expr>)
 
 ```python
 func.oct(12)
-+-----------------+
-| func.oct(12)    |
-+-----------------+
-| 014             |
-+-----------------+
+┌─────────────────┐
+│ func.oct(12)    │
+├─────────────────┤
+│ 014             │
+└─────────────────┘
 ```
 
 ## SQL Syntax
@@ -31,11 +31,11 @@ OCT(<expr>)
 
 ```sql
 SELECT OCT(12);
-+---------+
-| OCT(12) |
-+---------+
-| 014     |
-+---------+
+┌─────────┐
+│ OCT(12) │
+├─────────┤
+│ 014     │
+└─────────┘
 ```
 
 

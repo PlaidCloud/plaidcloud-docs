@@ -30,7 +30,7 @@ TO_QUARTER( <date_or_time_expr> )
 
 ## Aliases
 
-- [QUARTER](quarter)
+- [QUARTER](../quarter)
 
 ## Return Type
 

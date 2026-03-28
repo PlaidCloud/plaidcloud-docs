@@ -5,7 +5,7 @@ title: QUERY
 Searches for documents satisfying a specified query expression. Please note that the QUERY function can only be used in a WHERE clause.
 
 :::info
-Databend's QUERY function is inspired by Elasticsearch's [QUERY](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-query).
+PlaidCloud Lakehouse's QUERY function is inspired by Elasticsearch's [QUERY](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-search.html#sql-functions-search-query).
 :::
 
 ## SQL Syntax

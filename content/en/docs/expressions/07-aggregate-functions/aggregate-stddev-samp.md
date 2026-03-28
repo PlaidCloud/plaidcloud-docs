@@ -17,6 +17,7 @@ func.stddev_samp(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.stddev_samp(table.height).alias('height_stddev_samp')
 

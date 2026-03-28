@@ -10,6 +10,7 @@ func.coalesce(<expr1>[, <expr2> ...])
 ```
 
 ## Analyze Examples
+
 ```
 func.coalesce(table.UOM,  'none', \n)
 

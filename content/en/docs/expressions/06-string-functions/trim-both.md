@@ -6,7 +6,7 @@ Removes all occurrences of the specified trim string from the beginning, end, or
 
 See also: [TRIM](../trim)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.trim_both(<string>, <trim_string>)
@@ -16,11 +16,11 @@ func.trim_both(<string>, <trim_string>)
 
 ```python
 func.trim_both('xxdatabendxx', 'x')
-+--------------------------------------+
-| func.trim_both('xxdatabendxx', 'x')  |
-+--------------------------------------+
-| databend                             |
-+--------------------------------------+
+┌──────────────────────────────────────┐
+│ func.trim_both('xxdatabendxx', 'x')  │
+├──────────────────────────────────────┤
+│ databend                             │
+└──────────────────────────────────────┘
 ```
 
 ## SQL Syntax

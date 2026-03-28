@@ -10,7 +10,7 @@ Creates a JSON object with keys and values.
 - The keys must be distinct from each other, and their order in the resulting JSON might be different from the order you specify.
 - `TRY_JSON_OBJECT_KEEP_NULL` returns a NULL value if an error occurs when building the object.
 
-See also: [JSON_OBJECT](json-object.md)
+See also: JSON_OBJECT
 
 ## SQL Syntax
 

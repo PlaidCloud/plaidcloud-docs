@@ -2,19 +2,6 @@
 title: Other Functions
 ---
 
-## Type Conversion Functions
+This section provides reference information for other miscellaneous functions in PlaidCloud Lakehouse.
 
-- [TO_NULLABLE](to-nullable)
-- [TYPEOF](typeof)
-
-## Utility Functions
-
-- [HUMANIZE-NUMBER](humanize-number)
-- [HUMANIZE-SIZE](humanize-size)
-
-## Others
-
-- [ASSUME_NOT_NULL](assume-not-null)
-- [EXISTS](exists)
-- [GROUPING](grouping)
-- [IGNORE](ignore)
+<IndexOverviewList />

@@ -4,20 +4,21 @@ title: REPLACE
 
 Returns the string str with all occurrences of the string from_str replaced by the string to_str.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.replace(<str>, <from_str>, <to_str>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.replace(<str>, <from_str>, <to_str>)
-+--------------------------------------+
-| func.replace('plaidCloud', 'p', 'P') |
-+--------------------------------------+
-| PlaidCloud                           |
-+--------------------------------------+
+┌──────────────────────────────────────┐
+│ func.replace('plaidCloud', 'p', 'P') │
+├──────────────────────────────────────┤
+│ PlaidCloud                           │
+└──────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -42,9 +43,9 @@ REPLACE(<str>, <from_str>, <to_str>)
 
 ```sql
 SELECT REPLACE('www.mysql.com', 'w', 'Ww');
-+-------------------------------------+
-| REPLACE('www.mysql.com', 'w', 'Ww') |
-+-------------------------------------+
-| WwWwWw.mysql.com                    |
-+-------------------------------------+
+┌─────────────────────────────────────┐
+│ REPLACE('www.mysql.com', 'w', 'Ww') │
+├─────────────────────────────────────┤
+│ WwWwWw.mysql.com                    │
+└─────────────────────────────────────┘
 ```

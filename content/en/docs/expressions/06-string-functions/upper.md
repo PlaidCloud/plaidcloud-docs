@@ -4,20 +4,21 @@ title: UPPER
 
 Returns a string with all characters changed to uppercase.
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.unhex(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.upper('hello, plaidcloud lakehouse!')
-+--------------------------------------------+
-| func.upper('hello, plaidcloud lakehouse!') |
-+--------------------------------------------+
-| 'HELLO, PLAIDCLOUD LAKEHOUSE!'             |
-+--------------------------------------------+
+┌────────────────────────────────────────────┐
+│ func.upper('hello, plaidcloud lakehouse!') │
+├────────────────────────────────────────────┤
+│ 'HELLO, PLAIDCLOUD LAKEHOUSE!'             │
+└────────────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -28,7 +29,7 @@ UPPER(<str>)
 
 ## Aliases
 
-- [UCASE](ucase)
+- [UCASE](../ucase)
 
 ## Return Type
 

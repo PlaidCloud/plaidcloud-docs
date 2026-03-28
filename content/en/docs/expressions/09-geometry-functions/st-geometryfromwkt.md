@@ -12,11 +12,11 @@ ST_GEOMETRYFROMWKT(<string>, [<srid>])
 
 ## Aliases
 
-- [ST_GEOMFROMWKT](st-geomfromwkt.md)
-- [ST_GEOMETRYFROMEWKT](st-geometryfromewkt.md)
-- [ST_GEOMFROMEWKT](st-geomfromewkt.md)
-- [ST_GEOMFROMTEXT](st-geomfromtext.md)
-- [ST_GEOMETRYFROMTEXT](st-geometryfromtext.md)
+- [ST_GEOMFROMWKT](../st-geomfromwkt)
+- [ST_GEOMETRYFROMEWKT](../st-geometryfromewkt)
+- [ST_GEOMFROMEWKT](../st-geomfromewkt)
+- [ST_GEOMFROMTEXT](../st-geomfromtext)
+- [ST_GEOMETRYFROMTEXT](../st-geometryfromtext)
 
 ## Arguments
 

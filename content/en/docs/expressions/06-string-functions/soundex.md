@@ -5,7 +5,7 @@ title: SOUNDEX
 
 Generates the Soundex code for a string.
 
-- A Soundex code consists of a letter followed by three numerical digits. PlaidCloud Lakehouse's implementation returns more than 4 digits, but you can [SUBSTR](substr) the result to get a standard Soundex code.
+- A Soundex code consists of a letter followed by three numerical digits. PlaidCloud Lakehouse's implementation returns more than 4 digits, but you can [SUBSTR](../substr) the result to get a standard Soundex code.
 - All non-alphabetic characters in the string are ignored.
 - All international alphabetic characters outside the A-Z range are ignored unless they're the first letter.
 
@@ -17,20 +17,21 @@ Soundex converts an alphanumeric string to a four-character code that is based o
 
 See also: [SOUNDS LIKE](../soundslike)
 
-# Analyze Syntax
+## Analyze Syntax
 
 ```python
 func.soundex(<str>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.soundex('PlaidCloud Lakehouse')
-+--------------------------------------+
-| func.soundex('PlaidCloud Lakehouse') |
-+--------------------------------------+
-| D153                                 |
-+--------------------------------------+
+┌──────────────────────────────────────┐
+│ func.soundex('PlaidCloud Lakehouse') │
+├──────────────────────────────────────┤
+│ D153                                 │
+└──────────────────────────────────────┘
 ```
 
 ## SQL Syntax
@@ -82,9 +83,9 @@ soundex('databend cloud')|substring(soundex('databend cloud') from 1 for 4)|
 D153243                  |D153                                             |
 
 SELECT SOUNDEX(NULL);
-+-------------------------------------+
-| `SOUNDEX(NULL)`                     |
-+-------------------------------------+
-| <null>                              |
-+-------------------------------------+
+┌─────────────────────────────────────┐
+│ `SOUNDEX(NULL)`                     │
+├─────────────────────────────────────┤
+│ <null>                              │
+└─────────────────────────────────────┘
 ```

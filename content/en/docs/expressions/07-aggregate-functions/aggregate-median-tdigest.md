@@ -15,6 +15,7 @@ func.median_tdigest(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.median_tdigest(table.score).alias('median_score')
 

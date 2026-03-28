@@ -6,7 +6,7 @@ Estimates the number of distinct values in a data set with the [HyperLogLog](htt
 
 The HyperLogLog algorithm provides an approximation of the number of unique elements using little memory and time. Consider using this function when dealing with large data sets where an estimated result can be accepted. In exchange for some accuracy, this is a fast and efficient method of returning distinct counts.
 
-To get an accurate result, use [COUNT_DISTINCT](aggregate-count-distinct). See [Examples](#examples) for more explanations.
+To get an accurate result, use [COUNT_DISTINCT](../aggregate-count-distinct). See [Examples](#examples) for more explanations.
 
 ## Analyze Syntax
 
@@ -15,6 +15,7 @@ func.approx_count_distinct(<expr>)
 ```
 
 ## Analyze Examples
+
 ```python
 func.approx_count_distinct(table.user_id).alias('approx_distinct_user_count')
 
