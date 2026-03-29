@@ -1,0 +1,37 @@
+---
+title: DAYOFMONTH
+---
+
+Returns the day of the month from a date. Alias for `DAY`.
+
+## Analyze Syntax
+
+```python
+func.dayofmonth(<date>)
+```
+
+## Analyze Examples
+
+```python
+func.dayofmonth('2024-06-15')
+
+┌────┐
+│ 15  │
+└────┘
+```
+
+## SQL Syntax
+
+```sql
+DAYOFMONTH(<date>)
+```
+
+## SQL Examples
+
+```sql
+SELECT DAYOFMONTH('2024-06-15');
+
+┌────┐
+│ 15  │
+└────┘
+```

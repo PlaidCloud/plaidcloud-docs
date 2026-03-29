@@ -1,0 +1,37 @@
+---
+title: TRUNCATE
+---
+
+Truncates a number to a specified number of decimal places.
+
+## Analyze Syntax
+
+```python
+func.truncate(<x>, <d>)
+```
+
+## Analyze Examples
+
+```python
+func.truncate(3.14159, 2)
+
+┌──────┐
+│ 3.14  │
+└──────┘
+```
+
+## SQL Syntax
+
+```sql
+TRUNCATE(<x>, <d>)
+```
+
+## SQL Examples
+
+```sql
+SELECT TRUNCATE(3.14159, 2);
+
+┌──────┐
+│ 3.14  │
+└──────┘
+```

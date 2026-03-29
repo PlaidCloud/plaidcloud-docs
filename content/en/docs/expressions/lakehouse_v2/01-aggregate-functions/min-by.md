@@ -1,0 +1,37 @@
+---
+title: MIN_BY
+---
+
+Returns the value of one column associated with the minimum value of another column.
+
+## Analyze Syntax
+
+```python
+func.min_by(get_column(table, 'name'), get_column(table, 'salary'))
+```
+
+## Analyze Examples
+
+```python
+func.min_by(get_column(table, 'name'), get_column(table, 'salary'))
+
+┌─────┐
+│ Bob │
+└─────┘
+```
+
+## SQL Syntax
+
+```sql
+MIN_BY(<name>, <salary>)
+```
+
+## SQL Examples
+
+```sql
+SELECT MIN_BY(name, salary) FROM employees;
+
+┌─────┐
+│ Bob │
+└─────┘
+```
