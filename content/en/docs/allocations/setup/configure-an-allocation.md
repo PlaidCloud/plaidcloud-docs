@@ -2,7 +2,7 @@
 title: Configure an Allocation
 slug: configure-an-allocation
 weight: 1.0
-description: Set up a cost allocation transform and manage assignments
+description: Configure a PlaidCloud allocation including source data, driver data, target mapping, allocation methods, and processing options.
 date: 2022-01-25T07:40:20
 ---
 

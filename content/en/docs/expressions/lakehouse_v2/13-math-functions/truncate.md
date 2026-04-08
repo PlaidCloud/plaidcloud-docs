@@ -1,5 +1,6 @@
 ---
 title: TRUNCATE
+description: "Learn how to use the TRUNCATE math function in PlaidCloud Lakehouse. Truncates a number to a specified number of decimal places - with syntax and examples."
 ---
 
 Truncates a number to a specified number of decimal places.

@@ -1,5 +1,6 @@
 ---
 title: BITMAP_HAS_ANY
+description: "Learn how to use the BITMAP_HAS_ANY bitmap function in PlaidCloud Lakehouse. Checks whether two bitmaps have any common elements - with syntax and examples."
 ---
 
 Checks whether two bitmaps have any common elements.

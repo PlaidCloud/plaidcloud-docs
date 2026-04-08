@@ -1,7 +1,7 @@
 ---
 title: Azure Databricks
 slug: azure-databricks
-description: Connecting to Azure Databricks Database
+description: Configure an Azure Databricks connection in PlaidCloud to integrate Spark-based analytics and lakehouse data into workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

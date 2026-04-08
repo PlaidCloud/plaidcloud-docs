@@ -1,5 +1,6 @@
 ---
 title: BITMAP_SUBSET_LIMIT
+description: "Learn how to use the BITMAP_SUBSET_LIMIT bitmap function in PlaidCloud Lakehouse. Returns a subset of a bitmap starting from an offset with a cardinality limit."
 ---
 
 Returns a subset of a bitmap starting from an offset with a cardinality limit.

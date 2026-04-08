@@ -1,5 +1,6 @@
 ---
 title: ISNULL
+description: "Learn how to use the ISNULL utility function in PlaidCloud Lakehouse. Checks whether a value is NULL. Returns 1 if NULL, 0 otherwise - with syntax and examples."
 ---
 
 Checks whether a value is NULL. Returns 1 if NULL, 0 otherwise.

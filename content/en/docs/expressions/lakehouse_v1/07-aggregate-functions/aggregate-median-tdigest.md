@@ -1,5 +1,6 @@
 ---
 title: MEDIAN_TDIGEST
+description: "Learn how to use the MEDIAN_TDIGEST aggregate function in PlaidCloud Lakehouse. Computes the median of a numeric data sequence using the t-digest algorithm."
 ---
 
 Computes the median of a numeric data sequence using the [t-digest](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) algorithm.

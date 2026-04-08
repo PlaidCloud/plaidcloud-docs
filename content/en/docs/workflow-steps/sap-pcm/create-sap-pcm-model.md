@@ -1,7 +1,7 @@
 ---
 title: Create SAP PCM Model
 slug: create-sap-pcm-model
-description: This feature allows you to create a blank SAP PCM Model
+description: Create a new SAP PCM model from a PlaidCloud workflow step to set up profitability and cost management calculation structures.
 date: 2022-01-25T07:40:17
 ---
 

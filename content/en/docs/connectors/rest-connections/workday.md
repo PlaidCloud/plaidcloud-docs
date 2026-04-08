@@ -1,7 +1,7 @@
 ---
 title: Workday REST Connector
 slug: workday-connector
-description: Connecting to Workday from PlaidCloud using REST
+description: Configure a Workday REST API connection in PlaidCloud to integrate HR, finance, and planning data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,7 +1,7 @@
 ---
 linktitle: Lakehouse v2
 title: Lakehouse v2 Expressions
-Description: Lakehouse v2 expressions based on StarRocks 4.1 SQL functions with SQLAlchemy references using func. prefixes.
+Description: Lakehouse v2 expressions based on StarRocks 4.1 SQL functions with SQLAlchemy references.
 ---
 
 ## Aggregate Functions

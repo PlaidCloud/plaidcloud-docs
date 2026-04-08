@@ -1,5 +1,6 @@
 ---
 title: ASIN
+description: "Learn how to use the ASIN math function in PlaidCloud Lakehouse. Returns the arc sine of a number in radians - see syntax, examples, and output."
 ---
 
 Returns the arc sine of a number in radians.

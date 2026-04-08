@@ -1,5 +1,6 @@
 ---
 title: ST_Y
+description: "Learn how to use the ST_Y geometry function in PlaidCloud Lakehouse. Returns the latitude (Y coordinate) of a Point represented by a GEOMETRY object."
 ---
 
 Returns the latitude (Y coordinate) of a Point represented by a GEOMETRY object.

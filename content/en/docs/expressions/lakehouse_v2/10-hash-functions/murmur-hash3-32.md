@@ -1,5 +1,6 @@
 ---
 title: MURMUR_HASH3_32
+description: "Learn how to use the MURMUR_HASH3_32 hash function in PlaidCloud Lakehouse. Returns the 32-bit MurmurHash3 hash of a value - with syntax and examples."
 ---
 
 Returns the 32-bit MurmurHash3 hash of a value.

@@ -1,5 +1,6 @@
 ---
 title: SKEWNESS
+description: "Learn how to use the SKEWNESS aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

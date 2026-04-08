@@ -1,5 +1,6 @@
 ---
 title: SUBDATE
+description: "Learn how to use the SUBDATE date/time function in PlaidCloud Lakehouse. Subtracts a time interval from a date. Alias for `DATE_SUB` - with syntax and examples."
 ---
 
 Subtracts a time interval from a date. Alias for `DATE_SUB`.

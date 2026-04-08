@@ -2,7 +2,7 @@
 title: Import Google Spreadsheet
 slug: import-google-spreadsheet
 weight: 7.0
-description: Import specific worksheets from Google Spreadsheet files
+description: Import Google Sheets data into PlaidCloud as a workflow step with options for sheet selection, ranges, and data type mapping.
 date: 2022-01-25T07:39:58
 ---
 
@@ -25,7 +25,7 @@ No examples yet...
 ### Source And Target
 #### Google Account
 
-Accessing Google Spreadsheet data requires a valid Google user account. This requires set up in Tools. For details on setting up a Google account connection, see here: [PlaidCloud Tools – Connection](/docs/tools/data-connections).
+Accessing Google Spreadsheet data requires a valid Google user account. This requires set up in Tools. For details on setting up a Google account connection, see here: [PlaidCloud Tools – Connection](/docs/connectors/).
 
 Once all necessary accounts have been set up, select the appropriate **Google Account** from the drop down list.
 #### Spreadsheet

@@ -1,5 +1,6 @@
 ---
 title: IS_BOOLEAN
+description: "Learn how to use the IS_BOOLEAN semi-structured data function in PlaidCloud Lakehouse. Checks if the input JSON value is a boolean. With syntax and examples."
 ---
 
 Checks if the input JSON value is a boolean.

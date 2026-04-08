@@ -1,7 +1,7 @@
 ---
 title: Salesforce REST Connector
 slug: salesforce-connector
-description: Connecting to Salesforce from PlaidCloud using REST
+description: Set up a Salesforce REST API connection in PlaidCloud to integrate CRM, sales, and customer data into your analysis workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

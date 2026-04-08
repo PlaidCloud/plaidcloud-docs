@@ -1,5 +1,6 @@
 ---
 title: ARRAY_REMOVE
+description: "Learn how to use the ARRAY_REMOVE array function in PlaidCloud Lakehouse. Removes all occurrences of a specified element from an array."
 ---
 
 Removes all occurrences of a specified element from an array.

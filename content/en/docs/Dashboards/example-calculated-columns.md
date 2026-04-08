@@ -1,7 +1,7 @@
 ---
 title: Example Calculated Columns
 slug: dashboard-calculated-columns
-description: Examples of calculated column expressions
+description: Learn how to create calculated columns in PlaidCloud dashboards using formulas and expressions for custom data transformations.
 date: 2022-06-07T07:39:48
 weight: 4.0
 ---

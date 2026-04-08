@@ -1,5 +1,6 @@
 ---
 title: MD5SUM_NUMERIC
+description: "Learn how to use the MD5SUM_NUMERIC cryptographic function in PlaidCloud Lakehouse. Returns the MD5 hash of multiple strings as a 128-bit numeric value."
 ---
 
 Returns the MD5 hash of multiple strings as a 128-bit numeric value.

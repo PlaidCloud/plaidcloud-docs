@@ -2,7 +2,7 @@
 title: Allocation By Assignment Dimension
 slug: allocation-rules
 weight: 12.0
-description: Allocate values based on driver data and assignment dimension
+description: Define allocation rules in PlaidCloud workflow steps to specify how costs are distributed from source to target data records.
 date: 2022-05-10T14:00:00
 ---
 

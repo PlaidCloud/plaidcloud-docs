@@ -1,7 +1,7 @@
 ---
 title: Google Sheets
 slug: google-sheets
-description: Connecting to Google Sheets
+description: Set up a Google Sheets connection in PlaidCloud to import, export, and synchronize spreadsheet data within your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

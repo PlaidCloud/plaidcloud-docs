@@ -1,5 +1,6 @@
 ---
 title: CURRENT_TIME
+description: "Learn how to use the CURRENT_TIME date/time function in PlaidCloud Lakehouse. Returns the current time - see syntax, examples, and output."
 ---
 
 Returns the current time.

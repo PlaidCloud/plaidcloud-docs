@@ -1,5 +1,6 @@
 ---
 title: HLL_EMPTY
+description: "Learn how to use the HLL_EMPTY scalar function in PlaidCloud Lakehouse. Returns an empty HLL value - see syntax, examples, and output."
 ---
 
 Returns an empty HLL value.

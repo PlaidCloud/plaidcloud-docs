@@ -1,5 +1,6 @@
 ---
 title: ABS
+description: "Learn how to use the ABS numeric function in PlaidCloud Lakehouse. Returns the absolute value of x. Includes detailed syntax, examples, and usage reference."
 ---
 
 Returns the absolute value of `x`.

@@ -1,5 +1,6 @@
 ---
 title: MINUTES_ADD
+description: "Learn how to use the MINUTES_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of minutes to a datetime - with syntax and examples."
 ---
 
 Adds a specified number of minutes to a datetime.

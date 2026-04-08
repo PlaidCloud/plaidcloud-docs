@@ -1,5 +1,6 @@
 ---
 title: LOG10
+description: "Learn how to use the LOG10 math function in PlaidCloud Lakehouse. Returns the base-10 logarithm of a number - see syntax, examples, and output."
 ---
 
 Returns the base-10 logarithm of a number.

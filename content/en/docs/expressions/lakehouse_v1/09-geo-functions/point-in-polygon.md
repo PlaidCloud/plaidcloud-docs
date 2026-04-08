@@ -1,5 +1,6 @@
 ---
 title: POINT_IN_POLYGON
+description: "Learn how to use the POINT_IN_POLYGON utility function in PlaidCloud Lakehouse. Calculates whether a given point falls within the polygon formed by joining..."
 ---
 
 Calculates whether a given point falls within the polygon formed by joining multiple points. A polygon is a closed shape connected by coordinate pairs in the order they appear. Changing the order of coordinate pairs can result in a different shape.

@@ -2,7 +2,7 @@
 title: Dimension Create
 slug: dimension-create
 weight: 2.0
-description: Creates a dimension for use and loading
+description: Create a new hierarchical dimension in a PlaidCloud workflow step to organize and structure your data classification system.
 date: 2022-01-25T07:40:18
 ---
 ## Description

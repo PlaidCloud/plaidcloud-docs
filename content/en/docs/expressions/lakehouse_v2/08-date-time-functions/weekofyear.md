@@ -1,5 +1,6 @@
 ---
 title: WEEKOFYEAR
+description: "Learn how to use the WEEKOFYEAR date/time function in PlaidCloud Lakehouse. Returns the week of the year for a date. Alias for `WEEK`."
 ---
 
 Returns the week of the year for a date. Alias for `WEEK`.

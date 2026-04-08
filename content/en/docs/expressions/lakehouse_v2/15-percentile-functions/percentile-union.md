@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_UNION
+description: "Learn how to use the PERCENTILE_UNION percentile function in PlaidCloud Lakehouse. Returns the union of multiple percentile states - with syntax and examples."
 ---
 
 Returns the union of multiple percentile states.

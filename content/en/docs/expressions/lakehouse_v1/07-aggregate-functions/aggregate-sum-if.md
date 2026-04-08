@@ -1,5 +1,6 @@
 ---
 title: SUM_IF
+description: "Learn how to use the SUM_IF aggregate function in PlaidCloud Lakehouse. The suffix -If can be appended to the name of any aggregate function."
 ---
 
 The suffix -If can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.

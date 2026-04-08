@@ -1,5 +1,6 @@
 ---
 title: ARRAY_JOIN
+description: "Learn how to use the ARRAY_JOIN array function in PlaidCloud Lakehouse. Concatenates array elements into a string with a separator - with syntax and examples."
 ---
 
 Concatenates array elements into a string with a separator.

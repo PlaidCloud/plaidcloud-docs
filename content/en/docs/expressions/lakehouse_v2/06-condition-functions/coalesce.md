@@ -1,5 +1,6 @@
 ---
 title: COALESCE
+description: "Learn how to use the COALESCE condition function in PlaidCloud Lakehouse. Returns the first non-NULL expression from a list of expressions."
 ---
 
 Returns the first non-NULL expression from a list of expressions.

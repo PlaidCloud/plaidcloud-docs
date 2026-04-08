@@ -1,5 +1,6 @@
 ---
 title: STRING_AGG
+description: "Learn how to use the STRING_AGG aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

@@ -1,5 +1,6 @@
 ---
 title: LOWER
+description: "Learn how to use the LOWER string function in PlaidCloud Lakehouse. Returns a string with all characters changed to lowercase. Includes syntax and examples."
 ---
 
 Returns a string with all characters changed to lowercase.

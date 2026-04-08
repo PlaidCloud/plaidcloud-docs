@@ -1,5 +1,6 @@
 ---
 title: HEX_DECODE_BINARY
+description: "Learn how to use the HEX_DECODE_BINARY string function in PlaidCloud Lakehouse. Decodes a hexadecimal string to a binary value - with syntax and examples."
 ---
 
 Decodes a hexadecimal string to a binary value.

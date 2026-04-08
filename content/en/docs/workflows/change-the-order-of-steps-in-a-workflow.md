@@ -2,7 +2,7 @@
 title: Change the order of steps in a workflow
 slug: change-the-order-of-steps-in-a-workflow
 weight: 5.0
-description: Move steps up and down in a workflow to control the flow of execution
+description: Reorder steps within a PlaidCloud workflow using drag-and-drop or manual ordering to control the data processing sequence.
 date: 2022-01-25T07:40:21
 ---
 

@@ -2,7 +2,7 @@
 title: Export to External Project Table
 slug: export-external-project-table
 weight: 3.0
-description: Export data from a project table to different project's table.
+description: Export data to another project table in a PlaidCloud workflow step for cross-project data sharing and transfer operations.
 date: 2022-05-10T14:00:00
 ---
 

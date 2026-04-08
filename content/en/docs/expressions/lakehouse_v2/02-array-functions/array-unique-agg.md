@@ -1,5 +1,6 @@
 ---
 title: ARRAY_UNIQUE_AGG
+description: "Learn how to use the ARRAY_UNIQUE_AGG array function in PlaidCloud Lakehouse. Aggregates values into an array of distinct values - with syntax and examples."
 ---
 
 Aggregates values into an array of distinct values.

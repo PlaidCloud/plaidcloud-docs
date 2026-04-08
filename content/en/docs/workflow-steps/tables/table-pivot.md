@@ -2,7 +2,7 @@
 title: Table Pivot
 slug: table-pivot
 weight: 15.0
-description: Flip rows to columns
+description: Pivot rows to columns in a PlaidCloud workflow step to transform long data tables into a summarized wide format structure.
 date: 2022-01-25T07:39:49
 ---
 
@@ -122,7 +122,6 @@ To aggregate results, select the **Summarize** menu option. This will toggle a s
 * Cumulative Max
 * Cumulative Product
 
-For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
 

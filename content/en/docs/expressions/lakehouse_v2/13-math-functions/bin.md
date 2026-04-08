@@ -1,5 +1,6 @@
 ---
 title: BIN
+description: "Learn how to use the BIN math function in PlaidCloud Lakehouse. Returns the binary string representation of an integer - see syntax, examples, and output."
 ---
 
 Returns the binary string representation of an integer.

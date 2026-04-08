@@ -1,5 +1,6 @@
 ---
 title: VARIANCE_SAMP
+description: "Learn how to use the VARIANCE_SAMP aggregate function in PlaidCloud Lakehouse. Returns the sample variance - see syntax, examples, and output."
 ---
 
 Returns the sample variance.

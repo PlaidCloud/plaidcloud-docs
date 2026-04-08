@@ -2,7 +2,7 @@
 title: Configure
 slug: configure
 weight: 3.0
-description: Create and maintain PlaidLink (Agent) documentation and account access for optimal database and file system enhancement
+description: Configure PlaidLink agent settings in PlaidCloud including connection parameters, security options, and communication preferences.
 date: 2022-01-25T07:40:17
 tags:
 - plaidcloud
@@ -86,4 +86,4 @@ Agent data connection credentials are managed in the External Data Connections.
 
 ### Next Step: Installing PlaidLink (Agent) on a Remote System
 
-Follow these [Installation Instructions](/plaidlink/install) to install PlaidLink on the remote system.
+Follow these [Installation Instructions](/docs/plaidlink/install) to install PlaidLink on the remote system.

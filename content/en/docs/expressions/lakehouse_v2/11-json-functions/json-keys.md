@@ -1,5 +1,6 @@
 ---
 title: JSON_KEYS
+description: "Learn how to use the JSON_KEYS json function in PlaidCloud Lakehouse. Returns the keys of the top-level JSON object as a JSON array - with syntax and examples."
 ---
 
 Returns the keys of the top-level JSON object as a JSON array.

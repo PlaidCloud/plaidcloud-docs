@@ -2,7 +2,7 @@
 title: PlaidLink Agents
 slug: plaidlink-agents
 weight: 1.0
-description: Create and manage remote access using lightweight agents
+description: Manage PlaidLink agents in PlaidCloud including registration, monitoring, status checks, and handling multiple agent deployments.
 date: 2022-01-25T07:39:49
 ---
 

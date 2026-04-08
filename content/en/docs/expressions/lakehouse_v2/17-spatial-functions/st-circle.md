@@ -1,5 +1,6 @@
 ---
 title: ST_CIRCLE
+description: "Learn how to use the ST_CIRCLE spatial function in PlaidCloud Lakehouse. Creates a circle geometry from a center longitude, latitude and radius in meters."
 ---
 
 Creates a circle geometry from a center longitude, latitude and radius in meters.

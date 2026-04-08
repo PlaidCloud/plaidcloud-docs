@@ -2,7 +2,7 @@
 title: Delete Workflow
 slug: delete-workflow
 weight: 6.0
-description: Delete an existing PlaidCloud Analyze workflow
+description: Delete an existing workflow from a PlaidCloud workflow step to programmatically remove workflows that are no longer needed.
 date: 2022-01-25T07:39:56
 ---
 

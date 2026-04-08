@@ -1,7 +1,7 @@
 ---
 title: Organizations and Workspaces Explained
 slug: organizations-and-workspaces-explained
-description: Learn about the differences between Organizations and Workspaces
+description: Understand PlaidCloud organizations and workspaces, how they relate to each other, and how to structure your access hierarchy.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

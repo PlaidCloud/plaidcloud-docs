@@ -1,5 +1,6 @@
 ---
 title: FLATTEN
+description: "Learn how to use the FLATTEN semi-structured data function in PlaidCloud Lakehouse. Transforms nested JSON data into a tabular format, where each element or..."
 ---
 
 Transforms nested JSON data into a tabular format, where each element or field is represented as a separate row.

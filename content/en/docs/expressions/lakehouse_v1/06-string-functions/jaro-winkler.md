@@ -1,5 +1,6 @@
 ---
 title: JARO_WINKLER
+description: "Learn how to use the JARO_WINKLER string function in PlaidCloud Lakehouse. Calculates the Jaro-Winkler distance between two strings. With syntax and examples."
 ---
 
 Calculates the [Jaro-Winkler distance](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance) between two strings. It is commonly used for measuring the similarity between strings, with values ranging from 0.0 (completely dissimilar) to 1.0 (identical strings). 

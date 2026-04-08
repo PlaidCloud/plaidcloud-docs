@@ -1,5 +1,6 @@
 ---
 title: REGEXP_REPLACE
+description: "Use the REGEXP_REPLACE pattern matching function in PlaidCloud Lakehouse. Replaces substrings matching a regular expression pattern with a replacement string."
 ---
 
 Replaces substrings matching a regular expression pattern with a replacement string.

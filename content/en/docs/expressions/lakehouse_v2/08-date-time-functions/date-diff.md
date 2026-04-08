@@ -1,5 +1,6 @@
 ---
 title: DATE_DIFF
+description: "Learn how to use the DATE_DIFF date/time function in PlaidCloud Lakehouse. Returns the difference between two dates in the specified unit."
 ---
 
 Returns the difference between two dates in the specified unit.

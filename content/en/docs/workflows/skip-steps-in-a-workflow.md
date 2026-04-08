@@ -2,7 +2,7 @@
 title: Skip steps in a workflow
 slug: skip-steps-in-a-workflow
 weight: 11.0
-description: How to disable steps in a workflow so they are not executed
+description: Skip specific steps in a PlaidCloud workflow to bypass operations during testing, debugging, or selective processing runs.
 date: 2022-01-25T07:40:20
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: ST_POINT
+description: "Learn how to use the ST_POINT spatial function in PlaidCloud Lakehouse. Creates a point geometry from longitude and latitude values - with syntax and examples."
 ---
 
 Creates a point geometry from longitude and latitude values.

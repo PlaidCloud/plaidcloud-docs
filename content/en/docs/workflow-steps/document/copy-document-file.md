@@ -2,7 +2,7 @@
 title: Copy Document File
 slug: copy-document-file
 weight: 10.0
-description: Copy a single file within PlaidCloud Document.
+description: Copy a document file to a new location in a PlaidCloud workflow step for backup, staging, or file organization purposes.
 date: 2022-01-25T07:39:55
 ---
 

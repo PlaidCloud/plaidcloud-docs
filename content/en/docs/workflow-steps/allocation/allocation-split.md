@@ -2,7 +2,7 @@
 title: Allocation Split
 slug: allocation-split
 weight: 13.0
-description: Allocate values based on driver data
+description: Split and allocate values based on driver data in PlaidCloud workflow steps for cost distribution and activity-based analysis.
 date: 2022-05-10T14:00:00
 ---
 

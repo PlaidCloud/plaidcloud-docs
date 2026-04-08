@@ -1,5 +1,6 @@
 ---
 title: TRY_TO_TIMESTAMP
+description: "Learn how to use the TRY_TO_TIMESTAMP datetime function in PlaidCloud Lakehouse. A variant of TO_TIMESTAMP in PlaidCloud Lakehouse that, while performing..."
 ---
 
 A variant of [TO_TIMESTAMP](../to-timestamp) in PlaidCloud Lakehouse that, while performing the same conversion of an input expression to a timestamp, incorporates error-handling support by returning NULL if the conversion fails instead of raising an error.

@@ -1,5 +1,6 @@
 ---
 title: STRING_TO_H3
+description: "Learn how to use the STRING_TO_H3 utility function in PlaidCloud Lakehouse. Converts the string representation to H3 (uint64) representation."
 ---
 
 Converts the string representation to [H3](https://eng.uber.com/h3/) (uint64) representation.

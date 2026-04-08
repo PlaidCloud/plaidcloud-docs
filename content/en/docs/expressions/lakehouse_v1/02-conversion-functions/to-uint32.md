@@ -1,5 +1,6 @@
 ---
 title: TO_UINT32
+description: "Learn how to use the TO_UINT32 conversion function in PlaidCloud Lakehouse. Converts a value to UINT32 data type. Includes syntax and examples."
 ---
 
 Converts a value to UINT32 data type.

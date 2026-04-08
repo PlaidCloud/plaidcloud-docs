@@ -2,7 +2,7 @@
 title: Viewing the Project Log
 slug: viewing-the-project-log
 weight: 7.0
-description: View, sort and clear your project activities and assignments
+description: View the PlaidCloud project log to monitor workflow execution history, track changes, and troubleshoot data processing issues.
 date: 2022-01-25T07:39:48
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: Call SAP RFC
 slug: call-sap-rfc
-description: Calls an SAP ECC Remote Function Call (RFC) and retrieves the data in tabular form
+description: Call SAP RFC function modules from a PlaidCloud workflow step for direct integration with SAP ECC and S/4HANA systems.
 date: 2022-01-25T07:39:56
 ---
 

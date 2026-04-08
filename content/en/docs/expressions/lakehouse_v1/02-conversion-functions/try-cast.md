@@ -1,5 +1,6 @@
 ---
 title: TRY_CAST
+description: "Learn how to use the TRY_CAST conversion function in PlaidCloud Lakehouse. Converts a value from one data type to another. Includes syntax and examples."
 ---
 
 Converts a value from one data type to another. Returns NULL on error.

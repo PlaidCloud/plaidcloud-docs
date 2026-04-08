@@ -1,7 +1,7 @@
 ---
 title: Manage Organization Administrators
 slug: manage-organization-administrators
-description: Add, remove, and update members responsible for managing an organization
+description: Manage PlaidCloud organization administrator roles, assign admin privileges, and control top-level organizational security access.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

@@ -1,5 +1,6 @@
 ---
 title: TO_MONTHS
+description: "Learn how to use the TO_MONTHS interval function in PlaidCloud Lakehouse. Converts a specified number of months into an Interval type. With syntax and examples."
 ---
 
 Converts a specified number of months into an Interval type.

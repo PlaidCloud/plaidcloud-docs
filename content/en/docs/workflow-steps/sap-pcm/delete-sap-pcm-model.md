@@ -1,7 +1,7 @@
 ---
 title: Delete SAP PCM Model
 slug: delete-sap-pcm-model
-description: Deletes SAP Profitability and Cost Management (PCM) models matching the search criteria
+description: Delete an SAP PCM model from a PlaidCloud workflow step to remove obsolete cost management models and free system resources.
 date: 2022-01-25T07:39:56
 ---
 

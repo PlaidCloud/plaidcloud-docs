@@ -1,5 +1,6 @@
 ---
 title: BITMAP_AND_COUNT
+description: "Learn how to use the BITMAP_AND_COUNT bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 1 in the bitmap by performing a logical AND..."
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical AND operation.

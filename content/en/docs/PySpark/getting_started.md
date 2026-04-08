@@ -1,7 +1,7 @@
 ---
 title: Getting Started with PySpark
 slug: using-pyspark
-description: Using PySpark in UDFs and Notebooks
+description: Get started using PySpark in PlaidCloud for distributed data processing within user-defined functions and Jupyter Notebooks.
 date: 2022-01-25T07:39:48
 weight: 2.0
 ---

@@ -2,7 +2,7 @@
 title: Control Document Account Access
 slug: control-document-account-access
 weight: 1.0
-description: Set access controls for Document accounts
+description: Control who can access PlaidCloud document storage accounts by configuring permissions, roles, and access restrictions.
 date: 2022-01-25T07:39:47
 ---
 

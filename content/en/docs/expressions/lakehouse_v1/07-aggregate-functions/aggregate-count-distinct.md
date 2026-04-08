@@ -1,6 +1,7 @@
 ---
 title: COUNT_DISTINCT
 title_includes: uniq
+description: "Learn how to use the COUNT_DISTINCT aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

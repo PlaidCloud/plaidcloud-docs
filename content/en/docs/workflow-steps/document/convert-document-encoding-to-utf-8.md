@@ -2,7 +2,7 @@
 title: Convert Document Encoding to UTF-8
 slug: convert-document-encoding-to-utf-8
 weight: 5.0
-description: Updates file encoding and converts all characters to UTF-8
+description: Convert document file encoding to UTF-8 in a PlaidCloud workflow step for broad compatibility with modern systems and applications.
 date: 2022-01-25T07:39:56
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: ANY
+description: "Learn how to use the ANY aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes usage and syntax details."
 ---
 
 Aggregate function.

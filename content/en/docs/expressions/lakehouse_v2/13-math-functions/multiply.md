@@ -1,5 +1,6 @@
 ---
 title: MULTIPLY
+description: "Learn how to use the MULTIPLY math function in PlaidCloud Lakehouse. Returns the product of two numbers - see syntax, examples, and output."
 ---
 
 Returns the product of two numbers.

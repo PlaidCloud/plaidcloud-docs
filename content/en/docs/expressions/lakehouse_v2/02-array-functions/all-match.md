@@ -1,5 +1,6 @@
 ---
 title: ALL_MATCH
+description: "Learn how to use the ALL_MATCH array function in PlaidCloud Lakehouse. Returns TRUE if all elements in an array match the given predicate."
 ---
 
 Returns TRUE if all elements in an array match the given predicate.

@@ -1,5 +1,6 @@
 ---
 title: LEAST
+description: "Learn how to use the LEAST conditional function in PlaidCloud Lakehouse. Returns the minimum value from a set of values. Includes syntax and examples."
 ---
 
 Returns the minimum value from a set of values.

@@ -1,7 +1,7 @@
 ---
 title: Greenplum
 slug: greenplum
-description: Connecting to Greenplum Database
+description: Set up a Greenplum database connection in PlaidCloud to query, import, and export data with your Greenplum data warehouse.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

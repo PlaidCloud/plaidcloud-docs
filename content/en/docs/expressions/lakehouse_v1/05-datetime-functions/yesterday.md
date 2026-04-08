@@ -1,5 +1,6 @@
 ---
 title: YESTERDAY
+description: "Learn how to use the YESTERDAY datetime function in PlaidCloud Lakehouse. Returns yesterday date, same as today() - 1. Includes syntax and examples."
 ---
 
 Returns yesterday date, same as `today() - 1`.

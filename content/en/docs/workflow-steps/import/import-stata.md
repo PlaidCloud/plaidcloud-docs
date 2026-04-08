@@ -2,7 +2,7 @@
 title: Import Stata
 slug: import-stata
 weight: 16.0
-description: Import Stata files from PlaidCloud Document
+description: Import Stata data files into PlaidCloud as a workflow step for migrating statistical analysis and econometric research data.
 date: 2022-01-25T07:39:57
 ---
 

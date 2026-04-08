@@ -2,7 +2,7 @@
 title: Copy & Paste steps
 slug: copy-paste-steps
 weight: 4.0
-description: Copy and paste steps within and across workflows
+description: Copy and paste workflow steps between PlaidCloud workflows to reuse step configurations and speed up workflow development.
 date: 2022-01-25T07:40:21
 ---
 

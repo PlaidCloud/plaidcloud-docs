@@ -1,5 +1,6 @@
 ---
 title: INSPECT_MEMORY_DETAIL
+description: "Learn how to use the INSPECT_MEMORY_DETAIL meta function in PlaidCloud Lakehouse. Returns detailed memory usage information - with syntax and examples."
 ---
 
 Returns detailed memory usage information.

@@ -2,7 +2,7 @@
 title: Raise Workflow Error
 slug: raise-workflow-error
 weight: 10.0
-description: Raises an error in a workflow
+description: Raise a custom error in a PlaidCloud workflow step to trigger error handling and halt execution when conditions are not met.
 date: 2022-01-25T07:39:51
 ---
 

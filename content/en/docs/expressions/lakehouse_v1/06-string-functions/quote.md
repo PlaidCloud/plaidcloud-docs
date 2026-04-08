@@ -1,5 +1,6 @@
 ---
 title: QUOTE
+description: "Learn how to use the QUOTE string function in PlaidCloud Lakehouse. Quotes a string to produce a result that can be used as a properly escaped data value in..."
 ---
 
 Quotes a string to produce a result that can be used as a properly escaped data value in an SQL statement. 

@@ -1,5 +1,6 @@
 ---
 title: ARRAY_DISTINCT
+description: "Learn how to use the ARRAY_DISTINCT array function in PlaidCloud Lakehouse. Removes all duplicates and NULLs from the array without preserving the original..."
 ---
 
 Removes all duplicates and NULLs from the array without preserving the original order.

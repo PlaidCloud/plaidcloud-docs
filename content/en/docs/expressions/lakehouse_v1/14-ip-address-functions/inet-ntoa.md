@@ -1,5 +1,6 @@
 ---
 title: INET_NTOA
+description: "Learn how to use the INET_NTOA IP address function in PlaidCloud Lakehouse. Converts a 32-bit integer to an IPv4 address. Includes syntax and examples."
 ---
 
 Converts a 32-bit integer to an IPv4 address.

@@ -1,6 +1,6 @@
 ---
 linktitle: Adding New Document Accounts
 title: Adding New Document Accounts
-Description: Document Accounts allow you to grant access to manage documents in PlaidCloud for the purposes of data import, export or other actions.
+description: Add document storage accounts to PlaidCloud including AWS S3, Google Cloud Storage, OneDrive, and Wasabi Hot Storage options.
 weight: 1.0
 ---

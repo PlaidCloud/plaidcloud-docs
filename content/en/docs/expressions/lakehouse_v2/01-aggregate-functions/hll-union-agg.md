@@ -1,5 +1,6 @@
 ---
 title: HLL_UNION_AGG
+description: "Learn how to use the HLL_UNION_AGG aggregate function in PlaidCloud Lakehouse. Aggregates HLL values by computing the union - with syntax and examples."
 ---
 
 Aggregates HLL values by computing the union.

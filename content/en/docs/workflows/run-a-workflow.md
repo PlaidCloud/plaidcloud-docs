@@ -2,7 +2,7 @@
 title: Run a workflow
 slug: run-a-workflow
 weight: 6.0
-description: How to run a workflow from the workflow management area
+description: Run a PlaidCloud workflow manually or on demand to execute all enabled steps in sequence for data processing and transformation.
 date: 2022-01-25T07:40:20
 ---
 

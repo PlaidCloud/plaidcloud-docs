@@ -1,5 +1,6 @@
 ---
 title: ST_GEOHASH
+description: "Learn how to use the ST_GEOHASH geometry function in PlaidCloud Lakehouse. Return the geohash for a GEOMETRY object. Includes syntax and examples."
 ---
 
 Return the [geohash](https://en.wikipedia.org/wiki/Geohash) for a GEOMETRY object. A geohash is a short base32 string that identifies a geodesic rectangle containing a location in the world. The optional precision argument specifies the `precision` of the returned geohash. For example, passing 5 for `precision returns a shorter geohash (5 characters long) that is less precise.

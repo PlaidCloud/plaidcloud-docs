@@ -2,7 +2,7 @@
 title: Viewing Workflow Log
 slug: viewing-workflow-log
 weight: 15.0
-description: How to view and analyze the workflow log
+description: View PlaidCloud workflow execution logs to monitor step progress, review output messages, and troubleshoot processing issues.
 date: 2022-01-25T07:40:20
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: TIMESTAMP_DIFF
+description: "Learn how to use the TIMESTAMP_DIFF datetime function in PlaidCloud Lakehouse. Calculates the difference between two timestamps and returns the result as an..."
 ---
 
 Calculates the difference between two timestamps and returns the result as an INTERVAL.

@@ -1,5 +1,6 @@
 ---
 title: ATAN
+description: "Learn how to use the ATAN numeric function in PlaidCloud Lakehouse. Returns the arc tangent of x, that is, the value whose tangent is x. Includes syntax and..."
 ---
 
 Returns the arc tangent of `x`, that is, the value whose tangent is `x`.

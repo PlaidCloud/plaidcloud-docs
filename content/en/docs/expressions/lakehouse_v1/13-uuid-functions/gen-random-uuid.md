@@ -1,5 +1,6 @@
 ---
 title: GEN_RANDOM_UUID
+description: "Learn how to use the GEN_RANDOM_UUID UUID function in PlaidCloud Lakehouse. Generates a random UUID based on v4. Includes syntax and examples."
 ---
 
 Generates a random UUID based on v4.

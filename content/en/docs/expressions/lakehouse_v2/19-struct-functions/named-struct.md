@@ -1,5 +1,6 @@
 ---
 title: NAMED_STRUCT
+description: "Learn how to use the NAMED_STRUCT struct function in PlaidCloud Lakehouse. Creates a struct with specified field names and values - with syntax and examples."
 ---
 
 Creates a struct with specified field names and values.

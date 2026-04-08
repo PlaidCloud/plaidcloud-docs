@@ -1,5 +1,6 @@
 ---
 title: HOURS_DIFF
+description: "Learn how to use the HOURS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of hours between two datetimes - with syntax and examples."
 ---
 
 Returns the number of hours between two datetimes.

@@ -1,5 +1,6 @@
 ---
 title: DENSE_RANK
+description: "Learn how to use the DENSE_RANK window function in PlaidCloud Lakehouse. Returns the rank of a value within a group of values, without gaps in the ranks."
 ---
 
 Returns the rank of a value within a group of values, without gaps in the ranks.

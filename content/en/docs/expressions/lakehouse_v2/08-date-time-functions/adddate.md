@@ -1,5 +1,6 @@
 ---
 title: ADDDATE
+description: "Learn how to use the ADDDATE date/time function in PlaidCloud Lakehouse. Adds a specified time interval to a date. Alias for `DATE_ADD`."
 ---
 
 Adds a specified time interval to a date. Alias for `DATE_ADD`.

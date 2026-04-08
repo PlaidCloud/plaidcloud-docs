@@ -2,7 +2,7 @@
 title: Import Parquet
 slug: import-parquet
 weight: 19.0
-description: Import Apache Parquet files from PlaidCloud Document
+description: Import Apache Parquet files into PlaidCloud as a workflow step for loading columnar data with efficient compression and typing.
 date: 2024-01-01T00:00:00
 ---
 

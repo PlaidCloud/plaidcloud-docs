@@ -2,7 +2,7 @@
 title: Controlling Parallel Execution
 slug: controlling-parallel-execution
 weight: 13.0
-description: How to control serial versus parallel execution of steps in a workflow
+description: Control parallel step execution in PlaidCloud workflows to optimize performance by running independent steps simultaneously.
 date: 2022-01-25T07:40:20
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: DS_THETA_COUNT_DISTINCT
+description: "Use the DS_THETA_COUNT_DISTINCT aggregate function in PlaidCloud Lakehouse. Returns an approximate distinct count using DataSketches Theta algorithm. Supports."
 ---
 
 Returns an approximate distinct count using DataSketches Theta algorithm. Supports set operations like intersection and difference.

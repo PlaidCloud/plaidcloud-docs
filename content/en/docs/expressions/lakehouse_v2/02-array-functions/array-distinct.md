@@ -1,5 +1,6 @@
 ---
 title: ARRAY_DISTINCT
+description: "Learn how to use the ARRAY_DISTINCT array function in PlaidCloud Lakehouse. Removes duplicate elements from an array - see syntax, examples, and output."
 ---
 
 Removes duplicate elements from an array.

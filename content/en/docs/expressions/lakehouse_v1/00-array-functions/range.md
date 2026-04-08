@@ -1,5 +1,6 @@
 ---
 title: RANGE
+description: "Learn how to use the RANGE array function in PlaidCloud Lakehouse. Returns an array collected by [start, end). Includes syntax and examples."
 ---
 
 Returns an array collected by [start, end).

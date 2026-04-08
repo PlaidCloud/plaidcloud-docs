@@ -1,7 +1,7 @@
 ---
 title: Slack Connector
 slug: slack
-description: Connecting to Slack for Team Collaboration
+description: Configure a Slack connection in PlaidCloud to enable automated workflow notifications and data alerts to Slack channels.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

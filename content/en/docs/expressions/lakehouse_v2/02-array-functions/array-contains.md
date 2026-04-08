@@ -1,5 +1,6 @@
 ---
 title: ARRAY_CONTAINS
+description: "Learn how to use the ARRAY_CONTAINS array function in PlaidCloud Lakehouse. Checks whether an array contains a specific element - with syntax and examples."
 ---
 
 Checks whether an array contains a specific element.

@@ -1,5 +1,6 @@
 ---
 title: UNNEST
+description: "Learn how to use the UNNEST array function in PlaidCloud Lakehouse. Unnests the array and returns the set of elements. Includes syntax and examples."
 ---
 
 Unnests the array and returns the set of elements.

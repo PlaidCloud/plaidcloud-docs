@@ -1,5 +1,6 @@
 ---
 title: AES_DECRYPT
+description: "Learn how to use the AES_DECRYPT cryptographic function in PlaidCloud Lakehouse. Decrypts a value encrypted with AES - see syntax, examples, and output."
 ---
 
 Decrypts a value encrypted with AES.

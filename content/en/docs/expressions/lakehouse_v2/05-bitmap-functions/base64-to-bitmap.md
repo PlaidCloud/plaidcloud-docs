@@ -1,5 +1,6 @@
 ---
 title: BASE64_TO_BITMAP
+description: "Learn how to use the BASE64_TO_BITMAP bitmap function in PlaidCloud Lakehouse. Converts a base64-encoded string to a bitmap - with syntax and examples."
 ---
 
 Converts a base64-encoded string to a bitmap.

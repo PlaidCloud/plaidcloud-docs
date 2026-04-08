@@ -1,7 +1,7 @@
 ---
 title: Gusto REST Connector
 slug: gusto-connector
-description: Connecting to Gusto from PlaidCloud using REST
+description: Set up a Gusto REST API connection in PlaidCloud to integrate payroll, benefits, and HR data into your analysis workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

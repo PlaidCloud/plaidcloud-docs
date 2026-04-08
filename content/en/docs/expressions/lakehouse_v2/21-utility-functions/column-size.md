@@ -1,5 +1,6 @@
 ---
 title: COLUMN_SIZE
+description: "Learn how to use the COLUMN_SIZE utility function in PlaidCloud Lakehouse. Returns the size in bytes of a column value in its serialized form."
 ---
 
 Returns the size in bytes of a column value in its serialized form.

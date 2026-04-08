@@ -1,5 +1,6 @@
 ---
 title: GROUPING_ID
+description: "Learn how to use the GROUPING_ID aggregate function in PlaidCloud Lakehouse. Returns a bitmask corresponding to the grouping of columns."
 ---
 
 Returns a bitmask corresponding to the grouping of columns.

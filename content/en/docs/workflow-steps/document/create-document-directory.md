@@ -2,7 +2,7 @@
 title: Create Document Directory
 slug: create-document-directory
 weight: 11.0
-description: Use PlaidCloud Document to create a new Document Directory
+description: Create a new document directory in a PlaidCloud workflow step to organize file storage for imports, exports, and processing.
 date: 2022-01-25T07:40:17
 ---
 

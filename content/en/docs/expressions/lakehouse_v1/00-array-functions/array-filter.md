@@ -1,5 +1,6 @@
 ---
 title: ARRAY_FILTER
+description: "Learn how to use the ARRAY_FILTER array function in PlaidCloud Lakehouse. Constructs an array from those elements of the input array for which the lambda..."
 ---
 
 Constructs an array from those elements of the input array for which the lambda function returns true.

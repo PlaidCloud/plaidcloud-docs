@@ -1,5 +1,6 @@
 ---
 title: QUANTILE_TDIGEST_WEIGHTED
+description: "Learn how to use the QUANTILE_TDIGEST_WEIGHTED aggregate function in PlaidCloud Lakehouse. Computes an approximate quantile of a numeric data sequence using..."
 ---
 
 Computes an approximate quantile of a numeric data sequence using the [t-digest](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) algorithm.

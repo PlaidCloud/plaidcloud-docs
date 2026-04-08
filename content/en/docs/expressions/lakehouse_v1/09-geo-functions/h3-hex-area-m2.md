@@ -1,5 +1,6 @@
 ---
 title: H3_HEX_AREA_M2
+description: "Learn how to use the H3_HEX_AREA_M2 utility function in PlaidCloud Lakehouse. Returns the average hexagon area in square meters at the given resolution."
 ---
 
 Returns the average hexagon area in square meters at the given resolution. Excludes pentagons. 

@@ -2,7 +2,7 @@
 title: Add Wasabi Hot Storage Account
 slug: add-wasabi-hot-storage-account
 weight: 3.0
-description: How to add a Wasabi Hot Storage (Wasabi) account to Document
+description: Add a Wasabi Hot Storage account to PlaidCloud for importing and exporting data files using cost-effective cloud storage.
 date: 2022-01-25T07:39:47
 ---
 

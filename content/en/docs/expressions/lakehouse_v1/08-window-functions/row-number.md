@@ -1,5 +1,6 @@
 ---
 title: ROW_NUMBER
+description: "Learn how to use the ROW_NUMBER window function in PlaidCloud Lakehouse. Assigns a temporary sequential number to each row within a partition of a result..."
 ---
 
 Assigns a temporary sequential number to each row within a partition of a result set, starting at 1 for the first row in each partition. 

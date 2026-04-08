@@ -2,7 +2,7 @@
 title: Running a range of steps in a workflow
 slug: running-a-range-of-steps-in-a-workflow
 weight: 8.0
-description: How to run a selected range of steps together as mini-workflow
+description: Run a specific range of steps within a PlaidCloud workflow to selectively execute portions of your data processing pipeline.
 date: 2022-01-25T07:40:20
 ---
 

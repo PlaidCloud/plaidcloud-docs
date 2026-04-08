@@ -1,5 +1,6 @@
 ---
 title: COVAR_POP
+description: "Learn how to use the COVAR_POP aggregate function in PlaidCloud Lakehouse. Returns the population covariance of two expressions - with syntax and examples."
 ---
 
 Returns the population covariance of two expressions.

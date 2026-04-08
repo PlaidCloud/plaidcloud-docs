@@ -2,7 +2,7 @@
 title: Why are Allocations Useful
 slug: why-are-allocations-useful
 weight: 2.0
-description: A practical understanding of allocations and how they are helpful
+description: Understand why cost allocations are useful in PlaidCloud for activity-based costing, chargeback, and profitability analysis.
 date: 2022-01-25T07:40:20
 ---
 

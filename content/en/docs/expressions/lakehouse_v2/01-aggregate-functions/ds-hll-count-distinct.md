@@ -1,5 +1,6 @@
 ---
 title: DS_HLL_COUNT_DISTINCT
+description: "Use the DS_HLL_COUNT_DISTINCT aggregate function in PlaidCloud Lakehouse. Returns an approximate distinct count using DataSketches HLL algorithm. More."
 ---
 
 Returns an approximate distinct count using DataSketches HLL algorithm. More accurate than `APPROX_COUNT_DISTINCT`.

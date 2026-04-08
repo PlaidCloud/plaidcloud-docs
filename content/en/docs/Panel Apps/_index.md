@@ -1,5 +1,5 @@
 ---
 linktitle: Panel Apps
 title: Panel Apps
-Description: Build and deploy Holoviz Panel Apps natively with PlaidCloud
+description: Build and deploy interactive Holoviz Panel data applications natively within PlaidCloud for custom dashboards and data tools.
 ---

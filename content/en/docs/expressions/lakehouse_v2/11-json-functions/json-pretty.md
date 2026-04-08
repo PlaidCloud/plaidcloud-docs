@@ -1,5 +1,6 @@
 ---
 title: JSON_PRETTY
+description: "Learn how to use the JSON_PRETTY json function in PlaidCloud Lakehouse. Formats a JSON value with indentation for readability - with syntax and examples."
 ---
 
 Formats a JSON value with indentation for readability.

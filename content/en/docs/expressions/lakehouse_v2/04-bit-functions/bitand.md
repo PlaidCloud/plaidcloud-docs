@@ -1,5 +1,6 @@
 ---
 title: BITAND
+description: "Learn how to use the BITAND bit function in PlaidCloud Lakehouse. Returns the bitwise AND of two numeric values - see syntax, examples, and output."
 ---
 
 Returns the bitwise AND of two numeric values.

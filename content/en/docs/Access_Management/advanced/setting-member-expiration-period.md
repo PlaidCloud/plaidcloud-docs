@@ -1,7 +1,7 @@
 ---
 title: Setting Member Expiration Period
 slug: setting-member-expiration-period
-description: Set member logins to expire after a specified period and remove from organization
+description: Set member expiration periods in PlaidCloud to automatically manage access duration and enforce security compliance policies.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

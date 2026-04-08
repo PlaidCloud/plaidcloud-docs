@@ -1,7 +1,7 @@
 ---
 title: PostgreSQL
 slug: postgres
-description: Connecting to PostgreSQL (Postgres) Database
+description: Configure a PostgreSQL database connection in PlaidCloud to query, import, and export data with your Postgres instances.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -2,7 +2,7 @@
 title: OAuth Tokens
 slug: get-oauth-tokens
 weight: 3.0
-description: Obtaining OAuth tokens to interact with PlaidCloud APIs
+description: Set up OAuth tokens for PlaidCloud API access to authenticate Jupyter Notebooks, CLI tools, and custom application connections.
 date: 2022-01-25T07:39:47
 ---
 

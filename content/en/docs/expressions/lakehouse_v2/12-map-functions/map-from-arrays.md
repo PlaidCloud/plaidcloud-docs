@@ -1,5 +1,6 @@
 ---
 title: MAP_FROM_ARRAYS
+description: "Learn how to use the MAP_FROM_ARRAYS map function in PlaidCloud Lakehouse. Creates a map from an array of keys and an array of values."
 ---
 
 Creates a map from an array of keys and an array of values.

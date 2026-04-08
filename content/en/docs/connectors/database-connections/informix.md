@@ -1,7 +1,7 @@
 ---
 title: IBM Informix
 slug: informix
-description: Connecting to IBM Informix Database
+description: Set up an IBM Informix database connection in PlaidCloud to query, import, and export data with your Informix instances.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

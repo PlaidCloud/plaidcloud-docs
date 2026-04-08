@@ -1,5 +1,6 @@
 ---
 title: DICTIONARY_GET
+description: "Learn how to use the DICTIONARY_GET dictionary function in PlaidCloud Lakehouse. Returns the value for a specified key from a dictionary object."
 ---
 
 Returns the value for a specified key from a dictionary object.

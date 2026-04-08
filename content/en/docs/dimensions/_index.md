@@ -1,5 +1,5 @@
 ---
 linktitle: Data Management - Dimensions
 title: Data Management - Dimensions
-Description: Use, manage, view, and calculate values within hierarchical data.  This includes attributes, alternate hierarchies, properties, and values.
+description: Manage hierarchical data dimensions in PlaidCloud including attributes, alternate hierarchies, properties, and calculated values.
 ---

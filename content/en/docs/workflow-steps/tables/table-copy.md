@@ -2,7 +2,7 @@
 title: Table Copy
 slug: table-copy
 weight: 4.0
-description: Create a copy of a data table
+description: Create a complete copy of a data table in a PlaidCloud workflow step including all rows, columns, and schema definitions.
 date: 2022-01-25T07:39:56
 ---
 

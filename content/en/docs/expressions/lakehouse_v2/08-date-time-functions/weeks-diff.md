@@ -1,5 +1,6 @@
 ---
 title: WEEKS_DIFF
+description: "Learn how to use the WEEKS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of weeks between two dates - with syntax and examples."
 ---
 
 Returns the number of weeks between two dates.

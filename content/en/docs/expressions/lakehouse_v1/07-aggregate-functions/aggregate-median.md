@@ -1,5 +1,6 @@
 ---
 title: MEDIAN
+description: "Learn how to use the MEDIAN aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Full syntax and usage reference."
 ---
 
 Aggregate function.

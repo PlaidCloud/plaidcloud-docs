@@ -1,5 +1,6 @@
 ---
 title: ARRAY_POSITION
+description: "Learn how to use the ARRAY_POSITION array function in PlaidCloud Lakehouse. Returns the position of the first occurrence of an element (1-indexed)."
 ---
 
 Returns the position of the first occurrence of an element (1-indexed).

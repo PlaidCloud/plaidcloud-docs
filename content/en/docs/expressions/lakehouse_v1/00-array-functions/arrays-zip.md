@@ -1,5 +1,6 @@
 ---
 title: ARRAYS_ZIP
+description: "Learn how to use the ARRAYS_ZIP array function in PlaidCloud Lakehouse. Merges multiple arrays into a single array tuple. Includes syntax and examples."
 ---
 
 Merges multiple arrays into a single array tuple.

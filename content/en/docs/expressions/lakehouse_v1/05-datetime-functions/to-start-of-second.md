@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_SECOND
+description: "Learn how to use the TO_START_OF_SECOND datetime function in PlaidCloud Lakehouse. Rounds down a date with time (timestamp/datetime) to the start of the second."
 ---
 
 Rounds down a date with time (timestamp/datetime) to the start of the second.

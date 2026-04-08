@@ -1,7 +1,7 @@
 ---
 title: Run SAP PCM Console Job
 slug: run-sap-pcm-console-job
-description: Launch you PCM model onto the PCM server
+description: Run an SAP PCM console job from a PlaidCloud workflow step to execute batch processing and administrative operations remotely.
 date: 2022-01-25T07:39:50
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: VARIANT_QUERY
+description: "Use the VARIANT_QUERY variant function in PlaidCloud Lakehouse. Queries a value from a VARIANT object using a path expression and returns a VARIANT."
 ---
 
 Queries a value from a VARIANT object using a path expression and returns a VARIANT.

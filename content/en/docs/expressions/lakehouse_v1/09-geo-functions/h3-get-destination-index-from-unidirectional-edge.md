@@ -1,5 +1,6 @@
 ---
 title: H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE
+description: "Learn how to use the H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE utility function in PlaidCloud Lakehouse. Returns the destination hexagon index from..."
 ---
 
 Returns the destination hexagon index from the unidirectional edge H3Index.

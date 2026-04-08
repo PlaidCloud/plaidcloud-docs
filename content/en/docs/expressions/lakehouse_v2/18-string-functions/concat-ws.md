@@ -1,5 +1,6 @@
 ---
 title: CONCAT_WS
+description: "Learn how to use the CONCAT_WS string function in PlaidCloud Lakehouse. Concatenates strings with a separator - see syntax, examples, and output."
 ---
 
 Concatenates strings with a separator.

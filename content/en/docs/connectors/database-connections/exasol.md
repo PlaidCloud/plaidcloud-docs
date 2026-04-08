@@ -1,7 +1,7 @@
 ---
 title: Exasol
 slug: Exasol
-description: Connecting to Exasol Database
+description: Configure an Exasol database connection in PlaidCloud to run high-performance analytical queries and integrate your data.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

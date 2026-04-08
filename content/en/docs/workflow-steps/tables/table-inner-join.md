@@ -2,7 +2,7 @@
 title: Table Inner Join
 slug: table-inner-join
 weight: 11.0
-description: Use this function to perform an inner join between two data tables
+description: Perform an inner join between two tables in a PlaidCloud workflow step to combine matching records based on shared key columns.
 date: 2022-01-25T07:39:49
 ---
 

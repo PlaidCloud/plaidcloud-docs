@@ -1,5 +1,6 @@
 ---
 title: JSON_QUERY
+description: "Learn how to use the JSON_QUERY json function in PlaidCloud Lakehouse. Extracts a JSON value from a JSON document using a path expression."
 ---
 
 Extracts a JSON value from a JSON document using a path expression.

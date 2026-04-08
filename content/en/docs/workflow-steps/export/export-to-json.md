@@ -2,7 +2,7 @@
 title: Export to JSON
 slug: export-to-json
 weight: 7.0
-description: Export an Analyze data table to PlaidCloud Document as a JSON file
+description: Export data as JSON files from a PlaidCloud workflow step for API-compatible output and structured data interchange formats.
 date: 2022-01-25T07:39:58
 ---
 
@@ -96,7 +96,6 @@ All exported files are uncompressed, but the following compression options are a
 
 
 
-For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
 ## Data Filters

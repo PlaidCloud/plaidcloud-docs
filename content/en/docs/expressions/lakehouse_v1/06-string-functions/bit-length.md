@@ -1,6 +1,7 @@
 ---
 id: string-bit_length
 title: BIT_LENGTH
+description: "Learn how to use the BIT_LENGTH string function in PlaidCloud Lakehouse. Return the length of a string in bits. Includes syntax and examples."
 ---
 
 Return the length of a string in bits.

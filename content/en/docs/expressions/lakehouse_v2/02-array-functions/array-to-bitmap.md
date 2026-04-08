@@ -1,5 +1,6 @@
 ---
 title: ARRAY_TO_BITMAP
+description: "Learn how to use the ARRAY_TO_BITMAP array function in PlaidCloud Lakehouse. Converts an array of integers to a bitmap - see syntax, examples, and output."
 ---
 
 Converts an array of integers to a bitmap.

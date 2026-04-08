@@ -1,5 +1,6 @@
 ---
 title: TIMEDIFF
+description: "Learn how to use the TIMEDIFF date/time function in PlaidCloud Lakehouse. Returns the difference between two time values - see syntax, examples, and output."
 ---
 
 Returns the difference between two time values.

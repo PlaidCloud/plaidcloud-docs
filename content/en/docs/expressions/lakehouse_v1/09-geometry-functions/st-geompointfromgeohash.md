@@ -1,5 +1,6 @@
 ---
 title: ST_GEOMPOINTFROMGEOHASH
+description: "Learn how to use the ST_GEOMPOINTFROMGEOHASH geometry function in PlaidCloud Lakehouse. Returns a GEOMETRY object for the point that represents center of a..."
 ---
 
 Returns a GEOMETRY object for the point that represents center of a [geohash](https://en.wikipedia.org/wiki/Geohash).

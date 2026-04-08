@@ -2,7 +2,7 @@
 title: Table Union Distinct
 slug: table-union-distinct
 weight: 17.0
-description: Consolidate data tables
+description: Combine two tables using union distinct in a PlaidCloud workflow step to merge rows while automatically removing duplicates.
 date: 2022-01-25T07:39:49
 ---
 

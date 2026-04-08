@@ -1,5 +1,6 @@
 ---
 title: NTILE
+description: "Learn how to use the NTILE window function in PlaidCloud Lakehouse. Divides the sorted result set into a specified number of buckets or groups."
 ---
 
 Divides the sorted result set into a specified number of buckets or groups. It evenly distributes the sorted rows into these buckets and assigns a bucket number to each row. The NTILE function is typically used with the ORDER BY clause to sort the results. 

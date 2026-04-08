@@ -2,7 +2,7 @@
 title: Import Fixed Width
 slug: import-fixed-width
 weight: 5.0
-description: Import Fixed Width files
+description: Import fixed-width text files into PlaidCloud as a workflow step with configurable column positions and field width definitions.
 date: 2022-01-25T07:39:55
 ---
 

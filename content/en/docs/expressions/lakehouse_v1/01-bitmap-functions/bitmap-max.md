@@ -1,5 +1,6 @@
 ---
 title: BITMAP_MAX
+description: "Learn how to use the BITMAP_MAX bitmap function in PlaidCloud Lakehouse. Gets the maximum value in the bitmap. Includes syntax and examples."
 ---
 
 Gets the maximum value in the bitmap.

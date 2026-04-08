@@ -2,7 +2,7 @@
 title: Worklow Loop
 slug: workflow-loop
 weight: 9.0
-description: Runs a workflow looping over a dataset as Project variables
+description: Create a loop in a PlaidCloud workflow step to iterate over a set of values and repeat steps for each item in the collection.
 date: 2022-01-25T07:39:50
 ---
 

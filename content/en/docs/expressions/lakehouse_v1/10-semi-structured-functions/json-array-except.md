@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY_EXCEPT
+description: "Learn how to use the JSON_ARRAY_EXCEPT semi-structured data function in PlaidCloud Lakehouse. Returns a new JSON array containing the elements from the..."
 ---
 
 Returns a new JSON array containing the elements from the first JSON array that are not present in the second JSON array.

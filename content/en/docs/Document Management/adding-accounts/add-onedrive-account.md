@@ -2,7 +2,7 @@
 title: Add OneDrive Account
 slug: add-onedrive-account
 weight: 4.0
-description: How to add a Microsoft OneDrive account to Document
+description: Add a Microsoft OneDrive storage account to PlaidCloud for importing and exporting data files using OneDrive cloud storage.
 date: 2024-01-01T00:00:00
 ---
 

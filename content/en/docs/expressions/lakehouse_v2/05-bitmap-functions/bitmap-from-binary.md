@@ -1,5 +1,6 @@
 ---
 title: BITMAP_FROM_BINARY
+description: "Learn how to use the BITMAP_FROM_BINARY bitmap function in PlaidCloud Lakehouse. Converts a binary value to a bitmap - see syntax, examples, and output."
 ---
 
 Converts a binary value to a bitmap.

@@ -1,5 +1,6 @@
 ---
 title: RAND
+description: "Learn how to use the RAND math function in PlaidCloud Lakehouse. Returns a random floating-point value between 0 (inclusive) and 1 (exclusive)."
 ---
 
 Returns a random floating-point value between 0 (inclusive) and 1 (exclusive).

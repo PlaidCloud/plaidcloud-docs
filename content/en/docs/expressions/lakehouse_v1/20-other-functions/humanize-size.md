@@ -1,5 +1,6 @@
 ---
 title: HUMANIZE_SIZE
+description: "Learn how to use the HUMANIZE_SIZE utility function in PlaidCloud Lakehouse. Returns the readable size with a suffix(KiB, MiB, etc). With syntax and examples."
 ---
 
 Returns the readable size with a suffix(KiB, MiB, etc).

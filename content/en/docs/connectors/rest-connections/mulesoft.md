@@ -1,7 +1,7 @@
 ---
 title: Mulesoft REST Connector
 slug: mulesoft-connector
-description: Connecting to Mulesoft from PlaidCloud using REST
+description: Set up a MuleSoft REST API connection in PlaidCloud to integrate enterprise data across systems through the Anypoint platform.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,5 +1,6 @@
 ---
 title: GET_IGNORE_CASE
+description: "Learn how to use the GET_IGNORE_CASE semi-structured data function in PlaidCloud Lakehouse. Extracts value from a VARIANT that contains OBJECT by the..."
 ---
 
 Extracts value from a `VARIANT` that contains `OBJECT` by the field_name.

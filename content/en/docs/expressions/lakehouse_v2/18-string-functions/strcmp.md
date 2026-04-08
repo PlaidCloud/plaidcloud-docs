@@ -1,5 +1,6 @@
 ---
 title: STRCMP
+description: "Use the STRCMP string function in PlaidCloud Lakehouse. Compares two strings lexicographically. Returns 0 if equal, -1 if str1 < str2, 1 if str1 > str2."
 ---
 
 Compares two strings lexicographically. Returns 0 if equal, -1 if str1 < str2, 1 if str1 > str2.

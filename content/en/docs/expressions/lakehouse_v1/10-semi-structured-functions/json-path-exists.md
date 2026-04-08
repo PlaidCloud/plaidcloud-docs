@@ -1,5 +1,6 @@
 ---
 title: JSON_PATH_EXISTS
+description: "Learn how to use the JSON_PATH_EXISTS semi-structured data function in PlaidCloud Lakehouse. Checks whether a specified path exists in JSON data."
 ---
 
 Checks whether a specified path exists in JSON data.

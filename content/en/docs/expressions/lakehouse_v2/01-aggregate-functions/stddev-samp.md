@@ -1,5 +1,6 @@
 ---
 title: STDDEV_SAMP
+description: "Learn how to use the STDDEV_SAMP aggregate function in PlaidCloud Lakehouse. Returns the sample standard deviation - see syntax, examples, and output."
 ---
 
 Returns the sample standard deviation.

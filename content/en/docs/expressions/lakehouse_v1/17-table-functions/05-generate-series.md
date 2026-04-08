@@ -1,5 +1,6 @@
 ---
 title: GENERATE_SERIES
+description: "Learn how to use the GENERATE_SERIES table function in PlaidCloud Lakehouse. Generates a dataset starting from a specified point, ending at another..."
 ---
 
 Generates a dataset starting from a specified point, ending at another specified point, and optionally with an incrementing value. The GENERATE_SERIES function works with the following data types: 

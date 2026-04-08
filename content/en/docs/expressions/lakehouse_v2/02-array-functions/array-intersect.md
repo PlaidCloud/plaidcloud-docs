@@ -1,5 +1,6 @@
 ---
 title: ARRAY_INTERSECT
+description: "Learn how to use the ARRAY_INTERSECT array function in PlaidCloud Lakehouse. Returns the intersection of two arrays - see syntax, examples, and output."
 ---
 
 Returns the intersection of two arrays.

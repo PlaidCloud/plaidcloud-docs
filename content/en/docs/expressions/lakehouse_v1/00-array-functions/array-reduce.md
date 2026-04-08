@@ -1,5 +1,6 @@
 ---
 title: ARRAY_REDUCE
+description: "Learn how to use the ARRAY_REDUCE array function in PlaidCloud Lakehouse. Applies iteratively the lambda function to the elements of the array, so as to..."
 ---
 
 Applies iteratively the lambda function to the elements of the array, so as to reduce the array to a single value.

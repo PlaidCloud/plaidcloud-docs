@@ -1,5 +1,6 @@
 ---
 title: NOW
+description: "Learn how to use the NOW datetime function in PlaidCloud Lakehouse. Returns the current date and time. Includes detailed syntax, examples, and usage reference."
 ---
 
 Returns the current date and time.

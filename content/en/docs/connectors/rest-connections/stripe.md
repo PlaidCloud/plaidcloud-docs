@@ -1,7 +1,7 @@
 ---
 title: Stripe REST Connector
 slug: stripe-connector
-description: Connecting to Stripe from PlaidCloud using REST
+description: Configure a Stripe REST API connection in PlaidCloud to integrate payment processing and financial data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,5 +1,6 @@
 ---
 title: FUSE_ENCODING
+description: "Learn how to use the FUSE_ENCODING system function in PlaidCloud Lakehouse. Returns the encoding types applied to a specific column within a table."
 ---
 
 Returns the encoding types applied to a specific column within a table. It helps you understand how data is compressed and stored in a native format within the table.

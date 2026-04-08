@@ -1,5 +1,6 @@
 ---
 title: OCT
+description: "Learn how to use the OCT string function in PlaidCloud Lakehouse. Returns a string representation of the octal value of N. Includes syntax and examples."
 ---
 
 Returns a string representation of the octal value of N.

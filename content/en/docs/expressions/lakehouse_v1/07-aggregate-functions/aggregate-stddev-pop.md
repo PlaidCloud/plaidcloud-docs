@@ -1,6 +1,7 @@
 ---
 title: STDDEV_POP
 title_includes: STD, STDDEV
+description: "Learn how to use the STDDEV_POP aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

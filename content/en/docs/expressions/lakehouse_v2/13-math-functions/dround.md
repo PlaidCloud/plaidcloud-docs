@@ -1,8 +1,9 @@
 ---
 title: DROUND
+description: "Learn how to use the DROUND math function in PlaidCloud Lakehouse. Alias for `ROUND`. See [ROUND](round) - see syntax, examples, and output."
 ---
 
-Alias for `ROUND`. See [ROUND](../round).
+Alias for `ROUND`. See [ROUND](round).
 
 ## Analyze Syntax
 

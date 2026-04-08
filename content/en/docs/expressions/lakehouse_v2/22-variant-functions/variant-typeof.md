@@ -1,5 +1,6 @@
 ---
 title: VARIANT_TYPEOF
+description: "Learn how to use the VARIANT_TYPEOF variant function in PlaidCloud Lakehouse. Returns the type name of a VARIANT value as a string - with syntax and examples."
 ---
 
 Returns the type name of a VARIANT value as a string.

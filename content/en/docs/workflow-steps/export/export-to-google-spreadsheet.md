@@ -2,7 +2,7 @@
 title: Export to Google Spreadsheet
 slug: export-to-google-spreadsheet
 weight: 4.0
-description: Export an Analyze data table to Google Drive as a Google Spreadsheet
+description: Export data to Google Sheets from a PlaidCloud workflow step for sharing results and enabling collaborative data access.
 date: 2022-01-25T07:39:58
 ---
 
@@ -23,7 +23,7 @@ Select the **Source Table** from PlaidCloud Document using the dropdown menu.
 
 
 
-Next, specify the **Target Connection** information. For details on setting up a Google Docs account connection, see here: [PlaidCloud Tools – Connection](/docs/tools/data-connections). Once all necessary accounts have been set up, select the appropriate account from the dropdown list.
+Next, specify the **Target Connection** information. For details on setting up a Google Docs account connection, see here: [PlaidCloud Tools – Connection](/docs/connectors/). Once all necessary accounts have been set up, select the appropriate account from the dropdown list.
 
 
 
@@ -38,7 +38,6 @@ Finally, provide the **Target Spreadsheet Name** and **Target Worksheet Name**. 
 
 
 
-For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
 

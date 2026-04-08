@@ -2,7 +2,7 @@
 title: Table Append
 slug: table-append
 weight: 2.0
-description: Used append data to an existing table.
+description: Append rows to an existing data table in a PlaidCloud workflow step to add new records while preserving existing table data.
 ---
 
 ## Description

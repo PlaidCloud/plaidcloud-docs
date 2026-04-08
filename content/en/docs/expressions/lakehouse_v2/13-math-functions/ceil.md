@@ -1,5 +1,6 @@
 ---
 title: CEIL
+description: "Learn how to use the CEIL math function in PlaidCloud Lakehouse. Returns the smallest integer greater than or equal to a number - with syntax and examples."
 ---
 
 Returns the smallest integer greater than or equal to a number.

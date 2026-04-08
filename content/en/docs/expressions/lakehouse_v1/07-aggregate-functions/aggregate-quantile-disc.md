@@ -1,5 +1,6 @@
 ---
 title: QUANTILE_DISC
+description: "Learn how to use the QUANTILE_DISC aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

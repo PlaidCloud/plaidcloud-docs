@@ -1,7 +1,7 @@
 ---
 title: Copy SAP PCM Period
 slug: copy-sap-pcm-model-period
-description: Copy period within an SAP PCM model
+description: Copy a period within an SAP PCM model from a PlaidCloud workflow step for period-based versioning and comparison analysis.
 date: 2022-01-25T07:39:52
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: TAN
+description: "Learn how to use the TAN numeric function in PlaidCloud Lakehouse. Returns the tangent of x, where x is given in radians. Includes syntax and examples."
 ---
 
 Returns the tangent of `x`, where `x` is given in radians.

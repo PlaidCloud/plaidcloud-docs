@@ -1,7 +1,7 @@
 ---
 title: Microsoft Teams Connector
 slug: teams
-description: Connecting to Microsoft Teams for Team Collaboration
+description: Set up a Microsoft Teams connection in PlaidCloud to enable automated workflow notifications and data alerts to Teams channels.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,5 +1,6 @@
 ---
 title: REGEXP_SUBSTR
+description: "Learn how to use the REGEXP_SUBSTR string function in PlaidCloud Lakehouse. Returns the substring of the string expr that matches the regular expression..."
 ---
 
 Returns the substring of the string `expr` that matches the regular expression specified by the pattern `pat`, NULL if there is no match. If expr or pat is NULL, the return value is NULL.

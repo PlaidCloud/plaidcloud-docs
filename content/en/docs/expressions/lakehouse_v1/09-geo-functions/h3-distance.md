@@ -1,5 +1,6 @@
 ---
 title: H3_DISTANCE
+description: "Learn how to use the H3_DISTANCE utility function in PlaidCloud Lakehouse. Returns the grid distance between the the given two H3 indexes. Includes syntax..."
 ---
 
 Returns the grid distance between the the given two [H3](https://eng.uber.com/h3/) indexes.

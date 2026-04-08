@@ -1,5 +1,6 @@
 ---
 title: STRRIGHT
+description: "Learn how to use the STRRIGHT string function in PlaidCloud Lakehouse. Returns the rightmost N characters of a string. Alias for `RIGHT`."
 ---
 
 Returns the rightmost N characters of a string. Alias for `RIGHT`.

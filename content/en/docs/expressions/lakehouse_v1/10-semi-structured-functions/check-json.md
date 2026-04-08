@@ -1,5 +1,6 @@
 ---
 title: CHECK_JSON
+description: "Learn how to use the CHECK_JSON semi-structured data function in PlaidCloud Lakehouse. Checks the validity of a JSON document. Includes syntax and examples."
 ---
 
 Checks the validity of a JSON document.

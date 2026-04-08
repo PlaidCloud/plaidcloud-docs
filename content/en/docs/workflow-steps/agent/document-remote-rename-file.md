@@ -2,7 +2,7 @@
 title: Document - Remote Rename File
 slug: document-remote-rename-file
 weight: 7.0
-description: Renames or moves a remote file system file using a PlaidLink agent installed within the firewall
+description: Rename files on remote systems through a PlaidLink agent in PlaidCloud workflows for secure file management behind firewalls.
 date: 2022-01-25T07:39:56
 ---
 

@@ -2,7 +2,7 @@
 title: View Workflow Report
 slug: view-workflow-report
 weight: 16.0
-description: Get a summary report of the workflow and settings
+description: View PlaidCloud workflow reports to review execution summaries, step completion status, timing, and processing statistics.
 date: 2022-01-25T07:40:20
 ---
 

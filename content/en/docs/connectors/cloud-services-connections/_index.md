@@ -1,7 +1,7 @@
 ---
 title: Cloud Service Connections
 slug: cloud-service-connections
-description: Cloud Service connection requirements vary depending on the service.  See how to configure the individual connections.
+description: Connect PlaidCloud to cloud data services including Quandl for financial and economic data integration into your workflows.
 date: 2022-01-25T07:39:49
 ---
 

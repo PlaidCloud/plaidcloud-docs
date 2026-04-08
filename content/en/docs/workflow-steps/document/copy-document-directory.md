@@ -2,7 +2,7 @@
 title: Copy Document Directory
 slug: copy-document-directory
 weight: 9.0
-description: Copy entire directory in PlaidCloud Document
+description: Copy an entire document directory and its contents in a PlaidCloud workflow step for backup, staging, or duplication purposes.
 date: 2022-01-25T07:39:55
 ---
 

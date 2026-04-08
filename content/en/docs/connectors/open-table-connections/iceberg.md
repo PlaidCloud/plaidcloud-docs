@@ -1,7 +1,7 @@
 ---
 title: Apache Iceberg Open Table Format
 slug: apache-iceberg
-description: Connecting to Apache Iceberg Catalogs
+description: Set up an Apache Iceberg catalog connection in PlaidCloud for open table format queries through the PlaidCloud Lakehouse service.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

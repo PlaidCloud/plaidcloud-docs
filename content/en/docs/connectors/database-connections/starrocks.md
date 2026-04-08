@@ -1,7 +1,7 @@
 ---
 title: StarRocks
 slug: starrocks
-description: Connecting to StarRocks Database
+description: Configure a StarRocks database connection in PlaidCloud to run high-performance analytical queries on large-scale data sets.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

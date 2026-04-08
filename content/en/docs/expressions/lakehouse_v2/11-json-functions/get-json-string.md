@@ -1,5 +1,6 @@
 ---
 title: GET_JSON_STRING
+description: "Learn how to use the GET_JSON_STRING json function in PlaidCloud Lakehouse. Extracts a string value from a JSON object by a specified path."
 ---
 
 Extracts a string value from a JSON object by a specified path.

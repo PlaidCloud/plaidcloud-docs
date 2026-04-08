@@ -1,7 +1,7 @@
 ---
 title: Setting Up Google Workspace SAML for Single Sign-On
 slug: google-saml-setup
-description: Configure Google Workspace as a SAML identity provider for PlaidCloud Single Sign-On
+description: Set up Google Workspace as a SAML identity provider for PlaidCloud single sign-on to enable secure federated authentication.
 date: 2024-01-01T00:00:00
 tags:
 - plaidcloud

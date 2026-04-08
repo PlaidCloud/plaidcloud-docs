@@ -1,5 +1,6 @@
 ---
 title: TO_MINUTE
+description: "Learn how to use the TO_MINUTE datetime function in PlaidCloud Lakehouse. Converts a date with time (timestamp/datetime) to a UInt8 number containing the..."
 ---
 
 Converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the minute of the hour (0-59).

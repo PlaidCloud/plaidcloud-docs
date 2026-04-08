@@ -1,5 +1,6 @@
 ---
 title: CASE
+description: "Learn how to use the CASE condition function in PlaidCloud Lakehouse. Evaluates conditions and returns a value when the first condition is met."
 ---
 
 Evaluates conditions and returns a value when the first condition is met.

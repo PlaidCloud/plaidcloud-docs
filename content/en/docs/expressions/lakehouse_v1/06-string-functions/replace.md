@@ -1,5 +1,6 @@
 ---
 title: REPLACE
+description: "Learn how to use the REPLACE string function in PlaidCloud Lakehouse. Returns the string str with all occurrences of the string from_str replaced by the..."
 ---
 
 Returns the string str with all occurrences of the string from_str replaced by the string to_str.

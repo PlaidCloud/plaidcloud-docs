@@ -2,7 +2,7 @@
 title: Table Melt
 slug: table-melt
 weight: 13.0
-description: Flip columns to rows
+description: Unpivot columns to rows in a PlaidCloud workflow step to transform wide data tables into a normalized long format structure.
 date: 2022-01-25T07:39:49
 ---
 
@@ -60,7 +60,6 @@ The column layout in the Pre-Melt Table Data Selection does **NOT** reflect the 
 
 
 
-For more details regarding Table Data Selection, see details here: [Table Data Selection](/docs/workflow-steps/common/table-data-selection)
 
 
 

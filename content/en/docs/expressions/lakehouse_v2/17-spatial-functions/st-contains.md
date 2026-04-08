@@ -1,5 +1,6 @@
 ---
 title: ST_CONTAINS
+description: "Learn how to use the ST_CONTAINS spatial function in PlaidCloud Lakehouse. Checks whether one geometry contains another. Returns 1 if true."
 ---
 
 Checks whether one geometry contains another. Returns 1 if true.

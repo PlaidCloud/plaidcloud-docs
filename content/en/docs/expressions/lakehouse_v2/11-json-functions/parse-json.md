@@ -1,5 +1,6 @@
 ---
 title: PARSE_JSON
+description: "Learn how to use the PARSE_JSON json function in PlaidCloud Lakehouse. Parses a JSON string and returns a JSON value - see syntax, examples, and output."
 ---
 
 Parses a JSON string and returns a JSON value.

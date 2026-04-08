@@ -1,7 +1,7 @@
 ---
 title: Apache Hive Open Table Format
 slug: apache-hive
-description: Connecting to Apache Hive Catalogs
+description: Set up an Apache Hive catalog connection in PlaidCloud for open table format queries through the PlaidCloud Lakehouse service.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

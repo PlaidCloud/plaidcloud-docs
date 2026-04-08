@@ -2,7 +2,7 @@
 title: Import HDF
 slug: import-hdf
 weight: 8.0
-description: Import HDF5 files from PlaidCloud Document
+description: Import HDF5 data files into PlaidCloud as a workflow step for loading large numerical and scientific datasets into your tables.
 date: 2022-01-25T07:39:58
 ---
 

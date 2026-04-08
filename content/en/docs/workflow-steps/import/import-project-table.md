@@ -2,7 +2,7 @@
 title: Import Project Table
 slug: import-project-table
 weight: 11.0
-description: Import table data from a different project
+description: Import data from another PlaidCloud project table as a workflow step for cross-project data sharing and reuse operations.
 date: 2022-05-10T14:00:00
 ---
 

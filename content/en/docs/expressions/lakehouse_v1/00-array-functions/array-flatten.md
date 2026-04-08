@@ -1,5 +1,6 @@
 ---
 title: ARRAY_FLATTEN
+description: "Learn how to use the ARRAY_FLATTEN array function in PlaidCloud Lakehouse. Flattens nested arrays, converting them into a single-level array."
 ---
 
 Flattens nested arrays, converting them into a single-level array.

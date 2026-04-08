@@ -1,5 +1,6 @@
 ---
 title: RTRIM
+description: "Learn how to use the RTRIM string function in PlaidCloud Lakehouse. Removes trailing whitespace or specified characters from a string."
 ---
 
 Removes trailing whitespace or specified characters from a string.

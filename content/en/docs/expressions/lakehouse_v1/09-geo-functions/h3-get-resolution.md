@@ -1,5 +1,6 @@
 ---
 title: H3_GET_RESOLUTION
+description: "Learn how to use the H3_GET_RESOLUTION utility function in PlaidCloud Lakehouse. Returns the resolution of the given H3 index. Includes syntax and examples."
 ---
 
 Returns the resolution of the given [H3](https://eng.uber.com/h3/) index. 

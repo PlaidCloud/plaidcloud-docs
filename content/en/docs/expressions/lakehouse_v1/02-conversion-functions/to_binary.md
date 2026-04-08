@@ -1,5 +1,6 @@
 ---
 title: TO_BINARY
+description: "Learn how to use the TO_BINARY conversion function in PlaidCloud Lakehouse. Converts supported data types, including string, variant, bitmap, geometry, and..."
 ---
 
 Converts supported data types, including string, variant, bitmap, geometry, and geography, into their binary representation (hex format).

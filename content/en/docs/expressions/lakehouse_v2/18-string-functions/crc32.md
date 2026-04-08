@@ -1,5 +1,6 @@
 ---
 title: CRC32
+description: "Learn how to use the CRC32 string function in PlaidCloud Lakehouse. Returns the CRC-32 checksum of a string as an unsigned integer - with syntax and examples."
 ---
 
 Returns the CRC-32 checksum of a string as an unsigned integer.

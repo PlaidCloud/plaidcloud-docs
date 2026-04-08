@@ -1,5 +1,6 @@
 ---
 title: FIELD
+description: "Learn how to use the FIELD string function in PlaidCloud Lakehouse. Returns the index position of a value in a list of arguments - with syntax and examples."
 ---
 
 Returns the index position of a value in a list of arguments.

@@ -1,5 +1,6 @@
 ---
 title: ARRAY_MAP
+description: "Learn how to use the ARRAY_MAP array function in PlaidCloud Lakehouse. Applies a lambda expression to each element of an array - with syntax and examples."
 ---
 
 Applies a lambda expression to each element of an array.

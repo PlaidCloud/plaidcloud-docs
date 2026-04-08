@@ -1,5 +1,6 @@
 ---
 title: ASCII
+description: "Learn how to use the ASCII string function in PlaidCloud Lakehouse. Returns the numeric value of the leftmost character of the string str. Includes syntax..."
 ---
 
 Returns the numeric value of the leftmost character of the string str.

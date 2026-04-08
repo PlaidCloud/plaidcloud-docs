@@ -2,7 +2,7 @@
 title: Export to Excel
 slug: export-to-excel
 weight: 2.0
-description: Export an Analyze data table to PlaidCloud Document as a Microsoft Excel file
+description: Export data as Excel spreadsheet files from a PlaidCloud workflow step with formatting, sheet naming, and layout options.
 date: 2022-01-25T07:39:58
 ---
 
@@ -43,7 +43,6 @@ If this checkbox is selected the table headers will be exported to the first row
 
 
 
-For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
 ## Data Filters

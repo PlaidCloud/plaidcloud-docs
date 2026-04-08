@@ -1,5 +1,6 @@
 ---
 title: BITMAP_EMPTY
+description: "Learn how to use the BITMAP_EMPTY bitmap function in PlaidCloud Lakehouse. Returns an empty bitmap - see syntax, examples, and output."
 ---
 
 Returns an empty bitmap.

@@ -2,7 +2,7 @@
 title: Command Line
 slug: command-line
 weight: 2.0
-description: Interact with PlaidCloud directory from command line
+description: Use the PlaidCloud command line interface to automate tasks, run scripts, and interact with PlaidCloud resources via terminal.
 date: 2022-01-25T07:39:47
 ---
 
@@ -50,5 +50,5 @@ There are many APIs available for use that control nearly every aspect of PlaidC
 
 ## Obtaining an OAuth Token
 
-See [OAuth Tokens](/docs/cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
+See [OAuth Tokens](/docs/jupyter_cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
 

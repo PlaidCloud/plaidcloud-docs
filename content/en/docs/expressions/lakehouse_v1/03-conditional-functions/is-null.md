@@ -1,5 +1,6 @@
 ---
 title: IS_NULL
+description: "Learn how to use the IS_NULL conditional function in PlaidCloud Lakehouse. Checks whether a value is NULL. Includes usage and syntax details."
 ---
 
 Checks whether a value is NULL.

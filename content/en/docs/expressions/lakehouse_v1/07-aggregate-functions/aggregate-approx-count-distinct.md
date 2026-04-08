@@ -1,5 +1,6 @@
 ---
 title: APPROX_COUNT_DISTINCT
+description: "Learn how to use the APPROX_COUNT_DISTINCT aggregate function in PlaidCloud Lakehouse. Estimates the number of distinct values in a data set with the..."
 ---
 
 Estimates the number of distinct values in a data set with the [HyperLogLog](https://en.wikipedia.org/wiki/HyperLogLog) algorithm. 

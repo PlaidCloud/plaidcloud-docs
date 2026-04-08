@@ -1,5 +1,6 @@
 ---
 title: QUANTILE_TDIGEST
+description: "Learn how to use the QUANTILE_TDIGEST aggregate function in PlaidCloud Lakehouse. Computes an approximate quantile of a numeric data sequence using the..."
 ---
 
 Computes an approximate quantile of a numeric data sequence using the [t-digest](https://github.com/tdunning/t-digest/blob/master/docs/t-digest-paper/histo.pdf) algorithm.

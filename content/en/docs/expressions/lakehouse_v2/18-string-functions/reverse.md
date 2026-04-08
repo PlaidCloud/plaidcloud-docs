@@ -1,5 +1,6 @@
 ---
 title: REVERSE
+description: "Learn how to use the REVERSE string function in PlaidCloud Lakehouse. Reverses a string - see syntax, examples, and output."
 ---
 
 Reverses a string.

@@ -1,5 +1,6 @@
 ---
 title: OR
+description: "Learn how to use the OR conditional function in PlaidCloud Lakehouse. Conditional OR operator. Includes detailed syntax, examples, and usage reference."
 ---
 
 Conditional OR operator.  Checks whether either condition is true.

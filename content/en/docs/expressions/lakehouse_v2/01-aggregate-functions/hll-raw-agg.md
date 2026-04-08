@@ -1,5 +1,6 @@
 ---
 title: HLL_RAW_AGG
+description: "Learn how to use the HLL_RAW_AGG aggregate function in PlaidCloud Lakehouse. Aggregates HLL values into a single HLL value - with syntax and examples."
 ---
 
 Aggregates HLL values into a single HLL value.

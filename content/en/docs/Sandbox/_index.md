@@ -1,5 +1,5 @@
 ---
 linktitle: Custom App Sandbox
 title: Custom App Sandbox
-Description: Build and deploy you own custom applications within PlaidCloud
+description: Build and deploy custom applications within the PlaidCloud Sandbox environment using your preferred frameworks and languages.
 ---

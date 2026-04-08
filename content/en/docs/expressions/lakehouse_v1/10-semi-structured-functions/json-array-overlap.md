@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY_OVERLAP
+description: "Learn how to use the JSON_ARRAY_OVERLAP semi-structured data function in PlaidCloud Lakehouse. Checks if there is any overlap between two JSON arrays and..."
 ---
 
 Checks if there is any overlap between two JSON arrays and returns `true` if there are common elements; otherwise, it returns `false`.

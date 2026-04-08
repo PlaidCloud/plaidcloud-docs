@@ -1,6 +1,7 @@
 ---
 title: JSON_OBJECT_KEEP_NULL
 title_includes: TRY_JSON_OBJECT_KEEP_NULL
+description: "Learn how to use the JSON_OBJECT_KEEP_NULL semi-structured data function in PlaidCloud Lakehouse. Creates a JSON object with keys and values."
 ---
 
 Creates a JSON object with keys and values.

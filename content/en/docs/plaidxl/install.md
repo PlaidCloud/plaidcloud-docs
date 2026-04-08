@@ -1,7 +1,7 @@
 ---
 title: Installation
 slug: install
-description: Install the PlaidCloud Excel Add-in
+description: Install the PlaidXL Excel Add-in to connect Microsoft Excel directly to PlaidCloud for data retrieval and management operations.
 date: 2022-01-25T07:39:47
 weight: 1.0
 tags:

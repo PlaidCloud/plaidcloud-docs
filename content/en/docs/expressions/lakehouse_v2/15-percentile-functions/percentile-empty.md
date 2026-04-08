@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_EMPTY
+description: "Learn how to use the PERCENTILE_EMPTY percentile function in PlaidCloud Lakehouse. Returns an empty percentile state for initialization."
 ---
 
 Returns an empty percentile state for initialization.

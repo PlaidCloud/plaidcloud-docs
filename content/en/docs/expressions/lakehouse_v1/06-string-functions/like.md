@@ -1,5 +1,6 @@
 ---
 title: LIKE
+description: "Learn how to use the LIKE string function in PlaidCloud Lakehouse. Pattern matching using an SQL pattern. Includes usage and syntax details."
 ---
 
 Pattern matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If either expr or pat is NULL, the result is NULL.

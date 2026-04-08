@@ -1,7 +1,7 @@
 ---
 title: Ramp REST Connector
 slug: ramp-connector
-description: Connecting to Ramp from PlaidCloud using REST
+description: Set up a Ramp REST API connection in PlaidCloud to integrate corporate card spending and expense data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

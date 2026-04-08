@@ -1,5 +1,6 @@
 ---
 title: AES_ENCRYPT
+description: "Learn how to use the AES_ENCRYPT cryptographic function in PlaidCloud Lakehouse. Encrypts a value using AES encryption - see syntax, examples, and output."
 ---
 
 Encrypts a value using AES encryption.

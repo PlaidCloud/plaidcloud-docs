@@ -2,7 +2,7 @@
 title: Viewing Projects
 slug: viewing-projects
 weight: 1.0
-description: Viewing authorized projects
+description: View and browse authorized PlaidCloud projects including project details, status, membership, and associated data resources.
 date: 2022-01-25T07:39:48
 ---
 

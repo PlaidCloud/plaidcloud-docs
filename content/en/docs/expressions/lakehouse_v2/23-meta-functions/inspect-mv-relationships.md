@@ -1,5 +1,6 @@
 ---
 title: INSPECT_MV_RELATIONSHIPS
+description: "Learn how to use the INSPECT_MV_RELATIONSHIPS meta function in PlaidCloud Lakehouse. Returns dependency relationships for a materialized view."
 ---
 
 Returns dependency relationships for a materialized view.

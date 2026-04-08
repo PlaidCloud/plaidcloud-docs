@@ -1,5 +1,6 @@
 ---
 title: ST_XMAX
+description: "Learn how to use the ST_XMAX geometry function in PlaidCloud Lakehouse. Returns the maximum longitude (X coordinate) of all points contained in the..."
 ---
 
 Returns the maximum longitude (X coordinate) of all points contained in the specified GEOMETRY object.

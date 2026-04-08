@@ -1,7 +1,7 @@
 ---
 title: PlaidCloud Lakehouse
 slug: plaidcloud-lakehouse
-description: Connecting to PlaidCloud Lakehouse
+description: Configure the PlaidCloud Lakehouse database connection for high-performance querying and analytics on your lakehouse data.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

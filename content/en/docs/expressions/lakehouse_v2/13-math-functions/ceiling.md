@@ -1,5 +1,6 @@
 ---
 title: CEILING
+description: "Learn how to use the CEILING math function in PlaidCloud Lakehouse. Returns the smallest integer greater than or equal to a number. Alias for `CEIL`."
 ---
 
 Returns the smallest integer greater than or equal to a number. Alias for `CEIL`.

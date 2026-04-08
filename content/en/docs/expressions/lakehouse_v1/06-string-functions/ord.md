@@ -1,5 +1,6 @@
 ---
 title: ORD
+description: "Learn how to use the ORD string function in PlaidCloud Lakehouse. If the leftmost character is not a multibyte character, ORD() returns the same value as..."
 ---
 
 If the leftmost character is not a multibyte character, ORD() returns the same value as the ASCII() function.

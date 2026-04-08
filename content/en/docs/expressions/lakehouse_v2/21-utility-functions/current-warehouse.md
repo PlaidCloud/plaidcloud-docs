@@ -1,5 +1,6 @@
 ---
 title: CURRENT_WAREHOUSE
+description: "Learn how to use the CURRENT_WAREHOUSE utility function in PlaidCloud Lakehouse. Returns the name of the current warehouse - with syntax and examples."
 ---
 
 Returns the name of the current warehouse.

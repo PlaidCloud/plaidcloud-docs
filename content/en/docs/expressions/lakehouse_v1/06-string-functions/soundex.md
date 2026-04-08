@@ -1,6 +1,7 @@
 ---
 id: string-soundex
 title: SOUNDEX
+description: "Learn how to use the SOUNDEX string function in PlaidCloud Lakehouse. Generates the Soundex code for a string. Includes syntax and examples."
 ---
 
 Generates the Soundex code for a string.

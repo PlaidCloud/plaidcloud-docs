@@ -2,7 +2,7 @@
 title: Delete Document Directory
 slug: delete-document-directory
 weight: 13.0
-description: Delete an existing directory from within PlaidCloud Document
+description: Delete a document directory and its contents in a PlaidCloud workflow step to clean up temporary or obsolete file storage.
 date: 2022-01-25T07:39:56
 ---
 

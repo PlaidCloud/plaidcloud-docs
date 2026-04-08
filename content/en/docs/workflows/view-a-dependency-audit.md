@@ -2,7 +2,7 @@
 title: View a dependency audit
 slug: view-a-dependency-audit
 weight: 17.0
-description: View all the data dependencies within a workflow
+description: View dependency audit information for PlaidCloud workflows to understand data lineage and step-to-step dependencies in detail.
 date: 2022-01-25T07:40:21
 ---
 

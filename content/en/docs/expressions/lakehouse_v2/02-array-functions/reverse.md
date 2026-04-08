@@ -1,5 +1,6 @@
 ---
 title: REVERSE
+description: "Learn how to use the REVERSE array function in PlaidCloud Lakehouse. Returns an array with elements in reverse order - see syntax, examples, and output."
 ---
 
 Returns an array with elements in reverse order.

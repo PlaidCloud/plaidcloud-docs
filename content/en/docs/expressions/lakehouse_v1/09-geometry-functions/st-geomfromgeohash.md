@@ -1,5 +1,6 @@
 ---
 title: ST_GEOMFROMGEOHASH
+description: "Learn how to use the ST_GEOMFROMGEOHASH geometry function in PlaidCloud Lakehouse. Returns a GEOMETRY object for the polygon that represents the boundaries..."
 ---
 
 Returns a GEOMETRY object for the polygon that represents the boundaries of a [geohash](https://en.wikipedia.org/wiki/Geohash).

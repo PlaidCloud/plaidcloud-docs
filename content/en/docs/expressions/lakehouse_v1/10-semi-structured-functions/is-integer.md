@@ -1,5 +1,6 @@
 ---
 title: IS_INTEGER
+description: "Learn how to use the IS_INTEGER semi-structured data function in PlaidCloud Lakehouse. Checks if the input JSON value is an integer. With syntax and examples."
 ---
 
 Checks if the input JSON value is an integer.

@@ -1,5 +1,6 @@
 ---
 title: LN
+description: "Learn how to use the LN numeric function in PlaidCloud Lakehouse. Returns the natural logarithm of x; that is, the base-e logarithm of x. Includes syntax..."
 ---
 
 Returns the natural logarithm of `x`; that is, the base-e logarithm of `x`. If x is less than or equal to 0.0E0, the function returns NULL.

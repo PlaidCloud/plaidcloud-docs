@@ -1,5 +1,6 @@
 ---
 title: TO_TIMESTAMP
+description: "Learn how to use the TO_TIMESTAMP datetime function in PlaidCloud Lakehouse. TO_TIMESTAMP converts an expression to a date with time (timestamp/datetime)."
 ---
 
 TO_TIMESTAMP converts an expression to a date with time (timestamp/datetime).

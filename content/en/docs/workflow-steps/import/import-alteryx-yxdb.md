@@ -2,7 +2,7 @@
 title: Import Alteryx YXDB
 slug: import-alteryx-yxdb
 weight: 18.0
-description: Import Alteryx YXDB files from PlaidCloud Document
+description: Import Alteryx YXDB database files into PlaidCloud as a workflow step to migrate data from Alteryx workflows into your projects.
 date: 2024-01-01T00:00:00
 ---
 

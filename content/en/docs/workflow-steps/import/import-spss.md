@@ -2,7 +2,7 @@
 title: Import SPSS
 slug: import-spss
 weight: 14.0
-description: Import SPSS sav and zsav files from PlaidCloud Document
+description: Import SPSS data files into PlaidCloud as a workflow step for migrating statistical analysis and survey research datasets.
 date: 2022-01-25T07:39:57
 ---
 

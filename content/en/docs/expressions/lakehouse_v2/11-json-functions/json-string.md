@@ -1,5 +1,6 @@
 ---
 title: JSON_STRING
+description: "Learn how to use the JSON_STRING json function in PlaidCloud Lakehouse. Converts a JSON value to a JSON-encoded string - see syntax, examples, and output."
 ---
 
 Converts a JSON value to a JSON-encoded string.

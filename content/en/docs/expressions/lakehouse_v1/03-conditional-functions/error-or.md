@@ -1,5 +1,6 @@
 ---
 title: ERROR_OR
+description: "Learn how to use the ERROR_OR conditional function in PlaidCloud Lakehouse. Returns the first non-error expression among its inputs. With syntax and examples."
 ---
 
 Returns the first non-error expression among its inputs. If all expressions result in errors, it returns NULL.

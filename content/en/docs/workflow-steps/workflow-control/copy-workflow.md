@@ -2,7 +2,7 @@
 title: Copy Workflow
 slug: copy-workflow
 weight: 4.0
-description: Make a copy of an existing PlaidCloud Analyze workflow
+description: Copy an existing workflow in a PlaidCloud workflow step to duplicate workflow configurations for reuse or template purposes.
 date: 2022-01-25T07:39:52
 ---
 

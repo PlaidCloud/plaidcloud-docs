@@ -1,5 +1,6 @@
 ---
 title: BITMAP_SUBSET_LIMIT
+description: "Learn how to use the BITMAP_SUBSET_LIMIT bitmap function in PlaidCloud Lakehouse. Generates a sub-bitmap of the source bitmap, beginning with a range from..."
 ---
 
 Generates a sub-bitmap of the source bitmap, beginning with a range from the start value, with a size limit.

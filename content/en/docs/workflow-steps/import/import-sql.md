@@ -2,7 +2,7 @@
 title: Import SQL
 slug: import-sql
 weight: 15.0
-description: Import data from a remote SQL database.
+description: Import data from SQL databases into PlaidCloud as a workflow step using custom queries to select and filter source data.
 date: 2022-01-25T07:39:57
 ---
 

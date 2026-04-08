@@ -1,5 +1,6 @@
 ---
 title: SIN
+description: "Learn how to use the SIN math function in PlaidCloud Lakehouse. Returns the sine of a number in radians - see syntax, examples, and output."
 ---
 
 Returns the sine of a number in radians.

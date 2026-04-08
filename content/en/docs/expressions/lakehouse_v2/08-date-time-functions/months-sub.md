@@ -1,5 +1,6 @@
 ---
 title: MONTHS_SUB
+description: "Learn how to use the MONTHS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of months from a date - with syntax and examples."
 ---
 
 Subtracts a specified number of months from a date.

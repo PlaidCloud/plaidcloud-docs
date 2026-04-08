@@ -2,7 +2,7 @@
 title: Where are the Workflows
 slug: where-are-workflows
 weight: 1.0
-description: Create and Manage your own Workflows
+description: Navigate to and manage PlaidCloud workflows within your projects using the workflow interface and project navigation tools.
 date: 2022-01-25T07:39:49
 ---
 

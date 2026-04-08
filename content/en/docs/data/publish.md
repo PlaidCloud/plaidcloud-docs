@@ -1,7 +1,7 @@
 ---
 title: Publishing Tables
 slug: tables-views-publish
-description: Publishing Tables and Views to allow usage in Dashboard, PlaidXL, and other external reporting
+description: Publish PlaidCloud data tables and views for controlled sharing with downstream applications, reports, and external consumers.
 date: 2022-01-25T07:39:48
 weight: 4.0
 ---

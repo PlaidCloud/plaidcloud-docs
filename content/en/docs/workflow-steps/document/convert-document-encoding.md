@@ -2,7 +2,7 @@
 title: Convert Document Encoding
 slug: convert-document-encoding
 weight: 3.0
-description: Concatenates files to form a single file.
+description: Convert document file encoding between character sets in a PlaidCloud workflow step to resolve encoding compatibility issues.
 date: 2022-01-25T07:39:55
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: ST_POLYGON
+description: "Learn how to use the ST_POLYGON spatial function in PlaidCloud Lakehouse. Creates a polygon geometry from a WKT string - see syntax, examples, and output."
 ---
 
 Creates a polygon geometry from a WKT string.

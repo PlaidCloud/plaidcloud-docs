@@ -1,7 +1,7 @@
 ---
 title: SAP ECC Connector
 slug: sap-ecc
-description: Connecting to SAP ECC ERP System
+description: Configure an SAP ECC ERP connection in PlaidCloud to integrate financial, logistics, and operational data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

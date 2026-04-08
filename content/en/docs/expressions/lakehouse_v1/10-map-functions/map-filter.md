@@ -1,5 +1,6 @@
 ---
 title: MAP_FILTER
+description: "Learn how to use the MAP_FILTER map function in PlaidCloud Lakehouse. Filters key-value pairs from a map using a lambda expression to define the condition."
 ---
 
 Filters key-value pairs from a map using a lambda expression to define the condition.

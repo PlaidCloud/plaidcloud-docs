@@ -1,5 +1,6 @@
 ---
 title: DAYS_SUB
+description: "Learn how to use the DAYS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of days from a date - with syntax and examples."
 ---
 
 Subtracts a specified number of days from a date.

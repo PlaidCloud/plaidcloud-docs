@@ -1,5 +1,6 @@
 ---
 title: TO_INT64
+description: "Learn how to use the TO_INT64 conversion function in PlaidCloud Lakehouse. Converts a value to INT64 data type. Includes syntax and examples."
 ---
 
 Converts a value to INT64 data type.

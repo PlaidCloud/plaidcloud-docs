@@ -1,7 +1,7 @@
 ---
 title: Run SAP PCM Hyper Loader
 slug: run-sap-pcm-hyper-loader
-description: Load your PCM model using direct table loads
+description: Run the SAP PCM Hyper Loader from a PlaidCloud workflow step to perform high-speed bulk data loading into PCM models.
 date: 2022-01-25T07:39:50
 ---
 

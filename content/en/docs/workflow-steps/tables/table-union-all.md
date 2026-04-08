@@ -2,7 +2,7 @@
 title: Table Union All
 slug: table-union-all
 weight: 16.0
-description: Access history to all created workflow data tables
+description: Combine two tables using union all in a PlaidCloud workflow step to stack all rows together including any duplicate records.
 date: 2022-01-25T07:39:49
 ---
 

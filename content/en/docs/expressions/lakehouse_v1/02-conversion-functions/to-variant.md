@@ -1,5 +1,6 @@
 ---
 title: TO_VARIANT
+description: "Learn how to use the TO_VARIANT conversion function in PlaidCloud Lakehouse. Converts a value to VARIANT data type. Includes syntax and examples."
 ---
 
 Converts a value to VARIANT data type.

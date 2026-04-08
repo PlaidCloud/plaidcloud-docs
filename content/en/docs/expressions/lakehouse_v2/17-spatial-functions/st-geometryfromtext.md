@@ -1,5 +1,6 @@
 ---
 title: ST_GEOMETRYFROMTEXT
+description: "Learn how to use the ST_GEOMETRYFROMTEXT spatial function in PlaidCloud Lakehouse. Creates a geometry from a WKT (Well-Known Text) string."
 ---
 
 Creates a geometry from a WKT (Well-Known Text) string.

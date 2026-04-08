@@ -1,5 +1,6 @@
 ---
 title: TO_WEEKS
+description: "Learn how to use the TO_WEEKS interval function in PlaidCloud Lakehouse. Converts a specified number of weeks into an Interval type. With syntax and examples."
 ---
 
 Converts a specified number of weeks into an Interval type.

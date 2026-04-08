@@ -1,5 +1,6 @@
 ---
 title: NULL_OR_EMPTY
+description: "Learn how to use the NULL_OR_EMPTY string function in PlaidCloud Lakehouse. Checks whether a string is NULL or empty. Returns 1 if true, 0 otherwise."
 ---
 
 Checks whether a string is NULL or empty. Returns 1 if true, 0 otherwise.

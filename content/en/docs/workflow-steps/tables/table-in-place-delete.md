@@ -2,7 +2,7 @@
 title: Table In-Place Delete
 slug: table-in-place-delete
 weight: 9.0
-description: Performs a delete on the table using the specified filter conditions
+description: Delete specific rows from a table in a PlaidCloud workflow step using filter conditions to remove targeted records in place.
 date: 2022-01-25T07:39:56
 ---
 

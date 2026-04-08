@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY
+description: "Learn how to use the JSON_ARRAY semi-structured data function in PlaidCloud Lakehouse. Creates a JSON array with specified values. Includes syntax and examples."
 ---
 
 Creates a JSON array with specified values.

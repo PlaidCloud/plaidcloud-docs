@@ -1,5 +1,6 @@
 ---
 title: FUSE_COLUMN
+description: "Learn how to use the FUSE_COLUMN system function in PlaidCloud Lakehouse. Returns the column information of the latest or specified snapshot of a table."
 ---
 
 Returns the column information of the latest or specified snapshot of a table. For more information about what is block in PlaidCloud Lakehouse, see What are Snapshot, Segment, and Block?.

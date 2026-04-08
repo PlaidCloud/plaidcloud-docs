@@ -1,5 +1,6 @@
 ---
 title: RETENTION
+description: "Learn how to use the RETENTION aggregate function in PlaidCloud Lakehouse. Aggregate function. Includes detailed syntax, examples, and usage reference."
 ---
 
 Aggregate function

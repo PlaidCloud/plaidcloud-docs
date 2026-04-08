@@ -1,5 +1,6 @@
 ---
 title: ST_CONTAINS
+description: "Learn how to use the ST_CONTAINS geometry function in PlaidCloud Lakehouse. Returns TRUE if the second GEOMETRY object is completely inside the first..."
 ---
 
 Returns TRUE if the second GEOMETRY object is completely inside the first GEOMETRY object.

@@ -1,5 +1,6 @@
 ---
 title: ST_ASEWKB
+description: "Learn how to use the ST_ASEWKB geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a EWKB(extended well-known-binary) format..."
 ---
 
 Converts a GEOMETRY object into a [EWKB(extended well-known-binary)](https://postgis.net/docs/ST_GeomFromEWKB.html) format representation.

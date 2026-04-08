@@ -1,5 +1,6 @@
 ---
 title: FORMAT_BYTES
+description: "Use the FORMAT_BYTES string function in PlaidCloud Lakehouse. Converts a byte count into a human-readable string with the appropriate unit (B, KB, MB, GB, TB,."
 ---
 
 Converts a byte count into a human-readable string with the appropriate unit (B, KB, MB, GB, TB, PB, EB). Uses 1024-based (binary) calculations. Returns NULL for negative or NULL inputs.

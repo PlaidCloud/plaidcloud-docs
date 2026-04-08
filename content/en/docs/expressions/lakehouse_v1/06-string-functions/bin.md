@@ -1,5 +1,6 @@
 ---
 title: BIN
+description: "Learn how to use the BIN string function in PlaidCloud Lakehouse. Returns a string representation of the binary value of N. Includes syntax and examples."
 ---
 
 Returns a string representation of the binary value of N.

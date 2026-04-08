@@ -1,5 +1,6 @@
 ---
 title: DATE_TRUNC
+description: "Learn how to use the DATE_TRUNC date/time function in PlaidCloud Lakehouse. Truncates a date or datetime value to the specified precision."
 ---
 
 Truncates a date or datetime value to the specified precision.

@@ -1,7 +1,7 @@
 ---
 title: Paycor REST Connector
 slug: paycor-connector
-description: Connecting to Paycor from PlaidCloud using REST
+description: Configure a Paycor REST API connection in PlaidCloud to integrate payroll, HR, and workforce data into your analysis workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

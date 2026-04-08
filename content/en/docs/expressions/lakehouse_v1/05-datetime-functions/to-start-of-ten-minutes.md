@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_TEN_MINUTES
+description: "Learn how to use the TO_START_OF_TEN_MINUTES datetime function in PlaidCloud Lakehouse. Rounds down a date with time (timestamp/datetime) to the start of..."
 ---
 
 Rounds down a date with time (timestamp/datetime) to the start of the ten-minute interval.

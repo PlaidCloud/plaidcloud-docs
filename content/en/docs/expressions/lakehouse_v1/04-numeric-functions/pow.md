@@ -1,5 +1,6 @@
 ---
 title: POW
+description: "Learn how to use the POW numeric function in PlaidCloud Lakehouse. Returns the value of x to the power of y. Full syntax and usage reference."
 ---
 
 Returns the value of `x` to the power of `y`. 

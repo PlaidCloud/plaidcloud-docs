@@ -1,5 +1,6 @@
 ---
 title: MAP_TRANSFORM_VALUES
+description: "Learn how to use the MAP_TRANSFORM_VALUES map function in PlaidCloud Lakehouse. Applies a transformation to each value in a map using a lambda expression."
 ---
 
 Applies a transformation to each value in a map using a lambda expression.

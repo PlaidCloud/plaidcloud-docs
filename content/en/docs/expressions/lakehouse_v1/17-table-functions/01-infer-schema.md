@@ -1,5 +1,6 @@
 ---
 title: INFER_SCHEMA
+description: "Learn how to use the INFER_SCHEMA table function in PlaidCloud Lakehouse. Automatically detects the file metadata schema and retrieves the column definitions."
 ---
 
 Automatically detects the file metadata schema and retrieves the column definitions.

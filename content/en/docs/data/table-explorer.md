@@ -1,7 +1,7 @@
 ---
 title: Table Explorer
 slug: table-explorer
-description: Table Explorer provides powerful and readily accessible data exploration capabilities
+description: Use the PlaidCloud Table Explorer to browse table schemas, preview data, view statistics, and manage your data table properties.
 date: 2022-01-25T07:39:48
 weight: 2.0
 ---

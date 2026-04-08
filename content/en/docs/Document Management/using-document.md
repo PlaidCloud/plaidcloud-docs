@@ -2,7 +2,7 @@
 title: Using Document Accounts
 slug: using-document-accounts
 weight: 3.0
-description: Upload, download, delete, and view files in Document accounts
+description: Learn how to browse, upload, download, and manage files in PlaidCloud Document storage for data import and export operations.
 date: 2022-01-25T07:39:48
 ---
 

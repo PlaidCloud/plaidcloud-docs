@@ -1,5 +1,6 @@
 ---
 title: FACTORIAL
+description: "Learn how to use the FACTORIAL numeric function in PlaidCloud Lakehouse. Returns the factorial logarithm of x. Includes syntax and examples."
 ---
 
 Returns the factorial logarithm of `x`. If `x` is less than or equal to 0, the function returns 0.

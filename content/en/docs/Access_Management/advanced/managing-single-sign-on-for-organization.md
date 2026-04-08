@@ -1,7 +1,7 @@
 ---
 title: Managing Single Sign-On for Organization
 slug: managing-single-sign-on-for-organization
-description: Set up SAML 2.0 authorization along with attribute passing
+description: Configure and manage single sign-on settings for your PlaidCloud organization to streamline secure member authentication.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

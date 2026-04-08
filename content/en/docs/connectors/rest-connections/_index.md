@@ -1,7 +1,7 @@
 ---
 title: REST Connections
 slug: rest-connections
-description: REST connection requirements vary depending on the service.  See how to configure the individual connections.
+description: Connect PlaidCloud to REST API services including Salesforce, NetSuite, Workday, Dynamics, and other cloud-based platforms.
 date: 2022-01-25T07:39:49
 ---
 

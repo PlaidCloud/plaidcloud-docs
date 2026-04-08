@@ -1,7 +1,7 @@
 ---
 title: SAP Profitability and Cost Management (PCM) Connector
 slug: sap-pcm
-description: Connecting to SAP Profitability and Cost Managmenet System
+description: Configure an SAP Profitability and Cost Management connection in PlaidCloud to integrate cost allocation data into workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

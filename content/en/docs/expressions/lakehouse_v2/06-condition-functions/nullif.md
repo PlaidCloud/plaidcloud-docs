@@ -1,5 +1,6 @@
 ---
 title: NULLIF
+description: "Learn how to use the NULLIF condition function in PlaidCloud Lakehouse. Returns NULL if two expressions are equal, otherwise returns the first expression."
 ---
 
 Returns NULL if two expressions are equal, otherwise returns the first expression.

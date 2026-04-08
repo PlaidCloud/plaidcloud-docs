@@ -1,5 +1,6 @@
 ---
 title: DISTINCT_MAP_KEYS
+description: "Learn how to use the DISTINCT_MAP_KEYS map function in PlaidCloud Lakehouse. Returns the distinct keys from a map - see syntax, examples, and output."
 ---
 
 Returns the distinct keys from a map.

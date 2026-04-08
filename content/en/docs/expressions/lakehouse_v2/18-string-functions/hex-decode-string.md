@@ -1,5 +1,6 @@
 ---
 title: HEX_DECODE_STRING
+description: "Learn how to use the HEX_DECODE_STRING string function in PlaidCloud Lakehouse. Decodes a hexadecimal string to a VARCHAR string - with syntax and examples."
 ---
 
 Decodes a hexadecimal string to a VARCHAR string.

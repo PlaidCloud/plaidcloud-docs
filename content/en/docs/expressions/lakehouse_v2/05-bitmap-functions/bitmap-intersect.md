@@ -1,5 +1,6 @@
 ---
 title: BITMAP_INTERSECT
+description: "Learn how to use the BITMAP_INTERSECT bitmap function in PlaidCloud Lakehouse. Returns the intersection of a set of bitmaps (aggregate)."
 ---
 
 Returns the intersection of a set of bitmaps (aggregate).

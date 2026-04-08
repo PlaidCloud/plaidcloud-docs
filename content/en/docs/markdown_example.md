@@ -1,5 +1,6 @@
 ---
 title: Markdown Example Page
+description: Reference guide for Markdown formatting syntax used in PlaidCloud documentation pages, with examples and usage patterns.
 main_menu: false
 ---
 

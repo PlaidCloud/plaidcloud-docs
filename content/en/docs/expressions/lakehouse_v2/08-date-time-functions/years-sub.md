@@ -1,5 +1,6 @@
 ---
 title: YEARS_SUB
+description: "Learn how to use the YEARS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of years from a date - with syntax and examples."
 ---
 
 Subtracts a specified number of years from a date.

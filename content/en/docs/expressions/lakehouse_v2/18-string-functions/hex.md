@@ -1,5 +1,6 @@
 ---
 title: HEX
+description: "Learn how to use the HEX string function in PlaidCloud Lakehouse. Returns the hexadecimal representation of a string or number - with syntax and examples."
 ---
 
 Returns the hexadecimal representation of a string or number.

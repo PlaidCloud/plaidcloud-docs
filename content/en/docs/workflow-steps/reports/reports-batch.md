@@ -2,7 +2,7 @@
 title: Reports Batch
 slug: reports-batch
 weight: 2.0
-description: Generate multiple PDF documents based on specific data from each report
+description: Generate batch PDF reports from a PlaidCloud workflow step to produce multiple reports from templates with varying data inputs.
 date: 2022-01-25T07:40:18
 ---
 

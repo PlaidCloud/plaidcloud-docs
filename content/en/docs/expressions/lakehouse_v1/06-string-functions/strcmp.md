@@ -1,5 +1,6 @@
 ---
 title: STRCMP
+description: "Learn how to use the STRCMP string function in PlaidCloud Lakehouse. Returns 0 if the strings are the same, -1 if the first argument is smaller than the..."
 ---
 
 Returns 0 if the strings are the same, -1 if the first argument is smaller than the second, and 1 otherwise.

@@ -1,7 +1,7 @@
 ---
 title: AWS CodeCommit Repository Connector
 slug: codecommit
-description: Connecting to AWS CodeCommit
+description: Set up an AWS CodeCommit repository connection in PlaidCloud to integrate version-controlled code and configuration into workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

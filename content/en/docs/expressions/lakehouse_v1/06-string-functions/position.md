@@ -1,5 +1,6 @@
 ---
 title: POSITION
+description: "Learn how to use the POSITION string function in PlaidCloud Lakehouse. POSITION(substr IN str) is a synonym for LOCATE(substr,str). With syntax and examples."
 ---
 
 POSITION(substr IN str) is a synonym for LOCATE(substr,str).

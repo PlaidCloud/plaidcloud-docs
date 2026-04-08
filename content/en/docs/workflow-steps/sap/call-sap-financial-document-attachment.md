@@ -1,7 +1,7 @@
 ---
 title: Call SAP Financial Document Attachment
 slug: call-sap-financial-document-attachment
-description: Calls an SAP ECC Remote Function Call (RFC) designed to attach a file to specified FI document number
+description: Retrieve SAP financial document attachments from a PlaidCloud workflow step for automated document extraction and processing.
 date: 2022-01-25T07:39:56
 ---
 

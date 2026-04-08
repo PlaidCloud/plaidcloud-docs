@@ -1,5 +1,6 @@
 ---
 title: ST_GEOMETRYFROMWKB
+description: "Learn how to use the ST_GEOMETRYFROMWKB geometry function in PlaidCloud Lakehouse. Parses a WKB(well-known-binary) or EWKB(extended well-known-binary) input..."
 ---
 
 Parses a [WKB(well-known-binary)](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry#Well-known_binary) or [EWKB(extended well-known-binary)](https://postgis.net/docs/ST_GeomFromEWKB.html) input and returns a value of type GEOMETRY.

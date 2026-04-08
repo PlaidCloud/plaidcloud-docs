@@ -2,7 +2,7 @@
 title: Import Excel
 slug: import-excel
 weight: 3.0
-description: Import worksheets from Excel files within PlaidCloud Document
+description: Import Excel spreadsheet files into PlaidCloud as a workflow step with options for sheet selection, ranges, and data type mapping.
 date: 2022-01-25T07:39:55
 ---
 

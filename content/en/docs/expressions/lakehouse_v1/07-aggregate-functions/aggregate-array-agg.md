@@ -1,6 +1,7 @@
 ---
 title: ARRAY_AGG
 title_includes: LIST
+description: "Learn how to use the ARRAY_AGG aggregate function in PlaidCloud Lakehouse. The ARRAY_AGG function (also known by its alias LIST) transforms all the values,..."
 ---
 
 The ARRAY_AGG function (also known by its alias LIST) transforms all the values, including NULL, of a specific column in a query result into an array.

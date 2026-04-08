@@ -1,7 +1,7 @@
 ---
 title: Connecting
 slug: connect
-description: Connect Excel with the PlaidCloud Excel Add-in to your PlaidCloud project
+description: Connect PlaidXL to your PlaidCloud workspace to start importing, exporting, and managing data directly from Microsoft Excel.
 date: 2022-01-25T07:39:47
 weight: 2.0
 tags:

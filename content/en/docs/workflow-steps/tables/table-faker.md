@@ -2,7 +2,7 @@
 title: Table Faker
 slug: table-faker
 weight: 8.0
-description: This function generates fake data
+description: Generate synthetic test data in a PlaidCloud workflow step using Faker to create realistic sample datasets for development.
 date: 2022-01-25T07:39:50
 ---
 

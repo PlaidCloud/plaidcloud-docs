@@ -1,5 +1,6 @@
 ---
 title: COS
+description: "Learn how to use the COS numeric function in PlaidCloud Lakehouse. Returns the cosine of x, where x is given in radians. Includes syntax and examples."
 ---
 
 Returns the cosine of `x`, where `x` is given in radians.

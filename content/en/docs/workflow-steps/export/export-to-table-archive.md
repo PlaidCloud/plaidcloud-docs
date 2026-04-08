@@ -2,7 +2,7 @@
 title: Export to Table Archive
 slug: export-to-table-archive
 weight: 10.0
-description: Exports PlaidCloud table archive file
+description: Export data as PlaidCloud table archive files in a workflow step for portable backup and transfer of table data and schema.
 date: 2022-01-25T07:39:58
 ---
 

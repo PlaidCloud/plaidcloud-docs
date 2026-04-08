@@ -1,5 +1,6 @@
 ---
 title: H3_EXACT_EDGE_LENGTH_M
+description: "Learn how to use the H3_EXACT_EDGE_LENGTH_M utility function in PlaidCloud Lakehouse. Computes the length of this directed edge, in meters. Includes syntax..."
 ---
 
 Computes the length of this directed edge, in meters.

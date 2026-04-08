@@ -1,6 +1,7 @@
 ---
 title: TO_GEOMETRY
 title_includes: TRY_TO_GEOMETRY
+description: "Learn how to use the TO_GEOMETRY geometry function in PlaidCloud Lakehouse. Parses an input and returns a value of type GEOMETRY. Includes syntax and examples."
 ---
 
 Parses an input and returns a value of type GEOMETRY.

@@ -1,5 +1,6 @@
 ---
 title: CBRT
+description: "Learn how to use the CBRT numeric function in PlaidCloud Lakehouse. Returns the cube root of a nonnegative number x. Includes syntax and examples."
 ---
 
 Returns the cube root of a nonnegative number `x`.

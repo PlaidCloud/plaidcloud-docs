@@ -1,5 +1,6 @@
 ---
 title: CHAR
+description: "Learn how to use the CHAR string function in PlaidCloud Lakehouse. Returns the character for a given ASCII code - see syntax, examples, and output."
 ---
 
 Returns the character for a given ASCII code.

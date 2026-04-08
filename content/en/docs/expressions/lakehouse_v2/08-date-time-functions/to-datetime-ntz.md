@@ -1,5 +1,6 @@
 ---
 title: TO_DATETIME_NTZ
+description: "Use the TO_DATETIME_NTZ date/time function in PlaidCloud Lakehouse. Converts a value to a DATETIME without time zone (NTZ). The result is not affected by."
 ---
 
 Converts a value to a DATETIME without time zone (NTZ). The result is not affected by session time zone settings.

@@ -2,7 +2,7 @@
 title: Table Outer Join
 slug: table-outer-join
 weight: 14.0
-description: Combine data tables using specified join key(s)
+description: Perform an outer join between two tables in a PlaidCloud workflow step to combine records and include unmatched rows from both.
 date: 2022-01-25T07:39:49
 ---
 

@@ -2,7 +2,7 @@
 title: Managing Step Errors
 slug: managing-step-errors
 weight: 9.0
-description: Control the behavior of a step when errors occur
+description: Handle and manage step errors in PlaidCloud workflows including error notifications, retry logic, and failure recovery options.
 date: 2022-01-25T07:40:20
 ---
 

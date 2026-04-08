@@ -2,7 +2,7 @@
 title: Import Archive
 slug: import-archive
 weight: 1.0
-description: Import an archived project
+description: Import PlaidCloud table archive files in a workflow step to restore previously exported table data, schema, and configurations.
 date: 2022-05-10T14:00:00
 ---
 

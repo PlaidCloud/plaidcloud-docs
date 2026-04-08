@@ -1,5 +1,6 @@
 ---
 title: DICT_MAPPING
+description: "Learn how to use the DICT_MAPPING dictionary function in PlaidCloud Lakehouse. Returns the value mapped to a specified key in a dictionary table."
 ---
 
 Returns the value mapped to a specified key in a dictionary table.

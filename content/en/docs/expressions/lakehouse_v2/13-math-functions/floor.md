@@ -1,5 +1,6 @@
 ---
 title: FLOOR
+description: "Learn how to use the FLOOR math function in PlaidCloud Lakehouse. Returns the largest integer less than or equal to a number - with syntax and examples."
 ---
 
 Returns the largest integer less than or equal to a number.

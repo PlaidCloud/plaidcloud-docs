@@ -1,5 +1,6 @@
 ---
 title: MICROSECONDS_ADD
+description: "Learn how to use the MICROSECONDS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of microseconds to a datetime."
 ---
 
 Adds a specified number of microseconds to a datetime.

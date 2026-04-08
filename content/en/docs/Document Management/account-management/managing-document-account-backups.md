@@ -2,7 +2,7 @@
 title: Managing Document Account Backups
 slug: managing-document-account-backups
 weight: 3.0
-description: Control how, where, and when Document account backups occur
+description: Configure and manage backup settings for PlaidCloud document storage accounts to protect your files and ensure data recovery.
 date: 2022-01-25T07:39:47
 ---
 

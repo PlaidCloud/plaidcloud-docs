@@ -1,5 +1,6 @@
 ---
 title: JSON_MAP_TRANSFORM_VALUES
+description: "Learn how to use the JSON_MAP_TRANSFORM_VALUES semi-structured data function in PlaidCloud Lakehouse. Applies a transformation to each value in a JSON..."
 ---
 
 Applies a transformation to each value in a JSON object using a lambda expression.

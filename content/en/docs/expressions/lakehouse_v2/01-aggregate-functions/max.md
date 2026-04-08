@@ -1,5 +1,6 @@
 ---
 title: MAX
+description: "Learn how to use the MAX aggregate function in PlaidCloud Lakehouse. Returns the maximum value in a set of values - see syntax, examples, and output."
 ---
 
 Returns the maximum value in a set of values.

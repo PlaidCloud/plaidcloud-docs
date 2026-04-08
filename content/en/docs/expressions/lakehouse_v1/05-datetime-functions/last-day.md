@@ -1,5 +1,6 @@
 ---
 title: LAST_DAY
+description: "Learn how to use the LAST_DAY datetime function in PlaidCloud Lakehouse. Returns the last day of the specified interval (week, month, quarter, or year)..."
 ---
 
 Returns the last day of the specified interval (week, month, quarter, or year) based on the provided date or timestamp.

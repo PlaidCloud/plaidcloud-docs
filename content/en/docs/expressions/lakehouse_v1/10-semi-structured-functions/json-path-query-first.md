@@ -1,5 +1,6 @@
 ---
 title: JSON_PATH_QUERY_FIRST
+description: "Learn how to use the JSON_PATH_QUERY_FIRST semi-structured data function in PlaidCloud Lakehouse. Get the first JSON item returned by JSON path for the..."
 ---
 
 Get the first JSON item returned by JSON path for the specified JSON value. 

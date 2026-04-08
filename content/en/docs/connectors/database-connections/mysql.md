@@ -1,7 +1,7 @@
 ---
 title: MySQL
 slug: mysql
-description: Connecting to MySQL Database
+description: Configure a MySQL database connection in PlaidCloud to query, import, and export data with your MySQL database instances.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

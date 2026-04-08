@@ -1,5 +1,6 @@
 ---
 title: COSH
+description: "Learn how to use the COSH math function in PlaidCloud Lakehouse. Returns the hyperbolic cosine of a number - see syntax, examples, and output."
 ---
 
 Returns the hyperbolic cosine of a number.

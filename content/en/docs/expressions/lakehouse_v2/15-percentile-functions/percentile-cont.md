@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_CONT
+description: "Learn how to use the PERCENTILE_CONT percentile function in PlaidCloud Lakehouse. Returns an interpolated percentile value based on a continuous distribution."
 ---
 
 Returns an interpolated percentile value based on a continuous distribution.

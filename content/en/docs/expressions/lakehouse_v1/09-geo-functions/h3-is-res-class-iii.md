@@ -1,5 +1,6 @@
 ---
 title: H3_IS_RES_CLASS_III
+description: "Learn how to use the H3_IS_RES_CLASS_III utility function in PlaidCloud Lakehouse. Checks if the given H3 index has a resolution with Class III orientation."
 ---
 
 Checks if the given [H3](https://eng.uber.com/h3/) index has a resolution with Class III orientation.

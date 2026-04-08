@@ -1,5 +1,6 @@
 ---
 title: STR2DATE
+description: "Learn how to use the STR2DATE date/time function in PlaidCloud Lakehouse. Parses a string into a date using a format string. Alias for `STR_TO_DATE`."
 ---
 
 Parses a string into a date using a format string. Alias for `STR_TO_DATE`.

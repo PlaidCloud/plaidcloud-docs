@@ -1,5 +1,6 @@
 ---
 title: H3_EDGE_ANGLE
+description: "Learn how to use the H3_EDGE_ANGLE utility function in PlaidCloud Lakehouse. Returns the average length of the H3 hexagon edge in grades. Includes syntax..."
 ---
 
 Returns the average length of the H3 hexagon edge in grades.

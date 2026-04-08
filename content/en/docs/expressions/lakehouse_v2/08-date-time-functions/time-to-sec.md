@@ -1,5 +1,6 @@
 ---
 title: TIME_TO_SEC
+description: "Learn how to use the TIME_TO_SEC date/time function in PlaidCloud Lakehouse. Converts a time value to seconds - see syntax, examples, and output."
 ---
 
 Converts a time value to seconds.

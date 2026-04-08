@@ -1,5 +1,6 @@
 ---
 title: ACOS
+description: "Learn how to use the ACOS numeric function in PlaidCloud Lakehouse. Returns the arc cosine of x, that is, the value whose cosine is x. With syntax and examples."
 ---
 
 Returns the arc cosine of `x`, that is, the value whose cosine is `x`. Returns NULL if `x` is not in the range -1 to 1.

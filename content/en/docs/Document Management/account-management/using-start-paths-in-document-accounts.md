@@ -2,7 +2,7 @@
 title: Using Start Paths in Document Accounts
 slug: using-start-paths-in-document-accounts
 weight: 5.0
-description: Control where users start navigation in document storage
+description: Configure start paths in PlaidCloud document accounts to control the default directory location when browsing file storage.
 date: 2022-01-25T07:39:47
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: INTERSECT_COUNT
+description: "Use the INTERSECT_COUNT bitmap function in PlaidCloud Lakehouse. Returns the count of elements in the intersection of multiple bitmaps filtered by dimension."
 ---
 
 Returns the count of elements in the intersection of multiple bitmaps filtered by dimension.

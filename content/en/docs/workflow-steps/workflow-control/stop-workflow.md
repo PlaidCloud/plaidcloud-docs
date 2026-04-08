@@ -2,7 +2,7 @@
 title: Stop Workflow
 slug: stop-workflow
 weight: 3.0
-description: Stop an existing, running workflow
+description: Stop a running workflow from a PlaidCloud workflow step to halt execution when processing is complete or conditions require it.
 date: 2022-01-25T07:39:50
 ---
 

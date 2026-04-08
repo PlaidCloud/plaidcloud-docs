@@ -1,5 +1,6 @@
 ---
 title: H3_TO_STRING
+description: "Learn how to use the H3_TO_STRING utility function in PlaidCloud Lakehouse. Converts the representation of the given H3 index to the string representation."
 ---
 
 Converts the representation of the given [H3](https://eng.uber.com/h3/) index to the string representation. 

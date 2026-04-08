@@ -1,5 +1,6 @@
 ---
 title: LOOKUP_STRING
+description: "Learn how to use the LOOKUP_STRING meta function in PlaidCloud Lakehouse. Looks up a string in a dictionary and returns the corresponding ID."
 ---
 
 Looks up a string in a dictionary and returns the corresponding ID.

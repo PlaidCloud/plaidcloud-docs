@@ -1,5 +1,6 @@
 ---
 title: SECONDS_ADD
+description: "Learn how to use the SECONDS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of seconds to a datetime - with syntax and examples."
 ---
 
 Adds a specified number of seconds to a datetime.

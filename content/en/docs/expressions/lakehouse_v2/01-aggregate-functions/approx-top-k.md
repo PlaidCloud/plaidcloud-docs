@@ -1,5 +1,6 @@
 ---
 title: APPROX_TOP_K
+description: "Learn how to use the APPROX_TOP_K aggregate function in PlaidCloud Lakehouse. Returns the top-k most frequent values and their approximate counts."
 ---
 
 Returns the top-k most frequent values and their approximate counts.

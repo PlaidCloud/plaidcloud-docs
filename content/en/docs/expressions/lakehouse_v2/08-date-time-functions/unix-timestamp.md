@@ -1,5 +1,6 @@
 ---
 title: UNIX_TIMESTAMP
+description: "Learn how to use the UNIX_TIMESTAMP date/time function in PlaidCloud Lakehouse. Converts a datetime to a Unix timestamp - see syntax, examples, and output."
 ---
 
 Converts a datetime to a Unix timestamp.

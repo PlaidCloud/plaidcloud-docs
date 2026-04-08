@@ -1,5 +1,6 @@
 ---
 title: DIVIDE
+description: "Learn how to use the DIVIDE math function in PlaidCloud Lakehouse. Returns the result of dividing one number by another - see syntax, examples, and output."
 ---
 
 Returns the result of dividing one number by another.

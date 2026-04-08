@@ -1,5 +1,6 @@
 ---
 title: GREATEST
+description: "Learn how to use the GREATEST conditional function in PlaidCloud Lakehouse. Returns the maximum value from a set of values. Includes syntax and examples."
 ---
 
 Returns the maximum value from a set of values.

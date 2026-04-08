@@ -1,5 +1,6 @@
 ---
 title: MIN_BY
+description: "Learn how to use the MIN_BY aggregate function in PlaidCloud Lakehouse. Returns the value of one column associated with the minimum value of another column."
 ---
 
 Returns the value of one column associated with the minimum value of another column.

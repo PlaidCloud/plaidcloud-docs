@@ -1,7 +1,7 @@
 ---
 title: Rename SAP PCM Model
 slug: rename-sap-pcm-model
-description: Renames your SAP Profitability and Cost Management model
+description: Rename an SAP PCM model from a PlaidCloud workflow step to update model names for organization and identification purposes.
 date: 2022-01-25T07:39:51
 ---
 

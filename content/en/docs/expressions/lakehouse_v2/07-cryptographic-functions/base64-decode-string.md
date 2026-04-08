@@ -1,5 +1,6 @@
 ---
 title: BASE64_DECODE_STRING
+description: "Learn how to use the BASE64_DECODE_STRING cryptographic function in PlaidCloud Lakehouse. Decodes a base64-encoded string to a VARCHAR string."
 ---
 
 Decodes a base64-encoded string to a VARCHAR string.

@@ -2,7 +2,7 @@
 title: Managing Tables and Views
 slug: managing-tables-and-views
 weight: 3.0
-description: Organize and manage your tables and views
+description: Manage tables and views within PlaidCloud projects including creation, configuration, permissions, and data object organization.
 date: 2022-01-25T07:39:48
 ---
 

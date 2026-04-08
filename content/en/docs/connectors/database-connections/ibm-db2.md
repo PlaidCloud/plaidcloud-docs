@@ -1,7 +1,7 @@
 ---
 title: IBM DB2
 slug: ibm-db2
-description: Connecting to IBM DB2 Database
+description: Configure an IBM DB2 database connection in PlaidCloud to query, import, and export data with your DB2 database instances.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

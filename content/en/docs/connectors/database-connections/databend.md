@@ -1,7 +1,7 @@
 ---
 title: Databend
 slug: databend
-description: Connecting to Databend Database
+description: Set up a Databend database connection in PlaidCloud to run cloud-native analytical queries with cost-effective data storage.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

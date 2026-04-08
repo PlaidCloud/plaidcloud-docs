@@ -1,5 +1,6 @@
 ---
 title: AS_<type>
+description: "Learn how to use the AS_<TYPE> semi-structured data function in PlaidCloud Lakehouse. Strict casting VARIANT values to other data types. Includes syntax and..."
 ---
 
 Strict casting `VARIANT` values to other data types.

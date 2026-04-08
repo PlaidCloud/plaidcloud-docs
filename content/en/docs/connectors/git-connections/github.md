@@ -1,7 +1,7 @@
 ---
 title: GitHub Repository Connector
 slug: github
-description: Connecting to GitHub
+description: Set up a GitHub repository connection in PlaidCloud to integrate version-controlled code and configuration into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

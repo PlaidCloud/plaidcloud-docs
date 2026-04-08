@@ -1,5 +1,6 @@
 ---
 title: BITMAP_AGG
+description: "Learn how to use the BITMAP_AGG bitmap function in PlaidCloud Lakehouse. Aggregates integer values into a bitmap - see syntax, examples, and output."
 ---
 
 Aggregates integer values into a bitmap.

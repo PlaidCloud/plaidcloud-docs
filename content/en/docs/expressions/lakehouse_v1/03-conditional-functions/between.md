@@ -1,5 +1,6 @@
 ---
 title: "[ NOT ] BETWEEN"
+description: "Learn how to use the [ NOT ] BETWEEN conditional function in PlaidCloud Lakehouse. Returns true if the given numeric or string  <expr> falls inside the..."
 ---
 
 Returns `true` if the given numeric or string ` <expr>` falls inside the defined lower and upper limits.

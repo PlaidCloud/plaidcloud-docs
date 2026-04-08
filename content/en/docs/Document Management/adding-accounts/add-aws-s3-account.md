@@ -2,7 +2,7 @@
 title: Add AWS S3 Account
 slug: add-aws-s3-account
 weight: 1.0
-description: How to add an AWS Simple Storage Service (S3) account to Document
+description: Add an AWS S3 storage account to PlaidCloud for importing and exporting data files using Amazon cloud object storage.
 date: 2022-01-25T07:39:47
 ---
 

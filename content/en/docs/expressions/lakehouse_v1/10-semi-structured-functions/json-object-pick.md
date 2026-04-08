@@ -1,5 +1,6 @@
 ---
 title: JSON_OBJECT_PICK
+description: "Learn how to use the JSON_OBJECT_PICK semi-structured data function in PlaidCloud Lakehouse. Creates a new JSON object containing only the specified keys..."
 ---
 
 Creates a new JSON object containing only the specified keys from the input JSON object. If a specified key doesn't exist in the input object, it is omitted from the result.

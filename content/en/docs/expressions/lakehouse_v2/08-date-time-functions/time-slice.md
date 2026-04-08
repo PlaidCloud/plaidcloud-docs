@@ -1,5 +1,6 @@
 ---
 title: TIME_SLICE
+description: "Learn how to use the TIME_SLICE date/time function in PlaidCloud Lakehouse. Converts a given time to the beginning or end of a time interval."
 ---
 
 Converts a given time to the beginning or end of a time interval.

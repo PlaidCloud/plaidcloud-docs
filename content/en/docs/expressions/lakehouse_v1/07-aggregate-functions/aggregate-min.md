@@ -1,5 +1,6 @@
 ---
 title: MIN
+description: "Learn how to use the MIN aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes usage and syntax details."
 ---
 
 Aggregate function.

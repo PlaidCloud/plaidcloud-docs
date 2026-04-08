@@ -1,5 +1,6 @@
 ---
 title: TOKENIZE
+description: "Use the TOKENIZE string function in PlaidCloud Lakehouse. Tokenizes a string into an array of terms using the specified analyzer. Useful for full-text search."
 ---
 
 Tokenizes a string into an array of terms using the specified analyzer. Useful for full-text search scenarios.

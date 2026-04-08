@@ -1,5 +1,6 @@
 ---
 title: CORR
+description: "Learn how to use the CORR aggregate function in PlaidCloud Lakehouse. Returns the Pearson correlation coefficient between two expressions."
 ---
 
 Returns the Pearson correlation coefficient between two expressions.

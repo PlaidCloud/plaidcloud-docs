@@ -2,7 +2,7 @@
 title: Notify Distribution Group
 slug: notify-distribution-group
 weight: 1.0
-description: Send an email to a PlaidCloud distribution group
+description: Send notifications to a distribution group from a PlaidCloud workflow step to alert multiple recipients about workflow events.
 date: 2022-01-25T07:40:18
 ---
 
@@ -16,7 +16,7 @@ Send an email notification to a PlaidCloud distribution group. Messages are sent
 ## Select PlaidCloud Distribution List
 
 
-Select a single distribution list from the drop down menu. Distribution lists can be created using Tools. For details on creating a distribution list, see here: [PlaidCloud Tools – Distro](/iam/iam/member-management/#managing-distribution-distro-lists).
+Select a single distribution list from the drop down menu. Distribution lists can be created using Tools. For details on creating a distribution list, see here: [PlaidCloud Tools – Distro](/docs/access_management/member-management/#managing-distribution-distro-lists).
 
 
 

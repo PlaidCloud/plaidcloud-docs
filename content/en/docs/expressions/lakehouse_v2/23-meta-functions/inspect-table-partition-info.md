@@ -1,5 +1,6 @@
 ---
 title: INSPECT_TABLE_PARTITION_INFO
+description: "Learn how to use the INSPECT_TABLE_PARTITION_INFO meta function in PlaidCloud Lakehouse. Returns partition information for a table - with syntax and examples."
 ---
 
 Returns partition information for a table.

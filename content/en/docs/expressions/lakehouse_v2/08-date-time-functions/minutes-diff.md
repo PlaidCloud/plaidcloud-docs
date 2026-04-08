@@ -1,5 +1,6 @@
 ---
 title: MINUTES_DIFF
+description: "Learn how to use the MINUTES_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of minutes between two datetimes - with syntax and examples."
 ---
 
 Returns the number of minutes between two datetimes.

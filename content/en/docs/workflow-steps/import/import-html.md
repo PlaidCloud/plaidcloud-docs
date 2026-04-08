@@ -2,7 +2,7 @@
 title: Import HTML
 slug: import-html
 weight: 9.0
-description: Import HTML table data from the internet
+description: Import HTML table data into PlaidCloud as a workflow step to extract structured data from web pages and HTML documents.
 date: 2022-01-25T07:39:57
 ---
 

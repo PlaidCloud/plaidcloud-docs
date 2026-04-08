@@ -2,7 +2,7 @@
 title: Archive a Project
 slug: archive-a-project
 weight: 6.0
-description: Create and Restore your project archives
+description: Archive PlaidCloud projects to preserve completed work, free up workspace resources, and maintain a clean project environment.
 date: 2022-01-25T07:39:48
 ---
 

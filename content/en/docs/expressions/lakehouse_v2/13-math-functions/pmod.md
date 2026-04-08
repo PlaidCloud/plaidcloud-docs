@@ -1,5 +1,6 @@
 ---
 title: PMOD
+description: "Learn how to use the PMOD math function in PlaidCloud Lakehouse. Returns the positive modulus of dividing two numbers - see syntax, examples, and output."
 ---
 
 Returns the positive modulus of dividing two numbers.

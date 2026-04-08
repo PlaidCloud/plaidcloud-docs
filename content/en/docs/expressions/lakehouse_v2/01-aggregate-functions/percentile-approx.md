@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_APPROX
+description: "Learn how to use the PERCENTILE_APPROX aggregate function in PlaidCloud Lakehouse. Returns an approximate percentile value using the t-digest algorithm."
 ---
 
 Returns an approximate percentile value using the t-digest algorithm.

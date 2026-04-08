@@ -1,7 +1,7 @@
 ---
 title: Using Dimensions (Hierarchies)
 slug: hierarchies
-description: Using and managing hierarchical data
+description: Get started with PlaidCloud dimensions to organize hierarchical data with attributes, properties, and calculated values.
 date: 2022-01-25T07:39:48
 weight: 3.0
 ---

@@ -1,5 +1,6 @@
 ---
 title: CRC32
+description: "Learn how to use the CRC32 numeric function in PlaidCloud Lakehouse. Returns the CRC32 checksum of x, where 'x' is expected to be a string and (if possible)..."
 ---
 
 Returns the CRC32 checksum of `x`, where 'x' is expected to be a string and (if possible) is treated as one if it is not.

@@ -1,7 +1,7 @@
 ---
 title: Quickbooks REST Connector
 slug: quickbooks-connector
-description: Connecting to Quickbooks from PlaidCloud using REST
+description: Configure a QuickBooks REST API connection in PlaidCloud to integrate accounting and financial data into your analysis workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -2,7 +2,7 @@
 title: Upgrade
 slug: upgrade
 weight: 4.0
-description: Perform a manual upgrade of the PlaidLink Agent installation
+description: Upgrade your PlaidLink agent to the latest version to access new features, security patches, and improved system compatibility.
 date: 2022-12-20
 tags:
 - plaidcloud

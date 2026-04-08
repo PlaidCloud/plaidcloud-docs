@@ -2,7 +2,7 @@
 title: Running one step in a workflow
 slug: running-one-step-in-a-workflow
 weight: 7.0
-description: Execute a single step within a workflow
+description: Run a single step within a PlaidCloud workflow to test, debug, or selectively execute individual data processing operations.
 date: 2022-01-25T07:40:20
 ---
 

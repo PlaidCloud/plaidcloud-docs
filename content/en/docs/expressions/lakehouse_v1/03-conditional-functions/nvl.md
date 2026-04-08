@@ -1,5 +1,6 @@
 ---
 title: NVL
+description: "Learn how to use the NVL conditional function in PlaidCloud Lakehouse. If <expr1> is NULL, returns <expr2>, otherwise returns <expr1>. With syntax and examples."
 ---
 
 If `<expr1>` is NULL, returns `<expr2>`, otherwise returns `<expr1>`.

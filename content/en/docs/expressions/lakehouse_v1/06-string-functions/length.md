@@ -1,5 +1,6 @@
 ---
 title: LENGTH
+description: "Learn how to use the LENGTH string function in PlaidCloud Lakehouse. Returns the length of a given input string or binary value. Includes syntax and examples."
 ---
 
 Returns the length of a given input string or binary value. In the case of strings, the length represents the count of characters, with each UTF-8 character considered as a single character. For binary data, the length corresponds to the number of bytes.

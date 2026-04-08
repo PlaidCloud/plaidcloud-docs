@@ -1,5 +1,6 @@
 ---
 title: SM3
+description: "Learn how to use the SM3 cryptographic function in PlaidCloud Lakehouse. Returns the SM3 hash of a string - see syntax, examples, and output."
 ---
 
 Returns the SM3 hash of a string.

@@ -1,5 +1,6 @@
 ---
 title: "[ NOT ] IN"
+description: "Learn how to use the [ NOT ] IN conditional function in PlaidCloud Lakehouse. Checks whether a value is (or is not) in an explicit list. Includes syntax and..."
 ---
 
 Checks whether a value is (or is not) in an explicit list.

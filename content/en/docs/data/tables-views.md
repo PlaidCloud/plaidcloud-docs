@@ -1,7 +1,7 @@
 ---
 title: Using Tables and Views
 slug: tables-views
-description: Using and managing tables and views
+description: Create, manage, and query tables and views in PlaidCloud to organize and access your structured data for analysis workflows.
 date: 2022-01-25T07:39:48
 weight: 1.0
 ---

@@ -1,5 +1,6 @@
 ---
 title: ST_NPOINTS
+description: "Learn how to use the ST_NPOINTS geometry function in PlaidCloud Lakehouse. Returns the number of points in a GEOMETRY object. Includes syntax and examples."
 ---
 
 Returns the number of points in a GEOMETRY object.

@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_QUARTER
+description: "Learn how to use the TO_START_OF_QUARTER datetime function in PlaidCloud Lakehouse. Rounds down a date or date with time (timestamp/datetime) to the first..."
 ---
 
 Rounds down a date or date with time (timestamp/datetime) to the first day of the quarter.

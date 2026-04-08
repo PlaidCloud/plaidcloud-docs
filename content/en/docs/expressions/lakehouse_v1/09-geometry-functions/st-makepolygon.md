@@ -1,5 +1,6 @@
 ---
 title: ST_MAKEPOLYGON
+description: "Learn how to use the ST_MAKEPOLYGON geometry function in PlaidCloud Lakehouse. Constructs a GEOMETRY object that represents a Polygon without holes."
 ---
 
 Constructs a GEOMETRY object that represents a Polygon without holes. The function uses the specified LineString as the outer loop.

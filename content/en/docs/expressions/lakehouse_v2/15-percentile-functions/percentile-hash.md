@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_HASH
+description: "Learn how to use the PERCENTILE_HASH percentile function in PlaidCloud Lakehouse. Computes a percentile state from a numeric value - with syntax and examples."
 ---
 
 Computes a percentile state from a numeric value.

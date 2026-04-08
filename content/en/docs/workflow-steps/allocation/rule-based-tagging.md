@@ -2,7 +2,7 @@
 title: Rule-Based Tagging
 slug: rule-based-tagging
 weight: 14.0
-description: Tag data based on rules
+description: Tag data records based on configurable rules in PlaidCloud workflow steps for automated categorization and data classification.
 date: 2022-05-10T14:00:00
 ---
 

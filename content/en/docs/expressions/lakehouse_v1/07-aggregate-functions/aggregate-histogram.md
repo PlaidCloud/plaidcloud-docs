@@ -1,5 +1,6 @@
 ---
 title: HISTOGRAM
+description: "Learn how to use the HISTOGRAM aggregate function in PlaidCloud Lakehouse. Generates a data distribution histogram using equal-height bucketing strategy."
 ---
 
 Generates a data distribution histogram using an "equal height" bucketing strategy.

@@ -1,5 +1,6 @@
 ---
 title: FUSE_BLOCK
+description: "Learn how to use the FUSE_BLOCK system function in PlaidCloud Lakehouse. Returns the block information of the latest or specified snapshot of a table."
 ---
 
 Returns the block information of the latest or specified snapshot of a table. For more information about what is block in PlaidCloud Lakehouse, see What are Snapshot, Segment, and Block?.

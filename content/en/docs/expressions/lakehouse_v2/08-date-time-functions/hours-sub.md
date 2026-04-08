@@ -1,5 +1,6 @@
 ---
 title: HOURS_SUB
+description: "Learn how to use the HOURS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of hours from a datetime - with syntax and examples."
 ---
 
 Subtracts a specified number of hours from a datetime.

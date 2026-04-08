@@ -1,5 +1,6 @@
 ---
 title: H3_CELL_AREA_M2
+description: "Learn how to use the H3_CELL_AREA_M2 utility function in PlaidCloud Lakehouse. Returns the exact area of specific cell in square meters. Includes syntax and..."
 ---
 
 Returns the exact area of specific cell in square meters.

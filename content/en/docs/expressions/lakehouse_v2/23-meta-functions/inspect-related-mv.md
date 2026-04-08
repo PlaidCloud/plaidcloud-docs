@@ -1,5 +1,6 @@
 ---
 title: INSPECT_RELATED_MV
+description: "Learn how to use the INSPECT_RELATED_MV meta function in PlaidCloud Lakehouse. Returns materialized views related to a table - with syntax and examples."
 ---
 
 Returns materialized views related to a table.

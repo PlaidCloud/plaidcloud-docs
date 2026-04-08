@@ -1,5 +1,6 @@
 ---
 title: REPEAT
+description: "Learn how to use the REPEAT string function in PlaidCloud Lakehouse. Returns a string consisting of the string str repeated count times. Includes syntax and..."
 ---
 
 Returns a string consisting of the string str repeated count times. If count is less than 1, returns an empty string. Returns NULL if str or count are NULL.

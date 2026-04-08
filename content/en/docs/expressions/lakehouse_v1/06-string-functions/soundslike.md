@@ -1,5 +1,6 @@
 ---
 title: SOUNDS LIKE
+description: "Learn how to use the SOUNDS LIKE string function in PlaidCloud Lakehouse. Compares the pronunciation of two strings by their Soundex codes. Includes syntax..."
 ---
 
 Compares the pronunciation of two strings by their Soundex codes. Soundex is a phonetic algorithm that produces a code representing the pronunciation of a string, allowing for approximate matching of strings based on their pronunciation rather than their spelling. PlaidCloud Lakehouse offers the [SOUNDEX](../soundex) function that allows you to get the Soundex code from a string.

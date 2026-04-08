@@ -1,5 +1,6 @@
 ---
 title: BITMAP_COUNT
+description: "Learn how to use the BITMAP_COUNT bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 1 in the bitmap. Includes syntax and examples."
 ---
 
 Counts the number of bits set to 1 in the bitmap.

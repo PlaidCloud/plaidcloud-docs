@@ -2,7 +2,7 @@
 title: Document - Remote Export File
 slug: document-remote-export-file
 weight: 5.0
-description: Exports a file to a remote file system using a PlaidLink agent installed within the firewall
+description: Export files to remote systems through a PlaidLink agent in PlaidCloud workflows for secure file transfers behind firewalls.
 date: 2022-01-25T07:39:56
 ---
 

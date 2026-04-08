@@ -1,5 +1,6 @@
 ---
 title: ST_SETSRID
+description: "Learn how to use the ST_SETSRID geometry function in PlaidCloud Lakehouse. Returns a GEOMETRY object that has its SRID (spatial reference system identifier)..."
 ---
 
 Returns a GEOMETRY object that has its [SRID (spatial reference system identifier)](https://en.wikipedia.org/wiki/Spatial_reference_system#Identifier) set to the specified value. This Function only change the SRID without affecting the coordinates of the object. If you also need to change the coordinates to match the new SRS (spatial reference system), use [ST_TRANSFORM](../st-transform) instead.

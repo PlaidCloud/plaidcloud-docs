@@ -2,7 +2,7 @@
 title: Document - Remote Delete File
 slug: document-remote-delete-file
 weight: 4.0
-description: Deletes a remote file system file using a PlaidLink agent installed within the firewall
+description: Delete files on remote systems through a PlaidLink agent in PlaidCloud workflows for secure file management behind firewalls.
 date: 2022-01-25T07:39:56
 ---
 

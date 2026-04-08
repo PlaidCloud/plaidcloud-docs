@@ -1,5 +1,6 @@
 ---
 title: AVG
+description: "Learn how to use the AVG aggregate function in PlaidCloud Lakehouse. Returns the average value of a numeric column - see syntax, examples, and output."
 ---
 
 Returns the average value of a numeric column.

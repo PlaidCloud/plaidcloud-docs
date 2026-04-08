@@ -2,7 +2,7 @@
 title: Notify via Microsoft Teams
 slug: notify-via-microsoft-teams
 weight: 5.0
-description: Send notifications to Microsoft Teams channels
+description: Send Microsoft Teams notifications from a PlaidCloud workflow step to alert channels or users about workflow events and status.
 date: 2022-01-25T07:40:21
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: TODAY
+description: "Learn how to use the TODAY datetime function in PlaidCloud Lakehouse. Returns current date. Includes detailed syntax, examples, and usage reference."
 ---
 
 Returns current date.

@@ -1,5 +1,6 @@
 ---
 title: SHOW_GRANTS
+description: "Learn how to use the SHOW_GRANTS table function in PlaidCloud Lakehouse. Lists privileges explicitly granted to a user, to a role, or on a specific object."
 ---
 
 Lists privileges explicitly granted to a user, to a role, or on a specific object.

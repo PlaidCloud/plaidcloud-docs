@@ -1,5 +1,6 @@
 ---
 title: ST_YMIN
+description: "Learn how to use the ST_YMIN geometry function in PlaidCloud Lakehouse. Returns the minimum latitude (Y coordinate) of all points contained in the specified..."
 ---
 
 Returns the minimum latitude (Y coordinate) of all points contained in the specified GEOMETRY object.

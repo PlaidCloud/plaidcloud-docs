@@ -2,7 +2,7 @@
 title: Formatting Numbers and Other Data Types
 slug: dashboard-formatting-numbers
 weight: 3.0
-description: How to format numbers and other data types to look how you want
+description: Format numbers in PlaidCloud dashboards including currency, percentages, decimal places, and custom number display patterns.
 date: 2023-12-18T06:49:48
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: STDDEV
+description: "Learn how to use the STDDEV aggregate function in PlaidCloud Lakehouse. Returns the population standard deviation. Alias for `STDDEV_POP`."
 ---
 
 Returns the population standard deviation. Alias for `STDDEV_POP`.

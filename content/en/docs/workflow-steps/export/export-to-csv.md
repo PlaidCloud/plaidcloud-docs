@@ -2,7 +2,7 @@
 title: Export to CSV
 slug: export-to-csv
 weight: 1.0
-description: Export an Analyze data table to PlaidCloud Document as a CSV delimited file
+description: Export data as CSV files from a PlaidCloud workflow step with configurable delimiters, encoding, and formatting options.
 date: 2022-01-25T07:39:58
 ---
 
@@ -86,7 +86,6 @@ Lastly, the **Use Windows Compatible Line Endings** checkbox is selected by defa
 
 
 
-For more aggregation details, see the Analyze overview page [here](/docs/workflow-steps/common/aggregation).
 
 
 

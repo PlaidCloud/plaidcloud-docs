@@ -1,5 +1,6 @@
 ---
 title: CONNECTION_ID
+description: "Learn how to use the CONNECTION_ID context function in PlaidCloud Lakehouse. Returns the connection ID for the current connection. Includes syntax and examples."
 ---
 
 Returns the connection ID for the current connection.

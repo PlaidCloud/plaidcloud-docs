@@ -1,5 +1,6 @@
 ---
 title: MAKEDATE
+description: "Learn how to use the MAKEDATE date/time function in PlaidCloud Lakehouse. Creates a date from a year and day-of-year value - with syntax and examples."
 ---
 
 Creates a date from a year and day-of-year value.

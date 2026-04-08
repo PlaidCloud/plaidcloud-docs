@@ -1,5 +1,6 @@
 ---
 title: H3_IS_PENTAGON
+description: "Learn how to use the H3_IS_PENTAGON utility function in PlaidCloud Lakehouse. Checks if the given H3 index represents a pentagonal cell. Includes syntax and..."
 ---
 
 Checks if the given [H3](https://eng.uber.com/h3/) index represents a pentagonal cell. 

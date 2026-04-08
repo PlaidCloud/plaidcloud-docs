@@ -1,7 +1,7 @@
 ---
 linktitle: Overview
 title: Overview
-Description: A general overview of how members and organizations work.
+description: Overview of PlaidCloud member management and organization structure, including workspaces, roles, and access permissions.
 Weight: 1.0
 
 ---

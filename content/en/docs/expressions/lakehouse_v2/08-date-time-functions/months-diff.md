@@ -1,5 +1,6 @@
 ---
 title: MONTHS_DIFF
+description: "Learn how to use the MONTHS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of months between two dates - with syntax and examples."
 ---
 
 Returns the number of months between two dates.

@@ -1,5 +1,6 @@
 ---
 title: COVAR_SAMP
+description: "Learn how to use the COVAR_SAMP aggregate function in PlaidCloud Lakehouse. Returns the sample covariance of two expressions - with syntax and examples."
 ---
 
 Returns the sample covariance of two expressions.

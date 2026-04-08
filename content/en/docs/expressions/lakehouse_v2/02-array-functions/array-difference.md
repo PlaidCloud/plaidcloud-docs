@@ -1,5 +1,6 @@
 ---
 title: ARRAY_DIFFERENCE
+description: "Learn how to use the ARRAY_DIFFERENCE array function in PlaidCloud Lakehouse. Returns an array of differences between consecutive elements."
 ---
 
 Returns an array of differences between consecutive elements.

@@ -1,5 +1,6 @@
 ---
 title: DATE_SLICE
+description: "Use the DATE_SLICE date/time function in PlaidCloud Lakehouse. Converts a given time to the beginning or end of a time interval based on the specified period."
 ---
 
 Converts a given time to the beginning or end of a time interval based on the specified period.

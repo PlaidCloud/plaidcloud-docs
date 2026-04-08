@@ -2,7 +2,7 @@
 title: Import SAS7BDAT
 slug: import-sas7bdat
 weight: 13.0
-description: Import SAS table files from PlaidCloud Document
+description: Import SAS data files in SAS7BDAT format into PlaidCloud as a workflow step for migrating statistical analysis datasets.
 date: 2022-01-25T07:39:57
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: QUANTILE_CONT
+description: "Learn how to use the QUANTILE_CONT aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

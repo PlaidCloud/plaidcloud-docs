@@ -2,7 +2,7 @@
 title: Import XML
 slug: import-xml
 weight: 17.0
-description: Import XML data as an XML file
+description: Import XML data files into PlaidCloud as a workflow step with support for nested element parsing and attribute extraction.
 date: 2022-01-25T07:39:57
 ---
 

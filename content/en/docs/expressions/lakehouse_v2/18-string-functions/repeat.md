@@ -1,5 +1,6 @@
 ---
 title: REPEAT
+description: "Learn how to use the REPEAT string function in PlaidCloud Lakehouse. Repeats a string a specified number of times - see syntax, examples, and output."
 ---
 
 Repeats a string a specified number of times.

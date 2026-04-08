@@ -1,7 +1,7 @@
 ---
 title: Dimension Functions for Expressions and Aggregations
 slug: dimension_expressions
-description: Within the Dimension Hierarchy screen it is possible to add 'Aggregations' and 'Expressions'
+description: Use function expressions in PlaidCloud dimensions to define calculated values, conditional logic, and dynamic member properties.
 date: 2022-01-25T07:39:48
 weight: 3.0
 ---

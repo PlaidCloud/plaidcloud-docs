@@ -1,5 +1,6 @@
 ---
 title: ST_STARTPOINT
+description: "Learn how to use the ST_STARTPOINT geometry function in PlaidCloud Lakehouse. Returns the first Point in a LineString. Includes syntax and examples."
 ---
 
 Returns the first Point in a LineString.

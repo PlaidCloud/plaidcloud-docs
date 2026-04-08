@@ -1,7 +1,7 @@
 ---
 title: Learning About Dashboards
 slug: learning-dashboard
-description: Understanding Dashboard features and how to troubleshoot errors and warnings
+description: Get started building PlaidCloud dashboards with this learning guide covering chart types, data sources, and layout configuration.
 date: 2022-01-25T07:39:48
 weight: 1.0
 ---

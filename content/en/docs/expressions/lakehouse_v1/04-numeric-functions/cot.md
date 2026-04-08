@@ -1,5 +1,6 @@
 ---
 title: COT
+description: "Learn how to use the COT numeric function in PlaidCloud Lakehouse. Returns the cotangent of x, where x is given in radians. Includes syntax and examples."
 ---
 
 Returns the cotangent of `x`, where `x` is given in radians.

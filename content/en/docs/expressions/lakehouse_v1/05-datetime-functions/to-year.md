@@ -1,5 +1,6 @@
 ---
 title: TO_YEAR
+description: "Learn how to use the TO_YEAR datetime function in PlaidCloud Lakehouse. Converts a date or date with time (timestamp/datetime) to a UInt16 number containing..."
 ---
 
 Converts a date or date with time (timestamp/datetime) to a UInt16 number containing the year number (AD).

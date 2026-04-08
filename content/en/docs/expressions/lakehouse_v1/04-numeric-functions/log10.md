@@ -1,5 +1,6 @@
 ---
 title: LOG10
+description: "Learn how to use the LOG10 numeric function in PlaidCloud Lakehouse. Returns the base-10 logarithm of x. Reference with syntax and examples."
 ---
 
 Returns the base-10 logarithm of `x`. If `x` is less than or equal to 0.0E0, the function returns NULL.

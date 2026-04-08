@@ -1,5 +1,6 @@
 ---
 title: INSPECT_TASK_RUNS
+description: "Learn how to use the INSPECT_TASK_RUNS meta function in PlaidCloud Lakehouse. Returns execution history of a task - see syntax, examples, and output."
 ---
 
 Returns execution history of a task.

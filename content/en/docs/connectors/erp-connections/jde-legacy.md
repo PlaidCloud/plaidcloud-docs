@@ -1,7 +1,7 @@
 ---
 title: JD Edwards (Legacy) Connector
 slug: jde-legacy
-description: Connecting to JD Edwards Legacy ERP System
+description: Configure a JD Edwards Legacy ERP connection in PlaidCloud to integrate financial and operational data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

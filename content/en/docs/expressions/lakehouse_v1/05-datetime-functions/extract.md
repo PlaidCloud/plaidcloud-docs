@@ -1,5 +1,6 @@
 ---
 title: EXTRACT
+description: "Learn how to use the EXTRACT datetime function in PlaidCloud Lakehouse. Retrieves the designated portion of a date, time, or timestamp. Includes syntax and..."
 ---
 
 Retrieves the designated portion of a date, time, or timestamp.

@@ -1,5 +1,6 @@
 ---
 title: MAP_VALUES
+description: "Learn how to use the MAP_VALUES map function in PlaidCloud Lakehouse. Returns the values in a map. Includes detailed syntax, examples, and usage reference."
 ---
 
 Returns the values in a map.

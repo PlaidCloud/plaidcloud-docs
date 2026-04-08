@@ -1,5 +1,6 @@
 ---
 title: ST_LENGTH
+description: "Learn how to use the ST_LENGTH geometry function in PlaidCloud Lakehouse. Returns the Euclidean length of the LineString(s) in a GEOMETRY object."
 ---
 
 Returns the Euclidean length of the LineString(s) in a GEOMETRY object.

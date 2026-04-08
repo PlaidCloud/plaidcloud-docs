@@ -1,5 +1,6 @@
 ---
 title: FMOD
+description: "Learn how to use the FMOD math function in PlaidCloud Lakehouse. Returns the floating-point remainder of dividing two numbers - with syntax and examples."
 ---
 
 Returns the floating-point remainder of dividing two numbers.

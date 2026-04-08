@@ -1,5 +1,6 @@
 ---
 title: ST_LINEFROMTEXT
+description: "Learn how to use the ST_LINEFROMTEXT spatial function in PlaidCloud Lakehouse. Creates a line geometry from a WKT string - see syntax, examples, and output."
 ---
 
 Creates a line geometry from a WKT string.

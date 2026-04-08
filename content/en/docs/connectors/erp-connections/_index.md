@@ -1,7 +1,7 @@
 ---
 title: ERP System Connections
 slug: erp-connections
-description: ERP connection requirements vary depending on the system.  See how to configure the individual connections.
+description: Connect PlaidCloud to enterprise ERP systems including SAP, Oracle, Infor, and JD Edwards for data extraction and integration.
 date: 2022-01-25T07:39:49
 ---
 

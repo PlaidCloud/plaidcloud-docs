@@ -1,5 +1,6 @@
 ---
 title: ST_DISTANCE
+description: "Learn how to use the ST_DISTANCE geometry function in PlaidCloud Lakehouse. Returns the minimum Euclidean distance between two GEOMETRY objects."
 ---
 
 Returns the minimum [Euclidean distance](https://en.wikipedia.org/wiki/Euclidean_distance) between two GEOMETRY objects.

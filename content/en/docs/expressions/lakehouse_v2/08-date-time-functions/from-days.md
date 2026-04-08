@@ -1,5 +1,6 @@
 ---
 title: FROM_DAYS
+description: "Learn how to use the FROM_DAYS date/time function in PlaidCloud Lakehouse. Converts a day count to a date - see syntax, examples, and output."
 ---
 
 Converts a day count to a date.

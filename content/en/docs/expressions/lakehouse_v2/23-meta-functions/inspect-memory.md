@@ -1,5 +1,6 @@
 ---
 title: INSPECT_MEMORY
+description: "Learn how to use the INSPECT_MEMORY meta function in PlaidCloud Lakehouse. Returns memory usage information for the current node - with syntax and examples."
 ---
 
 Returns memory usage information for the current node.

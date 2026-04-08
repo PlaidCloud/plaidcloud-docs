@@ -1,7 +1,7 @@
 ---
 title: Git Repository Connections
 slug: git-connections
-description: Git connection requirements vary depending on the Git service.  See how to configure the individual connections.
+description: Connect PlaidCloud to Git repositories including GitHub, GitLab, Bitbucket, Azure Repos, and AWS CodeCommit for version control.
 date: 2022-01-25T07:39:49
 ---
 

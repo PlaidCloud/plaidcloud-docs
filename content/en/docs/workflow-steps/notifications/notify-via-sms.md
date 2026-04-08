@@ -2,7 +2,7 @@
 title: Notify Via SMS
 slug: notify-via-sms
 weight: 7.0
-description: Send an SMS message
+description: Send SMS text message notifications from a PlaidCloud workflow step to alert recipients about workflow events and status updates.
 date: 2022-01-25T07:39:57
 ---
 

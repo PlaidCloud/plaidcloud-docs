@@ -1,5 +1,6 @@
 ---
 title: ST_ASWKT
+description: "Learn how to use the ST_ASWKT geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a WKT(well-known-text) format representation."
 ---
 
 Converts a GEOMETRY object into a [WKT(well-known-text)](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) format representation.

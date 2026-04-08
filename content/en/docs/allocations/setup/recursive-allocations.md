@@ -2,7 +2,7 @@
 title: Recursive Allocations
 slug: recursive-allocations
 weight: 2.0
-description: How to set up and manage recursive allocations
+description: Set up recursive allocations in PlaidCloud to handle multi-pass cost distribution where allocated costs feed subsequent rounds.
 date: 2022-01-25T07:40:20
 ---
 

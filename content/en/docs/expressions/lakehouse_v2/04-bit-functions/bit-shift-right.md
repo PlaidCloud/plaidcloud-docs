@@ -1,5 +1,6 @@
 ---
 title: BIT_SHIFT_RIGHT
+description: "Use the BIT_SHIFT_RIGHT bit function in PlaidCloud Lakehouse. Shifts the bits of a numeric value to the right by a specified number of positions (arithmetic)."
 ---
 
 Shifts the bits of a numeric value to the right by a specified number of positions (arithmetic).

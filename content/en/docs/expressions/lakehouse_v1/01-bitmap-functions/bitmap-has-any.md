@@ -1,5 +1,6 @@
 ---
 title: BITMAP_HAS_ANY
+description: "Learn how to use the BITMAP_HAS_ANY bitmap function in PlaidCloud Lakehouse. Checks if the first bitmap has any bit matching the bits in the second bitmap."
 ---
 
 Checks if the first bitmap has any bit matching the bits in the second bitmap.

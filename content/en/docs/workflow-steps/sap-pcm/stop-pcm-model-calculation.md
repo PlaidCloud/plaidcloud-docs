@@ -1,7 +1,7 @@
 ---
 title: Stop PCM Model Calculation
 slug: stop-pcm-model-calculation
-description: This function stops a PCM Model calculating process
+description: Stop a running SAP PCM model calculation from a PlaidCloud workflow step to halt processing when errors or issues are detected.
 date: 2022-01-25T07:39:50
 ---
 

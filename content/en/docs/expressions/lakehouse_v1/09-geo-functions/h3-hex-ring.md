@@ -1,5 +1,6 @@
 ---
 title: H3_HEX_RING
+description: "Learn how to use the H3_HEX_RING geo function in PlaidCloud Lakehouse. Returns the hollow ring of hexagons at grid distance k from a given origin index."
 ---
 
 Returns the "hollow" ring of hexagons at exactly grid distance `k` from the given [H3](https://eng.uber.com/h3/) index.

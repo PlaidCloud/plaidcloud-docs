@@ -1,7 +1,7 @@
 ---
 title: Loading and Unloading Dimensions
 slug: loading
-description: Load dimensions from and unload to tables
+description: Load and unload dimension data in PlaidCloud including bulk imports, data refresh, and synchronization with external data sources.
 date: 2022-01-25T07:39:48
 weight: 3.0
 ---
@@ -28,4 +28,4 @@ Exporting dimensions to tables supports two structural approaches:
 
 Properties and values can also be included in the flattened tabular data.
 
- See the Workflow Step for [Dimension Unload](/docs/workflow-steps/dimensions/dimension-unload) for more information.
+ See the Workflow Step for [Dimension Export](/docs/workflow-steps/dimensions/dimension-export) for more information.

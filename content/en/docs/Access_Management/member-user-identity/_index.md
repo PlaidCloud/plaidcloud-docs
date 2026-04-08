@@ -1,7 +1,7 @@
 ---
 title: Member (User) Identity
 slug: member-user-identity
-description: Authentication and Role-based security
+description: Configure PlaidCloud member identity settings including authentication methods, role-based security, and user profile management.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

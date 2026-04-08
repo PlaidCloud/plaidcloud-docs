@@ -1,7 +1,7 @@
 ---
 title: Setting Up AWS IAM Identity Center SAML for Single Sign-On
 slug: aws-saml-setup
-description: Configure AWS IAM Identity Center as a SAML identity provider for PlaidCloud Single Sign-On
+description: Set up AWS IAM Identity Center as a SAML provider for PlaidCloud single sign-on to enable federated authentication for members.
 date: 2024-01-01T00:00:00
 tags:
 - plaidcloud

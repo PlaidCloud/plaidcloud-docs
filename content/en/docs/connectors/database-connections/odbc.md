@@ -1,7 +1,7 @@
 ---
 title: ODBC
 slug: odbc
-description: Connecting to a Database using ODBC
+description: Set up an ODBC database connection in PlaidCloud to connect to any database system that provides an ODBC driver interface.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

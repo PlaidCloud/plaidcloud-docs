@@ -1,5 +1,6 @@
 ---
 title: DAYS_DIFF
+description: "Learn how to use the DAYS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of days between two dates - see syntax, examples, and output."
 ---
 
 Returns the number of days between two dates.

@@ -2,7 +2,7 @@
 title: Jupyter Notebooks
 slug: jupyter-notebook
 weight: 1.0
-description: Interact with PlaidCloud directory from Jupyter Notebooks
+description: Run Jupyter Notebooks in PlaidCloud for interactive data analysis, visualization, and Python-based data exploration workflows.
 date: 2022-01-25T07:39:47
 ---
 
@@ -36,7 +36,7 @@ pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utiliti
 
 ## Obtaining an OAuth Token
 
-See [OAuth Tokens](/docs/cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
+See [OAuth Tokens](/docs/jupyter_cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
 
 
 ## Open Jupyter Notebook User Interface

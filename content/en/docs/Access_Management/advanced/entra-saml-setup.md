@@ -1,7 +1,7 @@
 ---
 title: Setting Up Microsoft Entra ID SAML for Single Sign-On
 slug: entra-saml-setup
-description: Configure Microsoft Entra ID (Azure AD) as a SAML identity provider for PlaidCloud Single Sign-On
+description: Configure Microsoft Entra ID as a SAML identity provider for PlaidCloud single sign-on to enable secure federated authentication.
 date: 2024-01-01T00:00:00
 tags:
 - plaidcloud

@@ -1,5 +1,6 @@
 ---
 title: MAX_IF
+description: "Learn how to use the MAX_IF aggregate function in PlaidCloud Lakehouse. The suffix _IF can be appended to the name of any aggregate function."
 ---
 
 The suffix `_IF` can be appended to the name of any aggregate function. In this case, the aggregate function accepts an extra argument – a condition.

@@ -1,5 +1,6 @@
 ---
 title: JSON_EXTRACT_PATH_TEXT
+description: "Learn how to use the JSON_EXTRACT_PATH_TEXT semi-structured data function in PlaidCloud Lakehouse. Extracts value from a Json string by path_name."
 ---
 
 Extracts value from a Json string by `path_name`.

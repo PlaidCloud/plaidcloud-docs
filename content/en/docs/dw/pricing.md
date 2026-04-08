@@ -1,6 +1,6 @@
 ---
 title: Pricing
-description: PlaidCloud Data Lakehouse Service Pricing
+description: Understand PlaidCloud Data Lakehouse Service pricing including compute, storage, and data transfer costs for your deployment.
 weight: 2.0
 date: 2022-01-25T07:39:51
 ---

@@ -1,8 +1,9 @@
 ---
 title: DFLOOR
+description: "Learn how to use the DFLOOR math function in PlaidCloud Lakehouse. Alias for `FLOOR`. See [FLOOR](floor) - see syntax, examples, and output."
 ---
 
-Alias for `FLOOR`. See [FLOOR](../floor).
+Alias for `FLOOR`. See [FLOOR](floor).
 
 ## Analyze Syntax
 

@@ -1,5 +1,6 @@
 ---
 title: RPAD
+description: "Learn how to use the RPAD string function in PlaidCloud Lakehouse. Pads a string on the right to a specified length with a fill string."
 ---
 
 Pads a string on the right to a specified length with a fill string.

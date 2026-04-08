@@ -1,5 +1,6 @@
 ---
 title: JSON_PRETTY
+description: "Learn how to use the JSON_PRETTY semi-structured data function in PlaidCloud Lakehouse. Formats JSON data, making it more readable and presentable."
 ---
 
 Formats JSON data, making it more readable and presentable. It automatically adds indentation, line breaks, and other formatting to the JSON data for better visual representation.

@@ -1,5 +1,6 @@
 ---
 title: LAG
+description: "Learn how to use the LAG window function in PlaidCloud Lakehouse. LAG allows you to access the value of a column from a preceding row within the same result..."
 ---
 
 LAG allows you to access the value of a column from a preceding row within the same result set. It is typically used to retrieve the value of a column in the previous row, based on a specified ordering.

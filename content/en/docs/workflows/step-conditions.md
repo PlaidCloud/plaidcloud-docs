@@ -2,7 +2,7 @@
 title: Conditional Step Execution
 slug: step-conditions
 weight: 12.0
-description: Control if a step is executed in a workflow based on a set of conditions
+description: Configure conditional execution for PlaidCloud workflow steps to control which steps run based on variable values and logic.
 date: 2023-06-21T07:40:20
 ---
 

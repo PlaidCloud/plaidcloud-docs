@@ -1,5 +1,6 @@
 ---
 title: ENCODE_SORT_KEY
+description: "Use the ENCODE_SORT_KEY utility function in PlaidCloud Lakehouse. Encodes values into a binary sort key that preserves the sort order. Useful for compound."
 ---
 
 Encodes values into a binary sort key that preserves the sort order. Useful for compound sort keys.

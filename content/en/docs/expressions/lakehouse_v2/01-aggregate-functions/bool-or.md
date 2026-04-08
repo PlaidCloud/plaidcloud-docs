@@ -1,5 +1,6 @@
 ---
 title: BOOL_OR
+description: "Learn how to use the BOOL_OR aggregate function in PlaidCloud Lakehouse. Returns TRUE if any value in the group is TRUE - see syntax, examples, and output."
 ---
 
 Returns TRUE if any value in the group is TRUE.

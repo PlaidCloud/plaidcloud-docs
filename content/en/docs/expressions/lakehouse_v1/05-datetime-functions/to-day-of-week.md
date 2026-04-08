@@ -1,5 +1,6 @@
 ---
 title: TO_DAY_OF_WEEK
+description: "Learn how to use the TO_DAY_OF_WEEK datetime function in PlaidCloud Lakehouse. Converts a date or date with time (timestamp/datetime) to a UInt8 number..."
 ---
 
 Converts a date or date with time (timestamp/datetime) to a UInt8 number containing the number of the day of the week (Monday is 1, and Sunday is 7).

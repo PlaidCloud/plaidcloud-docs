@@ -2,7 +2,7 @@
 title: Workflow Explorer
 slug: workflow-explorer
 weight: 1.1
-description: View the details of your Workflows
+description: Use the PlaidCloud Workflow Explorer to view workflow details, step configurations, execution history, and dependency information.
 ---
 
 

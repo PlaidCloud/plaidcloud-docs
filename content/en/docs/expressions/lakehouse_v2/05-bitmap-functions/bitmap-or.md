@@ -1,5 +1,6 @@
 ---
 title: BITMAP_OR
+description: "Learn how to use the BITMAP_OR bitmap function in PlaidCloud Lakehouse. Returns the union of two bitmaps - see syntax, examples, and output."
 ---
 
 Returns the union of two bitmaps.

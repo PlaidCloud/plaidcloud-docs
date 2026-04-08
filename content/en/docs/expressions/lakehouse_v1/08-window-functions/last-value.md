@@ -1,5 +1,6 @@
 ---
 title: LAST_VALUE
+description: "Learn how to use the LAST_VALUE window function in PlaidCloud Lakehouse. Returns the last value from an ordered group of values. Includes syntax and examples."
 ---
 
 Returns the last value from an ordered group of values.

@@ -1,7 +1,7 @@
 ---
 title: Working with Data
 slug: retrieve
-description: Retrieve and save data using the PlaidCloud Excel Add-in after connecting to a PlaidCloud project
+description: Retrieve PlaidCloud data tables and views directly into Microsoft Excel using PlaidXL for local analysis and reporting tasks.
 date: 2022-01-25T07:39:47
 weight: 3.0
 tags:

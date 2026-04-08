@@ -1,5 +1,6 @@
 ---
 title: TO_MINUTES
+description: "Learn how to use the TO_MINUTES interval function in PlaidCloud Lakehouse. Converts a specified number of minutes into an Interval type. Includes syntax and..."
 ---
 
 Converts a specified number of minutes into an Interval type.

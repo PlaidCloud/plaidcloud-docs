@@ -2,7 +2,7 @@
 title: Notify Via Log
 slug: notify-via-log
 weight: 4.0
-description: Write a message to the Analyze workflow log
+description: Write log entries from a PlaidCloud workflow step to record status messages, debugging information, and audit trail events.
 date: 2022-01-25T07:39:57
 ---
 

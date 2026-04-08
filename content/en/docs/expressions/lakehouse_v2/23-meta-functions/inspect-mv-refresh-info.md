@@ -1,5 +1,6 @@
 ---
 title: INSPECT_MV_REFRESH_INFO
+description: "Learn how to use the INSPECT_MV_REFRESH_INFO meta function in PlaidCloud Lakehouse. Returns refresh information for a materialized view."
 ---
 
 Returns refresh information for a materialized view.

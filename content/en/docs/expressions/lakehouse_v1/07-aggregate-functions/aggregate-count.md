@@ -1,5 +1,6 @@
 ---
 title: COUNT
+description: "Learn how to use the COUNT aggregate function in PlaidCloud Lakehouse. Returns the number of records returned by a SELECT query. Includes syntax and examples."
 ---
 
 The COUNT() function returns the number of records returned by a SELECT query.

@@ -1,5 +1,6 @@
 ---
 title: CURRENT_TIMEZONE
+description: "Learn how to use the CURRENT_TIMEZONE date/time function in PlaidCloud Lakehouse. Returns the current session time zone - see syntax, examples, and output."
 ---
 
 Returns the current session time zone.

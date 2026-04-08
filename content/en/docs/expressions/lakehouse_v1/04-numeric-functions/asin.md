@@ -1,5 +1,6 @@
 ---
 title: ASIN
+description: "Learn how to use the ASIN numeric function in PlaidCloud Lakehouse. Returns the arc sine of x, that is, the value whose sine is x. Includes syntax and examples."
 ---
 
 Returns the arc sine of `x`, that is, the value whose sine is `x`. Returns NULL if `x` is not in the range -1 to 1.

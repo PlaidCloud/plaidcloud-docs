@@ -1,7 +1,7 @@
 ---
 title: Viewing and Managing Workspaces
 slug: viewing-and-managing-workspaces
-description: Control how workspaces are configured and accessed
+description: View and manage your PlaidCloud workspaces including settings, membership, connected services, and workspace configuration options.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

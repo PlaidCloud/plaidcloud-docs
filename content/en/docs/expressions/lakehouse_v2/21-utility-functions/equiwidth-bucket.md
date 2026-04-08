@@ -1,5 +1,6 @@
 ---
 title: EQUIWIDTH_BUCKET
+description: "Use the EQUIWIDTH_BUCKET utility function in PlaidCloud Lakehouse. Returns the bucket number for a value in an equi-width histogram. Divides the range [min,."
 ---
 
 Returns the bucket number for a value in an equi-width histogram. Divides the range [min, max] into equal-width intervals.

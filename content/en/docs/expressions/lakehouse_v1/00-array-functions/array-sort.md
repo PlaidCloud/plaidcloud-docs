@@ -1,5 +1,6 @@
 ---
 title: ARRAY_SORT
+description: "Learn how to use the ARRAY_SORT array function in PlaidCloud Lakehouse. Sorts elements in the array in ascending order. Includes syntax and examples."
 ---
 
 Sorts elements in the array in ascending order.

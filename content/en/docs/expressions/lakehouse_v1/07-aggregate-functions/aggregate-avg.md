@@ -1,5 +1,6 @@
 ---
 title: AVG
+description: "Learn how to use the AVG aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes usage and syntax details."
 ---
 
 Aggregate function.

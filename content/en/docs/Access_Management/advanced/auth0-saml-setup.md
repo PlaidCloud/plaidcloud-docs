@@ -1,7 +1,7 @@
 ---
 title: Setting Up Auth0 SAML for Single Sign-On
 slug: auth0-saml-setup
-description: Configure Auth0 as a SAML identity provider for PlaidCloud Single Sign-On
+description: Configure Auth0 as a SAML identity provider for PlaidCloud single sign-on to enable secure federated authentication for members.
 date: 2024-01-01T00:00:00
 tags:
 - plaidcloud

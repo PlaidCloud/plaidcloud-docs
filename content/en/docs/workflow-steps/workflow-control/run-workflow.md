@@ -2,7 +2,7 @@
 title: Run Workflow
 slug: run-workflow
 weight: 2.0
-description: Run an existing workflow
+description: Run an existing workflow from a PlaidCloud workflow step to chain workflow execution and build multi-workflow processing pipelines.
 date: 2022-01-25T07:40:18
 ---
 

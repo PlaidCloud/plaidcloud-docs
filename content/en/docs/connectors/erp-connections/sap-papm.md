@@ -1,7 +1,7 @@
 ---
 title: SAP Profitability and Performance Management (PaPM) Connector
 slug: sap-papm
-description: Connecting to SAP PaPM System
+description: Set up an SAP PaPM connection in PlaidCloud to integrate profitability analysis and performance management data into workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

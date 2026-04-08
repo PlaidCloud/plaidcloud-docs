@@ -1,5 +1,6 @@
 ---
 title: TO_UINT16
+description: "Learn how to use the TO_UINT16 conversion function in PlaidCloud Lakehouse. Converts a value to UINT16 data type. Includes syntax and examples."
 ---
 
 Converts a value to UINT16 data type.

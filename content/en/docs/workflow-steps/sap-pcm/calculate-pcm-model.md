@@ -1,7 +1,7 @@
 ---
 title: Calculate PCM Model
 slug: calculate-pcm-model
-description: Start your PCM Model Calculation Process
+description: Trigger SAP PCM model calculations from a PlaidCloud workflow step to run profitability and cost allocation processing jobs.
 date: 2022-01-25T07:39:52
 ---
 

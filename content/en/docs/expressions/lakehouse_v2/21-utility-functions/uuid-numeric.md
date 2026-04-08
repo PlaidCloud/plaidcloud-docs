@@ -1,5 +1,6 @@
 ---
 title: UUID_NUMERIC
+description: "Learn how to use the UUID_NUMERIC utility function in PlaidCloud Lakehouse. Returns a random UUID as a 128-bit LARGEINT value - with syntax and examples."
 ---
 
 Returns a random UUID as a 128-bit LARGEINT value.

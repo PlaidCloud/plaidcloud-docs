@@ -1,5 +1,6 @@
 ---
 title: Import CSV
+description: Import CSV and delimited text files into PlaidCloud workflows supporting comma, pipe, tab, and other delimiter formats.
 slug: import-csv
 weight: 2.0
 date: 2022-01-25T07:39:55

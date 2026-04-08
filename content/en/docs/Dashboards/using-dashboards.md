@@ -1,7 +1,7 @@
 ---
 title: Using Dashboards
 slug: using-dashboards
-description: Create and edit data tables within dashboard and explore the data
+description: Learn how to use and interact with PlaidCloud dashboards including filtering, drilling down, exporting, and sharing visualizations.
 date: 2022-01-25T07:39:48
 weight: 2.0
 ---

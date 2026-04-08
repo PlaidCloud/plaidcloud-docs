@@ -2,7 +2,7 @@
 title: Convert Document Encoding to ASCII
 slug: convert-document-encoding-to-ascii
 weight: 4.0
-description: Updates file encoding and converts all characters to ASCII
+description: Convert document file encoding to ASCII in a PlaidCloud workflow step to ensure compatibility with systems requiring ASCII text.
 date: 2022-01-25T07:39:55
 ---
 

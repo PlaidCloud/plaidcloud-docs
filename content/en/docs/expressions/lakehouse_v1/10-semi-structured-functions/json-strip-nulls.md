@@ -1,5 +1,6 @@
 ---
 title: JSON_STRIP_NULLS
+description: "Learn how to use the JSON_STRIP_NULLS semi-structured data function in PlaidCloud Lakehouse. Removes all properties with null values from a JSON object."
 ---
 
 Removes all properties with null values from a JSON object. 

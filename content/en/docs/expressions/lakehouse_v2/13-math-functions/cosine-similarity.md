@@ -1,5 +1,6 @@
 ---
 title: COSINE_SIMILARITY
+description: "Learn how to use the COSINE_SIMILARITY math function in PlaidCloud Lakehouse. Returns the cosine similarity between two arrays (vectors)."
 ---
 
 Returns the cosine similarity between two arrays (vectors).

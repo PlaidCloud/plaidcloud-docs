@@ -2,7 +2,7 @@
 title: Clear Workflow Log
 slug: clear-workflow-log
 weight: 11.0
-description: Clear the Log from an existing PlaidCloud 'Analyze' Workflow
+description: Clear the workflow log entries in a PlaidCloud workflow step to reset logging history and free up log storage space.
 date: 2022-01-25T07:39:52
 ---
 

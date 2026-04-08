@@ -1,7 +1,7 @@
 ---
 title: Oracle Fusion Connector
 slug: oracle-fusion
-description: Connecting to Oracle Fusion ERP System
+description: Set up an Oracle Fusion Cloud ERP connection in PlaidCloud to integrate financial and operational data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

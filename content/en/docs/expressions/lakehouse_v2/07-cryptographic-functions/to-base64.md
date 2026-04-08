@@ -1,5 +1,6 @@
 ---
 title: TO_BASE64
+description: "Learn how to use the TO_BASE64 cryptographic function in PlaidCloud Lakehouse. Encodes a string to a base64-encoded string - with syntax and examples."
 ---
 
 Encodes a string to a base64-encoded string.

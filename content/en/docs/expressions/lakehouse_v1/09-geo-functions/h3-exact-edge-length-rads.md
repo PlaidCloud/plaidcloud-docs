@@ -1,5 +1,6 @@
 ---
 title: H3_EXACT_EDGE_LENGTH_RADS
+description: "Learn how to use the H3_EXACT_EDGE_LENGTH_RADS utility function in PlaidCloud Lakehouse. Computes the length of this directed edge, in radians."
 ---
 
 Computes the length of this directed edge, in radians.

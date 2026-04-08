@@ -1,5 +1,6 @@
 ---
 title: UNNEST
+description: "Learn how to use the UNNEST array function in PlaidCloud Lakehouse. Expands an array into a set of rows - see syntax, examples, and output."
 ---
 
 Expands an array into a set of rows.

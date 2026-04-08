@@ -2,7 +2,7 @@
 title: Create Workflow
 slug: create-workflow
 weight: 1.0
-description: Create a new workflow in 'Analyze'
+description: Create a new workflow dynamically from a PlaidCloud workflow step to build automated workflow generation and management processes.
 date: 2022-01-25T07:40:17
 ---
 

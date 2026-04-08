@@ -1,8 +1,9 @@
 ---
 title: DEXP
+description: "Learn how to use the DEXP math function in PlaidCloud Lakehouse. Alias for `EXP`. See [EXP](exp) - see syntax, examples, and output."
 ---
 
-Alias for `EXP`. See [EXP](../exp).
+Alias for `EXP`. See [EXP](exp).
 
 ## Analyze Syntax
 

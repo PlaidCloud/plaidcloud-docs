@@ -1,5 +1,6 @@
 ---
 title: WINDOW_FUNNEL
+description: "Use the WINDOW_FUNNEL aggregate function in PlaidCloud Lakehouse. Searches for event chains in a time-ordered sequence and returns the maximum chain length."
 ---
 
 Searches for event chains in a time-ordered sequence and returns the maximum chain length.

@@ -1,5 +1,6 @@
 ---
 title: MAP_SIZE
+description: "Learn how to use the MAP_SIZE map function in PlaidCloud Lakehouse. Returns the size of a MAP. Includes detailed syntax, examples, and usage reference."
 ---
 
 Returns the size of a MAP.

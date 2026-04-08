@@ -2,7 +2,7 @@
 title: Notify Via Twitter
 slug: notify-via-twitter
 weight: 8.0
-description: Send a direct message from PlaidCloud
+description: Send direct messages from PlaidCloud via a workflow step for social media notifications and automated status update alerts.
 date: 2022-01-25T07:39:56
 ---
 

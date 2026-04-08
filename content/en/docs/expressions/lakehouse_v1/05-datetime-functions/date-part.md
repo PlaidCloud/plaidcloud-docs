@@ -1,5 +1,6 @@
 ---
 title: DATE_PART
+description: "Learn how to use the DATE_PART datetime function in PlaidCloud Lakehouse. Retrieves the designated portion of a date, time, or timestamp. Includes syntax..."
 ---
 
 Retrieves the designated portion of a date, time, or timestamp.

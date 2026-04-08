@@ -1,5 +1,6 @@
 ---
 title: INSPECT_MV_PLAN
+description: "Learn how to use the INSPECT_MV_PLAN meta function in PlaidCloud Lakehouse. Returns the logical plan of a materialized view - with syntax and examples."
 ---
 
 Returns the logical plan of a materialized view.

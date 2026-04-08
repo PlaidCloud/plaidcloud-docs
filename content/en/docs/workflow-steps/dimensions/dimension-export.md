@@ -2,7 +2,7 @@
 title: Dimension Export
 slug: dimension-export
 weight: 4.0
-description: Export dimension by flattening the data into a table
+description: Export dimension data from PlaidCloud in a workflow step to save hierarchical structures as files or transfer to other systems.
 date: 2022-01-25T07:40:18
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: Microsoft Dynamics 365 REST Connector
 slug: dynamics-connector
-description: Connecting to Microsoft Dynamics 365 from PlaidCloud using REST
+description: Configure a Microsoft Dynamics REST API connection in PlaidCloud to integrate ERP and CRM data into your analysis workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -2,7 +2,7 @@
 title: Dimension Clear
 slug: dimension-clear
 weight: 1.0
-description: Clears the contents of a dimension including structure, values, aliases, properties, and alternate hierarchies
+description: Clear all members from a PlaidCloud dimension in a workflow step while preserving the dimension structure and configuration.
 date: 2022-01-25T07:40:18
 ---
 ## Description

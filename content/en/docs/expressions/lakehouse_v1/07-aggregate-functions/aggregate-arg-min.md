@@ -1,5 +1,6 @@
 ---
 title: ARG_MIN
+description: "Learn how to use the ARG_MIN aggregate function in PlaidCloud Lakehouse. Calculates the arg value for a minimum val value. Includes syntax and examples."
 ---
 
 Calculates the `arg` value for a minimum `val` value. If there are several different values of `arg` for minimum values of `val`, returns the first of these values encountered.

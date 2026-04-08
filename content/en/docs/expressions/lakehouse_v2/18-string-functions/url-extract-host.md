@@ -1,5 +1,6 @@
 ---
 title: URL_EXTRACT_HOST
+description: "Learn how to use the URL_EXTRACT_HOST string function in PlaidCloud Lakehouse. Extracts the host from a URL string - see syntax, examples, and output."
 ---
 
 Extracts the host from a URL string.

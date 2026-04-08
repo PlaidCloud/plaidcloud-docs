@@ -1,7 +1,7 @@
 ---
 title: Member Authentication
 slug: member-authentication
-description: Change Passwords and Authentication options
+description: Configure PlaidCloud member authentication options including password management, multi-factor authentication, and login security.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud
@@ -255,5 +255,5 @@ While Single Sign-On does require a more extensive authentication process behind
 
 
 
-For more information on setting up and managing Single Sign-On see the [Organization and Workspace management area.](/iam/orgs/advanced/managing-single-sign-on-for-organization)
+For more information on setting up and managing Single Sign-On see the [Organization and Workspace management area.](/docs/access_management/advanced/managing-single-sign-on-for-organization)
 

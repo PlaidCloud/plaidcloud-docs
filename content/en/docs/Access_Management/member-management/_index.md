@@ -1,7 +1,7 @@
 ---
 title: Member Management
 slug: member-management
-description: Add, remove, suspend members from workspace
+description: Add, remove, and suspend PlaidCloud workspace members, manage user roles, and control member access to projects and resources.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

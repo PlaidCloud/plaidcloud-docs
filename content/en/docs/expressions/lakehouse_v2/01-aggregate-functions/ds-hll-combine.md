@@ -1,5 +1,6 @@
 ---
 title: DS_HLL_COMBINE
+description: "Learn how to use the DS_HLL_COMBINE aggregate function in PlaidCloud Lakehouse. Combines multiple DataSketches HLL sketches into a single sketch."
 ---
 
 Combines multiple DataSketches HLL sketches into a single sketch.

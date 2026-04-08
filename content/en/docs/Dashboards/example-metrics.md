@@ -1,7 +1,7 @@
 ---
 title: Example Metrics
 slug: dashboard-metrics
-description: Examples of common metrics
+description: Explore common dashboard metric examples in PlaidCloud including KPIs, aggregations, and calculated measures for data analysis.
 date: 2022-06-07T07:39:48
 weight: 5.0
 ---

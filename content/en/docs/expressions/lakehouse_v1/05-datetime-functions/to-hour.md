@@ -1,5 +1,6 @@
 ---
 title: TO_HOUR
+description: "Learn how to use the TO_HOUR datetime function in PlaidCloud Lakehouse. Converts a date with time (timestamp/datetime) to a UInt8 number containing the..."
 ---
 
 Converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the hour in 24-hour time (0-23).

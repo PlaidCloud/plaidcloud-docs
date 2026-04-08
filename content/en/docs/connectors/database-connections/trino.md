@@ -1,7 +1,7 @@
 ---
 title: Trino
 slug: trino
-description: Connecting to Trino Query Engine
+description: Set up a Trino distributed query engine connection in PlaidCloud to run federated queries across multiple data sources.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,5 +1,6 @@
 ---
 title: DICT_GET
+description: "Learn how to use the DICT_GET dictionary function in PlaidCloud Lakehouse. Retrieves the value of a specified attribute from a dictionary using a provided..."
 ---
 
 Retrieves the value of a specified attribute from a dictionary using a provided key expression.

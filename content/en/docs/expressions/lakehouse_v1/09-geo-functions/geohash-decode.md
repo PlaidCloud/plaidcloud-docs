@@ -1,5 +1,6 @@
 ---
 title: GEOHASH_DECODE
+description: "Learn how to use the GEOHASH_DECODE utility function in PlaidCloud Lakehouse. Converts a Geohash-encoded string into latitude/longitude coordinates."
 ---
 
 Converts a [Geohash](https://en.wikipedia.org/wiki/Geohash)-encoded string into latitude/longitude coordinates.

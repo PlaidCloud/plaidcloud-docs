@@ -1,5 +1,6 @@
 ---
 title: STR_TO_JODATIME
+description: "Learn how to use the STR_TO_JODATIME date/time function in PlaidCloud Lakehouse. Parses a string into a datetime using Joda-Time format patterns."
 ---
 
 Parses a string into a datetime using Joda-Time format patterns.

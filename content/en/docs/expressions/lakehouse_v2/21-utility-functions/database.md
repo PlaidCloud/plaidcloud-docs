@@ -1,5 +1,6 @@
 ---
 title: DATABASE
+description: "Learn how to use the DATABASE utility function in PlaidCloud Lakehouse. Returns the name of the current database - see syntax, examples, and output."
 ---
 
 Returns the name of the current database.

@@ -2,7 +2,7 @@
 title: User Defined Transform
 slug: user-defined-transform
 weight: 3.0
-description: Use Python and Pandas directly in a workflow
+description: Create custom data transformations using Python code in a PlaidCloud workflow step for flexible and powerful data processing logic.
 date: 2022-01-25T07:39:49
 ---
 

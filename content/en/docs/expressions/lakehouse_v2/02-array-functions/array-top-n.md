@@ -1,5 +1,6 @@
 ---
 title: ARRAY_TOP_N
+description: "Learn how to use the ARRAY_TOP_N array function in PlaidCloud Lakehouse. Returns the top N elements from an array - see syntax, examples, and output."
 ---
 
 Returns the top N elements from an array.

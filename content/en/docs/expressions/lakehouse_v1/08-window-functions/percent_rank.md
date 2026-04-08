@@ -1,5 +1,6 @@
 ---
 title: PERCENT_RANK
+description: "Learn how to use the PERCENT_RANK window function in PlaidCloud Lakehouse. Returns the relative rank of a given value within a set of values."
 ---
 
 Returns the relative rank of a given value within a set of values. The resulting value falls between 0 and 1, inclusive. Please note that the first row in any set has a PERCENT_RANK of 0.

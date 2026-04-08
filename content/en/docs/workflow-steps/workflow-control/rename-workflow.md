@@ -2,7 +2,7 @@
 title: Rename Workflow
 slug: rename-workflow
 weight: 5.0
-description: Rename an Existing PlaidCloud Analyze Workflow
+description: Rename an existing workflow from a PlaidCloud workflow step to programmatically update workflow names for organization purposes.
 date: 2022-01-25T07:39:51
 ---
 

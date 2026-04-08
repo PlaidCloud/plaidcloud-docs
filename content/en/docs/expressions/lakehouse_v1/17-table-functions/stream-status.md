@@ -1,5 +1,6 @@
 ---
 title: STREAM_STATUS
+description: "Learn how to use the STREAM_STATUS table function in PlaidCloud Lakehouse. Provides information about the status of a specified stream, yielding a..."
 ---
 
 Provides information about the status of a specified stream, yielding a single-column result (`has_data`) that can take on values of `true` or `false`: 

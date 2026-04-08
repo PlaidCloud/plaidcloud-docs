@@ -2,7 +2,7 @@
 title: Rename Document Directory
 slug: rename-document-directory
 weight: 18.0
-description: Rename an existing directory in PlaidCloud Document
+description: Rename a document directory in a PlaidCloud workflow step to update folder names for organization and processing requirements.
 date: 2022-01-25T07:40:18
 ---
 

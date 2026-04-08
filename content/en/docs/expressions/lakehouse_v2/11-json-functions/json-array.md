@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY
+description: "Learn how to use the JSON_ARRAY json function in PlaidCloud Lakehouse. Creates a JSON array from a list of values - see syntax, examples, and output."
 ---
 
 Creates a JSON array from a list of values.

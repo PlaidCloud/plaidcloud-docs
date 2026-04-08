@@ -1,7 +1,7 @@
 ---
 title: Copy SAP PCM Model
 slug: copy-sap-pcm-model
-description: Copy an SAP PCM model
+description: Copy an entire SAP PCM model from a PlaidCloud workflow step for creating backups, templates, or variant analysis models.
 date: 2022-01-25T07:39:52
 ---
 

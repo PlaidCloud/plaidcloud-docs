@@ -1,5 +1,6 @@
 ---
 title: TO_MILLISECONDS
+description: "Learn how to use the TO_MILLISECONDS interval function in PlaidCloud Lakehouse. Converts a specified number of milliseconds into an Interval type."
 ---
 
 Converts a specified number of milliseconds into an Interval type.

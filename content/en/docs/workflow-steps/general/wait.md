@@ -2,7 +2,7 @@
 title: Wait
 slug: wait
 weight: 4.0
-description: Pauses workflow execution for a specified period of time
+description: Add a timed delay in a PlaidCloud workflow step to pause execution for a specified duration before proceeding to the next step.
 date: 2022-01-25T07:39:49
 ---
 

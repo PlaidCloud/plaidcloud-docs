@@ -1,7 +1,7 @@
 ---
 title: Amazon Redshift
 slug: amazon-redshift
-description: Connecting to Amazon Redshift Database
+description: Set up an Amazon Redshift database connection in PlaidCloud to query, import, and export data with your Redshift warehouse.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

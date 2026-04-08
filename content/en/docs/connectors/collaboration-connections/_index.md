@@ -1,7 +1,7 @@
 ---
 title: Team Collaboration Connections
 slug: team-collaboration-connections
-description: Team Collaboration connection requirements vary depending on the service.  See how to configure the individual connections.
+description: Connect PlaidCloud to collaboration platforms like Slack and Microsoft Teams for automated notifications and data sharing.
 date: 2022-01-25T07:39:49
 ---
 

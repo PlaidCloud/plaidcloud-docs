@@ -1,5 +1,6 @@
 ---
 title: TASK_HISTORY
+description: "Learn how to use the TASK_HISTORY table function in PlaidCloud Lakehouse. Displays task running history given variables. Includes syntax and examples."
 ---
 
 Displays task running history given variables.

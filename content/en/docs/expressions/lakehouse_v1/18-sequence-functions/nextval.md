@@ -1,5 +1,6 @@
 ---
 title: NEXTVAL
+description: "Learn how to use the NEXTVAL sequence function in PlaidCloud Lakehouse. Retrieves the next value from a sequence. Includes syntax and examples."
 ---
 
 Retrieves the next value from a sequence.

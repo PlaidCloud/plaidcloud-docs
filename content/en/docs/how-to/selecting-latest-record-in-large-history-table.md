@@ -1,7 +1,7 @@
 ---
 linktitle: Selecting the Latest Record in a Large Version History Table
 title: Selecting the Latest Record in a Large Version History Table
-Description: This demonstrates the use of a window function to perform a select of the latest version of a record with a single query and no joins
+description: Learn how to efficiently select the latest record from large history tables in PlaidCloud using optimized query techniques.
 weight: 1.0
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: TO_DATE
+description: "Learn how to use the TO_DATE datetime function in PlaidCloud Lakehouse. Converts an expression to a date, including:. Includes syntax and examples."
 ---
 
 Converts an expression to a date, including:

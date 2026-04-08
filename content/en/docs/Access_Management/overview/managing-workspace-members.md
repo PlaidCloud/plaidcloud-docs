@@ -1,7 +1,7 @@
 ---
 title: Managing Workspace Members
 slug: managing-workspace-members
-description: Add, remove, and update access for members to workspaces
+description: Add, manage, and remove workspace members in PlaidCloud including inviting new users, setting roles, and managing permissions.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

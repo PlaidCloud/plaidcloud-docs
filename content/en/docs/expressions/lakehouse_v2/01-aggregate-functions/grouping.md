@@ -1,5 +1,6 @@
 ---
 title: GROUPING
+description: "Use the GROUPING aggregate function in PlaidCloud Lakehouse. Indicates whether a specified column in a GROUP BY clause is aggregated. Returns 1 if aggregated,."
 ---
 
 Indicates whether a specified column in a GROUP BY clause is aggregated. Returns 1 if aggregated, 0 otherwise.

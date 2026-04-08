@@ -1,5 +1,6 @@
 ---
 title: DAY
+description: "Learn how to use the DAY date/time function in PlaidCloud Lakehouse. Returns the day of the month from a date - see syntax, examples, and output."
 ---
 
 Returns the day of the month from a date.

@@ -1,5 +1,6 @@
 ---
 title: ELEMENT_AT
+description: "Learn how to use the ELEMENT_AT map function in PlaidCloud Lakehouse. Returns the value associated with a specified key in a map - with syntax and examples."
 ---
 
 Returns the value associated with a specified key in a map.

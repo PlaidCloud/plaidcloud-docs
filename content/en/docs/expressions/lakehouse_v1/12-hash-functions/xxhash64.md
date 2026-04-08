@@ -1,5 +1,6 @@
 ---
 title: XXHASH64
+description: "Learn how to use the XXHASH64 hash function in PlaidCloud Lakehouse. Calculates an xxHash64 64-bit hash value for a string. Includes syntax and examples."
 ---
 
 Calculates an xxHash64 64-bit hash value for a string. The value is returned as a UInt64 or NULL if the argument was NULL.

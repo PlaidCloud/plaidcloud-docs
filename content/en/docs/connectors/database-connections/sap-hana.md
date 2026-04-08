@@ -1,7 +1,7 @@
 ---
 title: SAP HANA
 slug: sap-hana
-description: Connecting to SAP HANA Database
+description: Set up an SAP HANA database connection in PlaidCloud to query, import, and export data with your HANA in-memory database.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

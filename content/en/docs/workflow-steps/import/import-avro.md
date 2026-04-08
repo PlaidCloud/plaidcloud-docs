@@ -2,7 +2,7 @@
 title: Import Avro
 slug: import-avro
 weight: 20.0
-description: Import Apache Avro files from PlaidCloud Document
+description: Import Apache Avro data files into PlaidCloud as a workflow step for loading schema-rich serialized data into your tables.
 date: 2024-01-01T00:00:00
 ---
 

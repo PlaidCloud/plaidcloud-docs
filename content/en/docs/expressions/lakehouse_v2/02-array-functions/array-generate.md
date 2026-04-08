@@ -1,5 +1,6 @@
 ---
 title: ARRAY_GENERATE
+description: "Learn how to use the ARRAY_GENERATE array function in PlaidCloud Lakehouse. Generates an array of sequential values - see syntax, examples, and output."
 ---
 
 Generates an array of sequential values.

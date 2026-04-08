@@ -1,5 +1,6 @@
 ---
 title: AI_TO_SQL
+description: "Learn how to use the AI_TO_SQL AI function in PlaidCloud Lakehouse. Converts natural language instructions into SQL queries with the latest model..."
 ---
 
 Converts natural language instructions into SQL queries with the latest model `text-davinci-003`.

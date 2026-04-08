@@ -2,7 +2,7 @@
 title: Manage Workflow Variables
 slug: manage-workflow-variables
 weight: 14.0
-description: Create, view, and set workflow variable values
+description: Manage workflow variables in PlaidCloud to store and pass dynamic values between steps for flexible data processing logic.
 date: 2022-01-25T07:40:20
 ---
 

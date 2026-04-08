@@ -1,7 +1,7 @@
 ---
 title: Presto
 slug: presto
-description: Connecting to Presto Database
+description: Set up a Presto distributed query engine connection in PlaidCloud to run federated queries across multiple data sources.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

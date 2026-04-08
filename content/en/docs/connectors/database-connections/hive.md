@@ -1,7 +1,7 @@
 ---
 title: Apache Hive
 slug: hive
-description: Connecting to Apache Hive Data Lake
+description: Set up an Apache Hive data lake connection in PlaidCloud to query and integrate large-scale data stored in Hadoop ecosystems.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -2,7 +2,7 @@
 title: Table In-Place Update
 slug: table-in-place-update
 weight: 10.0
-description: Performs an update on the table using the specified filter conditions and value settings
+description: Update specific rows in a table in a PlaidCloud workflow step using filter conditions and value expressions for targeted changes.
 date: 2022-01-25T07:39:56
 ---
 

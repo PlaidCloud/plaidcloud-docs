@@ -1,5 +1,6 @@
 ---
 title: TO_YEARS
+description: "Learn how to use the TO_YEARS interval function in PlaidCloud Lakehouse. Converts a specified number of years into an Interval type. With syntax and examples."
 ---
 
 Converts a specified number of years into an Interval type.

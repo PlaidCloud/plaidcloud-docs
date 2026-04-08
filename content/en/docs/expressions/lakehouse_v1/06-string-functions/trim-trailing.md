@@ -1,5 +1,6 @@
 ---
 title: TRIM_TRAILING
+description: "Learn how to use the TRIM_TRAILING string function in PlaidCloud Lakehouse. Removes all occurrences of the specified trim string from the end of the string."
 ---
 
 Removes all occurrences of the specified trim string from the end of the string.

@@ -1,5 +1,6 @@
 ---
 title: JSON_OBJECT_KEYS
+description: "Learn how to use the JSON_OBJECT_KEYS semi-structured data function in PlaidCloud Lakehouse. Returns an Array containing the list of keys in the input..."
 ---
 
 Returns an Array containing the list of keys in the input Variant OBJECT.

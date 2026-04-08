@@ -1,7 +1,7 @@
 ---
 title: Event Scheduler
 slug: event-scheduler
-description: Create and organize a scheduled recurring event
+description: Configure the PlaidCloud Event Scheduler to automate workflow execution with custom timing, ordering, and conditional triggers.
 date: 2022-01-25T07:39:49
 ---
 

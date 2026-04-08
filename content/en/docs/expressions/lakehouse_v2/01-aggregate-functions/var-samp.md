@@ -1,5 +1,6 @@
 ---
 title: VAR_SAMP
+description: "Learn how to use the VAR_SAMP aggregate function in PlaidCloud Lakehouse. Returns the sample variance. Alias for `VARIANCE_SAMP` - with syntax and examples."
 ---
 
 Returns the sample variance. Alias for `VARIANCE_SAMP`.

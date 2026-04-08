@@ -2,7 +2,7 @@
 title: Advanced Data Mapper Usage
 slug: advanced-data-mapper-usage
 weight: 1.0
-description: Using the advanced features of the Data Mapper
+description: Learn advanced data mapper techniques in PlaidCloud workflow steps including expressions, lookups, and conditional transformations.
 date: 2022-01-25T07:39:53
 ---
 
@@ -93,7 +93,7 @@ Pick the appropriate summarization method for the column.
 When using aggregation, all columns **must** have a summarization type specified
 {{< /note >}}
 
-When using a [Window Function](/docs/workflow-steps/common/window-functions), select **Advanced Non-Group-By** as the aggregation method.  This special selection is required
+When using a Window Function, select **Advanced Non-Group-By** as the aggregation method.  This special selection is required
 due to the aggregation inherent in the window function already.
 
 ### Constants

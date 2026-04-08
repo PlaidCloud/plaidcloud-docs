@@ -2,7 +2,7 @@
 title: Set Workflow Variable
 slug: set-workflow-variable
 weight: 8.0
-description: Set variables during a workflow
+description: Set workflow variables during execution in a PlaidCloud workflow step to pass dynamic values between steps in your workflow.
 date: 2022-01-25T07:40:18
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY_INSERT
+description: "Learn how to use the JSON_ARRAY_INSERT semi-structured data function in PlaidCloud Lakehouse. Inserts a value into a JSON array at the specified index and..."
 ---
 
 Inserts a value into a JSON array at the specified index and returns the updated JSON array.

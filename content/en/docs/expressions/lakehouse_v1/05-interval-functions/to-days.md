@@ -1,5 +1,6 @@
 ---
 title: TO_DAYS
+description: "Learn how to use the TO_DAYS interval function in PlaidCloud Lakehouse. Converts a specified number of days into an Interval type. Includes syntax and examples."
 ---
 
 Converts a specified number of days into an Interval type.

@@ -1,5 +1,6 @@
 ---
 title: MIN
+description: "Learn how to use the MIN aggregate function in PlaidCloud Lakehouse. Returns the minimum value in a set of values - see syntax, examples, and output."
 ---
 
 Returns the minimum value in a set of values.

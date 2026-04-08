@@ -1,5 +1,6 @@
 ---
 title: QUERY
+description: "Learn how to use the QUERY search function in PlaidCloud Lakehouse. Searches for documents satisfying a specified query expression. With syntax and examples."
 ---
 
 Searches for documents satisfying a specified query expression. Please note that the QUERY function can only be used in a WHERE clause.

@@ -1,5 +1,6 @@
 ---
 title: INET_ATON
+description: "Learn how to use the INET_ATON IP address function in PlaidCloud Lakehouse. Converts an IPv4 address to a 32-bit integer. Includes syntax and examples."
 ---
 
 Converts an IPv4 address to a 32-bit integer.

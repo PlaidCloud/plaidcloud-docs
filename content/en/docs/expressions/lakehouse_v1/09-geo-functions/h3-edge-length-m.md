@@ -1,5 +1,6 @@
 ---
 title: H3_EDGE_LENGTH_M
+description: "Learn how to use the H3_EDGE_LENGTH_M utility function in PlaidCloud Lakehouse. Returns the average hexagon edge length in meters at the given resolution."
 ---
 
 Returns the average hexagon edge length in meters at the given resolution. Excludes pentagons.

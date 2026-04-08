@@ -1,5 +1,6 @@
 ---
 title: RANDOM
+description: "Learn how to use the RANDOM math function in PlaidCloud Lakehouse. Returns a random floating-point value between 0 and 1. Alias for `RAND`."
 ---
 
 Returns a random floating-point value between 0 and 1. Alias for `RAND`.

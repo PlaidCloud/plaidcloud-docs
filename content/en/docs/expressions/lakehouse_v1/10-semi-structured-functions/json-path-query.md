@@ -1,5 +1,6 @@
 ---
 title: JSON_PATH_QUERY
+description: "Learn how to use the JSON_PATH_QUERY semi-structured data function in PlaidCloud Lakehouse. Get all JSON items returned by JSON path for the specified JSON..."
 ---
 
 Get all JSON items returned by JSON path for the specified JSON value.

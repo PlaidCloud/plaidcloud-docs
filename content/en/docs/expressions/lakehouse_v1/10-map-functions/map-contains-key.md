@@ -1,5 +1,6 @@
 ---
 title: MAP_CONTAINS_KEY
+description: "Learn how to use the MAP_CONTAINS_KEY map function in PlaidCloud Lakehouse. Determines whether the specified MAP contains the specified key."
 ---
 
 Determines whether the specified MAP contains the specified key.

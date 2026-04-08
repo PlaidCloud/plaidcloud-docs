@@ -1,5 +1,5 @@
 ---
 linktitle: PySpark and Spark Compute Clusters
 title: PySpark and Spark Compute Clusters
-Description: Build and deploy PySpark applications and utilize Spark compute clusters for large data analysis
+description: Build and run PySpark applications on PlaidCloud Spark compute clusters for distributed large-scale data analysis and processing.
 ---

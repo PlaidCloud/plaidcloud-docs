@@ -1,5 +1,6 @@
 ---
 title: IFNULL
+description: "Learn how to use the IFNULL conditional function in PlaidCloud Lakehouse. If <expr1> is NULL, returns <expr2>, otherwise returns <expr1>. Includes syntax..."
 ---
 
 If `<expr1>` is NULL, returns `<expr2>`, otherwise returns `<expr1>`.

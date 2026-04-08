@@ -1,5 +1,6 @@
 ---
 title: LIKE
+description: "Use the LIKE pattern matching function in PlaidCloud Lakehouse. Matches a string against a pattern using `%` (any characters) and `_` (single character)."
 ---
 
 Matches a string against a pattern using `%` (any characters) and `_` (single character) wildcards.

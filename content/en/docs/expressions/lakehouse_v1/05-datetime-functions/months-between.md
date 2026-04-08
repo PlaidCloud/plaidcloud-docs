@@ -1,5 +1,6 @@
 ---
 title: MONTHS_BETWEEN
+description: "Learn how to use the MONTHS_BETWEEN datetime function in PlaidCloud Lakehouse. Returns the number of months between date1 and date2. With syntax and examples."
 ---
 
 Returns the number of months between *date1* and *date2*.

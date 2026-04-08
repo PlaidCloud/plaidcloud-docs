@@ -1,7 +1,7 @@
 ---
 title: Getting Started with the Custom App Sandbox
 slug: using-sandbox
-description: Accessing and using Custom apps in PlaidCloud
+description: Get started building and deploying custom applications in the PlaidCloud Sandbox environment with setup and configuration steps.
 date: 2022-01-25T07:39:48
 weight: 2.0
 ---

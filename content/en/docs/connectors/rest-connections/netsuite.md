@@ -1,7 +1,7 @@
 ---
 title: Netsuite REST Connector
 slug: netsuite-connector
-description: Connecting to Netsuite from PlaidCloud using REST
+description: Set up a NetSuite REST API connection in PlaidCloud to integrate ERP, financial, and e-commerce data into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

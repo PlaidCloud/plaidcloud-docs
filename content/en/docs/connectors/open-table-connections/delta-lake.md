@@ -1,7 +1,7 @@
 ---
 title: Delta Lake Open Table Format (Databricks Catalog)
 slug: delta-lake
-description: Connecting to Delta Lake Catalogs (Databricks)
+description: Configure a Delta Lake open table format connection in PlaidCloud for hybrid query execution without moving your stored data.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

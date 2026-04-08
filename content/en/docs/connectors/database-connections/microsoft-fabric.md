@@ -1,7 +1,7 @@
 ---
 title: Microsoft Fabric
 slug: microsoft-fabric
-description: Connecting to Microsoft Fabric Database
+description: Configure a Microsoft Fabric connection in PlaidCloud to integrate analytics, data warehousing, and lakehouse capabilities.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

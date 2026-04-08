@@ -1,5 +1,6 @@
 ---
 title: ST_ASEWKT
+description: "Learn how to use the ST_ASEWKT geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a EWKT(extended well-known-text) format..."
 ---
 
 Converts a GEOMETRY object into a [EWKT(extended well-known-text)](https://postgis.net/docs/ST_GeomFromEWKT.html) format representation.

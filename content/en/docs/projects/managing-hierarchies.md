@@ -2,7 +2,7 @@
 title: Managing Hierarchies
 slug: managing-hierarchies
 weight: 4.0
-description: Create and organize your own workflow hierarchies
+description: Manage hierarchical dimensions within PlaidCloud projects including assigning, configuring, and organizing dimension structures.
 date: 2022-01-25T07:39:48
 ---
 

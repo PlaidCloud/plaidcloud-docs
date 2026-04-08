@@ -1,5 +1,6 @@
 ---
 title: PERCENTILE_DISC
+description: "Use the PERCENTILE_DISC percentile function in PlaidCloud Lakehouse. Returns the smallest value whose cumulative distribution is >= the specified percentile."
 ---
 
 Returns the smallest value whose cumulative distribution is >= the specified percentile.

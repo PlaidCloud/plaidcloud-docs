@@ -1,5 +1,6 @@
 ---
 title: JSON_ARRAY_FILTER
+description: "Learn how to use the JSON_ARRAY_FILTER semi-structured data function in PlaidCloud Lakehouse. Filters elements from a JSON array based on a specified Lambda..."
 ---
 
 Filters elements from a JSON array based on a specified Lambda expression, returning only the elements that satisfy the condition. For more information about Lambda expression, see Lambda Expressions.

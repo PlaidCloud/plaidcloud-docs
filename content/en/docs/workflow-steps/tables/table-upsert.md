@@ -2,7 +2,7 @@
 title: Table Upsert
 slug: table-upsert
 weight: 18.0
-description: Perform an update of existing records or append new ones
+description: Perform an upsert operation in a PlaidCloud workflow step to update existing records or insert new ones based on key matching.
 date: 2022-01-25T07:40:19
 ---
 

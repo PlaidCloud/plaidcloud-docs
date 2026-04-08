@@ -1,7 +1,7 @@
 ---
 title: Oracle EBS Connector
 slug: oracle-ebs
-description: Connecting to Oracle EBS ERP System
+description: Set up an Oracle E-Business Suite connection in PlaidCloud to integrate ERP financial and operational data into workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

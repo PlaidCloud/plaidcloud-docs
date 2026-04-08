@@ -1,5 +1,6 @@
 ---
 title: ARRAY_AVG
+description: "Learn how to use the ARRAY_AVG array function in PlaidCloud Lakehouse. Returns the average of elements in an array - see syntax, examples, and output."
 ---
 
 Returns the average of elements in an array.

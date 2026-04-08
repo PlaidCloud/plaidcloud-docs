@@ -1,5 +1,6 @@
 ---
 title: CARDINALITY
+description: "Learn how to use the CARDINALITY array function in PlaidCloud Lakehouse. Returns the number of elements in an array. Alias for `ARRAY_LENGTH`."
 ---
 
 Returns the number of elements in an array. Alias for `ARRAY_LENGTH`.

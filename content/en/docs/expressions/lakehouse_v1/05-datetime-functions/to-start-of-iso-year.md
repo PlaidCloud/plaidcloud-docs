@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_ISO_YEAR
+description: "Learn how to use the TO_START_OF_ISO_YEAR datetime function in PlaidCloud Lakehouse. Returns the first day of the ISO year for a date or a date with time..."
 ---
 
 Returns the first day of the ISO year for a date or a date with time (timestamp/datetime).

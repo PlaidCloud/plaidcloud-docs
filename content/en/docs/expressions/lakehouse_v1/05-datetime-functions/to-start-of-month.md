@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_MONTH
+description: "Learn how to use the TO_START_OF_MONTH datetime function in PlaidCloud Lakehouse. Rounds down a date or date with time (timestamp/datetime) to the first day..."
 ---
 
 Rounds down a date or date with time (timestamp/datetime) to the first day of the month.

@@ -1,5 +1,6 @@
 ---
 title: ARRAY_REMOVE_LAST
+description: "Learn how to use the ARRAY_REMOVE_LAST array function in PlaidCloud Lakehouse. Removes the last element from the array. Includes syntax and examples."
 ---
 
 Removes the last element from the array.

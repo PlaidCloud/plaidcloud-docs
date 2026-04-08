@@ -1,5 +1,5 @@
 ---
 linktitle: Data Management - Tabular
 title: Data Management - Tabular
-Description: Manage tabular data using tables and views.  The PlaidCloud Lakehouse enables fast execution on any size data.
+description: Manage tabular data in PlaidCloud using tables, views, and the high-performance Lakehouse engine for any-scale data processing.
 ---

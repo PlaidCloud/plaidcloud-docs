@@ -1,5 +1,6 @@
 ---
 title: ST_GEOMETRYFROMWKT
+description: "Learn how to use the ST_GEOMETRYFROMWKT geometry function in PlaidCloud Lakehouse. Parses a WKT(well-known-text) or EWKT(extended well-known-text) input and..."
 ---
 
 Parses a [WKT(well-known-text)](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) or [EWKT(extended well-known-text)](https://postgis.net/docs/ST_GeomFromEWKT.html) input and returns a value of type GEOMETRY.

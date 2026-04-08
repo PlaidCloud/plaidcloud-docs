@@ -1,5 +1,6 @@
 ---
 title: TIMEZONE
+description: "Learn how to use the TIMEZONE datetime function in PlaidCloud Lakehouse. Returns the timezone for the current connection. Includes syntax and examples."
 ---
 
 Returns the timezone for the current connection. 

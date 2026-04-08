@@ -1,5 +1,6 @@
 ---
 title: MINUTE
+description: "Learn how to use the MINUTE date/time function in PlaidCloud Lakehouse. Returns the minute from a datetime - see syntax, examples, and output."
 ---
 
 Returns the minute from a datetime.

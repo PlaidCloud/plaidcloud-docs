@@ -1,7 +1,7 @@
 ---
 title: Getting Started
 slug: getting-started
-description: Getting started with the PlaidCloud Data Lakehouse Service
+description: Get started with the PlaidCloud Data Lakehouse Service including initial setup, configuration, and connecting to your data sources.
 weight: 1.0
 date: 2022-01-25T07:39:51
 ---

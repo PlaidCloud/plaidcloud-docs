@@ -1,7 +1,7 @@
 ---
 title: Oracle
 slug: oracle
-description: Connecting to Oracle Database
+description: Set up an Oracle database connection in PlaidCloud to query, import, and export data with your Oracle database instances.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

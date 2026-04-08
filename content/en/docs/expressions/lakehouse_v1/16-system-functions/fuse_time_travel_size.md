@@ -1,5 +1,6 @@
 ---
 title: FUSE_TIME_TRAVEL_SIZE
+description: "Learn how to use the FUSE_TIME_TRAVEL_SIZE system function in PlaidCloud Lakehouse. Calculates the storage size of historical data (for Time Travel) for tables."
 ---
 
 Calculates the storage size of historical data (for Time Travel) for tables.

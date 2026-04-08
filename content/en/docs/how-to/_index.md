@@ -1,5 +1,5 @@
 ---
 linktitle: How To
 title: How To
-Description: An area dedicated to helping PlaidCloud builders solve problems in unique ways
+description: Step-by-step PlaidCloud how-to guides and practical solutions for common data processing, integration, and analysis challenges.
 ---

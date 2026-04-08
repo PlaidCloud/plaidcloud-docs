@@ -2,7 +2,7 @@
 title: Run Remote Python
 slug: run-remote-python
 weight: 2.0
-description: Run a Python file using PlaidLink
+description: Run Python scripts remotely through a PlaidLink agent in a PlaidCloud workflow step for secure local code execution behind firewalls.
 date: 2022-01-25T07:39:50
 ---
 

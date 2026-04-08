@@ -1,5 +1,6 @@
 ---
 title: H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY
+description: "Learn how to use the H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY utility function in PlaidCloud Lakehouse. Returns the coordinates defining the unidirectional edge."
 ---
 
 Returns the coordinates defining the unidirectional edge.

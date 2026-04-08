@@ -1,5 +1,6 @@
 ---
 title: DAYOFWEEK_ISO
+description: "Learn how to use the DAYOFWEEK_ISO date/time function in PlaidCloud Lakehouse. Returns the ISO day of the week index for a date (1=Monday, 7=Sunday)."
 ---
 
 Returns the ISO day of the week index for a date (1=Monday, 7=Sunday).

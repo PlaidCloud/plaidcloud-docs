@@ -2,7 +2,7 @@
 title: Notify Via Email
 slug: notify-via-email
 weight: 3.0
-description: Send email notifications
+description: Send email notifications from a PlaidCloud workflow step with customizable subject, body, recipients, and attachment options.
 date: 2022-01-25T07:39:57
 ---
 

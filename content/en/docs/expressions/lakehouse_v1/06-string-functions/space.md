@@ -1,5 +1,6 @@
 ---
 title: SPACE
+description: "Learn how to use the SPACE string function in PlaidCloud Lakehouse. Returns a string consisting of N blank space characters. Includes syntax and examples."
 ---
 
 Returns a string consisting of N blank space characters.

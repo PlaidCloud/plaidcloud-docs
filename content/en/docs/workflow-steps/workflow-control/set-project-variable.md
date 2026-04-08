@@ -2,7 +2,7 @@
 title: Set Project Variable
 slug: set-project-variable
 weight: 7.0
-description: Set a project variable for use during a workflow
+description: Set project-level variables from a PlaidCloud workflow step to store values accessible across all workflows within the project.
 date: 2022-01-25T07:40:18
 ---
 

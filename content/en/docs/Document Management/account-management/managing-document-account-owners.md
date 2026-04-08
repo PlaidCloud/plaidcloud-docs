@@ -2,7 +2,7 @@
 title: Managing Document Account Owners
 slug: managing-document-account-owners
 weight: 4.0
-description: Add and remove Document account owners
+description: Assign and manage ownership of PlaidCloud document storage accounts to control administrative access and account settings.
 date: 2022-01-25T07:39:47
 ---
 

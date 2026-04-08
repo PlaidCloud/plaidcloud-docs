@@ -1,5 +1,6 @@
 ---
 title: ATAN2
+description: "Learn how to use the ATAN2 numeric function in PlaidCloud Lakehouse. Returns the arc tangent of the two variables x and y. Includes syntax and examples."
 ---
 
 Returns the arc tangent of the two variables `x` and `y`. It is similar to calculating the arc tangent of `y` / `x`, except that the signs of both arguments are used to determine the quadrant of the result. `ATAN(y, x)` is a synonym for `ATAN2(y, x)`.

@@ -1,5 +1,6 @@
 ---
 title: H3_TO_GEO_BOUNDARY
+description: "Learn how to use the H3_TO_GEO_BOUNDARY utility function in PlaidCloud Lakehouse. Returns an array containing the longitude and latitude coordinates of the..."
 ---
 
 Returns an array containing the longitude and latitude coordinates of the vertices of the hexagon corresponding to the [H3](https://eng.uber.com/h3/) index. 

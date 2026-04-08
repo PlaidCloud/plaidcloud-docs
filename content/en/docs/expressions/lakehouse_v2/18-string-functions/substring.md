@@ -1,5 +1,6 @@
 ---
 title: SUBSTRING
+description: "Learn how to use the SUBSTRING string function in PlaidCloud Lakehouse. Returns a substring starting from a specified position. Alias for `SUBSTR`."
 ---
 
 Returns a substring starting from a specified position. Alias for `SUBSTR`.

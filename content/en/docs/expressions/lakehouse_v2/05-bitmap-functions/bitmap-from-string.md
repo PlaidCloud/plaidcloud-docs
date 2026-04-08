@@ -1,5 +1,6 @@
 ---
 title: BITMAP_FROM_STRING
+description: "Learn how to use the BITMAP_FROM_STRING bitmap function in PlaidCloud Lakehouse. Converts a comma-separated string of integers to a bitmap."
 ---
 
 Converts a comma-separated string of integers to a bitmap.

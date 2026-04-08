@@ -1,5 +1,6 @@
 ---
 title: STDDEV_SAMP
+description: "Learn how to use the STDDEV_SAMP aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes syntax and examples."
 ---
 
 Aggregate function.

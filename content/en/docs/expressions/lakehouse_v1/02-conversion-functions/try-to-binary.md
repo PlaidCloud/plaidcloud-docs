@@ -1,5 +1,6 @@
 ---
 title: TRY_TO_BINARY
+description: "Learn how to use the TRY_TO_BINARY conversion function in PlaidCloud Lakehouse. An enhanced version of TO_BINARY that converts an input expression to a..."
 ---
 
 An enhanced version of [TO_BINARY](../to_binary) that converts an input expression to a binary value, returning `NULL` if the conversion fails instead of raising an error.

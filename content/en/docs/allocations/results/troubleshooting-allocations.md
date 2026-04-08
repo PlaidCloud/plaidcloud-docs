@@ -2,7 +2,7 @@
 title: Troubleshooting Allocations
 slug: troubleshooting-allocations
 weight: 2.0
-description: Understand how to troubleshoot allocations when the results are not as expected
+description: Troubleshoot PlaidCloud allocation issues including common errors, configuration problems, and techniques for debugging results.
 date: 2022-01-25T07:40:20
 ---
 

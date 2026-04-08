@@ -1,5 +1,6 @@
 ---
 title: YEARS_ADD
+description: "Learn how to use the YEARS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of years to a date - see syntax, examples, and output."
 ---
 
 Adds a specified number of years to a date.

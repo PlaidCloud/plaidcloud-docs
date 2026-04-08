@@ -1,7 +1,7 @@
 ---
 title: Setting Up Okta SAML for Single Sign-On
 slug: okta-saml-setup
-description: Configure Okta as a SAML identity provider for PlaidCloud Single Sign-On
+description: Configure Okta as a SAML identity provider for PlaidCloud single sign-on to enable secure federated authentication for members.
 date: 2024-01-01T00:00:00
 tags:
 - plaidcloud

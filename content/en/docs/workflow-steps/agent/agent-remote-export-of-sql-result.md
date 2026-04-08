@@ -2,7 +2,7 @@
 title: Agent Remote Export of SQL Result
 slug: agent-remote-export-of-sql-result
 weight: 2.0
-description: Use a specified SQL on a remote database through PlaidLink Agent and export to PlaidCloud
+description: Export SQL query results remotely through a PlaidLink agent in PlaidCloud workflows for secure data extraction behind firewalls.
 date: 2022-01-25T07:39:53
 ---
 

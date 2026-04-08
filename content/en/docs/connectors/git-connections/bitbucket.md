@@ -1,7 +1,7 @@
 ---
 title: BitBucket Repository Connector
 slug: bitbucket
-description: Connecting to BitBucket
+description: Set up a Bitbucket repository connection in PlaidCloud to integrate version-controlled code and configuration into your workflows.
 weight: 1.0
 date: 2025-10-21T07:39:51
 ---

@@ -1,5 +1,6 @@
 ---
 title: NOT LIKE
+description: "Learn how to use the NOT LIKE string function in PlaidCloud Lakehouse. Pattern not matching using an SQL pattern. Includes syntax and examples."
 ---
 
 Pattern not matching using an SQL pattern. Returns 1 (TRUE) or 0 (FALSE). If either expr or pat is NULL, the result is NULL.

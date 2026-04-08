@@ -1,5 +1,6 @@
 ---
 title: EXISTS
+description: "Learn how to use the EXISTS utility function in PlaidCloud Lakehouse. The exists condition is used in combination with a subquery and is considered \"to be..."
 ---
 
 The exists condition is used in combination with a subquery and is considered "to be met" if the subquery returns at least one row.

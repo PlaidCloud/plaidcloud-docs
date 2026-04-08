@@ -1,7 +1,7 @@
 ---
 title: Managing Security Groups and Assignments
 slug: managing-security-groups-and-assignments
-description: Manage security group settings and view membership
+description: Manage PlaidCloud security groups, assign members to groups, and configure group-based access permissions for your workspace.
 date: 2022-01-25T07:39:48
 tags:
 - plaidcloud

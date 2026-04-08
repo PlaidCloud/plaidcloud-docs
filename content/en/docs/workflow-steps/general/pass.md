@@ -2,7 +2,7 @@
 title: Pass
 slug: pass
 weight: 1.0
-description: This does nothing but may be useful for documenting workflows
+description: Use the Pass workflow step in PlaidCloud as a placeholder or no-operation step for workflow structure and conditional branching.
 date: 2022-01-25T07:39:51
 ---
 

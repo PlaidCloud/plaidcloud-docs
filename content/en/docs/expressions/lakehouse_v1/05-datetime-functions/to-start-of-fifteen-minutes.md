@@ -1,5 +1,6 @@
 ---
 title: TO_START_OF_FIFTEEN_MINUTES
+description: "Learn how to use the TO_START_OF_FIFTEEN_MINUTES datetime function in PlaidCloud Lakehouse. Rounds down the date with time (timestamp/datetime) to the start..."
 ---
 
 Rounds down the date with time (timestamp/datetime) to the start of the fifteen-minute interval.

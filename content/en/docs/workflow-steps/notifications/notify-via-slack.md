@@ -2,7 +2,7 @@
 title: Notify via Slack
 slug: notify-via-slack
 weight: 6.0
-description: Send Slack notifications
+description: Send Slack notifications from a PlaidCloud workflow step to alert channels or users about workflow events, errors, and status.
 date: 2022-01-25T07:39:49
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: ARRAY_APPEND
+description: "Learn how to use the ARRAY_APPEND array function in PlaidCloud Lakehouse. Appends an element to the end of an array - see syntax, examples, and output."
 ---
 
 Appends an element to the end of an array.

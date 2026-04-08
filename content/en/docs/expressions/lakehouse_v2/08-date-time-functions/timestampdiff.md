@@ -1,5 +1,6 @@
 ---
 title: TIMESTAMPDIFF
+description: "Learn how to use the TIMESTAMPDIFF date/time function in PlaidCloud Lakehouse. Returns the difference between two datetimes in the specified unit."
 ---
 
 Returns the difference between two datetimes in the specified unit.

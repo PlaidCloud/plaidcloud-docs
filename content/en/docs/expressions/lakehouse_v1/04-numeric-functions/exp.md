@@ -1,5 +1,6 @@
 ---
 title: EXP
+description: "Learn how to use the EXP numeric function in PlaidCloud Lakehouse. Returns the value of e (the base of natural logarithms) raised to the power of x."
 ---
 
 Returns the value of e (the base of natural logarithms) raised to the power of `x`.

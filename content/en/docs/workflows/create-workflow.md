@@ -2,7 +2,7 @@
 title: Create Workflow
 slug: create-workflow
 weight: 2.0
-description: Creating a new workflow
+description: Create a new workflow in PlaidCloud to define a sequence of data processing steps for loading, transforming, and exporting data.
 date: 2022-01-25T07:40:20
 ---
 

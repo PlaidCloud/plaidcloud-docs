@@ -1,5 +1,6 @@
 ---
 title: LAST_DAY
+description: "Learn how to use the LAST_DAY date/time function in PlaidCloud Lakehouse. Returns the last day of the month for a given date - with syntax and examples."
 ---
 
 Returns the last day of the month for a given date.

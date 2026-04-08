@@ -1,5 +1,6 @@
 ---
 title: ARRAYS_OVERLAP
+description: "Learn how to use the ARRAYS_OVERLAP array function in PlaidCloud Lakehouse. Checks whether two arrays have any common elements - with syntax and examples."
 ---
 
 Checks whether two arrays have any common elements.

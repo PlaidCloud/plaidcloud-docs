@@ -2,7 +2,7 @@
 title: Import Quandl
 slug: import-quandl
 weight: 12.0
-description: Imports data sets from Quandl’s repository of millions of data sets
+description: Import financial and economic data from Quandl into PlaidCloud as a workflow step for market analysis and research datasets.
 date: 2022-01-25T07:39:57
 ---
 
@@ -23,7 +23,7 @@ No examples yet...
 
 ### Source Data Specification
 
-Accessing Quandl data sets requires a user account or a guest account with limited access. This requires set up in Tools. For details on setting up a Quandl account connection, see here: [PlaidCloud Tools – Connection](/docs/tools/data-connections).
+Accessing Quandl data sets requires a user account or a guest account with limited access. This requires set up in Tools. For details on setting up a Quandl account connection, see here: [PlaidCloud Tools – Connection](/docs/connectors/).
 
 Once all necessary accounts have been set up, select the appropriate account from the drop down list.
 
