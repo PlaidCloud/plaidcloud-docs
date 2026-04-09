@@ -33,15 +33,14 @@ You should now have everything you need to add your GCS account to PlaidCloud Do
 
 ## PlaidCloud Document Setup
 
-
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
 3. Go to `Document > Manage Accounts`
 4. Select the `+ New Account` button
 5. Select `Google Cloud Storage` as the Service Type
 6. Fill in a name and description
-7. Leave the Start Path blank or add a start path based on an existing GCS account hierarchy. See the use of Start Paths for more information.
-8. Select an appropriate `Security Model` for your use case. Leave it `Private` if unsure.
-9. Open the Service Account JSON key file you downloaded in step 10 above and copy the contents
-10. Paste the contents into the Auth Credentials text area
+7. Enter the bucket name and optional path prefix into the **Start Path** field (e.g. `my-bucket` or `my-bucket/data`). The first path segment is the bucket name.
+8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
+9. Open the Service Account JSON key file you downloaded in step 10 above and copy the entire contents
+10. Paste the contents into the **System User JSON Key** field under Auth Credentials
 11. Select the Save button and your new Document account is live

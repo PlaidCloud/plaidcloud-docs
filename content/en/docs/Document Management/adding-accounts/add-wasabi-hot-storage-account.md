@@ -30,15 +30,15 @@ You should now have everything you need to add your Wasabi account to PlaidCloud
 
 ## PlaidCloud Document Setup
 
-
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
 3. Go to `Document > Manage Accounts`
 4. Select the `+ New Account` button
 5. Select `Wasabi Hot Storage` as the Service Type
 6. Fill in a name and description
-7. Leave the Start Path blank or add a start path based on an existing Wasabi account hierarchy. See the use of Start Paths for more information.
-8. Select an appropriate `Security Model` for your use case. Leave it `Private` if unsure.
-9. Paste the Access Key created in step 10 above into Public Key/User text field under Auth Credentials
-10. Paste the Secret Key created in step 10 above into the Private Key/Password text field under Auth Credentials
-11. Select the Save button and your new Document account is live
+7. Enter the bucket name and optional path prefix into the **Start Path** field (e.g. `my-bucket` or `my-bucket/data`). The first path segment is the bucket name.
+8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
+9. Paste the **Access Key** created in step 10 above into the Access Key ID field under Auth Credentials
+10. Paste the **Secret Key** created in step 10 above into the Secret Access Key field under Auth Credentials
+11. Enter the **Region** if your Wasabi account uses a specific region; otherwise leave blank
+12. Select the Save button and your new Document account is live
