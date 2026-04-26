@@ -1,0 +1,60 @@
+---
+title: Troubleshooting
+slug: troubleshooting
+weight: 8.0
+description: Common issues connecting AI agents to the PlaidCloud MCP server and how to fix them.
+---
+
+## "Failed to connect" / "Session not found"
+
+Symptom: the client config looks correct but the server shows as failed in the client's MCP status panel. Server logs show 404 `Session not found` errors.
+
+Cause: a known bug in some MCP clients (most notably Claude Code 2.1.111 with static `Authorization` headers) where the client doesn't preserve `mcp-session-id` between successive HTTP requests. PlaidCloud's MCP server runs in stateless HTTP mode to sidestep this — if you're seeing it on a tenant that hasn't been redeployed since the fix, ask your administrator to redeploy.
+
+Until the redeploy lands, the OAuth flow (without static `Authorization` headers) still works because it uses a different code path in the client.
+
+## "OAuth flow is not in progress" during Claude Code login
+
+Symptom: you authorize in the browser, paste the callback URL into Claude Code, and it says no flow is in progress.
+
+Cause: the bridge's in-memory OAuth state is per-port and can be lost between the `authenticate` and `complete_authentication` tool calls — particularly in remote/SSH sessions where the browser callback can't reach `localhost`.
+
+Fix: switch to the static Bearer flow. Open `https://<your-tenant>.plaidcloud.org/mcp/setup/token` in a browser where you're signed into PlaidCloud, copy the snippet into your `.mcp.json`, and restart Claude Code.
+
+## Token expired
+
+Symptom: tools that worked yesterday now return 401 Unauthorized.
+
+Cause: static Bearer tokens follow your Keycloak realm's access-token-lifespan policy (typically a few hours to a day).
+
+Fix: reload `https://<your-tenant>.plaidcloud.org/mcp/setup/token` to mint a fresh token, paste it into your config. For long-lived sessions, prefer OAuth — clients that support it refresh tokens automatically.
+
+## "No `access_token` in session"
+
+Symptom: opening `/mcp/setup/token` shows "Sign-in required" or "No access_token in session" even though you're signed into PlaidCloud.
+
+Cause: your session was established through a sign-in path that didn't cache the Keycloak token (uncommon but possible).
+
+Fix: sign out of PlaidCloud and sign back in through the standard login page. The new session will carry the access token.
+
+## Tools missing or incomplete catalog
+
+Symptom: `mcp_introspect` returns fewer tools than expected, or specific tools you need aren't there.
+
+Cause 1 — scopes: tools require specific PlaidCloud scopes (e.g. `analyze.workflow.write`). If your account lacks the scope, the tool will refuse to execute. Run `mcp_introspect(name='<tool>')` to see `required_scopes`. Ask your workspace admin to grant the scope or run the operation through an account that has it.
+
+Cause 2 — version mismatch: an older deployment may not have all the tools described in the latest docs. Compare `mcp_introspect()`'s tool count to your current version's release notes; ask for a redeploy if needed.
+
+## Multi-tenant: which tenant did the agent just hit?
+
+Symptom: you have multiple PlaidCloud tenants configured and the agent's response could've come from any of them.
+
+Fix: include the tenant explicitly in your prompt ("in the **dev** tenant, list workflows…"). The MCP server names you chose in your config (e.g. `plaidcloud-prod`, `plaidcloud-dev`) double as identifiers the model can disambiguate against. For high-stakes operations, keep production toggled off in the connectors picker until you actively need it.
+
+## Rate limits and quota
+
+PlaidCloud's REST surface is rate-limited per requests-per-minute via the same middleware that fronts the UI. MCP calls share that limit. If an agent fires off a long burst of `find` calls (e.g. trying to enumerate every project + workflow + step), you may hit the limit. Use pagination (`cursor`, `limit`) and `count_only=True` for sizing checks instead of fetching the full result set.
+
+## Getting help
+
+For server-side issues — auth failures, tools returning errors with no obvious cause, missing tools — check the response's `error` envelope first. Every failure includes `code`, `retryable`, `message`, and often a `hint`. If the hint isn't enough, contact your PlaidCloud administrator or open a support ticket with the request ID (returned in the `X-Request-Id` response header).
