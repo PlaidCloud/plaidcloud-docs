@@ -19,7 +19,7 @@ Symptom: you authorize in the browser, paste the callback URL into Claude Code, 
 
 Cause: the bridge's in-memory OAuth state is per-port and can be lost between the `authenticate` and `complete_authentication` tool calls — particularly in remote/SSH sessions where the browser callback can't reach `localhost`.
 
-Fix: switch to the static Bearer flow. Open `https://<your-tenant>.plaidcloud.org/mcp/setup/token` in a browser where you're signed into PlaidCloud, copy the snippet into your `.mcp.json`, and restart Claude Code.
+Fix: switch to the static Bearer flow. Open `https://<your-workspace>.plaid.cloud/mcp/setup/token` in a browser where you're signed into PlaidCloud, copy the snippet into your `.mcp.json`, and restart Claude Code.
 
 ## Token expired
 
@@ -27,7 +27,7 @@ Symptom: tools that worked yesterday now return 401 Unauthorized.
 
 Cause: static Bearer tokens follow your Keycloak realm's access-token-lifespan policy (typically a few hours to a day).
 
-Fix: reload `https://<your-tenant>.plaidcloud.org/mcp/setup/token` to mint a fresh token, paste it into your config. For long-lived sessions, prefer OAuth — clients that support it refresh tokens automatically.
+Fix: reload `https://<your-workspace>.plaid.cloud/mcp/setup/token` to mint a fresh token, paste it into your config. For long-lived sessions, prefer OAuth — clients that support it refresh tokens automatically.
 
 ## "No `access_token` in session"
 

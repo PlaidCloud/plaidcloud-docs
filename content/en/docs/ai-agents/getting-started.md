@@ -7,15 +7,15 @@ description: Overview of the PlaidCloud MCP server — what it exposes, authenti
 
 ## What is the MCP server?
 
-The [Model Context Protocol](https://modelcontextprotocol.io) is an open standard for letting AI agents talk to external tools and data. PlaidCloud runs an MCP server on every tenant that wraps the same core helpers the REST API uses — grouped by intent (`find`, `describe`, `upsert`, `run`, `organize`) so an agent can navigate the surface without loading 1,000+ low-level RPC method names.
+The [Model Context Protocol](https://modelcontextprotocol.io) is an open standard for letting AI agents talk to external tools and data. PlaidCloud runs an MCP server on every workspace that wraps the same core helpers the REST API uses — grouped by intent (`find`, `describe`, `upsert`, `run`, `organize`) so an agent can navigate the surface without loading 1,000+ low-level RPC method names.
 
 The server lives at:
 
 ```
-https://<your-tenant>.plaidcloud.org/mcp/
+https://<your-workspace>.plaid.cloud/mcp/
 ```
 
-Replace `<your-tenant>` with your tenant subdomain (whatever you use to log into the PlaidCloud UI).
+Replace `<your-workspace>` with your workspace subdomain (whatever you use to log into the PlaidCloud UI).
 
 ## What it exposes
 
@@ -46,10 +46,10 @@ PlaidCloud's MCP server accepts two authentication paths:
 Open this URL in a browser tab where you're already signed into PlaidCloud:
 
 ```
-https://<your-tenant>.plaidcloud.org/mcp/setup/token
+https://<your-workspace>.plaid.cloud/mcp/setup/token
 ```
 
-The page returns a JSON snippet ready to paste into your agent's MCP config. Each tenant has its own snippet.
+The page returns a JSON snippet ready to paste into your agent's MCP config. Each workspace has its own snippet.
 
 The token's lifespan is governed by your Keycloak realm's access-token-lifespan policy (typically a few hours to a day). To refresh, reload the same URL — your browser session re-mints the token automatically.
 

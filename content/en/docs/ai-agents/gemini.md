@@ -9,7 +9,7 @@ Google's [`gemini-cli`](https://github.com/google-gemini/gemini-cli) supports MC
 
 ## Setup
 
-1. Get a Bearer token by visiting `https://<your-tenant>.plaidcloud.org/mcp/setup/token` in a browser where you're signed into PlaidCloud.
+1. Get a Bearer token by visiting `https://<your-workspace>.plaid.cloud/mcp/setup/token` in a browser where you're signed into PlaidCloud.
 
 2. Edit `~/.gemini/settings.json` (create it if it doesn't exist):
 
@@ -17,7 +17,7 @@ Google's [`gemini-cli`](https://github.com/google-gemini/gemini-cli) supports MC
     {
       "mcpServers": {
         "plaidcloud": {
-          "httpUrl": "https://<your-tenant>.plaidcloud.org/mcp/",
+          "httpUrl": "https://<your-workspace>.plaid.cloud/mcp/",
           "headers": {
             "Authorization": "Bearer eyJhbGc…"
           }
@@ -39,7 +39,7 @@ You can also call tools explicitly with the `/tools` command if you want to insp
 
 ## Refreshing the token
 
-When the token expires, reload `https://<your-tenant>.plaidcloud.org/mcp/setup/token` and update the `Authorization` value in `settings.json`. Restart `gemini` to pick up the change.
+When the token expires, reload `https://<your-workspace>.plaid.cloud/mcp/setup/token` and update the `Authorization` value in `settings.json`. Restart `gemini` to pick up the change.
 
 ## Gemini Code Assist (IDE)
 

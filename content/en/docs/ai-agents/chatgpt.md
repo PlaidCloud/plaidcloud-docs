@@ -14,7 +14,7 @@ If your ChatGPT plan exposes the **Connectors** UI (Settings → Connectors), yo
 1. Go to **Settings → Connectors → Add custom connector**.
 2. Enter:
    - **Name**: `PlaidCloud`
-   - **MCP server URL**: `https://<your-tenant>.plaidcloud.org/mcp/`
+   - **MCP server URL**: `https://<your-workspace>.plaid.cloud/mcp/`
 3. ChatGPT will redirect you to PlaidCloud for OAuth login. Approve the connection.
 4. Toggle the connector on inside any conversation that should be able to use it.
 

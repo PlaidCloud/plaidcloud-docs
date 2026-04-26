@@ -17,7 +17,7 @@ Custom Connectors are available on Claude Pro, Max, Team, and Enterprise plans. 
 2. Click **Add custom connector**.
 3. Fill in:
    - **Name**: `PlaidCloud` (or `PlaidCloud (prod)`, `PlaidCloud (dev)` if you have multiple tenants).
-   - **Server URL**: `https://<your-tenant>.plaidcloud.org/mcp/`
+   - **Server URL**: `https://<your-workspace>.plaid.cloud/mcp/`
 4. Click **Add**. Claude opens a browser tab to PlaidCloud's Keycloak login.
 5. Sign in and approve the connection. You'll be redirected back to Claude with the connection saved.
 

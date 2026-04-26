@@ -14,7 +14,7 @@ OAuth is the lowest-maintenance path. Claude Code's MCP bridge handles the brows
 1. From your project root, add the server. The CLI form:
 
     ```bash
-    claude mcp add --transport http plaidcloud https://<your-tenant>.plaidcloud.org/mcp/
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp/
     ```
 
     Or in `.mcp.json` at the project root:
@@ -24,7 +24,7 @@ OAuth is the lowest-maintenance path. Claude Code's MCP bridge handles the brows
       "mcpServers": {
         "plaidcloud": {
           "type": "http",
-          "url": "https://<your-tenant>.plaidcloud.org/mcp/"
+          "url": "https://<your-workspace>.plaid.cloud/mcp/"
         }
       }
     }
@@ -45,7 +45,7 @@ When OAuth isn't practical (remote sessions, devcontainers, agent runtimes that 
 1. In a browser tab where you're signed into PlaidCloud, open:
 
     ```
-    https://<your-tenant>.plaidcloud.org/mcp/setup/token
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
     ```
 
     Click "Copy snippet."
@@ -57,7 +57,7 @@ When OAuth isn't practical (remote sessions, devcontainers, agent runtimes that 
       "mcpServers": {
         "plaidcloud": {
           "type": "http",
-          "url": "https://<your-tenant>.plaidcloud.org/mcp/",
+          "url": "https://<your-workspace>.plaid.cloud/mcp/",
           "headers": {
             "Authorization": "Bearer eyJhbGc…"
           }
@@ -70,7 +70,7 @@ When OAuth isn't practical (remote sessions, devcontainers, agent runtimes that 
 
     ```bash
     claude mcp add --transport http plaidcloud \
-      https://<your-tenant>.plaidcloud.org/mcp/ \
+      https://<your-workspace>.plaid.cloud/mcp/ \
       -H "Authorization: Bearer eyJhbGc…"
     ```
 
@@ -85,8 +85,8 @@ You can configure multiple PlaidCloud tenants side-by-side — give each a disti
 ```json
 {
   "mcpServers": {
-    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaidcloud.org/mcp/" },
-    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaidcloud.org/mcp/"  }
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp/" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp/"  }
   }
 }
 ```

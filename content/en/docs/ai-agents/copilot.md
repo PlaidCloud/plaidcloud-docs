@@ -13,7 +13,7 @@ Copilot's MCP support is gated by Copilot plan tier and the `chat.mcp.enabled` s
 
 ## Setup
 
-1. Get a Bearer token by visiting `https://<your-tenant>.plaidcloud.org/mcp/setup/token` in a browser where you're signed into PlaidCloud.
+1. Get a Bearer token by visiting `https://<your-workspace>.plaid.cloud/mcp/setup/token` in a browser where you're signed into PlaidCloud.
 
 2. In VSCode, open the command palette and run **MCP: Add Server**, or create `.vscode/mcp.json` directly:
 
@@ -22,7 +22,7 @@ Copilot's MCP support is gated by Copilot plan tier and the `chat.mcp.enabled` s
       "servers": {
         "plaidcloud": {
           "type": "http",
-          "url": "https://<your-tenant>.plaidcloud.org/mcp/",
+          "url": "https://<your-workspace>.plaid.cloud/mcp/",
           "headers": {
             "Authorization": "Bearer eyJhbGc…"
           }
@@ -45,7 +45,7 @@ Copilot picks the appropriate tool, executes it, and quotes results in its reply
 
 ## Refreshing the token
 
-VSCode reads `.vscode/mcp.json` on startup and on file change. When the token expires, reload `https://<your-tenant>.plaidcloud.org/mcp/setup/token` and overwrite the `Authorization` value — VSCode reloads the server automatically.
+VSCode reads `.vscode/mcp.json` on startup and on file change. When the token expires, reload `https://<your-workspace>.plaid.cloud/mcp/setup/token` and overwrite the `Authorization` value — VSCode reloads the server automatically.
 
 ## Restricting to specific tools
 
