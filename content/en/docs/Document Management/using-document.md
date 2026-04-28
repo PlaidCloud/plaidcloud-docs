@@ -2,140 +2,127 @@
 title: Using Document Accounts
 slug: using-document-accounts
 weight: 3.0
-description: Learn how to browse, upload, download, and manage files in PlaidCloud Document storage for data import and export operations.
+description: Browse, upload, search, and manage files in PlaidCloud Document storage using the two-pane file explorer.
 date: 2022-01-25T07:39:48
 ---
 
 
-Several file operations are available within a Document Account browser. All operations are accessible from a right-click menu within the file browser. The right-click menu provides specific options depending on whether a folder or file is selected.
+The Document browser is a two-pane split view: the folder tree on the left, the file list on the right. Most operations are available from a right-click menu in either pane. The right-click menu shows different options depending on whether a folder, a file, or empty space is selected.
 
+The root of an account is itself a viewable, droppable folder — clicking it shows everything at the top level and accepts dropped uploads.
 
 
 **To open the file explorer:**
 
+1. Go to **Document > Shared Accounts** (or **Private Accounts**)
+2. Click the folder icon (far left) for the account you want to explore
 
-1. Click on the folder icon (far left) from the list of private or shared accounts
+The various file and folder operations are detailed below.
 
-**Opening File Explorer**
-
-
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-
-The various file and folder operations available in the file explorer are detailed below:
-
-
-* Folders:
-	+ uploading new folders
-	+ creating new folders
-	+ renaming, deleting, and downloading current folders as ZIPs
-* Files:
-	+ downloading new files
-	+ renaming, deleting, and refreshing current files.
 
 ## Upload a File
 
+**Drag-and-drop:**
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Right-click and select `Upload Here`
+1. Browse to the desired directory
+2. Drag one or more files from your desktop onto the file list
+
+**From the right-click menu:**
+
+1. Browse to the desired directory
+2. Right-click in the file list and select `Upload Here`
+3. Pick the files in the OS file picker
+
+**From the toolbar:**
+
+1. Browse to the desired directory
+2. Click the `Upload` button on the right pane
 
 {{< note >}}
- Multiple files may be uploaded at one time
+Multiple files can be uploaded at once. If a target name already exists, you will be prompted to confirm overwrite or cancel.
 {{< /note >}}
 
 
 ## Download a File
 
+1. Browse to the desired directory
+2. Left-click to select the desired file
+3. Right-click and select `Download`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired file
-5. Right-click and select `Download`
 
 ## Rename a File
 
+1. Browse to the desired directory
+2. Left-click to select the desired file
+3. Right-click and select `Rename`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired file
-5. Right-click and select `Rename`
 
 ## Move a File
 
+1. Browse to the desired directory
+2. Left-click to select the desired file
+3. Drag into the destination folder
+4. Select `Move File`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired file
-5. Drag into desired folder
-6. Select `Move File`
 
 ## Copy a File
 
+1. Browse to the desired directory
+2. Left-click to select the desired file
+3. Right-click and select `Copy`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired file
-5. Right-click and select `Copy`
 
 ## Delete a File
 
+1. Browse to the desired directory
+2. Left-click to select the desired file
+3. Right-click and select `Delete`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired file
-5. Right-click and select `Delete`
 
 ## Create a Folder
 
+1. Open the account
+2. Click `New Top Level Folder` (or right-click an existing folder and select `New Folder`)
+3. Enter a folder name
+4. Click `Create`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Click “New Top Level Folder”
-4. Enter a folder name of your choosing
-5. Click `Create`
 
 ## Rename a Folder
 
+1. Browse to the desired directory
+2. Left-click to select the desired folder
+3. Right-click and select `Rename`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired folder
-5. Right-click and select `Rename`
 
 ## Move a Folder
 
+1. Browse to the desired directory
+2. Left-click to select the desired folder
+3. Drag into the destination folder
+4. Select `Move Folder`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired folder
-5. Drag into desired folder
-6. Select `Move Folder`
 
 ## Delete a Folder
 
+1. Browse to the desired directory
+2. Left-click to select the desired folder
+3. Right-click and select `Delete`
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired folder
-5. Right-click and select `Delete`
 
 ## Download Folder Contents (zip file)
 
-The `Download as Zip` option is for downloading many files at once. This option will zip (compress) all contents of the selected folder and download the zip file (.zip extension). 
-For easy navigation, the zip file retains the directory structure that exists in the file explorer.
+The `Download as Zip` option compresses every file under the selected folder into a single `.zip` and downloads it. The archive preserves the folder structure shown in the explorer.
 
-1. Go to Document > Shared Accounts
-2. Select the folder icon (far left) for the account you wish to explore
-3. Browse to the desired directory
-4. Left-click to select the desired folder
-5. Right-click and select `Download as ZIP`
+1. Browse to the desired directory
+2. Left-click to select the desired folder
+3. Right-click and select `Download as ZIP`
+
+
+## Read-only Accounts
+
+If an account is marked read-only, upload affordances (drag-prompts, the toolbar `Upload` button, and the `Upload Here` context menu) are hidden automatically. Browse, download, and search still work.
+
+
+## Search
+
+For finding files across an account — including across many subfolders or across multiple connected accounts — see [Searching Documents](../searching-documents/).
