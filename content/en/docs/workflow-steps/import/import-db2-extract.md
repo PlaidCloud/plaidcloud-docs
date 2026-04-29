@@ -2,17 +2,16 @@
 title: Import DB2 Extract
 slug: import-db2-extract
 weight: 23.0
-description: Import data from an IBM DB2 extract into PlaidCloud as a workflow step, using either a direct DB2 connection or a previously generated extract file.
+description: Import a DB2 extract file from PlaidCloud Document storage into a project table as a workflow step.
 date: 2026-04-28T00:00:00
 ---
 
 
 ## Description
 
-Import data from an IBM DB2 source. Two source modes are supported:
+Import an IBM DB2 extract file from PlaidCloud Document storage. This is useful when the DB2 server is reachable only from on-premises infrastructure: an external process pushes the extract into PlaidCloud Document storage, and this step reads it from there into a project table.
 
-* **Live DB2 connection** — read directly via a configured [IBM DB2](../../../connectors/database-connections/ibm-db2/) connection.
-* **Extract file** — read a DB2 extract file from a Document account. Useful when the DB2 server is reachable only from on-premises infrastructure and the extract has been pushed to PlaidCloud Document storage.
+For live DB2 access (no extract file), connect via the standard [IBM DB2](../../../connectors/database-connections/ibm-db2/) connection and use [Import External Database Tables](../import-external-database-tables/).
 
 
 ## Examples
@@ -23,10 +22,7 @@ Import data from an IBM DB2 source. Two source modes are supported:
 
 ## Unique Configuration Items
 
-* **Source Mode** — `Connection` or `Extract File`.
-* **Connection** — required when source mode is `Connection`. Selects the IBM DB2 connection to read from.
-* **Schema / Table** — required when source mode is `Connection`. Picks the DB2 object to extract.
-* **Extract File** — required when source mode is `Extract File`. Selects the DB2 extract file in Document storage.
+None
 
 ---
 

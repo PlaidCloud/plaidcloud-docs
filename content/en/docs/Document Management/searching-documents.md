@@ -2,58 +2,55 @@
 title: Searching Documents
 slug: searching-documents
 weight: 4.0
-description: Find files across one or more PlaidCloud Document accounts using inline search with live progress, advanced filters, and reveal-in-folder.
+description: Find files in a PlaidCloud Document account using inline search with live progress, advanced filters, and reveal-in-folder.
 date: 2026-04-28T00:00:00
 ---
 
 
 ## Description
 
-The Document browser includes a live search bar that streams results as they are found. Searches run against the connected backend (S3, Azure Blob, Google Drive, OneDrive, etc.) so results reflect the current state of each account, not a stale index.
-
-Results stream in via NDJSON with a progress counter so you can see how much of the search has completed and stop early if you've already found what you need.
+The Document browser includes a search bar at the top of the file list. Searches run live against the connected backend (S3, Azure Blob, Google Drive, OneDrive, etc.) so results reflect the current state of the account, not a stale index.
 
 
 ## Run a Search
 
 1. Open a Document account
-2. Click in the search bar at the top of the file list
-3. Type a name pattern and press Enter
-4. Watch results stream into the file list with a live progress counter
+2. Click in the **Search files…** field at the top of the file list
+3. Type a name pattern
+4. Watch results stream into the file list
 
-While the search runs, the status line shows the number of folders scanned and matches found so far. You can keep typing or refine filters at any time.
+Press `Esc` or click the clear icon at the end of the field to exit search mode and return to the regular file list. The status line below the field shows how many folders have been scanned and how many matches have been found.
 
 
 ## Advanced Filters
 
-Click the filter icon next to the search bar to open the advanced filter form. Combine any of the following predicates:
+Click `Advanced` next to the search field to show the filter row. Combine any of these filters with the name pattern:
 
-* **Glob pattern** — e.g. `reports/2026/*.csv`
-* **File kinds** — file, folder, or both
-* **Extensions** — comma-separated list, e.g. `csv, xlsx, parquet`
-* **Size** — minimum and/or maximum
-* **Modified time** — on/after and/or on/before
+* **Ext:** — comma-separated extensions, e.g. `pdf,xlsx`. No spaces.
+* **Kind:** — `Files & folders` (default), `Files only`, or `Folders only`.
+* **Size (bytes):** — minimum and/or maximum size.
+* **Modified:** — on/after date and on/before date, both as `YYYY-MM-DD`.
 
-Filters apply on top of the name pattern. Clear the form with the `Clear` button to start over.
-
-
-## Sort, Highlight, and Reveal
-
-* When the search finishes, results are sorted by relevance and the matched substring is highlighted in each row.
-* The most recently selected match stays highlighted across re-searches so you can keep your place.
-* Right-click any result and select `Reveal in Folder` to jump to the file in its containing directory.
+Filters apply on top of the name pattern. Click `Clear` to wipe the query and all filters.
 
 
-## Native Adapters
+## Highlighting and Reveal
 
-Search uses native adapters for the backend where available, including:
+* While the search is running, results stream in arrival order so you can act on early matches without waiting.
+* Once the stream completes, the file list re-sorts by name and the matched substring is highlighted in each row.
+* Right-click any result and select `Reveal in folder` to jump to the file in its containing directory and exit search mode.
 
-* **Google Drive** — uses the Drive API directly so results match what you'd see in the Drive web UI.
-* **OneDrive** — uses Microsoft Graph (app-only auth) so results respect the configured SharePoint/OneDrive scope.
 
-For S3-compatible and other object stores, search runs as a parallel live-crawl with per-user concurrency caps so a heavy search won't starve other users.
+## Searching Across Backends
+
+Search uses the storage backend's own search API where one is available, so results match what you'd see in the backend's native UI:
+
+* **Google Drive** — uses the Drive API.
+* **OneDrive / SharePoint** — uses Microsoft Graph.
+
+For object stores (S3 and S3-compatible, Azure Blob, GCS, etc.) PlaidCloud crawls the configured paths in parallel.
 
 
 {{< note >}}
-Each user is rate-limited to a small number of concurrent searches across all accounts to keep the system responsive. If you hit the limit, the search bar reports an HTTP 429 — wait for one of your other searches to finish and try again.
+Each user is rate-limited to a small number of concurrent searches per account so a heavy search won't starve other users. If you hit the limit the search bar reports an error — wait for one of your other searches to finish and try again.
 {{< /note >}}

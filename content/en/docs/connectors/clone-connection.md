@@ -16,16 +16,16 @@ Cloning works for every external data connection type: database, ERP, REST, clou
 
 ## Clone a Connection
 
-1. Go to **Tools > Connections** (or **Project > Connections** for project-scoped connectors)
+1. Open **Tools > Connections**
 2. Select the connection you want to copy
-3. Click `Clone` in the toolbar
+3. Click `Clone` in the toolbar (or right-click the row and select `Clone`)
 4. Edit the new connection's name and any fields that should differ
 5. Click `Save`
 
 
 ## Owner-only Actions
 
-`Edit`, `Clone`, and `Delete` are restricted to the connection owner. If you don't see those actions on a connection, you are not the owner — ask the owner to clone it for you, or have them transfer ownership.
+`Edit`, `Clone`, and `Delete` are only available on connections you own. If those toolbar buttons are greyed out for the selected row, you are not the owner — ask the owner to clone the connection for you, or have them add you as an additional owner via `Edit Owners`.
 
 {{< note >}}
 Cloning copies the configuration but not any test results or run history. Test the cloned connection before relying on it in a workflow.

@@ -2,48 +2,62 @@
 title: Using the Email Area
 slug: using-email
 weight: 1.0
-description: Browse sent transactional email and bounces, filter by stream, recipient, or tag, and page through delivery history.
+description: Browse sent transactional email and bounces, filter by stream, recipient, status, type, or tag, and reactivate bounced recipients.
 date: 2026-04-28T00:00:00
 ---
 
 
 ## Description
 
-Open the area from **Tools > Email**. The page is split into two panels: **Sent Email** and **Bounces**. The stream selector at the top of each panel chooses which Postmark stream to view; it defaults to the first transactional stream configured for your tenant.
+Open the area from **Tools > Email**. The page is split into two panels: **Sent Email** and **Bounces**. The stream selector at the top picks which Postmark stream to view; it defaults to the first transactional stream configured for your tenant.
 
 
 ## Sent Email
 
-The **Sent Email** panel shows messages PlaidCloud has sent on your tenant's behalf.
+The **Sent Email** panel shows messages PlaidCloud has sent on your tenant's behalf. Columns include `Sent At`, `Recipient`, `Subject`, `Status`, `Stream`, `Tag`, `Opens`, and `Clicks`.
 
 **To filter sent email:**
 
 1. Open **Tools > Email > Sent Email**
-2. Use the **Status** filter to narrow by Postmark delivery status
-3. Use the **Recipient** filter to search by To address
-4. Use the **Tag** filter to narrow to a specific message tag
-5. Use the stream selector to switch to a different stream
+2. Type into **Recipient** to search by To address (substring match)
+3. Pick a **Status** to narrow by Postmark delivery status (delivered, opened, etc.)
+4. Pick a **Tag** to narrow to a specific message tag
+5. Click `Apply`
 
-The status filter offers Postmark's valid status values (delivered, bounced, opened, etc.). Multiple filters combine.
+Click `Clear` to wipe the filters. Click any row to open a **Message Details** window with the full message metadata returned by Postmark.
 
 
 ## Bounces
 
-The **Bounces** panel shows delivery failures returned by Postmark.
+The **Bounces** panel shows delivery failures returned by Postmark. Columns include `Bounced At`, `Recipient`, `Type`, `Inactive`, `Description`, and `Stream`.
 
 **To filter bounces:**
 
 1. Open **Tools > Email > Bounces**
-2. Use the **Recipient** filter to search by To address
-3. Use the **Tag** filter to narrow to a specific message tag
+2. Type into **Recipient** to search by To address (substring match)
+3. Pick a **Type** to narrow by bounce type (HardBounce, SoftBounce, Transient, etc.)
+4. Pick a **Tag** to narrow to a specific message tag
+5. Tick **Inactive only** to show only recipients Postmark has marked inactive
+6. Click `Apply`
 
-Each row shows the bounce type and the delivery message returned by Postmark. Long delivery messages are truncated to 200 characters in the table — click the row to see the full message.
+Click `Clear` to wipe the filters. Click any row to open the bounce details.
+
+
+## Reactivate a Bounced Recipient
+
+When Postmark marks a recipient inactive (typically after a hard bounce), no further mail is sent to that address until the recipient is reactivated.
+
+1. Filter to **Inactive only**
+2. Select the recipient row
+3. Click `Reactivate`
+
+After reactivation, future PlaidCloud-generated mail to that address will be attempted again.
 
 
 ## Paging
 
-Both panels page through history rather than loading every message at once. Use the pager at the bottom of the table to move forward and back.
+Both panels page through history rather than loading every message at once. Use `Prev` and `Next` to move through pages; the label between them shows your position (`1–25 of 837`).
 
 {{< note >}}
-The Email area is read-only. Replies, retries, and template management still happen in the Postmark dashboard.
+The Email area is for inspection and recipient reactivation only. Replying to messages, configuring servers, and managing templates still happen in the Postmark dashboard.
 {{< /note >}}

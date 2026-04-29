@@ -11,7 +11,7 @@ date: 2026-04-28T00:00:00
 
 Import Accounts Payable bill headers from Sage Intacct via the Sage Intacct REST API. Each row is one AP bill, with the vendor, GL date, due date, totals, and status fields needed for downstream reporting.
 
-Use a configured [Sage Intacct REST Connector](../../../connectors/rest-connections/sage-intacct-connector/) as the source. To pull line-level detail at the same grain as the bill lines, pair this step with [Import Sage AP Lines](../import-sage-ap-lines/).
+Use a configured [Sage Intacct REST Connector](../../../connectors/rest-connections/sage-intacct-connector/) as the source. To pull line-level detail at the same time, pair this step with [Import Sage AP Lines](../import-sage-ap-lines/).
 
 
 ## Examples
@@ -22,9 +22,9 @@ Use a configured [Sage Intacct REST Connector](../../../connectors/rest-connecti
 
 ## Unique Configuration Items
 
-* **Connection** — the Sage Intacct REST connection to read from.
-* **Date Range** — restrict the import to bills whose GL date falls in the selected window. Leave blank to pull all available history.
-* **Entity Filter** — limit the import to a specific Intacct entity. Useful in multi-entity tenants.
+* **Sage Connection** — the Sage Intacct REST connection to read from. Sage connections are managed in **Tools > Connections**.
+* **Company ID** — the Intacct company to query. Required if your sender credentials cover more than one company.
+* **Entity ID(s) (comma-separated)** — restrict the import to one or more Intacct entities. Leave blank to pull every entity the user has access to.
 
 ---
 
