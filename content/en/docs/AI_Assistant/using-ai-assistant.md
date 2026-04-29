@@ -13,7 +13,7 @@ The AI Assistant is a project-scoped chat. Open the project, then click the **AI
 
 The tab is split into two parts: a conversation history list on the left, and a tabbed chat workspace on the right. Each conversation is its own tab, so you can keep several threads open at once.
 
-Conversations persist in PostgreSQL, so they survive across sessions, browsers, and devices.
+Conversations persist, so they survive across sessions, browsers, and devices.
 
 
 ## Start a Conversation

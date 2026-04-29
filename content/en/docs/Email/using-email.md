@@ -9,18 +9,18 @@ date: 2026-04-28T00:00:00
 
 ## Description
 
-Open the area from **Tools > Email**. The page is split into two panels: **Sent Email** and **Bounces**. The stream selector at the top picks which Postmark stream to view; it defaults to the first transactional stream configured for your tenant.
+Open the area from **Tools > Email**. The page is split into two panels: **Sent Email** and **Bounces**. The stream selector at the top picks which Postmark stream to view; it defaults to the first transactional stream configured for your workspace.
 
 
 ## Sent Email
 
-The **Sent Email** panel shows messages PlaidCloud has sent on your tenant's behalf. Columns include `Sent At`, `Recipient`, `Subject`, `Status`, `Stream`, `Tag`, `Opens`, and `Clicks`.
+The **Sent Email** panel shows messages PlaidCloud has sent on your workspace's behalf. Columns include `Sent At`, `Recipient`, `Subject`, `Status`, `Stream`, `Tag`, `Opens`, and `Clicks`.
 
 **To filter sent email:**
 
 1. Open **Tools > Email > Sent Email**
 2. Type into **Recipient** to search by To address (substring match)
-3. Pick a **Status** to narrow by Postmark delivery status (delivered, opened, etc.)
+3. Pick a **Status** to narrow by email delivery status (delivered, opened, etc.)
 4. Pick a **Tag** to narrow to a specific message tag
 5. Click `Apply`
 
