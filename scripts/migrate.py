@@ -22,7 +22,9 @@ from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HUGO_DOCS = REPO_ROOT / "content" / "en" / "docs"
+HUGO_INCLUDES = REPO_ROOT / "content" / "en" / "includes"
 ASTRO_DOCS = REPO_ROOT / "src" / "content" / "docs"
+ASTRO_SNIPPETS = REPO_ROOT / "src" / "snippets"
 REDIRECTS_FILE = REPO_ROOT / "public" / "_redirects"
 
 # Top-level section moves
@@ -63,7 +65,7 @@ CONNECTORS_SPLIT = {
     "rest-connections":           "reference/connectors/rest",
 }
 
-DROP = {"markdown_example.md", "how-to/_index.md", "how-to/selecting-latest-record-in-large-history-table.md"}
+DROP = {"markdown_example.md", "how-to/_index.md"}
 
 # how-to is a one-page section; relocate that page into guides/data
 HOWTO_MOVE = {
@@ -240,8 +242,8 @@ def _yaml_scalar(v) -> str:
 # --- Body transforms ---
 
 CALLOUT_PATTERN = re.compile(
-    r"\{\{[<%]\s*(note|caution|warning)\s*[%>]\}\}(.*?)\{\{[<%]\s*/\1\s*[%>]\}\}",
-    re.DOTALL | re.IGNORECASE,
+    r"^([ \t]*)\{\{[<%]\s*(note|caution|warning)\s*[%>]\}\}(.*?)\{\{[<%]\s*/\2\s*[%>]\}\}",
+    re.DOTALL | re.IGNORECASE | re.MULTILINE,
 )
 
 CALLOUT_TYPES = {
@@ -252,17 +254,24 @@ CALLOUT_TYPES = {
 
 
 def transform_callouts(body: str) -> tuple[str, bool]:
+    """
+    Convert Hugo note/caution/warning shortcodes into Starlight <Aside>.
+    Emits a compact single-line form to avoid MDX list-item boundary issues.
+    Preserves the leading whitespace of the original shortcode so nested
+    list contexts retain correct indentation.
+    """
     used = False
 
     def repl(m: re.Match) -> str:
         nonlocal used
         used = True
-        tag = m.group(1).lower()
-        inner = m.group(2).strip()
+        indent = m.group(1)
+        tag = m.group(2).lower()
+        inner = " ".join(m.group(3).split())  # collapse whitespace; single line
         ast_type = CALLOUT_TYPES[tag]
         if ast_type == "note":
-            return f"<Aside>\n{inner}\n</Aside>"
-        return f'<Aside type="{ast_type}">\n{inner}\n</Aside>'
+            return f"{indent}<Aside>{inner}</Aside>"
+        return f'{indent}<Aside type="{ast_type}">{inner}</Aside>'
 
     return CALLOUT_PATTERN.sub(repl, body), used
 
@@ -271,14 +280,21 @@ INCLUDE_PATTERN = re.compile(r'\{\{<\s*include\s+"([^"]+)"\s*>\}\}')
 
 
 def transform_includes(body: str) -> tuple[str, list[str]]:
-    """Convert {{< include "foo.md" >}} to MDX component reference. Returns body + names."""
+    """Convert {{< include "foo.md" >}} or {{< include "sub/foo.md" >}} to
+    MDX component reference. Returns body + entries of form
+    "ComponentName:relative/path-without-ext"."""
     names: list[str] = []
 
     def repl(m: re.Match) -> str:
         name = m.group(1)
-        stem = Path(name).stem
-        component = "Snippet" + "".join(p.capitalize() for p in re.split(r"[-_]", stem))
-        names.append(component + ":" + stem)
+        p = Path(name)
+        stem = p.stem
+        rel_no_ext = str(p.with_suffix(""))
+        # Component name from stem only (with directory prefix to avoid collisions)
+        prefix = "".join(part.capitalize() for part in p.parent.parts) if str(p.parent) != "." else ""
+        body_part = "".join(part.capitalize() for part in re.split(r"[-_]", stem))
+        component = "Snippet" + prefix + body_part
+        names.append(component + ":" + rel_no_ext)
         return f"<{component} />"
 
     return INCLUDE_PATTERN.sub(repl, body), names
@@ -302,6 +318,87 @@ def transform_misc(body: str) -> tuple[str, set[str]]:
         lambda m: f"![{m.group(2) or ''}]({m.group(1)})", body
     )
     return body, used_components
+
+
+# Common HTML elements MDX accepts as plain HTML (no escaping needed).
+_HTML_WHITELIST = {
+    "a", "abbr", "address", "area", "article", "aside", "audio", "b",
+    "base", "bdi", "bdo", "blockquote", "body", "br", "button", "canvas",
+    "caption", "cite", "code", "col", "colgroup", "data", "datalist",
+    "dd", "del", "details", "dfn", "dialog", "div", "dl", "dt", "em",
+    "embed", "fieldset", "figcaption", "figure", "footer", "form",
+    "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hr", "html",
+    "i", "iframe", "img", "input", "ins", "kbd", "label", "legend",
+    "li", "link", "main", "map", "mark", "meta", "meter", "nav",
+    "noscript", "object", "ol", "optgroup", "option", "output", "p",
+    "param", "picture", "pre", "progress", "q", "rb", "rp", "rt", "rtc",
+    "ruby", "s", "samp", "script", "section", "select", "slot", "small",
+    "source", "span", "strong", "style", "sub", "summary", "sup", "svg",
+    "table", "tbody", "td", "template", "textarea", "tfoot", "th",
+    "thead", "time", "title", "tr", "track", "u", "ul", "var", "video",
+    "wbr",
+}
+
+# Autolink: <http(s)://...> -> [url](url). Handle double-bracket too.
+AUTOLINK_DOUBLE = re.compile(r"<<(https?://[^>\s]+)>>")
+AUTOLINK_SINGLE = re.compile(r"<(https?://[^>\s]+)>")
+# Bare placeholder: <name-or_with_punct> where it's not a real HTML tag.
+PLACEHOLDER_TAG = re.compile(r"<([a-z][a-zA-Z0-9_-]*)>")
+
+
+def _wrap_placeholder(m: re.Match) -> str:
+    name = m.group(1)
+    if name.lower() in _HTML_WHITELIST:
+        return m.group(0)
+    return f"`<{name}>`"
+
+
+def _transform_outside_code_spans(line: str) -> str:
+    """Apply MDX safety transforms only to text outside backtick code spans."""
+    # Split on backticks; even-indexed pieces are outside code spans.
+    parts = line.split("`")
+    for i in range(0, len(parts), 2):
+        s = parts[i]
+        # Strip backslash escapes inside <...> first (Hugo md residue).
+        s = re.sub(
+            r"<([^>]*\\[_*][^>]*)>",
+            lambda m: "<" + m.group(1).replace("\\_", "_").replace("\\*", "*") + ">",
+            s,
+        )
+        # Autolinks -> plain URL text.
+        s = AUTOLINK_DOUBLE.sub(lambda m: m.group(1), s)
+        s = AUTOLINK_SINGLE.sub(lambda m: m.group(1), s)
+        # Wrap non-HTML placeholder tags in backticks.
+        s = PLACEHOLDER_TAG.sub(_wrap_placeholder, s)
+        # Escape bare `<` that can't start an HTML/JSX tag (e.g. `n <= 1`, `< 5`).
+        # MDX requires the character after `<` to be a letter, `!`, or `/`.
+        s = re.sub(r"<(?=[^a-zA-Z!/])", "&lt;", s)
+        # Escape bare `{` that MDX would parse as JS expression
+        # (text like `{Column -> Value}`). Allow `{/*` MDX comment marker.
+        s = re.sub(r"\{(?!/\*)", r"\\{", s)
+        parts[i] = s
+    return "`".join(parts)
+
+
+def mdx_safety(body: str) -> str:
+    """Escape constructs that look like JSX/HTML but aren't.
+
+    Skips fenced code blocks (```...```) entirely and skips inline code
+    spans (`...`) within text lines.
+    """
+    out_lines: list[str] = []
+    in_code_block = False
+    for line in body.splitlines(keepends=True):
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+            out_lines.append(line)
+            continue
+        if in_code_block:
+            out_lines.append(line)
+            continue
+        out_lines.append(_transform_outside_code_spans(line))
+    return "".join(out_lines)
 
 
 def strip_duplicate_h1(body: str, title: str) -> str:
@@ -362,6 +459,7 @@ def transform_file(src: Path, dst: Path, log) -> dict:
     body, callouts_used = transform_callouts(body)
     body, include_components = transform_includes(body)
     body, misc_components = transform_misc(body)
+    body = mdx_safety(body)
     body, leftover_hugo = escape_remaining_hugo_syntax(body)
 
     # Determine extension
@@ -490,15 +588,51 @@ def append_redirects(pairs) -> int:
     return added
 
 
+def migrate_snippets() -> int:
+    """Migrate content/en/includes/* (recursively) into src/snippets/ as MDX-importable components."""
+    if not HUGO_INCLUDES.is_dir():
+        return 0
+    ASTRO_SNIPPETS.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for src in sorted(HUGO_INCLUDES.rglob("*.md")):
+        text = src.read_text(encoding="utf-8")
+        _, body = split_front_matter(text)
+        body, _ = transform_callouts(body)
+        body, _ = transform_misc(body)
+        body = mdx_safety(body)
+        body, _ = escape_remaining_hugo_syntax(body)
+        body = body.strip("\n") + "\n"
+
+        imports: list[str] = []
+        if "<Aside" in body:
+            imports.append("import { Aside } from '@astrojs/starlight/components';")
+        prefix = ("\n".join(imports) + "\n\n") if imports else ""
+
+        rel = src.relative_to(HUGO_INCLUDES).with_suffix(".mdx")
+        dst = ASTRO_SNIPPETS / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(prefix + body, encoding="utf-8")
+        count += 1
+    return count
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sections", nargs="+", required=True, help="Section names under content/en/docs/")
+    ap.add_argument("--sections", nargs="+", help="Section names under content/en/docs/")
+    ap.add_argument("--snippets", action="store_true", help="Also migrate content/en/includes/ to src/snippets/")
     args = ap.parse_args()
 
     log = []
     grand_total = 0
     all_leftovers = []
     all_pairs = []
+
+    if args.snippets:
+        n = migrate_snippets()
+        print(f"snippets: migrated {n} files", file=sys.stderr)
+
+    if not args.sections:
+        return 0
 
     for section in args.sections:
         n, leftovers, pairs = migrate_section(section, log)

@@ -3,9 +3,17 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 import starlightLlmsTxt from 'starlight-llms-txt';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
 	site: 'https://docs.plaidcloud.com',
+	vite: {
+		resolve: {
+			alias: {
+				'@snippets': fileURLToPath(new URL('./src/snippets', import.meta.url)),
+			},
+		},
+	},
 	integrations: [
 		sitemap({
 			serialize(item) {

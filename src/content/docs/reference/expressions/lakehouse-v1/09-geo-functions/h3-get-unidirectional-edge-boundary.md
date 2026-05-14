@@ -1,0 +1,42 @@
+---
+title: H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY
+description: "Learn how to use the H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY utility function in PlaidCloud Lakehouse. Returns the coordinates defining the unidirectional edge."
+---
+
+Returns the coordinates defining the unidirectional edge.
+
+## Analyze Syntax
+
+```python
+func.h3_get_unidirectional_edge_boundary(h3)
+```
+
+## Analyze Examples
+
+```python
+func.h3_get_unidirectional_edge_boundary(1248204388774707199)
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│           func.h3_get_unidirectional_edge_boundary(1248204388774707199)         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ [(37.42012867767778,-122.03773496427027),(37.33755608435298,-122.090428929044)] │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## SQL Syntax
+
+```sql
+H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY(h3)
+```
+
+## SQL Examples
+
+```sql
+SELECT H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY(1248204388774707199);
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│             h3_get_unidirectional_edge_boundary(1248204388774707199)            │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ [(37.42012867767778,-122.03773496427027),(37.33755608435298,-122.090428929044)] │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```

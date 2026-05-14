@@ -1,0 +1,38 @@
+---
+title: GET_QUERY_DUMP
+description: "Learn how to use the GET_QUERY_DUMP meta function in PlaidCloud Lakehouse. Returns a query dump for diagnostic purposes - see syntax, examples, and output."
+---
+
+Returns a query dump for diagnostic purposes.
+
+## Analyze Syntax
+
+```python
+func.get_query_dump(<query>)
+```
+
+## Analyze Examples
+
+```python
+func.get_query_dump('SELECT * FROM t')
+
+┌────────┐
+│ (dump)  │
+└────────┘
+```
+
+## SQL Syntax
+
+```sql
+GET_QUERY_DUMP(<query>)
+```
+
+## SQL Examples
+
+```sql
+SELECT GET_QUERY_DUMP('SELECT * FROM t');
+
+┌───────────────────┐
+│ (diagnostic dump)  │
+└───────────────────┘
+```

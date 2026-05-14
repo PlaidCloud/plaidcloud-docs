@@ -1,0 +1,38 @@
+---
+title: SUM
+description: "Learn how to use the SUM aggregate function in PlaidCloud Lakehouse. Returns the sum of all values in a group - see syntax, examples, and output."
+---
+
+Returns the sum of all values in a group.
+
+## Analyze Syntax
+
+```python
+func.sum(get_column(table, 'amount'))
+```
+
+## Analyze Examples
+
+```python
+func.sum(get_column(table, 'amount'))
+```
+
+## SQL Syntax
+
+```sql
+SUM(<amount>)
+```
+
+## SQL Examples
+
+```sql
+SELECT department, SUM(salary) FROM employees GROUP BY department;
+
+┌────────────┬─────────────┐
+│ department │ sum(salary) │
+├────────────┼─────────────┤
+│ Sales      │      195000 │
+│ IT         │      246000 │
+│ HR         │      210000 │
+└────────────┴─────────────┘
+```
