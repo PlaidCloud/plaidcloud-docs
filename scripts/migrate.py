@@ -429,8 +429,9 @@ def _to_old_url(rel: Path, hugo_slug: str) -> str:
 
 
 def _to_new_url(rel: Path) -> str:
+    """Astro Starlight serves from src/content/docs/ at root URLs (no /docs/ prefix)."""
     posix = rel.as_posix()
-    return "/docs/" + re.sub(r"/index\.mdx?$|\.mdx?$", "/", posix)
+    return "/" + re.sub(r"/index\.mdx?$|\.mdx?$", "/", posix)
 
 
 def generate_redirect(old_rel: Path, new_rel: Path, hugo_slug: str = "") -> Optional[str]:
