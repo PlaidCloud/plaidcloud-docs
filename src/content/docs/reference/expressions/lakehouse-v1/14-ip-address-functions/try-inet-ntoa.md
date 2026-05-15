@@ -1,6 +1,6 @@
 ---
 title: TRY_INET_NTOA (Lakehouse v1)
-description: TRY_INET_NTOA — takes an IPv4 address in network byte order and then returns the address as.
+description: TRY_INET_NTOA — convert an IPv4 address in network byte order to its dotted-quad string representation, returning NULL on failure.
 ---
 
 Takes an IPv4 address in network byte order and then returns the address as a dotted-quad string representation.

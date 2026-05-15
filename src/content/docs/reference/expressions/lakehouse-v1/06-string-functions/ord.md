@@ -1,6 +1,6 @@
 ---
 title: ORD (Lakehouse v1)
-description: ORD — if the leftmost character is not a multibyte character, ORD() returns the same value as.
+description: ORD — return the character code for the leftmost character of a string (ASCII value for single-byte, computed value for multibyte).
 ---
 
 If the leftmost character is not a multibyte character, ORD() returns the same value as the ASCII() function.

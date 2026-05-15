@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_ELEMENTS (Lakehouse v1)
-description: JSON_ARRAY_ELEMENTS — extracts the elements from a JSON array, returning them as.
+description: JSON_ARRAY_ELEMENTS — extract elements from a JSON array as individual rows; nested arrays are not recursively expanded.
 ---
 
 Extracts the elements from a JSON array, returning them as individual rows in the result set. JSON_ARRAY_ELEMENTS does not recursively expand nested arrays; it treats them as single elements.
