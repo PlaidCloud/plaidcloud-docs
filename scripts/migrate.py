@@ -19,6 +19,7 @@ import shutil
 import sys
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HUGO_DOCS = REPO_ROOT / "content" / "en" / "docs"
@@ -515,15 +516,19 @@ def transform_file(src: Path, dst: Path, log) -> dict:
 
 def _to_old_url(rel: Path, hugo_slug: str) -> str:
     """Reconstruct the URL Hugo would have served for this file.
-    Hugo's slug overrides only the leaf segment."""
+    Hugo's slug overrides only the leaf segment. URL-encode the path so
+    Cloudflare's _redirects parser (whitespace-tokenized) doesn't choke
+    on legacy paths with spaces like /Document Management/."""
     posix = rel.as_posix()
     if posix.endswith("/_index.md"):
-        return "/docs/" + posix[: -len("/_index.md")] + "/"
-    if hugo_slug:
+        url = "/docs/" + posix[: -len("/_index.md")] + "/"
+    elif hugo_slug:
         parent = rel.parent.as_posix()
         prefix = f"/docs/{parent}/" if parent != "." else "/docs/"
-        return prefix + hugo_slug + "/"
-    return "/docs/" + re.sub(r"\.md$", "/", posix)
+        url = prefix + hugo_slug + "/"
+    else:
+        url = "/docs/" + re.sub(r"\.md$", "/", posix)
+    return quote(url, safe="/")
 
 
 def _to_new_url(rel: Path) -> str:
