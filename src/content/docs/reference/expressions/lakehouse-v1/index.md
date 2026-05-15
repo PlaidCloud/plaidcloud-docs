@@ -5,6 +5,8 @@ sidebar:
   label: Lakehouse v1
 ---
 
+Lakehouse v1 is built on the [Databend](https://databend.com/) SQL engine. For each function below, this site provides PlaidCloud-flavored syntax and examples; for the canonical upstream reference (with all edge cases and argument variants), see the **[Databend SQL function reference](https://docs.databend.com/sql/sql-functions/)**.
+
 ## Scalar Functions
 
 - [Array Functions](./00-array-functions) — Perform array operations

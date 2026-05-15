@@ -5,6 +5,8 @@ sidebar:
   label: Lakehouse v2
 ---
 
+Lakehouse v2 is built on [StarRocks](https://www.starrocks.io/) 4.1. For each function below, this site provides PlaidCloud-flavored syntax and examples; for the canonical upstream reference (with all edge cases and argument variants), see the **[StarRocks SQL function reference](https://docs.starrocks.io/docs/sql-reference/sql-functions/)**.
+
 ## Aggregate Functions
 
 - [Aggregate Functions](./01-aggregate-functions) — Calculate summaries like sum, average, count, etc.
