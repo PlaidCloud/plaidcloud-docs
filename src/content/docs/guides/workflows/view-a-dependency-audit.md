@@ -1,0 +1,12 @@
+---
+title: View a dependency audit
+description: View dependency audit information for PlaidCloud workflows to understand data lineage and step-to-step dependencies in detail.
+sidebar:
+  order: 17
+---
+
+The **Workflow Dependency Audit** is a very helpful tool to understand data and workflow dependencies in complex interconnected workflows. Over time, as workflow processes become more complex, it may become challenging to ensure all dependencies are in the correct order. When data already exists in tables, steps will run and appear correct in many cases but may actually have a dependency issue if the data is populated out of order.
+
+
+
+This tool will provide a dependency audit and identify issues with data dependency relationships.

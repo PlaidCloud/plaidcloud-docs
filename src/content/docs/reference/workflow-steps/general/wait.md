@@ -1,0 +1,27 @@
+---
+title: Wait
+description: Add a timed delay in a PlaidCloud workflow step to pause execution for a specified duration before proceeding to the next step.
+sidebar:
+  order: 4
+---
+
+## Description
+
+
+The Wait transform is used to pause processing for a specified duration. This can be especially helpful when waiting for I/O operations from other systems or for debugging workflows during development.
+
+
+
+## Duration Parameters
+
+
+Specify a non-negative integer value using the **Duration** spinner.
+
+
+
+Next, specify the unit of time from the dropdown menu. The following units are available for selection:
+
+
+* Seconds
+* Minutes
+* Hours

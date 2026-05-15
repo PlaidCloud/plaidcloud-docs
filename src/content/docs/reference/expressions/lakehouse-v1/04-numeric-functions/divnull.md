@@ -1,0 +1,50 @@
+---
+title: DIVNULL (Lakehouse v1)
+description: DIVNULL — returns the quotient by dividing the first number by the second one.
+---
+
+Returns the quotient by dividing the first number by the second one. Returns NULL if the second number is 0 or NULL.
+
+See also:
+
+- [DIV](../div)
+- [DIV0](../div0)
+
+## Analyze Syntax
+
+```python
+func.divnull(<numerator>, <denominator>)
+```
+
+## Analyze Examples
+
+```python
+func.divnull(20, 6), func.divnull(20, 0), func.divnull(20, null)
+
+┌───────────────────────────────────────────────────────────────────┐
+│ func.divnull(20, 6)│ func.divnull(20, 0) │ func.divnull(20, null) │
+├────────────────────┼─────────────────────┼────────────────────────┤
+│ 3.3333333333333335 │ NULL                │ NULL                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+## SQL Syntax
+
+```sql
+DIVNULL(<number1>, <number2>)
+```
+
+## SQL Examples
+
+```sql
+SELECT
+  DIVNULL(20, 6),
+  DIVNULL(20, 0),
+  DIVNULL(20, NULL);
+
+┌─────────────────────────────────────────────────────────┐
+│   divnull(20, 6)   │ divnull(20, 0) │ divnull(20, null) │
+├────────────────────┼────────────────┼───────────────────┤
+│ 3.3333333333333335 │ NULL           │ NULL              │
+└─────────────────────────────────────────────────────────┘
+```

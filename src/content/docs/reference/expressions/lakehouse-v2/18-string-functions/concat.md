@@ -1,0 +1,38 @@
+---
+title: CONCAT (Lakehouse v2)
+description: CONCAT — concatenates two or more strings.
+---
+
+Concatenates two or more strings.
+
+## Analyze Syntax
+
+```python
+func.concat(<str1>, <str2>[, ...])
+```
+
+## Analyze Examples
+
+```python
+func.concat('Star', 'Rocks')
+
+┌─────────────┐
+│ 'StarRocks'  │
+└─────────────┘
+```
+
+## SQL Syntax
+
+```sql
+CONCAT(<str1>, <str2>[, ...])
+```
+
+## SQL Examples
+
+```sql
+SELECT CONCAT('Star', 'Rocks');
+
+┌───────────┐
+│ StarRocks  │
+└───────────┘
+```

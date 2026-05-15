@@ -1,0 +1,42 @@
+---
+title: H3_TO_GEO (Lakehouse v1)
+description: H3_TO_GEO — returns the longitude and latitude corresponding to the given H3 index.
+---
+
+Returns the longitude and latitude corresponding to the given [H3](https://eng.uber.com/h3/) index. 
+
+## Analyze Syntax
+
+```python
+func.h3_to_geo(h3)
+```
+
+## Analyze Examples
+
+```python
+func.h3_to_geo(644325524701193974)
+
+┌────────────────────────────────────────┐
+│   func.h3_to_geo(644325524701193974)   │
+├────────────────────────────────────────┤
+│ (37.79506616830255,55.712902431456676) │
+└────────────────────────────────────────┘
+```
+
+## SQL Syntax
+
+```sql
+H3_TO_GEO(h3)
+```
+
+## SQL Examples
+
+```sql
+SELECT H3_TO_GEO(644325524701193974);
+
+┌────────────────────────────────────────┐
+│      h3_to_geo(644325524701193974)     │
+├────────────────────────────────────────┤
+│ (37.79506616830255,55.712902431456676) │
+└────────────────────────────────────────┘
+```

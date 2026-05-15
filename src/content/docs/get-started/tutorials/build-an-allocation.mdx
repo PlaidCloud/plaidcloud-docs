@@ -1,0 +1,134 @@
+---
+title: Build an Allocation Model
+description: End-to-end tutorial — spread a pool of costs across consumers using driver data and a hierarchy.
+sidebar:
+  order: 2
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This tutorial walks through building a complete cost allocation in PlaidCloud. By the end you'll have a working model that spreads a cost pool across a target dimension using driver data — the foundation of activity-based costing, IT chargeback, and shared-service distribution.
+
+Takes about an hour. Allocations are PlaidCloud's most distinctive feature; this is the best way to understand the model.
+
+## What You'll Build
+
+Spread total IT department cost across business units, weighted by each unit's user count.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Prerequisites
+
+- A PlaidCloud workspace ([start a free trial](https://plaidcloud.com/signup) if you don't have one)
+- A project containing or able to import:
+  - **Values to allocate** — IT cost by month, total or by sub-category
+  - **Driver data** — user count by business unit
+  - **A dimension** — hierarchy of business units (units → divisions → company)
+- Familiarity with [Concepts](/get-started/concepts/) — workspace, project, workflow, dimension, allocation
+
+<Aside>
+If you don't have the source data yet, you can prep small CSV files and follow [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/) to import them first.
+</Aside>
+
+## Step 1: Set up the Inputs
+
+Confirm you have these three things in your project:
+
+| Object | What it holds |
+|---|---|
+| `it_cost` table | Total IT cost (e.g., one row per month with the amount) |
+| `users_by_bu` table | One row per business unit with a `user_count` column |
+| `business_units` dimension | Hierarchy of business units, with leaf nodes matching the unit names in `users_by_bu` |
+
+If anything's missing, load it via a workflow before continuing.
+
+## Step 2: Create the Allocation Workflow
+
+<Steps>
+
+1. Open the project and switch to the **Workflows** tab.
+2. Click **New Workflow**. Name it "IT Cost Allocation".
+3. Open the new workflow in the Workflow Explorer.
+
+</Steps>
+
+## Step 3: Add the Allocation Step
+
+<Steps>
+
+1. Add a new step from the **Allocation** category. Choose **Allocation Rules** — the most flexible option.
+2. Configure the source:
+   - **Source table**: `it_cost`
+   - **Source amount column**: the column with the dollar amount
+3. Configure the driver:
+   - **Driver table**: `users_by_bu`
+   - **Driver value column**: `user_count`
+   - **Driver match column**: the column with the business unit name
+4. Configure the target:
+   - **Target dimension**: `business_units`
+   - **Target level**: choose which level of the hierarchy to allocate to (usually the leaf level)
+5. Configure the output:
+   - **Result table**: `it_cost_allocated`
+
+</Steps>
+
+## Step 4: Run and Inspect
+
+<Steps>
+
+1. Run the step.
+2. Open the **Tables** tab and click into `it_cost_allocated`.
+3. Each row represents one slice of cost going to one business unit. Columns include:
+   - The source amount (e.g., total IT cost for the month)
+   - The target business unit
+   - The driver value used (that unit's user count)
+   - The allocation rate (user count ÷ total user count across all units)
+   - The allocated amount (source × rate)
+
+</Steps>
+
+## Step 5: Verify the Numbers
+
+Three checks every allocation should pass:
+
+1. **Total reconciliation** — sum of allocated amounts equals the source total (within rounding tolerance)
+2. **Rate sum** — allocation rates sum to 1.0 (= 100%) per source row
+3. **Coverage** — every business unit in your dimension that should receive a slice actually got one
+
+The [Allocation results](/guides/allocations/results/allocation-results/) guide has a full checklist for verification.
+
+If something's off, the most common issues are:
+- **Missing driver data** — a business unit in the dimension with no row in `users_by_bu` won't receive an allocation
+- **Mismatched names** — driver table says "Sales East" but dimension says "Sales-East" (different spacing/casing won't match)
+- **Zero or negative drivers** — produce zero or unexpected allocations
+
+## Step 6: Use the Results
+
+The result table is just like any other PlaidCloud table — it can be:
+
+- **Joined** with other tables in further workflow steps (e.g., add a fully-loaded cost column to the GL)
+- **Published** for dashboards or external consumers
+- **Re-allocated** as a source for the next round of allocations (for cascading models)
+
+## Variations to Try
+
+Once the basic model works, common extensions:
+
+- **Multiple cost pools** — replace the single `it_cost` row with one row per IT sub-category (compute, storage, licensing) and allocate each independently with different drivers
+- **Multi-period** — partition the source by month and produce one allocation result per period
+- **Layered allocations** — allocate divisional overhead to units, then unit costs to products, then product costs to customers. Each layer is its own allocation step
+- **Recursive allocations** — when shared services consume each other (IT serves HR, HR serves IT). See [Recursive allocations](/guides/allocations/setup/recursive-allocations/)
+
+## What's Next
+
+- [Allocations guide](/guides/allocations/) — every option and configuration choice
+- [Rule-based tagging](/guides/allocations/getting-started/rule-based-tagging/) — different allocation rules per source row
+- [Allocation step reference](/reference/workflow-steps/allocation/) — every workflow step in the Allocation category
+- [Dimensions guide](/guides/dimensions/) — building the hierarchies that allocations target

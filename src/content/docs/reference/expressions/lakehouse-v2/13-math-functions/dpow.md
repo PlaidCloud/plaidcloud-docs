@@ -1,0 +1,38 @@
+---
+title: DPOW (Lakehouse v2)
+description: DPOW — alias for `POW`. See [POW](pow).
+---
+
+Alias for `POW`. See [POW](pow).
+
+## Analyze Syntax
+
+```python
+func.dpow(2, 10)
+```
+
+## Analyze Examples
+
+```python
+func.dpow(2, 10)
+
+┌────────┐
+│ 1024.0 │
+└────────┘
+```
+
+## SQL Syntax
+
+```sql
+DPOW(<x>)
+```
+
+## SQL Examples
+
+```sql
+SELECT DPOW(2, 10);
+
+┌────────┐
+│ 1024.0 │
+└────────┘
+```
