@@ -27,7 +27,11 @@ export default defineConfig({
 		}),
 		starlight({
 			title: 'PlaidCloud',
-			logo: { src: './src/assets/logo.svg', replacesTitle: true },
+			logo: {
+				light: './src/assets/logo.svg',
+				dark: './src/assets/logo-dark.svg',
+				replacesTitle: true,
+			},
 			favicon: '/favicon.ico',
 			customCss: ['./src/styles/brand.css'],
 			editLink: {
