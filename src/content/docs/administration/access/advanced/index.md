@@ -5,3 +5,5 @@ sidebar:
   label: Advanced Operations
   order: 6
 ---
+
+Advanced configuration for PlaidCloud security and identity — SAML single sign-on with major identity providers, organization admin roles, and member expiration policies.

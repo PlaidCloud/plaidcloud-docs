@@ -5,3 +5,5 @@ sidebar:
   label: Results and Troubleshooting
   order: 3
 ---
+
+Review allocation outputs, validate that totals reconcile end-to-end, and troubleshoot common issues — orphaned source rows, missing target members, negative drivers, and rounding artifacts.

@@ -5,3 +5,5 @@ sidebar:
   label: Account and Access Management
   order: 2
 ---
+
+Control access to PlaidCloud document accounts — permissions, backups, ownership transfer, and start-path configuration so each account exposes only the relevant subtree of storage.

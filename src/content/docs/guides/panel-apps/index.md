@@ -4,3 +4,5 @@ description: Build and deploy interactive Holoviz Panel data applications native
 sidebar:
   label: Panel Apps
 ---
+
+Build custom interactive applications on top of PlaidCloud data using the Panel framework — parameterized inputs, live charts, and embedded data tables.

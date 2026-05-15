@@ -16,6 +16,11 @@ export default defineConfig({
 	},
 	integrations: [
 		sitemap({
+			// Stamp every entry with the build time so crawlers know when the
+			// corpus was last refreshed. Per-page lastmod isn't available from
+			// @astrojs/sitemap without a custom resolver, and the site rebuilds
+			// the whole tree on every commit, so build time is the best signal.
+			lastmod: new Date(),
 			serialize(item) {
 				if (item.url.endsWith('/')) item.priority = 1.0;
 				else if (item.url.includes('/get-started/')) item.priority = 1.0;

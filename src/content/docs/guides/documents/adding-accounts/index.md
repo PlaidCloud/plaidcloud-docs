@@ -5,3 +5,5 @@ sidebar:
   label: Adding New Document Accounts
   order: 1
 ---
+
+Connect cloud and on-prem document storage to PlaidCloud — S3, Google Cloud Storage, Azure Blob, Google Drive, OneDrive, SFTP, WebDAV, and more. Each provider has its own credentials and connection flow.
