@@ -8,22 +8,62 @@ sidebar:
 ## Upstream Documentation
 Azure Databricks documentation is [here](https://learn.microsoft.com/en-us/azure/databricks/).
 
-## Security Requirements
-Documentation under development
+## Configuration
 
-## Obtain Credentials
-In order to obtain the connection credentials necessary for PlaidCloud to communicate with a Databricks warehouse, follow the steps below:
- 1. Open the Databricks console
- 2. Under the User Settings in the upper right, select "Settings"
- 3. Navigate to the "Developers" section
- 4. Generate an Access Token with a sufficient lifespan specified
- 5. Navigate to the "SQL Warehouses" area
- 6. Select the warehouse required for connecting
- 7. Capture the connection details including host, and http path
- 8. Navigate to the warehouse data area
- 9. Capture the initial catalog and initial schema information
+These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
 
-With the information above, the connection form can be completed and tested with the Databricks warehouse
+### Identification
 
-## Create Database Connector
-Documentation under development
+| Field | Type | Description |
+|---|---|---|
+| Name | Text | Display name for this connection. |
+| Alias | Text (multi-line) | Optional alias or notes about the connection. |
+| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
+| Db read only | Toggle | Restrict the connection to read-only operations. |
+| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+
+### Connection
+
+| Field | Type | Description |
+|---|---|---|
+| Db host | Text | Hostname or IP address of the database server. |
+| Db catalog | Text | Database, catalog, or schema to connect to. |
+| Db schema | Text | Schema name within the database. |
+
+### Authentication
+
+| Field | Type | Description |
+|---|---|---|
+| Db user | Text | Username for database authentication. |
+| Use sso | Toggle | Authenticate via single sign-on instead of username/password. |
+| Db password | Password | Password for database authentication. |
+
+### SSL / TLS
+
+| Field | Type | Description |
+|---|---|---|
+| Use ssl | Toggle | Encrypt the connection with SSL/TLS. |
+| Ssl mode | Select | SSL verification mode (e.g., disable, require, verify-ca, verify-full). |
+| Ssl auth client cert | Text (multi-line) | Client certificate (PEM) for mutual TLS authentication. |
+| Ssl auth client key | Text (multi-line) | Client private key (PEM) for mutual TLS authentication. |
+| Ssl auth root cert | Text (multi-line) | Root CA certificate (PEM) for verifying the server's cert. |
+| Ssl auth cert revoke | Text (multi-line) | Certificate revocation list, if your environment uses one. |
+
+### SSH tunnel
+
+| Field | Type | Description |
+|---|---|---|
+| Use ssh | Toggle | Tunnel the connection through an SSH bastion. |
+| Ssh host | Text | SSH bastion hostname. |
+| Ssh port | Number | SSH bastion port (default 22). |
+| Ssh user | Text | SSH bastion username. |
+| Ssh password | Password | SSH bastion password (if password auth is used). |
+| Use ssh cert | Toggle | Authenticate to the SSH bastion with a private key instead of password. |
+| Ssh private key | Text (multi-line) | SSH private key (PEM) for bastion authentication. |
+| Ssh host key | Text (multi-line) | Expected SSH host key for bastion fingerprint verification. |
+
+### Other
+
+| Field | Type | Description |
+|---|---|---|
+| Http path | Text | — |

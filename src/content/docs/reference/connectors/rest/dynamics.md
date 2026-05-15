@@ -8,11 +8,25 @@ sidebar:
 ## API Documentation
 The API documentation is for this connector is located [here](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/).
 
-## Security Requirements
-Documentation under development
+## Configuration
 
-## Obtain Credentials
-Documentation under development
+These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
 
-## Create REST Connector
-Documentation under development
+### Identification
+
+| Field | Type | Description |
+|---|---|---|
+| Name | Text | Display name for this connection. |
+| Alias | Text (multi-line) | Optional alias or notes about the connection. |
+| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
+| Db read only | Toggle | Restrict the connection to read-only operations. |
+| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+
+### Other
+
+| Field | Type | Description |
+|---|---|---|
+| Dynamics tenant | Text | — |
+| Oauth2 client id | Text | — |
+| Oauth2 client secret | Text | Secret credential — stored encrypted. |
+| Dynamics crm | Text | — |
