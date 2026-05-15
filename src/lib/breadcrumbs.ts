@@ -29,10 +29,12 @@ export function buildCrumbs(id: string): Promise<Crumb[]> {
 		let acc = '';
 		for (const segment of ancestors) {
 			acc = acc ? `${acc}/${segment}` : segment;
-			let entry = await getEntry('docs', `${acc}/index`).catch(() => undefined);
-			if (!entry) {
-				entry = await getEntry('docs', acc).catch(() => undefined);
-			}
+			// In Astro v6 content collections an index file's id is the
+			// directory name (e.g. `releases/index.mdx` → id `releases`),
+			// so look that up directly. Astro's `getEntry` logs a warning
+			// when it can't find an id even if the rejection is caught, so
+			// the previous `/index`-first fallback flooded the build log.
+			const entry = await getEntry('docs', acc).catch(() => undefined);
 			const label = entry?.data?.title ?? titleCase(segment);
 			crumbs.push({ href: `/${acc}/`, label });
 		}
