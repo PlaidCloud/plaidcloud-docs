@@ -73,13 +73,15 @@ npm run dev          # local dev at http://localhost:4321
 npm run build        # production build to dist/
 ```
 
-Pushed commits to the `astro-migration` branch trigger CF Workers Builds:
+Pushed commits to the `main` branch trigger CF Workers Builds:
 
 - Build command: `npm ci && npm run build`
 - Deploy command: `npx wrangler deploy`
 - Wrangler config: `wrangler.jsonc` at repo root (assets: `./dist`, 404 handling: `404-page`)
 
 **Don't push casually.** Each push runs through CF's build minutes (3,000/month free). Stage changes locally with `npm run build` first.
+
+The `astro-migration` branch is retained for safety until the new deployment has soaked for a release cycle. Do not push to it — all new work goes on `main`.
 
 ## Adding content
 
