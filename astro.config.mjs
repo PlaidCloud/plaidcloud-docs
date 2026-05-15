@@ -44,7 +44,20 @@ export default defineConfig({
 			sidebar: [
 				{ label: 'Get started',    items: [{ autogenerate: { directory: 'get-started' } }] },
 				{ label: 'Guides',         items: [{ autogenerate: { directory: 'guides' } }] },
-				{ label: 'Reference',      collapsed: true, items: [{ autogenerate: { directory: 'reference' } }] },
+				// Reference is curated to top-level only — full tree (1,200+ entries
+				// from expressions/workflow-steps) would inline into every page and
+				// blow past Workers Assets size limits. Users navigate references
+				// via landing pages + search (Pagefind).
+				{
+					label: 'Reference',
+					collapsed: true,
+					items: [
+						{ label: 'Connectors',     link: '/reference/connectors/' },
+						{ label: 'Workflow steps', link: '/reference/workflow-steps/' },
+						{ label: 'Expressions',    link: '/reference/expressions/' },
+						{ label: 'CLI',            link: '/reference/cli/' },
+					],
+				},
 				{ label: 'Integrations',   items: [{ autogenerate: { directory: 'integrations' } }] },
 				{ label: 'Administration', items: [{ autogenerate: { directory: 'administration' } }] },
 				{ label: 'Releases',       items: [{ autogenerate: { directory: 'releases' } }] },
