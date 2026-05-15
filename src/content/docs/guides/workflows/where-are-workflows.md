@@ -5,13 +5,36 @@ sidebar:
   order: 1
 ---
 
-Workflows exist within a **Project**. From the top menu in the **Analyze** menu click on the **Projects** menu item. This will open the **Projects** hierarchy showing the list of projects. Open the project and navigate to the **Workflows** tab to see the workflows in the project. Workflows are organized in a hierarchy.
+Workflows live inside projects. To find them:
 
+1. From the top menu, open **Projects**.
+2. Click the project that contains the workflows you're looking for.
+3. Switch to the **Workflows** tab.
 
-The list of projects you can see is determined by your access security for each project and your Viewing Role within the project (i.e. Architect, Manager, or Explorer). If you are expecting to see a project and it is not present, it could be that you have not been granted access to the project by one of the project owners. If you are expecting to see certain workflows, but you are not an Architect on the project, then they might be hidden from your viewing role.
+You'll see every workflow in the project, organized in a folder-style hierarchy.
 
+## What you'll see for each workflow
 
-The status of the workflow will be displayed if it is running, has a warning or error, or was completed normally. The creation and update dates are also shown along with who created or updated the workflow.
+- **Status** — running, completed normally, or finished with a warning or error
+- **Created** and **last updated** timestamps, plus the names of the people responsible
+- **Folder organization** — workflows can be grouped in nested folders for easier management in large projects
 
+Double-click a workflow to open the **Workflow Explorer**, where you can view steps, run the whole workflow, run a single step, or pick a range.
 
-The Workflow Explorer can be opened by double clicking on a workflow. You can then view the steps, execute a workflow or a part of a workflow, and so on.
+## Why a workflow might not be visible
+
+The workflows you can see depend on two things:
+
+- **Project access** — your workspace administrator grants you access to specific projects. If you expect to see a project but don't, ask a project owner to add you.
+- **Viewing role** — within a project you're assigned one of three roles:
+  - **Architect** — can see and edit everything
+  - **Manager** — can see and run workflows but not modify them
+  - **Explorer** — limited visibility; some workflows may be hidden
+
+If you expect to see specific workflows and don't, your role may be filtering them out. A project Architect can confirm what you should see.
+
+## Next steps
+
+- [Workflow explorer](/guides/workflows/workflow-explorer/) — what to do inside an open workflow
+- [Create a workflow](/guides/workflows/create-workflow/) — start a new one
+- [Run a workflow](/guides/workflows/run-a-workflow/) — execute end-to-end
