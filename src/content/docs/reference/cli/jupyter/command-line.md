@@ -48,4 +48,4 @@ There are many APIs available for use that control nearly every aspect of PlaidC
 
 ## Obtaining an OAuth Token
 
-See [OAuth Tokens](/docs/jupyter_cli/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
+See [OAuth Tokens](/reference/cli/jupyter/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.

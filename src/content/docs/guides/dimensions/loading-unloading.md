@@ -16,7 +16,7 @@ Since dimensions represent hierarchical data structures, the load process must c
 
  In addition to structure, other dimension information can be included in the load process such as values, aliases, and properties.
 
- See the Workflow Step for [Dimension Load](/docs/workflow-steps/dimensions/dimension-load) for more information.
+ See the Workflow Step for [Dimension Load](/reference/workflow-steps/dimensions/dimension-load) for more information.
 
 
 ## Unloading (Exporting) Dimensions
@@ -27,4 +27,4 @@ Exporting dimensions to tables supports two structural approaches:
 
 Properties and values can also be included in the flattened tabular data.
 
- See the Workflow Step for [Dimension Export](/docs/workflow-steps/dimensions/dimension-export) for more information.
+ See the Workflow Step for [Dimension Export](/reference/workflow-steps/dimensions/dimension-export) for more information.
