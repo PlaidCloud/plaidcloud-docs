@@ -8,13 +8,10 @@ sidebar:
 ## Upstream Documentation
 The Oracle EBS documentation is [here](https://docs.oracle.com/cd/E51111_01/current/html/docset.html).
 
-## Security Requirements
-Documentation under development
+## Setup
 
-## Obtain Credentials
-Oracle EBS utilizes the standard Oracle database connection.  This connection provides the connectivity to query, load, and execute PL/SQL programs in Oracle.
+This connector uses a vendor-specific authentication flow and is configured directly from the **Connections** screen in your workspace. The configuration fields shown depend on the credentials your tenant administrator has provisioned for the integration.
 
-If the EBS instance has the REST API interface available, this can be accessed using the same approach as Oracle Cloud REST connection too.
+See the upstream [oracle-ebs documentation](https://docs.oracle.com/cd/E26401_01/index.htm) for the latest setup specifics.
 
-## Create ERP Connection
-Documentation under development
+If you need help setting up this connector for your tenant, contact your account team — connector-specific credentials, environment URLs, and any required pre-provisioning typically need to be coordinated with PlaidCloud support.

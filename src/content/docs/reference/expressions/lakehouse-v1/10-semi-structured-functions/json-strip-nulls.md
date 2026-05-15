@@ -11,7 +11,7 @@ Removes all properties with null values from a JSON object.
 func.json_strip_nulls(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_strip_nulls(func.parse_json('{"name": "alice", "age": 30, "city": null}'))

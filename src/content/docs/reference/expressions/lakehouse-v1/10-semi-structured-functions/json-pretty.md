@@ -11,7 +11,7 @@ Formats JSON data, making it more readable and presentable. It automatically add
 func.json_pretty(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_pretty(func.parse_json('{"person": {"name": "bob", "age": 25}, "location": "city"}'))

@@ -8,11 +8,10 @@ sidebar:
 ## Connection Documentation
 Quandl is now Nasdaq Data Link.  The documentation is [here](https://docs.data.nasdaq.com/).
 
-## Security Requirements
-Documentation under development
+## Setup
 
-## Obtain Credentials
-Documentation under development
+This connector uses a vendor-specific authentication flow and is configured directly from the **Connections** screen in your workspace. The configuration fields shown depend on the credentials your tenant administrator has provisioned for the integration.
 
-## Create Service Connection
-Documentation under development
+See the upstream [quandl documentation](https://docs.data.nasdaq.com/) for the latest setup specifics.
+
+If you need help setting up this connector for your tenant, contact your account team — connector-specific credentials, environment URLs, and any required pre-provisioning typically need to be coordinated with PlaidCloud support.

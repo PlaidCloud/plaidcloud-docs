@@ -18,7 +18,7 @@ Checks whether the input value is a JSON `null`. Please note that this function 
 func.is_null_value(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

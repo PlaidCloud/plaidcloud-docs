@@ -11,7 +11,7 @@ Checks if the input JSON value is a boolean.
 func.is_boolean(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

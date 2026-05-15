@@ -13,7 +13,7 @@ This function is equivalent to `to_varchar(GET_PATH(PARSE_JSON(JSON), PATH_NAME)
 func.json_extract_path_text(<expr>, <path_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_extract_path_text('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}', 'k2.k4')

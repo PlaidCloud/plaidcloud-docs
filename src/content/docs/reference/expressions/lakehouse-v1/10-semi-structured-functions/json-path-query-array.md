@@ -11,7 +11,7 @@ Get all JSON items returned by JSON path for the specified JSON value and wrap a
 func.json_path_query_array(<variant>, <path_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 table.name, func.json_path_query_array(table.details, '$.features.*').alias('all_features')

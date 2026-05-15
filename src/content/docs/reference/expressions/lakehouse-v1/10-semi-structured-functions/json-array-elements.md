@@ -12,7 +12,7 @@ Extracts the elements from a JSON array, returning them as individual rows in th
 func.json_array_elements(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

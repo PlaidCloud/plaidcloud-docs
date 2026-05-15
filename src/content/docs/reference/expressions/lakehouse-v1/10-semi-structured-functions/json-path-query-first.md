@@ -12,7 +12,7 @@ Get the first JSON item returned by JSON path for the specified JSON value.
 func.json_path_query_first(<variant>, <path_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 table.name, func.json_path_query_first(table.details, '$.features.*').alias('first_feature')

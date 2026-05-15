@@ -11,7 +11,7 @@ Checks if the input JSON value is a string.
 func.is_string(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

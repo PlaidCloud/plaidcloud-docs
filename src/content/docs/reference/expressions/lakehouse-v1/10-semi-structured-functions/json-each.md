@@ -11,7 +11,7 @@ Extracts key-value pairs from a JSON object, breaking down the structure into in
 func.json_each(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

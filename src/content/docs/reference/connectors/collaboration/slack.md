@@ -8,11 +8,10 @@ sidebar:
 ## Connection Documentation
 Slack Admin documentation is [here](https://slack.com/help).
 
-## Security Requirements
-Documentation under development
+## Setup
 
-## Obtain Credentials
-Documentation under development
+This connector uses a vendor-specific authentication flow and is configured directly from the **Connections** screen in your workspace. The configuration fields shown depend on the credentials your tenant administrator has provisioned for the integration.
 
-## Create Slack Connection
-Documentation under development
+See the upstream [slack documentation](https://api.slack.com/) for the latest setup specifics.
+
+If you need help setting up this connector for your tenant, contact your account team — connector-specific credentials, environment URLs, and any required pre-provisioning typically need to be coordinated with PlaidCloud support.

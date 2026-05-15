@@ -18,7 +18,7 @@ or
 func.get(<variant>, <field_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.get(func.parse_json('[2.71, 3.14]'), 0);

@@ -29,7 +29,7 @@ INSERT INTO t1(a) VALUES (1), (2), (3);
 ### `result_scan`
 
 
-```shell
+```bash
 SELECT * FROM t1 ORDER BY a;
 ┌───────┐
 │   a   │
@@ -43,7 +43,7 @@ SELECT * FROM t1 ORDER BY a;
 ```
 
 
-```shell
+```bash
 SELECT * FROM RESULT_SCAN(LAST_QUERY_ID()) ORDER BY a;
 ┌───────┐
 │   a   │

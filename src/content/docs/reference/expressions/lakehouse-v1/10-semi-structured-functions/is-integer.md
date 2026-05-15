@@ -12,7 +12,7 @@ Checks if the input JSON value is an integer.
 func.is_integer(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

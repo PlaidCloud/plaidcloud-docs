@@ -17,7 +17,7 @@ or
 func.try_parse_json(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.parse_json('[-1, 12, 289, 2188, false]')

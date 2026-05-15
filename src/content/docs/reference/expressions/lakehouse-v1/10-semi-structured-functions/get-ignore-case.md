@@ -15,7 +15,7 @@ First match the exact same field name, if not found, match the case-insensitive 
 func.get_ignore_Case(<variant>, <field_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.get_ignore_case(func.parse_json('{"aa":1, "aA":2, "Aa":3}'), 'AA')

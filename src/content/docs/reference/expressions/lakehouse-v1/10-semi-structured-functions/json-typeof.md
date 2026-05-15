@@ -11,7 +11,7 @@ Returns the type of the main-level of a JSON structure.
 func.json_typeof(<json_string>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_typeof(func.parse_json('null'))|

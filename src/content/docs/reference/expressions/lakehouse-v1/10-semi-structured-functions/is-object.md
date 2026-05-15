@@ -11,7 +11,7 @@ Checks if the input value is a JSON object.
 func.is_object(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

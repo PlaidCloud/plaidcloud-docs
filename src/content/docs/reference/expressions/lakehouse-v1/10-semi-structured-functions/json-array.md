@@ -11,7 +11,7 @@ Creates a JSON array with specified values.
 func.json_array(value1[, value2[, ...]])
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

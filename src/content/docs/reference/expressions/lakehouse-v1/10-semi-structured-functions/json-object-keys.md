@@ -12,7 +12,7 @@ Returns an Array containing the list of keys in the input Variant OBJECT.
 func.json_object_keys(<variant>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_object_keys(func.parse_json(parse_json('{"a": 1, "b": [1,2,3]}')), func.json_object_keys(func.parse_json(parse_json('{"b": [2,3,4]}'))

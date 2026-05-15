@@ -13,7 +13,7 @@ If the input cannot be translated to a valid JSON value, the output string conta
 func.check_json(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.check_json('[1,2,3]');

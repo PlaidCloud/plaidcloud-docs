@@ -22,7 +22,7 @@ Checks if the input value is a JSON array. Please note that a JSON array is not 
 func.is_array(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

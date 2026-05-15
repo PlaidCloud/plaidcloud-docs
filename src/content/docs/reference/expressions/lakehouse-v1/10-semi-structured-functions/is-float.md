@@ -11,7 +11,7 @@ Checks if the input JSON value is a float.
 func.is_float(<expr>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 

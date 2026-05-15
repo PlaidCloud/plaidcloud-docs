@@ -14,7 +14,7 @@ The value is returned as a `Variant` or `NULL` if either of the arguments is `NU
 func.get_path(<variant>, <path_name>)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.get_path(func.parse_json('{"k1":[0,1,2], "k2":{"k3":3,"k4":4}}'), 'k2.k4')

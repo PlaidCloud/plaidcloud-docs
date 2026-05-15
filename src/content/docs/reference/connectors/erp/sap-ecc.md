@@ -8,11 +8,32 @@ sidebar:
 ## Upstream Documentation
 SAP has removed all ECC documentation and currently only provides documentation for [S/4HANA](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE).
 
-## Security Requirements
-Documentation under development
+## Configuration
 
-## Obtain Credentials
-Documentation under development
+These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
 
-## Create ERP Connection
-Documentation under development
+### Identification
+
+| Field | Type | Description |
+|---|---|---|
+| Name | Text | Display name for this connection. |
+| Alias | Text (multi-line) | Optional alias or notes about the connection. |
+| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
+| Db read only | Toggle | Restrict the connection to read-only operations. |
+| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+
+### Other
+
+| Field | Type | Description |
+|---|---|---|
+| Client | Text | — |
+| Lang | Select | — |
+| Trace | Select | — |
+| Ashost | Text | — |
+| Sysnr | Text | — |
+| Mshost | Text | — |
+| Msserv | Text | — |
+| Sysid | Text | — |
+| Group | Text | — |
+| User | Text | — |
+| Passwd | Password | — |

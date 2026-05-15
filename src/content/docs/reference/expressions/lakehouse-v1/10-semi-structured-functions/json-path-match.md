@@ -12,7 +12,7 @@ Checks whether a specified JSON path expression matches certain conditions withi
 func.json_path_match(<json_data>, <json_path_expression)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_path_match(func.parse_json('{"a":1,"b":[1,2,3]}'), '$.a == 1')

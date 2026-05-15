@@ -11,7 +11,7 @@ Checks whether a specified path exists in JSON data.
 func.json_path_exists(<json_data>, <json_path_expression)
 ```
 
-## Analyze Example
+## Analyze Examples
 
 ```python
 func.json_path_exists(parse_json('{"a": 1, "b": 2}'), '$.a ? (@ == 1)'), func.json_path_exists(parse_json('{"a": 1, "b": 2}'), '$.a ? (@ > 1)')
