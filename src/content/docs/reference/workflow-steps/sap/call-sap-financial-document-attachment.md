@@ -6,7 +6,10 @@ description: Retrieve SAP financial document attachments from a PlaidCloud workf
 ## Description
 
 
-Calls an SAP ECC Remote Function Call (RFC) designed to attach a file to specified FI document number.
+
+Attaches a file to a specific FI (Financial Accounting) document in SAP ECC via an RFC (Remote Function Call). Useful for posting supporting documentation — scanned invoices, approval workflows, contract copies — alongside the financial entries they back.
+
+Requires the SAP RFC credentials configured on the SAP connector and the target FI document number (company code, document number, fiscal year).
 
 
 ## Examples

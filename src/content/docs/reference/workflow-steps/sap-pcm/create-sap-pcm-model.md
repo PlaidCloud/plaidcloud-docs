@@ -6,8 +6,10 @@ description: Create a new SAP PCM model from a PlaidCloud workflow step to set u
 ## Description
 
 
-Creates a blank SAP Profitability and Cost Management (PCM) model.
 
+Creates a new, blank SAP Profitability and Cost Management (PCM) model on the PCM server. Useful for programmatically provisioning models — for example, when a new business unit or scenario needs its own model and the workflow can spin one up rather than waiting for a manual setup.
+
+Most users will copy from an existing model template via [Copy SAP PCM Model](/reference/workflow-steps/sap-pcm/copy-sap-pcm-model/) rather than starting blank.
 
 
 ## Our Credentials

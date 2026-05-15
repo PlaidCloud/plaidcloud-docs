@@ -6,8 +6,10 @@ description: Stop a running SAP PCM model calculation from a PlaidCloud workflow
 ## Description
 
 
-Stops an SAP Profitability and Cost Management (PCM) model calculation process.
 
+Aborts an in-progress SAP PCM model calculation. Useful when a calculation is taking too long, was started with bad input data, or needs to be stopped to free server resources for a higher-priority job.
+
+If no calculation is currently running, the step writes a warning to the workflow log and continues.
 
 
 ## Our Credentials

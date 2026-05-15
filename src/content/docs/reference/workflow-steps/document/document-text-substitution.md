@@ -8,12 +8,10 @@ sidebar:
 ## Description
 
 
-Performs text substitution in the specified file.
 
+Find-and-replace inside a document file. Replace specific strings, patterns, or placeholders with new values — useful for templating (replacing `\{customer_name}` with actual names) or for sanitizing text (removing or redacting specific strings).
 
-
-
-
+Operates on text-based files (TXT, CSV, JSON, XML, HTML, RML). Binary formats (PDF, Office) aren't supported.
 
 
 ## Examples

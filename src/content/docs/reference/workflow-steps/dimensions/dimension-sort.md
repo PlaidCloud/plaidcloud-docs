@@ -6,11 +6,10 @@ sidebar:
 ---
 
 ## Description
-Sort dimensions automatically.
 
+Sorts a dimension's members under their parents — alphabetical, by value, by property, or by a custom order column. Avoids the tedium of manually dragging hierarchy members into the right order, especially useful after a bulk load or a major restructure.
 
-![Dimension Clear](/images/dimension_clear.png)
-
+Operates on the dimension in place; no source or target table is needed.
 
 
 ## Dimension Selection

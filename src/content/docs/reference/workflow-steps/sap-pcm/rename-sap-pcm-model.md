@@ -6,8 +6,10 @@ description: Rename an SAP PCM model from a PlaidCloud workflow step to update m
 ## Description
 
 
-Renames an SAP Profitability and Cost Management (PCM) model.
 
+Renames an existing SAP Profitability and Cost Management (PCM) model. Useful for housekeeping during scenario rotations (e.g., move 'Forecast Q3' to 'Actuals Q3' after period close) or organizational restructuring.
+
+The new name must be unique within the PCM server.
 
 
 ## Our Credentials

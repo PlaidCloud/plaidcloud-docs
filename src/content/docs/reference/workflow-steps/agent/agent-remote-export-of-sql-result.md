@@ -8,7 +8,10 @@ sidebar:
 ## Description
 
 
-Execute specified SQL on a remote database through a PlaidLink Agent connection and export the result for use by PlaidCloud or other downstream systems.
+
+Runs SQL on a remote database through a PlaidLink Agent and brings the result set back into PlaidCloud as a project table. Used when the source database can't be reached directly from PlaidCloud (firewall, VPN-only, on-prem) but you still want to pull data from it.
+
+The Agent runs the query on-premises and streams the result to PlaidCloud, so credentials and data both stay on your network until the result is needed.
 
 
 ## Examples

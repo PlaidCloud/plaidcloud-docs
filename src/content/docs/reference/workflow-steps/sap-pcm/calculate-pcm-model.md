@@ -6,8 +6,10 @@ description: Trigger SAP PCM model calculations from a PlaidCloud workflow step 
 ## Description
 
 
-Starts SAP Profitability and Cost Management (PCM) model calculation process.
 
+Triggers the calculation engine in an SAP Profitability and Cost Management (PCM) model. Use this in a workflow to run the costing calculation after upstream data loads have populated the model's inputs (assignments, drivers, source data).
+
+Calculation is asynchronous on the PCM server side; pair with [Stop PCM Model Calculation](/reference/workflow-steps/sap-pcm/stop-pcm-model-calculation/) if you need to abort a long-running calculation.
 
 
 ## Our Credentials

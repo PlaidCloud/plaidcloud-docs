@@ -8,12 +8,10 @@ sidebar:
 ## Description
 
 
-Imports a remote file system file using a PlaidLink agent installed within the firewall.
 
+Pulls a file from a remote file system through a PlaidLink Agent and stores it in a PlaidCloud document account. Used when source files originate on internal file shares, on-prem servers, or behind a firewall.
 
-
-
-
+The Agent reads the file locally and streams it to PlaidCloud, where downstream workflow steps can process it.
 
 
 ## Examples

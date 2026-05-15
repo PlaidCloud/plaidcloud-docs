@@ -8,8 +8,10 @@ sidebar:
 ## Description
 
 
-Generates a PDF report based on the defined RML template and input data sources for the report.
 
+Renders a PDF report from an RML (Report Markup Language) template, populated with data from one or more PlaidCloud tables. Use this for formal, formatted reports — invoices, financial statements, regulatory filings, branded summaries.
+
+The RML template defines the layout (page size, fonts, fixed text, table placement); the input tables supply the variable data. Compare with [Reports Batch](/reference/workflow-steps/reports/reports-batch/) when one template needs to produce many reports (e.g., one per customer).
 
 
 ## Examples

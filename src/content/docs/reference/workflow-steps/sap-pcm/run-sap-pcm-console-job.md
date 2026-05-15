@@ -6,8 +6,10 @@ description: Run an SAP PCM console job from a PlaidCloud workflow step to execu
 ## Description
 
 
-Launches an SAP Profitability and Cost Management (PCM) Console process on the PCM server.
 
+Launches a job in the SAP PCM Console on the remote PCM server — typically used for administrative or batch tasks that PCM exposes via its Console interface rather than via the model calculation API.
+
+Use cases include archive operations, hyperloader runs, or vendor-specific maintenance routines. The exact job and parameters depend on your PCM deployment.
 
 
 ## Our Credentials

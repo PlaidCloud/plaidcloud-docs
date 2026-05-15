@@ -8,7 +8,11 @@ sidebar:
 ## Description
 
 
-Exports a file to a remote file system using a PlaidLink agent installed within the firewall.
+
+Writes a file from a PlaidCloud document account to a remote file system through a PlaidLink Agent. Useful for delivering reports, extracts, or processed files to systems that aren't reachable from PlaidCloud directly — internal shared drives, on-prem SFTP servers, or specialized application directories.
+
+The Agent receives the file from PlaidCloud and writes it to the configured local destination.
+
 
 ## Examples
 

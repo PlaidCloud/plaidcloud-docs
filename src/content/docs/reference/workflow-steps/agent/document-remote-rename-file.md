@@ -8,8 +8,10 @@ sidebar:
 ## Description
 
 
-Renames or moves a remote file system file using a PlaidLink agent installed within the firewall.
 
+Renames or moves a file on a remote file system through a PlaidLink Agent. Operates entirely on the on-premises side; no data is transferred to or from PlaidCloud.
+
+Common pattern: rename a source file to mark it as 'processed' after a remote-import step succeeds, so the same workflow doesn't re-import it on the next run.
 
 
 ## Examples

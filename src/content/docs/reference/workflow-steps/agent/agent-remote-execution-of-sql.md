@@ -7,5 +7,6 @@ sidebar:
 
 ## Description
 
+Executes SQL on a database that PlaidCloud can reach only through a PlaidLink Agent — typically because the database sits behind a firewall, on a private network, or in an on-premises data center. The Agent runs the SQL locally and reports success or failure back to PlaidCloud.
 
-Execute specified SQL on a remote database through a PlaidLink Agent connection.
+Use this for triggering remote stored procedures, refresh routines, or maintenance jobs as part of a PlaidCloud workflow without exposing the source database to the public internet.

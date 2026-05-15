@@ -8,7 +8,11 @@ sidebar:
 ## Description
 
 
-Send a notification via Web Hook (URL).
+
+Sends a notification by POSTing to a webhook URL — useful for triggering custom downstream actions, alerting integration platforms (Zapier, n8n, Make), or driving Slack/Teams/Discord bots that don't use first-class connectors.
+
+The payload format and any custom headers are configurable. The receiving service is responsible for what happens next.
+
 
 ## Examples
 

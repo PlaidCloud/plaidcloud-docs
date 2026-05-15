@@ -8,7 +8,10 @@ sidebar:
 ## Description
 
 
-Imports specified data into SQL database on a remote system through a PlaidLink Agent connection.
+
+Pushes a PlaidCloud project table into a database that's reachable only through a PlaidLink Agent. The Agent receives the data from PlaidCloud and performs the load locally — useful for keeping an on-premises operational database in sync with PlaidCloud analytics.
+
+Typical use: PlaidCloud produces a refreshed forecast or allocation result and the Agent loads it into the on-premises ERP, data mart, or operational reporting database.
 
 
 ## Examples
