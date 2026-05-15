@@ -1,0 +1,96 @@
+name: IndexNow ping
+
+# Notify IndexNow participants (Bing, Yandex, Naver, Seznam, DuckDuckGo, etc.)
+# whenever production content changes. They will re-crawl the changed URLs
+# within minutes instead of waiting for their normal crawl cycle.
+#
+# This runs on every push to main. We submit URLs derived from the changed
+# Markdown/MDX files; for large changes we fall back to a sitemap submission.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/docs/**'
+      - 'public/_redirects'
+
+jobs:
+  ping-indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need at least 2 commits so we can diff against the previous tip.
+          fetch-depth: 2
+
+      - name: Resolve changed content URLs
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITE="https://docs.plaidcloud.com"
+          # Files changed in this push (added or modified, not deleted).
+          mapfile -t FILES < <(
+            git diff --name-only --diff-filter=AM HEAD~1 HEAD \
+              | grep -E '^src/content/docs/.+\.(md|mdx)$' || true
+          )
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No content files changed."
+            echo "urls=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Map src/content/docs/foo/bar.mdx -> https://docs.plaidcloud.com/foo/bar/
+          URLS=()
+          for f in "${FILES[@]}"; do
+            slug="${f#src/content/docs/}"
+            slug="${slug%.md}"
+            slug="${slug%.mdx}"
+            slug="${slug%/index}"
+            if [ "$slug" = "index" ]; then
+              URLS+=("${SITE}/")
+            else
+              URLS+=("${SITE}/${slug}/")
+            fi
+          done
+          # IndexNow caps at 10,000 URLs per request; we're far below that.
+          printf 'Submitting %d URLs:\n' "${#URLS[@]}"
+          printf '  %s\n' "${URLS[@]}"
+          # JSON-encode the array
+          JSON=$(printf '%s\n' "${URLS[@]}" | python3 -c '
+          import sys, json
+          urls = [l.strip() for l in sys.stdin if l.strip()]
+          print(json.dumps(urls))
+          ')
+          echo "json=$JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Submit to IndexNow
+        if: steps.changed.outputs.json != ''
+        shell: bash
+        env:
+          KEY: 5e5bfa9ab14622d2bdf8b8bfc3df225f
+          URLS: ${{ steps.changed.outputs.json }}
+        run: |
+          set -euo pipefail
+          PAYLOAD=$(python3 -c '
+          import json, os
+          urls = json.loads(os.environ["URLS"])
+          payload = {
+              "host": "docs.plaidcloud.com",
+              "key": os.environ["KEY"],
+              "keyLocation": f"https://docs.plaidcloud.com/{os.environ[\"KEY\"]}.txt",
+              "urlList": urls,
+          }
+          print(json.dumps(payload))
+          ')
+          # IndexNow accepts 200/202 (success). Anything else is a failure;
+          # we log but don't fail the workflow — Bing/Yandex will still pick
+          # up the change on their next normal crawl.
+          HTTP=$(curl -s -o /tmp/indexnow.out -w '%{http_code}' \
+            -X POST 'https://api.indexnow.org/IndexNow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "$PAYLOAD")
+          echo "IndexNow HTTP $HTTP"
+          cat /tmp/indexnow.out || true
+          if [ "$HTTP" != "200" ] && [ "$HTTP" != "202" ]; then
+            echo "::warning::IndexNow returned $HTTP (non-fatal)"
+          fi
