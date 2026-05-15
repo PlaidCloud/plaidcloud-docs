@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Connection Documentation
-Quandl is now Nasdaq Data Link.  The documentation is [here](https://docs.data.nasdaq.com/).
+[Quandl is now Nasdaq Data Link.  The documentation](https://docs.data.nasdaq.com/).
 
 ## Setup
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://community.workday.com/sites/default/files/file-hosting/restapi/).
+The [vendor API reference](https://community.workday.com/sites/default/files/file-hosting/restapi/) covers this connector\'s endpoints.
 
 ## Configuration
 

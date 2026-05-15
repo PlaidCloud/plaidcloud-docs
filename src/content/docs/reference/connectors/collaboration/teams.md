@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Connection Documentation
-Microsoft Teams Admin documentation is [here](https://learn.microsoft.com/en-us/microsoftteams/).
+[Microsoft Teams Admin documentation](https://learn.microsoft.com/en-us/microsoftteams/).
 
 ## Setup
 

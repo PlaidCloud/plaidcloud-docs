@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.html).
+The [vendor API reference](https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/intro_what_is_rest_api.html) covers this connector\'s endpoints.
 
 ## Configuration
 

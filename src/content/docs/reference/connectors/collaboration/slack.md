@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Connection Documentation
-Slack Admin documentation is [here](https://slack.com/help).
+[Slack Admin documentation](https://slack.com/help).
 
 ## Setup
 

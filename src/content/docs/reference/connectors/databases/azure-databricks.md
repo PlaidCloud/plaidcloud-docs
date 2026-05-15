@@ -8,7 +8,7 @@ sidebar:
 **Azure Databricks** combines Apache Spark, Delta Lake, and a managed notebook environment on Microsoft Azure. Use this connector to read and write tables in a Databricks workspace from PlaidCloud workflows. Authentication uses a personal access token or service principal; the workspace URL and HTTP path identify the SQL warehouse to target.
 
 ## Upstream Documentation
-Azure Databricks documentation is [here](https://learn.microsoft.com/en-us/azure/databricks/).
+[Azure Databricks documentation](https://learn.microsoft.com/en-us/azure/databricks/).
 
 ## Configuration
 

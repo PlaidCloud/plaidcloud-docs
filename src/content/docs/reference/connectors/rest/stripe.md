@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://docs.stripe.com/api).
+The [vendor API reference](https://docs.stripe.com/api) covers this connector\'s endpoints.
 
 ## Configuration
 

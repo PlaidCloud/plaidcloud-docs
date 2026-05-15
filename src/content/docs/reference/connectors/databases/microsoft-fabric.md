@@ -8,7 +8,7 @@ sidebar:
 **Microsoft Fabric** combines Power BI, Synapse, and Data Factory into a unified analytics platform. Use this connector to access Fabric warehouses and lakehouses as relational sources from PlaidCloud workflows. Authentication is through a SQL Server-compatible endpoint plus your Microsoft tenant credentials.
 
 ## Upstream Documentation
-The Microsoft Fabric documentation is located [here](https://learn.microsoft.com/en-us/fabric/).
+[The Microsoft Fabric documentation](https://learn.microsoft.com/en-us/fabric/).
 
 ## Configuration
 

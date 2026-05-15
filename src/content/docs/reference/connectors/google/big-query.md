@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Connection Documentation
-The Google BigQuery documentation is [here](https://docs.cloud.google.com/bigquery/docs).
+[The Google BigQuery documentation](https://docs.cloud.google.com/bigquery/docs).
 
 ## Configuration
 

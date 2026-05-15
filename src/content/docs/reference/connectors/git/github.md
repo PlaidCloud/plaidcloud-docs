@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Service Documentation
-The GitHub service documentation is [here](https://docs.github.com/).
+[The GitHub service documentation](https://docs.github.com/).
 
 ## Configuration
 

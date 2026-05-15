@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Service Documentation
-The Azure Repos service documentation is [here](codecommit).
+[The Azure Repos service documentation](codecommit).
 
 ## Configuration
 

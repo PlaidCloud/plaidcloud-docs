@@ -8,7 +8,7 @@ sidebar:
 **Greenplum** is a massively parallel PostgreSQL-derived analytical database (originally Pivotal, now VMware Tanzu). Use this connector to read and write Greenplum tables from PlaidCloud workflows. The wire protocol is PostgreSQL-compatible, so most PostgreSQL tooling considerations apply.
 
 ## Upstream Documentation
-The Greenplum documentation is located [here](https://techdocs.broadcom.com/us/en/vmware-tanzu/data-solutions/tanzu-greenplum/7/greenplum-database/landing-index.html).
+[The Greenplum documentation](https://techdocs.broadcom.com/us/en/vmware-tanzu/data-solutions/tanzu-greenplum/7/greenplum-database/landing-index.html).
 
 ## Configuration
 

@@ -62,7 +62,7 @@ FROM
 
 **Result**
 
-```
+```text
    name    |         all_features
 -----------+-----------------------
  Laptop    | ["16GB", "512GB"]

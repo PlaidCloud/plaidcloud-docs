@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Service Documentation
-The BitBucket service documentation is [here](https://bitbucket.org/product/guides).
+[The BitBucket service documentation](https://bitbucket.org/product/guides).
 
 ## Configuration
 

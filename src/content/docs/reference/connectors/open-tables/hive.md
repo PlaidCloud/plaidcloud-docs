@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Catalog Documentation
-Apache Hive documentation is [here](https://hive.apache.org/docs/latest/).
+[Apache Hive documentation](https://hive.apache.org/docs/latest/).
 
 ## Configuration
 

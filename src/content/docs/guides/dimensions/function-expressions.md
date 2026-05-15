@@ -26,7 +26,7 @@ If these filters are left blank then the data can be filtered by using the dimen
 ## Expressions
 
 Using Expressions it is possible to display values which are calculated based on values from Aggregations displayed for the dimension.
-Expressions are built using mathematical formulae, which can contain many kinds of operators, and some special functions.  The list of operators available can be found [here](https://mathjs.org/docs/expressions/syntax.html). The functions available are described below
+Expressions are built using mathematical formulae, which can contain many kinds of operators, and some special functions.  see the [list of operators](https://mathjs.org/docs/expressions/syntax.html). The functions available are described below
 
 
 ## Functions

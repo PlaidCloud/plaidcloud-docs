@@ -26,7 +26,7 @@ func.timezone()
 
 ## SQL Syntax
 
-```
+```sql
 SELECT TIMEZONE();
 ```
 

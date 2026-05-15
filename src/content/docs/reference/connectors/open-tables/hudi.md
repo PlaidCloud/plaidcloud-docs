@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Catalog Documentation
-Apache Hudi documentation is [here](https://hudi.apache.org/docs/overview/).
+[Apache Hudi documentation](https://hudi.apache.org/docs/overview/).
 
 ## Setup
 

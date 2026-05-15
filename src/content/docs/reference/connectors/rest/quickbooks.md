@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://developer.intuit.com/app/developer/qbo/docs/learn/explore-the-quickbooks-online-api).
+The [vendor API reference](https://developer.intuit.com/app/developer/qbo/docs/learn/explore-the-quickbooks-online-api) covers this connector\'s endpoints.
 
 ## Configuration
 

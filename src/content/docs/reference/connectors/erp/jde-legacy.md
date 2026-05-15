@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The JDE documentation is [here](https://www.oracle.com/technical-resources/documentation/jd-edwards-enterpriseone.html).
+[The JDE documentation](https://www.oracle.com/technical-resources/documentation/jd-edwards-enterpriseone.html).
 
 ## Setup
 

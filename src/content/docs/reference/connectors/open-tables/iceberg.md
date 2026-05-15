@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Catalog Documentation
-Apache Iceberg documentation is [here](https://iceberg.apache.org/docs/latest/).
+[Apache Iceberg documentation](https://iceberg.apache.org/docs/latest/).
 
 ## Setup
 

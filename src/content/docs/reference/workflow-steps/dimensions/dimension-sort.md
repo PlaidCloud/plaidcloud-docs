@@ -20,7 +20,7 @@ If **dimensions** or **paths** were created dynamically then same variables can 
 
 An example that uses the `current_month` variable to dynamically sort the Materials dimension:
 
-```
+```text
 /Dimensions/{current_month}/Products/Materials
 ```
 

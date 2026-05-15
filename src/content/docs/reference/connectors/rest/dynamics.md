@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/).
+The [vendor API reference](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/) covers this connector\'s endpoints.
 
 ## Configuration
 

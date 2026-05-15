@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The Oracle EBS documentation is [here](https://docs.oracle.com/cd/E51111_01/current/html/docset.html).
+[The Oracle EBS documentation](https://docs.oracle.com/cd/E51111_01/current/html/docset.html).
 
 ## Setup
 

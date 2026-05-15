@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://docs.ramp.com/developer-api/v1).
+The [vendor API reference](https://docs.ramp.com/developer-api/v1) covers this connector\'s endpoints.
 
 ## Configuration
 

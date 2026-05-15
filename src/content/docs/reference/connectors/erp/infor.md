@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The Infor documentation is [here](https://docs.infor.com/en-us).
+[The Infor documentation](https://docs.infor.com/en-us).
 
 ## Setup
 

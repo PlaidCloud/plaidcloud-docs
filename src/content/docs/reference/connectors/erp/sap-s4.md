@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The documentation for SAP S/4HANA is [here](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE).
+See the [SAP S/4HANA documentation](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE).
 
 ## Setup
 

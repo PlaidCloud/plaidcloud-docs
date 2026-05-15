@@ -8,9 +8,9 @@ sidebar:
 **Apache Spark** is the distributed compute engine commonly used for ETL over large datasets. Use this connector to read and write data through Spark SQL endpoints (typically Spark Thrift Server). For Databricks-managed Spark, prefer the [Azure Databricks](../azure-databricks/) connector.
 
 ## Upstream Documentation
-The Apache Spark documentation is [here](https://spark.apache.org/documentation.html).
+[The Apache Spark documentation](https://spark.apache.org/documentation.html).
 
-The Apache project is [here](https://spark.apache.org/).
+The [Apache project](https://spark.apache.org/).
 
 ## Setup
 

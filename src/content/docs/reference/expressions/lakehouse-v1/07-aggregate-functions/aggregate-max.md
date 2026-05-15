@@ -25,7 +25,7 @@ table.city, func.max(table.temperature).alias('max_temperature')
 
 ## SQL Syntax
 
-```
+```sql
 MAX(<expr>)
 ```
 

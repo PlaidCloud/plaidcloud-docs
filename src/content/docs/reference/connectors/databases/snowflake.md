@@ -8,7 +8,7 @@ sidebar:
 **Snowflake** is a cloud-native data warehouse with separate storage and compute. Use this connector to read and write Snowflake tables. Authentication supports username/password, key-pair, OAuth, and SSO; specify the warehouse (compute pool), database, role, and schema you want PlaidCloud to act under.
 
 ## Upstream Documentation
-The Snowflake documentation is [here](https://docs.snowflake.com/).
+[The Snowflake documentation](https://docs.snowflake.com/).
 
 ## Configuration
 

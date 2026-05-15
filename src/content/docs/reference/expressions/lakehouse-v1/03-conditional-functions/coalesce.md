@@ -12,7 +12,7 @@ func.coalesce(<expr1>[, <expr2> ...])
 
 ## Analyze Examples
 
-```
+```sql
 func.coalesce(table.UOM,  'none', \n)
 
 func.coalesce(get_column(table2, 'TECHNOLOGY_RATE'), 0.0)

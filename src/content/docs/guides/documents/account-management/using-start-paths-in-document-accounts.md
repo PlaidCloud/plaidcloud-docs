@@ -42,6 +42,6 @@ The path always begins with the bucket name followed by the sub-directories.
 
 
 
-```
+```text
 <my-bucket>/folder1/folder2/
 ```

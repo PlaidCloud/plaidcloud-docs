@@ -8,7 +8,7 @@ sidebar:
 **Amazon Athena** is AWS's serverless query engine over S3-hosted data, billed per-query. Use this connector to run Athena queries from PlaidCloud workflows — useful for joining S3 data lakes with PlaidCloud project tables. Authentication uses AWS access keys or IAM role assumption.
 
 ## Upstream Documentation
-Amazon Athena documentation is [here](https://docs.aws.amazon.com/athena/).
+[Amazon Athena documentation](https://docs.aws.amazon.com/athena/).
 
 ## Configuration
 

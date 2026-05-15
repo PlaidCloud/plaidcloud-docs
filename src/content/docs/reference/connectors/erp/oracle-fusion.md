@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The Oracle Fusion applications documentation is [here](https://www.oracle.com/middleware/technologies/fusion-apps-doc.html).
+[The Oracle Fusion applications documentation](https://www.oracle.com/middleware/technologies/fusion-apps-doc.html).
 
 ## Setup
 

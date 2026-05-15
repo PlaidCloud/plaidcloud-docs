@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The SAP PaPM documentation is [here](https://help.sap.com/docs/SAP_PROFITABILITY_PERFORMANCE_MANAGEMENT).
+[The SAP PaPM documentation](https://help.sap.com/docs/SAP_PROFITABILITY_PERFORMANCE_MANAGEMENT).
 
 ## Setup
 

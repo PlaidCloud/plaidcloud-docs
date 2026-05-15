@@ -8,7 +8,7 @@ sidebar:
 **StarRocks** is the high-performance analytical database that powers PlaidCloud's Lakehouse v2 (tracking StarRocks 4.1). Use this connector to query standalone StarRocks deployments — for the in-product lakehouse, you don't need this connector.
 
 ## Upstream Documentation
-StarRocks documentation is [here](https://docs.starrocks.io/docs/introduction/StarRocks_intro/).
+[StarRocks documentation](https://docs.starrocks.io/docs/introduction/StarRocks_intro/).
 
 ## Setup
 

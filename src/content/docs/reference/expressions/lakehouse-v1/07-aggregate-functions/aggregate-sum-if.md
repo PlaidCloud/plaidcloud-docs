@@ -23,7 +23,7 @@ func.sum_if(table.amount, table.status=='Completed').alias('total_amount_complet
 
 ## SQL Syntax
 
-```
+```sql
 SUM_IF(<column>, <cond>)
 ```
 

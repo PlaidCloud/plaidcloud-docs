@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Service Documentation
-The GitLab service documentation is [here](https://docs.gitlab.com/).
+[The GitLab service documentation](https://docs.gitlab.com/).
 
 ## Configuration
 

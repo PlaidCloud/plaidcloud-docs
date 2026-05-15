@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The SAP Analytics Cloud documentation is [here](https://help.sap.com/docs/SAP_ANALYTICS_CLOUD).
+[The SAP Analytics Cloud documentation](https://help.sap.com/docs/SAP_ANALYTICS_CLOUD).
 
 ## Setup
 

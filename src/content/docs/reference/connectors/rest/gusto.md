@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## API Documentation
-The API documentation is for this connector is located [here](https://docs.gusto.com/app-integrations/reference/get-v1-token-info).
+The [vendor API reference](https://docs.gusto.com/app-integrations/reference/get-v1-token-info) covers this connector\'s endpoints.
 
 ## Configuration
 

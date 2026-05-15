@@ -25,7 +25,7 @@ table.station_id, func.min(table.price).alias('min_price')
 
 ## SQL Syntax
 
-```
+```sql
 MIN(<expr>)
 ```
 
@@ -51,7 +51,7 @@ The MIN() function returns the minimum value in a set of values.
 
 ## SQL Syntax
 
-```
+```sql
 MIN(expression)
 ```
 

@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Service Documentation
-The AWS CodeCommit service documentation is [here](https://docs.aws.amazon.com/codecommit/).
+[The AWS CodeCommit service documentation](https://docs.aws.amazon.com/codecommit/).
 
 ## Configuration
 

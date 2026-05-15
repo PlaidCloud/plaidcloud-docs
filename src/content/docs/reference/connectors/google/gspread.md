@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Connection Documentation
-Google Sheets is oriented more towards consumers.  For technical documentation, refer to the developer documentation [here](https://developers.google.com/workspace/sheets).
+Google Sheets is oriented more towards consumers.  For technical documentation, refer to the [developer documentation](https://developers.google.com/workspace/sheets).
 
 ## Configuration
 

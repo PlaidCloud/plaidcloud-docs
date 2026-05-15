@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Upstream Documentation
-The SAP PCM legacy documentation is [here](https://help.sap.com/docs/SAP_PROFITABILITY_AND_COST_MANAGEMENT).
+[The SAP PCM legacy documentation](https://help.sap.com/docs/SAP_PROFITABILITY_AND_COST_MANAGEMENT).
 
 ## Configuration
 

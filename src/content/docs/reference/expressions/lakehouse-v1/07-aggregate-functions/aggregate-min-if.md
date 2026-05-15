@@ -23,7 +23,7 @@ func.min_if(table.budget, table.departing=='IT').alias('min_it_budget')
 
 ## SQL Syntax
 
-```
+```sql
 MIN_IF(<column>, <cond>)
 ```
 

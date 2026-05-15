@@ -8,7 +8,7 @@ sidebar:
 **Databend** is the open-source SQL engine that powers PlaidCloud's Lakehouse v1. Use this connector when you want to query a standalone Databend deployment — for in-product analytics, the lakehouse is reachable through PlaidCloud directly without needing this connector.
 
 ## Upstream Documentation
-Databend documentation is [here](https://docs.databend.com/guides/).
+[Databend documentation](https://docs.databend.com/guides/).
 
 ## Configuration
 

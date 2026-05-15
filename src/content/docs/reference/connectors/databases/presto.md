@@ -8,7 +8,7 @@ sidebar:
 **Presto** is a distributed SQL query engine for federated queries across multiple data sources. Use this connector to query Presto deployments from PlaidCloud workflows. Authentication uses HTTP Basic Auth or Kerberos depending on your deployment.
 
 ## Upstream Documentation
-The Presto documentation is [here](https://prestodb.io/docs/current/).
+[The Presto documentation](https://prestodb.io/docs/current/).
 
 ## Configuration
 

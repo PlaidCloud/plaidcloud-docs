@@ -20,14 +20,14 @@ Variables are useful when dimensions are updated on a periodic basis and retaini
 
 An example that uses the `current_month` variable to dynamically name the dimension:
 
-```
+```text
 dimension_name_{current_month}
 ```
 ### Path
 Paths let you create folder structures that the dimensions are are stored in. You can use variables here as well to make the folder structure dynamic.
 An example that uses the `current_month` variable to dynamically name a folder:
 
-```
+```text
 /Dimensions/{current_month}/Product/
 ```
 

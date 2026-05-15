@@ -8,7 +8,7 @@ sidebar:
 **Trino** (formerly PrestoSQL) is the distributed SQL query engine commonly used over data lakes. Use this connector to query Trino deployments from PlaidCloud workflows. Authentication uses HTTP Basic Auth or JWT; the catalog and schema you target determine which underlying data source the query hits.
 
 ## Upstream Documentation
-The Trino documentation is [here](https://trino.io/docs/current/index.html).
+[The Trino documentation](https://trino.io/docs/current/index.html).
 
 ## Setup
 

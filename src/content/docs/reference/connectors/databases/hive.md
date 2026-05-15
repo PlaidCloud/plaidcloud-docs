@@ -8,7 +8,7 @@ sidebar:
 **Apache Hive** is the SQL layer over Hadoop-style distributed storage, common in older data lake deployments. Use this connector to read and write Hive tables. Authentication varies by deployment — common modes are LDAP, Kerberos, or no-auth on internal networks; check your Hive metastore configuration.
 
 ## Upstream Documentation
-Apache Hive documentation is located [here](https://hive.apache.org/docs/latest/).
+[Apache Hive documentation](https://hive.apache.org/docs/latest/).
 
 ## Configuration
 

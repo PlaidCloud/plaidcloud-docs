@@ -6,7 +6,7 @@ sidebar:
 ---
 
 ## Catalog Documentation
-The Delta Lake documentation is [here](https://docs.delta.io/).
+[The Delta Lake documentation](https://docs.delta.io/).
 
 ## Setup
 
