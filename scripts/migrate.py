@@ -579,17 +579,39 @@ def append_redirects(pairs) -> int:
         return 0
     REDIRECTS_FILE.parent.mkdir(parents=True, exist_ok=True)
     existing = REDIRECTS_FILE.read_text(encoding="utf-8") if REDIRECTS_FILE.exists() else ""
+
+    # Track 'from' URLs already emitted (in existing file + this run) to avoid
+    # CF _redirects "Duplicate rule" errors. Some Hugo pages shared slugs and
+    # therefore served at the same URL; first occurrence wins.
+    existing_froms = set()
+    for ln in existing.splitlines():
+        ln = ln.strip()
+        if not ln or ln.startswith("#"):
+            continue
+        toks = ln.split()
+        if len(toks) >= 1:
+            existing_froms.add(toks[0])
+
     new_lines = []
-    if not existing.endswith("\n"):
+    if existing and not existing.endswith("\n"):
         new_lines.append("")
     new_lines.append("# --- migration redirects (auto-generated) ---")
     added = 0
+    skipped_dupes = 0
     for old, new, hugo_slug in pairs:
         line = generate_redirect(old, new, hugo_slug)
-        if line and line not in existing:
-            new_lines.append(line)
-            added += 1
+        if not line:
+            continue
+        from_url = line.split()[0]
+        if from_url in existing_froms:
+            skipped_dupes += 1
+            continue
+        existing_froms.add(from_url)
+        new_lines.append(line)
+        added += 1
     REDIRECTS_FILE.write_text(existing + "\n".join(new_lines) + "\n", encoding="utf-8")
+    if skipped_dupes:
+        print(f"  skipped {skipped_dupes} duplicate redirect(s) (multiple Hugo files share a slug)", file=sys.stderr)
     return added
 
 
