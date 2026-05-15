@@ -1,39 +1,297 @@
 # Contributing to PlaidCloud Documentation
 
-**First off, thanks for taking the time to contribute!**
+This site is built with [Astro Starlight](https://starlight.astro.build/) and deployed to [Cloudflare Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/). This guide covers the day-to-day workflow: make a change, preview it on a real CF deployment, get it reviewed, and ship it.
 
-The following is a set of guidelines for contributing to PlaidCloud documentation, hosted at [PlaidCloud.io](http://PlaidCloud.io/).
-These are just guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
+For project-specific conventions (sidebar architecture, front-matter requirements, house style), read [CLAUDE.md](./CLAUDE.md). This guide is the *how* — CLAUDE.md is the *what*.
 
-## Before you get started
+## TL;DR
 
-### Code of Conduct
+```bash
+git checkout main && git pull
+git checkout -b docs/my-change
+# edit content under src/content/docs/
+npm install
+npm run dev          # localhost:4321
+npm run build        # verify production build
+git add . && git commit -m "Describe the change"
+git push -u origin docs/my-change
+# CF Workers Build creates a preview URL — check the GitHub PR page or CF dashboard
+# Open a PR; CI runs link check + prose lint
+# Merge to main → auto-deploys to docs.plaidcloud.com
+```
 
-PlaidCloud follows the [Cloud Native Computing Foundation (CNCF) Code of Conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the
-[PlaidCloud Code of Conduct Committee](https://github.com/PlaidCloud/community/tree/master/committee-code-of-conduct) <conduct@PlaidCloud.io>.
+## Repo and deployment overview
 
-### Documentation and Site Decisions
+| Piece | Where |
+|---|---|
+| Source | `src/content/docs/` (Markdown / MDX) |
+| Framework | Astro 6 + Starlight |
+| Search | Pagefind (built into Starlight) |
+| Host | Cloudflare Workers Static Assets |
+| Wrangler config | `wrangler.jsonc` |
+| Production branch | `main` → [docs.plaidcloud.com](https://docs.plaidcloud.com) |
+| Preview branches | any non-`main` branch → preview Worker URL |
+| Build / deploy command | `npm ci && npm run build && npx wrangler deploy` |
+| CI checks | `.github/workflows/docs-checks.yaml` (Lychee link check, Vale prose lint) |
 
-The [PlaidCloud SIG Docs Discussion Group](https://groups.google.com/forum/#!forum/PlaidCloud-sig-docs) is the discussion group for doc releases, suggested site improvements, and improving the doc contribution experience. If you are planning to be a regular contributor, join this group to stay informed and involved.
+The `astro-migration` branch is retained as a rollback target for the Hugo→Astro cutover. **Do not push to it.** All new work goes on `main` via feature branches.
 
-### Style Guides and Templates
+## Local setup
 
-Before submitting a pull request to create new content, please review the [PlaidCloud.io style guide](http://PlaidCloud.io/docs/home/contribute/style-guide/) and follow the [instructions for using page templates](https://plaidcloud.com/docs/contribute/style/page-content-types/).
+Prereqs: **Node 22+** (Astro 6 requires it).
 
+```bash
+git clone git@github.com:PlaidCloud/plaidcloud-docs.git
+cd plaidcloud-docs
+npm install
+```
 
-## Contributing to Documentation
+Two commands you'll use:
 
-### Reporting Documentation Issues
+```bash
+npm run dev          # hot-reload dev server at http://localhost:4321
+npm run build        # full production build → ./dist
+```
 
-PlaidCloud.io uses github issues to track documentation issues and requests. If you see a documentation issue, submit an issue using the following steps:
+`npm run dev` is for fast iteration on prose and links. **Always run `npm run build` before pushing** — the dev server is lenient about MDX errors that the production build catches.
 
-1. Check the [PlaidCloud.io issues list](https://github.com/PlaidCloud/website/issues) as you might find out the issue is a duplicate.
-2. Use the [included template for every new issue](https://github.com/PlaidCloud/website/issues/new).  When you create a bug report, include as many details as possible and include suggested fixes to the issue.
+## Making a change
 
-Note that code issues should be filed against the main PlaidCloud repository, while documentation issues should go in the PlaidCloud.io repository.
+### 1. Branch from `main`
 
-### Submitting Documentation Pull Requests
+```bash
+git checkout main && git pull
+git checkout -b docs/<topic>     # or fix/<topic>, feat/<topic>, etc.
+```
 
-If you're fixing an issue in the existing documentation, you should submit a PR against the main branch.  Follow [these instructions to create a documentation pull request against the PlaidCloud.io repository](http://PlaidCloud.io/docs/home/contribute/create-pull-request/).
+Keep branches small and focused — one logical change per PR. Smaller PRs review faster and have cleaner preview URLs.
 
-For more information, see [contributing to PlaidCloud docs](https://plaidcloud.com/docs/contribute/).
+### 2. Edit content
+
+Content lives under `src/content/docs/`. The directory mirrors the URL structure:
+
+```
+src/content/docs/get-started/quickstart.mdx  →  /get-started/quickstart/
+src/content/docs/reference/connectors/databases/postgres.md  →  /reference/connectors/databases/postgres/
+```
+
+Required front matter on every page:
+
+```yaml
+---
+title: Page Title in Title Case
+description: One-sentence description, ≤160 characters, no trailing boilerplate.
+---
+```
+
+Optional front matter:
+
+```yaml
+sidebar:
+  label: Custom Sidebar Label    # defaults to title if omitted
+  order: 2                       # within autogenerated siblings
+template: splash                 # for landing-style pages with a hero
+```
+
+**Critical things to know before adding pages.** Read these sections in [CLAUDE.md](./CLAUDE.md):
+
+- **Sidebar architecture** — the `reference/` section uses a curated sidebar (top-level entries only). Adding a new connector / workflow step / expression function requires updating the parent `index.md` to list it. The autogenerated sidebar will *not* surface it.
+- **House style** — Title Case for H2+ headings, second person voice, no boilerplate descriptions.
+- **Page patterns** — what reference pages vs. guides vs. landings should look like.
+
+If you skip those, your PR will get review comments.
+
+### 3. Verify locally
+
+```bash
+npm run build
+```
+
+Watch for:
+- MDX parse errors (bare `<`, unbalanced JSX, etc.)
+- YAML frontmatter errors (unquoted strings with colons, bad indentation)
+- "Entry docs → X was not found" warnings (broken internal links)
+
+If the build is clean, you're ready to push.
+
+### 4. Push and let CF build a preview
+
+```bash
+git push -u origin docs/<topic>
+```
+
+Cloudflare Workers Build watches the repo and **automatically deploys every non-`main` branch to a preview URL**. The URL pattern is:
+
+```
+https://<commit-or-branch>-plaidcloud-docs.paul-937.workers.dev/
+```
+
+Find the exact preview URL:
+- In the CF dashboard → Workers & Pages → `plaidcloud-docs` → **Deployments** tab (most recent deployment on your branch)
+- Or in the GitHub PR page once you open the PR — CF posts a status check with the URL
+
+Preview deployments run against the full production pipeline (same build command, same `wrangler deploy`, same caching). What you see on the preview is what you'll see on `docs.plaidcloud.com` after merge.
+
+### 5. Open a PR
+
+Use the template at `.github/pull_request_template.md` — it asks for:
+- One-sentence summary
+- "User-facing change?" checkbox (drives the monthly release notes)
+- Customer-summary line if user-facing
+- Category (Added / Changed / Fixed / Security / Deprecated)
+- How you tested
+
+The CI check (`docs-checks.yaml`) runs on every PR:
+- **Lychee link check** — broken links in the built HTML
+- **Vale prose lint** — Google style pack + PlaidCloud vocab
+
+Both should pass before merge. If Vale flags something that's clearly intentional (a quoted product name, a deliberate sentence fragment), suppress it inline rather than disabling the rule globally.
+
+### 6. Review
+
+Reviewer checks:
+- The preview URL renders correctly on desktop and mobile
+- Front matter complete (title, description, both ≤160 chars)
+- Sidebar / index pages updated where needed
+- Internal links resolve (`[guide](/guides/foo/)` and not `[guide](foo.md)`)
+- Title Case for H2+ headings
+- No new broken links flagged by Lychee
+- Vale either passes or has acceptable suppressions
+
+### 7. Merge to `main`
+
+Squash or regular merge — your team's call. CF Workers Build picks up `main` pushes and deploys to `docs.plaidcloud.com` within ~2 minutes.
+
+Verify the deploy:
+
+```bash
+curl -sI https://docs.plaidcloud.com/your-new-page/ | head -5
+# expect: HTTP/2 200, server: cloudflare, cf-ray: <id>
+```
+
+## Using Claude Code for changes
+
+This repo has a [CLAUDE.md](./CLAUDE.md) at the root and a [global ~/.claude/CLAUDE.md](https://docs.anthropic.com/en/docs/claude-code/memory) that Claude Code reads on every session. That means **Claude already knows the conventions** — Title Case, sidebar constraints, file layout, no-boilerplate descriptions, etc.
+
+Use Claude for tasks where the convention surface is wide enough that following it manually is tedious:
+
+### Adding a new page
+
+```
+"Add a new workflow-step reference page for the X step under
+src/content/docs/reference/workflow-steps/<category>/. Include Description,
+Load Parameters, and Examples sections. Update the category's index.md to
+link to it."
+```
+
+Claude will read CLAUDE.md, the category's existing pages for pattern reference, and produce something that fits. **Review the diff before committing** — Claude will get the structure right but may invent details about the step that don't match implementation.
+
+### Bulk consistency edits
+
+```
+"Audit all connector pages under reference/connectors/ — descriptions over
+160 chars, missing front-matter fields, generic boilerplate descriptions
+('Documentation for the X connector'). Fix any you find."
+```
+
+Claude is good at this — it can scan ~50 pages, apply consistent rewrites, and report what it changed.
+
+### Review against CLAUDE.md
+
+```
+"Review the changes on this branch (git diff main..HEAD) against the
+conventions in CLAUDE.md. Flag anything that violates the house style,
+sidebar architecture, or page patterns."
+```
+
+This is the highest-value Claude task — it catches things a human reviewer might miss: a description that's secretly 165 chars, a heading that's lowercase, an internal link with `.md` extension, etc.
+
+### Things Claude is *not* good at and shouldn't do unsupervised
+
+- **Inventing technical accuracy.** Don't ask Claude to "write a reference page for the FOO_BAR SQL function" without showing it the actual function source or a vendor doc. It'll hallucinate plausible-looking syntax. *Do* paste the upstream Databend / StarRocks doc into the prompt and have it adapt the style.
+- **Pushing without review.** Claude can `git commit && git push` — but every commit deploys (eventually) to a public site. Read the diff. Run the build. *Then* push.
+- **Risky destructive operations.** Mass-rename, mass-delete, force-push. Claude is cautious about these but you should be too.
+
+### Common Claude commands for this repo
+
+```bash
+# Verify all internal links resolve
+"Build the site and check for any broken internal links."
+
+# Tighten descriptions to ≤160 chars
+"Find descriptions over 160 chars in src/content/docs/, suggest a trim
+for each. Show me the list before changing anything."
+
+# Generate monthly release notes
+"Look at git log for the last 30 days. Bucket commits with a 'User-facing
+change: Yes' marker. Generate a draft release page at
+src/content/docs/releases/YYYY-MM.mdx in the same style as the existing
+monthly pages."
+
+# Title-case audit
+"Run scripts/title-case-headings.py and report what would change. Don't
+apply yet."
+```
+
+## Pre-merge checklist
+
+Before clicking "Merge":
+
+- [ ] `npm run build` passes locally
+- [ ] Lychee link check is green (no new broken links)
+- [ ] Vale prose lint is green (or warnings are intentional)
+- [ ] Index pages updated for any new reference content under `reference/`
+- [ ] Front matter has both `title` and `description`, both Title Case where applicable, description ≤160 chars
+- [ ] Preview URL renders correctly — check the home → your new page click path
+- [ ] PR template fields filled in (customer summary if user-facing)
+
+## Production deploy lifecycle
+
+1. PR merged to `main`
+2. CF Workers Build starts (~30s)
+3. `wrangler deploy` publishes to the production Worker
+4. `docs.plaidcloud.com` reflects the change within ~2 min
+5. Cloudflare's edge cache may hold an old version of a page for up to a few minutes — hard-refresh if you don't see the change immediately
+
+## Rollback
+
+If a deploy ships something broken:
+
+**Option 1 — revert on `main`** (preferred, ~5 min)
+
+```bash
+git revert <bad-commit-sha>
+git push origin main
+```
+
+The revert deploys like any other change.
+
+**Option 2 — promote a previous deployment via CF dashboard** (faster, no commit history change)
+
+CF dashboard → Workers & Pages → `plaidcloud-docs` → **Deployments** → find the last known-good deployment → **Rollback to this version**.
+
+**Option 3 — `astro-migration` snapshot** (true emergency only)
+
+The `astro-migration` branch is kept as a frozen snapshot of the migration-era state. Don't merge it back; promote a CF deployment from it via the dashboard if everything else is broken.
+
+## Build budgets to be aware of
+
+- **CF Workers Build minutes** — 3,000/month on the free plan. Each push uses ~30s. Branch pushes count too. Don't push trivial fixes in 10 separate commits; squash locally first.
+- **Workers Static Assets total upload** — 100 MB cap. Current build is ~135 MB; we're already over the free-tier cap and rely on the paid Workers plan. Any change that meaningfully grows per-page size needs evaluation. See CLAUDE.md → "Sidebar architecture" for context.
+- **Workers Assets file count** — 20,000 files cap. Current build is ~2,800. Plenty of headroom.
+
+## Where to ask for help
+
+- **Site behaviour, conventions, sidebar/index questions** → start with [CLAUDE.md](./CLAUDE.md) — most answers are there
+- **Build/deploy issues** → CF dashboard → `plaidcloud-docs` → **Logs** tab
+- **Slow site / Workers errors** → CF Analytics → Workers → look for error spikes
+- **General doc strategy** → @inviscid
+
+## Files you should not touch without good reason
+
+These are listed in CLAUDE.md → "Don't touch" but worth repeating here:
+
+- **`public/_redirects`** — 1,400+ entries mapping legacy Hugo URLs to current Astro URLs. Removing entries breaks inbound links from the old site. Add to it, don't subtract.
+- **`scripts/migrate.py`** — one-shot Hugo→Astro migration tool. Retained for archaeology; do not re-run.
+- **`themes/docsy`** — git submodule remnant from the Hugo era; ignored by build. Don't reintroduce theme files.
+- **`wrangler.jsonc`** — change only via PR with explicit reviewer approval (mistakes here break deploys site-wide).
