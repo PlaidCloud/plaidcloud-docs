@@ -40,6 +40,7 @@ export default defineConfig({
 			lastUpdated: true,
 			components: {
 				PageTitle: './src/components/PageTitle.astro',
+				Head: './src/components/Head.astro',
 			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/PlaidCloud/plaidcloud-docs' },
@@ -52,6 +53,7 @@ export default defineConfig({
 						{ label: 'Quickstart', link: '/get-started/quickstart/' },
 						{ label: 'Concepts',   link: '/get-started/concepts/' },
 						{ label: 'Tutorials',  link: '/get-started/tutorials/' },
+						{ label: 'FAQ',        link: '/get-started/faq/' },
 					],
 				},
 				{

@@ -1,0 +1,72 @@
+name: Docs Checks
+
+on:
+  pull_request:
+    branches: [astro-migration, main, production]
+  push:
+    branches: [astro-migration]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Cache dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - name: Lychee link check (internal + external)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --include-fragments
+            --exclude-mail
+            --exclude-loopback
+            --exclude '^https?://docs\.plaidcloud\.com'
+            --exclude '^https?://plaidcloud\.com/signup'
+            --max-retries 2
+            --retry-wait-time 2
+            ./dist/**/*.html
+          fail: false
+          output: ./lychee-report.md
+
+      - name: Upload Lychee report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: lychee-report
+          path: ./lychee-report.md
+
+  vale:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Vale (Google style)
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          version: 3.9.5
+          files: src/content/docs
+          fail_on_error: false
+          filter_mode: added
+          reporter: github-pr-check
+          vale_flags: "--no-exit"

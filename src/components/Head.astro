@@ -1,0 +1,58 @@
+---
+/**
+ * Custom Head override that:
+ *   1. Renders Starlight's default <head> contents
+ *   2. Replaces the og:image with a per-page generated image (via astro-og-canvas)
+ *   3. Injects JSON-LD Article structured data for SEO rich results
+ */
+import Default from '@astrojs/starlight/components/Head.astro';
+
+const { entry, lastUpdated } = Astro.locals.starlightRoute;
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://docs.plaidcloud.com';
+
+const slug = entry.id;
+
+// Only certain pages get per-page OG images (see src/pages/open-graph/[...slug].ts).
+// Reference workflow-step and expression function pages share a single default
+// OG image to keep the build under the Workers Assets size cap.
+function hasGeneratedOG(id: string): boolean {
+	if (id.startsWith('reference/workflow-steps/') && id.split('/').length > 3) return false;
+	if (id.startsWith('reference/expressions/') && id.split('/').length > 3) return false;
+	return true;
+}
+const ogImageUrl = hasGeneratedOG(slug)
+	? `${siteUrl}/open-graph/${slug}.png`
+	: `${siteUrl}/open-graph/_default.png`;
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? siteUrl).toString();
+
+const jsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'TechArticle',
+	headline: entry.data.title,
+	description: entry.data.description ?? '',
+	image: ogImageUrl,
+	url: canonicalUrl,
+	publisher: {
+		'@type': 'Organization',
+		name: 'PlaidCloud',
+		logo: {
+			'@type': 'ImageObject',
+			url: `${siteUrl}/favicon.ico`,
+		},
+	},
+	...(lastUpdated && {
+		dateModified: lastUpdated instanceof Date
+			? lastUpdated.toISOString()
+			: new Date(lastUpdated).toISOString(),
+	}),
+};
+---
+
+<Default><slot /></Default>
+
+<meta property="og:image" content={ogImageUrl} />
+<meta name="twitter:image" content={ogImageUrl} />
+<meta name="twitter:card" content="summary_large_image" />
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />

@@ -1,0 +1,138 @@
+---
+title: Load, Transform, and Publish Data
+description: End-to-end tutorial — import a CSV, clean it with table steps, and publish the result for downstream consumers.
+sidebar:
+  order: 1
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+This tutorial takes about an hour. By the end you'll have a working workflow that imports a CSV, transforms it through a few table steps, and publishes the result.
+
+## What You'll Build
+
+A workflow that takes a raw sales CSV, cleans it, joins it to a product reference table, computes derived columns, and publishes the result as a clean fact table.
+
+```
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Prerequisites
+
+- A PlaidCloud workspace ([start a free trial](https://plaidcloud.com/signup) if you don't have one)
+- A project to work in (create one from the **Projects** tab if needed)
+- Two CSV files to import — for this tutorial we'll use a simple sales transactions file and a product catalog file. You can use your own or generate sample data with any spreadsheet tool
+
+## Step 1: Create the Workflow
+
+<Steps>
+
+1. Open your project and switch to the **Workflows** tab.
+2. Click **New Workflow**. Name it something descriptive like "Sales Cleanup".
+3. Click **Create**. The empty workflow appears in your list.
+4. Double-click the workflow to open the Workflow Explorer.
+
+</Steps>
+
+## Step 2: Import the Sales CSV
+
+<Steps>
+
+1. In the Workflow Explorer, add a new step.
+2. Choose **Import → CSV** (or whichever import step matches your source format).
+3. In the step configuration:
+   - **Source file** — point at your sales CSV (upload, or pick from a connected document account)
+   - **Target table** — name it `sales_raw`
+   - **Delimiter, quote character, header row** — adjust if your file is non-standard
+4. Run the step. The CSV lands as a new table in your project.
+
+</Steps>
+
+Check the **Tables** tab to see `sales_raw`. Click into it to verify the data looks right — column count, sample rows, data types.
+
+## Step 3: Import the Product Catalog
+
+Repeat Step 2 with your products CSV, targeting a table named `products_raw`. This gives you both reference tables needed for the join.
+
+## Step 4: Filter Out Bad Rows
+
+Real sales data has gaps — null amounts, test transactions, refunds you don't want in the main fact table. Add a filter step to remove them.
+
+<Steps>
+
+1. Add a **Tables → Table Lookup** step (or any table transform that lets you filter).
+2. Configure:
+   - **Source table**: `sales_raw`
+   - **Target table**: `sales_clean`
+   - **Filter conditions**: e.g., `amount > 0 AND status = 'completed'`
+3. Run the step. `sales_clean` should have fewer rows than `sales_raw`.
+
+</Steps>
+
+<Aside>
+Filters apply as the data flows from source to target. The source table is unchanged. This is a core PlaidCloud pattern — each step reads from one or more sources and writes to one or more targets, leaving the originals intact for auditability.
+</Aside>
+
+## Step 5: Join to the Product Catalog
+
+Now combine the cleaned sales rows with product details from the catalog.
+
+<Steps>
+
+1. Add a **Tables → Table Inner Join** step.
+2. Configure:
+   - **Left table**: `sales_clean`
+   - **Right table**: `products_raw`
+   - **Join keys**: the column linking the two tables (e.g., `product_id`)
+   - **Target table**: `sales_enriched`
+3. Run the step.
+
+</Steps>
+
+`sales_enriched` now has every column from both tables. You probably want a subset — that comes next.
+
+## Step 6: Select and Compute Columns
+
+Cleaning typically means dropping columns you don't need and computing derived ones. Add another table step:
+
+<Steps>
+
+1. Add a **Tables → Table Lookup** step (used here for column selection and computation).
+2. Configure:
+   - **Source**: `sales_enriched`
+   - **Target**: `sales_final`
+   - **Columns to keep**: the subset that matters for downstream consumers
+   - **Computed columns**: e.g., `revenue = amount * price`, `margin = revenue - cost`
+3. Run the step.
+
+</Steps>
+
+For column-level calculations, the [Expressions reference](/reference/expressions/) covers every function available — string operations, date math, conditional logic, aggregations.
+
+## Step 7: Publish the Result
+
+Make `sales_final` available to dashboards and downstream systems.
+
+<Steps>
+
+1. Add a **Data → Publish** step (or use the **Publish** option directly on the table).
+2. Configure who can read the published table — typically other members of the workspace plus any external systems that have access.
+3. Run the step.
+
+</Steps>
+
+The published table is now reachable by [Dashboards](/guides/dashboards/), BI tools, and any external consumer with the right permissions.
+
+## Step 8: Run the Whole Workflow
+
+Click **Run** on the workflow (not just one step). Watch the log as each step executes in order. The complete pipeline runs from CSV import through to publish.
+
+If any step errors, the [Managing step errors](/guides/workflows/managing-step-errors/) guide covers debugging — the most common issues are bad join keys (mismatch between tables) and unexpected null values in computed columns.
+
+## What's Next
+
+- [Build an Allocation Model](/get-started/tutorials/build-an-allocation/) — spread costs across consumers using driver data
+- [Workflows guide](/guides/workflows/) — error handling, conditions, loops, variables
+- [Workflow steps reference](/reference/workflow-steps/) — every step type and what it does
