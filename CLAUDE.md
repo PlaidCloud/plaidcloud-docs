@@ -152,7 +152,34 @@ python3 scripts/title-case-headings.py
 # Find stranded reference pages (no inbound markdown links)
 # — useful before merging a change that adds reference content
 grep -rohE '\]\(/reference/[^)]+\)' src/content/docs/ | sort -u
+
+# Generate a docs insights report (CF Web Analytics + Search Console).
+# Output is gitignored (/insights/ + *.insights.md) — analytics data
+# does not belong in a public repo. Requires CF + GSC creds in env vars;
+# see scripts/insights.py docstring for setup.
+python3 scripts/insights.py --output insights/$(date +%Y-%m).md
 ```
+
+### Insights workflow for content decisions
+
+`scripts/insights.py` produces a structured Markdown report combining CF
+Web Analytics (page views, referrers, AI assistant traffic, geography)
+and Google Search Console (queries, impressions, CTR, position).
+Output goes to stdout or a file under `insights/` (gitignored).
+
+The report is designed to be handed to a Claude agent for analysis:
+
+> "Read `insights/2026-05.md` and propose five high-leverage content
+> changes. For each, name the page or query, the signal that motivated
+> it, and the specific edit you'd make."
+
+Typical findings the agent should look for:
+
+- High-impression, low-CTR queries → title / description rewrites
+- Content gap queries (rank but position ≥ 10) → new dedicated page
+- Pages with zero views in the window → audit for staleness
+- AI assistant referrer share trend → is LLM citation working?
+- Pages high in CF views but missing from Search Console clicks → traffic comes from referrers; investigate which
 
 ## CI checks
 
