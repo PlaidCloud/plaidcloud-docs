@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**Amazon Redshift** is AWS's managed cloud data warehouse, designed for analytical workloads over large datasets. Use this connector to read and write Redshift tables from PlaidCloud workflows. The connector speaks the PostgreSQL wire protocol; authentication uses standard database credentials or IAM-backed temporary credentials.
+
 ## Upstream Documentation
 Amazon Redshift has several guides related to use located [here](https://docs.aws.amazon.com/redshift/).
 

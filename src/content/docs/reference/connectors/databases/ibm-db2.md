@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**IBM DB2** is IBM's enterprise database, common in mainframe and mid-range environments. Use this connector to read and write DB2 tables from PlaidCloud workflows. Network access to the DB2 listener is required; for mainframe deployments, an SSH or VPN tunnel is typically required.
+
 ## Upstream Documentation
 The IBM DB2 documentation is located [here](https://www.ibm.com/support/pages/db2-database-product-documentation).
 

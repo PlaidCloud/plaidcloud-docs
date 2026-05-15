@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**PostgreSQL** is a widely-used open-source relational database. Use this connector to query, import, and export data from any PostgreSQL instance — self-hosted, RDS, Cloud SQL, or other managed offerings. Supports SSL, SSH tunneling, and SSO authentication for secure connections.
+
 ## Upstream Documentation
 PostreSQL documentation is located [here](https://www.postgresql.org/docs/)
 

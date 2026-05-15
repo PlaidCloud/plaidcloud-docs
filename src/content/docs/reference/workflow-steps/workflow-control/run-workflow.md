@@ -7,8 +7,9 @@ sidebar:
 
 ## Description
 
+Triggers another workflow as part of the current workflow's execution. Use this to chain workflows together when one process logically depends on another — for example, a "month-end close" workflow that calls a "load actuals" workflow, then a "run allocations" workflow, then a "publish dashboards" workflow.
 
-“Run Workflow” runs an existing workflow.
+The called workflow runs independently — it can be in the same project or a different one. By default the calling workflow continues without waiting; set the **Wait until processing completes** option if the next steps in the caller depend on the called workflow finishing first.
 
 
 

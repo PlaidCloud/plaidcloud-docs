@@ -7,8 +7,9 @@ sidebar:
 
 ## Description
 
+Runs a target workflow once per row of a dataset, setting each row's column values as project variables before each iteration. Use this when you have a parameterized process that needs to run multiple times with different inputs — for example, "run the monthly close for every business unit in this table," or "load this report for every quarter listed."
 
-Loops over a dataset and runs a specific workflow using the values of the looping dataset as Project variables.
+Each loop iteration sees the variables as if they had been set manually, so the called workflow can reference them in expressions, filters, file paths, and table names using the standard `\{variable_name}` syntax. The loop is sequential by default; iterations don't run in parallel.
 
 
 

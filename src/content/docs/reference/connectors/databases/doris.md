@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**Apache Doris** is the high-performance MPP analytical database that StarRocks forked from. Use this connector to query Doris deployments from PlaidCloud workflows. Connection uses the MySQL wire protocol with standard username/password authentication.
+
 ## Upstream Documentation
 Apache Doris documentation is [here](https://doris.apache.org/docs/4.x/gettingStarted/what-is-apache-doris).
 

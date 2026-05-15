@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**Oracle Database** is an enterprise relational database used widely in financial, ERP, and operational systems. Use this connector to read and write Oracle tables. Oracle's network requires the TNS listener to be reachable from PlaidCloud or via an SSH tunnel; coordinate with your DBA on firewall rules before configuring.
+
 ## Upstream Documentation
 The Oracle database documentation is located [here](https://docs.oracle.com/en/database/).
 

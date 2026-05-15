@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**Exasol** is an in-memory analytical database optimized for fast SQL over large datasets. Use this connector to read and write Exasol tables from PlaidCloud workflows. Connection uses standard username/password authentication with optional SSL.
+
 ## Upstream Documentation
 Exasol documentation is [here](https://docs.exasol.com/home.htm).
 

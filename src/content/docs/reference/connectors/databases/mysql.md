@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**MySQL** is one of the most widely-deployed open-source relational databases. Use this connector to query, import, and export data from MySQL instances. The connector also works with MySQL-compatible databases (MariaDB, Aurora MySQL); for PlaidCloud-specific compatibility quirks, check connection behavior on a small test before relying on it in production.
+
 ## Upstream Documentation
 MySQL documentation is located [here](https://dev.mysql.com/doc/).
 

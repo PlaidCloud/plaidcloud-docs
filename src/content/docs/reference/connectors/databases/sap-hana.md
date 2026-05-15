@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**SAP HANA** is SAP's in-memory column-store database, common alongside SAP S/4HANA, BW/4HANA, and other SAP business applications. Use this connector to read and write HANA tables and views from PlaidCloud workflows. Authentication supports username/password plus optional SSL and SSH tunneling.
+
 ## Upstream Documentation
 The SAP HANA documentation is [here](https://help.sap.com/docs/SAP_HANA_PLATFORM).
 

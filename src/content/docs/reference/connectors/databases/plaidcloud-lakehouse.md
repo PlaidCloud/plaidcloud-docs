@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**PlaidCloud Lakehouse** is the built-in analytical data store inside every PlaidCloud workspace. This connector is primarily used to read from one workspace's lakehouse into another, or to share data between tenants in multi-tenant deployments. Within a single workspace, project tables are accessible directly without needing this connector.
+
 ## Upstream Documentation
 There is very little configuration necessary for using the built-in PlaidCloud Lakehouse.  The documentation for the service is [here](https://docs.plaidcloud.com/docs/plaidcloud/analyze/dw/getting-started/).
 

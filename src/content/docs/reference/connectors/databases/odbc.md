@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**ODBC (Open Database Connectivity)** is a universal database interface that lets PlaidCloud connect to any system providing an ODBC driver — useful when a vendor doesn't have a dedicated PlaidCloud connector. The connection string and driver name vary per source; consult the vendor's ODBC documentation for the right values.
+
 ## Upstream Documentation
 Using the ODBC connector will require configuration specific to the database.  While ODBC is a generic connection type, each database may implement some specific configurations.  Please refer to the ODBC documentation for the target database.
 

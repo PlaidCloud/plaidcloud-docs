@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**Microsoft SQL Server** is the relational database commonly bundled with on-premises Microsoft enterprise stacks. Use this connector to read and write SQL Server tables. Supports both SQL Server Authentication (username/password) and integrated authentication; SSL and SSH tunneling are available for non-flat-network deployments.
+
 ## Upstream Documentation
 Microsoft SQL Server documentation is located [here](https://learn.microsoft.com/en-us/sql/sql-server/).
 

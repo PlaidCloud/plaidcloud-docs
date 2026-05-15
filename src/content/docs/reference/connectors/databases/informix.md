@@ -5,6 +5,8 @@ sidebar:
   order: 1
 ---
 
+**IBM Informix** is IBM's transactional database, common in retail and OLTP deployments. Use this connector to read and write Informix tables from PlaidCloud workflows. Network access to the Informix server is required; SSH tunneling is supported for non-flat networks.
+
 ## Upstream Documentation
 IBM Informix documentation is located [here](https://www.ibm.com/docs/ar/informix-servers/14.10.0?).
 
