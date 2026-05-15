@@ -1,0 +1,88 @@
+---
+/**
+ * Custom PageTitle override that prepends a breadcrumb trail above the title.
+ *
+ * Walks the current page's slug, looks up each ancestor's index page in the
+ * docs content collection to get a friendly title, and renders them as a
+ * clickable trail. Falls back to a title-cased version of the slug segment
+ * when no index page exists for an ancestor.
+ */
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import { getEntry } from 'astro:content';
+
+const route = Astro.locals.starlightRoute;
+const id = route?.entry?.id ?? '';
+
+type Crumb = { href: string; label: string };
+
+const parts = id.split('/').filter(Boolean);
+// Drop the leaf — that's the current page (rendered as the title below)
+const ancestors = parts.slice(0, -1);
+
+function titleCase(seg: string): string {
+	return seg
+		.split('-')
+		.map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : w))
+		.join(' ');
+}
+
+const crumbs: Crumb[] = [];
+let acc = '';
+for (const segment of ancestors) {
+	acc = acc ? `${acc}/${segment}` : segment;
+	// Try to find the index page for this ancestor path
+	const indexId = `${acc}/index`;
+	let entry = await getEntry('docs', indexId).catch(() => undefined);
+	if (!entry) {
+		// Some sections store an index.mdx; Astro maps both to the same id without /index
+		entry = await getEntry('docs', acc).catch(() => undefined);
+	}
+	const label = entry?.data?.title ?? titleCase(segment);
+	crumbs.push({ href: `/${acc}/`, label });
+}
+---
+
+{crumbs.length > 0 && (
+	<nav aria-label="Breadcrumb" class="breadcrumbs">
+		<ol>
+			{crumbs.map((c) => (
+				<li><a href={c.href}>{c.label}</a></li>
+			))}
+		</ol>
+	</nav>
+)}
+
+<Default><slot /></Default>
+
+<style>
+	.breadcrumbs {
+		font-size: var(--sl-text-sm);
+		color: var(--sl-color-gray-3);
+		margin-bottom: 0.5rem;
+	}
+	.breadcrumbs ol {
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 0.5rem;
+		padding: 0;
+		margin: 0;
+	}
+	.breadcrumbs li {
+		display: inline-flex;
+		align-items: center;
+	}
+	.breadcrumbs li + li::before {
+		content: "/";
+		margin-right: 0.5rem;
+		color: var(--sl-color-gray-4);
+	}
+	.breadcrumbs a {
+		color: var(--sl-color-gray-3);
+		text-decoration: none;
+	}
+	.breadcrumbs a:hover {
+		color: var(--sl-color-white);
+		text-decoration: underline;
+	}
+</style>

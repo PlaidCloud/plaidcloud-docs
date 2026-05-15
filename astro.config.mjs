@@ -38,6 +38,9 @@ export default defineConfig({
 				baseUrl: 'https://github.com/PlaidCloud/plaidcloud-docs/edit/main/',
 			},
 			lastUpdated: true,
+			components: {
+				PageTitle: './src/components/PageTitle.astro',
+			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/PlaidCloud/plaidcloud-docs' },
 			],
