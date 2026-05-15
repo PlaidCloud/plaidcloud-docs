@@ -101,6 +101,7 @@ export default defineConfig({
 						{ label: 'Workflow steps', link: '/reference/workflow-steps/' },
 						{ label: 'Expressions',    link: '/reference/expressions/' },
 						{ label: 'CLI',            link: '/reference/cli/' },
+						{ label: 'Glossary',       link: '/reference/glossary/' },
 					],
 				},
 				{
