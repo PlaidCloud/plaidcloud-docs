@@ -43,9 +43,9 @@ table = rpc.analyze.table.table(
 
 ## What Apis Are Available?
 
-There are many APIs available for use that control nearly every aspect of PlaidCloud. All of the APIs, the inputs, and expected outputs are documented in the [APIs documentation](/api).
+There are many APIs available for use that control nearly every aspect of PlaidCloud. The interactive API reference is served per-tenant inside each PlaidCloud workspace — open your workspace and navigate to the API documentation menu to see the live endpoint catalog.
 
 
 ## Obtaining an OAuth Token
 
-See [OAuth Tokens](/reference/cli/jupyter/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
+See [OAuth setup](/reference/cli/jupyter/oauth-setup/) for more information on obtaining an OAuth token and how to configure the system for automated auth.

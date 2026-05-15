@@ -34,7 +34,7 @@ pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utiliti
 
 ## Obtaining an OAuth Token
 
-See [OAuth Tokens](/reference/cli/jupyter/get-oauth-tokens/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
+See [OAuth setup](/reference/cli/jupyter/oauth-setup/) for more information on obtaining an OAuth token and how to configure the system for automated auth.
 
 
 ## Open Jupyter Notebook User Interface
