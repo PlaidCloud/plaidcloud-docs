@@ -64,11 +64,17 @@ export default defineConfig({
 				// Per-page lastmod from git history (falls back to file mtime).
 				const iso = urlToLastmod.get(item.url);
 				if (iso) item.lastmod = iso;
-				if (item.url.endsWith('/')) item.priority = 1.0;
-				else if (item.url.includes('/get-started/')) item.priority = 1.0;
-				else if (item.url.includes('/guides/'))      item.priority = 0.8;
-				else if (item.url.includes('/reference/'))   item.priority = 0.6;
-				else if (item.url.includes('/releases/'))    item.priority = 0.5;
+				// Priority by pathname. Every Astro URL ends in `/`, so check
+				// the pathname explicitly rather than the trailing slash.
+				const pathname = new URL(item.url).pathname;
+				if (pathname === '/')                          item.priority = 1.0;
+				else if (pathname.startsWith('/get-started/')) item.priority = 1.0;
+				else if (pathname.startsWith('/guides/'))      item.priority = 0.8;
+				else if (pathname.startsWith('/integrations/')) item.priority = 0.7;
+				else if (pathname.startsWith('/administration/')) item.priority = 0.6;
+				else if (pathname.startsWith('/reference/'))   item.priority = 0.6;
+				else if (pathname.startsWith('/releases/'))    item.priority = 0.5;
+				else                                           item.priority = 0.7;
 				return item;
 			},
 		}),
