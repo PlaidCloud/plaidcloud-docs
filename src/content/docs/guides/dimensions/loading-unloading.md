@@ -19,7 +19,7 @@ Since dimensions represent hierarchical data structures, the load process must c
  See the Workflow Step for [Dimension Load](/reference/workflow-steps/dimensions/dimension-load) for more information.
 
 
-## Unloading (Exporting) Dimensions
+## Unloading (exporting) Dimensions
 
 Exporting dimensions to tables supports two structural approaches:
  * Parent-Child - The data is organized vertically with a *Parent* column and *Child* column defining each parent of a child throughout the structure

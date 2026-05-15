@@ -18,7 +18,7 @@ The more elegant solution to perform this operation in a single query uses a Win
 
 ## Solution
 
-### The version history table
+### The Version History Table
 
 | employee_id | department | salary    | update_date  |
 |-------------|------------|-----------|--------------|

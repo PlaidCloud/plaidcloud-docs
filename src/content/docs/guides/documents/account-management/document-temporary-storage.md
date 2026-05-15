@@ -13,7 +13,7 @@ Temporary storage is perfect for sharing or transferring these types of large fi
 
 
 
-## To view temporary storage options
+## To View Temporary Storage Options
 
 
 1. Go To the `Document > Temp Share` in PlaidCloud
@@ -25,7 +25,7 @@ Shared temporary storage is viewable by all members of the workspace but is not 
 
 
 
-### To add new files to a shared temporary storage location
+### To Add New Files to a Shared Temporary Storage Location
 
 
 1. Select the `Temp Share` menu along the top of the main Document page
@@ -34,12 +34,12 @@ Shared temporary storage is viewable by all members of the workspace but is not 
 4. Select the desired file and click `Open`
 5. Click `Upload` to upload the file to the temporary storage location
 
-### To download existing files from temporary storage
+### To Download Existing Files From Temporary Storage
 
 
 1. Click on left-most icon, which represents the file type
 
-### To manually delete a file
+### To Manually Delete a File
 
 
 1. Click the red delete icon to the left of the file name.
@@ -59,7 +59,7 @@ All members of the workspace can upload files to a members personal share as a d
 
 
 
-### To upload a file to another member’s personal share:
+### To Upload a File to Another Member’s Personal Share:
 
 
 1. Select the `Temp Share` menu along the top of the main Document page

@@ -20,7 +20,7 @@ pip install plaidcloud-rpc
 ```
 
 
-## Using the SimpleRPC Object to Make a Request
+## Using the Simplerpc Object to Make a Request
 
 To make a request using the `plaidcloud-rpc` package use the `SimpleRPC` object.
 
@@ -41,7 +41,7 @@ table = rpc.analyze.table.table(
         )
 ```
 
-## What APIs are Available?
+## What Apis Are Available?
 
 There are many APIs available for use that control nearly every aspect of PlaidCloud. All of the APIs, the inputs, and expected outputs are documented in the [APIs documentation](/api).
 

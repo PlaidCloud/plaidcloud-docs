@@ -11,7 +11,7 @@ Returns an array collected by [start, end).
 func.range( <start>, <end> )
 ```
 
-## SQAnalyzeL Examples
+## Sqanalyzel Examples
 
 ```python
 func.range(1, 5)

@@ -7,7 +7,7 @@ sidebar:
 
 This walkthrough takes you from raw cost data to a working allocation model in roughly 30 minutes.
 
-## What you'll need
+## What You'll Need
 
 - A project with at least two tables:
   - **Values to allocate** — the costs (or revenues, or volumes) you want to spread. One row per source unit, one column with the amount.
@@ -27,13 +27,13 @@ If you don't have all of that yet, the [Tables and views](/guides/data/) and [Di
 7. **Run the step.** The output is a new table with one row per spread amount.
 8. **Inspect results.** Check that the totals match what you expected — sum of allocated amounts should equal sum of source amounts (within rounding tolerance).
 
-## Common follow-ups
+## Common Follow-Ups
 
 - **Spreading recursively** — if a target itself contains drivers for further allocation, see [Recursive allocations](/guides/allocations/setup/recursive-allocations/).
 - **Tagging rows for allocation** — to drive *which* rows allocate to which targets, see [Rule-based tagging](/guides/allocations/getting-started/rule-based-tagging/).
 - **Investigating unexpected results** — if totals don't reconcile or specific rows look wrong, see [Troubleshooting allocations](/guides/allocations/results/troubleshooting-allocations/).
 
-## Next steps
+## Next Steps
 
 - [Why are allocations useful?](/guides/allocations/getting-started/why-are-allocations-useful/) — when to use them
 - [Configure an allocation](/guides/allocations/setup/configure-an-allocation/) — deeper configuration reference

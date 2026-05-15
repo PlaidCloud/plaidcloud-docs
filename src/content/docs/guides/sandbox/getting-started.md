@@ -21,6 +21,6 @@ All PlaidCloud APIs are also available directly from the Sandbox without using a
 
 Any image that supports a Docker based Kubernetes deployment is suitable for a custom app.  Only *nix based images are currently supported.  If you have a need to run a Windows based image, please contact us.
 
-## Integrate with Your CI/CD Pipeline
+## Integrate With Your CI/CD Pipeline
 
 The Kubernetes deployment of the Sandbox app utilizes GitOps processes.  This allows you to implement your own CI/CD process for image builds and deployments.  Your custom app git repo is constantly monitored for changes so as updates are made, your sandbox will be updated.

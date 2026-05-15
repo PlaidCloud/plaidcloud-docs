@@ -37,7 +37,7 @@ Prompt Gemini to use the PlaidCloud tools directly:
 
 You can also call tools explicitly with the `/tools` command if you want to inspect a specific tool's input schema before invoking it.
 
-## Refreshing the token
+## Refreshing the Token
 
 When the token expires, reload `https://<your-workspace>.plaid.cloud/mcp/setup/token` and update the `Authorization` value in `settings.json`. Restart `gemini` to pick up the change.
 

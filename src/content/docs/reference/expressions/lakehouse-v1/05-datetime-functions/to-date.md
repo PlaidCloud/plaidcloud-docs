@@ -15,7 +15,7 @@ Date formats are expressed using the `strftime` specification.  A quick referenc
 
 See also: [TO_TIMESTAMP](../to-timestamp)
 
-## strftime Parameters
+## Strftime Parameters
 
 ### Quick Reference
 
@@ -171,7 +171,7 @@ SELECT TO_DATE(1), STR_TO_DATE(1), TO_DATE(-1), STR_TO_DATE(-1);
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-### SQL Examples 3: Converting a String using the Given Format
+### SQL Examples 3: Converting a String Using the Given Format
 
 ```sql
 SELECT TO_DATE('12/25/2022','%m/%d/%Y'), STR_TO_DATE('12/25/2022','%m/%d/%Y');

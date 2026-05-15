@@ -11,7 +11,7 @@ Creates a dimension for use and loading
 
 ![Dimension Create](/images/dimension_create.png)
 
-## Dimension To Create
+## Dimension to Create
 ### Name
 You can either use a specific name for the dimension to be created or include variables for dynamic naming.
 

@@ -18,7 +18,7 @@ Detects the face in a source image and crops the output to a standardized headsh
 
 A cropped image at the target dimensions centered on the detected face. If no face is detected, the step either falls back to center-crop or errors depending on configuration.
 
-## Common uses
+## Common Uses
 
 - Standardizing employee directory photos
 - Generating consistent avatar imagery for an internal portal

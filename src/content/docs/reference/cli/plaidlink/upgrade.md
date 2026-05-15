@@ -7,7 +7,7 @@ sidebar:
 
 A manual upgrade of PlaidLink may be necessary if the agent does not have sufficient privileges to update itself when new versions are released or a manual upgrade process is desired.
 
-## Download the agent
+## Download the Agent
 
 Check the releases on [PlaidCloud.com](https://plaidcloud.com/) for **PlaidLink**
 
@@ -17,7 +17,7 @@ Type **`Services`** into Windows' search bar and open the service manager. In th
 
 Right click on the **`PlaidCloud Agent`** service and select *Stop*.  Once the service successfully stops, continue on.
 
-## Extract the agent
+## Extract the Agent
 
 Navigate to the current location of the installed agent.
 
@@ -33,7 +33,7 @@ Extract the downloaded zip file to an install it in this location. Generally, th
 C:\Users\<Username here>\src\plaidlink
 ```
 
-## Start the agent
+## Start the Agent
 
 Return to the *Services* window.  Right click on the **`PlaidCloud Agent`** service and select *Start*.
 

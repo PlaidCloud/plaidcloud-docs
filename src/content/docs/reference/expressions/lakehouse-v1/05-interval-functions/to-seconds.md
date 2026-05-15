@@ -38,7 +38,7 @@ TO_SECONDS(<seconds>)
 
 Interval (in the format `hh:mm:ss`).
 
-## sQL Examples
+## SQL Examples
 
 ```sql
 SELECT TO_SECONDS(2), TO_SECONDS(0), TO_SECONDS((- 2));

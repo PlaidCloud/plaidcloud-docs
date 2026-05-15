@@ -16,7 +16,7 @@ Joins multiple PDF files into a single PDF, preserving page order and bookmarks 
 
 A single PDF containing all pages from the source PDFs in the order listed.
 
-## Common uses
+## Common Uses
 
 - Assembling monthly reports from individual report PDFs
 - Combining a cover sheet, body, and appendices into a single deliverable

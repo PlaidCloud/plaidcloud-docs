@@ -17,7 +17,7 @@ Wraps one or more image files (JPEG, PNG, TIFF) into a PDF. Each image becomes o
 
 A PDF containing one page per input image, in the order specified.
 
-## Common uses
+## Common Uses
 
 - Bundling scanned pages from a multi-page document originally captured as separate images
 - Standardizing receipt or invoice attachments into a single archival format

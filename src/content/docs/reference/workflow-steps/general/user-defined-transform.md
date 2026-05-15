@@ -46,7 +46,7 @@ Variable values can be manually set or dynamically defined using combinations of
 
 ## Python UDF Examples
 
-### Common Imports with PlaidCloud API Connection Setup
+### Common Imports With PlaidCloud API Connection Setup
 
 ```python
 ### COMMON PYTHON IMPORTS
@@ -85,7 +85,7 @@ This example assumes the data exists in a Pandas dataframe.
 fm.save(dfImport, name='/path_to_table/OUTBOUND_TABLE_NAME', append=False)
 ```
 
-### Reading Data from a Table
+### Reading Data From a Table
 
 To use a table, you first need to obtain the table object.  Once you have the object you can query it using the `get_data()` method.  The `get_data()` method also supports SQLAlchemy syntax to enable advanced query building capabilities.  The result of the query is a Pandas dataframe object.
 
@@ -129,7 +129,7 @@ my_var = conn.udf.variable_by_name('my_var')
 my_vars = conn.udf.variables()
 ```
 
-### Reading Files from Document
+### Reading Files From Document
 Accessing files in Document is also straightforward using the PlaidCloud connection.  This is an example of a function that gets the contents of the file and saves it to a local path in the run-time container.
 
 ```python

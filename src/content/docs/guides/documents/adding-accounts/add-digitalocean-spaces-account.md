@@ -5,7 +5,7 @@ sidebar:
   order: 10
 ---
 
-## DigitalOcean Spaces Setup
+## Digitalocean Spaces Setup
 
 These steps need to be completed within the DigitalOcean control panel.
 

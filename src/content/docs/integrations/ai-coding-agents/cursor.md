@@ -32,15 +32,15 @@ sidebar:
 
 4. Open Cursor's **Settings → MCP** to verify the server is connected. If it shows an error, see [Troubleshooting](../troubleshooting/).
 
-## Using the tools
+## Using the Tools
 
 In Cursor's Composer or chat panel, you can prompt the agent in plain English ("describe the structure of project `Q4 Forecast`") and it will pick the appropriate `plaidcloud_*` tool. Tool calls and responses appear inline — review mutating operations before approving.
 
-## Refreshing the token
+## Refreshing the Token
 
 When the token expires, reload `https://<your-workspace>.plaid.cloud/mcp/setup/token` and paste the new value into `mcp.json`. Cursor picks up the change without a full restart — toggle the server off/on in **Settings → MCP** if needed.
 
-## Multiple tenants
+## Multiple Tenants
 
 Repeat the entry under a different name:
 

@@ -49,7 +49,7 @@ These fields appear when creating or editing this connection. Required vs option
 | Ssl auth root cert | Text (multi-line) | Root CA certificate (PEM) for verifying the server's cert. |
 | Ssl auth cert revoke | Text (multi-line) | Certificate revocation list, if your environment uses one. |
 
-### SSH tunnel
+### SSH Tunnel
 
 | Field | Type | Description |
 |---|---|---|

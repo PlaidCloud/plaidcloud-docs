@@ -34,7 +34,7 @@ TO_WEEKS(<weeks>)
 
 Interval (represented in days).
 
-## sQL Examples
+## SQL Examples
 
 ```sql
 SELECT TO_WEEKS(2), TO_WEEKS(0), TO_WEEKS((- 2));

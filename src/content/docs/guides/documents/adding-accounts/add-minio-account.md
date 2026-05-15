@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-## MinIO Setup
+## Minio Setup
 
 These steps need to be completed within the MinIO Console or via the `mc` CLI.
 

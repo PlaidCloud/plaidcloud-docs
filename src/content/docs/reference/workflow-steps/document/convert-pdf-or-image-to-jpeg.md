@@ -18,7 +18,7 @@ Rasters a PDF or converts an image to JPEG. Each PDF page becomes one JPEG; non-
 
 One JPEG per source page, written to the output path with a page index in the filename for multi-page sources.
 
-## Common uses
+## Common Uses
 
 - Generating preview thumbnails for web display
 - Producing image-only versions of PDFs for systems that can't handle PDF

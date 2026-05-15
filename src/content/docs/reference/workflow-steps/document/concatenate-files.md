@@ -17,13 +17,13 @@ Combines two or more files in a document account into a single output file. Oper
 
 A single file containing the contents of all source files in the order listed, joined by the configured separator.
 
-## Common uses
+## Common Uses
 
 - Combining daily log files into a monthly archive
 - Merging CSV files that share a schema (drop headers from all but the first)
 - Joining JSON Lines exports from multiple sources before processing
 
-## Not for
+## Not For
 
 - PDFs — use [Merge multiple PDFs](/reference/workflow-steps/document/merge-multiple-pdfs/) instead
 - Binary formats with headers (XLSX, ZIP, image files) — concatenating bytes won't produce a valid file

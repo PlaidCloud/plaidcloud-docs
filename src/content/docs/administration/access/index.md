@@ -13,7 +13,7 @@ PlaidCloud's access controls are organized around a few core concepts:
 - **Security group** — a bundle of permissions inside a workspace. Members are assigned to security groups to grant them specific capabilities.
 - **Single sign-on (SSO)** — optional SAML-based federation that delegates authentication to your identity provider (Okta, Auth0, Microsoft Entra, Google, AWS).
 
-## Where to start
+## Where to Start
 
 If you're setting up a new organization:
 

@@ -7,33 +7,33 @@ sidebar:
 
 Allocations spread a pool of values (typically cost, but it works for any aggregate) across consumers based on a measurable driver. They answer the question: *if we incur this cost, how should it be assigned to the things that consume it?*
 
-## Common use cases
+## Common Use Cases
 
-### Activity-based costing
+### Activity-Based Costing
 
 You know your total marketing spend for a quarter. You want to attribute it to specific products based on something measurable — campaign hours, leads generated, qualified opportunities. An allocation spreads the marketing pool across products using your chosen driver, giving each product a fully-loaded cost.
 
-### IT chargeback
+### IT Chargeback
 
 You spend $X running shared infrastructure (compute, storage, licensing). Each business unit consumes a different amount. An allocation spreads the IT cost across units based on usage metrics — VM hours, storage GB, license seats — so each unit's P&L reflects what it actually consumed.
 
-### Shared service distribution
+### Shared Service Distribution
 
 Finance, HR, legal, facilities — central functions that serve the whole company. Allocations distribute their cost across the divisions they serve, typically by headcount, revenue, or a weighted blend.
 
-### Transfer pricing
+### Transfer Pricing
 
 For multi-entity organizations, allocations model how internal services are priced between entities. The output drives intercompany journal entries.
 
-### Profitability analysis
+### Profitability Analysis
 
 You have revenue at the product or customer level. You have costs at various pools (sales, support, infrastructure, COGS). Allocations bring everything together at the product/customer grain so you can see actual margin.
 
-### Bill of materials costing
+### Bill of Materials Costing
 
 Cost flows down a hierarchy of components. Each step in the BoM is an allocation: subassembly costs spread to assemblies, assemblies to finished goods, finished goods to SKUs.
 
-## What allocations save you from
+## What Allocations Save You From
 
 Without an allocation engine, you'd build these models in spreadsheets — fragile, hard to audit, hard to repeat with updated data. PlaidCloud allocations give you:
 
@@ -42,7 +42,7 @@ Without an allocation engine, you'd build these models in spreadsheets — fragi
 - **Layered allocations** where outputs feed further allocations
 - **Dimensional integration** so allocations respect your existing hierarchies
 
-## Next steps
+## Next Steps
 
 - [Allocations Quick Start](/guides/allocations/getting-started/allocations-quick-start/) — build one in 30 minutes
 - [Rule-Based Tagging](/guides/allocations/getting-started/rule-based-tagging/) — control allocation behavior by row

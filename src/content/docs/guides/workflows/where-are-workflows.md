@@ -13,7 +13,7 @@ Workflows live inside projects. To find them:
 
 You'll see every workflow in the project, organized in a folder-style hierarchy.
 
-## What you'll see for each workflow
+## What You'll See for Each Workflow
 
 - **Status** — running, completed normally, or finished with a warning or error
 - **Created** and **last updated** timestamps, plus the names of the people responsible
@@ -21,7 +21,7 @@ You'll see every workflow in the project, organized in a folder-style hierarchy.
 
 Double-click a workflow to open the **Workflow Explorer**, where you can view steps, run the whole workflow, run a single step, or pick a range.
 
-## Why a workflow might not be visible
+## Why a Workflow Might Not Be Visible
 
 The workflows you can see depend on two things:
 
@@ -33,7 +33,7 @@ The workflows you can see depend on two things:
 
 If you expect to see specific workflows and don't, your role may be filtering them out. A project Architect can confirm what you should see.
 
-## Next steps
+## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — what to do inside an open workflow
 - [Create a workflow](/guides/workflows/create-workflow/) — start a new one

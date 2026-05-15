@@ -18,7 +18,7 @@ case(
 
 ## Analyze Examples
 
-### A simple example
+### A Simple Example
 This example returns a person's name. It starts off searching to see if the first name column has a value (the "if"). If there is a value, concatenate the first name with the last name and return it (the "then"). If there isn't a first name, then return the last name only (the "else").
 
 ```python
@@ -28,7 +28,7 @@ case(
 )
 ```
 
-### A more complex example with multiple conditions
+### A More Complex Example With Multiple Conditions
 This example returns a price based on quantity. "If" the quantity in the order is more than 100, then give the customer the special price. If it doesn't satisfy the first condition, go to the second. If the quantity is greater than 10 (11-100), then give the customer the bulk price. Otherwise give the customer the regular price.
 
 ```python

@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-## Formatting numbers and other data types
+## Formatting Numbers and Other Data Types
 
 There are 2 ways of formatting numbers in PlaidCloud. One way is to transform the values in the tables directly, and a second (more common way) is to format them on display so the values don't lose precision in the table and the user can see the values in a cleaner, more appropriate way.
 
@@ -16,7 +16,7 @@ To change the format, edit the chart and locate the `D3 FORMAT` or `NUMBER FORMA
 
 The default value is `Adaptive formatting`. This will adjust the format based on the values. But if you want to fix it to a format (i.e. $12.23 or 12,345,678), then you select the format you want from the dropdown or manually type a different value (if the field allows).
 
-## D3 Formatting - what is it?
+## D3 Formatting - What is It?
 
 D3 Formatting is a structured, formalized means to display data results in a particular format. For example, in certain situations you may wish to display a large value as 3B (3 billion), formatted as `.3s` in D3 format, or as 3,001,238,383, formatted as `,d`. Another common example is the decision to represent dollar values with 2 decimal precision, or to round that to the nearest dollar $,d or $,.2f to show dollar sign, commas, 2 decimal precision, and a fixed point notation.
 For a deeper dive into D3, see the following site: [GitHub D3](https://github.com/d3/d3-format)

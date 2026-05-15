@@ -9,7 +9,7 @@ A **project** is the unit of work in PlaidCloud. Each project owns its own data,
 
 Most teams start with one project per analytical area: a project for headcount cost allocation, another for revenue analysis, another for monthly close — whatever maps to how your team thinks about its work.
 
-## What's in this section
+## What's in This Section
 
 - [Manage projects](/guides/projects/managing-projects/) — create, configure, and organize projects in your workspace
 - [View projects](/guides/projects/viewing-projects/) — find and open existing projects

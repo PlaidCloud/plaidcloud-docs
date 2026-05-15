@@ -7,7 +7,7 @@ sidebar:
 
 After running an allocation step, the output is a result table you can inspect, verify, and feed into downstream steps.
 
-## What the result table contains
+## What the Result Table Contains
 
 A typical allocation result row includes:
 
@@ -21,7 +21,7 @@ A typical allocation result row includes:
 
 The exact columns depend on the allocation step type and your configuration.
 
-## Verification checklist
+## Verification Checklist
 
 Before relying on the results:
 
@@ -31,13 +31,13 @@ Before relying on the results:
 4. **Reasonable rates** — allocation rates should sum to 1.0 (100%) per source pool. Rates significantly off-target indicate driver data issues.
 5. **Spot-check totals** — pick a high-value source row and verify its allocation matches what you'd compute by hand.
 
-## Common patterns to look for
+## Common Patterns to Look For
 
 - **Zero allocations** — a target that received nothing usually means the driver row was missing or had a zero value
 - **Mass concentration** — most of the spread landing on one target usually means the driver column has one very large value (often a data quality issue upstream)
 - **Negative drivers** — depending on the allocation step, negative driver values may produce inverted spreads. Verify intent.
 
-## Next steps
+## Next Steps
 
 - [Troubleshooting allocations](/guides/allocations/results/troubleshooting-allocations/) — what to do when reconciliation fails
 - [Publishing data](/guides/data/publish/) — once you trust the results, publish them for dashboards and downstream consumers

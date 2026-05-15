@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-## Functions for use in Dimension Hierarchy Expressions
+## Functions for Use in Dimension Hierarchy Expressions
 
 Within the Dimension Hierarchy screen it is possible to add 'Aggregations' and 'Expressions'. A description for these is included below.
 
@@ -30,7 +30,7 @@ Expressions are built using mathematical formulae, which can contain many kinds 
 
 
 ## Functions
-### column(`<column_name>`)
+### Column(`<column_name>`)
 Fetch a value from a named column for the current row/node.
 
 Below we see an example of an Expression being defined to display the result of multiplying the Line Item Value by 2.
@@ -40,7 +40,7 @@ Below we see an example of an Expression being defined to display the result of 
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_5_func_column.png)
 
-### childCount()
+### Childcount()
 
 Returns the number of children for the current row/node. If the current row/node is a leaf item this will return 0.
 
@@ -50,24 +50,24 @@ In the following example this is being used to return the average value for the 
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_7_func_childcount.png)
 
-### leafCount()
+### Leafcount()
 Returns the number of leaf items found in the tree for the current row/node. If the current row/node is a leaf item this will return 1.
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_8_func_leafcount.png)
 
-### descendantCount()
+### Descendantcount()
 Returns the total number of items found in the tree for the current row/node. If the current row/node is a leaf item this will return 0.
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_9_func_desccount.png)
 
 
-### siblingCount()
+### Siblingcount()
 Returns the number of sibling items for the current row/node.  The value returned includes the current node.
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_10_func_siblingcount.png)
 
 
-### nodeValue("`<node_name>`","`<column_name>`")
+### Nodevalue("`<node_name>`","`<column_name>`")
 Returns the value from a named column for a named node.
 Here's an example which is used to show the percentage of the "LIV" total for each row/node.
 
@@ -76,7 +76,7 @@ Here's an example which is used to show the percentage of the "LIV" total for ea
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_12_func_nodevalue.png)
 
 
-### parentValue("<column_name")
+### Parentvalue("<column_name")
 Returns the value from a given column for the parent of the current node.
 This example shows the percentage of the value from a parent node being used by a child node.
 
@@ -84,7 +84,7 @@ This example shows the percentage of the value from a parent node being used by 
 
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_14_func_parentvalue.png)
 
-### columnTextCompare("<column_name", "`<text>`")
+### Columntextcompare("<column_name", "`<text>`")
 
 Returns a numerical result representing if the text in a named column is greater than, less to, or equal to a provided value.
 
@@ -116,7 +116,7 @@ By combining expressions containing both conditionals and functions we can build
 ![Dimension Load](/images/dimensions/expressions/dimension_expressions_18_cond.png)
 
 
-## Another example: Simple Allocation
+## Another Example: Simple Allocation
 
 This example shows the amount of a parent's Line Item Value consumed by using the Resource Driver Value for a leaf node.
 

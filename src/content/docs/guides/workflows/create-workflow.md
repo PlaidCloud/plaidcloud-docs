@@ -20,7 +20,7 @@ To create a new workflow, you need an existing project. If you don't have one ye
 
 The workflow appears in the Workflows tab and is ready to have steps added to it. Double-click it to open the [Workflow Explorer](/guides/workflows/workflow-explorer/) and start building.
 
-## About remediation workflows
+## About Remediation Workflows
 
 If the new workflow ends in an error, PlaidCloud can automatically run a **remediation workflow** in response. This is useful for:
 
@@ -30,7 +30,7 @@ If the new workflow ends in an error, PlaidCloud can automatically run a **remed
 
 A remediation workflow is optional. You can leave it blank now and configure it later if needed. The remediation workflow only fires on terminal failures, not on per-step warnings.
 
-## Next steps
+## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — add steps to your new workflow
 - [Run a workflow](/guides/workflows/run-a-workflow/) — execute the workflow once it has steps

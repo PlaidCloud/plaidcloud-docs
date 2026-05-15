@@ -92,7 +92,7 @@ Searching for tables is accomplished by using the filter box in the lower left o
 2. Select New Folder
 
 
-## View Data (Table Explorer)
+## View Data (table Explorer)
 
 
 Table data is viewed using the Data Explorer. The Data Explorer provides a grid view of the data as well as a column by column summary of values and statistics. Point-and-click filtering and exporting to familiar file formats are both available. The filter selections can also be saved as an Extract step usable in a workflow.

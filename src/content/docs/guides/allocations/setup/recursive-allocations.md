@@ -7,13 +7,13 @@ sidebar:
 
 Recursive allocations handle the case where a target of one allocation becomes a *source* of the next. Common when modeling shared services that consume each other — IT serves HR, but HR also serves IT.
 
-## When you need recursion
+## When You Need Recursion
 
 - **Reciprocal services** — two cost pools that consume each other.
 - **Layered spreads** — divisional costs cascade through a hierarchy and the lower levels need to absorb the upper levels before re-allocating.
 - **Iterative balance** — the model needs to converge after multiple passes (cost pool A allocates some to B, B allocates some back, repeat until stable).
 
-## How recursion works in PlaidCloud
+## How Recursion Works in PlaidCloud
 
 Configure the allocation step with:
 
@@ -25,7 +25,7 @@ Configure the allocation step with:
 
 The output table includes a generation or iteration column so downstream consumers can see which pass each row came from.
 
-## Reciprocal vs iterative
+## Reciprocal vs Iterative
 
 - **Reciprocal** — solves a simultaneous equation in one mathematical pass. Use when relationships are well-defined and finite.
 - **Iterative** — runs allocations repeatedly until each round produces a residual smaller than your tolerance. Use when you want explicit control over how many passes happen, or when the relationship isn't easily inverted.

@@ -37,7 +37,7 @@ These steps need to be completed within the Google Cloud Console to create a ser
 4. Choose **JSON** format and select **Create**
 5. A JSON key file will download. Save this file securely — it contains the credentials PlaidCloud will use.
 
-### Share Drive Content with the Service Account
+### Share Drive Content With the Service Account
 
 1. Copy the service account's email address (e.g. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
 2. In Google Drive, share the folder(s) you want PlaidCloud to access with this email address, granting **Editor** access

@@ -12,7 +12,7 @@ Inspects the byte signature of a file and renames it with the correct extension.
 - **Source path** — file to inspect, in a document account
 - **Rename in place** — if true, the source file is renamed; if false, the corrected name is written to a target path
 
-## How it works
+## How It Works
 
 The step reads the first few bytes of the file (the magic number) and matches against known signatures: PDF, JPEG, PNG, ZIP/Office formats, CSV (best-effort by sniffing), and others. If a match is found, the file gets the canonical extension for that format.
 
@@ -20,7 +20,7 @@ The step reads the first few bytes of the file (the magic number) and matches ag
 
 A file with the corrected extension. If detection fails (unknown format or empty file), the step either keeps the original name or errors based on configuration.
 
-## Common uses
+## Common Uses
 
 - Cleaning up uploads from systems that strip or mangle extensions
 - Normalizing files arriving over FTP/SFTP where extensions aren't enforced

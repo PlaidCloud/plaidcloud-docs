@@ -14,7 +14,7 @@ There are two main types of order-sensitive window functions:
 
 * `Window frame functions`: Window frame functions enable you to perform rolling operations, such as calculating a running total or a moving average, on a subset of the rows in the window.
 
-## List of Functions that Support Windows
+## List of Functions That Support Windows
 
 The list below shows all the window functions.
 

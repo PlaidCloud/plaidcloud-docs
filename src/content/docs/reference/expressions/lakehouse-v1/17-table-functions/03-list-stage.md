@@ -16,19 +16,19 @@ LIST_STAGE(
 
 Where:
 
-### internalStage
+### Internalstage
 
 ```sql
 internalStage ::= @<internal_stage_name>[/<path>]
 ```
 
-### externalStage
+### Externalstage
 
 ```sql
 externalStage ::= @<external_stage_name>[/<path>]
 ```
 
-### userStage
+### Userstage
 
 ```sql
 userStage ::= @~[/<path>]

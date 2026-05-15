@@ -17,7 +17,7 @@ Reduces the file size of a PDF stored in a document account. Useful for trimming
 
 A compressed PDF at the configured output path. The step does not alter the source unless source and output paths match.
 
-## Common uses
+## Common Uses
 
 - Shrinking scanned invoices, receipts, or contracts before long-term storage
 - Reducing PDF size before emailing or attaching to notifications

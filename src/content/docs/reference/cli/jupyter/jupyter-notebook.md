@@ -15,7 +15,7 @@ This assumes you have a working Jupyter Notebook installation.
 ### Installing a Stand-Alone Jupyter Notebook
 For more information on installing a Jupyter Notebook locally you can reference [Jupyter’s installation documentation](https://jupyter.org/install).
 
-### Add to VS Code
+### Add to vs Code
 VS Code also provides an extension that allows you to run notebooks directly in VS Code.  Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
 
 

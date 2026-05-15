@@ -9,7 +9,7 @@ sidebar:
 
 Allocations enable values (typically costs) to be shredded to a more-granular level by applying a driver. Allocations are used to for a multitude of purposes. including but not limited to **Activity-Based Costing**, **IT & Shared Service Chargeback**, calculation of fully loaded cost to produce and provide a good or service to customers, etc. They are a fundamental tool for financial analysis, and a cornerstone for managerial reporting operations such as **Customer & Product Profitability**. They are also a useful construct for establishing and managing global Intercompany Transfer Prices for goods and services.
 
-## Setting up the Allocation transform
+## Setting up the Allocation Transform
 
 From a practical purpose, allocations are set up in PlaidCloud in similar fashion as other data transforms such as joins and lookups. Four configuration parameters must be set in order for an Allocation transform to succeed.
 
