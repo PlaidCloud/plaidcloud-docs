@@ -1,6 +1,6 @@
 ---
 title: SUBTRACT TIME INTERVAL
-description: Subtract time interval function
+description: SUBTRACT TIME INTERVAL — subtract years, months, days, hours, minutes, or seconds from a date or timestamp value.
 ---
 
 Subtract time interval from a date or timestamp, return the result of date or timestamp type.

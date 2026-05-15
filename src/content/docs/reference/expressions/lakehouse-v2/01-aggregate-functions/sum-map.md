@@ -1,6 +1,6 @@
 ---
 title: SUM_MAP
-description: "Learn how to use the SUM_MAP aggregate function in PlaidCloud Lakehouse. Sums values grouped by keys in map columns - see syntax, examples, and output."
+description: SUM_MAP — sums values grouped by keys in map columns - see syntax, examples, and output.
 ---
 
 Sums values grouped by keys in map columns.

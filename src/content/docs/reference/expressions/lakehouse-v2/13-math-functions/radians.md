@@ -1,6 +1,6 @@
 ---
 title: RADIANS
-description: "Learn how to use the RADIANS math function in PlaidCloud Lakehouse. Converts degrees to radians - see syntax, examples, and output."
+description: RADIANS — converts degrees to radians - see syntax, examples, and output.
 ---
 
 Converts degrees to radians.

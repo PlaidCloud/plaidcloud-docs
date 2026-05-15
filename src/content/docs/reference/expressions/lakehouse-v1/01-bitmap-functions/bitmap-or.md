@@ -1,6 +1,6 @@
 ---
 title: BITMAP_OR
-description: "Learn how to use the BITMAP_OR bitmap function in PlaidCloud Lakehouse. Performs a bitwise OR operation on the two bitmaps. Includes syntax and examples."
+description: BITMAP_OR — Performs a bitwise OR operation on the two bitmaps.
 ---
 
 Performs a bitwise OR operation on the two bitmaps.

@@ -1,6 +1,6 @@
 ---
 title: IS_STRING
-description: "Learn how to use the IS_STRING semi-structured data function in PlaidCloud Lakehouse. Checks if the input JSON value is a string. Includes syntax and examples."
+description: IS_STRING — Checks if the input JSON value is a string.
 ---
 
 Checks if the input JSON value is a string.

@@ -1,6 +1,6 @@
 ---
 title: AND
-description: "Learn how to use the AND conditional function in PlaidCloud Lakehouse. Conditional AND operator. Includes detailed syntax, examples, and usage reference."
+description: AND — conditional AND operator. Includes detailed syntax, examples, and usage reference.
 ---
 
 Conditional AND operator.  Checks whether both conditions are true.

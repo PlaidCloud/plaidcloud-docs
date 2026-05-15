@@ -1,6 +1,6 @@
 ---
 title: SECONDS_SUB
-description: "Learn how to use the SECONDS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of seconds from a datetime - with syntax and examples."
+description: SECONDS_SUB — subtracts a specified number of seconds from a datetime.
 ---
 
 Subtracts a specified number of seconds from a datetime.

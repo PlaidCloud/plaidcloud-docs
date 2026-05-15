@@ -1,6 +1,6 @@
 ---
 title: TO_UNIX_TIMESTAMP
-description: "Learn how to use the TO_UNIX_TIMESTAMP datetime function in PlaidCloud Lakehouse. Converts a timestamp in a date/time format to a Unix timestamp format."
+description: TO_UNIX_TIMESTAMP — converts a timestamp in a date/time format to a Unix timestamp format.
 ---
 
 Converts a timestamp in a date/time format to a Unix timestamp format. A Unix timestamp represents the number of seconds that have elapsed since January 1, 1970, at 00:00:00 UTC.

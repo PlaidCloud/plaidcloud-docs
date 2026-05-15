@@ -1,6 +1,6 @@
 ---
 title: IF
-description: "Learn how to use the IF condition function in PlaidCloud Lakehouse. Returns one of two values depending on whether a condition is TRUE or FALSE."
+description: IF — returns one of two values depending on whether a condition is TRUE or FALSE.
 ---
 
 Returns one of two values depending on whether a condition is TRUE or FALSE.

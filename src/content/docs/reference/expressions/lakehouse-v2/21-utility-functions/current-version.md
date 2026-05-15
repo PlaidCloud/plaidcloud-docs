@@ -1,6 +1,6 @@
 ---
 title: CURRENT_VERSION
-description: "Learn how to use the CURRENT_VERSION utility function in PlaidCloud Lakehouse. Returns the current version of StarRocks - see syntax, examples, and output."
+description: CURRENT_VERSION — returns the current version of StarRocks - see syntax, examples, and output.
 ---
 
 Returns the current version of StarRocks.

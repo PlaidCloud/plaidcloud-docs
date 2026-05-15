@@ -1,6 +1,6 @@
 ---
 title: PERCENTILE_DISC_LC
-description: "Learn how to use the PERCENTILE_DISC_LC aggregate function in PlaidCloud Lakehouse. Returns the percentile value using a low-cardinality optimized algorithm."
+description: PERCENTILE_DISC_LC — returns the percentile value using a low-cardinality optimized algorithm.
 ---
 
 Returns the percentile value using a low-cardinality optimized algorithm.

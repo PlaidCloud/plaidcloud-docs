@@ -1,6 +1,6 @@
 ---
 title: IS_OBJECT
-description: "Learn how to use the IS_OBJECT semi-structured data function in PlaidCloud Lakehouse. Checks if the input value is a JSON object. Includes syntax and examples."
+description: IS_OBJECT — Checks if the input value is a JSON object.
 ---
 
 Checks if the input value is a JSON object.

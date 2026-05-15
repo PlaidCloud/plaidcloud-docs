@@ -1,6 +1,6 @@
 ---
 title: FIRST_VALUE
-description: "Learn how to use the FIRST_VALUE window function in PlaidCloud Lakehouse. Returns the first value from an ordered group of values. Includes syntax and examples."
+description: FIRST_VALUE — Returns the first value from an ordered group of values.
 ---
 
 Returns the first value from an ordered group of values.

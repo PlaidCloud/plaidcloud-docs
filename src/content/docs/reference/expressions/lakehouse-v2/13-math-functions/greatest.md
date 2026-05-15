@@ -1,6 +1,6 @@
 ---
 title: GREATEST
-description: "Learn how to use the GREATEST math function in PlaidCloud Lakehouse. Returns the greatest value from a list of values - see syntax, examples, and output."
+description: GREATEST — returns the greatest value from a list of values - see syntax, examples, and output.
 ---
 
 Returns the greatest value from a list of values.

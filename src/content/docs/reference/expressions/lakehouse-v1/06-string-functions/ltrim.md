@@ -1,6 +1,6 @@
 ---
 title: LTRIM
-description: "Learn how to use the LTRIM string function in PlaidCloud Lakehouse. Removes all occurrences of any character present in the specified trim string from the..."
+description: LTRIM — removes all occurrences of any character present in the specified trim string from the.
 ---
 
 Removes all occurrences of any character present in the specified trim string from the left side of the string.

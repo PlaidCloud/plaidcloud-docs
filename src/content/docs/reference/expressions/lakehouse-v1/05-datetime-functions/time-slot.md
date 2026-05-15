@@ -1,6 +1,6 @@
 ---
 title: TIME_SLOT
-description: "Learn how to use the TIME_SLOT datetime function in PlaidCloud Lakehouse. Rounds the time to the half-hour. Full syntax and usage reference."
+description: TIME_SLOT — rounds the time to the half-hour.
 ---
 
 Rounds the time to the half-hour.

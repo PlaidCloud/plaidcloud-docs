@@ -1,5 +1,6 @@
 ---
 title: Math Functions
+description: "Lakehouse v2 SQL math functions: arithmetic, rounding, log, power, and trigonometric helpers for numbers."
 ---
 
 This section provides reference information for the math functions in PlaidCloud Lakehouse.

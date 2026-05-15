@@ -1,6 +1,6 @@
 ---
 title: LENGTH
-description: "Learn how to use the LENGTH string function in PlaidCloud Lakehouse. Returns the length of a string in bytes - see syntax, examples, and output."
+description: LENGTH — returns the length of a string in bytes - see syntax, examples, and output.
 ---
 
 Returns the length of a string in bytes.

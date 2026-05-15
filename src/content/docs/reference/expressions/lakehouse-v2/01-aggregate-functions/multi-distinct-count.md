@@ -1,6 +1,6 @@
 ---
 title: MULTI_DISTINCT_COUNT
-description: "Learn how to use the MULTI_DISTINCT_COUNT aggregate function in PlaidCloud Lakehouse. Returns the count of distinct values. Equivalent to COUNT(DISTINCT)."
+description: MULTI_DISTINCT_COUNT — returns the count of distinct values. Equivalent to COUNT(DISTINCT).
 ---
 
 Returns the count of distinct values. Equivalent to COUNT(DISTINCT).

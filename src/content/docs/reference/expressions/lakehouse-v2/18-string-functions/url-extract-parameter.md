@@ -1,6 +1,6 @@
 ---
 title: URL_EXTRACT_PARAMETER
-description: "Learn how to use the URL_EXTRACT_PARAMETER string function in PlaidCloud Lakehouse. Extracts the value of a query parameter from a URL string."
+description: URL_EXTRACT_PARAMETER — extracts the value of a query parameter from a URL string.
 ---
 
 Extracts the value of a query parameter from a URL string.

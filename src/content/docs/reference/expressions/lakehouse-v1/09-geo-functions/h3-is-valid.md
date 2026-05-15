@@ -1,6 +1,6 @@
 ---
 title: H3_IS_VALID
-description: "Learn how to use the H3_IS_VALID utility function in PlaidCloud Lakehouse. Checks if the given H3 index is valid. Includes syntax and examples."
+description: H3_IS_VALID — Checks if the given H3 index is valid.
 ---
 
 Checks if the given [H3](https://eng.uber.com/h3/) index is valid.

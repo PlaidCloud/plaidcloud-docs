@@ -1,6 +1,6 @@
 ---
 title: IS_NOT_ERROR
-description: "Learn how to use the IS_NOT_ERROR conditional function in PlaidCloud Lakehouse. Returns a Boolean value indicating whether an expression is an error value."
+description: IS_NOT_ERROR — returns a Boolean value indicating whether an expression is an error value.
 ---
 
 Returns a Boolean value indicating whether an expression is an error value.

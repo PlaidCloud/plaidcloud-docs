@@ -1,6 +1,6 @@
 ---
 title: TO_DAY_OF_YEAR
-description: "Learn how to use the TO_DAY_OF_YEAR datetime function in PlaidCloud Lakehouse. Convert a date or date with time (timestamp/datetime) to a UInt16 number..."
+description: TO_DAY_OF_YEAR — convert a date or date with time (timestamp/datetime) to a UInt16 number.
 ---
 
 Convert a date or date with time (timestamp/datetime) to a UInt16 number containing the number of the day of the year (1-366).

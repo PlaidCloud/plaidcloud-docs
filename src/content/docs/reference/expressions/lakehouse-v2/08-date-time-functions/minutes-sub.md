@@ -1,6 +1,6 @@
 ---
 title: MINUTES_SUB
-description: "Learn how to use the MINUTES_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of minutes from a datetime - with syntax and examples."
+description: MINUTES_SUB — subtracts a specified number of minutes from a datetime.
 ---
 
 Subtracts a specified number of minutes from a datetime.

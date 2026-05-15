@@ -1,6 +1,6 @@
 ---
 title: WEEK_ISO
-description: "Learn how to use the WEEK_ISO date/time function in PlaidCloud Lakehouse. Returns the ISO week number of the year for a date - with syntax and examples."
+description: WEEK_ISO — returns the ISO week number of the year for a date.
 ---
 
 Returns the ISO week number of the year for a date.

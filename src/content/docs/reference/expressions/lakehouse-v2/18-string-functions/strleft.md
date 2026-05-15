@@ -1,6 +1,6 @@
 ---
 title: STRLEFT
-description: "Learn how to use the STRLEFT string function in PlaidCloud Lakehouse. Returns the leftmost N characters of a string. Alias for `LEFT`."
+description: STRLEFT — returns the leftmost N characters of a string. Alias for `LEFT`.
 ---
 
 Returns the leftmost N characters of a string. Alias for `LEFT`.

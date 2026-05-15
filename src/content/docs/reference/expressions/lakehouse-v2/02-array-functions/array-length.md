@@ -1,6 +1,6 @@
 ---
 title: ARRAY_LENGTH
-description: "Learn how to use the ARRAY_LENGTH array function in PlaidCloud Lakehouse. Returns the number of elements in an array - see syntax, examples, and output."
+description: ARRAY_LENGTH — returns the number of elements in an array - see syntax, examples, and output.
 ---
 
 Returns the number of elements in an array.

@@ -1,6 +1,6 @@
 ---
 title: JSON_OBJECT_DELETE
-description: "Learn how to use the JSON_OBJECT_DELETE semi-structured data function in PlaidCloud Lakehouse. Deletes specified keys from a JSON object and returns the..."
+description: JSON_OBJECT_DELETE — deletes specified keys from a JSON object and returns the.
 ---
 
 Deletes specified keys from a JSON object and returns the modified object. If a specified key doesn't exist in the object, it is ignored.

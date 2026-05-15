@@ -1,6 +1,6 @@
 ---
 title: MOD
-description: "Learn how to use the MOD math function in PlaidCloud Lakehouse. Returns the remainder of dividing two numbers - see syntax, examples, and output."
+description: MOD — returns the remainder of dividing two numbers - see syntax, examples, and output.
 ---
 
 Returns the remainder of dividing two numbers.

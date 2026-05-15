@@ -1,6 +1,6 @@
 ---
 title: URL_ENCODE
-description: "Learn how to use the URL_ENCODE string function in PlaidCloud Lakehouse. Encodes a string for use in a URL - see syntax, examples, and output."
+description: URL_ENCODE — encodes a string for use in a URL - see syntax, examples, and output.
 ---
 
 Encodes a string for use in a URL.

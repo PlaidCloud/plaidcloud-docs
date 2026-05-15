@@ -1,6 +1,6 @@
 ---
 title: REGEXP_SPLIT
-description: "Learn how to use the REGEXP_SPLIT string function in PlaidCloud Lakehouse. Splits a string by a regular expression pattern and returns an array of substrings."
+description: REGEXP_SPLIT — splits a string by a regular expression pattern and returns an array of substrings.
 ---
 
 Splits a string by a regular expression pattern and returns an array of substrings.

@@ -1,6 +1,6 @@
 ---
 title: BITMAP
-description: "Learn how to use the BITMAP aggregate function in PlaidCloud Lakehouse. Returns a bitmap union of a set of values. Typically used with BITMAP_AGG."
+description: BITMAP — returns a bitmap union of a set of values. Typically used with BITMAP_AGG.
 ---
 
 Returns a bitmap union of a set of values. Typically used with BITMAP_AGG.

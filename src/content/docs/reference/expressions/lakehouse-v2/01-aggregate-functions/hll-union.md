@@ -1,6 +1,6 @@
 ---
 title: HLL_UNION
-description: "Learn how to use the HLL_UNION aggregate function in PlaidCloud Lakehouse. Returns the union of multiple HLL values - see syntax, examples, and output."
+description: HLL_UNION — returns the union of multiple HLL values - see syntax, examples, and output.
 ---
 
 Returns the union of multiple HLL values.

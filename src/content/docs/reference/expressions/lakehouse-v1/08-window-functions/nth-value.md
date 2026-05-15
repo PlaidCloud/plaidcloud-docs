@@ -1,6 +1,6 @@
 ---
 title: NTH_VALUE
-description: "Learn how to use the NTH_VALUE window function in PlaidCloud Lakehouse. Returns the Nth value from an ordered group of values. Includes syntax and examples."
+description: NTH_VALUE — Returns the Nth value from an ordered group of values.
 ---
 
 Returns the Nth value from an ordered group of values.

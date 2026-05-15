@@ -1,6 +1,6 @@
 ---
 title: TO_MICROSECONDS
-description: "Learn how to use the TO_MICROSECONDS interval function in PlaidCloud Lakehouse. Converts a specified number of microseconds into an Interval type."
+description: TO_MICROSECONDS — converts a specified number of microseconds into an Interval type.
 ---
 
 Converts a specified number of microseconds into an Interval type.

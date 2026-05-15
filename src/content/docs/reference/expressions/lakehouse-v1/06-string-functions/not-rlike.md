@@ -1,6 +1,6 @@
 ---
 title: NOT RLIKE
-description: "Learn how to use the NOT RLIKE string function in PlaidCloud Lakehouse. Returns 1 if the string expr doesn't match the regular expression specified by the..."
+description: NOT RLIKE — returns 1 if the string expr doesn't match the regular expression specified by the.
 ---
 
 Returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.

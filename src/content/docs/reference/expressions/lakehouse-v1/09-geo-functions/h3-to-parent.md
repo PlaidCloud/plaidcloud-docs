@@ -1,6 +1,6 @@
 ---
 title: H3_TO_PARENT
-description: "Learn how to use the H3_TO_PARENT utility function in PlaidCloud Lakehouse. Returns the parent index containing the h3 at resolution parent_res."
+description: H3_TO_PARENT — returns the parent index containing the h3 at resolution parent_res.
 ---
 
 Returns the parent index containing the `h3` at resolution `parent_res`. Returning 0 means an error occurred.

@@ -1,6 +1,6 @@
 ---
 title: H3_TO_CHILDREN
-description: "Learn how to use the H3_TO_CHILDREN utility function in PlaidCloud Lakehouse. Returns the indexes contained by h3 at resolution child_res. Includes syntax..."
+description: H3_TO_CHILDREN — returns the indexes contained by h3 at resolution child_res. Includes syntax.
 ---
 
 Returns the indexes contained by `h3` at resolution `child_res`.

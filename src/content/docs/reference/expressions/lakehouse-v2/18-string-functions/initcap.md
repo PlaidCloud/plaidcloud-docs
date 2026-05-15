@@ -1,6 +1,6 @@
 ---
 title: INITCAP
-description: "Learn how to use the INITCAP string function in PlaidCloud Lakehouse. Capitalizes the first letter of each word in a string - with syntax and examples."
+description: INITCAP — Capitalizes the first letter of each word in a string.
 ---
 
 Capitalizes the first letter of each word in a string.

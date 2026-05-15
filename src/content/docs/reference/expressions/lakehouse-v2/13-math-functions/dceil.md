@@ -1,6 +1,6 @@
 ---
 title: DCEIL
-description: "Learn how to use the DCEIL math function in PlaidCloud Lakehouse. Alias for `CEIL`. See [CEIL](ceil) - see syntax, examples, and output."
+description: DCEIL — alias for `CEIL`. See [CEIL](ceil) - see syntax, examples, and output.
 ---
 
 Alias for `CEIL`. See [CEIL](ceil).

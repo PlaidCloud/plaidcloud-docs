@@ -1,6 +1,6 @@
 ---
 title: H3_TO_GEO
-description: "Learn how to use the H3_TO_GEO utility function in PlaidCloud Lakehouse. Returns the longitude and latitude corresponding to the given H3 index."
+description: H3_TO_GEO — returns the longitude and latitude corresponding to the given H3 index.
 ---
 
 Returns the longitude and latitude corresponding to the given [H3](https://eng.uber.com/h3/) index. 

@@ -1,6 +1,6 @@
 ---
 title: MINUS
-description: "Learn how to use the MINUS numeric function in PlaidCloud Lakehouse. Negates a numeric value. Includes detailed syntax, examples, and usage reference."
+description: MINUS — negates a numeric value. Includes detailed syntax, examples, and usage reference.
 ---
 
 Negates a numeric value.

@@ -1,6 +1,6 @@
 ---
 title: SHA2
-description: "Learn how to use the SHA2 cryptographic function in PlaidCloud Lakehouse. Returns the SHA-2 hash of a string for a specified bit length (224, 256, 384, or 512)."
+description: SHA2 — returns the SHA-2 hash of a string for a specified bit length (224, 256, 384, or 512).
 ---
 
 Returns the SHA-2 hash of a string for a specified bit length (224, 256, 384, or 512).

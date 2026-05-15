@@ -1,6 +1,6 @@
 ---
 title: Comparison Methods
-description: "Learn how to use the COMPARISON METHODS conditional function in PlaidCloud Lakehouse. These comparison methods are available in Analyze expressions."
+description: Comparison Methods — these comparison methods are available in Analyze expressions.
 ---
 
 These comparison methods are available in Analyze expressions.

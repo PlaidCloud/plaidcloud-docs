@@ -1,6 +1,6 @@
 ---
 title: FROM_BINARY
-description: "Learn how to use the FROM_BINARY binary function in PlaidCloud Lakehouse. Converts a binary value to a VARCHAR string based on the specified binary format."
+description: FROM_BINARY — converts a binary value to a VARCHAR string based on the specified binary format.
 ---
 
 Converts a binary value to a VARCHAR string based on the specified binary format.

@@ -1,6 +1,6 @@
 ---
 title: TO_WEEK_OF_YEAR
-description: "Learn how to use the TO_WEEK_OF_YEAR datetime function in PlaidCloud Lakehouse. Calculates the week number within a year for a given date. Includes syntax..."
+description: TO_WEEK_OF_YEAR — calculates the week number within a year for a given date. Includes syntax.
 ---
 
 Calculates the week number within a year for a given date.

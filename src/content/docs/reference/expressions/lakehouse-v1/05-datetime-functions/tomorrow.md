@@ -1,6 +1,6 @@
 ---
 title: TOMORROW
-description: "Learn how to use the TOMORROW datetime function in PlaidCloud Lakehouse. Returns tomorrow date, same as today() + 1. Includes syntax and examples."
+description: TOMORROW — Returns tomorrow date, same as today() + 1.
 ---
 
 Returns tomorrow date, same as `today() + 1`.

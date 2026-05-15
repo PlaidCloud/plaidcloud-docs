@@ -1,6 +1,6 @@
 ---
 title: REGEXP_LIKE
-description: "Learn how to use the REGEXP_LIKE string function in PlaidCloud Lakehouse. REGEXP_LIKE function is used to check that whether the string matches the regular..."
+description: REGEXP_LIKE — rEGEXP_LIKE function is used to check that whether the string matches the regular.
 ---
 
 REGEXP_LIKE function is used to check that whether the string matches the regular expression.

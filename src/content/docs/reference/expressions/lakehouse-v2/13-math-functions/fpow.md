@@ -1,6 +1,6 @@
 ---
 title: FPOW
-description: "Learn how to use the FPOW math function in PlaidCloud Lakehouse. Alias for `POW`. See [POW](pow) - see syntax, examples, and output."
+description: FPOW — alias for `POW`. See [POW](pow) - see syntax, examples, and output.
 ---
 
 Alias for `POW`. See [POW](pow).

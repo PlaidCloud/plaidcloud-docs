@@ -1,6 +1,6 @@
 ---
 title: XXHASH32
-description: "Learn how to use the XXHASH32 hash function in PlaidCloud Lakehouse. Calculates an xxHash32 32-bit hash value for a string. Includes syntax and examples."
+description: XXHASH32 — Calculates an xxHash32 32-bit hash value for a string.
 ---
 
 Calculates an xxHash32 32-bit hash value for a string. The value is returned as a UInt32 or NULL if the argument was NULL.

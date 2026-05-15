@@ -1,5 +1,6 @@
 ---
 title: Semi-Structured Functions
+description: "Lakehouse v1 SQL semi-structured functions: extract, traverse, and transform JSON, variant, and nested data."
 ---
 
 This section provides reference information for the semi-structured data functions in PlaidCloud Lakehouse.

@@ -1,6 +1,6 @@
 ---
 title: BITMAP_XOR
-description: "Learn how to use the BITMAP_XOR bitmap function in PlaidCloud Lakehouse. Performs a bitwise XOR (exclusive OR) operation on the two bitmaps."
+description: BITMAP_XOR — performs a bitwise XOR (exclusive OR) operation on the two bitmaps.
 ---
 
 Performs a bitwise XOR (exclusive OR) operation on the two bitmaps.

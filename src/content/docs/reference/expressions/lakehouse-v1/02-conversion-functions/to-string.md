@@ -1,6 +1,6 @@
 ---
 title: TO_STRING
-description: "Learn how to use the TO_STRING conversion function in PlaidCloud Lakehouse. Converts a value to String data type, or converts a Date value to a specific..."
+description: TO_STRING — converts a value to String data type, or converts a Date value to a specific.
 ---
 
 Converts a value to String data type, or converts a Date value to a specific string format. To customize the format of date and time in PlaidCloud Lakehouse, you can utilize specifiers. These specifiers allow you to define the desired format for date and time values. For a comprehensive list of supported specifiers, see Formatting Date and Time.

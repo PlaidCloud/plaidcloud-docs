@@ -1,6 +1,6 @@
 ---
 title: CURRENT_DATE
-description: "Learn how to use the CURRENT_DATE date/time function in PlaidCloud Lakehouse. Returns the current date. Alias for `CURDATE` - with syntax and examples."
+description: CURRENT_DATE — returns the current date. Alias for `CURDATE`.
 ---
 
 Returns the current date. Alias for `CURDATE`.

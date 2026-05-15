@@ -1,6 +1,6 @@
 ---
 title: UTC_TIMESTAMP
-description: "Learn how to use the UTC_TIMESTAMP date/time function in PlaidCloud Lakehouse. Returns the current UTC date and time - see syntax, examples, and output."
+description: UTC_TIMESTAMP — returns the current UTC date and time - see syntax, examples, and output.
 ---
 
 Returns the current UTC date and time.

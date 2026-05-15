@@ -1,6 +1,6 @@
 ---
 title: GET_JSON_DOUBLE
-description: "Learn how to use the GET_JSON_DOUBLE json function in PlaidCloud Lakehouse. Extracts a double value from a JSON object by a specified path."
+description: GET_JSON_DOUBLE — extracts a double value from a JSON object by a specified path.
 ---
 
 Extracts a double value from a JSON object by a specified path.

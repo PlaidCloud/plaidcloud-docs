@@ -1,6 +1,6 @@
 ---
 title: BITMAP_ANDNOT
-description: "Learn how to use the BITMAP_ANDNOT bitmap function in PlaidCloud Lakehouse. Returns the difference of two bitmaps (elements in first but not second)."
+description: BITMAP_ANDNOT — returns the difference of two bitmaps (elements in first but not second).
 ---
 
 Returns the difference of two bitmaps (elements in first but not second).

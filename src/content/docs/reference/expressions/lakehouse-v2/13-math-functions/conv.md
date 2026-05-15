@@ -1,6 +1,6 @@
 ---
 title: CONV
-description: "Learn how to use the CONV math function in PlaidCloud Lakehouse. Converts a number from one base to another - see syntax, examples, and output."
+description: CONV — converts a number from one base to another - see syntax, examples, and output.
 ---
 
 Converts a number from one base to another.

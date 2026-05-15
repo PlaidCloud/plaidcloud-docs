@@ -1,6 +1,6 @@
 ---
 title: IS_NULL_VALUE
-description: "Learn how to use the IS_NULL_VALUE semi-structured data function in PlaidCloud Lakehouse. Checks whether the input value is a JSON null. Includes syntax and..."
+description: IS_NULL_VALUE — checks whether the input value is a JSON null. Includes syntax and.
 ---
 
 Checks whether the input value is a JSON `null`. Please note that this function examines JSON `null`, not SQL NULL. To check if a value is SQL NULL, use [IS_NULL](../../03-conditional-functions/is-null).

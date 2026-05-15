@@ -1,6 +1,6 @@
 ---
 title: CONCAT
-description: "Learn how to use the CONCAT string function in PlaidCloud Lakehouse. Concatenates two or more strings - see syntax, examples, and output."
+description: CONCAT — concatenates two or more strings - see syntax, examples, and output.
 ---
 
 Concatenates two or more strings.

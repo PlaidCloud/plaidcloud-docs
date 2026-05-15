@@ -1,6 +1,6 @@
 ---
 title: SLEEP
-description: "Learn how to use the SLEEP utility function in PlaidCloud Lakehouse. Pauses execution for a specified number of seconds. Returns 0 on success."
+description: SLEEP — pauses execution for a specified number of seconds. Returns 0 on success.
 ---
 
 Pauses execution for a specified number of seconds. Returns 0 on success.

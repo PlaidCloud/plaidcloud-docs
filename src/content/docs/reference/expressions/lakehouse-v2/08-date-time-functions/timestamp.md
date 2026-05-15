@@ -1,6 +1,6 @@
 ---
 title: TIMESTAMP
-description: "Learn how to use the TIMESTAMP date/time function in PlaidCloud Lakehouse. Converts a date or string to a datetime - see syntax, examples, and output."
+description: TIMESTAMP — converts a date or string to a datetime - see syntax, examples, and output.
 ---
 
 Converts a date or string to a datetime.

@@ -1,6 +1,6 @@
 ---
 title: MAP_DELETE
-description: "Learn how to use the MAP_DELETE map function in PlaidCloud Lakehouse. Returns an existing MAP with one or more keys removed. Includes syntax and examples."
+description: MAP_DELETE — Returns an existing MAP with one or more keys removed.
 ---
 
 Returns an existing MAP with one or more keys removed.

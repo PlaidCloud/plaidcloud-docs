@@ -1,6 +1,6 @@
 ---
 title: JSON_EACH
-description: "Learn how to use the JSON_EACH json function in PlaidCloud Lakehouse. Expands the top-level JSON object into a set of key-value pairs."
+description: JSON_EACH — expands the top-level JSON object into a set of key-value pairs.
 ---
 
 Expands the top-level JSON object into a set of key-value pairs.

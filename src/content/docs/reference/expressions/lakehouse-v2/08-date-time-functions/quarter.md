@@ -1,6 +1,6 @@
 ---
 title: QUARTER
-description: "Learn how to use the QUARTER date/time function in PlaidCloud Lakehouse. Returns the quarter of the year from a date (1-4) - with syntax and examples."
+description: QUARTER — returns the quarter of the year from a date (1-4).
 ---
 
 Returns the quarter of the year from a date (1-4).

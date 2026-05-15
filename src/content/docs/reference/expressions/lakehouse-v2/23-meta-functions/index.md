@@ -1,5 +1,6 @@
 ---
 title: Meta Functions
+description: "Lakehouse v2 SQL meta functions: introspect tables, columns, partitions, and engine state."
 ---
 
 This section provides reference information for the meta functions in PlaidCloud Lakehouse.

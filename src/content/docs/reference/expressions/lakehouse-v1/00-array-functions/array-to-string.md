@@ -1,6 +1,6 @@
 ---
 title: ARRAY_TO_STRING
-description: "Learn how to use the ARRAY_TO_STRING array function in PlaidCloud Lakehouse. Concatenates elements of an array into a single string, using a specified..."
+description: ARRAY_TO_STRING — concatenates elements of an array into a single string, using a specified.
 ---
 
 Concatenates elements of an array into a single string, using a specified separator.

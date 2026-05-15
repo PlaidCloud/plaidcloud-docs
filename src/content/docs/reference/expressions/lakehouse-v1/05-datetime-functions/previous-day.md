@@ -1,6 +1,6 @@
 ---
 title: PREVIOUS_DAY
-description: "Learn how to use the PREVIOUS_DAY datetime function in PlaidCloud Lakehouse. Returns the date of the most recent specified day of the week before the given..."
+description: PREVIOUS_DAY — returns the date of the most recent specified day of the week before the given.
 ---
 
 Returns the date of the most recent specified day of the week before the given date or timestamp.

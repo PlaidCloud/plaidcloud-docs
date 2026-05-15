@@ -1,6 +1,6 @@
 ---
 title: COLUMN_COMPRESSED_SIZE
-description: "Learn how to use the COLUMN_COMPRESSED_SIZE utility function in PlaidCloud Lakehouse. Returns the compressed size in bytes of a column value."
+description: COLUMN_COMPRESSED_SIZE — returns the compressed size in bytes of a column value.
 ---
 
 Returns the compressed size in bytes of a column value.

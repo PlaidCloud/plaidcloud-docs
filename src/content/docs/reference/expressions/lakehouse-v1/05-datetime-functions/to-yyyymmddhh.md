@@ -1,6 +1,6 @@
 ---
 title: TO_YYYYMMDDHH
-description: "Learn how to use the TO_YYYYMMDDHH datetime function in PlaidCloud Lakehouse. Formats a given date or timestamp into a string representation in the format..."
+description: TO_YYYYMMDDHH — formats a given date or timestamp into a string representation in the format.
 ---
 
 Formats a given date or timestamp into a string representation in the format "YYYYMMDDHH" (Year, Month, Day, Hour).

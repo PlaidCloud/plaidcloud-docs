@@ -1,6 +1,6 @@
 ---
 title: GENERATE_SERIES
-description: "Learn how to use the GENERATE_SERIES table function in PlaidCloud Lakehouse. Generates a series of values from start to stop with a given step."
+description: GENERATE_SERIES — generates a series of values from start to stop with a given step.
 ---
 
 Generates a series of values from start to stop with a given step.

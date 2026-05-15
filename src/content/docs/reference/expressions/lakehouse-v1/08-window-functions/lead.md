@@ -1,6 +1,6 @@
 ---
 title: LEAD
-description: "Learn how to use the LEAD window function in PlaidCloud Lakehouse. LEAD allows you to access the value of a column from a subsequent row within the same..."
+description: LEAD — lEAD allows you to access the value of a column from a subsequent row within the same.
 ---
 
 LEAD allows you to access the value of a column from a subsequent row within the same result set. It is typically used to retrieve the value of a column in the next row, based on a specified ordering.

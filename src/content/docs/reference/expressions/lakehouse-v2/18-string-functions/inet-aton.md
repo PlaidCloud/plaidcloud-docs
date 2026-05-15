@@ -1,6 +1,6 @@
 ---
 title: INET_ATON
-description: "Learn how to use the INET_ATON string function in PlaidCloud Lakehouse. Converts an IPv4 address string to a numeric value - with syntax and examples."
+description: INET_ATON — Converts an IPv4 address string to a numeric value.
 ---
 
 Converts an IPv4 address string to a numeric value.

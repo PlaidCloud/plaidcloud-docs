@@ -1,5 +1,6 @@
 ---
 title: Pattern Matching Functions
+description: "Lakehouse v2 SQL pattern matching functions: match and extract substrings using LIKE, regex, and SIMILAR TO patterns."
 ---
 
 This section provides reference information for the pattern matching functions in PlaidCloud Lakehouse.

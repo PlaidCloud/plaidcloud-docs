@@ -1,6 +1,6 @@
 ---
 title: BITMAP_NOT
-description: "Learn how to use the BITMAP_NOT bitmap function in PlaidCloud Lakehouse. Generates a new bitmap with elements from the first bitmap that are not in the..."
+description: BITMAP_NOT — generates a new bitmap with elements from the first bitmap that are not in the.
 ---
 
 Generates a new bitmap with elements from the first bitmap that are not in the second one.

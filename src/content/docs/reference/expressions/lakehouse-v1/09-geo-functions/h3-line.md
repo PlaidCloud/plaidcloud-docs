@@ -1,6 +1,6 @@
 ---
 title: H3_LINE
-description: "Learn how to use the H3_LINE utility function in PlaidCloud Lakehouse. Returns the line of indexes between the given two H3 indexes. With syntax and examples."
+description: H3_LINE — Returns the line of indexes between the given two H3 indexes.
 ---
 
 Returns the line of indexes between the given two [H3](https://eng.uber.com/h3/) indexes.

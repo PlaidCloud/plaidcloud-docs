@@ -1,6 +1,6 @@
 ---
 title: SCORE
-description: "Learn how to use the SCORE search function in PlaidCloud Lakehouse. Returns the relevance of the query string. Includes syntax and examples."
+description: SCORE — Returns the relevance of the query string.
 ---
 
 Returns the relevance of the query string. The higher the score, the more relevant the data. Please note that SCORE function can only be used with the [QUERY](../query) or [MATCH](../match) function.

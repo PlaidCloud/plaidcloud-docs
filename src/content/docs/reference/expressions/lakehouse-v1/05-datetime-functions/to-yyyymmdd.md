@@ -1,6 +1,6 @@
 ---
 title: TO_YYYYMMDD
-description: "Learn how to use the TO_YYYYMMDD datetime function in PlaidCloud Lakehouse. Converts a date or date with time (timestamp/datetime) to a UInt32 number..."
+description: TO_YYYYMMDD — converts a date or date with time (timestamp/datetime) to a UInt32 number.
 ---
 
 Converts a date or date with time (timestamp/datetime) to a UInt32 number containing the year and month number (YYYY * 10000 + MM * 100 + DD).

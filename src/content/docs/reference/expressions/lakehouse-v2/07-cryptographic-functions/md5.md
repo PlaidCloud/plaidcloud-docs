@@ -1,6 +1,6 @@
 ---
 title: MD5
-description: "Learn how to use the MD5 cryptographic function in PlaidCloud Lakehouse. Returns the MD5 hash of a string as a 32-character hexadecimal string."
+description: MD5 — returns the MD5 hash of a string as a 32-character hexadecimal string.
 ---
 
 Returns the MD5 hash of a string as a 32-character hexadecimal string.

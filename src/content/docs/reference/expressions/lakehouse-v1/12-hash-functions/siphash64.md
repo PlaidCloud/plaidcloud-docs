@@ -1,6 +1,6 @@
 ---
 title: SIPHASH64
-description: "Learn how to use the SIPHASH64 hash function in PlaidCloud Lakehouse. Produces a 64-bit SipHash hash value. Full syntax and usage reference."
+description: SIPHASH64 — produces a 64-bit SipHash hash value.
 ---
 
 Produces a 64-bit [SipHash](https://en.wikipedia.org/wiki/SipHash) hash value.

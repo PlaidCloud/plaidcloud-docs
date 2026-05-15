@@ -1,6 +1,6 @@
 ---
 title: H3_K_RING
-description: "Learn how to use the H3_K_RING utility function in PlaidCloud Lakehouse. Returns an array containing the H3 indexes of the k-ring hexagons surrounding the..."
+description: H3_K_RING — returns an array containing the H3 indexes of the k-ring hexagons surrounding the.
 ---
 
 Returns an array containing the [H3](https://eng.uber.com/h3/) indexes of the k-ring hexagons surrounding the input H3 index. Each element in this array is an H3 index.

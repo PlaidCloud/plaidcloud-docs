@@ -1,6 +1,6 @@
 ---
 title: LOCATE
-description: "Learn how to use the LOCATE string function in PlaidCloud Lakehouse. Returns the position of the first occurrence of a substring in a string."
+description: LOCATE — returns the position of the first occurrence of a substring in a string.
 ---
 
 Returns the position of the first occurrence of a substring in a string.

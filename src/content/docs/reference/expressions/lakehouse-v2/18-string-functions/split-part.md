@@ -1,6 +1,6 @@
 ---
 title: SPLIT_PART
-description: "Learn how to use the SPLIT_PART string function in PlaidCloud Lakehouse. Splits a string by a delimiter and returns the element at a specified index."
+description: SPLIT_PART — splits a string by a delimiter and returns the element at a specified index.
 ---
 
 Splits a string by a delimiter and returns the element at a specified index.

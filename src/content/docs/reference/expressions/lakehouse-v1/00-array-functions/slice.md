@@ -1,6 +1,6 @@
 ---
 title: SLICE
-description: "Learn how to use the SLICE array function in PlaidCloud Lakehouse. Extracts a slice from the array by index (1-based). Includes syntax and examples."
+description: SLICE — Extracts a slice from the array by index (1-based).
 ---
 
 Extracts a slice from the array by index (1-based).

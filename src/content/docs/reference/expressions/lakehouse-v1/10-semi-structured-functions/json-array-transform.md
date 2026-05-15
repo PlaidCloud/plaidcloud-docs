@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_TRANSFORM
-description: "Learn how to use the JSON_ARRAY_TRANSFORM semi-structured data function in PlaidCloud Lakehouse. Transforms each element of a JSON array using a specified..."
+description: JSON_ARRAY_TRANSFORM — transforms each element of a JSON array using a specified.
 ---
 
 Transforms each element of a JSON array using a specified transformation Lambda expression. For more information about Lambda expression, see Lambda Expressions.

@@ -1,6 +1,6 @@
 ---
 title: ST_ASWKB
-description: "Learn how to use the ST_ASWKB geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a WKB(well-known-binary) format representation."
+description: ST_ASWKB — converts a GEOMETRY object into a WKB(well-known-binary) format representation.
 ---
 
 Converts a GEOMETRY object into a [WKB(well-known-binary)](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry#Well-known_binary) format representation.

@@ -1,6 +1,6 @@
 ---
 title: RIGHT
-description: "Learn how to use the RIGHT string function in PlaidCloud Lakehouse. Returns the rightmost len characters from the string str, or NULL if any argument is NULL."
+description: RIGHT — returns the rightmost len characters from the string str, or NULL if any argument is NULL.
 ---
 
 Returns the rightmost len characters from the string str, or NULL if any argument is NULL.

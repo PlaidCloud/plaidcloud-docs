@@ -1,6 +1,6 @@
 ---
 title: TO_MONDAY
-description: "Learn how to use the TO_MONDAY datetime function in PlaidCloud Lakehouse. Round down a date or date with time (timestamp/datetime) to the nearest Monday."
+description: TO_MONDAY — round down a date or date with time (timestamp/datetime) to the nearest Monday.
 ---
 
 Round down a date or date with time (timestamp/datetime) to the nearest Monday.

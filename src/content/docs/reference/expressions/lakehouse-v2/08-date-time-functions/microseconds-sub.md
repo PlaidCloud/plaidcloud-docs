@@ -1,6 +1,6 @@
 ---
 title: MICROSECONDS_SUB
-description: "Learn how to use the MICROSECONDS_SUB date/time function in PlaidCloud Lakehouse. Subtracts a specified number of microseconds from a datetime."
+description: MICROSECONDS_SUB — subtracts a specified number of microseconds from a datetime.
 ---
 
 Subtracts a specified number of microseconds from a datetime.

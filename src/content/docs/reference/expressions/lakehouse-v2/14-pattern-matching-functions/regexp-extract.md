@@ -1,6 +1,6 @@
 ---
 title: REGEXP_EXTRACT
-description: "Learn how to use the REGEXP_EXTRACT pattern matching function in PlaidCloud Lakehouse. Extracts the first substring that matches a regular expression pattern."
+description: REGEXP_EXTRACT — extracts the first substring that matches a regular expression pattern.
 ---
 
 Extracts the first substring that matches a regular expression pattern.

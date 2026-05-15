@@ -1,6 +1,6 @@
 ---
 title: ARRAY_INDEXOF
-description: "Learn how to use the ARRAY_INDEXOF array function in PlaidCloud Lakehouse. Returns the index(1-based) of an element if the array contains the element."
+description: ARRAY_INDEXOF — returns the index(1-based) of an element if the array contains the element.
 ---
 
 Returns the index(1-based) of an element if the array contains the element.

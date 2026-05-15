@@ -1,6 +1,6 @@
 ---
 title: ST_MAKELINE
-description: "Learn how to use the ST_MAKELINE geometry function in PlaidCloud Lakehouse. Constructs a GEOMETRY object that represents a line connecting the points in the..."
+description: ST_MAKELINE — constructs a GEOMETRY object that represents a line connecting the points in the.
 ---
 
 Constructs a GEOMETRY object that represents a line connecting the points in the input two GEOMETRY objects.

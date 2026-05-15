@@ -1,6 +1,6 @@
 ---
 title: Agent Steps
-description: Workflow steps that operate through a PlaidLink Agent — for reaching databases, file systems, and other resources that sit behind a firewall or on-premises network.
+description: Workflow steps that operate through a PlaidLink Agent — for reaching databases and file systems behind a firewall.
 ---
 
 Workflow steps that operate through a PlaidLink Agent — for reaching databases, file systems, and other resources that sit behind a firewall or on-premises network.

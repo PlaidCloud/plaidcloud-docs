@@ -1,6 +1,6 @@
 ---
 title: BLAKE3
-description: "Learn how to use the BLAKE3 hash function in PlaidCloud Lakehouse. Calculates a BLAKE3 256-bit checksum for a string. Includes syntax and examples."
+description: BLAKE3 — Calculates a BLAKE3 256-bit checksum for a string.
 ---
 
 Calculates a BLAKE3 256-bit checksum for a string. The value is returned as a string of 64 hexadecimal digits or NULL if the argument was NULL.

@@ -1,6 +1,6 @@
 ---
 title: MAP_PICK
-description: "Learn how to use the MAP_PICK map function in PlaidCloud Lakehouse. Returns a new MAP containing the specified key-value pairs from an existing MAP."
+description: MAP_PICK — returns a new MAP containing the specified key-value pairs from an existing MAP.
 ---
 
 Returns a new MAP containing the specified key-value pairs from an existing MAP.

@@ -1,6 +1,6 @@
 ---
 title: ST_ASTEXT
-description: "Learn how to use the ST_ASTEXT spatial function in PlaidCloud Lakehouse. Converts a geometry to its WKT (Well-Known Text) representation."
+description: ST_ASTEXT — converts a geometry to its WKT (Well-Known Text) representation.
 ---
 
 Converts a geometry to its WKT (Well-Known Text) representation.

@@ -1,6 +1,6 @@
 ---
 title: BITMAP_REMOVE
-description: "Learn how to use the BITMAP_REMOVE bitmap function in PlaidCloud Lakehouse. Removes a specific value from a bitmap - see syntax, examples, and output."
+description: BITMAP_REMOVE — removes a specific value from a bitmap - see syntax, examples, and output.
 ---
 
 Removes a specific value from a bitmap.

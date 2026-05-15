@@ -1,6 +1,6 @@
 ---
 title: TO_BOOLEAN
-description: "Learn how to use the TO_BOOLEAN conversion function in PlaidCloud Lakehouse. Converts a value to BOOLEAN data type. Includes syntax and examples."
+description: TO_BOOLEAN — Converts a value to BOOLEAN data type.
 ---
 
 Converts a value to BOOLEAN data type.

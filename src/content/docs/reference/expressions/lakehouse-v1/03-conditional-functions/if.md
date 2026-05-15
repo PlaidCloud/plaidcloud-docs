@@ -1,6 +1,6 @@
 ---
 title: IF
-description: "Learn how to use the IF conditional function in PlaidCloud Lakehouse. If <cond1> is TRUE, it returns <expr1>. See syntax and usage examples."
+description: IF — if <cond1> is TRUE, it returns <expr1>. See syntax and usage examples.
 ---
 
 If `<cond1>` is TRUE, it returns `<expr1>`. Otherwise if `<cond2>` is TRUE, it returns `<expr2>`, and so on.

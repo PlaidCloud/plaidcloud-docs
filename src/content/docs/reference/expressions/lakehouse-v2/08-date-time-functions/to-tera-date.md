@@ -1,6 +1,6 @@
 ---
 title: TO_TERA_DATE
-description: "Learn how to use the TO_TERA_DATE date/time function in PlaidCloud Lakehouse. Converts a VARCHAR value to a DATE value according to a Teradata format string."
+description: TO_TERA_DATE — converts a VARCHAR value to a DATE value according to a Teradata format string.
 ---
 
 Converts a VARCHAR value to a DATE value according to a Teradata format string.

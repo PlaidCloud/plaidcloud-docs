@@ -1,6 +1,6 @@
 ---
 title: HLL_CARDINALITY
-description: "Learn how to use the HLL_CARDINALITY scalar function in PlaidCloud Lakehouse. Returns the cardinality estimate from an HLL value - with syntax and examples."
+description: HLL_CARDINALITY — Returns the cardinality estimate from an HLL value.
 ---
 
 Returns the cardinality estimate from an HLL value.

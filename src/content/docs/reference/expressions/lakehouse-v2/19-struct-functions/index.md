@@ -1,5 +1,6 @@
 ---
 title: Struct Functions
+description: "Lakehouse v2 SQL struct functions: build and query STRUCT (composite) values."
 ---
 
 This section provides reference information for the struct functions in PlaidCloud Lakehouse.

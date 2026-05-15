@@ -1,5 +1,6 @@
 ---
 title: Utility Functions
+description: "Lakehouse v2 SQL utility functions: general-purpose helpers for type checks, null handling, and value selection."
 ---
 
 This section provides reference information for the utility functions in PlaidCloud Lakehouse.

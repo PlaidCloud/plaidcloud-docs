@@ -1,6 +1,6 @@
 ---
 title: ARRAY_CONTAINS_ALL
-description: "Learn how to use the ARRAY_CONTAINS_ALL array function in PlaidCloud Lakehouse. Checks whether an array contains all elements of another array."
+description: ARRAY_CONTAINS_ALL — checks whether an array contains all elements of another array.
 ---
 
 Checks whether an array contains all elements of another array.

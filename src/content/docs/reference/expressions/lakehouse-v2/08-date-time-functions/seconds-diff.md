@@ -1,6 +1,6 @@
 ---
 title: SECONDS_DIFF
-description: "Learn how to use the SECONDS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of seconds between two datetimes - with syntax and examples."
+description: SECONDS_DIFF — returns the number of seconds between two datetimes.
 ---
 
 Returns the number of seconds between two datetimes.

@@ -1,6 +1,6 @@
 ---
 title: TO_QUARTER
-description: "Learn how to use the TO_QUARTER datetime function in PlaidCloud Lakehouse. Retrieves the quarter (1, 2, 3, or 4) from a given date or timestamp."
+description: TO_QUARTER — retrieves the quarter (1, 2, 3, or 4) from a given date or timestamp.
 ---
 
 Retrieves the quarter (1, 2, 3, or 4) from a given date or timestamp.

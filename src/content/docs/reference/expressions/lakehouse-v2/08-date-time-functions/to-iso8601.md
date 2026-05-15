@@ -1,6 +1,6 @@
 ---
 title: TO_ISO8601
-description: "Learn how to use the TO_ISO8601 date/time function in PlaidCloud Lakehouse. Converts a date or datetime to an ISO 8601 formatted string."
+description: TO_ISO8601 — converts a date or datetime to an ISO 8601 formatted string.
 ---
 
 Converts a date or datetime to an ISO 8601 formatted string.

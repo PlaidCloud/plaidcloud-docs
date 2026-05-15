@@ -1,6 +1,6 @@
 ---
 title: MAP_APPLY
-description: "Learn how to use the MAP_APPLY map function in PlaidCloud Lakehouse. Applies a lambda expression to each key-value pair in a map - with syntax and examples."
+description: MAP_APPLY — Applies a lambda expression to each key-value pair in a map.
 ---
 
 Applies a lambda expression to each key-value pair in a map.

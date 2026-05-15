@@ -1,6 +1,6 @@
 ---
 title: STRPOS
-description: "Learn how to use the STRPOS string function in PlaidCloud Lakehouse. Returns the position of the first occurrence of a substring. Alias for `LOCATE`."
+description: STRPOS — returns the position of the first occurrence of a substring. Alias for `LOCATE`.
 ---
 
 Returns the position of the first occurrence of a substring. Alias for `LOCATE`.

@@ -1,6 +1,6 @@
 ---
 title: TO_JSON
-description: "Learn how to use the TO_JSON json function in PlaidCloud Lakehouse. Converts a SQL value to a JSON value - see syntax, examples, and output."
+description: TO_JSON — converts a SQL value to a JSON value - see syntax, examples, and output.
 ---
 
 Converts a SQL value to a JSON value.

@@ -1,6 +1,6 @@
 ---
 title: RETENTION
-description: "Learn how to use the RETENTION aggregate function in PlaidCloud Lakehouse. Calculates retention for a set of events. Returns an array of 0s and 1s."
+description: RETENTION — calculates retention for a set of events. Returns an array of 0s and 1s.
 ---
 
 Calculates retention for a set of events. Returns an array of 0s and 1s.

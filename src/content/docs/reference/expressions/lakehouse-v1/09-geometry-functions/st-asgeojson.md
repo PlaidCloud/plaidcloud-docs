@@ -1,6 +1,6 @@
 ---
 title: ST_ASGEOJSON
-description: "Learn how to use the ST_ASGEOJSON geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a GeoJSON representation. With syntax and examples."
+description: ST_ASGEOJSON — Converts a GEOMETRY object into a GeoJSON representation.
 ---
 
 Converts a GEOMETRY object into a [GeoJSON](https://geojson.org/) representation.

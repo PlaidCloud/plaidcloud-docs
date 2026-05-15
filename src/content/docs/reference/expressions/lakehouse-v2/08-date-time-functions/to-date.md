@@ -1,6 +1,6 @@
 ---
 title: TO_DATE
-description: "Learn how to use the TO_DATE date/time function in PlaidCloud Lakehouse. Converts a datetime to a date - see syntax, examples, and output."
+description: TO_DATE — converts a datetime to a date - see syntax, examples, and output.
 ---
 
 Converts a datetime to a date.

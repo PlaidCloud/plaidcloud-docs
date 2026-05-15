@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_AGG
-description: "Learn how to use the JSON_ARRAY_AGG aggregate function in PlaidCloud Lakehouse. Converts values into a JSON array while skipping NULLs. Includes syntax and..."
+description: JSON_ARRAY_AGG — converts values into a JSON array while skipping NULLs. Includes syntax and.
 ---
 
 Converts values into a JSON array while skipping NULLs.

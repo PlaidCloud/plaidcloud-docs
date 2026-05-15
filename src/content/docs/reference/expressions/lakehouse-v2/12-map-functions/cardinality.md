@@ -1,6 +1,6 @@
 ---
 title: CARDINALITY
-description: "Learn how to use the CARDINALITY map function in PlaidCloud Lakehouse. Returns the number of key-value pairs in a map - see syntax, examples, and output."
+description: CARDINALITY — returns the number of key-value pairs in a map - see syntax, examples, and output.
 ---
 
 Returns the number of key-value pairs in a map.

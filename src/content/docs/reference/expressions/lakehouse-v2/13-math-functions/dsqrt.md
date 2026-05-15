@@ -1,6 +1,6 @@
 ---
 title: DSQRT
-description: "Learn how to use the DSQRT math function in PlaidCloud Lakehouse. Alias for `SQRT`. See [SQRT](sqrt) - see syntax, examples, and output."
+description: DSQRT — alias for `SQRT`. See [SQRT](sqrt) - see syntax, examples, and output.
 ---
 
 Alias for `SQRT`. See [SQRT](sqrt).

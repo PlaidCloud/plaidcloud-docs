@@ -1,6 +1,6 @@
 ---
 title: GROUP_ARRAY_MOVING_SUM
-description: "Learn how to use the GROUP_ARRAY_MOVING_SUM aggregate function in PlaidCloud Lakehouse. The GROUP_ARRAY_MOVING_SUM function calculates the moving sum of..."
+description: GROUP_ARRAY_MOVING_SUM — the GROUP_ARRAY_MOVING_SUM function calculates the moving sum of.
 ---
 
 The GROUP_ARRAY_MOVING_SUM function calculates the moving sum of input values. The function can take the window size as a parameter. If left unspecified, the function takes the window size equal to the number of input values.

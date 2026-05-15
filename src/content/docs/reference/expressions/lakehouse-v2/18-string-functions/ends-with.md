@@ -1,6 +1,6 @@
 ---
 title: ENDS_WITH
-description: "Learn how to use the ENDS_WITH string function in PlaidCloud Lakehouse. Checks whether a string ends with a specified suffix - with syntax and examples."
+description: ENDS_WITH — Checks whether a string ends with a specified suffix.
 ---
 
 Checks whether a string ends with a specified suffix.

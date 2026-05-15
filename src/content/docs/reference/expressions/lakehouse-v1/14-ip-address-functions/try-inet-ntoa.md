@@ -1,6 +1,6 @@
 ---
 title: TRY_INET_NTOA
-description: "Learn how to use the TRY_INET_NTOA IP address function in PlaidCloud Lakehouse. Takes an IPv4 address in network byte order and then returns the address as..."
+description: TRY_INET_NTOA — takes an IPv4 address in network byte order and then returns the address as.
 ---
 
 Takes an IPv4 address in network byte order and then returns the address as a dotted-quad string representation.

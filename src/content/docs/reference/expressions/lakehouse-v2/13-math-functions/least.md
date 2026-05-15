@@ -1,6 +1,6 @@
 ---
 title: LEAST
-description: "Learn how to use the LEAST math function in PlaidCloud Lakehouse. Returns the smallest value from a list of values - see syntax, examples, and output."
+description: LEAST — returns the smallest value from a list of values - see syntax, examples, and output.
 ---
 
 Returns the smallest value from a list of values.

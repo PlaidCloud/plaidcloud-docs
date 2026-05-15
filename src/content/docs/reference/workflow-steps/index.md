@@ -1,6 +1,6 @@
 ---
 title: Workflow Steps
-description: Every workflow step type available in PlaidCloud — import, export, table transformations, allocations, dimensions, document operations, notifications, and more.
+description: Every workflow step type in PlaidCloud — import, export, transforms, allocations, dimensions, documents, notifications, and more.
 ---
 
 Workflow steps are the building blocks of PlaidCloud automation. Each step performs one operation (import a CSV, join two tables, send a notification) and steps are composed into workflows that run sequentially, in parallel, conditionally, or in loops.

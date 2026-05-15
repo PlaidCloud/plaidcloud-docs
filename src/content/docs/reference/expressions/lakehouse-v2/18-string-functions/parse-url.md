@@ -1,6 +1,6 @@
 ---
 title: PARSE_URL
-description: "Learn how to use the PARSE_URL string function in PlaidCloud Lakehouse. Extracts a specified part from a URL string - see syntax, examples, and output."
+description: PARSE_URL — extracts a specified part from a URL string - see syntax, examples, and output.
 ---
 
 Extracts a specified part from a URL string.

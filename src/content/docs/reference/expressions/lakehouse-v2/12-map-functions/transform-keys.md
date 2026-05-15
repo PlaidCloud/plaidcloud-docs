@@ -1,6 +1,6 @@
 ---
 title: TRANSFORM_KEYS
-description: "Learn how to use the TRANSFORM_KEYS map function in PlaidCloud Lakehouse. Applies a lambda expression to transform the keys of a map - with syntax and examples."
+description: TRANSFORM_KEYS — Applies a lambda expression to transform the keys of a map.
 ---
 
 Applies a lambda expression to transform the keys of a map.

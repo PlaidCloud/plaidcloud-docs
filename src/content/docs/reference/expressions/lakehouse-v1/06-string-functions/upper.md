@@ -1,6 +1,6 @@
 ---
 title: UPPER
-description: "Learn how to use the UPPER string function in PlaidCloud Lakehouse. Returns a string with all characters changed to uppercase. Includes syntax and examples."
+description: UPPER — Returns a string with all characters changed to uppercase.
 ---
 
 Returns a string with all characters changed to uppercase.

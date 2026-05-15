@@ -1,6 +1,6 @@
 ---
 title: TO_STRING
-description: "Learn how to use the TO_STRING geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object into a String representation. Includes syntax and examples."
+description: TO_STRING — Converts a GEOMETRY object into a String representation.
 ---
 
 Converts a GEOMETRY object into a String representation. The display format of the output data is controlled by the `geometry_output_format` setting, which contains the following types:

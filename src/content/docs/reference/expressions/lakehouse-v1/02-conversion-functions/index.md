@@ -1,5 +1,6 @@
 ---
 title: Conversion Functions
+description: "Lakehouse v1 SQL conversion functions: cast values between types — CAST, TRY_CAST, parse, and format helpers."
 ---
 
 This section provides reference information for the conversion functions in PlaidCloud Lakehouse.

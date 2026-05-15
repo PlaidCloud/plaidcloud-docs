@@ -1,6 +1,6 @@
 ---
 title: DS_HLL_ESTIMATE
-description: "Learn how to use the DS_HLL_ESTIMATE aggregate function in PlaidCloud Lakehouse. Estimates the cardinality from a DataSketches HLL sketch."
+description: DS_HLL_ESTIMATE — estimates the cardinality from a DataSketches HLL sketch.
 ---
 
 Estimates the cardinality from a DataSketches HLL sketch.

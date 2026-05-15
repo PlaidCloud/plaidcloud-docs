@@ -1,6 +1,6 @@
 ---
 title: TIME_FORMAT
-description: "Learn how to use the TIME_FORMAT date/time function in PlaidCloud Lakehouse. Formats a time value according to a format string - with syntax and examples."
+description: TIME_FORMAT — formats a time value according to a format string.
 ---
 
 Formats a time value according to a format string.

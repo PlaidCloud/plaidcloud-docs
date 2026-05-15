@@ -1,6 +1,6 @@
 ---
 title: DAYNAME
-description: "Learn how to use the DAYNAME date/time function in PlaidCloud Lakehouse. Returns the name of the weekday for a date - see syntax, examples, and output."
+description: DAYNAME — returns the name of the weekday for a date - see syntax, examples, and output.
 ---
 
 Returns the name of the weekday for a date.

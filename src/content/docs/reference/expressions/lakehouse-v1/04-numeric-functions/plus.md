@@ -1,6 +1,6 @@
 ---
 title: PLUS
-description: "Learn how to use the PLUS numeric function in PlaidCloud Lakehouse. Calculates the sum of two numeric or decimal values. Includes syntax and examples."
+description: PLUS — Calculates the sum of two numeric or decimal values.
 ---
 
 Calculates the sum of two numeric or decimal values.

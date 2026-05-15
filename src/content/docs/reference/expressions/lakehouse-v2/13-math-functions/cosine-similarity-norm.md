@@ -1,6 +1,6 @@
 ---
 title: COSINE_SIMILARITY_NORM
-description: "Learn how to use the COSINE_SIMILARITY_NORM math function in PlaidCloud Lakehouse. Returns the cosine similarity between two normalized arrays."
+description: COSINE_SIMILARITY_NORM — returns the cosine similarity between two normalized arrays.
 ---
 
 Returns the cosine similarity between two normalized arrays.

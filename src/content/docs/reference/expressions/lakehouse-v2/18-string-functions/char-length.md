@@ -1,6 +1,6 @@
 ---
 title: CHAR_LENGTH
-description: "Learn how to use the CHAR_LENGTH string function in PlaidCloud Lakehouse. Returns the number of characters in a string - see syntax, examples, and output."
+description: CHAR_LENGTH — returns the number of characters in a string - see syntax, examples, and output.
 ---
 
 Returns the number of characters in a string.

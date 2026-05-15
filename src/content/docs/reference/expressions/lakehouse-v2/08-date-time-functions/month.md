@@ -1,6 +1,6 @@
 ---
 title: MONTH
-description: "Learn how to use the MONTH date/time function in PlaidCloud Lakehouse. Returns the month from a date - see syntax, examples, and output."
+description: MONTH — returns the month from a date - see syntax, examples, and output.
 ---
 
 Returns the month from a date.

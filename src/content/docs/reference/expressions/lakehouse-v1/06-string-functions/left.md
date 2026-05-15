@@ -1,6 +1,6 @@
 ---
 title: LEFT
-description: "Learn how to use the LEFT string function in PlaidCloud Lakehouse. Returns the leftmost len characters from the string str, or NULL if any argument is NULL."
+description: LEFT — returns the leftmost len characters from the string str, or NULL if any argument is NULL.
 ---
 
 Returns the leftmost len characters from the string str, or NULL if any argument is NULL.

@@ -1,6 +1,6 @@
 ---
 title: STARTS_WITH
-description: "Learn how to use the STARTS_WITH string function in PlaidCloud Lakehouse. Checks whether a string starts with a specified prefix - with syntax and examples."
+description: STARTS_WITH — Checks whether a string starts with a specified prefix.
 ---
 
 Checks whether a string starts with a specified prefix.

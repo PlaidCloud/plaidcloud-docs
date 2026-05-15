@@ -1,6 +1,6 @@
 ---
 title: BITMAP_UNION
-description: "Learn how to use the BITMAP_UNION bitmap function in PlaidCloud Lakehouse. Returns the union of a set of bitmaps (aggregate) - with syntax and examples."
+description: BITMAP_UNION — Returns the union of a set of bitmaps (aggregate).
 ---
 
 Returns the union of a set of bitmaps (aggregate).

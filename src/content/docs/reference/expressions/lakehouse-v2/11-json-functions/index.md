@@ -1,5 +1,6 @@
 ---
 title: JSON Functions
+description: "Lakehouse v2 SQL json functions: parse, query, and transform JSON values stored in tables."
 ---
 
 This section provides reference information for the JSON functions in PlaidCloud Lakehouse.

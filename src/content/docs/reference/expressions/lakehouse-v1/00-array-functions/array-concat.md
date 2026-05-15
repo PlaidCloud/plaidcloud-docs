@@ -1,6 +1,6 @@
 ---
 title: ARRAY_CONCAT
-description: "Learn how to use the ARRAY_CONCAT array function in PlaidCloud Lakehouse. Concats two arrays. Includes detailed syntax, examples, and usage reference."
+description: ARRAY_CONCAT — concats two arrays. Includes detailed syntax, examples, and usage reference.
 ---
 
 Concats two arrays.

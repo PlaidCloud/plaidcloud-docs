@@ -1,6 +1,6 @@
 ---
 title: ST_POINTN
-description: "Learn how to use the ST_POINTN geometry function in PlaidCloud Lakehouse. Returns a Point at a specified index in a LineString. Includes syntax and examples."
+description: ST_POINTN — Returns a Point at a specified index in a LineString.
 ---
 
 Returns a Point at a specified index in a LineString.

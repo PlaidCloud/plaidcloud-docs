@@ -1,6 +1,6 @@
 ---
 title: DATE
-description: "Learn how to use the DATE date/time function in PlaidCloud Lakehouse. Extracts the date part from a datetime expression - see syntax, examples, and output."
+description: DATE — extracts the date part from a datetime expression - see syntax, examples, and output.
 ---
 
 Extracts the date part from a datetime expression.

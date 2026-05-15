@@ -1,6 +1,6 @@
 ---
 title: PERCENTILE_APPROX_WEIGHT
-description: "Learn how to use the PERCENTILE_APPROX_WEIGHT aggregate function in PlaidCloud Lakehouse. Returns a weighted approximate percentile value."
+description: PERCENTILE_APPROX_WEIGHT — returns a weighted approximate percentile value.
 ---
 
 Returns a weighted approximate percentile value.

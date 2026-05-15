@@ -1,6 +1,6 @@
 ---
 title: POSITIVE
-description: "Learn how to use the POSITIVE math function in PlaidCloud Lakehouse. Returns the value unchanged (unary plus) - see syntax, examples, and output."
+description: POSITIVE — returns the value unchanged (unary plus) - see syntax, examples, and output.
 ---
 
 Returns the value unchanged (unary plus).

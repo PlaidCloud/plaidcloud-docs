@@ -1,6 +1,6 @@
 ---
 title: SECOND
-description: "Learn how to use the SECOND date/time function in PlaidCloud Lakehouse. Returns the second from a datetime - see syntax, examples, and output."
+description: SECOND — returns the second from a datetime - see syntax, examples, and output.
 ---
 
 Returns the second from a datetime.

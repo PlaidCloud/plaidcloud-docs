@@ -1,6 +1,6 @@
 ---
 title: ARRAY_TRANSFORM
-description: "Learn how to use the ARRAY_TRANSFORM array function in PlaidCloud Lakehouse. Returns an array that is the result of applying the lambda function to each..."
+description: ARRAY_TRANSFORM — returns an array that is the result of applying the lambda function to each.
 ---
 
 Returns an array that is the result of applying the lambda function to each element of the input array.

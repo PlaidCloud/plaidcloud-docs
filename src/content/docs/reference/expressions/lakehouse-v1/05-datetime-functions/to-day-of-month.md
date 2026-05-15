@@ -1,6 +1,6 @@
 ---
 title: TO_DAY_OF_MONTH
-description: "Learn how to use the TO_DAY_OF_MONTH datetime function in PlaidCloud Lakehouse. Convert a date or date with time (timestamp/datetime) to a UInt8 number..."
+description: TO_DAY_OF_MONTH — convert a date or date with time (timestamp/datetime) to a UInt8 number.
 ---
 
 Convert a date or date with time (timestamp/datetime) to a UInt8 number containing the number of the day of the month (1-31).

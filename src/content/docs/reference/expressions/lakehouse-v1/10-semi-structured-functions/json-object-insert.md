@@ -1,6 +1,6 @@
 ---
 title: JSON_OBJECT_INSERT
-description: "Learn how to use the JSON_OBJECT_INSERT semi-structured data function in PlaidCloud Lakehouse. Inserts or updates a key-value pair in a JSON object."
+description: JSON_OBJECT_INSERT — inserts or updates a key-value pair in a JSON object.
 ---
 
 Inserts or updates a key-value pair in a JSON object.

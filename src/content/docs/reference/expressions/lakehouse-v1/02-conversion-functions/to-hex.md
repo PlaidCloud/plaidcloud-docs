@@ -1,6 +1,6 @@
 ---
 title: TO_HEX
-description: "Learn how to use the TO_HEX conversion function in PlaidCloud Lakehouse. For a string argument str, TO_HEX() returns a hexadecimal string representation of..."
+description: TO_HEX — for a string argument str, TO_HEX() returns a hexadecimal string representation of.
 ---
 
 For a string argument str, TO_HEX() returns a hexadecimal string representation of str where each byte of each character in str is converted to two hexadecimal digits. The inverse of this operation is performed by the UNHEX() function.

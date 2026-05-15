@@ -1,6 +1,6 @@
 ---
 title: GET_JSON_INT
-description: "Learn how to use the GET_JSON_INT json function in PlaidCloud Lakehouse. Extracts an integer value from a JSON object by a specified path."
+description: GET_JSON_INT — extracts an integer value from a JSON object by a specified path.
 ---
 
 Extracts an integer value from a JSON object by a specified path.

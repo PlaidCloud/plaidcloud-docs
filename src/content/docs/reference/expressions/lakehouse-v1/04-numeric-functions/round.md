@@ -1,6 +1,6 @@
 ---
 title: ROUND
-description: "Learn how to use the ROUND numeric function in PlaidCloud Lakehouse. Rounds the argument x to d decimal places. Includes syntax and examples."
+description: ROUND — Rounds the argument x to d decimal places.
 ---
 
 Rounds the argument x to d decimal places. The rounding algorithm depends on the data type of x. d defaults to 0 if not specified. d can be negative to cause d digits left of the decimal point of the value x to become zero. The maximum absolute value for d is 30; any digits in excess of 30 (or -30) are truncated.

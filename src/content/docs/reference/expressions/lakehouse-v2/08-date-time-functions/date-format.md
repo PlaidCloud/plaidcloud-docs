@@ -1,6 +1,6 @@
 ---
 title: DATE_FORMAT
-description: "Learn how to use the DATE_FORMAT date/time function in PlaidCloud Lakehouse. Formats a date or datetime value according to a format string."
+description: DATE_FORMAT — formats a date or datetime value according to a format string.
 ---
 
 Formats a date or datetime value according to a format string.

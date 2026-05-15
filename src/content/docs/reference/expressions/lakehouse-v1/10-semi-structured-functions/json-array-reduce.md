@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_REDUCE
-description: "Learn how to use the JSON_ARRAY_REDUCE semi-structured data function in PlaidCloud Lakehouse. Reduces a JSON array to a single value by applying a specified..."
+description: JSON_ARRAY_REDUCE — reduces a JSON array to a single value by applying a specified.
 ---
 
 Reduces a JSON array to a single value by applying a specified Lambda expression. For more information about Lambda expression, see Lambda Expressions.

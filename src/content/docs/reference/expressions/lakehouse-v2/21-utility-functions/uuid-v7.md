@@ -1,6 +1,6 @@
 ---
 title: UUID_V7
-description: "Learn how to use the UUID_V7 utility function in PlaidCloud Lakehouse. Returns a time-ordered UUID v7 string. UUID v7 values are sortable by creation time."
+description: UUID_V7 — returns a time-ordered UUID v7 string. UUID v7 values are sortable by creation time.
 ---
 
 Returns a time-ordered UUID v7 string. UUID v7 values are sortable by creation time.

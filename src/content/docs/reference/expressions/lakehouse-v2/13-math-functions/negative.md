@@ -1,6 +1,6 @@
 ---
 title: NEGATIVE
-description: "Learn how to use the NEGATIVE math function in PlaidCloud Lakehouse. Returns the negation of a number - see syntax, examples, and output."
+description: NEGATIVE — returns the negation of a number - see syntax, examples, and output.
 ---
 
 Returns the negation of a number.

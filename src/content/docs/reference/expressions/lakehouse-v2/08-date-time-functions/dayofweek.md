@@ -1,6 +1,6 @@
 ---
 title: DAYOFWEEK
-description: "Learn how to use the DAYOFWEEK date/time function in PlaidCloud Lakehouse. Returns the day of the week index for a date (1=Sunday, 7=Saturday)."
+description: DAYOFWEEK — returns the day of the week index for a date (1=Sunday, 7=Saturday).
 ---
 
 Returns the day of the week index for a date (1=Sunday, 7=Saturday).

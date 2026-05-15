@@ -1,6 +1,6 @@
 ---
 title: CASE
-description: "Learn how to use the CASE conditional function in PlaidCloud Lakehouse. Handles IF/THEN logic. Includes detailed syntax, examples, and usage reference."
+description: CASE — handles IF/THEN logic. Includes detailed syntax, examples, and usage reference.
 ---
 
 Handles IF/THEN logic. It is structured with at least one pair of `WHEN` and `THEN` statements. Every `CASE` statement must be concluded with the `END` keyword. The `ELSE` statement is optional, providing a way to capture values not explicitly specified in the `WHEN` and `THEN` statements.

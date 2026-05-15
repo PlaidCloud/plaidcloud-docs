@@ -139,7 +139,41 @@ export default defineConfig({
 				},
 				{ label: "What's new", link: '/releases/' },
 			],
-			plugins: [starlightLlmsTxt()],
+			plugins: [
+				starlightLlmsTxt({
+					projectName: 'PlaidCloud',
+					description:
+						'PlaidCloud is a unified financial analytics platform for finance and data teams: ETL/ELT workflows, allocations, dimensions, a managed Lakehouse (Databend v1 or Iceberg+StarRocks v2), dashboards, and an MCP server for AI agents.',
+					details: `Audience: data engineers, analysts, and finance/FP&A users.
+
+Concepts:
+
+- **Workspace**: a tenant — e.g. \`acme.plaid.cloud\`. All access is scoped to a workspace.
+- **Project**: holds tables, dimensions, workflows, dashboards, and documents.
+- **Workflow**: an ordered sequence of *workflow steps* (import, transform, allocate, export, notify, etc.).
+- **Allocation**: distributes a value across a *dimension* using a driver and a method.
+- **Lakehouse v1 vs v2**: v1 uses Databend SQL; v2 uses Apache Iceberg tables with StarRocks 4.1 SQL — function names differ.
+- **PlaidLink Agent**: outbound proxy that lets workflows reach on-prem databases and file systems.
+- **MCP server**: every workspace exposes \`/mcp/\` for AI coding agents (Claude Code, Cursor, ChatGPT, etc.).
+
+Documentation structure:
+
+- \`get-started/\` — concepts, quickstart, end-to-end tutorials, FAQ
+- \`guides/\` — task-oriented how-to content
+- \`reference/\` — workflow steps, expressions (SQL functions), connectors, CLI, glossary
+- \`integrations/\` — AI coding agents, PySpark
+- \`administration/\` — access management, SSO/SAML, scheduled events
+- \`releases/\` — monthly release notes`,
+					customSets: [
+						{ label: 'Get Started', paths: ['get-started/**'], description: 'Concepts, quickstart, tutorials, and FAQ.' },
+						{ label: 'Guides', paths: ['guides/**'], description: 'Task-oriented how-to content.' },
+						{ label: 'Reference', paths: ['reference/**'], description: 'Workflow steps, expressions, connectors, CLI, and glossary.' },
+						{ label: 'Integrations', paths: ['integrations/**'], description: 'AI coding agents and external tools.' },
+						{ label: 'Administration', paths: ['administration/**'], description: 'Access management, SSO/SAML, and scheduled events.' },
+					],
+					exclude: ['releases/**'],
+				}),
+			],
 		}),
 	],
 });

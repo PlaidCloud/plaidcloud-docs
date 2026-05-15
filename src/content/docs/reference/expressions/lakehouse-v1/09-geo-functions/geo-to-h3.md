@@ -1,6 +1,6 @@
 ---
 title: GEO_TO_H3
-description: "Learn how to use the GEO_TO_H3 utility function in PlaidCloud Lakehouse. Returns the H3 index of the hexagon cell where the given location resides."
+description: GEO_TO_H3 — returns the H3 index of the hexagon cell where the given location resides.
 ---
 
 Returns the [H3](https://eng.uber.com/h3/) index of the hexagon cell where the given location resides. Returning 0 means an error occurred.

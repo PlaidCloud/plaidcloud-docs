@@ -1,6 +1,6 @@
 ---
 title: BITMAP_UNION
-description: "Learn how to use the BITMAP_UNION bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 1 in the bitmap by performing a logical UNION..."
+description: BITMAP_UNION — counts the number of bits set to 1 in the bitmap by performing a logical UNION.
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical UNION operation.

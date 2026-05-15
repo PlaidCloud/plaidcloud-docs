@@ -1,6 +1,6 @@
 ---
 title: VAR_POP
-description: "Learn how to use the VAR_POP aggregate function in PlaidCloud Lakehouse. Returns the population variance. Alias for `VARIANCE_POP` - with syntax and examples."
+description: VAR_POP — Returns the population variance. Alias for `VARIANCE_POP`.
 ---
 
 Returns the population variance. Alias for `VARIANCE_POP`.

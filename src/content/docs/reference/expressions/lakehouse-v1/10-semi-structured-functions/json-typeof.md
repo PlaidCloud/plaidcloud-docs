@@ -1,6 +1,6 @@
 ---
 title: JSON_TYPEOF
-description: "Learn how to use the JSON_TYPEOF semi-structured data function in PlaidCloud Lakehouse. Returns the type of the main-level of a JSON structure."
+description: JSON_TYPEOF — returns the type of the main-level of a JSON structure.
 ---
 
 Returns the type of the main-level of a JSON structure.

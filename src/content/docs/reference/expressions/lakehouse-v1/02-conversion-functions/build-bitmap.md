@@ -1,6 +1,6 @@
 ---
 title: BUILD_BITMAP
-description: "Learn how to use the BUILD_BITMAP conversion function in PlaidCloud Lakehouse. Converts an array of positive integers to a BITMAP value. Includes syntax and..."
+description: BUILD_BITMAP — converts an array of positive integers to a BITMAP value. Includes syntax and.
 ---
 
 Converts an array of positive integers to a BITMAP value.

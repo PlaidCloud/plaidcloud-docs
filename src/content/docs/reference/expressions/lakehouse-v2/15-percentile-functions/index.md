@@ -1,5 +1,6 @@
 ---
 title: Percentile Functions
+description: "Lakehouse v2 SQL percentile functions: compute percentiles, medians, and quantile-based aggregates."
 ---
 
 This section provides reference information for the percentile functions in PlaidCloud Lakehouse.

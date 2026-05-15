@@ -1,6 +1,6 @@
 ---
 title: MATCH
-description: "Learn how to use the MATCH search function in PlaidCloud Lakehouse. Searches for documents containing specified keywords. Includes syntax and examples."
+description: MATCH — Searches for documents containing specified keywords.
 ---
 
 Searches for documents containing specified keywords. Please note that the MATCH function can only be used in a WHERE clause.

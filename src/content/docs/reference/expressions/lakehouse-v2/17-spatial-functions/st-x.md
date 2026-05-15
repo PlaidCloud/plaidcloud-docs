@@ -1,6 +1,6 @@
 ---
 title: ST_X
-description: "Learn how to use the ST_X spatial function in PlaidCloud Lakehouse. Returns the X coordinate (longitude) of a point geometry - with syntax and examples."
+description: ST_X — Returns the X coordinate (longitude) of a point geometry.
 ---
 
 Returns the X coordinate (longitude) of a point geometry.

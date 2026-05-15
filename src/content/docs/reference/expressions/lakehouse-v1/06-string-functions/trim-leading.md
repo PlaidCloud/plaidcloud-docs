@@ -1,6 +1,6 @@
 ---
 title: TRIM_LEADING
-description: "Learn how to use the TRIM_LEADING string function in PlaidCloud Lakehouse. Removes all occurrences of the specified trim string from the beginning of the..."
+description: TRIM_LEADING — removes all occurrences of the specified trim string from the beginning of the.
 ---
 
 Removes all occurrences of the specified trim string from the beginning of the string.

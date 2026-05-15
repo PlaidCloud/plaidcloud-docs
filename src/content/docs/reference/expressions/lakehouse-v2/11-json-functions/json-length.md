@@ -1,6 +1,6 @@
 ---
 title: JSON_LENGTH
-description: "Learn how to use the JSON_LENGTH json function in PlaidCloud Lakehouse. Returns the number of elements in a JSON object or array - with syntax and examples."
+description: JSON_LENGTH — Returns the number of elements in a JSON object or array.
 ---
 
 Returns the number of elements in a JSON object or array.

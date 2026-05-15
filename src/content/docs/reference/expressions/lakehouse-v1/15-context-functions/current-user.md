@@ -1,6 +1,6 @@
 ---
 title: CURRENT_USER
-description: "Learn how to use the CURRENT_USER context function in PlaidCloud Lakehouse. Returns the user name and host name combination for the account that the server..."
+description: CURRENT_USER — returns the user name and host name combination for the account that the server.
 ---
 
 Returns the user name and host name combination for the account that the server used to authenticate the current client. This account determines your access privileges. The return value is a string in the utf8 character set.

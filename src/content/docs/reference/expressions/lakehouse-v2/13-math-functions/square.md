@@ -1,6 +1,6 @@
 ---
 title: SQUARE
-description: "Learn how to use the SQUARE math function in PlaidCloud Lakehouse. Returns the square of a number - see syntax, examples, and output."
+description: SQUARE — returns the square of a number - see syntax, examples, and output.
 ---
 
 Returns the square of a number.

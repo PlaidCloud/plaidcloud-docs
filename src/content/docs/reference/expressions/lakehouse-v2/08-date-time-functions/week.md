@@ -1,6 +1,6 @@
 ---
 title: WEEK
-description: "Learn how to use the WEEK date/time function in PlaidCloud Lakehouse. Returns the week number of the year for a date - see syntax, examples, and output."
+description: WEEK — returns the week number of the year for a date - see syntax, examples, and output.
 ---
 
 Returns the week number of the year for a date.

@@ -1,6 +1,6 @@
 ---
 title: HOST_NAME
-description: "Learn how to use the HOST_NAME utility function in PlaidCloud Lakehouse. Returns the host name of the current backend node - with syntax and examples."
+description: HOST_NAME — Returns the host name of the current backend node.
 ---
 
 Returns the host name of the current backend node.

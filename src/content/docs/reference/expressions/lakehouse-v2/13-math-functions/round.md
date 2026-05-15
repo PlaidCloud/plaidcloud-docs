@@ -1,6 +1,6 @@
 ---
 title: ROUND
-description: "Learn how to use the ROUND math function in PlaidCloud Lakehouse. Rounds a number to a specified number of decimal places - with syntax and examples."
+description: ROUND — Rounds a number to a specified number of decimal places.
 ---
 
 Rounds a number to a specified number of decimal places.

@@ -1,6 +1,6 @@
 ---
 title: TO_START_OF_FIVE_MINUTES
-description: "Learn how to use the TO_START_OF_FIVE_MINUTES datetime function in PlaidCloud Lakehouse. Rounds down a date with time (timestamp/datetime) to the start of..."
+description: TO_START_OF_FIVE_MINUTES — rounds down a date with time (timestamp/datetime) to the start of.
 ---
 
 Rounds down a date with time (timestamp/datetime) to the start of the five-minute interval.

@@ -1,6 +1,6 @@
 ---
 title: REGEXP_INSTR
-description: "Learn how to use the REGEXP_INSTR string function in PlaidCloud Lakehouse. Returns the starting index of the substring of the string expr that matches the..."
+description: REGEXP_INSTR — returns the starting index of the substring of the string expr that matches the.
 ---
 
 Returns the starting index of the substring of the string `expr` that matches the regular expression specified by the pattern `pat`, `0` if there is no match. If `expr` or `pat` is NULL, the return value is NULL. Character indexes begin at `1`.

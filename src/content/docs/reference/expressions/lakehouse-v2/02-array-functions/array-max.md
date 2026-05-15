@@ -1,6 +1,6 @@
 ---
 title: ARRAY_MAX
-description: "Learn how to use the ARRAY_MAX array function in PlaidCloud Lakehouse. Returns the maximum element in an array - see syntax, examples, and output."
+description: ARRAY_MAX — returns the maximum element in an array - see syntax, examples, and output.
 ---
 
 Returns the maximum element in an array.

@@ -1,6 +1,6 @@
 ---
 title: NGRAM_SEARCH
-description: "Learn how to use the NGRAM_SEARCH string function in PlaidCloud Lakehouse. Returns a similarity score between two strings based on n-gram matching."
+description: NGRAM_SEARCH — returns a similarity score between two strings based on n-gram matching.
 ---
 
 Returns a similarity score between two strings based on n-gram matching.

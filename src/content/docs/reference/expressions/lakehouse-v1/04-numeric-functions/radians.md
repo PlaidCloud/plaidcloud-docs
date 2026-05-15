@@ -1,6 +1,6 @@
 ---
 title: RADIANS
-description: "Learn how to use the RADIANS numeric function in PlaidCloud Lakehouse. Returns the argument x, converted from degrees to radians. Includes syntax and examples."
+description: RADIANS — Returns the argument x, converted from degrees to radians.
 ---
 
 Returns the argument `x`, converted from degrees to radians.

@@ -1,6 +1,6 @@
 ---
 title: GROUP_CONCAT
-description: "Learn how to use the GROUP_CONCAT aggregate function in PlaidCloud Lakehouse. Concatenates values from a group into a single string with a separator."
+description: GROUP_CONCAT — concatenates values from a group into a single string with a separator.
 ---
 
 Concatenates values from a group into a single string with a separator.

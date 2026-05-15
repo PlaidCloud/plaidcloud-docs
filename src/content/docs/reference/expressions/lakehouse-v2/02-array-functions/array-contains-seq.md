@@ -1,6 +1,6 @@
 ---
 title: ARRAY_CONTAINS_SEQ
-description: "Learn how to use the ARRAY_CONTAINS_SEQ array function in PlaidCloud Lakehouse. Checks whether an array contains all elements of another array in order."
+description: ARRAY_CONTAINS_SEQ — checks whether an array contains all elements of another array in order.
 ---
 
 Checks whether an array contains all elements of another array in order.

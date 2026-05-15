@@ -1,6 +1,6 @@
 ---
 title: CHARACTER_LENGTH
-description: "Learn how to use the CHARACTER_LENGTH string function in PlaidCloud Lakehouse. Returns the number of characters in a string. Alias for `CHAR_LENGTH`."
+description: CHARACTER_LENGTH — returns the number of characters in a string. Alias for `CHAR_LENGTH`.
 ---
 
 Returns the number of characters in a string. Alias for `CHAR_LENGTH`.

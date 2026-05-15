@@ -1,6 +1,6 @@
 ---
 title: FROM_UNIXTIME
-description: "Learn how to use the FROM_UNIXTIME date/time function in PlaidCloud Lakehouse. Converts a Unix timestamp to a datetime string - with syntax and examples."
+description: FROM_UNIXTIME — converts a Unix timestamp to a datetime string.
 ---
 
 Converts a Unix timestamp to a datetime string.

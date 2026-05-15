@@ -1,6 +1,6 @@
 ---
 title: TRIM_BOTH
-description: "Learn how to use the TRIM_BOTH string function in PlaidCloud Lakehouse. Removes all occurrences of the specified trim string from the beginning, end, or..."
+description: TRIM_BOTH — removes all occurrences of the specified trim string from the beginning, end, or.
 ---
 
 Removes all occurrences of the specified trim string from the beginning, end, or both sides of the string.

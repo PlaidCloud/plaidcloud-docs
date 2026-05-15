@@ -1,5 +1,6 @@
 ---
 title: Aggregate Functions
+description: "Lakehouse v2 SQL aggregate functions: summarise rows — SUM, AVG, MIN, MAX, COUNT, and statistical aggregates."
 ---
 
 This section provides reference information for the aggregate functions in PlaidCloud Lakehouse.

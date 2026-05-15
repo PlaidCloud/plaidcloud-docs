@@ -1,6 +1,6 @@
 ---
 title: E
-description: "Learn how to use the E math function in PlaidCloud Lakehouse. Returns the mathematical constant e (Euler's number) - see syntax, examples, and output."
+description: E — returns the mathematical constant e (Euler's number) - see syntax, examples, and output.
 ---
 
 Returns the mathematical constant e (Euler's number).

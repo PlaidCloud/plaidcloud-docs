@@ -1,6 +1,6 @@
 ---
 title: ARRAY_APPEND
-description: "Learn how to use the ARRAY_APPEND array function in PlaidCloud Lakehouse. Prepends an element to the array. Full syntax and usage reference."
+description: ARRAY_APPEND — prepends an element to the array.
 ---
 
 Prepends an element to the array.

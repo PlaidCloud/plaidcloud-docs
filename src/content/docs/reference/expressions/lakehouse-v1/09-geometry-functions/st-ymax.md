@@ -1,6 +1,6 @@
 ---
 title: ST_YMAX
-description: "Learn how to use the ST_YMAX geometry function in PlaidCloud Lakehouse. Returns the maximum latitude (Y coordinate) of all points contained in the specified..."
+description: ST_YMAX — returns the maximum latitude (Y coordinate) of all points contained in the specified.
 ---
 
 Returns the maximum latitude (Y coordinate) of all points contained in the specified GEOMETRY object.

@@ -1,6 +1,6 @@
 ---
 title: MAP_VALUES
-description: "Learn how to use the MAP_VALUES map function in PlaidCloud Lakehouse. Returns all values from a map as an array - see syntax, examples, and output."
+description: MAP_VALUES — returns all values from a map as an array - see syntax, examples, and output.
 ---
 
 Returns all values from a map as an array.

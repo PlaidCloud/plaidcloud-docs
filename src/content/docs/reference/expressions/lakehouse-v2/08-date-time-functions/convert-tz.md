@@ -1,6 +1,6 @@
 ---
 title: CONVERT_TZ
-description: "Learn how to use the CONVERT_TZ date/time function in PlaidCloud Lakehouse. Converts a datetime from one time zone to another - with syntax and examples."
+description: CONVERT_TZ — converts a datetime from one time zone to another.
 ---
 
 Converts a datetime from one time zone to another.

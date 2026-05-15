@@ -1,6 +1,6 @@
 ---
 title: REGEXP
-description: "Learn how to use the REGEXP pattern matching function in PlaidCloud Lakehouse. Checks whether a string matches a regular expression pattern."
+description: REGEXP — checks whether a string matches a regular expression pattern.
 ---
 
 Checks whether a string matches a regular expression pattern.

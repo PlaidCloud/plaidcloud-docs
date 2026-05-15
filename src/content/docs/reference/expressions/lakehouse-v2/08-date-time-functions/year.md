@@ -1,6 +1,6 @@
 ---
 title: YEAR
-description: "Learn how to use the YEAR date/time function in PlaidCloud Lakehouse. Returns the year from a date - see syntax, examples, and output."
+description: YEAR — returns the year from a date - see syntax, examples, and output.
 ---
 
 Returns the year from a date.

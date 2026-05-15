@@ -1,6 +1,6 @@
 ---
 title: VERSION
-description: "Learn how to use the VERSION context function in PlaidCloud Lakehouse. Returns the current version of PlaidCloud LakehouseQuery. Includes syntax and examples."
+description: VERSION — Returns the current version of PlaidCloud LakehouseQuery.
 ---
 
 Returns the current version of PlaidCloud LakehouseQuery.

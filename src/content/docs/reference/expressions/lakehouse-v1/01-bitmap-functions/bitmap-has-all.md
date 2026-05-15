@@ -1,6 +1,6 @@
 ---
 title: BITMAP_HAS_ALL
-description: "Learn how to use the BITMAP_HAS_ALL bitmap function in PlaidCloud Lakehouse. Checks if the first bitmap contains all the bits in the second bitmap."
+description: BITMAP_HAS_ALL — checks if the first bitmap contains all the bits in the second bitmap.
 ---
 
 Checks if the first bitmap contains all the bits in the second bitmap.

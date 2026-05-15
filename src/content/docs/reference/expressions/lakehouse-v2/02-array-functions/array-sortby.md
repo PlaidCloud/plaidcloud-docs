@@ -1,6 +1,6 @@
 ---
 title: ARRAY_SORTBY
-description: "Learn how to use the ARRAY_SORTBY array function in PlaidCloud Lakehouse. Sorts elements of one array by corresponding elements of another array."
+description: ARRAY_SORTBY — sorts elements of one array by corresponding elements of another array.
 ---
 
 Sorts elements of one array by corresponding elements of another array.

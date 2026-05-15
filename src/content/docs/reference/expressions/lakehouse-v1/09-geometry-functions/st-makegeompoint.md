@@ -1,6 +1,6 @@
 ---
 title: ST_MAKEGEOMPOINT
-description: "Learn how to use the ST_MAKEGEOMPOINT geometry function in PlaidCloud Lakehouse. Constructs a GEOMETRY object that represents a Point with the specified..."
+description: ST_MAKEGEOMPOINT — constructs a GEOMETRY object that represents a Point with the specified.
 ---
 
 Constructs a GEOMETRY object that represents a Point with the specified longitude and latitude.

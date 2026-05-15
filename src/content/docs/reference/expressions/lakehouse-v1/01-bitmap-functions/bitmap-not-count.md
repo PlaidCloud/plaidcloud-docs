@@ -1,6 +1,6 @@
 ---
 title: BITMAP_NOT_COUNT
-description: "Learn how to use the BITMAP_NOT_COUNT bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 0 in the bitmap by performing a logical NOT..."
+description: BITMAP_NOT_COUNT — counts the number of bits set to 0 in the bitmap by performing a logical NOT.
 ---
 
 Counts the number of bits set to 0 in the bitmap by performing a logical NOT operation.

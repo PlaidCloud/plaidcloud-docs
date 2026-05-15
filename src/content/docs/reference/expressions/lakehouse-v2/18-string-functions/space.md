@@ -1,6 +1,6 @@
 ---
 title: SPACE
-description: "Learn how to use the SPACE string function in PlaidCloud Lakehouse. Returns a string consisting of a specified number of spaces - with syntax and examples."
+description: SPACE — Returns a string consisting of a specified number of spaces.
 ---
 
 Returns a string consisting of a specified number of spaces.

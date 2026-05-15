@@ -1,6 +1,6 @@
 ---
 title: UNHEX
-description: "Learn how to use the UNHEX string function in PlaidCloud Lakehouse. For a string argument str, UNHEX(str) interprets each pair of characters in the argument..."
+description: UNHEX — for a string argument str, UNHEX(str) interprets each pair of characters in the argument.
 ---
 
 For a string argument str, UNHEX(str) interprets each pair of characters in the argument as a hexadecimal number and converts it to the byte represented by the number. The return value is a binary string.

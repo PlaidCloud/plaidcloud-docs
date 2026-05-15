@@ -1,5 +1,6 @@
 ---
 title: String Functions
+description: "Lakehouse v1 SQL string functions: manipulate text — case, trim, split, search, replace, format, and encode."
 ---
 
 This section provides reference information for the string-related functions in PlaidCloud Lakehouse.

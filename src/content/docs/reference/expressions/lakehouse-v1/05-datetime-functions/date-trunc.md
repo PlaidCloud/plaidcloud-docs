@@ -1,6 +1,6 @@
 ---
 title: DATE_TRUNC
-description: "Learn how to use the DATE_TRUNC datetime function in PlaidCloud Lakehouse. Truncates a date, time, or timestamp value to a specified precision."
+description: DATE_TRUNC — truncates a date, time, or timestamp value to a specified precision.
 ---
 
 Truncates a date, time, or timestamp value to a specified precision. For example, if you truncate `2022-07-07` to `MONTH`, the result will be `2022-07-01`; if you truncate `2022-07-07 01:01:01.123456` to `SECOND`, the result will be `2022-07-07 01:01:01.000000`.

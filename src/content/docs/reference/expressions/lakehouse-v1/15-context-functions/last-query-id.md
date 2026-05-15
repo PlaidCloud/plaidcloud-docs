@@ -1,6 +1,6 @@
 ---
 title: LAST_QUERY_ID
-description: "Learn how to use the LAST_QUERY_ID context function in PlaidCloud Lakehouse. Returns the last query ID of query in current session, index can be (-1, 1, 1+2)."
+description: LAST_QUERY_ID — returns the last query ID of query in current session, index can be (-1, 1, 1+2).
 ---
 
 Returns the last query ID of query in current session, index can be (-1, 1, 1+2)..., out of range index will return empty string.

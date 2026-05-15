@@ -1,5 +1,6 @@
 ---
 title: Aggregate Functions
+description: "Lakehouse v1 SQL aggregate functions: summarise rows — SUM, AVG, MIN, MAX, COUNT, and statistical aggregates."
 ---
 
 Aggregate functions are essential tools in SQL that allow you to perform calculations on a set of values and return a single result.

@@ -1,6 +1,6 @@
 ---
 title: ACOS
-description: "Learn how to use the ACOS math function in PlaidCloud Lakehouse. Returns the arc cosine of a number in radians - see syntax, examples, and output."
+description: ACOS — returns the arc cosine of a number in radians - see syntax, examples, and output.
 ---
 
 Returns the arc cosine of a number in radians.

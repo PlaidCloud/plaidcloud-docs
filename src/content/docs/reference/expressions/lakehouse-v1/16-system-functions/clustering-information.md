@@ -1,6 +1,6 @@
 ---
 title: CLUSTERING_INFORMATION
-description: "Learn how to use the CLUSTERING_INFORMATION system function in PlaidCloud Lakehouse. Returns clustering information of a table. Includes syntax and examples."
+description: CLUSTERING_INFORMATION — Returns clustering information of a table.
 ---
 
 Returns clustering information of a table.

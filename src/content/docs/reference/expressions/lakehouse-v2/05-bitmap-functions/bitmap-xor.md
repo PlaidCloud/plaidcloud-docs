@@ -1,6 +1,6 @@
 ---
 title: BITMAP_XOR
-description: "Learn how to use the BITMAP_XOR bitmap function in PlaidCloud Lakehouse. Returns the symmetric difference of two bitmaps - see syntax, examples, and output."
+description: BITMAP_XOR — returns the symmetric difference of two bitmaps - see syntax, examples, and output.
 ---
 
 Returns the symmetric difference of two bitmaps.

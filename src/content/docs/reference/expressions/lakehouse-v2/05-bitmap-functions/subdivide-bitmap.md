@@ -1,6 +1,6 @@
 ---
 title: SUBDIVIDE_BITMAP
-description: "Learn how to use the SUBDIVIDE_BITMAP bitmap function in PlaidCloud Lakehouse. Splits a bitmap into multiple sub-bitmaps of a given size."
+description: SUBDIVIDE_BITMAP — splits a bitmap into multiple sub-bitmaps of a given size.
 ---
 
 Splits a bitmap into multiple sub-bitmaps of a given size.

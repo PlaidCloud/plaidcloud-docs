@@ -1,6 +1,6 @@
 ---
 title: CURRENT_TIMESTAMP
-description: "Learn how to use the CURRENT_TIMESTAMP date/time function in PlaidCloud Lakehouse. Returns the current date and time - see syntax, examples, and output."
+description: CURRENT_TIMESTAMP — returns the current date and time - see syntax, examples, and output.
 ---
 
 Returns the current date and time.

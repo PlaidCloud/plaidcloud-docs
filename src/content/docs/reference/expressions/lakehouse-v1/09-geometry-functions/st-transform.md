@@ -1,6 +1,6 @@
 ---
 title: ST_TRANSFORM
-description: "Learn how to use the ST_TRANSFORM geometry function in PlaidCloud Lakehouse. Converts a GEOMETRY object from one spatial reference system (SRS) to another."
+description: ST_TRANSFORM — converts a GEOMETRY object from one spatial reference system (SRS) to another.
 ---
 
 Converts a GEOMETRY object from one [spatial reference system (SRS)](https://en.wikipedia.org/wiki/Spatial_reference_system) to another. If you just need to change the SRID without changing the coordinates (e.g. if the SRID was incorrect), use [ST_SETSRID](../st-setsrid) instead.

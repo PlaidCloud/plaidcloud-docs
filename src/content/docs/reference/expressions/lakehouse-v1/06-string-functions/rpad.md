@@ -1,6 +1,6 @@
 ---
 title: RPAD
-description: "Learn how to use the RPAD string function in PlaidCloud Lakehouse. Returns the string str, right-padded with the string padstr to a length of len characters."
+description: RPAD — returns the string str, right-padded with the string padstr to a length of len characters.
 ---
 
 Returns the string str, right-padded with the string padstr to a length of len characters.

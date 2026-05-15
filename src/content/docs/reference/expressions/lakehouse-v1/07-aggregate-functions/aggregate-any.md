@@ -1,6 +1,6 @@
 ---
 title: ANY
-description: "Learn how to use the ANY aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes usage and syntax details."
+description: ANY — return the first encountered non-NULL value from a set; result is indeterminate when execution order varies.
 ---
 
 Aggregate function.

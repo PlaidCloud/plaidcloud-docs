@@ -1,6 +1,6 @@
 ---
 title: JSON_SET
-description: "Learn how to use the JSON_SET json function in PlaidCloud Lakehouse. Sets a value in a JSON document at a specified path - see syntax, examples, and output."
+description: JSON_SET — sets a value in a JSON document at a specified path - see syntax, examples, and output.
 ---
 
 Sets a value in a JSON document at a specified path.

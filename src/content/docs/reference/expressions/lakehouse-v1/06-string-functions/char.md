@@ -1,6 +1,6 @@
 ---
 title: CHAR
-description: "Learn how to use the CHAR string function in PlaidCloud Lakehouse. Return the character for each integer passed. Includes syntax and examples."
+description: CHAR — Return the character for each integer passed.
 ---
 
 Return the character for each integer passed.

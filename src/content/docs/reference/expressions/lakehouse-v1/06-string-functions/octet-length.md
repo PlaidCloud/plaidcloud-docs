@@ -1,6 +1,6 @@
 ---
 title: OCTET_LENGTH
-description: "Learn how to use the OCTET_LENGTH string function in PlaidCloud Lakehouse. OCTET_LENGTH() is a synonym for LENGTH(). Includes syntax and examples."
+description: OCTET_LENGTH — OCTET_LENGTH() is a synonym for LENGTH().
 ---
 
 OCTET_LENGTH() is a synonym for LENGTH().

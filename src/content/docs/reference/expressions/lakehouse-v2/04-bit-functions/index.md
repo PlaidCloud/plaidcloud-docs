@@ -1,5 +1,6 @@
 ---
 title: Bit Functions
+description: "Lakehouse v2 SQL bit functions: bitwise operations on integers — AND, OR, XOR, shifts."
 ---
 
 This section provides reference information for the bit functions in PlaidCloud Lakehouse.

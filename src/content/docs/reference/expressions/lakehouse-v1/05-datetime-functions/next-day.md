@@ -1,6 +1,6 @@
 ---
 title: NEXT_DAY
-description: "Learn how to use the NEXT_DAY datetime function in PlaidCloud Lakehouse. Returns the date of the upcoming specified day of the week after the given date or..."
+description: NEXT_DAY — returns the date of the upcoming specified day of the week after the given date or.
 ---
 
 Returns the date of the upcoming specified day of the week after the given date or timestamp.

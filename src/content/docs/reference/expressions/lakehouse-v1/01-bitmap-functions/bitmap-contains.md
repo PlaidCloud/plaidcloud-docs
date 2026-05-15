@@ -1,6 +1,6 @@
 ---
 title: BITMAP_CONTAINS
-description: "Learn how to use the BITMAP_CONTAINS bitmap function in PlaidCloud Lakehouse. Checks if the bitmap contains a specific value. Includes syntax and examples."
+description: BITMAP_CONTAINS — Checks if the bitmap contains a specific value.
 ---
 
 Checks if the bitmap contains a specific value.

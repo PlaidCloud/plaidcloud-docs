@@ -1,6 +1,6 @@
 ---
 title: BITMAP_TO_STRING
-description: "Learn how to use the BITMAP_TO_STRING bitmap function in PlaidCloud Lakehouse. Converts a bitmap to a comma-separated string - with syntax and examples."
+description: BITMAP_TO_STRING — Converts a bitmap to a comma-separated string.
 ---
 
 Converts a bitmap to a comma-separated string.

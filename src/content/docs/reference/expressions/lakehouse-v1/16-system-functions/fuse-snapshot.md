@@ -1,6 +1,6 @@
 ---
 title: FUSE_SNAPSHOT
-description: "Learn how to use the FUSE_SNAPSHOT system function in PlaidCloud Lakehouse. Returns the snapshot information of a table. Includes syntax and examples."
+description: FUSE_SNAPSHOT — Returns the snapshot information of a table.
 ---
 
 Returns the snapshot information of a table. For more information about what is snapshot in PlaidCloud Lakehouse, see What are Snapshot, Segment, and Block?.

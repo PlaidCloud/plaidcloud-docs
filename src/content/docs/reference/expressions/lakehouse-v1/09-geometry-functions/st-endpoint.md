@@ -1,6 +1,6 @@
 ---
 title: ST_ENDPOINT
-description: "Learn how to use the ST_ENDPOINT geometry function in PlaidCloud Lakehouse. Returns the last Point in a LineString. Includes syntax and examples."
+description: ST_ENDPOINT — Returns the last Point in a LineString.
 ---
 
 Returns the last Point in a LineString.

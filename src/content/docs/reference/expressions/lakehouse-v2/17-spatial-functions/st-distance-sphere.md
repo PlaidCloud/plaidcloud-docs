@@ -1,6 +1,6 @@
 ---
 title: ST_DISTANCE_SPHERE
-description: "Learn how to use the ST_DISTANCE_SPHERE spatial function in PlaidCloud Lakehouse. Returns the spherical distance between two points in meters."
+description: ST_DISTANCE_SPHERE — returns the spherical distance between two points in meters.
 ---
 
 Returns the spherical distance between two points in meters.

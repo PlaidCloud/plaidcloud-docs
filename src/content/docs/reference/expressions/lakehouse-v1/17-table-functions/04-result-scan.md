@@ -1,6 +1,6 @@
 ---
 title: RESULT_SCAN
-description: "Learn how to use the RESULT_SCAN table function in PlaidCloud Lakehouse. Returns the result set of a previous command in same session as if the result was a..."
+description: RESULT_SCAN — returns the result set of a previous command in same session as if the result was a.
 ---
 
 Returns the result set of a previous command in same session as if the result was a table.

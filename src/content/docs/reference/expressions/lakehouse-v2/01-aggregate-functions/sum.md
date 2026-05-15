@@ -1,6 +1,6 @@
 ---
 title: SUM
-description: "Learn how to use the SUM aggregate function in PlaidCloud Lakehouse. Returns the sum of all values in a group - see syntax, examples, and output."
+description: SUM — returns the sum of all values in a group - see syntax, examples, and output.
 ---
 
 Returns the sum of all values in a group.

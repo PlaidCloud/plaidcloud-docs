@@ -1,6 +1,6 @@
 ---
 title: HOUR
-description: "Learn how to use the HOUR date/time function in PlaidCloud Lakehouse. Returns the hour from a datetime - see syntax, examples, and output."
+description: HOUR — returns the hour from a datetime - see syntax, examples, and output.
 ---
 
 Returns the hour from a datetime.

@@ -1,5 +1,6 @@
 ---
 title: Spatial Functions
+description: "Lakehouse v2 SQL spatial functions: work with geographic and planar geometry — points, shapes, distances, and containment."
 ---
 
 This section provides reference information for the spatial functions in PlaidCloud Lakehouse.

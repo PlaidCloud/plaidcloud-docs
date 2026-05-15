@@ -1,6 +1,6 @@
 ---
 title: MAP_CONCAT
-description: "Learn how to use the MAP_CONCAT map function in PlaidCloud Lakehouse. Concatenates multiple maps into a single map - see syntax, examples, and output."
+description: MAP_CONCAT — concatenates multiple maps into a single map - see syntax, examples, and output.
 ---
 
 Concatenates multiple maps into a single map.

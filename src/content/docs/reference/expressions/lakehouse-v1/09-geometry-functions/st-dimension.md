@@ -1,6 +1,6 @@
 ---
 title: ST_DIMENSION
-description: "Learn how to use the ST_DIMENSION geometry function in PlaidCloud Lakehouse. Return the dimension for a geometry object. Includes syntax and examples."
+description: ST_DIMENSION — Return the dimension for a geometry object.
 ---
 
 Return the dimension for a geometry object. The dimension of a GEOMETRY object is:

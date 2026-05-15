@@ -1,6 +1,6 @@
 ---
 title: TRANSLATE
-description: "Learn how to use the TRANSLATE string function in PlaidCloud Lakehouse. Transforms a given string by replacing specific characters with corresponding..."
+description: TRANSLATE — transforms a given string by replacing specific characters with corresponding.
 ---
 
 Transforms a given string by replacing specific characters with corresponding replacements, as defined by the provided mapping.

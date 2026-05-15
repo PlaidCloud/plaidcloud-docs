@@ -1,6 +1,6 @@
 ---
 title: ELEMENT_AT
-description: "Learn how to use the ELEMENT_AT array function in PlaidCloud Lakehouse. Returns the element at a specified position in an array (1-indexed)."
+description: ELEMENT_AT — returns the element at a specified position in an array (1-indexed).
 ---
 
 Returns the element at a specified position in an array (1-indexed).

@@ -1,6 +1,6 @@
 ---
 title: REPLACE
-description: "Learn how to use the REPLACE string function in PlaidCloud Lakehouse. Replaces all occurrences of a substring with another substring - with syntax and examples."
+description: REPLACE — Replaces all occurrences of a substring with another substring.
 ---
 
 Replaces all occurrences of a substring with another substring.

@@ -1,6 +1,6 @@
 ---
 title: TRIM
-description: "Learn how to use the TRIM string function in PlaidCloud Lakehouse. Returns the string without leading or trailing occurrences of the specified remove string."
+description: TRIM — returns the string without leading or trailing occurrences of the specified remove string.
 ---
 
 Returns the string without leading or trailing occurrences of the specified remove string. If remove string

@@ -1,6 +1,6 @@
 ---
 title: FROM_BASE64
-description: "Learn how to use the FROM_BASE64 string function in PlaidCloud Lakehouse. Takes a string encoded with the base-64 encoded rules nd returns the decoded..."
+description: FROM_BASE64 — takes a string encoded with the base-64 encoded rules nd returns the decoded.
 ---
 
 Takes a string encoded with the base-64 encoded rules nd returns the decoded result as a binary.

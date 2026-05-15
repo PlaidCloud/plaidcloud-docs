@@ -1,6 +1,6 @@
 ---
 title: TO_CENTURIES
-description: "Learn how to use the TO_CENTURIES interval function in PlaidCloud Lakehouse. Converts a specified number of centuries into an Interval type."
+description: TO_CENTURIES — converts a specified number of centuries into an Interval type.
 ---
 
 Converts a specified number of centuries into an Interval type.

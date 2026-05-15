@@ -1,6 +1,6 @@
 ---
 title: JSON_OBJECT
-description: "Learn how to use the JSON_OBJECT json function in PlaidCloud Lakehouse. Creates a JSON object from key-value pairs - see syntax, examples, and output."
+description: JSON_OBJECT — creates a JSON object from key-value pairs - see syntax, examples, and output.
 ---
 
 Creates a JSON object from key-value pairs.

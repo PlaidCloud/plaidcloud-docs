@@ -1,6 +1,6 @@
 ---
 title: ARRAY_CUM_SUM
-description: "Learn how to use the ARRAY_CUM_SUM array function in PlaidCloud Lakehouse. Returns the cumulative sum of elements in an array - with syntax and examples."
+description: ARRAY_CUM_SUM — Returns the cumulative sum of elements in an array.
 ---
 
 Returns the cumulative sum of elements in an array.

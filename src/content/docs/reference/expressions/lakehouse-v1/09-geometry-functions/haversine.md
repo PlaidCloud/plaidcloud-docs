@@ -1,6 +1,6 @@
 ---
 title: HAVERSINE
-description: "Learn how to use the HAVERSINE geometry function in PlaidCloud Lakehouse. Calculates the great circle distance in kilometers between two points on the..."
+description: HAVERSINE — calculates the great circle distance in kilometers between two points on the.
 ---
 
 Calculates the great circle distance in kilometers between two points on the Earth’s surface, using the [Haversine formula](https://en.wikipedia.org/wiki/Haversine_formula). The two points are specified by their latitude and longitude in degrees.

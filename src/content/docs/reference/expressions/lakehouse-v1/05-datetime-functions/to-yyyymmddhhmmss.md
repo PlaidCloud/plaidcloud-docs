@@ -1,6 +1,6 @@
 ---
 title: TO_YYYYMMDDHHMMSS
-description: "Learn how to use the TO_YYYYMMDDHHMMSS datetime function in PlaidCloud Lakehouse. Convert a date or date with time (timestamp/datetime) to a UInt64 number..."
+description: TO_YYYYMMDDHHMMSS — convert a date or date with time (timestamp/datetime) to a UInt64 number.
 ---
 
 Convert a date or date with time (timestamp/datetime) to a UInt64 number containing the year and month number (YYYY * 10000000000 + MM * 100000000 + DD * 1000000 + hh * 10000 + mm * 100 + ss).

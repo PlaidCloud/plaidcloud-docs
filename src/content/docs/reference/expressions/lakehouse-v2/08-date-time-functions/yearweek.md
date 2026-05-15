@@ -1,6 +1,6 @@
 ---
 title: YEARWEEK
-description: "Learn how to use the YEARWEEK date/time function in PlaidCloud Lakehouse. Returns the year and week number for a date as an integer - with syntax and examples."
+description: YEARWEEK — returns the year and week number for a date as an integer.
 ---
 
 Returns the year and week number for a date as an integer.

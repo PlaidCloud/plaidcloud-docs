@@ -1,6 +1,6 @@
 ---
 title: UNHEX
-description: "Learn how to use the UNHEX string function in PlaidCloud Lakehouse. Converts a hexadecimal string to a character string - see syntax, examples, and output."
+description: UNHEX — converts a hexadecimal string to a character string - see syntax, examples, and output.
 ---
 
 Converts a hexadecimal string to a character string.

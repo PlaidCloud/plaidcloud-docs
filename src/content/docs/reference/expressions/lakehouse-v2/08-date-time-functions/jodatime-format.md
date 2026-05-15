@@ -1,6 +1,6 @@
 ---
 title: JODATIME_FORMAT
-description: "Learn how to use the JODATIME_FORMAT date/time function in PlaidCloud Lakehouse. Formats a date or datetime using Joda-Time format patterns."
+description: JODATIME_FORMAT — formats a date or datetime using Joda-Time format patterns.
 ---
 
 Formats a date or datetime using Joda-Time format patterns.

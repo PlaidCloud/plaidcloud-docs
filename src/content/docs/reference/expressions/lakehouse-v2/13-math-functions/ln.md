@@ -1,6 +1,6 @@
 ---
 title: LN
-description: "Learn how to use the LN math function in PlaidCloud Lakehouse. Returns the natural logarithm of a number - see syntax, examples, and output."
+description: LN — returns the natural logarithm of a number - see syntax, examples, and output.
 ---
 
 Returns the natural logarithm of a number.

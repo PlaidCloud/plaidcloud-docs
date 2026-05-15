@@ -1,6 +1,6 @@
 ---
 title: BITMAP_AND
-description: "Learn how to use the BITMAP_AND bitmap function in PlaidCloud Lakehouse. Returns the intersection of two bitmaps - see syntax, examples, and output."
+description: BITMAP_AND — returns the intersection of two bitmaps - see syntax, examples, and output.
 ---
 
 Returns the intersection of two bitmaps.

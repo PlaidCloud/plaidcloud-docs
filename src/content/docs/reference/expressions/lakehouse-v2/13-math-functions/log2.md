@@ -1,6 +1,6 @@
 ---
 title: LOG2
-description: "Learn how to use the LOG2 math function in PlaidCloud Lakehouse. Returns the base-2 logarithm of a number - see syntax, examples, and output."
+description: LOG2 — returns the base-2 logarithm of a number - see syntax, examples, and output.
 ---
 
 Returns the base-2 logarithm of a number.

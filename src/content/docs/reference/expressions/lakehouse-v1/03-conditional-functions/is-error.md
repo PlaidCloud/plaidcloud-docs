@@ -1,6 +1,6 @@
 ---
 title: IS_ERROR
-description: "Learn how to use the IS_ERROR conditional function in PlaidCloud Lakehouse. Returns a Boolean value indicating whether an expression is an error value."
+description: IS_ERROR — returns a Boolean value indicating whether an expression is an error value.
 ---
 
 Returns a Boolean value indicating whether an expression is an error value.

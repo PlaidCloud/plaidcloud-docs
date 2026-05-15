@@ -1,6 +1,6 @@
 ---
 title: TO_BITMAP
-description: "Learn how to use the TO_BITMAP bitmap function in PlaidCloud Lakehouse. Converts an integer value to a bitmap containing that single value."
+description: TO_BITMAP — converts an integer value to a bitmap containing that single value.
 ---
 
 Converts an integer value to a bitmap containing that single value.

@@ -1,6 +1,6 @@
 ---
 title: GET
-description: "Learn how to use the GET semi-structured data function in PlaidCloud Lakehouse. Extracts value from a Variant that contains ARRAY by index, or a Variant..."
+description: GET — extracts value from a Variant that contains ARRAY by index, or a Variant.
 ---
 
 Extracts value from a `Variant` that contains `ARRAY` by `index`, or a `Variant` that contains `OBJECT` by `field_name`.

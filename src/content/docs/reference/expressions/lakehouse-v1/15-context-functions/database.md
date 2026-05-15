@@ -1,6 +1,6 @@
 ---
 title: DATABASE
-description: "Learn how to use the DATABASE context function in PlaidCloud Lakehouse. Returns the name of the currently selected database. Includes syntax and examples."
+description: DATABASE — Returns the name of the currently selected database.
 ---
 
 Returns the name of the currently selected database. If no database is selected, then this function returns `default`.

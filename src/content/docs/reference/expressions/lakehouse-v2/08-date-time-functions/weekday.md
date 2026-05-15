@@ -1,6 +1,6 @@
 ---
 title: WEEKDAY
-description: "Learn how to use the WEEKDAY date/time function in PlaidCloud Lakehouse. Returns the weekday index for a date (0=Monday, 6=Sunday) - with syntax and examples."
+description: WEEKDAY — returns the weekday index for a date (0=Monday, 6=Sunday).
 ---
 
 Returns the weekday index for a date (0=Monday, 6=Sunday).

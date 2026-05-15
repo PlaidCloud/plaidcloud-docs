@@ -1,6 +1,6 @@
 ---
 title: TO_MONTH
-description: "Learn how to use the TO_MONTH datetime function in PlaidCloud Lakehouse. Convert a date or date with time (timestamp/datetime) to a UInt8 number containing..."
+description: TO_MONTH — convert a date or date with time (timestamp/datetime) to a UInt8 number containing.
 ---
 
 Convert a date or date with time (timestamp/datetime) to a UInt8 number containing the month number (1-12).

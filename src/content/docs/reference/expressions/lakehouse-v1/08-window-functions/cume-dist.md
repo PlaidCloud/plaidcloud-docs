@@ -1,6 +1,6 @@
 ---
 title: CUME_DIST
-description: "Learn how to use the CUME_DIST window function in PlaidCloud Lakehouse. Returns the cumulative distribution of a given value in a set of values."
+description: CUME_DIST — returns the cumulative distribution of a given value in a set of values.
 ---
 
 Returns the cumulative distribution of a given value in a set of values. It calculates the proportion of rows that have values less than or equal to the specified value, divided by the total number of rows. Please note that the resulting value falls between 0 and 1, inclusive.

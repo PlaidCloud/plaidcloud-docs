@@ -1,5 +1,6 @@
 ---
 title: Geography Functions
+description: "Lakehouse v1 SQL geography functions: compute distances, bearings, and containment between geographic points and shapes on a spheroid."
 ---
 
 This section provides reference information for the geography functions in PlaidCloud Lakehouse.  These functions are based on the very innovate H3 system developed by Uber to better calculate geographic relationships.  The explanation of H3 can be found [here](https://www.uber.com/blog/h3/).

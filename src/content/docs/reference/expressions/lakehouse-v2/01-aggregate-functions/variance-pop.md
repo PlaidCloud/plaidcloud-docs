@@ -1,6 +1,6 @@
 ---
 title: VARIANCE_POP
-description: "Learn how to use the VARIANCE_POP aggregate function in PlaidCloud Lakehouse. Returns the population variance - see syntax, examples, and output."
+description: VARIANCE_POP — returns the population variance - see syntax, examples, and output.
 ---
 
 Returns the population variance.

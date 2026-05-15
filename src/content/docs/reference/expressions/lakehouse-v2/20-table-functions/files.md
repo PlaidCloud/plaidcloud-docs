@@ -1,6 +1,6 @@
 ---
 title: FILES
-description: "Learn how to use the FILES table function in PlaidCloud Lakehouse. Reads data directly from cloud storage files - see syntax, examples, and output."
+description: FILES — reads data directly from cloud storage files - see syntax, examples, and output.
 ---
 
 Reads data directly from cloud storage files.

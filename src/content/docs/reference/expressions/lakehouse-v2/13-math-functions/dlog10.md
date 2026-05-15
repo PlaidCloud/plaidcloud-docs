@@ -1,6 +1,6 @@
 ---
 title: DLOG10
-description: "Learn how to use the DLOG10 math function in PlaidCloud Lakehouse. Alias for `LOG10`. See [LOG10](log10) - see syntax, examples, and output."
+description: DLOG10 — alias for `LOG10`. See [LOG10](log10) - see syntax, examples, and output.
 ---
 
 Alias for `LOG10`. See [LOG10](log10).

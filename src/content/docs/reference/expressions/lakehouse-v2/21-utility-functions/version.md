@@ -1,6 +1,6 @@
 ---
 title: VERSION
-description: "Learn how to use the VERSION utility function in PlaidCloud Lakehouse. Returns the MySQL protocol version of StarRocks - see syntax, examples, and output."
+description: VERSION — returns the MySQL protocol version of StarRocks - see syntax, examples, and output.
 ---
 
 Returns the MySQL protocol version of StarRocks.

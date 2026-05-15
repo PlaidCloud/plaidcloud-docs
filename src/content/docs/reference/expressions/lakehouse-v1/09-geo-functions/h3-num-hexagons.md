@@ -1,6 +1,6 @@
 ---
 title: H3_NUM_HEXAGONS
-description: "Learn how to use the H3_NUM_HEXAGONS utility function in PlaidCloud Lakehouse. Returns the number of unique H3 indexes at the given resolution."
+description: H3_NUM_HEXAGONS — returns the number of unique H3 indexes at the given resolution.
 ---
 
 Returns the number of unique [H3](https://eng.uber.com/h3/) indexes at the given resolution. 

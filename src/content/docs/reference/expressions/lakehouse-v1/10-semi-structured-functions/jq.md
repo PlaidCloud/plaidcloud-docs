@@ -1,6 +1,6 @@
 ---
 title: JQ
-description: "Learn how to use the JQ semi-structured data function in PlaidCloud Lakehouse. The JQ function is a set-returning SQL function that allows you to apply jq..."
+description: JQ — the JQ function is a set-returning SQL function that allows you to apply jq.
 ---
 
 The JQ function is a set-returning SQL function that allows you to apply [jq](https://jqlang.github.io/jq/) filters to JSON data stored in Variant columns. With this function, you can process JSON data by applying a specified jq filter, returning the results as a set of rows.

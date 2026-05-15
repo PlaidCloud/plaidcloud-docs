@@ -1,6 +1,6 @@
 ---
 title: COUNT_IF
-description: "Learn how to use the COUNT_IF aggregate function in PlaidCloud Lakehouse. Returns the number of rows for which the expression is TRUE."
+description: COUNT_IF — returns the number of rows for which the expression is TRUE.
 ---
 
 Returns the number of rows for which the expression is TRUE.

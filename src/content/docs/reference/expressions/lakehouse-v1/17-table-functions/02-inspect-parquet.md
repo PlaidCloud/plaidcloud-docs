@@ -1,6 +1,6 @@
 ---
 title: INSPECT_PARQUET
-description: "Learn how to use the INSPECT_PARQUET table function in PlaidCloud Lakehouse. Retrieves a table of comprehensive metadata from a staged Parquet file,..."
+description: INSPECT_PARQUET — retrieves a table of comprehensive metadata from a staged Parquet file,.
 ---
 
 Retrieves a table of comprehensive metadata from a staged Parquet file, including the following columns:

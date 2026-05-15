@@ -1,6 +1,6 @@
 ---
 title: MANN_WHITNEY_U_TEST
-description: "Learn how to use the MANN_WHITNEY_U_TEST aggregate function in PlaidCloud Lakehouse. Performs a Mann-Whitney U test on two independent samples."
+description: MANN_WHITNEY_U_TEST — performs a Mann-Whitney U test on two independent samples.
 ---
 
 Performs a Mann-Whitney U test on two independent samples.

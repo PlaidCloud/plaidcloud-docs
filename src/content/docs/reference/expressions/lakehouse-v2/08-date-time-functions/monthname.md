@@ -1,6 +1,6 @@
 ---
 title: MONTHNAME
-description: "Learn how to use the MONTHNAME date/time function in PlaidCloud Lakehouse. Returns the name of the month for a date - see syntax, examples, and output."
+description: MONTHNAME — returns the name of the month for a date - see syntax, examples, and output.
 ---
 
 Returns the name of the month for a date.

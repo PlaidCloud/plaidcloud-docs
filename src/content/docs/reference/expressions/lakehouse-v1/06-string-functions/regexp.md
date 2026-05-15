@@ -1,6 +1,6 @@
 ---
 title: REGEXP
-description: "Learn how to use the REGEXP string function in PlaidCloud Lakehouse. Returns true if the string <expr> matches the regular expression specified by the..."
+description: REGEXP — returns true if the string <expr> matches the regular expression specified by the.
 ---
 
 Returns `true` if the string `<expr>` matches the regular expression specified by the `<pattern>`, `false` otherwise.

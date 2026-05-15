@@ -1,6 +1,6 @@
 ---
 title: JSON_CONTAINS
-description: "Learn how to use the JSON_CONTAINS json function in PlaidCloud Lakehouse. Checks whether a JSON document contains a specific value at a path."
+description: JSON_CONTAINS — checks whether a JSON document contains a specific value at a path.
 ---
 
 Checks whether a JSON document contains a specific value at a path.

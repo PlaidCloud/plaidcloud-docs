@@ -1,6 +1,6 @@
 ---
 title: UCASE
-description: "Learn how to use the UCASE string function in PlaidCloud Lakehouse. Converts a string to uppercase. Alias for `UPPER` - see syntax, examples, and output."
+description: UCASE — converts a string to uppercase. Alias for `UPPER` - see syntax, examples, and output.
 ---
 
 Converts a string to uppercase. Alias for `UPPER`.

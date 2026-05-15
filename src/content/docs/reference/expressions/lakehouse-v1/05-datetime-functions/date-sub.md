@@ -1,6 +1,6 @@
 ---
 title: DATE_SUB
-description: "Learn how to use the DATE_SUB datetime function in PlaidCloud Lakehouse. Subtract the time interval or date interval from the provided date or date with..."
+description: DATE_SUB — subtract the time interval or date interval from the provided date or date with.
 ---
 
 Subtract the time interval or date interval from the provided date or date with time (timestamp/datetime).

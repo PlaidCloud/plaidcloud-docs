@@ -1,6 +1,6 @@
 ---
 title: "LOG(b, x)"
-description: "Learn how to use the LOG(B, X) numeric function in PlaidCloud Lakehouse. Returns the base-b logarithm of x. Full syntax and usage reference."
+description: LOG(b, x) — returns the base-b logarithm of x.
 ---
 
 Returns the base-b logarithm of `x`. If `x` is less than or equal to 0.0E0, the function returns NULL.

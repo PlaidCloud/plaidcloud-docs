@@ -1,6 +1,6 @@
 ---
 title: FIND_IN_SET
-description: "Learn how to use the FIND_IN_SET string function in PlaidCloud Lakehouse. Returns the position of a string within a comma-separated list."
+description: FIND_IN_SET — returns the position of a string within a comma-separated list.
 ---
 
 Returns the position of a string within a comma-separated list.

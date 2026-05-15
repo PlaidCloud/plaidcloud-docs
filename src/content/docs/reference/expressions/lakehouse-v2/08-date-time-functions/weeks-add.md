@@ -1,6 +1,6 @@
 ---
 title: WEEKS_ADD
-description: "Learn how to use the WEEKS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of weeks to a date - see syntax, examples, and output."
+description: WEEKS_ADD — adds a specified number of weeks to a date - see syntax, examples, and output.
 ---
 
 Adds a specified number of weeks to a date.

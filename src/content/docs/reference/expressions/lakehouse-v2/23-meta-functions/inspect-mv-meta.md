@@ -1,6 +1,6 @@
 ---
 title: INSPECT_MV_META
-description: "Learn how to use the INSPECT_MV_META meta function in PlaidCloud Lakehouse. Returns metadata about a materialized view - see syntax, examples, and output."
+description: INSPECT_MV_META — returns metadata about a materialized view - see syntax, examples, and output.
 ---
 
 Returns metadata about a materialized view.

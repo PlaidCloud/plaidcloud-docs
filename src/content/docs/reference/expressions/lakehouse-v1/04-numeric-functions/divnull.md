@@ -1,6 +1,6 @@
 ---
 title: DIVNULL
-description: "Learn how to use the DIVNULL numeric function in PlaidCloud Lakehouse. Returns the quotient by dividing the first number by the second one. Includes syntax..."
+description: DIVNULL — returns the quotient by dividing the first number by the second one. Includes syntax.
 ---
 
 Returns the quotient by dividing the first number by the second one. Returns NULL if the second number is 0 or NULL.

@@ -1,6 +1,6 @@
 ---
 title: CBRT
-description: "Learn how to use the CBRT math function in PlaidCloud Lakehouse. Returns the cube root of a number - see syntax, examples, and output."
+description: CBRT — returns the cube root of a number - see syntax, examples, and output.
 ---
 
 Returns the cube root of a number.

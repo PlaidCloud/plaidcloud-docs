@@ -1,6 +1,6 @@
 ---
 title: ARRAY_REPEAT
-description: "Learn how to use the ARRAY_REPEAT array function in PlaidCloud Lakehouse. Creates an array containing a specified element repeated N times."
+description: ARRAY_REPEAT — creates an array containing a specified element repeated N times.
 ---
 
 Creates an array containing a specified element repeated N times.

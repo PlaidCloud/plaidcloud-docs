@@ -1,6 +1,6 @@
 ---
 title: TRIM
-description: "Learn how to use the TRIM string function in PlaidCloud Lakehouse. Removes leading and trailing whitespace or specified characters from a string."
+description: TRIM — removes leading and trailing whitespace or specified characters from a string.
 ---
 
 Removes leading and trailing whitespace or specified characters from a string.

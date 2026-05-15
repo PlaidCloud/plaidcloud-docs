@@ -1,6 +1,6 @@
 ---
 title: PREVIOUS_DAY
-description: "Learn how to use the PREVIOUS_DAY date/time function in PlaidCloud Lakehouse. Returns the date of the previous specified weekday before a given date."
+description: PREVIOUS_DAY — returns the date of the previous specified weekday before a given date.
 ---
 
 Returns the date of the previous specified weekday before a given date.

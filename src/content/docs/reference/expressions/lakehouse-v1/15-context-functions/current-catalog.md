@@ -1,6 +1,6 @@
 ---
 title: CURRENT_CATALOG
-description: "Learn how to use the CURRENT_CATALOG context function in PlaidCloud Lakehouse. Returns the name of the catalog currently in use for the session."
+description: CURRENT_CATALOG — returns the name of the catalog currently in use for the session.
 ---
 
 Returns the name of the catalog currently in use for the session.

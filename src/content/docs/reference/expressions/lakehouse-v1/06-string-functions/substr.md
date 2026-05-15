@@ -1,6 +1,6 @@
 ---
 title: SUBSTR
-description: "Learn how to use the SUBSTR string function in PlaidCloud Lakehouse. Extracts a string containing a specific number of characters from a particular position..."
+description: SUBSTR — extracts a string containing a specific number of characters from a particular position.
 ---
 
 Extracts a string containing a specific number of characters from a particular position of a given string.

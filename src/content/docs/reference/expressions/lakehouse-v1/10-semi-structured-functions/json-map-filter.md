@@ -1,6 +1,6 @@
 ---
 title: JSON_MAP_FILTER
-description: "Learn how to use the JSON_MAP_FILTER semi-structured data function in PlaidCloud Lakehouse. Filters key-value pairs in a JSON object based on a specified..."
+description: JSON_MAP_FILTER — filters key-value pairs in a JSON object based on a specified.
 ---
 
 Filters key-value pairs in a JSON object based on a specified condition, defined using a lambda expression.

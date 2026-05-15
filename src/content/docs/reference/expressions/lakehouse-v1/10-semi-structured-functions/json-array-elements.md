@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_ELEMENTS
-description: "Learn how to use the JSON_ARRAY_ELEMENTS semi-structured data function in PlaidCloud Lakehouse. Extracts the elements from a JSON array, returning them as..."
+description: JSON_ARRAY_ELEMENTS — extracts the elements from a JSON array, returning them as.
 ---
 
 Extracts the elements from a JSON array, returning them as individual rows in the result set. JSON_ARRAY_ELEMENTS does not recursively expand nested arrays; it treats them as single elements.

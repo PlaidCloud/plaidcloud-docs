@@ -1,6 +1,6 @@
 ---
 title: NULLIF
-description: "Learn how to use the NULLIF conditional function in PlaidCloud Lakehouse. Returns NULL if two expressions are equal. Includes syntax and examples."
+description: NULLIF — Returns NULL if two expressions are equal.
 ---
 
 Returns NULL if two expressions are equal. Otherwise return expr1. They must have the same data type.

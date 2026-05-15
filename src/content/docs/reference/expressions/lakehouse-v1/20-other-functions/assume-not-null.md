@@ -1,6 +1,6 @@
 ---
 title: ASSUME_NOT_NULL
-description: "Learn how to use the ASSUME_NOT_NULL utility function in PlaidCloud Lakehouse. Results in an equivalent non-Nullable value for a Nullable type."
+description: ASSUME_NOT_NULL — results in an equivalent non-Nullable value for a Nullable type.
 ---
 
 Results in an equivalent non-`Nullable` value for a Nullable type. In case the original value is `NULL` the result is undetermined. 

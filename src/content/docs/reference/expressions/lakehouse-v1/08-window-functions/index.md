@@ -1,5 +1,6 @@
 ---
 title: Window Functions
+description: "Lakehouse v1 SQL window functions: compute over row windows — ranking, running totals, leads, and lags."
 ---
 
 ## Overview 

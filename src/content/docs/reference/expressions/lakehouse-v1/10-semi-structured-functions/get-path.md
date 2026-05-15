@@ -1,6 +1,6 @@
 ---
 title: GET_PATH
-description: "Learn how to use the GET_PATH semi-structured data function in PlaidCloud Lakehouse. Extracts value from a VARIANT by path_name. Includes syntax and examples."
+description: GET_PATH — Extracts value from a VARIANT by path_name.
 ---
 
 Extracts value from a `VARIANT` by `path_name`.

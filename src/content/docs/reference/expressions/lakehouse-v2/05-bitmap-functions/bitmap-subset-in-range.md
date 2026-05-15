@@ -1,6 +1,6 @@
 ---
 title: BITMAP_SUBSET_IN_RANGE
-description: "Learn how to use the BITMAP_SUBSET_IN_RANGE bitmap function in PlaidCloud Lakehouse. Returns a subset of a bitmap within a specified range."
+description: BITMAP_SUBSET_IN_RANGE — returns a subset of a bitmap within a specified range.
 ---
 
 Returns a subset of a bitmap within a specified range.

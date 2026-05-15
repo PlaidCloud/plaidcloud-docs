@@ -1,6 +1,6 @@
 ---
 title: HUMANIZE_NUMBER
-description: "Learn how to use the HUMANIZE_NUMBER utility function in PlaidCloud Lakehouse. Returns a readable number. Includes usage and syntax details."
+description: HUMANIZE_NUMBER — returns a readable number.
 ---
 
 Returns a readable number.

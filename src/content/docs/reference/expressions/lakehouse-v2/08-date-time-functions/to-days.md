@@ -1,6 +1,6 @@
 ---
 title: TO_DAYS
-description: "Learn how to use the TO_DAYS date/time function in PlaidCloud Lakehouse. Converts a date to a day count - see syntax, examples, and output."
+description: TO_DAYS — converts a date to a day count - see syntax, examples, and output.
 ---
 
 Converts a date to a day count.

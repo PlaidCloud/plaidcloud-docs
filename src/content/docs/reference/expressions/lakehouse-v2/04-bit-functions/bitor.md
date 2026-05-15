@@ -1,6 +1,6 @@
 ---
 title: BITOR
-description: "Learn how to use the BITOR bit function in PlaidCloud Lakehouse. Returns the bitwise OR of two numeric values - see syntax, examples, and output."
+description: BITOR — returns the bitwise OR of two numeric values - see syntax, examples, and output.
 ---
 
 Returns the bitwise OR of two numeric values.

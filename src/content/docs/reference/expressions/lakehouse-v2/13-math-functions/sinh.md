@@ -1,6 +1,6 @@
 ---
 title: SINH
-description: "Learn how to use the SINH math function in PlaidCloud Lakehouse. Returns the hyperbolic sine of a number - see syntax, examples, and output."
+description: SINH — returns the hyperbolic sine of a number - see syntax, examples, and output.
 ---
 
 Returns the hyperbolic sine of a number.

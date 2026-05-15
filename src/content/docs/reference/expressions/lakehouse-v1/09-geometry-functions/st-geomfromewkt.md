@@ -1,6 +1,6 @@
 ---
 title: ST_GEOMFROMEWKT
-description: "Learn how to use ST_GEOMFROMEWKT in PlaidCloud Lakehouse. Alias for the ST_GEOMTRYFROMWKT geometry function. Full syntax and usage reference."
+description: ST_GEOMFROMEWKT — alias for the ST_GEOMTRYFROMWKT geometry function.
 ---
 
 Alias for [ST_GEOMTRYFROMWKT](../st-geometryfromwkt).

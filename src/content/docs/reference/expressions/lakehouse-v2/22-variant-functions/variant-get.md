@@ -1,6 +1,6 @@
 ---
 title: VARIANT_GET
-description: "Learn how to use the VARIANT_GET variant function in PlaidCloud Lakehouse. Extracts a typed value from a VARIANT object at a specified path."
+description: VARIANT_GET — extracts a typed value from a VARIANT object at a specified path.
 ---
 
 Extracts a typed value from a VARIANT object at a specified path.

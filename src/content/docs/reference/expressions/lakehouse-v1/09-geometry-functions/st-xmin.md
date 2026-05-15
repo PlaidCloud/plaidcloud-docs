@@ -1,6 +1,6 @@
 ---
 title: ST_XMIN
-description: "Learn how to use the ST_XMIN geometry function in PlaidCloud Lakehouse. Returns the minimum longitude (X coordinate) of all points contained in the..."
+description: ST_XMIN — returns the minimum longitude (X coordinate) of all points contained in the.
 ---
 
 Returns the minimum longitude (X coordinate) of all points contained in the specified GEOMETRY object.

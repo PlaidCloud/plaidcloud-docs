@@ -1,6 +1,6 @@
 ---
 title: ADD TIME INTERVAL
-description: Add time interval function
+description: ADD TIME INTERVAL — add years, months, days, hours, minutes, or seconds to a date or timestamp value.
 ---
 
 Add a time interval to a date or timestamp, return the result of date or timestamp type.

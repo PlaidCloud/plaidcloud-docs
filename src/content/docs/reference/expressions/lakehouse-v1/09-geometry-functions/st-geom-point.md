@@ -1,6 +1,6 @@
 ---
 title: ST_GEOM_POINT
-description: "Learn how to use ST_GEOM_POINT in PlaidCloud Lakehouse. Alias for the ST_MAKEGEOMPOINT geometry function. Includes usage and syntax details."
+description: ST_GEOM_POINT — alias for the ST_MAKEGEOMPOINT geometry function.
 ---
 
 Alias for [ST_MAKEGEOMPOINT](../st-makegeompoint).

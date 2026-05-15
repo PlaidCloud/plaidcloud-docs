@@ -1,6 +1,6 @@
 ---
 title: ARRAYS_ZIP
-description: "Learn how to use the ARRAYS_ZIP array function in PlaidCloud Lakehouse. Merges multiple arrays into an array of structs - see syntax, examples, and output."
+description: ARRAYS_ZIP — merges multiple arrays into an array of structs - see syntax, examples, and output.
 ---
 
 Merges multiple arrays into an array of structs.

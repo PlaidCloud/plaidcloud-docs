@@ -1,6 +1,6 @@
 ---
 title: TO_INT8
-description: "Learn how to use the TO_INT8 conversion function in PlaidCloud Lakehouse. Converts a value to INT8 data type. See syntax and usage examples."
+description: TO_INT8 — converts a value to INT8 data type. See syntax and usage examples.
 ---
 
 Converts a value to INT8 data type.

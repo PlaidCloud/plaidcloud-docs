@@ -1,6 +1,6 @@
 ---
 title: FROM_BASE64
-description: "Learn how to use the FROM_BASE64 cryptographic function in PlaidCloud Lakehouse. Decodes a base64-encoded string. Alias for `BASE64_DECODE_STRING`."
+description: FROM_BASE64 — decodes a base64-encoded string. Alias for `BASE64_DECODE_STRING`.
 ---
 
 Decodes a base64-encoded string. Alias for `BASE64_DECODE_STRING`.

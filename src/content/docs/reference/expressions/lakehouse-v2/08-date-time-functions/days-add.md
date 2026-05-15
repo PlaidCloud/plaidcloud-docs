@@ -1,6 +1,6 @@
 ---
 title: DAYS_ADD
-description: "Learn how to use the DAYS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of days to a date - see syntax, examples, and output."
+description: DAYS_ADD — adds a specified number of days to a date - see syntax, examples, and output.
 ---
 
 Adds a specified number of days to a date.

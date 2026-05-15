@@ -1,6 +1,6 @@
 ---
 title: Expressions
-description: Standard Expressions are basic level operations that can be added across the platform such as finding the max value in a column, extracting the year from a date field, or removing the leading zeroes in a text field.
+description: Reference for PlaidCloud expression functions — column aggregations, date math, string handling, and casting across Lakehouse v1 and v2.
 sidebar:
   label: Expressions
 ---

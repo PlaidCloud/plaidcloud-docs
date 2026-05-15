@@ -1,6 +1,6 @@
 ---
 title: POW
-description: "Learn how to use the POW math function in PlaidCloud Lakehouse. Returns a number raised to the power of another number - see syntax, examples, and output."
+description: POW — returns a number raised to the power of another number - see syntax, examples, and output.
 ---
 
 Returns a number raised to the power of another number.

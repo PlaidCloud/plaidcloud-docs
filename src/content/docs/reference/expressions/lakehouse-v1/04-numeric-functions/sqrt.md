@@ -1,6 +1,6 @@
 ---
 title: SQRT
-description: "Learn how to use the SQRT numeric function in PlaidCloud Lakehouse. Returns the square root of a nonnegative number x. Includes syntax and examples."
+description: SQRT — Returns the square root of a nonnegative number x.
 ---
 
 Returns the square root of a nonnegative number `x`. Returns Nan for negative input.

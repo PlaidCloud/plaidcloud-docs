@@ -1,6 +1,6 @@
 ---
 title: JSON_EACH
-description: "Learn how to use the JSON_EACH semi-structured data function in PlaidCloud Lakehouse. Extracts key-value pairs from a JSON object, breaking down the..."
+description: JSON_EACH — extracts key-value pairs from a JSON object, breaking down the.
 ---
 
 Extracts key-value pairs from a JSON object, breaking down the structure into individual rows in the result set. Each row represents a distinct key-value pair derived from the input JSON expression.

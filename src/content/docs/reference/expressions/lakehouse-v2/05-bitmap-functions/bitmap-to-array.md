@@ -1,6 +1,6 @@
 ---
 title: BITMAP_TO_ARRAY
-description: "Learn how to use the BITMAP_TO_ARRAY bitmap function in PlaidCloud Lakehouse. Converts a bitmap to an array of integers - see syntax, examples, and output."
+description: BITMAP_TO_ARRAY — converts a bitmap to an array of integers - see syntax, examples, and output.
 ---
 
 Converts a bitmap to an array of integers.

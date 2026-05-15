@@ -1,6 +1,6 @@
 ---
 title: REMOVE_NULLABLE
-description: "Learn how to use REMOVE_NULLABLE in PlaidCloud Lakehouse. Alias for the ASSUME_NOT_NULL utility function. Includes usage and syntax details."
+description: REMOVE_NULLABLE — alias for the ASSUME_NOT_NULL utility function.
 ---
 
 Alias for [ASSUME_NOT_NULL](../assume-not-null).

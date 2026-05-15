@@ -1,6 +1,6 @@
 ---
 title: REVERSE
-description: "Learn how to use the REVERSE string function in PlaidCloud Lakehouse. Returns the string str with the order of the characters reversed. Includes syntax and..."
+description: REVERSE — returns the string str with the order of the characters reversed. Includes syntax and.
 ---
 
 Returns the string str with the order of the characters reversed.

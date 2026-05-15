@@ -1,6 +1,6 @@
 ---
 title: DATE_ADD
-description: "Learn how to use the DATE_ADD date/time function in PlaidCloud Lakehouse. Adds a specified time interval to a date or datetime - with syntax and examples."
+description: DATE_ADD — adds a specified time interval to a date or datetime.
 ---
 
 Adds a specified time interval to a date or datetime.

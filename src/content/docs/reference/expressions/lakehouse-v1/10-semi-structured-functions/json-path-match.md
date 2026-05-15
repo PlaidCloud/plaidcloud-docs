@@ -1,6 +1,6 @@
 ---
 title: JSON_PATH_MATCH
-description: "Learn how to use the JSON_PATH_MATCH semi-structured data function in PlaidCloud Lakehouse. Checks whether a specified JSON path expression matches certain..."
+description: JSON_PATH_MATCH — checks whether a specified JSON path expression matches certain.
 ---
 
 Checks whether a specified JSON path expression matches certain conditions within a JSON data. Please note that the `@@` operator is synonymous with this function. For more information, see JSON Operators.

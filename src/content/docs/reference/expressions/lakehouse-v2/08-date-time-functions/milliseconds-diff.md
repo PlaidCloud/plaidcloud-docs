@@ -1,6 +1,6 @@
 ---
 title: MILLISECONDS_DIFF
-description: "Learn how to use the MILLISECONDS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of milliseconds between two datetimes."
+description: MILLISECONDS_DIFF — returns the number of milliseconds between two datetimes.
 ---
 
 Returns the number of milliseconds between two datetimes.

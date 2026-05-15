@@ -1,6 +1,6 @@
 ---
 title: SQRT
-description: "Learn how to use the SQRT math function in PlaidCloud Lakehouse. Returns the square root of a number - see syntax, examples, and output."
+description: SQRT — returns the square root of a number - see syntax, examples, and output.
 ---
 
 Returns the square root of a number.

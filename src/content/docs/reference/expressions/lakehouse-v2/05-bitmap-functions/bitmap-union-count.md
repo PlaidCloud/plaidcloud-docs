@@ -1,6 +1,6 @@
 ---
 title: BITMAP_UNION_COUNT
-description: "Learn how to use the BITMAP_UNION_COUNT bitmap function in PlaidCloud Lakehouse. Returns the count of distinct values in the union of a set of bitmaps."
+description: BITMAP_UNION_COUNT — returns the count of distinct values in the union of a set of bitmaps.
 ---
 
 Returns the count of distinct values in the union of a set of bitmaps.

@@ -1,6 +1,6 @@
 ---
 title: UNNEST_BITMAP
-description: "Learn how to use the UNNEST_BITMAP bitmap function in PlaidCloud Lakehouse. Expands a bitmap into a set of rows - see syntax, examples, and output."
+description: UNNEST_BITMAP — expands a bitmap into a set of rows - see syntax, examples, and output.
 ---
 
 Expands a bitmap into a set of rows.

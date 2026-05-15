@@ -1,6 +1,6 @@
 ---
 title: INSPECT_ALL_PIPES
-description: "Learn how to use the INSPECT_ALL_PIPES meta function in PlaidCloud Lakehouse. Returns information about all pipe objects - see syntax, examples, and output."
+description: INSPECT_ALL_PIPES — returns information about all pipe objects - see syntax, examples, and output.
 ---
 
 Returns information about all pipe objects.

@@ -1,6 +1,6 @@
 ---
 title: IS_ARRAY
-description: "Learn how to use the IS_ARRAY semi-structured data function in PlaidCloud Lakehouse. Checks if the input value is a JSON array. Includes syntax and examples."
+description: IS_ARRAY — Checks if the input value is a JSON array.
 ---
 
 Checks if the input value is a JSON array. Please note that a JSON array is not the same as the ARRAY data type. A JSON array is a data structure commonly used in JSON, representing an ordered collection of values enclosed within square brackets `[ ]`. It is a flexible format for organizing and exchanging various data types, including strings, numbers, booleans, objects, and nulls. 

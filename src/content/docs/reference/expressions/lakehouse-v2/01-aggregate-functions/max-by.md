@@ -1,6 +1,6 @@
 ---
 title: MAX_BY
-description: "Learn how to use the MAX_BY aggregate function in PlaidCloud Lakehouse. Returns the value of one column associated with the maximum value of another column."
+description: MAX_BY — returns the value of one column associated with the maximum value of another column.
 ---
 
 Returns the value of one column associated with the maximum value of another column.

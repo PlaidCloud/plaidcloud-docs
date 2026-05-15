@@ -1,6 +1,6 @@
 ---
 title: SLEEP
-description: "Learn how to use the SLEEP test function in PlaidCloud Lakehouse. Sleeps seconds seconds on each data block. Full syntax and usage reference."
+description: SLEEP — sleeps seconds seconds on each data block.
 ---
 
 Sleeps `seconds` seconds on each data block.

@@ -1,6 +1,6 @@
 ---
 title: CURDATE
-description: "Learn how to use the CURDATE date/time function in PlaidCloud Lakehouse. Returns the current date - see syntax, examples, and output."
+description: CURDATE — returns the current date - see syntax, examples, and output.
 ---
 
 Returns the current date.

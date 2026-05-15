@@ -1,6 +1,6 @@
 ---
 title: IS_FLOAT
-description: "Learn how to use the IS_FLOAT semi-structured data function in PlaidCloud Lakehouse. Checks if the input JSON value is a float. Includes syntax and examples."
+description: IS_FLOAT — Checks if the input JSON value is a float.
 ---
 
 Checks if the input JSON value is a float.

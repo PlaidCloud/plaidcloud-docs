@@ -1,6 +1,6 @@
 ---
 title: POWER
-description: "Learn how to use the POWER math function in PlaidCloud Lakehouse. Returns a number raised to the power of another number. Alias for `POW`."
+description: POWER — returns a number raised to the power of another number. Alias for `POW`.
 ---
 
 Returns a number raised to the power of another number. Alias for `POW`.

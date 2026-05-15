@@ -1,6 +1,6 @@
 ---
 title: CITY64WITHSEED
-description: "Learn how to use the CITY64WITHSEED hash function in PlaidCloud Lakehouse. Calculates a City64WithSeed 64-bit hash for a string. Includes syntax and examples."
+description: CITY64WITHSEED — Calculates a City64WithSeed 64-bit hash for a string.
 ---
 
 Calculates a City64WithSeed 64-bit hash for a string.

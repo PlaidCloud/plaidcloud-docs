@@ -1,6 +1,6 @@
 ---
 title: H3_TO_CENTER_CHILD
-description: "Learn how to use the H3_TO_CENTER_CHILD utility function in PlaidCloud Lakehouse. Returns the center child index at the specified resolution."
+description: H3_TO_CENTER_CHILD — returns the center child index at the specified resolution.
 ---
 
 Returns the center child index at the specified resolution.

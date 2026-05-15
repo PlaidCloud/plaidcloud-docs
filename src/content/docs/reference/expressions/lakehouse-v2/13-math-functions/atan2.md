@@ -1,6 +1,6 @@
 ---
 title: ATAN2
-description: "Learn how to use the ATAN2 math function in PlaidCloud Lakehouse. Returns the arc tangent of y/x, using the signs to determine the quadrant."
+description: ATAN2 — returns the arc tangent of y/x, using the signs to determine the quadrant.
 ---
 
 Returns the arc tangent of y/x, using the signs to determine the quadrant.

@@ -1,6 +1,6 @@
 ---
 title: ASCII
-description: "Learn how to use the ASCII string function in PlaidCloud Lakehouse. Returns the ASCII code of the first character in a string - with syntax and examples."
+description: ASCII — Returns the ASCII code of the first character in a string.
 ---
 
 Returns the ASCII code of the first character in a string.

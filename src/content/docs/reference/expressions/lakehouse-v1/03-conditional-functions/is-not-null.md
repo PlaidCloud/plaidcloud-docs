@@ -1,6 +1,6 @@
 ---
 title: IS_NOT_NULL
-description: "Learn how to use the IS_NOT_NULL conditional function in PlaidCloud Lakehouse. Checks whether a value is not NULL. Includes syntax and examples."
+description: IS_NOT_NULL — Checks whether a value is not NULL.
 ---
 
 Checks whether a value is not NULL.

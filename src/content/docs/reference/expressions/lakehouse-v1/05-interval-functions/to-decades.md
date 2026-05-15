@@ -1,6 +1,6 @@
 ---
 title: TO_DECADES
-description: "Learn how to use the TO_DECADES interval function in PlaidCloud Lakehouse. Converts a specified number of decades into an Interval type. Includes syntax and..."
+description: TO_DECADES — converts a specified number of decades into an Interval type. Includes syntax and.
 ---
 
 Converts a specified number of decades into an Interval type.

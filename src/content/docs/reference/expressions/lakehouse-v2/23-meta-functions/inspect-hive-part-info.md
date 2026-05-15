@@ -1,6 +1,6 @@
 ---
 title: INSPECT_HIVE_PART_INFO
-description: "Learn how to use the INSPECT_HIVE_PART_INFO meta function in PlaidCloud Lakehouse. Returns Hive partition information for an external table."
+description: INSPECT_HIVE_PART_INFO — returns Hive partition information for an external table.
 ---
 
 Returns Hive partition information for an external table.

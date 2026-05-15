@@ -1,6 +1,6 @@
 ---
 title: TO_SECONDS
-description: "Learn how to use the TO_SECONDS interval function in PlaidCloud Lakehouse. Converts a specified number of seconds into an Interval type. Includes syntax and..."
+description: TO_SECONDS — converts a specified number of seconds into an Interval type. Includes syntax and.
 ---
 
 Converts a specified number of seconds into an Interval type.

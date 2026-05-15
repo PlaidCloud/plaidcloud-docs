@@ -1,6 +1,6 @@
 ---
 title: BITMAP_INTERSECT
-description: "Learn how to use the BITMAP_INTERSECT bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 1 in the bitmap by performing a logical..."
+description: BITMAP_INTERSECT — counts the number of bits set to 1 in the bitmap by performing a logical.
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical INTERSECT operation.

@@ -1,6 +1,6 @@
 ---
 title: BITMAP_AND
-description: "Learn how to use the BITMAP_AND bitmap function in PlaidCloud Lakehouse. Performs a bitwise AND operation on the two bitmaps. Includes syntax and examples."
+description: BITMAP_AND — Performs a bitwise AND operation on the two bitmaps.
 ---
 
 Performs a bitwise AND operation on the two bitmaps.

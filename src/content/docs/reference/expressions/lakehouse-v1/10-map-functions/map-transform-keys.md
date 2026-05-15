@@ -1,6 +1,6 @@
 ---
 title: MAP_TRANSFORM_KEYS
-description: "Learn how to use the MAP_TRANSFORM_KEYS map function in PlaidCloud Lakehouse. Applies a transformation to each key in a map using a lambda expression."
+description: MAP_TRANSFORM_KEYS — applies a transformation to each key in a map using a lambda expression.
 ---
 
 Applies a transformation to each key in a map using a lambda expression.

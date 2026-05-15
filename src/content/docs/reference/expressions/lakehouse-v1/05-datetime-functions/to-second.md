@@ -1,6 +1,6 @@
 ---
 title: TO_SECOND
-description: "Learn how to use the TO_SECOND datetime function in PlaidCloud Lakehouse. Converts a date with time (timestamp/datetime) to a UInt8 number containing the..."
+description: TO_SECOND — converts a date with time (timestamp/datetime) to a UInt8 number containing the.
 ---
 
 Converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the second in the minute (0-59).

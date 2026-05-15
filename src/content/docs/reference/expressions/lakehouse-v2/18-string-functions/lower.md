@@ -1,6 +1,6 @@
 ---
 title: LOWER
-description: "Learn how to use the LOWER string function in PlaidCloud Lakehouse. Converts a string to lowercase - see syntax, examples, and output."
+description: LOWER — converts a string to lowercase - see syntax, examples, and output.
 ---
 
 Converts a string to lowercase.

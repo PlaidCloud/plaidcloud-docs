@@ -1,6 +1,6 @@
 ---
 title: TO_NULLABLE
-description: "Learn how to use the TO_NULLABLE utility function in PlaidCloud Lakehouse. Converts a value to its nullable equivalent. Includes syntax and examples."
+description: TO_NULLABLE — Converts a value to its nullable equivalent.
 ---
 
 Converts a value to its nullable equivalent.

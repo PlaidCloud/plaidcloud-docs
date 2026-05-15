@@ -1,6 +1,6 @@
 ---
 title: FLOOR
-description: "Learn how to use the FLOOR numeric function in PlaidCloud Lakehouse. Rounds the number down. Includes detailed syntax, examples, and usage reference."
+description: FLOOR — rounds the number down. Includes detailed syntax, examples, and usage reference.
 ---
 
 Rounds the number down.

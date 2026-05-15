@@ -1,6 +1,6 @@
 ---
 title: H3_EXACT_EDGE_LENGTH_KM
-description: "Learn how to use the H3_EXACT_EDGE_LENGTH_KM utility function in PlaidCloud Lakehouse. Computes the length of this directed edge, in kilometers."
+description: H3_EXACT_EDGE_LENGTH_KM — computes the length of this directed edge, in kilometers.
 ---
 
 Computes the length of this directed edge, in kilometers.

@@ -1,6 +1,6 @@
 ---
 title: ROW
-description: "Learn how to use the ROW struct function in PlaidCloud Lakehouse. Creates a struct from a list of values - see syntax, examples, and output."
+description: ROW — creates a struct from a list of values - see syntax, examples, and output.
 ---
 
 Creates a struct from a list of values.

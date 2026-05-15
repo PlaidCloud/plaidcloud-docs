@@ -1,6 +1,6 @@
 ---
 title: STR_TO_MAP
-description: "Learn how to use the STR_TO_MAP string function in PlaidCloud Lakehouse. Splits a string into key-value pairs and returns a map - with syntax and examples."
+description: STR_TO_MAP — Splits a string into key-value pairs and returns a map.
 ---
 
 Splits a string into key-value pairs and returns a map.

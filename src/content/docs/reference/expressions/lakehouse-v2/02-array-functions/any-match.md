@@ -1,6 +1,6 @@
 ---
 title: ANY_MATCH
-description: "Learn how to use the ANY_MATCH array function in PlaidCloud Lakehouse. Returns TRUE if any element in an array matches the given predicate."
+description: ANY_MATCH — returns TRUE if any element in an array matches the given predicate.
 ---
 
 Returns TRUE if any element in an array matches the given predicate.

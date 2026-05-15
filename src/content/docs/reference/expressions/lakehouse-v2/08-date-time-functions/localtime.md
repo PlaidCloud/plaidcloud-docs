@@ -1,6 +1,6 @@
 ---
 title: LOCALTIME
-description: "Learn how to use the LOCALTIME date/time function in PlaidCloud Lakehouse. Returns the current date and time. Alias for `NOW` - with syntax and examples."
+description: LOCALTIME — returns the current date and time. Alias for `NOW`.
 ---
 
 Returns the current date and time. Alias for `NOW`.

@@ -1,6 +1,6 @@
 ---
 title: HLL_HASH
-description: "Learn how to use the HLL_HASH scalar function in PlaidCloud Lakehouse. Computes an HLL hash of a value - see syntax, examples, and output."
+description: HLL_HASH — computes an HLL hash of a value - see syntax, examples, and output.
 ---
 
 Computes an HLL hash of a value.

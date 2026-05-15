@@ -1,6 +1,6 @@
 ---
 title: JSON_EXISTS
-description: "Learn how to use the JSON_EXISTS json function in PlaidCloud Lakehouse. Checks whether a JSON document contains a value at a specified path."
+description: JSON_EXISTS — checks whether a JSON document contains a value at a specified path.
 ---
 
 Checks whether a JSON document contains a value at a specified path.

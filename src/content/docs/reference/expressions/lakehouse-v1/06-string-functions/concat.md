@@ -1,6 +1,6 @@
 ---
 title: CONCAT
-description: "Learn how to use the CONCAT string function in PlaidCloud Lakehouse. Returns the string that results from concatenating the arguments. With syntax and examples."
+description: CONCAT — Returns the string that results from concatenating the arguments.
 ---
 
 Returns the string that results from concatenating the arguments. May have one or more arguments. If all arguments are nonbinary strings, the result is a nonbinary string. If the arguments include any binary strings, the result is a binary string. A numeric argument is converted to its equivalent nonbinary string form.

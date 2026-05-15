@@ -1,6 +1,6 @@
 ---
 title: CATALOG
-description: "Learn how to use the CATALOG utility function in PlaidCloud Lakehouse. Returns the name of the current catalog - see syntax, examples, and output."
+description: CATALOG — returns the name of the current catalog - see syntax, examples, and output.
 ---
 
 Returns the name of the current catalog.

@@ -1,6 +1,6 @@
 ---
 title: FUSE_STATISTIC
-description: "Learn how to use the FUSE_STATISTIC system function in PlaidCloud Lakehouse. Returns the estimated number of distinct values of each column in a table."
+description: FUSE_STATISTIC — returns the estimated number of distinct values of each column in a table.
 ---
 
 Returns the estimated number of distinct values of each column in a table.

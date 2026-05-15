@@ -1,6 +1,6 @@
 ---
 title: MAP_INSERT
-description: "Learn how to use the MAP_INSERT map function in PlaidCloud Lakehouse. Returns a new MAP consisting of the input MAP with a new key-value pair inserted (an..."
+description: MAP_INSERT — returns a new MAP consisting of the input MAP with a new key-value pair inserted (an.
 ---
 
 Returns a new MAP consisting of the input MAP with a new key-value pair inserted (an existing key updated with a new value).

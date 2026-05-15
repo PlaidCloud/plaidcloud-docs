@@ -1,6 +1,6 @@
 ---
 title: COALESCE
-description: "Learn how to use the COALESCE conditional function in PlaidCloud Lakehouse. Returns the first non-NULL expression within its arguments; if all arguments are..."
+description: COALESCE — returns the first non-NULL expression within its arguments; if all arguments are.
 ---
 
 Returns the first non-NULL expression within its arguments; if all arguments are NULL, it returns NULL.

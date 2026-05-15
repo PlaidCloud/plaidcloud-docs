@@ -1,6 +1,6 @@
 ---
 title: BIT_SHIFT_LEFT
-description: "Learn how to use the BIT_SHIFT_LEFT bit function in PlaidCloud Lakehouse. Shifts the bits of a numeric value to the left by a specified number of positions."
+description: BIT_SHIFT_LEFT — shifts the bits of a numeric value to the left by a specified number of positions.
 ---
 
 Shifts the bits of a numeric value to the left by a specified number of positions.

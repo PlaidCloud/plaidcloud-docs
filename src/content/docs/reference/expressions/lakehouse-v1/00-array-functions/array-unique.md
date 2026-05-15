@@ -1,6 +1,6 @@
 ---
 title: ARRAY_UNIQUE
-description: "Learn how to use the ARRAY_UNIQUE array function in PlaidCloud Lakehouse. Counts unique elements in the array (except NULL). Includes syntax and examples."
+description: ARRAY_UNIQUE — Counts unique elements in the array (except NULL).
 ---
 
 Counts unique elements in the array (except NULL).

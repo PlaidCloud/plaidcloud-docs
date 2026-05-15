@@ -1,6 +1,6 @@
 ---
 title: LCASE
-description: "Learn how to use the LCASE string function in PlaidCloud Lakehouse. Converts a string to lowercase. Alias for `LOWER` - see syntax, examples, and output."
+description: LCASE — converts a string to lowercase. Alias for `LOWER` - see syntax, examples, and output.
 ---
 
 Converts a string to lowercase. Alias for `LOWER`.

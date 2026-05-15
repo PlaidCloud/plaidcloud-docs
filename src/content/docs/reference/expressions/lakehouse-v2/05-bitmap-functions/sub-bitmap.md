@@ -1,6 +1,6 @@
 ---
 title: SUB_BITMAP
-description: "Learn how to use the SUB_BITMAP bitmap function in PlaidCloud Lakehouse. Returns a sub-bitmap starting from a specified position with a cardinality limit."
+description: SUB_BITMAP — returns a sub-bitmap starting from a specified position with a cardinality limit.
 ---
 
 Returns a sub-bitmap starting from a specified position with a cardinality limit.

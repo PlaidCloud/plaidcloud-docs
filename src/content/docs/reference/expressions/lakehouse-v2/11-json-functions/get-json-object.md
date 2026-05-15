@@ -1,6 +1,6 @@
 ---
 title: GET_JSON_OBJECT
-description: "Learn how to use the GET_JSON_OBJECT json function in PlaidCloud Lakehouse. Extracts a JSON object from a JSON string by a specified path."
+description: GET_JSON_OBJECT — extracts a JSON object from a JSON string by a specified path.
 ---
 
 Extracts a JSON object from a JSON string by a specified path.

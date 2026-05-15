@@ -1,6 +1,6 @@
 ---
 title: UUID
-description: "Learn how to use the UUID utility function in PlaidCloud Lakehouse. Returns a random UUID string - see syntax, examples, and output."
+description: UUID — returns a random UUID string - see syntax, examples, and output.
 ---
 
 Returns a random UUID string.

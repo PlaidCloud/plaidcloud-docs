@@ -1,6 +1,6 @@
 ---
 title: ARRAY_SLICE
-description: "Learn how to use the ARRAY_SLICE array function in PlaidCloud Lakehouse. Returns a slice of an array from a start position with a given length."
+description: ARRAY_SLICE — returns a slice of an array from a start position with a given length.
 ---
 
 Returns a slice of an array from a start position with a given length.

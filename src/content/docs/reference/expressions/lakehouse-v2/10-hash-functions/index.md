@@ -1,5 +1,6 @@
 ---
 title: Hash Functions
+description: "Lakehouse v2 SQL hash functions: compute deterministic hashes (MD5, SHA, xxHash, CityHash) for dedup, sampling, and integrity checks."
 ---
 
 This section provides reference information for the hash functions in PlaidCloud Lakehouse.

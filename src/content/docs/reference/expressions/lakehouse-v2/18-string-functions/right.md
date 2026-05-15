@@ -1,6 +1,6 @@
 ---
 title: RIGHT
-description: "Learn how to use the RIGHT string function in PlaidCloud Lakehouse. Returns the rightmost N characters of a string - see syntax, examples, and output."
+description: RIGHT — returns the rightmost N characters of a string - see syntax, examples, and output.
 ---
 
 Returns the rightmost N characters of a string.

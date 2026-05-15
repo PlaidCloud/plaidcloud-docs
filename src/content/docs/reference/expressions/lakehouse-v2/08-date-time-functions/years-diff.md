@@ -1,6 +1,6 @@
 ---
 title: YEARS_DIFF
-description: "Learn how to use the YEARS_DIFF date/time function in PlaidCloud Lakehouse. Returns the number of years between two dates - with syntax and examples."
+description: YEARS_DIFF — returns the number of years between two dates.
 ---
 
 Returns the number of years between two dates.

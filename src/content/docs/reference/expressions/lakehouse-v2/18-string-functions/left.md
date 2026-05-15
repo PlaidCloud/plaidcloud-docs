@@ -1,6 +1,6 @@
 ---
 title: LEFT
-description: "Learn how to use the LEFT string function in PlaidCloud Lakehouse. Returns the leftmost N characters of a string - see syntax, examples, and output."
+description: LEFT — returns the leftmost N characters of a string - see syntax, examples, and output.
 ---
 
 Returns the leftmost N characters of a string.

@@ -1,6 +1,6 @@
 ---
 title: SPLIT
-description: "Learn how to use the SPLIT string function in PlaidCloud Lakehouse. Splits a string by a delimiter and returns an array - see syntax, examples, and output."
+description: SPLIT — splits a string by a delimiter and returns an array - see syntax, examples, and output.
 ---
 
 Splits a string by a delimiter and returns an array.

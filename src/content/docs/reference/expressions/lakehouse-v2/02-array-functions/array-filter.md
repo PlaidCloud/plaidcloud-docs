@@ -1,6 +1,6 @@
 ---
 title: ARRAY_FILTER
-description: "Learn how to use the ARRAY_FILTER array function in PlaidCloud Lakehouse. Filters elements in an array using a lambda expression - with syntax and examples."
+description: ARRAY_FILTER — Filters elements in an array using a lambda expression.
 ---
 
 Filters elements in an array using a lambda expression.

@@ -1,6 +1,6 @@
 ---
 title: GET_JSON_BOOL
-description: "Learn how to use the GET_JSON_BOOL json function in PlaidCloud Lakehouse. Extracts a boolean value from a JSON object by a specified path."
+description: GET_JSON_BOOL — extracts a boolean value from a JSON object by a specified path.
 ---
 
 Extracts a boolean value from a JSON object by a specified path.

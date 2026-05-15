@@ -1,6 +1,6 @@
 ---
 title: TRY_INET_ATON
-description: "Learn how to use the TRY_INET_ATON IP address function in PlaidCloud Lakehouse. Try_inet_aton function is used to take the dotted-quad representation of an..."
+description: TRY_INET_ATON — try_inet_aton function is used to take the dotted-quad representation of an.
 ---
 
 try_inet_aton function is used to take the dotted-quad representation of an IPv4 address as a string and returns the numeric value of the given IP address in form of an integer.

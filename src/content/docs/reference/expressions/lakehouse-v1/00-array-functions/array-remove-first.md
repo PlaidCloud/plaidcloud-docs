@@ -1,6 +1,6 @@
 ---
 title: ARRAY_REMOVE_FIRST
-description: "Learn how to use the ARRAY_REMOVE_FIRST array function in PlaidCloud Lakehouse. Removes the first element from the array. Includes syntax and examples."
+description: ARRAY_REMOVE_FIRST — Removes the first element from the array.
 ---
 
 Removes the first element from the array.

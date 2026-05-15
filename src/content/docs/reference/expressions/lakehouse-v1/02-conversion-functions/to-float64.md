@@ -1,6 +1,6 @@
 ---
 title: TO_FLOAT64
-description: "Learn how to use the TO_FLOAT64 conversion function in PlaidCloud Lakehouse. Converts a value to FLOAT64 data type. Includes syntax and examples."
+description: TO_FLOAT64 — Converts a value to FLOAT64 data type.
 ---
 
 Converts a value to FLOAT64 data type.

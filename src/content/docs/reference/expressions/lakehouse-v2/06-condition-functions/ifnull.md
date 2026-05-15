@@ -1,6 +1,6 @@
 ---
 title: IFNULL
-description: "Learn how to use the IFNULL condition function in PlaidCloud Lakehouse. Returns the first expression if it is not NULL, otherwise returns the second expression."
+description: IFNULL — returns the first expression if it is not NULL, otherwise returns the second expression.
 ---
 
 Returns the first expression if it is not NULL, otherwise returns the second expression.

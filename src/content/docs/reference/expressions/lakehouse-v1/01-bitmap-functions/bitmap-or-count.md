@@ -1,6 +1,6 @@
 ---
 title: BITMAP_OR_COUNT
-description: "Learn how to use the BITMAP_OR_COUNT bitmap function in PlaidCloud Lakehouse. Counts the number of bits set to 1 in the bitmap by performing a logical OR..."
+description: BITMAP_OR_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical OR.
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical OR operation.

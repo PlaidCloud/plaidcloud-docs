@@ -1,6 +1,6 @@
 ---
 title: SUBSTR
-description: "Learn how to use the SUBSTR string function in PlaidCloud Lakehouse. Returns a substring starting from a specified position with an optional length."
+description: SUBSTR — returns a substring starting from a specified position with an optional length.
 ---
 
 Returns a substring starting from a specified position with an optional length.

@@ -1,6 +1,6 @@
 ---
 title: TO_BITMAP
-description: "Learn how to use the TO_BITMAP conversion function in PlaidCloud Lakehouse. Converts a value to BITMAP data type. Includes syntax and examples."
+description: TO_BITMAP — Converts a value to BITMAP data type.
 ---
 
 Converts a value to BITMAP data type.

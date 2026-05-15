@@ -1,6 +1,6 @@
 ---
 title: COVAR_POP
-description: "Learn how to use the COVAR_POP aggregate function in PlaidCloud Lakehouse. COVAR_POP returns the population covariance of a set of number pairs."
+description: COVAR_POP — cOVAR_POP returns the population covariance of a set of number pairs.
 ---
 
 COVAR_POP returns the population covariance of a set of number pairs. 

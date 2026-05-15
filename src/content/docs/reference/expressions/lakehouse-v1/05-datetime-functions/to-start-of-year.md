@@ -1,6 +1,6 @@
 ---
 title: TO_START_OF_YEAR
-description: "Learn how to use the TO_START_OF_YEAR datetime function in PlaidCloud Lakehouse. Returns the first day of the year for a date or a date with time..."
+description: TO_START_OF_YEAR — returns the first day of the year for a date or a date with time.
 ---
 
 Returns the first day of the year for a date or a date with time (timestamp/datetime).

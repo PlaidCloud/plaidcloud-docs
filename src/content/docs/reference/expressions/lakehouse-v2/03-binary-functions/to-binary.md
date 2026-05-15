@@ -1,6 +1,6 @@
 ---
 title: TO_BINARY
-description: "Learn how to use the TO_BINARY binary function in PlaidCloud Lakehouse. Converts a VARCHAR string to a binary value based on the specified binary format."
+description: TO_BINARY — converts a VARCHAR string to a binary value based on the specified binary format.
 ---
 
 Converts a VARCHAR string to a binary value based on the specified binary format.

@@ -1,6 +1,6 @@
 ---
 title: LAST_QUERY_ID
-description: "Learn how to use the LAST_QUERY_ID utility function in PlaidCloud Lakehouse. Returns the ID of the most recently executed query - with syntax and examples."
+description: LAST_QUERY_ID — Returns the ID of the most recently executed query.
 ---
 
 Returns the ID of the most recently executed query.

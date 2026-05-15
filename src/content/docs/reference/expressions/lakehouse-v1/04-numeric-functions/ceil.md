@@ -1,6 +1,6 @@
 ---
 title: CEIL
-description: "Learn how to use the CEIL numeric function in PlaidCloud Lakehouse. Rounds the number up. Includes detailed syntax, examples, and usage reference."
+description: CEIL — rounds the number up. Includes detailed syntax, examples, and usage reference.
 ---
 
 Rounds the number up.

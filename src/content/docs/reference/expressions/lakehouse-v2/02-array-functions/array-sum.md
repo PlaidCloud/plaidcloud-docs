@@ -1,6 +1,6 @@
 ---
 title: ARRAY_SUM
-description: "Learn how to use the ARRAY_SUM array function in PlaidCloud Lakehouse. Returns the sum of elements in an array - see syntax, examples, and output."
+description: ARRAY_SUM — returns the sum of elements in an array - see syntax, examples, and output.
 ---
 
 Returns the sum of elements in an array.

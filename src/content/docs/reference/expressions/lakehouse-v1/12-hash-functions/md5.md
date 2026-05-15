@@ -1,6 +1,6 @@
 ---
 title: MD5
-description: "Learn how to use the MD5 hash function in PlaidCloud Lakehouse. Calculates an MD5 128-bit checksum for a string. Includes syntax and examples."
+description: MD5 — Calculates an MD5 128-bit checksum for a string.
 ---
 
 Calculates an MD5 128-bit checksum for a string. The value is returned as a string of 32 hexadecimal digits or NULL if the argument was NULL.

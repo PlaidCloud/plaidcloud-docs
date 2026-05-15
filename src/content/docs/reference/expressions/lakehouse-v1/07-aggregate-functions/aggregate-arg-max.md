@@ -1,6 +1,6 @@
 ---
 title: ARG_MAX
-description: "Learn how to use the ARG_MAX aggregate function in PlaidCloud Lakehouse. Calculates the arg value for a maximum val value. Includes syntax and examples."
+description: ARG_MAX — Calculates the arg value for a maximum val value.
 ---
 
 Calculates the `arg` value for a maximum `val` value. If there are several values of `arg` for maximum values of `val`, returns the first of these values encountered.

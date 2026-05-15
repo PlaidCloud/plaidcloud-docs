@@ -1,6 +1,6 @@
 ---
 title: GET
-description: "Learn how to use the GET array function in PlaidCloud Lakehouse. Returns an element from an array by index (1-based). Includes syntax and examples."
+description: GET — Returns an element from an array by index (1-based).
 ---
 
 Returns an element from an array by index (1-based).

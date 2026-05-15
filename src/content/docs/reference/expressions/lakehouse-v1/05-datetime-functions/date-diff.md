@@ -1,6 +1,6 @@
 ---
 title: DATE DIFF
-description: "Learn how to use the DATE DIFF datetime function in PlaidCloud Lakehouse. PlaidCloud Lakehouse does not provide a date_diff function yet, but it supports..."
+description: DATE DIFF — plaidCloud Lakehouse does not provide a date_diff function yet, but it supports.
 ---
 
 PlaidCloud Lakehouse does not provide a `date_diff` function yet, but it supports direct arithmetic operations on dates and times. For example, you can use the expression `TO_DATE(NOW())-2` to obtain the date from two days ago.

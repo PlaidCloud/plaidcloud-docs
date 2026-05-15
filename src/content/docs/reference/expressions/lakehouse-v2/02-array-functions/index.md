@@ -1,5 +1,6 @@
 ---
 title: Array Functions
+description: "Lakehouse v2 SQL array functions: build, query, transform, and aggregate array values."
 ---
 
 This section provides reference information for the array functions in PlaidCloud Lakehouse.

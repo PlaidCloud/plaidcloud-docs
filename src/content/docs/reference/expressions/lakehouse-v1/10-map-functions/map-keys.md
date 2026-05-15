@@ -1,6 +1,6 @@
 ---
 title: MAP_KEYS
-description: "Learn how to use the MAP_KEYS map function in PlaidCloud Lakehouse. Returns the keys in a map. Includes detailed syntax, examples, and usage reference."
+description: MAP_KEYS — returns the keys in a map. Includes detailed syntax, examples, and usage reference.
 ---
 
 Returns the keys in a map.

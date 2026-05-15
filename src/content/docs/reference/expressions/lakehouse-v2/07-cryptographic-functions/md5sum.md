@@ -1,6 +1,6 @@
 ---
 title: MD5SUM
-description: "Learn how to use the MD5SUM cryptographic function in PlaidCloud Lakehouse. Returns the MD5 hash of multiple strings concatenated together."
+description: MD5SUM — returns the MD5 hash of multiple strings concatenated together.
 ---
 
 Returns the MD5 hash of multiple strings concatenated together.

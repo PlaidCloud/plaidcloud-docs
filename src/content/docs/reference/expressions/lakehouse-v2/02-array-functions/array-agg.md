@@ -1,6 +1,6 @@
 ---
 title: ARRAY_AGG
-description: "Learn how to use the ARRAY_AGG array function in PlaidCloud Lakehouse. Aggregates values into an array - see syntax, examples, and output."
+description: ARRAY_AGG — aggregates values into an array - see syntax, examples, and output.
 ---
 
 Aggregates values into an array.

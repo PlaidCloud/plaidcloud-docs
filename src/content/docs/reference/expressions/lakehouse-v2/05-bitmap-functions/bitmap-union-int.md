@@ -1,6 +1,6 @@
 ---
 title: BITMAP_UNION_INT
-description: "Learn how to use the BITMAP_UNION_INT bitmap function in PlaidCloud Lakehouse. Returns the count of distinct integer values (aggregate)."
+description: BITMAP_UNION_INT — returns the count of distinct integer values (aggregate).
 ---
 
 Returns the count of distinct integer values (aggregate).

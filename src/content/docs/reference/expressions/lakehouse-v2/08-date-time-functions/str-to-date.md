@@ -1,6 +1,6 @@
 ---
 title: STR_TO_DATE
-description: "Learn how to use the STR_TO_DATE date/time function in PlaidCloud Lakehouse. Parses a string into a date using a format string - with syntax and examples."
+description: STR_TO_DATE — parses a string into a date using a format string.
 ---
 
 Parses a string into a date using a format string.

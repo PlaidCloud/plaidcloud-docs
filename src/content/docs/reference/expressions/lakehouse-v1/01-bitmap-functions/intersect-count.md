@@ -1,6 +1,6 @@
 ---
 title: INTERSECT_COUNT
-description: "Learn how to use the INTERSECT_COUNT bitmap function in PlaidCloud Lakehouse. Counts the number of intersecting bits between two bitmap columns."
+description: INTERSECT_COUNT — counts the number of intersecting bits between two bitmap columns.
 ---
 
 Counts the number of intersecting bits between two bitmap columns.

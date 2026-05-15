@@ -1,5 +1,6 @@
 ---
 title: Date and Time Functions
+description: "Lakehouse v2 SQL date and time functions: parse, format, and arithmetic on dates, times, and timestamps."
 ---
 
 This section provides reference information for the date and time functions in PlaidCloud Lakehouse.

@@ -1,6 +1,6 @@
 ---
 title: H3_UNIDIRECTIONAL_EDGE_IS_VALID
-description: "Learn how to use the H3_UNIDIRECTIONAL_EDGE_IS_VALID utility function in PlaidCloud Lakehouse. Determines if the provided H3Index is a valid unidirectional..."
+description: H3_UNIDIRECTIONAL_EDGE_IS_VALID — determines if the provided H3Index is a valid unidirectional.
 ---
 
 Determines if the provided H3Index is a valid unidirectional edge index. Returns 1 if it's a unidirectional edge and 0 otherwise.

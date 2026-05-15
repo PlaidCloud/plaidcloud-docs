@@ -1,6 +1,6 @@
 ---
 title: ARRAY_MIN
-description: "Learn how to use the ARRAY_MIN array function in PlaidCloud Lakehouse. Returns the minimum element in an array - see syntax, examples, and output."
+description: ARRAY_MIN — returns the minimum element in an array - see syntax, examples, and output.
 ---
 
 Returns the minimum element in an array.

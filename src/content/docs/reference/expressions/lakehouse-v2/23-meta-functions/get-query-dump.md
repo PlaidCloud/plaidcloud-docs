@@ -1,6 +1,6 @@
 ---
 title: GET_QUERY_DUMP
-description: "Learn how to use the GET_QUERY_DUMP meta function in PlaidCloud Lakehouse. Returns a query dump for diagnostic purposes - see syntax, examples, and output."
+description: GET_QUERY_DUMP — returns a query dump for diagnostic purposes - see syntax, examples, and output.
 ---
 
 Returns a query dump for diagnostic purposes.

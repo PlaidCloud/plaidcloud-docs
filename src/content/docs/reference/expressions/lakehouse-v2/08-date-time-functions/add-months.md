@@ -1,6 +1,6 @@
 ---
 title: ADD_MONTHS
-description: "Learn how to use the ADD_MONTHS date/time function in PlaidCloud Lakehouse. Adds a specified number of months to a date - see syntax, examples, and output."
+description: ADD_MONTHS — adds a specified number of months to a date - see syntax, examples, and output.
 ---
 
 Adds a specified number of months to a date.

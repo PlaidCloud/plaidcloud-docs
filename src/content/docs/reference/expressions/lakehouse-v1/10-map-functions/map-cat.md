@@ -1,6 +1,6 @@
 ---
 title: MAP_CAT
-description: "Learn how to use the MAP_CAT map function in PlaidCloud Lakehouse. Returns the concatenatation of two MAPs. Full syntax and usage reference."
+description: MAP_CAT — returns the concatenatation of two MAPs.
 ---
 
 Returns the concatenatation of two MAPs.

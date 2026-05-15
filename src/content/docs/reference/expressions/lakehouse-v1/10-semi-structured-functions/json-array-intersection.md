@@ -1,6 +1,6 @@
 ---
 title: JSON_ARRAY_INTERSECTION
-description: "Learn how to use the JSON_ARRAY_INTERSECTION semi-structured data function in PlaidCloud Lakehouse. Returns the common elements between two JSON arrays."
+description: JSON_ARRAY_INTERSECTION — returns the common elements between two JSON arrays.
 ---
 
 Returns the common elements between two JSON arrays.

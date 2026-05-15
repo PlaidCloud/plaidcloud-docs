@@ -1,6 +1,6 @@
 ---
 title: RANK
-description: "Learn how to use the RANK window function in PlaidCloud Lakehouse. Assigns a unique rank to each value within an ordered group of values. Includes syntax..."
+description: RANK — assigns a unique rank to each value within an ordered group of values. Includes syntax.
 ---
 
 The RANK() function assigns a unique rank to each value within an ordered group of values.

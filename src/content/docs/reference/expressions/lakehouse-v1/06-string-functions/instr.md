@@ -1,6 +1,6 @@
 ---
 title: INSTR
-description: "Learn how to use the INSTR string function in PlaidCloud Lakehouse. Returns the position of the first occurrence of substring substr in string str."
+description: INSTR — returns the position of the first occurrence of substring substr in string str.
 ---
 
 Returns the position of the first occurrence of substring substr in string str.

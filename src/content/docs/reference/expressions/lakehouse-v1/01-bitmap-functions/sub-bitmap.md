@@ -1,6 +1,6 @@
 ---
 title: SUB_BITMAP
-description: "Learn how to use the SUB_BITMAP bitmap function in PlaidCloud Lakehouse. Generates a sub-bitmap of the source bitmap, beginning from the start index, with a..."
+description: SUB_BITMAP — generates a sub-bitmap of the source bitmap, beginning from the start index, with a.
 ---
 
 Generates a sub-bitmap of the source bitmap, beginning from the start index, with a specified size.

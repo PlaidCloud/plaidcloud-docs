@@ -1,6 +1,6 @@
 ---
 title: EXP
-description: "Learn how to use the EXP math function in PlaidCloud Lakehouse. Returns e raised to the power of a number - see syntax, examples, and output."
+description: EXP — returns e raised to the power of a number - see syntax, examples, and output.
 ---
 
 Returns e raised to the power of a number.

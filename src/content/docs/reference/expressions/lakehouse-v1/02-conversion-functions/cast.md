@@ -1,6 +1,6 @@
 ---
 title: "CAST, ::"
-description: "Learn how to use the CAST, :: conversion function in PlaidCloud Lakehouse. Converts a value from one data type to another. Includes syntax and examples."
+description: "CAST, :: — converts a value from one data type to another."
 ---
 
 Converts a value from one data type to another. `::` is an alias for CAST.

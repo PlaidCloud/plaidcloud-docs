@@ -1,6 +1,6 @@
 ---
 title: FUSE_SEGMENT
-description: "Learn how to use the FUSE_SEGMENT system function in PlaidCloud Lakehouse. Returns the segment information of a specified table snapshot. Includes syntax..."
+description: FUSE_SEGMENT — returns the segment information of a specified table snapshot. Includes syntax.
 ---
 
 Returns the segment information of a specified table snapshot. For more information about what is segment in PlaidCloud Lakehouse, see What are Snapshot, Segment, and Block?.

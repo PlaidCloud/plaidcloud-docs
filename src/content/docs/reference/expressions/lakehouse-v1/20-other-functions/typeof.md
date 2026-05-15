@@ -1,6 +1,6 @@
 ---
 title: TYPEOF
-description: "Learn how to use the TYPEOF utility function in PlaidCloud Lakehouse. TYPEOF function is used to return the name of a data type. Includes syntax and examples."
+description: TYPEOF — TYPEOF function is used to return the name of a data type.
 ---
 
 TYPEOF function is used to return the name of a data type.

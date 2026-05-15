@@ -1,6 +1,6 @@
 ---
 title: LOG
-description: "Learn how to use the LOG math function in PlaidCloud Lakehouse. Returns the logarithm of a number with a specified base - see syntax, examples, and output."
+description: LOG — returns the logarithm of a number with a specified base - see syntax, examples, and output.
 ---
 
 Returns the logarithm of a number with a specified base.

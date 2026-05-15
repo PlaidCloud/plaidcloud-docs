@@ -1,6 +1,6 @@
 ---
 title: BASE64_DECODE_BINARY
-description: "Learn how to use the BASE64_DECODE_BINARY cryptographic function in PlaidCloud Lakehouse. Decodes a base64-encoded string to a binary value."
+description: BASE64_DECODE_BINARY — decodes a base64-encoded string to a binary value.
 ---
 
 Decodes a base64-encoded string to a binary value.

@@ -1,6 +1,6 @@
 ---
 title: JSON_REMOVE
-description: "Learn how to use the JSON_REMOVE json function in PlaidCloud Lakehouse. Removes an element from a JSON document at a specified path - with syntax and examples."
+description: JSON_REMOVE — Removes an element from a JSON document at a specified path.
 ---
 
 Removes an element from a JSON document at a specified path.

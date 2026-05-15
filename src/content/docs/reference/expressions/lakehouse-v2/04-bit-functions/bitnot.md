@@ -1,6 +1,6 @@
 ---
 title: BITNOT
-description: "Learn how to use the BITNOT bit function in PlaidCloud Lakehouse. Returns the bitwise NOT of a numeric value - see syntax, examples, and output."
+description: BITNOT — returns the bitwise NOT of a numeric value - see syntax, examples, and output.
 ---
 
 Returns the bitwise NOT of a numeric value.

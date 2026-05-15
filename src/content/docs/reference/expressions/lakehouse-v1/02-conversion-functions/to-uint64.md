@@ -1,6 +1,6 @@
 ---
 title: TO_UINT64
-description: "Learn how to use the TO_UINT64 conversion function in PlaidCloud Lakehouse. Converts a value to UINT64 data type. Includes syntax and examples."
+description: TO_UINT64 — Converts a value to UINT64 data type.
 ---
 
 Converts a value to UINT64 data type.

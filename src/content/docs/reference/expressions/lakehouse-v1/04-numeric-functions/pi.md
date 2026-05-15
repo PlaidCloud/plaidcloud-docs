@@ -1,6 +1,6 @@
 ---
 title: PI
-description: "Learn how to use the PI numeric function in PlaidCloud Lakehouse. Returns the value of π as a floating-point value. Includes syntax and examples."
+description: PI — Returns the value of π as a floating-point value.
 ---
 
 Returns the value of π as a floating-point value.

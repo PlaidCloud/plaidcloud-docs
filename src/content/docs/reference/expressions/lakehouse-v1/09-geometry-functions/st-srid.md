@@ -1,6 +1,6 @@
 ---
 title: ST_SRID
-description: "Learn how to use the ST_SRID geometry function in PlaidCloud Lakehouse. Returns the SRID (spatial reference system identifier) of a GEOMETRY object."
+description: ST_SRID — returns the SRID (spatial reference system identifier) of a GEOMETRY object.
 ---
 
 Returns the SRID (spatial reference system identifier) of a GEOMETRY object.

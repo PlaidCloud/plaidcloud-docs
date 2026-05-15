@@ -1,5 +1,6 @@
 ---
 title: Cryptographic Functions
+description: "Lakehouse v2 SQL cryptographic functions: encryption, decryption, and HMAC helpers."
 ---
 
 This section provides reference information for the cryptographic functions in PlaidCloud Lakehouse.

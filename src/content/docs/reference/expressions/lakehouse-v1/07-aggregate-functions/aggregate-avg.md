@@ -1,6 +1,6 @@
 ---
 title: AVG
-description: "Learn how to use the AVG aggregate function in PlaidCloud Lakehouse. Syntax, examples, and usage details. Includes usage and syntax details."
+description: AVG — return the average value of an expression, ignoring NULL values.
 ---
 
 Aggregate function.

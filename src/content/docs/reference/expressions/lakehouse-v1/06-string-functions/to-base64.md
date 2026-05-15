@@ -1,6 +1,6 @@
 ---
 title: TO_BASE64
-description: "Learn how to use the TO_BASE64 string function in PlaidCloud Lakehouse. Converts the string argument to base-64 encoded form and returns the result as a..."
+description: TO_BASE64 — converts the string argument to base-64 encoded form and returns the result as a.
 ---
 
 Converts the string argument to base-64 encoded form and returns the result as a character string.

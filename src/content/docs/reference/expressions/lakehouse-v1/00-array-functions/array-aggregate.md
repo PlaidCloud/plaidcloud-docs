@@ -1,6 +1,6 @@
 ---
 title: ARRAY_AGGREGATE
-description: "Learn how to use the ARRAY_AGGREGATE array function in PlaidCloud Lakehouse. Aggregates elements in the array with an aggregate function. Includes syntax..."
+description: ARRAY_AGGREGATE — aggregates elements in the array with an aggregate function. Includes syntax.
 ---
 
 Aggregates elements in the array with an aggregate function.

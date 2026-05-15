@@ -1,6 +1,6 @@
 ---
 title: JSON_MAP_TRANSFORM_KEYS
-description: "Learn how to use the JSON_MAP_TRANSFORM_KEYS semi-structured data function in PlaidCloud Lakehouse. Applies a transformation to each key in a JSON object..."
+description: JSON_MAP_TRANSFORM_KEYS — applies a transformation to each key in a JSON object.
 ---
 
 Applies a transformation to each key in a JSON object using a lambda expression.

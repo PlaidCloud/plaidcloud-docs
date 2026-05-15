@@ -1,6 +1,6 @@
 ---
 title: DIV
-description: "Learn how to use the DIV numeric function in PlaidCloud Lakehouse. Returns the quotient by dividing the first number by the second one, rounding down to the..."
+description: DIV — returns the quotient by dividing the first number by the second one, rounding down to the.
 ---
 
 Returns the quotient by dividing the first number by the second one, rounding down to the closest smaller integer. Equivalent to the division operator `//`.

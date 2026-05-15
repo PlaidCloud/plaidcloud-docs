@@ -1,6 +1,6 @@
 ---
 title: HOURS_ADD
-description: "Learn how to use the HOURS_ADD date/time function in PlaidCloud Lakehouse. Adds a specified number of hours to a datetime - with syntax and examples."
+description: HOURS_ADD — adds a specified number of hours to a datetime.
 ---
 
 Adds a specified number of hours to a datetime.

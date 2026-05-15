@@ -1,6 +1,6 @@
 ---
 title: H3_GET_UNIDIRECTIONAL_EDGE
-description: "Learn how to use the H3_GET_UNIDIRECTIONAL_EDGE utility function in PlaidCloud Lakehouse. Returns the edge between the given two H3 indexes."
+description: H3_GET_UNIDIRECTIONAL_EDGE — returns the edge between the given two H3 indexes.
 ---
 
 Returns the edge between the given two [H3](https://eng.uber.com/h3/) indexes.

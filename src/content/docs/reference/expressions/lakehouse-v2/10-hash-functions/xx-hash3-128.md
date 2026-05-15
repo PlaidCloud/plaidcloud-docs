@@ -1,6 +1,6 @@
 ---
 title: XX_HASH3_128
-description: "Learn how to use the XX_HASH3_128 hash function in PlaidCloud Lakehouse. Returns the 128-bit xxHash3 hash of a value - see syntax, examples, and output."
+description: XX_HASH3_128 — returns the 128-bit xxHash3 hash of a value - see syntax, examples, and output.
 ---
 
 Returns the 128-bit xxHash3 hash of a value.

@@ -1,6 +1,6 @@
 ---
 title: OBJECT_KEYS
-description: "Learn how to use OBJECT_KEYS in PlaidCloud Lakehouse. Alias for the JSON_OBJECT_KEYS semi-structured data function. Includes syntax and examples."
+description: OBJECT_KEYS — alias for the JSON_OBJECT_KEYS semi-structured data function.
 ---
 
 Alias for [JSON_OBJECT_KEYS](../json-object-keys).

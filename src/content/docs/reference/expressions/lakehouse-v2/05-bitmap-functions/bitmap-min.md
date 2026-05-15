@@ -1,6 +1,6 @@
 ---
 title: BITMAP_MIN
-description: "Learn how to use the BITMAP_MIN bitmap function in PlaidCloud Lakehouse. Returns the minimum value in a bitmap - see syntax, examples, and output."
+description: BITMAP_MIN — returns the minimum value in a bitmap - see syntax, examples, and output.
 ---
 
 Returns the minimum value in a bitmap.

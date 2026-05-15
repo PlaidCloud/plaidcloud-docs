@@ -1,6 +1,6 @@
 ---
 title: DIV0
-description: "Learn how to use the DIV0 numeric function in PlaidCloud Lakehouse. Returns the quotient by dividing the first number by the second one. Includes syntax and..."
+description: DIV0 — returns the quotient by dividing the first number by the second one. Includes syntax and.
 ---
 
 Returns the quotient by dividing the first number by the second one. Returns 0 if the second number is 0.

@@ -1,6 +1,6 @@
 ---
 title: URL_DECODE
-description: "Learn how to use the URL_DECODE string function in PlaidCloud Lakehouse. Decodes a URL-encoded string - see syntax, examples, and output."
+description: URL_DECODE — decodes a URL-encoded string - see syntax, examples, and output.
 ---
 
 Decodes a URL-encoded string.

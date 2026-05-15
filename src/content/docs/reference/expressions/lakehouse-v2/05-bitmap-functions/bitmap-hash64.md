@@ -1,6 +1,6 @@
 ---
 title: BITMAP_HASH64
-description: "Learn how to use the BITMAP_HASH64 bitmap function in PlaidCloud Lakehouse. Computes a 64-bit hash of a value and returns a bitmap containing that hash."
+description: BITMAP_HASH64 — computes a 64-bit hash of a value and returns a bitmap containing that hash.
 ---
 
 Computes a 64-bit hash of a value and returns a bitmap containing that hash.

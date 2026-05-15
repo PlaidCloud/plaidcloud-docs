@@ -1,6 +1,6 @@
 ---
 title: TIMESTAMPADD
-description: "Learn how to use the TIMESTAMPADD date/time function in PlaidCloud Lakehouse. Adds a specified time interval to a datetime - with syntax and examples."
+description: TIMESTAMPADD — adds a specified time interval to a datetime.
 ---
 
 Adds a specified time interval to a datetime.
