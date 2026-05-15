@@ -1,5 +1,5 @@
 ---
-title: SCORE
+title: SCORE (Lakehouse v1)
 description: SCORE — Returns the relevance of the query string.
 ---
 

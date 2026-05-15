@@ -1,5 +1,5 @@
 ---
-title: ARRAY_TRANSFORM
+title: ARRAY_TRANSFORM (Lakehouse v1)
 description: ARRAY_TRANSFORM — returns an array that is the result of applying the lambda function to each.
 ---
 

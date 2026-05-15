@@ -1,5 +1,5 @@
 ---
-title: CHECK_JSON
+title: CHECK_JSON (Lakehouse v1)
 description: CHECK_JSON — Checks the validity of a JSON document.
 ---
 

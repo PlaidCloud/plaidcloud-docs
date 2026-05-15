@@ -1,5 +1,5 @@
 ---
-title: H3_EDGE_LENGTH_M
+title: H3_EDGE_LENGTH_M (Lakehouse v1)
 description: H3_EDGE_LENGTH_M — returns the average hexagon edge length in meters at the given resolution.
 ---
 

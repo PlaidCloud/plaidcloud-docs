@@ -1,6 +1,6 @@
 ---
-title: REPEAT
-description: REPEAT — returns a string consisting of the string str repeated count times. Includes syntax and.
+title: REPEAT (Lakehouse v1)
+description: REPEAT — returns a string consisting of the string str repeated count times.
 ---
 
 Returns a string consisting of the string str repeated count times. If count is less than 1, returns an empty string. Returns NULL if str or count are NULL.

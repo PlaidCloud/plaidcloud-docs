@@ -1,5 +1,5 @@
 ---
-title: TO_NULLABLE
+title: TO_NULLABLE (Lakehouse v1)
 description: TO_NULLABLE — Converts a value to its nullable equivalent.
 ---
 

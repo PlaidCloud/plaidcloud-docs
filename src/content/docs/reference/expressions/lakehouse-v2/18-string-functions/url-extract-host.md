@@ -1,6 +1,6 @@
 ---
-title: URL_EXTRACT_HOST
-description: URL_EXTRACT_HOST — extracts the host from a URL string - see syntax, examples, and output.
+title: URL_EXTRACT_HOST (Lakehouse v2)
+description: URL_EXTRACT_HOST — extracts the host from a URL string.
 ---
 
 Extracts the host from a URL string.

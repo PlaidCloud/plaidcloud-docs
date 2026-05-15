@@ -1,5 +1,5 @@
 ---
-title: MINUTES_SUB
+title: MINUTES_SUB (Lakehouse v2)
 description: MINUTES_SUB — subtracts a specified number of minutes from a datetime.
 ---
 

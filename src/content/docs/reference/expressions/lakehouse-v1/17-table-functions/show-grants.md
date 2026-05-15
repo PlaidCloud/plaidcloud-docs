@@ -1,5 +1,5 @@
 ---
-title: SHOW_GRANTS
+title: SHOW_GRANTS (Lakehouse v1)
 description: SHOW_GRANTS — lists privileges explicitly granted to a user, to a role, or on a specific object.
 ---
 

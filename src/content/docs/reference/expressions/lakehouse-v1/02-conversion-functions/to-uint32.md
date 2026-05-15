@@ -1,5 +1,5 @@
 ---
-title: TO_UINT32
+title: TO_UINT32 (Lakehouse v1)
 description: TO_UINT32 — Converts a value to UINT32 data type.
 ---
 

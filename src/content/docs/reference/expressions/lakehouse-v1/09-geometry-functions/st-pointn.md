@@ -1,5 +1,5 @@
 ---
-title: ST_POINTN
+title: ST_POINTN (Lakehouse v1)
 description: ST_POINTN — Returns a Point at a specified index in a LineString.
 ---
 

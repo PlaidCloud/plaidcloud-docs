@@ -1,5 +1,5 @@
 ---
-title: LEAST
+title: LEAST (Lakehouse v1)
 description: LEAST — Returns the minimum value from a set of values.
 ---
 

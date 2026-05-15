@@ -1,5 +1,5 @@
 ---
-title: GEO_TO_H3
+title: GEO_TO_H3 (Lakehouse v1)
 description: GEO_TO_H3 — returns the H3 index of the hexagon cell where the given location resides.
 ---
 

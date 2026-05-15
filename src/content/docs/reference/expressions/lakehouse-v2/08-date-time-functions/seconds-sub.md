@@ -1,5 +1,5 @@
 ---
-title: SECONDS_SUB
+title: SECONDS_SUB (Lakehouse v2)
 description: SECONDS_SUB — subtracts a specified number of seconds from a datetime.
 ---
 

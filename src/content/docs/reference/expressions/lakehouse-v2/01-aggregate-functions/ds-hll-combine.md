@@ -1,5 +1,5 @@
 ---
-title: DS_HLL_COMBINE
+title: DS_HLL_COMBINE (Lakehouse v2)
 description: DS_HLL_COMBINE — combines multiple DataSketches HLL sketches into a single sketch.
 ---
 

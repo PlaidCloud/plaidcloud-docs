@@ -1,6 +1,6 @@
 ---
-title: STDDEV_SAMP
-description: STDDEV_SAMP — returns the sample standard deviation - see syntax, examples, and output.
+title: STDDEV_SAMP (Lakehouse v2)
+description: STDDEV_SAMP — returns the sample standard deviation.
 ---
 
 Returns the sample standard deviation.

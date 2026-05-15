@@ -1,5 +1,5 @@
 ---
-title: BITMAP_INTERSECT
+title: BITMAP_INTERSECT (Lakehouse v2)
 description: BITMAP_INTERSECT — returns the intersection of a set of bitmaps (aggregate).
 ---
 

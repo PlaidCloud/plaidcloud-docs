@@ -1,5 +1,5 @@
 ---
-title: KURTOSIS
+title: KURTOSIS (Lakehouse v1)
 description: KURTOSIS — return the excess kurtosis (peakedness vs. normal) of all input values.
 ---
 

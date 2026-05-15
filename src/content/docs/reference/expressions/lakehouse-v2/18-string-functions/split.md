@@ -1,6 +1,6 @@
 ---
-title: SPLIT
-description: SPLIT — splits a string by a delimiter and returns an array - see syntax, examples, and output.
+title: SPLIT (Lakehouse v2)
+description: SPLIT — splits a string by a delimiter and returns an array.
 ---
 
 Splits a string by a delimiter and returns an array.

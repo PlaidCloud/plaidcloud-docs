@@ -1,5 +1,5 @@
 ---
-title: ARRAY_SORT
+title: ARRAY_SORT (Lakehouse v1)
 description: ARRAY_SORT — Sorts elements in the array in ascending order.
 ---
 

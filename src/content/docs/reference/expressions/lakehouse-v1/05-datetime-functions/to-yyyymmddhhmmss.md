@@ -1,5 +1,5 @@
 ---
-title: TO_YYYYMMDDHHMMSS
+title: TO_YYYYMMDDHHMMSS (Lakehouse v1)
 description: TO_YYYYMMDDHHMMSS — convert a date or date with time (timestamp/datetime) to a UInt64 number.
 ---
 

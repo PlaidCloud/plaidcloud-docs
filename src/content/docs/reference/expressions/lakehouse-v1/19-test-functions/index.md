@@ -1,5 +1,5 @@
 ---
-title: Test Functions
+title: Test Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL test functions: assertion and validation helpers for testing data values."
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: ARRAY_LENGTH
-description: ARRAY_LENGTH — returns the number of elements in an array - see syntax, examples, and output.
+title: ARRAY_LENGTH (Lakehouse v2)
+description: ARRAY_LENGTH — returns the number of elements in an array.
 ---
 
 Returns the number of elements in an array.

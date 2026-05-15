@@ -1,6 +1,6 @@
 ---
-title: FROM_DAYS
-description: FROM_DAYS — converts a day count to a date - see syntax, examples, and output.
+title: FROM_DAYS (Lakehouse v2)
+description: FROM_DAYS — converts a day count to a date.
 ---
 
 Converts a day count to a date.

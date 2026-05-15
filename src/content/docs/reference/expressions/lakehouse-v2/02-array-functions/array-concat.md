@@ -1,5 +1,5 @@
 ---
-title: ARRAY_CONCAT
+title: ARRAY_CONCAT (Lakehouse v2)
 description: ARRAY_CONCAT — Concatenates multiple arrays into a single array.
 ---
 

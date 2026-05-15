@@ -1,5 +1,5 @@
 ---
-title: TRIM
+title: TRIM (Lakehouse v2)
 description: TRIM — removes leading and trailing whitespace or specified characters from a string.
 ---
 

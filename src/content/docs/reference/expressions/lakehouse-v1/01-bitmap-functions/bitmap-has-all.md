@@ -1,5 +1,5 @@
 ---
-title: BITMAP_HAS_ALL
+title: BITMAP_HAS_ALL (Lakehouse v1)
 description: BITMAP_HAS_ALL — checks if the first bitmap contains all the bits in the second bitmap.
 ---
 

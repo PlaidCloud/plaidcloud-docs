@@ -1,5 +1,5 @@
 ---
-title: BITMAP_INTERSECT
+title: BITMAP_INTERSECT (Lakehouse v1)
 description: BITMAP_INTERSECT — counts the number of bits set to 1 in the bitmap by performing a logical.
 ---
 

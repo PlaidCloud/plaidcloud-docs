@@ -1,5 +1,5 @@
 ---
-title: JARO_WINKLER
+title: JARO_WINKLER (Lakehouse v1)
 description: JARO_WINKLER — Calculates the Jaro-Winkler distance between two strings.
 ---
 

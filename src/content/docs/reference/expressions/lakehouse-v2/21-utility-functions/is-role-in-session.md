@@ -1,5 +1,5 @@
 ---
-title: IS_ROLE_IN_SESSION
+title: IS_ROLE_IN_SESSION (Lakehouse v2)
 description: IS_ROLE_IN_SESSION — checks whether a specified role is active in the current session.
 ---
 

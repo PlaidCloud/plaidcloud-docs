@@ -1,6 +1,6 @@
 ---
-title: COS
-description: COS — returns the cosine of a number in radians - see syntax, examples, and output.
+title: COS (Lakehouse v2)
+description: COS — returns the cosine of a number in radians.
 ---
 
 Returns the cosine of a number in radians.

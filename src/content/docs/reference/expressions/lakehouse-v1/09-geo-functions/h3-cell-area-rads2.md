@@ -1,5 +1,5 @@
 ---
-title: H3_CELL_AREA_RADS2
+title: H3_CELL_AREA_RADS2 (Lakehouse v1)
 description: H3_CELL_AREA_RADS2 — returns the exact area of specific cell in square radians.
 ---
 

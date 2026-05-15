@@ -1,6 +1,6 @@
 ---
-title: TO_HOUR
-description: TO_HOUR — converts a date with time (timestamp/datetime) to a UInt8 number containing the.
+title: TO_HOUR (Lakehouse v1)
+description: TO_HOUR — converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the hour in 24-hour time (0-23).
 ---
 
 Converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the hour in 24-hour time (0-23).

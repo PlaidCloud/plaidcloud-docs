@@ -1,5 +1,5 @@
 ---
-title: YEARS_SUB
+title: YEARS_SUB (Lakehouse v2)
 description: YEARS_SUB — subtracts a specified number of years from a date.
 ---
 

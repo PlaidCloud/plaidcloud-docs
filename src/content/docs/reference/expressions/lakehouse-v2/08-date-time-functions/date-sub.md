@@ -1,5 +1,5 @@
 ---
-title: DATE_SUB
+title: DATE_SUB (Lakehouse v2)
 description: DATE_SUB — subtracts a specified time interval from a date or datetime.
 ---
 

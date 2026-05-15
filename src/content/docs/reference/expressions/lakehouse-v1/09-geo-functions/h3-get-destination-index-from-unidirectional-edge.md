@@ -1,6 +1,6 @@
 ---
-title: H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE
-description: H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE — returns the destination hexagon index from.
+title: H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE (Lakehouse v1)
+description: H3_GET_DESTINATION_INDEX_FROM_UNIDIRECTIONAL_EDGE — returns the destination hexagon index from the unidirectional edge H3Index.
 ---
 
 Returns the destination hexagon index from the unidirectional edge H3Index.

@@ -1,5 +1,5 @@
 ---
-title: H3_TO_GEO
+title: H3_TO_GEO (Lakehouse v1)
 description: H3_TO_GEO — returns the longitude and latitude corresponding to the given H3 index.
 ---
 

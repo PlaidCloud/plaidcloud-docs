@@ -1,5 +1,5 @@
 ---
-title: H3_IS_VALID
+title: H3_IS_VALID (Lakehouse v1)
 description: H3_IS_VALID — Checks if the given H3 index is valid.
 ---
 

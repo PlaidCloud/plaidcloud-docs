@@ -1,5 +1,5 @@
 ---
-title: TRANSLATE
+title: TRANSLATE (Lakehouse v1)
 description: TRANSLATE — transforms a given string by replacing specific characters with corresponding.
 ---
 

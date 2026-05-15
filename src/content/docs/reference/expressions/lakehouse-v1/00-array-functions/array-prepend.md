@@ -1,5 +1,5 @@
 ---
-title: ARRAY_PREPEND
+title: ARRAY_PREPEND (Lakehouse v1)
 description: ARRAY_PREPEND — prepends an element to the array.
 ---
 

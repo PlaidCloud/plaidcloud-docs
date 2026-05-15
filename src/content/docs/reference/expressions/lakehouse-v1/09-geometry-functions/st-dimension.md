@@ -1,5 +1,5 @@
 ---
-title: ST_DIMENSION
+title: ST_DIMENSION (Lakehouse v1)
 description: ST_DIMENSION — Return the dimension for a geometry object.
 ---
 

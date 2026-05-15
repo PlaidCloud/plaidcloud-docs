@@ -1,6 +1,6 @@
 ---
-title: RANK
-description: RANK — assigns a unique rank to each value within an ordered group of values. Includes syntax.
+title: RANK (Lakehouse v1)
+description: RANK — assigns a unique rank to each value within an ordered group of values.
 ---
 
 The RANK() function assigns a unique rank to each value within an ordered group of values.

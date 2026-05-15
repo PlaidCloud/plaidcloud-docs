@@ -1,6 +1,6 @@
 ---
-title: MINUS
-description: MINUS — negates a numeric value. Includes detailed syntax, examples, and usage reference.
+title: MINUS (Lakehouse v1)
+description: MINUS — negates a numeric value.
 ---
 
 Negates a numeric value.

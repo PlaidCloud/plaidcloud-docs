@@ -1,6 +1,6 @@
 ---
-title: ASIN
-description: ASIN — returns the arc sine of a number in radians - see syntax, examples, and output.
+title: ASIN (Lakehouse v2)
+description: ASIN — returns the arc sine of a number in radians.
 ---
 
 Returns the arc sine of a number in radians.

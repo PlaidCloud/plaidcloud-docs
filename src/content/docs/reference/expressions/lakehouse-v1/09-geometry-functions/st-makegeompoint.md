@@ -1,5 +1,5 @@
 ---
-title: ST_MAKEGEOMPOINT
+title: ST_MAKEGEOMPOINT (Lakehouse v1)
 description: ST_MAKEGEOMPOINT — constructs a GEOMETRY object that represents a Point with the specified.
 ---
 

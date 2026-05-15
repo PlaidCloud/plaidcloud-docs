@@ -1,5 +1,5 @@
 ---
-title: STARTS_WITH
+title: STARTS_WITH (Lakehouse v2)
 description: STARTS_WITH — Checks whether a string starts with a specified prefix.
 ---
 

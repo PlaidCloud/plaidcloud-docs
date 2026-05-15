@@ -1,6 +1,6 @@
 ---
-title: BUILD_BITMAP
-description: BUILD_BITMAP — converts an array of positive integers to a BITMAP value. Includes syntax and.
+title: BUILD_BITMAP (Lakehouse v1)
+description: BUILD_BITMAP — converts an array of positive integers to a BITMAP value.
 ---
 
 Converts an array of positive integers to a BITMAP value.

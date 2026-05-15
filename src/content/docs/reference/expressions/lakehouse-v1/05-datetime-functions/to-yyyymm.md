@@ -1,5 +1,5 @@
 ---
-title: TO_YYYYMM
+title: TO_YYYYMM (Lakehouse v1)
 description: TO_YYYYMM — converts a date or date with time (timestamp/datetime) to a UInt32 number.
 ---
 

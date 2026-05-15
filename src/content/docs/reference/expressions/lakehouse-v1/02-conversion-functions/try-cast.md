@@ -1,5 +1,5 @@
 ---
-title: TRY_CAST
+title: TRY_CAST (Lakehouse v1)
 description: TRY_CAST — Converts a value from one data type to another.
 ---
 

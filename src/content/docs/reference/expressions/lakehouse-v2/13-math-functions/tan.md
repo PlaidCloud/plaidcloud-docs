@@ -1,6 +1,6 @@
 ---
-title: TAN
-description: TAN — returns the tangent of a number in radians - see syntax, examples, and output.
+title: TAN (Lakehouse v2)
+description: TAN — returns the tangent of a number in radians.
 ---
 
 Returns the tangent of a number in radians.

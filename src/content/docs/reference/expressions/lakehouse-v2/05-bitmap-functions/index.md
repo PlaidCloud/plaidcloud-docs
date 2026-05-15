@@ -1,5 +1,5 @@
 ---
-title: Bitmap Functions
+title: Bitmap Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL bitmap functions: build and operate on roaring bitmap values for fast set arithmetic."
 ---
 

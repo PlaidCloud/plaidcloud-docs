@@ -1,6 +1,6 @@
 ---
-title: DEGREES
-description: DEGREES — converts radians to degrees - see syntax, examples, and output.
+title: DEGREES (Lakehouse v2)
+description: DEGREES — converts radians to degrees.
 ---
 
 Converts radians to degrees.

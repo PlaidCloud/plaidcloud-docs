@@ -1,5 +1,5 @@
 ---
-title: LEFT
+title: LEFT (Lakehouse v1)
 description: LEFT — returns the leftmost len characters from the string str, or NULL if any argument is NULL.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: BITMAP_NOT_COUNT
+title: BITMAP_NOT_COUNT (Lakehouse v1)
 description: BITMAP_NOT_COUNT — counts the number of bits set to 0 in the bitmap by performing a logical NOT.
 ---
 

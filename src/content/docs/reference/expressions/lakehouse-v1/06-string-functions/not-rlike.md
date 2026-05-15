@@ -1,6 +1,6 @@
 ---
-title: NOT RLIKE
-description: NOT RLIKE — returns 1 if the string expr doesn't match the regular expression specified by the.
+title: NOT RLIKE (Lakehouse v1)
+description: NOT RLIKE — returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.
 ---
 
 Returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.

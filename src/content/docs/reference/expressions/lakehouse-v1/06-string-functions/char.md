@@ -1,5 +1,5 @@
 ---
-title: CHAR
+title: CHAR (Lakehouse v1)
 description: CHAR — Return the character for each integer passed.
 ---
 

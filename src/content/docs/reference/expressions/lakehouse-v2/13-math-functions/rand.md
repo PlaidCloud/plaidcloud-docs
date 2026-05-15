@@ -1,5 +1,5 @@
 ---
-title: RAND
+title: RAND (Lakehouse v2)
 description: RAND — returns a random floating-point value between 0 (inclusive) and 1 (exclusive).
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: H3_GET_BASE_CELL
+title: H3_GET_BASE_CELL (Lakehouse v1)
 description: H3_GET_BASE_CELL — Returns the base cell number of the given H3 index.
 ---
 

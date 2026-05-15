@@ -1,5 +1,5 @@
 ---
-title: JSON_OBJECT_AGG
+title: JSON_OBJECT_AGG (Lakehouse v1)
 description: JSON_OBJECT_AGG — Converts key-value pairs into a JSON object.
 ---
 

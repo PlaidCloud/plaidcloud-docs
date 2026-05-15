@@ -1,6 +1,6 @@
 ---
-title: BITMAP_REMOVE
-description: BITMAP_REMOVE — removes a specific value from a bitmap - see syntax, examples, and output.
+title: BITMAP_REMOVE (Lakehouse v2)
+description: BITMAP_REMOVE — removes a specific value from a bitmap.
 ---
 
 Removes a specific value from a bitmap.

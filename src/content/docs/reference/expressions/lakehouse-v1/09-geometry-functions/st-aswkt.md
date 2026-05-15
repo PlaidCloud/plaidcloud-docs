@@ -1,5 +1,5 @@
 ---
-title: ST_ASWKT
+title: ST_ASWKT (Lakehouse v1)
 description: ST_ASWKT — converts a GEOMETRY object into a WKT(well-known-text) format representation.
 ---
 

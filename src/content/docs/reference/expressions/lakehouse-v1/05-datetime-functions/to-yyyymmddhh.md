@@ -1,5 +1,5 @@
 ---
-title: TO_YYYYMMDDHH
+title: TO_YYYYMMDDHH (Lakehouse v1)
 description: TO_YYYYMMDDHH — formats a given date or timestamp into a string representation in the format.
 ---
 

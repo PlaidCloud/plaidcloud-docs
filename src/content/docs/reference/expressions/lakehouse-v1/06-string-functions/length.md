@@ -1,5 +1,5 @@
 ---
-title: LENGTH
+title: LENGTH (Lakehouse v1)
 description: LENGTH — Returns the length of a given input string or binary value.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Numeric Functions
+title: Numeric Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL numeric functions: arithmetic, rounding, log, power, and trigonometric helpers for numbers."
 ---
 

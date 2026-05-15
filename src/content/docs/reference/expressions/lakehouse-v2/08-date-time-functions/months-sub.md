@@ -1,5 +1,5 @@
 ---
-title: MONTHS_SUB
+title: MONTHS_SUB (Lakehouse v2)
 description: MONTHS_SUB — subtracts a specified number of months from a date.
 ---
 

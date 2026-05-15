@@ -1,6 +1,6 @@
 ---
-title: ARRAYS_ZIP
-description: ARRAYS_ZIP — merges multiple arrays into an array of structs - see syntax, examples, and output.
+title: ARRAYS_ZIP (Lakehouse v2)
+description: ARRAYS_ZIP — merges multiple arrays into an array of structs.
 ---
 
 Merges multiple arrays into an array of structs.

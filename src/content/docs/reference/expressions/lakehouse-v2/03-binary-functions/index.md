@@ -1,5 +1,5 @@
 ---
-title: Binary Functions
+title: Binary Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL binary functions: manipulate binary (BLOB) data — slicing, encoding, and conversion."
 ---
 

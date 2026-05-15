@@ -1,5 +1,5 @@
 ---
-title: ST_GEOMFROMGEOHASH
+title: ST_GEOMFROMGEOHASH (Lakehouse v1)
 description: ST_GEOMFROMGEOHASH — returns a GEOMETRY object for the polygon that represents the boundaries.
 ---
 

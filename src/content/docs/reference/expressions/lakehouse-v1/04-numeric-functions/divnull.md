@@ -1,6 +1,6 @@
 ---
-title: DIVNULL
-description: DIVNULL — returns the quotient by dividing the first number by the second one. Includes syntax.
+title: DIVNULL (Lakehouse v1)
+description: DIVNULL — returns the quotient by dividing the first number by the second one.
 ---
 
 Returns the quotient by dividing the first number by the second one. Returns NULL if the second number is 0 or NULL.

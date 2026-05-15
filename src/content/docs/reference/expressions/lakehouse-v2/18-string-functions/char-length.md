@@ -1,6 +1,6 @@
 ---
-title: CHAR_LENGTH
-description: CHAR_LENGTH — returns the number of characters in a string - see syntax, examples, and output.
+title: CHAR_LENGTH (Lakehouse v2)
+description: CHAR_LENGTH — returns the number of characters in a string.
 ---
 
 Returns the number of characters in a string.

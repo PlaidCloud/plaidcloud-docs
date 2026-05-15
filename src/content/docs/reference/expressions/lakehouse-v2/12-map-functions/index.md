@@ -1,5 +1,5 @@
 ---
-title: Map Functions
+title: Map Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL map functions: build and query key-value MAP values."
 ---
 

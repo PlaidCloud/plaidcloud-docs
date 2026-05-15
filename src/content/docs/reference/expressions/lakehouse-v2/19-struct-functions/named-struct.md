@@ -1,5 +1,5 @@
 ---
-title: NAMED_STRUCT
+title: NAMED_STRUCT (Lakehouse v2)
 description: NAMED_STRUCT — Creates a struct with specified field names and values.
 ---
 

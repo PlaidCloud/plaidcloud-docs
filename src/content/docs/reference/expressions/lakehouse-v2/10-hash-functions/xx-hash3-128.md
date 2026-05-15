@@ -1,6 +1,6 @@
 ---
-title: XX_HASH3_128
-description: XX_HASH3_128 — returns the 128-bit xxHash3 hash of a value - see syntax, examples, and output.
+title: XX_HASH3_128 (Lakehouse v2)
+description: XX_HASH3_128 — returns the 128-bit xxHash3 hash of a value.
 ---
 
 Returns the 128-bit xxHash3 hash of a value.

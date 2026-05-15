@@ -1,5 +1,5 @@
 ---
-title: ST_LENGTH
+title: ST_LENGTH (Lakehouse v1)
 description: ST_LENGTH — returns the Euclidean length of the LineString(s) in a GEOMETRY object.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: MAP_KEYS
-description: MAP_KEYS — returns all keys from a map as an array - see syntax, examples, and output.
+title: MAP_KEYS (Lakehouse v2)
+description: MAP_KEYS — returns all keys from a map as an array.
 ---
 
 Returns all keys from a map as an array.

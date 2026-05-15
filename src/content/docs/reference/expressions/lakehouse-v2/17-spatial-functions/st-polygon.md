@@ -1,6 +1,6 @@
 ---
-title: ST_POLYGON
-description: ST_POLYGON — creates a polygon geometry from a WKT string - see syntax, examples, and output.
+title: ST_POLYGON (Lakehouse v2)
+description: ST_POLYGON — creates a polygon geometry from a WKT string.
 ---
 
 Creates a polygon geometry from a WKT string.

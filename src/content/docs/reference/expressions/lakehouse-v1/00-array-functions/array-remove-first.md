@@ -1,5 +1,5 @@
 ---
-title: ARRAY_REMOVE_FIRST
+title: ARRAY_REMOVE_FIRST (Lakehouse v1)
 description: ARRAY_REMOVE_FIRST — Removes the first element from the array.
 ---
 

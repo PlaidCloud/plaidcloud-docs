@@ -1,6 +1,6 @@
 ---
-title: SQRT
-description: SQRT — returns the square root of a number - see syntax, examples, and output.
+title: SQRT (Lakehouse v2)
+description: SQRT — returns the square root of a number.
 ---
 
 Returns the square root of a number.

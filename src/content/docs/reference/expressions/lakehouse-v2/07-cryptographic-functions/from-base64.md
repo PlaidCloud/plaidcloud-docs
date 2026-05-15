@@ -1,5 +1,5 @@
 ---
-title: FROM_BASE64
+title: FROM_BASE64 (Lakehouse v2)
 description: FROM_BASE64 — decodes a base64-encoded string. Alias for `BASE64_DECODE_STRING`.
 ---
 

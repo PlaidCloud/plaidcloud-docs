@@ -1,6 +1,6 @@
 ---
-title: REVERSE
-description: REVERSE — returns an array with elements in reverse order - see syntax, examples, and output.
+title: "REVERSE (Array, Lakehouse v2)"
+description: REVERSE — returns an array with elements in reverse order.
 ---
 
 Returns an array with elements in reverse order.

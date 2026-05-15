@@ -1,6 +1,6 @@
 ---
-title: BITMAP_NOT
-description: BITMAP_NOT — generates a new bitmap with elements from the first bitmap that are not in the.
+title: BITMAP_NOT (Lakehouse v1)
+description: BITMAP_NOT — generates a new bitmap with elements from the first bitmap that are not in the second one.
 ---
 
 Generates a new bitmap with elements from the first bitmap that are not in the second one.

@@ -1,5 +1,5 @@
 ---
-title: IS_INTEGER
+title: IS_INTEGER (Lakehouse v1)
 description: IS_INTEGER — Checks if the input JSON value is an integer.
 ---
 

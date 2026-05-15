@@ -1,5 +1,5 @@
 ---
-title: JSON_TYPEOF
+title: JSON_TYPEOF (Lakehouse v1)
 description: JSON_TYPEOF — returns the type of the main-level of a JSON structure.
 ---
 

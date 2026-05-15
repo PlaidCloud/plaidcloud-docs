@@ -1,5 +1,5 @@
 ---
-title: NULL_OR_EMPTY
+title: NULL_OR_EMPTY (Lakehouse v2)
 description: NULL_OR_EMPTY — checks whether a string is NULL or empty. Returns 1 if true, 0 otherwise.
 ---
 

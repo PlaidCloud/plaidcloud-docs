@@ -1,5 +1,5 @@
 ---
-title: STR2DATE
+title: STR2DATE (Lakehouse v2)
 description: STR2DATE — parses a string into a date using a format string. Alias for `STR_TO_DATE`.
 ---
 

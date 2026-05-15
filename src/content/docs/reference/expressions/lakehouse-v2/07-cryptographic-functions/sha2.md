@@ -1,5 +1,5 @@
 ---
-title: SHA2
+title: SHA2 (Lakehouse v2)
 description: SHA2 — returns the SHA-2 hash of a string for a specified bit length (224, 256, 384, or 512).
 ---
 

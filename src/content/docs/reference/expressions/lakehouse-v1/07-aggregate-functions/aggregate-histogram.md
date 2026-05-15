@@ -1,5 +1,5 @@
 ---
-title: HISTOGRAM
+title: HISTOGRAM (Lakehouse v1)
 description: HISTOGRAM — generates a data distribution histogram using equal-height bucketing strategy.
 ---
 

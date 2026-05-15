@@ -1,6 +1,6 @@
 ---
-title: ARRAY_TOP_N
-description: ARRAY_TOP_N — returns the top N elements from an array - see syntax, examples, and output.
+title: ARRAY_TOP_N (Lakehouse v2)
+description: ARRAY_TOP_N — returns the top N elements from an array.
 ---
 
 Returns the top N elements from an array.

@@ -1,5 +1,5 @@
 ---
-title: BITMAP_XOR_COUNT
+title: BITMAP_XOR_COUNT (Lakehouse v1)
 description: BITMAP_XOR_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical XOR.
 ---
 

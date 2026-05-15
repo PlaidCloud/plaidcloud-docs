@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_DISC_LC
+title: PERCENTILE_DISC_LC (Lakehouse v2)
 description: PERCENTILE_DISC_LC — returns the percentile value using a low-cardinality optimized algorithm.
 ---
 

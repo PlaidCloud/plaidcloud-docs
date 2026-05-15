@@ -1,5 +1,5 @@
 ---
-title: AVG_IF
+title: AVG_IF (Lakehouse v1)
 description: AVG_IF — the suffix -If can be appended to the name of any aggregate function.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: NEGATIVE
-description: NEGATIVE — returns the negation of a number - see syntax, examples, and output.
+title: NEGATIVE (Lakehouse v2)
+description: NEGATIVE — returns the negation of a number.
 ---
 
 Returns the negation of a number.

@@ -1,6 +1,6 @@
 ---
-title: DLOG10
-description: DLOG10 — alias for `LOG10`. See [LOG10](log10) - see syntax, examples, and output.
+title: DLOG10 (Lakehouse v2)
+description: DLOG10 — alias for `LOG10`. See [LOG10](log10).
 ---
 
 Alias for `LOG10`. See [LOG10](log10).

@@ -1,6 +1,6 @@
 ---
-title: DATABASE
-description: DATABASE — returns the name of the current database - see syntax, examples, and output.
+title: DATABASE (Lakehouse v2)
+description: DATABASE — returns the name of the current database.
 ---
 
 Returns the name of the current database.

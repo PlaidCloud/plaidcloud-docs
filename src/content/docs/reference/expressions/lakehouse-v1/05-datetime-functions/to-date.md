@@ -1,5 +1,5 @@
 ---
-title: TO_DATE
+title: TO_DATE (Lakehouse v1)
 description: TO_DATE — Converts an expression to a date, including:.
 ---
 

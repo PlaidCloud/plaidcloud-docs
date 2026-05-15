@@ -1,5 +1,5 @@
 ---
-title: COSINE_SIMILARITY_NORM
+title: COSINE_SIMILARITY_NORM (Lakehouse v2)
 description: COSINE_SIMILARITY_NORM — returns the cosine similarity between two normalized arrays.
 ---
 

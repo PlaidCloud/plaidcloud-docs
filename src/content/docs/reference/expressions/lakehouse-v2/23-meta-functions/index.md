@@ -1,5 +1,5 @@
 ---
-title: Meta Functions
+title: Meta Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL meta functions: introspect tables, columns, partitions, and engine state."
 ---
 

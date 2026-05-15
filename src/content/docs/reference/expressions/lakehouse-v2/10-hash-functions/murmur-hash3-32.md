@@ -1,5 +1,5 @@
 ---
-title: MURMUR_HASH3_32
+title: MURMUR_HASH3_32 (Lakehouse v2)
 description: MURMUR_HASH3_32 — Returns the 32-bit MurmurHash3 hash of a value.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: HEX
+title: HEX (Lakehouse v2)
 description: HEX — Returns the hexadecimal representation of a string or number.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: LOWER
-description: LOWER — converts a string to lowercase - see syntax, examples, and output.
+title: LOWER (Lakehouse v2)
+description: LOWER — converts a string to lowercase.
 ---
 
 Converts a string to lowercase.

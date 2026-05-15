@@ -1,5 +1,5 @@
 ---
-title: ARRAY_REMOVE_LAST
+title: ARRAY_REMOVE_LAST (Lakehouse v1)
 description: ARRAY_REMOVE_LAST — Removes the last element from the array.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: IS_BOOLEAN
+title: IS_BOOLEAN (Lakehouse v1)
 description: IS_BOOLEAN — Checks if the input JSON value is a boolean.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: H3_GET_FACES
-description: H3_GET_FACES — finds all icosahedron faces intersected by the given H3 index. Includes syntax.
+title: H3_GET_FACES (Lakehouse v1)
+description: H3_GET_FACES — finds all icosahedron faces intersected by the given H3 index.
 ---
 
 Finds all icosahedron faces intersected by the given [H3](https://eng.uber.com/h3/) index. Faces are represented as integers from 0-19.

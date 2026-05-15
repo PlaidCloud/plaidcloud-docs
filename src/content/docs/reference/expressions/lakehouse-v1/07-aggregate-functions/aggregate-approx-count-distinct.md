@@ -1,6 +1,6 @@
 ---
-title: APPROX_COUNT_DISTINCT
-description: APPROX_COUNT_DISTINCT — estimates the number of distinct values in a data set with the.
+title: APPROX_COUNT_DISTINCT (Lakehouse v1)
+description: APPROX_COUNT_DISTINCT — estimates the number of distinct values in a data set with the HyperLogLog algorithm.
 ---
 
 Estimates the number of distinct values in a data set with the [HyperLogLog](https://en.wikipedia.org/wiki/HyperLogLog) algorithm. 

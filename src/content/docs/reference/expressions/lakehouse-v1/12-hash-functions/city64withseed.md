@@ -1,5 +1,5 @@
 ---
-title: CITY64WITHSEED
+title: CITY64WITHSEED (Lakehouse v1)
 description: CITY64WITHSEED — Calculates a City64WithSeed 64-bit hash for a string.
 ---
 

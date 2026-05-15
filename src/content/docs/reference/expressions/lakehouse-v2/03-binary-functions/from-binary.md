@@ -1,5 +1,5 @@
 ---
-title: FROM_BINARY
+title: FROM_BINARY (Lakehouse v2)
 description: FROM_BINARY — converts a binary value to a VARCHAR string based on the specified binary format.
 ---
 

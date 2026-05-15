@@ -1,5 +1,5 @@
 ---
-title: JSON_PATH_EXISTS
+title: JSON_PATH_EXISTS (Lakehouse v1)
 description: JSON_PATH_EXISTS — checks whether a specified path exists in JSON data.
 ---
 

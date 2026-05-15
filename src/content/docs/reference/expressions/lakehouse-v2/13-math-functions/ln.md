@@ -1,6 +1,6 @@
 ---
-title: LN
-description: LN — returns the natural logarithm of a number - see syntax, examples, and output.
+title: LN (Lakehouse v2)
+description: LN — returns the natural logarithm of a number.
 ---
 
 Returns the natural logarithm of a number.

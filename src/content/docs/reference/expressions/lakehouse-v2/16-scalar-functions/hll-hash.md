@@ -1,6 +1,6 @@
 ---
-title: HLL_HASH
-description: HLL_HASH — computes an HLL hash of a value - see syntax, examples, and output.
+title: HLL_HASH (Lakehouse v2)
+description: HLL_HASH — computes an HLL hash of a value.
 ---
 
 Computes an HLL hash of a value.

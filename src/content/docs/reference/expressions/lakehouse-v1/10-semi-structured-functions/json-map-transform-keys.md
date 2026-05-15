@@ -1,5 +1,5 @@
 ---
-title: JSON_MAP_TRANSFORM_KEYS
+title: JSON_MAP_TRANSFORM_KEYS (Lakehouse v1)
 description: JSON_MAP_TRANSFORM_KEYS — applies a transformation to each key in a JSON object.
 ---
 

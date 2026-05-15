@@ -1,5 +1,5 @@
 ---
-title: CRC32
+title: CRC32 (Lakehouse v2)
 description: CRC32 — Returns the CRC-32 checksum of a string as an unsigned integer.
 ---
 

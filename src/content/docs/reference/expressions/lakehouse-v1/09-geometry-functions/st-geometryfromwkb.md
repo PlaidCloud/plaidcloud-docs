@@ -1,5 +1,5 @@
 ---
-title: ST_GEOMETRYFROMWKB
+title: ST_GEOMETRYFROMWKB (Lakehouse v1)
 description: ST_GEOMETRYFROMWKB — parses a WKB(well-known-binary) or EWKB(extended well-known-binary) input.
 ---
 

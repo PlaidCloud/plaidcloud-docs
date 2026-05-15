@@ -1,5 +1,5 @@
 ---
-title: DEGREES
+title: DEGREES (Lakehouse v1)
 description: DEGREES — returns the argument x, converted from radians to degrees, where x is given in radians.
 ---
 

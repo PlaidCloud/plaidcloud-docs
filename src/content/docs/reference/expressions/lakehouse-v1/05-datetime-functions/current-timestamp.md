@@ -1,6 +1,6 @@
 ---
-title: CURRENT_TIMESTAMP
-description: CURRENT_TIMESTAMP — alias for the NOW datetime function. Includes detailed syntax, examples, and usage reference.
+title: CURRENT_TIMESTAMP (Lakehouse v1)
+description: CURRENT_TIMESTAMP — alias for the NOW datetime function.
 ---
 
 Alias for [NOW](../now).

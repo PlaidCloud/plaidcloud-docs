@@ -1,5 +1,5 @@
 ---
-title: TO_YEAR
+title: TO_YEAR (Lakehouse v1)
 description: TO_YEAR — converts a date or date with time (timestamp/datetime) to a UInt16 number containing.
 ---
 

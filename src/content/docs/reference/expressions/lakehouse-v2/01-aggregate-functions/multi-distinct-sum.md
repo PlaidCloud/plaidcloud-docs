@@ -1,6 +1,6 @@
 ---
-title: MULTI_DISTINCT_SUM
-description: MULTI_DISTINCT_SUM — returns the sum of distinct values - see syntax, examples, and output.
+title: MULTI_DISTINCT_SUM (Lakehouse v2)
+description: MULTI_DISTINCT_SUM — returns the sum of distinct values.
 ---
 
 Returns the sum of distinct values.

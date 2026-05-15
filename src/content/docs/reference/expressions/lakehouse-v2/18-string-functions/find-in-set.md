@@ -1,5 +1,5 @@
 ---
-title: FIND_IN_SET
+title: FIND_IN_SET (Lakehouse v2)
 description: FIND_IN_SET — returns the position of a string within a comma-separated list.
 ---
 

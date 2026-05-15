@@ -1,6 +1,6 @@
 ---
-title: POW
-description: POW — returns a number raised to the power of another number - see syntax, examples, and output.
+title: POW (Lakehouse v2)
+description: POW — returns a number raised to the power of another number.
 ---
 
 Returns a number raised to the power of another number.

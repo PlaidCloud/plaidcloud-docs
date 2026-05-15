@@ -1,6 +1,6 @@
 ---
-title: BIN
-description: BIN — returns the binary string representation of an integer - see syntax, examples, and output.
+title: BIN (Lakehouse v2)
+description: BIN — returns the binary string representation of an integer.
 ---
 
 Returns the binary string representation of an integer.

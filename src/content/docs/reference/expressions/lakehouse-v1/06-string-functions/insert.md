@@ -1,5 +1,5 @@
 ---
-title: INSERT
+title: INSERT (Lakehouse v1)
 description: INSERT — returns the string str, with the substring beginning at position pos and len characters.
 ---
 

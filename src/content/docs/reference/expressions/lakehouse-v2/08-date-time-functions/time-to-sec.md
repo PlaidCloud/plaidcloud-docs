@@ -1,6 +1,6 @@
 ---
-title: TIME_TO_SEC
-description: TIME_TO_SEC — converts a time value to seconds - see syntax, examples, and output.
+title: TIME_TO_SEC (Lakehouse v2)
+description: TIME_TO_SEC — converts a time value to seconds.
 ---
 
 Converts a time value to seconds.

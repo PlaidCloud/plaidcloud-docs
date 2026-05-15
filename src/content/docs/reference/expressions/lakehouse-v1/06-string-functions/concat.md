@@ -1,5 +1,5 @@
 ---
-title: CONCAT
+title: CONCAT (Lakehouse v1)
 description: CONCAT — Returns the string that results from concatenating the arguments.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: LAST_DAY
+title: LAST_DAY (Lakehouse v2)
 description: LAST_DAY — returns the last day of the month for a given date.
 ---
 

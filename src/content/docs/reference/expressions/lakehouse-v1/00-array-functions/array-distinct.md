@@ -1,5 +1,5 @@
 ---
-title: ARRAY_DISTINCT
+title: ARRAY_DISTINCT (Lakehouse v1)
 description: ARRAY_DISTINCT — removes all duplicates and NULLs from the array without preserving the original.
 ---
 

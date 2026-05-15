@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_APPROX_WEIGHT
+title: PERCENTILE_APPROX_WEIGHT (Lakehouse v2)
 description: PERCENTILE_APPROX_WEIGHT — returns a weighted approximate percentile value.
 ---
 

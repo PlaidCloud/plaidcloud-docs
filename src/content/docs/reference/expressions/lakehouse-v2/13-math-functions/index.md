@@ -1,5 +1,5 @@
 ---
-title: Math Functions
+title: Math Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL math functions: arithmetic, rounding, log, power, and trigonometric helpers for numbers."
 ---
 

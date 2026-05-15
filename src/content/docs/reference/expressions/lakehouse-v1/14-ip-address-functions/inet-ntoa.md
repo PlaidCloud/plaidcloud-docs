@@ -1,5 +1,5 @@
 ---
-title: INET_NTOA
+title: INET_NTOA (Lakehouse v1)
 description: INET_NTOA — converts a 32-bit integer to an IPv4 address.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: JSON_OBJECT_KEYS
+title: JSON_OBJECT_KEYS (Lakehouse v1)
 description: JSON_OBJECT_KEYS — returns an Array containing the list of keys in the input.
 ---
 

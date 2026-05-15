@@ -1,5 +1,5 @@
 ---
-title: INSPECT_MV_REFRESH_INFO
+title: INSPECT_MV_REFRESH_INFO (Lakehouse v2)
 description: INSPECT_MV_REFRESH_INFO — returns refresh information for a materialized view.
 ---
 

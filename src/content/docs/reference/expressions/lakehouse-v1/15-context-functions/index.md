@@ -1,5 +1,5 @@
 ---
-title: Context Functions
+title: Context Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL context functions: access query context — current database, role, session ID, and timing."
 ---
 

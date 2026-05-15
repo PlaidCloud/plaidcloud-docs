@@ -1,6 +1,6 @@
 ---
-title: ARRAY_SLICE
-description: ARRAY_SLICE — alias for the SLICE array function. Includes detailed syntax, examples, and usage reference.
+title: ARRAY_SLICE (Lakehouse v1)
+description: ARRAY_SLICE — alias for the SLICE array function.
 ---
 
 Alias for [SLICE](../slice).

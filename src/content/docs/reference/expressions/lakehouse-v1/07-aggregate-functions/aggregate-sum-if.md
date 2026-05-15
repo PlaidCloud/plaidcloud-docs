@@ -1,5 +1,5 @@
 ---
-title: SUM_IF
+title: SUM_IF (Lakehouse v1)
 description: SUM_IF — the suffix -If can be appended to the name of any aggregate function.
 ---
 

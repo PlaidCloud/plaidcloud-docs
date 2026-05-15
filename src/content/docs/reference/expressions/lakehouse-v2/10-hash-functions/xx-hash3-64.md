@@ -1,6 +1,6 @@
 ---
-title: XX_HASH3_64
-description: XX_HASH3_64 — returns the 64-bit xxHash3 hash of a value - see syntax, examples, and output.
+title: XX_HASH3_64 (Lakehouse v2)
+description: XX_HASH3_64 — returns the 64-bit xxHash3 hash of a value.
 ---
 
 Returns the 64-bit xxHash3 hash of a value.

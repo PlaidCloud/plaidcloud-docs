@@ -1,5 +1,5 @@
 ---
-title: COVAR_SAMP
+title: COVAR_SAMP (Lakehouse v2)
 description: COVAR_SAMP — Returns the sample covariance of two expressions.
 ---
 

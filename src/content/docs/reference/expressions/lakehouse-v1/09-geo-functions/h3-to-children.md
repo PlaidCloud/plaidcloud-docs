@@ -1,6 +1,6 @@
 ---
-title: H3_TO_CHILDREN
-description: H3_TO_CHILDREN — returns the indexes contained by h3 at resolution child_res. Includes syntax.
+title: H3_TO_CHILDREN (Lakehouse v1)
+description: H3_TO_CHILDREN — returns the indexes contained by h3 at resolution child_res.
 ---
 
 Returns the indexes contained by `h3` at resolution `child_res`.

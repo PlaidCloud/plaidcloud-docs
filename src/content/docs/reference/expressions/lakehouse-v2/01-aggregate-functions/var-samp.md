@@ -1,5 +1,5 @@
 ---
-title: VAR_SAMP
+title: VAR_SAMP (Lakehouse v2)
 description: VAR_SAMP — Returns the sample variance. Alias for `VARIANCE_SAMP`.
 ---
 

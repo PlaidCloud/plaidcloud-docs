@@ -1,5 +1,5 @@
 ---
-title: HOST_NAME
+title: HOST_NAME (Lakehouse v2)
 description: HOST_NAME — Returns the host name of the current backend node.
 ---
 

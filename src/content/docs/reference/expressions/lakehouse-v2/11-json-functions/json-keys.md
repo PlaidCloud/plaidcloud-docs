@@ -1,5 +1,5 @@
 ---
-title: JSON_KEYS
+title: JSON_KEYS (Lakehouse v2)
 description: JSON_KEYS — Returns the keys of the top-level JSON object as a JSON array.
 ---
 

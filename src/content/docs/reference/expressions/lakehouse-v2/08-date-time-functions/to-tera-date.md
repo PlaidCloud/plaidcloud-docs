@@ -1,5 +1,5 @@
 ---
-title: TO_TERA_DATE
+title: TO_TERA_DATE (Lakehouse v2)
 description: TO_TERA_DATE — converts a VARCHAR value to a DATE value according to a Teradata format string.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ARRAY_CONTAINS_SEQ
+title: ARRAY_CONTAINS_SEQ (Lakehouse v2)
 description: ARRAY_CONTAINS_SEQ — checks whether an array contains all elements of another array in order.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Pattern Matching Functions
+title: Pattern Matching Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL pattern matching functions: match and extract substrings using LIKE, regex, and SIMILAR TO patterns."
 ---
 

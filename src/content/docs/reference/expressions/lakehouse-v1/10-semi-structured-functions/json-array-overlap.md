@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY_OVERLAP
-description: JSON_ARRAY_OVERLAP — checks if there is any overlap between two JSON arrays and.
+title: JSON_ARRAY_OVERLAP (Lakehouse v1)
+description: JSON_ARRAY_OVERLAP — checks if there is any overlap between two JSON arrays and returns true if there are common elements; otherwise, it returns false.
 ---
 
 Checks if there is any overlap between two JSON arrays and returns `true` if there are common elements; otherwise, it returns `false`.

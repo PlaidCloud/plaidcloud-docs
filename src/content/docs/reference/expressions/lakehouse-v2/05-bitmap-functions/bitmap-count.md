@@ -1,6 +1,6 @@
 ---
-title: BITMAP_COUNT
-description: BITMAP_COUNT — returns the number of set bits in a bitmap - see syntax, examples, and output.
+title: BITMAP_COUNT (Lakehouse v2)
+description: BITMAP_COUNT — returns the number of set bits in a bitmap.
 ---
 
 Returns the number of set bits in a bitmap.

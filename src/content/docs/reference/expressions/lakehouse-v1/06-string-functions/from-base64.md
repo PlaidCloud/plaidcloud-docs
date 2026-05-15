@@ -1,5 +1,5 @@
 ---
-title: FROM_BASE64
+title: FROM_BASE64 (Lakehouse v1)
 description: FROM_BASE64 — takes a string encoded with the base-64 encoded rules nd returns the decoded.
 ---
 

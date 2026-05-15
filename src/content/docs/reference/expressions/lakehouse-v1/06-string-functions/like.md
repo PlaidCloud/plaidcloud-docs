@@ -1,5 +1,5 @@
 ---
-title: LIKE
+title: LIKE (Lakehouse v1)
 description: LIKE — pattern matching using an SQL pattern.
 ---
 

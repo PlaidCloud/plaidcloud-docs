@@ -1,6 +1,6 @@
 ---
-title: CURRENT_TIMEZONE
-description: CURRENT_TIMEZONE — returns the current session time zone - see syntax, examples, and output.
+title: CURRENT_TIMEZONE (Lakehouse v2)
+description: CURRENT_TIMEZONE — returns the current session time zone.
 ---
 
 Returns the current session time zone.

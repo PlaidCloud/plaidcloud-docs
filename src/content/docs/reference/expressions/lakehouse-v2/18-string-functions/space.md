@@ -1,5 +1,5 @@
 ---
-title: SPACE
+title: SPACE (Lakehouse v2)
 description: SPACE — Returns a string consisting of a specified number of spaces.
 ---
 

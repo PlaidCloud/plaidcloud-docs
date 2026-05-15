@@ -1,5 +1,5 @@
 ---
-title: LAST_QUERY_ID
+title: LAST_QUERY_ID (Lakehouse v1)
 description: LAST_QUERY_ID — returns the last query ID of query in current session, index can be (-1, 1, 1+2).
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: TIMEZONE
+title: TIMEZONE (Lakehouse v1)
 description: TIMEZONE — Returns the timezone for the current connection.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: SLICE
+title: SLICE (Lakehouse v1)
 description: SLICE — Extracts a slice from the array by index (1-based).
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ATAN2
+title: ATAN2 (Lakehouse v2)
 description: ATAN2 — returns the arc tangent of y/x, using the signs to determine the quadrant.
 ---
 

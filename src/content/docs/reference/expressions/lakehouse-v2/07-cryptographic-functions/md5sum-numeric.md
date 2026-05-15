@@ -1,5 +1,5 @@
 ---
-title: MD5SUM_NUMERIC
+title: MD5SUM_NUMERIC (Lakehouse v2)
 description: MD5SUM_NUMERIC — returns the MD5 hash of multiple strings as a 128-bit numeric value.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: REGEXP_REPLACE
+title: REGEXP_REPLACE (Lakehouse v1)
 description: REGEXP_REPLACE — replaces occurrences in the string expr that match the regular expression.
 ---
 

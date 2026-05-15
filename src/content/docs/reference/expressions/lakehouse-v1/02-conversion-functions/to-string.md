@@ -1,5 +1,5 @@
 ---
-title: TO_STRING
+title: "TO_STRING (Conversion, Lakehouse v1)"
 description: TO_STRING — converts a value to String data type, or converts a Date value to a specific.
 ---
 

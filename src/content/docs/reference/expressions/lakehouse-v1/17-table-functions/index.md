@@ -1,5 +1,5 @@
 ---
-title: Table Functions
+title: Table Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL table functions: return tabular results — generators, splitters, and set-returning helpers."
 ---
 

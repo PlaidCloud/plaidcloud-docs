@@ -1,6 +1,6 @@
 ---
-title: VARIANCE_SAMP
-description: VARIANCE_SAMP — returns the sample variance - see syntax, examples, and output.
+title: VARIANCE_SAMP (Lakehouse v2)
+description: VARIANCE_SAMP — returns the sample variance.
 ---
 
 Returns the sample variance.

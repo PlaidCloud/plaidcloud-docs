@@ -1,5 +1,5 @@
 ---
-title: UPPER
+title: UPPER (Lakehouse v1)
 description: UPPER — Returns a string with all characters changed to uppercase.
 ---
 

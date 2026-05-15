@@ -1,5 +1,5 @@
 ---
-title: IS_ARRAY
+title: IS_ARRAY (Lakehouse v1)
 description: IS_ARRAY — Checks if the input value is a JSON array.
 ---
 

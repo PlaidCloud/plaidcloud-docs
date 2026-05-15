@@ -1,5 +1,5 @@
 ---
-title: ST_ENDPOINT
+title: ST_ENDPOINT (Lakehouse v1)
 description: ST_ENDPOINT — Returns the last Point in a LineString.
 ---
 

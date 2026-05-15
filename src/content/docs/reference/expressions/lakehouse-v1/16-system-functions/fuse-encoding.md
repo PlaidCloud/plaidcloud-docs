@@ -1,5 +1,5 @@
 ---
-title: FUSE_ENCODING
+title: FUSE_ENCODING (Lakehouse v1)
 description: FUSE_ENCODING — returns the encoding types applied to a specific column within a table.
 ---
 

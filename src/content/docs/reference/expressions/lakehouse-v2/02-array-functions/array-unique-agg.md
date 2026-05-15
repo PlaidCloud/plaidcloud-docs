@@ -1,5 +1,5 @@
 ---
-title: ARRAY_UNIQUE_AGG
+title: ARRAY_UNIQUE_AGG (Lakehouse v2)
 description: ARRAY_UNIQUE_AGG — Aggregates values into an array of distinct values.
 ---
 

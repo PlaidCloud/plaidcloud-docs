@@ -1,5 +1,5 @@
 ---
-title: LAST_DAY
+title: LAST_DAY (Lakehouse v1)
 description: LAST_DAY — returns the last day of the specified interval (week, month, quarter, or year).
 ---
 

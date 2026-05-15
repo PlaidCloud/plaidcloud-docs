@@ -1,6 +1,6 @@
 ---
-title: MONTHNAME
-description: MONTHNAME — returns the name of the month for a date - see syntax, examples, and output.
+title: MONTHNAME (Lakehouse v2)
+description: MONTHNAME — returns the name of the month for a date.
 ---
 
 Returns the name of the month for a date.

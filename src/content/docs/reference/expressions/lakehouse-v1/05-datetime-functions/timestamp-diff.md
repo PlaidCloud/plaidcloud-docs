@@ -1,6 +1,6 @@
 ---
-title: TIMESTAMP_DIFF
-description: TIMESTAMP_DIFF — calculates the difference between two timestamps and returns the result as an.
+title: TIMESTAMP_DIFF (Lakehouse v1)
+description: TIMESTAMP_DIFF — calculates the difference between two timestamps and returns the result as an INTERVAL.
 ---
 
 Calculates the difference between two timestamps and returns the result as an INTERVAL.

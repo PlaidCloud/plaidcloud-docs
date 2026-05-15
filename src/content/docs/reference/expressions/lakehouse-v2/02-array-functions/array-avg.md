@@ -1,6 +1,6 @@
 ---
-title: ARRAY_AVG
-description: ARRAY_AVG — returns the average of elements in an array - see syntax, examples, and output.
+title: ARRAY_AVG (Lakehouse v2)
+description: ARRAY_AVG — returns the average of elements in an array.
 ---
 
 Returns the average of elements in an array.

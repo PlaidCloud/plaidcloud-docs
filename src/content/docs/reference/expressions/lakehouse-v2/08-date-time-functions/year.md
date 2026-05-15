@@ -1,6 +1,6 @@
 ---
-title: YEAR
-description: YEAR — returns the year from a date - see syntax, examples, and output.
+title: YEAR (Lakehouse v2)
+description: YEAR — returns the year from a date.
 ---
 
 Returns the year from a date.

@@ -1,5 +1,5 @@
 ---
-title: ANY_MATCH
+title: ANY_MATCH (Lakehouse v2)
 description: ANY_MATCH — returns TRUE if any element in an array matches the given predicate.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: LOG10
-description: LOG10 — returns the base-10 logarithm of a number - see syntax, examples, and output.
+title: LOG10 (Lakehouse v2)
+description: LOG10 — returns the base-10 logarithm of a number.
 ---
 
 Returns the base-10 logarithm of a number.

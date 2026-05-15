@@ -1,6 +1,6 @@
 ---
-title: TO_BASE64
-description: TO_BASE64 — converts the string argument to base-64 encoded form and returns the result as a.
+title: TO_BASE64 (Lakehouse v1)
+description: TO_BASE64 — converts the string argument to base-64 encoded form and returns the result as a character string.
 ---
 
 Converts the string argument to base-64 encoded form and returns the result as a character string.

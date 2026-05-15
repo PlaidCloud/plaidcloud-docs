@@ -1,5 +1,5 @@
 ---
-title: LPAD
+title: LPAD (Lakehouse v2)
 description: LPAD — pads a string on the left to a specified length with a fill string.
 ---
 

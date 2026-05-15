@@ -1,5 +1,5 @@
 ---
-title: ST_ASGEOJSON
+title: ST_ASGEOJSON (Lakehouse v1)
 description: ST_ASGEOJSON — Converts a GEOMETRY object into a GeoJSON representation.
 ---
 

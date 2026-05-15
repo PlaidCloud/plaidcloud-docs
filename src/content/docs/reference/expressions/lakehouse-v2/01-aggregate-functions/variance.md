@@ -1,5 +1,5 @@
 ---
-title: VARIANCE
+title: VARIANCE (Lakehouse v2)
 description: VARIANCE — Returns the population variance. Alias for `VARIANCE_POP`.
 ---
 

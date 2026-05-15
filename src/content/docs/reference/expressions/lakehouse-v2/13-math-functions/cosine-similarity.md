@@ -1,5 +1,5 @@
 ---
-title: COSINE_SIMILARITY
+title: COSINE_SIMILARITY (Lakehouse v2)
 description: COSINE_SIMILARITY — returns the cosine similarity between two arrays (vectors).
 ---
 

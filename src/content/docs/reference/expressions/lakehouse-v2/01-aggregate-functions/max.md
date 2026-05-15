@@ -1,6 +1,6 @@
 ---
-title: MAX
-description: MAX — returns the maximum value in a set of values - see syntax, examples, and output.
+title: MAX (Lakehouse v2)
+description: MAX — returns the maximum value in a set of values.
 ---
 
 Returns the maximum value in a set of values.

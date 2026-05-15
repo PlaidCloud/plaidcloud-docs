@@ -1,5 +1,5 @@
 ---
-title: XXHASH64
+title: XXHASH64 (Lakehouse v1)
 description: XXHASH64 — Calculates an xxHash64 64-bit hash value for a string.
 ---
 

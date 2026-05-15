@@ -1,5 +1,5 @@
 ---
-title: ADDDATE
+title: ADDDATE (Lakehouse v2)
 description: ADDDATE — adds a specified time interval to a date. Alias for `DATE_ADD`.
 ---
 

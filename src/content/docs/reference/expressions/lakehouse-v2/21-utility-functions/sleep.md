@@ -1,5 +1,5 @@
 ---
-title: SLEEP
+title: SLEEP (Lakehouse v2)
 description: SLEEP — pauses execution for a specified number of seconds. Returns 0 on success.
 ---
 

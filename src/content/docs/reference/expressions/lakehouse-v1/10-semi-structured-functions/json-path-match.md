@@ -1,5 +1,5 @@
 ---
-title: JSON_PATH_MATCH
+title: JSON_PATH_MATCH (Lakehouse v1)
 description: JSON_PATH_MATCH — checks whether a specified JSON path expression matches certain.
 ---
 

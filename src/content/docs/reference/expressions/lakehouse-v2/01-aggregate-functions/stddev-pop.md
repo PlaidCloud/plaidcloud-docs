@@ -1,6 +1,6 @@
 ---
-title: STDDEV_POP
-description: STDDEV_POP — returns the population standard deviation - see syntax, examples, and output.
+title: STDDEV_POP (Lakehouse v2)
+description: STDDEV_POP — returns the population standard deviation.
 ---
 
 Returns the population standard deviation.

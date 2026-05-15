@@ -1,6 +1,6 @@
 ---
-title: GET_IGNORE_CASE
-description: GET_IGNORE_CASE — extracts value from a VARIANT that contains OBJECT by the.
+title: GET_IGNORE_CASE (Lakehouse v1)
+description: GET_IGNORE_CASE — extracts value from a VARIANT that contains OBJECT by the field_name.
 ---
 
 Extracts value from a `VARIANT` that contains `OBJECT` by the field_name.

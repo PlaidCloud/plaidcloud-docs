@@ -1,5 +1,5 @@
 ---
-title: DS_HLL_ESTIMATE
+title: DS_HLL_ESTIMATE (Lakehouse v2)
 description: DS_HLL_ESTIMATE — estimates the cardinality from a DataSketches HLL sketch.
 ---
 

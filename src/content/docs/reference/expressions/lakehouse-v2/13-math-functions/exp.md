@@ -1,6 +1,6 @@
 ---
-title: EXP
-description: EXP — returns e raised to the power of a number - see syntax, examples, and output.
+title: EXP (Lakehouse v2)
+description: EXP — returns e raised to the power of a number.
 ---
 
 Returns e raised to the power of a number.

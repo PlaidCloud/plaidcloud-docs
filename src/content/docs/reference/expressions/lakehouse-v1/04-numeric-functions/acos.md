@@ -1,5 +1,5 @@
 ---
-title: ACOS
+title: ACOS (Lakehouse v1)
 description: ACOS — Returns the arc cosine of x, that is, the value whose cosine is x.
 ---
 

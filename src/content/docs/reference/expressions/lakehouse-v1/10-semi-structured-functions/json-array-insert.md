@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY_INSERT
-description: JSON_ARRAY_INSERT — inserts a value into a JSON array at the specified index and.
+title: JSON_ARRAY_INSERT (Lakehouse v1)
+description: JSON_ARRAY_INSERT — inserts a value into a JSON array at the specified index and returns the updated JSON array.
 ---
 
 Inserts a value into a JSON array at the specified index and returns the updated JSON array.

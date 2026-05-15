@@ -1,5 +1,5 @@
 ---
-title: UNHEX
+title: UNHEX (Lakehouse v1)
 description: UNHEX — for a string argument str, UNHEX(str) interprets each pair of characters in the argument.
 ---
 

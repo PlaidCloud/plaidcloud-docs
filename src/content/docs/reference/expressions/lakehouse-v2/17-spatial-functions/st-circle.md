@@ -1,5 +1,5 @@
 ---
-title: ST_CIRCLE
+title: ST_CIRCLE (Lakehouse v2)
 description: ST_CIRCLE — creates a circle geometry from a center longitude, latitude and radius in meters.
 ---
 

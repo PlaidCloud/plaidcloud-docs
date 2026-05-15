@@ -1,5 +1,5 @@
 ---
-title: POINT_IN_POLYGON
+title: POINT_IN_POLYGON (Lakehouse v1)
 description: POINT_IN_POLYGON — calculates whether a given point falls within the polygon formed by joining.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: TRUNCATE
+title: TRUNCATE (Lakehouse v2)
 description: TRUNCATE — Truncates a number to a specified number of decimal places.
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Call SAP Master Data Table RFC
-description: Calls an SAP ECC Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form
+description: Calls an SAP ECC Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form.
 ---
 
 ## Description

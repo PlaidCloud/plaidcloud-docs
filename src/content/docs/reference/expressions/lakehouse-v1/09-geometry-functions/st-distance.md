@@ -1,5 +1,5 @@
 ---
-title: ST_DISTANCE
+title: ST_DISTANCE (Lakehouse v1)
 description: ST_DISTANCE — returns the minimum Euclidean distance between two GEOMETRY objects.
 ---
 

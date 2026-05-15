@@ -1,6 +1,6 @@
 ---
-title: DAYOFYEAR
-description: DAYOFYEAR — returns the day of the year from a date - see syntax, examples, and output.
+title: DAYOFYEAR (Lakehouse v2)
+description: DAYOFYEAR — returns the day of the year from a date.
 ---
 
 Returns the day of the year from a date.

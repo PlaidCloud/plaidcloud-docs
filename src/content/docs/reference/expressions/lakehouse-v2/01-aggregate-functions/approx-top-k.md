@@ -1,5 +1,5 @@
 ---
-title: APPROX_TOP_K
+title: APPROX_TOP_K (Lakehouse v2)
 description: APPROX_TOP_K — returns the top-k most frequent values and their approximate counts.
 ---
 

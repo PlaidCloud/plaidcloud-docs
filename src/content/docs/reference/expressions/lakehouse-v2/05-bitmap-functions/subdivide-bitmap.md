@@ -1,5 +1,5 @@
 ---
-title: SUBDIVIDE_BITMAP
+title: SUBDIVIDE_BITMAP (Lakehouse v2)
 description: SUBDIVIDE_BITMAP — splits a bitmap into multiple sub-bitmaps of a given size.
 ---
 

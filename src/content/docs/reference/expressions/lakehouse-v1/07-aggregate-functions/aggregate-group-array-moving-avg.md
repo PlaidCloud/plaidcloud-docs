@@ -1,6 +1,6 @@
 ---
-title: GROUP_ARRAY_MOVING_AVG
-description: GROUP_ARRAY_MOVING_AVG — the GROUP_ARRAY_MOVING_AVG function calculates the moving average of.
+title: GROUP_ARRAY_MOVING_AVG (Lakehouse v1)
+description: GROUP_ARRAY_MOVING_AVG — the GROUP_ARRAY_MOVING_AVG function calculates the moving average of input values.
 ---
 
 The GROUP_ARRAY_MOVING_AVG function calculates the moving average of input values. The function can take the window size as a parameter. If left unspecified, the function takes the window size equal to the number of input values.

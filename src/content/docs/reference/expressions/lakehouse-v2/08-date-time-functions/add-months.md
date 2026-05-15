@@ -1,6 +1,6 @@
 ---
-title: ADD_MONTHS
-description: ADD_MONTHS — adds a specified number of months to a date - see syntax, examples, and output.
+title: ADD_MONTHS (Lakehouse v2)
+description: ADD_MONTHS — adds a specified number of months to a date.
 ---
 
 Adds a specified number of months to a date.

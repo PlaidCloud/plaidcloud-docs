@@ -1,5 +1,5 @@
 ---
-title: MAP_FILTER
+title: MAP_FILTER (Lakehouse v1)
 description: MAP_FILTER — filters key-value pairs from a map using a lambda expression to define the condition.
 ---
 

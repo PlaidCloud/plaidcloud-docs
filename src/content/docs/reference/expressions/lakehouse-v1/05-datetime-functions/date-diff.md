@@ -1,5 +1,5 @@
 ---
-title: DATE DIFF
+title: DATE DIFF (Lakehouse v1)
 description: DATE DIFF — plaidCloud Lakehouse does not provide a date_diff function yet, but it supports.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: MID
-description: MID — alias for the SUBSTR string function. Includes detailed syntax, examples, and usage reference.
+title: MID (Lakehouse v1)
+description: MID — alias for the SUBSTR string function.
 ---
 
 Alias for [SUBSTR](../substr).

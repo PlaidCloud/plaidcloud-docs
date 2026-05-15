@@ -1,5 +1,5 @@
 ---
-title: TRIM
+title: TRIM (Lakehouse v1)
 description: TRIM — returns the string without leading or trailing occurrences of the specified remove string.
 ---
 

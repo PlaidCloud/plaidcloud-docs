@@ -1,6 +1,6 @@
 ---
-title: CBRT
-description: CBRT — returns the cube root of a number - see syntax, examples, and output.
+title: CBRT (Lakehouse v2)
+description: CBRT — returns the cube root of a number.
 ---
 
 Returns the cube root of a number.

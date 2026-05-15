@@ -1,6 +1,6 @@
 ---
-title: PARSE_JSON
-description: Interprets input JSON string, producing a VARIANT value
+title: PARSE_JSON (Lakehouse v1)
+description: Interprets input JSON string, producing a VARIANT value.
 ---
 
 `parse_json` and `try_parse_json` interprets an input string as a JSON document, producing a VARIANT value.

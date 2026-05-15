@@ -1,6 +1,6 @@
 ---
-title: FUSE_SEGMENT
-description: FUSE_SEGMENT — returns the segment information of a specified table snapshot. Includes syntax.
+title: FUSE_SEGMENT (Lakehouse v1)
+description: FUSE_SEGMENT — returns the segment information of a specified table snapshot.
 ---
 
 Returns the segment information of a specified table snapshot. For more information about what is segment in PlaidCloud Lakehouse, see What are Snapshot, Segment, and Block?.

@@ -1,5 +1,5 @@
 ---
-title: GET_JSON_STRING
+title: GET_JSON_STRING (Lakehouse v2)
 description: GET_JSON_STRING — extracts a string value from a JSON object by a specified path.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: URL_DECODE
-description: URL_DECODE — decodes a URL-encoded string - see syntax, examples, and output.
+title: URL_DECODE (Lakehouse v2)
+description: URL_DECODE — decodes a URL-encoded string.
 ---
 
 Decodes a URL-encoded string.

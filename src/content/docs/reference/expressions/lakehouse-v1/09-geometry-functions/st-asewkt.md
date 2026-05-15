@@ -1,5 +1,5 @@
 ---
-title: ST_ASEWKT
+title: ST_ASEWKT (Lakehouse v1)
 description: ST_ASEWKT — converts a GEOMETRY object into a EWKT(extended well-known-text) format.
 ---
 

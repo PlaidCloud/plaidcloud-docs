@@ -1,5 +1,5 @@
 ---
-title: GEOHASH_ENCODE
+title: GEOHASH_ENCODE (Lakehouse v1)
 description: GEOHASH_ENCODE — converts a pair of latitude and longitude coordinates into a Geohash-encoded.
 ---
 

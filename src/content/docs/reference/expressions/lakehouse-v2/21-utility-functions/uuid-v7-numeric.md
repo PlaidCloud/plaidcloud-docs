@@ -1,6 +1,6 @@
 ---
-title: UUID_V7_NUMERIC
-description: "Use the UUID_V7_NUMERIC utility function in PlaidCloud Lakehouse. Returns a time-ordered UUID v7 as a 128-bit LARGEINT value. UUID v7 values are sortable by."
+title: UUID_V7_NUMERIC (Lakehouse v2)
+description: UUID_V7_NUMERIC — returns a time-ordered UUID v7 as a 128-bit LARGEINT value.
 ---
 
 Returns a time-ordered UUID v7 as a 128-bit LARGEINT value. UUID v7 values are sortable by creation time.

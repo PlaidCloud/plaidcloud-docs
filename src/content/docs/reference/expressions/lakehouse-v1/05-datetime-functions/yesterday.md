@@ -1,5 +1,5 @@
 ---
-title: YESTERDAY
+title: YESTERDAY (Lakehouse v1)
 description: YESTERDAY — Returns yesterday date, same as today() - 1.
 ---
 

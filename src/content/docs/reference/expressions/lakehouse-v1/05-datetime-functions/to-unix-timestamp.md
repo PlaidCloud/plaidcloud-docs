@@ -1,5 +1,5 @@
 ---
-title: TO_UNIX_TIMESTAMP
+title: TO_UNIX_TIMESTAMP (Lakehouse v1)
 description: TO_UNIX_TIMESTAMP — converts a timestamp in a date/time format to a Unix timestamp format.
 ---
 

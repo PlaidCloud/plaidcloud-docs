@@ -1,5 +1,5 @@
 ---
-title: GREATEST
+title: GREATEST (Lakehouse v1)
 description: GREATEST — Returns the maximum value from a set of values.
 ---
 

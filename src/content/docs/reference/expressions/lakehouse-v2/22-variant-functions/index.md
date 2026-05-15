@@ -1,5 +1,5 @@
 ---
-title: Variant Functions
+title: Variant Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL variant functions: work with VARIANT and semi-structured values — extract paths, cast types, and inspect schemas."
 ---
 

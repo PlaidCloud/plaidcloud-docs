@@ -1,6 +1,6 @@
 ---
-title: MULTIPLY
-description: MULTIPLY — returns the product of two numbers - see syntax, examples, and output.
+title: MULTIPLY (Lakehouse v2)
+description: MULTIPLY — returns the product of two numbers.
 ---
 
 Returns the product of two numbers.

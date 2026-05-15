@@ -1,5 +1,5 @@
 ---
-title: HLL_RAW_AGG
+title: HLL_RAW_AGG (Lakehouse v2)
 description: HLL_RAW_AGG — Aggregates HLL values into a single HLL value.
 ---
 

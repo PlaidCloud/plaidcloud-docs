@@ -1,6 +1,6 @@
 ---
-title: INTDIV
-description: INTDIV — alias for the DIV numeric function. Includes detailed syntax, examples, and usage reference.
+title: INTDIV (Lakehouse v1)
+description: INTDIV — alias for the DIV numeric function.
 ---
 
 Alias for [DIV](../div).

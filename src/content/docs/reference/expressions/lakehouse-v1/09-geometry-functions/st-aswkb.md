@@ -1,5 +1,5 @@
 ---
-title: ST_ASWKB
+title: ST_ASWKB (Lakehouse v1)
 description: ST_ASWKB — converts a GEOMETRY object into a WKB(well-known-binary) format representation.
 ---
 

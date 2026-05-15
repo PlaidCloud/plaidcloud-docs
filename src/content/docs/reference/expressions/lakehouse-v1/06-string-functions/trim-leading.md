@@ -1,6 +1,6 @@
 ---
-title: TRIM_LEADING
-description: TRIM_LEADING — removes all occurrences of the specified trim string from the beginning of the.
+title: TRIM_LEADING (Lakehouse v1)
+description: TRIM_LEADING — removes all occurrences of the specified trim string from the beginning of the string.
 ---
 
 Removes all occurrences of the specified trim string from the beginning of the string.

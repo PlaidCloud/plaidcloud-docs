@@ -1,5 +1,5 @@
 ---
-title: BASE64_DECODE_BINARY
+title: BASE64_DECODE_BINARY (Lakehouse v2)
 description: BASE64_DECODE_BINARY — decodes a base64-encoded string to a binary value.
 ---
 

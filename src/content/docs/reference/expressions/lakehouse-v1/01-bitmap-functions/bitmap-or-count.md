@@ -1,6 +1,6 @@
 ---
-title: BITMAP_OR_COUNT
-description: BITMAP_OR_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical OR.
+title: BITMAP_OR_COUNT (Lakehouse v1)
+description: BITMAP_OR_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical OR operation.
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical OR operation.

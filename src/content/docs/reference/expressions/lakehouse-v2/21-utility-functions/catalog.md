@@ -1,6 +1,6 @@
 ---
-title: CATALOG
-description: CATALOG — returns the name of the current catalog - see syntax, examples, and output.
+title: CATALOG (Lakehouse v2)
+description: CATALOG — returns the name of the current catalog.
 ---
 
 Returns the name of the current catalog.

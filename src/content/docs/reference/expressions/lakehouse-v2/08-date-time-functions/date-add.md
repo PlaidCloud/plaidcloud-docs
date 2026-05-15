@@ -1,5 +1,5 @@
 ---
-title: DATE_ADD
+title: DATE_ADD (Lakehouse v2)
 description: DATE_ADD — adds a specified time interval to a date or datetime.
 ---
 

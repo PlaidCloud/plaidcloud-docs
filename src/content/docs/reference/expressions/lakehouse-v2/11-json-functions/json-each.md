@@ -1,5 +1,5 @@
 ---
-title: JSON_EACH
+title: JSON_EACH (Lakehouse v2)
 description: JSON_EACH — expands the top-level JSON object into a set of key-value pairs.
 ---
 

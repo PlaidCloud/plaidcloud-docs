@@ -1,5 +1,5 @@
 ---
-title: ARRAY_SORTBY
+title: ARRAY_SORTBY (Lakehouse v2)
 description: ARRAY_SORTBY — sorts elements of one array by corresponding elements of another array.
 ---
 

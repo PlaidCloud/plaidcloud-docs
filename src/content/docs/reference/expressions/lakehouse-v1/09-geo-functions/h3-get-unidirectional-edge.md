@@ -1,5 +1,5 @@
 ---
-title: H3_GET_UNIDIRECTIONAL_EDGE
+title: H3_GET_UNIDIRECTIONAL_EDGE (Lakehouse v1)
 description: H3_GET_UNIDIRECTIONAL_EDGE — returns the edge between the given two H3 indexes.
 ---
 

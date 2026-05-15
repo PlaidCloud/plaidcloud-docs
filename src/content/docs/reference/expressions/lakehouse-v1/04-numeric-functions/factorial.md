@@ -1,5 +1,5 @@
 ---
-title: FACTORIAL
+title: FACTORIAL (Lakehouse v1)
 description: FACTORIAL — Returns the factorial logarithm of x.
 ---
 

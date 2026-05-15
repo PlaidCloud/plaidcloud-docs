@@ -1,6 +1,6 @@
 ---
-title: MAP_SIZE
-description: MAP_SIZE — returns the size of a MAP. Includes detailed syntax, examples, and usage reference.
+title: MAP_SIZE (Lakehouse v1)
+description: MAP_SIZE — returns the size of a MAP.
 ---
 
 Returns the size of a MAP.

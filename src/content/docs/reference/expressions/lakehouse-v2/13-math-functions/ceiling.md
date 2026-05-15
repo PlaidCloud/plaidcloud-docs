@@ -1,5 +1,5 @@
 ---
-title: CEILING
+title: CEILING (Lakehouse v2)
 description: CEILING — returns the smallest integer greater than or equal to a number. Alias for `CEIL`.
 ---
 

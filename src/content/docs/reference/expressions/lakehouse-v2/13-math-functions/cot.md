@@ -1,6 +1,6 @@
 ---
-title: COT
-description: COT — returns the cotangent of a number in radians - see syntax, examples, and output.
+title: COT (Lakehouse v2)
+description: COT — returns the cotangent of a number in radians.
 ---
 
 Returns the cotangent of a number in radians.

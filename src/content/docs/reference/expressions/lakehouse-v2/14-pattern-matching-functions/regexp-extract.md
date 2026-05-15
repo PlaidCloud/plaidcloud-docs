@@ -1,5 +1,5 @@
 ---
-title: REGEXP_EXTRACT
+title: REGEXP_EXTRACT (Lakehouse v2)
 description: REGEXP_EXTRACT — extracts the first substring that matches a regular expression pattern.
 ---
 

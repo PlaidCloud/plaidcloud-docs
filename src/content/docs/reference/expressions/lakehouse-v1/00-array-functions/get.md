@@ -1,5 +1,5 @@
 ---
-title: GET
+title: "GET (Array, Lakehouse v1)"
 description: GET — Returns an element from an array by index (1-based).
 ---
 

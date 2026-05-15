@@ -1,6 +1,6 @@
 ---
-title: CURRENT_ROLE
-description: CURRENT_ROLE — returns the current active role - see syntax, examples, and output.
+title: CURRENT_ROLE (Lakehouse v2)
+description: CURRENT_ROLE — returns the current active role.
 ---
 
 Returns the current active role.

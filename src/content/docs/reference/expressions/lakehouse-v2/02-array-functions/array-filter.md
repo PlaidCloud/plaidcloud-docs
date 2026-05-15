@@ -1,5 +1,5 @@
 ---
-title: ARRAY_FILTER
+title: ARRAY_FILTER (Lakehouse v2)
 description: ARRAY_FILTER — Filters elements in an array using a lambda expression.
 ---
 

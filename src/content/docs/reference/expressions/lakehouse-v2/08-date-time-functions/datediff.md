@@ -1,6 +1,6 @@
 ---
-title: DATEDIFF
-description: DATEDIFF — returns the number of days between two dates - see syntax, examples, and output.
+title: DATEDIFF (Lakehouse v2)
+description: DATEDIFF — returns the number of days between two dates.
 ---
 
 Returns the number of days between two dates.

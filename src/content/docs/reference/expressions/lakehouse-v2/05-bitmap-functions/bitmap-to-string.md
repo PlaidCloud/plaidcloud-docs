@@ -1,5 +1,5 @@
 ---
-title: BITMAP_TO_STRING
+title: BITMAP_TO_STRING (Lakehouse v2)
 description: BITMAP_TO_STRING — Converts a bitmap to a comma-separated string.
 ---
 

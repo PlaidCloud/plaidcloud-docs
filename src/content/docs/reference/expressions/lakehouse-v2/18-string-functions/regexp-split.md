@@ -1,5 +1,5 @@
 ---
-title: REGEXP_SPLIT
+title: REGEXP_SPLIT (Lakehouse v2)
 description: REGEXP_SPLIT — splits a string by a regular expression pattern and returns an array of substrings.
 ---
 

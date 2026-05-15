@@ -1,5 +1,5 @@
 ---
-title: IGNORE
+title: IGNORE (Lakehouse v1)
 description: IGNORE — by using insert ignore statement, the rows with invalid data that cause the error are.
 ---
 

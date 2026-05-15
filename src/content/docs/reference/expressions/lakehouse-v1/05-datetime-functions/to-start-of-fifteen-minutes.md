@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_FIFTEEN_MINUTES
+title: TO_START_OF_FIFTEEN_MINUTES (Lakehouse v1)
 description: TO_START_OF_FIFTEEN_MINUTES — rounds down the date with time (timestamp/datetime) to the start.
 ---
 

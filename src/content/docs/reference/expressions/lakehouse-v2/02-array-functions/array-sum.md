@@ -1,6 +1,6 @@
 ---
-title: ARRAY_SUM
-description: ARRAY_SUM — returns the sum of elements in an array - see syntax, examples, and output.
+title: ARRAY_SUM (Lakehouse v2)
+description: ARRAY_SUM — returns the sum of elements in an array.
 ---
 
 Returns the sum of elements in an array.

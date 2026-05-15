@@ -1,5 +1,5 @@
 ---
-title: UUID_V7
+title: UUID_V7 (Lakehouse v2)
 description: UUID_V7 — returns a time-ordered UUID v7 string. UUID v7 values are sortable by creation time.
 ---
 

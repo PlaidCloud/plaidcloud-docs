@@ -1,5 +1,5 @@
 ---
-title: GEN_RANDOM_UUID
+title: GEN_RANDOM_UUID (Lakehouse v1)
 description: GEN_RANDOM_UUID — generates a random UUID based on v4.
 ---
 

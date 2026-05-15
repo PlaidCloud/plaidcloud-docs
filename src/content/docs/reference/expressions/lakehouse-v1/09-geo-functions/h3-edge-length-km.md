@@ -1,5 +1,5 @@
 ---
-title: H3_EDGE_LENGTH_KM
+title: H3_EDGE_LENGTH_KM (Lakehouse v1)
 description: H3_EDGE_LENGTH_KM — returns the average hexagon edge length in kilometers at the given resolution.
 ---
 

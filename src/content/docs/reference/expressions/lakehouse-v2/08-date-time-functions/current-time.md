@@ -1,6 +1,6 @@
 ---
-title: CURRENT_TIME
-description: CURRENT_TIME — returns the current time - see syntax, examples, and output.
+title: CURRENT_TIME (Lakehouse v2)
+description: CURRENT_TIME — returns the current time.
 ---
 
 Returns the current time.

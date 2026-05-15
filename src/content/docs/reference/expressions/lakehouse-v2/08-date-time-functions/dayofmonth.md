@@ -1,5 +1,5 @@
 ---
-title: DAYOFMONTH
+title: DAYOFMONTH (Lakehouse v2)
 description: DAYOFMONTH — returns the day of the month from a date. Alias for `DAY`.
 ---
 

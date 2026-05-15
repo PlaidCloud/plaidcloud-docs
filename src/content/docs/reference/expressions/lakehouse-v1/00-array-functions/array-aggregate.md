@@ -1,6 +1,6 @@
 ---
-title: ARRAY_AGGREGATE
-description: ARRAY_AGGREGATE — aggregates elements in the array with an aggregate function. Includes syntax.
+title: ARRAY_AGGREGATE (Lakehouse v1)
+description: ARRAY_AGGREGATE — aggregates elements in the array with an aggregate function.
 ---
 
 Aggregates elements in the array with an aggregate function.

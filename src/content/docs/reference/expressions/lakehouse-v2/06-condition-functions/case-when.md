@@ -1,5 +1,5 @@
 ---
-title: CASE
+title: CASE (Lakehouse v2)
 description: CASE — evaluates conditions and returns a value when the first condition is met.
 ---
 

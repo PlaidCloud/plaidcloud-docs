@@ -1,5 +1,5 @@
 ---
-title: CONVERT_TZ
+title: CONVERT_TZ (Lakehouse v2)
 description: CONVERT_TZ — converts a datetime from one time zone to another.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ORD
+title: ORD (Lakehouse v1)
 description: ORD — if the leftmost character is not a multibyte character, ORD() returns the same value as.
 ---
 

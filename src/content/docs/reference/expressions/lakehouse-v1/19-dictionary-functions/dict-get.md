@@ -1,5 +1,5 @@
 ---
-title: DICT_GET
+title: DICT_GET (Lakehouse v1)
 description: DICT_GET — retrieves the value of a specified attribute from a dictionary using a provided.
 ---
 

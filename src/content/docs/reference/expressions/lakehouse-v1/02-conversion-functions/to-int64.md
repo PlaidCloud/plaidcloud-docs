@@ -1,5 +1,5 @@
 ---
-title: TO_INT64
+title: TO_INT64 (Lakehouse v1)
 description: TO_INT64 — Converts a value to INT64 data type.
 ---
 

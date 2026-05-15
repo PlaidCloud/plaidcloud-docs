@@ -1,6 +1,6 @@
 ---
-title: ASCII
-description: ASCII — returns the numeric value of the leftmost character of the string str. Includes syntax.
+title: ASCII (Lakehouse v1)
+description: ASCII — returns the numeric value of the leftmost character of the string str.
 ---
 
 Returns the numeric value of the leftmost character of the string str.

@@ -1,6 +1,6 @@
 ---
-title: HLL_UNION
-description: HLL_UNION — returns the union of multiple HLL values - see syntax, examples, and output.
+title: HLL_UNION (Lakehouse v2)
+description: HLL_UNION — returns the union of multiple HLL values.
 ---
 
 Returns the union of multiple HLL values.

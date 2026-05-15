@@ -1,5 +1,5 @@
 ---
-title: UUID_NUMERIC
+title: UUID_NUMERIC (Lakehouse v2)
 description: UUID_NUMERIC — Returns a random UUID as a 128-bit LARGEINT value.
 ---
 

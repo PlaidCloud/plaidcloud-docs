@@ -1,5 +1,5 @@
 ---
-title: ST_GEOMETRYFROMTEXT
+title: ST_GEOMETRYFROMTEXT (Lakehouse v2)
 description: ST_GEOMETRYFROMTEXT — creates a geometry from a WKT (Well-Known Text) string.
 ---
 

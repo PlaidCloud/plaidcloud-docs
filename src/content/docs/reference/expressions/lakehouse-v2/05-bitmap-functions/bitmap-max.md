@@ -1,6 +1,6 @@
 ---
-title: BITMAP_MAX
-description: BITMAP_MAX — returns the maximum value in a bitmap - see syntax, examples, and output.
+title: BITMAP_MAX (Lakehouse v2)
+description: BITMAP_MAX — returns the maximum value in a bitmap.
 ---
 
 Returns the maximum value in a bitmap.

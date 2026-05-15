@@ -1,5 +1,5 @@
 ---
-title: ST_YMIN
+title: ST_YMIN (Lakehouse v1)
 description: ST_YMIN — returns the minimum latitude (Y coordinate) of all points contained in the specified.
 ---
 

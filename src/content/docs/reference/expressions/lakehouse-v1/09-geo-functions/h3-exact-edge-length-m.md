@@ -1,6 +1,6 @@
 ---
-title: H3_EXACT_EDGE_LENGTH_M
-description: H3_EXACT_EDGE_LENGTH_M — computes the length of this directed edge, in meters. Includes syntax.
+title: H3_EXACT_EDGE_LENGTH_M (Lakehouse v1)
+description: H3_EXACT_EDGE_LENGTH_M — computes the length of this directed edge, in meters.
 ---
 
 Computes the length of this directed edge, in meters.

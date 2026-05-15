@@ -1,5 +1,5 @@
 ---
-title: TASK_HISTORY
+title: TASK_HISTORY (Lakehouse v1)
 description: TASK_HISTORY — Displays task running history given variables.
 ---
 

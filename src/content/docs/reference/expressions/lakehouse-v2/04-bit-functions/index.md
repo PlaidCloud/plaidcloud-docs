@@ -1,5 +1,5 @@
 ---
-title: Bit Functions
+title: Bit Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL bit functions: bitwise operations on integers — AND, OR, XOR, shifts."
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: MD5
+title: MD5 (Lakehouse v1)
 description: MD5 — Calculates an MD5 128-bit checksum for a string.
 ---
 

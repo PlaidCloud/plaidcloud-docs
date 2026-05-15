@@ -1,6 +1,6 @@
 ---
-title: GET_QUERY_DUMP
-description: GET_QUERY_DUMP — returns a query dump for diagnostic purposes - see syntax, examples, and output.
+title: GET_QUERY_DUMP (Lakehouse v2)
+description: GET_QUERY_DUMP — returns a query dump for diagnostic purposes.
 ---
 
 Returns a query dump for diagnostic purposes.

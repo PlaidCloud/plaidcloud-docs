@@ -1,5 +1,5 @@
 ---
-title: MAP_CAT
+title: MAP_CAT (Lakehouse v1)
 description: MAP_CAT — returns the concatenatation of two MAPs.
 ---
 

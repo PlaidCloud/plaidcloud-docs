@@ -1,6 +1,6 @@
 ---
-title: REGEXP
-description: REGEXP — returns true if the string <expr> matches the regular expression specified by the.
+title: REGEXP (Lakehouse v1)
+description: REGEXP — returns true if the string <expr> matches the regular expression specified by the <pattern>, false otherwise.
 ---
 
 Returns `true` if the string `<expr>` matches the regular expression specified by the `<pattern>`, `false` otherwise.

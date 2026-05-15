@@ -1,5 +1,5 @@
 ---
-title: ST_Y
+title: ST_Y (Lakehouse v2)
 description: ST_Y — Returns the Y coordinate (latitude) of a point geometry.
 ---
 

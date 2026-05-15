@@ -1,5 +1,5 @@
 ---
-title: TRUNCATE
+title: TRUNCATE (Lakehouse v1)
 description: TRUNCATE — Returns the number x, truncated to d decimal places.
 ---
 

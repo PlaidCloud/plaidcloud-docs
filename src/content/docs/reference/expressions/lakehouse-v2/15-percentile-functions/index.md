@@ -1,5 +1,5 @@
 ---
-title: Percentile Functions
+title: Percentile Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL percentile functions: compute percentiles, medians, and quantile-based aggregates."
 ---
 

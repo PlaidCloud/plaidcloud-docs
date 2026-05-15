@@ -1,6 +1,6 @@
 ---
-title: HOUR
-description: HOUR — returns the hour from a datetime - see syntax, examples, and output.
+title: HOUR (Lakehouse v2)
+description: HOUR — returns the hour from a datetime.
 ---
 
 Returns the hour from a datetime.

@@ -1,5 +1,5 @@
 ---
-title: TO_MONTHS
+title: TO_MONTHS (Lakehouse v1)
 description: TO_MONTHS — Converts a specified number of months into an Interval type.
 ---
 

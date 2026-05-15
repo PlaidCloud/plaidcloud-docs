@@ -1,5 +1,5 @@
 ---
-title: BLAKE3
+title: BLAKE3 (Lakehouse v1)
 description: BLAKE3 — Calculates a BLAKE3 256-bit checksum for a string.
 ---
 

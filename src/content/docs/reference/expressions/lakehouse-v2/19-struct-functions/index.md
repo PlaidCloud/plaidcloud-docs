@@ -1,5 +1,5 @@
 ---
-title: Struct Functions
+title: Struct Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL struct functions: build and query STRUCT (composite) values."
 ---
 

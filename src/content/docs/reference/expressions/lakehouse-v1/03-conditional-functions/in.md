@@ -1,5 +1,5 @@
 ---
-title: "[ NOT ] IN"
+title: "[ NOT ] IN (Lakehouse v1)"
 description: "[ NOT ] IN — true if a value equals (or does not equal) any item in an explicit list."
 ---
 

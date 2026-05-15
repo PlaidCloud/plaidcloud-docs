@@ -1,6 +1,6 @@
 ---
-title: GREATEST
-description: GREATEST — returns the greatest value from a list of values - see syntax, examples, and output.
+title: GREATEST (Lakehouse v2)
+description: GREATEST — returns the greatest value from a list of values.
 ---
 
 Returns the greatest value from a list of values.

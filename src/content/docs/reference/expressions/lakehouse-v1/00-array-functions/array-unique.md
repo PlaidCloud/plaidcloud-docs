@@ -1,5 +1,5 @@
 ---
-title: ARRAY_UNIQUE
+title: ARRAY_UNIQUE (Lakehouse v1)
 description: ARRAY_UNIQUE — Counts unique elements in the array (except NULL).
 ---
 

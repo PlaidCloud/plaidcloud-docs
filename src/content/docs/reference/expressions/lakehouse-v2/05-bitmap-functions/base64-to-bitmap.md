@@ -1,5 +1,5 @@
 ---
-title: BASE64_TO_BITMAP
+title: BASE64_TO_BITMAP (Lakehouse v2)
 description: BASE64_TO_BITMAP — Converts a base64-encoded string to a bitmap.
 ---
 

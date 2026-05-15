@@ -1,5 +1,5 @@
 ---
-title: CURTIME
+title: CURTIME (Lakehouse v2)
 description: CURTIME — returns the current time. Alias for `CURRENT_TIME`.
 ---
 

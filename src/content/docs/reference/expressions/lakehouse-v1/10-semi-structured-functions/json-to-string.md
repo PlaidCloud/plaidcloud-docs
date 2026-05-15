@@ -1,5 +1,5 @@
 ---
-title: JSON_TO_STRING
+title: JSON_TO_STRING (Lakehouse v1)
 description: JSON_TO_STRING — alias for the TO_STRING semi-structured data function.
 ---
 

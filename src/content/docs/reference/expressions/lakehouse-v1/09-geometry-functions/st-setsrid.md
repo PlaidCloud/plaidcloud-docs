@@ -1,5 +1,5 @@
 ---
-title: ST_SETSRID
+title: ST_SETSRID (Lakehouse v1)
 description: ST_SETSRID — returns a GEOMETRY object that has its SRID (spatial reference system identifier).
 ---
 

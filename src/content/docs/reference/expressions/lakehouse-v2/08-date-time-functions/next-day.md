@@ -1,5 +1,5 @@
 ---
-title: NEXT_DAY
+title: NEXT_DAY (Lakehouse v2)
 description: NEXT_DAY — returns the date of the next specified weekday after a given date.
 ---
 

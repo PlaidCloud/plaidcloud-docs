@@ -1,5 +1,5 @@
 ---
-title: POWER
+title: POWER (Lakehouse v2)
 description: POWER — returns a number raised to the power of another number. Alias for `POW`.
 ---
 

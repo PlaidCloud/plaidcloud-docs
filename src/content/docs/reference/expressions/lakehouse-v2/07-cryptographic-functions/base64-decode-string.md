@@ -1,5 +1,5 @@
 ---
-title: BASE64_DECODE_STRING
+title: BASE64_DECODE_STRING (Lakehouse v2)
 description: BASE64_DECODE_STRING — decodes a base64-encoded string to a VARCHAR string.
 ---
 

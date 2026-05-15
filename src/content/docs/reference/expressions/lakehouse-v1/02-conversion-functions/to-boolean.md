@@ -1,5 +1,5 @@
 ---
-title: TO_BOOLEAN
+title: TO_BOOLEAN (Lakehouse v1)
 description: TO_BOOLEAN — Converts a value to BOOLEAN data type.
 ---
 

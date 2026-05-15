@@ -3,9 +3,11 @@
  * Custom Head override that:
  *   1. Renders Starlight's default <head> contents
  *   2. Replaces the og:image with a per-page generated image (via astro-og-canvas)
- *   3. Injects JSON-LD Article structured data for SEO rich results
+ *   3. Injects JSON-LD structured data for SEO rich results
  */
 import Default from '@astrojs/starlight/components/Head.astro';
+import { hasGeneratedOG } from '../lib/og-image';
+import { buildCrumbs } from '../lib/breadcrumbs';
 
 const { entry, lastUpdated } = Astro.locals.starlightRoute;
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://docs.plaidcloud.com';
@@ -14,14 +16,6 @@ const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://docs.plaid
 // `open-graph/index.png`. Normalise so the meta URL points at the real file.
 const slug = entry.id || 'index';
 
-// Only certain pages get per-page OG images (see src/pages/open-graph/[...slug].ts).
-// Reference workflow-step and expression function pages share a single default
-// OG image to keep the build under the Workers Assets size cap.
-function hasGeneratedOG(id: string): boolean {
-	if (id.startsWith('reference/workflow-steps/') && id.split('/').length > 3) return false;
-	if (id.startsWith('reference/expressions/') && id.split('/').length > 3) return false;
-	return true;
-}
 const ogImageUrl = hasGeneratedOG(slug)
 	? `${siteUrl}/open-graph/${slug}.png`
 	: `${siteUrl}/open-graph/_default.png`;
@@ -47,9 +41,25 @@ const publisher = {
 	},
 };
 
-const jsonLd = {
+// Landing pages (home, top-level section indexes) are not articles —
+// emit `WebPage` instead of `TechArticle` so the JSON-LD type matches
+// what the page actually is.
+const isHome = entry.id === '' || entry.id === 'index';
+const isLanding =
+	isHome ||
+	slug.endsWith('/index') ||
+	slug === 'get-started' ||
+	slug === 'guides' ||
+	slug === 'reference' ||
+	slug === 'integrations' ||
+	slug === 'administration' ||
+	slug === 'releases';
+
+const articleType = isLanding ? 'WebPage' : 'TechArticle';
+
+const jsonLd: Record<string, unknown> = {
 	'@context': 'https://schema.org',
-	'@type': 'TechArticle',
+	'@type': articleType,
 	headline: entry.data.title,
 	description: entry.data.description ?? '',
 	image: {
@@ -61,17 +71,20 @@ const jsonLd = {
 	url: canonicalUrl,
 	inLanguage: 'en-US',
 	publisher,
-	author: publisher,
-	...(lastUpdatedIso && {
-		dateModified: lastUpdatedIso,
-		datePublished: lastUpdatedIso,
-	}),
 };
+if (!isLanding) {
+	jsonLd.author = publisher;
+}
+if (lastUpdatedIso) {
+	jsonLd.dateModified = lastUpdatedIso;
+	if (!isLanding) {
+		jsonLd.datePublished = lastUpdatedIso;
+	}
+}
 
-// Home page: emit a WebSite schema with a SearchAction so Google can show a
-// sitelinks search box. The query parameter `q` is the standard Pagefind
-// URL parameter used by Starlight's search UI.
-const isHome = entry.id === '' || entry.id === 'index';
+// Home page: emit a WebSite schema. A SearchAction would require server-side
+// query handling that Pagefind (browser-only) doesn't provide, so we omit it
+// rather than ship a non-functional action target.
 const websiteSchema = isHome
 	? {
 			'@context': 'https://schema.org',
@@ -81,14 +94,27 @@ const websiteSchema = isHome
 			url: `${siteUrl}/`,
 			inLanguage: 'en-US',
 			publisher,
-			potentialAction: {
-				'@type': 'SearchAction',
-				target: {
-					'@type': 'EntryPoint',
-					urlTemplate: `${siteUrl}/?q={search_term_string}`,
-				},
-				'query-input': 'required name=search_term_string',
-			},
+		}
+	: null;
+
+// Build BreadcrumbList JSON-LD for deep pages — Home + each crumb + current page.
+const crumbs = await buildCrumbs(entry.id);
+const breadcrumbSchema = crumbs.length > 0
+	? {
+			'@context': 'https://schema.org',
+			'@type': 'BreadcrumbList',
+			itemListElement: [
+				{ '@type': 'ListItem', position: 1, name: 'Home', item: `${siteUrl}/` },
+				...crumbs.map((c, i) => ({
+					'@type': 'ListItem',
+					position: i + 2,
+					name: c.label,
+					item: `${siteUrl}${c.href}`,
+				})),
+				// Last item is the current page; per Google guidance, omit `item`
+				// because the user is already there.
+				{ '@type': 'ListItem', position: crumbs.length + 2, name: entry.data.title },
+			],
 		}
 	: null;
 ---
@@ -106,3 +132,4 @@ const websiteSchema = isHome
 
 <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 {websiteSchema && <script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />}
+{breadcrumbSchema && <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />}

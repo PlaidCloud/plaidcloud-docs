@@ -1,5 +1,5 @@
 ---
-title: MAP_FROM_ARRAYS
+title: MAP_FROM_ARRAYS (Lakehouse v2)
 description: MAP_FROM_ARRAYS — creates a map from an array of keys and an array of values.
 ---
 

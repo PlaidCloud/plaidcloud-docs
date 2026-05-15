@@ -1,6 +1,6 @@
 ---
-title: TO_SECONDS
-description: TO_SECONDS — converts a specified number of seconds into an Interval type. Includes syntax and.
+title: TO_SECONDS (Lakehouse v1)
+description: TO_SECONDS — converts a specified number of seconds into an Interval type.
 ---
 
 Converts a specified number of seconds into an Interval type.

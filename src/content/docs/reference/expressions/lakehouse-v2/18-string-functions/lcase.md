@@ -1,6 +1,6 @@
 ---
-title: LCASE
-description: LCASE — converts a string to lowercase. Alias for `LOWER` - see syntax, examples, and output.
+title: LCASE (Lakehouse v2)
+description: LCASE — converts a string to lowercase. Alias for `LOWER`.
 ---
 
 Converts a string to lowercase. Alias for `LOWER`.

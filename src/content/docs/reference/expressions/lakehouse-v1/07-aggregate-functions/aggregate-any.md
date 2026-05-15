@@ -1,5 +1,5 @@
 ---
-title: ANY
+title: ANY (Lakehouse v1)
 description: ANY — return the first encountered non-NULL value from a set; result is indeterminate when execution order varies.
 ---
 

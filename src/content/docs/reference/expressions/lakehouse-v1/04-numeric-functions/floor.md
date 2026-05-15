@@ -1,6 +1,6 @@
 ---
-title: FLOOR
-description: FLOOR — rounds the number down. Includes detailed syntax, examples, and usage reference.
+title: FLOOR (Lakehouse v1)
+description: FLOOR — rounds the number down.
 ---
 
 Rounds the number down.

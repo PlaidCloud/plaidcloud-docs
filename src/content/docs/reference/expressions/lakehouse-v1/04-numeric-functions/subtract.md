@@ -1,6 +1,6 @@
 ---
-title: SUBTRACT
-description: SUBTRACT — alias for the MINUS numeric function. Includes detailed syntax, examples, and usage reference.
+title: SUBTRACT (Lakehouse v1)
+description: SUBTRACT — alias for the MINUS numeric function.
 ---
 
 Alias for [MINUS](../minus).

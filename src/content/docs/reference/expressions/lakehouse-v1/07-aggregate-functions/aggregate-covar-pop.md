@@ -1,5 +1,5 @@
 ---
-title: COVAR_POP
+title: COVAR_POP (Lakehouse v1)
 description: COVAR_POP — cOVAR_POP returns the population covariance of a set of number pairs.
 ---
 

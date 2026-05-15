@@ -1,5 +1,5 @@
 ---
-title: UNNEST
+title: UNNEST (Lakehouse v1)
 description: UNNEST — Unnests the array and returns the set of elements.
 ---
 

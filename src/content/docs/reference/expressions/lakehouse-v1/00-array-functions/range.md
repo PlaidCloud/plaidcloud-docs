@@ -1,5 +1,5 @@
 ---
-title: RANGE
+title: RANGE (Lakehouse v1)
 description: RANGE — Returns an array collected by [start, end).
 ---
 

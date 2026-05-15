@@ -1,5 +1,5 @@
 ---
-title: INSPECT_MV_RELATIONSHIPS
+title: INSPECT_MV_RELATIONSHIPS (Lakehouse v2)
 description: INSPECT_MV_RELATIONSHIPS — returns dependency relationships for a materialized view.
 ---
 

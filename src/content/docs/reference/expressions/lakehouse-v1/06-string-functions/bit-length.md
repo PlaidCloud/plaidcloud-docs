@@ -1,5 +1,5 @@
 ---
-title: BIT_LENGTH
+title: BIT_LENGTH (Lakehouse v1)
 description: BIT_LENGTH — Return the length of a string in bits.
 ---
 

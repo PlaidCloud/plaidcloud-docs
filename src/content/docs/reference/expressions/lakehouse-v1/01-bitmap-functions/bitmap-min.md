@@ -1,5 +1,5 @@
 ---
-title: BITMAP_MIN
+title: BITMAP_MIN (Lakehouse v1)
 description: BITMAP_MIN — Gets the minimum value in the bitmap.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ST_ASTEXT
+title: ST_ASTEXT (Lakehouse v2)
 description: ST_ASTEXT — converts a geometry to its WKT (Well-Known Text) representation.
 ---
 

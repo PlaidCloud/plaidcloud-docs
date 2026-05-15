@@ -1,5 +1,5 @@
 ---
-title: Array Functions
+title: Array Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL array functions: build, query, transform, and aggregate array values."
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: DATE_DIFF
+title: DATE_DIFF (Lakehouse v2)
 description: DATE_DIFF — returns the difference between two dates in the specified unit.
 ---
 

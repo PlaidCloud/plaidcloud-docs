@@ -1,5 +1,5 @@
 ---
-title: LAST_VALUE
+title: LAST_VALUE (Lakehouse v1)
 description: LAST_VALUE — Returns the last value from an ordered group of values.
 ---
 

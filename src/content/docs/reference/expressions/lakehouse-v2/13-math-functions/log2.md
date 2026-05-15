@@ -1,6 +1,6 @@
 ---
-title: LOG2
-description: LOG2 — returns the base-2 logarithm of a number - see syntax, examples, and output.
+title: LOG2 (Lakehouse v2)
+description: LOG2 — returns the base-2 logarithm of a number.
 ---
 
 Returns the base-2 logarithm of a number.

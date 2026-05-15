@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY_EXCEPT
-description: JSON_ARRAY_EXCEPT — returns a new JSON array containing the elements from the.
+title: JSON_ARRAY_EXCEPT (Lakehouse v1)
+description: JSON_ARRAY_EXCEPT — returns a new JSON array containing the elements from the first JSON array that are not present in the second JSON array.
 ---
 
 Returns a new JSON array containing the elements from the first JSON array that are not present in the second JSON array.

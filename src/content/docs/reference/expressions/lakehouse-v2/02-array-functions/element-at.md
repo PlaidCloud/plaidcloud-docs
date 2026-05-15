@@ -1,5 +1,5 @@
 ---
-title: ELEMENT_AT
+title: "ELEMENT_AT (Array, Lakehouse v2)"
 description: ELEMENT_AT — returns the element at a specified position in an array (1-indexed).
 ---
 

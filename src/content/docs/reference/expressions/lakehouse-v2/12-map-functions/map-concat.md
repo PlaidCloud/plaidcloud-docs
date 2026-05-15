@@ -1,6 +1,6 @@
 ---
-title: MAP_CONCAT
-description: MAP_CONCAT — concatenates multiple maps into a single map - see syntax, examples, and output.
+title: MAP_CONCAT (Lakehouse v2)
+description: MAP_CONCAT — concatenates multiple maps into a single map.
 ---
 
 Concatenates multiple maps into a single map.

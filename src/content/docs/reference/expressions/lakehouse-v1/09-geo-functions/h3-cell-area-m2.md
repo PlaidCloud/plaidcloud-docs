@@ -1,6 +1,6 @@
 ---
-title: H3_CELL_AREA_M2
-description: H3_CELL_AREA_M2 — returns the exact area of specific cell in square meters. Includes syntax and.
+title: H3_CELL_AREA_M2 (Lakehouse v1)
+description: H3_CELL_AREA_M2 — returns the exact area of specific cell in square meters.
 ---
 
 Returns the exact area of specific cell in square meters.

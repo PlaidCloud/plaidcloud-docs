@@ -1,5 +1,5 @@
 ---
-title: DICT_MAPPING
+title: DICT_MAPPING (Lakehouse v2)
 description: DICT_MAPPING — returns the value mapped to a specified key in a dictionary table.
 ---
 

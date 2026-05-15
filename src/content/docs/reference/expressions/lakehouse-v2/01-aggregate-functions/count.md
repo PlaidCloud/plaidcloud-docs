@@ -1,6 +1,6 @@
 ---
-title: COUNT
-description: COUNT — returns the number of rows or non-NULL values - see syntax, examples, and output.
+title: COUNT (Lakehouse v2)
+description: COUNT — returns the number of rows or non-NULL values.
 ---
 
 Returns the number of rows or non-NULL values.

@@ -1,5 +1,5 @@
 ---
-title: INSTR
+title: INSTR (Lakehouse v2)
 description: INSTR — returns the position of the first occurrence of a substring in a string.
 ---
 

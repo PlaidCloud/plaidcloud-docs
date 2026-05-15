@@ -1,5 +1,5 @@
 ---
-title: ASIN
+title: ASIN (Lakehouse v1)
 description: ASIN — Returns the arc sine of x, that is, the value whose sine is x.
 ---
 

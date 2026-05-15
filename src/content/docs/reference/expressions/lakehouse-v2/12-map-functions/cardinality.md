@@ -1,6 +1,6 @@
 ---
-title: CARDINALITY
-description: CARDINALITY — returns the number of key-value pairs in a map - see syntax, examples, and output.
+title: "CARDINALITY (Map, Lakehouse v2)"
+description: CARDINALITY — returns the number of key-value pairs in a map.
 ---
 
 Returns the number of key-value pairs in a map.

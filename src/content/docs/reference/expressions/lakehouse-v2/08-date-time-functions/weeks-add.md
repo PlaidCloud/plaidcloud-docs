@@ -1,6 +1,6 @@
 ---
-title: WEEKS_ADD
-description: WEEKS_ADD — adds a specified number of weeks to a date - see syntax, examples, and output.
+title: WEEKS_ADD (Lakehouse v2)
+description: WEEKS_ADD — adds a specified number of weeks to a date.
 ---
 
 Adds a specified number of weeks to a date.

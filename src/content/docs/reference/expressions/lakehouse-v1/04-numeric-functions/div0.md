@@ -1,6 +1,6 @@
 ---
-title: DIV0
-description: DIV0 — returns the quotient by dividing the first number by the second one. Includes syntax and.
+title: DIV0 (Lakehouse v1)
+description: DIV0 — returns the quotient by dividing the first number by the second one.
 ---
 
 Returns the quotient by dividing the first number by the second one. Returns 0 if the second number is 0.

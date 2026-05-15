@@ -1,6 +1,6 @@
 ---
-title: DIV
-description: DIV — returns the quotient by dividing the first number by the second one, rounding down to the.
+title: DIV (Lakehouse v1)
+description: DIV — returns the quotient by dividing the first number by the second one, rounding down to the closest smaller integer.
 ---
 
 Returns the quotient by dividing the first number by the second one, rounding down to the closest smaller integer. Equivalent to the division operator `//`.

@@ -1,5 +1,5 @@
 ---
-title: PLUS
+title: PLUS (Lakehouse v1)
 description: PLUS — Calculates the sum of two numeric or decimal values.
 ---
 

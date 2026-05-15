@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY_AGG
-description: JSON_ARRAY_AGG — converts values into a JSON array while skipping NULLs. Includes syntax and.
+title: JSON_ARRAY_AGG (Lakehouse v1)
+description: JSON_ARRAY_AGG — converts values into a JSON array while skipping NULLs.
 ---
 
 Converts values into a JSON array while skipping NULLs.

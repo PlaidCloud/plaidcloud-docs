@@ -1,6 +1,6 @@
 ---
-title: ST_XMAX
-description: ST_XMAX — returns the maximum longitude (X coordinate) of all points contained in the.
+title: ST_XMAX (Lakehouse v1)
+description: ST_XMAX — returns the maximum longitude (X coordinate) of all points contained in the specified GEOMETRY object.
 ---
 
 Returns the maximum longitude (X coordinate) of all points contained in the specified GEOMETRY object.

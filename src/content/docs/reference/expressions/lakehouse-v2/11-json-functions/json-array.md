@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY
-description: JSON_ARRAY — creates a JSON array from a list of values - see syntax, examples, and output.
+title: JSON_ARRAY (Lakehouse v2)
+description: JSON_ARRAY — creates a JSON array from a list of values.
 ---
 
 Creates a JSON array from a list of values.

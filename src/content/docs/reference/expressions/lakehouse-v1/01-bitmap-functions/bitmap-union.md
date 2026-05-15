@@ -1,5 +1,5 @@
 ---
-title: BITMAP_UNION
+title: BITMAP_UNION (Lakehouse v1)
 description: BITMAP_UNION — counts the number of bits set to 1 in the bitmap by performing a logical UNION.
 ---
 

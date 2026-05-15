@@ -1,6 +1,6 @@
 ---
-title: CEILING
-description: CEILING — alias for the CEIL numeric function. Includes detailed syntax, examples, and usage reference.
+title: CEILING (Lakehouse v1)
+description: CEILING — alias for the CEIL numeric function.
 ---
 
 Alias for [CEIL](../ceil).

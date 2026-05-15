@@ -1,6 +1,6 @@
 ---
-title: CONCAT_WS
-description: CONCAT_WS — concatenates strings with a separator - see syntax, examples, and output.
+title: CONCAT_WS (Lakehouse v2)
+description: CONCAT_WS — concatenates strings with a separator.
 ---
 
 Concatenates strings with a separator.

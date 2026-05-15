@@ -1,6 +1,6 @@
 ---
-title: REPEAT
-description: REPEAT — repeats a string a specified number of times - see syntax, examples, and output.
+title: REPEAT (Lakehouse v2)
+description: REPEAT — repeats a string a specified number of times.
 ---
 
 Repeats a string a specified number of times.

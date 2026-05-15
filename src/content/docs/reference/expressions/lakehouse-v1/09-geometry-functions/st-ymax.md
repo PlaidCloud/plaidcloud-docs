@@ -1,5 +1,5 @@
 ---
-title: ST_YMAX
+title: ST_YMAX (Lakehouse v1)
 description: ST_YMAX — returns the maximum latitude (Y coordinate) of all points contained in the specified.
 ---
 

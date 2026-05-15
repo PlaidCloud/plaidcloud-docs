@@ -1,5 +1,5 @@
 ---
-title: TRY_INET_NTOA
+title: TRY_INET_NTOA (Lakehouse v1)
 description: TRY_INET_NTOA — takes an IPv4 address in network byte order and then returns the address as.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: MAP_VALUES
-description: MAP_VALUES — returns all values from a map as an array - see syntax, examples, and output.
+title: MAP_VALUES (Lakehouse v2)
+description: MAP_VALUES — returns all values from a map as an array.
 ---
 
 Returns all values from a map as an array.

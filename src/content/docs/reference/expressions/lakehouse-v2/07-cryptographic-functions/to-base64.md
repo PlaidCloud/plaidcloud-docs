@@ -1,5 +1,5 @@
 ---
-title: TO_BASE64
+title: TO_BASE64 (Lakehouse v2)
 description: TO_BASE64 — Encodes a string to a base64-encoded string.
 ---
 

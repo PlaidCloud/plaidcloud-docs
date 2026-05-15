@@ -1,5 +1,5 @@
 ---
-title: BIT_SHIFT_LEFT
+title: BIT_SHIFT_LEFT (Lakehouse v2)
 description: BIT_SHIFT_LEFT — shifts the bits of a numeric value to the left by a specified number of positions.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: UPPER
-description: UPPER — converts a string to uppercase - see syntax, examples, and output.
+title: UPPER (Lakehouse v2)
+description: UPPER — converts a string to uppercase.
 ---
 
 Converts a string to uppercase.

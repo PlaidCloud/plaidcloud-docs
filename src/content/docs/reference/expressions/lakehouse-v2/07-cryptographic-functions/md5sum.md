@@ -1,5 +1,5 @@
 ---
-title: MD5SUM
+title: MD5SUM (Lakehouse v2)
 description: MD5SUM — returns the MD5 hash of multiple strings concatenated together.
 ---
 

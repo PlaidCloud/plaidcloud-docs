@@ -1,6 +1,6 @@
 ---
-title: RIGHT
-description: RIGHT — returns the rightmost N characters of a string - see syntax, examples, and output.
+title: RIGHT (Lakehouse v2)
+description: RIGHT — returns the rightmost N characters of a string.
 ---
 
 Returns the rightmost N characters of a string.

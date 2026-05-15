@@ -1,5 +1,5 @@
 ---
-title: PREVIOUS_DAY
+title: PREVIOUS_DAY (Lakehouse v1)
 description: PREVIOUS_DAY — returns the date of the most recent specified day of the week before the given.
 ---
 

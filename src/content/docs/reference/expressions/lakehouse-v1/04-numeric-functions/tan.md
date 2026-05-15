@@ -1,5 +1,5 @@
 ---
-title: TAN
+title: TAN (Lakehouse v1)
 description: TAN — Returns the tangent of x, where x is given in radians.
 ---
 

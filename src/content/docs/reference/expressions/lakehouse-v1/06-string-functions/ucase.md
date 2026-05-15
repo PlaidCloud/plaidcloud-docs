@@ -1,6 +1,6 @@
 ---
-title: UCASE
-description: UCASE — alias for the UPPER string function. Includes detailed syntax, examples, and usage reference.
+title: UCASE (Lakehouse v1)
+description: UCASE — alias for the UPPER string function.
 ---
 
 Alias for [UPPER](../upper).

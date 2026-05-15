@@ -1,5 +1,5 @@
 ---
-title: TO_STRING
+title: "TO_STRING (Geometry, Lakehouse v1)"
 description: TO_STRING — Converts a GEOMETRY object into a String representation.
 ---
 

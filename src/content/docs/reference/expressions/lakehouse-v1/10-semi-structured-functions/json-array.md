@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY
+title: JSON_ARRAY (Lakehouse v1)
 description: JSON_ARRAY — Creates a JSON array with specified values.
 ---
 

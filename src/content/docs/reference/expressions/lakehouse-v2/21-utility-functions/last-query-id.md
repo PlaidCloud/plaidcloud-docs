@@ -1,5 +1,5 @@
 ---
-title: LAST_QUERY_ID
+title: LAST_QUERY_ID (Lakehouse v2)
 description: LAST_QUERY_ID — Returns the ID of the most recently executed query.
 ---
 

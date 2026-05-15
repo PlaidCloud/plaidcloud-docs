@@ -1,5 +1,5 @@
 ---
-title: CARDINALITY
+title: "CARDINALITY (Array, Lakehouse v2)"
 description: CARDINALITY — returns the number of elements in an array. Alias for `ARRAY_LENGTH`.
 ---
 

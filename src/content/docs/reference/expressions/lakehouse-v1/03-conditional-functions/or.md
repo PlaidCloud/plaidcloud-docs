@@ -1,6 +1,6 @@
 ---
-title: OR
-description: OR — conditional OR operator. Includes detailed syntax, examples, and usage reference.
+title: OR (Lakehouse v1)
+description: OR — conditional OR operator.
 ---
 
 Conditional OR operator.  Checks whether either condition is true.

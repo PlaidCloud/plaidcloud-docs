@@ -1,6 +1,6 @@
 ---
-title: STRCMP
-description: STRCMP — returns 0 if the strings are the same, -1 if the first argument is smaller than the.
+title: STRCMP (Lakehouse v1)
+description: STRCMP — returns 0 if the strings are the same, -1 if the first argument is smaller than the second, and 1 otherwise.
 ---
 
 Returns 0 if the strings are the same, -1 if the first argument is smaller than the second, and 1 otherwise.

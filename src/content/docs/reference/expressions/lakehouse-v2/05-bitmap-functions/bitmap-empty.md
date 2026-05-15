@@ -1,6 +1,6 @@
 ---
-title: BITMAP_EMPTY
-description: BITMAP_EMPTY — returns an empty bitmap - see syntax, examples, and output.
+title: BITMAP_EMPTY (Lakehouse v2)
+description: BITMAP_EMPTY — returns an empty bitmap.
 ---
 
 Returns an empty bitmap.

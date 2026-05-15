@@ -1,5 +1,5 @@
 ---
-title: BITMAP_HAS_ANY
+title: BITMAP_HAS_ANY (Lakehouse v1)
 description: BITMAP_HAS_ANY — checks if the first bitmap has any bit matching the bits in the second bitmap.
 ---
 

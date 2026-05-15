@@ -1,5 +1,5 @@
 ---
-title: ST_POINT
+title: ST_POINT (Lakehouse v2)
 description: ST_POINT — Creates a point geometry from longitude and latitude values.
 ---
 

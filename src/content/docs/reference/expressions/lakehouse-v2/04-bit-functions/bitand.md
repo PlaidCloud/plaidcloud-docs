@@ -1,6 +1,6 @@
 ---
-title: BITAND
-description: BITAND — returns the bitwise AND of two numeric values - see syntax, examples, and output.
+title: BITAND (Lakehouse v2)
+description: BITAND — returns the bitwise AND of two numeric values.
 ---
 
 Returns the bitwise AND of two numeric values.

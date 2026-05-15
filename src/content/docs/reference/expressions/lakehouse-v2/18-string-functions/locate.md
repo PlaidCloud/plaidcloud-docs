@@ -1,5 +1,5 @@
 ---
-title: LOCATE
+title: LOCATE (Lakehouse v2)
 description: LOCATE — returns the position of the first occurrence of a substring in a string.
 ---
 

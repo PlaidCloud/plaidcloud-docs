@@ -1,6 +1,6 @@
 ---
-title: ST_MAKELINE
-description: ST_MAKELINE — constructs a GEOMETRY object that represents a line connecting the points in the.
+title: ST_MAKELINE (Lakehouse v1)
+description: ST_MAKELINE — constructs a GEOMETRY object that represents a line connecting the points in the input two GEOMETRY objects.
 ---
 
 Constructs a GEOMETRY object that represents a line connecting the points in the input two GEOMETRY objects.

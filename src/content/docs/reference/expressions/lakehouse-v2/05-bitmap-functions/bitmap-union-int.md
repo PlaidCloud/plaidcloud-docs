@@ -1,5 +1,5 @@
 ---
-title: BITMAP_UNION_INT
+title: BITMAP_UNION_INT (Lakehouse v2)
 description: BITMAP_UNION_INT — returns the count of distinct integer values (aggregate).
 ---
 

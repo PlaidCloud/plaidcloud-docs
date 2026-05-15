@@ -1,5 +1,5 @@
 ---
-title: H3_HEX_AREA_KM2
+title: H3_HEX_AREA_KM2 (Lakehouse v1)
 description: H3_HEX_AREA_KM2 — returns the average hexagon area in square kilometers at the given resolution.
 ---
 

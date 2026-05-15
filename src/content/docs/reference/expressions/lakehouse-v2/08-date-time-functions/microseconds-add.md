@@ -1,5 +1,5 @@
 ---
-title: MICROSECONDS_ADD
+title: MICROSECONDS_ADD (Lakehouse v2)
 description: MICROSECONDS_ADD — adds a specified number of microseconds to a datetime.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: JSON_OBJECT_KEEP_NULL
+title: JSON_OBJECT_KEEP_NULL (Lakehouse v1)
 description: JSON_OBJECT_KEEP_NULL — creates a JSON object with keys and values.
 ---
 

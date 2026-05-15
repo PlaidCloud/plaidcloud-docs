@@ -1,6 +1,6 @@
 ---
-title: FPOW
-description: FPOW — alias for `POW`. See [POW](pow) - see syntax, examples, and output.
+title: FPOW (Lakehouse v2)
+description: FPOW — alias for `POW`. See [POW](pow).
 ---
 
 Alias for `POW`. See [POW](pow).

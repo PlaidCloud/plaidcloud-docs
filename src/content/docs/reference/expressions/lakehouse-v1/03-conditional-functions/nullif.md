@@ -1,5 +1,5 @@
 ---
-title: NULLIF
+title: NULLIF (Lakehouse v1)
 description: NULLIF — Returns NULL if two expressions are equal.
 ---
 

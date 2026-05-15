@@ -1,5 +1,5 @@
 ---
-title: H3_LINE
+title: H3_LINE (Lakehouse v1)
 description: H3_LINE — Returns the line of indexes between the given two H3 indexes.
 ---
 

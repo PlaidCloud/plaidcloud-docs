@@ -1,6 +1,6 @@
 ---
-title: CHAR_LENGTH
-description: CHAR_LENGTH — alias for the LENGTH string function. Includes detailed syntax, examples, and usage reference.
+title: CHAR_LENGTH (Lakehouse v1)
+description: CHAR_LENGTH — alias for the LENGTH string function.
 ---
 
 Alias for [LENGTH](../length).

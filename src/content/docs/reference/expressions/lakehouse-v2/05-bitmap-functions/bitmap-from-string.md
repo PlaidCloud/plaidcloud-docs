@@ -1,5 +1,5 @@
 ---
-title: BITMAP_FROM_STRING
+title: BITMAP_FROM_STRING (Lakehouse v2)
 description: BITMAP_FROM_STRING — converts a comma-separated string of integers to a bitmap.
 ---
 

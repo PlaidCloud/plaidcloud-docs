@@ -1,5 +1,5 @@
 ---
-title: CUME_DIST
+title: CUME_DIST (Lakehouse v1)
 description: CUME_DIST — returns the cumulative distribution of a given value in a set of values.
 ---
 

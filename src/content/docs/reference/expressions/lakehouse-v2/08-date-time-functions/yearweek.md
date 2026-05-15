@@ -1,5 +1,5 @@
 ---
-title: YEARWEEK
+title: YEARWEEK (Lakehouse v2)
 description: YEARWEEK — returns the year and week number for a date as an integer.
 ---
 

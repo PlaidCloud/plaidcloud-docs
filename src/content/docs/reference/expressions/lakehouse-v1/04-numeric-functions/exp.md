@@ -1,5 +1,5 @@
 ---
-title: EXP
+title: EXP (Lakehouse v1)
 description: EXP — returns the value of e (the base of natural logarithms) raised to the power of x.
 ---
 

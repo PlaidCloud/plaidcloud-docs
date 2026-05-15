@@ -1,5 +1,5 @@
 ---
-title: ISNULL
+title: ISNULL (Lakehouse v2)
 description: ISNULL — Checks whether a value is NULL. Returns 1 if NULL, 0 otherwise.
 ---
 

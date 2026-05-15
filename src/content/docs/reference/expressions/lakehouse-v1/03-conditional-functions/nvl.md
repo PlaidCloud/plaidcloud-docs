@@ -1,5 +1,5 @@
 ---
-title: NVL
+title: NVL (Lakehouse v1)
 description: NVL — If <expr1> is NULL, returns <expr2>, otherwise returns <expr1>.
 ---
 

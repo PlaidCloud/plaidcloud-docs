@@ -1,5 +1,5 @@
 ---
-title: FMOD
+title: FMOD (Lakehouse v2)
 description: FMOD — Returns the floating-point remainder of dividing two numbers.
 ---
 

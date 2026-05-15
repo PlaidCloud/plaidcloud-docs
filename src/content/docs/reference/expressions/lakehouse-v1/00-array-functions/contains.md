@@ -1,5 +1,5 @@
 ---
-title: CONTAINS
+title: CONTAINS (Lakehouse v1)
 description: CONTAINS — Checks if the array contains a specific element.
 ---
 

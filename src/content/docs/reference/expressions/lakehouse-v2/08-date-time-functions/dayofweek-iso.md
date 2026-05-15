@@ -1,5 +1,5 @@
 ---
-title: DAYOFWEEK_ISO
+title: DAYOFWEEK_ISO (Lakehouse v2)
 description: DAYOFWEEK_ISO — returns the ISO day of the week index for a date (1=Monday, 7=Sunday).
 ---
 

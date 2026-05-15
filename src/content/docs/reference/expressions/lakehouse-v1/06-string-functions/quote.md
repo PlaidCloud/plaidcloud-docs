@@ -1,6 +1,6 @@
 ---
-title: QUOTE
-description: QUOTE — quotes a string to produce a result that can be used as a properly escaped data value in.
+title: QUOTE (Lakehouse v1)
+description: QUOTE — quotes a string to produce a result that can be used as a properly escaped data value in an SQL statement.
 ---
 
 Quotes a string to produce a result that can be used as a properly escaped data value in an SQL statement. 

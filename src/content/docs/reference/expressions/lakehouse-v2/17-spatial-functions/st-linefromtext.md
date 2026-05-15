@@ -1,6 +1,6 @@
 ---
-title: ST_LINEFROMTEXT
-description: ST_LINEFROMTEXT — creates a line geometry from a WKT string - see syntax, examples, and output.
+title: ST_LINEFROMTEXT (Lakehouse v2)
+description: ST_LINEFROMTEXT — creates a line geometry from a WKT string.
 ---
 
 Creates a line geometry from a WKT string.

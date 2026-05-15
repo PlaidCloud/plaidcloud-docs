@@ -1,6 +1,6 @@
 ---
-title: ATAN
-description: ATAN — returns the arc tangent of x, that is, the value whose tangent is x. Includes syntax and.
+title: ATAN (Lakehouse v1)
+description: ATAN — returns the arc tangent of x, that is, the value whose tangent is x.
 ---
 
 Returns the arc tangent of `x`, that is, the value whose tangent is `x`.

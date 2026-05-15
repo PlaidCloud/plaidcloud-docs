@@ -1,5 +1,5 @@
 ---
-title: LPAD
+title: LPAD (Lakehouse v1)
 description: LPAD — returns the string str, left-padded with the string padstr to a length of len characters.
 ---
 

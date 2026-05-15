@@ -1,6 +1,6 @@
 ---
-title: DISTINCT_MAP_KEYS
-description: DISTINCT_MAP_KEYS — returns the distinct keys from a map - see syntax, examples, and output.
+title: DISTINCT_MAP_KEYS (Lakehouse v2)
+description: DISTINCT_MAP_KEYS — returns the distinct keys from a map.
 ---
 
 Returns the distinct keys from a map.

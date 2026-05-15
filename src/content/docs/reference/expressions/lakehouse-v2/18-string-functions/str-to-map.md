@@ -1,5 +1,5 @@
 ---
-title: STR_TO_MAP
+title: STR_TO_MAP (Lakehouse v2)
 description: STR_TO_MAP — Splits a string into key-value pairs and returns a map.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ST_GEOHASH
+title: ST_GEOHASH (Lakehouse v1)
 description: ST_GEOHASH — Return the geohash for a GEOMETRY object.
 ---
 

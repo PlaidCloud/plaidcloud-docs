@@ -1,5 +1,5 @@
 ---
-title: DAYOFWEEK
+title: DAYOFWEEK (Lakehouse v2)
 description: DAYOFWEEK — returns the day of the week index for a date (1=Sunday, 7=Saturday).
 ---
 

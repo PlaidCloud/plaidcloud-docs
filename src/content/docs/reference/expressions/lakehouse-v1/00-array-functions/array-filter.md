@@ -1,5 +1,5 @@
 ---
-title: ARRAY_FILTER
+title: ARRAY_FILTER (Lakehouse v1)
 description: ARRAY_FILTER — constructs an array from those elements of the input array for which the lambda.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: DS_HLL_ACCUMULATE
+title: DS_HLL_ACCUMULATE (Lakehouse v2)
 description: "Use the DS_HLL_ACCUMULATE aggregate function in PlaidCloud Lakehouse. Accumulates values into a DataSketches HLL sketch for approximate distinct counting."
 ---
 

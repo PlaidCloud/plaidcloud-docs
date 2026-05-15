@@ -1,5 +1,5 @@
 ---
-title: ARRAY_TO_STRING
+title: ARRAY_TO_STRING (Lakehouse v1)
 description: ARRAY_TO_STRING — concatenates elements of an array into a single string, using a specified.
 ---
 

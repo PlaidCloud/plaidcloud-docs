@@ -1,5 +1,5 @@
 ---
-title: REGEXP_LIKE
+title: REGEXP_LIKE (Lakehouse v1)
 description: REGEXP_LIKE — rEGEXP_LIKE function is used to check that whether the string matches the regular.
 ---
 

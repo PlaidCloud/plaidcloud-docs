@@ -1,6 +1,6 @@
 ---
-title: SECOND
-description: SECOND — returns the second from a datetime - see syntax, examples, and output.
+title: SECOND (Lakehouse v2)
+description: SECOND — returns the second from a datetime.
 ---
 
 Returns the second from a datetime.

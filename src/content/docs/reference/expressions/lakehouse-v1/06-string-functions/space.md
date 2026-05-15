@@ -1,5 +1,5 @@
 ---
-title: SPACE
+title: SPACE (Lakehouse v1)
 description: SPACE — Returns a string consisting of N blank space characters.
 ---
 

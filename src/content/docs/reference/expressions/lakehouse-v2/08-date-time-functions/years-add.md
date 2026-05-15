@@ -1,6 +1,6 @@
 ---
-title: YEARS_ADD
-description: YEARS_ADD — adds a specified number of years to a date - see syntax, examples, and output.
+title: YEARS_ADD (Lakehouse v2)
+description: YEARS_ADD — adds a specified number of years to a date.
 ---
 
 Adds a specified number of years to a date.

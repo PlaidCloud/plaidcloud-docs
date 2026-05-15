@@ -1,5 +1,5 @@
 ---
-title: CBRT
+title: CBRT (Lakehouse v1)
 description: CBRT — Returns the cube root of a nonnegative number x.
 ---
 

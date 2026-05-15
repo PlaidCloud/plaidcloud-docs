@@ -1,6 +1,6 @@
 ---
-title: MAP_VALUES
-description: MAP_VALUES — returns the values in a map. Includes detailed syntax, examples, and usage reference.
+title: MAP_VALUES (Lakehouse v1)
+description: MAP_VALUES — returns the values in a map.
 ---
 
 Returns the values in a map.

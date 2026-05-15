@@ -1,5 +1,5 @@
 ---
-title: TIME_SLOT
+title: TIME_SLOT (Lakehouse v1)
 description: TIME_SLOT — rounds the time to the half-hour.
 ---
 

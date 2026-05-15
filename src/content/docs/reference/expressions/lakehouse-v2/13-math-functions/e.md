@@ -1,6 +1,6 @@
 ---
-title: E
-description: E — returns the mathematical constant e (Euler's number) - see syntax, examples, and output.
+title: E (Lakehouse v2)
+description: E — returns the mathematical constant e (Euler's number).
 ---
 
 Returns the mathematical constant e (Euler's number).

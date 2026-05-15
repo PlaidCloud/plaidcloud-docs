@@ -1,5 +1,5 @@
 ---
-title: TO_WEEKS
+title: TO_WEEKS (Lakehouse v1)
 description: TO_WEEKS — Converts a specified number of weeks into an Interval type.
 ---
 

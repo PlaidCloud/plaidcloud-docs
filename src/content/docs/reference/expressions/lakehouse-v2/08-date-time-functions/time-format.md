@@ -1,5 +1,5 @@
 ---
-title: TIME_FORMAT
+title: TIME_FORMAT (Lakehouse v2)
 description: TIME_FORMAT — formats a time value according to a format string.
 ---
 

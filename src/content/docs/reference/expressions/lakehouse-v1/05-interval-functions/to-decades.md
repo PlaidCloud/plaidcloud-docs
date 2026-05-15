@@ -1,6 +1,6 @@
 ---
-title: TO_DECADES
-description: TO_DECADES — converts a specified number of decades into an Interval type. Includes syntax and.
+title: TO_DECADES (Lakehouse v1)
+description: TO_DECADES — converts a specified number of decades into an Interval type.
 ---
 
 Converts a specified number of decades into an Interval type.

@@ -1,5 +1,5 @@
 ---
-title: ST_SRID
+title: ST_SRID (Lakehouse v1)
 description: ST_SRID — returns the SRID (spatial reference system identifier) of a GEOMETRY object.
 ---
 

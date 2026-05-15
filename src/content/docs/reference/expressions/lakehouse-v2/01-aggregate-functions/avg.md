@@ -1,6 +1,6 @@
 ---
-title: AVG
-description: AVG — returns the average value of a numeric column - see syntax, examples, and output.
+title: AVG (Lakehouse v2)
+description: AVG — returns the average value of a numeric column.
 ---
 
 Returns the average value of a numeric column.

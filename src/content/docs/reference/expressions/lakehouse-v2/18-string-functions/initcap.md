@@ -1,5 +1,5 @@
 ---
-title: INITCAP
+title: INITCAP (Lakehouse v2)
 description: INITCAP — Capitalizes the first letter of each word in a string.
 ---
 

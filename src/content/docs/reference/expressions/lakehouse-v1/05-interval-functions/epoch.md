@@ -1,6 +1,6 @@
 ---
-title: EPOCH
-description: EPOCH — alias for the TO_SECONDS interval function. Includes detailed syntax, examples, and usage reference.
+title: EPOCH (Lakehouse v1)
+description: EPOCH — alias for the TO_SECONDS interval function.
 ---
 
 Alias for [TO_SECONDS](../to-seconds).

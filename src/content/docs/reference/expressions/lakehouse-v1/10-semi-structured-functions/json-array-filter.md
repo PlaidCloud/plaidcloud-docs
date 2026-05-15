@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_FILTER
+title: JSON_ARRAY_FILTER (Lakehouse v1)
 description: JSON_ARRAY_FILTER — filters elements from a JSON array based on a specified Lambda.
 ---
 

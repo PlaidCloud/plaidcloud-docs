@@ -1,5 +1,5 @@
 ---
-title: Date and Time Functions
+title: Date and Time Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL date and time functions: parse, format, and arithmetic on dates, times, and timestamps."
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: TO_GEOMETRY
+title: TO_GEOMETRY (Lakehouse v1)
 description: TO_GEOMETRY — Parses an input and returns a value of type GEOMETRY.
 ---
 

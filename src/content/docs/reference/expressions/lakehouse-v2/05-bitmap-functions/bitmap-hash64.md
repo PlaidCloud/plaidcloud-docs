@@ -1,5 +1,5 @@
 ---
-title: BITMAP_HASH64
+title: BITMAP_HASH64 (Lakehouse v2)
 description: BITMAP_HASH64 — computes a 64-bit hash of a value and returns a bitmap containing that hash.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: MAP_INSERT
+title: MAP_INSERT (Lakehouse v1)
 description: MAP_INSERT — returns a new MAP consisting of the input MAP with a new key-value pair inserted (an.
 ---
 

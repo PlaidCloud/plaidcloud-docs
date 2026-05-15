@@ -1,5 +1,5 @@
 ---
-title: MANN_WHITNEY_U_TEST
+title: MANN_WHITNEY_U_TEST (Lakehouse v2)
 description: MANN_WHITNEY_U_TEST — performs a Mann-Whitney U test on two independent samples.
 ---
 

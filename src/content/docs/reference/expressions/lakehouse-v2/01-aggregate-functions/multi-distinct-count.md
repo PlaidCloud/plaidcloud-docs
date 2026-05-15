@@ -1,5 +1,5 @@
 ---
-title: MULTI_DISTINCT_COUNT
+title: MULTI_DISTINCT_COUNT (Lakehouse v2)
 description: MULTI_DISTINCT_COUNT — returns the count of distinct values. Equivalent to COUNT(DISTINCT).
 ---
 

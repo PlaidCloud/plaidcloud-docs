@@ -1,6 +1,6 @@
 ---
-title: ARRAY_GENERATE
-description: ARRAY_GENERATE — generates an array of sequential values - see syntax, examples, and output.
+title: ARRAY_GENERATE (Lakehouse v2)
+description: ARRAY_GENERATE — generates an array of sequential values.
 ---
 
 Generates an array of sequential values.

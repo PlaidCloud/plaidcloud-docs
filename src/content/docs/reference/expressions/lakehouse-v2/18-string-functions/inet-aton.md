@@ -1,5 +1,5 @@
 ---
-title: INET_ATON
+title: INET_ATON (Lakehouse v2)
 description: INET_ATON — Converts an IPv4 address string to a numeric value.
 ---
 

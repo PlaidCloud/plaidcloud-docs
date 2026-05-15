@@ -1,5 +1,5 @@
 ---
-title: TO_INT16
+title: TO_INT16 (Lakehouse v1)
 description: TO_INT16 — Converts a value to INT16 data type.
 ---
 

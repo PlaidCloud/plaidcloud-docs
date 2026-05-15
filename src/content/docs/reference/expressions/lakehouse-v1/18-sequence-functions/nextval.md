@@ -1,5 +1,5 @@
 ---
-title: NEXTVAL
+title: NEXTVAL (Lakehouse v1)
 description: NEXTVAL — Retrieves the next value from a sequence.
 ---
 

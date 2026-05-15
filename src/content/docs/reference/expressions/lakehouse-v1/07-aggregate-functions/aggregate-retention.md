@@ -1,6 +1,6 @@
 ---
-title: RETENTION
-description: RETENTION — aggregate function. Includes detailed syntax, examples, and usage reference.
+title: RETENTION (Lakehouse v1)
+description: RETENTION — aggregate function.
 ---
 
 Aggregate function

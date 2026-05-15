@@ -1,5 +1,5 @@
 ---
-title: PERCENT_RANK
+title: PERCENT_RANK (Lakehouse v1)
 description: PERCENT_RANK — returns the relative rank of a given value within a set of values.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: TO_TERA_TIMESTAMP
+title: TO_TERA_TIMESTAMP (Lakehouse v2)
 description: "Use the TO_TERA_TIMESTAMP date/time function in PlaidCloud Lakehouse. Converts a VARCHAR value to a DATETIME value according to a Teradata format string."
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: COLUMN_SIZE
+title: COLUMN_SIZE (Lakehouse v2)
 description: COLUMN_SIZE — returns the size in bytes of a column value in its serialized form.
 ---
 

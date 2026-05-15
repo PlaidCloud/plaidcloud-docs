@@ -1,6 +1,6 @@
 ---
-title: UTC_TIMESTAMP
-description: UTC_TIMESTAMP — returns the current UTC date and time - see syntax, examples, and output.
+title: UTC_TIMESTAMP (Lakehouse v2)
+description: UTC_TIMESTAMP — returns the current UTC date and time.
 ---
 
 Returns the current UTC date and time.

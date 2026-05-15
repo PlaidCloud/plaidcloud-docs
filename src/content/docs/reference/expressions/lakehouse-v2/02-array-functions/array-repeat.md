@@ -1,5 +1,5 @@
 ---
-title: ARRAY_REPEAT
+title: ARRAY_REPEAT (Lakehouse v2)
 description: ARRAY_REPEAT — creates an array containing a specified element repeated N times.
 ---
 

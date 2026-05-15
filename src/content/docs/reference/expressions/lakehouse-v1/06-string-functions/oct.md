@@ -1,5 +1,5 @@
 ---
-title: OCT
+title: OCT (Lakehouse v1)
 description: OCT — Returns a string representation of the octal value of N.
 ---
 

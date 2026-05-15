@@ -1,5 +1,5 @@
 ---
-title: TRY_TO_TIMESTAMP
+title: TRY_TO_TIMESTAMP (Lakehouse v1)
 description: TRY_TO_TIMESTAMP — a variant of TO_TIMESTAMP in PlaidCloud Lakehouse that, while performing.
 ---
 

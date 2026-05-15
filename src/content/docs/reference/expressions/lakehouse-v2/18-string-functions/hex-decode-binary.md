@@ -1,5 +1,5 @@
 ---
-title: HEX_DECODE_BINARY
+title: HEX_DECODE_BINARY (Lakehouse v2)
 description: HEX_DECODE_BINARY — Decodes a hexadecimal string to a binary value.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ARRAYS_ZIP
+title: ARRAYS_ZIP (Lakehouse v1)
 description: ARRAYS_ZIP — Merges multiple arrays into a single array tuple.
 ---
 

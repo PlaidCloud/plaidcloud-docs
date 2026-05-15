@@ -1,6 +1,6 @@
 ---
-title: DAYS_DIFF
-description: DAYS_DIFF — returns the number of days between two dates - see syntax, examples, and output.
+title: DAYS_DIFF (Lakehouse v2)
+description: DAYS_DIFF — returns the number of days between two dates.
 ---
 
 Returns the number of days between two dates.

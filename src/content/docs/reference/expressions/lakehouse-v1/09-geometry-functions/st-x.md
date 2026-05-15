@@ -1,5 +1,5 @@
 ---
-title: ST_X
+title: ST_X (Lakehouse v1)
 description: ST_X — returns the longitude (X coordinate) of a Point represented by a GEOMETRY object.
 ---
 

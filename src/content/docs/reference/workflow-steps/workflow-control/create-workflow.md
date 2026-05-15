@@ -1,5 +1,5 @@
 ---
-title: Create Workflow
+title: Create Workflow Step
 description: Create a new workflow dynamically from a PlaidCloud workflow step to build automated workflow generation and management processes.
 sidebar:
   order: 1

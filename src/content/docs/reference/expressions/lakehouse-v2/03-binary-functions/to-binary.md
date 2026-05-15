@@ -1,5 +1,5 @@
 ---
-title: TO_BINARY
+title: TO_BINARY (Lakehouse v2)
 description: TO_BINARY — converts a VARCHAR string to a binary value based on the specified binary format.
 ---
 

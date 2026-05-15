@@ -1,5 +1,5 @@
 ---
-title: POW
+title: POW (Lakehouse v1)
 description: POW — returns the value of x to the power of y.
 ---
 

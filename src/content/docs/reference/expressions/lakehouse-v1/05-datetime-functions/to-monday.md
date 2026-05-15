@@ -1,5 +1,5 @@
 ---
-title: TO_MONDAY
+title: TO_MONDAY (Lakehouse v1)
 description: TO_MONDAY — round down a date or date with time (timestamp/datetime) to the nearest Monday.
 ---
 

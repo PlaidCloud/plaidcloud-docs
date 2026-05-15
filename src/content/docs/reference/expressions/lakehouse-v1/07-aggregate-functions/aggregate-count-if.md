@@ -1,5 +1,5 @@
 ---
-title: COUNT_IF
+title: COUNT_IF (Lakehouse v1)
 description: COUNT_IF — the suffix _IF can be appended to the name of any aggregate function.
 ---
 

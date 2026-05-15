@@ -1,5 +1,5 @@
 ---
-title: ARRAY_JOIN
+title: ARRAY_JOIN (Lakehouse v2)
 description: ARRAY_JOIN — Concatenates array elements into a string with a separator.
 ---
 

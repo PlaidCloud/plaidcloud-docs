@@ -1,5 +1,5 @@
 ---
-title: INSPECT_MEMORY
+title: INSPECT_MEMORY (Lakehouse v2)
 description: INSPECT_MEMORY — Returns memory usage information for the current node.
 ---
 

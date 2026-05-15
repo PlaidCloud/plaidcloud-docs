@@ -1,6 +1,6 @@
 ---
-title: CONCAT
-description: CONCAT — concatenates two or more strings - see syntax, examples, and output.
+title: CONCAT (Lakehouse v2)
+description: CONCAT — concatenates two or more strings.
 ---
 
 Concatenates two or more strings.

@@ -1,5 +1,5 @@
 ---
-title: JSON_EXTRACT_PATH_TEXT
+title: JSON_EXTRACT_PATH_TEXT (Lakehouse v1)
 description: JSON_EXTRACT_PATH_TEXT — extracts value from a Json string by path_name.
 ---
 

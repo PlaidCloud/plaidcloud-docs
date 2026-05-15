@@ -1,5 +1,5 @@
 ---
-title: DICTIONARY_GET
+title: DICTIONARY_GET (Lakehouse v2)
 description: DICTIONARY_GET — returns the value for a specified key from a dictionary object.
 ---
 

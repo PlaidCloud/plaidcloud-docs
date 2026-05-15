@@ -1,6 +1,6 @@
 ---
-title: DAYS_ADD
-description: DAYS_ADD — adds a specified number of days to a date - see syntax, examples, and output.
+title: DAYS_ADD (Lakehouse v2)
+description: DAYS_ADD — adds a specified number of days to a date.
 ---
 
 Adds a specified number of days to a date.

@@ -1,5 +1,5 @@
 ---
-title: JSON Functions
+title: JSON Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL json functions: parse, query, and transform JSON values stored in tables."
 ---
 

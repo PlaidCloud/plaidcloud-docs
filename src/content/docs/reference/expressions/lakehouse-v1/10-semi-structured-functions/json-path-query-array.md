@@ -1,5 +1,5 @@
 ---
-title: JSON_PATH_QUERY_ARRAY
+title: JSON_PATH_QUERY_ARRAY (Lakehouse v1)
 description: JSON_PATH_QUERY_ARRAY — get all JSON items returned by JSON path for the specified.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: POSITION
+title: POSITION (Lakehouse v1)
 description: POSITION — POSITION(substr IN str) is a synonym for LOCATE(substr,str).
 ---
 

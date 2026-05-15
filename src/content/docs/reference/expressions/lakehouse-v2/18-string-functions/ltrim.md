@@ -1,5 +1,5 @@
 ---
-title: LTRIM
+title: LTRIM (Lakehouse v2)
 description: LTRIM — Removes leading whitespace or specified characters from a string.
 ---
 

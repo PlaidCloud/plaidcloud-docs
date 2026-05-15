@@ -1,5 +1,5 @@
 ---
-title: ARRAY_REMOVE
+title: ARRAY_REMOVE (Lakehouse v2)
 description: ARRAY_REMOVE — removes all occurrences of a specified element from an array.
 ---
 

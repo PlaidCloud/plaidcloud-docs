@@ -1,5 +1,5 @@
 ---
-title: "LOG(x)"
+title: LOG(x) (Lakehouse v1)
 description: LOG(x) — returns the natural logarithm of x.
 ---
 

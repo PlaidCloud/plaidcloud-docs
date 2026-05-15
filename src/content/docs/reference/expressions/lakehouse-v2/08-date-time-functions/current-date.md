@@ -1,5 +1,5 @@
 ---
-title: CURRENT_DATE
+title: CURRENT_DATE (Lakehouse v2)
 description: CURRENT_DATE — returns the current date. Alias for `CURDATE`.
 ---
 

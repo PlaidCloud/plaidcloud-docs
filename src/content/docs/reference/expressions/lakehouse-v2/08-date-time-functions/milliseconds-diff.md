@@ -1,5 +1,5 @@
 ---
-title: MILLISECONDS_DIFF
+title: MILLISECONDS_DIFF (Lakehouse v2)
 description: MILLISECONDS_DIFF — returns the number of milliseconds between two datetimes.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: STREAM_STATUS
-description: STREAM_STATUS — provides information about the status of a specified stream, yielding a.
+title: STREAM_STATUS (Lakehouse v1)
+description: STREAM_STATUS — returns whether a stream has change-data-capture records to consume (true/false).
 ---
 
 Provides information about the status of a specified stream, yielding a single-column result (`has_data`) that can take on values of `true` or `false`: 

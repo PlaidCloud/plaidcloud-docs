@@ -1,6 +1,6 @@
 ---
-title: NEGATE
-description: NEGATE — alias for the MINUS numeric function. Includes detailed syntax, examples, and usage reference.
+title: NEGATE (Lakehouse v1)
+description: NEGATE — alias for the MINUS numeric function.
 ---
 
 Alias for [MINUS](../minus).

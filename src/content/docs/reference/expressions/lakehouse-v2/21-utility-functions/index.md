@@ -1,5 +1,5 @@
 ---
-title: Utility Functions
+title: Utility Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL utility functions: general-purpose helpers for type checks, null handling, and value selection."
 ---
 

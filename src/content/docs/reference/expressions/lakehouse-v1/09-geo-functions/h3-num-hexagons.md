@@ -1,5 +1,5 @@
 ---
-title: H3_NUM_HEXAGONS
+title: H3_NUM_HEXAGONS (Lakehouse v1)
 description: H3_NUM_HEXAGONS — returns the number of unique H3 indexes at the given resolution.
 ---
 

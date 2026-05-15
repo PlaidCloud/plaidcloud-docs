@@ -1,6 +1,6 @@
 ---
-title: ARRAY_APPLY
-description: ARRAY_APPLY — alias for the ARRAY_TRANSFORM array function. Includes detailed syntax, examples, and usage reference.
+title: ARRAY_APPLY (Lakehouse v1)
+description: ARRAY_APPLY — alias for the ARRAY_TRANSFORM array function.
 ---
 
 Alias for [ARRAY_TRANSFORM](../array-transform).

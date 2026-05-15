@@ -1,5 +1,5 @@
 ---
-title: HUMANIZE_NUMBER
+title: HUMANIZE_NUMBER (Lakehouse v1)
 description: HUMANIZE_NUMBER — returns a readable number.
 ---
 

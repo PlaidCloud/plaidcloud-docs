@@ -1,5 +1,5 @@
 ---
-title: ST_GEOMETRYFROMTEXT
+title: ST_GEOMETRYFROMTEXT (Lakehouse v1)
 description: ST_GEOMETRYFROMTEXT — alias for the ST_GEOMETRYFROMWKT geometry function.
 ---
 

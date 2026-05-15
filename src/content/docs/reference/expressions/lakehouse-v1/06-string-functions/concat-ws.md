@@ -1,5 +1,5 @@
 ---
-title: CONCAT_WS
+title: CONCAT_WS (Lakehouse v1)
 description: CONCAT_WS — cONCAT_WS() stands for Concatenate With Separator and is a special form of CONCAT().
 ---
 

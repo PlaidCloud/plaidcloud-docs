@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_SECOND
+title: TO_START_OF_SECOND (Lakehouse v1)
 description: TO_START_OF_SECOND — rounds down a date with time (timestamp/datetime) to the start of the second.
 ---
 

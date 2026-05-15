@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_APPROX
+title: PERCENTILE_APPROX (Lakehouse v2)
 description: PERCENTILE_APPROX — returns an approximate percentile value using the t-digest algorithm.
 ---
 

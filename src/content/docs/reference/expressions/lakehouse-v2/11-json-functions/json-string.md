@@ -1,6 +1,6 @@
 ---
-title: JSON_STRING
-description: JSON_STRING — converts a JSON value to a JSON-encoded string - see syntax, examples, and output.
+title: JSON_STRING (Lakehouse v2)
+description: JSON_STRING — converts a JSON value to a JSON-encoded string.
 ---
 
 Converts a JSON value to a JSON-encoded string.

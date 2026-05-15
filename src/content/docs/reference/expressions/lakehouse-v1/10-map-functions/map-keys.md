@@ -1,6 +1,6 @@
 ---
-title: MAP_KEYS
-description: MAP_KEYS — returns the keys in a map. Includes detailed syntax, examples, and usage reference.
+title: MAP_KEYS (Lakehouse v1)
+description: MAP_KEYS — returns the keys in a map.
 ---
 
 Returns the keys in a map.

@@ -1,5 +1,5 @@
 ---
-title: EXISTS
+title: EXISTS (Lakehouse v1)
 description: EXISTS — the exists condition is used in combination with a subquery and is considered \"to be.
 ---
 

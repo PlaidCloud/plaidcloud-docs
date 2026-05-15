@@ -1,5 +1,5 @@
 ---
-title: REPLACE
+title: REPLACE (Lakehouse v2)
 description: REPLACE — Replaces all occurrences of a substring with another substring.
 ---
 

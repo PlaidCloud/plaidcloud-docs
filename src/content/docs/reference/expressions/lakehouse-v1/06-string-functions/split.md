@@ -1,5 +1,5 @@
 ---
-title: SPLIT
+title: SPLIT (Lakehouse v1)
 description: SPLIT — splits a string using a specified delimiter and returns the resulting parts as an array.
 ---
 

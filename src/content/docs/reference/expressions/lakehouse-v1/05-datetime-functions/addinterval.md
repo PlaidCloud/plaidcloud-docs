@@ -1,5 +1,5 @@
 ---
-title: ADD TIME INTERVAL
+title: ADD TIME INTERVAL (Lakehouse v1)
 description: ADD TIME INTERVAL — add years, months, days, hours, minutes, or seconds to a date or timestamp value.
 ---
 

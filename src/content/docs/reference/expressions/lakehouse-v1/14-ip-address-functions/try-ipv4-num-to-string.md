@@ -1,5 +1,5 @@
 ---
-title: TRY_IPV4_NUM_TO_STRING
+title: TRY_IPV4_NUM_TO_STRING (Lakehouse v1)
 description: TRY_IPV4_NUM_TO_STRING — alias for the TRY_INET_NTOA IP address function.
 ---
 

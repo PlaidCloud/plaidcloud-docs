@@ -1,6 +1,6 @@
 ---
-title: INSPECT_ALL_PIPES
-description: INSPECT_ALL_PIPES — returns information about all pipe objects - see syntax, examples, and output.
+title: INSPECT_ALL_PIPES (Lakehouse v2)
+description: INSPECT_ALL_PIPES — returns information about all pipe objects.
 ---
 
 Returns information about all pipe objects.

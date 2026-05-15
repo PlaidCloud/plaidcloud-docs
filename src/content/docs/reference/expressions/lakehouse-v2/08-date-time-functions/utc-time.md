@@ -1,6 +1,6 @@
 ---
-title: UTC_TIME
-description: UTC_TIME — returns the current UTC time - see syntax, examples, and output.
+title: UTC_TIME (Lakehouse v2)
+description: UTC_TIME — returns the current UTC time.
 ---
 
 Returns the current UTC time.

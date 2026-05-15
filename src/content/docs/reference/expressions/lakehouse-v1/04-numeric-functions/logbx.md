@@ -1,5 +1,5 @@
 ---
-title: "LOG(b, x)"
+title: "LOG(b, x) (Lakehouse v1)"
 description: LOG(b, x) — returns the base-b logarithm of x.
 ---
 

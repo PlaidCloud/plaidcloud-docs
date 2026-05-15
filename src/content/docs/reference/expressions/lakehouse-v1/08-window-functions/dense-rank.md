@@ -1,5 +1,5 @@
 ---
-title: DENSE_RANK
+title: DENSE_RANK (Lakehouse v1)
 description: DENSE_RANK — returns the rank of a value within a group of values, without gaps in the ranks.
 ---
 

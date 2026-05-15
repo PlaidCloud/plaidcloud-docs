@@ -1,6 +1,6 @@
 ---
-title: ARRAY_AGG
-description: ARRAY_AGG — aggregates values into an array - see syntax, examples, and output.
+title: ARRAY_AGG (Lakehouse v2)
+description: ARRAY_AGG — aggregates values into an array.
 ---
 
 Aggregates values into an array.

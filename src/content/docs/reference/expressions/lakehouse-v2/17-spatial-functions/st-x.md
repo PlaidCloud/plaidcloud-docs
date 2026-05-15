@@ -1,5 +1,5 @@
 ---
-title: ST_X
+title: ST_X (Lakehouse v2)
 description: ST_X — Returns the X coordinate (longitude) of a point geometry.
 ---
 

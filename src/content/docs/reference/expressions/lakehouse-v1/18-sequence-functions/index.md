@@ -1,5 +1,5 @@
 ---
-title: Sequence Functions
+title: Sequence Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL sequence functions: detect ordered sequences and event chains within partitioned data."
 ---
 

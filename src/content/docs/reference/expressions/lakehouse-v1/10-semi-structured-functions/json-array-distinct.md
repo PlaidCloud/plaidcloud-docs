@@ -1,6 +1,6 @@
 ---
-title: JSON_ARRAY_DISTINCT
-description: JSON_ARRAY_DISTINCT — removes duplicate elements from a JSON array and returns an.
+title: JSON_ARRAY_DISTINCT (Lakehouse v1)
+description: JSON_ARRAY_DISTINCT — removes duplicate elements from a JSON array and returns an array with only distinct elements.
 ---
 
 Removes duplicate elements from a JSON array and returns an array with only distinct elements.

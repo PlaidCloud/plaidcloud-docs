@@ -1,5 +1,5 @@
 ---
-title: TO_MILLENNIA
+title: TO_MILLENNIA (Lakehouse v1)
 description: TO_MILLENNIA — converts a specified number of millennia into an Interval type.
 ---
 

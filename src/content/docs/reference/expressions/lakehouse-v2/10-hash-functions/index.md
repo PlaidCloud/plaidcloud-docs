@@ -1,5 +1,5 @@
 ---
-title: Hash Functions
+title: Hash Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL hash functions: compute deterministic hashes (MD5, SHA, xxHash, CityHash) for dedup, sampling, and integrity checks."
 ---
 

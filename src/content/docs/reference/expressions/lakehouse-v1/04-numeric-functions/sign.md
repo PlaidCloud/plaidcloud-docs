@@ -1,6 +1,6 @@
 ---
-title: SIGN
-description: SIGN — returns the sign of the argument as -1, 0, or 1, depending on whether x is negative,.
+title: SIGN (Lakehouse v1)
+description: SIGN — returns the sign of the argument as -1, 0, or 1, depending on whether x is negative.
 ---
 
 Returns the sign of the argument as -1, 0, or 1, depending on whether `x` is negative, zero, or positive or NULL if the argument was NULL.

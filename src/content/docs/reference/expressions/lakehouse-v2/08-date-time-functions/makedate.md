@@ -1,5 +1,5 @@
 ---
-title: MAKEDATE
+title: MAKEDATE (Lakehouse v2)
 description: MAKEDATE — creates a date from a year and day-of-year value.
 ---
 

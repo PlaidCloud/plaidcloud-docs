@@ -1,6 +1,6 @@
 ---
-title: LIST_STAGE
-description: LIST_STAGE — lists files in a stage. Includes detailed syntax, examples, and usage reference.
+title: LIST_STAGE (Lakehouse v1)
+description: LIST_STAGE — lists files in a stage.
 ---
 
 Lists files in a stage. This allows you to filter files in a stage based on their extensions and obtain comprehensive details about each file. The function is similar to the DDL command LIST STAGE FILES, but provides you the flexibility to retrieve specific file information with the SELECT statement, such as file name, size, MD5 hash, last modified timestamp, and creator, rather than all file information.

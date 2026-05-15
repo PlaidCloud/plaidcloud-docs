@@ -1,5 +1,5 @@
 ---
-title: REGEXP_COUNT
+title: REGEXP_COUNT (Lakehouse v2)
 description: "Use the REGEXP_COUNT pattern matching function in PlaidCloud Lakehouse. Returns the number of times a regular expression pattern occurs in a string."
 ---
 

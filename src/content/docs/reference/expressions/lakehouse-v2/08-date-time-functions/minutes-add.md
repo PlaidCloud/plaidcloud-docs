@@ -1,5 +1,5 @@
 ---
-title: MINUTES_ADD
+title: MINUTES_ADD (Lakehouse v2)
 description: MINUTES_ADD — adds a specified number of minutes to a datetime.
 ---
 

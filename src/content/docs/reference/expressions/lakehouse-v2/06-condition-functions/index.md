@@ -1,5 +1,5 @@
 ---
-title: Condition Functions
+title: Condition Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL condition functions: branch on values with IF, CASE, COALESCE, NULLIF, and related selectors."
 ---
 

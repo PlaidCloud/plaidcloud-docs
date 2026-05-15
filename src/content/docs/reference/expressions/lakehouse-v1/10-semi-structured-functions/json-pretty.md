@@ -1,5 +1,5 @@
 ---
-title: JSON_PRETTY
+title: JSON_PRETTY (Lakehouse v1)
 description: JSON_PRETTY — formats JSON data, making it more readable and presentable.
 ---
 

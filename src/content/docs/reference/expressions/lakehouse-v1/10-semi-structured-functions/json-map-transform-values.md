@@ -1,5 +1,5 @@
 ---
-title: JSON_MAP_TRANSFORM_VALUES
+title: JSON_MAP_TRANSFORM_VALUES (Lakehouse v1)
 description: JSON_MAP_TRANSFORM_VALUES — applies a transformation to each value in a JSON.
 ---
 

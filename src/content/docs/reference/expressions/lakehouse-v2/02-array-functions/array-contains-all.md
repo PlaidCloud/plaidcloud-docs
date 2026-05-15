@@ -1,5 +1,5 @@
 ---
-title: ARRAY_CONTAINS_ALL
+title: ARRAY_CONTAINS_ALL (Lakehouse v2)
 description: ARRAY_CONTAINS_ALL — checks whether an array contains all elements of another array.
 ---
 

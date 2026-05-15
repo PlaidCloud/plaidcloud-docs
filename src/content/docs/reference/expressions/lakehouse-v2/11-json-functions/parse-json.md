@@ -1,6 +1,6 @@
 ---
-title: PARSE_JSON
-description: PARSE_JSON — parses a JSON string and returns a JSON value - see syntax, examples, and output.
+title: PARSE_JSON (Lakehouse v2)
+description: PARSE_JSON — parses a JSON string and returns a JSON value.
 ---
 
 Parses a JSON string and returns a JSON value.

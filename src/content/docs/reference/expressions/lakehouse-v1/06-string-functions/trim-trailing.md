@@ -1,5 +1,5 @@
 ---
-title: TRIM_TRAILING
+title: TRIM_TRAILING (Lakehouse v1)
 description: TRIM_TRAILING — removes all occurrences of the specified trim string from the end of the string.
 ---
 

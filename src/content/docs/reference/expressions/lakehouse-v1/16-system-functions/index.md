@@ -1,5 +1,5 @@
 ---
-title: System Functions
+title: System Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL system functions: inspect runtime state — version, current user, session, and database."
 ---
 

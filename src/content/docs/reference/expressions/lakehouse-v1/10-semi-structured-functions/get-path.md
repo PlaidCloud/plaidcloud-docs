@@ -1,5 +1,5 @@
 ---
-title: GET_PATH
+title: GET_PATH (Lakehouse v1)
 description: GET_PATH — Extracts value from a VARIANT by path_name.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ALL_MATCH
+title: ALL_MATCH (Lakehouse v2)
 description: ALL_MATCH — returns TRUE if all elements in an array match the given predicate.
 ---
 

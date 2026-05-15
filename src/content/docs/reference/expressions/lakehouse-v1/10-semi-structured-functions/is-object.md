@@ -1,5 +1,5 @@
 ---
-title: IS_OBJECT
+title: IS_OBJECT (Lakehouse v1)
 description: IS_OBJECT — Checks if the input value is a JSON object.
 ---
 

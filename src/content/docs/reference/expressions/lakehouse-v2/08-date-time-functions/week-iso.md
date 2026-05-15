@@ -1,5 +1,5 @@
 ---
-title: WEEK_ISO
+title: WEEK_ISO (Lakehouse v2)
 description: WEEK_ISO — returns the ISO week number of the year for a date.
 ---
 

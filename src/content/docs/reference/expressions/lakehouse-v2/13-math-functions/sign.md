@@ -1,6 +1,6 @@
 ---
-title: SIGN
-description: "SIGN — returns the sign of a number: -1, 0, or 1 - see syntax, examples, and output."
+title: SIGN (Lakehouse v2)
+description: "SIGN — returns the sign of a number: -1, 0, or 1."
 ---
 
 Returns the sign of a number: -1, 0, or 1.

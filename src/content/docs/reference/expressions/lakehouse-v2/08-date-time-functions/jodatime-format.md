@@ -1,5 +1,5 @@
 ---
-title: JODATIME_FORMAT
+title: JODATIME_FORMAT (Lakehouse v2)
 description: JODATIME_FORMAT — formats a date or datetime using Joda-Time format patterns.
 ---
 

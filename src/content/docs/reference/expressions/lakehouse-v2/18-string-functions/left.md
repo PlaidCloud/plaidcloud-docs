@@ -1,6 +1,6 @@
 ---
-title: LEFT
-description: LEFT — returns the leftmost N characters of a string - see syntax, examples, and output.
+title: LEFT (Lakehouse v2)
+description: LEFT — returns the leftmost N characters of a string.
 ---
 
 Returns the leftmost N characters of a string.

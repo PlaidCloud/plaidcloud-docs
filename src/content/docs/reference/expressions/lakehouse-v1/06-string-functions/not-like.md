@@ -1,5 +1,5 @@
 ---
-title: NOT LIKE
+title: NOT LIKE (Lakehouse v1)
 description: NOT LIKE — pattern not matching using an SQL pattern.
 ---
 

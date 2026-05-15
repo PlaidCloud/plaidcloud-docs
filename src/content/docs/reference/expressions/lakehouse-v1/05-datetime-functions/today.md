@@ -1,6 +1,6 @@
 ---
-title: TODAY
-description: TODAY — returns current date. Includes detailed syntax, examples, and usage reference.
+title: TODAY (Lakehouse v1)
+description: TODAY — returns current date.
 ---
 
 Returns current date.

@@ -1,6 +1,6 @@
 ---
-title: MONTH
-description: MONTH — returns the month from a date - see syntax, examples, and output.
+title: MONTH (Lakehouse v2)
+description: MONTH — returns the month from a date.
 ---
 
 Returns the month from a date.

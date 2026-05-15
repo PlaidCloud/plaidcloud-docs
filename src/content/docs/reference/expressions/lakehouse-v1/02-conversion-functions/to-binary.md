@@ -1,6 +1,6 @@
 ---
-title: TO_BINARY
-description: TO_BINARY — converts supported data types, including string, variant, bitmap, geometry, and.
+title: TO_BINARY (Lakehouse v1)
+description: TO_BINARY — converts supported data types, including string, variant, bitmap, geometry, and geography, into their binary representation (hex format).
 ---
 
 Converts supported data types, including string, variant, bitmap, geometry, and geography, into their binary representation (hex format).

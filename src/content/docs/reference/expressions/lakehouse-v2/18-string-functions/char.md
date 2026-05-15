@@ -1,6 +1,6 @@
 ---
-title: CHAR
-description: CHAR — returns the character for a given ASCII code - see syntax, examples, and output.
+title: CHAR (Lakehouse v2)
+description: CHAR — returns the character for a given ASCII code.
 ---
 
 Returns the character for a given ASCII code.

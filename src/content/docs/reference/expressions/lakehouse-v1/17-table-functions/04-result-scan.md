@@ -1,6 +1,6 @@
 ---
-title: RESULT_SCAN
-description: RESULT_SCAN — returns the result set of a previous command in same session as if the result was a.
+title: RESULT_SCAN (Lakehouse v1)
+description: RESULT_SCAN — returns the result set of a previous command in same session as if the result was a table.
 ---
 
 Returns the result set of a previous command in same session as if the result was a table.

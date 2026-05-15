@@ -1,5 +1,5 @@
 ---
-title: TO_DAY_OF_YEAR
+title: TO_DAY_OF_YEAR (Lakehouse v1)
 description: TO_DAY_OF_YEAR — convert a date or date with time (timestamp/datetime) to a UInt16 number.
 ---
 

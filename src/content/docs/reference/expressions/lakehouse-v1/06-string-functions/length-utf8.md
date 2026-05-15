@@ -1,6 +1,6 @@
 ---
-title: LENGTH_UTF8
-description: LENGTH_UTF8 — alias for the LENGTH string function. Includes detailed syntax, examples, and usage reference.
+title: LENGTH_UTF8 (Lakehouse v1)
+description: LENGTH_UTF8 — alias for the LENGTH string function.
 ---
 
 Alias for [LENGTH](../length).

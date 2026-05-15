@@ -1,5 +1,5 @@
 ---
-title: BITMAP_ANDNOT
+title: BITMAP_ANDNOT (Lakehouse v2)
 description: BITMAP_ANDNOT — returns the difference of two bitmaps (elements in first but not second).
 ---
 

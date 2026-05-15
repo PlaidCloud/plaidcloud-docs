@@ -1,6 +1,6 @@
 ---
-title: CASE
-description: CASE — handles IF/THEN logic. Includes detailed syntax, examples, and usage reference.
+title: CASE (Lakehouse v1)
+description: CASE — handles IF/THEN logic.
 ---
 
 Handles IF/THEN logic. It is structured with at least one pair of `WHEN` and `THEN` statements. Every `CASE` statement must be concluded with the `END` keyword. The `ELSE` statement is optional, providing a way to capture values not explicitly specified in the `WHEN` and `THEN` statements.

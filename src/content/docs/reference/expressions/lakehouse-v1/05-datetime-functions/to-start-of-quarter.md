@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_QUARTER
+title: TO_START_OF_QUARTER (Lakehouse v1)
 description: TO_START_OF_QUARTER — rounds down a date or date with time (timestamp/datetime) to the first.
 ---
 

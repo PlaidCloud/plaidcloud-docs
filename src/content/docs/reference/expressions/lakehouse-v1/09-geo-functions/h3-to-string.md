@@ -1,5 +1,5 @@
 ---
-title: H3_TO_STRING
+title: H3_TO_STRING (Lakehouse v1)
 description: H3_TO_STRING — converts the representation of the given H3 index to the string representation.
 ---
 

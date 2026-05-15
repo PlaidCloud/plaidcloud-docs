@@ -1,6 +1,6 @@
 ---
-title: NOT REGEXP
-description: NOT REGEXP — returns 1 if the string expr doesn't match the regular expression specified by the.
+title: NOT REGEXP (Lakehouse v1)
+description: NOT REGEXP — returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.
 ---
 
 Returns 1 if the string expr doesn't match the regular expression specified by the pattern pat, 0 otherwise.

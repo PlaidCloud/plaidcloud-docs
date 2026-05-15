@@ -1,5 +1,5 @@
 ---
-title: TIMESTAMPADD
+title: TIMESTAMPADD (Lakehouse v2)
 description: TIMESTAMPADD — adds a specified time interval to a datetime.
 ---
 

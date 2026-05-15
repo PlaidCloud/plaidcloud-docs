@@ -1,6 +1,6 @@
 ---
-title: BITMAP_SUBSET_LIMIT
-description: BITMAP_SUBSET_LIMIT — generates a sub-bitmap of the source bitmap, beginning with a range from.
+title: BITMAP_SUBSET_LIMIT (Lakehouse v1)
+description: BITMAP_SUBSET_LIMIT — generates a sub-bitmap of the source bitmap, beginning with a range from the start value, with a size limit.
 ---
 
 Generates a sub-bitmap of the source bitmap, beginning with a range from the start value, with a size limit.

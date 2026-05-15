@@ -1,6 +1,6 @@
 ---
-title: BITMAP_OR
-description: BITMAP_OR — returns the union of two bitmaps - see syntax, examples, and output.
+title: BITMAP_OR (Lakehouse v2)
+description: BITMAP_OR — returns the union of two bitmaps.
 ---
 
 Returns the union of two bitmaps.

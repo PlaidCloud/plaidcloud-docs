@@ -1,6 +1,6 @@
 ---
-title: SQUARE
-description: SQUARE — returns the square of a number - see syntax, examples, and output.
+title: SQUARE (Lakehouse v2)
+description: SQUARE — returns the square of a number.
 ---
 
 Returns the square of a number.

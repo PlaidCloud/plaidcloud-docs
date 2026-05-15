@@ -1,5 +1,5 @@
 ---
-title: SIN
+title: SIN (Lakehouse v1)
 description: SIN — Returns the sine of x, where x is given in radians.
 ---
 

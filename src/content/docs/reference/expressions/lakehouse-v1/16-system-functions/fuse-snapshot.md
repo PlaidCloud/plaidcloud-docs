@@ -1,5 +1,5 @@
 ---
-title: FUSE_SNAPSHOT
+title: FUSE_SNAPSHOT (Lakehouse v1)
 description: FUSE_SNAPSHOT — Returns the snapshot information of a table.
 ---
 

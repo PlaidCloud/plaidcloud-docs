@@ -1,5 +1,5 @@
 ---
-title: REMOVE_NULLABLE
+title: REMOVE_NULLABLE (Lakehouse v1)
 description: REMOVE_NULLABLE — alias for the ASSUME_NOT_NULL utility function.
 ---
 

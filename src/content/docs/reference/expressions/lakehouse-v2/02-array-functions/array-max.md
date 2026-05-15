@@ -1,6 +1,6 @@
 ---
-title: ARRAY_MAX
-description: ARRAY_MAX — returns the maximum element in an array - see syntax, examples, and output.
+title: ARRAY_MAX (Lakehouse v2)
+description: ARRAY_MAX — returns the maximum element in an array.
 ---
 
 Returns the maximum element in an array.

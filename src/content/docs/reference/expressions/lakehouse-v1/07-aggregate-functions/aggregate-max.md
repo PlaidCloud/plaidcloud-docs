@@ -1,5 +1,5 @@
 ---
-title: MAX
+title: MAX (Lakehouse v1)
 description: MAX — return the maximum value in a set of values.
 ---
 

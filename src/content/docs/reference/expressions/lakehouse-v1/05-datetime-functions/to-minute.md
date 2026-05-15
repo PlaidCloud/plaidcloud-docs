@@ -1,6 +1,6 @@
 ---
-title: TO_MINUTE
-description: TO_MINUTE — converts a date with time (timestamp/datetime) to a UInt8 number containing the.
+title: TO_MINUTE (Lakehouse v1)
+description: TO_MINUTE — converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the minute of the hour (0-59).
 ---
 
 Converts a date with time (timestamp/datetime) to a UInt8 number containing the number of the minute of the hour (0-59).

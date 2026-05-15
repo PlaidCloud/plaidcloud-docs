@@ -1,5 +1,5 @@
 ---
-title: BAR
+title: BAR (Lakehouse v2)
 description: "Use the BAR utility function in PlaidCloud Lakehouse. Returns a visual bar string representation of a value within a range. Useful for text-based."
 ---
 

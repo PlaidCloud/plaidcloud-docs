@@ -1,6 +1,6 @@
 ---
-title: AES_DECRYPT
-description: AES_DECRYPT — decrypts a value encrypted with AES - see syntax, examples, and output.
+title: AES_DECRYPT (Lakehouse v2)
+description: AES_DECRYPT — decrypts a value encrypted with AES.
 ---
 
 Decrypts a value encrypted with AES.

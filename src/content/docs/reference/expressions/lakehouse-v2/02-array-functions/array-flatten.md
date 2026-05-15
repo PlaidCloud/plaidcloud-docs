@@ -1,5 +1,5 @@
 ---
-title: ARRAY_FLATTEN
+title: ARRAY_FLATTEN (Lakehouse v2)
 description: ARRAY_FLATTEN — Flattens nested arrays into a single-level array.
 ---
 

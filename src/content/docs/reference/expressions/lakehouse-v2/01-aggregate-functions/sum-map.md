@@ -1,6 +1,6 @@
 ---
-title: SUM_MAP
-description: SUM_MAP — sums values grouped by keys in map columns - see syntax, examples, and output.
+title: SUM_MAP (Lakehouse v2)
+description: SUM_MAP — sums values grouped by keys in map columns.
 ---
 
 Sums values grouped by keys in map columns.

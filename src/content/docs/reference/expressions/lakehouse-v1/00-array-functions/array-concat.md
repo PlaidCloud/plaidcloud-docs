@@ -1,6 +1,6 @@
 ---
-title: ARRAY_CONCAT
-description: ARRAY_CONCAT — concats two arrays. Includes detailed syntax, examples, and usage reference.
+title: ARRAY_CONCAT (Lakehouse v1)
+description: ARRAY_CONCAT — concats two arrays.
 ---
 
 Concats two arrays.

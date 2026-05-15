@@ -1,5 +1,5 @@
 ---
-title: TO_CENTURIES
+title: TO_CENTURIES (Lakehouse v1)
 description: TO_CENTURIES — converts a specified number of centuries into an Interval type.
 ---
 

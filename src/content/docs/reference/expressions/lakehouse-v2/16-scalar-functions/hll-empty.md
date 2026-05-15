@@ -1,6 +1,6 @@
 ---
-title: HLL_EMPTY
-description: HLL_EMPTY — returns an empty HLL value - see syntax, examples, and output.
+title: HLL_EMPTY (Lakehouse v2)
+description: HLL_EMPTY — returns an empty HLL value.
 ---
 
 Returns an empty HLL value.

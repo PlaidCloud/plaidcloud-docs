@@ -1,5 +1,5 @@
 ---
-title: GET_JSON_OBJECT
+title: GET_JSON_OBJECT (Lakehouse v2)
 description: GET_JSON_OBJECT — extracts a JSON object from a JSON string by a specified path.
 ---
 

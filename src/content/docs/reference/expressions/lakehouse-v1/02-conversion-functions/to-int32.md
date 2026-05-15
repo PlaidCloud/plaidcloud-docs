@@ -1,5 +1,5 @@
 ---
-title: TO_INT32
+title: TO_INT32 (Lakehouse v1)
 description: TO_INT32 — Converts a value to INT32 data type.
 ---
 

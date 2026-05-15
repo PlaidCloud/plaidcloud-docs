@@ -1,6 +1,6 @@
 ---
-title: TO_MINUTES
-description: TO_MINUTES — converts a specified number of minutes into an Interval type. Includes syntax and.
+title: TO_MINUTES (Lakehouse v1)
+description: TO_MINUTES — converts a specified number of minutes into an Interval type.
 ---
 
 Converts a specified number of minutes into an Interval type.

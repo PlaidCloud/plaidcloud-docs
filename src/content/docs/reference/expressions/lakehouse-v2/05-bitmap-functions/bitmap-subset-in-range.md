@@ -1,5 +1,5 @@
 ---
-title: BITMAP_SUBSET_IN_RANGE
+title: BITMAP_SUBSET_IN_RANGE (Lakehouse v2)
 description: BITMAP_SUBSET_IN_RANGE — returns a subset of a bitmap within a specified range.
 ---
 

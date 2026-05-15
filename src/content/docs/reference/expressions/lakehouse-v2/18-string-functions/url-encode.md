@@ -1,6 +1,6 @@
 ---
-title: URL_ENCODE
-description: URL_ENCODE — encodes a string for use in a URL - see syntax, examples, and output.
+title: URL_ENCODE (Lakehouse v2)
+description: URL_ENCODE — encodes a string for use in a URL.
 ---
 
 Encodes a string for use in a URL.

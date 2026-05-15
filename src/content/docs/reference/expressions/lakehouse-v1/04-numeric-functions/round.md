@@ -1,5 +1,5 @@
 ---
-title: ROUND
+title: ROUND (Lakehouse v1)
 description: ROUND — Rounds the argument x to d decimal places.
 ---
 

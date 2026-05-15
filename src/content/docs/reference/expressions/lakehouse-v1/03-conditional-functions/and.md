@@ -1,6 +1,6 @@
 ---
-title: AND
-description: AND — conditional AND operator. Includes detailed syntax, examples, and usage reference.
+title: AND (Lakehouse v1)
+description: AND — conditional AND operator.
 ---
 
 Conditional AND operator.  Checks whether both conditions are true.

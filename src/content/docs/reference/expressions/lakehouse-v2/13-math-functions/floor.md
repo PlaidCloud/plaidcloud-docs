@@ -1,5 +1,5 @@
 ---
-title: FLOOR
+title: FLOOR (Lakehouse v2)
 description: FLOOR — Returns the largest integer less than or equal to a number.
 ---
 

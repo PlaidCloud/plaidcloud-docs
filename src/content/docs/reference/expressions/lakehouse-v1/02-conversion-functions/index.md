@@ -1,5 +1,5 @@
 ---
-title: Conversion Functions
+title: Conversion Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL conversion functions: cast values between types — CAST, TRY_CAST, parse, and format helpers."
 ---
 

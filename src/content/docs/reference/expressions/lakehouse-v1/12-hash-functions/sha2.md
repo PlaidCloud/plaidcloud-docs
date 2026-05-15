@@ -1,5 +1,5 @@
 ---
-title: SHA2
+title: SHA2 (Lakehouse v1)
 description: SHA2 — calculates the SHA-2 family of hash functions (SHA-224, SHA-256, SHA-384, and SHA-512).
 ---
 

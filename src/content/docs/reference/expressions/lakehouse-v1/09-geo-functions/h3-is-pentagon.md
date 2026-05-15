@@ -1,6 +1,6 @@
 ---
-title: H3_IS_PENTAGON
-description: H3_IS_PENTAGON — checks if the given H3 index represents a pentagonal cell. Includes syntax and.
+title: H3_IS_PENTAGON (Lakehouse v1)
+description: H3_IS_PENTAGON — checks if the given H3 index represents a pentagonal cell.
 ---
 
 Checks if the given [H3](https://eng.uber.com/h3/) index represents a pentagonal cell. 

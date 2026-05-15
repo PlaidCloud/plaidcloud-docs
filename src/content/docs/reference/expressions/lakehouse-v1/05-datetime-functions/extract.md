@@ -1,6 +1,6 @@
 ---
-title: EXTRACT
-description: EXTRACT — retrieves the designated portion of a date, time, or timestamp. Includes syntax and.
+title: EXTRACT (Lakehouse v1)
+description: EXTRACT — retrieves the designated portion of a date, time, or timestamp.
 ---
 
 Retrieves the designated portion of a date, time, or timestamp.

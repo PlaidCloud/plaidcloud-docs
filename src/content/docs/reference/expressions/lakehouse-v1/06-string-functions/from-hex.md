@@ -1,6 +1,6 @@
 ---
-title: FROM_HEX
-description: FROM_HEX — alias for the UNHEX string function. Includes detailed syntax, examples, and usage reference.
+title: FROM_HEX (Lakehouse v1)
+description: FROM_HEX — alias for the UNHEX string function.
 ---
 
 Alias for [UNHEX](../unhex).

@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_UNION
+title: PERCENTILE_UNION (Lakehouse v2)
 description: PERCENTILE_UNION — Returns the union of multiple percentile states.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: LCASE
-description: LCASE — alias for the LOWER string function. Includes detailed syntax, examples, and usage reference.
+title: LCASE (Lakehouse v1)
+description: LCASE — alias for the LOWER string function.
 ---
 
 Alias for [LOWER](../lower).

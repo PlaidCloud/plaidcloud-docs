@@ -1,6 +1,6 @@
 ---
-title: BITMAP_AGG
-description: BITMAP_AGG — aggregates integer values into a bitmap - see syntax, examples, and output.
+title: BITMAP_AGG (Lakehouse v2)
+description: BITMAP_AGG — aggregates integer values into a bitmap.
 ---
 
 Aggregates integer values into a bitmap.

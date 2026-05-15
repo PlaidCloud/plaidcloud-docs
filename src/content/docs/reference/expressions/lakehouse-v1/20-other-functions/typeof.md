@@ -1,5 +1,5 @@
 ---
-title: TYPEOF
+title: TYPEOF (Lakehouse v1)
 description: TYPEOF — TYPEOF function is used to return the name of a data type.
 ---
 

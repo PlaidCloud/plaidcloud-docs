@@ -1,5 +1,5 @@
 ---
-title: ARRAY_POSITION
+title: ARRAY_POSITION (Lakehouse v2)
 description: ARRAY_POSITION — returns the position of the first occurrence of an element (1-indexed).
 ---
 

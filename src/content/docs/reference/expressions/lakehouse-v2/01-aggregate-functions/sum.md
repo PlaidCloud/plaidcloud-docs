@@ -1,6 +1,6 @@
 ---
-title: SUM
-description: SUM — returns the sum of all values in a group - see syntax, examples, and output.
+title: SUM (Lakehouse v2)
+description: SUM — returns the sum of all values in a group.
 ---
 
 Returns the sum of all values in a group.

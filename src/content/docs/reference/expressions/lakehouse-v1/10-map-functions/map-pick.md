@@ -1,5 +1,5 @@
 ---
-title: MAP_PICK
+title: MAP_PICK (Lakehouse v1)
 description: MAP_PICK — returns a new MAP containing the specified key-value pairs from an existing MAP.
 ---
 

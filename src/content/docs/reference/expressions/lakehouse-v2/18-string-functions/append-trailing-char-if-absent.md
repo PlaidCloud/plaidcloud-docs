@@ -1,5 +1,5 @@
 ---
-title: APPEND_TRAILING_CHAR_IF_ABSENT
+title: APPEND_TRAILING_CHAR_IF_ABSENT (Lakehouse v2)
 description: "Use the APPEND_TRAILING_CHAR_IF_ABSENT string function in PlaidCloud Lakehouse. Appends a trailing character to a string if it is not already present."
 ---
 

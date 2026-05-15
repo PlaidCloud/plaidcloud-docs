@@ -1,6 +1,6 @@
 ---
-title: UNHEX
-description: UNHEX — converts a hexadecimal string to a character string - see syntax, examples, and output.
+title: UNHEX (Lakehouse v2)
+description: UNHEX — converts a hexadecimal string to a character string.
 ---
 
 Converts a hexadecimal string to a character string.

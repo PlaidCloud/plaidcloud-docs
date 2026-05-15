@@ -1,5 +1,5 @@
 ---
-title: SUBDATE
+title: SUBDATE (Lakehouse v2)
 description: SUBDATE — subtracts a time interval from a date. Alias for `DATE_SUB`.
 ---
 

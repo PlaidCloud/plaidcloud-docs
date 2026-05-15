@@ -1,5 +1,5 @@
 ---
-title: H3_UNIDIRECTIONAL_EDGE_IS_VALID
+title: H3_UNIDIRECTIONAL_EDGE_IS_VALID (Lakehouse v1)
 description: H3_UNIDIRECTIONAL_EDGE_IS_VALID — determines if the provided H3Index is a valid unidirectional.
 ---
 

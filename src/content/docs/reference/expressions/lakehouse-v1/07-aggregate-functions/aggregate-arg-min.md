@@ -1,5 +1,5 @@
 ---
-title: ARG_MIN
+title: ARG_MIN (Lakehouse v1)
 description: ARG_MIN — Calculates the arg value for a minimum val value.
 ---
 

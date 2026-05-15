@@ -1,5 +1,5 @@
 ---
-title: TIME_SLICE
+title: TIME_SLICE (Lakehouse v2)
 description: TIME_SLICE — converts a given time to the beginning or end of a time interval.
 ---
 

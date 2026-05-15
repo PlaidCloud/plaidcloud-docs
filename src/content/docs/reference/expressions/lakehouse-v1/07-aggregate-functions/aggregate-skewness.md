@@ -1,5 +1,5 @@
 ---
-title: SKEWNESS
+title: SKEWNESS (Lakehouse v1)
 description: SKEWNESS — return the skewness (asymmetry of the distribution) of all input values.
 ---
 

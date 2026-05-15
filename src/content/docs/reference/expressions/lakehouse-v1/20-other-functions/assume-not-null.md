@@ -1,5 +1,5 @@
 ---
-title: ASSUME_NOT_NULL
+title: ASSUME_NOT_NULL (Lakehouse v1)
 description: ASSUME_NOT_NULL — results in an equivalent non-Nullable value for a Nullable type.
 ---
 

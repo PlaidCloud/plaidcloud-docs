@@ -1,5 +1,5 @@
 ---
-title: STRING_TO_H3
+title: STRING_TO_H3 (Lakehouse v1)
 description: STRING_TO_H3 — converts the string representation to H3 (uint64) representation.
 ---
 

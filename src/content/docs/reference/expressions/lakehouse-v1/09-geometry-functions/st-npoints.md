@@ -1,5 +1,5 @@
 ---
-title: ST_NPOINTS
+title: ST_NPOINTS (Lakehouse v1)
 description: ST_NPOINTS — Returns the number of points in a GEOMETRY object.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: ARRAY_INDEXOF
+title: ARRAY_INDEXOF (Lakehouse v1)
 description: ARRAY_INDEXOF — returns the index(1-based) of an element if the array contains the element.
 ---
 

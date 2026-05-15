@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_YEAR
+title: TO_START_OF_YEAR (Lakehouse v1)
 description: TO_START_OF_YEAR — returns the first day of the year for a date or a date with time.
 ---
 

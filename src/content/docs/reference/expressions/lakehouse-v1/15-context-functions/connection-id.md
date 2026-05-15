@@ -1,5 +1,5 @@
 ---
-title: CONNECTION_ID
+title: CONNECTION_ID (Lakehouse v1)
 description: CONNECTION_ID — Returns the connection ID for the current connection.
 ---
 

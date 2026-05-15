@@ -1,6 +1,6 @@
 ---
-title: REGEXP_INSTR
-description: REGEXP_INSTR — returns the starting index of the substring of the string expr that matches the.
+title: REGEXP_INSTR (Lakehouse v1)
+description: REGEXP_INSTR — returns the starting index of the substring of the string expr that matches the regular expression specified by the pattern pat, 0 if there is.
 ---
 
 Returns the starting index of the substring of the string `expr` that matches the regular expression specified by the pattern `pat`, `0` if there is no match. If `expr` or `pat` is NULL, the return value is NULL. Character indexes begin at `1`.

@@ -1,5 +1,5 @@
 ---
-title: ENDS_WITH
+title: ENDS_WITH (Lakehouse v2)
 description: ENDS_WITH — Checks whether a string ends with a specified suffix.
 ---
 

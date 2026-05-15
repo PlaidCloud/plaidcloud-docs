@@ -1,6 +1,6 @@
 ---
-title: MAP_SIZE
-description: MAP_SIZE — returns the number of key-value pairs in a map - see syntax, examples, and output.
+title: MAP_SIZE (Lakehouse v2)
+description: MAP_SIZE — returns the number of key-value pairs in a map.
 ---
 
 Returns the number of key-value pairs in a map.

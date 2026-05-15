@@ -1,6 +1,6 @@
 ---
-title: "IS [ NOT ] DISTINCT FROM"
-description: IS [ NOT ] DISTINCT FROM — compares whether two expressions are equal (or not equal) with.
+title: "IS [ NOT ] DISTINCT FROM (Lakehouse v1)"
+description: IS [ NOT ] DISTINCT FROM — compares whether two expressions are equal (or not equal) with awareness of nullability, meaning it treats NULLs as known values.
 ---
 
 Compares whether two expressions are equal (or not equal) with awareness of nullability, meaning it treats NULLs as known values for comparing equality.

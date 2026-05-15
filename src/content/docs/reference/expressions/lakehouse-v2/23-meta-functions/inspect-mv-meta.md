@@ -1,6 +1,6 @@
 ---
-title: INSPECT_MV_META
-description: INSPECT_MV_META — returns metadata about a materialized view - see syntax, examples, and output.
+title: INSPECT_MV_META (Lakehouse v2)
+description: INSPECT_MV_META — returns metadata about a materialized view.
 ---
 
 Returns metadata about a materialized view.

@@ -1,5 +1,5 @@
 ---
-title: String Functions
+title: String Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL string functions: manipulate text — case, trim, split, search, replace, format, and encode."
 ---
 

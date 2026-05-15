@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_MINUTE
+title: TO_START_OF_MINUTE (Lakehouse v1)
 description: TO_START_OF_MINUTE — rounds down a date with time (timestamp/datetime) to the start of the minute.
 ---
 

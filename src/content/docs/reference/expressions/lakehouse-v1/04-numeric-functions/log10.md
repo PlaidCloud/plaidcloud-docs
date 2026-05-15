@@ -1,5 +1,5 @@
 ---
-title: LOG10
+title: LOG10 (Lakehouse v1)
 description: LOG10 — Returns the base-10 logarithm of x. Reference.
 ---
 

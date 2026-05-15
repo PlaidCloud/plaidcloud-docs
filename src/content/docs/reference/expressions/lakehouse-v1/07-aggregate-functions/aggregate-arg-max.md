@@ -1,5 +1,5 @@
 ---
-title: ARG_MAX
+title: ARG_MAX (Lakehouse v1)
 description: ARG_MAX — Calculates the arg value for a maximum val value.
 ---
 

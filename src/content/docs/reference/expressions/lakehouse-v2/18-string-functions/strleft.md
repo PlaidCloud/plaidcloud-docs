@@ -1,5 +1,5 @@
 ---
-title: STRLEFT
+title: STRLEFT (Lakehouse v2)
 description: STRLEFT — returns the leftmost N characters of a string. Alias for `LEFT`.
 ---
 

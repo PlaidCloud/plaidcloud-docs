@@ -1,5 +1,5 @@
 ---
-title: REGEXP
+title: REGEXP (Lakehouse v2)
 description: REGEXP — checks whether a string matches a regular expression pattern.
 ---
 

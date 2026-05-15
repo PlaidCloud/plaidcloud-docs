@@ -1,5 +1,5 @@
 ---
-title: IS_NOT_ERROR
+title: IS_NOT_ERROR (Lakehouse v1)
 description: IS_NOT_ERROR — returns a Boolean value indicating whether an expression is an error value.
 ---
 

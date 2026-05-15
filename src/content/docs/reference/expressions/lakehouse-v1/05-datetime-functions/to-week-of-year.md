@@ -1,6 +1,6 @@
 ---
-title: TO_WEEK_OF_YEAR
-description: TO_WEEK_OF_YEAR — calculates the week number within a year for a given date. Includes syntax.
+title: TO_WEEK_OF_YEAR (Lakehouse v1)
+description: TO_WEEK_OF_YEAR — calculates the week number within a year for a given date.
 ---
 
 Calculates the week number within a year for a given date.

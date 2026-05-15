@@ -1,5 +1,5 @@
 ---
-title: ARRAY_SLICE
+title: ARRAY_SLICE (Lakehouse v2)
 description: ARRAY_SLICE — returns a slice of an array from a start position with a given length.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: TANH
-description: TANH — returns the hyperbolic tangent of a number - see syntax, examples, and output.
+title: TANH (Lakehouse v2)
+description: TANH — returns the hyperbolic tangent of a number.
 ---
 
 Returns the hyperbolic tangent of a number.

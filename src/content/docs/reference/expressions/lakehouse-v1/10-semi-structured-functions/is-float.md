@@ -1,5 +1,5 @@
 ---
-title: IS_FLOAT
+title: IS_FLOAT (Lakehouse v1)
 description: IS_FLOAT — Checks if the input JSON value is a float.
 ---
 

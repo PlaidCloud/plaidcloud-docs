@@ -1,5 +1,5 @@
 ---
-title: SHA
+title: SHA (Lakehouse v1)
 description: SHA — calculates an SHA-1 160-bit checksum for the string, as described in RFC 3174 (Secure Hash.
 ---
 

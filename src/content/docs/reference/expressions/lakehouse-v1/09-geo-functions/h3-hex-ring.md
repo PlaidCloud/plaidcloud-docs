@@ -1,5 +1,5 @@
 ---
-title: H3_HEX_RING
+title: H3_HEX_RING (Lakehouse v1)
 description: H3_HEX_RING — returns the hollow ring of hexagons at grid distance k from a given origin index.
 ---
 

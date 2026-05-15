@@ -1,5 +1,5 @@
 ---
-title: TO_BITMAP
+title: TO_BITMAP (Lakehouse v2)
 description: TO_BITMAP — converts an integer value to a bitmap containing that single value.
 ---
 

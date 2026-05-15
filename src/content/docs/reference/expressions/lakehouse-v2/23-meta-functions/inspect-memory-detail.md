@@ -1,5 +1,5 @@
 ---
-title: INSPECT_MEMORY_DETAIL
+title: INSPECT_MEMORY_DETAIL (Lakehouse v2)
 description: INSPECT_MEMORY_DETAIL — Returns detailed memory usage information.
 ---
 

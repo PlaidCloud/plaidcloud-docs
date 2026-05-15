@@ -1,5 +1,5 @@
 ---
-title: TO_MICROSECONDS
+title: TO_MICROSECONDS (Lakehouse v1)
 description: TO_MICROSECONDS — converts a specified number of microseconds into an Interval type.
 ---
 

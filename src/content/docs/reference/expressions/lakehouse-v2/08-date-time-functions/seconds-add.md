@@ -1,5 +1,5 @@
 ---
-title: SECONDS_ADD
+title: SECONDS_ADD (Lakehouse v2)
 description: SECONDS_ADD — adds a specified number of seconds to a datetime.
 ---
 

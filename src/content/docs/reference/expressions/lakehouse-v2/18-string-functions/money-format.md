@@ -1,5 +1,5 @@
 ---
-title: MONEY_FORMAT
+title: MONEY_FORMAT (Lakehouse v2)
 description: MONEY_FORMAT — formats a number as a currency string with commas and two decimal places.
 ---
 

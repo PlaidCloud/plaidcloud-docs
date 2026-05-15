@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_CONT
+title: "PERCENTILE_CONT (Percentile, Lakehouse v2)"
 description: PERCENTILE_CONT — returns an interpolated percentile value based on a continuous distribution.
 ---
 

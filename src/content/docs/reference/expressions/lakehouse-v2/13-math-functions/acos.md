@@ -1,6 +1,6 @@
 ---
-title: ACOS
-description: ACOS — returns the arc cosine of a number in radians - see syntax, examples, and output.
+title: ACOS (Lakehouse v2)
+description: ACOS — returns the arc cosine of a number in radians.
 ---
 
 Returns the arc cosine of a number in radians.

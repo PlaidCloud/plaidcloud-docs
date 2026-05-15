@@ -1,6 +1,6 @@
 ---
-title: DATE_PART
-description: DATE_PART — retrieves the designated portion of a date, time, or timestamp. Includes syntax.
+title: DATE_PART (Lakehouse v1)
+description: DATE_PART — retrieves the designated portion of a date, time, or timestamp.
 ---
 
 Retrieves the designated portion of a date, time, or timestamp.

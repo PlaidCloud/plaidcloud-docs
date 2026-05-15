@@ -1,5 +1,5 @@
 ---
-title: TO_UINT16
+title: TO_UINT16 (Lakehouse v1)
 description: TO_UINT16 — Converts a value to UINT16 data type.
 ---
 

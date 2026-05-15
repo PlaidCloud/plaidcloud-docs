@@ -1,6 +1,6 @@
 ---
-title: ARRAY_MIN
-description: ARRAY_MIN — returns the minimum element in an array - see syntax, examples, and output.
+title: ARRAY_MIN (Lakehouse v2)
+description: ARRAY_MIN — returns the minimum element in an array.
 ---
 
 Returns the minimum element in an array.

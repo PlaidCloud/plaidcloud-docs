@@ -1,5 +1,5 @@
 ---
-title: H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY
+title: H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY (Lakehouse v1)
 description: H3_GET_UNIDIRECTIONAL_EDGE_BOUNDARY — returns the coordinates defining the unidirectional edge.
 ---
 

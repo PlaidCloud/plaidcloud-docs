@@ -1,5 +1,5 @@
 ---
-title: FUSE_STATISTIC
+title: FUSE_STATISTIC (Lakehouse v1)
 description: FUSE_STATISTIC — returns the estimated number of distinct values of each column in a table.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: JSON_LENGTH
+title: JSON_LENGTH (Lakehouse v2)
 description: JSON_LENGTH — Returns the number of elements in a JSON object or array.
 ---
 

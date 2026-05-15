@@ -1,5 +1,5 @@
 ---
-title: TO_UINT8
+title: TO_UINT8 (Lakehouse v1)
 description: TO_UINT8 — Converts a value to UINT8 data type.
 ---
 

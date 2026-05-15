@@ -1,5 +1,5 @@
 ---
-title: WEEKDAY
+title: WEEKDAY (Lakehouse v2)
 description: WEEKDAY — returns the weekday index for a date (0=Monday, 6=Sunday).
 ---
 

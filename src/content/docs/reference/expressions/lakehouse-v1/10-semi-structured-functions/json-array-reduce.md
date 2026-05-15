@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_REDUCE
+title: JSON_ARRAY_REDUCE (Lakehouse v1)
 description: JSON_ARRAY_REDUCE — reduces a JSON array to a single value by applying a specified.
 ---
 

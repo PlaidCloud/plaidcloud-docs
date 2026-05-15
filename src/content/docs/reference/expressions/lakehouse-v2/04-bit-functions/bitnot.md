@@ -1,6 +1,6 @@
 ---
-title: BITNOT
-description: BITNOT — returns the bitwise NOT of a numeric value - see syntax, examples, and output.
+title: BITNOT (Lakehouse v2)
+description: BITNOT — returns the bitwise NOT of a numeric value.
 ---
 
 Returns the bitwise NOT of a numeric value.

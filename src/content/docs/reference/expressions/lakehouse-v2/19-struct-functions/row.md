@@ -1,6 +1,6 @@
 ---
-title: ROW
-description: ROW — creates a struct from a list of values - see syntax, examples, and output.
+title: ROW (Lakehouse v2)
+description: ROW — creates a struct from a list of values.
 ---
 
 Creates a struct from a list of values.

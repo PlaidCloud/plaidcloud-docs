@@ -1,5 +1,5 @@
 ---
-title: SUBSTR
+title: SUBSTR (Lakehouse v1)
 description: SUBSTR — extracts a string containing a specific number of characters from a particular position.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: SECONDS_DIFF
+title: SECONDS_DIFF (Lakehouse v2)
 description: SECONDS_DIFF — returns the number of seconds between two datetimes.
 ---
 

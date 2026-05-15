@@ -1,5 +1,5 @@
 ---
-title: HOURS_DIFF
+title: HOURS_DIFF (Lakehouse v2)
 description: HOURS_DIFF — returns the number of hours between two datetimes.
 ---
 

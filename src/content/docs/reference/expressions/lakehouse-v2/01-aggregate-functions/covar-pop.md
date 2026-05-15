@@ -1,5 +1,5 @@
 ---
-title: COVAR_POP
+title: COVAR_POP (Lakehouse v2)
 description: COVAR_POP — Returns the population covariance of two expressions.
 ---
 

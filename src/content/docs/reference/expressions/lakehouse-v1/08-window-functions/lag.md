@@ -1,5 +1,5 @@
 ---
-title: LAG
+title: LAG (Lakehouse v1)
 description: LAG — lAG allows you to access the value of a column from a preceding row within the same result.
 ---
 

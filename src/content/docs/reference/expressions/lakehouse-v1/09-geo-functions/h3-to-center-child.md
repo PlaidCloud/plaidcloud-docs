@@ -1,5 +1,5 @@
 ---
-title: H3_TO_CENTER_CHILD
+title: H3_TO_CENTER_CHILD (Lakehouse v1)
 description: H3_TO_CENTER_CHILD — returns the center child index at the specified resolution.
 ---
 

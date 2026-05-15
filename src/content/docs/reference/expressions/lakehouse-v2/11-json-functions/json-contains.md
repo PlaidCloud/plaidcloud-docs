@@ -1,5 +1,5 @@
 ---
-title: JSON_CONTAINS
+title: JSON_CONTAINS (Lakehouse v2)
 description: JSON_CONTAINS — checks whether a JSON document contains a specific value at a path.
 ---
 

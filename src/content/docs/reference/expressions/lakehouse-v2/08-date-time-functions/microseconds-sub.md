@@ -1,5 +1,5 @@
 ---
-title: MICROSECONDS_SUB
+title: MICROSECONDS_SUB (Lakehouse v2)
 description: MICROSECONDS_SUB — subtracts a specified number of microseconds from a datetime.
 ---
 

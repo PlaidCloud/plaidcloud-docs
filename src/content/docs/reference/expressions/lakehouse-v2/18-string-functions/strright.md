@@ -1,5 +1,5 @@
 ---
-title: STRRIGHT
+title: STRRIGHT (Lakehouse v2)
 description: STRRIGHT — returns the rightmost N characters of a string. Alias for `RIGHT`.
 ---
 

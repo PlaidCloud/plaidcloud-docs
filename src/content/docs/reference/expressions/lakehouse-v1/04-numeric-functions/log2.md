@@ -1,6 +1,6 @@
 ---
-title: LOG2
-description: LOG2 — returns the base-2 logarithm of x. Includes detailed syntax, examples, and usage reference.
+title: LOG2 (Lakehouse v1)
+description: LOG2 — returns the base-2 logarithm of x.
 ---
 
 Returns the base-2 logarithm of `x`. If `x` is less than or equal to 0.0E0, the function returns NULL.

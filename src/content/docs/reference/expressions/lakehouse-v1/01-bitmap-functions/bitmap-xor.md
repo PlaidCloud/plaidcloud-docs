@@ -1,5 +1,5 @@
 ---
-title: BITMAP_XOR
+title: BITMAP_XOR (Lakehouse v1)
 description: BITMAP_XOR — performs a bitwise XOR (exclusive OR) operation on the two bitmaps.
 ---
 

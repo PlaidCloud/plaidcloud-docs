@@ -1,5 +1,5 @@
 ---
-title: JSON_STRIP_NULLS
+title: JSON_STRIP_NULLS (Lakehouse v1)
 description: JSON_STRIP_NULLS — removes all properties with null values from a JSON object.
 ---
 

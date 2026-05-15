@@ -1,5 +1,5 @@
 ---
-title: BITMAP_SUBSET_LIMIT
+title: BITMAP_SUBSET_LIMIT (Lakehouse v2)
 description: BITMAP_SUBSET_LIMIT — returns a subset of a bitmap starting from an offset with a cardinality limit.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: VARIANT_GET
+title: VARIANT_GET (Lakehouse v2)
 description: VARIANT_GET — extracts a typed value from a VARIANT object at a specified path.
 ---
 

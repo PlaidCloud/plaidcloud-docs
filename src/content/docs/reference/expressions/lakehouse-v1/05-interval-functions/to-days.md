@@ -1,5 +1,5 @@
 ---
-title: TO_DAYS
+title: TO_DAYS (Lakehouse v1)
 description: TO_DAYS — Converts a specified number of days into an Interval type.
 ---
 

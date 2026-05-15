@@ -1,6 +1,6 @@
 ---
-title: TO_START_OF_TEN_MINUTES
-description: TO_START_OF_TEN_MINUTES — rounds down a date with time (timestamp/datetime) to the start of.
+title: TO_START_OF_TEN_MINUTES (Lakehouse v1)
+description: TO_START_OF_TEN_MINUTES — rounds down a date with time (timestamp/datetime) to the start of the ten-minute interval.
 ---
 
 Rounds down a date with time (timestamp/datetime) to the start of the ten-minute interval.

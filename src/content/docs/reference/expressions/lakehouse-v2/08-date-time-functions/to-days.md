@@ -1,6 +1,6 @@
 ---
-title: TO_DAYS
-description: TO_DAYS — converts a date to a day count - see syntax, examples, and output.
+title: TO_DAYS (Lakehouse v2)
+description: TO_DAYS — converts a date to a day count.
 ---
 
 Converts a date to a day count.

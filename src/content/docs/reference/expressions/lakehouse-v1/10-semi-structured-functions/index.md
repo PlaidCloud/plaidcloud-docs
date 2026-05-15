@@ -1,5 +1,5 @@
 ---
-title: Semi-Structured Functions
+title: Semi-Structured Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL semi-structured functions: extract, traverse, and transform JSON, variant, and nested data."
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: JSON_OBJECT_INSERT
+title: JSON_OBJECT_INSERT (Lakehouse v1)
 description: JSON_OBJECT_INSERT — inserts or updates a key-value pair in a JSON object.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: ST_GEOMPOINTFROMGEOHASH
-description: ST_GEOMPOINTFROMGEOHASH — returns a GEOMETRY object for the point that represents center of a.
+title: ST_GEOMPOINTFROMGEOHASH (Lakehouse v1)
+description: ST_GEOMPOINTFROMGEOHASH — returns a GEOMETRY object for the point that represents center of a geohash.
 ---
 
 Returns a GEOMETRY object for the point that represents center of a [geohash](https://en.wikipedia.org/wiki/Geohash).

@@ -1,5 +1,5 @@
 ---
-title: JSON_MAP_FILTER
+title: JSON_MAP_FILTER (Lakehouse v1)
 description: JSON_MAP_FILTER — filters key-value pairs in a JSON object based on a specified.
 ---
 

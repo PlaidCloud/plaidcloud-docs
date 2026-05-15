@@ -1,5 +1,5 @@
 ---
-title: GENERATE_SERIES
+title: GENERATE_SERIES (Lakehouse v2)
 description: GENERATE_SERIES — generates a series of values from start to stop with a given step.
 ---
 

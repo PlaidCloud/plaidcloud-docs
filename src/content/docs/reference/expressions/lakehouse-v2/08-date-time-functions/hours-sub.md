@@ -1,5 +1,5 @@
 ---
-title: HOURS_SUB
+title: HOURS_SUB (Lakehouse v2)
 description: HOURS_SUB — subtracts a specified number of hours from a datetime.
 ---
 

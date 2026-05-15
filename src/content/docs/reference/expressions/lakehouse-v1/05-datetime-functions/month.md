@@ -1,6 +1,6 @@
 ---
-title: MONTH
-description: MONTH — alias for the TO_MONTH datetime function. Includes detailed syntax, examples, and usage reference.
+title: MONTH (Lakehouse v1)
+description: MONTH — alias for the TO_MONTH datetime function.
 ---
 
 Alias for [TO_MONTH](../to-month).

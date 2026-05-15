@@ -1,6 +1,6 @@
 ---
-title: ARRAY_DISTINCT
-description: ARRAY_DISTINCT — removes duplicate elements from an array - see syntax, examples, and output.
+title: ARRAY_DISTINCT (Lakehouse v2)
+description: ARRAY_DISTINCT — removes duplicate elements from an array.
 ---
 
 Removes duplicate elements from an array.

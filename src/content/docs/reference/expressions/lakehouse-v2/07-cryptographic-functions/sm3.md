@@ -1,6 +1,6 @@
 ---
-title: SM3
-description: SM3 — returns the SM3 hash of a string - see syntax, examples, and output.
+title: SM3 (Lakehouse v2)
+description: SM3 — returns the SM3 hash of a string.
 ---
 
 Returns the SM3 hash of a string.

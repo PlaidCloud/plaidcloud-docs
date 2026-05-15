@@ -1,5 +1,5 @@
 ---
-title: HLL_CARDINALITY
+title: HLL_CARDINALITY (Lakehouse v2)
 description: HLL_CARDINALITY — Returns the cardinality estimate from an HLL value.
 ---
 

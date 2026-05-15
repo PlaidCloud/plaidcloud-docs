@@ -1,5 +1,5 @@
 ---
-title: INSPECT_HIVE_PART_INFO
+title: INSPECT_HIVE_PART_INFO (Lakehouse v2)
 description: INSPECT_HIVE_PART_INFO — returns Hive partition information for an external table.
 ---
 

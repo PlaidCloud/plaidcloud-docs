@@ -1,6 +1,6 @@
 ---
-title: ST_XMIN
-description: ST_XMIN — returns the minimum longitude (X coordinate) of all points contained in the.
+title: ST_XMIN (Lakehouse v1)
+description: ST_XMIN — returns the minimum longitude (X coordinate) of all points contained in the specified GEOMETRY object.
 ---
 
 Returns the minimum longitude (X coordinate) of all points contained in the specified GEOMETRY object.

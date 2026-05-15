@@ -1,5 +1,5 @@
 ---
-title: MONTHS_DIFF
+title: MONTHS_DIFF (Lakehouse v2)
 description: MONTHS_DIFF — returns the number of months between two dates.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Aggregate Functions
+title: Aggregate Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL aggregate functions: summarise rows — SUM, AVG, MIN, MAX, COUNT, and statistical aggregates."
 ---
 

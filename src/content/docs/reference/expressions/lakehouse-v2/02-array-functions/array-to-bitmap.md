@@ -1,6 +1,6 @@
 ---
-title: ARRAY_TO_BITMAP
-description: ARRAY_TO_BITMAP — converts an array of integers to a bitmap - see syntax, examples, and output.
+title: ARRAY_TO_BITMAP (Lakehouse v2)
+description: ARRAY_TO_BITMAP — converts an array of integers to a bitmap.
 ---
 
 Converts an array of integers to a bitmap.

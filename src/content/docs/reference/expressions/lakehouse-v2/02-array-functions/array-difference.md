@@ -1,5 +1,5 @@
 ---
-title: ARRAY_DIFFERENCE
+title: ARRAY_DIFFERENCE (Lakehouse v2)
 description: ARRAY_DIFFERENCE — returns an array of differences between consecutive elements.
 ---
 

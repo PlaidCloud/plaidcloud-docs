@@ -1,5 +1,5 @@
 ---
-title: CURRENT_WAREHOUSE
+title: CURRENT_WAREHOUSE (Lakehouse v2)
 description: CURRENT_WAREHOUSE — Returns the name of the current warehouse.
 ---
 

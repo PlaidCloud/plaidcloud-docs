@@ -1,5 +1,5 @@
 ---
-title: ST_STARTPOINT
+title: ST_STARTPOINT (Lakehouse v1)
 description: ST_STARTPOINT — Returns the first Point in a LineString.
 ---
 

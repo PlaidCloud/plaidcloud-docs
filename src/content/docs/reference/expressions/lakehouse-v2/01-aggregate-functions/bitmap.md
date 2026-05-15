@@ -1,5 +1,5 @@
 ---
-title: BITMAP
+title: BITMAP (Lakehouse v2)
 description: BITMAP — returns a bitmap union of a set of values. Typically used with BITMAP_AGG.
 ---
 

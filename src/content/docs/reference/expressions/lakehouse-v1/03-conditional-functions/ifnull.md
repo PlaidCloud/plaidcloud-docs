@@ -1,6 +1,6 @@
 ---
-title: IFNULL
-description: IFNULL — if <expr1> is NULL, returns <expr2>, otherwise returns <expr1>. Includes syntax.
+title: IFNULL (Lakehouse v1)
+description: IFNULL — if <expr1> is NULL, returns <expr2>, otherwise returns <expr1>.
 ---
 
 If `<expr1>` is NULL, returns `<expr2>`, otherwise returns `<expr1>`.

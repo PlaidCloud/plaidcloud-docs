@@ -1,5 +1,5 @@
 ---
-title: FUSE_BLOCK
+title: FUSE_BLOCK (Lakehouse v1)
 description: FUSE_BLOCK — returns the block information of the latest or specified snapshot of a table.
 ---
 

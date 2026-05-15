@@ -1,5 +1,5 @@
 ---
-title: DATABASE
+title: DATABASE (Lakehouse v1)
 description: DATABASE — Returns the name of the currently selected database.
 ---
 

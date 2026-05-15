@@ -1,5 +1,5 @@
 ---
-title: WEEKOFYEAR
+title: WEEKOFYEAR (Lakehouse v2)
 description: WEEKOFYEAR — returns the week of the year for a date. Alias for `WEEK`.
 ---
 

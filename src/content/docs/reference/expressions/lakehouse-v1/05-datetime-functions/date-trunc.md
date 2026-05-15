@@ -1,5 +1,5 @@
 ---
-title: DATE_TRUNC
+title: DATE_TRUNC (Lakehouse v1)
 description: DATE_TRUNC — truncates a date, time, or timestamp value to a specified precision.
 ---
 

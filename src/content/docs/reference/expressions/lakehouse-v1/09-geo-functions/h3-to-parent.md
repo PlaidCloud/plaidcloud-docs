@@ -1,5 +1,5 @@
 ---
-title: H3_TO_PARENT
+title: H3_TO_PARENT (Lakehouse v1)
 description: H3_TO_PARENT — returns the parent index containing the h3 at resolution parent_res.
 ---
 

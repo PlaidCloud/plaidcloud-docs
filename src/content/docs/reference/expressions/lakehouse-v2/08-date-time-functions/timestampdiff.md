@@ -1,5 +1,5 @@
 ---
-title: TIMESTAMPDIFF
+title: TIMESTAMPDIFF (Lakehouse v2)
 description: TIMESTAMPDIFF — returns the difference between two datetimes in the specified unit.
 ---
 

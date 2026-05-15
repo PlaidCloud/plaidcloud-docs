@@ -1,5 +1,5 @@
 ---
-title: MAP_APPLY
+title: MAP_APPLY (Lakehouse v2)
 description: MAP_APPLY — Applies a lambda expression to each key-value pair in a map.
 ---
 

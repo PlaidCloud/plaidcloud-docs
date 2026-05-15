@@ -1,6 +1,6 @@
 ---
-title: TO_DATE
-description: TO_DATE — converts a datetime to a date - see syntax, examples, and output.
+title: TO_DATE (Lakehouse v2)
+description: TO_DATE — converts a datetime to a date.
 ---
 
 Converts a datetime to a date.

@@ -1,6 +1,6 @@
 ---
-title: ATAN
-description: ATAN — returns the arc tangent of a number in radians - see syntax, examples, and output.
+title: ATAN (Lakehouse v2)
+description: ATAN — returns the arc tangent of a number in radians.
 ---
 
 Returns the arc tangent of a number in radians.

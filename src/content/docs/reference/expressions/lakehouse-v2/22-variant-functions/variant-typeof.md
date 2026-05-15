@@ -1,5 +1,5 @@
 ---
-title: VARIANT_TYPEOF
+title: VARIANT_TYPEOF (Lakehouse v2)
 description: VARIANT_TYPEOF — Returns the type name of a VARIANT value as a string.
 ---
 

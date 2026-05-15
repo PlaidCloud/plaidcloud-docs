@@ -1,5 +1,5 @@
 ---
-title: FIRST_VALUE
+title: FIRST_VALUE (Lakehouse v1)
 description: FIRST_VALUE — Returns the first value from an ordered group of values.
 ---
 

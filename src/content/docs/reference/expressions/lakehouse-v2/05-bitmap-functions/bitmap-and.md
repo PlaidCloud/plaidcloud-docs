@@ -1,6 +1,6 @@
 ---
-title: BITMAP_AND
-description: BITMAP_AND — returns the intersection of two bitmaps - see syntax, examples, and output.
+title: BITMAP_AND (Lakehouse v2)
+description: BITMAP_AND — returns the intersection of two bitmaps.
 ---
 
 Returns the intersection of two bitmaps.

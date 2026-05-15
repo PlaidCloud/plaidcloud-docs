@@ -1,6 +1,6 @@
 ---
-title: UCASE
-description: UCASE — converts a string to uppercase. Alias for `UPPER` - see syntax, examples, and output.
+title: UCASE (Lakehouse v2)
+description: UCASE — converts a string to uppercase. Alias for `UPPER`.
 ---
 
 Converts a string to uppercase. Alias for `UPPER`.

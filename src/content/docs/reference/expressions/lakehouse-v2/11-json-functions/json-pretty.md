@@ -1,5 +1,5 @@
 ---
-title: JSON_PRETTY
+title: JSON_PRETTY (Lakehouse v2)
 description: JSON_PRETTY — Formats a JSON value with indentation for readability.
 ---
 

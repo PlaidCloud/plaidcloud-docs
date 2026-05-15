@@ -1,6 +1,6 @@
 ---
-title: REVERSE
-description: REVERSE — reverses a string - see syntax, examples, and output.
+title: "REVERSE (String, Lakehouse v2)"
+description: REVERSE — reverses a string.
 ---
 
 Reverses a string.

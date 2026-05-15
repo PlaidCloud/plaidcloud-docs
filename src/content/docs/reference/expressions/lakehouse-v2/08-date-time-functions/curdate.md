@@ -1,6 +1,6 @@
 ---
-title: CURDATE
-description: CURDATE — returns the current date - see syntax, examples, and output.
+title: CURDATE (Lakehouse v2)
+description: CURDATE — returns the current date.
 ---
 
 Returns the current date.

@@ -1,5 +1,5 @@
 ---
-title: ELEMENT_AT
+title: "ELEMENT_AT (Map, Lakehouse v2)"
 description: ELEMENT_AT — Returns the value associated with a specified key in a map.
 ---
 

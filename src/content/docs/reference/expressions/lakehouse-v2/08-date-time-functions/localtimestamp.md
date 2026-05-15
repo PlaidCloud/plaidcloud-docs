@@ -1,5 +1,5 @@
 ---
-title: LOCALTIMESTAMP
+title: LOCALTIMESTAMP (Lakehouse v2)
 description: LOCALTIMESTAMP — returns the current date and time. Alias for `NOW`.
 ---
 

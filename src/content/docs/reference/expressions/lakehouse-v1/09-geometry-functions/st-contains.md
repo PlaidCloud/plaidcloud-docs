@@ -1,5 +1,5 @@
 ---
-title: ST_CONTAINS
+title: ST_CONTAINS (Lakehouse v1)
 description: ST_CONTAINS — returns TRUE if the second GEOMETRY object is completely inside the first.
 ---
 

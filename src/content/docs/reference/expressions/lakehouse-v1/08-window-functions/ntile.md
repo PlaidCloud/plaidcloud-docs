@@ -1,5 +1,5 @@
 ---
-title: NTILE
+title: NTILE (Lakehouse v1)
 description: NTILE — divides the sorted result set into a specified number of buckets or groups.
 ---
 

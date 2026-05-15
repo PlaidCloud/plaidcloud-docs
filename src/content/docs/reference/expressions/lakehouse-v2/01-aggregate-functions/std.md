@@ -1,5 +1,5 @@
 ---
-title: STD
+title: STD (Lakehouse v2)
 description: STD — returns the population standard deviation. Alias for `STDDEV_POP`.
 ---
 

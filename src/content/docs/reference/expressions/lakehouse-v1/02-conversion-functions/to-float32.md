@@ -1,5 +1,5 @@
 ---
-title: TO_FLOAT32
+title: TO_FLOAT32 (Lakehouse v1)
 description: TO_FLOAT32 — Converts a value to FLOAT32 data type.
 ---
 

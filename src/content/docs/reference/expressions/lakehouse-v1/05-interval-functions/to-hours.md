@@ -1,5 +1,5 @@
 ---
-title: TO_HOURS
+title: TO_HOURS (Lakehouse v1)
 description: TO_HOURS — Converts a specified number of hours into an Interval type.
 ---
 

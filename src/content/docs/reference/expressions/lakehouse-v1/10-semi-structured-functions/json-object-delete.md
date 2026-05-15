@@ -1,6 +1,6 @@
 ---
-title: JSON_OBJECT_DELETE
-description: JSON_OBJECT_DELETE — deletes specified keys from a JSON object and returns the.
+title: JSON_OBJECT_DELETE (Lakehouse v1)
+description: JSON_OBJECT_DELETE — deletes specified keys from a JSON object and returns the modified object.
 ---
 
 Deletes specified keys from a JSON object and returns the modified object. If a specified key doesn't exist in the object, it is ignored.

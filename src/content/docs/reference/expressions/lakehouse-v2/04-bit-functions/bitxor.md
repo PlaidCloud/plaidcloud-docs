@@ -1,6 +1,6 @@
 ---
-title: BITXOR
-description: BITXOR — returns the bitwise XOR of two numeric values - see syntax, examples, and output.
+title: BITXOR (Lakehouse v2)
+description: BITXOR — returns the bitwise XOR of two numeric values.
 ---
 
 Returns the bitwise XOR of two numeric values.

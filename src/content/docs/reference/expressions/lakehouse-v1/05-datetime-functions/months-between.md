@@ -1,5 +1,5 @@
 ---
-title: MONTHS_BETWEEN
+title: MONTHS_BETWEEN (Lakehouse v1)
 description: MONTHS_BETWEEN — Returns the number of months between date1 and date2.
 ---
 

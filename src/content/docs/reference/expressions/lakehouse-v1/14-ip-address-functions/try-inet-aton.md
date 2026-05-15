@@ -1,6 +1,6 @@
 ---
-title: TRY_INET_ATON
-description: TRY_INET_ATON — try_inet_aton function is used to take the dotted-quad representation of an.
+title: TRY_INET_ATON (Lakehouse v1)
+description: TRY_INET_ATON — converts an IPv4 address (dotted-quad string) to its 32-bit integer representation.
 ---
 
 try_inet_aton function is used to take the dotted-quad representation of an IPv4 address as a string and returns the numeric value of the given IP address in form of an integer.

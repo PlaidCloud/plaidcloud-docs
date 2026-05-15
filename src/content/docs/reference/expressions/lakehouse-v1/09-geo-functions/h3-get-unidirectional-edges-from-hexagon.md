@@ -1,6 +1,6 @@
 ---
-title: H3_GET_UNIDIRECTIONAL_EDGES_FROM_HEXAGON
-description: H3_GET_UNIDIRECTIONAL_EDGES_FROM_HEXAGON — returns all of the unidirectional edges from the.
+title: H3_GET_UNIDIRECTIONAL_EDGES_FROM_HEXAGON (Lakehouse v1)
+description: H3_GET_UNIDIRECTIONAL_EDGES_FROM_HEXAGON — returns all of the unidirectional edges from the provided H3Index.
 ---
 
 Returns all of the unidirectional edges from the provided H3Index.

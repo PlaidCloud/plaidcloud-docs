@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_HASH
+title: PERCENTILE_HASH (Lakehouse v2)
 description: PERCENTILE_HASH — Computes a percentile state from a numeric value.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: DATE_SUB
-description: DATE_SUB — subtract the time interval or date interval from the provided date or date with.
+title: DATE_SUB (Lakehouse v1)
+description: DATE_SUB — subtract the time interval or date interval from the provided date or date with time (timestamp/datetime).
 ---
 
 Subtract the time interval or date interval from the provided date or date with time (timestamp/datetime).

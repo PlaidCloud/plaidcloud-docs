@@ -1,5 +1,5 @@
 ---
-title: RIGHT
+title: RIGHT (Lakehouse v1)
 description: RIGHT — returns the rightmost len characters from the string str, or NULL if any argument is NULL.
 ---
 

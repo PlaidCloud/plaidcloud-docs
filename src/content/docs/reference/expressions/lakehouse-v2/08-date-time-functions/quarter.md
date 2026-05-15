@@ -1,5 +1,5 @@
 ---
-title: QUARTER
+title: QUARTER (Lakehouse v2)
 description: QUARTER — returns the quarter of the year from a date (1-4).
 ---
 

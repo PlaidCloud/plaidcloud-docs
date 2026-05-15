@@ -1,6 +1,6 @@
 ---
-title: UNNEST
-description: UNNEST — expands an array into a set of rows - see syntax, examples, and output.
+title: UNNEST (Lakehouse v2)
+description: UNNEST — expands an array into a set of rows.
 ---
 
 Expands an array into a set of rows.

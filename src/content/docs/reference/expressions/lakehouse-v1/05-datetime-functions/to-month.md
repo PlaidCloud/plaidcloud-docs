@@ -1,5 +1,5 @@
 ---
-title: TO_MONTH
+title: TO_MONTH (Lakehouse v1)
 description: TO_MONTH — convert a date or date with time (timestamp/datetime) to a UInt8 number containing.
 ---
 

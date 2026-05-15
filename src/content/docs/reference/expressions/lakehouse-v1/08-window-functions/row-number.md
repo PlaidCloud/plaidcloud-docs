@@ -1,5 +1,5 @@
 ---
-title: ROW_NUMBER
+title: ROW_NUMBER (Lakehouse v1)
 description: ROW_NUMBER — assigns a temporary sequential number to each row within a partition of a result.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: QUERY
+title: QUERY (Lakehouse v1)
 description: QUERY — Searches for documents satisfying a specified query expression.
 ---
 

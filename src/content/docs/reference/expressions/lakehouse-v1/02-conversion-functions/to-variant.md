@@ -1,5 +1,5 @@
 ---
-title: TO_VARIANT
+title: TO_VARIANT (Lakehouse v1)
 description: TO_VARIANT — Converts a value to VARIANT data type.
 ---
 

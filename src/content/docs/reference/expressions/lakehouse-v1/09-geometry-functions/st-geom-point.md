@@ -1,5 +1,5 @@
 ---
-title: ST_GEOM_POINT
+title: ST_GEOM_POINT (Lakehouse v1)
 description: ST_GEOM_POINT — alias for the ST_MAKEGEOMPOINT geometry function.
 ---
 

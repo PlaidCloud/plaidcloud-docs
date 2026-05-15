@@ -1,5 +1,5 @@
 ---
-title: COLUMN_COMPRESSED_SIZE
+title: COLUMN_COMPRESSED_SIZE (Lakehouse v2)
 description: COLUMN_COMPRESSED_SIZE — returns the compressed size in bytes of a column value.
 ---
 

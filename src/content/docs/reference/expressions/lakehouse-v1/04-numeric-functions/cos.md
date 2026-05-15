@@ -1,5 +1,5 @@
 ---
-title: COS
+title: COS (Lakehouse v1)
 description: COS — Returns the cosine of x, where x is given in radians.
 ---
 

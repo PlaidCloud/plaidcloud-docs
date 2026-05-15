@@ -1,6 +1,6 @@
 ---
-title: NOW
-description: NOW — returns the current date and time. Includes detailed syntax, examples, and usage reference.
+title: NOW (Lakehouse v1)
+description: NOW — returns the current date and time.
 ---
 
 Returns the current date and time.

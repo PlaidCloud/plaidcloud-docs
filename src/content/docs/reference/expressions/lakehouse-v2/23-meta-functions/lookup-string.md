@@ -1,5 +1,5 @@
 ---
-title: LOOKUP_STRING
+title: LOOKUP_STRING (Lakehouse v2)
 description: LOOKUP_STRING — looks up a string in a dictionary and returns the corresponding ID.
 ---
 

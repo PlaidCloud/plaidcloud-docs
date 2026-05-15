@@ -1,5 +1,5 @@
 ---
-title: SLEEP
+title: SLEEP (Lakehouse v1)
 description: SLEEP — sleeps seconds seconds on each data block.
 ---
 

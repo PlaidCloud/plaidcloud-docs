@@ -1,5 +1,5 @@
 ---
-title: ASCII
+title: ASCII (Lakehouse v2)
 description: ASCII — Returns the ASCII code of the first character in a string.
 ---
 

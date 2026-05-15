@@ -1,5 +1,5 @@
 ---
-title: Getting Started
+title: Getting Started with Allocations
 description: Get started with PlaidCloud allocations including quick start guides, rule-based tagging, and understanding allocation use cases.
 sidebar:
   label: Getting Started

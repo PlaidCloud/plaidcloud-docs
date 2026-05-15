@@ -1,5 +1,5 @@
 ---
-title: H3_GET_INDEXES_FROM_UNIDIRECTIONAL_EDGE
+title: H3_GET_INDEXES_FROM_UNIDIRECTIONAL_EDGE (Lakehouse v1)
 description: H3_GET_INDEXES_FROM_UNIDIRECTIONAL_EDGE — returns the origin and destination hexagon indexes.
 ---
 

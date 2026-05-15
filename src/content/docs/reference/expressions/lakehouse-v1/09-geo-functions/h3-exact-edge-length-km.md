@@ -1,5 +1,5 @@
 ---
-title: H3_EXACT_EDGE_LENGTH_KM
+title: H3_EXACT_EDGE_LENGTH_KM (Lakehouse v1)
 description: H3_EXACT_EDGE_LENGTH_KM — computes the length of this directed edge, in kilometers.
 ---
 

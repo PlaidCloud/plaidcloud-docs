@@ -1,5 +1,5 @@
 ---
-title: SQRT
+title: SQRT (Lakehouse v1)
 description: SQRT — Returns the square root of a nonnegative number x.
 ---
 

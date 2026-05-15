@@ -1,5 +1,5 @@
 ---
-title: "[ NOT ] BETWEEN"
+title: "[ NOT ] BETWEEN (Lakehouse v1)"
 description: "[ NOT ] BETWEEN — true if a numeric, string, or date value lies inside (or outside) the given range."
 ---
 

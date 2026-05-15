@@ -1,5 +1,5 @@
 ---
-title: ST_CONTAINS
+title: ST_CONTAINS (Lakehouse v2)
 description: ST_CONTAINS — checks whether one geometry contains another. Returns 1 if true.
 ---
 

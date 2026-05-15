@@ -1,6 +1,6 @@
 ---
-title: UUID
-description: UUID — returns a random UUID string - see syntax, examples, and output.
+title: UUID (Lakehouse v2)
+description: UUID — returns a random UUID string.
 ---
 
 Returns a random UUID string.

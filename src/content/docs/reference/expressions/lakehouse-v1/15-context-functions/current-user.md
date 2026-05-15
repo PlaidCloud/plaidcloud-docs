@@ -1,5 +1,5 @@
 ---
-title: CURRENT_USER
+title: CURRENT_USER (Lakehouse v1)
 description: CURRENT_USER — returns the user name and host name combination for the account that the server.
 ---
 

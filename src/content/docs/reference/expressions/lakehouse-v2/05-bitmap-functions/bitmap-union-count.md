@@ -1,5 +1,5 @@
 ---
-title: BITMAP_UNION_COUNT
+title: BITMAP_UNION_COUNT (Lakehouse v2)
 description: BITMAP_UNION_COUNT — returns the count of distinct values in the union of a set of bitmaps.
 ---
 

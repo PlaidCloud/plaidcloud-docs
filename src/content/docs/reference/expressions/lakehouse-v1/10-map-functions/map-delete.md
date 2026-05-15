@@ -1,5 +1,5 @@
 ---
-title: MAP_DELETE
+title: MAP_DELETE (Lakehouse v1)
 description: MAP_DELETE — Returns an existing MAP with one or more keys removed.
 ---
 

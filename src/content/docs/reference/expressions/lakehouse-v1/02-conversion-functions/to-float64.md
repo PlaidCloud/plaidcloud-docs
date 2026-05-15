@@ -1,5 +1,5 @@
 ---
-title: TO_FLOAT64
+title: TO_FLOAT64 (Lakehouse v1)
 description: TO_FLOAT64 — Converts a value to FLOAT64 data type.
 ---
 

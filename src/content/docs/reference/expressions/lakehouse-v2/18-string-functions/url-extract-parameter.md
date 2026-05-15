@@ -1,5 +1,5 @@
 ---
-title: URL_EXTRACT_PARAMETER
+title: URL_EXTRACT_PARAMETER (Lakehouse v2)
 description: URL_EXTRACT_PARAMETER — extracts the value of a query parameter from a URL string.
 ---
 

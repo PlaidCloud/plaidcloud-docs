@@ -1,6 +1,6 @@
 ---
-title: VERSION
-description: VERSION — returns the MySQL protocol version of StarRocks - see syntax, examples, and output.
+title: VERSION (Lakehouse v2)
+description: VERSION — returns the MySQL protocol version of StarRocks.
 ---
 
 Returns the MySQL protocol version of StarRocks.

@@ -1,5 +1,5 @@
 ---
-title: ARRAY_CUM_SUM
+title: ARRAY_CUM_SUM (Lakehouse v2)
 description: ARRAY_CUM_SUM — Returns the cumulative sum of elements in an array.
 ---
 

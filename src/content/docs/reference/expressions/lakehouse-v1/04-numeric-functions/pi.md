@@ -1,5 +1,5 @@
 ---
-title: PI
+title: PI (Lakehouse v1)
 description: PI — Returns the value of π as a floating-point value.
 ---
 

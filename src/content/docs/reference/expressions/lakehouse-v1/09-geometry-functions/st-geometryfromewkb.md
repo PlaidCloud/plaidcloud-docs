@@ -1,5 +1,5 @@
 ---
-title: ST_GEOMETRYFROMEWKB
+title: ST_GEOMETRYFROMEWKB (Lakehouse v1)
 description: ST_GEOMETRYFROMEWKB — alias for the ST_GEOMTRYFROMWKB geometry function.
 ---
 

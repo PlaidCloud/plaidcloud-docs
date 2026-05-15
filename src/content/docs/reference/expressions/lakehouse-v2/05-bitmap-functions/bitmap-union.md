@@ -1,5 +1,5 @@
 ---
-title: BITMAP_UNION
+title: BITMAP_UNION (Lakehouse v2)
 description: BITMAP_UNION — Returns the union of a set of bitmaps (aggregate).
 ---
 

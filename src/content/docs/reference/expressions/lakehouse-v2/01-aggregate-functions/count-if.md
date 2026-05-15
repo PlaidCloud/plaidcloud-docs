@@ -1,5 +1,5 @@
 ---
-title: COUNT_IF
+title: COUNT_IF (Lakehouse v2)
 description: COUNT_IF — returns the number of rows for which the expression is TRUE.
 ---
 

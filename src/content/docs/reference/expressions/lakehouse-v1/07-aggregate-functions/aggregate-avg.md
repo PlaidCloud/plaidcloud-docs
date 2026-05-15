@@ -1,5 +1,5 @@
 ---
-title: AVG
+title: AVG (Lakehouse v1)
 description: AVG — return the average value of an expression, ignoring NULL values.
 ---
 

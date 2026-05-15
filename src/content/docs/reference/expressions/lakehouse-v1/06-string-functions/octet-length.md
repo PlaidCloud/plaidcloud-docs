@@ -1,5 +1,5 @@
 ---
-title: OCTET_LENGTH
+title: OCTET_LENGTH (Lakehouse v1)
 description: OCTET_LENGTH — OCTET_LENGTH() is a synonym for LENGTH().
 ---
 

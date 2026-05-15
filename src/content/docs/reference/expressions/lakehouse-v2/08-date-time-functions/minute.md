@@ -1,6 +1,6 @@
 ---
-title: MINUTE
-description: MINUTE — returns the minute from a datetime - see syntax, examples, and output.
+title: MINUTE (Lakehouse v2)
+description: MINUTE — returns the minute from a datetime.
 ---
 
 Returns the minute from a datetime.

@@ -1,5 +1,5 @@
 ---
-title: MINUTES_DIFF
+title: MINUTES_DIFF (Lakehouse v2)
 description: MINUTES_DIFF — returns the number of minutes between two datetimes.
 ---
 

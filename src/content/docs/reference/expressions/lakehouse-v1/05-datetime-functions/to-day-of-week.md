@@ -1,5 +1,5 @@
 ---
-title: TO_DAY_OF_WEEK
+title: TO_DAY_OF_WEEK (Lakehouse v1)
 description: TO_DAY_OF_WEEK — converts a date or date with time (timestamp/datetime) to a UInt8 number.
 ---
 

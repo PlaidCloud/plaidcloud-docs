@@ -1,6 +1,6 @@
 ---
-title: "AS_<type>"
-description: AS_<type> — strict casting VARIANT values to other data types. Includes syntax and.
+title: "AS_<type> (Lakehouse v1)"
+description: AS_<type> — strict casting VARIANT values to other data types.
 ---
 
 Strict casting `VARIANT` values to other data types.

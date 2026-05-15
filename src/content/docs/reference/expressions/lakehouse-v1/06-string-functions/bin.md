@@ -1,5 +1,5 @@
 ---
-title: BIN
+title: BIN (Lakehouse v1)
 description: BIN — Returns a string representation of the binary value of N.
 ---
 

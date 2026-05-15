@@ -1,6 +1,6 @@
 ---
-title: PARSE_URL
-description: PARSE_URL — extracts a specified part from a URL string - see syntax, examples, and output.
+title: PARSE_URL (Lakehouse v2)
+description: PARSE_URL — extracts a specified part from a URL string.
 ---
 
 Extracts a specified part from a URL string.

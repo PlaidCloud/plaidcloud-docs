@@ -1,6 +1,6 @@
 ---
-title: BITOR
-description: BITOR — returns the bitwise OR of two numeric values - see syntax, examples, and output.
+title: BITOR (Lakehouse v2)
+description: BITOR — returns the bitwise OR of two numeric values.
 ---
 
 Returns the bitwise OR of two numeric values.

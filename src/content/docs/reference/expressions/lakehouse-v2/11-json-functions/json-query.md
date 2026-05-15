@@ -1,5 +1,5 @@
 ---
-title: JSON_QUERY
+title: JSON_QUERY (Lakehouse v2)
 description: JSON_QUERY — extracts a JSON value from a JSON document using a path expression.
 ---
 

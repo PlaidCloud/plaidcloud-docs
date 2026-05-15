@@ -1,6 +1,6 @@
 ---
-title: LTRIM
-description: LTRIM — removes all occurrences of any character present in the specified trim string from the.
+title: LTRIM (Lakehouse v1)
+description: LTRIM — removes all occurrences of any character present in the specified trim string from the left side of the string.
 ---
 
 Removes all occurrences of any character present in the specified trim string from the left side of the string.

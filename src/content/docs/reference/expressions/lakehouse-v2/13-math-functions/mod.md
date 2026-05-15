@@ -1,6 +1,6 @@
 ---
-title: MOD
-description: MOD — returns the remainder of dividing two numbers - see syntax, examples, and output.
+title: MOD (Lakehouse v2)
+description: MOD — returns the remainder of dividing two numbers.
 ---
 
 Returns the remainder of dividing two numbers.

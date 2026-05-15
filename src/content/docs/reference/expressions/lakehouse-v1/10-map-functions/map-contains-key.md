@@ -1,5 +1,5 @@
 ---
-title: MAP_CONTAINS_KEY
+title: MAP_CONTAINS_KEY (Lakehouse v1)
 description: MAP_CONTAINS_KEY — determines whether the specified MAP contains the specified key.
 ---
 

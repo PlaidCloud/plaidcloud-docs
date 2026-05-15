@@ -1,6 +1,6 @@
 ---
-title: CONV
-description: CONV — converts a number from one base to another - see syntax, examples, and output.
+title: CONV (Lakehouse v2)
+description: CONV — converts a number from one base to another.
 ---
 
 Converts a number from one base to another.

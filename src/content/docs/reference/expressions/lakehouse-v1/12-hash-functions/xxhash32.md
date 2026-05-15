@@ -1,5 +1,5 @@
 ---
-title: XXHASH32
+title: XXHASH32 (Lakehouse v1)
 description: XXHASH32 — Calculates an xxHash32 32-bit hash value for a string.
 ---
 

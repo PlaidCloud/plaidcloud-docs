@@ -1,6 +1,6 @@
 ---
-title: FIRST
-description: FIRST — alias for the FIRST_VALUE window function. Includes detailed syntax, examples, and usage reference.
+title: FIRST (Lakehouse v1)
+description: FIRST — alias for the FIRST_VALUE window function.
 ---
 
 Alias for [FIRST_VALUE](../first-value).

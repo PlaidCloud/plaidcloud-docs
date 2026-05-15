@@ -1,6 +1,6 @@
 ---
-title: ARRAY_APPEND
-description: ARRAY_APPEND — appends an element to the end of an array - see syntax, examples, and output.
+title: ARRAY_APPEND (Lakehouse v2)
+description: ARRAY_APPEND — appends an element to the end of an array.
 ---
 
 Appends an element to the end of an array.

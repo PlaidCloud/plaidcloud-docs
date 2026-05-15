@@ -1,5 +1,5 @@
 ---
-title: MAX_BY
+title: MAX_BY (Lakehouse v2)
 description: MAX_BY — returns the value of one column associated with the maximum value of another column.
 ---
 

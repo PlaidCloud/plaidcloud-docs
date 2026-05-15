@@ -1,6 +1,6 @@
 ---
-title: TIMEDIFF
-description: TIMEDIFF — returns the difference between two time values - see syntax, examples, and output.
+title: TIMEDIFF (Lakehouse v2)
+description: TIMEDIFF — returns the difference between two time values.
 ---
 
 Returns the difference between two time values.

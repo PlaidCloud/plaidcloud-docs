@@ -1,6 +1,6 @@
 ---
-title: TIMESTAMP
-description: TIMESTAMP — converts a date or string to a datetime - see syntax, examples, and output.
+title: TIMESTAMP (Lakehouse v2)
+description: TIMESTAMP — converts a date or string to a datetime.
 ---
 
 Converts a date or string to a datetime.

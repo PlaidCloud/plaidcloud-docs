@@ -1,6 +1,6 @@
 ---
-title: LOG
-description: LOG — returns the logarithm of a number with a specified base - see syntax, examples, and output.
+title: LOG (Lakehouse v2)
+description: LOG — returns the logarithm of a number with a specified base.
 ---
 
 Returns the logarithm of a number with a specified base.

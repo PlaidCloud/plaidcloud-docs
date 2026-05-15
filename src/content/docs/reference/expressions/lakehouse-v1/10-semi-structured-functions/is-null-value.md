@@ -1,6 +1,6 @@
 ---
-title: IS_NULL_VALUE
-description: IS_NULL_VALUE — checks whether the input value is a JSON null. Includes syntax and.
+title: IS_NULL_VALUE (Lakehouse v1)
+description: IS_NULL_VALUE — checks whether the input value is a JSON null.
 ---
 
 Checks whether the input value is a JSON `null`. Please note that this function examines JSON `null`, not SQL NULL. To check if a value is SQL NULL, use [IS_NULL](../../03-conditional-functions/is-null).

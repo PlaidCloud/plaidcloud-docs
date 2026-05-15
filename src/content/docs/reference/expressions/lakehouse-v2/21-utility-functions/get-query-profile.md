@@ -1,6 +1,6 @@
 ---
-title: GET_QUERY_PROFILE
-description: "Use the GET_QUERY_PROFILE utility function in PlaidCloud Lakehouse. Returns the query profile for a specified query ID. Useful for performance analysis and."
+title: GET_QUERY_PROFILE (Lakehouse v2)
+description: GET_QUERY_PROFILE — returns the query profile for a specified query ID.
 ---
 
 Returns the query profile for a specified query ID. Useful for performance analysis and debugging.

@@ -1,5 +1,5 @@
 ---
-title: HOURS_ADD
+title: HOURS_ADD (Lakehouse v2)
 description: HOURS_ADD — adds a specified number of hours to a datetime.
 ---
 

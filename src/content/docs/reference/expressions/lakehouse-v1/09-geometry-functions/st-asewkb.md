@@ -1,5 +1,5 @@
 ---
-title: ST_ASEWKB
+title: ST_ASEWKB (Lakehouse v1)
 description: ST_ASEWKB — converts a GEOMETRY object into a EWKB(extended well-known-binary) format.
 ---
 

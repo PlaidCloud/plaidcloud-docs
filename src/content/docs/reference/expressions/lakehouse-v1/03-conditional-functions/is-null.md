@@ -1,5 +1,5 @@
 ---
-title: IS_NULL
+title: IS_NULL (Lakehouse v1)
 description: IS_NULL — checks whether a value is NULL.
 ---
 

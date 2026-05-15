@@ -1,5 +1,5 @@
 ---
-title: IF
+title: IF (Lakehouse v2)
 description: IF — returns one of two values depending on whether a condition is TRUE or FALSE.
 ---
 

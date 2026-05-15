@@ -1,6 +1,6 @@
 ---
-title: INSPECT_PARQUET
-description: INSPECT_PARQUET — retrieves a table of comprehensive metadata from a staged Parquet file,.
+title: INSPECT_PARQUET (Lakehouse v1)
+description: INSPECT_PARQUET — retrieves a table of comprehensive metadata from a staged Parquet file.
 ---
 
 Retrieves a table of comprehensive metadata from a staged Parquet file, including the following columns:

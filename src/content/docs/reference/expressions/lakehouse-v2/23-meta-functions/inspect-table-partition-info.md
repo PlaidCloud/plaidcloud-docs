@@ -1,5 +1,5 @@
 ---
-title: INSPECT_TABLE_PARTITION_INFO
+title: INSPECT_TABLE_PARTITION_INFO (Lakehouse v2)
 description: INSPECT_TABLE_PARTITION_INFO — Returns partition information for a table.
 ---
 

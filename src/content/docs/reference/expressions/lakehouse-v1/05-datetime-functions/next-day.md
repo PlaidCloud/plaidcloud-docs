@@ -1,6 +1,6 @@
 ---
-title: NEXT_DAY
-description: NEXT_DAY — returns the date of the upcoming specified day of the week after the given date or.
+title: NEXT_DAY (Lakehouse v1)
+description: NEXT_DAY — returns the date of the upcoming specified day of the week after the given date or timestamp.
 ---
 
 Returns the date of the upcoming specified day of the week after the given date or timestamp.

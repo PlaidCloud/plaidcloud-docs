@@ -1,6 +1,6 @@
 ---
-title: JSON_EACH
-description: JSON_EACH — extracts key-value pairs from a JSON object, breaking down the.
+title: JSON_EACH (Lakehouse v1)
+description: JSON_EACH — extracts key-value pairs from a JSON object, breaking down the structure into individual rows in the result set.
 ---
 
 Extracts key-value pairs from a JSON object, breaking down the structure into individual rows in the result set. Each row represents a distinct key-value pair derived from the input JSON expression.

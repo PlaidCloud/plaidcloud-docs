@@ -1,6 +1,6 @@
 ---
-title: DFLOOR
-description: DFLOOR — alias for `FLOOR`. See [FLOOR](floor) - see syntax, examples, and output.
+title: DFLOOR (Lakehouse v2)
+description: DFLOOR — alias for `FLOOR`. See [FLOOR](floor).
 ---
 
 Alias for `FLOOR`. See [FLOOR](floor).

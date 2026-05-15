@@ -1,5 +1,5 @@
 ---
-title: ST_DISTANCE_SPHERE
+title: ST_DISTANCE_SPHERE (Lakehouse v2)
 description: ST_DISTANCE_SPHERE — returns the spherical distance between two points in meters.
 ---
 

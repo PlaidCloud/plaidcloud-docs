@@ -1,5 +1,5 @@
 ---
-title: NGRAM_SEARCH
+title: NGRAM_SEARCH (Lakehouse v2)
 description: NGRAM_SEARCH — returns a similarity score between two strings based on n-gram matching.
 ---
 

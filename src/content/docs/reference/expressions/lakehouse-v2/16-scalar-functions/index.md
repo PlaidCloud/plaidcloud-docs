@@ -1,5 +1,5 @@
 ---
-title: Scalar Functions
+title: Scalar Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL scalar functions: single-value transformations across primitive types."
 ---
 

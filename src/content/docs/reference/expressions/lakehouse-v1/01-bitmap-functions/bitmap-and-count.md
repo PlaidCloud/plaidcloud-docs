@@ -1,6 +1,6 @@
 ---
-title: BITMAP_AND_COUNT
-description: BITMAP_AND_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical AND.
+title: BITMAP_AND_COUNT (Lakehouse v1)
+description: BITMAP_AND_COUNT — counts the number of bits set to 1 in the bitmap by performing a logical AND operation.
 ---
 
 Counts the number of bits set to 1 in the bitmap by performing a logical AND operation.

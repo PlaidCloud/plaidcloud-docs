@@ -1,6 +1,6 @@
 ---
-title: DAY
-description: DAY — returns the day of the month from a date - see syntax, examples, and output.
+title: DAY (Lakehouse v2)
+description: DAY — returns the day of the month from a date.
 ---
 
 Returns the day of the month from a date.

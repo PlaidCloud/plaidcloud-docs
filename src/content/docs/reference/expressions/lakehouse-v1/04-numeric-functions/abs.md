@@ -1,6 +1,6 @@
 ---
-title: ABS
-description: ABS — returns the absolute value of x. Includes detailed syntax, examples, and usage reference.
+title: ABS (Lakehouse v1)
+description: ABS — returns the absolute value of x.
 ---
 
 Returns the absolute value of `x`.

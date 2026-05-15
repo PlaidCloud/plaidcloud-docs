@@ -1,6 +1,6 @@
 ---
-title: CHARACTER_LENGTH
-description: CHARACTER_LENGTH — alias for the LENGTH string function. Includes detailed syntax, examples, and usage reference.
+title: CHARACTER_LENGTH (Lakehouse v1)
+description: CHARACTER_LENGTH — alias for the LENGTH string function.
 ---
 
 Alias for [LENGTH](../length).

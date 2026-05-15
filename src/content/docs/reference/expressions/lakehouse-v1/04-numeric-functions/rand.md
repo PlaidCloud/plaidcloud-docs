@@ -1,5 +1,5 @@
 ---
-title: RAND()
+title: RAND() (Lakehouse v1)
 description: RAND() — returns a random floating-point value v in the range 0 <= v < 1.
 ---
 

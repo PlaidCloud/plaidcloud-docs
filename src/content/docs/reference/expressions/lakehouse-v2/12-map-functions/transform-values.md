@@ -1,5 +1,5 @@
 ---
-title: TRANSFORM_VALUES
+title: TRANSFORM_VALUES (Lakehouse v2)
 description: TRANSFORM_VALUES — applies a lambda expression to transform the values of a map.
 ---
 

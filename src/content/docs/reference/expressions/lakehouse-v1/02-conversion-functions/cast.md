@@ -1,5 +1,5 @@
 ---
-title: "CAST, ::"
+title: "CAST, :: (Lakehouse v1)"
 description: "CAST, :: — converts a value from one data type to another."
 ---
 

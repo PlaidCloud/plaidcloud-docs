@@ -1,6 +1,6 @@
 ---
-title: POSITIVE
-description: POSITIVE — returns the value unchanged (unary plus) - see syntax, examples, and output.
+title: POSITIVE (Lakehouse v2)
+description: POSITIVE — returns the value unchanged (unary plus).
 ---
 
 Returns the value unchanged (unary plus).

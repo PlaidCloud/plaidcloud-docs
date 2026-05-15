@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_INTERSECTION
+title: JSON_ARRAY_INTERSECTION (Lakehouse v1)
 description: JSON_ARRAY_INTERSECTION — returns the common elements between two JSON arrays.
 ---
 

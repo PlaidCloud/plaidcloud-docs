@@ -1,5 +1,5 @@
 ---
-title: REGEXP_EXTRACT_ALL
+title: REGEXP_EXTRACT_ALL (Lakehouse v2)
 description: REGEXP_EXTRACT_ALL — extracts all substrings that match a regular expression pattern.
 ---
 

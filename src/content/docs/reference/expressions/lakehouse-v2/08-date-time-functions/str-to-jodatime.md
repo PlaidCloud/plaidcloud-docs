@@ -1,5 +1,5 @@
 ---
-title: STR_TO_JODATIME
+title: STR_TO_JODATIME (Lakehouse v2)
 description: STR_TO_JODATIME — parses a string into a datetime using Joda-Time format patterns.
 ---
 

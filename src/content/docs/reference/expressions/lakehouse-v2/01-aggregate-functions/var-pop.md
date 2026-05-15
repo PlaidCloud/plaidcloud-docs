@@ -1,5 +1,5 @@
 ---
-title: VAR_POP
+title: VAR_POP (Lakehouse v2)
 description: VAR_POP — Returns the population variance. Alias for `VARIANCE_POP`.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: PI
-description: PI — returns the mathematical constant pi - see syntax, examples, and output.
+title: PI (Lakehouse v2)
+description: PI — returns the mathematical constant pi.
 ---
 
 Returns the mathematical constant pi.

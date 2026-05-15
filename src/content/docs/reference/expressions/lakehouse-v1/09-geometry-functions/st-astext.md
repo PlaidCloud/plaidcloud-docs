@@ -1,6 +1,6 @@
 ---
-title: ST_ASTEXT
-description: ST_ASTEXT — alias for the ST_ASWKT geometry function. Includes detailed syntax, examples, and usage reference.
+title: ST_ASTEXT (Lakehouse v1)
+description: ST_ASTEXT — alias for the ST_ASWKT geometry function.
 ---
 
 Alias for [ST_ASWKT](../st-aswkt).

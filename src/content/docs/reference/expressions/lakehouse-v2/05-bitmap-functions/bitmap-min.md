@@ -1,6 +1,6 @@
 ---
-title: BITMAP_MIN
-description: BITMAP_MIN — returns the minimum value in a bitmap - see syntax, examples, and output.
+title: BITMAP_MIN (Lakehouse v2)
+description: BITMAP_MIN — returns the minimum value in a bitmap.
 ---
 
 Returns the minimum value in a bitmap.

@@ -1,5 +1,5 @@
 ---
-title: INSPECT_MV_PLAN
+title: INSPECT_MV_PLAN (Lakehouse v2)
 description: INSPECT_MV_PLAN — Returns the logical plan of a materialized view.
 ---
 

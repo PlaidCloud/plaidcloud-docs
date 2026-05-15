@@ -1,6 +1,6 @@
 ---
-title: PMOD
-description: PMOD — returns the positive modulus of dividing two numbers - see syntax, examples, and output.
+title: PMOD (Lakehouse v2)
+description: PMOD — returns the positive modulus of dividing two numbers.
 ---
 
 Returns the positive modulus of dividing two numbers.

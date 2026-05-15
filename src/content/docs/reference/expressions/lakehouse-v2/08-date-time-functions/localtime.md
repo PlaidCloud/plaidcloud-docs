@@ -1,5 +1,5 @@
 ---
-title: LOCALTIME
+title: LOCALTIME (Lakehouse v2)
 description: LOCALTIME — returns the current date and time. Alias for `NOW`.
 ---
 

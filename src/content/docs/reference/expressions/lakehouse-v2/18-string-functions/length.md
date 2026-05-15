@@ -1,6 +1,6 @@
 ---
-title: LENGTH
-description: LENGTH — returns the length of a string in bytes - see syntax, examples, and output.
+title: LENGTH (Lakehouse v2)
+description: LENGTH — returns the length of a string in bytes.
 ---
 
 Returns the length of a string in bytes.

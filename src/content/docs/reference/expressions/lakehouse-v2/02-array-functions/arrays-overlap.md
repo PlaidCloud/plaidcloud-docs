@@ -1,5 +1,5 @@
 ---
-title: ARRAYS_OVERLAP
+title: ARRAYS_OVERLAP (Lakehouse v2)
 description: ARRAYS_OVERLAP — Checks whether two arrays have any common elements.
 ---
 

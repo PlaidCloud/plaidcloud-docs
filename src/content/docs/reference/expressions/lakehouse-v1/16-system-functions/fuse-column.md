@@ -1,5 +1,5 @@
 ---
-title: FUSE_COLUMN
+title: FUSE_COLUMN (Lakehouse v1)
 description: FUSE_COLUMN — returns the column information of the latest or specified snapshot of a table.
 ---
 

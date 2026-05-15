@@ -1,5 +1,5 @@
 ---
-title: NTH_VALUE
+title: NTH_VALUE (Lakehouse v1)
 description: NTH_VALUE — Returns the Nth value from an ordered group of values.
 ---
 

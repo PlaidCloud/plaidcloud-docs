@@ -1,5 +1,5 @@
 ---
-title: MIN_IF
+title: MIN_IF (Lakehouse v1)
 description: MIN_IF — the suffix _IF can be appended to the name of any aggregate function.
 ---
 

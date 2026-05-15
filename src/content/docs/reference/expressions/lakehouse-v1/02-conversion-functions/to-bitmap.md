@@ -1,5 +1,5 @@
 ---
-title: TO_BITMAP
+title: TO_BITMAP (Lakehouse v1)
 description: TO_BITMAP — Converts a value to BITMAP data type.
 ---
 

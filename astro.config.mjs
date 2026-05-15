@@ -4,6 +4,50 @@ import starlight from '@astrojs/starlight';
 import sitemap from '@astrojs/sitemap';
 import starlightLlmsTxt from 'starlight-llms-txt';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
+import { readdirSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
+
+// Build a `url -> ISO date` map from git log, one walk over the docs tree.
+// Fallback to file mtime when the file isn't tracked (or git isn't available).
+const DOCS_ROOT = fileURLToPath(new URL('./src/content/docs', import.meta.url));
+const SITE_URL = 'https://docs.plaidcloud.com';
+
+function fileToUrl(absPath) {
+	let rel = relative(DOCS_ROOT, absPath).replace(/\\/g, '/');
+	rel = rel.replace(/\.mdx?$/, '');
+	if (rel === 'index') return `${SITE_URL}/`;
+	rel = rel.replace(/\/index$/, '');
+	return `${SITE_URL}/${rel}/`;
+}
+
+function walkDocs(dir, out = []) {
+	for (const name of readdirSync(dir)) {
+		const p = join(dir, name);
+		const stat = statSync(p);
+		if (stat.isDirectory()) walkDocs(p, out);
+		else if (/\.(mdx?|MD)$/.test(name)) out.push(p);
+	}
+	return out;
+}
+
+function gitLastmod(absPath) {
+	try {
+		const iso = execSync(`git log -1 --format=%aI -- "${absPath}"`, {
+			encoding: 'utf8',
+			stdio: ['ignore', 'pipe', 'ignore'],
+		}).trim();
+		return iso || null;
+	} catch {
+		return null;
+	}
+}
+
+const urlToLastmod = new Map();
+for (const f of walkDocs(DOCS_ROOT)) {
+	const iso = gitLastmod(f) ?? statSync(f).mtime.toISOString();
+	urlToLastmod.set(fileToUrl(f), iso);
+}
 
 export default defineConfig({
 	site: 'https://docs.plaidcloud.com',
@@ -16,12 +60,10 @@ export default defineConfig({
 	},
 	integrations: [
 		sitemap({
-			// Stamp every entry with the build time so crawlers know when the
-			// corpus was last refreshed. Per-page lastmod isn't available from
-			// @astrojs/sitemap without a custom resolver, and the site rebuilds
-			// the whole tree on every commit, so build time is the best signal.
-			lastmod: new Date(),
 			serialize(item) {
+				// Per-page lastmod from git history (falls back to file mtime).
+				const iso = urlToLastmod.get(item.url);
+				if (iso) item.lastmod = iso;
 				if (item.url.endsWith('/')) item.priority = 1.0;
 				else if (item.url.includes('/get-started/')) item.priority = 1.0;
 				else if (item.url.includes('/guides/'))      item.priority = 0.8;

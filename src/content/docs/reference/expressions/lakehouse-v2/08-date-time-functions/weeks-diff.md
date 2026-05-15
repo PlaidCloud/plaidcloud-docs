@@ -1,5 +1,5 @@
 ---
-title: WEEKS_DIFF
+title: WEEKS_DIFF (Lakehouse v2)
 description: WEEKS_DIFF — returns the number of weeks between two dates.
 ---
 

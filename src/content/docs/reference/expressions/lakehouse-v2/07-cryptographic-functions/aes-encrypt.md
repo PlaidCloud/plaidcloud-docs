@@ -1,6 +1,6 @@
 ---
-title: AES_ENCRYPT
-description: AES_ENCRYPT — encrypts a value using AES encryption - see syntax, examples, and output.
+title: AES_ENCRYPT (Lakehouse v2)
+description: AES_ENCRYPT — encrypts a value using AES encryption.
 ---
 
 Encrypts a value using AES encryption.

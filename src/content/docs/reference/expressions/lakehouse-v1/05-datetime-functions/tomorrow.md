@@ -1,5 +1,5 @@
 ---
-title: TOMORROW
+title: TOMORROW (Lakehouse v1)
 description: TOMORROW — Returns tomorrow date, same as today() + 1.
 ---
 

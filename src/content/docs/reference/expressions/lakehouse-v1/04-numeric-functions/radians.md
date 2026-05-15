@@ -1,5 +1,5 @@
 ---
-title: RADIANS
+title: RADIANS (Lakehouse v1)
 description: RADIANS — Returns the argument x, converted from degrees to radians.
 ---
 

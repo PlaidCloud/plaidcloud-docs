@@ -1,5 +1,5 @@
 ---
-title: GEOHASH_DECODE
+title: GEOHASH_DECODE (Lakehouse v1)
 description: GEOHASH_DECODE — converts a Geohash-encoded string into latitude/longitude coordinates.
 ---
 

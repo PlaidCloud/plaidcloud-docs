@@ -1,5 +1,5 @@
 ---
-title: STR_TO_DATE
+title: STR_TO_DATE (Lakehouse v2)
 description: STR_TO_DATE — parses a string into a date using a format string.
 ---
 

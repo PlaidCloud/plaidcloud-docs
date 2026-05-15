@@ -1,5 +1,5 @@
 ---
-title: CORR
+title: CORR (Lakehouse v2)
 description: CORR — returns the Pearson correlation coefficient between two expressions.
 ---
 

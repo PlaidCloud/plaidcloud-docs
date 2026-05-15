@@ -1,21 +1,11 @@
 import { getCollection } from 'astro:content';
 import { OGImageRoute } from 'astro-og-canvas';
+import { hasGeneratedOG } from '../../lib/og-image';
 
 const docs = await getCollection('docs');
 
-// Skip OG image generation for deep reference pages (workflow step pages
-// and expression function pages) — they're rarely shared on social media
-// and they account for most of the page count. Reference category and
-// sub-category landing pages still get OG images. Pages without a generated
-// OG fall back to the site's default OG image declared in the layout.
-function shouldGenerate(id: string): boolean {
-	if (id.startsWith('reference/workflow-steps/') && id.split('/').length > 3) return false;
-	if (id.startsWith('reference/expressions/') && id.split('/').length > 3) return false;
-	return true;
-}
-
 const pages = Object.fromEntries(
-	docs.filter((entry) => shouldGenerate(entry.id))
+	docs.filter((entry) => hasGeneratedOG(entry.id))
 		.map((entry) => [entry.id, { data: entry.data }]),
 );
 

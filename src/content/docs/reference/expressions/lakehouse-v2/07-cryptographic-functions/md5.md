@@ -1,5 +1,5 @@
 ---
-title: MD5
+title: MD5 (Lakehouse v2)
 description: MD5 — returns the MD5 hash of a string as a 32-character hexadecimal string.
 ---
 

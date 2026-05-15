@@ -1,6 +1,6 @@
 ---
-title: TO_JSON
-description: TO_JSON — converts a SQL value to a JSON value - see syntax, examples, and output.
+title: TO_JSON (Lakehouse v2)
+description: TO_JSON — converts a SQL value to a JSON value.
 ---
 
 Converts a SQL value to a JSON value.

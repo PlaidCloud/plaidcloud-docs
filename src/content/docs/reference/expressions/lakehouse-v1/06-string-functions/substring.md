@@ -1,6 +1,6 @@
 ---
-title: SUBSTRING
-description: SUBSTRING — alias for the SUBSTR string function. Includes detailed syntax, examples, and usage reference.
+title: SUBSTRING (Lakehouse v1)
+description: SUBSTRING — alias for the SUBSTR string function.
 ---
 
 Alias for [SUBSTR](../substr).

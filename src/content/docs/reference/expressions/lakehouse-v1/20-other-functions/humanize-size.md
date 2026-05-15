@@ -1,5 +1,5 @@
 ---
-title: HUMANIZE_SIZE
+title: HUMANIZE_SIZE (Lakehouse v1)
 description: HUMANIZE_SIZE — Returns the readable size with a suffix(KiB, MiB, etc).
 ---
 

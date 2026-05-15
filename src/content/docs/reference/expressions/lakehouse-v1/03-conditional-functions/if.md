@@ -1,6 +1,6 @@
 ---
-title: IF
-description: IF — if <cond1> is TRUE, it returns <expr1>. See syntax and usage examples.
+title: IF (Lakehouse v1)
+description: IF — if <cond1> is TRUE, it returns <expr1>.
 ---
 
 If `<cond1>` is TRUE, it returns `<expr1>`. Otherwise if `<cond2>` is TRUE, it returns `<expr2>`, and so on.

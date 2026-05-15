@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_WEEK
+title: TO_START_OF_WEEK (Lakehouse v1)
 description: TO_START_OF_WEEK — returns the first day of the week for a date or a date with time.
 ---
 

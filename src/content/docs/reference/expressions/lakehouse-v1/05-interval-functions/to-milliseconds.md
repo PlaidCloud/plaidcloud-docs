@@ -1,5 +1,5 @@
 ---
-title: TO_MILLISECONDS
+title: TO_MILLISECONDS (Lakehouse v1)
 description: TO_MILLISECONDS — converts a specified number of milliseconds into an Interval type.
 ---
 

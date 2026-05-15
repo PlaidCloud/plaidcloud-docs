@@ -1,5 +1,5 @@
 ---
-title: Cryptographic Functions
+title: Cryptographic Functions (Lakehouse v2)
 description: "Lakehouse v2 SQL cryptographic functions: encryption, decryption, and HMAC helpers."
 ---
 

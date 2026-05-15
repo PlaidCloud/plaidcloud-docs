@@ -1,6 +1,6 @@
 ---
-title: ST_MAKE_LINE
-description: ST_MAKE_LINE — alias for the ST_MAKELINE geometry function. Includes detailed syntax, examples, and usage reference.
+title: ST_MAKE_LINE (Lakehouse v1)
+description: ST_MAKE_LINE — alias for the ST_MAKELINE geometry function.
 ---
 
 Alias for [ST_MAKELINE](../st-makeline).

@@ -1,5 +1,5 @@
 ---
-title: SUBTRACT TIME INTERVAL
+title: SUBTRACT TIME INTERVAL (Lakehouse v1)
 description: SUBTRACT TIME INTERVAL — subtract years, months, days, hours, minutes, or seconds from a date or timestamp value.
 ---
 

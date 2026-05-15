@@ -1,5 +1,5 @@
 ---
-title: Other Functions
+title: Other Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL other functions: miscellaneous helpers that don't fit other categories."
 ---
 

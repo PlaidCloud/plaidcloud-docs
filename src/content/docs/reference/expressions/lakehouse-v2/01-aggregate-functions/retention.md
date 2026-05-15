@@ -1,5 +1,5 @@
 ---
-title: RETENTION
+title: RETENTION (Lakehouse v2)
 description: RETENTION — calculates retention for a set of events. Returns an array of 0s and 1s.
 ---
 

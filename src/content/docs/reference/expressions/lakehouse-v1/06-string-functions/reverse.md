@@ -1,6 +1,6 @@
 ---
-title: REVERSE
-description: REVERSE — returns the string str with the order of the characters reversed. Includes syntax and.
+title: REVERSE (Lakehouse v1)
+description: REVERSE — returns the string str with the order of the characters reversed.
 ---
 
 Returns the string str with the order of the characters reversed.

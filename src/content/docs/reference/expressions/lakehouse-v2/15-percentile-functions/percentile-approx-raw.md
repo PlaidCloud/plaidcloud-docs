@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_APPROX_RAW
+title: PERCENTILE_APPROX_RAW (Lakehouse v2)
 description: "Use the PERCENTILE_APPROX_RAW percentile function in PlaidCloud Lakehouse. Returns an approximate percentile value from a precomputed percentile state."
 ---
 

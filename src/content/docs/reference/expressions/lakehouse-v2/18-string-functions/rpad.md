@@ -1,5 +1,5 @@
 ---
-title: RPAD
+title: RPAD (Lakehouse v2)
 description: RPAD — pads a string on the right to a specified length with a fill string.
 ---
 

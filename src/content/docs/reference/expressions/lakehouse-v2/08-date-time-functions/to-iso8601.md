@@ -1,5 +1,5 @@
 ---
-title: TO_ISO8601
+title: TO_ISO8601 (Lakehouse v2)
 description: TO_ISO8601 — converts a date or datetime to an ISO 8601 formatted string.
 ---
 

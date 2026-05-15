@@ -1,6 +1,6 @@
 ---
-title: INSPECT_TASK_RUNS
-description: INSPECT_TASK_RUNS — returns execution history of a task - see syntax, examples, and output.
+title: INSPECT_TASK_RUNS (Lakehouse v2)
+description: INSPECT_TASK_RUNS — returns execution history of a task.
 ---
 
 Returns execution history of a task.

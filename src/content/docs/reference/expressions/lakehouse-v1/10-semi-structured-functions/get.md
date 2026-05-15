@@ -1,5 +1,5 @@
 ---
-title: GET
+title: "GET (Semi-Structured, Lakehouse v1)"
 description: GET — extracts value from a Variant that contains ARRAY by index, or a Variant.
 ---
 

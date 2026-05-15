@@ -1,6 +1,6 @@
 ---
-title: ARRAY_REDUCE
-description: ARRAY_REDUCE — applies iteratively the lambda function to the elements of the array, so as to.
+title: ARRAY_REDUCE (Lakehouse v1)
+description: ARRAY_REDUCE — applies iteratively the lambda function to the elements of the array, so as to reduce the array to a single value.
 ---
 
 Applies iteratively the lambda function to the elements of the array, so as to reduce the array to a single value.

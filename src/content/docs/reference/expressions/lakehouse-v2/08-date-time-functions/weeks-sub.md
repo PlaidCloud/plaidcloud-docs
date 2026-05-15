@@ -1,5 +1,5 @@
 ---
-title: WEEKS_SUB
+title: WEEKS_SUB (Lakehouse v2)
 description: WEEKS_SUB — subtracts a specified number of weeks from a date.
 ---
 

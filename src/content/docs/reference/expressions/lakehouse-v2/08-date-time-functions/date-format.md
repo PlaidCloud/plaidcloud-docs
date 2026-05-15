@@ -1,5 +1,5 @@
 ---
-title: DATE_FORMAT
+title: DATE_FORMAT (Lakehouse v2)
 description: DATE_FORMAT — formats a date or datetime value according to a format string.
 ---
 

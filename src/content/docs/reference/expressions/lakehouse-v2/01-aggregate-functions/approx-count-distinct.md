@@ -1,5 +1,5 @@
 ---
-title: APPROX_COUNT_DISTINCT
+title: APPROX_COUNT_DISTINCT (Lakehouse v2)
 description: APPROX_COUNT_DISTINCT — returns an approximate count of distinct values using HyperLogLog.
 ---
 

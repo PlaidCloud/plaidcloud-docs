@@ -1,5 +1,5 @@
 ---
-title: PERCENTILE_EMPTY
+title: PERCENTILE_EMPTY (Lakehouse v2)
 description: PERCENTILE_EMPTY — returns an empty percentile state for initialization.
 ---
 

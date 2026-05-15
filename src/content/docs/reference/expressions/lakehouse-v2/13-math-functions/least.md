@@ -1,6 +1,6 @@
 ---
-title: LEAST
-description: LEAST — returns the smallest value from a list of values - see syntax, examples, and output.
+title: LEAST (Lakehouse v2)
+description: LEAST — returns the smallest value from a list of values.
 ---
 
 Returns the smallest value from a list of values.

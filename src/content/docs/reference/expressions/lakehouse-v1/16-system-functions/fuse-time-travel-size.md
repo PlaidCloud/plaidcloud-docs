@@ -1,5 +1,5 @@
 ---
-title: FUSE_TIME_TRAVEL_SIZE
+title: FUSE_TIME_TRAVEL_SIZE (Lakehouse v1)
 description: FUSE_TIME_TRAVEL_SIZE — calculates the storage size of historical data (for Time Travel) for tables.
 ---
 

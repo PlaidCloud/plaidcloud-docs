@@ -1,5 +1,5 @@
 ---
-title: IS_STRING
+title: IS_STRING (Lakehouse v1)
 description: IS_STRING — Checks if the input JSON value is a string.
 ---
 

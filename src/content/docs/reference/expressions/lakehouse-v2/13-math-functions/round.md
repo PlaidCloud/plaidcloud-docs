@@ -1,5 +1,5 @@
 ---
-title: ROUND
+title: ROUND (Lakehouse v2)
 description: ROUND — Rounds a number to a specified number of decimal places.
 ---
 

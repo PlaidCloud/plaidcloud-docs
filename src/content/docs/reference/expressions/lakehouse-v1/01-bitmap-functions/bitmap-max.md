@@ -1,5 +1,5 @@
 ---
-title: BITMAP_MAX
+title: BITMAP_MAX (Lakehouse v1)
 description: BITMAP_MAX — Gets the maximum value in the bitmap.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: INSPECT_RELATED_MV
+title: INSPECT_RELATED_MV (Lakehouse v2)
 description: INSPECT_RELATED_MV — Returns materialized views related to a table.
 ---
 

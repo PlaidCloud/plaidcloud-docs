@@ -1,5 +1,5 @@
 ---
-title: GROUP_CONCAT
+title: "GROUP_CONCAT (Aggregate, Lakehouse v2)"
 description: GROUP_CONCAT — concatenates values from a group into a single string with a separator.
 ---
 

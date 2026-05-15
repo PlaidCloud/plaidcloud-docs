@@ -1,5 +1,5 @@
 ---
-title: GET_JSON_DOUBLE
+title: GET_JSON_DOUBLE (Lakehouse v2)
 description: GET_JSON_DOUBLE — extracts a double value from a JSON object by a specified path.
 ---
 

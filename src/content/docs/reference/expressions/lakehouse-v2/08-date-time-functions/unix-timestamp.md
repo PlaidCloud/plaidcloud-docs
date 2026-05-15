@@ -1,6 +1,6 @@
 ---
-title: UNIX_TIMESTAMP
-description: UNIX_TIMESTAMP — converts a datetime to a Unix timestamp - see syntax, examples, and output.
+title: UNIX_TIMESTAMP (Lakehouse v2)
+description: UNIX_TIMESTAMP — converts a datetime to a Unix timestamp.
 ---
 
 Converts a datetime to a Unix timestamp.

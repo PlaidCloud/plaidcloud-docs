@@ -1,5 +1,5 @@
 ---
-title: YEARS_DIFF
+title: YEARS_DIFF (Lakehouse v2)
 description: YEARS_DIFF — returns the number of years between two dates.
 ---
 

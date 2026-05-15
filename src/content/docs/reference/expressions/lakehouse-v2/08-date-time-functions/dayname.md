@@ -1,6 +1,6 @@
 ---
-title: DAYNAME
-description: DAYNAME — returns the name of the weekday for a date - see syntax, examples, and output.
+title: DAYNAME (Lakehouse v2)
+description: DAYNAME — returns the name of the weekday for a date.
 ---
 
 Returns the name of the weekday for a date.

@@ -1,5 +1,5 @@
 ---
-title: H3_HEX_AREA_M2
+title: H3_HEX_AREA_M2 (Lakehouse v1)
 description: H3_HEX_AREA_M2 — returns the average hexagon area in square meters at the given resolution.
 ---
 

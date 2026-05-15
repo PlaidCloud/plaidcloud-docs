@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_ELEMENTS
+title: JSON_ARRAY_ELEMENTS (Lakehouse v1)
 description: JSON_ARRAY_ELEMENTS — extracts the elements from a JSON array, returning them as.
 ---
 

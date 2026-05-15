@@ -1,5 +1,5 @@
 ---
-title: JSON_REMOVE
+title: JSON_REMOVE (Lakehouse v2)
 description: JSON_REMOVE — Removes an element from a JSON document at a specified path.
 ---
 

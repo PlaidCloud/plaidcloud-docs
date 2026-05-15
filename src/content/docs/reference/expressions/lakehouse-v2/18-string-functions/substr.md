@@ -1,5 +1,5 @@
 ---
-title: SUBSTR
+title: SUBSTR (Lakehouse v2)
 description: SUBSTR — returns a substring starting from a specified position with an optional length.
 ---
 

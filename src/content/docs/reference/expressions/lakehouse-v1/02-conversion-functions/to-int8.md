@@ -1,6 +1,6 @@
 ---
-title: TO_INT8
-description: TO_INT8 — converts a value to INT8 data type. See syntax and usage examples.
+title: TO_INT8 (Lakehouse v1)
+description: TO_INT8 — converts a value to INT8 data type.
 ---
 
 Converts a value to INT8 data type.

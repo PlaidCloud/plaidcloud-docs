@@ -1,5 +1,5 @@
 ---
-title: CLUSTERING_INFORMATION
+title: CLUSTERING_INFORMATION (Lakehouse v1)
 description: CLUSTERING_INFORMATION — Returns clustering information of a table.
 ---
 

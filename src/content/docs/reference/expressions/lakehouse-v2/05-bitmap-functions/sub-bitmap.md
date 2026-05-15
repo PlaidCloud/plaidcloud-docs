@@ -1,5 +1,5 @@
 ---
-title: SUB_BITMAP
+title: SUB_BITMAP (Lakehouse v2)
 description: SUB_BITMAP — returns a sub-bitmap starting from a specified position with a cardinality limit.
 ---
 

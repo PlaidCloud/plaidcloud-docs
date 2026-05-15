@@ -1,5 +1,5 @@
 ---
-title: HEX_DECODE_STRING
+title: HEX_DECODE_STRING (Lakehouse v2)
 description: HEX_DECODE_STRING — Decodes a hexadecimal string to a VARCHAR string.
 ---
 

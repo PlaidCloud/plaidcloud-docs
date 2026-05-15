@@ -1,5 +1,5 @@
 ---
-title: STRPOS
+title: STRPOS (Lakehouse v2)
 description: STRPOS — returns the position of the first occurrence of a substring. Alias for `LOCATE`.
 ---
 

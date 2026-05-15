@@ -1,5 +1,5 @@
 ---
-title: TO_DAY_OF_MONTH
+title: TO_DAY_OF_MONTH (Lakehouse v1)
 description: TO_DAY_OF_MONTH — convert a date or date with time (timestamp/datetime) to a UInt8 number.
 ---
 

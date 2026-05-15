@@ -1,6 +1,6 @@
 ---
-title: ST_GEOMETRYFROMWKT
-description: ST_GEOMETRYFROMWKT — parses a WKT(well-known-text) or EWKT(extended well-known-text) input and.
+title: ST_GEOMETRYFROMWKT (Lakehouse v1)
+description: ST_GEOMETRYFROMWKT — parses a WKT(well-known-text) or EWKT(extended well-known-text) input and returns a value of type GEOMETRY.
 ---
 
 Parses a [WKT(well-known-text)](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) or [EWKT(extended well-known-text)](https://postgis.net/docs/ST_GeomFromEWKT.html) input and returns a value of type GEOMETRY.

@@ -1,5 +1,5 @@
 ---
-title: MAP_TRANSFORM_KEYS
+title: MAP_TRANSFORM_KEYS (Lakehouse v1)
 description: MAP_TRANSFORM_KEYS — applies a transformation to each key in a map using a lambda expression.
 ---
 

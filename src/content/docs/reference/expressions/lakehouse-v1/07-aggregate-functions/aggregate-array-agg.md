@@ -1,6 +1,6 @@
 ---
-title: ARRAY_AGG
-description: ARRAY_AGG — the ARRAY_AGG function (also known by its alias LIST) transforms all the values,.
+title: ARRAY_AGG (Lakehouse v1)
+description: ARRAY_AGG — the ARRAY_AGG function (also known by its alias LIST) transforms all the values.
 ---
 
 The ARRAY_AGG function (also known by its alias LIST) transforms all the values, including NULL, of a specific column in a query result into an array.

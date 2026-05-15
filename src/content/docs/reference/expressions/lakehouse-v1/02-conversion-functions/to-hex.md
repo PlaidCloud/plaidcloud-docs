@@ -1,6 +1,6 @@
 ---
-title: TO_HEX
-description: TO_HEX — for a string argument str, TO_HEX() returns a hexadecimal string representation of.
+title: TO_HEX (Lakehouse v1)
+description: TO_HEX — for a string argument str, TO_HEX() returns a hexadecimal string representation of str where each byte of each character in str is converted to two.
 ---
 
 For a string argument str, TO_HEX() returns a hexadecimal string representation of str where each byte of each character in str is converted to two hexadecimal digits. The inverse of this operation is performed by the UNHEX() function.

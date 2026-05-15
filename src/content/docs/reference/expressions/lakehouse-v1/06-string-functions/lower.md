@@ -1,5 +1,5 @@
 ---
-title: LOWER
+title: LOWER (Lakehouse v1)
 description: LOWER — Returns a string with all characters changed to lowercase.
 ---
 

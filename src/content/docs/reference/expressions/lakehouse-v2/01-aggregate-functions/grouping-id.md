@@ -1,5 +1,5 @@
 ---
-title: GROUPING_ID
+title: GROUPING_ID (Lakehouse v2)
 description: GROUPING_ID — returns a bitmask corresponding to the grouping of columns.
 ---
 

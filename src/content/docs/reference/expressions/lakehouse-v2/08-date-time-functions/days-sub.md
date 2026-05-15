@@ -1,5 +1,5 @@
 ---
-title: DAYS_SUB
+title: DAYS_SUB (Lakehouse v2)
 description: DAYS_SUB — subtracts a specified number of days from a date.
 ---
 

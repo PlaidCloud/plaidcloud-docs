@@ -1,5 +1,5 @@
 ---
-title: H3_EXACT_EDGE_LENGTH_RADS
+title: H3_EXACT_EDGE_LENGTH_RADS (Lakehouse v1)
 description: H3_EXACT_EDGE_LENGTH_RADS — computes the length of this directed edge, in radians.
 ---
 

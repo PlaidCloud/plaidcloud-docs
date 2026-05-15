@@ -1,5 +1,5 @@
 ---
-title: INTERSECT_COUNT
+title: INTERSECT_COUNT (Lakehouse v1)
 description: INTERSECT_COUNT — counts the number of intersecting bits between two bitmap columns.
 ---
 

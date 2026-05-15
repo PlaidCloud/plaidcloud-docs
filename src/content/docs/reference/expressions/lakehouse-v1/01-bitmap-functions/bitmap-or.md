@@ -1,5 +1,5 @@
 ---
-title: BITMAP_OR
+title: BITMAP_OR (Lakehouse v1)
 description: BITMAP_OR — Performs a bitwise OR operation on the two bitmaps.
 ---
 

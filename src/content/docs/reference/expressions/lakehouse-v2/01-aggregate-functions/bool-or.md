@@ -1,6 +1,6 @@
 ---
-title: BOOL_OR
-description: BOOL_OR — returns TRUE if any value in the group is TRUE - see syntax, examples, and output.
+title: BOOL_OR (Lakehouse v2)
+description: BOOL_OR — returns TRUE if any value in the group is TRUE.
 ---
 
 Returns TRUE if any value in the group is TRUE.

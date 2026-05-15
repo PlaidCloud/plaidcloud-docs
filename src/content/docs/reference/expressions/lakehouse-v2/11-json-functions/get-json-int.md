@@ -1,5 +1,5 @@
 ---
-title: GET_JSON_INT
+title: GET_JSON_INT (Lakehouse v2)
 description: GET_JSON_INT — extracts an integer value from a JSON object by a specified path.
 ---
 

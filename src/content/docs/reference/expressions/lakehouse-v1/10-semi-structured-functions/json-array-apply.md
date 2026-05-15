@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_APPLY
+title: JSON_ARRAY_APPLY (Lakehouse v1)
 description: JSON_ARRAY_APPLY — alias for the JSON_ARRAY_TRANSFORM semi-structured data function.
 ---
 

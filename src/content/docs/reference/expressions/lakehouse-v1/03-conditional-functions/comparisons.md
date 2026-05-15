@@ -1,5 +1,5 @@
 ---
-title: Comparison Methods
+title: Comparison Methods (Lakehouse v1)
 description: Comparison Methods — these comparison methods are available in Analyze expressions.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: UUID Functions
+title: UUID Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL uuid functions: generate and parse UUID values."
 ---
 

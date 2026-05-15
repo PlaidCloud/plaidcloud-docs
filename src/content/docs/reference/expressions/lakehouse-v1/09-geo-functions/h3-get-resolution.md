@@ -1,5 +1,5 @@
 ---
-title: H3_GET_RESOLUTION
+title: H3_GET_RESOLUTION (Lakehouse v1)
 description: H3_GET_RESOLUTION — Returns the resolution of the given H3 index.
 ---
 

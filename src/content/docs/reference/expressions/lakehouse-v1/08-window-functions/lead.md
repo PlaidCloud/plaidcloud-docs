@@ -1,5 +1,5 @@
 ---
-title: LEAD
+title: LEAD (Lakehouse v1)
 description: LEAD — lEAD allows you to access the value of a column from a subsequent row within the same.
 ---
 

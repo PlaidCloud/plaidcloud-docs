@@ -1,6 +1,6 @@
 ---
-title: ST_ASBINARY
-description: ST_ASBINARY — alias for the ST_ASWKB geometry function. Includes detailed syntax, examples, and usage reference.
+title: ST_ASBINARY (Lakehouse v1)
+description: ST_ASBINARY — alias for the ST_ASWKB geometry function.
 ---
 
 Alias for [ST_ASWKB](../st-aswkb).

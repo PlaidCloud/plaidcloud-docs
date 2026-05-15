@@ -1,6 +1,6 @@
 ---
-title: BITMAP_TO_BINARY
-description: BITMAP_TO_BINARY — converts a bitmap to a binary value - see syntax, examples, and output.
+title: BITMAP_TO_BINARY (Lakehouse v2)
+description: BITMAP_TO_BINARY — converts a bitmap to a binary value.
 ---
 
 Converts a bitmap to a binary value.

@@ -1,5 +1,5 @@
 ---
-title: MODULO
+title: MODULO (Lakehouse v1)
 description: MODULO — Returns the remainder of x divided by y.
 ---
 

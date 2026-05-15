@@ -1,5 +1,5 @@
 ---
-title: CHARACTER_LENGTH
+title: CHARACTER_LENGTH (Lakehouse v2)
 description: CHARACTER_LENGTH — returns the number of characters in a string. Alias for `CHAR_LENGTH`.
 ---
 

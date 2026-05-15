@@ -1,6 +1,6 @@
 ---
-title: JSON_SET
-description: JSON_SET — sets a value in a JSON document at a specified path - see syntax, examples, and output.
+title: JSON_SET (Lakehouse v2)
+description: JSON_SET — sets a value in a JSON document at a specified path.
 ---
 
 Sets a value in a JSON document at a specified path.

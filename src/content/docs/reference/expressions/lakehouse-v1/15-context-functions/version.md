@@ -1,5 +1,5 @@
 ---
-title: VERSION
+title: VERSION (Lakehouse v1)
 description: VERSION — Returns the current version of PlaidCloud LakehouseQuery.
 ---
 

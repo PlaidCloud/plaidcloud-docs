@@ -1,6 +1,6 @@
 ---
-title: CURRENT_VERSION
-description: CURRENT_VERSION — returns the current version of StarRocks - see syntax, examples, and output.
+title: CURRENT_VERSION (Lakehouse v2)
+description: CURRENT_VERSION — returns the current version of StarRocks.
 ---
 
 Returns the current version of StarRocks.

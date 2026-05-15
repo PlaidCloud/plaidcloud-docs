@@ -1,5 +1,5 @@
 ---
-title: TRY_TO_DATETIME
+title: TRY_TO_DATETIME (Lakehouse v1)
 description: TRY_TO_DATETIME — alias for the TRY_TO_TIMESTAMP datetime function.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: UNNEST_BITMAP
-description: UNNEST_BITMAP — expands a bitmap into a set of rows - see syntax, examples, and output.
+title: UNNEST_BITMAP (Lakehouse v2)
+description: UNNEST_BITMAP — expands a bitmap into a set of rows.
 ---
 
 Expands a bitmap into a set of rows.

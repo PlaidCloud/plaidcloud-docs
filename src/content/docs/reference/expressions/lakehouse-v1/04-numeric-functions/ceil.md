@@ -1,6 +1,6 @@
 ---
-title: CEIL
-description: CEIL — rounds the number up. Includes detailed syntax, examples, and usage reference.
+title: CEIL (Lakehouse v1)
+description: CEIL — rounds the number up.
 ---
 
 Rounds the number up.

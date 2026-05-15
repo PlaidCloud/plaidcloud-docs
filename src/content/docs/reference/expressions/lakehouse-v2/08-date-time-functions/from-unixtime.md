@@ -1,5 +1,5 @@
 ---
-title: FROM_UNIXTIME
+title: FROM_UNIXTIME (Lakehouse v2)
 description: FROM_UNIXTIME — converts a Unix timestamp to a datetime string.
 ---
 

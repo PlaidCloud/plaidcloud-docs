@@ -1,5 +1,5 @@
 ---
-title: MIN
+title: MIN (Lakehouse v1)
 description: MIN — return the minimum value in a set of values.
 ---
 

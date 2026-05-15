@@ -1,5 +1,5 @@
 ---
-title: BITMAP_CONTAINS
+title: BITMAP_CONTAINS (Lakehouse v2)
 description: BITMAP_CONTAINS — Checks whether a bitmap contains a specific value.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: RLIKE
-description: RLIKE — alias for the REGEXP string function. Includes detailed syntax, examples, and usage reference.
+title: RLIKE (Lakehouse v1)
+description: RLIKE — alias for the REGEXP string function.
 ---
 
 Alias for [REGEXP](../regexp).

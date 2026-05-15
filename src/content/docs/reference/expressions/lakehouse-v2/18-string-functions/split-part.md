@@ -1,5 +1,5 @@
 ---
-title: SPLIT_PART
+title: SPLIT_PART (Lakehouse v2)
 description: SPLIT_PART — splits a string by a delimiter and returns the element at a specified index.
 ---
 

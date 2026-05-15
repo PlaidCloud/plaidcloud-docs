@@ -1,5 +1,5 @@
 ---
-title: ST_MAKEPOLYGON
+title: ST_MAKEPOLYGON (Lakehouse v1)
 description: ST_MAKEPOLYGON — constructs a GEOMETRY object that represents a Polygon without holes.
 ---
 

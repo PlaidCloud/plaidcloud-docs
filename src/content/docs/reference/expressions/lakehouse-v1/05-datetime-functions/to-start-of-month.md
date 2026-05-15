@@ -1,5 +1,5 @@
 ---
-title: TO_START_OF_MONTH
+title: TO_START_OF_MONTH (Lakehouse v1)
 description: TO_START_OF_MONTH — rounds down a date or date with time (timestamp/datetime) to the first day.
 ---
 

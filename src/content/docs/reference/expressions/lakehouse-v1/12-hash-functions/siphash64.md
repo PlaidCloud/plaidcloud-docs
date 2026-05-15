@@ -1,5 +1,5 @@
 ---
-title: SIPHASH64
+title: SIPHASH64 (Lakehouse v1)
 description: SIPHASH64 — produces a 64-bit SipHash hash value.
 ---
 

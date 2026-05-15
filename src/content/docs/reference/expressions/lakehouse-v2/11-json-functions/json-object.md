@@ -1,6 +1,6 @@
 ---
-title: JSON_OBJECT
-description: JSON_OBJECT — creates a JSON object from key-value pairs - see syntax, examples, and output.
+title: JSON_OBJECT (Lakehouse v2)
+description: JSON_OBJECT — creates a JSON object from key-value pairs.
 ---
 
 Creates a JSON object from key-value pairs.

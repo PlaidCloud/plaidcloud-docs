@@ -1,5 +1,5 @@
 ---
-title: ANY_VALUE
+title: ANY_VALUE (Lakehouse v2)
 description: ANY_VALUE — Returns any arbitrary value from a group of rows.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: COALESCE
+title: COALESCE (Lakehouse v2)
 description: COALESCE — returns the first non-NULL expression from a list of expressions.
 ---
 

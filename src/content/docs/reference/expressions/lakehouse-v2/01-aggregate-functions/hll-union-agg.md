@@ -1,5 +1,5 @@
 ---
-title: HLL_UNION_AGG
+title: HLL_UNION_AGG (Lakehouse v2)
 description: HLL_UNION_AGG — Aggregates HLL values by computing the union.
 ---
 

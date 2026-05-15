@@ -1,5 +1,5 @@
 ---
-title: REGEXP_SUBSTR
+title: REGEXP_SUBSTR (Lakehouse v1)
 description: REGEXP_SUBSTR — returns the substring of the string expr that matches the regular expression.
 ---
 

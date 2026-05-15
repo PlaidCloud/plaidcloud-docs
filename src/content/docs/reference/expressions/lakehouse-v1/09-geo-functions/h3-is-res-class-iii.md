@@ -1,5 +1,5 @@
 ---
-title: H3_IS_RES_CLASS_III
+title: H3_IS_RES_CLASS_III (Lakehouse v1)
 description: H3_IS_RES_CLASS_III — checks if the given H3 index has a resolution with Class III orientation.
 ---
 

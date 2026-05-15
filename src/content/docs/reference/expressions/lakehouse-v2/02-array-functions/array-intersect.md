@@ -1,6 +1,6 @@
 ---
-title: ARRAY_INTERSECT
-description: ARRAY_INTERSECT — returns the intersection of two arrays - see syntax, examples, and output.
+title: ARRAY_INTERSECT (Lakehouse v2)
+description: ARRAY_INTERSECT — returns the intersection of two arrays.
 ---
 
 Returns the intersection of two arrays.

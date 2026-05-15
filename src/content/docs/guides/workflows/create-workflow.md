@@ -1,5 +1,5 @@
 ---
-title: Create Workflow
+title: Create Workflow (Guide)
 description: Create a new workflow in PlaidCloud to define a sequence of data processing steps for loading, transforming, and exporting data.
 sidebar:
   order: 2

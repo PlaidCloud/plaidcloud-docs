@@ -1,6 +1,6 @@
 ---
-title: SINH
-description: SINH — returns the hyperbolic sine of a number - see syntax, examples, and output.
+title: SINH (Lakehouse v2)
+description: SINH — returns the hyperbolic sine of a number.
 ---
 
 Returns the hyperbolic sine of a number.

@@ -1,6 +1,6 @@
 ---
-title: DIVIDE
-description: DIVIDE — returns the result of dividing one number by another - see syntax, examples, and output.
+title: DIVIDE (Lakehouse v2)
+description: DIVIDE — returns the result of dividing one number by another.
 ---
 
 Returns the result of dividing one number by another.

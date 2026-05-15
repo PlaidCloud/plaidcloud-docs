@@ -1,6 +1,6 @@
 ---
-title: REPLACE
-description: REPLACE — returns the string str with all occurrences of the string from_str replaced by the.
+title: REPLACE (Lakehouse v1)
+description: REPLACE — returns the string str with all occurrences of the string from_str replaced by the string to_str.
 ---
 
 Returns the string str with all occurrences of the string from_str replaced by the string to_str.

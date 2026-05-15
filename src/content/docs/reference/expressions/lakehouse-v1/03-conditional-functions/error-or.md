@@ -1,5 +1,5 @@
 ---
-title: ERROR_OR
+title: ERROR_OR (Lakehouse v1)
 description: ERROR_OR — Returns the first non-error expression among its inputs.
 ---
 

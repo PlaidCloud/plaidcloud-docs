@@ -1,5 +1,5 @@
 ---
-title: RPAD
+title: RPAD (Lakehouse v1)
 description: RPAD — returns the string str, right-padded with the string padstr to a length of len characters.
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: H3_INDEXES_ARE_NEIGHBORS
+title: H3_INDEXES_ARE_NEIGHBORS (Lakehouse v1)
 description: H3_INDEXES_ARE_NEIGHBORS — returns whether or not the provided H3 indexes are neighbors.
 ---
 

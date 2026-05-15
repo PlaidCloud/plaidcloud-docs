@@ -1,5 +1,5 @@
 ---
-title: ST_TRANSFORM
+title: ST_TRANSFORM (Lakehouse v1)
 description: ST_TRANSFORM — converts a GEOMETRY object from one spatial reference system (SRS) to another.
 ---
 

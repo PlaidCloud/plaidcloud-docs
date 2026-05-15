@@ -1,5 +1,5 @@
 ---
-title: ARRAY_CONTAINS
+title: ARRAY_CONTAINS (Lakehouse v2)
 description: ARRAY_CONTAINS — Checks whether an array contains a specific element.
 ---
 

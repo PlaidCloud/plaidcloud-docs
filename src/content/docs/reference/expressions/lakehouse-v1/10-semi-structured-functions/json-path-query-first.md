@@ -1,6 +1,6 @@
 ---
-title: JSON_PATH_QUERY_FIRST
-description: JSON_PATH_QUERY_FIRST — get the first JSON item returned by JSON path for the.
+title: JSON_PATH_QUERY_FIRST (Lakehouse v1)
+description: JSON_PATH_QUERY_FIRST — get the first JSON item returned by JSON path for the specified JSON value.
 ---
 
 Get the first JSON item returned by JSON path for the specified JSON value. 

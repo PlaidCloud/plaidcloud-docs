@@ -1,5 +1,5 @@
 ---
-title: MIN_BY
+title: MIN_BY (Lakehouse v2)
 description: MIN_BY — returns the value of one column associated with the minimum value of another column.
 ---
 

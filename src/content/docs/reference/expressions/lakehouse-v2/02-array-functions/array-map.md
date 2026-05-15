@@ -1,5 +1,5 @@
 ---
-title: ARRAY_MAP
+title: ARRAY_MAP (Lakehouse v2)
 description: ARRAY_MAP — Applies a lambda expression to each element of an array.
 ---
 

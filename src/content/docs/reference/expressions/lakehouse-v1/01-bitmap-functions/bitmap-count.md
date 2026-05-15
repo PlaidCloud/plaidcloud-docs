@@ -1,5 +1,5 @@
 ---
-title: BITMAP_COUNT
+title: BITMAP_COUNT (Lakehouse v1)
 description: BITMAP_COUNT — Counts the number of bits set to 1 in the bitmap.
 ---
 

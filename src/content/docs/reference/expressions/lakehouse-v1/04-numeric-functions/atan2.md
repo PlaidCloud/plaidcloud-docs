@@ -1,5 +1,5 @@
 ---
-title: ATAN2
+title: ATAN2 (Lakehouse v1)
 description: ATAN2 — Returns the arc tangent of the two variables x and y.
 ---
 

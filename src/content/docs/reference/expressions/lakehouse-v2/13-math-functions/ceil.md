@@ -1,5 +1,5 @@
 ---
-title: CEIL
+title: CEIL (Lakehouse v2)
 description: CEIL — Returns the smallest integer greater than or equal to a number.
 ---
 

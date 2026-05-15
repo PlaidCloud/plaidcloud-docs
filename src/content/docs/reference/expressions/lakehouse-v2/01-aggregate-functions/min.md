@@ -1,6 +1,6 @@
 ---
-title: MIN
-description: MIN — returns the minimum value in a set of values - see syntax, examples, and output.
+title: MIN (Lakehouse v2)
+description: MIN — returns the minimum value in a set of values.
 ---
 
 Returns the minimum value in a set of values.

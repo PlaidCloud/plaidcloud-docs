@@ -1,5 +1,5 @@
 ---
-title: JSON_EXISTS
+title: JSON_EXISTS (Lakehouse v2)
 description: JSON_EXISTS — checks whether a JSON document contains a value at a specified path.
 ---
 

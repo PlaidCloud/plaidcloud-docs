@@ -1,5 +1,5 @@
 ---
-title: TO_QUARTER
+title: TO_QUARTER (Lakehouse v1)
 description: TO_QUARTER — retrieves the quarter (1, 2, 3, or 4) from a given date or timestamp.
 ---
 

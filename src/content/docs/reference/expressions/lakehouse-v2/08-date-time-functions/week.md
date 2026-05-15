@@ -1,6 +1,6 @@
 ---
-title: WEEK
-description: WEEK — returns the week number of the year for a date - see syntax, examples, and output.
+title: WEEK (Lakehouse v2)
+description: WEEK — returns the week number of the year for a date.
 ---
 
 Returns the week number of the year for a date.

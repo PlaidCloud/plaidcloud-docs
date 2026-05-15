@@ -1,5 +1,5 @@
 ---
-title: SUBSTRING
+title: SUBSTRING (Lakehouse v2)
 description: SUBSTRING — returns a substring starting from a specified position. Alias for `SUBSTR`.
 ---
 

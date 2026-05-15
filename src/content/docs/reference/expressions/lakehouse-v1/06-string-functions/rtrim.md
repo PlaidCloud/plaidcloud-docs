@@ -1,6 +1,6 @@
 ---
-title: RTRIM
-description: RTRIM — removes all occurrences of any character present in the specified trim string from the.
+title: RTRIM (Lakehouse v1)
+description: RTRIM — removes all occurrences of any character present in the specified trim string from the right side of the string.
 ---
 
 Removes all occurrences of any character present in the specified trim string from the right side of the string.

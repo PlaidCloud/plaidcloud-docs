@@ -1,5 +1,5 @@
 ---
-title: JSON_ARRAY_TRANSFORM
+title: JSON_ARRAY_TRANSFORM (Lakehouse v1)
 description: JSON_ARRAY_TRANSFORM — transforms each element of a JSON array using a specified.
 ---
 

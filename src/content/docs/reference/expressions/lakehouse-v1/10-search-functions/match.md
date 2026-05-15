@@ -1,5 +1,5 @@
 ---
-title: MATCH
+title: MATCH (Lakehouse v1)
 description: MATCH — Searches for documents containing specified keywords.
 ---
 

@@ -1,6 +1,6 @@
 ---
-title: VARIANCE_POP
-description: VARIANCE_POP — returns the population variance - see syntax, examples, and output.
+title: VARIANCE_POP (Lakehouse v2)
+description: VARIANCE_POP — returns the population variance.
 ---
 
 Returns the population variance.

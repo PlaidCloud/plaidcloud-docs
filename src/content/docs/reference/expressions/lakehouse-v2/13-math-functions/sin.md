@@ -1,6 +1,6 @@
 ---
-title: SIN
-description: SIN — returns the sine of a number in radians - see syntax, examples, and output.
+title: SIN (Lakehouse v2)
+description: SIN — returns the sine of a number in radians.
 ---
 
 Returns the sine of a number in radians.

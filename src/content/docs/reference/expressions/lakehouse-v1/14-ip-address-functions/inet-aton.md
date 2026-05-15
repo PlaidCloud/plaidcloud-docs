@@ -1,5 +1,5 @@
 ---
-title: INET_ATON
+title: INET_ATON (Lakehouse v1)
 description: INET_ATON — converts an IPv4 address to a 32-bit integer.
 ---
 

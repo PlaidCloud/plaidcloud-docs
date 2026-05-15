@@ -1,5 +1,5 @@
 ---
-title: RANDOM
+title: RANDOM (Lakehouse v2)
 description: RANDOM — returns a random floating-point value between 0 and 1. Alias for `RAND`.
 ---
 

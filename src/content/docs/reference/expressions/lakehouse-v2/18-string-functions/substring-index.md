@@ -1,5 +1,5 @@
 ---
-title: SUBSTRING_INDEX
+title: SUBSTRING_INDEX (Lakehouse v2)
 description: "Use the SUBSTRING_INDEX string function in PlaidCloud Lakehouse. Returns a substring from a string before or after a specified number of delimiter occurrences."
 ---
 

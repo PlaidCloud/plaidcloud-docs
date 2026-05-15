@@ -1,6 +1,6 @@
 ---
-title: COSH
-description: COSH — returns the hyperbolic cosine of a number - see syntax, examples, and output.
+title: COSH (Lakehouse v2)
+description: COSH — returns the hyperbolic cosine of a number.
 ---
 
 Returns the hyperbolic cosine of a number.

@@ -1,6 +1,6 @@
 ---
-title: DATE
-description: DATE — extracts the date part from a datetime expression - see syntax, examples, and output.
+title: DATE (Lakehouse v2)
+description: DATE — extracts the date part from a datetime expression.
 ---
 
 Extracts the date part from a datetime expression.

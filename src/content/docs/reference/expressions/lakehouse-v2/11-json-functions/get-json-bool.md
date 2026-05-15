@@ -1,5 +1,5 @@
 ---
-title: GET_JSON_BOOL
+title: GET_JSON_BOOL (Lakehouse v2)
 description: GET_JSON_BOOL — extracts a boolean value from a JSON object by a specified path.
 ---
 

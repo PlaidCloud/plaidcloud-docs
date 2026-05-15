@@ -1,5 +1,5 @@
 ---
-title: COT
+title: COT (Lakehouse v1)
 description: COT — Returns the cotangent of x, where x is given in radians.
 ---
 

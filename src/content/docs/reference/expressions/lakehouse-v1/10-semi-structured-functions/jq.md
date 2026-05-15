@@ -1,5 +1,5 @@
 ---
-title: JQ
+title: JQ (Lakehouse v1)
 description: JQ — the JQ function is a set-returning SQL function that allows you to apply jq.
 ---
 

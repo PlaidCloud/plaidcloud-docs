@@ -1,6 +1,6 @@
 ---
-title: TRIM_BOTH
-description: TRIM_BOTH — removes all occurrences of the specified trim string from the beginning, end, or.
+title: TRIM_BOTH (Lakehouse v1)
+description: TRIM_BOTH — removes all occurrences of the specified trim string from the beginning, end, or both sides of the string.
 ---
 
 Removes all occurrences of the specified trim string from the beginning, end, or both sides of the string.

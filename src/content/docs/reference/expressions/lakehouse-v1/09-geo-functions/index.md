@@ -1,5 +1,5 @@
 ---
-title: Geography Functions
+title: Geography Functions (Lakehouse v1)
 description: "Lakehouse v1 SQL geography functions: compute distances, bearings, and containment between geographic points and shapes on a spheroid."
 ---
 

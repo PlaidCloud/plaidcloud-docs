@@ -1,6 +1,6 @@
 ---
-title: RAND(n)
-description: RAND(n) — returns a random floating-point value v in the range 0 <= v < 1. Includes syntax and.
+title: RAND(n) (Lakehouse v1)
+description: RAND(n) — returns a random floating-point value v in the range 0 &lt;= v &lt; 1.0.
 ---
 
 Returns a random floating-point value v in the range 0 &lt;= v &lt; 1.0. To obtain a random integer R in the range i &lt;= R &lt; j, use the expression FLOOR(i + RAND() * (j − i)). Argument `n` is used as the seed value. For equal argument values, RAND(n) returns the same value each time , and thus produces a repeatable sequence of column values.

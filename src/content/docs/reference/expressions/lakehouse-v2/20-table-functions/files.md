@@ -1,6 +1,6 @@
 ---
-title: FILES
-description: FILES — reads data directly from cloud storage files - see syntax, examples, and output.
+title: FILES (Lakehouse v2)
+description: FILES — reads data directly from cloud storage files.
 ---
 
 Reads data directly from cloud storage files.

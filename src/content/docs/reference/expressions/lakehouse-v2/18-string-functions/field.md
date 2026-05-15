@@ -1,5 +1,5 @@
 ---
-title: FIELD
+title: FIELD (Lakehouse v2)
 description: FIELD — Returns the index position of a value in a list of arguments.
 ---
 

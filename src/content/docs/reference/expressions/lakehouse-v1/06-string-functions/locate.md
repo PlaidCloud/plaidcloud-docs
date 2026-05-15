@@ -1,6 +1,6 @@
 ---
-title: LOCATE
-description: LOCATE — the first syntax returns the position of the first occurrence of substring substr in.
+title: LOCATE (Lakehouse v1)
+description: LOCATE — the first syntax returns the position of the first occurrence of substring substr in string str.
 ---
 
 The first syntax returns the position of the first occurrence of substring substr in string str.

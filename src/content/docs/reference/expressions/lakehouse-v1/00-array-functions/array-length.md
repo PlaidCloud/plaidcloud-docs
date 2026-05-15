@@ -1,5 +1,5 @@
 ---
-title: ARRAY_LENGTH
+title: ARRAY_LENGTH (Lakehouse v1)
 description: ARRAY_LENGTH — returns the length of an array.
 ---
 

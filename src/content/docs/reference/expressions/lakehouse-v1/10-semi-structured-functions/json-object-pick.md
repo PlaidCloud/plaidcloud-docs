@@ -1,5 +1,5 @@
 ---
-title: JSON_OBJECT_PICK
+title: JSON_OBJECT_PICK (Lakehouse v1)
 description: JSON_OBJECT_PICK — creates a new JSON object containing only the specified keys.
 ---
 

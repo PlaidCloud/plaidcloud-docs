@@ -1,5 +1,5 @@
 ---
-title: IFNULL
+title: IFNULL (Lakehouse v2)
 description: IFNULL — returns the first expression if it is not NULL, otherwise returns the second expression.
 ---
 
