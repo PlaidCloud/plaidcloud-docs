@@ -1,8 +1,11 @@
 ---
 title: Google Service Connections
-description: Google service connection requirements vary depending on the Google service.  See how to configure the individual connections.
+description: Connect PlaidCloud to Google services including BigQuery for analytics and Google Sheets for spreadsheet integration.
 ---
 
-PlaidCloud provides a direct connections for Google services.
+PlaidCloud connects to Google services via Google Cloud service accounts (BigQuery) and OAuth (Google Sheets). Each connector targets a specific Google product family.
 
-The individual service guides will help provide the specific setup necessary to connect.
+## Providers
+
+- [BigQuery](/reference/connectors/google/big-query/) — Google's cloud data warehouse
+- [Google Sheets](/reference/connectors/google/gspread/) — read and write spreadsheet data
