@@ -1,7 +1,13 @@
 ---
-title: SAP ECC and S/4HANA Steps
-description: Connect PlaidCloud workflows with SAP ECC and S/4HANA systems using RFC calls and financial document attachment steps.
-sidebar:
-  label: SAP ECC and S/4HANA Steps
-  order: 15
+title: SAP Steps
+description: Workflow steps that call SAP ECC Remote Function Calls (RFCs) for finance, master data, and document operations.
 ---
+
+Workflow steps that call SAP ECC Remote Function Calls (RFCs) for finance, master data, and document operations.
+
+## Steps
+
+- [Call SAP Financial Document Attachment](/reference/workflow-steps/sap/call-sap-financial-document-attachment/)
+- [Call SAP General Ledger Posting](/reference/workflow-steps/sap/call-sap-general-ledger-posting/)
+- [Call SAP Master Data Table RFC](/reference/workflow-steps/sap/call-sap-master-data-table-rfc/)
+- [Call SAP RFC](/reference/workflow-steps/sap/call-sap-rfc/)

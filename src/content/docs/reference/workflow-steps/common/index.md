@@ -1,7 +1,10 @@
 ---
 title: Common Step Operations
-description: Learn about common PlaidCloud workflow step operations including data mapping, filtering, and configuration options.
-sidebar:
-  label: Common Step Operations
-  order: 11
+description: Shared configuration patterns referenced by multiple workflow step types — primarily data mapping and filtering.
 ---
+
+Shared configuration patterns referenced by multiple workflow step types — primarily data mapping and filtering.
+
+## Steps
+
+- [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/)
