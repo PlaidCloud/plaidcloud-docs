@@ -37,6 +37,20 @@ Cause: your session was established through a sign-in path that didn't cache the
 
 Fix: sign out of PlaidCloud and sign back in through the standard login page. The new session will carry the access token.
 
+## Signed Out or Disconnected After a Security Update
+
+Symptom: after a workspace security update, you were signed out of the web app and your AI agent shows the MCP server as unauthorized or disconnected — even though nothing in your client config changed.
+
+Cause: your workspace switched to a signing secret unique to that workspace (see [Session and Token Security](/administration/access/member-authentication/session-and-token-security/)). This one-time change retires the previous secret, so sessions and agent tokens issued before it are no longer valid.
+
+Fix: re-authenticate. This is expected and needed only once.
+
+- **Web app**: sign in again.
+- **OAuth clients** (Claude Code, ChatGPT, Cursor, Claude Desktop): re-run the connection's sign-in so the client receives a fresh token. If the client cached the old token, remove and re-add the MCP server.
+- **Static bearer token**: the previous token is invalidated — mint a fresh one at `https://<your-workspace>.plaid.cloud/mcp/setup/token` and update your config.
+
+After reconnecting once, the connection is stable again.
+
 ## Tools Missing or Incomplete Catalog
 
 Symptom: `mcp_introspect` returns fewer tools than expected, or specific tools you need aren't there.
