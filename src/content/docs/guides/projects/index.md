@@ -18,6 +18,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Manage data editors](/guides/projects/managing-data-editors/) — who can modify project data
 - [View the project log](/guides/projects/viewing-the-project-log/) — audit trail of changes
 - [Archive a project](/guides/projects/archive-a-project/) — preserve completed work without deleting
+- [Compare and merge projects](/guides/projects/compare-and-merge-projects/) — diff two projects and selectively copy changes between them
 
 ## Related
 
