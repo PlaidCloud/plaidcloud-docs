@@ -33,5 +33,6 @@ A remediation workflow is optional. You can leave it blank now and configure it 
 ## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — add steps to your new workflow
+- [Advanced workflows](/guides/workflows/advanced-workflows/) — choose a workflow type and build on the visual canvas
 - [Run a workflow](/guides/workflows/run-a-workflow/) — execute the workflow once it has steps
 - [Managing step errors](/guides/workflows/managing-step-errors/) — debugging failures
