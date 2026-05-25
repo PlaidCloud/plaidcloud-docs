@@ -23,6 +23,7 @@ Relational databases, cloud warehouses, query engines, and lakehouse formats.
 - [Cloud services](/reference/connectors/cloud-services/) — third-party data services
 - [Google](/reference/connectors/google/) — BigQuery, Google Sheets
 - [Collaboration](/reference/connectors/collaboration/) — Slack, Microsoft Teams
+- [Singer Sources](/reference/connectors/singer-sources/) — 130+ Singer-tap sources: Stripe, GitHub, HubSpot, databases, and more
 
 ### Development and Source Control
 
