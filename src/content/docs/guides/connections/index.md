@@ -8,6 +8,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 ## Guides
 
 - [Clone a Connection](/guides/connections/clone-connection/) — duplicate an existing connection for a new environment or tenant.
+- [Singer Sources](/guides/connections/singer-sources/) — connect to sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables.
 
 ## Related
 
