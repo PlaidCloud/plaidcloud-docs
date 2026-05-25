@@ -1,6 +1,6 @@
 ---
 title: Create Workflow (Guide)
-description: Create a new workflow in PlaidCloud to define a sequence of data processing steps for loading, transforming, and exporting data.
+description: Create a workflow in PlaidCloud and choose its type — Standard Serial, Standard Parallel, or Advanced (DAG canvas) — to load, transform, and export data.
 sidebar:
   order: 2
 ---
@@ -15,10 +15,25 @@ To create a new workflow, you need an existing project. If you don't have one ye
 4. Fill in the form:
    - **Name** — short, descriptive (e.g., "Monthly close — load actuals")
    - **Memo** — optional longer description for context
-   - **Remediation workflow** — optional; see below
+   - **Workflow Type** — Standard Serial (default), Standard Parallel, or Advanced (DAG canvas). See [Choosing a workflow type](#choosing-a-workflow-type) below.
+   - **Trigger Remediation Workflow on Error** — optional; enable it to pick a remediation workflow (see [About remediation workflows](#about-remediation-workflows) below).
 5. Click **Create**.
 
 The workflow appears in the Workflows tab and is ready to have steps added to it. Double-click it to open the [Workflow Explorer](/guides/workflows/workflow-explorer/) and start building.
+
+## Choosing a Workflow Type
+
+The **Workflow Type** you pick when creating a workflow determines how its steps are arranged and run. It defaults to **Standard Serial**, and you set it from the type selector in the New Workflow form.
+
+| Type | How steps are arranged and run |
+|------|--------------------------------|
+| **Standard Serial** | Steps run from the **Steps list**, one at a time, in order. |
+| **Standard Parallel** | Steps run from the **Steps list**, in parallel where their dependencies allow. |
+| **Advanced (DAG canvas)** | Steps are laid out on a **visual canvas** and run in dependency order, with independent branches running in parallel. Advanced also unlocks breakpoints, containers, run-from-here, simulation, and real-time collaboration. |
+
+A fourth type, **Macro** — a reusable, callable workflow with declared inputs and outputs — is coming soon and appears in the selector as disabled.
+
+Choose **Advanced (DAG canvas)** here if you want the [Visual Workflow Designer](/guides/workflows/advanced-workflows/) from the start. The choice isn't permanent: you can promote a Standard workflow later with **Convert to Advanced…** from the Workflows list.
 
 ## About Remediation Workflows
 
