@@ -56,21 +56,27 @@ Required fields are marked, and the form validates them (including that JSON and
 2. Add a step and choose **Import: Singer Source** as the type. The editor opens with a **Source** tab and a **Streams** tab.
 3. On the **Source** tab:
    * Choose the **Connection** (your Singer Source connection).
-   * Choose a **Sync Mode** — **Full table (replace each run)** or **Incremental (append new data)**.
+   * Choose a **Sync Mode** — **Full table (replace each run)**, **Incremental (append new data)**, or **Upsert (merge on key)**.
    * Click **Discover Streams**. Discovery runs on the runner and may take up to about three minutes the first time; the status shows how many streams were found.
 4. On the **Streams** tab, you'll see one row per discovered stream. For each stream you want:
    * Open its **Stream** panel and check **Import this stream**.
    * Choose a **Target Table** for where the stream's data lands.
+   * If the sync mode is **Upsert**, set the stream's **Key Columns** — one column name per line. The field defaults to the tap's declared primary key; override it to merge on different columns. Every imported stream needs at least one key column when the mode is **Upsert**.
 5. Save the step and run it as part of the workflow (or [on its own](/guides/workflows/running-one-step-in-a-workflow/)).
 
 <Aside type="caution">The streams you select *are* the saved set. To change which streams import, click **Discover Streams** again — streams that reappear keep the target table and selection you already set.</Aside>
 
-## Full Table vs Incremental
+## Sync Modes
 
 * **Full table (replace each run)** re-extracts the whole stream every run and replaces the target table. Use it for small or fully refreshed sources.
 * **Incremental (append new data)** extracts only the rows that are new since the last run and appends them, resuming from where the previous run left off. It works only for streams the tap can sync incrementally — those that expose a replication key (such as an updated-at timestamp or an incrementing ID). If you choose incremental and a selected stream has no replication key, the step asks you to switch that stream to full table or deselect it.
+* **Upsert (merge on key)** re-extracts the whole stream each run, then merges it into the target on the stream's **Key Columns**: rows whose key matches an existing row are updated in place, and rows with a new key are inserted. Existing rows that aren't in this run are kept. Use it to keep a table in step with a source whose records change over time — without the duplicates an append would create or the full rebuild a replace would do. The target table is created on the first run, so the initial upsert inserts every row.
 
 <Aside type="note">Incremental progress is tracked per step. The first incremental run extracts everything; later runs pick up only new rows.</Aside>
+
+<Aside type="note">Upsert re-extracts the full stream each run (it doesn't use a replication key), so it suits sources where existing rows are updated and you want one row per key. Set each stream's **Key Columns** on the **Streams** tab; they default to the tap's declared primary key.</Aside>
+
+<Aside type="caution">Pick key columns that are always present. Upsert matches rows by exact key value, and an empty (null) key never matches another — so rows with a null key are always inserted rather than merged, and can accumulate across runs.</Aside>
 
 ## How Credentials Are Handled
 
