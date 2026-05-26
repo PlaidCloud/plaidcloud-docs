@@ -11,6 +11,7 @@ Steps that control workflow execution itself — variables, loops, error handlin
 - [Copy Workflow](/reference/workflow-steps/workflow-control/copy-workflow/)
 - [Create Workflow](/reference/workflow-steps/workflow-control/create-workflow/)
 - [Delete Workflow](/reference/workflow-steps/workflow-control/delete-workflow/)
+- [Macro Run](/reference/workflow-steps/workflow-control/run-macro/)
 - [Raise Workflow Error](/reference/workflow-steps/workflow-control/raise-workflow-error/)
 - [Rename Workflow](/reference/workflow-steps/workflow-control/rename-workflow/)
 - [Run Workflow](/reference/workflow-steps/workflow-control/run-workflow/)

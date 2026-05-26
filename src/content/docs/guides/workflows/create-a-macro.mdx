@@ -1,0 +1,71 @@
+---
+title: Create a Macro
+description: Define a Macro — a reusable, run-isolated sub-workflow with a typed input/output contract — and invoke it from another workflow.
+sidebar:
+  order: 12
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A **Macro** is a reusable Advanced (DAG) workflow with a declared input/output contract. You invoke a Macro from another workflow with a [Macro Run](/reference/workflow-steps/workflow-control/run-macro/) step — each invocation runs in its own isolated scratch schema, so the same Macro can be called concurrently from multiple parents (or multiple times from the same parent loop) without the runs colliding.
+
+Use a Macro when you have a repeatable, parameterized data transformation — for example, "process one month of sales data for one region" — that you want to call from a driver workflow once per month, per region, or both. The caller binds tables and variables to the Macro's declared input ports; when it finishes, the declared output tables are copied back to caller-side destinations.
+
+<Aside type="note">
+Macros are an Advanced-only feature. A Macro is a DAG of SQL-only steps — convert your workflow to Advanced first, and the steps inside must come from the Macro-safe whitelist (frame transforms, run-scoped variable ops, nested Macro Run calls, and a few control-flow steps). Steps that do external I/O or write the project schema directly will be rejected at conversion time.
+</Aside>
+
+## Steps
+
+1. Open the Project containing the workflow you want to turn into a Macro.
+2. Switch to the **Workflows** tab and select the workflow row.
+3. In the right-side **Workflow Details** panel, confirm the **Workflow Type** is **Advanced**. If it's Standard, use the **Convert to Advanced** action first.
+4. In the **Macro** section of the Workflow Details panel, click **Convert to Macro…** and confirm in the dialog. The workflow flips to Macro mode and a Ports editor appears.
+5. Click **Add Port** to declare each input or output the Macro accepts or produces. For each port:
+   - **Name** — a short identifier the caller uses to bind to this port (for example, `month`, `region_sales`).
+   - **Direction** — **Input** (the caller provides this value or table) or **Output** (the Macro produces this and the caller picks it up).
+   - **Kind** — **Table** for a data table, **Scalar** for a single value (string / int / float / bool / date), or **Dimension** for a hierarchical dimension reference.
+   - **Required** — clear if the Macro can run without this port being bound.
+   - **Memo** — a short note about what this port represents, shown to authors in the caller-side binding form.
+6. Click **Save Ports**.
+
+The workflow is now a Macro. Authors who add a [Macro Run](/reference/workflow-steps/workflow-control/run-macro/) step in another workflow will see your declared ports and bind to them by name.
+
+## Invoking a Macro
+
+In the caller workflow:
+
+1. Add a **Macro: Run** step.
+2. In **Macro to Run**, select the project and the Macro workflow.
+3. **Input Port Bindings** — for each input port the Macro declares, add a binding:
+   - **Table** ports take a caller-side source table; optionally select a subset of columns and add a filter (a `WHERE` clause referencing the Macro's scalar input variables) so only the needed slice is materialized into the Macro's run schema.
+   - **Scalar / Dimension** ports take a value (often a workflow variable from the caller) — set BEFORE table copy-in so the table-input filter can reference it.
+4. **Output Port Bindings** — for each output port the Macro produces, point it at a caller-side destination table (created on the fly if it doesn't already exist).
+5. Save the step.
+
+When the parent workflow runs and reaches the Macro Run step, the runner:
+
+1. Mints a fresh `run_id` for this Macro invocation.
+2. Creates a per-run scratch schema (`macrorun_<run_id>`) in the project's catalog.
+3. Copies the bound input tables into the scratch schema (column projection + filter applied at copy-in, so the filter pushes down).
+4. Sets the bound scalar / dimension input variables on the Macro's run-scoped variable overlay.
+5. Runs the Macro's steps in-process. Every SQL step inside the Macro reads and writes the scratch schema instead of the project schema.
+6. Copies the declared output tables back to the caller's destinations.
+7. Drops the scratch schema (always — even if a step inside the Macro failed).
+
+Because each invocation has its own scratch schema, two concurrent calls to the same Macro (from a loop, a fan-out, or independent workflows) never collide on intermediate table names.
+
+## Demoting a Macro
+
+You can clear the Macro flag at any time by clicking **Demote to Advanced…** in the Workflow Details panel. The workflow reverts to a plain Advanced workflow and any caller-side Macro Run steps that reference it will fail at runtime with a "not a macro" error. The declared ports stay on the record so re-converting later restores them.
+
+## Limitations (v1)
+
+- Macros are SQL-only. Steps that perform external I/O (imports, exports, document operations, agent calls), write the project schema directly, or read project-schema state by name (allocation dim, allocation split) are not allowed inside a Macro.
+- Macros must live in the same project as the caller. Cross-project Macros are not yet supported.
+- A Macro Run step cannot be invoked from a [Run Workflow](/reference/workflow-steps/workflow-control/run-workflow/), [Workflow Loop](/reference/workflow-steps/workflow-control/workflow-loop/), or conditional Run Workflow — those steps run un-isolated and would break the per-run schema contract. Use a Macro Run step in the caller instead.
+
+## Next Steps
+
+- [Macro Run step reference](/reference/workflow-steps/workflow-control/run-macro/) — the per-field reference for the calling step.
+- [Run Workflow step](/reference/workflow-steps/workflow-control/run-workflow/) — for sub-workflows that don't need per-invocation isolation.
