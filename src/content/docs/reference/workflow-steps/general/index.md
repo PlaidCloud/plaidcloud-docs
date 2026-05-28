@@ -7,6 +7,7 @@ General-purpose workflow steps that don't fit into a specific category.
 
 ## Steps
 
+- [Forecast](/reference/workflow-steps/general/forecast/)
 - [LLM Step](/reference/workflow-steps/general/llm-step/)
 - [Pass](/reference/workflow-steps/general/pass/)
 - [REST Request](/reference/workflow-steps/general/rest-request/)
