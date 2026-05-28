@@ -20,6 +20,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/)
 - [Table Lookup](/reference/workflow-steps/tables/table-lookup/)
 - [Table Melt](/reference/workflow-steps/tables/table-melt/)
+- [Multi-Table Join](/reference/workflow-steps/tables/table-multi-table-join/)
 - [Table Outer Join](/reference/workflow-steps/tables/table-outer-join/)
 - [Table Pivot](/reference/workflow-steps/tables/table-pivot/)
 - [Table Union All](/reference/workflow-steps/tables/table-union-all/)
