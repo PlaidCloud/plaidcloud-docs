@@ -1,0 +1,91 @@
+---
+title: Singer Sources
+description: Connect to SaaS, API, and database sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables with a workflow step.
+sidebar:
+  order: 3
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+A **Singer source** lets PlaidCloud pull data from a wide catalog of SaaS apps, APIs, and databases — such as Stripe, GitHub, Slack, and BigQuery — using [Singer](https://www.singer.io/) taps. Each tap is a connector for one source; you pick the tap when you create the connection, and PlaidCloud shows the configuration fields that tap needs.
+
+Using a Singer source has two parts:
+
+1. **A Singer Source connection** holds the tap choice and its settings (API token, account ID, start date, and so on).
+2. **An Import Singer Source workflow step** discovers the tap's available streams, lets you choose which to import and where each lands, and runs the extract.
+
+<Aside type="note">PlaidCloud ships a curated catalog of permissively licensed taps. The exact configuration fields differ from tap to tap — the connection form is generated from the tap you select.</Aside>
+
+## Before You Start
+
+You'll need credentials for the source system (for example, a GitHub personal access token or a Stripe API key), and the project and workflow where you want the data to land.
+
+## Create a Singer Source Connection
+
+1. Open **Tools > Connections**.
+2. Click **New Connection** and choose **Singer Source**.
+3. Give the connection a **Name** (for example, `GitHub (prod)`).
+4. Choose a **Tap** from the dropdown. The form below it rebuilds to show that tap's fields. See [Singer Sources](/reference/connectors/singer-sources/) for the full catalog and a link to each source's configuration docs.
+5. Fill in the tap's configuration fields, then click **Create**.
+
+### Configuration Field Types
+
+The fields depend on the tap, and each is rendered to match the value the tap expects:
+
+* **Text** — a single-line value (for example, an account ID or start date).
+* **Password** — a secret such as an API token or key. Secrets are write-only: they aren't shown when you edit the connection, and leaving one blank on save keeps the stored value.
+* **Number** — an integer or decimal (for example, a port or page size).
+* **List** — one entry per line (for example, a list of repositories or project IDs).
+* **JSON** — a structured value entered as JSON, used when a tap expects an object or an array of objects. For example, a CSV tap's file definitions:
+
+  ```json
+  [
+    { "entity": "orders", "path": "/data/orders.csv", "keys": ["id"] }
+  ]
+  ```
+
+* **Checkbox** — an on/off option.
+
+Required fields are marked, and the form validates them (including that JSON and number fields are well-formed) before it saves.
+
+## Import Streams into a Workflow
+
+1. Open the workflow and go to the **Analyze Steps** tab.
+2. Add a step and choose **Import: Singer Source** as the type. The editor opens with a **Source** tab and a **Streams** tab.
+3. On the **Source** tab:
+   * Choose the **Connection** (your Singer Source connection).
+   * Choose a **Sync Mode** — **Full table (replace each run)**, **Incremental (append new data)**, or **Upsert (merge on key)**.
+   * Click **Discover Streams**. Discovery runs on the runner and may take up to about three minutes the first time; the status shows how many streams were found.
+4. On the **Streams** tab, you'll see one row per discovered stream. For each stream you want:
+   * Open its **Stream** panel and check **Import this stream**.
+   * Choose a **Target Table** for where the stream's data lands.
+   * If the sync mode is **Upsert**, set the stream's **Key Columns** — one column name per line. The field defaults to the tap's declared primary key; override it to merge on different columns. Every imported stream needs at least one key column when the mode is **Upsert**.
+5. Save the step and run it as part of the workflow (or [on its own](/guides/workflows/running-one-step-in-a-workflow/)).
+
+<Aside type="caution">The streams you select *are* the saved set. To change which streams import, click **Discover Streams** again — streams that reappear keep the target table and selection you already set.</Aside>
+
+## Sync Modes
+
+* **Full table (replace each run)** re-extracts the whole stream every run and replaces the target table. Use it for small or fully refreshed sources.
+* **Incremental (append new data)** extracts only the rows that are new since the last run and appends them, resuming from where the previous run left off. It works only for streams the tap can sync incrementally — those that expose a replication key (such as an updated-at timestamp or an incrementing ID). If you choose incremental and a selected stream has no replication key, the step asks you to switch that stream to full table or deselect it.
+* **Upsert (merge on key)** re-extracts the whole stream each run, then merges it into the target on the stream's **Key Columns**: rows whose key matches an existing row are updated in place, and rows with a new key are inserted. Existing rows that aren't in this run are kept. Use it to keep a table in step with a source whose records change over time — without the duplicates an append would create or the full rebuild a replace would do. The target table is created on the first run, so the initial upsert inserts every row.
+
+<Aside type="note">Incremental progress is tracked per step. The first incremental run extracts everything; later runs pick up only new rows.</Aside>
+
+<Aside type="note">Upsert re-extracts the full stream each run (it doesn't use a replication key), so it suits sources where existing rows are updated and you want one row per key. Set each stream's **Key Columns** on the **Streams** tab; they default to the tap's declared primary key.</Aside>
+
+<Aside type="caution">Pick key columns that are always present. Upsert matches rows by exact key value, and an empty (null) key never matches another — so rows with a null key are always inserted rather than merged, and can accumulate across runs.</Aside>
+
+## How Credentials Are Handled
+
+The step stores a reference to the connection, not a copy of its credentials. Each run reads the connection's current credentials at run time. So when you rotate a token or key, update it once on the connection and every step that uses it picks up the new value on its next run — there's nothing to update on the individual steps.
+
+The extract runs in an isolated job that receives only the tap's own configuration; it has no access to other connections or to PlaidCloud's internal services.
+
+## Related
+
+* [Singer Sources catalog](/reference/connectors/singer-sources/) — every available source and its configuration docs
+* [Import Singer Source step reference](/reference/workflow-steps/import/import-singer/)
+* [Connections](/guides/connections/)
