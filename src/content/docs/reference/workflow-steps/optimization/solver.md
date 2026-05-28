@@ -81,7 +81,7 @@ Contains one row per constraint with activity, bounds, slack, and dual value whe
 
 ### Summary Table
 
-Contains one row with solver status, objective value, runtime, MIP gap, MIP dual bound, node count, iteration count, variable count, constraint count, and message.
+Contains one row with solver status, objective value, runtime, MIP gap, MIP dual bound, node count, iteration count, variable count, and constraint count.
 
 ## Status Behavior
 

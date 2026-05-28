@@ -10,6 +10,5 @@ General-purpose workflow steps that don't fit into a specific category.
 - [LLM Step](/reference/workflow-steps/general/llm-step/)
 - [Pass](/reference/workflow-steps/general/pass/)
 - [Run Remote Python](/reference/workflow-steps/general/run-remote-python/)
-- [Solver](/reference/workflow-steps/general/solver/)
 - [User Defined Transform](/reference/workflow-steps/general/user-defined-transform/)
 - [Wait](/reference/workflow-steps/general/wait/)

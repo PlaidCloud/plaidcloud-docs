@@ -21,6 +21,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 - [Allocation](/reference/workflow-steps/allocation/) — driver-based spreading, split allocations, rule-based tagging
 - [Dimensions](/reference/workflow-steps/dimensions/) — load, sort, clear, export, and manage hierarchies
+- [Optimization](/reference/workflow-steps/optimization/) — linear and mixed-integer solver steps
 
 ### Documents and Files
 
@@ -34,7 +35,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Workflow Control
 
 - [Workflow control](/reference/workflow-steps/workflow-control/) — variables, loops, sub-workflows, error handling (11 steps)
-- [General](/reference/workflow-steps/general/) — LLM step, pass, Solver, wait, user-defined transform, run remote Python
+- [General](/reference/workflow-steps/general/) — LLM step, pass, wait, user-defined transform, run remote Python
 
 ### Enterprise Integrations
 
