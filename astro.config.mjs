@@ -187,6 +187,7 @@ export default defineConfig({
 								{ label: 'Advanced (SSO/SAML)',     collapsed: true, items: [{ autogenerate: { directory: 'administration/access/advanced' } }] },
 							],
 						},
+						{ label: 'Control plane', collapsed: true, items: [{ autogenerate: { directory: 'administration/control-plane' } }] },
 						{ label: 'Scheduled events', collapsed: true, items: [{ autogenerate: { directory: 'administration/scheduled-events' } }] },
 					],
 				},
