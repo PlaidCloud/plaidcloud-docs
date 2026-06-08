@@ -1,0 +1,81 @@
+---
+title: Tracing Allocations with the AI Assistant
+description: Ask the PlaidCloud AI Assistant why an allocation result changed, what feeds it, where a driver is used, and what a hypothetical change would do.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+When a project contains allocation steps, the AI Assistant can trace cost through them in plain language. You don't run a report or write SQL — you ask a question, and the assistant uses its allocation-tracing tools to find the model, explain a change, walk the chain, and answer "what if".
+
+The same capabilities are available to external AI clients over MCP — see [AI Coding Agents](../../integrations/ai-coding-agents/). This page shows the in-app chat experience.
+
+<Aside>
+These tools read your allocation **configuration and results** — they don't change anything. You can ask freely; nothing is written back to the project.
+</Aside>
+
+## What You Can Ask
+
+| Ask the assistant … | What it does |
+| --- | --- |
+| "What allocation models are in this project?" | Lists each model, its stages, and the result tables it produces |
+| "How is `cost_line_rev` calculated?" | Shows the cost pool being split, the driver it is split by, and the target table |
+| "Why did `cost_line_rev` change from 2025 to 2026?" | Compares the two periods and attributes the change to the pool size versus the driver mix, with the top contributing accounts |
+| "What feeds `cost_line_rev`?" | Walks the upstream chain — drivers, source pools, and imports |
+| "Where is `revenue_by_line` used as a driver?" | Lists every allocation that splits by that table |
+| "What happens if US revenue rises by $1M?" | Estimates the downstream impact on each affected result table |
+
+## Worked Example
+
+A finance analyst notices a revenue-driven cost line has fallen year on year and asks one question. The assistant answers it end to end, calling several allocation tools behind the scenes.
+
+> **You:** Our revenue-based cost allocation (`cost_line_rev`) looks down in 2026 versus 2025. What happened, what is it built from, and what would a +$1M US revenue swing do?
+
+> **Assistant:**
+>
+> **What it is.** `cost_line_rev` is the revenue-driven stage of your ABC model. It takes a cost pool (`group_amount`, limited to a set of P&L accounts) and splits it by **revenue** from `revenue_by_line`, weighted within each entity, year, and month.
+>
+> **Why it dropped (US, 2025 → 2026).** US-allocated cost fell from **$7.12M to $2.99M — a $4.13M drop (−58.0%)**. This is **not** a mix shift: the US share of the pool held steady at about 23% in both years. The driver is the **total cost pool shrinking**, concentrated in a few accounts:
+>
+> | Account | 2025 | 2026 | Change |
+> | --- | --: | --: | --: |
+> | 700000 | $2.58M | $1.09M | **−$1.49M** |
+> | 701000 | $1.85M | $0.77M | −$1.08M |
+> | 610000 | $1.71M | $0.72M | −$0.99M |
+> | 670000 | $0.68M | $0.29M | −$0.40M |
+> | 702000 | $0.30M | $0.13M | −$0.18M |
+>
+> Those five accounts explain essentially all of the move.
+>
+> **What feeds it.** `cost_line_rev` is built from `revenue_by_line` (the split driver) and `gl_pool_entity` (the cost pool).
+>
+> **Heads-up — that driver is shared.** `revenue_by_line` also drives `cost_line_cs` and `cost_line_admin`, so a revenue restatement ripples into all three.
+>
+> **Your +$1M US scenario.** A $1M US revenue increase could shift allocated cost by **up to $1M each** in `cost_line_rev`, `cost_line_cs`, and `cost_line_admin` (three affected results).
+
+The analyst gets a board-ready answer — the size of the change, the accounts behind it, the lineage, and the blast radius of a what-if — without opening a single table.
+
+## Good to Know
+
+<Aside type="note" title="Filtered allocations are analysed as a slice">
+When an allocation's source rows are restricted (for example to a set of accounts), the assistant explains a **slice** of the result — pick a dimension such as entity or account so it can read the result table directly. If you ask for a whole-pool explanation on such a step, the assistant will tell you which filter to add.
+</Aside>
+
+<Aside type="caution" title="What-if estimates are upper bounds">
+"What happens if …" answers are **upper bounds** — they assume the full change flows to each target, so the per-table figures are worst-case envelopes, not additive totals. Use them to size the blast radius, not as a precise forecast.
+</Aside>
+
+## Tips
+
+- Refer to tables by their **name** (`cost_line_rev`) or their id — both work.
+- For a change question, name the **periods** to compare (for example 2025 versus 2026) and, where useful, a **breakdown** dimension such as account or entity.
+- Start broad ("what allocation models are in this project?") and drill in; the assistant keeps the thread, so follow-up questions build on the same model.
+
+## Related
+
+- [Using the AI Assistant](./using-ai-assistant/) — conversations, token usage, and drafting expressions
+- [Why Allocations Are Useful](../allocations/getting-started/why-are-allocations-useful/) — allocation concepts
+- [AI Coding Agents](../../integrations/ai-coding-agents/) — drive the same tools from an external MCP client
