@@ -141,6 +141,7 @@ export default defineConfig({
 						},
 						{ label: 'Email',             collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
 						{ label: 'Panel apps',        collapsed: true, items: [{ autogenerate: { directory: 'guides/panel-apps' } }] },
+						{ label: 'PlaidCloud Git',    collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
 						{ label: 'Projects',          collapsed: true, items: [{ autogenerate: { directory: 'guides/projects' } }] },
 						{ label: 'Sandbox',           collapsed: true, items: [{ autogenerate: { directory: 'guides/sandbox' } }] },
 						{ label: 'Workflows',         collapsed: true, items: [{ autogenerate: { directory: 'guides/workflows' } }] },
