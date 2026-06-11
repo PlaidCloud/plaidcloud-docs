@@ -246,7 +246,7 @@ s3y = sy + 100 + 38
 add(lane_heading(INX, s3y, "DATA FOUNDATION", TEAL_DK))
 data = [
     ("Lakehouse", "High-performance columnar analytics engine", "lakehouse", TEAL_DK, "/guides/data/"),
-    ("Object Storage", "Governed, elastic data lake", "objstore", BLUE, "/reference/connectors/cloud-services/"),
+    ("Object Storage", "Governed, elastic data lake", "objstore", BLUE, "/guides/documents/using-document/"),
     ("Data Catalog & Lineage", "Discovery, metadata & audit trail", "catalog", PURPLE, "/guides/data/table-explorer/"),
     ("Dimensional Hierarchies", "Attributes, alternate hierarchies, properties", "hierarchy", AMBER, "/guides/dimensions/dimensions/"),
 ]
@@ -273,7 +273,7 @@ external = [
     ("ERP Systems", "SAP · Oracle · NetSuite · Workday", "erp", AMBER, "/reference/connectors/erp/"),
     ("Databases & Warehouses", "Postgres · SQL Server · Snowflake · BigQuery", "database", AMBER, "/reference/connectors/databases/"),
     ("REST & SaaS APIs", "Salesforce · HTTP · custom services", "api", AMBER, "/reference/connectors/rest/"),
-    ("Cloud Object Storage", "Amazon S3 · Azure Blob · GCS", "cloud", AMBER, "/reference/connectors/cloud-services/"),
+    ("Cloud Object Storage", "Amazon S3 · Azure Blob · GCS", "cloud", AMBER, "/guides/documents/adding-accounts/"),
     ("Files & Spreadsheets", "Excel · CSV · Parquet · JSON", "files", AMBER, "/guides/connections/"),
 ]
 ne = len(external); gape = 28
