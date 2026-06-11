@@ -39,5 +39,6 @@ Before relying on the results:
 
 ## Next Steps
 
+- [Analyze allocations with the AI Assistant](/guides/allocations/results/analyzing-allocations-with-ai/) — ask why a result changed, what drives it, and what a change would do
 - [Troubleshooting allocations](/guides/allocations/results/troubleshooting-allocations/) — what to do when reconciliation fails
 - [Publishing data](/guides/data/publish/) — once you trust the results, publish them for dashboards and downstream consumers
