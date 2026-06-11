@@ -65,6 +65,7 @@ def icon(name, cx, cy, color, size=24):
         "lakehouse": '<ellipse cx="12" cy="6" rx="7" ry="2.6"/><path d="M5 6v8c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6"/><path d="M5 10c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>',
         "objstore": '<path d="M5 7c0-1.4 3.1-2.6 7-2.6S19 5.6 19 7v10c0 1.4-3.1 2.6-7 2.6S5 18.4 5 17z"/><ellipse cx="12" cy="7" rx="7" ry="2.6"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6"/>',
         "catalog": '<rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/><path d="M5 4v16"/>',
+        "hierarchy": '<circle cx="12" cy="5" r="2.5"/><circle cx="6" cy="17" r="2.5"/><circle cx="18" cy="17" r="2.5"/><path d="M12 7.5v4M12 11.5H6v3M12 11.5h6v3"/>',
         "erp": '<path d="M4 20h16"/><rect x="6" y="6" width="12" height="14" rx="1"/><path d="M9 10h2M13 10h2M9 14h2M13 14h2"/><path d="M10 6V3h4v3"/>',
         "database": '<ellipse cx="12" cy="6" rx="6.5" ry="2.4"/><path d="M5.5 6v12c0 1.3 2.9 2.4 6.5 2.4s6.5-1.1 6.5-2.4V6"/><path d="M5.5 12c0 1.3 2.9 2.4 6.5 2.4s6.5-1.1 6.5-2.4"/>',
         "api": '<rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M8 10l-2 2 2 2M16 10l2 2-2 2M13 9l-2 6"/>',
@@ -106,7 +107,7 @@ def text_lines(x, y, lines, size=14, color=NAVY, weight="400", line_height=15):
 def card(x, y, w, h, title, sub, icon_name, accent, title_size=15.5, sub_size=11.5, href=None):
     g = []
     if href:
-        g.append(f'<a href="{escape(href)}" class="arch-card">')
+        g.append(f'<a href="{escape(href)}" target="_top" class="arch-card">')
         g.append(f'<title>{escape(title)}</title>')
     g.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{CARD_BG}" '
              f'stroke="{CARD_BRD}" stroke-width="1.2"/>')
@@ -247,13 +248,14 @@ data = [
     ("Lakehouse", "High-performance columnar analytics engine", "lakehouse", TEAL_DK, "/guides/data/"),
     ("Object Storage", "Governed, elastic data lake", "objstore", BLUE, "/reference/connectors/cloud-services/"),
     ("Data Catalog & Lineage", "Discovery, metadata & audit trail", "catalog", PURPLE, "/guides/data/table-explorer/"),
+    ("Dimensional Hierarchies", "Attributes, alternate hierarchies, properties", "hierarchy", AMBER, "/guides/dimensions/dimensions/"),
 ]
 n3 = len(data); gap3 = 24
 dw = (INW - (n3-1)*gap3) / n3
 dy = s3y + 14
 for i,(t,s,ic,ac,href) in enumerate(data):
     cx = INX + i*(dw+gap3)
-    add(card(cx, dy, dw, 100, t, s, ic, ac, title_size=15.5, sub_size=11.5, href=href))
+    add(card(cx, dy, dw, 100, t, s, ic, ac, title_size=14.5, sub_size=11, href=href))
 
 # internal flow arrows (interfaces -> services -> data), subtle & centered per group
 def vflow(y1, y2, xs):
