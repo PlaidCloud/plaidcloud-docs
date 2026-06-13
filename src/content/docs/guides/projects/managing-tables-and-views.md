@@ -153,4 +153,4 @@ The number of rows, columns, and the data size for each table is shown in the ta
 ## Create a Data Editor from a Table
 
 
-You can turn a table into a configured data editor in one step — select the table and choose **Create Data Editor from Table** from the **New** menu (or the right-click menu). PlaidCloud examines the table's columns and pre-builds the editor's input controls. See [Create a Data Editor from a Table](/guides/projects/managing-data-editors/#create-a-data-editor-from-a-table) for details.
+You can turn a table into a configured data editor in one step — select the table and choose **Create Data Editor from Table** from the **New** menu or the right-click menu. PlaidCloud examines the table's columns and pre-builds the editor's input controls. See [Create a Data Editor from a Table](/guides/projects/managing-data-editors/#create-a-data-editor-from-a-table) for details.

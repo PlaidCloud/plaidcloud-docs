@@ -25,30 +25,30 @@ To create a data editor from a table:
 
 1. Open the project's **Tables** view and select a single table
 2. Open **Create Data Editor from Table** — from the **New** menu on the toolbar, or by right-clicking the table
-3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: the **Source and Target** are both set to the selected table (so edits are saved back to it), and each column on the **Form Columns** tab is given a control based on its data type and values
+3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: it points both the **Source and Target** at the selected table, so your edits save straight back to it, and it gives each column on the **Form Columns** tab a control that matches its data type and values
 4. Review the columns and adjust any controls as needed
 5. Click **Save** or **Save & Close**
 
-The editor is created only when you save — if you click **Cancel**, nothing is added.
+Saving creates the editor — clicking **Cancel** adds nothing.
 
-If a column is tied to a dimension, choose a hierarchy for it on the Form Columns tab before saving. The editor cannot be saved while a dimension column has no hierarchy selected.
-
-
-## How Columns Are Configured
+When a column maps to a dimension, choose a hierarchy for it on the Form Columns tab before you save. PlaidCloud blocks saving while a dimension column has no hierarchy.
 
 
-When you create an editor from a table — or use **Populate From Source** — each column is set up automatically:
+## How PlaidCloud Configures Columns
+
+
+When you create an editor from a table — or use **Populate From Source** — PlaidCloud sets up each column automatically:
 
 
 - **Boolean** columns become a checkbox, or a True/False list when the column allows empty values
 - **Date** columns become a date chooser
 - **Numeric** columns become a number field
-- Columns tied to a **dimension** become a dimension picker (you choose the hierarchy)
-- Columns whose values repeat over a small set — for example a status or region code — become a **drop-down** pre-filled with the values found in the column
+- Columns that map to a **dimension** become a dimension picker, where you choose the hierarchy
+- Columns whose values repeat over a small set — for example a status or region code — become a **drop-down** that lists the values found in the column
 - Other **text** columns become a text field, or a text area for long values
-- Key-like columns, such as auto-generated IDs, are included but set to read-only
+- PlaidCloud includes key-like columns, such as auto-generated IDs, but marks them read-only
 
-For very large tables the list of values is estimated from a sample of rows. You can change any column's control afterward.
+For very large tables, PlaidCloud estimates the list of values from a sample of rows. You can change any column's control afterward.
 
 
 ## Populate an Existing Editor from a Table
@@ -61,7 +61,7 @@ You can apply the same automatic configuration to an editor you are already edit
 2. Set the source to a table
 3. On the **Form Columns** tab, click **Populate From Source**
 
-PlaidCloud adds a configured column for each column in the source table. Columns you have already customized are left unchanged, and any columns that are no longer in the source are flagged so you can review them before saving.
+PlaidCloud adds a configured column for each column in the source table. It keeps the columns you have already customized, and flags any columns no longer in the source so you can review them before you save.
 
 
 ## Searching
