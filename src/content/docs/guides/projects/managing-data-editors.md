@@ -25,7 +25,7 @@ To create a data editor from a table:
 
 1. Open the project's **Tables** view and select a single table
 2. Open **Create Data Editor from Table** — from the **New** menu on the toolbar, or by right-clicking the table
-3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: it points both the **Source and Target** at the selected table, so your edits save straight back to it, and it gives each column on the **Form Columns** tab a control that matches its data type and values
+3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: it sets both the source and target to the selected table, so your edits save straight back to it, and it gives each column on the **Form Columns** tab a control that matches its data type and values
 4. Review the columns and adjust any controls as needed
 5. Click **Save** or **Save & Close**
 
@@ -61,7 +61,7 @@ You can apply the same automatic configuration to an editor you are already edit
 2. Set the source to a table
 3. On the **Form Columns** tab, click **Populate From Source**
 
-PlaidCloud adds a configured column for each column in the source table. It keeps the columns you have already customized, and flags any columns no longer in the source so you can review them before you save.
+PlaidCloud adds a configured column for each column in the source table. It keeps the columns you have already customized, and prompts you to remove any columns that are no longer in the source.
 
 
 ## Searching
