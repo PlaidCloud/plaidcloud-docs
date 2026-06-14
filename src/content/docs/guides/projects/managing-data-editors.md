@@ -25,7 +25,7 @@ To create a data editor from a table:
 
 1. Open the project's **Tables** view and select a single table
 2. Open **Create Data Editor from Table** — from the **New** menu on the toolbar, or by right-clicking the table
-3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: it points both the **Source and Target** at the selected table, so your edits save straight back to it, and it gives each column on the **Form Columns** tab a control that matches its data type and values
+3. PlaidCloud profiles the table and opens the **Data Editor Configuration** window with everything pre-filled: it sets both the source and target to the selected table, so your edits save straight back to it, and it gives each column on the **Form Columns** tab a control that matches its data type and values
 4. Review the columns and adjust any controls as needed
 5. Click **Save** or **Save & Close**
 
@@ -50,6 +50,20 @@ When you create an editor from a table — or use **Populate From Source** — P
 
 For very large tables, PlaidCloud estimates the list of values from a sample of rows. You can change any column's control afterward.
 
+On the **Form Columns** tab, select a column to see a short explanation of why PlaidCloud chose its control.
+
+
+## Adjust the Pick-List Cutoff
+
+
+PlaidCloud turns a column into a drop-down only when its values repeat over a small set. You can change that cutoff and re-derive the columns:
+
+
+1. On the **Form Columns** tab, set **Max pick-list values** to the largest number of distinct values a column may have and still become a drop-down
+2. Click **Re-profile**
+
+PlaidCloud re-examines the source table with the new setting and rebuilds the columns. If the editor already has columns, re-profiling replaces them, so PlaidCloud asks you to confirm.
+
 
 ## Populate an Existing Editor from a Table
 
@@ -61,7 +75,7 @@ You can apply the same automatic configuration to an editor you are already edit
 2. Set the source to a table
 3. On the **Form Columns** tab, click **Populate From Source**
 
-PlaidCloud adds a configured column for each column in the source table. It keeps the columns you have already customized, and flags any columns no longer in the source so you can review them before you save.
+PlaidCloud adds a configured column for each column in the source table. It keeps the columns you have already customized, and prompts you to remove any columns that are no longer in the source.
 
 
 ## Searching
