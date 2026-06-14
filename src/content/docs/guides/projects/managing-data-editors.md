@@ -62,7 +62,7 @@ PlaidCloud turns a column into a drop-down only when its values repeat over a sm
 1. On the **Form Columns** tab, set **Max pick-list values** to the largest number of distinct values a column may have and still become a drop-down
 2. Click **Re-profile**
 
-PlaidCloud re-examines the source table with the new setting and rebuilds the columns. Re-profiling replaces the current columns, so it asks you to confirm first.
+PlaidCloud re-examines the source table with the new setting and rebuilds the columns. If the editor already has columns, re-profiling replaces them, so PlaidCloud asks you to confirm.
 
 
 ## Populate an Existing Editor from a Table
