@@ -2,7 +2,7 @@
 title: Troubleshooting
 description: Common issues connecting AI agents to the PlaidCloud MCP server and how to fix them.
 sidebar:
-  order: 8
+  order: 9
 ---
 
 ## "failed to Connect" / "session Not Found"
