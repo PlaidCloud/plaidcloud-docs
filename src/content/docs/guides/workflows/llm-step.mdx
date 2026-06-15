@@ -1,6 +1,6 @@
 ---
 title: LLM Step
-description: Run a prompt against an LLM inside a workflow — with scoped read-only access to your project's tables, dimensions, and documents — and route the structured response to outputs such as generated PDFs.
+description: Run a prompt against an LLM inside a workflow — with scoped read and/or write access to your project's tables, dimensions, and documents — and let the model write its results back directly.
 sidebar:
   order: 18
 ---
@@ -9,24 +9,25 @@ import { Aside } from '@astrojs/starlight/components';
 
 ## Description
 
-The **LLM Step** runs a prompt against a large language model as one step in a workflow. You can give the model scoped, read-only access to specific tables, dimensions, and documents in your project, and you require it to return a structured JSON response that matches a schema you define. That structured response is then routed through one or more **outputs** — for example, generating one PDF per row of the response.
+The **LLM Step** runs a prompt against a large language model as one step in a workflow. You give the model scoped access to specific tables, dimensions, and documents in your project, choosing **Read**, **Write**, or both for each one. The model reads the data it needs and — where you've granted **Write** — writes its results straight back into the object you selected. There is no separate output format to configure: a Write-enabled binding *is* the step's output.
 
-A common use is to summarize a financial table into per-business-unit commentary and write each commentary out as its own PDF in a document account.
+A common use is to summarize a financial table into per-business-unit commentary and have the model write that commentary into a results table (or as document files) you bound with Write access.
 
-<Aside type="note">Scoped access to project data (tables, dimensions, documents) is available with **Anthropic** LLM connections, which use a secure connector to reach PlaidCloud's read-only tools. Other providers can still run a prompt and return structured JSON, but they don't get scoped data access — bindings are ignored for them.</Aside>
+<Aside type="note">Scoped access to project data (tables, dimensions, documents) is available with **Anthropic** LLM connections, which use a secure connector to reach PlaidCloud's MCP tools. Other providers can still run a prompt and return structured JSON, but they don't get scoped data access — bindings are ignored for them, and a result schema is required.</Aside>
 
 ## Before You Start
 
 You'll need:
 
-* **An LLM connection.** The step requires a connection of kind **LLM** (for example, Anthropic). The connection holds the provider API key and an optional default model. See [Connections](/guides/connections/).
-* **A document account** — only if you're generating files. PDF output is written to a document account you choose.
+* **An LLM connection.** The step requires a connection of kind **LLM** (for example, Anthropic). The connection holds the provider API key, an optional default model, and an **Agent Access** level. See [Connections](/guides/connections/).
+* **Write access on the connection — only if any binding is Write-enabled.** A binding can write only if the connection's Agent Access is **Read & write** or **Full**. A **Read-only** connection rejects Write bindings when you save.
+* **The destination objects already created.** The model writes *into* objects you select — an existing table, dimension, or document account. Create and bind the destination first; the step doesn't create new objects.
 
 ## Add an LLM Step
 
 1. Open the workflow and go to the **Analyze Steps** tab.
 2. Add a step in the position you want, the same way you'd add a standard transform.
-3. Choose **LLM Step** as the step type. The editor opens with four sections: **LLM Request**, **Bindings**, **Outputs**, and **Limits**.
+3. Choose **LLM Step** as the step type. The editor opens with three sections: **LLM Request**, **Bindings**, and **Limits**.
 
 ## Configure the Request
 
@@ -34,46 +35,27 @@ In the **LLM Request** group:
 
 * **LLM Connection** *(required)* — the LLM connection the step uses.
 * **Model** *(optional)* — a specific model name, such as `claude-opus-4-7`. Leave it blank to use the connection's default model.
-* **Prompt** *(required)* — the instruction sent to the model. You can reference bound objects inline with `{{tables.NAME}}`, `{{dimensions.NAME}}`, and `{{documents.NAME}}`; each reference must match a binding you declare below.
-* **Result schema** *(required)* — a JSON Schema the model's output must conform to. It must be a JSON object with `"type": "object"` at the root. The step validates the response against this schema, so your outputs can rely on its shape.
+* **Prompt** *(required)* — the instruction sent to the model. You can reference bound objects inline with `{{tables.NAME}}`, `{{dimensions.NAME}}`, and `{{documents.NAME}}`; each reference must match a binding you declare below. Tell the model plainly what to write and where (for example, "write one row per business unit into the `summary` table").
+* **Result schema** *(optional for Anthropic connections; required for other providers)* — a JSON Schema for a structured summary of the run, captured for the record. If you provide one, its root must be a JSON object with `"type": "object"`. With an Anthropic connection you can leave it blank when the model's real work is the writes it makes through MCP; other providers have no MCP access, so the structured response is their only output and a schema is required.
 
 ## Bind Project Data
 
-The **Bindings** section grants the model read-only access to specific objects and tells it how to address them. It has three tables — **Tables**, **Dimensions**, and **Documents** — each with **Add row** and **Remove selected** buttons.
+The **Bindings** section is where you grant access and choose what the step can read and write. It has three groups — **Tables**, **Dimensions**, and **Documents** — each with an **Add** button. Every row has:
 
-* **Tables** and **Dimensions** — `Name` (the label you reference in the prompt), `Reference` (the table or dimension ID), and `Mode` (`read`).
-* **Documents** — `Name`, `Account` (document account ID), `Path`, `Mode` (`read`), and `Format` (such as `pdf`).
+* A **selector** to pick the object: a table picker, a dimension picker, or (for documents) an account-and-path browser. No more typing IDs by hand.
+* A **Name** — the label you reference in the prompt (`{{tables.NAME}}`).
+* **Read** and **Write** checkboxes. Check **Read** to let the model read the object, **Write** to let it write into the object, or both. At least one is always set.
+* For documents, a **Format** hint (such as `pdf`).
 
-<Aside>The step is **read-only**. The model can query and read the objects you bind, but it cannot modify data, and it cannot reach objects you didn't bind.</Aside>
+How the model writes to each kind, through the MCP tools:
 
-## Define Outputs
+| Binding | The model writes by… |
+|---------|----------------------|
+| **Table** (Write) | inserting rows — typically a `SELECT` that produces the rows to add to the bound table. |
+| **Dimension** (Write) | adding or updating nodes in the bound dimension's hierarchy. |
+| **Document** (Write) | uploading a file to the bound document account and path. |
 
-The **Outputs** section routes the model's structured response to a destination. At least one output is required. Each row has a **Kind** and a **Config (JSON)** value.
-
-The available kind is **`pdf_per_item`**, which renders one PDF per element of an array in the response and uploads each to a document account. Its config fields are:
-
-| Field | Description |
-|-------|-------------|
-| `iterator` | Name of the array field in the response to loop over — one PDF per element. |
-| `content_field` | Per-item field holding the **Markdown** rendered into the PDF body. |
-| `title_field` | Per-item field used as the PDF title (default `title`). |
-| `document_account` | Document account ID to write to. |
-| `path_template` | File path for each item, with `{field}` placeholders taken from the item. The date tokens `{yyyy}`, `{yyyy-mm}`, `{yyyy-mm-dd}`, and `{yyyymmdd}` are filled in automatically. |
-| `on_collision` | `error` (default), `skip`, or `overwrite` when a file already exists at the target path. |
-| `account_root` | Root path within the document account (default `/`). |
-
-For a response that returns a `businesses` array whose items each have `business_name`, `title`, and `commentary`, the config is:
-
-```json
-{
-  "iterator": "businesses",
-  "title_field": "title",
-  "content_field": "commentary",
-  "document_account": "<document-account-id>",
-  "path_template": "/pl-analysis/{yyyy-mm}/{business_name}.pdf",
-  "on_collision": "overwrite"
-}
-```
+<Aside type="caution">Access is gated to exactly the objects you bind, per checkbox: the model can read only Read-bound objects and write only Write-bound ones. It cannot reach an object you didn't bind, and it cannot write to a Read-only binding.</Aside>
 
 ## Limits
 
@@ -84,6 +66,6 @@ The **Limits** group bounds the request:
 
 ## Run the Step
 
-The LLM Step runs like any other step — as part of a full workflow run, or on its own (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)). When it runs, the step sends your prompt and scoped tool access to the model, validates the response against your result schema, and writes each output. The model call runs in its own job, so a long-running step doesn't tie up the workflow runner.
+The LLM Step runs like any other step — as part of a full workflow run, or on its own (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)). When it runs, the step mints a short-lived, scoped credential, sends your prompt and the bound objects to the model, and the model reads and writes through the MCP tools directly. The credential is revoked as soon as the step ends. The model call runs in its own job, so a long-running step doesn't tie up the workflow runner.
 
-<Aside type="caution">Each run makes a real, billable call to your LLM provider and writes its outputs. When an output's `on_collision` is `error`, re-running a step whose files already exist fails — use `overwrite` or `skip` for repeatable runs.</Aside>
+<Aside type="caution">Each run makes a real, billable call to your LLM provider and writes into your bound objects. Treat a Write binding as you would any other transform target, and test on a scratch table before pointing the step at production data.</Aside>
