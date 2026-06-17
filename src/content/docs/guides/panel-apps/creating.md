@@ -98,7 +98,7 @@ Your repository must be reachable through a **git connection** in PlaidCloud. If
 
      > Fewer resources (lower CPU / memory) let the app schedule and cold-start faster.
 
-   - **Idle (minutes)** — how long the app stays warm with no traffic before it scales back to zero. The default is 30 minutes.
+   - **Idle (minutes)** — how long the app stays warm with no traffic before it scales back to zero. The default is 5 minutes.
    - **Allow Public Access** — tick to allow unauthenticated access; otherwise viewers must sign in to your tenant.
 5. Under **Advanced (Embedded Serving)** — optional. By default the app serves only from your PlaidCloud tenant. To embed it in another site, click **Add Domain** and enter each domain allowed to load it, one per row — a host only, no scheme or path (for example, `example.com` or `app.example.com:8443`). Leave the list empty unless you're embedding the app elsewhere.
 6. Click **Publish**.
