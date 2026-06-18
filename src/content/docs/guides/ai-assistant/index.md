@@ -7,3 +7,5 @@ sidebar:
 ---
 
 The PlaidCloud AI Assistant is the in-app chat experience for asking questions about your data, generating workflow expressions, and performing operations in natural language. It is separate from the [AI Agents (MCP)](/integrations/ai-coding-agents/) area, which covers connecting external AI clients to your tenant.
+
+AI assistance also appears directly in some workflow steps — for example, [generating a SQL Extract step's query](/guides/ai-assistant/generate-sql-extract/) from a plain-language description.

@@ -30,7 +30,7 @@ Click the **Open** icon at the start of a ready app's row to launch it in a new 
 
 Click the **pencil** icon on an app's row to edit it. The edit form matches the app's runtime.
 
-For a **server** app you can change the name, slug, branch, entry point, CPU, memory, idle window, public flag, allowed origins, and memo. The **Git Connection** is fixed once the app is created and is shown read-only. Saving rebuilds the app — its status returns to **Building…** until the new build is ready.
+For a **server** app you can change the name, slug, branch, entry point, CPU, memory, idle window, public flag, embedded-serving domains, and memo. The **Git Connection** is fixed once the app is created and is shown read-only. Saving rebuilds the app — its status returns to **Building…** until the new build is ready.
 
 ## Removing an App
 
