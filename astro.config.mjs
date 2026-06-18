@@ -104,6 +104,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Overview',   link: '/get-started/' },
 						{ label: 'Quickstart', link: '/get-started/quickstart/' },
+						{ label: 'Platform Architecture', link: '/get-started/platform-architecture/' },
 						{ label: 'Concepts',   link: '/get-started/concepts/' },
 						{ label: 'Tutorials',  link: '/get-started/tutorials/' },
 						{ label: 'FAQ',        link: '/get-started/faq/' },
@@ -141,6 +142,7 @@ export default defineConfig({
 						},
 						{ label: 'Email',             collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
 						{ label: 'Panel apps',        collapsed: true, items: [{ autogenerate: { directory: 'guides/panel-apps' } }] },
+						{ label: 'PlaidCloud Git',    collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
 						{ label: 'Projects',          collapsed: true, items: [{ autogenerate: { directory: 'guides/projects' } }] },
 						{ label: 'Sandbox',           collapsed: true, items: [{ autogenerate: { directory: 'guides/sandbox' } }] },
 						{ label: 'Workflows',         collapsed: true, items: [{ autogenerate: { directory: 'guides/workflows' } }] },
@@ -187,6 +189,7 @@ export default defineConfig({
 								{ label: 'Advanced (SSO/SAML)',     collapsed: true, items: [{ autogenerate: { directory: 'administration/access/advanced' } }] },
 							],
 						},
+						{ label: 'Control plane', collapsed: true, items: [{ autogenerate: { directory: 'administration/control-plane' } }] },
 						{ label: 'Scheduled events', collapsed: true, items: [{ autogenerate: { directory: 'administration/scheduled-events' } }] },
 					],
 				},
