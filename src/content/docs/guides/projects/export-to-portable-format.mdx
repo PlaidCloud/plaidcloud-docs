@@ -1,0 +1,63 @@
+---
+title: Export to Portable Format
+description: Export a PlaidCloud project to a standalone Python + DuckDB package that runs offline, outside PlaidCloud.
+sidebar:
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Export to Portable Format** packages a project's workflows as a self-contained Python program that runs on [DuckDB](https://duckdb.org) with no connection to PlaidCloud. It produces a portable copy of the project's logic and data that runs offline, on its own.
+
+It is a one-way export. The generated package is a point-in-time snapshot; it does not sync back, and re-exporting after changes produces a fresh package.
+
+<Aside type="caution" title="Best-effort fidelity">
+The export reproduces SQL-based transform steps exactly. Proprietary and side-effecting operations — allocations, dimension loads, notifications, document and report steps, scripts — are exported as **stubs**: their original configuration is preserved and, where the output table was materialized, its data is bundled as a snapshot, but the step itself does not re-run. Each step's fidelity is recorded in `COVERAGE.md` inside the package. For guaranteed, fully-recomputed results, run the project in PlaidCloud.
+</Aside>
+
+## Exporting a Project
+
+1. Open **Analyze** and select the **Projects** tab.
+2. Select a single project.
+3. Open the **Actions** menu (or right-click the project) and choose **Export to Portable Format** — it sits beside **Export Project**.
+4. In the dialog:
+   - **Document Account** — the document account the package is written to.
+   - **Folder Path** — the folder within that account, for example `/exports`.
+   - **Include data** — when checked (the default), source and snapshot tables are bundled as Parquet so the package runs without any external data. Uncheck it to ship only the code and schema contracts, which you then populate yourself.
+5. Click **Export**. When it finishes, a message confirms where the package was written and how many tables were snapshotted.
+
+The action requires access to the project and to read its tables — the same level of access needed to export table data today.
+
+## What's in the Package
+
+The export is a `.zip` containing:
+
+- `pipeline_<workflow>.py` — one script per workflow, with the steps in execution order.
+- `config.py` — engine selection (DuckDB by default) and the project schema name.
+- `_runtime.py` — a small engine shim; the only dependency beyond DuckDB.
+- `stubs.py` — no-op functions for non-portable operations, each carrying the original step configuration.
+- `data/` — Parquet snapshots of source and frozen tables (when **Include data** was checked).
+- `requirements.txt` — the Python dependencies (just `duckdb`).
+- `README.md`, `COVERAGE.md`, `RUN_ORDER.md` — how to run it, per-step fidelity, and the order to run the workflow scripts in.
+
+## Running the Package
+
+1. Unzip the package and create a Python environment:
+
+   ```bash
+   python -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Run each workflow script, in the order listed in `RUN_ORDER.md`:
+
+   ```bash
+   python pipeline_<workflow>.py
+   ```
+
+Each script builds its tables in a local DuckDB database (`export.duckdb` by default). SQL transform steps are recomputed live; stubbed steps print a notice and leave their snapshotted output in place. To point the package at your own warehouse instead of DuckDB, set `ENGINE` in `config.py`.
+
+## Related
+
+- [Archive a project](/guides/projects/archive-a-project/) — a full, restorable backup that stays within PlaidCloud
+- [Manage tables and views](/guides/projects/managing-tables-and-views/) — the data layer the export snapshots
