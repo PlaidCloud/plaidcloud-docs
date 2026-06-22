@@ -7,6 +7,10 @@ PlaidCloud connects to REST API services using standard authentication patterns 
 
 For any REST service that doesn't have a dedicated connector, PlaidCloud provides a generic REST connector configurable to most authentication and response-parsing patterns.
 
+## Generic Connector
+
+- [Generic REST Connection](/reference/connectors/rest/generic-rest/) — configure any HTTP API: None/Basic/API Key/Bearer/OAuth 2.0 auth, default headers, redirect handling, and request testing.
+
 ## CRM and Sales
 
 - [Salesforce](/reference/connectors/rest/salesforce/)
