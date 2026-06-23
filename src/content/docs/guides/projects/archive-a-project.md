@@ -28,6 +28,7 @@ To archive a project:
 
 1. Open Analyze
 2. Select the “Projects” tab
+3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project)
 
 ## Restoring an Archive
 
@@ -41,6 +42,7 @@ To restore an archive:
 
 1. Open Analyze
 2. Select the “Projects” tab
+3. Choose **Import Project Archive** from the **Actions** menu (or the toolbar) and select the archive to restore
 
 ## Archiving Schedule
 
