@@ -76,7 +76,7 @@ PlaidCloud installs these with `pip` when it builds the image.
 > **What the platform provides — and expects.** Keep these assumptions in mind when you write your app:
 >
 > - **`panel` and `bokeh` are pre-installed** by the platform base image. Don't list them in `requirements.txt`, and avoid pinning an older Panel version — the live-update reconnect relies on a recent one.
-> - **The PlaidCloud client libraries (`plaidcloud-rpc`, `plaidcloud-utilities`) are pre-installed.** You can `import plaidcloud.rpc` or `plaidcloud.utilities` directly, without listing them in `requirements.txt`.
+> - **The PlaidCloud client libraries (`plaidcloud-rpc`, `plaidcloud-utilities`) are pre-installed.** Import `plaidcloud.rpc` or `plaidcloud.utilities` directly — don't list them in `requirements.txt`.
 > - **`requirements.txt` must be at the repository root.** A file in a subdirectory is ignored, even if your entry point lives in one.
 > - **The app runs as a non-root user on a read-only filesystem.** Only `/tmp` is writable, so write any temporary files there (most libraries already honor `$TMPDIR`).
 > - **Don't hardcode the port, URL prefix, or host.** PlaidCloud assigns them and injects them at deploy time — just call `.servable()`.
