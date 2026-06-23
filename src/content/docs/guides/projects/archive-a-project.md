@@ -28,7 +28,7 @@ To archive a project:
 
 1. Open Analyze
 2. Select the “Projects” tab
-3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project)
+3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project and choose **Export Project Archive**)
 
 ## Restoring an Archive
 
