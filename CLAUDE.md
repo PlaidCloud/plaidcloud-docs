@@ -106,6 +106,8 @@ The `astro-migration` branch is retained for safety until the new deployment has
 
 ### A new monthly release page
 
+**Keep the current month's What's New entry current as part of shipping a change — don't leave it for later.** Whenever a customer-facing feature is added or updated, or a customer-facing bug is fixed, add a matching entry to the current month's `src/content/docs/releases/YYYY-MM.mdx` (under `## Added` / `## Changed` / `## Fixed` / `## Security`) and, when the page is new, create it from the previous month's structure — a `## Releases Shipped` version table plus those sections — and add its `<LinkCard>` to `releases/index.mdx`. Do this alongside the feature's guide/reference docs in the same change, not as a separate pass. The What's New area is how we showcase what shipped, so anything of significance belongs here. Keep entries customer-facing: plain-language outcomes only — no internal symbols, file names, SQL, version-control detail, or other implementation specifics.
+
 The PR template (`.github/pull_request_template.md`) has a "User-facing change?" checkbox and a customer summary field. Future monthly notes should be writable directly from the squash-merge commit body — no excavation needed.
 
 For the current corpus, monthly pages were generated from `plaid-tenant-infrastructure` tag history via:
