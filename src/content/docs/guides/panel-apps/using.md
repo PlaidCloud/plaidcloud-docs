@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the pencil and minus icons edit and remove it.
+Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you edit it, remove it, and — for server apps — view its logs. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
 
 ## Build Status (Server Apps)
 
@@ -24,7 +24,22 @@ Click the **Open** icon at the start of a ready app's row to launch it in a new 
 - A server app is served at `https://<your-tenant-host>/serve/<slug>/`.
 - The **Open** icon appears only once a server app is **Ready**.
 
-> A server app scales to zero when idle. The first request after an idle period spins it up — expect roughly a 15-second wait on that first open, then it responds normally until it goes idle again.
+A server app scales to zero when idle to save resources, so the first open after an idle period has to spin it up. While that happens you see a **PlaidCloud loading screen** — your app's name, a progress indicator, and your workspace details — instead of a blank tab. The app appears on its own as soon as it is ready (usually a few seconds, up to about a minute on a cold start), and then responds normally until it next goes idle.
+
+> If an app can't start, the loading screen turns into a **"This app didn't start"** message with a **Try Again** button rather than spinning forever. If that keeps happening, edit the app to check its entry point and branch and republish, or contact your PlaidCloud administrator.
+
+## Viewing Logs (Server Apps)
+
+Click the **View Logs** icon on a server app's row to open its log viewer. (WASM apps run entirely in the browser and have no server logs, so the icon appears only on server-app rows.)
+
+The viewer has two tabs:
+
+- **Runtime** (shown first) — the running app's own output: anything it logs, anything it prints, and any uncaught errors. These are kept even after the app scales to zero, so you can review what an earlier session did.
+- **Build** — the output from building the app's container. Use it to see *why* a build shows **Failed** — for example, a dependency that wouldn't install.
+
+Each tab gives you **Info / Warn / Error** filters, a **Logs since** time range (from the last hour up to 30 days, or all), a **Refresh** button, and **Auto-refresh** to poll for new entries — handy while you watch a live app or a build in progress. The newest entries are listed first.
+
+> If the build output couldn't be captured, the Build tab shows a short note explaining why rather than appearing empty.
 
 ## Editing an App
 
