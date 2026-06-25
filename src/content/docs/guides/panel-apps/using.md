@@ -1,6 +1,6 @@
 ---
 title: Using a Panel App
-description: Track build status, open, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
+description: Track build status, open, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
 sidebar:
   order: 3
 ---
@@ -28,6 +28,10 @@ A server app scales to zero when idle to save resources, so the first open after
 
 > If an app can't start, the loading screen turns into a **"This app didn't start"** message with a **Try Again** button rather than spinning forever. If that keeps happening, edit the app to check its entry point and branch and republish, or contact your PlaidCloud administrator.
 
+### Appearance
+
+Server Panel apps always display in the **light theme**. PlaidCloud forces light mode so that your app and its loading screen look consistent for every viewer. Dark mode is not supported yet, so you don't need to design for it — build and test your app against a light background.
+
 ## Viewing Logs (Server Apps)
 
 Click the **View Logs** icon on a server app's row to open its log viewer. (WASM apps run entirely in the browser and have no server logs, so the icon appears only on server-app rows.)
@@ -40,6 +44,31 @@ The viewer has two tabs:
 Each tab gives you **Info / Warn / Error** filters, a **Logs since** time range (from the last hour up to 30 days, or all), a **Refresh** button, and **Auto-refresh** to poll for new entries — handy while you watch a live app or a build in progress. The newest entries are listed first.
 
 > If the build output couldn't be captured, the Build tab shows a short note explaining why rather than appearing empty.
+
+### Reading a Full Log Message
+
+The log table trims long lines to keep the list readable. Select a log row to open a **detail pane** alongside the table that shows the entry's full message. This is the easiest way to read something that's too long for the table — a long error message or a complete stack trace — without it being cut off.
+
+### Copying Log Lines
+
+You can select several log rows at once and click **Copy** to put them on your clipboard. This is handy for pasting logs into a chat with an AI assistant when you're debugging your app, or into a message to your team or PlaidCloud support.
+
+### Who Triggered a Log Line
+
+When your app signs viewers in, each log line is tagged with the **user** whose session produced it, so you can tell which viewer hit a particular error or warning. Tagging is best-effort — some framework and startup lines run before any viewer is involved and may not show a user.
+
+## Usage Metrics (Server Apps)
+
+Click the **Usage Metrics** icon on a server app's row — next to **View Logs** — to see how the app is being used. The view summarizes:
+
+- **Unique users** — how many distinct people have opened the app.
+- **Sessions** — how many times it has been opened.
+- **Average and median session duration** — roughly how long a visit lasts.
+- **Last used** — when the app was most recently opened.
+
+Below the summary you get a breakdown **per user** and **per day**, so you can see who is using the app and how usage trends over time.
+
+> Durations are approximate. Server apps idle and scale down when no one is using them, so a session's exact end isn't always observed — read the duration figures as a guide, not an exact measurement.
 
 ## Editing an App
 
