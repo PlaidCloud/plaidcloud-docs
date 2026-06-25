@@ -167,9 +167,10 @@ export default defineConfig({
 				{
 					label: 'Integrations',
 					items: [
-						{ label: 'Overview',          link: '/integrations/' },
-						{ label: 'AI coding agents',  collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
-						{ label: 'PySpark',           collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
+						{ label: 'Overview',              link: '/integrations/' },
+						{ label: 'Microsoft 365 Copilot', link: '/integrations/microsoft-365-copilot/' },
+						{ label: 'AI coding agents',      collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
+						{ label: 'PySpark',               collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
 					],
 				},
 				{
