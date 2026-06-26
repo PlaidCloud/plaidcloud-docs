@@ -88,7 +88,7 @@ Server apps render in PlaidCloud's modern **Fast** design by default — a clean
 The theme is a property of the **template** you serve. The Fast templates — `FastListTemplate` (a single column) and `FastGridTemplate` (a responsive grid) — take two settings for it:
 
 - **`theme`** — `"default"` for light or `"dark"`. Setting it pins the app to that theme, even if a viewer adds `?theme=dark` to the URL.
-- **`theme_toggle`** — `True` shows a light/dark switch in the header; `False` hides it. It defaults to `True`, so set it explicitly when you want a fixed theme.
+- **`theme_toggle`** — `True` shows a light/dark switch in the header; `False` hides it. It defaults to `True`. Hiding the switch doesn't fix the theme on its own — pin it with `theme` (above); set `theme_toggle=False` once you have, so viewers don't see a switch that can't change anything.
 
 Pick the pattern that fits your app.
 
