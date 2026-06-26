@@ -30,7 +30,7 @@ A server app scales to zero when idle to save resources, so the first open after
 
 ### Appearance
 
-Server Panel apps always display in the **light theme**. PlaidCloud forces light mode so that your app and its loading screen look consistent for every viewer. Dark mode is not supported yet, so you don't need to design for it — build and test your app against a light background.
+Server Panel apps use PlaidCloud's modern **Fast** design and open in the **light theme** by default. The theme — light, dark, or a light/dark switch viewers can flip — is something you set in your app's template, not on this screen. See [Set the Theme](/guides/panel-apps/creating/#set-the-theme-light-dark-or-a-toggle) in the Creating guide for the patterns. If your app's tables or custom styling are built for a light background, keep it pinned to light.
 
 ## Viewing Logs (Server Apps)
 
