@@ -17,7 +17,7 @@ Google's [`gemini-cli`](https://github.com/google-gemini/gemini-cli) supports MC
     {
       "mcpServers": {
         "plaidcloud": {
-          "httpUrl": "https://<your-workspace>.plaid.cloud/mcp/",
+          "httpUrl": "https://<your-workspace>.plaid.cloud/mcp",
           "headers": {
             "Authorization": "Bearer eyJhbGc…"
           }
