@@ -211,7 +211,7 @@ Concepts:
 - **Allocation**: distributes a value across a *dimension* using a driver and a method.
 - **Lakehouse v1 vs v2**: v1 uses Databend SQL; v2 uses Apache Iceberg tables with StarRocks 4.1 SQL — function names differ.
 - **PlaidLink Agent**: outbound proxy that lets workflows reach on-prem databases and file systems.
-- **MCP server**: every workspace exposes \`/mcp/\` for AI coding agents (Claude Code, Cursor, ChatGPT, etc.).
+- **MCP server**: every workspace exposes \`/mcp\` for AI coding agents (Claude Code, Cursor, ChatGPT, etc.).
 
 Documentation structure:
 

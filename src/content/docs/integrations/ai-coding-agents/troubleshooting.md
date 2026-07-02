@@ -5,6 +5,14 @@ sidebar:
   order: 9
 ---
 
+## Cursor (or Another Strict Client) Won't Connect at All
+
+Symptom: the server never establishes a session in Cursor and similar strict clients, while the same workspace works in Claude Code.
+
+Cause: a **trailing slash** on the server URL. Use `https://<your-workspace>.plaid.cloud/mcp` — not `.../mcp/`. Strict clients reject a trailing-slash URL (or won't follow the redirect the older path issued), whereas lenient clients like Claude Code tolerate it.
+
+Fix: remove the trailing slash from the `url` in your config and reconnect. Every example in these guides uses the slash-free form.
+
 ## "failed to Connect" / "session Not Found"
 
 Symptom: the client config looks correct but the server shows as failed in the client's MCP status panel. Server logs show 404 `Session not found` errors.
