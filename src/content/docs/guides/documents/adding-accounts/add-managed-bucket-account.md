@@ -17,7 +17,7 @@ Use a Managed Bucket when you want a new, isolated place to keep Document files 
 4. Select the `+ New Account` button
 5. Select `Managed Bucket` as the Service Type
 6. Fill in a name and an optional description
-7. Enter a **Bucket Name**. Bucket names must be 3–63 characters, use only lowercase letters, digits, dots, hyphens, or underscores, and start and end with a letter or digit. The name is **globally unique across Google Cloud** — if it's already taken, you'll be asked to choose another
+7. Enter a **Bucket Name**. Bucket names must be 3–63 characters, use only lowercase letters, digits, dots, or hyphens, and start and end with a letter or digit. The name is **globally unique across Google Cloud** — if it's already taken, you'll be asked to choose another
 8. Choose a **Bucket Location** (defaults to `us-central1`). Multi-region options (`US`, `EU`, `Asia`) store data redundantly across a wide area; single regions keep it in one place
 9. Choose a **Storage Class** (defaults to `Standard`). Use `Standard` for data you access often; `Nearline`, `Coldline`, and `Archive` cost less to store but more to read and suit progressively colder data
 10. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure
