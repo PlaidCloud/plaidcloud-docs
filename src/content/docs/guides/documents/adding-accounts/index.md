@@ -8,4 +8,4 @@ sidebar:
 
 Connect cloud and on-prem document storage to PlaidCloud — S3, Google Cloud Storage, Azure Blob, Google Drive, OneDrive, SFTP, WebDAV, and more. Each provider has its own credentials and connection flow.
 
-The quickest option is a **Managed Bucket**, where PlaidCloud provisions a dedicated cloud storage bucket and its credentials for you — you only pick a name. To reuse storage you already manage, choose the matching provider below.
+The quickest option is a **Managed Bucket**, where PlaidCloud sets up and runs the storage for you — you only pick a name, with nothing else to configure. To connect storage you already own, choose the matching provider below.
