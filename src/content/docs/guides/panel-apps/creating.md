@@ -81,6 +81,57 @@ PlaidCloud installs these with `pip` when it builds the image.
 > - **The app runs as a non-root user on a read-only filesystem.** Only `/tmp` is writable, so write any temporary files there (most libraries already honor `$TMPDIR`).
 > - **Don't hardcode the port, URL prefix, or host.** PlaidCloud assigns them and injects them at deploy time — just call `.servable()`.
 
+### Set the Theme: Light, Dark, or a Toggle
+
+Server apps render in PlaidCloud's modern **Fast** design by default — a clean, Fluent-style look applied platform-wide, so you get it with no code. What you control, in your app, is the **theme**: light, dark, or a switch the viewer can flip.
+
+The theme is a property of the **template** you serve. The Fast templates — `FastListTemplate` (a single column) and `FastGridTemplate` (a responsive grid) — take two settings for it:
+
+- **`theme`** — `"default"` for light or `"dark"`. Setting it pins the app to that theme, even if a viewer adds `?theme=dark` to the URL.
+- **`theme_toggle`** — `True` shows a light/dark switch in the header; `False` hides it. It defaults to `True`. Hiding the switch doesn't fix the theme on its own — pin it with `theme` (above); set `theme_toggle=False` once you have, so viewers don't see a switch that can't change anything.
+
+Pick the pattern that fits your app.
+
+**Light only** — best for dense reports and financial tables, which are usually hand-styled for a light background:
+
+```python
+import panel as pn
+
+pn.extension("tabulator")
+
+pn.template.FastListTemplate(
+    title="Sales Dashboard",
+    theme="default",      # light
+    theme_toggle=False,   # hide the switch
+    main=[...],
+).servable()
+```
+
+**Dark only:**
+
+```python
+pn.template.FastListTemplate(
+    title="Ops Monitor",
+    theme="dark",
+    theme_toggle=False,
+    main=[...],
+).servable()
+```
+
+**Let the viewer choose** — defaults to light, with a switch in the header. Omit `theme` so it follows the toggle:
+
+```python
+pn.template.FastListTemplate(
+    title="Explorer",
+    theme_toggle=True,
+    main=[...],
+).servable()
+```
+
+> **If you allow dark, make your tables dark-aware.** A `Tabulator` pinned to a light table theme (`theme="bootstrap"`), or custom CSS with hardcoded light colors like `background: #fff`, renders as an unreadable white block on a dark page. Use a table theme that follows the app — `pn.widgets.Tabulator(..., theme="fast")` — and avoid hardcoded light colors. If a report is heavily hand-styled for light, pin it to light instead (the first pattern above).
+
+A plain app with no template — `pn.Column(...).servable()` — follows Panel's default and isn't affected by these settings; reach for a template when you want explicit control.
+
 Your repository must be reachable through a **git connection** in PlaidCloud. If you don't have one yet, create it under **Tools > Connections** before publishing.
 
 ### Publish the App

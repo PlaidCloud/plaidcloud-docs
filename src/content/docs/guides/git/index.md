@@ -10,6 +10,12 @@ PlaidCloud Git is a private Git service built into your workspace. Each workspac
 
 You sign in with your PlaidCloud account, so there's no separate username or password to set up. Open **Git** from your workspace and you're already signed in. New repositories are private by default, visible only to members you grant access.
 
+## Administering Git
+
+Any member can create repositories, but **creating organizations** — shared spaces that group repositories and teams — requires the **Git Administration** permission. Grant it in **Identity** by adding the permission to a security group, or by adding members to the built-in **Git Administration** group. Anyone in a group that has the permission becomes a Git administrator when they next sign in to Git. PlaidCloud support staff have it automatically.
+
+If a newly-granted administrator has never opened Git before, they may need to sign in to Git **twice** for administrator access to take effect — the first sign-in creates their Git account, and the permission is applied on the next.
+
 ## What's in This Section
 
 - [Repositories](/guides/git/repositories/) — create a repository, then clone, commit, and push your work
