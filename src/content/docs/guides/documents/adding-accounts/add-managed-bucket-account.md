@@ -21,7 +21,7 @@ Use a Managed Bucket when you want a new, self-contained place to keep Document 
 8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure
 9. Select the Save button
 
-PlaidCloud sets up the storage and makes you its owner. The account is ready to browse and upload to immediately — there's nothing else to configure. Storage costs are optimized for you automatically based on how often your files are accessed, so there's nothing to tune.
+PlaidCloud sets up the storage and makes you its owner. The account is ready to browse and upload to immediately — there's nothing else to configure.
 
 :::note
 Managed Buckets are available on the **Business** and **Enterprise** plans. If your plan doesn't include them, or you've reached your plan's limit, the form will tell you when you try to create one.
