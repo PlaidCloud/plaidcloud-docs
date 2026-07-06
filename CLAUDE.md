@@ -138,7 +138,7 @@ If you add a new section that should get per-page OG images, update the `shouldG
 ## Don't touch
 
 - **Hugo files are gone** (deleted in Phase 7 cleanup). Don't re-introduce `content/en/`, `static/`, `themes/`, `layouts/`, `config.toml`, or related infrastructure. The current source of truth is `src/content/docs/`.
-- **`public/_redirects`** has ~1,400 entries mapping legacy Hugo URLs to current Astro URLs. Don't delete entries — they protect inbound links from the old site.
+- **`public/_redirects`** has ~1,620 entries mapping legacy Hugo URLs to current Astro URLs — the Era-B `/docs/<area>/` generation as exact rules, plus the older Era-A `/docs/plaidcloud/**`, `/docs/assignments/**` and Docsy `_print` generation via slug-preserving area splats and a final `/docs/*` catch-all. Don't delete entries — they protect inbound links from the old site. Cloudflare caps this file at ~2,000 static + ~100 dynamic (splat) rules; stay under both.
 - **`public/images/`** holds shared image assets at stable paths. New page-specific images can go alongside the page for `astro:assets` optimization, but shared images should stay where they are so existing references work.
 - **`scripts/migrate.py`** is a one-shot migration tool retained for reference. Don't re-run it; it's idempotent but would no-op or duplicate work depending on current state.
 
