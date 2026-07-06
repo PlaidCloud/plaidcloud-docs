@@ -9,3 +9,4 @@ Workflow steps that render formatted PDF reports from RML templates and tabular 
 
 - [Report Single](/reference/workflow-steps/reports/report-single/)
 - [Reports Batch](/reference/workflow-steps/reports/reports-batch/)
+- [Report: Packaged Macro](/reference/workflow-steps/reports/report-packaged-macro/)
