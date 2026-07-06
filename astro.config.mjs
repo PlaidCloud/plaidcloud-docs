@@ -54,10 +54,12 @@ try {
 		stdio: ['ignore', 'pipe', 'ignore'],
 	}).trim();
 	if (shallow === 'true') {
-		execSync('git fetch --unshallow', { stdio: 'ignore' });
+		// timeout so a hung fetch can't stall the CI build — on timeout
+		// execSync throws and we fall through to the mtime fallback.
+		execSync('git fetch --unshallow', { stdio: 'ignore', timeout: 60_000 });
 	}
 } catch {
-	// no git / no network — gitLastmod() falls back to file mtime per file
+	// no git / no network / timed out — gitLastmod() falls back to file mtime
 }
 
 const urlToLastmod = new Map();
