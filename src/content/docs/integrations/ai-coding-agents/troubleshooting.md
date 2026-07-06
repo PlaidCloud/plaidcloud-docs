@@ -2,7 +2,7 @@
 title: Troubleshooting
 description: Common issues connecting AI agents to the PlaidCloud MCP server and how to fix them.
 sidebar:
-  order: 9
+  order: 12
 ---
 
 ## Cursor (or Another Strict Client) Won't Connect at All
