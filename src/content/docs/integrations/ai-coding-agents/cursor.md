@@ -21,7 +21,7 @@ sidebar:
     {
       "mcpServers": {
         "plaidcloud": {
-          "url": "https://<your-workspace>.plaid.cloud/mcp/",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
           "headers": {
             "Authorization": "Bearer eyJhbGc…"
           }
@@ -47,8 +47,8 @@ Repeat the entry under a different name:
 ```json
 {
   "mcpServers": {
-    "plaidcloud-prod": { "url": "https://prod.plaid.cloud/mcp/", "headers": { "Authorization": "Bearer …" } },
-    "plaidcloud-dev":  { "url": "https://dev.plaid.cloud/mcp/",  "headers": { "Authorization": "Bearer …" } }
+    "plaidcloud-prod": { "url": "https://prod.plaid.cloud/mcp", "headers": { "Authorization": "Bearer …" } },
+    "plaidcloud-dev":  { "url": "https://dev.plaid.cloud/mcp",  "headers": { "Authorization": "Bearer …" } }
   }
 }
 ```

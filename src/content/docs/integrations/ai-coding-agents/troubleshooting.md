@@ -2,8 +2,16 @@
 title: Troubleshooting
 description: Common issues connecting AI agents to the PlaidCloud MCP server and how to fix them.
 sidebar:
-  order: 9
+  order: 12
 ---
+
+## Cursor (or Another Strict Client) Won't Connect at All
+
+Symptom: the server never establishes a session in Cursor and similar strict clients, while the same workspace works in Claude Code.
+
+Cause: a **trailing slash** on the server URL. Use `https://<your-workspace>.plaid.cloud/mcp` — not `.../mcp/`. Strict clients reject a trailing-slash URL (or won't follow the redirect the older path issued), whereas lenient clients like Claude Code tolerate it.
+
+Fix: remove the trailing slash from the `url` in your config and reconnect. Every example in these guides uses the slash-free form.
 
 ## "failed to Connect" / "session Not Found"
 
