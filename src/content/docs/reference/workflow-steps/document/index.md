@@ -14,6 +14,7 @@ Workflow steps for operating on files stored in document accounts. Use these to 
 - [Rename document file](/reference/workflow-steps/document/rename-document-file/) · [Rename document directory](/reference/workflow-steps/document/rename-document-directory/)
 - [Delete document file](/reference/workflow-steps/document/delete-document-file/) · [Delete document directory](/reference/workflow-steps/document/delete-document-directory/)
 - [Create document directory](/reference/workflow-steps/document/create-document-directory/)
+- [Directory listing](/reference/workflow-steps/document/directory-listing/) — write a table of the files in a folder
 - [Fix file extension](/reference/workflow-steps/document/fix-file-extension/)
 
 ## PDF Operations
