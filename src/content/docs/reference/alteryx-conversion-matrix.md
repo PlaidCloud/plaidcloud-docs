@@ -24,7 +24,7 @@ Coverage levels:
 | BrowseV2 | Annotation Only | Browse or passthrough marker | Preserved for inspection without adding runtime work. |
 | Buffer | Converts To Executor | Spatial executor | Creates buffered geometries with validation against spatial fixtures. |
 | CheckBoxGroup | Fully Converts | Controlled workflow variable | Converts app check box choices to controlled user input. |
-| Classification | Converts To Executor | Machine learning executor | Runs classification logic through managed ML execution. |
+| Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
 | CreatePoints | Fully Converts | Geometry point creation transform | Creates point geometry from coordinate fields. |
@@ -48,7 +48,7 @@ Coverage levels:
 | FileBrowse | Fully Converts | Controlled Document file variable | Lets users choose a file for a converted app run. |
 | Filter | Fully Converts | Filter transform | Splits records by expression into true and false paths. |
 | FindNearest | Converts To Executor | Spatial nearest-neighbor executor | Finds nearest spatial records with managed spatial processing. |
-| Fit | Converts To Executor | Model training executor | Trains or fits model behavior through managed execution. |
+| Fit | Converts With Validation | ML Train step | Collapses into the fused ML Train step; the trained model is written as a one-row model table. |
 | FolderBrowse | Fully Converts | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
 | Formula | Fully Converts | Formula transform | Converts field expressions to PlaidCloud expressions or SQL-backed logic. |
 | FuzzyMatch | Converts To Executor | Fuzzy matching executor | Uses managed fuzzy matching for match keys, thresholds, and candidate review. |
@@ -67,7 +67,7 @@ Coverage levels:
 | Map | Cloud-Native Equivalent | Map artifact or spatial visualization | Creates a PlaidCloud map artifact for cloud review and sharing. |
 | MapInput | Converts With Validation | Spatial input materializer | Loads spatial input data into the converted workflow. |
 | Message | Fully Converts | Step condition with warning or message action | Emits workflow warning, message, or error based on configured condition. |
-| Modeling | Converts To Executor | Machine learning executor | Runs model-oriented processing through managed execution. |
+| Modeling | Converts With Validation | ML Train step or placeholder | Fuses into the ML Train step when the pipeline's model choice is saved in the workflow; a lone Assisted Modeling wizard is kept as a placeholder noting the recovered target variable. |
 | MultiFieldFormula | Converts With Validation | Multi-field formula transform | Applies a formula across selected fields. |
 | MultiRowFormula | Converts With Validation | Window or row-aware formula transform | Converts row-relative logic to PlaidCloud window behavior where possible. |
 | NumericUpDown | Fully Converts | Controlled numeric workflow variable | Converts app numeric input to a typed variable. |
@@ -80,11 +80,11 @@ Coverage levels:
 | PortfolioComposerRender | Cloud-Native Equivalent | Report render artifact | Renders report output as a PlaidCloud artifact. |
 | PortfolioComposerTable | Cloud-Native Equivalent | Report table artifact | Converts report table content to PlaidCloud report output. |
 | PortfolioComposerText | Cloud-Native Equivalent | Report text artifact | Converts report text content to PlaidCloud report output. |
-| Predict | Converts To Executor | Prediction executor | Scores records using managed model execution. |
+| Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
 | RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
-| Regression | Converts To Executor | Regression executor | Runs regression modeling through managed execution. |
+| Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | ReportMap | Cloud-Native Equivalent | Map report artifact | Produces a cloud-native map/report artifact. |
 | Sample | Fully Converts | Sample transform | Keeps configured records by count, percentage, or grouping rule. |
 | Smooth | Converts To Executor | Spatial smoothing executor | Smooths geometry through managed spatial processing. |
@@ -117,4 +117,4 @@ Coverage levels:
 
 For production workflows, validate converted outputs against trusted Alteryx outputs. PlaidCloud validation focuses on schema, row count, and row values, and ignores row order unless the workflow explicitly depends on ordered data.
 
-Specialized operations such as spatial processing, fuzzy matching, machine learning, OCR, NLP, and reporting may run through managed job executors. These routes keep the converted workflow cloud-native while covering capabilities that are not best expressed as a single SQL transform.
+Specialized operations such as spatial processing, fuzzy matching, OCR, NLP, and reporting may run through managed job executors. These routes keep the converted workflow cloud-native while covering capabilities that are not best expressed as a single SQL transform. Machine-learning pipelines convert to the native [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) steps.

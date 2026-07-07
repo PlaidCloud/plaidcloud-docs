@@ -1,21 +1,79 @@
 ---
-title: ML Train Model
-description: Train a machine-learning model (Alteryx Assisted Modeling) in a PlaidCloud workflow.
+title: "ML: Train Model"
+description: Fit a scikit-learn model on a table and write a one-row model table you can score with and query.
 sidebar:
   order: 22
 ---
 
 ## Description
 
-The **ML Train Model** step trains a model from a labelled table. It is the equivalent of the matching Alteryx tool and runs in the workflow engine (the ML / NLP / document libraries run in the executor job); results are an approximation of the Alteryx tool pending validation.
+The **ML: Train Model** step fits a scikit-learn model on a source table and writes the result as a one-row **model table**. The model table flows through the workflow like any other table — pass it to an [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) step to append predictions to a data table, or query it directly to inspect the training metrics. The step runs as a managed PlaidCloud job (like the LLM step), so training does not compete with the rest of the workflow for resources.
 
-## Source & Options
+## Model Tab
 
-- **Source / Output tables** — the input data and where the result is written.
-- **Target variable** — the column to predict.
-- **Algorithm** — the model algorithm.
-- **Numeric / Categorical features** — which columns to use and how to treat them.
+### Source and Output
 
-## Columns
+- **Training Table** — the table to train on. Rows with an empty target value are excluded from training.
+- **Model Table** — the output table that receives the one-row model record.
 
-The **Columns** tab maps the input columns passed through to the output.
+### Model
+
+- **Algorithm** — the model to fit:
+
+  | Algorithm | Value | Family |
+  | --- | --- | --- |
+  | Logistic Regression | `logistic_regression` | Classification |
+  | Decision Tree Classifier | `decision_tree` | Classification |
+  | Random Forest Classifier | `random_forest` | Classification |
+  | Gradient Boosting Classifier (XGBoost-style) | `xgb_classifier` | Classification |
+  | Linear Regression | `linear_regression` | Regression |
+  | Decision Tree Regressor | `decision_tree_regressor` | Regression |
+  | Random Forest Regressor | `random_forest_regressor` | Regression |
+
+  The XGBoost-style algorithm is a scikit-learn `HistGradientBoostingClassifier` — a statistically equivalent stand-in for XGBoost, not a wrapper around it. See [Limits and Caveats](#limits-and-caveats).
+
+- **Target Column** — the column to predict. Classification targets are treated as text labels; regression targets are coerced to numbers, and rows whose target does not parse as a number are excluded.
+
+### Hyperparameters
+
+An optional JSON object of scikit-learn hyperparameters for the chosen algorithm — for example `{"max_depth": 5, "n_estimators": 200}`. Unknown keys are rejected when you save the step, so a mistyped parameter fails immediately instead of being silently ignored. Workflows converted from Alteryx may also carry Alteryx-style sentinel keys such as `max_depth_none`; these are translated for you.
+
+A few legacy parameters that scikit-learn has removed are accepted but not applied (for example `presort`, or the XGBoost tree knobs listed under [Limits and Caveats](#limits-and-caveats)); anything dropped this way is recorded in the model table's `params_json` under `dropped_params`, so nothing disappears silently.
+
+## Features Tab
+
+The Features tab shows one row per source-table column:
+
+- **Feature** — check the columns to train on. Leave **all** boxes unchecked to train on every column except the target.
+- **Type Override** — force a column to **Numeric** or **Categorical** handling, or leave it at **(infer)** to derive the type from the table column type.
+
+Feature preparation matches Alteryx Assisted Modeling: numeric features are coerced to numbers (unparseable values become missing) and missing values are imputed with the median; categorical features are treated as text, imputed with the most frequent value, and one-hot encoded. Values a categorical feature never saw during training are ignored at scoring time.
+
+## The Model Table
+
+The step writes exactly one row with these columns:
+
+| Column | Contents |
+| --- | --- |
+| `model_pickle_b64` | The fitted scikit-learn pipeline (pickled, base64-encoded). |
+| `algorithm` | The algorithm value, for example `logistic_regression`. |
+| `params_json` | JSON: the applied scikit-learn parameters, the feature types used, and any `dropped_params`. |
+| `feature_names_json` | JSON array: the ordered feature columns the model expects at scoring time. |
+| `class_labels_json` | JSON array of class labels (classifiers) or `null` (regressors). |
+| `metrics_json` | JSON training metrics — see below. |
+| `trained_at` | UTC timestamp of the training run. |
+
+Because the model is an ordinary table, you can query it like one — for example, extract `metrics_json` in a downstream step to gate a workflow on model quality.
+
+`metrics_json` contains a `kind` key (`classification` or `regression`), `train_accuracy` for classifiers or `train_r2` and `train_rmse` for regressors, and `n_training_rows`.
+
+## Limits and Caveats
+
+- **Training metrics are computed on the training set** — there is no holdout split or cross-validation in this release. Treat them as a fit check, not an estimate of out-of-sample performance.
+- **In-memory working set** — the training table is read into memory, so the step targets roughly one million rows. Sample or aggregate larger tables first.
+- **XGBoost approximation** — `xgb_classifier` trains a scikit-learn `HistGradientBoostingClassifier`. The XGBoost-specific tree parameters `gamma`, `min_child_weight`, `subsample`, and the `colsample_*` family have no equivalent and are dropped (recorded in `dropped_params`, and in the step's mapping notes when the step was converted from Alteryx). Validate model metrics against your reference run before relying on parity.
+
+## Related
+
+- [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) — score a data table with the trained model.
+- [Migrate Alteryx Workflows](/guides/workflows/migrate-alteryx-workflows/#machine-learning-assisted-modeling-conversions) — how Alteryx Assisted Modeling pipelines convert to this step.
