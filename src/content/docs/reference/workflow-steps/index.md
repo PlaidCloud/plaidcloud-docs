@@ -22,6 +22,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Allocation](/reference/workflow-steps/allocation/) — driver-based spreading, split allocations, rule-based tagging
 - [Dimensions](/reference/workflow-steps/dimensions/) — load, sort, clear, export, and manage hierarchies
 - [Optimization](/reference/workflow-steps/optimization/) — linear and mixed-integer solver steps
+- [Machine learning](/reference/workflow-steps/machine-learning/) — train scikit-learn models and score tables with them (2 steps)
 
 ### Documents and Files
 
