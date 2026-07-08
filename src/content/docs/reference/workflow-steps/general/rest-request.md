@@ -21,7 +21,7 @@ For a full walkthrough, see the [REST Request step guide](/guides/workflows/rest
 * **Endpoint** — path (with a connection) or full URL.
 * **Headers** / **Query Parameters** — name/value rows with an on/off toggle.
 * **Body** — request payload (JSON, form, or raw).
-* **Send Test Request** / **Copy as curl** — fire the request and inspect the response inline, or copy an equivalent curl command (secrets masked).
+* **Send Test Request** / **Copy as curl** / **Import from curl** — fire the request and inspect the response inline; copy an equivalent curl command (secrets masked); or paste a curl command to fill the method, URL, headers, and body.
 * **Send** — `One request` (default), or `One request per table row` to fan the request out over a driver table.
 
 When **Send** is `One request per table row`, pick a **Driver Table** (choose it with the table picker or type a name) and use `{{row.column}}` tokens in the endpoint, query, headers, or body to substitute each row's values. Optional: **Driver Filter** (a SQL `WHERE` clause), **Key Columns** (carried onto each output row), **Row Limit**, **Concurrency**, and **Continue on error** (record a failed row and warn instead of aborting). Fan-out writes to the target table; it can't capture to variables.
