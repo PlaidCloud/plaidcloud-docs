@@ -7,7 +7,6 @@ Workflow steps that write project tables to external destinations — file forma
 
 ## Steps
 
-- [Export HTML](/reference/workflow-steps/export/export-html/)
 - [Export Project Table](/reference/workflow-steps/export/export-project-table/)
 - [Export Quandl](/reference/workflow-steps/export/export-quandl/)
 - [Export SQL](/reference/workflow-steps/export/export-sql/)

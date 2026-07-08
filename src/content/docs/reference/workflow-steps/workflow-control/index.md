@@ -15,6 +15,7 @@ Steps that control workflow execution itself — variables, loops, error handlin
 - [Macro Run](/reference/workflow-steps/workflow-control/run-macro/)
 - [Raise Workflow Error](/reference/workflow-steps/workflow-control/raise-workflow-error/)
 - [Rename Workflow](/reference/workflow-steps/workflow-control/rename-workflow/)
+- [Row Count Assert](/reference/workflow-steps/workflow-control/row-count-assert/)
 - [Run Workflow](/reference/workflow-steps/workflow-control/run-workflow/)
 - [Set Project Variable](/reference/workflow-steps/workflow-control/set-project-variable/)
 - [Set Workflow Variable](/reference/workflow-steps/workflow-control/set-workflow-variable/)

@@ -43,6 +43,25 @@ function gitLastmod(absPath) {
 	}
 }
 
+// The production build (Cloudflare Workers Builds) checks out a shallow clone,
+// so `git log` would report the single HEAD commit for every file and every
+// page would share one lastmod (the build time) — defeating freshness signals
+// in both the sitemap and the JSON-LD `dateModified`. Unshallow once so the
+// per-file dates below are real. No-op locally (already a full clone).
+try {
+	const shallow = execSync('git rev-parse --is-shallow-repository', {
+		encoding: 'utf8',
+		stdio: ['ignore', 'pipe', 'ignore'],
+	}).trim();
+	if (shallow === 'true') {
+		// timeout so a hung fetch can't stall the CI build — on timeout
+		// execSync throws and we fall through to the mtime fallback.
+		execSync('git fetch --unshallow', { stdio: 'ignore', timeout: 60_000 });
+	}
+} catch {
+	// no git / no network / timed out — gitLastmod() falls back to file mtime
+}
+
 const urlToLastmod = new Map();
 for (const f of walkDocs(DOCS_ROOT)) {
 	const iso = gitLastmod(f) ?? statSync(f).mtime.toISOString();
