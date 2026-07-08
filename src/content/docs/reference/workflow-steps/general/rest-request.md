@@ -22,6 +22,9 @@ For a full walkthrough, see the [REST Request step guide](/guides/workflows/rest
 * **Headers** / **Query Parameters** — name/value rows with an on/off toggle.
 * **Body** — request payload (JSON, form, or raw).
 * **Send Test Request** / **Copy as curl** — fire the request and inspect the response inline, or copy an equivalent curl command (secrets masked).
+* **Send** — `One request` (default), or `One request per table row` to fan the request out over a driver table.
+
+When **Send** is `One request per table row`, pick a **Driver Table** (choose it with the table picker or type a name) and use `{{row.column}}` tokens in the endpoint, query, headers, or body to substitute each row's values. Optional: **Driver Filter** (a SQL `WHERE` clause), **Key Columns** (carried onto each output row), **Row Limit**, **Concurrency**, and **Continue on error** (record a failed row and warn instead of aborting). Fan-out writes to the target table; it can't capture to variables.
 
 `{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
 
