@@ -32,6 +32,8 @@ When **Send** is `One request per table row`, pick a **Driver Table** (choose it
 
 `{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
 
+The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor.
+
 **Retries** apply only to idempotent methods (GET/HEAD/OPTIONS/DELETE); a POST/PUT/PATCH is always sent once so a non-idempotent body is never re-sent. **Timeout (s)** is the per-request limit, capped at 600.
 
 ### Response Destination
