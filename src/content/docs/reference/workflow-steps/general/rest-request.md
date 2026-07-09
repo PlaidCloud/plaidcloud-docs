@@ -18,7 +18,7 @@ While you edit, the browser keeps a local draft for the step. If you close or re
 ### Request
 
 * **Endpoint Source** — `Manual`, `Postman collection (file/URL)`, `OpenAPI / Swagger (URL/file)`, or `HAR archive (file)`. Use **Load Catalog** to list and pick an endpoint from an imported source.
-* **Connection** *(optional)* — a REST connection for auth and base URL; omit to call a full URL directly.
+* **Connection** *(optional)* — a REST connection for auth and base URL; omit to call a full URL directly. The edit shortcut beside the picker opens the selected connection editor for viewing or editing.
 * **Method** — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`.
 * **Endpoint** — path (with a connection) or full URL.
 * **Headers** / **Query Parameters** — name/value rows with an on/off toggle.
