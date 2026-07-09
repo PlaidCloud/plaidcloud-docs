@@ -83,7 +83,12 @@ PlaidCloud installs these with `pip` when it builds the image.
 
 ### Set the Theme: Light, Dark, or a Toggle
 
-Server apps render in PlaidCloud's modern **Fast** design by default — a clean, Fluent-style look applied platform-wide, so you get it with no code. What you control, in your app, is the **theme**: light, dark, or a switch the viewer can flip.
+Server apps render in PlaidCloud's modern **Fast** design by default — a clean, Fluent-style look applied platform-wide. In the publish dialog, **Design** controls that platform layer:
+
+- **FAST** — the PlaidCloud default. Use it for new apps and apps built with Fast templates.
+- **Default** — Panel's default styling. Use it when an existing app's CSS or visuals break under FAST.
+
+What you control in your app code is the **theme**: light, dark, or a switch the viewer can flip.
 
 The theme is a property of the **template** you serve. The Fast templates — `FastListTemplate` (a single column) and `FastGridTemplate` (a responsive grid) — take two settings for it:
 
@@ -150,14 +155,95 @@ Your repository must be reachable through a **git connection** in PlaidCloud. If
 
      > Fewer resources (lower CPU / memory) let the app schedule and cold-start faster.
 
+   - **Design** — choose **FAST** for PlaidCloud's modern design, or **Default** if the app's CSS expects Panel's default styling.
    - **Idle (minutes)** — how long the app stays warm with no traffic before it scales back to zero. The default is 5 minutes.
    - **Allow Public Access** — tick to allow unauthenticated access; otherwise viewers must sign in to your tenant.
 5. Under **Advanced (Embedded Serving)** — optional. By default the app serves only from your PlaidCloud tenant. To embed it in another site, click **Add Domain** and enter each domain allowed to load it, one per row — a host only, no scheme or path (for example, `example.com` or `app.example.com:8443`). Leave the list empty unless you're embedding the app elsewhere.
 6. Click **Publish**.
 
-After you publish, the app **builds** — its **Status** shows in the list and updates automatically. See [Using a Panel App](/guides/panel-apps/using/) for what the statuses mean and how to open the app once it is ready.
+After you publish, the app **builds** — its **Status** shows in the list and updates automatically. See [Using a Panel App](/guides/panel-apps/using/) for what the statuses mean, how to open the app once it is ready, and how to trigger a rebuild without unpublishing.
 
 > The app's URL works only once its build status is **Ready**, and the first request after it has been idle spins it up (~15 seconds).
+
+### Advanced: Match PlaidCloud Locally
+
+Technical users can build and test the app with the same inputs PlaidCloud uses. This is the closest local check before publishing or clicking **Rebuild**.
+
+PlaidCloud builds from the selected git branch with this generated Dockerfile. Use the same content locally as `Dockerfile.plaidcloud-panel`:
+
+```dockerfile
+FROM us-docker.pkg.dev/plaidcloud-build/panel-base/platform-panel-base:0.5.1
+USER root
+COPY . /app
+RUN if [ -f /app/requirements.txt ]; then pip install --no-cache-dir -r /app/requirements.txt; fi
+USER 10001
+```
+
+To match the server build:
+
+1. Check out the same branch you select in **Branch**.
+2. Run the build from the repository root, so `COPY . /app` matches PlaidCloud.
+3. Put optional dependencies in `requirements.txt` at the repository root.
+4. Use the same entry-point path you select in **Entry Point**.
+
+```sh
+docker build \
+  -f Dockerfile.plaidcloud-panel \
+  -t local-panel-app:plaidcloud \
+  .
+```
+
+The deployed image does not override the base image entry point. It runs `panel serve` from environment variables injected by PlaidCloud. Test the built image with the same runtime contract:
+
+```sh
+docker run --rm \
+  --cpus 0.5 \
+  --memory 512m \
+  -p 5006:5006 \
+  -e APP_PATH=/app/app.py \
+  -e PANEL_PREFIX=/serve/local \
+  -e PANEL_PORT=5006 \
+  -e PANEL_ORIGIN=localhost:5006 \
+  -e PANEL_KEEP_ALIVE_MS=25000 \
+  -e PLAID_PANEL_DESIGN=fast \
+  local-panel-app:plaidcloud
+```
+
+Open `http://localhost:5006/serve/local/`.
+
+Match the publish dialog settings when you test:
+
+- **Entry Point** maps to `APP_PATH=/app/<entry-point>`.
+- **CPU** and **Memory** map to Docker's `--cpus` and `--memory` limits.
+- **Design: FAST** maps to `PLAID_PANEL_DESIGN=fast`.
+- **Design: Default** means omit `PLAID_PANEL_DESIGN`.
+- **Idle (minutes)** maps to the deployed scale-down window. It is not enforced by local Docker, but the app still uses the same Panel websocket keepalive and session cleanup settings.
+- **Embedded Serving** domains map to `PANEL_ORIGIN`; use a space-separated list if you need to test more than one host.
+
+If you do not need a container, you can still test the serve layer from a local Python environment. Install the same `requirements.txt`, set the platform environment variables, then run `panel serve` with the same flags the deployed image uses.
+
+```sh
+export APP_PATH=app.py
+export PANEL_PREFIX=/serve/local
+export PANEL_PORT=5006
+export PANEL_ORIGIN=localhost:5006
+export PANEL_KEEP_ALIVE_MS=25000
+export PLAID_PANEL_DESIGN=fast
+
+panel serve "$APP_PATH" \
+  --address 0.0.0.0 \
+  --port "$PANEL_PORT" \
+  --prefix "$PANEL_PREFIX" \
+  --allow-websocket-origin "$PANEL_ORIGIN" \
+  --num-procs 1 \
+  --keep-alive "$PANEL_KEEP_ALIVE_MS" \
+  --unused-session-lifetime 15000 \
+  --index "$(basename "$APP_PATH" .py)"
+```
+
+Open `http://localhost:5006/serve/local/`.
+
+Use `PLAID_PANEL_DESIGN=fast` to match the default deployed look. To test the publish dialog's **Default** design option, leave `PLAID_PANEL_DESIGN` unset and run the same command. Keep `PANEL_PREFIX`, `PANEL_ORIGIN`, `--keep-alive`, and `--unused-session-lifetime` in place; those are part of the deployed runtime contract.
 
 ## Creating a WASM App
 
