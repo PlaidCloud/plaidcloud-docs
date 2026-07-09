@@ -11,6 +11,8 @@ The **REST Request** step calls a REST API and routes the response to a target t
 
 For a full walkthrough, see the [REST Request step guide](/guides/workflows/rest-request-step/).
 
+While you edit, the browser keeps a local draft for the step. If you close or reload before saving, reopening the step offers to restore that unsaved draft.
+
 ## Configuration
 
 ### Request
