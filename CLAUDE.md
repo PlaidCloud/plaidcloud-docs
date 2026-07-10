@@ -189,7 +189,7 @@ Typical findings the agent should look for:
 
 `.github/workflows/docs-checks.yaml` runs on every PR:
 
-- **Lychee link check** — scans built `dist/` HTML for broken links. Excludes `docs.plaidcloud.com` (self-references resolve only post-deploy), `mailto:`, and loopback. Report uploaded as artifact.
+- **Lychee link check** — scans built `dist/` HTML for broken **internal** links and **fails the build** on any (`fail: true`). Runs `--offline` (external URLs aren't checked — that's too slow/flaky per-PR; sweep external rot on a schedule instead) with `--root-dir …/dist` so root-relative links resolve against local files, and a **quoted** `'./dist/**/*.html'` so lychee (not the shell) does the globbing and actually recurses. `--include-fragments` is intentionally off: lychee misparses Starlight's heading-anchor HTML and false-flags anchors that exist. Report uploaded as artifact.
 - **Vale prose lint** — Google style pack + PlaidCloud vocab (`styles/Vocab/PlaidCloud/accept.txt`). `.vale.ini` disables `Google.Headings` (our own Title Case script owns this), `Google.We` (company voice OK), `Google.Contractions` (matches voice). Fenced code blocks are token-ignored.
 
 If a check fails, fix it before merge — don't disable the rule unless there's an explicit reason captured here.
