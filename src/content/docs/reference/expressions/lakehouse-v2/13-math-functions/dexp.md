@@ -1,9 +1,9 @@
 ---
 title: DEXP (Lakehouse v2)
-description: DEXP — alias for `EXP`. See [EXP](exp).
+description: DEXP — alias for `EXP`. See [EXP](../exp/).
 ---
 
-Alias for `EXP`. See [EXP](exp).
+Alias for `EXP`. See [EXP](../exp/).
 
 ## Analyze Syntax
 

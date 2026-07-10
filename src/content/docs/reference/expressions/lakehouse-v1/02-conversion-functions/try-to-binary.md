@@ -3,9 +3,9 @@ title: TRY_TO_BINARY (Lakehouse v1)
 description: TRY_TO_BINARY — convert an expression to a binary value, returning NULL on failure instead of raising an error.
 ---
 
-An enhanced version of [TO_BINARY](../to_binary) that converts an input expression to a binary value, returning `NULL` if the conversion fails instead of raising an error.
+An enhanced version of [TO_BINARY](../to-binary/) that converts an input expression to a binary value, returning `NULL` if the conversion fails instead of raising an error.
 
-See also: [TO_BINARY](../to_binary)
+See also: [TO_BINARY](../to-binary/)
 
 ## Analyze Syntax
 

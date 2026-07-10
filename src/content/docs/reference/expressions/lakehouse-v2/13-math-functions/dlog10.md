@@ -1,9 +1,9 @@
 ---
 title: DLOG10 (Lakehouse v2)
-description: DLOG10 — alias for `LOG10`. See [LOG10](log10).
+description: DLOG10 — alias for `LOG10`. See [LOG10](../log10/).
 ---
 
-Alias for `LOG10`. See [LOG10](log10).
+Alias for `LOG10`. See [LOG10](../log10/).
 
 ## Analyze Syntax
 
