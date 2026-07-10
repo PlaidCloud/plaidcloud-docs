@@ -9,8 +9,8 @@ The command returns the location information of each parquet file referenced by 
 
 See Also:
 
-- [FUSE_SNAPSHOT](../fuse_snapshot)
-- [FUSE_SEGMENT](../fuse_segment)
+- [FUSE_SNAPSHOT](../fuse-snapshot/)
+- [FUSE_SEGMENT](../fuse-segment/)
 
 ## SQL Syntax
 

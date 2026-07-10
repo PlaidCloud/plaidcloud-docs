@@ -5,7 +5,7 @@ description: CUME_DIST — returns the cumulative distribution of a given value 
 
 Returns the cumulative distribution of a given value in a set of values. It calculates the proportion of rows that have values less than or equal to the specified value, divided by the total number of rows. Please note that the resulting value falls between 0 and 1, inclusive.
 
-See also: [PERCENT_RANK](../percent_rank)
+See also: [PERCENT_RANK](../percent-rank/)
 
 ## Analyze Syntax
 

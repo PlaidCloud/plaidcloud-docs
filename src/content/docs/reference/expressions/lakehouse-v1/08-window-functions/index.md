@@ -42,7 +42,7 @@ The list below shows all the window functions.
 | [SUM](../07-aggregate-functions/aggregate-sum)                        | General      | ✔      | ✔            |       |
 | [SUM_IF](../07-aggregate-functions/aggregate-sum-if)                  | General      | ✔      | ✔            |       |
 | [CUME_DIST](cume-dist)                                                | Rank-related | ✔      |              |       |
-| [PERCENT_RANK](percent_rank)                                          | Rank-related | ✔      | ✔            |       |
+| [PERCENT_RANK](percent-rank/)                                          | Rank-related | ✔      | ✔            |       |
 | [DENSE_RANK](dense-rank)                                              | Rank-related | ✔      | ✔            |       |
 | [RANK](rank)                                                          | Rank-related | ✔      | ✔            |       |
 | [ROW_NUMBER](row-number)                                              | Rank-related | ✔      |              |       |

@@ -1,9 +1,9 @@
 ---
 title: DSQRT (Lakehouse v2)
-description: DSQRT — alias for `SQRT`. See [SQRT](sqrt).
+description: DSQRT — alias for `SQRT`. See [SQRT](../sqrt/).
 ---
 
-Alias for `SQRT`. See [SQRT](sqrt).
+Alias for `SQRT`. See [SQRT](../sqrt/).
 
 ## Analyze Syntax
 

@@ -7,8 +7,8 @@ Returns the snapshot information of a table. For more information about what is 
 
 See Also:
 
-- [FUSE_SEGMENT](../fuse_segment)
-- [FUSE_BLOCK](../fuse_block)
+- [FUSE_SEGMENT](../fuse-segment/)
+- [FUSE_BLOCK](../fuse-block/)
 
 ## SQL Syntax
 
