@@ -18,7 +18,7 @@ The current sidebar is split:
 |---|---|---|
 | `get-started/` | Hand-curated entries | Small, deliberate ordering |
 | `guides/` | Hand-curated top, autogenerate at leaf | Friendly labels for the ~13 sub-guide groups |
-| `reference/` | **Top-level only** (5 link entries) | Full tree would inline 1,400+ entries × 1,400 pages = breach the cap |
+| `reference/` | **Top-level only** (5 link entries) | Full tree would inline 1,400+ entries × 1,400 pages — an untenable amount of duplicated per-page HTML |
 | `integrations/` | Hand-curated | Friendly labels |
 | `administration/` | Hand-curated | Friendly labels |
 | `releases/` | Single link | Timeline lives on the index page |
