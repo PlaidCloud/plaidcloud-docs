@@ -1,9 +1,9 @@
 ---
 title: DROUND (Lakehouse v2)
-description: DROUND — alias for `ROUND`. See [ROUND](round).
+description: DROUND — alias for `ROUND`. See [ROUND](../round/).
 ---
 
-Alias for `ROUND`. See [ROUND](round).
+Alias for `ROUND`. See [ROUND](../round/).
 
 ## Analyze Syntax
 

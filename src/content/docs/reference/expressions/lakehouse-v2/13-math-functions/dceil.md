@@ -1,9 +1,9 @@
 ---
 title: DCEIL (Lakehouse v2)
-description: DCEIL — alias for `CEIL`. See [CEIL](ceil).
+description: DCEIL — alias for `CEIL`. See [CEIL](../ceil/).
 ---
 
-Alias for `CEIL`. See [CEIL](ceil).
+Alias for `CEIL`. See [CEIL](../ceil/).
 
 ## Analyze Syntax
 

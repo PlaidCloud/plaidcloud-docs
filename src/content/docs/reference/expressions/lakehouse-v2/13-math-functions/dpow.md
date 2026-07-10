@@ -1,9 +1,9 @@
 ---
 title: DPOW (Lakehouse v2)
-description: DPOW — alias for `POW`. See [POW](pow).
+description: DPOW — alias for `POW`. See [POW](../pow/).
 ---
 
-Alias for `POW`. See [POW](pow).
+Alias for `POW`. See [POW](../pow/).
 
 ## Analyze Syntax
 

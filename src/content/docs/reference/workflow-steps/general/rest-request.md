@@ -11,19 +11,30 @@ The **REST Request** step calls a REST API and routes the response to a target t
 
 For a full walkthrough, see the [REST Request step guide](/guides/workflows/rest-request-step/).
 
+While you edit, the browser keeps a local draft for the step. If you close or reload before saving, reopening the step offers to restore that unsaved draft.
+
 ## Configuration
 
 ### Request
 
 * **Endpoint Source** — `Manual`, `Postman collection (file/URL)`, `OpenAPI / Swagger (URL/file)`, or `HAR archive (file)`. Use **Load Catalog** to list and pick an endpoint from an imported source.
-* **Connection** *(optional)* — a REST connection for auth and base URL; omit to call a full URL directly.
+* **Connection** *(optional)* — a REST connection for auth and base URL; omit to call a full URL directly. The edit shortcut beside the picker opens the selected connection editor for viewing or editing.
 * **Method** — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`.
 * **Endpoint** — path (with a connection) or full URL.
 * **Headers** / **Query Parameters** — name/value rows with an on/off toggle.
 * **Body** — request payload (JSON, form, or raw).
-* **Send Test Request** / **Copy as curl** — fire the request and inspect the response inline, or copy an equivalent curl command (secrets masked).
+* **Send Test Request** / **Copy as curl** / **Import from curl** — fire the request and inspect the response inline; copy an equivalent curl command (secrets masked); or paste a curl command to fill the method, URL, headers, and body.
+* **Send** — `One request` (default), or `One request per table row` to fan the request out over a driver table.
 
-`${...}` references to workflow variables are substituted in the endpoint, headers, query values, and body at run time.
+Saving outbound request changes before a successful **Send Test Request** asks for confirmation. In fan-out mode, **Test Row 1** is the successful test that clears the warning.
+
+When **Send** is `One request per table row`, pick a **Driver Table** (choose it with the table picker or type a name) and use `{{row.column}}` tokens in the endpoint, query, headers, or body to substitute each row's values. The endpoint and body variable insert menus include the selected driver table's columns. Optional: **Driver Filter** (a SQL `WHERE` clause), **Key Columns** (carried onto each output row), **Row Limit**, **Concurrency**, **Max req/sec** (cap on how fast requests start across all workers, independent of concurrency; 0 = no limit), **Add Idempotency-Key header** (send a stable per-row `Idempotency-Key` on a single No-Paging POST/PUT/PATCH so re-runs don't double-create; skipped with a warning otherwise), and **Continue on error** (record a failed row and warn instead of aborting). **Test Row 1** fires the request for the first driver row so you can preview the fan-out before running it. Fan-out writes to the target table; it can't capture to variables.
+
+`{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
+
+The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor.
+
+**Retries** apply only to idempotent methods (GET/HEAD/OPTIONS/DELETE); a POST/PUT/PATCH is always sent once so a non-idempotent body is never re-sent. **Timeout (s)** is the per-request limit, capped at 600.
 
 ### Response Destination
 

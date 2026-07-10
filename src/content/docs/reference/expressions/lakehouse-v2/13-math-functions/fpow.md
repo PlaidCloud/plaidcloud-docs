@@ -1,9 +1,9 @@
 ---
 title: FPOW (Lakehouse v2)
-description: FPOW — alias for `POW`. See [POW](pow).
+description: FPOW — alias for `POW`. See [POW](../pow/).
 ---
 
-Alias for `POW`. See [POW](pow).
+Alias for `POW`. See [POW](../pow/).
 
 ## Analyze Syntax
 

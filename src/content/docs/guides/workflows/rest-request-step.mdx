@@ -13,6 +13,8 @@ The **REST Request** step calls a REST API as one step in a workflow. It's a sin
 
 You choose where the response goes. By default it's parsed into a **table**. Alternatively, the step can capture the response into **workflow variables** so a later step can branch on the status code or read a value out of the body.
 
+If you close or reload the browser before saving, the editor keeps a local draft in that browser. Reopen the same step and choose **Restore** when prompted to recover the unsaved request settings.
+
 <Aside type="note">The REST Request step replaces the older REST-flavored steps with one unified step. Use it for new work; existing REST steps keep running.</Aside>
 
 ## Before You Start
@@ -41,7 +43,7 @@ For an imported source, choose **Load Catalog** to list the available endpoints,
 
 ### Connection, Method, and Endpoint
 
-- **Connection** — the REST connection to authenticate with. Leave it unset to call a fully-qualified URL directly.
+- **Connection** — the REST connection to authenticate with. Leave it unset to call a fully-qualified URL directly. Use the edit shortcut beside the picker to view or edit the selected connection without leaving the request editor.
 - **Method** — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, or `HEAD`.
 - **Endpoint** — the path (when a connection is set) or a full URL.
 
@@ -50,12 +52,24 @@ For an imported source, choose **Load Catalog** to list the available endpoints,
 - **Headers** and **Query Parameters** are editable tables of name/value rows, each with an **On** toggle and a description. Add rows with **Add** and remove them with **Remove**.
 - **Body** holds the request payload (JSON, form, or raw).
 
-Anywhere in the endpoint, headers, query values, or body you can reference workflow variables with `${...}` — they're substituted at run time.
+### Variable Substitution
+
+Anywhere in the endpoint, headers, query values, or body you can inject a variable at run time by wrapping its name in double braces: `{{name}}`. You can also write `{{var.name}}` for a workflow-run variable or `{{project_var.name}}` for a project variable — the prefix is optional and both resolve the same name.
+
+The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor so substitutions are easy to spot before you test or save.
+
+Only double braces are substituted, so a single `{` or `}` in a JSON body is left exactly as written — you can freely mix variables into JSON, for example `{"id": "{{var.order_id}}", "qty": 1}`. An unknown variable name fails the step so a typo surfaces immediately.
+
+When the workflow is started by a sensor or webhook, four trigger variables are also available: `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (the inbound payload as a JSON string — parse it in a later step to reach nested fields). On a manual or scheduled run these resolve to an empty string.
 
 ### Test the Request
 
-- **Send Test Request** fires the request with your current settings and shows the live response inline, so you can confirm the call works before saving.
+- **Send Test Request** fires the request with your current settings and shows the live response inline, so you can confirm the call works before saving. (This sends a single request; pagination runs only when the step executes.)
+- **Test Paging** follows the configured pagination and reports how many records come back across pages (up to a preview cap), so you can confirm the paging mode and its params/paths chain correctly before a full run. Only enough pages fire to reach the cap.
 - **Copy as curl** copies an equivalent curl command to the clipboard for sharing or debugging (with secrets masked).
+- **Import from curl** does the reverse: paste a curl command — for example, a browser's "Copy as cURL" — and its method, URL, headers, and body replace the current request. Basic-auth (`-u`) becomes an Authorization header; unsupported options are reported rather than silently dropped. Use **Undo replace** to restore the previous values.
+
+If you change the outbound request fields and save before a successful **Send Test Request**, PlaidCloud asks you to confirm. In fan-out mode, use **Test Row 1** to test the first driver row before saving.
 
 ## Route the Response
 
@@ -68,7 +82,7 @@ The response is parsed into the step's target table. The **Pagination & Parsing*
 - **Row format** and **Items path** — where the rows live inside the response.
 - **Pagination mode**, **Mode params**, and **Mode paths** — how to follow multiple pages of results.
 - **Dump raw JSON instead of parsing rows** — store the raw payload rather than parsing it into columns.
-- **Retries** and **Timeout (s)** — how the request behaves under failure and how long it may run.
+- **Retries** and **Timeout (s)** — how the request behaves under failure and how long it may run (timeout capped at 600 s). Retries apply only to idempotent methods (GET, HEAD, OPTIONS, DELETE); a POST, PUT, or PATCH is always sent once so a non-idempotent request body is never re-sent. Retries cover connection failures, server errors (5xx), and rate limiting (HTTP 429); when the API returns a `Retry-After` header, the step waits the interval it asks for (capped at 2 minutes) before retrying.
 
 ### Workflow variables
 
@@ -84,6 +98,26 @@ Set **Destination** to **Workflow variables** and give a **Variable prefix** (a 
 Reference them downstream like any workflow variable — for example `{my_call_status}`. This is the building block for "fire one request, then branch on the result" patterns.
 
 <Aside type="caution">The prefix must start with a letter or underscore and contain only letters, digits, and underscores. It can't be one of the reserved names `cloud`, `project`, `model`, or `date`. In variable mode the step captures a single response — pagination and row parsing don't apply.</Aside>
+
+## Send One Request Per Table Row
+
+By default the step sends **one** request. To call an API once per row of a table — for example, look up every customer id in a table, or POST each row as a record — set **Send** (in the Request tab) to **One request per table row**. This reveals the driver-table fields:
+
+- **Driver Table** — pick the table whose rows drive the requests. Choose it from the workflow's tables with the picker, or type a table name. Each row's columns are available as `{{row.column}}` tokens.
+- **Driver Filter** *(optional)* — a SQL `WHERE` clause that limits which rows are used.
+- **Key Columns** *(optional)* — comma-separated driver columns to carry through onto every output row, so the results join back to the driver.
+- **Row Limit** and **Concurrency** — the maximum number of rows to process and how many requests run at once.
+- **Max req/sec** *(optional)* — cap how fast requests start across all workers so a burst doesn't trip the API's rate limit (0 = no limit). This is independent of **Concurrency**: concurrency bounds how many run at once, while Max req/sec paces how often a new one starts.
+- **Add Idempotency-Key header** *(optional)* — for a single (No Paging) POST, PUT, or PATCH request per row, sends a stable `Idempotency-Key` header derived from each row so that re-running the step doesn't double-create records on an idempotency-aware API (the same row always sends the same key, so the API dedupes the repeat). It's skipped, with a warning, for GET/HEAD/DELETE or a paging mode. A request that already sets its own `Idempotency-Key` keeps it.
+- **Continue on error** — when on, a row that fails is recorded and the step ends with a warning instead of aborting on the first failure. The run log names the first few failed rows (by their key columns) and the error each hit, so you can tell which rows failed and why.
+
+Use `{{row.column}}` tokens anywhere in the endpoint, query, headers, or body to substitute that row's values — for example `GET /customers/{{row.customer_id}}`. Each row's response records are parsed into the target table (with any key columns prepended); with **Dump raw JSON** on, you get one row per request instead.
+
+The **Insert `{{row.column}}`** menu lists the selected driver table's columns, so you can drop a `{{row.customer_id}}`-style token into the endpoint or body — whichever field you edited last — instead of typing column names by hand. As you edit, the form also lists the `{{row.column}}` tokens you've used and highlights in red any that aren't a column of the driver table, so typos are caught before you run the step.
+
+**Test Row 1** reads the first driver row (honoring the driver filter), substitutes its values into the endpoint, query, headers, and body, and fires that one request — so you can confirm the fan-out is wired correctly before running it over every row. The response is shown inline like **Send Test Request**, along with the driver-row values that were used. **Preview Row 1** likewise resolves the first driver row's `{{row.column}}` values and shows the resolved request without firing it.
+
+<Aside type="note">One request per table row writes to a table — it can't capture to workflow variables. The response destination stays **Table**.</Aside>
 
 ## Run the Step
 
