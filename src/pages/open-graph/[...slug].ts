@@ -2,7 +2,8 @@
 // in (see `hasGeneratedOG`), plus a shared `_default` card for deep reference
 // leaves. The design mirrors the marketing site's cards (plaidcloud.com):
 // navy field with a warm orange/amber + cyan glow, PlaidCloud logo, an
-// uppercase section eyebrow, the page title, and an orange→amber accent bar.
+// uppercase section eyebrow, the page title, the page description, and an
+// orange→amber accent bar.
 //
 // Rendering: hand-built SVG rasterized by @resvg/resvg-js with the vendored
 // Inter TTFs in scripts/assets/og/ (resvg needs real font files, not a remote
@@ -64,23 +65,43 @@ function wrap(text: string, fontSize: number, maxWidth: number): string[] {
 	return lines;
 }
 
-function card(title: string, eyebrow: string): string {
-	let fontSize = 64;
-	let lines = wrap(title, fontSize, 1040);
-	if (lines.length > 2) {
-		fontSize = 52;
-		lines = wrap(title, fontSize, 1040);
+function card(title: string, eyebrow: string, description: string): string {
+	// Title: 60px, dropping to 48px when it would wrap past two lines; hard cap
+	// at three lines with an ellipsis.
+	const titleFont = wrap(title, 60, 1040).length > 2 ? 48 : 60;
+	let titleLines = wrap(title, titleFont, 1040);
+	if (titleLines.length > 3) {
+		titleLines = titleLines.slice(0, 3);
+		titleLines[2] = titleLines[2].replace(/\s+\S*$/, '') + '…';
 	}
-	if (lines.length > 3) {
-		lines = lines.slice(0, 3);
-		lines[2] = lines[2].replace(/\s+\S*$/, '') + '…';
+	const titleLH = titleFont * 1.16;
+
+	// Description: muted subtitle below the title. Fewer lines are allowed as the
+	// title grows, so the stacked block always clears the footer.
+	const descFont = 29;
+	const descLH = descFont * 1.34;
+	const descMax = titleLines.length >= 3 ? 1 : titleLines.length === 2 ? 2 : 3;
+	let descLines = description ? wrap(description, descFont, 1000) : [];
+	if (descLines.length > descMax) {
+		descLines = descLines.slice(0, descMax);
+		descLines[descMax - 1] = descLines[descMax - 1].replace(/\s+\S*$/, '') + '…';
 	}
-	const lineHeight = fontSize * 1.18;
-	const titleBlockH = lines.length * lineHeight;
-	const titleY = 340 - titleBlockH / 2 + fontSize; // vertically centered around y=340
-	const tspans = lines
-		.map((l, i) => `<tspan x="80" y="${(titleY + i * lineHeight).toFixed(0)}">${esc(l)}</tspan>`)
+
+	// Vertically center the title + description block around y=360 (between the
+	// eyebrow at ~228 and the footer at 566).
+	const gap = descLines.length ? 30 : 0;
+	const blockH = titleLines.length * titleLH + gap + descLines.length * descLH;
+	const top = 360 - blockH / 2;
+	const titleTspans = titleLines
+		.map((l, i) => `<tspan x="80" y="${(top + titleFont + i * titleLH).toFixed(0)}">${esc(l)}</tspan>`)
 		.join('');
+	const descBase = top + titleLines.length * titleLH + gap + descFont;
+	const descTspans = descLines
+		.map((l, i) => `<tspan x="80" y="${(descBase + i * descLH).toFixed(0)}">${esc(l)}</tspan>`)
+		.join('');
+	const descText = descLines.length
+		? `<text font-family="Inter" font-size="${descFont}" font-weight="400" fill="#B4C8E6">${descTspans}</text>`
+		: '';
 	return `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <radialGradient id="glowA" cx="100%" cy="100%" r="90%">
@@ -102,7 +123,8 @@ function card(title: string, eyebrow: string): string {
   <rect width="1200" height="630" fill="url(#glowB)"/>
   <image x="80" y="64" width="196" height="52" preserveAspectRatio="xMinYMid meet" xlink:href="data:image/png;base64,${LOGO_B64}"/>
   <text x="80" y="228" font-family="Inter" font-size="26" font-weight="700" letter-spacing="4" fill="#FDC20D">${esc(eyebrow.toUpperCase())}</text>
-  <text font-family="Inter" font-size="${fontSize}" font-weight="700" fill="#FFFFFF">${tspans}</text>
+  <text font-family="Inter" font-size="${titleFont}" font-weight="700" fill="#FFFFFF">${titleTspans}</text>
+  ${descText}
   <text x="80" y="566" font-family="Inter" font-size="26" font-weight="400" fill="#FFFFFF" fill-opacity="0.6">docs.plaidcloud.com</text>
   <rect x="0" y="618" width="1200" height="12" fill="url(#bar)"/>
 </svg>`;
@@ -111,6 +133,7 @@ function card(title: string, eyebrow: string): string {
 interface CardProps {
 	title: string;
 	eyebrow: string;
+	description: string;
 }
 
 export async function getStaticPaths() {
@@ -123,18 +146,26 @@ export async function getStaticPaths() {
 			// from colliding with a child section's directory (`administration/`).
 			// Root page has an empty id; `Head.astro` points it at `index.png`.
 			params: { slug: `${entry.id || 'index'}.png` },
-			props: { title: entry.data.title, eyebrow: eyebrowFor(entry.id) } as CardProps,
+			props: {
+				title: entry.data.title,
+				eyebrow: eyebrowFor(entry.id),
+				description: entry.data.description ?? '',
+			} as CardProps,
 		}));
 	paths.push({
 		params: { slug: '_default.png' },
-		props: { title: 'PlaidCloud Documentation', eyebrow: 'Documentation' },
+		props: {
+			title: 'PlaidCloud Documentation',
+			eyebrow: 'Documentation',
+			description: 'Guides, reference, and tutorials for the PlaidCloud analytics platform.',
+		},
 	});
 	return paths;
 }
 
 export async function GET({ props }: APIContext): Promise<Response> {
-	const { title, eyebrow } = props as CardProps;
-	const rendered = new Resvg(card(title, eyebrow), {
+	const { title, eyebrow, description } = props as CardProps;
+	const rendered = new Resvg(card(title, eyebrow, description), {
 		fitTo: { mode: 'width', value: 1200 },
 		font: { fontFiles: FONTS, defaultFontFamily: 'Inter', loadSystemFonts: false },
 	})
