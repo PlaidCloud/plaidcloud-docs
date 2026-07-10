@@ -8,12 +8,15 @@
 // Inter TTFs in scripts/assets/og/ (resvg needs real font files, not a remote
 // stylesheet — the previous astro-og-canvas config pointed at a Google Fonts
 // CSS URL, which returns CSS rather than a typeface, so every card rendered
-// blank). `Head.astro` writes the matching `/open-graph/<slug>.png` URL.
+// blank). resvg emits a barely-compressed PNG (~150 KB); a lossless sharp
+// re-encode drops it to ~30 KB (pixel-identical) so 300+ cards don't bloat the
+// Workers Assets upload. `Head.astro` writes the matching `<slug>.png` URL.
 import type { APIContext } from 'astro';
 import { getCollection } from 'astro:content';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
+import sharp from 'sharp';
 import { hasGeneratedOG } from '../../lib/og-image';
 
 // Anchor to the project root (cwd during `astro build`) rather than
@@ -129,14 +132,17 @@ export async function getStaticPaths() {
 	return paths;
 }
 
-export function GET({ props }: APIContext): Response {
+export async function GET({ props }: APIContext): Promise<Response> {
 	const { title, eyebrow } = props as CardProps;
-	const png = new Resvg(card(title, eyebrow), {
+	const rendered = new Resvg(card(title, eyebrow), {
 		fitTo: { mode: 'width', value: 1200 },
 		font: { fontFiles: FONTS, defaultFontFamily: 'Inter', loadSystemFonts: false },
 	})
 		.render()
 		.asPng();
+	// Lossless re-encode: resvg's PNG deflate is weak; max-compression sharp
+	// shrinks each card ~5× with no pixel change.
+	const png = await sharp(rendered).png({ compressionLevel: 9, effort: 10 }).toBuffer();
 	return new Response(new Uint8Array(png), {
 		headers: { 'Content-Type': 'image/png' },
 	});
