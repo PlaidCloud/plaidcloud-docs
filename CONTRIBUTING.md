@@ -277,8 +277,8 @@ The `astro-migration` branch is kept as a frozen snapshot of the migration-era s
 ## Build budgets to be aware of
 
 - **CF Workers Build minutes** — 3,000/month on the free plan. Each push uses ~30s. Branch pushes count too. Don't push trivial fixes in 10 separate commits; squash locally first.
-- **Workers Static Assets total upload** — 100 MB cap. Current build is ~135 MB; we're already over the free-tier cap and rely on the paid Workers plan. Any change that meaningfully grows per-page size needs evaluation. See CLAUDE.md → "Sidebar architecture" for context.
-- **Workers Assets file count** — 20,000 files cap. Current build is ~2,800. Plenty of headroom.
+- **Workers Static Assets file count** — **20,000 files** cap (and **25 MiB per file**). Current build is ~3,500 files; plenty of headroom, but this is the real constraint to watch — adding a file per page (e.g. per-page images) is what moves the needle. See CLAUDE.md → "Sidebar architecture" for context.
+- **Workers Static Assets total size** — there is **no total-size cap**. The build deploys a ~177 MB `dist/` successfully, so total bytes are not a limit. (An earlier note here claimed a 100 MB cap requiring the paid plan — that was never a real limit.)
 
 ## Where to ask for help
 
