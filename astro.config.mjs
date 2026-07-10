@@ -76,6 +76,9 @@ export default defineConfig({
 				'@snippets': fileURLToPath(new URL('./src/snippets', import.meta.url)),
 			},
 		},
+		// @resvg/resvg-js is a native addon — keep Vite from trying to bundle it
+		// when the open-graph endpoint runs during the build.
+		ssr: { external: ['@resvg/resvg-js'] },
 	},
 	integrations: [
 		sitemap({
