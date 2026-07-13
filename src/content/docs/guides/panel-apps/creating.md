@@ -137,7 +137,7 @@ pn.template.FastListTemplate(
 
 A plain app with no template — `pn.Column(...).servable()` — follows Panel's default and isn't affected by these settings; reach for a template when you want explicit control.
 
-Your repository must be reachable through a **git connection** in PlaidCloud. If you don't have one yet, create it under **Tools > Connections** before publishing.
+Your repository must be reachable through a **git connection** in PlaidCloud. If your code lives in [PlaidCloud Git](/guides/git/), create a managed **PlaidCloud Git** connection under **Tools > Connections** — it needs no server URL or credentials. For the whole path from an empty repository to a served app, see [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/).
 
 ### Publish the App
 
