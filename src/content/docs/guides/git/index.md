@@ -29,4 +29,5 @@ If a newly-granted administrator has never opened Git before, they may need to s
 
 ## Related
 
+- [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) — serve a HoloViz Panel app straight from a repository, with a managed no-credentials connection
 - [Access Management](/administration/access/) — how workspace membership and security groups govern who can see and edit repositories
