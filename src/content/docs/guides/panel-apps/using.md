@@ -28,7 +28,7 @@ Use **Rebuild** after dependency changes, base-image updates, or a transient fai
 Click the **lock** icon on an app's row to protect it from accidental changes. While an app is locked:
 
 - **Edit**, **Remove**, and **Rebuild** refuse to run and tell you the app is locked.
-- A **push to a server app's branch does not rebuild it** — the automatic rebuild is skipped (and noted in the build activity) until you unlock the app.
+- A **push to a server app's branch does not rebuild it** — the automatic rebuild is skipped until you unlock the app. No build runs for a skipped push, so nothing new appears in the app's Build logs; push again (or use **Rebuild**) after unlocking to pick the change up.
 - Opening the app, viewing its logs, and viewing its usage metrics all keep working — the lock only stops changes, never viewers.
 
 Click the icon again to unlock. The icon shows the app's current state: closed when locked, open when not.
