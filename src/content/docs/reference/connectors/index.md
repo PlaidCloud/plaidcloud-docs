@@ -27,7 +27,7 @@ Relational databases, cloud warehouses, query engines, and lakehouse formats.
 
 ### Development and Source Control
 
-- [Git providers](/reference/connectors/git/) — GitHub, GitLab, Bitbucket, Azure Repos, CodeCommit
+- [Git providers](/reference/connectors/git/) — PlaidCloud Git (managed, built-in), plus GitHub, GitLab, Bitbucket, Azure Repos, CodeCommit
 
 ## Related
 
