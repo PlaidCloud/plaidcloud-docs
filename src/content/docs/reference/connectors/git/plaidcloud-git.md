@@ -24,9 +24,9 @@ From **Tools > Connections**, click **New Connection** and choose **PlaidCloud G
 
 | Field | Type | Description |
 |---|---|---|
-| Repository Path | Text | The repository to use, in the form `<organization>/<repository>` — for example, your workspace's `apps` or `udfs` repository. |
-| Default Branch | Text | The branch to read from. Defaults to `main`. |
-| Start Path | Text | Optional path prefix applied to all file lookups, if your files live in a subdirectory of the repository. |
+| Repository | Picker | The repository to use. Click **Refresh** to list your workspace repositories — for example `apps` or `udfs` — and choose one. |
+| Default Branch | Picker | The branch to read from, chosen from the branches in the selected repository. |
+| Start Path | Picker | Optional. Browse the selected repository and choose a folder to scope every file lookup to a subdirectory. |
 
 **Usage** (`Active` / `Read Only`) and the **Security Model** (who in the workspace may use the connection) are the standard connection settings — see the [connection guide](/guides/connections/plaidcloud-git/) and [Create and Manage a Connection](/guides/connections/create-connection/).
 
