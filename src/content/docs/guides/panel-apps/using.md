@@ -1,11 +1,11 @@
 ---
 title: Using a Panel App
-description: Track build status, open, rebuild, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
+description: Track build status, open, rebuild, lock, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
 sidebar:
   order: 3
 ---
 
-Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
+Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you lock it against accidental changes, edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
 
 ## Build Status (Server Apps)
 
@@ -22,6 +22,20 @@ WASM apps have no build step and are available as soon as they are published.
 Click the **Rebuild** icon on a server app's row to rebuild and redeploy it without changing its settings. The app's status returns to **Building…** while PlaidCloud builds the same branch and entry point again, then switches back to **Ready** when the new build is live.
 
 Use **Rebuild** after dependency changes, base-image updates, or a transient failed build. Editing and saving a server app also rebuilds it, but a rebuild does not require opening the edit form.
+
+## Locking an App
+
+Click the **lock** icon on an app's row to protect it from accidental changes. While an app is locked:
+
+- **Edit**, **Remove**, and **Rebuild** refuse to run and tell you the app is locked.
+- A **push to a server app's branch does not rebuild it** — the automatic rebuild is skipped until you unlock the app. No build runs for a skipped push, so nothing new appears in the app's Build logs; push again (or use **Rebuild**) after unlocking to pick the change up.
+- Opening the app, viewing its logs, and viewing its usage metrics all keep working — the lock only stops changes, never viewers.
+
+Click the icon again to unlock. The icon shows the app's current state: closed when locked, open when not.
+
+The lock is a guard against accidents — a mistaken edit, an unintended delete, or a git push landing on an app you're demoing — just like the lock on workflows and workflow steps. It is **not** a security control: anyone who can edit panel apps can also unlock them.
+
+> Two things the lock does not cover: a **build already in progress** when you lock still finishes and goes live, and a **WASM** app's files live in its document account, so replacing those files changes the running app without touching the locked record.
 
 ## Opening an App
 
