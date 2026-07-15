@@ -1,9 +1,9 @@
 ---
 title: DLOG1 (Lakehouse v2)
-description: DLOG1 — alias for `LN`. See [LN](ln).
+description: DLOG1 — alias for `LN`. See [LN](../ln/).
 ---
 
-Alias for `LN`. See [LN](ln).
+Alias for `LN`. See [LN](../ln/).
 
 ## Analyze Syntax
 

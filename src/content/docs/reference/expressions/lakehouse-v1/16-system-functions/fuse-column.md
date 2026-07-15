@@ -8,9 +8,9 @@ Returns the column information of the latest or specified snapshot of a table. F
 
 See Also:
 
-- [FUSE_SNAPSHOT](../fuse_snapshot)
-- [FUSE_SEGMENT](../fuse_segment)
-- [FUSE_BLOCK](../fuse_block)
+- [FUSE_SNAPSHOT](../fuse-snapshot/)
+- [FUSE_SEGMENT](../fuse-segment/)
+- [FUSE_BLOCK](../fuse-block/)
 
 ## SQL Syntax
 
