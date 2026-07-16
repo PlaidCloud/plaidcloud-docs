@@ -10,6 +10,8 @@ sidebar:
 
 As things happen within a workflow, such as steps running or warnings occurring, those events are logged to the workflow log. This log is viewable from the **Project** area under the **Log** tab. The workflow log is also present in the project log in case you would like to see a more comprehensive view of logs across multiple workflows.
 
+If you are working in the [Visual Workflow Designer](/guides/workflows/advanced-workflows/), the toolbar's **View Logs** button opens this same Log view already filtered to the workflow you have open.
+
 
 
 The log viewer allows for sorting and filtering the log as well as viewing the details of a particular log entry.
