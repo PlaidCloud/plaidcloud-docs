@@ -1,97 +1,114 @@
 ---
-title: Add OneDrive Account
-description: Add a Microsoft OneDrive storage account to PlaidCloud for importing and exporting data files using OneDrive cloud storage.
+title: Add OneDrive / SharePoint Account
+description: Connect Microsoft OneDrive for Business or SharePoint to PlaidCloud Document with least-privilege Sites.Selected access, or tenant-wide access.
 sidebar:
   order: 4
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-## Onedrive Setup
+Connect a Microsoft **OneDrive for Business** or **SharePoint** location to PlaidCloud Document. You register an Entra (Azure AD) application, choose how much of your tenant it can reach, and PlaidCloud uses it to read and write files.
 
-These steps need to be completed within the Azure portal to register an application and obtain the credentials PlaidCloud needs to access OneDrive.
+## Choose an Access Model
 
-### Register an Application in Azure
+Decide how much of your Microsoft 365 tenant the application can reach. This is the most important choice in the whole setup.
 
-1. Sign in to the [Azure portal](https://portal.azure.com) and navigate to **Microsoft Entra ID**.
-2. In the left sidebar, select **App registrations**.
-3. Click **+ New registration**.
-4. Enter a name for the application (e.g., `PlaidCloud`).
-5. Under **Supported account types**, select the option that matches your organization:
-   - **Accounts in this organizational directory only** — for a single-tenant setup (most common)
-   - **Accounts in any organizational directory** — for multi-tenant access
-6. Leave the **Redirect URI** blank.
-7. Click **Register**.
+| Model | Graph application permission | What the app can reach | Choose when |
+|---|---|---|---|
+| **Selected sites** (recommended) | `Sites.Selected` | Only the specific sites you explicitly grant | Any site holds sensitive data — payroll, HR, finance, PHI |
+| **All sites** | `Sites.Read.All` (read) or `Sites.ReadWrite.All` (read + write) | **Every** site in the tenant | No site is sensitive and you want the simplest setup |
 
-### Copy the Client ID and Tenant ID
+**Most organizations should choose Selected.** If even one site holds sensitive information, tenant-wide access exposes it. With `Sites.Selected` the application can reach nothing until an administrator grants it to each named site, so sites you never grant stay completely out of reach.
 
-After registration, you will land on the application overview page.
+<Aside type="caution">
+Do **not** grant `Directory.*`, `Files.*`, or `User.Read.All`. A document connector never needs them, and `Directory.ReadWrite.All` in particular allows read/write over your entire identity directory. A single `Sites.Selected` (or one `Sites.Read.All` / `Sites.ReadWrite.All`) is all that is required.
+</Aside>
 
-1. Copy the **Application (client) ID** — this is your **Client ID**. Save it for the PlaidCloud Document setup below.
-2. Copy the **Directory (tenant) ID** — this is your **Tenant ID**. Save it as well.
+## Register the Application in Azure
 
-Both values are displayed on the application overview page immediately after registration.
+1. Sign in to the [Azure portal](https://portal.azure.com) and go to **Microsoft Entra ID** → **App registrations** → **+ New registration**.
+2. Enter a name (for example `PlaidCloud`).
+3. Under **Supported account types**, choose **Accounts in this organizational directory only** (single tenant — most common).
+4. Leave the **Redirect URI** blank and click **Register**.
+5. On the overview page, copy the **Application (client) ID** (your **Client ID**) and the **Directory (tenant) ID** (your **Tenant ID**).
+6. Go to **Certificates & secrets** → **+ New client secret**, set a description and expiry, **Add**, and copy the secret **Value** immediately — it is not shown again.
 
-### Create a Client Secret
+## Grant the API Permission
 
-1. In the left sidebar, select **Certificates & secrets** under **Manage**.
-2. Click **+ New client secret**.
-3. Enter a description (e.g., `PlaidCloud`) and choose an expiration period.
-4. Click **Add**.
-5. Copy the **Value** of the newly created secret immediately — this is your **Client Secret**. It will not be shown again after you leave this page.
+Add exactly **one** Microsoft Graph **Application** permission, matching the access model you chose:
 
-### Grant API Permissions
+- **Selected sites:** `Sites.Selected`
+- **All sites:** `Sites.Read.All` (read-only) or `Sites.ReadWrite.All` (read + write)
 
-1. In the left sidebar, select **API permissions** under **Manage**.
-2. Click **+ Add a permission**.
-3. Select **Microsoft Graph**.
-4. Add the following permissions, selecting the type indicated for each:
-   - `Directory.ReadWrite.All` (Application) — Read and write directory data
-   - `Files.Read.All` (Application) — Read files in all site collections
-   - `Files.ReadWrite.All` (Application) — Read and write files in all site collections
-   - `Sites.ReadWrite.All` (Application) — Read and write items in all site collections
-   - `User.Read` (Delegated) — Sign in and read user profile
-   - `User.Read.All` (Application) — Read all users' full profiles
-5. Click **Add permissions**.
-6. Click **Grant admin consent for [your organization]** and confirm.
+Steps: **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → add the one permission above → **Grant admin consent**.
 
----
+<Aside type="note">
+Granting admin consent requires a **Global Administrator** or **Privileged Role Administrator** — a SharePoint Administrator alone cannot consent an application permission.
+</Aside>
 
-### Find the Onedrive Drive Path (start Path)
+If you chose **All sites**, your setup is done — skip to [Add the Account in PlaidCloud](#add-the-account-in-plaidcloud). If you chose **Selected sites**, grant the app to each site next.
 
-The **Start Path** in PlaidCloud Document controls which drive or folder in OneDrive is used as the root for the account.
+## Grant the App Access to Each Site (Selected model)
 
-In the most common scenario, the registered application has access to multiple drives or SharePoint sites. In this case the Start Path must begin with the name of the drive or site. For most OneDrive for Business accounts this is simply:
+`Sites.Selected` grants the application no access on its own — a SharePoint or Global administrator must grant it to each site you want it to reach. There is no admin-center screen for this, so you use two Microsoft Graph calls in [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer). Because you grant sites one at a time, sensitive sites simply are never granted.
+
+**One-time setup.** In Graph Explorer, signed in as a SharePoint/Global administrator, open the **Modify permissions** tab and click **Consent** on `Sites.FullControl.All` (this scope is what lets you set site grants). If a later query returns `accessDenied`, this consent is what's missing — sign out and back in after consenting to refresh the token.
+
+### Step 1 — Find the Site ID
+
+List the sites in your tenant (method **GET**):
 
 ```text
-Documents
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
 ```
 
-To target a specific subfolder within that drive, append the folder path:
+Or resolve a single site directly by its URL:
 
 ```text
-Documents/Finance
-Documents/Shared/Data
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
 ```
 
-<Aside>If the application only has access to a single drive, the Start Path can be left blank to use the root of that drive. When in doubt, start with `Documents` as the drive name.</Aside>
+Copy the site's `id` from the response — it has the form `contoso.sharepoint.com,<guid>,<guid>`.
 
----
+### Step 2 — Grant the App
 
-You should now have everything you need to add your OneDrive account to PlaidCloud Document.
+Set the method to **POST** against that site's `permissions` collection (paste the `id` from Step 1):
 
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
 
-## PlaidCloud Document Setup
+On the **Request body** tab, paste the following — set `roles` to `["read"]` or `["write"]`, and use your app's **Application (client) ID**:
 
-1. Sign into PlaidCloud
-2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
-5. Select `OneDrive` as the Service Type
-6. Fill in a name and description
-7. Enter the folder path identified above into the **Start Path** field, or leave it blank to use the root of the drive
-8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
-9. Paste the **Client ID** copied from the Azure app registration into the Public Key/User text field under Auth Credentials
-10. Paste the **Client Secret** copied from the Azure app registration into the Private Key/Password text field under Auth Credentials
-11. Paste the **Tenant ID** copied from the Azure app registration into the Tenant ID field under Auth Credentials
-12. Select the Save button and your new Document account is live
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+Run the query. A success returns a permission object with an `id` and your `roles`. **Repeat Step 2 for each site** you want PlaidCloud to reach. To review what a site has granted:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` is granted per **site**, not per folder or library — granting a site exposes everything in it. Keep sensitive content in its own dedicated sites so it is never swept in with content you intend to share.
+</Aside>
+
+## Add the Account in PlaidCloud
+
+1. Sign into PlaidCloud and select the workspace where the account will reside.
+2. Go to `Document` → `Manage Accounts` → **+ New Account**.
+3. Choose **OneDrive** as the **Service**.
+4. Enter a name and description, and choose a **Security Model** (leave `Private` if unsure).
+5. Under **Auth Credentials**, paste the **Client ID**, **Client Secret**, and **OneDrive Tenant ID** from the app registration.
+6. In **SharePoint Site URL**, paste the URL of a site the app has been granted (for example `https://contoso.sharepoint.com/sites/TeamName`). The **Drive/Site** list then shows that site's document libraries — pick the one to use as the account's root. This fills in the **Start Path**.
+7. Select **Save**.
+
+<Aside type="note">
+A Drive or Site is required — the account cannot be saved without one. Without it, the account would list folders but no files.
+</Aside>
