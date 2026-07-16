@@ -16,12 +16,12 @@ A server app is built from a git repository and served at `https://<your-tenant-
 
 ### Prepare Your App Repository
 
-Your repository needs two things: an **entry point** — a Python file that builds a Panel app and marks it `.servable()` — and, optionally, a **`requirements.txt`** at the repository root listing any extra packages.
+Your repository needs two things: an **entry point** — a Python file that builds a Panel app and marks it `.servable()` — and, optionally, a **`requirements.txt`** listing any extra packages, either at the repository root or beside your entry point.
 
 ```
 my-panel-app/
 ├── app.py            # entry point — calls .servable()
-└── requirements.txt  # optional; extra dependencies, at the repo root
+└── requirements.txt  # optional; extra dependencies (repo root or next to app.py)
 ```
 
 #### Hello World
@@ -65,19 +65,19 @@ pn.Column(
 
 #### Add Dependencies
 
-This second example imports `pandas`, which isn't part of the base image, so add a `requirements.txt` at the repository root:
+This second example imports `pandas`, which isn't part of the base image, so add a `requirements.txt` (at the repository root, or next to your entry point):
 
 ```text
 pandas
 ```
 
-PlaidCloud installs these with `pip` when it builds the image.
+PlaidCloud installs these with `pip` when it builds the image. Common visualization libraries — `plotly`, `holoviews`, `hvplot` — aren't in the base image either, so list any your app imports here.
 
 > **What the platform provides — and expects.** Keep these assumptions in mind when you write your app:
 >
 > - **`panel` and `bokeh` are pre-installed** by the platform base image. Don't list them in `requirements.txt`, and avoid pinning an older Panel version — the live-update reconnect relies on a recent one.
 > - **The PlaidCloud client libraries (`plaidcloud-rpc`, `plaidcloud-utilities`) are pre-installed.** Import `plaidcloud.rpc` or `plaidcloud.utilities` directly — don't list them in `requirements.txt`.
-> - **`requirements.txt` must be at the repository root.** A file in a subdirectory is ignored, even if your entry point lives in one.
+> - **`requirements.txt` can be at the repository root or next to your entry point.** In a shared (monorepo) repository, keep each app's dependencies in its own folder. A root-level file, if present, is installed too — put shared dependencies there and app-specific ones beside the app.
 > - **The app runs as a non-root user on a read-only filesystem.** Only `/tmp` is writable, so write any temporary files there (most libraries already honor `$TMPDIR`).
 > - **Don't hardcode the port, URL prefix, or host.** PlaidCloud assigns them and injects them at deploy time — just call `.servable()`.
 
@@ -176,6 +176,10 @@ FROM us-docker.pkg.dev/plaidcloud-build/panel-base/platform-panel-base:0.5.1
 USER root
 COPY . /app
 RUN if [ -f /app/requirements.txt ]; then pip install --no-cache-dir -r /app/requirements.txt; fi
+# If your entry point is in a subfolder, PlaidCloud also installs that folder's requirements.txt,
+# after the root one (so a per-app pin wins). Replace <app-folder> with your entry point's folder,
+# or drop this line if your app is at the repository root.
+RUN if [ -f "/app/<app-folder>/requirements.txt" ]; then pip install --no-cache-dir -r "/app/<app-folder>/requirements.txt"; fi
 USER 10001
 ```
 
@@ -183,7 +187,7 @@ To match the server build:
 
 1. Check out the same branch you select in **Branch**.
 2. Run the build from the repository root, so `COPY . /app` matches PlaidCloud.
-3. Put optional dependencies in `requirements.txt` at the repository root.
+3. Put optional dependencies in a `requirements.txt` — at the repository root, or next to your entry point. Both are installed, the app folder's last (so a per-app pin wins).
 4. Use the same entry-point path you select in **Entry Point**.
 
 ```sh
