@@ -24,12 +24,12 @@ Each step links to the deeper guide for that piece; this page stitches them into
 
 ## 1. Write a Minimal Panel App
 
-Your app needs an **entry point** — a Python file that builds a Panel app and marks it `.servable()` — and, optionally, a **`requirements.txt`** at the repository root for extra packages.
+Your app needs an **entry point** — a Python file that builds a Panel app and marks it `.servable()` — and, optionally, a **`requirements.txt`** for extra packages, either at the repository root or next to your entry point.
 
 ```
 apps/
 ├── app.py            # entry point — calls .servable()
-└── requirements.txt  # optional; extra dependencies, at the repo root
+└── requirements.txt  # optional; extra dependencies (repo root or next to app.py)
 ```
 
 Create `app.py`:
@@ -93,7 +93,7 @@ Every field in this dialog is described in [Creating a Panel App](/guides/panel-
 
 ## 5. Open the App — and Read Logs if It Doesn't Start
 
-After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt`, and builds a container image. Its **Status** shows in the **My Panel Apps** list and updates automatically.
+After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt` (the repository root's and your app folder's, if present), and builds a container image. Its **Status** shows in the **My Panel Apps** list and updates automatically.
 
 - When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up (~15 seconds).
 - If the build fails, open the app and check its **Build** logs — a missing dependency or an import error shows up there. See [Using a Panel App](/guides/panel-apps/using/) for what each status means, how to read logs, and how to trigger a rebuild.
