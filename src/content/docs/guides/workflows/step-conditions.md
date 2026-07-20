@@ -43,9 +43,11 @@ To activate and add conditions on a step:
 
 ## Managing Conditions
 
-You can add as many conditions as necessary in the **Conditions Check** section.  As you add them, it is a good idea to give them a useful name so you can find the conditions easily in the future.
+You can add as many conditions as necessary in the **Condition Checks** section.  As you add them, it is a good idea to give them a useful name so you can find the conditions easily in the future.
 
 Once you add a condition, select it on the left and the condition evaluation criteria will be editable on the right.
+
+To rename a condition, select it and edit the **Name** field at the top of the Configuration panel on the right — or double-click the condition in the list. You can also right-click a condition for **Rename** and **Delete**; **Delete** is also available from the "−" button above the list.
 
 
 ## Variable Conditions
