@@ -1,40 +1,31 @@
 ---
-title: Mulesoft REST Connector
-description: Set up a MuleSoft REST API connection in PlaidCloud to integrate enterprise data across systems through the Anypoint platform.
+title: MuleSoft REST Connector
+description: Connect PlaidCloud to a MuleSoft Anypoint gateway and attach the API definition so workflow steps can list its endpoints.
 sidebar:
   order: 1
 ---
 
+MuleSoft Anypoint is an API gateway: it fronts whatever services your organization has published behind it, at an address specific to your deployment. So unlike a connector built for one service, a MuleSoft connection doesn't know its own endpoints — you tell it where the API and its definition live.
+
 ## API Documentation
-The API documentation is for this connector is determined by the service endpoints for which Mulesoft is handling.
+
+The API documentation for this connection is whatever documents the services your gateway fronts.
 
 ## Configuration
 
-These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
+MuleSoft uses the same form as the [Generic REST Connection](/reference/connectors/rest/generic-rest/) — the same four tabs, the same fields, the same behavior throughout. Two matter most here:
 
-### Identification
+- **Host or IP Address** — your Anypoint gateway's address. There is no default, because a MuleSoft address is specific to your deployment.
+- **Authentication Type** — whichever of `None`, `Basic`, `API Key`, `Bearer Token`, or `OAuth 2.0` your gateway expects. Nothing is assumed on your behalf.
 
-| Field | Type | Description |
-|---|---|---|
-| Name | Text | Display name for this connection. |
-| Alias | Text (multi-line) | Optional alias or notes about the connection. |
-| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
+## Listing Endpoints in a Workflow
 
-### Other
+Because the gateway has no built-in endpoint list, attach your API's OpenAPI 3.x or Swagger 2.0 definition to the connection under **API Definition** — either the address it's published at, or a `.json` or `.yaml` file stored in Document. See [API Definition](/reference/connectors/rest/generic-rest/#api-definition) for the fields.
 
-| Field | Type | Description |
-|---|---|---|
-| Host | Text | — |
-| Auth type | Select | — |
-| Enable ssl verification | Toggle | — |
-| Follow redirects | Toggle | — |
-| Redirect follow http | Toggle | — |
-| Redirect follow auth | Toggle | — |
-| Redirect remove referer | Toggle | — |
-| Strict http | Toggle | — |
-| Encode url | Toggle | URL endpoint. |
-| Disable cookie jar | Toggle | — |
-| Server cipher | Toggle | — |
-| Max redirects | Number | — |
-| Test endpoint | Text | — |
-| Test method | Select | — |
+A [REST Request step](/guides/workflows/rest-request-step/) using this connection can then set **Endpoint Source** to **From the connection's API definition** and choose **Load Catalog** to pick from the API's endpoints, instead of typing each path by hand.
+
+## Related
+
+- [Generic REST Connection](/reference/connectors/rest/generic-rest/) — the full field reference for this form.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
+- [REST Request Workflow Step](/guides/workflows/rest-request-step/)
