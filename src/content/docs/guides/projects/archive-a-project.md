@@ -30,6 +30,8 @@ To archive a project:
 2. Select the “Projects” tab
 3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project and choose **Export Project Archive**)
 
+The **Archive Table Data** tree in that dialog chooses which tables have their *data* written into the archive — the difference between a full and a partial backup. It does not change what else the archive holds: an archive always captures the project's whole structure, including every workflow, step, function, table, data editor, and dimension. Choose what you want to bring back when you restore it.
+
 ## Restoring an Archive
 
 
@@ -43,6 +45,20 @@ To restore an archive:
 1. Open Analyze
 2. Select the “Projects” tab
 3. Choose **Import Project Archive** from the **Actions** menu (or the toolbar) and select the archive to restore
+
+### Choosing What to Restore
+
+Once you pick an archive, its contents are listed grouped by kind — workflows, steps, functions, tables, data editors, and dimensions. Everything is ticked to start with, so leaving the tree alone restores the whole archive.
+
+To bring back only part of it, untick whatever you don't want. You can untick a whole kind, or expand one and tick individual items.
+
+Whatever you pick, anything it needs comes with it, so a partial restore still works:
+
+- A workflow brings its steps, and each step brings the tables it reads and writes and the function it runs.
+- A dimension brings the tables its members are built from, and any dimension it refers to.
+- A data editor brings its source and target tables.
+
+This means a restore can include a few items you didn't tick — they are what your selection depends on.
 
 ## Archiving Schedule
 
