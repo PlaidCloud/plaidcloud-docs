@@ -12,6 +12,10 @@ description: Machine learning in workflows, a Currency data type for money value
 | v5.11.2 | 2026-07-15 |
 | v5.11.4 | 2026-07-20 |
 | v5.11.5 | 2026-07-21 |
+| v5.11.6 | 2026-07-22 |
+| v5.11.7 | 2026-07-22 |
+| v5.11.8 | 2026-07-22 |
+| v5.11.9 | 2026-07-22 |
 
 ## Added
 
@@ -64,6 +68,8 @@ description: Machine learning in workflows, a Currency data type for money value
 - **External Tables: refresh a single table's columns from the source.** On the Import and Export External Tables steps, the per-table **Inspect Source** button now reads the selected table's current columns straight from the connected database and updates just that table's mapping in place — handy when a source table's columns have changed since you built the step, without re-running discovery over the whole connection. See [Import External Database Tables](/reference/workflow-steps/import/import-external-database-tables/).
 - **Presence in the Visual Workflow Designer now shows real avatars.** When several people have the same Advanced workflow open, the toolbar's presence row now shows each person by their gravatar (or their initials if they have none), and a person appears once no matter how many browser tabs they have it open in. See [Advanced Workflows](/guides/workflows/advanced-workflows/#whos-here).
 
+- **Opening a Server Panel app now shows real progress.** The waking screen used to show one message for the whole start-up and then a generic timeout, so an app that could not start at all looked identical to one that was simply slow. It now reports the actual stage — starting, preparing, loading — reports a genuine failure within seconds along with the underlying reason, and sends you straight through when the app is already warm. An app that starts but fails while loading (for example a missing package) is reported as failed with its error, instead of serving a blank page. See [Creating a Panel App](/guides/panel-apps/creating/).
+
 ## Fixed
 
 - **REST connections using Basic, API Key, or Bearer Token authentication now actually authenticate.** Only OAuth 2.0 credentials were ever sent, so a connection configured with any of the other three failed against APIs that check authentication. All four now work as configured. If you worked around this by putting the credential into **Default Headers** by hand, the connection's own authentication now takes precedence and that row can be removed. See [Generic REST Connection](/reference/connectors/rest/generic-rest/#authentication).
@@ -100,8 +106,36 @@ description: Machine learning in workflows, a Currency data type for money value
 
 - **The AI assistant no longer refuses expressions that reference underscore-named columns.** An expression referencing a column whose name starts with an underscore (for example `_MajorAccountFlag`) is now accepted. And when an expression tests a column with `is`, `is not`, or `not` — which on a column never matches any row, or errors, rather than doing what it looks like — the assistant steers you to the operator that works (`is_(None)` for a null test, `!=`, `~`) instead of a plain rejection.
 
+- **The AI assistant no longer refuses valid functions.** Real functions that weren't in the expression picker's list — `rtrim`, `ltrim`, `to_char`, `substring`, and many more — were rejected as unknown, and writing any function name in capitals (`func.SUM`) was rejected even when the lowercase form was accepted. The assistant now checks names against your workspace's own function list as well as the picker's, and does so case-insensitively.
+
+- **Panel apps no longer render with invisible text.** A platform-wide theme default was applied to every Panel app, including apps that don't use a matching page template. On those apps it painted the text white on a white page — the app looked blank, with nothing in the logs to explain it. Apps now keep their own look unless they opt into a themed template. Existing apps pick this up the next time they're rebuilt or republished.
+
+- **The waking screen no longer changes how a Panel app looks.** While a Server Panel app was starting, the screen behind it set its own background and light/dark colors, and the app inherited them with no way to override — so an app could render on the wrong canvas color and follow your operating system's light/dark preference instead of its own. The screen is now fully removed once the app is up. It also drops nothing from the address you opened: query parameters an app reads, `?theme=dark` among them, now reach the app.
+
+- **Expanding an archive keeps its folder structure.** Unpacking a `.zip` or `.tar.gz` into Document flattened everything into the destination folder — an archive containing `data/master/accounts.csv` produced a bare `accounts.csv`, so files with the same name in different folders collided. Nested archives now unpack with their folders intact. Flat archives and single-file `.gz`/`.bz2` are unchanged. On SFTP document accounts the destination folders must already exist, so expand a nested archive to a path you have already created there.
+
+- **A bad schedule no longer breaks the Event Scheduler.** One scheduled event with an unusable recurrence — an impossible date such as the 31st of a 30-day month, or a malformed entry — made the workspace-wide Event Scheduler list and the schedule calendar fail with an internal server error, and could stop a project opening. A schedule that can't be read now simply shows a blank next run, and everything else on the screen loads normally. See [Event Scheduler](/administration/scheduled-events/event-scheduler/).
+
+- **Workflow failures now say what actually went wrong.** When a workflow step failed inside a background job, the run log and the notification email showed only a generic message for the operation — "Exception importing directly from remote sql" — while the real cause, such as an expired password on the source system, appeared nowhere you could reach. The underlying failure is now carried through to the log and the email. When many tables fail on one shared cause it's reported once rather than per table, and credentials are stripped from the message.
+
+- **REST requests to a different host no longer send the connection's credentials.** When a REST Request step used a full address rather than a path — including the paging links many APIs return — two things went wrong: the address was joined onto the connection's host and the request failed outright, and the connection's authentication and default headers were attached regardless of where the request was going. Full addresses are now used as given, and credentials and default headers are withheld unless the address points back at the connection's own host — so paging still works while a third-party address never receives your credentials. See [REST Request Step](/guides/workflows/rest-request-step/).
+
+- **Editing a Basic-auth REST connection no longer loses its password.** Saving a change to a REST connection that used Basic authentication, without retyping the password, discarded the stored secret. Stored passwords are now preserved for all four authentication types. Two request-preview mismatches are also fixed: a header set in different letter cases on the step is folded the same way the real request folds it, and an empty header value is now sent empty instead of as the literal text "None". See [Generic REST Connection](/reference/connectors/rest/generic-rest/#authentication).
+
+- **Combining tables keeps each column's dimension and formatting.** When a Union, Union All, Allocation, or multi-table Join merges several sources into one output column, the column's dimension, memo, and format settings were resolved from whichever source happened to sort last. A source that said nothing about a dimension could suppress one that named it, so a column stayed unassociated across rebuilds while a similar column recovered. Now a source that names a dimension wins over one that is silent, a passed-through column takes precedence over a renamed one, and a genuine disagreement between sources is reported in the step log instead of being resolved silently. Renaming an aggregated column — `SUM(amount)` to `total_amount` — also no longer copies the source column's dimension onto the total, which never identified a member of it. See [Table Union All](/reference/workflow-steps/tables/table-union-all/) and [Table Union Distinct](/reference/workflow-steps/tables/table-union-distinct/).
+
+- **Table Melt honors the column mapping you authored.** Columns you deliberately left out of a melt's mapping were added back into the step behind the scenes, which on an aggregating step made the whole step fail. A mapping that names its value columns is now used exactly as written. See [Table Melt](/reference/workflow-steps/tables/table-melt/).
+
+- **Copying a table from another project works again.** The step that copies a table between projects called an operation that no longer exists, so every run failed on the server. It now uses the same mechanism as the Import Project Table step, and reports a warning rather than failing when the source is empty. See [Import Project Table](/reference/workflow-steps/import/import-project-table/).
+
+- **Row Count Assert works inside a macro.** A Row Count Assert step nested in a Macro Run or Macro Concurrent step failed with a server-side error; only top-level runs worked, which is why it went unnoticed. It now runs correctly at any nesting level. See [Row Count Assert](/reference/workflow-steps/workflow-control/row-count-assert/).
+
 ## Removed
 
 - **Retired legacy import and export steps** — the SAS7BDAT import, HTML import, and HTML export steps have been removed. Use the current import and export steps for these formats instead.
 
 - **Retired the in-app Reset Password option** — the **Reset Password** item has been removed from the account (avatar) menu. To reset your password, use the **Forgot Password?** link on the sign-in page.
+
+## Security
+
+- **Security assignment changes now take effect immediately.** Editing a security group's scopes or members, deleting a group, changing a member's security groups, or activating and deactivating a member all applied on a delay — up to half a minute for most permissions, and for access to your workspace's Git server not until that person next signed in, which for someone whose access was revoked could be never. Every one of those changes is now applied the moment you save it, across the whole platform. Nothing to configure; review any access you previously granted or revoked and expect it to be accurate now. See [Managing Security Groups and Assignments](/administration/access/managing-security-groups-and-assignments/).
