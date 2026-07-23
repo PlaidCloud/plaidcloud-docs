@@ -58,7 +58,7 @@ Whatever you pick, anything it needs comes with it, so a partial restore still w
 - A dimension brings the tables its members are built from, and any dimension it refers to.
 - A data editor brings its source and target tables.
 
-This means a restore can include a few items you didn't tick — they are what your selection depends on.
+This means a restore can include a few items you didn't tick — they are what your selection depends on. If you start the import with nothing ticked, PlaidCloud asks you to pick something rather than create an empty project.
 
 ## Archiving Schedule
 
