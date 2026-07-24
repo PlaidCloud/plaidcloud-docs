@@ -48,9 +48,9 @@ To restore an archive:
 
 ### Choosing What to Restore
 
-Once you pick an archive, its contents are listed grouped by kind — workflows, steps, functions, tables, data editors, and dimensions. Everything is ticked to start with, so leaving the tree alone restores the whole archive.
+Once you pick an archive, the dialog lists its contents grouped by kind — workflows, steps, functions, tables, data editors, and dimensions. Everything starts checked, so leaving the tree alone restores the whole archive.
 
-To bring back only part of it, untick whatever you don't want. You can untick a whole kind, or expand one and tick individual items.
+To bring back only part of it, uncheck whatever you don't want. You can uncheck a whole kind, or expand one and check individual items.
 
 Whatever you pick, anything it needs comes with it, so a partial restore still works:
 
@@ -58,7 +58,7 @@ Whatever you pick, anything it needs comes with it, so a partial restore still w
 - A dimension brings the tables its members are built from, and any dimension it refers to.
 - A data editor brings its source and target tables.
 
-This means a restore can include a few items you didn't tick — they are what your selection depends on. If you start the import with nothing ticked, PlaidCloud asks you to pick something rather than create an empty project.
+This means a restore can include a few items you didn't check — they are what your selection depends on. If you start the import with nothing checked, PlaidCloud asks you to pick something rather than create an empty project.
 
 ## Archiving Schedule
 
