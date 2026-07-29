@@ -14,7 +14,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 ### Table Transformations
 
-- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, in-place updates (19 steps)
+- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates (19 steps)
 - [Common operations](/reference/workflow-steps/common/) — shared data mapping and filtering patterns
 
 ### Modeling
