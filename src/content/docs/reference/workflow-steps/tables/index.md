@@ -1,9 +1,9 @@
 ---
 title: Table Steps
-description: Workflow steps that transform project tables — joins, unions, filters, lookups, pivots, in-place updates.
+description: Workflow steps that transform project tables — joins, unions, filters, lookups, pivots, targeted updates.
 ---
 
-Workflow steps that transform project tables — joins, unions, filters, lookups, pivots, in-place updates.
+Workflow steps that transform project tables — joins, unions, filters, lookups, pivots, targeted updates.
 
 ## Steps
 
@@ -16,7 +16,6 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Extract](/reference/workflow-steps/tables/table-extract/)
 - [Table Faker](/reference/workflow-steps/tables/table-faker/)
 - [Table In Place Delete](/reference/workflow-steps/tables/table-in-place-delete/)
-- [Table Update](/reference/workflow-steps/tables/table-update/)
 - [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/)
 - [Table Lookup](/reference/workflow-steps/tables/table-lookup/)
 - [Table Melt](/reference/workflow-steps/tables/table-melt/)
@@ -25,4 +24,5 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Pivot](/reference/workflow-steps/tables/table-pivot/)
 - [Table Union All](/reference/workflow-steps/tables/table-union-all/)
 - [Table Union Distinct](/reference/workflow-steps/tables/table-union-distinct/)
+- [Table Update](/reference/workflow-steps/tables/table-update/)
 - [Table Upsert](/reference/workflow-steps/tables/table-upsert/)
