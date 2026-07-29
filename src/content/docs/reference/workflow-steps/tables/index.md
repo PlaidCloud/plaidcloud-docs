@@ -16,7 +16,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Extract](/reference/workflow-steps/tables/table-extract/)
 - [Table Faker](/reference/workflow-steps/tables/table-faker/)
 - [Table In Place Delete](/reference/workflow-steps/tables/table-in-place-delete/)
-- [Table In Place Update](/reference/workflow-steps/tables/table-in-place-update/)
+- [Table Update](/reference/workflow-steps/tables/table-update/)
 - [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/)
 - [Table Lookup](/reference/workflow-steps/tables/table-lookup/)
 - [Table Melt](/reference/workflow-steps/tables/table-melt/)
