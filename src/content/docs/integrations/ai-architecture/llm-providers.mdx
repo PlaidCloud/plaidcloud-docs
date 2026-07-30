@@ -6,7 +6,7 @@ sidebar:
   order: 2
 ---
 
-import { Aside, Steps } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 
 An **LLM Provider connection** is where you choose the model that powers AI in your workspace. It
 holds the provider, your API key, a default model, and standing instructions — and it is the point
@@ -62,8 +62,10 @@ Microsoft path for Copilot-class GPT models is **Azure OpenAI** (or GitHub Model
 
 ## How Tools Get Brokered
 
-An LLM is only useful here if it can call PlaidCloud tools. There are two mechanisms, and which one
-runs depends on the provider.
+An LLM is only useful here if it can call PlaidCloud tools. For **interactive** AI — the in-app
+assistant and the workspace chat agent — there are two mechanisms, and which one runs depends on the
+provider. (The unattended [LLM workflow step](#the-llm-workflow-step-is-different) works
+differently; read that section too.)
 
 ### Server-Side Connector — Anthropic
 
@@ -71,9 +73,7 @@ Anthropic's API connects to your PlaidCloud MCP endpoint itself, carrying the sh
 token. Anthropic manages the tool catalog on its side, so the model sees everything the token is
 permitted to call and discovers tools without help.
 
-This is the path that supports **scoped bindings**: an LLM workflow step names specific tables,
-dimensions, and documents, each marked read or write, and the token is gated to exactly those
-objects. Everything else is refused even though the tool exists.
+This is also the only path that supports **scoped bindings** — see below.
 
 ### Client-Side Loop — Everyone Else
 
@@ -95,6 +95,31 @@ delegated token, so scopes, ACLs, the access tier, and the denylist all apply ex
 the Anthropic path.
 </Aside>
 
+## The LLM Workflow Step Is Different
+
+Everything above describes interactive AI. The unattended **LLM workflow step** does not use the
+client-side loop at all, and the difference is worth understanding before you pick a provider for
+one.
+
+| Provider on the step's connection | What the step can do |
+|---|---|
+| **Anthropic** | Reaches your data through the MCP connector, gated to **scoped bindings** — the specific tables, dimensions, and documents you named on the step, each marked read or write. Anything outside those objects is refused even though the tool exists. |
+| **Everything else** | **No data access.** The step is a single structured completion: prompt, rules, and schema in; JSON out. |
+
+Two consequences follow directly:
+
+- **Bindings are ignored on a non-Anthropic step.** They are not silently honored and they are not
+  an error — the step logs that scoped data access is Anthropic-only and runs without them. If you
+  switch a bound step from Anthropic to another provider, it stops reading your data.
+- **A result schema is required on a non-Anthropic step.** With no tools to call, structured output
+  is the only thing the step produces.
+
+<Aside type="caution">
+If a step needs to read or write project objects, put it on an Anthropic connection. On any other
+provider the step can still classify, summarize, extract, or rewrite text you pass in the prompt —
+it simply cannot go and fetch anything.
+</Aside>
+
 ## Access Tiers
 
 Every LLM connection carries a tier. It is a **ceiling**, always intersected with the acting
@@ -111,8 +136,8 @@ document-account credentials and ACLs, member and group management, password res
 publishing, user-defined function code, and app deployments. Those are never callable by an AI
 credential at any tier.
 
-For a workflow step, the tier interacts with **bindings**: read/write is granted per bound object,
-so a step can write to the one table you checked and nothing else.
+For an Anthropic workflow step, the tier interacts with **bindings**: read/write is granted per bound
+object, so a step can write to the one table you checked and nothing else.
 
 ## Structured Results
 

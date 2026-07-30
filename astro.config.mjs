@@ -191,11 +191,11 @@ export default defineConfig({
 				{
 					label: 'Integrations',
 					items: [
-						{ label: 'Overview',              link: '/integrations/' },
+						{ label: 'Overview',                link: '/integrations/' },
 						{ label: 'AI and LLM architecture', collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-architecture' } }] },
-						{ label: 'Microsoft 365 Copilot', link: '/integrations/microsoft-365-copilot/' },
-						{ label: 'AI coding agents',      collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
-						{ label: 'PySpark',               collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
+						{ label: 'Microsoft 365 Copilot',   link: '/integrations/microsoft-365-copilot/' },
+						{ label: 'AI coding agents',        collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
+						{ label: 'PySpark',                 collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
 					],
 				},
 				{
