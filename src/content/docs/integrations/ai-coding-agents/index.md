@@ -8,7 +8,7 @@ sidebar:
 
 PlaidCloud exposes a curated [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server at `/mcp` on every workspace. AI agents connect to it the same way they connect to any other MCP server, then call the tools to read projects, run workflows, query tables, manage dimensions, and more.
 
-The pages in this section cover what the server exposes, how to authenticate, and step-by-step setup for the most common AI clients.
+The pages in this section cover what the server exposes, how to authenticate, and step-by-step setup for the most common AI clients. For the architecture behind them — the governed path every AI request takes, how retrieval works, and how to run your own model — see [AI and LLM Architecture](/integrations/ai-architecture/).
 
 ## What Makes PlaidCloud's AI Analysis Different
 

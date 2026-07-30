@@ -1,0 +1,127 @@
+---
+title: AI and LLM Architecture
+description: How PlaidCloud connects to large language models such as Claude, GPT, Gemini, and Grok — the four ways people reach AI, the governed path every request takes, and where your data does and does not travel.
+sidebar:
+  label: Overview
+  order: 1
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud does not have one AI feature. It has four ways to reach a model — the assistant inside
+the product, Microsoft 365 Copilot, external coding agents, and an LLM step inside a workflow — and
+all four run over the same governed path. The model itself is swappable: Claude, GPT, Gemini, Grok,
+an Azure OpenAI resource in your own subscription, or a model you host yourself.
+
+This section explains that architecture: what runs where, what crosses the boundary, and why.
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="PlaidCloud AI architecture. Four client surfaces — the in-app assistant, Microsoft 365 Copilot, AI coding agents, and the LLM workflow step — enter the tenant boundary, which contains delegated tokens, the curated MCP server, access enforcement, AI services, and project data. Prompts flow outward to LLM providers; data flows only within the boundary."
+	class="doc-diagram"
+/>
+
+## The Four Surfaces
+
+| Surface | Who uses it | How the model reaches data | Where to start |
+|---|---|---|---|
+| **In-app AI Assistant** | Anyone working in PlaidCloud | PlaidCloud's own agents call internal tools on your behalf | [Using the AI Assistant](/guides/ai-assistant/using-ai-assistant/) |
+| **Microsoft 365 Copilot** | Whole teams, in Teams and Outlook | A published agent signs the person in, then calls the MCP server | [Microsoft 365 Copilot](/integrations/microsoft-365-copilot/) |
+| **AI coding agents** | Analysts and developers | Their client connects directly to the MCP server over OAuth | [Getting started](/integrations/ai-coding-agents/getting-started/) |
+| **LLM workflow step** | Unattended pipelines | On Anthropic, a token scoped to just the objects you bind; on other providers, no data access at all — see [the step's rules](/integrations/ai-architecture/llm-providers/#the-llm-workflow-step-is-different) | [LLM Step](/reference/workflow-steps/general/llm-step/) |
+
+They differ in who is driving and where the conversation happens. They do not differ in what the
+model is allowed to touch.
+
+## One Governed Path
+
+Whichever surface a question arrives on, the same five things are true.
+
+<Steps>
+
+1. **The model runs as a person, not as the platform.** Every request carries a short-lived,
+   revoked-when-finished credential that stands in for the signed-in user. There is no shared
+   service account with elevated rights behind the AI.
+
+2. **Tools are the only way in.** The model cannot query your lakehouse directly. It calls a
+   curated catalog of tools — find, describe, read, run, upsert — and every call is checked
+   independently.
+
+3. **Your own permissions still bound it.** An AI request can never see or change something you
+   could not see or change yourself. The AI layer narrows access; it never widens it.
+
+4. **An administrator sets the ceiling, and it starts closed.** An LLM connection's **Agent
+   Access** begins at read-only. Microsoft 365 Copilot begins at nothing at all: until an
+   administrator assigns someone an **access level**, a signed-in person gets no data. These are
+   two separate mechanisms, but raising either only ever caps what the AI may attempt — it never
+   widens what you could already reach yourself.
+
+5. **Some things are permanently off-limits.** Credential and connection settings, identity and
+   group management, access-control changes, publishing, and deployable code are never callable by
+   an AI credential — no matter what an administrator has granted, on any provider. Those stay
+   human-only.
+
+</Steps>
+
+<Aside type="note">
+These are enforced in the server, not in the prompt. A prompt-injection attempt that talks the model
+into asking for a forbidden tool gets the same refusal a well-behaved model would.
+</Aside>
+
+## The Life of a Question
+
+Take *"Why did allocated IT cost for Atlanta go up last quarter?"*, asked from any surface:
+
+<Steps>
+
+1. **A credential is minted** for the asking person, scoped and short-lived.
+
+2. **Tools are put in front of the model** — narrowed to what the question plausibly needs on the
+   surfaces that do the narrowing, discovered from the catalog on the ones that don't.
+
+3. **The prompt goes to the model** — the question, any standing rules, and the tool descriptions.
+   No data yet.
+
+4. **The model asks for data** through tool calls: resolve the analysis path, read the schema, run
+   the allocation trace, read the driver rows. Each call is permission-checked on arrival.
+
+5. **The model answers** from what came back, cites the documentation page if it consulted one, and
+   carries a confidence signal and caveats.
+
+6. **The credential is revoked.** A captured token cannot be replayed after the request ends.
+
+</Steps>
+
+The important detail is step 4: the model does not have your data. It asks for slices of it, and
+each ask is adjudicated.
+
+## Read Next
+
+<CardGrid>
+	<LinkCard
+		title="LLM Providers and Connections"
+		href="/integrations/ai-architecture/llm-providers/"
+		description="Claude, GPT, Gemini, Grok, Azure OpenAI — one connection, four execution adapters, and two ways tools get brokered."
+	/>
+	<LinkCard
+		title="Microsoft 365 Copilot Architecture"
+		href="/integrations/ai-architecture/microsoft-365-copilot/"
+		description="Why Copilot needs a published agent package and its own OAuth client, and how deny-by-default access levels work."
+	/>
+	<LinkCard
+		title="Retrieval, Grounding, and Analysis Paths"
+		href="/integrations/ai-architecture/retrieval/"
+		description="What RAG actually does here — and why your business data is read live rather than indexed into a vector store."
+	/>
+	<LinkCard
+		title="Using Your Own Controlled LLM"
+		href="/integrations/ai-architecture/private-llm/"
+		description="Keep proprietary, PHI, or contractually confined data inside infrastructure you control."
+	/>
+</CardGrid>
+
+## Related
+
+- [Answers You Can Trust](/integrations/ai-coding-agents/honest-answers/) — how answers are graded and caveated
+- [Analysis Paths](/integrations/ai-coding-agents/analysis-paths/) — friendly names for the tables your team asks about
+- [Platform Architecture](/get-started/platform-architecture/) — where AI sits in the wider platform
