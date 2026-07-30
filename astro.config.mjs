@@ -243,7 +243,7 @@ Documentation structure:
 - \`get-started/\` — concepts, quickstart, end-to-end tutorials, FAQ
 - \`guides/\` — task-oriented how-to content
 - \`reference/\` — workflow steps, expressions (SQL functions), connectors, CLI, glossary
-- \`integrations/\` — AI coding agents, PySpark
+- \`integrations/\` — AI and LLM architecture, Microsoft 365 Copilot, AI coding agents, PySpark
 - \`administration/\` — access management, SSO/SAML, scheduled events
 - \`releases/\` — monthly release notes`,
 					customSets: [
