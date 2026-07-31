@@ -30,6 +30,14 @@ To archive a project:
 2. Select the “Projects” tab
 3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project and choose **Export Project Archive**)
 
+The window names the project it will archive in its title bar, so you can confirm you have the right one before you start.
+
+### Tables Whose Data Cannot Be Included
+
+Occasionally a table listed in a project no longer has any data behind it — for example, a table that was never built, or whose data was removed outside the project. The archive is still written: those tables are left out of the table data, and the export finishes with a message naming them. Everything else — the project configuration, workflows, table definitions, and the data for every other table — is archived as normal.
+
+The archive records which tables went in without their data, so restoring it re-creates those tables with their shape but no rows, rather than silently presenting them as complete.
+
 ## Restoring an Archive
 
 
