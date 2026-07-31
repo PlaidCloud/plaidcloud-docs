@@ -36,7 +36,11 @@ The window names the project it will archive in its title bar, so you can confir
 
 Occasionally a table listed in a project no longer has any data behind it — for example, a table that was never built, or whose data was removed outside the project. The archive is still written: those tables are left out of the table data, and the export finishes with a message naming them. Everything else — the project configuration, workflows, table definitions, and the data for every other table — is archived as normal.
 
-The archive records which tables went in without their data, so restoring it re-creates those tables with their shape but no rows, rather than silently presenting them as complete.
+The archive records which tables went in without their data. Restoring it brings those tables back as entries with no data behind them, and lists them at the end of the restore, rather than presenting them as complete. Re-run the workflow that builds a table to fill it in.
+
+:::note
+A scheduled archive records skipped tables in the system log rather than showing you a message, since nothing is on screen to show it to. Check the export message when it matters which tables were included.
+:::
 
 ## Restoring an Archive
 
