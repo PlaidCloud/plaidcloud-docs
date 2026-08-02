@@ -63,13 +63,13 @@ Fix: include the tenant explicitly in your prompt ("in the **dev** tenant, list 
 
 PlaidCloud's REST surface is rate-limited per requests-per-minute via the same middleware that fronts the UI. MCP calls share that limit. If an agent fires off a long burst of `find` calls (e.g. trying to enumerate every project + workflow + step), you may hit the limit. Use pagination (`cursor`, `limit`) and `count_only=True` for sizing checks instead of fetching the full result set.
 
-Note that a find returns 25 rows per page by default, so enumerating a large set costs more calls than it used to — raise `limit` on a deliberate sweep rather than paging through at the default. Conversely, if you keep hitting the limit, `count_only=True` and a tighter `fields=[...]` projection usually mean you didn't need the sweep at all.
+Note that a find returns 25 rows per page by default (`step_find` returns 50), so enumerating a large set costs more calls than it used to — raise `limit` on a deliberate sweep rather than paging through at the default. Conversely, if you keep hitting the limit, `count_only=True` and a tighter `fields=[...]` projection usually mean you didn't need the sweep at all.
 
 ## A List Looks Short, or an Agent Says "That's All of Them"
 
 Symptom: a find returned fewer rows than you expected, or the agent concluded a project has 25 tables when it has 300.
 
-Fix: check the envelope. A capped page sets `next_cursor` and names the clipped list in `truncated` — both mean there is more to fetch. `total` reports the full count regardless. Ask the agent to page with the cursor, or to re-run with a higher `limit`.
+Fix: check the envelope. A capped page sets `next_cursor`, and a find tool also names the clipped list in `truncated` — either one means there is more to fetch. `total` reports the full count regardless, so compare it against the rows you got. Ask the agent to page with the cursor, or to re-run with a higher `limit`.
 
 ## Getting Help
 
