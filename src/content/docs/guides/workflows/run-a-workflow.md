@@ -1,6 +1,6 @@
 ---
 title: Run a workflow
-description: Run a PlaidCloud workflow manually or on demand, and pause, stop, or resume a run from where it left off.
+description: Run a PlaidCloud workflow manually or on demand, follow each step's status, and pause, stop, or resume a run from where it left off.
 sidebar:
   order: 6
 ---
@@ -10,6 +10,30 @@ You can trigger a full workflow run by either clicking on the run icon from the 
 
 
 You can also click on the **Toggle Start/Stop** button at the top of the workflow table. This toggle button will stop a running workflow or start a workflow.
+
+## Follow a Step's Status
+
+While a workflow runs, each step carries a status icon showing where it stands, alongside how long it has been running. Hover the icon for the message behind it.
+
+| Status | What it means |
+|---|---|
+| Waiting | The step is queued and hasn't started yet. |
+| Running | The step is working, and its duration counts up as it goes. |
+| Completed | The step finished successfully. |
+| Warning | The step finished, but flagged something worth reading in the [workflow log](/guides/workflows/viewing-workflow-log/). |
+| Error | The step failed. See [Managing Step Errors](/guides/workflows/managing-step-errors/). |
+| Skipped | The step was passed over — it's disabled, or its run conditions weren't met. See [Skip Steps in a Workflow](/guides/workflows/skip-steps-in-a-workflow/). |
+| Continued | The step failed but is set to continue on error, so the workflow carried on. See [Continue on Error](/guides/workflows/continue-on-error/). |
+| Stopped | The run was stopped before the step could finish. |
+| Abandoned | The step's execution was interrupted, so it will never finish. Re-run the workflow. |
+
+An open workflow view refreshes on its own as a run progresses, so the statuses you're looking at stay current without reloading the page.
+
+### Abandoned Steps
+
+A step is marked **abandoned** when whatever was executing it went away mid-run — most often because someone pressed **Stop**, or because platform maintenance interrupted the run. The step's duration stops climbing and the status tooltip explains what happened.
+
+An abandoned step did not complete and produced no output. It is not a slow step, and it is not a problem with your data or your configuration. Re-run the workflow.
 
 ## Pause, Stop, and Resume
 
