@@ -1,0 +1,155 @@
+---
+title: Geometry in SQL
+description: Portable geom_* expression functions plus recipes for building point geometry and measuring distance, all running in the database.
+sidebar:
+  order: 15
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Not every geospatial operation needs a dedicated step. Anything that is a
+single-row column expression runs as a [Table Extract](/reference/workflow-steps/tables/table-extract/)
+expression cell, in the database, with no rows leaving the warehouse — so it
+scales with the table rather than with the workflow engine. This is the route
+[Alteryx conversion](/guides/workflows/migrate-spatial-alteryx-workflows/) picks
+for the Alteryx *Create Points* and *Distance* tools.
+
+## Portable Geometry Functions
+
+Lakehouse v1 and v2 spell their geometry functions differently — `ST_MAKEGEOMPOINT`
+against `ST_POINT`, `ST_ASWKT` against `ST_ASTEXT`. The `geom_*` family resolves
+to the right one for the workspace you are running on, so an expression written
+once works on both.
+
+| Expression | Lakehouse v1 | Lakehouse v2 |
+|---|---|---|
+| `func.geom_from_wkt(x)` | `ST_GEOMETRYFROMWKT` | `ST_GEOMETRYFROMTEXT` |
+| `func.geom_point(lon, lat)` | `ST_MAKEGEOMPOINT` | `ST_POINT` |
+| `func.geom_as_wkt(g)` | `ST_ASWKT` | `ST_ASTEXT` |
+| `func.geom_contains(a, b)` | `ST_CONTAINS` | `ST_CONTAINS` |
+| `func.geom_within(a, b)` | `ST_WITHIN` | `ST_CONTAINS`, arguments swapped |
+| `func.geom_x(g)` | `ST_X` | `ST_X` |
+| `func.geom_y(g)` | `ST_Y` | `ST_Y` |
+
+<Aside type="note" title="Not Everything Is Portable">
+  `geom_area`, `geom_length`, `geom_intersects`, `geom_centroid`,
+  `geom_distance`, `geom_createline`, and the bounding-box edges
+  (`st_xmin`/`st_xmax`/`st_ymin`/`st_ymax`) exist on Lakehouse v1 only —
+  StarRocks ships no equivalent. On a v2 workspace they fail when the
+  expression compiles, with a message naming the function, rather than
+  producing a wrong answer. Use the
+  [geospatial steps](/reference/workflow-steps/spatial/) for those measures
+  instead; they run in the workflow engine and give the same answer on every
+  warehouse.
+</Aside>
+
+## Create Points
+
+Build a WKT point from a longitude column and a latitude column:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+`geom_as_wkt` writes the result as WKT, the form every PlaidCloud spatial step
+reads and writes.
+
+<Aside type="caution" title="Floating-Point Lon/Lat Only">
+  This is exact for plain decimal-degree coordinates. Coordinates stored as
+  integers scaled by 1,000,000, or in a projected coordinate system, need
+  rescaling or reprojecting first — building a point from them directly
+  produces mis-scaled or unprojected geometry.
+</Aside>
+
+## Distance Between Two Points
+
+Distance is the one operation here with **no portable spelling** — the two
+lakehouses disagree on both the function and its return unit, so the expression
+differs by version.
+
+<Aside type="caution" title="Pick the Form That Matches Your Workspace">
+  `ST_DISTANCE_SPHERE` exists on Lakehouse v2 only, and `geom_distance` on
+  Lakehouse v1 only. Neither degrades to the other. If you want one step that
+  works on both, use
+  [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) —
+  it picks the right expression for the workspace it runs on.
+</Aside>
+
+### Lakehouse v2
+
+`ST_DISTANCE_SPHERE` takes four coordinates and returns **meters**:
+
+```python
+case(
+    (
+        and_(
+            get_column(table, 'Origin').like('POINT%'),
+            get_column(table, 'Destination').like('POINT%'),
+        ),
+        func.st_distance_sphere(
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Destination'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Destination'))),
+        ) * 0.0006213711922373339,
+    ),
+    else_=null,
+)
+```
+
+| Unit | Factor from meters |
+|---|---|
+| Miles | `0.0006213711922373339` |
+| Kilometers | `0.001` |
+| Meters | `1` |
+| Feet | `3.280839895013123` |
+
+### Lakehouse v1
+
+`geom_distance` is **planar** over two geometries and returns **degrees**, so the
+factor converts from degrees rather than meters:
+
+```python
+func.geom_distance(
+    func.geom_from_wkt(get_column(table, 'Origin')),
+    func.geom_from_wkt(get_column(table, 'Destination')),
+) * 69.1709
+```
+
+| Unit | Factor from degrees |
+|---|---|
+| Miles | `69.1709` |
+| Kilometers | `111.32` |
+| Meters | `111320.0` |
+| Feet | `364566.929` |
+
+Being planar, this is an approximation that degrades away from the equator — fine
+over the local distances typical of catchment analysis, less so across a
+continent.
+
+The `LIKE 'POINT%'` guard on the v2 form matters: `ST_DISTANCE_SPHERE` takes four
+coordinates, so a non-point geometry on either side would silently measure the
+wrong thing. The `CASE` returns null for those rows instead.
+
+## When to Use a Step Instead
+
+| You want | Use |
+|---|---|
+| Distance from each row to its *nearest* rows in another table | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) |
+| Distance as a filter in a spatial join | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) |
+| Area, length, centroid, or bounding box | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) |
+| Anything that changes the shape of a geometry | [Geospatial steps](/reference/workflow-steps/spatial/) |
+
+## Related
+
+- [Geospatial steps](/reference/workflow-steps/spatial/)
+- [Geometry Functions (Lakehouse v1)](/reference/expressions/lakehouse-v1/09-geometry-functions/)
+- [Geography Functions (Lakehouse v1)](/reference/expressions/lakehouse-v1/09-geo-functions/) — H3 and geohash indexing
+- [Spatial Functions (Lakehouse v2)](/reference/expressions/lakehouse-v2/17-spatial-functions/)

@@ -28,10 +28,29 @@ This section provides reference information for the semi-structured data functio
 - [JSON_PATH_QUERY](json-path-query)
 - [JSON_PATH_QUERY_ARRAY](json-path-query-array)
 - [JSON_PATH_QUERY_FIRST](json-path-query-first)
+- [JQ](jq)
+- [JSON_OBJECT_KEYS](json-object-keys)
 
 ## JSON Data Manipulation:
 - [JSON_ARRAY](json-array)
 - [JSON_STRIP_NULLS](json-strip-nulls)
+- [JSON_ARRAY_APPLY](json-array-apply)
+- [JSON_ARRAY_DISTINCT](json-array-distinct)
+- [JSON_ARRAY_EXCEPT](json-array-except)
+- [JSON_ARRAY_FILTER](json-array-filter)
+- [JSON_ARRAY_INSERT](json-array-insert)
+- [JSON_ARRAY_INTERSECTION](json-array-intersection)
+- [JSON_ARRAY_MAP](json-array-map)
+- [JSON_ARRAY_OVERLAP](json-array-overlap)
+- [JSON_ARRAY_REDUCE](json-array-reduce)
+- [JSON_ARRAY_TRANSFORM](json-array-transform)
+- [JSON_MAP_FILTER](json-map-filter)
+- [JSON_MAP_TRANSFORM_KEYS](json-map-transform-keys)
+- [JSON_MAP_TRANSFORM_VALUES](json-map-transform-values)
+- [JSON_OBJECT_DELETE](json-object-delete)
+- [JSON_OBJECT_INSERT](json-object-insert)
+- [JSON_OBJECT_KEEP_NULL](json-object-keep-null)
+- [JSON_OBJECT_PICK](json-object-pick)
 
 ## Object Operations:
 - [GET](get)
@@ -41,3 +60,4 @@ This section provides reference information for the semi-structured data functio
 
 ## Type Conversion:
 - [AS_TYPE](as-type)
+- [JSON_TO_STRING](json-to-string)

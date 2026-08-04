@@ -1,40 +1,68 @@
 ---
 title: Migrate Spatial Alteryx Workflows
-description: Prepare, import, and validate Alteryx spatial workflows in PlaidCloud with Document-backed files, SQL geometry logic, and managed spatial executors.
+description: Package spatial dependencies, import an Alteryx spatial workflow, and validate the converted geometry against the original outputs.
 sidebar:
   order: 37
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-PlaidCloud converts Alteryx spatial workflows into Advanced workflows that use Document-backed spatial inputs, SQL geometry logic where appropriate, and managed spatial executors for operations that need specialized geometry processing.
+PlaidCloud converts Alteryx spatial workflows into Advanced workflows built from
+[geospatial steps](/reference/workflow-steps/spatial/). Every tool in the Alteryx
+Spatial palette has a route — the
+[spatial tool coverage table](/reference/alteryx-conversion-matrix/#spatial-tool-coverage)
+lists them tool by tool, along with the known gaps.
 
-<Aside type="note">
-  PlaidCloud chooses the simplest reliable route for each spatial operation. Some spatial logic can run as SQL, while nearest-neighbor, overlay, buffering, smoothing, trade area, and similar operations may run through managed executors.
-</Aside>
+This guide covers the mechanics: packaging the files, running the import, and
+validating the result. For what the steps do once converted, see
+[Geospatial Analytics](/guides/workflows/geospatial-analytics/).
 
 ## Package Spatial Inputs
 
-Before import, collect every spatial dependency:
+Collect every spatial dependency before you import. A converted workflow can only
+read the files you brought with it.
 
-- Shapefile groups with `.shp`, `.shx`, `.dbf`, and `.prj`.
-- MapInfo groups with `.tab`, `.map`, `.id`, and `.dat`.
-- KML, GeoJSON, and other spatial files.
-- Lookup tables used to join spatial and non-spatial records.
-- Expected spatial outputs for validation.
+- Shapefile groups: `.shp` with `.shx`, `.dbf`, and `.prj`.
+- MapInfo groups: `.tab` with `.map`, `.id`, and `.dat`.
+- KML and GeoJSON files.
+- Lookup tables that join spatial and non-spatial records.
+- The expected spatial outputs, for validation.
 
-Keep sidecar files together in the same folder before importing.
+Keep each group's sidecars in the same folder as its main file —
+[Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/)
+reads them from alongside it.
+
+<Aside type="caution" title="The .geo GeoFile Does Not Convert">
+  Alteryx's proprietary binary `.geo` format cannot be read. Conversion fails
+  closed on it rather than emitting an import that crashes at run time. Re-export
+  those layers as shapefile or GeoJSON before importing.
+</Aside>
 
 ## How Spatial Tools Convert
 
-PlaidCloud uses the best available execution route for each spatial operation:
+Conversion picks the simplest route that gives the right answer, and the route
+determines how the step scales.
 
-- Point creation can convert to native geometry creation.
-- Spatial metadata can convert to SQL geometry expressions or a spatial transform.
-- Spatial matching, nearest-neighbor, overlay, buffer, smoothing, generalization, trade area, and polygon building can run through managed spatial executors.
-- Map and report-map outputs can convert to PlaidCloud map or report artifacts.
+**Database (SQL) route.** Create Points and Distance become
+[Table Extract expressions](/reference/workflow-steps/spatial/spatial-sql-recipes/);
+Spatial Match and Find Nearest become
+[Spatial Match](/reference/workflow-steps/spatial/spatial-match/) and
+[Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/).
+These run entirely in the warehouse, so they scale with the table.
 
-This lets converted workflows use fast SQL logic when it is sufficient and executor-backed processing when the operation needs broader geometry support.
+**Workflow-engine route.** Everything that reshapes geometry — Buffer, Trade
+Area, Generalize, Smooth, Process, Poly-Build, Poly-Split, Make Grid, Combine,
+Spatial Info, and the spatial file import — runs in the workflow engine on
+Shapely and GDAL, because the work is not expressible in database SQL.
+
+**Reporting.** Map and Report Map become
+[Report Map](/reference/workflow-steps/reports/report-map/) steps; the Heat Map
+and Pie Wedge Trade Area packaged macros become
+[packaged macro steps](/reference/workflow-steps/macros/).
+
+Every converted step is a first-class step type you can open, edit, and rebuild
+by hand — with two exceptions noted in
+[Known Spatial Gaps](/reference/alteryx-conversion-matrix/#known-spatial-gaps).
 
 ## Validate Geometry
 
@@ -43,11 +71,18 @@ For spatial output parity, compare:
 1. Output schema.
 2. Row count.
 3. Key field values.
-4. Geometry values or geometry-derived measurements.
+4. Geometry values, or measurements derived from the geometry.
 5. Coordinate reference behavior.
-6. Accepted tolerance for distances, areas, and simplified geometry.
+6. Distances, areas, and simplified geometry, against an accepted tolerance.
 
 Row order does not need to match unless the workflow depends on ordering.
+
+<Aside type="note" title="Areas and Lengths May Differ — Usually for the Better">
+  [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) measures
+  geodesically on the WGS84 spheroid. If you are comparing against a planar
+  measurement, expect a difference of roughly 25% at US latitudes; the geodesic
+  value is the one that matches Alteryx.
+</Aside>
 
 ## Validate Spatial Artifacts
 
@@ -59,19 +94,24 @@ For maps and report maps, confirm:
 4. The artifact is usable by downstream reviewers.
 5. Any intentional cloud-native artifact difference is recorded.
 
+Report renderers are an approximation of the Alteryx output — validate the table
+behind a map before comparing the visual layout.
+
 ## Common Spatial Issues
 
-If a converted spatial workflow does not validate:
-
-- Confirm sidecar files are present.
-- Confirm projection files are present.
-- Confirm the same source data was used in both runs.
-- Review geometry precision and coordinate reference differences.
-- Review executor notes.
-- Validate the data table behind a map artifact before comparing visual layout.
+| Symptom | Check |
+| --- | --- |
+| Import produces rows with empty geometry | Sidecar files present in the same folder |
+| Coordinates land in the wrong place | Projection file (`.prj`) present; Create Points coordinate mode is floating-point lon/lat |
+| Areas or lengths differ from the original | Planar versus geodesic measurement, per the note above |
+| A Spatial Info column is missing | The measure may be one of the [skipped info types](/reference/alteryx-conversion-matrix/#known-spatial-gaps); conversion names it in a note |
+| Trade areas are the wrong size | Drive-time sizing does not convert — only fixed radius |
+| Row counts differ | Same source data used in both runs |
 
 ## Related Guides
 
+- [Geospatial Analytics](/guides/workflows/geospatial-analytics/)
+- [Geospatial steps](/reference/workflow-steps/spatial/)
 - [Package Alteryx Dependencies](/guides/workflows/package-alteryx-dependencies/)
 - [Validate Alteryx Reports And Artifacts](/guides/workflows/validate-alteryx-reports-and-artifacts/)
 - [Alteryx Conversion Matrix](/reference/alteryx-conversion-matrix/)

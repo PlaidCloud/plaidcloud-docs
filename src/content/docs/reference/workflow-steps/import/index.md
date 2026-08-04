@@ -7,11 +7,13 @@ Workflow steps that bring data from external sources into project tables.
 
 ## Steps
 
+- [Import Access](/reference/workflow-steps/import/import-access/)
 - [Import Alteryx YXDB](/reference/workflow-steps/import/import-alteryx-yxdb/)
 - [Import Archive](/reference/workflow-steps/import/import-archive/)
 - [Import Avro](/reference/workflow-steps/import/import-avro/)
 - [Import CSV](/reference/workflow-steps/import/import-csv/)
 - [Import Db2 Extract](/reference/workflow-steps/import/import-db2-extract/)
+- [Import dBASE](/reference/workflow-steps/import/import-dbf/)
 - [Import Excel](/reference/workflow-steps/import/import-excel/)
 - [Import External Database Tables](/reference/workflow-steps/import/import-external-database-tables/)
 - [Import Fixed Width](/reference/workflow-steps/import/import-fixed-width/)
@@ -20,9 +22,11 @@ Workflow steps that bring data from external sources into project tables.
 - [Import HDF](/reference/workflow-steps/import/import-hdf/)
 - [Import Intacct Query](/reference/workflow-steps/import/import-intacct-query/)
 - [Import JSON](/reference/workflow-steps/import/import-json/)
+- [Import Monday](/reference/workflow-steps/import/import-monday/)
 - [Import Parquet](/reference/workflow-steps/import/import-parquet/)
 - [Import Project Table](/reference/workflow-steps/import/import-project-table/)
 - [Import Quandl](/reference/workflow-steps/import/import-quandl/)
+- [Import Sage](/reference/workflow-steps/import/import-sage/)
 - [Import Sage AP](/reference/workflow-steps/import/import-sage-ap/)
 - [Import Sage AP Lines](/reference/workflow-steps/import/import-sage-ap-lines/)
 - [Import Singer Source](/reference/workflow-steps/import/import-singer/)
@@ -30,3 +34,4 @@ Workflow steps that bring data from external sources into project tables.
 - [Import SQL](/reference/workflow-steps/import/import-sql/)
 - [Import Stata](/reference/workflow-steps/import/import-stata/)
 - [Import XML](/reference/workflow-steps/import/import-xml/)
+- [Restore Tables](/reference/workflow-steps/import/restore-tables/)

@@ -5,4 +5,8 @@ description: "Lakehouse v1 SQL search functions: full-text and similarity search
 
 This section provides reference information for the search functions in PlaidCloud Lakehouse.
 
-<IndexOverviewList />
+## Functions
+
+- [MATCH](match/)
+- [QUERY](query/)
+- [SCORE](score/)

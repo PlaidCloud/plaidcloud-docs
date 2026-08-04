@@ -23,6 +23,9 @@ These functions help you extract and summarize data from databases to gain valua
 | [COVAR_SAMP](aggregate-covar-samp)                               | Returns the sample covariance of a set of number pairs                       | 
 | [GROUP_ARRAY_MOVING_AVG](aggregate-group-array-moving-avg)       | Returns an array with elements calculates the moving average of input values |
 | [GROUP_ARRAY_MOVING_SUM](aggregate-group-array-moving-sum)       | Returns an array with elements calculates the moving sum of input values     |
+| [HISTOGRAM](aggregate-histogram)                                | Generates a data distribution histogram using equal-height bucketing        | 
+| [JSON_ARRAY_AGG](aggregate-json-array-agg)                      | Converts values into a JSON array, skipping NULLs                           | 
+| [JSON_OBJECT_AGG](aggregate-json-object-agg)                    | Converts key-value pairs into a JSON object                                 | 
 | [KURTOSIS](aggregate-kurtosis)                                   | Calculates the excess kurtosis of a set of values                            | 
 | [MAX_IF](aggregate-max-if)                                       | Finds the maximum value for rows meeting a condition                         | 
 | [MAX](aggregate-max)                                             | Finds the largest value in a specific column                                 | 
