@@ -5,4 +5,6 @@ description: "Lakehouse v1 SQL dictionary functions: look up values from diction
 
 This section provides reference information for the dictionary functions in PlaidCloud Lakehouse.
 
-<IndexOverviewList />
+## Functions
+
+- [DICT_GET](dict-get/)

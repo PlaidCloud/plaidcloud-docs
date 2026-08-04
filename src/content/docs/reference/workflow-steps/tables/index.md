@@ -15,6 +15,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Drop](/reference/workflow-steps/tables/table-drop/)
 - [Table Extract](/reference/workflow-steps/tables/table-extract/)
 - [Table Faker](/reference/workflow-steps/tables/table-faker/)
+- [Table Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/)
 - [Table In Place Delete](/reference/workflow-steps/tables/table-in-place-delete/)
 - [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/)
 - [Table Lookup](/reference/workflow-steps/tables/table-lookup/)
@@ -26,3 +27,4 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Union Distinct](/reference/workflow-steps/tables/table-union-distinct/)
 - [Table Update](/reference/workflow-steps/tables/table-update/)
 - [Table Upsert](/reference/workflow-steps/tables/table-upsert/)
+- [Table XML Parse](/reference/workflow-steps/tables/table-xml-parse/)

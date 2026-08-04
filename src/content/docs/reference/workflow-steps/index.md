@@ -17,6 +17,10 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates (19 steps)
 - [Common operations](/reference/workflow-steps/common/) — shared data mapping and filtering patterns
 
+### Geospatial
+
+- [Geospatial](/reference/workflow-steps/spatial/) — import spatial files, buffer, match, measure, and build geometry; full Alteryx spatial-tool coverage (14 steps)
+
 ### Modeling
 
 - [Allocation](/reference/workflow-steps/allocation/) — driver-based spreading, split allocations, rule-based tagging
@@ -27,6 +31,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Documents and Files
 
 - [Document](/reference/workflow-steps/document/) — file operations, directory listing, PDF manipulation, image processing, encoding conversion (21 steps)
+- [Text and documents](/reference/workflow-steps/text-documents/) — PDF text extraction, image OCR, sentiment, topic modeling, word clouds (6 steps)
 
 ### Communication
 
@@ -37,6 +42,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 - [Workflow control](/reference/workflow-steps/workflow-control/) — variables, loops, sub-workflows, Macros, error handling, row-count assert (14 steps)
 - [General](/reference/workflow-steps/general/) — LLM step, pass, wait, user-defined transform, run remote Python, Alteryx executor
+- [Packaged macros](/reference/workflow-steps/macros/) — Alteryx packaged-macro equivalents: Create Samples, DateTime Now, Heat Map, Pie Wedge Trade Area (4 steps)
 
 ### Enterprise Integrations
 

@@ -14,6 +14,7 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export To Excel](/reference/workflow-steps/export/export-to-excel/)
 - [Export To Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/)
 - [Export To HDF](/reference/workflow-steps/export/export-to-hdf/)
+- [Tableau Hyper Export](/reference/workflow-steps/export/export-hyper/)
 - [Export To JSON](/reference/workflow-steps/export/export-to-json/)
 - [Export To Table Archive](/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/reference/workflow-steps/export/export-to-xml/)
