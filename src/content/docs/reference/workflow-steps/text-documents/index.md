@@ -20,3 +20,4 @@ Workflow steps that pull text out of documents and analyze it. Each runs in the 
 ## Related
 
 - [Document steps](/reference/workflow-steps/document/) — file operations, PDF manipulation, and image processing that do not extract text
+- [PDF to Text](/reference/workflow-steps/text-documents/document-pdf-text/)
