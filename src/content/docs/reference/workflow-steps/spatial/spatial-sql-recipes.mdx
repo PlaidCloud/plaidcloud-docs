@@ -70,8 +70,21 @@ reads and writes.
 
 ## Distance Between Two Points
 
-Measure the geodesic distance between two point columns, guarding against rows
-where either side is not a point:
+Distance is the one operation here with **no portable spelling** — the two
+lakehouses disagree on both the function and its return unit, so the expression
+differs by version.
+
+<Aside type="caution" title="Pick the Form That Matches Your Workspace">
+  `ST_DISTANCE_SPHERE` exists on Lakehouse v2 only, and `geom_distance` on
+  Lakehouse v1 only. Neither degrades to the other. If you want one step that
+  works on both, use
+  [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) —
+  it picks the right expression for the workspace it runs on.
+</Aside>
+
+### Lakehouse v2
+
+`ST_DISTANCE_SPHERE` takes four coordinates and returns **meters**:
 
 ```python
 case(
@@ -91,19 +104,39 @@ case(
 )
 ```
 
-`ST_DISTANCE_SPHERE` returns meters, so the trailing factor converts to the unit
-you want:
-
-| Unit | Factor |
+| Unit | Factor from meters |
 |---|---|
 | Miles | `0.0006213711922373339` |
 | Kilometers | `0.001` |
 | Meters | `1` |
 | Feet | `3.280839895013123` |
 
-The `LIKE 'POINT%'` guard matters: `ST_DISTANCE_SPHERE` takes four coordinates,
-so a non-point geometry on either side would silently measure the wrong thing.
-The `CASE` returns null for those rows instead.
+### Lakehouse v1
+
+`geom_distance` is **planar** over two geometries and returns **degrees**, so the
+factor converts from degrees rather than meters:
+
+```python
+func.geom_distance(
+    func.geom_from_wkt(get_column(table, 'Origin')),
+    func.geom_from_wkt(get_column(table, 'Destination')),
+) * 69.1709
+```
+
+| Unit | Factor from degrees |
+|---|---|
+| Miles | `69.1709` |
+| Kilometers | `111.32` |
+| Meters | `111320.0` |
+| Feet | `364566.929` |
+
+Being planar, this is an approximation that degrades away from the equator — fine
+over the local distances typical of catchment analysis, less so across a
+continent.
+
+The `LIKE 'POINT%'` guard on the v2 form matters: `ST_DISTANCE_SPHERE` takes four
+coordinates, so a non-point geometry on either side would silently measure the
+wrong thing. The `CASE` returns null for those rows instead.
 
 ## When to Use a Step Instead
 

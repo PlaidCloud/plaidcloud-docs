@@ -13,14 +13,14 @@ Writes the workspace's members into a project table. Use it to report on access,
 
 ### Information to Include
 
-On by default: **last name**, **first name**, **email**, **user name**, **created**, and **last login**.
+On by default: **Last Name**, **First Name**, **Email**, **Username**, **Member Creation Date**, and **Last Login Timestamp**.
 
 ### Additional Settings
 
 Off by default:
 
-- **Is active** — whether the member's account is currently active.
-- **Login time** — the timestamp of the most recent login, alongside the last-login date.
+- **Include Deactivated Members** — widen the output beyond active members.
+- **Login History Mode** — return login history rather than only the last login.
 
 ## Related
 

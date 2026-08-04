@@ -19,12 +19,15 @@ Deletes files in a document account based on age. Use it to keep an export or la
 - **Age** — a number plus a unit: minutes, hours, days, months, or years.
 - **Before or after** — delete files last modified **before** the cutoff (the usual clean-up direction) or **after** it.
 - **Recursive** — off by default. Turn it on to include subfolders.
-- **Test results table** — write the list of files that *would* be deleted to a table instead of deleting them.
+- **Test results table** — the table the step editor's **Test** button writes its
+  preview of matching files into.
 
-<Aside type="caution" title="Dry Run First">
-  Point the step at a test results table and run it once before letting it
-  delete anything. Deletion is not reversible, and a wrong path with
-  **Recursive** on reaches further than you expect.
+<Aside type="caution" title="Preview With Test, Not by Running the Step">
+  The preview comes from the **Test** button while you are editing the step.
+  Running the step in a workflow always deletes — there is no dry-run mode, and
+  the test results table does not divert it. Deletion is not reversible, and a
+  wrong path with **Recursive** on reaches further than you expect, so check the
+  preview before you schedule it.
 </Aside>
 
 ## Related
