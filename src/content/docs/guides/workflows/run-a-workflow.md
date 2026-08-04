@@ -25,7 +25,7 @@ While a workflow runs, each step carries a status icon showing where it stands, 
 | Skipped | The step was passed over — it's disabled, or its run conditions weren't met. See [Skip Steps in a Workflow](/guides/workflows/skip-steps-in-a-workflow/). |
 | Continued | The step failed but is set to continue on error, so the workflow carried on. See [Continue on Error](/guides/workflows/continue-on-error/). |
 | Stopped | The run was stopped before the step could finish. |
-| Abandoned | The step's execution was interrupted, so it will never finish. Re-run the workflow. |
+| Abandoned | The step's execution was interrupted, so it will never finish. Resume the run, or re-run the workflow. |
 
 An open workflow view refreshes on its own as a run progresses, so the statuses you're looking at stay current without reloading the page.
 
@@ -33,7 +33,9 @@ An open workflow view refreshes on its own as a run progresses, so the statuses 
 
 A step is marked **abandoned** when whatever was executing it went away mid-run — most often because someone pressed **Stop**, or because platform maintenance interrupted the run. The step's duration stops climbing and the status tooltip explains what happened.
 
-An abandoned step did not complete and produced no output. It is not a slow step, and it is not a problem with your data or your configuration. Re-run the workflow.
+An abandoned step did not complete and produced no output. It is not a slow step, and it is not a problem with your data or your configuration.
+
+To pick the work back up, either [**Resume**](#pause-stop-and-resume) the run — the abandoned step runs again — or re-run the whole workflow. Both are safe.
 
 ## Pause, Stop, and Resume
 
