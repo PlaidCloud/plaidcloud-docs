@@ -21,18 +21,27 @@ The dashboard to render.
 
 The document account and folder the PDFs are written to.
 
+### Source Columns
+
+Each source column is marked with a **kind**:
+
+- **Filter** — the column feeds a dashboard filter, named by the filter column you map it to.
+- **Filename** — the column supplies the output PDF's file name. Without one, the step warns and generates names automatically.
+
+The step renders one PDF per row of the source table, applying that row's filter values. Leave the filter columns unmapped to render the dashboard once, unfiltered.
+
 ### Dashboard Filters
 
-Map columns from a source table to the dashboard's filters. The step renders one PDF per row of that table, applying that row's values — leave it empty to render the dashboard once, unfiltered.
+The dashboard-side filters the mapped source columns drive.
 
 ### Source Filter
 
-A filter expression narrowing which rows of the filter table are rendered.
+A filter expression narrowing which rows of the source table are rendered.
 
 ### Options
 
 - **Thread count** — how many renders run at once. Defaults to 8; lower it if the dashboard is heavy enough that parallel renders time out.
-- **Render wait (seconds)** — how long to let the dashboard finish loading before capturing it. Defaults to 10; raise it for dashboards whose queries are slow, or the PDF captures a half-drawn page.
+- **Render wait (seconds)** — present in the step configuration but **not currently applied** by the workflow runner. Setting it has no effect today.
 
 ## Related
 
