@@ -30,7 +30,21 @@ To archive a project:
 2. Select the “Projects” tab
 3. Select the project, then choose **Export Project Archive** from the **Actions** menu (or right-click the project and choose **Export Project Archive**)
 
-## Restoring an Archive
+The window names the project it will archive in its title bar, so you can confirm you have the right one before you start.
+
+### Tables Whose Data Cannot Be Included
+
+Occasionally a table listed in a project no longer has any data behind it — for example, a table that was never built, or whose data was removed outside the project. The archive is still written: those tables are left out of the table data, and the export finishes with a message naming them. Everything else — the project configuration, workflows, table definitions, and the data for every other table — is archived as normal.
+
+The archive records which tables went in without their data, and restoring it names them again at the end of the restore rather than presenting them as complete. A table whose definition was still readable comes back with its columns and no rows; one whose definition had gone too comes back as an entry with no table behind it. Re-run the workflow that builds a table to fill it in.
+
+:::note
+A scheduled archive records skipped tables in the system log rather than showing you a message, since nothing is on screen to show it to. Check the export message when it matters which tables were included.
+:::
+
+### If the Export Fails
+
+An export that fails now reports the failure. Previously an archive could report as finished when it had not been written, leaving you to discover the missing file later — most often when you came to restore it. A failed export now says so, so treat a reported success as a genuine one and check the message on anything that reports an error. The same applies to the other export types, not just project archives.
 
 
 Once you have an archive, you may want to restore it. You can restore an archive into a new project or into an existing project.
