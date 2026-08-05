@@ -7,6 +7,7 @@ Workflow steps that control SAP Profitability and Cost Management (PCM) models â
 
 ## Steps
 
+- [Calculate and Export PCM Model](/reference/workflow-steps/sap-pcm/export-pcm-model/)
 - [Calculate PCM Model](/reference/workflow-steps/sap-pcm/calculate-pcm-model/)
 - [Copy SAP PCM Model](/reference/workflow-steps/sap-pcm/copy-sap-pcm-model/)
 - [Copy SAP PCM Model Period](/reference/workflow-steps/sap-pcm/copy-sap-pcm-model-period/)
