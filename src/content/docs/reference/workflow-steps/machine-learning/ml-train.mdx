@@ -1,20 +1,20 @@
 ---
 title: "ML: Train Model"
-description: Fit a scikit-learn model on a table and write a one-row model table you can score with and query.
+description: Fit a scikit-learn model on a table and write a model table you can score with and query.
 sidebar:
   order: 22
 ---
 
 ## Description
 
-The **ML: Train Model** step fits a scikit-learn model on a source table and writes the result as a one-row **model table**. The model table flows through the workflow like any other table — pass it to an [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) step to append predictions to a data table, or query it directly to inspect the training metrics. The step runs as a managed PlaidCloud job (like the LLM step), so training does not compete with the rest of the workflow for resources.
+The **ML: Train Model** step fits a scikit-learn model on a source table and writes the result as a **model table**. The model table flows through the workflow like any other table — pass it to an [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) step to append predictions to a data table, or query it directly to inspect the training metrics. The step runs as a managed PlaidCloud job (like the LLM step), so training does not compete with the rest of the workflow for resources.
 
 ## Model Tab
 
 ### Source and Output
 
 - **Training Table** — the table to train on. Rows with an empty target value are excluded from training.
-- **Model Table** — the output table that receives the one-row model record.
+- **Model Table** — the output table that receives the model record.
 
 ### Model
 
@@ -51,11 +51,12 @@ Feature preparation matches Alteryx Assisted Modeling: numeric features are coer
 
 ## The Model Table
 
-The step writes exactly one row with these columns:
+The model table has these columns:
 
 | Column | Contents |
 | --- | --- |
-| `model_pickle_b64` | The fitted scikit-learn pipeline (pickled, base64-encoded). |
+| `model_pickle_b64` | The fitted scikit-learn pipeline (pickled, compressed, base64-encoded). Large models are split across rows — see [How the Model Is Stored](#how-the-model-is-stored). |
+| `chunk_index` | The position of this row's piece of the model, counting from `0`. |
 | `algorithm` | The algorithm value, for example `logistic_regression`. |
 | `params_json` | JSON: the applied scikit-learn parameters, the feature types used, and any `dropped_params`. |
 | `feature_names_json` | JSON array: the ordered feature columns the model expects at scoring time. |
@@ -67,10 +68,22 @@ Because the model is an ordinary table, you can query it like one — for exampl
 
 `metrics_json` contains a `kind` key (`classification` or `regression`), `train_accuracy` for classifiers or `train_r2` and `train_rmse` for regressors, and `n_training_rows`.
 
+### How the Model Is Stored
+
+A fitted model can be large — a random forest left at its default hundred trees can run to hundreds of megabytes — and that is more than a warehouse will accept as a single value. The model is therefore compressed and, if it is still too big for one row, split across as many rows as it needs. Every row repeats the columns above, so any one of them tells you the algorithm, parameters, features and metrics; only `model_pickle_b64` and `chunk_index` differ between them.
+
+This matters in two places:
+
+- **Reading the metrics.** A model table may hold more than one row, so read the metrics from a single row rather than assuming there is only one — for example with `WHERE chunk_index = 0`.
+- **Reassembling the model yourself.** If you read `model_pickle_b64` outside PlaidCloud, concatenate the pieces in `chunk_index` order, base64-decode, then decompress before unpickling.
+
+An [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) step does all of this for you. It also checks that every piece is present, and stops with an error if one is missing rather than scoring with an incomplete model.
+
 ## Limits and Caveats
 
 - **Training metrics are computed on the training set** — there is no holdout split or cross-validation in this release. Treat them as a fit check, not an estimate of out-of-sample performance.
 - **In-memory working set** — the training table is read into memory, so the step targets roughly one million rows. Sample or aggregate larger tables first.
+- **Maximum model size** — a fitted model is rejected if it comes to more than 128 MB once compressed, and the step stops as soon as training finishes with a message naming the size and the limit. For scale: a random forest of a hundred trees over 17,000 rows and 17 features comes to about 56 MB, so the limit is roughly twice that. If you reach it, train fewer trees (`n_estimators`) or cap `max_depth`.
 - **XGBoost approximation** — `xgb_classifier` trains a scikit-learn `HistGradientBoostingClassifier`. The XGBoost-specific tree parameters `gamma`, `min_child_weight`, `subsample`, and the `colsample_*` family have no equivalent and are dropped (recorded in `dropped_params`, and in the step's mapping notes when the step was converted from Alteryx). Validate model metrics against your reference run before relying on parity.
 
 ## Related
