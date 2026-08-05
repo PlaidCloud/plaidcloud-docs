@@ -139,3 +139,40 @@ Once you have completed the expression, save the expression so it will be applie
 View examples and expression functions in the [Expressions](/reference/expressions/) area.
 
 <Aside>Expressions are validated when the transform step is saved</Aside>
+
+### Reading Another Table From an Expression
+
+`sqlalchemy.literal_column` passes a fragment of SQL through to the warehouse untouched, and it accepts a single value — a column, a calculation, a `CASE`, a function call, a cast, a window function. A `literal_column` holding a **subquery** (`(SELECT ... FROM ...)`) is refused, because a subquery reaches a table the step never declared.
+
+Build the subquery with `sqlalchemy.select(...)` instead — `.scalar_subquery()` where you need a single value in a column, or `.subquery()` where you are selecting from it:
+
+```python
+# Refused
+sqlalchemy.literal_column('(SELECT rate FROM fx WHERE fx.cc = t.cc)')
+
+# Supported — a single value in a column
+sqlalchemy.select(fx.c.rate).where(fx.c.cc == t.c.cc).scalar_subquery()
+
+# Supported — a table to select from
+sqlalchemy.select(fx.c.rate).subquery()
+```
+
+### Bracket a Top-Level OR
+
+A `literal_column` whose outermost operator is `OR` is also refused. PlaidCloud passes the text through untouched, so a condition added after it would bind to only half of it — `a OR b` followed by `AND region = 'East'` reads as `a OR (b AND region = 'East')`, and the rows you meant to exclude come back.
+
+Add brackets and it works as before:
+
+```python
+# Refused
+sqlalchemy.literal_column("status = 'open' OR status = 'pending'")
+
+# Supported
+sqlalchemy.literal_column("(status = 'open' OR status = 'pending')")
+```
+
+A disjunction anywhere *inside* the expression — in a `CASE`, or already bracketed — is unaffected.
+
+`XOR` is refused wherever it appears, brackets or not: warehouses disagree about how tightly it binds, so there is no reading that is safe everywhere. Write it out instead, as `(a AND NOT b) OR (NOT a AND b)`.
+
+Everything else `literal_column` is normally used for is unaffected — `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` and `func.count()` all work as before. Column names containing spaces, dots or quotation marks are unaffected too; the warehouse quotes them for you.
