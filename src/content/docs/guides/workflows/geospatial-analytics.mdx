@@ -1,0 +1,136 @@
+---
+title: Geospatial Analytics
+description: Load spatial files, build and reshape geometry, match locations against territories, and publish the result — the geospatial path through a PlaidCloud workflow.
+sidebar:
+  order: 36
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud handles geometry as a first-class part of a workflow: you import
+spatial files, build geometry from coordinates, reshape and match it, and publish
+the result — without leaving the platform and without a separate GIS tool.
+
+This guide is the path through those capabilities. For the reference detail on any
+one step, see [Geospatial steps](/reference/workflow-steps/spatial/).
+
+## Geometry Is Just a Column
+
+Every spatial step reads and writes geometry as **WKT** (well-known text) in an
+ordinary text column. That has three consequences worth knowing up front:
+
+- **No type declaration.** A geometry column is a text column. Nothing to
+  configure, nothing to migrate.
+- **Steps compose freely.** Any spatial step's output feeds any other's input, in
+  any order.
+- **SQL and geometry mix.** A geometry column sits alongside your measures, so you
+  can filter, group, and join on both in the same step.
+
+## 1. Get Geometry Into a Table
+
+You have two routes in, depending on where the geometry comes from.
+
+**From a spatial file.** Use
+[Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) for
+MapInfo `.TAB`, ESRI `.shp`, `.kml`, or `.geojson`. Upload the file and its
+sidecars to the same document folder — the step reads the companions
+(`.shx`/`.dbf`/`.prj` for a shapefile, `.dat`/`.map`/`.id` for a `.TAB`)
+automatically. One row per feature comes out, with a WKT geometry column and the
+file's attributes.
+
+**From coordinates you already have.** If your data carries longitude and latitude
+columns, build points with a
+[Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) —
+this runs in the database, so no rows leave the warehouse:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="Keep Sidecars Together">
+  A shapefile without its `.prj` imports with no coordinate reference, and a
+  `.TAB` without its `.dat` has no attributes. Upload the whole group before you
+  run the import.
+</Aside>
+
+## 2. Shape the Geometry
+
+With geometry in a column, reshape it to answer the question you actually have.
+
+| Question | Step |
+|---|---|
+| What is within *n* miles of each store? | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) |
+| What is within a fixed distance of this shape? | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) |
+| What is the combined footprint of each region? | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) |
+| What area do these points enclose? | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) |
+| Where do these two footprints overlap, or differ? | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) |
+| How do I make these boundaries cheaper to draw? | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) |
+| How do I tile this area into equal cells? | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) |
+
+Trade Area is usually where a retail or service-territory analysis starts: give it
+a table of locations and a set of radii, and it returns concentric rings you can
+match customers against.
+
+## 3. Match Locations to Territories
+
+The two matching steps answer different questions and run by different routes.
+
+**Which territory is each customer in?** Use
+[Spatial Match](/reference/workflow-steps/spatial/spatial-match/). It runs as a
+spatial predicate join in the database, so it scales with the table. Pick the
+relationship — *intersects*, *within*, or *contains* — and it emits one row per
+matching pair.
+
+**Which are the nearest stores to each customer?** Use
+[Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/).
+It keeps the N closest rows per target and adds a computed distance column in the
+unit you choose. Also SQL-route, so it scales the same way.
+
+**Which customers fell outside every territory?** Use
+[Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/)
+in *Unmatched* mode. The same step also emits the overlap geometry itself when you
+need the intersection rather than the pairing.
+
+## 4. Measure
+
+[Spatial Info](/reference/workflow-steps/spatial/spatial-info/) appends area,
+length, centroid, and bounding-rectangle columns. These are **WGS84 geodesic**
+measurements, so square miles are real square miles rather than a planar
+approximation — which matters as soon as you compare territories at different
+latitudes.
+
+For a straight point-to-point distance between two columns on the same row, a
+[SQL expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) is
+cheaper than a step.
+
+## 5. Publish
+
+Geometry that stays in a table is not an answer anyone can act on.
+
+- [Report Map](/reference/workflow-steps/reports/report-map/) renders geometry into
+  a PDF report, alongside charts and tables from the same workflow.
+- The result table feeds [dashboards](/guides/dashboards/) like any other table —
+  the geometry column carries through, and the measures beside it are what most
+  dashboards actually chart.
+- [Export steps](/reference/workflow-steps/export/) write the table out to CSV,
+  Excel, or an external database when a downstream GIS tool needs it.
+
+## Coming From Alteryx
+
+Every Alteryx spatial tool has a PlaidCloud route. Converted workflows pick it
+automatically; the
+[Alteryx conversion matrix](/reference/alteryx-conversion-matrix/) lists the
+mapping tool by tool, and
+[Migrate Spatial Alteryx Workflows](/guides/workflows/migrate-spatial-alteryx-workflows/)
+covers packaging the files and validating the result.
+
+## Related Guides
+
+- [Geospatial steps](/reference/workflow-steps/spatial/)
+- [Migrate Spatial Alteryx Workflows](/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Advanced Workflows](/guides/workflows/advanced-workflows/)

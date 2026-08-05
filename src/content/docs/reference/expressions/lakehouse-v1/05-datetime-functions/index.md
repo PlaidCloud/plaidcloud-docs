@@ -47,6 +47,10 @@ This section provides reference information for the datetime-related functions i
 - [TO_YYYYMMDD](to-yyyymmdd)
 - [TO_YYYYMMDDHH](to-yyyymmddhh)
 - [TO_YYYYMMDDHHMMSS](to-yyyymmddhhmmss)
+- [STR_TO_DATE](str-to-date)
+- [STR_TO_TIMESTAMP](str-to-timestamp)
+- [TRY_TO_DATETIME](try-to-datetime)
+- [TRY_TO_TIMESTAMP](try-to-timestamp)
 
 ## Date Arithmetic Functions
 
@@ -54,6 +58,8 @@ This section provides reference information for the datetime-related functions i
 - [DATE_ADD](date-add)
 - [DATE_SUB](date-sub)
 - [SUBTRACT INTERVAL](subtractinterval)
+- [MONTHS_BETWEEN](months-between)
+- [TIMESTAMP_DIFF](timestamp-diff)
 
 ## Date Information Functions
 
@@ -63,6 +69,9 @@ This section provides reference information for the datetime-related functions i
 - [DATE_TRUNC](date-trunc)
 - [NOW](now)
 - [CURRENT_TIMESTAMP](current-timestamp)
+- [LAST_DAY](last-day)
+- [NEXT_DAY](next-day)
+- [PREVIOUS_DAY](previous-day)
 
 ## Others
 

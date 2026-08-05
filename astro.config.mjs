@@ -165,6 +165,7 @@ export default defineConfig({
 						},
 						{ label: 'Email',             collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
 						{ label: 'Help & Support',    collapsed: true, items: [{ autogenerate: { directory: 'guides/support' } }] },
+						{ label: 'Launcher',          link: '/guides/launcher/' },
 						{ label: 'Panel apps',        collapsed: true, items: [{ autogenerate: { directory: 'guides/panel-apps' } }] },
 						{ label: 'PlaidCloud Git',    collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
 						{ label: 'Projects',          collapsed: true, items: [{ autogenerate: { directory: 'guides/projects' } }] },
@@ -191,10 +192,11 @@ export default defineConfig({
 				{
 					label: 'Integrations',
 					items: [
-						{ label: 'Overview',              link: '/integrations/' },
-						{ label: 'Microsoft 365 Copilot', link: '/integrations/microsoft-365-copilot/' },
-						{ label: 'AI coding agents',      collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
-						{ label: 'PySpark',               collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
+						{ label: 'Overview',                link: '/integrations/' },
+						{ label: 'AI and LLM Architecture', collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-architecture' } }] },
+						{ label: 'Microsoft 365 Copilot',   link: '/integrations/microsoft-365-copilot/' },
+						{ label: 'AI coding agents',        collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
+						{ label: 'PySpark',                 collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
 					],
 				},
 				{
@@ -242,7 +244,7 @@ Documentation structure:
 - \`get-started/\` — concepts, quickstart, end-to-end tutorials, FAQ
 - \`guides/\` — task-oriented how-to content
 - \`reference/\` — workflow steps, expressions (SQL functions), connectors, CLI, glossary
-- \`integrations/\` — AI coding agents, PySpark
+- \`integrations/\` — AI and LLM architecture, Microsoft 365 Copilot, AI coding agents, PySpark
 - \`administration/\` — access management, SSO/SAML, scheduled events
 - \`releases/\` — monthly release notes`,
 					customSets: [

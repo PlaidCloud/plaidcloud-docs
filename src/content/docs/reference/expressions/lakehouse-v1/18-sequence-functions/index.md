@@ -5,4 +5,6 @@ description: "Lakehouse v1 SQL sequence functions: detect ordered sequences and 
 
 This section provides reference information for the sequence functions in PlaidCloud Lakehouse.
 
-<IndexOverviewList />
+## Functions
+
+- [NEXTVAL](nextval/)
