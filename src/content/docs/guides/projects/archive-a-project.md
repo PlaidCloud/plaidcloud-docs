@@ -42,6 +42,18 @@ The archive records which tables went in without their data, and restoring it na
 A scheduled archive records skipped tables in the system log rather than showing you a message, since nothing is on screen to show it to. Check the export message when it matters which tables were included.
 :::
 
+### If You Cannot Read the Project's Tables
+
+Reading a project's tables is a separate permission from reading the project itself, and an archive depends on both. If you can open a project but do not have table read access, the archive is still written — it simply carries no table data, and no table definitions either, since both sit behind that same permission. The export finishes with a message naming the tables that were left out, identified by their internal ids rather than their names, because the names come from the definitions the archive did not include.
+
+An archive taken this way is a copy of the project's configuration — its workflows, variables, dimensions, views and layouts, as far as you are entitled to read each of them — and not of its data. **Restoring it recreates no tables at all**, so it is not a backup you can rebuild the project's data from. Check the export message before relying on one.
+
+Unlike the tables described above, this is not something re-running a workflow corrects — the data was never read in the first place. Ask a workspace administrator to grant you read access to the project's tables, then take the archive again.
+
+:::caution
+This applies to scheduled archives too, which run as a particular member. Where that member does not have table read access, every archive the schedule produces is configuration-only, and the shortfall is recorded in the system log rather than shown to anyone. If you keep scheduled archives as backups, confirm the member they run as can read the project's tables.
+:::
+
 ### If the Export Fails
 
 An export that fails now reports the failure. Previously an archive could report as finished when it had not been written, leaving you to discover the missing file later — most often when you came to restore it. A failed export now says so, so treat a reported success as a genuine one and check the message on anything that reports an error. The same applies to the other export types, not just project archives.
