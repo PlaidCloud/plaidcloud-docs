@@ -46,6 +46,8 @@ A scheduled archive records skipped tables in the system log rather than showing
 
 An export that fails now reports the failure. Previously an archive could report as finished when it had not been written, leaving you to discover the missing file later — most often when you came to restore it. A failed export now says so, so treat a reported success as a genuine one and check the message on anything that reports an error. The same applies to the other export types, not just project archives.
 
+## Restoring an Archive
+
 
 Once you have an archive, you may want to restore it. You can restore an archive into a new project or into an existing project.
 
