@@ -32,6 +32,16 @@ To archive a project:
 
 The window names the project it will archive in its title bar, so you can confirm you have the right one before you start.
 
+### While the Archive Runs
+
+The export window closes as soon as PlaidCloud has accepted the request, and a progress window follows the archive from there. You can leave that progress window open to watch it, or send it to the background and carry on working — the archive runs on the platform either way, and closing the progress window does not stop it.
+
+A notification tells you how it ended: that the archive was written, which tables went in without their data, or, if it failed, why. You do not need to keep the window open to get it.
+
+:::note
+A large project can take anywhere from a few seconds to an hour to archive, depending on how much table data it includes. A long-running archive is normal and does not mean anything has gone wrong — wait for the notification rather than starting a second export, which would archive the project again from scratch.
+:::
+
 ### Tables Whose Data Cannot Be Included
 
 Occasionally a table listed in a project no longer has any data behind it — for example, a table that was never built, or whose data was removed outside the project. The archive is still written: those tables are left out of the table data, and the export finishes with a message naming them. Everything else — the project configuration, workflows, table definitions, and the data for every other table — is archived as normal.
