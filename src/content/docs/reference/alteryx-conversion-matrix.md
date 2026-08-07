@@ -28,6 +28,7 @@ Coverage levels:
 | Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
 | CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
+| Create Samples | Converts With Validation | Three Table Extract steps, one per output | Splits the input into Estimation, Validation, and Holdout at the configured percentages. Each sample holds its configured share, drawn at random — not the same records Alteryx's seed picks, and a different set on each run. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. |
 | DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
 | Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
@@ -84,6 +85,7 @@ Coverage levels:
 | PortfolioComposerText | Cloud-Native Equivalent | Report text artifact | Converts report text content to PlaidCloud report output. |
 | Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
+| Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
 | Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
