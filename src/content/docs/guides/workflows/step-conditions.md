@@ -82,3 +82,15 @@ For Date or Time selections you can add multiple conditions if a combination of 
  - Minute of the hour set to 5
 
 For "Use Financial Close Workday", set that to the xth day of the month that your close happens on. For example, if your close happens on the 5th day of the month, have "5".
+
+## Setting Conditions With an AI Assistant
+
+An AI assistant connected to your workspace can add and change a step's conditions for you, whether it is creating the step or editing one you already have. Every condition type described earlier is available to it except **Check Financial Close Workday** — the assistant declines that one, so set it on the **Conditions** tab yourself.
+
+Three things work differently from editing conditions by hand:
+
+- **The whole list is replaced each time.** Ask for one condition to be added or changed and the assistant sends the full list, so any condition it leaves out is removed. If you are not certain it has them all, ask it to list the step's current conditions before it writes.
+- **A condition that cannot be evaluated is refused.** A condition that does not say what it checks is rejected instead of saved, and the step keeps the conditions it already had. Fix the request and ask again.
+- **An incomplete condition is saved, with a warning.** A condition missing the value to compare against, or conditions added without **Check Conditions Before Running** ticked, are stored and reported back as a warning. Open the **Conditions** tab and finish them, or the step does not behave as you asked.
+
+An assistant can also set the step's lock, its visibility in the Manager and Explorer views, its retry settings, and the step to go to on error.
