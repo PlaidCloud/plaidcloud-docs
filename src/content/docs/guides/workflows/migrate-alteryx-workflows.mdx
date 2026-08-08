@@ -130,6 +130,60 @@ The step was never reading the Browse's records. That table was created at impor
 
 Workflows you imported before this release keep the conversion they were given, tables and all. Import them again to pick this up.
 
+### Calgary Databases
+
+An Alteryx **Calgary database** — a `.cydb` file — is a proprietary indexed store, and there is no way for PlaidCloud to open one. What the tools around it actually do, though, is ordinary table work: a saved query is a filter, cross-count buckets are conditional counts, and a loader's field list is a set of columns. So each `.cydb` stands for one ordinary PlaidCloud table, named `calgary_` plus the database's own file name under the import's table prefix, and the tools convert against that table:
+
+- A **Calgary Loader** writes the table from its input. The index types it declared are dropped, since a warehouse indexes for itself, but the fields it stored carry over as the table's columns.
+- A **Calgary Input** reads the table back, with its saved query as the filter. Nothing in the workflow records what columns the database held, so they are resolved when the step runs — and they arrive as text, because the table gives names rather than the database's own types.
+- A **Calgary Input** set to count only, and a **Calgary Cross Count**, read the table as an aggregate: the plain indexed fields group the rows, and each named value of a custom field becomes one counted column.
+
+A converted Loader and the readers of what it wrote are wired together, so a reader cannot run beside the write that fills its table.
+
+<Aside type="caution" title="Reading A Database Your Workflow Did Not Build">
+Where nothing in the workflow writes the database — the demographic and reference files Alteryx ships are the usual case — there is no table to read yet. The converted step stops and names the table it needs, rather than reading nothing and reporting success. Export that database from Alteryx into the named table before you run the workflow.
+
+Two `.cydb` files with the same name in different folders would claim one table, and there is no way to tell from the workflow which one a reader was meant to use. Every tool involved stops and names both files instead of guessing. Rename one of the databases and import again.
+</Aside>
+
+**Calgary Join and Cross Count Append do not convert.** Both match every incoming record against the database through one of its indexes, and the workflow records the index's *name* but not its *kind*. The same settings mean an equality join where the index holds ordinary values, and a point-in-polygon match where it holds spatial geometry. Converting on a guess would either join the wrong records or match none of them and still report success, so both tools arrive as steps flagged for review. Their note tells you to export the database to a table and rebuild the match yourself — as a [Join](/reference/workflow-steps/tables/table-inner-join/) for a value index, or as a [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) for a spatial one.
+
+A few other Calgary shapes are flagged for review rather than converted, each saying which one it is: a query that is not a set of indexed value or range comparisons joined by AND; a read that takes records by position, through **Skip Records** or **Max Records**, since the stand-in table carries no record order to count from; a Cross Count crossing more than one custom-value field; a Loader that stores no data field; and a Calgary tool naming no database at all.
+
+### Cross Tab Percent And Total Columns
+
+A **Cross Tab** carrying one of its derived methods — **Percent Row**, **Percent Column**, **Total Column** or **Total Row** — used to stop the conversion and take every step below it. All four now convert:
+
+- **Percent Row** and **Percent Column** are the cell's share of its row's, or its column's, total of the data field.
+- **Total Column** is that row total, under the name the tool recorded for it.
+- **Total Row** is an extra record carrying the totals, with no value in the grouping fields.
+
+Every total is a sum of the data field, whichever methods the tool computes for each cell.
+
+<Aside type="caution" title="Check The Percent Scale Once">
+The percent columns are written on a scale of 0 to 100. Alteryx documents these methods only as calculating "a percent based on the values" and never says which scale it means, so that reading is inferred from how Alteryx renders the columns rather than from anything it states. Compare one converted Cross Tab against a run of the original before its figures reach a published report.
+</Aside>
+
+Two shapes are still flagged for review instead of converted: a **Total Row** on a Cross Tab with no grouping field, which would produce the same record twice with nothing to tell the copies apart, and a **Total Column** whose name the tool never recorded, which would otherwise be missing from the output entirely.
+
+### Macros In A Converted Workflow
+
+**A macro called from inside a Batch or Iterative macro now converts.** A looping macro whose interior called another macro could not resolve that inner call, and the whole loop was discarded and left as a placeholder — with a note blaming the loop rather than naming the macro inside it. Interior macro calls now resolve, so those workflows convert.
+
+Two arrangements are refused by name rather than converted: a looping macro nested inside another looping macro, and a looping macro that ends up calling itself.
+
+<Aside type="caution" title="Location Optimizer Macros Are Refused">
+A **Location Optimizer** macro is only the scoring pass of a search. The search itself — generating candidate location sets, the number of locations, the generation limits and the seed — lives in the calling tool and in the Alteryx engine rather than in the workflow file, and PlaidCloud has no equivalent for that optimisation loop yet. The macro call now arrives as a step flagged for review, naming the macro, the input its candidate sets arrive on, the output that ranks them, and whether a high or a low score wins.
+
+**Such a macro used to convert and run green, and its figures were wrong.** It was treated as an ordinary macro, so the scoring pass ran exactly once against a single candidate set and the run reported success — a result that looked like an answer but was one scored guess rather than an optimised one. If you re-import a workflow like this and see a refusal where it used to work, the earlier result was not one you should have relied on.
+</Aside>
+
+### Reports In A Converted Workflow
+
+An image a report layout refers to is now packaged with the workflow, so a converted report finds it in Document instead of failing on an asset that only ever existed on the Alteryx machine. This covers an image named by a fixed path — an image whose bytes are embedded in the workflow, or whose path is taken from a column per record, has no separate file to fetch.
+
+A report piece whose source data could not be read is now reported as such. Where the columns of a table could not be read, a report snippet built from it used to be skipped and a report table section used to come out empty, both on runs that reported success. The step now stops and says the column information could not be read, and why. **A report that previously came out with a section missing may now stop with an explanation instead** — see the Fixed entry for it in [August 2026](/releases/2026-08/).
+
 ## Use The Converted Workflow
 
 After import, use the workflow like any other PlaidCloud Advanced workflow:
@@ -217,6 +271,7 @@ Use the matrix to understand how the importer handles each tool family:
 - Controlled workflow variables for analytic app questions such as check boxes, drop-downs, text boxes, radio buttons, folder pickers, and file pickers.
 - Document-backed file operations for input, output, directory, and dynamic file behavior.
 - Native ML Train and ML Score steps for Assisted Modeling machine-learning pipelines.
+- An ordinary table standing in for each Alteryx Calgary database, so the tools that load and read one convert as table operations — see [Calgary Databases](#calgary-databases).
 - Managed job executors for specialized spatial, fuzzy matching, PDF, OCR, NLP, reporting, and artifact work.
 - Cloud-native equivalents where PlaidCloud creates a durable, shareable artifact rather than reproducing an Alteryx-specific desktop renderer or proprietary file format.
 
