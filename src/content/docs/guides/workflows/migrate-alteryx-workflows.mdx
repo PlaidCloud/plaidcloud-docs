@@ -132,12 +132,12 @@ Workflows you imported before this release keep the conversion they were given, 
 
 ### Calgary Databases
 
-An Alteryx **Calgary database** (a `.cydb` file) is a proprietary indexed store. PlaidCloud has no way to read the file format, and there is no open specification for it. Rather than refuse every tool that touches one, conversion treats each `.cydb` path as standing for one ordinary PlaidCloud table, named `calgary_<database name>` under the project's table prefix. Once the database is an ordinary table, the tools built around it become ordinary operations: a saved query is a `WHERE` clause, cross-count buckets are conditional counts, and a loader's field list is a projection.
+An Alteryx **Calgary database** (a `.cydb` file) is a proprietary indexed store. PlaidCloud has no way to read the file format, and there is no open specification for it. Rather than refuse every tool that touches one, conversion treats each `.cydb` path as standing for one ordinary PlaidCloud table, named `calgary_<database name>` under the table prefix the import applies. Once the database is an ordinary table, the tools built around it become ordinary operations: a saved query is a filter, cross-count buckets are conditional counts, and a loader's field list is a set of columns.
 
 - A converted **Calgary Loader** writes that table from its input. Its declared index types are dropped during conversion — a warehouse indexes for itself — but the field list carries over.
 - A converted **Calgary Input** reads the table back, applying its saved query as the filter. The table's own columns are resolved when the step runs, since nothing in the workflow file records what the database held.
 - A converted **Calgary Input (Count Only)** or **Calgary Cross Count** reads the table as an aggregate: plain indexed fields group the rows, and each of a custom field's named values becomes one counted column.
-- A converted **Calgary Join** matches incoming records against the database through one of its indexes. It converts to a join against the table when the incoming field is a plain, non-spatial value — see [Calgary Join and Cross Count Append](#calgary-join-and-cross-count-append) below for when it does not.
+- A converted **Calgary Join** matches each incoming record against the table, keeping the records that matched and carrying the input's own columns through. It converts when the incoming field is a plain, non-spatial value — see [Calgary Join and Cross Count Append](#calgary-join-and-cross-count-append) below for when it does not.
 
 <Aside type="caution" title="Two Databases Sharing One Name">
 Two `.cydb` files of the same name in different directories name the same PlaidCloud table, and there is no way to tell from the workflow which one a reader was meant to use. Both the Loader and any reader involved refuse, naming both files, rather than guessing. Rename one of the source databases and import again.
@@ -153,7 +153,8 @@ A handful of query shapes still don't convert, each naming itself in the convers
 
 - A query using contains, starts-with, or a spatial lookup instead of an indexed comparison.
 - A read limited by **Skip Records** or **Max Records** — the stand-in table carries no record order to skip or cap against.
-- A Cross Count grouped by more than one custom field. The counts are genuinely one aggregate over the database, but Alteryx doesn't document what it names the resulting columns, and there is no non-spatial example in hand to check against.
+- A Cross Count grouped by more than one custom field. The counts are genuinely one aggregate over the database, but Alteryx doesn't document what it names or how it orders the resulting columns, and there is no example on hand to check against.
+- A count-only read that names no column to count over, since the database's own columns are not readable from the workflow file.
 - A **Calgary Loader** that stores no data field, which would write a table with no columns.
 - A Calgary tool that names no database at all.
 
@@ -163,13 +164,15 @@ A handful of query shapes still don't convert, each naming itself in the convers
 
 Conversion decides using the **incoming field's own declared type**: a spatial index can only ever have been paired with a spatial field, so
 
-- an incoming field typed as a spatial object refuses, naming the stand-in table and telling you to rebuild the match as a **Spatial Match** step against it;
-- an incoming field whose type couldn't be determined refuses, naming that as the reason — it is never guessed;
-- an ordinary, non-spatial incoming field converts a **Calgary Join** to a join against the stand-in table.
+- an incoming field typed as a spatial object stops, naming the field, the reading it produced, and the stand-in table to rebuild the match against as a **Spatial Match** step;
+- an incoming field whose type couldn't be determined stops, naming that as the reason — it is never guessed;
+- an ordinary, non-spatial incoming field converts a **Calgary Join** to a match against the stand-in table.
 
-**Calgary Cross Count Append refuses on every incoming field, spatial or not.** It appends the *counts* of matching database records rather than the records themselves, and Alteryx doesn't document how many columns that produces or what they're named for anything beyond a single field — so there is no shape to build with confidence. Rebuild it as a **Spatial Match** or ordinary join against the stand-in table, followed by the aggregation you need.
+Whichever way it goes, the step records the reading it took and the field type it read it from, so a conversion you disagree with shows its working rather than leaving you to infer it.
 
-A **Calgary Join** also still refuses, naming itself, when it is set to count matches only, when it matches on an index built over a range rather than a value, or when its unmatched-records output is wired to something downstream.
+**Calgary Cross Count Append stops on every incoming field, spatial or not.** It appends the *counts* of matching database records rather than the records themselves, and Alteryx doesn't document how many columns that produces or what they're named for anything beyond a single field — so there is no shape to build with confidence. Rebuild it as a Cross Count over the stand-in table, joined back to this input.
+
+A **Calgary Join** also stops, naming itself, in five more cases: when it is set to count matches only, when it matches against a range of index values rather than a single one, when its unmatched-records output is wired to something downstream, when it names no field to match the database on, and when nothing is wired to its input for it to match records from.
 
 A converted Loader and the readers of what it wrote are wired together, so a reader cannot run beside the write that fills its table.
 
