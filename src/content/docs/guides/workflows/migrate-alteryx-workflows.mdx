@@ -154,6 +154,7 @@ A handful of query shapes still don't convert, each naming itself in the convers
 - A query using contains, starts-with, or a spatial lookup instead of an indexed comparison.
 - A read limited by **Skip Records** or **Max Records** — the stand-in table carries no record order to skip or cap against.
 - A Cross Count grouped by more than one custom field. The counts are genuinely one aggregate over the database, but Alteryx doesn't document what it names the resulting columns, and there is no non-spatial example in hand to check against.
+- A **Calgary Loader** that stores no data field, which would write a table with no columns.
 - A Calgary tool that names no database at all.
 
 #### Calgary Join and Cross Count Append
@@ -169,6 +170,44 @@ Conversion decides using the **incoming field's own declared type**: a spatial i
 **Calgary Cross Count Append refuses on every incoming field, spatial or not.** It appends the *counts* of matching database records rather than the records themselves, and Alteryx doesn't document how many columns that produces or what they're named for anything beyond a single field — so there is no shape to build with confidence. Rebuild it as a **Spatial Match** or ordinary join against the stand-in table, followed by the aggregation you need.
 
 A **Calgary Join** also still refuses, naming itself, when it is set to count matches only, when it matches on an index built over a range rather than a value, or when its unmatched-records output is wired to something downstream.
+
+A converted Loader and the readers of what it wrote are wired together, so a reader cannot run beside the write that fills its table.
+
+A Calgary Input's columns arrive as text: the stand-in table gives their names, not the database's own types.
+
+### Cross Tab Percent And Total Columns
+
+A **Cross Tab** carrying one of its derived methods — **Percent Row**, **Percent Column**, **Total Column** or **Total Row** — used to stop the conversion and take every step below it. All four now convert:
+
+- **Percent Row** and **Percent Column** are the cell's share of its row's, or its column's, total of the data field.
+- **Total Column** is that row total, under the name the tool recorded for it.
+- **Total Row** is an extra record carrying the totals, with no value in the grouping fields.
+
+Every total is a sum of the data field, whichever methods the tool computes for each cell.
+
+<Aside type="caution" title="Check The Percent Scale Once">
+The percent columns are written on a scale of 0 to 100. Alteryx documents these methods only as calculating "a percent based on the values" and never says which scale it means, so that reading is inferred from how Alteryx renders the columns rather than from anything it states. Compare one converted Cross Tab against a run of the original before its figures reach a published report.
+</Aside>
+
+Two shapes are still flagged for review instead of converted: a **Total Row** on a Cross Tab with no grouping field, which would produce the same record twice with nothing to tell the copies apart, and a **Total Column** whose name the tool never recorded, which would otherwise be missing from the output entirely.
+
+### Macros In A Converted Workflow
+
+**A macro called from inside a Batch or Iterative macro now converts.** A looping macro whose interior called another macro could not resolve that inner call, and the whole loop was discarded and left as a placeholder — with a note blaming the loop rather than naming the macro inside it. Interior macro calls now resolve, so those workflows convert.
+
+Two arrangements are refused by name rather than converted: a looping macro nested inside another looping macro, and a looping macro that ends up calling itself.
+
+<Aside type="caution" title="Location Optimizer Macros Are Refused">
+A **Location Optimizer** macro is only the scoring pass of a search. The search itself — generating candidate location sets, the number of locations, the generation limits and the seed — lives in the calling tool and in the Alteryx engine rather than in the workflow file, and PlaidCloud has no equivalent for that optimisation loop yet. The macro call now arrives as a step flagged for review, naming the macro, the input its candidate sets arrive on, the output that ranks them, and whether a high or a low score wins.
+
+**Such a macro used to convert and run green, and its figures were wrong.** It was treated as an ordinary macro, so the scoring pass ran exactly once against a single candidate set and the run reported success — a result that looked like an answer but was one scored guess rather than an optimised one. If you re-import a workflow like this and see a refusal where it used to work, the earlier result was not one you should have relied on.
+</Aside>
+
+### Reports In A Converted Workflow
+
+An image a report layout refers to is now packaged with the workflow, so a converted report finds it in Document instead of failing on an asset that only ever existed on the Alteryx machine. This covers an image named by a fixed path — an image whose bytes are embedded in the workflow, or whose path is taken from a column per record, has no separate file to fetch.
+
+A report piece whose source data could not be read is now reported as such. Where the columns of a table could not be read, a report snippet built from it used to be skipped and a report table section used to come out empty, both on runs that reported success. The step now stops and says the column information could not be read, and why. **A report that previously came out with a section missing may now stop with an explanation instead** — see the Fixed entry for it in [August 2026](/releases/2026-08/).
 
 ## Use The Converted Workflow
 
