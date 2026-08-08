@@ -85,7 +85,7 @@ For "Use Financial Close Workday", set that to the xth day of the month that you
 
 ## Setting Conditions With an AI Assistant
 
-An AI assistant connected to your workspace can add and change a step's conditions for you, whether it is creating the step or editing one you already have. Every condition type described earlier is available to it except **Check Financial Close Workday** — the assistant declines that one, so set it on the **Conditions** tab yourself.
+An AI assistant connected to your workspace can add and change a step's conditions for you, whether it is creating the step or editing one you already have. Every condition type described earlier is available to it except **Check Financial Close Workday**: an assistant can write that one, but it never matches, so the assistant warns you instead of letting it pass unnoticed. Set that one on the **Conditions** tab yourself.
 
 Three things work differently from editing conditions by hand:
 
