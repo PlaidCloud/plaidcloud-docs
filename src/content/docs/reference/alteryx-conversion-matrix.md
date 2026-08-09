@@ -236,6 +236,22 @@ and validate the specific options your workflows use — which is what the
 validation guidance below is for. The Known Gaps sections on this page name the
 options that are deliberately refused.
 
+## Recognised but Unconverted Tools
+
+Not every Alteryx tool has a PlaidCloud conversion yet. When the importer meets a
+tool it recognises as a real, published Alteryx tool but does not convert, it
+**refuses by name** — the conversion note states the tool and its Alteryx palette
+category, for example *"Alteryx 'Rank' (Preparation) is a recognised Alteryx tool
+that PlaidCloud does not convert yet."* The step fails closed rather than
+producing a plausible but wrong result.
+
+This is deliberately distinct from an **unrecognised** tool — a typo, or a plugin
+PlaidCloud has never heard of — which still reports the generic *"Unrecognised
+Alteryx tool; manual mapping required."* A named refusal tells you the tool is
+genuine and simply awaits conversion support; the generic message tells you to
+check the workflow. Marketplace connectors are named this way too: the guidance
+is to connect through a PlaidCloud connection rather than an Alteryx connector.
+
 ## Validation Notes
 
 For production workflows, validate converted outputs against trusted Alteryx outputs. PlaidCloud validation focuses on schema, row count, and row values, and ignores row order unless the workflow explicitly depends on ordered data.
