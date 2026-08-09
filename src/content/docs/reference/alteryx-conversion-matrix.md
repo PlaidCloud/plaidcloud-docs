@@ -33,7 +33,7 @@ Coverage levels:
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
 | CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
 | Create Samples | Converts With Validation | Three Table Extract steps, one per output | Splits the input into Estimation, Validation, and Holdout at the configured percentages. Each sample holds its configured share, drawn at random — not the same records Alteryx's seed picks, and a different set on each run. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
-| CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. |
+| CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. Sum, Average, Count, Min, Max, Concatenate, Mode and the derived totals (Total Row/Column, Percent Row/Column) convert directly; First and Last substitute the cell's minimum value — the pivot carries no record order — and say so; Count Non Null has no pivot equivalent and refuses, naming the method. |
 | DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
 | Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
 | DateTime | Converts With Validation | Date and time transform | Converts date and time parsing or formatting logic. |
@@ -80,7 +80,7 @@ Coverage levels:
 | Message | Fully Converts | Step condition with warning or message action | Emits workflow warning, message, or error based on configured condition. |
 | Modeling | Converts With Validation | ML Train step or placeholder | Fuses into the ML Train step when the pipeline's model choice is saved in the workflow; a lone Assisted Modeling wizard is kept as a placeholder noting the recovered target variable. |
 | MultiFieldFormula | Converts With Validation | Multi-field formula transform | Applies a formula across selected fields. |
-| MultiRowFormula | Converts With Validation | Window or row-aware formula transform | Converts row-relative logic to PlaidCloud window behavior where possible. |
+| MultiRowFormula | Converts With Validation | Window or row-aware formula transform | Converts row-relative logic to PlaidCloud window behavior where possible. For rows that don't exist, Empty (null) and Nearest (clamp to the edge record) convert; Error and a fixed user value cannot be reproduced by a window — there is no row there to fail on or seed — and refuse, naming the value, rather than silently reading a null. Group By confines the lookup to each partition. |
 | NumericUpDown | Fully Converts | Controlled numeric workflow variable | Converts app numeric input to a typed variable. |
 | Overlay | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
 | PDFInput | Converts To Executor | PDF extraction executor | Extracts text or tables from PDFs. |
@@ -95,7 +95,7 @@ Coverage levels:
 | Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
 | Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
-| RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier. |
+| RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier in the configured type (Int16/Int32/Int64, Double or String) and start value; grouped numbering restarts within each group. Field size is not applied, so a String identifier is not zero-padded to a fixed width. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
 | Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | ReportMap | Cloud-Native Equivalent | Map report artifact | Produces a cloud-native map/report artifact. |
@@ -117,7 +117,7 @@ Coverage levels:
 | TopicModel | Converts To Executor | Topic modeling executor | Runs topic modeling through managed NLP execution. |
 | TradeArea | Converts To Executor | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units. Fixed-radius mode; drive-time trade areas are not covered. |
 | Transformation | Converts With Validation | Transform step | Converts configured transformation logic to PlaidCloud expressions or SQL. |
-| Transpose | Fully Converts | Unpivot transform | Converts columns to rows. |
+| Transpose | Fully Converts | Unpivot transform | Converts columns to rows. Key fields stay columns and the ticked data fields stack into one Name/Value pair; a column that is both a key and a ticked data field stays a key. Data fields of different types stack into one string Value column, so a numeric cell comes through as its text. |
 | Tree | Fully Converts | Controlled workflow variable | Converts app tree selection to controlled user input. |
 | Union | Fully Converts | Union transform | Combines streams by name, position, or configured field rules. |
 | Unique | Fully Converts | Unique and duplicate split transform | Separates first unique records from duplicates. |
