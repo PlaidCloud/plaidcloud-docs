@@ -18,7 +18,7 @@ Coverage levels:
 | Alteryx Object | Coverage Level | PlaidCloud Operation | Notes |
 | --- | --- | --- | --- |
 | Action | Fully Converts | Variable binding and conditional step configuration | Updates downstream settings from converted app inputs. |
-| AlteryxSelect | Fully Converts | Select and schema projection step | Keeps selected, renamed, and reordered fields. |
+| AlteryxSelect | Fully Converts | Select and schema projection step | Keeps selected, renamed, and reordered fields, and converts a field to any Alteryx data type — numeric, text, date, and time. |
 | AppendFields | Fully Converts | Append fields transform | Appends fields from one stream to another. |
 | AutoField | Converts With Validation | Auto field sizing transform | Preserves inferred field sizing intent; validate schema where precision matters. |
 | BrowseV2 | Annotation Only | Browse or passthrough marker | Preserved for inspection without adding runtime work. |
@@ -51,7 +51,7 @@ Coverage levels:
 | DynamicSelect | Fully Converts | Dynamic field selection transform | Selects fields by type, name, or rule. |
 | Error | Fully Converts | Step condition with error action | Converts configured error behavior to PlaidCloud step conditions. |
 | FileBrowse | Fully Converts | Controlled Document file variable | Lets users choose a file for a converted app run. |
-| Filter | Fully Converts | Filter transform | Splits records by expression into true and false paths. |
+| Filter | Fully Converts | Filter transform | Splits records by expression into true and false paths, including comparisons, text and emptiness tests, and date-period filters measured from today, tomorrow, yesterday, or a fixed date. |
 | FindNearest | Fully Converts | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Runs as a distance-ranked join in the database; adds the computed distance column. |
 | Fit | Converts With Validation | ML Train step | Collapses into the fused ML Train step; the trained model is written as a one-row model table. |
 | FolderBrowse | Fully Converts | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
@@ -66,7 +66,7 @@ Coverage levels:
 | ImageTemplate | Converts With Validation | Manual region extraction | Stops with a message naming the missing page-region detection. Extract the regions with a Formula or Text step instead. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
-| Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams. |
+| Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams, matched on a single- or multi-field key or by record position. |
 | JoinMultiple | Fully Converts | Multi-join transform | Joins multiple input streams. |
 | Label | Annotation Only | Canvas label | Preserved as workflow context. |
 | LabelGroup | Annotation Only | Canvas label group | Preserved as workflow context. |
@@ -105,7 +105,7 @@ Coverage levels:
 | SpatialInfo | Converts To Executor | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Area, length, centroid, and bounding rectangle as WGS84 geodesic measures. Object type, part/point counts, Peano key, and end-point coordinates are skipped with a note. |
 | SpatialMatch | Converts With Validation | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) or [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Plain matched pairs run in the database; the intersection-geometry and Unmatched outputs run in the workflow engine. |
 | SpatialProcess | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut, with optional dropping of empty results. |
-| Summarize | Fully Converts | Aggregate transform | Groups and aggregates records. |
+| Summarize | Fully Converts | Aggregate transform | Groups and aggregates records — sum, count, average, minimum, maximum, median, mode, sample standard deviation and variance, and count distinct. Statistics with no direct equivalent, such as percentile, range, and skewness, are reported rather than silently approximated. |
 | Tab | Annotation Only | App tab grouping | Preserved as converted app structure where relevant. |
 | Test | Fully Converts | Step condition with warning or error action | Converts test assertions to PlaidCloud conditions. |
 | TextBox | Fully Converts | Controlled text workflow variable | Converts app text input to a typed variable. |
