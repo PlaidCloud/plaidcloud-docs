@@ -22,6 +22,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Compare and merge projects](/guides/projects/compare-and-merge-projects/) — diff two projects and selectively copy changes between them
 - [Export to portable format](/guides/projects/export-to-portable-format/) — package a project as a standalone Python + DuckDB program that runs off-platform
 - [Organize work with labels](/guides/projects/organizing-with-labels/) — tag workflows, steps, tables, and other objects to group and filter them
+- [Share links](/guides/projects/sharing-links/) — copy a link from the address bar that opens a project, workflow, table, or dimension directly
 
 ## Related
 
