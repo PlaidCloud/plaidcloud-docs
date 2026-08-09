@@ -82,8 +82,44 @@ Denied is always shown as its own row rather than left out. A column set to deny
 2. Move the values this group should see into the assigned side, and save
 
 <Aside>
-Declaring a column and granting values records the configuration only. It does not yet change what any group can see — enforcement is switched on separately, one workspace at a time.
+Declaring a column and granting values records the configuration. Nothing you enter here reaches your dashboards until the configuration is applied to them — see [Applying Row Access to Dashboards](#applying-row-access-to-dashboards) below.
 </Aside>
+
+### Applying Row Access to Dashboards
+
+The Row Access screen is the record of what each group may see. Applying that record to your dashboards is a separate action, run through the PlaidCloud API one project at a time:
+
+```
+POST /rest/v1/analyze/rls/reconcile?project_id=<project id>
+```
+
+Applying a project rewrites its dashboard restrictions to match what Row Access says right now. It is not additive: a grant you removed has its restriction removed too, and a column you stopped governing has its restrictions taken away. That makes re-running it the normal way to publish a change — edit the grants, then apply the project again.
+
+You need the same access to apply a project as to edit its grants: Architect on that project, and the project not locked against changes.
+
+**What gets applied, and what is reported back instead.** The response names what it did and what it left alone, so nothing is silently skipped:
+
+- A governed column whose values come from another table's column is applied.
+- A governed column whose values come from a dimension or from a list you typed is **not** applied yet, and is returned as unbound.
+- A table is applied only where at least one of its governed columns denies ungranted groups by default. A table governed only by columns that let ungranted groups see everything is returned as skipped — applying it would publish the table to your dashboards with nothing restricting it.
+- A governed table has to have been published to the project's report schema first, and every governed column has to still exist in what was published. Where one doesn't, the project stops and names the column rather than publishing a restriction that could never filter anything.
+
+<Aside type="caution">
+A group member has to have signed in to your dashboards at least once before their restrictions can follow them there, because until then they have no dashboard account to attach the restriction to. Anyone in that position is listed in the response, and picked up automatically the next time the project is applied.
+</Aside>
+
+### Approving the First Apply
+
+The first apply on a workspace takes ownership of the dashboard roles PlaidCloud manages, and there is no undo — the dashboard service keeps no history of role membership. So it is held behind an approval that a workspace administrator gives once per workspace, after reading exactly what the first apply would change:
+
+```
+GET  /rest/v1/analyze/rls/first-write-diff?group_id=<security group id>&group_id=<...>
+POST /rest/v1/analyze/rls/first-write-approval
+```
+
+The first call changes nothing. It reports, for each group you name, who would be added to and removed from that group's dashboard role, and which members have no dashboard account yet. The second records your approval. Both are restricted to workspace administrators.
+
+Approval takes no parameters: it records the administrator who is signed in, so it cannot be given on somebody else's behalf. Until it is given, applying a project is refused and nothing is written to your dashboards.
 
 ## Setting Default Security Groups
 
