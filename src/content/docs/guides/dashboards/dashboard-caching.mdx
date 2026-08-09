@@ -1,0 +1,107 @@
+---
+title: Dashboard Caching
+description: How PlaidCloud dashboards cache chart results, when a cached result is discarded, and how to hold results longer so repeat views load from cache.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A dashboard caches the result of every chart it draws. The first person to open a
+dashboard runs its queries against the data warehouse; everyone who opens it after
+that gets the stored result instead, which is why a second view is much faster than
+the first.
+
+A cached result is discarded — and the next view re-queries the warehouse — in two
+situations: the table behind the chart is republished, or the result reaches the end
+of its cache lifetime.
+
+## Republishing a Table Clears Its Cached Results
+
+When a workflow run republishes a table, every chart reading that table drops its
+cached results immediately. The next person to open the dashboard sees the refreshed
+numbers, without waiting and without forcing a refresh by hand.
+
+This means a dashboard is never showing pre-refresh numbers because of caching. If a
+dashboard looks stale after a workflow run, the cause is the workflow — check that
+the run finished and that it republished the table you expect — not the cache.
+
+<Aside type="caution" title="Publish Under a Stable Name">
+Cached results are tracked per published table. If you rebuild a table under a
+different published name, the charts still pointing at the old name keep serving the
+old table's data. Republish under the same name so the charts you already built stay
+attached to it.
+</Aside>
+
+## Cache Lifetime
+
+Every cached result also carries a lifetime, after which it expires on its own. The
+default is **1 hour**.
+
+The lifetime is not what keeps a dashboard current — republishing does that. So on
+data that changes only when a workflow runs, a short lifetime buys nothing and costs
+a great deal: any view after the last result expires re-queries the warehouse from
+scratch. Dashboards used in bursts — a morning review, a month-end close — pay that
+cost on almost every load.
+
+The default was 5 minutes until August 2026. It was short because republishing did
+not reliably clear cached results, so expiry was the only thing keeping a dashboard
+current. Now that republishing clears them, an hour is both safe and far cheaper.
+
+Raise it further on tables that change less often — a day suits one that reloads
+overnight — and the workflow that reloads the table still clears the cache the moment
+new data lands.
+
+<Aside type="caution">
+The lifetime is only safe to leave long for data that changes through PlaidCloud. If
+a chart reads a table that something outside PlaidCloud writes to, nothing signals
+the dashboard to drop its cache, and the lifetime is the only thing that refreshes
+it. Set a short lifetime on those datasets — the 1-hour default means they can now be
+up to an hour behind, where previously they were at most 5 minutes behind.
+</Aside>
+
+## Changing the Cache Lifetime
+
+Set the lifetime in seconds, either on a database or on an individual dataset. A value
+on the dataset wins over the value on its database, and the 1-hour default applies
+where you have set neither. Changing either needs the corresponding edit permission in
+the Dashboards area.
+
+**For every dataset on a database:**
+
+1. Go to **Data → Databases** in the Dashboards area
+2. Click the edit icon on the database
+3. Open the **Advanced** tab, then **Performance**
+4. Enter a value in seconds in **Chart cache timeout** — for example, `3600` for one
+   hour
+5. Click **Finish**
+
+**For a single dataset:**
+
+1. Go to **Data → Datasets**
+2. Click the edit icon on the dataset
+3. Open the **Settings** tab
+4. Enter a value in seconds in **Cache timeout**
+5. Click **Save**
+
+Two values have special meanings: `0` means never expire, so the result is only ever
+cleared by a republish, and `-1` disables caching entirely for that database or
+dataset.
+
+The change applies to results cached from that point on. Results already in the cache
+keep the lifetime they were stored with until they expire or the table is republished.
+
+## Refreshing a Dashboard by Hand
+
+You rarely need to, but you can discard a dashboard's cached results yourself: open
+the menu beside **Edit dashboard** and choose **Force refresh dashboard**. If a chart
+is serving an older result, a note in the upper right says how long ago the data was
+cached, and clicking it forces the same refresh.
+
+Prefer either of these to reloading the browser page — a browser reload re-requests the
+charts but still receives the cached results.
+
+## Related
+
+- [Using Dashboards](/guides/dashboards/using-dashboards/)
+- [Learning About Dashboards](/guides/dashboards/learning-dashboard/)

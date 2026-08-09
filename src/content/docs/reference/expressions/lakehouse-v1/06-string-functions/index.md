@@ -22,6 +22,11 @@ This section provides reference information for the string-related functions in 
 - [SUBSTRING](substring)
 - [TRANSLATE](translate)
 - [TRIM](trim)
+- [LTRIM](ltrim)
+- [RTRIM](rtrim)
+- [TRIM_BOTH](trim-both)
+- [TRIM_LEADING](trim-leading)
+- [TRIM_TRAILING](trim-trailing)
 
 ## String Information:
 - [ASCII](ascii)
@@ -35,6 +40,8 @@ This section provides reference information for the string-related functions in 
 - [ORD](ord)
 - [POSITION](position)
 - [STRCMP](strcmp)
+- [JARO_WINKLER](jaro-winkler)
+- [LENGTH_UTF8](length-utf8)
 
 ## Case Conversion:
 - [LCASE](lcase)
@@ -61,6 +68,7 @@ This section provides reference information for the string-related functions in 
 - [OCT](oct)
 - [TO_BASE64](to-base64)
 - [UNHEX](unhex)
+- [FROM_HEX](from-hex)
 
 ## Miscellaneous:
 - [CHAR](char)

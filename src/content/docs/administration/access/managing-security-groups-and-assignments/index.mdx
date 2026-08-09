@@ -38,6 +38,89 @@ Security groups can be added, updated, or deleted.
 4. Click the Member icon
 5. Drag desired members from the “Unassigned Members” column to the “Assigned Members” column or vice versa to remove members
 
+<Aside>Saving with the “Assigned Members” column empty makes no change, and tells you so. To take a group away from everyone, remove its permissions or delete the group rather than emptying its membership.</Aside>
+
+<Aside type="caution">Permissions you cannot grant yourself are left alone when you save a group’s permission matrix, and are not shown in it. If you need to change one, ask someone who holds that permission — the matrix only ever edits what you control.</Aside>
+
+## Managing Row Access
+
+Row Access lets you designate a column on a project as governing which rows a security group can see, and grant specific values of that column to specific groups. For example, a `region` column could be declared as governing, and a group granted `East` and `Central` would be limited to rows carrying those values.
+
+**To open Row Access for a security group:**
+
+1. Open Identity
+2. Select the "Security" tab
+3. Click "Security Groups" in the dropdown menu
+4. Click the Row Access icon beside the group
+
+This opens a list of every project that has at least one governed column, with the group's current standing on each one.
+
+**Every project and column always shows one of three states:**
+
+- **Granted** — the group has been given specific values it can see.
+- **Unrestricted** — the group holds no grant, and the column's default lets an ungranted group see every value.
+- **Denied** — the group holds no grant, and the column's default is to deny an ungranted group everything.
+
+<Aside type="caution">
+Denied is always shown as its own row rather than left out. A column set to deny by default is a total lockout for any group with no grant on it, and hiding that row would make the lockout look like nothing had been configured.
+</Aside>
+
+<Aside type="caution">
+"— all values (default) —" only applies to a group that holds **no** grant on that column at all. It does not widen a group that has been granted specific values elsewhere — that group still sees only what it was granted.
+</Aside>
+
+**To declare a governed column on a project:**
+
+1. From Row Access, click "Declare Attribute…"
+2. Choose the project and the column that will govern row access
+3. Choose where its grantable values come from — a dimension, another table's column, or a list you type in
+4. Choose what an ungranted group sees by default: every row, or none
+
+**To grant specific values to a security group:**
+
+1. From Row Access, click "Edit Grant" beside a column
+2. Move the values this group should see into the assigned side, and save
+
+<Aside>
+Declaring a column and granting values records the configuration. Nothing you enter here reaches your dashboards until the configuration is applied to them — see [Applying Row Access to Dashboards](#applying-row-access-to-dashboards) below.
+</Aside>
+
+### Applying Row Access to Dashboards
+
+The Row Access screen is the record of what each group may see. Applying that record to your dashboards is a separate action, run through the PlaidCloud API one project at a time:
+
+```
+POST /rest/v1/analyze/rls/reconcile?project_id=<project id>
+```
+
+Applying a project rewrites its dashboard restrictions to match what Row Access says right now. It is not additive: a grant you removed has its restriction removed too, and a column you stopped governing has its restrictions taken away. That makes re-running it the normal way to publish a change — edit the grants, then apply the project again.
+
+You need the same access to apply a project as to edit its grants: Architect on that project, and the project not locked against changes.
+
+**What gets applied, and what is reported back instead.** The response names what it did and what it left alone, so nothing is silently skipped:
+
+- A governed column whose values come from another table's column is applied.
+- A governed column whose values come from a dimension or from a list you typed is **not** applied yet, and is returned as unbound.
+- A table is applied only where at least one of its governed columns denies ungranted groups by default. A table governed only by columns that let ungranted groups see everything is returned as skipped — applying it would publish the table to your dashboards with nothing restricting it.
+- A governed table has to have been published to the project's report schema first, and every governed column has to still exist in what was published. Where one doesn't, the project stops and names the column rather than publishing a restriction that could never filter anything.
+
+<Aside type="caution">
+A group member has to have signed in to your dashboards at least once before their restrictions can follow them there, because until then they have no dashboard account to attach the restriction to. The dry-run diff below lists anyone in that position; applying the project again once they have signed in picks them up.
+</Aside>
+
+### Approving the First Apply
+
+The first apply on a workspace takes ownership of the dashboard roles PlaidCloud manages, and there is no undo — the dashboard service keeps no history of role membership. So it is held behind an approval that a workspace administrator gives once per workspace, after reading exactly what the first apply would change:
+
+```
+GET  /rest/v1/analyze/rls/first-write-diff?group_id=<security group id>&group_id=<...>
+POST /rest/v1/analyze/rls/first-write-approval
+```
+
+The first call changes nothing. It reports, for each group you name, who would be added to and removed from that group's dashboard role, and which members have no dashboard account yet. The second records your approval. Both are restricted to workspace administrators.
+
+Approval takes no parameters: it records the administrator who is signed in, so it cannot be given on somebody else's behalf. Until it is given, applying a project is refused and nothing is written to your dashboards.
+
 ## Setting Default Security Groups
 
 
