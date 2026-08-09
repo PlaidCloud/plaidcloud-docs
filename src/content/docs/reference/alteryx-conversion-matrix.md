@@ -37,7 +37,7 @@ Coverage levels:
 | DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
 | Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
 | DateTime | Converts With Validation | Date and time transform | Converts date and time parsing or formatting logic. |
-| DbFileInput | Fully Converts | Document-backed file input or data materializer | Loads source files from Document into workflow data. |
+| DbFileInput | Converts With Validation | Document-backed file input or data materializer | Loads source files from Document into workflow data, including `.yxdb`, `.dbf`, Excel, and fixed-width `.flat`. A `.flat` needs its layout file packaged alongside the workflow; without it the step stops and names the file to supply. Alteryx `.geo` files are not read — the step stops rather than risk a wrong shape. |
 | DbFileOutput | Fully Converts | Document-backed file output or table write | Writes output data to Document or PlaidCloud tables. |
 | Detour | Fully Converts | Conditional branch routing | Converts route selection to DAG conditions. |
 | DetourEnd | Fully Converts | Conditional branch merge | Rejoins conditionally selected branches. |
@@ -59,6 +59,11 @@ Coverage levels:
 | FuzzyMatch | Converts To Executor | Fuzzy matching executor | Uses managed fuzzy matching for match keys, thresholds, and candidate review. |
 | Generalize | Converts To Executor | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
 | HtmlBox | Cloud-Native Equivalent | Report text or HTML artifact | Preserves content in PlaidCloud report or artifact output. |
+| Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
+| ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
+| ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
+| ImageRecognition | Converts With Validation | ML Score step | Stops with a message pointing at ML Score, which reads the same trained model table. The tool's own VGG16 transfer learning is not reproduced. |
+| ImageTemplate | Converts With Validation | Manual region extraction | Stops with a message naming the missing page-region detection. Extract the regions with a Formula or Text step instead. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
 | Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams. |
@@ -190,6 +195,46 @@ An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud 
 - **A read limited by Skip Records or Max Records doesn't convert** — the stand-in table carries no record order.
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
 - **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
+
+## How Coverage Is Measured
+
+The coverage level in the table above is a statement about a **tool**. It says
+the importer has a real route for that tool — not that every one of its
+configuration options has been exercised.
+
+Parity is tracked at a finer grain: one **tool × permutation**, where a
+permutation is a distinct configuration path through the tool. A Join's join
+type, a Sample's mode, a Summarize's aggregation action and a file input's
+format are each their own permutation. Every permutation carries three gates,
+and all three are required:
+
+| Gate | Question |
+| --- | --- |
+| Converts | Does it produce a real step, rather than a refusal? |
+| Runs | Does that step execute without erroring? |
+| Correct | Is the output what Alteryx would produce? |
+
+A permutation that ends in a **specific refusal naming what is missing** is an
+acceptable outcome. It is reported separately and never counted as a pass — you
+find out at conversion time, in a message that tells you what to build by hand.
+A conversion that runs and returns a **quietly wrong answer** is treated as
+worse than a refusal, which is why several options in the Known Gaps lists are
+refused rather than approximated.
+
+Because there is no Alteryx licence in the loop, the "Correct" gate is never
+recorded on judgement. Each verdict names its oracle: Alteryx's own published
+documentation, the output schema Alteryx wrote into the workflow file, the
+tool's own internal contract (row counts, column sets, types), or agreement
+between two independent conversion paths. A verdict with no named oracle is
+recorded as unverified, however good the underlying test is.
+
+The scoreboard is regenerated from the test suite on every pull request, and a
+permutation that used to pass a gate cannot quietly stop passing it.
+
+**What this means for you:** treat *Fully Converts* as "this tool has a route",
+and validate the specific options your workflows use — which is what the
+validation guidance below is for. The Known Gaps sections on this page name the
+options that are deliberately refused.
 
 ## Validation Notes
 
