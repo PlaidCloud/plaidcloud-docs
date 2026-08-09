@@ -26,7 +26,7 @@ PlaidCloud creates a runnable Advanced workflow from the Alteryx design:
 - Assisted Modeling (machine learning) pipelines become native ML Train and ML Score workflow steps.
 - Advanced operations such as fuzzy matching, spatial processing, PDF extraction, OCR, NLP, and reporting run through PlaidCloud's managed job executors when a native SQL or workflow operation is not the best fit.
 - Comment boxes and Tool Containers arrive on the workflow canvas as notes, highlight boxes, and groups. They explain the converted workflow exactly as they explained the original, and they add no runtime work.
-- Browse, layout, and other designer-only objects are retained where they help explain the converted workflow, but they do not add unnecessary runtime work.
+- Browse and other viewer-only objects come across as part of the canvas rather than as steps, so they add no runtime work — every step's output table is already there to look at.
 
 ## Before You Start
 
@@ -86,7 +86,131 @@ Two things behave differently from the original:
 - **A switched-off Tool Container's tools are not imported at all.** Alteryx does not run them either, so importing them would put steps in the workflow that never do anything. The container itself still comes across, as a highlight box carrying its caption, so you can see what was there. To bring its tools in, switch the container on in Alteryx and import again. (Importing over the API or from an AI agent also accepts an option to import a disabled container's tools as ordinary, runnable steps — useful for sample workflows that ship everything switched off.)
 - **Box colors are not carried across.** The canvas offers a fixed set of six colors, and Alteryx boxes are almost always white or grey, so every one of them would arrive the same shade. They come in with the canvas default instead; set the color you want from the right-click menu.
 
+A Tool Container that ends up holding no steps at all — because it was switched off, or because it only ever contained comments — still appears, as a highlight box carrying its caption, rather than disappearing from the canvas.
+
 A workflow that is nothing but comments — a page of documentation with no tools on it — imports as a canvas carrying those comments, and says it converted to no runnable step. That is the honest result, not a failure: there was nothing to run.
+
+### Control Containers
+
+An Alteryx **Control Container** runs the tools inside it only when the stream wired to its **Control** input carries records. That gate comes across with the container, not just the container's outline:
+
+- The container becomes a **group** on the canvas like any other, keeping its caption and its contents.
+- Every step that was inside it is imported already set to run only when the gated data has rows, and to be skipped when it does not. Steps in containers nested inside it are gated the same way. You do not have to wire the condition up yourself.
+- A Control Container with nothing wired to its **Control** input was only ever a visual grouping, and converts exactly like a Tool Container.
+- A Control Container drawn around nothing keeps its caption on the canvas as a highlight box.
+
+<Aside type="caution" title="A Gate The Import Could Not Interpret">
+Sometimes the tool feeding the **Control** input produces no data to test against, so there is nothing to build the gate from. The import no longer passes over that quietly. The container arrives as a step marked as not converted, carrying a note saying that the tools inside it would otherwise run every time, and it is listed in the conversion report as a step you have to act on. That step fails when the workflow reaches it, so the conversion cannot be run through as though nothing were wrong.
+
+Previously the interior was imported to run unconditionally and nothing on the canvas said so, which is the quiet version of the same problem.
+
+To resolve it, either change the Alteryx workflow so the **Control** input comes from a tool that produces data and import again, or delete the flagged step and put the gate on the steps that were inside the container yourself — see [Step Conditions](/guides/workflows/step-conditions/).
+</Aside>
+
+### The Browse Tool
+
+An Alteryx **Browse** is a viewer. It displays the records reaching it, changes nothing, and has no output connector. In PlaidCloud every step's output table is already there to open, so what an author drew a Browse for is one click away from the step above it — select that step and look at its table.
+
+A Browse therefore comes across as part of the canvas rather than as a step. It creates no step, claims no table, and is not counted among the tools the conversion could not handle:
+
+- **No table is created for it.** Each Browse used to become a do-nothing step that the workflow then discarded, while still claiming a warehouse table of its own that nothing wrote and nothing read. Across our 179-workflow Alteryx reference set that was 152 tables.
+- **A broken branch is reported once, against the tool that broke.** A Browse used to be listed in the conversion report as a tool that failed to convert whenever the tool *feeding* it failed, so the same problem appeared twice — once against the tool you actually have to fix, and once against a viewer that could never have run. Fourteen of that reference set's reported failures were of that kind. Those entries are gone; the tool actually to blame is still reported.
+
+This removes misleading entries from the conversion report rather than the failures behind them. The number of workflows that convert with every tool converted is the same as before.
+
+<Aside type="caution" title="A Workflow That Now Stops, Naming A Table">
+One shape of workflow now stops where it used to run, and that is the fix rather than a new break.
+
+Where a workflow numbers a tool inside a macro the same as a tool on the canvas that calls it, a step below the macro resolved to the Browse's table name instead of the macro's own output. Re-import such a workflow and that step now stops, naming a table that does not exist.
+
+The step was never reading the Browse's records. That table was created at import and then never written by anything — the Browse itself was dropped before the workflow was built — so the step read an **empty** table, and the run reported success having processed no records at all. The figures it produced came from nothing, and nothing said so. With the table no longer created, the step says so instead.
+
+**The repair:** re-point that step at the table it was drawn to read — the output of the macro step above it — and run the workflow again.
+</Aside>
+
+Workflows you imported before this release keep the conversion they were given, tables and all. Import them again to pick this up.
+
+### Calgary Databases
+
+An Alteryx **Calgary database** (a `.cydb` file) is a proprietary indexed store. PlaidCloud has no way to read the file format, and there is no open specification for it. Rather than refuse every tool that touches one, conversion treats each `.cydb` path as standing for one ordinary PlaidCloud table, named `calgary_<database name>` under the table prefix the import applies. Once the database is an ordinary table, the tools built around it become ordinary operations: a saved query is a filter, cross-count buckets are conditional counts, and a loader's field list is a set of columns.
+
+- A converted **Calgary Loader** writes that table from its input. Its declared index types are dropped during conversion — a warehouse indexes for itself — but the field list carries over.
+- A converted **Calgary Input** reads the table back, applying its saved query as the filter. The table's own columns are resolved when the step runs, since nothing in the workflow file records what the database held.
+- A converted **Calgary Input (Count Only)** or **Calgary Cross Count** reads the table as an aggregate: plain indexed fields group the rows, and each of a custom field's named values becomes one counted column.
+- A converted **Calgary Join** matches each incoming record against the table, keeping the records that matched and carrying the input's own columns through. It converts when the incoming field is a plain, non-spatial value — see [Calgary Join and Cross Count Append](#calgary-join-and-cross-count-append) below for when it does not.
+
+<Aside type="caution" title="Two Databases Sharing One Name">
+Two `.cydb` files of the same name in different directories name the same PlaidCloud table, and there is no way to tell from the workflow which one a reader was meant to use. Both the Loader and any reader involved refuse, naming both files, rather than guessing. Rename one of the source databases and import again.
+</Aside>
+
+**A workflow that reads a database it didn't build itself gets a step that stops, naming the table.** The demographic and reference `.cydb` files Alteryx ships are the usual case — nothing in your workflow wrote them, so there is no PlaidCloud table to read yet. Until that table exists, the converted step stops and names it rather than silently reading nothing and reporting success. Export the source data into the named table — from the original `.cydb`, if you have Alteryx available to read it, or from wherever the data actually lives — before running the workflow.
+
+#### Or, And, and Not in a Calgary Query
+
+A Calgary query is a tree of `And`, `Or`, and `Not` over the database's indexed fields, and the tree now converts as written: an `Or` anywhere in it, and a `Not` wrapped around more than one condition, both convert. This covers a Calgary Input's record read, its count-only read, Calgary Cross Count, and the buckets inside a Cross Count's custom fields.
+
+A handful of query shapes still don't convert, each naming itself in the conversion report and on the step:
+
+- A query using contains, starts-with, or a spatial lookup instead of an indexed comparison.
+- A read limited by **Skip Records** or **Max Records** — the stand-in table carries no record order to skip or cap against.
+- A Cross Count grouped by more than one custom field. The counts are genuinely one aggregate over the database, but Alteryx doesn't document what it names or how it orders the resulting columns, and there is no example on hand to check against.
+- A count-only read that names no column to count over, since the database's own columns are not readable from the workflow file.
+- A **Calgary Loader** that stores no data field, which would write a table with no columns.
+- A Calgary tool that names no database at all.
+
+#### Calgary Join and Cross Count Append
+
+**Calgary Join** and **Calgary Cross Count Append** match every incoming record against the database through one of its indexes, and the workflow file records the index's *name* but not its *kind*. The same configuration means an equality join when the index holds ordinary values, and a "which points fall inside this shape" match when it holds spatial geometry — the file gives no way to tell which.
+
+Conversion decides using the **incoming field's own declared type**: a spatial index can only ever have been paired with a spatial field, so
+
+- an incoming field typed as a spatial object stops, naming the field, the reading it produced, and the stand-in table to rebuild the match against as a **Spatial Match** step;
+- an incoming field whose type couldn't be determined stops, naming that as the reason — it is never guessed;
+- an ordinary, non-spatial incoming field converts a **Calgary Join** to a match against the stand-in table.
+
+Whichever way it goes, the step records the reading it took and the field type it read it from, so a conversion you disagree with shows its working rather than leaving you to infer it.
+
+**Calgary Cross Count Append stops on every incoming field, spatial or not.** It appends the *counts* of matching database records rather than the records themselves, and Alteryx doesn't document how many columns that produces or what they're named for anything beyond a single field — so there is no shape to build with confidence. Rebuild it as a Cross Count over the stand-in table, joined back to this input.
+
+A **Calgary Join** also stops, naming itself, in five more cases: when it is set to count matches only, when it matches against a range of index values rather than a single one, when its unmatched-records output is wired to something downstream, when it names no field to match the database on, and when nothing is wired to its input for it to match records from.
+
+A converted Loader and the readers of what it wrote are wired together, so a reader cannot run beside the write that fills its table.
+
+A Calgary Input's columns arrive as text: the stand-in table gives their names, not the database's own types.
+
+### Cross Tab Percent And Total Columns
+
+A **Cross Tab** carrying one of its derived methods — **Percent Row**, **Percent Column**, **Total Column** or **Total Row** — used to stop the conversion and take every step below it. All four now convert:
+
+- **Percent Row** and **Percent Column** are the cell's share of its row's, or its column's, total of the data field.
+- **Total Column** is that row total, under the name the tool recorded for it.
+- **Total Row** is an extra record carrying the totals, with no value in the grouping fields.
+
+Every total is a sum of the data field, whichever methods the tool computes for each cell.
+
+<Aside type="caution" title="Check The Percent Scale Once">
+The percent columns are written on a scale of 0 to 100. Alteryx documents these methods only as calculating "a percent based on the values" and never says which scale it means, so that reading is inferred from how Alteryx renders the columns rather than from anything it states. Compare one converted Cross Tab against a run of the original before its figures reach a published report.
+</Aside>
+
+Two shapes are still flagged for review instead of converted: a **Total Row** on a Cross Tab with no grouping field, which would produce the same record twice with nothing to tell the copies apart, and a **Total Column** whose name the tool never recorded, which would otherwise be missing from the output entirely.
+
+### Macros In A Converted Workflow
+
+**A macro called from inside a Batch or Iterative macro now converts.** A looping macro whose interior called another macro could not resolve that inner call, and the whole loop was discarded and left as a placeholder — with a note blaming the loop rather than naming the macro inside it. Interior macro calls now resolve, so those workflows convert.
+
+Two arrangements are refused by name rather than converted: a looping macro nested inside another looping macro, and a looping macro that ends up calling itself.
+
+<Aside type="caution" title="Location Optimizer Macros Are Refused">
+A **Location Optimizer** macro is only the scoring pass of a search. The search itself — generating candidate location sets, the number of locations, the generation limits and the seed — lives in the calling tool and in the Alteryx engine rather than in the workflow file, and PlaidCloud has no equivalent for that optimisation loop yet. The macro call now arrives as a step flagged for review, naming the macro, the input its candidate sets arrive on, the output that ranks them, and whether a high or a low score wins.
+
+**Such a macro used to convert and run green, and its figures were wrong.** It was treated as an ordinary macro, so the scoring pass ran exactly once against a single candidate set and the run reported success — a result that looked like an answer but was one scored guess rather than an optimised one. If you re-import a workflow like this and see a refusal where it used to work, the earlier result was not one you should have relied on.
+</Aside>
+
+### Reports In A Converted Workflow
+
+An image a report layout refers to is now packaged with the workflow, so a converted report finds it in Document instead of failing on an asset that only ever existed on the Alteryx machine. This covers an image named by a fixed path — an image whose bytes are embedded in the workflow, or whose path is taken from a column per record, has no separate file to fetch.
+
+A report piece whose source data could not be read is now reported as such. Where the columns of a table could not be read, a report snippet built from it used to be skipped and a report table section used to come out empty, both on runs that reported success. The step now stops and says the column information could not be read, and why. **A report that previously came out with a section missing may now stop with an explanation instead** — see the Fixed entry for it in [August 2026](/releases/2026-08/).
 
 ## Use The Converted Workflow
 
@@ -131,6 +255,27 @@ For workflows that create reports, maps, PDFs, images, or model artifacts, valid
 
 See [Validate Converted Alteryx Workflows](/guides/workflows/validate-converted-alteryx-workflows/) for a detailed validation checklist.
 
+### Random Sampling
+
+Row values are the one place where a sampling tool is a deliberate exception.
+**Create Samples** and **Random % Sample** both draw at random, and Alteryx returns
+the same records every run when a seed is set. PlaidCloud draws with its own
+generator, so:
+
+- Sample sizes, percentages, and the Estimation / Validation / Holdout split
+  proportions carry over exactly.
+- **The records inside each sample are not the ones Alteryx picks, and a re-run
+  picks a different set again.**
+
+Each converted step says so in the conversion report and on the step itself, and
+neither is reported as a tool that failed to convert. Validate these on row counts
+and proportions rather than row values.
+
+Where which record lands in which sample actually matters — a model you need to
+reproduce exactly, or a holdout you have already published results against —
+decide the sample with a column instead: a **Formula** step that computes the
+sample assignment, and a **Filter** step per sample.
+
 ## Machine Learning (Assisted Modeling) Conversions
 
 Alteryx machine-learning pipelines built with the Machine Learning tool family convert to PlaidCloud's native ML steps:
@@ -154,6 +299,7 @@ Use the matrix to understand how the importer handles each tool family:
 - Controlled workflow variables for analytic app questions such as check boxes, drop-downs, text boxes, radio buttons, folder pickers, and file pickers.
 - Document-backed file operations for input, output, directory, and dynamic file behavior.
 - Native ML Train and ML Score steps for Assisted Modeling machine-learning pipelines.
+- A stand-in table for each Alteryx Calgary database, so Calgary Loader, Input, Cross Count, and Join tools convert against an ordinary table instead of refusing outright — see [Calgary Databases](#calgary-databases).
 - Managed job executors for specialized spatial, fuzzy matching, PDF, OCR, NLP, reporting, and artifact work.
 - Cloud-native equivalents where PlaidCloud creates a durable, shareable artifact rather than reproducing an Alteryx-specific desktop renderer or proprietary file format.
 

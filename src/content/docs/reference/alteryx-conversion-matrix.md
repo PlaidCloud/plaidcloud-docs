@@ -23,16 +23,21 @@ Coverage levels:
 | AutoField | Converts With Validation | Auto field sizing transform | Preserves inferred field sizing intent; validate schema where precision matters. |
 | BrowseV2 | Annotation Only | Browse or passthrough marker | Preserved for inspection without adding runtime work. |
 | Buffer | Converts To Executor | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
+| CalgaryCrossCount | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) aggregate over the stand-in table | Groups indexed fields and counts each custom field's named values; a bucket built from an Or, or wrapped in a Not, now converts too. Refuses a cross over more than one custom field — see [Calgary Tool Coverage](#calgary-tool-coverage). |
+| CalgaryInput | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input reading the stand-in table | Applies the saved query as a filter, now including one built from an Or or wrapped in a Not. Refuses contains/starts-with/spatial queries, and a read limited by Skip Records or Max Records. |
+| CalgaryJoin | Converts With Validation | [Calgary Join](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) matching each record against the stand-in table | Converts when the incoming field is a plain value matched to a value index, keeping the records that matched and carrying the input's columns through; refuses, naming Spatial Match, when the field is spatial — the workflow records the index's name but not its kind. See [Calgary Tool Coverage](#calgary-tool-coverage). |
+| CalgaryLoader | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) writing the stand-in table | Writes `calgary_<database>` from its input for every Calgary reader of that file to bind to. Refuses when two `.cydb` files of the same name would claim one table. |
 | CheckBoxGroup | Fully Converts | Controlled workflow variable | Converts app check box choices to controlled user input. |
 | Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
 | CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
+| Create Samples | Converts With Validation | Three Table Extract steps, one per output | Splits the input into Estimation, Validation, and Holdout at the configured percentages. Each sample holds its configured share, drawn at random — not the same records Alteryx's seed picks, and a different set on each run. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. |
 | DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
 | Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
 | DateTime | Converts With Validation | Date and time transform | Converts date and time parsing or formatting logic. |
-| DbFileInput | Fully Converts | Document-backed file input or data materializer | Loads source files from Document into workflow data. |
+| DbFileInput | Converts With Validation | Document-backed file input or data materializer | Loads source files from Document into workflow data, including `.yxdb`, `.dbf`, Excel, and fixed-width `.flat`. A `.flat` needs its layout file packaged alongside the workflow; without it the step stops and names the file to supply. Alteryx `.geo` files are not read — the step stops rather than risk a wrong shape. |
 | DbFileOutput | Fully Converts | Document-backed file output or table write | Writes output data to Document or PlaidCloud tables. |
 | Detour | Fully Converts | Conditional branch routing | Converts route selection to DAG conditions. |
 | DetourEnd | Fully Converts | Conditional branch merge | Rejoins conditionally selected branches. |
@@ -54,6 +59,11 @@ Coverage levels:
 | FuzzyMatch | Converts To Executor | Fuzzy matching executor | Uses managed fuzzy matching for match keys, thresholds, and candidate review. |
 | Generalize | Converts To Executor | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
 | HtmlBox | Cloud-Native Equivalent | Report text or HTML artifact | Preserves content in PlaidCloud report or artifact output. |
+| Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
+| ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
+| ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
+| ImageRecognition | Converts With Validation | ML Score step | Stops with a message pointing at ML Score, which reads the same trained model table. The tool's own VGG16 transfer learning is not reproduced. |
+| ImageTemplate | Converts With Validation | Manual region extraction | Stops with a message naming the missing page-region detection. Extract the regions with a Formula or Text step instead. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
 | Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams. |
@@ -84,6 +94,7 @@ Coverage levels:
 | PortfolioComposerText | Cloud-Native Equivalent | Report text artifact | Converts report text content to PlaidCloud report output. |
 | Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
+| Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
 | Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
@@ -163,6 +174,27 @@ for how they fit together.
   correctly, but neither has a configuration form in the workflow designer yet;
   converted steps carry their settings, and hand-authoring goes through the API
   or MCP.
+
+## Calgary Tool Coverage
+
+An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud cannot open. Conversion treats each one as standing for one ordinary PlaidCloud table, named `calgary_<database name>`, so the tools built around it convert as ordinary table operations rather than refusing outright. See [Calgary Databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) for how the stand-in table works, and [Calgary Join and Cross Count Append](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) for the index-matching tools.
+
+| Alteryx Calgary Tool | PlaidCloud Route | Converts |
+| --- | --- | --- |
+| Calgary Loader | Table Extract writing `calgary_<database>` | Yes, once the database is named and it stores at least one data field. |
+| Calgary Input | Dynamic Document input reading `calgary_<database>`, with the saved query as filter | Yes, including a query built from an Or or wrapped in a Not. Refuses on contains/starts-with/spatial queries and on Skip Records/Max Records limits. |
+| Calgary Input (Count Only) / Calgary Cross Count | Aggregate transform over `calgary_<database>` | Yes, including a bucket built from an Or or wrapped in a Not. Refuses on a cross over more than one custom field, and on a count-only read naming no column to count over. |
+| Calgary Join | Dynamic Document input matching each record of its input against `calgary_<database>` | When the incoming field is a plain value matched against a value index. Refuses when the field is spatial (rebuild as Spatial Match) or its type is unresolved, and on count-only, range-index, or unmatched-output-wired Joins, on a Join naming no match field, and on a Join with nothing wired to its input. |
+| Calgary Cross Count Append | — | Never. Rebuild as a Cross Count over `calgary_<database>`, joined back to this input. |
+
+### Known Calgary Gaps
+
+- **Calgary Cross Count Append never converts.** It appends the *counts* of matching database records, and Alteryx doesn't document what columns that produces beyond a single field — there is no shape to build with confidence, spatial index or not.
+- **A Calgary Join or Cross Count Append matched against a spatial index refuses**, naming the stand-in table and pointing at Spatial Match — the workflow file records the index's name but not whether it holds ordinary values or spatial geometry.
+- **Contains, starts-with, and spatial-lookup queries don't convert.** Only indexed value and range comparisons do.
+- **A read limited by Skip Records or Max Records doesn't convert** — the stand-in table carries no record order.
+- **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
+- **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
 
 ## Validation Notes
 
