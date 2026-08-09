@@ -18,6 +18,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Manage data editors](/guides/projects/managing-data-editors/) — who can modify project data
 - [View the project log](/guides/projects/viewing-the-project-log/) — audit trail of changes
 - [Archive a project](/guides/projects/archive-a-project/) — preserve completed work without deleting
+- [Breadcrumbs and links](/guides/projects/breadcrumbs-and-shareable-links/) — move up from any window, and share a link to what you are looking at
 - [Compare and merge projects](/guides/projects/compare-and-merge-projects/) — diff two projects and selectively copy changes between them
 - [Export to portable format](/guides/projects/export-to-portable-format/) — package a project as a standalone Python + DuckDB program that runs off-platform
 - [Organize work with labels](/guides/projects/organizing-with-labels/) — tag workflows, steps, tables, and other objects to group and filter them
