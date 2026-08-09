@@ -37,7 +37,7 @@ Coverage levels:
 | DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
 | Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
 | DateTime | Converts With Validation | Date and time transform | Converts date and time parsing or formatting logic. |
-| DbFileInput | Fully Converts | Document-backed file input or data materializer | Loads source files from Document into workflow data. |
+| DbFileInput | Converts With Validation | Document-backed file input or data materializer | Loads source files from Document into workflow data, including `.yxdb`, `.dbf`, Excel, and fixed-width `.flat`. A `.flat` needs its layout file packaged alongside the workflow; without it the step stops and names the file to supply. Alteryx `.geo` files are not read — the step stops rather than risk a wrong shape. |
 | DbFileOutput | Fully Converts | Document-backed file output or table write | Writes output data to Document or PlaidCloud tables. |
 | Detour | Fully Converts | Conditional branch routing | Converts route selection to DAG conditions. |
 | DetourEnd | Fully Converts | Conditional branch merge | Rejoins conditionally selected branches. |
@@ -59,6 +59,11 @@ Coverage levels:
 | FuzzyMatch | Converts To Executor | Fuzzy matching executor | Uses managed fuzzy matching for match keys, thresholds, and candidate review. |
 | Generalize | Converts To Executor | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
 | HtmlBox | Cloud-Native Equivalent | Report text or HTML artifact | Preserves content in PlaidCloud report or artifact output. |
+| Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
+| ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
+| ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
+| ImageRecognition | Converts With Validation | ML Score step | Stops with a message pointing at ML Score, which reads the same trained model table. The tool's own VGG16 transfer learning is not reproduced. |
+| ImageTemplate | Converts With Validation | Manual region extraction | Stops with a message naming the missing page-region detection. Extract the regions with a Formula or Text step instead. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
 | Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams. |
