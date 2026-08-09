@@ -32,6 +32,16 @@ To archive a project:
 
 The window names the project it will archive in its title bar, so you can confirm you have the right one before you start.
 
+### While the Archive Runs
+
+The export window closes as soon as PlaidCloud has accepted the request, and a progress window follows the archive from there. You can leave that progress window open to watch it, or send it to the background and carry on working — the archive runs on the platform either way, and closing the progress window does not stop it.
+
+A notification tells you how it ended: that the archive was written, which tables went in without their data, or, if it failed, why. You do not need to keep the window open to get it.
+
+:::note
+A large project can take anywhere from a few seconds to an hour to archive, depending on how much table data it includes. A long-running archive is normal and does not mean anything has gone wrong — wait for the notification rather than starting a second export, which would archive the project again from scratch.
+:::
+
 ### Tables Whose Data Cannot Be Included
 
 Occasionally a table listed in a project no longer has any data behind it — for example, a table that was never built, or whose data was removed outside the project. The archive is still written: those tables are left out of the table data, and the export finishes with a message naming them. Everything else — the project configuration, workflows, table definitions, and the data for every other table — is archived as normal.
@@ -40,6 +50,18 @@ The archive records which tables went in without their data, and restoring it na
 
 :::note
 A scheduled archive records skipped tables in the system log rather than showing you a message, since nothing is on screen to show it to. Check the export message when it matters which tables were included.
+:::
+
+### If You Cannot Read the Project's Tables
+
+Reading a project's tables is a separate permission from reading the project itself, and an archive depends on both. If you can open a project but do not have table read access, the archive is still written — it simply carries no table data, and no table definitions either, since both sit behind that same permission. The export finishes with a message naming the tables that were left out, identified by their internal ids rather than their names, because the names come from the definitions the archive did not include.
+
+An archive taken this way is a copy of the project's configuration — its workflows, variables, dimensions, views and layouts, as far as you are entitled to read each of them — and not of its data. **Restoring it recreates no tables at all**, so it is not a backup you can rebuild the project's data from. Check the export message before relying on one.
+
+Unlike the tables described above, this is not something re-running a workflow corrects — the data was never read in the first place. Ask a workspace administrator to grant you read access to the project's tables, then take the archive again.
+
+:::caution
+This applies to scheduled archives too, which run as a particular member. Where that member does not have table read access, every archive the schedule produces is configuration-only, and the shortfall is recorded in the system log rather than shown to anyone. If you keep scheduled archives as backups, confirm the member they run as can read the project's tables.
 :::
 
 ### If the Export Fails
@@ -59,6 +81,38 @@ To restore an archive:
 1. Open Analyze
 2. Select the “Projects” tab
 3. Choose **Import Project Archive** from the **Actions** menu (or the toolbar) and select the archive to restore
+4. Choose whether to **Create New Project** or **Import Into Existing Project**, and pick what to bring across from the selection tree
+
+
+You do not have to bring the whole archive. The selection tree lists what the archive holds by type — workflows, steps, tables, dimensions, data editors, user-defined functions — and anything you tick brings its dependencies with it.
+
+
+### Importing Into an Existing Project
+
+
+Importing into a project that already exists adds to it rather than replacing it. Two things decide what happens where the archive and the project both hold the same item.
+
+
+**You need to be able to change the target project.** An import into a project you hold no role on is refused, as is an import into a project that has been locked to prevent changes — checked before anything is read or written, so a refused import leaves the project untouched.
+
+
+**The project keeps its own settings.** Its name, identifier, data connection environment, storage defaults, document account, access type, access lists and row-access grants are all left as they are. Only the contents you selected are brought in.
+
+
+### Duplicate Items
+
+
+Where an incoming item is the same item as one already in the project, you choose what happens to it:
+
+
+- **Overwrite duplicate items with incoming data** — the version in the archive replaces the one in the project.
+- **Create new copy of duplicate items** — the project keeps what it has, and the incoming one is added alongside it with ` copy` appended to its name (and a counter, if that name is taken too). This applies to workflows, steps, tables, dimensions, data editors, views and user-defined functions.
+
+
+**Project and workflow variables are the exception.** A variable is identified by its name, so there is no way to add a second copy of one without renaming it into something nothing refers to. Where the project already defines a variable the archive also carries, the project's own value is kept and the import tells you which variables it left alone. If you want the archive's value, set it on the variable afterwards.
+
+
+One thing to know: this matching is by identity, not by name. An item that came from the same project originally — anything the archive was exported from, or a copy of it — is recognised as the same item. Two items that merely happen to share a name are treated as different items, and both will be present after the import.
 
 ## Archiving Schedule
 
