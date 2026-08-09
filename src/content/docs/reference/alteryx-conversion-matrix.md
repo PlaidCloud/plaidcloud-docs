@@ -196,6 +196,46 @@ An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud 
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
 - **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
 
+## How Coverage Is Measured
+
+The coverage level in the table above is a statement about a **tool**. It says
+the importer has a real route for that tool — not that every one of its
+configuration options has been exercised.
+
+Parity is tracked at a finer grain: one **tool × permutation**, where a
+permutation is a distinct configuration path through the tool. A Join's join
+type, a Sample's mode, a Summarize's aggregation action and a file input's
+format are each their own permutation. Every permutation carries three gates,
+and all three are required:
+
+| Gate | Question |
+| --- | --- |
+| Converts | Does it produce a real step, rather than a refusal? |
+| Runs | Does that step execute without erroring? |
+| Correct | Is the output what Alteryx would produce? |
+
+A permutation that ends in a **specific refusal naming what is missing** is an
+acceptable outcome. It is reported separately and never counted as a pass — you
+find out at conversion time, in a message that tells you what to build by hand.
+A conversion that runs and returns a **quietly wrong answer** is treated as
+worse than a refusal, which is why several options in the Known Gaps lists are
+refused rather than approximated.
+
+Because there is no Alteryx licence in the loop, the "Correct" gate is never
+recorded on judgement. Each verdict names its oracle: Alteryx's own published
+documentation, the output schema Alteryx wrote into the workflow file, the
+tool's own internal contract (row counts, column sets, types), or agreement
+between two independent conversion paths. A verdict with no named oracle is
+recorded as unverified, however good the underlying test is.
+
+The scoreboard is regenerated from the test suite on every pull request, and a
+permutation that used to pass a gate cannot quietly stop passing it.
+
+**What this means for you:** treat *Fully Converts* as "this tool has a route",
+and validate the specific options your workflows use — which is what the
+validation guidance below is for. The Known Gaps sections on this page name the
+options that are deliberately refused.
+
 ## Validation Notes
 
 For production workflows, validate converted outputs against trusted Alteryx outputs. PlaidCloud validation focuses on schema, row count, and row values, and ignores row order unless the workflow explicitly depends on ordered data.
