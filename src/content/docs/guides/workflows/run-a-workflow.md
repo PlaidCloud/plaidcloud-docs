@@ -53,6 +53,8 @@ What "where it left off" means depends on how the workflow runs:
 
 Steps that call another workflow — **Run Model**, **Conditional Run Model**, and **Loop Model** — resume the workflow they call rather than restarting it, through however many levels of nesting you have. A loop step resumes the iteration that was interrupted and skips the iterations that already completed.
 
+Resume always continues the **original** run. It re-runs every step from that run that did not finish successfully — a step that failed or was abandoned is re-run, not treated as complete — and re-running an individual step on its own in the meantime does not change what Resume picks up next.
+
 A resumed run is recorded as a **new run** in the workflow's run history, containing only the steps it re-ran. The original run keeps its own history entry.
 
 :::note
