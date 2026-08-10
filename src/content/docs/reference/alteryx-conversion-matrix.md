@@ -17,7 +17,7 @@ Coverage levels:
 
 | Alteryx Object | Coverage Level | PlaidCloud Operation | Notes |
 | --- | --- | --- | --- |
-| Action | Fully Converts | Variable binding and conditional step configuration | Updates downstream settings from converted app inputs. |
+| Action | Fully Converts | Variable binding and conditional step configuration | Updates downstream settings from converted app inputs. An update the conversion cannot apply to its target fails closed and names itself, rather than reporting success while changing nothing. |
 | AlteryxSelect | Fully Converts | Select and schema projection step | Keeps selected, renamed, and reordered fields, and converts a field to any Alteryx data type — numeric, text, date, and time. |
 | AppendFields | Fully Converts | Append fields transform | Appends fields from one stream to another. |
 | AutoField | Converts With Validation | Auto field sizing transform | Preserves inferred field sizing intent; validate schema where precision matters. |
@@ -42,7 +42,7 @@ Coverage levels:
 | Detour | Fully Converts | Conditional branch routing | Converts route selection to DAG conditions. |
 | DetourEnd | Fully Converts | Conditional branch merge | Rejoins conditionally selected branches. |
 | Directory | Fully Converts | Document directory listing | Lists files from a Document path. |
-| Distance | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL, in the requested unit. |
+| Distance | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. Miles, kilometres, metres, feet, yards and nautical miles convert; a drive-time unit, or any unit the tool cannot convert, is refused by name rather than answered in metres under the requested unit's column. |
 | Download | Converts To Executor | HTTP download executor | Downloads external data or artifacts. |
 | DropDown | Fully Converts | Controlled workflow variable | Converts app drop-down choices to controlled user input. |
 | DynamicInput | Converts With Validation | Dynamic Document input | Resolves file patterns or variable-driven inputs at runtime. |
@@ -105,7 +105,7 @@ Coverage levels:
 | SpatialInfo | Converts To Executor | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Area, length, centroid, and bounding rectangle as WGS84 geodesic measures. Object type, part/point counts, Peano key, and end-point coordinates are skipped with a note. |
 | SpatialMatch | Converts With Validation | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) or [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Plain matched pairs run in the database; the intersection-geometry and Unmatched outputs run in the workflow engine. |
 | SpatialProcess | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut, with optional dropping of empty results. |
-| Summarize | Fully Converts | Aggregate transform | Groups and aggregates records — sum, count, average, minimum, maximum, median, mode, sample standard deviation and variance, and count distinct. Statistics with no direct equivalent, such as percentile, range, and skewness, are reported rather than silently approximated. |
+| Summarize | Fully Converts | Aggregate transform | Groups and aggregates records — sum, count, average, minimum, maximum, median, mode, sample standard deviation and variance, and count distinct. Statistics with no direct equivalent, such as percentile, range, and skewness, are reported rather than silently approximated. First and Last, which take the value from the first or last record in incoming file order, are refused by name — a set-based query has no reproducible record order to take them from. |
 | Tab | Annotation Only | App tab grouping | Preserved as converted app structure where relevant. |
 | Test | Fully Converts | Step condition with warning or error action | Converts test assertions to PlaidCloud conditions. |
 | TextBox | Fully Converts | Controlled text workflow variable | Converts app text input to a typed variable. |
