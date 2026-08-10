@@ -46,7 +46,7 @@ Coverage levels:
 | Download | Converts To Executor | HTTP download executor | Downloads external data or artifacts. |
 | DropDown | Fully Converts | Controlled workflow variable | Converts app drop-down choices to controlled user input. |
 | DynamicInput | Converts With Validation | Dynamic Document input | Resolves file patterns or variable-driven inputs at runtime. |
-| DynamicRename | Fully Converts | Dynamic rename transform | Renames fields using metadata or configured rules. |
+| DynamicRename | Fully Converts | Dynamic rename transform | Renames fields using metadata or configured rules. The error option set to "Error" — abort the run when a rename collides or produces an invalid name — is refused by name, because a warehouse rename cannot reproduce that abort; "Ignore" and "Warn" convert and proceed. |
 | DynamicReplace | Converts With Validation | Dynamic replace transform | Applies replacement rules from a second data stream. |
 | DynamicSelect | Fully Converts | Dynamic field selection transform | Selects fields by type, name, or rule. |
 | Error | Fully Converts | Step condition with error action | Converts configured error behavior to PlaidCloud step conditions. |
@@ -117,7 +117,7 @@ Coverage levels:
 | TopicModel | Converts To Executor | Topic modeling executor | Runs topic modeling through managed NLP execution. |
 | TradeArea | Converts To Executor | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units. Fixed-radius mode; drive-time trade areas are not covered. |
 | Transformation | Converts With Validation | Transform step | Converts configured transformation logic to PlaidCloud expressions or SQL. |
-| Transpose | Fully Converts | Unpivot transform | Converts columns to rows. Key fields stay columns and the ticked data fields stack into one Name/Value pair; a column that is both a key and a ticked data field stays a key. Data fields of different types stack into one string Value column, so a numeric cell comes through as its text. |
+| Transpose | Fully Converts | Unpivot transform | Converts columns to rows. Key fields stay columns and the ticked data fields stack into one Name/Value pair; a column that is both a key and a ticked data field stays a key. Data fields of different types stack into one string Value column, so a numeric cell comes through as its text. The error option set to "Error" — abort the run on a data-type conflict — is refused by name, because the melt coerces the columns rather than stopping; "Ignore" and "Warn" convert. |
 | Tree | Fully Converts | Controlled workflow variable | Converts app tree selection to controlled user input. |
 | Union | Fully Converts | Union transform | Combines streams by name, position, or configured field rules. |
 | Unique | Fully Converts | Unique and duplicate split transform | Separates first unique records from duplicates. |
