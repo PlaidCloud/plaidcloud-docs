@@ -174,6 +174,18 @@ for how they fit together.
   correctly, but neither has a configuration form in the workflow designer yet;
   converted steps carry their settings, and hand-authoring goes through the API
   or MCP.
+- **Spatial tools with no equivalent.** Centroid, Convex Hull, Line To Polygon,
+  Point To Line, Geocoder, and Redistribute have no SQL translation and no
+  geometry-engine operation; conversion refuses each by name rather than emitting
+  a placeholder step.
+- **Spatial Match relationships other than Within, Contains, and Intersects.**
+  Touches, Crosses, Overlaps, Centroid-In, and any other relationship refuse by
+  name. They select a different set of records, and converting them as Intersects
+  would return the wrong matches on a green run.
+- **Find Nearest distance units other than miles, kilometers, meters, and feet.**
+  Yards, nautical miles, and drive-time units refuse rather than being measured in
+  miles under the original unit's column name, and a maximum distance that is not
+  a number refuses rather than dropping the limit.
 
 ## Calgary Tool Coverage
 
