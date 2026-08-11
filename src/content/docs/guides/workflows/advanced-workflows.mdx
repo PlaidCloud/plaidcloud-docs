@@ -277,6 +277,40 @@ Neither re-runs the upstream steps that feed the container — they run the grou
 
 <Aside type="note">The Run Monitor's step table now shows each step's container and that container's rolled-up status, matching what the canvas shows. A failed member reads the same way in both places, so you can work from whichever view you have open.</Aside>
 
+### Iterating a Container
+
+An execution container can run its sealed sub-DAG **once per value** in a list — so a group that loads and transforms one region's data can process every region in turn without you copying the steps once per region. Right-click an execution container and choose **Iterate…** (the action appears only on execution containers, since iteration drives a group that runs as a unit).
+
+**Configure the loop.** The Iterate dialog asks for two things:
+
+- **Loop variable** — a name for the value that changes each pass, such as `region`. Steps inside the container reference it like any workflow variable — `{region}` — so a member's SQL, expressions, table names, and file paths can all vary by iteration.
+- **Source** — where the list of values comes from. Choose one of:
+
+  | Source | The container runs once per… |
+  |--------|------------------------------|
+  | **List of values** | value you type in an explicit list |
+  | **Integer range** | number from a **start**, **end**, and **step** |
+  | **Upper alpha** / **Lower alpha** | letter in a range (`A`–`Z` or `a`–`z`) |
+  | **Frame column** | distinct value found in a column of a table |
+
+Optionally turn on **combine all iterations' output** to accumulate each pass's results instead of keeping only the last — see the note below on where that stands.
+
+**How it runs.** Iterations run **serially**, one after the next — the members share the single loop variable, so two passes at once would read each other's value. Each iteration binds the loop variable to the next value and then runs the whole group as [an ordinary execution-container run](#running-and-monitoring-execution-containers); the next iteration starts only when the previous one finishes. A container is capped at **1,000 iterations**.
+
+**What downstream reads.** Because each pass overwrites the group's output tables, a step downstream of the container reads the **last iteration's** output. If you need every iteration's rows, turn on **combine all iterations' output** so the passes accumulate rather than replace.
+
+For example, to build one filtered extract per region, set the loop variable to `region` with a **list of values** of `East, West`, and give a member step a filter that reads the variable:
+
+```sql
+SELECT *
+  FROM sales
+ WHERE region = '{region}'
+```
+
+The container runs twice — `region = 'East'`, then `region = 'West'` — running the whole sealed group each time.
+
+<Aside type="note">**Combine all iterations' output** is a later capability. Until it's available, plan on downstream steps seeing only the final iteration's tables, and write each pass to a table named for the loop variable (for example an output table keyed on `{region}`) when you need to keep every iteration's results.</Aside>
+
 ## The Inspector
 
 The docked **Step Inspector** shows everything about the step you select:
