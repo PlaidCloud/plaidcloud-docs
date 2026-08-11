@@ -33,6 +33,8 @@ df = conn.get_dataframe("Sales Ledger")
 
 Because the connection is the viewer, this returns only the rows the viewer is allowed to see, and raises a permission error if they have no access to the project at all.
 
+> **Read tables by name, not by writing SQL.** On a project where an administrator has turned on [Row Access](/administration/access/managing-security-groups-and-assignments/#row-access-and-queries-you-write-yourself), reading by name applies each viewer's row grants, while a query your app composes itself is declined for anyone who is not a project Architect — there is no single table for the grants to filter. Reading by name keeps your app working either way.
+
 ## Identify the Viewer
 
 To tailor what the app shows to **who is looking at it** — a personalized greeting, hiding a tab, or row-level security — read the signed-in user from Panel:
