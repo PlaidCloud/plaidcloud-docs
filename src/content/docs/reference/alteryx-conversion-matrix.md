@@ -28,7 +28,7 @@ Coverage levels:
 | CalgaryJoin | Converts With Validation | [Calgary Join](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) matching each record against the stand-in table | Converts when the incoming field is a plain value matched to a value index, keeping the records that matched and carrying the input's columns through; refuses, naming Spatial Match, when the field is spatial — the workflow records the index's name but not its kind. See [Calgary Tool Coverage](#calgary-tool-coverage). |
 | CalgaryLoader | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) writing the stand-in table | Writes `calgary_<database>` from its input for every Calgary reader of that file to bind to. Refuses when two `.cydb` files of the same name would claim one table. |
 | CheckBoxGroup | Fully Converts | Controlled workflow variable | Converts app check box choices to controlled user input. |
-| Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
+| Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. When the workflow does not carry the hyperparameters, the step trains at the algorithm's defaults and says so at reduced confidence rather than claiming a matching model. |
 | Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
 | CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
@@ -92,12 +92,12 @@ Coverage levels:
 | PortfolioComposerRender | Cloud-Native Equivalent | Report render artifact | Renders report output as a PlaidCloud artifact. |
 | PortfolioComposerTable | Cloud-Native Equivalent | Report table artifact | Converts report table content to PlaidCloud report output. |
 | PortfolioComposerText | Cloud-Native Equivalent | Report text artifact | Converts report text content to PlaidCloud report output. |
-| Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
+| Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. A Predict whose model input is not a converted Assisted Modeling trainer has no model table to score against and is refused by name rather than scored against an arbitrary table. |
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
 | Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier in the configured type (Int16/Int32/Int64, Double or String) and start value; grouped numbering restarts within each group. Field size is not applied, so a String identifier is not zero-padded to a fixed width. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
-| Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
+| Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. When the workflow does not carry the hyperparameters, the step trains at the algorithm's defaults and says so at reduced confidence rather than claiming a matching model. |
 | ReportMap | Cloud-Native Equivalent | Map report artifact | Produces a cloud-native map/report artifact. |
 | Sample | Fully Converts | Sample transform | Keeps configured records by count, percentage, or grouping rule. |
 | Smooth | Converts To Executor | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
@@ -122,7 +122,7 @@ Coverage levels:
 | Union | Fully Converts | Union transform | Combines streams by name, position, or configured field rules. |
 | Unique | Fully Converts | Unique and duplicate split transform | Separates first unique records from duplicates. |
 | VisualLayout | Annotation Only | Canvas layout metadata | Preserved as design context. |
-| WordCloud | Cloud-Native Equivalent | Text visualization artifact | Creates a PlaidCloud visualization artifact from text analysis output. |
+| WordCloud | Cloud-Native Equivalent | Text visualization artifact | Creates a PlaidCloud visualization artifact from text analysis output — published as a standalone PNG document, not composed into a report render's PDF. |
 | XMLParse | Converts With Validation | XML parse transform | Extracts XML fields into workflow data. |
 | Missing plugin reference | Fully Converts | Macro invocation or generated placeholder when resolved | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
 
