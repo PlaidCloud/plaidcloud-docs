@@ -58,11 +58,46 @@ Description bounds are intentionally permissive (any length); the original Zod s
 - **Voice**: second person ("you can do X"). PlaidCloud company voice ("we recommend") is fine where it reflects an explicit recommendation. Avoid third-person "the user" except when referring to external system accounts (AWS IAM users, SAML user attributes, etc.).
 - **Don't restate the obvious**. A step called "Compress PDF" doesn't need a description saying "This step compresses a PDF" — go straight to inputs, outputs, and when to use it.
 
+### Diagrams (inline SVG)
+
+A small, purpose-built diagram earns its place wherever a mechanism is easier to *see* than to read — a data flow, an isolation boundary, a fan-out, a lifecycle, a port contract. They meaningfully raise the clarity and polish of a page. Prefer one clear diagram over three paragraphs restating the same shape. Exemplars: [`guides/workflows/advanced-workflows.mdx`](src/content/docs/guides/workflows/advanced-workflows.mdx) (execution container + iteration) and [`guides/workflows/create-a-macro.mdx`](src/content/docs/guides/workflows/create-a-macro.mdx) (port contract, isolation lifecycle, fan-out).
+
+**Format — hand-authored, theme-aware inline SVG. No image files, no diagram libraries, no Mermaid.**
+
+- **Inline `<svg>` in the page**, wrapped in `<figure>` + `<figcaption>`. Works in both `.md` and `.mdx` — Astro passes raw HTML through and this repo adds no sanitizer. Use `.mdx` when the page also imports components; plain `.md` is fine otherwise. In `.md`, keep the whole `<figure>…</figure>` **contiguous** (no blank lines inside it) so CommonMark treats it as one HTML block, and surround it with a blank line above and below.
+- **Theme-aware via Starlight CSS tokens only** — never hard-code colors, so diagrams read in both light and dark:
+  - `var(--sl-color-text)` — box/label text
+  - `var(--sl-color-gray-3)` — arrows, muted/secondary text
+  - `var(--sl-color-gray-5)` — neutral box borders
+  - `var(--sl-color-gray-6)` — neutral box fills
+  - `var(--sl-color-accent)` — the emphasized element (the boundary/container/ports the diagram is *about*)
+- **Responsive**: set `viewBox`, `style="width:100%;max-width:<W>px;height:auto;"` — no fixed pixel width/height attributes.
+- **Accessible**: `role="img"` plus a one-sentence `aria-label` that states what the diagram shows. The `<figcaption>` restates the takeaway for sighted readers.
+- **Arrowheads**: define a `<marker>` in `<defs>` with a **page-unique `id`** (e.g. `mp-arrow`, `ml-arrow`) — ids are global once inlined, so don't reuse across diagrams on one page.
+- **Escaping**: escape literal `<`/`>` in *text* as `&lt;`/`&gt;` (a bare `<word>` looks like a tag and gets dropped). In `.mdx` only, there are two extra pitfalls — no HTML comments (`<!-- -->`, MDX rejects them) and literal braces must be `&#123;`/`&#125;` (a bare `{` starts a JSX expression). Plain `.md` has neither pitfall (braces are literal).
+- **Verify**: `npm run build` must pass, and the SVG must actually appear in the built `dist/.../index.html`.
+
+Boilerplate:
+
+```mdx
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 210" role="img" aria-label="One sentence describing what this shows." style="width:100%;max-width:660px;height:auto;">
+  <defs>
+    <marker id="ex-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="230" y="85" width="100" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="280" y="110" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">step</text>
+  <path d="M330 106 L386 106" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ex-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The one takeaway a reader should leave with.</figcaption>
+</figure>
+```
+
 ### Page patterns
 
 - **Reference pages**: short description → Configuration / Inputs / Outputs / Common Uses / Related links
 - **Workflow step pages**: `## Description` (2-3 sentences with use case context) → step-specific sections (Load Parameters, etc.)
-- **Guide pages**: prerequisites if any → numbered steps → notes → next steps
+- **Guide pages**: prerequisites if any → numbered steps → notes → next steps. Add an inline SVG diagram (see **Diagrams** above) wherever a data flow, isolation boundary, fan-out, or lifecycle is easier to see than to read.
 - **Landing/index pages**: 1-2 sentence intro → categorized link list (CardGrid or plain `## H2` + bullet list)
 
 ## Build and deploy
