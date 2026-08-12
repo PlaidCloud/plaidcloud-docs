@@ -81,7 +81,25 @@ For Date or Time selections you can add multiple conditions if a combination of 
  - Hour of the day set to 2
  - Minute of the hour set to 5
 
-For "Use Financial Close Workday", set that to the xth day of the month that your close happens on. For example, if your close happens on the 5th day of the month, have "5".
+### Timezone Offset
+
+Each Date and Time condition carries its own **Timezone Offset**, listed as a whole-hour offset named after a representative zone — for example *Eastern Time (US & Canada) (UTC -5)* or *Asia/Tokyo (UTC +9)*. The times you enter are compared against the clock in that zone.
+
+A new condition starts on the offset your browser reports, so in most cases you can leave it alone. Set it deliberately when the schedule belongs to somewhere other than where you are — a close that runs on the finance team's clock, say. Only whole hours are available, so a half-hour zone such as India (UTC +5:30) has to be rounded to the nearest whole hour.
+
+A condition saved before this setting took effect keeps evaluating against UTC until you pick a zone for it, so existing conditions carry on behaving exactly as they did.
+
+:::caution
+**Day of the week** conditions currently compare against UTC whatever offset you choose. If you need a day-of-the-week condition to land on a particular day in a zone far from UTC, be aware it can differ from your local day for several hours either side of midnight.
+:::
+
+### Financial Close Workday
+
+For **Use Financial Close Workday**, the count starts at **0 for the 1st of the month** — as the hint beside the field says. So a close that happens on the 5th day of the month is `4`, not `5`.
+
+:::caution
+This condition never currently matches, so a step guarded by one will not run. Use a **Day of the month** condition until this is resolved. Negative values, intended to count back from the end of the month, do not work either.
+:::
 
 ## Setting Conditions With an AI Assistant
 
