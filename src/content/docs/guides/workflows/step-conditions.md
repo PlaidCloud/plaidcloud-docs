@@ -29,6 +29,30 @@ For variables or table query result comparisons you can use the following compar
 
 What is also important to note is that you can have multiple conditions that must be met in order for the step to execute.  This provides a powerful tool for controlling exactly when a step should execute.
 
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 190" role="img" aria-label="A step condition gates whether a step runs. When the prior step finishes, the condition is checked; if it is met the step runs, otherwise the step is skipped and the workflow continues to the next step." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sc3-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="74" width="104" height="44" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="66" y="100" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">prior step</text>
+  <path d="M118 96 L150 96" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sc3-arrow)" />
+  <rect x="152" y="66" width="150" height="60" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="227" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">condition met?</text>
+  <text x="227" y="108" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">variable · rows · doc exists</text>
+  <path d="M302 82 C340 82 350 54 384 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sc3-arrow)" />
+  <text x="345" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-accent)">true</text>
+  <path d="M302 110 C340 110 350 138 384 138" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#sc3-arrow)" />
+  <text x="345" y="132" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">false</text>
+  <rect x="386" y="34" width="128" height="40" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="450" y="59" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-text)">step runs</text>
+  <rect x="386" y="118" width="128" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" stroke-dasharray="5 4" />
+  <text x="450" y="143" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">step skipped</text>
+  <path d="M514 54 C548 54 556 96 578 96" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" marker-end="url(#sc3-arrow)" />
+  <path d="M514 138 C548 138 556 96 578 96" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" marker-end="url(#sc3-arrow)" />
+  <text x="606" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-text)">next</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">A condition gates the step: met → the step runs; not met → it's skipped. Either way the workflow moves on to the next step. Conditions test variables, whether a table has rows, or whether a document exists.</figcaption>
+</figure>
+
 ## Adding and Controlling Conditions
 
 To activate and add conditions on a step:
