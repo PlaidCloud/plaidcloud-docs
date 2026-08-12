@@ -5,6 +5,27 @@ description: Set up and manage PlaidCloud connections — saved configurations t
 
 A **connection** is a saved configuration that lets PlaidCloud reach an external system — a database, cloud storage account, ERP, or REST API. Workflow steps that need to read from or write to that system reference the connection, so credentials and endpoint details live in one place.
 
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 210" role="img" aria-label="Many workflow steps reference one saved connection, which holds the credentials and endpoint in a single place and reaches the external system — a database, cloud storage, ERP, or REST API." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="cn-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <text x="76" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">workflow steps</text>
+  <rect x="16" y="40" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="61" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Import step</text>
+  <rect x="16" y="88" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="109" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Export step</text>
+  <rect x="16" y="136" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="157" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Lookup step</text>
+  <path d="M136 57 C190 57 210 96 248 100" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#cn-arrow)" />
+  <path d="M136 105 L248 108" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#cn-arrow)" />
+  <path d="M136 153 C190 153 210 118 248 114" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#cn-arrow)" />
+  <rect x="250" y="76" width="180" height="66" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="340" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Connection</text>
+  <text x="340" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">credentials + endpoint, once</text>
+  <path d="M430 109 L512 109" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#cn-arrow)" />
+  <rect x="514" y="80" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="104" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">external system</text>
+  <text x="589" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">DB · storage · ERP · REST</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Configure the connection once; every step that reads or writes the external system points at it, so credentials and endpoint details aren't duplicated across steps.</figcaption>
+</figure>
+
 ## Guides
 
 - [Create and Manage a Connection](/guides/connections/create-connection/) — create, edit, test, and control access to a connection, and configure it per environment.
