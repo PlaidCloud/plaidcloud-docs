@@ -148,6 +148,7 @@ export default defineConfig({
 							],
 						},
 						{ label: 'Connections',       collapsed: true, items: [{ autogenerate: { directory: 'guides/connections' } }] },
+						{ label: 'Dash apps',         collapsed: true, items: [{ autogenerate: { directory: 'guides/dash-apps' } }] },
 						{ label: 'Dashboards',        collapsed: true, items: [{ autogenerate: { directory: 'guides/dashboards' } }] },
 						{ label: 'Data',              collapsed: true, items: [{ autogenerate: { directory: 'guides/data' } }] },
 						{ label: 'Dimensions',        collapsed: true, items: [{ autogenerate: { directory: 'guides/dimensions' } }] },
