@@ -78,7 +78,7 @@ and the like) are **connected, not converted** — see
 | Join | Full | Join transform | Produces joined, left-only, and right-only streams on a single- or multi-field key or by position. |
 | Join Multiple | Full | Multi-join transform | Joins multiple input streams. |
 | List Box | Full | Controlled workflow variable | Converts app list selections to controlled input. |
-| Macro calls | Full | Macro invocation | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
+| Macro calls | Full | Macro invocation | Standard macros inline into the canvas; Batch and Iterative macros convert to native per-record and looping constructs. |
 | Macro Input / Macro Output | Full | Macro input / output port | Map directly to PlaidCloud macro ports. |
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
 | Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
