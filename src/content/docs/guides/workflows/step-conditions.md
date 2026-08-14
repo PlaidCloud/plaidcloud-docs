@@ -58,11 +58,28 @@ What is also important to note is that you can have multiple conditions that mus
 To activate and add conditions on a step:
 1) Find the step you want to add a condition on
 2) Click the **Edit Step Details** (pencil) icon
-3) Select the **Conditions** tab.
+3) Scroll to the **Condition Checks** section, at the bottom of the **General** tab
 4) Check the **Check Conditions Before Running** checkbox to enable the dialog and add conditions.
 5) In the **Condition Checks** section on the left, select the "+" to add a New Condition
 6) Add a condition from the tabbed section on the right
 7) Repeat steps 5,6 as needed to add all your conditions
+
+## Seeing Conditions on the Visual Canvas
+
+A step's conditions are visible from the Visual Canvas without opening the step. The connector that leads into a conditional step is **dashed**, and carries a small **shield** at its arrowhead. The dash is what you read when you are zoomed out far enough that the shield is too small to pick out.
+
+Click the shield to open the step with its **Condition Checks** already scrolled into view — you can also right-click the connector and choose **Edit Conditions…**, which does the same thing. The shield on the step's own tile, at the bottom-left, still marks the step as conditional as it always has.
+
+Two cases show no shield on an arrow, by design:
+
+- **A step with no incoming connector.** A step gated on a date or a variable can sit at the start of a workflow with nothing leading into it. There is no arrow to mark, so only the tile shield appears.
+- **A step inside a collapsed group.** Its tile is folded into the group's, and the arrow anchors on the group rather than the step, so marking it would attribute the condition to the wrong thing.
+
+A step with several incoming connectors gets one shield, not one per arrow.
+
+:::note
+Opening the conditions this way lands on the condition checks for step types that use the native step form. A step type that still opens the older configuration window opens it at the top instead — the conditions are there, just not scrolled to.
+:::
 
 
 ## Managing Conditions
