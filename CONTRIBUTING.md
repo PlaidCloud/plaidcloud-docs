@@ -226,7 +226,14 @@ for each. Show me the list before changing anything."
 "Look at git log for the last 30 days. Bucket commits with a 'User-facing
 change: Yes' marker. Generate a draft release page at
 src/content/docs/releases/YYYY-MM.mdx in the same style as the existing
-monthly pages."
+monthly pages. Group commits by capability first — one entry per capability
+describing what it does now, never one entry per commit or per increment."
+
+# Consolidate a month that reads like a merge log
+"Read src/content/docs/releases/YYYY-MM.mdx as a customer would. Merge every
+set of bullets covering the same capability into one entry describing the end
+state, collapse related families under a lead entry, and drop anything that
+reads as an implementation step. Show me the merge plan before editing."
 
 # Title-case audit
 "Run scripts/title-case-headings.py and report what would change. Don't
