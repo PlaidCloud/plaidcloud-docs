@@ -81,6 +81,41 @@ A step with several incoming connectors gets one shield, not one per arrow.
 Opening the conditions this way lands on the condition checks for step types that use the native step form. A step type that still opens the older configuration window opens it at the top instead — the conditions are there, just not scrolled to.
 :::
 
+### What the shield says it checks
+
+The shield's tooltip lists what the step actually checks, rather than only telling you
+that it checks something:
+
+```
+Table Row Count (sales_2026) > 0 where region = 'EU'
+Day of Week = Monday (UTC+2)
+Project Variable (run_mode) = "full"
+```
+
+Up to three checks are listed, followed by a count of the rest — *…and 2 more checks* — so
+the list stays readable on a step with many conditions. The same summary appears on the
+step's own tile shield, which is the only one a step with no incoming connector has.
+
+Selecting the step puts the same list in the **Conditions** section of the Inspector
+panel, which is the easier place to read a long one.
+
+A few things to expect from the wording:
+
+- **Day and month checks read as names**, not the numbers stored against them — *Day of
+  Week = Monday*, not *Day of Week = 3*.
+- **The timezone appears only when it is not UTC**, as in *(UTC+2)* above.
+- **A filter on a table check is shown** after `where`, shortened if it is long.
+- **An aggregated comparison says so** — *Query Value (aggregated sales_2026.amount) >=
+  100* compares a total across the table, where *Query Value (sales_2026.amount) >= 100*
+  compares a single row's value.
+- **A document check shows the path but not the account.** Two conditions checking the
+  same path in different Document accounts read identically; open the step to tell them
+  apart.
+- **A table picked from the tree browser shows its name** when the workflow reads or
+  writes that table somewhere. If it does not, the check is listed without the table name
+  rather than with an internal identifier.
+
+
 ### What the gate would cost you
 
 Hover the shield without clicking it, and the canvas outlines the conditional step and everything downstream of it in a dashed highlight — the steps that would not run if that condition blocked. Nothing changes; move the pointer away and the highlight clears. Steps *upstream* are never highlighted: they run either way.
