@@ -78,7 +78,7 @@ and the like) are **connected, not converted** — see
 | Join | Full | Join transform | Produces joined, left-only, and right-only streams on a single- or multi-field key or by position. |
 | Join Multiple | Full | Multi-join transform | Joins multiple input streams. |
 | List Box | Full | Controlled workflow variable | Converts app list selections to controlled input. |
-| Macro calls | Full | Macro invocation | Standard macros inline into the canvas; Batch and Iterative macros convert to native per-record and looping constructs. |
+| Macro calls | Full | Macro invocation | Standard macros inline into the canvas; Batch and Iterative macros convert to native per-record and looping constructs. An Iterative macro's loop runs to its own Maximum Number of Iterations, and stops with a message if it has not converged by then. |
 | Macro Input / Macro Output | Full | Macro input / output port | Map directly to PlaidCloud macro ports. |
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
 | Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
@@ -146,6 +146,24 @@ importer stops with a message naming the tool, so you know at conversion time:
 | Centroid, Convex Hull, Line To Polygon, Point To Line | A [spatial SQL recipe](/reference/workflow-steps/spatial/spatial-sql-recipes/) or geometry step |
 | Geocoder, Redistribute | A native geospatial step or connection to a geocoding service |
 | Calgary Cross Count Append | A [Calgary Cross Count](/guides/workflows/migrate-alteryx-workflows/#calgary-databases), joined back to your input |
+| Connect In-DB, Write Data In-DB | An SQL import or export step against a PlaidCloud connection — see [In-Database Tools](#in-database-tools) |
+
+## In-Database Tools
+
+The Alteryx **In-Database** palette pushes work to the warehouse instead of the
+Alteryx engine. A PlaidCloud step already *is* warehouse SQL, so the In-Database
+operation tools — Filter, Formula, Join, Select, Sample, Sort, Summarize, Union,
+Browse — convert to the same steps as their in-memory twins and run the same way.
+
+The two **endpoint** tools do not. **Connect In-DB** and **Write Data In-DB** open
+a live warehouse connection that the rest of the In-DB chain holds and pushes SQL
+against, and PlaidCloud has no equivalent to that held-open connection. The
+importer stops on each one, names the tool, and points at the replacement: an SQL
+import or export step bound to a PlaidCloud connection. Replace the two endpoints
+and the operation tools between them convert unchanged.
+
+Data Stream In, Data Stream Out, Dynamic Input In-DB, Dynamic Output In-DB, and
+Macro Input/Output In-DB are likewise refused by name.
 
 ## Spatial Tool Coverage
 
