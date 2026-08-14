@@ -81,6 +81,41 @@ A step with several incoming connectors gets one shield, not one per arrow.
 Opening the conditions this way lands on the condition checks for step types that use the native step form. A step type that still opens the older configuration window opens it at the top instead — the conditions are there, just not scrolled to.
 :::
 
+### What the shield says it checks
+
+The shield's tooltip lists what the step actually checks, rather than only telling you
+that it checks something:
+
+```
+Table Row Count (sales_2026) > 0 where region = 'EU'
+Day of Week = Monday (UTC+2)
+Project Variable (run_mode) = "full"
+```
+
+Up to three checks are listed, followed by a count of the rest — *…and 2 more checks* — so
+the list stays readable on a step with many conditions. The same summary appears on the
+step's own tile shield, which is the only one a step with no incoming connector has.
+
+Selecting the step puts the same list in the **Conditions** section of the Inspector
+panel, which is the easier place to read a long one.
+
+A few things to expect from the wording:
+
+- **Day and month checks read as names**, not the numbers stored against them — *Day of
+  Week = Monday*, not *Day of Week = 3*.
+- **The timezone appears only when it is not UTC**, as in *(UTC+2)* above.
+- **A filter on a table check is shown** after `where`, shortened if it is long.
+- **An aggregated comparison says so** — *Query Value (aggregated sales_2026.amount) >=
+  100* compares a total across the table, where *Query Value (sales_2026.amount) >= 100*
+  compares a single row's value.
+- **A document check shows the path but not the account.** Two conditions checking the
+  same path in different Document accounts read identically; open the step to tell them
+  apart.
+- **A table picked from the tree browser shows its name** when the workflow reads or
+  writes that table somewhere. If it does not, the check is listed without the table name
+  rather than with an internal identifier.
+
+
 ### What the gate would cost you
 
 Hover the shield without clicking it, and the canvas outlines the conditional step and everything downstream of it in a dashed highlight — the steps that would not run if that condition blocked. Nothing changes; move the pointer away and the highlight clears. Steps *upstream* are never highlighted: they run either way.
@@ -144,7 +179,25 @@ For Date or Time selections you can add multiple conditions if a combination of 
  - Hour of the day set to 2
  - Minute of the hour set to 5
 
-For "Use Financial Close Workday", set that to the xth day of the month that your close happens on. For example, if your close happens on the 5th day of the month, have "5".
+### Timezone Offset
+
+Each Date and Time condition carries its own **Timezone Offset**, listed as a whole-hour offset named after a representative zone — for example *Eastern Time (US & Canada) (UTC -5)* or *Asia/Tokyo (UTC +9)*. The times you enter are compared against the clock in that zone.
+
+A new condition starts on the offset your browser reports, so in most cases you can leave it alone. Set it deliberately when the schedule belongs to somewhere other than where you are — a close that runs on the finance team's clock, say. Only whole hours are available, so a half-hour zone such as India (UTC +5:30) has to be rounded to the nearest whole hour.
+
+A condition saved before this setting took effect keeps evaluating against UTC until you pick a zone for it, so existing conditions carry on behaving exactly as they did.
+
+:::caution
+**Day of the week** conditions currently compare against UTC whatever offset you choose. If you need a day-of-the-week condition to land on a particular day in a zone far from UTC, be aware it can differ from your local day for several hours either side of midnight.
+:::
+
+### Financial Close Workday
+
+For **Use Financial Close Workday**, the count starts at **0 for the 1st of the month** — as the hint beside the field says. So a close that happens on the 5th day of the month is `4`, not `5`.
+
+:::caution
+This condition never currently matches, so a step guarded by one will not run. Use a **Day of the month** condition until this is resolved. Negative values, intended to count back from the end of the month, do not work either.
+:::
 
 ## Setting Conditions With an AI Assistant
 
