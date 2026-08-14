@@ -145,7 +145,27 @@ The `astro-migration` branch is retained for safety until the new deployment has
 
 **Do not document Alteryx-conversion changes in What's New.** The converter may be announced as a capability at a high level (a deliberate launch entry), but the incremental churn stays out of the monthly release notes — which tools now convert or refuse, coverage-matrix or measurement notes, and per-tool conversion bug fixes all reveal our capability boundaries and belong only in the Alteryx guide/reference pages (`guides/workflows/migrate-alteryx-workflows/`, `reference/alteryx-conversion-matrix/`), never in `releases/`. A passing, incidental mention (e.g. "Alteryx yxdb" as one supported import format) is fine; an entry whose subject is a conversion change is not.
 
-The PR template (`.github/pull_request_template.md`) has a "User-facing change?" checkbox and a customer summary field. Future monthly notes should be writable directly from the squash-merge commit body — no excavation needed.
+#### A What's New page is a summary, not a merge log
+
+**One capability gets one entry for the month, however many times it was worked on.** The page is read by a customer who wants to know what the product does now — not by someone reconstructing the order in which we built it. A feature that shipped and was then extended, refined, or fixed twice within the month is still *one* bullet describing the finished capability, rewritten to include the later work. Two bullets on the same capability in one month is a defect in the page.
+
+So the act of adding an entry is **edit-first, append-second**:
+
+1. Read the whole current month's page before writing anything.
+2. If any existing entry already covers this capability — or an adjacent part of the same user-visible feature — **rewrite that entry in place** so it describes the end state. Do not add a second bullet, do not add a "now also…" sentence tacked onto the end, and do not leave the original wording describing a superseded intermediate state.
+3. Only add a new bullet when nothing on the page covers it.
+
+Writing rules that follow from this:
+
+- **Present tense, end state.** "You can copy steps between projects, links and groups included." Never "we added copy/paste, then added group support, then added undo."
+- **No chronology, no internal work units.** No dates, no PR or story numbers, no release-by-release sequencing, no "initially / later in the month", no "part one of".
+- **Fold same-month fixes into the feature.** A bug introduced and fixed inside the same month never reaches the customer and gets no `## Fixed` entry — it is simply part of how the feature is described. `## Fixed` is for something that was broken in a *previous* release.
+- **Group a family under one lead entry.** Many small changes to one area (a converter, a step type, an admin screen) become one bullet naming the capability, with sub-bullets or a short paragraph for the parts worth calling out — not one top-level bullet per change.
+- **Alteryx conversion in particular:** incremental converter coverage — individual tools converting, individual tools refusing by name, coverage-matrix wording — does **not** belong on a What's New page at all. The converter appears there for high-level launches only.
+- **Order by what matters to the reader**, biggest capability first. Merge order is not a ranking.
+- **Sweep before the month closes.** When the month's last entry goes in, reread the page top to bottom as one document: merge near-duplicates, collapse families, cut anything that reads as an implementation step rather than a customer outcome, and make the front-matter `description` describe the month's headline capabilities rather than the last thing merged.
+
+The PR template (`.github/pull_request_template.md`) has a "User-facing change?" checkbox and a customer summary field. Future monthly notes should be writable directly from the squash-merge commit body — no excavation needed. That per-PR summary is raw material for an entry, **not an entry** — never paste one in as its own bullet without checking whether the capability is already on the page.
 
 For the current corpus, monthly pages were generated from `plaid-tenant-infrastructure` tag history via:
 
