@@ -81,6 +81,28 @@ A step with several incoming connectors gets one shield, not one per arrow.
 Opening the conditions this way lands on the condition checks for step types that use the native step form. A step type that still opens the older configuration window opens it at the top instead — the conditions are there, just not scrolled to.
 :::
 
+### What the gate would cost you
+
+Hover the shield without clicking it, and the canvas outlines the conditional step and everything downstream of it in a dashed highlight — the steps that would not run if that condition blocked. Nothing changes; move the pointer away and the highlight clears. Steps *upstream* are never highlighted: they run either way.
+
+This is the same preview a disabled group's **disabled** chip gives you, with one difference in wording that matters. A disabled group really is off, so its chip says how many steps *will* skip. A condition is only evaluated when the run reaches it, so the shield says how many steps *would not* run **if** the condition blocks. It may well let everything through.
+
+### What the shield says about the last run
+
+The shield also reports what happened on the most recent run, so you can trace a finished flow and see where it stopped:
+
+| Shield | Meaning |
+| --- | --- |
+| Plain shield | The step is conditional. Either it has not run yet, or it is running now. |
+| Shield with a **+** | The step ran on the last run. |
+| Shield with a **−** | The step did not run on the last run. |
+
+The three are told apart by their shape, not by colour, and the shield's tooltip spells the state out in words. It updates live while a workflow is running, so you do not need to reload the canvas to watch a run reach a gate.
+
+:::caution
+A shield with a **−** tells you the step did not run. It does not tell you *why*, and you should not read it as "the condition blocked it." A step is also recorded as not run when it is disabled, when its group is disabled, when a step upstream of it failed, or when it fell outside the scope of a partial run. The toolbar's **View Logs** opens the [run log](/guides/workflows/viewing-workflow-log/), which names the reason for each step it skipped. A step held at a breakpoint is the one case deliberately excluded — it keeps the plain shield, because pausing there was your decision rather than an outcome of the run.
+:::
+
 
 ## Managing Conditions
 
