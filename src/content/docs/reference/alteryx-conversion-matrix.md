@@ -62,8 +62,6 @@ Coverage levels:
 | Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
 | ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
 | ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
-| ImageRecognition | Converts With Validation | ML Score step | Stops with a message pointing at ML Score, which reads the same trained model table. The tool's own VGG16 transfer learning is not reproduced. |
-| ImageTemplate | Converts With Validation | Manual region extraction | Stops with a message naming the missing page-region detection. Extract the regions with a Formula or Text step instead. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
 | Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams, matched on a single- or multi-field key or by record position. |
@@ -250,6 +248,18 @@ PlaidCloud has never heard of — which still reports the generic *"Unrecognised
 Alteryx tool; manual mapping required."* A named refusal tells you the tool is
 genuine and simply awaits conversion support; the generic message tells you to
 check the workflow.
+
+### Image Recognition and Image Template
+
+Two Alteryx **Image** tools convert to a step, but that step depends on machine
+vision the workflow-parity image does not carry, so it stops at run time and
+names what is missing rather than return a wrong answer. Treat both as
+unsupported until the parity image gains the capability:
+
+| Alteryx tool | Why it refuses |
+| --- | --- |
+| Image Recognition | Trains a deep-learning image classifier from pretrained weights. The parity image ships no deep-learning framework and none of the starting weights, so it can neither train nor score. The refusal points at [ML: Score](/reference/workflow-steps/machine-learning/ml-score/), which reads the same model table — train the classifier outside PlaidCloud and score it there. |
+| Image Template | Extracts page regions. Automatic mode needs a layout detector the parity image does not carry; manual regions have no reader either, since PDF to Text and Image to Text reject a Template Input. The refusal names both, in either mode. |
 
 ### Connector Input and Output Tools
 
