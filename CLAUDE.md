@@ -145,6 +145,41 @@ The `astro-migration` branch is retained for safety until the new deployment has
 
 **Do not document Alteryx-conversion changes in What's New.** The converter may be announced as a capability at a high level (a deliberate launch entry), but the incremental churn stays out of the monthly release notes — which tools now convert or refuse, coverage-matrix or measurement notes, and per-tool conversion bug fixes all reveal our capability boundaries and belong only in the Alteryx guide/reference pages (`guides/workflows/migrate-alteryx-workflows/`, `reference/alteryx-conversion-matrix/`), never in `releases/`. A passing, incidental mention (e.g. "Alteryx yxdb" as one supported import format) is fine; an entry whose subject is a conversion change is not.
 
+#### The Alteryx conversion matrix uses EXACTLY three statuses — never deviate
+
+`reference/alteryx-conversion-matrix.md` is a **customer-facing marketing page**, not an
+engineering scoreboard. Its tool table has **exactly three statuses and no others**:
+
+- **Full** — the tool converts and runs its function. This is where nearly every tool
+  belongs. A validation caveat, a managed-executor route, a cloud-native-artifact
+  equivalent, or an annotation-only passthrough is **still Full** — none of those demote.
+- **Partial** — converts and runs for its common use, but one whole *capability mode* is
+  not reproduced (e.g. Trade Area drive-time; Image Template automatic region detection).
+- **Not supported** — no conversion path at all (e.g. Image Recognition training,
+  Geocoder). A tool that converts but refuses one narrow option/mode is **Full**, not
+  Not-supported — drop the narrow caveat from the marketing table.
+
+**Hard rules, no exceptions:**
+
+- **Never reintroduce the old five-level "coverage levels"** (Fully Converts / Converts
+  With Validation / Converts To Executor / Cloud-Native Equivalent / Annotation Only). That
+  scheme was deliberately retired (plaidcloud-docs#454) because a wall of nuanced levels
+  makes prospects think we *can't* fully convert. It was silently reverted once
+  (#463 merged a stale pre-#454 copy of this file and clobbered the recast) — do not let it
+  happen again. The page carries an HTML comment at the top restating this; keep it.
+- **Only a structural capability-mode gap demotes from Full.** Edge-case config
+  permutations and option-level caveats do not. When in doubt, it's Full.
+- **Marketplace/cloud connectors** (Salesforce, S3, Cassandra, Anaplan, cloud ML, …) live
+  in their own "Connecting to External Systems" section as *connected, not converted* — they
+  never appear in the Full/Partial/Not-supported table.
+- **Do NOT re-add the "How Coverage Is Measured" methodology section** or a detailed
+  recognised-but-unconverted enumeration — that is competitive over-disclosure.
+- **This file is edited by many concurrent sessions. Rebase onto `origin/main` immediately
+  before touching it**, and edit the *current* three-status structure in place — never
+  regenerate it from an older copy. A whole-file rewrite against a stale base is exactly how
+  the scheme got reverted. If you find it in five-level form, converting it back to three
+  statuses IS the task, not an optional nicety.
+
 #### A What's New page is a summary, not a merge log
 
 **One capability gets one entry for the month, however many times it was worked on.** The page is read by a customer who wants to know what the product does now — not by someone reconstructing the order in which we built it. A feature that shipped and was then extended, refined, or fixed twice within the month is still *one* bullet describing the finished capability, rewritten to include the later work. Two bullets on the same capability in one month is a defect in the page.

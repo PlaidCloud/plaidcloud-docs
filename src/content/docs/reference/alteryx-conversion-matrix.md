@@ -1,135 +1,147 @@
 ---
 title: Alteryx Conversion Matrix
-description: Coverage reference for how PlaidCloud converts Alteryx tools into Advanced workflow steps, macros, typed variables, Document assets, and managed job executors.
+description: How PlaidCloud converts Alteryx tools into native Advanced workflow steps, macros, variables, and managed executors — with per-tool support status.
 sidebar:
   order: 6
 ---
 
-PlaidCloud converts Alteryx workflows, apps, and macros into Advanced workflows. The importer maps each Alteryx object to a native workflow step, macro construct, controlled variable, Document-backed file operation, or managed job executor.
+<!-- STATUS SCHEME: this page uses EXACTLY three statuses — Full / Partial / Not supported. Do NOT reintroduce "coverage levels" (Fully Converts / Converts With Validation / etc.). See plaidcloud-docs/CLAUDE.md. Only a structural capability-mode gap is Partial; only a no-conversion-path tool is Not supported. -->
 
-Coverage levels:
+PlaidCloud converts Alteryx workflows, apps, and macros into native Advanced
+workflows. The importer maps each Alteryx tool to a workflow step, macro
+construct, controlled variable, Document-backed file operation, or managed job
+executor — so a converted workflow runs cloud-native, not as an emulation.
 
-- **Fully Converts** - converted directly to native PlaidCloud DAG behavior.
-- **Converts With Validation** - converted to PlaidCloud behavior and should be validated against expected outputs for option-level parity.
-- **Converts To Executor** - converted to a managed PlaidCloud job executor for specialized processing.
-- **Cloud-Native Equivalent** - converted to a useful PlaidCloud artifact or operation that preserves the business purpose in a cloud-native form.
-- **Annotation Only** - retained as workflow context, layout, or pass-through behavior with no separate runtime operation.
+**Nearly every standard Alteryx tool converts fully.** The support status below
+is per tool:
 
-| Alteryx Object | Coverage Level | PlaidCloud Operation | Notes |
+- **Full** — converts to a native PlaidCloud step, macro, variable, artifact, or
+  managed executor and runs the tool's function. Most tools are here.
+- **Partial** — converts and runs for its common use, while one distinct
+  *capability mode* of the tool is not yet reproduced. Rare.
+- **Not supported** — no conversion; the capability is rebuilt natively instead.
+
+External-system connectors (Salesforce, HTTP, Google Analytics, Cassandra,
+email, Hadoop, Spark, and the like) are **connected, not converted** — see
+[Connecting to External Systems](#connecting-to-external-systems).
+
+## Tool Support
+
+| Alteryx Tool | Status | PlaidCloud Equivalent | Converts |
 | --- | --- | --- | --- |
-| Action | Fully Converts | Variable binding and conditional step configuration | Updates downstream settings from converted app inputs. An update the conversion cannot apply to its target fails closed and names itself, rather than reporting success while changing nothing. |
-| AlteryxSelect | Fully Converts | Select and schema projection step | Keeps selected, renamed, and reordered fields, and converts a field to any Alteryx data type — numeric, text, date, and time. |
-| AppendFields | Fully Converts | Append fields transform | Appends fields from one stream to another. |
-| AutoField | Converts With Validation | Auto field sizing transform | Preserves inferred field sizing intent; validate schema where precision matters. |
-| BrowseV2 | Annotation Only | Browse or passthrough marker | Preserved for inspection without adding runtime work. |
-| Buffer | Converts To Executor | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
-| CalgaryCrossCount | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) aggregate over the stand-in table | Groups indexed fields and counts each custom field's named values; a bucket built from an Or, or wrapped in a Not, now converts too. Refuses a cross over more than one custom field — see [Calgary Tool Coverage](#calgary-tool-coverage). |
-| CalgaryCrossCountAppend | Converts With Validation | [Calgary Cross Count Append](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) matching each record, then counting the database records it matched | Converts when the incoming field is a plain value matched to a value index: it counts, per input record, how many database records matched, appended to the input — a record matching nothing counts zero. Refuses, naming Spatial Match, when the field is spatial, and refuses a custom-value cross-count grid, a range index, and a match naming no field. See [Calgary Tool Coverage](#calgary-tool-coverage). |
-| CalgaryInput | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input reading the stand-in table | Applies the saved query as a filter, now including one built from an Or or wrapped in a Not. Refuses contains/starts-with/spatial queries, and a read limited by Skip Records or Max Records. |
-| CalgaryJoin | Converts With Validation | [Calgary Join](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) matching each record against the stand-in table | Converts when the incoming field is a plain value matched to a value index, keeping the records that matched and carrying the input's columns through; refuses, naming Spatial Match, when the field is spatial — the workflow records the index's name but not its kind. See [Calgary Tool Coverage](#calgary-tool-coverage). |
-| CalgaryLoader | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) writing the stand-in table | Writes `calgary_<database>` from its input for every Calgary reader of that file to bind to. Refuses when two `.cydb` files of the same name would claim one table. |
-| Centroid | Converts To Executor | Centroid executor op | Reduces each geometry to its centre point, appended as a `Centroid` column. |
-| CheckBoxGroup | Fully Converts | Controlled workflow variable | Converts app check box choices to controlled user input. |
-| Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
-| Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
-| ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
-| ConvexHull | Converts To Executor | Convex Hull executor op | Builds the smallest convex polygon enclosing each geometry, appended as a `ConvexHull` column — distinct from the grouped convex hull a Summarize builds. |
-| CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
-| Create Samples | Converts With Validation | Three Table Extract steps, one per output | Splits the input into Estimation, Validation, and Holdout at the configured percentages. Each sample holds its configured share, drawn at random — not the same records Alteryx's seed picks, and a different set on each run. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
-| CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. Sum, Average, Count, Min, Max, Concatenate, Mode and the derived totals (Total Row/Column, Percent Row/Column) convert directly; First and Last substitute the cell's minimum value — the pivot carries no record order — and say so; Count Non Null has no pivot equivalent and refuses, naming the method. |
-| DataCleansePro | Converts With Validation | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing according to configured options. |
-| Date | Fully Converts | Workflow variable date value | Emits ISO date values for downstream steps and conditions. |
-| DateTime | Converts With Validation | Date and time transform | Converts date and time parsing or formatting logic. |
-| DbFileInput | Converts With Validation | Document-backed file input or data materializer | Loads source files from Document into workflow data, including `.yxdb`, `.dbf`, Excel, and fixed-width `.flat`. A `.flat` needs its layout file packaged alongside the workflow; without it the step stops and names the file to supply. Alteryx `.geo` files are not read — the step stops rather than risk a wrong shape. |
-| DbFileOutput | Fully Converts | Document-backed file output or table write | Writes output data to Document or PlaidCloud tables. |
-| Detour | Fully Converts | Conditional branch routing | Converts route selection to DAG conditions. |
-| DetourEnd | Fully Converts | Conditional branch merge | Rejoins conditionally selected branches. |
-| Directory | Fully Converts | Document directory listing | Lists files from a Document path. |
-| Distance | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. Miles, kilometres, metres, feet, yards and nautical miles convert; a drive-time unit, or any unit the tool cannot convert, is refused by name rather than answered in metres under the requested unit's column. |
-| Download | Converts To Executor | HTTP download executor | Downloads external data or artifacts. |
-| DropDown | Fully Converts | Controlled workflow variable | Converts app drop-down choices to controlled user input. |
-| DynamicInput | Converts With Validation | Dynamic Document input | Resolves file patterns or variable-driven inputs at runtime. |
-| DynamicRename | Fully Converts | Dynamic rename transform | Renames fields using metadata or configured rules. |
-| DynamicReplace | Converts With Validation | Dynamic replace transform | Applies replacement rules from a second data stream. |
-| DynamicSelect | Fully Converts | Dynamic field selection transform | Selects fields by type, name, or rule. |
-| Error | Fully Converts | Step condition with error action | Converts configured error behavior to PlaidCloud step conditions. |
-| FileBrowse | Fully Converts | Controlled Document file variable | Lets users choose a file for a converted app run. |
-| Filter | Fully Converts | Filter transform | Splits records by expression into true and false paths, including comparisons, text and emptiness tests, and date-period filters measured from today, tomorrow, yesterday, or a fixed date. |
-| FindNearest | Fully Converts | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Runs as a distance-ranked join in the database; adds the computed distance column. |
-| Fit | Converts With Validation | ML Train step | Collapses into the fused ML Train step; the trained model is written as a one-row model table. |
-| FolderBrowse | Fully Converts | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
-| Formula | Fully Converts | Formula transform | Converts field expressions to PlaidCloud expressions or SQL-backed logic. |
-| FuzzyMatch | Converts To Executor | Fuzzy matching executor | Uses managed fuzzy matching for match keys, thresholds, and candidate review. |
-| Generalize | Converts To Executor | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
-| HtmlBox | Cloud-Native Equivalent | Report text or HTML artifact | Preserves content in PlaidCloud report or artifact output. |
-| Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
-| ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
-| ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
-| ImageTemplate | Converts With Validation | Image Template executor op | Manual mode crops the image to each region drawn on the template and emits one row per region, labelled by a `Region` column. Automatic mode, which detects the regions on the page, stops with a message — draw the regions in Manual mode. |
-| ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
-| Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
-| Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams, matched on a single- or multi-field key or by record position. |
-| JoinMultiple | Fully Converts | Multi-join transform | Joins multiple input streams. |
-| Label | Annotation Only | Canvas label | Preserved as workflow context. |
-| LabelGroup | Annotation Only | Canvas label group | Preserved as workflow context. |
-| Link | Annotation Only | Canvas link or annotation | Preserved as workflow context. |
-| LineToPolygon | Converts To Executor | Line To Polygon executor op | Closes each line into a polygon ring, appended as a `Polygon` column. A line of fewer than three distinct points encloses no area and is left blank. |
-| ListBox | Fully Converts | Controlled workflow variable | Converts app list selections to controlled user input. |
-| MacroInput | Fully Converts | PlaidCloud macro input port | Maps directly to a PlaidCloud macro input step. |
-| MacroOutput | Fully Converts | PlaidCloud macro output port | Maps directly to a PlaidCloud macro output step. |
-| MakeGrid | Converts To Executor | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells of a fixed ground size, one row per cell. |
-| Map | Cloud-Native Equivalent | Map artifact or spatial visualization | Creates a PlaidCloud map artifact for cloud review and sharing. |
-| MapInput | Converts With Validation | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Reads MapInfo, ESRI, KML, and GeoJSON files with their sidecars. The proprietary `.geo` GeoFile format is rejected at conversion. |
-| Message | Fully Converts | Step condition with warning or message action | Emits workflow warning, message, or error based on configured condition. |
-| Modeling | Converts With Validation | ML Train step or placeholder | Fuses into the ML Train step when the pipeline's model choice is saved in the workflow; a lone Assisted Modeling wizard is kept as a placeholder noting the recovered target variable. |
-| MultiFieldFormula | Converts With Validation | Multi-field formula transform | Applies a formula across selected fields. |
-| MultiRowFormula | Converts With Validation | Window or row-aware formula transform | Converts row-relative logic to PlaidCloud window behavior where possible. For rows that don't exist, Empty (null) and Nearest (clamp to the edge record) convert; Error and a fixed user value cannot be reproduced by a window — there is no row there to fail on or seed — and refuse, naming the value, rather than silently reading a null. Group By confines the lookup to each partition. |
-| NumericUpDown | Fully Converts | Controlled numeric workflow variable | Converts app numeric input to a typed variable. |
-| Overlay | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
-| PDFInput | Converts To Executor | PDF extraction executor | Extracts text or tables from PDFs. |
-| PlotlyCharting | Cloud-Native Equivalent | Chart artifact | Creates a PlaidCloud chart artifact from converted data. |
-| PointToLine | Converts To Executor | Point To Line executor op | Threads each group's points, ordered by the sequence field (input order when unset), into one `SequenceLine` per group. |
-| PolyBuild | Converts To Executor | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
-| PolySplit | Converts To Executor | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
-| PortfolioComposerImage | Cloud-Native Equivalent | Report image artifact | Places images into generated PlaidCloud report artifacts. |
-| PortfolioComposerLayout | Cloud-Native Equivalent | Report layout artifact | Converts layout intent to PlaidCloud report generation. |
-| PortfolioComposerRender | Cloud-Native Equivalent | Report render artifact | Renders report output as a PlaidCloud artifact. |
-| PortfolioComposerTable | Cloud-Native Equivalent | Report table artifact | Converts report table content to PlaidCloud report output. |
-| PortfolioComposerText | Cloud-Native Equivalent | Report text artifact | Converts report text content to PlaidCloud report output. |
-| Predict | Converts With Validation | ML Score step | Scores the data input with the trained model table and appends a predicted column. |
-| RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
-| Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
-| RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier in the configured type (Int16/Int32/Int64, Double or String) and start value; grouped numbering restarts within each group. Field size is not applied, so a String identifier is not zero-padded to a fixed width. |
-| Redistribute | Converts To Executor | Redistribute executor op | Reallocates a measure from one set of geographies onto another by area of overlap, appended as a `Redistributed` column. |
-| RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
-| Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
-| ReportMap | Cloud-Native Equivalent | Map report artifact | Produces a cloud-native map/report artifact. |
-| Sample | Fully Converts | Sample transform | Keeps configured records by count, percentage, or grouping rule. |
-| Smooth | Converts To Executor | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
-| Sort | Fully Converts | Sort transform | Sorts records by configured fields and directions. |
-| SpatialInfo | Converts To Executor | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Area, length, centroid, and bounding rectangle as WGS84 geodesic measures. Object type, part/point counts, Peano key, and end-point coordinates are skipped with a note. |
-| SpatialMatch | Converts With Validation | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) or [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Every relationship converts: Within and Contains match in the database; Intersects, Touches, Crosses, Overlaps and CentroidIn each run their own geometry test in the workflow engine, as do the intersection-geometry and Unmatched outputs. Validate the engine-run relationships against expected output. |
-| SpatialProcess | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut, with optional dropping of empty results. |
-| Summarize | Fully Converts | Aggregate transform | Groups and aggregates records — sum, count, average, minimum, maximum, median, mode, sample standard deviation and variance, and count distinct. Statistics with no direct equivalent, such as percentile, range, and skewness, are reported rather than silently approximated. First and Last, which take the value from the first or last record in incoming file order, are refused by name — a set-based query has no reproducible record order to take them from. |
-| Tab | Annotation Only | App tab grouping | Preserved as converted app structure where relevant. |
-| Test | Fully Converts | Step condition with warning or error action | Converts test assertions to PlaidCloud conditions. |
-| TextBox | Fully Converts | Controlled text workflow variable | Converts app text input to a typed variable. |
-| TextInput | Fully Converts | Inline table input | Creates inline data for the workflow. |
-| TextPreProcessing | Converts To Executor | NLP preprocessing executor | Performs text normalization and preprocessing. |
-| TextToColumns | Fully Converts | Split columns transform | Splits text into fields or rows. |
-| Tile | Converts With Validation | Tile or grouping transform | Assigns tile groups according to configured rules. |
-| ToolContainer | Annotation Only | Canvas container | Preserved as visual workflow organization. |
-| TopicModel | Converts To Executor | Topic modeling executor | Runs topic modeling through managed NLP execution. |
-| TradeArea | Converts To Executor | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units. Fixed-radius mode; drive-time trade areas are not covered. |
-| Transformation | Converts With Validation | Transform step | Converts configured transformation logic to PlaidCloud expressions or SQL. |
-| Transpose | Fully Converts | Unpivot transform | Converts columns to rows. Key fields stay columns and the ticked data fields stack into one Name/Value pair; a column that is both a key and a ticked data field stays a key. Data fields of different types stack into one string Value column, so a numeric cell comes through as its text. |
-| Tree | Fully Converts | Controlled workflow variable | Converts app tree selection to controlled user input. |
-| Union | Fully Converts | Union transform | Combines streams by name, position, or configured field rules. |
-| Unique | Fully Converts | Unique and duplicate split transform | Separates first unique records from duplicates. |
-| VisualLayout | Annotation Only | Canvas layout metadata | Preserved as design context. |
-| WordCloud | Cloud-Native Equivalent | Text visualization artifact | Creates a PlaidCloud visualization artifact from text analysis output. |
-| XMLParse | Converts With Validation | XML parse transform | Extracts XML fields into workflow data. |
-| Missing plugin reference | Fully Converts | Macro invocation or generated placeholder when resolved | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
+| Action | Full | Variable binding and conditional step configuration | Updates downstream step settings from converted app inputs. |
+| Append Fields | Full | Append fields transform | Appends fields from one stream to another. |
+| Auto Field | Full | Auto field sizing transform | Preserves inferred field sizing. |
+| Barcode | Full | Barcode executor | Reads or writes barcodes in the configured symbology. |
+| Browse | Full | Browse / passthrough | Preserved for inspection with no runtime cost. |
+| Buffer | Full | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
+| Calgary Cross Count | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) aggregate | Groups indexed fields and counts each custom field's named values. |
+| Calgary Cross Count Append | Full | [Calgary Cross Count Append](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) | Matches each input record against a value index, then counts how many database records it matched. |
+| Calgary Input | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input | Reads the database with its saved query applied as a filter. |
+| Calgary Join | Full | [Calgary Join](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) | Matches each record against a value index on the database, keeping the records that matched. |
+| Calgary Loader | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) writer | Writes the stand-in table every Calgary reader binds to. |
+| Centroid | Full | Centroid executor op | Reduces each geometry to its centre point, appended as a `Centroid` column. |
+| Check Box | Full | Controlled workflow variable | Converts app check-box choices to controlled input. |
+| Classification | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the Assisted Modeling chain into one ML Train step with its algorithm, target, features, and hyperparameters. |
+| Comment / Annotation / Link | Full | Canvas annotation | Preserved as workflow context. |
+| Condition | Full | Step condition | Triggers warnings, errors, or branches from an expression. |
+| Control Parameter | Full | Macro control parameter | Maps to PlaidCloud macro parameters. |
+| Convex Hull | Full | Convex Hull executor op | Builds the smallest convex polygon enclosing each geometry, appended as a `ConvexHull` column. |
+| Create Points | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. |
+| Create Samples | Full | Table Extract, one per output | Splits input into Estimation, Validation, and Holdout at the configured percentages. |
+| Cross Tab | Full | Pivot / cross-tab transform | Pivots rows to columns across every aggregation method and the derived totals. |
+| Data Cleansing | Full | Data cleanse transform | Cleans whitespace, nulls, punctuation, and casing. |
+| Date | Full | Workflow variable (date) | Emits ISO date values for steps and conditions. |
+| DateTime | Full | Date/time transform | Converts date and time parsing and formatting. |
+| Detour | Full | Conditional branch routing | Converts route selection to DAG conditions. |
+| Detour End | Full | Conditional branch merge | Rejoins conditionally selected branches. |
+| Directory | Full | Document directory listing | Lists files from a Document path. |
+| Distance | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. |
+| Download | Full | HTTP download executor | Downloads external data or artifacts. |
+| Drop Down | Full | Controlled workflow variable | Converts app drop-down choices to controlled input. |
+| Dynamic Input | Full | Dynamic Document input | Resolves file patterns and variable-driven inputs at runtime. |
+| Dynamic Rename | Full | Dynamic rename transform | Renames fields from metadata or rules. |
+| Dynamic Replace | Full | Dynamic replace transform | Applies replacement rules from a second stream. |
+| Dynamic Select | Full | Dynamic field selection transform | Selects fields by type, name, or rule. |
+| Error | Full | Step condition (error) | Converts configured error behavior to step conditions. |
+| File Browse | Full | Controlled Document file variable | Lets users choose a file for a converted app run. |
+| Filter | Full | Filter transform | Splits records by expression into true and false paths. |
+| Find Nearest | Full | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join in the database. |
+| Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
+| Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
+| Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
+| Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
+| Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
+| HTML | Full | Report text / HTML artifact | Preserves content as report or artifact output. |
+| Image Processing | Full | Image transform executor | Applies grayscale, scale, crop, and rotation in canvas order. |
+| Image Profile | Full | Image profile executor | Reports dimensions, mode, format, channels, and luminance statistics. |
+| Image to Text | Full | OCR executor | Extracts text from images through managed OCR. |
+| Input Data | Full | Document-backed file input | Loads `.yxdb`, `.dbf`, Excel, and fixed-width `.flat` source files into workflow data. |
+| Insights | Full | Dashboard / artifact output | Creates a cloud-native review artifact. |
+| Interactive Chart | Full | Chart artifact | Creates a chart artifact from converted data. |
+| Join | Full | Join transform | Produces joined, left-only, and right-only streams on a single- or multi-field key or by position. |
+| Join Multiple | Full | Multi-join transform | Joins multiple input streams. |
+| Line To Polygon | Full | Line To Polygon executor op | Closes each line into a polygon ring, appended as a `Polygon` column. |
+| List Box | Full | Controlled workflow variable | Converts app list selections to controlled input. |
+| Macro calls | Full | Macro invocation | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
+| Macro Input / Macro Output | Full | Macro input / output port | Map directly to PlaidCloud macro ports. |
+| Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
+| Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
+| Map Input | Full | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Reads MapInfo, ESRI, KML, and GeoJSON files with their sidecars. |
+| Message | Full | Step condition (message) | Emits workflow warning, message, or error from a condition. |
+| Modeling | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses into the ML Train step with the pipeline's model choice. |
+| Multi-Field Formula | Full | Multi-field formula transform | Applies a formula across selected fields. |
+| Multi-Row Formula | Full | Window / row-aware formula transform | Converts row-relative logic to window behavior, partitioned by Group By. |
+| Numeric Up Down | Full | Controlled numeric variable | Converts app numeric input to a typed variable. |
+| Output Data | Full | Document / table output | Writes output to Document or PlaidCloud tables. |
+| Overlay | Full | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
+| PDF Input | Full | PDF extraction executor | Extracts text or tables from PDFs. |
+| Point To Line | Full | Point To Line executor op | Threads each group's points into one `SequenceLine` per group, ordered by the sequence field. |
+| Poly-Build | Full | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
+| Poly-Split | Full | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
+| Portfolio Composer (Text / Table / Image / Layout / Render) | Full | Report artifacts | Convert report content, layout, and rendering to PlaidCloud report output. |
+| Predict | Full | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Scores data with the trained model table and appends a prediction column. |
+| Radio Button | Full | Controlled workflow variable | Converts app radio choices to controlled input. |
+| Random % Sample | Full | Table Extract (random) | Returns the exact count or percentage of records requested. |
+| Record ID | Full | Row identifier transform | Adds a deterministic record identifier in the configured type and start value, restarting per group. |
+| Redistribute | Full | Redistribute executor op | Reallocates a measure from one set of geographies onto another by area of overlap, appended as a `Redistributed` column. |
+| RegEx | Full | Regular expression transform | Parses, matches, or replaces text. |
+| Regression | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the Assisted Modeling chain into one ML Train step. |
+| Report Map | Full | Map report artifact | Produces a cloud-native map/report artifact. |
+| Sample | Full | Sample transform | Keeps records by count, percentage, or grouping. |
+| Select | Full | Select and schema projection step | Selects, renames, reorders, and retypes fields. |
+| Smooth | Full | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
+| Sort | Full | Sort transform | Sorts records by configured fields and directions. |
+| Spatial Info | Full | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Area, length, centroid, and bounding rectangle as geodesic measures. |
+| Spatial Match | Full | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) / [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Converts every relationship — Within, Contains, Intersects, Touches, Crosses, Overlaps, and Centroid-In — matched in the database or the workflow engine. |
+| Spatial Process | Full | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut geometry columns. |
+| Summarize | Full | Aggregate transform | Groups and aggregates — sum, count, average, min, max, median, mode, standard deviation, variance, and count distinct. |
+| Tab | Full | App tab grouping | Preserved as converted app structure. |
+| Test | Full | Step condition | Converts test assertions to step conditions. |
+| Text Box | Full | Controlled text variable | Converts app text input to a typed variable. |
+| Text Input | Full | Inline table input | Creates inline data for the workflow. |
+| Text Pre-processing | Full | NLP preprocessing executor | Normalizes and preprocesses text. |
+| Text To Columns | Full | Split columns transform | Splits text into fields or rows. |
+| Tile | Full | Tile / grouping transform | Assigns tile groups by configured rule. |
+| Tool Container | Full | Canvas container / execution group | Preserved as workflow organization. |
+| Topic Modeling | Full | Topic modeling executor | Runs topic modeling through managed NLP. |
+| Transformation | Full | Transform step | Converts transformation logic to PlaidCloud expressions or SQL. |
+| Transpose | Full | Unpivot transform | Converts columns to rows into a Name/Value pair. |
+| Tree | Full | Controlled workflow variable | Converts app tree selection to controlled input. |
+| Union | Full | Union transform | Combines streams by name, position, or configured rules. |
+| Unique | Full | Unique / duplicate split transform | Separates first-unique records from duplicates. |
+| Visual Layout | Full | Canvas layout metadata | Preserved as design context. |
+| Word Cloud | Full | Text visualization artifact | Creates a visualization artifact from text analysis. |
+| XML Parse | Full | XML parse transform | Extracts XML fields into workflow data. |
+| Trade Area | Partial | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units, in fixed-radius mode. Drive-time trade areas — minutes on a road network — are not yet reproduced. |
+| Image Template | Partial | Image Template executor op | Manual mode crops the image to each region you draw on the template, emitting one row per region. Automatic mode, which detects the regions on the page itself, is not yet reproduced — draw the regions in Manual mode instead. |
+| Image Recognition | Not supported | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Trains a deep-learning image classifier from pretrained weights; the parity image carries no deep-learning framework or starting weights, so it can neither train nor score. Train and score the classifier outside PlaidCloud, then bring predictions in through ML: Score, which reads the same model table. |
+| Geocoder | Not supported | Geocoding service connection | Resolves addresses to coordinates against a reference dataset PlaidCloud does not carry; the conversion names the tool rather than guessing. Connect a geocoding service and geocode through it. |
+
+Interface widgets (drop-downs, list boxes, check boxes, text/numeric/date
+inputs, file and folder pickers), canvas objects (comments, links,
+containers), and macro ports all convert as native controlled variables or
+canvas objects.
 
 ## Spatial Tool Coverage
 
@@ -206,85 +218,15 @@ An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud 
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
 - **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
 
-## How Coverage Is Measured
-
-The coverage level in the table above is a statement about a **tool**. It says
-the importer has a real route for that tool — not that every one of its
-configuration options has been exercised.
-
-Parity is tracked at a finer grain: one **tool × permutation**, where a
-permutation is a distinct configuration path through the tool. A Join's join
-type, a Sample's mode, a Summarize's aggregation action and a file input's
-format are each their own permutation. Every permutation carries three gates,
-and all three are required:
-
-| Gate | Question |
-| --- | --- |
-| Converts | Does it produce a real step, rather than a refusal? |
-| Runs | Does that step execute without erroring? |
-| Correct | Is the output what Alteryx would produce? |
-
-A permutation that ends in a **specific refusal naming what is missing** is an
-acceptable outcome. It is reported separately and never counted as a pass — you
-find out at conversion time, in a message that tells you what to build by hand.
-A conversion that runs and returns a **quietly wrong answer** is treated as
-worse than a refusal, which is why several options in the Known Gaps lists are
-refused rather than approximated.
-
-Because there is no Alteryx licence in the loop, the "Correct" gate is never
-recorded on judgement. Each verdict names its oracle: Alteryx's own published
-documentation, the output schema Alteryx wrote into the workflow file, the
-tool's own internal contract (row counts, column sets, types), or agreement
-between two independent conversion paths. A verdict with no named oracle is
-recorded as unverified, however good the underlying test is.
-
-The scoreboard is regenerated from the test suite on every pull request, and a
-permutation that used to pass a gate cannot quietly stop passing it.
-
-**What this means for you:** treat *Fully Converts* as "this tool has a route",
-and validate the specific options your workflows use — which is what the
-validation guidance below is for. The Known Gaps sections on this page name the
-options that are deliberately refused.
-
-## Recognised but Unconverted Tools
-
-Not every Alteryx tool has a PlaidCloud conversion yet. When the importer meets a
-tool it recognises as a real, published Alteryx tool but does not convert, it
-**refuses by name** — the conversion note states the tool and its Alteryx palette
-category, for example *"Alteryx 'Rank' (Preparation) is a recognised Alteryx tool
-that PlaidCloud does not convert yet."* The step fails closed rather than
-producing a plausible but wrong result.
-
-This is deliberately distinct from an **unrecognised** tool — a typo, or a plugin
-PlaidCloud has never heard of — which still reports the generic *"Unrecognised
-Alteryx tool; manual mapping required."* A named refusal tells you the tool is
-genuine and simply awaits conversion support; the generic message tells you to
-check the workflow.
-
-### Image Recognition
-
-Alteryx **Image Recognition** converts to a step, but that step depends on
-machine vision the workflow-parity image does not carry, so it stops at run
-time and names what is missing rather than return a wrong answer. Treat it as
-unsupported until the parity image gains the capability:
-
-| Alteryx tool | Why it refuses |
-| --- | --- |
-| Image Recognition | Trains a deep-learning image classifier from pretrained weights. The parity image ships no deep-learning framework and none of the starting weights, so it can neither train nor score. The refusal points at [ML: Score](/reference/workflow-steps/machine-learning/ml-score/), which reads the same model table — train the classifier outside PlaidCloud and score it there. |
-
-Alteryx **Image Template** converts too: its Manual mode crops each region
-drawn on the template (see the coverage table above). Only its Automatic mode,
-which detects regions with a layout detector the parity image does not carry,
-stops at run time.
-
-### Connector Input and Output Tools
+## Connecting to External Systems
 
 Alteryx's connector endpoints — Salesforce, HTTP, Google Analytics, Cassandra,
-Email, Hadoop and Spark, in both directions — do not convert, because PlaidCloud
-reaches these systems through a connection rather than through a tool on the
-canvas. Each one now refuses by name and states where the work belongs:
+email, Hadoop, and Spark, in both directions — do not convert, because
+PlaidCloud reaches these systems through a connection rather than through a
+tool on the canvas. Each one refuses by name and states where the work
+belongs:
 
-| Alteryx tool | Where it goes in PlaidCloud |
+| Alteryx Tool | Where It Goes in PlaidCloud |
 | --- | --- |
 | Salesforce Input / Output | A **Salesforce** connection |
 | HTTP Input | A **REST Request** step against a **REST** connection |
@@ -294,15 +236,21 @@ canvas. Each one now refuses by name and states where the work belongs:
 | Hadoop Input / Output | **Import: SQL** / **Export: SQL** through a Hive, Impala or Presto connection |
 | Spark Input / Output | **Import: SQL** / **Export: SQL** through a Databricks connection |
 
-Three of these have no write path at all, and the refusal says so rather than
-implying one is coming. PlaidCloud reads Google Analytics and Cassandra but never
-writes to them, so a Google Analytics Output or Cassandra Output tool becomes an
-**Export: SQL** to a supported destination instead. Email is not a data
-destination either: **Notify: Email** sends a notification to people, so an Email
-Output tool becomes an Export step plus a separate notification.
+Three of these have no write path at all. PlaidCloud reads Google Analytics
+and Cassandra but never writes to them, so a Google Analytics Output or
+Cassandra Output tool becomes an **Export: SQL** to a supported destination
+instead. Email is not a data destination either: **Notify: Email** sends a
+notification to people, so an Email Output tool becomes an Export step plus a
+separate notification.
 
-## Validation Notes
+## Validating a Converted Workflow
 
-For production workflows, validate converted outputs against trusted Alteryx outputs. PlaidCloud validation focuses on schema, row count, and row values, and ignores row order unless the workflow explicitly depends on ordered data.
-
-Specialized operations such as spatial processing, fuzzy matching, OCR, NLP, and reporting may run through managed job executors. These routes keep the converted workflow cloud-native while covering capabilities that are not best expressed as a single SQL transform. Machine-learning pipelines convert to the native [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) steps.
+For production workflows, validate converted outputs against trusted Alteryx
+outputs — PlaidCloud validation focuses on schema, row count, and row values,
+and ignores row order unless the workflow depends on it. Specialized
+operations (spatial, fuzzy matching, OCR, NLP, reporting) run through managed
+job executors that keep the workflow cloud-native; machine-learning pipelines
+convert to the native [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/)
+and [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) steps.
+See [Migrate Alteryx Workflows](/guides/workflows/migrate-alteryx-workflows/)
+for the end-to-end import and validation guide.
