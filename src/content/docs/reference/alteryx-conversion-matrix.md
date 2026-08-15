@@ -27,10 +27,12 @@ Coverage levels:
 | CalgaryInput | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input reading the stand-in table | Applies the saved query as a filter, now including one built from an Or or wrapped in a Not. Refuses contains/starts-with/spatial queries, and a read limited by Skip Records or Max Records. |
 | CalgaryJoin | Converts With Validation | [Calgary Join](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) matching each record against the stand-in table | Converts when the incoming field is a plain value matched to a value index, keeping the records that matched and carrying the input's columns through; refuses, naming Spatial Match, when the field is spatial — the workflow records the index's name but not its kind. See [Calgary Tool Coverage](#calgary-tool-coverage). |
 | CalgaryLoader | Converts With Validation | [Calgary databases](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) writing the stand-in table | Writes `calgary_<database>` from its input for every Calgary reader of that file to bind to. Refuses when two `.cydb` files of the same name would claim one table. |
+| Centroid | Converts To Executor | Centroid executor op | Reduces each geometry to its centre point, appended as a `Centroid` column. |
 | CheckBoxGroup | Fully Converts | Controlled workflow variable | Converts app check box choices to controlled user input. |
 | Classification | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | Condition | Fully Converts | Step condition with warning or error action | Uses workflow step conditions to trigger warnings, errors, or branches. |
 | ControlParam | Fully Converts | Macro control parameter | Maps to PlaidCloud macro parameter handling. |
+| ConvexHull | Converts To Executor | Convex Hull executor op | Builds the smallest convex polygon enclosing each geometry, appended as a `ConvexHull` column — distinct from the grouped convex hull a Summarize builds. |
 | CreatePoints | Fully Converts | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `geom_point` | Builds point geometry from longitude/latitude columns, in SQL. Non-floating-point coordinate modes are flagged rather than mis-scaled. |
 | Create Samples | Converts With Validation | Three Table Extract steps, one per output | Splits the input into Estimation, Validation, and Holdout at the configured percentages. Each sample holds its configured share, drawn at random — not the same records Alteryx's seed picks, and a different set on each run. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | CrossTab | Fully Converts | Pivot or cross-tab transform | Converts rows to columns. Sum, Average, Count, Min, Max, Concatenate, Mode and the derived totals (Total Row/Column, Percent Row/Column) convert directly; First and Last substitute the cell's minimum value — the pivot carries no record order — and say so; Count Non Null has no pivot equivalent and refuses, naming the method. |
@@ -101,7 +103,7 @@ Coverage levels:
 | Smooth | Converts To Executor | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
 | Sort | Fully Converts | Sort transform | Sorts records by configured fields and directions. |
 | SpatialInfo | Converts To Executor | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Area, length, centroid, and bounding rectangle as WGS84 geodesic measures. Object type, part/point counts, Peano key, and end-point coordinates are skipped with a note. |
-| SpatialMatch | Converts With Validation | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) or [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Plain matched pairs run in the database; the intersection-geometry and Unmatched outputs run in the workflow engine. |
+| SpatialMatch | Converts With Validation | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) or [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Every relationship converts: Within and Contains match in the database; Intersects, Touches, Crosses, Overlaps and CentroidIn each run their own geometry test in the workflow engine, as do the intersection-geometry and Unmatched outputs. Validate the engine-run relationships against expected output. |
 | SpatialProcess | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut, with optional dropping of empty results. |
 | Summarize | Fully Converts | Aggregate transform | Groups and aggregates records — sum, count, average, minimum, maximum, median, mode, sample standard deviation and variance, and count distinct. Statistics with no direct equivalent, such as percentile, range, and skewness, are reported rather than silently approximated. First and Last, which take the value from the first or last record in incoming file order, are refused by name — a set-based query has no reproducible record order to take them from. |
 | Tab | Annotation Only | App tab grouping | Preserved as converted app structure where relevant. |
@@ -135,6 +137,8 @@ for how they fit together.
 | Alteryx Spatial Tool | PlaidCloud Route | Runs In |
 | --- | --- | --- |
 | Buffer | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Workflow engine |
+| Centroid | Centroid executor op | Workflow engine |
+| Convex Hull | Convex Hull executor op | Workflow engine |
 | Create Points | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
 | Distance | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
 | Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database |
