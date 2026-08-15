@@ -65,6 +65,7 @@ Coverage levels:
 | Barcode | Converts To Executor | Barcode executor | Reads or writes barcodes in the configured symbology. A row with no readable barcode returns empty; several return a joined list. |
 | ImageProcessing | Converts To Executor | Image transform executor | Applies the tool's pipeline in canvas order — grayscale, scale, crop, and custom-angle rotation — writing `<field>_processed`. Thresholding, brightness balance, OCR optimization, and automatic alignment stop with a message naming the setting, because Alteryx records the choice but not the values needed to reproduce it. |
 | ImageProfile | Converts To Executor | Image profile executor | Reports image dimensions, mode, format, and channel count, or luminance statistics. Column names are PlaidCloud's — Alteryx records none. |
+| ImageTemplate | Converts With Validation | Image Template executor op | Manual mode crops the image to each region drawn on the template and emits one row per region, labelled by a `Region` column. Automatic mode, which detects the regions on the page, stops with a message — draw the regions in Manual mode. |
 | ImageToText | Converts To Executor | OCR executor | Extracts text from images through managed OCR. |
 | Insights | Cloud-Native Equivalent | PlaidCloud dashboard or artifact output | Creates a cloud-native review artifact for repeatable sharing and review. |
 | Join | Fully Converts | Join transform | Produces joined, left-only, and right-only streams, matched on a single- or multi-field key or by record position. |
@@ -72,6 +73,7 @@ Coverage levels:
 | Label | Annotation Only | Canvas label | Preserved as workflow context. |
 | LabelGroup | Annotation Only | Canvas label group | Preserved as workflow context. |
 | Link | Annotation Only | Canvas link or annotation | Preserved as workflow context. |
+| LineToPolygon | Converts To Executor | Line To Polygon executor op | Closes each line into a polygon ring, appended as a `Polygon` column. A line of fewer than three distinct points encloses no area and is left blank. |
 | ListBox | Fully Converts | Controlled workflow variable | Converts app list selections to controlled user input. |
 | MacroInput | Fully Converts | PlaidCloud macro input port | Maps directly to a PlaidCloud macro input step. |
 | MacroOutput | Fully Converts | PlaidCloud macro output port | Maps directly to a PlaidCloud macro output step. |
@@ -86,6 +88,7 @@ Coverage levels:
 | Overlay | Converts To Executor | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
 | PDFInput | Converts To Executor | PDF extraction executor | Extracts text or tables from PDFs. |
 | PlotlyCharting | Cloud-Native Equivalent | Chart artifact | Creates a PlaidCloud chart artifact from converted data. |
+| PointToLine | Converts To Executor | Point To Line executor op | Threads each group's points, ordered by the sequence field (input order when unset), into one `SequenceLine` per group. |
 | PolyBuild | Converts To Executor | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
 | PolySplit | Converts To Executor | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
 | PortfolioComposerImage | Cloud-Native Equivalent | Report image artifact | Places images into generated PlaidCloud report artifacts. |
@@ -97,6 +100,7 @@ Coverage levels:
 | RadioButtonGroup | Fully Converts | Controlled workflow variable | Converts app radio choices to controlled user input. |
 | Random % Sample | Converts With Validation | Table Extract with a random record position | Returns exactly the number or the percentage of records asked for. With a fixed seed set, the count is exact but the records are not the ones Alteryx's seed picks. See [Random Sampling](/guides/workflows/migrate-alteryx-workflows/#random-sampling). |
 | RecordID | Fully Converts | Row identifier transform | Adds a deterministic record identifier in the configured type (Int16/Int32/Int64, Double or String) and start value; grouped numbering restarts within each group. Field size is not applied, so a String identifier is not zero-padded to a fixed width. |
+| Redistribute | Converts To Executor | Redistribute executor op | Reallocates a measure from one set of geographies onto another by area of overlap, appended as a `Redistributed` column. |
 | RegEx | Fully Converts | Regular expression transform | Parses, matches, or replaces text using configured expressions. |
 | Regression | Converts With Validation | ML Train step | Fuses with the upstream Assisted Modeling chain into a single ML Train step carrying the algorithm, target, features, and hyperparameters. |
 | ReportMap | Cloud-Native Equivalent | Map report artifact | Produces a cloud-native map/report artifact. |
@@ -145,9 +149,12 @@ for how they fit together.
 | Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database |
 | Generalize | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Workflow engine |
 | Heat Map | [Heat Map (macro)](/reference/workflow-steps/macros/macro-heat-map/) | Workflow engine |
+| Line To Polygon | Line To Polygon executor op | Workflow engine |
 | Make Grid | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Workflow engine |
+| Point To Line | Point To Line executor op | Workflow engine |
 | Poly-Build | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Workflow engine |
 | Poly-Split | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | Workflow engine |
+| Redistribute | Redistribute executor op | Workflow engine |
 | Smooth | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Workflow engine |
 | Spatial Info | [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) | Workflow engine |
 | Spatial Match | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) | Database |
@@ -254,17 +261,21 @@ Alteryx tool; manual mapping required."* A named refusal tells you the tool is
 genuine and simply awaits conversion support; the generic message tells you to
 check the workflow.
 
-### Image Recognition and Image Template
+### Image Recognition
 
-Two Alteryx **Image** tools convert to a step, but that step depends on machine
-vision the workflow-parity image does not carry, so it stops at run time and
-names what is missing rather than return a wrong answer. Treat both as
+Alteryx **Image Recognition** converts to a step, but that step depends on
+machine vision the workflow-parity image does not carry, so it stops at run
+time and names what is missing rather than return a wrong answer. Treat it as
 unsupported until the parity image gains the capability:
 
 | Alteryx tool | Why it refuses |
 | --- | --- |
 | Image Recognition | Trains a deep-learning image classifier from pretrained weights. The parity image ships no deep-learning framework and none of the starting weights, so it can neither train nor score. The refusal points at [ML: Score](/reference/workflow-steps/machine-learning/ml-score/), which reads the same model table — train the classifier outside PlaidCloud and score it there. |
-| Image Template | Extracts page regions. Automatic mode needs a layout detector the parity image does not carry; manual regions have no reader either, since PDF to Text and Image to Text reject a Template Input. The refusal names both, in either mode. |
+
+Alteryx **Image Template** converts too: its Manual mode crops each region
+drawn on the template (see the coverage table above). Only its Automatic mode,
+which detects regions with a layout detector the parity image does not carry,
+stops at run time.
 
 ### Connector Input and Output Tools
 
