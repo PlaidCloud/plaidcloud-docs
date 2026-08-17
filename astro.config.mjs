@@ -74,6 +74,7 @@ export default defineConfig({
 		resolve: {
 			alias: {
 				'@snippets': fileURLToPath(new URL('./src/snippets', import.meta.url)),
+				'@components': fileURLToPath(new URL('./src/components', import.meta.url)),
 			},
 		},
 		// @resvg/resvg-js is a native addon — keep Vite from trying to bundle it
