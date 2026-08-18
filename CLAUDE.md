@@ -154,7 +154,7 @@ engineering scoreboard. Its tool table has **exactly three statuses and no other
   belongs. A validation caveat, a managed-executor route, a cloud-native-artifact
   equivalent, or an annotation-only passthrough is **still Full** — none of those demote.
 - **Partial** — converts and runs for its common use, but one whole *capability mode* is
-  not reproduced (e.g. Trade Area drive-time; Image Template automatic region detection).
+  not reproduced (e.g. Trade Area drive-time).
 - **Not supported** — no conversion path at all (e.g. Geocoder). A tool that
   converts but refuses one narrow option/mode is **Full**, not
   Not-supported — drop the narrow caveat from the marketing table.
