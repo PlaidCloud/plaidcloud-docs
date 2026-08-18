@@ -155,8 +155,8 @@ engineering scoreboard. Its tool table has **exactly three statuses and no other
   equivalent, or an annotation-only passthrough is **still Full** — none of those demote.
 - **Partial** — converts and runs for its common use, but one whole *capability mode* is
   not reproduced (e.g. Trade Area drive-time; Image Template automatic region detection).
-- **Not supported** — no conversion path at all (e.g. Image Recognition training,
-  Geocoder). A tool that converts but refuses one narrow option/mode is **Full**, not
+- **Not supported** — no conversion path at all (e.g. Geocoder). A tool that
+  converts but refuses one narrow option/mode is **Full**, not
   Not-supported — drop the narrow caveat from the marketing table.
 
 **Hard rules, no exceptions:**
