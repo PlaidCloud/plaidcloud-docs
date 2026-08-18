@@ -66,7 +66,6 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Error | Full | Step condition (error) | Converts configured error behavior to step conditions. |
 | File Browse | Full | Controlled Document file variable | Lets users choose a file for a converted app run. |
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
-| Find Nearest | Full | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join in the database. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
@@ -133,6 +132,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Visual Layout | Full | Canvas layout metadata | Preserved as design context. |
 | Word Cloud | Full | Text visualization artifact | Creates a visualization artifact from text analysis. |
 | XML Parse | Full | XML parse transform | Extracts XML fields into workflow data. |
+| Find Nearest | Partial | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join in the database, in straight-line distance mode. Drive-time nearest — ranking by minutes on a road network — is not yet reproduced. |
 | Trade Area | Partial | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units, in fixed-radius mode. Drive-time trade areas — minutes on a road network — are not yet reproduced. |
 | Image Template | Partial | Image Template executor op | Manual mode crops the image to each region you draw on the template, emitting one row per region. Automatic mode, which detects the regions on the page itself, is not yet reproduced — draw the regions in Manual mode instead. |
 | Image Recognition | Not supported | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Trains a deep-learning image classifier from pretrained weights; the parity image carries no deep-learning framework or starting weights, so it can neither train nor score. Train and score the classifier outside PlaidCloud, then bring predictions in through ML: Score, which reads the same model table. |
@@ -180,9 +180,10 @@ for how they fit together.
 
 ### Known Spatial Gaps
 
-- **Drive-time trade areas.** Trade Area converts in fixed-radius mode. There is
-  no factor that turns minutes on a road network into a distance, so drive-time
-  sizing does not convert.
+- **Drive-time trade areas and nearest.** Trade Area converts in fixed-radius
+  mode and Find Nearest in straight-line distance mode. There is no factor that
+  turns minutes on a road network into a distance, so drive-time trade-area
+  sizing and drive-time nearest-neighbor ranking do not convert.
 - **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile cannot be
   read. Conversion fails closed rather than emitting an import that crashes at
   run time; other spatial formats are unaffected.
