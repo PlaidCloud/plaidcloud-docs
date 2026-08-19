@@ -18,6 +18,8 @@ From a practical purpose, allocations are set up in PlaidCloud in similar fashio
 3. **Specify the Results Table**: Post-allocated data must be stored in a table. Specify the table in the **Allocation Result Table** section of the allocation result section of the transform.
 4. **Specify the Assignment Dimension**: Allocations require an assignment dimension, whose purpose is to provide the prescription for how each record or set of records in the preallocated will be assigned. Specify the the assignment dimension in the **Assignment Dimension Hierarchy** section of the allocation transform.
 
+Beyond those four, the two mapping tabs need column **Roles** set before the step will save: a **Value to Allocate** column in the **Allocation Source Map**, and **Split Value**, **Source Relation (Denominator)** and **Allocation Target (Numerator)** columns in the **Driver Data Map**. PlaidCloud checks these when you save and names what is missing — see [Troubleshooting Allocations](/guides/allocations/results/troubleshooting-allocations/#why-an-allocation-step-will-not-save).
+
 ## Key Concepts
 
 The sum of values in an allocated dataset should tie out to those of the pre-allocated source data
