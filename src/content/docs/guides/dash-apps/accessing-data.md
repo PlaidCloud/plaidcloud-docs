@@ -27,7 +27,7 @@ That's all the setup you need. You do **not** supply a token, username, or passw
 
 > **Call it from inside a callback.** `get_connection()` reads the viewer's token from the current request's Flask session, which is only available while a callback is handling that viewer's request. If you push a blocking call onto a background thread, a raw thread pool won't carry the session — read the token inside the callback and pass it in explicitly instead. Calling `get_connection()` outside a request (or with authentication disabled) raises a `RuntimeError` rather than silently returning a connection with no identity behind it.
 
-> **Name your project in code.** There is no project setting in the publish dialog — a Dash app reads whichever project you name in `get_connection(project_id=...)`. (To read from more than one project, open a connection per project.)
+> **Name your project in code.** There is no project setting in the publish dialog — a Dash app reads whichever project you name in `get_connection(project_id=...)`, the same as a server Panel app's `PlaidConnection(project_id=...)` — see [Reading Data and the Signed-In User](/guides/panel-apps/accessing-data/). A bare `get_connection()` with no `project_id` is fine for an app that never touches project data (one that only calls `current_user()`, for example); call a project-scoped operation on that connection without a real, accessible project id and it raises `Project Id has not been set`. (To read from more than one project, open a connection per project.)
 
 ### Read a Table
 

@@ -27,7 +27,7 @@ Two things a Dash app does **not** have, both by design and both matching what a
 
 ## App Contract
 
-A Dash app's entry point (`app.py`, unless you name a different **Entry Point**) must:
+A Dash app's entry file must be named `app.py` and must:
 
 ```python
 import os
@@ -41,9 +41,10 @@ server = app.server   # gunicorn's entry point targets app:server
 pcd.init_auth(server, url_base_pathname=os.environ["DASH_URL_BASE_PATHNAME"])
 ```
 
-- **Expose `server = app.server`.** Dash apps run under gunicorn, and PlaidCloud's launcher serves `app:server` — Dash's underlying Flask/WSGI application.
+- **Name the file `app.py`.** PlaidCloud's launcher always starts your app with `gunicorn app:server` — a fixed Python module target — so whatever path you set in **Entry Point** (repo root or a subfolder), the file at that path has to be named `app.py`.
+- **Expose `server = app.server`** at module level. That's the object `app:server` imports.
 - **Don't set `requests_pathname_prefix` or `url_base_pathname` on `Dash(__name__)`.** Every Dash app is served under a mandatory URL prefix (`/serve/<slug>/`), and the platform sets it for you through the `DASH_URL_BASE_PATHNAME` environment variable — which is Dash's own native config variable, read before any constructor argument. Passing the prefix explicitly as well conflicts with Dash's own configuration and the app fails to start.
-- **Keep `app.py` at the entry root your publish form points to.** An entry point in a subdirectory isn't supported yet — put your app file at the path you name in **Entry Point**.
+- **`Entry Point` can point into a subfolder.** Before starting gunicorn, the host sets the container's working directory to the entry file's own folder — so same-folder sibling imports (`import data`) and relative file paths in your app resolve against that folder, the same as running `python app.py` from inside it.
 - **Call `plaidcloud_dash.init_auth(server, url_base_pathname=...)`** before your layout and callbacks matter, so every request is gated behind per-user sign-in.
 
 PlaidCloud runs your app under **threaded gunicorn**, so it serves concurrent viewers from one process — you don't need to do anything extra to support more than one person using the app at once.
