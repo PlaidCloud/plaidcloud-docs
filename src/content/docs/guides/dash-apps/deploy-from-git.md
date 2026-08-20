@@ -24,26 +24,22 @@ This walkthrough is nearly identical to [Deploy a Panel App From PlaidCloud Git]
 
 ## 1. Write a Minimal Dash App
 
-Your app needs an **entry point** — a Python file that builds a Dash app, exposes its Flask server, and wires in the platform's authentication — and, optionally, a **`requirements.txt`** for extra packages, either at the repository root or next to your entry point.
+Your app needs an **entry point** — a Python file that builds a Dash app and exposes its Flask server — and, optionally, a **`requirements.txt`** for extra packages, either at the repository root or next to your entry point.
 
 ```
 apps/
-├── app.py            # entry point — exposes `server` and calls init_auth()
+├── app.py            # entry point — exposes `server`
 └── requirements.txt  # optional; extra dependencies (repo root or next to app.py)
 ```
 
 Create `app.py`:
 
 ```python
-import os
-
 import plaidcloud_dash as pcd
 from dash import Dash, Input, Output, html
 
 app = Dash(__name__)  # picks up DASH_URL_BASE_PATHNAME from the platform automatically
-server = app.server   # gunicorn's entry point targets app:server
-
-pcd.init_auth(server, url_base_pathname=os.environ["DASH_URL_BASE_PATHNAME"])
+server = app.server   # the platform imports this and wires per-user sign-in for you
 
 app.layout = html.Div(
     [

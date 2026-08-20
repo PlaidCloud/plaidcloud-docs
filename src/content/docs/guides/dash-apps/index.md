@@ -27,25 +27,21 @@ Two things a Dash app does **not** have, both by design and both matching what a
 
 ## App Contract
 
-A Dash app's entry file must be named `app.py` and must:
+A Dash app's entry file must be named `app.py` and must expose a `server` — that's the whole contract:
 
 ```python
-import os
-
-import plaidcloud_dash as pcd
 from dash import Dash
 
 app = Dash(__name__)  # picks up DASH_URL_BASE_PATHNAME from the platform automatically
-server = app.server   # gunicorn's entry point targets app:server
-
-pcd.init_auth(server, url_base_pathname=os.environ["DASH_URL_BASE_PATHNAME"])
+server = app.server   # the platform imports this and wires per-user sign-in for you
 ```
 
-- **Name the file `app.py`.** PlaidCloud's launcher always starts your app with `gunicorn app:server` — a fixed Python module target — so whatever path you set in **Entry Point** (repo root or a subfolder), the file at that path has to be named `app.py`.
-- **Expose `server = app.server`** at module level. That's the object `app:server` imports.
+- **Name the file `app.py`.** PlaidCloud's launcher imports your app as the `app` module and reads its `server` object, so whatever path you set in **Entry Point** (repo root or a subfolder), the file at that path has to be named `app.py`.
+- **Expose `server = app.server`** at module level. That's the object the platform imports.
+- **You don't wire sign-in yourself.** The platform gates every request behind per-user single sign-on automatically — you don't call `init_auth` or import `plaidcloud_dash` just to get identity. (An older app that *does* call `plaidcloud_dash.init_auth(server, url_base_pathname=os.environ["DASH_URL_BASE_PATHNAME"])` still works unchanged — that call is idempotent, so it coexists with the platform's own wiring.)
 - **Don't set `requests_pathname_prefix` or `url_base_pathname` on `Dash(__name__)`.** Every Dash app is served under a mandatory URL prefix (`/serve/<slug>/`), and the platform sets it for you through the `DASH_URL_BASE_PATHNAME` environment variable — which is Dash's own native config variable, read before any constructor argument. Passing the prefix explicitly as well conflicts with Dash's own configuration and the app fails to start.
-- **`Entry Point` can point into a subfolder.** Before starting gunicorn, the host sets the container's working directory to the entry file's own folder — so same-folder sibling imports (`import data`) and relative file paths in your app resolve against that folder, the same as running `python app.py` from inside it.
-- **Call `plaidcloud_dash.init_auth(server, url_base_pathname=...)`** before your layout and callbacks matter, so every request is gated behind per-user sign-in.
+- **`Entry Point` can point into a subfolder.** Before starting the app, the host sets the container's working directory to the entry file's own folder — so same-folder sibling imports (`import data`) and relative file paths in your app resolve against that folder, the same as running `python app.py` from inside it.
+- **Don't read data at import time.** Do your PlaidCloud reads inside callbacks, not at module scope — see [Reading Data and the Signed-In User in a Dash App](/guides/dash-apps/accessing-data/). Your app's module runs once, at container start, before any viewer has signed in; a connection or table read there has no viewer to act as and fails the app on boot.
 
 PlaidCloud runs your app under **threaded gunicorn**, so it serves concurrent viewers from one process — you don't need to do anything extra to support more than one person using the app at once.
 
