@@ -1,0 +1,167 @@
+---
+title: Transform Data With SQL and Expressions
+description: Shape data inside a workflow table step — select and filter with SQL, join two tables, add a calculated column with an expression, and preview the result before you run.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minutes · a filter, a join, a calculated column*
+
+Most of the work in a [workflow](/guides/workflows/) is one small move repeated: take a table, reshape it, write the result to a new table. This tutorial teaches that move — selecting and filtering rows, joining a second table, and adding a calculated column — using the two tools you reach for constantly: **SQL** and **column expressions**. Learn the pattern once and it applies to nearly every transform step you'll ever build.
+
+The goal here is the *shape* of the work and where to look things up — not to memorize functions. PlaidCloud ships over a thousand SQL functions; you'll link into that reference, never reproduce it.
+
+## What You'll Build
+
+A single table step that reads a raw `orders` table, keeps only completed orders, joins each one to a `customers` table for the region, and adds a calculated `net_amount` column — writing the result to a new `orders_clean` table.
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+Every source table is left untouched. A transform step reads from one or more sources and writes to a target — the originals stay exactly as they were, which is what makes a workflow safe to re-run and audit.
+
+## Two Ways to Shape a Column
+
+Before the steps, the one distinction worth holding in your head:
+
+| Tool | What it is | Where you write it |
+|---|---|---|
+| **SQL** | The query that selects, filters, and joins whole tables | The step's SQL editor |
+| **Expression** | A single formula that produces one column's value, row by row | The column mapper's expression cell |
+
+You reach for SQL to decide *which rows and which tables*. You reach for an expression to decide *what one column contains*. Many steps let you mix both — a SQL step to shape the set, expression cells to compute the columns.
+
+## Prerequisites
+
+- A PlaidCloud workspace and a project to work in ([start a free trial](https://app.plaidcloud.com) if you need one).
+- Two [tables](/guides/data/tables-views/) already in the project — this tutorial assumes `orders` (with `order_id`, `customer_id`, `status`, `amount`, `tax`) and `customers` (with `customer_id`, `region`). If you don't have them, the [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/) tutorial imports tables from CSV first.
+- A workflow open in the **Workflow Explorer** — open a project's **Workflows** tab and double-click the workflow. See [Create a Workflow](/guides/workflows/create-workflow/) if you don't have one yet.
+
+## Step 1: Select and Filter With SQL
+
+Start narrow: pull just the columns and rows you actually want.
+
+<Steps>
+
+1. Add a table transform step and open its SQL editor.
+2. Point the step's source at your `orders` table.
+3. Write a query that keeps only the columns you need and drops the rows you don't:
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+That `WHERE` clause is the filter — everything that isn't a completed, non-zero order never reaches the target. Selecting only four columns instead of `SELECT *` keeps the downstream table lean and its intent obvious.
+
+> **Write SQL to be read.** One clause per line, one column per line, aligned `CASE` / `WHEN` — never a dense one-liner. The editor's **Prettify** button (or **Shift+Alt+F**, **Shift+Option+F** on macOS) reformats it in place without changing what it does. See [Prettify (Format) Code in Editors](/guides/workflows/prettify-code-in-editors/).
+
+## Step 2: Join the Second Table
+
+A join brings columns from a second table alongside the first, matched on a shared key. Here you want each order's `region`, which lives on `customers`.
+
+<Steps>
+
+1. Add `customers` as a second source on the step.
+2. Extend the query to join on the shared key and pull the column you need:
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` keeps only orders that have a matching customer. If you'd rather keep every order even when no customer matches — with `region` left null — use `LEFT JOIN` instead. A mismatched or wrong join key is the most common cause of a join that returns too many or too few rows, so confirm the row count in the preview (next step) before moving on.
+
+> **Table names in the query.** Refer to each source by the name the step gives it. On the default Lakehouse warehouses a physical table id can contain hyphens — quote it in backticks when it does (for example `` `analyzetable_9f3c...` ``) so the engine reads it as one identifier.
+
+## Step 3: Add a Calculated Column With an Expression
+
+Now compute a value that isn't in either source. A calculated (expression) column runs one formula per row and writes the result to a new column. Add `net_amount` — the amount after tax.
+
+<Steps>
+
+1. In the step's column mapper, add a new target column named `net_amount`.
+2. In its expression cell, write the formula:
+
+   ```python
+   amount - tax
+   ```
+
+3. For anything conditional, expressions carry the usual logic. A shipping flag, for example:
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **An expression cell is a single formula, not a script.** It's evaluated as one bare expression, so a multi-line expression must supply its own outer parentheses (as above) — otherwise it fails at run time. Keep each cell to one column's value; use the SQL step for anything that spans rows or tables.
+
+Whether a given function exists, and exactly how its arguments behave, depends on which Lakehouse generation your project runs on — the two track different upstream engines. Don't guess a function name; look it up:
+
+| Lakehouse | Function library |
+|---|---|
+| **v1** | Databend SQL functions |
+| **v2** | StarRocks 4.1 SQL functions |
+
+The [Expressions reference](/reference/expressions/) is the entry point — string operations, date math, conditional logic, casting, and aggregations — with the canonical upstream syntax linked for each generation. Treat it as the lookup you return to, not something to read end to end.
+
+> **Prettify formats expression cells too**, applying standard Python spacing and line breaks — handy for a long conditional.
+
+## Step 4: Preview Before You Run
+
+You don't have to run the whole workflow to see whether the step did what you meant. The **Data Preview drawer** shows a step's output — the first 100 rows with typed columns — right inside the Workflow Explorer.
+
+<Steps>
+
+1. Run just this step so it produces its output table. (Until it has run once, the preview reports *"No data yet — run the step to generate this table."*)
+2. Open the preview: select the step and choose **Preview Output Data** (also on the step's right-click menu).
+3. Confirm the shape: the columns you selected are present, `region` came through the join, `net_amount` computed correctly, and the row count reflects the filter.
+
+</Steps>
+
+While the drawer is open, selecting any other step retargets the preview to that step's output — walk a chain of steps and watch the data change shape at each stage. For anything past the first 100 rows, or to slice and filter, click **Open in Table Explorer**. Full details in [Preview Step Data](/guides/workflows/preview-step-data/).
+
+## The Pattern, Generalized
+
+Every one of those moves is the same primitive:
+
+> **Read one or more source tables, reshape them, write a new target.** SQL decides the rows and the tables; expressions decide each column's value; the preview confirms the result before you commit to a full run. Chain a few of these and you have a pipeline — each step's target becomes the next step's source.
+
+Write intermediate results to **tables** when a later step or a dashboard needs the data materialized, and to **[views](/guides/data/tables-views/)** when you'd rather compute on read and save the storage — a view holds no data of its own and updates automatically when its sources change.
+
+When a transform outgrows SQL and expressions entirely — bespoke Python, an external package, custom logic — reach for a [User Defined Transform](/reference/workflow-steps/general/user-defined-transform/). That's the exception, not the everyday case; SQL and expressions cover the overwhelming majority of shaping work.
+
+## Where to Go Next
+
+- [Expressions reference](/reference/expressions/) — every function available for calculated columns, per Lakehouse generation.
+- [Workflow steps reference](/reference/workflow-steps/) — the full catalog of transform, import, and export steps.
+- [Workflows guide](/guides/workflows/) — conditions, loops, variables, and error handling around your steps.
+- [Preview Step Data](/guides/workflows/preview-step-data/) — the drawer, in full.
+- [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/) — the end-to-end pipeline this step slots into.
