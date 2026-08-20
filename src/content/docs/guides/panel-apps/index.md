@@ -58,3 +58,4 @@ There are two runtimes, shown in the **Runtime** column:
 - [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) — the complete path from repository to a served app, using a managed no-credentials connection.
 - [Creating a Panel App](/guides/panel-apps/creating/) — publish a server app from git, or a WASM app from a file.
 - [Using a Panel App](/guides/panel-apps/using/) — build status, opening the app, editing, and removing it.
+- [Build an AI Agent Inside a Panel App](/get-started/tutorials/panel-ai-agent/) — a tutorial: give an AI agent the REST API as its tools, scoped to the viewer's own permissions.
