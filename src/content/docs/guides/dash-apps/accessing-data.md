@@ -41,6 +41,36 @@ Because the connection is the viewer, this returns only the rows the viewer is a
 
 > **Read tables by name, not by writing SQL.** On a project where an administrator has turned on [Row Access](/administration/access/managing-security-groups-and-assignments/#row-access-and-queries-you-write-yourself), reading by name applies each viewer's row grants, while a query your app composes itself is declined for anyone who is not a project Architect — there is no single table for the grants to filter. Reading by name keeps your app working either way.
 
+## Read in a Callback, Never at Import or Process Scope
+
+One process serves every viewer. Getting data isolation right comes down to two rules:
+
+- **Never open a connection or read a table at module scope (import time).** Your `app.py` and any modules it imports run **once**, when the container starts — before anyone has signed in. A `get_connection()` or `PlaidConnection()` there has no viewer to authenticate as and fails the app on boot (this is the most common cause of an "app didn't start" crash loop). Keep every read inside a callback, where a viewer's request — and their session token — is present.
+
+- **Never cache a per-viewer result at module or process scope.** The threaded gunicorn worker shares one Python process across all concurrent viewers, so a DataFrame you stash in a module-level variable, a global dict, or an `lru_cache` is visible to *every* other viewer — one person's rows leak into another's view. Compute per-viewer data inside the callback and let it go out of scope when the callback returns:
+
+  ```python
+  # WRONG — a module/process-global cache is shared across all viewers
+  _CACHE = {}
+
+  @app.callback(...)
+  def _load(n):
+      viewer = current_user()
+      if viewer not in _CACHE:                      # still process-global; leaks under load
+          _CACHE[viewer] = get_connection(project_id="…").get_dataframe("Sales")
+      return _CACHE[viewer].to_dict("records")
+
+  # RIGHT — read inside the callback, no shared state
+  @app.callback(...)
+  def _load(n):
+      conn = get_connection(project_id="…")          # this viewer, this request
+      return conn.get_dataframe("Sales").to_dict("records")
+  ```
+
+### Shared Reference Data
+
+If several viewers genuinely need the *same* reference data — a lookup table, a product list — don't try to share it through a process-level cache. Grant those tables to the app's users through PlaidCloud's normal [Row Access / project permissions](/administration/access/managing-security-groups-and-assignments/), and let each viewer read them under their own `get_connection()`. Everyone gets the same reference rows because they're all granted the same access — not because one viewer's read is reused for another.
+
 ## Identify the Viewer
 
 To tailor what the app shows to **who is looking at it** — a personalized greeting, hiding a tab, or row-level security — call `current_user()`:
