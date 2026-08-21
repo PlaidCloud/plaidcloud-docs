@@ -186,21 +186,23 @@ workspace. Routing and drive-time areas use OpenStreetMap data —
 © OpenStreetMap contributors, available under the [Open Database License
 (ODbL)](https://www.openstreetmap.org/copyright).
 
-### Known Spatial Gaps
+### Known Spatial Prerequisites
 
-- **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile cannot be
-  read. Conversion fails closed rather than emitting an import that crashes at
-  run time; other spatial formats are unaffected.
-- **Some Spatial Info measures.** Object type, part count, point count, Peano
-  key, and end-point coordinates have no verified parity definition and are
-  skipped. Conversion names the dropped measures in a note.
-- **Non-floating-point Create Points modes.** Coordinates stored as integers
-  scaled by 1,000,000, or already projected, are flagged for upstream rescaling
-  rather than converted into mis-scaled points.
-- **Make Grid and Poly-Split configuration forms.** Both step types run
-  correctly, but neither has a configuration form in the workflow designer yet;
-  converted steps carry their settings, and hand-authoring goes through the API
-  or MCP.
+The spatial tools themselves convert; these are prerequisites on the input.
+
+- **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile has no
+  open reader, so an import of one fails closed rather than crashing at run
+  time. Export the layer to a standard spatial format first; other spatial
+  formats are unaffected.
+- **The Peano key Spatial Info measure.** Peano key is a proprietary Alteryx
+  spatial index with no public specification, so a Spatial Info that asks for it
+  skips that one column and names it in a note. Every other Spatial Info measure
+  — area, length, centroid, bounding rectangle, object type, part and point
+  counts, and end points — converts.
+- **Projected Create Points coordinates.** Create Points converts
+  floating-point and integer (×1,000,000) lon/lat coordinates directly.
+  Coordinates already in a projected system need reprojecting to WGS84 lon/lat
+  upstream first, because the workflow does not record which projection they use.
 
 ## Calgary Tool Coverage
 
@@ -209,19 +211,22 @@ An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud 
 | Alteryx Calgary Tool | PlaidCloud Route | Converts |
 | --- | --- | --- |
 | Calgary Loader | Table Extract writing `calgary_<database>` | Yes, once the database is named and it stores at least one data field. |
-| Calgary Input | Dynamic Document input reading `calgary_<database>`, with the saved query as filter | Yes, including a query built from an Or or wrapped in a Not. Refuses on contains/starts-with/spatial queries and on Skip Records/Max Records limits. |
+| Calgary Input | Dynamic Document input reading `calgary_<database>`, with the saved query as filter | Yes, including a query built from an Or or wrapped in a Not, and a contains or starts-with filter (rebuilt as a SQL LIKE). Refuses on a spatial-lookup query and on Skip Records/Max Records limits. |
 | Calgary Input (Count Only) / Calgary Cross Count | Aggregate transform over `calgary_<database>` | Yes, including a bucket built from an Or or wrapped in a Not. Refuses on a cross over more than one custom field, and on a count-only read naming no column to count over. |
 | Calgary Join | Dynamic Document input matching each record of its input against `calgary_<database>` | When the incoming field is a plain value matched against a value index — including Count Only mode, which counts the database records each input record matched, a record matching nothing counting zero. Refuses when the field is spatial (rebuild as Spatial Match) or its type is unresolved, and on range-index or unmatched-output-wired Joins, on a Join naming no match field, and on a Join with nothing wired to its input. |
 | Calgary Cross Count Append | Dynamic Document input matching each record, then a counted join over `calgary_<database>` | When the incoming field is a plain value matched against a value index: it counts, per input record, the database records matched, and a record that matched nothing counts zero. Refuses on a spatial or unresolved index (rebuild as Spatial Match), a custom-value cross-count grid, a range index, and a match naming no field. |
 
-### Known Calgary Gaps
+### Known Calgary Prerequisites
 
-- **A Calgary Cross Count Append over a custom-value cross-count grid doesn't convert.** A single plain cross-count field converts — it counts, per input record, the matching database records — but a grid of *named* custom values would append one count column per value, and Alteryx documents neither how many columns that is nor what it names them.
-- **A Calgary Join or Cross Count Append matched against a spatial index refuses**, naming the stand-in table and pointing at Spatial Match — the workflow file records the index's name but not whether it holds ordinary values or spatial geometry.
-- **Contains, starts-with, and spatial-lookup queries don't convert.** Only indexed value and range comparisons do.
-- **A read limited by Skip Records or Max Records doesn't convert** — the stand-in table carries no record order.
+Most of these are prerequisites on the input rather than conversion limits.
+
+- **A spatial-index match needs rebuilding as a Spatial Match.** A Calgary Join or Cross Count Append matched against a spatial index refuses, naming the stand-in table — the workflow records the index's name but not whether it holds ordinary values or spatial geometry, and a value match (an equality join) and a spatial match (point-in-polygon) are different operations. Export the database to a table and rebuild the match as a Join (value index) or a Spatial Match (spatial index).
+- **A read limited by Skip Records or Max Records needs an explicit order.** The exported stand-in table carries no record order, so add an order column when you export if you need to take the first or last N records by position.
+- **A demographic or reference database must be loaded first.** A Calgary read before its database has been loaded stops, naming the table to build. This is the common case for the licensed demographic and reference `.cydb` files Alteryx ships (Experian, Census, and similar): no converter can reproduce that third-party data, so bring your own licensed reference data and load it into the named table — the same as the Geocoder reference data.
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
-- **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
+- **A custom-value cross-count grid doesn't convert yet.** A single plain cross-count field converts — it counts, per input record, the matching database records — but a grid of *named* custom values would append one count column per value, and Alteryx documents neither how many columns that is nor what it names them. Tracked for a future release, pending a reference export to reverse-engineer the column contract.
+
+Value, range, contains and starts-with queries all convert to a filter; only a spatial-lookup query, an index operation with no column-level equivalent, does not.
 
 ## Connecting to External Systems
 
