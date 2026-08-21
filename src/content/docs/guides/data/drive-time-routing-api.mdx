@@ -1,0 +1,147 @@
+---
+title: Drive-Time Routing API
+description: Call PlaidCloud's REST drive-time routing endpoints — isochrone polygons and nearest-by-drive-time ranking, backed by a self-hosted Valhalla router. Opt-in preview, best-effort, no SLA.
+sidebar:
+  label: Drive-Time Routing API
+  order: 11
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud exposes drive-time routing as two REST endpoints under `/rest/v1/analyze/route`: an **isochrone** endpoint that draws a drive-time (or drive-distance) polygon around an origin, and a **find-nearest** endpoint that ranks candidate destinations by actual drive time rather than straight-line distance. Both proxy an in-cluster [Valhalla](https://valhalla.github.io) service backed by OpenStreetMap road data, and wrap every result in a small `plaidcloud` envelope carrying attribution.
+
+<Aside type="caution" title="Opt-in preview — read this before you build against it">
+Drive-time routing is **off by default** and only reaches tenants who have opted in. It runs against a small, shared routing pool and is offered **best-effort with no SLA** — there is no guaranteed live-traffic capacity, and a request can be turned away with a `503` when the pool is busy rather than queued or retried for you. If you don't already have this enabled, contact PlaidCloud to ask about the preview before building a dependency on it.
+</Aside>
+
+## Authentication and Entitlement
+
+Every routing call needs:
+
+- A normal PlaidCloud session or bearer token carrying the **`analyze.table.read`** role — the same role that gates other read access to a project's data. There is no routing-specific role.
+- The **`drive_time_enabled`** feature flag turned on for your tenant. A tenant without it gets a `403` with `detail: "drive_time_disabled"` on every call — there is no partial or read-only mode.
+
+## Endpoints
+
+### `isochrone` — Drive-Time Polygon Around an Origin
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `origin` | `{ lat, lon }`, required | A single coordinate. Isochrone takes one origin per call |
+| `costing` | string | `auto` (default), `truck`, `bike`, or `pedestrian` |
+| `contours_minutes` | array of integers, required | One entry per contour ring you want, each 1–120 minutes. Up to 5 contours per call |
+| `costing_options.truck.height` | float, meters | Optional, > 0 and ≤ 10. Only applies under `truck` costing |
+| `costing_options.truck.weight` | float, kilograms | Optional, > 0 and ≤ 100000. Only applies under `truck` costing |
+| `costing_options.truck.length` | float, meters | Optional, > 0 and ≤ 50. Only applies under `truck` costing |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Response — Valhalla's own isochrone GeoJSON, unmodified, plus the `plaidcloud` envelope:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright). Routing engine: Valhalla (https://valhalla.github.io)."
+  }
+}
+```
+
+### `find-nearest` — Nearest Destinations by Drive Time
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `origins` | array of `{ lat, lon }`, required | 1–5 origins |
+| `destinations` | array of `{ lat, lon }`, required | 1–500 candidates. See [destination prefiltering](#destination-prefiltering) below |
+| `costing` | string | `auto` (default), `truck`, `bike`, or `pedestrian` |
+| `top_n` | integer | Nearest destinations to return per origin. 1–50, default 5 |
+| `costing_options.truck.{height,weight,length}` | same as isochrone | Only applies under `truck` costing |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright). Routing engine: Valhalla (https://valhalla.github.io)."
+  }
+}
+```
+
+`destination_index` refers to the position of that destination in the `destinations` array you submitted, not its position in any internal ranking — hold onto it to map a result back to your own data.
+
+#### Destination Prefiltering
+
+You can submit up to 500 destinations, but only the **50 nearest by straight-line distance** to any of your origins are ever sent into the actual drive-time routing calculation. If you submit more than 50, PlaidCloud narrows the field with a straight-line (great-circle) prefilter before ranking the survivors by real drive time — so a destination that's close on the map but on the far side of a straight-line cutoff can be excluded before drive time is ever computed. For destination sets already under 50, every candidate is routed and this has no effect. `top_n` is capped at 50 for the same reason: it can't return more candidates than the routing step ever considers.
+
+### Costing Modes
+
+`auto`, `truck`, `bike`, and `pedestrian` are supported. Under `truck` costing you can also constrain the route by vehicle dimensions — `costing_options.truck.height`, `.weight`, `.length` — so a route can avoid a low bridge or a weight-restricted road. **Hazmat routing is not supported.** There is no hazmat parameter on either endpoint, and none is available even indirectly through `truck` costing — this API does not route around hazardous-materials restrictions, so don't rely on it for hazmat-regulated freight.
+
+## Errors
+
+| Status | Meaning |
+|---|---|
+| `403` | Missing the `analyze.table.read` role, or the tenant's `drive_time_enabled` feature flag isn't turned on |
+| `422` | A request field failed validation — for example more than 5 contours, a contour outside 1–120 minutes, more than 5 origins, or a truck dimension out of range |
+| `503 route_unavailable` | Valhalla could not be reached, timed out, or returned an error — **or** your tenant's concurrent-request allowance was already in use (see [Limits](#limits)) |
+
+A `503` here is never a raw `5xx` and never an unbounded hang — every call to Valhalla runs under a bounded timeout, so a slow or hung upstream surfaces quickly as `503` rather than leaving your request open.
+
+## Limits
+
+- **Per-tenant concurrency is capped at 2 simultaneous requests.** This reflects the shared routing pool behind the preview, not a per-plan quota — a third concurrent request from the same tenant gets `503 route_unavailable` until one of the first two finishes. There's no queueing; retry after a short backoff.
+- **No response caching.** Every call is answered live against the current Valhalla index.
+- **Coordinates are never logged.** Failure logs record the request path and error type, not the origin, destination, or any other location data you submitted.
+- Routing data is OpenStreetMap-derived (ODbL) — the same coverage and freshness caveats that apply to [PlaidCloud's geocoding API](/guides/data/geocoding-api/#coverage-and-determinism-read-this-first) apply here: strong in well-mapped regions, more variable elsewhere, and continuously community-edited rather than a versioned commercial dataset.
+- If you display routing results or drive-time areas to an end user, display the `plaidcloud.attribution` string (or equivalent OSM/Valhalla credit) alongside them — the same ODbL obligation that applies to geocoding results applies to routing results.
+
+## Related
+
+- [Migrating From Google or Mapbox Geocoding](/guides/data/geocoding-api/) — PlaidCloud's REST geocoding endpoints, and the same OpenStreetMap coverage caveats
+- [REST Request step](/guides/workflows/rest-request-step/) — call these endpoints from a workflow
