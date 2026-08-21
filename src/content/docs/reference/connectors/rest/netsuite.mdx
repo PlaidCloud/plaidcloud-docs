@@ -1,0 +1,172 @@
+---
+title: NetSuite REST Connector
+description: Set up a NetSuite REST API connection in PlaidCloud and pull financial and operational data with SuiteQL over the REST Request step.
+sidebar:
+  order: 1
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+## API Documentation
+
+The [NetSuite REST API Browser](https://system.netsuite.com/help/helpcenter/en_US/APIs/REST_API_Browser/record/v1/2023.1/index.html) documents the record endpoints, and the [SuiteQL reference](https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156257770590.html) documents the query language this connector uses to pull tabular data.
+
+<Aside type="tip">
+For a start-to-finish walkthrough — NetSuite-side setup, creating the connection, testing it, and building the pull step — follow the [Connect to NetSuite](/guides/connections/netsuite/) guide. This page is the field-and-recipe reference behind it.
+</Aside>
+
+## How Authentication Works
+
+The connector signs in with **OAuth 2.0 client credentials** using a **PS256** JWT client assertion — there is no interactive login and no refresh token. You generate an RSA key pair, upload the **public** certificate to NetSuite, and give PlaidCloud the matching **private** key plus three ids. On each pull PlaidCloud builds and signs a short-lived assertion, exchanges it for an access token, and calls the REST API.
+
+<Aside type="caution">
+The role, scope, and permission specifics below are built to NetSuite's documented shape and **confirmed at live cutover** — if a token exchange or query is rejected, the surfaced NetSuite error names the cause (scope, role, or query) so you can trim or correct exactly that one thing.
+</Aside>
+
+## NetSuite-Side Setup
+
+Do this in NetSuite before creating the PlaidCloud connection. It requires an administrator and is on the critical path.
+
+### 1. Enable the feature
+
+Enable **OAuth 2.0** and **SuiteTalk (SOAP and REST Web Services)** under **Setup > Company > Enable Features > SuiteCloud**.
+
+### 2. Create the RSA key pair
+
+Generate a 2048-bit (or larger) RSA key pair with a PS256-capable digest. For example, with OpenSSL:
+
+```bash
+openssl genrsa -out plaidcloud_netsuite.pem 2048
+openssl rsa -in plaidcloud_netsuite.pem -pubout -out plaidcloud_netsuite_public.pem
+```
+
+Keep the private key (`plaidcloud_netsuite.pem`) secret — it goes into PlaidCloud, never into NetSuite.
+
+### 3. Upload the public certificate → certificate id
+
+Under **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup**, map the public certificate to an integration, an entity, and a role. NetSuite returns a **certificate id** for the uploaded public key — this is the JWT `kid`, and it is **not** a secret. Record it.
+
+### 4. Create the integration record → client id
+
+Under **Setup > Integration > Manage Integrations > New**, create an integration with **OAuth 2.0** enabled and the **Client Credentials** grant selected. NetSuite issues a **client id** (consumer key). Record it. There is **no client secret** in the client-credentials + assertion flow.
+
+### 5. Role and permissions
+
+Assign the role used in the M2M mapping a set of permissions that covers what you will read:
+
+- **REST Web Services** (Setup) — required for any REST call.
+- **SuiteAnalytics Workbook** — required if your SuiteQL touches analytics/workbook data.
+- **Log in using OAuth 2.0 Access Tokens** — required for the token exchange.
+- Record-level view permissions on every record type your queries read (transactions, accounts, entities, and so on).
+
+### 6. Account id
+
+Find your account id under **Setup > Company > Company Information** (the **Account ID** field). It drives the API host:
+
+| Environment | Account id form | API host |
+|---|---|---|
+| Production | `1234567` | `1234567.suitetalk.api.netsuite.com` |
+| Sandbox | `1234567_SB1` | `1234567-sb1.suitetalk.api.netsuite.com` |
+
+PlaidCloud derives the host from the account id automatically (lowercasing and turning `_` into `-`). Enter the account id exactly as NetSuite shows it, including the `_SB1` suffix for a sandbox.
+
+## Configuration
+
+Create the connection with the **NetSuite** connection type (not the generic REST type — only the NetSuite kind derives the host and injects the SuiteQL paging behavior). These fields appear on the form:
+
+### Identification
+
+| Field | Type | Description |
+|---|---|---|
+| Name | Text | Display name for this connection. |
+| Alias | Text (multi-line) | Optional alias or notes about the connection. |
+| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
+| Db read only | Toggle | Restrict the connection to read-only operations. |
+| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+
+### NetSuite Credentials
+
+| Field | Type | Description |
+|---|---|---|
+| Oauth2 client id | Text | The **client id** from the integration record (step 4). |
+| Netsuite certificate id | Text | The **certificate id** (JWT `kid`) returned when you uploaded the public certificate (step 3). Not a secret. |
+| Netsuite account id | Text | The **account id** (step 6), for example `1234567` or `1234567_SB1`. |
+| Netsuite private certificate | Text (PEM) | The **private key** (step 2), pasted as a full multi-line PEM block. Stored encrypted and never returned in cleartext. |
+
+<Aside type="note">
+The private key is a multi-line PEM. If the connection form's field can't hold a multi-line value in your build, set it with the MCP `connection_upsert` tool, which preserves the PEM intact. Everything else can be entered on the form.
+</Aside>
+
+## Pulling Data with SuiteQL
+
+NetSuite's record API only returns `{id, links}` per row, so PlaidCloud pulls tabular data with **SuiteQL** through the [REST Request step](/guides/workflows/rest-request-step/). Configure the step against the NetSuite connection:
+
+- **Method** — `POST`
+- **Endpoint** — `/services/rest/query/v1/suiteql` (the literal path; the host comes from the connection)
+- **Body** — the query as JSON: `{"q": "SELECT ... FROM ... ORDER BY internalid"}`
+
+<Aside type="caution">
+**Always give an offset-paged SuiteQL query a deterministic `ORDER BY`** (for example `ORDER BY internalid`). NetSuite pages by numeric offset; without a stable sort, pages silently duplicate and skip rows, which mis-ties financial totals.
+</Aside>
+
+### Don't Hand-Configure Paging or Headers
+
+For a NetSuite connection the step **auto-injects** the SuiteQL specifics:
+
+- `Prefer: transient` and `Content-Type: application/json` headers.
+- Offset pagination against the response's `items` / `hasMore` fields, at the service-fixed page size.
+
+Leave the **Pagination & Parsing** controls and these headers alone — the connection sets them. Set only your **Endpoint**, **Body**, and the **columns** (below).
+
+### Type the Amount and Date Columns
+
+SuiteQL returns **every** value as a JSON string (`"1234.56"`, `"2026-01-15"`, `"T"`). Define the output columns manually with their real types — `Currency`/`Decimal` for amounts, `Date`/`Datetime` for dates, `Boolean` for `"T"`/`"F"` flags — and PlaidCloud coerces the strings into typed columns on the way into the table. Empty strings map to `null`. (Automatic schema guessing does not apply the connection's service config, so it can't do this for you — define the columns yourself.)
+
+## Known Limitations
+
+| Limitation | What it means |
+|---|---|
+| Manual columns required | Schema auto-guess doesn't apply the NetSuite service config, so define amount/date/boolean columns and their types by hand. |
+| Paging is service-fixed | The pagination mode, paths, and page size are set by the connection and are **not** adjustable on the step. |
+| Full-table replace only | Every pull re-extracts the whole result — there is **no incremental/delta** path. A scheduled pull re-reads the entire table each run, so keep your `WHERE` clause to the slice you need. |
+| Multi-currency / subsidiary | On `transaction`/`transactionline`, `amount` is in the transaction's **own** currency. A naive cross-subsidiary `SUM(amount)` is **consolidation-wrong** — select consolidated or exchange-rate-converted fields when totaling across subsidiaries. |
+| Response envelope | The exact response envelope and the accepted scope/role are **confirmed at live cutover**; the connector is built to NetSuite's documented shape. |
+
+## Example Queries
+
+Financial — GL transaction lines for a period, typed and ordered:
+
+```sql
+SELECT
+    tl.transaction   AS transaction_id,
+    t.trandate       AS tran_date,
+    a.acctnumber     AS account_number,
+    tl.subsidiary    AS subsidiary_id,
+    tl.foreignamount AS amount
+FROM   transactionline tl
+JOIN   transaction     t ON t.id = tl.transaction
+JOIN   account         a ON a.id = tl.expenseaccount
+WHERE  t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                      AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY tl.transaction, tl.id
+```
+
+Operational — open sales orders by customer:
+
+```sql
+SELECT
+    so.tranid        AS order_number,
+    so.entity        AS customer_id,
+    so.trandate      AS order_date,
+    so.status        AS order_status
+FROM   transaction so
+WHERE  so.type = 'SalesOrd'
+  AND  so.status = 'SalesOrd:B'
+ORDER BY so.id
+```
+
+<LinkCard
+  title="Connect to NetSuite (guide)"
+  href="/guides/connections/netsuite/"
+  description="Step-by-step: NetSuite-side setup, create the connection, test it, and build a financial and an operational SuiteQL pull."
+/>
