@@ -1,6 +1,6 @@
 ---
 title: Drive-Time Routing API
-description: Call PlaidCloud's REST drive-time routing endpoints — isochrone polygons and nearest-by-drive-time ranking, backed by a self-hosted Valhalla router. Opt-in preview, best-effort, no SLA.
+description: Call PlaidCloud's REST drive-time routing endpoints — isochrone polygons and nearest-by-drive-time ranking, backed by PlaidCloud's self-hosted routing engine. Opt-in preview, best-effort, no SLA.
 sidebar:
   label: Drive-Time Routing API
   order: 11
@@ -8,7 +8,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-PlaidCloud exposes drive-time routing as two REST endpoints under `/rest/v1/analyze/route`: an **isochrone** endpoint that draws a drive-time (or drive-distance) polygon around an origin, and a **find-nearest** endpoint that ranks candidate destinations by actual drive time rather than straight-line distance. Both proxy an in-cluster [Valhalla](https://valhalla.github.io) service backed by OpenStreetMap road data, and wrap every result in a small `plaidcloud` envelope carrying attribution.
+PlaidCloud exposes drive-time routing as two REST endpoints under `/rest/v1/analyze/route`: an **isochrone** endpoint that draws a drive-time (or drive-distance) polygon around an origin, and a **find-nearest** endpoint that ranks candidate destinations by actual drive time rather than straight-line distance. Both run on PlaidCloud's self-hosted routing engine, built from OpenStreetMap road data (ODbL), and wrap every result in a small `plaidcloud` envelope carrying attribution.
 
 <Aside type="caution" title="Opt-in preview — read this before you build against it">
 Drive-time routing is **off by default** and only reaches tenants who have opted in. It runs against a small, shared routing pool and is offered **best-effort with no SLA** — there is no guaranteed live-traffic capacity, and a request can be turned away with a `503` when the pool is busy rather than queued or retried for you. If you don't already have this enabled, contact PlaidCloud to ask about the preview before building a dependency on it.
@@ -19,7 +19,7 @@ Drive-time routing is **off by default** and only reaches tenants who have opted
 Every routing call needs:
 
 - A normal PlaidCloud session or bearer token carrying the **`analyze.table.read`** role — the same role that gates other read access to a project's data. There is no routing-specific role.
-- The **`drive_time_enabled`** feature flag turned on for your tenant. A tenant without it gets a `403` with `detail: "drive_time_disabled"` on every call — there is no partial or read-only mode.
+- Drive-time routing included in your plan — the drive-time entitlement enabled for your tenant. A tenant whose plan doesn't include it gets a `403` with `detail: "drive_time_disabled"` on every call — there is no partial or read-only mode.
 
 ## Endpoints
 
@@ -46,7 +46,7 @@ POST /rest/v1/analyze/route/isochrone
 }
 ```
 
-Response — Valhalla's own isochrone GeoJSON, unmodified, plus the `plaidcloud` envelope:
+Response — the routing engine's own isochrone GeoJSON, unmodified, plus the `plaidcloud` envelope:
 
 ```json
 {
@@ -64,7 +64,7 @@ Response — Valhalla's own isochrone GeoJSON, unmodified, plus the `plaidcloud`
     }
   ],
   "plaidcloud": {
-    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright). Routing engine: Valhalla (https://valhalla.github.io)."
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
   }
 }
 ```
@@ -108,7 +108,7 @@ POST /rest/v1/analyze/route/find-nearest
     }
   ],
   "plaidcloud": {
-    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright). Routing engine: Valhalla (https://valhalla.github.io)."
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
   }
 }
 ```
@@ -127,19 +127,19 @@ You can submit up to 500 destinations, but only the **50 nearest by straight-lin
 
 | Status | Meaning |
 |---|---|
-| `403` | Missing the `analyze.table.read` role, or the tenant's `drive_time_enabled` feature flag isn't turned on |
+| `403` | Missing the `analyze.table.read` role, or your plan doesn't include the drive-time entitlement |
 | `422` | A request field failed validation — for example more than 5 contours, a contour outside 1–120 minutes, more than 5 origins, or a truck dimension out of range |
-| `503 route_unavailable` | Valhalla could not be reached, timed out, or returned an error — **or** your tenant's concurrent-request allowance was already in use (see [Limits](#limits)) |
+| `503 route_unavailable` | The routing engine could not be reached, timed out, or returned an error — **or** your tenant's concurrent-request allowance was already in use (see [Limits](#limits)) |
 
-A `503` here is never a raw `5xx` and never an unbounded hang — every call to Valhalla runs under a bounded timeout, so a slow or hung upstream surfaces quickly as `503` rather than leaving your request open.
+A `503` here is never a raw `5xx` and never an unbounded hang — every call to the routing engine runs under a bounded timeout, so a slow or hung upstream surfaces quickly as `503` rather than leaving your request open.
 
 ## Limits
 
 - **Per-tenant concurrency is capped at 2 simultaneous requests.** This reflects the shared routing pool behind the preview, not a per-plan quota — a third concurrent request from the same tenant gets `503 route_unavailable` until one of the first two finishes. There's no queueing; retry after a short backoff.
-- **No response caching.** Every call is answered live against the current Valhalla index.
+- **No response caching.** Every call is answered live against the current routing index.
 - **Coordinates are never logged.** Failure logs record the request path and error type, not the origin, destination, or any other location data you submitted.
-- Routing data is OpenStreetMap-derived (ODbL) — the same coverage and freshness caveats that apply to [PlaidCloud's geocoding API](/guides/data/geocoding-api/#coverage-and-determinism-read-this-first) apply here: strong in well-mapped regions, more variable elsewhere, and continuously community-edited rather than a versioned commercial dataset.
-- If you display routing results or drive-time areas to an end user, display the `plaidcloud.attribution` string (or equivalent OSM/Valhalla credit) alongside them — the same ODbL obligation that applies to geocoding results applies to routing results.
+- Routing data is built from OpenStreetMap road data (ODbL) — the same coverage and freshness caveats that apply to [PlaidCloud's geocoding API](/guides/data/geocoding-api/#coverage-and-determinism-read-this-first) apply here: strong in well-mapped regions, more variable elsewhere, and continuously community-edited rather than a versioned commercial dataset.
+- If you display routing results or drive-time areas to an end user, display the `plaidcloud.attribution` string (or equivalent OSM credit) alongside them — the same ODbL obligation that applies to geocoding results applies to routing results.
 
 ## Related
 
