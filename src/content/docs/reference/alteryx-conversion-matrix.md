@@ -132,8 +132,8 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Visual Layout | Full | Canvas layout metadata | Preserved as design context. |
 | Word Cloud | Full | Text visualization artifact | Creates a visualization artifact from text analysis. |
 | XML Parse | Full | XML parse transform | Extracts XML fields into workflow data. |
-| Find Nearest | Partial | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join in the database, in straight-line distance mode. Drive-time nearest — ranking by minutes on a road network — is not yet reproduced. |
-| Trade Area | Partial | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units, in fixed-radius mode. Drive-time trade areas — minutes on a road network — are not yet reproduced. |
+| Find Nearest | Full | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join — straight-line, and drive-time nearest (ranked by minutes on a road network) via PlaidCloud's self-hosted routing engine. Drive-time enabled per workspace. |
+| Trade Area | Full | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units — fixed-radius, and drive-time trade areas (minutes on a road network) via the self-hosted routing engine. Drive-time enabled per workspace. |
 | Image Template | Full | Image Template executor op | Manual mode crops the image to each region you draw on the template. Automatic mode detects the page regions for you with an open-standard layout model and emits one row per region, each carrying its detected bounds and confidence for review; a page the model cannot read confidently is flagged by name rather than cropped. Open-standard detection can differ from Alteryx's own — review the detected regions, or use Manual mode for exact control. |
 | Image Recognition | Full | Image recognition executor | Trains an image classifier in the workflow and scores new images against it, in place — no external account and no data leaves PlaidCloud. The classifier is retrained rather than copied from Alteryx, so results are a faithful approximation rather than a bit-for-bit match, and training runs on CPU. Enabled per workspace. |
 | Geocoder | Full | Self-hosted geocoder | Geocodes addresses to coordinates and reverse-geocodes coordinates to addresses against PlaidCloud's own geocoder — no external account, no data leaves PlaidCloud. Enabled per workspace. |
@@ -158,7 +158,7 @@ for how they fit together.
 | Convex Hull | Convex Hull executor op | Workflow engine |
 | Create Points | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
 | Distance | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
-| Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database |
+| Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database; routing service for drive-time |
 | Generalize | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Workflow engine |
 | Heat Map | [Heat Map (macro)](/reference/workflow-steps/macros/macro-heat-map/) | Workflow engine |
 | Line To Polygon | Line To Polygon executor op | Workflow engine |
@@ -172,18 +172,22 @@ for how they fit together.
 | Spatial Match | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) | Database |
 | Spatial Match — intersection object, Unmatched | [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Workflow engine |
 | Spatial Process | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Workflow engine |
-| Trade Area (fixed radius) | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Workflow engine |
+| Trade Area (fixed-radius + drive-time) | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Workflow engine; routing service for drive-time |
 | Pie Wedge Trade Area | [Pie Wedge Trade Area (macro)](/reference/workflow-steps/macros/macro-pie-wedge-trade-area/) | Workflow engine |
 | Spatial file input | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Workflow engine |
 | Summarize — SpatialObjCombine, SpatialObjConvexHull | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) | Workflow engine |
 | Report Map | [Report Map](/reference/workflow-steps/reports/report-map/) | Workflow engine |
 
+**Drive-time trade areas and nearest** — Trade Area drive-time rings and Find
+Nearest drive-time ranking run on PlaidCloud's self-hosted routing engine
+(road-network isochrones and travel-time matrices), not a hosted third-party
+API, so origin coordinates never leave the platform. Drive-time is enabled per
+workspace. Routing and drive-time areas use OpenStreetMap data —
+© OpenStreetMap contributors, available under the [Open Database License
+(ODbL)](https://www.openstreetmap.org/copyright).
+
 ### Known Spatial Gaps
 
-- **Drive-time trade areas and nearest.** Trade Area converts in fixed-radius
-  mode and Find Nearest in straight-line distance mode. There is no factor that
-  turns minutes on a road network into a distance, so drive-time trade-area
-  sizing and drive-time nearest-neighbor ranking do not convert.
 - **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile cannot be
   read. Conversion fails closed rather than emitting an import that crashes at
   run time; other spatial formats are unaffected.
