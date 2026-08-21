@@ -58,6 +58,41 @@ func.geom_as_wkt(
   run the import.
 </Aside>
 
+**From addresses — geocoding.** The **geocode** step turns address columns into
+coordinates (forward), and the **geocode reverse** step turns a lat/lon pair back
+into an address (reverse), against PlaidCloud's self-hosted
+[Pelias](https://pelias.io) service. Forward geocoding appends `GeocodeLat` /
+`GeocodeLon` (plus `GeocodeStatus`, `GeocodeConfidence`, and the matched label);
+reverse appends the resolved address components.
+
+### Location-Code Enrichment
+
+Both geocode steps can also append a compact **location code** for each row,
+computed locally from the returned coordinate — no extra service call and no
+external dependency:
+
+- **Geohash** (`GeocodeGeohash`) — emitted **by default**. A geohash is the
+  data-analytics convention (Elasticsearch, Redis, Lucene): its **prefix
+  property** means a shorter code is a prefix of a longer one for the same point,
+  so `GROUP BY LEFT(GeocodeGeohash, n)` is instant spatial bucketing and a prefix
+  join is cheap proximity.
+- **Plus Code** (`GeocodePlusCode`) — optional, **off by default**. An
+  [Open Location Code](https://maps.google.com/pluscodes/) is the
+  human-shareable-address form used by Google Maps and some government addressing.
+
+Control which columns are emitted with the step's **`location_codes`** setting:
+
+| `location_codes` | Columns appended |
+|---|---|
+| `none` | No location code |
+| `geohash` *(default)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` and `GeocodePlusCode` |
+
+Two optional settings tune the codes: **`geohash_precision`** (default `9` ≈ a
+4.8m cell; capped at `12`) and **`pluscode_length`** (default `10` ≈ a 14m cell).
+A row that didn't resolve to a coordinate leaves the code columns blank; a reverse
+row encodes its **queried** coordinate even when no address is found.
+
 ## 2. Shape the Geometry
 
 With geometry in a column, reshape it to answer the question you actually have.
