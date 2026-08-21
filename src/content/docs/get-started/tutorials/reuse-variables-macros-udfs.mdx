@@ -1,0 +1,140 @@
+---
+title: "Reuse Your Work: Variables, Macros, and UDFs"
+description: Turn one-off pipelines into scalable assets — parameterize with workflow variables, package a repeatable sequence as a Macro, and add a user-defined transform for custom logic.
+---
+
+*~30 minutes · a variable, a macro, a user-defined transform*
+
+The first workflow you build usually hard-codes everything — one region, one month, one table name. It works once. This tutorial is the leap from *user* to *power-user*: you take that one-off pipeline and turn it into an asset you can point at any region, call from anywhere, and extend with your own Python.
+
+Three tools do the work, and they stack:
+
+| Tool | What it removes | Reach for it when |
+|---|---|---|
+| **Workflow variable** | Hard-coded values scattered across steps | The same value (a month, a region, a threshold) appears in more than one step |
+| **Macro** | Copy-pasted sequences of steps | A parameterized *sequence* runs many times — per region, per month, per driver row |
+| **User Defined Transform (UDF)** | The gap the standard steps can't reach | No standard transform (or combination) does what you need, and you can write it in Python |
+
+You don't need all three on every workflow. Add each one at the moment the pain it removes actually shows up.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="Three reuse tools stacked from smallest to largest scope. A workflow variable parameterizes one value across steps; a Macro packages a whole parameterized sequence of steps for reuse; a User Defined Transform adds custom Python where standard steps fall short." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="rv-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Variable</text>
+  <text x="104" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">parameterize one value</text>
+  <path d="M194 75 L234 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="236" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="326" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Macro</text>
+  <text x="326" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">package a sequence</text>
+  <path d="M416 75 L456 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="458" y="48" width="208" height="54" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="562" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-accent)">UDF</text>
+  <text x="562" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">custom Python where steps fall short</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Each tool covers more ground than the last. Add them as the need appears — not before.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace and a project with a workflow you've already built — ideally the one from [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/).
+- Comfort adding and running workflow steps. If that's new, start with the [Workflows guide](/guides/workflows/).
+
+## Step 1: Parameterize With a Workflow Variable
+
+A variable is a named value your steps read instead of a literal. Change it in one place and every step that references it follows. PlaidCloud keeps variables at two scopes: **project** variables are shared across every workflow in the project; **workflow** variables belong to one workflow and are the natural way to pass information between its steps.
+
+1. In the **Workflows** hierarchy, click the **variables** icon to open the variables table.
+2. Add a variable — give it a clear name like `target_region` and set its current value (for example, `East`).
+3. In a step that currently hard-codes that value, reference the variable instead of typing the literal.
+4. Run the step. Then change the variable's value in the table and run again — the same step now processes a different slice, with no edit to the step itself.
+
+The variables table is also where you view current values, edit them, and delete variables you no longer need.
+
+> **Project scope vs. workflow scope.** Put a value at **project** scope when several workflows need the same setting, and at **workflow** scope when it's local to one workflow's steps. When in doubt, start narrow — a workflow variable — and promote it to the project only when a second workflow needs it.
+
+For the full picture of where variables live and how to manage them, see [Manage Workflow Variables](/guides/workflows/manage-workflow-variables/).
+
+## Step 2: Package a Sequence as a Macro
+
+A variable parameterizes one value. A **Macro** parameterizes a whole *sequence* of steps. It's a reusable Advanced (DAG) workflow with a declared input/output contract — think "process one month of sales for one region" — that you call from another workflow once per month, per region, or both. Each invocation runs in its own isolated scratch schema, so the same Macro can run many times at once without the runs colliding.
+
+> **Macros are an Advanced-only feature.** Convert the workflow to Advanced first. Steps inside a Macro must be Macro-safe — table transforms, imports, exports, run-scoped variable steps, and nested Macro calls are fine; dimension imports and dimension-updating steps are rejected because dimensions are project-global state.
+
+### Turn a Workflow Into a Macro
+
+1. Open the project and, on the **Workflows** tab, select the workflow you want to reuse.
+2. In the **Workflow Details** panel, confirm **Workflow Type** is **Advanced** — use **Convert to Advanced** first if it's Standard.
+3. In the **Macro** section, click **Convert to Macro…** and confirm. A Ports editor appears.
+4. Click **Add Port** for each input or output the Macro accepts or produces. For every port set:
+   - **Name** — the identifier the caller binds to (for example, `month`, `region_sales`).
+   - **Direction** — **Input** (the caller supplies it) or **Output** (the Macro produces it).
+   - **Kind** — **Table**, **Scalar** (a single string / int / float / bool / date), or **Dimension**.
+   - **Required** — clear it if the Macro can run without this port bound.
+   - **Memo** — a short note shown to authors in the caller-side binding form.
+5. Click **Save Ports**.
+
+### Invoke It From Another Workflow
+
+1. In the caller workflow, add a **Macro: Run** step.
+2. In **Macro to Run**, select the project and the Macro workflow.
+3. **Input Port Bindings** — bind each input port. Scalar and dimension ports often take a caller-side workflow variable (the one from Step 1); table ports take a source table, optionally column-projected and filtered.
+4. **Output Port Bindings** — point each output port at a caller-side destination table.
+5. Save the step and run the workflow.
+
+To run the Macro once per row of a driver table — a region per row, say — use a **Macro: Concurrent Run** step instead, and cap how many run at once with **Concurrent Runs**. Each row gets its own scratch schema and destination.
+
+The full field-by-field walkthrough, including the run-isolation lifecycle, is in [Create a Macro](/guides/workflows/create-a-macro/).
+
+## Step 3: Add Custom Logic With a User Defined Transform
+
+The standard transforms cover nearly everything, and they're continuously tuned for performance — reach for them first. But when no standard step (alone or in combination) does what you need, a **User Defined Transform (UDF)** lets you drop into standard Python, with the full PlaidCloud API and packages like Pandas, NumPy, and SciPy available.
+
+You can author a UDF two ways: write and maintain it directly in PlaidCloud, or point at a file in a connected Git repository (which picks up changes automatically on the next run, and supports branches and tags for release control).
+
+### Author the Function
+
+1. Open the workflow, select the **User Defined** tab, and click **Add User Defined Function**.
+2. Give the UDF an **ID**, then click the **Edit function logic** icon to open the editor.
+3. Write your logic. A minimal UDF connects, reads a source, transforms in Pandas, and saves a target:
+
+   ```python
+   from plaidcloud.utilities.connect import PlaidConnection
+   from plaidcloud.utilities import frame_manager as fm
+
+   conn = PlaidConnection()
+
+   # Read a table configured as a source on the step
+   source = conn.udf.source_by_name('sales_clean')
+   df = conn.get_data(source)
+
+   # Custom logic the standard steps don't cover
+   df['margin_band'] = df['margin'].apply(
+       lambda m: 'high' if m > 0.4 else 'low'
+   )
+
+   # Write to a table configured as a target on the step.
+   # Sources are read by their configured name; fm.save writes to a table PATH (leading slash).
+   fm.save(df, name='/output/sales_scored', append=False)
+   ```
+
+### Add It to the Workflow
+
+1. On the **Analyze Steps** tab, add a **User Defined Transform** step where you need it, just like a standard transform.
+2. In the step config, choose the type: **Analyze UDF** (a stored function) or **External Source Code Repository** (Git — then pick Connection, Branch, and File path).
+3. Define the **source and target tables** the UDF uses. You *can* reach tables directly in code, but declaring them here registers the dependencies and makes them available through `conn.udf.source_by_name(...)` / `target_by_name(...)`.
+4. Optionally add step-specific values under **Other Variables**, readable with `conn.udf.variable_by_name(...)`.
+
+> **Declare your tables in the config, not just in code.** A UDF that reads a table directly still runs, but PlaidCloud won't know the table is a dependency — so lineage and run ordering can't account for it. Listing sources and targets in the step config keeps the dependency graph honest.
+
+Project and workflow variables from Step 1 are reachable inside the UDF too, via `conn.analyze.workflow.variable_values(...)` and `conn.analyze.project.variable_values(...)` — so the same parameter drives your standard steps and your custom code. Full API examples are in the [User Defined Transform reference](/reference/workflow-steps/general/user-defined-transform/).
+
+**That's the leap from user to power-user.** You've turned a one-off pipeline into reusable assets — a value you can repoint with a variable, a whole sequence you can call anywhere as a Macro, and custom Python that reaches what the standard steps can't.
+
+## Where to Go Next
+
+- [Manage Workflow Variables](/guides/workflows/manage-workflow-variables/) — project vs. workflow scope, and the variables table.
+- [Create a Macro](/guides/workflows/create-a-macro/) — ports, run isolation, and driving one Macro per row.
+- [User Defined Transform reference](/reference/workflow-steps/general/user-defined-transform/) — the full API surface for custom Python.
+- [Workflows guide](/guides/workflows/) — conditions, loops, and everything else the orchestration layer offers.
+- [Transform Data With SQL](/get-started/tutorials/transform-with-sql/) — the sibling tutorial for when the answer is a query, not code.
