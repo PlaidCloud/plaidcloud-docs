@@ -7,7 +7,7 @@ PlaidCloud provides dedicated connectors for major enterprise ERP systems. Each 
 
 ## SAP
 
-- [SAP ECC](/reference/connectors/erp/sap-ecc/)
+- [SAP ECC / S/4HANA](/reference/connectors/erp/sap-ecc/) — one connection type serves both
 - [SAP S/4HANA](/reference/connectors/erp/sap-s4/)
 - [SAP Analytics Cloud (SAC)](/reference/connectors/erp/sap-sac/)
 - [SAP Profitability and Performance Management (PaPM)](/reference/connectors/erp/sap-papm/)

@@ -47,5 +47,5 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Enterprise Integrations
 
 - [Agent](/reference/workflow-steps/agent/) — PlaidLink Agent operations for on-premises resources
-- [SAP](/reference/workflow-steps/sap/) — SAP ECC RFC calls
+- [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls
 - [SAP-PCM](/reference/workflow-steps/sap-pcm/) — SAP Profitability and Cost Management model control
