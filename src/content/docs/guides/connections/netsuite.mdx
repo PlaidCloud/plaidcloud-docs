@@ -1,0 +1,141 @@
+---
+title: Connect to NetSuite
+description: Connect PlaidCloud to NetSuite and pull financial and operational data with SuiteQL — prerequisites, credentials, connection, smoke test, and a scheduled pull.
+sidebar:
+  order: 5
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Pull financial and operational data out of NetSuite into PlaidCloud tables with SuiteQL. This guide takes you from an empty NetSuite integration to a scheduled, typed pull. For the field-by-field reference behind it, see the [NetSuite REST Connector](/reference/connectors/rest/netsuite/).
+
+## Prerequisites
+
+You need, in NetSuite:
+
+- **OAuth 2.0** and **REST Web Services** enabled (**Setup > Company > Enable Features > SuiteCloud**).
+- An **RSA key pair** — the public certificate uploaded to NetSuite, the private key kept for PlaidCloud.
+- A **certificate id** (the JWT `kid`, from uploading the public cert), a **client id** (from the integration record), and your **account id** (production `1234567` or sandbox `1234567_SB1`).
+- A **role** with REST Web Services, **Log in using OAuth 2.0 Access Tokens**, SuiteAnalytics Workbook (if your queries touch analytics), and view access to the records you'll read.
+
+The full NetSuite-side steps — generating the key pair, uploading the certificate, and creating the integration — are in the [reference's NetSuite-Side Setup](/reference/connectors/rest/netsuite/#netsuite-side-setup). Complete those first; this guide assumes you have the four values in hand.
+
+<Aside type="caution">
+Enter the account id exactly as NetSuite shows it, **including** the `_SB1` suffix for a sandbox. PlaidCloud derives the API host from it — the wrong form points the pull at the wrong account.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **NetSuite** from the menu.
+
+   <Aside type="caution">Pick **NetSuite**, not the generic **REST** type. Only the NetSuite kind derives the API host from the account id and auto-injects the SuiteQL headers and paging. A generic-REST connection would run unauthenticated and fail.</Aside>
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `NetSuite Prod`. |
+   | Oauth2 client id | The client id from the integration record. |
+   | Netsuite certificate id | The certificate id (`kid`) from the public-cert upload. |
+   | Netsuite account id | Your account id, e.g. `1234567` or `1234567_SB1`. |
+   | Netsuite private certificate | The full private-key PEM block, pasted multi-line. |
+
+4. Click `Create`.
+
+</Steps>
+
+<Aside type="note">
+The private key is a multi-line PEM. If the form field can't hold a multi-line value in your build, create the connection with the other three fields, then set the private key through the MCP `connection_upsert` tool — it preserves the PEM intact. The saved key is encrypted and never shown again.
+</Aside>
+
+## Smoke-Test the Connection
+
+Confirm the credentials work before you build anything on top of them.
+
+<Steps>
+
+1. Add a [REST Request step](/guides/workflows/rest-request-step/) to a workflow.
+
+2. On the **Request** tab, set **Connection** to your NetSuite connection, **Method** to `POST`, and **Endpoint** to `/services/rest/query/v1/suiteql`.
+
+3. In the **Body**, put a tiny bounded query:
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 1"}
+   ```
+
+4. Click **Send Test Request**.
+
+</Steps>
+
+<Aside type="caution">
+Use **Send Test Request**, not the Preview tab — the Preview tab doesn't apply the connection's service config and will misreport. A green Send Test Request means the JWT signed, the token exchanged, and NetSuite answered. If it errors, the message carries NetSuite's own detail — usually a scope, role, or query problem — so fix that one thing and retest.
+</Aside>
+
+## Build the Pull Step
+
+With the smoke test green, turn the step into a real pull.
+
+<Steps>
+
+1. In the **Body**, write your SuiteQL query with a deterministic `ORDER BY`.
+
+   Financial — GL transaction lines for a period:
+
+   ```json
+   {"q": "SELECT tl.transaction AS transaction_id, t.trandate AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   ```
+
+   Operational — open sales orders by customer:
+
+   ```json
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, so.trandate AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   ```
+
+2. Leave the **Pagination & Parsing** controls and the `Prefer`/`Content-Type` headers **alone** — the NetSuite connection injects them.
+
+3. On the **Response** tab, keep the destination as **Table** and **define the columns with real types**: `Currency`/`Decimal` for amounts, `Date`/`Datetime` for dates, `Boolean` for `T`/`F` flags. SuiteQL returns everything as strings; the typed columns tell PlaidCloud how to coerce them.
+
+</Steps>
+
+<Aside type="caution">
+Without an `ORDER BY`, offset paging silently duplicates and skips rows across pages — a financial mis-tie you won't see until you reconcile. Every paged SuiteQL query needs a stable sort such as `ORDER BY internalid`.
+</Aside>
+
+<Aside type="caution">
+**Multi-currency:** on `transaction`/`transactionline`, `amount` is in each transaction's own currency. A `SUM(amount)` across subsidiaries is **consolidation-wrong** — select consolidated or exchange-rate-converted fields when you total across subsidiaries.
+</Aside>
+
+## Verify and Schedule
+
+<Steps>
+
+1. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)) and check the target table — row counts, and that amount/date columns arrived typed, not as text.
+
+2. For an ongoing feed, [schedule the workflow](/get-started/tutorials/schedule-a-workflow/).
+
+</Steps>
+
+<Aside type="note">
+Every NetSuite pull is a **full-table replace** — there is no incremental path, so a scheduled pull re-extracts the whole result each run. Keep the `WHERE` clause to the slice you actually need (a rolling date window, for instance) rather than pulling all of history every run.
+</Aside>
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| Test request 400 with a scope or role message | The role is missing REST Web Services / OAuth 2.0 login / SuiteAnalytics, or the scope array was rejected — the surfaced detail names it. |
+| Token exchange fails | Wrong account id form (missing `_SB1`), wrong certificate id (`kid`), or a private key that doesn't match the uploaded public cert. |
+| Type/conversion error on import | An amount or date column left as text, or typed against a value SuiteQL didn't return as expected — check the column types. |
+| Totals don't tie across subsidiaries | `amount` is in each transaction's own currency — use consolidated/converted fields. |
+| Duplicate or missing rows across a large pull | No deterministic `ORDER BY` on an offset-paged query. |
+
+## Related
+
+- [NetSuite REST Connector](/reference/connectors/rest/netsuite/) — field and SuiteQL reference.
+- [REST Request Step](/guides/workflows/rest-request-step/) — the step this pull is built on.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

@@ -32,6 +32,9 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [PlaidCloud Git Connection](/guides/connections/plaidcloud-git/) — connect to your workspace's own managed Git server with no server URL or credentials, and automate Panel app builds from it.
 - [Clone a Connection](/guides/connections/clone-connection/) — duplicate an existing connection for a new environment or tenant.
 - [Singer Sources](/guides/connections/singer-sources/) — connect to sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables.
+- [Connect to NetSuite](/guides/connections/netsuite/) — set up a NetSuite connection and pull financial and operational data with SuiteQL.
+- [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
+- [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
 
 ## Related
 
