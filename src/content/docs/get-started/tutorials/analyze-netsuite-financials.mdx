@@ -15,7 +15,7 @@ This is the day-one path for a controller or FP&A analyst: by the end you'll hav
 You'll connect once, pull once, and then do the part that actually matters: shaping raw GL rows into the summaries a business person reads on Monday morning.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 720 96" role="img" aria-label="Five stages left to right: NetSuite, a REST Request step running SuiteQL, a landed general ledger table, a SQL transform, and a P&L plus dashboard, feeding a scheduled refresh." style="width:100%;max-width:720px;height:auto;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Five stages left to right: NetSuite, a REST Request step running SuiteQL, a landed general ledger table, a Table Extract step that groups and summarizes, and a P&L plus dashboard, feeding a scheduled refresh." style="width:100%;max-width:720px;height:auto;">
   <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
@@ -27,7 +27,7 @@ You'll connect once, pull once, and then do the part that actually matters: shap
   <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">GL table</text>
   <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
   <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
-  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SQL transform</text>
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Group &amp; sum</text>
   <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
   <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">P&amp;L</text>
@@ -39,10 +39,10 @@ You'll connect once, pull once, and then do the part that actually matters: shap
 
 - A PlaidCloud workspace and a project to work in ([start a trial](https://app.plaidcloud.com) if you need one).
 - **A working NetSuite connection.** Follow [Connect to NetSuite](/guides/connections/netsuite/) first — you need OAuth 2.0 and REST Web Services enabled in NetSuite, the integration's client id, a certificate id, your account id, and the private-key PEM. Confirm **Send Test Request** is green before you start here.
-- A little SuiteQL is helpful but not required — every query is provided. Keep [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) open in a tab; this tutorial draws from it.
+- No SQL required to shape the data — you'll do that with standard transform steps. The only query text is the **pull** from NetSuite, and every pull query is provided. Keep [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) open in a tab; this tutorial draws from it.
 
 <Aside type="note">
-Two different SQL dialects appear below, and it's worth knowing which is which. The **pull** query is **SuiteQL**, which runs *inside NetSuite*. The **shaping** query is ordinary PlaidCloud warehouse SQL, which runs *in PlaidCloud* over the table you already landed. They look similar but have different functions available.
+The one place you write query text is the **pull** from NetSuite — that's **SuiteQL**, which runs *inside NetSuite*. Everything after it — grouping the GL into a P&L, bucketing receivables — is done with PlaidCloud's point-and-click transform steps, no SQL. (If you're a SQL person, there's an Extract SQL step for it, but you won't need it here.)
 </Aside>
 
 ## Step 1: Create a Workflow
@@ -95,41 +95,40 @@ One SuiteQL query gives you a year of posting activity — every account, every 
 
 ## Step 3: Shape the GL Into a P&L
 
-Now the analysis. A P&L is just the GL rolled up: income and expense accounts, grouped into a few lines, with the sign flipped so revenue reads positive. One PlaidCloud SQL transform does it.
+Now the analysis, done with a single point-and-click transform — no SQL. A P&L is just the GL rolled up: income and expense accounts, grouped into a few lines, with the sign flipped so revenue reads positive. A [Table Extract step](/reference/workflow-steps/tables/table-extract/) does all of it on its **Table Data Selection** and **Data Filters** tabs.
 
 <Steps>
 
-1. Add a table transform step that reads from `netsuite_gl` and writes to a new table `netsuite_pnl`. Open its **SQL editor** and enter:
+1. Add a **Table Extract** step. Set its **Source** to `netsuite_gl` and its **Target** to a new table, `netsuite_pnl`.
 
-   ```sql
-   SELECT
-       period,
-       CASE
-           WHEN account_type IN ('Income', 'OthIncome')  THEN '1 - Revenue'
-           WHEN account_type = 'COGS'                     THEN '2 - Cost of Goods Sold'
-           WHEN account_type IN ('Expense', 'OthExpense') THEN '3 - Operating Expenses'
-       END                             AS pnl_line,
-       SUM(-1 * amount)                AS amount
-   FROM netsuite_gl
-   WHERE account_type IN ('Income', 'OthIncome', 'COGS', 'Expense', 'OthExpense')
-   GROUP BY
-       period,
-       CASE
-           WHEN account_type IN ('Income', 'OthIncome')  THEN '1 - Revenue'
-           WHEN account_type = 'COGS'                     THEN '2 - Cost of Goods Sold'
-           WHEN account_type IN ('Expense', 'OthExpense') THEN '3 - Operating Expenses'
-       END
-   ORDER BY period, pnl_line
+2. On the **Data Filters** tab, keep only the income and expense accounts (leave out balance-sheet accounts): add a filter where **`account_type` is one of** `Income`, `OthIncome`, `COGS`, `Expense`, `OthExpense`.
+
+3. On the **Table Data Selection** tab, click **Summarize** to turn on aggregation, then set up three target columns:
+
+   | Target column | How to fill it | Summarize |
+   |---|---|---|
+   | `period` | mapped straight from the source | **Group By** |
+   | `pnl_line` | an **expression** (below) that turns each account type into a report line | **Group By** |
+   | `amount` | an **expression** `netsuite_gl.amount * -1` — the sign flip | **Sum** |
+
+   For `pnl_line`, double-click its **expression** cell and enter (the editor lets you point-and-click the columns and the `case` function from the **Conditions** group):
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
    ```
 
-2. Run the step.
+4. Run the step.
 
 </Steps>
 
-The `SUM(-1 * amount)` is the one accounting move: negating the debit-positive amount makes **revenue positive and costs negative**, so each month's three lines *add up to net income*. This is ordinary PlaidCloud SQL, not SuiteQL — the [v1 / v2 function reference](/get-started/tutorials/transform-with-sql/) covers what's available, and **Prettify** keeps it readable.
+The `amount * -1` expression is the one accounting move: negating the debit-positive amount makes **revenue positive and costs negative**, so each month's three lines *add up to net income*. Then **Sum** with **Group By** on `period` and `pnl_line` rolls every account into those three lines per month. Expressions use PlaidCloud's point-and-click editor — see [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/) and the [expression reference](/reference/expressions/).
 
 <Aside type="tip">
-Grouping several dozen accounts into three lines is deliberately coarse for a first pass. To break Operating Expenses into departments, add `department` (via `BUILTIN.DF(tl.department)`, joining `transactionline`) to the Step 2 pull and to this grouping.
+Grouping several dozen accounts into three lines is deliberately coarse for a first pass. To break Operating Expenses into departments, add `department` (via `BUILTIN.DF(tl.department)`, joining `transactionline`) to the Step 2 pull, then add `department` as another **Group By** column here.
 </Aside>
 
 ## Step 4: Read It Like a Finance Person
@@ -151,7 +150,7 @@ Read straight off it:
 The first thing to do is **tie it out**: run NetSuite's own Income Statement for the same month and confirm revenue and net income match. If they don't, it's almost always a scope difference — a subsidiary/currency filter, or posting-period vs transaction-date alignment (see the [note on periods](/guides/connections/netsuite-financial-queries/#trial-balance)). Trust the pipeline only once it ties.
 
 <Aside type="tip">
-Want the classic month-across-the-top layout? Add one more SQL transform that pivots `period` into columns — one column per month, one row per P&L line — using a `CASE`-per-month `SUM`, or the [pivot approach in Transform Data With SQL](/get-started/tutorials/transform-with-sql/). That gives you month-over-month at a glance.
+Want the classic month-across-the-top layout? Add a [Table Pivot step](/reference/workflow-steps/tables/table-pivot/) reading `netsuite_pnl`: pivot `period` into columns, keep `pnl_line` as the row, and sum `amount`. That gives you one column per month, one row per P&L line — month-over-month at a glance, no SQL.
 </Aside>
 
 ## Step 5: Build an A/R Aging
@@ -178,32 +177,27 @@ The second day-one win, and it follows the same connect-pull-shape shape. Start 
 
    Land it as `netsuite_open_ar`, with `invoice_total` and `amount_unpaid` → **Currency**, `invoice_date` and `due_date` → **Date**, the rest → **Text**.
 
-2. Add a table transform reading `netsuite_open_ar` into `netsuite_ar_aging`, with this SQL:
+2. Add a **Table Extract** step reading `netsuite_open_ar` into a new table `netsuite_ar_aging`. On the **Table Data Selection** tab, click **Summarize** and set up three target columns:
 
-   ```sql
-   SELECT
-       CASE
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 0  THEN '0 - Current'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 30 THEN '1 - 1-30 days'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 60 THEN '2 - 31-60 days'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 90 THEN '3 - 61-90 days'
-           ELSE '4 - Over 90 days'
-       END                     AS aging_bucket,
-       COUNT(*)                AS invoices,
-       SUM(amount_unpaid)      AS balance
-   FROM netsuite_open_ar
-   GROUP BY
-       CASE
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 0  THEN '0 - Current'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 30 THEN '1 - 1-30 days'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 60 THEN '2 - 31-60 days'
-           WHEN DATEDIFF(CURRENT_DATE, due_date) <= 90 THEN '3 - 61-90 days'
-           ELSE '4 - Over 90 days'
-       END
-   ORDER BY aging_bucket
+   | Target column | How to fill it | Summarize |
+   |---|---|---|
+   | `aging_bucket` | an **expression** (below) that labels each invoice by how overdue it is | **Group By** |
+   | `invoices` | any column, e.g. `invoice_number` | **Count** |
+   | `balance` | mapped from `amount_unpaid` | **Sum** |
+
+   For `aging_bucket`, enter this expression — it measures days past due (a date minus a date gives days) and labels the band:
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
    ```
 
-3. Run it. `netsuite_ar_aging` now tells you, in five rows, how much is current versus 30/60/90+ days overdue — the collections view a business reads first. (`due_date` must be typed as **Date** for `DATEDIFF` to work; the exact date-difference function can vary by warehouse — see the [function reference](/get-started/tutorials/transform-with-sql/).)
+3. Run it. `netsuite_ar_aging` now tells you, in five rows, how much is current versus 30/60/90+ days overdue — the collections view a business reads first. (`due_date` must be typed as **Date** for the date subtraction to work — you set that on the REST Request step's **Response** tab above.)
 
 </Steps>
 
@@ -229,11 +223,11 @@ Because every pull is a full-table replace, each run re-extracts the slice its `
 
 ## What You've Built
 
-Starting from an empty workflow, you pulled live NetSuite GL and receivables, shaped them into a **monthly P&L** and an **A/R aging** with two small SQL transforms, put them on a dashboard, and set them to refresh — the core reporting loop a finance team runs, now automated.
+Starting from an empty workflow, you pulled live NetSuite GL and receivables, shaped them into a **monthly P&L** and an **A/R aging** with two standard transform steps — no SQL — put them on a dashboard, and set them to refresh — the core reporting loop a finance team runs, now automated.
 
 ## Where to Go Next
 
 - [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) — trial balance, balance sheet, open sales orders, POs, and inventory to add to the same workflow.
-- [Transform Data With SQL and Expressions](/get-started/tutorials/transform-with-sql/) — pivots, joins, and calculated columns for deeper analysis.
+- [Table Extract step](/reference/workflow-steps/tables/table-extract/) and [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/) — grouping, filtering, and calculated columns for deeper analysis.
 - [Design a Dimension Hierarchy](/get-started/tutorials/design-a-dimension/) — roll your chart of accounts up into reporting groups you control.
 - [Build a Dashboard](/get-started/tutorials/build-a-dashboard/) — the full dashboard walkthrough.
