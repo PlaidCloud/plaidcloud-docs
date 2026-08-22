@@ -67,6 +67,7 @@ SuiteQL is the pull path — the record API returns only ids and links, not fiel
 - **`Prefer: transient`, `Content-Type: application/json`, and offset paging are injected by the connection** — do not hand-configure them. Paging is service-fixed, not form-adjustable.
 - **A deterministic `ORDER BY` is required** on any paged query (e.g. `ORDER BY internalid`). Without it, offset paging silently duplicates and skips rows across pages — a financial mis-tie you won't see until you reconcile.
 - **Define your columns with real types.** SuiteQL returns every value as a string; typed columns (Currency/Decimal, Date/Datetime, Boolean) tell PlaidCloud how to coerce them, and a blank value is read as empty.
+- **Format dates in the query.** SuiteQL returns dates in the account's display format (often `M/D/YYYY`), which is ambiguous, so PlaidCloud does not guess it. For a `Date`/`Datetime` column, select the field as `TO_CHAR(col, 'YYYY-MM-DD')` (or `'YYYY-MM-DD HH24:MI:SS'`), or leave the column as `Text`. A value that can't be converted fails the run with a message naming the column and value.
 
 > The SuiteQL response envelope (the `items` / `hasMore` paths) is built to the documented shape and confirmed at live cutover.
 

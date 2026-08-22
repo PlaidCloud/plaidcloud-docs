@@ -87,18 +87,22 @@ With the smoke test green, turn the step into a real pull.
    Financial — GL transaction lines for a period:
 
    ```json
-   {"q": "SELECT tl.transaction AS transaction_id, t.trandate AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   {"q": "SELECT tl.transaction AS transaction_id, TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
    ```
 
    Operational — open sales orders by customer:
 
    ```json
-   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, so.trandate AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, TO_CHAR(so.trandate, 'YYYY-MM-DD') AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
    ```
 
 2. Leave the **Pagination & Parsing** controls and the `Prefer`/`Content-Type` headers **alone** — the NetSuite connection injects them.
 
 3. On the **Response** tab, keep the destination as **Table** and **define the columns with real types**: `Currency`/`Decimal` for amounts, `Date`/`Datetime` for dates, `Boolean` for `T`/`F` flags. SuiteQL returns everything as strings; the typed columns tell PlaidCloud how to coerce them.
+
+   <Aside type="caution">
+   SuiteQL returns dates as text in the **account's display format** (often `M/D/YYYY`), which is ambiguous, so PlaidCloud does not guess it. For a column you type as `Date`/`Datetime`, format the date in the query — `TO_CHAR(trandate, 'YYYY-MM-DD') AS trandate` (or `'YYYY-MM-DD HH24:MI:SS'` for a datetime) — or leave the column as `Text`. Numbers and `T`/`F` flags need no such handling. If a value can't be converted, the run fails with a message naming the column and value.
+   </Aside>
 
 </Steps>
 
@@ -130,7 +134,7 @@ Every NetSuite pull is a **full-table replace** — there is no incremental path
 |---|---|
 | Test request 400 with a scope or role message | The role is missing REST Web Services / OAuth 2.0 login / SuiteAnalytics, or the scope array was rejected — the surfaced detail names it. |
 | Token exchange fails | Wrong account id form (missing `_SB1`), wrong certificate id (`kid`), or a private key that doesn't match the uploaded public cert. |
-| Type/conversion error on import | An amount or date column left as text, or typed against a value SuiteQL didn't return as expected — check the column types. |
+| Type/conversion error on import (names the column and value) | A typed column got a value it can't parse — most often a `Date`/`Datetime` column where SuiteQL returned the account's display format. Wrap the field in `TO_CHAR(col, 'YYYY-MM-DD')` in the query, or set the column type to `Text`. |
 | Totals don't tie across subsidiaries | `amount` is in each transaction's own currency — use consolidated/converted fields. |
 | Duplicate or missing rows across a large pull | No deterministic `ORDER BY` on an offset-paged query. |
 
