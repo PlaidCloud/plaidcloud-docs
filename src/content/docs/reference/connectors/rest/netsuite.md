@@ -81,4 +81,5 @@ SuiteQL is the pull path — the record API returns only ids and links, not fiel
 ## Related
 
 - [Connect to NetSuite](/guides/connections/netsuite/) — the full walkthrough.
+- [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) — journal entries, trial balance, P&L, balance sheet, and operational queries.
 - [REST Request Step](/guides/workflows/rest-request-step/) — the step this pull is built on.
