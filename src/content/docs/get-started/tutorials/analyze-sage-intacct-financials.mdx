@@ -1,6 +1,6 @@
 ---
 title: Analyze Sage Intacct Financials — From Connection to Trial Balance
-description: End-to-end Sage Intacct tutorial — connect, pull account balances by dimension with the Import Sage step, shape them into a departmental trial balance and P&L, put it on a dashboard, and schedule the refresh.
+description: End-to-end Sage Intacct tutorial — connect, pull account balances by dimension with the Import Sage step, shape them into a departmental trial balance and P&L, add a per-head metric from statistical accounts, put it on a dashboard, and schedule the refresh.
 sidebar:
   label: Analyze Sage Intacct Financials
   order: 8
@@ -38,7 +38,7 @@ You'll connect once, pull once, and then do the part that actually matters: shap
 ## Prerequisites
 
 - A PlaidCloud workspace and a project to work in ([start a trial](https://app.plaidcloud.com) if you need one).
-- **A working Sage Intacct connection.** Follow [Connect to Sage Intacct](/guides/connections/sage-intacct/) first — you need Web Services enabled, a Web Services user with permission on the objects you'll read, your company id, and the sender/user credentials. Confirm the connection works before you start here.
+- **A working Sage Intacct connection.** Follow [Connect to Sage Intacct](/guides/connections/sage-intacct/) first — you need Web Services enabled, a Web Services user with permission on the objects you'll read, and the connection's four credential fields: **Client ID**, **Client Secret**, **Web Service User Username**, and **Company ID**. Confirm the connection works before you start here.
 - Know your **operating entities** (the entity ids you report on) and roughly which **account-number range** holds your P&L accounts (revenue and expense). The examples below use `201` and `301` for entities and `4010`–`9999` for the P&L range — substitute your own.
 
 <Aside type="note">
@@ -165,13 +165,49 @@ That's a live Sage Intacct financial dashboard — no export, refreshed whenever
 
 Because the pull is a full-table replace, each run re-reads the balances for the date and account range you set — keep those to the window you need (the current period, your P&L accounts) rather than all of history.
 
-<Aside type="note">
-**Statistical accounts** (headcount, square footage, units) live in Intacct's *statistical* books, which the Import Sage step doesn't reach from the UI. Pulling them — to build per-head or per-unit metrics alongside this P&L — uses the same account-balances API in statistical mode, driven by a small reusable [user-defined function](/get-started/tutorials/reuse-variables-macros-udfs/). It's an advanced follow-up to this tutorial, not part of the day-one path.
-</Aside>
+## Step 7: Add a Per-Head Metric With Statistical Accounts
+
+Intacct also tracks non-monetary **statistical accounts** — headcount, square footage, units — alongside your financial chart. Pull them with a second **Import Sage** step set to statistical mode, then join them onto the P&L to read a metric like operating expense per employee, by department. Three more standard steps, still no SQL.
+
+<Steps>
+
+1. Add a second **Import Sage** step. On its configuration, set:
+
+   | Field | Value |
+   |---|---|
+   | **Connection** | your Sage Intacct connection |
+   | **Company** | the Intacct company to read from |
+   | **Start date** / **End date** | the same period as Step 2 |
+   | **Statistical** | **Statistical only** |
+   | **Start account** / **End account** | `0000` to `9999` — statistical accounts aren't guaranteed to fall inside your financial chart's numbering, so pull the full range rather than the P&L range from Step 2 |
+   | **Entities** | your operating entities, e.g. `201`, `301` |
+   | **Dimensions** | **Department** — the dimension you're reporting per head by |
+
+2. Set the **Target** to a new table named `intacct_statistics`.
+
+3. Run the step. You get one row per statistical account per department, with `endbalance` carrying the statistic itself — e.g. headcount for that department at period end.
+
+</Steps>
+
+Now bring headcount onto the P&L and divide — but not directly off `intacct_statistics`. That table has one row *per statistical account per department* (headcount, square footage, units, whatever you track), so a join on `departmentname` alone would fan out every P&L row once per statistical account in that department, and `amount_per_head` would divide by whichever statistical account happened to land on the row. Filter to headcount first so the join is one row per department and the ratio actually means something.
+
+<Steps>
+
+1. Add a **Table Extract** step. Set its **Source** to `intacct_statistics` and its **Target** to a new table, `intacct_headcount`. On **Table Data Selection**, propagate all columns unchanged — no aggregation needed here. On the **Data Filters** tab, add a **Select Subset Of Data** filter on the source data: `intacct_statistics.glaccountno == '9000'` — replace `9000` with your own headcount statistical account number (filter on the account-name column instead if that's what your pull returns; `glaccountno` is still text, so compare it to a quoted string). Run the step — `intacct_headcount` now has exactly one row per department.
+
+2. Add a [Table Outer Join step](/reference/workflow-steps/tables/table-outer-join/). Set **Table 1** to `intacct_pnl` and **Table 2** to `intacct_headcount`, and join on `departmentname` — now a clean 1:1 match per department. Leave **Join Type** at its default **Left Join** — every P&L row is kept, with headcount filled in where the department matches. Target a new table, `intacct_pnl_with_headcount`, and propagate all columns from both tables.
+
+3. Run the step, then add a **Table Extract** step reading `intacct_pnl_with_headcount` and targeting a new table, `intacct_pnl_per_head`. On **Table Data Selection**, propagate the existing columns, then add one more target column: `amount_per_head`, an **expression** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, type **Currency**.
+
+4. Run the step.
+
+</Steps>
+
+Read the **`3 - Operating Expenses`** row's `amount_per_head` for opex per employee, by department — the same read as Step 4, one column deeper. Add it to the dashboard alongside the P&L, or fold it into Step 6's schedule so it refreshes with everything else.
 
 ## What You've Built
 
-Starting from an empty workflow, you pulled live Sage Intacct account balances, shaped them into a **departmental P&L** with a single standard transform step — no SQL — put it on a dashboard, and set it to refresh — the core reporting loop a finance team runs, now automated.
+Starting from an empty workflow, you pulled live Sage Intacct account balances, shaped them into a **departmental P&L** with a single standard transform step, joined in statistical accounts for a per-head metric — no SQL anywhere in the pipeline — put it on a dashboard, and set it to refresh — the core reporting loop a finance team runs, now automated.
 
 ## Where to Go Next
 
