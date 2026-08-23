@@ -59,7 +59,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Detour End | Full | Conditional branch merge | Rejoins conditionally selected branches. |
 | Directory | Full | Document directory listing | Lists files from a Document path. |
 | Distance | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. |
-| Download | Full | HTTP download executor | Downloads external data or artifacts. |
+| Download | Full | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection | Downloads external data or artifacts; assign a REST connection to the converted step before it runs. |
 | Drop Down | Full | Controlled workflow variable | Converts app drop-down choices to controlled input. |
 | Dynamic Input | Full | Dynamic Document input | Resolves file patterns and variable-driven inputs at runtime. |
 | Dynamic Rename | Full | Dynamic rename transform | Renames fields from metadata or rules. |
