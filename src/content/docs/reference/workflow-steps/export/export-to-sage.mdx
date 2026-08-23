@@ -1,29 +1,98 @@
 ---
-title: Export Sage Trial Balance
-description: Post a trial balance from PlaidCloud project tables into Sage Intacct over a Sage connection.
+title: "Intacct: Post Journal Entry"
+description: Post journal entries from PlaidCloud project tables into Sage Intacct as a low-code alternative to a posting UDF, with a per-entry result table and Preview validation.
 sidebar:
   order: 18
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
 ## Description
 
-Posts a trial balance into Sage over a Sage connection. The step takes two tables — a header table describing the journal entry and a lines table holding its individual postings — and writes them as a single transaction.
+Posts journal entries into Sage Intacct over a Sage Intacct connection, using Intacct's REST v1 API. This is a low-code, native alternative to writing a posting user-defined function (UDF) — pick the connection, map your columns, and the step handles authentication, batching, and per-entry error handling for you.
+
+The step reads two tables you've already shaped upstream — a **header table** and a **lines table** — validates each journal entry, and posts it. It handles the batch case: many journal entries in a single run, each posted and tracked independently.
+
+<Aside type="danger" title="No duplicate protection — check the result table before re-running">
+This step does **not** track which entries have already posted. Re-running it re-posts **every** entry in the header table, including ones that posted successfully last time — there is no dedupe. Before you re-run, open the result table from the last run and confirm which entries actually need posting. If a prior run left any entries with a `status` of `unknown`, see [Result Table](#result-table) below before you do anything else.
+</Aside>
+
+## Data-Shape Contract
+
+The step doesn't infer which rows belong to which journal entry — you build that structure upstream with standard steps (an assignment expression, an aggregation) before this step runs:
+
+- The **header table** has **exactly one row per journal entry**, and that row carries an **`entry_key`** column — any value that's unique per entry (a batch number, a concatenated date+description, a generated sequence).
+- The **lines table** has one row per posting line, and **every line carries the same `entry_key`** value as the header row it belongs to.
+
+A single journal entry (no batching) still needs this shape — give every row in both tables the same constant `entry_key`.
+
+The step groups both tables by `entry_key` before validating or posting, so a header row with no matching lines, a line with no matching header, or more than one header row for the same key all fail validation for that entry rather than producing a malformed posting.
 
 ## Unique Configuration Items
 
 ### Sage Connection
 
-The Sage connection to post through.
+The **Sage Intacct** connection to post through. Only Sage Intacct connections are offered here — a generic REST connection isn't accepted, because posting requires the Intacct-specific token exchange and company/entity resolution that only a Sage Intacct connection carries.
+
+The same connection is used elsewhere to *read* from Intacct (for example, [Import Sage AP](/reference/workflow-steps/import/import-sage-ap/) or [Import Sage Intacct Query](/reference/workflow-steps/import/import-intacct-query/)) — one connection serves both directions. See [Sage Intacct REST Connector](/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+The name of the column — present in both the header and lines source columns — that groups header and line rows into one journal entry. See [Data-Shape Contract](#data-shape-contract) above.
 
 ### Source Columns
 
-Two separate mappings:
+Two separate column mappings, one per tab — for each, map a source column onto the journal-entry field it feeds:
 
-- **Header columns** — the journal-entry-level fields.
-- **Lines columns** — the per-posting fields.
+- **Header columns** — the journal-entry-level fields: journal, posting date, description, reference number, an optional `base_location` (the Intacct entity/location the entry posts under — omit it for a single-entity company), the correlation column you named as the **Entry Key**, and similar header-level detail.
+- **Lines columns** — the per-posting fields: GL account, debit/credit amount, line description, the same **Entry Key** column, and dimensions (location, department, employee, class, and similar).
+
+You don't have to rename your source columns — map whatever they're called onto the target field names above.
+
+### Result Table
+
+The target table this step writes one row to per journal entry, recording the outcome of validating and (if not in Preview) posting it. See [Result Table](#result-table) below for its columns and `status` values.
+
+### Preview
+
+A checkbox, **checked by default**. With Preview on, the step validates every journal entry and writes the result table exactly as a real run would, but it does **not** authenticate to Intacct and does **not** post anything — there's no network call to Intacct at all in Preview mode. Rows land in the result table with `status = preview`, showing you which entries would post cleanly and which would fail validation, before anything reaches your GL.
+
+Like a real run, a Preview **replaces** the result table with this run's rows — it is the step's per-run output, not a running log — so a Preview after a real run overwrites that run's `posted` and `unknown` rows. Open and copy the last run's result table before re-running (Preview or real) if you still need it.
+
+Preview does not validate your Intacct **credentials** — because it never connects, a bad connection or expired credential won't surface here. Use the connection's **Test Connection** action (under **Tools > Connections**) to confirm credentials separately.
+
+Uncheck Preview only when you're ready for a real post. We recommend running with Preview on first, reviewing the result table, then re-running with Preview off.
+
+## Result Table
+
+Every run — Preview or real — writes one row per journal entry to the result table:
+
+| Column | Description |
+|---|---|
+| `entry_key` | The journal entry this row reports on. |
+| `status` | One of `preview`, `posted`, `failed`, `unknown` — see below. |
+| `intacct_key` | The Intacct-assigned key for the posted entry, when available. |
+| `http_status` | The HTTP status Intacct returned for the post attempt, when available. |
+| `error_message` | A short, sanitized description of what went wrong, when `status` is `failed` or `unknown`. |
+| `line_count` | Number of lines matched to this entry. |
+| `posting_date` | The posting date sent to (or, in Preview, that would be sent to) Intacct. |
+
+### Status Values
+
+- **`preview`** — Preview mode; the entry validated and was not posted.
+- **`posted`** — the entry posted to Intacct successfully.
+- **`failed`** — Intacct definitively rejected the entry (or it failed validation before any post was attempted). Safe to fix the underlying issue and re-post just that entry.
+- **`unknown`** — the outcome couldn't be determined — a timeout, a dropped connection, or a server error with no definitive response from Intacct.
+
+<Aside type="danger" title="unknown does not mean it failed">
+An `unknown` entry may already have posted successfully at Intacct — the request could have been received and committed before the connection was lost or the response was never returned. **Verify the entry's status directly in Intacct before re-running this step.** Blindly re-posting an `unknown` entry risks creating a duplicate journal entry in your GL.
+</Aside>
+
+A run with any `failed` or `unknown` rows reports a warning so it's visible without opening the result table, but the result table itself is the source of truth for what to do next.
 
 ## Related
 
 - [Export steps](/reference/workflow-steps/export/)
 - [Import Sage AP](/reference/workflow-steps/import/import-sage-ap/)
 - [Import Sage Intacct Query](/reference/workflow-steps/import/import-intacct-query/)
+- [Sage Intacct REST Connector](/reference/connectors/rest/sage-intacct/)
