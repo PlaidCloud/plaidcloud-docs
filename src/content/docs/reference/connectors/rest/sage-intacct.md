@@ -12,30 +12,30 @@ The Sage Intacct REST API documentation is available at the [Sage Developer site
 
 ## Security Requirements
 
-The connector authenticates with a Sage Intacct **Web Services** sender ID plus a user-level login. The sender credentials must be enabled for your company by Sage support; the user credentials must have permissions for every Intacct object the connector will read.
+PlaidCloud has a dedicated **Sage Intacct** connection type. It authenticates with a Sage Intacct **Web Services** Sender ID/Sender password pair, entered as the connection's **Client ID** and **Client Secret**, plus a Web Service User Username and a Company ID. The sender credentials must be enabled for your company by Sage support; the Web Services user must have permissions for every Intacct object the connector will read.
 
-Treat sender and user credentials as secrets — store them only via the **Credentials** area in PlaidCloud and reference them from the connection.
+Treat the Client ID and Client Secret as secrets — store them only via the **Credentials** area in PlaidCloud and reference them from the connection.
 
 
 ## Obtain Credentials
 
 1. Open the Sage Intacct **Company Setup** area
-2. Enable Web Services for the sender ID provided by Sage
+2. Enable Web Services for the Sender ID provided by Sage
 3. Create or select a Web Services user for PlaidCloud
 4. Grant the user permissions on every object you intend to query
-5. Record the company ID, user ID, user password, sender ID, and sender password
+5. Record the Company ID, Web Service User Username, Sender ID, and Sender password
 
 
-## Create REST Connector
+## Create Sage Intacct Connector
 
 1. Go to **Tools > Connections** and click `Add Connection`
 2. Select **Sage Intacct** as the connection type
 3. Enter:
     * **Connection Name** — friendly name shown in workflow steps
+    * **Client ID** — your Intacct Sender ID
+    * **Client Secret** — your Intacct Sender password
+    * **Web Service User Username** — the Web Services user login
     * **Company ID** — the Intacct company you're connecting to
-    * **User ID** and **User Password**
-    * **Sender ID** and **Sender Password**
-    * **Entity** — optional, for multi-entity tenants
 4. Click `Test` to validate the credentials
 5. Click `Save`
 
