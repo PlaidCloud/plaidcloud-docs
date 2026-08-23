@@ -192,8 +192,10 @@ The spatial tools themselves convert; these are prerequisites on the input.
 
 - **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile has no
   open reader, so an import of one fails closed rather than crashing at run
-  time. Export the layer to a standard spatial format first; other spatial
-  formats are unaffected.
+  time. In Alteryx, re-export the layer to a standard spatial format —
+  shapefile or GeoJSON — and import that instead; other spatial formats are
+  unaffected. See
+  [Migrate Spatial Alteryx Workflows](/guides/workflows/migrate-spatial-alteryx-workflows/#package-spatial-inputs).
 - **The Peano key Spatial Info measure.** Peano key is a proprietary Alteryx
   spatial index with no public specification, so a Spatial Info that asks for it
   skips that one column and names it in a note. Every other Spatial Info measure
@@ -222,7 +224,7 @@ Most of these are prerequisites on the input rather than conversion limits.
 
 - **A spatial-index match needs rebuilding as a Spatial Match.** A Calgary Join or Cross Count Append matched against a spatial index refuses, naming the stand-in table — the workflow records the index's name but not whether it holds ordinary values or spatial geometry, and a value match (an equality join) and a spatial match (point-in-polygon) are different operations. Export the database to a table and rebuild the match as a Join (value index) or a Spatial Match (spatial index).
 - **A read limited by Skip Records or Max Records needs an explicit order.** The exported stand-in table carries no record order, so add an order column when you export if you need to take the first or last N records by position.
-- **A demographic or reference database must be loaded first.** A Calgary read before its database has been loaded stops, naming the table to build. This is the common case for the licensed demographic and reference `.cydb` files Alteryx ships (Experian, Census, and similar): no converter can reproduce that third-party data, so bring your own licensed reference data and load it into the named table — the same as the Geocoder reference data.
+- **A demographic or reference database must be loaded first.** A Calgary read before its database has been loaded stops, naming the table to build. The `.cydb` file itself has no open reader, so re-export it in Alteryx (a Calgary Input into an Output Data tool writing CSV or Parquet) and import that as the named table — see [Unreadable .cydb (Calgary) Databases](/guides/workflows/troubleshoot-alteryx-imports/#unreadable-cydb-calgary-databases). This is the common case for the licensed demographic and reference `.cydb` files Alteryx ships (Experian, Census, and similar): no converter can reproduce that third-party data, so bring your own licensed reference data and load it into the named table — the same as the Geocoder reference data.
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
 - **A custom-value cross-count grid doesn't convert yet.** A single plain cross-count field converts — it counts, per input record, the matching database records — but a grid of *named* custom values would append one count column per value, and Alteryx documents neither how many columns that is nor what it names them. Tracked for a future release, pending a reference export to reverse-engineer the column contract.
 
