@@ -12,7 +12,6 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export Project Archive](/reference/workflow-steps/export/export-project-archive/)
 - [Export Project Table](/reference/workflow-steps/export/export-project-table/)
 - [Export Quandl](/reference/workflow-steps/export/export-quandl/)
-- [Export Sage Trial Balance](/reference/workflow-steps/export/export-to-sage/)
 - [Export SQL](/reference/workflow-steps/export/export-sql/)
 - [Export Templated](/reference/workflow-steps/export/export-templated/)
 - [Export to Avro](/reference/workflow-steps/export/export-to-avro/)
