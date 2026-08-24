@@ -44,7 +44,7 @@ Treat the Client ID and Client Secret as secrets — store them only via the **C
 
 The same connection serves both reading from and posting to Intacct. It's selectable from:
 
-* [Import Sage AP](../../../workflow-steps/import/import-sage-ap/) — AP bill headers
-* [Import Sage AP Lines](../../../workflow-steps/import/import-sage-ap-lines/) — AP bill line detail
-* [Import Sage Intacct Query](../../../workflow-steps/import/import-intacct-query/) — generic query against any Intacct object
-* [Intacct: Post Journal Entry](../../../workflow-steps/export/export-to-sage/) — post journal entries
+* [Import Sage AP](../../../workflow-steps/sage-intacct/import-sage-ap/) — AP bill headers
+* [Import Sage AP Lines](../../../workflow-steps/sage-intacct/import-sage-ap-lines/) — AP bill line detail
+* [Import Sage Intacct Query](../../../workflow-steps/sage-intacct/import-intacct-query/) — generic query against any Intacct object
+* [Intacct: Post Journal Entry](../../../workflow-steps/sage-intacct/export-to-sage/) — post journal entries
