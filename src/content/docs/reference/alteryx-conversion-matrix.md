@@ -32,9 +32,11 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Action | Full | Variable binding and conditional step configuration | Updates downstream step settings from converted app inputs. |
 | Append Fields | Full | Append fields transform | Appends fields from one stream to another. |
 | Auto Field | Full | Auto field sizing transform | Preserves inferred field sizing. |
+| AutoML | Not supported | No conversion path — build models with [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) by hand; automated model search is on the roadmap. | Refuses by name. |
 | Barcode | Full | Barcode executor | Reads or writes barcodes in the configured symbology. |
 | Browse | Full | Browse / passthrough | Preserved for inspection with no runtime cost. |
 | Buffer | Full | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
+| Build Features | Not supported | No conversion path — engineer features with transform steps by hand; automated feature generation is on the roadmap. | Refuses by name. |
 | Calgary Cross Count | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) aggregate | Groups indexed fields and counts each custom field's named values. |
 | Calgary Cross Count Append | Full | [Calgary Cross Count Append](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) | Matches each input record against a value index, then counts how many database records it matched. |
 | Calgary Input | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input | Reads the database with its saved query applied as a filter. |
@@ -57,13 +59,14 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Detour End | Full | Conditional branch merge | Rejoins conditionally selected branches. |
 | Directory | Full | Document directory listing | Lists files from a Document path. |
 | Distance | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. |
-| Download | Full | HTTP download executor | Downloads external data or artifacts. |
+| Download | Full | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection | Downloads external data or artifacts; assign a REST connection to the converted step before it runs. |
 | Drop Down | Full | Controlled workflow variable | Converts app drop-down choices to controlled input. |
 | Dynamic Input | Full | Dynamic Document input | Resolves file patterns and variable-driven inputs at runtime. |
 | Dynamic Rename | Full | Dynamic rename transform | Renames fields from metadata or rules. |
 | Dynamic Replace | Full | Dynamic replace transform | Applies replacement rules from a second stream. |
 | Dynamic Select | Full | Dynamic field selection transform | Selects fields by type, name, or rule. |
 | Error | Full | Step condition (error) | Converts configured error behavior to step conditions. |
+| Feature Types | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) feature configuration | Carries each field's assigned model role into the fused ML Train step. |
 | File Browse | Full | Controlled Document file variable | Lets users choose a file for a converted app run. |
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
@@ -80,8 +83,10 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Interactive Chart | Full | Chart artifact | Creates a chart artifact from converted data. |
 | Join | Full | Join transform | Produces joined, left-only, and right-only streams on a single- or multi-field key or by position. |
 | Join Multiple | Full | Multi-join transform | Joins multiple input streams. |
+| Key/Value Pairs | Not supported | No conversion path — extract key/value pairs by hand with an [LLM step](/guides/workflows/llm-step/) or text-parsing transforms; on the roadmap. | Refuses by name. |
 | Line To Polygon | Full | Line To Polygon executor op | Closes each line into a polygon ring, appended as a `Polygon` column. |
 | List Box | Full | Controlled workflow variable | Converts app list selections to controlled input. |
+| Location Optimizer | Not supported | No conversion path — the candidate-generation and scoring build is on the roadmap; rebuild the site-selection logic by hand meanwhile. | Refuses by name. |
 | Macro calls | Full | Macro invocation | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
 | Macro Input / Macro Output | Full | Macro input / output port | Map directly to PlaidCloud macro ports. |
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
@@ -91,6 +96,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Modeling | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses into the ML Train step with the pipeline's model choice. |
 | Multi-Field Formula | Full | Multi-field formula transform | Applies a formula across selected fields. |
 | Multi-Row Formula | Full | Window / row-aware formula transform | Converts row-relative logic to window behavior, partitioned by Group By. |
+| Named Entity Recognition (NER) | Not supported | No conversion path — extract entities by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
 | Numeric Up Down | Full | Controlled numeric variable | Converts app numeric input to a typed variable. |
 | Output Data | Full | Document / table output | Writes output to Document or PlaidCloud tables. |
 | Overlay | Full | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
@@ -99,6 +105,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Poly-Build | Full | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
 | Poly-Split | Full | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
 | Portfolio Composer (Text / Table / Image / Layout / Render) | Full | Report artifacts | Convert report content, layout, and rendering to PlaidCloud report output. |
+| POS Tagger | Not supported | No conversion path — tag parts of speech by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
 | Predict | Full | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Scores data with the trained model table and appends a prediction column. |
 | Radio Button | Full | Controlled workflow variable | Converts app radio choices to controlled input. |
 | Random % Sample | Full | Table Extract (random) | Returns the exact count or percentage of records requested. |
@@ -120,6 +127,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Text Box | Full | Controlled text variable | Converts app text input to a typed variable. |
 | Text Input | Full | Inline table input | Creates inline data for the workflow. |
 | Text Pre-processing | Full | NLP preprocessing executor | Normalizes and preprocesses text. |
+| Text Summary | Not supported | No conversion path — summarize text by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
 | Text To Columns | Full | Split columns transform | Splits text into fields or rows. |
 | Tile | Full | Tile / grouping transform | Assigns tile groups by configured rule. |
 | Tool Container | Full | Canvas container / execution group | Preserved as workflow organization. |
@@ -132,8 +140,9 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Visual Layout | Full | Canvas layout metadata | Preserved as design context. |
 | Word Cloud | Full | Text visualization artifact | Creates a visualization artifact from text analysis. |
 | XML Parse | Full | XML parse transform | Extracts XML fields into workflow data. |
-| Find Nearest | Partial | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join in the database, in straight-line distance mode. Drive-time nearest — ranking by minutes on a road network — is not yet reproduced. |
-| Trade Area | Partial | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units, in fixed-radius mode. Drive-time trade areas — minutes on a road network — are not yet reproduced. |
+| Zero-shot Text Classification | Not supported | No conversion path — classify text by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
+| Find Nearest | Full | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join — straight-line, and drive-time nearest (ranked by minutes on a road network) via PlaidCloud's self-hosted routing engine. Drive-time enabled per workspace. |
+| Trade Area | Full | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units — fixed-radius, and drive-time trade areas (minutes on a road network) via the self-hosted routing engine. Drive-time enabled per workspace. |
 | Image Template | Full | Image Template executor op | Manual mode crops the image to each region you draw on the template. Automatic mode detects the page regions for you with an open-standard layout model and emits one row per region, each carrying its detected bounds and confidence for review; a page the model cannot read confidently is flagged by name rather than cropped. Open-standard detection can differ from Alteryx's own — review the detected regions, or use Manual mode for exact control. |
 | Image Recognition | Full | Image recognition executor | Trains an image classifier in the workflow and scores new images against it, in place — no external account and no data leaves PlaidCloud. The classifier is retrained rather than copied from Alteryx, so results are a faithful approximation rather than a bit-for-bit match, and training runs on CPU. Enabled per workspace. |
 | Geocoder | Full | Self-hosted geocoder | Geocodes addresses to coordinates and reverse-geocodes coordinates to addresses against PlaidCloud's own geocoder — no external account, no data leaves PlaidCloud. Enabled per workspace. |
@@ -158,7 +167,7 @@ for how they fit together.
 | Convex Hull | Convex Hull executor op | Workflow engine |
 | Create Points | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
 | Distance | [Table Extract expression](/reference/workflow-steps/spatial/spatial-sql-recipes/) | Database |
-| Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database |
+| Find Nearest | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Database; routing service for drive-time |
 | Generalize | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Workflow engine |
 | Heat Map | [Heat Map (macro)](/reference/workflow-steps/macros/macro-heat-map/) | Workflow engine |
 | Line To Polygon | Line To Polygon executor op | Workflow engine |
@@ -172,31 +181,39 @@ for how they fit together.
 | Spatial Match | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) | Database |
 | Spatial Match — intersection object, Unmatched | [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) | Workflow engine |
 | Spatial Process | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Workflow engine |
-| Trade Area (fixed radius) | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Workflow engine |
+| Trade Area (fixed-radius + drive-time) | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Workflow engine; routing service for drive-time |
 | Pie Wedge Trade Area | [Pie Wedge Trade Area (macro)](/reference/workflow-steps/macros/macro-pie-wedge-trade-area/) | Workflow engine |
 | Spatial file input | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Workflow engine |
 | Summarize — SpatialObjCombine, SpatialObjConvexHull | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) | Workflow engine |
 | Report Map | [Report Map](/reference/workflow-steps/reports/report-map/) | Workflow engine |
 
-### Known Spatial Gaps
+**Drive-time trade areas and nearest** — Trade Area drive-time rings and Find
+Nearest drive-time ranking run on PlaidCloud's self-hosted routing engine
+(road-network isochrones and travel-time matrices), not a hosted third-party
+API, so origin coordinates never leave the platform. Drive-time is enabled per
+workspace. Routing and drive-time areas use OpenStreetMap data —
+© OpenStreetMap contributors, available under the [Open Database License
+(ODbL)](https://www.openstreetmap.org/copyright).
 
-- **Drive-time trade areas and nearest.** Trade Area converts in fixed-radius
-  mode and Find Nearest in straight-line distance mode. There is no factor that
-  turns minutes on a road network into a distance, so drive-time trade-area
-  sizing and drive-time nearest-neighbor ranking do not convert.
-- **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile cannot be
-  read. Conversion fails closed rather than emitting an import that crashes at
-  run time; other spatial formats are unaffected.
-- **Some Spatial Info measures.** Object type, part count, point count, Peano
-  key, and end-point coordinates have no verified parity definition and are
-  skipped. Conversion names the dropped measures in a note.
-- **Non-floating-point Create Points modes.** Coordinates stored as integers
-  scaled by 1,000,000, or already projected, are flagged for upstream rescaling
-  rather than converted into mis-scaled points.
-- **Make Grid and Poly-Split configuration forms.** Both step types run
-  correctly, but neither has a configuration form in the workflow designer yet;
-  converted steps carry their settings, and hand-authoring goes through the API
-  or MCP.
+### Known Spatial Prerequisites
+
+The spatial tools themselves convert; these are prerequisites on the input.
+
+- **The `.geo` GeoFile format.** Alteryx's proprietary binary GeoFile has no
+  open reader, so an import of one fails closed rather than crashing at run
+  time. In Alteryx, re-export the layer to a standard spatial format —
+  shapefile or GeoJSON — and import that instead; other spatial formats are
+  unaffected. See
+  [Migrate Spatial Alteryx Workflows](/guides/workflows/migrate-spatial-alteryx-workflows/#package-spatial-inputs).
+- **The Peano key Spatial Info measure.** Peano key is a proprietary Alteryx
+  spatial index with no public specification, so a Spatial Info that asks for it
+  skips that one column and names it in a note. Every other Spatial Info measure
+  — area, length, centroid, bounding rectangle, object type, part and point
+  counts, and end points — converts.
+- **Projected Create Points coordinates.** Create Points converts
+  floating-point and integer (×1,000,000) lon/lat coordinates directly.
+  Coordinates already in a projected system need reprojecting to WGS84 lon/lat
+  upstream first, because the workflow does not record which projection they use.
 
 ## Calgary Tool Coverage
 
@@ -205,19 +222,22 @@ An Alteryx Calgary database (`.cydb`) is a proprietary indexed store PlaidCloud 
 | Alteryx Calgary Tool | PlaidCloud Route | Converts |
 | --- | --- | --- |
 | Calgary Loader | Table Extract writing `calgary_<database>` | Yes, once the database is named and it stores at least one data field. |
-| Calgary Input | Dynamic Document input reading `calgary_<database>`, with the saved query as filter | Yes, including a query built from an Or or wrapped in a Not. Refuses on contains/starts-with/spatial queries and on Skip Records/Max Records limits. |
+| Calgary Input | Dynamic Document input reading `calgary_<database>`, with the saved query as filter | Yes, including a query built from an Or or wrapped in a Not, and a contains or starts-with filter (rebuilt as a SQL LIKE). Refuses on a spatial-lookup query and on Skip Records/Max Records limits. |
 | Calgary Input (Count Only) / Calgary Cross Count | Aggregate transform over `calgary_<database>` | Yes, including a bucket built from an Or or wrapped in a Not. Refuses on a cross over more than one custom field, and on a count-only read naming no column to count over. |
 | Calgary Join | Dynamic Document input matching each record of its input against `calgary_<database>` | When the incoming field is a plain value matched against a value index — including Count Only mode, which counts the database records each input record matched, a record matching nothing counting zero. Refuses when the field is spatial (rebuild as Spatial Match) or its type is unresolved, and on range-index or unmatched-output-wired Joins, on a Join naming no match field, and on a Join with nothing wired to its input. |
 | Calgary Cross Count Append | Dynamic Document input matching each record, then a counted join over `calgary_<database>` | When the incoming field is a plain value matched against a value index: it counts, per input record, the database records matched, and a record that matched nothing counts zero. Refuses on a spatial or unresolved index (rebuild as Spatial Match), a custom-value cross-count grid, a range index, and a match naming no field. |
 
-### Known Calgary Gaps
+### Known Calgary Prerequisites
 
-- **A Calgary Cross Count Append over a custom-value cross-count grid doesn't convert.** A single plain cross-count field converts — it counts, per input record, the matching database records — but a grid of *named* custom values would append one count column per value, and Alteryx documents neither how many columns that is nor what it names them.
-- **A Calgary Join or Cross Count Append matched against a spatial index refuses**, naming the stand-in table and pointing at Spatial Match — the workflow file records the index's name but not whether it holds ordinary values or spatial geometry.
-- **Contains, starts-with, and spatial-lookup queries don't convert.** Only indexed value and range comparisons do.
-- **A read limited by Skip Records or Max Records doesn't convert** — the stand-in table carries no record order.
+Most of these are prerequisites on the input rather than conversion limits.
+
+- **A spatial-index match needs rebuilding as a Spatial Match.** A Calgary Join or Cross Count Append matched against a spatial index refuses, naming the stand-in table — the workflow records the index's name but not whether it holds ordinary values or spatial geometry, and a value match (an equality join) and a spatial match (point-in-polygon) are different operations. Export the database to a table and rebuild the match as a Join (value index) or a Spatial Match (spatial index).
+- **A read limited by Skip Records or Max Records needs an explicit order.** The exported stand-in table carries no record order, so add an order column when you export if you need to take the first or last N records by position.
+- **A demographic or reference database must be loaded first.** A Calgary read before its database has been loaded stops, naming the table to build. The `.cydb` file itself has no open reader, so re-export it in Alteryx (a Calgary Input into an Output Data tool writing CSV or Parquet) and import that as the named table — see [Unreadable .cydb (Calgary) Databases](/guides/workflows/troubleshoot-alteryx-imports/#unreadable-cydb-calgary-databases). This is the common case for the licensed demographic and reference `.cydb` files Alteryx ships (Experian, Census, and similar): no converter can reproduce that third-party data, so bring your own licensed reference data and load it into the named table — the same as the Geocoder reference data.
 - **A Calgary Loader that stores no data field doesn't convert**, since the table it wrote would have no columns.
-- **A database read before it has been loaded stops, naming the table to build.** This is the common case for the demographic and reference `.cydb` files Alteryx ships, which nothing in your workflow wrote.
+- **A custom-value cross-count grid doesn't convert yet.** A single plain cross-count field converts — it counts, per input record, the matching database records — but a grid of *named* custom values would append one count column per value, and Alteryx documents neither how many columns that is nor what it names them. Tracked for a future release, pending a reference export to reverse-engineer the column contract.
+
+Value, range, contains and starts-with queries all convert to a filter; only a spatial-lookup query, an index operation with no column-level equivalent, does not.
 
 ## Connecting to External Systems
 

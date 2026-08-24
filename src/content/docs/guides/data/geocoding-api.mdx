@@ -8,12 +8,12 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-PlaidCloud exposes forward geocoding, structured geocoding, reverse geocoding, autocomplete, and place lookup as REST endpoints under `/rest/v1/analyze/geocode`. They proxy an in-cluster [Pelias](https://pelias.io) service backed by OpenStreetMap data, and wrap every result in a small `plaidcloud` envelope so a caller can tell how precise a match is without parsing Pelias' internal fields directly.
+PlaidCloud exposes forward geocoding, structured geocoding, reverse geocoding, autocomplete, and place lookup as REST endpoints under `/rest/v1/analyze/geocode`. They proxy PlaidCloud's geocoding service, built from authoritative open rooftop-address and administrative-place data (including OpenStreetMap, under ODbL), and wrap every result in a small `plaidcloud` envelope so a caller can tell how precise a match is without parsing the service's internal fields directly.
 
 This guide is for anyone moving an existing Google Geocoding API or Mapbox Geocoding integration onto PlaidCloud — request shapes that map closely, and the places they don't.
 
 <Aside type="caution" title="Read this before you migrate">
-PlaidCloud's geocoder is OpenStreetMap-derived, not a licensed commercial dataset. It is not a drop-in replacement for every Google or Mapbox use case — see [Coverage and Determinism](#coverage-and-determinism-read-this-first) before you commit to it for anything address-critical.
+PlaidCloud's geocoder is built from open geospatial data — authoritative rooftop-address and administrative-place sources, including OpenStreetMap (ODbL) — not a licensed commercial dataset. It is not a drop-in replacement for every Google or Mapbox use case — see [Coverage and Determinism](#coverage-and-determinism-read-this-first) before you commit to it for anything address-critical.
 </Aside>
 
 ## Authentication and Entitlement
@@ -21,15 +21,13 @@ PlaidCloud's geocoder is OpenStreetMap-derived, not a licensed commercial datase
 Every geocoding call needs:
 
 - A normal PlaidCloud session or bearer token carrying the **`analyze.table.read`** role — the same role that gates other read access to a project's data. There is no geocoding-specific role.
-- The **`flag.geocode`** entitlement enabled on your tenant. A tenant without it gets a `403` on every call.
-
-A tenant can also have the geocode router disabled outright as an operational kill switch, independent of the entitlement — that returns `503 geocoding_unavailable` (see [Errors](#errors) below). If you get a 503 immediately with no apparent Pelias issue, ask your PlaidCloud administrator whether the router is disabled for your tenant.
+- Geocoding included in your plan — the geocoding entitlement enabled for your tenant. A tenant whose plan doesn't include it gets a `403` on every call.
 
 ## Rate Limits
 
 The geocoding endpoints carry a raised cap over PlaidCloud's default REST rate limit: **1,200 requests per minute per calling IP**, versus 600/minute on most other `/rest/v1` endpoints. Exceeding it returns `429` with a `Retry-After: 60` header.
 
-There is no per-request caching in front of Pelias — every call is answered live. Cache results on your own side if you expect to repeat a query.
+There is no per-request caching in front of the geocoding service — every call is answered live. Cache results on your own side if you expect to repeat a query.
 
 ## Endpoint Mapping
 
@@ -50,7 +48,7 @@ There is no per-request caching in front of Pelias — every call is answered li
 | `text` | string, required | 1–300 characters |
 | `focus.point.lat`, `focus.point.lon` | float | Soft ranking bias, not a filter |
 | `boundary.country` | string | Hard filter — comma-separated ISO alpha-2 country codes, max 300 chars |
-| `layers` | string | Comma-separated Pelias layers to restrict to, max 300 chars |
+| `layers` | string | Comma-separated geocoding layers to restrict to, max 300 chars |
 | `size` | integer | 1–40, default 10 |
 
 ```
@@ -82,7 +80,7 @@ GET /rest/v1/analyze/geocode/search/structured?address=350+5th+Ave&locality=New+
 | `point.lat` | float, required | -90 to 90 |
 | `point.lon` | float, required | -180 to 180 |
 | `size` | integer | 1–40, default 1 |
-| `layers` | string | Comma-separated Pelias layers, max 300 chars |
+| `layers` | string | Comma-separated geocoding layers, max 300 chars |
 
 ```
 GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
@@ -94,7 +92,7 @@ GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
 |---|---|---|
 | `text` | string, required | 1–300 characters, partial query |
 | `focus.point.lat`, `focus.point.lon` | float | Soft ranking bias |
-| `layers` | string | Comma-separated Pelias layers, max 300 chars |
+| `layers` | string | Comma-separated geocoding layers, max 300 chars |
 
 ```
 GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
@@ -104,7 +102,7 @@ GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
 
 | Path parameter | Type | Notes |
 |---|---|---|
-| `gid` | string, required | 1–300 characters — a Pelias global id, taken from a prior result's `properties.gid` |
+| `gid` | string, required | 1–300 characters — a global id from the geocoding service, taken from a prior result's `properties.gid` |
 
 ```
 GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
@@ -112,7 +110,7 @@ GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
 
 ## The `plaidcloud` Response Envelope
 
-Every endpoint returns Pelias' own GeoJSON `FeatureCollection` unmodified, with one addition: a `plaidcloud` object attached to **each feature**.
+Every endpoint returns the geocoding service's GeoJSON `FeatureCollection` unmodified, with one addition: a `plaidcloud` object attached to **each feature**.
 
 ```json
 {
@@ -146,10 +144,12 @@ Fields inside `plaidcloud`:
 |---|---|---|
 | `attribution` | string | Fixed OSM ODbL attribution string — see [Attribution](#attribution-is-not-optional) below |
 | `location_type` | string | See [`location_type` mapping](#location_type-mapping-to-googles-taxonomy) |
-| `confidence` | float or `null` | Pelias' own raw confidence score, passed through unmodified — PlaidCloud does not recalibrate or document its scale beyond what Pelias publishes |
+| `confidence` | float or `null` | The geocoding service's own raw confidence score, passed through unmodified — PlaidCloud does not recalibrate or document its scale |
 | `match_type` | `"exact"` \| `"partial"` | **`search` only.** `"exact"` when `confidence >= 0.9`, else `"partial"`. Not present on `search/structured`, `reverse`, `autocomplete`, or `place` responses |
+| `geohash` | string | Present unless `location_codes=none`. See [`location_codes`](#location_codes--geohash-and-plus-code) below |
+| `plus_code` | string | Present only when `location_codes=geohash+pluscode`. See [`location_codes`](#location_codes--geohash-and-plus-code) below |
 
-**A query with zero matches is a `200`, not an error.** When Pelias returns no features, the response carries an **empty `features` array** and a **top-level** `plaidcloud` object instead of per-feature ones:
+**A query with zero matches is a `200`, not an error.** When the geocoding service returns no features, the response carries an **empty `features` array** and a **top-level** `plaidcloud` object instead of per-feature ones:
 
 ```json
 {
@@ -164,49 +164,83 @@ Fields inside `plaidcloud`:
 
 ### `location_type` Mapping to Google's Taxonomy
 
-Pelias' `layer` and `accuracy` fields are collapsed into a four-value `location_type`, chosen to line up with Google Geocoding's own `location_type` enum:
+The service's `layer` and `accuracy` fields are collapsed into a four-value `location_type`, chosen to line up with Google Geocoding's own `location_type` enum:
 
 | PlaidCloud `location_type` | Meaning | Nearest Google equivalent |
 |---|---|---|
 | `rooftop` | Address-level match with a precise point | `ROOFTOP` |
-| `interpolated` | Address matched by interpolating along a street segment, not a directly geocoded point | `RANGE_INTERPOLATED` |
+| `interpolated` | Address matched by interpolating along a street segment, not a directly geocoded point — **not returned in v1** (address-range interpolation isn't enabled yet) | `RANGE_INTERPOLATED` |
 | `geometric_center` | A venue or POI's center point (a building, a business) | `GEOMETRIC_CENTER` |
 | `approximate` | Anything coarser — locality, region, country level, or a layer PlaidCloud doesn't otherwise classify | `APPROXIMATE` |
 | `none` | Zero matching features | *(no Google equivalent — Google returns no results at all rather than a typed empty result)* |
 
-This is deliberately a coarse, four-value mapping rather than a full replica of Pelias' own layer taxonomy — enough to tell a caller how much to trust a match's precision, not a precision guarantee.
+This is deliberately a coarse, four-value mapping rather than a full replica of the service's own layer taxonomy — enough to tell a caller how much to trust a match's precision, not a precision guarantee.
+
+### `location_codes` — geohash and Plus Code
+
+Every endpoint accepts a `location_codes` query parameter, letting you ask for a compact, computable location code alongside each match instead of just raw coordinates:
+
+| Value | Meaning |
+|---|---|
+| `geohash` | **Default.** Add a `geohash` to each feature's `plaidcloud` envelope. |
+| `geohash+pluscode` | Add both `geohash` and `plus_code`. |
+| `none` | Omit both — envelope carries only `attribution`, `location_type`, `confidence`, and (on `search`) `match_type`. |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&location_codes=geohash+pluscode
+```
+
+Both codes are computed locally from the feature's own coordinates — no extra lookup, no external service — at **geohash precision 9** and **Plus Code length 10**, matching what the [geocode workflow step](/guides/workflows/geospatial-analytics/#location-code-enrichment) produces at its default settings, so a value computed via REST and one computed via the workflow step for the same coordinate pair agree.
+
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+  "properties": { "gid": "openstreetmap:venue:node/61785451", "name": "Empire State Building" },
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "geometric_center",
+    "confidence": 0.94,
+    "match_type": "exact",
+    "geohash": "dr5rsjhzz",
+    "plus_code": "87G7PX7V+XX"
+  }
+}
+```
+
+`geohash` is a geohash string; `plus_code` is an Open Location Code (Plus Code). Neither is present when a query matches zero features — the top-level `plaidcloud` object on an empty result carries only `attribution` and `location_type: "none"`.
 
 ### Attribution Is Not Optional
 
-The geocoding and basemap data behind this API is OpenStreetMap data, licensed under the **Open Database License (ODbL)**. ODbL requires that any use of the data credit OpenStreetMap. **If you display geocoding results to an end user — on a map, in an address list, anywhere — you must display the `attribution` string** (or equivalent OSM credit) alongside them. This is a licensing obligation on you as the consumer of the data, not a PlaidCloud house-style suggestion.
+The geocoding and basemap data behind this API includes OpenStreetMap data, licensed under the **Open Database License (ODbL)**. ODbL requires that any use of the data credit OpenStreetMap. **If you display geocoding results to an end user — on a map, in an address list, anywhere — you must display the `attribution` string** (or equivalent OSM credit) alongside them. This is a licensing obligation on you as the consumer of the data, not a PlaidCloud house-style suggestion.
 
 ## Errors
 
 | Status | Meaning |
 |---|---|
-| `403` | Missing the `analyze.table.read` role, or the tenant's `flag.geocode` entitlement isn't enabled |
-| `404` | `place/{gid}` found no record for that id, or `reverse` hit a coordinate Pelias itself 404s on |
+| `403` | Missing the `analyze.table.read` role, or your plan doesn't include the geocoding entitlement |
+| `404` | `place/{gid}` found no record for that id, or `reverse` hit a coordinate the geocoding service itself 404s on |
 | `422` | A query parameter failed validation — for example `text` over 300 characters, or `point.lat` out of range |
 | `429` | Rate limit exceeded — see [Rate Limits](#rate-limits) |
-| `503 geocoding_unavailable` | Pelias could not be reached, timed out, or returned an error — **or** the tenant's geocode router is administratively disabled |
+| `503 geocoding_unavailable` | The geocoding service could not be reached, timed out, or returned an error |
 
-A `503` here is deliberately never a raw `5xx` and never an unbounded hang: the proxy applies a bounded timeout (a few seconds) to every call to Pelias, so a slow or hung upstream surfaces quickly as `503` rather than leaving your request open.
+A `503` here is deliberately never a raw `5xx` and never an unbounded hang: the proxy applies a bounded timeout (a few seconds) to every call to the geocoding service, so a slow or hung upstream surfaces quickly as `503` rather than leaving your request open.
 
 ### Autocomplete Degrades, It Doesn't Error
 
-`autocomplete` is the one exception to the `503` behavior above. Because it fires on every keystroke, a transient Pelias hiccup there returns a **`200` with an empty result set** (the same shape as a genuine zero-match query — `location_type: "none"`) rather than a `503`. If you're migrating from Google Places Autocomplete, where a backend failure surfaces as an error your client code branches on, note that PlaidCloud's autocomplete cannot be distinguished from "no suggestions" by status code alone — build your UI around an empty suggestion list either way, rather than relying on an error path here.
+`autocomplete` is the one exception to the `503` behavior above. Because it fires on every keystroke, a transient upstream hiccup there returns a **`200` with an empty result set** (the same shape as a genuine zero-match query — `location_type: "none"`) rather than a `503`. If you're migrating from Google Places Autocomplete, where a backend failure surfaces as an error your client code branches on, note that PlaidCloud's autocomplete cannot be distinguished from "no suggestions" by status code alone — build your UI around an empty suggestion list either way, rather than relying on an error path here.
 
 ## Coverage and Determinism — Read This First
 
 Be honest with yourself about what this API is before pointing production traffic at it:
 
-- **It's OpenStreetMap-derived, not a licensed commercial address dataset.** Coverage quality tracks how well an area is mapped in OSM — generally strong in North America, Europe, and other well-mapped urban regions, and inconsistent elsewhere. There is no PlaidCloud-published coverage guarantee by country or region.
-- **Addresses are frequently not interpolated to a true rooftop point.** Where OSM (or the open address data behind it) doesn't carry a directly geocoded point for an address, you'll get an `interpolated` or `approximate` result rather than `rooftop` — this is common, not an edge case, and varies by region.
+- **It's built from open geospatial data, not a licensed commercial address dataset.** Coverage quality tracks how well an area is covered by those open sources — generally strong in North America, Europe, and other well-mapped urban regions, and inconsistent elsewhere. There is no PlaidCloud-published coverage guarantee by country or region.
+- **Rooftop precision varies by region.** Where the open sources carry a directly geocoded point, you get a true `rooftop` result; where they don't, you fall back to a coarser street- or locality-level match. Address-range **interpolation** is not enabled in v1, so gaps are not filled with estimated points — so `approximate` results are common outside well-covered areas.
 - **No apartment/suite/unit-level detail.** Subpremise information isn't returned; you'll get building- or street-level precision at best.
 - **No deep administrative hierarchy.** If you're used to Google's multi-level `address_components` (sublocality tiers, `administrative_area_level_1/2/3`, and so on), expect a shallower breakdown here.
-- **`gid` is not a permanent identifier.** Google's `place_id` is a stable, long-lived reference you can store and re-resolve months or years later. Pelias' `gid` carries no such guarantee — treat it as valid for the duration of a session or a short-lived workflow, not as a durable foreign key into your own data.
-- **Results are not guaranteed deterministic over time.** OpenStreetMap is continuously, crowd-sourced edited — the same query run today and again in three months can return different results, a different `gid`, or a different ranking, because the underlying map data itself changed. If your migration plan assumes byte-for-byte reproducible geocoding results the way a versioned commercial dataset would give you, this API does not provide that.
-- **No response caching in v1.** Every call is answered live against the current OSM-derived index; there's no ETag or cache-control story to lean on yet.
+- **`gid` is not a permanent identifier.** Google's `place_id` is a stable, long-lived reference you can store and re-resolve months or years later. The geocoding service's `gid` carries no such guarantee — treat it as valid for the duration of a session or a short-lived workflow, not as a durable foreign key into your own data.
+- **Results are not guaranteed deterministic over time.** OpenStreetMap and the other open sources behind this API are continuously, crowd-sourced edited — the same query run today and again in three months can return different results, a different `gid`, or a different ranking, because the underlying map data itself changed. If your migration plan assumes byte-for-byte reproducible geocoding results the way a versioned commercial dataset would give you, this API does not provide that.
+- **No response caching in v1.** Every call is answered live against the current geocoding index; there's no ETag or cache-control story to lean on yet.
 
 None of this makes the API unsuitable — for address normalization, map display, or general-purpose location lookup it's a solid fit. It's specifically the wrong tool if you need permanent place identifiers, guaranteed rooftop precision everywhere, or bit-for-bit reproducible results across time.
 

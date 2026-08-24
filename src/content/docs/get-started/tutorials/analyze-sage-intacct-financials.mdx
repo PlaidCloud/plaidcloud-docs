@@ -1,0 +1,217 @@
+---
+title: Analyze Sage Intacct Financials — From Connection to Trial Balance
+description: End-to-end Sage Intacct tutorial — connect, pull account balances by dimension with the Import Sage step, shape them into a departmental trial balance and P&L, add a per-head metric from statistical accounts, put it on a dashboard, and schedule the refresh.
+sidebar:
+  label: Analyze Sage Intacct Financials
+  order: 8
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~40 minutes · a live Sage Intacct connection, a landed trial balance, a departmental P&L, a dashboard, and a scheduled refresh*
+
+This is the day-one path for a controller or FP&A analyst on Sage Intacct: by the end you'll have pulled **account balances by dimension** straight from Intacct, turned them into a **departmental trial balance and P&L** you can read like a statement, put it on a dashboard, and set the whole thing to refresh on its own. No canned-report export, no manual re-keying — the numbers come from Intacct and stay current.
+
+You'll connect once, pull once, and then do the part that actually matters: shaping raw balances into the summaries a business person reads on Monday morning.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Five stages left to right: Sage Intacct, an Import Sage step pulling account balances by dimension, a landed trial-balance table, a Table Extract step that groups and summarizes, and a P&L plus dashboard, feeding a scheduled refresh." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Import Sage</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">TB table</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Group &amp; sum</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">P&amp;L</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Connect, pull balances once, then shape them into statements you read — all of it re-runnable on a schedule.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace and a project to work in ([start a trial](https://app.plaidcloud.com) if you need one).
+- **A working Sage Intacct connection.** Follow [Connect to Sage Intacct](/guides/connections/sage-intacct/) first — you need Web Services enabled, a Web Services user with permission on the objects you'll read, and the connection's four credential fields: **Client ID**, **Client Secret**, **Web Service User Username**, and **Company ID**. Confirm the connection works before you start here.
+- Know your **operating entities** (the entity ids you report on) and roughly which **account-number range** holds your P&L accounts (revenue and expense). The examples below use `201` and `301` for entities and `4010`–`9999` for the P&L range — substitute your own.
+
+<Aside type="note">
+Everything after the pull is point-and-click — no SQL, no code. The one Intacct-specific piece is the **Import Sage** step, which reads Intacct's *account balances by dimension* for a date and account range. It returns one row per account per dimension combination, with an opening, period, and ending balance on each.
+</Aside>
+
+## Step 1: Create a Workflow
+
+The workflow is the pipeline that pulls and shapes the data.
+
+<Steps>
+
+1. Open your project and switch to the **Workflows** tab.
+2. Click **New Workflow**, name it something like `Intacct Financials`, and open it.
+
+</Steps>
+
+## Step 2: Pull the Trial Balance
+
+The [Import Sage step](/reference/workflow-steps/import/import-sage/) pulls account balances for a date range and an account range, carrying the dimensions you choose onto every row — that's your trial balance.
+
+<Steps>
+
+1. Add an **Import Sage** step.
+
+2. On its configuration, set:
+
+   | Field | Value |
+   |---|---|
+   | **Connection** | your Sage Intacct connection |
+   | **Company** | the Intacct company to read from |
+   | **Start date** / **End date** | the period you're closing — e.g. the first and last day of the month |
+   | **Start account** / **End account** | your P&L range, e.g. `4010` to `9999` |
+   | **Entities** | your operating entities, e.g. `201`, `301` |
+   | **Dimensions** | switch on the ones you report by — commonly **Location**, **Department**, **Employee**, and **Class** |
+
+3. Set the **Target** to a new table named `intacct_trial_balance`.
+
+4. Run the step. You now have one row per account per dimension combination, with `startbalance`, `periodbalance`, and `endbalance` columns plus an id/name pair for each dimension you enabled (e.g. `departmentid` / `departmentname`, `locationname`).
+
+</Steps>
+
+<Aside type="caution">
+Intacct returns every column as **text**, and Sage pulls are **single-request** (no pagination) — account-balance results are small, so that's fine here, but don't use this step for high-volume line-item detail. You'll set the real column types in the next step, where they matter.
+</Aside>
+
+<Aside type="note">
+Both **Start date** and **End date** must be set — a lone start or end date is ignored. If you enabled a dimension whose id and name you don't need, you can drop the extra column in the next step. (The **Warehouse** dimension checkbox has no effect; use **Custom dimensions** if you need warehouse on the output.)
+</Aside>
+
+## Step 3: Shape the Balances Into a P&L
+
+Now the analysis, done with a single point-and-click transform — no SQL. Your P&L range rolls up into a few statement lines, per department, with the sign flipped so revenue reads positive. A [Table Extract step](/reference/workflow-steps/tables/table-extract/) does all of it on its **Table Data Selection** and **Data Filters** tabs.
+
+<Steps>
+
+1. Add a **Table Extract** step. Set its **Source** to `intacct_trial_balance` and its **Target** to a new table, `intacct_pnl`.
+
+2. On the **Table Data Selection** tab, click **Summarize** to turn on aggregation, then set up three target columns:
+
+   - **`departmentname`** — mapped straight from the source. Type **Text**, summarize **Group By**.
+   - **`pnl_line`** — an **expression** (below) that turns the account number into a report line. Type **Text**, summarize **Group By**.
+   - **`amount`** — an **expression** `func.to_float64(intacct_trial_balance.endbalance) * -1`, which converts the text balance to a number and flips the sign. Type **Currency**, summarize **Sum**.
+
+   Setting the `amount` target column's **Type** to **Currency** is what lets the text balance add up. For `pnl_line`, double-click its **expression** cell and enter (point-and-click the columns and the `case` function from the **Conditions** group):
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. Run the step.
+
+</Steps>
+
+The `* -1` is the one accounting move: Intacct carries revenue as a credit (negative) and expenses as a debit (positive), so negating the ending balance makes **revenue read positive and costs negative** — each department's lines then *add up to net income*. Adjust the account-number cutoffs in the `case()` to match your chart of accounts. Expressions use PlaidCloud's point-and-click editor — see [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/) and the [expression reference](/reference/expressions/).
+
+<Aside type="tip">
+Want a company-wide P&L instead of by-department? Drop `departmentname` from the target columns and keep only `pnl_line` (Group By) and `amount` (Sum).
+</Aside>
+
+## Step 4: Read It Like a Finance Person
+
+Open the `intacct_pnl` table. For each department you have three numbers:
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+Read straight off it:
+
+- **Gross profit** = Revenue + Cost of Goods Sold (COGS is already negative) → `486,200 − 190,540 = 295,660`.
+- **Net income** = the three lines summed → `82,780`.
+- **Gross margin %** = gross profit ÷ revenue → ~61%.
+
+The first thing to do is **tie it out**: run Intacct's own P&L (Financial Reports) for the same period and entities, and confirm revenue and net income match. If they don't, it's almost always a scope difference — an entity you didn't include, an account range that clips part of the P&L, or a period misalignment. Trust the pipeline only once it ties.
+
+<Aside type="tip">
+Want the classic period-across-the-top layout? Add a [Table Pivot step](/reference/workflow-steps/tables/table-pivot/) reading `intacct_pnl`: pivot the period into columns, keep `pnl_line` as the row, and sum `amount`. To get a period column in the first place, add `end_date` as a **Group By** column in Step 3. That gives you month-over-month at a glance, no SQL.
+</Aside>
+
+## Step 5: Put It on a Dashboard
+
+Numbers in a table are fine; a chart is what you send to the CFO. [Publish](/get-started/tutorials/load-and-transform-data/#step-7-publish-the-result) `intacct_pnl`, then follow [Build a Dashboard](/get-started/tutorials/build-a-dashboard/) to add:
+
+- a **bar chart** of net income (or revenue) by `departmentname`, and
+- a **bar** of each `pnl_line` so the revenue / COGS / opex mix is visible at a glance.
+
+That's a live Sage Intacct financial dashboard — no export, refreshed whenever the workflow runs.
+
+## Step 6: Schedule the Refresh
+
+<Steps>
+
+1. Run the whole workflow once, top to bottom, to confirm every step is green.
+2. [Schedule the workflow](/get-started/tutorials/schedule-a-workflow/) — monthly on a close cadence, or weekly if you want the numbers fresh through the month.
+
+</Steps>
+
+Because the pull is a full-table replace, each run re-reads the balances for the date and account range you set — keep those to the window you need (the current period, your P&L accounts) rather than all of history.
+
+## Step 7: Add a Per-Head Metric With Statistical Accounts
+
+Intacct also tracks non-monetary **statistical accounts** — headcount, square footage, units — alongside your financial chart. Pull them with a second **Import Sage** step set to statistical mode, then join them onto the P&L to read a metric like operating expense per employee, by department. Three more standard steps, still no SQL.
+
+<Steps>
+
+1. Add a second **Import Sage** step. On its configuration, set:
+
+   | Field | Value |
+   |---|---|
+   | **Connection** | your Sage Intacct connection |
+   | **Company** | the Intacct company to read from |
+   | **Start date** / **End date** | the same period as Step 2 |
+   | **Statistical** | **Statistical only** |
+   | **Start account** / **End account** | `0000` to `9999` — statistical accounts aren't guaranteed to fall inside your financial chart's numbering, so pull the full range rather than the P&L range from Step 2 |
+   | **Entities** | your operating entities, e.g. `201`, `301` |
+   | **Dimensions** | **Department** — the dimension you're reporting per head by |
+
+2. Set the **Target** to a new table named `intacct_statistics`.
+
+3. Run the step. You get one row per statistical account per department, with `endbalance` carrying the statistic itself — e.g. headcount for that department at period end.
+
+</Steps>
+
+Now bring headcount onto the P&L and divide — but not directly off `intacct_statistics`. That table has one row *per statistical account per department* (headcount, square footage, units, whatever you track), so a join on `departmentname` alone would fan out every P&L row once per statistical account in that department, and `amount_per_head` would divide by whichever statistical account happened to land on the row. Filter to headcount first so the join is one row per department and the ratio actually means something.
+
+<Steps>
+
+1. Add a **Table Extract** step. Set its **Source** to `intacct_statistics` and its **Target** to a new table, `intacct_headcount`. On **Table Data Selection**, propagate all columns unchanged — no aggregation needed here. On the **Data Filters** tab, add a **Select Subset Of Data** filter on the source data: `intacct_statistics.glaccountno == '9000'` — replace `9000` with your own headcount statistical account number (filter on the account-name column instead if that's what your pull returns; `glaccountno` is still text, so compare it to a quoted string). Run the step — `intacct_headcount` now has exactly one row per department.
+
+2. Add a [Table Outer Join step](/reference/workflow-steps/tables/table-outer-join/). Set **Table 1** to `intacct_pnl` and **Table 2** to `intacct_headcount`, and join on `departmentname` — now a clean 1:1 match per department. Leave **Join Type** at its default **Left Join** — every P&L row is kept, with headcount filled in where the department matches. Target a new table, `intacct_pnl_with_headcount`, and propagate all columns from both tables.
+
+3. Run the step, then add a **Table Extract** step reading `intacct_pnl_with_headcount` and targeting a new table, `intacct_pnl_per_head`. On **Table Data Selection**, propagate the existing columns, then add one more target column: `amount_per_head`, an **expression** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, type **Currency**.
+
+4. Run the step.
+
+</Steps>
+
+Read the **`3 - Operating Expenses`** row's `amount_per_head` for opex per employee, by department — the same read as Step 4, one column deeper. Add it to the dashboard alongside the P&L, or fold it into Step 6's schedule so it refreshes with everything else.
+
+## What You've Built
+
+Starting from an empty workflow, you pulled live Sage Intacct account balances, shaped them into a **departmental P&L** with a single standard transform step, joined in statistical accounts for a per-head metric — no SQL anywhere in the pipeline — put it on a dashboard, and set it to refresh — the core reporting loop a finance team runs, now automated.
+
+## Where to Go Next
+
+- [Connect to Sage Intacct](/guides/connections/sage-intacct/) — connection setup and the other Sage import steps (AP bills, AP lines, ad-hoc object queries).
+- [Import Sage Intacct Query](/reference/workflow-steps/import/import-intacct-query/) — pull any Intacct object (GL accounts, customers, projects) to enrich your statements.
+- [Table Extract step](/reference/workflow-steps/tables/table-extract/) and [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/) — grouping, filtering, and calculated columns for deeper analysis.
+- [Design a Dimension Hierarchy](/get-started/tutorials/design-a-dimension/) — roll your chart of accounts up into reporting groups you control.

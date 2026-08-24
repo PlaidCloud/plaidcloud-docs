@@ -1,0 +1,275 @@
+---
+title: NetSuite SuiteQL Query Examples
+description: Ready-to-run NetSuite SuiteQL queries for PlaidCloud — journal entries, general ledger, trial balance, P&L, balance sheet, open A/R, sales orders, POs, and inventory.
+sidebar:
+  label: NetSuite Query Examples
+  order: 6
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Once your [NetSuite connection](/guides/connections/netsuite/) works, this page gets you to real reporting fast: copy-paste SuiteQL for the financial and operational data most pulls start with — journal entries, a general ledger, a trial balance, a P&L, a balance sheet, open receivables, open orders, and inventory on hand.
+
+Each recipe is a **starting point**. Run it, confirm the numbers against a report you trust in NetSuite, then adapt the filters and columns to your account.
+
+## How to Run a Recipe
+
+<Steps>
+
+1. Add a [REST Request step](/guides/workflows/rest-request-step/) to a workflow and set **Connection** to your NetSuite connection, **Method** to `POST`, and **Endpoint** to `/services/rest/query/v1/suiteql`.
+
+2. Put the query in the **Body** as a single JSON object — the query text goes in `q`:
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 5"}
+   ```
+
+   The recipes below are shown as readable SQL for clarity; when you paste one into the step, wrap it as `{"q": "…your query…"}`.
+
+3. On the **Response** tab, keep the destination as **Table** and **set each column's type** (see the "Column types" note under each recipe). SuiteQL returns everything as text, so the types are what make amounts add up and dates sort.
+
+4. Click **Send Test Request** to confirm it runs, then run the step.
+
+</Steps>
+
+<Aside type="caution">
+These queries target NetSuite's standard SuiteQL schema (`transaction`, `transactionaccountingline`, `account`, `item`). Table and field availability, account-type codes, and transaction-status codes vary with your NetSuite edition, the features you have enabled, and account customizations — treat every recipe as a starting point and validate it against a NetSuite report before relying on it. The surfaced error names the exact field or table when something doesn't match.
+</Aside>
+
+## Conventions Used in Every Recipe
+
+A few rules run through all the financial recipes:
+
+- **`transactionaccountingline` (TAL) is the GL truth.** Posting amounts, debits, and credits live here — not on `transactionline`. Every financial recipe joins through it.
+- **Posting entries only:** `tal.posting = 'T'` excludes non-posting lines.
+- **Primary accounting book:** `tal.accountingbook = 1`. Change this only if you run NetSuite Multi-Book.
+- **Amount sign:** NetSuite stores posting amounts **debit-positive, credit-negative**. So revenue (a credit) is a negative `amount`. The P&L and balance-sheet recipes negate where a natural "income positive" presentation is wanted, and each says so.
+- **A deterministic `ORDER BY` is required** on every paged query, or rows silently duplicate/skip across pages.
+- **Format dates in the query:** `TO_CHAR(t.trandate, 'YYYY-MM-DD')` (SuiteQL returns dates in the account's display format otherwise). Type those columns as `Date`.
+
+<Aside type="caution">
+**Multi-subsidiary / multi-currency:** these recipes read each transaction's own amounts. Totalling across subsidiaries with different currencies is **consolidation-wrong** — filter to one subsidiary (`t.subsidiary = <id>`), or select consolidated / exchange-rate-converted amounts, when you report across subsidiaries.
+</Aside>
+
+## Financial Recipes
+
+### Journal Entries
+
+Every posting line of the journal entries in a period, with account, debit, and credit.
+
+```sql
+SELECT
+    t.tranid                                AS entry_number,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS entry_date,
+    BUILTIN.DF(t.postingperiod)             AS period,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    tal.debit                               AS debit,
+    tal.credit                              AS credit,
+    tl.memo                                 AS line_memo
+FROM transaction t
+    JOIN transactionaccountingline tal ON tal.transaction = t.id
+    JOIN transactionline tl            ON tl.transaction = tal.transaction
+                                      AND tl.id = tal.transactionline
+    JOIN account a                     ON a.id = tal.account
+WHERE t.type = 'Journal'
+    AND tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY t.tranid, tl.id
+```
+
+**Column types:** `debit`, `credit` → `Currency`; `entry_date` → `Date`; everything else → `Text`.
+
+### General Ledger Detail
+
+The same shape without the `type = 'Journal'` filter — every posting line across all transaction types, which is your general ledger for the period.
+
+```sql
+SELECT
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS posting_date,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    t.type                                  AS transaction_type,
+    t.tranid                                AS document_number,
+    BUILTIN.DF(t.entity)                    AS name,
+    tal.amount                              AS amount,
+    tl.memo                                 AS line_memo
+FROM transactionaccountingline tal
+    JOIN transaction t     ON t.id = tal.transaction
+    JOIN transactionline tl ON tl.transaction = tal.transaction
+                           AND tl.id = tal.transactionline
+    JOIN account a         ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY a.acctnumber, t.trandate, t.tranid, tl.id
+```
+
+**Column types:** `amount` → `Currency`; `posting_date` → `Date`; the rest → `Text`. `amount` is debit-positive / credit-negative.
+
+### Trial Balance
+
+Each account's net movement for a period. Across all accounts the total nets to zero when the books balance.
+
+```sql
+SELECT
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    a.accttype              AS account_type,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.acctnumber, BUILTIN.DF(a.id), a.accttype
+ORDER BY a.acctnumber
+```
+
+**Column types:** `balance` → `Currency`; the rest → `Text`.
+
+<Aside type="note">
+To align to a named accounting period instead of a calendar range, join `accountingperiod` and filter on it: `JOIN accountingperiod ap ON ap.id = t.postingperiod` … `WHERE ap.periodname = 'Jan 2026'`. Period reporting and calendar-date reporting can differ when entries are posted to a period out of date order.
+</Aside>
+
+### Profit & Loss (Income Statement)
+
+The trial balance restricted to income and expense accounts, negated so revenue reads positive and expenses negative — the column then sums to net income.
+
+```sql
+SELECT
+    a.accttype                      AS account_type,
+    a.acctnumber                    AS account_number,
+    BUILTIN.DF(a.id)                AS account_name,
+    -SUM(tal.amount)                AS amount
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Column types:** `amount` → `Currency`; the rest → `Text`. Group `account_type` in your report as Income (`Income`, `OthIncome`), COGS (`COGS`), and Expense (`Expense`, `OthExpense`); revenue minus COGS minus expense is net income.
+
+### Balance Sheet
+
+Cumulative account balances **as of** a date — every posting line from inception through the as-of date, for balance-sheet accounts (everything that is not a P&L account).
+
+```sql
+SELECT
+    a.accttype              AS account_type,
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype NOT IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate <= TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Column types:** `balance` → `Currency`; the rest → `Text`. Assets read positive (debit-normal); liabilities and equity read negative (credit-normal) — negate them for presentation. Assets should equal liabilities plus equity.
+
+## Operational Recipes
+
+### Open Receivables (Unpaid Customer Invoices)
+
+Outstanding customer invoices with the amount still owed and the due date — the basis for an A/R aging.
+
+```sql
+SELECT
+    t.tranid                            AS invoice_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+    TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+    t.foreigntotal                      AS invoice_total,
+    t.foreignamountunpaid               AS amount_unpaid
+FROM transaction t
+WHERE t.type = 'CustInvc'
+    AND t.foreignamountunpaid <> 0
+ORDER BY t.tranid
+```
+
+**Column types:** `invoice_total`, `amount_unpaid` → `Currency`; `invoice_date`, `due_date` → `Date`; the rest → `Text`. Compute aging buckets from `due_date` in a later step.
+
+### Open Sales Orders
+
+Sales orders not yet fully processed, by customer.
+
+```sql
+SELECT
+    t.tranid                            AS order_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS order_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS order_total
+FROM transaction t
+WHERE t.type = 'SalesOrd'
+    AND t.status IN ('SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E')
+ORDER BY t.tranid
+```
+
+**Column types:** `order_total` → `Currency`; `order_date` → `Date`; the rest → `Text`. The `SalesOrd:*` status codes (Pending Fulfillment, Partially Fulfilled, Pending Billing) vary by account — confirm the ones that mean "open" for you, or drop the status filter and filter downstream.
+
+### Open Purchase Orders
+
+Purchase orders awaiting receipt or billing, by vendor.
+
+```sql
+SELECT
+    t.tranid                            AS po_number,
+    BUILTIN.DF(t.entity)                AS vendor,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS po_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS po_total
+FROM transaction t
+WHERE t.type = 'PurchOrd'
+    AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E', 'PurchOrd:F')
+ORDER BY t.tranid
+```
+
+**Column types:** `po_total` → `Currency`; `po_date` → `Date`; the rest → `Text`. As with sales orders, confirm which `PurchOrd:*` status codes mean "open" in your account.
+
+### Inventory on Hand
+
+Company-wide quantity on hand and available for inventory items.
+
+```sql
+SELECT
+    i.itemid            AS item,
+    BUILTIN.DF(i.id)    AS description,
+    i.quantityonhand    AS on_hand,
+    i.quantityavailable AS available
+FROM item i
+WHERE i.itemtype = 'InvtPart'
+    AND i.isinactive = 'F'
+ORDER BY i.itemid
+```
+
+**Column types:** `on_hand`, `available` → `Decimal`; the rest → `Text`. These are company-wide totals; per-location quantities come from NetSuite's inventory-location data, which depends on the Multi-Location Inventory feature — check what your account exposes.
+
+## Adjust for Your Account
+
+- **Bound it while testing.** Add `AND ROWNUM <= 100` (or a tight date range) so a first run returns quickly, then remove it for the real pull.
+- **Trace a wrong number to the query, not the connector.** A conversion error names the column and value; a total that does not tie is almost always a subsidiary/currency scope or a posting/period filter — check those first.
+- **Every pull is a full-table replace.** Keep the `WHERE` clause to the slice you need (a rolling period, open items only) rather than re-extracting all history on each scheduled run.
+
+## Related
+
+- [Connect to NetSuite](/guides/connections/netsuite/) — set up the connection first.
+- [NetSuite REST Connector](/reference/connectors/rest/netsuite/) — field and SuiteQL reference.
+- [REST Request Step](/guides/workflows/rest-request-step/) — the step these queries run in.

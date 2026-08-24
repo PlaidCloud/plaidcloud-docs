@@ -1,0 +1,136 @@
+---
+title: Post a NetSuite Journal Entry
+description: Configure the Post NetSuite Journal Entry workflow step — map header and line fields, preview and validate a batch, then post it and read the result table.
+sidebar:
+  label: Post NetSuite Journal Entries
+  order: 8
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Post journal entries from PlaidCloud project tables into NetSuite with the **Post NetSuite Journal Entry** workflow step. This guide builds a batch from a header table and a lines table, previews it without touching NetSuite, then posts it and reads back the result.
+
+<Aside type="caution">
+This step has not yet been validated against a live NetSuite account. Work through **Preview and Validate** below on every batch before posting live, and reconcile a handful of postings directly in NetSuite the first time you run this against a real account.
+</Aside>
+
+## Prerequisites
+
+- A working [NetSuite connection](/guides/connections/netsuite/) with a role that can create journal entries (**Create** access on the Journal Entry record, in addition to the REST/OAuth setup the read-side guide covers).
+- Two source tables in your project:
+  - A **header table** with one row per journal entry.
+  - A **lines table** with one or more debit/credit rows per journal entry.
+
+<Aside type="note">
+The header and lines tables can come from anywhere in your workflow — an import, a prior transform, a pivot. The only requirement is that both carry a Journal ID column linking each line back to its header row.
+</Aside>
+
+## Shape Your Header and Lines Tables
+
+<Steps>
+
+1. Build or import a **header table** with one row per journal entry. At minimum it needs:
+
+   | Column | Maps to | Required |
+   |---|---|---|
+   | A journal identifier | Journal ID | Yes |
+   | The NetSuite subsidiary | Subsidiary | Yes |
+   | The entry's date | Posting Date | Yes |
+   | The NetSuite currency | Currency | No |
+   | An entry-level memo | Memo | No |
+   | A caller-supplied external ID | External ID | No |
+
+2. Build or import a **lines table** with one or more rows per journal entry, sharing the same journal identifier as its header row:
+
+   | Column | Maps to | Required |
+   |---|---|---|
+   | The journal identifier | Journal ID | Yes |
+   | The GL account | Account | Yes |
+   | The debit amount (0 if none) | Debit | Yes |
+   | The credit amount (0 if none) | Credit | Yes |
+   | A line-level memo | Memo | No |
+   | Department, class, location, entity | Department / Class / Location / Entity | No |
+
+   <Aside type="caution">
+   Each journal entry's lines must balance — total debits must equal total credits to the cent. An unbalanced entry is never sent to NetSuite; it records as an error instead (see [Preview and Validate](#preview-and-validate)).
+   </Aside>
+
+3. Group amounts onto these two tables at whatever level you're posting at — one entry per day, per document, per batch — using your usual [table steps](/reference/workflow-steps/tables/) (a pivot, a group-by aggregate, or a join). The Journal ID is what ties a set of lines to its header row, so build it as a key that's unique per journal entry and shared by every line that belongs to it.
+
+</Steps>
+
+## Configure the Step
+
+<Steps>
+
+1. Add a **Post NetSuite Journal Entry** step to your workflow.
+
+2. On the **Connection** tab, set **NetSuite Connection** to your NetSuite connection and pick an **Environment**.
+
+3. On the **Data** tab:
+
+   - Set **Journal Entry Header Table** and **Journal Entry Lines Table** to the tables you built above.
+   - Leave **Test Only Mode** checked for now — see [Preview and Validate](#preview-and-validate).
+   - Leave **Continue posting remaining entries if one entry fails** checked, unless you'd rather a batch stop dead on its first bad entry.
+   - Set **Posting Result Table** to a table PlaidCloud can create or overwrite. You'll want this for every run, not just the first — see [Read the Result Table](#read-the-result-table).
+
+4. On the **Header Map** tab, map your header table's columns to Journal ID, Subsidiary, Posting Date, and (if you have them) Currency, Memo, and External ID. Use **Header Filters** if you want to post only a subset of the header rows.
+
+5. On the **Line Map** tab, map your lines table's columns to Journal ID, Account, Debit, Credit, and (if you have them) Memo, Department, Class, Location, and Entity. Use **Line Filters** the same way.
+
+</Steps>
+
+<Aside type="note">
+Every internal ID field — Subsidiary, Account, Currency, Department, Class, Location, Entity — takes NetSuite's internal ID, not its display name. If your source data carries the display name instead, resolve it to the internal ID first (a lookup against a small reference table pulled from NetSuite, or a join to one you maintain).
+</Aside>
+
+## Preview and Validate
+
+With **Test Only Mode** checked, run the step. PlaidCloud builds every journal entry from your mapped data and runs the same checks it would before posting — balanced debits and credits, required fields present, a valid posting date — without making a single call to NetSuite. Nothing posts.
+
+<Steps>
+
+1. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Open the result table and confirm every row you expected to post shows `status = validated`. Any row reading `error` names the entry's Journal ID and the problem — commonly an unbalanced entry, a missing Account, or a blank Subsidiary or Posting Date.
+
+3. Fix the source data (or your mappings and filters) for any `error` row and re-run until the batch validates clean.
+
+</Steps>
+
+## Post the Batch
+
+Once a batch validates clean, uncheck **Test Only Mode** and run the step again. This time PlaidCloud actually posts each validated entry to NetSuite.
+
+<Aside type="caution">
+Posting is not the same as re-validating — always re-run in Test Only Mode after any change to your source data or mappings, and only turn it off once you're confident in the result. A step scheduled to run unattended should be treated the same way you'd treat any other unattended write to your books.
+</Aside>
+
+## Read the Result Table
+
+The result table holds one row per journal entry attempted, whichever mode the step ran in:
+
+| Column | Description |
+|---|---|
+| journal_id | The Journal ID from your header table. |
+| external_id | The external ID used for this posting attempt (see below). |
+| internal_id | NetSuite's internal ID for the created entry. Blank in Test Only Mode and on error. |
+| status | `validated`, `posted`, or `error`. |
+| message | Error detail. Blank on success. |
+
+Build downstream steps — a notification on any `error` row, a join back to your header table to record `internal_id` — off this table rather than off the step's own run status, since one bad entry in a large batch doesn't fail the whole step when **Continue posting remaining entries** is on.
+
+## Re-Running a Batch Safely
+
+Each entry posts with a deterministic external ID built from your project, connection, Journal ID, Posting Date, and its line amounts. Re-running the step over an **unchanged** entry reuses that same external ID, and NetSuite's own external-ID handling keeps it from creating a duplicate — so re-running a workflow after a transient failure is safe for the entries that didn't change.
+
+<Aside type="caution">
+That protection covers an unchanged entry only. If you edit an entry's lines — a different amount, an added or removed line — and re-run the step, PlaidCloud computes a new external ID and NetSuite records it as a **second** journal entry, not an update to the first. To correct an entry that already posted, correct it directly in NetSuite. Setting your own value in the header table's External ID column overrides PlaidCloud's generated one, if you need external IDs to follow your own scheme instead.
+</Aside>
+
+## Related
+
+- [Connect to NetSuite](/guides/connections/netsuite/) — set up the connection this step posts through
+- [Post NetSuite Journal Entry reference](/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) — full field and configuration reference
+- [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) — pull the subsidiaries, accounts, and dimensions you'll need as internal IDs
+- [Advanced Data Mapper Usage](/reference/workflow-steps/common/advanced-data-mapper-usage/)
