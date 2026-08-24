@@ -1,9 +1,9 @@
 ---
 title: SAP Steps
-description: Workflow steps that call SAP ECC Remote Function Calls (RFCs) for finance, master data, and document operations.
+description: Workflow steps that call SAP ECC / S/4HANA Remote Function Calls (RFCs) for finance, master data, and document operations.
 ---
 
-Workflow steps that call SAP ECC Remote Function Calls (RFCs) for finance, master data, and document operations.
+Workflow steps that call SAP ECC / S/4HANA Remote Function Calls (RFCs) for finance, master data, and document operations.
 
 ## Steps
 

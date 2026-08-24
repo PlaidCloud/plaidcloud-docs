@@ -6,7 +6,7 @@ description: Call SAP RFC function modules from a PlaidCloud workflow step for d
 ## Description
 
 
-Calls an SAP ECC Remote Function Call (RFC) and retrieves the data in tabular form. This data is then available for transformation processes in PlaidCloud.
+Calls an SAP ECC / S/4HANA Remote Function Call (RFC) and retrieves the data in tabular form. This data is then available for transformation processes in PlaidCloud.
 
 
 ## Examples
