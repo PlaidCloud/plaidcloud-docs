@@ -1,0 +1,97 @@
+---
+title: Post NetSuite Journal Entry
+description: Post one or more journal entries to NetSuite from PlaidCloud header and line tables, with a preview mode that validates every entry before anything posts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Posts journal entries to NetSuite over your [NetSuite connection](/guides/connections/netsuite/). The step takes two source tables — a header table with one row per journal entry and a lines table with one or more debit/credit rows per entry — groups the lines by journal entry, and posts each entry to NetSuite. **Test Only Mode** builds and checks every entry without making any call to NetSuite, and an optional result table records the outcome of each entry.
+
+<Aside type="caution">
+This step has not yet been validated against a live NetSuite account. Run every batch in **Test Only Mode** first, review the result table, and reconcile a handful of postings directly in NetSuite before relying on this step to post live entries unattended.
+</Aside>
+
+## Configuration
+
+### Connection
+
+- **NetSuite Connection** — the NetSuite connection to post through, filtered to connections of type NetSuite.
+- **Environment** — the connection's environment.
+
+NetSuite connections are managed under **Tools > Connections** — see [Connect to NetSuite](/guides/connections/netsuite/).
+
+### Data
+
+- **Journal Entry Header Table** — one row per journal entry.
+- **Journal Entry Lines Table** — one or more debit/credit rows per journal entry, linked to its header row by Journal ID.
+- **Test Only Mode** — checked by default. Validates each journal entry against the checks below but makes no call to NetSuite; nothing posts. Uncheck it to post for real.
+- **Continue posting remaining entries if one entry fails** — checked by default. When an entry fails a check or the post itself, PlaidCloud records an error for that entry and moves on to the rest of the batch rather than stopping it.
+- **Posting Result Table** — optional. If set, PlaidCloud (over)writes it with one row per journal entry — see [Result Table Columns](#result-table-columns).
+
+### Header Map / Header Filters
+
+Map the header table's columns to the journal entry fields below, and optionally filter which header rows are posted, using the [standard data mapping and filter tabs](/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Field | Required | Notes |
+|---|---|---|
+| Journal ID | Yes | Links a header row to its lines. One row per unique Journal ID. |
+| Subsidiary | Yes | NetSuite subsidiary internal ID. |
+| Posting Date | Yes | The entry's transaction date. |
+| Currency | No | NetSuite currency internal ID. |
+| Memo | No | Entry-level memo. |
+| External ID | No | Overrides the deterministic external ID PlaidCloud generates for the entry — see [Re-Posting and Duplicate Entries](#re-posting-and-duplicate-entries). |
+
+### Line Map / Line Filters
+
+Map the lines table's columns, and optionally filter which line rows are posted.
+
+| Field | Required | Notes |
+|---|---|---|
+| Journal ID | Yes | Matches a header row's Journal ID. |
+| Account | Yes | NetSuite GL account internal ID. |
+| Debit | Yes | The debit amount; 0 for a pure-credit line. |
+| Credit | Yes | The credit amount; 0 for a pure-debit line. |
+| Memo | No | Line-level memo. |
+| Department | No | NetSuite department internal ID. |
+| Class | No | NetSuite class internal ID. |
+| Location | No | NetSuite location internal ID. |
+| Entity | No | NetSuite entity (customer or vendor) internal ID. |
+
+## How Posting Works
+
+PlaidCloud groups the lines table by Journal ID and builds one NetSuite journal entry per header row. Before posting each entry — or, in Test Only Mode, before recording it as validated — PlaidCloud checks that:
+
+- the entry has at least one line
+- its debits and credits balance to the cent
+- every line has an Account
+- the header row has a Subsidiary
+- Posting Date is a valid date
+
+Any check that fails records an error row for that entry and, unless **Continue posting remaining entries** is off, moves on to the next entry in the batch.
+
+### Re-Posting and Duplicate Entries
+
+Each entry posts with a deterministic external ID, built from the project, connection, Journal ID, Posting Date, and the line amounts. Re-posting an entry whose lines haven't changed reuses that same external ID, and NetSuite's own external-ID handling keeps it from creating a duplicate journal entry. Change any line on an entry — a different amount, an added or removed line — and PlaidCloud computes a new external ID for it, which NetSuite accepts as a new entry rather than an update to the old one. Set a value in the header table's External ID column to control the ID yourself instead.
+
+<Aside type="caution">
+Re-posting only dedupes an entry NetSuite considers identical to one it already has. Editing an entry's lines and re-running the step does not update the original posting in NetSuite — it creates a second entry. Correct a posted entry directly in NetSuite rather than by re-running this step with changed data.
+</Aside>
+
+### Result Table Columns
+
+| Column | Description |
+|---|---|
+| journal_id | The Journal ID from the header table. |
+| external_id | The external ID used for this posting attempt. |
+| internal_id | NetSuite's internal ID for the created journal entry. Blank in Test Only Mode and on error. |
+| status | `validated` (Test Only Mode), `posted`, or `error`. |
+| message | Error detail. Blank on success. |
+
+## Related
+
+- [Connect to NetSuite](/guides/connections/netsuite/)
+- [Post a NetSuite Journal Entry](/guides/connections/post-netsuite-journal-entries/) — full walkthrough covering configuration, previewing, and posting
+- [NetSuite REST Connector](/reference/connectors/rest/netsuite/)
+- [NetSuite Steps](/reference/workflow-steps/netsuite/)
