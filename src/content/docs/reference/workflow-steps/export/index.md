@@ -23,5 +23,4 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export to Parquet](/reference/workflow-steps/export/export-to-parquet/)
 - [Export To Table Archive](/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/reference/workflow-steps/export/export-to-xml/)
-- [Intacct: Post Journal Entry](/reference/workflow-steps/export/export-to-sage/)
 - [Tableau Hyper Export](/reference/workflow-steps/export/export-hyper/)
