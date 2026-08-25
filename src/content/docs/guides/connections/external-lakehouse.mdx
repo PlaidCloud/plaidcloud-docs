@@ -28,49 +28,41 @@ A project's tables normally live in the built-in PlaidCloud Lakehouse. Instead, 
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The project's tables live in your warehouse; PlaidCloud reads and writes them in place rather than copying the data into its own store.</figcaption>
 </figure>
 
-## Register the Lakehouse Connection
+## How an External Lakehouse Is Registered
 
-First create a connection to your lakehouse from **Tools > Connections**. This is an ordinary [connection](/guides/connections/create-connection/) — the fields differ by provider.
+Registering a Snowflake or Databricks lakehouse for your tenant isn't self-service — a PlaidCloud administrator sets it up on your behalf. Give your PlaidCloud contact the details below for whichever engine you're connecting. Once it's registered, the lakehouse becomes available to pick when you create a project.
 
 ### Snowflake
 
-Choose **Snowflake** as the connection type and provide:
-
-| Field | What to enter |
+| Field | What to provide |
 |---|---|
-| Account (server) | Your Snowflake account identifier or host. |
-| Warehouse | The compute warehouse PlaidCloud should run under. |
-| Database | The database that holds the project's schema. |
-| Schema | The schema PlaidCloud reads and writes tables in. |
+| Hostname | Your Snowflake account host. |
+| Superuser | The Snowflake user PlaidCloud authenticates as. |
+| Database | The database PlaidCloud creates and manages project schemas in. |
+| Warehouse | The compute warehouse PlaidCloud runs queries under. |
 | Role | The Snowflake role PlaidCloud acts as. |
-| User | The Snowflake user for the key pair. |
-| Private key | The PEM private key for key-pair authentication. |
+| Private key | The **raw, unencrypted** PEM private key for key-pair authentication — paste the key text itself, not a base64-encoded copy. Passphrase-protected keys aren't supported yet. |
 
-PlaidCloud authenticates to Snowflake with a **key pair**. Generate a key pair, assign the public key to the Snowflake user, and paste the private key into the connection. The role you give PlaidCloud must be able to create, read, and write tables in the target database and schema.
-
-See the [Snowflake connector reference](/reference/connectors/databases/snowflake/) for the full field list.
+Generate a key pair and assign the public key to the Snowflake superuser before handing off the private key. The role must be able to create, read, and write tables in the target database.
 
 ### Databricks
 
-Choose **Databricks** as the connection type and provide:
-
-| Field | What to enter |
+| Field | What to provide |
 |---|---|
-| Workspace host | Your Databricks workspace URL. |
-| HTTP path | The HTTP path of the SQL warehouse PlaidCloud should run against. |
+| Hostname | Your Databricks workspace URL. |
+| HTTP path | The HTTP path of the SQL warehouse PlaidCloud runs queries against. |
+| Unity Catalog | The Unity Catalog catalog PlaidCloud creates and manages project schemas in. |
 | Personal access token | A Databricks PAT for authentication. |
-| Catalog | The Unity Catalog catalog that holds the project's schema. |
-| Schema | The schema PlaidCloud reads and writes tables in. |
 
-PlaidCloud authenticates to Databricks with a **personal access token** and runs queries against a **SQL warehouse** — you must supply its HTTP path. Databricks tables are addressed through **Unity Catalog** as `catalog.schema.table`, so both the catalog and schema are required. The token's identity must be able to create, read, and write tables in that catalog and schema.
+The token's identity must be able to create, read, and write tables in that catalog.
 
-See the [Azure Databricks connector reference](/reference/connectors/databases/azure-databricks/) for the full field list.
+Neither registration asks for a schema — each project gets its own, derived automatically from its DSN when the project binds to the lakehouse.
 
-<Aside type="note">Test and save the connection before you create a project against it — a project bound to a lakehouse it can't reach can't create its tables.</Aside>
+<Aside type="note">An Iceberg/Lakekeeper catalog connection is registered separately and is optional — it isn't required to use a Snowflake or Databricks lakehouse.</Aside>
 
-## Create a Project on the Lakehouse
+## Bind a Project to the Lakehouse
 
-When you create a new project (**Analyze > Projects > New Project**), choose your Snowflake or Databricks connection as the project's data backend. From then on:
+Once your tenant has at least one external lakehouse registered, the **New Project** dialog (**Analyze > Projects > New Project**) offers a lakehouse picker: choose **Tenant Default** to use the built-in PlaidCloud Lakehouse, or pick the registered external lakehouse. From then on:
 
 - Every table the project's workflows create, load, or transform is created and written in your lakehouse.
 - Reads — in steps, views, and dashboards — run as queries against your warehouse.
@@ -78,7 +70,16 @@ When you create a new project (**Analyze > Projects > New Project**), choose you
 
 Build workflows exactly as you would on the built-in lakehouse — import, transform, join, and publish steps all work the same way. The backend is set when the project is created and applies to the whole project.
 
-<Aside type="caution">Dashboards over data stored in **Databricks** are available now. Dashboards over data stored in **Snowflake** are not yet available. If you need Snowflake-backed dashboards today, publish the tables to the built-in PlaidCloud Lakehouse.</Aside>
+## Importing Files Into a Lakehouse-Bound Project
+
+Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
+
+## Dashboards Over Lakehouse Data
+
+Dashboards work over both engines.
+
+- **Databricks** — dashboards query the lakehouse through the Databricks driver, the same as any other project.
+- **Snowflake** — dashboards authenticate with a key pair and are enabled per tenant. A **new** project created after your tenant has Snowflake dashboards enabled gets its dashboard automatically. An **existing** Snowflake-backed project gets its dashboard the next time it's published.
 
 ## Related
 
