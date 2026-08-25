@@ -12,7 +12,7 @@ The Sage Intacct REST API documentation is available at the [Sage Developer site
 
 ## Security Requirements
 
-PlaidCloud has a dedicated **Sage Intacct** connection type. It authenticates with a Sage Intacct **Web Services** Sender ID/Sender password pair, entered as the connection's **Client ID** and **Client Secret**, plus a Web Service User Username and a Company ID. The sender credentials must be enabled for your company by Sage support; the Web Services user must have permissions for every Intacct object the connector will read.
+PlaidCloud provides a dedicated **Intacct** connection in the REST connection family (listed as **REST - Intacct**). It authenticates with OAuth2 client credentials against the Intacct REST API: the Sage Intacct **Web Services** Sender ID/Sender password pair are entered as the connection's **Client ID** and **Client Secret**, plus a Web Service User Username and a Company ID. The sender credentials must be enabled for your company by Sage support; the Web Services user must have permissions for every Intacct object the connector will read.
 
 Treat the Client ID and Client Secret as secrets — store them only via the **Credentials** area in PlaidCloud and reference them from the connection.
 
@@ -29,7 +29,7 @@ Treat the Client ID and Client Secret as secrets — store them only via the **C
 ## Create Sage Intacct Connector
 
 1. Go to **Tools > Connections** and click `Add Connection`
-2. Select **Sage Intacct** as the connection type
+2. Under **REST**, select **Intacct** (listed as **REST - Intacct**)
 3. Enter:
     * **Connection Name** — friendly name shown in workflow steps
     * **Client ID** — your Intacct Sender ID
