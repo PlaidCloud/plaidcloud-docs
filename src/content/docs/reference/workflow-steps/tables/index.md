@@ -7,6 +7,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 
 ## Steps
 
+- [Build Features](/reference/workflow-steps/tables/table-build-features/)
 - [Extract SQL](/reference/workflow-steps/tables/table-extract-sql/)
 - [Multi-Table Join](/reference/workflow-steps/tables/table-multi-table-join/)
 - [Table Anti Join](/reference/workflow-steps/tables/table-anti-join/)
