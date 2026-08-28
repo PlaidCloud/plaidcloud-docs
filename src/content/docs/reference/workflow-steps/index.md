@@ -48,6 +48,8 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 - [Agent](/reference/workflow-steps/agent/) — PlaidLink Agent operations for on-premises resources
 - [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, and master data; post journal entries to NetSuite
+- [Acumatica](/reference/workflow-steps/acumatica/) — import master and transactional entities; post journal transactions, invoices, bills, and payments
+- [Business Central](/reference/workflow-steps/business-central/) — import OData entities; post general journal lines
 - [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, and ad-hoc queries; post journal entries
 - [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls
 - [SAP-PCM](/reference/workflow-steps/sap-pcm/) — SAP Profitability and Cost Management model control

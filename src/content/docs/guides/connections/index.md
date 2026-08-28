@@ -36,6 +36,8 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to NetSuite](/guides/connections/netsuite/) — set up a NetSuite connection and pull financial and operational data with SuiteQL.
 - [Import NetSuite Financials](/guides/connections/import-netsuite-financials/) — pull balances, GL detail, and master data with the canned NetSuite import steps, no SuiteQL to write.
 - [Post a NetSuite Journal Entry](/guides/connections/post-netsuite-journal-entries/) — map header and line tables, preview, and post journal entries to NetSuite.
+- [Connect to Acumatica](/guides/connections/acumatica/) — set up an Acumatica connection, import entities, and post journal transactions, invoices, bills, and payments.
+- [Connect to Business Central](/guides/connections/business-central/) — set up a Business Central connection with Azure AD, import OData entities, and post general journal lines.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
 
