@@ -47,7 +47,7 @@ The **Acumatica Post** step posts **JournalTransaction**, **SalesInvoice**, **Bi
 | Reversal is manual | No document type has a documented void/reversal action. A posted document can't be reversed from PlaidCloud — correct it directly in Acumatica. |
 | No Payment correlation field | Acumatica exposes no documented field to correlate a Payment to PlaidCloud's request after an ambiguous outcome; an in-doubt Payment is quarantined for manual resolution. |
 | Line-item filtering isn't server-side | `$filter`-style filters reach entity and header fields, not a document's line-item dimensions (for example a line-level cost center). Scope lines in your workflow after the pull. |
-| No live tenant validation | Built to Acumatica's documented contract-based REST API and a mock server; not yet exercised against a live Acumatica account. |
+| No live tenant validation | This connector is newly released and built to Acumatica's documented contract-based REST API. It is pending validation against a live Acumatica instance — verify field mappings and posting behavior in a sandbox company before relying on it in production. |
 
 ## Related
 
