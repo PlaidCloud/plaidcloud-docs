@@ -1,0 +1,134 @@
+---
+title: Connect to Acumatica
+description: Connect PlaidCloud to Acumatica and pull master and transactional data with the canned entity import step, then post journal entries, invoices, bills, and payments with the Acumatica post step.
+sidebar:
+  order: 10
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Acumatica's contract-based REST API to pull reference and transactional data with no OData to hand-write, and post journal transactions, sales invoices, bills, and payments back. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+This connector is built to Acumatica's documented contract-based REST API and has not yet been validated against a live Acumatica tenant. Run every import against a sandbox company first, and work through **Preview and Validate** below on every post batch before posting live.
+</Aside>
+
+## Prerequisites
+
+You need, in Acumatica:
+
+- An **instance base URL** (for example `https://yourcompany.acumatica.com`).
+- A **company** name (the exact company ID PlaidCloud logs into) and, if you use branches, the **branch** to post under.
+- A dedicated **username** and **password** for PlaidCloud, with a role that has access to the entities you'll read and the document screens you'll post to.
+- **Contract-based REST API** access enabled for that user (**System > Integration Preferences**, on by default in current Acumatica versions).
+
+<Aside type="note">
+Acumatica's contract-based REST API is **session-based**, not token-based — PlaidCloud logs in once per bounded unit of work (one import pull, one post batch) and logs out when it's done, rather than authenticating on every call. Acumatica trial and lower-tier licenses can cap **concurrent** API sessions as low as 2, so avoid running many Acumatica steps in parallel against the same connection.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Acumatica** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `Acumatica Prod`. |
+   | Base URL | Your instance URL, e.g. `https://yourcompany.acumatica.com`. |
+   | Username | The PlaidCloud API user. |
+   | Password | The PlaidCloud API user's password. |
+   | Company | The exact Acumatica company ID. |
+   | Branch | Optional. Leave blank to use the user's default branch. |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add an **Import Acumatica Entity** step to a workflow.
+
+2. Set **Acumatica Connection** to your connection, **Entity Type** to `account`, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the login, company, and branch are all correct. An error names the problem — bad credentials, wrong company, or a role missing REST API access.
+
+## Import Data
+
+<Steps>
+
+1. Add an **Import Acumatica Entity** step and set **Acumatica Connection** and **Target Table**.
+
+2. Set **Entity Type** to the record you want. Master data and reference lists — `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project` — and transactional entities — `sales_invoice`, `bill`, `sales_order`, `shipment`.
+
+3. Leave **Active Only** checked to pull active records only, for the entities that carry an Active flag.
+
+4. Set **Updated After** to an ISO date or datetime to pull only rows changed since then (a request-side filter, not a persisted incremental cursor — you supply the cutoff each run).
+
+5. Add **Filters** to bound a large pull — each is a `{field, operator, value}` clause (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) or a `{field, from, to}` range, restricted per entity to the fields Acumatica can actually filter on server side. PlaidCloud rejects a filter field that entity doesn't support rather than silently dropping it.
+
+6. Run the step and check the target table.
+
+</Steps>
+
+<Aside type="note">
+Trial balance, GL transaction detail, inventory-on-hand, budgets, and intercompany data all live behind Acumatica Generic Inquiries rather than the contract-based entities above, and PlaidCloud does not generate GIs for you. If you need one of these, build the GI in Acumatica and pull it with a [Generic REST connection](/reference/connectors/rest/generic-rest/) instead.
+</Aside>
+
+## Post Documents
+
+The **Acumatica Post** step posts four document types through the same shared write pipeline every ERP post step uses: **JournalTransaction**, **SalesInvoice**, **Bill**, and **Payment**.
+
+<Steps>
+
+1. Build a **header table** — one row per document — with columns for `ref` (your document identifier), `doc_type` (`JournalTransaction`, `SalesInvoice`, `Bill`, or `Payment`), `posting_date`, `party_id` (customer/vendor, where the doc type needs one), `memo`, `due_date`, and `branch_id`. A single batch can mix document types — PlaidCloud partitions it by `doc_type` before posting.
+
+2. Build a **lines table** — one or more rows per `ref` — shaped to the document type:
+
+   | Doc Type | Line Columns |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. Add an **Acumatica Post** step, set **Acumatica Connection**, **Environment**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every document without a ledger claim and without posting anything.
+
+5. Review the result table (one row per document: `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a batch to stop dead on its first failed document.
+
+</Steps>
+
+### How Posting Works
+
+Acumatica creates every document **on Hold**, then PlaidCloud calls the release action, which runs asynchronously (a `202` response, polled to completion, then a `204` confirms release). PlaidCloud only reports a document `posted` once release is **confirmed** — a document that lands but whose release never confirms stays quarantined rather than being recorded as posted, so a stuck Hold never silently passes as success.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **No native idempotency key.** Acumatica's write API has no per-document idempotency field, so PlaidCloud's own ledger claim is the **only** guard against a double post on a retried or re-run batch. Don't bypass this step's ledger by posting the same document another way.
+- **Reversal is manual.** No document type has a documented void/reversal action in Acumatica's contract-based API, so PlaidCloud never fakes one — a posted document can't be reversed from this step. Correct a mis-posted document directly in Acumatica.
+- **Payment has no reliable lookup.** Acumatica exposes no documented field to correlate a Payment back to PlaidCloud's request after an ambiguous outcome (a timeout, a dropped response). An in-doubt Payment is quarantined rather than guessed at — resolve it by checking Acumatica directly.
+- **Line-item cost-center filtering isn't server-side.** Acumatica's `$filter` doesn't reach into a document's line-item dimensions, so filter at the header/entity level and do line-level scoping in your workflow after the pull.
+</Aside>
+
+## Related
+
+- [Acumatica REST Connector](/reference/connectors/rest/acumatica/) — field reference.
+- [Import Acumatica Entity](/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents](/reference/workflow-steps/acumatica/acumatica-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every Acumatica post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

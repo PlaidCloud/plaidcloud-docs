@@ -19,6 +19,8 @@ For any REST service that doesn't have a dedicated connector, PlaidCloud provide
 ## Financial and Accounting
 
 - [NetSuite](/reference/connectors/rest/netsuite/)
+- [Acumatica](/reference/connectors/rest/acumatica/)
+- [Business Central](/reference/connectors/rest/business-central/)
 - [QuickBooks](/reference/connectors/rest/quickbooks/)
 - [Sage Intacct](/reference/connectors/rest/sage-intacct/)
 - [Stripe](/reference/connectors/rest/stripe/)

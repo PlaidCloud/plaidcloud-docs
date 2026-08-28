@@ -72,6 +72,7 @@ The header and lines tables can come from anywhere in your workflow — an impor
    - Set **Journal Entry Header Table** and **Journal Entry Lines Table** to the tables you built above.
    - Leave **Test Only Mode** checked for now — see [Preview and Validate](#preview-and-validate).
    - Leave **Continue posting remaining entries if one entry fails** checked, unless you'd rather a batch stop dead on its first bad entry.
+   - Leave **Submit Asynchronously** off unless you specifically need NetSuite's async accept path for a high-volume batch — see [Asynchronous Submission](#asynchronous-submission) below.
    - Set **Posting Result Table** to a table PlaidCloud can create or overwrite. You'll want this for every run, not just the first — see [Read the Result Table](#read-the-result-table).
 
 4. On the **Header Map** tab, map your header table's columns to Journal ID, Subsidiary, Posting Date, and (if you have them) Currency, Memo, and External ID. Use **Header Filters** if you want to post only a subset of the header rows.
@@ -106,6 +107,14 @@ Once a batch validates clean, uncheck **Test Only Mode** and run the step again.
 Posting is not the same as re-validating — always re-run in Test Only Mode after any change to your source data or mappings, and only turn it off once you're confident in the result. A step scheduled to run unattended should be treated the same way you'd treat any other unattended write to your books.
 </Aside>
 
+## Asynchronous Submission
+
+**Submit Asynchronously** sends each entry with NetSuite's async accept header instead of waiting for a synchronous create-and-read-back. NetSuite queues the entry and answers immediately; PlaidCloud records it as `pending` with a submission reference rather than `posted` or `error`.
+
+<Aside type="caution">
+**Nothing resolves a pending entry automatically today.** Re-running this step is what resolves it — the step looks up a pending entry by its submission reference and records its now-final outcome (`posted` or `error`). If you turn on Submit Asynchronously, build re-running the step into your workflow (a scheduled re-run, or a follow-up step later in the same workflow) rather than treating every `pending` row as finished. Leave this off unless you specifically need it for a high-volume batch where the synchronous path is too slow.
+</Aside>
+
 ## Read the Result Table
 
 The result table holds one row per journal entry attempted, whichever mode the step ran in:
@@ -114,9 +123,9 @@ The result table holds one row per journal entry attempted, whichever mode the s
 |---|---|
 | journal_id | The Journal ID from your header table. |
 | external_id | The external ID used for this posting attempt (see below). |
-| internal_id | NetSuite's internal ID for the created entry. Blank in Test Only Mode and on error. |
-| status | `validated`, `posted`, or `error`. |
-| message | Error detail. Blank on success. |
+| internal_id | NetSuite's internal ID for the created entry, or the async submission reference while `pending`. Blank in Test Only Mode and on error. |
+| status | `validated`, `posted`, `pending` (Submit Asynchronously accepted the entry but NetSuite hasn't confirmed it), or `error`. |
+| message | Error detail on `error`. Blank on `posted`/`validated`. |
 
 Build downstream steps — a notification on any `error` row, a join back to your header table to record `internal_id` — off this table rather than off the step's own run status, since one bad entry in a large batch doesn't fail the whole step when **Continue posting remaining entries** is on.
 

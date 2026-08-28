@@ -1,0 +1,127 @@
+---
+title: Connect to Business Central
+description: Connect PlaidCloud to Microsoft Dynamics 365 Business Central with Azure AD client-credentials, pull OData entities with the canned import step, and post general journal lines.
+sidebar:
+  order: 11
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Business Central's standard OData v2.0 REST API to pull accounts, ledger entries, customers, vendors, items, and journals with no OData to hand-write, and post general journal lines back. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+This connector is built to Business Central's documented API and has not yet been validated against a live tenant. Run every import against a sandbox environment first, and work through **Preview and Validate** below on every post batch before posting live.
+</Aside>
+
+## Prerequisites
+
+You need, in Azure AD and Business Central:
+
+- An **Entra ID (Azure AD) app registration** for PlaidCloud with a **client secret**, granted **API permissions** to Business Central (`Dynamics 365 Business Central > API.ReadWrite.All` or the narrower permission your admin issues).
+- Your Azure AD **tenant ID**.
+- The **Business Central environment** name PlaidCloud should call (for example `Production` or a sandbox environment).
+- The **company** PlaidCloud reads and posts against — Business Central scopes both entity reads and journal posts to one company at a time.
+
+<Aside type="note">
+The connection authenticates as an application, not a user — Entra ID **client-credentials (S2S)** flow, the same OAuth2 client-credentials mechanism PlaidCloud uses for other Microsoft REST connections. There is no interactive sign-in.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Business Central** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `BC Prod`. |
+   | Client ID | The Entra app registration's application (client) ID. |
+   | Client Secret | The app registration's client secret. |
+   | Tenant ID | Your Azure AD tenant ID. |
+   | Environment | The Business Central environment name, e.g. `Production`. |
+   | Company | The Business Central company ID to read and post against. |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add an **Import Business Central Entity** step to a workflow.
+
+2. Set **Business Central Connection** to your connection, **Entity Type** to `accounts`, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the tenant, credentials, environment, and company are all correct. An error names the problem — a bad client secret, a missing API permission grant, or a wrong environment/company.
+
+## Import Data
+
+<Steps>
+
+1. Add an **Import Business Central Entity** step and set **Business Central Connection**, **Environment**, and **Target Table**.
+
+2. Set **Entity Type** to the record you want: `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items`, or `journals`.
+
+3. Add **Filters** — `{field, operator, value}` rows ANDed into the request's `$filter`, checked against the entity's own queryable-field allowlist. Leave blank to pull the whole entity.
+
+4. Run the step and check the target table.
+
+</Steps>
+
+<Aside type="note">
+`generalLedgerEntries` is Business Central's **read-only, posted-only** ledger — it never shows a line still sitting in an unposted journal batch, so it's the entity to pull for a trial balance or GL detail rather than querying a journal directly.
+</Aside>
+
+## Post General Journal Lines
+
+The **Business Central Post** step posts lines into an **existing** general journal batch and then posts that batch.
+
+<Steps>
+
+1. Build a **header table** — one row per `journal_id` — with the Business Central journal batch name your lines post into, plus `document_number`, `posting_date`, and a currency label.
+
+2. Build a **lines table** — one or more rows per `journal_id` — with a signed `amount` (positive for a debit, negative for a credit), `account_id` or `account_number`, `account_type`, and `description`.
+
+3. Add a **Business Central Post** step, set **Business Central Connection**, **Environment**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every journal without posting anything.
+
+5. Review the result table (one row per `journal_id`: `journal_id`, `external_id`, `internal_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a batch to stop dead on its first failed journal.
+
+</Steps>
+
+<Aside type="caution">
+**The journal batch named in `journal_id` must already exist in Business Central** — this step creates lines inside it, it doesn't create the batch itself. Set up the journal batch (name, journal template) in Business Central first, then point `journal_id` at it.
+</Aside>
+
+### How Posting Works
+
+Business Central's `Microsoft.NAV.post` action posts the **whole** journal batch, not just the lines PlaidCloud just created — so before calling it, PlaidCloud reads the batch back and refuses to post (recording an error, nothing posted) if it holds any line not stamped with this request's document number. That guard exists specifically so a stray line left behind by an earlier partial failure never gets swept into the GL by an unrelated later post to the same batch.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **One write document type.** Only General Journal Line posting is supported. Business Central's draft-document flow (sales/purchase invoices moving Draft → Posted) is not — the exact post action for that flow isn't pinned down in Microsoft's documentation, and PlaidCloud doesn't guess at an unverified endpoint for a money-moving write.
+- **Posts into an existing batch only.** This step never creates a journal batch — create it in Business Central first (see above).
+- **No live validation yet.** Built to Business Central's documented OData v2.0 contract; treat the first live batch as a validation run, and reconcile it directly in Business Central.
+- **Concurrent same-batch posts aren't fully serialized.** The idempotency guard is scoped by document number, not by journal batch — two different document numbers posted to the same batch at the same time aren't guaranteed to serialize the way two calls with the same document number are. Avoid running concurrent posts into one journal batch.
+</Aside>
+
+## Related
+
+- [Business Central REST Connector](/reference/connectors/rest/business-central/) — field reference.
+- [Import Business Central Entity](/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/reference/workflow-steps/business-central/business-central-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every Business Central post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
