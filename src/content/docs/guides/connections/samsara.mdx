@@ -1,0 +1,87 @@
+---
+title: Import Samsara Data
+description: Connect PlaidCloud to Samsara with the Generic REST connection and import complete paginated lists with a copy-paste cursor-paging recipe.
+sidebar:
+  label: Import Samsara Data
+  order: 8
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Use the **Generic REST** connection and a **REST Request** step to import Samsara data. This keeps the API token in a reusable connection and uses the same generic cursor-paging controls available for any API that returns a continuation cursor.
+
+## Before You Begin
+
+In Samsara, create an API token with only the read scopes and tag access the import needs. Samsara shows the token only when you create it, so copy it before leaving the page. See [Samsara API authentication](https://developers.samsara.com/docs/authentication).
+
+Choose the host that matches your Samsara dashboard:
+
+| Samsara dashboard | Host or IP Address |
+| --- | --- |
+| US or legacy Canada cloud | `api.samsara.com` |
+| EU / UK | `api.eu.samsara.com` |
+| Canada cloud | `api.ca.samsara.com` |
+
+## Create the Connection
+
+1. Open **Connections** and create a **Generic REST** connection named `Samsara`.
+2. Enter the matching host from the table above.
+3. On **Authentication**, select **Bearer Token** and paste the Samsara API token. Do not add an `Authorization` header yourself.
+4. Save the connection.
+
+<Aside type="note">An API token is the simplest choice for importing your own fleet data. Samsara recommends OAuth 2.0 for marketplace applications that connect customer organizations.</Aside>
+
+## Import Vehicles
+
+This first import confirms the connection and provides a recipe you can reuse for other modern Samsara list endpoints.
+
+1. Add a **REST Request** step and select the `Samsara` connection.
+2. Set **Endpoint Source** to **Manual**, **Method** to `GET`, and **Endpoint** to `/fleet/vehicles`.
+3. Select a **Target Table**, such as `samsara_vehicles`.
+4. On **Query Parameters**, add `limit` with the value `512`.
+5. In **Request**, set the following values:
+
+| Field | Value |
+| --- | --- |
+| Row Format | `Object` |
+| Streaming Mode | `Cursor Paging` |
+| Items Path (JSON format) | `["data"]` |
+| Mode Params (JSON format) | `{"cursor": "after"}` |
+| Mode Paths (JSON format) | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. Select **Test Paging**. PlaidCloud fetches only enough pages for the preview, so you can verify the result before a full run.
+7. Save and run the step.
+
+Copy these values exactly when configuring a modern Samsara list endpoint:
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+When Samsara returns `hasNextPage: true`, PlaidCloud sends the returned `endCursor` as the next request's `after` parameter. It continues even when a page is empty, because Samsara can have later pages with data. See [Samsara pagination](https://developers.samsara.com/docs/pagination).
+
+## Run Efficiently
+
+- Use one REST Request step for each list endpoint. Cursor values are opaque and must be sent exactly as returned.
+- Set `limit=512` when the endpoint supports `limit`; 512 is Samsara's documented maximum.
+- Avoid one-request-per-row fan-out for a list endpoint. Use it only for genuinely independent detail requests, and keep its request rate within the endpoint's limit.
+- `/feed` endpoints are incremental rather than full snapshots. Persist the last successful cursor and schedule the workflow more often than Samsara's 30-day cursor-expiry window.
+
+## Troubleshoot
+
+| Problem | What to check |
+| --- | --- |
+| `401` or `403` | Confirm the regional host, token, tag access, and endpoint read scope. |
+| No rows | Confirm this is a list endpoint and **Items Path** is `["data"]`. |
+| Paging stops too soon | Use the modern endpoint in Samsara's current API reference. Legacy `/v1/` endpoints can use different pagination fields. |
+| `429` | Reduce the request rate for independent fan-out calls. The REST Request step respects Samsara's `Retry-After` response when it retries a safe read request. |
+
+## Related
+
+- [Generic REST Connection](/reference/connectors/rest/generic-rest/)
+- [REST Request workflow step](/guides/workflows/rest-request-step/)
+- [Samsara base URLs](https://developers.samsara.com/docs/base-url)
