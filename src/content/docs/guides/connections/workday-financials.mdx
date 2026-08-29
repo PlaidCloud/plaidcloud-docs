@@ -1,0 +1,127 @@
+---
+title: Connect to Workday Financials
+description: Connect PlaidCloud to Workday Financial Management with an Integration System User, pull data through a Report-as-a-Service report, then post journal entries over SOAP.
+sidebar:
+  order: 14
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Workday Financial Management using an Integration System User (ISU) and a customer-supplied Report-as-a-Service (RaaS) report to pull financial data, and post accounting journals back over Workday's SOAP API. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+This connector is built to Workday's documented SOAP and RaaS interfaces and has not yet been validated against a live Workday tenant. Run every import against a sandbox tenant first, and work through **Validate Only** below on every post batch before posting live.
+</Aside>
+
+<Aside type="note">
+This is a different connection from the generic [Workday REST connector](/reference/connectors/rest/workday/), which targets Workday's REST API for HR and payroll data. Workday Financials uses Workday's SOAP web services and RaaS reporting instead — use this connector for financial data and journal posting.
+</Aside>
+
+## Prerequisites
+
+You need, in Workday:
+
+- An **Integration System User (ISU)** dedicated to PlaidCloud, with an Integration System Security Group granting it access to the financial data and the Submit Accounting Journal business process.
+- Your Workday **tenant host** (for example `wd5-impl.workday.com`) and **tenant name**.
+- A **Report-as-a-Service (RaaS) report** you've built in Workday that returns the data you want to import, published with **Web Service** access so PlaidCloud can call its URL directly.
+
+<Aside type="note">
+Workday Financials doesn't expose a fixed set of canned entities the way NetSuite or Business Central do — instead, you build the extract as a RaaS report in Workday (using Workday's own report writer) and give PlaidCloud that report's URL. This puts you in control of exactly which fields and rows the import returns.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Workday Financials** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `Workday Financials Prod`. |
+   | Tenant Host | Your Workday host, e.g. `wd5-impl.workday.com`. |
+   | Tenant Name | Your Workday tenant name. |
+   | ISU Username | The Integration System User's username. |
+   | ISU Password | The Integration System User's password. |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Build a small RaaS report in Workday and publish it with Web Service access.
+
+2. Add an **Import Workday Entity** step to a workflow, set **Workday Connection** to your connection, **RaaS Report URL** to the report's URL, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the ISU credentials, tenant host, and report URL are all correct. An error names the problem — bad credentials, a wrong tenant host, or an ISU missing access to the report.
+
+## Import Data
+
+<Steps>
+
+1. Add an **Import Workday Entity** step and set **Workday Connection**, **RaaS Report URL**, and **Target Table**.
+
+2. Add **Filters** to bound the pull — `company`, `ledger`, `period`, `accounting_date` (range), `ledger_account` (range), and `cost_center` are passed as report parameters when your RaaS report defines matching prompts.
+
+3. Run the step and check the target table.
+
+</Steps>
+
+<Aside type="caution">
+Filters only reach a report parameter your RaaS report actually defines as a prompt. If a filter you set has no matching prompt on the report, PlaidCloud rejects it rather than silently ignoring it — add the prompt to the report in Workday first.
+</Aside>
+
+## Post Journal Entries
+
+The **Workday Financials: Post Journal Entry** step posts accounting journals through PlaidCloud's shared ERP write pipeline, using Workday's `Submit_Accounting_Journal` SOAP operation.
+
+<Steps>
+
+1. Build a **header table** — one row per journal entry — with `journal_id` (your entry identifier), `company`, `ledger`, `accounting_date`, and `memo`.
+
+2. Build a **lines table** — one or more rows per `journal_id` — with `ledger_account`, `debit`, `credit`, and any worktag (cost center, project) columns your journals require.
+
+3. Add a **Workday Financials: Post Journal Entry** step, set **Workday Connection**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every entry without a ledger claim and without posting anything.
+
+5. Review the result table (one row per entry: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a batch to stop dead on its first failed entry.
+
+</Steps>
+
+### How Posting Works
+
+PlaidCloud calls `Submit_Accounting_Journal` for each journal entry and, because Workday's own business-process approval chain can hold a submitted journal before it's actually posted, polls the entry's business-process status until it reaches a terminal state. An entry is only reported `posted` once that terminal state is **confirmed** — an entry that's submitted but stuck in an approval step stays quarantined rather than being recorded as posted, so a pending approval never silently passes as success. PlaidCloud's own ledger claim guards against submitting the same entry twice on a retried or re-run batch.
+
+### Correcting a Posted Entry
+
+This step never deletes or rewrites a posted journal. To correct one, post a new entry with debits and credits swapped against the original — a **posted reversing entry** — rather than editing the original in place. This preserves Workday's own audit trail and matches how corrections are made directly in the application.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **No live tenant validation.** Built to Workday's documented SOAP and RaaS interfaces; not yet exercised against a live Workday tenant. Validate report output and posting behavior in a sandbox tenant before relying on this step in production.
+- **Import depends entirely on the RaaS report you build.** PlaidCloud has no canned Workday Financials entities — the report's fields, prompts, and access control are all defined in Workday, not by this connector. A report change in Workday can change the shape of your import without any change on the PlaidCloud side.
+- **Business-process approval adds latency.** If your Submit Accounting Journal business process routes through approval steps, a posted entry may sit `pending` until someone approves it in Workday — the terminal-state poll waits for that, so a post can take materially longer than a call to an ERP with no approval chain.
+- **This connector is distinct from the generic [Workday REST connector](/reference/connectors/rest/workday/).** That connector targets Workday's REST API (HR/payroll); use it only if you're not connecting to Workday Financials.
+</Aside>
+
+## Related
+
+- [Workday Financials Connector](/reference/connectors/rest/workday-financials/) — field reference.
+- [Import Workday Entity](/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/reference/workflow-steps/workday-financials/workday-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every Workday Financials post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

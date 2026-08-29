@@ -1,0 +1,51 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: Post general ledger journal batches to Oracle Fusion Cloud from header and line tables through the FBDI GL Interface, with a preview mode that validates every batch before anything posts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Posts general ledger journal batches to Oracle Fusion Cloud over your [Oracle Fusion connection](/guides/connections/oracle-fusion/), routed through PlaidCloud's shared ERP write pipeline. The step takes a header table (one row per batch) and a lines table (one or more rows per batch), writes each batch to Oracle's GL_INTERFACE staging table as an FBDI file, and submits the Journal Import Launcher Enterprise Scheduler Service (ESS) job. **Validate Only** builds and checks every batch without a ledger claim and without posting; an optional result table records the outcome of each batch.
+
+<Aside type="caution">
+This step has not yet been validated against a live Oracle Fusion Cloud environment. Run every batch in **Validate Only** first, review the result table, and reconcile a handful of postings directly in Oracle Fusion before relying on this step to post live journals unattended.
+</Aside>
+
+## Configuration
+
+### Connection
+
+- **Fusion Connection** — the Oracle Fusion connection to post through.
+
+### Data
+
+- **Header Table** — one row per batch: `batch_id` (your batch identifier, required), `ledger_id` (required), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Lines Table** — one or more rows per `batch_id`: `account_combination` (or its segment columns), `entered_debit`, `entered_credit`, `currency_code`.
+- **Result Table** — output table id: one row per batch with `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — checked by default. Preflight only; no ledger claim, no post.
+- **Continue On Error** — checked by default. Keeps posting the remaining batches after one fails; unchecked stops the run at the first failure.
+
+## How Posting Works
+
+PlaidCloud loads each batch into Oracle's GL_INTERFACE staging table via an FBDI file, then submits and polls the Journal Import Launcher ESS job until it reports a terminal state. A batch is only reported `posted` once that terminal state is **confirmed** — a batch that lands in the interface table but whose import job never resolves stays quarantined (not reported posted, not silently dropped) rather than being recorded as success on the strength of the staged data merely existing.
+
+## Correcting a Posted Entry
+
+This step never deletes or rewrites a posted journal batch. To correct one, post a new batch with debits and credits swapped against the original — a posted reversing entry — rather than editing the original in place.
+
+## Capability Limits
+
+| Limitation | What it means |
+|---|---|
+| No live tenant validation | Built to Oracle Fusion's documented OData, BIP, and FBDI/ESS endpoints; not yet exercised against a live Oracle Fusion Cloud environment. |
+| ESS job latency | The Journal Import Launcher runs as a scheduled job — expect a posting run to take materially longer than a direct API write. |
+| Reversal is a new batch, not an in-place edit | Corrections post a new debit/credit-swapped reversing batch. There is no void or delete of an already-posted batch. |
+
+## Related
+
+- [Connect to Oracle Fusion](/guides/connections/oracle-fusion/) — full walkthrough covering configuration, previewing, and posting
+- [Oracle Fusion Connector](/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusion Steps](/reference/workflow-steps/oracle-fusion/)
+- [Review ERP Post History](/guides/connections/erp-post-history/)
