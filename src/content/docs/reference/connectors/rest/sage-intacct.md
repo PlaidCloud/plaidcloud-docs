@@ -47,4 +47,5 @@ The same connection serves both reading from and posting to Intacct. It's select
 * [Import Sage AP](../../../workflow-steps/sage-intacct/import-sage-ap/) — AP bill headers
 * [Import Sage AP Lines](../../../workflow-steps/sage-intacct/import-sage-ap-lines/) — AP bill line detail
 * [Import Sage Intacct Query](../../../workflow-steps/sage-intacct/import-intacct-query/) — generic query against any Intacct object
+* [Import Intacct Entity](../../../workflow-steps/sage-intacct/import-intacct-entity/) — GL detail, balances, entries, and dimension masters, with automatic pagination
 * [Intacct: Post Journal Entry](../../../workflow-steps/sage-intacct/export-to-sage/) — post journal entries

@@ -11,6 +11,7 @@ Workflow steps that read and write Sage Intacct over a [Sage Intacct connection]
 - [Import Sage Intacct Query](/reference/workflow-steps/sage-intacct/import-intacct-query/)
 - [Import Sage AP](/reference/workflow-steps/sage-intacct/import-sage-ap/)
 - [Import Sage AP Lines](/reference/workflow-steps/sage-intacct/import-sage-ap-lines/)
+- [Import Intacct Entity](/reference/workflow-steps/sage-intacct/import-intacct-entity/) — GL detail, balances, entries, and dimension masters, with automatic pagination.
 - [Intacct: Post Journal Entry](/reference/workflow-steps/sage-intacct/export-to-sage/)
 
 ## Related

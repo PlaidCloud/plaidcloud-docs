@@ -1,0 +1,138 @@
+---
+title: Connect to Dynamics 365 Finance & Operations
+description: Connect PlaidCloud to Dynamics 365 Finance & Operations with Azure AD client-credentials, pull OData entities or bulk DMF extracts with the canned import step, then post journal entries asynchronously.
+sidebar:
+  order: 12
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Dynamics 365 Finance & Operations (D365 F&O) over its OData and Data Management Framework (DMF) endpoints to pull master and transactional data with no OData to hand-write, and post general journal entries back. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+This connector is built to D365 F&O's documented OData and DMF endpoints and has not yet been validated against a live D365 F&O environment. Run every import against a sandbox environment first, and work through **Validate Only** below on every post batch before posting live.
+</Aside>
+
+## Prerequisites
+
+You need, in Azure AD and D365 F&O:
+
+- An **Entra ID (Azure AD) app registration** for PlaidCloud with a **client secret**, granted an application permission (or delegated admin-consented permission) to the D365 F&O resource.
+- Your Azure AD **tenant ID**.
+- The **environment URL** for the D365 F&O environment PlaidCloud should call (for example `https://yourorg.operations.dynamics.com`).
+- A **resource/scope** value — usually the environment URL itself with `/.default` appended — that the app registration requests a token for.
+
+<Aside type="note">
+The connection authenticates as an application, not a user — Entra ID **client-credentials** flow, the same OAuth2 mechanism PlaidCloud uses for other Microsoft REST connections. There is no interactive sign-in.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Dynamics 365 Finance & Operations** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `D365 F&O Prod`. |
+   | Environment URL | Your environment URL, e.g. `https://yourorg.operations.dynamics.com`. |
+   | Client ID | The Entra app registration's application (client) ID. |
+   | Client Secret | The app registration's client secret. |
+   | Tenant ID | Your Azure AD tenant ID. |
+   | Resource/Scope | The OAuth2 scope to request, typically the environment URL plus `/.default`. |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add an **Import D365 F&O Entity** step to a workflow.
+
+2. Set **D365 F&O Connection** to your connection, **Entity Type** to `main_accounts`, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the tenant, credentials, and environment URL are all correct. An error names the problem — a bad client secret, a missing permission grant, or a wrong environment URL.
+
+## Import Data
+
+<Steps>
+
+1. Add an **Import D365 F&O Entity** step and set **D365 F&O Connection** and **Target Table**.
+
+2. Set **Entity Type** to the record you want, and **Sync Mode** to `odata` for a normal-sized pull or `dmf` for a bulk extract of a large entity.
+
+3. Add **Filters** to bound the pull — date, account, and dimension ranges are translated into the request's OData `$filter`, restricted per entity to the fields D365 F&O can actually filter on server side.
+
+4. Run the step and check the target table.
+
+</Steps>
+
+### Entities and Filters
+
+| Entity Type | What it pulls | Filterable fields |
+|---|---|---|
+| `main_accounts` | The chart of accounts | account range, dimension |
+| `currencies` | Currency master | — |
+| `customers` | Customer master | account range |
+| `vendors` | Vendor master | account range |
+| `released_products` | Released product master | — |
+| `ledger_journal_headers` | Unposted and posted journal headers | date range, account range, dimension |
+
+<Aside type="note">
+**Sync Mode: OData vs DMF.** `odata` calls D365 F&O's standard OData entity endpoints directly — the simplest path, suited to routine pulls. `dmf` submits an asynchronous Data Management Framework export job and downloads the resulting package once it completes — the path for a bulk extract of a large entity (a full `ledger_journal_headers` history, for example) that would be slow or truncated over plain OData paging.
+</Aside>
+
+## Post Journal Entries
+
+The **D365 F&O: Post Journal Entry** step posts general ledger journal entries through PlaidCloud's shared ERP write pipeline, using D365 F&O's asynchronous custom-service journal post action.
+
+<Steps>
+
+1. Build a **header table** — one row per journal entry — with `journal_id` (your entry identifier), `journal_name` (the D365 F&O journal name to post into), `posting_date`, and `description`.
+
+2. Build a **lines table** — one or more rows per `journal_id` — with `account`, `debit`, `credit`, and any dimension columns your ledger requires.
+
+3. Add a **D365 F&O: Post Journal Entry** step, set **D365 F&O Connection**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every entry without a ledger claim and without posting anything.
+
+5. Review the result table (one row per entry: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a batch to stop dead on its first failed entry.
+
+</Steps>
+
+### How Posting Works
+
+PlaidCloud submits each journal entry to D365 F&O's asynchronous custom-service post action, then polls until the service reports the entry's terminal state. An entry is only reported `posted` once that terminal state is **confirmed** — an entry that's accepted but whose terminal state never resolves stays quarantined rather than being recorded as posted, so a stuck submission never silently passes as success. PlaidCloud's own ledger claim guards against posting the same entry twice on a retried or re-run batch.
+
+### Correcting a Posted Entry
+
+This step never deletes or rewrites a posted entry. To correct one, post a new entry with debits and credits swapped against the original — a **posted reversing entry** — rather than editing the original in place. This preserves D365 F&O's own audit trail and matches how corrections are made directly in the application.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **No live tenant validation.** Built to D365 F&O's documented OData and DMF endpoints; not yet exercised against a live D365 F&O environment. Validate field mappings and posting behavior in a sandbox environment before relying on this step in production.
+- **DMF sync mode has extract latency.** A `dmf` pull waits on an asynchronous export job — expect it to take materially longer than an `odata` pull of the same size, and don't use it for a small, latency-sensitive read.
+- **Dimension filtering depends on your ledger's dimension setup.** A financial dimension that isn't part of your account structure isn't filterable server-side; scope it in your workflow after the pull instead.
+- **This connector is distinct from the generic [Dynamics REST connector](/reference/connectors/rest/dynamics/).** That connector targets other Dynamics 365 applications (for example Sales/CRM); use it only if you're not connecting to Finance & Operations.
+</Aside>
+
+## Related
+
+- [Dynamics 365 F&O REST Connector](/reference/connectors/rest/dynamics-365-fo/) — field reference.
+- [Import D365 F&O Entity](/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every D365 F&O post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
