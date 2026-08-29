@@ -54,5 +54,6 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Oracle Fusion](/reference/workflow-steps/oracle-fusion/) — import GL balances and journal batches; post journal entries through FBDI
 - [Workday Financials](/reference/workflow-steps/workday-financials/) — import a RaaS report; post accounting journals
 - [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, ad-hoc queries, and GL/dimension objects; post journal entries
+- [SAP S/4HANA Cloud](/reference/workflow-steps/s4hana-cloud/) — import trial balance and journal entry items over OData; post journal entries over SOAP
 - [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls
 - [SAP-PCM](/reference/workflow-steps/sap-pcm/) — SAP Profitability and Cost Management model control

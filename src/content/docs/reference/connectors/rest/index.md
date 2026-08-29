@@ -23,6 +23,7 @@ For any REST service that doesn't have a dedicated connector, PlaidCloud provide
 - [Business Central](/reference/connectors/rest/business-central/)
 - [Dynamics 365 Finance & Operations](/reference/connectors/rest/dynamics-365-fo/)
 - [Workday Financials](/reference/connectors/rest/workday-financials/)
+- [SAP S/4HANA Cloud](/reference/connectors/rest/s4hana-cloud/)
 - [QuickBooks](/reference/connectors/rest/quickbooks/)
 - [Sage Intacct](/reference/connectors/rest/sage-intacct/)
 - [Stripe](/reference/connectors/rest/stripe/)
