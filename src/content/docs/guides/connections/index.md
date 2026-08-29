@@ -41,6 +41,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to Dynamics 365 Finance & Operations](/guides/connections/dynamics-365-fo/) — set up a D365 F&O connection with Azure AD, import OData/DMF entities, and post journal entries.
 - [Connect to Oracle Fusion](/guides/connections/oracle-fusion/) — set up an Oracle Fusion connection, import GL balances and journal batches, and post journals through FBDI.
 - [Connect to Workday Financials](/guides/connections/workday-financials/) — set up a Workday Financials connection with an Integration System User, import a RaaS report, and post journal entries.
+- [Connect to SAP S/4HANA Cloud](/guides/connections/s4hana-cloud/) — set up a direct S/4HANA Cloud connection with OAuth2, import trial balance and journal entry items, and post journal entries over SOAP.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
 
