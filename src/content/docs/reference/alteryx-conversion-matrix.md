@@ -71,7 +71,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
-| Formatted multi-tab Excel report packaging (BlobOutput + template-tab clone) | Partial | Multi-tab Excel writer (template-tab clone) | A reusable multi-tab Excel writer with template-tab cloning is available on-platform — it preserves values, number formats, fonts, fills, borders, merged cells, and column widths — but automatic conversion of the Alteryx report-packaging layer into that writer is not yet wired, and the template clone does not preserve charts, images, or pivot tables. |
+| Formatted Excel output into a styled template | Partial | Template-aware Excel writer | Writing a single sheet into a styled template preserves the template's formatting — values, number formats, fonts, fills, borders, merged cells, and column widths carry through to the named sheet and range. Two cases stay partial: a template that contains pivot tables or charts drops those objects when the sheet is written, and assembling several outputs into different sheets of one styled workbook is not yet supported. Plain (unstyled) Excel output is Full — see Output Data. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
 | Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
 | Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
@@ -158,6 +158,14 @@ canvas objects. An Alteryx App's full interface layout — the `.yxwz` file's
 through a generic Panel "App Runner" at run time, so a converted app keeps
 its original input form rather than only its individual controlled
 variables.
+
+**A note on Excel output.** A plain new workbook — data written with default
+formatting — converts fully. Writing into a *styled template*, filling a named
+sheet and range while preserving its formatting, converts for a single sheet.
+Templates that carry pivot tables or charts, and assembling several outputs
+into separate sheets of one workbook, are not yet reproduced; sheet-level file
+surgery driven from Run Command (Excel COM/VBS) is flagged by name for manual
+review rather than auto-converted.
 
 ## Spatial Tool Coverage
 
