@@ -71,6 +71,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
+| Formatted multi-tab Excel report packaging (BlobOutput + template-tab clone) | Partial | Multi-tab Excel writer (template-tab clone) | A reusable multi-tab Excel writer with template-tab cloning is available on-platform — it preserves values, number formats, fonts, fills, borders, merged cells, and column widths — but automatic conversion of the Alteryx report-packaging layer into that writer is not yet wired, and the template clone does not preserve charts, images, or pivot tables. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
 | Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
 | Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
@@ -92,6 +93,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
 | Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
 | Map Input | Full | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Reads MapInfo, ESRI, KML, and GeoJSON files with their sidecars. |
+| Master Selector | Partial | Controlled workflow variable and conditional step visibility | Converts the tool's show/hide visibility conditions on interface elements to conditional step visibility. Converts which sub-workflow the selection runs on a best-effort basis — validation against real on-tenant apps is still pending, so review the selected run-target before relying on it in production. |
 | Message | Full | Step condition (message) | Emits workflow warning, message, or error from a condition. |
 | Modeling | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses into the ML Train step with the pipeline's model choice. |
 | Multi-Field Formula | Full | Multi-field formula transform | Applies a formula across selected fields. |
@@ -114,6 +116,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | RegEx | Full | Regular expression transform | Parses, matches, or replaces text. |
 | Regression | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the Assisted Modeling chain into one ML Train step. |
 | Report Map | Full | Map report artifact | Produces a cloud-native map/report artifact. |
+| Run Command | Partial | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection (`curl`/`wget` only) | Converts a `curl` or `wget` command line to a REST Request step. Interpreter and script commands (`cscript`, PowerShell, Python, and similar), Excel-COM automation, filesystem operations, and opaque or workflow-launching commands are flagged by name for manual review rather than auto-converted. |
 | Sample | Full | Sample transform | Keeps records by count, percentage, or grouping. |
 | Select | Full | Select and schema projection step | Selects, renames, reorders, and retypes fields. |
 | Smooth | Full | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
@@ -150,7 +153,11 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 Interface widgets (drop-downs, list boxes, check boxes, text/numeric/date
 inputs, file and folder pickers), canvas objects (comments, links,
 containers), and macro ports all convert as native controlled variables or
-canvas objects.
+canvas objects. An Alteryx App's full interface layout — the `.yxwz` file's
+`<Questions>` definition — converts to an interface manifest and renders
+through a generic Panel "App Runner" at run time, so a converted app keeps
+its original input form rather than only its individual controlled
+variables.
 
 ## Spatial Tool Coverage
 
