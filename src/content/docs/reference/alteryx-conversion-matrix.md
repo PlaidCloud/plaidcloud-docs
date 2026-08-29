@@ -92,6 +92,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
 | Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
 | Map Input | Full | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Reads MapInfo, ESRI, KML, and GeoJSON files with their sidecars. |
+| Master Selector | Partial | Controlled workflow variable and conditional step visibility | Converts the tool's show/hide visibility conditions on interface elements to conditional step visibility. Converts which sub-workflow the selection runs on a best-effort basis — validation against real on-tenant apps is still pending, so review the selected run-target before relying on it in production. |
 | Message | Full | Step condition (message) | Emits workflow warning, message, or error from a condition. |
 | Modeling | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses into the ML Train step with the pipeline's model choice. |
 | Multi-Field Formula | Full | Multi-field formula transform | Applies a formula across selected fields. |
@@ -104,7 +105,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Point To Line | Full | Point To Line executor op | Threads each group's points into one `SequenceLine` per group, ordered by the sequence field. |
 | Poly-Build | Full | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
 | Poly-Split | Full | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
-| Portfolio Composer (Text / Table / Image / Layout / Render) | Full | Report artifacts | Convert report content, layout, and rendering to PlaidCloud report output. |
+| Portfolio Composer (Text / Table / Image / Layout / Render) | Partial | Report artifacts | Converts report content, layout, and rendering to PlaidCloud report output. A reusable multi-tab Excel writer with template-tab cloning is available on-platform — it preserves values, formats, styles, merged cells, and column widths — but automatic conversion of the Render tool's Alteryx report-packaging layer into that writer is not yet wired, and the template clone does not preserve charts, images, or pivot tables. |
 | POS Tagger | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (pos task) | Tags each token's part of speech from a text column through the LLM-backed NLP AI step. |
 | Predict | Full | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Scores data with the trained model table and appends a prediction column. |
 | Radio Button | Full | Controlled workflow variable | Converts app radio choices to controlled input. |
@@ -114,6 +115,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | RegEx | Full | Regular expression transform | Parses, matches, or replaces text. |
 | Regression | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the Assisted Modeling chain into one ML Train step. |
 | Report Map | Full | Map report artifact | Produces a cloud-native map/report artifact. |
+| Run Command | Partial | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection (`curl`/`wget` only) | Converts a `curl` or `wget` command line to a REST Request step. Interpreter and script commands (`cscript`, PowerShell, Python, and similar), Excel-COM automation, filesystem operations, and opaque or workflow-launching commands are flagged by name for manual review rather than auto-converted. |
 | Sample | Full | Sample transform | Keeps records by count, percentage, or grouping. |
 | Select | Full | Select and schema projection step | Selects, renames, reorders, and retypes fields. |
 | Smooth | Full | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
@@ -150,7 +152,11 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 Interface widgets (drop-downs, list boxes, check boxes, text/numeric/date
 inputs, file and folder pickers), canvas objects (comments, links,
 containers), and macro ports all convert as native controlled variables or
-canvas objects.
+canvas objects. An Alteryx App's full interface layout — the `.yxwz` file's
+`<Questions>` definition — converts to an interface manifest and renders
+through a generic Panel "App Runner" at run time, so a converted app keeps
+its original input form rather than only its individual controlled
+variables.
 
 ## Spatial Tool Coverage
 
