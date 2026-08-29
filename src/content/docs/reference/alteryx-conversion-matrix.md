@@ -71,6 +71,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
+| Formatted multi-tab Excel report packaging (BlobOutput + template-tab clone) | Partial | Multi-tab Excel writer (template-tab clone) | A reusable multi-tab Excel writer with template-tab cloning is available on-platform — it preserves values, number formats, fonts, fills, borders, merged cells, and column widths — but automatic conversion of the Alteryx report-packaging layer into that writer is not yet wired, and the template clone does not preserve charts, images, or pivot tables. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
 | Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
 | Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
@@ -105,7 +106,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Point To Line | Full | Point To Line executor op | Threads each group's points into one `SequenceLine` per group, ordered by the sequence field. |
 | Poly-Build | Full | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
 | Poly-Split | Full | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
-| Portfolio Composer (Text / Table / Image / Layout / Render) | Partial | Report artifacts | Converts report content, layout, and rendering to PlaidCloud report output. A reusable multi-tab Excel writer with template-tab cloning is available on-platform — it preserves values, formats, styles, merged cells, and column widths — but automatic conversion of the Render tool's Alteryx report-packaging layer into that writer is not yet wired, and the template clone does not preserve charts, images, or pivot tables. |
+| Portfolio Composer (Text / Table / Image / Layout / Render) | Full | Report artifacts | Convert report content, layout, and rendering to PlaidCloud report output. |
 | POS Tagger | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (pos task) | Tags each token's part of speech from a text column through the LLM-backed NLP AI step. |
 | Predict | Full | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Scores data with the trained model table and appends a prediction column. |
 | Radio Button | Full | Controlled workflow variable | Converts app radio choices to controlled input. |
