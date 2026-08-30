@@ -30,10 +30,12 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Alteryx Tool | Status | PlaidCloud Equivalent | Converts |
 | --- | --- | --- | --- |
 | Action | Full | Variable binding and conditional step configuration | Updates downstream step settings from converted app inputs. |
+| Analytic App interface (`.yxwz`) | Partial | Published Panel "App Runner" front-end | The app's `<Questions>` layout is materialized into a working Panel app that collects user inputs and drives the converted workflow, published automatically as part of conversion (an app with no input widgets is skipped). Common question types — text, numeric (Numeric Up Down), date, check box, radio button, drop-down, list box, tree, file browse, and folder browse — become App Runner widgets. A question whose value binds to no workflow variable is rendered with a visible note rather than silently collecting a dead value, and less common question types are flagged for review rather than materialized. See [Use Converted Alteryx Apps](/guides/workflows/use-converted-alteryx-apps/#the-app-runner-front-end). |
 | Append Fields | Full | Append fields transform | Appends fields from one stream to another. |
 | Auto Field | Full | Auto field sizing transform | Preserves inferred field sizing. |
 | AutoML | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the model-method, target, and candidate-algorithm selections into an ML Train step, the same as Classification and Regression. AutoML never records which candidate algorithm actually won at Alteryx run time, so conversion picks the first checked algorithm ML Train supports and notes the choice. Validated against a reconstructed fixture rather than a real Alteryx export — AutoML left Alteryx's palette after 2023.1, so no export sample exists to convert from; confirm against a real workflow if one surfaces. |
 | Barcode | Full | Barcode executor | Reads or writes barcodes in the configured symbology. |
+| Batch Macro | Partial | Macro fanned out over its control-anchor table | The caller runs the whole macro once per record of its control input, binding the interior's control parameters each pass — including a control parameter the caller renamed to a display label when exactly one is in play, and an `UpdateRawXml` Action that rewrites a Select's field list from a variable. Shapes whose per-pass value cannot be reproduced safely fail closed by name rather than convert wrongly: an `UpdateRawXml` that rewrites anything other than a Select's field list, and an Action that replaces a Filter's entire expression with a variable (its raw per-pass syntax would mis-evaluate). |
 | Browse | Full | Browse / passthrough | Preserved for inspection with no runtime cost. |
 | Buffer | Full | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
 | Build Features | Partial | [Build Features](/reference/workflow-steps/tables/table-build-features/) | Converts arithmetic and interaction primitives, date-part extraction, explicit-threshold binning, z-score and min-max scaling, and one-hot encoding. Cross-table aggregation (Deep Feature Synthesis across the Manage Relationships tab), PCA, target encoding, and data-driven auto-binning have no equivalent — each is flagged by name in the conversion report rather than silently dropped. |
@@ -61,7 +63,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Distance | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. |
 | Download | Full | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection | Downloads external data or artifacts; assign a REST connection to the converted step before it runs. |
 | Drop Down | Full | Controlled workflow variable | Converts app drop-down choices to controlled input. |
-| Dynamic Input | Full | Dynamic Document input | Resolves file patterns and variable-driven inputs at runtime. |
+| Dynamic Input | Partial | Dynamic Document input | Resolves file patterns and variable-driven inputs at run time. An Excel *ReadList* — one worksheet read from every workbook a Directory tool lists, then unioned — converts to a folder-glob sheet read when an upstream Filter pins the sheet to a single name by exact match. A sheet chosen by a Contains, an inequality, or an OR filter, or a read spanning more than one sheet, refuses rather than read the wrong sheet. |
 | Dynamic Rename | Full | Dynamic rename transform | Renames fields from metadata or rules. |
 | Dynamic Replace | Full | Dynamic replace transform | Applies replacement rules from a second stream. |
 | Dynamic Select | Full | Dynamic field selection transform | Selects fields by type, name, or rule. |
@@ -71,7 +73,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
-| Formatted Excel output into a styled template | Partial | Template-aware Excel writer | Writing a single sheet into a styled template preserves the template's formatting — values, number formats, fonts, fills, borders, merged cells, and column widths carry through to the named sheet and range. Two cases stay partial: a template that contains pivot tables or charts drops those objects when the sheet is written, and assembling several outputs into different sheets of one styled workbook is not yet supported. Plain (unstyled) Excel output is Full — see Output Data. |
+| Formatted Excel output into a styled template | Partial | Template-aware Excel writer ([Export to Excel Sheets](/reference/workflow-steps/export/export-to-excel-sheets/) for multi-sheet) | Writing into a styled template preserves the template's formatting — values, number formats, fonts, fills, borders, merged cells, and column widths carry through to the named sheet and range. This covers both a single sheet and several outputs assembled into different sheets of one workbook, filled in a single pass so the sheets no longer overwrite one another. One case stays partial: a template that carries pivot tables or charts drops those objects when its sheets are written. Plain (unstyled) Excel output is Full — see Output Data. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
 | Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
 | Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
@@ -154,18 +156,21 @@ Interface widgets (drop-downs, list boxes, check boxes, text/numeric/date
 inputs, file and folder pickers), canvas objects (comments, links,
 containers), and macro ports all convert as native controlled variables or
 canvas objects. An Alteryx App's full interface layout — the `.yxwz` file's
-`<Questions>` definition — converts to an interface manifest and renders
-through a generic Panel "App Runner" at run time, so a converted app keeps
-its original input form rather than only its individual controlled
-variables.
+`<Questions>` definition — is also materialized into a published Panel "App
+Runner" front-end, so converting the app produces a working input form that
+collects the same values and drives the converted workflow, not just the
+individual controlled variables. See the Analytic App interface row above and
+[Use Converted Alteryx Apps](/guides/workflows/use-converted-alteryx-apps/#the-app-runner-front-end).
 
 **A note on Excel output.** A plain new workbook — data written with default
-formatting — converts fully. Writing into a *styled template*, filling a named
-sheet and range while preserving its formatting, converts for a single sheet.
-Templates that carry pivot tables or charts, and assembling several outputs
-into separate sheets of one workbook, are not yet reproduced; sheet-level file
-surgery driven from Run Command (Excel COM/VBS) is flagged by name for manual
-review rather than auto-converted.
+formatting — converts fully. Writing into a *styled template*, filling named
+sheets and ranges while preserving their formatting, converts for a single
+sheet and for several outputs assembled into different sheets of one workbook
+(the [Export to Excel Sheets](/reference/workflow-steps/export/export-to-excel-sheets/)
+step fills every sheet in one pass). Templates that carry pivot tables or charts
+drop those objects when their sheets are written; sheet-level file surgery driven
+from Run Command (Excel COM/VBS) is flagged by name for manual review rather than
+auto-converted.
 
 ## Spatial Tool Coverage
 

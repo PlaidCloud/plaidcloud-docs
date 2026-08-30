@@ -17,6 +17,7 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export to Avro](/reference/workflow-steps/export/export-to-avro/)
 - [Export To CSV](/reference/workflow-steps/export/export-to-csv/)
 - [Export To Excel](/reference/workflow-steps/export/export-to-excel/)
+- [Export To Excel Sheets](/reference/workflow-steps/export/export-to-excel-sheets/)
 - [Export To Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/)
 - [Export To HDF](/reference/workflow-steps/export/export-to-hdf/)
 - [Export To JSON](/reference/workflow-steps/export/export-to-json/)
