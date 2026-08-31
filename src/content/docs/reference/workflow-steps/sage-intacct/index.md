@@ -1,9 +1,9 @@
 ---
 title: Sage Intacct Steps
-description: Workflow steps that read and write Sage Intacct over a Sage Intacct REST connection — balances, AP bills, ad-hoc queries, and journal entry posting.
+description: Workflow steps that read and write Sage Intacct over a Sage Intacct REST connection — balances, AP bills, ad-hoc queries, journal entry posting, and document attachment.
 ---
 
-Workflow steps that read and write Sage Intacct over a [Sage Intacct connection](/guides/connections/sage-intacct/). Import account balances, Accounts Payable bills, or the results of an ad-hoc query against any Intacct object, and post journal entries back.
+Workflow steps that read and write Sage Intacct over a [Sage Intacct connection](/guides/connections/sage-intacct/). Import account balances, Accounts Payable bills, or the results of an ad-hoc query against any Intacct object, post journal entries back, and attach supporting documents to Intacct records.
 
 ## Steps
 
@@ -13,6 +13,7 @@ Workflow steps that read and write Sage Intacct over a [Sage Intacct connection]
 - [Import Sage AP Lines](/reference/workflow-steps/sage-intacct/import-sage-ap-lines/)
 - [Import Intacct Entity](/reference/workflow-steps/sage-intacct/import-intacct-entity/) — GL detail, balances, entries, and dimension masters, with automatic pagination.
 - [Intacct: Post Journal Entry](/reference/workflow-steps/sage-intacct/export-to-sage/)
+- [Sage Intacct: Attach Document](/reference/workflow-steps/sage-intacct/attach-document/) — attach supporting documents from a table onto Intacct records.
 
 ## Related
 
