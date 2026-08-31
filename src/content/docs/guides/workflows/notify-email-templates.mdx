@@ -1,0 +1,85 @@
+---
+title: Send Templated HTML Email Notifications
+description: Render a rich HTML email from a Jinja template and a workflow table using the Notify Via Email step's template mode.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The [Notify Via Email](/reference/workflow-steps/notifications/notify-via-email/) step can send a plain `{token}` message, or render a rich HTML email from a **Jinja template** over one of your workflow's tables. This guide covers template mode: enabling it, the data available inside a template, the `render_table` helper, and the constraints that come from sending through email.
+
+## Enable Template Mode
+
+Open a **Notify Via Email** step and fill in **Template Body** with a Jinja template. Leaving Template Body empty keeps the step on its existing plain-text **Message** path, unchanged.
+
+<Aside type="note">Template mode has its own sandboxed rendering engine. It's syntactically similar to [Export Templated](/reference/workflow-steps/export/export-templated/) — Jinja, a `frames` selection, a `render_table` helper — but the two engines are **not interchangeable**. A template written for one will not run on the other.</Aside>
+
+## Add a Frame
+
+Add a single table from the workflow's context under **Frames**. This is Phase 1: one frame, one table — multiple frames, and joining or combining tables into a single frame, aren't supported yet.
+
+The frame's data is exposed inside the template as `rows` and `columns` (see below).
+
+## What's Available Inside the Template
+
+Template mode exposes a narrow, explicit set of variables — it does **not** carry over the legacy `{project}` / `{model}` / `{date}` tokens from plain-text mode. Referencing an undefined variable fails the render, so only use what's listed here:
+
+| Variable | Contents |
+|---|---|
+| `cloud` | The workspace name. |
+| `rows` | A list of row objects for your frame, one per row. |
+| `columns` | The frame's column list, in order. |
+
+Values keep their native Python types — a `Decimal` stays a `Decimal`, a date stays a date, and a null column comes through as `None` — so you can format and compare them the same way you would in Python, rather than working from stringified text.
+
+## Render a Table with `render_table`
+
+Rather than hand-writing `<table>` markup, call the `render_table` macro with your frame's rows and columns:
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+This emits a correctly structured HTML table for the frame in one call.
+
+## A Complete Example
+
+This template renders the workspace name, a short summary line, and a table from your frame:
+
+```jinja
+<p><strong>Overdue Invoices — {{ cloud }}</strong></p>
+
+<p>{{ rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(rows, columns) }}
+
+{% if rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Point your frame at the table you want reported, and the rendered email shows a bold title line, a one-line summary computed from the row count, and the full table.
+
+## The Allowlisted-HTML Constraint
+
+Every rendered email passes through the same sanitizer as the rest of PlaidCloud's transactional mail before it's sent. The sanitizer strips anything outside a small allowlist:
+
+- **Allowed tags**: the table tags `render_table` emits (`table`, `tbody`, `tr`, `th`, `td`), plus common text tags — `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code`, and `a`. Headings (`h1`–`h6`), `div`, and `span` are **not** on the list — for a title, use a `p` with a `strong` inside it.
+- **Allowed attributes**: `class` and `style` only (plus `href` on `a`).
+- **No `<thead>`.** `render_table` emits `table` / `tbody` / `tr` / `th` / `td` — a header row is a `tr` of `th` cells inside `tbody`, not a separate `<thead>` section.
+- **No `<style>` blocks**, and no external resources — a `url(...)` reference or a tracking beacon is stripped along with any other tag or attribute not on the list.
+
+In practice: build your report structure with `render_table` and plain text tags, and keep any custom styling to simple inline `style` attributes. Anything more elaborate — a `<style>` block, an external style sheet, custom fonts, tracking pixels — does not survive sanitization and does not appear in the delivered email.
+
+## Migrating from a Plain-Text Body
+
+Switching an existing step from its plain-text **Message** to **Template Body** rewrites each `{var}` token to the Jinja form `{{ var }}` automatically. If a token can't be rewritten safely, the switch is blocked rather than producing a broken template. The step's editor also lints variable names as you type in template mode and flags any that won't resolve, so a typo or a leftover legacy token is caught before you save.
+
+## Security and Egress
+
+Frame reads go through the same row-level security as any other read in the project — a frame only ever returns the rows the running user or automation principal is allowed to see. Sending limits (recipients, size, and rate) are unchanged from the plain-text path; template mode does not relax or add to them.
+
+## Next Steps
+
+- [Notify Via Email reference](/reference/workflow-steps/notifications/notify-via-email/) — field-level configuration
+- [Export Templated](/reference/workflow-steps/export/export-templated/) — the similarly shaped but separate engine for rendering documents from tables
+- [Manage Workflow Variables](/guides/workflows/manage-workflow-variables/) — for the plain-text `{var}` path
