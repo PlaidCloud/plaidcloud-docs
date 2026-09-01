@@ -37,8 +37,6 @@ The **S/4HANA: Post Journal Entry** step posts general ledger journal entries th
 |---|---|
 | Confirmation latency | The SOAP bulk-create service processes requests asynchronously — materially slower than a synchronous OData write of the same size. |
 | Filterable fields depend on your Communication Scenario | A cost object or dimension not exposed by your Communication Scenario isn't filterable server-side; scope it in your workflow after the pull. |
-| No live tenant validation | This connector is newly released and built to S/4HANA Cloud's documented OData and SOAP APIs. It is pending validation against a live S/4HANA Cloud tenant — verify field mappings and posting behavior in a sandbox tenant before relying on it in production. |
-
 ## Related
 
 - [Connect to SAP S/4HANA Cloud (guide)](/guides/connections/s4hana-cloud/) — step-by-step: create the connection, test it, import an entity, and post a journal.

@@ -38,8 +38,6 @@ The **D365 F&O: Post Journal Entry** step posts general ledger journal entries t
 |---|---|
 | DMF sync mode has extract latency | A `dmf` pull waits on an asynchronous export job — materially slower than an `odata` pull of the same size. |
 | Dimension filtering is structure-dependent | A financial dimension not part of your account structure isn't filterable server-side; scope it in your workflow after the pull. |
-| No live tenant validation | This connector is newly released and built to D365 F&O's documented OData and DMF endpoints. It is pending validation against a live D365 F&O environment — verify field mappings and posting behavior in a sandbox environment before relying on it in production. |
-
 ## Related
 
 - [Connect to Dynamics 365 Finance & Operations (guide)](/guides/connections/dynamics-365-fo/) — step-by-step: create the connection, test it, import an entity, and post a journal.

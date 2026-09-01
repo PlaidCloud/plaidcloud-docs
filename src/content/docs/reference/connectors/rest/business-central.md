@@ -43,8 +43,6 @@ The **Business Central Post** step creates lines inside an **existing** journal 
 | One write document type | Only General Journal Line posting is supported. The draft-document flow (sales/purchase invoices, Draft → Posted) is not — the post action for that flow isn't pinned down in Microsoft's published documentation. |
 | Posts into an existing batch only | This connector never creates a journal batch in Business Central — create it there first. |
 | Concurrent same-batch posts | The idempotency guard is scoped by document number, not by journal batch — two different document numbers posting concurrently to the same batch aren't guaranteed to serialize. |
-| No live tenant validation | This connector is newly released and built to Business Central's documented OData v2.0 API. It is pending validation against a live Business Central tenant — verify field mappings and posting behavior in a sandbox environment before relying on it in production. |
-
 ## Related
 
 - [Connect to Business Central (guide)](/guides/connections/business-central/) — step-by-step: create the connection, test it, import an entity, and post a journal.

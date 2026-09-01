@@ -37,8 +37,6 @@ The **Workday Financials: Post Journal Entry** step posts accounting journals th
 |---|---|
 | Import shape depends on your RaaS report | PlaidCloud has no canned entities for Workday Financials — the report's fields, prompts, and access control all live in Workday. A report change there can change your import's shape without any change on the PlaidCloud side. |
 | Business-process approval adds latency | A journal routed through an approval step in your Submit Accounting Journal business process stays `pending` until approved in Workday; the terminal-state poll waits for that. |
-| No live tenant validation | This connector is newly released and built to Workday's documented SOAP and RaaS interfaces. It is pending validation against a live Workday tenant — verify report output and posting behavior in a sandbox tenant before relying on it in production. |
-
 ## Related
 
 - [Connect to Workday Financials (guide)](/guides/connections/workday-financials/) — step-by-step: create the connection, test it, import a report, and post a journal.
