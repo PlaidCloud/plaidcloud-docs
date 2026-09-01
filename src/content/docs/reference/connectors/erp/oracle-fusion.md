@@ -41,8 +41,6 @@ The **Oracle Fusion: Post Journal Entry** step posts general ledger journal batc
 |---|---|
 | ESS job latency | The Journal Import Launcher runs as a scheduled job, not a synchronous call — a posting run takes materially longer than a direct API write. |
 | Bulk extract latency | `import_fusion_bulk_extract` waits on an FBDI/BIP export job — reserve it for pulls too large for `import_fusion_entity`'s direct path. |
-| No live tenant validation | This connector is newly released and built to Oracle Fusion's documented OData, BIP, and FBDI/ESS endpoints. It is pending validation against a live Oracle Fusion Cloud environment — verify field mappings and posting behavior in a test environment before relying on it in production. |
-
 ## Related
 
 - [Connect to Oracle Fusion (guide)](/guides/connections/oracle-fusion/) — step-by-step: create the connection, test it, import an entity, and post a journal.
