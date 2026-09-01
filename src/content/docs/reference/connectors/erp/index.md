@@ -17,6 +17,7 @@ PlaidCloud provides dedicated connectors for major enterprise ERP systems. Each 
 
 - [Oracle EBS](/reference/connectors/erp/oracle-ebs/)
 - [Oracle Fusion](/reference/connectors/erp/oracle-fusion/)
+- [Oracle Essbase](/reference/connectors/erp/oracle-essbase/) — live MDX queries against Essbase 21c+ / OAC cubes
 
 ## Other ERPs
 

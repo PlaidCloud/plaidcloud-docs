@@ -1,0 +1,56 @@
+---
+title: "Acumatica: Post Documents"
+description: Post journal transactions, sales invoices, bills, and payments to Acumatica from header and line tables, with a preview mode that validates every document before anything posts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Posts documents to Acumatica over your [Acumatica connection](/guides/connections/acumatica/), routed through PlaidCloud's shared ERP write pipeline. The step takes a header table (one row per document) and a lines table (one or more rows per document), and posts each document as **JournalTransaction**, **SalesInvoice**, **Bill**, or **Payment**. **Validate Only** builds and checks every document without a ledger claim and without posting; an optional result table records the outcome of each document.
+
+<Aside type="caution">
+Run every batch in **Validate Only** first, review the result table, and reconcile a handful of postings directly in Acumatica before relying on this step to post live documents unattended.
+</Aside>
+
+## Configuration
+
+### Connection
+
+- **Acumatica Connection** — the Acumatica connection to post through.
+- **Environment** — the connection's environment.
+
+### Data
+
+- **Header Table** — one row per document: `ref` (your document identifier, required), `doc_type` (`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`, required), `posting_date`, `party_id` (customer/vendor, where the doc type needs one), `memo`, `due_date`, `branch_id`. A batch can mix document types — PlaidCloud partitions by `doc_type` before posting.
+- **Lines Table** — one or more rows per `ref`, shaped to the document type:
+
+  | Doc Type | Line Columns |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **Result Table** — output table id: one row per document with `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — checked by default. Preflight only; no ledger claim, no post.
+- **Continue On Error** — checked by default. Keeps posting the remaining documents after one fails; unchecked stops the batch at the first failure.
+
+## How Posting Works
+
+Acumatica creates every document **on Hold**, then PlaidCloud calls the release action, which runs asynchronously — a `202` accepted response, polled to completion, then a `204` confirms release. PlaidCloud only reports `posted` once release is **confirmed by re-reading the document's Hold flag as false** — a document that lands but whose release never confirms stays quarantined (not reported posted, not silently dropped) rather than being recorded as success on the strength of the document merely existing.
+
+## Capability Limits
+
+| Limitation | What it means |
+|---|---|
+| No native idempotency key | Acumatica's PUT-based write API has no idempotency field. PlaidCloud's own ledger claim, not an Acumatica-side key, is the sole guard against a double post on a retry or re-run. |
+| Reversal is manual | No document type has a documented void/reversal action in the contract-based API. `reversal_mode` is `NONE` everywhere — refused, never faked. Correct a mis-posted document directly in Acumatica. |
+| Payment has no reliable lookup | No documented field correlates a Payment back to PlaidCloud's request after an ambiguous outcome. An in-doubt Payment is quarantined for manual resolution rather than guessed at. |
+| Line-item filtering isn't server-side | Server-side filters (on the import step) don't reach a document's line-item dimensions — filter at header/entity level and scope lines in your workflow. |
+## Related
+
+- [Connect to Acumatica](/guides/connections/acumatica/) — full walkthrough covering configuration, previewing, and posting
+- [Acumatica REST Connector](/reference/connectors/rest/acumatica/)
+- [Acumatica Steps](/reference/workflow-steps/acumatica/)
+- [Review ERP Post History](/guides/connections/erp-post-history/)

@@ -1,0 +1,135 @@
+---
+title: Connect to SAP S/4HANA Cloud
+description: Connect PlaidCloud directly to SAP S/4HANA Cloud Public Edition with OAuth2 client-credentials — no agent required — pull trial balance and journal entry items, then post journal entries with a posted reversing entry for corrections.
+sidebar:
+  order: 15
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud directly to SAP S/4HANA Cloud Public Edition over its OData and SOAP APIs to pull trial balance and journal entry item data with no OData to hand-write, and post journal entries back. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+Run every import against a sandbox tenant first, and work through **Validate Only** below on every post batch before posting live.
+</Aside>
+
+<Aside type="note">
+This is a different connection from the [SAP ECC / S/4HANA connector](/reference/connectors/erp/sap-s4/), which reaches an on-premises or private-cloud S/4HANA system through a PlaidLink agent and RFC calls. This connector talks directly to SAP S/4HANA Cloud **Public Edition** over the internet — there's no agent to install or RFC destination to configure.
+</Aside>
+
+## Prerequisites
+
+You need, in SAP S/4HANA Cloud:
+
+- A **Communication Arrangement** built on a Communication Scenario that exposes the Trial Balance and Journal Entry Item APIs (read) and the journal entry posting service (write), with a **Communication User** configured for OAuth2 client-credentials rather than basic auth.
+- Your S/4HANA Cloud tenant's **host** (for example `https://yourorg.s4hana.ondemand.com`) and its **OAuth2 token URL** (for example `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- The Communication Arrangement's **OAuth2 client ID and secret**.
+
+<Aside type="note">
+The connection authenticates as an application, not a user — OAuth2 **client-credentials** flow, the same mechanism PlaidCloud uses for other cloud ERP REST connections. There is no interactive sign-in.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **SAP S/4HANA Cloud** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `S/4HANA Cloud Prod`. |
+   | Host | Your S/4HANA Cloud tenant host, e.g. `https://yourorg.s4hana.ondemand.com`. |
+   | Token URL | The Communication Arrangement's OAuth2 token endpoint. |
+   | Client ID | The Communication Arrangement's OAuth2 client ID. |
+   | Client Secret | The Communication Arrangement's OAuth2 client secret. |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add an **Import S/4HANA Entity** step to a workflow.
+
+2. Set **S/4HANA Connection** to your connection, **Entity Type** to `trial_balance`, add a **CompanyCode** filter for one company, and set **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the host, token URL, and client credentials are all correct. An error names the problem — a bad client secret, a Communication Arrangement missing the required scope, or a wrong host.
+
+## Import Data
+
+<Steps>
+
+1. Add an **Import S/4HANA Entity** step and set **S/4HANA Connection** and **Target Table**.
+
+2. Set **Entity Type** to the record you want.
+
+3. Add **Filters** to bound the pull — company code, account, and date ranges are translated into the request's OData `$filter`, restricted per entity to the fields S/4HANA can actually filter on server side.
+
+4. Run the step and check the target table.
+
+</Steps>
+
+### Entities and Filters
+
+| Entity Type | What it pulls | OData Service | Filterable fields |
+|---|---|---|---|
+| `trial_balance` | Aggregated period-end GL account balances | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | Posted journal entry line items | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate` (range), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear`, and `FiscalPeriod` accept **range** filters (`ge`/`le` bounds); the rest are equality filters. A range filter with only one bound is open-ended on the other side. Set at least one bound before pulling `journal_entry_items` against production data — an unbounded pull of line-item detail can be very large.
+</Aside>
+
+## Post Journal Entries
+
+The **S/4HANA: Post Journal Entry** step posts general ledger journal entries through PlaidCloud's shared ERP write pipeline, using S/4HANA Cloud's SOAP journal-entry bulk-create service.
+
+<Steps>
+
+1. Build a **header table** — one row per journal entry — with `journal_id` (your entry identifier), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger`, and `header_text`.
+
+2. Build a **lines table** — one or more rows per `journal_id` — with `gl_account`, `debit`, `credit`, and any `cost_center`/`profit_center` dimension columns your ledger requires.
+
+3. Add an **S/4HANA: Post Journal Entry** step, set **S/4HANA Connection**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every entry without a ledger claim and without posting anything.
+
+5. Review the result table (one row per entry: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a batch to stop dead on its first failed entry.
+
+</Steps>
+
+### How Posting Works
+
+PlaidCloud submits each journal entry via S/4HANA Cloud's `JournalEntryBulkCreateRequest_In` SOAP service, then polls for the corresponding `JournalEntryBulkCreateConfirmation_Out` message that reports the entry's terminal processing state. An entry is only reported `posted` once that confirmation is received — an entry that's accepted but whose confirmation never arrives stays quarantined rather than being recorded as posted, so a stuck submission never silently passes as success. PlaidCloud's own ledger claim guards against posting the same entry twice on a retried or re-run batch.
+
+### Correcting a Posted Entry
+
+This step never deletes or rewrites a posted entry. To correct one, post a new entry with debits and credits swapped against the original — a **posted reversing entry** — rather than editing the original in place. This preserves S/4HANA's own audit trail and matches how corrections are made directly in the application.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **Confirmation latency.** The SOAP service processes bulk-create requests asynchronously — expect the terminal-state poll to take materially longer than a synchronous OData write, and don't use this step for a latency-sensitive single-entry post.
+- **Filterable fields depend on your Communication Scenario's exposed dimensions.** A cost object or dimension not part of the scenario's exposed fields isn't filterable server-side; scope it in your workflow after the pull instead.
+- **This connector is distinct from the [SAP ECC / S/4HANA connector](/reference/connectors/erp/sap-s4/).** That connector reaches an on-premises or private-cloud system through a PlaidLink agent and RFC calls; use it only if you're not connecting to S/4HANA Cloud Public Edition.
+</Aside>
+
+## Related
+
+- [SAP S/4HANA Cloud REST Connector](/reference/connectors/rest/s4hana-cloud/) — field reference.
+- [Import S/4HANA Entity](/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every S/4HANA Cloud post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

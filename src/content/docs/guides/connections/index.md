@@ -34,8 +34,16 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Clone a Connection](/guides/connections/clone-connection/) — duplicate an existing connection for a new environment or tenant.
 - [Singer Sources](/guides/connections/singer-sources/) — connect to sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables.
 - [Connect to NetSuite](/guides/connections/netsuite/) — set up a NetSuite connection and pull financial and operational data with SuiteQL.
+- [Import NetSuite Financials](/guides/connections/import-netsuite-financials/) — pull balances, GL detail, and master data with the canned NetSuite import steps, no SuiteQL to write.
 - [Post a NetSuite Journal Entry](/guides/connections/post-netsuite-journal-entries/) — map header and line tables, preview, and post journal entries to NetSuite.
+- [Connect to Acumatica](/guides/connections/acumatica/) — set up an Acumatica connection, import entities, and post journal transactions, invoices, bills, and payments.
+- [Connect to Business Central](/guides/connections/business-central/) — set up a Business Central connection with Azure AD, import OData entities, and post general journal lines.
+- [Connect to Dynamics 365 Finance & Operations](/guides/connections/dynamics-365-fo/) — set up a D365 F&O connection with Azure AD, import OData/DMF entities, and post journal entries.
+- [Connect to Oracle Fusion](/guides/connections/oracle-fusion/) — set up an Oracle Fusion connection, import GL balances and journal batches, and post journals through FBDI.
+- [Connect to Workday Financials](/guides/connections/workday-financials/) — set up a Workday Financials connection with an Integration System User, import a RaaS report, and post journal entries.
+- [Connect to SAP S/4HANA Cloud](/guides/connections/s4hana-cloud/) — set up a direct S/4HANA Cloud connection with OAuth2, import trial balance and journal entry items, and post journal entries over SOAP.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
+- [Extract from HFM / FCCS (Ad-hoc)](/guides/connections/hfm-fccs/) — connect to Oracle FCCS and self-serve a data slice with a point-of-view picker, no ticket to the HFM team.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
 
 ## Related

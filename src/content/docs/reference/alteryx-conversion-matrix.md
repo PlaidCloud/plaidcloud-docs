@@ -30,13 +30,15 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Alteryx Tool | Status | PlaidCloud Equivalent | Converts |
 | --- | --- | --- | --- |
 | Action | Full | Variable binding and conditional step configuration | Updates downstream step settings from converted app inputs. |
+| Analytic App interface (`.yxwz`) | Partial | Published Panel "App Runner" front-end | The app's `<Questions>` layout is materialized into a working Panel app that collects user inputs and drives the converted workflow, published automatically as part of conversion (an app with no input widgets is skipped). Common question types — text, numeric (Numeric Up Down), date, check box, radio button, drop-down, list box, tree, file browse, and folder browse — become App Runner widgets. A question whose value binds to no workflow variable is rendered with a visible note rather than silently collecting a dead value, and less common question types are flagged for review rather than materialized. See [Use Converted Alteryx Apps](/guides/workflows/use-converted-alteryx-apps/#the-app-runner-front-end). |
 | Append Fields | Full | Append fields transform | Appends fields from one stream to another. |
 | Auto Field | Full | Auto field sizing transform | Preserves inferred field sizing. |
-| AutoML | Not supported | No conversion path — build models with [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) by hand; automated model search is on the roadmap. | Refuses by name. |
+| AutoML | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the model-method, target, and candidate-algorithm selections into an ML Train step, the same as Classification and Regression. AutoML never records which candidate algorithm actually won at Alteryx run time, so conversion picks the first checked algorithm ML Train supports and notes the choice. Validated against a reconstructed fixture rather than a real Alteryx export — AutoML left Alteryx's palette after 2023.1, so no export sample exists to convert from; confirm against a real workflow if one surfaces. |
 | Barcode | Full | Barcode executor | Reads or writes barcodes in the configured symbology. |
+| Batch Macro | Partial | Macro fanned out over its control-anchor table | The caller runs the whole macro once per record of its control input, binding the interior's control parameters each pass — including a control parameter the caller renamed to a display label when exactly one is in play, and an `UpdateRawXml` Action that rewrites a Select's field list from a variable. Shapes whose per-pass value cannot be reproduced safely fail closed by name rather than convert wrongly: an `UpdateRawXml` that rewrites anything other than a Select's field list, and an Action that replaces a Filter's entire expression with a variable (its raw per-pass syntax would mis-evaluate). |
 | Browse | Full | Browse / passthrough | Preserved for inspection with no runtime cost. |
 | Buffer | Full | [Spatial Buffer](/reference/workflow-steps/spatial/spatial-buffer/) | Grows each geometry by a fixed distance. |
-| Build Features | Not supported | No conversion path — engineer features with transform steps by hand; automated feature generation is on the roadmap. | Refuses by name. |
+| Build Features | Partial | [Build Features](/reference/workflow-steps/tables/table-build-features/) | Converts arithmetic and interaction primitives, date-part extraction, explicit-threshold binning, z-score and min-max scaling, and one-hot encoding. Cross-table aggregation (Deep Feature Synthesis across the Manage Relationships tab), PCA, target encoding, and data-driven auto-binning have no equivalent — each is flagged by name in the conversion report rather than silently dropped. |
 | Calgary Cross Count | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) aggregate | Groups indexed fields and counts each custom field's named values. |
 | Calgary Cross Count Append | Full | [Calgary Cross Count Append](/guides/workflows/migrate-alteryx-workflows/#calgary-join-and-cross-count-append) | Matches each input record against a value index, then counts how many database records it matched. |
 | Calgary Input | Full | [Calgary database](/guides/workflows/migrate-alteryx-workflows/#calgary-databases) input | Reads the database with its saved query applied as a filter. |
@@ -61,7 +63,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Distance | Full | [Table Extract](/reference/workflow-steps/spatial/spatial-sql-recipes/) with `ST_DISTANCE_SPHERE` | Geodesic point-to-point distance and bearing, in SQL. |
 | Download | Full | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection | Downloads external data or artifacts; assign a REST connection to the converted step before it runs. |
 | Drop Down | Full | Controlled workflow variable | Converts app drop-down choices to controlled input. |
-| Dynamic Input | Full | Dynamic Document input | Resolves file patterns and variable-driven inputs at runtime. |
+| Dynamic Input | Partial | Dynamic Document input | Resolves file patterns and variable-driven inputs at run time. An Excel *ReadList* — one worksheet read from every workbook a Directory tool lists, then unioned — converts to a folder-glob sheet read when an upstream Filter pins the sheet to a single name by exact match. A sheet chosen by a Contains, an inequality, or an OR filter, or a read spanning more than one sheet, refuses rather than read the wrong sheet. |
 | Dynamic Rename | Full | Dynamic rename transform | Renames fields from metadata or rules. |
 | Dynamic Replace | Full | Dynamic replace transform | Applies replacement rules from a second stream. |
 | Dynamic Select | Full | Dynamic field selection transform | Selects fields by type, name, or rule. |
@@ -71,6 +73,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Filter | Full | Filter transform | Splits records by expression into true and false paths. |
 | Fit | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Collapses into the fused ML Train step. |
 | Folder Browse | Full | Controlled Document folder variable | Lets users choose a folder for a converted app run. |
+| Formatted Excel output into a styled template | Partial | Template-aware Excel writer ([Export to Excel Sheets](/reference/workflow-steps/export/export-to-excel-sheets/) for multi-sheet) | Writing into a styled template preserves the template's formatting — values, number formats, fonts, fills, borders, merged cells, and column widths carry through to the named sheet and range. This covers both a single sheet and several outputs assembled into different sheets of one workbook, filled in a single pass so the sheets no longer overwrite one another. One case stays partial: a template that carries pivot tables or charts drops those objects when its sheets are written. Plain (unstyled) Excel output is Full — see Output Data. |
 | Formula | Full | Formula transform | Converts field expressions to PlaidCloud expressions or SQL. |
 | Fuzzy Match | Full | Fuzzy matching executor | Matches on keys, thresholds, and candidate review. |
 | Generalize | Full | [Spatial Generalize](/reference/workflow-steps/spatial/spatial-generalize/) | Simplifies geometry to a tolerance, preserving topology. |
@@ -83,20 +86,21 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Interactive Chart | Full | Chart artifact | Creates a chart artifact from converted data. |
 | Join | Full | Join transform | Produces joined, left-only, and right-only streams on a single- or multi-field key or by position. |
 | Join Multiple | Full | Multi-join transform | Joins multiple input streams. |
-| Key/Value Pairs | Not supported | No conversion path — extract key/value pairs by hand with an [LLM step](/guides/workflows/llm-step/) or text-parsing transforms; on the roadmap. | Refuses by name. |
+| Key/Value Pairs | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (keyvalue task) | Extracts key/value pairs from a text column through the LLM-backed NLP AI step, with optional candidate keys and fuzzy or exact matching. |
 | Line To Polygon | Full | Line To Polygon executor op | Closes each line into a polygon ring, appended as a `Polygon` column. |
 | List Box | Full | Controlled workflow variable | Converts app list selections to controlled input. |
-| Location Optimizer | Not supported | No conversion path — the candidate-generation and scoring build is on the roadmap; rebuild the site-selection logic by hand meanwhile. | Refuses by name. |
+| Location Optimizer | Partial | [Location Optimizer](/reference/workflow-steps/optimization/location-optimizer/) | Converts the linear distance-minimization case — choosing K sites to minimize total or weighted distance to demand — to the native p-median MIP step. A gravity-kernel score, a bespoke scoring macro, or any other candidate-search objective still refuses; see [Migrate Alteryx Workflows](/guides/workflows/migrate-alteryx-workflows/#macros-in-a-converted-workflow). |
 | Macro calls | Full | Macro invocation | Imports known macro sources and maps macro calls to PlaidCloud macro steps. |
 | Macro Input / Macro Output | Full | Macro input / output port | Map directly to PlaidCloud macro ports. |
 | Make Grid | Full | [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) | Tiles an extent into square cells, one row per cell. |
 | Map | Full | Map artifact | Creates a PlaidCloud map artifact. |
 | Map Input | Full | [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) | Reads MapInfo, ESRI, KML, and GeoJSON files with their sidecars. |
+| Master Selector | Partial | Controlled workflow variable and conditional step visibility | Converts the tool's show/hide visibility conditions on interface elements to conditional step visibility. Converts which sub-workflow the selection runs on a best-effort basis — validation against real on-tenant apps is still pending, so review the selected run-target before relying on it in production. |
 | Message | Full | Step condition (message) | Emits workflow warning, message, or error from a condition. |
 | Modeling | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses into the ML Train step with the pipeline's model choice. |
 | Multi-Field Formula | Full | Multi-field formula transform | Applies a formula across selected fields. |
 | Multi-Row Formula | Full | Window / row-aware formula transform | Converts row-relative logic to window behavior, partitioned by Group By. |
-| Named Entity Recognition (NER) | Not supported | No conversion path — extract entities by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
+| Named Entity Recognition (NER) | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (ner task) | Extracts entities (people, organizations, locations, dates, quantities, or a custom type list) from a text column through the LLM-backed NLP AI step. |
 | Numeric Up Down | Full | Controlled numeric variable | Converts app numeric input to a typed variable. |
 | Output Data | Full | Document / table output | Writes output to Document or PlaidCloud tables. |
 | Overlay | Full | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
@@ -105,7 +109,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Poly-Build | Full | [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) | Builds a polygon or convex hull per group of points. |
 | Poly-Split | Full | [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) | One row per vertex, component polygon, or hole. |
 | Portfolio Composer (Text / Table / Image / Layout / Render) | Full | Report artifacts | Convert report content, layout, and rendering to PlaidCloud report output. |
-| POS Tagger | Not supported | No conversion path — tag parts of speech by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
+| POS Tagger | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (pos task) | Tags each token's part of speech from a text column through the LLM-backed NLP AI step. |
 | Predict | Full | [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) | Scores data with the trained model table and appends a prediction column. |
 | Radio Button | Full | Controlled workflow variable | Converts app radio choices to controlled input. |
 | Random % Sample | Full | Table Extract (random) | Returns the exact count or percentage of records requested. |
@@ -114,6 +118,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | RegEx | Full | Regular expression transform | Parses, matches, or replaces text. |
 | Regression | Full | [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) | Fuses the Assisted Modeling chain into one ML Train step. |
 | Report Map | Full | Map report artifact | Produces a cloud-native map/report artifact. |
+| Run Command | Partial | [REST Request](/reference/workflow-steps/general/rest-request/) step against a REST connection (`curl`/`wget` only) | Converts a `curl` or `wget` command line to a REST Request step. Interpreter and script commands (`cscript`, PowerShell, Python, and similar), Excel-COM automation, filesystem operations, and opaque or workflow-launching commands are flagged by name for manual review rather than auto-converted. |
 | Sample | Full | Sample transform | Keeps records by count, percentage, or grouping. |
 | Select | Full | Select and schema projection step | Selects, renames, reorders, and retypes fields. |
 | Smooth | Full | [Spatial Smooth](/reference/workflow-steps/spatial/spatial-smooth/) | Smooths each geometry over a number of passes. |
@@ -127,7 +132,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Text Box | Full | Controlled text variable | Converts app text input to a typed variable. |
 | Text Input | Full | Inline table input | Creates inline data for the workflow. |
 | Text Pre-processing | Full | NLP preprocessing executor | Normalizes and preprocesses text. |
-| Text Summary | Not supported | No conversion path — summarize text by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
+| Text Summary | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (summary task) | Summarizes a text column to a configured maximum sentence count through the LLM-backed NLP AI step. |
 | Text To Columns | Full | Split columns transform | Splits text into fields or rows. |
 | Tile | Full | Tile / grouping transform | Assigns tile groups by configured rule. |
 | Tool Container | Full | Canvas container / execution group | Preserved as workflow organization. |
@@ -140,7 +145,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Visual Layout | Full | Canvas layout metadata | Preserved as design context. |
 | Word Cloud | Full | Text visualization artifact | Creates a visualization artifact from text analysis. |
 | XML Parse | Full | XML parse transform | Extracts XML fields into workflow data. |
-| Zero-shot Text Classification | Not supported | No conversion path — classify text by hand with an [LLM step](/guides/workflows/llm-step/); on the roadmap. | Refuses by name. |
+| Zero-shot Text Classification | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (zeroshot task) | Classifies a text column against a per-row list of candidate labels, single- or multi-label, through the LLM-backed NLP AI step. |
 | Find Nearest | Full | [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Distance-ranked nearest-neighbor join — straight-line, and drive-time nearest (ranked by minutes on a road network) via PlaidCloud's self-hosted routing engine. Drive-time enabled per workspace. |
 | Trade Area | Full | [Spatial Trade Area](/reference/workflow-steps/spatial/spatial-trade-area/) | Concentric buffers sized in real-world units — fixed-radius, and drive-time trade areas (minutes on a road network) via the self-hosted routing engine. Drive-time enabled per workspace. |
 | Image Template | Full | Image Template executor op | Manual mode crops the image to each region you draw on the template. Automatic mode detects the page regions for you with an open-standard layout model and emits one row per region, each carrying its detected bounds and confidence for review; a page the model cannot read confidently is flagged by name rather than cropped. Open-standard detection can differ from Alteryx's own — review the detected regions, or use Manual mode for exact control. |
@@ -150,7 +155,22 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 Interface widgets (drop-downs, list boxes, check boxes, text/numeric/date
 inputs, file and folder pickers), canvas objects (comments, links,
 containers), and macro ports all convert as native controlled variables or
-canvas objects.
+canvas objects. An Alteryx App's full interface layout — the `.yxwz` file's
+`<Questions>` definition — is also materialized into a published Panel "App
+Runner" front-end, so converting the app produces a working input form that
+collects the same values and drives the converted workflow, not just the
+individual controlled variables. See the Analytic App interface row above and
+[Use Converted Alteryx Apps](/guides/workflows/use-converted-alteryx-apps/#the-app-runner-front-end).
+
+**A note on Excel output.** A plain new workbook — data written with default
+formatting — converts fully. Writing into a *styled template*, filling named
+sheets and ranges while preserving their formatting, converts for a single
+sheet and for several outputs assembled into different sheets of one workbook
+(the [Export to Excel Sheets](/reference/workflow-steps/export/export-to-excel-sheets/)
+step fills every sheet in one pass). Templates that carry pivot tables or charts
+drop those objects when their sheets are written; sheet-level file surgery driven
+from Run Command (Excel COM/VBS) is flagged by name for manual review rather than
+auto-converted.
 
 ## Spatial Tool Coverage
 

@@ -47,7 +47,14 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Enterprise Integrations
 
 - [Agent](/reference/workflow-steps/agent/) — PlaidLink Agent operations for on-premises resources
-- [NetSuite](/reference/workflow-steps/netsuite/) — post journal entries to NetSuite
-- [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, and ad-hoc queries; post journal entries
+- [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, and master data; post journal entries to NetSuite
+- [Acumatica](/reference/workflow-steps/acumatica/) — import master and transactional entities; post journal transactions, invoices, bills, and payments
+- [Business Central](/reference/workflow-steps/business-central/) — import OData entities; post general journal lines
+- [Dynamics 365 F&O](/reference/workflow-steps/dynamics-365-fo/) — import OData/DMF entities; post journal entries
+- [Oracle Fusion](/reference/workflow-steps/oracle-fusion/) — import GL balances and journal batches; post journal entries through FBDI
+- [Oracle EPM (HFM / FCCS)](/reference/workflow-steps/oracle-epm/) — self-serve an ad-hoc data slice from Oracle FCCS with a point-of-view picker; optional scheduled recurring load
+- [Workday Financials](/reference/workflow-steps/workday-financials/) — import a RaaS report; post accounting journals
+- [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, ad-hoc queries, and GL/dimension objects; post journal entries
+- [SAP S/4HANA Cloud](/reference/workflow-steps/s4hana-cloud/) — import trial balance and journal entry items over OData; post journal entries over SOAP
 - [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls
 - [SAP-PCM](/reference/workflow-steps/sap-pcm/) — SAP Profitability and Cost Management model control
