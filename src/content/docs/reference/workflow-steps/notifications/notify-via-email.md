@@ -40,12 +40,12 @@ Attaching files to emails is very simple. Select a file or folder from Document 
 
 
 
-### Template Mode (Jinja)
+### Body (Jinja Template)
 
 
-Set **Template Body** to a Jinja template to render a rich HTML email over a single **Frame** (one workflow table), instead of the plain `{token}` **Message** body. Leaving Template Body empty keeps the plain-text path above unchanged.
+The step's body is authored as a **Jinja template** rendered over a single **Source Table** (one workflow table), producing a rich HTML email. The editor opens directly into this template — a source table, the template body, a live preview, and a **Send Test to Me** button — with no plain-text-versus-template toggle.
 
-Template mode is a separate, sandboxed rendering engine from the plain-text path — the legacy `{project}` / `{model}` / `{date}` tokens don't resolve inside it. See [Send Templated HTML Email Notifications](/guides/workflows/notify-email-templates/) for the available template variables, the `render_table` helper, the HTML tags and attributes that survive the email sanitizer, and how migrating an existing `{var}` body works.
+The template is a separate, sandboxed rendering engine — only `cloud` resolves as a workspace value, and the legacy `{project}` / `{model}` / `{date}` tokens don't resolve inside it. Steps created before Jinja authoring open with their old body auto-converted; a body that can't be converted safely stays in a plain-text fallback and keeps sending with the legacy `{token}` substitution. See [Send Templated HTML Email Notifications](/guides/workflows/notify-email-templates/) for the available template variables, the `render_table` helper, the HTML tags and attributes that survive the email sanitizer, and how existing bodies migrate.
 
 
 
