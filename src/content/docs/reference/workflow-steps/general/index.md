@@ -9,6 +9,7 @@ General-purpose workflow steps that don't fit into a specific category.
 
 - [Alteryx Executor](/reference/workflow-steps/general/alteryx-executor/)
 - [Deactivate Workspace Members](/reference/workflow-steps/general/deactivate-workspace-members/)
+- [Essbase Query](/reference/workflow-steps/general/essbase-query/)
 - [Forecast](/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/reference/workflow-steps/general/get-workspace-members/)
 - [LLM Step](/reference/workflow-steps/general/llm-step/)
