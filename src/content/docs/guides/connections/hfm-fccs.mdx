@@ -1,0 +1,135 @@
+---
+title: Extract from HFM / FCCS (Ad-hoc)
+description: Connect PlaidCloud to Oracle FCCS and self-serve a data slice with a point-of-view picker — no ticket to the HFM team. Covers the connection, building a POV, running it, caching, row-level security, and a scheduled recurring load.
+sidebar:
+  order: 20
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Oracle **FCCS** (Financial Consolidation and Close, part of Oracle EPM Cloud) so a finance user can pull a data slice themselves instead of filing a ticket with the HFM team. You build a **point of view (POV)** in the step form, hit Run, and the result lands automatically as a table. It feels like a live query — under the hood it's an asynchronous request → poll → fetch against FCCS's data-export job. This guide covers the connection, building a POV, running it, caching, governing the result with row-level security, and turning it into a scheduled recurring load.
+
+<Aside type="caution">
+This connector is built to Oracle's documented EPM Cloud REST API and has **not yet been validated against a live FCCS instance**. A few endpoint details are pending live validation. Verify a small, tightly scoped point of view against a non-production application before relying on it, and keep the **Entity** selection bounded — an un-scoped extract can lock the FCCS application for a long time while the export job runs.
+</Aside>
+
+## Prerequisites
+
+You need, in Oracle EPM Cloud:
+
+- Your **EPM Cloud pod/service URL**, for example `https://planning-test-yourdomain.epm.us2.oraclecloud.com`.
+- Your **identity domain** (for a classic pod). PlaidCloud composes the login as `identitydomain.username`.
+- A dedicated **service account** — username and password — with read access to the FCCS applications and the point-of-view slices your self-serve users will pull.
+- The **application name(s)** users will read from.
+
+<Aside type="note">
+The connection authenticates with **HTTP Basic auth** against a classic EPM Cloud pod. OCI / Gen 2 pods that require an OAuth bearer token are out of scope for this connector.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **REST - HFM/FCCS** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `FCCS Prod`. |
+   | EPM Cloud URL | Your pod/service URL, e.g. `https://planning-test-yourdomain.epm.us2.oraclecloud.com`. |
+   | Identity Domain | Your EPM Cloud identity domain. Leave blank only if your username already includes the domain. |
+   | Username | The service account username. |
+   | Password | The service account password. |
+   | Default Application | Optional. An FCCS application to prefill in the step's POV picker. |
+
+4. Click `Create`.
+
+</Steps>
+
+PlaidCloud logs in as `identitydomain.username` (or the username as-is when Identity Domain is blank or the username already contains a dot).
+
+## Build a Point of View
+
+<Steps>
+
+1. Add an **HFM/FCCS: Read Data (Ad-hoc)** step to a workflow (it's under **Oracle EPM (HFM/FCCS)** in the step menu).
+
+2. Under **Source and Target**, set **HFM/FCCS Connection**, **Environment**, **Application**, and a **Target Table**.
+
+3. Under **Point of View**, build the slice from the FCCS dimensions: **Scenario, Year, Period, Entity, Account, Custom1–Custom4, ICP, View, Value**.
+
+   - **Scenario, Year, and Period are required.**
+   - **Entity must be a bounded slice** — the form rejects an empty selection, "all", or a selection wider than 500 members. Keep it scoped so the export doesn't lock the application.
+   - Leave any other dimension unset to apply no filter on that axis.
+
+</Steps>
+
+<Aside type="note">
+On supported FCCS pods, member lists **auto-populate** from live metadata discovery once you pick a connection and an application — the picker offers real members, and re-discovers whenever the connection or application changes. On older pods that don't expose the metadata endpoint, the picker falls back to **manual entry**: type member names by hand. A saved POV always round-trips either way.
+</Aside>
+
+## Run It
+
+<Steps>
+
+1. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. A progress status ("polling HFM job…") shows while the export job runs in FCCS.
+
+3. When it finishes, the result table lands automatically — the table is created from the returned grid's columns, so there's no schema to define up front.
+
+</Steps>
+
+## Caching
+
+Request the **same POV again** and PlaidCloud serves the **already-landed table** instantly, instead of re-submitting the export to FCCS. A run is keyed by application, target table, point of view, and an **as-of** tag (default `latest`); a repeat that resolves to an already-landed slice reports that the table was left in place rather than re-written. Change the as-of tag when you want to force a fresh extract of the same POV.
+
+## Govern With Row-Level Security
+
+The landed table's entity axis is normalized to a column named exactly **`Entity`**, so the table is **row-level-security-ready** — an administrator can govern it with [Row Access](/administration/access/managing-security-groups-and-assignments/) so self-serve users only see the entities they're entitled to.
+
+<Aside type="caution">
+This is **governed under admin control, not automatic**. Because the extract runs under the connection's service account, PlaidCloud will not let the step declare its own security — an administrator (Architect) has to set it up.
+</Aside>
+
+An administrator follows the standard Row Access workflow:
+
+<Steps>
+
+1. **Publish** the landed table for reporting.
+
+2. **Declare** the `Entity` column as a governing attribute (default deny).
+
+3. **Approve** the first governed write.
+
+4. **Reconcile** so grants take effect.
+
+</Steps>
+
+Until an administrator does this, the table is not filtered. See [Managing Security Groups and Assignments](/administration/access/managing-security-groups-and-assignments/).
+
+## Schedule a Recurring Load
+
+To promote an ad-hoc slice into a nightly refresh, enable **Bound target** on the step:
+
+<Steps>
+
+1. In the step's **Bound Target** group, check **Bound target (scheduled recurring load)**.
+
+2. Optionally set **Key Columns** — the comma-separated columns that form the merge key (for example `Entity, Account`). **Leave it empty** to use the POV dimension columns present in the landed grid as the merge key.
+
+3. Place the step in a [scheduled workflow](/administration/scheduled-events/).
+
+</Steps>
+
+With Bound target on, the target becomes a **persistent** table: each run **merges** into it with a keyset upsert instead of overwriting, and the schema **grows additively** when a later grid brings new columns (a new column raises a warning, never a failure). So a scheduled run accumulates rather than wiping — a recurring load, not a destructive reload.
+
+## Related
+
+- [HFM/FCCS: Read Data (Ad-hoc)](/reference/workflow-steps/oracle-epm/hfm-fccs-read/) — step field reference.
+- [HFM / FCCS Connector](/reference/connectors/rest/hfm-fccs/) — connection field reference.
+- [Managing Security Groups and Assignments](/administration/access/managing-security-groups-and-assignments/) — how Row Access governs the landed table.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
