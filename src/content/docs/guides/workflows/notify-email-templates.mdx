@@ -5,19 +5,38 @@ description: Render a rich HTML email from a Jinja template and a workflow table
 
 import { Aside } from '@astrojs/starlight/components';
 
-The [Notify Via Email](/reference/workflow-steps/notifications/notify-via-email/) step composes its email as a rich HTML report from a **Jinja template** rendered over one of your workflow's tables. The step opens directly into the Jinja editor, and that is its only authoring surface — there is no plain-text body box and no mode to switch to. This guide covers the editor, the data available inside a template, the `render_table` helper, and the constraints that come from sending through email.
+The [Notify Via Email](/reference/workflow-steps/notifications/notify-via-email/) step composes its email as a rich HTML report from a **Jinja template** rendered over one or more of your workflow's tables. You add each table to the step as a named **frame**, and the template renders those frames into a single email. The step opens directly into the Jinja editor, and that is its only authoring surface — there is no plain-text body box and no mode to switch to. This guide covers the editor and its formatting toolbar, the frames you add, the data available inside a template, the `render_table` helper, and the constraints that come from sending through email.
 
 ## The Jinja Editor
 
-Open a **Notify Via Email** step and it lands in the Jinja editor. Pick a **Source Table** (see below), write your template in the body, and watch the **Live Preview** on the right update as you type. **Send Test to Me** delivers the rendered email to your own address so you can check it before you schedule the workflow. New steps are Jinja-only — there is no plain-text body to fill in and no rich-versus-plain toggle.
+Open a **Notify Via Email** step and it lands in the Jinja editor. Add one or more **frames** (see below), write your template in the body, and watch the **Live Preview** on the right update as you type. **Send Test to Me** delivers the rendered email to your own address so you can check it before you schedule the workflow. New steps are Jinja-only — there is no plain-text body to fill in and no rich-versus-plain toggle.
 
-<Aside type="note">The editor has its own sandboxed rendering engine. It's syntactically similar to [Export Templated](/reference/workflow-steps/export/export-templated/) — Jinja, a table selection, a `render_table` helper — but the two engines are **not interchangeable**. A template written for one will not run on the other.</Aside>
+<Aside type="note">The editor has its own sandboxed rendering engine. It's syntactically similar to [Export Templated](/reference/workflow-steps/export/export-templated/) — Jinja, named frames, a `render_table` helper — but the two engines are **not interchangeable**. A template written for one will not run on the other.</Aside>
 
-## Choose a Source Table
+## The Formatting Toolbar
 
-Pick one table from the workflow's context as the **Source Table**. A step reports on a single table — multiple tables, and joining or combining tables into one, aren't supported.
+The Jinja editor carries a toolbar for shaping the template without hand-typing boilerplate:
 
-The table's data is exposed inside the template as `rows` and `columns` (see below).
+- **Prettify** reindents and normalizes the whole template — consistent indentation, tag spacing, and Jinja block layout — so a template you've been editing reads cleanly. It reformats only; it never changes what the template renders.
+- **Insert palette** — a row of buttons that drop a ready-made snippet at the cursor:
+  - a `render_table(...)` call for a frame, pre-filled with that frame's name;
+  - `{{ cloud }}`, the workspace name;
+  - a `{% for %}` loop scaffold to iterate a frame's rows;
+  - the formatting filters — currency, thousands, percent, and date — inserted around the current selection.
+
+Every button just inserts text you could type yourself; use them as a starting point and edit freely.
+
+## Add Frames
+
+A step reports on **frames** — named single-table selections you add to the step. Add one frame or several; each renders into the same email. For every frame you give:
+
+- a **Frame Name** — the label you reference it by in the template (`Sales`, `Overdue`, and so on);
+- one **table** from the workflow's context;
+- optional **column selection**, a **where** filter, and **aggregation** on that table.
+
+A frame is always a single table. Joining or combining tables into one frame isn't supported — add a second frame instead and reference each by its name.
+
+Each frame is exposed inside the template through `frames['<Frame Name>']`, which carries that frame's `rows` and `columns` (see below).
 
 ## What's Available Inside the Template
 
@@ -26,38 +45,49 @@ The template exposes a narrow, explicit set of variables. Referencing an undefin
 | Variable | Contents |
 |---|---|
 | `cloud` | The workspace name. |
-| `rows` | A list of row objects for your frame, one per row. |
-| `columns` | The frame's column list, in order. |
+| `frames` | A dictionary of your frames, keyed by Frame Name. `frames['Sales'].rows` is that frame's list of row objects (one per row); `frames['Sales'].columns` is its column list, in order. |
+| `rows` | The first frame's rows — a convenience binding so a single-frame template can use `rows` directly. |
+| `columns` | The first frame's columns — the same convenience binding as `rows`. |
 
 Values keep their native Python types — a `Decimal` stays a `Decimal`, a date stays a date, and a null column comes through as `None` — so you can format and compare them the same way you would in Python, rather than working from stringified text.
 
 ## Render a Table with `render_table`
 
-Rather than hand-writing `<table>` markup, call the `render_table` macro with your frame's rows and columns:
+Rather than hand-writing `<table>` markup, call the `render_table` macro with a frame's rows and columns. Reference each frame by its name:
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+This emits a correctly structured HTML table for that frame in one call. Call it once per frame you want to show.
+
+A single-frame template can use the top-level `rows` and `columns`, which are bound to the first frame:
 
 ```jinja
 {{ render_table(rows, columns) }}
 ```
 
-This emits a correctly structured HTML table for the frame in one call.
-
 ## A Complete Example
 
-This template renders the workspace name, a short summary line, and a table from your frame:
+This template has two frames, `Overdue` and `Paid`. It renders the workspace name, a short summary line, and a table for each frame:
 
 ```jinja
-<p><strong>Overdue Invoices — {{ cloud }}</strong></p>
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
 
-<p>{{ rows|length }} invoice(s) are past due as of today.</p>
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
 
-{{ render_table(rows, columns) }}
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
 
-{% if rows|length == 0 %}
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
 <p>No overdue invoices — nothing further to review.</p>
 {% endif %}
 ```
 
-Point your frame at the table you want reported, and the rendered email shows a bold title line, a one-line summary computed from the row count, and the full table.
+Point each frame at the table you want reported, and the rendered email shows a bold title line, a one-line summary computed from the row count, and a table per frame. With a single frame, you could write the same template against the bare `rows` and `columns` instead.
 
 ## The Allowlisted-HTML Constraint
 
@@ -76,7 +106,7 @@ Steps created before Jinja authoring open straight into the editor with their ol
 
 A body the converter can't rewrite safely — a non-standard token, or unbalanced braces — stays in a plain-text fallback box instead. That step keeps sending exactly as it did before, using the legacy `{token}` substitution; only its authoring stays plain text. New steps never use this path.
 
-The editor lints variable names as you type and flags any that won't resolve. Only `cloud` resolves as a workspace value, so a migrated `{{ project }}`, `{{ model }}`, or `{{ date }}` is flagged — replace it with a column from your source table, or remove it, before you save.
+The editor lints variable names as you type and flags any that won't resolve. Only `cloud` resolves as a workspace value, so a migrated `{{ project }}`, `{{ model }}`, or `{{ date }}` is flagged — replace it with a column from one of your frames, or remove it, before you save.
 
 ## Security and Egress
 
