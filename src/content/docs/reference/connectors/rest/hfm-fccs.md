@@ -9,8 +9,8 @@ Connect PlaidCloud to Oracle **FCCS** — Financial Consolidation and Close, par
 
 The connection kind appears in the connection picker as **REST - HFM/FCCS**.
 
-:::caution[No live tenant validation]
-This connector is built to Oracle's documented EPM Cloud REST API and has **not yet been validated against a live FCCS instance**. Some endpoint details are pending live validation. Verify a small, tightly scoped point of view against a non-production application before relying on it.
+:::note[Scope the entity dimension]
+Keep every point of view bounded — an un-scoped extract can lock the FCCS application for a long time while the export job runs.
 :::
 
 ## API Documentation
@@ -48,7 +48,6 @@ On supported FCCS pods, the step form discovers each dimension's member list liv
 
 | Limitation | What it means |
 |---|---|
-| No live tenant validation | Built to Oracle's documented EPM Cloud REST API but not yet exercised against a live FCCS pod. A few endpoint details are pending live validation. Verify a tightly scoped POV against a non-production application first. |
 | Read-only | The connector extracts data from FCCS. It does not write consolidation data, run consolidations, or post back. |
 | Scope the entity dimension | An un-scoped extract (no `Entity` selection) can lock the FCCS application for a long time while the export job runs. Keep the entity selection bounded. |
 | Manual members on older pods | Where a pod does not expose the metadata endpoint, member lists don't auto-populate — enter member names by hand. |

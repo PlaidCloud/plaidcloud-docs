@@ -9,8 +9,8 @@ Reads an ad-hoc data slice from Oracle **FCCS** (Financial Consolidation and Clo
 
 This step appears in the step menu under **Oracle EPM (HFM/FCCS)**.
 
-:::caution[No live tenant validation]
-This step is built to Oracle's documented EPM Cloud REST API and has **not yet been validated against a live FCCS instance**. Verify a small, tightly scoped point of view against a non-production application before relying on it. Keep the **Entity** selection bounded — an un-scoped extract can lock the FCCS application for a long time while the export job runs.
+:::note[Scope the entity dimension]
+Keep the **Entity** selection bounded — an un-scoped extract can lock the FCCS application for a long time while the export job runs.
 :::
 
 ## Configuration
@@ -93,7 +93,6 @@ Until an administrator does this, the table is not filtered. See [Managing Secur
 
 | Limitation | What it means |
 |---|---|
-| No live tenant validation | Built to Oracle's documented EPM Cloud REST API; not yet exercised against a live FCCS pod. Verify a tightly scoped POV against a non-production application first. |
 | Read-only | Extracts a slice from FCCS. It does not write consolidation data, run consolidations, or post back. |
 | Bounded entity required | The form rejects an empty, "all", or wider-than-500-member entity selection, and a single aggregate member can still expand server side — keep the slice scoped. |
 | Manual members on older pods | Where a pod doesn't expose the metadata endpoint, member lists don't auto-populate; enter member names by hand. |
