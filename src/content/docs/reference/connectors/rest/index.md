@@ -26,6 +26,7 @@ For any REST service that doesn't have a dedicated connector, PlaidCloud provide
 - [Workday Financials](/reference/connectors/rest/workday-financials/)
 - [SAP S/4HANA Cloud](/reference/connectors/rest/s4hana-cloud/)
 - [QuickBooks](/reference/connectors/rest/quickbooks/)
+- [Xero](/reference/connectors/rest/xero/)
 - [Sage Intacct](/reference/connectors/rest/sage-intacct/)
 - [Stripe](/reference/connectors/rest/stripe/)
 - [Ramp](/reference/connectors/rest/ramp/)

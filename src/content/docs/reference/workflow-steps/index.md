@@ -50,6 +50,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, and master data; post journal entries to NetSuite
 - [Acumatica](/reference/workflow-steps/acumatica/) — import master and transactional entities; post journal transactions, invoices, bills, and payments
 - [Business Central](/reference/workflow-steps/business-central/) — import OData entities; post general journal lines
+- [Xero](/reference/workflow-steps/xero/) — import Accounting API entities; post manual journals, invoices, bills, payments, and credit notes
 - [Dynamics 365 F&O](/reference/workflow-steps/dynamics-365-fo/) — import OData/DMF entities; post journal entries
 - [Oracle Fusion](/reference/workflow-steps/oracle-fusion/) — import GL balances and journal batches; post journal entries through FBDI
 - [Oracle EPM (HFM / FCCS)](/reference/workflow-steps/oracle-epm/) — self-serve an ad-hoc data slice from Oracle FCCS with a point-of-view picker; optional scheduled recurring load
