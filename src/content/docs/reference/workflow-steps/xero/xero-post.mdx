@@ -1,0 +1,75 @@
+---
+title: "Xero: Post Document"
+description: Post manual journals, invoices, bills, payments, and credit notes to Xero from header and line tables, with a test mode that validates every document before anything posts.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Posts documents to Xero over your [Xero connection](/guides/connections/xero/), routed through PlaidCloud's shared ERP write pipeline. The step takes a header table (one row per document) and a lines table (one or more rows per document), and posts each document as a **ManualJournal**, **Invoice**, **Bill**, **Payment**, or **CreditNote**. A batch can mix document types — PlaidCloud partitions it by document type before any network call. **Test Only Mode** builds and checks every document without a ledger claim and without posting; an optional result table records the outcome of each document.
+
+<Aside type="caution">
+Run every batch in **Test Only Mode** first, review the result table, and reconcile a handful of postings directly in Xero before relying on this step to post live documents unattended.
+</Aside>
+
+## Configuration
+
+### Xero Connection
+
+- **Xero Connection** — the Xero connection to post through. It carries the organisation every document posts into.
+- **Environment** — which of the connection's PlaidCloud environments to post through, the same picker every connection-driven step carries. This is unrelated to Xero's own Demo Company, which is a property of the organisation the connection points at.
+- **Test Only Mode** — checked by default. Validates each document but does not post it: no ledger claim, no write.
+- **Continue posting remaining documents if one document fails** — checked by default. Unchecked, the batch stops at the first failure.
+- **Result Table** — one row per document: `ref`, `doc_type`, `natural_key`, `xero_id`, `status` (`posted`/`validated`/`error`), and `message`.
+
+### Table Selection
+
+- **Header Table** — one row per document.
+- **Lines Table** — one or more rows per document, correlated to the header by `ref`.
+
+### Header and Line Fields
+
+Two mapping tabs map your own column names onto the fields Xero needs. **Header Fields** covers:
+
+| Field | Notes |
+|---|---|
+| `ref` | Required. Your business key — links header rows to their lines, and is the key the idempotency ledger claims. |
+| `doc_type` | Required. `ManualJournal`, `Invoice`, `Bill`, `Payment`, or `CreditNote`. |
+| `posting_date` | Required. |
+| `currency_id`, `party_id`, `memo`, `due_date` | Optional. `party_id` is the Xero contact. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | Payment only, optional. |
+| `credit_note_type` | Credit note only, optional. `ACCRECCREDIT` (sales, the default) or `ACCPAYCREDIT` (purchase). |
+
+**Line Fields** covers `ref` (required, matching a header row), plus the fields the document type needs:
+
+| Doc Type | Line Fields |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit`, and optionally `class_id` / `department_id` for tracking |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id` (the invoice the line applies to), `amount` |
+
+`tax_type` and `memo` are optional on every line.
+
+## How Posting Works
+
+Each document is claimed in PlaidCloud's idempotency ledger before it is submitted, so a re-run never posts a document that already reached `posted`. The ledger key is prefixed by document type, so an invoice and a bill sharing the same `ref` never collide even though Xero posts both through the same endpoint.
+
+Where an outcome is ambiguous — a timeout, a dropped response — PlaidCloud queries Xero back by the document number it stamped: an invoice number for an invoice or a bill, a credit note number for a credit note. A match counts as proof only when the document is in a terminal posted status, since those numbers are not guaranteed unique in Xero — a draft, voided, or duplicate-numbered match is treated as unresolved and quarantined rather than recorded as this write's outcome.
+
+## Capability Limits
+
+| Limitation | What it means |
+|---|---|
+| Manual journals and payments can't be looked up | A manual journal's narration and a payment's reference are not queryable in Xero, so there is no field to correlate an in-doubt write back to the request. Those are quarantined for manual resolution rather than guessed at. |
+| Reversal covers manual journals and invoices | A manual journal reverses as a debit/credit-swapped journal; an invoice reverses as a mirroring credit note. Bills, payments, and credit notes have no documented undo payload, so a reversal is refused, never faked. |
+| Rate limits are per organisation | Xero allows 60 calls per minute and 5,000 per day per organisation, with 5 concurrent calls. PlaidCloud governs the per-minute and concurrency limits and backs off on a throttled response; a very large batch takes proportionally longer. |
+
+## Related
+
+- [Connect to Xero](/guides/connections/xero/) — full walkthrough covering configuration, previewing, and posting
+- [Xero REST Connector](/reference/connectors/rest/xero/)
+- [Xero Steps](/reference/workflow-steps/xero/)
+- [Review ERP Post History](/guides/connections/erp-post-history/)

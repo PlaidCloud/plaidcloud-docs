@@ -18,11 +18,13 @@ The connection is **session-based**: PlaidCloud logs in once per bounded unit of
 | Field | Type | Description |
 |---|---|---|
 | Name | Text | Display name for this connection. |
-| Base URL | Text | Your Acumatica instance URL, e.g. `https://yourcompany.acumatica.com`. |
+| Instance Base URL | Text | Your Acumatica instance URL, e.g. `https://yourcompany.acumatica.com`. |
+| Endpoint Name | Text | The contract endpoint name. `Default` unless a custom endpoint was published. |
+| Endpoint Version | Text | Optional, e.g. `25.200.001`. Leave blank to use the endpoint's latest published version. |
+| Company / Tenant | Text | The exact Acumatica company ID this connection logs into. |
+| Branch | Text | Optional. Leave blank to use the login user's default branch. |
 | Username | Text | The PlaidCloud API user's login. |
 | Password | Text | The PlaidCloud API user's password. Stored encrypted. |
-| Company | Text | The exact Acumatica company ID this connection logs into. |
-| Branch | Text | Optional. Leave blank to use the user's default branch. |
 
 ## Entities Available to Import
 

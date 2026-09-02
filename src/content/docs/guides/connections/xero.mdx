@@ -1,0 +1,131 @@
+---
+title: Connect to Xero
+description: Connect PlaidCloud to Xero with a one-click OAuth grant, pull Accounting API entities with the canned entity import step, then post manual journals, invoices, bills, payments, and credit notes.
+sidebar:
+  order: 16
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Xero's Accounting API to pull chart of accounts, contacts, invoices, credit notes, payments, manual journals, and more with no query to hand-write, and post documents back. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+Run every import against a demo organisation first, and work through **Test Only Mode** below on every post batch before posting live.
+</Aside>
+
+## Prerequisites
+
+You need, in Xero:
+
+- A Xero login with access to the organisation you want to read and post to.
+- Permission to authorize a connected app for that organisation — Xero asks you to approve the grant during setup.
+
+That is the whole list. PlaidCloud registers the OAuth app, so there is no developer account, client id, or client secret to obtain.
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **REST - Xero** from the menu.
+
+3. Give the connection a name, for example `Xero Prod`.
+
+4. Click **Connect to Xero**, sign in to Xero, and approve access to the organisations you want PlaidCloud to reach.
+
+5. **Connection Status** now reports how many organisations the grant covers. Pick the one this connection targets from **Organisation**.
+
+6. Click `Create`.
+
+</Steps>
+
+<Aside type="note">
+PlaidCloud refreshes the Xero tokens for you and stores each rotated refresh token, so a connection left idle for weeks keeps working. One grant can cover several organisations, but a connection always targets exactly one — create a second Xero connection to reach a second organisation. Xero's Demo Company is an organisation like any other, so a sandbox connection is one whose **Organisation** points at it.
+</Aside>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add a **Xero: Import Entity** step to a workflow.
+
+2. Set **Xero Connection** to your connection, **Entity Type** to `Chart of Accounts`, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the grant and the organisation selection are both correct. An error names the problem — an expired grant, or an organisation the login no longer has access to.
+
+## Import Data
+
+<Steps>
+
+1. Add a **Xero: Import Entity** step and set **Xero Connection** and **Target Table**.
+
+2. Set **Entity Type** to the record you want: Chart of Accounts, Contacts, Invoices, Credit Notes, Payments, Manual Journals, Bank Transactions, Items, Tracking Categories, Tax Rates, or Currencies.
+
+3. Narrow the pull with the optional filters — **Status** (a single Xero status such as `AUTHORISED` or `PAID`), **Date From** and **Date To** (`YYYY-MM-DD` bounds on the entity's date), and **Updated After** (a modified-since cutoff).
+
+4. Run the step and check the target table.
+
+</Steps>
+
+<Aside type="note">
+**Updated After** carries no saved watermark — PlaidCloud does not remember where the last run stopped, so supply the cutoff yourself on every run to pull incrementally. Items and Currencies document no filters at all, and the Chart of Accounts and Contacts take a status but no date range; Xero rejects a filter its entity does not support, so the step reports the error rather than returning a wrong result set.
+</Aside>
+
+## Post Documents
+
+The **Xero: Post Document** step posts five document types through the same shared write pipeline every ERP post step uses: **ManualJournal**, **Invoice**, **Bill**, **Payment**, and **CreditNote**.
+
+<Steps>
+
+1. Build a **header table** — one row per document — with columns for `ref` (your document identifier), `doc_type` (`ManualJournal`, `Invoice`, `Bill`, `Payment`, or `CreditNote`), `posting_date`, and, where the document type needs them, `currency_id`, `party_id` (the Xero contact), `memo`, and `due_date`. A Payment also takes `total_amt`, `deposit_account_id`, `bank_account_id`, and `linked_invoice_id`; a CreditNote takes `credit_note_type` (`ACCRECCREDIT` for sales, the default, or `ACCPAYCREDIT` for purchases). A single batch can mix document types — PlaidCloud partitions it by `doc_type` before posting.
+
+2. Build a **lines table** — one or more rows per `ref`, each carrying that `ref` — shaped to the document type:
+
+   | Doc Type | Line Columns |
+   |---|---|
+   | ManualJournal | `account_id`, `debit`, `credit`, and optionally `class_id` / `department_id` for tracking |
+   | Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+   | Bill | `account_id`, `amount` |
+   | CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+   | Payment | `linked_txn_id` (the invoice the line applies to), `amount` |
+
+   `tax_type` and `memo` are optional on any line.
+
+3. Add a **Xero: Post Document** step, set **Xero Connection**, **Environment** (which of the connection's PlaidCloud environments to post through), **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Map your own column names onto those fields on the **Header Fields** and **Line Fields** tabs.
+
+5. Leave **Test Only Mode** checked and run the step — PlaidCloud builds and checks every document without a ledger claim and without posting anything.
+
+6. Review the result table (one row per document: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+7. Uncheck **Test Only Mode** and run again to post for real. Leave **Continue posting remaining documents if one document fails** checked unless you want a batch to stop dead on its first failed document.
+
+</Steps>
+
+### How Posting Works
+
+Each document is claimed in PlaidCloud's idempotency ledger before it is submitted, so a re-run never posts a document that already reached `posted`. The ledger key is prefixed by document type, so an invoice and a bill sharing the same `ref` never collide even though Xero posts both through the same endpoint.
+
+Where an outcome is ambiguous — a timeout, a dropped response — PlaidCloud queries Xero back by the document number it stamped, and treats a match as proof only when the document is in a terminal posted status. Xero's invoice and credit note numbers are not guaranteed unique, so a draft, voided, or duplicate-numbered match is quarantined rather than recorded as this write's outcome.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **Manual journals and payments can't be looked up.** A manual journal's narration and a payment's reference are not queryable in Xero, so there is no field to correlate an in-doubt write back to PlaidCloud's request. Those are quarantined for you to resolve directly in Xero rather than guessed at.
+- **Reversal covers manual journals and invoices only.** A manual journal reverses as a debit/credit-swapped journal; an invoice reverses as a mirroring credit note. Bills, payments, and credit notes have no documented undo payload in Xero's API, so PlaidCloud refuses a reversal rather than inventing one — correct those directly in Xero.
+- **Rate limits are per organisation.** Xero allows 60 calls per minute and 5,000 per day per organisation, with 5 concurrent calls. PlaidCloud governs the per-minute and concurrency limits per connection and backs off on a throttled response, so a very large batch takes proportionally longer. Schedule wide pulls rather than running many Xero steps at once against the same organisation.
+</Aside>
+
+## Related
+
+- [Xero REST Connector](/reference/connectors/rest/xero/) — field reference.
+- [Xero: Import Entity](/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero: Post Document](/reference/workflow-steps/xero/xero-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every Xero post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
