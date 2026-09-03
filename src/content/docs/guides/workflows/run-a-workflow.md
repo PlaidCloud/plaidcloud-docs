@@ -23,7 +23,7 @@ Every run carries an ERP posting mode, set when you start the run:
 
 A project also carries its own posting mode cap, in its project settings, and any member with write access to an unlocked project can set it. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
 
-The mode carries through everything the run touches. A sub-workflow, a macro, and a **Run Model**, **Conditional Run Model**, or **Loop Model** step all inherit the parent run's mode, and so does a run you [resume](#pause-stop-and-resume) after a stop — a simulated run can't post for real anywhere inside itself. Reverse and undo steps are the one exception: they always act live and are never simulated.
+The mode carries through everything the run touches. A sub-workflow, a macro, and a **Run Model**, **Conditional Run Model**, or **Loop Model** step all inherit the parent run's mode, and so does a run you [resume](#pause-stop-and-resume) after a stop — a simulated run can't post for real anywhere inside itself.
 
 :::caution
 SAP posting, SAP attachment, and generic SAP RFC steps don't dry-run. Under Simulate or Off they're skipped outright, because SAP's own test flags still open a real connection to SAP — skipping the step is the only way a simulated run never reaches SAP.
