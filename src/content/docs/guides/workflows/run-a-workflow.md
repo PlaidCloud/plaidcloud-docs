@@ -29,6 +29,10 @@ The mode carries through everything the run touches. A sub-workflow, a macro, an
 SAP posting, SAP attachment, and generic SAP RFC steps don't dry-run. Under Simulate or Off they're skipped outright, because SAP's own test flags still open a real connection to SAP — skipping the step is the only way a simulated run never reaches SAP.
 :::
 
+:::note
+An individual ERP posting step also carries its own Validate Only setting (labeled Preview or Test Only Mode on some steps), independent of the run's posting mode above. The step editor always saves this explicitly. A step configuration written another way — the REST API, MCP, or a workflow bundle import — that leaves the setting out entirely now also defaults to a preview rather than a live post.
+:::
+
 ## Follow a Step's Status
 
 While a workflow runs, each step carries a status icon showing where it stands, alongside how long it has been running. Hover the icon for the message behind it.
