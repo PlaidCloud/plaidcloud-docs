@@ -20,7 +20,9 @@ One clipboard serves every place you copy a step — the steps table, the older 
 
 
 
-Copying a step will make a duplicate step within the project. If you want to place the same step in more than one location in a workflow, use the **Add Step** menu option to add a reference to the same step rather than a clone of the original step.
+Copying a step makes a duplicate step within the project — a new step with its own configuration, independent of the original.
+
+A step can appear at most once in any given workflow's structure. **Append** and **Insert** always paste in a fresh duplicate, so they never run into this. Pasting a *reference* to a step you already placed — see **Paste as a Linked Step** below — is different: it's the same step, so pasting it into a workflow that already contains it, including the workflow you copied it from, is refused with a message naming the step. Link it into a *different* workflow instead.
 
 
 
@@ -43,6 +45,8 @@ The append option will simply append the steps to the end of the selected workfl
 
 
 A linked step can only be pasted into the project it was copied from. Linking is a second placement of a step that a project owns, so it has no meaning outside that project — paste into a different project and PlaidCloud declines and tells you to use **Append** or **Insert** instead, which copies the steps into the target project as steps of their own.
+
+A linked step also can't be placed into a workflow that already contains it — that would be the same step twice in one workflow's structure, which PlaidCloud refuses. This is most likely to come up if a link operation seems to fail and you try it again: the first attempt actually went through, and the retry is refused rather than corrupting the workflow. The error names the step so you can confirm it's already there.
 
 
 ## Copy & Paste on the Advanced canvas
@@ -69,4 +73,4 @@ Select the steps you want — drag a box around them, or click one and Shift- or
 **To undo a paste,** press **Ctrl/Cmd+Z** right after it — the pasted steps are removed. Once a collaborator has changed the workflow, or you've reloaded it, that one-step undo steps aside rather than risk removing work that is no longer just yours.
 
 
-Steps are copied as new steps of their own. Pasting the *same* step into more than one place — the linked-step behavior above — is a steps-table action; on the canvas, use **Add Step** to place a reference.
+Steps are copied as new steps of their own. Pasting the *same* step into more than one place — the linked-step behavior above — is a steps-table action; on the canvas, use **Add Step** to place a reference in a workflow that doesn't already contain that step.
