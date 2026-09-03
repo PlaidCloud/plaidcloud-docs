@@ -11,6 +11,8 @@ You can trigger a full workflow run by either clicking on the run icon from the 
 
 You can also click on the **Toggle Start/Stop** button at the top of the workflow table. This toggle button will stop a running workflow or start a workflow.
 
+If you click **Run** on a workflow that's already running, PlaidCloud tells you so instead of starting a second run.
+
 ## Choose a Posting Mode
 
 Every run carries an ERP posting mode, set when you start the run:
