@@ -46,6 +46,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to Xero](/guides/connections/xero/) — authorize a Xero organisation in one click, import Accounting API entities, and post manual journals, invoices, bills, payments, and credit notes.
 - [Extract from HFM / FCCS (Ad-hoc)](/guides/connections/hfm-fccs/) — connect to Oracle FCCS and self-serve a data slice with a point-of-view picker, no ticket to the HFM team.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
+- [Review the Posting Register](/guides/connections/posting-register/) — a tenant-level console for finance and accounting to review ERP postings across every project and connection they can see.
 
 ## Related
 

@@ -1,0 +1,87 @@
+---
+title: Review the Posting Register
+description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see, with a detail drawer and strict data minimization.
+sidebar:
+  label: Review the Posting Register
+  order: 17
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+The **Posting Register** is a tenant-level console, outside any single project, where finance and accounting review ERP postings across every project and connection they're permitted to see. Where [ERP Post History](/guides/connections/erp-post-history/) is scoped to one project you already have access to, the Posting Register is the cross-project view built for a reviewer who needs to see postings from many projects and connections in one place.
+
+The Posting Register is **read-only**. Nothing in it changes, retries, clears, or reverses a posting — it's a place to review what happened, not to act on it.
+
+## Who Can Open It
+
+Opening the Posting Register takes one of four built-in security groups, seeded from four Keycloak realm scopes. Each tier is cumulative — holding a higher tier includes everything the tiers below it grant:
+
+| Scope | Grants |
+|---|---|
+| `erp.register.view` | Open the register and review postings. |
+| `erp.register.operate` | Everything `.view` grants. |
+| `erp.register.approve` | Everything `.operate` grants. |
+| `erp.register.admin` | Everything `.approve` grants. |
+
+<Aside type="note">
+This release is read-only end to end, so `.operate`, `.approve`, and `.admin` currently behave the same as `.view` in the register itself — the tiers exist so that later capabilities (acting on a posting, approving one) can be layered onto the higher tiers without a new grant scheme. Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
+</Aside>
+
+### The Visibility Rule
+
+Holding an `erp.register.*` scope opens the console, but it doesn't by itself make any posting visible. A posting is visible in the register only if you also hold a **personal connection grant** on that posting's connection, and — when the posting belongs to a project — access to that project. A posting that isn't tied to a project is gated by the connection grant alone.
+
+This is a separate grant from the register scope above, and both are required:
+
+- **Connection grant.** You need to be an explicit owner of the connection, or named individually, or a member of a security group named on it — the same grants a connection's [Security Model](/guides/connections/create-connection/#security-model) controls. **A connection set to `All Workspace Members` does not grant register visibility.** That setting makes the connection usable by everyone; it isn't a personal, group, or ownership grant, and the register requires one of those specifically.
+- **Project access**, for any posting that belongs to a project — the same access your other project work requires.
+
+A member who holds `erp.register.view` but no connection grants at all sees a correctly empty register, and the console tells them so rather than looking broken. A connection or project grant that's revoked takes effect on your next page load — there's no stale visibility to clear.
+
+## The Register Grid
+
+The grid lists postings across every project and connection you can see, one row per posting. Filter on:
+
+- Project
+- Environment
+- Connection
+- ERP type
+- Entity
+- Posting date
+- State
+
+<Aside type="note">
+Filters take a project or connection by id. There's no picker yet — look up the id from the project or connection you already have open.
+</Aside>
+
+## The Detail Drawer
+
+Click a row to open its detail drawer. It's organized into tabs:
+
+| Tab | Shows |
+|---|---|
+| Request/Response | The outbound request and the ERP's response, filtered for data minimization (see below). |
+| Errors | Any error the ERP or the posting step returned. |
+| Timeline | The posting's states in order, from submission to its current state. |
+| Related | The original posting and its reversal, linked to each other, when one exists. |
+| Audit | A read-only record of activity on this posting. Sparse for now — see [The Audit Tab](#the-audit-tab) below. |
+
+## Data Minimization
+
+The register is built to show what a reviewer needs to confirm a posting happened, without surfacing the sensitive data a posting step handled to make it happen.
+
+- **Request and response payloads are allow-listed per adapter.** A field only appears if it's been explicitly classified as safe to keep. Bank account numbers, routing numbers, IBANs, tax ids, and other personal identifiers are stripped before you ever see the payload.
+- **The ERP business key is withheld entirely.** It can embed a vendor name or another reference token, so it never reaches the register. Identify a row by its ledger id, and use the `confirmation_id` as the ERP's own pointer to the document — the same field [ERP Post History](/guides/connections/erp-post-history/#what-each-post-shows) calls `confirmation_id`.
+- **Free-text fields are pattern-scrubbed on read.** Dimension and worktag values are excluded from comments, digests, and exports.
+
+<Aside type="note">
+**A blank amount is a label, not a gap.** Postings captured before this feature existed have no money detail to show. SAP postings never carry a captured amount at all — the register shows "no amount captured (by design)" for those rows. Neither case is an error, and neither should be read as a zero.
+</Aside>
+
+### The Audit Tab
+
+The Audit tab is display-only. Its detail is intentionally sparse in this release, because the underlying audit vocabulary hasn't been classified yet — expect it to fill in as that work lands, not to change how you read the rest of the drawer.
+
+## What's Not Here Yet
+
+This release is read-only. There's no retry, clear, bulk action, reversal, or approval workflow in the register, and no export, comments, or AI assistance. Everything above works today; anything not listed here isn't live.
