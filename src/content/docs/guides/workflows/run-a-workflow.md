@@ -15,7 +15,7 @@ If you click **Run** on a workflow that's already running, PlaidCloud tells you 
 
 ## Choose a Posting Mode
 
-Every run carries an ERP posting mode, set when you start the run:
+Every run carries an ERP posting mode, chosen when you start the run through the run API or the assistant. Runs started from the workflow toolbar use the project's cap, described below. An in-client mode selector is follow-on work.
 
 | Mode | What happens |
 |---|---|
@@ -23,7 +23,7 @@ Every run carries an ERP posting mode, set when you start the run:
 | Simulate | Every ERP posting step builds and validates exactly what it would post, then commits nothing and never contacts the ERP. The would-post entries are recorded in [ERP Post History](/guides/connections/erp-post-history/), marked simulated, so you can review them before running live. |
 | Off | Posting steps are skipped entirely. |
 
-A project also carries its own posting mode cap, in its project settings, and any member with write access to an unlocked project can set it. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
+A project also carries its own posting mode cap, set through the project API or the assistant by any member with write access to an unlocked project. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
 
 The mode carries through everything the run touches. A sub-workflow, a macro, and a **Run Model**, **Conditional Run Model**, or **Loop Model** step all inherit the parent run's mode, and so does a run you [resume](#pause-stop-and-resume) after a stop — a simulated run can't post for real anywhere inside itself.
 
