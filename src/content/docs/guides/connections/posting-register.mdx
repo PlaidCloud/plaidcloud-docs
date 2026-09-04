@@ -1,6 +1,6 @@
 ---
 title: Review the Posting Register
-description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions, AI assist, trends, lineage drill-back, scheduled export and alerts, and strict data minimization.
+description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions, reversal, AI assist, trends, lineage drill-back, period closes, scheduled export and alerts, collaboration, and strict data minimization.
 sidebar:
   label: Review the Posting Register
   order: 17
@@ -10,21 +10,21 @@ import { Aside } from '@astrojs/starlight/components';
 
 The **Posting Register** is a tenant-level console, outside any single project, where finance and accounting review ERP postings across every project and connection they're permitted to see. Where [ERP Post History](/guides/connections/erp-post-history/) is scoped to one project you already have access to, the Posting Register is the cross-project view built for a reviewer who needs to see postings from many projects and connections in one place.
 
-The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — let you act directly from the grid, [AI Assist](#ai-assist) helps you find and understand postings faster, and [Trends](#trends), [Lineage](#lineage), and [Export](#export) let you analyze, drill back to source, and get data out. Reversal exists as an API capability (see [Reversal](#reversal)), but nothing in the console itself changes, reverses, or approves a posting yet.
+The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — and [Reversal](#reversal) let you act directly from the grid and the detail drawer, [AI Assist](#ai-assist) helps you find and understand postings faster, and [Trends](#trends), [Lineage](#lineage), [Closes](#closes), and [Export](#export) let you analyze, drill back to source, seal a period, and get data out. [Collaboration](#collaboration) lets a team comment, sign off, and watch a posting together, without ever putting money in a notification.
 
 ## Who Can Open It
 
-Opening the Posting Register takes one of four built-in security groups, seeded from four Keycloak realm scopes. Each tier is cumulative — holding a higher tier includes everything the tiers below it grant:
+Opening the Posting Register takes one of four Keycloak realm scopes — `erp.register.view`, `.operate`, `.approve`, and `.admin`. They're independent grants, not an escalating ladder: holding `.admin` does not by itself grant what `.operate` grants, and every mutating or egress action checks its own required scope, or scopes, explicitly rather than inferring them from a higher tier.
 
 | Scope | Grants |
 |---|---|
-| `erp.register.view` | Open the register and review postings, including Trends and Lineage. |
-| `erp.register.operate` | Everything `.view` grants, plus bulk actions, initiating a reversal, and exporting or scheduling a delivery. |
-| `erp.register.approve` | Everything `.operate` grants, plus resolving a stuck reversal attempt. |
-| `erp.register.admin` | Everything `.approve` grants, plus the auditor export profile (unmasked money and maker identity) and setting the tenant's retention policy. |
+| `erp.register.view` | Open the register and review postings — the exception queue, grid, roll-up views, Trends, Lineage, and AI Assist. None of this applies, exports, or notifies anything. |
+| `erp.register.operate` | The floor beneath everything that changes state or leaves the console: bulk actions, initiating a reversal, exporting or scheduling a delivery, subscribing to the AI Assist digest, and posting a comment, sign-off, or watch. `.approve`- and `.admin`-gated actions are asserted on top of `.operate`, never in place of it — see below. |
+| `erp.register.approve` | Resolving a stuck reversal attempt (`released` or `confirmed`), held alongside `.operate`. |
+| `erp.register.admin` | The auditor export and as-of-read profile (unmasked money and maker identity) and setting the tenant's [retention policy](#retention) — each held alongside `.operate`. Also lets you delete or fire another member's schedule. |
 
 <Aside type="note">
-`.view` opens the register for review only, including [AI Assist](#ai-assist), [Trends](#trends), and [Lineage](#lineage) — none of those apply anything. `.operate` additionally unlocks the [bulk actions](#bulk-actions) below, calling the reversal API, and [exporting or scheduling a delivery](#export) — reading the register on screen is not, by itself, authorization to produce a file of it. `.approve` is required, alongside `.operate`, to resolve a reversal attempt stuck `pending` or `in_doubt` — see [Reversal](#reversal). `.admin` is the auditor tier: the only one whose exports carry unmasked money and maker identity, and the only one that can set the tenant's [retention policy](#retention). Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
+Four built-in security groups bundle these cumulatively for convenience — **Posting Register Viewer** (`.view`), **Operator** (adds `.operate`), **Approver** (adds `.approve`), and **Admin** (all four) — but the Security Groups matrix lets you assign any combination independently, since the scopes don't imply each other. `.approve` and `.admin` are each meaningless on their own: every action they gate also requires `.operate`, so a group meant to resolve reversals or unmask exports needs `.operate` granted explicitly alongside them, not assumed from the higher tier. Assign the tier — or combination — that matches what a member is meant to do, not just `.view` for everyone.
 </Aside>
 
 ### The Visibility Rule
@@ -123,7 +123,7 @@ Type a sentence — "postings in doubt for the EMEA connection last week" — an
 Seven cards summarize what's worth a look, each with a live count and sample rows scoped to your own grants: **outstanding to close**, **near-duplicates**, the **intercompany net-zero gap**, **changed vs. last close**, **confirmed in ERP**, **aging & owners**, and **already reversed**. A short narrative sentence sits beside the figures where an LLM connection is configured for your workspace; where none is, the card still renders in full and says why the narrative is missing. An uncaptured amount on a card is always blank, never `0.00` — the same rule the [roll-up views](#roll-up-views) follow.
 
 <Aside type="note">
-`erp.register.assist`'s "anomalies" are the same near-duplicate and net-zero computation the cards above already run — there's no second, separately-scored anomaly detector.
+AI Assist's "anomalies" are the same near-duplicate and net-zero computation the cards above already run — there's no second, separately-scored anomaly detector.
 </Aside>
 
 ### Per-Row Advice
@@ -134,7 +134,7 @@ Pick a posting and get two kinds of advice, depending on its state:
 - **Failure direction**, for a rejected or in-doubt posting — why it failed, whether to retry it or fix the source data first, which field to fix, and the duplicate risk of pressing retry. The ERP's own error message is free text, so it's classified into a cause server-side rather than shown to you directly — the same rule that keeps free text out of the rest of the register.
 
 <Aside type="caution">
-Nothing on this panel is an apply button. There is no Reverse control and no Retry control here — applying a reversal or a retry is done through [the API directly](#reversal) or [bulk actions](#bulk-actions), respectively, both of which carry `erp.register.operate` and their own confirmation step.
+Nothing on this panel is an apply button. Applying a reversal is done through the detail drawer's **Reverse** control (see [Reversal](#reversal)) or the API directly; applying a retry is done through [bulk actions](#bulk-actions). Both carry `erp.register.operate` and their own confirmation step.
 </Aside>
 
 ### The Daily Digest
@@ -142,16 +142,17 @@ Nothing on this panel is an apply button. There is no Reverse control and no Ret
 A digest previews, on demand, the cards above scoped to a close-relevant subset — outstanding-to-close, aging & owners, near-duplicates, the IC net-zero gap, and confirmed-in-ERP — as they'd appear if sent to you today. A toggle subscribes or unsubscribes you; the subscription stores nothing but your member id, so a grant you lose afterward simply drops those rows out of your next digest rather than leaking a stale view.
 
 <Aside type="caution">
-**Subscribing previews the digest; nothing sends it yet.** PlaidCloud has no periodic-job scheduler at all, so there is no nightly or recurring digest email — the only thing that runs today is the on-demand preview you trigger yourself. Treat the subscription as recording your intent for when a send mechanism exists, not as turning one on.
+**Subscribing previews the digest; nothing sends it yet.** [Scheduled exports and alerts](#scheduling-a-delivery) now fire on their own, but the digest is a separate mechanism with no delivery channel wired to it — there is still no nightly or recurring digest email. The only thing that runs today is the on-demand preview you trigger yourself. Treat the subscription as recording your intent for when a send mechanism exists, not as turning one on.
 </Aside>
 
 ## Reversal
 
-Reversing a posting — creating a new, opposite document in the ERP — is a real, shipped capability, but it's reachable through the API only; the console has no Reverse button or reversal dialog yet.
+Reversing a posting — creating a new, opposite document in the ERP — is available from the detail drawer's **Reverse** control, and directly over the API for automation.
 
-- **Eligibility** depends on the posting's own state (only a posted entry with a confirmed ERP document id can be reversed), the connection's driver (some, like Oracle Fusion, support no programmatic reversal at all), and whether a reversal attempt is already outstanding on it.
-- **Reversing** can optionally redirect the new entry to a different target period than the original posting — honored on adapters whose ERP accepts an explicit posting period, refused with a clear error on ones that can't aim it. A hard database latch stops a second reversal attempt from ever being dispatched while one is outstanding, even across a process crash mid-dispatch; an ERP rejection releases that latch automatically, since nothing was created.
-- **A reversal left `pending` or `in_doubt`** — its outcome unknown — doesn't resolve itself; v1 has no automated reverse-confirmation, by design. It's cleared by a human holding `erp.register.approve`, who checks the ERP directly and records what they found: `released` (nothing was created there, so the posting becomes reversible again) or `confirmed` (a reversing document exists, with its id) — which is the only way that latch is ever cleared.
+- **Eligibility** depends on the posting's own state (only a posted entry with a confirmed ERP document id can be reversed), the connection's driver (some, like Oracle Fusion, support no programmatic reversal at all), and whether a reversal attempt is already outstanding on it. The drawer re-checks eligibility both when you open Reverse and again immediately before you submit, so a row that's gone stale in between — another reversal already outstanding, say — shows the driver's own refusal in its own words rather than firing a doomed request.
+- **Reversing** requires `erp.register.operate` and is bound behind a type-to-confirm challenge: you retype the posting's own ERP document id, checked only in the browser and never sent, before **Reverse** unlocks — the same blast-radius pattern [bulk actions](#bulk-actions) use, a safety prompt rather than an approval step.
+- Reversing can optionally redirect the new entry to a different target period than the original posting — honored on adapters whose ERP accepts an explicit posting period, refused with a clear error on ones that can't aim it. **A redirect can still land in a different period than requested:** some adapters only learn whether they honored it after dispatch, so the drawer states a landing period only once the attempt has actually settled as reversed — never earlier — and defers to the server's own message for every other outcome. A hard database latch stops a second reversal attempt from ever being dispatched while one is outstanding, even across a process crash mid-dispatch; an ERP rejection releases that latch automatically, since nothing was created.
+- **A reversal left `pending` or `in_doubt`** — its outcome unknown — doesn't resolve itself; v1 has no automated reverse-confirmation, by design. The drawer's resolve controls clear it, gated on `erp.register.approve` in addition to `.operate`: a human checks the ERP directly and records what they found — **Release** (nothing was created there, so the ledger is untouched and the posting becomes reversible again) or **Mark Reversed** (a reversing document exists, with its id) — which is the only way that latch is ever cleared. Marking a reversal `confirmed` is permanent; there's no undo through the product.
 
 Segregation of duties isn't enforced on any of this yet: a reversal records who approved it, but nothing currently requires a second person to have done so.
 
@@ -162,6 +163,18 @@ Segregation of duties isn't enforced on any of this yet: a reversal records who 
 ## Lineage
 
 **Lineage** drills from one posting back to the workflow run that produced it, and out to the document in the ERP itself. Look it up by run id or by a posting's ledger id — asking by ledger id resolves the run through your own grants first, so a posting on a connection you can't see resolves nothing rather than exposing which run it came from. Where PlaidCloud can verify the ERP's document URL shape for that adapter, lineage includes a deep link straight to the document; where it can't, or the posting was never confirmed, it says which of those is why rather than guessing at a link. The ERP's business key still never appears here — the lineage key is the workflow's `run_id`, and the ERP pointer is `confirmation_id`, the same as everywhere else in the register.
+
+## Closes
+
+**Request a close** to seal a period — for one or more connections and entities — into an immutable, point-in-time snapshot: everything the register knew about those postings as of that moment, kept even if the live rows are later retried, reversed, or cleared. It's aimed at a locked accounting period where you need a defensible, unchanging record rather than whatever the live grid shows today. Requesting or reading a close is reachable through the API only for now; there's no console screen yet to request or browse one.
+
+Requesting a close (`erp.register.operate`) is a tenant-wide administrative action, not a personal one — the connections and entities you name are exactly the ones sealed, regardless of your own connection grants. Re-closing an already-closed period is never destructive: it always produces a new, separately numbered revision rather than overwriting the last one.
+
+<Aside type="caution">
+**Requesting a close does not seal it.** Nothing runs on a schedule yet to materialize a requested close into its Iceberg snapshot, so every close stays `pending` — there's no automatic path from "requested" to "sealed" today.
+</Aside>
+
+Once a close is materialized, reading it back applies the register's usual rules, re-resolved live on every read rather than baked into the snapshot at seal time: you only see rows on connections and projects you're currently granted. Unlike the live grid, which shows money and maker identity to any viewer who can see the row at all, a close's figures are masked unless you hold `erp.register.admin` — the same rule [Export](#export) applies. A close also reports its own **late-arrival count**: postings submitted or changed after the close's high-water mark, and so never captured in the seal — visible only by requesting a new close for the same period, since nothing re-opens an old one.
 
 ## Export
 
@@ -183,8 +196,8 @@ Create a **schedule** — a filter, a cadence, a format, and a list of recipient
 - **Export** — a recurring CSV or JSON delivery of the filtered register.
 - **Alert** — a notification triggered by one of three conditions: a failed live post, an aging authorization, or a posting reversal. Preview what a trigger would currently match for you before subscribing to it.
 
-<Aside type="caution">
-**A schedule's cadence is recorded, not acted on.** PlaidCloud has no periodic-job mechanism at all — the same gap already true of [the AI Assist digest](#the-daily-digest) — so a `daily` or `weekly` schedule sends only when a person presses **Send Now**. Creating a schedule records your intent for when a send mechanism exists; it doesn't turn one on.
+<Aside type="note">
+**A schedule's cadence fires on its own.** A per-tenant job checks every schedule once a day and sends any `daily`, `weekly`, or `monthly` schedule whose interval has elapsed since it last sent — the same send path **Send Now** uses, so there's exactly one way a schedule is ever delivered. `manual` schedules are never picked up by that sweep, by design; they exist for **Send Now** only.
 </Aside>
 
 Each recipient's file is built from *their own* live grants at the moment of sending, not the schedule owner's — two recipients on the same schedule can receive two different files, and a recipient who has since lost the export role, lost every connection grant, been disabled, or has no address on file is skipped individually with a stated reason rather than silently dropped. Only the schedule's owner or an `erp.register.admin` can delete or fire someone else's schedule.
@@ -201,7 +214,7 @@ Configure how long the register keeps three kinds of history: captured payload d
 Retention can never reach the posting ledger itself — deleting a ledger row would free the idempotency key that stops a document from being posted twice, so there is deliberately no ledger horizon to set. Redacting captured payload detail leaves the posting's own record, its state, and its context columns intact; only the sensitive detail is removed.
 </Aside>
 
-Like scheduled delivery, the retention sweep that acts on this policy has no periodic invoker yet — it runs only when explicitly called, for the same reason: PlaidCloud has no scheduler to hang it off yet.
+The retention sweep that acts on this policy now runs automatically, once a day, tenant-wide — the same periodic-jobs mechanism that also drives [scheduled exports and alerts](#scheduling-a-delivery), ages overdue postings into the exception queue, and expires old simulated postings.
 
 ## Roll-Up Views
 
@@ -224,6 +237,22 @@ Click a row to open its detail drawer. It's organized into tabs:
 | Timeline | The posting's states in order, from submission to its current state. |
 | Related | The original posting and its reversal, linked to each other, when one exists. |
 | Audit | A read-only record of activity on this posting. Sparse for now — see [The Audit Tab](#the-audit-tab) below. |
+| Comments | Threaded comments on this posting, with @mention by member id. See [Collaboration](#collaboration). |
+| Sign-off | The posting's current review status — Reviewed, Cleared, or Needs Follow-up — with its full history. See [Collaboration](#collaboration). |
+
+## Collaboration
+
+Work a posting with your team without leaving the register: **comment** on it with @mention, record a **sign-off**, or **watch** a connection or a run for its future activity.
+
+- **Comments** are threaded, plain-text notes on one posting, from its Comments tab. @mention a colleague by member id and they're notified — if they can currently see the posting; that check is redone at send time, never assumed from who was mentioned.
+- **Sign-off** records one of three states — Reviewed, Cleared, or Needs Follow-up — with an optional note, and keeps the full history of who set what, when. It's a record, not a gate: nothing currently blocks a posting or a reversal on its sign-off state.
+- **Watch** a connection or a run — two separate toggles — to be notified of activity on either one going forward.
+
+Posting a comment, a sign-off, or a watch requires `erp.register.view` and `.operate`; reading them back requires `.view` alone.
+
+<Aside type="note">
+**A notification never carries money.** A comment or watch alert names the posting's entity and links back to it — never the amount, the currency, or any free text you or anyone else typed — so a notification can never outrun the role that would be needed to see the real figure in the drawer. And a notification's own visibility check is exactly the register's own: a mention or a watch on a connection or project you're no longer granted is silently dropped from delivery, the same way a revoked grant drops a row from the grid.
+</Aside>
 
 ## Data Minimization
 
@@ -243,9 +272,9 @@ The Audit tab is display-only. Its detail is intentionally sparse in this releas
 
 ## What's Not Here Yet
 
-- **No Reverse or Retry control on the detail drawer, or anywhere in the console UI.** Retry is bulk-only (see [Retry Only Runs Against What You Checked](#retry-only-runs-against-what-you-checked)); reversal is [API-only](#reversal) for now.
+- **No Retry control on the detail drawer, or anywhere outside bulk actions.** Retry is bulk-only (see [Retry Only Runs Against What You Checked](#retry-only-runs-against-what-you-checked)). Reverse, by contrast, now lives on the detail drawer (see [Reversal](#reversal)) as well as the API.
 - **No dedicated Reconcile or Control Totals screen.** Control-total figures appear inline — in a reversal draft under AI Assist, and in the bulk impact preview — not as their own view.
 - **No approvals inbox and no segregation-of-duties enforcement.** A reversal's `approver_member_id` is recorded but nothing currently requires it, or requires a second person's sign-off.
-- **No collaboration** — no comments, @mentions, or review sign-off.
+- **Closes aren't materialized automatically.** Requesting a close (see [Closes](#closes)) records the request only — nothing runs on a schedule yet to turn it into its Iceberg snapshot, so every close stays `pending` until PlaidCloud adds that job.
 
-Everything else on this page — the exception queue, connection health, roll-up views, bulk actions, AI Assist, trends, lineage, and export — works today.
+Everything else on this page — the exception queue, connection health, roll-up views, bulk actions, reversal, AI Assist, trends, lineage, collaboration, and export — works today.
