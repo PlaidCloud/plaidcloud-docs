@@ -14,7 +14,7 @@ Table Explorer supports exploration on any size dataset so you can use the same 
 filtering along with advanced filter capabilities to zero in on the data you need.  The best part is that anywhere in PlaidCloud with tables or views, 
 you can click on those tables and views to explore with Table Explorer.  By being fully integrated, data access is only a click away.
 
-The `Grid` view provides a tabular view of the data. The `Details` view provides a summary of each column, a count of unique values, and summary statistics for numeric columns.
+The `Grid` view provides a tabular view of the data. The `Details` view provides a summary of each column, a count of unique values, and profiling statistics for every column.
 
 Data can be exported directly from a filtered set as well as being able to save and share filters with others.  Finally, the filters and column settings 
 can be saved directly as a workflow `Extract` step.
@@ -110,17 +110,67 @@ Activating the `Distinct` button will help reduce the data to only a set of uniq
 <Aside type="caution">If you include too many columns in the unique records determination, it will appear you have many more distinct results than you should.</Aside>
 
 
-### Summary Statistics for Numeric Columns
+### Column Profiling Statistics
 
-Integer and numeric columns automatically display summary statistics at the bottom of the column information.  This includes:
- * Min
- * Max
+Every column displays profiling statistics at the bottom of its column information, regardless of data type.
+
+Integer and numeric columns display these statistics, calculated on the full **filtered** dataset:
+ * Minimum
+ * Maximum
  * Mean
+ * Std. Deviation
  * Sum
- * Standard Deviation
- * Variance
 
- These statistics are calculated on the full **filtered** dataset.
+Every column — numeric, text, date, or otherwise — also displays these statistics, calculated on the full **unfiltered** table:
+ * `Null Count (All Rows)` — the number of null values across the whole table
+ * `Null % (All Rows)` — null values as a percentage of the whole table
+ * `Blank Count (All Rows)` — text columns only. A blank is a value that's empty or whitespace-only after trimming, as distinct from a null.
+ * `Blank % (All Rows)` — blank values as a percentage of the whole table
+ * `Distinct % of Non-Null (All Rows)` — distinct values as a percentage of the rows that actually have a value. Nulls are excluded from both the distinct count and the total, so a column that's 90% null but whose populated values are all unique reads 100%, not 10%.
+
+<Aside type="note">The `(All Rows)` suffix is there for a reason: those five statistics always cover the whole table, ignoring any filter you've applied — unlike Minimum, Maximum, Mean, Std. Deviation, and Sum above, which respect your current filter. Two differently-scoped sets of numbers in one panel need the label to avoid being misread as the same scope.</Aside>
+
+These `(All Rows)` statistics are computed server-side and deterministically, with no AI or sampling involved — the same column returns the same numbers every time. They respect row-level security, so you only ever see statistics computed over rows you're entitled to see. Computing them costs one additional whole-table query, subject to the same 60-second budget as other column facets; if that query times out, the rest of the grid is unaffected.
+
+
+### Distribution Shape
+
+For numeric columns, Table Explorer also reports how the values are distributed, not just where they cluster.
+
+* `Skewness (All Rows)` — measures whether the column's values lean to one side of the average or are evenly balanced around it. A value near zero means the values are roughly symmetric; a strongly positive or negative value means the column has a long tail stretching toward one end. This can reveal a shape that Mean and Std. Deviation alone would hide — for example, a handful of very large values pulling the average up while most of the column sits much lower.
+* A histogram below each numeric column's statistics groups its values into 10 equal-width buckets spanning the column's full range, so you can see the shape of the distribution at a glance. Hover over a bar to see the exact value range it covers and how many rows fall in it.
+
+Like the other `(All Rows)` statistics, Skewness and the histogram always cover the whole table regardless of your current filter. Skewness is omitted — never shown as zero or an error — for a column with fewer than two values or with no variation at all, since it can't be calculated meaningfully in that case. The histogram is omitted the same way for a column with no computable range, such as one that's entirely null.
+
+
+### Data Quality Radar
+
+Table Explorer runs five automated checks against every column to flag data that's worth a closer look:
+
+* `Outliers` — numeric values statistically far from the rest of the column (more than three standard deviations from the mean).
+* `Format` — text values that don't match the dominant pattern found in the rest of the column, such as a column that's almost entirely dates with a few free-text values mixed in. This check only runs on columns with at least 100 non-blank values, and only flags a mismatch once one pattern clearly dominates — more than 95% of the column's values matching it.
+* `Duplicates` — repeated values in a column that's part of the table's declared row key, where every value should be unique. This check only runs on tables with a declared row key — the table's update keys are used as the row key.
+* `Orphans` — values in a column linked to a dimension that don't match any member of that dimension.
+* `Constant` — every non-null value in the column is the same, which usually means the column carries no useful information.
+
+These checks run over the whole table, the same as the `(All Rows)` statistics above — your current filter has no effect on them.
+
+A badge appears directly on a column in the `Details` view for any check that found something, and a muted badge appears for a check that couldn't complete. Open `Data Quality Radar` from the `Actions` menu for a ranked summary of every column against all five checks — including checks that came back clean or don't apply, not just the ones that were flagged.
+
+Each check independently reports one of five outcomes: flagged, clean, not applicable, timed out, or unavailable. A check is never silently skipped — you can always see why a column has no verdict for a given check.
+
+
+### Correlations
+
+For numeric columns, Table Explorer also reports how strongly a column's values move together with the table's other numeric columns.
+
+* `Pearson r vs <column> (Complete Cases)` — how strongly two columns move together in a straight-line relationship, from -1 (perfectly opposite) through 0 (no linear relationship) to +1 (perfectly together).
+* `Spearman ρ vs <column> (Complete Cases)` — how strongly two columns move together in rank order, whether or not that relationship is a straight line. A pair that consistently rises together but curves rather than forming a straight line can score higher on Spearman than on Pearson.
+* `Complete Cases (All Rows)` — how many rows the coefficients above it are actually computed from.
+
+Correlations are computed against up to 10 other numeric columns currently visible in the `Details` view, and only using rows that have a value in every one of those numeric columns — not just the pair being compared. That's why the scope is labelled `(Complete Cases)` rather than `(All Rows)`: it's a narrower, listwise subset of the table, and calling it `(All Rows)` would overstate what the coefficients describe. The `Complete Cases (All Rows)` count itself is measured against the whole table, the same as the other `(All Rows)` statistics — it isn't affected by your current filter, though it does change if you change which numeric columns are visible.
+
+Correlations are omitted entirely, rather than shown from too little evidence, unless there are at least 10 complete-case rows and they make up at least 10% of the table. A single partner column whose own coefficient can't be computed — no variation in that column, for example — drops just that one row rather than the whole set.
 
 
 ## Copying Data

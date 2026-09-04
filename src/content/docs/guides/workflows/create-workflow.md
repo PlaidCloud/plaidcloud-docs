@@ -33,6 +33,10 @@ The **Workflow Type** you pick when creating a workflow determines how its steps
 
 A fourth type, **Macro** — a reusable, callable workflow with declared inputs and outputs — is coming soon and appears in the selector as disabled.
 
+:::note
+A step can only appear once in a workflow. Inserting, copying, cloning, or importing a step into a position that would place it in a workflow a second time is refused, naming the step — so you can't create this state going forward. If a workflow from before that fix still has one in two places, it fails a **Standard Serial** run immediately with an error naming the duplicated step — as it does a **Standard Parallel** run stopped at a chosen end step (see [Running a Range of Steps in a Workflow](/guides/workflows/running-a-range-of-steps-in-a-workflow/)), since running to an end point also runs sequentially. A **Standard Parallel** run to completion tolerates the duplicate and simply runs it once. Either way, delete the duplicate step to repair the workflow — removing steps is never restricted.
+:::
+
 Choose **Advanced (DAG canvas)** here if you want the [Visual Workflow Designer](/guides/workflows/advanced-workflows/) from the start. The choice isn't permanent: you can promote a Standard workflow later with **Convert to Advanced…** from the Workflows list.
 
 ## About Remediation Workflows

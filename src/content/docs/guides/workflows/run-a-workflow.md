@@ -11,9 +11,11 @@ You can trigger a full workflow run by either clicking on the run icon from the 
 
 You can also click on the **Toggle Start/Stop** button at the top of the workflow table. This toggle button will stop a running workflow or start a workflow.
 
+If you click **Run** on a workflow that's already running, PlaidCloud tells you so instead of starting a second run.
+
 ## Choose a Posting Mode
 
-Every run carries an ERP posting mode, set when you start the run:
+Every run carries an ERP posting mode, chosen when you start the run through the run API or the assistant. Runs started from the workflow toolbar use the project's cap, described below. An in-client mode selector is follow-on work.
 
 | Mode | What happens |
 |---|---|
@@ -21,12 +23,16 @@ Every run carries an ERP posting mode, set when you start the run:
 | Simulate | Every ERP posting step builds and validates exactly what it would post, then commits nothing and never contacts the ERP. The would-post entries are recorded in [ERP Post History](/guides/connections/erp-post-history/), marked simulated, so you can review them before running live. |
 | Off | Posting steps are skipped entirely. |
 
-A project also carries its own posting mode cap, in its project settings, and any member with write access to an unlocked project can set it. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
+A project also carries its own posting mode cap, set through the project API or the assistant by any member with write access to an unlocked project. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
 
 The mode carries through everything the run touches. A sub-workflow, a macro, and a **Run Model**, **Conditional Run Model**, or **Loop Model** step all inherit the parent run's mode, and so does a run you [resume](#pause-stop-and-resume) after a stop — a simulated run can't post for real anywhere inside itself.
 
 :::caution
 SAP posting, SAP attachment, and generic SAP RFC steps don't dry-run. Under Simulate or Off they're skipped outright, because SAP's own test flags still open a real connection to SAP — skipping the step is the only way a simulated run never reaches SAP.
+:::
+
+:::note
+An individual ERP posting step also carries its own Validate Only setting (labeled Preview or Test Only Mode on some steps), independent of the run's posting mode above. The step editor always saves this explicitly. A step configuration written another way — the REST API, MCP, or a workflow bundle import — that leaves the setting out entirely now also defaults to a preview rather than a live post.
 :::
 
 ## Follow a Step's Status
