@@ -1,6 +1,6 @@
 ---
 title: Review the Posting Register
-description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions with an impact preview, a detail drawer, and strict data minimization.
+description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions with an impact preview, AI assist and proactive cards, a detail drawer, and strict data minimization.
 sidebar:
   label: Review the Posting Register
   order: 17
@@ -10,7 +10,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 The **Posting Register** is a tenant-level console, outside any single project, where finance and accounting review ERP postings across every project and connection they're permitted to see. Where [ERP Post History](/guides/connections/erp-post-history/) is scoped to one project you already have access to, the Posting Register is the cross-project view built for a reviewer who needs to see postings from many projects and connections in one place.
 
-The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — let you act directly from the grid; nothing else here changes, reverses, or approves a posting.
+The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — let you act directly from the grid, and [AI Assist](#ai-assist) helps you find and understand postings faster. Reversal exists as an API capability (see [Reversal](#reversal)), but nothing in the console itself changes, reverses, or approves a posting yet.
 
 ## Who Can Open It
 
@@ -19,12 +19,12 @@ Opening the Posting Register takes one of four built-in security groups, seeded 
 | Scope | Grants |
 |---|---|
 | `erp.register.view` | Open the register and review postings. |
-| `erp.register.operate` | Everything `.view` grants. |
-| `erp.register.approve` | Everything `.operate` grants. |
+| `erp.register.operate` | Everything `.view` grants, plus bulk actions and initiating a reversal. |
+| `erp.register.approve` | Everything `.operate` grants, plus resolving a stuck reversal attempt. |
 | `erp.register.admin` | Everything `.approve` grants. |
 
 <Aside type="note">
-`.view` opens the register for review only. `.operate` additionally unlocks the [bulk actions](#bulk-actions) below — clearing simulated postings and retrying failed ones. `.approve` and `.admin` don't yet grant anything beyond `.operate`; those tiers exist so that later capabilities (like approvals) can be layered on without a new grant scheme. Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
+`.view` opens the register for review only, including [AI Assist](#ai-assist) — every AI surface is a read that drafts and explains, never applies. `.operate` additionally unlocks the [bulk actions](#bulk-actions) below and calling the reversal API. `.approve` is required, alongside `.operate`, to resolve a reversal attempt stuck `pending` or `in_doubt` — see [Reversal](#reversal). `.admin` doesn't yet grant anything beyond `.approve`; it exists so a future capability can be layered on without a new grant scheme. Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
 </Aside>
 
 ### The Visibility Rule
@@ -110,6 +110,51 @@ Retrying requires `erp.register.operate` **and** your own personal grant on that
 
 Clearing is a soft delete: PlaidCloud records who cleared it and when, and requires a reason before Apply is enabled. It removes the postings from the simulate preview store and the ledger's own simulate journal — it never touches a live posting, and there's no way to point it at one.
 
+## AI Assist
+
+**Assist** opens a search box, a row of proactive cards, and a per-row advice panel — every figure on it is computed by the register itself, over your own live grants; the model, where one is configured, only explains or drafts, and never invents a number or a predicate.
+
+### Ask in Plain Words
+
+Type a sentence — "postings in doubt for the EMEA connection last week" — and it's parsed into the register's own filter vocabulary by a fixed table, not a model call: a parse can only ever narrow the rows the grid would already show you, never reach a row you weren't granted. The model's only role is to explain the parse in a sentence: it names the field it matched and how many of your rows the resulting filter finds.
+
+### Proactive Cards
+
+Seven cards summarize what's worth a look, each with a live count and sample rows scoped to your own grants: **outstanding to close**, **near-duplicates**, the **intercompany net-zero gap**, **changed vs. last close**, **confirmed in ERP**, **aging & owners**, and **already reversed**. A short narrative sentence sits beside the figures where an LLM connection is configured for your workspace; where none is, the card still renders in full and says why the narrative is missing. An uncaptured amount on a card is always blank, never `0.00` — the same rule the [roll-up views](#roll-up-views) follow.
+
+<Aside type="note">
+`erp.register.assist`'s "anomalies" are the same near-duplicate and net-zero computation the cards above already run — there's no second, separately-scored anomaly detector.
+</Aside>
+
+### Per-Row Advice
+
+Pick a posting and get two kinds of advice, depending on its state:
+
+- **A reversal draft**, for any posting — what reversing it would look like: whether the connection's driver supports it at all, the control-total it would need to tie to, and a period check. It is a draft only; nothing here reverses anything.
+- **Failure direction**, for a rejected or in-doubt posting — why it failed, whether to retry it or fix the source data first, which field to fix, and the duplicate risk of pressing retry. The ERP's own error message is free text, so it's classified into a cause server-side rather than shown to you directly — the same rule that keeps free text out of the rest of the register.
+
+<Aside type="caution">
+Nothing on this panel is an apply button. There is no Reverse control and no Retry control here — applying a reversal or a retry is done through [the API directly](#reversal) or [bulk actions](#bulk-actions), respectively, both of which carry `erp.register.operate` and their own confirmation step.
+</Aside>
+
+### The Daily Digest
+
+A digest previews, on demand, the cards above scoped to a close-relevant subset — outstanding-to-close, aging & owners, near-duplicates, the IC net-zero gap, and confirmed-in-ERP — as they'd appear if sent to you today. A toggle subscribes or unsubscribes you; the subscription stores nothing but your member id, so a grant you lose afterward simply drops those rows out of your next digest rather than leaking a stale view.
+
+<Aside type="caution">
+**Subscribing previews the digest; nothing sends it yet.** PlaidCloud has no periodic-job scheduler at all, so there is no nightly or recurring digest email — the only thing that runs today is the on-demand preview you trigger yourself. Treat the subscription as recording your intent for when a send mechanism exists, not as turning one on.
+</Aside>
+
+## Reversal
+
+Reversing a posting — creating a new, opposite document in the ERP — is a real, shipped capability, but it's reachable through the API only; the console has no Reverse button or reversal dialog yet.
+
+- **Eligibility** depends on the posting's own state (only a posted entry with a confirmed ERP document id can be reversed), the connection's driver (some, like Oracle Fusion, support no programmatic reversal at all), and whether a reversal attempt is already outstanding on it.
+- **Reversing** can optionally redirect the new entry to a different target period than the original posting — honored on adapters whose ERP accepts an explicit posting period, refused with a clear error on ones that can't aim it. A hard database latch stops a second reversal attempt from ever being dispatched while one is outstanding, even across a process crash mid-dispatch; an ERP rejection releases that latch automatically, since nothing was created.
+- **A reversal left `pending` or `in_doubt`** — its outcome unknown — doesn't resolve itself; v1 has no automated reverse-confirmation, by design. It's cleared by a human holding `erp.register.approve`, who checks the ERP directly and records what they found: `released` (nothing was created there, so the posting becomes reversible again) or `confirmed` (a reversing document exists, with its id) — which is the only way that latch is ever cleared.
+
+Segregation of duties isn't enforced on any of this yet: a reversal records who approved it, but nothing currently requires a second person to have done so.
+
 ## Roll-Up Views
 
 Group the register by **run**, **period**, or **connection** to see subtotals and a status roll-up instead of individual rows, reachable from the register alongside the grid and the exception queue.
@@ -137,8 +182,8 @@ Click a row to open its detail drawer. It's organized into tabs:
 The register is built to show what a reviewer needs to confirm a posting happened, without surfacing the sensitive data a posting step handled to make it happen.
 
 - **Request and response payloads are allow-listed per adapter.** A field only appears if it's been explicitly classified as safe to keep. Bank account numbers, routing numbers, IBANs, tax ids, and other personal identifiers are stripped before you ever see the payload.
-- **The ERP business key is withheld entirely.** It can embed a vendor name or another reference token, so it never reaches the register. Identify a row by its ledger id, and use the `confirmation_id` as the ERP's own pointer to the document — the same field [ERP Post History](/guides/connections/erp-post-history/#what-each-post-shows) calls `confirmation_id`.
-- **Free-text fields are pattern-scrubbed on read.** Dimension and worktag values are excluded from comments, digests, and exports.
+- **The ERP business key is withheld entirely.** It can embed a vendor name or another reference token, so it never reaches the register — including [AI Assist](#ai-assist): the same allow-list that decides what you see decides what a model prompt is allowed to see, and a natural-key value anywhere in that payload is refused outright rather than sent. Identify a row by its ledger id, and use the `confirmation_id` as the ERP's own pointer to the document — the same field [ERP Post History](/guides/connections/erp-post-history/#what-each-post-shows) calls `confirmation_id`.
+- **Free-text fields are pattern-scrubbed on read**, and excluded outright — not just scrubbed — from the digest and any AI model prompt.
 
 <Aside type="note">
 **A blank amount is a label, not a gap.** Postings captured before this feature existed have no money detail to show. SAP postings never carry a captured amount at all — the register shows "no amount captured (by design)" for those rows. Neither case is an error, and neither should be read as a zero.
@@ -150,4 +195,10 @@ The Audit tab is display-only. Its detail is intentionally sparse in this releas
 
 ## What's Not Here Yet
 
-Reconcile and control totals, single-row retry from the detail drawer, and a dedicated list of simulated postings aren't in the console yet. Beyond those: no reversal, approval workflow, segregation of duties, export, comments, or AI assistance. Everything above — including the exception queue, connection health, roll-up views, and bulk actions — works today; anything not listed here isn't live.
+- **No Reverse or Retry control on the detail drawer, or anywhere in the console UI.** Retry is bulk-only (see [Retry Only Runs Against What You Checked](#retry-only-runs-against-what-you-checked)); reversal is [API-only](#reversal) for now.
+- **No dedicated Reconcile or Control Totals screen.** Control-total figures appear inline — in a reversal draft under AI Assist, and in the bulk impact preview — not as their own view.
+- **No approvals inbox and no segregation-of-duties enforcement.** A reversal's `approver_member_id` is recorded but nothing currently requires it, or requires a second person's sign-off.
+- **No collaboration** — no comments, @mentions, or review sign-off.
+- **No export, trends, or lineage views.**
+
+Everything else on this page — the exception queue, connection health, roll-up views, bulk actions, and AI Assist — works today.
