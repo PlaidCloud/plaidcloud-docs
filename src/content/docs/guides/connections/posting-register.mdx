@@ -1,6 +1,6 @@
 ---
 title: Review the Posting Register
-description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, a detail drawer, and strict data minimization.
+description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions with an impact preview, a detail drawer, and strict data minimization.
 sidebar:
   label: Review the Posting Register
   order: 17
@@ -10,7 +10,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 The **Posting Register** is a tenant-level console, outside any single project, where finance and accounting review ERP postings across every project and connection they're permitted to see. Where [ERP Post History](/guides/connections/erp-post-history/) is scoped to one project you already have access to, the Posting Register is the cross-project view built for a reviewer who needs to see postings from many projects and connections in one place.
 
-The Posting Register is **read-only**. Nothing in it changes, retries, clears, or reverses a posting — it's a place to review what happened, not to act on it.
+The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — let you act directly from the grid; nothing else here changes, reverses, or approves a posting.
 
 ## Who Can Open It
 
@@ -24,7 +24,7 @@ Opening the Posting Register takes one of four built-in security groups, seeded 
 | `erp.register.admin` | Everything `.approve` grants. |
 
 <Aside type="note">
-This release is read-only end to end, so `.operate`, `.approve`, and `.admin` currently behave the same as `.view` in the register itself — the tiers exist so that later capabilities (acting on a posting, approving one) can be layered onto the higher tiers without a new grant scheme. Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
+`.view` opens the register for review only. `.operate` additionally unlocks the [bulk actions](#bulk-actions) below — clearing simulated postings and retrying failed ones. `.approve` and `.admin` don't yet grant anything beyond `.operate`; those tiers exist so that later capabilities (like approvals) can be layered on without a new grant scheme. Assign the tier that matches what a member is meant to do, not just `.view` for everyone.
 </Aside>
 
 ### The Visibility Rule
@@ -73,6 +73,43 @@ Switch to the grid to see every posting rather than only the exceptions — it l
 Filters take a project or connection by id. There's no picker yet — look up the id from the project or connection you already have open.
 </Aside>
 
+## Bulk Actions
+
+From the grid, select more than one posting and act on all of them together. Select postings by ticking their rows, or by choosing **select all matching the current filter** — which reaches every posting the filter matches across every page, not just the ones already loaded.
+
+Two actions are offered:
+
+- **Clear simulated postings** — a soft delete for simulated postings you no longer need to keep around.
+- **Retry failed postings** — resend postings the ERP rejected, or that were never sent.
+
+### The Impact Preview
+
+Before either action runs, PlaidCloud shows an impact preview: how many postings are affected, the money involved (broken out by currency — amounts are never blended across currencies, and an uncaptured amount shows blank, never `0.00`), and which connections and entities the affected postings belong to. Anything in your selection the action can't touch is called out separately, so "24 of your 30 selected postings will do nothing" is visible before you commit, not discovered after.
+
+### Type-to-Confirm
+
+Above a threshold, Apply stays disabled until you type the affected amount to match it exactly.
+
+<Aside type="caution">
+Typing the amount is a **safety prompt, not an approval step**. It authorizes nothing on its own — the same permission checks apply whether or not the threshold is crossed, and nothing you type is sent to the ERP or recorded as an approval. It exists to make you look at the blast radius before a bulk write goes out.
+</Aside>
+
+### Retry Only Runs Against What You Checked
+
+Clearing simulated postings can run against either kind of selection — ticked rows or everything matching your filter. Retrying can't: **it only ever runs against postings you've individually ticked.** A filter-wide selection has no fixed list of postings to hold the retry to, so retrying asks you to paste the postings back in, and refuses to proceed unless what you paste is exactly what the preview showed — the same postings, no duplicates, and the same count. That binding is what keeps the confirmation honest: the batch you confirmed is the batch that gets sent.
+
+### What Can Be Retried
+
+Only a posting the ERP rejected, or one that was never sent, can be retried. One still in flight, in doubt, or already posted can't be retried from here.
+
+Where the connection's ERP supports it, PlaidCloud asks the ERP directly before retrying: if the ERP already holds the document as posted, the retry is refused and reversal is suggested instead. If the ERP can't answer that check, the retry is refused rather than risked — it never guesses. A few connections don't support this check at all; for those, the retry relies on the posting's own recorded rejection.
+
+Retrying requires `erp.register.operate` **and** your own personal grant on that posting's connection — the same connection grant [The Visibility Rule](#the-visibility-rule) requires to see the posting at all.
+
+### Clearing Simulated Postings
+
+Clearing is a soft delete: PlaidCloud records who cleared it and when, and requires a reason before Apply is enabled. It removes the postings from the simulate preview store and the ledger's own simulate journal — it never touches a live posting, and there's no way to point it at one.
+
 ## Roll-Up Views
 
 Group the register by **run**, **period**, or **connection** to see subtotals and a status roll-up instead of individual rows, reachable from the register alongside the grid and the exception queue.
@@ -113,4 +150,4 @@ The Audit tab is display-only. Its detail is intentionally sparse in this releas
 
 ## What's Not Here Yet
 
-The console is still entirely read-only: no retry, clear, bulk action, reversal, or approval workflow, and no export, comments, or AI assistance. Everything above — including the exception queue, connection health, and roll-up views — works today; anything not listed here isn't live.
+Reconcile and control totals, single-row retry from the detail drawer, and a dedicated list of simulated postings aren't in the console yet. Beyond those: no reversal, approval workflow, segregation of duties, export, comments, or AI assistance. Everything above — including the exception queue, connection health, roll-up views, and bulk actions — works today; anything not listed here isn't live.
