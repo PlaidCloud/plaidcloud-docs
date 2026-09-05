@@ -19,8 +19,8 @@ Opening the Posting Register takes one of four Keycloak realm scopes — `erp.re
 | Scope | Grants |
 |---|---|
 | `erp.register.view` | Open the register and review postings — the exception queue, grid, roll-up views, Trends, Lineage, and AI Assist. None of this applies, exports, or notifies anything. |
-| `erp.register.operate` | The floor beneath everything that changes state or leaves the console: bulk actions, initiating a reversal, exporting or scheduling a delivery, subscribing to the AI Assist digest, and posting a comment, sign-off, or watch. `.approve`- and `.admin`-gated actions are asserted on top of `.operate`, never in place of it — see below. |
-| `erp.register.approve` | Approving a reversal that's at or above the tenant's segregation-of-duties threshold, and resolving a stuck reversal attempt (`released` or `confirmed`) — both held alongside `.operate`. |
+| `erp.register.operate` | The floor beneath everything that changes state or leaves the console: bulk actions, initiating a reversal, requesting approval for one, opening the approvals inbox and deciding a request you have authority over, seeing or handing back a delegation, exporting or scheduling a delivery, subscribing to the AI Assist digest, and posting a comment, sign-off, or watch. `.approve`- and `.admin`-gated actions are asserted on top of `.operate`, never in place of it — see below. |
+| `erp.register.approve` | Approval authority over a reversal at or above the tenant's segregation-of-duties threshold — either by holding this scope directly or through an active delegation from someone who does — and resolving a stuck reversal attempt (`released` or `confirmed`). Granting a delegation of that authority to someone else also requires holding `.approve` yourself; using, viewing, or revoking one doesn't. All held alongside `.operate`. |
 | `erp.register.admin` | The auditor export and as-of-read profile (unmasked money and maker identity) and setting the tenant's [retention policy](#retention) — each held alongside `.operate`. Also lets you delete or fire another member's schedule. |
 
 <Aside type="note">
@@ -168,18 +168,34 @@ Reversing a posting — creating a new, opposite document in the ERP — is avai
 
 ### Segregation of Duties
 
-A reversal at or above your tenant's configured threshold requires approval from a second, different person before it proceeds.
+A reversal at or above your tenant's configured threshold requires approval before it proceeds — and approval is something an approver does, not a name the submitter supplies on the request.
 
 - **Maker≠checker.** The member submitting the reversal can't also be its approver, and can't be their own break-glass authorizer.
 - **Measured by magnitude.** The threshold compares the size of the reversal regardless of sign — reversing a credit is measured the same as reversing a debit.
 - **Recent reversals count toward the threshold.** A rolling window totals a submitter's own reversals on the same connection, so a large reversal can't be split into several smaller ones to stay under it. Amounts are summed by magnitude, not netted — a negative reversal and a positive one don't cancel each other out.
 - **Fails closed.** If a prior reversal in the window can't be verified — an uncaptured amount or currency, for instance — the reversal requires approval rather than skipping the check.
-- **The approver must be qualified.** They need `erp.register.approve` and their own grant on the connection being reversed. If fewer than two members hold both, reversals at or above the threshold are refused rather than let through.
-- **Break-glass** covers a genuine emergency: an authorizer independent of the operational chain — holding `erp.register.admin` but not `.operate` or `.approve`, plus their own grant on the connection — can override the gate, and every override is permanently recorded to the audit trail.
-- **A refusal doesn't say why.** Whether a named approver doesn't exist, lacks the role, or lacks connection access, the reversal is refused with the same message — deliberately, so a refusal can't be used to map out who holds which role or grant. The actual reason is in the audit trail, not the error.
+- **The approver must be qualified.** They need `erp.register.approve` — or an active delegation from someone who holds it — and their own grant on the connection being reversed. If fewer than two members hold both, reversals at or above the threshold are refused rather than let through.
+- **Break-glass** remains the one path where the submitter names who authorized an override directly: a genuine emergency, decided by an authorizer independent of the operational chain — holding `erp.register.admin` but not `.operate` or `.approve`, plus their own grant on the connection — and every override is permanently recorded to the audit trail.
+- **A refusal doesn't say why.** Whether a request has no qualified approver, was decided by the wrong person, or was never opened, the reversal is refused with the same message — deliberately, so a refusal can't be used to map out who holds which role or grant. The actual reason is in the audit trail, not the error.
 - **Scope.** This gate covers reversals initiated from the Posting Register. Reversals and posts issued through the project-level ERP posting API aren't covered by it yet.
 
 Turning segregation of duties on, and setting its threshold, is configured for your tenant by PlaidCloud — there's no console toggle for it yet.
+
+### The Approvals Inbox
+
+When the threshold requires one, **Request Approval** — offered alongside **Reverse** in the detail drawer — routes the reversal to every approver who holds a live personal grant on that connection. There's no one to address it to; the connection grant *is* the routing. Approvers work the queue from **Approvals** on the console toolbar: an inbox of requests waiting on their decision, and a second queue showing the requests they've submitted themselves. Each row carries the posting's amount, entity, and period, and how long it's been waiting, so deciding never means leaving the queue to go look something up first. **Approve** or **Reject** takes one reason, recorded with the decision.
+
+An approval is bound to exactly what it was granted for — the posting, its connection, the stated reason, and the target period — and can't be reused for a different reversal, a different reason, or a changed target period; a changed request needs a fresh approval. Only one request can be open on a posting at a time, and an approval is spent the moment it's redeemed. A brief hold follows every approval, during which either the approver or the submitter can still cancel it — once the hold passes, the reversal may already be a document in the ERP, and nothing undoes that. Everything is re-checked again at the moment the reversal is actually applied — the approver's role, both parties' access to the connection, and the tenant's two-approver minimum — so an approval granted earlier doesn't survive the approver losing access in the meantime.
+
+### Delegation
+
+An approver can delegate their approval authority to another member for a bounded window, from the **Delegations** window on the console toolbar — useful when an approver is going to be unavailable and reversals still need deciding. Granting a delegation needs `erp.register.approve`; using one, seeing your own, and handing one back only need `.operate`, since the typical delegate doesn't hold the approver role at all — that's the point of delegating to them.
+
+Self-delegation is refused, and so is a reciprocal pair (delegating to someone who has already delegated to you) or any longer chain — none of these are honored, so two members can't quietly make each other's decisions count as covering both of them, directly or through a middle step. Maker≠checker still applies through a delegation: a delegate can't approve a request from the person who delegated to them, and can't approve a request of their own either way. Every decision a delegate makes is recorded in the audit trail as made under the delegating approver's authority, not as if the delegate held the role outright.
+
+### Escalation
+
+An approval sitting too long without a decision raises an alert, so it doesn't just age silently in a queue nobody's watching. Each recipient is told only about the requests they themselves could actually decide — a colleague's escalation email never names a request routed to somebody else's grants — and the alert carries no amount and no free text, the same minimization the rest of the register's notifications follow.
 
 ## Trends
 
@@ -305,9 +321,5 @@ The register is built to show what a reviewer needs to confirm a posting happene
 ### The Audit Tab
 
 The Audit tab is display-only. Its detail is intentionally sparse in this release, because the underlying audit vocabulary hasn't been classified yet — expect it to fill in as that work lands, not to change how you read the rest of the drawer.
-
-## What's Not Here Yet
-
-- **No approvals inbox.** A reversal names its approver directly on the request itself; there's no separate screen where an approver reviews and acts on reversals waiting on them.
 
 Everything else on this page — the exception queue, connection health, roll-up views, bulk actions, single-row retry, reversal, control totals, AI Assist, trends, lineage, closes, collaboration, and export — works today.
