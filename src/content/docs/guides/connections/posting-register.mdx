@@ -1,6 +1,6 @@
 ---
 title: Review the Posting Register
-description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions, single-row retry, reversal, control totals reconciliation, AI assist, trends, lineage drill-back, period closes, scheduled export and alerts, collaboration, and strict data minimization.
+description: A tenant-level console for finance and accounting to review ERP postings across every project and connection they're permitted to see — an exception queue, roll-up views, connection health, bulk actions, single-row retry, reversal, intercompany run reversal with net-zero and pairing, control totals reconciliation, AI assist, trends, lineage drill-back, period closes, scheduled export and alerts, collaboration, and strict data minimization.
 sidebar:
   label: Review the Posting Register
   order: 17
@@ -10,7 +10,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 The **Posting Register** is a tenant-level console, outside any single project, where finance and accounting review ERP postings across every project and connection they're permitted to see. Where [ERP Post History](/guides/connections/erp-post-history/) is scoped to one project you already have access to, the Posting Register is the cross-project view built for a reviewer who needs to see postings from many projects and connections in one place.
 
-The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — a single-row **Retry** on the detail drawer, and [Reversal](#reversal) let you act directly from the grid and the detail drawer, [AI Assist](#ai-assist) helps you find and understand postings faster, and [Trends](#trends), [Lineage](#lineage), [Control Totals](#control-totals), [Closes](#closes), and [Export](#export) let you analyze, drill back to source, seal a period, and get data out. [Collaboration](#collaboration) lets a team comment, sign off, and watch a posting together, without ever putting money in a notification.
+The Posting Register is built for review first. Two [bulk actions](#bulk-actions) — clearing simulated postings and retrying failed ones — a single-row **Retry** on the detail drawer, [Reversal](#reversal), and reversing a whole [intercompany run](#intercompany-runs) at once let you act directly from the grid and the detail drawer, [AI Assist](#ai-assist) helps you find and understand postings faster, and [Trends](#trends), [Lineage](#lineage), [Control Totals](#control-totals), [Closes](#closes), and [Export](#export) let you analyze, drill back to source, seal a period, and get data out. [Collaboration](#collaboration) lets a team comment, sign off, and watch a posting together, without ever putting money in a notification.
 
 ## Who Can Open It
 
@@ -177,6 +177,7 @@ A reversal at or above your tenant's configured threshold requires approval befo
 - **The approver must be qualified.** They need `erp.register.approve` — or an active delegation from someone who holds it — and their own grant on the connection being reversed. If fewer than two members hold both, reversals at or above the threshold are refused rather than let through.
 - **Break-glass** remains the one path where the submitter names who authorized an override directly: a genuine emergency, decided by an authorizer independent of the operational chain — holding `erp.register.admin` but not `.operate` or `.approve`, plus their own grant on the connection — and every override is permanently recorded to the audit trail.
 - **A refusal doesn't say why.** Whether a request has no qualified approver, was decided by the wrong person, or was never opened, the reversal is refused with the same message — deliberately, so a refusal can't be used to map out who holds which role or grant. The actual reason is in the audit trail, not the error.
+- **A run reversal needs one approval per leg, not one for the run.** Reversing a whole [intercompany run](#intercompany-runs) at once doesn't get a single run-level approval — every leg needs its own, because an approval is bound to one posting, one connection, and one approver holding a grant there, and there's no single name to bind a whole run's worth of legs to.
 - **Scope.** This gate covers reversals initiated from the Posting Register. Reversals and posts issued through the project-level ERP posting API aren't covered by it yet.
 
 Turning segregation of duties on, and setting its threshold, is configured for your tenant by PlaidCloud — there's no console toggle for it yet.
@@ -196,6 +197,36 @@ Self-delegation is refused, and so is a reciprocal pair (delegating to someone w
 ### Escalation
 
 An approval sitting too long without a decision raises an alert, so it doesn't just age silently in a queue nobody's watching. Each recipient is told only about the requests they themselves could actually decide — a colleague's escalation email never names a request routed to somebody else's grants — and the alert carries no amount and no free text, the same minimization the rest of the register's notifications follow.
+
+## Intercompany Runs
+
+An intercompany run is the group of postings — its **legs** — made together for one close, identified by the **close day and sequence** stamped onto them at the time, never by the workflow run that produced them. (That workflow run id lives on separately in the ledger's own history and can outlast a posting's close stamp, so it isn't a safe way to identify a run.) List runs, open one to see its legs tied out and paired, and reverse the whole run as a single governed action.
+
+Reachable through the API only for now — `GET /erp/register/runs`, `GET /erp/register/runs/{run_day}/{sequence}`, and `POST /erp/register/runs/{run_day}/{sequence}/reverse` — there's no console screen yet.
+
+<Aside type="caution">
+**No run carries run data yet.** The step that stamps a close day and sequence onto a posting as it's made hasn't shipped — it's waiting on a finance decision — so today these endpoints correctly report **zero runs**. What you'll see instead is a count of postings that already exist but predate that stamp (`legacy_run_rows`) and a separate count of postings carrying neither a close stamp nor the older workflow-run id (`unattributed_rows`). An empty list here means the feature is working exactly as designed, not that something is broken.
+</Aside>
+
+### Net-Zero and Pairing
+
+Open a run and its legs are tied out two ways, both scoped to the connections you're personally granted — the same [visibility rule](#the-visibility-rule) as everywhere else in the register, so a run spanning connections you only partly see is reported as partly visible rather than as unbalanced.
+
+- **Net-zero**, per currency: a **balanced**, **imbalanced**, or **indeterminate** verdict, with the entities behind each net broken out. A currency isn't tied unless every leg in it was captured — one uncaptured leg makes the whole currency **indeterminate**, never a net computed over only what happened to be measured.
+- **Pairing** matches each payable leg to its receivable counterpart by a pairing key the posting workflow stamps into both before either is submitted. A matched pair nets to zero in one currency; everything else carries a named reason — no counterparty leg visible to you, an uncaptured amount, a net that genuinely isn't zero, or **cross-currency**, which is reported and never tied, since there's no foreign-exchange rate anywhere in the platform.
+
+A run larger than 200 legs is too large to tie out or pair in one response: both come back **indeterminate** rather than computed over a truncated slice of the run, so a large run never reports a false balance, or a false missing counterparty, caused only by its own size.
+
+### Reversing a Run
+
+Reverse every leg of a run in one action, from `POST /erp/register/runs/{run_day}/{sequence}/reverse`.
+
+- **Eligibility is checked for every leg up front.** Anything knowable in advance — state, adapter support, an outstanding attempt, your own connection grant — refuses the whole run before a single request reaches an ERP.
+- **What can't be known up front is reported afterward, per leg.** Live ERP and authorization state can change mid-run, so a run can finish **partially reversed** even though nothing looked wrong at preflight. Nothing is auto-compensated — posting more documents to unwind a partial failure is a riskier write than the one that failed. A partial run is remediated leg by leg, the same way a single reversal is.
+- **Re-running a run reversal is how a partial one gets finished.** Legs an earlier attempt already reversed are set aside rather than refused, so trying again only reverses whatever's actually still left.
+- **Segregation of duties applies per leg, not to the run's total.** When your tenant's SoD policy is enforced, every leg needs its own approval before the run dispatches anything — at any amount, not only above the threshold. A 10-leg run needs 10 approval requests and 10 decisions; there's no bulk-approve yet. This is deliberately conservative: a leg's own requirement can only be settled the moment it's dispatched — a rolling anti-structuring window that counts the run's own legs as they reverse, and a live ERP read-back that can fail — so demanding every approval up front is what stops a run from reversing half its legs before discovering partway through that the rest need approval too.
+- **Break-glass isn't available for a run reversal.** It's a two-person override of one posting, and applying one witness's authorization across a whole run would multiply it by the run's leg count. Take break-glass per leg from `POST /entries/{ledger_id}/reverse` instead.
+- **Runs above 200 legs can't be reversed as one action.** Reverse them in parts from the entry list instead.
 
 ## Trends
 
