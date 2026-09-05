@@ -20,7 +20,7 @@ Opening the Posting Register takes one of four Keycloak realm scopes — `erp.re
 |---|---|
 | `erp.register.view` | Open the register and review postings — the exception queue, grid, roll-up views, Trends, Lineage, and AI Assist. None of this applies, exports, or notifies anything. |
 | `erp.register.operate` | The floor beneath everything that changes state or leaves the console: bulk actions, initiating a reversal, exporting or scheduling a delivery, subscribing to the AI Assist digest, and posting a comment, sign-off, or watch. `.approve`- and `.admin`-gated actions are asserted on top of `.operate`, never in place of it — see below. |
-| `erp.register.approve` | Resolving a stuck reversal attempt (`released` or `confirmed`), held alongside `.operate`. |
+| `erp.register.approve` | Approving a reversal that's at or above the tenant's segregation-of-duties threshold, and resolving a stuck reversal attempt (`released` or `confirmed`) — both held alongside `.operate`. |
 | `erp.register.admin` | The auditor export and as-of-read profile (unmasked money and maker identity) and setting the tenant's [retention policy](#retention) — each held alongside `.operate`. Also lets you delete or fire another member's schedule. |
 
 <Aside type="note">
@@ -166,7 +166,20 @@ Reversing a posting — creating a new, opposite document in the ERP — is avai
 - Reversing can optionally redirect the new entry to a different target period than the original posting — honored on adapters whose ERP accepts an explicit posting period, refused with a clear error on ones that can't aim it. **A redirect can still land in a different period than requested:** some adapters only learn whether they honored it after dispatch, so the drawer states a landing period only once the attempt has actually settled as reversed — never earlier — and defers to the server's own message for every other outcome. A hard database latch stops a second reversal attempt from ever being dispatched while one is outstanding, even across a process crash mid-dispatch; an ERP rejection releases that latch automatically, since nothing was created.
 - **A reversal left `pending` or `in_doubt`** — its outcome unknown — doesn't resolve itself; v1 has no automated reverse-confirmation, by design. The drawer's resolve controls clear it, gated on `erp.register.approve` in addition to `.operate`: a human checks the ERP directly and records what they found — **Release** (nothing was created there, so the ledger is untouched and the posting becomes reversible again) or **Mark Reversed** (a reversing document exists, with its id) — which is the only way that latch is ever cleared. Marking a reversal `confirmed` is permanent; there's no undo through the product.
 
-Segregation of duties isn't enforced on any of this yet: a reversal records who approved it, but nothing currently requires a second person to have done so.
+### Segregation of Duties
+
+A reversal at or above your tenant's configured threshold requires approval from a second, different person before it proceeds.
+
+- **Maker≠checker.** The member submitting the reversal can't also be its approver, and can't be their own break-glass authorizer.
+- **Measured by magnitude.** The threshold compares the size of the reversal regardless of sign — reversing a credit is measured the same as reversing a debit.
+- **Recent reversals count toward the threshold.** A rolling window totals a submitter's own reversals on the same connection, so a large reversal can't be split into several smaller ones to stay under it. Amounts are summed by magnitude, not netted — a negative reversal and a positive one don't cancel each other out.
+- **Fails closed.** If a prior reversal in the window can't be verified — an uncaptured amount or currency, for instance — the reversal requires approval rather than skipping the check.
+- **The approver must be qualified.** They need `erp.register.approve` and their own grant on the connection being reversed. If fewer than two members hold both, reversals at or above the threshold are refused rather than let through.
+- **Break-glass** covers a genuine emergency: an authorizer independent of the operational chain — holding `erp.register.admin` but not `.operate` or `.approve`, plus their own grant on the connection — can override the gate, and every override is permanently recorded to the audit trail.
+- **A refusal doesn't say why.** Whether a named approver doesn't exist, lacks the role, or lacks connection access, the reversal is refused with the same message — deliberately, so a refusal can't be used to map out who holds which role or grant. The actual reason is in the audit trail, not the error.
+- **Scope.** This gate covers reversals initiated from the Posting Register. Reversals and posts issued through the project-level ERP posting API aren't covered by it yet.
+
+Turning segregation of duties on, and setting its threshold, is configured for your tenant by PlaidCloud — there's no console toggle for it yet.
 
 ## Trends
 
@@ -295,6 +308,6 @@ The Audit tab is display-only. Its detail is intentionally sparse in this releas
 
 ## What's Not Here Yet
 
-- **No approvals inbox and no segregation-of-duties enforcement.** A reversal's `approver_member_id` is recorded but nothing currently requires it, or requires a second person's sign-off.
+- **No approvals inbox.** A reversal names its approver directly on the request itself; there's no separate screen where an approver reviews and acts on reversals waiting on them.
 
 Everything else on this page — the exception queue, connection health, roll-up views, bulk actions, single-row retry, reversal, control totals, AI Assist, trends, lineage, closes, collaboration, and export — works today.
