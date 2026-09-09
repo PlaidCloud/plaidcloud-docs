@@ -64,6 +64,16 @@ Unlike the tables described above, this is not something re-running a workflow c
 This applies to scheduled archives too, which run as a particular member. Where that member does not have table read access, every archive the schedule produces is configuration-only, and the shortfall is recorded in the system log rather than shown to anyone. If you keep scheduled archives as backups, confirm the member they run as can read the project's tables.
 :::
 
+### If the Project Uses Row Access
+
+Taking an archive reads the project's tables, so [Row Access](/administration/access/managing-security-groups-and-assignments/#managing-row-access) applies to it as it does to any other read. On each governing column the archive carries the rows your groups are granted. Where you hold no grant on a column, what you get depends on how that column was declared: one left to deny by default gives you no rows at all, one declared to allow everything by default leaves that column unfiltered. A table carrying none of the governing columns is archived whole, and a project Architect archives every row whatever the grants say. A scheduled archive runs under the project's own identity rather than yours, so it archives every row.
+
+An archive taken by a member holding only some of the grants is a partial copy of the project's data, and a column left to deny by default means a table can come back empty rather than merely narrowed. Restoring such an archive rebuilds the project with those rows missing, and nothing in the restore says so, because as far as the archive is concerned the rows were never there.
+
+:::caution
+Where you need an archive you can rebuild the whole project from, take it as a member who reads the project whole.
+:::
+
 ### If the Export Fails
 
 An export that fails now reports the failure. Previously an archive could report as finished when it had not been written, leaving you to discover the missing file later — most often when you came to restore it. A failed export now says so, so treat a reported success as a genuine one and check the message on anything that reports an error. The same applies to the other export types, not just project archives.
