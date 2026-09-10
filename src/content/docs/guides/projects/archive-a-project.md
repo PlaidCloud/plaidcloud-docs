@@ -124,6 +124,15 @@ Where an incoming item is the same item as one already in the project, you choos
 
 One thing to know: this matching is by identity, not by name. An item that came from the same project originally — anything the archive was exported from, or a copy of it — is recognised as the same item. Two items that merely happen to share a name are treated as different items, and both will be present after the import.
 
+### If a Table Comes Back Without Its Data
+
+
+Restoring a table's data depends on its columns lining up with the table it is going into — the same names in the same order, because that is what a load goes by. Where they do not line up, that table's data is left out and the table is named at the end of the import, the same way a table that held no data in the archive is. A difference in a column's stored type alone does not hold the data back: the type is reported and the data loads.
+
+
+An import that ends up with no table data at all is reported as a failure rather than a success. If an import finishes with every workflow, table and dimension in place, read its closing message before assuming the rows came with them.
+
+
 ## Archiving Schedule
 
 
