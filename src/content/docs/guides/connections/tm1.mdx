@@ -1,0 +1,85 @@
+---
+title: Connect to TM1
+description: Connect PlaidCloud to an IBM TM1 / Planning Analytics server and read cube data with the TM1 Query step — build a view or MDX query, add a point-of-view slice, preview, and land the result as a table.
+sidebar:
+  order: 20
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to an IBM **TM1 / Planning Analytics** server so a workflow can read cube data straight from a saved view or MDX query. The connection reaches TM1's own REST API **cloud-direct** — PlaidCloud calls the server directly, with no on-premises agent involved. This guide covers the connection, running a query, and the incremental-extract pattern for pulling one period at a time.
+
+<Aside type="note">
+This connector is read-only and cloud-direct: no write-back to TM1, and no on-premises PlaidLink agent path yet — the TM1 server needs a network path PlaidCloud can reach directly (a public endpoint, an allowlisted IP, or a VPN).
+</Aside>
+
+## Prerequisites
+
+You need, from your TM1 administrator:
+
+- The **TM1 REST API host**, for example `https://tm1-prod.example.com:8010`, or a PAaaS URL.
+- A **TM1 account** — username and password — with read access to the databases, cubes, and views your workflows will query.
+- Whether that account authenticates **Native** (TM1 user/password) or **CAM** (Cognos Access Manager SSO), and, for CAM, the **namespace**.
+- The **database (instance) name** users will read from.
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **IBM Planning Analytics (TM1)** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `TM1 Prod`. |
+   | Host | The TM1 REST API host, e.g. `https://tm1-prod.example.com:8010`. |
+   | Default Database | Optional. A TM1 database to prefill in the step's Database field. |
+   | Authentication Mode | `Native` or `CAM`. |
+   | Username | The TM1 account username. |
+   | Password | The TM1 account password. |
+   | CAM Namespace | Required only when Authentication Mode is CAM. |
+   | Verify SSL Certificate | On by default. Turn off only for a known self-signed certificate on a test server. |
+   | Timeout (seconds) | Defaults to 30. |
+
+4. Click `Test Connection`. A successful test reports the server's product version.
+
+5. Click `Create`.
+
+</Steps>
+
+## Run a Query
+
+<Steps>
+
+1. Add a **TM1 Query** step to a workflow (it's under **IBM TM1 / Planning Analytics** in the step menu).
+
+2. Under **Source and Target**, set **TM1 Connection**, **Environment**, **Database**, **Cube**, and a **Target Table**. Cube options are discovered live from the connected database once you pick one; type a name by hand if discovery doesn't return it.
+
+3. Under **Slice**, choose **Source Mode**:
+
+   - **By View** — pick a saved TM1 view. View options are discovered live once you pick a cube.
+   - **By MDX** — write an MDX query against the cube.
+
+4. Optionally, under **Point of View**, pin dimension members beyond what the view or MDX already fixes. A point of view can only be applied with `By MDX`.
+
+5. Click **Preview** to run the current slice and see the first rows and a cell count before you save.
+
+</Steps>
+
+## Incremental Extracts by Period
+
+TM1 doesn't track changes, so there's no changed-since call to make. Instead, slice by **period** (or version) on every run: pin `Period` in the point of view to a `{period}` workflow variable rather than a literal member name — point-of-view member values are substituted from the workflow's own variables at run time, the same as the MDX field — so each run pulls the period it's given rather than re-reading the whole cube. Place the step in a [scheduled workflow](/administration/scheduled-events/) with a variable that advances each run to build up history a period at a time.
+
+## Options
+
+- **Suppress Zero/Empty Cells** — off by default. It drops zero-valued cells only **after** they're fetched, which saves no bandwidth and, in a planning cube where a posted `0` is real data, discards it. Prefer suppressing zeros in the query itself instead — `NON EMPTY` in MDX, or the saved view's own suppression setting.
+- **Row Limit** — unlimited by default. A query that returns more cells than the limit fails rather than silently truncating; narrow the query or raise the limit.
+
+## Related
+
+- [TM1 Query](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — step field reference.
+- [TM1 Connector](/reference/connectors/rest/tm1/) — connection field reference.
+- [Create and Manage a Connection](/guides/connections/create-connection/)
