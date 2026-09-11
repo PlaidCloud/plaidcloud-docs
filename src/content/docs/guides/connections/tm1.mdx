@@ -1,16 +1,16 @@
 ---
 title: Connect to TM1
-description: Connect PlaidCloud to an IBM TM1 / Planning Analytics server and read cube data with the TM1 Query step — build a view or MDX query, add a point-of-view slice, preview, and land the result as a table.
+description: Connect PlaidCloud to an IBM TM1 / Planning Analytics server and read cube data or dimension hierarchies — cloud-direct, or through an on-premises PlaidLink agent for a server the cloud cannot reach directly.
 sidebar:
   order: 20
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-Connect PlaidCloud to an IBM **TM1 / Planning Analytics** server so a workflow can read cube data straight from a saved view or MDX query. The connection reaches TM1's own REST API **cloud-direct** — PlaidCloud calls the server directly, with no on-premises agent involved. This guide covers the connection, running a query, and the incremental-extract pattern for pulling one period at a time.
+Connect PlaidCloud to an IBM **TM1 / Planning Analytics** server so a workflow can read cube data from a saved view or MDX query, or load a dimension hierarchy as a PlaidCloud dimension. The connection reaches TM1's own REST API **cloud-direct** by default; for a TM1 server that's only reachable from inside your own network, an on-premises [PlaidLink agent](/reference/cli/plaidlink/) reaches it instead — see [Reading TM1 Behind a Firewall](#reading-tm1-behind-a-firewall) below. This guide covers the connection, running a cloud-direct query, the incremental-extract pattern for pulling one period at a time, and the on-premises path.
 
 <Aside type="note">
-This connector is read-only and cloud-direct: no write-back to TM1, and no on-premises PlaidLink agent path yet — the TM1 server needs a network path PlaidCloud can reach directly (a public endpoint, an allowlisted IP, or a VPN).
+This connector is read-only: no write-back to TM1, no TI process execution.
 </Aside>
 
 ## Prerequisites
@@ -78,8 +78,33 @@ TM1 doesn't track changes, so there's no changed-since call to make. Instead, sl
 - **Suppress Zero/Empty Cells** — off by default. It drops zero-valued cells only **after** they're fetched, which saves no bandwidth and, in a planning cube where a posted `0` is real data, discards it. Prefer suppressing zeros in the query itself instead — `NON EMPTY` in MDX, or the saved view's own suppression setting.
 - **Row Limit** — unlimited by default. A query that returns more cells than the limit fails rather than silently truncating; narrow the query or raise the limit.
 
+## Load a Dimension Hierarchy
+
+The [TM1 Dimension Read](/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) step reads one TM1 hierarchy's elements, parent/child edges, and attributes, and loads them into a PlaidCloud dimension — cloud-direct, over the same connection. It's a separate step from TM1 Query: it reads dimension structure, not cube cells. A TM1 element under two consolidations in one hierarchy, or a consolidation weight it can't represent as a plain `+`/`-`/`~` sign, is refused or flagged rather than loaded wrong — see the step reference for both limits.
+
+## Reading TM1 Behind a Firewall
+
+If your TM1 server has no network path PlaidCloud can reach directly — no public endpoint, no allowlisted IP, no VPN — read it through an installed **PlaidLink agent** instead. The [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) step runs the same view/MDX/point-of-view query described above, but dispatches it to the agent, which reaches TM1 on your own network.
+
+You'll need:
+
+<Steps>
+
+1. **An installed PlaidLink agent** with network access to the TM1 server. See [Install PlaidLink](/reference/cli/plaidlink/install/).
+
+2. **A TM1-capable agent build.** PlaidCloud checks an agent's advertised capabilities before dispatching, so an existing agent installed before TM1 support shipped needs a manual rebuild and reinstall — PlaidLink does not auto-update. See [Upgrade PlaidLink](/reference/cli/plaidlink/upgrade/).
+
+3. **The TM1 connection shared with that agent**, from the connection's `Actions > Agents` list, in addition to whatever member or group access it already has. See [Security Model](/guides/connections/create-connection/#security-model).
+
+</Steps>
+
+Add a **TM1 Query (Agent)** step, choose the agent, and fill in the same connection, database, cube, and slice fields as TM1 Query. There's no live discovery or preview on this step — an agent is only reachable during a run, not while the form is open — so cube, view, and MDX are typed by hand and validated when the step runs.
+
 ## Related
 
-- [TM1 Query](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — step field reference.
+- [TM1 Query](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — cube reads, step field reference.
+- [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — cube reads through an on-premises agent.
+- [TM1 Dimension Read](/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) — load a TM1 hierarchy as a PlaidCloud dimension.
 - [TM1 Connector](/reference/connectors/rest/tm1/) — connection field reference.
+- [PlaidLink](/reference/cli/plaidlink/) — installing and upgrading agents.
 - [Create and Manage a Connection](/guides/connections/create-connection/)
