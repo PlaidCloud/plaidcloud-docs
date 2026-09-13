@@ -37,7 +37,7 @@ The step reaches Essbase **cloud-direct** over its REST API — there is no on-p
 | Dynamic Calc members | A Dynamic Calc member's value is computed by Essbase on the fly and never stored. This step reads outline structure, not computed data, so a Dynamic Calc member is refused by name rather than loaded as if it were a stored member. |
 | Attribute dimensions | An attribute dimension classifies members of a base dimension — it isn't a hierarchy of facts in its own right. Reading one is refused outright; read the base dimension instead. |
 | Unrepresentable consolidation operators | A PlaidCloud edge carries a consolidation flag (`+`, `-`, or `~`). Essbase's `+` and `-` operators map directly. `*`, `/`, and `%` can't be represented as a plain rollup sign — a member that uses one of them is refused by name rather than loaded with the wrong sign. |
-| Outlines past the member cap | A dimension outline with more members than the step supports is refused rather than partially loaded, with the count and the cap both named in the error. Read a shallower level of the hierarchy, or a smaller sub-tree, to bring it under the limit. |
+| Outlines past the member cap | A dimension outline with more than **5,000 total outline members** is refused rather than partially loaded, with the observed count and the cap both named in the error. Read a shallower level of the hierarchy, or a smaller sub-tree, to bring it under the limit. |
 
 ## Related
 
