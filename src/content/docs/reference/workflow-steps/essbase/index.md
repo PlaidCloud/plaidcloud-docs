@@ -7,8 +7,8 @@ Workflow steps that read from Oracle **Essbase** over your [Oracle Essbase conne
 
 ## Steps
 
-- [Essbase Query](/reference/workflow-steps/essbase/essbase-query/) — run a live MDX query against a cube and land the result grid as a table. Cloud-direct.
-- [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) — load an Essbase dimension outline into a PlaidCloud dimension. Cloud-direct.
+- [Essbase: Query Cube](/reference/workflow-steps/essbase/essbase-query/) — run a live MDX query against a cube and land the result grid as a table. Cloud-direct.
+- [Essbase: Read Dimension](/reference/workflow-steps/essbase/essbase-dimension-read/) — load an Essbase dimension outline into a PlaidCloud dimension. Cloud-direct.
 
 ## Related
 

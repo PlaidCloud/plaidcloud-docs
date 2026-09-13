@@ -54,6 +54,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Dynamics 365 F&O](/reference/workflow-steps/dynamics-365-fo/) — import OData/DMF entities; post journal entries
 - [Oracle Fusion](/reference/workflow-steps/oracle-fusion/) — import GL balances and journal batches; post journal entries through FBDI
 - [Oracle EPM (HFM / FCCS)](/reference/workflow-steps/oracle-epm/) — self-serve an ad-hoc data slice from Oracle FCCS with a point-of-view picker; optional scheduled recurring load
+- [Oracle Essbase](/reference/workflow-steps/essbase/) — run a live MDX query against a cube, or load a dimension outline as a PlaidCloud dimension; cloud-direct
 - [IBM TM1 / Planning Analytics](/reference/workflow-steps/ibm-planning-analytics/) — read a cube by saved view or MDX, or a dimension hierarchy; cloud-direct or via an on-premises agent
 - [Workday Financials](/reference/workflow-steps/workday-financials/) — import a RaaS report; post accounting journals
 - [Salesforce](/reference/workflow-steps/salesforce/) — extract any standard or custom CRM object into a project table over Bulk API 2.0, with the object and field list read from the org

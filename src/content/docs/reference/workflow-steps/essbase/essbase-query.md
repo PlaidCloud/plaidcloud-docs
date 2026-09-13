@@ -1,11 +1,11 @@
 ---
-title: Essbase Query
+title: "Essbase: Query Cube"
 description: Run a live MDX query against an Oracle Essbase cube and land the result grid in a workflow table, with columns derived from the grid and row access applied to the result.
 ---
 
 ## Description
 
-The **Essbase Query** step runs an MDX `SELECT` against an Oracle Essbase cube and writes the returned grid to a target table. It is a **true live query** — the step sends the MDX and reads the resulting grid synchronously, so each run reflects the cube's current numbers. It is not an extract or a poll: there is no staging job to wait on and no snapshot that goes stale between runs.
+The **Essbase: Query Cube** step runs an MDX `SELECT` against an Oracle Essbase cube and writes the returned grid to a target table. It is a **true live query** — the step sends the MDX and reads the resulting grid synchronously, so each run reflects the cube's current numbers. It is not an extract or a poll: there is no staging job to wait on and no snapshot that goes stale between runs.
 
 Use it to pull a specific slice of a cube — a set of accounts by period, a scenario comparison, a driver set for an allocation — into a PlaidCloud table you can then transform, join, or report on alongside the rest of your data.
 
@@ -43,6 +43,18 @@ You can produce the MDX two ways:
 
 Both paths produce the same `MDX` value that the step runs; the guided picker is a starting point you can always edit by hand.
 
+## Options
+
+| Field | Default | Notes |
+|---|---|---|
+| Suppress #Missing Cells | Off | Server-side: drops `#Missing` and other structurally irrelevant cells before they cross the wire. Safe — never drops a posted zero. |
+| Also Suppress Zero Cells (Lossy) | Off | A separate, opt-in filter that also discards any cell whose value is already exactly `0`, after it's fetched. **Lossy**: a posted zero is a real fact in a planning cube, not absence of data — enable only if you specifically want zeros excluded from the result. |
+| Row Limit | 250,000 | Caps the number of returned rows. Leave blank to use the default cap of 250,000; raise or lower it explicitly. A query that exceeds the limit is refused rather than truncated silently — narrow the query (add a slicer, `NON EMPTY`, or a tighter member set) or raise Row Limit, then try again. |
+
+## Preview
+
+Before saving, **Preview** runs the current MDX against the cube and shows the returned columns and first rows — a quick check that the query is shaped the way you expect, independent of whatever Row Limit the step itself is configured with.
+
 ## Results and Schema-on-Read
 
 The grid Essbase returns is written to the target table with its **columns derived from the returned grid** — schema-on-read. You don't declare a column list up front:
@@ -52,10 +64,6 @@ The grid Essbase returns is written to the target table with its **columns deriv
 - Member and alias labels in the grid come from the alias table configured on the connection, applied consistently on every run — not Essbase's own per-session default, which could show different label text depending on who was logged in when the query ran.
 
 Because the shape follows the query, changing what the MDX puts on columns changes the table's columns on the next run — keep that in mind for downstream steps that reference specific column names.
-
-## Limits
-
-An extract returning more than 250,000 rows is refused rather than run unbounded — the step fails with a clear error naming the cap, instead of silently truncating the grid. Narrow the query (fewer members on rows or columns, a smaller MDX set) to bring it under the limit.
 
 ## Row Access
 
@@ -85,6 +93,6 @@ The row-label column has no header in the grid, so it becomes `column_1` (text);
 
 - [Connect to Oracle Essbase (guide)](/guides/connections/essbase/) — create the connection and build a query.
 - [Oracle Essbase Connector](/reference/connectors/erp/oracle-essbase/) — connection field reference.
-- [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) — load an Essbase dimension outline into a PlaidCloud dimension, cloud-direct.
+- [Essbase: Read Dimension](/reference/workflow-steps/essbase/essbase-dimension-read/) — load an Essbase dimension outline into a PlaidCloud dimension, cloud-direct.
 - [Oracle Essbase Steps](/reference/workflow-steps/essbase/)
 - [REST Request](/reference/workflow-steps/general/rest-request/) — the general-purpose step for other live HTTP requests.

@@ -1,5 +1,5 @@
 ---
-title: "Essbase Dimension Read"
+title: "Essbase: Read Dimension"
 description: Read an Oracle Essbase dimension outline into a PlaidCloud dimension's main hierarchy, cloud-direct — refusing by name any shared, label-only, Dynamic Calc, or attribute member, and anything else the outline can't represent.
 ---
 
@@ -43,5 +43,5 @@ The step reaches Essbase **cloud-direct** over its REST API — there is no on-p
 
 - [Connect to Oracle Essbase (guide)](/guides/connections/essbase/) — create the connection.
 - [Oracle Essbase Connector](/reference/connectors/erp/oracle-essbase/) — connection field reference.
-- [Essbase Query](/reference/workflow-steps/essbase/essbase-query/) — run a live MDX query against a cube, cloud-direct.
+- [Essbase: Query Cube](/reference/workflow-steps/essbase/essbase-query/) — run a live MDX query against a cube, cloud-direct.
 - [Oracle Essbase Steps](/reference/workflow-steps/essbase/)
