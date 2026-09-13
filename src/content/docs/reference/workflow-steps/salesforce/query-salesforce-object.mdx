@@ -1,0 +1,127 @@
+---
+title: "Salesforce: Query Object"
+description: Extract one Salesforce object into a project table over Bulk API 2.0 — pick the object and fields from the org's own describe, filter at Salesforce, and land every column as the type Salesforce declares for it.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Reads one Salesforce object — standard or custom — into a project table over Salesforce's Bulk API 2.0. Pick the [Salesforce connection](/guides/connections/salesforce/), the object, and the fields; the step builds the query, pages the whole result set, and lands each column as the type Salesforce declares for it. There is no query to write.
+
+Salesforce is reached cloud-direct over its REST API, so this step needs no PlaidLink agent.
+
+## Configuration
+
+| Field | Required | Notes |
+|---|---|---|
+| Salesforce Connection | Yes | The Salesforce connection to read through. Connections are managed in **Tools > Connections**. |
+| Environment | No | Which of the connection's environments to read — point a sandbox environment at the sandbox org and a production one at production. Defaults to the connection's `default` environment. |
+| Object | Yes | The object's API name — `Account`, `Opportunity`, `Invoice__c`. The picker lists the objects the connection's Run As user can query, and also accepts a typed name, so a saved step keeps working while discovery is unavailable. |
+| Target Table | Yes | The project table the rows land in. |
+| Fields | Yes | Tick the fields to extract. At least one is required: Bulk API 2.0 rejects a whole-object select, so the column list is always enumerated. |
+| Filter | No | Narrows the extract at Salesforce. See [Filtering at Salesforce](#filtering-at-salesforce). |
+| Window Tag | No | Names the extract window. See [Extract Windows Run Once](#extract-windows-run-once). |
+
+`Id` is always included whether or not you tick it — it is the key every re-run merges on. A currency field also pulls its `CurrencyIsoCode` where the object has one.
+
+## How the Rows Land
+
+Each run reads the object in full, subject to your filter, and merges each page into the target table on `Id`. A row already in the table is replaced in place, so an interrupted run that resumes re-lands nothing twice.
+
+<Aside type="caution">
+**Deletions are not tracked.** The table reflects what Salesforce returned, and a record deleted in Salesforce stays in the target table — nothing removes it. This is an extract, not a two-way sync: merged, deleted, and archived records are deliberately excluded from what the step reads, so they never reappear as rows either.
+</Aside>
+
+The landed columns use the types Salesforce declares in its own field metadata, never a type guessed from the first page of data. The **Lands As** column in the field picker is that declared type, so the shape you approve in the form is the shape the table gets.
+
+## What Lands As What
+
+| Salesforce field type | Lands as |
+|---|---|
+| `id`, `reference`, `string`, `textarea`, `phone`, `url`, `email`, `picklist`, `multipicklist`, `combobox` | text |
+| `boolean` | boolean |
+| `date` | date |
+| `datetime` | timestamp |
+| `time` | time |
+| `int` | integer, or a 64-bit integer when the field declares 10 or more digits |
+| `double`, `currency`, `percent` | numeric — a wide decimal, 38 digits with 10 decimal places |
+
+Three conventions follow from that table and are worth knowing before you build on the output:
+
+- **Currency lands as a number, not as a currency type.** Real orgs declare currency fields with scales of 0, 2, 3, and 4, so every numeric type lands in one decimal wide enough for all of them. There is no currency symbol on the column and no per-field decimal-place constraint. Where the object carries `CurrencyIsoCode`, that column comes along beside the currency field so the amount keeps its currency; a single-currency org has no such field on the object, and none is invented.
+- **A percent is the whole number Salesforce reports.** `20` means 20 percent, not `0.2`. Nothing is rescaled on the way in.
+- **An empty value lands as NULL.** Bulk results cannot distinguish a true null from an explicit empty string, so both land as `NULL` — in every column, text included. A column that must keep empty-string semantics needs a formula field on the Salesforce side.
+
+## Fields the Step Refuses
+
+Some Salesforce field types cannot be landed honestly, so the field picker marks them unusable and names the reason rather than letting you save a step that fails at run time. Each refusal names the field and its Salesforce type.
+
+| Salesforce field type | Why | What to do instead |
+|---|---|---|
+| `address`, `location` (compound fields) | A compound field has no directly readable value in a Bulk query. | Tick its component fields — `BillingStreet`, `BillingCity`, `BillingState`, `BillingPostalCode`, `BillingCountry`, and the geolocation's latitude and longitude. The picker names the components for the field in front of you. |
+| `base64` | File and blob content is never returned inline; it needs a separate binary download this step does not do. | Read the record's other fields, and handle attachments separately. |
+| `encryptedstring` | Salesforce returns a masked value rather than an error when the Run As user lacks **View Encrypted Data**, and nothing distinguishes masked data from real. Landing rows of asterisks silently is worse than refusing. | Decide deliberately whether the data should leave Salesforce at all; there is no supported way to extract it through this step. |
+| `anyType` | The real type can differ row by row, and a table column has exactly one type. | Extract a typed field, or a formula field that renders the value as text. |
+| Any type the step does not recognize | Refused rather than landed as text, which would quietly change what the value means. | Raise it with support so the type gets a mapping. |
+
+<Aside type="note">
+Field-level security is not one of these refusals, because it is not visible in field metadata. A query naming a field the Run As user cannot read fails outright — see [The Run As User Scopes Everything](/guides/connections/salesforce/#the-run-as-user-scopes-everything).
+</Aside>
+
+## Extract Windows Run Once
+
+**Window Tag** names the window of data a run is loading — a period or a batch label such as `2026-09`.
+
+An extract window runs once. Re-running a window that already completed does **not** go back to Salesforce: the step reports plainly that it did not re-read, and says the row count it shows belongs to the earlier run. That is a loud no-op, not a silent one, and it is the behavior that keeps a re-run from paging a second copy of a result set it already landed.
+
+<Aside type="caution">
+**The tag is a literal string — workflow variables are not substituted into it.** A tag of `{period}` is stored, compared, and reused as the eight characters `{period}`, which never changes, so every run after the first replays instead of reading. A step configured in the workflow editor therefore cannot vary its own tag from run to run.
+</Aside>
+
+That leaves three ways to use the step:
+
+- **Leave the tag blank** and treat the step as a one-shot load. The first run reads; a second run of that same step replays and reports that it did not re-read. Use this to build and validate the extract, and for a table you load once.
+- **Type a literal tag and change it when you load the next window** — `2026-09`, then `2026-10`. Editing the tag starts a new window, so a monthly load someone advances by hand works exactly as it reads.
+- **Drive the step from a caller that supplies the tag** — the REST API or an MCP client — passing a distinct `extract_tag` per run. This is the shape an unattended recurring pull needs today, because a scheduled step cannot advance its own tag.
+
+A run that was interrupted resumes the same window, so keep the tag constant for as long as that window may still need to finish. Changing the tag starts a new window and a new query at Salesforce.
+
+## Filtering at Salesforce
+
+Narrow the extract at Salesforce rather than pulling the whole object and filtering afterwards. Each filter term is a field, an operator, and a value; terms combine with AND.
+
+| Operator | Notes |
+|---|---|
+| `=`, `!=`, `<`, `<=`, `>`, `>=` | Compared against the value as typed. |
+| `LIKE` | Use `%` as the wildcard, for example `Acme%`. |
+| `IN`, `NOT IN` | Give a comma-separated list of values. |
+
+Both the field and the operator are checked against the fields you selected before the query is built, and there is no free-text `WHERE` clause to write — so a filter cannot reach past the extract. Filter on a field you have also ticked; a filter naming a field the extract does not select is refused.
+
+The step offers no row limit and no sort. Bulk API 2.0 turns off its own internal chunking when a query carries either, which makes a large extract slower and more likely to time out. Selective filter criteria are Salesforce's own remedy for a query that is too large or too slow.
+
+## Volume and Churn Fit
+
+This shape — read the object in full, on a schedule — suits moderate-volume, moderate-churn objects: Accounts, Opportunities, Leads, Campaigns, and custom objects of similar size.
+
+It is the wrong tool for high-volume, high-churn objects such as `Task`, `EmailMessage`, or a large custom object with millions of rows changing daily. A nightly full pull of those spends wall-clock and API capacity that an incremental sync would not. Where the object is large but only part of it is interesting, a filter that bounds the extract — a date range, a record type, an owner — turns it back into a moderate-volume pull.
+
+## When a Run Does Not Finish
+
+| What you see | What happened | What to do |
+|---|---|---|
+| A warning that the job is still running after 15 minutes | The step waits in the foreground for Salesforce to finish the query, and that wait is bounded. Nothing advances the job in the background. | Re-run the step. It resumes the wait on the **same** Salesforce job and never submits a second one. If it keeps exceeding the bound, narrow the extract with filter criteria. |
+| A warning that the window already completed and was not re-read | The window ran before. The row count shown is the earlier run's. | Run the extract with a distinct **Window Tag** — see [Extract Windows Run Once](#extract-windows-run-once). |
+| An error naming a failed or aborted job | A failed Bulk query job yields no partial results and cannot be resumed. The window is now spent. | Re-run with a **distinct Window Tag**. Re-running the same window replays the failure and submits nothing, and editing the step's configuration under the same tag is refused as a conflict. |
+| A refusal naming Salesforce's request limit | The org's rolling 24-hour API request allowance is exhausted. Salesforce documents no retry-after for it. | Wait for the window to clear, then re-run — the extract is still resumable, nothing was lost. |
+| A refusal naming one field and its Salesforce type | That field type cannot be landed, or the Run As user cannot read the field. | See [Fields the Step Refuses](#fields-the-step-refuses) and the Run As user's field-level security. |
+
+Salesforce keeps a completed query job's results retrievable for 7 days, which is what makes an interrupted extract resumable — and what bounds how long a resume can wait before the results are gone. Jobs are visible in Salesforce under **Setup > Environments > Jobs > Bulk Data Load Jobs**.
+
+## Related
+
+- [Salesforce Steps](/reference/workflow-steps/salesforce/)
+- [Connect to Salesforce](/guides/connections/salesforce/) — the org-side setup, start to finish
+- [Salesforce REST Connector](/reference/connectors/rest/salesforce/) — connection field reference
+- [Running One Step in a Workflow](/guides/workflows/running-one-step-in-a-workflow/)

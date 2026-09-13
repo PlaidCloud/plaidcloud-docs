@@ -44,6 +44,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to SAP S/4HANA Cloud](/guides/connections/s4hana-cloud/) — set up a direct S/4HANA Cloud connection with OAuth2, import trial balance and journal entry items, and post journal entries over SOAP.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
 - [Connect to Xero](/guides/connections/xero/) — authorize a Xero organisation in one click, import Accounting API entities, and post manual journals, invoices, bills, payments, and credit notes.
+- [Connect to Salesforce](/guides/connections/salesforce/) — set up a Salesforce External Client App and Run As user, then extract CRM objects into project tables.
 - [Extract from HFM / FCCS (Ad-hoc)](/guides/connections/hfm-fccs/) — connect to Oracle FCCS and self-serve a data slice with a point-of-view picker, no ticket to the HFM team.
 - [Connect to TM1](/guides/connections/tm1/) — connect to an IBM TM1 / Planning Analytics server and read cube data by view or MDX, sliced by period.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
