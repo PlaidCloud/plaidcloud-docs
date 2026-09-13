@@ -1,0 +1,82 @@
+---
+title: Connect to Oracle Essbase
+description: Connect PlaidCloud to Oracle Essbase 21c or Oracle Analytics Cloud and run a live MDX query against a cube or load a dimension outline into a PlaidCloud dimension — cloud-direct, with deterministic member labels and a hard cap on extract size.
+sidebar:
+  order: 20
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Oracle **Essbase** (21c or later, or Oracle Analytics Cloud) so a workflow can run a live MDX query against a cube or load a dimension outline as a PlaidCloud dimension. The connection reaches Essbase's own REST API **cloud-direct** — there is no on-premises agent path for these steps. This guide covers the connection, running a query, the options that control row limits and labeling, and loading a dimension hierarchy.
+
+<Aside type="note">
+This connector is read-only: no write-back to Essbase.
+</Aside>
+
+## Prerequisites
+
+You need, from your Essbase administrator:
+
+- The **Essbase server origin**, for example `https://your-host:9001` — no trailing `/essbase/...` path.
+- A **service account** — username and password — with read access to the applications and cubes your workflows will query.
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Oracle Essbase** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `Essbase Prod`. |
+   | Base URL | The Essbase server origin, e.g. `https://your-host:9001`. |
+   | Default Application | Optional. Pre-selects this application in the step forms. |
+   | Username | The service-account username. |
+   | Password | The service-account password. |
+   | Verify SSL | On by default. Turn off only for a host with a self-signed or otherwise unverifiable certificate. |
+
+4. Click `Test Connection`. A successful test reaches the Essbase server, lists the applications the service account can see, and reports how many it found — confirming both the base URL and the credentials before you build a query.
+
+5. Click `Create`.
+
+</Steps>
+
+## Run a Query
+
+<Steps>
+
+1. Add an **Essbase Query** step to a workflow (it's under **Oracle Essbase** in the step menu).
+
+2. Under **Configuration**, set **Connection**, **Application**, **Cube (Database)**, and a **Target Table**.
+
+3. Build the **MDX**:
+
+   - **Guided member selection** — browse the cube's dimensions and members and pick what goes on columns and rows; the step assembles the MDX for you.
+   - **Raw MDX** — write or paste an MDX `SELECT` directly, for anything the guided picker doesn't cover, such as calculated members or set operators.
+
+4. Run the step. The returned grid lands as the target table, with columns derived from the grid itself — there's no schema to declare up front.
+
+</Steps>
+
+## Options
+
+- **Member labels are deterministic.** Column labels for members come from the alias table configured on the connection, applied consistently on every run — not Essbase's own per-session default, which could show different label text depending on who was logged in when the query ran.
+- **Extracts over 250,000 rows are refused.** A query returning more rows than that fails with a clear error naming the cap, instead of running unbounded or silently truncating the grid. Narrow the query to bring it under the limit.
+- **Zero suppression is opt-in and lossy.** Suppressing zero-valued cells is a filter you turn on deliberately, and it's a destructive one: it discards cells that hold a genuine posted `0`, which is a different thing from Essbase's own `#Missing` marker for a cell with no data at all. In a planning cube, a posted zero is meaningful — someone entered it — so suppressing zeros can drop real data, not just absence of data. Leave it off unless you specifically want zeros excluded from the result.
+
+## Load a Dimension Hierarchy
+
+The [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) step reads one Essbase dimension's outline and loads it into a PlaidCloud dimension's main hierarchy — cloud-direct, over the same connection. It's a separate step from Essbase Query: it reads outline structure, not cube cells.
+
+The step refuses, by name, anything it can't represent rather than loading it wrong: shared members, label-only members, Dynamic Calc members, attribute dimensions, a consolidation operator other than `+`/`-` (Essbase's `*`, `/`, and `%` have no PlaidCloud equivalent), and an outline past the step's member cap. See the [step reference](/reference/workflow-steps/essbase/essbase-dimension-read/#what-this-step-cannot-represent) for the full list and what each refusal means.
+
+## Related
+
+- [Essbase Query](/reference/workflow-steps/essbase/essbase-query/) — step field reference.
+- [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) — load a dimension outline as a PlaidCloud dimension.
+- [Oracle Essbase Connector](/reference/connectors/erp/oracle-essbase/) — connection field reference.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

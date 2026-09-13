@@ -13,7 +13,7 @@ This connector talks to [Oracle Essbase's REST API](https://docs.oracle.com/en/d
 
 Oracle Essbase **21c or later**, and Oracle Analytics Cloud (OAC) Essbase. These versions expose Essbase over a documented REST API, which is what PlaidCloud calls. Pre-REST on-premises Essbase releases are **not supported** — there is no legacy Java-API or grid-client path.
 
-Once the connection exists, the [Essbase Query](/reference/workflow-steps/general/essbase-query/) step runs live MDX against a cube and lands the result grid in a table.
+Once the connection exists, the [Essbase Query](/reference/workflow-steps/essbase/essbase-query/) step runs live MDX against a cube and lands the result grid in a table, and the [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) step loads a dimension outline into a PlaidCloud dimension.
 
 ## How Authentication Works
 
@@ -36,5 +36,8 @@ Use **Test Connection** in the connection editor. A successful test reaches the 
 
 ## Related
 
-- [Essbase Query](/reference/workflow-steps/general/essbase-query/) — run a live MDX query against a cube and land the result in a table.
+- [Essbase Query](/reference/workflow-steps/essbase/essbase-query/) — run a live MDX query against a cube and land the result in a table.
+- [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) — load a dimension outline into a PlaidCloud dimension.
+- [Oracle Essbase Steps](/reference/workflow-steps/essbase/)
+- [Connect to Oracle Essbase (guide)](/guides/connections/essbase/)
 - [Create and Manage a Connection](/guides/connections/create-connection/)

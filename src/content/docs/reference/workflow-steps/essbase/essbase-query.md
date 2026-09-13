@@ -1,8 +1,6 @@
 ---
 title: Essbase Query
 description: Run a live MDX query against an Oracle Essbase cube and land the result grid in a workflow table, with columns derived from the grid and row access applied to the result.
-sidebar:
-  order: 12
 ---
 
 ## Description
@@ -51,8 +49,13 @@ The grid Essbase returns is written to the target table with its **columns deriv
 
 - Column names come from the grid's header rows. A header cell that spans nothing (the corner above the row labels) becomes `column_1`, `column_2`, and so on; duplicate names are made unique with a numeric suffix.
 - A column whose data cells are all numeric is typed as numeric; anything else is typed as text. Empty Essbase cells land as nulls.
+- Member and alias labels in the grid come from the alias table configured on the connection, applied consistently on every run — not Essbase's own per-session default, which could show different label text depending on who was logged in when the query ran.
 
 Because the shape follows the query, changing what the MDX puts on columns changes the table's columns on the next run — keep that in mind for downstream steps that reference specific column names.
+
+## Limits
+
+An extract returning more than 250,000 rows is refused rather than run unbounded — the step fails with a clear error naming the cap, instead of silently truncating the grid. Narrow the query (fewer members on rows or columns, a smaller MDX set) to bring it under the limit.
 
 ## Row Access
 
@@ -80,5 +83,8 @@ The row-label column has no header in the grid, so it becomes `column_1` (text);
 
 ## Related
 
-- [Oracle Essbase Connector](/reference/connectors/erp/oracle-essbase/) — create and test the connection this step uses.
+- [Connect to Oracle Essbase (guide)](/guides/connections/essbase/) — create the connection and build a query.
+- [Oracle Essbase Connector](/reference/connectors/erp/oracle-essbase/) — connection field reference.
+- [Essbase Dimension Read](/reference/workflow-steps/essbase/essbase-dimension-read/) — load an Essbase dimension outline into a PlaidCloud dimension, cloud-direct.
+- [Oracle Essbase Steps](/reference/workflow-steps/essbase/)
 - [REST Request](/reference/workflow-steps/general/rest-request/) — the general-purpose step for other live HTTP requests.
