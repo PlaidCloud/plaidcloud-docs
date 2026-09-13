@@ -56,6 +56,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Oracle EPM (HFM / FCCS)](/reference/workflow-steps/oracle-epm/) — self-serve an ad-hoc data slice from Oracle FCCS with a point-of-view picker; optional scheduled recurring load
 - [IBM TM1 / Planning Analytics](/reference/workflow-steps/ibm-planning-analytics/) — read a cube by saved view or MDX, or a dimension hierarchy; cloud-direct or via an on-premises agent
 - [Workday Financials](/reference/workflow-steps/workday-financials/) — import a RaaS report; post accounting journals
+- [Salesforce](/reference/workflow-steps/salesforce/) — extract any standard or custom CRM object into a project table over Bulk API 2.0, with the object and field list read from the org
 - [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, ad-hoc queries, and GL/dimension objects; post journal entries
 - [SAP S/4HANA Cloud](/reference/workflow-steps/s4hana-cloud/) — import trial balance and journal entry items over OData; post journal entries over SOAP
 - [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls

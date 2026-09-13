@@ -1,0 +1,157 @@
+---
+title: Connect to Salesforce
+description: Set up a Salesforce connection with an External Client App and the OAuth client credentials flow, choose the Run As integration user, test the connection, and extract CRM objects into project tables.
+sidebar:
+  order: 21
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to a Salesforce org to extract standard and custom objects — Accounts, Opportunities, Leads, Campaigns, your own `__c` objects — into project tables, with the object list, the field list, and every column's type read from the org itself.
+
+The Salesforce side is an administrator's job and it is on the critical path: an **External Client App**, an integration user for the app to **run as**, and the app's consumer key and secret. This guide covers that setup, then the PlaidCloud connection, the test, and the first extract.
+
+## Prerequisites
+
+You need, in Salesforce:
+
+- An administrator who can create apps and edit their policies in **Setup**.
+- A Salesforce user for the integration to run as. Use a dedicated integration user rather than a person's login — everything PlaidCloud reads is scoped to this user, and a person's account changes as their role does.
+- That user's profile or permission set with **API Enabled**.
+
+In PlaidCloud you need permission to create connections (**Tools > Connections**).
+
+## Find Your My Domain Host
+
+Every Salesforce org has a My Domain, and its name is the host PlaidCloud connects to. In Salesforce, go to **Setup** and search Quick Find for **My Domain**; the page shows your domain name. Your host is that name plus `.my.salesforce.com`:
+
+| Org | Host |
+|---|---|
+| Production and Developer Edition | `mycompany.my.salesforce.com` |
+| Sandbox | `mycompany--uat.sandbox.my.salesforce.com` — the domain name, `--`, the sandbox name, then `.sandbox.my.salesforce.com` |
+
+Use the org's own My Domain host, not `login.salesforce.com` or `test.salesforce.com`. The client credentials flow authenticates against a specific org, and the generic login hosts do not name one.
+
+<Aside type="tip">
+Sandboxes and production are separate orgs with separate apps and separate credentials. Set both up the same way and keep them in different PlaidCloud environments on one connection, so the same workflow reads the sandbox in your development environment and production in production.
+</Aside>
+
+## Create an External Client App
+
+<Aside type="caution">
+Create an **External Client App**, not a Connected App. Salesforce disabled the creation of new Connected Apps by default — through the UI and the Metadata API alike — phasing it in through Spring '26. An administrator who goes looking for the familiar "New Connected App" button will not find it. Salesforce Support can re-enable it on a case, and says that option will itself be removed in a future release, so build the integration on an External Client App. Connected Apps you already have keep working.
+</Aside>
+
+<Steps>
+
+1. In **Setup**, search Quick Find for **External Client App Manager** and click `New External Client App`.
+
+2. Fill in **External Client App Name** (for example `PlaidCloud Integration`), the auto-filled **API Name**, and a **Contact Email**. Leave **Distribution State** as `Local`.
+
+3. Under **API (Enable OAuth)**, turn on OAuth. A **Callback URL** is required by the form even though this flow never redirects anywhere — `https://localhost/` is a fine placeholder.
+
+4. Add the OAuth scope **Manage user data via APIs (api)**. That is the scope the REST and Bulk APIs read through.
+
+5. Create the app.
+
+6. Open the app, go to its **Policies**, and click `Edit`. Enable the **client credentials flow**, and set **Run As** to your integration user.
+
+7. On the same page, set **Permitted Users** to `Admin approved users are pre-authorized`, then assign the app to the Run As user through that user's profile or a permission set.
+
+8. Go to the app's **Settings > OAuth Settings** and open **Consumer Key and Secret**. Salesforce verifies your identity, then shows both values for a few minutes. Copy them somewhere safe — you will paste them into PlaidCloud next, and the secret cannot be read back out of PlaidCloud afterwards.
+
+</Steps>
+
+<Aside type="note">
+A newly created app takes a few minutes to become usable across Salesforce's infrastructure. If the first connection test fails immediately after you create the app, wait a few minutes and test again before changing anything.
+</Aside>
+
+## Choose the Run As User
+
+The client credentials flow has no interactive login, so the app carries one Salesforce identity: the user named in its **Run As** setting. Everything PlaidCloud ever reads through this connection is read as that user.
+
+Provision that user deliberately:
+
+- **Give it access to the objects you intend to extract**, through its profile or a permission set — read access on the objects, and field-level read on the fields you plan to select.
+- **Give it the sharing it needs.** Row-level access comes from the org's sharing model: role hierarchy, sharing rules, and record ownership. An integration user low in the hierarchy sees a fraction of the records a sales operations user sees.
+- **Give it API Enabled**, or the flow cannot authenticate at all.
+- **Keep it out of day-to-day administration.** A user whose permissions change for unrelated reasons changes what every saved extract returns.
+
+Confirm which user you actually got: PlaidCloud's **Test Connection** reports the Run As user's name back to you, which is the cheapest way to catch an app pointed at the wrong identity before it ships data.
+
+## The Run As User Scopes Everything
+
+This is the part worth reading twice, because the two ways a Run As user limits an extract fail in opposite directions.
+
+**Row-level sharing is silent.** Records the Run As user cannot see are simply not in the result. There is no error, no warning, and no count of what was withheld — a 40,000-row extract of a 250,000-record object looks exactly like a complete extract of a 40,000-record object. Nothing in PlaidCloud can detect the difference, because Salesforce never says the rows exist. So when row counts look low, check the Run As user's role, sharing rules, and record ownership before you look anywhere else. Compare against a report run in Salesforce **as that same user**, not as yourself.
+
+**Field-level security is loud.** PlaidCloud names every selected field explicitly in the query it sends, so a field the Run As user cannot read fails the whole extract with an error naming that field. Nothing partial lands, and nothing comes back blank and undetected.
+
+That asymmetry has a practical consequence: **a working saved step stops running the moment someone revokes field-level read on one selected field.** The step did not change and PlaidCloud did not change; the Run As user's field access did. When an extract that ran for months suddenly fails naming a single field, that is what happened — restore the field for the Run As user, or untick the field in the step.
+
+<Aside type="caution">
+Encrypted fields fail the other way around. When the Run As user lacks **View Encrypted Data**, Salesforce returns masked characters rather than an error — real-looking rows of asterisks. PlaidCloud refuses `encryptedstring` fields outright rather than landing that, so they are never offered for extract.
+</Aside>
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **REST - Salesforce** from the menu.
+
+3. Give the connection an **Account Name**, for example `Salesforce Prod`.
+
+4. Set **Host or IP Address** to the org's My Domain host from above.
+
+5. Paste the app's consumer key into **Client ID** and its consumer secret into **Client Secret**.
+
+6. Set the **Security Model** to control who in the workspace can use the connection, leave **Active (Allow Access)** checked, and click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+Click `Test Connection`. PlaidCloud performs the real token exchange and reports three things:
+
+| Reported | What to check |
+|---|---|
+| Organization id | That it is the org you meant — the quickest way to catch sandbox credentials saved into a production environment. |
+| API version | The highest version this org supports. Extracts run on the version pinned to the connection, not necessarily this one. |
+| Run As user | That it is the integration user you provisioned, not a person and not an admin. |
+
+An authentication failure asks you to re-enter the client id and secret, because the secret cannot be read back after it is saved.
+
+## Extract Your First Object
+
+<Steps>
+
+1. Add a **Salesforce: Query Object** step to a workflow.
+
+2. Set **Salesforce Connection** and **Environment**, then pick **Object** — start with `Account`.
+
+3. Tick a handful of fields. The **Lands As** column shows the type each column will really have, taken from Salesforce's own field metadata. `Id` is always included.
+
+4. Set **Target Table** to a scratch table and run the step (see [Running One Step in a Workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the app, the Run As user's access, and the host are all correct. Before you build on the output, read the step's own reference page: an extract window runs once, deletions are not tracked, a few field types cannot be extracted at all, and an unattended recurring pull is driven by a caller that supplies a new window tag each run rather than by a scheduled step.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+|---|---|---|
+| Authentication fails right after you create the app | The app has not finished propagating across Salesforce's infrastructure. | Wait a few minutes and test again before changing anything. |
+| Authentication fails with the credentials you just pasted | A consumer key or secret copied with leading or trailing whitespace, or a secret from a different app. | Re-copy both from **Settings > OAuth Settings > Consumer Key and Secret** and paste them again. |
+| Authentication fails and the app looks correct | The app's policies were never edited, so the client credentials flow is not enabled or has no **Run As** user. | Open the app's **Policies**, click `Edit`, enable the client credentials flow, and set **Run As**. |
+| Authentication fails from PlaidCloud but the same app works from your own machine | **IP restrictions.** Login IP Ranges on the Run As user's profile, or an app without IP relaxation, reject the token exchange — and Salesforce gives no hint that this is why. | Either relax IP enforcement for this app, or add PlaidCloud's egress addresses to the profile's Login IP Ranges. Ask PlaidCloud support for the addresses for your tenant. |
+| A connection that worked stops authenticating | The Run As user was deactivated, the app was revoked, or a session or IP policy changed in the org. | Check the user and the app in Salesforce. PlaidCloud discards a stale token and retries once on its own, so a persistent failure is a real change in the org. |
+| An extract fails naming one field | The Run As user lost field-level read on a selected field. | See [The Run As User Scopes Everything](#the-run-as-user-scopes-everything). |
+
+## Related
+
+- [Salesforce: Query Object](/reference/workflow-steps/salesforce/query-salesforce-object/) — the step's full reference, including extract windows and refused field types
+- [Salesforce REST Connector](/reference/connectors/rest/salesforce/) — connection field reference
+- [Create and Manage a Connection](/guides/connections/create-connection/) — editing, testing, per-environment configuration, and access control
