@@ -1,0 +1,59 @@
+---
+title: "Anaplan: Read List"
+description: Read one or more Anaplan lists — a whole composite hierarchy, root first — into a PlaidCloud dimension. Access-control flags and subsets aren't imported, and every edge rolls up as a plain plus sign.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Reads one or more Anaplan lists over your [Anaplan connection](/guides/connections/anaplan/) and loads them into a PlaidCloud dimension. **One step reads a whole composite hierarchy** — name every list it spans, root first (for example Region, then Country, then Store) — rather than splitting it across several steps: the staging table is replaced outright on every run, so several steps pointed at one staging table would each wipe out the previous one's rows.
+
+This step appears in the step menu under **Anaplan**, labeled **List Read**.
+
+The step reaches Anaplan **cloud-direct** over its Integration API — there is no on-premises agent path.
+
+<Aside type="tip">
+This connector is read-only, and v1 authenticates over Basic auth only — see [Authentication](/guides/connections/anaplan/#authentication). Anaplan's request budget is shared tenant-wide, so stagger this step's schedule against your other Anaplan workflows — see [Schedule Considerations](/guides/connections/anaplan/#schedule-considerations).
+</Aside>
+
+## Configuration
+
+### Anaplan Source
+
+| Field | Required | Notes |
+|---|---|---|
+| Anaplan Connection | Yes | The [Anaplan connection](/guides/connections/anaplan/) to read through. |
+| Environment | Yes | The connection's environment. |
+| Model | No | Overrides the model ID saved on the connection. Discovered live from the connection, or typed by hand. |
+| Lists | Yes | Every Anaplan list the hierarchy spans, as an ordered list. Add lists discovered from the chosen model, or type an ID by hand, then reorder with Move Up / Move Down. Listing them root first reads well, but the order doesn't change what lands — every list is read before any parent is resolved. |
+| Staging Table | Yes | The raw parent/child/consolidation/name and property rows land here before the PlaidCloud dimension is built from it. |
+
+### Target PlaidCloud Dimension
+
+| Field | Required | Notes |
+|---|---|---|
+| Specify Dimension Dynamically | One of the two | Target dimension name, which may contain `{variable}` tokens resolved at run time. Selected by default. |
+| Use Specific Dimension | One of the two | Pick a pre-existing PlaidCloud dimension instead. |
+
+## What This Step Cannot Represent
+
+| Limitation | What it means |
+|---|---|
+| Every edge rolls up with a plain `+` | Anaplan list hierarchies carry no per-edge weight or sign — there's nothing to read, so nothing is lost in translation, but nothing more can be represented either. If a model expresses exclusions or negative rollups through a line item or a property, that logic isn't carried into the dimension and has to be rebuilt downstream. |
+| Access-control flags and subset membership aren't imported | Selective Access read/write flags and each item's list-subset membership are Anaplan metadata, not dimension data — importing every subset as its own column would otherwise collide with real properties across a growing, shared namespace. A genuine list property whose name collides with either is refused rather than silently landed under the other's name. |
+| Line item subsets aren't readable as dimensions | Anaplan exposes them only through a generic dimension-items endpoint, not as a list this step can read. |
+| A list above 1,000,000 records can't be read on this path | The items endpoint this step reads from refuses outright above that documented ceiling rather than returning a partial result, and offers no way to page around it — so the step refuses and names the ceiling rather than land a partial dimension. Split the list in Anaplan, or read a subset of it, in the meantime. |
+| A node sits under exactly one parent | An item whose parent name and parent ID disagree, whose parent sits in a list this step doesn't read, or whose named parent doesn't exist at all, is refused by name rather than silently reparented to the dimension's root. |
+| A list's top-level item isn't imported | Anaplan's top-level item is a rollup node that sits above every item in the list rather than an item of the list itself, so it's never returned by the items this step reads. The dimension ends up one level shallower than the Anaplan list, and the list's own roots become the dimension's roots. The step warns when a list you read declares one. |
+| Node IDs must be unique across every list read together | A node's ID is the item's Anaplan code, or its name when it has none — and an Anaplan code is only guaranteed unique within one list. Two lists reusing the same short codes are refused by name rather than silently merged into one node. |
+| Alternate hierarchies aren't supported | Every list loads into the dimension's main hierarchy. |
+| Read-only | Nothing is ever written back to Anaplan. |
+
+## Related
+
+- [Connect to Anaplan (guide)](/guides/connections/anaplan/) — create the connection.
+- [Anaplan: Read View](/reference/workflow-steps/anaplan/anaplan-read-view/) — read a saved view exactly as saved.
+- [Anaplan: Read Export](/reference/workflow-steps/anaplan/anaplan-read-export/) — run a pre-existing export action.
+- [Dimension Load](/reference/workflow-steps/dimensions/dimension-load/) — the same dimension-load mechanism this step builds on.
+- [Anaplan Steps](/reference/workflow-steps/anaplan/)

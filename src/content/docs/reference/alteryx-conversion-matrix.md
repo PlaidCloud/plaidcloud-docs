@@ -270,6 +270,7 @@ belongs:
 | Alteryx Tool | Where It Goes in PlaidCloud |
 | --- | --- |
 | Salesforce Input / Output | A **Salesforce** connection |
+| Anaplan | An **Anaplan** connection |
 | HTTP Input | A **REST Request** step against a **REST** connection |
 | Google Analytics Input | **Import: Singer Source** with the Google Analytics tap |
 | Cassandra Input | **Import: Singer Source** with the Cassandra tap |
@@ -277,12 +278,15 @@ belongs:
 | Hadoop Input / Output | **Import: SQL** / **Export: SQL** through a Hive, Impala or Presto connection |
 | Spark Input / Output | **Import: SQL** / **Export: SQL** through a Databricks connection |
 
-Three of these have no write path at all. PlaidCloud reads Google Analytics
+Four of these have no write path at all. PlaidCloud reads Google Analytics
 and Cassandra but never writes to them, so a Google Analytics Output or
 Cassandra Output tool becomes an **Export: SQL** to a supported destination
 instead. Email is not a data destination either: **Notify: Email** sends a
 notification to people, so an Email Output tool becomes an Export step plus a
-separate notification.
+separate notification. The **Anaplan** connection is read-only in the same
+way — it reads a saved view, runs a pre-existing export action, or loads
+lists into a PlaidCloud dimension, but there is no PlaidCloud step that
+writes back to Anaplan.
 
 ## Validating a Converted Workflow
 
