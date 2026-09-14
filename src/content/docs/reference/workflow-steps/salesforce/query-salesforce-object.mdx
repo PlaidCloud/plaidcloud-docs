@@ -71,25 +71,27 @@ Field-level security is not one of these refusals, because it is not visible in 
 
 ## Extract Windows Run Once
 
-**Window Tag** names the window of data a run is loading — a period or a batch label such as `2026-09`.
+**Window Tag** names the window of data a run is loading — a period or a batch label such as `2026-09`. It takes workflow variables: a tag of `{period}` resolves to that variable's value each time the step runs.
 
 An extract window runs once. Re-running a window that already completed does **not** go back to Salesforce: the step reports plainly that it did not re-read, and says the row count it shows belongs to the earlier run. That is a loud no-op, not a silent one, and it is the behavior that keeps a re-run from paging a second copy of a result set it already landed.
 
-<Aside type="caution">
-**The tag is a literal string — workflow variables are not substituted into it.** A tag of `{period}` is stored, compared, and reused as the eight characters `{period}`, which never changes, so every run after the first replays instead of reading. A step configured in the workflow editor therefore cannot vary its own tag from run to run.
-</Aside>
-
-That leaves three ways to use the step:
+There are three ways to use the step:
 
 - **Leave the tag blank** and treat the step as a one-shot load. The first run reads; a second run of that same step replays and reports that it did not re-read. Use this to build and validate the extract, and for a table you load once.
-- **Type a literal tag and change it when you load the next window** — `2026-09`, then `2026-10`. Editing the tag starts a new window, so a monthly load someone advances by hand works exactly as it reads.
-- **Drive the step from a caller that supplies the tag** — the REST API or an MCP client — passing a distinct `extract_tag` per run. This is the shape an unattended recurring pull needs today, because a scheduled step cannot advance its own tag.
+- **Type a tag and change it when you load the next window** — `2026-09`, then `2026-10`. Editing the tag starts a new window, so a monthly load someone advances by hand works exactly as it reads.
+- **Build the tag from a workflow variable** for an unattended recurring pull — for example `{period}`, set by an earlier step in the workflow to the period being loaded. Each scheduled run names its own window, and a re-run inside the same period resumes or replays that window instead of starting another.
 
-A run that was interrupted resumes the same window, so keep the tag constant for as long as that window may still need to finish. Changing the tag starts a new window and a new query at Salesforce.
+<Aside type="caution">
+Name the window, not the run. A tag that changes on every run — one built from `{date}`, which includes the current time — starts a new window each time, so an interrupted extract can never resume and every retry sends a new query to Salesforce. Use a variable that holds the period or batch being loaded.
+</Aside>
+
+A REST API or MCP caller passes `extract_tag` directly and supplies a distinct value per window itself.
+
+A run that was interrupted resumes the same window, so keep the tag constant for as long as that window may still need to finish. Changing the tag starts a new window and a new query at Salesforce. Change the tag whenever you change the filter or fields: editing the configuration under a tag that already ran is refused as a conflict.
 
 ## Filtering at Salesforce
 
-Narrow the extract at Salesforce rather than pulling the whole object and filtering afterwards. Each filter term is a field, an operator, and a value; terms combine with AND.
+Narrow the extract at Salesforce rather than pulling the whole object and filtering afterwards. Each filter term is a field, an operator, and a value; terms combine with AND. A value can use a workflow variable, such as `{region}`.
 
 | Operator | Notes |
 |---|---|
@@ -112,7 +114,7 @@ It is the wrong tool for high-volume, high-churn objects such as `Task`, `EmailM
 | What you see | What happened | What to do |
 |---|---|---|
 | A warning that the job is still running after 15 minutes | The step waits in the foreground for Salesforce to finish the query, and that wait is bounded. Nothing advances the job in the background. | Re-run the step. It resumes the wait on the **same** Salesforce job and never submits a second one. If it keeps exceeding the bound, narrow the extract with filter criteria. |
-| A warning that the window already completed and was not re-read | The window ran before. The row count shown is the earlier run's. | Run the extract with a distinct **Window Tag** — see [Extract Windows Run Once](#extract-windows-run-once). |
+| A warning that the window already completed and was not re-read | The window ran before. The row count shown is the earlier run's. | Run the extract with a distinct **Window Tag**, or advance the variable the tag is built from — see [Extract Windows Run Once](#extract-windows-run-once). |
 | An error naming a failed or aborted job | A failed Bulk query job yields no partial results and cannot be resumed. The window is now spent. | Re-run with a **distinct Window Tag**. Re-running the same window replays the failure and submits nothing, and editing the step's configuration under the same tag is refused as a conflict. |
 | A refusal naming Salesforce's request limit | The org's rolling 24-hour API request allowance is exhausted. Salesforce documents no retry-after for it. | Wait for the window to clear, then re-run — the extract is still resumable, nothing was lost. |
 | A refusal naming one field and its Salesforce type | That field type cannot be landed, or the Run As user cannot read the field. | See [Fields the Step Refuses](#fields-the-step-refuses) and the Run As user's field-level security. |
