@@ -7,9 +7,9 @@ Workflow steps that read from IBM **TM1 / Planning Analytics** over your [TM1 co
 
 ## Steps
 
-- [TM1 Query](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — read a cube by saved view or MDX, with a point-of-view slice and a pre-save preview. Cloud-direct.
-- [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — the on-prem twin of TM1 Query, dispatched through an installed PlaidLink agent.
-- [TM1 Dimension Read](/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) — load a TM1 hierarchy into a PlaidCloud dimension. Cloud-direct.
+- [TM1: Query Cube](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — read a cube by saved view or MDX, with a point-of-view slice and a pre-save preview. Cloud-direct.
+- [TM1: Query Cube (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — the on-prem twin of TM1: Query Cube, dispatched through an installed PlaidLink agent.
+- [TM1: Read Dimension](/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) — load a TM1 hierarchy into a PlaidCloud dimension. Cloud-direct.
 
 ## Related
 

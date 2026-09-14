@@ -1,5 +1,5 @@
 ---
-title: "TM1 Dimension Read"
+title: "TM1: Read Dimension"
 description: Read an IBM TM1 / Planning Analytics hierarchy — elements, parent/child edges, and element attributes — into a PlaidCloud dimension, cloud-direct over REST.
 ---
 
@@ -9,7 +9,7 @@ Reads one hierarchy from an IBM **TM1 / Planning Analytics** dimension over your
 
 This step appears in the step menu under **IBM TM1 / Planning Analytics**.
 
-The step reaches TM1 **cloud-direct** over its REST API — no on-premises agent is involved. See [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) for the on-prem path.
+The step reaches TM1 **cloud-direct** over its REST API — no on-premises agent is involved. See [TM1: Query Cube (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) for the on-prem path.
 
 ## Configuration
 
@@ -42,13 +42,13 @@ Loading into an alternate hierarchy is validated before anything is written: a P
 |---|---|
 | Multi-parent elements are refused | A PlaidCloud dimension node has exactly one parent per hierarchy. A TM1 element sitting under two consolidations in the same hierarchy cannot be loaded — the step fails with a named error listing every offending element and its parents, rather than silently dropping the element from the first consolidation. Read the alternate rollup as its own PlaidCloud dimension, or resolve the duplicate parentage in TM1 first. |
 | Consolidation weights carry only a sign | A PlaidCloud edge carries a consolidation flag (`+`, `-`, or `~`), not a coefficient. TM1 weight `0` becomes `~` (the member does not roll up into its parent); a negative weight becomes `-`; a positive weight becomes `+`; an absent weight (TM1's own default) is treated as `+`. A **fractional or multiplier weight — 0.5, 2.0 — cannot be represented**: it lands as a plain `+` and the multiplier is lost. This is counted and named, not swallowed — the run's step warning reports how many edges were affected and lists them as `parent -> child (weight)`, for example `Total Revenue -> Product A (0.5)`, capped at 10 with "(and N more)" beyond that. A root edge (no parent) is named `(root)` rather than left blank. A present-but-non-numeric weight is refused outright rather than guessed at. |
-| No agent-mediated discovery | This step is cloud-direct only — see [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) for reading a TM1 server the cloud cannot reach. |
+| No agent-mediated discovery | This step is cloud-direct only — see [TM1: Query Cube (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) for reading a TM1 server the cloud cannot reach. |
 
 ## Related
 
 - [Connect to TM1 (guide)](/guides/connections/tm1/) — create the connection.
 - [TM1 Connector](/reference/connectors/rest/tm1/) — connection field reference, including the on-prem agent path.
-- [TM1 Query](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — read cube data, cloud-direct.
-- [TM1 Query (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — read cube data through an on-prem PlaidLink agent.
+- [TM1: Query Cube](/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — read cube data, cloud-direct.
+- [TM1: Query Cube (Agent)](/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — read cube data through an on-prem PlaidLink agent.
 - [Dimension Load](/reference/workflow-steps/dimensions/dimension-load/) — the same dimension-load mechanism this step builds on.
 - [IBM TM1 / Planning Analytics Steps](/reference/workflow-steps/ibm-planning-analytics/)
