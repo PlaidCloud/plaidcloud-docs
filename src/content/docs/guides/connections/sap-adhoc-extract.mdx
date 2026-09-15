@@ -165,7 +165,22 @@ The first run reads the whole table. Each later run reads only rows at or after 
 
 ## How Columns Land
 
-**SAP: Ad-Hoc Extract** lands every column as text, and UTC timestamps land as ISO text such as `2026-01-03T10:15:00.123456Z`. **SAP: Run Transaction / Report** lands amount columns as numbers. **SAP: Run Query (SQ01)** lands amount, integer, and date columns with those types. Every other column lands as text. Convert types in a downstream step where you need them.
+**SAP: Ad-Hoc Extract** lands every column with its real type from SAP's data dictionary.
+
+| SAP type | Lands as |
+|---|---|
+| Date (`DATS`) | Date. Blank, initial, and invalid dates land empty (`NULL`). An invalid date finishes the step with a warning. |
+| Amount, quantity, decimal (`CURR` / `QUAN` / `DEC`) | Exact decimal. When the amount's currency key column is in the same table and in the extract, PlaidCloud shifts the amount to its currency's true decimal places. Otherwise, it lands as SAP stores it. A decimal with more than 10 decimal places, more than 28 integer digits, or no declared decimal places lands as text instead, and the step finishes with a warning naming the column. |
+| Integer | Integer. |
+| Floating-point (`FLTP`) | Double. |
+| Decimal float (`DF16_*` / `DF34_*`) | Exact text. |
+| Short UTC timestamp (`TZNTSTMPS`) | Timestamp, to the second. |
+| Long UTC timestamp (`TZNTSTMPL`, `UTCL`) | UTC ISO text, such as `2026-01-03T10:15:00.123456Z` — this keeps the fraction a timestamp column would drop. |
+| Time (`TIMS`), code (`NUMC`), text (`CHAR`) | Text exactly as SAP stores it, leading zeros kept. |
+
+If a column's SAP type changes, a full run replaces the table. An incremental extract re-reads and replaces the whole table in that same run, and the step finishes with a warning naming the column. If that read doesn't complete, later runs keep reading the whole table, with the same warning, until one succeeds — then incremental runs resume.
+
+**SAP: Run Transaction / Report** lands amount columns as numbers. Every other column lands as text. **SAP: Run Query (SQ01)** lands amount, integer, and date columns with those types. Every other column lands as text. Convert types in a downstream step where you need them.
 
 ## Run Limits
 
