@@ -63,6 +63,51 @@ Row *i* is `dict(zip(cols, rows[i]))`. Small results, and any result whose rows 
 
 For the live catalog, point your agent at the server and call `mcp_introspect` (no arguments) — that returns the current tool count, per-domain summaries, and parameter signatures. Use `mcp_recipes` for common multi-tool playbooks (paginating large lists, snapshot-then-modify, rerun a failed step, etc.).
 
+## Task Starters
+
+The server ships a small set of starters for the tasks people ask for by name. A client that supports MCP prompts lists them and offers them as a menu — check your client's documentation for where it puts them — so you pick the task rather than describe the sequence of tool calls it takes:
+
+| Starter | What you give it |
+| --- | --- |
+| Import a file into a table | The file, and optionally the project and a name for the new table |
+| Explain a cost change | The results table, and optionally the project and the two periods |
+| Debug a failed workflow | The workflow, and optionally the project |
+| Explore project data | What you are looking for, and optionally the project |
+
+Each one is a starting message, not a command: your agent reads it and then drives the tools itself, so you can edit it or carry the conversation on from there.
+
+### Importing a File Without Knowing the Object Model
+
+The import starter saves the most work, because the naive route needs four tools in the right order — find the document account, browse to the file, create the target table, then run the import — and a wrong guess at any of them ends the flow several calls in.
+
+Instead, the `bulk_import_csv` playbook takes the account by **name** and the file by **name or path**:
+
+```text
+mcp_recipe_run(name='bulk_import_csv', params={
+    'project_id': '<project>',
+    'document_path': 'sales_2026.csv',
+    'document_account': 'Demo Data',
+})
+```
+
+It resolves the account to its identifier, locates the file, creates the table with the columns and types read from the file itself, and loads it — so you supply neither an account id nor a column specification. `table_name` defaults to the file name without its extension, and `table_path` to the project root.
+
+Where an argument is ambiguous, the result asks instead of guessing:
+
+```json
+{
+  "needs_choice": "document_account",
+  "question": "More than one document account is named 'Archive'. Which one?",
+  "candidates": [{"id": "...", "name": "Archive"}, {"id": "...", "name": "Archive"}]
+}
+```
+
+Show the candidates to the person you are helping, then call the playbook again with their answer. When the file cannot be found, the reply lists the nearest names instead and reports how many files it searched, so "not there" can be told apart from "not where I looked".
+
+<Aside type="note">
+How far below a folder the search reaches depends on the document account's storage type: an object-store account (S3, Wasabi, GCS) lists the whole tree, while OneDrive, SFTP and Azure Blob accounts list one directory level. If a bare file name is not found on one of those, give the full path.
+</Aside>
+
 ## Authentication
 
 PlaidCloud's MCP server accepts two authentication paths:
