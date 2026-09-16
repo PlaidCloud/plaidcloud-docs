@@ -54,6 +54,32 @@ To aggregate results, select the **Summarize** menu option. This will toggle a s
 
 <Aside>When using aggregation, all columns **must** have a summarization type specified</Aside>
 
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 620 210" role="img" aria-label="The data mapper connects source columns to target columns. Source columns cust_id, amt, and dt map to target columns customer_id, amount, and order_date — some renamed, some cast to a new type — while an unmapped source column is dropped." style="width:100%;max-width:620px;height:auto;">
+  <text x="105" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">source columns</text>
+  <rect x="24" y="40" width="164" height="148" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="38" y="68" font-size="11" fill="var(--sl-color-text)">cust_id</text>
+  <text x="38" y="100" font-size="11" fill="var(--sl-color-text)">amt</text>
+  <text x="38" y="132" font-size="11" fill="var(--sl-color-text)">dt</text>
+  <text x="38" y="164" font-size="11" fill="var(--sl-color-gray-3)">note</text>
+  <circle cx="188" cy="64" r="3" fill="var(--sl-color-accent)" /><circle cx="188" cy="96" r="3" fill="var(--sl-color-accent)" /><circle cx="188" cy="128" r="3" fill="var(--sl-color-accent)" /><circle cx="188" cy="160" r="3" fill="var(--sl-color-gray-5)" />
+  <text x="432" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">target columns</text>
+  <rect x="432" y="40" width="164" height="116" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <circle cx="432" cy="64" r="3" fill="var(--sl-color-accent)" /><circle cx="432" cy="96" r="3" fill="var(--sl-color-accent)" /><circle cx="432" cy="128" r="3" fill="var(--sl-color-accent)" />
+  <text x="446" y="68" font-size="11" fill="var(--sl-color-text)">customer_id</text>
+  <text x="446" y="100" font-size="11" fill="var(--sl-color-text)">amount</text>
+  <text x="446" y="132" font-size="11" fill="var(--sl-color-text)">order_date</text>
+  <path d="M188 64 L432 64" stroke="var(--sl-color-accent)" stroke-width="1.6" fill="none" />
+  <path d="M188 96 L432 96" stroke="var(--sl-color-accent)" stroke-width="1.6" fill="none" />
+  <path d="M188 128 L432 128" stroke="var(--sl-color-accent)" stroke-width="1.6" fill="none" />
+  <text x="310" y="58" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">rename</text>
+  <text x="310" y="90" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">cast → decimal</text>
+  <text x="310" y="122" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">rename</text>
+  <text x="230" y="164" font-size="9" fill="var(--sl-color-gray-3)">unmapped → dropped</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The mapper wires each source column to a target column — renaming and casting types along the way. Unmapped source columns are left out of the result.</figcaption>
+</figure>
+
 ## Advanced Usage
 
 ### Aggregation Options
@@ -92,6 +118,16 @@ due to the aggregation inherent in the window function already.
 ### Constants
 
 Specifying a value in the *Constant* column will override the source column value, if specified, and populate the column with the constant value specified.
+
+### Source, Constant, and Expression together
+
+A target column takes its value from whichever of these you fill in, in this order: a *Constant* wins, then an *Expression*, then the *Source* column.
+
+So a column that computes its value does not need a *Source*. Leave it blank on a constant or an expression — the constant or expression already says what the value is, and a *Source* alongside one is ignored. Fill *Source* in when you are mapping a column straight through from the incoming data, renaming it, or casting it along the way.
+
+An expression reads the incoming columns by name, with `get_column(table, 'Column Name')`, rather than through the *Source* cell.
+
+<Aside>In a file import, the columns an expression can read are the ones the mapper is bringing across — those named as a *Source* by some target column, plus the target's own name where you left *Source* blank. An expression that needs a column you are not otherwise importing will not find it, so map that column to a target as well.</Aside>
 
 ### Cleaners
 
@@ -139,3 +175,61 @@ Once you have completed the expression, save the expression so it will be applie
 View examples and expression functions in the [Expressions](/reference/expressions/) area.
 
 <Aside>Expressions are validated when the transform step is saved</Aside>
+
+### Reading Another Table From an Expression
+
+`sqlalchemy.literal_column` passes a fragment of SQL through to the warehouse untouched, and it accepts a single value — a column, a calculation, a `CASE`, a function call, a cast, a window function. A `literal_column` holding a **subquery** (`(SELECT ... FROM ...)`) is refused, because a subquery reaches a table the step never declared.
+
+The rules in this section apply wherever the expression is written — here in the mapper, in a step's filter, and in a query assembled elsewhere and sent to the platform. They are checked when the step is saved and again when the expression is turned into SQL.
+
+Build the subquery with `sqlalchemy.select(...)` instead — `.scalar_subquery()` where you need a single value in a column, or `.subquery()` where you are selecting from it:
+
+```python
+# Refused
+sqlalchemy.literal_column('(SELECT rate FROM fx WHERE fx.cc = t.cc)')
+
+# Supported — a single value in a column
+sqlalchemy.select(fx.c.rate).where(fx.c.cc == t.c.cc).scalar_subquery()
+
+# Supported — a table to select from
+sqlalchemy.select(fx.c.rate).subquery()
+```
+
+### Bracket a Top-Level OR
+
+A `literal_column` whose outermost operator is `OR` is also refused. PlaidCloud passes the text through untouched, so a condition added after it would bind to only half of it — `a OR b` followed by `AND region = 'East'` reads as `a OR (b AND region = 'East')`, and the rows you meant to exclude come back.
+
+Add brackets and it works as before:
+
+```python
+# Refused
+sqlalchemy.literal_column("status = 'open' OR status = 'pending'")
+
+# Supported
+sqlalchemy.literal_column("(status = 'open' OR status = 'pending')")
+```
+
+A disjunction anywhere *inside* the expression — in a `CASE`, or already bracketed — is unaffected.
+
+`XOR` is refused wherever it appears, brackets or not: warehouses disagree about how tightly it binds, so there is no reading that is safe everywhere. Write it out instead, as `(a AND NOT b) OR (NOT a AND b)`.
+
+A `literal_column` carrying a comment is refused for the same reason: a comment runs to the end of the statement, so it erases whatever PlaidCloud adds after your expression rather than only what you wrote.
+
+`--` is refused where it would reach the rest of the statement. **`#` is refused anywhere in the text**, without exception — including inside a quoted string, and including Postgres' `#>` and `#>>` JSON path operators:
+
+```python
+# Refused
+sqlalchemy.literal_column("attrs #> '{a,b}'")
+sqlalchemy.literal_column("code || '#'")
+```
+
+`#` opens a comment on MySQL-compatible warehouses such as StarRocks, and PlaidCloud does not know which warehouse will run the expression at the time you write it — so there is no position in the text where it is reliably safe, and a `#` that looks quoted to one engine is the start of a comment to another. If you need the character as data, pass it as a value:
+
+```python
+# Supported
+sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
+```
+
+The same two spellings are refused in `.op('...')`.
+
+Everything else `literal_column` is normally used for is unaffected — `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` and `func.count()` all work as before. Column names containing spaces, dots or quotation marks are unaffected too; the warehouse quotes them for you.

@@ -61,7 +61,22 @@ Output bindings copy Macro result tables back to caller-side destinations.
 - **Caller Destination Table** — the caller-side table to copy into.
 - **Columns JSON** — optional JSON column projection for copy-out.
 
+Every driver row must resolve to a different destination table, so include a driver column in the destination name — `results_{region}`, for example. Copy-out replaces the destination rather than appending to it, so two rows resolving to the same destination would leave only the second row's result; the step refuses that configuration before it launches anything. To combine the results into one table, add a step downstream that unions the per-row tables.
+
 Copy-out is skipped for a stopped child invocation so partial results are not written into durable caller tables.
+
+## When a Child Invocation Stops Responding
+
+A child invocation reports its own result when it finishes, so a child whose machine stops without warning never reports anything at all. Rather than wait on it indefinitely, the step checks that each child it is still waiting on is alive.
+
+- A child that has started is checked roughly once a minute, and only while it shows no sign of progress. A child working through a single long-running step shows no progress for as long as that step takes, and is left alone for as long as it is genuinely still running.
+- A child that was accepted but has not started within 15 minutes is treated as never having started. That window covers scheduling and image pull, not the Macro's own work.
+
+A child treated either way is stopped, its scratch schema is dropped, and the step fails at the end naming that invocation, the last state it reported, and when it last reported it.
+
+**The other child invocations are unaffected.** They run to completion and their output tables are written as normal, so one unresponsive child out of many does not discard the rest. Only the invocations that could not complete are named in the failure.
+
+If the check itself cannot be answered — while the platform is briefly unreachable, for instance — the child is treated as still running and checked again on the next pass.
 
 ## Stop Behavior
 

@@ -1,0 +1,107 @@
+---
+title: SCD-2 As-Of Join
+description: Join a fact table to an SCD-2 history table, returning the version of each master-data record that was in effect on the fact's date.
+sidebar:
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Joins a fact table to an [SCD-2 Master Builder](/reference/workflow-steps/dimensions/scd2-master-builder/) history table and returns, for each fact row, the master-data version that was **in effect on that fact's date** — not the version that is current now.
+
+This is how you attribute each transaction to the region, cost center, owner, or price that applied *when it happened*. It is a `LEFT JOIN`, so every fact row is preserved: a key with no matching version (unknown key, or a date before the key's first version) comes back with null carry columns rather than being dropped.
+
+## Tables
+
+### Fact Table
+
+The rows you want to enrich — transactions, orders, events. Each row carries a business key and a date.
+
+### SCD-2 Table
+
+A history table produced by [SCD-2 Master Builder](/reference/workflow-steps/dimensions/scd2-master-builder/), holding `valid_from`, `valid_to`, and `is_current` alongside the tracked attributes.
+
+### Output Table
+
+Where the enriched fact rows are written. This must be a table, not a view. Every original fact column passes through unchanged; the carried master-data columns are appended.
+
+## As-Of Date and Options
+
+The **as-of date** is the point in time each fact row is resolved at. Provide it in exactly one of two ways:
+
+- **Fact As-Of Column** — a date column in the fact table (e.g. `txn_date`). Each row is resolved at its own date.
+- **Literal As-Of Date** — a single `YYYY-MM-DD` date, or a variable, applied to every fact row (resolve the whole fact table as of one reporting date).
+
+<Aside type="caution">Choose one, not both. The step rejects a run that specifies a fact column *and* a literal date, and equally rejects one that specifies neither.</Aside>
+
+Rename options avoid collisions when a carried column shares a name with a fact column:
+
+- **Carry Prefix** / **Carry Suffix** — added to each carried column's output name (`prefix` + column + `suffix`). If a carried column would still collide with a fact column or another carried column after renaming, the run fails rather than silently overwriting.
+
+## Column Roles
+
+Use **Inspect** on the SCD-2 table, then tag each column:
+
+| Role | Meaning |
+|---|---|
+| **Business Key** | The key joining fact to history (e.g. `customer_id`). Must match the fact's key columns. At least one is required. |
+| **Carry Column** | An attribute to bring onto the fact row (e.g. `region`). At least one is required. |
+| **(ignore)** | Untagged columns are not carried. |
+
+## The Half-Open Boundary
+
+A fact row matches the one history version whose interval contains its as-of date, using a **half-open** comparison:
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+The lower bound is inclusive and the upper bound is exclusive. This matters on the boundary day:
+
+- `as_of == valid_from` → **matches** that version (it takes effect on its start date).
+- `as_of == valid_to` → **does not match** that version; it falls to the next version, whose `valid_from` equals this `valid_to`.
+
+Because [SCD-2 Master Builder](/reference/workflow-steps/dimensions/scd2-master-builder/) writes consecutive versions so that one's `valid_to` is the next one's `valid_from`, every date maps to exactly one version — no gaps, no overlaps. A change dated `2026-04-01` means the new value applies *on* April 1; a transaction on March 31 still gets the old value.
+
+<Aside type="note">Open (current) rows carry the sentinel high date `9999-12-31` in `valid_to`. Should any open row instead hold a null `valid_to`, the step treats it as open (via the same sentinel) so the current version is never silently missed.</Aside>
+
+## Worked Example
+
+Continuing from [SCD-2 Master Builder](/reference/workflow-steps/dimensions/scd2-master-builder/), attribute each transaction to the region in effect on its date.
+
+**`customer_scd2` (the history table):**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (the fact table):**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Configuration: **Fact Table** = `transactions`, **SCD-2 Table** = `customer_scd2`, **Output Table** = `transactions_by_region`, **Fact As-Of Column** = `txn_date`, Business Key = `customer_id`, Carry Column = `region`.
+
+**`transactions_by_region`:**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(null)* |
+
+Note the boundary: **T2 on 2026-04-01 resolves to Central**, because the half-open interval makes April 1 the first day of the Central version, not the last day of West. **T4's key `C9` is unknown**, so it is kept with a null region rather than dropped.
+
+## Related
+
+- [SCD-2 Master Builder](/reference/workflow-steps/dimensions/scd2-master-builder/) — build the history table this step reads.
+- [Dimension Load](/reference/workflow-steps/dimensions/dimension-load/) — load a hierarchy from a table.

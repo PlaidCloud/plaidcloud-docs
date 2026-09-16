@@ -33,6 +33,8 @@ The workflows you can see depend on two things:
 
 If you expect to see specific workflows and don't, your role may be filtering them out. A project Architect can confirm what you should see.
 
+Your role also decides whether you can change a step. If you can open a workflow but not modify it, the step form opens read-only — its fields are disabled and its **Save** button is hidden — so you can read a step's configuration without being able to alter it. This applies wherever the form opens: the workflow table's edit (pencil) icon, the Visual Canvas, the project **Steps** grid, and the **New Step** menu.
+
 ## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — what to do inside an open workflow

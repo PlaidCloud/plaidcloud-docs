@@ -5,4 +5,7 @@ description: "Lakehouse v1 SQL uuid functions: generate and parse UUID values."
 
 This section provides reference information for the UUID-related functions in PlaidCloud Lakehouse.
 
-<IndexOverviewList />
+## Functions
+
+- [GEN_RANDOM_UUID](gen-random-uuid/)
+- [UUID](uuid/)

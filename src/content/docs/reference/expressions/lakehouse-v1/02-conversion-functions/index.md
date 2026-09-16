@@ -5,7 +5,30 @@ description: "Lakehouse v1 SQL conversion functions: cast values between types â
 
 This section provides reference information for the conversion functions in PlaidCloud Lakehouse.
 
-<IndexOverviewList />
+## Functions
+
+- [BUILD_BITMAP](build-bitmap/)
+- [CAST, ::](cast/)
+- [TO_BINARY](to-binary/)
+- [TO_BITMAP](to-bitmap/)
+- [TO_BOOLEAN](to-boolean/)
+- [TO_FLOAT32](to-float32/)
+- [TO_FLOAT64](to-float64/)
+- [TO_HEX](to-hex/)
+- [TO_INT16](to-int16/)
+- [TO_INT32](to-int32/)
+- [TO_INT64](to-int64/)
+- [TO_INT8](to-int8/)
+- [TO_STRING (Conversion, Lakehouse v1)](to-string/)
+- [TO_TEXT](to-text/)
+- [TO_UINT16](to-uint16/)
+- [TO_UINT32](to-uint32/)
+- [TO_UINT64](to-uint64/)
+- [TO_UINT8](to-uint8/)
+- [TO_VARCHAR](to-varchar/)
+- [TO_VARIANT](to-variant/)
+- [TRY_CAST](try-cast/)
+- [TRY_TO_BINARY](try-to-binary/)
 
 Please note the following when converting a value from one type to another:
 

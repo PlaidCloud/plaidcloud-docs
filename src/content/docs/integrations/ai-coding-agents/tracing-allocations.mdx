@@ -31,7 +31,7 @@ These tools read your allocation **configuration and results** — they don't ch
 | "What feeds `cost_line_rev`?" | Walks the upstream chain — drivers, source pools, and imports | `allocation_lineage` |
 | "Where is `revenue_by_line` used as a driver?" | Lists every allocation that splits by that table | `allocation_driver_usage` |
 | "What happens if US revenue rises by $1M?" | Splits the change across each affected result by its current share of the pool — additive across a fan-out, not a worst-case per table | `allocation_forward_impact` |
-| "What if the Assembly cost centre's headcount driver rose by 10?" | Reslices the fixed pool under the new driver weights — exact, showing which targets gain and which lose, netting to zero | `allocation_driver_scenario` |
+| "What if the Assembly cost centre's headcount driver rose by 10?" | Reslices the fixed pool under the new driver weights, showing which targets gain and which lose. Declines where the result table is written by more than one step, rather than reslicing a pool that is not the allocation's own | `allocation_driver_scenario` |
 
 ## Worked Example
 
@@ -69,11 +69,16 @@ A fluent answer isn't automatically a correct one. Every "why did this change" a
 
 - **A confidence level** — high, medium, or low — reflecting how cleanly the change decomposes. A change driven by one clear cause reads high; one where several causes overlap, or where the figures don't fully reconcile, reads lower. When a result is built from several allocation branches, the confidence weighs each branch by how much of the change it accounts for — so one small, shaky branch doesn't drag down an otherwise-clean answer — but a branch whose number is itself in doubt (an unreconciled split, stale data, or something that can't be attributed) still holds the whole answer's confidence down.
 - **Caveats in plain words** — for example: the cause is a mix of overlapping factors rather than a single one; the answer rests on the *current* hierarchy or driver weights; part of a change may be a data-completeness artefact (a period that hasn't finished loading) rather than a real movement; the pool or driver feeding the allocation hasn't been reloaded recently, so the figure may rest on out-of-date data; or a what-if figure can't be added across targets.
+- **A comparison that could not be made, said out loud.** Most answers size the movement they report — against the same movement a year earlier, and against recent periods — so you can tell an ordinary year from a break in trend. Neither is produced for a table written by a step that allocates several value columns at once, because each is built for a single-column answer. That used to be silent, so the answer read as having gone as far as the data allows when it had stopped short by design. It is now stated among the limits, together with the reason there is no narrower question to ask instead, and with the fact that no figure in the answer is withdrawn by it — the amounts are exact and it is the context that is absent.
 
 When the agent can't stand behind a precise cause, it says so and points you at the scope or filter that would let it answer cleanly — instead of inventing a confident story. And because the confidence and caveats are part of the answer, they travel with it: if you ask a follow-up agent to summarise, the trust signals don't get quietly dropped.
 
 <Aside type="note" title="Stale-data flagging is optional">
 The freshness caveat — lowering confidence when the underlying data hasn't been reloaded within a set window — is **off by default** and turned on per workspace by your administrator, who also sets how recent counts as fresh (higher for data that's only refreshed quarterly or annually). If your team deliberately works with older data, it stays out of the way until someone opts in.
+
+Once it is on, it reaches every answer that reads your warehouse: the "why did this change" explanation, and both what-if answers, which is where it matters most — a what-if propagates or reweights using the shares your model realised on its last run, so out-of-date data is exactly the case where the estimate is least dependable.
+
+Two things bound what it can tell you, and they apply to every answer, not only the what-ifs. It asks the age only of tables **loaded straight into PlaidCloud**: a table a workflow step builds can only report when that step last ran, which is a different question from when the data arrived, so it is deliberately left unasked rather than answered with the wrong number. And it names the **oldest table of each kind** — one pool, one driver — so where a what-if fans out across several steps and more than one driver is stale, you are told about one of them. Neither case ever reports a stale table as fresh.
 </Aside>
 
 <Aside type="tip" title="Read the confidence, not just the number">
@@ -98,16 +103,38 @@ For an allocation driven by a **dimension hierarchy** — for example, splitting
 When one allocation feeds another — a cascade — a project-wide "why" would mix the wrong rows, so the agent asks you to scope the question to a slice (a specific region, product, or cost centre) and then explains it.
 </Aside>
 
-<Aside type="note" title="Results built by more than one allocation">
+<Aside type="note" title="Results built by more than one step">
 If a result table is produced by **more than one** allocation step, the agent won't guess which one drove a change — it lists the candidate steps and asks you to name the one you mean. When your question narrows to rows that only one of those steps produced (for example a region it alone allocates), the agent recognises that and traces that step automatically, telling you it did so.
+
+**Naming a step tells the agent which step to describe, not which rows to measure.** The change it reports is the whole table's and is exact; it is the *split between factors* that can't be attributed to one step, so on a table with several writers the agent withholds that split, says the figure covers every step that writes the table, and offers to trace the table in through each of the others in turn. Each such re-run is a separate measurement — not that step's share of the change you are looking at, and not a measurement of that step **alone**: these steps write into the same column, which is the reason the split was withheld, so the change that comes back still covers all of them.
+
+This applies **whatever the other writer is**. A step that isn't an allocation — one appending rows into the result table, say — is never a candidate to trace and so never prompts you to choose, but its rows are in the total just the same, and the agent now says so instead of folding its movement into the split.
 </Aside>
 
 <Aside type="note" title="Value-change what-ifs use today's shares">
 "What happens if this pool goes up by …" answers split the change across a fan-out by each target's **current share of the pool**, so the per-table figures **add up** rather than each being a worst-case envelope. They reflect the model's shares as they stand today — a well-scoped estimate of where a change lands, not a precise forecast. Point one at a **driver or basis** table rather than the input pool and it's handled as a *driver* what-if instead (below), since changing a driver reshuffles a fixed split rather than adding value.
+
+**Name the period explicitly for this one.** Unlike a "why did this change" question or a driver what-if, a forward what-if does *not* work the period column out for you. Leave it unstated and the estimate covers **all periods** rather than the window you had in mind.
+</Aside>
+
+<Aside type="caution" title="A result the what-if could not measure carries no figure">
+A forward what-if works out each target's share by querying the step that writes it. Where that query fails — the step's table has no period column, the warehouse rejects it — that target now reports **no estimate at all**, along with the reason. It used to report the *whole* change reaching it, a maximum presented exactly like a measured answer, and everything below that step was then estimated from it, so a whole branch read as ordinary figures.
+
+Three things follow, and the answer states each of them: the totals cover only the targets that **were** measured; nothing downstream of an unmeasured step is estimated from it, so those targets are missing from the answer rather than guessed at; and a target measured from only *part* of what writes it says so and names the step that could not be read. That partial figure is a real measurement of what could be read, so it stands — but it is not the whole target, and the missing part may be larger, smaller, or opposite in sign. Don't read it as a floor.
 </Aside>
 
 <Aside type="note" title="Driver what-ifs are computed exactly">
 Ask what a change to a **driver** would do — "what if the Assembly cost centre's headcount driver rose by 10?" — and the agent reslices the fixed pool under the new weights **exactly**, with no model re-run. It shows which targets **gain** and which **lose**, and the gains and losses **net to zero** as a built-in check. It sticks to what it can compute exactly: a single straightforward split with a simple driver. Anything more involved — a hierarchy-based or filtered/conditional allocation, adding a brand-new driver member, or a change that empties a group — is **declined with the reason** rather than estimated.
+
+**Name the column as the driver table spells it.** Where a step carries a driver column through under a different name, the driver table's own name is the one to ask with — and it is the one the answer quotes back if you get it wrong. The results read the other way round: the cost centres and groups that moved are named as the *result* table spells them, because those are the names you filter and read results by. On most steps the two are the same name.
+</Aside>
+
+<Aside type="note" title="The period column is detected for you">
+For a "why did this change" question or a driver what-if, you don't normally name the column that holds the period — the agent works it out from the table. Name one explicitly and it is checked against the table first: if that column isn't there, you're told so straight away, along with the columns that *are*, so you can correct it in one step rather than getting an analysis that couldn't total anything. If the table has two equally likely period columns (a year and a period number, say), the agent asks you to pick one instead of guessing. Forward what-ifs are the exception — name the period yourself there, as noted above.
+</Aside>
+
+<Aside type="note" title="Combinations of dimensions, where enabled">
+Asking what drove a change searches for the single dimension that best explains it, on every workspace. Where your workspace also has the **combination** search switched on, it tests combinations of dimensions as well — a move confined to one region *and* one product line, say — rather than only one dimension at a time. Combinations have to clear a higher bar than a single dimension before they are reported, and where nothing explains the move on its own the answer still says so rather than picking something. The combination search is off by default; ask your PlaidCloud administrator whether it is enabled for your workspace.
 </Aside>
 
 <Aside type="note" title="Is this change unusual?">
@@ -116,6 +143,52 @@ Alongside the "why", the agent judges whether a change is out of the ordinary �
 
 <Aside type="note" title="Concentrated changes are called out">
 When most of a year-on-year change comes from a single group — one entity or customer accounting for the bulk of the move — the agent's summary flags it explicitly, so a change driven by one outlier isn't mistaken for a broad-based shift. Add a breakdown dimension such as entity or account to your question to see this.
+</Aside>
+
+<Aside type="caution" title="A breakdown by a field with no values in it">
+Breaking a change down by a field gathers together the rows that share a value — and rows with **no** value gather together too. So a field left blank on every row in the periods being compared produced a single group holding the entire change, which read as the most concentrated result possible: one member, the whole move, full confidence.
+
+The agent now tells you the field is not filled in for those rows and **withholds** the concentration figures rather than reporting them as 100%. It suggests either a field that is populated or dropping the breakdown altogether, in which case it finds the field that best explains the change itself. Where a second grouping field *is* populated the breakdown is genuine and is reported as usual, with the blank one simply noted. Blank values read as *(no value)* or *(blank)*, and the two are kept apart: a field never filled in and a field explicitly set to nothing are different things.
+
+Only the breakdown was ever affected. The headline change, its totals and how it was attributed were correct throughout.
+</Aside>
+
+<Aside type="caution" title="When the unassigned rows are what moved">
+Where you don't name a field, the agent picks the one that best explains the change — and sometimes the answer is the rows that have **no** value for that field at all. That is a real finding, not a fault, so it is reported rather than hidden: a cost that has quietly stopped being tagged is worth knowing about.
+
+But "the unassigned rows grew" means something quite different on a field that is nearly always filled in than on one that is nearly always blank. The answer now says which, in the same sentence — *"the winning cut is `cost_centre`'s unassigned rows: `cost_centre` carries a value on 12% of the rows in the periods compared"*. A field filled in on 12% of rows is barely in use; one filled in on 95% has a genuine gap worth chasing. Very sparse and very complete fields read as *fewer than 1%* and *more than 99%* rather than as 0% or 100%, neither of which could be true here.
+</Aside>
+
+<Aside type="note" title="When the search can't run at all">
+Before searching, the agent asks one quick question of the data to rule out fields that hold a single value throughout, or that are divided too finely to be a grouping at all. Where that question can't be answered — a column type the warehouse can't measure, or a connection that dropped — it used to search every field instead, lifting both of those limits at exactly the moment something had already gone wrong.
+
+It now says the search was not run, and says so in its own words: this is a limit on the search, not a finding about the data. That wording differs from the note you get when the periods compared are simply too large to search, because so does what you can do about it — there, narrow the periods; here, name the field you want examined, which works whatever the cause. Retrying only helps if the failure was a passing one.
+</Aside>
+
+<Aside type="caution" title="A breakdown by a field that isn't on the table">
+Ask for a breakdown by a field the table doesn't have, and you now get told so — with the fields it *does* have, so you can correct the question in one step. Previously the answer came back complete and confident with the breakdown simply absent, and nothing saying one had been attempted; the "to go further" suggestion pointed somewhere else entirely. Four consecutive questions on a real model came back that way.
+
+Further up the chain the rule is different, deliberately. A field added by an allocation only exists on tables downstream of it, so a field that is on the table you asked about is often genuinely absent two stages back. There the trace **groups by the fields that stage does have** rather than losing that stage's breakdown, and tells you which it left out.
+
+That note is about the earlier stage, and says so — *"the breakdown you asked for was not available at this stage"*. It is **not** about the table of members the answer prints: those are the table you asked about, at the full grouping you asked for. The earlier stage's coarser grouping is what its own concentration figure is measured on, and its members are not listed. The suggestion that goes with it names that stage too: group by a field every stage traced has, if you want its members as well. Until August 2026 the note read "is not in this answer" and explained itself as *"so the members you see are grouped only by the rest"*, and the suggestion said the field was not on "the traced table" — which pointed at the printed table, described it as something it was not, and advised dropping a field that was working.
+
+And where a breakdown is missing for any other reason — a passing warehouse fault, say — the answer says so the same way, naming the stage it could not produce one for: the totals are measured and unaffected, and it offers you a retry. The detail is absent, not wrong.
+</Aside>
+
+<Aside type="caution" title="A total that crossed zero is two states, not one change">
+Where a total moved from positive to negative between the two periods — a cost centre that was a net charge and became a net credit, say — there is no meaningful way to divide the move between the things that drove it, and no meaningful percentage either: a swing from a small positive to a large negative produces a figure like −10,013%, which measures nothing.
+
+The agent declines to apportion such a change, as it always did. What it now does is **say that** as its reason, rather than opening with a general note about how the measurement is taken — which read as though it were the explanation, and disagreed with the line printed directly beneath it. The percentage is no longer shown at all for a change that crossed zero; the amounts either side, and the change itself, are exact and unaffected.
+
+Read the two periods as separate figures — the answer now prints both of them on the line that declines, naming whether they are the slice you asked about or the whole column. To see what moved, add a breakdown dimension — the total crossing zero cannot be split into causes, but the movement **per member** behind it reads normally, which is usually where the answer is.
+</Aside>
+
+<Aside type="note" title="Where the trace stops, it suggests a next step">
+Every answer ends with next steps you can run. Two situations used to offer none — and they were the two where you were most stuck: a total that crossed zero, and a stage the agent could not aggregate at all. Both now carry a suggestion, the second naming the table to check and the likeliest cause (a period column missing from that stage's table) so you can rule that out before assuming a passing warehouse fault.
+
+Equally, an answer no longer suggests **scoping to a member** when you have already scoped your question to one. That advice came from a limitation recorded further up the chain, not from the question you asked, and it was repeated among the stated limits as though it applied here.
+
+One case still offers no next step: where an independent read of the driver table disagrees with the realised split, the answer says so but cannot suggest a re-run that resolves it — the useful move there is to inspect the driver table directly, which is a different request rather than an adjustment to this one.
 </Aside>
 
 ## Tips

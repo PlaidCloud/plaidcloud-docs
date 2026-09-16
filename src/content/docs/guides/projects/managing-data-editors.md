@@ -43,7 +43,7 @@ When you create an editor from a table — or use **Populate From Source** — P
 - **Boolean** columns become a checkbox, or a True/False list when the column allows empty values
 - **Date** columns become a date chooser
 - **Numeric** columns become a number field
-- Columns that map to a **dimension** become a dimension picker, where you choose the hierarchy
+- Columns that map to a **dimension** become a dimension picker, where you choose the hierarchy — editing a cell opens the same member-picker tree described in [Dimension-Type Properties and the Member Picker](/guides/dimensions/dimensions/#dimension-type-properties-and-the-member-picker), with **Expand All**, **Collapse All**, **Apply**, **Clear**, and **Cancel**
 - Columns whose values repeat over a small set — for example a status or region code — become a **drop-down** that lists the values found in the column
 - Other **text** columns become a text field, or a text area for long values
 - PlaidCloud includes key-like columns, such as auto-generated IDs, but marks them read-only

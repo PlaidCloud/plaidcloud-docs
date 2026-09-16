@@ -19,7 +19,7 @@ Relational databases, cloud warehouses, query engines, and lakehouse formats.
 ### Cloud and SaaS Services
 
 - [REST](/reference/connectors/rest/) — Salesforce, NetSuite, Workday, QuickBooks, Stripe, Dynamics, and more
-- [ERP systems](/reference/connectors/erp/) — SAP ECC, S/4HANA, Oracle EBS/Fusion, Infor, JD Edwards
+- [ERP systems](/reference/connectors/erp/) — SAP ECC / S/4HANA, Oracle EBS/Fusion, Infor, JD Edwards
 - [Cloud services](/reference/connectors/cloud-services/) — third-party data services
 - [Google](/reference/connectors/google/) — BigQuery, Google Sheets
 - [Collaboration](/reference/connectors/collaboration/) — Slack, Microsoft Teams

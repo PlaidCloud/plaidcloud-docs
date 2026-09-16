@@ -1,0 +1,108 @@
+---
+title: Use an External Lakehouse
+description: Store a PlaidCloud project's data in your own Snowflake or Databricks lakehouse, so workflows read and write tables directly in your warehouse and the data never leaves it.
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A project's tables normally live in the built-in PlaidCloud Lakehouse. Instead, you can point a project at **your own Snowflake or Databricks lakehouse** as its data backend. Workflows then read and write project tables directly in your warehouse — the data stays in your account, under your governance and billing, while PlaidCloud drives the transformations, workflows, and dashboards over it.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 190" role="img" aria-label="A PlaidCloud project runs workflows that read and write tables directly in the customer's own Snowflake or Databricks lakehouse, where the data stays." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="xl-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="66" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="90" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidCloud project</text>
+  <text x="91" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">workflows + dashboards</text>
+  <path d="M166 88 L262 88" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <text x="214" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">read / write</text>
+  <rect x="264" y="60" width="180" height="70" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="354" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">connection</text>
+  <text x="354" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Snowflake or Databricks</text>
+  <path d="M444 95 L540 95" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <rect x="514" y="60" width="150" height="70" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="88" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">your lakehouse</text>
+  <text x="589" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">data stays here</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The project's tables live in your warehouse; PlaidCloud reads and writes them in place rather than copying the data into its own store.</figcaption>
+</figure>
+
+## How an External Lakehouse Is Registered
+
+Registering a Snowflake or Databricks lakehouse for your tenant isn't self-service — a PlaidCloud administrator sets it up on your behalf. Give your PlaidCloud contact the details below for whichever engine you're connecting. Once it's registered, the lakehouse becomes available to pick when you create a project.
+
+### Snowflake
+
+| Field | What to provide |
+|---|---|
+| Hostname | Your Snowflake account host. |
+| Superuser | The Snowflake user PlaidCloud authenticates as. |
+| Database | The database PlaidCloud creates and manages project schemas in. |
+| Warehouse | The compute warehouse PlaidCloud runs queries under. |
+| Role | The Snowflake role PlaidCloud acts as. |
+| Private key | The **raw, unencrypted** PEM private key for key-pair authentication — paste the key text itself, not a base64-encoded copy. Passphrase-protected keys aren't supported yet. |
+
+Generate a key pair and assign the public key to the Snowflake superuser before handing off the private key. The role must be able to create, read, and write tables in the target database.
+
+### Databricks
+
+| Field | What to provide |
+|---|---|
+| Hostname | Your Databricks workspace URL. |
+| HTTP path | The HTTP path of the SQL warehouse PlaidCloud runs queries against. |
+| Unity Catalog | The Unity Catalog catalog PlaidCloud creates and manages project schemas in. |
+| Personal access token | A Databricks PAT for authentication. |
+
+The token's identity must be able to create, read, and write tables in that catalog.
+
+Neither registration asks for a schema — each project gets its own, derived automatically from its DSN when the project binds to the lakehouse.
+
+The registration form has a **Test Connection** button that opens a live connection with the details entered and reports success or the reason it failed, without saving anything — so credentials can be verified before the lakehouse is registered. A Snowflake test needs the raw, unencrypted PEM private key (a passphrase-protected key is reported as unsupported); a Databricks test uses the PAT.
+
+<Aside type="note">An Iceberg/Lakekeeper catalog connection is registered separately and is optional — it isn't required to use a Snowflake or Databricks lakehouse.</Aside>
+
+## Bind a Project to the Lakehouse
+
+Once your tenant has at least one external lakehouse registered, the **New Project** dialog (**Analyze > Projects > New Project**) offers a lakehouse picker: choose **Tenant Default**, or pick a specific registered lakehouse. **Tenant Default** is the built-in PlaidCloud Lakehouse unless an administrator has set a registered external lakehouse as the tenant default (see [Set a tenant default](#set-a-tenant-default) below), in which case new projects land there automatically. From then on:
+
+- Every table the project's workflows create, load, or transform is created and written in your lakehouse.
+- Reads — in steps, views, and dashboards — run as queries against your warehouse.
+- Nothing is copied into the PlaidCloud Lakehouse; the data stays in your account.
+
+Build workflows exactly as you would on the built-in lakehouse — import, transform, join, and publish steps all work the same way. The backend is set when the project is created and applies to the whole project.
+
+## Managing Registered Lakehouses
+
+### Set a Tenant Default
+
+An administrator can designate one registered external lakehouse as the **tenant default**. New projects that pick **Tenant Default** then bind to it instead of the built-in PlaidCloud Lakehouse. The default is a single tenant-wide setting — there's no per-project default. Changing it affects only projects created afterward; existing projects keep the backend they were created with.
+
+### Deleting a Lakehouse
+
+Deleting a registered lakehouse is refused while any project is still bound to it — the error lists the bound projects. Rebind or delete those projects first, then delete the lakehouse (or force the deletion, which leaves the listed projects pointing at a lakehouse that no longer exists).
+
+## Importing Files Into a Lakehouse-Bound Project
+
+Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
+
+## Exporting Query and Table Results
+
+Exporting query or table results from a lakehouse-bound project delivers straight to cloud storage rather than routing every row back through PlaidCloud:
+
+- **Snowflake** — the export runs as a Snowflake server-side unload (`COPY INTO` a stage), so the warehouse writes the results directly to storage. Large exports are automatically split into multiple files (previously an export above Snowflake's single-file limit would fail).
+- **Databricks** — the export runs as a Databricks server-side unload (`INSERT OVERWRITE DIRECTORY` into a Unity Catalog managed volume), so the warehouse writes and encodes the results itself and PlaidCloud only relays the finished files to storage. Large exports roll across multiple files automatically, and CSV can be delivered gzip-compressed.
+
+## Dashboards Over Lakehouse Data
+
+Dashboards work over both engines.
+
+- **Databricks** — dashboards query the lakehouse through the Databricks driver, the same as any other project.
+- **Snowflake** — dashboards authenticate with a key pair and are enabled per tenant. A **new** project created after your tenant has Snowflake dashboards enabled gets its dashboard automatically. An **existing** Snowflake-backed project gets its dashboard the next time it's published.
+
+## Related
+
+- [Create and Manage a Connection](/guides/connections/create-connection/)
+- [Snowflake connector reference](/reference/connectors/databases/snowflake/)
+- [Azure Databricks connector reference](/reference/connectors/databases/azure-databricks/)
+- [Managing Projects](/guides/projects/managing-projects/)

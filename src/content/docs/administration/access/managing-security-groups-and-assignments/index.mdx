@@ -38,6 +38,108 @@ Security groups can be added, updated, or deleted.
 4. Click the Member icon
 5. Drag desired members from the “Unassigned Members” column to the “Assigned Members” column or vice versa to remove members
 
+<Aside>Saving with the “Assigned Members” column empty makes no change, and tells you so. To take a group away from everyone, remove its permissions or delete the group rather than emptying its membership.</Aside>
+
+<Aside type="caution">Permissions you cannot grant yourself are left alone when you save a group’s permission matrix, and are not shown in it. If you need to change one, ask someone who holds that permission — the matrix only ever edits what you control.</Aside>
+
+## Managing Row Access
+
+Row Access lets you designate a column on a project as governing which rows a security group can see, and grant specific values of that column to specific groups. For example, a `region` column could be declared as governing, and a group granted `East` and `Central` would be limited to rows carrying those values.
+
+**To open Row Access for a security group:**
+
+1. Open Identity
+2. Select the "Security" tab
+3. Click "Security Groups" in the dropdown menu
+4. Click the Row Access icon beside the group
+
+This opens a list of every project that has at least one governed column, with the group's current standing on each one.
+
+**Every project and column always shows one of three states:**
+
+- **Granted** — the group has been given specific values it can see.
+- **Unrestricted** — the group holds no grant, and the column's default lets an ungranted group see every value.
+- **Denied** — the group holds no grant, and the column's default is to deny an ungranted group everything.
+
+<Aside type="caution">
+Denied is always shown as its own row rather than left out. A column set to deny by default is a total lockout for any group with no grant on it, and hiding that row would make the lockout look like nothing had been configured.
+</Aside>
+
+<Aside type="caution">
+"— all values (default) —" only applies to a group that holds **no** grant on that column at all. It does not widen a group that has been granted specific values elsewhere — that group still sees only what it was granted.
+</Aside>
+
+**To declare a governed column on a project:**
+
+1. From Row Access, click "Declare Attribute…"
+2. Choose the project and the column that will govern row access
+3. Choose where its grantable values come from — a dimension, another table's column, or a list you type in
+4. Choose what an ungranted group sees by default: every row, or none
+
+**To grant specific values to a security group:**
+
+1. From Row Access, click "Edit Grant" beside a column
+2. Move the values this group should see into the assigned side, and save
+
+<Aside>
+Declaring a column and granting values records the configuration. Nothing you enter here reaches your dashboards until the configuration is applied to them — see [Applying Row Access to Dashboards](#applying-row-access-to-dashboards) below.
+</Aside>
+
+<Aside type="caution">
+**Publish a governed table before you declare row access on it.** Row Access restricts a table's *published reporting view*, so the table has to be published for reporting first — the [Apply to dashboards](#applying-row-access-to-dashboards) step binds and filters that view. Once a column is declared as governing, PlaidCloud declines to publish or republish that table, because an unfiltered reporting view would let anyone with reporting access read every row. A table already published stays published; only new publishes are declined. One consequence: while a table stays governed, a change to its shape cannot rebuild its reporting view — un-govern the column, republish, then declare it again if you need to. See [Publishing Tables](/guides/data/publish/).
+</Aside>
+
+### Applying Row Access to Dashboards
+
+The Row Access screen is the record of what each group may see. That record does not reach your dashboards until you apply it. Each project on the screen has an **Apply to dashboards** button — click it to apply that project.
+
+Applying a project rewrites its dashboard restrictions to match what Row Access says right now. It is not additive: a grant you removed has its restriction removed too, and a column you stopped governing has its restrictions taken away. So re-applying is the normal way to publish a change — edit the grants, then click **Apply to dashboards** again. Applying twice does no more than applying once.
+
+You need the same access to apply a project as to edit its grants: Architect on that project, and the project not locked against changes.
+
+**What gets applied, and what is reported back instead.** When you apply, PlaidCloud tells you what it did and what it left alone, so nothing is silently skipped:
+
+- A governed column whose values come from another table's column is applied.
+- A governed column whose values come from a dimension or from a list you typed is **not** applied yet, and is reported as unbound.
+- A table is applied only where at least one of its governed columns denies ungranted groups by default. A table governed only by columns that let ungranted groups see everything is reported as skipped — applying it would publish the table to your dashboards with nothing restricting it.
+- A governed table has to have been published to the project's report schema first, and every governed column has to still exist in what was published. Where one doesn't, the apply stops and names the column rather than publishing a restriction that could never filter anything.
+
+<Aside type="caution">
+A group member has to have signed in to your dashboards at least once before their restrictions can follow them there, because until then they have no dashboard account to attach the restriction to. Applying the project again once they have signed in picks them up.
+</Aside>
+
+### Row Access and Queries You Write Yourself
+
+Row Access limits which rows a group may see by filtering the table it is defined against. A query someone writes themselves has no single table to attach that filter to — a query can join, combine or nest as many tables as it likes — so on a project with Row Access declared, PlaidCloud declines to run a query supplied by the caller rather than return rows nothing has vetted.
+
+This applies to reading through your own SQL, exporting the results of your own SQL to a file or to another database, and typing a row condition into a fan-out step's "Test row 1" preview. It does **not** apply to reading a table by name, which is the ordinary way apps and tools read data — those apply the grants and return the rows the viewer is entitled to.
+
+Anyone declined is told which project it was, and pointed at the by-name readers. A project Architect can run the query as written, because an Architect can already grant themselves every value of every governed column.
+
+Exporting the results of your own SQL to a file is the one exception to that: a large export is carried out by a separate background worker that is not told who asked for it, so it is declined on a governed project even for an Architect. Export a table by name instead, or run the query and export what it returns.
+
+Importing a spreadsheet is not, by itself, a query you wrote yourself — an ordinary file import reads no governed data at all, it only creates the project's own new table from the file you uploaded, so it is unaffected by Row Access. The exception is an import whose data projection is caller-supplied: a per-column expression, or a dynamic Excel mapping. On the interactive import screen those are declined the same way as the free-form-SQL surfaces above, and need a project Architect, because a caller-supplied projection could read another table. An import run from a workflow is unaffected either way, since it runs under the project's own service identity.
+
+<Aside type="caution">
+Declaring your first governed column on a project changes this for everyone using it. If a Panel app, notebook or integration on that project reads data by composing its own SQL, switch it to reading the table by name before you declare — otherwise it stops working for everyone who is not an Architect.
+</Aside>
+
+### Row Access and the Data Editor
+
+The Data Editor reads and writes a table directly, so Row Access applies to it on both sides.
+
+Opening a governed table in the Data Editor shows only the rows your security group is granted — the same filter that follows you into a dashboard, and it applies even when the governing column is not one of the columns shown in the grid.
+
+Saving your edits requires **Architect** on the project. A save replaces the table's rows wholesale rather than reading them, and it is not filtered row by row, so editing data on a governed table is treated as an authoring action rather than a read: anyone without Architect is told they need it. A table that carries no governed column is edited as before, and so is any project that has not turned Row Access on.
+
+### Approving the First Apply
+
+The first time you apply Row Access in a workspace, PlaidCloud takes ownership of the dashboard roles it manages, and there is no undo — the dashboard service keeps no history of role membership to roll back to. So the first apply asks a workspace administrator to confirm it, once per workspace. Click **Apply to dashboards** and a confirmation appears describing this as a one-time, permanent, workspace-wide authorization; confirm it and the apply proceeds. The approval is recorded against the administrator who is signed in, so it cannot be given on someone else's behalf. After that one confirmation, applying any project just works.
+
+<Aside type="note">
+These actions are also available through the PlaidCloud API, for automation. `POST /rest/v1/analyze/rls/reconcile?project_id=<project id>` applies one project; `GET /rest/v1/analyze/rls/first-write-diff?group_id=<security group id>&group_id=<...>` previews the first-apply role changes — who would be added to and removed from each group's dashboard role, and who has no dashboard account yet — without making them; and `POST /rest/v1/analyze/rls/first-write-approval` records the one-time approval. Applying needs Architect on the project; the approval is restricted to workspace administrators and takes no parameters.
+</Aside>
+
 ## Setting Default Security Groups
 
 

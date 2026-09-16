@@ -58,11 +58,46 @@ Description bounds are intentionally permissive (any length); the original Zod s
 - **Voice**: second person ("you can do X"). PlaidCloud company voice ("we recommend") is fine where it reflects an explicit recommendation. Avoid third-person "the user" except when referring to external system accounts (AWS IAM users, SAML user attributes, etc.).
 - **Don't restate the obvious**. A step called "Compress PDF" doesn't need a description saying "This step compresses a PDF" — go straight to inputs, outputs, and when to use it.
 
+### Diagrams (inline SVG)
+
+A small, purpose-built diagram earns its place wherever a mechanism is easier to *see* than to read — a data flow, an isolation boundary, a fan-out, a lifecycle, a port contract. They meaningfully raise the clarity and polish of a page. Prefer one clear diagram over three paragraphs restating the same shape. Exemplars: [`guides/workflows/advanced-workflows.mdx`](src/content/docs/guides/workflows/advanced-workflows.mdx) (execution container + iteration) and [`guides/workflows/create-a-macro.mdx`](src/content/docs/guides/workflows/create-a-macro.mdx) (port contract, isolation lifecycle, fan-out).
+
+**Format — hand-authored, theme-aware inline SVG. No image files, no diagram libraries, no Mermaid.**
+
+- **Inline `<svg>` in the page**, wrapped in `<figure>` + `<figcaption>`. Works in both `.md` and `.mdx` — Astro passes raw HTML through and this repo adds no sanitizer. Use `.mdx` when the page also imports components; plain `.md` is fine otherwise. In `.md`, keep the whole `<figure>…</figure>` **contiguous** (no blank lines inside it) so CommonMark treats it as one HTML block, and surround it with a blank line above and below.
+- **Theme-aware via Starlight CSS tokens only** — never hard-code colors, so diagrams read in both light and dark:
+  - `var(--sl-color-text)` — box/label text
+  - `var(--sl-color-gray-3)` — arrows, muted/secondary text
+  - `var(--sl-color-gray-5)` — neutral box borders
+  - `var(--sl-color-gray-6)` — neutral box fills
+  - `var(--sl-color-accent)` — the emphasized element (the boundary/container/ports the diagram is *about*)
+- **Responsive**: set `viewBox`, `style="width:100%;max-width:<W>px;height:auto;"` — no fixed pixel width/height attributes.
+- **Accessible**: `role="img"` plus a one-sentence `aria-label` that states what the diagram shows. The `<figcaption>` restates the takeaway for sighted readers.
+- **Arrowheads**: define a `<marker>` in `<defs>` with a **page-unique `id`** (e.g. `mp-arrow`, `ml-arrow`) — ids are global once inlined, so don't reuse across diagrams on one page.
+- **Escaping**: escape literal `<`/`>` in *text* as `&lt;`/`&gt;` (a bare `<word>` looks like a tag and gets dropped). In `.mdx` only, there are two extra pitfalls — no HTML comments (`<!-- -->`, MDX rejects them) and literal braces must be `&#123;`/`&#125;` (a bare `{` starts a JSX expression). Plain `.md` has neither pitfall (braces are literal).
+- **Verify**: `npm run build` must pass, and the SVG must actually appear in the built `dist/.../index.html`.
+
+Boilerplate:
+
+```mdx
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 210" role="img" aria-label="One sentence describing what this shows." style="width:100%;max-width:660px;height:auto;">
+  <defs>
+    <marker id="ex-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="230" y="85" width="100" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="280" y="110" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">step</text>
+  <path d="M330 106 L386 106" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ex-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The one takeaway a reader should leave with.</figcaption>
+</figure>
+```
+
 ### Page patterns
 
 - **Reference pages**: short description → Configuration / Inputs / Outputs / Common Uses / Related links
 - **Workflow step pages**: `## Description` (2-3 sentences with use case context) → step-specific sections (Load Parameters, etc.)
-- **Guide pages**: prerequisites if any → numbered steps → notes → next steps
+- **Guide pages**: prerequisites if any → numbered steps → notes → next steps. Add an inline SVG diagram (see **Diagrams** above) wherever a data flow, isolation boundary, fan-out, or lifecycle is easier to see than to read.
 - **Landing/index pages**: 1-2 sentence intro → categorized link list (CardGrid or plain `## H2` + bullet list)
 
 ## Build and deploy
@@ -108,7 +143,64 @@ The `astro-migration` branch is retained for safety until the new deployment has
 
 **Keep the current month's What's New entry current as part of shipping a change — don't leave it for later.** Whenever a customer-facing feature is added or updated, or a customer-facing bug is fixed, add a matching entry to the current month's `src/content/docs/releases/YYYY-MM.mdx` (under `## Added` / `## Changed` / `## Fixed` / `## Security`) and, when the page is new, create it from the previous month's structure — a `## Releases Shipped` version table plus those sections — and add its `<LinkCard>` to `releases/index.mdx`. Do this alongside the feature's guide/reference docs in the same change, not as a separate pass. The What's New area is how we showcase what shipped, so anything of significance belongs here. Keep entries customer-facing: plain-language outcomes only — no internal symbols, file names, SQL, version-control detail, or other implementation specifics.
 
-The PR template (`.github/pull_request_template.md`) has a "User-facing change?" checkbox and a customer summary field. Future monthly notes should be writable directly from the squash-merge commit body — no excavation needed.
+**Do not document Alteryx-conversion changes in What's New.** The converter may be announced as a capability at a high level (a deliberate launch entry), but the incremental churn stays out of the monthly release notes — which tools now convert or refuse, coverage-matrix or measurement notes, and per-tool conversion bug fixes all reveal our capability boundaries and belong only in the Alteryx guide/reference pages (`guides/workflows/migrate-alteryx-workflows/`, `reference/alteryx-conversion-matrix/`), never in `releases/`. A passing, incidental mention (e.g. "Alteryx yxdb" as one supported import format) is fine; an entry whose subject is a conversion change is not.
+
+#### The Alteryx conversion matrix uses EXACTLY three statuses — never deviate
+
+`reference/alteryx-conversion-matrix.md` is a **customer-facing marketing page**, not an
+engineering scoreboard. Its tool table has **exactly three statuses and no others**:
+
+- **Full** — the tool converts and runs its function. This is where nearly every tool
+  belongs. A validation caveat, a managed-executor route, a cloud-native-artifact
+  equivalent, or an annotation-only passthrough is **still Full** — none of those demote.
+- **Partial** — converts and runs for its common use, but one whole *capability mode* is
+  not reproduced (e.g. Trade Area drive-time).
+- **Not supported** — no conversion path at all (e.g. Geocoder). A tool that
+  converts but refuses one narrow option/mode is **Full**, not
+  Not-supported — drop the narrow caveat from the marketing table.
+
+**Hard rules, no exceptions:**
+
+- **Never reintroduce the old five-level "coverage levels"** (Fully Converts / Converts
+  With Validation / Converts To Executor / Cloud-Native Equivalent / Annotation Only). That
+  scheme was deliberately retired (plaidcloud-docs#454) because a wall of nuanced levels
+  makes prospects think we *can't* fully convert. It was silently reverted once
+  (#463 merged a stale pre-#454 copy of this file and clobbered the recast) — do not let it
+  happen again. The page carries an HTML comment at the top restating this; keep it.
+- **Only a structural capability-mode gap demotes from Full.** Edge-case config
+  permutations and option-level caveats do not. When in doubt, it's Full.
+- **Marketplace/cloud connectors** (Salesforce, S3, Cassandra, Anaplan, cloud ML, …) live
+  in their own "Connecting to External Systems" section as *connected, not converted* — they
+  never appear in the Full/Partial/Not-supported table.
+- **Do NOT re-add the "How Coverage Is Measured" methodology section** or a detailed
+  recognised-but-unconverted enumeration — that is competitive over-disclosure.
+- **This file is edited by many concurrent sessions. Rebase onto `origin/main` immediately
+  before touching it**, and edit the *current* three-status structure in place — never
+  regenerate it from an older copy. A whole-file rewrite against a stale base is exactly how
+  the scheme got reverted. If you find it in five-level form, converting it back to three
+  statuses IS the task, not an optional nicety.
+
+#### A What's New page is a summary, not a merge log
+
+**One capability gets one entry for the month, however many times it was worked on.** The page is read by a customer who wants to know what the product does now — not by someone reconstructing the order in which we built it. A feature that shipped and was then extended, refined, or fixed twice within the month is still *one* bullet describing the finished capability, rewritten to include the later work. Two bullets on the same capability in one month is a defect in the page.
+
+So the act of adding an entry is **edit-first, append-second**:
+
+1. Read the whole current month's page before writing anything.
+2. If any existing entry already covers this capability — or an adjacent part of the same user-visible feature — **rewrite that entry in place** so it describes the end state. Do not add a second bullet, do not add a "now also…" sentence tacked onto the end, and do not leave the original wording describing a superseded intermediate state.
+3. Only add a new bullet when nothing on the page covers it.
+
+Writing rules that follow from this:
+
+- **Present tense, end state.** "You can copy steps between projects, links and groups included." Never "we added copy/paste, then added group support, then added undo."
+- **No chronology, no internal work units.** No dates, no PR or story numbers, no release-by-release sequencing, no "initially / later in the month", no "part one of".
+- **Fold same-month fixes into the feature.** A bug introduced and fixed inside the same month never reaches the customer and gets no `## Fixed` entry — it is simply part of how the feature is described. `## Fixed` is for something that was broken in a *previous* release.
+- **Group a family under one lead entry.** Many small changes to one area (a converter, a step type, an admin screen) become one bullet naming the capability, with sub-bullets or a short paragraph for the parts worth calling out — not one top-level bullet per change.
+- **Alteryx conversion in particular:** incremental converter coverage — individual tools converting, individual tools refusing by name, coverage-matrix wording — does **not** belong on a What's New page at all. The converter appears there for high-level launches only.
+- **Order by what matters to the reader**, biggest capability first. Merge order is not a ranking.
+- **Sweep before the month closes.** When the month's last entry goes in, reread the page top to bottom as one document: merge near-duplicates, collapse families, cut anything that reads as an implementation step rather than a customer outcome, and make the front-matter `description` describe the month's headline capabilities rather than the last thing merged.
+
+The PR template (`.github/pull_request_template.md`) has a "User-facing change?" checkbox and a customer summary field. Future monthly notes should be writable directly from the squash-merge commit body — no excavation needed. That per-PR summary is raw material for an entry, **not an entry** — never paste one in as its own bullet without checking whether the capability is already on the page.
 
 For the current corpus, monthly pages were generated from `plaid-tenant-infrastructure` tag history via:
 

@@ -41,3 +41,7 @@ Lakehouse v2 is built on [StarRocks](https://www.starrocks.io/) 4.1. For each fu
 
 - [Utility Functions](./21-utility-functions) — Access system information and session utilities
 - [Meta Functions](./23-meta-functions) — Inspect materialized views, memory, and diagnostics
+
+## Managing the Lakehouse
+
+- [Lakehouse Management](./lakehouse-management/) — run queries, browse the catalog, manage warehouses, and monitor compute

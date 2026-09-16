@@ -1,12 +1,12 @@
 ---
 title: Call SAP Master Data Table RFC
-description: Calls an SAP ECC Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form.
+description: Calls an SAP ECC / S/4HANA Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form.
 ---
 
 ## Description
 
 
-Calls an SAP ECC Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form. This data is then available for transformation processes in PlaidCloud. It also provides the ability to export the master data table structure to a separate file which includes column names, data types, and column order information.
+Calls an SAP ECC / S/4HANA Remote Function Call (RFC) designed to access master data tables and retrieves the data in tabular form. This data is then available for transformation processes in PlaidCloud. It also provides the ability to export the master data table structure to a separate file which includes column names, data types, and column order information.
 
 
 ## Examples

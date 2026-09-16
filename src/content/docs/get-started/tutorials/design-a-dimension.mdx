@@ -1,0 +1,160 @@
+---
+title: Design a Dimension Hierarchy
+description: End-to-end tutorial — build a dimension, add an alternate hierarchy, load it from a table, and use it downstream in reporting and allocations.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minutes · a dimension, an alternate hierarchy, used downstream*
+
+Dimensions are the hierarchies everything else in PlaidCloud builds on — allocations target them, dashboards slice by them, reports roll up through them. Yet most guides *reference* dimensions without ever teaching you to build one. This tutorial closes that gap: you'll create a cost center dimension, give it a second way to roll up, populate it from a table, and hand it to a downstream consumer.
+
+## What You'll Build
+
+A cost center dimension with a **main** hierarchy that groups centers by department, plus an **alternate** hierarchy that re-groups the same centers by region. Then you'll load it from a source table and point an allocation at it.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 300" role="img" aria-label="A cost center dimension drawn as a tree. The main hierarchy has a root, Company, with two department children, Sales and Operations. Sales has leaf cost centers CC-100 and CC-200; Operations has leaf cost centers CC-300 and CC-400. Below, an alternate hierarchy named By Region re-groups the same four leaves: East gathers CC-100 and CC-300, West gathers CC-200 and CC-400, shown with dashed connectors that cross the main tree." style="width:100%;max-width:640px;height:auto;">
+  <path d="M320 51 L170 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M320 51 L470 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L90 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L250 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L390 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L550 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M240 250 L90 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M240 250 L390 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L250 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L550 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <rect x="270" y="15" width="100" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="320" y="38" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">Company</text>
+  <rect x="120" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="170" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sales</text>
+  <rect x="420" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="470" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Operations</text>
+  <rect x="50" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="90" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-100</text>
+  <rect x="210" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="250" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-200</text>
+  <rect x="350" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="390" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-300</text>
+  <rect x="510" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="550" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-400</text>
+  <rect x="200" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="240" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">East</text>
+  <rect x="360" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="400" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">West</text>
+  <text x="30" y="30" font-size="10" fill="var(--sl-color-gray-3)">Main</text>
+  <text x="30" y="270" font-size="10" fill="var(--sl-color-accent)">By Region</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The main hierarchy groups cost centers by department; the alternate re-rolls the same four leaves by region. Same leaves, different parents.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace ([start a free trial](https://app.plaidcloud.com) if you don't have one)
+- A project to work in (create one from the **Projects** tab if needed)
+- Familiarity with [Concepts](/get-started/concepts/) — workspace, project, workflow, dimension
+- Optionally, a source table with cost center structure for the load in Step 4 (you can also build the tree by hand)
+
+> **New to the idea? Read [Getting Started with Dimensions](/guides/dimensions/getting-started/) first.** It explains when a dimension earns its keep and how the main and alternate hierarchies relate — the vocabulary this tutorial assumes.
+
+## Step 1: Create the Dimension
+
+Dimensions live in the **Dimensions** tab within each project.
+
+<Steps>
+
+1. Open your project and switch to the **Dimensions** tab.
+2. From the **New** button in the toolbar, choose **New Dimension**.
+3. Enter a **name** (e.g., `Cost Centers`), a **directory** for folder-style organization, and a descriptive **memo**.
+4. Click **Create**. The dimension is ready immediately.
+
+</Steps>
+
+You now have an empty dimension — a shell with a main hierarchy and nothing in it yet. The next step gives it structure.
+
+## Step 2: Build the Main Hierarchy
+
+Every dimension has one **main** hierarchy: the canonical, single-truth tree where every leaf member is registered exactly once. Build the department structure here.
+
+<Steps>
+
+1. With the dimension open, select the root and click **Add Member** on the hierarchy toolbar to create the top-level parents — `Sales` and `Operations`.
+2. Select a department and use **Add Member** again to add the leaf cost centers that roll up to it:
+
+   | Parent | Leaf members |
+   |---|---|
+   | Sales | CC-100, CC-200 |
+   | Operations | CC-300, CC-400 |
+3. The hierarchy toolbar also moves members up and down and re-parents them directly, so you can fix any member you place wrong.
+
+</Steps>
+
+> **Every leaf must live in the main hierarchy.** Anything anywhere in the dimension is first a member of the main tree — the only open question is *where* it sits. Alternate hierarchies (next step) reuse these leaves; they never introduce new ones.
+
+For large trees, arranging members by hand gets tedious. The [Dimension Sort](/reference/workflow-steps/dimensions/dimension-sort/) workflow step sorts programmatically — a real time saver after a load or a big restructure.
+
+## Step 3: Add an Alternate Hierarchy
+
+An **alternate hierarchy** is a different view of the same leaves. It can pick a subset, group them differently, or use an entirely different roll-up. Here you'll re-group the four cost centers by region instead of by department.
+
+<Steps>
+
+1. Add a new alternate hierarchy to the dimension and name it `By Region`.
+2. In the new hierarchy, use **Add Member** to create two parents — `East` and `West` — then add the existing leaves under them:
+
+   | Region parent | Leaf members |
+   |---|---|
+   | East | CC-100, CC-300 |
+   | West | CC-200, CC-400 |
+
+</Steps>
+
+The leaves are the *same* members from the main hierarchy — you're re-parenting them for this view, not duplicating them. Members in the main hierarchy carry attribute labels showing which alternate hierarchies they also belong to, so you can see at a glance that CC-100 is both a Sales center and an East center.
+
+> **Two common alternate patterns.** A *subset view* pulls a focused set of leaves into a tree for one report or allocation; it inherits member changes from the main. A *different roll-up* keeps every leaf but re-groups them, as `By Region` does here. See [Using Dimensions (Hierarchies)](/guides/dimensions/dimensions/#alternate-attribute-hierarchies) for both.
+
+## Step 4: Load It From a Table
+
+Building a few nodes by hand is fine for a tutorial. In practice you populate a dimension from a source table via a workflow, so it refreshes as the source changes. PlaidCloud reads two data shapes:
+
+| Format | Shape | Best for |
+|---|---|---|
+| **Parent-Child** | Two columns — one parent, one child — one edge per row | Arbitrarily deep, irregular hierarchies |
+| **Levels** | One column per level, one full path per row | Regular hierarchies with predictable depth |
+
+<Steps>
+
+1. Switch to the **Workflows** tab and create a workflow (e.g., `Load Cost Centers`).
+2. Add a [Dimension Load](/reference/workflow-steps/dimensions/dimension-load/) step.
+3. Point it at your source table, choose **Parent-Child** or **Levels**, and map the columns that carry the structure.
+4. A load can carry more than structure — **values, aliases, and properties** can ride along in the same step. Map those columns too if your source has them.
+5. Run the step, then reopen the **Dimensions** tab to confirm the tree matches your source.
+
+</Steps>
+
+> **A load builds structure; it doesn't reset the dimension.** To wipe a dimension back to empty before reloading — clearing structure, values, aliases, properties, and alternate hierarchies — use [Dimension Clear](/reference/workflow-steps/dimensions/dimension-clear/) first. See [Loading and Unloading Dimensions](/guides/dimensions/loading-unloading/) for the round trip, including exporting the hierarchy back to a flat table for reporting.
+
+## Step 5: Enrich Nodes (Optional)
+
+A hierarchy can be more than a tree of names. Each node can carry **properties** (a cost center's currency, its owning business unit), **aliases**, and **values**. Toggle **Properties** on the hierarchy toolbar to show a column per property, and add one with **New Property**.
+
+You can also compute values directly in the hierarchy. **Aggregations** pull summed, counted, min, or max values from a table into each node, and **Expressions** calculate from those aggregations using math operators, conditionals, and functions like `Column(...)`, `Leafcount()`, and `Parentvalue(...)`. See [Dimension Functions for Expressions and Aggregations](/guides/dimensions/function-expressions/) for the full set.
+
+## Step 6: Use It Downstream
+
+The payoff: define the tree once, reference it everywhere. Your dimension is now a target for the rest of PlaidCloud.
+
+- **Allocations** target a dimension to spread a cost pool across its leaves — the natural next step below.
+- **Reports and dashboards** slice and drill through the hierarchy, using the main tree for one roll-up and `By Region` for another, from the same underlying leaves.
+- **Dimension-mapped columns** in a [Data Editor](/guides/projects/managing-data-editors/) or in another dimension's **Select (Dimension)** property let users pick members from your tree through a member picker.
+
+To feed an allocation, keep the leaf member names in your dimension identical to the keys in your driver and source data — a mismatch in spacing or casing means a leaf receives nothing. That contract is exactly what the allocation tutorial builds on next.
+
+## Where to Go Next
+
+- [Build an Allocation Model](/get-started/tutorials/build-an-allocation/) — spread a cost pool across the dimension you just built (the natural next step)
+- [Getting Started with Dimensions](/guides/dimensions/getting-started/) — when to reach for a dimension, and how the pieces fit
+- [Using Dimensions (Hierarchies)](/guides/dimensions/dimensions/) — full management reference: properties, inheritance, copying, sorting
+- [Loading and Unloading Dimensions](/guides/dimensions/loading-unloading/) — moving structure in and flattening it back out
+- [Dimension Functions for Expressions and Aggregations](/guides/dimensions/function-expressions/) — calculated values inside a hierarchy

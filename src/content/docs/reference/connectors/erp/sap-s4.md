@@ -1,17 +1,19 @@
 ---
 title: SAP S/4HANA Connector
-description: Configure an SAP S/4HANA ERP connection in PlaidCloud to integrate real-time financial and operational data into workflows.
+description: SAP S/4HANA connects to PlaidCloud through the shared SAP ECC / S/4HANA RFC connection — see the combined connector reference for its configuration fields.
 sidebar:
   order: 1
 ---
 
+S/4HANA does not have a connector of its own. It shares one connection type with SAP ECC, because PlaidCloud reaches both through the same Remote Function Call interface. In the **Connections** screen, choose **New → SAP ECC / S/4HANA Instance**.
+
+**[SAP ECC and S/4HANA Connector →](/reference/connectors/erp/sap-ecc/)** — every configuration field, for both generations.
+
 ## Upstream Documentation
+
 See the [SAP S/4HANA documentation](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE).
 
-## Setup
+## Related
 
-This connector uses a vendor-specific authentication flow and is configured directly from the **Connections** screen in your workspace. The configuration fields shown depend on the credentials your tenant administrator has provisioned for the integration.
-
-See the upstream [sap-s4 documentation](https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE) for the latest setup specifics.
-
-If you need help setting up this connector for your tenant, contact your account team — connector-specific credentials, environment URLs, and any required pre-provisioning typically need to be coordinated with PlaidCloud support.
+- [SAP workflow steps](/reference/workflow-steps/sap/) — the steps that run against this connection.
+- [SAP Analytics Cloud (SAC)](/reference/connectors/erp/sap-sac/), [SAP PaPM](/reference/connectors/erp/sap-papm/), and [SAP PCM](/reference/connectors/erp/sap-pcm/) are separate connectors with their own configuration.

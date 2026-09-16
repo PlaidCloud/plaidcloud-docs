@@ -11,18 +11,18 @@ Workflow steps for operating on files stored in document accounts. Use these to 
 ## File Operations
 
 - [Copy document file](/reference/workflow-steps/document/copy-document-file/) · [Copy document directory](/reference/workflow-steps/document/copy-document-directory/)
-- [Rename document file](/reference/workflow-steps/document/rename-document-file/) · [Rename document directory](/reference/workflow-steps/document/rename-document-directory/)
-- [Delete document file](/reference/workflow-steps/document/delete-document-file/) · [Delete document directory](/reference/workflow-steps/document/delete-document-directory/)
 - [Create document directory](/reference/workflow-steps/document/create-document-directory/)
+- [Delete document file](/reference/workflow-steps/document/delete-document-file/) · [Delete document directory](/reference/workflow-steps/document/delete-document-directory/)
 - [Directory listing](/reference/workflow-steps/document/directory-listing/) — write a table of the files in a folder
 - [Fix file extension](/reference/workflow-steps/document/fix-file-extension/)
+- [Rename document file](/reference/workflow-steps/document/rename-document-file/) · [Rename document directory](/reference/workflow-steps/document/rename-document-directory/)
 
 ## PDF Operations
 
-- [Merge multiple PDFs](/reference/workflow-steps/document/merge-multiple-pdfs/)
 - [Compress PDF](/reference/workflow-steps/document/compress-pdf/)
 - [Convert image to PDF](/reference/workflow-steps/document/convert-image-to-pdf/)
 - [Convert PDF or image to JPEG](/reference/workflow-steps/document/convert-pdf-or-image-to-jpeg/)
+- [Merge multiple PDFs](/reference/workflow-steps/document/merge-multiple-pdfs/)
 
 ## Image Operations
 
@@ -30,17 +30,19 @@ Workflow steps for operating on files stored in document accounts. Use these to 
 
 ## Text Operations
 
-- [Document text substitution](/reference/workflow-steps/document/document-text-substitution/) — find/replace inside a document
 - [Concatenate files](/reference/workflow-steps/document/concatenate-files/) — join multiple files into one
+- [Document text substitution](/reference/workflow-steps/document/document-text-substitution/) — find/replace inside a document
 
 ## Encoding Conversion
 
 - [Convert document encoding](/reference/workflow-steps/document/convert-document-encoding/) — choose target encoding
-- [Convert document encoding to UTF-8](/reference/workflow-steps/document/convert-document-encoding-to-utf-8/)
-- [Convert document encoding to UTF-16](/reference/workflow-steps/document/convert-document-encoding-to-utf-16/)
 - [Convert document encoding to ASCII](/reference/workflow-steps/document/convert-document-encoding-to-ascii/)
+- [Convert document encoding to UTF-16](/reference/workflow-steps/document/convert-document-encoding-to-utf-16/)
+- [Convert document encoding to UTF-8](/reference/workflow-steps/document/convert-document-encoding-to-utf-8/)
 
 ## See Also
 
-- [Documents guide](/guides/documents/) — task-oriented walkthroughs for the same operations
+- [Convert Dashboard to PDF](/reference/workflow-steps/document/dashboard-to-pdf/)
+- [Delete Old Files](/reference/workflow-steps/document/document-delete-old-files/)
 - [Document accounts](/guides/documents/adding-accounts/) — connect document accounts before using these steps
+- [Documents guide](/guides/documents/) — task-oriented walkthroughs for the same operations

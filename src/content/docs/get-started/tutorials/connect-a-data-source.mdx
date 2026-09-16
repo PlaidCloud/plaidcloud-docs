@@ -1,0 +1,147 @@
+---
+title: Connect a Live Data Source
+description: End-to-end tutorial — create a connection to an external database or cloud service, land its data into a project table, preview it, and set it to refresh on a schedule.
+---
+
+*~30 minutes · a connection, a landed table, a scheduled refresh*
+
+The other tutorials start from a CSV you upload. Real data usually lives somewhere else — a database, a warehouse, a SaaS app, a cloud store — and you want PlaidCloud reading it *directly*, not a stale export. This tutorial connects one of those systems, lands its data into a project table, previews the result, and sets it to refresh so the table stays current on its own.
+
+You'll do four things: **create a connection**, **land data through a workflow step**, **preview it**, and **schedule the refresh**. Each maps to one of PlaidCloud's building blocks, and the same shape works whatever you connect to.
+
+## What You'll Build
+
+A project table that fills itself from an external source and re-reads it on a schedule — no manual re-upload.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 700 150" role="img" aria-label="An external source connects to PlaidCloud through a saved connection. A workflow import step reads through that connection and writes into a project table. Table Explorer previews the table. A schedule re-runs the workflow so the table stays current." style="width:100%;max-width:700px;height:auto;">
+  <defs><marker id="cs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="8" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="68" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">external source</text>
+  <text x="68" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">DB · SaaS · cloud</text>
+  <path d="M128 75 L160 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="162" y="52" width="120" height="46" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="222" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-accent)">Connection</text>
+  <text x="222" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Tools &gt; Connections</text>
+  <path d="M282 75 L314 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="316" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="376" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">import step</text>
+  <text x="376" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">in a workflow</text>
+  <path d="M436 75 L468 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="470" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="530" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">project table</text>
+  <text x="530" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">preview · publish</text>
+  <path d="M530 98 C530 128 376 128 376 108" stroke="var(--sl-color-gray-3)" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#cs-arrow)" />
+  <text x="452" y="140" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">schedule re-runs the workflow</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The connection holds the credentials once; the import step reads through it into a table; a schedule keeps that table current.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace ([start a free trial](https://app.plaidcloud.com) if you don't have one)
+- A project to work in, and a workflow inside it (create one from the **Workflows** tab — see [Create a Workflow](/guides/workflows/create-workflow/))
+- Credentials for the source you're connecting to — a database host and login, an API token, a cloud-storage key, whatever that system uses
+
+## Step 1: Pick Your Connector
+
+PlaidCloud reaches each kind of external system through a purpose-built **connector** that knows that provider's authentication and protocol. Find yours in the [Connectors reference](/reference/connectors/) — the categories are:
+
+| Category | Examples |
+|---|---|
+| Databases and data lakes | PostgreSQL, SQL Server, Snowflake, BigQuery, Databricks, Redshift, Iceberg, Delta Lake |
+| REST / SaaS | Salesforce, NetSuite, Workday, QuickBooks, Stripe |
+| ERP systems | SAP ECC, S/4HANA, Oracle EBS/Fusion, Infor |
+| Cloud, Google, collaboration | Cloud services, Google Sheets/BigQuery, Slack, Microsoft Teams |
+| Singer Sources | 130+ tap-based sources — Stripe, GitHub, HubSpot, and more |
+| Git providers | GitHub, GitLab, Bitbucket, plus managed PlaidCloud Git |
+
+> **No dedicated connector? Use the generic one.** For a service without its own entry, the [Generic REST Connection](/reference/connectors/rest/generic-rest/) reaches any HTTP API. Note the exact field names each connector needs live in its reference page.
+
+This tutorial walks a [Singer Source](/guides/connections/singer-sources/) as the concrete example, because it lands data end-to-end with the fewest moving parts. A database or cloud-storage connector follows the same three moves — connection, import step, target table — with fields specific to that system.
+
+## Step 2: Create the Connection
+
+A **connection** is a saved configuration that holds the endpoint and credentials once, so every workflow step reuses it by name.
+
+1. Open **Tools > Connections**.
+2. Click **New Connection** in the toolbar and choose your system from the menu.
+3. Fill in the connection form. The tabs vary by type, but you'll commonly set:
+   - **Connection Config** (or **Connection Details** for REST) — the connection **Name**, an optional **Memo**, the host/port/database (or host/auth type), the **Usage** toggle set to **Active**, and the **Security Model**.
+   - Credentials — in an **Auth Credentials** group on a database connection, or a dedicated **Authentication** tab on a REST connection.
+   - **SSL Config** / **SSH Config** — enable encryption or tunnel through a bastion host if your source requires it.
+4. Click **Create**. The connection appears in the list, owned by you.
+
+The **Security Model** decides who else can use it — from **Private (Only Owners)** through **All Workspace Members**. See [Create and Manage a Connection](/guides/connections/create-connection/) for the full field-by-field walkthrough and how to grant access.
+
+> **Secrets are write-only.** Password and token fields show blank when you reopen a saved connection; leaving one blank on save keeps the stored value. Retype only when you're changing it.
+
+> **One connection, many environments.** A single connection can hold a different configuration per **environment** — a development host and a production host under one name — chosen from the environment selector in the toolbar. Set this up now if you'll promote the same workflow across environments later.
+
+## Step 3: Test the Connection
+
+Confirm PlaidCloud can actually reach the source before you build on it.
+
+- Save the connection first — tests run against the *stored* configuration, not unsaved edits.
+- A database connection with SSH exposes a tunnel test in its **SSH Config** tab.
+- The Generic REST connection has a **Testing** tab that fires an ad-hoc request through the saved connection.
+
+If the test fails, the usual causes are a wrong host or port, a firewall that doesn't allow PlaidCloud's egress, or a credential that needs retyping (remember secrets read back blank).
+
+## Step 4: Land the Data into a Table
+
+Data enters a project through a **workflow import step** that references your connection and writes into a **target table**. Views can't be import targets — a table holds the physical rows.
+
+Using a Singer Source as the worked example:
+
+1. Double-click your workflow to open it in the **Workflow Explorer**.
+2. Add a step and choose **Import: Singer Source**. The editor opens with a **Source** tab and a **Streams** tab.
+3. On the **Source** tab, choose your **Connection**, pick a **Sync Mode** (covered in Step 6), then click **Discover Streams**. Discovery runs on the background execution engine and can take up to about three minutes the first time.
+4. On the **Streams** tab, open the stream you want, check **Import this stream**, and set its **Target Table** — the table the rows land in.
+5. Save the step and run it. The rows land in the target table.
+
+> **The step stores a reference to the connection, not a copy of its credentials.** Each run reads the connection's current credentials at run time — so when you rotate a token, you update it once on the connection and every step picks it up on its next run.
+
+For a database or cloud-storage connector, the import step differs but the shape is identical: point it at the connection, name a target table, run it. The [Connectors reference](/reference/connectors/) links the specific step each connector uses, and the [Workflows guide](/guides/workflows/) covers building and running steps.
+
+## Step 5: Preview the Landed Data
+
+Anywhere PlaidCloud shows a table or view, clicking it opens [Table Explorer](/guides/data/table-explorer/) — so verifying the import is one click from the **Tables** tab.
+
+- The **Grid** view shows the rows (default limit 5,000). The **Top / Random** selector controls which rows fill it — switch to **Random** to spot-check quality across a large table rather than just the first rows.
+- The **Details** view summarizes each column: unique-value counts, and Min/Max/Mean/Sum-style statistics for numeric columns.
+- If a column landed as the wrong type, that's fixed with the column mappers in your workflow steps, not here.
+
+Check the row count and a few sample values match what you expect from the source. If they do, the connection and import are working.
+
+## Step 6: Set It to Refresh
+
+A one-time import is a snapshot. To keep the table current, choose **how** each run reconciles new data, then schedule the runs.
+
+**How each run reconciles** — set on the import step. For a Singer Source the sync modes are:
+
+| Sync mode | What each run does | Use when |
+|---|---|---|
+| Full table (replace each run) | Re-extracts everything and replaces the target | Small or fully refreshed sources |
+| Incremental (append new data) | Extracts only rows new since the last run and appends them | Sources with a replication key (an updated-at or incrementing ID) |
+| Upsert (merge on key) | Re-extracts the stream and merges on key columns — updates matches, inserts new keys, keeps the rest | Sources whose existing records change and you want one row per key |
+
+Other connectors expose their own equivalents; the principle — replace, append, or merge — is the same.
+
+**When the runs happen** — schedule the workflow so it re-runs on its own. Set up a recurring run in [Scheduled Events](/administration/scheduled-events/); from then on the table refreshes on that cadence with no manual step. You can also [run the workflow](/guides/workflows/run-a-workflow/) by hand any time you want an immediate refresh.
+
+> **Pick key columns that are always present (Upsert).** Upsert matches rows by exact key value, and a null key never matches — rows with a null key are inserted every run and accumulate. Use a column the source always populates.
+
+## Optional: Publish the Table
+
+If dashboards, PlaidXL, or external BI tools will consume this table, give it a published reporting name so it stands out from intermediate tables. Right-click the table on the **Tables** tab and choose **Set Published Table Reporting Name** — see [Publishing Tables](/guides/data/publish/). Only published names reach downstream tools.
+
+## Where to Go Next
+
+- [Connections guide](/guides/connections/) — create, test, clone, and control access to connections
+- [Singer Sources](/guides/connections/singer-sources/) — the tap-based source used in this walkthrough, in full
+- [Connectors reference](/reference/connectors/) — every supported system and the exact fields it needs
+- [Table Explorer](/guides/data/table-explorer/) and [Tables and Views](/guides/data/tables-views/) — inspect and understand what landed
+- [Scheduled Events](/administration/scheduled-events/) — run the refresh on a recurring schedule
+- [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/) — clean and reshape the table you just landed
+- [Build an Allocation Model](/get-started/tutorials/build-an-allocation/) — put connected data to work in a model

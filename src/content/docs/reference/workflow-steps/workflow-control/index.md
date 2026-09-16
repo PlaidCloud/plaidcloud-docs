@@ -18,6 +18,8 @@ Steps that control workflow execution itself — variables, loops, error handlin
 - [Row Count Assert](/reference/workflow-steps/workflow-control/row-count-assert/)
 - [Run Workflow](/reference/workflow-steps/workflow-control/run-workflow/)
 - [Set Project Variable](/reference/workflow-steps/workflow-control/set-project-variable/)
+- [Set Project Variable Values from Table](/reference/workflow-steps/workflow-control/set-project-variable-from-table/)
 - [Set Workflow Variable](/reference/workflow-steps/workflow-control/set-workflow-variable/)
+- [Set Workflow Variable Values from Table](/reference/workflow-steps/workflow-control/set-workflow-variable-from-table/)
 - [Stop Workflow](/reference/workflow-steps/workflow-control/stop-workflow/)
 - [Workflow Loop](/reference/workflow-steps/workflow-control/workflow-loop/)

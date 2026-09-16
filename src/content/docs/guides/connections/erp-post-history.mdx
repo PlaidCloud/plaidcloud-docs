@@ -1,0 +1,95 @@
+---
+title: Review ERP Post History
+description: See every ERP post attempt your project has made and its live state — posted, rejected, in doubt or reversed — with the ERP document number, filterable by project, over REST or the MCP tools.
+sidebar:
+  label: Review ERP Post History
+  order: 9
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+When a workflow posts to an ERP — a Sage Intacct or NetSuite journal entry, an Acumatica, Business Central, or Xero document, a Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials, or SAP S/4HANA Cloud journal entry, an SAP document — PlaidCloud records each post attempt in a durable, per-tenant ledger so the same document is never posted twice. **ERP Post History** is the read-only view over that ledger: every attempt and its live state, with the ERP's own document number and timestamps, filterable by project.
+
+It is complementary to the per-run result table a posting step writes: the result table is one run's outcomes, while Post History is the standing record across every run and workflow, and it tracks each post through its full lifecycle rather than freezing it at the moment the run finished.
+
+<Aside type="note">
+Post History is **read-only** — it never changes a post or the ledger. It is available over the REST API and as an MCP tool, scoped to one project you already have access to. For a tenant-level screen that reviews postings across every project and connection you're permitted to see, use the [Posting Register](/guides/connections/posting-register/).
+</Aside>
+
+## What Each Post Shows
+
+Each row is one document posted (or attempted) to one ERP environment on one connection:
+
+| Field | Meaning |
+|---|---|
+| `project_id` | The project the post was made from. |
+| `connection_id` | The ERP connection used. |
+| `environment_id` | The connection environment posted to (for example a sandbox versus production). |
+| `natural_key` | The document's business key, as the posting step derived it. |
+| `state` | The post's current lifecycle state (see below). |
+| `confirmation_id` | The ERP's own document number, once the ERP assigns one. Never set on a simulated post. |
+| `run_id` | The workflow run that made the post. |
+| `submitted_at`, `created_at`, `updated_at` | When the post was submitted, first recorded, and last changed. |
+
+A post made under [Simulate mode](/guides/workflows/run-a-workflow/#choose-a-posting-mode) is flagged as simulated, distinguishing it from a real post at a glance — see [Simulated Posts](#simulated-posts) below.
+
+## The Lifecycle States
+
+A post moves through these states as the ERP processes it:
+
+| State | Meaning |
+|---|---|
+| `preflighted` | Validated and claimed, not yet sent to the ERP. |
+| `submitted` | Sent to the ERP; the outcome is not yet known. |
+| `pending` | Accepted for asynchronous processing; awaiting a final result. |
+| `posted` | Confirmed posted; `confirmation_id` holds the ERP document number. |
+| `rejected` | The ERP declined the post. |
+| `in_doubt` | The outcome could not be confirmed — needs a human to check the ERP directly before any retry. |
+| `reversed` | A previously posted document was reversed. |
+
+<Aside type="caution">
+An `in_doubt` post is exactly that — unknown, not failed. Confirm it in the ERP itself before deciding whether to act on it; never blindly re-run it.
+</Aside>
+
+## Simulated Posts
+
+A run started in [Simulate mode](/guides/workflows/run-a-workflow/#choose-a-posting-mode) validates what a posting step would send but never contacts the ERP. What it would have posted is still recorded here, flagged as simulated, so you can review it the same way you review a real post — including its `natural_key` and the request it built — without a `confirmation_id`, since no ERP ever saw it.
+
+A simulated entry never occupies or blocks the slot that guards a real post's idempotent write. If you later run the same document live, the real post proceeds and supersedes the simulated record. A workspace with no posting ledger configured still validates a simulated run normally — it simply records nothing here.
+
+Clear a project's simulated entries independently of real ones with `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (optionally narrowed with `connection_id`), or the `erp_clear_simulated_postings` MCP tool with the same arguments. Either way, only simulated rows are removed — a real post is never touched — and the response reports both the history rows and the [Posting Register's](/guides/connections/posting-register/) own simulation-store rows cleared, since one clear removes from both.
+
+<Aside type="note">
+SAP posting, attachment, and RFC steps are skipped outright under Simulate, not dry-run, so they never produce a simulated entry. See [Choose a Posting Mode](/guides/workflows/run-a-workflow/#choose-a-posting-mode).
+</Aside>
+
+## Read the History
+
+Scope every read to one project you can access. You need read access to that project — the same access the rest of your project work requires.
+
+### Over REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Optional query parameters narrow the result:
+
+| Parameter | Effect |
+|---|---|
+| `connection_id` | Only posts made on this connection. |
+| `state` | Only posts in this state (for example `state=in_doubt`). |
+| `limit` | Page size (default 100). |
+| `cursor` | The `next_cursor` from the previous page. |
+
+Results come back newest-first. When a page fills to `limit`, the response carries a `next_cursor`; pass it back as `cursor` to read the next page, and stop when `next_cursor` is null.
+
+### Over MCP
+
+Call the `erp_post_history` tool with the same arguments — `project_id` (required), and optional `connection_id`, `state`, `limit`, and `cursor`. It returns the same rows, paged the same way.
+
+## Common Reviews
+
+- **Everything still in doubt for a project:** `state=in_doubt` — the posts to confirm in the ERP by hand.
+- **What a specific run posted:** read the project's history and match on `run_id`.
+- **Whether a document actually posted:** find its row and read `state` and `confirmation_id`.
