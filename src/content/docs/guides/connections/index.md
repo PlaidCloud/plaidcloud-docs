@@ -42,6 +42,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to Oracle Fusion](/guides/connections/oracle-fusion/) — set up an Oracle Fusion connection, import GL balances and journal batches, and post journals through FBDI.
 - [Connect to Workday Financials](/guides/connections/workday-financials/) — set up a Workday Financials connection with an Integration System User, import a RaaS report, and post journal entries.
 - [Connect to SAP S/4HANA Cloud](/guides/connections/s4hana-cloud/) — set up a direct S/4HANA Cloud connection with OAuth2, import trial balance and journal entry items, and post journal entries over SOAP.
+- [Ad-Hoc Extracts from SAP ECC / S/4HANA](/guides/connections/sap-adhoc-extract/) — search SAP by table, transaction code, or saved SAP Query, preview and plan the extract, and land it in a table through a PlaidLink agent.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
 - [Connect to Xero](/guides/connections/xero/) — authorize a Xero organisation in one click, import Accounting API entities, and post manual journals, invoices, bills, payments, and credit notes.
 - [Connect to Salesforce](/guides/connections/salesforce/) — set up a Salesforce External Client App and Run As user, then extract CRM objects into project tables.
