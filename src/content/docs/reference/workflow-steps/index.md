@@ -54,8 +54,11 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 - [Dynamics 365 F&O](/reference/workflow-steps/dynamics-365-fo/) — import OData/DMF entities; post journal entries
 - [Oracle Fusion](/reference/workflow-steps/oracle-fusion/) — import GL balances and journal batches; post journal entries through FBDI
 - [Oracle EPM (HFM / FCCS)](/reference/workflow-steps/oracle-epm/) — self-serve an ad-hoc data slice from Oracle FCCS with a point-of-view picker; optional scheduled recurring load
-- [IBM TM1 / Planning Analytics](/reference/workflow-steps/ibm-planning-analytics/) — read a cube by saved view or MDX, with a point-of-view slice
+- [Oracle Essbase](/reference/workflow-steps/essbase/) — run a live MDX query against a cube, or load a dimension outline as a PlaidCloud dimension; cloud-direct
+- [IBM TM1 / Planning Analytics](/reference/workflow-steps/ibm-planning-analytics/) — read a cube by saved view or MDX, or a dimension hierarchy; cloud-direct or via an on-premises agent
+- [Anaplan](/reference/workflow-steps/anaplan/) — read a saved view, run a pre-existing export action, or load one or more lists into a PlaidCloud dimension; cloud-direct, read-only
 - [Workday Financials](/reference/workflow-steps/workday-financials/) — import a RaaS report; post accounting journals
+- [Salesforce](/reference/workflow-steps/salesforce/) — extract any standard or custom CRM object into a project table over Bulk API 2.0, with the object and field list read from the org
 - [Sage Intacct](/reference/workflow-steps/sage-intacct/) — import balances, AP bills, ad-hoc queries, and GL/dimension objects; post journal entries
 - [SAP S/4HANA Cloud](/reference/workflow-steps/s4hana-cloud/) — import trial balance and journal entry items over OData; post journal entries over SOAP
 - [SAP](/reference/workflow-steps/sap/) — SAP ECC / S/4HANA RFC calls

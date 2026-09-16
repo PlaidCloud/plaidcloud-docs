@@ -1,0 +1,88 @@
+---
+title: Connect to Anaplan
+description: Connect PlaidCloud to Anaplan over its Integration API to read a saved view, run a pre-existing export action, or read lists into a PlaidCloud dimension — read-only, cloud-direct.
+sidebar:
+  order: 20
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to **Anaplan** so a workflow can read a saved view through Anaplan's large-volume read-request path, run a pre-existing export action, or read one or more Anaplan lists into a PlaidCloud dimension. The connection reaches Anaplan's own Integration API **cloud-direct** — there is no on-premises agent path for these steps. This guide covers the connection, authentication, a short introduction to each of the three read steps, and schedule considerations.
+
+<Aside type="note">
+This connector is read-only. Nothing is ever written back to Anaplan — there is no write-back step, and no partial-apply mode.
+</Aside>
+
+## Prerequisites
+
+You need, from your Anaplan Workspace Administrator:
+
+- Either an Anaplan **username and password**, or a **CA certificate and its private key** registered to an Anaplan user by your Workspace Administrator — with read access to the workspace and models your workflows will read. See [Authentication](#authentication) below.
+- The **workspace ID** and **model ID** for the models you'll read from, visible in Anaplan's own model settings. Both can also be discovered live from the connection once it's created.
+- For **Anaplan: Read View** — a **saved view**, built with exactly the row, column, and filter slice you want. See [Anaplan: Read View](#anaplan-read-view) below.
+- For **Anaplan: Read Export** — an **export action that already exists** in the model.
+- For **Anaplan: Read List** — the Anaplan **lists** that make up the hierarchy you want to read.
+
+## Authentication
+
+The connection has an **Authentication Mode**: **Basic** (the default) or **Certificate**. An existing connection keeps working unchanged as Basic.
+
+- **Basic** signs in with an Anaplan username and password.
+- **Certificate** signs in with a CA-issued certificate and its private key, both pasted as PEM text. The private key must be **RSA and not encrypted**, and the certificate must be the one your Anaplan Workspace Administrator has registered to your Anaplan user — issued by a CA that Anaplan trusts for your tenant. PlaidCloud signs a random challenge with the key and exchanges it for an Anaplan token, following Anaplan's own certificate-authentication flow; there's nothing else to do once the certificate and key are pasted in, and token refresh works the same as in Basic mode. Both secrets are stored encrypted, the same as a Basic password, and switching modes never sends the other mode's credentials — if you switch an existing connection from Basic to Certificate, you'll need to paste the certificate and key in, since they aren't carried over.
+
+Anaplan's multi-factor authentication applies to users signing in with email and password. Certificate authentication is the non-password option for an automated, scheduled connection.
+
+Certificate mode refuses before contacting Anaplan if the pasted key or certificate can't be read, the key is encrypted or isn't RSA, or the key doesn't match the certificate. If Anaplan itself rejects the certificate, the error says whether it has expired; the usual causes are a certificate that isn't registered to an Anaplan user, or a CA that isn't trusted for your tenant.
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Anaplan** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, for example `Anaplan Prod`. |
+   | API Host | Optional. Leave blank for Anaplan's standard `https://api.anaplan.com`. |
+   | Authentication Host | Optional. Leave blank for Anaplan's standard `https://auth.anaplan.com`. |
+   | Authentication Mode | **Basic** (default) or **Certificate**. See [Authentication](#authentication) above. |
+   | Username | The Anaplan account username. Basic mode only. |
+   | Password | The Anaplan account password. Basic mode only. |
+   | CA Certificate | PEM text of the X.509 certificate registered in Anaplan. Certificate mode only. |
+   | Private Key | PEM text of the certificate's RSA private key, not encrypted. Certificate mode only. |
+   | Default Workspace ID | Optional. A convenience prefill for a read step's Workspace field. |
+   | Default Model ID | Optional. A convenience prefill for a read step's Model field. |
+   | Timeout (seconds) | Defaults to 30. |
+
+4. Click `Test Connection`. A successful test reports the Anaplan account email the credentials resolve to.
+
+5. Click `Create`.
+
+</Steps>
+
+## Anaplan: Read View
+
+Add an **Anaplan: Read View** step to read a saved view through Anaplan's large-volume read-request path. **The view is read exactly as it was saved in Anaplan — there is no row, column, or page selection on this step.** To read a different slice, build a different saved view in Anaplan; a Boolean line item plus a saved view is the usual way to filter there. A data column lands with its declared Anaplan type only when the view puts **Line Items on the columns axis**; with Line Items on rows (an ordinary P&L layout) or absent from the view, every column lands as text instead, and the step says so. A view whose filter matches nothing lands an empty table with a warning. A Number value the step can't read unambiguously — most often one that could equally be a plain decimal or a European-style rendering — is refused rather than guessed at, unless another value in the same column settles which reading is right; a value that does parse lands at full precision, with no rounding error. See [Anaplan: Read View](/reference/workflow-steps/anaplan/anaplan-read-view/) for the full field and behavior reference.
+
+## Anaplan: Read Export
+
+Add an **Anaplan: Read Export** step to run a **pre-existing** Anaplan export action and land the file it produces. The API can't create an export action — build or edit it in Anaplan first — and the step can't narrow what it emits: whatever the action is configured to export in Anaplan is exactly what lands. **Every column lands as text.** Numbers are requested under US formatting; a column that still comes back with thousands separators lands unchanged, as text, with a named warning rather than failing the run. The step stops instead of landing a table when the export fails, is cancelled, produces no data, is still running once the step's poll budget runs out, or produces a file that can't be tied back to the export or whose row count disagrees with what Anaplan itself reports. See [Anaplan: Read Export](/reference/workflow-steps/anaplan/anaplan-read-export/) for the full reference.
+
+## Anaplan: Read List
+
+Add an **Anaplan: Read List** step to read one or more Anaplan lists into a PlaidCloud dimension. **One step reads a whole composite hierarchy** — name every list it spans, root first (for example Region, then Country, then Store), rather than splitting it across several steps; the staging table is replaced on every run, so several steps pointed at one staging table would each wipe out the previous one's rows. Every edge rolls up with a plain `+`, since Anaplan list hierarchies carry no per-edge weight or sign to read. Anaplan's list access controls and subset membership aren't imported — they're metadata, not dimension data. Duplicate node IDs, a parent reference that can't be resolved, conflicting parent references, and a property name that collides with imported metadata all refuse before anything lands. See [Anaplan: Read List](/reference/workflow-steps/anaplan/anaplan-read-list/) for the full reference.
+
+## Schedule Considerations
+
+Anaplan's request rate budget is **shared tenant-wide** — across every integration your organization runs against that Anaplan tenant, not PlaidCloud's alone — and PlaidCloud doesn't coordinate schedules across concurrent runs. Several Anaplan steps landing on the same cron minute can exhaust that budget before any of them finishes. **Stagger your Anaplan workflow schedules** rather than running them all at once.
+
+## Related
+
+- [Anaplan: Read View](/reference/workflow-steps/anaplan/anaplan-read-view/) — read a saved view, field reference.
+- [Anaplan: Read Export](/reference/workflow-steps/anaplan/anaplan-read-export/) — run an export action, field reference.
+- [Anaplan: Read List](/reference/workflow-steps/anaplan/anaplan-read-list/) — read lists into a dimension, field reference.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

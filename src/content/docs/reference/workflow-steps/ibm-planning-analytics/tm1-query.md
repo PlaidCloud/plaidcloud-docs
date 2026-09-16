@@ -1,5 +1,5 @@
 ---
-title: "TM1 Query"
+title: "TM1: Query Cube"
 description: Read cube data from an IBM TM1 / Planning Analytics server by saved view or MDX, apply an optional point-of-view slice, and land the result as a table — cloud-direct over REST, with a preview before you save.
 ---
 
@@ -40,7 +40,7 @@ Pin one member per dimension to bound the slice beyond what the view or MDX alre
 | Field | Default | Notes |
 |---|---|---|
 | Suppress Zero/Empty Cells | Off | Drops cells whose value is exactly numeric `0` **after** they've been fetched. It saves no bandwidth and, in a planning cube where a posted `0` is a real fact, discards it. Prefer suppressing zeros in the query itself — `NON EMPTY` in your MDX, or the saved view's own suppression setting — so TM1 never computes them in the first place. |
-| Row Limit | Unlimited | Caps the number of returned cells. Leave blank for unlimited. A query that exceeds the limit fails rather than truncating silently — narrow the query or raise the limit. |
+| Row Limit | 250,000 | Caps the number of returned cells. Leave blank to use the default cap of 250,000; raise or lower it explicitly — an unset Row Limit is not unlimited. A query that exceeds the effective limit is refused rather than truncating silently. |
 
 ## Incremental Extracts
 
@@ -49,6 +49,18 @@ TM1 has no built-in change tracking, so there's no "give me only what changed si
 ## Preview
 
 Before saving, **Preview** runs the current slice against TM1 and shows the first rows and a cell count, capped to a small row limit independent of whatever Row Limit the step itself is configured with.
+
+## When Value Lands as Text
+
+A TM1 measure dimension routinely holds numeric elements (`Sales`, `Cost`) alongside String elements (`Comment`, `Status`) in the same dimension. A slice that spans both lands the `Value` column as text — a column has one physical type, and a single non-numeric cell in the slice is enough to decide it.
+
+This is correct handling: setting the string cells to null would lose data, failing the query would block a legitimate cube, and splitting into two columns would make the schema depend on the data returned. What the step does instead is say so. It warns, naming the column, the scale, and the elements responsible, for example:
+
+> Column Value landed as text: 3 of 4,812 cells are non-numeric (text or boolean), and a column can only have one type. The non-numeric cells come from element Comment. Exclude that element from the slice, or query it separately, to keep this column numeric.
+
+**Preview** shows the same detail before you save, and the point-of-view member picker marks each element's TM1 type (Numeric, String, or Consolidated) so a String element is visible before you pin it. Pinning a String element in the point of view is not blocked — it is a legitimate way to read a text measure — but doing so lands the whole `Value` column as text, since the measure sits in the POV rather than on an axis; in that case the warning reports the counts without naming an element, because every member on the axes is equally non-numeric and none of them discriminates the slice.
+
+To keep `Value` numeric, exclude the String element from the slice, or query the String and numeric measures separately.
 
 ## Capability Limits
 
