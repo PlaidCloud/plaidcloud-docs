@@ -130,6 +130,7 @@ export default defineConfig({
 						{ label: 'Platform Architecture', link: '/get-started/platform-architecture/' },
 						{ label: 'Concepts',   link: '/get-started/concepts/' },
 						{ label: 'Tutorials',  link: '/get-started/tutorials/' },
+						{ label: 'Supported Browsers', link: '/get-started/supported-browsers/' },
 						{ label: 'FAQ',        link: '/get-started/faq/' },
 					],
 				},
