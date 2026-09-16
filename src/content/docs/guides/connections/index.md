@@ -42,10 +42,13 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to Oracle Fusion](/guides/connections/oracle-fusion/) — set up an Oracle Fusion connection, import GL balances and journal batches, and post journals through FBDI.
 - [Connect to Workday Financials](/guides/connections/workday-financials/) — set up a Workday Financials connection with an Integration System User, import a RaaS report, and post journal entries.
 - [Connect to SAP S/4HANA Cloud](/guides/connections/s4hana-cloud/) — set up a direct S/4HANA Cloud connection with OAuth2, import trial balance and journal entry items, and post journal entries over SOAP.
+- [Ad-Hoc Extracts from SAP ECC / S/4HANA](/guides/connections/sap-adhoc-extract/) — search SAP by table, transaction code, or saved SAP Query, preview and plan the extract, and land it in a table through a PlaidLink agent.
 - [Connect to Sage Intacct](/guides/connections/sage-intacct/) — set up a Sage Intacct connection and pull financial and accounting data.
 - [Connect to Xero](/guides/connections/xero/) — authorize a Xero organisation in one click, import Accounting API entities, and post manual journals, invoices, bills, payments, and credit notes.
+- [Connect to Salesforce](/guides/connections/salesforce/) — set up a Salesforce External Client App and Run As user, then extract CRM objects into project tables.
 - [Extract from HFM / FCCS (Ad-hoc)](/guides/connections/hfm-fccs/) — connect to Oracle FCCS and self-serve a data slice with a point-of-view picker, no ticket to the HFM team.
 - [Connect to TM1](/guides/connections/tm1/) — connect to an IBM TM1 / Planning Analytics server and read cube data by view or MDX, sliced by period.
+- [Connect to Anaplan](/guides/connections/anaplan/) — connect to Anaplan and read a saved view, run a pre-existing export action, or load lists into a PlaidCloud dimension. Read-only.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
 - [Review the Posting Register](/guides/connections/posting-register/) — a tenant-level console for finance and accounting to review ERP postings across every project and connection they can see.
 

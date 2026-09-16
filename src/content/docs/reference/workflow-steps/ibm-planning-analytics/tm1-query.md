@@ -1,5 +1,5 @@
 ---
-title: "TM1 Query"
+title: "TM1: Query Cube"
 description: Read cube data from an IBM TM1 / Planning Analytics server by saved view or MDX, apply an optional point-of-view slice, and land the result as a table — cloud-direct over REST, with a preview before you save.
 ---
 
@@ -40,7 +40,7 @@ Pin one member per dimension to bound the slice beyond what the view or MDX alre
 | Field | Default | Notes |
 |---|---|---|
 | Suppress Zero/Empty Cells | Off | Drops cells whose value is exactly numeric `0` **after** they've been fetched. It saves no bandwidth and, in a planning cube where a posted `0` is a real fact, discards it. Prefer suppressing zeros in the query itself — `NON EMPTY` in your MDX, or the saved view's own suppression setting — so TM1 never computes them in the first place. |
-| Row Limit | Unlimited | Caps the number of returned cells. Leave blank for unlimited. A query that exceeds the limit fails rather than truncating silently — narrow the query or raise the limit. |
+| Row Limit | 250,000 | Caps the number of returned cells. Leave blank to use the default cap of 250,000; raise or lower it explicitly — an unset Row Limit is not unlimited. A query that exceeds the effective limit is refused rather than truncating silently. |
 
 ## Incremental Extracts
 

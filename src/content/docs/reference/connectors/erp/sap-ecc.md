@@ -8,7 +8,7 @@ sidebar:
 
 One connection type covers both SAP ECC and SAP S/4HANA. Both are reached the same way — Remote Function Calls against the application server — so PlaidCloud does not ask you which generation you are on. In the **Connections** screen, choose **New → SAP ECC / S/4HANA Instance**.
 
-The [SAP workflow steps](/reference/workflow-steps/sap/) all run against a connection of this type.
+The [SAP workflow steps](/reference/workflow-steps/sap/) all run against a connection of this type. To search SAP and extract tables, transactions, reports, and saved SAP Queries, see [Ad-Hoc Extracts from SAP ECC / S/4HANA](/guides/connections/sap-adhoc-extract/).
 
 ## Upstream Documentation
 
