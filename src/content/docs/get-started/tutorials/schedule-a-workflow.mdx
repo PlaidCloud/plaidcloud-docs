@@ -1,0 +1,144 @@
+---
+title: Automate a Workflow on a Schedule
+description: Take a workflow you already built and let it run itself — schedule it with the Event Scheduler, watch its run history and logs, and handle the first failure.
+---
+
+*~25 minutes · a scheduled run, a run history, a handled failure*
+
+You already have a workflow — say the sales-cleanup pipeline from [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/). Right now it runs when you click **Run**. This tutorial hands that job to PlaidCloud: the workflow runs on a calendar, on its own, and you learn to watch it, prove it ran, and recover it when a run fails.
+
+Three things turn a manual pipeline into an automated one, and this tutorial does each in turn:
+
+- **A schedule** — a rule that fires the workflow at the times you choose.
+- **A record you can trust** — run history and logs that tell you what happened while you weren't watching.
+- **A failure plan** — because an unattended job eventually hits bad data, and it should not fail silently.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="The automation loop: a schedule fires the workflow, the run produces run history and a log, and a failed run is recovered by resuming it, which loops back into the run." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Schedule</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Run</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Run history</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ log</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Recover</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">resume from where it stopped</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Once a schedule owns the run, the history and log are how you know it worked — and Resume is how you fix it when it didn't.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace with a workflow that already runs correctly when you run it by hand. If you don't have one, build it first with [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/).
+- Access to **Analyze → Tools → Event Scheduler** in that workspace.
+
+> **Schedule a workflow that already passes.** Automation repeats whatever the workflow does — including its mistakes, now unattended. Run it manually to a clean finish once before you put it on a schedule.
+
+## Step 1: Confirm It Runs by Hand
+
+Open your workflow and run it once, the manual way, so you have a baseline to compare against.
+
+1. Open your project and go to the **Workflows** hierarchy.
+2. Click the **run** icon on the workflow, or open the workflow and choose **Run All** from the **Actions** menu. (The **Toggle Start/Stop** button at the top of the workflow table does the same, and stops a run in progress.)
+3. Watch the step status icons as the run moves through. Each step shows where it stands and how long it has been running — hover an icon for the message behind it.
+
+The statuses you'll see, and what each means:
+
+| Status | What it means |
+|---|---|
+| Waiting | Queued, not started yet. |
+| Running | Working; its duration counts up. |
+| Completed | Finished successfully. |
+| Warning | Finished, but flagged something worth reading in the log. |
+| Error | The step failed — see [Managing Step Errors](/guides/workflows/managing-step-errors/). |
+| Skipped | Passed over — disabled, or its run conditions weren't met. |
+| Continued | Failed but set to continue on error, so the run carried on. |
+
+A clean run ends with every step **Completed**. That's your green baseline. Full status details are in [Run a Workflow](/guides/workflows/run-a-workflow/).
+
+## Step 2: Create the Schedule
+
+Now hand that run to the Event Scheduler.
+
+1. Open **Analyze**, select **Tools**, and click **Event Scheduler**. The **Events Table** lists every event already configured for the workspace.
+2. Click **Add Scheduled Event**.
+3. Complete the required fields the form marks, pointing the event at the workflow you just ran (and its project).
+4. Open the **Event Schedule** tab and pick a **Schedule type**:
+   - **Use Classic Schedule** — choose the specific months, days, hours, and minutes to run. Start with something you'll see happen soon, like a few minutes from now.
+   - **Use Workday Schedule** — choose a financial workday instead of a clock time. Workday schedules can also honor holiday calendars, so a run lands on the right business day.
+5. Click **Create**.
+
+The Events Table now lists your event, and its description column shows whether it's scheduled by month, by day/hour/minute, or by workday.
+
+> **Times are UTC unless you say otherwise.** New events default to the UTC timezone. If "9 a.m." needs to mean 9 a.m. where you are, set the **Timezone** field on the event — otherwise a scheduled run can land hours off from what you expected.
+
+> **Cap a test schedule so it can't run forever.** The **Limit Running** section runs an event only for a set time period and a set number of times. On a schedule you're just trying out, that's how you avoid a job that quietly fires every few minutes for weeks.
+
+## Step 3: Preview When It Will Run
+
+Before you trust the schedule, look at what it will actually do.
+
+1. Open the **Upcoming Runs Calendar**. It's a read-only preview — it expands the same schedules that drive real execution, so what you see is what will run, and looking never triggers anything.
+2. Switch between **Month**, **Week**, and **Agenda** views; use **Previous**, **Next**, and **Today** to move through time, and **Refresh** to re-pull the latest.
+3. Confirm your event appears when you expect it. Each run is drawn as a bar sized to the workflow's typical duration.
+
+> **Side-by-side bars mean an overlap.** If two runs' bars sit next to each other in the same window, those runs collide — stagger their schedules if they compete for the same data or resources. Event-driven sensors don't appear here; they have no fixed future time. See [Upcoming Runs Calendar](/administration/scheduled-events/upcoming-runs-calendar/).
+
+If you'd rather not wait for the clock, select the event in the Events Table and click **Run Selected Events** to fire it immediately — a good way to prove the scheduled path works end to end right now.
+
+## Step 4: Watch the Run History and Log
+
+An automated run happens while you're elsewhere, so the record it leaves is what you actually rely on.
+
+- **Run history** lives with the workflow. Each execution is its own entry. A resumed run is recorded as a *new* run containing only the steps it re-ran, and the original keeps its own entry — so history reads as a truthful sequence of what happened, not a single line that gets overwritten.
+- **The workflow log** captures events as they happen — steps running, warnings raised. Open it from the **Project** area under the **Log** tab; it also rolls up into the broader project log so you can watch several workflows at once. The viewer sorts and filters, and you can open any entry for detail. See [Viewing Workflow Log](/guides/workflows/viewing-workflow-log/).
+- **The workflow report** documents the workflow's current state — its steps, functions, and variables. It's generated on demand from the **Report** icon in the **Workflows** hierarchy, which is handy when someone asks what an automated job actually does. See [View Workflow Report](/guides/workflows/view-workflow-report/).
+
+After a scheduled or on-demand run, open the log and confirm the run you expected is there and finished as you intended.
+
+## Step 5: Handle a Failure
+
+An unattended job will eventually meet bad data. Decide now what should happen when it does — PlaidCloud gives you three responses, and the right one depends on the step.
+
+| Choice | What happens | Use it when |
+|---|---|---|
+| Stop the workflow | The run halts; an error indicator shows on both the step and the workflow. | The default — most steps should not proceed past a real failure. |
+| Continue on error | The step is marked with an error, but the run treats it as done and carries on. | A step that can harmlessly fail on missing data. |
+| Remediation workflow | The failing run stops and a second workflow starts instead. | You want a failure to notify someone or attempt an automatic fix. |
+
+Two settings shape this, both on the step's edit form (the pencil icon in the workflow table):
+
+- **Retry** — a failed step can retry a set number of times, with a delay between attempts from seconds to hours. This alone rescues most failures that come from a remote system being briefly unavailable. See [Managing Step Errors](/guides/workflows/managing-step-errors/).
+- **Continue On Error** — check this box and the step's failure won't stop the workflow. Steps set this way carry a special indicator in the workflow table. See [Continue on Error](/guides/workflows/continue-on-error/).
+
+> **Continue-on-error hides the failure from your remediation plan.** A step marked to continue never stops the workflow, so it never triggers a remediation workflow either — only a failure that would otherwise halt the run does that. Reserve continue-on-error for failures you're genuinely fine ignoring.
+
+When a scheduled run does fail, you rarely need to start over. **Resume** picks a stopped or errored run back up from where it left off — it re-runs the steps that didn't finish successfully and leaves completed ones alone. Resume is available whenever a workflow's last run ended paused, stopped, or in error.
+
+## Step 6: Pause It When You Need To
+
+Automation you can't turn off is a liability. To take a schedule offline without deleting it:
+
+1. Open **Analyze → Tools → Event Scheduler** and click the **edit** icon on the event.
+2. Uncheck the **Active** checkbox and click **Update**.
+
+The event stops firing on its schedule until you re-activate it — the same edit path, with **Active** checked again. To remove it for good, use the **delete** icon instead. An active event shows the **Active** icon in the Events Table, so a glance tells you what's live.
+
+**You're set.** You now have a scheduled event, a run history to watch, and a way to handle the first failure — and you can pause the whole thing without deleting it.
+
+## Where to Go Next
+
+- [Event Scheduler](/administration/scheduled-events/event-scheduler/) — every field on a scheduled event, including workday and holiday-calendar scheduling.
+- [Scheduled Workflows](/administration/scheduled-events/) — run windows, ordering, and conditional triggers across a workspace.
+- [Upcoming Runs Calendar](/administration/scheduled-events/upcoming-runs-calendar/) — spot colliding run windows before they compete.
+- [Run a Workflow](/guides/workflows/run-a-workflow/) — pause, stop, and resume in full, plus every step status.
+- [Managing Step Errors](/guides/workflows/managing-step-errors/) and [Continue on Error](/guides/workflows/continue-on-error/) — the failure-handling settings in depth.
+- [Workflows guide](/guides/workflows/) — conditions, loops, and variables for more advanced automation.
+- [Load, Transform, and Publish Data](/get-started/tutorials/load-and-transform-data/) — the tutorial that builds the workflow this one automates.

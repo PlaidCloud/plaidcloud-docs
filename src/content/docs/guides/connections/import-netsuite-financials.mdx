@@ -1,0 +1,84 @@
+---
+title: Import NetSuite Financials
+description: Pull NetSuite balances, GL detail, and master data into project tables with the canned NetSuite import steps — pick a connection, a target table, a date range, and a subsidiary, then run.
+sidebar:
+  label: Import NetSuite Financials
+  order: 7
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Pull the common NetSuite financial and reference data into project tables with the canned NetSuite import steps — no SuiteQL to write. Three steps cover most pulls: **Import Balances** for a trial balance, **Import GL Detail** for the posting-level lines behind it, and **Import Master Data** for the accounts, subsidiaries, and dimensions those pulls reference. Each runs on a shared read layer that refreshes the OAuth token, pages through large results, and retries transient errors, so a full-period or all-subsidiary pull comes back complete.
+
+<Aside type="tip">
+For a bespoke pull the canned steps don't cover, write your own SuiteQL with the [REST Request step](/guides/workflows/rest-request-step/) — see [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/). The canned steps below are the simpler option for these common pulls.
+</Aside>
+
+## Prerequisites
+
+- A working [NetSuite connection](/guides/connections/netsuite/) with view access to the records you want to read.
+- A workflow to add the step to.
+
+## Pull a Trial Balance
+
+<Steps>
+
+1. Add a **NetSuite: Import Balances** step to your workflow.
+
+2. Set **NetSuite Connection** to your connection, and **Target Table** to the project table the balances should land in. The step overwrites this table in full on every run.
+
+3. Set **Start Date** and **End Date** to the period you want, each as `YYYY-MM-DD` and both inclusive. Leave either blank to leave that end of the range unbounded.
+
+4. To restrict the pull to one subsidiary, set **Subsidiary** to its NetSuite internal ID; leave it blank for all subsidiaries. (See [Resolve internal IDs](#resolve-internal-ids-with-master-data) if you have names rather than IDs.)
+
+5. On a Multi-Book Accounting account, leave **Accounting Book** blank to pull the **primary book only** — the correct default for a standard trial balance. Set it to `all` only if you deliberately want a cross-book total, or to a specific book's internal ID.
+
+6. Narrow further with **Account Number** (an exact GL account) or **Posting Period** (a NetSuite period internal ID) if you don't need the whole chart of accounts or every period in the range.
+
+7. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)) and check the target table.
+
+</Steps>
+
+<Aside type="caution">
+**Multi-book accounts default to the primary book.** Before this behavior shipped, an unfiltered pull on a Multi-Book Accounting account summed every book together — silently N-times counting a balance. Leaving **Accounting Book** blank now pulls the primary book only, matching what a standard trial balance expects. If you were relying on the old cross-book sum, set **Accounting Book** to `all` explicitly.
+</Aside>
+
+## Pull GL Detail
+
+The **NetSuite: Import GL Detail** step configures the same way — connection, target table, date range, subsidiary, accounting book, account number, and posting period — but returns transaction-line detail rather than period balances. Use it to reconcile, drill into, or rebuild a detailed P&L from the postings behind your balances.
+
+<Aside type="note">
+Bound the date range to the slice you need. Every run replaces the whole target table, so a scheduled GL pull re-extracts the full result each time — a rolling date window keeps a recurring pull fast rather than re-reading all of history.
+</Aside>
+
+<Aside type="note">
+NetSuite caps a single SuiteQL query at roughly 100,000 rows. Giving both **Start Date** and **End Date** lets PlaidCloud automatically window a wide pull into smaller date chunks that stay under that ceiling, so a full-year GL pull comes back complete without you doing anything. Leaving both blank on a pull large enough to cross the ceiling now fails with a message asking you to add a date range, instead of silently coming back truncated.
+</Aside>
+
+## Resolve Internal IDs With Master Data
+
+Subsidiary, account, and dimension fields in NetSuite are internal IDs, not names. Pull the matching list with **NetSuite: Import Master Data** and join it to your balances or detail to add readable names.
+
+<Steps>
+
+1. Add a **NetSuite: Import Master Data** step and set **NetSuite Connection** and **Target Table**.
+
+2. Set **Record Type** to the list you want: **account**, **subsidiary**, **department**, **class**, **location**, **vendor**, or **customer**.
+
+3. Leave **Include Inactive** off to pull only active records, or turn it on to include inactive ones.
+
+4. Run the step, then join its table to your balances or GL detail on the internal ID to carry names onto every row.
+
+</Steps>
+
+## Schedule the Pull
+
+For an ongoing feed, [schedule the workflow](/get-started/tutorials/schedule-a-workflow/). Because each step replaces its target table in full, a scheduled run always reflects the current state in NetSuite for the period you bounded.
+
+## Related
+
+- [NetSuite: Import Balances](/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite: Import GL Detail](/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite: Import Master Data](/reference/workflow-steps/netsuite/import-master-data/)
+- [Connect to NetSuite](/guides/connections/netsuite/) — set up the connection these steps read through
+- [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/) — write your own query for a pull the canned steps don't cover

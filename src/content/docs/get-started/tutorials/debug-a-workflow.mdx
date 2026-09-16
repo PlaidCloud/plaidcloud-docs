@@ -1,0 +1,136 @@
+---
+title: Debug a Workflow
+description: When a workflow breaks, work it out yourself — run one step, preview its output, read the log, trace inputs with the dependency audit, and interpret the error.
+---
+
+*~25 minutes · run one step, preview the data, read the log, trace the inputs*
+
+Something in a workflow isn't right — a step is red, a downstream number looks wrong, or a run stopped partway. This tutorial walks the manual toolkit for finding out why: run a single step in isolation, preview what it produced, read the workflow log, trace where its inputs came from with the dependency audit, and read the error itself. Each tool answers a different question, and together they usually get you to the cause without guessing.
+
+> **Prefer to have it explained to you?** The [AI-assisted path](/get-started/tutorials/fix-a-workflow-with-ai/) does the same investigation conversationally. This tutorial is the manual version — everything here you drive yourself, which is worth doing at least once so you know what the assistant is actually looking at.
+
+## The Debugging Loop
+
+Most workflow debugging is the same short loop, whichever tool you reach for first:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="The workflow debugging loop: run one step in isolation, preview its output data, read the workflow log for the error message, trace the step's inputs with the dependency audit, then fix and run the step again." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Run one step</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Preview data</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Read the log</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Trace inputs</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">fix, then run again</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Each tool answers one question — you rarely need all four, but they run in this order.</figcaption>
+</figure>
+
+## Prerequisites
+
+- A PlaidCloud workspace with a project and a workflow that has a problem to chase (a red step, a wrong result, or a run that stopped).
+- Familiarity with the [Visual Workflow Designer](/guides/workflows/advanced-workflows/) — the canvas where you'll do most of this.
+
+## Step 1: Run Just the Broken Step
+
+Don't re-run the whole workflow to test one change — it's slow, and it re-does work you already trust. Run the single step you're investigating.
+
+1. Open the workflow in the Visual Workflow Designer.
+2. Right-click the step you want to test and choose **Run Step** from the context menu.
+3. The step runs in isolation, against the data that already exists in its source tables.
+
+That last point matters when you're debugging: a step reads from its source tables as they are *right now*. If an upstream step hasn't run yet, or ran with stale data, running this step alone reflects that — which is exactly what [Step 4](#step-4-trace-the-inputs-with-the-dependency-audit) helps you catch.
+
+See [Running One Step in a Workflow](/guides/workflows/running-one-step-in-a-workflow/) for the full details.
+
+## Step 2: Preview What the Step Produced
+
+Once the step has run, look at what it actually wrote before you decide whether it's correct. The **Data Preview drawer** shows a step's output data right on the canvas — the first 100 rows with typed columns, docked at the bottom.
+
+There are three ways in, all landing in the same drawer:
+
+- **Hover the step tile** — a small browse (table) glyph fades in at the tile's bottom-right corner. Click it.
+- **Right-click the step** and choose **Preview Output Data**.
+- **In the Inspector**, click the **eye icon** on any output card under the step's **Outputs** section.
+
+What to check depends on the symptom:
+
+| Symptom | What to look for in the preview |
+|---|---|
+| Wrong or missing columns | Did the step produce the columns you expected? A join or column-select gone wrong shows up here first. |
+| Too few / too many rows | The header shows **Showing first N of ~M rows** — is the total roughly what it should be? |
+| Empty output | The drawer says *Table is empty* (ran, zero rows) or *No data yet — run the step* (never ran). |
+| Suspicious values | Sort a column to surface nulls or outliers at the top. |
+
+While the drawer is open, **clicking any other step retargets the preview** to that step's output — so you can walk down a chain of steps and watch where the data first goes wrong. When you need to filter, slice, or go beyond the first 100 rows, click **Open in Table Explorer** in the drawer header.
+
+Full details are in [Preview Step Data](/guides/workflows/preview-step-data/).
+
+## Step 3: Read the Workflow Log
+
+The preview tells you *what* the output looks like; the log tells you *what happened* when the step ran — including the error message if it failed.
+
+As steps run and warnings occur, those events are written to the **workflow log**, viewable from the **Project** area under the **Log** tab. From inside the Visual Workflow Designer, the toolbar's **View Logs** button opens this same view already filtered to the workflow you have open.
+
+1. Open the **Log** tab (the project log) — from the toolbar's **View Logs** button, or the **Log** tab in the Project area.
+2. Use the filter control next to the log messages to narrow to the step and run you care about.
+3. Open a log entry to read its details — this is where a failed step's error message lives.
+
+The project-level log shows a more comprehensive view across multiple workflows, if a problem might span more than one. See [Viewing Workflow Log](/guides/workflows/viewing-workflow-log/).
+
+> **Reading the error message.** Copy the exact text from the log entry — a bad join key, a type mismatch, a missing source table each read differently. The two most common causes when a step errors are mismatched join keys between tables and unexpected null values in computed columns. When the message points at data rather than the step's configuration, that's your cue to trace the inputs.
+
+> **A worked example.** Say a transform step turns red. You open the log and the entry reads `column "revenue" does not exist` — the source table has a `net_revenue` column, not `revenue`. The one-line fix is to correct the column name in the step's expression. You run just that step again, and it comes back green. That's the whole loop in a single pass.
+
+## Step 4: Trace the Inputs With the Dependency Audit
+
+Sometimes a step is configured correctly and still produces wrong data — because it ran against inputs that were populated *out of order*. When data already exists in tables, a step will run and look correct even though it read stale or not-yet-updated data. This is the failure the log can't show you, because nothing errored.
+
+The **Workflow Dependency Audit** exists for exactly this. It analyzes the data and workflow dependencies across an interconnected workflow and identifies steps whose inputs are populated in the wrong order relative to when they're read.
+
+Use it when:
+
+- A step's output is wrong but the step itself has no error.
+- You've reordered or added steps and want to confirm nothing now reads a table before it's built.
+- A workflow "works" on a full run but a single-step run gives different numbers — a classic sign of an ordering dependency.
+
+See [View a Dependency Audit](/guides/workflows/view-a-dependency-audit/) for how to open and read the audit.
+
+## Step 5: Decide How the Workflow Should Handle the Error
+
+Once you understand the cause, decide what the workflow should do when this step fails in future. Each step's error handling is set in the step form, and PlaidCloud offers three levels:
+
+| Behavior | What happens | When to use it |
+|---|---|---|
+| **Stop the workflow** | The run halts; an error indicator appears on both the step and the workflow. | The default and most common — workflows generally should run clean. |
+| **Keep processing** | The step is marked with an error, but the workflow treats it as complete and continues. | Steps that can harmlessly error on missing data. Note: the workflow shows a *running* indicator, not an error one. |
+| **Trigger a remediation workflow** | The current workflow stops and a remediation workflow starts instead. | Automatic notification or correction. Does *not* fire for steps set to keep processing. |
+
+PlaidCloud can also **retry** a failed step automatically — a set number of times, with an optional delay from seconds to hours. That's the right tool when a step reaches a remote system or data source that fails intermittently, rather than one with a real logic bug. See [Managing Step Errors](/guides/workflows/managing-step-errors/).
+
+## Step 6: Fix, Re-Run, and Confirm
+
+1. Make the change your investigation pointed to — fix the join key, add an upstream step, correct a null-producing expression, or reorder steps.
+2. **Run just that step again** (Step 1) and **preview its output** (Step 2). If the drawer was open during the run, it refreshes automatically once the run completes.
+3. When the step is right, run the workflow end to end and watch the log to confirm the whole pipeline is clean.
+
+For a permanent record of what the workflow does — its steps, functions, and variables — generate the on-demand **Workflow Report** from the Report icon in the **Workflows** hierarchy. It reflects the current state of the workflow and is useful documentation once a fix is in. See [View Workflow Report](/guides/workflows/view-workflow-report/).
+
+**That's the whole loop.** You've run one step in isolation, previewed what it wrote, read the error in the log, traced its inputs with the dependency audit, and re-run to confirm the fix — the same investigation the AI assistant does, only now you can drive it yourself.
+
+## Where to Go Next
+
+- [Fix a Workflow With the AI Assistant](/get-started/tutorials/fix-a-workflow-with-ai/) — the same investigation, done conversationally
+- [Running One Step in a Workflow](/guides/workflows/running-one-step-in-a-workflow/) — run a single step in isolation
+- [Preview Step Data](/guides/workflows/preview-step-data/) — the Data Preview drawer
+- [Viewing Workflow Log](/guides/workflows/viewing-workflow-log/) — where run events and errors are recorded
+- [View a Dependency Audit](/guides/workflows/view-a-dependency-audit/) — catch out-of-order data dependencies
+- [Managing Step Errors](/guides/workflows/managing-step-errors/) — stop, continue, remediate, and retry
+- [View Workflow Report](/guides/workflows/view-workflow-report/) — on-demand documentation of the whole workflow

@@ -7,4 +7,5 @@ Optimization steps solve decision problems from workflow data.
 
 ## Steps
 
+- [Location Optimizer](/reference/workflow-steps/optimization/location-optimizer/)
 - [Solver](/reference/workflow-steps/optimization/solver/)

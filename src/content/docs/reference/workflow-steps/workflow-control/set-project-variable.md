@@ -15,7 +15,9 @@ sidebar:
 ## Variable List
 
 
-The table will display the list of registered project variables and the current values. Enter the value for the variable desired. It’s also possible to set variable values without registering the variable first by simply adding the variable to the list.
+The table lists every variable registered in the project, each with its **Current Value** and **Memo** read fresh every time you open the step — so you can see what a variable holds now before deciding what to set it to.
+
+To set one, tick **Set** on its row and enter the new value under **Set Value**. Only ticked rows are written when the step runs, so a value entered without ticking **Set** is ignored. It’s also possible to set a variable that has not been registered yet: add a row and set it the same way — running the step creates it.
 
 
 

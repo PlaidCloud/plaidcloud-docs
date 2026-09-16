@@ -1,0 +1,127 @@
+---
+title: SCD-2 Master Builder
+description: Build a point-in-time history table from a master-data source, tracking changes to selected attributes over time with valid-from and valid-to dates.
+sidebar:
+  order: 6
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Builds a **Slowly-Changing-Dimension type-2 (SCD-2)** history table from a source table. Where an ordinary master table keeps only today's value for each key, an SCD-2 table keeps every value a key has ever held, each stamped with the date range it was in effect. This lets you answer point-in-time questions — *which region was this customer in on the day of the transaction?* — instead of only *which region are they in now?*
+
+Each run compares the source snapshot against the prior history and, for keys whose tracked attributes changed, closes the old version and opens a new one. The table is recomputed and swapped in atomically, so a re-run with the same inputs produces the same result.
+
+Pair this step with [SCD-2 As-Of Join](/reference/workflow-steps/dimensions/scd2-asof-join/) to attach the point-in-time value to a fact table.
+
+## Output Columns
+
+Every run emits three reserved columns alongside your carried-through columns. You do not name these — they are always `valid_from`, `valid_to`, and `is_current`, and your business-key and tracked columns may not reuse those names.
+
+| Column | Meaning |
+|---|---|
+| `valid_from` | Date this version took effect (inclusive). |
+| `valid_to` | Date this version stopped being in effect (exclusive). Open (current) rows carry the sentinel high date `9999-12-31`. |
+| `is_current` | `true` for the version in effect now, `false` for closed history. |
+
+<Aside type="note">The interval is **half-open**: `[valid_from, valid_to)`. A version covers `valid_from` up to *but not including* `valid_to`. Consecutive versions therefore meet without overlapping — one version's `valid_to` is exactly the next version's `valid_from`, and no date belongs to two versions.</Aside>
+
+## Tables
+
+### Source Table
+
+The current snapshot of your master data — one row per business key, holding today's attribute values.
+
+### Prior SCD-2 Table (optional)
+
+The existing history table from the previous run. Leave it empty (or point it at the result table) on the **first run**; the step then builds the full history from scratch, opening one version per source row at the effective date.
+
+### Result Table
+
+Where the rebuilt history is written. This must be a table, not a view.
+
+## Effective Date and Options
+
+Each run stamps its changes with a single effective date. Provide it in exactly one of two ways — supplying both, or neither, is an error.
+
+- **Effective Date Column** — a column in the source that holds the effective date. It must hold the same value on every source row (the snapshot is *as of* one date).
+- **Effective Date** — a literal `YYYY-MM-DD` date, or a variable such as `{current_month}`, applied to the whole run.
+
+<Aside type="caution">Choose one, not both. This is a hard XOR: the step rejects a run that specifies an effective date column *and* a literal date, and equally rejects one that specifies neither.</Aside>
+
+Other options:
+
+- **Open Interval High Date** — the sentinel written to `valid_to` for open rows. Defaults to `9999-12-31`; there is rarely a reason to change it, and it must match the high date used by [SCD-2 As-Of Join](/reference/workflow-steps/dimensions/scd2-asof-join/).
+- **Close on Absence** — when enabled, a key that disappears from the source has its open version closed at the effective date (the key is treated as retired). When disabled (the default), absent keys keep their existing open version so history is never lost to a partial extract.
+
+## Column Roles
+
+Use **Inspect Source** to list the source columns, then tag each one:
+
+| Role | Meaning |
+|---|---|
+| **Business Key** | The natural key that identifies a row across time (e.g. `customer_id`). At least one is required. Values must be unique in the source and non-null. |
+| **Tracked Attribute** | An attribute whose changes open a new version (e.g. `region`). At least one is required. |
+| **(carry through)** | Untagged columns are copied onto each version unchanged and do not, on their own, trigger a new version. |
+
+## Merge Behavior
+
+When a prior table is supplied, the step compares the source snapshot against the **current** versions only (never closed history) and decides per key:
+
+| Situation | Result |
+|---|---|
+| Tracked attributes unchanged | No-op — the open version is left as is. |
+| Tracked attributes changed | The open version is closed at the effective date and a new open version is inserted. |
+| Effective date equals the open version's `valid_from` | Treated as a **same-day restatement** — the tracked values are overwritten in place rather than creating a zero-width interval. |
+| Key absent from source | Left open (or closed at the effective date if **Close on Absence** is enabled). |
+
+Guardrails that stop a run rather than silently corrupt history:
+
+- **Out-of-order dates are rejected.** The effective date must be *after* each affected key's current `valid_from`. A backdated run that would invert an interval fails with an error rather than producing a negative-width version.
+- **Duplicate source keys are rejected.** The source must be unique on the business key; duplicates (or null keys) fail rather than being silently de-duplicated.
+- Change detection is **null-safe**, so a value changing to or from empty is correctly recorded as a change.
+
+## Worked Example
+
+Track which region each customer belonged to over time.
+
+**Source — `customer_master` (as of 2026-01-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | West | SMB |
+| C2 | East | Enterprise |
+
+First run: **Source Table** = `customer_master`, **Prior SCD-2 Table** = empty, **Result Table** = `customer_scd2`, **Effective Date** = `2026-01-01`, Business Key = `customer_id`, Tracked Attribute = `region` (`segment` left untagged, carried through).
+
+**`customer_scd2` after the first run:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Now C1 moves to the Central region. **Source — `customer_master` (as of 2026-04-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | Central | SMB |
+| C2 | East | Enterprise |
+
+Second run: same table roles, **Prior SCD-2 Table** = `customer_scd2`, **Effective Date** = `2026-04-01`.
+
+**`customer_scd2` after the second run:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | SMB | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+C1's West version was closed at `2026-04-01` and a Central version opened. Because of the half-open interval, a transaction dated `2026-04-01` belongs to **Central**, not West. C2 was unchanged and left untouched.
+
+## Related
+
+- [SCD-2 As-Of Join](/reference/workflow-steps/dimensions/scd2-asof-join/) — attach the point-in-time value to a fact table.
+- [Dimension Load](/reference/workflow-steps/dimensions/dimension-load/) — load a hierarchy from a table.

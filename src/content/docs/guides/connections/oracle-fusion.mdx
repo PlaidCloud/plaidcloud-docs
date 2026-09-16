@@ -1,0 +1,130 @@
+---
+title: Connect to Oracle Fusion
+description: Connect PlaidCloud to Oracle Fusion Cloud with OAuth2 credentials, pull GL balances and journal batches with OData or BIP extracts, then post through FBDI and the GL Interface.
+sidebar:
+  order: 13
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connect PlaidCloud to Oracle Fusion Cloud ERP over its OData and BI Publisher (BIP) reporting endpoints to pull general ledger balances and journal batches with no OData to hand-write, and post journal entries back through Oracle's File-Based Data Import (FBDI) path. This guide covers the connection, the import step, and the post step.
+
+<Aside type="caution">
+Run every import against a test environment first, and work through **Validate Only** below on every post batch before posting live.
+</Aside>
+
+## Prerequisites
+
+You need, in Oracle Fusion Cloud:
+
+- A dedicated **API user** for PlaidCloud, with a role that has access to the entities you'll read (General Ledger inquiry) and the FBDI/GL Interface functions you'll post through.
+- Your Fusion Cloud **instance URL** (for example `https://yourorg.fa.us2.oraclecloud.com`).
+- **OAuth2 client credentials** (client ID and secret) or the basic-auth API credentials your Fusion Cloud security setup issues for integration users — whichever your tenant is provisioned for.
+
+## Create the Connection
+
+<Steps>
+
+1. Open **Tools > Connections** and click `New Connection`.
+
+2. Choose **Oracle Fusion** from the menu.
+
+3. Fill in the fields:
+
+   | Field | Value |
+   |---|---|
+   | Name | A friendly name, e.g. `Fusion Prod`. |
+   | Instance URL | Your Fusion Cloud instance URL. |
+   | Client ID | The API user's OAuth2 client ID (or username, for basic auth). |
+   | Client Secret | The API user's OAuth2 client secret (or password, for basic auth). |
+
+4. Click `Create`.
+
+</Steps>
+
+## Smoke-Test the Connection
+
+<Steps>
+
+1. Add an **Import Fusion Entity** step to a workflow.
+
+2. Set **Fusion Connection** to your connection, **Entity Type** to `gl_balances`, and **Target Table** to a scratch table.
+
+3. Run the step (see [Running one step in a workflow](/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+A populated target table confirms the credentials and instance URL are correct. An error names the problem — bad credentials, a wrong instance URL, or a role missing the entity's read privilege.
+
+## Import Data
+
+Two import steps cover different pull sizes:
+
+<Steps>
+
+1. For a routine, bounded pull, add an **Import Fusion Entity** step — it calls Oracle Fusion's OData or BIP endpoints directly.
+
+2. For a large extract, add an **Import Fusion Bulk Extract** step instead — it submits an FBDI/BIP extract job and downloads the resulting file once it completes.
+
+3. Set **Entity Type** to `gl_balances` or `journal_batches`.
+
+4. Add **Filters** to bound the pull — date and accounting-period ranges (`ge`/`le`) and numeric ranges on balance/amount fields, restricted per entity to the fields Oracle Fusion can actually filter on server side.
+
+5. Run the step and check the target table.
+
+</Steps>
+
+### Entities and Filters
+
+| Entity Type | What it pulls | Filterable fields |
+|---|---|---|
+| `gl_balances` | General ledger account balances | accounting period range, account range, balance amount range |
+| `journal_batches` | Journal batch headers and status | date range, accounting period range |
+
+<Aside type="note">
+`gl_balances` and `journal_batches` accept both **range** filters (`ge`/`le` on a date, period, or numeric field) and equality filters on discrete fields like ledger or currency. A range filter with only one bound is open-ended on the other side.
+</Aside>
+
+## Post Journal Entries
+
+The **Oracle Fusion: Post Journal Entry** step posts general ledger journal entries through PlaidCloud's shared ERP write pipeline, using Oracle's FBDI GL Interface load path.
+
+<Steps>
+
+1. Build a **header table** — one row per journal entry — with `batch_id` (your batch identifier), `ledger_id`, `journal_source`, `journal_category`, `accounting_date`, and `description`.
+
+2. Build a **lines table** — one or more rows per `batch_id` — with `account_combination` (or its segment columns), `entered_debit`, `entered_credit`, and `currency_code`.
+
+3. Add an **Oracle Fusion: Post Journal Entry** step, set **Fusion Connection**, **Header Table**, **Lines Table**, and a **Result Table**.
+
+4. Leave **Validate Only** checked and run the step — PlaidCloud builds and checks every batch without a ledger claim and without posting anything.
+
+5. Review the result table (one row per batch: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Fix any `error` row and re-validate.
+
+6. Uncheck **Validate Only** and run again to post for real. Leave **Continue On Error** checked unless you want a run to stop dead on its first failed batch.
+
+</Steps>
+
+### How Posting Works
+
+PlaidCloud writes each journal batch to Oracle's GL_INTERFACE staging table as an FBDI file, then submits and polls the **Journal Import Launcher** Enterprise Scheduler Service (ESS) job asynchronously until it reports a terminal state. An entry is only reported `posted` once that terminal state is **confirmed** — a batch that lands in the interface table but whose import job never resolves stays quarantined rather than being recorded as posted, so a stuck ESS job never silently passes as success. PlaidCloud's own ledger claim guards against loading the same batch twice on a retried or re-run batch.
+
+### Correcting a Posted Entry
+
+This step never deletes or rewrites a posted journal batch. To correct one, post a new batch with debits and credits swapped against the original — a **posted reversing entry** — rather than editing the original in place. This preserves Oracle Fusion's own audit trail and matches how corrections are made directly in the application.
+
+### Capability Limits — Read Before Posting Live
+
+<Aside type="caution">
+- **ESS job latency.** The Journal Import Launcher runs as a scheduled job, not a synchronous call — expect a posting run to take materially longer than a direct API write, and don't use this step for a latency-sensitive single-entry post.
+- **Bulk extract latency.** `import_fusion_bulk_extract` waits on an FBDI/BIP export job — reserve it for pulls too large for `import_fusion_entity`'s direct OData/BIP path.
+</Aside>
+
+## Related
+
+- [Oracle Fusion Connector](/reference/connectors/erp/oracle-fusion/) — field reference.
+- [Import Fusion Entity](/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [Review ERP Post History](/guides/connections/erp-post-history/) — the standing record of every Oracle Fusion post attempt and its live state.
+- [Create and Manage a Connection](/guides/connections/create-connection/)

@@ -13,8 +13,10 @@ PlaidCloud's data layer is built around **tables** (structured row-and-column da
 - [Table explorer](/guides/data/table-explorer/) — browse and inspect tables in your project
 - [Currency data type](/guides/data/currency-data-type/) — an exact, half-width column type for money values, and when to choose it over Numeric
 - [Table snapshots](/guides/data/table-snapshots/) — browse snapshot history, view data as of a past snapshot, and revert or restore a table
-- [Publishing data](/guides/data/publish/) — make project tables available to dashboards, BI tools, and downstream systems
+- [Publishing data](/guides/data/publish/) — make project tables available to dashboards, BI tools, and downstream systems, and review their performance guidance
 - [Selecting the latest record in a large history table](/guides/data/selecting-latest-record-in-large-history-table/) — a common pattern with a performance-aware solution
+- [Geocoding API](/guides/data/geocoding-api/) — migrate a Google or Mapbox geocoding integration to PlaidCloud's REST geocoding endpoints
+- [Drive-Time Routing API](/guides/data/drive-time-routing-api/) — opt-in preview: drive-time isochrones and nearest-by-drive-time ranking over REST
 
 ## Where Data Comes From
 

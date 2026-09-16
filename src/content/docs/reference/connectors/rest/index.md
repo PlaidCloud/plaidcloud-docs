@@ -19,7 +19,15 @@ For any REST service that doesn't have a dedicated connector, PlaidCloud provide
 ## Financial and Accounting
 
 - [NetSuite](/reference/connectors/rest/netsuite/)
+- [HFM / FCCS](/reference/connectors/rest/hfm-fccs/) — Oracle EPM Cloud (Financial Consolidation and Close)
+- [TM1](/reference/connectors/rest/tm1/) — IBM TM1 / Planning Analytics
+- [Acumatica](/reference/connectors/rest/acumatica/)
+- [Business Central](/reference/connectors/rest/business-central/)
+- [Dynamics 365 Finance & Operations](/reference/connectors/rest/dynamics-365-fo/)
+- [Workday Financials](/reference/connectors/rest/workday-financials/)
+- [SAP S/4HANA Cloud](/reference/connectors/rest/s4hana-cloud/)
 - [QuickBooks](/reference/connectors/rest/quickbooks/)
+- [Xero](/reference/connectors/rest/xero/)
 - [Sage Intacct](/reference/connectors/rest/sage-intacct/)
 - [Stripe](/reference/connectors/rest/stripe/)
 - [Ramp](/reference/connectors/rest/ramp/)

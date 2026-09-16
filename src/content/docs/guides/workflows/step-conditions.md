@@ -29,16 +29,114 @@ For variables or table query result comparisons you can use the following compar
 
 What is also important to note is that you can have multiple conditions that must be met in order for the step to execute.  This provides a powerful tool for controlling exactly when a step should execute.
 
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 190" role="img" aria-label="A step condition gates whether a step runs. When the prior step finishes, the condition is checked; if it is met the step runs, otherwise the step is skipped and the workflow continues to the next step." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sc3-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="74" width="104" height="44" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="66" y="100" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">prior step</text>
+  <path d="M118 96 L150 96" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sc3-arrow)" />
+  <rect x="152" y="66" width="150" height="60" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="227" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">condition met?</text>
+  <text x="227" y="108" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">variable · rows · doc exists</text>
+  <path d="M302 82 C340 82 350 54 384 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sc3-arrow)" />
+  <text x="345" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-accent)">true</text>
+  <path d="M302 110 C340 110 350 138 384 138" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#sc3-arrow)" />
+  <text x="345" y="132" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">false</text>
+  <rect x="386" y="34" width="128" height="40" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="450" y="59" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-text)">step runs</text>
+  <rect x="386" y="118" width="128" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" stroke-dasharray="5 4" />
+  <text x="450" y="143" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">step skipped</text>
+  <path d="M514 54 C548 54 556 96 578 96" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" marker-end="url(#sc3-arrow)" />
+  <path d="M514 138 C548 138 556 96 578 96" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" marker-end="url(#sc3-arrow)" />
+  <text x="606" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-text)">next</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">A condition gates the step: met → the step runs; not met → it's skipped. Either way the workflow moves on to the next step. Conditions test variables, whether a table has rows, or whether a document exists.</figcaption>
+</figure>
+
 ## Adding and Controlling Conditions
 
 To activate and add conditions on a step:
 1) Find the step you want to add a condition on
 2) Click the **Edit Step Details** (pencil) icon
-3) Select the **Conditions** tab.
+3) Scroll to the **Condition Checks** section, at the bottom of the **General** tab
 4) Check the **Check Conditions Before Running** checkbox to enable the dialog and add conditions.
 5) In the **Condition Checks** section on the left, select the "+" to add a New Condition
 6) Add a condition from the tabbed section on the right
 7) Repeat steps 5,6 as needed to add all your conditions
+
+## Seeing Conditions on the Visual Canvas
+
+A step's conditions are visible from the Visual Canvas without opening the step. The connector that leads into a conditional step is **dashed**, and carries a small **shield** at its arrowhead. The dash is what you read when you are zoomed out far enough that the shield is too small to pick out.
+
+Click the shield to open the step with its **Condition Checks** already scrolled into view — you can also right-click the connector and choose **Edit Conditions…**, which does the same thing. The shield on the step's own tile, at the bottom-left, still marks the step as conditional as it always has.
+
+Two cases show no shield on an arrow, by design:
+
+- **A step with no incoming connector.** A step gated on a date or a variable can sit at the start of a workflow with nothing leading into it. There is no arrow to mark, so only the tile shield appears.
+- **A step inside a collapsed group.** Its tile is folded into the group's, and the arrow anchors on the group rather than the step, so marking it would attribute the condition to the wrong thing.
+
+A step with several incoming connectors gets one shield, not one per arrow.
+
+:::note
+Opening the conditions this way lands on the condition checks for step types that use the native step form. A step type that still opens the older configuration window opens it at the top instead — the conditions are there, just not scrolled to.
+:::
+
+### What the shield says it checks
+
+The shield's tooltip lists what the step actually checks, rather than only telling you
+that it checks something:
+
+```
+Table Row Count (sales_2026) > 0 where region = 'EU'
+Day of Week = Monday (UTC+2)
+Project Variable (run_mode) = "full"
+```
+
+Up to three checks are listed, followed by a count of the rest — *…and 2 more checks* — so
+the list stays readable on a step with many conditions. The same summary appears on the
+step's own tile shield, which is the only one a step with no incoming connector has.
+
+Selecting the step puts the same list in the **Conditions** section of the Inspector
+panel, which is the easier place to read a long one.
+
+A few things to expect from the wording:
+
+- **Day and month checks read as names**, not the numbers stored against them — *Day of
+  Week = Monday*, not *Day of Week = 3*.
+- **The timezone appears only when it is not UTC**, as in *(UTC+2)* above.
+- **A filter on a table check is shown** after `where`, shortened if it is long.
+- **An aggregated comparison says so** — *Query Value (aggregated sales_2026.amount) >=
+  100* compares a total across the table, where *Query Value (sales_2026.amount) >= 100*
+  compares a single row's value.
+- **A document check shows the path but not the account.** Two conditions checking the
+  same path in different Document accounts read identically; open the step to tell them
+  apart.
+- **A table picked from the tree browser shows its name** when the workflow reads or
+  writes that table somewhere. If it does not, the check is listed without the table name
+  rather than with an internal identifier.
+
+
+### What the gate would cost you
+
+Hover the shield without clicking it, and the canvas outlines the conditional step and everything downstream of it in a dashed highlight — the steps that would not run if that condition blocked. Nothing changes; move the pointer away and the highlight clears. Steps *upstream* are never highlighted: they run either way.
+
+This is the same preview a disabled group's **disabled** chip gives you, with one difference in wording that matters. A disabled group really is off, so its chip says how many steps *will* skip. A condition is only evaluated when the run reaches it, so the shield says how many steps *would not* run **if** the condition blocks. It may well let everything through.
+
+### What the shield says about the last run
+
+The shield also reports what happened on the most recent run, so you can trace a finished flow and see where it stopped:
+
+| Shield | Meaning |
+| --- | --- |
+| Plain shield | The step is conditional. Either it has not run yet, or it is running now. |
+| Shield with a **+** | The step ran on the last run. |
+| Shield with a **−** | The step did not run on the last run. |
+
+The three are told apart by their shape, not by colour, and the shield's tooltip spells the state out in words. It updates live while a workflow is running, so you do not need to reload the canvas to watch a run reach a gate.
+
+:::caution
+A shield with a **−** tells you the step did not run. It does not tell you *why*, and you should not read it as "the condition blocked it." A step is also recorded as not run when it is disabled, when its group is disabled, when a step upstream of it failed, or when it fell outside the scope of a partial run. The toolbar's **View Logs** opens the [run log](/guides/workflows/viewing-workflow-log/), which names the reason for each step it skipped. A step held at a breakpoint is the one case deliberately excluded — it keeps the plain shield, because pausing there was your decision rather than an outcome of the run.
+:::
 
 
 ## Managing Conditions
@@ -81,7 +179,25 @@ For Date or Time selections you can add multiple conditions if a combination of 
  - Hour of the day set to 2
  - Minute of the hour set to 5
 
-For "Use Financial Close Workday", set that to the xth day of the month that your close happens on. For example, if your close happens on the 5th day of the month, have "5".
+### Timezone Offset
+
+Each Date and Time condition carries its own **Timezone Offset**, listed as a whole-hour offset named after a representative zone — for example *Eastern Time (US & Canada) (UTC -5)* or *Asia/Tokyo (UTC +9)*. The times you enter are compared against the clock in that zone.
+
+A new condition starts on the offset your browser reports, so in most cases you can leave it alone. Set it deliberately when the schedule belongs to somewhere other than where you are — a close that runs on the finance team's clock, say. Only whole hours are available, so a half-hour zone such as India (UTC +5:30) has to be rounded to the nearest whole hour.
+
+A condition saved before this setting took effect keeps evaluating against UTC until you pick a zone for it, so existing conditions carry on behaving exactly as they did.
+
+:::caution
+**Day of the week** conditions currently compare against UTC whatever offset you choose. If you need a day-of-the-week condition to land on a particular day in a zone far from UTC, be aware it can differ from your local day for several hours either side of midnight.
+:::
+
+### Financial Close Workday
+
+For **Use Financial Close Workday**, the count starts at **0 for the 1st of the month** — as the hint beside the field says. So a close that happens on the 5th day of the month is `4`, not `5`.
+
+:::caution
+This condition never currently matches, so a step guarded by one will not run. Use a **Day of the month** condition until this is resolved. Negative values, intended to count back from the end of the month, do not work either.
+:::
 
 ## Setting Conditions With an AI Assistant
 

@@ -10,3 +10,7 @@ sidebar:
 Flattens a dimension into a tabular PlaidCloud table — one row per member with columns for parent, level, value, aliases, and properties. Use this when you need to query, join, or feed dimension structure into downstream systems that can't read PlaidCloud's hierarchical format directly.
 
 Common use: export the dimension as a table, then write it to an external system (BI tool, reporting database, file delivery) using a regular export step.
+
+## Exporting Every Hierarchy
+
+Choose **All Hierarchies** to bring every hierarchy into a single table. The result gains a `hierarchy` column naming the one each row belongs to, and the rows are ordered with the main hierarchy first, followed by the alternates in alphabetical order.

@@ -13,6 +13,7 @@ Workflow steps that pull text out of documents and analyze it. Each runs in the 
 
 ## Text Analysis
 
+- [Text NLP AI](/reference/workflow-steps/text-documents/nlp-ai/)
 - [Text Pre-Process](/reference/workflow-steps/text-documents/nlp-preprocess/)
 - [Text Sentiment](/reference/workflow-steps/text-documents/nlp-sentiment/)
 - [Text Topic Model](/reference/workflow-steps/text-documents/nlp-topic-model/)

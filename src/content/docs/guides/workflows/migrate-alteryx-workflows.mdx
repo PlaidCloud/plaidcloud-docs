@@ -49,10 +49,10 @@ Collect the workflow files and dependencies together before importing:
 5. Choose the Document account and folder where imported files should be stored.
 6. Add any referenced files or folders that the workflow needs at runtime.
 7. Start the import.
-8. Review the conversion report shown when the import finishes.
-9. Open the generated Advanced workflow.
+8. On a clean import, the window closes on its own and opens the generated Advanced workflow — you don't need to close it by hand. Anything worth a second look surfaces afterward as a toast rather than holding up the import.
+9. If the workflow has a step that did not convert, the window stays open instead and shows the conversion report so you can review it before continuing.
 
-When the import finishes, the import window replaces its form with a conversion report: a summary of how many steps mapped with high confidence and how many need review, and — when any step needs a look — a table of the lower-confidence or caveated steps listing each step's name, operation, confidence, and notes. Use it to go straight to the steps worth checking before you run the workflow; each of those steps also carries the same confidence note in its step memo on the canvas.
+When any step needs a look — a dropped or unconverted tool — the import window replaces its form with a conversion report: a summary of how many steps mapped with high confidence and how many need review, and a table of the lower-confidence or caveated steps listing each step's name, operation, confidence, and notes. Use it to go straight to the steps worth checking before you run the workflow; each of those steps also carries the same confidence note in its step memo on the canvas.
 
 PlaidCloud stores imported dependencies in the Document location selected during import. Converted steps then reference those Document paths, so the workflow can run repeatedly without relying on a desktop file system.
 
@@ -85,6 +85,8 @@ Two things behave differently from the original:
 
 - **A switched-off Tool Container's tools are not imported at all.** Alteryx does not run them either, so importing them would put steps in the workflow that never do anything. The container itself still comes across, as a highlight box carrying its caption, so you can see what was there. To bring its tools in, switch the container on in Alteryx and import again. (Importing over the API or from an AI agent also accepts an option to import a disabled container's tools as ordinary, runnable steps — useful for sample workflows that ship everything switched off.)
 - **Box colors are not carried across.** The canvas offers a fixed set of six colors, and Alteryx boxes are almost always white or grey, so every one of them would arrive the same shade. They come in with the canvas default instead; set the color you want from the right-click menu.
+
+A note's text now renders in a neutral gray. It previously came in amber/orange against the dark canvas — a color that reads as a warning even on an unremarkable comment carried straight over from Alteryx.
 
 A Tool Container that ends up holding no steps at all — because it was switched off, or because it only ever contained comments — still appears, as a highlight box carrying its caption, rather than disappearing from the canvas.
 
@@ -138,6 +140,7 @@ An Alteryx **Calgary database** (a `.cydb` file) is a proprietary indexed store.
 - A converted **Calgary Input** reads the table back, applying its saved query as the filter. The table's own columns are resolved when the step runs, since nothing in the workflow file records what the database held.
 - A converted **Calgary Input (Count Only)** or **Calgary Cross Count** reads the table as an aggregate: plain indexed fields group the rows, and each of a custom field's named values becomes one counted column.
 - A converted **Calgary Join** matches each incoming record against the table, keeping the records that matched and carrying the input's own columns through. It converts when the incoming field is a plain, non-spatial value — see [Calgary Join and Cross Count Append](#calgary-join-and-cross-count-append) below for when it does not.
+- A converted **Calgary Cross Count Append** matches each incoming record against the table the same way, then reports how many database records it matched, appended to the input — again when the incoming field is a plain, non-spatial value.
 
 <Aside type="caution" title="Two Databases Sharing One Name">
 Two `.cydb` files of the same name in different directories name the same PlaidCloud table, and there is no way to tell from the workflow which one a reader was meant to use. Both the Loader and any reader involved refuse, naming both files, rather than guessing. Rename one of the source databases and import again.
@@ -147,11 +150,11 @@ Two `.cydb` files of the same name in different directories name the same PlaidC
 
 #### Or, And, and Not in a Calgary Query
 
-A Calgary query is a tree of `And`, `Or`, and `Not` over the database's indexed fields, and the tree now converts as written: an `Or` anywhere in it, and a `Not` wrapped around more than one condition, both convert. This covers a Calgary Input's record read, its count-only read, Calgary Cross Count, and the buckets inside a Cross Count's custom fields.
+A Calgary query is a tree of `And`, `Or`, and `Not` over the database's indexed fields, and the tree now converts as written: an `Or` anywhere in it, and a `Not` wrapped around more than one condition, both convert. A contains or starts-with term converts too — to a SQL LIKE on the count path, and a substring match on the record read. This covers a Calgary Input's record read, its count-only read, Calgary Cross Count, and the buckets inside a Cross Count's custom fields.
 
 A handful of query shapes still don't convert, each naming itself in the conversion report and on the step:
 
-- A query using contains, starts-with, or a spatial lookup instead of an indexed comparison.
+- A query using a spatial lookup (or a negated contains/starts-with) instead of a column comparison — an index operation with no column-level equivalent.
 - A read limited by **Skip Records** or **Max Records** — the stand-in table carries no record order to skip or cap against.
 - A Cross Count grouped by more than one custom field. The counts are genuinely one aggregate over the database, but Alteryx doesn't document what it names or how it orders the resulting columns, and there is no example on hand to check against.
 - A count-only read that names no column to count over, since the database's own columns are not readable from the workflow file.
@@ -166,17 +169,33 @@ Conversion decides using the **incoming field's own declared type**: a spatial i
 
 - an incoming field typed as a spatial object stops, naming the field, the reading it produced, and the stand-in table to rebuild the match against as a **Spatial Match** step;
 - an incoming field whose type couldn't be determined stops, naming that as the reason — it is never guessed;
-- an ordinary, non-spatial incoming field converts a **Calgary Join** to a match against the stand-in table.
+- an ordinary, non-spatial incoming field converts, matching against the stand-in table.
 
 Whichever way it goes, the step records the reading it took and the field type it read it from, so a conversion you disagree with shows its working rather than leaving you to infer it.
 
-**Calgary Cross Count Append stops on every incoming field, spatial or not.** It appends the *counts* of matching database records rather than the records themselves, and Alteryx doesn't document how many columns that produces or what they're named for anything beyond a single field — so there is no shape to build with confidence. Rebuild it as a Cross Count over the stand-in table, joined back to this input.
+**Calgary Cross Count Append converts on a plain, non-spatial incoming field**, the same as a Calgary Join. Where the Join keeps the matched records, the Append reports how many database records each input record matched: it counts, per input record, the matches, and appends that count to the input. An input record that matched nothing counts zero rather than dropping out, and two identical input records each keep their own row — the count is per record, not per distinct set of values. A single plain cross-count field converts this way; a grid of *named* custom values does **not**, because it would append one count column per value and Alteryx documents neither how many columns that is nor what it names them.
 
-A **Calgary Join** also stops, naming itself, in five more cases: when it is set to count matches only, when it matches against a range of index values rather than a single one, when its unmatched-records output is wired to something downstream, when it names no field to match the database on, and when nothing is wired to its input for it to match records from.
+A **Calgary Join in Count Only mode** converts the same way — it counts, per input record, the database records matched, a record matching nothing counting zero — rather than keeping the matched records.
+
+A **Calgary Join or Cross Count Append** also stops, naming itself, when it matches against a range of index values rather than a single one, when its unmatched-records output is wired to something downstream, when it names no field to match the database on, and when nothing is wired to its input for it to match records from.
 
 A converted Loader and the readers of what it wrote are wired together, so a reader cannot run beside the write that fills its table.
 
 A Calgary Input's columns arrive as text: the stand-in table gives their names, not the database's own types.
+
+### In-Database Tools
+
+An In-Database workflow pushes its work to the warehouse rather than the Alteryx engine, and a PlaidCloud step already *is* warehouse SQL — so the In-Database **operation** tools convert to exactly the same steps as their in-memory twins. Filter In-DB becomes a filter, Formula In-DB a formula, Summarize In-DB an aggregate, and Join, Select, Sample, Sort, Union and Browse likewise.
+
+What does not convert is the pair of tools at either end of the chain. **Connect In-DB** and **Write Data In-DB** open a live warehouse connection that the tools between them hold and push SQL against, and PlaidCloud has no equivalent to that held-open connection. Each arrives as a step flagged for review, naming the tool and pointing at its replacement: an SQL import or export step bound to a PlaidCloud connection. Swap the two endpoints for those steps and the operation tools in between convert unchanged.
+
+Data Stream In, Data Stream Out, Dynamic Input In-DB, Dynamic Output In-DB, and In-Database Macro Input/Output are refused by name for the same reason.
+
+### A Union Fed By A By-Position Join Or Multi-Row Formula
+
+A workflow with a **Union** reading from a **Join** matched by record position, or from a **Multi-Row Formula**, converted cleanly but could fail once you ran it — stopping partway through with a column it could not resolve. The conversion looked fine; only running the workflow turned up the problem.
+
+This is fixed: such a workflow now runs to a correct result. If you hit this error on a workflow imported earlier, re-run it — no need to re-import.
 
 ### Cross Tab Percent And Total Columns
 
@@ -194,14 +213,39 @@ The percent columns are written on a scale of 0 to 100. Alteryx documents these 
 
 Two shapes are still flagged for review instead of converted: a **Total Row** on a Cross Tab with no grouping field, which would produce the same record twice with nothing to tell the copies apart, and a **Total Column** whose name the tool never recorded, which would otherwise be missing from the output entirely.
 
+### Alteryx Double Columns Keep Full Precision
+
+An Alteryx **Double** column now converts to a 64-bit numeric column, matching the precision Alteryx itself calculates with. It previously converted to a 32-bit column — about 7 significant digits — so any value with more digits than that was silently rounded on read, and every calculation built on it inherited the error. A real case: 16,862,441.27 came back as 16,862,442.00.
+
+Inside a converted macro, a Double column passed in as a macro input used to arrive as text; it now arrives as a number. If macro logic depended on the old text behavior — string concatenation, leading-zero formatting, a text pattern match — review it after reconverting, since a genuine number in hand can behave differently.
+
+Workflows converted before this fix keep the column types they were converted with. Import them again to pick this up.
+
 ### Macros In A Converted Workflow
 
-**A macro called from inside a Batch or Iterative macro now converts.** A looping macro whose interior called another macro could not resolve that inner call, and the whole loop was discarded and left as a placeholder — with a note blaming the loop rather than naming the macro inside it. Interior macro calls now resolve, so those workflows convert.
+Macros convert to native PlaidCloud constructs — not to an emulation of the Alteryx macro engine. Every macro flavour maps to a first-class workflow feature, so a converted macro runs the same logic with the same per-record or per-iteration behaviour as the original, at full fidelity:
 
-Two arrangements are refused by name rather than converted: a looping macro nested inside another looping macro, and a looping macro that ends up calling itself.
+- **Standard macros** are inlined into the calling workflow: the macro's tools become ordinary steps on the canvas, so there is no black box to trust — every step stays visible, reviewable, and editable. Nested standard macros inline to any depth, and a macro that ends up calling itself is caught and named rather than looped forever.
+- **Batch macros** become a macro workflow run once per record of the control parameter, with each pass's output collected back into a single stream — the same per-group execution Alteryx performs. The control parameter is bound as a per-pass variable, exactly as it drives the batch in Alteryx.
+- **Iterative macros** become a native workflow loop that carries state between passes and runs until the macro converges. The loop's pass limit is the macro's own **Maximum Number of Iterations**, the same setting Alteryx runs it under; where that is left at Alteryx's runaway-guard default, or not set at all, conversion applies its own ceiling instead. If a macro has still not converged at that limit, the run **stops and says so** — naming the limit it reached — rather than reporting a partial result as a final answer. A macro that genuinely needs more passes than the ceiling allows can be re-imported with a higher one: the import's `iteration_ceiling` option sets it.
+- **Control parameters, Macro Input and Macro Output ports, Action tools, and Detour branching** all convert to their native equivalents, so the machinery that wires a macro together is preserved — not approximated. A macro called from inside a Batch or Iterative macro resolves and converts along with its caller.
 
-<Aside type="caution" title="Location Optimizer Macros Are Refused">
-A **Location Optimizer** macro is only the scoring pass of a search. The search itself — generating candidate location sets, the number of locations, the generation limits and the seed — lives in the calling tool and in the Alteryx engine rather than in the workflow file, and PlaidCloud has no equivalent for that optimisation loop yet. The macro call now arrives as a step flagged for review, naming the macro, the input its candidate sets arrive on, the output that ranks them, and whether a high or a low score wins.
+Two arrangements are refused by name rather than converted, so you know at import time: a looping macro nested inside another looping macro, and In-Database Macro Input/Output tools.
+
+<Aside type="caution" title="Batch Macros That Used To Stall Now Complete">
+Earlier conversions had each pass write its own output table, with the step gathering the results reading them all back by name — so a macro driven by as few as a few dozen records built one query spanning that many tables, and the database refused to plan it. The workflow stopped partway through, with nothing useful to point at as the cause.
+
+Passes now accumulate onto a single table that the gathering step reads directly, and that table is emptied properly at the start of each run, so a run whose macro produces no passes returns an empty result instead of re-serving the previous run's rows.
+
+If a batch macro workflow used to stall or fail partway through, re-import it to pick up the fix.
+</Aside>
+
+<Aside type="tip" title="Location Optimizer's Linear-Distance Case Converts Natively">
+A **Location Optimizer** whose score is an unmodified linear distance-minimization — choose K sites minimizing total or weighted distance to demand — converts directly to the native [Location Optimizer](/reference/workflow-steps/optimization/location-optimizer/) step, a p-median MIP solved on PlaidCloud's HiGHS solver. The candidate and demand tables and the site count carry over; confirm the distance columns before relying on the result.
+</Aside>
+
+<Aside type="caution" title="Other Location Optimizer Macros Are Refused">
+A **Location Optimizer** macro is only the scoring pass of a search. The search itself — generating candidate location sets, the number of locations, the generation limits and the seed — lives in the calling tool and in the Alteryx engine rather than in the workflow file. Outside the linear-distance case above — a gravity kernel, a bespoke scoring macro, a higher-is-better objective, or any transform of distance before scoring (a fixed facility cost, a Summarize, a join) — PlaidCloud has no equivalent for that optimisation loop. The macro call now arrives as a step flagged for review, naming the macro, the input its candidate sets arrive on, the output that ranks them, and whether a high or a low score wins.
 
 **Such a macro used to convert and run green, and its figures were wrong.** It was treated as an ordinary macro, so the scoring pass ran exactly once against a single candidate set and the run reported success — a result that looked like an answer but was one scored guess rather than an optimised one. If you re-import a workflow like this and see a refusal where it used to work, the earlier result was not one you should have relied on.
 </Aside>
@@ -222,6 +266,8 @@ After import, use the workflow like any other PlaidCloud Advanced workflow:
 4. Run the workflow.
 5. Review run history, step outputs, readiness notes, and generated artifacts.
 6. Schedule the workflow when it is ready for repeatable operation.
+
+A converted **Download** tool becomes a [REST Request](/reference/workflow-steps/general/rest-request/) step, which reaches an external endpoint through a REST connection rather than a URL baked into the step. Assign a REST connection to the step before you run it — the converter flags this at import time with a readiness note. See [Create a Connection](/guides/connections/create-connection/) to set one up.
 
 Converted macros are available as PlaidCloud macro workflows. A workflow that called an Alteryx macro will call the generated PlaidCloud macro through the macro step. Macro runs are isolated from one another, so concurrent workflow runs can safely use the same macro definition.
 
@@ -283,6 +329,8 @@ Alteryx machine-learning pipelines built with the Machine Learning tool family c
 - A **Classification** or **Regression** tool, together with its upstream Assisted Modeling and Transformation stages and the downstream **Fit** tool, fuses into a single [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) step. The step carries the exact algorithm, target variable, feature columns, and hyperparameters from the Alteryx workflow, and writes the trained model as a one-row model table with the training metrics recorded in it.
 - Each **Predict** tool becomes an [ML: Score](/reference/workflow-steps/machine-learning/ml-score/) step reading the trained model table and its data input. The prediction column is named after the target variable with a `_predicted` suffix.
 - **XGBoost classifiers** convert with an approximation note: the model trains as a scikit-learn gradient-boosted classifier, and any XGBoost-specific tree parameters with no equivalent are listed in the step's mapping notes. Validate model metrics against the Alteryx run before relying on parity.
+- An **Image Recognition** tool trains an image classifier in the workflow and scores new images against it, entirely in place — no external account, and no image data leaves PlaidCloud. A downstream **Predict** pointed at the model scores against it. Two things carry over differently from the rest of the ML family, so validate them before relying on parity. First, the classifier is retrained from your labeled images rather than copied from Alteryx, and that training is non-deterministic — two conversions of the same workflow produce slightly different models, so predictions are a faithful approximation, not a bit-for-bit match. Second, training runs on CPU, so a set of hundreds to low thousands of images takes several minutes. Image Recognition is enabled per workspace; ask your administrator to turn it on if a converted workflow reports that it is not enabled.
+- An **AutoML** tool fuses to an [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) step the same way Classification and Regression do. AutoML doesn't record which of its candidate algorithms actually won at Alteryx run time, so conversion picks the first checked algorithm ML Train supports and notes the choice rather than reproducing an automated search. This mapping is validated against a reconstructed fixture, not a real Alteryx export — AutoML left Alteryx's palette after 2023.1 — so confirm a converted AutoML step against a real workflow if one becomes available.
 - An **Assisted Modeling wizard** whose model was chosen interactively (and never saved into the workflow file) cannot convert — the importer keeps a placeholder step whose notes record the recovered target variable so you can hand-build the ML Train step.
 - A **standalone one-hot-encoding stage** is flagged in the conversion report. The fused ML Train step one-hot encodes categorical features internally, so the standalone stage usually needs no replacement.
 

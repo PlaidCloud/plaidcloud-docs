@@ -1,0 +1,39 @@
+---
+title: Build Features
+description: Engineer arithmetic, interaction, date-part, binning, scaling, and one-hot-encoded feature columns from a source table.
+sidebar:
+  order: 36
+---
+
+## Description
+
+The **Build Features** step engineers a table of derived feature columns from a source table — arithmetic and interaction combinations, date-part extraction, binning, scaling, and one-hot encoding — in one pass, without hand-writing an expression per column. It runs as an ordinary transform against the warehouse.
+
+## Configuration
+
+- **Source / Output tables** — the input table and the table the derived columns are written to.
+- **Passthrough Columns** (`passthrough_columns`) — source columns carried through unchanged.
+- **Features** (`features`) — an ordered list of feature specs, at least one required. Each spec has a `type` and produces one or more output columns. Output column names — passthrough columns plus every non-one-hot feature's `name` — must all be distinct; saving a duplicate name, or a duplicate one-hot `(column, prefix)` pair, is rejected.
+
+## Feature Types
+
+| Type | Fields | Produces |
+| --- | --- | --- |
+| **Expression** (`expression`) | `name`, `expression`, `dtype` (default `text`) | One column: an arbitrary expression over source columns. |
+| **Interaction** (`interaction`) | `name`, `columns` (exactly 2), `op` (`multiply` or `add`, default `multiply`), `dtype` (default `numeric`) | One column: the pairwise arithmetic combination of two numeric columns. |
+| **Date Part** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow`, or `hour`) | One column: the extracted date/time component. |
+| **Bin** (`bin`) | `name`, `column`, `thresholds` (ascending, at least 1), `labels` (exactly one more than `thresholds`) | One column: the label for the bucket `column`'s value falls into. Thresholds are fixed values you supply — see [Limits and Caveats](#limits-and-caveats). |
+| **Z-Score** (`zscore`) | `name`, `column`, `dtype` (default `numeric`) | One column: the column standardized to zero mean, unit variance. |
+| **Min-Max** (`minmax`) | `name`, `column`, `out_min` (default 0), `out_max` (default 1), `dtype` (default `numeric`) | One column: the column rescaled to the `[out_min, out_max]` range. |
+| **One-Hot** (`onehot`) | `column`, `prefix` | One column per distinct value of `column`, each named `<prefix><value>`. |
+
+## Limits and Caveats
+
+- **Binning needs fixed thresholds up front.** `bin` buckets a column against thresholds and labels you supply — there is no data-driven binning (equal-width or equal-frequency bins computed from the data at run time). Compute thresholds yourself (for example from a prior aggregate step) before configuring a `bin` feature.
+- **One frame at a time.** Build Features reads and writes a single source table; it does not aggregate values across related tables the way a cross-table feature-synthesis tool does. Model any cross-table relationship as a join upstream of the step instead.
+- **No built-in dimensionality reduction or target-aware encoding.** There is no PCA-style component reduction and no target encoding (a categorical column re-expressed as a statistic of the label, such as its mean). Use `onehot` for categorical features, and a separate [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) step's own feature handling if a training pipeline needs a different encoding.
+
+## Related
+
+- [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) — train a model on a table, including one built by this step.
+- [Alteryx Conversion Matrix](/reference/alteryx-conversion-matrix/) — how the Alteryx Build Features tool's primitives map onto these feature types, and which of its primitives (cross-table aggregation, PCA, target encoding, auto-binning) have no equivalent here.

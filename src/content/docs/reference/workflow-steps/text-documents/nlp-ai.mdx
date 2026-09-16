@@ -1,0 +1,49 @@
+---
+title: Text NLP AI
+description: Run one of five LLM-backed NLP tasks — entity extraction, part-of-speech tagging, summarization, zero-shot classification, or key/value extraction — over a text column.
+sidebar:
+  order: 33
+---
+
+## Description
+
+The **Text NLP AI** step runs one of five per-row NLP tasks over a text column, each as a batch of structured (forced tool-use) LLM calls: **Named Entity Recognition**, **POS Tagging**, **Summary**, **Zero-shot Classification**, and **Key/Value Extraction**. It runs as a managed PlaidCloud job (like [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and the [LLM Step](/reference/workflow-steps/general/llm-step/)), so it does not compete with the rest of the workflow for resources.
+
+Because every task is a real LLM call, results are not bit-for-bit reproducible between runs — see [Non-Determinism](#non-determinism-llm-backed-results).
+
+## Configuration
+
+- **Source / Output tables** — the input table and the table the results are written to.
+- **Text Column** (`field`) — the column each task reads.
+- **Task** (`task`) — one of `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`.
+- **Language** (`language`) — the text's language, passed to the model. Defaults to `en`.
+- **LLM Connection** (`llm_connection_id`) — an Anthropic LLM connection. Leave blank to use the workspace default.
+- **Model** (`llm_model`) — leave blank to use the connection's default model.
+- **Temperature** (`temperature`) — optional sampling temperature. See [Non-Determinism](#non-determinism-llm-backed-results): current-generation models ignore it.
+- **Batch Size** (`batch_size`) — rows sent per LLM call, 1 to 500. Defaults to 25. A batch whose response is truncated is split in half and retried rather than losing rows.
+
+## Tasks
+
+Two tasks return one output row per input row (**row-preserving**); three return zero or more rows per input row and carry the source's identifier columns (`id_columns`) onto each one (**row-exploding**).
+
+| Task | Fan-out | Output columns | Task-specific fields |
+| --- | --- | --- | --- |
+| Named Entity Recognition (`ner`) | Row-exploding | `entity_text`, `entity_type` | **Entity Types** (`entity_types`) — the allowed type list. Defaults to `people`, `organizations`, `locations`, `dates`, `quantities` if left blank. |
+| POS Tagger (`pos`) | Row-exploding | `token`, `pos` (universal POS tag, for example `NOUN`, `VERB`, `ADJ`) | None. |
+| Summary (`summary`) | Row-preserving | `summary` | **Summary Length** (`summary_length`) — maximum sentences, 1 to 20. Defaults to 3. |
+| Zero-shot Classification (`zeroshot`) | Row-preserving | `label`, `score` (0 to 1) | **Label Field** (`label_field`) — the source column holding each row's candidate labels; without it the model has nothing to choose from. **Multi-Label** (`multi`) — allow more than one label per row (joined with `, `) instead of picking the single best. |
+| Key/Value Pairs (`keyvalue`) | Row-exploding | `key`, `value` | **Key Field** (`key_field`) — the source column holding each row's candidate keys to extract; leave blank to let the model find keys freely. **Fuzzy** (`fuzzy`) — match candidate keys loosely instead of exactly. |
+
+**ID Columns** (`id_columns`) carry identifying columns from the source table onto every output row of a row-exploding task, so you can trace an extracted entity or pair back to its source record. A configured ID column that collides with a task's own output column name (for example naming an ID column `entity_type` on an `ner` task) is rejected when the step runs, not when it's saved.
+
+## Non-Determinism (LLM-Backed Results)
+
+Every task is a real call to an LLM, so results can vary between runs even with identical input — there is no bit-for-bit guarantee, and this is expected, not a bug.
+
+**Temperature** exposes a further wrinkle: current-generation models (Opus 4.7+, Sonnet 5+, Fable) reject an explicit sampling temperature outright. If you set one, the step tries it once; the first rejection is detected, the run falls back to the model's own server default for the rest of the batches, and the step's result carries a one-time informational note rather than failing. Leaving Temperature blank (the default) skips this round-trip entirely and is the recommended setting on current models.
+
+## Related
+
+- [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) — fit a model rather than call an LLM per row.
+- [LLM Step](/reference/workflow-steps/general/llm-step/) — a free-form agentic LLM call with scoped read/write project access, rather than one of these five fixed per-row tasks.
+- [Alteryx Conversion Matrix](/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification, and Key/Value Pairs all convert to this step.

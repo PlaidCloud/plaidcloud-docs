@@ -1,13 +1,13 @@
 ---
 title: PlaidCloud Git Connector
-description: Connect a Panel app or workflow to a repository in PlaidCloud Git — the managed built-in Git service — with no server URL or credentials to configure.
+description: Connect a Panel app, Dash app, or workflow to a repository in PlaidCloud Git — the managed built-in Git service — with no server URL or credentials to configure.
 sidebar:
   order: 0
 ---
 
-**PlaidCloud Git** is the managed Git service built into your workspace. A PlaidCloud Git connection points a Panel deployment — or a workflow — at one of your repositories. Because the service is managed, it needs **no server URL, username, or token**: PlaidCloud supplies the host and authenticates on your behalf.
+**PlaidCloud Git** is the managed Git service built into your workspace. A PlaidCloud Git connection points a Panel or Dash deployment — or a workflow — at one of your repositories. Because the service is managed, it needs **no server URL, username, or token**: PlaidCloud supplies the host and authenticates on your behalf.
 
-For the end-to-end walkthrough of serving a Panel app from one of these connections, see [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/). To create repositories and push code, see the [PlaidCloud Git guides](/guides/git/).
+For the end-to-end walkthrough of serving an app from one of these connections, see [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) or [Deploy a Dash App From PlaidCloud Git](/guides/dash-apps/deploy-from-git/). To create repositories and push code, see the [PlaidCloud Git guides](/guides/git/).
 
 ## Configuration
 
@@ -32,12 +32,13 @@ From **Tools > Connections**, click **New Connection** and choose **PlaidCloud G
 
 ## Common Uses
 
-- Serving a [HoloViz Panel app](/guides/panel-apps/deploy-from-git/) from your workspace's `apps` repository.
+- Serving a [HoloViz Panel app](/guides/panel-apps/deploy-from-git/) or a [Plotly Dash app](/guides/dash-apps/deploy-from-git/) from your workspace's `apps` repository.
 - Sourcing user-defined functions, configuration, or templated files that live in PlaidCloud Git.
 
 ## Related
 
 - [PlaidCloud Git Connection](/guides/connections/plaidcloud-git/) — task guide for creating the connection, with usage and security model
 - [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) — the full path from repository to served app
+- [Deploy a Dash App From PlaidCloud Git](/guides/dash-apps/deploy-from-git/) — the same path for a Plotly Dash app
 - [PlaidCloud Git guides](/guides/git/) — repositories, issues, pull requests, and more
 - [Git Repository Connections](/reference/connectors/git/) — external Git providers (GitHub, GitLab, and others)
