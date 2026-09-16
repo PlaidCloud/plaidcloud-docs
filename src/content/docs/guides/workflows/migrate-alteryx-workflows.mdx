@@ -213,6 +213,14 @@ The percent columns are written on a scale of 0 to 100. Alteryx documents these 
 
 Two shapes are still flagged for review instead of converted: a **Total Row** on a Cross Tab with no grouping field, which would produce the same record twice with nothing to tell the copies apart, and a **Total Column** whose name the tool never recorded, which would otherwise be missing from the output entirely.
 
+### Alteryx Double Columns Keep Full Precision
+
+An Alteryx **Double** column now converts to a 64-bit numeric column, matching the precision Alteryx itself calculates with. It previously converted to a 32-bit column — about 7 significant digits — so any value with more digits than that was silently rounded on read, and every calculation built on it inherited the error. A real case: 16,862,441.27 came back as 16,862,442.00.
+
+Inside a converted macro, a Double column passed in as a macro input used to arrive as text; it now arrives as a number. If macro logic depended on the old text behavior — string concatenation, leading-zero formatting, a text pattern match — review it after reconverting, since a genuine number in hand can behave differently.
+
+Workflows converted before this fix keep the column types they were converted with. Import them again to pick this up.
+
 ### Macros In A Converted Workflow
 
 Macros convert to native PlaidCloud constructs — not to an emulation of the Alteryx macro engine. Every macro flavour maps to a first-class workflow feature, so a converted macro runs the same logic with the same per-record or per-iteration behaviour as the original, at full fidelity:
@@ -223,6 +231,14 @@ Macros convert to native PlaidCloud constructs — not to an emulation of the Al
 - **Control parameters, Macro Input and Macro Output ports, Action tools, and Detour branching** all convert to their native equivalents, so the machinery that wires a macro together is preserved — not approximated. A macro called from inside a Batch or Iterative macro resolves and converts along with its caller.
 
 Two arrangements are refused by name rather than converted, so you know at import time: a looping macro nested inside another looping macro, and In-Database Macro Input/Output tools.
+
+<Aside type="caution" title="Batch Macros That Used To Stall Now Complete">
+Earlier conversions had each pass write its own output table, with the step gathering the results reading them all back by name — so a macro driven by as few as a few dozen records built one query spanning that many tables, and the database refused to plan it. The workflow stopped partway through, with nothing useful to point at as the cause.
+
+Passes now accumulate onto a single table that the gathering step reads directly, and that table is emptied properly at the start of each run, so a run whose macro produces no passes returns an empty result instead of re-serving the previous run's rows.
+
+If a batch macro workflow used to stall or fail partway through, re-import it to pick up the fix.
+</Aside>
 
 <Aside type="tip" title="Location Optimizer's Linear-Distance Case Converts Natively">
 A **Location Optimizer** whose score is an unmodified linear distance-minimization — choose K sites minimizing total or weighted distance to demand — converts directly to the native [Location Optimizer](/reference/workflow-steps/optimization/location-optimizer/) step, a p-median MIP solved on PlaidCloud's HiGHS solver. The candidate and demand tables and the site count carry over; confirm the distance columns before relying on the result.
