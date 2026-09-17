@@ -88,7 +88,7 @@ Selecting a table opens its details panel, which lists the workflow steps that t
 * **May Reference This Table** — steps that reach a table through a variable that cannot be resolved. This section only appears when there are such steps.
 
 
-A step can name a table outright, or reach it through a path containing a variable, such as `/Periods/{period}/Sales`. Where that variable has a current value, the step appears in the first two lists with an information icon beside it. Hover the row to see the path as the step stores it, along with the value used.
+A step can name a table outright, or reach it through a path containing a variable, such as `/Periods/{period}/Sales`. Where that variable has a current value, the step appears in the first two lists with an information icon beside it. Hover the row to see the path as the step stores it.
 
 
 Treat those rows as the weaker answer they are. They describe what a run starting now would touch — not everything that has ever touched the table. Change the variable and a different table is read.
@@ -97,7 +97,7 @@ Treat those rows as the weaker answer they are. They describe what a run startin
 Some variables cannot be resolved. Either nothing has set the variable at all, or a step sets it while the workflow runs — a Workflow Loop takes its variables from data as it iterates, and a Set Variable step assigns during the run — so whatever is stored between runs is left over from the last one rather than a value to trust. Rather than resolve those to a table that may be the wrong one, PlaidCloud lists the steps by name under **May Reference This Table**, with the variable it could not resolve, so you can open them and check.
 
 
-*Note: Deleting a table counts only the steps that name it outright or through a resolved path. A step listed under **May Reference This Table** does not block a delete.*
+*Note: Deleting unused tables counts only the steps that name a table directly. A step that reaches it through a path — resolved or not — does not block a delete.*
 
 
 
