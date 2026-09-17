@@ -16,6 +16,8 @@ Since dimensions represent hierarchical data structures, the load process must c
 
  In addition to structure, other dimension information can be included in the load process such as values, aliases, and properties.
 
+ A levels (flat) load takes a default consolidation, which every interim node the load creates receives, and can name a leaf column: when it does, that column decides which node carries the row's aliases, properties and values; otherwise the last filled level is the leaf.
+
  A load of aliases, properties or values checks every row's member before writing anything. If any row names a member the dimension does not hold, the load fails and reports those names, and nothing from that load is stored. Load the structure first, or include the missing members in it, then load the attributes.
 
  See the Workflow Step for [Dimension Load](/reference/workflow-steps/dimensions/dimension-load) for more information.
