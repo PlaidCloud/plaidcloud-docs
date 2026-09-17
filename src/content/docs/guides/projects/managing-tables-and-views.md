@@ -77,6 +77,30 @@ Searching for tables is accomplished by using the filter box in the lower left o
 
 
 
+## See Where a Table Is Used
+
+
+Selecting a table opens its details panel, which lists the workflow steps that touch it:
+
+
+* **Table Created By** — steps that write to the table
+* **Table Contributes To** — steps that read from it
+* **May Reference This Table** — steps that reach a table through a variable that cannot be resolved. This section only appears when there are such steps.
+
+
+A step can name a table outright, or reach it through a path containing a variable, such as `/Periods/{period}/Sales`. Where that variable has a current value, the step appears in the first two lists with an information icon beside it. Hover the row to see the path as the step stores it, along with the value used.
+
+
+Treat those rows as the weaker answer they are. They describe what a run starting now would touch — not everything that has ever touched the table. Change the variable and a different table is read.
+
+
+Some variables cannot be resolved. Either nothing has set the variable at all, or a step sets it while the workflow runs — a Workflow Loop takes its variables from data as it iterates, and a Set Variable step assigns during the run — so whatever is stored between runs is left over from the last one rather than a value to trust. Rather than resolve those to a table that may be the wrong one, PlaidCloud lists the steps by name under **May Reference This Table**, with the variable it could not resolve, so you can open them and check.
+
+
+*Note: Deleting a table counts only the steps that name it outright or through a resolved path. A step listed under **May Reference This Table** does not block a delete.*
+
+
+
 ## Create New Directory Structure
 
 
