@@ -94,7 +94,7 @@ A step can name a table outright, or reach it through a path containing a variab
 Treat those rows as the weaker answer they are. They describe what a run starting now would touch — not everything that has ever touched the table. Change the variable and a different table is read.
 
 
-Some variables cannot be resolved. Either nothing has set the variable at all, or a step sets it while the workflow runs — a Workflow Loop takes its variables from data as it iterates, and a Set Variable step assigns during the run — so whatever is stored between runs is left over from the last one rather than a value to trust. Rather than resolve those to a table that may be the wrong one, PlaidCloud lists the steps by name under **May Reference This Table**, with the variable it could not resolve, so you can open them and check.
+Some variables cannot be resolved. Either nothing has set the variable at all, or the value a run uses does not come from what is stored — a Workflow Loop takes its variables from data as it iterates, a Set Variable step assigns during the run, a macro is handed its variables by whichever step calls it, and a run started by a sensor carries that sensor's own details. In each case whatever is stored between runs is left over from the last one rather than a value to trust. Rather than resolve those to a table that may be the wrong one, PlaidCloud lists the steps by name under **May Reference This Table**, with the variable it could not resolve, so you can open them and check.
 
 
 *Note: Deleting unused tables counts only the steps that name a table directly. A step that reaches it through a path — resolved or not — does not block a delete.*
