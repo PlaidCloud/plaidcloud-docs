@@ -126,6 +126,7 @@ export default defineConfig({
 					label: 'Get started',
 					items: [
 						{ label: 'Overview',   link: '/get-started/' },
+						{ label: 'Sign Up',    link: '/get-started/sign-up/' },
 						{ label: 'Quickstart', link: '/get-started/quickstart/' },
 						{ label: 'Platform Architecture', link: '/get-started/platform-architecture/' },
 						{ label: 'Concepts',   link: '/get-started/concepts/' },
