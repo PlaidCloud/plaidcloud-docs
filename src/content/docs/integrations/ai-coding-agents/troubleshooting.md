@@ -21,6 +21,16 @@ Cause: a known bug in some MCP clients (most notably Claude Code 2.1.111 with st
 
 Until the redeploy lands, the OAuth flow (without static `Authorization` headers) still works because it uses a different code path in the client.
 
+## The "application Access Request" Page
+
+Symptom: after signing in to PlaidCloud during an OAuth authorization, you land on a page titled **Application Access Request** naming an application and a redirect URI, and have to click Approve before the flow continues.
+
+Cause: this is expected. Every OAuth authorization through PlaidCloud's MCP server shows this page so you can confirm what you're connecting before it gets a token — it names the requesting application and the redirect URI it will send credentials to. Check that both match the client you're actually connecting, and don't approve a request you didn't start.
+
+An already-connected client doesn't see this page again on token refresh — only a fresh authorization (first connection, or after the refresh token expires or is revoked) revisits it.
+
+Fix: nothing to fix — approve the page to continue. If you started the authorization in one browser (or profile) and the page is showing in another, it won't complete: the consent is bound to the browser that started the flow. Restart the authorization from the same browser you're signed into PlaidCloud in.
+
 ## "oauth Flow is Not in Progress" During Claude Code Login
 
 Symptom: you authorize in the browser, paste the callback URL into Claude Code, and it says no flow is in progress.
