@@ -27,6 +27,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Outer Join](/reference/workflow-steps/tables/table-outer-join/)
 - [Table Pivot](/reference/workflow-steps/tables/table-pivot/)
 - [Table Project to Project Copy](/reference/workflow-steps/tables/frame-project-copy/)
+- [Set Row Access](/reference/workflow-steps/tables/table-set-row-access/)
 - [Table Union All](/reference/workflow-steps/tables/table-union-all/)
 - [Table Union Distinct](/reference/workflow-steps/tables/table-union-distinct/)
 - [Table Update](/reference/workflow-steps/tables/table-update/)
