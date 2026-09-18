@@ -7,6 +7,8 @@ sidebar:
 
 [Cursor](https://cursor.com) supports MCP servers through a `mcp.json` config file. The shape is the same as Claude Code's `.mcp.json`, so the same Bearer-token snippet works in both.
 
+The **Connect Your AI** window in PlaidCloud's header toolbar offers an **Install in Cursor** one-click link that adds the server through an OAuth sign-in, no config file needed. Try that first. The Bearer-token config below is the setup this page documents in full, and the fallback if the one-click link doesn't add the server or Cursor isn't installed.
+
 ## Setup
 
 1. Get a Bearer token by visiting `https://<your-workspace>.plaid.cloud/mcp/setup/token` in a browser where you're signed into PlaidCloud.
