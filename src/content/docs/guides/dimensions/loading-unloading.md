@@ -18,6 +18,8 @@ Since dimensions represent hierarchical data structures, the load process must c
 
  A levels (flat) load takes a default consolidation, which every interim node the load creates receives, and can name a leaf column: when it does, that column decides which node carries the row's aliases, properties and values; otherwise the last filled level is the leaf.
 
+ A parent-child load's default consolidation type applies to any row whose own consolidation is blank or unrecognised, so it must be one of the valid types even when the table also names a consolidation column. The hierarchy a load targets must not share its name with a column that load maps: a column of that name is read as the hierarchy each row belongs to, so a load naming both is refused rather than following one reading and ignoring the other.
+
  A load of aliases, properties or values checks every row's member before writing anything. If any row names a member the dimension does not hold, the load fails and reports those names, and nothing from that load is stored. Load the structure first, or include the missing members in it, then load the attributes.
 
  See the Workflow Step for [Dimension Load](/reference/workflow-steps/dimensions/dimension-load) for more information.
