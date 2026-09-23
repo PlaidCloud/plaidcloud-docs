@@ -108,6 +108,8 @@ Importing into a project that already exists adds to it rather than replacing it
 
 **The project keeps its own settings.** Its name, identifier, data connection environment, storage defaults, document account, access type, access lists and row-access grants are all left as they are. Only the contents you selected are brought in.
 
+A step set to **Project Default** carries that setting across, not an account — once restored, it resolves to whatever default the project has, not the one it had when archived.
+
 
 ### Duplicate Items
 
