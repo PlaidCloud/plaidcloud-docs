@@ -45,6 +45,7 @@ This section provides reference information for the numeric functions in PlaidCl
 - [RAND()](rand/)
 - [RAND(n)](randn/)
 - [ROUND](round/)
+- [SAFE_DIVIDE](safe-divide/)
 - [SIGN](sign/)
 - [SIN](sin/)
 - [SQRT](sqrt/)
