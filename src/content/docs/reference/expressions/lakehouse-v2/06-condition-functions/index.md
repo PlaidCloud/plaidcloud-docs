@@ -9,6 +9,7 @@ This section provides reference information for the condition functions in Plaid
 
 - [CASE](case-when/)
 - [COALESCE](coalesce/)
+- [Comparison Methods](comparisons/)
 - [IF](if/)
 - [IFNULL](ifnull/)
 - [NULLIF](nullif/)

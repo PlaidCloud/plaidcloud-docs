@@ -33,6 +33,7 @@ This section provides reference information for the semi-structured data functio
 
 ## JSON Data Manipulation:
 - [JSON_ARRAY](json-array)
+- [JSON_OBJECT](json-object)
 - [JSON_STRIP_NULLS](json-strip-nulls)
 - [JSON_ARRAY_APPLY](json-array-apply)
 - [JSON_ARRAY_DISTINCT](json-array-distinct)

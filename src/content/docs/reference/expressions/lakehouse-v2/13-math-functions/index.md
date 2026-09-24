@@ -55,6 +55,7 @@ This section provides reference information for the math functions in PlaidCloud
 - [RAND](rand/)
 - [RANDOM](random/)
 - [ROUND](round/)
+- [SAFE_DIVIDE](safe-divide/)
 - [SIGN](sign/)
 - [SIN](sin/)
 - [SINH](sinh/)

@@ -1,5 +1,5 @@
 ---
-title: Comparison Methods (Lakehouse v1)
+title: Comparison Methods (Lakehouse v2)
 description: Comparison Methods — these comparison methods are available in Analyze expressions.
 ---
 
@@ -13,7 +13,7 @@ These comparison methods are available in Analyze expressions.
 |General Usage|&lt;=|&lt;=|table.column &lt;= 23|Less than or equal to|
 |General Usage|==|==|table.column == 23|Equal to|
 |General Usage|!=|!=|table.column != 23|Not Equal to|
-|General Usage|and_|and_()|and_(table.a > 23, table.b == u'blue')<br>[Additional Examples](../and)|Creates an AND SQL condition|
+|General Usage|and_|and_()|and_(table.a > 23, table.b == u'blue')|Creates an AND SQL condition|
 |General Usage|any_|any_()|table.column.any(('red', 'blue', 'yellow'))|Applies the SQL ANY() condition to a column|
 |General Usage|between|between|table.column.between(23, 46)<br><br>get_column(table, 'LAST_CHANGED_DATE').between(\{start_date}, \{end_date})|Applies the SQL BETWEEN condition|
 |General Usage|contains|contains|table.column.contains('mno')<br><br>table.SOURCE_SYSTEM.contains('TEST')|Applies the SQL LIKE '%%'|
@@ -29,18 +29,6 @@ These comparison methods are available in Analyze expressions.
 |General Usage|notin|notin|table.column.notin((1, 2, 3))<br><br>table.LE.notin_(['12345','67890'])|Inverts the IN condition|
 |General Usage|notlike|notlike|table.column.notlike('%foobar%')|Applies the SQL NOT LIKE method|
 |General Usage|NULL|NULL|NULL|Null, null, NULL - Alias for Python None|
-|General Usage|or_|or_()|or_(table.a > 23, table.b == u'blue')<br>[Additional Examples](../or)|Creates an OR SQL condition|
+|General Usage|or_|or_()|or_(table.a > 23, table.b == u'blue')|Creates an OR SQL condition|
 |General Usage|startswith|startswith|table.column.startswith('abc')<br><br>get_column(table, 'Zip Code').startswith('9')<br><br>get_column(table1, 'GL Account').startswith('CORP')|Applies the SQL LIKE '%'|
 |General Usage|TRUE|TRUE|TRUE|True, true, TRUE - Alias for Python True|	
-|Math Expressions|+|+|+|addition, e.g. 2+3=5|
-|Math Expressions|–|–|-|subtraction, e.g. 2–3=-1|
-|Math Expressions|*|*|*|multiplication, e.g. 2*3=6|
-|Math Expressions|/|/|/|division|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('%')`|modulo (remainder), e.g. 5%4=1|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('^')`|exponentiation, e.g. 2.0^3.0=8|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('!')`|factorial, e.g. 5!=120|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('&')`|bitwise AND, e.g. 91&15=11|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('#')`|bitwise XOR, e.g. 17 # 5=20|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('~')`|bitwise NOT, e.g. ~1=-2|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('&lt;&lt;')`|bitwise shift left, e.g. 1&lt;&lt;4=16|
-|Math Expressions|column.op|`column.op(operator)`|`column.op('>>')`|bitwise shift right, e.g. 8>>2=2|
