@@ -1,6 +1,6 @@
 ---
 title: What Weave Checks
-description: Weave reads your saved step and workflow configuration, reports the problems it finds in one voice, and says plainly what it could not check rather than reporting it as healthy.
+description: Weave reads your saved step and workflow configuration and your workflows' recent runs, reports the problems it finds in one voice, and says plainly what it could not check rather than reporting it as healthy.
 sidebar:
   order: 4
 ---
@@ -9,19 +9,24 @@ import { Aside } from '@astrojs/starlight/components';
 
 ## Description
 
-Weave reads the configuration your project has already saved and reports what it
-finds: a step whose allocation has nothing to allocate, a workflow whose saved
-structure lists the same step twice. It reads only — nothing it reports changes a
-step, and it never runs your workflow.
+Weave reads the configuration your project has already saved, and the record of
+how its workflows have run over the last 30 days, and reports what it finds: a
+step whose allocation has nothing to allocate, a workflow whose saved structure
+lists the same step twice, a workflow whose last run failed, a step whose output
+holds far fewer rows than it usually does. It reads only — nothing it reports
+changes a step, and it never runs your workflow.
 
 No AI model is involved. Every check is a fixed rule and every sentence is
 written in advance, so a report costs nothing to produce however often you ask
 for one.
 
 <Aside type="note">
-The findings are reachable through the platform API. The notifications panel
-that will show them inside PlaidCloud is separate work, and is not in the
-product yet.
+The findings are reachable through the platform API, and each workflow's worst
+finding shows as a mark in the **Weave** column of the project's workflow list:
+red for a problem, amber for something worth a look, a question mark where Weave
+could not check the workflow, and a tick where it has nothing to report. Hover
+the mark to read the sentence behind it. The notifications panel that will list
+every finding inside PlaidCloud is separate work, and is not in the product yet.
 </Aside>
 
 ## Three answers, not two
@@ -114,7 +119,68 @@ Two cases Weave reports as unchecked rather than judging:
 appears more than once in the same workflow, and that no two folders sharing a
 parent carry the same identifier.
 
+**How your workflows ran.** Weave reads each workflow's runs from the last 30
+days — up to the twenty most recent runs of each workflow — and judges the latest
+against the ones before it. Every comparison is against the workflow's own
+history, never against another workflow's.
+
+- **Last run failed.** A workflow whose most recent run failed is reported, with
+  the date of the failure and, where the runs before it failed too, how many in
+  a row and since when.
+- **Run slower than usual.** A run that finished, but whose steps took longer
+  between them than the workflow's previous finished runs allow for — more than
+  two standard deviations above their average, and at least 5% over it (never
+  less than a second, so a fast workflow is not reported for a few
+  milliseconds). The
+  time is the steps' added together, so on a workflow that runs steps in
+  parallel it is more than the clock showed. A run that finished faster is not
+  reported.
+- **Target rows unlike previous runs.** A step whose output tables held far more
+  or far fewer rows after its last run than after its previous runs in that
+  workflow, by the same measure (and by at least a row). The count is what the tables hold, so a step
+  that appends is judged on the growing total. A step in several workflows is
+  judged separately in each.
+- **Empty values unlike previous runs.** A column of a step's output table that
+  came out empty in a much larger or smaller share of its rows than after the
+  step's previous runs — more than two standard deviations from the usual share,
+  and at least five percentage points away from it. Each table a step writes is
+  judged over its own rows.
+
+A baseline needs at least four previous runs. With fewer, the workflow is
+reported as unchecked for its run time, and its steps as unchecked for their rows
+and empty values, each saying how many finished runs it has had, rather than
+judged against too little. A step whose recorded runs carry no empty-value counts
+is reported as unchecked for them too.
+A workflow that has not run in the last 30 days is reported as unchecked, and so
+is one whose run history could not be read — neither is reported as healthy.
+
 A step whose type Weave has no rule for is reported as uncovered, not as clean.
+
+## Being told when a run ends
+
+When a workflow run ends, Weave looks at that workflow and tells the person the
+run belongs to — the person who started it, or for a scheduled run the person
+who last saved the schedule — about the problems it holds against that
+workflow, its runs and its steps' saved configuration alike, that they have not
+yet read in the Weave inbox, as an in-app message. A message is only shown while
+you are signed in, so a problem you have not read is mentioned again at each
+run's end.
+
+Reading a finding quiets that finding, not the workflow. A run finding describes
+the run it came from — its date, its time, its counts — so the next run's is
+usually a new finding: a workflow that fails every night is mentioned every
+night, whether or not you read the night before's. A configuration problem says
+the same thing from run to run, so once you have read it, it is not repeated
+with each run.
+
+A stopped run sends nothing, whoever stopped it. A workflow run by a Macro Run
+or Macro Concurrent step sends nothing of its own, and that call is not counted
+among its runs; a workflow started by a Run Workflow or Workflow Loop step is a
+run of that workflow like any other. Things Weave could not check are never sent
+this way.
+
+Being told is not the same as having read: an alert does not mark the finding
+read in your inbox.
 
 ## Marking a finding as read
 
