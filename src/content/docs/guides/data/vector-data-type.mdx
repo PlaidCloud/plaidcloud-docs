@@ -45,11 +45,22 @@ Open a table's column details panel, select the Vector column, and set **Vector 
 of values each embedding holds — 768, 1024, 1536, whatever your model produces. The field appears on
 a Vector column in a Lakehouse v2 (StarRocks) project, and nowhere else.
 
-The width is checked every time the column is written. A write whose vector is a different length is
-refused, and the refusal names the column, the row, the length it found, and the width you declared,
-so you know exactly which value disagreed and by how much. That turns a truncated file or a switched
-embedding model into a failed run you can read, instead of a table that quietly mixes two dimensions
-and returns nonsense from every search over it.
+The width is checked when you load a Parquet file into the column. A row whose vector is a different
+length is refused before anything lands, and the refusal names the file, the column, the row, the
+length it found, and the width you declared, so you know exactly which value disagreed and by how
+much — rows are counted from 1 over the file. That turns a truncated file or a switched embedding
+model into a failed run you can read.
+
+**Data arriving by any other route is not width-checked.** A REST connector — including QuickBooks,
+Xero, and Sage — a Singer tap, a workflow step that writes a frame into the table, and an archive
+restore into an existing table all load whatever width they carry. A CSV import is not checked
+either, and cannot be: the conversion turns the array into text before a width could be examined. So
+Vector Width is a guard on file loading, not a guarantee about what the column holds.
+
+That distinction matters, because a column whose rows hold different widths is unsearchable. A vector
+search over it fails with a raw error from the underlying engine rather than a message naming the
+column. Where you load embeddings through an unchecked path, make that path produce the width you
+declared — stage them as Parquet and import the file when you want the check to run for you.
 
 Declare the width before you load. Vector Width holds a whole number of 1 or more, and there is no
 empty value to go back to — emptying the field restores what was stored — so treat the declaration as
@@ -74,6 +85,15 @@ A typical end-to-end shape, all standard steps:
 3. **AI: Vector Search** — find the nearest rows to your query vectors and write the matches to a
    target table.
 4. **Table Lookup** — bring the descriptive columns you want to show back onto the match rows.
+
+### Where a Parquet File Can Be Read From
+
+Checking the width means reading the vector column on its own, which needs a document account that
+can be read a column at a time. **S3**, **Google Cloud Storage**, and **Azure Blob Storage** can.
+A Parquet import from any other document account into a table that declares a Vector Width is
+refused rather than loaded unchecked, so stage the file in S3, Google Cloud Storage, or Azure Blob
+Storage and import it from there. Tables with no Vector Width declared are unaffected, and so is
+every other import step.
 
 <Aside type="note">
 When a table is registered as an external table, a source vector column arrives as Vector in a
