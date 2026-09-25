@@ -1,0 +1,167 @@
+---
+title: "AI: Vector Search"
+description: Find the rows of a table whose stored vector is nearest each query vector, by cosine or Euclidean distance, in a PlaidCloud workflow step.
+sidebar:
+  label: "AI: Vector Search"
+  order: 7
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+**AI: Vector Search** ranks the rows of a table by how close their [Vector](/guides/data/vector-data-type/)
+column is to a query vector, and writes the nearest rows — with the distance that ranked them — to a
+target table. Give it several query vectors and each one gets its own set of matches, all in one pass
+over the source table and all in one output table.
+
+The search is **exact**. Every row that passes the step's filter is compared against every query
+vector, so the matches are the true nearest rows rather than an approximation — and the work grows
+with the number of rows scanned multiplied by the number of query vectors. There is no vector index
+to build, tune, or fall back on.
+
+<Aside type="caution">
+The Vector column type, and therefore this step, requires **Lakehouse v2 (StarRocks)**.
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="Each query vector is compared against every row of the table to search that passes the filter, and the nearest rows are written to the target table with a distance column. Rows whose distance cannot be measured are left out." style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">every filtered row is compared — no index, no approximation</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">query vectors</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">table to search</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">filtered first</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">distance</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">lower is nearer</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">target table</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">top matches per query</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">a row whose distance cannot be measured is left out, not ranked first</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Rows are filtered, then every survivor is scored against each query vector and the nearest are kept. Narrowing the filter is what makes a large table fast, because there is no index to fall back on.</figcaption>
+</figure>
+
+## Source and Target
+
+- **Table to Search** — the table whose stored vectors are searched.
+- **Target Table** — the table the matches are written to.
+
+## Search
+
+- **Vector Column** — the Vector column on the table to search that distance is measured against.
+  Any other data type is refused, naming the column and the type it actually holds.
+- **Distance Metric** — **Cosine** or **Euclidean (L2)**. Cosine measures the angle between two
+  vectors and ignores their magnitudes, which is what you want for text embeddings; Euclidean
+  measures straight-line distance and takes magnitude into account. For both, a lower distance means
+  a nearer row. Cosine is the default.
+- **Matches Per Query** — how many nearest rows to keep for each query vector. The default is 10.
+
+<Aside type="note">
+**Cosine and Euclidean are the only metrics.** Inner product is deliberately not offered: on vectors
+that are not normalized it is not a distance — a vector's distance from itself comes out negative —
+so a threshold set against it, and any score shown for it, would be wrong even where the ranking
+happened to hold. On normalized embeddings, cosine produces the same ranking inner product would.
+</Aside>
+
+## Query Vectors
+
+The **Query Vectors** tab takes a JSON array with one entry per query, each carrying an `id` and a
+`vector`:
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+Every query returns its own set of matches, and the `id` is what identifies them in the output. The
+ids must be unique, every value must be a finite number, and every query vector must hold the same
+number of values as the stored vectors — a distance is only defined between vectors of equal width.
+A mismatch is refused, naming the query, the number of values it holds, and the width the column
+holds or declares.
+
+## Select Subset of Data
+
+A filter restricts which rows are candidates. Rows are filtered *before* they are ranked, so the
+matches are the nearest rows that pass the filter — not the nearest rows overall, filtered
+afterwards. This is the main control over how much work the step does; see
+[Sizing a Search](#sizing-a-search).
+
+## Output Columns
+
+Each match is written as one row carrying the columns you selected on the **Table Data Selection**
+tab, plus two computed columns whose names you control:
+
+- **Query Name Column** — the id of the query vector this row answers. Defaults to `query_id`.
+- **Distance Column** — the measured distance between the match and that query vector. Defaults to
+  `distance`. This is also the ranking key.
+
+The query name comes first in the output, the columns you selected follow, and the distance comes
+last. Output column names must be unique.
+
+<Aside>
+The **Summarize**, **Distinct**, and aggregation controls on the Table Data Selection tab are
+ignored by this step: a set of top matches is per query vector and never groups.
+</Aside>
+
+## Rows That Are Left Out
+
+A row whose distance cannot be measured is **excluded** from the matches rather than returned as
+though it were the nearest one. A vector whose magnitude overflows the range of a 32-bit float is
+the case you will meet: no measurable distance comes back for it, and since nothing available orders
+an unmeasurable distance last, including such a row would put the rows the search knows least about
+at the top of every result.
+
+Run the workflow with **Diagnostic Mode** on to see the count. The workflow log then reports how many
+rows each query left out, or states that the step measured every row it searched. Taking that count
+costs a second pass over the table, which is why it is charged only when you ask for it; with
+Diagnostic Mode off, the log states that unmeasurable rows are left out by design and points you at
+Diagnostic Mode for the number.
+
+A stored vector holding a *missing value* inside the array is a different matter: no distance can be
+measured against any array containing one, so the search is refused outright, naming the column,
+rather than silently returning a partial result. Correct or remove those rows and run again.
+
+## Sizing a Search
+
+The cost of a run is the number of candidate rows multiplied by the number of query vectors, and the
+step refuses a search whose total exceeds ten billion distance measurements — reporting the row count,
+the query count, and the limit — rather than starting work that cannot finish. Two things keep a
+search well inside that:
+
+- **Filter to the slice that matters.** Narrow the candidates to one entity, one period, or one
+  document set rather than scanning a whole corpus to answer a question about part of it.
+- **Split the table on the dimension you always filter by**, and search the relevant table. Cutting
+  the candidate count is far more effective than anything else available here.
+
+Declaring a **Vector Width** on the column also helps: with it declared, the step takes the width
+from the declaration instead of sampling a row to find out. See
+[Vector Data Type](/guides/data/vector-data-type/#vector-width).
+
+## What a Vector Column Cannot Be Used For
+
+A Vector column is refused as a join key, as a group-by column, and as an aggregation target — in
+this step and in every other one. The message names the column and the role it was used in, both when
+you save the step and when a step saved earlier is run. Join and group on the business keys beside
+the vector instead. Carrying a vector through a step as an ordinary output column is fine, as are
+counting rows and counting distinct values.
+
+## Related
+
+- [Vector Data Type](/guides/data/vector-data-type/) — declaring a Vector column, setting its width,
+  and loading embeddings into it
+- [Spatial Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) — the same
+  nearest-neighbour shape over geometry rather than embeddings
+- [Table Lookup](/reference/workflow-steps/tables/table-lookup/) — bring descriptive columns back
+  onto the matched rows
+- [Import Parquet](/reference/workflow-steps/import/import-parquet/) — load embeddings from a
+  Parquet file

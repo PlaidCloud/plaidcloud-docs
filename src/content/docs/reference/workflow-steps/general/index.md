@@ -7,6 +7,7 @@ General-purpose workflow steps that don't fit into a specific category.
 
 ## Steps
 
+- [AI: Vector Search](/reference/workflow-steps/general/vector-search/)
 - [Alteryx Executor](/reference/workflow-steps/general/alteryx-executor/)
 - [Deactivate Workspace Members](/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Forecast](/reference/workflow-steps/general/forecast/)

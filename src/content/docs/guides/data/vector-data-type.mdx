@@ -1,0 +1,171 @@
+---
+title: Vector Data Type
+description: Store pre-computed embeddings in a project table with the Vector column data type, declare the width you expect, and find the nearest rows to a query vector with an AI Vector Search step.
+sidebar:
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Vector** is a column data type for pre-computed embeddings. A Vector column holds an array of
+floating-point numbers per row — the output of whatever embedding model you already use — in an
+ordinary project table, in the same row as the text, keys, amounts, and dimensions that describe it.
+Because it is an ordinary column in an ordinary table, it joins to your fact tables and loads through
+the same import and transform steps as every other column. There is no separate vector store to
+provision, populate, or keep in step with the rest of your data.
+
+An **AI: Vector Search** step then finds the rows nearest to one or more query vectors, so a
+similarity lookup is a workflow step like any other.
+
+<Aside type="caution">
+Vector requires **Lakehouse v2 (StarRocks)**. On any other engine the type is not offered in
+data-type lists, and a request to create a Vector column there is refused by name.
+</Aside>
+
+<Aside type="note">
+PlaidCloud stores and searches vectors; it does not generate them. Compute your embeddings with the
+model of your choice and load the resulting arrays like any other data.
+</Aside>
+
+
+## Declaring a Vector Column
+
+**Vector** appears in the **Semi Structured** group of the data-type lists, alongside JSON and
+Bitmap — in a workflow step's output column mapping and in a table's column properties. It is not
+offered as an import step's *source* data type: a file's values arrive as a list of numbers and land
+in a column that is already typed Vector. Nor is it offered where a single scalar type is required,
+such as a workflow variable's declared type.
+
+The type itself carries no dimension. Rather than a family of types, one per width, there is one
+Vector type plus a per-column declaration of how wide its vectors are.
+
+### Vector Width
+
+Open a table's column details panel, select the Vector column, and set **Vector Width** to the number
+of values each embedding holds — 768, 1024, 1536, whatever your model produces. The field appears on
+a Vector column in a Lakehouse v2 (StarRocks) project, and nowhere else.
+
+The width is checked every time the column is written. A write whose vector is a different length is
+refused, and the refusal names the column, the row, the length it found, and the width you declared,
+so you know exactly which value disagreed and by how much. That turns a truncated file or a switched
+embedding model into a failed run you can read, instead of a table that quietly mixes two dimensions
+and returns nonsense from every search over it.
+
+Declare the width before you load. Vector Width holds a whole number of 1 or more, and there is no
+empty value to go back to — emptying the field restores what was stored — so treat the declaration as
+part of designing the column.
+
+The width is also what a search works from. Where a column has none declared, a search has to sample
+a row to find out how wide the stored vectors are before it can check a query against them.
+
+
+## Loading Vectors
+
+Load a Vector column with the standard import and transform steps. A Parquet file whose column is a
+list of 32-bit floats is the most direct route: **Import Parquet** lands it straight into a Vector
+column.
+
+A typical end-to-end shape, all standard steps:
+
+1. **Import Parquet** (or any other import step) — land the embeddings and their business keys into a
+   table whose embedding column is typed Vector with its Vector Width declared.
+2. **Table Inner Join** — join that table to the fact or reference table the embeddings describe, on
+   the business key.
+3. **AI: Vector Search** — find the nearest rows to your query vectors and write the matches to a
+   target table.
+4. **Table Lookup** — bring the descriptive columns you want to show back onto the match rows.
+
+<Aside type="note">
+When a table is registered as an external table, a source vector column arrives as Vector in a
+Lakehouse v2 (StarRocks) project. In a project on any other engine it arrives as Text, because a
+Vector column cannot be created there.
+</Aside>
+
+
+## Searching for Nearest Rows
+
+The **AI: Vector Search** step takes a table to search, one or more query vectors, and how many
+matches to keep per query, and writes the nearest rows to a target table along with the distance that
+ranked each one.
+
+Two distance metrics are available, and for both a lower distance means a nearer row:
+
+* **Cosine** — the angle between two vectors, ignoring their magnitudes. This is the right default
+  for text embeddings.
+* **Euclidean (L2)** — straight-line distance, which does take magnitude into account.
+
+Inner product is deliberately not offered. On vectors that are not normalized it is not a distance at
+all — a vector's distance from itself comes out negative — so any threshold you set against it, and
+any score the step showed you, would be meaningless even though the ranking happened to hold. On
+normalized embeddings, ranking by cosine gives you the same order that inner product would, so
+nothing is lost.
+
+For the full parameter list, see
+[AI: Vector Search](/reference/workflow-steps/general/vector-search/).
+
+### Search Is Exact, Not Approximate
+
+The step compares every row that passes its filter against every query vector. There is no vector
+index and no approximation: the result is the true nearest set, and the work grows with the number of
+rows searched multiplied by the number of query vectors.
+
+Size accordingly. Use the step's filter to narrow the candidate rows to the slice that matters — one
+entity, one period, one document set — rather than scanning a whole corpus to answer a question about
+part of it. Splitting an embedding table along the dimension you always filter on, and searching the
+relevant table, is the single most effective thing you can do for search time.
+
+### Unmeasurable Rows Are Left Out
+
+A row whose distance cannot be measured is excluded from the matches rather than returned as though
+it were the nearest one. Run the workflow with **Diagnostic Mode** on and the log reports how many
+rows each query left out, or says that the step measured every row it searched.
+
+A stored vector with a missing value inside the array is refused rather than skipped: no distance can
+be measured against an array containing one, so the search stops and names the column instead of
+returning a partial answer.
+
+
+## What a Vector Column Cannot Do
+
+An embedding is a coordinate, not a key or a measure, so a Vector column is refused in the roles that
+treat it as one:
+
+* **Not a join key.** Join on the business key beside the vector.
+* **Not a group-by column.** Grouping rows by their raw embedding puts every row in its own group.
+* **Not an aggregation target.** There is no meaningful sum, average, minimum, or maximum of an
+  embedding.
+
+All three are refused with a message naming the column and the role — when you save the step, and
+again at run time for a step that was saved before. A workflow carrying one of these does not run and
+quietly produce a wrong number. Carrying a vector through a step as an ordinary output column is
+fine, as are counting rows and counting distinct values.
+
+A Vector column is also left out of [Table Explorer](/guides/data/table-explorer/)'s column profiling
+and value lists, cannot be charted on a dashboard, is read-only in the data editor, and cannot be
+linked to a dimension. A minimum, a mean, or a list of top values says nothing about an embedding, and
+an embedding is not a member of anything.
+
+
+## Reading Vector Values Back
+
+Reading a whole Vector column — in a preview, an export, or through an AI assistant over MCP —
+returns a text rendering of the array rather than numbers. To get numbers back, read the elements
+individually.
+
+In a data grid the values are shown as a short preview that leads with the width, such as
+`1536-dim [0.013,-0.046,0.079, ...]`, so a column of embeddings stays readable without a thousand
+numbers per cell.
+
+
+## Related
+
+* [AI: Vector Search](/reference/workflow-steps/general/vector-search/) — the step's full parameter
+  reference
+* [Using Tables and Views](/guides/data/tables-views/) — how tables store columns and why data types
+  matter
+* [Table Explorer](/guides/data/table-explorer/) — inspect each column's data type and set its column
+  details
+* [Import Parquet](/reference/workflow-steps/import/import-parquet/) — load embeddings from a Parquet
+  file
+* [Currency Data Type](/guides/data/currency-data-type/) — the other purpose-built column type, for
+  money values
