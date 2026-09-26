@@ -147,6 +147,8 @@ Once you add a condition, select it on the left and the condition evaluation cri
 
 To rename a condition, select it and edit the **Name** field at the top of the Configuration panel on the right — or double-click the condition in the list. You can also right-click a condition for **Rename** and **Delete**; **Delete** is also available from the "−" button above the list.
 
+A condition with no condition type selected — one carried over from an older or imported workflow, say — cannot be evaluated. It is treated as not met, so the step is skipped, and the step's message says the condition does not say what to check. Open the condition and choose what it should check.
+
 
 ## Variable Conditions
 
