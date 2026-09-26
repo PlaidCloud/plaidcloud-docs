@@ -1,0 +1,113 @@
+---
+title: Migrate a Project to Lakehouse v2
+description: Move a single project from Lakehouse v1 to Lakehouse v2 from the Tools menu, including what the readiness check refuses, what changes in your results, and how long you have to abort.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+You can move one project at a time from Lakehouse v1 to Lakehouse v2. Other projects in the same workspace keep running on v1 until you migrate them too, so you can migrate a single project and leave everything else alone.
+
+Migration moves the project's tables and everything built on them: queries, expressions, views, Superset datasets, calculated columns, metrics, and row access rules.
+
+<Aside type="caution" title="Changes Made During a Migration Are Lost">
+A migration copies your data as it stands when the run starts. Anything written to the project after that — a workflow run, an imported file, an edited table — is **not** carried across and is **not** recoverable from the migrated copy. Stop scheduled workflows and tell project members to stay out of the project before you start.
+</Aside>
+
+<Aside type="caution" title="Migration Is One Way">
+There is no migrate-back. You can abort a run and return the project to Lakehouse v1 within seven days, as described in [Abort a Migration](#abort-a-migration). After that the original data is deleted.
+</Aside>
+
+## Before You Start
+
+- You need the lakehouse migration permission to start a run. Without it, **Migrate Project to Lakehouse v2…** does not appear in the Tools menu.
+- Anyone who can open a project can run the readiness check.
+- Run the readiness check first and resolve anything it refuses. A migration that starts on a project it cannot translate stops partway.
+- Plan for the project to be unavailable for the length of the run, because writes during the run are lost.
+
+## Check Migration Readiness
+
+The readiness check reports what will happen to the project before you commit to anything. It changes nothing.
+
+<Steps>
+
+1. Open the **Tools** menu.
+
+2. Select **Check Migration Readiness…**.
+
+3. Select the project.
+
+</Steps>
+
+The report separates two kinds of finding: refusals, which stop a migration, and notes, which tell you a result will change.
+
+### What the Readiness Check Refuses
+
+| Refusal | Why |
+| --- | --- |
+| A column whose type has no Lakehouse v2 equivalent | The migration refuses rather than quietly turning the column into text. Change the column's type in the project, then re-run the check. |
+| The target Lakehouse v2 warehouse cannot be resolved | The workspace's v2 lakehouse is not visible to the service running the migration. This is an administrative problem, not something you can resolve in the project. |
+| Deletion protection on the storage bucket cannot be confirmed | The seven-day abort window depends on it, so the migration will not start without it. |
+
+JSON columns migrate. Earlier releases refused them; they are supported now.
+
+## Run the Migration
+
+<Steps>
+
+1. Open the **Tools** menu.
+
+2. Select **Migrate Project to Lakehouse v2…**. The window lists migration runs for the workspace.
+
+3. Start a new run and select the project.
+
+4. Read the readiness report shown in the window and acknowledge each named finding.
+
+5. Start the run. The progress dialog shows each table as it is copied and checked. You can close the dialog and reopen it from the run list; the run continues either way.
+
+</Steps>
+
+When the run finishes, the project is bound to Lakehouse v2 and queries begin using it. The original Lakehouse v1 copy is kept, unavailable to the project, for seven days.
+
+## Weekly Grouping Shifts by One Day
+
+Lakehouse v2 starts its weeks on **Sunday**. Lakehouse v1 started them on **Monday**.
+
+Anything grouped by week changes accordingly, with no error and no warning. A row dated Sunday 14 June belonged to the week beginning Monday 8 June on v1. On v2 it belongs to the week beginning Sunday 14 June.
+
+The totals on either side of that boundary move. A weekly chart, a weekly summary table, and a report grouped by week all keep working and all show different numbers than they did before. Check any weekly figure you rely on after migrating, and expect a one-day shift rather than a mistake.
+
+## What Does Not Carry Over
+
+Your data migrates. Some things built on top of the old engine, and some details of how columns were declared, do not.
+
+| Item | What happens |
+| --- | --- |
+| Snapshot history, time travel, and flashback | Not transferred. The migrated tables start with fresh history, so you cannot query the project as of a time before the migration. |
+| Table branches and tags | Existing branches and tags are not transferred. |
+| `VARCHAR(n)` length limits | The length limit is dropped. Text columns become unconstrained text; existing values are unaffected. |
+| Narrow integer widths | Small integer types become 32-bit integers. Values are unaffected. |
+| Fractional-second precision on timestamps | A declared precision is dropped. |
+| Spatial, geometry, and bitmap columns | Migrated, but excluded from the automatic value comparison — check them yourself. |
+| Binary, JSON, array, and map columns | Migrated, but excluded from the automatic value comparison — check them yourself. |
+
+<Aside type="caution" title="Very Large Unsigned Integers">
+An unsigned 64-bit integer column holding values above 9,223,372,036,854,775,807 cannot be represented on Lakehouse v2, and those values are not reported as a refusal. If a project stores unsigned integers near that limit, check them before and after migrating.
+</Aside>
+
+## Abort a Migration
+
+For seven days after a run completes, the original Lakehouse v1 data is kept intact but detached from the project. Aborting within that window returns the project to Lakehouse v1.
+
+Use it if results look wrong after migrating — weekly figures aside, which are expected to shift.
+
+After seven days the original data is deleted and the migration is final.
+
+## After the Migration
+
+Sessions that were already open keep reading the copy they started with until they end. A long-lived Panel application session, in particular, continues serving the old data until it is restarted. Restart long-running sessions after a migration so they pick up Lakehouse v2.
+
+## Related
+
+- [Lakehouse Management](/reference/expressions/lakehouse-v2/lakehouse-management/)
+- [Bind a Project to an External Lakehouse](/guides/connections/external-lakehouse/)
+- [Vector Data Type](/guides/data/vector-data-type/)
