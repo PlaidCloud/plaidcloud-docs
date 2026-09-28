@@ -11,7 +11,7 @@ Steps in the workflow can be set to skip during the workflow run. This may be us
 * Edit the step form
 * Uncheck the enabled checkbox in the workflow hierarchy
 
-To edit the step form, click on the step edit option, the pencil icon in the workflow table, to open the edit form. Uncheck the enabled checkbox. After saving the updated step it will no longer run as part of the workflow but can still be run using the single step run process.
+To edit the step form, open the step's form from the workflow table — click its gear icon, or right-click it and choose **Edit Step Details** — and go to the **General** tab. Uncheck the enabled checkbox. After saving the updated step it will no longer run as part of the workflow but can still be run using the single step run process.
 
 
 

@@ -9,7 +9,7 @@ Workflow steps can be set to continue processing even when there is an error. Th
 
 
 
-To set this option, click on the step edit option, the pencil icon in the workflow table, to open the edit form. Check the checkbox for **Continue On Error**. After saving the updated step, any errors with the step will not cause the workflow to stop.
+To set this option, open the step's form from the workflow table — click its gear icon, or right-click it and choose **Edit Step Details** — and go to the **General** tab. Check the checkbox for **Continue On Error**. After saving the updated step, any errors with the step will not cause the workflow to stop.
 
 
 

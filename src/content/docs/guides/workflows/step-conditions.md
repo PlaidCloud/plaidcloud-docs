@@ -57,7 +57,7 @@ What is also important to note is that you can have multiple conditions that mus
 
 To activate and add conditions on a step:
 1) Find the step you want to add a condition on
-2) Click the **Edit Step Details** (pencil) icon
+2) Right-click the step and choose **Edit Step Details**, or click its gear icon and switch to the **General** tab
 3) Scroll to the **Condition Checks** section, at the bottom of the **General** tab
 4) Check the **Check Conditions Before Running** checkbox to enable the dialog and add conditions.
 5) In the **Condition Checks** section on the left, select the "+" to add a New Condition
