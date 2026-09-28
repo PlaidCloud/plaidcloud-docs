@@ -184,3 +184,8 @@ To duplicate a data editor:
 
 1. Select the data editor
 2. Click on the Duplicate button on the top toolbar
+
+
+## Writing Through the AI Assistant or MCP
+
+Beyond the configuration screens, `editor_upsert` can set a data editor's source, target, and controls, and write rows to it directly — `data` is a list of row objects keyed by each control's id. An invalid date is refused before anything touches the target table, so a bad write never lands partially.
