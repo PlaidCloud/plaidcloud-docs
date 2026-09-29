@@ -1,33 +1,33 @@
 ---
 title: Crop Image to Headshot
-description: Automatically crop images to headshot dimensions in a PlaidCloud workflow step using face detection for standardized portraits.
+description: Crop images to a square headshot in a PlaidCloud workflow step for standardized portraits in directories and badges.
 sidebar:
   order: 12
 ---
 
-Detects the face in a source image and crops the output to a standardized headshot frame around it. Useful for normalizing employee or member directories where source photos vary in aspect ratio and framing.
+Crops an image to a centred square and scales it to a 500 × 500 pixel JPEG. Useful for normalizing employee or member directories where source photos vary in aspect ratio.
 
 ## Inputs
 
-- **Source image** — JPEG or PNG path in a document account
-- **Output path** — destination for the cropped result
-- **Target aspect ratio** — e.g., 1:1 (square), 4:5 (portrait)
-- **Headroom** — how much space to leave above the head (proportion of frame)
+- **Input File or Directory** — an image, or a folder of images, in a document account.
+- **Output File or Directory** — where the headshot is written.
 
 ## Output
 
-A cropped image at the target dimensions centered on the detected face. If no face is detected, the step either falls back to center-crop or errors depending on configuration.
+A 500 × 500 JPEG cropped from the centre of the source. For a folder, each file's headshot is written into a folder named after the output path, without its extension.
+
+## Notes
+
+- The crop is taken from the centre of the image; it does not look for a face, so frame source photos with the subject centred.
+- A file that cannot be read as an image is copied to the output unchanged rather than failing the step.
+- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- The output path cannot be the input path.
 
 ## Common Uses
 
 - Standardizing employee directory photos
 - Generating consistent avatar imagery for an internal portal
 - Trimming photos for ID badges and credentials
-
-## Caveats
-
-- Face detection works best on well-lit, front-facing portraits. Heavily-cropped, side-angle, or low-resolution sources may not detect cleanly.
-- The step doesn't enhance image quality — output resolution can be at most the input resolution.
 
 ## Related
 

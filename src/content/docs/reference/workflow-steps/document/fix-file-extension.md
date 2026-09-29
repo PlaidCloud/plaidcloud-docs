@@ -5,26 +5,43 @@ sidebar:
   order: 16
 ---
 
-Inspects the byte signature of a file and renames it with the correct extension. Useful when source systems hand off files with wrong or missing extensions (e.g., `.dat` for what's really a PDF, `.tmp` for a JPEG).
+Reads what a file actually contains and, where that contradicts its extension, renames it with the extension its type normally carries — a PDF saved as `.dat` becomes `.pdf`. Useful when a source system hands off files with wrong or missing extensions.
 
 ## Inputs
 
-- **Source path** — file to inspect, in a document account
-- **Rename in place** — if true, the source file is renamed; if false, the corrected name is written to a target path
+- **Input File or Directory** — a file, or a folder whose files are each checked, in a document account. Files are renamed where they are, so there is no output location.
 
 ## How It Works
 
-The step reads the first few bytes of the file (the magic number) and matches against known signatures: PDF, JPEG, PNG, ZIP/Office formats, CSV (best-effort by sniffing), and others. If a match is found, the file gets the canonical extension for that format.
+The step identifies each file's type from its contents, and renames the file only when its current name is missing an extension, has a placeholder one (`.dat`, `.tmp` or `.bin`), or names a different type the step recognises.
 
-## Output
+The types it recognises are PDF; JPEG, PNG, GIF, TIFF, BMP, WebP and HEIC images; Excel (`.xlsx`, `.xls`), Word (`.docx`, `.doc`) and PowerPoint (`.pptx`) documents; ZIP and GZip archives; and CSV, JSON, HTML, XML and plain text.
 
-A file with the corrected extension. If detection fails (unknown format or empty file), the step either keeps the original name or errors based on configuration.
+A file keeps its name when:
 
-## Common Uses
+- its extension already fits its contents — `.jpg` and `.jpeg` both fit a JPEG, `.tif` and `.tiff` a TIFF;
+- its extension is one the step doesn't recognise, such as `.sql`, `.log` or `.ai`, because contents alone cannot tell a SQL script from any other text, or an Illustrator file from a PDF;
+- it holds plain text under a text extension such as `.csv`, `.tsv` or `.json`;
+- it holds one text format under another's extension — XML in a `.html` file, CSV in a `.json` file — because contents can't reliably tell those apart. Only a `.txt` file, or one with no or a placeholder extension, is renamed to a text format;
+- it is a ZIP file named as an Office document, since `.xlsx`, `.docx` and `.pptx` files are ZIP files inside;
+- its type cannot be determined, as for an empty file.
 
-- Cleaning up uploads from systems that strip or mangle extensions
-- Normalizing files arriving over FTP/SFTP where extensions aren't enforced
-- Pre-processing before format-specific steps that match on extension
+An archive is judged by its own contents: its members are not opened or renamed. Files whose names start with `.` are skipped.
+
+## Examples
+
+| File | Contents | Result |
+|---|---|---|
+| `invoice.dat` | PDF | renamed `invoice.pdf` |
+| `photo.png` | JPEG | renamed `photo.jpg` |
+| `export.txt` | CSV | renamed `export.csv` |
+| `readme` | plain text | renamed `readme.txt` |
+| `query.sql` | plain text | unchanged |
+| `budget.xlsx` | ZIP | unchanged |
+
+## Notes
+
+- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
 
 ## Related
 

@@ -5,24 +5,27 @@ sidebar:
   order: 8
 ---
 
-Rasters a PDF or converts an image to JPEG. Each PDF page becomes one JPEG; non-PDF inputs are simply re-encoded.
+Converts a PDF or an image to a JPEG. A PDF's first page becomes the JPEG; an image is re-encoded, and one with several pages or frames, such as a scanned TIFF, converts from its first.
 
 ## Inputs
 
-- **Source document** — PDF or image path in a document account
-- **Output path or prefix** — destination JPEG path; for multi-page PDFs, a numeric page suffix is appended
-- **Resolution (DPI)** — pixels per inch when rasterizing PDF pages (higher = larger file, sharper output)
-- **JPEG quality** — compression level (typical 70–90)
+- **Input File or Directory** — a PDF or image (PNG, GIF, TIFF, JPEG or HEIC), or a folder of them, in a document account.
+- **Output File or Directory** — where the JPEG is written.
 
 ## Output
 
-One JPEG per source page, written to the output path with a page index in the filename for multi-page sources.
+One JPEG per input file. For a folder, each file's JPEG is written into a folder named after the output path, without its extension, under the source file's own name.
+
+## Notes
+
+- A file of any other type fails the step, naming the types it accepts.
+- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- The output path cannot be the input path.
 
 ## Common Uses
 
-- Generating preview thumbnails for web display
+- Generating preview images for web display
 - Producing image-only versions of PDFs for systems that can't handle PDF
-- Pulling specific pages out of a PDF as standalone images
 
 ## Related
 

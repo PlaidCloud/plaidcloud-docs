@@ -9,13 +9,22 @@ Reduces the file size of a PDF stored in a document account. Useful for trimming
 
 ## Inputs
 
-- **Source document** — path to the input PDF inside a document account
-- **Output path** — destination for the compressed result (can overwrite the source or write to a different location)
-- **Compression level** — trade-off between size reduction and image fidelity
+- **Input File or Directory** — a PDF, or a folder of PDFs, in a document account.
+- **Output File or Directory** — where the compressed PDF is written.
+
+## How It Works
+
+The PDF is rewritten with its images reduced to screen resolution (72 dpi) and its fonts embedded as subsets, which can shrink scanned documents dramatically; text stays sharp. Pages are fitted to US Letter size.
 
 ## Output
 
-A compressed PDF at the configured output path. The step does not alter the source unless source and output paths match.
+A compressed PDF at the output path. For a folder, each PDF is written below the output path, keeping its place relative to the input folder.
+
+## Notes
+
+- The output path cannot be the input path, so the source is never overwritten.
+- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- A PDF that cannot be compressed fails the step, naming the file and the reason.
 
 ## Common Uses
 
