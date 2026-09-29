@@ -17,9 +17,9 @@ While you edit, the browser keeps a local draft for the step. If you close or re
 
 ### Request
 
-* **Endpoint Source** — `Manual`, `From the connection's API definition`, `Postman collection (file/URL)`, `OpenAPI / Swagger (URL/file)`, or `HAR archive (file)`. Use **Load Catalog** to list and pick an endpoint from an imported source. The three file sources also offer **Paste…**, letting you supply the collection or spec directly instead of picking a file.
+* **Endpoint Source** — `Manual`, `From the connection's API definition`, `Postman collection (file/URL)`, `OpenAPI / Swagger (URL/file)`, or `HAR archive (file)`. Use **Load Catalog** to list the endpoints of an imported source; picking one fills in its method, URL, headers, query parameters, and body, asking first if you have edited the request. The three file sources also offer **Paste…**, letting you supply the collection or spec directly instead of picking a file.
 * **Connection** *(optional)* — a REST connection for auth and base URL; omit to call a full URL directly. The edit shortcut beside the picker opens the selected connection editor for viewing or editing.
-* **Method** — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`.
+* **Method** — `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS`.
 * **Endpoint** — path (with a connection) or full URL.
 * **Headers** / **Query Parameters** — name/value rows with an on/off toggle.
 * **Body** — request payload (JSON, form, or raw).
@@ -38,7 +38,7 @@ The editor highlights detected `{{...}}` tokens in the endpoint, header and quer
 
 ### Response Destination
 
-* **Table** *(default)* — parse the response into the target table. Controls: Row format, Items path, Pagination mode, Mode params, Mode paths, "Dump raw JSON instead of parsing rows", Retries, Timeout.
+* **Table** *(default)* — parse the response into the **Target Table** (required; tables only, not views). Controls: Row format (`Object` or `Array`; one request per table row needs `Object`), Items path, Pagination mode (`No Paging`, `Offset Paging`, or `Next Page URL Paging`), Mode params, Mode paths, "Dump raw JSON instead of parsing rows", Retries, Timeout. The **Table Data Selection** tab maps response fields to columns; **Inspect Source → Populate** fills it from a live response, which needs a connection and asks first before sending a method other than GET, HEAD, or OPTIONS.
 * **Workflow variables** — fire one request and set `{prefix}_status`, `{prefix}_body`, `{prefix}_headers`, and `{prefix}_elapsed_ms`. The **Variable prefix** must be a plain identifier and can't be one of `cloud`, `project`, `model`, `date`.
 
 ## Behavior
