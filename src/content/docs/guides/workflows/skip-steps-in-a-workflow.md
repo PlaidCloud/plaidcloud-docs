@@ -7,7 +7,7 @@ sidebar:
 
 Steps in the workflow can be set to skip during the workflow run. This may be useful if there are debugging steps or old steps that you are not prepared to completely remove from the workflow yet.
 
-To set this option, uncheck the step's **Enabled** checkbox in the workflow table. The step will no longer run as part of the workflow but can still be run using the single step run process.
+To set this option, uncheck the step's **Enabled** checkbox in the workflow table. The change is saved as soon as you click it, with no separate Save. The step will no longer run as part of the workflow but can still be run using the single step run process.
 
 
 
