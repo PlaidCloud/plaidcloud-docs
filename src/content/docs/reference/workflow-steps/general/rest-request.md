@@ -38,7 +38,7 @@ The editor highlights detected `{{...}}` tokens in the endpoint, header and quer
 
 ### Response Destination
 
-* **Table** *(default)* — parse the response into the **Target Table** (required; tables only, not views). Controls: Row format (`Object` or `Array`; one request per table row needs `Object`), Items path, Pagination mode (`No Paging`, `Offset Paging`, or `Next Page URL Paging`), Mode params, Mode paths, "Dump raw JSON instead of parsing rows", Retries, Timeout. The **Table Data Selection** tab maps response fields to columns; **Inspect Source → Populate** fills it from a live response, which needs a connection and asks first before sending a method other than GET, HEAD, or OPTIONS.
+* **Table** *(default)* — parse the response into the **Target Table** (required; tables only, not views). Controls: Row format (`Object` or `Array`; one request per table row needs `Object`), Items path, Pagination mode (`No Paging`, `Offset Paging`, or `Next Page URL Paging`), Mode params, Mode paths, "Dump raw JSON instead of parsing rows", Retries, Timeout. The **Table Data Selection** tab maps response fields to columns; **Inspect Source → Populate** fills it from a live response, which needs a connection and asks first before sending a method other than GET, HEAD, or OPTIONS. Summarize and Distinct aren't offered.
 * **Workflow variables** — fire one request and set `{prefix}_status`, `{prefix}_body`, `{prefix}_headers`, and `{prefix}_elapsed_ms`. The **Variable prefix** must be a plain identifier and can't be one of `cloud`, `project`, `model`, `date`.
 
 ## Behavior
