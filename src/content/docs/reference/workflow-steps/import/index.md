@@ -5,7 +5,7 @@ description: Workflow steps that bring data from external sources into project t
 
 Workflow steps that bring data from external sources into project tables.
 
-Every import checks the query that loads its target table before it runs. A query that carries anything other than a plain SQL statement over typed columns is refused before the target table is created, replaced or loaded, so the table is left exactly as it was.
+A file import checks the query that loads its target table before it runs. A query that carries anything other than a plain SQL statement over typed columns is refused before the target table is created, replaced or loaded, so the table is left exactly as it was.
 
 ## Steps
 
