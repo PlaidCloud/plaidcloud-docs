@@ -92,6 +92,9 @@ To restore an archive:
 2. Select the “Projects” tab
 3. Choose **Import Project Archive** from the **Actions** menu (or the toolbar) and select the archive to restore
 4. Choose whether to **Create New Project** or **Import Into Existing Project**, and pick what to bring across from the selection tree
+5. Click **Import Project**
+
+The import runs in the background. A progress window shows how far it has got, and when it finishes you are told so, along with any warnings it raised — a variable it left alone, for example, or a table whose data it could not load. If the import cannot start — because the project you chose is locked, say — the window stays open and tells you why.
 
 
 You do not have to bring the whole archive. The selection tree lists what the archive holds by type — workflows, steps, tables, dimensions, data editors, user-defined functions — and anything you tick brings its dependencies with it.

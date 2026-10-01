@@ -23,6 +23,8 @@ Click the **Rebuild** icon on a server app's row to rebuild and redeploy it with
 
 Use **Rebuild** after dependency changes, base-image updates, or a transient failed build. Editing and saving a server app also rebuilds it, but a rebuild does not require opening the edit form.
 
+For an [App Runner](/guides/workflows/use-converted-alteryx-apps/#keeping-the-app-current) app — the input form generated for a converted Alteryx app — **Rebuild** and saving an edit first refresh its generated files to the current App Runner version, then build it. PlaidCloud also does this for every App Runner app that isn't locked when PlaidCloud itself is updated; a locked one needs a **Rebuild** after you unlock it.
+
 ## Locking an App
 
 Click the **lock** icon on an app's row to protect it from accidental changes. While an app is locked:
