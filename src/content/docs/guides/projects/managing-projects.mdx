@@ -42,7 +42,9 @@ A step left on Project Default resolves to whichever account is the project's de
 
 Every object in a project — a step, a UDF, a workflow, a dimension, a saved layout, a document or data editor, and the project's own settings — is covered by version-history backups. A backup isn't taken on every individual save; instead, once an object has gone 30 seconds without a further save, one backup is taken of its settled state. A burst of edits — several saves in quick succession — produces a single version containing the final result, not one version per save. Saving is never slowed down waiting for a backup: the countdown, and the backup itself, both run in the background. If you need a version right now, use **Back up now** to capture the current state immediately and wait for it to finish — available in the UI, the API, and as the `*_versions` MCP action `backup`. Version history is available on every plan, including Free.
 
-Past versions support point-in-time recovery: restore an object to an earlier version, or copy an earlier version elsewhere for comparison, without losing anything you've built since. Restoring is refused inside a locked project, the same as any other change there.
+Past versions support point-in-time recovery: restore an object to an earlier version. Restoring is refused inside a locked project, the same as any other change there.
+
+A version restores in place. Restoring a version of a project, dimension, user-defined function, step, workflow or data editor replaces that same item, and naming a different item as the target is refused — for example, "A project version is restored in place. Leave the target out, or set it to this project." Restoring is a change to the item, so it needs the same role as editing it; on a project that [restricts rows](/administration/access/managing-security-groups-and-assignments/#who-can-change-a-project-that-restricts-rows), restoring the project or a dimension a restricted column reads takes a project Architect. To bring old table data back as a separate table, restore a [table snapshot](/guides/data/table-snapshots/) to a new table.
 
 In addition to this automatic tracking, projects and their elements also allow for versioning. Not only is creating a version easy, you can also merge changes from one version to another. This provides a simple way to keep track of snapshots or to create a version for development and then be able to merge those changes into the non-development version when you want. See [Collaborate: Versions, Compare, and Share](/get-started/tutorials/collaborate-versions-and-sharing/) for versioning, comparison, and merge in practice.
 
@@ -50,7 +52,7 @@ Table data has its own history — snapshots taken by the Lakehouse on every wri
 
 ### Restoring and Holding Through the AI Assistant or MCP
 
-Through the AI assistant or MCP, `dimension_versions` restores, holds, and releases a dimension version by its `version_id`, and every `*_versions` listing (steps, UDFs, workflows, dimensions, projects) shows each version's `version_id` and whether it is held. `project_upsert` can unlock a locked project, and honors `if_match` so it fails rather than overwrite a change made since you last read the project.
+Through the AI assistant or MCP, `dimension_versions` restores, holds, and releases a dimension version by its `version_id`, and `restore_project` rolls every dimension in the project back to its last backup, and every `*_versions` listing (steps, UDFs, workflows, dimensions, projects) shows each version's `version_id` and whether it is held. A `restore` through any `*_versions` tool, or the REST API, restores the item in place: leave the target out, or set it to the item itself. `project_upsert` can unlock a locked project, and honors `if_match` so it fails rather than overwrite a change made since you last read the project.
 
 
 ## Managing Project Access
@@ -70,6 +72,8 @@ Setting the project security is easy to do:
 3. Click the edit icon of the project you want to restrict
 4. Choose desired restriction under “Access Control”
 5. Click “Update”
+
+Only a project Architect or a tenant admin can change who has access to a project — its access type, the members and security groups on it, and its data shares. Anyone else sees those panels read-only, with the note “Only project Architects can change access.”
 
 
 ## All Workspace Members
@@ -103,6 +107,25 @@ To edit assigned groups:
 3. Click the security groups icon
 4. Grant access to security groups by selecting the check box next to their name in the “Access” column
 5. Click “Update”
+
+
+## Sharing Data Between Projects
+
+A data share lets one project reach another project's tables — for example, so the [Import Project Table](/reference/workflow-steps/import/import-project-table/) and [Export Project Table](/reference/workflow-steps/export/export-project-table/) steps can move data between them. A share is granted by the project whose data is shared, to one other project:
+
+1. Open the project whose data you want to share, and go to its **Home** tab.
+2. Under **Data Sharing Management**, click **New Data Share**.
+3. Under **Select Project**, choose the project that may use this project's data.
+4. Under **Allowed Operations**, tick **Read**, **Write**, or both, and click **Add Data Share**.
+
+**Delete Data Share** removes a share. Only a project Architect or a tenant admin can add or delete a project's data shares.
+
+A share is granted to a project, so it speaks only for that project's members and its workflows:
+
+- **Reading** through a share needs a role in the project it was granted to. Someone with no role there gets nothing from the share.
+- **Writing** through a share — creating a table, a folder or a dimension in the sharing project — needs a **Write** share and the Manager or Architect role in your own project, the role that could make the same change there. Anyone else is told "Writing to this project through a data share needs a write share from it to your project, and the Manager or Architect role in your project."
+
+Workflows run as their project's own identity, so Import Project Table and Export Project Table steps work through a share whoever starts the run.
 
 
 ## Setting Different Viewing Roles
@@ -170,6 +193,8 @@ Give the new project a name and an ID. The ID becomes its schema name and cannot
 Pick the target from the project list. The copy adds to that project rather than replacing it.
 
 **You need to be able to change the target.** A copy into a project you hold no role on is refused, as is a copy into a project that has been locked to prevent changes — checked before anything is read or written, so a refused copy leaves the target untouched. A project also cannot be copied into itself.
+
+**Copying a project that restricts rows takes a project Architect.** The copy is a new project with no [row access](/administration/access/managing-security-groups-and-assignments/#managing-row-access) restriction, and the copy tells you so: “This copy is not row-restricted.” Set up Row Access on the copy before you share it. Copying into an existing project that restricts rows likewise needs one of its Architects or a tenant admin.
 
 **The target keeps its own settings.** Its name, ID, data connection environment, storage defaults, document account, access type, access lists and row-access grants are all left as they are. Only the contents you selected are brought in.
 
