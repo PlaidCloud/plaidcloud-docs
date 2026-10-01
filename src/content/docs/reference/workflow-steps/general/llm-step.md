@@ -13,7 +13,7 @@ For a full walkthrough, see the [LLM Step guide](/guides/workflows/llm-step/).
 
 ## Configuration
 
-* **LLM Connection** *(required)* — a connection of kind LLM (for example, Anthropic). Its **Agent Access** must be **Read & write** or **Full** for any Write binding.
+* **LLM Connection** *(required)* — a connection of kind LLM (for example, Anthropic). Its **Agent Access** must be **Read & write** for any Write binding. **Full** also allows writes until it is removed on January 15, 2027, and a step that uses it logs a warning when it completes. At **Read & write** a step writes only to bindings with Write checked, and cannot run SQL that writes or create tables.
 * **Model** *(optional)* — defaults to the connection's default model.
 * **Prompt** *(required)* — supports `{{tables.NAME}}`, `{{dimensions.NAME}}`, and `{{documents.NAME}}` references to bound objects.
 * **Result schema** *(optional for Anthropic; required for other providers)* — a JSON Schema (root `"type": "object"`) for a captured structured summary; with Anthropic, leave blank when the model's work is its MCP writes. Non-Anthropic providers have no MCP access, so a schema is required.
