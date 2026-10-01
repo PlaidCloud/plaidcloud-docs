@@ -97,6 +97,9 @@ To restore an archive:
 The import runs in the background. A progress window shows how far it has got, and when it finishes you are told so, along with any warnings it raised — a variable it left alone, for example, or a table whose data it could not load. If the import cannot start — because the project you chose is locked, say — the window stays open and tells you why.
 
 
+An archive is checked as it is opened. One holding content a project archive never contains — a file that would land outside the archive's own folder, a link that points outside it, or settings that try to create anything other than plain data — is refused before anything from it is restored.
+
+
 You do not have to bring the whole archive. The selection tree lists what the archive holds by type — workflows, steps, tables, dimensions, data editors, user-defined functions — and anything you tick brings its dependencies with it.
 
 

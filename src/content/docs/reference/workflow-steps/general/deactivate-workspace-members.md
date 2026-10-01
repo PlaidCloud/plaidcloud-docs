@@ -18,6 +18,10 @@ Pair it with [Get Workspace Members](/reference/workflow-steps/general/get-works
   contains only who you intend before scheduling this step.
 </Aside>
 
+## Workspace Admins in the List
+
+[Only a workspace admin can deactivate a workspace admin](/administration/access/member-management/#changing-a-workspace-admin). When the step runs without workspace-admin rights and its list includes admins, it leaves those admins active, deactivates everyone else, and then ends in error with a message that gives how many members it deactivated and names each admin it left active. The members it deactivated stay deactivated. To deactivate an admin, have a workspace admin do it in Identity.
+
 ## Configuration
 
 ### Member Search Parameter
