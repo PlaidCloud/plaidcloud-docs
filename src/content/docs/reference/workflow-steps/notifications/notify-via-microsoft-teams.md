@@ -47,7 +47,7 @@ These steps will need to be performed by a PlaidCloud workspace administrator wi
 
 1. Navigate to `Analyze > Tools > External Data Connections`
 2. Under the `+ New Connection` selection, pick Microsoft Teams Webhook
-3. Complete the name, description, and paste in the webhook url generated during the webhook creation above. The name provided here will be shown as the selection in the workflow step so it should be descriptive if possible.
+3. Complete the name, description, and paste in the webhook url generated during the webhook creation above. The name provided here will be shown as the selection in the workflow step so it should be descriptive if possible. Anyone holding the URL can post to your channel, so the **Webhook URL** field masks it as you paste it and shows blank when you reopen the connection; leave it blank to keep the saved URL.
 4. Select the `+ Create` button
 
 

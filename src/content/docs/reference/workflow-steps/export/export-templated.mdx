@@ -10,23 +10,62 @@ import SnippetCommonDataFilter from '@snippets/common-data-filter.mdx';
 
 ## Description
 
-Renders project tables through an XML template to produce a structured document, instead of the raw column dump the other export steps write. Use it when the receiving system requires a specific XML shape rather than a table.
-
-The project and workflow names are available to the template alongside the table data.
+Renders project tables through a template to produce a structured document, instead of the raw column dump the other export steps write. Use it when the receiving system requires a specific XML shape, or another text format, rather than a table.
 
 ## Unique Configuration Items
 
 ### Source Template
 
-The XML template the output is rendered from.
+The Jinja template the output is rendered from. See [What a Template Can Use](#what-a-template-can-use).
 
 ### Target Output
 
-The document account, folder, and file name for the rendered result. The output is written as XML.
+The document account, folder, and file name for the rendered result. The template decides what the file contains; a file name with no extension gets `.xml`.
+
+**Use Pandas Dataframes for Table Data** changes how each source's rows reach the template. See [Source Rows as a Table](#source-rows-as-a-table).
 
 ### Source Table
 
 Name the tables explicitly, or match them by path and a search rule — exact, starts with, ends with, contains, or glob.
+
+## What a Template Can Use
+
+The template renders in a sandbox: it reads the data the step gives it and nothing else.
+
+- **Each source, by its Name.** Every source table you list is available to the template by the **Name** you give it, so use a name that works as a variable, such as `invoices`.
+- **The workflow's variables**, as `variable` — for example `{{ variable.region }}`.
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### Source Rows as a List
+
+With **Use Pandas Dataframes for Table Data** off, a source is a read-only list of rows. Loop over it, or use `|length`, `keys()`, `first()`, `one()`, `all()`, `scalar()`, `scalars()`, `mappings()`, `fetchmany(n)` and `columns('a', 'b')`. Read a value from a row as `row.amount`, `row['amount']` or `row[0]`; `row._mapping`, `row._asdict()` and `row._fields` work too. Rows from `columns('a', 'b')` take `row.amount` or `row[0]`, not `row['amount']`.
+
+### Source Rows as a Table
+
+With **Use Pandas Dataframes for Table Data** on, a source is a read-only table. Looping over it gives each row as a dictionary, so `row.amount` and `row['amount']` both work. You can also use:
+
+- `columns`, `empty`, `shape`, `values` and `index`
+- `head(n)` and `tail(n)`
+- `itertuples()`, which puts the row position first as `Index`, so `r[1]` is the first column; `itertuples(index=False)` leaves it out
+- `iterrows()`, which gives the row position and the row
+- `invoices['amount']`, the values of one column, with `sum()`, `min()`, `max()`, `mean()`, `unique()` and `tolist()`; `sum`, `min`, `max` and `mean` skip nulls
+
+Other pandas methods, such as `loc` and `groupby`, aren't available. Shape the data in an earlier step and export the result.
+
+### What a Template Can't Do
+
+- Call a method whose name starts with `to_`, on any value — `to_csv` and `to_json`, and also harmless ones such as `to_pydatetime`.
+- Read an attribute whose name starts with an underscore, other than a row's `_mapping`, `_asdict` and `_fields`.
+- Write or open files.
+
+A `to_` call or a file operation fails the step. An underscore attribute other than those three just renders as nothing.
 
 ## Common Configuration Items
 
