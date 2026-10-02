@@ -1,6 +1,6 @@
 ---
 title: October 2026
-description: You choose who can see each dashboard, steps that build their own results load them directly and faster, a scheduled event keeps its own ERP posting mode, an ERP answer PlaidCloud can't confirm is held in doubt rather than guessed, and only a workspace admin can change a workspace admin, and workflow texts reach members who opted in.
+description: You choose who can see each dashboard, steps that build their own results load them directly and faster, steps check their settings when you save them again, a scheduled event keeps its own ERP posting mode, an ERP answer PlaidCloud can't confirm is held in doubt rather than guessed, only a workspace admin can change a workspace admin, and workflow texts reach members who opted in.
 ---
 
 ## Added
@@ -35,9 +35,31 @@ description: You choose who can see each dashboard, steps that build their own r
 
 - **Steps and screens always open in the current forms.** Holding **Ctrl** or **Cmd** while opening a step or a screen no longer switches to the old-style form, and the old application layout can no longer be loaded instead of the current one.
 
+- **Steps check their settings when you save them, again.** As in the old-style form, saving a step whose settings would fail its run, or give the wrong result, is refused with a message that says what to change. Saves through the API and AI assistants get the same checks, except that a setting they leave empty isn't checked until it's filled in. Each step's page lists what it checks:
+  - [Report: Generate Single](/reference/workflow-steps/reports/report-single/) and [Report: Generate Batch](/reference/workflow-steps/reports/reports-batch/) — source, constant and batch column names must each be distinct and readable by the template: letters, digits and underscores, starting with a letter or underscore, and not one of the eight words the template reserves, such as `true` or `self`. New sources are named `new_source`, `new_source_2` and so on.
+  - [Table: Union Distinct](/reference/workflow-steps/tables/table-union-distinct/) and [Table: Union All](/reference/workflow-steps/tables/table-union-all/) — every source must produce the first source's columns.
+  - [Table: Pivot (Rows to Columns)](/reference/workflow-steps/tables/table-pivot/) — the category and value columns must be among the step's output columns.
+  - [Table: Faker](/reference/workflow-steps/tables/table-faker/) — each fake data column needs a name of its own.
+  - [SAP: Attach File to Document](/reference/workflow-steps/sap/call-sap-financial-document-attachment/) — the output columns must include `relative_file_path`, as text.
+  - [SAP PCM: Hyper Loader](/reference/workflow-steps/sap-pcm/run-sap-pcm-hyper-loader/) — each source must match its loader table, and two sources can't share a name.
+  - [SCD-2 As-Of Join](/reference/workflow-steps/dimensions/scd2-asof-join/#whats-checked-when-you-save) — a column takes one role, once, and a **Literal As-Of Date** must be a real date in YYYY-MM-DD form.
+  - [Document: Save Dashboard as PDF](/reference/workflow-steps/document/dashboard-to-pdf/#whats-checked-when-you-save) — at least one **Column Filter**, each with a **Mapped Filter Column** that is one of the dashboard's filters, and only one **File Name**.
+  - [Forecast](/reference/workflow-steps/general/forecast/) — the mapping needs source columns.
+  - [Text: NLP (AI)](/reference/workflow-steps/text-documents/nlp-ai/) — a source table is required, and an ID column can't share its name with a column the task writes.
+  - [AI: LLM Step](/reference/workflow-steps/general/llm-step/#whats-checked-when-you-save) — a result schema must be a JSON object declaring `"type": "object"`, and bindings need an Anthropic connection, whose **Agent Access** allows writes for a binding with **Write** checked.
+  - [Table: Append](/reference/workflow-steps/tables/table-append/) and [Table: Upsert](/reference/workflow-steps/tables/table-upsert/#whats-checked-when-you-save) — when the target table already exists, the mapping must fit its columns and types, and an upsert must map every one of its columns. Numeric and currency count as the same type.
+
+  An Alteryx workflow is imported through the same checks. Re-importing one into a project whose Append or Upsert target tables already exist with different column types now fails the import, rather than that step's first run.
+
+- **Saving a step with an empty column mapping fills it from its source**, as the old-style form did. In **Table: Append**, **Table: Upsert**, **Table: Pivot (Rows to Columns)**, **Table: Melt (Columns to Rows)**, **SAP: Attach File to Document**, and each source of **Table: Union Distinct** and **Table: Union All**, saving with a source table chosen but no source or no target columns fills the empty side, as **Populate Both Mapping Tables** would. **Report: Generate Batch** fills its batch mapping the same way.
+
+- **Table: Project to Project Copy names its target project again, and checks the data shares it copies through.** The step's **Write To** section has a **Target Project** picker, which starts on the current project, and **Target Table** browses whichever project you pick; a step created in the current step form had no target project and failed every run. It also reads its source through a data share: copying from a project that shares with this one used to fail with *You do not have access to this project*, while Import Project Table, reading through the same share, worked. A copy needs the source project to allow the target to **Read** and, when it writes into another project, that project to allow this one to **Write**. A run without a share it needs fails, saying which share to add, and saving such a step is refused. A copy within one project needs no share, and a refused copy no longer leaves an empty target table behind. See [Data Sharing Management](/reference/workflow-steps/tables/frame-project-copy/#data-sharing-management).
+
 - **Full agent access is deprecated and will be removed on January 15, 2027.** Until then, an LLM connection's **Agent Access** and a Microsoft 365 Copilot user's access level can still be set to **Full**, and an LLM step that uses Full access logs a warning when it completes. Move to **Read & write**: agents then make changes through PlaidCloud's write tools rather than with SQL that writes, and an LLM step writes only to bindings with **Write** checked, and cannot run SQL that writes or create tables. See [Agent Access](/integrations/ai-architecture/llm-providers/#agent-access).
 
 - **A member with no apps lands on the Launcher**, which says it has nothing to show yet, instead of a blank **Home** tab.
+
+- **Report: Generate Batch no longer shows Report Constants.** Its **Report Constants (Fixed Values)** section was never used: each batch row supplies the template's values. See [Reports Batch](/reference/workflow-steps/reports/reports-batch/).
 
 - **Manage Accounts no longer shows a Backup icon.** Backup sets were never available, and the window it opened could not load. To keep a copy of an account's files in another account, use a scheduled workflow — see [Backing Up Document Accounts](/guides/documents/account-management/managing-document-account-backups/).
 
@@ -65,7 +87,13 @@ description: You choose who can see each dashboard, steps that build their own r
 
 - **Pivot and Allocation Split in pandas mode keep date-and-time values.** On StarRocks those columns were written empty, and on Databend the step failed. An infinite value in their results — a division by zero, for example — is now written as a null where Databend failed the step.
 
-- **Table Project to Project Copy reads through a data share.** Copying a table from a project that shares it with this one failed with *You do not have access to this project*, while Import Project Table, reading through the same share, worked. The step now reads its source through the share, and still refuses a project that has not shared with it. See [Table Project to Project Copy](/reference/workflow-steps/tables/frame-project-copy/#data-sharing-management).
+- **Table: Upsert steps save again.** Once a step's mapping had target columns, the step form refused every save, because the mapping had lost its **Update Key** column. The column is back, right after the target column's name, and ticked by default. A column with no Update Key setting counts as a key, and at least one column must stay ticked. See [Update Key](/reference/workflow-steps/tables/table-upsert/#update-key).
+
+- **Document: Save Dashboard as PDF keeps each source column's type.** A step saved in the current step form lost the types of its source columns, and failed every run. The types are now kept. A step saved before this fix needs its source inspected again, with **Inspect Source › Populate Mapping Table**, which now keeps the **Column Filter** and **File Name** tags you've set; until then, saving it names the columns with no type. See [What's Checked When You Save](/reference/workflow-steps/document/dashboard-to-pdf/#whats-checked-when-you-save).
+
+- **Table: Union Distinct and Table: Union All match each source's columns by name.** A source that named the same columns as the first source, in a different order, was combined by position, so its values could land in the wrong columns. See [Table Union All](/reference/workflow-steps/tables/table-union-all/#whats-checked-when-you-save).
+
+- **SCD-2 As-Of Join takes a workflow variable as its Literal As-Of Date**, as the field's tooltip says. A variable such as `{report_date}` wasn't filled in when the step ran. See [As-Of Date and Options](/reference/workflow-steps/dimensions/scd2-asof-join/#as-of-date-and-options).
 
 - **A step that writes a table in a locked project no longer fails** at the automatic backup taken after its rows load.
 

@@ -28,6 +28,8 @@ Use the table data selection tab to shape the input table before forecasting. Th
 
 Use **Inspect Source** to populate the mapping from the selected input table. You can populate both sides of the mapping, only the source side, or only the target side before adjusting the columns.
 
+Saving is refused until the mapping has source columns — *Source columns are required: use Populate to read them from the input table.* — and while its target columns leave out the **Date Column**, the **Value Column** or a **Series Column**.
+
 ### Data Filters
 
 Use the filters tab to limit rows, apply conditions, aggregate input data, or slice the result before the forecast runs.

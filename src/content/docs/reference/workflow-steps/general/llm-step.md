@@ -25,3 +25,8 @@ For a full walkthrough, see the [LLM Step guide](/guides/workflows/llm-step/).
 * The model call runs in its own job. A short-lived, scoped credential is minted for the run and revoked when it ends.
 * Access is gated per object and per checkbox: the model reads only Read-bound objects and writes only Write-bound ones — never an object you didn't bind. Writing requires an existing destination object; the step doesn't create one.
 * Each run makes a billable provider call and writes into your bound objects.
+
+## What's Checked When You Save
+
+* **Result schema** — when you provide one, it must be valid JSON, a JSON object, and declare `"type": "object"` at its root. Otherwise saving is refused, for example with *The result schema must declare "type": "object" at its root.*
+* **Bindings and the connection** — only an Anthropic connection gives the model access to bindings. Saving a step with bindings on another provider's connection is refused, with a message naming the provider and asking you to *Remove the bindings or choose an Anthropic connection.* A binding with **Write** checked needs a connection whose **Agent Access** allows writes. On a Read-only connection, saving is refused with *The selected LLM connection has Read-only Agent Access, so a binding with Write checked could not write. Set the connection to 'Read & write' or uncheck Write on the bindings.* A step saved through the API with no connection is checked against the workspace's default LLM connection, which it also runs on: the one an admin marked as the default, or else the most recently updated. Without an admin-marked default, editing another LLM connection makes that one the default, and can refuse the step's next save.

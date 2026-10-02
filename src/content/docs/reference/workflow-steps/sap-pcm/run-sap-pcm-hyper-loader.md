@@ -72,10 +72,13 @@ This is the current list of available loading targets:
 PlaidCloud is an official SAP Partner and a preferred vendor of services related to SAP PCM model design and implementation.
 
 
+## What's Checked When You Save
 
+Each source on the **Load Steps** tab stages into the loader table chosen as its **Target Load Table**, matched by column name. Saving is refused, naming the source, when:
 
-
-
+- A source has no Target Load Table, or one that isn't a PCM loader table — *Source 'activity_aliases' loads into 'ACTIVITY', which isn't a PCM loader table.*
+- A source's columns don't match its loader table: a loader table column is missing, has a different type from the loader table's, or has no source, expression or constant — *Source 'activity_aliases' doesn't match loader table PPLOAD_ACTIVITY_AL: missing DEFAULTALIAS; no source, expression or constant for ALIAS.* **Reset Target Columns to Schema** refills a source's target columns from its loader table.
+- Two sources share a name. Each source is exported to a file named after it, so one would overwrite the other — *Source name 'activity_aliases' is used more than once; each source needs its own, or one overwrites the other.*
 
 
 ## Examples
