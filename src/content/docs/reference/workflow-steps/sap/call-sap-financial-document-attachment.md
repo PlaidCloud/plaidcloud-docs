@@ -12,6 +12,13 @@ Attaches a file to a specific FI (Financial Accounting) document in SAP ECC / S/
 Requires the SAP RFC credentials configured on the SAP connector and the target FI document number (company code, document number, fiscal year).
 
 
+## What's Checked When You Save
+
+The step reads each file's path from a `relative_file_path` column among the output columns on its **Table Data Selection** tab, and that column must be text. Saving is refused without one — *The output columns must include relative_file_path, the path of each file to attach.* — or when it has another type — *The relative_file_path column must be text, not integer.*
+
+Saving with a source table chosen but no source or no target columns fills the empty side from the source, as **Populate Both Mapping Tables** would.
+
+
 ## Examples
 
 
