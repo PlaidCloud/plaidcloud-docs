@@ -17,7 +17,7 @@ Texts come from one PlaidCloud alert number and read `PlaidCloud [your workspace
 
 Choose **Members** or **Distribution list**.
 
-- **Members** lists your workspace members. Each shows **Opted in**, **Not opted in**, or **Opted out - Text START to the alert number**.
+- **Members** lists your workspace members. Each shows **Opted in**, **Not opted in**, or **Opted out - Text START to +1 (855) 752-4312**.
 - **Distribution list** texts every member of the list who has opted in.
 
 A member who hasn't opted in gets no text. They are a problem for the step (see **If a text can't be delivered**), and by default they receive the message by email instead.
@@ -52,7 +52,7 @@ Each member receives at most 20 texts per day, a workspace sends at most 500 tex
 
 ## What Recipients See
 
-Every text is from the alert number. Replying **STOP** stops all texts from PlaidCloud to that number, and **HELP** returns contact information. After STOP, a member text **START** to the alert number to resume, then turn text alerts back on in **Text alerts**. The step form shows **Opted out - Text START to the alert number** beside that member until they do.
+Every text is from the alert number. Replying **STOP** stops all texts from PlaidCloud to that number, and **HELP** returns contact information. After STOP, a member text **START** to +1 (855) 752-4312 to resume, then turn text alerts back on in **Text alerts**. The step form shows **Opted out - Text START to +1 (855) 752-4312** beside that member until they do.
 
 Workspace admins can see each member's text alert status, with the number masked, on the **Member Info** tab of the member window. Members opt in and out themselves; an admin can't do it for them.
 

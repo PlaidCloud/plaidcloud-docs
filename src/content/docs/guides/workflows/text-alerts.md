@@ -21,7 +21,7 @@ Open **Text alerts** and click **Stop text alerts**, or reply **STOP** to any te
 
 ## Turn Them Back On After STOP
 
-Replying STOP blocks every text to your number. Text **START** to the alert number shown in the window, then send a new code and confirm it.
+Replying STOP blocks every text to your number. Text **START** to +1 (855) 752-4312 (shown in the window), then send a new code and confirm it.
 
 ## If Something Goes Wrong
 
