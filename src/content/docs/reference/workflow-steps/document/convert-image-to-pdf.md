@@ -26,7 +26,7 @@ One PDF per input file. For a folder, each file's PDF is written into a folder n
 
 ## Notes
 
-- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- If the input path does not exist or has no files in it, the step finishes with a warning that names the path and processes nothing, and the workflow continues.
 - The destination cannot be the input path.
 
 ## Common Uses
