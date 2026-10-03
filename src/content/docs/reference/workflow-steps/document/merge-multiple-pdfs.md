@@ -25,7 +25,7 @@ A single PDF at the output path, holding every page of every merged PDF.
 
 ## Notes
 
-- A folder with no PDFs in it fails the step, naming the folder.
+- A folder with no PDFs in it, or one that does not exist, finishes the step with a warning that names the folder and merges nothing, and the workflow continues.
 - The output path cannot be the input path.
 
 ## Common Uses

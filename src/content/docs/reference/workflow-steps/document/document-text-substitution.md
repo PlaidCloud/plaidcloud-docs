@@ -24,7 +24,7 @@ Works on UTF-8 text files (TXT, CSV, JSON, XML, HTML, RML) of any size. A file t
 - Matching is exact and case-sensitive, and every occurrence is replaced.
 - A row whose original text is empty is ignored.
 - For a folder, each file is written into a folder named after the destination, without its extension, under the file's own name.
-- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- If the input path does not exist or has no files in it, the step finishes with a warning that names the path and processes nothing, and the workflow continues.
 
 ## Examples
 

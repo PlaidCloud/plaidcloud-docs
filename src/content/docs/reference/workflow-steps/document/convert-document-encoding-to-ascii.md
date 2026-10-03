@@ -15,7 +15,7 @@ Rewrites a text file as plain ASCII. This is particularly useful if the source o
 - Accented letters keep their base letter (`café` becomes `cafe`), and characters with no ASCII form are dropped.
 - A line holding only a double quote is joined to the end of the line before it.
 - A file whose encoding cannot be detected fails the step, naming the file.
-- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- If the input path does not exist or has no files in it, the step finishes with a warning that names the path and processes nothing, and the workflow continues.
 
 ## Examples
 

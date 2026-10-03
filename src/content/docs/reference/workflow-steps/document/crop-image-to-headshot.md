@@ -20,7 +20,7 @@ A 500 × 500 JPEG cropped from the centre of the source. For a folder, each file
 
 - The crop is taken from the centre of the image; it does not look for a face, so frame source photos with the subject centred.
 - A file that cannot be read as an image is copied to the output unchanged rather than failing the step.
-- If the input path is neither a file nor a folder with files in it, the step fails and names the path.
+- If the input path does not exist or has no files in it, the step finishes with a warning that names the path and processes nothing, and the workflow continues.
 - The output path cannot be the input path.
 
 ## Common Uses
