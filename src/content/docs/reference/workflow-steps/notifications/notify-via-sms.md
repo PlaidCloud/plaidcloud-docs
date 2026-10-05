@@ -58,7 +58,12 @@ Workspace admins can see each member's text alert status, with the number masked
 
 ## Steps That Typed a Number
 
-An earlier version of this step took a mobile provider and a typed phone number. Those steps now fail with *This step texts a typed number. Choose members who've opted in to text alerts.* Open the step, choose members or a distribution list, and save.
+An earlier version of this step took a mobile provider and a typed phone number. A step still saved that way doesn't fail the workflow, and it sends no text to the typed number.
+
+- **No recipients chosen:** the step completes with a warning, *No text was sent: this step still uses the retired mobile provider and number. Open the step, choose members who've opted in to text alerts, and save it.* Nothing is sent.
+- **Members or a distribution list chosen:** the step texts those recipients and ignores the leftover carrier and number.
+
+To fix a step, open it, choose members or a distribution list, and save.
 
 ## Examples
 
