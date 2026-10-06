@@ -169,6 +169,7 @@ export default defineConfig({
 						{ label: 'Email',             collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
 						{ label: 'Help & Support',    collapsed: true, items: [{ autogenerate: { directory: 'guides/support' } }] },
 						{ label: 'Launcher',          link: '/guides/launcher/' },
+						{ label: 'Mobile app',        link: '/guides/mobile-app/' },
 						{ label: 'Panel apps',        collapsed: true, items: [{ autogenerate: { directory: 'guides/panel-apps' } }] },
 						{ label: 'PlaidCloud Git',    collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
 						{ label: 'Projects',          collapsed: true, items: [{ autogenerate: { directory: 'guides/projects' } }] },
