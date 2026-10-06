@@ -26,6 +26,11 @@ Every source and batch column name must be given, its own, and readable by the t
 Saving with a batch source table chosen but an empty batch mapping fills the mapping from that table, as Populate would.
 
 
+## Empty Batch Table
+
+When the batch source table has no rows, the step finishes successfully with a warning that names the batch table, and no reports are produced.
+
+
 ## Examples
 
 No examples yet...
