@@ -9,6 +9,8 @@ If a workflow experiences an error during processing, an error indicator is disp
 
 
 
+A step whose server is lost mid-run is handled separately from retries: a step that is safe to repeat re-runs automatically, and one that isn't fails once with an **interrupted** message. See [Interrupted Steps](/guides/workflows/run-a-workflow/#interrupted-steps).
+
 If no retry is selected or the maximum number of retries is exceeded, then the step will be marked as an error. PlaidCloud provides three levels of error handling in that case:
 
 
