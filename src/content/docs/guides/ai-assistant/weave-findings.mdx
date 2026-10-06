@@ -275,6 +275,63 @@ finding says "a step you don't have access to" and still gives the time of the
 write. "180 days" in a finding is how far back Weave's run history goes, not a
 fact about the table.
 
+**Tables a workflow reads, written to since.** For a workflow that reads a table
+another workflow writes, Weave checks that no other workflow has written to the
+table since the workflow last read it. A table counts as read or written by a
+step that names it as an input or an output and finished in a run. Weave reads
+what the run history records, not the table's data.
+
+- **Reads a table written to since its last read.** A workflow last read a table
+  in one of its runs, and a different workflow has written to that table since,
+  so its results may be out of date. The finding names the run that last read
+  the table and the workflows that wrote to it. A workflow with an enabled
+  scheduled event, or one that another workflow with one runs, is reported only
+  once a schedule that runs it has come due after the write; a workflow nothing
+  runs on a schedule is reported straight away.
+
+These aren't counted as written to since:
+
+- a write by the workflow itself, including one made during its run by a
+  workflow it runs through a Run Workflow, Workflow Loop or Conditional Run step;
+- a table the workflow writes and then reads in the same run, such as a staging
+  table; and
+- a write made before the step that made it was last saved, since the step may
+  have written to a different table then.
+
+Weave reports the workflow as unchecked, with the reason, rather than as behind,
+when:
+
+- it is running, or has just finished and its results aren't recorded yet;
+- a step that reads the table was skipped in a run after the write;
+- the schedule that runs it isn't valid;
+- it hasn't read the table in any run in the last 30 days, while another
+  workflow wrote to it;
+- one of its steps reads tables Weave can't work out from the step's settings,
+  such as an AI: LLM Step, a Report step or a Run: Remote Python step; picks a
+  table with a variable; names a table by a name more than one table has; reads
+  a view; or reads a table in another project;
+- a table it reads is also written to by a macro, whose runs Weave doesn't see,
+  or by a step in another workflow that has run since and either picks the table
+  it writes with a variable or writes tables Weave can't work out; or
+- its run history can't be read.
+
+A workflow with no runs in the last 30 days isn't checked this way.
+
+What this check doesn't see:
+
+- reads and writes older than the run history Weave reads, which is the last 30
+  days and, for each workflow, its last 20 runs;
+- a step's condition that checks a table, which doesn't count as reading it;
+- an earlier read by one step where another step of the workflow read the same
+  table more recently; and
+- writes made before the writing step was last saved, even where the save
+  changed nothing it writes, until its workflow runs again.
+
+Without the `analyze.table.read` role no workflow is checked this way. Where a
+workflow or table that wrote or was read is one you don't have access to, the
+finding says "a workflow you don't have access to" or "a table you don't have
+access to".
+
 A step whose type Weave has no rule for is reported as uncovered, not as clean.
 
 ## Being told when a run ends
@@ -303,7 +360,8 @@ A stopped run sends nothing, whoever stopped it. A workflow run by a Macro Run
 or Macro Concurrent step sends nothing of its own, and that call is not counted
 among its runs; a workflow started by a Run Workflow or Workflow Loop step is a
 run of that workflow like any other. Things Weave could not check are never sent
-this way, and neither are findings about tables written on a schedule.
+this way, and neither are findings about tables written on a schedule or about a
+workflow's tables written to since it read them.
 
 Being told is not the same as having read: an alert does not mark the finding
 read in the Weave tab, and neither does following its **Open Weave** link.
