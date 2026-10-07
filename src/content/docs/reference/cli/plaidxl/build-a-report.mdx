@@ -1,0 +1,123 @@
+---
+title: Build a Report With Custom Functions
+description: Build a live Excel report with PlaidXL — drill a dimension down the rows, put periods across the columns, fill every intersection with a CELL formula, and send a values-only copy.
+sidebar:
+  label: Build a Report
+  order: 5
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+A PlaidXL report is an ordinary Excel grid: a dimension's nodes down the side, another dimension's nodes across the top, and a `PLAIDXL.CELL` formula at each intersection that rolls up a measure from a PlaidCloud table. Because the numbers are formulas, the report recalculates against current data instead of being rebuilt every month.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 270" role="img" aria-label="A report grid. Rows are Region nodes Total, EMEA, APAC and Americas produced by DRILL. Columns are periods FY2025 and FY2026. The highlighted cell at EMEA and FY2026 is a CELL formula that combines the Sales table, the revenue measure, a sum, the Region node from its row and the Period node from its column." style="width:100%;max-width:680px;height:auto;">
+  <defs>
+    <marker id="rp-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="30" y="30" font-size="11" fill="var(--sl-color-gray-3)">rows from PLAIDXL.DRILL</text>
+  <rect x="30" y="40" width="130" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="40" y="62" font-size="12" fill="var(--sl-color-gray-3)">Region</text>
+  <rect x="160" y="40" width="110" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="215" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">FY2025</text>
+  <rect x="270" y="40" width="110" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="325" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">FY2026</text>
+  <rect x="30" y="74" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="40" y="96" font-size="12" font-weight="700" fill="var(--sl-color-text)">Total</text>
+  <rect x="30" y="108" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="130" font-size="12" fill="var(--sl-color-text)">EMEA</text>
+  <rect x="30" y="142" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="164" font-size="12" fill="var(--sl-color-text)">APAC</text>
+  <rect x="30" y="176" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="198" font-size="12" fill="var(--sl-color-text)">Americas</text>
+  <rect x="160" y="74" width="110" height="136" fill="none" stroke="var(--sl-color-gray-5)" />
+  <rect x="270" y="74" width="110" height="136" fill="none" stroke="var(--sl-color-gray-5)" />
+  <path d="M160 108 L380 108 M160 142 L380 142 M160 176 L380 176" stroke="var(--sl-color-gray-5)" fill="none" />
+  <rect x="270" y="108" width="110" height="34" fill="none" stroke="var(--sl-color-accent)" stroke-width="2.5" />
+  <text x="325" y="130" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">=CELL(…)</text>
+  <path d="M160 125 L265 125" stroke="var(--sl-color-gray-3)" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#rp-arrow)" />
+  <path d="M325 74 L325 104" stroke="var(--sl-color-gray-3)" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#rp-arrow)" />
+  <rect x="440" y="40" width="220" height="190" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="550" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">PLAIDXL.CELL combines</text>
+  <text x="458" y="92" font-size="11" fill="var(--sl-color-text)">TABLE_REPR("Sales")</text>
+  <text x="458" y="116" font-size="11" fill="var(--sl-color-text)">MEASURE("revenue")</text>
+  <text x="458" y="140" font-size="11" fill="var(--sl-color-text)">MEASURE_TYPE("sum")</text>
+  <text x="458" y="164" font-size="11" fill="var(--sl-color-text)">DIMENSION_REPR("Region", row)</text>
+  <text x="458" y="188" font-size="11" fill="var(--sl-color-text)">DIMENSION_REPR("Period", column)</text>
+  <text x="458" y="214" font-size="11" fill="var(--sl-color-gray-3)">→ revenue for EMEA in FY2026</text>
+  <path d="M435 125 L386 125" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rp-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Each cell takes its row's node and its column's node, and rolls the measure up to both.</figcaption>
+</figure>
+
+## Before You Start
+
+- [Sign in](/reference/cli/plaidxl/connect/) and select the project that holds your data.
+- You need a table with a numeric column to report on, such as **revenue**, and a column for each dimension you'll report by, such as **Region** and **Period**, linked to that dimension in PlaidCloud. `CELL` filters by column name, and rolls a node up through its dimension only on a linked column. See [Values](/reference/cli/plaidxl/functions/#values).
+- Not sure of the exact names? `=PLAIDXL.TABLE.TBL_LIST()`, `=PLAIDXL.TABLE.GET_COLUMNS("Sales")` and `=PLAIDXL.DIMENSION.DIM_LIST()` list them on a scratch sheet.
+
+## Build the Report
+
+The steps use a table named **Sales** with the measure column **revenue** and the dimension columns **Region** (rows) and **Period** (columns), linked to dimensions of the same names. Swap in your own names — in `DRILL` use the dimension's name, and in `DIMENSION_REPR` the table's column name.
+
+<Steps>
+
+1. **Describe what you're measuring.** In three cells at the top of the sheet, enter:
+
+   ```text
+   B1  =PLAIDXL.REPR.TABLE_REPR("Sales")
+   B2  =PLAIDXL.REPR.MEASURE("revenue")
+   B3  =PLAIDXL.REPR.MEASURE_TYPE("sum")
+   ```
+
+   Every value in the report refers to these cells, so changing one — `"mean"` instead of `"sum"`, say — changes the whole report.
+
+2. **Lay out the rows.** In `A6`, drill the row dimension from its top node:
+
+   ```text
+   A6  =PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("1 level"))
+   ```
+
+   **Total** and its children spill down column A, indented under their parent and grouped so you can collapse them. Use `"all"` for every level, or `"leaves"` for just the bottom level. To type the row nodes yourself instead, put one node name in each cell.
+
+3. **Lay out the columns.** Type the column nodes across row 5, starting in `B5` — for example `FY2025` and `FY2026`.
+
+4. **Fill the first value.** In `B6`, enter:
+
+   ```text
+   =PLAIDXL.CELL($B$1, $B$2, $B$3, PLAIDXL.REPR.DIMENSION_REPR("Region", $A6), PLAIDXL.REPR.DIMENSION_REPR("Period", B$5))
+   ```
+
+   The `$` signs keep the table, measure and type fixed, the row node in column A, and the column node in row 5. The indentation `DRILL` adds to node names is ignored.
+
+5. **Fill the grid.** Copy `B6` across to your last period and down to your last row. Each cell shows revenue for its row's region in its column's period.
+
+</Steps>
+
+To add a filter that applies to the whole report — one product line, say — add another `DIMENSION_REPR` in a cell at the top, such as `B4  =PLAIDXL.REPR.DIMENSION_REPR("Product", "Hardware")`, and pass `$B$4` to every `CELL`.
+
+To show several measures for each row, use [`PLAIDXL.CELLS`](/reference/cli/plaidxl/functions/#cells) with [`PLAIDXL.REPR.MEASURES`](/reference/cli/plaidxl/functions/#measures).
+
+## Keep the Report Current
+
+- **Force a full recalculation** to pull current values into every PlaidXL formula — on Windows, press **Ctrl+Alt+F9**. An ordinary recalculation doesn't fetch again unless a formula's arguments changed.
+- **Change the scope** by editing a building-block cell: another table, measure or aggregation, or another top-level filter node. Formulas that use the cell update straight away.
+- **Report on another project** by selecting it in the task pane, then forcing a full recalculation. The formulas read from whichever project is selected, so the same workbook can report on each project that shares the table, column and dimension names.
+
+## Share a Values-Only Copy
+
+People without PlaidXL, or without access to the project, see errors in place of PlaidXL formulas. To send them the numbers, replace the formulas with their values first:
+
+1. Save your report, then save a copy under a new name for sending.
+2. In the copy, click **PlaidCloud → Sanitize Workbook**.
+3. Send the copy.
+
+**Sanitize Workbook** replaces every formula in the workbook with its current value. **Restore Workbook** puts formulas back, but it doesn't restore formulas whose results spill, such as `DRILL`, cleanly, and it overwrites anything you changed after sanitizing. Keep your original — it's the reliable way to get your live report back. See [Sanitize and Restore](/reference/cli/plaidxl/ribbon/#control-functions).
+
+<Aside type="caution">Sanitize the copy you're sending, never your only working report. Sanitizing affects every formula in the workbook, including ones that aren't PlaidXL functions.</Aside>
+
+## Related
+
+- [PlaidXL Custom Functions](/reference/cli/plaidxl/functions/) — every function and argument
+- [The PlaidCloud Ribbon](/reference/cli/plaidxl/ribbon/) — drill from two cells, and sanitize for sharing
+- [Design a Dimension Hierarchy](/get-started/tutorials/design-a-dimension/) — build the hierarchy your rows roll up through

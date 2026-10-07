@@ -1,0 +1,236 @@
+---
+title: PlaidXL Custom Functions
+description: Reference for every PlaidXL custom function in Excel — list projects, tables, columns and dimensions, read a table, lay out and drill a hierarchy, and calculate rolled-up values with CELL and CELLS.
+sidebar:
+  label: Custom Functions
+  order: 4
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidXL adds functions to Excel that read PlaidCloud data straight into cells. Type `=PLAIDXL.` in a cell and Excel's autocomplete lists them, with a short description of each argument.
+
+| Group | Functions | Use them to |
+|---|---|---|
+| Lists | [`LIST_PROJECTS`](#list_projects), [`TABLE.TBL_LIST`](#tbl_list), [`TABLE.GET_COLUMNS`](#get_columns), [`DIMENSION.DIM_LIST`](#dim_list) | See what's available to build on |
+| Tables | [`TABLE.GET_TABLE`](#get_table) | Read a whole table into a range |
+| Hierarchies | [`DIMENSION.GET_DIMENSION`](#get_dimension), [`DRILL`](#drill) | Lay out a dimension's nodes as report rows |
+| Values | [`CELL`](#cell), [`CELLS`](#cells) | Calculate a rolled-up value for any combination of nodes |
+| Building blocks | [`REPR.TABLE_REPR`](#table_repr), [`REPR.MEASURE`](#measure), [`REPR.MEASURES`](#measures), [`REPR.MEASURE_TYPE`](#measure_type), [`REPR.DIMENSION_REPR`](#dimension_repr), [`REPR.DRILL_KEY`](#drill_key) | Describe the table, measure, aggregation, nodes and drill depth that `CELL`, `CELLS` and `DRILL` use |
+
+[Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/) shows these working together.
+
+## How the Functions Work
+
+- **Sign in first.** The functions read with your PlaidCloud sign-in, so [sign in](/reference/cli/plaidxl/connect/) from the task pane before you use them.
+- **They read from the selected project.** Every function reads from the project selected in the task pane. `GET_TABLE`, `TBL_LIST` and `DIM_LIST` also take an optional project ID, to read another project without changing the selection. The selection is shared by every workbook you have open.
+- **Results spill.** A function that returns a list or a table fills the cells below it (or to its right). Leave room for the results; if anything is in the way, Excel shows a `#SPILL!` error.
+- **Recalculate to pick up changes.** A PlaidXL formula fetches again when one of its arguments changes. To pick up new data in PlaidCloud, or a different project selected in the task pane, force a full recalculation — on Windows, press **Ctrl+Alt+F9**. **Refresh All Tables** refreshes retrieved tables, not formulas.
+- **Use exact names.** Type table, column, dimension and node names exactly as they appear in PlaidCloud.
+
+Arguments in square brackets are optional.
+
+## Lists
+
+### LIST_PROJECTS
+
+`=PLAIDXL.LIST_PROJECTS([horizontal])`
+
+Lists the names of the projects you can open, sorted by name.
+
+- `horizontal` — `TRUE` to list across a row. Defaults to `FALSE`, a column.
+
+### TBL_LIST
+
+`=PLAIDXL.TABLE.TBL_LIST([project_id], [horizontal])`
+
+Lists the names of the tables in a project, sorted by name.
+
+- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `horizontal` — `TRUE` to list across a row. Defaults to `FALSE`, a column.
+
+### GET_COLUMNS
+
+`=PLAIDXL.TABLE.GET_COLUMNS(table_name, [column_filter], [orientation])`
+
+Lists the column names of a table in the selected project.
+
+- `table_name` — the table's name in PlaidCloud.
+- `column_filter` — a data type, such as `"text"`, to list only the columns of that type. Leave it out to list every column.
+- `orientation` — `"vertical"` (the default) for a column, or `"horizontal"` for a row.
+
+### DIM_LIST
+
+`=PLAIDXL.DIMENSION.DIM_LIST([project_id], [horizontal])`
+
+Lists the names of the dimensions in a project.
+
+- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `horizontal` — `TRUE` to list across a row. Defaults to `FALSE`, a column.
+
+## Tables
+
+### GET_TABLE
+
+`=PLAIDXL.TABLE.GET_TABLE(table_name, [project_id], [limit])`
+
+Returns a table's rows with a header row, spilled from the formula's cell. Empty values come back as blank cells.
+
+- `table_name` — the table's name in PlaidCloud.
+- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `limit` — the most rows to return. Defaults to 1,048,575, the most a worksheet holds below a header row.
+
+`GET_TABLE` returns every column. To choose columns or filter rows, [retrieve the table from the task pane](/reference/cli/plaidxl/retrieve/#retrieve-a-table) instead.
+
+## Hierarchies
+
+### GET_DIMENSION
+
+`=PLAIDXL.DIMENSION.GET_DIMENSION(dimension_name, start_node, [hierarchy], [orientation], [generation_limit])`
+
+Lays out a dimension's nodes, starting at `start_node` and working down through its descendants. Each generation is indented four spaces more than its parent, and Excel outline groups let you collapse and expand each level.
+
+- `dimension_name` — the dimension's name, or its path in the project.
+- `start_node` — the node to start from, such as the dimension's root.
+- `hierarchy` — the [alternate hierarchy](/guides/dimensions/dimensions/#alternate-attribute-hierarchies) to follow. Defaults to `"main"`.
+- `orientation` — `"vertical"` (the default) to list nodes down a column, or `"horizontal"` to list them across a row.
+- `generation_limit` — how many generations to return, counting `start_node` as the first: `2` returns the start node and its children. Leave it out to return every generation.
+
+### DRILL
+
+`=PLAIDXL.DRILL(dimension_name, start_node, drill_key, [hierarchy])`
+
+Returns `start_node` and the nodes below it that `drill_key` asks for, down a column, indented by generation and grouped in an Excel outline.
+
+- `dimension_name` — the dimension's name, or its path in the project.
+- `start_node` — the node to drill from.
+- `drill_key` — how far to drill, from [`DRILL_KEY`](#drill_key): every descendant, only the leaves, or a number of levels.
+- `hierarchy` — the alternate hierarchy to follow. Defaults to `"main"`.
+
+For example, `=PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("leaves"))` lists **Total** followed by every leaf region beneath it.
+
+The [drill commands on the ribbon](/reference/cli/plaidxl/ribbon/#drill-functions) do the same thing for a dimension and node you've typed in two cells, without writing a formula.
+
+## Values
+
+`CELL` and `CELLS` calculate a measure — a numeric column of a table — rolled up to the nodes you choose in one or more dimensions. Think of each call as one intersection in a report: **Revenue** for **EMEA** in **FY2026**.
+
+You describe the intersection with the building-block functions below, usually in their own cells, then pass those cells to `CELL` or `CELLS` in any order:
+
+| Argument | Built with | Required |
+|---|---|---|
+| The table to read | [`TABLE_REPR`](#table_repr) | Exactly one |
+| The column to aggregate | [`MEASURE`](#measure) for `CELL`, [`MEASURES`](#measures) or several `MEASURE` cells for `CELLS` | Yes |
+| How to aggregate it | [`MEASURE_TYPE`](#measure_type) | No — defaults to `sum` |
+| A filter on a column | [`DIMENSION_REPR`](#dimension_repr) | At least one, one per column |
+
+Each filter names a **column of the table** and a value. When that column is linked to a dimension in PlaidCloud, the value is a node, and the filter includes everything that rolls up to that node in the dimension's main hierarchy — on a **Region** column linked to a geography dimension, the node **EMEA** covers every country beneath it. On a column that isn't linked to a dimension, the filter matches the value exactly.
+
+The examples on this page use a table whose **Region** and **Period** columns are linked to dimensions. Use your own table's column names.
+
+### CELL
+
+`=PLAIDXL.CELL(table, measure, [measure_type], node, [node], ...)`
+
+Returns one number: the measure, aggregated across the rows that fall under every node you pass.
+
+```text
+A1  =PLAIDXL.REPR.TABLE_REPR("Sales")
+A2  =PLAIDXL.REPR.MEASURE("revenue")
+A3  =PLAIDXL.REPR.MEASURE_TYPE("sum")
+A4  =PLAIDXL.REPR.DIMENSION_REPR("Region", "EMEA")
+A5  =PLAIDXL.REPR.DIMENSION_REPR("Period", "FY2026")
+B1  =PLAIDXL.CELL(A1, A2, A3, A4, A5)
+```
+
+`B1` shows total revenue for EMEA in FY2026.
+
+### CELLS
+
+`=PLAIDXL.CELLS(table, measures, [measure_type], node, [node], ...)`
+
+Like `CELL`, but for several measures at once. Returns one number per measure, down a column, in the order you listed them.
+
+```text
+D1:F1  revenue | cost | units
+D2     =PLAIDXL.REPR.MEASURES(D1:F1)
+B2     =PLAIDXL.CELLS(A1, D2#, A3, A4, A5)
+```
+
+`D2#` passes the whole spilled result of `MEASURES`. `B2:B4` show revenue, cost and units for EMEA in FY2026.
+
+## Building Blocks
+
+These functions don't read data themselves. Each returns a short piece of text that describes one part of a calculation, ready to pass to `CELL`, `CELLS` or `DRILL`. Put them in cells you reference, so one change — a different period, say — updates every formula that uses them.
+
+### TABLE_REPR
+
+`=PLAIDXL.REPR.TABLE_REPR(table_name)`
+
+The table `CELL` and `CELLS` read from, by its name in the selected project.
+
+### MEASURE
+
+`=PLAIDXL.REPR.MEASURE(column_name)`
+
+The numeric column `CELL` aggregates.
+
+### MEASURES
+
+`=PLAIDXL.REPR.MEASURES(column_names)`
+
+Several measure columns for `CELLS`, from a range of cells that hold column names. The result spills one cell per column; pass it to `CELLS` with the spill operator, such as `D2#`.
+
+### MEASURE_TYPE
+
+`=PLAIDXL.REPR.MEASURE_TYPE(agg_function)`
+
+How to aggregate the measure. `agg_function` is one of these, in lowercase:
+
+| Value | Returns |
+|---|---|
+| `sum` | The total (the default when you don't pass a measure type) |
+| `mean` | The average |
+| `median` | The middle value |
+| `min` | The smallest value |
+| `max` | The largest value |
+| `std` | The standard deviation |
+| `var` | The variance |
+
+### DIMENSION_REPR
+
+`=PLAIDXL.REPR.DIMENSION_REPR(dimension_name, start_node)`
+
+A filter for `CELL` and `CELLS`. Pass one for each column you want to filter by.
+
+- `dimension_name` — the name of a **column in the table** — the column that holds the dimension's values, such as `"Region"`. It must match the column name exactly; a column that isn't in the table returns an error.
+- `start_node` — the node to roll up to, such as `"EMEA"`. On a column that isn't linked to a dimension, the value to match.
+
+Reference a cell for the node to build a grid: `=PLAIDXL.REPR.DIMENSION_REPR("Region", $A7)`. Leading and trailing spaces are ignored, so you can point it at the indented node names `DRILL` lays out.
+
+### DRILL_KEY
+
+`=PLAIDXL.REPR.DRILL_KEY(d_key)`
+
+How far [`DRILL`](#drill) goes below its start node. `d_key` is plain text:
+
+| `d_key` | Drills to |
+|---|---|
+| `"all"` | Every descendant |
+| `"leaves"` | Only the leaves — nodes with nothing below them |
+| `"1 level"`, `"2 levels"`, … | That many generations down |
+
+Write the number as digits: `"2 levels"`, not `"two levels"`. A leading `drill` is ignored, so `"drill 2 levels"` also works.
+
+With two or more levels, `DRILL` lists a generation at a time — all the children, then all the grandchildren — rather than each node directly under its parent. For a nested layout, use `"all"`, or [`GET_DIMENSION`](#get_dimension) with a `generation_limit`.
+
+<Aside type="note">
+`CELL`, `CELLS` and `DRILL` expect the output of these building-block functions. Build each argument with its function rather than typing the text yourself.
+</Aside>
+
+## Related
+
+- [Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/) — a hierarchy down the side, values across the top
+- [Work With Tables and Dimensions](/reference/cli/plaidxl/retrieve/) — choose the project the functions read from
+- [Using Dimensions](/guides/dimensions/dimensions/) — main and alternate hierarchies, and how nodes roll up
+- [Design a Dimension Hierarchy](/get-started/tutorials/design-a-dimension/) — build the hierarchy your report rolls up through
