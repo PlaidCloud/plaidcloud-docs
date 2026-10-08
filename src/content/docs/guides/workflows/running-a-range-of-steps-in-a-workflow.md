@@ -5,4 +5,6 @@ sidebar:
   order: 8
 ---
 
-While running individual steps is useful, it also may be useful to run subsets of an entire workflow for development, testing, or troubleshooting. To run a subset of steps, select all the steps you would like to run and select **Run Selected** from the **Actions** menu at the top of the workflow steps hierarchy. This will trigger a normal workflow processing but start the workflow at the beginning of the selected steps and stop once the last selected step is complete.
+While running individual steps is useful, it also may be useful to run subsets of an entire workflow for development, testing, or troubleshooting. To run a subset of steps, select all the steps you would like to run and select **Run Selected Step(s)** from the **Actions** menu at the top of the workflow steps hierarchy. This will trigger a normal workflow processing but start the workflow at the beginning of the selected steps and stop once the last selected step is complete.
+
+If the last selected step is inside a group set to [**Execute in Parallel**](/guides/workflows/controlling-parallel-execution/), the run also waits for every other selected step in that group to finish before it stops.
