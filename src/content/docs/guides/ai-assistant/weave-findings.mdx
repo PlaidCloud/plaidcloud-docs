@@ -68,10 +68,10 @@ driver column must have the role "Split Value".
 Weave hasn't checked the step "Regional Split" — its column mapping is empty.
 ```
 
-When a project has tables written on a schedule, the first line counts them
-separately: *Weave fully checked 31 of the 36 steps and workflows, and 3 of the 4
-tables written on a schedule, in "Finance", and found 2 problems in the parts it
-could judge.*
+When a project has tables written on a schedule or given a freshness threshold,
+the first line counts them separately: *Weave fully checked 31 of the 36 steps
+and workflows, and 3 of the 4 tables expected to be kept up to date, in
+"Finance", and found 2 problems in the parts it could judge.*
 
 The fraction in the first line is deliberate. Three steps checked and found
 clean is not the same statement as a clean project, and the opening line carries
@@ -252,7 +252,8 @@ when:
 
 A table isn't checked at all when:
 
-- no workflow with an enabled scheduled event of its own writes it. A workflow
+- it has no freshness threshold (below), and no workflow with an enabled
+  scheduled event of its own writes it. A workflow
   that another workflow runs, through a Run Workflow or Macro step or as a
   workflow placed inside it, counts only through its own schedule;
 - the only steps that write it are disabled, sit in a disabled container, or sit
@@ -274,6 +275,53 @@ Where the step that last wrote a table is one you don't have access to, the
 finding says "a step you don't have access to" and still gives the time of the
 write. "180 days" in a finding is how far back Weave's run history goes, not a
 fact about the table.
+
+**Tables with a freshness threshold.** A freshness threshold is the most hours
+that may pass between writes of a table, from 1 to 4,320 (180 days). A table
+with a threshold is judged against it
+instead of against the schedules of the workflows that write it. That lets you
+set a looser or tighter bound than a schedule gives, and check a table that no
+scheduled workflow writes. As with schedules, a table counts as written when a
+step that writes it finishes.
+
+- **Table not written within its set time.** No step has written the table for
+  longer than its threshold. The finding gives the time of the last write and
+  the threshold.
+
+Weave reports a table with a threshold as unchecked, with the reason, rather
+than as not written, when:
+
+- a workflow that writes it is running, is queued, or has just finished and its
+  results aren't recorded yet;
+- a workflow that writes it started a run after the threshold passed and
+  finished it, but the record of the writing step from that run is missing;
+- a step anywhere in the project picks the table it writes with a variable
+  whose value Weave can't work out, so it might write this table;
+- no step in the project writes it, such as a table you load by hand, so Weave
+  has no write to measure from; or
+- the run history can't be read.
+
+A skipped step doesn't make a table with a threshold unchecked: the table still
+hasn't been written for longer than its threshold. A view can't have a
+threshold.
+
+To set a threshold, ask an AI assistant connected through PlaidCloud MCP to set
+the table's freshness threshold (its tool is `table_upsert`, with
+`freshness_max_age_hours`), or call the platform API:
+
+```
+PUT /rest/v1/analyze/weave/freshness
+{"project_id": "<project>", "table_id": "<table>", "freshness_max_age_hours": 24}
+```
+
+Send `null` in place of the number to clear it, and the table goes back to being
+judged on its writers' schedules. `GET
+/rest/v1/analyze/weave/freshness?project_id=<project>&table_id=<table>` returns
+the threshold and `scheduled_writers`, the scheduled workflows whose schedules
+the table is judged on when it has no threshold; an empty list means Weave
+doesn't check the table without one. Reading a threshold needs the
+`analyze.table.read` role and setting one needs `analyze.table.write`. A
+threshold can't be changed while the project is locked.
 
 **Tables a workflow reads, written to since.** For a workflow that reads a table
 another workflow writes, Weave checks that no other workflow has written to the
