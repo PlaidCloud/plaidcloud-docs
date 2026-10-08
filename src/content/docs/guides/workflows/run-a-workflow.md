@@ -79,7 +79,7 @@ What "where it left off" means depends on how the workflow runs:
 
 | Execution | On resume |
 |---|---|
-| Serial | Restarts at the step that was running when the run ended, and continues from there. |
+| Serial | Restarts at the step that was running when the run ended, and continues from there. If that step is inside a group, Resume picks up the whole top-level group holding it: steps in the group that already finished successfully are left alone, the others run, and the run continues after the group. |
 | Parallel | Re-runs every step that had not yet finished successfully, and leaves completed steps alone. |
 | Advanced (graph) | Re-runs the node that failed and everything still waiting on it, and leaves completed nodes alone. |
 
