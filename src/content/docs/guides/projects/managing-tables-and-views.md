@@ -31,6 +31,16 @@ Searching for tables is accomplished by using the filter box in the lower left o
 
 
 
+## Import a CSV File
+
+**To turn a CSV file into a new table in this project:**
+
+1. Drag the file from your computer onto the project's **Tables** list, or choose **New** > **Table from CSV File** on the toolbar and drop the file onto the box or click **Choose a CSV file**.
+2. PlaidCloud uploads the file to your **Personal Temp Drive**, or to the workspace's **Temp Drive** if you don't have one, and imports it into a new table at the top level of the list, named after the file: `Sales Data.csv` becomes `sales_data`. If the project already has a table with that name, the new one gets a number, such as `sales_data_2`.
+3. The list refreshes with the new table selected, and **Your data at a glance** opens on it. See [Start With Your Own CSV](/get-started/quickstart/#start-with-your-own-csv) for what the panel shows.
+
+Only files ending in `.csv` are accepted. You need permission to create tables and to write to document storage, and a locked project doesn't accept a CSV until it is unlocked. If the import fails, the window says why and your project is left as it was. PlaidCloud deletes the uploaded file from the temp drive once the import has finished, whether or not it succeeded; failing that, the temp drive deletes it after a day.
+
 ## Move
 
 
