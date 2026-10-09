@@ -34,7 +34,7 @@ When **Send** is `One request per table row`, pick a **Driver Table** (choose it
 
 The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor.
 
-**Retries** apply only to idempotent methods (GET/HEAD/OPTIONS/DELETE); a POST/PUT/PATCH is always sent once so a non-idempotent body is never re-sent. **Timeout (s)** is the per-request limit, capped at 600.
+**Retries** apply only to idempotent methods (GET/HEAD/OPTIONS/DELETE); a POST/PUT/PATCH is always sent once so a non-idempotent body is never re-sent. **Retries** accepts 0 to 100. **Timeout (s)** is the per-request limit, 1 to 600 s; test requests wait at most 300 s. See [REST Request Step](/guides/workflows/rest-request-step/) for the catalog filter, paste and drop, JSON tools, request warnings, and test results.
 
 ### Response Destination
 
