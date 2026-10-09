@@ -1,13 +1,13 @@
 ---
 title: Text NLP AI
-description: Run one of five LLM-backed NLP tasks — entity extraction, part-of-speech tagging, summarization, zero-shot classification, or key/value extraction — over a text column.
+description: Run an LLM-backed task over each row — entity extraction, part-of-speech tagging, summarization, zero-shot classification, key/value extraction, or your own prompt.
 sidebar:
   order: 33
 ---
 
 ## Description
 
-The **Text NLP AI** step runs one of five per-row NLP tasks over a text column, each as a batch of structured (forced tool-use) LLM calls: **Named Entity Recognition**, **POS Tagging**, **Summary**, **Zero-shot Classification**, and **Key/Value Extraction**. It runs as a managed PlaidCloud job (like [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and the [LLM Step](/reference/workflow-steps/general/llm-step/)), so it does not compete with the rest of the workflow for resources.
+The **Text NLP AI** step runs one of six per-row tasks over your data, each as a batch of structured (forced tool-use) LLM calls: **Named Entity Recognition**, **POS Tagging**, **Summary**, **Zero-shot Classification**, **Key/Value Extraction**, and **Prompt**. It runs as a managed PlaidCloud job (like [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and the [LLM Step](/reference/workflow-steps/general/llm-step/)), so it does not compete with the rest of the workflow for resources.
 
 Because every task is a real LLM call, results are not bit-for-bit reproducible between runs — see [Non-Determinism](#non-determinism-llm-backed-results).
 
@@ -15,7 +15,7 @@ Because every task is a real LLM call, results are not bit-for-bit reproducible 
 
 - **Source / Output tables** — the input table and the table the results are written to.
 - **Text Column** (`field`) — the column each task reads.
-- **Task** (`task`) — one of `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`.
+- **Task** (`task`) — one of `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`.
 - **Language** (`language`) — the text's language, passed to the model. Defaults to `en`.
 - **LLM Connection** (`llm_connection_id`) — an Anthropic LLM connection. Leave blank to use the workspace default.
 - **Model** (`llm_model`) — leave blank to use the connection's default model.
@@ -24,7 +24,7 @@ Because every task is a real LLM call, results are not bit-for-bit reproducible 
 
 ## Tasks
 
-Two tasks return one output row per input row (**row-preserving**); three return zero or more rows per input row and carry the source's identifier columns (`id_columns`) onto each one (**row-exploding**).
+Three tasks return one output row per input row (**row-preserving**); three return zero or more rows per input row and carry the source's identifier columns (`id_columns`) onto each one (**row-exploding**).
 
 | Task | Fan-out | Output columns | Task-specific fields |
 | --- | --- | --- | --- |
@@ -32,9 +32,12 @@ Two tasks return one output row per input row (**row-preserving**); three return
 | POS Tagger (`pos`) | Row-exploding | `token`, `pos` (universal POS tag, for example `NOUN`, `VERB`, `ADJ`) | None. |
 | Summary (`summary`) | Row-preserving | `summary` | **Summary Length** (`summary_length`) — maximum sentences, 1 to 20. Defaults to 3. |
 | Zero-shot Classification (`zeroshot`) | Row-preserving | `label`, `score` (0 to 1) | **Label Field** (`label_field`) — the source column holding each row's candidate labels; without it the model has nothing to choose from. **Multi-Label** (`multi`) — allow more than one label per row (joined with `, `) instead of picking the single best. |
+| Prompt (`prompt`) | Row-preserving | `answer` | **Prompt** (`prompt`) — the instruction applied to every row, required. **Input Fields** (`input_fields`) — the columns sent to the model with the prompt, as one record per row; blank sends the **Text Column**. |
 | Key/Value Pairs (`keyvalue`) | Row-exploding | `key`, `value` | **Key Field** (`key_field`) — the source column holding each row's candidate keys to extract; leave blank to let the model find keys freely. **Fuzzy** (`fuzzy`) — match candidate keys loosely instead of exactly. |
 
 **ID Columns** (`id_columns`) carry identifying columns from the source table onto every output row of a row-exploding task, so you can trace an extracted entity or pair back to its source record. An ID column can't share its name with one of the task's own output columns: naming an ID column `entity_type` on an `ner` task, for example, is refused when you save the step, with *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+The Prompt task is for any per-row question the other tasks don't cover, such as *Classify the sentiment of this review.* Field values are sent as data, never as instructions to the model. If a batch fails, its rows are kept with an empty `answer` and the step warns.
 
 Saving is also refused without a source table (*Source table is required.*), or with a **Batch Size** or **Summary Length** outside the ranges above.
 
@@ -47,5 +50,6 @@ Every task is a real call to an LLM, so results can vary between runs even with 
 ## Related
 
 - [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) — fit a model rather than call an LLM per row.
-- [LLM Step](/reference/workflow-steps/general/llm-step/) — a free-form agentic LLM call with scoped read/write project access, rather than one of these five fixed per-row tasks.
+- [LLM Step](/reference/workflow-steps/general/llm-step/) — a free-form agentic LLM call with scoped read/write project access, rather than one of these fixed per-row tasks.
 - [Alteryx Conversion Matrix](/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification, and Key/Value Pairs all convert to this step.
+- [Migrate Savant Analyses](/guides/workflows/migrate-savant-analyses/) — Savant Infer and Vision agents convert to the Prompt task.
