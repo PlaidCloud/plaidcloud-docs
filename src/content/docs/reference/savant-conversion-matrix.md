@@ -37,11 +37,11 @@ External-system connectors are **connected, not converted** — see
 | Measure | Count |
 | --- | --- |
 | Permutations total | 751 |
-| G1 passed (converts and validates) | 649 of 751 |
-| G2 passed (runs) | 592 of 751 |
-| G3 passed (output matches the oracle) | 265 of 751 |
+| G1 passed (converts and validates) | 684 of 751 |
+| G2 passed (runs) | 562 of 751 |
+| G3 passed (output matches the oracle) | 273 of 751 |
 
-Target status across the 33 agents: 18 Full, 7 Partial, 8 Not supported.
+Target status across the 33 agents: 18 Full, 15 Partial, 0 Not supported.
 
 **G1** is a permutation that converts and validates, **G2** one that runs, and **G3** one whose output matches its oracle. This page is generated from the converter's measured results, so it always reflects what the converter does today.
 
@@ -50,50 +50,50 @@ Target status across the 33 agents: 18 Full, 7 Partial, 8 Not supported.
 | Agent | Target status | Measured status | PlaidCloud Equivalent | Permutations | Converts |
 | --- | --- | --- | --- | --- | --- |
 | Adapter Agent (`adapter`) | Full | Partial | Select and schema projection step | G1 11 / G2 11 / G3 1 of 11 | Renames, retypes, and orders fields. |
-| API / Infer Agent (legacy service) (`service`) | Not supported | Not supported | Rebuild with a REST Request or LLM step | G1 4 / G2 4 / G3 0 of 4 | Named placeholder. |
-| API Agent (`apiService`) | Not supported | Not supported | Rebuild with a REST Request step | G1 14 / G2 14 / G3 0 of 14 | Named placeholder. |
+| API / Infer Agent (legacy service) (`service`) | Partial | Partial | Same as the API or Infer Agent, by serviceType | G1 4 / G2 0 / G3 0 of 4 | An LLMService converts as the Infer Agent and an APIService as the API Agent. |
+| API Agent (`apiService`) | Partial | Partial | Table Extract, [REST Request](/reference/workflow-steps/general/rest-request/), and a left join back | G1 14 / G2 0 / G3 0 of 14 | One request per input row; the response body lands in a text column and every input row is kept. |
 | Blend Agent (`blend`) | Full | Partial | [Inner Join](/reference/workflow-steps/tables/table-inner-join/), [Outer Join](/reference/workflow-steps/tables/table-outer-join/), [Anti Join](/reference/workflow-steps/tables/table-anti-join/) | G1 33 / G2 31 / G3 25 of 35 | Inner, left, right, full, and anti blends, with matched and unmatched streams. |
 | Dedupe Agent (`deduplicate`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with distinct rows | G1 7 / G2 7 / G3 6 of 8 | Keeps the first record per key and routes duplicates to a second stream. |
 | Destination Agent (`destination`) | Partial | Partial | [Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), or a table | G1 40 / G2 29 / G3 38 of 43 | CSV and Excel destinations convert fully. Connector destinations without a PlaidCloud export step write a CSV or table and warn with the original target. |
 | Explode Agent (`explode`) | Full | Full | [Cross Join](/reference/workflow-steps/tables/table-cross-join/) | G1 2 / G2 2 / G3 2 of 2 | Cross-joins a small side against the main stream. |
 | Filter Agent (`filter`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 70 / G2 70 / G3 39 of 70 | Splits records by wizard or expression into true and false paths. |
 | Filter Pushdown (`pdfilter`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 11 / G2 11 / G3 11 of 12 | Database-side filter, converted the same as Filter. |
-| Format Agent (`format`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames | G1 21 / G2 18 / G3 0 of 22 |
+| Format Agent (`format`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames | G1 21 / G2 18 / G3 0 of 22 | Header-row promotion is a named placeholder (it needs the row at convert time). Renames, retypes, hides, and fills convert. |
 | Fuse Agent (`fuzzy_match`) | Partial | Partial | [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) | G1 5 / G2 0 / G3 0 of 5 | Matches records on keys and thresholds through the fuzzy-match executor. Deterministic, never parity. |
 | Group (`group`) | Full | Full | Canvas container | G1 3 / G2 0 / G3 3 of 3 | Preserved as workflow organization. |
-| Infer Agent (`gen_ai`) | Not supported | Not supported | Rebuild with the LLM Step | G1 9 / G2 9 / G3 0 of 10 | Named placeholder; the node is saved as a pass-through that refuses at run time. |
+| Infer Agent (`gen_ai`) | Partial | Partial | [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 10 / G2 0 / G3 0 of 10 | The prompt runs per row over the input fields; the answer lands in an AI Answer column beside every input column. |
 | JSON Agent (`json`) | Partial | Partial | [JSON Parse](/reference/workflow-steps/tables/table-json-parse/) | G1 6 / G2 5 / G3 0 of 6 | Flattens JSON fields into columns and rows. Keys come from references or schema. |
 | Notes Agent (`notes`) | Full | Full | Canvas annotation | G1 1 / G2 0 / G3 1 of 1 | Preserved as workflow context. |
 | Pivot Agent (`pivot`) | Full | Partial | [Pivot](/reference/workflow-steps/tables/table-pivot/) | G1 12 / G2 12 / G3 0 of 12 | Pivots rows to columns with aggregation. |
-| Recursion Agent (`hierarchy`) | Not supported | Not supported | Rebuild with a workflow loop | G1 13 / G2 13 / G3 0 of 13 | Named placeholder. |
+| Recursion Agent (`hierarchy`) | Partial | Partial | Table Extract, repeated inner joins, Union All, and a row-count assertion | G1 13 / G2 13 / G3 0 of 13 | Walks a parent/child tree to a fixed depth, aggregating each node over its ancestors and itself. |
 | Sample Agent (`sample`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a row limit | G1 5 / G2 5 / G3 4 of 8 | Keeps the first N rows, optionally per group. |
-| Search and Replace (`search_replace`) | Not supported | Not supported | Lookup-and-replace transform | G1 8 / G2 8 / G3 0 of 8 | Named placeholder; rebuild with a lookup-and-replace transform. |
+| Search and Replace (`search_replace`) | Partial | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with nested replace expressions | G1 8 / G2 8 / G3 8 of 8 | Literal find/replace rules, case-sensitive or not, whole word or not, over the chosen text fields. |
 | Source Agent (`source`) | Full | Partial | Import steps bound through `source_bindings` ([Import: CSV](/reference/workflow-steps/import/import-csv/), [Import: Excel](/reference/workflow-steps/import/import-excel/), [Import: SQL](/reference/workflow-steps/import/import-sql/)) or an existing table | G1 29 / G2 29 / G3 27 of 31 | Reads the bound table or document; an unbound source creates an empty import and a warning. |
-| Spatial Match Agent (`spatial_match`) | Not supported | Unmeasured | [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) | G1 0 / G2 0 / G3 0 of 17 | Named placeholder; rebuild with the native Spatial Match step. |
-| Spatial Summarize Agent (`spatial_summarize`) | Not supported | Unmeasured | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) | G1 0 / G2 0 / G3 0 of 7 | Named placeholder; rebuild with the native Spatial Combine step. |
+| Spatial Match Agent (`spatial_match`) | Partial | Partial | [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), Cross Join, or Find Nearest | G1 17 / G2 1 / G3 0 of 17 | Intersects, within, contains, touches, crosses, overlaps, equals, disjoint and multi-rule matches, with matched and unmatched streams. |
+| Spatial Summarize Agent (`spatial_summarize`) | Partial | Partial | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | G1 7 / G2 2 / G3 0 of 7 | Union, intersect, bounding box, geometric center, and polyline or polygon builds, per group. |
 | Split Agent (`split`) | Partial | Partial | Split columns transform | G1 8 / G2 6 / G3 0 of 9 | Splits text into columns or rows on a separator. The number of columns comes from downstream references or adapter specs. |
 | Split Output (`outlet`) | Full | Partial | Workflow edge | G1 10 / G2 8 / G3 8 of 10 | Routes a named output to its consumers. |
 | Stack Agent (`multi_stack`) | Full | Full | [Union All](/reference/workflow-steps/tables/table-union-all/) | G1 7 / G2 7 / G3 7 of 7 | Stacks any number of inputs by name or position. |
 | Summarize Agent (`summarize`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 24 / G2 22 / G3 3 of 30 | Groups and aggregates, including first/last by a deterministic sort. |
 | Summarize Pushdown (`pdsummarize`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 10 / G2 10 / G3 10 of 10 | Database-side aggregation, converted the same as Summarize. |
-| Text (`text`) | Full | Full | Canvas annotation | G1 2 / G2 0 / G3 2 of 2 |
+| Text (`text`) | Full | Full | Canvas annotation | G1 2 / G2 0 / G3 2 of 2 | Preserved as workflow context. |
 | Time Series Agent (`rollup`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) aggregation over a period-bucket expression | G1 24 / G2 24 / G3 3 of 28 | Rolls records up to day, week, month, quarter, or year periods. Period labels and empty-period fill are noted. |
 | Transform Agent (`edit`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | G1 47 / G2 47 / G3 28 of 48 | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number), evaluated in order. |
 | Unpivot Agent (`unpivot`) | Full | Full | [Melt](/reference/workflow-steps/tables/table-melt/) | G1 4 / G2 4 / G3 4 of 4 | Converts columns to rows as a name/value pair. |
-| Vision Agent (`vision`) | Not supported | Not supported | Rebuild with the LLM Step or image OCR | G1 5 / G2 5 / G3 0 of 5 | Named placeholder. |
+| Vision Agent (`vision`) | Partial | Partial | Blob input, image OCR, then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 5 / G2 0 / G3 0 of 5 | Each document is read (PDF text layer, else OCR) and the prompt runs over that text. |
 | XML Agent (`xml`) | Partial | Partial | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | G1 7 / G2 5 / G3 0 of 7 | Extracts XML fields with simple //a/b paths. Predicates, attributes, and XML to JSON are named placeholders. |
 
 Wiring, canvas, and pushdown variants (Split Output, Group, Text, Filter Pushdown, Summarize Pushdown) are Savant node types without a help-center agent article of their own; each converts as the agent it mirrors.
 
 ## Expression Language
 
-Savant expression functions and operators convert to PlaidCloud expressions. Target status: **Partial**; measured status: **Partial**. Functions and operators convert to PlaidCloud expressions; a function with no equivalent is flagged by name. G1 173 / G2 172 / G3 42 of 225.
+Savant expression functions and operators convert to PlaidCloud expressions. Target status: **Partial**; measured status: **Partial**. Functions and operators convert to PlaidCloud expressions; a function with no equivalent is flagged by name. G1 183 / G2 171 / G3 42 of 225.
 
 | Function group | Permutations | G1 / G2 / G3 passed |
 | --- | --- | --- |
 | Date and DateTime | 56 | 52 / 52 / 6 |
 | Formatting | 9 | 7 / 7 / 3 |
-| Geospatial | 17 | 0 / 0 / 0 |
+| Geospatial | 17 | 10 / 0 / 0 |
 | Keywords | 2 | 2 / 2 / 2 |
 | Logical | 2 | 2 / 2 / 1 |
 | Math | 15 | 14 / 14 / 0 |
@@ -101,7 +101,7 @@ Savant expression functions and operators convert to PlaidCloud expressions. Tar
 | Operator | 32 | 32 / 32 / 19 |
 | Registry-only (no help article) | 17 | 16 / 16 / 1 |
 | Text | 43 | 38 / 37 / 4 |
-| Type coercion | 12 | 10 / 10 / 6 |
+| Type coercion | 12 | 10 / 9 / 6 |
 
 ## Export Formats
 
@@ -111,13 +111,13 @@ The loader accepts every observed export shape — flat, model-wrapped, server-r
 
 | Agent | Plan | Measured status |
 | --- | --- | --- |
-| Infer Agent (`gen_ai`) | Named placeholder. Rebuild with the LLM Step. | Not supported |
-| Vision Agent (`vision`) | Named placeholder. Rebuild with the LLM Step or image OCR. | Not supported |
+| Infer Agent (`gen_ai`) | Converts to the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Partial |
+| Vision Agent (`vision`) | Converts to the Blob input, image OCR, then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Partial |
 | Fuse Agent (`fuzzy_match`) | Converts to the [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) | Partial |
-| Spatial Match Agent (`spatial_match`) | Named placeholder. [Spatial Match](/reference/workflow-steps/spatial/spatial-match/). | Unmeasured |
-| Spatial Summarize Agent (`spatial_summarize`) | Named placeholder. [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/). | Unmeasured |
+| Spatial Match Agent (`spatial_match`) | Converts to the [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), Cross Join, or Find Nearest | Partial |
+| Spatial Summarize Agent (`spatial_summarize`) | Converts to the [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | Partial |
 
-A placeholder keeps the node on the canvas as a pass-through that refuses by name at run time, so a downstream step never reads a silently missing result. The Infer, Vision, API, and Recursion agents become mappings when a customer analysis needs them.
+A placeholder keeps the node on the canvas as a pass-through that refuses by name at run time, so a downstream step never reads a silently missing result.
 
 ## Analysis Parameters
 
