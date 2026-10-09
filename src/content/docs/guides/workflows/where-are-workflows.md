@@ -35,6 +35,10 @@ If you expect to see specific workflows and don't, your role may be filtering th
 
 Your role also decides whether you can change a step. If you can open a workflow but not modify it, the step form opens read-only — its fields are disabled and its **Save** button is hidden — so you can read a step's configuration without being able to alter it. This applies wherever the form opens: the workflow table's gear icon and right-click menu, the Visual Canvas, the project **Steps** grid, and the **New Step** menu.
 
+## Unsaved Changes in a Step Window
+
+A step window marks unsaved changes with a **•** in its title. Closing the window with **Esc**, the **X**, **Cancel**, or its tab button asks **Discard unsaved changes?** so an edit isn't lost by accident. Choose **Discard** to close without saving, or go back to keep editing.
+
 ## Next Steps
 
 - [Workflow explorer](/guides/workflows/workflow-explorer/) — what to do inside an open workflow
