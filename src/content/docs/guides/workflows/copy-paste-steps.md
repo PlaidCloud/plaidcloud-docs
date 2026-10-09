@@ -55,7 +55,7 @@ A linked step also can't be placed into a workflow that already contains it — 
 On an Advanced workflow you can copy and paste steps directly on the canvas with the keyboard, and the links between them come along.
 
 
-Select the steps you want — drag a box around them, or click one and Shift- or Ctrl/Cmd-click to add more — and press **Ctrl/Cmd+C**. Move to the workflow you want them in, whether in this project or another, point at where they should go, and press **Ctrl/Cmd+V**. The steps are copied in, arranged the way they were, and left selected so you can drag them into place. The same actions are on the right-click menu as **Copy N Steps** and **Paste N Steps Here**.
+Select the steps you want — drag a box around them, or click one and Shift- or Ctrl/Cmd-click to add more — and press **Ctrl/Cmd+C**. Move to the workflow you want them in, whether in this project or another, point at where they should go, and press **Ctrl/Cmd+V**. The steps are copied in, arranged the way they were, and left selected so you can drag them into place. You can also do both without the keyboard. Right-click empty space on the canvas and choose **Copy N Steps** (shown when steps are selected) or **Paste N Steps Here** (shown when the clipboard holds steps); the pasted steps land where you clicked. When the clipboard has steps, the toolbar shows "N steps from *workflow*" with a **Paste** button that pastes into the middle of the part of the canvas you are looking at.
 
 
 **A group comes across as a group.** Click a group's header and the group and all of its steps are selected together; copy, and the group box and its members paste in as one. A box drawn around a whole group in the marquee selects it the same way.
