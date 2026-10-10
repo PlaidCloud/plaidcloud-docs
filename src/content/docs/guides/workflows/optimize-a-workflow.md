@@ -13,7 +13,7 @@ Optimize works on Advanced (DAG) workflows. For a Standard workflow, choose **Co
 
 1. In the **Workflows** list, right-click an Advanced workflow and choose **Optimize...**. The workflow must not be running or paused, and you need write access to it.
 2. The **Optimize Workflow** window shows a headline such as *34 steps → 30 steps · 12 steps can run in parallel*. When the workflow has run history, it adds *~11 s faster per run*.
-3. Below the headline is one row per change, each with a checkbox, the steps it touches, what it means for the workflow, and the time it saves. All are checked; clear the ones you don't want.
+3. Below the headline is one row per change, each with a checkbox, the steps it touches, what it means for the workflow, and the time it saves, measured as the change in wall-clock run time. All are checked; clear the ones you don't want.
 4. A **Can't optimize** list names the steps Optimize left alone and the specific reason for each; see [Why a Step Can't Be Optimized](#why-a-step-cant-be-optimized).
 5. Choose **Apply N changes**.
 
@@ -56,7 +56,7 @@ Every row in **Can't optimize** names its own cause:
 | A table read by more than one step | The table in the middle of the chain is needed elsewhere. |
 | Disabled step | A disabled step isn't merged and doesn't carry an ordering. |
 | Member of an execution container | Steps in an execution container run as a unit. |
-| No recorded row count | The source table has no row count, so the merge can't be sized for verification. |
+| No row count available | The source table's row count can't be read, even live, so the merge can't be sized for verification. |
 | Table can't be identified | The step's table name matches no table or more than one, uses a variable, or points to another project. |
 | Row-level security or too large | The table is governed by row-level security, or is too large to verify automatically. |
 
