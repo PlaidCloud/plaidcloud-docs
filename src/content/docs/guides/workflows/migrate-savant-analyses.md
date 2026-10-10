@@ -15,7 +15,8 @@ Conversion reads only the export file you point it at. It never contacts the sys
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
 - Notes and groups arrive on the canvas as notes and groups.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
-- Every Savant agent type converts. A configuration the converter can't reproduce, such as a spatial match by distance, arrives as a named placeholder step.
+- Every Savant agent type converts. The few configurations the converter can't reproduce arrive as named placeholder steps. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
+- A step whose Savant behavior the help documentation doesn't spell out is converted to the most likely reading and carries a **semantics assumed** note in the conversion report. Check those steps against your Savant output.
 
 ## Before You Start
 
@@ -122,15 +123,33 @@ Most agents convert to the step you would build by hand; the [Savant Conversion 
 | --- | --- | --- |
 | Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Every row is answered on every run, and each call has a cost. The step uses the Anthropic LLM connection of your workspace whichever provider Savant used. A batch that fails keeps its rows with an empty answer and warns. |
 | Vision Agent (`vision`) | A document extract step, image OCR, then the AI/NLP **Prompt** task. Each document is read from its PDF text layer, or by OCR when it has none, and the prompt runs over that text. | Same LLM caveats as the Infer Agent. A document that isn't found is skipped and the step warns with its path. |
-| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The response body lands in a text column. | The export carries no credentials, so requests go out unauthenticated; bind a REST connection whose base URL owns the host, or add headers. A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A secret in the URL is stored as a plain-text variable. A failed request leaves its row with an empty response. Only an `http://` or `https://` URL converts, and row data can't choose the host. |
-| Recursion Agent (`hierarchy`) | A bounded walk up the parent chain: repeated inner joins, a union, an aggregate over each row's ancestors and itself, and a row-count check. A row with a blank parent, or naming itself as its parent, is a root. | A chain deeper than 17 levels, or a loop in the parent ids, fails the run at the depth check, and nothing downstream is written. |
-| Search and Replace (`search_replace`) | A [Table Extract](/reference/workflow-steps/tables/table-extract/) that applies each find and replace rule in order to the chosen text columns, case-sensitive or not, whole word or not. | Rules are literal text, not patterns. |
-| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A within-distance match isn't supported and arrives as a placeholder. |
+| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The response body lands in a text column. | The export carries no credentials, so requests go out unauthenticated; add the credential to a REST connection whose base URL owns the host. Settings the converter doesn't recognize map to headers, the body, and parameters. Any header, parameter, body field, or path segment with a credential-like name or value is withheld, and the conversion report's warning names its position. A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A secret in the URL is stored as a plain-text variable. A failed request leaves its row with an empty response. Only an `http://` or `https://` URL converts, and row data can't choose the host. |
+| Recursion Agent (`hierarchy`) | A bounded walk up the parent chain: repeated inner joins, a union, an aggregate over each row's ancestors and itself, and a row-count check. A row with a blank parent, or naming itself as its parent, is a root. | A chain deeper than 17 levels, or a loop in the parent ids, fails the run at the depth check, and nothing downstream is written. Duplicate rows and rows with several parents each keep their own values, and a loop stops at the repeated node. |
+| Search and Replace (`search_replace`) | A [Table Extract](/reference/workflow-steps/tables/table-extract/) that applies each rule in order to the chosen text columns, case-sensitive or not, whole word or not. Each rule runs in its mode: replace the matched text, replace the whole cell when it contains the text, replace the whole cell when it matches exactly, or append to the cell. | Rules are literal text, not patterns. |
+| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A within-distance match converts too. The distance is in kilometers when the rule gives no unit. |
 | Spatial Summarize Agent (`spatial_summarize`) | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) for union, intersect, and bounding box, plus centroid and point-to-line steps for geometric center and line or polygon builds. | None beyond the matrix status. |
 
 `GEO_POINT`, `GEO_TYPE`, and `GEO_SPATIAL_DISTANCE` convert to expressions. An edit whose whole expression is another `GEO_*` function, such as `GEO_AREA` or `GEO_UNION`, converts to the matching spatial step. Geometry travels as WKT text.
 
 A source that reads binary files, such as the documents a Vision agent reads, converts to a document extract of the bound document, or of the file expected at the unbound sources path.
+
+## Behaviors Worth Knowing
+
+These conversions behave as follows.
+
+| Agent | Behavior |
+| --- | --- |
+| Blend (`blend`) | Joins on OR-combined predicates, contains, and is-part-of. Outer-excluding-inner blends and the unmatched outputs convert to the matching join streams. |
+| Dedupe (`deduplicate`) | Keeps the first record per key within each Group By group. The duplicates flag marks every member of a duplicate group, and duplicates can also route to a second stream. |
+| Summarize (`summarize`) | Window aggregates add the aggregate to every row instead of collapsing groups. |
+| Sample (`sample`) | First N rows, per group or overall, a random percent or number of rows, or one row in every Nth. |
+| Time Series (`rollup`) | Month periods are labeled `YYYY-MM`, and periods with no records appear with zeros. Records with a NULL date are excluded. |
+| Pivot (`pivot`) | COUNT counts rows. |
+| XML (`xml`) | SELECT extracts elements, paths can carry namespaces, and TO_JSON converts XML to JSON. |
+| JSON (`json`) | Flattens into wide columns. Text that isn't valid JSON gives NULL, and arrays come out as text. |
+| Split (`split`) | Splits into columns. With no downstream references to set the count, it makes 2 columns. |
+
+Expression functions now convert for `sha1`, `NOT_TRUE`, `LEVENSHTEIN`, the daylight saving time functions (`DST`), and regular expression functions that take an nth match. `DAY_OF_WEEK` numbers Sunday as 7, and `DAY_NAME` returns the day's name.
 
 ## Read the Conversion Report
 
@@ -138,7 +157,7 @@ The response carries the conversion report: a summary of how many steps converte
 
 ## Placeholders for Unconverted Configurations
 
-A configuration the converter doesn't reproduce, such as a spatial match by distance, is created as a placeholder step that carries the agent's name. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
+A configuration the converter doesn't reproduce is created as a placeholder step that carries the agent's name. Two remain: `JWT_ENCODE`, because the signing key would sit in step configuration, and the Format Agent's replace-names-with-row option, which needs the row's values at conversion time. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
 
 Set `allow_unconverted_placeholders` to `true` to import each placeholder as a pass-through step instead. The run then continues past it and the placeholder's output is its input. Rebuild the capability with a native step when its result matters. 
 
@@ -152,7 +171,6 @@ Set `allow_unconverted_placeholders` to `true` to import each placeholder as a p
 ## Known Limitations
 
 - Date and timestamp conversions of text that isn't in a recognizable date format can fail the run on that row.
-- A JSON agent over text that isn't valid JSON can fail the run.
 - Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs.
 - A hierarchy deeper than 17 levels fails the run.
 - An Adapter agent that passes through a source with no declared columns keeps only the columns later steps reference.
