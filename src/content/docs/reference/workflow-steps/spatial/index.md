@@ -57,6 +57,9 @@ scale with the workflow pod.
 - [Spatial Poly-Build](/reference/workflow-steps/spatial/spatial-poly-build/) — build a polygon or convex hull per group of points
 - [Spatial Poly-Split](/reference/workflow-steps/spatial/spatial-poly-split/) — one row per vertex, component polygon, or hole
 - [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) — dissolve each group's geometries into one
+- [Spatial Centroid](/reference/workflow-steps/spatial/spatial-centroid/) — add the center point of each geometry
+- [Spatial Point to Line](/reference/workflow-steps/spatial/spatial-point-to-line/) — join each group's points into a line
+- [Spatial Line to Polygon](/reference/workflow-steps/spatial/spatial-line-to-polygon/) — close each line into a polygon
 - [Spatial Make Grid](/reference/workflow-steps/spatial/spatial-make-grid/) — tile an extent into square cells
 
 ## Expression Reference

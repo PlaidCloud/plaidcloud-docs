@@ -17,6 +17,7 @@ A file import checks the query that loads its target table before it runs. A que
 - [Import Db2 Extract](/reference/workflow-steps/import/import-db2-extract/)
 - [Import dBASE](/reference/workflow-steps/import/import-dbf/)
 - [Import Excel](/reference/workflow-steps/import/import-excel/)
+- [Import Delimited](/reference/workflow-steps/import/import-delimited/)
 - [Import External Database Tables](/reference/workflow-steps/import/import-external-database-tables/)
 - [Import Fixed Width](/reference/workflow-steps/import/import-fixed-width/)
 - [Import Google Bigquery](/reference/workflow-steps/import/import-google-bigquery/)

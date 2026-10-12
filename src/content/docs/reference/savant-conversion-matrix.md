@@ -37,87 +37,92 @@ External-system connectors are **connected, not converted** — see
 | Measure | Count |
 | --- | --- |
 | Permutations total | 751 |
-| G1 passed (converts and validates) | 688 of 751 |
-| G2 passed (runs) | 571 of 751 |
-| G3 passed (output matches the oracle) | 539 of 751 |
+| Fixture-covered | 747 of 751 |
+| G1 passed (converts and validates) | 629 of 751 |
+| G2 passed (runs) | 621 of 751 |
+| G3 passed (output matches the oracle) | 576 of 751 |
+| Reclassified, not counted as passed (G1 / G2 / G3) | 122 / 130 / 96 |
+| Fixture-covered by a validator-accepted fixture | 646 of 751 |
 
-Target status across the 33 agents: 18 Full, 15 Partial, 0 Not supported.
+Fixture-covered counts a permutation covered only by a fixture the Savant validator is expected to reject; the validator-accepted row excludes those 101. Target status across the 33 agents: 24 Full, 9 Partial, 0 Not supported.
 
-**G1** is a permutation that converts and validates, **G2** one that runs, and **G3** one whose output matches its oracle. This page is generated from the converter's measured results, so it always reflects what the converter does today.
+A reclassified permutation is covered only by a reading that measures no converter output against an independent expectation: an export the Savant validator rejects (the converter must fail closed), one it rejects although the help center documents it, a node that converts to no step by design, an answer from an external system (an AI model, a random sample, a fuzzy score) that is stubbed and matched by shape rather than value, or a destination whose target was not written: with no target bound, or one its export cannot write, the converter writes a CSV in its place, and that CSV is not the destination's own output.
+
+Detail for every permutation is in `plaid/tests/ci/savant_parity/PERMUTATION_MATRIX.tsv`.
 
 ## Agent Support
 
 | Agent | Target status | Measured status | PlaidCloud Equivalent | Permutations | Converts |
 | --- | --- | --- | --- | --- | --- |
-| Adapter Agent (`adapter`) | Full | Full | Select and schema projection step | G1 11 / G2 11 / G3 11 of 11 | Renames, retypes, and orders fields. |
-| API / Infer Agent (legacy service) (`service`) | Partial | Partial | Same as the API or Infer Agent, by serviceType | G1 4 / G2 0 / G3 0 of 4 | An LLMService converts as the Infer Agent and an APIService as the API Agent. |
-| API Agent (`apiService`) | Partial | Partial | Table Extract, [REST Request](/reference/workflow-steps/general/rest-request/), and a left join back | G1 14 / G2 0 / G3 0 of 14 | One request per input row; the response body lands in a text column and every input row is kept. |
-| Blend Agent (`blend`) | Full | Partial | [Inner Join](/reference/workflow-steps/tables/table-inner-join/), [Outer Join](/reference/workflow-steps/tables/table-outer-join/), [Anti Join](/reference/workflow-steps/tables/table-anti-join/) | G1 33 / G2 31 / G3 33 of 35 | Inner, left, right, full, anti and outer-excluding-inner blends, OR-joined, contains and is-part-of conditions, with matched and unmatched streams. |
-| Dedupe Agent (`deduplicate`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with distinct rows | G1 8 / G2 7 / G3 7 of 8 | Keeps the first record per key, within Group By groups, and routes duplicates to a second stream or flags them. |
-| Destination Agent (`destination`) | Partial | Partial | [Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), or a table | G1 40 / G2 29 / G3 40 of 43 | CSV and Excel destinations convert fully. Connector destinations without a PlaidCloud export step write a CSV or table and warn with the original target. |
-| Explode Agent (`explode`) | Full | Full | [Cross Join](/reference/workflow-steps/tables/table-cross-join/) | G1 2 / G2 2 / G3 2 of 2 | Cross-joins a small side against the main stream. |
-| Filter Agent (`filter`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 70 / G2 70 / G3 60 of 70 | Splits records by wizard or expression into true and false paths. |
-| Filter Pushdown (`pdfilter`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 11 / G2 11 / G3 11 of 12 | Database-side filter, converted the same as Filter. |
-| Format Agent (`format`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames | G1 21 / G2 21 / G3 19 of 22 | Header-row promotion runs at run time (the chosen row, in import record order, becomes the column names and is removed). Renames, retypes, hides, and fills convert. |
-| Fuse Agent (`fuzzy_match`) | Partial | Partial | [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) | G1 5 / G2 0 / G3 0 of 5 | Matches records on keys and thresholds through the fuzzy-match executor. Deterministic, never parity. |
-| Group (`group`) | Full | Full | Canvas container | G1 3 / G2 0 / G3 3 of 3 | Preserved as workflow organization. |
-| Infer Agent (`gen_ai`) | Partial | Partial | [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 10 / G2 0 / G3 0 of 10 | The prompt runs per row over the input fields; the answer lands in an AI Answer column beside every input column. |
-| JSON Agent (`json`) | Partial | Partial | [JSON Parse](/reference/workflow-steps/tables/table-json-parse/) | G1 6 / G2 5 / G3 5 of 6 | Flattens JSON fields into columns and rows. Keys come from references or schema; text that is not JSON flattens to a NULL row. |
-| Notes Agent (`notes`) | Full | Full | Canvas annotation | G1 1 / G2 0 / G3 1 of 1 | Preserved as workflow context. |
-| Pivot Agent (`pivot`) | Full | Full | [Pivot](/reference/workflow-steps/tables/table-pivot/) | G1 12 / G2 12 / G3 12 of 12 | Pivots rows to columns with aggregation. |
-| Recursion Agent (`hierarchy`) | Partial | Full | Table Extract, repeated inner joins, Union All, and a row-count assertion | G1 13 / G2 13 / G3 13 of 13 | Walks a parent/child tree to a fixed depth from its roots, aggregating each node over its ancestors and itself; a loop stops at the repeated node. |
-| Sample Agent (`sample`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a row limit | G1 8 / G2 5 / G3 4 of 8 | Keeps the first N rows, optionally per group, a random percent or N rows, or one row in every N. |
-| Search and Replace (`search_replace`) | Partial | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with nested replace expressions | G1 8 / G2 8 / G3 8 of 8 | Find/replace rules, case-sensitive or not, whole word or not, over the chosen text fields; replace, contains, whole-cell match and append modes. |
-| Source Agent (`source`) | Full | Partial | Import steps bound through `source_bindings` ([Import: CSV](/reference/workflow-steps/import/import-csv/), [Import: Excel](/reference/workflow-steps/import/import-excel/), [Import: SQL](/reference/workflow-steps/import/import-sql/)) or an existing table | G1 29 / G2 29 / G3 28 of 31 | Reads the bound table or document; an unbound source creates an empty import and a warning. |
-| Spatial Match Agent (`spatial_match`) | Partial | Partial | [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), Cross Join, or Find Nearest | G1 17 / G2 1 / G3 0 of 17 | Intersects, within, within distance, contains, touches, crosses, overlaps, equals, disjoint and multi-rule matches, with matched and unmatched streams. |
-| Spatial Summarize Agent (`spatial_summarize`) | Partial | Partial | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | G1 7 / G2 2 / G3 0 of 7 | Union, intersect, bounding box, geometric center, and polyline or polygon builds, per group. |
-| Split Agent (`split`) | Partial | Partial | Split columns transform | G1 8 / G2 8 / G3 8 of 9 | Splits text into columns or rows on a separator. The number of columns comes from downstream references or adapter specs; with neither, two columns and a note. |
-| Split Output (`outlet`) | Full | Full | Workflow edge | G1 10 / G2 8 / G3 10 of 10 | Routes a named output to its consumers. |
-| Stack Agent (`multi_stack`) | Full | Full | [Union All](/reference/workflow-steps/tables/table-union-all/) | G1 7 / G2 7 / G3 7 of 7 | Stacks any number of inputs by name or position. |
-| Summarize Agent (`summarize`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 24 / G2 24 / G3 21 of 30 | Groups and aggregates, including first/last by a deterministic sort and per-row window aggregates (useWindow). |
-| Summarize Pushdown (`pdsummarize`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 10 / G2 10 / G3 10 of 10 | Database-side aggregation, converted the same as Summarize. |
-| Text (`text`) | Full | Full | Canvas annotation | G1 2 / G2 0 / G3 2 of 2 | Preserved as workflow context. |
-| Time Series Agent (`rollup`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) aggregation over a period-bucket expression | G1 24 / G2 24 / G3 24 of 28 | Rolls records up to day, week, month, quarter, year or decade periods, excludes NULL dates, and zero-fills empty periods up to a cap. |
-| Transform Agent (`edit`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | G1 47 / G2 46 / G3 45 of 48 | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number, forward and backward fill), evaluated in order. |
-| Unpivot Agent (`unpivot`) | Full | Full | [Melt](/reference/workflow-steps/tables/table-melt/) | G1 4 / G2 4 / G3 4 of 4 | Converts columns to rows as a name/value pair. |
-| Vision Agent (`vision`) | Partial | Partial | Blob input, image OCR, then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 5 / G2 0 / G3 0 of 5 | Each document is read (PDF text layer, else OCR) and the prompt runs over that text. |
-| XML Agent (`xml`) | Partial | Partial | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | G1 7 / G2 7 / G3 0 of 7 | Extracts XML fields with simple //a/b paths, selects elements (namespace prefixes stripped), and converts XML to JSON. Predicates and attributes in paths are named placeholders. |
+| Adapter Agent (`adapter`) | Full | Partial | Select and schema projection step | G1 11 / G2 11 / G3 9 of 11; fixture-covered 11 of 11 | Renames, retypes, and orders fields. |
+| API / Infer Agent (legacy service) (`service`) | Partial | Partial | Same as the API or Infer Agent, by serviceType | G1 4 / G2 4 / G3 1 of 4; fixture-covered 4 of 4 | An LLMService converts as the Infer Agent and an APIService as the API Agent; a missing or misspelled serviceType is read from the node's keys with a warning. |
+| API Agent (`apiService`) | Partial | Full | Table Extract, [REST Request](/reference/workflow-steps/general/rest-request/), and a left join back | G1 14 / G2 14 / G3 14 of 14; fixture-covered 14 of 14 | One GET, POST, PUT, PATCH or DELETE request per input row; the raw response body lands in a text column, HTTP errors stay as rows, every input row is kept, and a quota per period becomes a fractional requests-per-second. |
+| Blend Agent (`blend`) | Full | Partial | [Inner Join](/reference/workflow-steps/tables/table-inner-join/), [Outer Join](/reference/workflow-steps/tables/table-outer-join/), [Anti Join](/reference/workflow-steps/tables/table-anti-join/) | G1 33 / G2 33 / G3 27 of 35; fixture-covered 35 of 35 | Inner, left, right, full, anti and outer-excluding-inner blends, OR-joined, contains and is-part-of conditions, with matched and unmatched streams; columns a pivot or parse names only at run time are carried through. |
+| Dedupe Agent (`deduplicate`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with distinct rows | G1 8 / G2 8 / G3 8 of 8; fixture-covered 8 of 8 | Keeps the first record per key, within Group By groups, and routes duplicates to a second stream or flags them. |
+| Destination Agent (`destination`) | Partial | Partial | [Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), [Export: Tableau Hyper](/reference/workflow-steps/export/export-hyper/), [Export: External Database Tables](/reference/workflow-steps/export/export-external-tables/), or email | G1 14 / G2 14 / G3 12 of 43; fixture-covered 43 of 43 | Writes through destination_bindings to a document account (CSV, Excel or a Tableau .hyper), a connection table (append, or replace when the binding allows it), or email recipients; a file append reads the prior file back and rewrites it. |
+| Explode Agent (`explode`) | Full | Full | [Cross Join](/reference/workflow-steps/tables/table-cross-join/) | G1 2 / G2 2 / G3 2 of 2; fixture-covered 2 of 2 | Cross-joins a small side against the main stream. |
+| Filter Agent (`filter`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 70 / G2 70 / G3 70 of 70; fixture-covered 69 of 70 | Splits records by wizard or expression into true and false paths. |
+| Filter Pushdown (`pdfilter`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | G1 11 / G2 11 / G3 11 of 12; fixture-covered 12 of 12 | Database-side filter, converted the same as Filter. |
+| Format Agent (`format`) | Partial | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames, or Promote Header | G1 21 / G2 21 / G3 21 of 22; fixture-covered 22 of 22 | Hides, retypes, renames and fills fields matched by name (contains, starts with, ends with) or by being empty; header-row promotion and is-empty matching run at run time in the Promote Header step. |
+| Fuse Agent (`fuzzy_match`) | Partial | Partial | [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/), between a Union All and two joins | G1 5 / G2 5 / G3 0 of 5; fixture-covered 5 of 5 | Stacks both inputs, matches records on the key fields with the deterministic Jaro/TF-IDF matcher at threshold 80, and joins both sides back with a Confidence Score. |
+| Group (`group`) | Full | Full | Canvas container | G1 3 / G2 0 / G3 3 of 3; fixture-covered 3 of 3 | Preserved as workflow organization. |
+| Infer Agent (`gen_ai`) | Full | Partial | [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 9 / G2 9 / G3 0 of 10; fixture-covered 10 of 10 | The prompt runs per row over the input fields on the visible LLM connection matching Savant's provider and model; the answer lands in an AI Answer column beside every input column, and rowLimit caps the rows answered. |
+| JSON Agent (`json`) | Full | Full | [JSON Parse](/reference/workflow-steps/tables/table-json-parse/) | G1 6 / G2 6 / G3 6 of 6; fixture-covered 6 of 6 | Flattens a JSON field into dotted-key columns, or explodes an array into one row per element; the keys are read from the data at run time. |
+| Notes Agent (`notes`) | Full | Full | Canvas annotation | G1 1 / G2 0 / G3 1 of 1; fixture-covered 1 of 1 | Preserved as workflow context. |
+| Pivot Agent (`pivot`) | Full | Full | [Pivot](/reference/workflow-steps/tables/table-pivot/) | G1 12 / G2 12 / G3 12 of 12; fixture-covered 12 of 12 | Pivots rows to columns with aggregation. |
+| Recursion Agent (`hierarchy`) | Full | Full | Hierarchy Closure, [Table Extract](/reference/workflow-steps/tables/table-extract/), and [Multi-Table Join](/reference/workflow-steps/tables/table-multi-table-join/) | G1 13 / G2 13 / G3 13 of 13; fixture-covered 13 of 13 | Walks a parent/child tree to any depth, aggregating each node over the ids on its path to the root, itself included, and writing Depth and Path; a loop stops at the repeated node. |
+| Sample Agent (`sample`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a row limit | G1 5 / G2 5 / G3 2 of 8; fixture-covered 8 of 8 | Keeps the first N rows, optionally per group, a random percent or N rows, or one row in every N. |
+| Search and Replace (`search_replace`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with nested replace expressions, split across stages | G1 8 / G2 8 / G3 8 of 8; fixture-covered 8 of 8 | Find/replace rules (contains or matches; replace or append), case-sensitive or not, whole word or not, applied in order over the chosen text fields, or every text field when none is named. |
+| Source Agent (`source`) | Full | Partial | Import steps bound through `source_bindings` ([Import: CSV](/reference/workflow-steps/import/import-csv/), [Import: Excel](/reference/workflow-steps/import/import-excel/), [Import: SQL](/reference/workflow-steps/import/import-sql/)) or an existing table | G1 31 / G2 31 / G3 29 of 31; fixture-covered 31 of 31 | Reads the bound table or document; an unbound source creates an empty import and a warning. |
+| Spatial Match Agent (`spatial_match`) | Partial | Not supported | [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), [Cross Join](/reference/workflow-steps/tables/table-cross-join/), or [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | G1 0 / G2 0 / G3 0 of 17; fixture-covered 17 of 17 | Intersects, within, contains, touches, crosses, overlaps, equals, disjoint and and/or multi-rule matches, geodesic within distance, nearest N with a maximum distance and a Distance column, and Cross, with matched and unmatched streams. |
+| Spatial Summarize Agent (`spatial_summarize`) | Partial | Not supported | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | G1 0 / G2 0 / G3 0 of 7; fixture-covered 7 of 7 | Union, intersect, bounding box, one or several geometric centers, and polyline or polygon builds, per group with an optional sort. |
+| Split Agent (`split`) | Full | Full | Split Text, or [Table Extract](/reference/workflow-steps/tables/table-extract/) with split_part columns | G1 9 / G2 9 / G3 9 of 9; fixture-covered 9 of 9 | Splits a text field on a literal separator of any length into rows or columns, with trim and keep-original; the number of columns is read from the data at run time. |
+| Split Output (`outlet`) | Full | Full | Workflow edge | G1 10 / G2 8 / G3 10 of 10; fixture-covered 10 of 10 | Routes a named output to its consumers. |
+| Stack Agent (`multi_stack`) | Full | Full | [Union All](/reference/workflow-steps/tables/table-union-all/) | G1 7 / G2 7 / G3 7 of 7; fixture-covered 6 of 7 | Stacks any number of inputs by name or position. |
+| Summarize Agent (`summarize`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 24 / G2 24 / G3 24 of 30; fixture-covered 30 of 30 | Groups and aggregates, including first/last by a deterministic sort and per-row window aggregates (useWindow). |
+| Summarize Pushdown (`pdsummarize`) | Full | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | G1 10 / G2 10 / G3 10 of 10; fixture-covered 10 of 10 | Database-side aggregation, converted the same as Summarize. |
+| Text (`text`) | Full | Full | Canvas annotation | G1 2 / G2 0 / G3 2 of 2; fixture-covered 2 of 2 | Preserved as workflow context. |
+| Time Series Agent (`rollup`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) aggregation over a period-bucket expression, Period Spine, [Anti Join](/reference/workflow-steps/tables/table-anti-join/) and [Union All](/reference/workflow-steps/tables/table-union-all/) | G1 24 / G2 24 / G3 24 of 28; fixture-covered 28 of 28 | Rolls records up to day, week, month, quarter, year or decade periods between optional start and end dates, per group, excluding NULL dates and zero-filling empty periods. |
+| Transform Agent (`edit`) | Full | Partial | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | G1 47 / G2 47 / G3 42 of 48; fixture-covered 47 of 48 | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number, forward and backward fill), evaluated in order. |
+| Unpivot Agent (`unpivot`) | Full | Full | [Melt](/reference/workflow-steps/tables/table-melt/) | G1 4 / G2 4 / G3 4 of 4; fixture-covered 4 of 4 | Converts columns to rows as a name/value pair. |
+| Vision Agent (`vision`) | Partial | Partial | [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | G1 5 / G2 5 / G3 0 of 5; fixture-covered 5 of 5 | Each document goes to the provider as an image or PDF when it accepts that type and size, else its PDF text layer or OCR text is sent; the prompt's answer lands in an AI Answer column. |
+| XML Agent (`xml`) | Partial | Full | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | G1 7 / G2 7 / G3 7 of 7; fixture-covered 7 of 7 | Selects elements, extracts child values and attributes into columns, or converts XML to JSON, for simple //a/b element paths, namespace-aware or as written. |
 
 Wiring, canvas, and pushdown variants (Split Output, Group, Text, Filter Pushdown, Summarize Pushdown) are Savant node types without a help-center agent article of their own; each converts as the agent it mirrors.
 
 ## Expression Language
 
-Savant expression functions and operators convert to PlaidCloud expressions. Target status: **Partial**; measured status: **Partial**. Functions and operators convert to PlaidCloud expressions; a function with no equivalent is flagged by name. G1 183 / G2 172 / G3 147 of 225.
+Savant expression functions and operators convert to PlaidCloud expressions. Target status: **Partial**; measured status: **Partial**. Functions and operators convert to PlaidCloud expressions, GEO_* functions anywhere in an expression run in companion Spatial steps, and a function with no equivalent is flagged by name. G1 175 / G2 175 / G3 168 of 225; fixture-covered 224 of 225.
 
-| Function group | Permutations | G1 / G2 / G3 passed |
-| --- | --- | --- |
-| Date and DateTime | 56 | 52 / 52 / 48 |
-| Formatting | 9 | 7 / 7 / 6 |
-| Geospatial | 17 | 10 / 0 / 0 |
-| Keywords | 2 | 2 / 2 / 2 |
-| Logical | 2 | 2 / 2 / 2 |
-| Math | 15 | 14 / 14 / 9 |
-| Multi-Row Aggregation & Windowing | 20 | 0 / 0 / 0 |
-| Operator | 32 | 32 / 32 / 30 |
-| Registry-only (no help article) | 17 | 16 / 16 / 10 |
-| Text | 43 | 38 / 38 / 32 |
-| Type coercion | 12 | 10 / 9 / 8 |
+| Function group | Permutations | G1 / G2 / G3 passed | Fixture-covered |
+| --- | --- | --- | --- |
+| Date and DateTime | 56 | 52 / 52 / 52 | 56 |
+| Formatting | 9 | 7 / 7 / 7 | 9 |
+| Geospatial | 17 | 0 / 0 / 0 | 17 |
+| Keywords | 2 | 2 / 2 / 2 | 2 |
+| Logical | 2 | 2 / 2 / 2 | 2 |
+| Math | 15 | 14 / 14 / 12 | 15 |
+| Multi-Row Aggregation & Windowing | 20 | 0 / 0 / 0 | 20 |
+| Operator | 32 | 32 / 32 / 29 | 32 |
+| Registry-only (no help article) | 17 | 16 / 16 / 16 | 17 |
+| Text | 43 | 38 / 38 / 38 | 42 |
+| Type coercion | 12 | 12 / 12 / 10 | 12 |
 
 ## Export Formats
 
-The loader accepts every observed export shape — flat, model-wrapped, server-record, recipe envelope, array-wrapped, BOM-prefixed, and legacy type aliases — and normalizes them into one model. Target status: **Full**; measured status: **Partial**. G1 24 / G2 4 / G3 4 of 24.
+The loader accepts every observed export shape — flat, model-wrapped, server-record, recipe envelope, array-wrapped, BOM-prefixed, and legacy type aliases — and normalizes them into one model. Target status: **Full**; measured status: **Partial**. G1 24 / G2 24 / G3 20 of 24; fixture-covered 24 of 24.
 
 ## AI and Spatial Agents
 
 | Agent | Plan | Measured status |
 | --- | --- | --- |
 | Infer Agent (`gen_ai`) | Converts to the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Partial |
-| Vision Agent (`vision`) | Converts to the Blob input, image OCR, then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Partial |
-| Fuse Agent (`fuzzy_match`) | Converts to the [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) | Partial |
-| Spatial Match Agent (`spatial_match`) | Converts to the [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), Cross Join, or Find Nearest | Partial |
-| Spatial Summarize Agent (`spatial_summarize`) | Converts to the [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | Partial |
+| Vision Agent (`vision`) | Converts to the [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Partial |
+| Fuse Agent (`fuzzy_match`) | Converts to the [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/), between a Union All and two joins | Partial |
+| Spatial Match Agent (`spatial_match`) | Converts to the [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), [Cross Join](/reference/workflow-steps/tables/table-cross-join/), or [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Not supported |
+| Spatial Summarize Agent (`spatial_summarize`) | Converts to the [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | Not supported |
 
-A placeholder keeps the node on the canvas as a pass-through that refuses by name at run time, so a downstream step never reads a silently missing result.
+A placeholder keeps the node on the canvas as a pass-through that refuses by name at run time, so a downstream step never reads a silently missing result. The Infer, Vision, API, and Recursion agents become mappings when a customer analysis needs them.
 
 ## Analysis Parameters
 
@@ -140,6 +145,8 @@ Conversion never contacts the source or destination system.
 Validation is by oracle, and the evidence label travels with every result.
 
 - **Parity is claimed only against a real golden** — output from the customer's own system of record, compared row by row.
+- **Alteryx-equivalence** is the strongest evidence available for a Savant analysis without a golden: the analysis is migrated from an Alteryx workflow with a real golden through Savant's own migration, converted, run, and diffed. A match proves the output is Alteryx-equivalent for that flow, not that it matches the Savant runtime.
 - **Expected output derived from the spec** shows consistency with the documented behavior and is never reported as parity.
+- Semantics Savant does not document are implemented as the Alteryx reading and reported as unverified against Savant.
 
 Comparison checks schema, row count, and row values, and ignores row order unless the workflow depends on it.
