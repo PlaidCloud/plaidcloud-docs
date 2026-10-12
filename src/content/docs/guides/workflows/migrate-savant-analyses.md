@@ -11,7 +11,7 @@ Conversion reads only the export file you point it at. It never contacts the sys
 
 ## What PlaidCloud Creates
 
-- Each Savant agent becomes the matching workflow step, with upstream and downstream relationships preserved. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/) lists every agent and its measured status.
+- Each Savant agent becomes the matching workflow step, with upstream and downstream relationships preserved. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/) lists every agent, its mapping tier, and any option without a mapping.
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
 - Notes and groups arrive on the canvas as notes and groups.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
@@ -249,9 +249,9 @@ Set `allow_unconverted_placeholders` to `true` to import each placeholder as a p
 
 A converted workflow can differ from Savant in these ways. The conversion report names each one that applies.
 
-**Reading differences.** Savant's help doesn't settle these, so the converter takes one reading, and the conversion matrix measures 30 permutations that differ from the Savant answer for this reason:
+**Reading differences.** Savant's help doesn't settle these, so the converter takes one reading, and the converted step can differ from the Savant answer:
 
-- **Ties between equal values.** In a nearest match, two candidates can sit at the same distance. Savant picks the one that arrived first. A warehouse join has no arrival order, so the converted step can pick the other. This accounts for 29 of the 30 differences.
+- **Ties between equal values.** In a nearest match, two candidates can sit at the same distance. Savant picks the one that arrived first. A warehouse join has no arrival order, so the converted step can pick the other.
 - **The distance column.** The converted nearest match writes a `Distance` column beside each match. Savant writes none.
 
 **Language models.** Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs. A Fuse agent matches with the deterministic [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) step at a threshold of 80, where Savant uses a language model.
