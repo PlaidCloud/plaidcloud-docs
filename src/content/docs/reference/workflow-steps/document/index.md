@@ -17,6 +17,8 @@ Workflow steps for operating on files stored in document accounts. Use these to 
 - [Fix file extension](/reference/workflow-steps/document/fix-file-extension/)
 - [Rename document file](/reference/workflow-steps/document/rename-document-file/) · [Rename document directory](/reference/workflow-steps/document/rename-document-directory/)
 
+Copy and rename steps treat a missing source as normal. When the file, or the folder to copy or rename, is missing, or the folder is empty, the step does nothing, finishes with a warning that names the path, and the workflow continues. A scheduled run over a folder that has no files that day no longer fails.
+
 ## PDF Operations
 
 - [Compress PDF](/reference/workflow-steps/document/compress-pdf/)

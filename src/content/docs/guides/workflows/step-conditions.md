@@ -10,6 +10,7 @@ sidebar:
 Workflow steps normally execute in the defined order for the workflow.  However, it is often useful to have certain steps only execute if predefined conditions are met.  By using the step conditions capability you can control execution based on the following options:
  - Variable values
  - Table has rows or is empty
+ - Table exists or does not exist
  - A document or folder exists in Document
  - A document or folder is missing in Document
  - Table query result
@@ -161,6 +162,12 @@ In the **Variable or Table Field** fill in the variable name.  Select a comparis
 
 If the condition is checking whether a table has rows or is empty, you will also need to define the table in the **Table Data Selection** tab.
 
+
+## Table Exists Conditions
+
+A table exists condition runs the step only when the table has been created in the warehouse, or only when it has not. It never reads the table's rows, and a table written with zero rows exists. A table name that matches no table in the project counts as missing. Use it to build a table on the first run and leave it alone afterward, or to skip a step that reads a table an earlier step may not have made.
+
+The two check types are `radio_table_exists` and `radio_table_not_exists`. Pick the table the same way you do for a basic table condition. Set the condition with an AI assistant or the REST API; the **Condition Checks** tab does not list it yet.
 
 ## Advanced Table Conditions
 

@@ -19,6 +19,18 @@ Specify any number of email recipients. Acceptable delimiters include semicolon 
 
 
 
+### Cc, Bcc, and Reply-To
+
+**Cc** (`cc_address`), **Bcc** (`bcc_address`) and **Reply-To** (`reply_to`) take addresses formatted like the recipients, and accept Project and Workflow Variables. Cc and Bcc recipients get the same message, and replies go to the Reply-To address. They apply to plain and Jinja template bodies. Set them with an AI assistant or the REST API.
+
+### One Email for Each Row
+
+Set `request_source` to `table` and name a `driver_table` to send one email for each row of a table instead of a single email. `row_limit` caps the rows used and defaults to 10,000. The driver must be a table, not a view.
+
+Use `{{row.column}}` in the addresses, subject, message and attachment path to fill in each row's value. A column the driver table doesn't have fails the step. A row with no To address sends nothing for that row and the step finishes with a warning that names it.
+
+An attachment path filled from a row (`{{row.column}}`) must be a single existing file, never a folder, so a row whose path came out wrong can't send someone else's files. A row whose value for that path is empty, whose path climbs out of its folder with `..`, or whose file is missing is sent without the attachment, with a warning that names the row. Per-row sending needs a plain body and is not available with a Jinja template body.
+
 ### Message
 
 
