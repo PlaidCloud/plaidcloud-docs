@@ -107,6 +107,9 @@ Treat those rows as the weaker answer they are. They describe what a run startin
 Some variables cannot be resolved. Either nothing has set the variable at all, or the value a run uses does not come from what is stored — a Workflow Loop takes its variables from data as it iterates, a Set Variable step assigns during the run, a macro is handed its variables by whichever step calls it, and a run started by a sensor carries that sensor's own details. In each case whatever is stored between runs is left over from the last one rather than a value to trust. Rather than resolve those to a table that may be the wrong one, PlaidCloud lists the steps by name under **May Reference This Table**, with the variable it could not resolve, so you can open them and check.
 
 
+A step your role can't see is still listed, so you know the table is in use, but without its name or workflow, and you can't open it. It still counts when you delete the table. A step you can see is listed without any workflow your role hides. Nothing is hidden from an Architect.
+
+
 *Note: Deleting unused tables counts only the steps that name a table directly. A step that reaches it through a path — resolved or not — does not block a delete.*
 
 
