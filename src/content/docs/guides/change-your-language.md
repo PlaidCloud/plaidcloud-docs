@@ -1,11 +1,11 @@
 ---
 title: Change Your Language
-description: Show PlaidCloud in English (US), English (UK), Deutsch, Español, Français, Português (Portugal) or Português (Brasil), and have your choice follow you to other devices.
+description: Show PlaidCloud in English (US), English (UK), Deutsch, Español, Français, Português (Portugal), Português (Brasil), Polski, 日本語, 한국어 or 简体中文, and have your choice follow you to other devices.
 sidebar:
   label: Change Your Language
 ---
 
-PlaidCloud's interface is available in seven languages:
+PlaidCloud's interface is available in eleven languages:
 
 | Language | Menu entry |
 |---|---|
@@ -16,6 +16,10 @@ PlaidCloud's interface is available in seven languages:
 | French | Français |
 | Portuguese (Portugal) | Português (Portugal) |
 | Portuguese (Brazil) | Português (Brasil) |
+| Polish | Polski |
+| Japanese | 日本語 |
+| Korean | 한국어 |
+| Chinese (Simplified) | 简体中文 |
 
 Everyone starts in English (US). Nothing changes until you pick a language.
 
@@ -34,9 +38,13 @@ PlaidCloud saves your choice to your profile and reloads in the new language. To
 
 ## Numbers and Dates
 
-Numbers and dates display in the format of the language you choose. In German, for example, one thousand two hundred thirty-four and a half displays as `1.234,5`. English (UK) uses British spelling and British formats.
+Numbers and dates display in the format of the language you choose. In German, for example, one thousand two hundred thirty-four and a half displays as `1.234,5`. In Polish, 1234567.89 displays as `1 234 567,89` and 12 October 2026 as `12.10.2026`. Japanese and Chinese show that date as `2026/10/12`, and Korean as `26. 10. 12.`. English (UK) uses British spelling and British formats.
 
 Only the display changes. Values you save, export, or send to integrations keep their usual format.
+
+## Typing in Japanese, Korean, and Chinese
+
+Japanese, Korean, and Chinese input methods work in number fields and other fields that limit what you can type. Full-width digits convert as you type, so `１２３` becomes `123`.
 
 ## What Isn't Translated Yet
 
