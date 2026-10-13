@@ -48,14 +48,12 @@ Japanese, Korean, and Chinese input methods work in number fields and other fiel
 
 ## What Else Follows Your Language
 
-The text PlaidCloud sends you from the server follows your language too, in English (US), English (UK), German, Spanish, French, Portuguese (Portugal), and Portuguese (Brazil):
+The text PlaidCloud sends you from the server follows your language too, in every language PlaidCloud offers:
 
 - **Emails.** System emails such as invitations, password resets, workflow and migration notices, and sign-up, billing, and support emails.
 - **Sign-in screens.** The sign-in, set-password, and signed-out screens, and the emails Keycloak sends from them.
 - **Error messages.** The messages PlaidCloud shows when a request fails, in the interface, through the REST API, and through JSON-RPC.
 - **Project documentation PDF.** The PDF PlaidCloud generates to document a project.
-
-Polish, Japanese, Korean, and Chinese (Simplified) translate the interface. Server text in those languages appears in English.
 
 ## How PlaidCloud Picks the Language
 
@@ -65,7 +63,7 @@ Polish, Japanese, Korean, and Chinese (Simplified) translate the interface. Serv
 | Sign-in and other screens before you sign in | Your browser's language. |
 | Signing up | Your browser's language. PlaidCloud stores it on your organization, and billing and account emails to the organization use it. |
 
-If your browser or profile uses a language PlaidCloud doesn't offer, the text appears in English (US).
+If your browser or profile uses a language PlaidCloud doesn't offer, the text appears in English (US). Browsers set to Traditional Chinese (zh-TW or zh-HK) fall back to English (US) for server text.
 
 ## What Stays in English
 
