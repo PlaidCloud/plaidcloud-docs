@@ -18,6 +18,14 @@ Adding Slack notification steps to the workflow is the same as adding other step
 
 
 
+## Attach a File
+
+Choose a document in **File to Upload** to send it to the channel with the message as its comment. A webhook can't carry a file, so an attachment goes through a bot token on the Slack connection:
+
+- Add a **Bot Token** to the connection. It is the `xoxb-` token of a Slack app that has the `files:write` scope, and the app must be invited to the channel.
+- Enter the **channel ID** in the step, such as `C0123ABCD`, not a channel name. Slack's file upload takes IDs only, and the step fails without one. To find an ID, open the channel's details in Slack and scroll to the bottom.
+- If the document isn't found, the message is sent by webhook without it, and the step warns with the document's path.
+
 ## Formatting the Slack Message
 
 
@@ -55,7 +63,8 @@ These steps will need to be performed by a PlaidCloud workspace administrator wi
 1. Navigate to `Analyze > Tools > External Data Connections`
 2. Under the `+ New Connection` selection, pick Slack Webhook
 3. Complete the name, description, and paste in the webhook url provided in step 6 above. The name provided here will be shown as the selection in the workflow step so it should be descriptive if possible. Anyone holding the URL can post to your channel, so the **Webhook URL** field masks it as you paste it and shows blank when you reopen the connection; leave it blank to keep the saved URL.
-4. Select the `+ Create` button
+4. To send attachments, also paste the Slack app's bot token into the **Bot Token (for file uploads)** field. A connection can hold the webhook URL, the bot token, or both. The bot token is masked like the webhook URL and shows blank when you reopen the connection.
+5. Select the `+ Create` button
 
 
 ## Examples
