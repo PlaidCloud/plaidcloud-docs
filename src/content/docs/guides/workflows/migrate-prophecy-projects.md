@@ -1,6 +1,6 @@
 ---
 title: Migrate Prophecy Projects
-description: Convert a Prophecy project export into PlaidCloud workflows from the Analyze app, the REST API, or an MCP-connected AI agent, bind its datasets, and read the conversion report.
+description: Convert a Prophecy project export into PlaidCloud workflows from the Analyze app, the REST API, or an MCP-connected AI agent, bind its datasets and connections, and read the conversion report.
 sidebar:
   order: 31.5
 ---
@@ -36,7 +36,7 @@ Convert from the Analyze app, the REST API, or the MCP tool catalog. All three t
 1. Open **Analyze** and choose **Tools → Import Prophecy Project**.
 2. Choose the **Target Project**, the **Prophecy Project (.zip or .json)** you uploaded to a Document account, and the **Source Files Location**, the Document account and base folder where files for unbound datasets are read from.
 3. Under **Object Names and Options**, optionally set workflow, step, and table prefixes, choose the **Workflow Type**, and choose whether to import unconverted components as pass-through placeholders.
-4. Under **Source Bindings and Parameters**, optionally bind a dataset to an existing table by entering the dataset name and the table ID, and override Prophecy parameters by name.
+4. Under **Source Bindings and Parameters**, optionally bind a dataset to an existing table by entering the dataset name and the table ID, and override Prophecy parameters by name. To bind connections, use the REST API or the MCP tool. See [Bind Connections](#bind-connections).
 5. Select **Import**.
 
 The window shows progress as it reads the project, parses the pipelines, maps them to PlaidCloud operations, and creates the workflows, tables, and steps. When it finishes, the window shows the conversion report: step counts by confidence, warnings, partial conversions, unconverted placeholders, dropped components, and the source files to upload.
@@ -57,6 +57,7 @@ The REST API and MCP tool take these fields.
 | `table_prefix` | No | Prefix added to table names. Defaults to the workflow's own name. A prefix that would reuse an existing table name is refused before anything is created. The prefix used is returned in the conversion report. |
 | `workflow_type` | No | `advanced` (default) lays the graph onto the DAG canvas. `standard` produces a serial step list. |
 | `source_bindings` | No | Binds datasets and operations to existing data. See [Bind Sources](#bind-sources). |
+| `connection_bindings` | No | Binds the databases, file stores, REST APIs and email a project reaches to PlaidCloud connections and Document accounts. See [Bind Connections](#bind-connections). |
 | `parameters` | No | Overrides Prophecy parameters. See [Parameters](#parameters). |
 | `allow_unconverted_placeholders` | No | Controls what a placeholder does at run time. See [Placeholders for Unconverted Gems](#placeholders-for-unconverted-gems). |
 
@@ -122,6 +123,33 @@ Gems that change tables or files, such as Table Operations (update, delete, drop
 
 A destructive table or file operation runs only when you bind it. Without a binding, a Table Operations gem works on a table written by another gem of the same project, and otherwise becomes a placeholder that names its key. A File Operation copies from its own staging folder. Nothing outside the conversion's own tables and folders is changed unless you bind it.
 
+## Bind Connections
+
+A Prophecy project reaches databases, file stores, REST APIs and mail servers through connections. The export carries the connection names but no credentials, so use `connection_bindings` to point each one at a PlaidCloud connection or Document account you already have. The conversion report lists every key under its bindings.
+
+```json
+"connection_bindings": {
+  "connection:warehouse_pg": "<connection id>",
+  "connection:landing_s3": "<document account id>",
+  "operation:daily_load/Email_1": "<connection id>"
+}
+```
+
+A key is one of:
+
+| Key | Binds | Value |
+| --- | --- | --- |
+| `connection:<name>` | The Prophecy connection a gem or database dataset names. One binding serves every gem on that connection. A gem that names no connection uses `connection:<pipeline>/<gem id>`, and a database dataset uses `connection:<dataset name>`. | A PlaidCloud connection id for a database or Singer-backed store. A Document account id for a File Storage or Directory gem. |
+| `operation:<pipeline>/<gem id>` | A REST gem that sends anything but GET, HEAD, or OPTIONS, and every Email gem. | A connection id. For REST, a REST connection that holds the credential. |
+
+The binding is your consent for gems that change things outside the conversion:
+
+- A REST request that can change what the API holds, and an email that reaches real people, convert to working steps only when you bind their `operation:` key. Unbound, the gem is a placeholder that names the key.
+- A Document account bound to a File Storage or Directory gem lets that gem's steps write, delete, or move files in that account.
+- A GET, HEAD, or OPTIONS request goes out as the gem sends it. Unbound, it has no credential until you select a REST connection on the converted step.
+
+A database dataset or External Table gem with no binding converts to a step that names its key and waits for you to select a connection, and the report carries a warning. Re-convert with the key bound, or select the connection on the step. A binding whose id is the wrong kind of store for its gems, or that you can't use, is refused. A key that matches nothing is reported as a warning.
+
 ## Parameters
 
 `parameters` overrides Prophecy parameters at conversion:
@@ -166,7 +194,7 @@ Every step that carries project code reports `W_PROJECT_CODE_EMBEDDED`, and tran
 
 ## Placeholders for Unconverted Gems
 
-A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are gems that send email, publish to a BI tool, run data quality frameworks, or call a model service. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
+A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are a Custom Gem, whose Gem Builder code is not part of the export, Heat Map, whose H3 cells no PlaidCloud step computes, and a gem that changes data outside the conversion, such as a REST request that can change data, an Email, or a table or file operation, when you haven't bound its `operation:` key. A database dataset or External Table with no connection bound is not a placeholder: it converts to a step that waits for you to select a connection. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
 
 Set `allow_unconverted_placeholders` to `true` (in the window, **Import unconverted components as pass-through placeholders**) to import each placeholder as a pass-through step instead. The run then continues past it and the placeholder's output is its input. The report counts the pass-through placeholders and lists their steps. Rebuild the capability with a native step when its result matters.
 
@@ -178,11 +206,60 @@ Set `allow_unconverted_placeholders` to `true` (in the window, **Import unconver
 4. Review the steps that carry project code.
 5. Run the workflows and review each step's output table.
 
+## What Converts
+
+Prophecy gems convert to native steps, project variables, or canvas objects. A few have no PlaidCloud equivalent and arrive as placeholders. The converter measures itself against each gem's configuration options, not against whole projects, and reports what it can't reproduce in the conversion report.
+
+Each gem has a mapping tier:
+
+- **Full**: every option of the gem has a valid mapping to a PlaidCloud step.
+- **Partial**: the gem converts, and the option named below has no mapping. The conversion report names it.
+
+### Data Movement
+
+| Capability | How it converts |
+| --- | --- |
+| Write modes | Target write modes convert to platform steps: SCD2 with the check and timestamp strategies (the timestamp strategy dates each version from the column the gem's `scd2.updatedAtColumn` names), merge, `replaceWhere`, and `insertInto`. A first run onto an empty target writes every row, as dbt and Delta do. The first run needs no table made ahead, including for a pipeline that reads a dataset it also writes. Later runs apply the incremental filter or merge condition. The `error` and `ignore` modes check with the [table exists condition](/guides/workflows/step-conditions/#table-exists-conditions). |
+| Streaming | Streaming sources and targets run as scheduled batch. The streaming sink replaces its table rather than appending, so a re-run never duplicates rows. Schedule the workflow to pick up newly arrived data. |
+| Databases | JDBC, Snowflake, Redshift, Hive, and External Table gems read and write through the PlaidCloud connection you bind. |
+| Singer-backed stores | MongoDB, Slack, Smartsheet, and Iceberg read through [Import Singer Source](/reference/workflow-steps/import/import-singer/) with their bound connection. |
+| File formats | CSV, JSON, Parquet, Avro, Excel, XML, fixed-width (column widths come from the schema), and ORC through [Import ORC](/reference/workflow-steps/import/import-orc/). Format options are mapped, or marked neutral when they change no row. |
+
+### Services and Control
+
+| Gem | How it converts |
+| --- | --- |
+| REST API, REST API Enrich | [REST Request](/reference/workflow-steps/general/rest-request/) steps, one request for each input row, keeping an error response as Prophecy does. Enrich also reads the status, reason, and final URL. |
+| Email, Email Data | [Notify Via Email](/reference/workflow-steps/notifications/notify-via-email/) with Cc, Bcc, Reply-To, and one message for each row when a field reads from a column. |
+| OpenAI, Bedrock, SageMaker Endpoint | [Text: NLP (AI)](/reference/workflow-steps/text-documents/nlp-ai/) on your workspace's LLM connection. OpenAI and Bedrock embeddings use the Embed task, which needs an OpenAI-compatible or Azure OpenAI connection; an Anthropic connection is refused. |
+| Pinecone Lookup | A REST request for each row. |
+| Data Quality Check, Deequ, Soda | The checks run in the warehouse and write the results table. A Data Quality Check stops the run only when the gem sets `minFailedChecks` or a `fail_pipeline` post action; otherwise the results table lists the failures. Deequ and Soda never stop the run. A minimum or maximum length check on a numeric column measures the number as text. |
+| ToDo | Raises an error that names the original tool and message when the run reaches it. |
+
+### Partial Conversions
+
+| Gem or option | What has no mapping |
+| --- | --- |
+| BigQuery datasets | PlaidCloud has no BigQuery SQL driver, so a BigQuery Source or Target can't read or write through a connection. |
+| Cosmos DB and Kafka Sources | The Source reads a staged JSON extract of the data, one batch for a Kafka topic. It doesn't connect to the live store. |
+| Tableau, Tableau Write, Power BI Write | PlaidCloud publishes to neither. Each input stays a PlaidCloud table and is written as Parquet to the gem's staging folder, and the report says nothing was published. |
+| File Storage encryption | The whole-file encryption setting isn't applied. |
+| Spark hash functions | `hash()` and `xxhash64()` use Murmur3 and XXH64 with seed 42, which no warehouse has. The converted values differ, as do Data Masking hashes. |
+| `regexp_extract_all` | PlaidCloud has no array type, so it returns the first match. |
+| Data Encoder/Decoder AES | AES runs on StarRocks lakehouses with the key in the `aes_key` workflow variable. Other engines have no AES function. |
+| Buffer and Simplify | Distances are measured in degrees, where Prophecy uses meters. |
+
+The converter also reports these known divergences on the step they affect:
+
+- A Join with two output columns of the same name keeps one, because a table can't hold both.
+- A `struct` value reads as a tuple without field names.
+- `encode` to ISO-8859-1 returns the text, not its bytes.
+- A CSV written in a character set with no codec is written in UTF-8.
+- A Bulk Column Expressions gem with no selected column applies to no column.
+
 ## Known Limitations
 
 - Conversion is one-time. Re-importing a project creates new workflows and tables.
-- Streaming sources and targets convert to one-shot batch steps, and the report warns for each.
-- Write modes such as merge, upsert, and SCD2 are reported with a warning and written as a plain table write where the destination step has no equivalent.
 - Project code is carried over, not run or ported. Spark-specific code needs porting before it runs.
 
 ## Related Guides

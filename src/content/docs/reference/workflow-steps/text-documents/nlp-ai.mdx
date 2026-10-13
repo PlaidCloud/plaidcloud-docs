@@ -7,7 +7,7 @@ sidebar:
 
 ## Description
 
-The **Text NLP AI** step runs one of six per-row tasks over your data, each as a batch of structured (forced tool-use) LLM calls: **Named Entity Recognition**, **POS Tagging**, **Summary**, **Zero-shot Classification**, **Key/Value Extraction**, and **Prompt**. It runs as a managed PlaidCloud job (like [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and the [LLM Step](/reference/workflow-steps/general/llm-step/)), so it does not compete with the rest of the workflow for resources.
+The **Text NLP AI** step runs one of seven per-row tasks over your data, each as a batch of structured (forced tool-use) LLM calls: **Named Entity Recognition**, **POS Tagging**, **Summary**, **Zero-shot Classification**, **Key/Value Extraction**, **Prompt**, and **Embed**. It runs as a managed PlaidCloud job (like [ML: Train Model](/reference/workflow-steps/machine-learning/ml-train/) and the [LLM Step](/reference/workflow-steps/general/llm-step/)), so it does not compete with the rest of the workflow for resources.
 
 Because every task is a real LLM call, results are not bit-for-bit reproducible between runs — see [Non-Determinism](#non-determinism-llm-backed-results).
 
@@ -15,7 +15,7 @@ Because every task is a real LLM call, results are not bit-for-bit reproducible 
 
 - **Source / Output tables** — the input table and the table the results are written to.
 - **Text Column** (`field`) — the column each task reads.
-- **Task** (`task`) — one of `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`.
+- **Task** (`task`) — one of `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. The `embed` task is not in the form's task list; set it with an AI assistant or the REST API.
 - **Language** (`language`) — the text's language, passed to the model. Defaults to `en`.
 - **LLM Connection** (`llm_connection_id`) — an LLM connection for Anthropic, OpenAI, Gemini, Azure OpenAI, Grok, or GitHub Models. Leave blank to use the workspace default.
 - **Model** (`llm_model`) — leave blank to use the connection's default model.
@@ -25,7 +25,7 @@ Because every task is a real LLM call, results are not bit-for-bit reproducible 
 
 ## Tasks
 
-Three tasks return one output row per input row (**row-preserving**); three return zero or more rows per input row and carry the source's identifier columns (`id_columns`) onto each one (**row-exploding**).
+Four tasks return one output row per input row (**row-preserving**); three return zero or more rows per input row and carry the source's identifier columns (`id_columns`) onto each one (**row-exploding**).
 
 | Task | Fan-out | Output columns | Task-specific fields |
 | --- | --- | --- | --- |
@@ -33,12 +33,13 @@ Three tasks return one output row per input row (**row-preserving**); three retu
 | POS Tagger (`pos`) | Row-exploding | `token`, `pos` (universal POS tag, for example `NOUN`, `VERB`, `ADJ`) | None. |
 | Summary (`summary`) | Row-preserving | `summary` | **Summary Length** (`summary_length`) — maximum sentences, 1 to 20. Defaults to 3. |
 | Zero-shot Classification (`zeroshot`) | Row-preserving | `label`, `score` (0 to 1) | **Label Field** (`label_field`) — the source column holding each row's candidate labels; without it the model has nothing to choose from. **Multi-Label** (`multi`) — allow more than one label per row (joined with `, `) instead of picking the single best. |
-| Prompt (`prompt`) | Row-preserving | `answer` | **Prompt** (`prompt`) — the instruction applied to every row, required. **Input Fields** (`input_fields`) — the columns sent to the model with the prompt, as one record per row; blank sends the **Text Column**. |
+| Prompt (`prompt`) | Row-preserving | `answer`, `error` | **Prompt** (`prompt`) — the instruction applied to every row, required. **Input Fields** (`input_fields`) — the columns sent to the model with the prompt, as one record per row; blank sends the **Text Column**. |
+| Embed (`embed`) | Row-preserving | `embedding` (a JSON array of numbers), `error` | None. Set with an AI assistant or the REST API. Needs an OpenAI-compatible or Azure OpenAI connection, and the step's **Model** must name an embedding model, since the connection's default is usually a chat model; an Anthropic connection is refused because it has no embeddings API. A failed request keeps every row of its batch, with an empty `embedding` and the reason in `error`. |
 | Key/Value Pairs (`keyvalue`) | Row-exploding | `key`, `value` | **Key Field** (`key_field`) — the source column holding each row's candidate keys to extract; leave blank to let the model find keys freely. **Fuzzy** (`fuzzy`) — match candidate keys loosely instead of exactly. |
 
 **ID Columns** (`id_columns`) carry identifying columns from the source table onto every output row of a row-exploding task, so you can trace an extracted entity or pair back to its source record. An ID column can't share its name with one of the task's own output columns: naming an ID column `entity_type` on an `ner` task, for example, is refused when you save the step, with *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
 
-The Prompt task is for any per-row question the other tasks don't cover, such as *Classify the sentiment of this review.* Field values are sent as data, never as instructions to the model.
+The `error` column holds the message of the call that failed for that row. The Prompt task is for any per-row question the other tasks don't cover, such as *Classify the sentiment of this review.* Field values are sent as data, never as instructions to the model.
 
 For the Prompt task, **Document column** (`content_field`) names a column that holds each row's document as base64. The step then sends one document per call. The document goes to the provider as an image or PDF when the provider accepts that type and size. Otherwise the step sends the text in **Text fallback column** (`text_fallback_field`), such as OCR text. Whole documents leave PlaidCloud for the provider, so check that this is acceptable for your data. Rows are sent one at a time, so **Batch Size** is ignored. If a batch fails, its rows are kept with an empty `answer` and the step warns.
 
