@@ -10,8 +10,10 @@ Workflows can text you when they need attention, with the [Notify Via SMS](/refe
 1. Open the user menu in the upper-right corner and choose **Text alerts**.
 2. Enter your **US mobile number**.
 3. Check **I agree to receive PlaidCloud workflow text alerts at this number.** Read the disclosures above it, and the **SMS Terms** and **SMS Privacy Policy** links.
-4. Click **Send code**. PlaidCloud texts a 6-digit code to your number.
+4. Click **Send code**. PlaidCloud texts a 6-digit code to your number. Texts can take a minute or two to arrive.
 5. Enter the **Confirmation code** within 10 minutes and click **Confirm**.
+
+After you send a code, the button counts down for 60 seconds, then reads **Resend code**. Resending while your code is still valid texts the same code, so whichever text arrives works. You can request 3 codes per phone number per day and 3 per person per hour.
 
 The window then reads **Text alerts are on for** your masked number. Only US mobile numbers are supported. Message and data rates may apply, and message frequency varies.
 
@@ -29,9 +31,9 @@ Replying STOP blocks every text to your number. Text **START** to the alert numb
 |---|---|
 | That code is not right | Check the text and enter the code again. |
 | That code has expired | Click **Send code** for a new one. |
-| Too many wrong codes | Click **Send code** for a new one. |
+| Too many wrong codes | After 5 wrong codes, click **Send code** for a new one. |
 | Enter a valid US mobile number | Use a 10-digit US mobile number. |
-| Too many requests | Wait a few minutes and try again. |
+| Too many requests | You reached a code limit. Wait a few minutes and try again. |
 | Text alerts are not available for your workspace right now | Try again later. |
 
 Don't use text alerts for health or financial personal data. Questions: support@plaidcloud.com.
