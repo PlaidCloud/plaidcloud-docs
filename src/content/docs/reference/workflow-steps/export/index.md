@@ -22,6 +22,8 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export To HDF](/reference/workflow-steps/export/export-to-hdf/)
 - [Export To JSON](/reference/workflow-steps/export/export-to-json/)
 - [Export to Parquet](/reference/workflow-steps/export/export-to-parquet/)
+- [Export to PDF](/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/reference/workflow-steps/export/export-to-xml/)
+- [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/reference/workflow-steps/export/export-hyper/)

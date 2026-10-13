@@ -150,6 +150,7 @@ export default defineConfig({
 								{ label: 'Results & troubleshooting', collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/results' } }] },
 							],
 						},
+						{ label: 'Change your language', link: '/guides/change-your-language/' },
 						{ label: 'Connections',       collapsed: true, items: [{ autogenerate: { directory: 'guides/connections' } }] },
 						{ label: 'Dash apps',         collapsed: true, items: [{ autogenerate: { directory: 'guides/dash-apps' } }] },
 						{ label: 'Dashboards',        collapsed: true, items: [{ autogenerate: { directory: 'guides/dashboards' } }] },
