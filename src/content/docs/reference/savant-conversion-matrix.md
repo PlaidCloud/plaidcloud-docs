@@ -24,16 +24,16 @@ External-system connectors are **connected, not converted** — see
 
 ## Agent Support
 
-Across the 33 agents: 28 Full, 5 Partial.
+Across the 33 agents: 33 Full, 0 Partial.
 
 | Agent | Tier | PlaidCloud Equivalent | Converts | Option without a mapping |
 | --- | --- | --- | --- | --- |
 | Adapter Agent (`adapter`) | Full | Select and schema projection step | Renames, retypes, and orders fields. | — |
-| API / Infer Agent (legacy service) (`service`) | Partial | Same as the API or Infer Agent, by serviceType | An LLMService converts as the Infer Agent and an APIService as the API Agent; a missing or misspelled serviceType is read from the node's keys with a warning. | An APIService node carries the API Agent's named options: a relative URL or row-field host is a named placeholder, and pagination is not followed. |
-| API Agent (`apiService`) | Partial | Table Extract, [REST Request](/reference/workflow-steps/general/rest-request/), and a left join back | One GET, POST, PUT, PATCH or DELETE request per input row; the raw response body lands in a text column, HTTP errors stay as rows, every input row is kept, and a quota per period becomes a fractional requests-per-second. Credentials move into a REST connection over https; over http, without connection write permission, or in an MCP conversion they are withheld with a warning, by design. | A relative URL, or one whose host comes from an input field, is a named placeholder; pagination is not followed (first page only). |
+| API / Infer Agent (legacy service) (`service`) | Full | Same as the API or Infer Agent, by serviceType | An LLMService converts as the Infer Agent and an APIService as the API Agent; a missing or misspelled serviceType is read from the node's keys with a warning. | — |
+| API Agent (`apiService`) | Full | Table Extract, [REST Request](/reference/workflow-steps/general/rest-request/), and a left join back | One GET, POST, PUT, PATCH or DELETE request per input row; the raw response body lands in a text column, HTTP errors stay as rows, every input row is kept, and a quota per period becomes a fractional requests-per-second. A relative URL joins its api_bindings base URL or REST connection host; a host, port or path from a row field is substituted per row; next-URL, Link-header, offset and page paging are followed. | — |
 | Blend Agent (`blend`) | Full | [Inner Join](/reference/workflow-steps/tables/table-inner-join/), [Outer Join](/reference/workflow-steps/tables/table-outer-join/), [Anti Join](/reference/workflow-steps/tables/table-anti-join/) | Inner, left, right, full, anti and outer-excluding-inner blends, OR-joined, contains and is-part-of conditions, with matched and unmatched streams; columns a pivot or parse names only at run time are carried through. | — |
 | Dedupe Agent (`deduplicate`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with distinct rows | Keeps the first record per key, within Group By groups, and routes duplicates to a second stream or flags them. | — |
-| Destination Agent (`destination`) | Partial | [Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), [Export: Tableau Hyper](/reference/workflow-steps/export/export-hyper/), [Export: External Database Tables](/reference/workflow-steps/export/export-external-tables/), or email | Writes through destination_bindings to a document account (CSV, Excel or a Tableau .hyper), a connection table (append, or replace when the binding allows it), or email recipients; a file append reads the prior file back and rewrites it. | Slack, Google Sheets, Tableau publishing, upsert and match_keys write modes, file types other than CSV, Excel and Hyper, and non-UTF-8 encoding write a CSV in their place. |
+| Destination Agent (`destination`) | Full | [Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), Export: Parquet, JSON, Avro or XML, [Export to PDF](/reference/workflow-steps/export/export-to-pdf/), [Export: Tableau Hyper](/reference/workflow-steps/export/export-hyper/) with [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/), [Export: External Database Tables](/reference/workflow-steps/export/export-external-tables/), [Export to Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/), [Notify via Slack](/reference/workflow-steps/notifications/notify-via-slack/), or email | Writes through destination_bindings to a document account (CSV, TSV, TXT, Excel, Parquet, JSON, Avro, XML, PDF or a Tableau .hyper, in any Java charset, a character it lacks written as ?), a connection table, a Google Sheet, a Tableau data source or a Slack channel, or email recipients. Append, upsert, update and groupReplace merge on the match keys (a file or table is read back and rewritten; Tableau updates its rows in place). | — |
 | Explode Agent (`explode`) | Full | [Cross Join](/reference/workflow-steps/tables/table-cross-join/) | Cross-joins a small side against the main stream. | — |
 | Filter Agent (`filter`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Splits records by wizard or expression into true and false paths. | — |
 | Filter Pushdown (`pdfilter`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Database-side filter, converted the same as Filter. | — |
@@ -48,7 +48,7 @@ Across the 33 agents: 28 Full, 5 Partial.
 | Sample Agent (`sample`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a row limit | Keeps the first N rows, optionally per group, a random percent or N rows, or one row in every N. | — |
 | Search and Replace (`search_replace`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with nested replace expressions, split across stages | Find/replace rules (contains or matches; replace or append), case-sensitive or not, whole word or not, applied in order over the chosen text fields, or every text field when none is named. | — |
 | Source Agent (`source`) | Full | Import steps bound through `source_bindings` ([Import: CSV](/reference/workflow-steps/import/import-csv/), [Import: Excel](/reference/workflow-steps/import/import-excel/), [Import: SQL](/reference/workflow-steps/import/import-sql/)) or an existing table | Reads the bound table or document; an unbound source creates an empty import and a warning. | — |
-| Spatial Match Agent (`spatial_match`) | Partial | [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), [Cross Join](/reference/workflow-steps/tables/table-cross-join/), or [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Intersects, within, contains, touches, crosses, overlaps, equals, disjoint and and/or multi-rule matches, geodesic within distance, nearest N with a maximum distance and a Distance column, and Cross, with matched and unmatched streams. | A nearest rule combined with other rules is a named placeholder. |
+| Spatial Match Agent (`spatial_match`) | Full | [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/), [Cross Join](/reference/workflow-steps/tables/table-cross-join/), or [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) | Intersects, within, contains, touches, crosses, overlaps, equals, disjoint and and/or multi-rule matches, geodesic within distance, nearest N with a maximum distance and a Distance column (combined with other rules as nearest-then-filter: AND joins, OR unions), and Cross, with matched and unmatched streams. | — |
 | Spatial Summarize Agent (`spatial_summarize`) | Full | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/), Spatial Centroid, and point-to-line steps | Union, intersect, bounding box, one or several geometric centers, and polyline or polygon builds, per group with an optional sort. | — |
 | Split Agent (`split`) | Full | Split Text, or [Table Extract](/reference/workflow-steps/tables/table-extract/) with split_part columns | Splits a text field on a literal separator of any length into rows or columns, with trim and keep-original; the number of columns is read from the data at run time. | — |
 | Split Output (`outlet`) | Full | Workflow edge | Routes a named output to its consumers. | — |
@@ -60,19 +60,28 @@ Across the 33 agents: 28 Full, 5 Partial.
 | Transform Agent (`edit`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number, forward and backward fill), evaluated in order. | — |
 | Unpivot Agent (`unpivot`) | Full | [Melt](/reference/workflow-steps/tables/table-melt/) | Converts columns to rows as a name/value pair. | — |
 | Vision Agent (`vision`) | Full | [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Each document goes to the provider as an image or PDF when it accepts that type and size, else its PDF text layer or OCR text is sent; the prompt's answer lands in an AI Answer column. | — |
-| XML Agent (`xml`) | Partial | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | Selects elements, extracts child values and attributes into columns, or converts XML to JSON, for simple //a/b element paths, namespace-aware or as written. | An XPath with a predicate, attribute test, wildcard or function is a named placeholder; only a simple //a/b path converts. |
+| XML Agent (`xml`) | Full | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | Selects elements, extracts child values and attributes into columns, or converts XML to JSON; a simple //a/b path converts as before and any other XPath 1.0 path (predicates, attribute tests, wildcards, functions such as count(), name() and contains()) is evaluated as XPath, namespace-aware or as written. | — |
 
 Wiring, canvas, and pushdown variants (Split Output, Group, Text, Filter Pushdown, Summarize Pushdown) are Savant node types without a help-center agent article of their own; each converts as the agent it mirrors.
 
 A credential in an API Agent request is never copied into a workflow step. Over https it moves into a REST connection; over http, without permission to write connections, or in a conversion made through MCP it is withheld with a warning. This is by design and does not lower the tier.
 
+## Named Refusals
+
+Two constructs are refused by name rather than converted. Neither lowers an agent's tier.
+
+| Construct | Why It Is Refused |
+| --- | --- |
+| An aggregate or window function in a plain expression | Savant itself fails on it at run time, so there is no result to reproduce. Inside a Transform calculation or a Summarize it converts. |
+| An API Agent request that carries a credential and takes its host from an input field | Each row could send the credential to a host the data chooses. The request becomes a named placeholder. A request without a credential, and a credential on a fixed host, convert. |
+
+A relative API URL converts when you bind a base URL or REST connection with `api_bindings`; see [Convert-Time Bindings](/guides/workflows/migrate-savant-analyses/#convert-time-bindings).
+
 ## Expression Language
 
-Savant expression functions and operators convert to PlaidCloud expressions. Tier: **Partial**. Functions and operators convert to PlaidCloud expressions, GEO_* functions anywhere in an expression run in companion Spatial steps, and a function with no equivalent is flagged by name.
+Savant expression functions and operators convert to PlaidCloud expressions. Tier: **Full**. Functions and operators convert to PlaidCloud expressions, GEO_* functions anywhere in an expression run in companion Spatial steps, TO_TEXT/date formats (numeric DecimalFormat patterns, per-row formats, S fraction, MMMMM, week tokens) run in Text Function steps, and a function with no equivalent is flagged by name.
 
-Without a mapping: TO_TEXT with a numeric pattern or a per-row format, and the S fraction, narrow MMMMM and week-based date tokens, are refused by name.
-
-An aggregate or window function in a plain expression fails in Savant itself, so it is flagged by name; inside a calculation or a Summarize it converts.
+Every function and format converts, including `TO_TEXT` with a numeric pattern, a format that is only known per row, fractional-second tokens, and week-based date tokens. The one exception is an aggregate or window function in a plain expression. It fails in Savant itself, so the converter flags it by name; inside a calculation or a Summarize it converts.
 
 ## Export Formats
 
@@ -89,8 +98,9 @@ Savant connectors are source and destination targets, not steps, and an export c
 | Savant | Where It Goes in PlaidCloud |
 | --- | --- |
 | Source connector | `source_bindings` maps the Savant node or dataset to a PlaidCloud table or a Document file, read through the matching import step; an unbound source warns and processes nothing |
-| Destination: CSV, Excel | An export step ([Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/)) |
-| Destination: other connectors | The matching export step when PlaidCloud has one for that system; otherwise a CSV or table destination with a warning naming the original target |
+| Destination: CSV, Excel and other file formats | An export step ([Export: CSV](/reference/workflow-steps/export/export-to-csv/), [Export: Excel](/reference/workflow-steps/export/export-to-excel/), [Export to PDF](/reference/workflow-steps/export/export-to-pdf/)) |
+| Destination: Google Sheets, Tableau, Slack | [Export to Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/), [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/), or [Notify via Slack](/reference/workflow-steps/notifications/notify-via-slack/), through a connection you bind with `destination_bindings` |
+| Destination: other connectors | A CSV or table destination with a warning naming the original target |
 
 Conversion never contacts the source or destination system.
 

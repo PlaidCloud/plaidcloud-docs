@@ -57,7 +57,8 @@ The REST API and MCP tool take these fields.
 | `table_prefix` | No | Prefix added to table names. Defaults to the workflow's own name. A prefix that would reuse an existing table name is refused before anything is created. The prefix used is returned in the conversion report. |
 | `workflow_type` | No | `advanced` (default) lays the graph onto the DAG canvas. `standard` produces a serial step list. |
 | `source_bindings` | No | Binds sources to existing data. See [Bind Sources](#bind-sources). |
-| `destination_bindings` | No | Routes destinations to a document account, a connection table, or email recipients. REST and MCP only. See [Destinations](#destinations). |
+| `destination_bindings` | No | Routes destinations to a document account, a connection table, a Google Sheet, a Tableau data source, a Slack channel, or email recipients. REST and MCP only. See [Destinations](#destinations). |
+| `api_bindings` | No | Says where an API agent's relative URL goes: a base URL or a REST connection. REST and MCP only. See [Bind API Requests](#bind-api-requests). |
 | `allow_unconverted_placeholders` | No | Controls what a placeholder does at run time. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations). |
 
 ### REST
@@ -89,6 +90,16 @@ Each entry in the response has the source's `node_id`, `name`, and `connector`.
 ### MCP
 
 An MCP-connected AI agent calls the `savant_convert` tool with the same fields. See [AI Agents (MCP)](/integrations/ai-coding-agents/) to connect an agent. The tool changes your project, so review the call before you approve it.
+
+## Convert-Time Bindings
+
+A Savant export carries no data, no credentials and no connections, so three convert-time parameters connect it to yours. Each is a map from a Savant node id or name to a target, and a binding you can't use refuses the whole conversion before anything is created.
+
+| Parameter | Binds | Section |
+| --- | --- | --- |
+| `source_bindings` | Source agents to tables or files | [Bind Sources](#bind-sources) |
+| `destination_bindings` | Destination agents to a file, table, sheet, Tableau data source, Slack channel, or email | [Destinations](#destinations) |
+| `api_bindings` | API agents with a relative URL to a base URL or REST connection | [Bind API Requests](#bind-api-requests) |
 
 ## Bind Sources
 
@@ -124,13 +135,13 @@ Most agents convert to the step you would build by hand; the [Savant Conversion 
 | --- | --- | --- |
 | Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. A row limit becomes **Max rows**, and an empty source warns and writes an empty table. | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Each call has a cost. See [AI Providers](#ai-providers). A batch that fails keeps its rows with an empty answer and warns. |
 | Vision Agent (`vision`) | A [Document Read Blob](/reference/workflow-steps/text-documents/document-blob-extract/) step, [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the AI/NLP **Prompt** task. Each document goes to the provider as an image or PDF when the provider accepts that type and size. Otherwise the step sends its PDF text layer, or the OCR text. | Same LLM caveats as the Infer Agent. Whole documents leave PlaidCloud for the provider, and the conversion warns. TIFF and BMP files are sent as OCR text, and there is no maximum document size setting. A document that isn't found is skipped and the step warns with its path. |
-| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The raw response body lands in a text column, with a status column beside it. A quota per period becomes a fractional **Max req/sec**. | A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A failed request stays as a row with its status. Pagination isn't followed: only the first page is read, with a warning. Only an absolute `http://` or `https://` URL converts, and row data can't choose the host. Credentials are handled as described in [API Steps with Credentials](#api-steps-with-credentials). |
+| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The raw response body lands in a text column, with a status column beside it. A quota per period becomes a fractional **Max req/sec**. A relative URL joins the base URL or REST connection you bind with `api_bindings`. A host, port, or path that comes from a row field is filled in per row. Next-URL, Link header, offset, and page paging are followed. | A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A failed request stays as a row with its status. A request that carries a credential can't take its host from a row field. Credentials are handled as described in [API Steps with Credentials](#api-steps-with-credentials). |
 | Recursion Agent (`hierarchy`) | A [Hierarchy Closure](/reference/workflow-steps/tables/table-hierarchy-closure/) step that walks each row up its parent chain to any depth, then aggregates each node over the ids on its path to the root, itself included. It writes Depth and Path. A row with a blank parent, or naming itself as its parent, is a root. | A loop in the parent ids stops at the repeated node and keeps every ancestor before it. Rows with several parents each keep their own values. |
 | Search and Replace (`search_replace`) | A [Table Extract](/reference/workflow-steps/tables/table-extract/) that applies each rule in order to the chosen text columns, case-sensitive or not, whole word or not. Each rule runs in its mode: replace the matched text, replace the whole cell when it contains the text, replace the whole cell when it matches exactly, or append to the cell. | Rules are literal text, not patterns. |
 | Split (`split`) | A [Split Text](/reference/workflow-steps/tables/table-split-text/) step. It splits into columns or rows on a literal separator of any length, and decides the number of columns from the data when the workflow runs. | None beyond the matrix status. |
 | Time Series (`rollup`) | A Table Extract that groups by a period expression, with a [Period Spine](/reference/workflow-steps/tables/table-period-spine/), an anti join, and a union that zero-fill the periods with no records. | Records with a NULL date are excluded. The spine stops at 100,000 periods. |
 | Format (`format`) | A Table Extract with the renames, retypes, hides, and fills, or a [Promote Header](/reference/workflow-steps/tables/table-promote-header/) step for replace-names-with-row. | A few Format settings aren't converted. See [What Stays Limited](#what-stays-limited). |
-| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A nearest match ranks and filters by great-circle distance, as Savant does. A within-distance match converts too, in kilometers when the rule gives no unit, and tests WKT points only. |
+| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A nearest match ranks and filters by great-circle distance, as Savant does. A nearest rule combined with other rules finds the nearest records first, then applies the other rules: with AND the result keeps records that satisfy every rule, and with OR it unions the nearest records with the records the other rules match. A nearest rule with neither a count nor a maximum distance keeps the single nearest record. A within-distance match converts too, in kilometers when the rule gives no unit, and tests WKT points only. |
 | Spatial Summarize Agent (`spatial_summarize`) | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) for union, intersect, and bounding box, plus [Spatial Centroid](/reference/workflow-steps/spatial/spatial-centroid/), [Spatial Point to Line](/reference/workflow-steps/spatial/spatial-point-to-line/), and [Spatial Line to Polygon](/reference/workflow-steps/spatial/spatial-line-to-polygon/) for geometric center and line or polygon builds. | A polygon built from fewer than 3 points is an empty polygon. |
 | Destination Agent (`destination`) | An export step to the target you bind, or a CSV when you don't. See [Destinations](#destinations). | See [What Stays Limited](#what-stays-limited). |
 
@@ -151,14 +162,58 @@ A Savant destination writes the table it receives to the target you bind. Bind d
 
 | Target | Binding | Result |
 | --- | --- | --- |
-| Document account | `{account, path[, file_name]}` | A CSV, Excel, or Tableau Hyper export, by the kind of destination. You need the document storage write permission on the account. |
+| Document account | `{account, path[, file_name]}` | A CSV, TSV, TXT, Excel, Parquet, JSON, Avro, XML, PDF, or Tableau Hyper file, by the kind of destination. You need the document storage write permission on the account. |
 | Table on a connection | `{connection, table[, schema, replace]}` | An [Export: External Database Tables](/reference/workflow-steps/export/export-external-tables/) step. You need connection write permission. Replacing the table needs `replace: true`. |
+| Google Sheets | `{connection, spreadsheet_name[, sheet_name, replace]}`, or `{connection, spreadsheet_id[, sheet_name, replace]}` | An [Export to Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/) step on a Google Sheets connection. The tab defaults to the one the destination names, else `Sheet1`. A destination that replaces the sheet's rows clears the tab, so it needs `replace: true`. |
+| Tableau | `{account, connection[, path, file_name, replace, datasource_name, tableau_project]}` | A Tableau Hyper extract written to the account's folder, then a [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/) step on a [Tableau connection](/reference/connectors/collaboration/tableau/). Replacing the data source, or changing its rows on match keys, needs `replace: true`. |
+| Slack | `{connection[, channel]}` | The CSV is written to a document account, then a [Notify via Slack](/reference/workflow-steps/notifications/notify-via-slack/) step uploads it to the channel. The connection needs a bot token, and the channel must be a channel ID, taken from the binding or else from the export. |
 | Email | `{email_to: [...]}`, and `email_export_recipients: true` to also use the recipients the export lists | The CSV is mailed as an attachment. You need email write permission. |
 
-- An append destination reads the earlier file back and rewrites it with the new rows. It never overwrites.
+A Sheets, Tableau, or Slack connection is checked the way a table connection is: you must be able to see it and hold connection write permission, or the conversion is refused.
+
+### Write Modes
+
+- A file or table destination that appends reads the earlier file back and rewrites it with the new rows. It never overwrites.
+- An upsert, update, or groupReplace destination merges on the destination's match keys. A file or table is read back and rewritten, and a Tableau data source has its matching rows changed in place.
+- A Tableau destination maps Savant's modes to the six [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/#modes) modes: append and insert add rows, replace overwrites, and upsert, update, and groupReplace match on keys. A mode that changes existing data publishes only when the binding says `replace: true`; otherwise the destination publishes a new data source and the report says so.
+- A destination with an output encoding writes the file in that Java character set. A character the set lacks is written as `?`, as Savant does.
 - Export file names must stay inside the bound folder.
-- An AI assistant (MCP) can't bind a replace or email recipients. An appending destination still appends to its bound table. A destination that replaces falls back to a CSV, and the warning says which part wasn't allowed.
-- A destination with no usable binding writes a CSV to the Document account you gave for unbound sources and warns **Fallback, target not written**, with the original target in the message. Nothing is dropped. The CSV is not the destination's own output, so check it before you rely on it. A plain CSV destination writes its own file.
+
+### What AI Callers Can Bind
+
+A conversion through an AI assistant (MCP) binds the same shapes with these parts withheld, each with a warning that names the part:
+
+| Withheld | What Happens Instead |
+| --- | --- |
+| `replace` on a table, sheet, or Tableau data source | A destination that appends still appends to its bound table or sheet. A destination that replaces writes a CSV. A Tableau destination publishes a new data source. |
+| Email recipients | A CSV is written in place of the email. |
+| Slack | A CSV is written in place of the Slack post. |
+
+Convert from the Analyze app or the REST API, or sign in yourself rather than through an assistant, to bind these.
+
+A destination with no usable binding writes a CSV to the Document account you gave for unbound sources and warns **Fallback, target not written**, with the original target in the message. Nothing is dropped. The CSV is not the destination's own output, so check it before you rely on it. A plain CSV destination writes its own file.
+
+## Bind API Requests
+
+An API agent whose URL is relative, such as `/v2/customers`, has no host to send to. Bind one with `api_bindings`. A key is the API node's id or name, or `*` for every API node without a binding of its own. A value is one of:
+
+- A base URL, as a string or `{"base_url": "https://host/path"}`. The relative URL is joined to it. The URL must be `http` or `https` with a public host, and carry no user, query, or fragment.
+- `{"connection": "<REST connection id>"}`. The request goes to that [REST connection](/reference/connectors/rest/generic-rest/)'s host and carries its credentials. You need connection write permission, and the connection must be a REST connection you can see.
+
+```json
+"api_bindings": {
+  "*": "https://api.example.com/v1",
+  "Customers": { "connection": "<REST connection id>" }
+}
+```
+
+An unmatched key is a warning, and a binding you can't use is refused. A relative URL with no binding stays a named placeholder.
+
+An AI assistant (MCP) without connection write permission has a connection binding ignored with a warning, and the relative URL it would have joined stays a placeholder. Bind a base URL, or convert from the Analyze app or the REST API.
+
+A host, port, or path that comes from an input field needs no binding. It is filled in per row, each value checked as it is used, and the report lists the hosts a row may name. A request that carries a credential can't take its host from a row field: sending a credential to a host the data chooses is refused.
+
+Paging converts too. A next-page URL in the response, a `Link` header, an offset, and a page number each become a paging mode on the [REST Request](/reference/workflow-steps/general/rest-request/) step, which reads every page.
 
 ## API Steps with Credentials
 
@@ -202,7 +257,7 @@ These conversions behave as follows.
 | Sample (`sample`) | First N rows, per group or overall, a random percent or number of rows, or one row in every Nth. |
 | Time Series (`rollup`) | Day, week, month, quarter, year, and decade periods between the optional start and end dates, per group. Month periods are labeled `YYYY-MM`, and periods with no records appear with zeros. Records with a NULL date are excluded. |
 | Pivot (`pivot`) | COUNT counts rows. |
-| XML (`xml`) | SELECT extracts elements, paths can carry namespaces, and TO_JSON converts XML to JSON. With `processNs` off, names are matched literally, prefix included. |
+| XML (`xml`) | SELECT extracts elements, paths can carry namespaces, and TO_JSON converts XML to JSON. Any XPath 1.0 path converts, including predicates, attribute tests, wildcards, and functions such as `count()`, `name()`, and `contains()`, and the [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) step reads it as XPath. With `processNs` off, names are matched literally, prefix included. |
 | JSON (`json`) | Flattens into wide columns. Text that isn't valid JSON gives NULL, and arrays come out as text. |
 | Split (`split`) | Splits into columns or rows, with the number of columns read from the data each time the workflow runs. |
 
@@ -223,8 +278,11 @@ These expression functions follow Savant's results:
 | `DURING_DAYLIGHT_SAVING` and `DURING_STANDARD` | NULL in gives NULL out. |
 | `TO_TEXT` with a date format | Reads the format tokens as Savant does. `YYYY`, `w`, and `u` are the ISO week-year, week, and weekday, and a zone or era letter is written as for a UTC time. |
 | `TO_TEXT` and number-to-text output | Writes plain numbers such as `12`, not `12.0000000000`. |
+| `TO_TEXT` with a numeric pattern | Formats as a Java `DecimalFormat` does, rounding half to even, including scientific patterns such as `##0.##E0`. |
+| `TO_TEXT` and date parsing with a per-row format | Reads the format from each row. |
+| Fractional-second, narrow month, and week-based date tokens | Convert. The week tokens read as ISO weeks, with a **semantics assumed** note. |
 
-`TO_TEXT` with a numeric pattern, a format that is only known per row, or fractional-second (`S`) tokens isn't converted. It is flagged by name. Plain aggregate and window functions inside an ordinary expression aren't converted either.
+`TO_TEXT` and date formats convert in a [Text Function](/reference/workflow-steps/tables/table-text-function/) step. The converter refuses a plain aggregate or window function inside an ordinary expression and flags it by name, because Savant itself fails on it at run time. Inside a calculation or a Summarize it converts.
 
 Expression functions also convert for `sha1`, `NOT_TRUE`, `LEVENSHTEIN`, the daylight saving time functions (`DST`), and regular expression functions that take an nth match. `DAY_OF_WEEK` numbers Sunday as 7, and `DAY_NAME` returns the day's name.
 
@@ -256,16 +314,16 @@ A converted workflow can differ from Savant in these ways. The conversion report
 
 **Language models.** Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs. A Fuse agent matches with the deterministic [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) step at a threshold of 80, where Savant uses a language model.
 
-**Destinations that fall back to a CSV.** These options aren't converted and write a CSV with a warning: matching keys for an upsert, Google Sheets, an output encoding, a sheet taken from a field, and Slack. A destination with no binding, or one the export can't write, also falls back. See [Destinations](#destinations).
+**Destinations that fall back to a CSV.** A destination with no binding, one whose binding the conversion can't use, a replace that the binding doesn't allow, a Slack or email part an AI assistant withheld, and a sheet whose tab name comes from a field fall back to a CSV with a warning. See [Destinations](#destinations).
 
 **Other limits.**
 
 - Date and timestamp conversions of text that isn't in a recognizable date format can fail the run on that row.
 - A source with no declared columns that isn't a bound CSV, TSV, or TXT file keeps only the columns later steps reference. See [Files with No Declared Columns](#files-with-no-declared-columns).
-- An API agent follows only the first page, and a relative URL or a host taken from a row field isn't converted. Credentials in an `http://` URL are left out, and MCP imports don't create connections.
+- An API agent whose URL is relative needs an `api_bindings` entry, and a request that carries a credential can't take its host from a row field. Credentials in an `http://` URL are left out, and MCP imports don't create connections.
 - A Vision agent sends TIFF and BMP files as OCR text.
 - Format settings for sort, field reordering, extra, and replace aren't converted, and fill writes only text columns.
-- XML paths with predicates, attributes, wildcards, or functions become placeholders, and a path with several steps matches its last element.
+- An XML path that isn't XPath 1.0 becomes a placeholder.
 - A spatial within-distance test reads WKT points only.
 - On StarRocks and Snowflake, `JSON_FORMAT` and `JSON_SET` fail at run time, and the conversion report notes it.
 
