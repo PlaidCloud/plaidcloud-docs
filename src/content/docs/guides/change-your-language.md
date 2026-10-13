@@ -46,8 +46,34 @@ Only the display changes. Values you save, export, or send to integrations keep 
 
 Japanese, Korean, and Chinese input methods work in number fields and other fields that limit what you can type. Full-width digits convert as you type, so `１２３` becomes `123`.
 
-## What Isn't Translated Yet
+## What Else Follows Your Language
 
-- Messages that come from the server, such as error text, step validation messages, and emails.
-- The sign-in page.
+The text PlaidCloud sends you from the server follows your language too, in English (US), English (UK), German, Spanish, French, Portuguese (Portugal), and Portuguese (Brazil):
+
+- **Emails.** System emails such as invitations, password resets, workflow and migration notices, and sign-up, billing, and support emails.
+- **Sign-in screens.** The sign-in, set-password, and signed-out screens, and the emails Keycloak sends from them.
+- **Error messages.** The messages PlaidCloud shows when a request fails, in the interface, through the REST API, and through JSON-RPC.
+- **Project documentation PDF.** The PDF PlaidCloud generates to document a project.
+
+Polish, Japanese, Korean, and Chinese (Simplified) translate the interface. Server text in those languages appears in English.
+
+## How PlaidCloud Picks the Language
+
+| Where | Language used |
+|---|---|
+| Inside PlaidCloud | The language you chose with the **Language** button. Your sign-in page and emails follow the same choice. |
+| Sign-in and other screens before you sign in | Your browser's language. |
+| Signing up | Your browser's language. PlaidCloud stores it on your organization, and billing and account emails to the organization use it. |
+
+If your browser or profile uses a language PlaidCloud doesn't offer, the text appears in English (US).
+
+## What Stays in English
+
+- Workflow and step run messages and logs, and the activity stream. Many people read these, and keeping them in one language keeps them searchable and consistent.
+- Text from the AI assistant and MCP tools.
+- Emails you write yourself, including email templates and emails sent by report steps.
+- The OpenAPI documentation.
+- Error text from the SQL and expression engines.
+- Field-level validation messages.
+- The sign-up screens.
 - Content you create, such as the names of projects, tables, and steps.
