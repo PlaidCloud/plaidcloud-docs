@@ -72,6 +72,5 @@ If your browser or profile uses a language PlaidCloud doesn't offer, the text ap
 - Emails you write yourself, including email templates and emails sent by report steps.
 - The OpenAPI documentation.
 - Error text from the SQL and expression engines.
-- Field-level validation messages.
 - The sign-up screens.
 - Content you create, such as the names of projects, tables, and steps.
