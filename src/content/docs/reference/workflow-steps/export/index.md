@@ -9,6 +9,8 @@ Workflow steps that write project tables to external destinations — file forma
 
 - [Archive Tables](/reference/workflow-steps/export/archive-tables/)
 - [Export External Database Tables](/reference/workflow-steps/export/export-external-tables/)
+- [Export Kafka](/reference/workflow-steps/export/export-kafka/)
+- [Export MongoDB](/reference/workflow-steps/export/export-mongodb/)
 - [Export Project Archive](/reference/workflow-steps/export/export-project-archive/)
 - [Export Project Table](/reference/workflow-steps/export/export-project-table/)
 - [Export Quandl](/reference/workflow-steps/export/export-quandl/)

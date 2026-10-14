@@ -19,6 +19,10 @@ Workflow steps for operating on files stored in document accounts. Use these to 
 
 Copy and rename steps treat a missing source as normal. When the file, or the folder to copy or rename, is missing, or the folder is empty, the step does nothing, finishes with a warning that names the path, and the workflow continues. A scheduled run over a folder that has no files that day no longer fails.
 
+## Encryption
+
+- [Encrypt file · Decrypt file](/reference/workflow-steps/document/encrypt-decrypt-file/) — AES, Blowfish, or an Excel workbook password
+
 ## PDF Operations
 
 - [Compress PDF](/reference/workflow-steps/document/compress-pdf/)

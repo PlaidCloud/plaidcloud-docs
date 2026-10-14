@@ -41,6 +41,11 @@ The terms *database*, *lakehouse*, *query engine*, and *data warehouse* describe
 - [Apache Hive](/reference/connectors/databases/hive/)
 - [Apache Spark](/reference/connectors/databases/spark/)
 
+## Document and Streaming Stores
+
+- [MongoDB](/reference/connectors/databases/mongodb/)
+- [Apache Kafka](/reference/connectors/databases/apache-kafka/)
+
 ## Generic
 
 - [ODBC](/reference/connectors/databases/odbc/) — connect to any database with an ODBC driver
