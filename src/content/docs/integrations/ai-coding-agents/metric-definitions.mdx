@@ -35,6 +35,8 @@ A metric definition is a recipe, not a stored result. It is recalculated every t
 
 A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved, and again when it is approved.
 
+A metric can also be built from other metrics, as a ratio, a sum, a difference or a multiple: see [Derive a Metric From Others](#derive-a-metric-from-others).
+
 Nothing stops two metrics in a project from sharing a name or a synonym. Keep them distinct, or the assistant has to guess which one you mean, or ask.
 
 ## Who Can Do What
@@ -98,6 +100,43 @@ The one-row-per-key check looks at the lookup table's data on the day the metric
 
 Each approval is recorded with who approved it, when, and which version. Editing an approved metric creates a new draft version; for readers, the approved version keeps answering questions until the new one is approved in turn.
 
+## Derive a Metric From Others
+
+A **derived metric** is arithmetic over metrics that already exist: *Net Revenue per FTE* is *Net Revenue* divided by *Headcount (FTE)*. It is defined, approved, asked about and retired like any other metric. What differs is its definition, which names the metrics it is built from instead of a table.
+
+| Operation | What it calculates | Inputs |
+|---|---|---|
+| `ratio` | the first input divided by the second | two metrics |
+| `add` | the first input plus the second | two metrics |
+| `subtract` | the first input minus the second | two metrics |
+| `scale` | the input multiplied by a fixed `factor` | one metric and a number |
+
+The inputs are **base metrics** of the same project, the kind defined from a table above. A derived metric can't be built from another derived metric, and can't use the same input twice.
+
+Ask the assistant:
+
+> *"In the **Sales** project, define a metric named **Net Revenue per FTE** as the ratio of **Net Revenue** to **Headcount (FTE)**."*
+
+Through the REST API, the `definition` names the inputs by their ids, which `metric_find` or the definitions list gives you. The order matters: the first id is the numerator of a `ratio`, and the metric subtracted from in a `subtract`.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` takes one input and a `factor`: `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` annualizes a monthly figure.
+
+**How it is calculated.** Each input is calculated on its own, at the breakdown you asked for and under your row access, and the results are then combined for each breakdown value. Totaling each input before combining them is what keeps a ratio of two tables honest: joining the rows first would count a row once for every row it met on the other side. Where one input has no rows for a breakdown value, the derived value for it is empty, and so is a ratio whose denominator is zero; neither is reported as zero.
+
+**Breakdown columns are computed, not declared.** A derived metric can be broken down only by the columns that *every* input allows, and that list is shown beside its definition. If you want to ask for the derived metric by region, give each input `region_lookup.region`, spelled the same way, as a breakdown column. Inputs that share no breakdown column give a derived metric that answers only as a single total. A question that groups or filters by anything else is refused, as for any metric. An empty list beside an approved derived metric means one of its inputs is no longer usable: retired, or missing.
+
+**Approval checks the inputs.** A derived metric can be approved only when each input has an approved version, since that is the version readers get. Readers always get the approved version of each input and of the derived metric itself; Architects get the working versions, drafts included. An input is not pinned to a version: when a later version of an input is approved, the derived metric's figures change with it, and the approval's result names the derived metrics it affects (`used_by`).
+
+**An input stays in service while an approved derived metric uses it.** It can't be retired, and a new version of it can't be approved as a derived metric; the refusal names the metric that uses it. Editing that metric isn't enough, since its approved version still uses the input: retire it, or approve a version of it that doesn't.
+
 ## Ask About a Metric
 
 Anyone who can read the project can ask an assistant connected over MCP:
@@ -114,7 +153,7 @@ Architects asking about a metric get its **working version**, draft included, so
 
 ## Retire a Metric
 
-Retiring a metric takes it out of service for good: people who read the project no longer see it, Architects see it marked retired with its history, and it can no longer be edited or run. An Architect retires one by asking the assistant, or with `POST /rest/v1/analyze/metric/retire`. To replace a retired metric, define a new one.
+Retiring a metric takes it out of service for good: people who read the project no longer see it, Architects see it marked retired with its history, and it can no longer be edited or run. An Architect retires one by asking the assistant, or with `POST /rest/v1/analyze/metric/retire`. A metric that an approved derived metric is built from can't be retired until that metric is retired, or a version of it that no longer uses this input is approved. To replace a retired metric, define a new one.
 
 ## Through MCP and the REST API
 
@@ -128,7 +167,7 @@ Retiring a metric takes it out of service for good: people who read the project 
 | Run | `metric_run` with `group_by` and `filters` | `POST /rest/v1/analyze/metric/run` |
 | Earlier versions (Architects only) | | `GET /rest/v1/analyze/metric/flashback-versions` |
 
-`metric_upsert` takes a `spec` of `{name, memo, synonyms, definition}` and accepts `dry_run` to check a definition without saving it.
+`metric_upsert` takes a `spec` of `{name, memo, synonyms, definition}` and accepts `dry_run` to check a definition without saving it. A derived metric's `definition` is `{kind, op, inputs, factor}`; its computed breakdown columns come back as `grain` beside the definition.
 
 ## Related
 
