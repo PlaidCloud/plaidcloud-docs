@@ -7,7 +7,7 @@ Workflow steps that bring data from external sources into project tables.
 
 A file import checks the query that loads its target table before it runs. A query that carries anything other than a plain SQL statement over typed columns is refused before the target table is created, replaced or loaded, so the table is left exactly as it was.
 
-A missing source file is not an error. The import warns with the path and leaves the target table empty with its declared columns, so later steps read zero rows. This applies to CSV, Excel, JSON, fixed-width, YXDB, dBASE, ORC, Avro, Parquet, XML and Db2 extract imports. Archive and Access imports also warn, but they declare no columns, so they create no table.
+A missing source file is not an error. The import warns with the path and leaves the target table empty with its declared columns, so later steps read zero rows. This applies to CSV, Excel, JSON, fixed-width, YXDB, dBASE, ORC, Avro, Parquet, XML and Db2 extract imports. A tagged XML import creates an empty table only for each tag that declares fields. Archive and Access imports also warn, but they declare no columns, so they create no table. An archive import that finds its files by a document search gives no missing-file warning.
 
 ## Steps
 
@@ -26,7 +26,9 @@ A missing source file is not an error. The import warns with the path and leaves
 - [Import Google Spreadsheet](/reference/workflow-steps/import/import-google-spreadsheet/)
 - [Import HDF](/reference/workflow-steps/import/import-hdf/)
 - [Import JSON](/reference/workflow-steps/import/import-json/)
+- [Import Kafka](/reference/workflow-steps/import/import-kafka/)
 - [Import Monday](/reference/workflow-steps/import/import-monday/)
+- [Import MongoDB](/reference/workflow-steps/import/import-mongodb/)
 - [Import ORC](/reference/workflow-steps/import/import-orc/) — set with an AI assistant or the REST API
 - [Import Parquet](/reference/workflow-steps/import/import-parquet/)
 - [Import Project Table](/reference/workflow-steps/import/import-project-table/)

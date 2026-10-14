@@ -22,17 +22,18 @@ These fields appear when creating or editing this connection. Required vs option
 | Db read only | Toggle | Restrict the connection to read-only operations. |
 | Access type | Select | Read-only, write-only, or read-write access level for this connection. |
 
-### Connection
+### BigQuery Connection
 
-| Field | Type | Description |
+| Field | Required | Description |
 |---|---|---|
-| Db project | Text | — |
-| Db dataset | Text | — |
-| Db catalog | Text | Database, catalog, or schema to connect to. |
+| Project | Yes | The Google Cloud project that holds the dataset. |
+| Dataset | Yes | The BigQuery dataset to read and write. |
+| Table | Yes | A table in the dataset. |
 
-### Authentication
+### Auth Credentials
 
-| Field | Type | Description |
+| Field | Required | Description |
 |---|---|---|
-| Db user | Text | Username for database authentication. |
-| Db password | Password | Password for database authentication. |
+| Service Account Key (JSON) | Yes | Paste the whole JSON key file of a Google service account that can read the dataset. Grant it write access only if you want to write to the dataset. The key is write-only: leave it blank on edit to keep the saved one. |
+
+The connection authenticates only with the service account key you give it. [Import SQL](/reference/workflow-steps/import/import-sql/) reads BigQuery through this connection, and [Export External Database Tables](/reference/workflow-steps/export/export-external-tables/) writes to it with a BigQuery load job.
