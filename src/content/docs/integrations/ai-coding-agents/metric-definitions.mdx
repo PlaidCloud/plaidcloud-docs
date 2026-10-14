@@ -29,11 +29,12 @@ A metric definition is a recipe, not a stored result. It is recalculated every t
 | **Description** (`memo` in the API) | What the number means and when to use it, for the assistant and for people. Up to 1,000 characters. | *Revenue after returns and discounts. Use for all revenue questions.* |
 | **Source table** | The table the rows come from. | `sales_fact` |
 | **Joins** | Lookup tables joined to the source on matching columns. Each lookup table must have only one row for each key (one row per region code, say), or the rows it matches are counted twice. | `region_lookup`, matching `region_code` in the source to `code` in the lookup |
-| **Measure** | How the rows are added up: `sum`, `count`, `count_distinct`, `min`, `max` or `avg` of a column. | `sum` of `net_amount` |
-| **Filters** | Which rows always count. Each filter is a column, an operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) and its values. | `scenario` `eq` *Actual* |
+| **Measure** | How the rows are added up: `sum`, `count`, `count_distinct`, `min`, `max` or `avg` of a column, or `weighted_avg` of a column weighted by a second column (`weight`): the sum of value times weight over the rows where both are set, divided by the sum of those weights; empty if the weights add to zero. | `sum` of `net_amount`; `weighted_avg` of `unit_price` by `units` |
+| **Filters** | Which rows always count. Each filter is a column, an operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) and its values. | `status` `eq` *Posted* |
 | **Breakdown columns** (`grain` in the API) | The columns a person may group and filter by when they ask. Filters are fixed; breakdown columns are the asker's choice. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Scenario** (optional) | The column that separates actual rows from budget rows, and the value of each. The metric is its actual rows; the budget rows are read only for a [variance](#compare-rank-and-share). | `scenario`, actual *Actual*, budget *Budget* |
 
-A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved, and again when it is approved.
+A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved, and again when it is approved. A metric with a scenario can't filter on the scenario column, or offer it as a breakdown column: the scenario decides which rows are read, so a filter such as `scenario` `eq` *Actual* belongs in the scenario, not in the filters.
 
 A metric can also be built from other metrics, as a ratio, a sum, a difference or a multiple: see [Derive a Metric From Others](#derive-a-metric-from-others).
 
@@ -50,7 +51,7 @@ Nothing stops two metrics in a project from sharing a name or a synonym. Keep th
 
 If you are a project Architect, ask your connected AI assistant in plain language:
 
-> *"In the **Sales** project, define a metric named **Net Revenue**, with synonyms revenue and sales: the sum of `net_amount` in `sales_fact`, where `scenario` is Actual, joined to `region_lookup` on `region_code`, that can be broken down by the lookup's `region`, by `product_line` and by `fiscal_year`."*
+> *"In the **Sales** project, define a metric named **Net Revenue**, with synonyms revenue and sales: the sum of `net_amount` in `sales_fact`, joined to `region_lookup` on `region_code`, that can be broken down by the lookup's `region`, by `product_line` and by `fiscal_year`; its actual rows have `scenario` Actual and its budget rows `scenario` Budget."*
 
 The assistant saves it as a **draft**, and tells you if a table or column it names doesn't exist. A draft can be edited as often as you like. Every edit is a new **version** of the definition, written by whoever made it. The latest saved version, approved or not, is the metric's **working version**.
 
@@ -67,8 +68,9 @@ POST /rest/v1/analyze/metric/definition
     "source": "sales_fact",
     "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
     "measure": {"agg": "sum", "column": "net_amount"},
-    "filters": [{"column": "scenario", "op": "eq", "values": ["Actual"]}],
-    "grain": ["region_lookup.region", "product_line", "fiscal_year"]
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"}
   }
 }
 ```
@@ -151,6 +153,26 @@ The result the assistant works from names the metric, its version and its state,
 
 Architects asking about a metric get its **working version**, draft included, so they can preview a change before it is approved; everyone else always gets the approved version. Architects read every row, as they do everywhere else in the project.
 
+## Compare, Rank and Share
+
+A question about a metric can also ask for one comparison, one ranking, and a share of the total. Each is a fixed calculation over the metric's own figures, under the asker's row access; none of them is worked out by the assistant.
+
+| Ask for | What comes back | In the API |
+|---|---|---|
+| **Variance against budget** | For each breakdown value: the actual figure, the budget figure, the difference (`value`), and the difference as a percentage of the budget's size (`pct`), which keeps the sign of the difference when the budget is negative. | `compare: "variance"` |
+| **Share of the total** | Each row's figure divided by the total over every row of the breakdown (`share`), or over the rows that share the `within` columns you name. | `share: {"within": ["region"]}`; `{}` for the grand total |
+| **Top or bottom N** | The N highest figures, or the N lowest with `order: "asc"`, with their `rank`; per group when you name `within` columns. Rows that tie share a rank and are all kept, so there can be more than N. For a cost metric *furthest over budget* is the top N of the variance; for a revenue metric it is the bottom N. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *"Which five cost centers are furthest over budget in the **Finance** project?"*
+>
+> *"What share of total spend is each region, and which region is the largest?"*
+
+A variance needs a metric with a **scenario**; a metric without one, or a derived metric, refuses it. Each side is totaled on its own before the two are compared: a breakdown value with no budget row, or no actual row, shows an empty difference rather than a zero (the exception is a `count` metric asked for as a single total, where a side with no rows counts zero), and so does a percentage over a zero budget.
+
+The ranking and the share are over the metric's figure, or over the difference when a variance is asked for, so *"which cost centers account for most of the overspend"* is a variance with a share and a ranking. The share is worked out over every row of the breakdown before a top-N keeps some of them, so the shares of the rows you get back need not add up to one. An empty figure ranks last whichever order you ask for, and has an empty share; so does a share over a zero total.
+
+A share is of what *you* can see. Someone whose row access limits them to EMEA gets EMEA's cost centers as shares of EMEA's total, and the result says row access was applied. The `within` columns of a share or a ranking must be among the breakdown columns you asked for, and a question that groups by a column named like one of the result's own columns (`value`, and `actual`, `budget`, `pct`, `share` or `rank` when the operator that produces it is asked for) is refused. A question with two comparisons, or two rankings, is refused.
+
 ## Retire a Metric
 
 Retiring a metric takes it out of service for good: people who read the project no longer see it, Architects see it marked retired with its history, and it can no longer be edited or run. An Architect retires one by asking the assistant, or with `POST /rest/v1/analyze/metric/retire`. A metric that an approved derived metric is built from can't be retired until that metric is retired, or a version of it that no longer uses this input is approved. To replace a retired metric, define a new one.
@@ -164,10 +186,10 @@ Retiring a metric takes it out of service for good: people who read the project 
 | Define or edit a draft | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
 | Approve | `metric_review` with `action: approve` and the `content_digest` as `digest` | `POST /rest/v1/analyze/metric/approve` with `digest` |
 | Retire | `metric_review` with `action: retire` | `POST /rest/v1/analyze/metric/retire` |
-| Run | `metric_run` with `group_by` and `filters` | `POST /rest/v1/analyze/metric/run` |
+| Run | `metric_run` with `group_by`, `filters`, and the optional `compare`, `share` and `top` | `POST /rest/v1/analyze/metric/run` with the same fields |
 | Earlier versions (Architects only) | | `GET /rest/v1/analyze/metric/flashback-versions` |
 
-`metric_upsert` takes a `spec` of `{name, memo, synonyms, definition}` and accepts `dry_run` to check a definition without saving it. A derived metric's `definition` is `{kind, op, inputs, factor}`; its computed breakdown columns come back as `grain` beside the definition.
+`metric_upsert` takes a `spec` of `{name, memo, synonyms, definition}` and accepts `dry_run` to check a definition without saving it. A base metric's `definition` is `{source, joins, measure, filters, grain, scenario}`, with `measure` as `{agg, column}` or `{agg: "weighted_avg", column, weight}` and `scenario` as `{column, actual, budget}`. A derived metric's `definition` is `{kind, op, inputs, factor}`; its computed breakdown columns come back as `grain` beside the definition.
 
 ## Related
 
