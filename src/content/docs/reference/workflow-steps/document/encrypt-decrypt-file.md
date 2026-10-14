@@ -23,7 +23,7 @@ A source file that isn't there isn't an error: the step finishes with a warning 
 
 | Setting | What it does |
 | --- | --- |
-| Cipher | **AES-128 (16-byte key)**, **AES-192 (24-byte key)**, **AES-256 (32-byte key)**, **Blowfish (4 to 56-byte key)**, or **Excel Workbook Password**. |
+| Algorithm | In the Cipher group: **AES-128 (16-byte key)**, **AES-192 (24-byte key)**, **AES-256 (32-byte key)**, **Blowfish (4 to 56-byte key)**, or **Excel Workbook Password**. |
 | Mode | **CBC** (the default), **ECB**, or **GCM**. Blowfish takes CBC or ECB only. |
 | Key | The encryption key. Required for AES and Blowfish. |
 | Key and IV Encoding | How the key and IV are written: **Text (UTF-8)**, **Hexadecimal**, or **Base64**. |
