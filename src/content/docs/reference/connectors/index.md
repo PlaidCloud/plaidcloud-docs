@@ -13,7 +13,7 @@ PlaidCloud connects to external data sources and services through purpose-built 
 
 Relational databases, cloud warehouses, query engines, and lakehouse formats.
 
-- [Databases](/reference/connectors/databases/) — PostgreSQL, MySQL, SQL Server, Oracle, Snowflake, Redshift, BigQuery, Databricks, and 15+ more
+- [Databases](/reference/connectors/databases/) — PostgreSQL, MySQL, SQL Server, Oracle, Snowflake, Redshift, BigQuery, Databricks, MongoDB, Kafka, and 15+ more
 - [Open Tables](/reference/connectors/open-tables/) — Apache Iceberg, Delta Lake, Hudi, Hive open table formats
 
 ### Cloud and SaaS Services

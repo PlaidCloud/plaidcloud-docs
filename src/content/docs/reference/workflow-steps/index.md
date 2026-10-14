@@ -9,12 +9,12 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 ### Data Movement
 
-- [Import](/reference/workflow-steps/import/) — pull data in (25 source types: CSV, Excel, Parquet, JSON, SQL, BigQuery, SPSS, Singer sources, and more)
-- [Export](/reference/workflow-steps/export/) — push data out (11 destination types: CSV, XML, SQL, Excel, Google Sheets, table archive, and more)
+- [Import](/reference/workflow-steps/import/) — pull data in (27 source types: CSV, Excel, Parquet, JSON, SQL, BigQuery, MongoDB, Kafka, SPSS, Singer sources, and more)
+- [Export](/reference/workflow-steps/export/) — push data out (13 destination types: CSV, XML, SQL, Excel, Google Sheets, MongoDB, Kafka, table archive, and more)
 
 ### Table Transformations
 
-- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates, Row Access grants from a source table (27 steps)
+- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates, Row Access grants from a source table, restore to a point in time (28 steps)
 - [Common operations](/reference/workflow-steps/common/) — shared data mapping and filtering patterns
 
 ### Geospatial
@@ -30,7 +30,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 ### Documents and Files
 
-- [Document](/reference/workflow-steps/document/) — file operations, directory listing, PDF manipulation, image processing, encoding conversion (21 steps)
+- [Document](/reference/workflow-steps/document/) — file operations, directory listing, encryption, PDF manipulation, image processing, encoding conversion (23 steps)
 - [Text and documents](/reference/workflow-steps/text-documents/) — PDF text extraction, image OCR, blob read, sentiment, topic modeling, word clouds (7 steps)
 
 ### Communication
