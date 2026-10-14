@@ -33,7 +33,7 @@ A metric definition is a recipe, not a stored result. It is recalculated every t
 | **Filters** | Which rows always count. Each filter is a column, an operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) and its values. | `status` `eq` *Posted* |
 | **Breakdown columns** (`grain` in the API) | The columns a person may group and filter by when they ask. Filters are fixed; breakdown columns are the asker's choice. | `region_lookup.region`, `product_line`, `fiscal_year` |
 | **Scenario** (optional) | The column that separates actual rows from budget rows, and the value of each. The metric is its actual rows; the budget rows are read only for a [variance](#compare-rank-and-share). | `scenario`, actual *Actual*, budget *Budget* |
-| **Time** (optional) | Where each row sits in time, so a question can ask for one fiscal period and [compare it over time](#compare-over-time). Either a date column with the calendar month its fiscal year starts in, or a fiscal year column and a period column that already hold the fiscal year and the period within it. | `posting_date`, year starting in October; or `fiscal_year` and `period`, 12 periods a year |
+| **Time columns** (optional, `time` in the API) | A date column, or a fiscal year column and a period column, so a question can ask for one fiscal period and [compare it over time](#compare-over-time). | `fiscal_year` and `fiscal_period` |
 
 A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved, and again when it is approved. A metric with a scenario can't filter on the scenario column, or offer it as a breakdown column: the scenario decides which rows are read, so a filter such as `scenario` `eq` *Actual* belongs in the scenario, not in the filters.
 
@@ -72,12 +72,12 @@ POST /rest/v1/analyze/metric/definition
     "filters": [],
     "grain": ["region_lookup.region", "product_line", "fiscal_year"],
     "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
-    "time": {"column": "posting_date", "fiscal_year_start": 10}
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
   }
 }
 ```
 
-Each pair in `on` is `[source column, lookup column]`. `time` is either `{"column", "fiscal_year_start", "fiscal_year_label"}` for a date column, or `{"year_column", "period_column", "periods_per_year"}` for integer columns; see [Compare Over Time](#compare-over-time).
+Each pair in `on` is `[source column, lookup column]`. `time` is either `{"year_column", "period_column"}` with an optional `periods_per_year`, or `{"column"}` for a date column with an optional `fiscal_year_start` and `fiscal_year_label`; see [Compare Over Time](#compare-over-time).
 
 ## Approve a Metric
 
@@ -171,18 +171,18 @@ A question about a metric can also ask for one comparison, one ranking, and a sh
 
 A variance needs a metric with a **scenario**; a metric without one, or a derived metric, refuses it. Each side is totaled on its own before the two are compared: a breakdown value with no budget row, or no actual row, shows an empty difference rather than a zero (the exception is a `count` metric asked for as a single total, where a side with no rows counts zero), and so does a percentage over a zero budget.
 
-The ranking and the share are over the metric's figure, or over the difference when a variance or a [comparison over time](#compare-over-time) is asked for, so *"which cost centers account for most of the overspend"* is a variance with a share and a ranking. The share is worked out over every row of the breakdown before a top-N keeps some of them, so the shares of the rows you get back need not add up to one. An empty figure ranks last whichever order you ask for, and has an empty share; so does a share over a zero total.
+The ranking and the share are over the metric's figure, or over the difference when a variance or a [comparison over time](#compare-over-time) is asked for, so *"which cost centers account for most of the overspend"* is a variance with a share and a ranking. `pct` is a percentage, so `12` means 12%, where `share` is a fraction. The share is worked out over every row of the breakdown before a top-N keeps some of them, so the shares of the rows you get back need not add up to one. An empty figure ranks last whichever order you ask for, and has an empty share; so does a share over a zero total.
 
-A share is of what *you* can see. Someone whose row access limits them to EMEA gets EMEA's cost centers as shares of EMEA's total, and the result says row access was applied. The `within` columns of a share or a ranking must be among the breakdown columns you asked for, and a question that groups by a column named like one of the result's own columns (`value`, and `actual`, `budget`, `pct`, `share` or `rank` when the operator that produces it is asked for) is refused. A question with two comparisons, or two rankings, is refused.
+A share is of what *you* can see. Someone whose row access limits them to EMEA gets EMEA's cost centers as shares of EMEA's total, and the result says row access was applied. The `within` columns of a share or a ranking must be among the breakdown columns you asked for, and a question that groups by a column named like one of the result's own columns (`value`, and `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` or `cumulative` when the operator that produces it is asked for) is refused. A question with two comparisons, or two rankings, is refused.
 
 ## Compare Over Time
 
-A metric with a **time** in its definition can be asked for one fiscal period, compared with the period before it, and totaled up through the year. The time says where each row sits:
+A metric whose definition has **time columns** (`time` in the API) can be asked for one fiscal period, compared with the period before it, and totaled up period by period. The time columns say where each row sits in the fiscal calendar, in one of two ways:
 
-- **A date column**, with `fiscal_year_start`, the calendar month the fiscal year starts in (`1` for January, the default). Its periods are months, so a quarter is three of them. A fiscal year that doesn't start in January is named for the calendar year it **ends** in unless `fiscal_year_label` is `starting`: with a year starting in October, the months from October 2025 to September 2026 are FY2026 by default, and FY2025 with `starting`. Rows are read by date range, so a warehouse can still prune on the column.
-- **A fiscal year column and a period column**, both integers, with `periods_per_year` (`12` by default; `13` for a 13-period calendar, `52` for weeks, `4` for quarters). Quarters exist only when the periods divide into four.
+- **A date column**, with `fiscal_year_start`, the calendar month the fiscal year starts in (`1` for January, the default). Its periods are the fiscal year's months, numbered from the start month: with a year starting in October, period 1 is October and period 7 is April. A quarter is three of them. A fiscal year that doesn't start in January is named for the calendar year it **ends** in by default (`fiscal_year_label` is `ending`); set `fiscal_year_label` to `starting` to name it for the year it starts in. With an October start, the months from October 2025 to September 2026 are FY2026 by default, and FY2025 with `starting`. Rows are read by date range, which keeps the question fast on a large table.
+- **A fiscal year column and a period column**, both integers holding the fiscal year (`2026`, not `26`) and the period within it, numbered from 1, with `periods_per_year`: `12` by default, `13` for a 13-period calendar, `52` for weeks, `4` for quarters. Quarters exist only when the periods divide into four. A calendar with 53-week years can set `53`, at the cost of its quarters.
 
-A question then names the **period** it is about: a fiscal year, or one quarter or one period of it, optionally **to date**, which is the year from its start to the end of that quarter or period.
+A question then names the **period** it is about: a fiscal year, or one quarter or one period of it. **To date** stretches that back to the start of the year, so *April year to date* is the year's first months up to and including April.
 
 > *"What were sales in FY2026 Q1 by region, and how does that compare with the quarter before?"*
 >
@@ -192,16 +192,18 @@ A question then names the **period** it is about: a fiscal year, or one quarter 
 
 | Ask for | What comes back | In the API |
 |---|---|---|
-| **One period** | The metric over that period alone, with the usual breakdowns, shares and rankings. | `period: {"year": 2026, "quarter": 1}` |
-| **Year over year** | For each breakdown value: the figure for the period (`current`), the same period one year earlier (`prior`), the difference (`value`) and the difference as a percentage of the prior figure's size (`pct`). The answer names the prior span. | `compare: "yoy"` with a `period` |
-| **Quarter over quarter** | The same, against the quarter before; the first quarter is compared with the fourth of the year before. | `compare: "qoq"` with a `period` naming a `quarter` |
-| **Period over period** | The same, against the period before; the first period is compared with the last of the year before. On a 12-period calendar this is month over month. | `compare: "mom"` with a `period` naming a `period` |
-| **Year to date** | The year from its start to the end of the named quarter or period; with `yoy`, against the same span of the year before. | `"to_date": true` in the `period` |
-| **Running total** | One row for each fiscal year and period in the span, with the period's own figure (`value`) and the total so far (`cumulative`). Without a period, it runs from the first row to the last across the years. | `cumulative: true` |
+| **One period** | The metric over that period alone, with the usual breakdowns, shares and rankings; a variance against budget reads both scenarios over it. | `period: {"year": 2026}`; `{"year": 2026, "quarter": 1}`; `{"year": 2026, "period": 7}` |
+| **Year over year** | For each breakdown value: the figure for the period (`current`), the same period one year earlier (`prior`), the difference (`value`) and `pct`. The answer names the prior period. | `compare: "yoy"` with a `period` |
+| **Quarter over quarter** | The same, against the quarter before. The first quarter is compared with the fourth of the year before. | `compare: "qoq"`; the `period` must name a `quarter` |
+| **Period over period** | The same, against the period before. The first period is compared with the last of the year before. On a 12-period calendar this is month over month, which is where the name comes from. | `compare: "mom"`; the `period` must name a `period` |
+| **Year to date** | The year from its start to the end of the named quarter or period, on its own or, with `yoy`, against the same months of the year before. Refused with `qoq` or `mom`. | `"to_date": true` in the `period` |
+| **Running total** | One row for each fiscal year and period in the period asked for, with the period's own figure (`value`) and the total so far (`cumulative`). Without a period, it runs from the first row to the last across the years. It takes no comparison, share or ranking. | `cumulative: true` |
 
-Each span is totaled on its own and the two are lined up on the breakdown, never read off neighboring rows: a period with no rows last year compares as empty, not as the nearest month that had some, and a breakdown value with rows in only one span shows the other as empty. A running total is for `sum` and `count` metrics; an average, a distinct count, a minimum or a maximum doesn't add up over time and is refused. A period with no rows has no row in a running total, and the total carries on past it.
+`pct` is the difference as a percentage of the prior figure's size, keeping the sign of the difference when the prior figure is negative, as for a variance. Each of the two periods is totaled on its own, and the two totals are matched up by breakdown value; nothing is read off a neighboring row. So a month with no rows last year compares as empty, not as the nearest month that had some, and a breakdown value with rows in only one of the two periods shows the other, the difference and `pct` as empty rather than zero.
 
-The time column can't be a filter or a breakdown column in a question that names a period: the period decides which rows are read. A question without a period can still filter and group by it as by any breakdown column. A period past the end of the year, a quarter on a calendar without quarters, and a time comparison on a derived metric are refused; a derived metric can be asked for one period when every one of its inputs has a time. A time comparison is the question's one comparison, so it can't be combined with a variance against budget, though a share and a ranking still apply to the difference.
+A running total is for `sum` and `count` metrics. An average, a distinct count, a minimum or a maximum doesn't add up over time and is refused. A period with no rows has no row in a running total, and the total carries on past it.
+
+The time columns can't be filtered or grouped by in a question that names a period, compares over time or asks for a running total: those decide which rows are read and how they are placed. A question that does none of these can still filter and group by them as by any breakdown column. Also refused: a period past the end of the year (period 13 on a 12-period calendar), a quarter on a calendar without quarters, a time comparison or a running total on a derived metric, and a question that doesn't name the kind of period its comparison needs. A derived metric can be asked for one period when every one of its inputs has time columns, and then none of those can be filtered or grouped by either. A time comparison is the question's one comparison, so it can't be combined with a variance against budget, though a share and a ranking still apply to the difference.
 
 ## Retire a Metric
 
