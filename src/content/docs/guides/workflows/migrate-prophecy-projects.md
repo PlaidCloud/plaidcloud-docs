@@ -139,7 +139,7 @@ A key is one of:
 
 | Key | Binds | Value |
 | --- | --- | --- |
-| `connection:<name>` | The Prophecy connection a gem or database dataset names. One binding serves every gem on that connection. A gem that names no connection uses `connection:<pipeline>/<gem id>`, and a database dataset uses `connection:<dataset name>`. | A PlaidCloud connection id for a database or Singer-backed store. A Document account id for a File Storage or Directory gem. |
+| `connection:<name>` | The Prophecy connection a gem or database dataset names. One binding serves every gem on that connection. A gem that names no connection uses `connection:<pipeline>/<gem id>`, and a database dataset uses `connection:<dataset name>`. | A PlaidCloud connection id: a database connection (BigQuery and SAP HANA included), a MongoDB or Apache Kafka connection, a Salesforce connection for Salesforce reads and writes, a Tableau connection for a Tableau gem, a REST connection for Azure Cosmos DB, Pinecone, Power BI, and Smartsheet and Slack writes, or a Singer-backed connection for Smartsheet, Slack, and Iceberg reads. A Document account id for a File Storage or Directory gem. |
 | `operation:<pipeline>/<gem id>` | A REST gem that sends anything but GET, HEAD, or OPTIONS, and every Email gem. | A connection id. For REST, a REST connection that holds the credential. |
 
 The binding is your consent for gems that change things outside the conversion:
@@ -194,7 +194,7 @@ Every step that carries project code reports `W_PROJECT_CODE_EMBEDDED`, and tran
 
 ## Placeholders for Unconverted Gems
 
-A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are a Custom Gem, whose Gem Builder code is not part of the export, Heat Map, whose H3 cells no PlaidCloud step computes, and a gem that changes data outside the conversion, such as a REST request that can change data, an Email, or a table or file operation, when you haven't bound its `operation:` key. A database dataset or External Table with no connection bound is not a placeholder: it converts to a step that waits for you to select a connection. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
+A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are a Custom Gem, whose Gem Builder code is not part of the export, and a gem that changes data outside the conversion, such as a REST request that can change data, an Email, or a table or file operation, when you haven't bound its `operation:` key. A database dataset or External Table with no connection bound is not a placeholder: it converts to a step that waits for you to select a connection. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
 
 Set `allow_unconverted_placeholders` to `true` (in the window, **Import unconverted components as pass-through placeholders**) to import each placeholder as a pass-through step instead. The run then continues past it and the placeholder's output is its input. The report counts the pass-through placeholders and lists their steps. Rebuild the capability with a native step when its result matters.
 
@@ -219,11 +219,25 @@ Each gem has a mapping tier:
 
 | Capability | How it converts |
 | --- | --- |
-| Write modes | Target write modes convert to platform steps: SCD2 with the check and timestamp strategies (the timestamp strategy dates each version from the column the gem's `scd2.updatedAtColumn` names), merge, `replaceWhere`, and `insertInto`. A first run onto an empty target writes every row, as dbt and Delta do. The first run needs no table made ahead, including for a pipeline that reads a dataset it also writes. Later runs apply the incremental filter or merge condition. The `error` and `ignore` modes check with the [table exists condition](/guides/workflows/step-conditions/#table-exists-conditions). |
+| Write modes | Target write modes convert to platform steps: SCD2 with the check and timestamp strategies (the timestamp strategy dates each version from the column the gem's `scd2.updatedAtColumn` names), merge, `replaceWhere`, and `insertInto`. A merge applies the per-column SET expressions of its matched-update and not-matched-insert clauses; a clause that sets no column takes every column from the incoming row. A first run onto an empty target writes every row, as dbt and Delta do. The first run needs no table made ahead, including for a pipeline that reads a dataset it also writes, unless the export doesn't say what columns that dataset has: then create the table before the first run. Later runs apply the incremental filter or merge condition. The `error` and `ignore` modes check with the [table exists condition](/guides/workflows/step-conditions/#table-exists-conditions). |
 | Streaming | Streaming sources and targets run as scheduled batch. The streaming sink replaces its table rather than appending, so a re-run never duplicates rows. Schedule the workflow to pick up newly arrived data. |
-| Databases | JDBC, Snowflake, Redshift, Hive, and External Table gems read and write through the PlaidCloud connection you bind. |
-| Singer-backed stores | MongoDB, Slack, Smartsheet, and Iceberg read through [Import Singer Source](/reference/workflow-steps/import/import-singer/) with their bound connection. |
-| File formats | CSV, JSON, Parquet, Avro, Excel, XML, fixed-width (column widths come from the schema), and ORC through [Import ORC](/reference/workflow-steps/import/import-orc/). Format options are mapped, or marked neutral when they change no row. |
+| Databases | JDBC, Snowflake, Redshift, Hive, BigQuery, SAP HANA, and External Table gems read and write through the PlaidCloud connection you bind. A BigQuery dataset reads with [Import SQL](/reference/workflow-steps/import/import-sql/) and writes with [Export External Database Tables](/reference/workflow-steps/export/export-external-tables/) on a [BigQuery connection](/reference/connectors/google/big-query/). A SAP HANA table written in a merge mode is staged beside the target and merged into it in one statement on the gem's merge condition. |
+| MongoDB and Kafka | A MongoDB dataset reads with [Import MongoDB](/reference/workflow-steps/import/import-mongodb/), its filter or aggregation pipeline included, and writes with [Export MongoDB](/reference/workflow-steps/export/export-mongodb/) in the matching write mode. A Kafka source reads its topics between the starting and ending offsets with [Import Kafka](/reference/workflow-steps/import/import-kafka/), and a Kafka target sends each row with [Export Kafka](/reference/workflow-steps/export/export-kafka/). |
+| Azure Cosmos DB | A read sends the dataset's query, or reads every document, with [REST Request](/reference/workflow-steps/general/rest-request/) on a REST connection with Cosmos DB authentication, and follows the continuation header from page to page. A write sends one request for each row by the gem's write strategy: overwrite, append, delete, or patch, with the item's ETag checked for an if-not-modified strategy. |
+| Salesforce | A read uses [Salesforce: Query Object](/reference/workflow-steps/salesforce/query-salesforce-object/), deleted and archived records included when the gem asks for them. A write inserts, updates, upserts on the external id field, or deletes, with one request for each row. |
+| Smartsheet, Slack, and Pinecone | Smartsheet, Slack, and Iceberg reads use [Import Singer Source](/reference/workflow-steps/import/import-singer/). A Smartsheet write adds the rows to the named sheet, and an overwrite deletes the sheet's rows first. A Slack write posts one message for each row, and a message Slack refuses fails the step. A Pinecone index reads as its vectors and their metadata, and a write upserts the rows as vectors. |
+| Tableau and Power BI | Tableau and Tableau Write publish the input as a Hyper extract through [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/) on the Tableau connection you bind. Power BI Write pushes the inputs to a Power BI push dataset through a REST connection with OAuth 2.0, finding the workspace by name and creating the dataset when it is new. |
+| File formats | CSV, JSON, Parquet, Avro, Excel, XML, fixed-width (column widths come from the schema), and ORC through [Import ORC](/reference/workflow-steps/import/import-orc/). Format options are mapped, or marked neutral when they change no row. Compressed text files read and write with gzip, Deflate (zlib), Zstandard, LZ4, and Snappy; a compressed file is read when its name ends in its codec's extension. Encrypted files are decrypted and encrypted in place. See [Encrypted Files](#encrypted-files). |
+
+### Columns and Rows
+
+| Gem or function | How it converts |
+| --- | --- |
+| Surrogate Key | Keys continue from a table that keeps the last key issued, as the gem's key file does. Every gem that names the same key file shares that table, so their keys never overlap. A run with no rows leaves it as it was, and keys start from the initial value before any run has issued one. |
+| Column Parser, XML Parse, JSON parsing | XML and JSON text parses with the [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) and [JSON Parse](/reference/workflow-steps/tables/table-json-parse/) steps, reading each field from the element's text, an attribute, or a child element. |
+| Casts | A cast of text to a decimal or a long follows Spark exactly: spaces and control characters around the number are trimmed, a decimal rounds half up to its scale, and text that isn't a number, or a value out of range, is null. |
+| Data Encoder/Decoder AES | Runs on every engine. The key, and the initialization vector and additional data when the gem names them, come from the workflow variables `aes_key`, `aes_iv`, and `aes_aad`, which you set. |
+| Data Masking hash | Computes the same values as Spark's `hash()`. |
 
 ### Services and Control
 
@@ -236,18 +250,23 @@ Each gem has a mapping tier:
 | Data Quality Check, Deequ, Soda | The checks run in the warehouse and write the results table. A Data Quality Check stops the run only when the gem sets `minFailedChecks` or a `fail_pipeline` post action; otherwise the results table lists the failures. Deequ and Soda never stop the run. A minimum or maximum length check on a numeric column measures the number as text. |
 | ToDo | Raises an error that names the original tool and message when the run reaches it. |
 
+### Encrypted Files
+
+A File Storage gem that reads an encrypted file converts to [Document: Decrypt File](/reference/workflow-steps/document/encrypt-decrypt-file/), which decrypts the file into a folder of its own before the import reads it; the decrypted copy is removed afterwards. A gem that writes an encrypted file exports into that folder and then encrypts the file into place with Document: Encrypt File. AES and Blowfish files and password-protected Excel workbooks are covered.
+
+The export never carries a key, so the converted steps read it from a workflow variable: `aes_key` for an AES or Blowfish key, and `xlsx_password` for a workbook password. Set the variable before you run the workflow, and give it a key meant for these files only. Keep a key in a workflow variable rather than typing it into a step.
+
 ### Partial Conversions
 
 | Gem or option | What has no mapping |
 | --- | --- |
-| BigQuery datasets | PlaidCloud has no BigQuery SQL driver, so a BigQuery Source or Target can't read or write through a connection. |
-| Cosmos DB and Kafka Sources | The Source reads a staged JSON extract of the data, one batch for a Kafka topic. It doesn't connect to the live store. |
-| Tableau, Tableau Write, Power BI Write | PlaidCloud publishes to neither. Each input stays a PlaidCloud table and is written as Parquet to the gem's staging folder, and the report says nothing was published. |
-| File Storage encryption | The whole-file encryption setting isn't applied. |
-| Spark hash functions | `hash()` and `xxhash64()` use Murmur3 and XXH64 with seed 42, which no warehouse has. The converted values differ, as do Data Masking hashes. |
-| `regexp_extract_all` | PlaidCloud has no array type, so it returns the first match. |
-| Data Encoder/Decoder AES | AES runs on StarRocks lakehouses with the key in the `aes_key` workflow variable. Other engines have no AES function. |
-| Buffer and Simplify | Distances are measured in degrees, where Prophecy uses meters. |
+| Buffer | A rounded corner is drawn with more segments than Prophecy uses, so the geometry text differs for the same shape. Compare buffered shapes by area or containment. |
+| Simplify | Simplifying keeps each shape valid, so it can keep a vertex that Prophecy drops where dropping it makes the shape cross itself. |
+| Heat Map | Draws bands of a smoothed density surface as polygons, where Prophecy sums heat into H3 hexagons. |
+| Script `Config` writes | A value the script sets on `Config` becomes a workflow variable, set when the script finishes. A workflow variable keeps its value from one run to the next, so a step that doesn't follow the script reads the value the previous run left, where Prophecy reads the pipeline default on every run. A `Config` value no pipeline parameter declares changes only that step's copy. |
+| XML export of timestamps and doubles | A timestamp or double column is written as the warehouse formats it as text, not in Spark's form (ISO-8601 with `T` and the offset for a timestamp, Java's notation for a double). |
+| XML string field with child elements | A string field whose element holds child elements reads as their JSON, where Spark reads their XML. |
+| Spark hash functions | `hash()` and `xxhash64()` in an expression use Murmur3 and XXH64 with seed 42, which no warehouse has, so the converted values differ. |
 
 The converter also reports these known divergences on the step they affect:
 
@@ -256,6 +275,7 @@ The converter also reports these known divergences on the step they affect:
 - `encode` to ISO-8859-1 returns the text, not its bytes.
 - A CSV written in a character set with no codec is written in UTF-8.
 - A Bulk Column Expressions gem with no selected column applies to no column.
+- A Salesforce insert doesn't send the table's `Id` column, because Salesforce assigns the Id of each record it creates.
 
 ## Known Limitations
 

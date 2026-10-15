@@ -33,6 +33,7 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table JWT Encode](/reference/workflow-steps/tables/table-jwt-encode/)
 - [Table Period Spine](/reference/workflow-steps/tables/table-period-spine/)
 - [Table Promote Header](/reference/workflow-steps/tables/table-promote-header/)
+- [Table Restore to Timestamp](/reference/workflow-steps/tables/table-restore-timestamp/)
 - [Table Split Text](/reference/workflow-steps/tables/table-split-text/)
 - [Table Text Function](/reference/workflow-steps/tables/table-text-function/)
 - [Table Union All](/reference/workflow-steps/tables/table-union-all/)
