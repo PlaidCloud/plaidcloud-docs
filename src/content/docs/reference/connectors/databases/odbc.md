@@ -51,7 +51,8 @@ Saving refuses:
 
 - text that isn't `KEY=value` pairs, including a brace that is never closed and a keyword with no value;
 - a keyword given more than once, in any case;
-- a keyword the connection sets from its own fields: `DRIVER`, `DSN`, `SERVER`, `DATABASE`, `UID`, `PWD`, `USER`, `USERID`, `USERNAME` and `PASSWORD`.
+- a keyword the connection sets from its own fields: `DRIVER`, `DSN`, `SERVER`, `DATABASE`, `UID`, `PWD`, `USER`, `USERID`, `USERNAME` and `PASSWORD`;
+- `FILEDSN` and `SAVEFILE`, which would have the agent read the connection's settings from a file on its machine, or write them to one.
 
 Connection lists mask the attributes, because a driver can take its own credential keyword there; the connection's own form shows them. Clear the field to remove them. Enter the user and password under **Auth Credentials**.
 
