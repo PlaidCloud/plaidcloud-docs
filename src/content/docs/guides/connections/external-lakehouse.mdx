@@ -1,13 +1,13 @@
 ---
-title: Use an External Lakehouse
-description: Store a PlaidCloud project's data in your own Snowflake or Databricks lakehouse, so workflows read and write tables directly in your warehouse and the data never leaves it.
+title: Use Your Own Warehouse
+description: Connect your own Snowflake or Databricks warehouse yourself, store a workspace's tables and run its workflows there, sign in with your own warehouse identity, manage several warehouses, and see what each run costs.
 sidebar:
   order: 2
 ---
 
 import { Aside } from '@astrojs/starlight/components';
 
-A project's tables normally live in the built-in PlaidCloud Lakehouse. Instead, you can point a project at **your own Snowflake or Databricks lakehouse** as its data backend. Workflows then read and write project tables directly in your warehouse — the data stays in your account, under your governance and billing, while PlaidCloud drives the transformations, workflows, and dashboards over it.
+A project's tables normally live in the built-in PlaidCloud Lakehouse. A workspace administrator can instead connect **your own Snowflake or Databricks warehouse** from inside PlaidCloud, with no help from PlaidCloud staff. Workflows then read and write project tables directly in your warehouse. The data stays in your account, under your governance and billing, while PlaidCloud drives the transformations, workflows, and dashboards over it.
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 190" role="img" aria-label="A PlaidCloud project runs workflows that read and write tables directly in the customer's own Snowflake or Databricks lakehouse, where the data stays." style="width:100%;max-width:680px;height:auto;">
@@ -28,9 +28,154 @@ A project's tables normally live in the built-in PlaidCloud Lakehouse. Instead, 
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The project's tables live in your warehouse; PlaidCloud reads and writes them in place rather than copying the data into its own store.</figcaption>
 </figure>
 
-## How an External Lakehouse Is Registered
+## Connect Your Warehouse
 
-Registering a Snowflake or Databricks lakehouse for your tenant isn't self-service — a PlaidCloud administrator sets it up on your behalf. Give your PlaidCloud contact the details below for whichever engine you're connecting. Once it's registered, the lakehouse becomes available to pick when you create a project.
+Only a workspace administrator can connect, change, or remove a warehouse.
+
+1. Open your user menu and choose **Use your own warehouse**. You can also choose **Connect** on the **Use your warehouse** row of the Home checklist, or choose **Use this as your warehouse instead** in a Snowflake or Databricks connection dialog.
+2. Choose **Snowflake** or **Databricks**.
+3. Connect in one of two ways: **Sign in with Snowflake** or **Sign in with Databricks** (the quickest, described in [Sign In With Snowflake or Databricks](#sign-in-with-snowflake-or-databricks)), or run the setup script and paste the credentials it produces (below).
+
+### 1. Run the Setup Script
+
+The dialog writes a setup script from the names you choose and updates it as you type. Run it in your own account and copy it with **Copy script**. It never changes your existing warehouses.
+
+| | Snowflake | Databricks |
+|---|---|---|
+| Run as | `ACCOUNTADMIN` | A workspace and metastore admin |
+| Creates | A warehouse that suspends after 60 seconds idle, with a monthly credit cap that notifies at 90 percent and suspends at 100 percent; a database; a role; a service user | A service principal; a SQL warehouse that stops when idle; the catalog, unless it already exists |
+| Names you can change | Warehouse, Size, Monthly credit cap, Database, Role, Service user | Service principal name, SQL warehouse name, Size, Stop after idle minutes, Catalog |
+| Defaults | `PLAIDCLOUD_WH` (`XSMALL`, 100 credits a month), `PLAIDCLOUD`, `PLAIDCLOUD_ROLE`, `PLAIDCLOUD_SVC` | `plaidcloud`, `PlaidCloud` (`2X-Small`, 10 idle minutes), catalog `plaidcloud` |
+| Authentication | Key pair (the script shows how to generate one) | OAuth secret for the service principal |
+
+The script also sets up the following.
+
+- **Network access.** PlaidCloud connects from the address `130.211.116.97/32`. The Snowflake script creates a network policy that allows only that address for the service user. On Databricks, if your workspace already enforces IP access lists, the script includes the statement that allows it; add that address to any network policy or IP access list that protects your account.
+- **Policies carry over.** On Snowflake, the role is granted the privileges to apply row access, masking, projection, aggregation, and join policies and tags, so your policies survive when PlaidCloud rewrites a table. On Databricks, grant the service principal `EXECUTE` on any row-filter or column-mask function you use.
+- **Run costs.** Snowflake's role receives the `SNOWFLAKE.GOVERNANCE_VIEWER` database role, which lets PlaidCloud read the credits each run was attributed. Databricks receives read access to query history and warehouse sizes in the `system` catalog. See [Warehouse Cost per Run](#warehouse-cost-per-run).
+
+### 2. Connect
+
+| Field | Engine | What to enter |
+|---|---|---|
+| Account URL | Snowflake | Your account host, for example `myorg-myaccount.snowflakecomputing.com`. |
+| Private key | Snowflake | The service user's private key (PEM). A key pair never expires. |
+| Workspace URL | Databricks | Your workspace host, for example `adb-1234567890123456.7.azuredatabricks.net`. |
+| SQL warehouse HTTP path | Databricks | For example `/sql/1.0/warehouses/abc123def456`. |
+| Application ID | Databricks | The service principal's application (client) ID. |
+| OAuth secret | Databricks | The service principal's OAuth secret. PlaidCloud renews it for you. |
+
+Under **Advanced**, you can use a Snowflake programmatic access token or a Databricks personal access token instead. Tokens expire: PlaidCloud stops reaching your warehouse on that date until you add a new one. Fourteen days before, and after, a banner tells you the date and offers **Renew**. A key pair or an OAuth secret avoids the expiry.
+
+The address must be your account's public URL, ending in `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net`, or `.gcp.databricks.com`. Private and custom endpoints aren't supported.
+
+### 3. Check, Then Use It
+
+- **Check connection** tests the address, the sign-in, and every privilege PlaidCloud needs, and stores nothing.
+- **Use as my warehouse** runs the same check, attaches the warehouse, makes it the default, and waits while the workspace switches to it. This usually takes a few minutes and you can close the window. New projects in the workspace then use your warehouse.
+
+A check that fails explains the problem and the fix in plain language. Missing privileges are listed as ready-to-run `GRANT` statements with a **Copy** button, a **Copy all** button, and **Show the setup script**. **Copy for support** copies the warehouse's own error text for PlaidCloud support.
+
+| What you see | Fix |
+|---|---|
+| The service user can't use an object | Grant its role the privilege on that object. The setup script has every grant. |
+| Your warehouse is suspended or doesn't exist | Check the warehouse name and that it can start on its own (`AUTO_RESUME` on Snowflake, a running SQL warehouse on Databricks). |
+| Your warehouse has used up its credit quota | Raise the resource monitor's quota or the budget, or wait for it to reset. |
+| A network policy is blocking PlaidCloud | Allow `130.211.116.97/32` in the policy, as the setup script does. |
+| The token or key has expired or is no longer valid | Create a new token, or switch to a key pair. |
+| Unity Catalog denied the service principal access | Grant `USE CATALOG`, `CREATE SCHEMA`, and `USE SCHEMA` on the catalog. |
+| PlaidCloud couldn't sign in | Check the user or service principal and its key, token, or secret. |
+| PlaidCloud couldn't reach your warehouse | Check the URL, and allow PlaidCloud's address in any network policy or IP access list. |
+| Private or custom endpoints aren't supported | Use your account's public URL. |
+
+## Sign In With Snowflake or Databricks
+
+Instead of pasting a key, secret, or token, an administrator can attach the warehouse by signing in. Each person then signs in with their own Snowflake or Databricks identity, so dashboards and queries run with their own permissions in your warehouse.
+
+### What an Administrator Sets Up First
+
+Once, in your own account, an account administrator registers PlaidCloud as a sign-in application. The **Use your own warehouse** dialog shows the exact text to use, including PlaidCloud's redirect URL.
+
+- **Snowflake.** Run the `CREATE SECURITY INTEGRATION` statement shown in the dialog, then copy `OAUTH_CLIENT_ID` from the result of the `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS` statement.
+- **Databricks.** In the account console, under **Settings > App connections**, add an app named `PlaidCloud`. Give it the redirect URL shown in the dialog and access to all APIs, leave **Generate a client secret** off, and copy its client ID.
+
+### Attach the Warehouse
+
+1. In **Quickest: sign in with Snowflake** (or Databricks), enter the **Account URL** (or **Workspace URL**) and the **Client ID**.
+2. On Snowflake, enter the **Database** and the **Data role for PlaidCloud**. **Warehouse** is optional and defaults to yours. On Databricks, enter the **SQL warehouse HTTP path**. **Catalog** is optional and defaults to yours.
+3. Choose **Sign in with Snowflake** or **Sign in with Databricks**, sign in to your vendor account, and approve.
+
+PlaidCloud creates its own service identity in your account, dedicated to this warehouse. Workflows, schedules, and anything else with no person behind them run as that identity.
+
+- **Snowflake.** PlaidCloud creates a new service user with a key pair that holds only the data role you name. The role must be a plain data role. PlaidCloud refuses a role that is the one you signed in with, that is or inherits `ACCOUNTADMIN`, `SECURITYADMIN`, `USERADMIN`, `SYSADMIN`, or `ORGADMIN`, or that can create users or roles, manage grants, or apply policies. PlaidCloud also refuses to reuse an existing Snowflake user. The role you sign in with must be able to create users and grant the data role.
+- **Databricks.** PlaidCloud creates a new service principal with access to the SQL warehouse and the catalog's data privileges only. Sign in as a workspace admin so PlaidCloud can create it.
+
+If you lack a privilege the service identity needs, the warehouse still attaches for signed-in people with a warning naming it, and workflow runs are refused with the same reason until an administrator signs in again.
+
+### Everyone Signs In
+
+Once the workspace has a warehouse reached by sign-in, every member sees **Sign in to your warehouse** in the user menu. Choose it, then **Sign in with Snowflake** or **Sign in with Databricks**. PlaidCloud keeps you signed in. If a sign-in lapses, a banner asks you to sign in again from the same menu item.
+
+A dashboard on such a warehouse runs with the viewer's own permissions there. A viewer who hasn't signed in is told: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
+
+## Manage Warehouses
+
+A workspace administrator opens the user menu and chooses **Manage warehouses**. The **Your warehouses** window lists each warehouse's **Name**, **Type**, **Default**, **Projects**, and **Status**.
+
+| Button | What it does |
+|---|---|
+| **Add warehouse** | Opens the same flow as connecting, titled **Add a warehouse**. Your warehouse is added, and the default for new projects doesn't change. |
+| **Make default** | New projects use this warehouse. Projects already created stay on the warehouse they were created on. |
+| **Remove** | Disconnects the warehouse. It is available only when the warehouse isn't the default and no project uses it. |
+
+When you remove a warehouse, PlaidCloud revokes its credential in your account (including every sign-in and the service identity) and deletes its copy. Your data stays in your warehouse. If the credential can't be revoked, PlaidCloud tells you to revoke it in your account yourself.
+
+## Warehouse Cost per Run
+
+On your own warehouse, a converted Alteryx workflow's run history shows a **Warehouse cost** column, and the [Prove your migration](/guides/workflows/validate-converted-alteryx-workflows/#prove-your-migration) window shows the last run's cost and an estimate for the next run. Costs are in credits on Snowflake and in DBUs on Databricks.
+
+| Label | Meaning |
+|---|---|
+| *attributed* | Snowflake billed these credits to the run's queries, read through the `GOVERNANCE_VIEWER` grant. Attribution appears after Snowflake's reporting delay. |
+| *estimated* | Computed from query run time and the warehouse size, shown with a leading ≈. This is always the case on Databricks, and on Snowflake before attribution arrives or without the grant. |
+
+The cost covers the steps that PlaidCloud's engine ran. A run partly priced is marked *partial*, and a run whose cost hasn't been reported yet says so.
+
+## Your Policies and Descriptions Carry Over
+
+Schema, table, and column descriptions set in PlaidCloud are written as comments in your warehouse's own catalog. Row access, masking, projection, aggregation, and join policies on Snowflake, and row filters and column masks on Databricks, stay attached when PlaidCloud replaces, recreates, or clones a table. If a policy can't be carried over, PlaidCloud leaves the table as it was and the message names the policy and the reason.
+
+## Bind a Project to Your Warehouse
+
+Once your workspace has a warehouse connected, the **New Project** dialog (**Analyze > Projects > New Project**) offers a lakehouse picker: choose **Tenant Default**, or pick a specific warehouse. **Tenant Default** is the built-in PlaidCloud Lakehouse unless a warehouse is the default, in which case new projects land there automatically. Use **Use as my warehouse** or **Make default** in [Manage Warehouses](#manage-warehouses) to set the default. It affects only projects created afterward; existing projects keep the backend they were created with. From then on:
+
+- Every table the project's workflows create, load, or transform is created and written in your lakehouse.
+- Reads — in steps, views, and dashboards — run as queries against your warehouse.
+- Nothing is copied into the PlaidCloud Lakehouse; the data stays in your account.
+
+Build workflows exactly as you would on the built-in lakehouse — import, transform, join, and publish steps all work the same way. The backend is set when the project is created and applies to the whole project.
+
+## Importing Files Into a Lakehouse-Bound Project
+
+Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
+
+## Exporting Query and Table Results
+
+Exporting query or table results from a lakehouse-bound project delivers straight to cloud storage rather than routing every row back through PlaidCloud:
+
+- **Snowflake** — the export runs as a Snowflake server-side unload (`COPY INTO` a stage), so the warehouse writes the results directly to storage. Large exports are automatically split into multiple files (previously an export above Snowflake's single-file limit would fail).
+- **Databricks** — the export runs as a Databricks server-side unload (`INSERT OVERWRITE DIRECTORY` into a Unity Catalog managed volume), so the warehouse writes and encodes the results itself and PlaidCloud only relays the finished files to storage. Large exports roll across multiple files automatically, and CSV can be delivered gzip-compressed.
+
+## Dashboards Over Lakehouse Data
+
+Dashboards work over both engines.
+
+- **Databricks** — dashboards query the lakehouse through the Databricks driver, the same as any other project. On a warehouse attached by [sign-in](#sign-in-with-snowflake-or-databricks), each viewer's dashboard runs with their own Databricks identity.
+- **Snowflake** — dashboards authenticate with a key pair and are enabled per tenant. On a warehouse attached by [sign-in](#sign-in-with-snowflake-or-databricks), each viewer's dashboard runs with their own Snowflake identity instead. A **new** project created after your tenant has Snowflake dashboards enabled gets its dashboard automatically. An **existing** Snowflake-backed project gets its dashboard the next time it's published.
+
+## Have PlaidCloud Register a Warehouse for You
+
+You don't have to connect a warehouse yourself. Give your PlaidCloud contact the details below for whichever engine you're connecting, and an administrator registers it on your behalf.
 
 ### Snowflake
 
@@ -60,49 +205,12 @@ Neither registration asks for a schema — each project gets its own, derived au
 
 The registration form has a **Test Connection** button that opens a live connection with the details entered and reports success or the reason it failed, without saving anything — so credentials can be verified before the lakehouse is registered. A Snowflake test needs the raw, unencrypted PEM private key (a passphrase-protected key is reported as unsupported); a Databricks test uses the PAT.
 
-<Aside type="note">An Iceberg/Lakekeeper catalog connection is registered separately and is optional — it isn't required to use a Snowflake or Databricks lakehouse.</Aside>
-
-## Bind a Project to the Lakehouse
-
-Once your tenant has at least one external lakehouse registered, the **New Project** dialog (**Analyze > Projects > New Project**) offers a lakehouse picker: choose **Tenant Default**, or pick a specific registered lakehouse. **Tenant Default** is the built-in PlaidCloud Lakehouse unless an administrator has set a registered external lakehouse as the tenant default (see [Set a tenant default](#set-a-tenant-default) below), in which case new projects land there automatically. From then on:
-
-- Every table the project's workflows create, load, or transform is created and written in your lakehouse.
-- Reads — in steps, views, and dashboards — run as queries against your warehouse.
-- Nothing is copied into the PlaidCloud Lakehouse; the data stays in your account.
-
-Build workflows exactly as you would on the built-in lakehouse — import, transform, join, and publish steps all work the same way. The backend is set when the project is created and applies to the whole project.
-
-## Managing Registered Lakehouses
-
-### Set a Tenant Default
-
-An administrator can designate one registered external lakehouse as the **tenant default**. New projects that pick **Tenant Default** then bind to it instead of the built-in PlaidCloud Lakehouse. The default is a single tenant-wide setting — there's no per-project default. Changing it affects only projects created afterward; existing projects keep the backend they were created with.
-
-### Deleting a Lakehouse
-
-Deleting a registered lakehouse is refused while any project is still bound to it — the error lists the bound projects. Rebind or delete those projects first, then delete the lakehouse (or force the deletion, which leaves the listed projects pointing at a lakehouse that no longer exists).
-
-## Importing Files Into a Lakehouse-Bound Project
-
-Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
-
-## Exporting Query and Table Results
-
-Exporting query or table results from a lakehouse-bound project delivers straight to cloud storage rather than routing every row back through PlaidCloud:
-
-- **Snowflake** — the export runs as a Snowflake server-side unload (`COPY INTO` a stage), so the warehouse writes the results directly to storage. Large exports are automatically split into multiple files (previously an export above Snowflake's single-file limit would fail).
-- **Databricks** — the export runs as a Databricks server-side unload (`INSERT OVERWRITE DIRECTORY` into a Unity Catalog managed volume), so the warehouse writes and encodes the results itself and PlaidCloud only relays the finished files to storage. Large exports roll across multiple files automatically, and CSV can be delivered gzip-compressed.
-
-## Dashboards Over Lakehouse Data
-
-Dashboards work over both engines.
-
-- **Databricks** — dashboards query the lakehouse through the Databricks driver, the same as any other project.
-- **Snowflake** — dashboards authenticate with a key pair and are enabled per tenant. A **new** project created after your tenant has Snowflake dashboards enabled gets its dashboard automatically. An **existing** Snowflake-backed project gets its dashboard the next time it's published.
+<Aside type="note">An Iceberg/Lakekeeper catalog connection is registered separately and is optional — it isn't required to use a Snowflake or Databricks warehouse.</Aside>
 
 ## Related
 
 - [Create and Manage a Connection](/guides/connections/create-connection/)
 - [Snowflake connector reference](/reference/connectors/databases/snowflake/)
 - [Azure Databricks connector reference](/reference/connectors/databases/azure-databricks/)
+- [Single Sign-On for Your Workspace](/administration/control-plane/workspace-configuration/#single-sign-on)
 - [Managing Projects](/guides/projects/managing-projects/)
