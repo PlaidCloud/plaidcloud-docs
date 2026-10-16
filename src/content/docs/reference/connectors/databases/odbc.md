@@ -1,66 +1,84 @@
 ---
 title: ODBC
-description: Set up an ODBC database connection in PlaidCloud to connect to any database system that provides an ODBC driver interface.
+description: Set up an ODBC connection in PlaidCloud through a 64-bit System DSN or an ODBC driver installed on a PlaidLink agent's machine.
 sidebar:
   order: 1
 ---
 
-**ODBC (Open Database Connectivity)** is a universal database interface that lets PlaidCloud connect to any system providing an ODBC driver — useful when a vendor doesn't have a dedicated PlaidCloud connector. The connection string and driver name vary per source; consult the vendor's ODBC documentation for the right values.
+**ODBC (Open Database Connectivity)** reaches a database through the ODBC setup on the machine where a [PlaidLink agent](/reference/cli/plaidlink/) runs. Use it for a database that has no dedicated PlaidCloud connector, from agent steps such as [Agent Remote Export of SQL Result](/reference/workflow-steps/agent/agent-remote-export-of-sql-result/). To create one, choose **ODBC** as the connection type.
+
+An ODBC connection works one of two ways:
+
+- **Through a DSN.** Leave **ODBC Driver** blank and name a data source (DSN) set up on the agent's machine. The DSN holds the driver, server, database and any other driver settings, and **Connection Attributes** can override them. This works with any ODBC driver.
+- **Through a driver.** Choose or type an **ODBC Driver** installed on the agent's machine, then give the server and database. PlaidCloud passes the driver a `Server` and a `Database` setting, followed by any **Connection Attributes**, so this suits drivers that take the server and database that way, such as Microsoft's SQL Server drivers, PostgreSQL, MySQL and MariaDB. For a driver that names them differently, use a DSN.
 
 ## Upstream Documentation
-Using the ODBC connector will require configuration specific to the database.  While ODBC is a generic connection type, each database may implement some specific configurations.  Please refer to the ODBC documentation for the target database.
+Each database's ODBC driver has its own settings. Refer to the driver vendor's documentation for the keywords it accepts, both when you create a DSN and when you write connection attributes.
+
+## Create the DSN on the Agent's Machine
+
+1. On the machine where the agent runs, open **ODBC Data Sources (64-bit)**.
+2. On the **System DSN** tab, add a data source that uses the database's ODBC driver, and enter the server, database and any other settings the driver asks for.
+3. Note the **Data Source Name**. You enter it in the connection.
+
+:::caution
+The DSN must be a 64-bit **System DSN**. The agent runs as a Windows service, which can't see a User DSN or a DSN created in the 32-bit ODBC administrator. The step then fails with `IM002 … Data source name not found and no default driver specified`.
+:::
 
 ## Configuration
 
-These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
+### Database Connection
 
-### Identification
-
-| Field | Type | Description |
+| Field | Required | Description |
 |---|---|---|
-| Name | Text | Display name for this connection. |
-| Alias | Text (multi-line) | Optional alias or notes about the connection. |
-| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
-| Db read only | Toggle | Restrict the connection to read-only operations. |
-| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+| ODBC Driver | No | Leave blank to connect through a DSN. Otherwise, the name of an ODBC driver installed on the agent's machine, exactly as **ODBC Data Sources (64-bit)** lists it on its **Drivers** tab. The list offers common drivers, and you can type any other. A driver name can't contain braces or semicolons. |
+| Data Source Name (DSN) or Server | Yes | Without a driver, the name of the System DSN on the agent's machine. With a driver, the database server's host name, or `host,port` for SQL Server on a non-default port. |
+| Database | With a driver | The database to open. It is unavailable without a driver, because the DSN names its own, and saving refuses a database without a driver. |
+| Connection Attributes | No | Other settings for the driver, as `KEY=value` pairs separated by `;`. See [Connection Attributes](#connection-attributes). |
 
-### Connection
+The connection has no port field. For SQL Server on a non-default port, add it to the server as `host,port`, because Microsoft's SQL Server drivers take no port keyword. For another driver that takes one, give it as an attribute, such as `PORT=5433`. With a DSN, set the port in the DSN.
 
-| Field | Type | Description |
-|---|---|---|
-| Db host | Text | Hostname or IP address of the database server. |
-| Db port | Number | Port number for the database connection. |
-| Db odbc driver | Select | — |
-| Db catalog | Text | Database, catalog, or schema to connect to. |
+### Connection Attributes
 
-### Authentication
+**Connection Attributes** passes ODBC settings to the driver in either mode, written the way ODBC writes them:
 
-| Field | Type | Description |
-|---|---|---|
-| Db user | Text | Username for database authentication. |
-| Use sso | Toggle | Authenticate via single sign-on instead of username/password. |
-| Db password | Password | Password for database authentication. |
+- With a driver, they follow the server and database. Use them for whatever else the driver needs, such as `PORT=5433` for a driver that takes a port.
+- With a DSN, they override the DSN's own settings, such as `DBQ=MYLIB`.
 
-### SSL / TLS
+Separate pairs with `;`, as in `PORT=5433;SSLMODE=require`. Wrap a value that contains `;` in braces, as in `KEY={first;second}`, and inside braces write `}` as `}}`. Keywords reach the driver in upper case; ODBC keywords don't depend on case.
 
-| Field | Type | Description |
-|---|---|---|
-| Use ssl | Toggle | Encrypt the connection with SSL/TLS. |
-| Ssl mode | Select | SSL verification mode (e.g., disable, require, verify-ca, verify-full). |
-| Ssl auth client cert | Text (multi-line) | Client certificate (PEM) for mutual TLS authentication. |
-| Ssl auth client key | Text (multi-line) | Client private key (PEM) for mutual TLS authentication. |
-| Ssl auth root cert | Text (multi-line) | Root CA certificate (PEM) for verifying the server's cert. |
-| Ssl auth cert revoke | Text (multi-line) | Certificate revocation list, if your environment uses one. |
+Saving refuses:
 
-### SSH Tunnel
+- text that isn't `KEY=value` pairs, including a brace that is never closed and a keyword with no value;
+- a keyword given more than once, in any case;
+- a keyword the connection sets from its own fields: `DRIVER`, `DSN`, `SERVER`, `DATABASE`, `UID`, `PWD`, `USER`, `USERID`, `USERNAME` and `PASSWORD`;
+- `FILEDSN` and `SAVEFILE`, which would have the agent read the connection's settings from a file on its machine, or write them to one.
 
-| Field | Type | Description |
-|---|---|---|
-| Use ssh | Toggle | Tunnel the connection through an SSH bastion. |
-| Ssh host | Text | SSH bastion hostname. |
-| Ssh port | Number | SSH bastion port (default 22). |
-| Ssh user | Text | SSH bastion username. |
-| Ssh password | Password | SSH bastion password (if password auth is used). |
-| Use ssh cert | Toggle | Authenticate to the SSH bastion with a private key instead of password. |
-| Ssh private key | Text (multi-line) | SSH private key (PEM) for bastion authentication. |
-| Ssh host key | Text (multi-line) | Expected SSH host key for bastion fingerprint verification. |
+Connection lists mask the attributes, because a driver can take its own credential keyword there; the connection's own form shows them. Clear the field to remove them. Enter the user and password under **Auth Credentials**.
+
+:::note
+**ODBC Driver 18 for SQL Server** encrypts the connection and checks the server's certificate by default. For a server with a self-signed certificate, add `TrustServerCertificate=yes` to the attributes.
+:::
+
+### Auth Credentials
+
+| Field | Description |
+|---|---|
+| User | The user to connect as. Through a DSN, leave it blank to sign in as the DSN is set up to, or add `TRUSTED_CONNECTION=Yes` to the attributes to sign in as the agent's Windows account. With a SQL Server driver and no user, the connection signs in as the agent's Windows account. |
+| Use Single Sign-On Authentication (No Password, Optional User) | Connect without a stored password. |
+| Password | The user's password (write-only). Leave it blank on edit to keep the saved password. |
+
+### SSL Config and SSH Config
+
+These tabs don't apply to an ODBC connection. Set encryption and other driver options in the DSN or the connection attributes.
+
+## Connections Saved by an Earlier Version
+
+Earlier versions of this form required a **Database** and a driver chosen from a fixed list, and filled in a **Port**, but never passed the driver on, so those connections couldn't connect. Open the connection and either:
+
+- **Connect through a DSN:** clear **ODBC Driver**, enter the DSN, and save. Saving clears the old Database.
+- **Connect through a driver:** check that **ODBC Driver** matches a driver installed on the agent's machine. Many names in the old list weren't the names drivers register under.
+
+A connection that keeps a driver from the old list opens as a driver connection, and fails to connect until the driver is one installed on the agent's machine.
+
+Saving also clears the old Port. A connection that only ever had a DSN, with no Database, opens with **ODBC Driver** blank.
