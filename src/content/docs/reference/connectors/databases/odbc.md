@@ -94,7 +94,7 @@ Connection lists mask the attributes, because a driver can take its own credenti
 
 | Field | Description |
 |---|---|
-| User | The user to connect as. |
+| User | The user to connect as. Through a DSN, leave it blank to sign in as the DSN is set up to, or for SQL Server add `TRUSTED_CONNECTION=Yes` to the attributes to sign in as the agent's own account. With a SQL Server driver and no user, the connection signs in as the agent's own account: its Windows account, or its Kerberos ticket on Linux. |
 | Use Single Sign-On Authentication (No Password, Optional User) | Connect without a stored password. |
 | Password | The user's password (write-only). Leave it blank on edit to keep the saved password. |
 
