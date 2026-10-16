@@ -1,66 +1,74 @@
 ---
 title: ODBC
-description: Set up an ODBC database connection in PlaidCloud to connect to any database system that provides an ODBC driver interface.
+description: Set up an ODBC connection in PlaidCloud that reaches a database through a 64-bit System DSN on a PlaidLink agent's machine.
 sidebar:
   order: 1
 ---
 
-**ODBC (Open Database Connectivity)** is a universal database interface that lets PlaidCloud connect to any system providing an ODBC driver — useful when a vendor doesn't have a dedicated PlaidCloud connector. The connection string and driver name vary per source; consult the vendor's ODBC documentation for the right values.
+**ODBC (Open Database Connectivity)** reaches a database through a data source name (DSN) defined on the machine where a [PlaidLink agent](/reference/cli/plaidlink/) runs. Use it for a database that has no dedicated PlaidCloud connector, from agent steps such as [Agent Remote Export of SQL Result](/reference/workflow-steps/agent/agent-remote-export-of-sql-result/). To create one, choose **ODBC** as the connection type.
 
 ## Upstream Documentation
-Using the ODBC connector will require configuration specific to the database.  While ODBC is a generic connection type, each database may implement some specific configurations.  Please refer to the ODBC documentation for the target database.
+Each database's ODBC driver has its own settings. Refer to the driver vendor's documentation when you create the DSN.
+
+## Create the DSN on the Agent's Machine
+
+Set up the DSN on the machine where the agent runs, as a system DSN, so that the agent finds it whichever account it runs as.
+
+### On Windows
+
+1. Open **ODBC Data Sources (64-bit)**.
+2. On the **System DSN** tab, add a data source that uses the database's ODBC driver, and enter the server, database and any other settings the driver asks for.
+3. Note the **Data Source Name**. You enter it in the connection.
+
+:::caution
+The DSN must be a 64-bit **System DSN**. On Windows the agent runs as a service, which can't see a User DSN or a DSN created in the 32-bit ODBC administrator. The step then fails with `ODBC data source '<name>' is not defined on the agent machine`.
+:::
+
+### On Linux
+
+On Linux the agent reaches ODBC through unixODBC.
+
+1. Install unixODBC and the database's ODBC driver.
+2. Check that the driver is registered in `odbcinst.ini`, under its name in square brackets. Most driver packages register themselves when installed, and `odbcinst -q -d` lists the registered drivers.
+3. Add the data source to the system `odbc.ini`, as a section named for the DSN. Set `Driver` to the registered driver name, and add the server, database and any other settings the driver asks for:
+
+   ```ini
+   [Sales]
+   Driver=ODBC Driver 18 for SQL Server
+   Server=sales-db.example.com
+   Database=Sales
+   ```
+
+4. Note the section name, `Sales` here. You enter it in the connection.
+
+`odbcinst -j` shows where the system `odbcinst.ini` and `odbc.ini` are, usually `/etc`. A DSN in a user's own `~/.odbc.ini` is found only when the agent runs as that user.
+
+### In a Container
+
+The PlaidLink container image includes unixODBC but no ODBC driver. To use ODBC from an agent running in Docker or Kubernetes, build an image from it that installs the driver, and add the system `odbc.ini` with the DSN to the image or mount it into the container. The image runs as the `plaid` user, so switch to `root` to install the driver and back to `plaid` afterwards.
 
 ## Configuration
 
-These fields appear when creating or editing this connection. Required vs optional depends on the authentication options you enable.
+The DSN supplies the driver, server and database, so the connection has no fields for them.
 
-### Identification
+### Database Connection
 
-| Field | Type | Description |
+| Field | Required | Description |
 |---|---|---|
-| Name | Text | Display name for this connection. |
-| Alias | Text (multi-line) | Optional alias or notes about the connection. |
-| Is active | Toggle | Whether the connection is enabled. Disable to pause without deleting. |
-| Db read only | Toggle | Restrict the connection to read-only operations. |
-| Access type | Select | Read-only, write-only, or read-write access level for this connection. |
+| Data Source Name (DSN) | Yes | The name of the System DSN on the agent's machine. |
 
-### Connection
+### Auth Credentials
 
-| Field | Type | Description |
-|---|---|---|
-| Db host | Text | Hostname or IP address of the database server. |
-| Db port | Number | Port number for the database connection. |
-| Db odbc driver | Select | — |
-| Db catalog | Text | Database, catalog, or schema to connect to. |
+| Field | Description |
+|---|---|
+| User | The user to connect as. |
+| Use Single Sign-On Authentication (No Password, Optional User) | Connect without a stored password. |
+| Password | The user's password (write-only). Leave it blank on edit to keep the saved password. |
 
-### Authentication
+### SSL Config and SSH Config
 
-| Field | Type | Description |
-|---|---|---|
-| Db user | Text | Username for database authentication. |
-| Use sso | Toggle | Authenticate via single sign-on instead of username/password. |
-| Db password | Password | Password for database authentication. |
+These tabs don't apply to an ODBC connection. Set encryption and other driver options in the DSN.
 
-### SSL / TLS
+## Connections Saved by an Earlier Version
 
-| Field | Type | Description |
-|---|---|---|
-| Use ssl | Toggle | Encrypt the connection with SSL/TLS. |
-| Ssl mode | Select | SSL verification mode (e.g., disable, require, verify-ca, verify-full). |
-| Ssl auth client cert | Text (multi-line) | Client certificate (PEM) for mutual TLS authentication. |
-| Ssl auth client key | Text (multi-line) | Client private key (PEM) for mutual TLS authentication. |
-| Ssl auth root cert | Text (multi-line) | Root CA certificate (PEM) for verifying the server's cert. |
-| Ssl auth cert revoke | Text (multi-line) | Certificate revocation list, if your environment uses one. |
-
-### SSH Tunnel
-
-| Field | Type | Description |
-|---|---|---|
-| Use ssh | Toggle | Tunnel the connection through an SSH bastion. |
-| Ssh host | Text | SSH bastion hostname. |
-| Ssh port | Number | SSH bastion port (default 22). |
-| Ssh user | Text | SSH bastion username. |
-| Ssh password | Password | SSH bastion password (if password auth is used). |
-| Use ssh cert | Toggle | Authenticate to the SSH bastion with a private key instead of password. |
-| Ssh private key | Text (multi-line) | SSH private key (PEM) for bastion authentication. |
-| Ssh host key | Text (multi-line) | Expected SSH host key for bastion fingerprint verification. |
+Earlier versions of this form required a **Database** and filled in a **Port**. A saved Database makes the connection bypass the DSN, and it fails with the same `IM002` error. Open the connection and save it: saving clears the Database and the Port.
