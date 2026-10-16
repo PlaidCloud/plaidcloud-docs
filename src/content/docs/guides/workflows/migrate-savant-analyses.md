@@ -143,7 +143,7 @@ Most agents convert to the step you would build by hand; the [Savant Conversion 
 | Format (`format`) | A Table Extract with the renames, retypes, hides, and fills, or a [Promote Header](/reference/workflow-steps/tables/table-promote-header/) step for replace-names-with-row. | A few Format settings aren't converted. See [What Stays Limited](#what-stays-limited). |
 | Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A nearest match ranks and filters by great-circle distance, as Savant does. A nearest rule combined with other rules finds the nearest records first, then applies the other rules: with AND the result keeps records that satisfy every rule, and with OR it unions the nearest records with the records the other rules match. A nearest rule with neither a count nor a maximum distance keeps the single nearest record. A within-distance match converts too, in kilometers when the rule gives no unit, and tests WKT points only. |
 | Spatial Summarize Agent (`spatial_summarize`) | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) for union, intersect, and bounding box, plus [Spatial Centroid](/reference/workflow-steps/spatial/spatial-centroid/), [Spatial Point to Line](/reference/workflow-steps/spatial/spatial-point-to-line/), and [Spatial Line to Polygon](/reference/workflow-steps/spatial/spatial-line-to-polygon/) for geometric center and line or polygon builds. | A polygon built from fewer than 3 points is an empty polygon. |
-| Destination Agent (`destination`) | An export step to the target you bind, or a CSV when you don't. See [Destinations](#destinations). | See [What Stays Limited](#what-stays-limited). |
+| Destination Agent (`destination`) | An export step to the target you bind, or a project table or file when you don't. See [Destinations](#destinations). | See [What Stays Limited](#what-stays-limited). |
 
 `GEO_POINT`, `GEO_TYPE`, and `GEO_SPATIAL_DISTANCE` convert to expressions. An edit whose whole expression is another `GEO_*` function, such as `GEO_AREA` or `GEO_UNION`, converts to the matching spatial step, including [Spatial Info](/reference/workflow-steps/spatial/spatial-info/). Geometry travels as WKT text. `GEO_AREA`, `GEO_PERIMETER`, and `GEO_SPATIAL_DISTANCE` in miles use the statute mile.
 
@@ -158,7 +158,7 @@ An Infer or Vision agent converts to an AI/NLP step that uses an LLM connection.
 
 ## Destinations
 
-A Savant destination writes the table it receives to the target you bind. Bind destinations with `destination_bindings` in the REST body or MCP call. A key is the destination's node id or name. The Analyze window doesn't bind destinations, so a destination converted there writes a CSV.
+A Savant destination writes the table it receives to the target you bind. Bind destinations with `destination_bindings` in the REST body or MCP call. A key is the destination's node id or name. The Analyze window doesn't bind destinations, so a destination converted there writes the unbound result described under [Unbound Destinations](#unbound-destinations).
 
 | Target | Binding | Result |
 | --- | --- | --- |
@@ -191,7 +191,26 @@ A conversion through an AI assistant (MCP) binds the same shapes with these part
 
 Convert from the Analyze app or the REST API, or sign in yourself rather than through an assistant, to bind these.
 
-A destination with no usable binding writes a CSV to the Document account you gave for unbound sources and warns **Fallback, target not written**, with the original target in the message. Nothing is dropped. The CSV is not the destination's own output, so check it before you rely on it. A plain CSV destination writes its own file.
+### Unbound Destinations
+
+A destination with no binding writes its PlaidCloud counterpart and warns **Destination target unbound**, naming the original target. The conversion never contacts the target system.
+
+| Destination | Result |
+| --- | --- |
+| Database, warehouse, or SaaS target (Oracle, generic database, Looker Studio, NetSuite, SAP, and Google Sheets, Tableau, or Slack with no connection bound) | A table in the project, named after the destination node. |
+| File storage (S3, GCS, Box, SFTP, SharePoint, Google Drive, OneDrive) | The file, in the destination's file type, in a Document folder under the account you gave for unbound sources. The folder mirrors the target folder. Credentials and share tokens are dropped from the path. |
+| Email | A CSV, in the Document account you gave for unbound sources. |
+
+The warning tells you what to bind to reach the real target. A destination whose binding can't be used writes a CSV and warns **Fallback, target not written**, with the original target in the message; check that CSV before you rely on it. A plain CSV destination writes its own file.
+
+### Excel Options
+
+An Excel destination maps these options:
+
+- **Tab per field value.** Each value of the field becomes a sheet. Blank values go to `Sheet1`, and sheets whose names collide get a numeric suffix.
+- **Format from template.** Each run first copies `<name>_template.xlsx` from the same folder over the workbook, then writes into it, so the workbook is always replaced. If the template isn't there, the copy warns and the workbook is written without it.
+- **Top-left cell.** The rows are written into the workbook starting at that cell.
+- **Mode `create`.** Every run writes the file as the destination's write mode says.
 
 ## Bind API Requests
 
@@ -314,7 +333,7 @@ A converted workflow can differ from Savant in these ways. The conversion report
 
 **Language models.** Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs. A Fuse agent matches with the deterministic [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) step at a threshold of 80, where Savant uses a language model.
 
-**Destinations that fall back to a CSV.** A destination with no binding, one whose binding the conversion can't use, a replace that the binding doesn't allow, a Slack or email part an AI assistant withheld, and a sheet whose tab name comes from a field fall back to a CSV with a warning. See [Destinations](#destinations).
+**Destinations that fall back to a CSV.** A destination whose binding the conversion can't use, an unbound email destination, a replace that the binding doesn't allow, a Slack or email part an AI assistant withheld, and a sheet whose tab name comes from a field fall back to a CSV with a warning. See [Destinations](#destinations).
 
 **Other limits.**
 
