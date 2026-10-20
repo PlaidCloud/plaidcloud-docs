@@ -42,3 +42,5 @@ You should now have everything you need to add your GCS account to PlaidCloud Do
 9. Open the Service Account JSON key file you downloaded in step 10 above and copy the entire contents
 10. Paste the contents into the **System User JSON Key** field under Auth Credentials
 11. Select the Save button and your new Document account is live
+
+A valid service-account key is required. Saving the account without one, or with something that isn't a Google service-account key, is refused with "GCS document accounts require a valid service-account key." An existing account saved without a valid key stops working until you paste one into the **System User JSON Key** field.
