@@ -48,4 +48,4 @@ The terms *database*, *lakehouse*, *query engine*, and *data warehouse* describe
 
 ## Generic
 
-- [ODBC](/reference/connectors/databases/odbc/) — connect to any database with an ODBC driver
+- [ODBC](/reference/connectors/databases/odbc/) — connect through a DSN or an ODBC driver on a PlaidLink agent's machine
