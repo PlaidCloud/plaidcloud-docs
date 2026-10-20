@@ -106,7 +106,7 @@ You do not have to bring the whole archive. The selection tree lists what the ar
 ### When Part of an Archive Does Not Import
 
 
-An import keeps going when part of the archive cannot be restored. As long as the archive can be read and the project itself can be set up, the project is imported, and anything that could not be restored is listed in its import result. If the archive cannot be read, or the project itself cannot be set up, the import fails and tells you why, and a new project is removed.
+An import keeps going when part of the archive cannot be restored. As long as the archive can be read and the project itself can be set up, the project is imported, and anything that could not be restored is listed in its import result. If the archive cannot be read, or the project itself cannot be set up, the import fails and tells you why, and a new project is removed. An import into an existing project can also stop before it finishes. Anything it had already restored stays in the project, and the import result says when the import stopped and why, and lists what it could not restore before then.
 
 When anything was left out, the message and email at the end of the import say so, and the message links to the **Import Result** window. The window names each item by type and name, gives the reason, and groups the items under these headings:
 
