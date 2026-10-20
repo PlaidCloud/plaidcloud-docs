@@ -15,7 +15,7 @@ Conversion reads the export file you point it at and the headers of the files yo
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
 - Notes and groups arrive on the canvas as notes and groups.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
-- Every Savant agent type converts. Twenty-seven agents convert in full. Six convert in part, each with a named loss: the API Agent (`api_pagination_ignored`), Destination Agent (`destination_option_unmapped`, `destination_format_replaced`, `destination_sort_unresolved`), Format Agent (`format_option_unmapped`, `format_fill_not_text`, `promoted_columns_unread`), Infer Agent (`ai_row_limit_partial`), Source Agent (`xml_text_unread`, `promoted_columns_unread`, `xml_document_columns_unread`) and Spatial Match Agent (`spatial_within_distance_points_only`). The conversion report carries the code whenever an analysis uses the option. A configuration the converter can't reproduce arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
+- Every Savant agent type converts, and every agent converts in full: each option has a mapping. A configuration the converter can't reproduce because Savant itself fails on it or doesn't document it arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
 - A step whose Savant behavior the help documentation doesn't spell out is converted to the most likely reading and carries a **semantics assumed** note in the conversion report. Check those steps against your Savant output. The readings it assumes are listed under [What Stays Limited](#what-stays-limited).
 
 ## Before You Start
@@ -117,6 +117,8 @@ A Savant export describes where its data comes from but carries no data and no c
 
 A binding you can't read is refused. A key that matches no source is reported as a warning.
 
+A source file path in the export can start with `/` or run through dot-folders such as `.archive`, and it converts. A source that reads XML converts the XML text, and an XML document source also carries Savant's file-context columns.
+
 ### Unbound Sources
 
 A source with no binding becomes an import step with no data yet, and the conversion report carries a warning for it. The step reads from:
@@ -133,15 +135,15 @@ Most agents convert to the step you would build by hand; the [Savant Conversion 
 
 | Savant Agent | What It Becomes | Caveats |
 | --- | --- | --- |
-| Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. A row limit becomes **Max rows**, and an empty source warns and writes an empty table. Max rows answers the first N rows on every run and keeps no earlier answers (`ai_row_limit_partial`). | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Each call has a cost. See [AI Providers](#ai-providers). A batch that fails keeps its rows with an empty answer and warns. |
+| Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. A row limit becomes **Max rows**, and an empty source warns and writes an empty table. **Max New Rows** answers only the rows that are new and keeps the answers from earlier runs. | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Each call has a cost. See [AI Providers](#ai-providers). A batch that fails keeps its rows with an empty answer and warns. |
 | Vision Agent (`vision`) | A [Document Read Blob](/reference/workflow-steps/text-documents/document-blob-extract/) step, [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the AI/NLP **Prompt** task. Each document goes to the provider as an image or PDF when the provider accepts that type and size. Otherwise the step sends its PDF text layer, or the OCR text. | Same LLM caveats as the Infer Agent. Whole documents leave PlaidCloud for the provider, and the conversion warns. TIFF and BMP files are sent as OCR text, and there is no maximum document size setting. A document that isn't found is skipped and the step warns with its path. |
-| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The raw response body lands in a text column, with a status column beside it. A quota per period becomes a fractional **Max req/sec**. A relative URL joins the base URL or REST connection you bind with `api_bindings`. A host, port, or path that comes from a row field is filled in per row. Next-URL, Link header, offset, and page paging are followed. | A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A failed request stays as a row with its status. A request that carries a credential can't take its host from a row field. Credentials are handled as described in [API Steps with Credentials](#api-steps-with-credentials). |
+| API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The raw response body lands in a text column, with a status column beside it. A quota per period becomes a fractional **Max req/sec**. A relative URL joins the base URL or REST connection you bind with `api_bindings`. A host, port, or path that comes from a row field is filled in per row. Next-URL, Link header, offset, and page paging are followed, and a paging value (start, page size, or parameter name) can come from an input field or a parameter. | A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A failed request stays as a row with its status. A request that carries a credential can't take its host from a row field. Credentials are handled as described in [API Steps with Credentials](#api-steps-with-credentials). |
 | Recursion Agent (`hierarchy`) | A [Hierarchy Closure](/reference/workflow-steps/tables/table-hierarchy-closure/) step that walks each row up its parent chain to any depth, then aggregates each node over the ids on its path to the root, itself included. It writes Depth and Path. A row with a blank parent, or naming itself as its parent, is a root. | A loop in the parent ids stops at the repeated node and keeps every ancestor before it. Rows with several parents each keep their own values. |
 | Search and Replace (`search_replace`) | A [Table Extract](/reference/workflow-steps/tables/table-extract/) that applies each rule in order to the chosen text columns, case-sensitive or not, whole word or not. Each rule runs in its mode: replace the matched text, replace the whole cell when it contains the text, replace the whole cell when it matches exactly, or append to the cell. | Rules are literal text, not patterns. |
 | Split (`split`) | A [Split Text](/reference/workflow-steps/tables/table-split-text/) step. It splits into columns or rows on a literal separator of any length, and decides the number of columns from the data when the workflow runs. | None beyond the matrix status. |
 | Time Series (`rollup`) | A Table Extract that groups by a period expression, with a [Period Spine](/reference/workflow-steps/tables/table-period-spine/), an anti join, and a union that zero-fill the periods with no records. | Records with a NULL date are excluded. The spine stops at 100,000 periods. |
-| Format (`format`) | A Table Extract with the renames, retypes, hides, and fills, or a [Promote Header](/reference/workflow-steps/tables/table-promote-header/) step for replace-names-with-row. | A few Format settings aren't converted. See [What Stays Limited](#what-stays-limited). |
-| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A nearest match ranks and filters by great-circle distance, as Savant does. A nearest rule combined with other rules finds the nearest records first, then applies the other rules: with AND the result keeps records that satisfy every rule, and with OR it unions the nearest records with the records the other rules match. A nearest rule with neither a count nor a maximum distance keeps the single nearest record. A within-distance match converts too, in kilometers when the rule gives no unit, and tests WKT points only. |
+| Format (`format`) | A Table Extract with the renames, retypes, hides, and fills, or a [Promote Header](/reference/workflow-steps/tables/table-promote-header/) step for replace-names-with-row. | A fill on a column that isn't text casts the default to the column's type. Promoting a header over a source that declares no columns reads every column, from CSV, Excel, XLS, JSON, Parquet, and Avro files. See [Files with No Declared Columns](#files-with-no-declared-columns). |
+| Spatial Match Agent (`spatial_match`) | A [Spatial Match (executor)](/reference/workflow-steps/spatial/spatial-match-executor/) step for intersects, within, contains, touches, crosses, overlaps, equals, and disjoint, with several rules combined; Cross Join for a cross match; [Find Nearest](/reference/workflow-steps/spatial/spatial-find-nearest/) for a nearest match. | A nearest match ranks and filters by great-circle distance, as Savant does. A nearest rule combined with other rules finds the nearest records first, then applies the other rules: with AND the result keeps records that satisfy every rule, and with OR it unions the nearest records with the records the other rules match. A nearest rule with neither a count nor a maximum distance keeps the single nearest record. A within-distance match converts too, in kilometers when the rule gives no unit, and measures geodesic distance between any geometries, not only points. A geometry that can't be parsed gives NULL or no match, with a warning. |
 | Spatial Summarize Agent (`spatial_summarize`) | [Spatial Combine](/reference/workflow-steps/spatial/spatial-combine/) for union, intersect, and bounding box, plus [Spatial Centroid](/reference/workflow-steps/spatial/spatial-centroid/), [Spatial Point to Line](/reference/workflow-steps/spatial/spatial-point-to-line/), and [Spatial Line to Polygon](/reference/workflow-steps/spatial/spatial-line-to-polygon/) for geometric center and line or polygon builds. | A polygon built from fewer than 3 points is an empty polygon. |
 | Destination Agent (`destination`) | An export step to the target you bind, or a project table or file when you don't. See [Destinations](#destinations). | See [What Stays Limited](#what-stays-limited). |
 
@@ -175,8 +177,9 @@ A Sheets, Tableau, or Slack connection is checked the way a table connection is:
 
 - A file or table destination that appends reads the earlier file back and rewrites it with the new rows. It never overwrites.
 - An upsert, update, or groupReplace destination merges on the destination's match keys. A file or table is read back and rewritten, and a Tableau data source has its matching rows changed in place.
+- Append and merge also work on existing files that are split per value, headerless (rows match by position), Excel files anchored at a top-left cell, and files in a non-UTF-8 charset. A split reads back the file each value is written to and merges within it, leaving the other files as they are.
 - A Tableau destination maps Savant's modes to the six [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/#modes) modes: append and insert add rows, replace overwrites, and upsert, update, and groupReplace match on keys. A mode that changes existing data publishes only when the binding says `replace: true`; otherwise the destination publishes a new data source and the report says so.
-- A destination with an output encoding writes the file in that Java character set. A character the set lacks is written as `?`, as Savant does.
+- A destination with an output encoding writes the file in that Java character set. A character the set lacks is written as `?`, as Savant does. Java aliases, CESU-8, and byte-order-mark forms are accepted, and a charset Python can't write is written through the host's `iconv`. A charset that neither writes (for example `x-ISCII91` or `JIS_X0212`) is written as UTF-8 and the report warns (`destination_charset_unwritable`). A split in a non-UTF-8 charset converts the folder.
 - Export file names must stay inside the bound folder.
 
 ### What AI Callers Can Bind
@@ -202,6 +205,16 @@ A destination with no binding writes its PlaidCloud counterpart and warns **Dest
 | Email | A CSV, in the Document account you gave for unbound sources. |
 
 The warning tells you what to bind to reach the real target. A destination whose binding can't be used writes a CSV and warns **Fallback, target not written**, with the original target in the message; check that CSV before you rely on it. A plain CSV destination writes its own file.
+
+### Split Destinations
+
+A destination that writes a file, sub-folder, or tab per value of a field splits CSV, Excel, Parquet, and PDF files and Google Sheets tabs.
+
+- **Parquet and PDF.** One file per value.
+- **Google Sheets.** One tab per value.
+- **Template.** A template workbook seeds the workbook for every value. A missing template warns and the workbook is written without it.
+- **NULL values.** A NULL split value is written to its own file or tab, not dropped.
+- **A field the input lacks.** A split, or a sort, on a field the input doesn't carry is refused by name, because Savant fails on it.
 
 ### Excel Options
 
@@ -232,7 +245,7 @@ An AI assistant (MCP) without connection write permission has a connection bindi
 
 A host, port, or path that comes from an input field needs no binding. It is filled in per row, each value checked as it is used, and the report lists the hosts a row may name. A request that carries a credential can't take its host from a row field: sending a credential to a host the data chooses is refused.
 
-Paging converts too. A next-page URL in the response, a `Link` header, an offset, and a page number each become a paging mode on the [REST Request](/reference/workflow-steps/general/rest-request/) step, which reads every page.
+Paging converts too. A next-page URL in the response, a `Link` header, an offset, and a page number each become a paging mode on the [REST Request](/reference/workflow-steps/general/rest-request/) step, which reads every page. A paging value can come from an input field (`{{Field}}`) or a parameter (`{{Param}}`), and a value written as numeric text such as `10.0` is read as a number.
 
 ## API Steps with Credentials
 
@@ -263,8 +276,9 @@ A source with no declared columns keeps these columns:
 
 - A CSV, TSV, or TXT source bound at import keeps every column in the file's header.
 - Any other file type, and any unbound source, keeps only the columns later steps name, and the conversion report warns.
+- A promoted header over such a source reads every column, from CSV, Excel, XLS, JSON, Parquet, and Avro files.
 
-When such a CSV feeds only a promoted header, the import is an [Import Delimited](/reference/workflow-steps/import/import-delimited/) step that reads every column by position. A step that exports or joins after a promoted header carries every column the table has at run time (see **Also carry columns named at run time** in [Table Extract](/reference/workflow-steps/tables/table-extract/)).
+When such a source feeds only a promoted header, the import is an [Import Delimited](/reference/workflow-steps/import/import-delimited/) step that reads every column by position. A step that exports or joins after a promoted header carries every column the table has at run time (see **Also carry columns named at run time** in [Table Extract](/reference/workflow-steps/tables/table-extract/)).
 
 ## Behaviors Worth Knowing
 
@@ -348,10 +362,10 @@ A converted workflow can differ from Savant in these ways. The conversion report
 - A source with no declared columns that isn't a bound CSV, TSV, or TXT file keeps only the columns later steps reference. See [Files with No Declared Columns](#files-with-no-declared-columns).
 - An API agent whose URL is relative needs an `api_bindings` entry, and a request that carries a credential can't take its host from a row field. Credentials in an `http://` URL are left out, and MCP imports don't create connections.
 - A Vision agent sends TIFF and BMP files as OCR text.
-- Format settings for sort, field reordering, extra, and replace aren't converted, and fill writes only text columns.
 - An XML path that isn't XPath 1.0 becomes a placeholder.
-- A source bound to an XML document reads the whole document into one column (`xml_document_columns_unread`), and XML text with no document behind it isn't read (`xml_text_unread`).
-- A spatial within-distance test reads WKT points only.
+- A charset that no encoder on the host can write is written as UTF-8, and the report warns.
+- Format settings Savant doesn't document, split formats it doesn't document, paging keys that form no scheme, keyed write modes with no keys, a top-left cell that isn't a cell, and email with no recipients carry a **semantics assumed** note or are refused by name. Check those steps against your Savant output.
+- An Excel read-back can't tell an empty string from a blank cell, so a merge into an existing workbook reads an empty string as blank.
 - On StarRocks and Snowflake, `JSON_FORMAT` and `JSON_SET` fail at run time, and the conversion report notes it.
 
 ## Related Guides
