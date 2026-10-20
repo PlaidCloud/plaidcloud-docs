@@ -94,13 +94,30 @@ To restore an archive:
 4. Choose whether to **Create New Project** or **Import Into Existing Project**, and pick what to bring across from the selection tree
 5. Click **Import Project**
 
-The import runs in the background. A progress window shows how far it has got, and when it finishes you are told so, along with any warnings it raised — a variable it left alone, for example, or a table whose data it could not load. If the import cannot start — because the project you chose is locked, say — the window stays open and tells you why.
+The import runs in the background. A progress window shows how far it has got, and a message tells you when it finishes, with an email too if anything was left out. If the import cannot start — because the project you chose is locked, say — the window stays open and tells you why.
 
 
 An archive is checked as it is opened. One holding content a project archive never contains — a file that would land outside the archive's own folder, a link that points outside it, or settings that try to create anything other than plain data — is refused before anything from it is restored.
 
 
 You do not have to bring the whole archive. The selection tree lists what the archive holds by type — workflows, steps, tables, dimensions, data editors, user-defined functions — and anything you tick brings its dependencies with it.
+
+
+### When Part of an Archive Does Not Import
+
+
+An import keeps going when part of the archive cannot be restored. As long as the archive can be read and the project itself can be set up, the project is imported, and anything that could not be restored is listed in its import result. If the archive cannot be read, or the project itself cannot be set up, the import fails and tells you why, and a new project is removed.
+
+When anything was left out, the message and email at the end of the import say so, and the message links to the **Import Result** window. The window names each item by type and name, gives the reason, and groups the items under these headings:
+
+- **Not imported** — the item is not in the project.
+- **Created without data** — the table, view or dimension is in the project but holds no data, because its data could not be read or loaded.
+- **Warnings** — the item imported, but there is something to check, such as columns the warehouse converted to the table's column types.
+- **Variables that kept this project's value** — the project already had a variable with that name, so it kept its own value.
+
+The most serious items are listed first, and the window says so when there are more than it lists. To open the window again later, select the project on the **Projects** tab and choose **View Import or Copy Result** from the **Actions** menu, or right-click the project.
+
+The result stays on the project until someone dismisses it, or a later import into the same project replaces it. Click **Dismiss Result** to remove it for everyone who can open the project; nothing in the project changes. Dismissing needs edit access to the project, and the project must not be locked.
 
 
 ### Importing Into an Existing Project
@@ -127,7 +144,7 @@ Where an incoming item is the same item as one already in the project, you choos
 - **Create new copy of duplicate items** — the project keeps what it has, and the incoming one is added alongside it with ` copy` appended to its name (and a counter, if that name is taken too). This applies to workflows, steps, tables, dimensions, data editors, views and user-defined functions.
 
 
-**Project and workflow variables are the exception.** A variable is identified by its name, so there is no way to add a second copy of one without renaming it into something nothing refers to. Where the project already defines a variable the archive also carries, the project's own value is kept and the import tells you which variables it left alone. If you want the archive's value, set it on the variable afterwards.
+**Project and workflow variables are the exception.** A variable is identified by its name, so there is no way to add a second copy of one without renaming it into something nothing refers to. Where the project already defines a variable the archive also carries, the project's own value is kept and the import result lists the variables it left alone. If you want the archive's value, set it on the variable afterwards.
 
 
 One thing to know: this matching is by identity, not by name. An item that came from the same project originally — anything the archive was exported from, or a copy of it — is recognised as the same item. Two items that merely happen to share a name are treated as different items, and both will be present after the import.
@@ -135,10 +152,10 @@ One thing to know: this matching is by identity, not by name. An item that came 
 ### If a Table Comes Back Without Its Data
 
 
-Restoring a table's data depends on its columns lining up with the table it is going into — the same names in the same order, because that is what a load goes by. Where they do not line up, that table's data is left out and the table is named at the end of the import, the same way a table that held no data in the archive is. A difference in a column's stored type alone does not hold the data back: the type is reported and the data loads.
+Restoring a table's data depends on its columns lining up with the table it is going into — the same names in the same order, because that is what a load goes by. Where they do not line up, that table's data is left out and the table is listed in the import result under **Created without data**, the same way a table whose data was not in the archive is. A difference in a column's stored type alone does not hold the data back: the data loads, and the table is listed under **Warnings** with the columns the warehouse converted.
 
 
-An import that ends up with no table data at all is reported as a failure rather than a success. If an import finishes with every workflow, table and dimension in place, read its closing message before assuming the rows came with them.
+An import whose tables all failed to load their data still keeps the project, and its closing message and import result say first that none of the table data could be loaded. If an import finishes with every workflow, table and dimension in place, read its closing message before assuming the rows came with them.
 
 
 ## Archiving Schedule
