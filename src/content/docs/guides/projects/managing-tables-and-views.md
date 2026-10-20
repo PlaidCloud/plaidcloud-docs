@@ -110,7 +110,7 @@ Some variables cannot be resolved. Either nothing has set the variable at all, o
 A step your role can't see is still listed, so you know the table is in use, but without its name or workflow, and you can't open it. It still counts when you delete the table. A step you can see is listed without any workflow your role hides. Nothing is hidden from an Architect.
 
 
-*Note: Deleting unused tables counts only the steps that name a table directly. A step that reaches it through a path — resolved or not — does not block a delete.*
+*Note: When you delete tables, a step that reaches a table through a path counts as using it, whether or not its variable can be resolved. The delete window lists the step, and the delete goes ahead only if you force it.*
 
 
 
