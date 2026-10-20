@@ -7,7 +7,7 @@ sidebar:
 
 PlaidCloud converts a Savant Labs analysis export into a runnable Advanced workflow. The converter maps each Savant agent to a workflow step, a project variable, or a canvas object, keeps the original graph, and returns a conversion report that names anything it could not convert.
 
-Conversion reads only the export file you point it at. It never contacts the system a Savant source or destination connects to.
+Conversion reads the export file you point it at and the headers of the files you bind to its sources. It never contacts the system a Savant source or destination connects to.
 
 ## What PlaidCloud Creates
 
@@ -15,8 +15,8 @@ Conversion reads only the export file you point it at. It never contacts the sys
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
 - Notes and groups arrive on the canvas as notes and groups.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
-- Every Savant agent type converts. A configuration the converter can't reproduce arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
-- A step whose Savant behavior the help documentation doesn't spell out is converted to the most likely reading and carries a **semantics assumed** note in the conversion report. Check those steps against your Savant output.
+- Every Savant agent type converts. Twenty-seven agents convert in full. Six convert in part, each with a named loss: the API Agent (`api_pagination_ignored`), Destination Agent (`destination_option_unmapped`, `destination_format_replaced`, `destination_sort_unresolved`), Format Agent (`format_option_unmapped`, `format_fill_not_text`, `promoted_columns_unread`), Infer Agent (`ai_row_limit_partial`), Source Agent (`xml_text_unread`, `promoted_columns_unread`, `xml_document_columns_unread`) and Spatial Match Agent (`spatial_within_distance_points_only`). The conversion report carries the code whenever an analysis uses the option. A configuration the converter can't reproduce arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
+- A step whose Savant behavior the help documentation doesn't spell out is converted to the most likely reading and carries a **semantics assumed** note in the conversion report. Check those steps against your Savant output. The readings it assumes are listed under [What Stays Limited](#what-stays-limited).
 
 ## Before You Start
 
@@ -133,7 +133,7 @@ Most agents convert to the step you would build by hand; the [Savant Conversion 
 
 | Savant Agent | What It Becomes | Caveats |
 | --- | --- | --- |
-| Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. A row limit becomes **Max rows**, and an empty source warns and writes an empty table. | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Each call has a cost. See [AI Providers](#ai-providers). A batch that fails keeps its rows with an empty answer and warns. |
+| Infer Agent (`gen_ai`, and legacy `service` with an LLM service) | An [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) step with the **Prompt** task. The prompt runs once per row over the input fields, and the answer lands in an **AI Answer** column beside every input column. A row limit becomes **Max rows**, and an empty source warns and writes an empty table. Max rows answers the first N rows on every run and keeps no earlier answers (`ai_row_limit_partial`). | An LLM answers, so output is never byte-identical to Savant's and can vary between runs. Each call has a cost. See [AI Providers](#ai-providers). A batch that fails keeps its rows with an empty answer and warns. |
 | Vision Agent (`vision`) | A [Document Read Blob](/reference/workflow-steps/text-documents/document-blob-extract/) step, [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the AI/NLP **Prompt** task. Each document goes to the provider as an image or PDF when the provider accepts that type and size. Otherwise the step sends its PDF text layer, or the OCR text. | Same LLM caveats as the Infer Agent. Whole documents leave PlaidCloud for the provider, and the conversion warns. TIFF and BMP files are sent as OCR text, and there is no maximum document size setting. A document that isn't found is skipped and the step warns with its path. |
 | API Agent (`apiService`, and legacy `service` with an API service) | A [REST Request](/reference/workflow-steps/general/rest-request/) step that sends one request per input row, then a join back that keeps every input row. The raw response body lands in a text column, with a status column beside it. A quota per period becomes a fractional **Max req/sec**. A relative URL joins the base URL or REST connection you bind with `api_bindings`. A host, port, or path that comes from a row field is filled in per row. Next-URL, Link header, offset, and page paging are followed. | A method other than GET runs against the live system once per input row every time the workflow runs, so confirm the target before the first run. Non-GET requests aren't retried automatically. A failed request stays as a row with its status. A request that carries a credential can't take its host from a row field. Credentials are handled as described in [API Steps with Credentials](#api-steps-with-credentials). |
 | Recursion Agent (`hierarchy`) | A [Hierarchy Closure](/reference/workflow-steps/tables/table-hierarchy-closure/) step that walks each row up its parent chain to any depth, then aggregates each node over the ids on its path to the root, itself included. It writes Depth and Path. A row with a blank parent, or naming itself as its parent, is a root. | A loop in the parent ids stops at the repeated node and keeps every ancestor before it. Rows with several parents each keep their own values. |
@@ -243,7 +243,9 @@ A credential in an API agent's headers, URL path, query, or body moves into a Pl
 - An unencrypted `http://` endpoint is not converted with credentials. The credential is left out and the conversion report warns that it was not copied.
 - Importing through an AI assistant (MCP) does not create connections. Credentials are left out and a warning says so. Import from the Analyze app or the REST API instead, or add the credential to a REST connection by hand and select it on the step.
 - A user without connection-write permission gets the same outcome: credentials left out and a warning.
-- A pipeline parameter used where an API credential goes, in a header, query, path, or body, moves into the connection's encrypted `secret_values`, and the step refers to it through the connection. It is never created as a workflow variable, whatever the parameter is named.
+- Only an API credential slot moves a parameter into a connection. A pipeline parameter used in a header, query, path, or body where an API credential goes moves into the connection's encrypted `secret_values`, and the step refers to it through the connection. It is never created as a workflow variable, whatever the parameter is named.
+- Any other parameter whose name holds a secret word (such as `password`, `token`, `secret`, or `key`, with `key` excepted after a data word such as `sort` or `partition`) becomes a workflow variable with a blank value and a warning (`parameter_secret_blanked`). A name such as `api_key_2` is blanked too. Set the value on the project variable after the import.
+- A parameter named for a count or limit, such as `max_tokens`, keeps its value.
 - A secret typed into a formula, filter, or replace value is left out of the step and the conversion report warns. A path, a URL, and a 40 or 64 character hex digest are kept, unless part of them or a secret name says otherwise. Folder sharing links and recipient email addresses never appear in warnings or notes.
 - A response that echoes a credential back is stored as received. Treat the output table of such a request as sensitive.
 
@@ -276,11 +278,11 @@ These conversions behave as follows.
 | Sample (`sample`) | First N rows, per group or overall, a random percent or number of rows, or one row in every Nth. |
 | Time Series (`rollup`) | Day, week, month, quarter, year, and decade periods between the optional start and end dates, per group. Month periods are labeled `YYYY-MM`, and periods with no records appear with zeros. Records with a NULL date are excluded. |
 | Pivot (`pivot`) | COUNT counts rows. |
-| XML (`xml`) | SELECT extracts elements, paths can carry namespaces, and TO_JSON converts XML to JSON. Any XPath 1.0 path converts, including predicates, attribute tests, wildcards, and functions such as `count()`, `name()`, and `contains()`, and the [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) step reads it as XPath. With `processNs` off, names are matched literally, prefix included. |
+| XML (`xml`) | SELECT extracts elements, paths can carry namespaces, and TO_JSON converts XML to JSON. Any XPath 1.0 path converts, including predicates, attribute tests, wildcards, and functions such as `count()`, `name()`, and `contains()`, and the [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) step reads it as XPath. With `processNs` off, names are matched literally, prefix included. An XML file missing when you convert resolves its root element when the workflow runs. |
 | JSON (`json`) | Flattens into wide columns. Text that isn't valid JSON gives NULL, and arrays come out as text. |
 | Split (`split`) | Splits into columns or rows, with the number of columns read from the data each time the workflow runs. |
 
-These expression functions follow Savant's results:
+These expression functions follow Savant's results, and the rows marked as assumed are the converter's reading where Savant's help is silent:
 
 | Function | Behavior |
 | --- | --- |
@@ -299,9 +301,11 @@ These expression functions follow Savant's results:
 | `TO_TEXT` and number-to-text output | Writes plain numbers such as `12`, not `12.0000000000`. |
 | `TO_TEXT` with a numeric pattern | Formats as a Java `DecimalFormat` does, rounding half to even, including scientific patterns such as `##0.##E0`. |
 | `TO_TEXT` and date parsing with a per-row format | Reads the format from each row. |
-| Fractional-second, narrow month, and week-based date tokens | Convert. The week tokens read as ISO weeks, with a **semantics assumed** note. |
+| Fractional-second, narrow month, and week-based date tokens | Convert. The week tokens read as ISO weeks (assumed), with a **semantics assumed** note. |
+| Two-digit years (`yy`, `y`) | Read through a window of 80 years back and 20 years forward from the current year (assumed). |
+| `REGEX_MATCH` | A partial match: the pattern matches anywhere in the text, not the whole text (assumed). |
 
-`TO_TEXT` and date formats convert in a [Text Function](/reference/workflow-steps/tables/table-text-function/) step. The converter refuses a plain aggregate or window function inside an ordinary expression and flags it by name, because Savant itself fails on it at run time. Inside a calculation or a Summarize it converts.
+`TO_TEXT` and date formats convert in a [Text Function](/reference/workflow-steps/tables/table-text-function/) step. The converter refuses by name what Savant itself fails on or does not document, and the step becomes a placeholder: a plain aggregate or window function inside a Transform or Filter expression (inside a calculation or a Summarize it converts), `HASH` with a literal algorithm other than `md5` or `sha1`, a regex construct no engine reads as Java does (a class inside a class, a class intersection, or an unknown `\p{}` property), a Copilot edit that has only its prompt, a Transform edit with no expression whose compiled pipeline chains several steps, an XML path that is not XPath 1.0, and an API request that carries a credential and takes its host from a row field. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/#named-refusals) lists each with its reason.
 
 Expression functions also convert for `sha1`, `NOT_TRUE`, `LEVENSHTEIN`, the daylight saving time functions (`DST`), and regular expression functions that take an nth match. `DAY_OF_WEEK` numbers Sunday as 7, and `DAY_NAME` returns the day's name.
 
@@ -328,7 +332,10 @@ A converted workflow can differ from Savant in these ways. The conversion report
 
 **Reading differences.** Savant's help doesn't settle these, so the converter takes one reading, and the converted step can differ from the Savant answer:
 
-- **Ties between equal values.** In a nearest match, two candidates can sit at the same distance. Savant picks the one that arrived first. A warehouse join has no arrival order, so the converted step can pick the other.
+- **Order of NULL.** NULL sorts first on an ascending sort and last on a descending sort, in every sort and window.
+- **Ties between equal values.** Where the source is a CSV file, ties break by the order its rows arrived, in first and last, dedupe, sample, windows and explode, and a note says so where the order is assumed. Other sources have no arrival order, so those ties can differ from Savant. In a nearest match, two candidates can sit at the same distance; Savant picks the one that arrived first, and a warehouse join has no arrival order, so the converted step can pick the other.
+- **Weeks and years.** Week tokens read as ISO weeks, and a two-digit year reads through a window of 80 years back and 20 forward.
+- **Regular expressions.** `REGEX_MATCH` is a partial match.
 - **The distance column.** The converted nearest match writes a `Distance` column beside each match. Savant writes none.
 
 **Language models.** Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs. A Fuse agent matches with the deterministic [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) step at a threshold of 80, where Savant uses a language model.
@@ -343,6 +350,7 @@ A converted workflow can differ from Savant in these ways. The conversion report
 - A Vision agent sends TIFF and BMP files as OCR text.
 - Format settings for sort, field reordering, extra, and replace aren't converted, and fill writes only text columns.
 - An XML path that isn't XPath 1.0 becomes a placeholder.
+- A source bound to an XML document reads the whole document into one column (`xml_document_columns_unread`), and XML text with no document behind it isn't read (`xml_text_unread`).
 - A spatial within-distance test reads WKT points only.
 - On StarRocks and Snowflake, `JSON_FORMAT` and `JSON_SET` fail at run time, and the conversion report notes it.
 
