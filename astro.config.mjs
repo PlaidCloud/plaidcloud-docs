@@ -220,6 +220,7 @@ export default defineConfig({
 								{ label: 'Member identity',         collapsed: true, items: [{ autogenerate: { directory: 'administration/access/member-user-identity' } }] },
 								{ label: 'Security groups',         collapsed: true, items: [{ autogenerate: { directory: 'administration/access/managing-security-groups-and-assignments' } }] },
 								{ label: 'Advanced (SSO/SAML)',     collapsed: true, items: [{ autogenerate: { directory: 'administration/access/advanced' } }] },
+								{ label: 'Usage Reports',            link: '/administration/access/usage-reports/' },
 							],
 						},
 						{ label: 'Control plane', collapsed: true, items: [{ autogenerate: { directory: 'administration/control-plane' } }] },

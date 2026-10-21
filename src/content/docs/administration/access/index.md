@@ -62,4 +62,5 @@ If you're integrating with an existing identity provider:
 - [Member authentication](/administration/access/member-authentication/) — password and MFA options for non-SSO members
 - [Member management](/administration/access/member-management/) — adding, removing, and updating members
 - [Member user identity](/administration/access/member-user-identity/) — identity attributes and how PlaidCloud uses them
+- [Usage Reports](/administration/access/usage-reports/) — who uses what across the app, Superset, Panel apps and JupyterHub
 - [Setting member expiration](/administration/access/advanced/setting-member-expiration-period/) — automatic deactivation policies
