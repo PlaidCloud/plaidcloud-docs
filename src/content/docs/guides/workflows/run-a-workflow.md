@@ -37,6 +37,17 @@ SAP posting, SAP attachment, and generic SAP RFC steps don't dry-run. Under Simu
 An individual ERP posting step also carries its own Validate Only setting (labeled Preview or Test Only Mode on some steps), independent of the run's posting mode above. The step editor always saves this explicitly. A step configuration written another way — the REST API, MCP, or a workflow bundle import — that leaves the setting out entirely now also defaults to a preview rather than a live post.
 :::
 
+## Authorize the Project to Post
+
+A workflow run posts to an ERP as the project, not as the person who started it. Before a run can post, the project needs an authorization for each ERP connection and environment its posting steps use. Without one, the step fails with "This project isn't authorized to post to connection …", naming the connection and environment. The **Call SAP Financial Document Attachment**, **Call SAP Master Data Table RFC** and **Call SAP RFC** steps don't need one.
+
+To authorize a project, open its home page and select **ERP Write Authorizations** under **ERP Posting**. Each row is one connection in one environment. Tick **Authorized** to let the project post there, or clear it to stop. **Authorized By** and **Authorized At** show who last authorized it and when.
+
+- The button is shown to the project's Architects and to workspace admins, but only an Architect can change an authorization, and only while the project is unlocked. A workspace admin who isn't an Architect can add themselves as one first.
+- To authorize a connection, you also need write access to it yourself: you own it, or it is shared with you by name or through one of your security groups. A connection set to **All Workspace Members** doesn't count.
+- A project set to **All Workspace Members** is authorized like any other. Every member is an Architect of it, so any member with write access to a connection can authorize the project for it. Once it's authorized, any member can post to that connection from the project's workflows, and the window says so above the grid.
+- A copied project, or one created from a project archive, starts with no authorizations. Authorize the copy before it posts.
+
 ## Follow a Step's Status
 
 While a workflow runs, each step carries a status icon showing where it stands, alongside how long it has been running. Hover the icon for the message behind it.
