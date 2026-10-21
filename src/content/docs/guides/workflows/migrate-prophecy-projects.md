@@ -191,7 +191,7 @@ Prophecy projects carry code: Script gems, SQL statements, macros, dynamic input
 - Python scripts are placed in a Python step, with table access rewritten. A script that calls Spark data frame methods keeps those calls, and the report notes that you must port them to pandas.
 - A macro from a known dbt package becomes the standard steps that do what the macro does.
 
-Every step that carries project code reports `W_PROJECT_CODE_EMBEDDED`, and translated SQL reports `W_DIALECT_TRANSLATED`. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
+Every step that carries project code gets a warning, and so does translated SQL. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
 
 ## Placeholders for Unconverted Gems
 
@@ -211,7 +211,7 @@ Scheduled events created from Prophecy schedules are enabled when they were enab
 
 ## What Converts
 
-Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. The converter measures itself against each gem's configuration options, not against whole projects: of the 3,934 gem and option combinations it is measured against, 3,875 convert fully. The rest are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs.
+Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. Nearly every gem converts fully, with every option it offers. The few exceptions are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs.
 
 Each gem has a status:
 
