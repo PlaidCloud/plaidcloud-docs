@@ -11,8 +11,8 @@ Workflow steps normally execute in the defined order for the workflow.  However,
  - Variable values
  - Table has rows or is empty
  - Table exists or does not exist
- - A document or folder exists in Document
- - A document or folder is missing in Document
+ - A file exists in Document
+ - A file is missing in Document
  - Table query result
  - Date and time conditions are met
 
@@ -179,7 +179,7 @@ In the **Table Data Selection** tab, select the table and complete the data mapp
 
 ## Document Path Conditions
 
-If the condition is checking whether a document or folder exists, this requires picking the Document account and specifying the document path to check in the **Document Path** tab.
+If the condition is checking whether a file exists, this requires picking the Document account and specifying the document path to check in the **Document Path** tab. A folder at that path counts as missing, because the check is for a file.
 
 ## Date and Time Conditions
 

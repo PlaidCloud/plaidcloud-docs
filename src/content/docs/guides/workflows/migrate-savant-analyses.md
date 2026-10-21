@@ -312,7 +312,7 @@ These expression functions follow Savant's results, and the rows marked as assum
 | Split to rows | Keeps empty pieces as rows. |
 | `LAST` with no sort | Returns the last row in the order rows arrive, with a note that the warehouse doesn't guarantee that order. |
 | `JOIN_STR` | Joins a fractional number as Savant writes it, without trailing zero padding. |
-| `JSON_FORMAT` | Pretty-prints the JSON. |
+| `JSON_FORMAT` | Pretty-prints the JSON; on Snowflake it writes the JSON compact on one line. |
 | `JSON_SET` | Keeps Savant's key order. |
 | `GREATEST` and `LEAST` | Skip NULL arguments. The result is NULL only when every argument is NULL. |
 | `ROUNDUP` | Rounds up to the next whole step, so a negative number rounds toward zero: -1.5 becomes -1. `ROUNDDOWN` is unchanged. |
@@ -375,7 +375,7 @@ A converted workflow can differ from Savant in these ways. The conversion report
 - **Timestamps on Databend.** A value on 9999-12-30 or 9999-12-31 is past Databend's last timestamp and clamps to 9999-12-29 23:59:59. A date keeps its day. A year 0000 becomes NULL. A date format that holds a `[`, `]`, `'`, `\`, or `^` literal isn't guarded.
 - **Regular expressions.** A pattern that uses a construct Java rejects, such as `{,n}`, an inline comment `(?#...)`, or an invalid `{` repetition, is refused by name. On Databend, a case-sensitive pattern matches case-sensitively. On StarRocks, `REGEX_SEARCH` of the first match returns the correct position. On Snowflake, regular expressions use Snowflake's own spellings; they were checked at compile time only.
 - **JSON and time zones on StarRocks.** `JSON_FIELD`, `JSON_SET`, and time zone conversion use native StarRocks functions.
-- On Snowflake, `JSON_FORMAT` in a filter fails at run time, and the conversion report notes it. See the [Savant Conversion Matrix](/reference/savant-conversion-matrix/) for each warehouse.
+- See the [Savant Conversion Matrix](/reference/savant-conversion-matrix/) for each warehouse.
 
 ## Related Guides
 
