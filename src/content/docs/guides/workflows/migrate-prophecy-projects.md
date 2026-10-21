@@ -244,7 +244,7 @@ Each gem has a status:
 | Business rules | A project business rule called in an expression converts to the same conditions, one `CASE` for each column it sets. |
 | Casts | A cast of text to a decimal or a long follows Spark exactly: spaces and control characters around the number are trimmed, a decimal rounds half up to its scale, and text that isn't a number, or a value out of range, is null. |
 | Dates and times | Date and time formats are written for your workspace's engine, Databend included, and `window()` places each timestamp in its tumbling window, aligned as Spark aligns it. |
-| Iterator outputs | A Table Iterator or While Iterator whose output columns are known only at run time gathers each pass's rows by position with [Table: Union All](/reference/workflow-steps/tables/table-union-all/#stack-sources-by-position), each column widened to a type every pass fits, as Prophecy stacks the passes. |
+| Iterator outputs | A Table Iterator or While Iterator whose output columns are known only at run time gathers each pass's rows by position with [Table: Union All](/reference/workflow-steps/tables/table-union-all/#column-matching), each column widened to a type every pass fits, as Prophecy stacks the passes. |
 | Data Encoder/Decoder AES | Runs on every engine. The key, and the initialization vector and additional data when the gem names them, come from the workflow variables `aes_key`, `aes_iv`, and `aes_aad`, which you set. |
 | Data Masking hash | Computes the same values as Spark's `hash()`. |
 | Buffer, Simplify, Heat Map | Buffer draws a rounded corner with the same number of segments Prophecy does, Simplify drops the same vertices, and Heat Map sums heat into H3 hexagons at the gem's resolution. |
