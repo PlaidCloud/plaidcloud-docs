@@ -26,3 +26,7 @@ Next, enter “Source Path” and “Destination Path”.
 
 
 Finally, select “Save and Run Step”.
+
+## Missing Source
+
+With an updated PlaidLink agent, a source that doesn't exist on the remote system finishes the step with a warning, `No file or folder found at <path>; nothing renamed`, instead of an error, and the workflow continues. Agents that haven't been updated still fail the step.

@@ -18,3 +18,7 @@ Use this for cleanup after on-prem export operations, or as part of file-based i
 
 
 First, make a selection from the “Agent to Use” dropdown. Next, enter the file or folder path under “File or Folder Path for Delete”. Finally, select “Save and Run Step”.
+
+## Missing Path
+
+With an updated PlaidLink agent, a path that doesn't exist on the remote system finishes the step with a warning, `Nothing to delete at <path>`, instead of an error, and the workflow continues. Agents that haven't been updated still fail the step.
