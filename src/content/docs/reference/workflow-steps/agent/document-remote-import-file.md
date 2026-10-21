@@ -17,4 +17,4 @@ The Agent reads the file locally and streams it to PlaidCloud, where downstream 
 ## Examples
 
 
-First, make a selection from the “Agent to Use” dropdown. Next, enter the file or folder path under “File or Folder Path for Import”. Then enter the folder destination under “Folder Destination”. Select the file type from the dropdown. Finally, select “Save and Run Step”.
+First, make a selection from the “Agent to Use” dropdown. Next, enter the file or folder path under “File or Folder Path for Import”. Then enter the folder destination under “Folder Destination”. Optionally choose a **Compression** to compress the file as it arrives: Zip, GZip, BZip2, Zstandard, LZ4, Snappy, LZO or Deflate (zlib). Finally, select “Save and Run Step”.

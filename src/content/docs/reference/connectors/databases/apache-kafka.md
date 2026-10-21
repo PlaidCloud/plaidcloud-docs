@@ -26,9 +26,21 @@ Used when the security protocol is `SASL_PLAINTEXT` or `SASL_SSL`.
 
 | Field | Description |
 |---|---|
-| SASL Mechanism | `PLAIN` (the default), `SCRAM-SHA-256`, or `SCRAM-SHA-512`. |
-| User | The user to connect as. |
-| Password | The user's password (write-only). |
+| SASL Mechanism | `PLAIN` (the default), `SCRAM-SHA-256`, `SCRAM-SHA-512`, or `OAUTHBEARER`. Kerberos (`GSSAPI`) isn't available. |
+| User | The user to connect as, for `PLAIN` and `SCRAM`. |
+| Password | The user's password (write-only), for `PLAIN` and `SCRAM`. |
+
+### OAuth (OAUTHBEARER)
+
+Used when the SASL mechanism is `OAUTHBEARER`. PlaidCloud fetches its token from your identity provider with the OAuth client-credentials grant, and fetches a new one when it expires.
+
+| Field | Description |
+|---|---|
+| Token Endpoint URL | The identity provider's token endpoint. It must be an `https` address on the public internet. |
+| Client ID | The client to request the token as. Required. |
+| Client Secret | The client's secret (write-only). Required. |
+| Scope | The scope to request, when your provider needs one. |
+| SASL Extensions | Optional `key=value` pairs, separated by commas, sent with the token, such as the `logicalCluster` and `identityPoolId` that Confluent Cloud asks for. |
 
 ### TLS
 
