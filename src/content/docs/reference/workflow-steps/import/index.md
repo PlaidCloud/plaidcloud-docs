@@ -9,6 +9,8 @@ A file import checks the query that loads its target table before it runs. A que
 
 A missing source file is not an error. The import warns with the path and leaves the target table empty with its declared columns, so later steps read zero rows. This applies to CSV, Excel, JSON, fixed-width, YXDB, dBASE, ORC, Avro, Parquet, XML and Db2 extract imports. A tagged XML import creates an empty table only for each tag that declares fields. Archive and Access imports also warn, but they declare no columns, so they create no table. An archive import that finds its files by a document search gives no missing-file warning.
 
+The same holds before a step runs. **Populate** on a file import's mapping, and reading a file's columns through the REST API or an AI assistant, answer *Nothing to populate* (an empty column list through the API) with a warning naming the path when the file is missing or empty, instead of an error. Importing a missing file into a new table or step from Documents creates nothing, marks the file **skipped**, and shows a warning naming the path.
+
 ## Steps
 
 - [Import Access](/reference/workflow-steps/import/import-access/)

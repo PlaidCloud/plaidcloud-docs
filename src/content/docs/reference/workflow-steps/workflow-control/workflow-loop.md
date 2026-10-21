@@ -47,6 +47,10 @@ First, select the Project which contains the workflow that will be run on each l
 
 Next, select the particular workflow for running from the **Workflow** dropdown menu.
 
+## If an Iteration Fails
+
+By default, the loop stops at the first iteration whose workflow fails, and the step fails. Set **Continue Past a Failed Iteration** (`continue_on_error`) with an AI assistant or the REST API to run every iteration even when one fails. Each iteration's outcome and error is kept in the loop's record, and the step finishes with a warning that says how many iterations failed.
+
 ## Examples
 
 Examples coming soon

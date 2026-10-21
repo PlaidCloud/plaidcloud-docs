@@ -17,6 +17,8 @@ Combines two or more files in a document account into a single output file. Oper
 
 A single file containing the contents of all source files in the order listed, joined by the configured separator.
 
+A source file that doesn't exist is left out of the combined file, and the step finishes with a warning that names it, so the workflow continues.
+
 ## Common Uses
 
 - Combining daily log files into a monthly archive
