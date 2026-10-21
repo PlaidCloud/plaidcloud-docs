@@ -215,6 +215,12 @@ A destination that writes a file, sub-folder, or tab per value of a field splits
 - **Template.** A template workbook seeds the workbook for every value. A missing template warns and the workbook is written without it.
 - **NULL values.** A NULL split value is written to its own file or tab, not dropped.
 - **A field the input lacks.** A split, or a sort, on a field the input doesn't carry is refused by name, because Savant fails on it.
+- **A `/` or `\` in a value.** A split value that holds a slash or backslash can't be a file or tab name, so it is sanitised. A changed value gets a fixed six-character suffix, `-` followed by the first six characters of the value's MD5 hash, placed before the file extension. Values that need no change keep their name.
+
+### Exported Values and Row Order
+
+- **Plain numbers and booleans.** CSV, TSV, and TXT exports write numbers as plain numbers and booleans as `true` and `false`, with no `+00:00` on timestamps.
+- **Stable row order.** A destination that sorts writes one row order on every run: ties are broken the same way each time, and split and part routes sort too. Savant's own order for ties isn't documented, so the order can differ from Savant's. Parquet, Google Sheets, Tableau, and table targets keep no row order.
 
 ### Excel Options
 
@@ -366,7 +372,10 @@ A converted workflow can differ from Savant in these ways. The conversion report
 - A charset that no encoder on the host can write is written as UTF-8, and the report warns.
 - Format settings Savant doesn't document, split formats it doesn't document, paging keys that form no scheme, keyed write modes with no keys, a top-left cell that isn't a cell, and email with no recipients carry a **semantics assumed** note or are refused by name. Check those steps against your Savant output.
 - An Excel read-back can't tell an empty string from a blank cell, so a merge into an existing workbook reads an empty string as blank.
-- On StarRocks and Snowflake, `JSON_FORMAT` and `JSON_SET` fail at run time, and the conversion report notes it.
+- **Timestamps on Databend.** A value on 9999-12-30 or 9999-12-31 is past Databend's last timestamp and clamps to 9999-12-29 23:59:59. A date keeps its day. A year 0000 becomes NULL. A date format that holds a `[`, `]`, `'`, `\`, or `^` literal isn't guarded.
+- **Regular expressions.** A pattern that uses a construct Java rejects, such as `{,n}`, an inline comment `(?#...)`, or an invalid `{` repetition, is refused by name. On Databend, a case-sensitive pattern matches case-sensitively. On StarRocks, `REGEX_SEARCH` of the first match returns the correct position. On Snowflake, regular expressions use Snowflake's own spellings; they were checked at compile time only.
+- **JSON and time zones on StarRocks.** `JSON_FIELD`, `JSON_SET`, and time zone conversion use native StarRocks functions. A `yyyy` date part written with one or two digits is read as the year written.
+- On Snowflake, `JSON_FORMAT` and `JSON_SET` in a filter fail at run time, and the conversion report notes it. See the [Savant Conversion Matrix](/reference/savant-conversion-matrix/) for each warehouse.
 
 ## Related Guides
 
