@@ -155,7 +155,7 @@ One thing to know: this matching is by identity, not by name. An item that came 
 Restoring a table's data depends on its columns lining up with the table it is going into — the same names in the same order, because that is what a load goes by. Where they do not line up, that table's data is left out and the table is listed in the import result under **Created without data**, the same way a table whose data was not in the archive is. A difference in a column's stored type alone does not hold the data back: the data loads, and the table is listed under **Warnings** with the columns the warehouse converted.
 
 
-An import whose tables all failed to load their data still keeps the project, and its closing message and import result say first that none of the table data could be loaded. If an import finishes with every workflow, table and dimension in place, read its closing message before assuming the rows came with them.
+An import whose tables all failed to load their data still keeps the project. Its closing message says that none of the table data could be loaded, and so does the import result. If an import finishes with every workflow, table and dimension in place, read its closing message before assuming the rows came with them.
 
 
 ## Archiving Schedule
