@@ -15,7 +15,7 @@ Works on UTF-8 text files (TXT, CSV, JSON, XML, HTML, RML) of any size. A file t
 
 - **Input File or Directory** — the file, or a folder of files, to change.
 - **Destination File or Directory** — where the result is written. The result is always written to the input's document account; the destination sets the path.
-- **Compression** — No Compression, Zip, GZip or BZip2 for the output.
+- **Compression** — No Compression, Zip, GZip, BZip2, Zstandard, LZ4, Snappy, LZO or Deflate (zlib) for the output. Snappy and LZ4 are written in the block format Spark and Hadoop read, and LZO as an `lzop` file.
 - **Text Replacement Operation Order** — one row per replacement, each giving the original text and its replacement. Variables can be used in the replacement.
 
 ## How It Works

@@ -25,16 +25,18 @@ A source file that isn't there isn't an error: the step finishes with a warning 
 | --- | --- |
 | Algorithm | In the Cipher group: **AES-128 (16-byte key)**, **AES-192 (24-byte key)**, **AES-256 (32-byte key)**, **Blowfish (4 to 56-byte key)**, or **Excel Workbook Password**. |
 | Mode | **CBC** (the default), **ECB**, or **GCM**. Blowfish takes CBC or ECB only. |
-| Key | The encryption key. Required for AES and Blowfish. |
+| Key Variable | The workflow or project variable that holds the encryption key, such as `{aes_key}`. Required for AES and Blowfish. |
 | Key and IV Encoding | How the key and IV are written: **Text (UTF-8)**, **Hexadecimal**, or **Base64**. |
 | Fixed IV | The initialization vector. Leave it blank and encryption starts the file with a random IV, which decryption reads back from the start of the file. GCM encryption always uses a random IV, so leave it blank for GCM. |
-| Workbook Password | The password to set on, or remove from, an Excel workbook. Required for **Excel Workbook Password**. |
+| Workbook Password Variable | The workflow or project variable that holds the password to set on, or remove from, an Excel workbook, such as `{xlsx_password}`. Required for **Excel Workbook Password**. |
 
 CBC and ECB pad with PKCS7, and GCM adds a 16-byte authentication tag after the encrypted data. A GCM file can be up to 256 MB. A wrong key or IV stops the step with an error and leaves no partial file behind.
 
-## Keep Keys in Workflow Variables
+## Keys Live in Variables
 
-The **Key**, **Fixed IV** and **Workbook Password** fields are password fields: their values are hidden in the form. Put the secret in a [workflow variable](/guides/workflows/manage-workflow-variables/) and enter the variable in the field, such as `{aes_key}`, so the key is set in one place and isn't typed into each step. The step reads the variable's value when it runs.
+**Key Variable** and **Workbook Password Variable** take only a variable reference, such as `{aes_key}`, never the key or password itself: saving a step with anything else in them is refused. Put the secret in a [workflow variable](/guides/workflows/manage-workflow-variables/) or a project variable, so it is set in one place and never appears in the step, its versions, its copies or what an AI assistant reads back. The step reads the variable's value when it runs. **Fixed IV** is a password field, so its value is hidden in the form.
+
+Steps that held a typed key or password before this rule had it moved into a new project variable automatically, visible to Architects only, and now reference that variable.
 
 ## Related
 

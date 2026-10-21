@@ -22,7 +22,7 @@ Writes each row of a project table to a MongoDB collection as a document. The co
 
 | Setting | What it does |
 | --- | --- |
-| Write Mode | **Insert a Document per Row** (the default), **Replace the Matching Document**, **Update Fields of the Matching Document**, or **Replace the Matching Document, or Insert**. |
+| Write Mode | **Insert a Document per Row** (the default), **Replace the Matching Document**, **Update Fields of the Matching Document**, **Replace the Matching Document, or Insert**, or **Update Fields of the Matching Document, or Insert**. |
 | Match Columns | The comma-separated columns that identify a document. Required for every mode but insert. |
 | Delete every document in the collection before writing | Empties the collection first, so it holds only this run's rows. |
 | Stop at the first failed write | Stops at the first document MongoDB refuses. Clear it to carry on with the rest. |
@@ -30,7 +30,7 @@ Writes each row of a project table to a MongoDB collection as a document. The co
 | Write Concern | Blank for the connection's, a number of servers, or `majority`. |
 | Documents per Request | How many documents are sent in each request. |
 
-Insert adds the documents again each time the step runs. Replace, update and upsert leave the collection the same however many times the step runs, so use one of them when a workflow may run twice over the same rows.
+Insert adds the documents again each time the step runs. The modes that replace or update leave the collection the same however many times the step runs, so use one of them when a workflow may run twice over the same rows.
 
 ## Related
 

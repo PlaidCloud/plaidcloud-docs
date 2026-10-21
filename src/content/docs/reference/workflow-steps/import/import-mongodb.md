@@ -26,12 +26,13 @@ Reads the documents of a MongoDB collection into a project table, one row per do
 | Aggregation Pipeline (JSON) | An aggregation pipeline as a JSON array, such as `[{"$match": {"status": "open"}}]`. When set, the collection is aggregated instead of filtered. A pipeline with a `$out` or `$merge` stage is refused, because it would write to MongoDB. |
 | Row Limit (0 = All) | The most documents to read. `0` reads every one. |
 | Time Limit (Seconds) | How long MongoDB may spend on the read before it stops it. |
+| Documents Sampled for Columns | When the step declares no columns, how many documents, from the first, decide the columns and their types: each top-level field they carry becomes a column. The default is 1000. |
 
 The filter and the pipeline take workflow variables written as `{name}`, such as `{"region": "{region}"}`. Each variable's value is inserted as a single JSON string or number, so a variable can't add keys or operators to the query. A variable that isn't defined stops the step with an error that names it.
 
 ## Column Mapping
 
-Map each document field to a column of the target table on the mapping tab. A column reads the document field of the same name.
+Map each document field to a column of the target table on the mapping tab. A column reads the document field of the same name. A collection that doesn't exist finishes with a warning and leaves the target table empty.
 
 ## Related
 
