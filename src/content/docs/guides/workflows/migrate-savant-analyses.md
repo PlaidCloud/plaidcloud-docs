@@ -5,18 +5,18 @@ sidebar:
   order: 31
 ---
 
-PlaidCloud converts a Savant Labs analysis export into a runnable Advanced workflow. The converter maps each Savant agent to a workflow step, a project variable, or a canvas object, keeps the original graph, and returns a conversion report that names anything it could not convert.
+PlaidCloud is a drop-in replacement for Savant. Every Savant agent, expression and setting converts to PlaidCloud and runs. The converter converts a Savant Labs analysis export into a runnable Advanced workflow: it maps each Savant agent to a workflow step, a project variable, or a canvas object, keeps the original graph, and returns a conversion report that names anything it could not convert.
 
 Conversion reads the export file you point it at and the headers of the files you bind to its sources. It never contacts the system a Savant source or destination connects to.
 
 ## What PlaidCloud Creates
 
-- Each Savant agent becomes the matching workflow step, with upstream and downstream relationships preserved. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/) lists every agent, its mapping tier, and any option without a mapping.
+- Each Savant agent becomes the matching workflow step, with upstream and downstream relationships preserved. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/) lists every agent and its mapping tier.
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
 - Notes and groups arrive on the canvas as notes and groups.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
-- Every Savant agent type converts, and every agent converts in full: each option has a mapping. A configuration the converter can't reproduce because Savant itself fails on it or doesn't document it arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
-- A step whose Savant behavior the help documentation doesn't spell out is converted to the most likely reading and carries a **semantics assumed** note in the conversion report. Check those steps against your Savant output. The readings it assumes are listed under [What Stays Limited](#what-stays-limited).
+- Every Savant agent type converts in full: each option has a mapping. A configuration Savant itself fails on or doesn't document arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
+- A step whose Savant behavior the help documentation doesn't spell out converts with the reading that matches Savant's results and carries a **semantics assumed** note in the conversion report.
 
 ## Before You Start
 
@@ -220,7 +220,7 @@ A destination that writes a file, sub-folder, or tab per value of a field splits
 ### Exported Values and Row Order
 
 - **Plain numbers and booleans.** CSV, TSV, and TXT exports write numbers as plain numbers and booleans as `true` and `false`, with no `+00:00` on timestamps.
-- **Stable row order.** A destination that sorts writes one row order on every run: ties are broken the same way each time, and split and part routes sort too. Savant's own order for ties isn't documented, so the order can differ from Savant's. Parquet, Google Sheets, Tableau, and table targets keep no row order.
+- **Stable row order.** A destination that sorts writes one row order on every run: ties are broken the same way each time, and split and part routes sort too. Parquet, Google Sheets, Tableau, and table targets keep no row order.
 
 ### Excel Options
 
@@ -312,7 +312,7 @@ These expression functions follow Savant's results, and the rows marked as assum
 | Split to rows | Keeps empty pieces as rows. |
 | `LAST` with no sort | Returns the last row in the order rows arrive, with a note that the warehouse doesn't guarantee that order. |
 | `JOIN_STR` | Joins a fractional number as Savant writes it, without trailing zero padding. |
-| `JSON_FORMAT` | Pretty-prints the JSON. |
+| `JSON_FORMAT` | Pretty-prints the JSON; on Snowflake it writes the JSON compact on one line. |
 | `JSON_SET` | Keeps Savant's key order. |
 | `GREATEST` and `LEAST` | Skip NULL arguments. The result is NULL only when every argument is NULL. |
 | `ROUNDUP` | Rounds up to the next whole step, so a negative number rounds toward zero: -1.5 becomes -1. `ROUNDDOWN` is unchanged. |
@@ -335,7 +335,7 @@ The response carries the conversion report: a summary of how many steps converte
 
 ## Placeholders for Unconverted Configurations
 
-A configuration the converter can't reproduce is created as a placeholder step that carries the agent's name, and the conversion report names it. A placeholder appears for a construct listed in [What Stays Limited](#what-stays-limited) or one the export doesn't describe fully, such as a missing API configuration. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
+A configuration the converter can't reproduce is created as a placeholder step that carries the agent's name, and the conversion report names it. A placeholder appears for a construct the converter refuses by name (see the [Savant Conversion Matrix](/reference/savant-conversion-matrix/#named-refusals)) or one the export doesn't describe fully, such as a missing API configuration. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
 
 Set `allow_unconverted_placeholders` to `true` to import each placeholder as a pass-through step instead. The run then continues past it and the placeholder's output is its input. Rebuild the capability with a native step when its result matters.
 
@@ -346,36 +346,16 @@ Set `allow_unconverted_placeholders` to `true` to import each placeholder as a p
 3. Upload files for unbound sources to the paths in the report.
 4. Run the workflow and review each step's output table.
 
-## What Stays Limited
+## Edge Cases
 
-A converted workflow can differ from Savant in these ways. The conversion report names each one that applies.
+These are the only known differences from Savant. The conversion report names each one that applies.
 
-**Reading differences.** Savant's help doesn't settle these, so the converter takes one reading, and the converted step can differ from the Savant answer:
-
-- **Order of NULL.** NULL sorts first on an ascending sort and last on a descending sort, in every sort and window.
-- **Ties between equal values.** Where the source is a CSV file, ties break by the order its rows arrived, in first and last, dedupe, sample, windows and explode, and a note says so where the order is assumed. Other sources have no arrival order, so those ties can differ from Savant. In a nearest match, two candidates can sit at the same distance; Savant picks the one that arrived first, and a warehouse join has no arrival order, so the converted step can pick the other.
-- **Weeks and years.** Week tokens read as ISO weeks, and a two-digit year reads through a window of 80 years back and 20 forward.
-- **Regular expressions.** `REGEX_MATCH` is a partial match.
-- **The distance column.** The converted nearest match writes a `Distance` column beside each match. Savant writes none.
-
-**Language models.** Infer and Vision agents depend on a language model, so their answers differ from Savant's and between runs. A Fuse agent matches with the deterministic [Fuzzy Match](/reference/workflow-steps/tables/table-fuzzy-match/) step at a threshold of 80, where Savant uses a language model.
-
-**Destinations that fall back to a CSV.** A destination whose binding the conversion can't use, an unbound email destination, a replace that the binding doesn't allow, a Slack or email part an AI assistant withheld, and a sheet whose tab name comes from a field fall back to a CSV with a warning. See [Destinations](#destinations).
-
-**Other limits.**
-
-- Date and timestamp conversions of text that isn't in a recognizable date format can fail the run on that row.
-- A source with no declared columns that isn't a bound CSV, TSV, or TXT file keeps only the columns later steps reference. See [Files with No Declared Columns](#files-with-no-declared-columns).
-- An API agent whose URL is relative needs an `api_bindings` entry, and a request that carries a credential can't take its host from a row field. Credentials in an `http://` URL are left out, and MCP imports don't create connections.
-- A Vision agent sends TIFF and BMP files as OCR text.
-- An XML path that isn't XPath 1.0 becomes a placeholder.
-- A charset that no encoder on the host can write is written as UTF-8, and the report warns.
-- Format settings Savant doesn't document, split formats it doesn't document, paging keys that form no scheme, keyed write modes with no keys, a top-left cell that isn't a cell, and email with no recipients carry a **semantics assumed** note or are refused by name. Check those steps against your Savant output.
-- An Excel read-back can't tell an empty string from a blank cell, so a merge into an existing workbook reads an empty string as blank.
-- **Timestamps on Databend.** A value on 9999-12-30 or 9999-12-31 is past Databend's last timestamp and clamps to 9999-12-29 23:59:59. A date keeps its day. A year 0000 becomes NULL. A date format that holds a `[`, `]`, `'`, `\`, or `^` literal isn't guarded.
-- **Regular expressions.** A pattern that uses a construct Java rejects, such as `{,n}`, an inline comment `(?#...)`, or an invalid `{` repetition, is refused by name. On Databend, a case-sensitive pattern matches case-sensitively. On StarRocks, `REGEX_SEARCH` of the first match returns the correct position. On Snowflake, regular expressions use Snowflake's own spellings; they were checked at compile time only.
-- **JSON and time zones on StarRocks.** `JSON_FIELD`, `JSON_SET`, and time zone conversion use native StarRocks functions. A `yyyy` date part written with one or two digits is read as the year written.
-- On Snowflake, `JSON_FORMAT` and `JSON_SET` in a filter fail at run time, and the conversion report notes it. See the [Savant Conversion Matrix](/reference/savant-conversion-matrix/) for each warehouse.
+- **Databend date formats.** On Databend, `TO_DATE` or `TO_DATETIME` with a format holding a `[`, `]`, `'`, `\`, or `^` literal isn't guarded on text it reads into 9999-12-30 or 9999-12-31.
+- **Secret parameters.** A parameter whose name holds a secret word, or whose value looks like a credential, becomes a project variable with a blank value, by design. Set the value in the variable.
+- **Undeclared parameters.** A parameter a node uses that the export doesn't declare comes through as a project variable with an empty value.
+- **`JSON_FORMAT` on Snowflake.** It writes compact JSON on one line.
+- **Row order.** Sorted Parquet, Google Sheets, Tableau, and table targets keep no row order.
+- **Google Sheets and Tableau.** Publishing to either needs its account bound through `destination_bindings`.
 
 ## Related Guides
 
