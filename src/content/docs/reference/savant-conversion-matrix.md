@@ -92,7 +92,7 @@ A relative API URL converts when you bind a base URL or REST connection with `ap
 
 Savant expression functions and operators convert to PlaidCloud expressions. Tier: **Partial**. Every function and format converts, including `TO_TEXT` with a numeric pattern, a format known only per row, fractional-second, week-based, quarter and zone date tokens, two-digit years, and Java regex constructs the warehouse lacks: what the warehouse cannot read runs in an executor step in a Transform, Filter, Summarize or Time Series calculation, and GEO_* functions anywhere in an expression run in companion Spatial steps. The exceptions are the [named refusals](#named-refusals).
 
-Without a mapping: Some functions compile to a function a warehouse lacks, so the step fails on that warehouse. Databend: TO_DATE or TO_DATETIME with a format holding a [, ], quote, backslash or ^ literal, on text it reads into 9999-12-30 or 9999-12-31, past Databend's last timestamp (`date_range_databend`). Snowflake: JSON_FORMAT in a filter.
+Without a mapping: Some functions compile to a function a warehouse lacks, so the step fails on that warehouse. Databend: TO_DATE or TO_DATETIME with a format holding a [, ], quote, backslash or ^ literal, on text it reads into 9999-12-30 or 9999-12-31, past Databend's last timestamp (`date_range_databend`).
 
 ## Export Formats
 
