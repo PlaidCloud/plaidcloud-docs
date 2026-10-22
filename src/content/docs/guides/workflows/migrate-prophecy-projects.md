@@ -19,6 +19,7 @@ Conversion is a one-time step. Converting the same project again creates new wor
 - Each Prophecy job or SQL pipeline schedule becomes a [scheduled event](/administration/scheduled-events/) on the converted workflow, enabled when it is enabled in Prophecy. See [Schedules](#services-and-control).
 - Scripts, SQL statements, macros, and other project code arrive inside steps that carry the code. See [Project Code in Steps](#project-code-in-steps).
 - A custom gem, including a Gem Builder gem, runs the code the export carries for it in a Python step. See [Project Code in Steps](#project-code-in-steps).
+- A Pivot gem with a HAVING condition or an all-values column converts, as do the sort and Deduplicate types Prophecy offers.
 - Expressions are converted assuming Spark SQL behavior for null handling, integer division, and implicit casts. Check results where those differ on your PlaidCloud engine.
 
 ## Before You Start
@@ -190,7 +191,8 @@ Prophecy projects carry code: Script gems, SQL statements, macros, dynamic input
 - SQL is translated to your tenant's SQL dialect and placed in a SQL step, with the gem's inputs available under the names the query reads them by.
 - Python scripts are placed in a Python step, with table access rewritten. A script that calls Spark data frame methods keeps those calls and runs them in the step.
 - A custom gem, including a Gem Builder gem, runs the PySpark code its pipeline export carries for it in a Python step.
-- A macro from a known dbt package becomes the standard steps that do what the macro does.
+- A macro from a known dbt package becomes the standard steps that do what the macro does. A macro in your own project, or in a package the export includes, is read and converted too, including if and for blocks, set, filters, nested macros and adapter dispatch.
+- A Python user-defined aggregate function in an Aggregate gem runs in a Python step for each group.
 
 Every step that carries project code gets a warning, and so does translated SQL. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
 
@@ -257,7 +259,7 @@ Every Prophecy gem converts fully to native steps, project variables, scheduled 
 | Email, Email Data | [Notify Via Email](/reference/workflow-steps/notifications/notify-via-email/) with Cc, Bcc, Reply-To, and one message for each row when a field reads from a column. |
 | OpenAI, Bedrock, SageMaker Endpoint | [Text: NLP (AI)](/reference/workflow-steps/text-documents/nlp-ai/) on your workspace's LLM connection. OpenAI and Bedrock embeddings use the Embed task, which needs an OpenAI-compatible or Azure OpenAI connection; an Anthropic connection is refused. |
 | Pinecone Lookup | A REST request for each row. |
-| Data Quality Check, Deequ, Soda | The checks run in the warehouse and write the results table. A Data Quality Check stops the run only when the gem sets `minFailedChecks` or a `fail_pipeline` post action; otherwise the results table lists the failures. Deequ and Soda never stop the run. A minimum or maximum length check on a numeric column measures the number as text. |
+| Data Quality Check, Deequ, Soda | The checks run in the warehouse and write the results table. A Data Quality Check stops the run only when the gem sets `minFailedChecks` or a `fail_pipeline` post action; otherwise the results table lists the failures. Deequ and Soda never stop the run. A minimum or maximum length check on a numeric column measures the number as text. Soda checks convert from the project's YAML, including missing, invalid and valid values, statistics, lengths, percentiles, duplicates across columns, freshness, failed rows and your own metric queries. |
 | ToDo | Raises an error that names the original tool and message when the run reaches it. |
 
 ### Encrypted Files
@@ -270,21 +272,14 @@ The export never carries a key, so the converted steps read it from a workflow v
 
 These are the behaviors a converted workflow doesn't reproduce on its own. The conversion report names each one where it occurs.
 
-- **Custom gem without its code in the export**: the gem becomes a step that names it. Export the project with its pipeline code, or rebuild the logic in a Python step.
-- **Kafka Kerberos sign-in**: a Kafka source or target that signs in with Kerberos (GSSAPI) converts without the Kerberos service name and sign-in mechanism. Set them on the PlaidCloud connection.
-- **Ab Initio Error Detection and MTime**: these pass their input through, because the rule they apply isn't in the export.
-- **Delta restore with a configured database**: a Delta table operation that names its database through a pipeline configuration value writes that value into the step when the project converts. Edit the step if the configuration changes.
-- **REST response flattening**: a REST API gem that flattens its response puts the whole response in one column, because the field names are only known from a run. Extract the fields you need in a later step.
-- **`input_file_name()` over a table**: returns an empty string, because the step reads a table or Delta source instead of a file.
-- **`hash()` and `xxhash64()` in aggregates, windows, and multi-input gems**: the warehouse computes the value, so it approximates Spark's and can differ.
-- **Unsafe parameter values**: a parameter value holding a quote, backslash, or brace is written into the step as a fixed value, so changing the workflow variable doesn't change it.
-- **Streaming**: streaming sources, targets, and pipelines run as batch workflows over the data present when they run. Schedule the workflow to run as often as you need.
-- **Job components**: a Spark job converts its one pipeline and schedule. Its other components, run conditions, and configuration overrides aren't converted.
-- **Scala code**: a Scala script or Scala expression becomes a step that names it. Rewrite it in SQL or Python.
-- **Stored procedure OUT values**: a Spark StoredProcedure gem runs, but its OUT values aren't returned. The output is the pass-through columns.
-- **dbt packages and macros**: packages and macros the project depends on aren't converted, so a gem that calls one becomes a step that names it. Re-create what they provide or inline the macro.
-- **User-defined aggregate functions and Soda checks**: a pipeline's user-defined aggregate functions, and Soda checks the converter can't read, aren't converted. A gem that calls one becomes a step that names it, and the Soda results table has no row for a skipped check. Re-create them with the standard Aggregate step or a data quality step.
-- **Unmapped Pivot, sort, and Deduplicate settings**: a Pivot with a HAVING condition or all-values column, or a sort or Deduplicate type the converter doesn't know, becomes a step that names the gem. Rebuild it with the matching PlaidCloud step.
+- **Code or data the export does not include**: A Gem Builder or other custom gem whose code is not in the export, and a call to a macro of a dbt package the export leaves out, become a step that names what is missing; export the project with its pipeline code and dbt packages, or rebuild the logic in a Python or SQL step. Ab Initio Error Detection and MTime gems pass their input through, because the rule they apply is not in the export. Soda checks read from a file outside the project, and Soda checks that compare with earlier scans or with another dataset or test a format Soda names, have no row in the results table; compute them in a later step.
+- **Results only known when the pipeline runs**: A REST API gem that flattens its response puts the whole response in one column when nothing declares the field names, which only a run reveals; extract the fields you need in a later step. A dbt macro that queries the warehouse as dbt compiles becomes a step that names it; replace the query with the values it returns. A Spark StoredProcedure gem runs, but its OUT values are not returned; the output is the pass-through columns. `input_file_name()` returns an empty string over a table or Delta source, which has no file to name, and `hash()` / `xxhash64()` inside an aggregate, a window or a gem with several inputs are computed by the warehouse, so they can differ from Spark's.
+- **Values written into a step when the project converts**: A parameter value holding a quote, backslash or brace, a pipeline value a SQL step reads, and the database a Delta table operation names through configuration are written into the step as fixed values, so changing the workflow variable does not change them; edit the step when the configuration changes.
+- **Scala code**: A Scala script, Scala expression, or Scala user-defined function or aggregate function becomes a step that names it; rewrite it in SQL or Python.
+- **Kafka Kerberos sign-in**: A Kafka source or target that signs in with Kerberos (GSSAPI) converts without the Kerberos service name and sign-in mechanism; set them on the PlaidCloud connection.
+- **Streaming**: Streaming sources, targets and pipelines run as batch workflows over the data present when they run; schedule the workflow to run as often as you need.
+- **Job components**: A Spark job converts its one pipeline and schedule; its other components, run conditions and configuration overrides are not converted.
+- **Uncommon calls**: A user-defined aggregate function called from a rollup or a window, and a dbt macro that uses Jinja beyond if, for, set and the common filters, become a step that names the gem; call the function from an Aggregate gem, or inline the macro.
 
 ## Related Guides
 
