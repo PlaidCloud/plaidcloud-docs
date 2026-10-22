@@ -211,7 +211,7 @@ Scheduled events created from Prophecy schedules are enabled when they were enab
 
 ## What Converts
 
-Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. Nearly every gem converts fully, with every option it offers. The few exceptions are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs.
+Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. Nearly every gem converts fully, with every option it offers. The few exceptions are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs. The [Prophecy Conversion Matrix](/reference/prophecy-conversion-matrix/) lists every gem with the PlaidCloud step it becomes.
 
 Each gem has a status:
 
