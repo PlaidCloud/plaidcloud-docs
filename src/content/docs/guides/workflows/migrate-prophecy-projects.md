@@ -5,7 +5,7 @@ sidebar:
   order: 31.5
 ---
 
-PlaidCloud converts a Prophecy project into runnable workflows. The converter creates one workflow for each Spark pipeline and one for the SQL project, maps each Prophecy gem to a workflow step, a project variable, or a canvas object, keeps the original graph, and returns a conversion report that names anything it could not convert.
+PlaidCloud is a drop-in replacement for Prophecy. Every Prophecy gem converts to native PlaidCloud workflow steps that do the gem's work: the converter creates one workflow for each Spark pipeline and one for the SQL project, maps each gem to a workflow step, a project variable, or a canvas object, keeps the original graph, and returns a conversion report. The few behaviors a converted workflow doesn't reproduce on its own are listed under [Edge Cases](#edge-cases).
 
 Conversion reads only the export you point it at. It never contacts the system a Prophecy dataset reads from or writes to, and it never runs project code.
 
@@ -18,7 +18,7 @@ Conversion is a one-time step. Converting the same project again creates new wor
 - Each dataset a gem reads becomes an import step, or reads an existing table or document, depending on how you bind it.
 - Each Prophecy job or SQL pipeline schedule becomes a [scheduled event](/administration/scheduled-events/) on the converted workflow, enabled when it is enabled in Prophecy. See [Schedules](#services-and-control).
 - Scripts, SQL statements, macros, and other project code arrive inside steps that carry the code. See [Project Code in Steps](#project-code-in-steps).
-- A gem with no PlaidCloud equivalent arrives as a named placeholder step. See [Placeholders for Unconverted Gems](#placeholders-for-unconverted-gems).
+- A custom gem, including a Gem Builder gem, runs the code the export carries for it in a Python step. See [Project Code in Steps](#project-code-in-steps).
 - Expressions are converted assuming Spark SQL behavior for null handling, integer division, and implicit casts. Check results where those differ on your PlaidCloud engine.
 
 ## Before You Start
@@ -188,14 +188,15 @@ The report also names the table prefix used and the parameters applied. A step t
 Prophecy projects carry code: Script gems, SQL statements, macros, dynamic inputs, stored procedure calls, and custom gems. The converter doesn't run that code. It places it inside a step:
 
 - SQL is translated to your tenant's SQL dialect and placed in a SQL step, with the gem's inputs available under the names the query reads them by.
-- Python scripts are placed in a Python step, with table access rewritten. A script that calls Spark data frame methods keeps those calls, and the report notes that you must port them to pandas.
+- Python scripts are placed in a Python step, with table access rewritten. A script that calls Spark data frame methods keeps those calls and runs them in the step.
+- A custom gem, including a Gem Builder gem, runs the PySpark code its pipeline export carries for it in a Python step.
 - A macro from a known dbt package becomes the standard steps that do what the macro does.
 
 Every step that carries project code gets a warning, and so does translated SQL. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
 
 ## Placeholders for Unconverted Gems
 
-A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are a Custom Gem, whose Gem Builder code is not part of the export, and a gem that changes data outside the conversion, such as a REST request that can change data, an Email, or a table or file operation, when you haven't bound its `operation:` key. A database dataset or External Table with no connection bound is not a placeholder: it converts to a step that waits for you to select a connection. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
+A gem the converter can't reproduce is created as a placeholder step that carries the gem's name. Examples are a custom gem whose code isn't in the export, and a gem that changes data outside the conversion, such as a REST request that can change data, an Email, or a table or file operation, when you haven't bound its `operation:` key. A database dataset or External Table with no connection bound is not a placeholder: it converts to a step that waits for you to select a connection. By default a placeholder fails when the workflow reaches it, so a run can't report success on work that never happened.
 
 Set `allow_unconverted_placeholders` to `true` (in the window, **Import unconverted components as pass-through placeholders**) to import each placeholder as a pass-through step instead. The run then continues past it and the placeholder's output is its input. The report counts the pass-through placeholders and lists their steps. Rebuild the capability with a native step when its result matters.
 
@@ -211,13 +212,7 @@ Scheduled events created from Prophecy schedules are enabled when they were enab
 
 ## What Converts
 
-Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. Nearly every gem converts fully, with every option it offers. The few exceptions are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs. The [Prophecy Conversion Matrix](/reference/prophecy-conversion-matrix/) lists every gem with the PlaidCloud step it becomes.
-
-Each gem has a status:
-
-- **Full**: the gem converts to a valid mapping that is expected to run its function. Nearly every gem is Full.
-- **Partial**: the gem converts and runs for its common use, and one mode, named below, isn't reproduced. Partial gems are Bedrock, SageMaker Endpoint, and Directory.
-- **Not supported**: no conversion path. Only a Custom Gem, whose Gem Builder code isn't part of the export, is Not supported.
+Every Prophecy gem converts fully to native steps, project variables, scheduled events, or canvas objects, with the options it offers. The [Prophecy Conversion Matrix](/reference/prophecy-conversion-matrix/) lists every gem with the PlaidCloud step it becomes, and [Edge Cases](#edge-cases) lists the few behaviors to check; the conversion report names each one where it occurs.
 
 ### Data Movement
 
@@ -234,6 +229,7 @@ Each gem has a status:
 | Tableau and Power BI | Tableau and Tableau Write publish the input as a Hyper extract through [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/) on the Tableau connection you bind. Power BI Write pushes the inputs to a Power BI push dataset through a REST connection with OAuth 2.0, finding the workspace by name and creating the dataset when it is new. |
 | File formats | CSV, JSON, Parquet, Avro, Excel, XML, fixed-width, and ORC through [Import ORC](/reference/workflow-steps/import/import-orc/). Format options are mapped, or marked neutral when they change no row: an Avro read's modified-time window, a fixed-width file's EBCDIC encoding, header and footer records and records with no line breaks, an Excel read's sheet map and password, the quote options of a CSV write, and an Excel write with one sheet for each value. Compressed text files read and write with gzip, Deflate (zlib), Zstandard, LZ4, Snappy, and LZO; a compressed file is read when its name ends in its codec's extension. Encrypted files are decrypted and encrypted in place. See [Encrypted Files](#encrypted-files). |
 | File Operation | Copy and Move convert to [Document: Copy File](/reference/workflow-steps/document/copy-document-file/) or Copy Directory on the folder you bind, keeping only the files whose name matches the gem's `filenameRegex`, and keeping each file's path below the source folder when the gem recurses. |
+| Directory | Lists the files of the bound Document folder with [Directory Listing](/reference/workflow-steps/document/directory-listing/), in the gem's columns. With the sheet-name option on, each Excel workbook gives one row per sheet and its `sheet_name`; other files give one row with an empty `sheet_name`. |
 
 ### Columns and Rows
 
@@ -247,7 +243,7 @@ Each gem has a status:
 | Iterator outputs | A Table Iterator or While Iterator whose output columns are known only at run time gathers each pass's rows by position with [Table: Union All](/reference/workflow-steps/tables/table-union-all/#column-matching), each column widened to a type every pass fits, as Prophecy stacks the passes. |
 | Data Encoder/Decoder AES | Runs on every engine. The key, and the initialization vector and additional data when the gem names them, come from the workflow variables `aes_key`, `aes_iv`, and `aes_aad`, which you set. |
 | Data Masking hash | Computes the same values as Spark's `hash()`. |
-| Buffer, Simplify, Heat Map | Buffer draws a rounded corner with the same number of segments Prophecy does, Simplify drops the same vertices, and Heat Map sums heat into H3 hexagons at the gem's resolution. |
+| Buffer, Simplify, Heat Map | Buffer draws a rounded corner with the same number of segments Prophecy does, Simplify drops the same vertices, and Heat Map sums heat into H3 hexagons at the gem's resolution, a decimal heat staying a decimal. |
 
 ### Services and Control
 
@@ -270,43 +266,23 @@ A File Storage gem that reads an encrypted file converts to [Document: Decrypt F
 
 The export never carries a key, so the converted steps read it from a workflow variable: `aes_key` for an AES or Blowfish key, and `xlsx_password` for a workbook password. Set the variable before you run the workflow, and give it a key meant for these files only. Key and password fields take only a variable reference, so a key is never typed into a step.
 
-### Partial Conversions
+## Edge Cases
 
-| Gem or option | What isn't reproduced |
-| --- | --- |
-| Bedrock, SageMaker Endpoint | Answers and embeddings come from your workspace's LLM connection, not the Bedrock or SageMaker model, so they differ from Prophecy's. A SageMaker endpoint's name, token limit, and `top_p` aren't applied, and a gem that names no text, question, or context column stops the run. |
-| Directory | A listing of Smartsheet or another store with no Document account lists the same path in the conversion's Document account instead, and `include_sheet_name` isn't applied. |
-| File Operation Sync | Copies the files, but doesn't remove destination files the source no longer has. |
-| Table restore by version | Restoring a Delta table to a version number does nothing, because PlaidCloud restores a table to a point in time. A restore to a timestamp converts. |
-| Schedules | A cron with a seconds or year field, or with `L`, `W`, or `#`, isn't applied, nor is a time zone that isn't a whole-hour offset. A zone whose daylight saving differs from the scheduled event's region runs at its standard offset. More than one concurrent run becomes unlimited concurrency, and email alerts aren't applied. |
-| Job components | In a Spark job, components other than its one pipeline, and run conditions and configuration overrides, aren't converted. A SQL orchestration pipeline's Dataset, Model, Orchestration Target, Run Stored Procedure, and Script components in a job aren't converted. |
-| `input_file_name()` | The converted step reads a table, so the file each row came from isn't known, and the function returns an empty string. |
-| Spark hash functions | `hash()` and `xxhash64()` in an expression use Murmur3 and XXH64 with seed 42, which no warehouse has, so the converted values differ. |
-| Ab Initio components | Assign Keys, Compare Records, Error Detection, and MTime work by a rule the export doesn't carry: the first output passes the input through unchanged and any other output is empty. |
-| Unsafe parameter values | A parameter value holding a quote, backslash, or brace isn't put into an expression; the step that reads it becomes a placeholder. |
-| Rare source options | A few options whose exported form isn't documented convert in part, and the report names each: a Kafka source's Kerberos (`GSSAPI`) sign-in, a Salesforce SAQL query or Wave dataset read through a dataset, a DataHub table's `replaceWhere`, Data Generator providers with no PlaidCloud equivalent, Upload Files' multi-table extraction, a REST response that Prophecy flattens into columns, and the schema REST Enrich infers for parsed content. |
-| XML export of timestamps and doubles | A timestamp or double column is written as the warehouse formats it as text, not in Spark's form (ISO-8601 with `T` and the offset for a timestamp, Java's notation for a double). |
-| XML string field with child elements | A string field whose element holds child elements reads as their JSON, where Spark reads their XML. |
-| Sliding windows | `window()` with a slide shorter than its duration puts a row in several windows, which no single value can hold, so the step that uses it doesn't convert. |
+These are the behaviors a converted workflow doesn't reproduce on its own. The conversion report names each one where it occurs.
 
-The converter also reports these known divergences on the step they affect:
-
-- A Join with two output columns of the same name renames the later one, because a table can't hold both.
-- A `struct` value reads as a tuple without field names.
-- `encode` to ISO-8859-1 returns the text, not its bytes.
-- A CSV written in a character set with no codec is written in UTF-8.
-- A Bulk Column Expressions gem with no selected column applies to no column.
-- A Salesforce insert doesn't send the table's `Id` column, because Salesforce assigns the Id of each record it creates.
-- A Heat Map sums a decimal heat column as a double.
-
-### Settings That Become Placeholders
-
-A gem setting that Prophecy itself can't run converts to a placeholder step that names the reason: a Custom Gem, a Script in Scala or with no code, a SQL Statement with no query, a File Operation with no source or destination, a spatial gem or Fuzzy Match with no column to work on, a window frame that runs backwards, a method-style call such as `x.f()` in a SQL expression, and the Ab Initio Create Data component, whose record format isn't in the export.
-
-## Known Limitations
-
-- Conversion is one-time. Re-importing a project creates new workflows and tables.
-- Project code is carried over, not run or ported. Spark-specific code needs porting before it runs.
+- **Custom gem without its code in the export**: the gem becomes a placeholder step that names it. Export the project with its pipeline code, or rebuild the logic in a Python step.
+- **Scala code**: Script and custom gems in a Scala project become placeholder steps. Rewrite the logic in Python or with standard steps.
+- **Smartsheet as a file store**: a Directory or File Storage gem on a Smartsheet connection lists or reads the converted workflow's Document folder. Read the sheets with a Smartsheet source instead.
+- **Spark-only functions**: `hash()` and `xxhash64()` return different values, because no warehouse uses Spark's seed, and `input_file_name()` returns an empty string.
+- **Stored procedure results**: the procedure runs on its warehouse, and the values it returns aren't brought back.
+- **Delta restore by version**: restoring a Delta table to a version number does nothing. Restore it to a timestamp.
+- **File Operation sync**: the files are copied, but destination files the source no longer has aren't removed.
+- **Job components**: a Spark job converts its one pipeline and its schedule. Its other components, run conditions, and configuration overrides, and the Dataset, Model, Orchestration Target, Run Stored Procedure, and Script components of a SQL orchestration job, aren't converted.
+- **Ab Initio record rules**: Assign Keys, Compare Records, Error Detection, and MTime pass their input through, because the rule they apply isn't in the export.
+- **Rare options**: a Kafka Kerberos sign-in, a Salesforce SAQL query or Wave dataset, a DataHub `replaceWhere`, Data Generator providers with no PlaidCloud equivalent, Upload Files multi-table extraction, REST response flattening, and the schema REST Enrich infers for parsed content convert in part.
+- **Unsafe parameter values**: a parameter value holding a quote, backslash, or brace isn't put into an expression, and the step that reads it becomes a placeholder.
+- **Streaming**: streaming sources, targets, and pipelines run as batch workflows over the data present when they run. Schedule the workflow to run as often as you need.
+- **One-time conversion**: re-importing a project creates new workflows and tables; edits you made in PlaidCloud aren't merged.
 
 ## Related Guides
 
