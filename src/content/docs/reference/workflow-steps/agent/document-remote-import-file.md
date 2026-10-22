@@ -23,6 +23,10 @@ First, make a selection from the “Agent to Use” dropdown. Next, enter the fi
 
 When nothing exists at the path on the remote share, the step finishes with a warning, `No file or folder found at <path>; nothing imported.`, instead of an error. The workflow continues to the next step, and the step's retry and on-error settings (go to a step, or continue) don't run for a missing source. This works with the PlaidLink agents you already have deployed.
 
+An empty path finishes the same way, with the warning `No path to import from; nothing imported.`. This includes a path whose folder is a variable that resolved to nothing in this run, such as `{folder}/archive`.
+
+A path that is a filesystem root or a parent folder of the PlaidLink agent's working directory (`/`, `C:\`, a share root such as `\\server\share`, or `..`) fails the step before anything is uploaded, with `Refusing to import from the filesystem root <path>.` or `Refusing to import from <path>, which contains the agent's working directory.` Roots and `..` are refused with the PlaidLink agents you already have deployed; an updated agent also refuses any other folder that contains its working directory, judged against its own file system.
+
 Other failures still fail the step: permission denied, a failed upload to PlaidCloud, or, on an updated PlaidLink agent, a server or share that can't be reached.
 
 Because nothing is imported, a document from a previous run stays where it was. To run a downstream step only when this period's file arrived, either:
