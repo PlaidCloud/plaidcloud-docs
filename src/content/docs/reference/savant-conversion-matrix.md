@@ -53,7 +53,7 @@ All 33 agents convert at Full.
 | Summarize Pushdown (`pdsummarize`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | Database-side aggregation, converted the same as Summarize. |
 | Text (`text`) | Full | Canvas annotation | Preserved as workflow context. |
 | Time Series Agent (`rollup`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) aggregation over a period-bucket expression, Period Spine, [Anti Join](/reference/workflow-steps/tables/table-anti-join/) and [Union All](/reference/workflow-steps/tables/table-union-all/) | Rolls records up to day, week, month, quarter, year or decade periods between optional start and end dates, per group, excluding NULL dates and zero-filling empty periods. |
-| Transform Agent (`edit`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number, forward and backward fill), evaluated in order. |
+| Transform Agent (`edit`) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Calculated columns, type changes, and window calculations (lag, lead, cumulative sum, row number, forward and backward fill), evaluated in order. An edit that carries only its compiled steps converts as those steps applied in order, each feeding the next. |
 | Unpivot Agent (`unpivot`) | Full | [Melt](/reference/workflow-steps/tables/table-melt/) | Converts columns to rows as a name/value pair. |
 | Vision Agent (`vision`) | Full | [Image OCR](/reference/workflow-steps/text-documents/image-ocr/), then the [AI/NLP](/reference/workflow-steps/text-documents/nlp-ai/) prompt task | Each document goes to the provider as an image or PDF when it accepts that type and size, else its PDF text layer or OCR text is sent; the prompt's answer lands in an AI Answer column. |
 | XML Agent (`xml`) | Full | [XML Parse](/reference/workflow-steps/tables/table-xml-parse/) | Selects elements, extracts child values and attributes into columns, or converts XML to JSON; a simple //a/b path converts as before and any other XPath 1.0 path (predicates, attribute tests, wildcards, functions such as count(), name() and contains()) is evaluated as XPath, namespace-aware or as written. |
@@ -66,13 +66,12 @@ Two destination limits do not lower the tier. A few rare charsets (for example `
 
 ## Named Refusals
 
-Nine constructs are refused by name rather than converted. None lowers an agent's tier.
+Eight constructs are refused by name rather than converted. None lowers an agent's tier.
 
 | Construct | Why It Is Refused |
 | --- | --- |
 | An API Agent request that carries a credential and takes its host from an input field | Each row could send the credential to a host the data chooses. The request becomes a named placeholder. A request without a credential, and a credential on a fixed host, convert. |
-| A Copilot edit that has only its prompt | The prompt is not a formula, and Savant does not document how the pipeline it compiles from the prompt combines its steps. |
-| A Transform edit with no expression whose compiled pipeline chains several steps | Savant does not document how the chained steps combine. A one-step pipeline converts. |
+| A Transform edit with no expression and no compiled steps, such as a Copilot edit that has only its prompt | There is nothing to convert: a prompt is not a formula. An edit with compiled steps converts. |
 | A regex construct in a Transform or Filter expression that PlaidCloud cannot read: a class inside a class, a class intersection (`&&`), or an unknown `\p{}` property | The step becomes a named placeholder that refuses at run time. |
 | An aggregate or window function in a Transform or Filter expression | Savant itself fails on it at run time. As a Transform calculation or in a Summarize it converts. |
 | `HASH` in a Transform or Filter expression with a literal algorithm other than `md5` or `sha1` | Savant itself fails on it (the algorithm is `md5` or `sha1`). An algorithm read from a column converts, giving NULL for any other value. |
