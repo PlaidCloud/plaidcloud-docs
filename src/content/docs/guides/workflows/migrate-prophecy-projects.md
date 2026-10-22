@@ -191,7 +191,7 @@ Prophecy projects carry code: Script gems, SQL statements, macros, dynamic input
 - Python scripts are placed in a Python step, with table access rewritten. A script that calls Spark data frame methods keeps those calls, and the report notes that you must port them to pandas.
 - A macro from a known dbt package becomes the standard steps that do what the macro does.
 
-Every step that carries project code reports `W_PROJECT_CODE_EMBEDDED`, and translated SQL reports `W_DIALECT_TRANSLATED`. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
+Every step that carries project code gets a warning, and so does translated SQL. Review the code in each such step before you run the workflow. The converter withholds anything credential-like it finds in code strings and comments, so add credentials to a connection and not to the code.
 
 ## Placeholders for Unconverted Gems
 
@@ -211,7 +211,7 @@ Scheduled events created from Prophecy schedules are enabled when they were enab
 
 ## What Converts
 
-Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. The converter measures itself against each gem's configuration options, not against whole projects: of the 3,934 gem and option combinations it is measured against, 3,875 convert fully. The rest are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs.
+Prophecy gems convert to native steps, project variables, scheduled events, or canvas objects. Nearly every gem converts fully, with every option it offers. The few exceptions are listed under [Partial Conversions](#partial-conversions) and [Placeholders](#settings-that-become-placeholders), and the conversion report names each one where it occurs.
 
 Each gem has a status:
 
@@ -244,7 +244,7 @@ Each gem has a status:
 | Business rules | A project business rule called in an expression converts to the same conditions, one `CASE` for each column it sets. |
 | Casts | A cast of text to a decimal or a long follows Spark exactly: spaces and control characters around the number are trimmed, a decimal rounds half up to its scale, and text that isn't a number, or a value out of range, is null. |
 | Dates and times | Date and time formats are written for your workspace's engine, Databend included, and `window()` places each timestamp in its tumbling window, aligned as Spark aligns it. |
-| Iterator outputs | A Table Iterator or While Iterator whose output columns are known only at run time gathers each pass's rows by position with [Table: Union All](/reference/workflow-steps/tables/table-union-all/#stack-sources-by-position), each column widened to a type every pass fits, as Prophecy stacks the passes. |
+| Iterator outputs | A Table Iterator or While Iterator whose output columns are known only at run time gathers each pass's rows by position with [Table: Union All](/reference/workflow-steps/tables/table-union-all/#column-matching), each column widened to a type every pass fits, as Prophecy stacks the passes. |
 | Data Encoder/Decoder AES | Runs on every engine. The key, and the initialization vector and additional data when the gem names them, come from the workflow variables `aes_key`, `aes_iv`, and `aes_aad`, which you set. |
 | Data Masking hash | Computes the same values as Spark's `hash()`. |
 | Buffer, Simplify, Heat Map | Buffer draws a rounded corner with the same number of segments Prophecy does, Simplify drops the same vertices, and Heat Map sums heat into H3 hexagons at the gem's resolution. |
