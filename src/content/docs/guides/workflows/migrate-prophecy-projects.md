@@ -280,6 +280,11 @@ These are the behaviors a converted workflow doesn't reproduce on its own. The c
 - **Unsafe parameter values**: a parameter value holding a quote, backslash, or brace is written into the step as a fixed value, so changing the workflow variable doesn't change it.
 - **Streaming**: streaming sources, targets, and pipelines run as batch workflows over the data present when they run. Schedule the workflow to run as often as you need.
 - **Job components**: a Spark job converts its one pipeline and schedule. Its other components, run conditions, and configuration overrides aren't converted.
+- **Scala code**: a Scala script or Scala expression becomes a step that names it. Rewrite it in SQL or Python.
+- **Stored procedure OUT values**: a Spark StoredProcedure gem runs, but its OUT values aren't returned. The output is the pass-through columns.
+- **dbt packages and macros**: packages and macros the project depends on aren't converted, so a gem that calls one becomes a step that names it. Re-create what they provide or inline the macro.
+- **User-defined aggregate functions and Soda checks**: a pipeline's user-defined aggregate functions, and Soda checks the converter can't read, aren't converted. A gem that calls one becomes a step that names it, and the Soda results table has no row for a skipped check. Re-create them with the standard Aggregate step or a data quality step.
+- **Unmapped Pivot, sort, and Deduplicate settings**: a Pivot with a HAVING condition or all-values column, or a sort or Deduplicate type the converter doesn't know, becomes a step that names the gem. Rebuild it with the matching PlaidCloud step.
 
 ## Related Guides
 

@@ -300,6 +300,11 @@ Dataset formats and connectors are source and target settings of a gem, not gems
 | Unsafe parameter values | A parameter value holding a quote, backslash or brace is written into the step as a fixed value, so changing the workflow variable does not change it. |
 | Streaming | Streaming sources, targets and pipelines run as batch workflows over the data present when they run; schedule the workflow to run as often as you need. |
 | Job components | A Spark job converts its one pipeline and schedule; its other components, run conditions and configuration overrides are not converted. |
+| Scala code | A Scala script or Scala expression becomes a step that names it; rewrite it in SQL or Python. |
+| Stored procedure OUT values | A Spark StoredProcedure gem runs, but its OUT values are not returned; the output is the pass-through columns. |
+| dbt packages and macros | Packages and macros the project depends on are not converted, so a gem that calls one becomes a step that names it; re-create what they provide or inline the macro. |
+| User-defined aggregate functions and Soda checks | A pipeline's user-defined aggregate functions, and Soda checks the converter cannot read, are not converted; a gem that calls one becomes a step that names it, and the Soda results table has no row for a skipped check. Re-create them with the standard Aggregate step or a data quality step. |
+| Unmapped Pivot, sort and Deduplicate settings | A Pivot with a HAVING condition or all-values column, or a sort or Deduplicate type the converter does not know, becomes a step that names the gem; rebuild it with the matching PlaidCloud step. |
 
 ## Validating a Converted Workflow
 
