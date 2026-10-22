@@ -270,19 +270,16 @@ The export never carries a key, so the converted steps read it from a workflow v
 
 These are the behaviors a converted workflow doesn't reproduce on its own. The conversion report names each one where it occurs.
 
-- **Custom gem without its code in the export**: the gem becomes a placeholder step that names it. Export the project with its pipeline code, or rebuild the logic in a Python step.
-- **Scala code**: Script and custom gems in a Scala project become placeholder steps. Rewrite the logic in Python or with standard steps.
-- **Smartsheet as a file store**: a Directory or File Storage gem on a Smartsheet connection lists or reads the converted workflow's Document folder. Read the sheets with a Smartsheet source instead.
-- **Spark-only functions**: `hash()` and `xxhash64()` return different values, because no warehouse uses Spark's seed, and `input_file_name()` returns an empty string.
-- **Stored procedure results**: the procedure runs on its warehouse, and the values it returns aren't brought back.
-- **Delta restore by version**: restoring a Delta table to a version number does nothing. Restore it to a timestamp.
-- **File Operation sync**: the files are copied, but destination files the source no longer has aren't removed.
-- **Job components**: a Spark job converts its one pipeline and its schedule. Its other components, run conditions, and configuration overrides, and the Dataset, Model, Orchestration Target, Run Stored Procedure, and Script components of a SQL orchestration job, aren't converted.
-- **Ab Initio record rules**: Assign Keys, Compare Records, Error Detection, and MTime pass their input through, because the rule they apply isn't in the export.
-- **Rare options**: a Kafka Kerberos sign-in, a Salesforce SAQL query or Wave dataset, a DataHub `replaceWhere`, Data Generator providers with no PlaidCloud equivalent, Upload Files multi-table extraction, REST response flattening, and the schema REST Enrich infers for parsed content convert in part.
-- **Unsafe parameter values**: a parameter value holding a quote, backslash, or brace isn't put into an expression, and the step that reads it becomes a placeholder.
+- **Custom gem without its code in the export**: the gem becomes a step that names it. Export the project with its pipeline code, or rebuild the logic in a Python step.
+- **Kafka Kerberos sign-in**: a Kafka source or target that signs in with Kerberos (GSSAPI) converts without the Kerberos service name and sign-in mechanism. Set them on the PlaidCloud connection.
+- **Ab Initio Error Detection and MTime**: these pass their input through, because the rule they apply isn't in the export.
+- **Delta restore with a configured database**: a Delta table operation that names its database through a pipeline configuration value writes that value into the step when the project converts. Edit the step if the configuration changes.
+- **REST response flattening**: a REST API gem that flattens its response puts the whole response in one column, because the field names are only known from a run. Extract the fields you need in a later step.
+- **`input_file_name()` over a table**: returns an empty string, because the step reads a table or Delta source instead of a file.
+- **`hash()` and `xxhash64()` in aggregates, windows, and multi-input gems**: the warehouse computes the value, so it approximates Spark's and can differ.
+- **Unsafe parameter values**: a parameter value holding a quote, backslash, or brace is written into the step as a fixed value, so changing the workflow variable doesn't change it.
 - **Streaming**: streaming sources, targets, and pipelines run as batch workflows over the data present when they run. Schedule the workflow to run as often as you need.
-- **One-time conversion**: re-importing a project creates new workflows and tables; edits you made in PlaidCloud aren't merged.
+- **Job components**: a Spark job converts its one pipeline and schedule. Its other components, run conditions, and configuration overrides aren't converted.
 
 ## Related Guides
 
