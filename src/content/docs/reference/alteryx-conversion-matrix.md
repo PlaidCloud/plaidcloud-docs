@@ -100,7 +100,7 @@ email, Hadoop, Spark, and the like) are **connected, not converted** — see
 | Multi-Row Formula | Full | Window / row-aware formula transform | Converts row-relative logic to window behavior, partitioned by Group By. |
 | Named Entity Recognition (NER) | Full | [Text: NLP AI](/reference/workflow-steps/text-documents/nlp-ai/) (ner task) | Extracts entities (people, organizations, locations, dates, quantities, or a custom type list) from a text column through the LLM-backed NLP AI step. |
 | Numeric Up Down | Full | Controlled numeric variable | Converts app numeric input to a typed variable. |
-| Output Data | Full | Document / table output | Writes output to Document or PlaidCloud tables. |
+| Output Data | Full | Document / table output | Writes output to Document or PlaidCloud tables, including Parquet and Avro files; `.yxdb`, `.hyper`, and `.dbf` outputs are written as Parquet. |
 | Overlay | Full | [Spatial Process](/reference/workflow-steps/spatial/spatial-process/) | Intersect, union, or cut two geometry columns. |
 | PDF Input | Full | PDF extraction executor | Extracts text or tables from PDFs. |
 | Point To Line | Full | Point To Line executor op | Threads each group's points into one `SequenceLine` per group, ordered by the sequence field. |
