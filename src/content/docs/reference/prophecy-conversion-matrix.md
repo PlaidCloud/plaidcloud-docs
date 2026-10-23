@@ -290,18 +290,14 @@ Dataset formats and connectors are source and target settings of a gem, not gems
 
 | Case | What happens |
 | --- | --- |
-| Custom gem without its code in the export | A Gem Builder or other custom gem runs the code the project export carries for it with each pipeline. When the export holds no code for the gem, it becomes a step that names the gem; export the project with its pipeline code, or rebuild the logic in a Python step. |
-| Scala code | Script and custom gems in a Scala project become a step that names the gem; rewrite the logic in Python or with standard steps. |
-| Smartsheet as a file store | A Directory or File Storage gem on a Smartsheet connection lists or reads the converted workflow's document folder; read the sheets with a Smartsheet source instead. |
-| Spark-only functions | `hash()` and `xxhash64()` return different values, because no warehouse uses Spark's seed, and `input_file_name()` returns an empty string, because the step reads a table. |
-| Stored procedure results | The procedure runs on its warehouse, and the values it returns are not brought back; the step's output is its input columns. |
-| Delta restore by version | Restoring a Delta table to a version number does nothing; restore it to a timestamp. |
-| File Operation sync | Copies the files, but does not remove destination files the source no longer has. |
-| Job components | A Spark job converts its one pipeline and schedule; its other components, run conditions and configuration overrides, and the Dataset, Model, Orchestration Target, Run Stored Procedure and Script components of a SQL orchestration job, are not converted. |
-| Ab Initio record rules | Assign Keys, Compare Records, Error Detection and MTime pass their input through, because the rule they apply is not in the export. |
-| Rare options | A Kafka Kerberos sign-in, a Salesforce SAQL query or Wave dataset, a DataHub `replaceWhere`, Data Generator providers with no PlaidCloud equivalent, Upload Files multi-table extraction, REST response flattening and the schema REST Enrich infers for parsed content convert in part, and the conversion report names each. |
-| Unsafe parameter values | A parameter value holding a quote, backslash or brace is not put into an expression; the step that reads it becomes a step that names it. |
+| Code or data the export does not include | A Gem Builder or other custom gem whose code is not in the export, and a call to a macro of a dbt package the export leaves out, become a step that names what is missing; export the project with its pipeline code and dbt packages, or rebuild the logic in a Python or SQL step. Ab Initio Error Detection and MTime gems pass their input through, because the rule they apply is not in the export. Soda checks read from a file outside the project, and Soda checks that compare with earlier scans or with another dataset or test a format Soda names, have no row in the results table; compute them in a later step. |
+| Results only known when the pipeline runs | A REST API gem that flattens its response puts the whole response in one column when nothing declares the field names, which only a run reveals; extract the fields you need in a later step. A dbt macro that queries the warehouse as dbt compiles becomes a step that names it; replace the query with the values it returns. A Spark StoredProcedure gem runs, but its OUT values are not returned; the output is the pass-through columns. `input_file_name()` returns an empty string over a table or Delta source, which has no file to name, and `hash()` / `xxhash64()` inside an aggregate, a window or a gem with several inputs are computed by the warehouse, so they can differ from Spark's. |
+| Values written into a step when the project converts | A parameter value holding a quote, backslash or brace, a pipeline value a SQL step reads, and the database a Delta table operation names through configuration are written into the step as fixed values, so changing the workflow variable does not change them; edit the step when the configuration changes. |
+| Scala code | A Scala script, Scala expression, or Scala user-defined function or aggregate function becomes a step that names it; rewrite it in SQL or Python. |
+| Kafka Kerberos sign-in | A Kafka source or target that signs in with Kerberos (GSSAPI) converts without the Kerberos service name and sign-in mechanism; set them on the PlaidCloud connection. |
 | Streaming | Streaming sources, targets and pipelines run as batch workflows over the data present when they run; schedule the workflow to run as often as you need. |
+| Job components | A Spark job converts its one pipeline and schedule; its other components, run conditions and configuration overrides are not converted. |
+| Uncommon calls | A user-defined aggregate function called from a rollup or a window, and a dbt macro that uses Jinja beyond if, for, set and the common filters, become a step that names the gem; call the function from an Aggregate gem, or inline the macro. |
 
 ## Validating a Converted Workflow
 
