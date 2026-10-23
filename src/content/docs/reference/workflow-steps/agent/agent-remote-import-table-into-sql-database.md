@@ -14,6 +14,12 @@ Pushes a PlaidCloud project table into a database that's reachable only through 
 Typical use: PlaidCloud produces a refreshed forecast or allocation result and the Agent loads it into the on-premises ERP, data mart, or operational reporting database.
 
 
+## How the Data Reaches the Agent
+
+A PlaidLink Agent on version 1.2.33 or later receives the table's rows as one Parquet file. Numbers, dates, timestamps and true/false values arrive as their own types. Other columns, such as time, interval and JSON columns, arrive as text. An empty text value arrives empty (NULL), as it always has.
+
+An older Agent receives the rows as a zipped tab-delimited file, as before. [Upgrade the Agent](/reference/cli/plaidlink/upgrade/) to receive Parquet.
+
 ## Examples
 
 No examples yet...
