@@ -44,6 +44,7 @@ A workflow run posts to an ERP as the project, not as the person who started it.
 To authorize a project, open its home page and select **ERP Write Authorizations** under **ERP Posting**. Each row is one connection in one environment. Tick **Authorized** to let the project post there, or clear it to stop. **Authorized By** and **Authorized At** show who last authorized it and when.
 
 - The button is shown to the project's Architects and to workspace admins, but only an Architect can change an authorization, and only while the project is unlocked. A workspace admin who isn't an Architect can add themselves as one first.
+- Selecting a row to authorize or clear it doesn't reload the list: the scroll position and any column sort you chose stay where they are. The window can be resized, and the note about public projects wraps in full.
 - To authorize a connection, you also need write access to it yourself: you own it, or it is shared with you by name or through one of your security groups. A connection set to **All Workspace Members** doesn't count.
 - A project set to **All Workspace Members** is authorized like any other. Every member is an Architect of it, so any member with write access to a connection can authorize the project for it. Once it's authorized, any member can post to that connection from the project's workflows, and the window says so above the grid.
 - A copied project, or one created from a project archive, starts with no authorizations. Authorize the copy before it posts.
