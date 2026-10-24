@@ -55,6 +55,8 @@ For each output port declared on the Macro, add a binding pointing at a caller-s
 | `stop` (manual stop)    | Copy-out skipped; scratch schema dropped; caller warning logged.      |
 | Error mid-run           | Macro Run step errors; scratch schema dropped; outputs not written.   |
 
+When the Macro's workflow fails, the Macro Run step's log shows the Macro's own error message (“Child workflow run failed:” followed by the message), so you can see what to fix without opening the Macro's run.
+
 The scratch schema is always reclaimed in a `finally` block, so a failed or stopped Macro never leaks intermediate tables into the project schema.
 
 ## Examples

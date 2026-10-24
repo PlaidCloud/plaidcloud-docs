@@ -21,6 +21,10 @@ To create a new workflow, you need an existing project. If you don't have one ye
 
 The workflow appears in the Workflows tab and is ready to have steps added to it. Double-click it to open the [Workflow Explorer](/guides/workflows/workflow-explorer/) and start building.
 
+## Seeing When a Source Table Last Changed
+
+In a step's form, a table selector shows a muted **Last Updated** line with the date and time, in your local time, under the table you've selected, so you can tell at a glance whether the data is current. Hover the line to see the full text. The line is hidden when the selection is dynamic, or when the table has never been updated.
+
 ## Choosing a Workflow Type
 
 The **Workflow Type** you pick when creating a workflow determines how its steps are arranged and run. It defaults to **Standard Serial**, and you set it from the type selector in the New Workflow form.
