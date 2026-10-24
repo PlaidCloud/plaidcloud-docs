@@ -11,6 +11,8 @@ If a workflow experiences an error during processing, an error indicator is disp
 
 A step whose server is lost mid-run is handled separately from retries: a step that is safe to repeat re-runs automatically, and one that isn't fails once with an **interrupted** message. See [Interrupted Steps](/guides/workflows/run-a-workflow/#interrupted-steps).
 
+When PlaidCloud refuses a step for a reason you can fix, such as a missing permission or a setting that isn't valid, the step log shows that message in plain words rather than a server error with a stack trace. A Model Loop, Model Run or Macro Run step whose child workflow fails shows the child's own error message, as “Child workflow run failed:” followed by the message.
+
 If no retry is selected or the maximum number of retries is exceeded, then the step will be marked as an error. PlaidCloud provides three levels of error handling in that case:
 
 
