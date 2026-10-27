@@ -24,10 +24,41 @@ PlaidCloud uses a path-based system to organize tables, like you would use to na
 
 
 
-## Searching
+## Finding Tables
 
 
-Searching for tables is accomplished by using the filter box in the lower left of hierarchy. The search filter will search table names and labels for matches and show the results in the hierarchy above.
+Use the filter box in the lower left of the hierarchy to search table names and labels. The matches show in the hierarchy above.
+
+
+### By Workflow
+
+The **By Workflow** folder at the end of the **Tables** tab groups tables under each workflow that reads or writes them. Open a workflow to see its tables. The folder is a view of the same tables, so you can't move or copy anything from it.
+
+
+### By Column
+
+Type a column name in the column search box on the **Tables** tab to show only the tables that have a column with that name. Select **Contains** to match part of a column name instead of the whole name. Clear the box to show every table again. A long search can return in pages and the status line says when it is still searching or may be incomplete.
+
+Select **Column Tree** to search from a window of its own. Each table that has the column opens to two lists:
+
+* **Fed by** — the tables that supply the column
+* **Feeds** — the tables the column goes on to feed
+
+An AI assistant connected over MCP finds the same tables with `table_find(column=...)`, matching the whole name or part of it.
+
+
+### Search Values {#search-values}
+
+To find which tables hold a value, select **Search Values** on the **Tables** tab, or right-click a table and choose **Search Value** to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values.
+
+Before you search, know that:
+
+* You see only rows you could already open. Row-level security applies to every search.
+* Your warehouse's query history records the values you search for.
+* The search covers the text columns of tables. Tables that haven't been built are skipped and named in a warning.
+* Results come in pages. When the status line says the search stopped early, choose **Search more** to continue with the tables not yet searched.
+
+An AI assistant connected over MCP uses `table_value_search`. It returns the tables and columns that hold the value, never the values themselves. When you ask the AI assistant in a project to find a value, Weave sends the names of the matching tables and columns to the language model provider.
 
 
 
@@ -84,6 +115,21 @@ Only files ending in `.csv` are accepted. You need permission to create tables a
 3. The deleted operation will check to see if the table is in use by workflow steps or Views. If so, you will be asked to remove those associations before deletion can occur.
 
 *Note: You can also force delete the table(s). Force deletion of the table(s) will leave references broken, so this should be used sparingly.*
+
+
+### Last Read {#last-read}
+
+The delete window shows when the table was last read, for example **Last read 3 days ago by** a person or step, so you can tell a table nobody uses from one that is still in use. PlaidCloud takes this from your warehouse's own query history and leaves out reads made by its own housekeeping.
+
+| Warehouse | What is needed |
+| --- | --- |
+| Snowflake | Reads come from Access History, which Snowflake records up to about 3 hours late. The connection's role needs the `IMPORTED PRIVILEGES` grant on the `SNOWFLAKE` database. |
+| Databricks | The connection's identity needs `USE` and `SELECT` on `system.access` and `system.query`. |
+| PlaidCloud Lakehouse | Read history is not yet available. The window shows **Read history incomplete**. |
+
+When PlaidCloud can't read the whole history, the line says **Read history incomplete** and never reports "no reads" in its place. Anyone with direct SQL access to your warehouse can set a session tag that changes how their own reads are labelled.
+
+An AI assistant connected over MCP gets the same answer from `table_describe(include=['last_read'])`.
 
 
 
