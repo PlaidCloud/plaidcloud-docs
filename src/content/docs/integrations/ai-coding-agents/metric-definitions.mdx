@@ -1,6 +1,6 @@
 ---
 title: Metric Definitions
-description: Write down once how a business number is calculated, have a second Architect approve it, and PlaidCloud's AI assistant, or one connected over MCP, calculates it that way every time, under each person's own row access.
+description: Write down once how a business number is calculated, and PlaidCloud's AI assistant, or one connected over MCP, calculates it that way every time, under each person's own row access.
 sidebar:
   label: Metric Definitions
   order: 11
@@ -10,10 +10,10 @@ import { Aside, Steps } from '@astrojs/starlight/components';
 
 A **metric definition** is a business number whose calculation has been agreed and written down: *Net Revenue*, *Headcount (FTE)*, *Units Shipped*. It says which table the number comes from, how the rows are added up, which rows count, and which columns it can be broken down by.
 
-Without one, an AI assistant asked *"what was net revenue in EMEA last quarter?"* decides for itself which table, column and filters to use, and two people asking the same question can get two different numbers. A metric definition takes that decision away from the assistant. A project Architect writes the definition once, a second Architect checks and approves it, and when the assistant uses it, the figure is calculated exactly as written.
+Without one, an AI assistant asked *"what was net revenue in EMEA last quarter?"* decides for itself which table, column and filters to use, and two people asking the same question can get two different numbers. A metric definition takes that decision away from the assistant. A project Architect writes the definition once, and from the moment it is saved the assistant calculates the figure exactly as written.
 
 <Aside>
-Metric definitions are managed through an AI assistant connected over [MCP](../getting-started/), or through the REST API; there is no screen for them in PlaidCloud yet. Metrics are available to PlaidCloud's built-in [AI assistant](/guides/ai-assistant/weave-tab/#weave-ai-chat) and to any assistant connected over MCP. The built-in assistant can find and calculate metrics, but cannot create, edit, approve or retire them.
+Metric definitions are managed through an AI assistant connected over [MCP](../getting-started/), or through the REST API; there is no screen for them in PlaidCloud yet. Metrics are available to PlaidCloud's built-in [AI assistant](/guides/ai-assistant/weave-tab/#weave-ai-chat) and to any assistant connected over MCP. The built-in assistant can find and calculate metrics, but cannot create, edit or retire them.
 </Aside>
 
 **Architects**: start at [Define a Metric](#define-a-metric). **Analysts**: start at [Ask About a Metric](#ask-about-a-metric).
@@ -36,7 +36,7 @@ A metric definition is a recipe, not a stored result. It is recalculated every t
 | **Dimensions** (optional, `dimensions` in the API) | A breakdown column bound to a dimension, so the words in a question are matched against that dimension's members and aliases and turned into the column's values: see [Ask About a Metric](#ask-about-a-metric). The dimension must exist in the project. | `region_lookup.region` bound to the *Region* dimension |
 | **Time columns** (optional, `time` in the API) | A date column, or a fiscal year column and a period column, so a question can ask for one fiscal period and [compare it over time](#compare-over-time). | `fiscal_year` and `fiscal_period` |
 
-A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved, and again when it is approved. A metric with a scenario can't filter on the scenario column, or offer it as a breakdown column: the scenario decides which rows are read, so a filter such as `scenario` `eq` *Actual* belongs in the scenario, not in the filters.
+A column from a lookup table is written as `<table>.<column>`; the assistant writes these for you. Every table and column in a definition must exist in the project; a definition that names one that doesn't is refused when it is saved. A metric with a scenario can't filter on the scenario column, or offer it as a breakdown column: the scenario decides which rows are read, so a filter such as `scenario` `eq` *Actual* belongs in the scenario, not in the filters.
 
 A metric can also be built from other metrics, as a ratio, a sum, a difference or a multiple: see [Derive a Metric From Others](#derive-a-metric-from-others).
 
@@ -44,10 +44,9 @@ Nothing stops two metrics in a project from sharing a name or a synonym. Keep th
 
 ## Who Can Do What
 
-- **Project Architects** write, edit, approve and retire definitions. A public project gives every member the Architect role in name only, and that doesn't count: in a public project nobody can define or approve a metric, so keep metrics in a project with its own access list.
-- **Anyone who can read the project** can see and run the approved definitions. Drafts are visible to Architects only.
-- **An approval needs two people**, so a project needs at least two Architects. Whoever saved a version cannot approve it. If you edit someone else's draft, the version is now yours: they can approve it and you can't.
-- **A locked project refuses every change.** Defining, editing, approving and retiring all wait until the project is unlocked.
+- **Project Architects** write, edit and retire definitions. A public project gives every member the Architect role in name only, and that doesn't count: in a public project nobody can define a metric, so keep metrics in a project with its own access list.
+- **Anyone who can read the project** can see and run the definitions.
+- **A locked project refuses every change.** Defining, editing and retiring all wait until the project is unlocked.
 
 ## Define a Metric
 
@@ -55,7 +54,7 @@ If you are a project Architect, ask your connected AI assistant in plain languag
 
 > *"In the **Sales** project, define a metric named **Net Revenue**, with synonyms revenue and sales: the sum of `net_amount` in `sales_fact`, joined to `region_lookup` on `region_code`, that can be broken down by the lookup's `region`, by `product_line` and by `fiscal_year`; its actual rows have `scenario` Actual and its budget rows `scenario` Budget."*
 
-The assistant saves it as a **draft**, and tells you if a table or column it names doesn't exist. A draft can be edited as often as you like. Every edit is a new **version** of the definition, written by whoever made it. A save that changes nothing is refused. The latest saved version, approved or not, is the metric's **working version**.
+The assistant saves it, and tells you if a table or column it names doesn't exist. The metric is live as soon as it is saved. Every edit is a new **version** of the definition, written by whoever made it, and readers get the new version immediately. A save that changes nothing is refused. The latest saved version is the metric's **current version**.
 
 For developers, the same definition through the REST API is:
 
@@ -80,34 +79,23 @@ POST /rest/v1/analyze/metric/definition
 
 Each pair in `on` is `[source column, lookup column]`. `time` is either `{"year_column", "period_column"}` with an optional `periods_per_year`, or `{"column"}` for a date column with an optional `fiscal_year_start` and `fiscal_year_label`; see [Compare Over Time](#compare-over-time).
 
-## Approve a Metric
+## What Is Checked When You Save
 
-A draft becomes usable when a **second** Architect approves it. To find the drafts waiting, ask the assistant to list the project's metrics: each shows its state, `draft`, `approved` or `retired`.
+Every save runs these checks, and a definition that fails one is refused with a message that names the problem:
 
-<Steps>
+- **Every table and column exists** in the project.
+- **Every lookup table has one row per key**, in the data as it is at that moment. A lookup table with two rows for the same key would double the source rows it matches, so the save is refused and names the table. A lookup row with no key value is ignored by this check, since it never matches a source row.
+- **A derived metric's inputs exist** and are neither retired nor derived themselves.
 
-1. **Read the definition as it is stored now.** Ask the assistant to show you the metric, or fetch it with `GET /rest/v1/analyze/metric/definition`. What comes back includes a `content_digest`: a fingerprint of the name, synonyms, description and definition you are looking at. Through the assistant, you never need to handle it yourself.
-
-2. **Check it.** Is the table right, the measure right, the filters complete, the breakdown columns what people will ask for?
-
-3. **Approve that exact content.** Ask the assistant to approve the metric, or call `POST /rest/v1/analyze/metric/approve`, passing the `content_digest` you read as `digest`. If anyone has changed the definition since you read it, the approval is refused and you are asked to read it again, so you can approve only the exact content you read.
-
-</Steps>
-
-Approval runs two checks of its own before it goes through:
-
-- **Every table and column still exists** in the project. The schema may have moved since the draft was saved.
-- **Every lookup table has one row per key** in the data as it is at that moment. A lookup table with two rows for the same key would double the source rows it matches, so the approval is refused and names the table. A lookup row with no key value is ignored by this check, since it never matches a source row.
-
-<Aside type="caution" title="The lookup check runs once, at approval">
-The one-row-per-key check looks at the lookup table's data on the day the metric is approved. If that table later gains a second row for a key, the approved metric double-counts the source rows that key matches, and nothing warns you. An approved version cannot be approved again, so to run the check again an Architect saves the metric as a new version (a change to its description is enough) and a different Architect approves that version. Better, keep the lookup's key unique in the workflow that writes it.
+<Aside type="caution" title="The lookup check runs at each save">
+The one-row-per-key check looks at the lookup table's data on the day you save. If that table later gains a second row for a key, the metric double-counts the source rows that key matches, and nothing warns you. To run the check again, save the metric again (a change to its description is enough). Better, keep the lookup's key unique in the workflow that writes it.
 </Aside>
 
-Each approval is recorded with who approved it, when, and which version. Editing an approved metric creates a new draft version; for readers, the approved version keeps answering questions until the new one is approved in turn.
+Each version records who saved it and when. Editing a metric saves a new version that readers get immediately.
 
 ## Derive a Metric From Others
 
-A **derived metric** is arithmetic over metrics that already exist: *Net Revenue per FTE* is *Net Revenue* divided by *Headcount (FTE)*. It is defined, approved, asked about and retired like any other metric. What differs is its definition, which names the metrics it is built from instead of a table.
+A **derived metric** is arithmetic over metrics that already exist: *Net Revenue per FTE* is *Net Revenue* divided by *Headcount (FTE)*. It is defined, asked about and retired like any other metric. What differs is its definition, which names the metrics it is built from instead of a table.
 
 | Operation | What it calculates | Inputs |
 |---|---|---|
@@ -136,11 +124,11 @@ Through the REST API, the `definition` names the inputs by their ids, which `met
 
 **How it is calculated.** Each input is calculated on its own, at the breakdown you asked for and under your row access, and the results are then combined for each breakdown value. Totaling each input before combining them is what keeps a ratio of two tables honest: joining the rows first would count a row once for every row it met on the other side. Where one input has no rows for a breakdown value, the derived value for it is empty, and so is a ratio whose denominator is zero; neither is reported as zero.
 
-**Breakdown columns are computed, not declared.** A derived metric can be broken down only by the columns that *every* input allows, and that list is shown beside its definition. If you want to ask for the derived metric by region, give each input `region_lookup.region`, spelled the same way, as a breakdown column. Inputs that share no breakdown column give a derived metric that answers only as a single total. A question that groups or filters by anything else is refused, as for any metric. An empty list beside an approved derived metric means one of its inputs is no longer usable: retired, or missing.
+**Breakdown columns are computed, not declared.** A derived metric can be broken down only by the columns that *every* input allows, and that list is shown beside its definition. If you want to ask for the derived metric by region, give each input `region_lookup.region`, spelled the same way, as a breakdown column. Inputs that share no breakdown column give a derived metric that answers only as a single total. A question that groups or filters by anything else is refused, as for any metric. An empty list beside a derived metric means one of its inputs is no longer usable: retired, or missing.
 
-**Approval checks the inputs.** A derived metric can be approved only when each input has an approved version, since that is the version readers get. Readers always get the approved version of each input and of the derived metric itself; Architects get the working versions, drafts included. An input is not pinned to a version: when a later version of an input is approved, the derived metric's figures change with it, and the approval's result names the derived metrics it affects (`used_by`).
+**Saving checks the inputs.** A derived metric can be saved only when each input exists, is not retired and is not itself derived. Readers and Architects alike always get the current version of each input and of the derived metric. An input is not pinned to a version: when a later version of an input is saved, the derived metric's figures change with it.
 
-**An input stays in service while an approved derived metric uses it.** It can't be retired, and a new version of it can't be approved as a derived metric; the refusal names the metric that uses it. Editing that metric isn't enough, since its approved version still uses the input: retire it, or approve a version of it that doesn't.
+**An input stays in service while a derived metric uses it.** It can't be retired, and it can't be changed into a derived metric; the refusal names the metric that uses it. To retire an input, retire the derived metric first, or save a version of it that doesn't use the input.
 
 ## Ask About a Metric
 
@@ -148,17 +136,17 @@ Anyone who can read the project can ask PlaidCloud's built-in AI assistant, or a
 
 > *"What was net revenue by region in FY26?"*
 
-The assistant recognizes the metric by its name or one of its synonyms (the lookup ignores case and matches part of a name, so *revenue* finds *Net Revenue*), takes the breakdown and the filters from your question, and runs the approved definition. A question can only group or filter by one of the metric's breakdown columns; one that asks for anything else is refused rather than answered with a guess. So is a metric whose table has lost a column since it was approved: the refusal names the metric and its version, and an Architect must fix the definition.
+The assistant recognizes the metric by its name or one of its synonyms (the lookup ignores case and matches part of a name, so *revenue* finds *Net Revenue*), takes the breakdown and the filters from your question, and runs the definition. A question can only group or filter by one of the metric's breakdown columns; one that asks for anything else is refused rather than answered with a guess. So is a metric whose table has lost a column since it was saved: the refusal names the metric and its version, and an Architect must fix the definition.
 
 **Your words become the column's values through a dimension.** When an Architect has bound a breakdown column to a dimension, the assistant looks the words in your question up against that dimension's member names and aliases, ignoring case. A word that names one member becomes that member's values: a leaf is its own value, and a parent such as *EMEA* expands to every leaf beneath it, so "net revenue in EMEA" filters on all of EMEA's regions. A word that names no member, or more than one (*Seaboard* may be an alias on two members) and none of them in exactly the spelling you used, comes back as a list of candidates for the assistant to ask you about; it never picks one for you. Looking words up in a dimension needs permission to read dimensions, as reading a dimension anywhere else in PlaidCloud does.
 
-The result the assistant works from names the metric, its version and its state, and says whether row access was applied. If an answer doesn't say which metric it used, ask. In PlaidCloud's built-in AI assistant, the figures appear in their own card with a ✓; see [Figures From a Metric](/guides/ai-assistant/weave-tab/#figures-from-a-metric). For how PlaidCloud grades and caveats AI answers more generally, see [Answers You Can Trust](../honest-answers/).
+The result the assistant works from names the metric and its version, and says whether row access was applied. If an answer doesn't say which metric it used, ask. In PlaidCloud's built-in AI assistant, the figures appear in their own card with a ✓; see [Figures From a Metric](/guides/ai-assistant/weave-tab/#figures-from-a-metric). For how PlaidCloud grades and caveats AI answers more generally, see [Answers You Can Trust](../honest-answers/).
 
 **Row access is applied to every table the metric reads**, the source and each lookup alike. Where a lookup row is hidden from you but the source row it labels is not, the source row still counts. Say you can't see the lookup row for region *APAC* but can see its sales: those sales are in your total, appear under a blank region in a breakdown by region, and are usually left out if you filter on region, or if the metric itself filters on a lookup column.
 
 Row access shapes the lookup too: where the breakdown column is governed, you are offered only the values your access allows. A member with nothing beneath it that you may see is never offered, as a value or as a candidate, and a parent expands only to the leaves you may see. An Architect, who reads every row, sees every member.
 
-Architects asking about a metric get its **working version**, draft included, so they can preview a change before it is approved; everyone else always gets the approved version. Architects read every row, as they do everywhere else in the project.
+Architects read every row, as they do everywhere else in the project.
 
 ## Compare, Rank and Share
 
@@ -212,7 +200,7 @@ The time columns can't be filtered or grouped by in a question that names a peri
 
 ## Retire a Metric
 
-Retiring a metric takes it out of service for good: people who read the project no longer see it, Architects see it marked retired with its history, and it can no longer be edited or run. An Architect retires one by asking the assistant, or with `POST /rest/v1/analyze/metric/retire`. A metric that an approved derived metric is built from can't be retired until that metric is retired, or a version of it that no longer uses this input is approved. To replace a retired metric, define a new one.
+Retiring a metric takes it out of service for good: people who read the project no longer see it, Architects see it marked retired with its history, and it can no longer be edited or run. An Architect retires one by asking the assistant, or with `POST /rest/v1/analyze/metric/retire`. A metric that a derived metric is built from can't be retired until that derived metric is retired, or a version of it that no longer uses this input is saved. To replace a retired metric, define a new one.
 
 ## Through MCP and the REST API
 
@@ -221,8 +209,7 @@ Retiring a metric takes it out of service for good: people who read the project 
 | List a project's metrics, each with its full definition; `q` keeps those whose name or a synonym contains it | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
 | Resolve the words in a question to a breakdown column's values | `metric_values` with `column` and `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
 | Read one metric | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
-| Define or edit a draft | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
-| Approve | `metric_review` with `action: approve` and the `content_digest` as `digest` | `POST /rest/v1/analyze/metric/approve` with `digest` |
+| Define or edit | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
 | Retire | `metric_review` with `action: retire` | `POST /rest/v1/analyze/metric/retire` |
 | Run | `metric_run` with `group_by`, `filters`, and the optional `period`, `compare`, `share`, `top` and `cumulative` | `POST /rest/v1/analyze/metric/run` with the same fields |
 | Earlier versions (Architects only) | | `GET /rest/v1/analyze/metric/flashback-versions` |
