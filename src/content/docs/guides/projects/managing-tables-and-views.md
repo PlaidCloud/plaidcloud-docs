@@ -124,8 +124,10 @@ The delete window shows when the table was last read, for example **Last read 3 
 | Warehouse | What is needed |
 | --- | --- |
 | Snowflake | Reads come from Access History, which Snowflake records up to about 3 hours late. The connection's role needs the `IMPORTED PRIVILEGES` grant on the `SNOWFLAKE` database. |
-| Databricks | The connection's identity needs `USE` and `SELECT` on `system.access`. |
+| Databricks | Reads come from the lineage table, which Databricks also records with a delay, so a recent read may not show yet. The connection's identity needs `USE CATALOG`, `USE SCHEMA`, and `SELECT` on the `system` catalog. |
 | PlaidCloud Lakehouse | Read history is not yet available. The window shows **Read history incomplete**. |
+
+When you connect your warehouse, [the connection check](/guides/connections/external-lakehouse/#3-check-then-use-it) lists any of these grants that are missing, each with the statement to run.
 
 When PlaidCloud can't read the whole history, the line says **Read history incomplete** and never reports "no reads" in its place. Anyone with direct SQL access to your warehouse can set a session tag that changes how their own reads are labelled.
 
