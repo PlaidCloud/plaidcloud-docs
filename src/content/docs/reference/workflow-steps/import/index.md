@@ -18,6 +18,7 @@ The same holds before a step runs. **Populate** on a file import's mapping, and 
 - [Import Archive](/reference/workflow-steps/import/import-archive/)
 - [Import Avro](/reference/workflow-steps/import/import-avro/)
 - [Import CSV](/reference/workflow-steps/import/import-csv/)
+- [Import Delta Lake](/reference/workflow-steps/import/import-delta/) — set with an AI assistant or the REST API
 - [Import Db2 Extract](/reference/workflow-steps/import/import-db2-extract/)
 - [Import dBASE](/reference/workflow-steps/import/import-dbf/)
 - [Import Excel](/reference/workflow-steps/import/import-excel/)

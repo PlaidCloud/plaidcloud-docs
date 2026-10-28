@@ -31,6 +31,8 @@ Workflow steps that transform project tables — joins, unions, filters, lookups
 - [Table Drop Columns](/reference/workflow-steps/tables/table-drop-columns/)
 - [Table Hierarchy Closure](/reference/workflow-steps/tables/table-hierarchy-closure/)
 - [Table JWT Encode](/reference/workflow-steps/tables/table-jwt-encode/)
+- [Table KNIME Random Sample](/reference/workflow-steps/tables/table-knime-random-sample/)
+- [Table KNIME Rule Engine](/reference/workflow-steps/tables/table-knime-rule-engine/)
 - [Table Period Spine](/reference/workflow-steps/tables/table-period-spine/)
 - [Table Promote Header](/reference/workflow-steps/tables/table-promote-header/)
 - [Table Restore to Timestamp](/reference/workflow-steps/tables/table-restore-timestamp/)

@@ -32,9 +32,10 @@ You do not choose the route; each step type has one. The distinction matters whe
 you are sizing a job: SQL-route steps scale with the warehouse, engine-route steps
 scale with the workflow pod.
 
-## Load Geometry
+## Load and Write Geometry
 
 - [Spatial File Import](/reference/workflow-steps/spatial/spatial-file-import/) — read a MapInfo `.TAB`, ESRI `.shp`, `.kml`, or `.geojson` file and its sidecars
+- [Spatial File Export](/reference/workflow-steps/spatial/spatial-file-export/) — write WKT geometry and its attributes to a shapefile, GeoJSON, GeoPackage, KML, GML, or MapInfo file
 - [Geometry in SQL](/reference/workflow-steps/spatial/spatial-sql-recipes/) — build points from longitude/latitude columns
 
 ## Match and Measure
@@ -43,6 +44,7 @@ scale with the workflow pod.
 - [Spatial Match](/reference/workflow-steps/spatial/spatial-match/) — pair rows whose geometry intersects, is within, or contains
 - [Spatial Match (Intersect / Unmatched)](/reference/workflow-steps/spatial/spatial-match-executor/) — the same match, emitting the overlap geometry or the rows that did not match
 - [Spatial Info](/reference/workflow-steps/spatial/spatial-info/) — area, length, centroid, and bounding rectangle, measured geodesically
+- [Spatial Reproject](/reference/workflow-steps/spatial/spatial-reproject/) — transform geometry from one coordinate reference system to another
 
 ## Reshape Geometry
 
