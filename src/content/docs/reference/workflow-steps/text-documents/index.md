@@ -10,6 +10,7 @@ Workflow steps that pull text out of documents and analyze it. Each runs in the 
 - [PDF Text Extract](/reference/workflow-steps/text-documents/document-pdf-extract/)
 - [Image OCR](/reference/workflow-steps/text-documents/image-ocr/)
 - [Document Read Blob](/reference/workflow-steps/text-documents/document-blob-extract/)
+- [Document Write Blob](/reference/workflow-steps/text-documents/document-blob-write/)
 - [PDF to Text](/reference/workflow-steps/text-documents/document-pdf-text/)
 
 ## Text Analysis
