@@ -21,7 +21,7 @@ conn = PlaidConnection(project_id="<your-project-id>")
 
 That's all the setup you need. You do **not** supply a token, username, or password — the connection authenticates as the signed-in viewer automatically. Find your project's id in the project's URL or its settings page.
 
-> **Name your project in code.** There is no project setting in the publish dialog — a panel app reads whichever project you name in `PlaidConnection(project_id=...)`. A bare `PlaidConnection()` with no project will fail when it tries to read data; always pass `project_id`. (To read from more than one project, open a connection per project.)
+> **Name your project.** An app published with a project in the **Project** picker reads that project by default, and the [Data API](/guides/panel-apps/data-api/) uses it for `table("name")`. For an app with no project, pass `project_id` to `PlaidConnection` as above; a bare `PlaidConnection()` has no project to read.
 
 ### Read a Table
 
