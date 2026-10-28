@@ -129,7 +129,7 @@ These are the only known differences from KNIME.
 
 - **Crosstab.** Converts to [Table: Pivot](/reference/workflow-steps/tables/table-pivot/). A few settings combinations give results that differ from KNIME.
 - **Loop End (Column Append).** Converts to [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/). A few settings combinations give results that differ from KNIME.
-- **Random draws.** Row Sampler, Table Partitioner, and Equal Size Sampling use the PlaidCloud random generator, so the rows they select can differ from KNIME's. The conversion warns where this applies.
+- **Random draws.** Row Sampler, Table Partitioner, and Equal Size Sampling make KNIME's own random draw with [Table: KNIME Random Sample](/reference/workflow-steps/tables/table-knime-random-sample/), so a node with a seed selects the same rows as in KNIME. The draw takes a table of at most 10,000,000 rows; a larger table fails the step.
 
 ## Related Guides
 

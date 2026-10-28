@@ -18,5 +18,8 @@ Workflows are the automation unit in PlaidCloud — orchestrate imports, transfo
 - [Tune Alteryx Imports](/guides/workflows/troubleshoot-alteryx-imports/)
 - [Validate Alteryx Reports And Artifacts](/guides/workflows/validate-alteryx-reports-and-artifacts/)
 - [Migrate Spatial Alteryx Workflows](/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Migrate KNIME Workflows](/guides/workflows/migrate-knime-workflows/)
+- [Migrate Prophecy Projects](/guides/workflows/migrate-prophecy-projects/)
+- [Migrate Savant Analyses](/guides/workflows/migrate-savant-analyses/)
 - [Create A Macro](/guides/workflows/create-a-macro/)
 - [Run A Workflow](/guides/workflows/run-a-workflow/)
