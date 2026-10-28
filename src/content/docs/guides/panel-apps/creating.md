@@ -81,6 +81,8 @@ PlaidCloud installs these with `pip` when it builds the image. Common visualizat
 > - **The app runs as a non-root user on a read-only filesystem.** Only `/tmp` is writable, so write any temporary files there (most libraries already honor `$TMPDIR`).
 > - **Don't hardcode the port, URL prefix, or host.** PlaidCloud assigns them and injects them at deploy time — just call `.servable()`.
 
+To get the PlaidCloud look and ready-made filters, grids and charts, build your app with [the Panel app kit](/guides/panel-apps/app-kit/).
+
 ### Set the Theme: Light, Dark, or a Toggle
 
 Server apps render in PlaidCloud's modern **Fast** design by default — a clean, Fluent-style look applied platform-wide. In the publish dialog, **Design** controls that platform layer:
@@ -146,6 +148,7 @@ Your repository must be reachable through a **git connection** in PlaidCloud. If
    - **App Name** — the display name shown in the list.
    - **URL Slug** — both the app's URL and its internal name, so it must be a valid DNS label: lowercase letters, digits, and hyphens, starting with a letter, 40 characters or fewer (for example, `sales-dashboard`). The dialog checks this before you publish.
    - **Memo** — an optional description.
+   - **Project** — the project that owns the app. It supplies the app's [branding](/guides/panel-apps/branding/) and is the default project for its tables. You can't change it here after publishing; use [Assign](/guides/panel-apps/branding/#for-existing-apps).
 3. Under **Git Connection and Publish Watcher**:
    - **Git Connection** — the connection that holds your app's repository.
    - **Branch** — the branch to build from. Pushes to this branch rebuild and redeploy the app automatically.
