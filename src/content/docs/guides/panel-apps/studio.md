@@ -1,6 +1,6 @@
 ---
 title: Panel Studio
-description: Create, edit, preview and publish Panel apps without leaving PlaidCloud — start from a blank app, a table, a view or a template, then Save, Preview and Publish.
+description: Create, edit, preview and publish Panel apps without leaving PlaidCloud — then restore an earlier version, read the app's usage and speed, set up alerts and digests, list it in the gallery and pin it to Home.
 sidebar:
   order: 3
 ---
@@ -16,7 +16,7 @@ To start a new app, choose **Create app** in either place.
 
 ## Create an App
 
-The **Create app** dialog starts you from one of four places:
+The **Create app** dialog starts you from one of five places:
 
 | Start from | You get |
 |---|---|
@@ -24,6 +24,7 @@ The **Create app** dialog starts you from one of four places:
 | **Table** | An app built on the table you pick. |
 | **View** | The same, built on a project view. |
 | **Template** | A ready-made app from the [Panel App Kit](/guides/panel-apps/app-kit/#start-from-a-template). |
+| **From the gallery** | A copy of an app your workspace has listed in the [app gallery](/guides/panel-apps/gallery/). |
 
 Name the app, pick its **Project**, and choose **Create**. Studio opens the new app with its files listed on the left.
 
@@ -77,7 +78,42 @@ If someone else published a change after you opened the app, Studio reports a co
 
 The **Build** tab shows the status of the latest build, and updates as it runs. When a build fails, the tab lists each error with its file and line number, so you can go straight to the line. Dependency problems in `requirements.txt` come with a hint about the fix.
 
+Errors and warnings are also marked on their lines in the editor, so you see a problem where it is.
+
 For what each status means once the app is published, see [Using a Panel App](/guides/panel-apps/using/#build-status-server-apps).
+
+## History and Restore
+
+The **History** tab lists every published version of the app, newest first, with its build status. Choose **Load more** to see older ones.
+
+To go back to an earlier version, choose **Restore** on it and confirm. The restored version becomes the live app and rebuilds. Your unsaved draft is not lost: it stays in the draft and goes live on top of the restored version the next time you publish. If the app already matches that version, Studio says so and changes nothing. If someone published while you were restoring, Studio restores nothing and asks you to try again.
+
+## Insights
+
+The **Insights** tab shows how people use the app and how quickly it responds. Choose the last 7, 14 or 30 days.
+
+| Section | Shows |
+|---|---|
+| **Views per day** | How many times the app was opened each day. |
+| **Page load** | The median load time, and the time that 95 percent of loads beat, from the page loads in the period. |
+| **Slowest queries** | The queries that took longest, with how often they ran and their median, slow-end and slowest times. |
+| **Errors** | What went wrong in the period, by the kind of error and where in the app it happened. |
+
+When a period holds more activity than Insights can read, it says the figures are partial. When page loads go over the app's [performance budget](/guides/panel-apps/app-kit/#performance-budgets), Insights warns you how many did and which queries were slow. Insights never shows the data a query returned or the names of the people who opened the app.
+
+Both tabs need the app to be assigned to a project; an unassigned app shows a prompt to assign it.
+
+## Alerts and Digests
+
+Choose **Alerts & Digests** to set up notifications that watch a number in the app's data and tell you when it crosses a limit, or send a summary on a schedule. See [Alerts and Digests](/guides/panel-apps/alerts-and-digests/).
+
+## List an App in the Gallery
+
+Choose **Gallery…** to list the app as a template anyone who can view its project can create their own app from, or to take it out of the gallery. See [The App Gallery](/guides/panel-apps/gallery/).
+
+## Pin to Home
+
+Choose **Pin to Home** to add the app to the project's **Home** board, and **Unpin from Home** to remove it.
 
 ## Delete an App
 
@@ -87,4 +123,6 @@ Deleting a Panel app asks you to confirm first. In **My Panel Apps**, use the **
 
 - [Build Panel Apps With Weave](/guides/panel-apps/build-with-weave/) — describe the app and approve the exact change.
 - [The Panel App Kit](/guides/panel-apps/app-kit/) — the components Studio's table, view and template starts use.
+- [Alerts and Digests](/guides/panel-apps/alerts-and-digests/) — notify people when a number crosses a limit, or on a schedule.
+- [The App Gallery](/guides/panel-apps/gallery/) — share an app as a starting point for others.
 - [Using a Panel App](/guides/panel-apps/using/) — logs, usage and rebuilds after you publish.
