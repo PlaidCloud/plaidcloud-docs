@@ -23,6 +23,7 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export To Google Spreadsheet](/reference/workflow-steps/export/export-to-google-spreadsheet/)
 - [Export To HDF](/reference/workflow-steps/export/export-to-hdf/)
 - [Export To JSON](/reference/workflow-steps/export/export-to-json/)
+- [Export to ORC](/reference/workflow-steps/export/export-to-orc/)
 - [Export to Parquet](/reference/workflow-steps/export/export-to-parquet/)
 - [Export to PDF](/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/reference/workflow-steps/export/export-to-table-archive/)

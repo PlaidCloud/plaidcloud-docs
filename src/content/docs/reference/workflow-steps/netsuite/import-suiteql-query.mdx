@@ -1,0 +1,112 @@
+---
+title: "NetSuite: Import SuiteQL Query"
+description: Run your own NetSuite SuiteQL query in a workflow and load the result into a typed project table, with date windows and paging handled for you.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Runs a SuiteQL query you write against NetSuite over your [NetSuite connection](/guides/connections/netsuite/) and loads the result into a project table. Use it for data the canned import steps don't cover — a custom record, a saved-search-style report, or a join shaped for your own model.
+
+The step reads through the same layer as the other [NetSuite import steps](/reference/workflow-steps/netsuite/): it refreshes the OAuth token, reads large results in batches, retries transient errors and splits a long date range into windows, so you write only the query. The [Data Foundation](/guides/projects/data-foundation-enterprise-profitability/) Load workflow uses this step for its NetSuite reads.
+
+## Configuration
+
+The step has one tab, **Import Parameters**.
+
+### Source and Target
+
+| Field | Required | Notes |
+|---|---|---|
+| NetSuite Connection | Yes | The NetSuite connection to read through. NetSuite connections are managed in **Tools > Connections**. |
+| Environment | No | The connection environment to use, such as production or sandbox. |
+| Target Table | Yes | The project table the result is written to. It is overwritten on every run. |
+
+### SuiteQL Query
+
+The query to run. It can use four placeholders, each replaced by the matching value under **Placeholder Values and Paging**. PlaidCloud checks each value and writes it into the query as a literal of the right kind, so you don't add quotes or a `TO_DATE` around a placeholder.
+
+| Placeholder | Replaced by | Written as |
+|---|---|---|
+| `{subsidiary_id}` | **Subsidiary ID** | A whole number |
+| `{posting_period_id}` | **Posting Period ID** | A whole number |
+| `{start_date}` | **Start Date**, or the start of the current window | A date |
+| `{end_date}` | **End Date**, or the end of the current window | A date |
+
+Any other word in braces is refused, and so is a placeholder the query uses while its value is blank.
+
+Write the query so that it:
+
+- **Ends with `ORDER BY` a unique key.** NetSuite returns a large result in batches, and without a stable sort the batches can skip or repeat rows. Sort on an internal ID or another key that is unique per row. A query without `ORDER BY` stops and asks you to add one.
+- **Returns dates as text** with `TO_CHAR(date, 'YYYY-MM-DD')`. SuiteQL otherwise returns dates in the account's display format.
+- **Filters one date column between `{start_date}` and `{end_date}`** when you read a date range. Filter on a single date column so that each row falls in exactly one window. If you set a Start Date or End Date, the query must use its placeholder.
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### Result Columns
+
+Name each column the query returns and give it a type. Names are matched to the query's column aliases, ignoring case. Use the add and remove buttons above the grid to manage the list.
+
+| Column | Notes |
+|---|---|
+| Column Name | The query's column alias. Every result column needs a name. |
+| Type | **Text** (the default), **Integer**, **Big Integer**, **Small Integer**, **Tiny Integer**, **Serial**, **Big Serial**, **Decimal**, **Numeric**, **Currency**, **Double**, **Float**, **Boolean**, **Date**, **Timestamp** or **UUID**. |
+
+Add at least one result column. Columns land in the target table under the names you give here. SuiteQL returns every value as text; the type tells PlaidCloud how to store it. Type amounts as **Currency** or **Decimal**, dates returned with `TO_CHAR` as **Date** or **Timestamp**, and `T`/`F` flags as **Boolean**.
+
+### Placeholder Values and Paging
+
+| Field | Default | Notes |
+|---|---|---|
+| Subsidiary ID | blank | The NetSuite subsidiary internal ID used for `{subsidiary_id}`. |
+| Posting Period ID | blank | The NetSuite posting period internal ID used for `{posting_period_id}`. |
+| Start Date | blank | `YYYY-MM-DD`. Used for `{start_date}`. Must not be after End Date. |
+| End Date | blank | `YYYY-MM-DD`. Used for `{end_date}`. |
+| Window Days | 90 | With both Start Date and End Date set, the range is read in windows of this many days, from 1 to 3650. The query runs once per window with that window's dates, and the results are combined. |
+| Requests per Minute | 0 | Paces the step's calls to NetSuite, to leave room for other integrations on the same account. `0` means no limit. |
+
+Each of these values can use a variable.
+
+## Validation
+
+The step can't be saved until these are set:
+
+- **NetSuite Connection** — "NetSuite connection is required."
+- **Target Table** — "Target table is required."
+- **SuiteQL Query** — "A SuiteQL query is required."
+- **Result Columns** — "Add at least one result column." and "Every result column needs a name."
+
+## Notes
+
+- NetSuite caps one query at about 100,000 rows. A query or window that would go past it stops with a message telling you to narrow the date range or other filters, rather than loading a cut-off result. Lower **Window Days** to keep each window under the cap.
+- The step refreshes its NetSuite token as needed and retries a throttled or failed request after a pause.
+- The target table is replaced in full on every run. Keep the `WHERE` clause to the slice you need, such as a rolling date window, rather than reading all of history each time.
+- A query that returns no rows finishes with a warning and leaves the target table empty, so the steps after it still run.
+- Error messages from NetSuite are shown with credentials, tokens and keys removed, so they can carry less of NetSuite's original wording.
+
+<Aside type="caution">
+On `transaction` and `transactionline`, `amount` is in each transaction's own currency. A total across subsidiaries with different currencies is not a consolidated figure. Select consolidated or converted amounts when you total across subsidiaries.
+</Aside>
+
+## Related
+
+- [NetSuite Steps](/reference/workflow-steps/netsuite/)
+- [Connect to NetSuite](/guides/connections/netsuite/)
+- [NetSuite SuiteQL Query Examples](/guides/connections/netsuite-financial-queries/)
+- [Data Foundation: Enterprise Profitability](/guides/projects/data-foundation-enterprise-profitability/)

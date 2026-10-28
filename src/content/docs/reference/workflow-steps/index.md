@@ -10,7 +10,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Data Movement
 
 - [Import](/reference/workflow-steps/import/) — pull data in (27 source types: CSV, Excel, Parquet, JSON, SQL, BigQuery, MongoDB, Kafka, SPSS, Singer sources, and more)
-- [Export](/reference/workflow-steps/export/) — push data out (13 destination types: CSV, XML, SQL, Excel, Google Sheets, MongoDB, Kafka, table archive, and more)
+- [Export](/reference/workflow-steps/export/) — push data out (23 destination types: CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, table archive, and more)
 
 ### Table Transformations
 
@@ -47,7 +47,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Enterprise Integrations
 
 - [Agent](/reference/workflow-steps/agent/) — PlaidLink Agent operations for on-premises resources
-- [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, and master data; post journal entries to NetSuite
+- [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, master data, or your own [SuiteQL query](/reference/workflow-steps/netsuite/import-suiteql-query/); post journal entries to NetSuite
 - [Acumatica](/reference/workflow-steps/acumatica/) — import master and transactional entities; post journal transactions, invoices, bills, and payments
 - [Business Central](/reference/workflow-steps/business-central/) — import OData entities; post general journal lines
 - [Xero](/reference/workflow-steps/xero/) — import Accounting API entities; post manual journals, invoices, bills, payments, and credit notes

@@ -1,0 +1,120 @@
+---
+title: NetSuite Access for Data Foundation
+description: What a NetSuite administrator sets up for PlaidCloud Data Foundation — a read-only role, OAuth 2.0 integration and certificate — and what to send back.
+sidebar:
+  label: NetSuite Access for Data Foundation
+  order: 6
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/guides/projects/data-foundation-enterprise-profitability/) reads NetSuite with OAuth 2.0 machine-to-machine access: a read-only role, an integration record that uses the client credentials grant, and a certificate. This page is for the NetSuite administrator who sets that up, and for the PlaidCloud user who asks them to.
+
+PlaidCloud only reads data. Nobody sends a password, a token secret or a private key by email.
+
+## Before You Start: Create the Certificate
+
+The PlaidCloud user's team creates an RSA key pair and keeps the private key. Only the public certificate goes to NetSuite. For example, with OpenSSL:
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+Attach `plaidcloud_netsuite_public.pem` to the request you send the administrator. Keep `plaidcloud_netsuite.pem` for the **Private key** field in PlaidCloud.
+
+## Send the Access Request
+
+On the project's **Foundation** tab, choose **Create a new connection** under **NetSuite connection**. The form shows the full request. Click **Copy request** to paste it into your own message, or **Email request** to open it in your mail program with the subject "NetSuite access for PlaidCloud." Attach the public certificate.
+
+## What the NetSuite Administrator Sets Up
+
+<Steps>
+
+1. **Enable features.** Under **Setup > Company > Enable Features > SuiteCloud**, enable:
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook (needed for SuiteQL)
+
+2. **Create a read-only role**, for example "PlaidCloud Read Only", with these permissions:
+
+   | Permission | Level |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   Give the role access to every subsidiary PlaidCloud reports on.
+
+3. **Create an integration record.** Under **Setup > Integration > Manage Integrations > New**:
+
+   - **Name:** PlaidCloud
+   - **Authentication:** tick **Client Credentials (Machine to Machine) Grant** only — no token-based authentication and no authorization code grant.
+   - **Scopes:** REST Web Services and RESTlets.
+
+   Save it and copy the **Client ID**. NetSuite shows it once, on the confirmation page.
+
+4. **Map the certificate.** Under **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New**:
+
+   - **Entity:** the user PlaidCloud acts as.
+   - **Role:** the role from step 2.
+   - **Application:** PlaidCloud, the integration from step 3.
+   - **Certificate:** the public certificate attached to the request.
+
+   Save it and copy the **Certificate ID**.
+
+</Steps>
+
+## What to Send Back
+
+| The administrator sends | Entered in PlaidCloud as |
+|---|---|
+| The **Account ID**, from **Setup > Company > Company Information** — for example `1234567`, or `1234567_SB1` for a sandbox | **Account ID** |
+| The **Client ID** from step 3 | **Client ID** |
+| The **Certificate ID** from step 4 | **Certificate ID** |
+| The subsidiaries PlaidCloud may read | Chosen under **Subsidiaries** in PlaidCloud |
+
+The private key that matches the certificate stays with the PlaidCloud user's team. They paste it into PlaidCloud themselves as the **Private key**.
+
+<Aside type="caution">
+Enter the Account ID exactly as NetSuite shows it, including the `_SB1` suffix for a sandbox. PlaidCloud works out the NetSuite address from it.
+</Aside>
+
+## Check the Access
+
+Back in PlaidCloud, enter the values and click **Test connection**. Each dataset shows as **Readable**, **Missing permission** or **Error**:
+
+| Dataset | Permission it needs |
+|---|---|
+| Sales lines | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| Inventory balances | Lists: Items and Locations (View) |
+| Budgets | Transactions: Budget (View) |
+| Statistical accounts | Reports: General Ledger (View) |
+| Accounting periods | Setup: Accounting Periods (View) |
+| Subsidiaries | Lists: Subsidiaries (View) |
+| Exchange rates | Lists: Consolidated Exchange Rates (View) |
+| Classes | Lists: Classes (View) |
+| Locations | Lists: Locations (View) |
+
+When a dataset is missing, the test names the permissions to add. Ask the administrator to add them to the role and test again. Budgets are optional: a NetSuite account that doesn't use budgets still loads everything else. Exchange rates, classes and locations don't stop a load either: if one can't be read, the load keeps what it last read. Without exchange rates, supply the rates in a **Currency rates** file instead.
+
+## Related
+
+- [Data Foundation: Enterprise Profitability Template](/guides/projects/data-foundation-enterprise-profitability/)
+- [Connect to NetSuite](/guides/connections/netsuite/)
+- [NetSuite REST Connector](/reference/connectors/rest/netsuite/)

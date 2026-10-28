@@ -35,6 +35,8 @@ With **Response** set to `Text (one row per request)`, two more fan-out options 
 * **Response body** — `As returned` (default), `Visible page text` writes the visible text of an HTML page in `DownloadData` instead of its markup, and `Raw bytes (Base64)` writes the body's bytes exactly as the server sent them, base64-encoded, for a file or other binary response.
 * **Keep polling while the response matches** — for an API that answers "still working" until a job finishes. Give a **response path** (`$` for the whole response, then `.name`, `[0]`, `['name']` or `["name"]`), an operator (`==`, `!=`, `<`, `<=`, `>`, or `>=`), and a value with its type (`Text`, `Number`, `True/False`, or `Empty`). Each row's request is sent again while its response matches, every **N seconds** (1 to 600, 5 by default) for up to **M requests per row** (1 to 1000, 60 by default); a row still matching after the last request fails.
 
+To send binary content, such as a file or audio stored as base64 text in a column, set `body_base64` with an AI assistant or the REST API. With one request per table row, the body, after its `{{row.column}}` tokens are filled, is read as base64 text and the bytes it decodes to are sent.
+
 `{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
 
 The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor.
