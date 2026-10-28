@@ -21,11 +21,11 @@ Specify any number of email recipients. Acceptable delimiters include semicolon 
 
 ### Cc, Bcc, and Reply-To
 
-**Cc** (`cc_address`), **Bcc** (`bcc_address`) and **Reply-To** (`reply_to`) take addresses formatted like the recipients, and accept Project and Workflow Variables. Cc and Bcc recipients get the same message, and replies go to the Reply-To address. They apply to plain and Jinja template bodies. Set them with an AI assistant or the REST API.
+**Cc** (`cc_address`), **Bcc** (`bcc_address`) and **Reply-To** (`reply_to`) take addresses formatted like the recipients, and accept Project and Workflow Variables. Cc and Bcc recipients get the same message, and replies go to the Reply-To address. They apply to plain and Jinja template bodies. Set them in **More Email Options** on the **Message** tab.
 
 ### One Email for Each Row
 
-Set `request_source` to `table` and name a `driver_table` to send one email for each row of a table instead of a single email. `row_limit` caps the rows used and defaults to 10,000. The driver must be a table, not a view.
+In **More Email Options**, set **Send** (`request_source`) to **One email per row of a table** (`table`) and choose a **Driver Table** (`driver_table`) to send one email for each row of a table instead of a single email. **Most Rows to Email** (`row_limit`) caps the rows used and defaults to 10,000. The driver must be a table, not a view.
 
 Use `{{row.column}}` in the addresses, subject, message and attachment path to fill in each row's value. A column the driver table doesn't have fails the step. A row with no To address sends nothing for that row and the step finishes with a warning that names it.
 
@@ -52,11 +52,11 @@ Attaching files to emails is very simple. Select a file or folder from Document 
 
 
 
-To attach several documents, set `attachments` with an AI assistant or the REST API, each `{account, path}`; they are sent with the attachment you select, and a path can use variables and row tokens the same way.
+To attach several documents, check **Add Attachment to Email** and list them under **More Attachments** (`attachments`) in **More Email Options**, each with an **Account ID** and a **Document Path**; they are sent with the attachment you select, and a path can use variables and row tokens the same way.
 
 ### Priority and Plain Text
 
-An AI assistant or the REST API can also set `priority` (`low`, `normal` or `high`) to mark the message's priority, and `content_type` to `text` to send the body as plain text instead of HTML (`html`, the default).
+In **More Email Options**, **Priority** (`priority`) marks the message **Low**, **Normal** or **High** (`low`, `normal`, `high`), and **Send As** (`content_type`) set to **Plain text** (`text`) sends the body as plain text instead of **HTML** (`html`, the default).
 
 ### Body (Jinja Template)
 

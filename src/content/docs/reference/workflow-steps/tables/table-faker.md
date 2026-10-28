@@ -322,7 +322,7 @@ With this, when the pattern generator is run, you will recieve the following res
 
 ## Row Count From a Table
 
-To take the number of rows from data, set `rows_source` and `rows_column` with an AI assistant or the REST API. The step reads the number from the first row of `rows_source`, in the `rows_column` column, when it runs, in place of the row count you set. A missing value, or one below 1, generates no rows.
+To take the number of rows from data, set **Table Holding the Count** (`rows_source`) and **Column Holding the Count** (`rows_column`). The step reads the number from the first row of the table, in that column, when it runs, in place of the row count you set. A missing value, or one below 1, generates no rows.
 
 ## What's Checked When You Save
 
