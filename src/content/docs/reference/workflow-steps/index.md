@@ -10,7 +10,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 ### Data Movement
 
 - [Import](/reference/workflow-steps/import/) — pull data in (27 source types: CSV, Excel, Parquet, JSON, SQL, BigQuery, MongoDB, Kafka, SPSS, Singer sources, and more)
-- [Export](/reference/workflow-steps/export/) — push data out (13 destination types: CSV, XML, SQL, Excel, Google Sheets, MongoDB, Kafka, table archive, and more)
+- [Export](/reference/workflow-steps/export/) — push data out (23 destination types: CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, table archive, and more)
 
 ### Table Transformations
 

@@ -1,0 +1,353 @@
+---
+title: KNIME Conversion Matrix
+description: How PlaidCloud converts KNIME workflows into native Advanced workflows, with the status of each node and the few named edge cases.
+sidebar:
+  order: 9
+---
+
+<!-- STATUS SCHEME: this page uses EXACTLY three statuses — Full / Partial / Not supported. Do NOT reintroduce "coverage levels" (Fully Converts / Converts With Validation / etc.). See plaidcloud-docs/CLAUDE.md. Only a structural capability-mode gap is Partial; only a no-conversion-path node is Not supported. -->
+
+PlaidCloud converts KNIME workflows (`.knwf`) and workflow groups (`.knar`)
+into native Advanced workflows. The importer maps each KNIME node to a
+workflow step, project variable, or canvas object, and flattens metanodes and
+components, so a converted workflow runs cloud-native.
+
+98.5% of KNIME node configurations convert fully, and 205 of the 207 core
+node types are Full. To run a conversion, see
+[Migrate KNIME Workflows](/guides/workflows/migrate-knime-workflows/).
+
+Each node has a status:
+
+- **Full** — the node has a valid mapping to PlaidCloud steps.
+- **Partial** — the node converts for its common use, while one distinct
+  *capability mode* is not reproduced; the mode is named.
+- **Not supported** — no conversion; the node stays on the canvas as a named
+  placeholder and the capability is rebuilt natively instead.
+
+Older and deprecated variants of a node are listed under the node that
+replaces them.
+
+The few behaviors a converted workflow does not reproduce are listed under
+[Known Edge Cases](#known-edge-cases).
+
+A connector node becomes the PlaidCloud connection its steps run on — see
+[Connecting to External Systems](#connecting-to-external-systems).
+
+## Node Support
+
+Across the 207 core nodes: 205 Full, 2 Partial, 0 Not supported.
+
+### IO
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Compress Files/Folder | Full | Document steps | Compresses files and folders. |
+| CSV Reader | Full | [Import: CSV](/reference/workflow-steps/import/import-csv/) | Reads delimited text with the configured delimiter, quote, header, encoding, and column types. |
+| CSV Writer | Full | [Export: CSV](/reference/workflow-steps/export/export-to-csv/) | Writes the table as delimited text with the configured delimiter, quote, header, and encoding. |
+| Decompress Files | Full | Document steps | Decompresses files. |
+| Empty Table Creator | Full | Inline table input | Creates an empty table with a defined structure. |
+| Excel Reader | Full | [Import: Excel](/reference/workflow-steps/import/import-excel/) | Reads the selected sheet, range, header row, and column types. |
+| Excel Reader (XLS) | Full | [Import: Excel](/reference/workflow-steps/import/import-excel/) | Reads legacy .xls workbooks the same way as the Excel Reader. |
+| Excel Writer | Full | [Export: Excel](/reference/workflow-steps/export/export-to-excel/) | Writes the table to a sheet of an Excel workbook. |
+| Excel Writer (XLS) | Full | [Export: Excel](/reference/workflow-steps/export/export-to-excel/) | Writes the table to an Excel workbook. |
+| File Reader | Full | [Import: CSV](/reference/workflow-steps/import/import-csv/) | Reads delimited text files; layouts beyond a single delimiter and header convert as the equivalent Import: CSV settings. |
+| Fixed Width File Reader | Full | [Import: CSV](/reference/workflow-steps/import/import-csv/) | Reads fixed-width text files into a table. |
+| GET Request | Full | REST Request step | Issues a GET request and returns the response. |
+| Google Ads | Full | REST step | Calls the Google Ads API. |
+| JSON Reader | Full | [Import: JSON](/reference/workflow-steps/import/import-json/) | Reads a JSON file into a table. |
+| Line Reader | Full | [Import: CSV](/reference/workflow-steps/import/import-csv/) | Reads each line of a text file into a row. |
+| POST Request | Full | REST Request step | Issues a POST request and returns the response. |
+| Send Email | Full | Notify: Email step | Sends an email from the workflow. |
+| Table Creator | Full | Inline table input | Creates the typed rows entered in the node dialog as an inline table. |
+| Table Reader | Full | [Import: Table Archive](/reference/workflow-steps/import/import-archive/) | Reads a KNIME table file that ships with the workflow archive. |
+| Table Writer | Full | [Export: Table Archive](/reference/workflow-steps/export/export-to-table-archive/) | Writes the table to a KNIME table file. |
+
+### Manipulation
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Binner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Binner node. |
+| Binner (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Binner (Apply) node. |
+| Binner (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Binner (Dictionary) node. |
+| Bootstrap Sampling | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter | Samples rows with replacement. |
+| Case Converter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the selected text columns to upper or lower case. |
+| Category to Number | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Category to Number node. |
+| Category to Number (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Category to Number (Apply) node. |
+| Cell Extractor | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Extracts one cell as a project variable or column. |
+| Cell Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Splits a text column into several columns by delimiter. |
+| Cell Splitter By Position | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Splits a text column into several columns at fixed positions. |
+| Cell Updater | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Cell Updater node. |
+| Column Appender | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) on row number | Appends the columns of several tables side by side. |
+| Column Auto Type Cast | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column types | Detects and applies the narrowest type for each text column. |
+| Column Combiner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Concatenates the selected columns into one text column with a delimiter and quote. |
+| Column Comparator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Column Comparator node. |
+| Column Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a column list | Keeps or drops columns by name, pattern, or type. |
+| Column Merger | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Takes the first non-missing value across two columns, or the primary with a fallback. |
+| Column Name Extractor | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Column Name Extractor node. |
+| Column Name Replacer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames | Renames columns by search-and-replace or regular expression. |
+| Column Renamer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column renames | Renames the selected columns. |
+| Column Renamer (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Column Renamer (Dictionary) node. |
+| Column Resorter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column order | Reorders columns. |
+| Column Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a column list (two steps) | Splits columns into two tables by selection. |
+| Columns to Collection | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Combines columns into one list column. |
+| Constant Value Column Appender | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a constant column | Appends columns holding a constant, variable, or missing value. |
+| Constant Value Column Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Constant Value Column Filter node. |
+| Constant Value Row Appender | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Constant Value Row Appender node. |
+| Correlation Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Correlation Filter node. |
+| Denormalizer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Denormalizer node. |
+| Domain Calculator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Domain Calculator node. |
+| Double to Integer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts decimal columns to integers by floor, ceiling, or rounding. |
+| Duplicate Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with row numbering | Removes or flags duplicate rows by the selected columns, keeping the first, last, minimum, maximum, or most frequent row. |
+| Edit Nominal Domain | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Nominal Domain node. |
+| Edit Nominal Domain (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Nominal Domain (Dictionary) node. |
+| Edit Numeric Domain | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Numeric Domain node. |
+| Equal Size Sampling | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter | Samples every class of a column down to the size of the smallest class. |
+| Expression Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Filters rows with an expression. |
+| Extract Table Spec | Full | Column metadata written as a table | Writes the column names and types of the input table as a table. |
+| Filter Apply | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Filter Apply node. |
+| Filter Apply Row Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Filter Apply Row Splitter node. |
+| Lag Column | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with window expressions | Appends the value from a previous row, per lag step and interval. |
+| Linear Correlation | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Linear Correlation node. |
+| Low Variance Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Low Variance Filter node. |
+| Missing Value | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Replaces missing values by type with a fixed value, mean, median, previous or next value, or most frequent value. |
+| Missing Value (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Missing Value (Apply) node. |
+| Missing Value Column Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Missing Value Column Filter node. |
+| Nominal Value Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Keeps rows whose chosen column holds one of the selected values. |
+| Nominal Value Row Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits rows by the selected values of a column. |
+| Normalizer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Normalizer node. |
+| Normalizer (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Normalizer (Apply) node. |
+| Number Rounder | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Rounds numbers by decimal places or significant digits using the selected rounding mode. |
+| Number to Category (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Number to Category (Apply) node. |
+| Number to String | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts numbers to text. |
+| Numeric Outliers | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Numeric Outliers node. |
+| Numeric Outliers (Apply) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Numeric Outliers (Apply) node. |
+| Rank | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with window expressions | Ranks rows by the selected columns, optionally per group. |
+| Reference Column Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a column list | Keeps or drops the columns that also exist in a reference table. |
+| Reference Column Resorter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column order | Orders columns to match a reference table. |
+| Reference Column Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a column list (two steps) | Splits columns by whether they exist in a reference table. |
+| Reference Row Filter | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) / [Table: Anti Join](/reference/workflow-steps/tables/table-anti-join/) | Keeps or drops rows whose key appears in a second table. |
+| Reference Row Splitter | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) and [Table: Anti Join](/reference/workflow-steps/tables/table-anti-join/) | Splits rows by whether their key appears in a second table. |
+| Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Keeps or drops rows by column value, row number range, row ID pattern, or missing value test. |
+| Row Sampler | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter | Samples rows by absolute count, percentage, first rows, linear, or random draw, with optional stratification. |
+| Row Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits rows into matching and non-matching outputs using the Row Filter criteria. |
+| Row to Column Names | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Row to Column Names node. |
+| RowID | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with row numbering | Replaces or creates the row identifier from a column or a pattern. |
+| Rule-based Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Keeps rows that satisfy the first matching rule of a rule list. |
+| Rule-based Row Filter (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Filters rows by rules read from a second input table. |
+| Rule-based Row Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits rows by the first matching rule of a rule list. |
+| Rule-based Row Splitter (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits rows by rules read from a second input table. |
+| Shuffle | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sort order | Reorders rows randomly. |
+| Sorter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sort order | Sorts rows by the selected columns and directions. |
+| Split Collection Column | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Spreads a list column into separate columns. |
+| String Cleaner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Removes spaces, digits, punctuation, or special characters from text, and trims or changes case. |
+| String Replacer | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Replaces text matching a wildcard or regular expression. |
+| String Replacer (Dictionary) | Full | [Table: Lookup](/reference/workflow-steps/tables/table-lookup/) | Replaces text using a dictionary table. |
+| String Splitter (Regex) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Splits a text column into columns by regular-expression groups. |
+| String to Number | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Parses text into integer or decimal numbers with the configured separators. |
+| String to Number (PMML) | Full | [Table: Extract](/reference/workflow-steps/tables/table-extract/) | Converts to native PlaidCloud steps. |
+| Subset Matcher | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Subset Matcher node. |
+| Table Cropper | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Cropper node. |
+| Table Difference Finder | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Difference Finder node. |
+| Table Manipulator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Manipulator node. |
+| Table Partitioner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter (two steps) | Splits rows into two tables by count or percentage, taking the first rows, linear, or at random. |
+| Table Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits a table at a row number. |
+| Table Structure Creator | Full | Inline table input | Creates an empty table with defined column types. |
+| Table Updater | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Updater node. |
+| Top k Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sort order | Keeps the top k rows by sort criteria. |
+| Ungroup | Full | [Table: Melt](/reference/workflow-steps/tables/table-melt/) | Expands collection cells into rows. |
+
+### Join & Aggregate
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Column Aggregator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Aggregates across the selected columns of each row. |
+| Concatenate | Full | [Table: Union All](/reference/workflow-steps/tables/table-union-all/) / [Table: Union Distinct](/reference/workflow-steps/tables/table-union-distinct/) | Stacks tables by column name, keeping the intersection or the union of columns, with optional row ID handling. |
+| Cross Joiner | Full | [Table: Cross Join](/reference/workflow-steps/tables/table-cross-join/) | Pairs every row of the left table with every row of the right table. |
+| Crosstab | Partial | [Table: Pivot](/reference/workflow-steps/tables/table-pivot/) | Cross-tabulates two columns. Not yet reproduced: a few settings combinations whose results differ from KNIME. |
+| GroupBy | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | Groups rows and applies the aggregation methods to the selected columns, including count, sum, mean, median, mode, first, last, concatenate, and list. |
+| Joiner | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) / [Table: Outer Join](/reference/workflow-steps/tables/table-outer-join/) | Joins two tables on one or more key columns as inner, left, right, or full outer joins, with matched and unmatched outputs. |
+| Loop End (Column Append) | Partial | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) | Collects the iteration results side by side as appended columns. Not yet reproduced: a few settings combinations whose results differ from KNIME. |
+| Moving Aggregator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with window expressions | Computes moving aggregates over a window of rows. |
+| Pivoting | Full | [Table: Pivot](/reference/workflow-steps/tables/table-pivot/) | Pivots group and pivot columns into aggregated value columns, with optional totals. |
+| Row Aggregator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | Aggregates rows by a column's value. |
+| Set Operator | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) / [Table: Anti Join](/reference/workflow-steps/tables/table-anti-join/) / [Table: Union Distinct](/reference/workflow-steps/tables/table-union-distinct/) | Computes intersection, union, difference of two tables. |
+| Statistics | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | Computes column statistics. |
+| Transpose | Full | [Table: Melt](/reference/workflow-steps/tables/table-melt/) and [Table: Pivot](/reference/workflow-steps/tables/table-pivot/) | Swaps rows and columns using a melt followed by a pivot. |
+| Unpivot | Full | [Table: Melt](/reference/workflow-steps/tables/table-melt/) | Turns the selected columns into rows of a name column and a value column. |
+| Value Counter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with aggregation | Counts the occurrences of each value in a column. |
+| Value Lookup | Full | [Table: Lookup](/reference/workflow-steps/tables/table-lookup/) | Looks up values from a dictionary table. |
+
+### Expressions
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Column Expressions | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates column expressions into new or replaced columns. |
+| Expression | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates the Expression node into a new or replaced column. |
+| Math Formula | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates the Math Formula functions into a new or replaced column. |
+| Math Formula (Multi Column) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Applies one Math Formula expression to several columns. |
+| Math Formula (Variable) | Full | Project variables | Computes a numeric project variable from a Math Formula. |
+| Rule Engine | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates the first matching rule of a rule list into a new or replaced column. |
+| Rule Engine (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates rules read from a second input table into a column. |
+| Rule Engine Variable | Full | Project variables | Computes a project variable from the first matching rule. |
+| Rule Engine Variable (Dictionary) | Full | Project variables | Computes a project variable from rules read from a second table. |
+| String Manipulation | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Evaluates the String Manipulation functions into a new or replaced column. |
+| String Manipulation (Multi Column) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Applies one String Manipulation expression to several columns. |
+| String Manipulation (Variable) | Full | Project variables | Computes a text project variable from String Manipulation functions. |
+| Variable Expression | Full | Project variables | Computes project variables from expressions. |
+
+### Flow Control
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Active Branch Inverter | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Boolean Configuration | Full | Project variables | Becomes a true/false project variable holding the configured default. |
+| Boolean Widget | Full | Project variables | Becomes a true/false project variable holding the widget default. |
+| Breakpoint | Full | Step condition | Stops the branch when the configured condition on a variable or table holds. |
+| CASE Switch End | Full | Step condition on the chosen branch | Takes the data from whichever branch was kept. |
+| CASE Switch Start | Full | Step condition on the chosen branch | A selector known at conversion time keeps the chosen branch and prunes the others. |
+| Catch Errors (Data Ports) | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Catch Errors (Generic Ports) | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Catch Errors (Var Ports) | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Chunk Loop Start | Full | Set-based processing (no loop) | Processes all rows in one pass, equivalent to running every chunk, and numbers the chunks. |
+| Column List Loop Start | Full | Inline iteration copies | Repeats the loop body once per selected column when the column list is known at conversion time. |
+| Component Input | Full | Flattened workflow wiring | Component inputs are inlined; their ports are wired straight into the flattened workflow. |
+| Component Output | Full | Flattened workflow wiring | Component outputs are inlined; their ports are wired straight into the flattened workflow. |
+| Counting Loop Start | Full | Inline iteration copies | Repeats the loop body a convert-time-known number of times as inline copies. |
+| Create File/Folder Variables | Full | Project variables | Creates path variables. |
+| Double Configuration | Full | Project variables | Becomes a decimal project variable holding the configured default. |
+| Double Widget | Full | Project variables | Becomes a decimal project variable holding the widget default. |
+| Empty Table Switch | Full | Step condition on the chosen branch | Routes data by whether the input table is empty. |
+| End IF | Full | Step condition on the chosen branch | Takes the data from whichever branch was kept. |
+| Extract Table Dimension | Full | Project variables | Exposes row and column counts as variables. |
+| Extract Variables (Data) | Full | Project variables | Turns table columns into project variables. |
+| Group Loop Start | Full | Grouped loop body | Runs the loop body once per group when the body is safe to run on all groups at once. |
+| IF Switch | Full | Step condition on the chosen branch | A selector known at conversion time keeps the chosen branch and prunes the other. |
+| Inject Variables (Data) | Full | Project variables | Writes project variables into table columns. |
+| Integer Configuration | Full | Project variables | Becomes an integer project variable holding the configured default. |
+| Integer Widget | Full | Project variables | Becomes an integer project variable holding the widget default. |
+| Loop End | Full | [Table: Union All](/reference/workflow-steps/tables/table-union-all/) | Collects the rows of every iteration into one table. |
+| Merge Variables | Full | Project variables | Merges variable streams; the top port wins on a name clash. |
+| Quickform inputs and filters (legacy) | Full | Project variables | Becomes a project variable holding the input default; a filter keeps the default selection. |
+| String Configuration | Full | Project variables | Becomes a text project variable holding the configured default. |
+| String Widget | Full | Project variables | Becomes a text project variable holding the widget default. |
+| Table Column to Variable | Full | Project variables | Turns the values of one column into a list project variable. |
+| Table Row to Variable | Full | Project variables | Turns the first row of a table into project variables. |
+| Try (Data Ports) | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Try (Variable Ports) | Full | Step failure handling | Runs the guarded branch and takes the alternative output when it fails. |
+| Variable Creator | Full | Project variables | Creates the typed variables entered in the dialog as project variables. |
+| Variable Filter | Full | Project variables | Keeps or drops project variables by name or type. |
+| Variable to Table Column | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with constant columns | Appends project variables to a table as constant columns. |
+| Variable to Table Row | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with constant columns | Turns project variables into a one-row table. |
+
+### Date & Time
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Date Modifier | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Changes date parts or moves to period start or end. |
+| Date Rounder | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Rounds dates to a chosen period. |
+| Date&Time Difference | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Computes the difference between two dates or times in the chosen unit. |
+| Date&Time Part Extractor | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Extracts year, quarter, month, week, day, hour, minute, or similar parts into columns. |
+| Date&Time Range Creator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Generates a sequence of dates or times by interval and count or end. |
+| Date&Time Shift | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Shifts dates and times by a number of units. |
+| Date&Time to String | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Formats dates and times as text with the configured pattern. |
+| Date&Time-based Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Keeps rows whose date and time falls inside a range. |
+| Duration Part Extractor | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Extracts the parts of a duration into columns. |
+| Duration to Number | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts a duration to a number of the chosen unit. |
+| Duration to String | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Formats a duration as text. |
+| String to Date&Time | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Parses text into dates and times with the configured pattern. |
+| String to Duration | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Parses text into a duration. |
+| Time Modifier | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Changes time parts or moves to period start or end. |
+| Time Rounder | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Rounds times to a chosen period. |
+| Time Zone Modifier | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Sets or converts the time zone of a date and time. |
+| UNIX Timestamp to Date&Time | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts UNIX timestamps to dates and times. |
+
+### Other
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Agent Prompter | Full | LLM step | Runs the agent messages as an LLM step. |
+| Chat Model Prompter | Full | [AI step](/reference/workflow-steps/text-documents/nlp-ai/) with the prompt task | Answers the chat message. |
+| Color and format managers, Table Editor | Full | None needed; the rows pass through unchanged | Colors, display formats and view edits have no data effect, so the table passes through. |
+| Columns to JSON | Full | Table: JSON Parse step and column expressions | Builds JSON values from table columns. |
+| FAISS vector store | Full | AI step embed task and Vector Search | Embeds the documents and returns the nearest to each query. |
+| JSON Path | Full | Table: JSON Parse step | Extracts values from JSON by path. |
+| JSON to Table | Full | Table: JSON Parse step | Flattens JSON values into table columns. |
+| LLM connectors and authenticators | Full | The LLM connection of the AI step | The model and temperature move to the AI step that calls the model; credentials are chosen as a PlaidCloud LLM connection. |
+| LLM Prompter | Full | [AI step](/reference/workflow-steps/text-documents/nlp-ai/) with the prompt task | Answers the prompt in each row. |
+| Presidio | Full | [AI step](/reference/workflow-steps/text-documents/nlp-ai/) with the entity and prompt tasks | Finds and rewrites personal data with the LLM connection. |
+| Table to JSON | Full | Table: JSON Parse step and column expressions | Builds JSON values from table columns. |
+| Views, charts and color managers | Full | None needed; the node is dropped and listed in the conversion report | Dropped: visual-only, no data effect |
+| XPath | Full | Table: XML Parse step | Extracts values from XML by XPath. |
+
+## Expression Dialects
+
+KNIME has five expression languages — Expression, String Manipulation, Math Formula, Column Expressions, and Rule Engine. Their functions, operators, keywords, and constants convert to PlaidCloud expressions.
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Expression dialect: column expressions | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the column expressions functions, operators, and constants to PlaidCloud expressions. |
+| Expression dialect: expression | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the expression functions, operators, and constants to PlaidCloud expressions. |
+| Expression dialect: math formula | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the math formula functions, operators, and constants to PlaidCloud expressions. |
+| Expression dialect: rule engine | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the rule engine functions, operators, and constants to PlaidCloud expressions. |
+| Expression dialect: string manipulation | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Converts the string manipulation functions, operators, and constants to PlaidCloud expressions. |
+
+## Flow Control and Archive Formats
+
+Flow variables, variable overrides, switches, and loops convert where their values are known at conversion time. The loader accepts every observed archive layout — workflow versions, metanodes, components (inlined from the body stored in the archive), and group archives.
+
+| Node | Status | PlaidCloud Equivalent | Converts |
+| --- | --- | --- | --- |
+| Flow control, variables, and loops | Full | Project variables, pruned switches, and expanded loops | Flow variables, variable overrides, switches, and loops convert where their values are known at conversion time. |
+| Archive formats | Full | Workflow import | Reads every supported KNIME archive layout: workflow versions, metanodes, components, and group archives. |
+
+## Additional Node Families
+
+## Extension Node Families
+
+Nodes from KNIME's extension families convert to standard PlaidCloud steps
+too: database, REST and web services, Python, R and Java scripting, machine
+learning, JSON and XML, text processing, notification and reporting, time
+series, geospatial, big data, image processing, chemistry, workflow services,
+and the long tail of core utility nodes. A node with no conversion path is
+kept as a named placeholder; see [Not Converted](#not-converted).
+
+## Not Converted
+
+A node without a conversion path is kept on the canvas as a named placeholder.
+The placeholder passes its data through, adds a warning that names the KNIME
+node, and never fails the conversion — a missing or unbound input is a
+warning, not an error. Any step downstream of a placeholder is flagged so a
+missing result is never silent.
+
+## Connecting to External Systems
+
+A KNIME connector node becomes the connection its steps run on. Credentials
+are never imported, so each connection is one you choose in the target
+workspace, and the warning on the step names what to set.
+
+| KNIME | What You Set in PlaidCloud |
+| --- | --- |
+| Database connectors | A database connection, bound when you convert or picked on the step. |
+| REST and web service nodes that sign in | A [REST connection](/reference/connectors/rest/generic-rest/), bound when you convert or picked on the step. |
+| Speech Recognizer (IBM Watson) | A REST connection to the Watson service URL whose Basic login is the user `apikey` with your API key as the password. |
+| Email Connector, Email Reader, Email Mover | The mail server password, in the project variable the step's warning names. The host and user come from the Email Connector. |
+| Password-protected Excel workbooks | The workbook password, in the project variable the step's warning names. |
+| LLM connectors and authenticators | An LLM connection on the AI step. |
+| Views, charts and reporting layout | Nothing; these nodes have no data effect and are listed in the conversion report. |
+
+Conversion never contacts a source or destination system.
+
+## Known Edge Cases
+
+| Node | What Differs |
+| --- | --- |
+| Crosstab | Converts to [Table: Pivot](/reference/workflow-steps/tables/table-pivot/). A few settings combinations give results that differ from KNIME. |
+| Loop End (Column Append) | Converts to [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/). A few settings combinations give results that differ from KNIME. |
+| Row Sampler, Table Partitioner, Equal Size Sampling | Random draws use the PlaidCloud generator, so the selected rows can differ from KNIME's. The conversion warns where this applies. |
+
+## Checking a Converted Workflow
+
+Row order and RowID are carried through the nodes that read them, so a
+workflow that depends on row order keeps it through those nodes. Compare the
+converted workflow's output with your KNIME workflow's output: schema, row
+count, and row values.
