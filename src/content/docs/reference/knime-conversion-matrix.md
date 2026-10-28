@@ -101,7 +101,7 @@ Across the 207 core nodes: 205 Full, 2 Partial, 0 Not supported.
 | Edit Nominal Domain | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Nominal Domain node. |
 | Edit Nominal Domain (Dictionary) | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Nominal Domain (Dictionary) node. |
 | Edit Numeric Domain | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Edit Numeric Domain node. |
-| Equal Size Sampling | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter | Samples every class of a column down to the size of the smallest class. |
+| Equal Size Sampling | Full | [Table KNIME Random Sample](/reference/workflow-steps/tables/table-knime-random-sample/) with [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/) on the kept row positions | Samples every class of a column down to the size of the smallest class. |
 | Expression Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Filters rows with an expression. |
 | Extract Table Spec | Full | Column metadata written as a table | Writes the column names and types of the input table as a table. |
 | Filter Apply | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Filter Apply node. |
@@ -128,7 +128,7 @@ Across the 207 core nodes: 205 Full, 2 Partial, 0 Not supported.
 | Reference Row Filter | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) / [Table: Anti Join](/reference/workflow-steps/tables/table-anti-join/) | Keeps or drops rows whose key appears in a second table. |
 | Reference Row Splitter | Full | [Table: Inner Join](/reference/workflow-steps/tables/table-inner-join/) and [Table: Anti Join](/reference/workflow-steps/tables/table-anti-join/) | Splits rows by whether their key appears in a second table. |
 | Row Filter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression | Keeps or drops rows by column value, row number range, row ID pattern, or missing value test. |
-| Row Sampler | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter | Samples rows by absolute count, percentage, first rows, linear, or random draw, with optional stratification. |
+| Row Sampler | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a position filter for first rows and linear sampling; [Table KNIME Random Sample](/reference/workflow-steps/tables/table-knime-random-sample/) with [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/) for random and stratified draws | Samples rows by absolute count, percentage, first rows, linear, or random draw, with optional stratification. |
 | Row Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits rows into matching and non-matching outputs using the Row Filter criteria. |
 | Row to Column Names | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Row to Column Names node. |
 | RowID | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with row numbering | Replaces or creates the row identifier from a column or a pattern. |
@@ -149,7 +149,7 @@ Across the 207 core nodes: 205 Full, 2 Partial, 0 Not supported.
 | Table Cropper | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Cropper node. |
 | Table Difference Finder | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Difference Finder node. |
 | Table Manipulator | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Manipulator node. |
-| Table Partitioner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a sample filter (two steps) | Splits rows into two tables by count or percentage, taking the first rows, linear, or at random. |
+| Table Partitioner | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a position filter (two steps) for first rows and linear sampling; [Table KNIME Random Sample](/reference/workflow-steps/tables/table-knime-random-sample/) with [Table Inner Join](/reference/workflow-steps/tables/table-inner-join/) and [Table Anti Join](/reference/workflow-steps/tables/table-anti-join/) for random and stratified draws | Splits rows into two tables by count or percentage, taking the first rows, linear, or at random. |
 | Table Splitter | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with a filter expression (two steps) | Splits a table at a row number. |
 | Table Structure Creator | Full | Inline table input | Creates an empty table with defined column types. |
 | Table Updater | Full | [Table Extract](/reference/workflow-steps/tables/table-extract/) with column expressions | Reproduces the Table Updater node. |
