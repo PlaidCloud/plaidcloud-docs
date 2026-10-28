@@ -1,13 +1,13 @@
 ---
 title: "Data Foundation: Enterprise Profitability Template"
-description: Start an Enterprise Profitability project from the Data Foundation template, load NetSuite or CSV and Excel data, and check readiness before you report.
+description: Start an Enterprise Profitability project from the Data Foundation template, load NetSuite or CSV and Excel data, translate it into one reporting currency, and check readiness before you report.
 sidebar:
   label: Data Foundation
 ---
 
 import { Aside, Steps } from '@astrojs/starlight/components';
 
-**Data Foundation** builds a ready-to-use Enterprise Profitability project for you. Start a project from the **Enterprise Profitability** template, connect NetSuite or add CSV and Excel files, and press **Load**. PlaidCloud conforms the data into the Common Finance Model, checks that it ties out, and builds a profit and loss model with margin bridges against last year and budget. Everything happens on the project's **Foundation** tab.
+**Data Foundation** builds a ready-to-use Enterprise Profitability project for you. Start a project from the **Enterprise Profitability** template, connect NetSuite or add CSV and Excel files, and press **Load**. PlaidCloud conforms the data into the Common Finance Model, translates it into one reporting currency, checks that it ties out, and builds a profit and loss model with margin bridges against last year and budget. Everything happens on the project's **Foundation** tab.
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 700 200" role="img" aria-label="NetSuite and CSV or Excel files feed the Load workflow, which fills the Common Finance Model tables, runs readiness checks and builds the profitability model." style="width:100%;max-width:700px;height:auto;">
@@ -56,12 +56,12 @@ The new project opens on its **Foundation** tab. It is private to you, and you a
 The template creates:
 
 - The [Common Finance Model tables](#common-finance-model-tables), empty or filled with sample data.
-- **Entity**, **Account** and **Department** dimensions built from those tables.
+- **Entity**, **Account**, **Department**, **Customer**, **Product**, **Segment 1** and **Segment 2** dimensions built from those tables. See [Hierarchies](#hierarchies).
 - The **Load** workflow and the workflows it runs: NetSuite pull, Load files, Conform, Readiness and Profitability model.
 - A profit and loss table with revenue, COGS, gross margin, direct and overhead operating expenses, contribution and operating margin, plus margin bridges year over year and against budget.
 - Metrics and an analysis path for asking questions about the results.
 
-With sample data, the project runs a first Load straight away, so the Foundation tab shows a complete example. When you connect your own NetSuite account or add your own files, the sample rows are cleared and your data takes their place.
+With sample data, the project runs a first Load straight away, so the Foundation tab shows a complete example, including a euro entity translated into US dollars. When you connect your own NetSuite account or add your own files, the sample rows are cleared and your data takes their place.
 
 ## The Foundation Tab
 
@@ -71,7 +71,7 @@ The **Foundation** tab is where you connect, load and check your data. It has th
 |---|---|
 | **Last load** | Whether the last load succeeded, failed or is still running, with the **Load**, **Refresh** and **Refresh nightly** buttons. |
 | **Setup** | The setup checklist: **Connect your data**, **Load your data**, **Check that totals tie out**, **Review your hierarchies** and **Share with your team**. The current item is in bold. |
-| **Files** | Each file you added, its dataset, and whether its mapping is **✓ Confirmed** or **○ Waiting for confirmation**. |
+| **Files** | Each file you added, its dataset, such as **General ledger** or **Currency rates**, and whether its mapping is **✓ Confirmed** or **○ Waiting for confirmation**. |
 | **Data loaded** | For each entity, the first and last period loaded and how many periods are ready. |
 | **Periods** | Each entity's fiscal periods and whether each is **✓ Closed** or **○ Open**. |
 | **Readiness** | The readiness grid: one row per entity, period and check, with its status and **What to do**. |
@@ -116,7 +116,7 @@ Data Foundation reads NetSuite through a NetSuite connection that uses OAuth 2.0
 
 Once connected, the card says which connection, environment, subsidiaries and months of history the project loads.
 
-Each load reads only what changed: open periods and the last closed period are read again, and closed periods already loaded are kept. Raising **Months of history** reads just the added months.
+Each load reads only what changed: open periods and the last closed period are read again, and closed periods already loaded are kept. Raising **Months of history** reads just the added months. A changed exchange rate, entity crosswalk or reporting currency reads again the months it affects.
 
 ## Add CSV and Excel Files
 
@@ -159,6 +159,105 @@ Click **Load** on the **Load** card or the **Last load** card. The load reads Ne
 - A failed load shows red and never hides behind earlier results. Rows from an earlier load show **From an earlier load. Load again.** until a load succeeds.
 - If one subsidiary and period fails to read from NetSuite, the rest still load. Run **Load** again to fetch only what failed.
 
+## Currency Translation
+
+Each load translates every general ledger and trial balance amount from its local currency into one reporting currency. The profit and loss and the margin bridges read the translated amounts, so subsidiaries in different currencies total correctly.
+
+### The Reporting Currency
+
+To choose the reporting currency, set the project variable `reporting_currency` to a currency code such as `USD`. See [Managing Project Variables](/guides/projects/managing-projects/#managing-project-variables). The template creates it blank. While it is blank, each load uses the first of these that names exactly one currency:
+
+1. The group currency of the entities.
+2. The local currency of the top-level entities, the ones with no parent. From NetSuite, this is the currency of the top parent subsidiary.
+3. The local currency of the general ledger and trial balance files.
+
+If none of them names exactly one currency, **Currency translation** shows a problem until you set `reporting_currency`.
+
+A project that loads files in a single currency needs no entities file and no rates: amounts already in the reporting currency stay as they are.
+
+### Exchange Rates
+
+A rate converts one unit of a currency into the reporting currency for a month: the translated amount is the local amount times the rate.
+
+- **From NetSuite**, each load reads NetSuite's consolidated exchange rates for the primary accounting book. NetSuite publishes them into the top parent subsidiary's currency, so to report in a different currency, add a **Currency rates** file.
+- **From a file**, add a CSV or Excel file and choose the **Currency rates** dataset. A rate in the file replaces NetSuite's rate for the same currencies and month.
+
+| Column | Holds |
+|---|---|
+| `from_currency` | The currency to translate from, for example `EUR`. |
+| `to_currency` | The reporting currency, for example `USD`. |
+| `period` | The month, as `YYYY-MM`. |
+| `average_rate` | The average rate for the month. |
+| `closing_rate` | The rate at the end of the month. |
+| `historical_rate` | The historical rate, for equity and for accounts set to the historical rate. |
+
+Only rates into the reporting currency are used. A rate quoted the other way round, from the reporting currency into another currency, isn't inverted.
+
+### Which Rate Applies
+
+Each row is translated from its own currency, so a line in a different currency from its entity is translated from the currency it is in. The first rule that fits the row applies:
+
+| Row | Rate |
+|---|---|
+| Statistical and non-posting accounts | Not translated. |
+| Already in the reporting currency | Not translated. |
+| Account with a rate type | That rate: average, closing or historical. Historical falls back to closing when there is no historical rate. From NetSuite, the rate type is the account's general rate type. In a chart of accounts file, map a rate type column to `fx_rate_type` with `average`, `closing` or `historical`. |
+| Profit and loss account | The average rate for the period. |
+| Equity account | The historical rate, or the closing rate when there is no historical rate. |
+| Any other balance sheet account | The closing rate for the period. |
+
+Translated amounts aren't rounded, so totals don't drift.
+
+<Aside type="note">
+The trial balance holds each period's movements, so balance sheet amounts are each month's movements translated at that month's closing rate. They aren't a balance sheet retranslated at the period-end rate, and there is no cumulative translation adjustment or intercompany elimination. Use the translated amounts for the profit and loss.
+</Aside>
+
+## Entity Crosswalk
+
+Each source names entities with its own codes: NetSuite uses subsidiary internal IDs, and a file uses whatever company codes it carries. The **Entity crosswalk** maps those codes to the entities in your entity master, so lines from every source land on the same entity.
+
+To use one, add a CSV or Excel file and choose the **Entity crosswalk** dataset:
+
+| Column | Holds |
+|---|---|
+| `source_entity` | The code as the source carries it, such as a NetSuite subsidiary ID or a company code. |
+| `entity` | The entity it belongs to, as the entity master names it. |
+
+- A code that isn't in the crosswalk is used as it is.
+- Several codes can map to one entity. Their lines are combined, and a month counts as closed once it is closed for all of them.
+- Codes from every source share one list. If a file's company code is the same as a NetSuite subsidiary ID for a different entity, map one of them to its own entity in the crosswalk.
+- An **Entities** file row replaces the NetSuite subsidiary with the same entity code.
+
+The **Unmapped entities** check flags any line whose entity is neither in the entity master nor mapped to one by the crosswalk. Until an entity master is loaded, it shows **– Not applicable**, so a single-currency project that loads only files can run without an entities file.
+
+## Hierarchies
+
+Each load rebuilds seven dimensions from the master data:
+
+| Dimension | Built from | From NetSuite |
+|---|---|---|
+| **Entity** | Entities | Subsidiaries and their parents |
+| **Account** | Chart of accounts | Accounts and their parent accounts |
+| **Department** | Departments | Departments and their parents |
+| **Customer** | Customers | Customers and their parent customers |
+| **Product** | Products | Items and their parent items |
+| **Segment 1** | Segment values for `segment_1` | Classes and their parents |
+| **Segment 2** | Segment values for `segment_2` | Locations and their parents |
+
+- A record with no parent, or one that names itself as its parent, loads as a top-level member.
+- Because each load rebuilds the hierarchies, change a parent in NetSuite or in your file, not in the dimension.
+- A problem in one hierarchy affects only that dimension. The load and the profit and loss still complete.
+- You can rename **Segment 1** and **Segment 2** to what they hold, for example **Class** and **Location**.
+
+To supply segment hierarchies from a file, choose the **Segment values** dataset:
+
+| Column | Holds |
+|---|---|
+| `segment` | Which segment the value belongs to: `segment_1` to `segment_5`. **Segment 1** and **Segment 2** have dimensions. |
+| `segment_value` | The value, as the general ledger, sales and budget lines carry it. |
+| `segment_value_name` | Its name. |
+| `parent_segment_value` | Its parent within the same segment. |
+
 ## Readiness Checks
 
 After each load, the **Readiness** grid lists every check for every entity and period, with one of these statuses:
@@ -175,14 +274,21 @@ The checks are:
 | Check | What it confirms |
 |---|---|
 | **Data loaded** | Every fiscal period has general ledger lines, and every NetSuite read succeeded. A closed period with no lines is a problem; an open period with none needs attention. |
-| **Trial balance ties to GL** | The trial balance equals the general ledger for each entity, period and account, and for each department when the trial balance carries departments. |
+| **Trial balance ties to GL** | The trial balance equals the general ledger for each entity, period and account. Where both the trial balance and the general ledger carry departments for an account, it also ties out each department. |
 | **Sales tie to GL** | Sales lines equal the general ledger revenue and COGS accounts for each period. |
 | **Unknown products/customers** | Every sales line names a product and customer that exist in the product and customer masters. |
 | **Accounts missing from chart** | Every general ledger line names an account in the chart of accounts. Lines with an unknown account are left out of the profit and loss. |
+| **Currency translation** | Every general ledger and trial balance row has an amount in the reporting currency. A profit and loss row with no rate is a problem, because the profit and loss reads translated amounts. A balance sheet row with no rate needs attention. See [Currency Translation](#currency-translation). |
+| **Unmapped entities** | Every general ledger, trial balance and sales line names an entity in the entity master, directly or through the entity crosswalk. Not applicable until an entity master is loaded. See [Entity Crosswalk](#entity-crosswalk). |
 
-Each row that isn't ready says what to do in the **What to do** column, such as loading the chart of accounts or running **Load** again for a period.
+Each row that isn't ready says what to do in the **What to do** column, such as loading the chart of accounts, loading currency rates or running **Load** again for a period.
 
-The grid also flags setup that needs attention, such as an overhead allocation that is only half set up or a budget comparison with no budget rows in the chosen version. The project variables `overhead_department`, `overhead_driver` and `budget_version` control these.
+The grid also shows two setup checks, which appear only when they need attention:
+
+| Check | When it appears |
+|---|---|
+| **Overhead allocation** | Only one of the project variables `overhead_department` and `overhead_driver` is set, or no allocation driver matches `overhead_driver`, so the allocation would do nothing. Set both, or clear both to turn overhead allocation off. |
+| **Budget comparison** | Budget rows are loaded, but none are in the version the project variable `budget_version` names, so the budget comparison would be empty. |
 
 ## Finish the Setup Checklist
 
@@ -199,29 +305,29 @@ The nightly load runs as the person who set it up. If that person can no longer 
 
 ## Common Finance Model Tables
 
-Data Foundation conforms every source into the same twelve tables, so reports and models built on them work the same whatever the source. Each row also records its source system and when it was read.
+Data Foundation conforms every source into the same fifteen tables, so reports and models built on them work the same whatever the source. Each row also records its source system and when it was read. The **Dataset** column is the name you choose when you add a file.
 
 | Dataset | Table | Holds |
 |---|---|---|
 | Entities | `cfm_entity` | Legal entities with parent, local and group currency, and country. |
+| Entity crosswalk | `cfm_entity_map` | Source entity codes and the entity each belongs to. See [Entity Crosswalk](#entity-crosswalk). |
+| Currency rates | `cfm_fx_rate` | Monthly average, closing and historical rates by currency pair. See [Exchange Rates](#exchange-rates). |
 | Fiscal calendar | `cfm_fiscal_calendar` | One row per entity fiscal period, with start and end dates and whether it is closed. |
-| Chart of accounts | `cfm_account` | Accounts with parent, type (`Revenue`, `COGS`, `Opex`, `NonOperating`, `Asset`, `Liability`, `Equity`), statement and normal balance. |
+| Chart of accounts | `cfm_account` | Accounts with parent, type (`Revenue`, `COGS`, `Opex`, `NonOperating`, `Asset`, `Liability`, `Equity`), statement, normal balance and rate type. |
 | Departments | `cfm_department` | Departments and cost centers with parent and profit center. |
-| Products | `cfm_product` | Product master with family, group, unit of measure and standard cost. |
-| Customers | `cfm_customer` | Customer master with group, region and country. |
-| General ledger | `cfm_gl_journal` | Journal lines in transaction, local and group currency. |
-| Trial balance | `cfm_trial_balance` | Period balances by entity, account and department. |
+| Products | `cfm_product` | Product master with parent, family, group, unit of measure and standard cost. |
+| Customers | `cfm_customer` | Customer master with parent, group, region and country. Customer names are not masked. |
+| Segment values | `cfm_segment` | Segment values with name and parent. See [Hierarchies](#hierarchies). |
+| General ledger | `cfm_gl_journal` | Journal lines in transaction, local and reporting currency. |
+| Trial balance | `cfm_trial_balance` | Period debits, credits and net by entity, account and department, in local and reporting currency. |
 | Sales lines | `cfm_sales_line` | Invoiced sales lines with quantity, gross, discount, net and COGS amounts. |
 | Inventory balances | `cfm_inventory_balance` | Period-end inventory by product and warehouse. |
 | Budget | `cfm_budget` | Budget and forecast by scenario, version, account and department. |
 | Allocation drivers | `cfm_stat_driver` | Statistical drivers such as headcount, square feet or units. |
 
-Periods are written `YYYY-MM`. From NetSuite, transactions are placed by posting period, keys are NetSuite internal IDs, accounts are account numbers, and class and location are kept as extra segments. Only the primary accounting book is read. Budget is optional: a NetSuite account without budgets still loads everything else.
+Periods are written `YYYY-MM`. From NetSuite, transactions are placed by posting period, keys are NetSuite internal IDs, accounts are account numbers, class is `segment_1` and location is `segment_2`. The trial balance carries debits, credits and departments. Only the primary accounting book is read. Budget is optional: a NetSuite account without budgets still loads everything else.
 
-## Current Limits
-
-- **No currency conversion.** Amounts are kept in each subsidiary's base currency. Group totals across subsidiaries with different currencies are summed as they are, not translated.
-- **Flat NetSuite hierarchies.** Accounts and departments read from NetSuite load as a flat list. Build the parent-child structure in the **Account** and **Department** dimensions, or supply it in a file.
+A trial balance file can carry debit and credit columns, a net column, or both. With only debit and credit, the net is debit minus credit, and a blank side counts as zero. With only a net, a positive net becomes the debit and a negative net becomes the credit, as a positive amount. A department column is optional.
 
 ## Troubleshooting
 
@@ -232,6 +338,9 @@ Periods are written `YYYY-MM`. From NetSuite, transactions are placed by posting
 | A NetSuite error message is shorter than NetSuite's own | PlaidCloud removes credentials, tokens and keys from provider errors before showing them, so some detail is left out. Run **Test connection** to see which dataset is affected. |
 | **Data loaded** is a problem for a period | A NetSuite read for that period failed. Run **Load** again; periods that loaded are skipped. |
 | **Accounts missing from chart** is a problem | Load the chart of accounts, or add the missing accounts to it, and run **Load** again. |
+| **Currency translation** is a problem | An entity's currency has no rate into the reporting currency for that period, or no single reporting currency was found. Add the rates to a **Currency rates** file, check that the role can read NetSuite's consolidated exchange rates, or set the project variable `reporting_currency`. Then run **Load** again. |
+| **Currency translation** needs attention | Balance sheet rows have no closing or historical rate for the period. The profit and loss is not affected. Add the rates to load them. |
+| **Unmapped entities** is a problem | Add the entity to the entities file, or map its code to an existing entity in the **Entity crosswalk** file, and run **Load** again. |
 
 ## Related
 
