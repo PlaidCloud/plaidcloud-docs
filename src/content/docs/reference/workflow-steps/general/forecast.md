@@ -40,14 +40,15 @@ The step creates or updates the configured output table with forecast rows for t
 
 ## ARIMA Models, Fitting, and Diagnostics
 
-An AI assistant or the REST API can also set these keys:
+The **Model Settings** section has these fields:
 
-* `forecast_model` — besides the models above (`automatic`, `auto_ets`, `auto_arima`, `seasonal_naive`, `naive`, `auto_theta`), `arima`, `sarima` and `sarimax` fit the order you give: `order` is `[p, d, q]`, `seasonal_order` is `[P, D, Q, s]` (`sarima`, `sarimax`), and `exog_columns` names the exogenous regressor columns (`sarimax`).
-* `mode` — `forecast` (default) writes the forecast of every series. `fit` fits one series with `arima`, `sarima` or `sarimax` and writes the model as a table. `apply` writes the forecasts of the model table named by `model_frame`; for a `sarimax` model, the input table holds the future regressors.
-* `log_transform` — fit on the natural log of the values. With `apply`, whether the forecasts are returned from the log scale.
-* `diagnostics` — write one table instead of a forecast: `residuals` or `coefficients` of the model in `model_frame`, `autocorrelation` (ACF and PACF) or `residual_stats` of the input value column, or `ljung_box`, the Q statistic and p-value for each lag of the model's residuals, else of the input value column. `max_lag` (default 40) is the largest lag for `autocorrelation` and `ljung_box`, and `dynamic` makes `residuals` use dynamic in-sample prediction.
-* `interval_levels` — the prediction interval levels; `95` is the only level.
-* `knime_config` — set by the KNIME converter to run a KNIME time series preparation node instead of a forecast: `aggregate_granularity` aggregates the values to a year, quarter, month, week, day, hour, minute or second, and `align_timestamps` aligns them to a period.
+* **Model** (`forecast_model`) — besides the models above (`automatic`, `auto_ets`, `auto_arima`, `seasonal_naive`, `naive`, `auto_theta`), **ARIMA**, **Seasonal ARIMA (SARIMA)** and **Seasonal ARIMA with Regressors (SARIMAX)** (`arima`, `sarima`, `sarimax`) fit the order you give, using **ARIMA Order (p, d, q)** (`order`) is `[p, d, q]`, **Seasonal Order (P, D, Q, m)** (`seasonal_order`) is `[P, D, Q, s]` (`sarima`, `sarimax`), and **Regressor Columns** (`exog_columns`) names the exogenous regressor columns (`sarimax`).
+* **Mode** (`mode`) — `forecast` (default) writes the forecast of every series. `fit` fits one series with `arima`, `sarima` or `sarimax` and writes the model as a table. `apply` writes the forecasts of the model table named by **Model Table** (`model_frame`); for a `sarimax` model, the input table holds the future regressors.
+* **Fit the logarithm of the values** (`log_transform`) — fit on the natural log of the values. With `apply`, whether the forecasts are returned from the log scale.
+* **Write Diagnostics Instead** (`diagnostics`) — write one table instead of a forecast: `residuals` or `coefficients` of the model in `model_frame`, `autocorrelation` (ACF and PACF) or `residual_stats` of the input value column, or `ljung_box`, the Q statistic and p-value for each lag of the model's residuals, else of the input value column. **Max Lag** (`max_lag`, default 40) is the largest lag for `autocorrelation` and `ljung_box`, and **Forecast dynamically (feed predictions back in)** (`dynamic`) makes `residuals` use dynamic in-sample prediction.
+* **KNIME Time Series Node** (`knime_config`) — run a KNIME time series preparation node instead of a forecast: `aggregate_granularity` aggregates the values to a year, quarter, month, week, day, hour, minute or second, and `align_timestamps` aligns them to a period.
+
+An AI assistant or the REST API can also set `interval_levels`, the prediction interval levels; `95` is the only level.
 
 ## Resources
 

@@ -15,7 +15,7 @@ For loading directly into a remote database, use the appropriate database export
 
 ## Additional Settings
 
-An AI assistant or the REST API can also set `sort_columns` to order the written rows by these source columns, first key first, each `{source, ascending, nulls}`. A key column need not be written. `nulls` defaults to `first` ascending and `last` descending. It is not used with **Summarize** or **Distinct**.
+In **Row Order**, **Order Rows By** (`sort_columns`) orders the written rows by these source columns, first key first, each with a **Column**, **Ascending** and **Nulls** setting. A key column need not be written. **Nulls** defaults to first ascending and last descending. It is not used with **Summarize** or **Distinct**.
 
 ## Examples
 

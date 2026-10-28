@@ -35,31 +35,31 @@ With **Response** set to `Text (one row per request)`, two more fan-out options 
 * **Response body** — `As returned` (default), `Visible page text` writes the visible text of an HTML page in `DownloadData` instead of its markup, and `Raw bytes (Base64)` writes the body's bytes exactly as the server sent them, base64-encoded, for a file or other binary response.
 * **Keep polling while the response matches** — for an API that answers "still working" until a job finishes. Give a **response path** (`$` for the whole response, then `.name`, `[0]`, `['name']` or `["name"]`), an operator (`==`, `!=`, `<`, `<=`, `>`, or `>=`), and a value with its type (`Text`, `Number`, `True/False`, or `Empty`). Each row's request is sent again while its response matches, every **N seconds** (1 to 600, 5 by default) for up to **M requests per row** (1 to 1000, 60 by default); a row still matching after the last request fails.
 
-To send binary content, such as a file or audio stored as base64 text in a column, set `body_base64` with an AI assistant or the REST API. With one request per table row, the body, after its `{{row.column}}` tokens are filled, is read as base64 text and the bytes it decodes to are sent.
+To send binary content, such as a file or audio stored as base64 text in a column, turn on **The body is base64 text: send the bytes it decodes to** (`body_base64`). With one request per table row, the body, after its `{{row.column}}` tokens are filled, is read as base64 text and the bytes it decodes to are sent.
 
-An AI assistant or the REST API can also set these keys. Converted KNIME workflows use them too.
+The **Text Response Options** and **Login, Proxy and TLS** sections have these fields. Converted KNIME workflows use them too.
 
 With one request per table row and **Response** set to `Text (one row per request)`:
 
-* `include_status` — add each response's HTTP status as a `DownloadStatus` column. `status_column` names that column instead, and setting it adds the column.
-* `keep_error_rows` — a failed request keeps its row, with the body missing and `DownloadStatus` and `DownloadError` filled in.
-* `keep_failed_rows` — a request that answered HTTP 400 or above keeps its row with the status, the response headers, and the error body in `DownloadError`; a request with no response keeps its key columns only. A failure still stops the step when **Continue on error** is off. `fail_on_status` lists the status families, such as `5xx`, that fail the step; a response of any other family is kept as a row.
-* `document` — save each response as a file in this Document folder, `{account, path, file_name}`, where `file_name` defaults to the last segment of the URL. The row holds `FilePath` instead of the body.
-* `html_document` — write each body as a normalized HTML document (`html`) or its XML form (`xml`). `html_absolute_urls` (default true) makes relative `href` and `src` values absolute against the request URL.
-* `typed_body` — type the body column by the first successful response: JSON, text, or binary by its `Content-Type`. A later response of another kind, JSON that does not parse, and an empty body are missing.
-* `all_headers` — add a text column for each response header, after the status column; a header a response did not send is missing.
-* `cookies` — add `DownloadCookies`, the cookies of each response.
+* **Add each response's HTTP status as a DownloadStatus column** (`include_status`) — add each response's HTTP status as a `DownloadStatus` column. **Status Column** (`status_column`) names that column instead, and setting it adds the column.
+* **Keep the row of a failed request, with DownloadStatus and DownloadError** (`keep_error_rows`) — a failed request keeps its row, with the body missing and `DownloadStatus` and `DownloadError` filled in.
+* **Keep the row of a failed request** (`keep_failed_rows`) — a request that answered HTTP 400 or above keeps its row with the status, the response headers, and the error body in `DownloadError`; a request with no response keeps its key columns only. A failure still stops the step when **Continue on error** is off. **Fail the Step on a Response Status** (`fail_on_status`) lists the status families, such as `5xx`, that fail the step; a response of any other family is kept as a row.
+* `document` *(set with an AI assistant or the REST API)* — save each response as a file in this Document folder, `{account, path, file_name}`, where `file_name` defaults to the last segment of the URL. The row holds `FilePath` instead of the body.
+* **Write the Body as a Web Page Document** (`html_document`) — write each body as a normalized HTML document (`html`) or its XML form (`xml`). **Make relative href and src values absolute** (`html_absolute_urls`, default true) makes relative `href` and `src` values absolute against the request URL.
+* **Type the body column by the first successful response** (`typed_body`) — type the body column by the first successful response: JSON, text, or binary by its `Content-Type`. A later response of another kind, JSON that does not parse, and an empty body are missing.
+* **Add a column per response header** (`all_headers`) — add a text column for each response header, after the status column; a header a response did not send is missing.
+* **Add the response cookies (DownloadCookies)** (`cookies`) — add `DownloadCookies`, the cookies of each response.
 
 With one request per table row:
 
-* `skip_invalid_urls` — a row whose URL is not an absolute HTTP or HTTPS URL sends no request and writes no row. `fail_invalid_urls` fails the step for such a row instead.
-* `skip_null_headers` — a header whose `{{row.column}}` value is NULL is not sent. `fail_null_headers` fails the step instead.
-* `soap` — call an operation of the WSDL the endpoint names, once per row: `service`, `port` and `operation` (each the first when blank), `inputs` mapping each parameter to a column or a constant, `outputs` naming the response elements to write as columns (a column per leaf element when empty), and `xml` to add the response element as XML. The WSDL and the service address must be public HTTP or HTTPS URLs.
+* **Skip a row whose URL is not an absolute http(s) URL** (`skip_invalid_urls`) — a row whose URL is not an absolute HTTP or HTTPS URL sends no request and writes no row. **Fail the step on a row whose URL is not an absolute http(s) URL** (`fail_invalid_urls`) fails the step for such a row instead.
+* **Do not send a header whose row value is NULL** (`skip_null_headers`) — a header whose `{{row.column}}` value is NULL is not sent. **Fail the step when a header's row value is NULL** (`fail_null_headers`) fails the step instead.
+* **SOAP Operation** (`soap`) — call an operation of the WSDL the endpoint names, once per row: `service`, `port` and `operation` (each the first when blank), `inputs` mapping each parameter to a column or a constant, `outputs` naming the response elements to write as columns (a column per leaf element when empty), and `xml` to add the response element as XML. The WSDL and the service address must be public HTTP or HTTPS URLs.
 
 For any request:
 
-* `digest_auth` — answer an HTTP Digest challenge with the connection's Basic Auth user name and password. `ntlm_auth` answers an NTLM challenge the same way; write the user name as `DOMAIN\user` to give a domain.
-* `proxy` — send requests through an HTTP or SOCKS proxy: `protocol` (`http`, `https`, `socks`, `socks4` or `socks5`), `host`, `port`, `excluded` host patterns, and `username`. The password is the connection's `proxy_password`, used only when the connection's `proxy_host` is this host.
+* **Answer an HTTP Digest challenge** (`digest_auth`) — answer an HTTP Digest challenge with the connection's Basic Auth user name and password. **Answer an NTLM challenge** (`ntlm_auth`) answers an NTLM challenge the same way; write the user name as `DOMAIN\user` to give a domain.
+* `proxy` — send requests through an HTTP or SOCKS proxy, set with **Proxy Protocol** (`protocol`: `http`, `https`, `socks`, `socks4` or `socks5`), **Proxy Host** (`host`), **Proxy Port** (`port`), **Hosts Sent Directly** (`excluded` host patterns), and **Proxy User Name** (`username`). The password is the connection's `proxy_password`, used only when the connection's `proxy_host` is this host.
 
 `{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
 

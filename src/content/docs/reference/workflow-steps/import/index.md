@@ -18,7 +18,7 @@ The same holds before a step runs. **Populate** on a file import's mapping, and 
 - [Import Archive](/reference/workflow-steps/import/import-archive/)
 - [Import Avro](/reference/workflow-steps/import/import-avro/)
 - [Import CSV](/reference/workflow-steps/import/import-csv/)
-- [Import Delta Lake](/reference/workflow-steps/import/import-delta/) — set with an AI assistant or the REST API
+- [Import Delta Lake](/reference/workflow-steps/import/import-delta/)
 - [Import Db2 Extract](/reference/workflow-steps/import/import-db2-extract/)
 - [Import dBASE](/reference/workflow-steps/import/import-dbf/)
 - [Import Excel](/reference/workflow-steps/import/import-excel/)
@@ -32,7 +32,7 @@ The same holds before a step runs. **Populate** on a file import's mapping, and 
 - [Import Kafka](/reference/workflow-steps/import/import-kafka/)
 - [Import Monday](/reference/workflow-steps/import/import-monday/)
 - [Import MongoDB](/reference/workflow-steps/import/import-mongodb/)
-- [Import ORC](/reference/workflow-steps/import/import-orc/) — set with an AI assistant or the REST API
+- [Import ORC](/reference/workflow-steps/import/import-orc/)
 - [Import Parquet](/reference/workflow-steps/import/import-parquet/)
 - [Import Project Table](/reference/workflow-steps/import/import-project-table/)
 - [Import Quandl](/reference/workflow-steps/import/import-quandl/)

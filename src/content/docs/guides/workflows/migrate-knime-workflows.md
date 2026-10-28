@@ -1,6 +1,6 @@
 ---
 title: Migrate KNIME Workflows
-description: Convert a KNIME workflow (.knwf) or workflow group (.knar) into PlaidCloud Advanced workflows from the REST API or an MCP-connected AI agent, bind its inputs and connections, and read the conversion report.
+description: Convert a KNIME workflow (.knwf) or workflow group (.knar) into PlaidCloud Advanced workflows from the Analyze app, the REST API or an MCP-connected AI agent, bind its inputs and connections, and read the conversion report.
 sidebar:
   order: 31.7
 ---
@@ -23,13 +23,23 @@ Conversion is a one-time step. Converting the same archive again creates new wor
 ## Before You Start
 
 1. Export the workflow from KNIME Analytics Platform as a `.knwf` file. To convert several workflows at once, export their workflow group as a `.knar` file. Keep the files your readers use in the workflow's `data` folder so they ship inside the archive.
-2. Upload the archive to a [Document account](/guides/documents/adding-accounts/) you can read.
+2. Upload the archive to a [Document account](/guides/documents/adding-accounts/) you can read. In the Analyze app, **Browse** on the import window uploads it from your computer.
 3. Choose the PlaidCloud project that should receive the workflows. You must be an Architect or Manager of the project, and the project must have a default Document account.
 4. Note the PlaidCloud tables, files, and connections you want the workflow's readers and connector nodes to use. See [Bind Sources](#bind-sources).
 
 ## Convert a Workflow
 
-Convert through the REST API or an MCP-connected AI agent. Both take the same fields.
+Convert from the Analyze app, the REST API or an MCP-connected AI agent. The REST API and the MCP tool take the same fields; the window takes the ones it shows.
+
+### Analyze App
+
+1. Open **Analyze** and choose **Tools → Import KNIME Workflow**.
+2. Under **Import Source and Target**, choose the **Target Project** and the **KNIME Archive (.knwf or .knar)** in a Document account. Select **Browse** to upload the archive from your computer.
+3. Under **Object Prefixes**, optionally set the **Workflow Prefix**, **Step Prefix** and **Table Prefix**. The table prefix defaults to the workflow's name.
+4. Under **Source Bindings (optional)**, optionally bind a reader to an existing table in the target project: select **Add**, then enter the **KNIME Reader** (its node id, such as `12:3`, its node name or its file name) and the **Table ID**. To bind connections, documents or tables in other projects, use the REST API or the MCP tool. See [Bind Sources](#bind-sources).
+5. Select **Import**.
+
+The window shows progress while it converts the archive, then the conversion report: step counts (**Steps**, **High confidence**, **Medium**, **Low** and **Not converted**), the nodes that could not be converted and the steps downstream of them, partial conversions, warnings, the source files to upload, and the nodes with no step. A conversion with nothing to review says so and the window closes on its own.
 
 ### Fields
 
@@ -70,7 +80,9 @@ Use `source_bindings` to point a KNIME reader at data that already exists in Pla
 - An `analyzetable_` id for a table in the target project. The table replaces the reader.
 - `{"project": "<project id>", "table": "<table id>"}` for a table in another project you can read. The reader becomes an [Import Project Table](/reference/workflow-steps/import/import-project-table/) step that copies it. The source project must share Read with the target project, or the step warns. A table governed by row access is refused.
 - `{"account": "<document account id>", "path": "/finance/budget.xlsx"}` for a document you can read. The reader imports it.
-- `{"connection": "<connection id>"}` for a database or REST connector node, through the MCP tool. The converted steps run on that connection. From the REST API, pick the connection on the step after you convert.
+- `{"connection": "<connection id>"}` for a database or REST connector node. The converted steps run on that connection.
+
+The Analyze app window binds readers to tables in the target project by table id. Bind connections, documents and tables in other projects through the REST API or the MCP tool.
 
 ```json
 "source_bindings": {
@@ -102,7 +114,7 @@ See [Manage Workflow Variables](/guides/workflows/manage-workflow-variables/) to
 
 ## Read the Conversion Report
 
-The response carries the conversion report. Read it before you run the workflows.
+The Analyze app window shows the conversion report when the import finishes, and the REST and MCP responses carry it. Read it before you run the workflows.
 
 - `summary` counts the steps created and how many mapped with high, medium, or low confidence.
 - `warnings` lists each warning with its node, step, and the action to take, including every credential or connection to set.
@@ -120,7 +132,7 @@ A node without a conversion path stays on the canvas as a named placeholder. The
 
 1. Open the new workflow in the project.
 2. Set the project variables and connections the warnings name.
-3. Upload files for unbound inputs to the paths in `missing_inputs`.
+3. Upload files for unbound inputs to the paths under **Source files to upload** in the window, or in `missing_inputs`.
 4. [Run the workflow](/guides/workflows/run-a-workflow/) and review each step's output table.
 
 ## Edge Cases

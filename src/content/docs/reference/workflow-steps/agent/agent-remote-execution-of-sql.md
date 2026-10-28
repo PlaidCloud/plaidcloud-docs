@@ -19,4 +19,4 @@ Every parameter needs both a name and a driver column, and a parameter can't be 
 
 ## Run a Script in One Transaction
 
-Set `transaction` with an AI assistant or the REST API to treat the SQL as a script of statements run one after another in a single transaction, so either every statement is applied or none is.
+In the **Remote Execute: SQL** step, check **Run the SQL as a script of statements in one transaction: all applied or none** (`transaction`) to run the SQL as a script of statements, one after another, in a single transaction, so either every statement is applied or none is.
