@@ -52,6 +52,12 @@ Attaching files to emails is very simple. Select a file or folder from Document 
 
 
 
+To attach several documents, set `attachments` with an AI assistant or the REST API, each `{account, path}`; they are sent with the attachment you select, and a path can use variables and row tokens the same way.
+
+### Priority and Plain Text
+
+An AI assistant or the REST API can also set `priority` (`low`, `normal` or `high`) to mark the message's priority, and `content_type` to `text` to send the body as plain text instead of HTML (`html`, the default).
+
 ### Body (Jinja Template)
 
 

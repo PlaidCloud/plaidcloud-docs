@@ -320,6 +320,10 @@ Here, the “Key Word Args/Pattern/Choices” column of the “pattern” row co
 With this, when the pattern generator is run, you will recieve the following results.
 
 
+## Row Count From a Table
+
+To take the number of rows from data, set `rows_source` and `rows_column` with an AI assistant or the REST API. The step reads the number from the first row of `rows_source`, in the `rows_column` column, when it runs, in place of the row count you set. A missing value, or one below 1, generates no rows.
+
 ## What's Checked When You Save
 
 Each row of **Fake Data Columns and Data Types** becomes a column of the generated table, so each needs a name of its own. Saving is refused with *Every fake data column needs a name.* when one is blank, and with *Fake data column name 'city' is used more than once; each needs its own.* when two share one.

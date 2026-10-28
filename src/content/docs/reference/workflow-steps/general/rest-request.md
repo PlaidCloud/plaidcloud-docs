@@ -37,6 +37,30 @@ With **Response** set to `Text (one row per request)`, two more fan-out options 
 
 To send binary content, such as a file or audio stored as base64 text in a column, set `body_base64` with an AI assistant or the REST API. With one request per table row, the body, after its `{{row.column}}` tokens are filled, is read as base64 text and the bytes it decodes to are sent.
 
+An AI assistant or the REST API can also set these keys. Converted KNIME workflows use them too.
+
+With one request per table row and **Response** set to `Text (one row per request)`:
+
+* `include_status` — add each response's HTTP status as a `DownloadStatus` column. `status_column` names that column instead, and setting it adds the column.
+* `keep_error_rows` — a failed request keeps its row, with the body missing and `DownloadStatus` and `DownloadError` filled in.
+* `keep_failed_rows` — a request that answered HTTP 400 or above keeps its row with the status, the response headers, and the error body in `DownloadError`; a request with no response keeps its key columns only. A failure still stops the step when **Continue on error** is off. `fail_on_status` lists the status families, such as `5xx`, that fail the step; a response of any other family is kept as a row.
+* `document` — save each response as a file in this Document folder, `{account, path, file_name}`, where `file_name` defaults to the last segment of the URL. The row holds `FilePath` instead of the body.
+* `html_document` — write each body as a normalized HTML document (`html`) or its XML form (`xml`). `html_absolute_urls` (default true) makes relative `href` and `src` values absolute against the request URL.
+* `typed_body` — type the body column by the first successful response: JSON, text, or binary by its `Content-Type`. A later response of another kind, JSON that does not parse, and an empty body are missing.
+* `all_headers` — add a text column for each response header, after the status column; a header a response did not send is missing.
+* `cookies` — add `DownloadCookies`, the cookies of each response.
+
+With one request per table row:
+
+* `skip_invalid_urls` — a row whose URL is not an absolute HTTP or HTTPS URL sends no request and writes no row. `fail_invalid_urls` fails the step for such a row instead.
+* `skip_null_headers` — a header whose `{{row.column}}` value is NULL is not sent. `fail_null_headers` fails the step instead.
+* `soap` — call an operation of the WSDL the endpoint names, once per row: `service`, `port` and `operation` (each the first when blank), `inputs` mapping each parameter to a column or a constant, `outputs` naming the response elements to write as columns (a column per leaf element when empty), and `xml` to add the response element as XML. The WSDL and the service address must be public HTTP or HTTPS URLs.
+
+For any request:
+
+* `digest_auth` — answer an HTTP Digest challenge with the connection's Basic Auth user name and password. `ntlm_auth` answers an NTLM challenge the same way; write the user name as `DOMAIN\user` to give a domain.
+* `proxy` — send requests through an HTTP or SOCKS proxy: `protocol` (`http`, `https`, `socks`, `socks4` or `socks5`), `host`, `port`, `excluded` host patterns, and `username`. The password is the connection's `proxy_password`, used only when the connection's `proxy_host` is this host.
+
 `{{name}}` references to workflow variables (also `{{var.name}}` / `{{project_var.name}}`) are substituted in the endpoint, headers, query values, and body at run time. Only double braces are substituted, so single braces in a JSON body are left literal. Sensor/webhook runs also expose `{{trigger_sensor_id}}`, `{{trigger_sensor_type}}`, `{{trigger_fired_at}}`, and `{{trigger_payload_json}}` (empty on non-triggered runs).
 
 The editor highlights detected `{{...}}` tokens in the endpoint, header and query tables, and body editor.

@@ -9,40 +9,40 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 ### Data Movement
 
-- [Import](/reference/workflow-steps/import/) — pull data in (27 source types: CSV, Excel, Parquet, JSON, SQL, BigQuery, MongoDB, Kafka, SPSS, Singer sources, and more)
-- [Export](/reference/workflow-steps/export/) — push data out (23 destination types: CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, table archive, and more)
+- [Import](/reference/workflow-steps/import/) — pull data in from CSV, Excel, Parquet, JSON, ORC, Delta Lake, SQL, BigQuery, MongoDB, Kafka, SPSS, Singer sources, and more
+- [Export](/reference/workflow-steps/export/) — push data out to CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, table archive, and more
 
 ### Table Transformations
 
-- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates, Row Access grants from a source table, restore to a point in time (28 steps)
+- [Tables](/reference/workflow-steps/tables/) — joins, unions, filters, lookups, pivots, melts, targeted updates, Row Access grants from a source table, restore to a point in time
 - [Common operations](/reference/workflow-steps/common/) — shared data mapping and filtering patterns
 
 ### Geospatial
 
-- [Geospatial](/reference/workflow-steps/spatial/) — import spatial files, buffer, match, measure, and build geometry; full Alteryx spatial-tool coverage (17 steps)
+- [Geospatial](/reference/workflow-steps/spatial/) — import and export spatial files, buffer, match, measure, reproject, and build geometry; full Alteryx spatial-tool coverage
 
 ### Modeling
 
 - [Allocation](/reference/workflow-steps/allocation/) — driver-based spreading, split allocations, rule-based tagging
 - [Dimensions](/reference/workflow-steps/dimensions/) — load, sort, clear, export, and manage hierarchies
 - [Optimization](/reference/workflow-steps/optimization/) — linear and mixed-integer solver steps
-- [Machine learning](/reference/workflow-steps/machine-learning/) — train scikit-learn models and score tables with them (2 steps)
+- [Machine learning](/reference/workflow-steps/machine-learning/) — train models, including XGBoost and KNIME learners, and score tables with them
 
 ### Documents and Files
 
-- [Document](/reference/workflow-steps/document/) — file operations, directory listing, encryption, PDF manipulation, image processing, encoding conversion (23 steps)
-- [Text and documents](/reference/workflow-steps/text-documents/) — PDF text extraction, image OCR, blob read, sentiment, topic modeling, word clouds (7 steps)
+- [Document](/reference/workflow-steps/document/) — file operations, directory listing, encryption, PDF manipulation, image processing, encoding conversion, Excel cell updates
+- [Text and documents](/reference/workflow-steps/text-documents/) — PDF text extraction, image OCR, blob read and write, sentiment, topic modeling, word clouds
 
 ### Communication
 
-- [Notifications](/reference/workflow-steps/notifications/) — email, Slack, Teams, SMS, webhook, Twitter, log (9 steps)
+- [Notifications](/reference/workflow-steps/notifications/) — email, Slack, Teams, SMS, webhook, Twitter, log
 - [Reports](/reference/workflow-steps/reports/) — render single or batch PDF reports from RML templates
 
 ### Workflow Control
 
-- [Workflow control](/reference/workflow-steps/workflow-control/) — variables, loops, sub-workflows, Macros, error handling, row-count assert (14 steps)
+- [Workflow control](/reference/workflow-steps/workflow-control/) — variables, loops, sub-workflows, Macros, error handling, row-count assert
 - [General](/reference/workflow-steps/general/) — LLM step, pass, wait, user-defined transform, run remote Python, Alteryx executor
-- [Packaged macros](/reference/workflow-steps/macros/) — Alteryx packaged-macro equivalents: Create Samples, DateTime Now, Heat Map, Pie Wedge Trade Area (4 steps)
+- [Packaged macros](/reference/workflow-steps/macros/) — Alteryx packaged-macro equivalents: Create Samples, DateTime Now, Heat Map, Pie Wedge Trade Area
 
 ### Enterprise Integrations
 
