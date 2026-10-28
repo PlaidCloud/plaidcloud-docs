@@ -10,6 +10,8 @@ Open **My Panel Apps**. The toolbar offers two ways to publish, one per [runtime
 - **New Server App** — build and run an app from a git repository.
 - **Add WASM App** — publish a static, in-browser app from a file.
 
+To write the app in PlaidCloud instead, with no repository to set up, use [Panel Studio](/guides/panel-apps/studio/).
+
 ## Creating a Server App
 
 A server app is built from a git repository and served at `https://<your-tenant-host>/serve/<slug>/`. You point PlaidCloud at a branch of a repository; it builds the code into a container, runs `panel serve` on it, and rebuilds automatically whenever you push to that branch.

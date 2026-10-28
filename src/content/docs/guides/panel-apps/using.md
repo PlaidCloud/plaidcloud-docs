@@ -100,4 +100,6 @@ For a **server** app you can change the name, slug, branch, entry point, CPU, me
 
 ## Removing an App
 
-Click the **minus** icon on an app's row and confirm. Removing a server app tears down its build and deployment; removing a WASM app unpublishes the static file. The app's URL stops working immediately.
+Click the **minus** icon on an app's row and confirm; deleting or unpublishing an app always asks you to confirm first. Removing a server app tears down its build and deployment; removing a WASM app unpublishes the static file. The app's URL stops working immediately.
+
+The MCP tool `panel_deployment_manage` no longer offers unpublish. Remove an app from this list instead.
