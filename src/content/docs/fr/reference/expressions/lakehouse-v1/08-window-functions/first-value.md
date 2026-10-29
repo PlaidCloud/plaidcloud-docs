@@ -37,7 +37,7 @@ employee_id | first_name | last_name | salary  | highest_salary_first_name
 FIRST_VALUE(expression) OVER ([PARTITION BY partition_expression] ORDER BY order_expression [window_frame])
 ```
 
-Pour la syntaxe de la fenêtre (window frame), consultez [Syntaxe de la fenêtre](..#window-frame-syntax).
+Pour la syntaxe de la fenêtre (window frame), consultez [Syntaxe de la fenêtre](..#syntaxe-du-cadre-de-fenêtre).
 
 ## Exemples SQL
 

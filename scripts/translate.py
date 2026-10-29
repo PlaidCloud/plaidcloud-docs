@@ -439,7 +439,8 @@ def split_frontmatter(text):
 
 
 FENCE_RE = re.compile(r"^([ \t]*)(`{3,}|~{3,})[^\n]*\n.*?^[ \t]*\2[`~]*[ \t]*$", re.M | re.S)
-INLINE_CODE_RE = re.compile(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)")
+# A code span may wrap onto the next line (CommonMark turns the line ending into a space), never past a blank line.
+INLINE_CODE_RE = re.compile(r"(?<!`)(`+)(?!`)((?:[^\n]|\n(?![ \t]*\n))+?)(?<!`)\1(?!`)")
 
 
 def fences(body):
@@ -575,8 +576,8 @@ def validate(rel, src, out):
                 reasons.append(f"frontmatter {'.'.join(p)} changed")
     if fences(sbody) != fences(obody):
         reasons.append(f"code fences differ ({len(fences(sbody))} vs {len(fences(obody))} blocks)")
-    sic = Counter(m.group(0) for m in INLINE_CODE_RE.finditer(FENCE_RE.sub("\n", sbody)))
-    oic = Counter(m.group(0) for m in INLINE_CODE_RE.finditer(FENCE_RE.sub("\n", obody)))
+    spans = lambda b: Counter(re.sub(r"[ \t]*\n[ \t]*", " ", m.group(0)) for m in INLINE_CODE_RE.finditer(FENCE_RE.sub("\n", b)))
+    sic, oic = spans(sbody), spans(obody)
     if sic != oic:
         reasons.append(f"inline code differs: missing {list((sic - oic).elements())[:5]} extra {list((oic - sic).elements())[:5]}")
     imports = lambda b: [SNIPPET_IMPORT_RE.sub(r"\1@snippets/\2\1", l)
@@ -1093,6 +1094,9 @@ def rel_or_abs(path):
 
 def cmd_prepare(args):
     out = ROOT / args.out
+    removed = prune_deleted()
+    if removed:
+        print(f"deleted {len(removed)} translations of removed pages")
     pairs = stale_pairs(args.locales, select_units(args.paths))
     if args.force_paths:  # re-translate these even though the manifest says they are current
         have = {(lc, k) for lc, k, _ in pairs}
@@ -1219,9 +1223,15 @@ def cmd_check(args):
                 bad += 1
                 print(f"invalid  {name}: {'; '.join(reasons)}")
             if manifest.get(name) != sha(src):
+                print(f"stale    {name}")
                 stale += 1
-    print(f"{total} translated files: {bad} invalid, {stale} stale")
-    sys.exit(1 if bad else 0)
+    have = {(lc, key) for lc in LOCALES for key, _ in translated_units(lc)}
+    missing = [(lc, key) for lc in LOCALES for key in sorted(english) if (lc, key) not in have]
+    for lc, key in missing:
+        print(f"missing  {mkey(lc, key)}")
+    # Every English change ships with its translations: a stale or missing translation fails like an invalid one.
+    print(f"{total} translated files: {bad} invalid, {stale} stale, {len(missing)} missing")
+    sys.exit(1 if bad or stale or missing else 0)
 
 
 def main():
