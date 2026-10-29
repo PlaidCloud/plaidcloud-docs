@@ -1,0 +1,130 @@
+---
+title: "Générateur de référentiel SCD-2"
+description: "Construisez une table d'historique ponctuel à partir d'une source de données de référence, en suivant dans le temps les modifications d'attributs choisis grâce à des dates de début et de fin de validité."
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-master-builder.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Construit une table d'historique de **dimension à variation lente de type 2 (SCD-2)** à partir d'une table source. Là où une table de référence ordinaire ne conserve que la valeur actuelle de chaque clé, une table SCD-2 conserve toutes les valeurs qu'une clé a détenues, chacune estampillée de la plage de dates pendant laquelle elle était en vigueur. Vous pouvez ainsi répondre à des questions ponctuelles (*dans quelle région se trouvait ce client le jour de la transaction ?*) au lieu de seulement *dans quelle région se trouve-t-il maintenant ?*
+
+Chaque exécution compare l'instantané de la source à l'historique précédent et, pour les clés dont les attributs suivis ont changé, clôt l'ancienne version et en ouvre une nouvelle. La table est recalculée et substituée de façon atomique : une nouvelle exécution avec les mêmes entrées produit donc le même résultat.
+
+Associez cette étape à [Jointure temporelle SCD-2](/fr/reference/workflow-steps/dimensions/scd2-asof-join/) pour rattacher la valeur ponctuelle à une table de faits.
+
+## Colonnes de sortie
+
+Chaque exécution produit trois colonnes réservées en plus de vos colonnes reportées. Vous ne les nommez pas : ce sont toujours `valid_from`, `valid_to` et `is_current`, et vos colonnes de clé métier et d'attributs suivis ne peuvent pas réutiliser ces noms.
+
+| Colonne | Signification |
+|---|---|
+| `valid_from` | Date à laquelle cette version a pris effet (incluse). |
+| `valid_to` | Date à laquelle cette version a cessé d'être en vigueur (exclue). Les lignes ouvertes (actuelles) portent la date haute sentinelle `9999-12-31`. |
+| `is_current` | `true` pour la version actuellement en vigueur, `false` pour l'historique clos. |
+
+<Aside type="note">L'intervalle est **semi-ouvert** : `[valid_from, valid_to)`. Une version couvre `valid_from` jusqu'à `valid_to` *exclu*. Les versions consécutives se rejoignent donc sans se chevaucher : le `valid_to` d'une version est exactement le `valid_from` de la suivante, et aucune date n'appartient à deux versions.</Aside>
+
+## Tables
+
+### Table source
+
+L'instantané actuel de vos données de référence : une ligne par clé métier, avec les valeurs d'attributs actuelles.
+
+### Table SCD-2 précédente (facultative)
+
+La table d'historique existante issue de l'exécution précédente. Laissez-la vide (ou faites-la pointer vers la table de résultat) lors de la **première exécution** ; l'étape construit alors tout l'historique à partir de zéro, en ouvrant une version par ligne source à la date d'effet.
+
+### Table de résultat
+
+L'emplacement où l'historique reconstruit est écrit. Il doit s'agir d'une table, et non d'une vue.
+
+## Date d'effet et options
+
+Chaque exécution estampille ses modifications avec une date d'effet unique. Indiquez-la d'une seule des deux façons suivantes : fournir les deux, ou aucune, est une erreur.
+
+- **Colonne de date d'effet** : une colonne de la source qui contient la date d'effet. Elle doit contenir la même valeur sur chaque ligne source (l'instantané est établi *à* une seule date).
+- **Date d'effet** : une date littérale `YYYY-MM-DD`, ou une variable telle que `{current_month}`, appliquée à toute l'exécution.
+
+<Aside type="caution">Choisissez l'une ou l'autre, pas les deux. Il s'agit d'un OU exclusif strict : l'étape rejette une exécution qui spécifie une colonne de date d'effet *et* une date littérale, et rejette tout autant celle qui n'en spécifie aucune.</Aside>
+
+Autres options :
+
+- **Date haute de l'intervalle ouvert** : la sentinelle écrite dans `valid_to` pour les lignes ouvertes. Vaut `9999-12-31` par défaut ; il y a rarement une raison de la modifier, et elle doit correspondre à la date haute utilisée par [Jointure temporelle SCD-2](/fr/reference/workflow-steps/dimensions/scd2-asof-join/).
+- **Close on Absence** : lorsque cette option est activée, une clé qui disparaît de la source voit sa version ouverte clôturée à la date d'effet (la clé est considérée comme retirée). Lorsqu'elle est désactivée (par défaut), les clés absentes conservent leur version ouverte existante, afin que l'historique ne soit jamais perdu à cause d'une extraction partielle.
+
+L'étape refuse d'enregistrer une Date d'effet littérale ou une Date haute de l'intervalle ouvert qui n'est pas une date réelle au format `YYYY-MM-DD`, ou une Date d'effet égale ou postérieure à la Date haute. Une date fournie sous forme de variable n'est pas contrôlée.
+
+## Rôles des colonnes
+
+Utilisez **Inspecter la source** pour lister les colonnes source, puis attribuez un rôle à chacune :
+
+| Rôle | Signification |
+|---|---|
+| **Clé métier** | La clé naturelle qui identifie une ligne dans le temps (par exemple `customer_id`). Au moins une est requise. Les valeurs doivent être uniques dans la source et non nulles. |
+| **Attribut suivi** | Un attribut dont les modifications ouvrent une nouvelle version (par exemple `region`). Au moins un est requis. |
+| **(reporter tel quel)** | Les colonnes sans rôle sont copiées telles quelles sur chaque version et ne déclenchent pas, à elles seules, de nouvelle version. |
+
+## Comportement de la fusion
+
+Lorsqu'une table précédente est fournie, l'étape compare l'instantané de la source aux seules versions **actuelles** (jamais à l'historique clos) et décide clé par clé :
+
+| Situation | Résultat |
+|---|---|
+| Attributs suivis inchangés | Aucune opération : la version ouverte est laissée telle quelle. |
+| Attributs suivis modifiés | La version ouverte est clôturée à la date d'effet et une nouvelle version ouverte est insérée. |
+| La date d'effet est égale au `valid_from` de la version ouverte | Traité comme une **correction le jour même** : les valeurs suivies sont écrasées sur place au lieu de créer un intervalle de largeur nulle. |
+| Clé absente de la source | Laissée ouverte (ou clôturée à la date d'effet si **Close on Absence** est activé). |
+
+Garde-fous qui interrompent une exécution plutôt que de corrompre silencieusement l'historique :
+
+- **Les dates dans le désordre sont rejetées.** La date d'effet doit être *postérieure* au `valid_from` actuel de chaque clé concernée. Une exécution antidatée qui inverserait un intervalle échoue avec une erreur au lieu de produire une version de largeur négative.
+- **Les clés source en double sont rejetées.** La source doit être unique sur la clé métier ; les doublons (ou les clés nulles) provoquent un échec au lieu d'être dédoublonnés silencieusement.
+- La détection des changements **gère correctement les valeurs nulles** : une valeur qui devient vide, ou qui cesse de l'être, est donc correctement enregistrée comme un changement.
+
+## Exemple détaillé
+
+Suivez la région à laquelle chaque client a appartenu au fil du temps.
+
+**Source : `customer_master` (au 2026-01-01) :**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | West | SMB |
+| C2 | East | Enterprise |
+
+Première exécution : **Table source** = `customer_master`, **Table SCD-2 précédente** = vide, **Table de résultat** = `customer_scd2`, **Date d'effet** = `2026-01-01`, Clé métier = `customer_id`, Attribut suivi = `region` (`segment` sans rôle, reporté tel quel).
+
+**`customer_scd2` après la première exécution :**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+C1 passe maintenant dans la région Central. **Source : `customer_master` (au 2026-04-01) :**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | Central | SMB |
+| C2 | East | Enterprise |
+
+Deuxième exécution : mêmes rôles de colonnes, **Table SCD-2 précédente** = `customer_scd2`, **Date d'effet** = `2026-04-01`.
+
+**`customer_scd2` après la deuxième exécution :**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | SMB | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+La version West de C1 a été clôturée au `2026-04-01` et une version Central a été ouverte. En raison de l'intervalle semi-ouvert, une transaction datée du `2026-04-01` appartient à **Central**, et non à West. C2 n'a pas changé et n'a pas été modifié.
+
+## Voir aussi
+
+- [Jointure temporelle SCD-2](/fr/reference/workflow-steps/dimensions/scd2-asof-join/) : rattacher la valeur ponctuelle à une table de faits.
+- [Dimension Load](/fr/reference/workflow-steps/dimensions/dimension-load/) : charger une hiérarchie à partir d'une table.

@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry 步骤"
+description: 通过 FBDI 总账接口，根据标题表和行表将总账日记账批次过账到 Oracle Fusion Cloud，并提供预览模式，在任何过账之前验证每个批次。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [Oracle Fusion 连接](/zh-cn/guides/connections/oracle-fusion/)，经由 PlaidCloud 共享的 ERP 写入管道，将总账日记账批次过账到 Oracle Fusion Cloud。该步骤接收一个标题表（每个批次一行）和一个行表（每个批次一行或多行），将每个批次作为 FBDI 文件写入 Oracle 的 GL_INTERFACE 暂存表，并提交 Journal Import Launcher 企业调度服务（ESS）作业。**Validate Only** 会构建并检查每个批次，但不占用分类账，也不过账；可选的结果表会记录每个批次的结果。
+
+<Aside type="caution">
+请先在 **Validate Only** 模式下运行每个批次并查看结果表，同时在 Oracle Fusion 中直接核对少量过账记录，然后再依赖此步骤无人值守地过账正式日记账。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **Fusion Connection**：用于过账的 Oracle Fusion 连接。
+
+### 数据
+
+- **标题表**：每个批次一行，包含 `batch_id`（您的批次标识符，必填）、`ledger_id`（必填）、`journal_source`、`journal_category`、`accounting_date`、`description`。
+- **行表**：每个 `batch_id` 对应一行或多行，包含 `account_combination`（或其分段列）、`entered_debit`、`entered_credit`、`currency_code`。
+- **结果表**：输出表 ID，每个批次一行，包含 `batch_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message`。
+- **Validate Only**：默认勾选。仅做预检，不占用分类账，也不过账。如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创建的配置），同样默认为 Validate Only，而不是正式过账。
+- **Continue On Error**：默认勾选。某个批次失败后继续过账其余批次；取消勾选则在第一次失败时停止运行。
+
+## 过账的工作方式
+
+PlaidCloud 通过 FBDI 文件将每个批次加载到 Oracle 的 GL_INTERFACE 暂存表，然后提交 Journal Import Launcher ESS 作业并轮询，直到其报告终止状态。只有在该终止状态已**确认**后，批次才会被报告为 `posted`。如果批次已进入接口表，但其导入作业始终没有结果，则该批次会保持隔离状态（不会被报告为已过账，也不会被悄悄丢弃），而不会仅因暂存数据存在就被记录为成功。
+
+## 更正已过账的分录
+
+此步骤从不删除或改写已过账的日记账批次。如需更正，请过账一个新批次，将借贷方向与原批次对调，即已过账的冲销分录，而不是直接修改原批次。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|| ESS 作业延迟 | Journal Import Launcher 作为计划作业运行，过账运行所需的时间会明显长于直接的 API 写入。 |
+| 冲销是新批次，而不是就地编辑 | 更正会过账一个借贷对调的新冲销批次。已过账的批次无法作废或删除。 |
+
+## 相关内容
+
+- [连接到 Oracle Fusion](/zh-cn/guides/connections/oracle-fusion/)：涵盖配置、预览和过账的完整演练
+- [Oracle Fusion 连接器](/zh-cn/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusion 步骤](/zh-cn/reference/workflow-steps/oracle-fusion/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

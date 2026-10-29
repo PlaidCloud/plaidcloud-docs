@@ -1,0 +1,76 @@
+---
+title: "Xero: contabilizar documento"
+description: Contabilice en Xero asientos de diario manuales, facturas, facturas de proveedor, pagos y notas de crédito a partir de tablas de encabezados y de líneas, con un modo de prueba que valida todos los documentos antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza documentos en Xero a través de su [conexión de Xero](/es/guides/connections/xero/), mediante la canalización de escritura de ERP compartida de PlaidCloud. El paso toma una tabla de encabezados (una fila por documento) y una tabla de líneas (una o más filas por documento), y contabiliza cada documento como **ManualJournal**, **Invoice**, **Bill**, **Payment** o **CreditNote**. Un lote puede mezclar tipos de documento: PlaidCloud lo particiona por tipo de documento antes de cualquier llamada de red. **Test Only Mode** genera y comprueba todos los documentos sin reservar en el libro mayor y sin contabilizar; una tabla de resultados opcional registra el resultado de cada documento.
+
+<Aside type="caution">
+Ejecute siempre cada lote primero en **Test Only Mode**, revise la tabla de resultados y concilie directamente en Xero algunas contabilizaciones antes de confiar en que este paso contabilice documentos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión de Xero
+
+- **Conexión de Xero**: la conexión de Xero a través de la cual se contabiliza. Lleva consigo la organización en la que se contabiliza cada documento.
+- **Entorno**: a través de cuál de los entornos de PlaidCloud de la conexión se contabiliza; es el mismo selector que tiene todo paso basado en conexiones. No guarda relación con la Demo Company de Xero, que es una propiedad de la organización a la que apunta la conexión.
+- **Test Only Mode**: marcado de forma predeterminada. Valida cada documento pero no lo contabiliza: sin reserva en el libro mayor y sin escritura. Una configuración de paso que omita este campo por completo (por ejemplo, una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo) también adopta de forma predeterminada Test Only Mode en lugar de una contabilización real.
+- **Continue posting remaining documents if one document fails**: marcado de forma predeterminada. Si se desmarca, el lote se detiene en el primer error.
+- **Tabla de resultados**: una fila por documento: `ref`, `doc_type`, `natural_key`, `xero_id`, `status` (`posted`/`validated`/`error`) y `message`.
+
+### Selección de tablas
+
+- **Tabla de encabezados**: una fila por documento.
+- **Tabla de líneas**: una o más filas por documento, correlacionadas con el encabezado mediante `ref`.
+
+### Campos de encabezado y de línea
+
+Dos pestañas de asignación vinculan los nombres de sus propias columnas con los campos que necesita Xero. **Campos de encabezado** abarca:
+
+| Campo | Notas |
+|---|---|
+| `ref` | Obligatorio. Su clave de negocio: vincula las filas de encabezado con sus líneas y es la clave que reserva el libro de idempotencia. |
+| `doc_type` | Obligatorio. `ManualJournal`, `Invoice`, `Bill`, `Payment` o `CreditNote`. |
+| `posting_date` | Obligatorio. |
+| `currency_id`, `party_id`, `memo`, `due_date` | Opcionales. `party_id` es el contacto de Xero. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | Solo para pagos, opcionales. |
+| `credit_note_type` | Solo para notas de crédito, opcional. `ACCRECCREDIT` (ventas, el valor predeterminado) o `ACCPAYCREDIT` (compras). |
+
+**Campos de línea** abarca `ref` (obligatorio, debe coincidir con una fila de encabezado), además de los campos que necesita el tipo de documento:
+
+| Tipo de documento | Campos de línea |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit` y, opcionalmente, `class_id` / `department_id` para el seguimiento |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id` (la factura a la que se aplica la línea), `amount` |
+
+`tax_type` y `memo` son opcionales en todas las líneas.
+
+## Cómo funciona la contabilización
+
+Cada documento se reserva en el libro de idempotencia de PlaidCloud antes de enviarse, de modo que una nueva ejecución nunca contabiliza un documento que ya llegó a `posted`. La clave del libro lleva como prefijo el tipo de documento, por lo que una factura y una factura de proveedor que comparten el mismo `ref` nunca colisionan aunque Xero contabilice ambas por el mismo punto de conexión.
+
+Cuando un resultado es ambiguo (un tiempo de espera agotado, una respuesta perdida), PlaidCloud consulta a Xero por el número de documento que asignó: un número de factura para una factura o una factura de proveedor, un número de nota de crédito para una nota de crédito. Una coincidencia cuenta como prueba solo cuando el documento está en un estado contabilizado terminal, ya que esos números no están garantizados como únicos en Xero: una coincidencia en borrador, anulada o con número duplicado se trata como no resuelta y se pone en cuarentena en lugar de registrarse como el resultado de esta escritura.
+
+## Límites de capacidad
+
+| Limitación | Qué significa |
+|---|---|
+| No se pueden buscar los asientos de diario manuales ni los pagos | La descripción de un asiento de diario manual y la referencia de un pago no se pueden consultar en Xero, por lo que no hay ningún campo para correlacionar una escritura dudosa con la solicitud. Se ponen en cuarentena para resolverlos manualmente en lugar de suponer un resultado. |
+| La reversión cubre asientos de diario manuales y facturas | Un asiento de diario manual se revierte como un asiento con débito y crédito intercambiados; una factura se revierte con una nota de crédito espejo. Las facturas de proveedor, los pagos y las notas de crédito no tienen una carga de deshacer documentada, por lo que la reversión se rechaza y nunca se simula. |
+| Los límites de velocidad son por organización | Xero permite 60 llamadas por minuto y 5000 al día por organización, con 5 llamadas simultáneas. PlaidCloud controla los límites por minuto y de simultaneidad, y espera y reintenta ante una respuesta de limitación; un lote muy grande tarda proporcionalmente más. |
+
+## Elementos relacionados
+
+- [Conectar con Xero](/es/guides/connections/xero/): guía completa que abarca la configuración, la vista previa y la contabilización
+- [Conector REST de Xero](/es/reference/connectors/rest/xero/)
+- [Pasos de Xero](/es/reference/workflow-steps/xero/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/)

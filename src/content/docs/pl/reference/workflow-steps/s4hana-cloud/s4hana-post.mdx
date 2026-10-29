@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry"
+description: Księguj zapisy dziennika księgi głównej w SAP S/4HANA Cloud na podstawie tabel nagłówków i wierszy przez usługę SOAP JournalEntryBulkCreateRequest_In, z trybem podglądu, który sprawdza każdy zapis przed zaksięgowaniem czegokolwiek.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje zapisy dziennika księgi głównej w SAP S/4HANA Cloud przez [połączenie S/4HANA Cloud](/pl/guides/connections/s4hana-cloud/), korzystając ze wspólnego potoku zapisu ERP w PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na zapis dziennika) i tabelę wierszy (jeden lub więcej wierszy Winien/Ma na zapis) i przesyła każdy zapis do usługi SOAP `JournalEntryBulkCreateRequest_In` w S/4HANA Cloud. **Validate Only** buduje i sprawdza każdy zapis bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników rejestruje wynik każdego zapisu.
+
+<Aside type="caution">
+Zanim zaczniesz polegać na tym kroku przy księgowaniu zapisów na żywo bez nadzoru, uruchom każdą partię najpierw w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowanych pozycji bezpośrednio w S/4HANA.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **S/4HANA Connection** — połączenie S/4HANA Cloud, przez które odbywa się księgowanie.
+
+### Dane
+
+- **Tabela nagłówka** — jeden wiersz na zapis dziennika: `journal_id` (identyfikator zapisu, wymagany), `company_code` (wymagany), `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text`.
+- **Tabela wierszy** — jeden lub więcej wierszy na `journal_id`: `gl_account`, `debit`, `credit` oraz wszelkie kolumny wymiarów `cost_center`/`profit_center` wymagane przez Twoją księgę.
+- **Tabela wyników** — identyfikator tabeli wyjściowej: jeden wiersz na zapis z kolumnami `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — domyślnie zaznaczone. Wyłącznie sprawdzenie wstępne; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Validate Only zamiast księgowania na żywo.
+- **Continue On Error** — domyślnie zaznaczone. Księguje pozostałe zapisy po niepowodzeniu jednego; po odznaczeniu partia zatrzymuje się na pierwszym niepowodzeniu.
+
+## Jak działa księgowanie
+
+PlaidCloud przesyła każdy zapis przez `JournalEntryBulkCreateRequest_In` i odpytuje o odpowiadający komunikat `JournalEntryBulkCreateConfirmation_Out`, który zgłasza końcowy stan przetwarzania zapisu. Zapis jest zgłaszany jako `posted` dopiero po **otrzymaniu** tego potwierdzenia — zapis, który został przyjęty, ale którego potwierdzenie nigdy nie nadeszło, pozostaje w kwarantannie (nie jest zgłaszany jako zaksięgowany ani po cichu pomijany), zamiast być zapisany jako sukces tylko dlatego, że przesłanie zostało przyjęte.
+
+## Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego zapisu. Aby go skorygować, zaksięguj nowy zapis z zamienionymi stronami Winien i Ma względem oryginału — zaksięgowany zapis odwracający — zamiast edytować oryginał w miejscu.
+
+## Ograniczenia możliwości
+
+| Limitation | What it means |
+|---|---|| Opóźnienie potwierdzenia | Usługa zbiorczego tworzenia przetwarza żądania asynchronicznie; odpytywanie o stan końcowy czeka na komunikat potwierdzenia zamiast otrzymywać wynik synchroniczny. |
+| Odwrócenie to nowy zapis, a nie edycja w miejscu | Korekty księgują nowy zapis odwracający z zamienionymi stronami Winien i Ma. Nie ma możliwości anulowania ani usunięcia już zaksięgowanego zapisu. |
+| Walidacja wymiarów zależy od konfiguracji Twojej księgi | Obiekt kosztowy lub kombinacja wymiarów nieprawidłowa dla Twojej struktury kont kończy się niepowodzeniem w ramach własnej walidacji S/4HANA i jest zgłaszana jako wiersz `error`, a nie wychwytywana wcześniej przez PlaidCloud. |
+
+## Powiązane
+
+- [Połączenie z SAP S/4HANA Cloud](/pl/guides/connections/s4hana-cloud/) — pełny przewodnik obejmujący konfigurację, podgląd i księgowanie
+- [Konektor REST SAP S/4HANA Cloud](/pl/reference/connectors/rest/s4hana-cloud/)
+- [Kroki S/4HANA Cloud](/pl/reference/workflow-steps/s4hana-cloud/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/)

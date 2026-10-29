@@ -1,0 +1,145 @@
+---
+title: Automatice un flujo de trabajo con una programación
+description: "Tome un flujo de trabajo que ya creó y deje que se ejecute solo: prográmelo con el Programador de eventos, supervise su historial de ejecuciones y sus registros, y gestione el primer error."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/schedule-a-workflow.mdx
+---
+
+*~25 minutos · una ejecución programada, un historial de ejecuciones, un error gestionado*
+
+Ya tiene un flujo de trabajo, por ejemplo la canalización de limpieza de ventas de [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/). Ahora se ejecuta cuando usted hace clic en **Ejecutar**. Este tutorial entrega esa tarea a PlaidCloud: el flujo de trabajo se ejecuta según un calendario, por sí solo, y usted aprende a supervisarlo, demostrar que se ejecutó y recuperarlo cuando una ejecución falla.
+
+Tres cosas convierten una canalización manual en una automatizada, y este tutorial aborda cada una por turno:
+
+- **Una programación**: una regla que activa el flujo de trabajo en los momentos que usted elija.
+- **Un registro en el que pueda confiar**: un historial de ejecuciones y registros que le dicen qué sucedió mientras usted no miraba.
+- **Un plan de fallos**: porque un trabajo desatendido tarde o temprano se topa con datos incorrectos, y no debería fallar en silencio.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="El ciclo de automatización: una programación activa el flujo de trabajo, la ejecución genera un historial de ejecuciones y un registro, y una ejecución fallida se recupera reanudándola, lo que vuelve a la ejecución." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Programación</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ejecución</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Historial de ejecuciones</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ registro</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Recuperar</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">reanudar desde donde se detuvo</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Una vez que una programación se encarga de la ejecución, el historial y el registro son la forma de saber que funcionó, y Reanudar es la forma de repararlo cuando no fue así.</figcaption>
+</figure>
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud con un flujo de trabajo que ya se ejecuta correctamente cuando lo ejecuta a mano. Si no tiene uno, créelo primero con [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/).
+- Acceso a **Analizar → Herramientas → Programador de eventos** en ese espacio de trabajo.
+
+> **Programe un flujo de trabajo que ya funcione.** La automatización repite todo lo que hace el flujo de trabajo, incluidos sus errores, ahora sin supervisión. Ejecútelo manualmente hasta un final limpio una vez antes de ponerlo en una programación.
+
+## Paso 1: Confirme que se ejecuta a mano
+
+Abra su flujo de trabajo y ejecútelo una vez, de forma manual, para tener una referencia con la cual comparar.
+
+1. Abra su proyecto y vaya a la jerarquía de **Flujos de trabajo**.
+2. Haga clic en el icono de **ejecutar** del flujo de trabajo, o abra el flujo de trabajo y elija **Run All** en el menú **Acciones**. (El botón **Toggle Start/Stop** en la parte superior de la tabla del flujo de trabajo hace lo mismo y detiene una ejecución en curso.)
+3. Observe los iconos de estado de los pasos mientras avanza la ejecución. Cada paso muestra en qué punto se encuentra y cuánto tiempo lleva ejecutándose; pase el cursor sobre un icono para ver el mensaje que lo acompaña.
+
+Los estados que verá y lo que significa cada uno:
+
+| Estado | Qué significa |
+|---|---|
+| En espera | En cola, aún no ha comenzado. |
+| En ejecución | Trabajando; su duración va en aumento. |
+| Completado | Terminó correctamente. |
+| Advertencia | Terminó, pero señaló algo que vale la pena leer en el registro. |
+| Error | El paso falló; consulte [Administrar errores de pasos](/es/guides/workflows/managing-step-errors/). |
+| Omitido | Se pasó por alto: está deshabilitado o no se cumplieron sus condiciones de ejecución. |
+| Continuado | Falló pero está configurado para continuar en caso de error, por lo que la ejecución siguió adelante. |
+
+Una ejecución limpia termina con todos los pasos en **Completado**. Esa es su referencia en verde. Los detalles completos de los estados están en [Ejecutar un flujo de trabajo](/es/guides/workflows/run-a-workflow/).
+
+## Paso 2: Cree la programación
+
+Ahora entregue esa ejecución al Programador de eventos.
+
+1. Abra **Analizar**, seleccione **Herramientas** y haga clic en **Programador de eventos**. La **Events Table** enumera todos los eventos ya configurados para el espacio de trabajo.
+2. Haga clic en **Agregar evento programado**.
+3. Complete los campos obligatorios que marca el formulario, apuntando el evento al flujo de trabajo que acaba de ejecutar (y a su proyecto).
+4. Abra la pestaña **Event Schedule** y elija un **Schedule type**:
+   - **Use Classic Schedule**: elija los meses, días, horas y minutos específicos de la ejecución. Comience con algo que vaya a ver ocurrir pronto, como dentro de unos minutos.
+   - **Use Workday Schedule**: elija un día laborable financiero en lugar de una hora del reloj. Las programaciones por día laborable también pueden respetar calendarios de feriados, de modo que una ejecución caiga en el día hábil correcto.
+5. Haga clic en **Crear**.
+
+La Events Table ahora enumera su evento, y su columna de descripción muestra si está programado por mes, por día/hora/minuto o por día laborable.
+
+> **Las horas son la hora de Londres a menos que indique otra cosa.** Los eventos nuevos usan de forma predeterminada **UTC +0**, que se interpreta como la hora de Londres, incluido el horario de verano británico. Si "9 a. m." debe significar las 9 a. m. donde usted se encuentra, defina el campo **Zona horaria** del evento; de lo contrario, una ejecución programada puede caer con horas de diferencia respecto de lo que esperaba. La mayoría de los demás desfases también siguen la hora local de un lugar; consulte [Programador de eventos](/es/administration/scheduled-events/event-scheduler/#zona-horaria).
+
+> **Limite una programación de prueba para que no se ejecute para siempre.** La sección **Limit Running** ejecuta un evento solo durante un período determinado y un número determinado de veces. En una programación que solo está probando, así evita un trabajo que se activa en silencio cada pocos minutos durante semanas.
+
+## Paso 3: Previsualice cuándo se ejecutará
+
+Antes de confiar en la programación, vea qué hará realmente.
+
+1. Abra el **Upcoming Runs Calendar**. Es una vista previa de solo lectura: expande las mismas programaciones que controlan la ejecución real, por lo que lo que ve es lo que se ejecutará, y mirar nunca activa nada.
+2. Cambie entre las vistas **Mes**, **Semana** y **Agenda**; use **Anterior**, **Siguiente** y **Hoy** para desplazarse en el tiempo, y **Actualizar** para volver a obtener lo más reciente.
+3. Confirme que su evento aparece cuando lo espera. Cada ejecución se dibuja como una barra cuyo tamaño corresponde a la duración típica del flujo de trabajo.
+
+> **Las barras una al lado de otra indican un solapamiento.** Si las barras de dos ejecuciones están una junto a otra en la misma ventana, esas ejecuciones colisionan; escalone sus programaciones si compiten por los mismos datos o recursos. Los sensores basados en eventos no aparecen aquí, porque no tienen una hora futura fija. Consulte [Calendario de próximas ejecuciones](/es/administration/scheduled-events/upcoming-runs-calendar/).
+
+Si prefiere no esperar al reloj, seleccione el evento en la Events Table y haga clic en **Ejecutar eventos seleccionados** para activarlo de inmediato; es una buena forma de demostrar ahora mismo que la ruta programada funciona de principio a fin.
+
+## Paso 4: Supervise el historial de ejecuciones y el registro
+
+Una ejecución automatizada ocurre mientras usted está en otra parte, por lo que el registro que deja es en lo que realmente se apoya.
+
+- **El historial de ejecuciones** reside con el flujo de trabajo. Cada ejecución es una entrada propia. Una ejecución reanudada se registra como una ejecución *nueva* que contiene solo los pasos que volvió a ejecutar, y la original conserva su propia entrada, de modo que el historial se lee como una secuencia fiel de lo ocurrido, no como una sola línea que se sobrescribe.
+- **El registro del flujo de trabajo** captura los eventos a medida que ocurren: pasos en ejecución, advertencias generadas. Ábralo desde el área **Proyecto** en la pestaña **Registro**; también se consolida en el registro más amplio del proyecto para que pueda observar varios flujos de trabajo a la vez. El visor ordena y filtra, y puede abrir cualquier entrada para ver el detalle. Consulte [Ver el registro del flujo de trabajo](/es/guides/workflows/viewing-workflow-log/).
+- **El informe del flujo de trabajo** documenta el estado actual del flujo de trabajo: sus pasos, funciones y variables. Se genera a petición desde el icono **Informe** en la jerarquía de **Flujos de trabajo**, lo cual es útil cuando alguien pregunta qué hace realmente un trabajo automatizado. Consulte [Ver el informe del flujo de trabajo](/es/guides/workflows/view-workflow-report/).
+
+Después de una ejecución programada o a petición, abra el registro y confirme que la ejecución que esperaba está allí y terminó como usted pretendía.
+
+## Paso 5: Gestione un error
+
+Un trabajo desatendido tarde o temprano se encontrará con datos incorrectos. Decida desde ahora qué debe ocurrir cuando eso pase: PlaidCloud le ofrece tres respuestas, y la correcta depende del paso.
+
+| Opción | Qué ocurre | Úsela cuando |
+|---|---|---|
+| Detener el flujo de trabajo | La ejecución se interrumpe; aparece un indicador de error tanto en el paso como en el flujo de trabajo. | Es lo predeterminado: la mayoría de los pasos no deberían continuar después de un error real. |
+| Continuar en caso de error | El paso se marca con un error, pero la ejecución lo trata como terminado y sigue adelante. | Un paso que puede fallar sin consecuencias cuando faltan datos. |
+| Flujo de trabajo de corrección | La ejecución con error se detiene y, en su lugar, se inicia un segundo flujo de trabajo. | Quiere que un error avise a alguien o intente una reparación automática. |
+
+Dos configuraciones dan forma a esto, ambas en la pestaña **General** del formulario del paso (haga clic en el icono de engranaje del paso en la tabla del flujo de trabajo, o haga clic con el botón derecho y elija **Editar detalles del paso**):
+
+- **Reintentar**: un paso fallido puede reintentarse un número determinado de veces, con un retraso entre intentos que va de segundos a horas. Solo esto rescata la mayoría de los fallos causados por un sistema remoto que no está disponible brevemente. Consulte [Administrar errores de pasos](/es/guides/workflows/managing-step-errors/).
+- **Acción que se realizará en caso de error**: elija **Continuar** y el fallo del paso no detendrá el flujo de trabajo. Los pasos configurados así llevan un indicador especial en la tabla del flujo de trabajo. Consulte [Continuar en caso de error](/es/guides/workflows/continue-on-error/).
+
+> **Continuar en caso de error oculta el fallo a su plan de corrección.** Un paso marcado para continuar nunca detiene el flujo de trabajo, por lo que tampoco activa nunca un flujo de trabajo de corrección; solo lo hace un fallo que de otro modo interrumpiría la ejecución. Reserve la opción de continuar en caso de error para fallos que realmente le da igual ignorar.
+
+Cuando una ejecución programada sí falla, rara vez necesita empezar de nuevo. **Reanudar** retoma una ejecución detenida o con error desde donde se quedó: vuelve a ejecutar los pasos que no terminaron correctamente y deja en paz los completados. Reanudar está disponible siempre que la última ejecución de un flujo de trabajo haya terminado en pausa, detenida o con error.
+
+## Paso 6: Póngalo en pausa cuando lo necesite
+
+Una automatización que no puede apagar es un riesgo. Para desconectar una programación sin eliminarla:
+
+1. Abra **Analizar → Herramientas → Programador de eventos** y haga clic en el icono de **editar** del evento.
+2. Desmarque la casilla **Activo** y haga clic en **Actualizar**.
+
+El evento deja de activarse según su programación hasta que lo vuelva a activar, por la misma vía de edición, con **Activo** marcado de nuevo. Para quitarlo definitivamente, use en su lugar el icono de **eliminar**. Un evento activo muestra el icono **Activo** en la Events Table, de modo que de un vistazo sabe qué está en funcionamiento.
+
+**Todo listo.** Ahora tiene un evento programado, un historial de ejecuciones que supervisar y una forma de gestionar el primer error, y puede poner todo en pausa sin eliminarlo.
+
+## Dónde continuar
+
+- [Programador de eventos](/es/administration/scheduled-events/event-scheduler/): todos los campos de un evento programado, incluida la programación por día laborable y por calendario de feriados.
+- [Flujos de trabajo programados](/es/administration/scheduled-events/): ventanas de ejecución, orden y activadores condicionales en un espacio de trabajo.
+- [Calendario de próximas ejecuciones](/es/administration/scheduled-events/upcoming-runs-calendar/): detecte ventanas de ejecución que colisionan antes de que compitan.
+- [Ejecutar un flujo de trabajo](/es/guides/workflows/run-a-workflow/): pausar, detener y reanudar en detalle, además de todos los estados de los pasos.
+- [Administrar errores de pasos](/es/guides/workflows/managing-step-errors/) y [Continuar en caso de error](/es/guides/workflows/continue-on-error/): las configuraciones de gestión de fallos en profundidad.
+- [Guía de flujos de trabajo](/es/guides/workflows/): condiciones, bucles y variables para una automatización más avanzada.
+- [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/): el tutorial que crea el flujo de trabajo que este automatiza.

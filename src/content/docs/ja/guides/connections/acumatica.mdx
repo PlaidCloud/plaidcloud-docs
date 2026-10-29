@@ -1,0 +1,137 @@
+---
+title: Acumaticaに接続する
+description: PlaidCloudをAcumaticaに接続し、標準のエンティティインポートステップでマスターデータとトランザクションデータを取得し、Acumatica Postステップで仕訳、請求書、請求、支払を転記します。
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudをAcumaticaのコントラクトベースREST APIに接続すると、ODataを手書きすることなく参照データやトランザクションデータを取得でき、仕訳トランザクション、売上請求書、請求、支払を書き戻すこともできます。このガイドでは、接続、インポートステップ、転記ステップについて説明します。
+
+<Aside type="caution">
+インポートは必ず最初にサンドボックスの会社に対して実行し、本番に転記する前に、すべての転記バッチで下記の**プレビューと検証**を行ってください。
+</Aside>
+
+## 前提条件
+
+Acumaticaで次のものが必要です。
+
+- **インスタンスのベースURL**（例: `https://yourcompany.acumatica.com`）。
+- **会社**名（PlaidCloudがログインする正確な会社ID）。ブランチを使用する場合は、転記先の**ブランチ**。
+- PlaidCloud専用の**ユーザー名**と**パスワード**。読み取るエンティティと転記先のドキュメント画面にアクセスできるロールが必要です。
+- そのユーザーに対して有効化された**コントラクトベースREST API**へのアクセス（**System > Integration Preferences**。現在のAcumaticaのバージョンではデフォルトでオンです）。
+
+<Aside type="note">
+AcumaticaのコントラクトベースREST APIは、トークンベースではなく**セッションベース**です。PlaidCloudは、呼び出しのたびに認証するのではなく、一定の作業単位（1回のインポート取得、1回の転記バッチ）ごとに1度ログインし、完了時にログアウトします。Acumaticaのトライアルや下位ティアのライセンスでは、**同時**APIセッション数が最小2に制限される場合があるため、同じ接続に対して多数のAcumaticaステップを並列に実行することは避けてください。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections**を開き、`New Connection`をクリックします。
+
+2. メニューから**Acumatica**を選択します。
+
+3. フィールドを入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例: `Acumatica Prod`）。 |
+   | インスタンスのベースURL | インスタンスのURL（例: `https://yourcompany.acumatica.com`）。 |
+   | エンドポイント名 | コントラクトエンドポイント名。カスタムエンドポイントを公開していない限り`Default`です。 |
+   | エンドポイントのバージョン | 任意（例: `25.200.001`）。空白のままにすると、エンドポイントの公開済み最新バージョンを使用します。 |
+   | 会社/テナント | Acumaticaの正確な会社ID。 |
+   | ブランチ | 任意。空白のままにすると、ログインユーザーのデフォルトのブランチを使用します。 |
+   | ユーザー名 | PlaidCloud用のAPIユーザー。 |
+   | パスワード | PlaidCloud用のAPIユーザーのパスワード。 |
+
+4. `Create`をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. ワークフローに**Import Acumatica Entity**ステップを追加します。
+
+2. **Acumatica接続**に作成した接続を、**エンティティタイプ**に`account`を、**ターゲットテーブル**に作業用テーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内で1つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが入っていれば、ログイン、会社、ブランチがすべて正しいことを確認できます。エラーが出た場合は、問題が示されます。認証情報の誤り、会社の誤り、またはロールにREST APIアクセスがないことなどです。
+
+## データをインポートする
+
+<Steps>
+
+1. **Import Acumatica Entity**ステップを追加し、**Acumatica接続**と**ターゲットテーブル**を設定します。
+
+2. **エンティティタイプ**に、取得するレコードを設定します。マスターデータと参照リストは`account`、`subaccount`、`ledger`、`financial_period`、`branch`、`currency`、`currency_rate`、`customer`、`vendor`、`stock_item`、`warehouse`、`employee`、`tax_category`、`project`、トランザクションのエンティティは`sales_invoice`、`bill`、`sales_order`、`shipment`です。
+
+3. Activeフラグを持つエンティティについて、アクティブなレコードのみを取得するには、**アクティブのみ**をオンのままにします。
+
+4. **更新日時以降**にISO形式の日付または日時を設定すると、それ以降に変更された行のみを取得します（リクエスト側のフィルターであり、永続化される増分カーソルではありません。実行のたびに基準日時を指定します）。
+
+5. 大量の取得を絞り込むには**フィルター**を追加します。各フィルターは、`{field, operator, value}`句（`eq`、`ne`、`gt`、`ge`、`lt`、`le`、`contains`）または`{field, from, to}`の範囲で、エンティティごとに、Acumaticaがサーバー側で実際にフィルターできるフィールドに限られます。PlaidCloudは、そのエンティティがサポートしないフィルターフィールドを黙って破棄せず、拒否します。
+
+6. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+<Aside type="note">
+試算表、総勘定元帳のトランザクション明細、手持在庫、予算、会社間データは、上記のコントラクトベースのエンティティではなく、AcumaticaのGeneric Inquiryの背後にあり、PlaidCloudはGeneric Inquiryを生成しません。これらが必要な場合は、AcumaticaでGeneric Inquiryを作成し、代わりに[Generic REST接続](/ja/reference/connectors/rest/generic-rest/)で取得してください。
+</Aside>
+
+## ドキュメントを転記する
+
+**Acumatica Post**ステップは、すべてのERP転記ステップが使用する共通の書き込みパイプラインを通じて、**JournalTransaction**、**SalesInvoice**、**Bill**、**Payment**の4種類のドキュメントを転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル**（ドキュメントごとに1行）を作成します。列は`ref`（ドキュメントの識別子）、`doc_type`（`JournalTransaction`、`SalesInvoice`、`Bill`、`Payment`のいずれか）、`posting_date`、`party_id`（ドキュメントタイプに必要な場合の顧客/仕入先）、`memo`、`due_date`、`branch_id`です。1つのバッチに複数のドキュメントタイプを混在させることができ、PlaidCloudは転記前に`doc_type`で分割します。
+
+2. ドキュメントタイプに合わせた**明細テーブル**（`ref`ごとに1行以上）を作成します。
+
+   | ドキュメントタイプ | 明細列 |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. **Acumatica Post**ステップを追加し、**Acumatica接続**、**環境**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル**を設定します。
+
+4. **Validate Only**をオンのままステップを実行します。PlaidCloudは、台帳の請求を行わず、何も転記せずに、すべてのドキュメントを作成してチェックします。
+
+5. 結果テーブル（ドキュメントごとに1行: `ref`、`doc_type`、`natural_key`、`confirmation_id`、`status`、`message`）を確認します。`error`行があれば修正して、再検証します。
+
+6. **Validate Only**をオフにして再度実行し、実際に転記します。バッチが最初に失敗したドキュメントで完全に停止してよい場合を除き、**Continue On Error**はオンのままにしてください。
+
+</Steps>
+
+### 転記の仕組み
+
+Acumaticaはすべてのドキュメントを**保留状態**で作成し、その後PlaidCloudがリリースアクションを呼び出します。このアクションは非同期で実行されます（`202`レスポンスを返し、完了までポーリングした後、`204`でリリースが確認されます）。PlaidCloudは、リリースが**確認された**場合にのみドキュメントを`posted`として報告します。登録はされたもののリリースが確認されないドキュメントは、転記済みとして記録されず隔離されたままになるため、保留のままで止まっているものが黙って成功として扱われることはありません。
+
+### 機能の制限 — 本番に転記する前にお読みください
+
+<Aside type="caution">
+- **ネイティブの冪等性キーがありません。** AcumaticaのWrite APIにはドキュメントごとの冪等性フィールドがないため、再試行または再実行されたバッチでの二重転記を防ぐ唯一の手段は、PlaidCloud独自の台帳請求です。同じドキュメントを別の方法で転記して、このステップの台帳を迂回しないでください。
+- **取消は手動です。** AcumaticaのコントラクトベースのAPIには、どのドキュメントタイプについても文書化された無効化/取消アクションがなく、PlaidCloudがそれを偽装することもありません。転記済みのドキュメントを、このステップから取り消すことはできません。誤って転記したドキュメントは、Acumatica上で直接修正してください。
+- **Paymentには確実な検索手段がありません。** Acumaticaには、曖昧な結果（タイムアウトや応答の欠落）の後でPaymentをPlaidCloudのリクエストと突き合わせるための、文書化されたフィールドがありません。判断のつかないPaymentは推測せずに隔離されるため、Acumaticaで直接確認して解決してください。
+- **明細行レベルのコストセンターによるフィルターはサーバー側では行われません。** Acumaticaの`$filter`はドキュメントの明細行のディメンションには届かないため、ヘッダー/エンティティのレベルでフィルターし、明細行レベルの絞り込みは取得後にワークフロー内で行ってください。
+</Aside>
+
+## 関連項目
+
+- [Acumatica RESTコネクタ](/ja/reference/connectors/rest/acumatica/) — フィールドリファレンス。
+- [Import Acumatica Entityステップ](/ja/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documentsステップ](/ja/reference/workflow-steps/acumatica/acumatica-post/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/) — Acumaticaへのすべての転記試行とその最新の状態を記録した常設の履歴。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

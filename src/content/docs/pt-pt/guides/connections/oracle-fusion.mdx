@@ -1,0 +1,131 @@
+---
+title: Ligar ao Oracle Fusion
+description: Ligue o PlaidCloud ao Oracle Fusion Cloud com credenciais OAuth2, obtenha saldos do razão geral e lotes de diário com OData ou extrações BIP e, em seguida, lance através do FBDI e da GL Interface.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud ao Oracle Fusion Cloud ERP através dos respetivos endpoints de relatórios OData e BI Publisher (BIP) para obter saldos do razão geral e lotes de diário sem ter de escrever OData à mão, e lance lançamentos de diário de volta através do caminho File-Based Data Import (FBDI) da Oracle. Este guia abrange a ligação, o passo de importação e o passo de lançamento.
+
+<Aside type="caution">
+Execute primeiro cada importação num ambiente de teste e percorra **Validate Only**, abaixo, em cada lote de lançamento antes de lançar em produção.
+</Aside>
+
+## Pré-requisitos
+
+Precisa, no Oracle Fusion Cloud:
+
+- De um **utilizador de API** dedicado para o PlaidCloud, com uma função que tenha acesso às entidades que vai ler (consulta do razão geral) e às funções FBDI/GL Interface através das quais vai lançar.
+- Do **URL da instância** do Fusion Cloud (por exemplo `https://yourorg.fa.us2.oraclecloud.com`).
+- De **credenciais de cliente OAuth2** (ID e segredo do cliente) ou das credenciais de API de autenticação básica que a configuração de segurança do Fusion Cloud emite para utilizadores de integração — consoante o que o seu inquilino tiver aprovisionado.
+
+## Criar a ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Oracle Fusion** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome descritivo, por exemplo `Fusion Prod`. |
+   | URL da instância | O URL da sua instância do Fusion Cloud. |
+   | ID do cliente | O ID de cliente OAuth2 do utilizador de API (ou o nome de utilizador, na autenticação básica). |
+   | Segredo do cliente | O segredo de cliente OAuth2 do utilizador de API (ou a palavra-passe, na autenticação básica). |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar a ligação rapidamente
+
+<Steps>
+
+1. Adicione um passo **Import Fusion Entity** a um fluxo de trabalho.
+
+2. Defina a **Ligação Fusion** para a sua ligação, o **Tipo de entidade** para `gl_balances` e a **Tabela de destino** para uma tabela temporária.
+
+3. Execute o passo (consulte [Executar um passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que as credenciais e o URL da instância estão corretos. Um erro indica o problema — credenciais inválidas, um URL de instância errado ou uma função sem o privilégio de leitura da entidade.
+
+## Importar dados
+
+Dois passos de importação cobrem dimensões de extração diferentes:
+
+<Steps>
+
+1. Para uma extração de rotina e delimitada, adicione um passo **Import Fusion Entity** — chama diretamente os endpoints OData ou BIP do Oracle Fusion.
+
+2. Para uma extração grande, adicione antes um passo **Import Fusion Bulk Extract** — submete uma tarefa de extração FBDI/BIP e transfere o ficheiro resultante quando esta termina.
+
+3. Defina o **Tipo de entidade** para `gl_balances` ou `journal_batches`.
+
+4. Adicione **Filtros** para delimitar a extração — intervalos de datas e de períodos contabilísticos (`ge`/`le`) e intervalos numéricos em campos de saldo/montante, restringidos, por entidade, aos campos que o Oracle Fusion consegue de facto filtrar no servidor.
+
+5. Execute o passo e verifique a tabela de destino.
+
+</Steps>
+
+### Entidades e filtros
+
+| Tipo de entidade | O que extrai | Campos filtráveis |
+|---|---|---|
+| `gl_balances` | Saldos das contas do razão geral | intervalo de períodos contabilísticos, intervalo de contas, intervalo de montantes do saldo |
+| `journal_batches` | Cabeçalhos e estado dos lotes de diário | intervalo de datas, intervalo de períodos contabilísticos |
+
+<Aside type="note">
+`gl_balances` e `journal_batches` aceitam filtros de **intervalo** (`ge`/`le` num campo de data, de período ou numérico) e filtros de igualdade em campos discretos, como o razão ou a moeda. Um filtro de intervalo com apenas um limite fica em aberto do outro lado.
+</Aside>
+
+## Lançar lançamentos de diário
+
+O passo **Oracle Fusion: Post Journal Entry** lança lançamentos de diário do razão geral através do pipeline de escrita ERP partilhado do PlaidCloud, utilizando o caminho de carregamento FBDI GL Interface da Oracle.
+
+<Steps>
+
+1. Crie uma **tabela de cabeçalho** — uma linha por lançamento de diário — com `batch_id` (o identificador do seu lote), `ledger_id`, `journal_source`, `journal_category`, `accounting_date` e `description`.
+
+2. Crie uma **tabela de linhas** — uma ou mais linhas por `batch_id` — com `account_combination` (ou as respetivas colunas de segmento), `entered_debit`, `entered_credit` e `currency_code`.
+
+3. Adicione um passo **Oracle Fusion: Post Journal Entry**, defina a **Ligação Fusion**, a **Tabela de cabeçalho**, a **Tabela de linhas** e uma **Tabela de resultados**.
+
+4. Deixe **Validate Only** marcado e execute o passo — o PlaidCloud constrói e verifica cada lote sem reserva no razão e sem lançar nada.
+
+5. Reveja a tabela de resultados (uma linha por lote: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija qualquer linha `error` e valide novamente.
+
+6. Desmarque **Validate Only** e execute novamente para lançar a sério. Deixe **Continue On Error** marcado, a menos que pretenda que uma execução pare de imediato no primeiro lote falhado.
+
+</Steps>
+
+### Como funciona o lançamento
+
+O PlaidCloud escreve cada lote de diário na tabela de estágio GL_INTERFACE da Oracle como um ficheiro FBDI e, em seguida, submete e consulta de forma assíncrona a tarefa **Journal Import Launcher** do Enterprise Scheduler Service (ESS) até esta comunicar um estado terminal. Um lançamento só é comunicado como `posted` quando esse estado terminal é **confirmado** — um lote que chega à tabela de interface mas cuja tarefa de importação nunca se resolve fica em quarentena, em vez de ser registado como lançado, pelo que uma tarefa ESS bloqueada nunca passa silenciosamente por êxito. A reserva no razão do próprio PlaidCloud protege contra o carregamento do mesmo lote duas vezes num lote repetido ou reexecutado.
+
+### Corrigir um lançamento já registado
+
+Este passo nunca elimina nem reescreve um lote de diário lançado. Para corrigir um, lance um novo lote com débitos e créditos trocados em relação ao original — um **lançamento de estorno registado** — em vez de editar o original no local. Isto preserva a própria pista de auditoria do Oracle Fusion e corresponde à forma como as correções são feitas diretamente na aplicação.
+
+### Limites de capacidade — ler antes de lançar em produção
+
+<Aside type="caution">
+- **Latência da tarefa ESS.** O Journal Import Launcher é executado como uma tarefa agendada, não como uma chamada síncrona — espere que uma execução de lançamento demore substancialmente mais do que uma escrita direta pela API, e não utilize este passo para um lançamento individual sensível à latência.
+- **Latência da extração em massa.** O `import_fusion_bulk_extract` aguarda uma tarefa de exportação FBDI/BIP — reserve-o para extrações demasiado grandes para o caminho OData/BIP direto do `import_fusion_entity`.
+</Aside>
+
+## Relacionado
+
+- [Conector Oracle Fusion](/pt-pt/reference/connectors/erp/oracle-fusion/) — referência de campos.
+- [Import Fusion Entity](/pt-pt/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/pt-pt/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/pt-pt/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [Rever o histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/) — o registo permanente de cada tentativa de lançamento no Oracle Fusion e do seu estado atual.
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)

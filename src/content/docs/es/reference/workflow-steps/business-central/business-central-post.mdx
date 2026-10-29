@@ -1,0 +1,55 @@
+---
+title: "Business Central: Post General Journal Lines"
+description: Contabilice líneas de diario general en un lote de diario existente de Business Central a partir de tablas de encabezados y de líneas de PlaidCloud, con un modo de vista previa que valida cada diario antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza líneas de diario general en Business Central a través de su [conexión de Business Central](/es/guides/connections/business-central/), mediante la canalización de escritura de ERP compartida de PlaidCloud. El paso toma una tabla de encabezados (una fila por `journal_id`) y una tabla de líneas (una o más filas por `journal_id`), crea las líneas dentro de un lote de diario **existente** y contabiliza ese lote. **Validate Only** construye y comprueba cada diario sin contabilizarlo; una tabla de resultados opcional registra el resultado.
+
+<Aside type="caution">
+Ejecute cada lote primero en **Validate Only**, revise la tabla de resultados y concilie unas cuantas contabilizaciones directamente en Business Central antes de confiar en que este paso contabilice diarios reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **Conexión de Business Central**: la conexión de Business Central mediante la que se contabiliza.
+- **Entorno**: el entorno de la conexión.
+
+### Datos
+
+- **Tabla de encabezados**: una fila por `journal_id`: el nombre del lote de diario de Business Central en el que se contabilizan sus líneas, `document_number`, `posting_date` y una etiqueta de moneda.
+- **Tabla de líneas**: una o más filas por `journal_id`: un `amount` con signo (positivo para un débito, negativo para un crédito), `account_id` o `account_number`, `account_type`, `description`.
+- **Tabla de resultados**: ID de la tabla de salida: una fila por `journal_id` con `journal_id`, `external_id`, `internal_id`, `status`, `message`.
+- **Validate Only**: marcada de forma predeterminada. Solo comprobación previa; sin reserva en el libro mayor y sin contabilización. Una configuración de paso que omite este campo por completo (por ejemplo, una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo) también adopta Validate Only de forma predeterminada en lugar de una contabilización real.
+- **Continue On Error**: marcada de forma predeterminada. Sigue contabilizando los diarios restantes después de que uno falle; si se desmarca, detiene el lote en el primer fallo.
+
+<Aside type="caution">
+**El lote de diario indicado por `journal_id` ya debe existir en Business Central.** Este paso crea líneas dentro de un lote; no crea el lote en sí. Configure el lote de diario (nombre, plantilla de diario) en Business Central antes de contabilizar en él.
+</Aside>
+
+## Cómo funciona la contabilización
+
+La acción enlazada `Microsoft.NAV.post` de Business Central contabiliza el lote de diario **completo**, no solo las líneas que creó esta solicitud. Antes de llamarla, PlaidCloud vuelve a leer el lote y se niega a contabilizar (registra un error y no contabiliza nada) si contiene alguna línea que no esté marcada con el número de documento de esta solicitud. Esa protección impide que una línea perdida, dejada por un fallo parcial anterior, pase al libro mayor general por una contabilización posterior no relacionada en el mismo lote.
+
+Como `generalLedgerEntries` es de solo lectura y solo contiene datos contabilizados, PlaidCloud verifica que una contabilización se realizó buscando allí el número de documento, y no volviendo a leer el lote de diario: una coincidencia en `generalLedgerEntries` es prueba de una contabilización real, no solo de que se crearon líneas.
+
+## Límites de capacidad
+
+| Limitación | Qué significa |
+|---|---|
+| Un solo tipo de documento de escritura | Solo se admite la contabilización de líneas de diario general. El flujo de documentos en borrador de Business Central (facturas de venta y de compra, de Borrador a Contabilizado) no se admite: la acción de contabilización exacta de ese flujo no está especificada en la documentación publicada de Microsoft. |
+| Solo un lote existente | Este paso nunca crea un lote de diario. Créelo primero en Business Central y luego apunte `journal_id` a él. |
+| Contabilizaciones simultáneas en el mismo lote | La protección de idempotencia se define por número de documento, no por lote de diario: no se garantiza que dos números de documento distintos contabilizados al mismo tiempo en el mismo lote se serialicen como lo hacen dos llamadas con el mismo número de documento. Evite las contabilizaciones simultáneas en un mismo lote. |
+
+## Relacionado
+
+- [Conectarse a Business Central](/es/guides/connections/business-central/): guía completa que cubre la configuración, la vista previa y la contabilización
+- [Conector REST de Business Central](/es/reference/connectors/rest/business-central/)
+- [Pasos de Business Central](/es/reference/workflow-steps/business-central/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/)

@@ -1,0 +1,229 @@
+---
+title: Utiliser votre propre entrepôt de données
+description: Connectez vous-même votre propre entrepôt Snowflake ou Databricks, stockez-y les tables d'un espace de travail et exécutez-y ses workflows, connectez-vous avec votre propre identité d'entrepôt, gérez plusieurs entrepôts et consultez le coût de chaque exécution.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Les tables d'un projet résident normalement dans le PlaidCloud Lakehouse intégré. Un administrateur de l'espace de travail peut à la place connecter **votre propre entrepôt Snowflake ou Databricks** depuis PlaidCloud, sans l'aide du personnel de PlaidCloud. Les workflows lisent et écrivent alors les tables du projet directement dans votre entrepôt. Les données restent dans votre compte, sous votre gouvernance et votre facturation, tandis que PlaidCloud pilote les transformations, les workflows et les tableaux de bord qui s'appuient dessus.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 190" role="img" aria-label="Un projet PlaidCloud exécute des workflows qui lisent et écrivent des tables directement dans le lakehouse Snowflake ou Databricks du client, où les données restent." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="xl-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="66" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="90" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">projet PlaidCloud</text>
+  <text x="91" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">workflows + tableaux de bord</text>
+  <path d="M166 88 L262 88" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <text x="214" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">lecture / écriture</text>
+  <rect x="264" y="60" width="180" height="70" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="354" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">connexion</text>
+  <text x="354" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Snowflake ou Databricks</text>
+  <path d="M444 95 L540 95" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <rect x="514" y="60" width="150" height="70" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="88" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">votre lakehouse</text>
+  <text x="589" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">les données restent ici</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Les tables du projet résident dans votre entrepôt de données ; PlaidCloud les lit et les écrit sur place au lieu de copier les données dans son propre stockage.</figcaption>
+</figure>
+
+## Connecter votre entrepôt de données
+
+Seul un administrateur de l'espace de travail peut connecter, modifier ou supprimer un entrepôt de données.
+
+1. Ouvrez votre menu utilisateur et choisissez **Utiliser votre propre entrepôt de données**. Vous pouvez aussi choisir **Connecter** sur la ligne **Utiliser votre entrepôt de données** de la liste de contrôle de l'accueil, ou choisir **Utiliser ceci comme entrepôt de données** dans une boîte de dialogue de connexion Snowflake ou Databricks.
+2. Choisissez **Snowflake** ou **Databricks**.
+3. Connectez-vous de l'une des deux manières suivantes : **Sign in with Snowflake** ou **Sign in with Databricks** (la plus rapide, décrite dans [Se connecter avec Snowflake ou Databricks](#se-connecter-avec-snowflake-ou-databricks)), ou exécutez le script de configuration et collez les identifiants qu'il produit (ci-dessous).
+
+### 1. Exécuter d'abord le script de configuration
+
+<Aside type="caution">Exécutez le script de configuration avant de vous connecter. Tant que vous ne l'avez pas fait, la vérification de la connexion échoue.</Aside>
+
+La boîte de dialogue génère un script de configuration à partir des noms que vous choisissez et le met à jour au fil de la saisie. Copiez-le avec **Copier le script** et exécutez-le dans votre propre compte. Il ne modifie jamais vos entrepôts existants.
+
+| | Snowflake | Databricks |
+|---|---|---|
+| Exécuté en tant que | `ACCOUNTADMIN` | Un administrateur de l'espace de travail et du metastore |
+| Crée | Un entrepôt qui se suspend après 60 secondes d'inactivité, avec un plafond mensuel de crédits qui envoie une notification à 90 % et suspend à 100 % ; une base de données ; un rôle ; un utilisateur de service | Un service principal ; un SQL warehouse qui s'arrête lorsqu'il est inactif ; le catalogue, s'il n'existe pas déjà |
+| Noms modifiables | Entrepôt de données, taille, plafond mensuel de crédits, base de données, rôle, utilisateur de service | Nom du service principal, nom du SQL warehouse, taille, minutes d'inactivité avant l'arrêt, catalogue |
+| Valeurs par défaut | `PLAIDCLOUD_WH` (`XSMALL`, 100 crédits par mois), `PLAIDCLOUD`, `PLAIDCLOUD_ROLE`, `PLAIDCLOUD_SVC` | `plaidcloud`, `PlaidCloud` (`2X-Small`, 10 minutes d'inactivité), catalogue `plaidcloud` |
+| Authentification | Paire de clés (le script indique comment en générer une) | Secret OAuth pour le service principal |
+
+Le script configure également les éléments suivants.
+
+- **Accès réseau.** PlaidCloud se connecte depuis l'adresse `130.211.116.97/32`. Le script Snowflake crée une politique réseau qui n'autorise que cette adresse pour l'utilisateur de service. Sur Databricks, si votre espace de travail applique déjà des listes d'accès IP, le script inclut l'instruction qui l'autorise ; ajoutez cette adresse à toute politique réseau ou liste d'accès IP qui protège votre compte.
+- **Les politiques sont conservées.** Sur Snowflake, le rôle reçoit les privilèges permettant d'appliquer les politiques et balises d'accès aux lignes, de masquage, de projection, d'agrégation et de jointure, de sorte que vos politiques survivent lorsque PlaidCloud réécrit une table. Sur Databricks, accordez au service principal `EXECUTE` sur toute fonction de filtre de lignes ou de masque de colonne que vous utilisez.
+- **Coûts d'exécution.** Le rôle Snowflake reçoit le rôle de base de données `SNOWFLAKE.GOVERNANCE_VIEWER`, qui permet à PlaidCloud de lire les crédits attribués à chaque exécution et couvre aussi [Dernière lecture](/fr/guides/projects/managing-tables-and-views/#dernière-lecture). Databricks reçoit un accès en lecture à l'historique des requêtes et aux tailles d'entrepôt dans le catalogue `system`.
+- **Dernière lecture.** Sur Databricks, le script accorde également `USE SCHEMA` sur `system.access` et `SELECT` sur `system.access.table_lineage`, dont les informations de dernière lecture de la table ont besoin. Consultez [Coût de l'entrepôt par exécution](#coût-de-lentrepôt-par-exécution).
+
+### 2. Se connecter
+
+| Champ | Moteur | Ce qu'il faut saisir |
+|---|---|---|
+| URL du compte | Snowflake | L'hôte de votre compte, par exemple `myorg-myaccount.snowflakecomputing.com`. |
+| Clé privée | Snowflake | La clé privée de l'utilisateur de service (PEM). Une paire de clés n'expire jamais. |
+| URL de l'espace de travail | Databricks | L'hôte de votre espace de travail, par exemple `adb-1234567890123456.7.azuredatabricks.net`. |
+| Chemin HTTP du SQL warehouse | Databricks | Par exemple `/sql/1.0/warehouses/abc123def456`. |
+| ID d'application | Databricks | L'ID d'application (client) du service principal. |
+| Secret OAuth | Databricks | Le secret OAuth du service principal. PlaidCloud le renouvelle pour vous. |
+
+Sous **Avancé**, vous pouvez utiliser à la place un jeton d'accès programmatique Snowflake ou un jeton d'accès personnel Databricks. Les jetons expirent : à cette date, PlaidCloud n'accède plus à votre entrepôt tant que vous n'en ajoutez pas un nouveau. Quatorze jours avant l'expiration, puis après, une bannière vous indique la date et propose **Renouveler**. Une paire de clés ou un secret OAuth évite l'expiration.
+
+L'adresse doit être l'URL publique de votre compte, se terminant par `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` ou `.gcp.databricks.com`. Les points de terminaison privés et personnalisés ne sont pas pris en charge.
+
+### 3. Vérifier, puis l'utiliser
+
+- **Vérifier la connexion** teste l'adresse, la connexion et tous les privilèges dont PlaidCloud a besoin, sans rien enregistrer.
+- **Utiliser comme mon entrepôt de données** effectue la même vérification, rattache l'entrepôt, le définit par défaut et attend que l'espace de travail bascule dessus. Cela prend généralement quelques minutes et vous pouvez fermer la fenêtre. Les nouveaux projets de l'espace de travail utilisent ensuite votre entrepôt.
+
+Une vérification en échec explique le problème et sa solution en langage clair. Les privilèges requis manquants sont listés sous forme d'instructions `GRANT` prêtes à l'emploi, avec un bouton **Copier**, un bouton **Tout copier** et **Afficher le script de configuration**. **Copier pour l'assistance** copie le texte d'erreur propre à l'entrepôt pour l'assistance PlaidCloud.
+
+La vérification liste aussi séparément des autorisations sous **Recommandé — active « Dernière lecture »**, chacune avec **Copier**. Elles permettent aux informations de [Dernière lecture](/fr/guides/projects/managing-tables-and-views/#dernière-lecture) de la table de lire l'historique de votre entrepôt. Elles ne vous empêchent jamais d'utiliser l'entrepôt : sans elles, il se connecte normalement et « Dernière lecture » affiche **Read history incomplete**.
+
+- **Snowflake :** `GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE <role>;` (`IMPORTED PRIVILEGES` sur la base de données `SNOWFLAKE` fonctionne aussi). « Dernière lecture » nécessite Access History, que l'édition Snowflake Standard n'offre pas.
+- **Databricks :** `USE CATALOG` sur `system`, `USE SCHEMA` sur `system.access` et `SELECT` sur `system.access.table_lineage` pour le service principal.
+
+| Ce que vous voyez | Solution |
+|---|---|
+| L'utilisateur de service ne peut pas utiliser un objet | Accordez à son rôle le privilège sur cet objet. Le script de configuration contient toutes les autorisations. |
+| Votre entrepôt est suspendu ou n'existe pas | Vérifiez le nom de l'entrepôt et qu'il peut démarrer seul (`AUTO_RESUME` sur Snowflake, un SQL warehouse en cours d'exécution sur Databricks). |
+| Votre entrepôt a épuisé son quota de crédits | Augmentez le quota du moniteur de ressources ou le budget, ou attendez sa réinitialisation. |
+| Une politique réseau bloque PlaidCloud | Autorisez `130.211.116.97/32` dans la politique, comme le fait le script de configuration. |
+| Le jeton ou la clé a expiré ou n'est plus valide | Créez un nouveau jeton ou passez à une paire de clés. |
+| Unity Catalog a refusé l'accès au service principal | Accordez `USE CATALOG`, `CREATE SCHEMA` et `USE SCHEMA` sur le catalogue. |
+| PlaidCloud n'a pas pu se connecter | Vérifiez l'utilisateur ou le service principal, ainsi que sa clé, son jeton ou son secret. |
+| PlaidCloud n'a pas pu joindre votre entrepôt | Vérifiez l'URL et autorisez l'adresse de PlaidCloud dans toute politique réseau ou liste d'accès IP. |
+| Les points de terminaison privés ou personnalisés ne sont pas pris en charge | Utilisez l'URL publique de votre compte. |
+
+## Se connecter avec Snowflake ou Databricks
+
+Au lieu de coller une clé, un secret ou un jeton, un administrateur peut rattacher l'entrepôt en se connectant. Chaque personne se connecte ensuite avec sa propre identité Snowflake ou Databricks, de sorte que les tableaux de bord et les requêtes s'exécutent avec ses propres autorisations dans votre entrepôt.
+
+### Ce qu'un administrateur configure d'abord
+
+Une seule fois, dans votre propre compte, un administrateur de compte enregistre PlaidCloud comme application de connexion. La boîte de dialogue **Utiliser votre propre entrepôt de données** affiche le texte exact à utiliser, y compris l'URL de redirection de PlaidCloud.
+
+- **Snowflake.** Exécutez l'instruction `CREATE SECURITY INTEGRATION` affichée dans la boîte de dialogue, puis copiez `OAUTH_CLIENT_ID` depuis le résultat de l'instruction `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS`.
+- **Databricks.** Dans la console de compte, sous **Settings > App connections**, ajoutez une application nommée `PlaidCloud`. Donnez-lui l'URL de redirection affichée dans la boîte de dialogue et l'accès à toutes les API, laissez **Generate a client secret** désactivé et copiez son ID client.
+
+### Rattacher l'entrepôt
+
+1. Dans **Quickest: sign in with Snowflake** (ou Databricks), saisissez l'**URL du compte** (ou l'**URL de l'espace de travail**) et l'**ID client**.
+2. Sur Snowflake, saisissez la **Base de données** et le **Rôle de données pour PlaidCloud**. **Entrepôt de données** est facultatif et prend par défaut votre valeur. Sur Databricks, saisissez le **Chemin HTTP du SQL warehouse**. **Catalogue** est facultatif et prend par défaut votre valeur.
+3. Choisissez **Sign in with Snowflake** ou **Sign in with Databricks**, connectez-vous à votre compte chez le fournisseur et approuvez.
+
+PlaidCloud crée sa propre identité de service dans votre compte, dédiée à cet entrepôt. Les workflows, les planifications et tout ce qui n'a aucune personne derrière s'exécutent sous cette identité.
+
+- **Snowflake.** PlaidCloud crée un nouvel utilisateur de service avec une paire de clés qui ne détient que le rôle de données que vous nommez. Le rôle doit être un simple rôle de données. PlaidCloud refuse un rôle qui est celui avec lequel vous vous êtes connecté, qui est `ACCOUNTADMIN`, `SECURITYADMIN`, `USERADMIN`, `SYSADMIN` ou `ORGADMIN` ou en hérite, qui détient `CREATE USER`, `CREATE ROLE`, `MANAGE GRANTS`, `CREATE INTEGRATION` ou `CREATE NETWORK POLICY`, ou qui possède un utilisateur. Le rôle peut détenir les autorisations `APPLY ROW ACCESS POLICY`, `APPLY MASKING POLICY`, `APPLY PROJECTION POLICY`, `APPLY AGGREGATION POLICY`, `APPLY JOIN POLICY` et `APPLY TAG` du script de configuration, dont les tables reconstruites ont besoin pour conserver leurs politiques. PlaidCloud refuse également de réutiliser un utilisateur Snowflake existant. Le rôle avec lequel vous vous connectez doit pouvoir créer des utilisateurs et accorder le rôle de données.
+- **Databricks.** PlaidCloud crée un nouveau service principal disposant uniquement de l'accès au SQL warehouse et des privilèges de données du catalogue. Connectez-vous en tant qu'administrateur de l'espace de travail pour que PlaidCloud puisse le créer.
+
+Si vous n'avez pas un privilège dont l'identité de service a besoin, l'entrepôt se rattache quand même pour les personnes connectées, avec un avertissement qui le nomme, et les exécutions de workflow sont refusées pour le même motif jusqu'à ce qu'un administrateur se reconnecte.
+
+### Tout le monde se connecte
+
+Dès que l'espace de travail dispose d'un entrepôt joint par connexion, chaque membre voit **Se connecter à votre entrepôt** dans le menu utilisateur. Choisissez-le, puis **Sign in with Snowflake** ou **Sign in with Databricks**. PlaidCloud maintient votre session. Un tableau de bord ouvert sans connexion, ou après l'expiration de la vôtre, affiche *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.* (ou *Databricks*). Reconnectez-vous depuis cet élément de menu.
+
+Un tableau de bord sur un tel entrepôt s'exécute avec les propres autorisations du lecteur dans cet entrepôt. Un lecteur qui ne s'est pas connecté voit ce message : *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
+
+## Gérer les entrepôts de données
+
+Un administrateur de l'espace de travail ouvre le menu utilisateur et choisit **Gérer les entrepôts de données**. La fenêtre **Vos entrepôts de données** liste pour chaque entrepôt son **Nom**, son **Type**, **Par défaut**, **Projets** et son **Statut**.
+
+| Bouton | Ce qu'il fait |
+|---|---|
+| **Ajouter un entrepôt de données** | Ouvre le même parcours que la connexion, intitulé **Ajouter un entrepôt de données**. Votre entrepôt est ajouté, et l'entrepôt par défaut des nouveaux projets ne change pas. |
+| **Définir par défaut** | Les nouveaux projets utilisent cet entrepôt. Les projets déjà créés restent sur l'entrepôt sur lequel ils ont été créés. |
+| **Supprimer** | Déconnecte l'entrepôt. Disponible uniquement lorsque l'entrepôt n'est pas celui par défaut et qu'aucun projet ne l'utilise. |
+
+<Aside type="note">L'apparition d'un entrepôt nouvellement ajouté dans votre espace de travail peut prendre plusieurs minutes. Chaque espace de travail s'exécute de façon isolée des autres et prend en compte seul les changements de configuration ; tant que le changement n'est pas arrivé, l'entrepôt n'est pas listé et les projets ne peuvent pas encore l'utiliser. S'il n'est toujours pas apparu après une heure, contactez l'assistance PlaidCloud.</Aside>
+
+Lorsque vous supprimez un entrepôt, PlaidCloud révoque son identifiant dans votre compte (y compris toutes les connexions et l'identité de service) et en supprime sa copie. Vos données restent dans votre entrepôt. Si l'identifiant ne peut pas être révoqué, PlaidCloud vous indique de le révoquer vous-même dans votre compte.
+
+## Coût de l'entrepôt par exécution
+
+Sur votre propre entrepôt, l'historique d'exécution d'un workflow Alteryx converti affiche une colonne **Coût de l'entrepôt**, et la fenêtre [Prouvez votre migration](/fr/guides/workflows/validate-converted-alteryx-workflows/#prouvez-votre-migration) affiche le coût de la dernière exécution et une estimation pour la prochaine. Les coûts sont exprimés en crédits sur Snowflake et en DBU sur Databricks.
+
+| Libellé | Signification |
+|---|---|
+| *attributed* | Snowflake a facturé ces crédits aux requêtes de l'exécution, lus grâce à l'autorisation `GOVERNANCE_VIEWER`. L'attribution apparaît après le délai de reporting de Snowflake. |
+| *estimated* | Calculé à partir du temps d'exécution des requêtes et de la taille de l'entrepôt, affiché avec un ≈ en tête. C'est toujours le cas sur Databricks, et sur Snowflake avant l'arrivée de l'attribution ou sans l'autorisation. |
+
+Le coût couvre les étapes exécutées par le moteur de PlaidCloud. Une exécution tarifée en partie est marquée *partial*, et une exécution dont le coût n'a pas encore été rapporté l'indique.
+
+## Vos politiques et descriptions sont conservées
+
+Les descriptions de schéma, de table et de colonne définies dans PlaidCloud sont écrites sous forme de commentaires dans le catalogue propre à votre entrepôt. Les politiques d'accès aux lignes, de masquage, de projection, d'agrégation et de jointure sur Snowflake, ainsi que les filtres de lignes et les masques de colonne sur Databricks, restent attachés lorsque PlaidCloud remplace, recrée ou clone une table. Si une politique ne peut pas être conservée, PlaidCloud laisse la table telle quelle et le message nomme la politique et la raison.
+
+## Lier un projet à votre entrepôt de données
+
+Dès que votre espace de travail dispose d'un entrepôt connecté, la boîte de dialogue **Nouveau projet** (**Analyze > Projets > Nouveau projet**) propose un sélecteur de lakehouse : choisissez **Valeur par défaut du locataire** ou sélectionnez un entrepôt précis. **Valeur par défaut du locataire** correspond au PlaidCloud Lakehouse intégré, sauf si un entrepôt est défini par défaut, auquel cas les nouveaux projets y sont créés automatiquement. Utilisez **Utiliser comme mon entrepôt de données** ou **Définir par défaut** dans [Gérer les entrepôts de données](#gérer-les-entrepôts-de-données) pour définir la valeur par défaut. Cela n'affecte que les projets créés ensuite ; les projets existants conservent le backend avec lequel ils ont été créés. À partir de là :
+
+- Chaque table que les workflows du projet créent, chargent ou transforment est créée et écrite dans votre lakehouse.
+- Les lectures — dans les étapes, les vues et les tableaux de bord — s'exécutent sous forme de requêtes sur votre entrepôt.
+- Rien n'est copié dans le PlaidCloud Lakehouse ; les données restent dans votre compte.
+
+Créez vos workflows exactement comme sur le lakehouse intégré : les étapes d'importation, de transformation, de jointure et de publication fonctionnent toutes de la même façon. Le backend est défini à la création du projet et s'applique à l'ensemble du projet.
+
+## Importer des fichiers dans un projet lié à un lakehouse
+
+L'importation d'un fichier CSV, Parquet, XML ou Access dans un projet lié à un lakehouse le charge via le **chemin de chargement en masse natif et parallèle** de votre entrepôt : une zone de transit interne Snowflake plus `COPY INTO` pour Snowflake, un volume géré Databricks plus `COPY INTO` pour Databricks — au lieu de transiter le fichier par un bucket cloud externe. Aucun IAM cloud supplémentaire n'est à configurer, et le fonctionnement est identique quel que soit le cloud sur lequel s'exécute votre entrepôt.
+
+## Exporter les résultats de requêtes et de tables
+
+L'exportation des résultats de requêtes ou de tables depuis un projet lié à un lakehouse les livre directement dans le stockage cloud, au lieu de faire repasser chaque ligne par PlaidCloud :
+
+- **Snowflake** — l'export s'exécute comme un déchargement côté serveur Snowflake (`COPY INTO` vers une zone de transit), de sorte que l'entrepôt écrit les résultats directement dans le stockage. Les exports volumineux sont automatiquement répartis en plusieurs fichiers (auparavant, un export dépassant la limite de fichier unique de Snowflake échouait).
+- **Databricks** — l'export s'exécute comme un déchargement côté serveur Databricks (`INSERT OVERWRITE DIRECTORY` dans un volume géré Unity Catalog), de sorte que l'entrepôt écrit et encode lui-même les résultats et que PlaidCloud se contente de relayer les fichiers terminés vers le stockage. Les exports volumineux sont automatiquement répartis sur plusieurs fichiers, et le CSV peut être livré compressé en gzip.
+
+## Tableaux de bord sur les données du lakehouse
+
+Les tableaux de bord fonctionnent avec les deux moteurs.
+
+- **Databricks** — les tableaux de bord se connectent via le pilote Databricks, avec les identifiants OAuth du service principal (ou un jeton d'accès personnel). Sur un entrepôt rattaché par [connexion](#se-connecter-avec-snowflake-ou-databricks), le tableau de bord de chaque lecteur s'exécute avec sa propre identité Databricks.
+- **Snowflake** — les tableaux de bord se connectent avec l'utilisateur de service de l'entrepôt et sa paire de clés. Sur un entrepôt rattaché par [connexion](#se-connecter-avec-snowflake-ou-databricks), le tableau de bord de chaque lecteur s'exécute à la place avec sa propre identité Snowflake. Le tableau de bord d'un projet est configuré lors de la création ou de la publication du projet.
+
+## Faire enregistrer un entrepôt de données par PlaidCloud
+
+Vous n'êtes pas obligé de connecter un entrepôt vous-même. Communiquez à votre contact PlaidCloud les informations ci-dessous pour le moteur que vous connectez, et un administrateur l'enregistre en votre nom.
+
+### Snowflake
+
+| Champ | Ce qu'il faut fournir |
+|---|---|
+| Nom d'hôte | L'hôte de votre compte Snowflake. |
+| Superutilisateur | L'utilisateur Snowflake sous lequel PlaidCloud s'authentifie. |
+| Base de données | La base de données dans laquelle PlaidCloud crée et gère les schémas de projet. |
+| Entrepôt de données | L'entrepôt de calcul sous lequel PlaidCloud exécute les requêtes. |
+| Rôle | Le rôle Snowflake que PlaidCloud endosse. |
+| Clé privée | La clé privée PEM **brute et non chiffrée** pour l'authentification par paire de clés — collez le texte de la clé lui-même, pas une copie encodée en base64. Les clés protégées par phrase secrète ne sont pas encore prises en charge. |
+
+Générez une paire de clés et attribuez la clé publique au superutilisateur Snowflake avant de transmettre la clé privée. Le rôle doit pouvoir créer, lire et écrire des tables dans la base de données cible.
+
+### Databricks
+
+| Champ | Ce qu'il faut fournir |
+|---|---|
+| Nom d'hôte | L'URL de votre espace de travail Databricks. |
+| Chemin HTTP | Le chemin HTTP du SQL warehouse sur lequel PlaidCloud exécute les requêtes. |
+| Unity Catalog | Le catalogue Unity Catalog dans lequel PlaidCloud crée et gère les schémas de projet. |
+| Jeton d'accès personnel | Un PAT Databricks pour l'authentification. |
+
+L'identité du jeton doit pouvoir créer, lire et écrire des tables dans ce catalogue.
+
+Aucun des deux enregistrements ne demande de schéma : chaque projet obtient le sien, dérivé automatiquement de son DSN lorsque le projet est lié au lakehouse.
+
+Le formulaire d'enregistrement comporte un bouton **Tester la connexion** qui ouvre une connexion réelle avec les informations saisies et indique la réussite ou la raison de l'échec, sans rien enregistrer — ce qui permet de vérifier les identifiants avant l'enregistrement du lakehouse. Un test Snowflake nécessite la clé privée PEM brute et non chiffrée (une clé protégée par phrase secrète est signalée comme non prise en charge) ; un test Databricks utilise le PAT.
+
+Un entrepôt enregistré n'est pas utilisable dès qu'il est sauvegardé. Il peut mettre plusieurs minutes à apparaître dans l'espace de travail, pour la même raison qu'un entrepôt que vous ajoutez vous-même (consultez **Gérer les entrepôts de données**).
+
+<Aside type="note">La connexion à un catalogue Iceberg/Lakekeeper s'enregistre séparément et est facultative : elle n'est pas nécessaire pour utiliser un entrepôt Snowflake ou Databricks.</Aside>
+
+## Voir aussi
+
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)
+- [Référence du connecteur Snowflake](/fr/reference/connectors/databases/snowflake/)
+- [Référence du connecteur Azure Databricks](/fr/reference/connectors/databases/azure-databricks/)
+- [Authentification unique pour votre espace de travail](/fr/administration/control-plane/workspace-configuration/#authentification-unique)
+- [Gérer les projets](/fr/guides/projects/managing-projects/)

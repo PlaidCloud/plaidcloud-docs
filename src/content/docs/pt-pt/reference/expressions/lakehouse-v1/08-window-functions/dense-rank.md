@@ -1,0 +1,79 @@
+---
+title: DENSE_RANK (Lakehouse v1)
+description: DENSE_RANK — devolve a classificação de um valor num grupo de valores, sem lacunas nas classificações.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/08-window-functions/dense-rank.md
+---
+
+Devolve a classificação de um valor num grupo de valores, sem lacunas nas classificações.
+
+O valor da classificação começa em 1 e continua sequencialmente.
+
+Se dois valores forem iguais, têm a mesma classificação.
+
+## Sintaxe do Analyze
+
+```python
+func.dense_rank().over(partition_by=[<columns>], order_by=[<columns>])
+```
+
+## Exemplos do Analyze
+
+```python
+table.department, func.sum(salary), func.dense_rank().over(order_by=func.sum(table.salary).desc()).alias('dense_rank')
+
+| department | total_salary | dense_rank |
+|------------|--------------|------------|
+| IT         | 172000       | 1          |
+| HR         | 160000       | 2          |
+| Sales      | 77000        | 3          |
+```
+
+## Sintaxe SQL
+
+```sql
+DENSE_RANK() OVER ( [ PARTITION BY <expr1> ] ORDER BY <expr2> [ ASC | DESC ] [ <window_frame> ] )
+```
+
+## Exemplos de SQL
+
+**Criar a tabela**
+```sql
+CREATE TABLE employees (
+  employee_id INT,
+  first_name VARCHAR,
+  last_name VARCHAR,
+  department VARCHAR,
+  salary INT
+);
+```
+
+**Inserir dados**
+```sql
+INSERT INTO employees (employee_id, first_name, last_name, department, salary) VALUES
+  (1, 'John', 'Doe', 'IT', 90000),
+  (2, 'Jane', 'Smith', 'HR', 85000),
+  (3, 'Mike', 'Johnson', 'IT', 82000),
+  (4, 'Sara', 'Williams', 'Sales', 77000),
+  (5, 'Tom', 'Brown', 'HR', 75000);
+```
+
+**Calcular o salário total por departamento com DENSE_RANK**
+
+```sql
+SELECT
+    department,
+    SUM(salary) AS total_salary,
+    DENSE_RANK() OVER (ORDER BY SUM(salary) DESC) AS dense_rank
+FROM
+    employees
+GROUP BY
+    department;
+```
+
+Resultado:
+
+| department | total_salary | dense_rank |
+|------------|--------------|------------|
+| IT         | 172000       | 1          |
+| HR         | 160000       | 2          |
+| Sales      | 77000        | 3          |

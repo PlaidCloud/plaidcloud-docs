@@ -1,0 +1,78 @@
+---
+title: JSON_EACH (Lakehouse v1)
+description: JSON_EACH — extrae pares clave-valor de un objeto JSON y descompone la estructura en filas individuales del conjunto de resultados.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/10-semi-structured-functions/json-each.md
+---
+
+Extrae pares clave-valor de un objeto JSON y descompone la estructura en filas individuales del conjunto de resultados. Cada fila representa un par clave-valor distinto derivado de la expresión JSON de entrada.
+
+## Sintaxis de Analyze
+
+```python
+func.json_each(<json_string>)
+```
+
+## Ejemplos de Analyze
+
+```python
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ func.json_each(func.parse_json('{"name": "john", "age": 25, "isstudent": false, "grades": [90, 85, 92]}')) │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ('age','25')                                                                                               │
+│ ('grades','[90,85,92]')                                                                                    │
+│ ('isStudent','false')                                                                                      │
+│ ('name','"John"')                                                                                          │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Sintaxis SQL
+
+```sql
+JSON_EACH(<json_string>)
+```
+
+## Tipo de retorno
+
+JSON_EACH devuelve un conjunto de tuplas, cada una formada por una clave STRING y un valor VARIANT correspondiente.
+
+## Ejemplos de SQL
+
+```sql
+-- Extract key-value pairs from a JSON object representing information about a person
+SELECT
+  JSON_EACH(
+    PARSE_JSON (
+      '{"name": "John", "age": 25, "isStudent": false, "grades": [90, 85, 92]}'
+    )
+  );
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ json_each(parse_json('{"name": "john", "age": 25, "isstudent": false, "grades": [90, 85, 92]}')) │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ ('age','25')                                                                                     │
+│ ('grades','[90,85,92]')                                                                          │
+│ ('isStudent','false')                                                                            │
+│ ('name','"John"')                                                                                │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- Display data types of the extracted values
+SELECT
+  TYPEOF (
+    JSON_EACH(
+      PARSE_JSON (
+        '{"name": "John", "age": 25, "isStudent": false, "grades": [90, 85, 92]}'
+      )
+    )
+  );
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ typeof(json_each(parse_json('{"name": "john", "age": 25, "isstudent": false, "grades": [90, 85, 92]}'))) │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ TUPLE(STRING, VARIANT) NULL                                                                              │
+│ TUPLE(STRING, VARIANT) NULL                                                                              │
+│ TUPLE(STRING, VARIANT) NULL                                                                              │
+│ TUPLE(STRING, VARIANT) NULL                                                                              │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```

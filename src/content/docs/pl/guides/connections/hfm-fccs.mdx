@@ -1,0 +1,138 @@
+---
+title: Wyodrębnianie z HFM / FCCS (ad hoc)
+description: Połącz PlaidCloud z Oracle FCCS i samodzielnie pobieraj wycinek danych za pomocą selektora punktu widzenia — bez zgłoszenia do zespołu HFM. Obejmuje połączenie, budowanie punktu widzenia, uruchamianie, buforowanie, zabezpieczenia na poziomie wierszy oraz zaplanowane cykliczne ładowanie.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Oracle **FCCS** (Financial Consolidation and Close, część Oracle EPM Cloud), aby użytkownik działu finansów mógł samodzielnie pobrać wycinek danych zamiast zgłaszać prośbę do zespołu HFM. Budujesz **punkt widzenia (POV)** w formularzu kroku, klikasz Uruchom, a wynik automatycznie trafia do tabeli. Wygląda to jak zapytanie na żywo — w rzeczywistości jest to asynchroniczne żądanie → odpytywanie → pobranie wyniku zadania eksportu danych FCCS. Ten przewodnik obejmuje połączenie, budowanie punktu widzenia, uruchamianie, buforowanie, nadzorowanie wyniku za pomocą zabezpieczeń na poziomie wierszy oraz przekształcenie go w zaplanowane cykliczne ładowanie.
+
+<Aside type="note">
+Ogranicz wybór **Jednostka** — niezawężone wyodrębnienie może na długo zablokować aplikację FCCS na czas działania zadania eksportu. Zawężaj każdy punkt widzenia do jednostek, których faktycznie potrzebujesz.
+</Aside>
+
+## Wymagania wstępne
+
+W Oracle EPM Cloud potrzebujesz:
+
+- **Adresu URL poda/usługi EPM Cloud**, na przykład `https://planning-test-yourdomain.epm.us2.oraclecloud.com`.
+- **Domeny tożsamości** (dla klasycznego poda). PlaidCloud składa login jako `identitydomain.username`.
+- Dedykowanego **konta usługi** — nazwy użytkownika i hasła — z dostępem do odczytu aplikacji FCCS i wycinków punktu widzenia, które będą pobierać użytkownicy samoobsługowi.
+- **Nazwy (nazw) aplikacji**, z których użytkownicy będą czytać dane.
+
+<Aside type="note">
+Połączenie uwierzytelnia się za pomocą **uwierzytelniania podstawowego HTTP** w klasycznym podzie EPM Cloud. Pody OCI / Gen 2, które wymagają tokenu okaziciela OAuth, nie są objęte tym łącznikiem.
+</Aside>
+
+## Utwórz połączenie
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **REST - HFM/FCCS**.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `FCCS Prod`. |
+   | Adres URL EPM Cloud | Adres URL Twojego poda/usługi, np. `https://planning-test-yourdomain.epm.us2.oraclecloud.com`. |
+   | Domena tożsamości | Domena tożsamości Twojego EPM Cloud. Pozostaw puste tylko wtedy, gdy nazwa użytkownika już zawiera domenę. |
+   | Nazwa użytkownika | Nazwa użytkownika konta usługi. |
+   | Hasło | Hasło konta usługi. |
+   | Aplikacja domyślna | Opcjonalnie. Aplikacja FCCS wstępnie wpisana w selektorze POV kroku. |
+
+4. Kliknij `Test Connection`. Pomyślny test potwierdza, że PlaidCloud może połączyć się z serwerem HFM/FCCS przy użyciu skonfigurowanych danych uwierzytelniających.
+
+5. Kliknij `Create`.
+
+</Steps>
+
+PlaidCloud loguje się jako `identitydomain.username` (lub z nazwą użytkownika bez zmian, gdy Domena tożsamości jest pusta albo nazwa użytkownika już zawiera kropkę).
+
+## Zbuduj punkt widzenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **HFM/FCCS: odczytaj dane (ad hoc)** (znajduje się w sekcji **Oracle EPM (HFM/FCCS)** w menu kroków).
+
+2. W sekcji **Źródło i cel** ustaw **Połączenie HFM/FCCS**, **Środowisko**, **Aplikacja** oraz **Tabela docelowa**.
+
+3. W sekcji **Punkt widzenia** zbuduj wycinek z wymiarów FCCS: **Scenario, Year, Period, Entity, Account, Custom1–Custom4, ICP, View, Value**.
+
+   - **Scenario, Year i Period są wymagane.**
+   - **Entity musi być ograniczonym wycinkiem** — formularz odrzuca pusty wybór, „all” lub wybór szerszy niż 500 elementów. Zawężaj go, aby eksport nie blokował aplikacji.
+   - Pozostaw dowolny inny wymiar nieustawiony, aby nie stosować filtra na tej osi.
+
+</Steps>
+
+<Aside type="note">
+W obsługiwanych podach FCCS listy elementów **wypełniają się automatycznie** na podstawie wykrywania metadanych na żywo, gdy wybierzesz połączenie i aplikację — selektor oferuje rzeczywiste elementy i wykrywa je ponownie po każdej zmianie połączenia lub aplikacji. W starszych podach, które nie udostępniają punktu końcowego metadanych, selektor przechodzi na **wpisywanie ręczne**: nazwy elementów wpisujesz samodzielnie. Zapisany punkt widzenia zawsze zostaje odtworzony w obu przypadkach.
+</Aside>
+
+## Uruchom
+
+<Steps>
+
+1. Uruchom krok (zobacz [Uruchamianie pojedynczego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Podczas działania zadania eksportu w FCCS wyświetlany jest stan postępu („polling HFM job…”).
+
+3. Po zakończeniu tabela wynikowa trafia automatycznie — tabela jest tworzona na podstawie kolumn zwróconej siatki, więc nie trzeba z góry definiować schematu.
+
+</Steps>
+
+## Buforowanie
+
+Zażądaj **tego samego punktu widzenia ponownie**, a PlaidCloud natychmiast zwróci **już załadowaną tabelę**, zamiast ponownie wysyłać eksport do FCCS. Uruchomienie jest identyfikowane przez aplikację, tabelę docelową, punkt widzenia i znacznik **as-of** (domyślnie `latest`); powtórzenie, które wskazuje już załadowany wycinek, zgłasza, że tabela została pozostawiona bez zmian, a nie zapisana ponownie. Zmień znacznik as-of, gdy chcesz wymusić nowe wyodrębnienie tego samego punktu widzenia.
+
+## Nadzoruj za pomocą zabezpieczeń na poziomie wierszy
+
+Oś jednostek załadowanej tabeli jest normalizowana do kolumny o nazwie dokładnie **`Entity`**, więc tabela jest **gotowa na zabezpieczenia na poziomie wierszy** — administrator może nadzorować ją za pomocą [Dostępu do wierszy](/pl/administration/access/managing-security-groups-and-assignments/), aby użytkownicy samoobsługowi widzieli tylko jednostki, do których mają uprawnienia.
+
+<Aside type="caution">
+To jest **nadzorowane przez administratora, a nie automatyczne**. Ponieważ wyodrębnianie działa na koncie usługi połączenia, PlaidCloud nie pozwala, aby krok sam deklarował swoje zabezpieczenia — musi je skonfigurować administrator (Architekt).
+</Aside>
+
+Administrator postępuje według standardowego procesu Dostępu do wierszy:
+
+<Steps>
+
+1. **Opublikuj** załadowaną tabelę na potrzeby raportowania.
+
+2. **Zadeklaruj** kolumnę `Entity` jako atrybut nadzorujący (domyślna odmowa).
+
+3. **Zatwierdź** pierwszy nadzorowany zapis.
+
+4. **Uzgodnij**, aby uprawnienia zaczęły obowiązywać.
+
+</Steps>
+
+Dopóki administrator tego nie zrobi, tabela nie jest filtrowana. Zobacz [Zarządzanie grupami zabezpieczeń i przypisaniami](/pl/administration/access/managing-security-groups-and-assignments/).
+
+## Zaplanuj cykliczne ładowanie
+
+Aby przekształcić wycinek ad hoc w nocne odświeżanie, włącz w kroku **Ogranicz cel**:
+
+<Steps>
+
+1. W grupie **Ogranicz cel** kroku zaznacz **Powiązany cel (zaplanowane cykliczne ładowanie)**.
+
+2. Opcjonalnie ustaw **Kolumny kluczowe** — kolumny rozdzielone przecinkami, które tworzą klucz scalania (na przykład `Entity, Account`). **Pozostaw puste**, aby jako klucz scalania użyć kolumn wymiarów POV obecnych w załadowanej siatce.
+
+3. Umieść krok w [zaplanowanym przepływie pracy](/pl/administration/scheduled-events/).
+
+</Steps>
+
+Gdy opcja Ogranicz cel jest włączona, cel staje się **trwałą** tabelą: każde uruchomienie **scala** dane z nią za pomocą upsertu zestawu kluczy zamiast je nadpisywać, a schemat **rozszerza się addytywnie**, gdy kolejna siatka wnosi nowe kolumny (nowa kolumna wywołuje ostrzeżenie, nigdy błąd). Zaplanowane uruchomienie więc gromadzi dane, a nie je kasuje — to ładowanie cykliczne, a nie destrukcyjne przeładowanie.
+
+## Powiązane
+
+- [HFM/FCCS: odczytaj dane (ad hoc)](/pl/reference/workflow-steps/oracle-epm/hfm-fccs-read/) — dokumentacja pól kroku.
+- [Łącznik HFM / FCCS](/pl/reference/connectors/rest/hfm-fccs/) — dokumentacja pól połączenia.
+- [Zarządzanie grupami zabezpieczeń i przypisaniami](/pl/administration/access/managing-security-groups-and-assignments/) — jak Dostęp do wierszy nadzoruje załadowaną tabelę.
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/)

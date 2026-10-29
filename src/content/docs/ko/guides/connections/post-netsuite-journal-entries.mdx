@@ -1,0 +1,146 @@
+---
+title: NetSuite 분개 전표 전기
+description: Post NetSuite Journal Entry 워크플로 단계를 구성합니다. 헤더 및 라인 필드를 매핑하고, 배치를 미리 보기와 검증한 다음 전기하고 결과 테이블을 확인합니다.
+sidebar:
+  label: NetSuite 분개 전표 전기
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+**Post NetSuite Journal Entry** 워크플로 단계로 PlaidCloud 프로젝트 테이블의 분개 전표를 NetSuite에 전기합니다. 이 가이드에서는 헤더 테이블과 라인 테이블로 배치를 구성하고, NetSuite를 건드리지 않고 미리 본 다음, 전기하고 결과를 다시 읽어 옵니다.
+
+<Aside type="caution">
+실제로 전기하기 전에 모든 배치에 대해 아래의 **미리 보기 및 검증**을 거치십시오. 실제 계정을 대상으로 처음 실행할 때는 몇 건의 전기 내역을 NetSuite에서 직접 대조하십시오.
+</Aside>
+
+## 사전 요구 사항
+
+- 분개 전표를 만들 수 있는 역할을 가진, 정상 작동하는 [NetSuite 연결](/ko/guides/connections/netsuite/). 읽기 쪽 가이드에서 다루는 REST/OAuth 설정에 더해 Journal Entry 레코드에 대한 **Create** 액세스가 필요합니다.
+- 프로젝트의 소스 테이블 두 개:
+  - 분개 전표당 한 행을 가진 **헤더 테이블**.
+  - 분개 전표당 하나 이상의 차변/대변 행을 가진 **라인 테이블**.
+
+<Aside type="note">
+헤더 테이블과 라인 테이블은 가져오기, 이전 변환, 피벗 등 워크플로의 어디에서 오든 상관없습니다. 유일한 요구 사항은 두 테이블 모두 각 라인을 헤더 행에 연결하는 Journal ID 열을 가져야 한다는 것입니다.
+</Aside>
+
+## 헤더 테이블과 라인 테이블 구성
+
+<Steps>
+
+1. 분개 전표당 한 행을 가진 **헤더 테이블**을 만들거나 가져옵니다. 최소한 다음이 필요합니다.
+
+   | 열 | 매핑 대상 | 필수 |
+   |---|---|---|
+   | 분개 식별자 | Journal ID | 예 |
+   | NetSuite 자회사 | Subsidiary | 예 |
+   | 전표 날짜 | 전기 일자 | 예 |
+   | NetSuite 통화 | Currency | 아니요 |
+   | 전표 수준 메모 | Memo | 아니요 |
+   | 호출자가 제공하는 외부 ID | External ID | 아니요 |
+
+2. 헤더 행과 동일한 분개 식별자를 공유하는, 분개 전표당 하나 이상의 행을 가진 **라인 테이블**을 만들거나 가져옵니다.
+
+   | 열 | 매핑 대상 | 필수 |
+   |---|---|---|
+   | 분개 식별자 | Journal ID | 예 |
+   | 총계정원장 계정 | Account | 예 |
+   | 차변 금액(없으면 0) | Debit | 예 |
+   | 대변 금액(없으면 0) | Credit | 예 |
+   | 라인 수준 메모 | Memo | 아니요 |
+   | 부서, 클래스, 위치, 엔터티 | Department / Class / Location / Entity | 아니요 |
+
+   <Aside type="caution">
+   각 분개 전표의 라인은 균형이 맞아야 합니다. 차변 합계와 대변 합계가 센트 단위까지 같아야 합니다. 균형이 맞지 않는 전표는 NetSuite로 전송되지 않고 오류로 기록됩니다([미리 보기 및 검증](#미리-보기-및-검증) 참조).
+   </Aside>
+
+3. 전기하려는 수준(하루당 한 건, 문서당 한 건, 배치당 한 건 등)에 맞춰 금액을 이 두 테이블에 집계합니다. 평소 사용하는 [테이블 단계](/ko/reference/workflow-steps/tables/)(피벗, 그룹별 집계 또는 조인)를 사용하십시오. Journal ID는 한 묶음의 라인을 헤더 행에 연결하는 값이므로, 분개 전표마다 고유하고 해당 전표에 속한 모든 라인이 공유하는 키로 만드십시오.
+
+</Steps>
+
+## 단계 구성
+
+<Steps>
+
+1. 워크플로에 **Post NetSuite Journal Entry** 단계를 추가합니다.
+
+2. **연결** 탭에서 **NetSuite 연결**을 사용할 NetSuite 연결로 설정하고 **환경**을 선택합니다.
+
+3. **데이터** 탭에서 다음을 설정합니다.
+
+   - **분개 항목 헤더 테이블**과 **분개 항목 줄 테이블**을 위에서 만든 테이블로 설정합니다.
+   - 지금은 **Test Only Mode**를 선택한 상태로 둡니다. [미리 보기 및 검증](#미리-보기-및-검증)을 참조하십시오.
+   - 배치가 첫 번째 오류 항목에서 바로 중단되기를 원하는 경우가 아니라면 **Continue posting remaining entries if one entry fails**를 선택한 상태로 둡니다.
+   - 대량 배치에 NetSuite의 비동기 수락 경로가 꼭 필요한 경우가 아니라면 **Submit Asynchronously**를 끈 상태로 둡니다. 아래 [비동기 제출](#비동기-제출)을 참조하십시오.
+   - **전기 결과 테이블**을 PlaidCloud가 만들거나 덮어쓸 수 있는 테이블로 설정합니다. 첫 실행뿐 아니라 모든 실행에서 필요합니다. [결과 테이블 읽기](#결과-테이블-읽기)를 참조하십시오.
+
+4. **헤더 맵** 탭에서 헤더 테이블의 열을 Journal ID, Subsidiary, 전기 일자, 그리고 있는 경우 Currency, Memo, External ID에 매핑합니다. 헤더 행의 일부만 전기하려면 **헤더 필터**를 사용합니다.
+
+5. **라인 맵** 탭에서 라인 테이블의 열을 Journal ID, Account, Debit, Credit, 그리고 있는 경우 Memo, Department, Class, Location, Entity에 매핑합니다. **라인 필터**도 같은 방식으로 사용합니다.
+
+</Steps>
+
+<Aside type="note">
+Subsidiary, Account, Currency, Department, Class, Location, Entity 등 모든 내부 ID 필드에는 표시 이름이 아니라 NetSuite의 내부 ID를 입력해야 합니다. 소스 데이터에 표시 이름이 들어 있다면 먼저 내부 ID로 변환하십시오. NetSuite에서 가져온 작은 참조 테이블에 대한 조회나 직접 관리하는 참조 테이블과의 조인을 사용할 수 있습니다.
+</Aside>
+
+## 미리 보기 및 검증
+
+**Test Only Mode**를 선택한 상태로 단계를 실행합니다. PlaidCloud는 매핑된 데이터로 모든 분개 전표를 구성하고, 전기 전에 수행하는 것과 동일한 검사(차변과 대변의 균형, 필수 필드 존재 여부, 유효한 전기 일자)를 NetSuite를 한 번도 호출하지 않고 실행합니다. 아무것도 전기되지 않습니다.
+
+<Steps>
+
+1. 단계를 실행합니다([워크플로에서 단계 하나 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+2. 결과 테이블을 열어 전기하려던 모든 행이 `status = validated`로 표시되는지 확인합니다. `error`로 표시된 행에는 해당 전표의 Journal ID와 문제가 나타납니다. 흔한 원인은 균형이 맞지 않는 전표, 누락된 Account, 비어 있는 Subsidiary 또는 전기 일자입니다.
+
+3. `error` 행이 있으면 소스 데이터(또는 매핑과 필터)를 수정하고, 배치가 오류 없이 검증될 때까지 다시 실행합니다.
+
+</Steps>
+
+## 배치 전기
+
+배치가 오류 없이 검증되면 **Test Only Mode**를 선택 해제하고 단계를 다시 실행합니다. 이번에는 PlaidCloud가 검증된 각 전표를 실제로 NetSuite에 전기합니다.
+
+<Aside type="caution">
+전기는 다시 검증하는 것과 다릅니다. 소스 데이터나 매핑을 변경한 후에는 항상 Test Only Mode에서 다시 실행하고, 결과를 확신할 때만 이 모드를 끄십시오. 무인으로 실행되도록 예약된 단계는 장부에 대한 다른 무인 쓰기 작업과 똑같이 취급해야 합니다.
+</Aside>
+
+## 비동기 제출
+
+**Submit Asynchronously**는 동기식 생성 후 다시 읽기를 기다리는 대신 NetSuite의 비동기 수락 헤더와 함께 각 전표를 보냅니다. NetSuite는 전표를 대기열에 넣고 즉시 응답하며, PlaidCloud는 이를 `posted`나 `error`가 아니라 제출 참조가 있는 `pending`으로 기록합니다.
+
+<Aside type="caution">
+**현재는 보류 중인 전표를 자동으로 해결하는 기능이 없습니다.** 보류 중인 전표는 이 단계를 다시 실행해야 해결됩니다. 단계가 제출 참조로 보류 중인 전표를 조회하여 최종 결과(`posted` 또는 `error`)를 기록합니다. Submit Asynchronously를 켜는 경우 모든 `pending` 행을 완료된 것으로 간주하지 말고, 워크플로에 단계 재실행(예약된 재실행 또는 같은 워크플로 뒤쪽의 후속 단계)을 포함하십시오. 동기 경로가 너무 느린 대량 배치에 꼭 필요한 경우가 아니라면 이 옵션을 끈 상태로 두십시오.
+</Aside>
+
+## 결과 테이블 읽기
+
+결과 테이블에는 단계가 어느 모드로 실행되었든 시도한 분개 전표당 한 행이 들어 있습니다.
+
+| 열 | 설명 |
+|---|---|
+| journal_id | 헤더 테이블의 Journal ID. |
+| external_id | 이 전기 시도에 사용된 외부 ID(아래 참조). |
+| internal_id | 생성된 전표의 NetSuite 내부 ID. `pending` 상태에서는 비동기 제출 참조. Test Only Mode와 오류 시에는 비어 있습니다. |
+| status | `validated`, `posted`, `pending`(Submit Asynchronously로 전표가 수락되었으나 NetSuite가 아직 확인하지 않음) 또는 `error`. |
+| message | `error`일 때의 오류 상세 정보. `posted`/`validated`일 때는 비어 있습니다. |
+
+`error` 행에 대한 알림, `internal_id`를 기록하기 위한 헤더 테이블과의 조인 등 후속 단계는 단계 자체의 실행 상태가 아니라 이 테이블을 기준으로 구성하십시오. **Continue posting remaining entries**가 켜져 있으면 대량 배치에서 잘못된 전표 하나가 전체 단계를 실패시키지 않기 때문입니다.
+
+## 배치를 안전하게 다시 실행
+
+각 전표는 프로젝트, 연결, Journal ID, 전기 일자, 라인 금액으로 만든 결정적 외부 ID와 함께 전기됩니다. **변경 없음** 상태의 전표에 대해 단계를 다시 실행하면 동일한 외부 ID를 재사용하며, NetSuite 자체의 외부 ID 처리로 중복 생성이 방지됩니다. 따라서 일시적인 실패 후 워크플로를 다시 실행해도 변경되지 않은 전표에는 안전합니다.
+
+<Aside type="caution">
+이 보호는 변경되지 않은 전표에만 적용됩니다. 금액을 바꾸거나 라인을 추가 또는 제거하는 등 전표의 라인을 수정한 후 단계를 다시 실행하면 PlaidCloud가 새 외부 ID를 계산하고, NetSuite는 이를 첫 번째 전표의 업데이트가 아닌 **두 번째** 분개 전표로 기록합니다. 이미 전기된 전표를 정정하려면 NetSuite에서 직접 정정하십시오. 외부 ID가 자체 체계를 따라야 한다면 헤더 테이블의 External ID 열에 직접 값을 설정하여 PlaidCloud가 생성한 값을 재정의할 수 있습니다.
+</Aside>
+
+## 관련 문서
+
+- [NetSuite에 연결](/ko/guides/connections/netsuite/) — 이 단계가 전기에 사용하는 연결을 설정합니다
+- [Post NetSuite Journal Entry 참조](/ko/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) — 전체 필드 및 구성 참조
+- [NetSuite SuiteQL 쿼리 예제](/ko/guides/connections/netsuite-financial-queries/) — 내부 ID로 필요한 자회사, 계정, 차원을 가져옵니다
+- [고급 데이터 매퍼 사용법](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/)

@@ -1,0 +1,132 @@
+---
+title: Połączenie z Xero
+description: Połącz PlaidCloud z Xero jednym kliknięciem przez autoryzację OAuth, pobieraj encje Accounting API za pomocą gotowego kroku importu encji, a następnie księguj ręczne zapisy dziennika, faktury, rachunki, płatności i noty kredytowe.
+sidebar:
+  order: 16
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/xero.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Accounting API Xero, aby pobierać plan kont, kontakty, faktury, noty kredytowe, płatności, ręczne zapisy dziennika i inne dane bez pisania zapytań, a także księgować dokumenty z powrotem. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import najpierw uruchom na demonstracyjnej organizacji, a przed księgowaniem na żywo każdą partię dokumentów przepuść przez **Test Only Mode**, opisany poniżej.
+</Aside>
+
+## Wymagania wstępne
+
+W Xero potrzebujesz:
+
+- Loginu Xero z dostępem do organizacji, z której chcesz odczytywać dane i do której chcesz księgować.
+- Uprawnienia do autoryzowania połączonej aplikacji dla tej organizacji — podczas konfiguracji Xero poprosi o zatwierdzenie dostępu.
+
+To cała lista. Aplikację OAuth rejestruje PlaidCloud, więc nie musisz zakładać konta dewelopera ani uzyskiwać identyfikatora klienta czy klucza tajnego klienta.
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **REST - Xero**.
+
+3. Nadaj połączeniu nazwę, na przykład `Xero Prod`.
+
+4. Kliknij **Połącz z Xero**, zaloguj się do Xero i zatwierdź dostęp do organizacji, do których PlaidCloud ma mieć dostęp.
+
+5. **Stan połączenia** pokazuje teraz, ile organizacji obejmuje autoryzacja. Wybierz z listy **Organizacja** tę, której dotyczy to połączenie.
+
+6. Kliknij `Create`.
+
+</Steps>
+
+<Aside type="note">
+PlaidCloud odświeża tokeny Xero za Ciebie i zapisuje każdy zrotowany token odświeżania, dzięki czemu połączenie bezczynne przez tygodnie nadal działa. Jedna autoryzacja może obejmować kilka organizacji, ale połączenie zawsze dotyczy dokładnie jednej — aby uzyskać dostęp do drugiej organizacji, utwórz drugie połączenie Xero. Demo Company w Xero jest organizacją jak każda inna, więc połączenie sandbox to takie, w którym **Organizacja** wskazuje na nią.
+</Aside>
+
+## Test działania połączenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Xero: importuj encję**.
+
+2. Ustaw **Połączenie Xero** na swoje połączenie, **Typ jednostki** na `Chart of Accounts`, a **Tabela docelowa** na tabelę roboczą.
+
+3. Uruchom krok (zobacz [Uruchamianie pojedynczego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że zarówno autoryzacja, jak i wybór organizacji są poprawne. Błąd wskazuje problem — wygasłą autoryzację albo organizację, do której login nie ma już dostępu.
+
+## Import danych
+
+<Steps>
+
+1. Dodaj krok **Xero: importuj encję** i ustaw **Połączenie Xero** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ jednostki** na rekord, który chcesz pobrać: Plan kont, Kontakty, Faktury, Noty kredytowe, Płatności, Ręczne zapisy dziennika, Transakcje bankowe, Pozycje, Kategorie śledzenia, Stawki podatkowe lub Waluty.
+
+3. Zawęź pobieranie opcjonalnymi filtrami — **Stan** (pojedynczy stan Xero, taki jak `AUTHORISED` lub `PAID`), **Data od** i **Data do** (granice w formacie `YYYY-MM-DD` dla daty encji) oraz **Zaktualizowane po** (próg daty modyfikacji).
+
+4. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+<Aside type="note">
+**Zaktualizowane po** nie przechowuje zapisanego znacznika — PlaidCloud nie pamięta, w którym miejscu zakończyło się poprzednie uruchomienie, więc aby pobierać dane przyrostowo, podawaj próg samodzielnie przy każdym uruchomieniu. Pozycje i Waluty nie mają udokumentowanych żadnych filtrów, a Plan kont i Kontakty przyjmują stan, ale nie zakres dat; Xero odrzuca filtr, którego dana encja nie obsługuje, więc krok zgłasza błąd zamiast zwracać błędny zbiór wyników.
+</Aside>
+
+## Księgowanie dokumentów
+
+Krok **Xero: zaksięguj dokument** księguje pięć typów dokumentów przez ten sam wspólny potok zapisu, z którego korzysta każdy krok księgowania ERP: **ManualJournal**, **Invoice**, **Bill**, **Payment** i **CreditNote**.
+
+<Steps>
+
+1. Zbuduj **tabelę nagłówka** — jeden wiersz na dokument — z kolumnami `ref` (identyfikator dokumentu), `doc_type` (`ManualJournal`, `Invoice`, `Bill`, `Payment` lub `CreditNote`), `posting_date` oraz, jeśli wymaga ich dany typ dokumentu, `currency_id`, `party_id` (kontakt Xero), `memo` i `due_date`. Payment wymaga ponadto `total_amt`, `deposit_account_id`, `bank_account_id` i `linked_invoice_id`; CreditNote przyjmuje `credit_note_type` (`ACCRECCREDIT` dla sprzedaży, wartość domyślna, lub `ACCPAYCREDIT` dla zakupów). Jedna partia może mieszać typy dokumentów — PlaidCloud dzieli ją według `doc_type` przed księgowaniem.
+
+2. Zbuduj **tabelę wierszy** — jeden lub więcej wierszy na `ref`, z których każdy zawiera ten `ref` — dopasowaną do typu dokumentu:
+
+   | Typ dokumentu | Kolumny wierszy |
+   |---|---|
+   | ManualJournal | `account_id`, `debit`, `credit` oraz opcjonalnie `class_id` / `department_id` do śledzenia |
+   | Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+   | Bill | `account_id`, `amount` |
+   | CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+   | Payment | `linked_txn_id` (faktura, której dotyczy wiersz), `amount` |
+
+   `tax_type` i `memo` są opcjonalne w każdym wierszu.
+
+3. Dodaj krok **Xero: zaksięguj dokument**, ustaw **Połączenie Xero**, **Środowisko** (które ze środowisk PlaidCloud połączenia ma służyć do księgowania), **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Przypisz własne nazwy kolumn do tych pól na kartach **Pola nagłówka** i **Pola wiersza**.
+
+5. Pozostaw zaznaczone **Test Only Mode** i uruchom krok — PlaidCloud tworzy i sprawdza każdy dokument bez rezerwacji w rejestrze i niczego nie księguje.
+
+6. Przejrzyj tabelę wyników (jeden wiersz na dokument: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`, `message`). Popraw każdy wiersz `error` i ponownie zweryfikuj.
+
+7. Odznacz **Test Only Mode** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue posting remaining documents if one document fails**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym dokumencie.
+
+</Steps>
+
+### Jak działa księgowanie
+
+Każdy dokument jest rezerwowany w rejestrze idempotentności PlaidCloud przed wysłaniem, więc ponowne uruchomienie nigdy nie zaksięguje dokumentu, który już osiągnął stan `posted`. Klucz rejestru ma przedrostek typu dokumentu, dzięki czemu faktura i rachunek o tym samym `ref` nigdy się nie zderzają, mimo że Xero księguje oba przez ten sam punkt końcowy.
+
+Gdy wynik jest niejednoznaczny — przekroczenie czasu, utracona odpowiedź — PlaidCloud odpytuje Xero o numer dokumentu, który nadał, i uznaje dopasowanie za dowód tylko wtedy, gdy dokument ma końcowy stan zaksięgowania. Numery faktur i not kredytowych w Xero nie muszą być unikatowe, więc dopasowanie do wersji roboczej, unieważnionego dokumentu lub dokumentu o zduplikowanym numerze trafia do kwarantanny zamiast być zapisane jako wynik tego zapisu.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Ręcznych zapisów dziennika i płatności nie można wyszukać.** Opis ręcznego zapisu dziennika i odwołanie płatności nie są odpytywalne w Xero, więc nie ma pola, które pozwoliłoby powiązać wątpliwy zapis z żądaniem PlaidCloud. Takie dokumenty trafiają do kwarantanny, abyś rozstrzygnął je bezpośrednio w Xero, zamiast zgadywać.
+- **Odwrócenie obejmuje tylko ręczne zapisy dziennika i faktury.** Ręczny zapis dziennika odwraca się jako zapis z zamienionymi stronami debetu i kredytu; faktura odwraca się jako lustrzana nota kredytowa. Rachunki, płatności i noty kredytowe nie mają udokumentowanego ładunku cofnięcia w API Xero, więc PlaidCloud odmawia odwrócenia zamiast je wymyślać — popraw je bezpośrednio w Xero.
+- **Limity zapytań obowiązują per organizacja.** Xero zezwala na 60 wywołań na minutę i 5000 dziennie na organizację, przy 5 wywołaniach równoczesnych. PlaidCloud kontroluje limity na minutę i współbieżności dla każdego połączenia i wycofuje się przy odpowiedzi o ograniczeniu, więc bardzo duża partia trwa proporcjonalnie dłużej. Planuj szerokie pobrania w harmonogramie zamiast uruchamiać wiele kroków Xero naraz dla tej samej organizacji.
+</Aside>
+
+## Powiązane
+
+- [Łącznik REST Xero](/pl/reference/connectors/rest/xero/) — opis pól.
+- [Xero: importuj encję](/pl/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero: zaksięguj dokument](/pl/reference/workflow-steps/xero/xero-post/)
+- [Przegląd historii księgowania ERP](/pl/guides/connections/erp-post-history/) — stały zapis każdej próby księgowania w Xero i jej bieżącego stanu.
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/)

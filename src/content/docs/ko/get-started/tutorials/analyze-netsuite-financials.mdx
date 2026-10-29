@@ -1,0 +1,230 @@
+---
+title: NetSuite 재무 데이터 분석 — 연결부터 손익계산서까지
+description: NetSuite 엔드투엔드 튜토리얼입니다. 연결하고, SuiteQL로 총계정원장을 가져와 월별 손익계산서와 매출채권 연령 분석으로 구성한 뒤, 대시보드에 올리고 새로 고침을 예약합니다.
+sidebar:
+  label: NetSuite 재무 데이터 분석
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*약 45분 · 실시간 NetSuite 연결, 가져온 총계정원장, 월별 손익계산서, 매출채권 연령 분석, 예약된 새로 고침*
+
+컨트롤러나 FP&A 분석가가 첫날 따라 할 수 있는 경로입니다. 끝까지 진행하면 NetSuite에서 **총계정원장**을 바로 가져오고, 재무제표처럼 읽을 수 있는 **월별 손익계산서**로 바꾸고, **매출채권 연령 분석**을 만들고, 둘 다 대시보드에 올리고, 전체가 자동으로 새로 고쳐지도록 설정하게 됩니다. 스프레드시트로 내보내거나 수동으로 다시 입력할 필요가 없으며, 숫자는 NetSuite에서 가져와 최신 상태로 유지됩니다.
+
+한 번 연결하고 한 번 가져온 다음, 정말 중요한 작업을 합니다. 원시 총계정원장 행을 월요일 아침에 비즈니스 담당자가 읽는 요약으로 구성하는 것입니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="왼쪽에서 오른쪽으로 다섯 단계가 이어집니다. NetSuite, SuiteQL을 실행하는 REST 요청 단계, 가져온 총계정원장 테이블, 그룹화하고 요약하는 Table Extract 단계, 손익계산서와 대시보드이며, 예약된 새로 고침으로 이어집니다." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SuiteQL 가져오기</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">총계정원장 테이블</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">그룹화 &amp; 합계</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">손익계산서</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">연결하고, 총계정원장을 한 번 가져온 다음, 읽을 수 있는 재무제표로 구성합니다. 모든 과정은 일정에 따라 다시 실행할 수 있습니다.</figcaption>
+</figure>
+
+## 사전 요구 사항
+
+- PlaidCloud 워크스페이스와 작업할 프로젝트([필요하면 체험을 시작하세요](https://app.plaidcloud.com)).
+- **작동하는 NetSuite 연결.** 먼저 [NetSuite에 연결](/ko/guides/connections/netsuite/)을 따라 하십시오. NetSuite에서 OAuth 2.0과 REST Web Services가 활성화되어 있어야 하며, 통합의 클라이언트 ID, 인증서 ID, 계정 ID, 개인 키 PEM이 필요합니다. 여기서 시작하기 전에 **테스트 요청 보내기** 결과가 녹색인지 확인하십시오.
+- 데이터를 구성하는 데 SQL은 필요하지 않습니다. 표준 변환 단계로 처리합니다. 쿼리 텍스트는 NetSuite에서 데이터를 **가져오는** 부분에만 사용하며, 가져오기 쿼리는 모두 제공됩니다. [NetSuite SuiteQL 쿼리 예제](/ko/guides/connections/netsuite-financial-queries/)를 탭에 열어 두십시오. 이 튜토리얼은 해당 문서를 바탕으로 합니다.
+
+<Aside type="note">
+쿼리 텍스트를 작성하는 곳은 NetSuite에서 **가져오는** 부분뿐이며, 이는 *NetSuite 내부에서* 실행되는 **SuiteQL**입니다. 그 이후의 모든 작업, 즉 총계정원장을 손익계산서로 그룹화하거나 매출채권을 구간별로 나누는 작업은 SQL 없이 PlaidCloud의 클릭 방식 변환 단계로 처리합니다. (SQL에 익숙하다면 이를 위한 SQL 추출 단계가 있지만, 여기서는 필요하지 않습니다.)
+</Aside>
+
+## 1단계: 워크플로 만들기
+
+워크플로는 데이터를 가져오고 구성하는 파이프라인입니다.
+
+<Steps>
+
+1. 프로젝트를 열고 **워크플로** 탭으로 전환합니다.
+2. **새 워크플로**를 클릭하고 `NetSuite Financials`와 같은 이름을 지정한 다음 엽니다.
+
+</Steps>
+
+## 2단계: 총계정원장 가져오기
+
+SuiteQL 쿼리 하나로 모든 계정의 월별 1년 치 전기 활동을 가져올 수 있으며, 손익계산서와 이후의 다른 재무제표를 만들기에 충분합니다.
+
+<Steps>
+
+1. [REST 요청 단계](/ko/guides/workflows/rest-request-step/)를 추가합니다. **요청** 탭에서 **연결**을 NetSuite 연결로, **메서드**를 `POST`로, **엔드포인트**를 `/services/rest/query/v1/suiteql`로 설정합니다.
+
+2. **본문**에 다음 SuiteQL을 `{"q": "…"}` 형태로 감싸 넣습니다.
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. **응답** 탭에서 대상을 **테이블**로 설정하고 이름을 `netsuite_gl`로 지정한 다음, 열 유형을 설정합니다. `amount`는 **통화**, 나머지는 모두 **텍스트**입니다. (SuiteQL은 숫자와 날짜를 텍스트로 반환하므로, 유형을 지정해야 `amount`를 합산할 수 있습니다.)
+
+4. **테스트 요청 보내기**를 클릭해 실행되는지 확인한 다음 단계를 실행합니다. 이제 계정별, 월별로 한 행씩 있고 부호가 있는 전기 금액이 담긴 `netsuite_gl` 테이블이 생겼습니다.
+
+</Steps>
+
+<Aside type="note">
+`amount`는 NetSuite 총계정원장의 관례에 따라 **차변은 양수, 대변은 음수**입니다. 이것이 원본 그대로의 값이며, 다음 단계에서 읽기 쉬운 재무제표로 바꿉니다. 장부가 둘 이상의 자회사나 통화에 걸쳐 있다면 하나의 자회사로 필터링하십시오(`t.subsidiary = <id>`). [쿼리 예제](/ko/guides/connections/netsuite-financial-queries/#모든-레시피에-사용되는-규칙)의 다중 통화 주의 사항을 참조하십시오.
+</Aside>
+
+## 3단계: 총계정원장을 손익계산서로 구성하기
+
+이제 분석 단계이며, SQL 없이 클릭 방식 변환 하나로 처리합니다. 손익계산서는 총계정원장을 집계한 것에 불과합니다. 수익 계정과 비용 계정을 몇 개의 항목으로 묶고, 매출이 양수로 보이도록 부호를 뒤집습니다. [Table Extract 단계](/ko/reference/workflow-steps/tables/table-extract/)가 **테이블 데이터 선택** 탭과 **데이터 필터** 탭에서 이 모든 작업을 처리합니다.
+
+<Steps>
+
+1. **Table Extract** 단계를 추가합니다. **소스**를 `netsuite_gl`로, **대상**을 새 테이블 `netsuite_pnl`로 설정합니다.
+
+2. **데이터 필터** 탭에서 수익 계정과 비용 계정만 남깁니다(대차대조표 계정은 제외). 필터를 추가합니다. **`account_type`이(가) 다음 중 하나**: `Income`, `OthIncome`, `COGS`, `Expense`, `OthExpense`.
+
+3. **테이블 데이터 선택** 탭에서 **요약**을 클릭해 집계를 켠 다음, 대상 열 세 개를 설정합니다.
+
+   - **`period`**: 소스에서 그대로 매핑합니다. 요약은 **그룹화 기준**입니다.
+   - **`pnl_line`**: 각 계정 유형을 보고서 항목으로 바꾸는 **식**(아래 참조)입니다. 요약은 **그룹화 기준**입니다.
+   - **`amount`**: **식** `netsuite_gl.amount * -1`(부호 반전)입니다. 요약은 **합계**입니다.
+
+   `pnl_line`의 **식** 셀을 두 번 클릭하고 다음을 입력합니다(편집기에서 열과 **조건** 그룹의 `case` 함수를 클릭으로 선택할 수 있습니다).
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. 단계를 실행합니다.
+
+</Steps>
+
+`amount * -1` 식이 유일한 회계 처리입니다. 차변이 양수인 금액의 부호를 뒤집으면 **매출은 양수, 비용은 음수**가 되므로 매월 세 항목을 더하면 *당기순이익*이 됩니다. 그런 다음 `period`와 `pnl_line`을 **그룹화 기준**으로 하여 **합계**를 구하면 모든 계정이 월별 세 항목으로 집계됩니다. 식은 PlaidCloud의 클릭 방식 편집기를 사용합니다. [고급 데이터 매퍼 사용법](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/)과 [식 참조](/ko/reference/expressions/)를 확인하십시오.
+
+<Aside type="tip">
+수십 개의 계정을 세 항목으로 묶는 것은 첫 번째 시도로서 의도적으로 거칠게 구성한 것입니다. 운영비를 부서별로 나누려면 2단계의 가져오기 쿼리에 `department`(`transactionline`을 조인하여 `BUILTIN.DF(tl.department)` 사용)를 추가한 다음, 여기에서 `department`를 **그룹화 기준** 열로 하나 더 추가하십시오.
+</Aside>
+
+## 4단계: 재무 담당자처럼 읽기
+
+`netsuite_pnl` 테이블을 엽니다. 월별로 세 개의 숫자가 있습니다.
+
+| period | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+여기서 바로 읽을 수 있는 값은 다음과 같습니다.
+
+- **매출총이익** = 매출 + 매출원가(매출원가는 이미 음수) → `486,200 − 190,540 = 295,660`.
+- **당기순이익** = 세 항목의 합계 → `82,780`.
+- **매출총이익률(%)** = 매출총이익 ÷ 매출 → 약 61%.
+
+가장 먼저 **대조**해야 합니다. 같은 월에 대해 NetSuite 자체의 손익계산서를 실행하여 매출과 당기순이익이 일치하는지 확인하십시오. 일치하지 않는다면 거의 항상 범위 차이 때문입니다. 자회사나 통화 필터, 또는 전기 기간과 거래 날짜의 정렬 차이가 원인입니다([기간 관련 참고 사항](/ko/guides/connections/netsuite-financial-queries/#시산표) 참조). 대조가 맞은 뒤에야 파이프라인을 신뢰하십시오.
+
+<Aside type="tip">
+월이 위쪽에 가로로 나열되는 전통적인 레이아웃이 필요하신가요? `netsuite_pnl`을 읽는 [Table Pivot 단계](/ko/reference/workflow-steps/tables/table-pivot/)를 추가하여 `period`를 열로 피벗하고, `pnl_line`을 행으로 유지하고, `amount`를 합산하십시오. 월마다 한 열, 손익계산서 항목마다 한 행이 되어 SQL 없이 전월 대비 변화를 한눈에 볼 수 있습니다.
+</Aside>
+
+## 5단계: 매출채권 연령 분석 만들기
+
+첫날의 두 번째 성과이며, 연결, 가져오기, 구성이라는 같은 흐름을 따릅니다. 미수 채권 레시피에서 시작하여 각 청구서의 연체 정도에 따라 구간으로 나눕니다.
+
+<Steps>
+
+1. 다음 본문으로 또 다른 **REST 요청** 단계를 추가합니다(같은 연결, `POST`, suiteql 엔드포인트).
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   `netsuite_open_ar`로 저장하고, `invoice_total`과 `amount_unpaid`는 **통화**, `invoice_date`와 `due_date`는 **날짜**, 나머지는 **텍스트**로 지정합니다.
+
+2. `netsuite_open_ar`를 읽어 새 테이블 `netsuite_ar_aging`에 쓰는 **Table Extract** 단계를 추가합니다. **테이블 데이터 선택** 탭에서 **요약**을 클릭하고 대상 열 세 개를 설정합니다.
+
+   - **`aging_bucket`**: 각 청구서에 연체 정도에 따라 레이블을 붙이는 **식**(아래 참조)입니다. 요약은 **그룹화 기준**입니다.
+   - **`invoices`**: 아무 열이나 사용합니다(예: `invoice_number`). 요약은 **개수**입니다.
+   - **`balance`**: `amount_unpaid`에서 매핑합니다. 요약은 **합계**입니다.
+
+   `aging_bucket`에는 다음 식을 입력합니다. 이 식은 연체 일수(날짜에서 날짜를 빼면 일수가 됩니다)를 계산하여 구간 레이블을 붙입니다.
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. 실행합니다. 이제 `netsuite_ar_aging`은 다섯 개의 행으로 정상 채권과 30/60/90일 이상 연체된 금액을 보여 줍니다. 비즈니스 담당자가 가장 먼저 읽는 채권 회수 관점의 보기입니다. (날짜 빼기가 작동하려면 `due_date`를 **날짜**로 지정해야 하며, 이는 위의 REST 요청 단계 **응답** 탭에서 설정했습니다.)
+
+</Steps>
+
+## 6단계: 대시보드에 올리기
+
+테이블의 숫자도 괜찮지만, CFO에게 보내는 것은 차트입니다. `netsuite_pnl`과 `netsuite_ar_aging`을 [게시](/ko/get-started/tutorials/load-and-transform-data/#7단계-결과-게시하기)한 다음 [대시보드 만들기](/ko/get-started/tutorials/build-a-dashboard/)를 따라 다음을 추가하십시오.
+
+- `period`별 당기순이익(또는 매출)의 **막대 차트**
+- `aging_bucket`별 매출채권 `balance`의 **원형 또는 막대 차트**
+
+이것으로 내보내기 없이 워크플로가 실행될 때마다 새로 고쳐지는 실시간 NetSuite 재무 대시보드가 완성되었습니다.
+
+## 7단계: 새로 고침 예약하기
+
+<Steps>
+
+1. 전체 워크플로를 위에서 아래로 한 번 실행하여 모든 단계가 녹색인지 확인합니다.
+2. [워크플로를 예약](/ko/get-started/tutorials/schedule-a-workflow/)합니다. 결산 주기에 맞춰 매월 실행하거나, 매출채권 연령 분석을 매일 아침 최신 상태로 유지하려면 매일 밤 실행합니다.
+
+</Steps>
+
+모든 가져오기는 테이블 전체를 교체하므로, 실행할 때마다 `WHERE` 절이 정의한 범위를 다시 추출합니다. 전체 이력이 아니라 필요한 기간(올해, 미수 청구서만)으로 한정하십시오.
+
+## 완성한 내용
+
+빈 워크플로에서 시작하여 실시간 NetSuite 총계정원장과 매출채권을 가져오고, 표준 변환 단계 두 개로 SQL 없이 **월별 손익계산서**와 **매출채권 연령 분석**으로 구성하고, 대시보드에 올리고, 새로 고침을 설정했습니다. 재무 팀이 실행하는 핵심 보고 루프가 이제 자동화되었습니다.
+
+## 다음 단계
+
+- [NetSuite SuiteQL 쿼리 예제](/ko/guides/connections/netsuite-financial-queries/): 같은 워크플로에 추가할 수 있는 시산표, 대차대조표, 미결 판매 주문, 구매 주문, 재고.
+- [Table Extract 단계](/ko/reference/workflow-steps/tables/table-extract/)와 [고급 데이터 매퍼 사용법](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/): 더 깊은 분석을 위한 그룹화, 필터링, 계산 열.
+- [차원 계층 설계](/ko/get-started/tutorials/design-a-dimension/): 계정과목표를 직접 제어하는 보고 그룹으로 집계합니다.
+- [대시보드 만들기](/ko/get-started/tutorials/build-a-dashboard/): 전체 대시보드 안내.

@@ -1,0 +1,115 @@
+---
+title: 地理空間分析
+description: 空間ファイルのロード、ジオメトリの作成と整形、場所とテリトリーの照合、結果の公開まで、PlaidCloudワークフローにおける地理空間分析の流れを説明します。
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudでは、ジオメトリがワークフローの第一級の要素として扱われます。空間ファイルのインポート、座標からのジオメトリの作成、整形と照合、結果の公開まで、別のGISツールを使わずにプラットフォーム内で完結できます。
+
+このガイドでは、それらの機能を一連の流れとして説明します。個々のステップの詳細については、[地理空間ステップ](/ja/reference/workflow-steps/spatial/)を参照してください。
+
+## ジオメトリは単なる列
+
+すべての空間ステップは、ジオメトリを通常のテキスト列内の**WKT**（Well-Known Text）として読み書きします。これには、最初に知っておくべき3つの利点があります。
+
+- **型宣言が不要です。** ジオメトリ列はテキスト列です。設定も移行も必要ありません。
+- **ステップを自由に組み合わせられます。** どの空間ステップの出力も、他のどのステップの入力にもなり、順序も問いません。
+- **SQLとジオメトリを併用できます。** ジオメトリ列はメジャーと並んで存在するため、同じステップ内で両方に対してフィルター、グループ化、結合を行えます。
+
+## 1. テーブルにジオメトリを取り込む
+
+ジオメトリの出所に応じて、2つの取り込み方法があります。
+
+**空間ファイルから。** MapInfoの`.TAB`、ESRIの`.shp`、`.kml`、`.geojson`には、
+[Spatial File Import](/ja/reference/workflow-steps/spatial/spatial-file-import/)ステップを使用します。ファイルとそのサイドカーファイルを同じドキュメントフォルダーにアップロードしてください。ステップは付随ファイル（シェープファイルの場合は`.shx`/`.dbf`/`.prj`、`.TAB`の場合は`.dat`/`.map`/`.id`）を自動的に読み取ります。フィーチャーごとに1行が出力され、WKTジオメトリ列とファイルの属性が含まれます。
+
+**すでにある座標から。** データに経度と緯度の列がある場合は、
+[Table Extract ステップの式](/ja/reference/workflow-steps/spatial/spatial-sql-recipes/)でポイントを作成します。この処理はデータベース内で実行されるため、行がウェアハウスの外に出ることはありません。
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="サイドカーファイルをまとめて保管する">
+  `.prj`のないシェープファイルは座標参照なしでインポートされ、`.dat`のない`.TAB`には属性がありません。インポートを実行する前に、ファイル一式をアップロードしてください。
+</Aside>
+
+**住所から（ジオコーディング）。** **geocode**ステップは住所列を座標に変換（順引き）し、**geocode reverse**ステップは緯度経度のペアを住所に戻します（逆引き）。どちらもPlaidCloudのジオコーディングサービスを使用します。順引きジオコーディングでは`GeocodeLat` /
+`GeocodeLon`（および`GeocodeStatus`、`GeocodeConfidence`、一致したラベル）が追加され、逆引きでは解決された住所の構成要素が追加されます。
+
+### ロケーションコードによる拡張
+
+どちらのジオコードステップも、返された座標からローカルで計算した簡潔な**ロケーションコード**を各行に追加できます。追加のサービス呼び出しや外部依存はありません。
+
+- **Geohash**（`GeocodeGeohash`）— **デフォルトで**出力されます。Geohashはデータ分析で広く使われる規約（Elasticsearch、Redis、Lucene）で、**プレフィックス特性**を持ちます。同じ地点について、短いコードは長いコードの接頭辞になるため、`GROUP BY LEFT(GeocodeGeohash, n)`で即座に空間のバケット化ができ、プレフィックス結合で近接検索も低コストで行えます。
+- **Plus Code**（`GeocodePlusCode`）— 任意で、**デフォルトではオフ**です。[Open Location Code](https://maps.google.com/pluscodes/)は、Google Mapsや一部の政府の住所体系で使われる、人が共有しやすい住所の形式です。
+
+出力する列は、ステップの **`location_codes`** 設定で制御します。
+
+| `location_codes` | 追加される列 |
+|---|---|
+| `none` | ロケーションコードなし |
+| `geohash` *(デフォルト)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash`と`GeocodePlusCode` |
+
+2つの任意設定でコードを調整できます。**`geohash_precision`**（デフォルトは`9`で、約4.8mのセル。上限は`12`）と、**`pluscode_length`**（デフォルトは`10`で、約14mのセル）です。順引きで座標に解決されなかった行では、コード列は空白のままです。逆引きの行は、住所が見つからない場合でも**クエリした**座標をエンコードします。
+
+## 2. ジオメトリを整形する
+
+ジオメトリを列に取り込んだら、知りたい内容に合わせて整形します。
+
+| 知りたいこと | ステップ |
+|---|---|
+| 各店舗から*n*マイル以内には何があるか | [Spatial Trade Area ステップ](/ja/reference/workflow-steps/spatial/spatial-trade-area/) |
+| この形状から一定距離以内には何があるか | [Spatial Buffer ステップ](/ja/reference/workflow-steps/spatial/spatial-buffer/) |
+| 各リージョンを合わせた範囲はどうなるか | [空間結合](/ja/reference/workflow-steps/spatial/spatial-combine/)ステップ |
+| これらのポイントが囲む領域はどこか | [Spatial Poly-Build ステップ](/ja/reference/workflow-steps/spatial/spatial-poly-build/) |
+| この2つの範囲はどこで重なり、どこが異なるか | [空間処理](/ja/reference/workflow-steps/spatial/spatial-process/)ステップ |
+| 境界線を軽量化して描画するにはどうするか | [Spatial Generalize ステップ](/ja/reference/workflow-steps/spatial/spatial-generalize/) |
+| この領域を等間隔のセルに分割するにはどうするか | [Spatial Make Grid ステップ](/ja/reference/workflow-steps/spatial/spatial-make-grid/) |
+| ポリゴンをパーツに分解するにはどうするか | [Spatial Poly-Split ステップ](/ja/reference/workflow-steps/spatial/spatial-poly-split/) |
+
+小売やサービステリトリーの分析は、通常Trade Area（商圏）から始まります。拠点のテーブルと一組の半径を渡すと、顧客と照合できる同心円状のリングが返されます。
+
+## 3. 場所をテリトリーと照合する
+
+2つの照合ステップは、答える問いも実行経路も異なります。
+
+**各顧客はどのテリトリーにいるか。** [空間照合](/ja/reference/workflow-steps/spatial/spatial-match/)ステップを使用します。データベース内で空間述語による結合として実行されるため、テーブルの規模に応じてスケールします。関係として*intersects*、*within*、*contains*のいずれかを選ぶと、一致するペアごとに1行が出力されます。
+
+**各顧客に最も近い店舗はどこか。** [Spatial Find Nearest ステップ](/ja/reference/workflow-steps/spatial/spatial-find-nearest/)を使用します。ターゲットごとに最も近いN行を保持し、選択した単位で計算した距離列を追加します。こちらもSQL経路で実行されるため、同様にスケールします。
+
+**どのテリトリーにも入らなかった顧客はどれか。** *Unmatched*モードで[Spatial Match (Intersect / Unmatched) ステップ](/ja/reference/workflow-steps/spatial/spatial-match-executor/)を使用します。同じステップで、ペアではなく共通部分そのものが必要な場合に、重なり合うジオメトリを出力することもできます。
+
+## 4. 計測する
+
+[Spatial Info ステップ](/ja/reference/workflow-steps/spatial/spatial-info/)は、面積、長さ、重心、外接矩形の列を追加します。これらは**WGS84の測地線**による計測値であるため、平方マイルは平面近似ではなく実際の平方マイルです。緯度の異なるテリトリーを比較するときに重要になります。
+
+同じ行にある2つの列間の直線距離を求めるだけなら、ステップよりも[SQL式](/ja/reference/workflow-steps/spatial/spatial-sql-recipes/)のほうが低コストです。
+
+## 5. 公開する
+
+テーブルに残ったままのジオメトリは、誰も行動に移せる答えではありません。
+
+- [Report Map ステップ](/ja/reference/workflow-steps/reports/report-map/)は、同じワークフローのチャートやテーブルとともに、ジオメトリをPDFレポートに描画します。
+- 結果テーブルは、他のテーブルと同様に[ダッシュボード](/ja/guides/dashboards/)に取り込めます。ジオメトリ列も引き継がれますが、実際にダッシュボードでチャート化されることが多いのは、その隣にあるメジャーです。
+- 下流のGISツールが必要とする場合は、[エクスポートステップ](/ja/reference/workflow-steps/export/)でテーブルをCSV、Excel、または外部データベースに書き出せます。
+
+## Alteryxからの移行
+
+Alteryxの空間ツールには、すべてPlaidCloud側の対応経路があります。変換されたワークフローでは、その経路が自動的に選ばれます。ツールごとの対応関係は[Alteryx変換マトリックス](/ja/reference/alteryx-conversion-matrix/)に一覧があり、ファイルのパッケージ化と結果の検証については[空間Alteryxワークフローの移行](/ja/guides/workflows/migrate-spatial-alteryx-workflows/)で説明しています。
+
+## 関連ガイド
+
+- [地理空間ステップ](/ja/reference/workflow-steps/spatial/)
+- [空間Alteryxワークフローの移行](/ja/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [高度なワークフロー](/ja/guides/workflows/advanced-workflows/)

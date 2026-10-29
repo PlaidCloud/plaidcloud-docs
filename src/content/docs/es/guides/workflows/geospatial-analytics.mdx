@@ -1,0 +1,183 @@
+---
+title: Análisis geoespacial
+description: "Cargue archivos espaciales, construya y remodele geometría, haga coincidir ubicaciones con territorios y publique el resultado: la ruta geoespacial en un flujo de trabajo de PlaidCloud."
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud trata la geometría como una parte esencial de un flujo de trabajo: usted
+importa archivos espaciales, construye geometría a partir de coordenadas, la
+remodela y la hace coincidir, y publica el resultado, sin salir de la plataforma y
+sin una herramienta de SIG aparte.
+
+Esta guía es el recorrido por esas capacidades. Para el detalle de referencia de
+cualquier paso, consulte [Pasos geoespaciales](/es/reference/workflow-steps/spatial/).
+
+## La geometría es solo una columna
+
+Todos los pasos espaciales leen y escriben la geometría como **WKT** (texto bien
+conocido) en una columna de texto común. Esto tiene tres consecuencias que conviene
+conocer desde el principio:
+
+- **Sin declaración de tipo.** Una columna de geometría es una columna de texto. No
+  hay nada que configurar ni que migrar.
+- **Los pasos se combinan libremente.** La salida de cualquier paso espacial sirve de
+  entrada para cualquier otro, en cualquier orden.
+- **SQL y geometría se combinan.** Una columna de geometría convive con sus medidas,
+  de modo que puede filtrar, agrupar y combinar por ambas en el mismo paso.
+
+## 1. Cargar geometría en una tabla
+
+Tiene dos vías de entrada, según el origen de la geometría.
+
+**Desde un archivo espacial.** Use
+[Spatial File Import](/es/reference/workflow-steps/spatial/spatial-file-import/) (paso Importación de archivo espacial) para
+archivos MapInfo `.TAB`, ESRI `.shp`, `.kml` o `.geojson`. Cargue el archivo y sus
+archivos complementarios en la misma carpeta de documentos: el paso lee los
+archivos acompañantes (`.shx`/`.dbf`/`.prj` para un shapefile, `.dat`/`.map`/`.id`
+para un `.TAB`) automáticamente. Se obtiene una fila por elemento, con una columna
+de geometría WKT y los atributos del archivo.
+
+**Desde coordenadas que ya tiene.** Si sus datos incluyen columnas de longitud y
+latitud, construya puntos con una
+[expresión de Table Extract](/es/reference/workflow-steps/spatial/spatial-sql-recipes/) (paso):
+esto se ejecuta en la base de datos, por lo que ninguna fila sale del almacén de datos:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="Mantenga juntos los archivos complementarios">
+  Un shapefile sin su `.prj` se importa sin referencia de coordenadas, y un
+  `.TAB` sin su `.dat` no tiene atributos. Cargue el grupo completo antes de
+  ejecutar la importación.
+</Aside>
+
+**Desde direcciones: geocodificación.** El paso **geocode** convierte columnas de
+dirección en coordenadas (directa), y el paso **geocode reverse** convierte un par
+de latitud y longitud de nuevo en una dirección (inversa), mediante el servicio de
+geocodificación de PlaidCloud. La geocodificación directa agrega `GeocodeLat` /
+`GeocodeLon` (además de `GeocodeStatus`, `GeocodeConfidence` y la etiqueta
+coincidente); la inversa agrega los componentes de la dirección resuelta.
+
+### Enriquecimiento con códigos de ubicación
+
+Ambos pasos de geocodificación también pueden agregar a cada fila un **código de
+ubicación** compacto, calculado localmente a partir de la coordenada devuelta, sin
+llamadas adicionales a ningún servicio ni dependencias externas:
+
+- **Geohash** (`GeocodeGeohash`): se genera **de forma predeterminada**. Un geohash es
+  la convención del análisis de datos (Elasticsearch, Redis, Lucene): su **propiedad
+  de prefijo** significa que un código más corto es prefijo de uno más largo para el
+  mismo punto, de modo que `GROUP BY LEFT(GeocodeGeohash, n)` es una agrupación
+  espacial instantánea y una combinación por prefijo es una proximidad económica.
+- **Plus Code** (`GeocodePlusCode`): opcional, **desactivado de forma predeterminada**.
+  Un [Open Location Code](https://maps.google.com/pluscodes/) es la forma de
+  dirección fácil de compartir que usan Google Maps y algunos sistemas
+  gubernamentales de direcciones.
+
+Controle qué columnas se generan con la opción **`location_codes`** del paso:
+
+| `location_codes` | Columnas agregadas |
+|---|---|
+| `none` | Sin código de ubicación |
+| `geohash` *(predeterminado)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` y `GeocodePlusCode` |
+
+Dos opciones adicionales ajustan los códigos: **`geohash_precision`** (predeterminado
+`9` ≈ una celda de 4,8 m; máximo `12`) y **`pluscode_length`** (predeterminado `10`
+≈ una celda de 14 m). Una fila de geocodificación directa que no se resolvió a una
+coordenada deja en blanco las columnas de código; una fila de geocodificación
+inversa codifica su coordenada **consultada** incluso cuando no se encuentra ninguna
+dirección.
+
+## 2. Remodelar la geometría
+
+Con la geometría en una columna, remodélela para responder la pregunta que realmente
+tiene.
+
+| Pregunta | Paso |
+|---|---|
+| ¿Qué hay a menos de *n* millas de cada tienda? | [Spatial Trade Area](/es/reference/workflow-steps/spatial/spatial-trade-area/) |
+| ¿Qué hay a una distancia fija de esta figura? | [Spatial Buffer](/es/reference/workflow-steps/spatial/spatial-buffer/) |
+| ¿Cuál es la huella combinada de cada región? | [Combinación espacial](/es/reference/workflow-steps/spatial/spatial-combine/) |
+| ¿Qué área encierran estos puntos? | [Spatial Poly-Build](/es/reference/workflow-steps/spatial/spatial-poly-build/) |
+| ¿Dónde se superponen o difieren estas dos huellas? | [Proceso espacial](/es/reference/workflow-steps/spatial/spatial-process/) |
+| ¿Cómo hago que estos límites sean más económicos de dibujar? | [Spatial Generalize](/es/reference/workflow-steps/spatial/spatial-generalize/) |
+| ¿Cómo divido esta área en celdas iguales? | [Spatial Make Grid](/es/reference/workflow-steps/spatial/spatial-make-grid/) |
+| ¿Cómo descompongo un polígono en sus partes? | [Spatial Poly-Split](/es/reference/workflow-steps/spatial/spatial-poly-split/) |
+
+Trade Area (Área comercial) suele ser el punto de partida de un análisis de comercio minorista o
+de territorios de servicio: se le da una tabla de ubicaciones y un conjunto de
+radios, y devuelve anillos concéntricos con los que puede hacer coincidir clientes.
+
+## 3. Hacer coincidir ubicaciones con territorios
+
+Los dos pasos de coincidencia responden preguntas distintas y se ejecutan por vías
+diferentes.
+
+**¿En qué territorio está cada cliente?** Use
+[Coincidencia espacial](/es/reference/workflow-steps/spatial/spatial-match/). Se ejecuta
+como una combinación por predicado espacial en la base de datos, por lo que escala
+con la tabla. Elija la relación (*intersecta*, *dentro de* o *contiene*) y genera
+una fila por cada par coincidente.
+
+**¿Cuáles son las tiendas más cercanas a cada cliente?** Use
+[Spatial Find Nearest](/es/reference/workflow-steps/spatial/spatial-find-nearest/)
+(Buscar el más cercano). Conserva las N filas más cercanas por destino y agrega una columna de distancia
+calculada en la unidad que elija. También usa la vía SQL, por lo que escala del
+mismo modo.
+
+**¿Qué clientes quedaron fuera de todos los territorios?** Use
+[Spatial Match (Intersect / Unmatched)](/es/reference/workflow-steps/spatial/spatial-match-executor/)
+en modo *Unmatched* (sin coincidencia). El mismo paso también genera la propia
+geometría de superposición cuando necesita la intersección en lugar del emparejamiento.
+
+## 4. Medir
+
+[Spatial Info](/es/reference/workflow-steps/spatial/spatial-info/) agrega columnas de
+área, longitud, centroide y rectángulo delimitador. Son mediciones **geodésicas
+WGS84**, por lo que las millas cuadradas son millas cuadradas reales y no una
+aproximación plana, lo cual importa en cuanto compara territorios en latitudes
+distintas.
+
+Para una distancia directa de punto a punto entre dos columnas de la misma fila, una
+[expresión SQL](/es/reference/workflow-steps/spatial/spatial-sql-recipes/) es más
+económica que un paso.
+
+## 5. Publicar
+
+La geometría que se queda en una tabla no es una respuesta sobre la que alguien
+pueda actuar.
+
+- [Report Map](/es/reference/workflow-steps/reports/report-map/) representa la geometría en
+  un informe PDF, junto con gráficos y tablas del mismo flujo de trabajo.
+- La tabla de resultados alimenta [paneles de control](/es/guides/dashboards/) como
+  cualquier otra tabla: la columna de geometría se conserva, y las medidas que la
+  acompañan son lo que la mayoría de los paneles de control grafican realmente.
+- Los [pasos de exportación](/es/reference/workflow-steps/export/) escriben la tabla en
+  CSV, Excel o una base de datos externa cuando una herramienta de SIG posterior la
+  necesita.
+
+## Si viene de Alteryx
+
+Cada herramienta espacial de Alteryx tiene una ruta en PlaidCloud. Los flujos de
+trabajo convertidos la eligen automáticamente; la
+[matriz de conversión de Alteryx](/es/reference/alteryx-conversion-matrix/) enumera la
+asignación herramienta por herramienta, y
+[Migrar flujos de trabajo espaciales de Alteryx](/es/guides/workflows/migrate-spatial-alteryx-workflows/)
+explica cómo empaquetar los archivos y validar el resultado.
+
+## Guías relacionadas
+
+- [Pasos geoespaciales](/es/reference/workflow-steps/spatial/)
+- [Migrar flujos de trabajo espaciales de Alteryx](/es/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Flujos de trabajo avanzados](/es/guides/workflows/advanced-workflows/)

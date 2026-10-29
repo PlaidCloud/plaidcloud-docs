@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry"
+description: Bucht Hauptbuch-Journalbuchungen aus Kopf- und Positionstabellen über den SOAP-Dienst JournalEntryBulkCreateRequest_In in SAP S/4HANA Cloud, mit einem Vorschaumodus, der jede Buchung prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Hauptbuch-Journalbuchungen über Ihre [S/4HANA-Cloud-Verbindung](/de/guides/connections/s4hana-cloud/) in SAP S/4HANA Cloud, geleitet über die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Journalbuchung) und eine Positionstabelle (eine oder mehrere Soll-/Haben-Zeilen pro Buchung) und übermittelt jede Buchung an den SOAP-Dienst `JournalEntryBulkCreateRequest_In` von S/4HANA Cloud. **Validate Only** erstellt und prüft jede Buchung ohne Hauptbuchanspruch und ohne Buchung; eine optionale Ergebnistabelle hält das Ergebnis jeder Buchung fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in S/4HANA ab, bevor Sie sich darauf verlassen, dass dieser Schritt Live-Buchungen unbeaufsichtigt bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **S/4HANA Connection** – die S/4HANA-Cloud-Verbindung, über die gebucht wird.
+
+### Daten
+
+- **Kopftabelle** – eine Zeile pro Journalbuchung: `journal_id` (Ihre Buchungskennung, erforderlich), `company_code` (erforderlich), `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text`.
+- **Positionstabelle** – eine oder mehrere Zeilen pro `journal_id`: `gl_account`, `debit`, `credit` sowie alle Dimensionsspalten `cost_center`/`profit_center`, die Ihr Hauptbuch benötigt.
+- **Ergebnistabelle** – Ausgabetabellen-ID: eine Zeile pro Buchung mit `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** – standardmäßig aktiviert. Nur Vorabprüfung; kein Hauptbuchanspruch, keine Buchung. Eine Schrittkonfiguration, die dieses Feld ganz weglässt – etwa eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig Validate Only statt einer Live-Buchung.
+- **Continue On Error** – standardmäßig aktiviert. Bucht die übrigen Buchungen weiter, nachdem eine fehlgeschlagen ist; ist die Option deaktiviert, stoppt der Stapel beim ersten Fehler.
+
+## So funktioniert das Buchen
+
+PlaidCloud übermittelt jede Buchung über `JournalEntryBulkCreateRequest_In` und fragt die zugehörige Nachricht `JournalEntryBulkCreateConfirmation_Out` ab, die den Endzustand der Verarbeitung der Buchung meldet. Eine Buchung wird erst dann als `posted` gemeldet, wenn diese Bestätigung **eingegangen** ist – eine Buchung, die angenommen wurde, deren Bestätigung aber nie eintrifft, bleibt in Quarantäne (weder als gebucht gemeldet noch stillschweigend verworfen), statt allein deshalb als Erfolg zu gelten, weil die Übermittlung angenommen wurde.
+
+## Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie eine gebuchte Buchung. Um eine zu korrigieren, buchen Sie eine neue Buchung, in der Soll und Haben gegenüber dem Original vertauscht sind – eine gebuchte Stornobuchung –, statt das Original direkt zu bearbeiten.
+
+## Einschränkungen
+
+| Einschränkung | Bedeutung |
+|---|---|| Bestätigungslatenz | Der Bulk-Create-Dienst verarbeitet Anfragen asynchron; die Abfrage des Endzustands wartet auf die Bestätigungsnachricht, statt ein synchrones Ergebnis zu erhalten. |
+| Storno ist eine neue Buchung, keine Bearbeitung an Ort und Stelle | Korrekturen buchen eine neue Stornobuchung mit vertauschtem Soll und Haben. Eine bereits gebuchte Buchung können Sie weder stornieren noch löschen. |
+| Die Dimensionsprüfung hängt von Ihrer Hauptbucheinrichtung ab | Ein Kostenobjekt oder eine Dimensionskombination, die für Ihre Kontenstruktur ungültig ist, scheitert an der eigenen Validierung von S/4HANA und wird als `error`-Zeile ausgewiesen, statt früher von PlaidCloud abgefangen zu werden. |
+
+## Verwandte Themen
+
+- [Mit SAP S/4HANA Cloud verbinden](/de/guides/connections/s4hana-cloud/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [SAP S/4HANA Cloud REST Connector](/de/reference/connectors/rest/s4hana-cloud/)
+- [S/4HANA-Cloud-Schritte](/de/reference/workflow-steps/s4hana-cloud/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

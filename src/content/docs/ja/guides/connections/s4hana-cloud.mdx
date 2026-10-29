@@ -1,0 +1,136 @@
+---
+title: SAP S/4HANA Cloudに接続する
+description: OAuth2クライアント資格情報を使用して、エージェント不要でPlaidCloudをSAP S/4HANA Cloud Public Editionに直接接続し、試算表と仕訳明細を取得して、仕訳を転記します。修正には転記済みの逆仕訳を使用します。
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudをSAP S/4HANA Cloud Public EditionにODataおよびSOAP APIで直接接続すると、ODataを手書きすることなく試算表と仕訳明細のデータを取得し、仕訳を書き戻すことができます。このガイドでは、接続、インポートステップ、転記ステップについて説明します。
+
+<Aside type="caution">
+インポートは必ず最初にサンドボックステナントで実行してください。また、本番で転記する前に、すべての転記バッチで下記の **Validate Only** を実施してください。
+</Aside>
+
+<Aside type="note">
+これは [SAP ECC / S/4HANAコネクタ](/ja/reference/connectors/erp/sap-s4/)とは別の接続です。そちらはPlaidLinkエージェントとRFC呼び出しを介して、オンプレミスまたはプライベートクラウドのS/4HANAシステムに接続します。このコネクタはインターネット経由でSAP S/4HANA Cloud **Public Edition** と直接通信するため、インストールするエージェントも、設定するRFC宛先もありません。
+</Aside>
+
+## 前提条件
+
+SAP S/4HANA Cloudで次のものが必要です。
+
+- 試算表および仕訳明細API（読み取り）と、仕訳転記サービス（書き込み）を公開するCommunication Scenarioに基づく **Communication Arrangement**。**Communication User** は、基本認証ではなくOAuth2クライアント資格情報用に設定します。
+- S/4HANA Cloudテナントの **ホスト**（例: `https://yourorg.s4hana.ondemand.com`）と、その **OAuth2トークンURL**（例: `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`）。
+- Communication Arrangementの **OAuth2クライアントIDとシークレット**。
+
+<Aside type="note">
+この接続はユーザーとしてではなく、アプリケーションとして認証されます。PlaidCloudが他のクラウドERP REST接続で使用するのと同じ、OAuth2 **クライアント資格情報** フローです。対話型のサインインはありません。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections** を開き、`New Connection` をクリックします。
+
+2. メニューから **SAP S/4HANA Cloud** を選択します。
+
+3. 各フィールドに入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例: `S/4HANA Cloud Prod`）。 |
+   | ホスト | S/4HANA Cloudテナントのホスト（例: `https://yourorg.s4hana.ondemand.com`）。 |
+   | トークンURL | Communication ArrangementのOAuth2トークンエンドポイント。 |
+   | クライアントID | Communication ArrangementのOAuth2クライアントID。 |
+   | クライアントシークレット | Communication ArrangementのOAuth2クライアントシークレット。 |
+
+4. `Create` をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. ワークフローに **Import S/4HANA Entity** ステップを追加します。
+
+2. **S/4HANA Connection** に作成した接続を設定し、**エンティティタイプ** を `trial_balance` にして、1社分の **CompanyCode** フィルターを追加し、**ターゲットテーブル** に作業用テーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内で1つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが入っていれば、ホスト、トークンURL、クライアント資格情報がすべて正しいことを確認できます。エラーが発生した場合は、問題が示されます。たとえば、クライアントシークレットの誤り、必要なスコープがないCommunication Arrangement、ホストの誤りなどです。
+
+## データをインポートする
+
+<Steps>
+
+1. **Import S/4HANA Entity** ステップを追加し、**S/4HANA Connection** と **ターゲットテーブル** を設定します。
+
+2. **エンティティタイプ** に取得したいレコードを設定します。
+
+3. **フィルター** を追加して取得範囲を絞り込みます。会社コード、勘定科目、日付範囲はリクエストのOData `$filter` に変換され、エンティティごとに、S/4HANAがサーバー側で実際にフィルターできるフィールドに限定されます。
+
+4. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+### エンティティとフィルター
+
+| エンティティタイプ | 取得する内容 | ODataサービス | フィルター可能なフィールド |
+|---|---|---|---|
+| `trial_balance` | 期末時点の総勘定元帳勘定科目残高の集計 | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | 転記済みの仕訳明細行 | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate`（範囲）, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`、`FiscalYear`、`FiscalPeriod` は **範囲** フィルター（`ge`/`le` の境界）を受け付けます。それ以外は等価フィルターです。境界が片方だけの範囲フィルターは、もう一方が開いたままになります。本番データに対して `journal_entry_items` を取得する前に、少なくとも片方の境界を設定してください。明細レベルの詳細を無制限に取得すると、非常に大きくなる可能性があります。
+</Aside>
+
+## 仕訳を転記する
+
+**S/4HANA: Post Journal Entry** ステップは、S/4HANA CloudのSOAP仕訳一括作成サービスを使用し、PlaidCloudの共有ERP書き込みパイプラインを通じて総勘定元帳の仕訳を転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル** を作成します。仕訳1件につき1行で、`journal_id`（仕訳の識別子）、`company_code`、`document_date`、`posting_date`、`fiscal_year`、`ledger`、`header_text` を含めます。
+
+2. **明細テーブル** を作成します。`journal_id` ごとに1行以上で、`gl_account`、`debit`、`credit`、および台帳が必要とする `cost_center`/`profit_center` ディメンション列を含めます。
+
+3. **S/4HANA: Post Journal Entry** ステップを追加し、**S/4HANA Connection**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル** を設定します。
+
+4. **Validate Only** をオンのままにしてステップを実行します。PlaidCloudは、台帳の要求（ledger claim）を行わず、何も転記せずに、すべての仕訳を作成してチェックします。
+
+5. 結果テーブルを確認します（仕訳1件につき1行: `journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）。`error` の行があれば修正して、再度検証します。
+
+6. **Validate Only** をオフにして再度実行し、実際に転記します。最初に失敗した仕訳でバッチを即座に停止したい場合を除き、**Continue On Error** はオンのままにしてください。
+
+</Steps>
+
+### 転記の仕組み
+
+PlaidCloudは、各仕訳をS/4HANA Cloudの `JournalEntryBulkCreateRequest_In` SOAPサービス経由で送信し、その仕訳の最終的な処理状態を報告する対応する `JournalEntryBulkCreateConfirmation_Out` メッセージをポーリングします。仕訳が `posted` と報告されるのは、この確認を受信した後だけです。受け付けられたものの確認が届かない仕訳は、転記済みとして記録されずに隔離されたままになるため、停止した送信が黙って成功扱いになることはありません。PlaidCloud独自の台帳の要求（ledger claim）により、再試行または再実行されたバッチで同じ仕訳が二重に転記されるのを防ぎます。
+
+### 転記済みの仕訳を修正する
+
+このステップは、転記済みの仕訳を削除したり書き換えたりすることはありません。修正するには、元の仕訳を直接編集するのではなく、元の仕訳の借方と貸方を入れ替えた新しい仕訳（**転記済みの逆仕訳**）を転記します。これにより、S/4HANA自体の監査証跡が保持され、アプリケーション上で直接修正する場合のやり方とも一致します。
+
+### 機能の制限事項: 本番で転記する前にお読みください
+
+<Aside type="caution">
+- **確認の遅延。** SOAPサービスは一括作成リクエストを非同期で処理するため、最終状態のポーリングには、同期ODataの書き込みよりもかなり長い時間がかかります。レイテンシーが重要な単一仕訳の転記には、このステップを使用しないでください。
+- **フィルター可能なフィールドは、Communication Scenarioが公開するディメンションによって異なります。** シナリオの公開フィールドに含まれないコストオブジェクトやディメンションは、サーバー側ではフィルターできません。代わりに、取得後にワークフロー内で絞り込んでください。
+- **このコネクタは [SAP ECC / S/4HANAコネクタ](/ja/reference/connectors/erp/sap-s4/)とは別のものです。** そちらはPlaidLinkエージェントとRFC呼び出しを介して、オンプレミスまたはプライベートクラウドのシステムに接続します。SAP S/4HANA Cloud Public Editionに接続しない場合にのみ使用してください。
+</Aside>
+
+## 関連情報
+
+- [SAP S/4HANA Cloud RESTコネクタ](/ja/reference/connectors/rest/s4hana-cloud/) — フィールドリファレンス。
+- [Import S/4HANA Entity](/ja/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/ja/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/) — S/4HANA Cloudへのすべての転記試行と、その最新の状態を記録した常設の履歴。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

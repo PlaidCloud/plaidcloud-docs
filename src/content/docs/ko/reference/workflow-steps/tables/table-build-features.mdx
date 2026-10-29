@@ -1,0 +1,41 @@
+---
+title: Build Features
+description: 소스 테이블에서 산술, 상호작용, 날짜 부분, 구간화, 스케일링, 원-핫 인코딩 피처 열을 만듭니다.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Description
+
+**Build Features** 단계는 열마다 식을 직접 작성하지 않고도 소스 테이블에서 파생 피처 열 테이블을 한 번에 만듭니다. 산술 및 상호작용 조합, 날짜 부분 추출, 구간화, 스케일링, 원-핫 인코딩을 지원합니다. 웨어하우스에서 일반 변환으로 실행됩니다.
+
+## Configuration
+
+- **소스 / 출력 테이블** — 입력 테이블과 파생 열을 기록할 테이블입니다.
+- **패스스루 열** (`passthrough_columns`) — 변경 없이 그대로 전달할 소스 열입니다.
+- **피처** (`features`) — 순서가 있는 피처 사양 목록이며 하나 이상 필요합니다. 각 사양에는 `type`이 있고 하나 이상의 출력 열을 만듭니다. 패스스루 열과 원-핫이 아닌 모든 피처의 `name`을 포함한 출력 열 이름은 모두 고유해야 하며, 이름이 중복되거나 원-핫 `(column, prefix)` 쌍이 중복되면 저장이 거부됩니다.
+
+## Feature Types
+
+| 유형 | 필드 | 생성 결과 |
+| --- | --- | --- |
+| **식** (`expression`) | `name`, `expression`, `dtype` (default `text`) | 열 하나: 소스 열에 대한 임의의 식입니다. |
+| **상호작용** (`interaction`) | `name`, `columns` (exactly 2), `op` (`multiply` or `add`, default `multiply`), `dtype` (default `numeric`) | 열 하나: 숫자 열 두 개의 쌍별 산술 조합입니다. |
+| **날짜 부분** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow`, or `hour`) | 열 하나: 추출한 날짜/시간 구성 요소입니다. |
+| **구간화** (`bin`) | `name`, `column`, `thresholds` (ascending, at least 1), `labels` (exactly one more than `thresholds`) | 열 하나: `column` 값이 속하는 구간의 레이블입니다. 임계값은 사용자가 제공하는 고정 값입니다. [제한 사항 및 주의 사항](#limits-and-caveats)을 참고하십시오. |
+| **Z 점수** (`zscore`) | `name`, `column`, `dtype` (default `numeric`) | 열 하나: 평균 0, 단위 분산으로 표준화한 열입니다. |
+| **최소-최대** (`minmax`) | `name`, `column`, `out_min` (default 0), `out_max` (default 1), `dtype` (default `numeric`) | 열 하나: `[out_min, out_max]` 범위로 다시 조정한 열입니다. |
+| **원-핫** (`onehot`) | `column`, `prefix` | `column`의 고유 값마다 열 하나씩 생성하며, 각 열의 이름은 `<prefix><value>`입니다. |
+| **열 통계** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | 열 하나: 단계의 필터를 적용한 전체 열의 통계값이 모든 행에 들어갑니다. `moments`는 `sql`(기본값, 웨어하우스 집계) 또는 `welford`입니다. 후자는 `order_column` 순서로 읽은 열에 대해 평균, 합계, 분산, 표준 편차를 단일 패스 누적 모멘트로 계산하며, KNIME의 Math Formula `COL_MEAN` 및 관련 함수와 같은 방식입니다. |
+
+## Limits and Caveats
+
+- **구간화에는 사전에 고정된 임계값이 필요합니다.** `bin`은 사용자가 제공한 임계값과 레이블을 기준으로 열을 구간으로 나눕니다. 실행 시점에 데이터에서 등폭 또는 등빈도 구간을 계산하는 데이터 기반 구간화는 없습니다. `bin` 피처를 구성하기 전에 이전 집계 단계 등을 통해 임계값을 직접 계산하십시오.
+- **한 번에 하나의 프레임만 처리합니다.** Build Features는 소스 테이블 하나를 읽고 씁니다. 교차 테이블 피처 합성 도구처럼 관련 테이블에 걸쳐 값을 집계하지는 않습니다. 테이블 간 관계는 이 단계 앞에서 조인으로 구성하십시오.
+- **이 단계에는 차원 축소나 타깃 인식 인코딩이 없습니다.** Build Features에는 PCA 방식의 성분 축소와 타깃 인코딩(범주형 열을 레이블의 평균과 같은 통계로 다시 표현하는 방식)이 없습니다. 범주형 피처에는 `onehot`을 사용하십시오. 성분 축소에는 [ML: 모델 학습](/ko/reference/workflow-steps/machine-learning/ml-train/) 단계의 `pca` 알고리즘을 사용하고, 학습 파이프라인에 다른 인코딩이 필요하면 해당 단계의 자체 피처 처리를 사용하십시오.
+
+## Related
+
+- [ML: 모델 학습](/ko/reference/workflow-steps/machine-learning/ml-train/) — 이 단계에서 만든 테이블을 포함하여 테이블로 모델을 학습합니다.
+- [Alteryx 변환 매트릭스](/ko/reference/alteryx-conversion-matrix/) — Alteryx Build Features 도구의 기본 요소가 이러한 피처 유형에 어떻게 대응하는지, 그리고 어떤 기본 요소(교차 테이블 집계, PCA, 타깃 인코딩, 자동 구간화)가 여기에 대응 항목이 없는지 설명합니다.

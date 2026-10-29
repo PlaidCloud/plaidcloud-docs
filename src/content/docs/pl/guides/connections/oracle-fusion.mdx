@@ -1,0 +1,131 @@
+---
+title: Połączenie z Oracle Fusion
+description: Połącz PlaidCloud z Oracle Fusion Cloud za pomocą danych uwierzytelniających OAuth2, pobieraj salda księgi głównej i partie zapisów dziennika przez OData lub wyodrębnienia BIP, a następnie księguj przez FBDI i GL Interface.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Oracle Fusion Cloud ERP przez jego punkty końcowe raportowania OData i BI Publisher (BIP), aby pobierać salda księgi głównej i partie zapisów dziennika bez ręcznego pisania OData, oraz księguj zapisy dziennika z powrotem ścieżką File-Based Data Import (FBDI) firmy Oracle. Ten przewodnik obejmuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import najpierw uruchamiaj w środowisku testowym, a dla każdej partii księgowań przed księgowaniem na żywo przejdź opisaną poniżej opcję **Validate Only**.
+</Aside>
+
+## Wymagania wstępne
+
+W Oracle Fusion Cloud potrzebujesz:
+
+- Dedykowanego **użytkownika API** dla PlaidCloud, z rolą mającą dostęp do jednostek, które będziesz odczytywać (zapytania do księgi głównej), oraz do funkcji FBDI/GL Interface, przez które będziesz księgować.
+- **Adresu URL instancji** Fusion Cloud (na przykład `https://yourorg.fa.us2.oraclecloud.com`).
+- **Danych uwierzytelniających klienta OAuth2** (identyfikator klienta i sekret) lub danych uwierzytelniających API z uwierzytelnianiem podstawowym, które konfiguracja zabezpieczeń Fusion Cloud wydaje użytkownikom integracji — zależnie od tego, jak skonfigurowano Twój tenant.
+
+## Utwórz połączenie
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **Oracle Fusion**.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `Fusion Prod`. |
+   | Adres URL instancji | Adres URL Twojej instancji Fusion Cloud. |
+   | Identyfikator klienta | Identyfikator klienta OAuth2 użytkownika API (lub nazwa użytkownika, dla uwierzytelniania podstawowego). |
+   | Klucz tajny klienta | Sekret klienta OAuth2 użytkownika API (lub hasło, dla uwierzytelniania podstawowego). |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Przetestuj połączenie
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Import Fusion Entity**.
+
+2. Ustaw **Fusion Connection** na swoje połączenie, **Typ jednostki** na `gl_balances`, a **Tabela docelowa** na tabelę roboczą.
+
+3. Uruchom krok (zobacz [Uruchamianie pojedynczego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że dane uwierzytelniające i adres URL instancji są poprawne. Błąd wskazuje problem — nieprawidłowe dane uwierzytelniające, błędny adres URL instancji lub rolę, której brakuje uprawnienia do odczytu danej jednostki.
+
+## Importuj dane
+
+Dwa kroki importu obsługują pobrania o różnej wielkości:
+
+<Steps>
+
+1. W przypadku rutynowego, ograniczonego pobrania dodaj krok **Import Fusion Entity** — wywołuje on bezpośrednio punkty końcowe OData lub BIP Oracle Fusion.
+
+2. W przypadku dużego wyodrębnienia dodaj zamiast tego krok **Import Fusion Bulk Extract** — przesyła on zadanie wyodrębnienia FBDI/BIP i po jego zakończeniu pobiera powstały plik.
+
+3. Ustaw **Typ jednostki** na `gl_balances` lub `journal_batches`.
+
+4. Dodaj **Filtry**, aby ograniczyć pobranie — zakresy dat i okresów księgowych (`ge`/`le`) oraz zakresy liczbowe pól sald/kwot, ograniczone dla każdej jednostki do pól, które Oracle Fusion rzeczywiście potrafi filtrować po stronie serwera.
+
+5. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+### Jednostki i filtry
+
+| Typ jednostki | Co pobiera | Pola, które można filtrować |
+|---|---|---|
+| `gl_balances` | Salda kont księgi głównej | zakres okresów księgowych, zakres kont, zakres kwoty salda |
+| `journal_batches` | Nagłówki partii zapisów dziennika i ich stan | zakres dat, zakres okresów księgowych |
+
+<Aside type="note">
+`gl_balances` i `journal_batches` akceptują zarówno filtry **zakresowe** (`ge`/`le` na polu daty, okresu lub liczbowym), jak i filtry równości na polach dyskretnych, takich jak księga lub waluta. Filtr zakresowy z tylko jedną granicą jest otwarty po drugiej stronie.
+</Aside>
+
+## Księguj zapisy dziennika
+
+Krok **Oracle Fusion: Post Journal Entry** księguje zapisy dziennika księgi głównej przez wspólny potok zapisu ERP PlaidCloud, używając ścieżki ładowania FBDI GL Interface firmy Oracle.
+
+<Steps>
+
+1. Zbuduj **tabelę nagłówków** — jeden wiersz na zapis dziennika — z kolumnami `batch_id` (identyfikator Twojej partii), `ledger_id`, `journal_source`, `journal_category`, `accounting_date` i `description`.
+
+2. Zbuduj **tabelę wierszy** — jeden lub więcej wierszy na `batch_id` — z kolumnami `account_combination` (lub jego kolumnami segmentów), `entered_debit`, `entered_credit` i `currency_code`.
+
+3. Dodaj krok **Oracle Fusion: Post Journal Entry**, ustaw **Fusion Connection**, **Tabela nagłówka**, **Tabela wierszy** i **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud buduje i sprawdza każdą partię bez rezerwacji w rejestrze księgi i bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na partię: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Napraw każdy wiersz z `error` i zweryfikuj ponownie.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby uruchomienie zatrzymało się całkowicie przy pierwszej nieudanej partii.
+
+</Steps>
+
+### Jak działa księgowanie
+
+PlaidCloud zapisuje każdą partię zapisów dziennika w tabeli pośredniej GL_INTERFACE firmy Oracle jako plik FBDI, a następnie przesyła i asynchronicznie odpytuje zadanie Enterprise Scheduler Service (ESS) **Journal Import Launcher**, aż zgłosi ono stan końcowy. Zapis jest zgłaszany jako `posted` dopiero po **potwierdzeniu** tego stanu końcowego — partia, która trafia do tabeli interfejsu, ale której zadanie importu nigdy się nie rozstrzyga, pozostaje w kwarantannie, zamiast zostać odnotowana jako zaksięgowana, więc zawieszone zadanie ESS nigdy po cichu nie uchodzi za sukces. Własna rezerwacja w rejestrze księgi PlaidCloud chroni przed dwukrotnym załadowaniem tej samej partii przy ponowionej lub ponownie uruchomionej partii.
+
+### Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanej partii zapisów dziennika. Aby ją skorygować, zaksięguj nową partię z zamienionymi debetami i kredytami względem oryginału — **zaksięgowany zapis storno** — zamiast edytować oryginał w miejscu. Zachowuje to własną ścieżkę audytu Oracle Fusion i odpowiada sposobowi wprowadzania korekt bezpośrednio w aplikacji.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Opóźnienie zadania ESS.** Journal Import Launcher działa jako zadanie harmonogramu, a nie wywołanie synchroniczne — spodziewaj się, że uruchomienie księgowania potrwa wyraźnie dłużej niż bezpośredni zapis przez API, i nie używaj tego kroku do księgowania pojedynczego zapisu wrażliwego na opóźnienia.
+- **Opóźnienie wyodrębnienia zbiorczego.** `import_fusion_bulk_extract` czeka na zadanie eksportu FBDI/BIP — zarezerwuj go dla pobrań zbyt dużych dla bezpośredniej ścieżki OData/BIP kroku `import_fusion_entity`.
+</Aside>
+
+## Powiązane
+
+- [Łącznik Oracle Fusion](/pl/reference/connectors/erp/oracle-fusion/) — dokumentacja pól.
+- [Import Fusion Entity](/pl/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/pl/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/pl/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [Przeglądanie historii księgowań ERP](/pl/guides/connections/erp-post-history/) — stały zapis każdej próby księgowania do Oracle Fusion i jej bieżący stan.
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/)

@@ -1,0 +1,251 @@
+---
+title: Migrer depuis le géocodage Google ou Mapbox
+description: "Migrez une intégration Google Geocoding API ou Mapbox Geocoding vers les points de terminaison REST de géocodage de PlaidCloud : correspondance des points de terminaison, enveloppe de réponse, équivalents de location_type, authentification, limites de débit et limites de couverture."
+sidebar:
+  label: API de géocodage
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/geocoding-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud expose le géocodage direct, le géocodage structuré, le géocodage inverse, l'autocomplétion et la recherche de lieu sous forme de points de terminaison REST sous `/rest/v1/analyze/geocode`. Ils servent de proxy au service de géocodage de PlaidCloud, construit à partir de données ouvertes faisant autorité sur les adresses au niveau du toit et sur les lieux administratifs (dont OpenStreetMap, sous licence ODbL), et enveloppent chaque résultat dans un petit objet `plaidcloud` afin que l'appelant puisse connaître la précision d'une correspondance sans analyser directement les champs internes du service.
+
+Ce guide s'adresse à toute personne qui migre une intégration Google Geocoding API ou Mapbox Geocoding existante vers PlaidCloud : il présente les formes de requête qui se correspondent étroitement, ainsi que celles qui divergent.
+
+<Aside type="caution" title="À lire avant de migrer">
+Le géocodeur de PlaidCloud est construit à partir de données géospatiales ouvertes (sources faisant autorité sur les adresses au niveau du toit et sur les lieux administratifs, dont OpenStreetMap (ODbL)), et non à partir d'un jeu de données commercial sous licence. Il ne remplace pas à l'identique tous les usages de Google ou de Mapbox. Consultez [Couverture et déterminisme](#couverture-et-déterminisme-à-lire-en-premier) avant de l'adopter pour tout usage où l'exactitude des adresses est critique.
+</Aside>
+
+## Authentification et droits
+
+Chaque appel de géocodage nécessite :
+
+- Une session PlaidCloud normale ou un jeton porteur disposant du rôle **`analyze.table.read`**, le même rôle que celui qui contrôle les autres accès en lecture aux données d'un projet. Il n'existe aucun rôle propre au géocodage.
+- Le géocodage inclus dans votre offre, c'est-à-dire le droit de géocodage activé pour votre locataire. Un locataire dont l'offre ne l'inclut pas reçoit une erreur `403` à chaque appel.
+
+## Limites de débit
+
+Les points de terminaison de géocodage bénéficient d'un plafond supérieur à la limite de débit REST par défaut de PlaidCloud : **1 200 requêtes par minute et par adresse IP appelante**, contre 600 par minute sur la plupart des autres points de terminaison `/rest/v1`. Un dépassement renvoie une erreur `429` avec un en-tête `Retry-After: 60`.
+
+Aucun cache par requête ne précède le service de géocodage : chaque appel est traité en direct. Mettez les résultats en cache de votre côté si vous prévoyez de répéter une requête.
+
+## Correspondance des points de terminaison
+
+| Votre appel actuel | Point de terminaison PlaidCloud | Remarques |
+|---|---|---|
+| Google Geocoding API (adresse → coordonnées) | `GET /rest/v1/analyze/geocode/search` | Requête en texte libre |
+| Google Geocoding API (composants structurés) | `GET /rest/v1/analyze/geocode/search/structured` | Champ par champ |
+| Google Reverse Geocoding | `GET /rest/v1/analyze/geocode/reverse` | Des coordonnées aux lieux |
+| Google Places Autocomplete | `GET /rest/v1/analyze/geocode/autocomplete` | Saisie semi-automatique. Renvoie des résultats vides au lieu d'une erreur en cas de dégradation ; voir [L'autocomplétion se dégrade, elle ne renvoie pas d'erreur](#lautocomplétion-se-dégrade-elle-ne-renvoie-pas-derreur) |
+| Google Place Details (recherche par `place_id`) | `GET /rest/v1/analyze/geocode/place/{gid}` | `gid` n'est **pas** un identifiant permanent comme l'est `place_id` ; voir [Couverture et déterminisme](#couverture-et-déterminisme-à-lire-en-premier) |
+| Mapbox Geocoding API (direct) | `GET /rest/v1/analyze/geocode/search` ou `/search/structured` | |
+| Mapbox Geocoding API (inverse) | `GET /rest/v1/analyze/geocode/reverse` | |
+
+### `search` : géocodage direct en texte libre
+
+| Paramètre de requête | Type | Remarques |
+|---|---|---|
+| `text` | chaîne, obligatoire | 1 à 300 caractères |
+| `focus.point.lat`, `focus.point.lon` | flottant | Biais de classement souple, pas un filtre |
+| `boundary.country` | chaîne | Filtre strict : codes pays ISO alpha-2 séparés par des virgules, 300 caractères maximum |
+| `layers` | chaîne | Couches de géocodage à restreindre, séparées par des virgules, 300 caractères maximum |
+| `size` | entier | 1 à 40, 10 par défaut |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&size=5
+```
+
+### `search/structured` : géocodage direct champ par champ
+
+| Paramètre de requête | Type | Remarques |
+|---|---|---|
+| `address` | chaîne | Numéro de rue + rue |
+| `neighbourhood`, `borough`, `county` | chaîne | |
+| `locality` | chaîne | Ville |
+| `region` | chaîne | État/province |
+| `postalcode` | chaîne | |
+| `country` | chaîne | ISO alpha-2/3 ou nom complet du pays |
+| `size` | entier | 1 à 40, 10 par défaut |
+
+Tous les champs ci-dessus sont facultatifs et limités à 300 caractères. Fournissez-en autant que vous en avez ; il n'est pas nécessaire de tous les renseigner.
+
+```
+GET /rest/v1/analyze/geocode/search/structured?address=350+5th+Ave&locality=New+York&region=NY&country=US
+```
+
+### `reverse` : des coordonnées aux lieux les plus proches
+
+| Paramètre de requête | Type | Remarques |
+|---|---|---|
+| `point.lat` | flottant, obligatoire | -90 à 90 |
+| `point.lon` | flottant, obligatoire | -180 à 180 |
+| `size` | entier | 1 à 40, 1 par défaut |
+| `layers` | chaîne | Couches de géocodage séparées par des virgules, 300 caractères maximum |
+
+```
+GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
+```
+
+### `autocomplete` : saisie semi-automatique
+
+| Paramètre de requête | Type | Remarques |
+|---|---|---|
+| `text` | chaîne, obligatoire | 1 à 300 caractères, requête partielle |
+| `focus.point.lat`, `focus.point.lon` | flottant | Biais de classement souple |
+| `layers` | chaîne | Couches de géocodage séparées par des virgules, 300 caractères maximum |
+
+```
+GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
+```
+
+### `place/{gid}` : résoudre un enregistrement de lieu
+
+| Paramètre de chemin | Type | Remarques |
+|---|---|---|
+| `gid` | chaîne, obligatoire | 1 à 300 caractères : identifiant global issu du service de géocodage, repris de `properties.gid` d'un résultat précédent |
+
+```
+GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
+```
+
+## L'enveloppe de réponse `plaidcloud`
+
+Chaque point de terminaison renvoie la `FeatureCollection` GeoJSON du service de géocodage telle quelle, avec un ajout : un objet `plaidcloud` attaché à **chaque entité**.
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+      "properties": {
+        "gid": "openstreetmap:venue:node/61785451",
+        "layer": "venue",
+        "name": "Empire State Building",
+        "confidence": 0.94,
+        "accuracy": "point",
+        "label": "Empire State Building, New York, NY, USA"
+      },
+      "plaidcloud": {
+        "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+        "location_type": "geometric_center",
+        "confidence": 0.94,
+        "match_type": "exact"
+      }
+    }
+  ]
+}
+```
+
+Champs de l'objet `plaidcloud` :
+
+| Champ | Type | Remarques |
+|---|---|---|
+| `attribution` | chaîne | Chaîne d'attribution OSM ODbL fixe ; voir [Attribution](#lattribution-nest-pas-facultative) ci-dessous |
+| `location_type` | chaîne | Voir [Correspondance de `location_type`](#correspondance-de-location_type-avec-la-taxonomie-de-google) |
+| `confidence` | flottant ou `null` | Le score de confiance brut du service de géocodage, transmis sans modification ; PlaidCloud ne le recalibre pas et n'en documente pas l'échelle |
+| `match_type` | `"exact"` \| `"partial"` | **`search` uniquement.** `"exact"` lorsque `confidence >= 0.9`, sinon `"partial"`. Absent des réponses de `search/structured`, `reverse`, `autocomplete` et `place` |
+| `geohash` | chaîne | Présent sauf si `location_codes=none`. Voir [`location_codes`](#location_codes-geohash-et-plus-code) ci-dessous |
+| `plus_code` | chaîne | Présent uniquement lorsque `location_codes=geohash+pluscode`. Voir [`location_codes`](#location_codes-geohash-et-plus-code) ci-dessous |
+
+**Une requête sans aucune correspondance renvoie un `200`, pas une erreur.** Lorsque le service de géocodage ne renvoie aucune entité, la réponse contient un tableau **`features` vide** et un objet `plaidcloud` **de premier niveau** au lieu d'objets par entité :
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "none"
+  }
+}
+```
+
+### Correspondance de `location_type` avec la taxonomie de Google
+
+Les champs `layer` et `accuracy` du service sont ramenés à un `location_type` à quatre valeurs, choisi pour s'aligner sur l'énumération `location_type` de Google Geocoding :
+
+| `location_type` PlaidCloud | Signification | Équivalent Google le plus proche |
+|---|---|---|
+| `rooftop` | Correspondance au niveau de l'adresse avec un point précis | `ROOFTOP` |
+| `interpolated` | Adresse trouvée par interpolation le long d'un tronçon de rue, et non par un point géocodé directement ; **non renvoyé dans la v1** (l'interpolation par plages d'adresses n'est pas encore activée) | `RANGE_INTERPOLATED` |
+| `geometric_center` | Point central d'un lieu ou d'un point d'intérêt (un bâtiment, un commerce) | `GEOMETRIC_CENTER` |
+| `approximate` | Tout ce qui est plus grossier : niveau localité, région, pays, ou couche que PlaidCloud ne classe pas autrement | `APPROXIMATE` |
+| `none` | Aucune entité correspondante | *(aucun équivalent Google : Google ne renvoie aucun résultat plutôt qu'un résultat vide typé)* |
+
+Il s'agit volontairement d'une correspondance grossière à quatre valeurs, et non d'une réplique complète de la taxonomie de couches du service : elle suffit pour indiquer à l'appelant le degré de confiance à accorder à la précision d'une correspondance, sans constituer une garantie de précision.
+
+### `location_codes` : geohash et Plus Code
+
+Chaque point de terminaison accepte un paramètre de requête `location_codes`, qui vous permet de demander, en plus des coordonnées brutes, un code de localisation compact et calculable pour chaque correspondance :
+
+| Valeur | Signification |
+|---|---|
+| `geohash` | **Valeur par défaut.** Ajoute un `geohash` à l'enveloppe `plaidcloud` de chaque entité. |
+| `geohash+pluscode` | Ajoute à la fois `geohash` et `plus_code`. |
+| `none` | Omet les deux : l'enveloppe ne contient que `attribution`, `location_type`, `confidence` et (sur `search`) `match_type`. |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&location_codes=geohash+pluscode
+```
+
+Les deux codes sont calculés localement à partir des coordonnées de l'entité elle-même (sans recherche supplémentaire ni service externe), avec une **précision geohash de 9** et une **longueur de Plus Code de 10**. Ils correspondent à ce que produit l'[étape de géocodage du workflow](/fr/guides/workflows/geospatial-analytics/#enrichissement-par-code-de-localisation) avec ses paramètres par défaut : une valeur calculée via REST et une valeur calculée via l'étape de workflow pour la même paire de coordonnées concordent donc.
+
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+  "properties": { "gid": "openstreetmap:venue:node/61785451", "name": "Empire State Building" },
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "geometric_center",
+    "confidence": 0.94,
+    "match_type": "exact",
+    "geohash": "dr5rsjhzz",
+    "plus_code": "87G7PX7V+XX"
+  }
+}
+```
+
+`geohash` est une chaîne geohash ; `plus_code` est un Open Location Code (Plus Code). Aucun des deux n'est présent lorsqu'une requête ne correspond à aucune entité : l'objet `plaidcloud` de premier niveau d'un résultat vide ne contient que `attribution` et `location_type: "none"`.
+
+### L'attribution n'est pas facultative
+
+Les données de géocodage et de fond de carte qui alimentent cette API incluent des données OpenStreetMap, sous licence **Open Database License (ODbL)**. L'ODbL exige que toute utilisation des données mentionne OpenStreetMap. **Si vous affichez des résultats de géocodage à un utilisateur final (sur une carte, dans une liste d'adresses, n'importe où), vous devez afficher la chaîne `attribution`** (ou une mention OSM équivalente) à côté de ces résultats. Il s'agit d'une obligation de licence qui vous incombe en tant que consommateur des données, et non d'une simple recommandation de style de PlaidCloud.
+
+## Erreurs
+
+| Statut | Signification |
+|---|---|
+| `403` | Le rôle `analyze.table.read` est manquant, ou votre offre n'inclut pas le droit de géocodage |
+| `404` | `place/{gid}` n'a trouvé aucun enregistrement pour cet identifiant, ou `reverse` a atteint une coordonnée pour laquelle le service de géocodage renvoie lui-même une erreur 404 |
+| `422` | Un paramètre de requête a échoué à la validation, par exemple `text` dépassant 300 caractères ou `point.lat` hors plage |
+| `429` | Limite de débit dépassée ; voir [Limites de débit](#limites-de-débit) |
+| `503 geocoding_unavailable` | Le service de géocodage est injoignable, a expiré ou a renvoyé une erreur |
+
+Un `503` n'est volontairement jamais une erreur `5xx` brute ni une attente illimitée : le proxy applique un délai d'expiration borné (quelques secondes) à chaque appel du service de géocodage, de sorte qu'un service en amont lent ou bloqué se traduit rapidement par un `503` plutôt que de laisser votre requête ouverte.
+
+### L'autocomplétion se dégrade, elle ne renvoie pas d'erreur
+
+`autocomplete` est la seule exception au comportement `503` décrit ci-dessus. Comme elle se déclenche à chaque frappe, un incident transitoire en amont y renvoie un **`200` avec un jeu de résultats vide** (de même forme qu'une requête sans correspondance réelle, avec `location_type: "none"`) plutôt qu'un `503`. Si vous migrez depuis Google Places Autocomplete, où une défaillance du backend se traduit par une erreur sur laquelle votre code client se branche, notez que l'autocomplétion de PlaidCloud ne se distingue pas d'une absence de suggestions par le seul code de statut : concevez votre interface autour d'une liste de suggestions vide dans les deux cas, sans compter sur un chemin d'erreur ici.
+
+## Couverture et déterminisme : à lire en premier
+
+Soyez lucide sur ce qu'est cette API avant d'y diriger du trafic de production :
+
+- **Elle est construite à partir de données géospatiales ouvertes, et non d'un jeu de données d'adresses commercial sous licence.** La qualité de la couverture suit celle de la couverture d'une zone par ces sources ouvertes : généralement solide en Amérique du Nord, en Europe et dans les autres régions urbaines bien cartographiées, et inégale ailleurs. PlaidCloud ne publie aucune garantie de couverture par pays ou par région.
+- **La précision au niveau du toit varie selon les régions.** Lorsque les sources ouvertes fournissent un point géocodé directement, vous obtenez un véritable résultat `rooftop` ; sinon, vous retombez sur une correspondance plus grossière au niveau de la rue ou de la localité. L'**interpolation** par plages d'adresses n'est pas activée dans la v1 : les lacunes ne sont donc pas comblées par des points estimés, et les résultats `approximate` sont fréquents en dehors des zones bien couvertes.
+- **Aucun détail au niveau de l'appartement, de la suite ou de l'unité.** Les informations de sous-local ne sont pas renvoyées ; vous obtiendrez au mieux une précision au niveau du bâtiment ou de la rue.
+- **Aucune hiérarchie administrative profonde.** Si vous êtes habitué aux `address_components` multiniveaux de Google (niveaux de sous-localité, `administrative_area_level_1/2/3`, etc.), attendez-vous à un découpage moins détaillé ici.
+- **`gid` n'est pas un identifiant permanent.** Le `place_id` de Google est une référence stable et durable que vous pouvez stocker et résoudre à nouveau des mois ou des années plus tard. Le `gid` du service de géocodage n'offre aucune garantie de ce type : considérez-le comme valide pour la durée d'une session ou d'un workflow de courte durée, et non comme une clé étrangère durable vers vos propres données.
+- **Les résultats ne sont pas garantis déterministes dans le temps.** OpenStreetMap et les autres sources ouvertes qui alimentent cette API sont modifiées en continu par la communauté : la même requête exécutée aujourd'hui puis dans trois mois peut renvoyer des résultats différents, un `gid` différent ou un classement différent, car les données cartographiques sous-jacentes ont changé. Si votre plan de migration suppose des résultats de géocodage reproductibles à l'octet près, comme le ferait un jeu de données commercial versionné, cette API ne l'offre pas.
+- **Aucune mise en cache des réponses dans la v1.** Chaque appel est traité en direct sur l'index de géocodage courant ; il n'existe pour l'instant ni ETag ni stratégie de cache sur lesquels s'appuyer.
+
+Rien de tout cela ne rend l'API inadaptée : pour la normalisation d'adresses, l'affichage cartographique ou la recherche de localisation généraliste, elle convient bien. Elle est en revanche inadaptée si vous avez besoin d'identifiants de lieu permanents, d'une précision au niveau du toit garantie partout, ou de résultats reproductibles à l'identique dans le temps.
+
+## Voir aussi
+
+- [Étape Requête REST](/fr/guides/workflows/rest-request-step/) : appelez ces points de terminaison depuis un workflow
+- [Connexion REST générique](/fr/reference/connectors/rest/generic-rest/) : si vous préférez configurer le géocodage sous forme de connexion enregistrée

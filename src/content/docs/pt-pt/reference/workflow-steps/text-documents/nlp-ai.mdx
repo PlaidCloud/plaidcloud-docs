@@ -1,0 +1,60 @@
+---
+title: Text NLP AI
+description: Execute uma tarefa baseada num LLM sobre cada linha — extração de entidades, etiquetagem de classes gramaticais, resumo, classificação zero-shot, extração de chave/valor ou o seu próprio pedido.
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## Descrição
+
+O passo **Text NLP AI** executa uma de sete tarefas por linha sobre os seus dados, cada uma como um lote de chamadas estruturadas a um LLM (com utilização forçada de ferramentas): **Named Entity Recognition**, **POS Tagging**, **Resumo**, **Classificação zero-shot**, **Extração de chave/valor**, **Pedido** e **Embed**. É executado como uma tarefa gerida do PlaidCloud (tal como [ML: Train Model](/pt-pt/reference/workflow-steps/machine-learning/ml-train/) e o [LLM Step](/pt-pt/reference/workflow-steps/general/llm-step/)), pelo que não compete com o resto do fluxo de trabalho por recursos.
+
+Como cada tarefa é uma chamada real a um LLM, os resultados não são reproduzíveis bit a bit entre execuções — consulte [Não determinismo](#não-determinismo-resultados-baseados-em-llm).
+
+## Configuração
+
+- **Origem / Tabelas de saída** — a tabela de entrada e a tabela onde os resultados são escritos.
+- **Coluna de texto** (`field`) — a coluna que cada tarefa lê.
+- **Tarefa** (`task`) — uma de `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. A tarefa `embed` não consta da lista de tarefas do formulário; defina-a com um assistente de IA ou com a API REST.
+- **Idioma** (`language`) — o idioma do texto, transmitido ao modelo. A predefinição é `en`.
+- **Ligação ao LLM** (`llm_connection_id`) — uma ligação LLM para Anthropic, OpenAI, Gemini, Azure OpenAI, Grok ou GitHub Models. Deixe em branco para utilizar a predefinição da área de trabalho.
+- **Modelo** (`llm_model`) — deixe em branco para utilizar o modelo predefinido da ligação.
+- **Temperatura** (`temperature`) — temperatura de amostragem opcional. Consulte [Não determinismo](#não-determinismo-resultados-baseados-em-llm): os modelos da geração atual ignoram-na.
+- **Máximo de linhas** (`max_rows`) — responder apenas às primeiras N linhas pela ordem da origem. As restantes ficam com uma resposta vazia. Deixe em branco para todas as linhas.
+- **Tamanho do lote** (`batch_size`) — linhas enviadas por chamada ao LLM, de 1 a 500. A predefinição é 25. Um lote cuja resposta seja truncada é dividido ao meio e repetido, em vez de perder linhas.
+
+## Tarefas
+
+Quatro tarefas devolvem uma linha de saída por linha de entrada (**preservam as linhas**); três devolvem zero ou mais linhas por linha de entrada e transportam as colunas identificadoras da origem (`id_columns`) para cada uma (**expandem as linhas**).
+
+| Tarefa | Efeito nas linhas | Colunas de saída | Campos específicos da tarefa |
+| --- | --- | --- | --- |
+| Named Entity Recognition (`ner`) | Expande as linhas | `entity_text`, `entity_type` | **Tipos de entidade** (`entity_types`) — a lista de tipos permitidos. Se for deixada em branco, a predefinição é `people`, `organizations`, `locations`, `dates`, `quantities`. |
+| POS Tagger (`pos`) | Expande as linhas | `token`, `pos` (etiqueta gramatical universal, por exemplo `NOUN`, `VERB`, `ADJ`) | Nenhum. |
+| Resumo (`summary`) | Preserva as linhas | `summary` | **Summary Length** (`summary_length`) — máximo de frases, de 1 a 20. A predefinição é 3. |
+| Classificação zero-shot (`zeroshot`) | Preserva as linhas | `label`, `score` (0 a 1) | **Campo de etiqueta** (`label_field`) — a coluna de origem que contém as etiquetas candidatas de cada linha; sem ela, o modelo não tem nada entre que escolher. **Multi-Label** (`multi`) — permite mais do que uma etiqueta por linha (unidas com `, `) em vez de escolher a única melhor. |
+| Pedido (`prompt`) | Preserva as linhas | `answer`, `error` | **Pedido** (`prompt`) — a instrução aplicada a todas as linhas, obrigatória. **Campos de entrada** (`input_fields`) — as colunas enviadas ao modelo com o pedido, como um registo por linha; em branco, envia a **Coluna de texto**. |
+| Embed (`embed`) | Preserva as linhas | `embedding` (uma matriz JSON de números), `error` | Nenhum. Defina-a com um assistente de IA ou com a API REST. Requer uma ligação compatível com OpenAI ou Azure OpenAI, e o **Modelo** do passo tem de indicar um modelo de embeddings, uma vez que o predefinido da ligação é normalmente um modelo de conversa; uma ligação Anthropic é recusada porque não tem API de embeddings. Um pedido falhado mantém todas as linhas do seu lote, com um `embedding` vazio e o motivo em `error`. |
+| Key/Value Pairs (`keyvalue`) | Expande as linhas | `key`, `value` | **Campo-chave** (`key_field`) — a coluna de origem que contém as chaves candidatas a extrair de cada linha; deixe em branco para que o modelo encontre as chaves livremente. **Fuzzy** (`fuzzy`) — faz a correspondência das chaves candidatas de forma aproximada em vez de exata. |
+
+**Colunas de ID** (`id_columns`) transportam colunas identificadoras da tabela de origem para cada linha de saída de uma tarefa que expande linhas, para que possa rastrear uma entidade ou um par extraído até ao respetivo registo de origem. Uma coluna de ID não pode ter o mesmo nome de uma das colunas de saída da própria tarefa: dar a uma coluna de ID o nome `entity_type` numa tarefa `ner`, por exemplo, é recusado ao guardar o passo, com *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+A coluna `error` contém a mensagem da chamada que falhou para essa linha. A tarefa Pedido destina-se a qualquer pergunta por linha que as outras tarefas não cubram, como *Classify the sentiment of this review.* Os valores dos campos são enviados como dados, nunca como instruções ao modelo.
+
+Na tarefa Pedido, **Coluna de documento** (`content_field`) indica uma coluna que contém o documento de cada linha em base64. O passo envia então um documento por chamada. O documento segue para o fornecedor como imagem ou PDF quando o fornecedor aceita esse tipo e tamanho. Caso contrário, o passo envia o texto da **Coluna de texto alternativo** (`text_fallback_field`), como o texto de OCR. Os documentos inteiros saem do PlaidCloud para o fornecedor, por isso verifique se isso é aceitável para os seus dados. As linhas são enviadas uma a uma, pelo que o **Tamanho do lote** é ignorado. Se um lote falhar, as suas linhas são mantidas com um `answer` vazio e o passo emite um aviso.
+
+Guardar é também recusado sem uma tabela de origem (*Source table is required.*), ou com um **Tamanho do lote** ou **Summary Length** fora dos intervalos acima.
+
+## Não determinismo (resultados baseados em LLM)
+
+Cada tarefa é uma chamada real a um LLM, pelo que os resultados podem variar entre execuções mesmo com entradas idênticas — não existe garantia bit a bit, e isto é esperado, não é um erro.
+
+**Temperatura** revela uma complicação adicional: os modelos da geração atual (Opus 4.7+, Sonnet 5+, Fable) rejeitam por completo uma temperatura de amostragem explícita. Se definir uma, o passo tenta-a uma vez; a primeira rejeição é detetada, a execução recorre à predefinição do servidor do próprio modelo para os restantes lotes, e o resultado do passo inclui uma nota informativa única em vez de falhar. Deixar a Temperatura em branco (a predefinição) evita por completo esta viagem de ida e volta e é a definição recomendada nos modelos atuais.
+
+## Relacionado
+
+- [ML: Train Model](/pt-pt/reference/workflow-steps/machine-learning/ml-train/) — ajusta um modelo em vez de chamar um LLM por linha.
+- [LLM Step](/pt-pt/reference/workflow-steps/general/llm-step/) — uma chamada LLM agêntica de forma livre com acesso de leitura/escrita limitado ao projeto, em vez de uma destas tarefas fixas por linha.
+- [Matriz de conversão do Alteryx](/pt-pt/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification e Key/Value Pairs convertem-se todos neste passo.
+- [Migrar análises Savant](/pt-pt/guides/workflows/migrate-savant-analyses/) — os agentes Savant Infer e Vision convertem-se na tarefa Pedido.

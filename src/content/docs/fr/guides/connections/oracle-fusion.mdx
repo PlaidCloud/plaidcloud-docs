@@ -1,0 +1,131 @@
+---
+title: Se connecter à Oracle Fusion
+description: Connectez PlaidCloud à Oracle Fusion Cloud avec des identifiants OAuth2, importez les soldes du grand livre et les lots de journaux avec OData ou des extractions BIP, puis comptabilisez via FBDI et la GL Interface.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à Oracle Fusion Cloud ERP via ses points de terminaison de reporting OData et BI Publisher (BIP) pour importer les soldes du grand livre et les lots de journaux sans OData à écrire à la main, puis comptabilisez les écritures de journal en retour par le chemin File-Based Data Import (FBDI) d'Oracle. Ce guide couvre la connexion, l'étape d'import et l'étape de comptabilisation.
+
+<Aside type="caution">
+Exécutez d'abord chaque import dans un environnement de test, et suivez la procédure **Validate Only** ci-dessous sur chaque lot à comptabiliser avant de comptabiliser en production.
+</Aside>
+
+## Prérequis
+
+Vous avez besoin, dans Oracle Fusion Cloud, des éléments suivants :
+
+- Un **utilisateur d'API** dédié pour PlaidCloud, avec un rôle ayant accès aux entités que vous lirez (consultation du grand livre) et aux fonctions FBDI/GL Interface par lesquelles vous comptabiliserez.
+- L'**URL de l'instance** de votre Fusion Cloud (par exemple `https://yourorg.fa.us2.oraclecloud.com`).
+- Des **informations d'identification client OAuth2** (ID client et secret) ou les identifiants d'API à authentification de base que la configuration de sécurité de votre Fusion Cloud délivre aux utilisateurs d'intégration, selon ce pour quoi votre locataire est provisionné.
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Oracle Fusion** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom explicite, par exemple `Fusion Prod`. |
+   | URL de l'instance | L'URL de votre instance Fusion Cloud. |
+   | ID client | L'ID client OAuth2 de l'utilisateur d'API (ou le nom d'utilisateur, pour l'authentification de base). |
+   | Secret client | Le secret client OAuth2 de l'utilisateur d'API (ou le mot de passe, pour l'authentification de base). |
+
+4. Cliquez sur `Create`.
+
+</Steps>
+
+## Tester le bon fonctionnement de la connexion
+
+<Steps>
+
+1. Ajoutez une étape **Import Fusion Entity** à un workflow.
+
+2. Définissez **Fusion Connection** sur votre connexion, **Type d'entité** sur `gl_balances` et **Table cible** sur une table temporaire.
+
+3. Exécutez l'étape (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Une table cible alimentée confirme que les identifiants et l'URL de l'instance sont corrects. Une erreur nomme le problème : identifiants incorrects, URL d'instance erronée ou rôle sans privilège de lecture sur l'entité.
+
+## Importer des données
+
+Deux étapes d'import couvrent des volumes d'extraction différents :
+
+<Steps>
+
+1. Pour une extraction courante et bornée, ajoutez une étape **Import Fusion Entity** : elle appelle directement les points de terminaison OData ou BIP d'Oracle Fusion.
+
+2. Pour une grosse extraction, ajoutez plutôt une étape **Import Fusion Bulk Extract** : elle soumet un job d'extraction FBDI/BIP et télécharge le fichier obtenu une fois le job terminé.
+
+3. Définissez **Type d'entité** sur `gl_balances` ou `journal_batches`.
+
+4. Ajoutez des **Filtres** pour borner l'extraction : plages de dates et de périodes comptables (`ge`/`le`) et plages numériques sur les champs de solde ou de montant, limitées pour chaque entité aux champs qu'Oracle Fusion peut effectivement filtrer côté serveur.
+
+5. Exécutez l'étape et vérifiez la table cible.
+
+</Steps>
+
+### Entités et filtres
+
+| Type d'entité | Ce qu'elle extrait | Champs filtrables |
+|---|---|---|
+| `gl_balances` | Soldes des comptes du grand livre | plage de périodes comptables, plage de comptes, plage de montants de solde |
+| `journal_batches` | En-têtes et statut des lots de journaux | plage de dates, plage de périodes comptables |
+
+<Aside type="note">
+`gl_balances` et `journal_batches` acceptent à la fois des filtres de **plage** (`ge`/`le` sur un champ de date, de période ou numérique) et des filtres d'égalité sur des champs discrets comme le grand livre ou la devise. Un filtre de plage n'ayant qu'une seule borne reste ouvert de l'autre côté.
+</Aside>
+
+## Comptabiliser des écritures de journal
+
+L'étape **Oracle Fusion: Post Journal Entry** comptabilise des écritures de journal du grand livre via le pipeline d'écriture ERP partagé de PlaidCloud, en utilisant le chemin de chargement FBDI GL Interface d'Oracle.
+
+<Steps>
+
+1. Construisez une **table d'en-tête**, avec une ligne par écriture de journal, contenant `batch_id` (votre identifiant de lot), `ledger_id`, `journal_source`, `journal_category`, `accounting_date` et `description`.
+
+2. Construisez une **table de lignes**, avec une ou plusieurs lignes par `batch_id`, contenant `account_combination` (ou ses colonnes de segments), `entered_debit`, `entered_credit` et `currency_code`.
+
+3. Ajoutez une étape **Oracle Fusion: Post Journal Entry**, puis définissez **Fusion Connection**, **Table d'en-tête**, **Table des lignes** et une **Table de résultat**.
+
+4. Laissez **Validate Only** coché et exécutez l'étape : PlaidCloud construit et contrôle chaque lot sans réservation de grand livre et sans rien comptabiliser.
+
+5. Passez en revue la table de résultat (une ligne par lot : `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrigez toute ligne `error` et validez à nouveau.
+
+6. Décochez **Validate Only** et exécutez de nouveau pour comptabiliser réellement. Laissez **Continue On Error** coché, sauf si vous voulez qu'une exécution s'arrête net au premier lot en échec.
+
+</Steps>
+
+### Fonctionnement de la comptabilisation
+
+PlaidCloud écrit chaque lot de journaux dans la table intermédiaire GL_INTERFACE d'Oracle sous forme de fichier FBDI, puis soumet et interroge de façon asynchrone le job Enterprise Scheduler Service (ESS) **Journal Import Launcher** jusqu'à ce qu'il signale un état final. Une écriture n'est signalée `posted` qu'une fois cet état final **confirmé** : un lot qui arrive dans la table d'interface mais dont le job d'import ne se termine jamais reste en quarantaine au lieu d'être enregistré comme comptabilisé, de sorte qu'un job ESS bloqué ne passe jamais silencieusement pour un succès. La réservation de grand livre propre à PlaidCloud empêche de charger deux fois le même lot lors d'une nouvelle tentative ou d'une réexécution.
+
+### Corriger une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais un lot de journaux comptabilisé. Pour en corriger un, comptabilisez un nouveau lot avec les débits et les crédits inversés par rapport à l'original (une **écriture d'extourne comptabilisée**) plutôt que de modifier l'original sur place. Cela préserve la piste d'audit propre à Oracle Fusion et correspond à la manière dont les corrections sont faites directement dans l'application.
+
+### Limites des capacités : à lire avant de comptabiliser en production
+
+<Aside type="caution">
+- **Latence des jobs ESS.** Le Journal Import Launcher s'exécute comme un job planifié, et non comme un appel synchrone : attendez-vous à ce qu'une exécution de comptabilisation soit nettement plus longue qu'une écriture directe par API, et n'utilisez pas cette étape pour comptabiliser une écriture unique sensible à la latence.
+- **Latence de l'extraction en masse.** `import_fusion_bulk_extract` attend un job d'export FBDI/BIP : réservez-la aux extractions trop volumineuses pour le chemin OData/BIP direct d'`import_fusion_entity`.
+</Aside>
+
+## Voir aussi
+
+- [Connecteur Oracle Fusion](/fr/reference/connectors/erp/oracle-fusion/) : référence des champs.
+- [Import Fusion Entity](/fr/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/fr/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/fr/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/) : le registre permanent de chaque tentative de comptabilisation Oracle Fusion et de son état actuel.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

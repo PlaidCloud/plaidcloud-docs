@@ -1,0 +1,121 @@
+---
+title: Dostęp NetSuite dla Data Foundation
+description: Co administrator NetSuite konfiguruje, aby PlaidCloud Data Foundation mogło bezpośrednio odczytywać NetSuite — rola tylko do odczytu, integracja OAuth 2.0 i certyfikat — oraz co należy odesłać.
+sidebar:
+  label: Dostęp NetSuite dla Data Foundation
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/pl/guides/projects/data-foundation/) łączy dane z każdego podłączonego systemu i instancji ERP w jeden Common Finance Model, a NetSuite jest jednym z systemów ERP, które odczytuje bezpośrednio. Połączenie z NetSuite korzysta z dostępu maszyna-maszyna OAuth 2.0: roli tylko do odczytu, rekordu integracji używającego przyznania poświadczeń klienta (client credentials) oraz certyfikatu. Ta strona jest przeznaczona dla administratora NetSuite, który to konfiguruje, oraz dla użytkownika PlaidCloud, który go o to prosi.
+
+PlaidCloud wyłącznie odczytuje dane. Nikt nie wysyła hasła, sekretu tokenu ani klucza prywatnego pocztą e-mail.
+
+## Zanim zaczniesz: utwórz certyfikat
+
+Zespół użytkownika PlaidCloud tworzy parę kluczy RSA i zachowuje klucz prywatny. Do NetSuite trafia tylko certyfikat publiczny. Na przykład za pomocą OpenSSL:
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+Dołącz `plaidcloud_netsuite_public.pem` do prośby wysyłanej administratorowi. Zachowaj `plaidcloud_netsuite.pem` na potrzeby pola **Klucz prywatny** w PlaidCloud.
+
+## Wyślij prośbę o dostęp
+
+Na karcie **Foundation** projektu wybierz **Utwórz nowe połączenie** w sekcji **Połączenie NetSuite**. Formularz pokazuje pełną treść prośby. Kliknij **Kopiuj żądanie**, aby wkleić ją do własnej wiadomości, lub **Wyślij żądanie e-mailem**, aby otworzyć ją w programie pocztowym z tematem „NetSuite access for PlaidCloud”. Dołącz certyfikat publiczny.
+
+## Co konfiguruje administrator NetSuite
+
+<Steps>
+
+1. **Włącz funkcje.** W **Setup > Company > Enable Features > SuiteCloud** włącz:
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook (potrzebny dla SuiteQL)
+
+2. **Utwórz rolę tylko do odczytu**, na przykład „PlaidCloud Read Only”, z następującymi uprawnieniami:
+
+   | Uprawnienie | Poziom |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   Nadaj roli dostęp do każdej spółki zależnej, dla której PlaidCloud tworzy raporty.
+
+3. **Utwórz rekord integracji.** W **Setup > Integration > Manage Integrations > New**:
+
+   - **Nazwa:** PlaidCloud
+   - **Uwierzytelnianie:** zaznacz tylko **Client Credentials (Machine to Machine) Grant** — bez uwierzytelniania opartego na tokenach i bez przyznania kodu autoryzacji.
+   - **Zakresy:** REST Web Services i RESTlets.
+
+   Zapisz go i skopiuj **Identyfikator klienta**. NetSuite pokazuje go jednorazowo, na stronie potwierdzenia.
+
+4. **Zmapuj certyfikat.** W **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New**:
+
+   - **Jednostka:** użytkownik, jako którego działa PlaidCloud.
+   - **Rola:** rola z kroku 2.
+   - **Aplikacja:** PlaidCloud, integracja z kroku 3.
+   - **Certyfikat:** certyfikat publiczny dołączony do prośby.
+
+   Zapisz go i skopiuj **ID certyfikatu**.
+
+</Steps>
+
+## Co odesłać
+
+| Administrator przekazuje | Wprowadzane w PlaidCloud jako |
+|---|---|
+| **Identyfikator konta** z **Setup > Company > Company Information** — na przykład `1234567` lub `1234567_SB1` dla piaskownicy | **Identyfikator konta** |
+| **Identyfikator klienta** z kroku 3 | **Identyfikator klienta** |
+| **ID certyfikatu** z kroku 4 | **ID certyfikatu** |
+| Spółki zależne, które PlaidCloud może odczytywać | Wybierane w sekcji **Spółki zależne** w PlaidCloud |
+
+Klucz prywatny odpowiadający certyfikatowi pozostaje w zespole użytkownika PlaidCloud. Użytkownicy sami wklejają go do PlaidCloud jako **Klucz prywatny**.
+
+<Aside type="caution">
+Wprowadź identyfikator konta dokładnie tak, jak pokazuje go NetSuite, łącznie z sufiksem `_SB1` dla piaskownicy. PlaidCloud wyznacza na jego podstawie adres NetSuite.
+</Aside>
+
+## Sprawdź dostęp
+
+Po powrocie do PlaidCloud wprowadź wartości i kliknij **Testuj połączenie**. Każdy zbiór danych jest pokazany jako **Dostępne do odczytu**, **Brak uprawnienia** lub **Błąd**:
+
+| Zbiór danych | Wymagane uprawnienie |
+|---|---|
+| Pozycje sprzedaży | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| Stany magazynowe | Lists: Items and Locations (View) |
+| Budżety | Transactions: Budget (View) |
+| Konta statystyczne | Reports: General Ledger (View) |
+| Okresy księgowe | Setup: Accounting Periods (View) |
+| Spółki zależne | Lists: Subsidiaries (View) |
+| Kursy wymiany | Lists: Consolidated Exchange Rates (View) |
+| Klasy | Lists: Classes (View) |
+| Lokalizacje | Lists: Locations (View) |
+
+Gdy brakuje zbioru danych, test wskazuje uprawnienia do dodania. Poproś administratora o dodanie ich do roli i przetestuj ponownie. Budżety są opcjonalne: konto NetSuite, które nie używa budżetów, nadal ładuje wszystko inne. Kursy wymiany, klasy i lokalizacje również nie zatrzymują ładowania: jeśli któregoś nie można odczytać, ładowanie zachowuje ostatnio odczytane dane. Bez kursów wymiany dostarcz kursy w pliku **Kursy walut**.
+
+## Powiązane
+
+- [Data Foundation](/pl/guides/projects/data-foundation/)
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/)
+- [Łącznik REST NetSuite](/pl/reference/connectors/rest/netsuite/)

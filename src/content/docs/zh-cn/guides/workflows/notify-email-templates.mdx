@@ -1,0 +1,119 @@
+---
+title: 发送模板化 HTML 电子邮件通知
+description: 使用 Notify Via Email 步骤，基于 Jinja 模板和工作流表渲染丰富的 HTML 电子邮件。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Notify Via Email](/zh-cn/reference/workflow-steps/notifications/notify-via-email/) 步骤会把电子邮件编写为丰富的 HTML 报告，其内容由 **Jinja 模板**基于工作流中的一个或多个表渲染而成。您将每个表作为具名**框架**添加到步骤中，模板再把这些框架渲染为一封电子邮件。该步骤直接打开 Jinja 编辑器，这也是它唯一的编写界面，没有纯文本正文框，也没有可切换的模式。本指南介绍编辑器及其格式工具栏、添加的框架、模板中可用的数据、`render_table` 辅助函数，以及发送电子邮件所带来的限制。
+
+## Jinja 编辑器
+
+打开 **Notify Via Email** 步骤后会进入 Jinja 编辑器。添加一个或多个**框架**（见下文），在正文中编写模板，右侧的**实时预览**会随输入同步更新。**向我发送测试**会把渲染后的电子邮件发送到您自己的地址，便于在为工作流设置计划之前检查效果。新建步骤仅支持 Jinja，没有需要填写的纯文本正文，也没有富文本与纯文本之间的切换。
+
+<Aside type="note">编辑器有自己的沙盒渲染引擎。它在语法上类似于 [Export Templated](/zh-cn/reference/workflow-steps/export/export-templated/)（同样是 Jinja、具名框架和 `render_table` 辅助函数），但两个引擎**不能互换**。为其中一个编写的模板无法在另一个上运行。</Aside>
+
+## 格式工具栏
+
+Jinja 编辑器带有一个工具栏，无需手动输入样板代码即可调整模板：
+
+- **美化**会对整个模板重新缩进并规范化，包括统一缩进、标签间距和 Jinja 块布局，使正在编辑的模板更易阅读。它只调整格式，不会改变模板的渲染结果。
+- **插入**会在光标处放入现成的代码片段：为某个框架预先填好的 `render_table(...)` 调用、工作区名称 `{{ cloud }}`、任意项目变量或工作流变量、框架的行数、遍历框架各行的 `{% for %}` 循环，以及 if/else 和注释的骨架。
+- **格式**会对光标处的值应用显示筛选器，包括货币、千位分隔、百分比、舍入和日期格式，以及文本辅助功能（大写、小写、标题大小写、去除空白）和列表辅助功能（长度、连接、求和等）。
+- **样式**会用 HTML 格式包裹所选文本，包括粗体、斜体、下划线、三种标题大小、段落、项目符号列表和编号列表、块引用、链接和换行。每个选项只生成电子邮件清理器会保留的标记（参见[允许列表 HTML 限制](#允许列表-html-限制)），因此标题会显示为较大的粗体行而不是 `h1`，下划线则借助允许使用的标签实现。
+
+每个按钮都只是插入您自己也可以输入的文本；可将它们作为起点，并随意编辑。
+
+## 添加框架
+
+一个步骤基于**框架**生成报告，框架是添加到步骤中的具名单表选择。可以添加一个或多个框架，每个框架都会渲染到同一封电子邮件中。对于每个框架，需要提供：
+
+- **框架名称**：在模板中引用它所用的标签（如 `Sales`、`Overdue` 等）；
+- 来自工作流上下文的一个**表**；
+- 对该表的可选**列选择**、**where** 筛选器和**聚合**。
+
+框架始终只对应一个表。不支持把多个表联接或合并为一个框架，请改为添加第二个框架，并分别按名称引用。
+
+每个框架在模板中通过 `frames['<Frame Name>']` 访问，其中包含该框架的 `rows` 和 `columns`（见下文）。
+
+## 模板中的可用内容
+
+模板只开放一组范围狭窄且明确的变量。引用未定义的变量会导致渲染失败，因此只应使用此处列出的变量：
+
+| 变量 | 内容 |
+|---|---|
+| `cloud` | 工作区名称。 |
+| `frames` | 框架字典，以框架名称为键。`frames['Sales'].rows` 是该框架的行对象列表（每行一个）；`frames['Sales'].columns` 是按顺序排列的列列表。 |
+| `rows` | 第一个框架的行，这是一个便捷绑定，使单框架模板可以直接使用 `rows`。 |
+| `columns` | 第一个框架的列，与 `rows` 的便捷绑定相同。 |
+| `variables` | 项目的变量；在工作流中还包括工作流的变量，以名称为键：`variables['Fiscal Year']`。内置的 `variables['project']`、`variables['model']` 和 `variables['date']`（当前 UTC 时间）也在其中。请使用下标形式，因为变量名不一定是有效的标识符。 |
+
+值会保留其原生 Python 类型：`Decimal` 仍是 `Decimal`，日期仍是日期，空列则以 `None` 传入。因此可以像在 Python 中那样对它们进行格式化和比较，而不必处理转换为字符串的文本。
+
+## 使用 `render_table` 渲染表
+
+无需手写 `<table>` 标记，只需用框架的行和列调用 `render_table` 宏，并按名称引用每个框架：
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+一次调用即可为该框架生成结构正确的 HTML 表。每个要显示的框架各调用一次。
+
+单框架模板可以使用顶层的 `rows` 和 `columns`，它们绑定到第一个框架：
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## 完整示例
+
+此模板有两个框架：`Overdue` 和 `Paid`。它会渲染工作区名称、一行简短摘要，以及每个框架对应的表：
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+将每个框架指向要报告的表后，渲染出的电子邮件会显示一行粗体标题、一行根据行数计算出的摘要，以及每个框架对应的一个表。如果只有一个框架，也可以改为针对裸 `rows` 和 `columns` 编写同样的模板。
+
+## 允许列表 HTML 限制
+
+每封渲染后的电子邮件在发送前，都会经过与 PlaidCloud 其他事务性邮件相同的清理器。清理器会剔除允许列表之外的所有内容：
+
+- **允许的标签**：`render_table` 生成的表格标签（`table`、`tbody`、`tr`、`th`、`td`），以及常见的文本标签：`p`、`br`、`strong`/`b`、`em`/`i`、`ul`/`ol`/`li`、`blockquote`、`code` 和 `a`。标题（`h1`–`h6`）、`div` 和 `span` **不在**列表中；需要标题时，请使用内含 `strong` 的 `p`。
+- **允许的属性**：仅限 `class` 和 `style`（`a` 上另可使用 `href`）。
+- **不允许 `<thead>`。** `render_table` 生成 `table` / `tbody` / `tr` / `th` / `td`，表头行是 `tbody` 内由 `th` 单元格组成的 `tr`，而不是单独的 `<thead>` 部分。
+- **不允许 `<style>` 块**，也不允许外部资源：`url(...)` 引用或跟踪信标，与其他不在列表中的标签或属性一样会被剔除。
+
+实际使用时：用 `render_table` 和纯文本标签构建报告结构，自定义样式只使用简单的内联 `style` 属性。任何更复杂的内容（`<style>` 块、外部样式表、自定义字体、跟踪像素）都无法通过清理，不会出现在送达的电子邮件中。
+
+## 现有步骤与旧版步骤
+
+在采用 Jinja 编写方式之前创建的步骤会直接进入编辑器，其旧正文已完成转换。由 `{project}`、`{model}`、`{cloud}` 和 `{date}` 构成的标准纯文本正文会被改写为 Jinja 形式（`{{ project }}`、`{{ cloud }}` 等），您可以在此基础上继续编辑。
+
+转换器无法安全改写的正文（含有非标准标记，或花括号不匹配）会保留在纯文本回退框中。这样的步骤会继续按原来的方式发送，使用旧版 `{token}` 替换；只有其编写方式仍为纯文本。新建步骤从不使用这一路径。
+
+编辑器会在您输入时检查变量名，并标出无法解析的变量。从旧版正文沿用下来的裸 `{{ project }}`、`{{ model }}` 或 `{{ date }}` 会被标出，因为这些名称现在只能通过 `variables` 解析：请改用 `variables['project']`、`variables['model']` 或 `variables['date']`，或者用某个框架中的列替换该标记，或在保存之前将其删除。
+
+## 安全与出站
+
+框架读取与项目中的任何其他读取一样，都要经过行级安全：框架只会返回运行用户或自动化主体有权查看的行。发送限制（收件人、大小和频率）与纯文本路径相同；模板模式不会放宽或增加这些限制。
+
+## 后续步骤
+
+- [Notify Via Email 参考](/zh-cn/reference/workflow-steps/notifications/notify-via-email/)：字段级配置
+- [Export Templated](/zh-cn/reference/workflow-steps/export/export-templated/)：形态相似但相互独立的引擎，用于基于表渲染文档
+- [管理工作流变量](/zh-cn/guides/workflows/manage-workflow-variables/)：旧版纯文本正文仍在使用的 `{var}` 替换

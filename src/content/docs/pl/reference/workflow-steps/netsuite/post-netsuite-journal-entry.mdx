@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry
+description: Księguj jeden lub więcej zapisów dziennika w NetSuite z tabel nagłówków i wierszy PlaidCloud, z trybem podglądu, który weryfikuje każdy zapis, zanim cokolwiek zostanie zaksięgowane.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje zapisy dziennika w NetSuite przez Twoje [połączenie NetSuite](/pl/guides/connections/netsuite/). Krok przyjmuje dwie tabele źródłowe — tabelę nagłówków z jednym wierszem na zapis dziennika oraz tabelę wierszy z jednym lub kilkoma wierszami debetowymi/kredytowymi na zapis — grupuje wiersze według zapisu dziennika i księguje każdy zapis w NetSuite. **Test Only Mode** tworzy i sprawdza każdy zapis bez żadnego wywołania NetSuite, a opcjonalna tabela wyników rejestruje wynik każdego zapisu.
+
+<Aside type="caution">
+Każdą partię najpierw uruchom w **Test Only Mode**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowanych zapisów bezpośrednio w NetSuite, zanim zaczniesz polegać na tym kroku przy księgowaniu zapisów na żywo bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **Połączenie NetSuite** — połączenie NetSuite, przez które będzie wykonywane księgowanie, przefiltrowane do połączeń typu NetSuite.
+- **Środowisko** — środowisko połączenia.
+
+Połączeniami NetSuite zarządza się w **Tools > Connections** — zobacz [Połączenie z NetSuite](/pl/guides/connections/netsuite/).
+
+### Dane
+
+- **Tabela nagłówków zapisów dziennika** — jeden wiersz na zapis dziennika.
+- **Tabela wierszy zapisów dziennika** — jeden lub kilka wierszy debetowych/kredytowych na zapis dziennika, powiązanych z jego wierszem nagłówka przez identyfikator zapisu (Journal ID).
+- **Test Only Mode** — domyślnie zaznaczone. Sprawdza każdy zapis dziennika według poniższych kontroli, ale nie wykonuje żadnego wywołania NetSuite; nic nie jest księgowane. Odznacz, aby zaksięgować naprawdę. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie działa w Test Only Mode, a nie jako księgowanie na żywo.
+- **Continue posting remaining entries if one entry fails** — domyślnie zaznaczone. Gdy zapis nie przejdzie kontroli lub samego księgowania, PlaidCloud rejestruje błąd dla tego zapisu i przechodzi do pozostałych w partii zamiast ją zatrzymać.
+- **Submit Asynchronously** — domyślnie wyłączone. Wysyła każdy zapis z asynchronicznym nagłówkiem NetSuite `Prefer: respond-async` zamiast synchronicznej ścieżki utwórz-a-następnie-odczytaj. NetSuite kolejkuje zadanie, a PlaidCloud rejestruje zapis jako `pending` wraz z odwołaniem do zgłoszenia, zamiast czekać na jego rozstrzygnięcie. To wybór dla połączenia — używaj tego samego ustawienia przy każdym uruchomieniu na danym połączeniu, bez mieszania. **Obecnie nic nie rozstrzyga zapisu oczekującego automatycznie; rozstrzyga go ponowne uruchomienie tego kroku**, które wyszukuje zapis i rejestruje jego już ostateczny wynik. Jeśli włączysz tę opcję, zaplanuj ponowne uruchomienie kroku (lub sprawdzenie bezpośrednio w NetSuite), zamiast traktować wiersz `pending` jako zakończony.
+- **Tabela wyników księgowania** — opcjonalna. Jeśli jest ustawiona, PlaidCloud zapisuje (lub nadpisuje) ją jednym wierszem na zapis dziennika — zobacz [Kolumny tabeli wyników](#kolumny-tabeli-wyników).
+
+### Mapa nagłówka / Filtry nagłówka
+
+Przypisz kolumny tabeli nagłówków do poniższych pól zapisu dziennika i opcjonalnie przefiltruj, które wiersze nagłówka są księgowane, używając [standardowych kart mapowania danych i filtrów](/pl/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Journal ID | Tak | Łączy wiersz nagłówka z jego wierszami. Jeden wiersz na unikatowy Journal ID. |
+| Spółka zależna | Tak | Wewnętrzny identyfikator spółki zależnej w NetSuite. |
+| Data księgowania | Tak | Data transakcji zapisu. |
+| Waluta | Nie | Wewnętrzny identyfikator waluty w NetSuite. |
+| Opis | Nie | Opis na poziomie zapisu. |
+| External ID | Nie | Zastępuje deterministyczny zewnętrzny identyfikator generowany przez PlaidCloud dla zapisu — zobacz [Ponowne księgowanie i zduplikowane zapisy](#ponowne-księgowanie-i-zduplikowane-zapisy). |
+
+### Mapa wierszy / Filtry wierszy
+
+Przypisz kolumny tabeli wierszy i opcjonalnie przefiltruj, które wiersze są księgowane.
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Journal ID | Tak | Odpowiada Journal ID wiersza nagłówka. |
+| Konto | Tak | Wewnętrzny identyfikator konta księgi głównej w NetSuite. |
+| Debet | Tak | Kwota debetowa; 0 dla wiersza wyłącznie kredytowego. |
+| Kredyt | Tak | Kwota kredytowa; 0 dla wiersza wyłącznie debetowego. |
+| Opis | Nie | Opis na poziomie wiersza. |
+| Dział | Nie | Wewnętrzny identyfikator działu w NetSuite. |
+| Klasa | Nie | Wewnętrzny identyfikator klasy w NetSuite. |
+| Lokalizacja | Nie | Wewnętrzny identyfikator lokalizacji w NetSuite. |
+| Jednostka | Nie | Wewnętrzny identyfikator jednostki (klienta lub dostawcy) w NetSuite. |
+
+## Jak działa księgowanie
+
+PlaidCloud grupuje tabelę wierszy według Journal ID i tworzy jeden zapis dziennika NetSuite na wiersz nagłówka. Przed zaksięgowaniem każdego zapisu — lub, w Test Only Mode, przed zarejestrowaniem go jako zweryfikowanego — PlaidCloud sprawdza, czy:
+
+- zapis ma co najmniej jeden wiersz
+- jego debety i kredyty bilansują się co do grosza
+- każdy wiersz ma konto
+- wiersz nagłówka ma spółkę zależną
+- data księgowania jest prawidłową datą
+
+Każda nieudana kontrola rejestruje wiersz błędu dla tego zapisu i, o ile nie wyłączono **Continue posting remaining entries**, przechodzi do następnego zapisu w partii.
+
+### Ponowne księgowanie i zduplikowane zapisy
+
+Każdy zapis jest księgowany z deterministycznym zewnętrznym identyfikatorem zbudowanym z projektu, połączenia, Journal ID, daty księgowania i kwot wierszy. Ponowne zaksięgowanie zapisu, którego wiersze się nie zmieniły, używa tego samego zewnętrznego identyfikatora, a własna obsługa zewnętrznych identyfikatorów w NetSuite zapobiega utworzeniu zduplikowanego zapisu dziennika. Zmień dowolny wiersz zapisu — inną kwotę, dodany lub usunięty wiersz — a PlaidCloud wyliczy dla niego nowy zewnętrzny identyfikator, który NetSuite przyjmie jako nowy zapis, a nie aktualizację starego. Ustaw wartość w kolumnie External ID tabeli nagłówków, aby samodzielnie kontrolować identyfikator.
+
+<Aside type="caution">
+Ponowne księgowanie wykrywa duplikaty tylko dla zapisu, który NetSuite uznaje za identyczny z już posiadanym. Edycja wierszy zapisu i ponowne uruchomienie kroku nie aktualizuje oryginalnego zaksięgowania w NetSuite — tworzy drugi zapis. Poprawiaj zaksięgowany zapis bezpośrednio w NetSuite, a nie przez ponowne uruchamianie tego kroku ze zmienionymi danymi.
+</Aside>
+
+### Kolumny tabeli wyników
+
+| Kolumna | Opis |
+|---|---|
+| journal_id | Journal ID z tabeli nagłówków. |
+| external_id | Zewnętrzny identyfikator użyty w tej próbie księgowania. |
+| internal_id | Wewnętrzny identyfikator utworzonego zapisu dziennika w NetSuite albo odwołanie do zgłoszenia asynchronicznego, gdy stan to `pending`. Puste w Test Only Mode i w przypadku błędu. |
+| status | `validated` (Test Only Mode), `posted`, `pending` (Submit Asynchronously przyjęło zapis, ale NetSuite jeszcze go nie potwierdziło) lub `error`. |
+| message | Szczegóły błędu przy `error`; przy `pending` informacja, że ponowne uruchomienie kroku go rozstrzyga. Puste przy `posted`/`validated`. |
+
+## Powiązane
+
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/)
+- [Księgowanie zapisu dziennika NetSuite](/pl/guides/connections/post-netsuite-journal-entries/) — pełny opis obejmujący konfigurację, podgląd i księgowanie
+- [Łącznik REST NetSuite](/pl/reference/connectors/rest/netsuite/)
+- [Kroki NetSuite](/pl/reference/workflow-steps/netsuite/)

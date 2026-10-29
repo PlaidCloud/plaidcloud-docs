@@ -1,0 +1,113 @@
+---
+title: Almacenamiento en caché de paneles de control
+description: Cómo almacenan en caché los paneles de control de PlaidCloud los resultados de los gráficos, cuándo se descarta un resultado en caché y cómo conservar los resultados durante más tiempo para que las vistas repetidas se carguen desde la caché.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dashboards/dashboard-caching.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Un panel de control almacena en caché el resultado de cada gráfico que dibuja. La primera
+persona que abre un panel ejecuta sus consultas en el almacén de datos; todas las que lo
+abren después reciben el resultado almacenado, y por eso una segunda vista es mucho más
+rápida que la primera.
+
+Un resultado en caché se descarta, y la siguiente vista vuelve a consultar el almacén, en
+dos situaciones: la tabla que hay detrás del gráfico se vuelve a publicar, o el resultado
+llega al final de su vida útil en la caché.
+
+## Volver a publicar una tabla borra sus resultados en caché
+
+Cuando una ejecución de un flujo de trabajo vuelve a publicar una tabla, todos los gráficos
+que leen esa tabla descartan sus resultados en caché de inmediato. La siguiente persona que
+abre el panel ve las cifras actualizadas, sin esperar y sin forzar una actualización manual.
+
+Esto significa que un panel de control nunca muestra cifras anteriores a la actualización a
+causa de la caché. Si un panel parece obsoleto después de una ejecución de un flujo de
+trabajo, la causa es el flujo de trabajo (compruebe que la ejecución terminó y que volvió a
+publicar la tabla que espera), no la caché.
+
+<Aside type="caution" title="Publique con un nombre estable">
+Los resultados en caché se registran por tabla publicada. Si reconstruye una tabla con un
+nombre publicado distinto, los gráficos que siguen apuntando al nombre anterior continúan
+sirviendo los datos de la tabla anterior. Vuelva a publicar con el mismo nombre para que los
+gráficos que ya creó sigan asociados a ella.
+</Aside>
+
+## Vida útil de la caché
+
+Todo resultado en caché también tiene una vida útil, tras la cual caduca por sí solo. El
+valor predeterminado es **1 hora**.
+
+La vida útil no es lo que mantiene actualizado un panel de control; eso lo hace volver a
+publicar. Por eso, en datos que solo cambian cuando se ejecuta un flujo de trabajo, una vida
+útil corta no aporta nada y cuesta mucho: cualquier vista posterior a la caducidad del último
+resultado vuelve a consultar el almacén desde cero. Los paneles que se usan en ráfagas (una
+revisión matutina, un cierre de fin de mes) pagan ese costo en casi todas las cargas.
+
+El valor predeterminado era de 5 minutos hasta agosto de 2026. Era corto porque volver a
+publicar no borraba de forma fiable los resultados en caché, así que la caducidad era lo único
+que mantenía actualizado un panel. Ahora que volver a publicar los borra, una hora es seguro
+y mucho más económico.
+
+Auméntela más en las tablas que cambian con menos frecuencia (un día es adecuado para una que
+se recarga durante la noche), y el flujo de trabajo que recarga la tabla seguirá borrando la
+caché en el momento en que lleguen los datos nuevos.
+
+<Aside type="caution">
+Dejar una vida útil larga solo es seguro para los datos que cambian a través de PlaidCloud.
+Si un gráfico lee una tabla en la que escribe algo ajeno a PlaidCloud, nada avisa al panel de
+que descarte su caché, y la vida útil es lo único que la actualiza. Establezca una vida útil
+corta en esos conjuntos de datos: con el valor predeterminado de 1 hora, ahora pueden estar
+hasta una hora desfasados, cuando antes lo estaban como máximo 5 minutos.
+</Aside>
+
+## Cambiar la vida útil de la caché
+
+Establezca la vida útil en segundos, ya sea en una base de datos o en un conjunto de datos
+individual. Un valor en el conjunto de datos prevalece sobre el valor de su base de datos, y
+el valor predeterminado de 1 hora se aplica donde no haya establecido ninguno. Para cambiar
+cualquiera de los dos se necesita el permiso de edición correspondiente en el área de Paneles
+de control.
+
+**Para todos los conjuntos de datos de una base de datos:**
+
+1. Vaya a **Data → Databases** en el área de Paneles de control
+2. Haga clic en el ícono de edición de la base de datos
+3. Abra la pestaña **Avanzado** y luego **Performance**
+4. Introduzca un valor en segundos en **Chart cache timeout**; por ejemplo, `3600` para una
+   hora
+5. Haga clic en **Finish**
+
+**Para un solo conjunto de datos:**
+
+1. Vaya a **Data → Datasets**
+2. Haga clic en el ícono de edición del conjunto de datos
+3. Abra la pestaña **Configuración**
+4. Introduzca un valor en segundos en **Cache timeout**
+5. Haga clic en **Guardar**
+
+Dos valores tienen significados especiales: `0` significa que nunca caduca, de modo que el
+resultado solo se borra al volver a publicar, y `-1` desactiva por completo el almacenamiento
+en caché para esa base de datos o ese conjunto de datos.
+
+El cambio se aplica a los resultados que se almacenen en caché a partir de ese momento. Los
+resultados que ya están en la caché conservan la vida útil con la que se guardaron hasta que
+caducan o la tabla se vuelve a publicar.
+
+## Actualizar un panel de control manualmente
+
+Rara vez es necesario, pero puede descartar usted mismo los resultados en caché de un panel:
+abra el menú junto a **Edit dashboard** y elija **Force refresh dashboard**. Si un gráfico
+está sirviendo un resultado más antiguo, una nota en la esquina superior derecha indica hace
+cuánto se almacenaron los datos en caché, y al hacer clic en ella se fuerza la misma
+actualización.
+
+Prefiera cualquiera de estas opciones a recargar la página del navegador: una recarga del
+navegador vuelve a solicitar los gráficos, pero sigue recibiendo los resultados en caché.
+
+## Relacionado
+
+- [Uso de los paneles de control](/es/guides/dashboards/using-dashboards/)
+- [Aprender sobre los paneles de control](/es/guides/dashboards/learning-dashboard/)

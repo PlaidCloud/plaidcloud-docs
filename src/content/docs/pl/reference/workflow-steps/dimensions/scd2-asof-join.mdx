@@ -1,0 +1,116 @@
+---
+title: Złączenie SCD-2 na dzień
+description: Złącz tabelę faktów z tabelą historii SCD-2, zwracając dla każdego rekordu wersję danych głównych, która obowiązywała w dniu faktu.
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Złącza tabelę faktów z tabelą historii [Kreator tabeli głównej SCD-2](/pl/reference/workflow-steps/dimensions/scd2-master-builder/) i zwraca dla każdego wiersza faktu wersję danych głównych, która **obowiązywała w dniu tego faktu** — a nie wersję bieżącą.
+
+W ten sposób przypisujesz każdą transakcję do regionu, centrum kosztów, właściciela lub ceny, które obowiązywały *w chwili jej wystąpienia*. Jest to `LEFT JOIN`, więc każdy wiersz faktu zostaje zachowany: klucz bez pasującej wersji (nieznany klucz lub data wcześniejsza niż pierwsza wersja klucza) wraca z pustymi (null) kolumnami przenoszonymi, zamiast zostać pominięty.
+
+## Tabele
+
+### Tabela faktów
+
+Wiersze, które chcesz wzbogacić — transakcje, zamówienia, zdarzenia. Każdy wiersz zawiera klucz biznesowy i datę.
+
+### Tabela SCD-2
+
+Tabela historii utworzona przez [Kreator tabeli głównej SCD-2](/pl/reference/workflow-steps/dimensions/scd2-master-builder/), zawierająca `valid_from`, `valid_to` i `is_current` obok śledzonych atrybutów.
+
+### Tabela wyjściowa
+
+Miejsce, do którego zapisywane są wzbogacone wiersze faktów. Musi to być tabela, a nie widok. Każda oryginalna kolumna faktu przechodzi bez zmian; przenoszone kolumny danych głównych są dołączane.
+
+## Data stanu (as-of) i opcje
+
+**Data stanu (as-of)** to moment w czasie, na który rozwiązywany jest każdy wiersz faktu. Podaj ją dokładnie na jeden z dwóch sposobów:
+
+- **Kolumna daty stanu faktu** — kolumna z datą w tabeli faktów (np. `txn_date`). Każdy wiersz jest rozwiązywany na własną datę.
+- **Literalna data stanu (as-of)** — pojedyncza data `YYYY-MM-DD` lub zmienna przepływu pracy, taka jak `{report_date}`, stosowana do każdego wiersza faktu (rozwiązanie całej tabeli faktów na jedną datę raportowania). Zmienna jest podstawiana w chwili uruchomienia kroku.
+
+<Aside type="caution">Wybierz jedno, nie oba. Zapisanie kroku jest odrzucane, gdy określono kolumnę faktu *i* datę literalną albo żadnej z nich — to samo dotyczy uruchomienia.</Aside>
+
+Opcje zmiany nazw zapobiegają kolizjom, gdy przenoszona kolumna ma tę samą nazwę co kolumna faktu:
+
+- **Prefiks przenoszenia** / **Sufiks przenoszenia** — dodawane do nazwy wyjściowej każdej przenoszonej kolumny (`prefix` + kolumna + `suffix`). Jeśli po zmianie nazwy przenoszona kolumna nadal koliduje z kolumną faktu lub inną przenoszoną kolumną, uruchomienie kończy się błędem, zamiast po cichu nadpisać dane.
+
+## Role kolumn
+
+Użyj **Sprawdź SCD-2**, aby wyświetlić kolumny tabeli SCD-2, a następnie oznacz każdą kolumnę:
+
+| Rola | Znaczenie |
+|---|---|
+| **Klucz biznesowy** | Klucz łączący fakt z historią (np. `customer_id`). Musi odpowiadać kolumnom klucza faktu. Wymagany jest co najmniej jeden. |
+| **Kolumna przenoszona** | Atrybut do przeniesienia do wiersza faktu (np. `region`). Wymagana jest co najmniej jedna. |
+| **(ignoruj)** | Nieoznaczone kolumny nie są przenoszone. |
+
+## Co jest sprawdzane przy zapisie
+
+Zapisanie kroku jest odrzucane, z komunikatem wskazującym kolumnę lub datę, gdy:
+
+- Kolumna jest oznaczona jako Klucz biznesowy lub jako Kolumna przenoszona więcej niż raz — *'region' is tagged as a Carry Column more than once.*
+- Kolumna jest jednocześnie Kluczem biznesowym i Kolumną przenoszoną — *customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- **Literalna data stanu (as-of)** nie jest prawdziwą datą w formacie `YYYY-MM-DD` — *The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* Data wskazująca zmienną przepływu pracy jest sprawdzana, gdy uruchomienie ją podstawi.
+
+## Półotwarta granica
+
+Wiersz faktu pasuje do jednej wersji historii, której przedział zawiera jego datę stanu, przy użyciu porównania **półotwartego**:
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+Dolna granica jest włączona, a górna wyłączona. Ma to znaczenie w dniu granicznym:
+
+- `as_of == valid_from` → **pasuje do** tej wersji (obowiązuje od dnia początkowego).
+- `as_of == valid_to` → **nie pasuje do** tej wersji; trafia do następnej wersji, której `valid_from` jest równe temu `valid_to`.
+
+Ponieważ [Kreator tabeli głównej SCD-2](/pl/reference/workflow-steps/dimensions/scd2-master-builder/) zapisuje kolejne wersje tak, że `valid_to` jednej jest `valid_from` następnej, każda data odpowiada dokładnie jednej wersji — bez luk i bez nakładania się. Zmiana z datą `2026-04-01` oznacza, że nowa wartość obowiązuje *od* 1 kwietnia; transakcja z 31 marca nadal otrzymuje starą wartość.
+
+<Aside type="note">Otwarte (bieżące) wiersze mają w `valid_to` wartownika w postaci odległej daty `9999-12-31`. Gdyby jakiś otwarty wiersz miał zamiast tego w `valid_to` wartość null, krok traktuje go jako otwarty (przez ten sam wartownik), aby bieżąca wersja nigdy nie została po cichu pominięta.</Aside>
+
+## Przykład
+
+Kontynuując przykład z kroku [Kreator tabeli głównej SCD-2](/pl/reference/workflow-steps/dimensions/scd2-master-builder/), przypisz każdą transakcję do regionu obowiązującego w jej dniu.
+
+**`customer_scd2` (tabela historii):**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (tabela faktów):**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Konfiguracja: **Tabela faktów** = `transactions`, **Tabela SCD-2** = `customer_scd2`, **Tabela wyjściowa** = `transactions_by_region`, **Kolumna daty stanu faktu** = `txn_date`, Klucz biznesowy = `customer_id`, Kolumna przenoszona = `region`.
+
+**`transactions_by_region`:**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(null)* |
+
+Zwróć uwagę na granicę: **T2 z 2026-04-01 jest rozwiązywane do Central**, ponieważ przedział półotwarty sprawia, że 1 kwietnia jest pierwszym dniem wersji Central, a nie ostatnim dniem West. **Klucz T4 `C9` jest nieznany**, więc wiersz zostaje zachowany z pustym regionem, zamiast zostać pominięty.
+
+## Powiązane
+
+- [Kreator tabeli głównej SCD-2](/pl/reference/workflow-steps/dimensions/scd2-master-builder/) — zbuduj tabelę historii odczytywaną przez ten krok.
+- [Krok Dimension Load](/pl/reference/workflow-steps/dimensions/dimension-load/) — załaduj hierarchię z tabeli.

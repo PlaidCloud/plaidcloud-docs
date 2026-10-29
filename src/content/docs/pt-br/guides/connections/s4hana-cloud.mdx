@@ -1,0 +1,136 @@
+---
+title: Conectar ao SAP S/4HANA Cloud
+description: Conecte o PlaidCloud diretamente ao SAP S/4HANA Cloud Public Edition com credenciais de cliente OAuth2, sem necessidade de agente, extraia balancete e itens de lançamentos contábeis e, em seguida, registre lançamentos contábeis com um lançamento de estorno registrado para correções.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud diretamente ao SAP S/4HANA Cloud Public Edition por meio de suas APIs OData e SOAP para extrair dados de balancete e de itens de lançamentos contábeis sem precisar escrever OData manualmente, e para registrar lançamentos contábeis de volta. Este guia aborda a conexão, a etapa de importação e a etapa de lançamento.
+
+<Aside type="caution">
+Execute toda importação primeiro em um tenant de sandbox e percorra a opção **Validate Only** descrita abaixo em cada lote de lançamentos antes de lançar em produção.
+</Aside>
+
+<Aside type="note">
+Esta é uma conexão diferente do [conector SAP ECC / S/4HANA](/pt-br/reference/connectors/erp/sap-s4/), que acessa um sistema S/4HANA local ou em nuvem privada por meio de um agente PlaidLink e chamadas RFC. Este conector se comunica diretamente com o SAP S/4HANA Cloud **Public Edition** pela internet: não há agente para instalar nem destino RFC para configurar.
+</Aside>
+
+## Pré-requisitos
+
+No SAP S/4HANA Cloud, você precisa de:
+
+- Um **Communication Arrangement** baseado em um Communication Scenario que exponha as APIs Trial Balance e Journal Entry Item (leitura) e o serviço de lançamento de lançamentos contábeis (gravação), com um **Communication User** configurado para credenciais de cliente OAuth2 em vez de autenticação básica.
+- O **host** do seu tenant do S/4HANA Cloud (por exemplo, `https://yourorg.s4hana.ondemand.com`) e a **URL do token OAuth2** (por exemplo, `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- O **ID e o segredo do cliente OAuth2** do Communication Arrangement.
+
+<Aside type="note">
+A conexão se autentica como um aplicativo, não como um usuário: fluxo de **credenciais de cliente** OAuth2, o mesmo mecanismo que o PlaidCloud usa em outras conexões REST de ERP em nuvem. Não há login interativo.
+</Aside>
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **SAP S/4HANA Cloud** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo, `S/4HANA Cloud Prod`. |
+   | Host | O host do seu tenant do S/4HANA Cloud, por exemplo, `https://yourorg.s4hana.ondemand.com`. |
+   | URL do token | O endpoint de token OAuth2 do Communication Arrangement. |
+   | ID do cliente | O ID de cliente OAuth2 do Communication Arrangement. |
+   | Segredo do cliente | O segredo de cliente OAuth2 do Communication Arrangement. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar a conexão
+
+<Steps>
+
+1. Adicione uma etapa **Import S/4HANA Entity** a um fluxo de trabalho.
+
+2. Defina **S/4HANA Connection** como a sua conexão, **Tipo de entidade** como `trial_balance`, adicione um filtro **CompanyCode** para uma empresa e defina **Tabela de destino** como uma tabela temporária.
+
+3. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que o host, a URL do token e as credenciais de cliente estão corretos. Um erro indica o problema: um segredo de cliente incorreto, um Communication Arrangement sem o escopo necessário ou um host errado.
+
+## Importar dados
+
+<Steps>
+
+1. Adicione uma etapa **Import S/4HANA Entity** e defina **S/4HANA Connection** e **Tabela de destino**.
+
+2. Defina **Tipo de entidade** como o registro desejado.
+
+3. Adicione **Filtros** para limitar a extração: código da empresa, conta e intervalos de datas são convertidos no `$filter` OData da solicitação, restritos, para cada entidade, aos campos que o S/4HANA realmente consegue filtrar no servidor.
+
+4. Execute a etapa e verifique a tabela de destino.
+
+</Steps>
+
+### Entidades e filtros
+
+| Tipo de entidade | O que extrai | Serviço OData | Campos filtráveis |
+|---|---|---|---|
+| `trial_balance` | Saldos agregados de contas do razão geral no fim do período | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | Itens de linha de lançamentos contábeis registrados | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate` (intervalo), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear` e `FiscalPeriod` aceitam filtros de **intervalo** (limites `ge`/`le`); os demais são filtros de igualdade. Um filtro de intervalo com apenas um limite fica aberto do outro lado. Defina pelo menos um limite antes de extrair `journal_entry_items` de dados de produção: uma extração sem limites do detalhe dos itens de linha pode ser muito grande.
+</Aside>
+
+## Lançar lançamentos contábeis
+
+A etapa **S/4HANA: Post Journal Entry** registra lançamentos contábeis do razão geral por meio do pipeline compartilhado de gravação em ERP do PlaidCloud, usando o serviço SOAP de criação em lote de lançamentos contábeis do S/4HANA Cloud.
+
+<Steps>
+
+1. Crie uma **tabela de cabeçalho**, com uma linha por lançamento contábil, contendo `journal_id` (o identificador do seu lançamento), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger` e `header_text`.
+
+2. Crie uma **tabela de linhas**, com uma ou mais linhas por `journal_id`, contendo `gl_account`, `debit`, `credit` e as colunas de dimensão `cost_center`/`profit_center` que o seu razão exigir.
+
+3. Adicione uma etapa **S/4HANA: Post Journal Entry**, defina **S/4HANA Connection**, **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultado**.
+
+4. Deixe **Validate Only** marcado e execute a etapa: o PlaidCloud monta e verifica cada lançamento sem reivindicação no razão e sem lançar nada.
+
+5. Revise a tabela de resultado (uma linha por lançamento: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija qualquer linha com `error` e valide novamente.
+
+6. Desmarque **Validate Only** e execute novamente para lançar de fato. Deixe **Continue On Error** marcado, a menos que você queira que um lote pare imediatamente no primeiro lançamento com falha.
+
+</Steps>
+
+### Como funciona o lançamento
+
+O PlaidCloud envia cada lançamento contábil pelo serviço SOAP `JournalEntryBulkCreateRequest_In` do S/4HANA Cloud e depois consulta a mensagem `JournalEntryBulkCreateConfirmation_Out` correspondente, que informa o estado final de processamento do lançamento. Um lançamento só é informado como `posted` depois que essa confirmação é recebida: um lançamento aceito, mas cuja confirmação nunca chega, permanece em quarentena em vez de ser registrado como lançado, de modo que um envio travado nunca passa silenciosamente como sucesso. A reivindicação no razão do próprio PlaidCloud impede que o mesmo lançamento seja registrado duas vezes em um lote repetido ou reexecutado.
+
+### Corrigir um lançamento registrado
+
+Esta etapa nunca exclui nem reescreve um lançamento registrado. Para corrigir um, lance um novo lançamento com débitos e créditos invertidos em relação ao original, um **lançamento de estorno registrado**, em vez de editar o original. Isso preserva a trilha de auditoria do próprio S/4HANA e corresponde à forma como as correções são feitas diretamente no aplicativo.
+
+### Limites de capacidade: leia antes de lançar em produção
+
+<Aside type="caution">
+- **Latência de confirmação.** O serviço SOAP processa as solicitações de criação em lote de forma assíncrona: espere que a consulta do estado final leve bem mais tempo que uma gravação OData síncrona e não use esta etapa para lançar um único lançamento sensível à latência.
+- **Os campos filtráveis dependem das dimensões expostas pelo seu Communication Scenario.** Um objeto de custo ou dimensão que não faça parte dos campos expostos pelo cenário não pode ser filtrado no servidor; em vez disso, delimite-o no seu fluxo de trabalho depois da extração.
+- **Este conector é distinto do [conector SAP ECC / S/4HANA](/pt-br/reference/connectors/erp/sap-s4/).** Aquele conector acessa um sistema local ou em nuvem privada por meio de um agente PlaidLink e chamadas RFC; use-o somente se você não estiver se conectando ao S/4HANA Cloud Public Edition.
+</Aside>
+
+## Relacionados
+
+- [Conector REST do SAP S/4HANA Cloud](/pt-br/reference/connectors/rest/s4hana-cloud/): referência de campos.
+- [Import S/4HANA Entity](/pt-br/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/pt-br/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [Revisar o histórico de lançamentos em ERP](/pt-br/guides/connections/erp-post-history/): o registro permanente de cada tentativa de lançamento no S/4HANA Cloud e seu estado atual.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

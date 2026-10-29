@@ -1,0 +1,137 @@
+---
+title: Conectar ao Acumatica
+description: Conecte o PlaidCloud ao Acumatica e extraia dados mestres e transacionais com a etapa de importação de entidade pronta, depois lance lançamentos contábeis, faturas, contas a pagar e pagamentos com a etapa de lançamento do Acumatica.
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud à API REST baseada em contrato do Acumatica para extrair dados de referência e transacionais sem precisar escrever OData manualmente, e lançar de volta transações contábeis, faturas de venda, contas a pagar e pagamentos. Este guia aborda a conexão, a etapa de importação e a etapa de lançamento.
+
+<Aside type="caution">
+Execute toda importação primeiro em uma empresa de sandbox e percorra **Visualizar e validar**, mais abaixo, em cada lote de lançamento antes de lançar em produção.
+</Aside>
+
+## Pré-requisitos
+
+Você precisa, no Acumatica:
+
+- Uma **URL base da instância** (por exemplo, `https://yourcompany.acumatica.com`).
+- Um nome de **empresa** (o ID exato da empresa no qual o PlaidCloud faz login) e, se você usa filiais, a **filial** sob a qual lançar.
+- Um **nome de usuário** e uma **senha** dedicados ao PlaidCloud, com uma função que tenha acesso às entidades que você vai ler e às telas de documentos nas quais vai lançar.
+- Acesso à **API REST baseada em contrato** habilitado para esse usuário (**System > Integration Preferences**, ativado por padrão nas versões atuais do Acumatica).
+
+<Aside type="note">
+A API REST baseada em contrato do Acumatica é **baseada em sessão**, não em token — o PlaidCloud faz login uma vez por unidade de trabalho delimitada (uma extração de importação, um lote de lançamento) e faz logout ao terminar, em vez de se autenticar a cada chamada. As licenças de avaliação e de nível inferior do Acumatica podem limitar as sessões de API **simultâneas** a apenas 2, então evite executar muitas etapas do Acumatica em paralelo na mesma conexão.
+</Aside>
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Acumatica** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `Acumatica Prod`. |
+   | URL base da instância | A URL da sua instância, por exemplo `https://yourcompany.acumatica.com`. |
+   | Nome do endpoint | O nome do endpoint de contrato. `Default`, a menos que um endpoint personalizado tenha sido publicado. |
+   | Versão do endpoint | Opcional, por exemplo `25.200.001`. Deixe em branco para usar a versão publicada mais recente do endpoint. |
+   | Empresa / Tenant | O ID exato da empresa no Acumatica. |
+   | Filial | Opcional. Deixe em branco para usar a filial padrão do usuário de login. |
+   | Nome de usuário | O usuário de API do PlaidCloud. |
+   | Senha | A senha do usuário de API do PlaidCloud. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar a conexão
+
+<Steps>
+
+1. Adicione uma etapa **Import Acumatica Entity** a um fluxo de trabalho.
+
+2. Defina **Conexão do Acumatica** como a sua conexão, **Tipo de entidade** como `account` e **Tabela de destino** como uma tabela de rascunho.
+
+3. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que o login, a empresa e a filial estão corretos. Um erro nomeia o problema — credenciais inválidas, empresa errada ou uma função sem acesso à API REST.
+
+## Importar dados
+
+<Steps>
+
+1. Adicione uma etapa **Import Acumatica Entity** e defina **Conexão do Acumatica** e **Tabela de destino**.
+
+2. Defina **Tipo de entidade** como o registro desejado. Dados mestres e listas de referência — `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project` — e entidades transacionais — `sales_invoice`, `bill`, `sales_order`, `shipment`.
+
+3. Deixe **Somente ativos** marcado para extrair apenas registros ativos, nas entidades que têm um indicador Active.
+
+4. Defina **Atualizado após** como uma data ou data e hora ISO para extrair apenas as linhas alteradas desde então (um filtro do lado da solicitação, não um cursor incremental persistido — você informa a data de corte a cada execução).
+
+5. Adicione **Filtros** para limitar uma extração grande — cada um é uma cláusula `{field, operator, value}` (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) ou um intervalo `{field, from, to}`, restrito, por entidade, aos campos que o Acumatica de fato consegue filtrar no servidor. O PlaidCloud rejeita um campo de filtro que a entidade não suporta em vez de descartá-lo silenciosamente.
+
+6. Execute a etapa e verifique a tabela de destino.
+
+</Steps>
+
+<Aside type="note">
+Balancete, detalhes de transações do razão geral, estoque disponível, orçamentos e dados entre empresas do grupo ficam todos atrás das Generic Inquiries do Acumatica, e não das entidades baseadas em contrato acima, e o PlaidCloud não gera GIs para você. Se precisar de um desses dados, crie a GI no Acumatica e extraia-a com uma [conexão Generic REST](/pt-br/reference/connectors/rest/generic-rest/).
+</Aside>
+
+## Lançar documentos
+
+A etapa **Acumatica Post** lança quatro tipos de documento pelo mesmo pipeline de gravação compartilhado que toda etapa de lançamento de ERP usa: **JournalTransaction**, **SalesInvoice**, **Bill** e **Payment**.
+
+<Steps>
+
+1. Construa uma **tabela de cabeçalho** — uma linha por documento — com colunas para `ref` (o identificador do seu documento), `doc_type` (`JournalTransaction`, `SalesInvoice`, `Bill` ou `Payment`), `posting_date`, `party_id` (cliente/fornecedor, quando o tipo de documento exige um), `memo`, `due_date` e `branch_id`. Um único lote pode misturar tipos de documento — o PlaidCloud o particiona por `doc_type` antes de lançar.
+
+2. Construa uma **tabela de linhas** — uma ou mais linhas por `ref` — no formato do tipo de documento:
+
+   | Tipo de documento | Colunas de linha |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. Adicione uma etapa **Acumatica Post**, defina **Conexão do Acumatica**, **Ambiente**, **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultado**.
+
+4. Deixe **Validate Only** marcado e execute a etapa — o PlaidCloud constrói e verifica cada documento sem reservar no livro de controle e sem lançar nada.
+
+5. Revise a tabela de resultado (uma linha por documento: `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija qualquer linha `error` e valide novamente.
+
+6. Desmarque **Validate Only** e execute novamente para lançar de verdade. Deixe **Continue On Error** marcado, a menos que você queira que um lote pare completamente no primeiro documento com falha.
+
+</Steps>
+
+### Como funciona o lançamento
+
+O Acumatica cria todo documento **em espera (Hold)**, e então o PlaidCloud chama a ação de liberação, que é executada de forma assíncrona (uma resposta `202`, consultada até a conclusão, e depois um `204` confirma a liberação). O PlaidCloud só informa um documento como `posted` quando a liberação é **confirmada** — um documento que chega, mas cuja liberação nunca é confirmada, permanece em quarentena em vez de ser registrado como lançado, de modo que um Hold travado nunca passa silenciosamente por sucesso.
+
+### Limites de capacidade — leia antes de lançar em produção
+
+<Aside type="caution">
+- **Sem chave de idempotência nativa.** A API de gravação do Acumatica não tem campo de idempotência por documento, então a reserva no livro de controle do próprio PlaidCloud é a **única** proteção contra lançamento duplicado em um lote repetido ou reexecutado. Não contorne o livro de controle desta etapa lançando o mesmo documento de outra forma.
+- **O estorno é manual.** Nenhum tipo de documento tem uma ação de anulação/estorno documentada na API baseada em contrato do Acumatica, então o PlaidCloud nunca simula uma — um documento lançado não pode ser estornado a partir desta etapa. Corrija um documento lançado incorretamente diretamente no Acumatica.
+- **Payment não tem consulta confiável.** O Acumatica não expõe nenhum campo documentado para correlacionar um Payment de volta à solicitação do PlaidCloud após um resultado ambíguo (um tempo limite, uma resposta perdida). Um Payment em dúvida é colocado em quarentena em vez de presumido — resolva-o verificando diretamente no Acumatica.
+- **A filtragem por centro de custo em nível de linha não é feita no servidor.** O `$filter` do Acumatica não alcança as dimensões dos itens de linha de um documento, então filtre no nível do cabeçalho/da entidade e faça o escopo em nível de linha no seu fluxo de trabalho depois da extração.
+</Aside>
+
+## Relacionado
+
+- [Conector REST do Acumatica](/pt-br/reference/connectors/rest/acumatica/) — referência de campos.
+- [Import Acumatica Entity](/pt-br/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents](/pt-br/reference/workflow-steps/acumatica/acumatica-post/)
+- [Revisar o histórico de lançamentos do ERP](/pt-br/guides/connections/erp-post-history/) — o registro permanente de cada tentativa de lançamento no Acumatica e seu estado atual.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

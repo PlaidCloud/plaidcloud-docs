@@ -1,0 +1,152 @@
+---
+title: Optimiser les imports Alteryx
+description: Optimisez vos migrations Alteryx grâce à la complétion des dépendances, à la résolution des macros, aux variables, aux comparaisons de validation et aux exécuteurs gérés.
+sidebar:
+  order: 35
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/troubleshoot-alteryx-imports.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud importe les workflows Alteryx sous forme de workflows avancés et signale les détails de conversion pendant l'import. Utilisez ce guide pour compléter rapidement les paquets de dépendances, examiner les macros générées, ajuster les variables et interpréter les comparaisons de validation.
+
+<Aside type="note">
+  Commencez par le résumé de conversion. Il met en évidence les éléments de dépendances, de macros, de variables, d'exécuteurs et de validation avant que vous n'ayez besoin d'inspecter chaque étape.
+</Aside>
+
+## Compléter les fichiers d'entrée
+
+Symptômes :
+
+- Le rapport de conversion liste un fichier manquant.
+- Une exécution se termine avec l'avertissement « No files found at &lt;path&gt;; the target table was created empty. »
+- L'entrée dynamique ne résout aucun fichier.
+- Les nombres de lignes de validation sont inférieurs aux attentes.
+
+Un workflow se convertit même lorsqu'un fichier qu'il lit est manquant ; le rapport est donc le moyen le plus rapide de voir ce qui reste à fournir : il indique le chemin Document où téléverser chaque fichier manquant, le chemin Alteryx d'origine, les feuilles attendues le cas échéant, et les outils qui le lisent.
+
+Un fichier lu uniquement par un outil situé dans un conteneur d'outils Alteryx désactivé n'apparaît jamais dans cette liste, puisque cet outil n'est pas importé non plus ; consultez [Commentaires et conteneurs d'outils sur le canevas](/fr/guides/workflows/migrate-alteryx-workflows/#commentaires-et-tool-containers-sur-le-canevas). Activez le conteneur, ou réimportez avec l'option qui fait entrer les outils d'un conteneur désactivé sous forme d'étapes ordinaires, si vous souhaitez que ce fichier soit pris en compte.
+
+Actions :
+
+1. Téléversez chaque fichier listé par le rapport vers le chemin Document qu'il indique.
+2. Pour la plupart des fichiers, relancez le workflow une fois le téléversement effectué ; aucune réimportation n'est nécessaire.
+3. Pour une disposition ASCII plate, une entrée avec caractère générique, un modèle Dynamic Input ou une source de renommage FirstRow manquants, réimportez le workflow au lieu de simplement le relancer, car ces éléments sont lus au moment de la conversion.
+4. Vérifiez que les motifs de fichiers dynamiques correspondent toujours après le téléversement.
+
+## Compléter les fichiers associés spatiaux
+
+Symptômes :
+
+- Une entrée spatiale nécessite un fichier compagnon.
+- Les champs de géométrie sont vides.
+- La sortie spatiale diffère du résultat attendu.
+
+Actions :
+
+1. Vérifiez que tous les fichiers associés shapefile ou MapInfo ont été inclus.
+2. Conservez les fichiers associés dans le même dossier Document.
+3. Vérifiez que les fichiers de projection sont présents lorsque le workflow dépend du comportement du système de coordonnées de référence.
+4. Relancez le workflow après avoir corrigé le paquet.
+
+## Compléter ou clarifier les macros
+
+Symptômes :
+
+- Un appel de macro ne peut pas être résolu.
+- Les entrées ou sorties de la macro ne sont pas connectées.
+- Un workflow s'importe structurellement et une sortie de macro doit être connectée.
+
+Actions :
+
+1. Incluez le fichier `.yxmc` de chaque macro référencée.
+2. Incluez les macros imbriquées appelées par ces macros.
+3. Évitez les noms de macro en double, sauf si le paquet inclut intentionnellement des macros versionnées.
+4. Vérifiez que la macro PlaidCloud générée comporte des étapes d'entrée et de sortie de macro.
+
+## Fichiers .yxdb illisibles
+
+Symptômes :
+
+- Un fichier `.yxdb` ne s'importe pas alors que les autres fichiers du même paquet s'importent sans problème.
+- Les premiers octets du fichier indiquent `Alteryx e2 Database file` au lieu de `Alteryx Database File`.
+
+Le fichier a été écrit par le moteur Alteryx AMP dans un format propriétaire que PlaidCloud ne peut pas lire. Réécrivez-le avec Alteryx Designer tant que vous y avez accès : réenregistrez les fichiers individuellement, ou convertissez un dossier entier en CSV par lots avec un workflow téléchargeable. Consultez [Convertir des fichiers .yxdb pour l'import](/fr/guides/workflows/convert-yxdb-files-for-import/).
+
+## Bases de données .cydb (Calgary) illisibles
+
+Symptômes :
+
+- Une étape Calgary convertie s'arrête et nomme une table `calgary_<database>` qui n'existe pas encore.
+- La source est un fichier `.cydb`, souvent une base de données démographiques ou de référence sous licence fournie par Alteryx (Experian, Census, etc.).
+
+La base de données Alteryx Calgary est un magasin indexé propriétaire sans lecteur ouvert ; PlaidCloud ne peut donc pas charger directement un `.cydb`. Les outils Calgary eux-mêmes se convertissent : chaque `.cydb` devient une [table de substitution](/fr/guides/workflows/migrate-alteryx-workflows/#bases-de-données-calgary) ordinaire nommée `calgary_<database>`, mais c'est à vous de fournir les données de cette table :
+
+1. Dans Alteryx, ajoutez une entrée Calgary qui lit le `.cydb`, puis réexportez ses enregistrements vers un format ouvert : un outil **Output Data** vers CSV ou Parquet, ou une table d'entrepôt.
+2. Importez ce fichier dans PlaidCloud comme la table `calgary_<database>` attendue par le workflow converti.
+3. Pour une lecture limitée par Skip Records ou Max Records, incluez une colonne d'ordre dans l'export : la table de substitution ne porte aucun ordre d'enregistrement inhérent.
+
+Pour les bases de données de référence sous licence que vous ne pouvez pas réexporter, utilisez votre propre copie sous licence des mêmes données et chargez-la dans la table nommée.
+
+## Problèmes de variables de workflow
+
+Symptômes :
+
+- Une entrée d'application convertie n'est pas définie.
+- Une condition se déclenche de façon inattendue.
+- Une variable de fichier ou de dossier pointe vers un chemin de bureau.
+
+Actions :
+
+1. Examinez les variables de workflow avant l'exécution.
+2. Définissez les valeurs requises.
+3. Remplacez les chemins de fichiers de bureau par des chemins de fichier ou de dossier Document.
+4. Vérifiez que les choix contrôlés correspondent à la sélection attendue de l'application.
+5. Relancez le workflow.
+
+## Différences de validation
+
+Symptômes :
+
+- Le schéma diffère.
+- Le nombre de lignes diffère.
+- Les valeurs des lignes diffèrent.
+- La sortie d'un artefact présente une différence à examiner.
+
+Actions :
+
+1. Vérifiez que les mêmes données d'entrée ont été utilisées dans les deux exécutions.
+2. Vérifiez que les valeurs des variables correspondent.
+3. Vérifiez que les systèmes sources proviennent de la même date d'instantané.
+4. Examinez la gestion des valeurs nulles, des dates, la précision numérique et le classement des chaînes.
+5. Pour les sorties spatiales, examinez le format de géométrie et le comportement du système de coordonnées de référence.
+6. Pour les artefacts, vérifiez la sortie cloud native visée et comparez le contenu métier.
+
+## Remarques sur les exécuteurs
+
+Des opérations spécialisées telles que la correspondance approximative, le traitement spatial, l'extraction PDF, l'OCR, le NLP et le reporting peuvent s'exécuter via des exécuteurs gérés. (Les pipelines d'apprentissage automatique se convertissent plutôt en étapes natives [ML : entraîner un modèle](/fr/reference/workflow-steps/machine-learning/ml-train/) et [ML : scorer](/fr/reference/workflow-steps/machine-learning/ml-score/).)
+
+Si un exécuteur signale une remarque :
+
+1. Ouvrez les détails de l'exécution du workflow.
+2. Examinez la remarque de l'étape.
+3. Vérifiez que les entrées et paramètres requis sont présents.
+4. Vérifiez que les sorties attendues sont disponibles si une validation de parité est requise.
+5. Relancez après avoir corrigé les entrées ou les paramètres.
+
+## Quand réimporter
+
+Réimportez lorsque :
+
+- Des fichiers ou macros importants ont été ajoutés après le paquet d'origine.
+- Un mauvais chemin Document a été sélectionné.
+- Une version plus récente du workflow doit remplacer la version importée.
+- Le paquet du workflow nécessite une organisation des dépendances plus propre.
+
+Si seule la valeur d'une variable, un identifiant ou un chemin Document a changé, il peut suffire de mettre à jour le workflow converti.
+
+## Guides associés
+
+- [Empaqueter les dépendances Alteryx](/fr/guides/workflows/package-alteryx-dependencies/)
+- [Valider les workflows Alteryx convertis](/fr/guides/workflows/validate-converted-alteryx-workflows/)
+- [Matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/)

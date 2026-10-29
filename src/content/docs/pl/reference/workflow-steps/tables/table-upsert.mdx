@@ -1,0 +1,102 @@
+---
+title: Table Upsert (krok)
+description: Wykonaj operację upsert w kroku przepływu pracy PlaidCloud, aby zaktualizować istniejące rekordy lub wstawić nowe na podstawie dopasowania kluczy.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-upsert.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import SnippetCommonDataFilter from '@snippets/pl/common-data-filter.mdx';
+
+## Opis
+
+Łączy wstawianie i aktualizację w jednej operacji, opartej na jednej lub wielu kolumnach wskazanych jako klucz dopasowania. Dla każdego wiersza źródła: jeśli w tabeli docelowej istnieje pasujący wiersz (te same wartości klucza), zostaje zaktualizowany; w przeciwnym razie wstawiany jest nowy wiersz.
+
+Użyj tego, gdy masz przyrostowy strumień danych zawierający zarówno nowe rekordy, jak i zmiany istniejących — aktualizacje sprzedaży, zmiany rekordów pracowników lub dowolny scenariusz „zawsze odzwierciedlaj najnowszy stan”. Kolumny dopasowania wybieraj ostrożnie: wiersze o tych samych wartościach klucza, ale różniące się w pozostałych, zostaną nadpisane, więc zły wybór klucza może po cichu uszkodzić dane.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 220" role="img" aria-label="Upsert scala źródło z tabelą docelową według klucza dopasowania. Tabela docelowa zawiera już id 1 i id 2. Źródło wnosi zmienione id 2 i nowe id 3. W wyniku id 1 pozostaje bez zmian, id 2 zostaje zaktualizowane wartością ze źródła, a id 3 zostaje wstawione." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="up-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <text x="96" y="34" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">tabela docelowa (istniejąca)</text>
+  <rect x="20" y="42" width="152" height="30" rx="5" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="96" y="62" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">id 1 · A</text>
+  <rect x="20" y="74" width="152" height="30" rx="5" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="96" y="94" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">id 2 · B</text>
+  <text x="96" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">źródło (przyrostowe)</text>
+  <rect x="20" y="148" width="152" height="30" rx="5" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="96" y="168" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">id 2 · B′</text>
+  <rect x="20" y="180" width="152" height="30" rx="5" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="96" y="200" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">id 3 · C</text>
+  <path d="M172 79 C260 79 300 118 372 122" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#up-arrow)" />
+  <path d="M172 179 C260 179 300 150 372 146" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#up-arrow)" />
+  <text x="286" y="96" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dopasowanie po id</text>
+  <text x="420" y="70" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-accent)">wynik</text>
+  <rect x="374" y="78" width="176" height="30" rx="5" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="404" y="98" font-size="11" fill="var(--sl-color-text)">id 1 · A</text><text x="540" y="98" text-anchor="end" font-size="9" fill="var(--sl-color-gray-3)">zachowane</text>
+  <rect x="374" y="110" width="176" height="30" rx="5" fill="var(--sl-color-accent)" fill-opacity="0.16" stroke="var(--sl-color-accent)" /><text x="404" y="130" font-size="11" fill="var(--sl-color-text)">id 2 · B′</text><text x="540" y="130" text-anchor="end" font-size="9" fill="var(--sl-color-accent)">zaktualizowane</text>
+  <rect x="374" y="142" width="176" height="30" rx="5" fill="none" stroke="var(--sl-color-accent)" stroke-dasharray="4 3" /><text x="404" y="162" font-size="11" fill="var(--sl-color-text)">id 3 · C</text><text x="540" y="162" text-anchor="end" font-size="9" fill="var(--sl-color-accent)">wstawione</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Upsert scala źródło z tabelą docelową według <strong>klucza dopasowania</strong>: istniejący klucz jest <strong>aktualizowany</strong> (id 2 → B′), nowy klucz jest <strong>wstawiany</strong> (id 3). Wybierz klucz ostrożnie — wiersze o tym samym kluczu są nadpisywane.</figcaption>
+</figure>
+
+## Parametry upsert
+
+![Źródło i cel](/images/table_source_and_target_EN.png)
+
+Aby ustalić tabelę źródłową i docelową, najpierw wybierz tabelę danych, z której mają być wyodrębniane dane, z listy rozwijanej **Tabela źródłowa**. Następnie wybierz istniejącą tabelę jako tabelę docelową z listy rozwijanej **Tabela docelowa**.
+
+
+## Wybór danych tabeli źródłowej
+
+![Table Upsert](/images/table_upsert.png)
+
+Data Mapper służy do mapowania kolumn z danych źródłowych na docelową tabelę danych.
+
+### Sprawdzanie i wypełnianie mappera
+
+Przycisk menu **Sprawdź źródło** udostępnia dodatkowe sposoby mapowania kolumn ze źródła na cel:
+
+* Wypełnij obie tabele mapowania: Propaguje wszystkie wartości z źródłowej tabeli danych do docelowej tabeli danych. Dzieje się tak domyślnie.
+* Wypełnij tylko tabelę mapowania źródła: Mapuje wyłącznie wszystkie wartości w źródłowej tabeli danych. Jest to przydatne przy modyfikowaniu istniejącego przepływu pracy, gdy zmieniła się struktura kolumn źródła.
+* Wypełnij tylko tabelę mapowania celu: Propaguje wszystkie wartości wyłącznie do docelowej tabeli danych.
+
+Jeśli opcje kolumn źródłowych i docelowych nie wystarczają, do docelowej tabeli danych można dodać kolumny na kilka sposobów:
+
+* **Propaguj wszystko** wstawi wszystkie kolumny źródłowe do docelowej tabeli danych, niezależnie od tego, czy już istniały.
+* **Propaguj zaznaczone** wstawi tylko zaznaczone kolumny źródłowe.
+* Kliknij prawym przyciskiem myszy po stronie docelowej i wybierz **Wstaw wiersz**, aby wstawić wiersz bezpośrednio nad aktualnie zaznaczonym wierszem.
+* Kliknij prawym przyciskiem myszy po stronie docelowej i wybierz **Dołącz wiersz**, aby wstawić wiersz na dole (z prawej strony) docelowej tabeli danych.
+
+<Aside type="danger">Wybranie *Propaguj wszystko* zduplikuje kolumny, jeśli już istnieją na liście docelowej</Aside>
+
+### Usuwanie kolumn
+
+Aby usunąć kolumny z docelowej tabeli danych, zaznacz wybrane kolumny, następnie kliknij prawym przyciskiem myszy i wybierz **Usuń**.
+
+### Zmiana kolejności kolumn
+
+Aby zmienić kolejność kolumn w docelowej tabeli danych, zaznacz wybrane kolumny. Możesz użyć jednej z opcji:
+* **Strzałki przenoszenia zbiorczego**: wybierz żądaną opcję przenoszenia za pomocą strzałek w prawym górnym rogu
+* **Menu kontekstowe**: kliknij prawym przyciskiem myszy i wybierz **Przenieś na początek**, **Przenieś w górę**, **Przenieś w dół** lub **Przenieś na koniec**.
+
+### Ograniczanie wyniku wyłącznie do unikalnych rekordów
+
+Aby zwrócić tylko unikalne opcje, wybierz opcję menu **Unikalne**. Spowoduje to wyświetlenie zestawu pól wyboru dla każdej kolumny źródła. Wystarczy zaznaczyć pole obok odpowiedniej kolumny, aby zwrócić tylko unikalne wyniki.
+
+W zależności od sytuacji warto rozważyć użycie podsumowania.
+
+Proces wyboru unikalnych rekordów zachowuje pierwszy znaleziony unikalny rekord, a pozostałe odrzuca.  Jeśli ważna jest spójność między uruchomieniami, warto zastosować sortowanie danych.
+
+<Aside type="danger">Zaznaczenie wszystkich kolumn do określenia unikalności może sprawiać wrażenie, że opcja nie jest stosowana. Zaznacz tylko te kolumny, które Twoim zdaniem definiują unikalność danych.</Aside>
+### Klucz aktualizacji
+
+Siatka kolumn docelowych ma kolumnę **Klucz aktualizacji**, tuż za nazwą kolumny docelowej. Zaznacz ją przy kolumnach, które razem identyfikują wiersz: wiersz źródłowy, którego wartości klucza pasują do wiersza już istniejącego w tabeli docelowej, aktualizuje ten wiersz, a każdy inny wiersz źródłowy jest wstawiany.
+
+Każda kolumna jest domyślnie zaznaczona, więc odznacz kolumny, które nie są częścią klucza. Kolumna bez ustawienia klucza aktualizacji — dodana właśnie przez wypełnienie lub zapisana przez API bez niego — jest traktowana jako klucz. Co najmniej jedna kolumna musi pozostać zaznaczona.
+
+
+## Filtry danych źródłowych
+
+<SnippetCommonDataFilter />
+
+## Co jest sprawdzane przy zapisie
+
+- **Co najmniej jeden klucz aktualizacji.** W przeciwnym razie zapis jest odrzucany z komunikatem *At least one target column must be marked as Update Key.*
+- **Mapowanie zgadza się z istniejącą tabelą docelową.** Gdy tabela docelowa już istnieje, krok musi zmapować każdą z jej kolumn, nie mapować żadnej kolumny, której tabela nie ma, i nadać każdej kolumnie typ tabeli, aby upsert nie mógł usunąć kolumny tabeli wraz z danymi ani zmienić typu kolumny. Typy liczbowy i walutowy są traktowane jako ten sam typ. Odrzucenie wymienia każdą różnicę, na przykład *The target columns must match the existing target table 'customers'. The table has columns the step doesn't map: region.* Tabela docelowa, która jeszcze nie istnieje, lub nazwana za pomocą zmiennej, jest sprawdzana podczas uruchomienia kroku.
+- **Puste mapowanie jest uzupełniane za Ciebie.** Zapis z wybraną tabelą źródłową, ale bez kolumn źródłowych lub docelowych, uzupełnia pustą stronę na podstawie źródła, tak jak zrobiłoby to **Wypełnij obie tabele mapowania**.

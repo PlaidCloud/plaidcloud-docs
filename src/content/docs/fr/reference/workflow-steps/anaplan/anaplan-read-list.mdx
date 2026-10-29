@@ -1,0 +1,60 @@
+---
+title: "Anaplan : lire une liste"
+description: "Lisez une ou plusieurs listes Anaplan, y compris une hiérarchie composite entière en partant de la racine, dans une dimension PlaidCloud. Les indicateurs de contrôle d'accès et les sous-ensembles ne sont pas importés, et chaque arête se consolide avec un simple signe plus."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Lit une ou plusieurs listes Anaplan via votre [connexion Anaplan](/fr/guides/connections/anaplan/) et les charge dans une dimension PlaidCloud. **Une seule étape lit une hiérarchie composite entière** : indiquez toutes les listes qu'elle couvre, en commençant par la racine (par exemple Region, puis Country, puis Store), plutôt que de la répartir sur plusieurs étapes. La table intermédiaire est entièrement remplacée à chaque exécution ; plusieurs étapes pointant vers la même table intermédiaire effaceraient donc chacune les lignes de la précédente.
+
+Cette étape apparaît dans le menu des étapes sous **Anaplan**, avec le libellé **Lecture de listes**.
+
+L'étape accède à Anaplan en **direct depuis le cloud** via son API d'intégration : il n'existe pas de chemin passant par un agent sur site.
+
+<Aside type="tip">
+Ce connecteur est en lecture seule et s'authentifie avec des identifiants de base (nom d'utilisateur et mot de passe) ou un certificat d'AC ; consultez [Authentification](/fr/guides/connections/anaplan/#authentification). Le quota de requêtes d'Anaplan est partagé à l'échelle du tenant : échelonnez donc la planification de cette étape par rapport à vos autres workflows Anaplan ; consultez [Considérations sur la planification](/fr/guides/connections/anaplan/#considérations-de-planification).
+</Aside>
+
+## Configuration
+
+### Source Anaplan
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| Connexion Anaplan | Oui | La [connexion Anaplan](/fr/guides/connections/anaplan/) à utiliser pour la lecture. |
+| Environnement | Oui | L'environnement de la connexion. |
+| Modèle | Non | Remplace l'ID de modèle enregistré dans la connexion. Découvert en direct à partir de la connexion, ou saisi à la main. |
+| Listes | Oui | Toutes les listes Anaplan couvertes par la hiérarchie, sous forme de liste ordonnée. Ajoutez des listes découvertes à partir du modèle choisi, ou saisissez un ID à la main, puis réorganisez-les avec Monter / Descendre. Les indiquer en partant de la racine est plus lisible, mais l'ordre ne change pas le résultat : toutes les listes sont lues avant la résolution des parents. |
+| Table intermédiaire | Oui | Les lignes brutes parent/enfant/consolidation/nom et propriétés sont déposées ici avant que la dimension PlaidCloud n'en soit construite. |
+
+### Dimension PlaidCloud cible
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| Spécifier la dimension dynamiquement | L'un des deux | Nom de la dimension cible, qui peut contenir des jetons `{variable}` résolus au moment de l'exécution. Sélectionné par défaut. |
+| Utiliser une dimension spécifique | L'un des deux | Choisissez plutôt une dimension PlaidCloud existante. |
+
+## Ce que cette étape ne peut pas représenter
+
+| Limitation | Signification |
+|---|---|
+| Chaque arête se consolide avec un simple `+` | Les hiérarchies de listes Anaplan ne portent ni poids ni signe par arête : il n'y a rien à lire, donc rien n'est perdu à la conversion, mais rien de plus ne peut être représenté. Si un modèle exprime des exclusions ou des consolidations négatives au moyen d'un élément de ligne ou d'une propriété, cette logique n'est pas reprise dans la dimension et doit être reconstruite en aval. |
+| Les indicateurs de contrôle d'accès et l'appartenance aux sous-ensembles ne sont pas importés | Les indicateurs de lecture/écriture de l'accès sélectif et l'appartenance de chaque élément à un sous-ensemble de la liste sont des métadonnées Anaplan, et non des données de dimension : importer chaque sous-ensemble comme sa propre colonne entrerait sinon en collision avec de véritables propriétés dans un espace de noms partagé en croissance. Une véritable propriété de liste dont le nom entre en collision avec l'un ou l'autre est refusée au lieu d'être déposée silencieusement sous le nom de l'autre. |
+| Les sous-ensembles d'éléments de ligne ne sont pas lisibles comme dimensions | Anaplan ne les expose que par un point de terminaison générique des éléments de dimension, et non comme une liste que cette étape peut lire. |
+| Une liste de plus de 1 000 000 d'enregistrements ne peut pas être lue par ce chemin | Le point de terminaison des éléments que lit cette étape refuse catégoriquement au-delà de ce plafond documenté plutôt que de renvoyer un résultat partiel, et ne permet pas de paginer pour le contourner : l'étape refuse donc et nomme le plafond plutôt que de charger une dimension partielle. En attendant, scindez la liste dans Anaplan ou lisez-en un sous-ensemble. |
+| Un nœud n'a qu'un seul parent | Un élément dont le nom de parent et l'ID de parent ne concordent pas, dont le parent se trouve dans une liste que cette étape ne lit pas, ou dont le parent nommé n'existe pas du tout, est refusé nommément au lieu d'être rattaché silencieusement à la racine de la dimension. |
+| L'élément de niveau supérieur d'une liste n'est pas importé | L'élément de niveau supérieur d'Anaplan est un nœud de consolidation situé au-dessus de tous les éléments de la liste, et non un élément de la liste elle-même ; il n'est donc jamais renvoyé par les éléments que lit cette étape. La dimension compte un niveau de moins que la liste Anaplan, et les racines propres de la liste deviennent celles de la dimension. L'étape émet un avertissement lorsqu'une liste lue en déclare un. |
+| Les ID de nœud doivent être uniques dans toutes les listes lues ensemble | L'ID d'un nœud est le code Anaplan de l'élément, ou son nom s'il n'en a pas ; or un code Anaplan n'est garanti unique qu'au sein d'une même liste. Deux listes qui réutilisent les mêmes codes courts sont refusées nommément au lieu d'être fusionnées silencieusement en un seul nœud. |
+| Les hiérarchies alternatives ne sont pas prises en charge | Chaque liste est chargée dans la hiérarchie principale de la dimension. |
+| Lecture seule | Rien n'est jamais réécrit dans Anaplan. |
+
+## Voir aussi
+
+- [Se connecter à Anaplan (guide)](/fr/guides/connections/anaplan/) : créer la connexion.
+- [Anaplan : lire une vue](/fr/reference/workflow-steps/anaplan/anaplan-read-view/) : lire une vue enregistrée telle qu'elle a été enregistrée.
+- [Anaplan : lire un export](/fr/reference/workflow-steps/anaplan/anaplan-read-export/) : exécuter une action d'export existante.
+- [Dimension Load](/fr/reference/workflow-steps/dimensions/dimension-load/) : le même mécanisme de chargement de dimension, sur lequel s'appuie cette étape.
+- [Étapes Anaplan](/fr/reference/workflow-steps/anaplan/)

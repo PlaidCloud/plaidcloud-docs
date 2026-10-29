@@ -1,0 +1,138 @@
+---
+title: HFM / FCCS에서 추출(임시)
+description: PlaidCloud를 Oracle FCCS에 연결하고 관점 선택기로 데이터 조각을 직접 가져옵니다. HFM 팀에 요청할 필요가 없습니다. 연결, 관점 구성, 실행, 캐싱, 행 수준 보안, 예약된 반복 로드를 다룹니다.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud를 Oracle **FCCS**(Financial Consolidation and Close, Oracle EPM Cloud의 일부)에 연결하면 재무 담당 사용자가 HFM 팀에 요청서를 제출하지 않고도 직접 데이터 조각을 가져올 수 있습니다. 단계 양식에서 **관점**(POV)을 구성하고 실행하면 결과가 테이블로 자동 저장됩니다. 실시간 쿼리처럼 느껴지지만, 내부적으로는 FCCS의 데이터 내보내기 작업에 대한 비동기 요청 → 폴링 → 가져오기 방식으로 동작합니다. 이 가이드는 연결, 관점 구성, 실행, 캐싱, 행 수준 보안을 통한 결과 관리, 예약된 반복 로드로의 전환을 다룹니다.
+
+<Aside type="note">
+**엔터티** 선택 범위를 제한하십시오. 범위를 지정하지 않은 추출은 내보내기 작업이 실행되는 동안 FCCS 애플리케이션을 장시간 잠글 수 있습니다. 모든 관점은 실제로 필요한 엔터티로 범위를 한정하십시오.
+</Aside>
+
+## 사전 요구 사항
+
+Oracle EPM Cloud에서 다음이 필요합니다.
+
+- **EPM Cloud 포드/서비스 URL**(예: `https://planning-test-yourdomain.epm.us2.oraclecloud.com`).
+- **ID 도메인**(클래식 포드의 경우). PlaidCloud는 로그인 이름을 `identitydomain.username` 형식으로 구성합니다.
+- 셀프 서비스 사용자가 가져올 FCCS 애플리케이션과 관점 조각에 대한 읽기 권한이 있는 전용 **서비스 계정**(사용자 이름과 비밀번호).
+- 사용자가 데이터를 읽어 올 **애플리케이션 이름**.
+
+<Aside type="note">
+이 연결은 클래식 EPM Cloud 포드에 대해 **HTTP 기본 인증**으로 인증합니다. OAuth 전달자 토큰이 필요한 OCI / Gen 2 포드는 이 커넥터의 범위에 포함되지 않습니다.
+</Aside>
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **REST - HFM/FCCS**를 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알기 쉬운 이름(예: `FCCS Prod`). |
+   | EPM Cloud URL | 포드/서비스 URL(예: `https://planning-test-yourdomain.epm.us2.oraclecloud.com`). |
+   | ID 도메인 | EPM Cloud ID 도메인. 사용자 이름에 이미 도메인이 포함된 경우에만 비워 둡니다. |
+   | 사용자 이름 | 서비스 계정 사용자 이름. |
+   | 비밀번호 | 서비스 계정 비밀번호. |
+   | 기본 애플리케이션 | 선택 사항. 단계의 관점 선택기에 미리 채울 FCCS 애플리케이션. |
+
+4. `Test Connection`을 클릭합니다. 테스트에 성공하면 PlaidCloud가 구성된 자격 증명으로 HFM/FCCS 서버에 접속할 수 있음을 확인한 것입니다.
+
+5. `Create`를 클릭합니다.
+
+</Steps>
+
+PlaidCloud는 `identitydomain.username`으로 로그인합니다(ID 도메인이 비어 있거나 사용자 이름에 이미 점이 포함된 경우에는 사용자 이름을 그대로 사용합니다).
+
+## 관점 구성하기
+
+<Steps>
+
+1. 워크플로에 **HFM/FCCS: 데이터 읽기(임시)** 단계를 추가합니다(단계 메뉴의 **Oracle EPM (HFM/FCCS)** 아래에 있습니다).
+
+2. **소스 및 대상**에서 **HFM/FCCS 연결**, **환경**, **애플리케이션**, **대상 테이블**을 설정합니다.
+
+3. **관점**에서 FCCS 차원으로 데이터 조각을 구성합니다. **시나리오, 연도, 기간, 엔터티, 계정, Custom1–Custom4, ICP, 뷰, 값**.
+
+   - **시나리오, 연도, 기간은 필수입니다.**
+   - **엔터티는 범위가 제한된 조각이어야 합니다.** 선택 항목이 비어 있거나 "all"이거나 멤버가 500개를 초과하면 양식에서 거부됩니다. 내보내기가 애플리케이션을 잠그지 않도록 범위를 한정하십시오.
+   - 다른 차원을 설정하지 않으면 해당 축에는 필터가 적용되지 않습니다.
+
+</Steps>
+
+<Aside type="note">
+지원되는 FCCS 포드에서는 연결과 애플리케이션을 선택하면 실시간 메타데이터 검색을 통해 멤버 목록이 **자동으로 채워집니다**. 선택기에 실제 멤버가 표시되며, 연결이나 애플리케이션이 바뀔 때마다 다시 검색합니다. 메타데이터 엔드포인트를 제공하지 않는 이전 포드에서는 선택기가 **수동 입력**으로 전환되므로 멤버 이름을 직접 입력합니다. 어느 경우든 저장된 관점은 그대로 다시 불러올 수 있습니다.
+</Aside>
+
+## 실행하기
+
+<Steps>
+
+1. 단계를 실행합니다([워크플로에서 단일 단계 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+2. FCCS에서 내보내기 작업이 실행되는 동안 진행 상태("polling HFM job…")가 표시됩니다.
+
+3. 작업이 끝나면 결과 테이블이 자동으로 저장됩니다. 테이블은 반환된 그리드의 열로 만들어지므로 미리 스키마를 정의할 필요가 없습니다.
+
+</Steps>
+
+## 캐싱
+
+**같은 관점**을 다시 요청하면 PlaidCloud는 내보내기를 FCCS에 다시 제출하지 않고 **이미 저장된 테이블**을 즉시 제공합니다. 실행은 애플리케이션, 대상 테이블, 관점, **기준 시점** 태그(기본값 `latest`)를 키로 식별되며, 이미 저장된 조각으로 확인되는 반복 요청은 테이블을 다시 쓰지 않고 그대로 두었다고 보고합니다. 같은 관점을 새로 추출하려면 기준 시점 태그를 변경하십시오.
+
+## 행 수준 보안으로 관리하기
+
+저장된 테이블의 엔터티 축은 정확히 **`Entity`** 라는 이름의 열로 정규화되므로 테이블이 **행 수준 보안을 적용할 수 있는 상태**가 됩니다. 관리자가 [행 액세스](/ko/administration/access/managing-security-groups-and-assignments/)로 이를 관리하면 셀프 서비스 사용자는 권한이 있는 엔터티만 볼 수 있습니다.
+
+<Aside type="caution">
+이는 **관리자의 통제 아래에서 관리되며 자동으로 적용되지 않습니다**. 추출이 연결의 서비스 계정으로 실행되기 때문에 PlaidCloud는 단계가 자체적으로 보안을 선언하도록 허용하지 않습니다. 관리자(아키텍트)가 직접 설정해야 합니다.
+</Aside>
+
+관리자는 표준 행 액세스 워크플로를 따릅니다.
+
+<Steps>
+
+1. 저장된 테이블을 보고용으로 **게시**합니다.
+
+2. `Entity` 열을 관리 속성으로 **선언**합니다(기본 거부).
+
+3. 첫 번째 관리 대상 쓰기를 **승인**합니다.
+
+4. 권한이 적용되도록 **조정**합니다.
+
+</Steps>
+
+관리자가 이 작업을 하기 전에는 테이블이 필터링되지 않습니다. [보안 그룹 및 할당 관리](/ko/administration/access/managing-security-groups-and-assignments/)를 참조하십시오.
+
+## 반복 로드 예약하기
+
+임시 조각을 야간 새로 고침으로 전환하려면 단계에서 **대상 범위 지정**을 활성화합니다.
+
+<Steps>
+
+1. 단계의 **대상 범위 지정** 그룹에서 **대상 범위 지정(예약된 반복 로드)** 확인란을 선택합니다.
+
+2. 필요하면 **키 열**을 설정합니다. 병합 키를 구성하는 열을 쉼표로 구분해 입력합니다(예: `Entity, Account`). **비워 두면** 저장된 그리드에 있는 관점 차원 열이 병합 키로 사용됩니다.
+
+3. 단계를 [예약된 워크플로](/ko/administration/scheduled-events/)에 배치합니다.
+
+</Steps>
+
+대상 범위 지정을 켜면 대상이 **영구** 테이블이 됩니다. 실행할 때마다 덮어쓰지 않고 키 집합 업서트로 **병합**하며, 이후 그리드에 새 열이 있으면 스키마가 **추가 방식으로 확장**됩니다(새 열은 경고를 발생시킬 뿐 실패하지 않습니다). 따라서 예약 실행은 데이터를 지우지 않고 누적합니다. 파괴적인 재로드가 아니라 반복 로드입니다.
+
+## 관련 항목
+
+- [HFM/FCCS: 데이터 읽기(임시)](/ko/reference/workflow-steps/oracle-epm/hfm-fccs-read/) — 단계 필드 참조.
+- [HFM / FCCS 커넥터](/ko/reference/connectors/rest/hfm-fccs/) — 연결 필드 참조.
+- [보안 그룹 및 할당 관리](/ko/administration/access/managing-security-groups-and-assignments/) — 행 액세스가 저장된 테이블을 관리하는 방식.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

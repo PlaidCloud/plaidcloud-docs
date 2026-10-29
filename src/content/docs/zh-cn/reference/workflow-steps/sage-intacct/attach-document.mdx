@@ -1,0 +1,55 @@
+---
+title: "Sage Intacct：附加文档"
+description: 通过 Sage Intacct 连接，将 PlaidCloud 表中的支持文档附加到 Sage Intacct 记录，提供仅验证预览和每个附件的结果表。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/attach-document.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [Sage Intacct 连接](/zh-cn/guides/connections/sage-intacct/)，经由 PlaidCloud 共享的 ERP 写入管道，将支持文档附加到 Sage Intacct 记录。源表中的每一行对应一个文件，包含文件内容、文件名以及所附加的 Intacct 记录的键；步骤会将其创建为 Sage Intacct 支持文档（`supdoc`），并链接到该记录。**Validate Only** 会检查每一行，但不会在 Intacct 中创建任何内容；结果表会记录每个附件的结果。
+
+可用它把工作流中已有的文件（如渲染好的发票 PDF、扫描的收据、导出的报表）推送到其所属的 Intacct 交易或记录上，并与生成或过账这些记录的运行放在同一次运行中。它与 [Intacct：过账日记账分录](/zh-cn/reference/workflow-steps/sage-intacct/export-to-sage/)自然搭配：先过账分录，再使用每次过账返回的 Intacct 键附加其依据文件。
+
+## 数据结构约定
+
+请在上游使用标准步骤构建附件表，使每一行都是绑定到一条记录的一个完整文件：
+
+- **`parent_key`**：文件所附加的 Sage Intacct 记录。每行一个文件、一个父级；如需将同一个文件附加到多条记录，请在多行中重复该文件。
+- **`file_name`**：支持文档的文件名，包括扩展名（`invoice-1043.pdf`）。
+- **`mime_type`**：文件的内容类型（`application/pdf`、`image/png`），以便 Intacct 正确存储和提供该文件。
+- **`content_base64`**：该行中经过 base64 编码的文件字节内容。
+
+## 配置
+
+### 连接
+
+- **Sage Intacct 连接**：用于附加文档的 Sage Intacct 连接。仅提供 Sage Intacct 连接；同一个连接既用于读取 Intacct，也用于写入 Intacct。
+- **环境**：连接的环境。
+
+### 数据
+
+- **附件表**：上述源表，每个文件一行，包含 `parent_key`、`file_name`、`mime_type` 和 `content_base64`。
+- **结果表**：输出表 ID，每个附件一行，包含 `parent_key`、`file_name`、`supdoc_id`、`status`、`message`。
+- **Validate Only**：默认勾选。仅做预检；检查每一行并写入结果表，但不会在 Intacct 中创建任何支持文档。如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创建的配置），同样默认为 Validate Only，而不是正式附加。
+- **Continue On Error**：默认勾选。某个文件失败后继续附加其余文件；取消勾选则在第一次失败时停止。
+
+## 结果表
+
+每次运行（无论是 Validate Only 还是正式运行）都会为每个源行向结果表写入一行：
+
+| 列 | 说明 |
+|---|---|
+| `parent_key` | 此附件所针对的 Intacct 记录。 |
+| `file_name` | 源行中的文件名。 |
+| `supdoc_id` | 附件成功时，为该文件创建的 Sage Intacct 支持文档 ID。 |
+| `status` | 此行的结果：已验证、已附加或失败。 |
+| `message` | 行失败时，对出错原因的简短、经过净化的描述。 |
+
+## 相关内容
+
+- [Intacct：过账日记账分录](/zh-cn/reference/workflow-steps/sage-intacct/export-to-sage/)
+- [Sage Intacct 步骤](/zh-cn/reference/workflow-steps/sage-intacct/)
+- [Sage Intacct REST 连接器](/zh-cn/reference/connectors/rest/sage-intacct/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

@@ -1,0 +1,70 @@
+---
+title: AI_EMBEDDING_VECTOR（Lakehouse v1）
+description: PlaidCloud Lakehouseのai_embedding_vector関数を使用して埋め込みを作成します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/02-ai-embedding-vector.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+このドキュメントでは、PlaidCloud Lakehouseのai_embedding_vector関数の概要と、この関数を使用してドキュメントの埋め込みを作成する方法を説明します。
+
+[アップストリームの実装](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/common/openai/src/embedding.rs)を参照してください。
+
+デフォルトでは、PlaidCloud Lakehouseは埋め込みの生成に[text-embedding-ada](https://platform.openai.com/docs/models/embeddings)モデルを使用します。
+
+<Aside>PlaidCloud Lakehouse v1.1.47以降、PlaidCloud Lakehouseは[Azure OpenAIサービス](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service)をサポートしています。この統合により、データのプライバシーが向上します。Azure OpenAIを使用するには、`[query]` セクションに次の設定を追加します。 ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+
+<Aside type="caution">PlaidCloud Lakehouseは `AI_EMBEDDING_VECTOR` に(Azure) OpenAIを利用し、埋め込み対象の列データを(Azure) OpenAIに送信します。これらの関数は、PlaidCloud Lakehouseの設定に `openai_api_key` が含まれている場合にのみ動作し、含まれていない場合は無効です。この関数は、Azure OpenAIキーを使用するPlaidCloud Lakehouseでは、デフォルトで利用できます。これらを使用する場合、お客様のデータが当社によってAzure OpenAIに送信されることに同意したものとみなされます。</Aside>
+
+## Ai_embedding_vectorの概要
+
+PlaidCloud Lakehouseの `ai_embedding_vector` 関数は、テキストデータのベクトル埋め込みを生成する組み込み関数です。ドキュメントの類似度、クラスタリング、レコメンデーションシステムなどの自然言語処理タスクに役立ちます。
+
+この関数はテキストを入力として受け取り、入力テキストの意味と文脈を表す高次元ベクトルを返します。埋め込みは、大規模なテキストコーパスで事前学習されたモデルを使用して作成され、単語やフレーズ間の関係を連続空間上で捉えます。
+
+## Ai_embedding_vectorを使用した埋め込みの作成
+
+`ai_embedding_vector` 関数を使用してテキストドキュメントの埋め込みを作成するには、次の例に従います。
+1. ドキュメントを格納するテーブルを作成します。
+```sql
+CREATE TABLE documents (
+                           id INT,
+                           title VARCHAR,
+                           content VARCHAR,
+                           embedding ARRAY(FLOAT32)
+);
+```
+
+2. サンプルドキュメントをテーブルに挿入します。
+```sql
+INSERT INTO documents(id, title, content)
+VALUES
+    (1, 'A Brief History of AI', 'Artificial intelligence (AI) has been a fascinating concept of science fiction for decades...'),
+    (2, 'Machine Learning vs. Deep Learning', 'Machine learning and deep learning are two subsets of artificial intelligence...'),
+    (3, 'Neural Networks Explained', 'A neural network is a series of algorithms that endeavors to recognize underlying relationships...'),
+```
+
+3. 埋め込みを生成します。
+```sql
+UPDATE documents SET embedding = ai_embedding_vector(content) WHERE length(embedding) = 0;
+```
+クエリの実行後、テーブルの embedding 列に生成された埋め込みが格納されます。
+
+埋め込みは `FLOAT32` 値の配列として embedding 列に格納されます。この列の型は `ARRAY(FLOAT32)` です。
+
+これらの埋め込みは、類似ドキュメントの検索や、内容に基づくドキュメントのクラスタリングなど、さまざまな自然言語処理タスクに利用できます。
+
+4. 埋め込みを確認します。
+
+```sql
+SELECT length(embedding) FROM documents;
+┌───────────────────┐
+│ length(embedding) │
+├───────────────────┤
+│              1536 │
+│              1536 │
+│              1536 │
+└───────────────────┘
+```
+上のクエリから、生成された埋め込みの長さが各ドキュメントで1536（次元）であることがわかります。

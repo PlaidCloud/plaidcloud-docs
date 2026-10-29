@@ -1,0 +1,7 @@
+---
+title: IPV4_NUM_TO_STRING (Lakehouse v1)
+description: IPV4_NUM_TO_STRING — alias de la fonction d'adresse IP INET_NTOA.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/14-ip-address-functions/ipv4-num-to-string.md
+---
+
+Alias de [INET_NTOA](../inet-ntoa).

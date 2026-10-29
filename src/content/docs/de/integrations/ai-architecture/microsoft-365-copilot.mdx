@@ -1,0 +1,123 @@
+---
+title: Microsoft-365-Copilot-Architektur
+description: Warum Microsoft 365 Copilot ein veröffentlichtes Agent-Paket und einen eigenen OAuth-Client braucht, wie Zugriffsstufen nach dem Prinzip „standardmäßig verweigern“ aufgelöst werden und was dauerhaft tabu bleibt.
+sidebar:
+  label: Copilot-Architektur
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/microsoft-365-copilot.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Microsoft 365 Copilot ist die einzige Integration, die nicht dem üblichen Muster folgen kann. Einem Coding-Agent
+kann man eine Serveradresse geben und sagen, er solle sich authentifizieren; Copilot kann das nicht. Es spricht nur mit Agents,
+die **in Ihrem Microsoft-365-Tenant veröffentlicht** wurden, und es gibt die Anmeldung gegen eine feste Weiterleitungsadresse
+an Microsoft zurück.
+
+Diese Einschränkung prägt alles auf dieser Seite. Die Installation Schritt für Schritt finden Sie unter
+[Microsoft 365 Copilot](/de/integrations/microsoft-365-copilot/) – diese Seite erklärt, was diese Schritte
+tatsächlich bewirken.
+
+<img
+	src="/images/ai-copilot-architecture.svg"
+	alt="Eine Person in Teams oder Outlook fragt den deklarativen PlaidCloud-Agent, der im Microsoft-365-Tenant veröffentlicht ist. Microsoft vermittelt die Anmeldung an einen dedizierten PlaidCloud-OAuth-Client. Anfragen erreichen dann den kuratierten MCP-Server, wo eine Zugriffsstufe nach dem Prinzip „standardmäßig verweigern“ und die eigenen Berechtigungen der Person jeden Aufruf prüfen. Werkzeuge für Anmeldedaten, Identität und Zugriffskontrolle sind nie erreichbar."
+	class="doc-diagram"
+/>
+
+## Warum es ein Sonderfall ist
+
+| Einschränkung von Microsoft | Was PlaidCloud dagegen tut |
+|---|---|
+| Copilot führt nur Agents aus, die in Ihrem M365-App-Katalog veröffentlicht sind | Liefert ein **deklaratives Agent-Paket** (eine `.zip`), das Sie aus der Control Plane herunterladen und Ihr Teams-Administrator hochlädt |
+| Die Anmeldung muss zu einer festen Microsoft-Weiterleitungsadresse zurückkehren | Richtet pro Tenant einen **dedizierten vertraulichen OAuth-Client** ein, bei dem diese Adresse vorab registriert ist |
+| Benutzerdefinierte Apps sind standardmäßig blockiert | Erfordert, dass die Einrichtungsrichtlinie *Benutzerdefinierte Apps hochladen* aktiviert ist – ein anderer Schalter als die Rolle des globalen Administrators |
+| Copilot authentifiziert sich nach eigenem Zeitplan neu | Verlängert das Aktualisierungsfenster, sodass die Anmeldung etwa einen Monat statt einiger Tage hält |
+
+Das Paket gilt **pro Workspace** und trägt den Namen dieses Workspace. Die Installation ist nicht dasselbe wie die Gewährung von
+Zugriff, worum es im nächsten Abschnitt geht und woran sich viele stoßen.
+
+## Standardmäßig verweigern
+
+Eine Person, die den Agent installiert und sich erfolgreich angemeldet hat, erhält trotzdem keine Daten, bis ein
+Administrator ihr eine Zugriffsstufe zuweist. Der Agent verbindet sich, authentifiziert sich und antwortet *„Es wurde kein
+Zugriff gewährt“* – das ist das System bei der Arbeit, kein Fehler.
+
+Die Stufe wird **serverseitig aus der Zuweisung ermittelt, die ein Administrator vorgenommen hat**, nicht aus irgendetwas,
+was das eingehende Token behauptet. Ein Token kann sich keine höhere Stufe verschaffen.
+
+| Stufe | Der Agent kann … | Typische Verwendung |
+|---|---|---|
+| **Nur Lesen** | Projekte und Tabellen auflisten und beschreiben, Tabellendaten lesen, Dimensionsmitglieder auflisten, Umlagen erklären | Die meisten Personen – der sichere Standard |
+| **Lesen/Schreiben** | Das Obige sowie Schreibvorgänge, die die Person ohnehin ausführen darf | Analysten, die Daten pflegen |
+| **Vollständig** *(veraltet – entfällt am 15. Januar 2027)* | Den vollständigen Werkzeugsatz dieser Person, einschließlich rohem SQL mit Schreibzugriff | Power-User und Ersteller |
+
+Zwei weitere Regeln:
+
+- **Die großzügigste Stufe gewinnt.** Wenn jemand irgendwie mehr als eine Stufe innehat, gilt die höchste.
+- **Die Stufe ist eine Obergrenze, nie eine Gewährung.** Innerhalb davon gelten weiterhin die eigenen PlaidCloud-Rollen und ACLs der Person,
+  sodass der Agent nie Daten anzeigen kann, die sie nicht ohnehin selbst öffnen könnte.
+
+<Aside type="note">
+Die Zugriffsgruppen hinter diesen Stufen sind in Identity gesperrt – sie können nicht umbenannt oder gelöscht werden,
+und ihre Berechtigungen können nicht bearbeitet werden. Sie fügen Mitglieder hinzu und entfernen sie (auch über eine SAML-Gruppenzuordnung),
+sodass die Verankerungen nicht versehentlich zweckentfremdet werden können.
+</Aside>
+
+## Immer tabu
+
+Unabhängig von der Stufe und unabhängig von den eigenen Berechtigungen der Person kann Copilot nie Folgendes erreichen:
+
+- Verbindungs- und Anmeldedateneinstellungen, wer eine Verbindung besitzt oder darauf zugreifen darf, oder
+  Anmeldedaten und Zugriffskontrolle von Dokumentenkonten
+- Mitgliederverwaltung, Gruppen- und Rollenzuweisung, Verteilerlisten, Zurücksetzen von Kennwörtern
+- Zugriffskontrolle von Projekten, der ERP-Buchungsmodus eines Projekts und Veröffentlichung
+- Code benutzerdefinierter Funktionen und App-Bereitstellungen
+
+Das sind unumkehrbare oder anmeldedatenbezogene Aktionen, bei denen ein Fehlgriff durch Prompt-Injection
+kostspielig wäre und die selten Teil analytischer Arbeit sind. Sie bleiben ausschließlich Menschen vorbehalten.
+
+## Der Weg einer Frage
+
+<Steps>
+
+1. Eine Person fragt den Agent in Teams, Outlook oder im Microsoft-365-Chat.
+
+2. Copilot ruft den Agent auf, der eine PlaidCloud-Identität benötigt – bei der ersten Verwendung fordert er die Anmeldung
+   über das eigene Fenster von Microsoft an und speichert das Ergebnis.
+
+3. Die Anfrage erreicht den PlaidCloud-MCP-Endpunkt mit dem Token dieser Person.
+
+4. Der Server ermittelt ihre Zugriffsstufe aus dem, was ein Administrator zugewiesen hat. Keine Stufe, keine Daten.
+
+5. Jeder Werkzeugaufruf wird gegen die Stufe, die eigenen Bereiche und ACLs der Person und die Sperrliste geprüft.
+
+6. Die Antwort kommt aus einer echten Abfrage – mit einem Konfidenzsignal und Einschränkungen, nicht geraten.
+
+</Steps>
+
+Da die Stufe bei jeder Anfrage live geprüft wird, wirkt die Gewährung von Zugriff bereits bei der nächsten Nachricht der Person.
+Es muss weder eine Abmeldung noch eine Neuinstallation erfolgen.
+
+<Aside type="tip">
+**Es gibt einen Notausschalter für den gesamten Pfad.** Betreiber können den Copilot-Pfad komplett deaktivieren, und er schlägt
+geschlossen fehl – jedes Copilot-Token wird abgelehnt, solange er ausgeschaltet ist, ohne die anderen KI-Oberflächen zu berühren.
+</Aside>
+
+## Copilot im Vergleich zu Coding-Agents
+
+Beide verbinden sich mit demselben MCP-Server und unterliegen derselben Durchsetzung, richten sich aber an unterschiedliche
+Personen:
+
+| | Microsoft 365 Copilot | KI-Coding-Agents |
+|---|---|---|
+| **Wer** | Ganze Teams, nicht technisch | Analysten und Entwickler |
+| **Wo** | Teams, Outlook, M365-Chat | Eine IDE oder ein Desktop-Client |
+| **Einrichtung** | Der Administrator veröffentlicht einmal ein Paket | Jede Person verbindet ihren eigenen Client |
+| **Zugriffsmodell** | Eine zugewiesene Stufe, standardmäßig verweigert | Die eigenen Berechtigungen der Person |
+
+## Verwandte Themen
+
+- [Microsoft 365 Copilot](/de/integrations/microsoft-365-copilot/) – die Einrichtungsanleitung
+- [Analysepfade](/de/integrations/ai-coding-agents/analysis-paths/) – damit alle dieselbe Tabelle auf dieselbe Weise abfragen
+- [Antworten, denen Sie vertrauen können](/de/integrations/ai-coding-agents/honest-answers/) – Konfidenz und Einschränkungen
+- [KI- und LLM-Architektur](/de/integrations/ai-architecture/) – der gemeinsame gesteuerte Pfad

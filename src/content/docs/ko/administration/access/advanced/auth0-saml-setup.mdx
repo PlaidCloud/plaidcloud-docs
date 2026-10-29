@@ -1,0 +1,123 @@
+---
+title: 싱글 사인온을 위한 Auth0 SAML 설정
+description: PlaidCloud 싱글 사인온을 위해 Auth0를 SAML ID 공급자로 구성하여 멤버를 위한 안전한 페더레이션 인증을 사용합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/auth0-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud는 SAML 2.0을 통한 싱글 사인온(SSO)을 지원합니다. 이 가이드에서는 조직의 사용자가 PlaidCloud에 접속할 때 Auth0를 통해 인증할 수 있도록 Auth0를 SAML ID 공급자로 구성하는 방법을 안내합니다.
+
+<Aside>PlaidCloud 측 구성은 PlaidCloud 팀이 처리합니다. 사용자는 Auth0에서 SAML 애플리케이션을 설정하고 **Identity Provider Metadata URL**을 PlaidCloud에 제공해야 합니다. 나머지 구성은 PlaidCloud 지원팀이 완료합니다.</Aside>
+
+## 사전 요구 사항
+
+- Auth0 테넌트
+- **Administrator** 역할이 있는 Auth0 계정
+- 설정을 조율하고 구성 값을 주고받기 위한 PlaidCloud 지원팀과의 연락
+
+## 개요
+
+설정 과정에서는 두 당사자가 SAML 메타데이터를 교환합니다.
+
+1. **사용자가 구성합니다.** SAML2 Web App 애드온을 사용하도록 설정한 애플리케이션을 Auth0에서 구성하고, Identity Provider Metadata URL을 PlaidCloud에 제공합니다.
+2. **PlaidCloud가 제공합니다.** Auth0 애플리케이션 구성을 완료하는 데 필요한 서비스 공급자(SP) Entity ID와 ACS URL(Assertion Consumer Service URL)을 제공합니다.
+
+아래 3단계를 완료하기 전에 PlaidCloud 지원팀과 협의하여 SP 값을 받으십시오.
+
+## 1단계: 애플리케이션 만들기
+
+1. [Auth0 Dashboard](https://manage.auth0.com)에 로그인합니다.
+2. 왼쪽 사이드바에서 **Applications** > **Applications**로 이동합니다.
+3. **Create Application**을 클릭합니다.
+4. 애플리케이션 이름을 입력합니다(예: `PlaidCloud SSO`).
+5. 애플리케이션 유형으로 **Regular Web Applications**를 선택합니다.
+6. **만들기**를 클릭합니다.
+
+## 2단계: SAML2 Web App 애드온 사용
+
+1. 애플리케이션 상세 페이지에서 **Addons** 탭을 선택합니다.
+2. **SAML2 Web App** 애드온을 클릭하여 사용하도록 설정합니다.
+3. 애드온 설정 패널이 열립니다. 다음 단계에서 구성하므로 열어 둡니다.
+
+## 3단계: SAML 설정 구성
+
+<Aside>이 단계를 완료하려면 PlaidCloud에서 받은 **SP Entity ID**와 **ACS URL**이 필요합니다. 이 값은 PlaidCloud 지원팀에 문의하여 받으십시오.</Aside>
+
+**SAML2 Web App** 애드온 설정 패널에서 다음을 수행합니다.
+
+1. **Application Callback URL** 필드에 PlaidCloud에서 제공한 ACS URL을 입력합니다.
+2. **설정** JSON 편집기에서 `audience` 필드를 PlaidCloud에서 제공한 SP Entity ID로 설정합니다.
+
+```json
+{
+  "audience": "your-sp-entity-id-from-plaidcloud",
+  "mappings": {
+    "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "given_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+    "family_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+  },
+  "nameIdentifierFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+  "nameIdentifierProbes": [
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+  ]
+}
+```
+
+3. **사용**(또는 **저장**)을 클릭하여 설정을 적용합니다.
+
+## 4단계: Identity Provider Metadata URL 확인 및 전송
+
+애드온을 사용하도록 설정했으면 메타데이터 URL을 찾아 PlaidCloud에 보내 통합을 완료합니다.
+
+1. **SAML2 Web App** 애드온 설정 패널에서 **사용법** 탭을 선택합니다.
+2. **Identity Provider Metadata** URL을 복사합니다(형식: `https://{your-auth0-domain}/samlp/metadata/{client-id}`).
+
+**이 Metadata URL을 PlaidCloud 지원팀에 보내십시오.** 이 URL은 PlaidCloud가 ID 공급자 측에서 신뢰 관계를 구성하는 데 필요한 Entity Descriptor URL입니다. PlaidCloud가 이 URL을 받으면 팀에서 Keycloak 구성을 완료하고 SSO를 테스트할 준비가 되었을 때 알려 드립니다.
+
+## 5단계: 그룹 속성 매핑 구성(선택 사항)
+
+PlaidCloud 구성에서 그룹 기반 보안 역할 할당을 사용하는 경우 Auth0 규칙 또는 작업을 사용하여 SAML 어설션으로 그룹 멤버십을 전달할 수 있습니다.
+
+### Auth0 작업 사용
+
+1. 왼쪽 사이드바에서 **작업** > **Library**로 이동합니다.
+2. **Build Custom**을 클릭하고 **Login / Post Login** 트리거용 새 작업을 만듭니다.
+3. SAML 어설션에 그룹 정보를 추가하는 로직을 작성합니다. 예를 들어 그룹이 사용자 메타데이터로 저장되어 있는 경우는 다음과 같습니다.
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const groups = event.user.app_metadata?.groups || [];
+  api.samlResponse.setAttribute("groups", groups);
+};
+```
+
+4. 작업을 배포하고 **Login** 흐름에 추가합니다.
+
+<Aside>PlaidCloud에서 그룹 기반 보안 역할 할당이 올바르게 작동하려면 어떤 그룹 속성 이름과 형식이 필요한지 PlaidCloud 지원팀과 협의하십시오.</Aside>
+
+## 6단계: 사용자 액세스 제어
+
+Auth0는 애플리케이션에 연결된 연결(connection)과 규칙에 따라 인증할 수 있는 사용자를 제어합니다.
+
+1. 애플리케이션 상세 페이지에서 **연결** 탭을 선택합니다.
+2. 이 애플리케이션에 적합한 연결(예: 조직의 데이터베이스 연결, Active Directory 또는 소셜 연결)을 사용하도록 설정합니다.
+3. PlaidCloud에 액세스하면 안 되는 연결은 모두 사용 중지합니다.
+
+연결 내의 특정 사용자로 액세스를 제한하려면 Auth0 작업 또는 규칙을 사용하여 사용자 속성이나 그룹 멤버십에 따라 인증을 허용하거나 거부합니다.
+
+## 통합 테스트
+
+PlaidCloud에서 구성이 완료되었다고 확인한 후 다음을 수행합니다.
+
+1. 조직의 PlaidCloud 워크스페이스로 이동합니다(예: `https://my-workspace.plaid.cloud`).
+2. Auth0 로그인 페이지(또는 구성한 연결의 로그인 페이지)로 리디렉션됩니다.
+3. Auth0 자격 증명으로 로그인합니다.
+4. 인증에 성공하면 PlaidCloud로 다시 리디렉션됩니다.
+
+오류가 발생하면 다음을 확인하십시오.
+- Application Callback URL과 audience가 PlaidCloud에서 제공한 값과 정확히 일치하는지 확인합니다.
+- 애플리케이션에서 SAML2 Web App 애드온이 사용 설정되어 있는지 확인합니다.
+- `nameIdentifierFormat`이 이메일 주소 형식으로 설정되어 있는지 확인합니다.
+- PlaidCloud에 보낸 Metadata URL에 접근할 수 있는지 확인합니다.
+- 사용자의 연결이 애플리케이션에서 사용 설정되어 있는지 확인합니다.

@@ -1,0 +1,139 @@
+---
+title: Carregar, transformar e publicar dados
+description: Tutorial de ponta a ponta — importe um CSV, limpe-o com etapas de tabela e publique o resultado para consumidores downstream.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Este tutorial leva cerca de uma hora. Ao final, você terá um fluxo de trabalho funcional que importa um CSV, o transforma por meio de algumas etapas de tabela e publica o resultado.
+
+## O que você vai construir
+
+Um fluxo de trabalho que pega um CSV bruto de vendas, limpa-o, junta-o a uma tabela de referência de produtos, calcula colunas derivadas e publica o resultado como uma tabela de fatos limpa.
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Pré-requisitos
+
+- Um espaço de trabalho do PlaidCloud ([inicie uma avaliação gratuita](https://app.plaidcloud.com) se não tiver um)
+- Um projeto para trabalhar (crie um na guia **Projetos**, se necessário)
+- Dois arquivos CSV para importar — neste tutorial usaremos um arquivo simples de transações de vendas e um arquivo de catálogo de produtos. Você pode usar os seus ou gerar dados de exemplo com qualquer ferramenta de planilhas
+
+## Etapa 1: crie o fluxo de trabalho
+
+<Steps>
+
+1. Abra seu projeto e vá para a guia **Fluxos de trabalho**.
+2. Clique em **Novo fluxo de trabalho**. Dê a ele um nome descritivo, como "Sales Cleanup".
+3. Clique em **Criar**. O fluxo de trabalho vazio aparece na sua lista.
+4. Clique duas vezes no fluxo de trabalho para abrir o Workflow Explorer.
+
+</Steps>
+
+## Etapa 2: importe o CSV de vendas
+
+<Steps>
+
+1. No Workflow Explorer, adicione uma nova etapa.
+2. Escolha **Import → CSV** (ou a etapa de importação que corresponder ao formato da sua origem).
+3. Na configuração da etapa:
+   - **Arquivo de origem** — aponte para o seu CSV de vendas (faça o upload ou escolha em uma conta de documentos conectada)
+   - **Tabela de destino** — dê a ela o nome `sales_raw`
+   - **Delimitador, caractere de aspas, linha de cabeçalho** — ajuste se o seu arquivo for fora do padrão
+4. Execute a etapa. O CSV é gravado como uma nova tabela no seu projeto.
+
+</Steps>
+
+Confira a guia **Tabelas** para ver `sales_raw`. Entre nela para verificar se os dados parecem corretos — quantidade de colunas, linhas de exemplo, tipos de dados.
+
+## Etapa 3: importe o catálogo de produtos
+
+Repita a Etapa 2 com o seu CSV de produtos, tendo como destino uma tabela chamada `products_raw`. Isso lhe dá as duas tabelas de referência necessárias para a junção.
+
+## Etapa 4: filtre as linhas ruins
+
+Dados reais de vendas têm lacunas — valores nulos, transações de teste, estornos que você não quer na tabela de fatos principal. Adicione uma etapa de filtro para removê-los.
+
+<Steps>
+
+1. Adicione uma etapa **Tabelas → Table Lookup** (ou qualquer transformação de tabela que permita filtrar).
+2. Configure:
+   - **Tabela de origem**: `sales_raw`
+   - **Tabela de destino**: `sales_clean`
+   - **Condições de filtro**: por exemplo, `amount > 0 AND status = 'completed'`
+3. Execute a etapa. `sales_clean` deve ter menos linhas que `sales_raw`.
+
+</Steps>
+
+<Aside>
+Os filtros são aplicados conforme os dados fluem da origem para o destino. A tabela de origem permanece inalterada. Este é um padrão central do PlaidCloud — cada etapa lê de uma ou mais origens e grava em um ou mais destinos, deixando os originais intactos para fins de auditoria.
+</Aside>
+
+## Etapa 5: junte ao catálogo de produtos
+
+Agora combine as linhas de vendas limpas com os detalhes dos produtos do catálogo.
+
+<Steps>
+
+1. Adicione uma etapa **Tabelas → Table Inner Join**.
+2. Configure:
+   - **Tabela esquerda**: `sales_clean`
+   - **Tabela da direita**: `products_raw`
+   - **Chaves de junção**: a coluna que liga as duas tabelas (por exemplo, `product_id`)
+   - **Tabela de destino**: `sales_enriched`
+3. Execute a etapa.
+
+</Steps>
+
+`sales_enriched` agora tem todas as colunas das duas tabelas. Você provavelmente quer um subconjunto — isso vem a seguir.
+
+## Etapa 6: selecione e calcule colunas
+
+Limpar costuma significar descartar colunas de que você não precisa e calcular colunas derivadas. Adicione outra etapa de tabela:
+
+<Steps>
+
+1. Adicione uma etapa **Tabelas → Table Lookup** (usada aqui para seleção e cálculo de colunas).
+2. Configure:
+   - **Origem**: `sales_enriched`
+   - **Destino**: `sales_final`
+   - **Colunas a manter**: o subconjunto que importa para os consumidores downstream
+   - **Colunas calculadas**: por exemplo, `revenue = amount * price`, `margin = revenue - cost`
+3. Execute a etapa.
+
+</Steps>
+
+Para cálculos em nível de coluna, a [referência de expressões](/pt-br/reference/expressions/) cobre todas as funções disponíveis — operações com strings, aritmética de datas, lógica condicional, agregações.
+
+## Etapa 7: publique o resultado
+
+Deixe `sales_final` disponível para painéis e sistemas downstream.
+
+<Steps>
+
+1. Adicione uma etapa **Data → Publish** (ou use a opção **Publicar** diretamente na tabela).
+2. Configure quem pode ler a tabela publicada — normalmente outros membros do espaço de trabalho, além de quaisquer sistemas externos com acesso.
+3. Execute a etapa.
+
+</Steps>
+
+A tabela publicada agora é acessível por [painéis](/pt-br/guides/dashboards/), ferramentas de BI e qualquer consumidor externo com as permissões corretas.
+
+## Etapa 8: execute o fluxo de trabalho inteiro
+
+Clique em **Executar** no fluxo de trabalho (não apenas em uma etapa). Acompanhe o log enquanto cada etapa é executada em ordem. O pipeline completo é executado da importação do CSV até a publicação.
+
+Se alguma etapa der erro, o guia [Gerenciamento de erros de etapa](/pt-br/guides/workflows/managing-step-errors/) cobre a depuração — os problemas mais comuns são chaves de junção incorretas (incompatibilidade entre tabelas) e valores nulos inesperados em colunas calculadas.
+
+## Próximos passos
+
+- [Construa um modelo de alocação](/pt-br/get-started/tutorials/build-an-allocation/) — distribua custos entre consumidores usando dados de direcionadores
+- [Guia de fluxos de trabalho](/pt-br/guides/workflows/) — tratamento de erros, condições, loops, variáveis
+- [Referência de etapas de fluxo de trabalho](/pt-br/reference/workflow-steps/) — cada tipo de etapa e o que ele faz

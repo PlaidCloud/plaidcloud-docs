@@ -1,0 +1,263 @@
+---
+title: Microsoft 365 Copilot
+description: 让团队在 Microsoft 365 Copilot 中查询 PlaidCloud 数据：只需安装一次 PlaidCloud 代理，登录并授予访问级别即可。
+sidebar:
+  label: Microsoft 365 Copilot
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/microsoft-365-copilot.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 数据引入 **Microsoft 365 Copilot**。安装 PlaidCloud 代理并为用户授予访问权限后，他们就可以用自然语言向 Copilot 询问项目、表、维度和分摊模型的相关问题，无需单独登录，无需打开 PlaidCloud 窗口，也无需编写 SQL。
+
+> *“列出我的 PlaidCloud 项目。”*
+> *“Enterprise Profitability 中有哪些表？显示其中一张表的前几行。”*
+> *“上个季度亚特兰大成本中心分摊的 IT 成本为什么上升了？”*
+
+<Aside type="note">
+这与 [GitHub Copilot](/zh-cn/integrations/ai-coding-agents/copilot/) 不同，后者将开发者的 IDE 连接到 PlaidCloud。本页介绍的是 **Microsoft 365 Copilot**，即整个团队已在使用的 Teams、Outlook 和 Microsoft 365 应用中的助手。
+</Aside>
+
+## 工作原理
+
+PlaidCloud 发布了一个接入 Microsoft 365 Copilot 的小型**代理**。当有人向 Copilot 询问数据相关问题时，代理会安全地连接到您的 PlaidCloud 工作区，以该用户自己的权限运行请求，再由 Copilot 解释结果。
+
+- **大多数人只读。** 常见的访问级别是只读：列出并描述项目和表、读取表数据、列出维度成员，以及解释分摊结果。代理从不凭空编造数字；每个答案都来自对您数据的真实查询，并附带置信度信号和通俗易懂的注意事项，详见[值得信赖的答案](/zh-cn/integrations/ai-coding-agents/honest-answers/)。
+- **每个人只能看到自己的数据。** 请求以登录用户的身份运行，受其已有的 PlaidCloud 角色和访问控制约束。代理永远无法访问凭据、身份或访问控制设置。
+- **授予之前没有访问权限。** 安装代理不等于授予访问权限。在 PlaidCloud 管理员为其授予访问级别之前，已登录的用户只会看到“尚未授予访问权限”的明确提示。这是有意为之，详见[访问级别](#访问级别)。
+
+有关这些要点背后的机制，包括已发布的代理包、专用的 OAuth 客户端，以及访问级别的解析和强制执行方式，请参阅 [Copilot 架构](/zh-cn/integrations/ai-architecture/microsoft-365-copilot/)。
+
+## 设置概览
+
+按顺序列出的**完整路径**如下。最多涉及三种角色，同一个人往往身兼数职。**步骤 1 至 5 安装代理；步骤 6 才真正让数据流通。**
+
+| # | 步骤 | 执行者 | 位置 |
+|---|---|---|---|
+| 1 | [下载代理包](#步骤-1下载代理包)（`.zip`） | PlaidCloud 工作区管理员 | PlaidCloud 控制平面 → **工作区** |
+| 2 | [允许自定义应用](#步骤-2允许自定义应用) | Microsoft 365 / Teams 管理员 | Teams 管理中心 → **Setup policies** |
+| 3 | [上传代理包](#步骤-3上传代理包) | Microsoft 365 / Teams 管理员 | Teams 管理中心 → **Manage apps → 操作** |
+| 4 | [在 Copilot 中添加代理](#步骤-4在-copilot-中添加代理) | 每位用户 | Microsoft 365 Copilot → **More agents** |
+| 5 | [登录](#步骤-5登录) | 每位用户 | Copilot（仅一次） |
+| 6 | [授予访问级别](#步骤-6授予访问级别) | PlaidCloud 管理员 | PlaidCloud |
+
+<Aside type="caution">
+**在步骤 6 完成之前，代理可以连接，但不会返回任何数据。** 如果登录成功后收到“尚未授予访问权限”的答复，说明一切运行正常，只是该用户还需要一个访问级别。这不是错误。
+</Aside>
+
+## 步骤 1：下载代理包
+
+贵组织的代理包是一个 `.zip` 文件，可从 [PlaidCloud 控制平面](/zh-cn/administration/control-plane/)自行下载，无需申请，也无需等待文件。
+
+<Steps>
+
+1. 登录 **PlaidCloud 控制平面**，从左侧导航栏打开**工作区**。
+
+2. 打开存放您数据的工作区（使用**编辑**或**视图**操作）。
+
+3. 在工作区对话框底部，点击 **Download Copilot Package** 并保存该 `.zip` 文件。
+
+</Steps>
+
+<Aside type="note">
+只有在 PlaidCloud 完成该工作区的 Copilot 连接设置后，才会出现 **Download Copilot Package** 按钮。如果没有看到该按钮，说明连接尚未就绪，请联系您的 PlaidCloud 代表。（该按钮位于**工作区**屏幕，而不是仅限管理员使用的租户屏幕。）
+</Aside>
+
+## 步骤 2：允许自定义应用
+
+*Microsoft 365 / Teams 管理员操作。* 默认情况下，Microsoft 365 会阻止并非来自公共应用商店的应用，因此必须先开启此设置，才能安装 PlaidCloud 代理。
+
+<Steps>
+
+1. 在 [Teams 管理中心](https://admin.teams.microsoft.com/)中，依次进入 **Teams apps → Setup policies → Global (Org-wide default)**。
+
+2. 将 **Upload custom apps** 设置为**开启**，然后点击**保存**。
+
+</Steps>
+
+<Aside type="caution">
+全局管理员身份**并不**等同于已开启此设置，它是一项单独的策略。如果跳过这一步，上传会失败，并提示 *“Uploading custom apps is not allowed.”* 策略变更最长可能需要约 24 小时才能生效（通常要短得多）。如果只想对试点分组开放而非全组织开放，请创建单独的设置策略并分配给这些用户。
+</Aside>
+
+## 步骤 3：上传代理包
+
+*Microsoft 365 / Teams 管理员操作。* 将 `.zip` 添加到贵组织的应用目录。
+
+<Steps>
+
+1. 在 Teams 管理中心，依次进入 **Teams apps → Manage apps**。
+
+2. 点击页面**右上角**的**操作**菜单，然后选择 **Upload new app**。
+
+   <Aside type="note">
+   “Upload new app”位于右上角的**操作**菜单中，而不是灰色工具栏（Edit installs / Edit availability / …）中，后者作用于已选中的应用。
+   </Aside>
+
+3. 选择您下载的 `.zip`。应用随即上传并发布（您会看到 **Published version 1.0.0**），支持 Teams、Outlook 和 Copilot。
+
+4. 在该应用的页面上设置 **Availability**：全面推广选择 **Everyone (org-wide default)**，试点则选择特定分组。
+
+</Steps>
+
+<Aside type="tip">
+**想先在自己的账号上立即测试，而不进行全组织推广？** 可以跳过管理中心：打开 [Microsoft 365 Copilot](https://m365.cloud.microsoft/chat)，在**代理**下选择上传自定义应用，然后选择该 `.zip`。它只会为您自己侧载，并立即出现。
+</Aside>
+
+## 步骤 4：在 Copilot 中添加代理
+
+接下来需要将代理添加到每位用户的 Copilot 中。
+
+<Steps>
+
+1. 打开 **Microsoft 365 Copilot**（[m365.cloud.microsoft/chat](https://m365.cloud.microsoft/chat)或在 Teams 中），在代理列表中点击 **More agents**。
+
+2. 找到 **PlaidCloud** 代理并点击**添加**。它随后会出现在代理列表中，可随时打开。每个工作区的代理都叫 **PlaidCloud**；如果有多个，代理的说明中会显示工作区名称以便区分。
+
+</Steps>
+
+<Aside type="note">
+新近**面向全组织发布**的代理可能需要一段时间才会出现在 **More agents** 下：几分钟，偶尔需要几个小时，取决于 Microsoft 的传播速度。**侧载**的应用（步骤 3 中的提示）会立即出现。如需为所有人预先安装代理，免去他们自行添加的麻烦，可通过 Teams 的**设置策略**固定该代理。
+</Aside>
+
+## 步骤 5：登录
+
+用户首次打开代理并提出问题时，Copilot 会提示其**登录**。这是正常的一次性步骤。
+
+<Steps>
+
+1. 打开代理并提出问题，例如 *“列出我的 PlaidCloud 项目。”*
+
+2. 出现提示时，选择 **Sign in** 并完成 PlaidCloud 登录。
+
+</Steps>
+
+此后连接会被记住，用户无需每次或每天都登录。只有偶尔（大约每月一次）或访问权限发生变化时，才需要重新登录。
+
+<Aside type="note">
+即使您已登录 Microsoft 365，这里的登录仍需交互完成：Copilot 会打开自己的登录窗口，不会沿用您现有的会话。这是预期行为。该窗口带有 PlaidCloud 自己的品牌标识，因此应完成的正是 PlaidCloud 登录界面。
+</Aside>
+
+代理首次读取 PlaidCloud 数据时，Copilot 会询问一次：*“I'll connect to PlaidCloud to help with this and future requests. You can manage access anytime in Settings.”* 请选择**允许**。此后，代理会直接运行只读查询而不再询问，因此多步骤问题可以一次性得到解答。代理对 PlaidCloud 数据的所有查询都是只读的，访问范围仍受该用户的 PlaidCloud 访问级别、权限和行级安全限制。
+
+## 步骤 6：授予访问级别
+
+正是这一步将“尚未授予访问权限”变成真正的答案。用户登录后，由 **PlaidCloud 管理员**为其授予访问级别（参见下文的[访问级别](#访问级别)）。访问权限**默认拒绝**：未分配级别时，代理可以连接，但不会返回任何数据。
+
+每个级别对应一个 PlaidCloud 分组，每位用户只属于其中一个：
+
+| 级别 | 分组 |
+|---|---|
+| 只读 | **Microsoft 365 Copilot Read Only** |
+| 读/写 | **Microsoft 365 Copilot Read and Write** |
+| 完整 | **Microsoft 365 Copilot Full Access** |
+
+不属于上述任何分组的用户会收到提示，要求其请管理员将自己添加到 **Microsoft 365 Copilot Read Only** 分组（或另外两个分组之一）。请将用户添加到与其所需访问权限相符的分组。
+
+授予级别后，用户只需**再次提问**，无需退出登录或重新安装。每次请求都会实时检查访问权限，因此下一条消息就会返回数据。
+
+<Aside type="note">
+访问级别在 PlaidCloud 一侧管理。请联系您的 PlaidCloud 代表或 [support@plaidcloud.com](mailto:support@plaidcloud.com) 来授予（或更改）用户的级别；如果您的 PlaidCloud 管理员直接管理身份，也可以在 PlaidCloud 的身份管理中分配级别。
+</Aside>
+
+## 访问级别
+
+每位 PlaidCloud Copilot 用户都持有三个级别之一。该级别是代理权限的**上限**；在此范围内，用户自己的 PlaidCloud 权限仍然适用，因此代理永远不能显示或更改用户本来无法访问的数据。
+
+| 级别 | 代理加载的工具 | 能否写入？ | 原生 SQL | 典型用途 |
+|---|---|---|---|---|
+| **只读** | 仅限读取和查找工具：列出并描述项目和表、读取表数据、列出维度成员、解释分摊。 | 否。仅可读取和描述。 | 仅限只读查询（`SELECT` 和集合运算）；会写入的语句将被拒绝。 | 大多数人。安全的默认选择。 |
+| **读/写** | 包含只读级别的全部工具，另加用户获准使用的写入工具，例如更新表数据、编辑维度节点和上传文档。 | 是，仅限结构化写入，且仍受用户自身权限约束。 | 仅限只读查询。更改需通过写入工具完成，绝不使用原生写入 SQL。 | 维护数据的分析师。 |
+| **完整** *（已弃用，将于 2027 年 1 月 15 日移除）* | 用户完整的 PlaidCloud 工具集，但不含下列始终被阻止的操作。 | 是，包括结构化写入和会写入的原生 SQL，受用户自身数据库角色约束。 | 读取和写入 SQL。 | 高级用户和构建者。 |
+
+以下规则适用于所有级别：
+
+- **默认拒绝。** 未分配级别即无访问权限。在有人被授予级别之前，不会公开任何内容。
+- **以最宽松者为准。** 如果某位用户意外持有多个级别，则以最高级别为准。
+- **某些操作代理始终无法执行，即使是完整级别。** 无论用户自己的 PlaidCloud 权限如何，凭据、身份、访问控制和代码部署类工具都仅限人工操作。在任何级别下，代理都不能：
+  - **更改凭据或访问控制**：数据连接凭据以及谁拥有或可访问某个连接、文档存储凭据及其访问控制、项目访问控制、项目的 ERP 过账模式、成员账户、分组成员关系和角色、分发列表、密码重置，或发布；以及
+  - **部署或编写代码**：用户定义函数代码、JupyterLite 应用或 Panel 应用。
+
+## 使用代理
+
+打开 Copilot，选择您的 PlaidCloud 代理，然后用自然语言提问。以下是一些很好的起点：
+
+- **查找您的工作：** *“列出我的 PlaidCloud 项目。”* / *“项目 X 中有哪些表？”*
+- **读取数据：** *“显示客户表的前 20 行。”* / *“Region 维度中有哪些值？”*
+- **解释结果：** *“亚特兰大成本中心的分摊成本在第一季度和第二季度之间为什么发生了变化？”*
+- **随身带走：** *“将其导出为电子表格。”* 代理会根据所获取的数据创建 CSV、Excel、PowerPoint 或 Word 文件。
+
+代理会选择合适的工具，对您的数据运行查询，再由 Copilot 作答：先给出结果，再附上简短的表格或摘要。如果请求需要您无权访问的数据，或超出您的级别的更改，代理会明确说明，而不是猜测。
+
+## 提出能得到直接答案的问题
+
+Copilot 会为业务问题找到合适的分析路径、项目和表，并读取 PlaidCloud 返回的任何错误、修正请求后重试，因此出现小问题后无需重新措辞。以下几个习惯可以让答案更快、更准确：
+
+- **用通俗的语言说明指标和筛选条件。** *“UDM 中 DairyCheese 的 FY2027 EBITDA，已分摊”* 就指明了指标（EBITDA）和筛选条件（财年、计量单位、方案、业务单元）。筛选后的合计值只需一次查询即可返回。
+- **说明您指的范围。** 如果合计值可能指整个公司、某个事业部或单个业务单元，请说明是哪一个。存在歧义时，Copilot 会询问而不是猜测。
+- **核对 Copilot 说明的筛选条件。** 每个答案都会列出所应用的筛选条件。如果有不符合您本意的，请说明，Copilot 会重新运行。
+- **使用多条分析路径时，请指明分析路径。** 参见[分析路径](/zh-cn/integrations/ai-coding-agents/analysis-paths/)。
+
+## 擅长回答的问题
+
+代理最擅长回答具体的业务问题。示例：
+
+| 您的提问 | 代理的处理方式 |
+|---|---|
+| *“UDM 中 DairyCheese 的 FY2027 EBITDA，已分摊”* | 返回筛选后的合计值；如果存在[指标定义](/zh-cn/integrations/ai-coding-agents/metric-definitions/)则使用该定义，并列出所应用的筛选条件。 |
+| *“按产品显示收入、销量和成本”* | 对整张表一次性汇总每个产品的所有度量，而不是只取行样本。 |
+| *“12 号工厂每磅的成本是多少？”* | 根据指标定义回答诸如每磅美元数之类的指定数字。 |
+| *“IT 成本是如何分摊到成本中心的？”* | 根据您的分摊模型说明方法：使用了哪些动因，以及依据什么基础。 |
+| *“将其导出为电子表格”* | 根据刚获取的数据创建 CSV、Excel、PowerPoint 或 Word 文件。 |
+
+代理还会读取每条分析路径的说明，了解其中的固定筛选条件、符号约定和您的业务术语，并将它们应用于该路径上的每个问题。
+
+## 管理员设置清单
+
+代理的精确度取决于管理员提供的上下文。安装完成后：
+
+1. **为每条分析路径编写说明。** 说明表是什么、符号约定、始终适用的筛选条件以及您的业务术语。代理在该路径上执行每次查询之前都会读取这些内容。参见[让路径对 AI 助手更有用](/zh-cn/integrations/ai-coding-agents/analysis-paths/#让路径对-ai-助手更有用)。
+2. **定义大家常问的业务指标。** 项目中有指标定义时，代理会据此回答收入或每磅成本等指定数字，让每个人得到相同的数字。参见[指标定义](/zh-cn/integrations/ai-coding-agents/metric-definitions/)。
+3. **保持代理包为最新。** 文件创建，以及指标、细分和分摊方法相关的答案，需要代理包版本 1.4.0 或更高。请重新下载代理包并[更新](#更新代理包)。
+
+## 故障排除
+
+| 症状 | 原因和解决方法 |
+|---|---|
+| 在 Manage apps 中找不到 **Upload new app** | 它位于页面右上角的**操作**菜单中，而不是灰色工具栏。如果完全找不到，说明尚未开启[允许自定义应用](#步骤-2允许自定义应用)。 |
+| 安装时出现 **“Uploading custom apps is not allowed”** | *Upload custom apps* 策略处于关闭状态。请开启（[步骤 2](#步骤-2允许自定义应用)），等待其生效后重试。 |
+| 代理没有出现在 Copilot 的代理列表中 | 请在 **More agents** 下查找并点击**添加**。面向全组织发布的代理可能需要一段时间才会出现；如需立即测试，请将 [`.zip` 侧载](#步骤-3上传代理包)到您自己的账号。 |
+| **“No Microsoft 365 Copilot access has been granted to this user”** | 在[授予访问级别](#步骤-6授予访问级别)之前，这是预期现象。该用户已登录并已连接，只是需要一个级别。授予后请立即再次提问。 |
+| **“Ask an administrator to add you to the Microsoft 365 Copilot Read Only group”**（或其他级别） | 该用户尚未加入任何 Copilot 访问分组。请[将其添加到分组](#步骤-6授予访问级别)（选择其所需级别对应的分组），然后让其再次提问。 |
+| Copilot 提示没有可用于查询 PlaidCloud 的工具 | 代理包已过期。请从控制平面[更新](#更新代理包)到最新版本，并开始新聊天。 |
+| 更改数据的请求被拒绝 | 该用户的访问级别（或其自身的 PlaidCloud 权限）不允许该写入。如有必要，请提升其[访问级别](#访问级别)。 |
+| 原本正常，却再次被要求登录 | 属正常现象：已保存的连接会定期刷新（大约每月一次）。请再登录一次后继续。 |
+| 答案似乎需要用户无法访问的数据 | 属预期行为：代理只会返回已登录用户本来就有权查看的数据。 |
+| **只读**用户可以登录，但无法读取表 | 临时情况，正在处理：只读 Copilot 用户目前需要更宽泛的分析访问权限才能读取表，请联系 [support@plaidcloud.com](mailto:support@plaidcloud.com)。 |
+
+## 更新代理包
+
+PlaidCloud 发布新版本的代理包时，管理员分三步进行更新：
+
+<Steps>
+
+1. 从控制平面重新下载代理包（[步骤 1](#步骤-1下载代理包)）。
+
+2. 在 Teams 管理中心，打开 **Manage apps**，选择 PlaidCloud 代理，然后选择**更新**来上传新的 `.zip`（[步骤 3](#步骤-3上传代理包)）。
+
+3. 请用户与代理开始**新聊天**。已打开的聊天仍会沿用之前的行为。
+
+</Steps>
+
+访问级别和登录状态会保留，无需任何人重新登录。如果更新后 Copilot 仍在使用旧版本，请移除并重新添加代理：打开 Agent Store，选择该代理的 **…** 菜单和 **Uninstall**，然后从 **Built by your org** 中再次添加。之后请开始新聊天。
+
+## 相关内容
+
+- [Copilot 架构](/zh-cn/integrations/ai-architecture/microsoft-365-copilot/)：设置步骤实际在做什么，以及访问级别如何强制执行
+- [值得信赖的答案](/zh-cn/integrations/ai-coding-agents/honest-answers/)：PlaidCloud 如何为每个 AI 答案评级并提示注意事项
+- [追踪分摊](/zh-cn/integrations/ai-coding-agents/tracing-allocations/)：询问分摊结果*为什么*发生变化
+- [分析路径](/zh-cn/integrations/ai-coding-agents/analysis-paths/)：为关键表命名，让整个团队以同样的方式提问
+
+## 需要帮助？
+
+代理包由您自行从控制平面下载，参见[步骤 1](#步骤-1下载代理包)。如需了解访问级别，或遇到与本页所述不符的情况，请联系您的 PlaidCloud 代表或 [support@plaidcloud.com](mailto:support@plaidcloud.com)。

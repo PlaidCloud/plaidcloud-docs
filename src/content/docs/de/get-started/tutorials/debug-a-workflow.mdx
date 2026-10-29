@@ -1,0 +1,137 @@
+---
+title: Einen Workflow debuggen
+description: Wenn ein Workflow ausfällt, finden Sie die Ursache selbst – führen Sie einen Schritt aus, zeigen Sie seine Ausgabe in der Vorschau an, lesen Sie das Protokoll, verfolgen Sie Eingaben mit dem Abhängigkeits-Audit und deuten Sie den Fehler.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*ca. 25 Minuten · einen Schritt ausführen, die Daten in der Vorschau ansehen, das Protokoll lesen, die Eingaben verfolgen*
+
+In einem Workflow stimmt etwas nicht – ein Schritt ist rot, eine nachgelagerte Zahl sieht falsch aus oder eine Ausführung ist auf halbem Weg stehen geblieben. Dieses Tutorial zeigt das manuelle Werkzeugset, um den Grund herauszufinden: einen einzelnen Schritt isoliert ausführen, ansehen, was er erzeugt hat, das Workflow-Protokoll lesen, mit dem Abhängigkeits-Audit verfolgen, woher seine Eingaben stammen, und die Fehlermeldung selbst deuten. Jedes Werkzeug beantwortet eine andere Frage, und zusammen führen sie meist ohne Raten zur Ursache.
+
+> **Möchten Sie es lieber erklärt bekommen?** Der [KI-gestützte Weg](/de/get-started/tutorials/fix-a-workflow-with-ai/) führt dieselbe Untersuchung im Dialog durch. Dieses Tutorial ist die manuelle Version – alles hier steuern Sie selbst, was sich mindestens einmal lohnt, damit Sie wissen, was der Assistent tatsächlich betrachtet.
+
+## Die Debugging-Schleife
+
+Das meiste Debuggen von Workflows folgt derselben kurzen Schleife, mit welchem Werkzeug Sie auch beginnen:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="Die Debugging-Schleife für Workflows: einen Schritt isoliert ausführen, seine Ausgabedaten in der Vorschau ansehen, das Workflow-Protokoll auf die Fehlermeldung prüfen, die Eingaben des Schritts mit dem Abhängigkeits-Audit verfolgen, dann beheben und den Schritt erneut ausführen." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Einen Schritt ausführen</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Daten ansehen</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Protokoll lesen</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Eingaben verfolgen</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">beheben, dann erneut ausführen</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Jedes Werkzeug beantwortet eine Frage – meist brauchen Sie nicht alle vier, aber sie kommen in dieser Reihenfolge zum Einsatz.</figcaption>
+</figure>
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace mit einem Projekt und einem Workflow, der ein Problem hat, dem Sie nachgehen können (ein roter Schritt, ein falsches Ergebnis oder eine Ausführung, die angehalten hat).
+- Vertrautheit mit dem [Visuellen Workflow-Designer](/de/guides/workflows/advanced-workflows/) – der Arbeitsfläche, auf der Sie das meiste davon tun.
+
+## Schritt 1: Nur den fehlerhaften Schritt ausführen
+
+Führen Sie nicht den ganzen Workflow erneut aus, nur um eine Änderung zu testen – das ist langsam und wiederholt Arbeit, der Sie bereits vertrauen. Führen Sie den einzelnen Schritt aus, den Sie untersuchen.
+
+1. Öffnen Sie den Workflow im Visuellen Workflow-Designer.
+2. Klicken Sie mit der rechten Maustaste auf den Schritt, den Sie testen möchten, und wählen Sie im Kontextmenü **Schritt ausführen**.
+3. Der Schritt läuft isoliert, auf Basis der Daten, die bereits in seinen Quelltabellen vorhanden sind.
+
+Dieser letzte Punkt ist beim Debuggen wichtig: Ein Schritt liest seine Quelltabellen so, wie sie *genau jetzt* sind. Wurde ein vorgelagerter Schritt noch nicht ausgeführt oder lief er mit veralteten Daten, spiegelt die Einzelausführung dieses Schritts genau das wider – und genau das hilft Ihnen [Schritt 4](#schritt-4-eingaben-mit-dem-abhängigkeits-audit-verfolgen) zu erkennen.
+
+Die vollständigen Details finden Sie unter [Running One Step in a Workflow](/de/guides/workflows/running-one-step-in-a-workflow/).
+
+## Schritt 2: Ansehen, was der Schritt erzeugt hat
+
+Nachdem der Schritt gelaufen ist, sehen Sie sich an, was er tatsächlich geschrieben hat, bevor Sie entscheiden, ob es korrekt ist. Die **Datenvorschau-Schublade** zeigt die Ausgabedaten eines Schritts direkt auf der Arbeitsfläche – die ersten 100 Zeilen mit typisierten Spalten, unten angedockt.
+
+Es gibt drei Wege hinein, die alle in dieselbe Schublade führen:
+
+- **Fahren Sie mit der Maus über die Schrittkachel** – unten rechts an der Kachel erscheint ein kleines Symbol zum Durchsuchen (Tabelle). Klicken Sie darauf.
+- **Klicken Sie mit der rechten Maustaste auf den Schritt** und wählen Sie **Ausgabedaten in der Vorschau anzeigen**.
+- **Klicken Sie im Inspector** auf das **Augensymbol** einer beliebigen Ausgabekarte im Abschnitt **Ausgaben** des Schritts.
+
+Worauf Sie achten, hängt vom Symptom ab:
+
+| Symptom | Worauf Sie in der Vorschau achten |
+|---|---|
+| Falsche oder fehlende Spalten | Hat der Schritt die erwarteten Spalten erzeugt? Ein fehlgeschlagener Join oder eine fehlerhafte Spaltenauswahl zeigt sich hier zuerst. |
+| Zu wenige / zu viele Zeilen | Die Kopfzeile zeigt **Showing first N of ~M rows** – entspricht die Gesamtzahl ungefähr dem Erwarteten? |
+| Leere Ausgabe | Die Schublade meldet *Table is empty* (ausgeführt, null Zeilen) oder *No data yet — run the step* (nie ausgeführt). |
+| Verdächtige Werte | Sortieren Sie eine Spalte, damit Nullwerte oder Ausreißer oben erscheinen. |
+
+Solange die Schublade geöffnet ist, **richtet ein Klick auf einen anderen Schritt die Vorschau auf dessen Ausgabe aus** – so können Sie eine Kette von Schritten durchgehen und beobachten, wo die Daten zum ersten Mal falsch werden. Wenn Sie filtern, aufteilen oder über die ersten 100 Zeilen hinausgehen müssen, klicken Sie in der Kopfzeile der Schublade auf **Im Tabellen-Explorer öffnen**.
+
+Alle Details stehen unter [Preview Step Data](/de/guides/workflows/preview-step-data/).
+
+## Schritt 3: Das Workflow-Protokoll lesen
+
+Die Vorschau zeigt Ihnen, *wie* die Ausgabe aussieht; das Protokoll zeigt, *was geschah*, als der Schritt lief – einschließlich der Fehlermeldung, falls er fehlgeschlagen ist.
+
+Wenn Schritte laufen und Warnungen auftreten, werden diese Ereignisse in das **Workflow-Protokoll** geschrieben, das Sie im Bereich **Projekt** auf der Registerkarte **Protokoll** ansehen können. Im Visuellen Workflow-Designer öffnet die Schaltfläche **Protokolle anzeigen** in der Symbolleiste dieselbe Ansicht, bereits auf den geöffneten Workflow gefiltert.
+
+1. Öffnen Sie die Registerkarte **Protokoll** (das Projektprotokoll) – über die Schaltfläche **Protokolle anzeigen** in der Symbolleiste oder die Registerkarte **Protokoll** im Bereich „Projekt“.
+2. Grenzen Sie mit dem Filter neben den Protokollnachrichten auf den Schritt und die Ausführung ein, die Sie interessieren.
+3. Öffnen Sie einen Protokolleintrag, um seine Details zu lesen – hier steht die Fehlermeldung eines fehlgeschlagenen Schritts.
+
+Das Protokoll auf Projektebene zeigt eine umfassendere Ansicht über mehrere Workflows hinweg, falls ein Problem mehr als einen betreffen könnte. Siehe [Viewing Workflow Log](/de/guides/workflows/viewing-workflow-log/).
+
+> **Die Fehlermeldung lesen.** Kopieren Sie den genauen Text aus dem Protokolleintrag – ein falscher Join-Schlüssel, ein Typkonflikt oder eine fehlende Quelltabelle lesen sich jeweils anders. Die beiden häufigsten Ursachen bei einem Schrittfehler sind nicht übereinstimmende Join-Schlüssel zwischen Tabellen und unerwartete Nullwerte in berechneten Spalten. Verweist die Meldung eher auf Daten als auf die Konfiguration des Schritts, ist das Ihr Zeichen, die Eingaben zu verfolgen.
+
+> **Ein durchgespieltes Beispiel.** Angenommen, ein Transformationsschritt wird rot. Sie öffnen das Protokoll, und der Eintrag lautet `column "revenue" does not exist` – die Quelltabelle hat eine Spalte `net_revenue`, nicht `revenue`. Die Lösung besteht in einer Zeile: den Spaltennamen im Ausdruck des Schritts korrigieren. Sie führen nur diesen Schritt erneut aus, und er wird grün. Das ist die ganze Schleife in einem Durchgang.
+
+## Schritt 4: Eingaben mit dem Abhängigkeits-Audit verfolgen
+
+Manchmal ist ein Schritt korrekt konfiguriert und erzeugt trotzdem falsche Daten – weil er mit Eingaben lief, die in der *falschen Reihenfolge* befüllt wurden. Wenn bereits Daten in Tabellen vorliegen, läuft ein Schritt und sieht korrekt aus, obwohl er veraltete oder noch nicht aktualisierte Daten gelesen hat. Das ist der Fehler, den das Protokoll nicht zeigen kann, weil nichts fehlgeschlagen ist.
+
+Genau dafür gibt es das **Workflow-Abhängigkeits-Audit**. Es analysiert die Daten- und Workflow-Abhängigkeiten in einem vernetzten Workflow und identifiziert Schritte, deren Eingaben im Verhältnis zum Zeitpunkt ihres Lesens in der falschen Reihenfolge befüllt werden.
+
+Verwenden Sie es, wenn:
+
+- Die Ausgabe eines Schritts falsch ist, der Schritt selbst aber keinen Fehler meldet.
+- Sie Schritte umsortiert oder hinzugefügt haben und sicherstellen möchten, dass nun keiner eine Tabelle liest, bevor sie aufgebaut ist.
+- Ein Workflow bei einer vollständigen Ausführung „funktioniert“, eine Einzelausführung eines Schritts aber andere Zahlen liefert – ein klassisches Zeichen für eine Reihenfolgeabhängigkeit.
+
+Wie Sie das Audit öffnen und lesen, steht unter [View a Dependency Audit](/de/guides/workflows/view-a-dependency-audit/).
+
+## Schritt 5: Festlegen, wie der Workflow mit dem Fehler umgehen soll
+
+Wenn Sie die Ursache verstanden haben, legen Sie fest, was der Workflow künftig tun soll, wenn dieser Schritt fehlschlägt. Die Fehlerbehandlung jedes Schritts wird im Schrittformular festgelegt, und PlaidCloud bietet drei Stufen:
+
+| Verhalten | Was passiert | Wann Sie es verwenden |
+|---|---|---|
+| **Stop the workflow** | Die Ausführung hält an; am Schritt und am Workflow erscheint eine Fehleranzeige. | Der Standard und der häufigste Fall – Workflows sollten im Allgemeinen sauber durchlaufen. |
+| **Keep processing** | Der Schritt wird mit einem Fehler markiert, aber der Workflow behandelt ihn als abgeschlossen und läuft weiter. | Schritte, die bei fehlenden Daten unbedenklich fehlschlagen dürfen. Hinweis: Der Workflow zeigt eine Anzeige für *läuft*, keine Fehleranzeige. |
+| **Trigger a remediation workflow** | Der aktuelle Workflow stoppt, und stattdessen startet ein Korrektur-Workflow. | Automatische Benachrichtigung oder Korrektur. Löst bei Schritten, die auf „Keep processing“ gesetzt sind, *nicht* aus. |
+
+PlaidCloud kann einen fehlgeschlagenen Schritt außerdem automatisch **wiederholen** – eine festgelegte Anzahl von Malen, mit einer optionalen Verzögerung von Sekunden bis Stunden. Das ist das richtige Mittel, wenn ein Schritt auf ein Remote-System oder eine Datenquelle zugreift, die sporadisch ausfällt, und nicht bei einem echten Logikfehler. Siehe [Managing Step Errors](/de/guides/workflows/managing-step-errors/).
+
+## Schritt 6: Beheben, erneut ausführen und bestätigen
+
+1. Nehmen Sie die Änderung vor, auf die Ihre Untersuchung hingewiesen hat – den Join-Schlüssel korrigieren, einen vorgelagerten Schritt hinzufügen, einen Ausdruck korrigieren, der Nullwerte erzeugt, oder Schritte umsortieren.
+2. **Führen Sie nur diesen Schritt erneut aus** (Schritt 1) und **sehen Sie sich seine Ausgabe in der Vorschau an** (Schritt 2). War die Schublade während der Ausführung geöffnet, wird sie nach Abschluss der Ausführung automatisch aktualisiert.
+3. Ist der Schritt korrekt, führen Sie den Workflow von Anfang bis Ende aus und beobachten Sie das Protokoll, um zu bestätigen, dass die gesamte Pipeline sauber läuft.
+
+Für eine dauerhafte Dokumentation dessen, was der Workflow tut – seine Schritte, Funktionen und Variablen –, erzeugen Sie den bedarfsgesteuerten **Workflow-Bericht** über das Berichtssymbol in der Hierarchie **Workflows**. Er spiegelt den aktuellen Zustand des Workflows wider und ist nach einer Korrektur eine nützliche Dokumentation. Siehe [View Workflow Report](/de/guides/workflows/view-workflow-report/).
+
+**Das ist die ganze Schleife.** Sie haben einen Schritt isoliert ausgeführt, in der Vorschau angesehen, was er geschrieben hat, den Fehler im Protokoll gelesen, seine Eingaben mit dem Abhängigkeits-Audit verfolgt und erneut ausgeführt, um die Korrektur zu bestätigen – dieselbe Untersuchung, die der KI-Assistent durchführt, nur dass Sie sie jetzt selbst steuern können.
+
+## Wie es weitergeht
+
+- [Fix a Workflow With the AI Assistant](/de/get-started/tutorials/fix-a-workflow-with-ai/) – dieselbe Untersuchung, im Dialog durchgeführt
+- [Running One Step in a Workflow](/de/guides/workflows/running-one-step-in-a-workflow/) – einen einzelnen Schritt isoliert ausführen
+- [Preview Step Data](/de/guides/workflows/preview-step-data/) – die Datenvorschau-Schublade
+- [Viewing Workflow Log](/de/guides/workflows/viewing-workflow-log/) – wo Ausführungsereignisse und Fehler aufgezeichnet werden
+- [View a Dependency Audit](/de/guides/workflows/view-a-dependency-audit/) – Datenabhängigkeiten in falscher Reihenfolge aufspüren
+- [Managing Step Errors](/de/guides/workflows/managing-step-errors/) – stoppen, fortfahren, korrigieren und wiederholen
+- [View Workflow Report](/de/guides/workflows/view-workflow-report/) – bedarfsgesteuerte Dokumentation des gesamten Workflows

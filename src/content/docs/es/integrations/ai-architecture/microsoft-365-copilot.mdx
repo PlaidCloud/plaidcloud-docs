@@ -1,0 +1,122 @@
+---
+title: Arquitectura de Microsoft 365 Copilot
+description: Por qué Microsoft 365 Copilot necesita un paquete de agente publicado y su propio cliente OAuth, cómo se resuelven los niveles de acceso con denegación predeterminada y qué queda permanentemente fuera de alcance.
+sidebar:
+  label: Arquitectura de Copilot
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/microsoft-365-copilot.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Microsoft 365 Copilot es la única integración que no puede seguir el patrón normal. A un agente de programación
+se le puede dar la dirección de un servidor y pedirle que se autentique; a Copilot, no. Solo se comunica con agentes
+que se han **publicado en su inquilino de Microsoft 365**, y devuelve el inicio de sesión a Microsoft
+mediante una dirección de redirección fija.
+
+Esa restricción condiciona todo lo que se explica en esta página. Para la instalación paso a paso, consulte
+[Microsoft 365 Copilot](/es/integrations/microsoft-365-copilot/); esta página explica qué hacen en realidad esos pasos.
+
+<img
+	src="/images/ai-copilot-architecture.svg"
+	alt="Una persona en Teams u Outlook hace una pregunta al agente declarativo de PlaidCloud, que está publicado en el inquilino de Microsoft 365. Microsoft intermedia el inicio de sesión hacia un cliente OAuth dedicado de PlaidCloud. Las solicitudes llegan entonces al servidor MCP curado, donde un nivel de acceso con denegación predeterminada y los permisos propios de la persona controlan cada llamada. Las herramientas de credenciales, identidad y control de acceso nunca están al alcance."
+	class="doc-diagram"
+/>
+
+## Por qué es un caso especial
+
+| Restricción que impone Microsoft | Qué hace PlaidCloud al respecto |
+|---|---|
+| Copilot solo ejecuta agentes publicados en su catálogo de aplicaciones de M365 | Incluye un **paquete de agente declarativo** (un `.zip`) que usted descarga del plano de control y que su administrador de Teams carga |
+| El inicio de sesión debe volver a una dirección de redirección fija de Microsoft | Aprovisiona un **cliente OAuth confidencial dedicado** por inquilino con esa dirección registrada de antemano |
+| Las aplicaciones personalizadas están bloqueadas de forma predeterminada | Requiere activar la directiva de configuración *Cargar aplicaciones personalizadas*, un interruptor distinto del de ser administrador global |
+| Copilot vuelve a autenticarse según su propio calendario | Amplía la ventana de actualización para que el inicio de sesión dure aproximadamente un mes en lugar de un par de días |
+
+El paquete es **por espacio de trabajo** y lleva el nombre de ese espacio de trabajo. Instalarlo no equivale a
+conceder acceso, que es la siguiente sección y con la que tropieza la gente.
+
+## Denegación predeterminada
+
+Una persona que ha instalado el agente e iniciado sesión correctamente sigue sin obtener datos hasta que un
+administrador le asigna un nivel de acceso. El agente se conecta, se autentica y responde *“no se ha
+concedido ningún acceso”*: es el sistema funcionando, no un error.
+
+El nivel se resuelve **en el servidor a partir de la asignación que hizo un administrador**, no a partir de nada
+de lo que afirme el token entrante. Un token no puede conseguir un nivel superior a base de argumentos.
+
+| Nivel | El agente puede… | Uso típico |
+|---|---|---|
+| **Solo lectura** | Enumerar y describir proyectos y tablas, leer datos de tablas, enumerar miembros de dimensiones, explicar asignaciones | La mayoría de las personas: el valor predeterminado seguro |
+| **Lectura y escritura** | Lo anterior, más las escrituras que esa persona ya tiene permiso de hacer | Analistas que mantienen datos |
+| **Completo** *(obsoleto: se eliminará el 15 de enero de 2027)* | El conjunto completo de herramientas de esa persona, incluido el SQL sin procesar que escribe | Usuarios avanzados y creadores |
+
+Dos reglas adicionales:
+
+- **Prevalece el más permisivo.** Si alguien tuviera de algún modo más de un nivel, se aplica el más alto.
+- **El nivel es un límite máximo, nunca una concesión.** Dentro de él, siguen aplicándose los roles y las ACL propios de la persona en PlaidCloud,
+  de modo que el agente nunca puede mostrar datos que la persona no pudiera abrir por sí misma.
+
+<Aside type="note">
+Los grupos de acceso que respaldan estos niveles están bloqueados en Identidad: no se pueden cambiar de nombre ni eliminar, ni
+editar sus permisos. Usted agrega y quita miembros (incluso mediante una asignación de grupos SAML),
+de modo que esos anclajes no puedan reutilizarse por accidente.
+</Aside>
+
+## Siempre fuera de alcance
+
+Sea cual sea el nivel y sean cuales sean los permisos de la persona, Copilot nunca puede acceder a:
+
+- la configuración de conexiones y credenciales, quién es propietario de una conexión o tiene acceso a ella, ni
+  las credenciales y el control de acceso de las cuentas de documentos
+- la administración de miembros, la asignación de grupos y roles, las listas de distribución y el restablecimiento de contraseñas
+- el control de acceso a proyectos, el modo de contabilización de ERP de un proyecto y la publicación
+- el código de funciones definidas por el usuario y las implementaciones de aplicaciones
+
+Son acciones irreversibles o que manejan credenciales, en las que un fallo por inyección de indicaciones saldría
+caro y que rara vez forman parte del trabajo analítico. Siguen siendo exclusivamente humanas.
+
+## El recorrido de una pregunta
+
+<Steps>
+
+1. Una persona hace una pregunta al agente en Teams, Outlook o el chat de Microsoft 365.
+
+2. Copilot llama al agente, que necesita una identidad de PlaidCloud: en el primer uso solicita iniciar sesión
+   en la ventana propia de Microsoft y guarda el resultado.
+
+3. La solicitud llega al punto de conexión MCP de PlaidCloud con el token de esa persona.
+
+4. El servidor resuelve su nivel de acceso a partir de lo que asignó un administrador. Sin nivel, no hay datos.
+
+5. Cada llamada a una herramienta se comprueba contra el nivel, los alcances y las ACL propios de la persona y la lista de denegación.
+
+6. La respuesta llega desde una consulta real, con una señal de confianza y salvedades, no como una conjetura.
+
+</Steps>
+
+Como el nivel se comprueba en vivo en cada solicitud, la concesión de acceso surte efecto en el siguiente mensaje
+de la persona. No hay nada de lo que cerrar sesión ni nada que reinstalar.
+
+<Aside type="tip">
+**Existe un interruptor de apagado para todo el carril.** Los operadores pueden desactivar por completo la ruta de Copilot, y falla
+en modo cerrado: mientras está desactivada se rechaza cada token de Copilot, sin afectar a las demás superficies de IA.
+</Aside>
+
+## Copilot frente a los agentes de programación
+
+Ambos se conectan al mismo servidor MCP y se rigen por la misma aplicación de reglas, pero están dirigidos a personas
+distintas:
+
+| | Microsoft 365 Copilot | Agentes de programación con IA |
+|---|---|---|
+| **Quién** | Equipos completos, no técnicos | Analistas y desarrolladores |
+| **Dónde** | Teams, Outlook, chat de M365 | Un IDE o un cliente de escritorio |
+| **Configuración** | El administrador publica un paquete una vez | Cada persona conecta su propio cliente |
+| **Modelo de acceso** | Un nivel asignado, con denegación predeterminada | Los permisos propios de la persona |
+
+## Relacionado
+
+- [Microsoft 365 Copilot](/es/integrations/microsoft-365-copilot/): la guía de configuración
+- [Rutas de análisis](/es/integrations/ai-coding-agents/analysis-paths/): para que todos pregunten por la misma tabla de la misma manera
+- [Respuestas en las que puede confiar](/es/integrations/ai-coding-agents/honest-answers/): confianza y salvedades
+- [Arquitectura de IA y LLM](/es/integrations/ai-architecture/): la ruta gobernada compartida

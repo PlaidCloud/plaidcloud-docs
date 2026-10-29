@@ -1,0 +1,138 @@
+---
+title: Ligar ao Dynamics 365 Finance & Operations
+description: Ligue o PlaidCloud ao Dynamics 365 Finance & Operations com credenciais de cliente do Azure AD, extraia entidades OData ou extrações DMF em massa com o passo de importação predefinido e depois lance lançamentos de diário de forma assíncrona.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud ao Dynamics 365 Finance & Operations (D365 F&O) através dos seus pontos de acesso OData e Data Management Framework (DMF) para extrair dados mestre e transacionais sem ter de escrever OData à mão, e lance de volta lançamentos de diário geral. Este guia abrange a ligação, o passo de importação e o passo de lançamento.
+
+<Aside type="caution">
+Execute sempre cada importação primeiro num ambiente de testes (sandbox) e percorra **Validate Only**, mais abaixo, em cada lote de lançamento antes de lançar em produção.
+</Aside>
+
+## Pré-requisitos
+
+Precisa, no Azure AD e no D365 F&O, de:
+
+- Um **registo de aplicação do Entra ID (Azure AD)** para o PlaidCloud com um **segredo do cliente**, com uma permissão de aplicação (ou uma permissão delegada com consentimento do administrador) concedida para o recurso D365 F&O.
+- O **ID do inquilino** do seu Azure AD.
+- O **URL do ambiente** do ambiente D365 F&O que o PlaidCloud deve chamar (por exemplo, `https://yourorg.operations.dynamics.com`).
+- Um valor de **recurso/âmbito** — normalmente o próprio URL do ambiente com `/.default` acrescentado — para o qual o registo de aplicação pede um token.
+
+<Aside type="note">
+A ligação autentica-se como uma aplicação, não como um utilizador — fluxo de **credenciais de cliente** do Entra ID, o mesmo mecanismo OAuth2 que o PlaidCloud utiliza para outras ligações REST da Microsoft. Não existe início de sessão interativo.
+</Aside>
+
+## Criar a ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Dynamics 365 Finance & Operations** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `D365 F&O Prod`. |
+   | URL do ambiente | O URL do seu ambiente, por exemplo `https://yourorg.operations.dynamics.com`. |
+   | ID do cliente | O ID da aplicação (cliente) do registo de aplicação do Entra. |
+   | Segredo do cliente | O segredo do cliente do registo de aplicação. |
+   | ID do inquilino | O ID do inquilino do seu Azure AD. |
+   | Recurso/Âmbito | O âmbito OAuth2 a pedir, normalmente o URL do ambiente mais `/.default`. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar rapidamente a ligação
+
+<Steps>
+
+1. Adicione um passo **Import D365 F&O Entity** a um fluxo de trabalho.
+
+2. Defina **Ligação D365 F&O** com a sua ligação, **Tipo de entidade** como `main_accounts` e **Tabela de destino** com uma tabela de rascunho.
+
+3. Execute o passo (consulte [Executar um único passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que o inquilino, as credenciais e o URL do ambiente estão corretos. Um erro indica o problema — um segredo do cliente inválido, uma permissão não concedida ou um URL de ambiente errado.
+
+## Importar dados
+
+<Steps>
+
+1. Adicione um passo **Import D365 F&O Entity** e defina **Ligação D365 F&O** e **Tabela de destino**.
+
+2. Defina **Tipo de entidade** como o registo pretendido e **Modo de sincronização** como `odata` para uma extração de tamanho normal ou `dmf` para uma extração em massa de uma entidade grande.
+
+3. Adicione **Filtros** para delimitar a extração — os intervalos de datas, contas e dimensões são traduzidos para o `$filter` OData do pedido, restringidos, por entidade, aos campos que o D365 F&O consegue de facto filtrar no servidor.
+
+4. Execute o passo e verifique a tabela de destino.
+
+</Steps>
+
+### Entidades e filtros
+
+| Tipo de entidade | O que extrai | Campos filtráveis |
+|---|---|---|
+| `main_accounts` | O plano de contas | intervalo de contas, dimensão |
+| `currencies` | Dados mestre de moedas | — |
+| `customers` | Dados mestre de clientes | intervalo de contas |
+| `vendors` | Dados mestre de fornecedores | intervalo de contas |
+| `released_products` | Dados mestre de produtos libertados | — |
+| `ledger_journal_headers` | Cabeçalhos de diário por lançar e lançados | intervalo de datas, intervalo de contas, dimensão |
+
+<Aside type="note">
+**Modo de sincronização: OData vs DMF.** `odata` chama diretamente os pontos de acesso de entidades OData padrão do D365 F&O — o caminho mais simples, adequado a extrações de rotina. `dmf` submete uma tarefa de exportação assíncrona do Data Management Framework e transfere o pacote resultante quando esta termina — o caminho para uma extração em massa de uma entidade grande (um histórico completo de `ledger_journal_headers`, por exemplo) que seria lenta ou truncada na paginação OData simples.
+</Aside>
+
+## Lançar lançamentos de diário
+
+O passo **D365 F&O: Post Journal Entry** lança lançamentos de diário do razão geral através do pipeline de escrita de ERP partilhado do PlaidCloud, utilizando a ação assíncrona de lançamento de diário do serviço personalizado do D365 F&O.
+
+<Steps>
+
+1. Construa uma **tabela de cabeçalho** — uma linha por lançamento de diário — com `journal_id` (o identificador do seu lançamento), `journal_name` (o nome do diário do D365 F&O em que lançar), `posting_date` e `description`.
+
+2. Construa uma **tabela de linhas** — uma ou mais linhas por `journal_id` — com `account`, `debit`, `credit` e quaisquer colunas de dimensão que o seu razão exija.
+
+3. Adicione um passo **D365 F&O: Post Journal Entry**, defina **Ligação D365 F&O**, **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultados**.
+
+4. Deixe **Validate Only** assinalado e execute o passo — o PlaidCloud constrói e verifica todos os lançamentos sem reserva no registo e sem lançar nada.
+
+5. Reveja a tabela de resultados (uma linha por lançamento: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija qualquer linha `error` e valide novamente.
+
+6. Desassinale **Validate Only** e execute novamente para lançar a sério. Deixe **Continue On Error** assinalado, a menos que pretenda que um lote pare de imediato no primeiro lançamento com falha.
+
+</Steps>
+
+### Como funciona o lançamento
+
+O PlaidCloud submete cada lançamento de diário à ação assíncrona de lançamento do serviço personalizado do D365 F&O e depois consulta até o serviço comunicar o estado terminal do lançamento. Um lançamento só é comunicado como `posted` quando esse estado terminal está **confirmado** — um lançamento que é aceite mas cujo estado terminal nunca é resolvido permanece em quarentena em vez de ser registado como lançado, pelo que uma submissão bloqueada nunca passa silenciosamente por sucesso. A reserva no registo do próprio PlaidCloud protege contra o lançamento do mesmo lançamento duas vezes num lote repetido ou reexecutado.
+
+### Corrigir um lançamento efetuado
+
+Este passo nunca elimina nem reescreve um lançamento efetuado. Para corrigir um, lance um novo lançamento com os débitos e os créditos trocados em relação ao original — um **lançamento de reversão efetuado** — em vez de editar o original no próprio local. Isto preserva o rasto de auditoria do próprio D365 F&O e corresponde à forma como as correções são feitas diretamente na aplicação.
+
+### Limites de capacidade — ler antes de lançar em produção
+
+<Aside type="caution">
+- **O modo de sincronização DMF tem latência de extração.** Uma extração `dmf` aguarda uma tarefa de exportação assíncrona — espere que demore substancialmente mais do que uma extração `odata` do mesmo tamanho e não a utilize para uma leitura pequena e sensível à latência.
+- **A filtragem por dimensão depende da configuração de dimensões do seu razão.** Uma dimensão financeira que não faça parte da estrutura de contas não é filtrável no servidor; delimite-a no seu fluxo de trabalho depois da extração.
+- **Este conector é distinto do [conector REST Dynamics](/pt-pt/reference/connectors/rest/dynamics/) genérico.** Esse conector destina-se a outras aplicações Dynamics 365 (por exemplo, Sales/CRM); utilize-o apenas se não estiver a ligar-se ao Finance & Operations.
+</Aside>
+
+## Relacionado
+
+- [Conector REST Dynamics 365 F&O](/pt-pt/reference/connectors/rest/dynamics-365-fo/) — referência de campos.
+- [Import D365 F&O Entity](/pt-pt/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/pt-pt/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [Rever o histórico de lançamentos de ERP](/pt-pt/guides/connections/erp-post-history/) — o registo permanente de cada tentativa de lançamento no D365 F&O e do seu estado atual.
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)

@@ -1,0 +1,177 @@
+---
+title: Validar fluxos de trabalho do Alteryx convertidos
+description: Valide fluxos de trabalho do Alteryx convertidos com verificações estruturais, verificações de paridade de saída, validação de macros e revisão de artefatos.
+sidebar:
+  order: 31
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/validate-converted-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A validação confirma que um fluxo de trabalho do Alteryx convertido está pronto para ser executado no PlaidCloud e, quando as saídas esperadas estão disponíveis, produz os mesmos resultados de negócio.
+
+Use este guia depois de importar um fluxo de trabalho, aplicativo ou macro para o PlaidCloud.
+
+<Aside type="note">
+  Paridade de saída significa coincidência de esquema, contagem de linhas e valores das linhas. A ordem das linhas não precisa coincidir, a menos que o fluxo de trabalho use a ordenação como parte da lógica de negócio.
+</Aside>
+
+## Escolha um nível de validação
+
+A maioria dos programas de migração usa dois níveis de validação.
+
+### Validação estrutural
+
+A validação estrutural confirma que o PlaidCloud criou um fluxo de trabalho completo a partir do design do Alteryx. Use este nível ao medir a prontidão da migração, preparar um inventário de portfólio ou converter fluxos de trabalho antes que as saídas esperadas estejam disponíveis.
+
+Verifique se:
+
+1. O fluxo de trabalho convertido abre no Designer visual de fluxo de trabalho.
+2. O grafo do fluxo de trabalho contém as ramificações, junções, macros e saídas esperadas.
+3. Todos os arquivos de entrada necessários foram enviados para o caminho de Documentos selecionado.
+4. Todas as macros necessárias foram importadas ou geradas.
+5. As entradas e saídas de macro estão conectadas.
+6. As perguntas dos aplicativos analíticos viraram variáveis do fluxo de trabalho com campos de entrada controlados.
+7. A execução do fluxo de trabalho é concluída e informa observações claras de prontidão para condições que dependem de dados.
+
+### Validação de paridade de saída
+
+A validação de paridade de saída confirma que o fluxo de trabalho convertido produz os mesmos resultados tabulares que o fluxo de trabalho do Alteryx.
+
+Compare:
+
+1. Esquema da tabela de saída.
+2. Contagem de linhas.
+3. Valores das linhas.
+4. Tratamento de nulos.
+5. Precisão numérica e arredondamento.
+6. Valores de data e hora.
+7. Valores de geometria quando saídas espaciais fazem parte do resultado.
+
+Ignore a ordem das linhas, a menos que o fluxo de trabalho ordene os dados explicitamente ou o processo seguinte dependa de linhas ordenadas.
+
+No mecanismo Lakehouse v2 (StarRocks) do PlaidCloud, estas conversões de uso comum têm os valores verificados para coincidir com a saída do Alteryx, então você pode esperar resultados coincidentes sem tratamento especial:
+
+- Conversão de texto para capitalização de título.
+- Distância esférica (círculo máximo) entre pontos.
+- Covariância amostral.
+- Soma e média sobre valores numéricos armazenados como texto.
+- Divisão de texto em colunas com uma expressão regular.
+- Imputação de valores ausentes pela média.
+
+<Aside type="tip" title="Converta novamente antes de comparar a precisão numérica">
+Uma coluna Double do Alteryx agora é convertida para uma coluna numérica de 64 bits em vez de uma de 32 bits, então um fluxo de trabalho convertido antes desta correção pode apresentar arredondamento em valores acima de cerca de 7 dígitos significativos. Importe-o novamente antes de comparar a precisão numérica, em vez de tratar a conversão anterior como sua linha de base. Consulte [Colunas Double do Alteryx mantêm a precisão total](/pt-br/guides/workflows/migrate-alteryx-workflows/#as-colunas-alteryx-de-precisão-dupla-mantêm-a-precisão-total).
+</Aside>
+
+## Comprove sua migração
+
+**Comprove sua migração** compara o que um fluxo de trabalho convertido produziu com as saídas que o Alteryx produziu, para que você não precise compará-las manualmente. Em um espaço de trabalho que chegou por meio do relatório de cobertura do Alteryx, ela aparece na lista de verificação da página inicial como **Comprove sua migração** com um botão **Comparar**, e o relatório de cobertura oferece o mesmo botão.
+
+1. Escolha **Importar uma saída do Alteryx…** e importe cada arquivo de saída que o seu fluxo de trabalho do Alteryx produziu. **Adicionar outra saída** adiciona mais um par.
+2. Para cada par, escolha a **Saída convertida** e a **Saída do Alteryx** com a qual ela deve coincidir.
+3. Escolha **Comparar**.
+
+O PlaidCloud verifica primeiro as contagens de linhas, depois cada coluna, e então mostra as linhas encontradas somente em um dos lados (até 20 de cada), de modo que uma diferença fica ligada à sua coluna. Cada saída informa um dos seguintes resultados.
+
+| Resultado | Significado |
+|---|---|
+| *Coincide com `<output>`: `<n>` linhas nos dois lados, todas as colunas iguais.* | O mesmo número de linhas nos dois lados e todas as colunas iguais. |
+| *Coincide com `<output>` em tudo o que foi comparado: `<n>` linhas nos dois lados.* | Tudo o que foi comparado coincide. Uma observação como *3 colunas a mais não foram comparadas.* conta as colunas deixadas de fora. |
+| *Difere de `<output>`: `<n>` linhas convertidas, `<m>` linhas do Alteryx.* | As contagens de linhas, as colunas ou os valores diferem. O relatório lista as colunas encontradas somente em um dos lados e, para cada coluna, o que difere (por exemplo, a soma, o mínimo ou a contagem de valores distintos). |
+
+Um lado com mais de 5 milhões de linhas é grande demais para ser comparado aqui; compare um extrato filtrado de cada um. A linha da lista de verificação da página inicial mostra o último resultado: *As saídas coincidem*, *As saídas coincidem nas colunas comparadas* ou *Algumas saídas diferem*.
+
+No seu próprio [warehouse Snowflake ou Databricks](/pt-br/guides/connections/external-lakehouse/#custo-do-warehouse-por-execução), a janela também mostra o **Custo do warehouse** da última execução, marcado como *atribuído* ou *estimado*, e uma estimativa para a próxima execução.
+
+## Validar as entradas
+
+Antes de comparar as saídas, confirme que o fluxo de trabalho convertido usa os mesmos dados de origem:
+
+1. Abra a pasta de Documentos selecionada durante a importação.
+2. Confirme que os arquivos necessários e os arquivos auxiliares estão presentes.
+3. Confirme que os padrões de entrada dinâmica resolvem para os arquivos pretendidos.
+4. Confirme que as credenciais de banco de dados ou de API estão disponíveis no ambiente de destino.
+5. Confirme que as variáveis do fluxo de trabalho coincidem com os valores usados na execução do Alteryx.
+
+Entradas alinhadas tornam a validação mais rápida e mantêm as comparações focadas no comportamento do fluxo de trabalho.
+
+## Validar macros
+
+As macros do Alteryx convertidas viram fluxos de trabalho de macro do PlaidCloud. Valide a macro e o fluxo de trabalho que a chama em conjunto:
+
+1. Abra o fluxo de trabalho de macro gerado.
+2. Confirme que cada entrada de macro tem uma etapa de entrada de macro correspondente.
+3. Confirme que cada saída de macro tem uma etapa de saída de macro correspondente.
+4. Execute um fluxo de trabalho que chame a macro.
+5. Confirme que execuções repetidas ou simultâneas permanecem isoladas umas das outras.
+6. Compare os dados de saída da macro quando você tiver as saídas esperadas da macro.
+7. Para uma macro em lote, confirme que cada passagem aparece no resultado reunido, inclusive uma execução cuja macro não produz passagens — ela deve retornar um resultado vazio em vez de linhas restantes de uma execução anterior. Se a lógica da macro depende de como um valor Double chega, verifique novamente: uma entrada de macro Double agora chega como número em vez de texto.
+
+## Validar aplicativos analíticos
+
+Os aplicativos analíticos do Alteryx convertidos usam variáveis do fluxo de trabalho para a entrada controlada do usuário.
+
+Verifique se:
+
+- Caixas de texto, entradas numéricas, datas, seletores de arquivo, seletores de pasta, listas, árvores, botões de opção, caixas de seleção e listas suspensas expõem os controles de entrada esperados.
+- Os valores padrão coincidem com os do aplicativo original onde havia padrões.
+- Os valores obrigatórios são definidos antes de executar o fluxo de trabalho.
+- As condições produzem as mensagens, os avisos ou o comportamento de interrupção esperados para os valores de entrada configurados.
+
+## Validar saídas especializadas
+
+Alguns fluxos de trabalho convertidos criam artefatos em vez de apenas tabelas. Valide essas saídas de acordo com o uso que se faz delas.
+
+Para relatórios, PDFs, imagens, gráficos e mapas:
+
+1. Confirme que o artefato foi criado no caminho de Documentos esperado.
+2. Confirme que o artefato contém os dados, os rótulos, as imagens e o layout esperados.
+3. Confirme que os consumidores posteriores conseguem abrir ou usar o artefato.
+4. Compare com um artefato esperado quando houver um disponível.
+
+Para fluxos de trabalho de NLP, correspondência aproximada e espaciais:
+
+1. Confirme que o executor de jobs gerenciado foi concluído com sucesso.
+2. Revise as observações do executor.
+3. Compare as tabelas ou pontuações geradas com as saídas esperadas.
+4. Documente quaisquer diferenças de artefatos nativos da nuvem quando a saída do PlaidCloud diferir intencionalmente de uma saída específica do Alteryx para desktop.
+
+Para fluxos de trabalho de aprendizado de máquina:
+
+1. Confirme que a etapa ML: Treinar modelo gravou sua tabela de modelo de uma linha e revise as métricas de treinamento registradas.
+2. Compare a coluna de previsão de ML: Pontuar com as pontuações do Alteryx. Para modelos XGBoost, espere equivalência estatística em vez de valores idênticos e revise as observações de mapeamento da etapa.
+
+## Resolver diferenças de validação
+
+Quando a validação encontra uma diferença, revise os itens nesta ordem:
+
+1. Arquivos de entrada ausentes ou diferentes.
+2. Valores diferentes das variáveis do fluxo de trabalho.
+3. Instantâneos de banco de dados ou respostas de API diferentes.
+4. Diferenças de data, fuso horário, nulos, arredondamento ou ordenação de strings.
+5. Diferenças de referência espacial ou de formato de geometria.
+6. Diferenças de artefatos nativos da nuvem para relatórios, mapas, formatos proprietários ou renderizadores exclusivos de desktop.
+
+Depois de corrigir a causa, execute o fluxo de trabalho novamente e repita a comparação.
+
+## Promover um fluxo de trabalho validado
+
+Quando a validação passar:
+
+1. Mova ou copie o fluxo de trabalho para o projeto de produção se a migração foi feita em um projeto de homologação.
+2. Confirme os caminhos de Documentos e as credenciais de produção.
+3. Agende o fluxo de trabalho.
+4. Monitore as primeiras execuções em produção no histórico de execuções.
+5. Mantenha os resultados da validação com o registro da migração para auditoria e suporte.
+
+## Guias relacionados
+
+- [Migrar fluxos de trabalho do Alteryx](/pt-br/guides/workflows/migrate-alteryx-workflows/)
+- [Lista de verificação de prontidão para migração do Alteryx](/pt-br/guides/workflows/alteryx-migration-readiness-checklist/)
+- [Empacotar dependências do Alteryx](/pt-br/guides/workflows/package-alteryx-dependencies/)
+- [Usar aplicativos do Alteryx convertidos](/pt-br/guides/workflows/use-converted-alteryx-apps/)
+- [Orquestrar migrações do Alteryx com MCP](/pt-br/guides/workflows/orchestrate-alteryx-migrations-with-mcp/)
+- [Validar relatórios e artefatos do Alteryx](/pt-br/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Matriz de conversão do Alteryx](/pt-br/reference/alteryx-conversion-matrix/)
+- [Criar uma macro](/pt-br/guides/workflows/create-a-macro/)
+- [Executar um fluxo de trabalho](/pt-br/guides/workflows/run-a-workflow/)

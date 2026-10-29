@@ -1,0 +1,96 @@
+---
+title: INFER_SCHEMA (Lakehouse v1)
+description: INFER_SCHEMA — 파일 메타데이터 스키마를 자동으로 감지하고 열 정의를 가져옵니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/17-table-functions/01-infer-schema.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+파일 메타데이터 스키마를 자동으로 감지하고 열 정의를 가져옵니다.
+
+<Aside type="caution">`infer_schema`는 현재 parquet 파일 형식만 지원합니다.</Aside>
+
+## SQL 구문
+
+```sql
+INFER_SCHEMA(
+  LOCATION => '{ internalStage | externalStage }'
+  [ PATTERN => '<regex_pattern>']
+)
+```
+
+여기서:
+
+### Internalstage
+
+```sql
+internalStage ::= @<internal_stage_name>[/<path>]
+```
+
+### Externalstage
+
+```sql
+externalStage ::= @<external_stage_name>[/<path>]
+```
+
+### PATTERN = 'regex_pattern'
+
+일치시킬 파일 이름을 지정하는 [PCRE2](https://www.pcre.org/current/doc/html/) 기반 정규식 패턴 문자열이며, 작은따옴표로 묶습니다. 예제는 [아래](#패턴-일치를-사용한-infer_schema)를 참조하십시오. PCRE2 구문은 http://www.pcre.org/current/doc/html/pcre2syntax.html 을 참조하십시오.
+
+## SQL 예제
+
+스테이지에 parquet 파일을 생성합니다.
+
+```sql
+CREATE STAGE infer_parquet FILE_FORMAT = (TYPE = PARQUET);
+COPY INTO @infer_parquet FROM (SELECT * FROM numbers(10)) FILE_FORMAT = (TYPE = PARQUET);
+```
+
+```sql
+LIST @infer_parquet;
+┌───────────────────────────────────────────────────────┬──────┬────────────────────────────────────┬───────────────────────────────┬─────────┐
+│ name                                                  │ size │ md5                                │ last_modified                 │ creator │
+├───────────────────────────────────────────────────────┼──────┼────────────────────────────────────┼───────────────────────────────┼─────────┤
+│ data_e0fd9cba-f45c-4c43-aa07-d6d87d134378_0_0.parquet │  258 │ "7DCC9FFE04EA1F6882AED2CF9640D3D4" │ 2023-02-09 05:21:52.000 +0000 │ NULL    │
+└───────────────────────────────────────────────────────┴──────┴────────────────────────────────────┴───────────────────────────────┴─────────┘
+```
+
+### `infer_schema`
+
+
+```sql
+SELECT * FROM INFER_SCHEMA(location => '@infer_parquet/data_e0fd9cba-f45c-4c43-aa07-d6d87d134378_0_0.parquet');
+┌─────────────┬─────────────────┬──────────┬──────────┐
+│ column_name │ type            │ nullable │ order_id │
+├─────────────┼─────────────────┼──────────┼──────────┤
+│ number      │ BIGINT UNSIGNED │        0 │        0 │
+└─────────────┴─────────────────┴──────────┴──────────┘
+```
+
+### 패턴 일치를 사용한 `infer_schema`
+
+```sql
+SELECT * FROM infer_schema(location => '@infer_parquet/', pattern => '.*parquet');
+┌─────────────┬─────────────────┬──────────┬──────────┐
+│ column_name │ type            │ nullable │ order_id │
+├─────────────┼─────────────────┼──────────┼──────────┤
+│ number      │ BIGINT UNSIGNED │        0 │        0 │
+└─────────────┴─────────────────┴──────────┴──────────┘
+```
+
+### Parquet 파일에서 테이블 생성
+
+`infer_schema`는 parquet 파일의 스키마를 표시할 수만 있고 이를 바탕으로 테이블을 생성할 수는 없습니다. 
+
+parquet 파일에서 테이블을 생성하려면 다음과 같이 합니다.
+
+```sql
+CREATE TABLE mytable AS SELECT * FROM @infer_parquet/ (pattern=>'.*parquet') LIMIT 0;
+
+DESC mytable;
+┌────────┬─────────────────┬──────┬─────────┬───────┐
+│ Field  │ Type            │ Null │ Default │ Extra │
+├────────┼─────────────────┼──────┼─────────┼───────┤
+│ number │ BIGINT UNSIGNED │ NO   │ 0       │       │
+└────────┴─────────────────┴──────┴─────────┴───────┘
+```

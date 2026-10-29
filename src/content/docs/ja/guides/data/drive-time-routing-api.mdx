@@ -1,0 +1,148 @@
+---
+title: 移動時間ルーティングAPI
+description: PlaidCloud の REST 移動時間ルーティングエンドポイント（等時間圏ポリゴンと、移動時間による最寄り順位付け）を呼び出します。PlaidCloud のセルフホスト型ルーティングエンジンを利用しています。オプトイン方式のプレビューで、ベストエフォート、SLA なしです。
+sidebar:
+  label: 移動時間ルーティングAPI
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud は、移動時間ルーティングを `/rest/v1/analyze/route` 配下の2つの REST エンドポイントとして提供します。起点の周囲に移動時間（または移動距離）のポリゴンを描く **isochrone** エンドポイントと、直線距離ではなく実際の移動時間で候補の目的地を順位付けする **find-nearest** エンドポイントです。どちらも OpenStreetMap の道路データ（ODbL）から構築された PlaidCloud のセルフホスト型ルーティングエンジンで動作し、すべての結果を、帰属表示を含む小さな `plaidcloud` エンベロープで包んで返します。
+
+<Aside type="caution" title="オプトイン方式のプレビュー: 利用を前提に構築する前にお読みください">
+移動時間ルーティングは**デフォルトで無効**で、オプトインしたテナントのみが利用できます。小規模な共有ルーティングプールで動作し、**ベストエフォートで SLA はありません**。ライブトラフィックの容量は保証されず、プールが混雑している場合は、キューイングや自動再試行は行われず、リクエストが `503` で拒否されることがあります。まだ有効にしていない場合は、この機能に依存したシステムを構築する前に、PlaidCloud にプレビューについてお問い合わせください。
+</Aside>
+
+## 認証と利用資格
+
+すべてのルーティング呼び出しには、次が必要です。
+
+- **`analyze.table.read`** ロールを持つ通常の PlaidCloud セッションまたはベアラートークン。これは、プロジェクトのデータへのその他の読み取りアクセスを制御するロールと同じです。ルーティング専用のロールはありません。
+- プランに移動時間ルーティングが含まれていること。つまり、テナントで移動時間の利用資格が有効になっていることです。プランに含まれていないテナントは、すべての呼び出しで `detail: "drive_time_disabled"` を伴う `403` が返されます。部分的な利用や読み取り専用のモードはありません。
+
+## エンドポイント
+
+### `isochrone`: 起点の周囲の移動時間ポリゴン
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| フィールド | 型 | メモ |
+|---|---|---|
+| `origin` | `{ lat, lon }`、必須 | 単一の座標。isochrone は1回の呼び出しにつき起点を1つ受け取ります |
+| `costing` | 文字列 | `auto`（デフォルト）、`truck`、`bike`、`pedestrian` |
+| `contours_minutes` | 整数の配列、必須 | 必要な等値線リングごとに1つの要素。それぞれ1〜120分。1回の呼び出しにつき最大5つの等値線 |
+| `costing_options.truck.height` | 浮動小数点数（メートル） | 任意。0 より大きく 10 以下。`truck` の costing でのみ適用されます |
+| `costing_options.truck.weight` | 浮動小数点数（キログラム） | 任意。0 より大きく 100000 以下。`truck` の costing でのみ適用されます |
+| `costing_options.truck.length` | 浮動小数点数（メートル） | 任意。0 より大きく 50 以下。`truck` の costing でのみ適用されます |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+レスポンスは、ルーティングエンジン自身の isochrone GeoJSON が変更されずに返され、`plaidcloud` エンベロープが付加されます。
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest`: 移動時間による最寄りの目的地
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| フィールド | 型 | メモ |
+|---|---|---|
+| `origins` | `{ lat, lon }` の配列、必須 | 1〜5個の起点 |
+| `destinations` | `{ lat, lon }` の配列、必須 | 1〜500個の候補。後述の[目的地の事前フィルタリング](#目的地の事前フィルタリング)をご覧ください |
+| `costing` | 文字列 | `auto`（デフォルト）、`truck`、`bike`、`pedestrian` |
+| `top_n` | 整数 | 起点ごとに返す最寄りの目的地の数。1〜50、デフォルトは5 |
+| `costing_options.truck.{height,weight,length}` | isochrone と同じ | `truck` の costing でのみ適用されます |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` は、内部的な順位付けでの位置ではなく、送信した `destinations` 配列におけるその目的地の位置を示します。結果を自分のデータに対応付けるために、この値を保持してください。
+
+#### 目的地の事前フィルタリング
+
+最大500個の目的地を送信できますが、実際の移動時間ルーティングの計算に渡されるのは、いずれかの起点から**直線距離で最も近い50個**だけです。50個を超えて送信した場合、PlaidCloud は、直線（大円）の事前フィルターで候補を絞り込んでから、残った候補を実際の移動時間で順位付けします。そのため、地図上では近くても直線距離のカットオフの外側にある目的地は、移動時間が計算される前に除外されることがあります。目的地が50個未満の場合は、すべての候補がルーティングされ、この影響はありません。`top_n` が同じ理由で50に制限されているのは、ルーティング処理が検討する候補数より多くを返せないためです。
+
+### costing モード
+
+`auto`、`truck`、`bike`、`pedestrian` がサポートされています。`truck` の costing では、車両の寸法（`costing_options.truck.height`、`.weight`、`.length`）でルートを制約することもでき、低い橋や重量制限のある道路を避けるルートにできます。**危険物のルーティングはサポートされていません。** どちらのエンドポイントにも危険物のパラメーターはなく、`truck` の costing を通じて間接的に利用することもできません。この API は危険物の規制を回避するルーティングを行わないため、危険物規制の対象となる貨物輸送には使用しないでください。
+
+## エラー
+
+| ステータス | 意味 |
+|---|---|
+| `403` | `analyze.table.read` ロールがない、またはプランに移動時間の利用資格が含まれていない |
+| `422` | リクエストのフィールドが検証に失敗した。たとえば、等値線が5つを超える、等値線が1〜120分の範囲外、起点が5つを超える、トラックの寸法が範囲外など |
+| `503 route_unavailable` | ルーティングエンジンに接続できなかった、タイムアウトした、またはエラーを返した。**あるいは**、テナントの同時リクエストの許容数がすでに使用されていた（[制限](#制限)をご覧ください） |
+
+ここでの `503` は、生の `5xx` でも無制限のハングでもありません。ルーティングエンジンへのすべての呼び出しは制限付きのタイムアウト下で実行されるため、アップストリームが遅いかハングしている場合は、リクエストが開いたままになるのではなく、すぐに `503` として返されます。
+
+## 制限
+
+- **テナントごとの同時実行数は、2つの同時リクエストに制限されています。** これはプランごとのクォータではなく、プレビューの背後にある共有ルーティングプールを反映したものです。同じテナントからの3つ目の同時リクエストは、最初の2つのいずれかが完了するまで `503 route_unavailable` になります。キューイングはありません。少し待ってから再試行してください。
+- **レスポンスはキャッシュされません。** すべての呼び出しは、現在のルーティングインデックスに対してリアルタイムで処理されます。
+- **座標はログに記録されません。** 失敗のログには、リクエストのパスとエラーの種類が記録され、送信した起点、目的地、その他の位置情報は記録されません。
+- ルーティングデータは OpenStreetMap の道路データ（ODbL）から構築されています。[PlaidCloud のジオコーディング API](/ja/guides/data/geocoding-api/#カバレッジと決定性--最初にお読みください)に適用されるカバレッジと鮮度に関する注意事項が、ここにも当てはまります。十分にマッピングされた地域では強力ですが、それ以外の地域ではばらつきがあり、バージョン管理された商用データセットではなく、コミュニティによって継続的に編集されています。
+- ルーティング結果や移動時間圏をエンドユーザーに表示する場合は、`plaidcloud.attribution` の文字列（または同等の OSM のクレジット）を併せて表示してください。ジオコーディングの結果に適用されるのと同じ ODbL の義務が、ルーティングの結果にも適用されます。
+
+## 関連項目
+
+- [GoogleまたはMapboxのジオコーディングからの移行](/ja/guides/data/geocoding-api/): PlaidCloud の REST ジオコーディングエンドポイントと、同じ OpenStreetMap のカバレッジに関する注意事項
+- [RESTリクエストステップ](/ja/guides/workflows/rest-request-step/): ワークフローからこれらのエンドポイントを呼び出す

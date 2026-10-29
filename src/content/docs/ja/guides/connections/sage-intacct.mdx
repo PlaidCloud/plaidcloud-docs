@@ -1,0 +1,105 @@
+---
+title: Sage Intacctに接続する
+description: PlaidCloudをSage Intacctに接続して財務・会計データを取得します。前提条件、認証情報、接続の作成、スモークテスト、取得ステップを説明します。
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sage-intacct.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudをSage Intacctに接続して、財務・会計データを取得します。このガイドでは、Web Servicesの認証情報から実際にデータを取得できる状態になるまでを説明します。フィールドのリファレンスについては、[Sage Intacct RESTコネクター](/ja/reference/connectors/rest/sage-intacct/)を参照してください。
+
+## 前提条件
+
+Sage Intacctで次のものが必要です。
+
+- 会社で有効化された **Web Services**。Sageサポートが **Sender ID** と **Sender password** を発行します。これらは接続の **クライアントID** と **クライアントシークレット** になります。
+- PlaidCloud用の **Web Servicesユーザー**。クエリで読み取る **すべての** オブジェクトに対する権限が必要です。
+- **会社ID**。
+
+開始する前に、会社ID、Webサービスユーザーのユーザー名、クライアントID（Sender ID）、クライアントシークレット（Sender password）を控えておいてください。
+
+<Aside type="caution">クライアントID／クライアントシークレットと、Webサービスユーザーのユーザー名は別のものです。クライアントID／クライアントシークレットはアプリケーションをSageに対して認証し、Webサービスユーザーのユーザー名は会社IDと組み合わせて会社内のログインを認証します。3つともすべて必要です。また、クライアントID／クライアントシークレットはシークレットとして扱ってください。</Aside>
+
+## 接続を作成する
+
+Intacctは **REST系** の接続です。PlaidCloudには専用の **Intacct** バリアント（**REST - Intacct** として表示）があり、OAuth2トークンエンドポイントがあらかじめ入力され、以下の4つの認証情報フィールドだけを入力すれば済みます。内部的には、Intacct REST APIに対してOAuth2クライアント資格情報で認証するREST接続です。
+
+<Steps>
+
+1. **Tools > Connections** を開き、`New Connection` をクリックします。
+
+2. **REST** の下で **Intacct**（メニューでは **REST - Intacct** と表示）を選択します。
+
+3. 各フィールドに入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例：`Intacct Prod`）。 |
+   | クライアントID | Intacctの **Sender ID**。 |
+   | クライアントシークレット | Intacctの **Sender password**。 |
+   | Webサービスユーザーのユーザー名 | Web Servicesユーザーのログイン名。 |
+   | 会社ID | 接続先のIntacct会社。 |
+
+4. `Create` をクリックします。
+
+</Steps>
+
+## 接続のスモークテスト
+
+接続を前提に作業を進める前に、認証情報が機能することを確認します。
+
+<Steps>
+
+1. ワークフローに[RESTリクエストステップ](/ja/guides/workflows/rest-request-step/)を追加し、**接続** にSage Intacct接続を設定します。
+
+2. ユーザーが参照できるオブジェクトに対する、小規模で範囲を限定した読み取りを指定します。
+
+3. **テストリクエストを送信** をクリックします。
+
+</Steps>
+
+<Aside type="caution">
+プレビュータブではなく、**テストリクエストを送信** を使用してください。結果が緑色であれば、クライアントID／クライアントシークレットとWebサービスユーザーのユーザー名の両方で認証できています。エラーになった場合、メッセージにはSage自身の詳細情報が含まれます。多くの場合、原因はWeb Servicesユーザーの権限不足か、クライアントID／クライアントシークレットの誤りです。
+</Aside>
+
+<Aside type="note">
+Sage Intacctのリクエストは **単一リクエストであり、設定すべきページネーションはありません**。ページネーションのコントロールは変更しないでください。
+</Aside>
+
+## データを取得する
+
+定期的な取得には、Intacctのオブジェクトに直接対応する専用のインポートステップがあります。
+
+- [Import Sage AP](/ja/reference/workflow-steps/sage-intacct/import-sage-ap/) ステップ：AP請求書のヘッダー
+- [Import Sage AP Lines](/ja/reference/workflow-steps/sage-intacct/import-sage-ap-lines/) ステップ：AP請求書の明細
+- [Import Sage Intacct Query](/ja/reference/workflow-steps/sage-intacct/import-intacct-query/) ステップ：任意のIntacctオブジェクトに対するクエリ
+- [Import Intacct Entity](/ja/reference/workflow-steps/sage-intacct/import-intacct-entity/) ステップ：総勘定元帳明細、勘定科目残高、仕訳、ディメンションマスター（ロケーション、部門、クラス）、および販売注文ドキュメント。大きな結果セットに対する自動 `readMore` ページネーションと、`ge`／`le` の範囲フィルターに対応
+
+ステップを選び、Sage Intacct接続を選択し、オブジェクトまたはクエリを設定して実行します。他のインポートと同様に、金額列や日付列は実際の型で定義してください。そうすることで、テキストではなく型付きの値として取り込まれます。
+
+## 確認とスケジュール
+
+<Steps>
+
+1. ステップを実行し、ターゲットテーブルの行数と列の型を確認します。
+
+2. 継続的なフィードにする場合は、[ワークフローをスケジュール](/ja/get-started/tutorials/schedule-a-workflow/)します。
+
+</Steps>
+
+## トラブルシューティング
+
+| 症状 | 考えられる原因 |
+|---|---|
+| 認証エラー | クライアントID／クライアントシークレット（Sageが発行）の誤り、またはWebサービスユーザーのユーザー名の誤り。 |
+| 権限エラー／オブジェクトが見つからないエラー | Web Servicesユーザーに、読み取り対象のオブジェクトに対する権限がない。 |
+| 結果が空、または想定と異なる | **会社ID** の誤り。 |
+
+## 関連情報
+
+- [Sage Intacctの財務データを分析する](/ja/get-started/tutorials/analyze-sage-intacct-financials/) — 初日向けチュートリアル：試算表を取得し、ダッシュボード上の部門別損益計算書に整形します。
+- [Sage Intacct RESTコネクター](/ja/reference/connectors/rest/sage-intacct/) — フィールドのリファレンス。
+- [RESTリクエストステップ](/ja/guides/workflows/rest-request-step/)
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

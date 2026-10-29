@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry"
+description: "Comptabilisez dans SAP S/4HANA Cloud des écritures de journal du grand livre à partir de tables d'en-tête et de lignes, via le service SOAP JournalEntryBulkCreateRequest_In, avec un mode aperçu qui valide chaque écriture avant toute comptabilisation."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des écritures de journal du grand livre dans SAP S/4HANA Cloud via votre [connexion S/4HANA Cloud](/fr/guides/connections/s4hana-cloud/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-tête (une ligne par écriture de journal) et une table des lignes (une ou plusieurs lignes de débit/crédit par écriture), et soumet chaque écriture au service SOAP `JournalEntryBulkCreateRequest_In` de S/4HANA Cloud. **Validate Only** construit et vérifie chaque écriture sans réservation sur le grand livre et sans comptabilisation. Une table de résultat facultative consigne l'issue de chaque écriture.
+
+<Aside type="caution">
+Exécutez d'abord chaque lot en mode **Validate Only**, examinez la table de résultat et rapprochez quelques écritures directement dans S/4HANA avant de vous fier à cette étape pour comptabiliser des écritures réelles sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion S/4HANA** : la connexion S/4HANA Cloud à utiliser pour la comptabilisation.
+
+### Données
+
+- **Table d'en-tête** : une ligne par écriture de journal : `journal_id` (votre identifiant d'écriture, obligatoire), `company_code` (obligatoire), `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text`.
+- **Table des lignes** : une ou plusieurs lignes par `journal_id` : `gl_account`, `debit`, `credit`, ainsi que les colonnes de dimension `cost_center`/`profit_center` exigées par votre grand livre.
+- **Table de résultat** : identifiant de la table de sortie : une ligne par écriture avec `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** : case cochée par défaut. Contrôle préalable uniquement : aucune réservation sur le grand livre, aucune comptabilisation. Une configuration d'étape qui omet entièrement ce champ (par exemple créée via l'API REST, MCP ou l'importation d'un bundle de workflow) est elle aussi en mode Validate Only par défaut, et non en comptabilisation réelle.
+- **Continue On Error** : case cochée par défaut. Poursuit la comptabilisation des écritures restantes après l'échec de l'une d'elles. Si elle est décochée, le lot s'arrête au premier échec.
+
+## Fonctionnement de la comptabilisation
+
+PlaidCloud soumet chaque écriture via `JournalEntryBulkCreateRequest_In`, puis interroge le service jusqu'à recevoir le message `JournalEntryBulkCreateConfirmation_Out` correspondant, qui indique l'état de traitement terminal de l'écriture. Une écriture n'est signalée comme `posted` qu'une fois cette confirmation **reçue** : une écriture acceptée dont la confirmation n'arrive jamais reste en quarantaine (elle n'est ni signalée comme comptabilisée, ni abandonnée silencieusement), au lieu d'être enregistrée comme réussie du simple fait que la soumission a été acceptée.
+
+## Correction d'une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais une écriture comptabilisée. Pour en corriger une, comptabilisez une nouvelle écriture dont les débits et les crédits sont inversés par rapport à l'original (une écriture d'extourne comptabilisée) plutôt que de modifier l'original sur place.
+
+## Limites de fonctionnement
+
+| Limite | Signification |
+|---|---|| Confirmation latency | The bulk-create service processes requests asynchronously; the terminal-state poll waits for the confirmation message rather than getting a synchronous result. |
+| Reversal is a new entry, not an in-place edit | Corrections post a new debit/credit-swapped reversing entry. There is no void or delete of an already-posted entry. |
+| Dimension validation depends on your ledger setup | A cost object or dimension combination invalid for your account structure fails at S/4HANA's own validation, surfaced as an `error` row rather than caught earlier by PlaidCloud. |
+
+## Voir aussi
+
+- [Se connecter à SAP S/4HANA Cloud](/fr/guides/connections/s4hana-cloud/) : procédure complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur REST SAP S/4HANA Cloud](/fr/reference/connectors/rest/s4hana-cloud/)
+- [Étapes S/4HANA Cloud](/fr/reference/workflow-steps/s4hana-cloud/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

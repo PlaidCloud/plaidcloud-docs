@@ -1,0 +1,138 @@
+---
+title: Extrair do HFM / FCCS (ad hoc)
+description: Conecte o PlaidCloud ao Oracle FCCS e obtenha por conta própria uma fatia de dados com um seletor de ponto de vista, sem abrir chamado para a equipe do HFM. Abrange a conexão, a criação de um ponto de vista, a execução, o cache, a segurança em nível de linha e uma carga recorrente agendada.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud ao **FCCS** (Financial Consolidation and Close, parte do Oracle EPM Cloud) para que um usuário de finanças possa obter uma fatia de dados por conta própria, em vez de abrir um chamado para a equipe do HFM. Você cria um **ponto de vista (POV)** no formulário da etapa, clica em Executar e o resultado chega automaticamente como uma tabela. Parece uma consulta em tempo real — por baixo dos panos, é uma solicitação assíncrona → consulta de status → busca sobre o job de exportação de dados do FCCS. Este guia aborda a conexão, a criação de um POV, a execução, o cache, a governança do resultado com segurança em nível de linha e a transformação em uma carga recorrente agendada.
+
+<Aside type="note">
+Mantenha a seleção de **Entidade** delimitada — uma extração sem escopo pode bloquear o aplicativo do FCCS por muito tempo enquanto o job de exportação é executado. Defina o escopo de cada ponto de vista para as entidades de que você realmente precisa.
+</Aside>
+
+## Pré-requisitos
+
+Você precisa, no Oracle EPM Cloud:
+
+- A **URL do pod/serviço do EPM Cloud**, por exemplo `https://planning-test-yourdomain.epm.us2.oraclecloud.com`.
+- Seu **domínio de identidade** (para um pod clássico). O PlaidCloud compõe o login como `identitydomain.username`.
+- Uma **conta de serviço** dedicada — nome de usuário e senha — com acesso de leitura aos aplicativos do FCCS e às fatias de ponto de vista que seus usuários de autoatendimento vão obter.
+- O(s) **nome(s) de aplicativo** de onde os usuários vão ler.
+
+<Aside type="note">
+A conexão se autentica com **autenticação básica HTTP** em um pod clássico do EPM Cloud. Pods OCI / Gen 2 que exigem um token de portador OAuth estão fora do escopo deste conector.
+</Aside>
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **REST - HFM/FCCS** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `FCCS Prod`. |
+   | URL do EPM Cloud | A URL do seu pod/serviço, por exemplo `https://planning-test-yourdomain.epm.us2.oraclecloud.com`. |
+   | Domínio de identidade | O domínio de identidade do seu EPM Cloud. Deixe em branco somente se o seu nome de usuário já incluir o domínio. |
+   | Nome de usuário | O nome de usuário da conta de serviço. |
+   | Senha | A senha da conta de serviço. |
+   | Aplicativo padrão | Opcional. Um aplicativo do FCCS a ser preenchido previamente no seletor de POV da etapa. |
+
+4. Clique em `Test Connection`. Um teste bem-sucedido confirma que o PlaidCloud consegue alcançar o servidor HFM/FCCS com as credenciais configuradas.
+
+5. Clique em `Create`.
+
+</Steps>
+
+O PlaidCloud faz login como `identitydomain.username` (ou com o nome de usuário como está quando o domínio de identidade está em branco ou o nome de usuário já contém um ponto).
+
+## Criar um ponto de vista
+
+<Steps>
+
+1. Adicione uma etapa **HFM/FCCS: Ler dados (ad hoc)** a um fluxo de trabalho (ela fica em **Oracle EPM (HFM/FCCS)** no menu de etapas).
+
+2. Em **Origem e destino**, defina **Conexão HFM/FCCS**, **Ambiente**, **Aplicativo** e uma **Tabela de destino**.
+
+3. Em **Ponto de vista**, crie a fatia a partir das dimensões do FCCS: **Cenário, Ano, Período, Entidade, Conta, Custom1–Custom4, ICP, Visão, Valor**.
+
+   - **Cenário, Ano e Período são obrigatórios.**
+   - **A entidade deve ser uma fatia delimitada** — o formulário rejeita uma seleção vazia, "all" ou uma seleção com mais de 500 membros. Mantenha o escopo restrito para que a exportação não bloqueie o aplicativo.
+   - Deixe qualquer outra dimensão sem definir para não aplicar filtro nesse eixo.
+
+</Steps>
+
+<Aside type="note">
+Nos pods do FCCS compatíveis, as listas de membros são **preenchidas automaticamente** a partir da descoberta de metadados em tempo real assim que você escolhe uma conexão e um aplicativo — o seletor oferece membros reais e refaz a descoberta sempre que a conexão ou o aplicativo muda. Em pods mais antigos que não expõem o endpoint de metadados, o seletor recorre à **entrada manual**: digite os nomes dos membros à mão. Um POV salvo é sempre preservado nos dois casos.
+</Aside>
+
+## Executar
+
+<Steps>
+
+1. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Um status de progresso ("polling HFM job…") é exibido enquanto o job de exportação é executado no FCCS.
+
+3. Quando ele termina, a tabela de resultado chega automaticamente — a tabela é criada a partir das colunas da grade retornada, portanto não há esquema para definir antecipadamente.
+
+</Steps>
+
+## Cache
+
+Solicite o **mesmo POV novamente** e o PlaidCloud entrega instantaneamente a **tabela já carregada**, em vez de reenviar a exportação ao FCCS. Uma execução é identificada por aplicativo, tabela de destino, ponto de vista e uma tag **as-of** (padrão `latest`); uma repetição que resulte em uma fatia já carregada informa que a tabela foi mantida no lugar, em vez de regravada. Altere a tag as-of quando quiser forçar uma nova extração do mesmo POV.
+
+## Governar com segurança em nível de linha
+
+O eixo de entidade da tabela carregada é normalizado para uma coluna chamada exatamente **`Entity`**, de modo que a tabela está **pronta para a segurança em nível de linha** — um administrador pode governá-la com [Acesso a linhas](/pt-br/administration/access/managing-security-groups-and-assignments/) para que os usuários de autoatendimento vejam apenas as entidades às quais têm direito.
+
+<Aside type="caution">
+Isso é **governado sob controle do administrador, não é automático**. Como a extração é executada sob a conta de serviço da conexão, o PlaidCloud não permite que a etapa declare a própria segurança — um administrador (Arquiteto) precisa configurá-la.
+</Aside>
+
+Um administrador segue o fluxo padrão de Acesso a linhas:
+
+<Steps>
+
+1. **Publicar** a tabela carregada para geração de relatórios.
+
+2. **Declarar** a coluna `Entity` como atributo de governança (negação por padrão).
+
+3. **Aprovar** a primeira gravação governada.
+
+4. **Reconciliar** para que as concessões entrem em vigor.
+
+</Steps>
+
+Até que um administrador faça isso, a tabela não é filtrada. Consulte [Gerenciar grupos de segurança e atribuições](/pt-br/administration/access/managing-security-groups-and-assignments/).
+
+## Agendar uma carga recorrente
+
+Para transformar uma fatia ad hoc em uma atualização noturna, ative **Destino vinculado** na etapa:
+
+<Steps>
+
+1. No grupo **Vincular destino** da etapa, marque **Destino vinculado (carga recorrente agendada)**.
+
+2. Opcionalmente, defina **Colunas-chave** — as colunas, separadas por vírgula, que formam a chave de mesclagem (por exemplo, `Entity, Account`). **Deixe vazio** para usar como chave de mesclagem as colunas de dimensão do POV presentes na grade carregada.
+
+3. Coloque a etapa em um [fluxo de trabalho agendado](/pt-br/administration/scheduled-events/).
+
+</Steps>
+
+Com o destino vinculado ativado, o destino se torna uma tabela **persistente**: cada execução **mescla** os dados nela com um upsert por conjunto de chaves, em vez de sobrescrevê-la, e o esquema **cresce de forma aditiva** quando uma grade posterior traz novas colunas (uma nova coluna gera um aviso, nunca uma falha). Assim, uma execução agendada acumula em vez de apagar — uma carga recorrente, não uma recarga destrutiva.
+
+## Relacionados
+
+- [HFM/FCCS: Ler dados (ad hoc)](/pt-br/reference/workflow-steps/oracle-epm/hfm-fccs-read/) — referência dos campos da etapa.
+- [Conector HFM / FCCS](/pt-br/reference/connectors/rest/hfm-fccs/) — referência dos campos da conexão.
+- [Gerenciar grupos de segurança e atribuições](/pt-br/administration/access/managing-security-groups-and-assignments/) — como o Acesso a linhas governa a tabela carregada.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

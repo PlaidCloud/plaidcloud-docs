@@ -1,0 +1,206 @@
+---
+title: Śledzenie alokacji za pomocą agenta AI połączonego przez MCP
+description: Zapytaj agenta AI połączonego z Twoim obszarem roboczym przez MCP, dlaczego zmienił się wynik alokacji, co go zasila, gdzie używany jest klucz alokacji i co spowodowałaby hipotetyczna zmiana.
+sidebar:
+  label: Śledzenie alokacji
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Gdy [połączysz agenta AI z obszarem roboczym przez Model Context Protocol (MCP)](../getting-started/), możesz go poprosić — zwykłym językiem — o prześledzenie kosztów przez kroki alokacji. Nie uruchamiasz raportu ani nie piszesz SQL: zadajesz pytanie, a agent wywołuje narzędzia PlaidCloud do śledzenia alokacji, aby znaleźć model, wyjaśnić zmianę, przejść po łańcuchu i odpowiedzieć na pytania typu „co jeśli".
+
+Działa to z każdego klienta połączonego przez MCP — agenta czatu (Claude Desktop, ChatGPT) lub agenta do kodowania (Claude Code, Cursor) — ponieważ wszyscy docierają do tych samych narzędzi przez [serwer MCP](../getting-started/).
+
+<Aside>
+Te narzędzia odczytują **konfigurację i wyniki** Twoich alokacji — niczego nie zmieniają. Możesz pytać swobodnie; nic nie jest zapisywane z powrotem do projektu.
+</Aside>
+
+## Wymagania wstępne
+
+- Projekt zawierający kroki alokacji (`allocation_split`, `allocation_rules` lub `allocation_dim`).
+- Agent AI połączony z Twoim obszarem roboczym przez MCP — zobacz [Pierwsze kroki z agentami do kodowania z AI](../getting-started/).
+
+## O co możesz pytać
+
+| Zapytaj agenta … | Co robi | Stojące za tym narzędzie |
+| --- | --- | --- |
+| „Jakie modele alokacji są w tym projekcie?" | Wyświetla każdy model, jego etapy i tabele wynikowe, które tworzy | `allocation_model_find` |
+| „Jak obliczana jest `cost_line_rev`?" | Pokazuje dzieloną pulę kosztów, klucz alokacji, według którego jest dzielona, oraz tabelę docelową | `allocation_describe` |
+| „Dlaczego `cost_line_rev` zmieniła się z 2025 na 2026?" | Porównuje dwa okresy i przypisuje zmianę wielkości puli lub strukturze klucza alokacji, z najważniejszymi kontami wpływającymi na zmianę | `allocation_root_cause` |
+| „Co zasila `cost_line_rev`?" | Przechodzi w górę łańcucha — klucze alokacji, pule źródłowe i importy | `allocation_lineage` |
+| „Gdzie `revenue_by_line` jest używana jako klucz alokacji?" | Wyświetla każdą alokację, która dzieli według tej tabeli | `allocation_driver_usage` |
+| „Co się stanie, jeśli przychody w USA wzrosną o 1 mln USD?" | Rozkłada zmianę na każdy dotknięty wynik według jego bieżącego udziału w puli — addytywnie przy rozgałęzieniu, a nie jako najgorszy przypadek dla każdej tabeli | `allocation_forward_impact` |
+| „Co jeśli klucz alokacji liczby pracowników dla centrum kosztów Assembly wzrośnie o 10?" | Ponownie dzieli stałą pulę według nowych wag klucza alokacji, pokazując, które cele zyskują, a które tracą. Odmawia, gdy tabela wynikowa jest zapisywana przez więcej niż jeden krok (zamiast ponownie dzielić pulę, która nie należy do tej alokacji), oraz gdy klucz alokacji nie odpowiada już podziałowi wykonanemu przez model przy ostatnim uruchomieniu | `allocation_driver_scenario` |
+
+## Przykład praktyczny
+
+Analityk finansowy zauważa, że linia kosztów oparta na przychodach spadła rok do roku, i zadaje jedno pytanie. Agent odpowiada na nie od początku do końca, wywołując w tle kilka narzędzi alokacji.
+
+> **Pytasz:** Nasza alokacja kosztów oparta na przychodach (`cost_line_rev`) wygląda na niższą w 2026 niż w 2025. Co się stało, z czego jest zbudowana i co spowodowałaby zmiana przychodów w USA o +1 mln USD?
+
+> **Agent odpowiada:**
+>
+> **Czym jest.** `cost_line_rev` to etap modelu rachunku kosztów działań (ABC) oparty na przychodach. Bierze pulę kosztów (`group_amount`, ograniczoną do zestawu kont rachunku zysków i strat) i dzieli ją według **przychodów** z `revenue_by_line`, z wagami w obrębie każdej jednostki, roku i miesiąca.
+>
+> **Dlaczego spadła (USA, 2025 → 2026).** Koszty przypisane do USA spadły z **7,12 mln USD do 2,99 mln USD — o 4,13 mln USD (−58,0%)**. To **nie** jest przesunięcie struktury: udział USA w puli utrzymywał się na poziomie około 23% w obu latach. Przyczyną jest **kurcząca się łączna pula kosztów**, skoncentrowana na kilku kontach:
+>
+> | Konto | 2025 | 2026 | Zmiana |
+> | --- | --: | --: | --: |
+> | 700000 | 2,58 mln USD | 1,09 mln USD | **−1,49 mln USD** |
+> | 701000 | 1,85 mln USD | 0,77 mln USD | −1,08 mln USD |
+> | 610000 | 1,71 mln USD | 0,72 mln USD | −0,99 mln USD |
+> | 670000 | 0,68 mln USD | 0,29 mln USD | −0,39 mln USD |
+> | 702000 | 0,30 mln USD | 0,13 mln USD | −0,18 mln USD |
+>
+> Te pięć kont wyjaśnia zasadniczo całą zmianę.
+>
+> **Co ją zasila.** `cost_line_rev` jest zbudowana z `revenue_by_line` (klucz alokacji podziału) i `gl_pool_entity` (pula kosztów).
+>
+> **Uwaga — ten klucz alokacji jest współdzielony.** `revenue_by_line` zasila także `cost_line_cs` i `cost_line_admin`, więc korekta przychodów odbije się na wszystkich trzech.
+>
+> **Twój scenariusz +1 mln USD w USA.** 1 mln USD jest rozłożony na wyniki, które współdzielą ten klucz alokacji, według **bieżącego udziału każdego z nich w puli**, więc oszacowania dla poszczególnych tabel **sumują się** do zmiany, zamiast każde powtarzać pełny 1 mln USD — otrzymujesz wartość dla `cost_line_rev`, `cost_line_cs` i `cost_line_admin`, które możesz zsumować. Zawęź pytanie do jednego celu, a oszacowanie zostanie zastosowane tylko do tego wycinka.
+
+Analityk dostaje pełną odpowiedź — wielkość zmiany, konta za nią stojące, pochodzenie danych i zasięg skutków scenariusza „co jeśli" — bez otwierania ani jednej tabeli.
+
+## Na ile ufać odpowiedzi
+
+Płynna odpowiedź nie jest automatycznie poprawna. Każda odpowiedź na pytanie „dlaczego to się zmieniło" zawiera teraz prostą ocenę tego, **na ile jej ufać**, więc prawdopodobna, ale niepewna liczba jest oznaczona *zanim* na jej podstawie coś zrobisz, a nie ukryta w treści. Obok wyjaśnienia agent podaje:
+
+- **Poziom pewności** — wysoki, średni lub niski — odzwierciedlający, jak czysto zmiana daje się rozłożyć. Zmiana wynikająca z jednej wyraźnej przyczyny ma poziom wysoki; taka, w której nakłada się kilka przyczyn albo wartości nie uzgadniają się w pełni, ma niższy. Gdy wynik składa się z kilku gałęzi alokacji, pewność waży każdą gałąź tym, jaką część zmiany ona wyjaśnia — więc jedna mała, niepewna gałąź nie obniża skądinąd czystej odpowiedzi — ale gałąź, której liczba sama budzi wątpliwości (nieuzgodniony podział, nieaktualne dane lub coś, czego nie da się przypisać), nadal obniża pewność całej odpowiedzi.
+- **Zastrzeżenia prostymi słowami** — na przykład: przyczyną jest splot nakładających się czynników, a nie jeden; odpowiedź opiera się na *bieżącej* hierarchii lub wagach klucza alokacji; część zmiany może być artefaktem kompletności danych (okres, który nie dokończył się ładować), a nie rzeczywistym ruchem; pula lub klucz alokacji zasilający alokację nie były ostatnio ponownie ładowane, więc wartość może opierać się na nieaktualnych danych; albo wartości ze scenariusza „co jeśli" nie można dodawać między celami.
+- **Wprost wypowiedziane porównanie, którego nie dało się wykonać.** Większość odpowiedzi ocenia wielkość raportowanego ruchu — na tle tego samego ruchu rok wcześniej i na tle ostatnich okresów — abyś mógł odróżnić zwykły rok od załamania trendu. Żadne z tych porównań nie jest tworzone dla tabeli zapisywanej przez krok, który alokuje kilka kolumn wartości naraz, ponieważ każde jest zbudowane dla odpowiedzi dotyczącej jednej kolumny. Dawniej odbywało się to po cichu, więc odpowiedź wyglądała, jakby zaszła tak daleko, jak pozwalają dane, choć celowo zatrzymała się wcześniej. Teraz jest to podane wśród ograniczeń, wraz z powodem, dla którego nie ma węższego pytania do zadania, oraz z informacją, że żadna wartość w odpowiedzi nie zostaje przez to wycofana — kwoty są dokładne, brakuje jedynie kontekstu.
+
+Gdy agent nie może poręczyć za dokładną przyczynę, mówi o tym i wskazuje zakres lub filtr, który pozwoliłby mu odpowiedzieć czysto — zamiast wymyślać pewnie brzmiącą historię. A ponieważ pewność i zastrzeżenia są częścią odpowiedzi, podróżują razem z nią: jeśli poprosisz kolejnego agenta o streszczenie, sygnały zaufania nie zostaną po cichu pominięte.
+
+<Aside type="note" title="Oznaczanie nieaktualnych danych jest opcjonalne">
+Zastrzeżenie o aktualności — obniżanie pewności, gdy dane źródłowe nie były ponownie ładowane w ustalonym oknie — jest **domyślnie wyłączone** i włącza je dla obszaru roboczego administrator, który ustala też, co uznaje się za aktualne (dłużej dla danych odświeżanych tylko kwartalnie lub rocznie). Jeśli Twój zespół celowo pracuje na starszych danych, funkcja nie przeszkadza, dopóki ktoś jej nie włączy.
+
+Po włączeniu obejmuje każdą odpowiedź, która odczytuje Twoją hurtownię: wyjaśnienie „dlaczego to się zmieniło" oraz obie odpowiedzi „co jeśli", gdzie ma to największe znaczenie — scenariusz „co jeśli" propaguje lub przelicza wagi z użyciem udziałów zrealizowanych przez model przy ostatnim uruchomieniu, więc nieaktualne dane to dokładnie ten przypadek, w którym oszacowanie jest najmniej wiarygodne.
+
+Dwie rzeczy ograniczają to, co może Ci powiedzieć, i dotyczą każdej odpowiedzi, nie tylko scenariuszy „co jeśli". Pyta o wiek tylko tabel **załadowanych bezpośrednio do PlaidCloud**: tabela budowana przez krok przepływu pracy może zgłosić tylko, kiedy ten krok ostatnio się wykonał, a to inne pytanie niż to, kiedy dane dotarły, więc celowo go nie zadaje, zamiast odpowiadać błędną liczbą. Podaje też **najstarszą tabelę każdego rodzaju** — jedną pulę, jeden klucz alokacji — więc gdy scenariusz „co jeśli" rozgałęzia się na kilka kroków i nieaktualnych jest więcej niż jeden klucz alokacji, dowiadujesz się o jednym z nich. W żadnym z tych przypadków nieaktualna tabela nigdy nie jest zgłaszana jako aktualna.
+</Aside>
+
+<Aside type="tip" title="Czytaj pewność, nie tylko liczbę">
+**Niska** lub **Średnia** pewność nie jest porażką — to agent uczciwie sygnalizuje, że zmiana ma więcej niż jedną prawdopodobną przyczynę albo że coś (nieaktualny klucz alokacji, niezakończony okres) może ją zniekształcać. Potraktuj to jako zachętę, aby dodać okres, filtr lub wymiar rozbicia i zapytać ponownie.
+</Aside>
+
+<Aside type="caution" title="Gdy czysto wyglądająca suma ukrywa całą historię">
+Dwie sumy całej puli mogą wyglądać na czysty wzrost, a wprowadzać w błąd, i agent wychwytuje teraz oba przypadki: gdy duże wzrosty i spadki **równoważą się** do niewielkiej zmiany netto (największy pojedynczy czynnik jest większy niż sama zmiana łączna) oraz gdy większość zmiany to **przepływ przelotowy** — koszty, które alokacja przenosi dalej bez dzielenia ich według klucza alokacji — więc część faktycznie sterowana kluczem to tylko niewielki ułamek. W każdym z tych przypadków obniża pewność, podaje, o ile naprawdę zmieniła się kwota sterowana kluczem alokacji, i kieruje Cię do widoku na poziomie członków.
+</Aside>
+
+## Warto wiedzieć
+
+<Aside type="note" title="Przefiltrowane alokacje dają czystą odpowiedź dla całej puli">
+Gdy wiersze źródłowe alokacji są ograniczone (na przykład do zestawu kont rachunku zysków i strat), agent stosuje ten filtr automatycznie i nadal podaje czyste przypisanie dla całej puli — nie musisz niczego dodawać.
+</Aside>
+
+<Aside type="note" title="Alokacje wymiarowe">
+W przypadku alokacji sterowanej **hierarchią wymiaru** — na przykład podziału centrum kosztów według struktury raportowej — agent wyjaśnia teraz zmianę: na poziomie sumy całkowitej przypisuje ją puli wejściowej, a po przefiltrowaniu do konkretnego celu oddziela **ruch puli** od przesunięcia **udziału** tego celu. Jedyne, czego nie potrafi jeszcze odtworzyć, to przyczyna zależna od **historii hierarchii na dany moment w czasie**, co jest planowane w późniejszym wydaniu.
+</Aside>
+
+<Aside type="caution" title="Alokacje kaskadowe wymagają wycinka">
+Gdy jedna alokacja zasila inną — kaskada — pytanie „dlaczego" dla całego projektu pomieszałoby niewłaściwe wiersze, więc agent prosi o zawężenie pytania do wycinka (konkretnego regionu, produktu lub centrum kosztów), a następnie je wyjaśnia.
+</Aside>
+
+<Aside type="note" title="Wyniki budowane przez więcej niż jeden krok">
+Jeśli tabela wynikowa jest tworzona przez **więcej niż jeden** krok alokacji, agent nie zgaduje, który spowodował zmianę — wyświetla kroki kandydujące i prosi o wskazanie tego, o który Ci chodzi. Gdy Twoje pytanie zawęża się do wierszy tworzonych tylko przez jeden z tych kroków (na przykład region, który alokuje tylko on), agent to rozpoznaje i automatycznie śledzi ten krok, informując Cię o tym.
+
+**Wskazanie kroku mówi agentowi, który krok opisać, a nie które wiersze mierzyć.** Zmiana, którą raportuje, dotyczy całej tabeli i jest dokładna; to *podział między czynniki* nie może zostać przypisany jednemu krokowi, więc przy tabeli z kilkoma zapisującymi agent wstrzymuje ten podział, mówi, że wartość obejmuje każdy krok zapisujący tabelę, i proponuje prześledzenie tabeli kolejno przez każdy z pozostałych. Każde takie ponowne uruchomienie to osobny pomiar — nie udział tego kroku w oglądanej zmianie ani pomiar tego kroku **samodzielnie**: te kroki zapisują do tej samej kolumny, co jest powodem wstrzymania podziału, więc zwracana zmiana nadal obejmuje je wszystkie.
+
+Dotyczy to **każdego innego zapisującego**. Krok, który nie jest alokacją — na przykład dopisujący wiersze do tabeli wynikowej — nigdy nie jest kandydatem do śledzenia i dlatego nigdy nie prosi Cię o wybór, ale jego wiersze są w sumie tak samo, a agent mówi teraz o tym wprost, zamiast włączać jego ruch do podziału.
+</Aside>
+
+<Aside type="note" title="Scenariusze „co jeśli” dla zmiany wartości używają dzisiejszych udziałów">
+Odpowiedzi na pytania „co się stanie, jeśli ta pula wzrośnie o …" rozkładają zmianę na rozgałęzienie według **bieżącego udziału każdego celu w puli**, więc wartości dla poszczególnych tabel **sumują się**, zamiast być obwiednią najgorszego przypadku. Odzwierciedlają udziały modelu takie, jakie są dziś — dobrze zakreślone oszacowanie, gdzie trafi zmiana, a nie dokładna prognoza. Skieruj je na tabelę **klucza alokacji lub podstawy**, a nie na pulę wejściową, a zostanie obsłużone jako scenariusz „co jeśli" dla *klucza alokacji* (poniżej), ponieważ zmiana klucza przetasowuje stały podział, a nie dodaje wartości.
+
+**W tym przypadku nazwij okres wprost.** W przeciwieństwie do pytania „dlaczego to się zmieniło" lub scenariusza dla klucza alokacji, scenariusz „co jeśli" w przód *nie* ustala kolumny okresu za Ciebie. Pozostaw ją niewskazaną, a oszacowanie obejmie **wszystkie okresy**, a nie okno, które miałeś na myśli.
+</Aside>
+
+<Aside type="caution" title="Wynik, którego scenariusz „co jeśli” nie mógł zmierzyć, nie zawiera wartości">
+Scenariusz „co jeśli” w przód ustala udział każdego celu, odpytując krok, który go zapisuje. Gdy to zapytanie się nie powiedzie — tabela kroku nie ma kolumny okresu, hurtownia je odrzuca — ten cel zgłasza teraz **brak oszacowania**, wraz z powodem. Dawniej zgłaszał *całą* docierającą do niego zmianę, czyli wartość maksymalną przedstawioną dokładnie jak zmierzona odpowiedź, a wszystko poniżej tego kroku było z niej szacowane, więc cała gałąź wyglądała jak zwykłe wartości.
+
+Wynikają z tego trzy rzeczy, a odpowiedź podaje każdą z nich: sumy obejmują tylko cele, które **zostały** zmierzone; nic poniżej niezmierzonego kroku nie jest z niego szacowane, więc te cele są nieobecne w odpowiedzi, a nie odgadywane; a cel zmierzony tylko z *części* tego, co go zapisuje, mówi o tym i wskazuje krok, którego nie udało się odczytać. Taka częściowa wartość jest prawdziwym pomiarem tego, co dało się odczytać, więc pozostaje w mocy — ale nie jest całym celem, a brakująca część może być większa, mniejsza lub o przeciwnym znaku. Nie traktuj jej jako dolnej granicy.
+</Aside>
+
+<Aside type="note" title="Scenariusze dla klucza alokacji są obliczane dokładnie">
+Zapytaj, co spowodowałaby zmiana **klucza alokacji** — „co jeśli klucz alokacji liczby pracowników dla centrum kosztów Assembly wzrośnie o 10?" — a agent **dokładnie** ponownie dzieli stałą pulę według nowych wag, bez ponownego uruchamiania modelu. Pokazuje, które cele **zyskują**, a które **tracą**, a zyski i straty **sumują się do zera** jako wbudowane sprawdzenie. Trzyma się tego, co potrafi obliczyć dokładnie: jednego prostego podziału z prostym kluczem alokacji. Wszystko bardziej złożone — alokacja oparta na hierarchii lub filtrowana/warunkowa, dodanie zupełnie nowego członka klucza alokacji albo zmiana, która opróżnia grupę — jest **odrzucane z podaniem powodu**, a nie szacowane.
+
+**Nazwij kolumnę tak, jak zapisuje ją tabela klucza alokacji.** Gdy krok przenosi kolumnę klucza alokacji pod inną nazwą, należy pytać nazwą z tabeli klucza alokacji — i właśnie ją odpowiedź cytuje z powrotem, jeśli się pomylisz. Wyniki czyta się odwrotnie: centra kosztów i grupy, które się zmieniły, są nazwane tak, jak zapisuje je tabela *wynikowa*, ponieważ po tych nazwach filtrujesz i czytasz wyniki. W większości kroków obie nazwy są takie same.
+</Aside>
+
+<Aside type="note" title="Kolumna okresu jest wykrywana za Ciebie">
+W pytaniu „dlaczego to się zmieniło" lub scenariuszu dla klucza alokacji zwykle nie podajesz kolumny z okresem — agent ustala ją na podstawie tabeli. Jeśli nazwiesz ją wprost, zostanie najpierw sprawdzona w tabeli: jeśli takiej kolumny nie ma, od razu się o tym dowiesz, razem z kolumnami, które *są*, abyś mógł poprawić to jednym krokiem, a nie dostać analizy, która niczego nie mogła zsumować. Jeśli tabela ma dwie równie prawdopodobne kolumny okresu (na przykład rok i numer okresu), agent prosi o wybranie jednej, zamiast zgadywać. Wyjątkiem są scenariusze „co jeśli” w przód — tam nazwij okres samodzielnie, jak opisano wyżej.
+</Aside>
+
+<Aside type="note" title="Kombinacje wymiarów, gdy są włączone">
+Pytanie o to, co spowodowało zmianę, wyszukuje pojedynczy wymiar, który najlepiej ją wyjaśnia, w każdym obszarze roboczym. Jeśli w Twoim obszarze roboczym włączono też wyszukiwanie **kombinacji**, testuje ono również kombinacje wymiarów — na przykład ruch ograniczony do jednego regionu *i* jednej linii produktów — a nie tylko jeden wymiar naraz. Kombinacje muszą przekroczyć wyższy próg niż pojedynczy wymiar, zanim zostaną zgłoszone, a gdy nic samo nie wyjaśnia ruchu, odpowiedź nadal mówi o tym, zamiast coś wybierać. Wyszukiwanie kombinacji jest domyślnie wyłączone; zapytaj administratora PlaidCloud, czy jest włączone w Twoim obszarze roboczym.
+</Aside>
+
+<Aside type="note" title="Czy ta zmiana jest nietypowa?">
+Obok „dlaczego" agent ocenia, czy zmiana wykracza poza normę — porównuje ruch z tego okresu z własną historią **zmian z okresu na okres** modelu i określa go jako normalny, podwyższony lub skrajny, dzięki czemu rutynowe przesunięcie i rzeczywisty skok wyglądają inaczej.
+</Aside>
+
+<Aside type="note" title="Skoncentrowane zmiany są wyróżniane">
+Gdy większość zmiany rok do roku pochodzi z jednej grupy — jedna jednostka lub jeden klient odpowiadają za większość ruchu — podsumowanie agenta wyraźnie to oznacza, aby zmiana napędzana jednym odstającym elementem nie została wzięta za szeroko zakrojone przesunięcie. Dodaj do pytania wymiar rozbicia, taki jak jednostka lub konto, aby to zobaczyć.
+</Aside>
+
+<Aside type="caution" title="Rozbicie według pola, w którym nie ma wartości">
+Rozbicie zmiany według pola zbiera razem wiersze o tej samej wartości — a wiersze **bez** wartości też gromadzą się razem. Pole pozostawione puste w każdym wierszu w porównywanych okresach tworzyło więc jedną grupę zawierającą całą zmianę, co wyglądało na najbardziej skoncentrowany możliwy wynik: jeden członek, cały ruch, pełna pewność.
+
+Agent mówi teraz, że pole nie jest wypełnione dla tych wierszy, i **wstrzymuje** wartości koncentracji, zamiast raportować je jako 100%. Sugeruje albo pole, które jest wypełnione, albo zrezygnowanie z rozbicia, a wtedy sam znajduje pole, które najlepiej wyjaśnia zmianę. Gdy drugie pole grupujące *jest* wypełnione, rozbicie jest rzeczywiste i raportowane jak zwykle, z samą adnotacją o pustym. Puste wartości są wyświetlane jako *(no value)* lub *(blank)*, a te dwa przypadki są rozróżniane: pole, które nigdy nie było wypełnione, i pole jawnie ustawione na nic to różne rzeczy.
+
+Dotyczyło to wyłącznie rozbicia. Zmiana główna, jej sumy i sposób przypisania były przez cały czas poprawne.
+</Aside>
+
+<Aside type="caution" title="Gdy zmieniły się wiersze nieprzypisane">
+Gdy nie wskazujesz pola, agent wybiera to, które najlepiej wyjaśnia zmianę — i czasem odpowiedzią są wiersze, które **nie mają** żadnej wartości tego pola. To rzeczywiste ustalenie, a nie usterka, więc jest raportowane, a nie ukrywane: koszt, który po cichu przestał być oznaczany, warto znać.
+
+Ale „wiersze nieprzypisane wzrosły" znaczy coś zupełnie innego dla pola prawie zawsze wypełnionego niż dla pola prawie zawsze pustego. Odpowiedź mówi teraz, które to jest, w tym samym zdaniu — *„the winning cut is `cost_centre`'s unassigned rows: `cost_centre` carries a value on 12% of the rows in the periods compared"*. Pole wypełnione w 12% wierszy jest ledwo używane; wypełnione w 95% ma rzeczywistą lukę wartą zbadania. Pola bardzo rzadko i bardzo kompletnie wypełnione są podawane jako *fewer than 1%* i *more than 99%*, a nie jako 0% lub 100%, żadne z których nie mogłoby tu być prawdą.
+</Aside>
+
+<Aside type="note" title="Gdy wyszukiwanie w ogóle nie może się wykonać">
+Przed wyszukiwaniem agent zadaje danym jedno szybkie pytanie, aby wykluczyć pola, które mają jedną wartość w całym zakresie, lub są podzielone zbyt drobno, by w ogóle służyć do grupowania. Gdy na to pytanie nie da się odpowiedzieć — typ kolumny, którego hurtownia nie potrafi zmierzyć, albo przerwane połączenie — dawniej przeszukiwał każde pole, znosząc oba te ograniczenia w chwili, gdy coś już poszło nie tak.
+
+Teraz mówi, że wyszukiwanie nie zostało wykonane, i robi to własnymi słowami: to ograniczenie wyszukiwania, a nie ustalenie dotyczące danych. To sformułowanie różni się od uwagi, którą dostajesz, gdy porównywane okresy są po prostu zbyt duże, aby je przeszukać, ponieważ różni się też to, co możesz zrobić — tam zawęź okresy; tu wskaż pole, które chcesz zbadać, co działa niezależnie od przyczyny. Ponowienie pomaga tylko wtedy, gdy awaria była przejściowa.
+</Aside>
+
+<Aside type="caution" title="Rozbicie według pola, którego nie ma w tabeli">
+Poproś o rozbicie według pola, którego tabela nie ma, a teraz zostaniesz o tym poinformowany — wraz z polami, które *są*, abyś mógł poprawić pytanie jednym krokiem. Wcześniej odpowiedź wracała kompletna i pewna, a rozbicia po prostu brakowało, bez żadnej informacji, że je podjęto; sugestia „aby pójść dalej" kierowała zupełnie gdzie indziej. Cztery kolejne pytania na prawdziwym modelu wróciły w ten sposób.
+
+Wyżej w łańcuchu reguła jest celowo inna. Pole dodane przez alokację istnieje tylko w tabelach za nią, więc pole, które jest w tabeli, o którą pytasz, często naprawdę nie występuje dwa etapy wcześniej. Tam śledzenie **grupuje według pól, które ten etap ma**, zamiast tracić rozbicie tego etapu, i mówi, które pominęło.
+
+Ta uwaga dotyczy wcześniejszego etapu i tak to mówi — *„the breakdown you asked for was not available at this stage"*. **Nie** dotyczy tabeli członków drukowanej w odpowiedzi: to tabela, o którą pytasz, w pełnym grupowaniu, o które prosisz. Grubsze grupowanie wcześniejszego etapu to to, na czym mierzona jest jego własna wartość koncentracji, a jego członkowie nie są wymienieni. Towarzysząca sugestia również nazywa ten etap: grupuj według pola, które ma każdy śledzony etap, jeśli chcesz zobaczyć także jego członków. Do sierpnia 2026 uwaga brzmiała „is not in this answer” i wyjaśniała się jako *„so the members you see are grouped only by the rest"*, a sugestia mówiła, że pola nie ma w „the traced table” — co wskazywało na drukowaną tabelę, opisywało ją jako coś, czym nie była, i radziło porzucić pole, które działało.
+
+A gdy rozbicia brakuje z jakiegokolwiek innego powodu — na przykład przejściowej awarii hurtowni — odpowiedź mówi o tym w ten sam sposób, wskazując etap, dla którego nie mogła go utworzyć: sumy są zmierzone i niezmienione, a ona proponuje ponowienie. Brakuje szczegółu, a nie jest on błędny.
+</Aside>
+
+<Aside type="caution" title="Suma, która przekroczyła zero, to dwa stany, a nie jedna zmiana">
+Gdy suma zmieniła się z dodatniej na ujemną między dwoma okresami — na przykład centrum kosztów, które było obciążeniem netto, a stało się uznaniem netto — nie ma sensownego sposobu podziału ruchu między to, co go wywołało, ani sensownego procentu: przejście z niewielkiej wartości dodatniej na dużą ujemną daje wartość taką jak −10 013%, która niczego nie mierzy.
+
+Agent odmawia przypisania takiej zmiany, jak zawsze. Teraz jednak **podaje to** jako powód, zamiast zaczynać od ogólnej uwagi o sposobie pomiaru — co brzmiało jak wyjaśnienie i było sprzeczne z wierszem drukowanym tuż pod nią. Procent nie jest już w ogóle pokazywany dla zmiany, która przekroczyła zero; kwoty po obu stronach i sama zmiana są dokładne i niezmienione.
+
+Czytaj te dwa okresy jako osobne wartości — odpowiedź drukuje teraz obie w wierszu, w którym odmawia, wskazując, czy dotyczą wycinka, o który pytałeś, czy całej kolumny. Aby zobaczyć, co się zmieniło, dodaj wymiar rozbicia — sumy, która przekroczyła zero, nie da się rozłożyć na przyczyny, ale ruch **dla każdego członka** stojący za nią czyta się normalnie i tam zwykle jest odpowiedź.
+</Aside>
+
+<Aside type="note" title="Gdy śledzenie się kończy, sugeruje następny krok">
+Każda odpowiedź kończy się następnymi krokami, które możesz uruchomić. Dwie sytuacje dawniej nie oferowały żadnego — a były to te, w których utykałeś najbardziej: suma, która przekroczyła zero, oraz etap, którego agent w ogóle nie mógł zagregować. Obie mają teraz sugestię, druga wskazuje tabelę do sprawdzenia i najbardziej prawdopodobną przyczynę (brak kolumny okresu w tabeli tego etapu), abyś mógł ją wykluczyć, zanim założysz przejściową awarię hurtowni.
+
+Podobnie odpowiedź nie sugeruje już **zawężenia do członka**, gdy zawęziłeś już pytanie do jednego. Ta rada pochodziła z ograniczenia zapisanego wyżej w łańcuchu, a nie z zadanego pytania, i była powtarzana wśród podanych ograniczeń, jakby dotyczyła tego miejsca.
+
+Jeden przypadek nadal nie ma następnego kroku: gdy niezależny odczyt tabeli klucza alokacji nie zgadza się ze zrealizowanym podziałem, odpowiedź mówi o tym, ale nie potrafi zasugerować ponownego uruchomienia, które to rozwiąże — przydatnym ruchem jest tam bezpośrednia inspekcja tabeli klucza alokacji, co jest innym żądaniem, a nie korektą tego.
+</Aside>
+
+## Wskazówki
+
+- Odwołuj się do tabel po **nazwie** (`cost_line_rev`) lub identyfikatorze — oba działają.
+- W pytaniu o zmianę nazwij **okresy** do porównania (na przykład 2025 w porównaniu z 2026) i, gdy to przydatne, wymiar **rozbicia**, taki jak konto lub jednostka.
+- Zacznij szeroko („jakie modele alokacji są w tym projekcie?") i schodź w głąb; agent zachowuje wątek, więc kolejne pytania budują na tym samym modelu.
+- Istnieją **dwa rodzaje scenariuszy „co jeśli”**: zmiana **wartości** („ta pula rośnie o 1 mln USD") jest szacowana według dzisiejszych udziałów i sumuje się między celami; zmiana **klucza alokacji** („przelicz wagi tego klucza") jest dzielona dokładnie i sumuje się do zera. Sformułuj pytanie dla tego, który masz na myśli.
+
+## Powiązane
+
+- [Pierwsze kroki z agentami do kodowania z AI](../getting-started/) — połącz agenta z obszarem roboczym przez MCP
+- [Dlaczego alokacje są przydatne](/pl/guides/allocations/getting-started/why-are-allocations-useful/) — pojęcia dotyczące alokacji
+- [Rozwiązywanie problemów](../troubleshooting/) — problemy z połączeniem i uwierzytelnianiem

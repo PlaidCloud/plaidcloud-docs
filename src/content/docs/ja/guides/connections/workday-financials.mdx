@@ -1,0 +1,127 @@
+---
+title: Workday Financialsに接続する
+description: 統合システムユーザーでPlaidCloudをWorkday Financial Managementに接続し、Report-as-a-Serviceレポートでデータを取得して、SOAP経由で仕訳を転記します。
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+統合システムユーザー（ISU）とお客様が用意するReport-as-a-Service（RaaS）レポートを使用して、PlaidCloudをWorkday Financial Managementに接続し、財務データを取得して、WorkdayのSOAP APIで会計仕訳を書き戻します。このガイドでは、接続、インポートステップ、転記ステップについて説明します。
+
+<Aside type="caution">
+インポートは必ず最初にサンドボックステナントで実行してください。また、本番で転記する前に、すべての転記バッチで下記の **Validate Only** を実施してください。
+</Aside>
+
+<Aside type="note">
+これは、汎用の[Workday RESTコネクタ](/ja/reference/connectors/rest/workday/)とは別の接続です。そちらは、人事と給与データ向けのWorkday REST APIを対象としています。Workday Financialsは代わりにWorkdayのSOAPウェブサービスとRaaSレポートを使用します。財務データと仕訳の転記には、このコネクタを使用してください。
+</Aside>
+
+## 前提条件
+
+Workdayで次のものが必要です。
+
+- PlaidCloud専用の **統合システムユーザー（ISU）**。財務データとSubmit Accounting Journalビジネスプロセスへのアクセスを付与する、Integration System Security Group（統合システムのセキュリティグループ）が必要です。
+- Workdayの **テナントホスト**（例: `wd5-impl.workday.com`）と **テナント名**。
+- インポートしたいデータを返す、Workdayで作成した **Report-as-a-Service（RaaS）レポート**。PlaidCloudがそのURLを直接呼び出せるよう、**Web Service** アクセスを付けて公開されている必要があります。
+
+<Aside type="note">
+Workday Financialsは、NetSuiteやBusiness Centralのように、あらかじめ用意された固定のエンティティを公開しません。代わりに、Workday自身のレポートライターを使ってRaaSレポートとして抽出を作成し、そのレポートのURLをPlaidCloudに渡します。これにより、インポートが返すフィールドと行を完全に制御できます。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections** を開き、`New Connection` をクリックします。
+
+2. メニューから **Workday Financials** を選択します。
+
+3. 各フィールドに入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例: `Workday Financials Prod`）。 |
+   | テナントホスト | Workdayのホスト（例: `wd5-impl.workday.com`）。 |
+   | テナント名 | Workdayのテナント名。 |
+   | ISUユーザー名 | 統合システムユーザーのユーザー名。 |
+   | ISUパスワード | 統合システムユーザーのパスワード。 |
+
+4. `Create` をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. Workdayで小規模なRaaSレポートを作成し、Web Serviceアクセスを付けて公開します。
+
+2. ワークフローに **Import Workday Entity** ステップを追加し、**Workday接続** に作成した接続を、**RaaS Report URL** にレポートのURLを、**ターゲットテーブル** に作業用テーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内で1つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが入っていれば、ISUの資格情報、テナントホスト、レポートURLがすべて正しいことを確認できます。エラーが発生した場合は、問題が示されます。たとえば、資格情報の誤り、テナントホストの誤り、レポートへのアクセス権がないISUなどです。
+
+## データをインポートする
+
+<Steps>
+
+1. **Import Workday Entity** ステップを追加し、**Workday接続**、**RaaS Report URL**、**ターゲットテーブル** を設定します。
+
+2. **フィルター** を追加して取得範囲を絞り込みます。`company`、`ledger`、`period`、`accounting_date`（範囲）、`ledger_account`（範囲）、`cost_center` は、RaaSレポートが対応するプロンプトを定義している場合に、レポートパラメーターとして渡されます。
+
+3. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+<Aside type="caution">
+フィルターが届くのは、RaaSレポートが実際にプロンプトとして定義しているレポートパラメーターだけです。設定したフィルターに対応するプロンプトがレポートにない場合、PlaidCloudは黙って無視するのではなく、それを拒否します。先にWorkdayでレポートにプロンプトを追加してください。
+</Aside>
+
+## 仕訳を転記する
+
+**Workday Financials: Post Journal Entry** ステップは、Workdayの `Submit_Accounting_Journal` SOAP操作を使用し、PlaidCloudの共有ERP書き込みパイプラインを通じて会計仕訳を転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル** を作成します。仕訳1件につき1行で、`journal_id`（仕訳の識別子）、`company`、`ledger`、`accounting_date`、`memo` を含めます。
+
+2. **明細テーブル** を作成します。`journal_id` ごとに1行以上で、`ledger_account`、`debit`、`credit`、および仕訳が必要とするワークタグ（コストセンター、プロジェクト）の列を含めます。
+
+3. **Workday Financials: Post Journal Entry** ステップを追加し、**Workday接続**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル** を設定します。
+
+4. **Validate Only** をオンのままにしてステップを実行します。PlaidCloudは、台帳の要求（ledger claim）を行わず、何も転記せずに、すべての仕訳を作成してチェックします。
+
+5. 結果テーブルを確認します（仕訳1件につき1行: `journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）。`error` の行があれば修正して、再度検証します。
+
+6. **Validate Only** をオフにして再度実行し、実際に転記します。最初に失敗した仕訳でバッチを即座に停止したい場合を除き、**Continue On Error** はオンのままにしてください。
+
+</Steps>
+
+### 転記の仕組み
+
+PlaidCloudは、仕訳ごとに `Submit_Accounting_Journal` を呼び出します。Workday自身のビジネスプロセスの承認チェーンが、送信された仕訳を実際に転記される前に保留することがあるため、仕訳のビジネスプロセスのステータスが最終状態に達するまでポーリングします。仕訳が `posted` と報告されるのは、その最終状態が **確認済み** になった後だけです。送信されたものの承認ステップで止まっている仕訳は、転記済みとして記録されずに隔離されたままになるため、保留中の承認が黙って成功扱いになることはありません。PlaidCloud独自の台帳の要求（ledger claim）により、再試行または再実行されたバッチで同じ仕訳が二重に送信されるのを防ぎます。
+
+### 転記済みの仕訳を修正する
+
+このステップは、転記済みの仕訳を削除したり書き換えたりすることはありません。修正するには、元の仕訳を直接編集するのではなく、元の仕訳の借方と貸方を入れ替えた新しい仕訳（**転記済みの逆仕訳**）を転記します。これにより、Workday自体の監査証跡が保持され、アプリケーション上で直接修正する場合のやり方とも一致します。
+
+### 機能の制限事項: 本番で転記する前にお読みください
+
+<Aside type="caution">
+- **インポートは、作成するRaaSレポートに完全に依存します。** PlaidCloudには、あらかじめ用意されたWorkday Financialsのエンティティはありません。レポートのフィールド、プロンプト、アクセス制御は、このコネクタではなく、すべてWorkdayで定義されます。Workdayでレポートを変更すると、PlaidCloud側で何も変更しなくても、インポートの形が変わる可能性があります。
+- **ビジネスプロセスの承認によって遅延が生じます。** Submit Accounting Journalビジネスプロセスが承認ステップを経由する場合、転記された仕訳は、誰かがWorkdayで承認するまで `pending` のままになることがあります。最終状態のポーリングはそれを待つため、承認チェーンのないERPの呼び出しと比べて、転記にかなり長い時間がかかる場合があります。
+- **このコネクタは、汎用の[Workday RESTコネクタ](/ja/reference/connectors/rest/workday/)とは別のものです。** そちらはWorkdayのREST API（人事/給与）を対象としています。Workday Financialsに接続しない場合にのみ使用してください。
+</Aside>
+
+## 関連情報
+
+- [Workday Financialsコネクタ](/ja/reference/connectors/rest/workday-financials/) — フィールドリファレンス。
+- [Import Workday Entity](/ja/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/ja/reference/workflow-steps/workday-financials/workday-post/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/) — Workday Financialsへのすべての転記試行と、その最新の状態を記録した常設の履歴。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

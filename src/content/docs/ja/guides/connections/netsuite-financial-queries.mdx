@@ -1,0 +1,281 @@
+---
+title: NetSuite SuiteQL クエリの例
+description: PlaidCloud で実行できる NetSuite の SuiteQL クエリ集です。仕訳エントリ、総勘定元帳、試算表、損益計算書、貸借対照表、未回収売掛金、受注、発注、在庫を取得できます。
+sidebar:
+  label: NetSuite クエリの例
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-financial-queries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[NetSuite 接続](/ja/guides/connections/netsuite/)が動作したら、このページで実際のレポートをすばやく作成できます。仕訳エントリ、総勘定元帳、試算表、損益計算書、貸借対照表、未回収の売掛金、未処理の受注、手持ち在庫など、多くの取得の出発点となる財務データと業務データ向けの SuiteQL をコピー＆ペーストで使えます。
+
+各レシピは**出発点**です。実行し、NetSuite で信頼しているレポートと数値を照合してから、フィルターと列をお使いのアカウントに合わせて調整してください。
+
+<Aside type="tip">
+試算表、GL 明細、勘定科目や子会社などのマスターリストといった一般的な取得には、定型の NetSuite インポートステップのほうが簡単で、SuiteQL は不要です。[NetSuite の財務データをインポートする](/ja/guides/connections/import-netsuite-financials/)を参照してください。それらのステップでカバーされない取得が必要な場合に、以下のクエリを使用してください。
+</Aside>
+
+## レシピの実行方法
+
+<Steps>
+
+1. ワークフローに [REST リクエストステップ](/ja/guides/workflows/rest-request-step/)を追加し、**接続**に NetSuite 接続を、**メソッド**に `POST` を、**エンドポイント**に `/services/rest/query/v1/suiteql` を設定します。
+
+2. クエリを、単一の JSON オブジェクトとして**本文**に記述します。クエリのテキストは `q` に入れます。
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 5"}
+   ```
+
+   以下のレシピは、分かりやすいように読みやすい SQL として示しています。ステップに貼り付けるときは、`{"q": "…your query…"}` の形式で囲んでください。
+
+3. **レスポンス**タブで、出力先を**テーブル**のままにし、**各列の型を設定します**（各レシピの下の「Column types」の注記を参照）。SuiteQL はすべてをテキストとして返すため、型を設定することで、金額が合計でき、日付が並べ替えられるようになります。
+
+4. **テストリクエストを送信**をクリックして実行を確認し、ステップを実行します。
+
+</Steps>
+
+<Aside type="caution">
+これらのクエリは、NetSuite の標準的な SuiteQL スキーマ（`transaction`、`transactionaccountingline`、`account`、`item`）を対象としています。テーブルとフィールドの有無、勘定科目タイプコード、取引ステータスコードは、NetSuite のエディション、有効にしている機能、アカウントのカスタマイズによって異なります。すべてのレシピを出発点として扱い、使用する前に NetSuite のレポートと照合して検証してください。一致しない場合は、表示されるエラーに正確なフィールドまたはテーブルの名前が示されます。
+</Aside>
+
+## すべてのレシピで共通の規則
+
+すべての財務レシピに共通する規則がいくつかあります。
+
+- **`transactionaccountingline`（TAL）が GL の正です。** 転記金額、借方、貸方は `transactionline` ではなく、ここにあります。すべての財務レシピは、これを経由して結合します。
+- **転記エントリのみ:** `tal.posting = 'T'` で、転記されない明細を除外します。
+- **プライマリ会計ブック:** `tal.accountingbook = 1`。NetSuite のマルチブックを使用している場合にのみ変更してください。
+- **金額の符号:** NetSuite は転記金額を**借方がプラス、貸方がマイナス**で保持します。そのため、収益（貸方）は `amount` がマイナスになります。損益計算書と貸借対照表のレシピでは、「収益がプラス」という自然な表示が望ましい箇所で符号を反転しており、それぞれに明記しています。
+- **すべてのページングクエリには、決定的な `ORDER BY` が必要です。** そうでないと、ページをまたいで行が知らないうちに重複したり、欠落したりします。
+- **クエリ内で日付を整形します:** `TO_CHAR(t.trandate, 'YYYY-MM-DD')`（そうしないと、SuiteQL はアカウントの表示形式で日付を返します）。これらの列には `Date` 型を設定します。
+
+<Aside type="caution">
+**複数子会社 / 複数通貨:** これらのレシピは、各取引自身の金額を読み取ります。通貨の異なる子会社をまたいで合計すると、**連結としては誤り**になります。子会社をまたいでレポートする場合は、1 つの子会社に絞り込む（`t.subsidiary = <id>`）か、連結後または為替レート換算後の金額を選択してください。
+</Aside>
+
+## 財務レシピ
+
+### 仕訳エントリ
+
+指定した期間の仕訳エントリのすべての転記明細を、勘定科目、借方、貸方とともに取得します。
+
+```sql
+SELECT
+    t.tranid                                AS entry_number,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS entry_date,
+    BUILTIN.DF(t.postingperiod)             AS period,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    tal.debit                               AS debit,
+    tal.credit                              AS credit,
+    tl.memo                                 AS line_memo
+FROM transaction t
+    JOIN transactionaccountingline tal ON tal.transaction = t.id
+    JOIN transactionline tl            ON tl.transaction = tal.transaction
+                                      AND tl.id = tal.transactionline
+    JOIN account a                     ON a.id = tal.account
+WHERE t.type = 'Journal'
+    AND tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY t.tranid, tl.id
+```
+
+**Column types:** `debit`、`credit` → `Currency`、`entry_date` → `Date`、それ以外はすべて → `Text`。
+
+### 総勘定元帳の明細
+
+`type = 'Journal'` フィルターを除いた同じ形式のクエリです。すべての取引タイプにわたるすべての転記明細が、その期間の総勘定元帳になります。
+
+```sql
+SELECT
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS posting_date,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    t.type                                  AS transaction_type,
+    t.tranid                                AS document_number,
+    BUILTIN.DF(t.entity)                    AS name,
+    tal.amount                              AS amount,
+    tl.memo                                 AS line_memo
+FROM transactionaccountingline tal
+    JOIN transaction t     ON t.id = tal.transaction
+    JOIN transactionline tl ON tl.transaction = tal.transaction
+                           AND tl.id = tal.transactionline
+    JOIN account a         ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY a.acctnumber, t.trandate, t.tranid, tl.id
+```
+
+**Column types:** `amount` → `Currency`、`posting_date` → `Date`、残りは → `Text`。`amount` は借方がプラス、貸方がマイナスです。
+
+### 試算表
+
+期間における各勘定科目の純増減です。帳簿が合っていれば、全勘定科目の合計はゼロになります。
+
+```sql
+SELECT
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    a.accttype              AS account_type,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.acctnumber, BUILTIN.DF(a.id), a.accttype
+ORDER BY a.acctnumber
+```
+
+**Column types:** `balance` → `Currency`、残りは → `Text`。
+
+<Aside type="note">
+暦の範囲ではなく名前付きの会計期間に合わせるには、`accountingperiod` を結合してフィルターします。`JOIN accountingperiod ap ON ap.id = t.postingperiod` … `WHERE ap.periodname = 'Jan 2026'`。エントリが日付順でない期間に転記されている場合、期間によるレポートと暦日によるレポートは異なることがあります。
+</Aside>
+
+### 損益計算書（Income Statement）
+
+試算表を収益と費用の勘定科目に限定し、符号を反転して、収益をプラス、費用をマイナスで表示します。これにより、この列の合計が純利益になります。
+
+```sql
+SELECT
+    a.accttype                      AS account_type,
+    a.acctnumber                    AS account_number,
+    BUILTIN.DF(a.id)                AS account_name,
+    -SUM(tal.amount)                AS amount
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Column types:** `amount` → `Currency`、残りは → `Text`。レポートでは `account_type` を、収益（`Income`、`OthIncome`）、COGS（`COGS`）、費用（`Expense`、`OthExpense`）にグループ化します。収益から COGS と費用を差し引いたものが純利益です。
+
+### 貸借対照表
+
+指定した日付**時点**の累積勘定科目残高です。貸借対照表の勘定科目（損益計算書の勘定科目以外のすべて）について、開始から基準日までのすべての転記明細を集計します。
+
+```sql
+SELECT
+    a.accttype              AS account_type,
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype NOT IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate <= TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Column types:** `balance` → `Currency`、残りは → `Text`。資産はプラス（借方が通常残高）、負債と資本はマイナス（貸方が通常残高）で表示されるため、表示用には符号を反転してください。資産は、負債と資本の合計に等しくなるはずです。
+
+## 業務レシピ
+
+### 未回収売掛金（未払いの顧客請求書）
+
+未払いの顧客請求書を、残高と支払期日とともに取得します。売掛金のエージングの基礎となります。
+
+```sql
+SELECT
+    t.tranid                            AS invoice_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+    TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+    t.foreigntotal                      AS invoice_total,
+    t.foreignamountunpaid               AS amount_unpaid
+FROM transaction t
+WHERE t.type = 'CustInvc'
+    AND t.foreignamountunpaid <> 0
+ORDER BY t.tranid
+```
+
+**Column types:** `invoice_total`、`amount_unpaid` → `Currency`、`invoice_date`、`due_date` → `Date`、残りは → `Text`。エージングのバケットは、後続のステップで `due_date` から計算します。
+
+### 未処理の受注
+
+まだ完全には処理されていない受注を、顧客別に取得します。
+
+```sql
+SELECT
+    t.tranid                            AS order_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS order_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS order_total
+FROM transaction t
+WHERE t.type = 'SalesOrd'
+    AND t.status IN ('SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E')
+ORDER BY t.tranid
+```
+
+**Column types:** `order_total` → `Currency`、`order_date` → `Date`、残りは → `Text`。`SalesOrd:*` のステータスコード（出荷待ち、一部出荷済み、請求待ち）はアカウントによって異なります。「未処理」を意味するコードを確認するか、ステータスフィルターを外して後続でフィルターしてください。
+
+### 未処理の発注
+
+入荷待ちまたは請求待ちの発注を、仕入先別に取得します。
+
+```sql
+SELECT
+    t.tranid                            AS po_number,
+    BUILTIN.DF(t.entity)                AS vendor,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS po_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS po_total
+FROM transaction t
+WHERE t.type = 'PurchOrd'
+    AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E', 'PurchOrd:F')
+ORDER BY t.tranid
+```
+
+**Column types:** `po_total` → `Currency`、`po_date` → `Date`、残りは → `Text`。受注の場合と同様に、お使いのアカウントで「未処理」を意味する `PurchOrd:*` ステータスコードを確認してください。
+
+### 手持ち在庫
+
+在庫アイテムの、全社の手持ち数量と利用可能数量です。
+
+```sql
+SELECT
+    i.itemid            AS item,
+    BUILTIN.DF(i.id)    AS description,
+    i.quantityonhand    AS on_hand,
+    i.quantityavailable AS available
+FROM item i
+WHERE i.itemtype = 'InvtPart'
+    AND i.isinactive = 'F'
+ORDER BY i.itemid
+```
+
+**Column types:** `on_hand`、`available` → `Decimal`、残りは → `Text`。これらは全社の合計です。ロケーション別の数量は NetSuite の在庫ロケーションデータから取得しますが、これは複数ロケーション在庫機能に依存します。お使いのアカウントで何が公開されているかを確認してください。
+
+## アカウントに合わせて調整する
+
+- **テスト中は範囲を限定します。** `AND ROWNUM <= 100`（または狭い日付範囲）を追加して、最初の実行がすぐに返るようにし、本番の取得では削除します。
+- **誤った数値は、コネクタではなくクエリまでさかのぼって調べます。** 変換エラーには列と値が示されます。合計が一致しない場合は、ほぼ間違いなく子会社/通貨の範囲、または転記/期間のフィルターが原因です。まずそれらを確認してください。
+- **すべての取得はテーブル全体の置き換えです。** スケジュールされた実行のたびに全履歴を再抽出するのではなく、`WHERE` 句を必要なスライス（ローリング期間、未処理の項目のみなど）に限定してください。
+
+## 関連情報
+
+- [NetSuite に接続する](/ja/guides/connections/netsuite/) — 最初に接続を設定します。
+- [NetSuite の財務データをインポートする](/ja/guides/connections/import-netsuite-financials/) — 残高、GL 明細、マスターデータのための定型インポートステップです。SuiteQL は不要です。
+- [NetSuite REST コネクタ](/ja/reference/connectors/rest/netsuite/) — フィールドと SuiteQL のリファレンス。
+- [REST リクエストステップ](/ja/guides/workflows/rest-request-step/) — これらのクエリを実行するステップです。

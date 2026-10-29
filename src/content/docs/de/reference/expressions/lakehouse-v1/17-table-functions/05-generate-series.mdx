@@ -1,0 +1,143 @@
+---
+title: GENERATE_SERIES (Lakehouse v1)
+description: GENERATE_SERIES erzeugt einen Datensatz, der an einem angegebenen Punkt beginnt und an einem anderen endet.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/17-table-functions/05-generate-series.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Erzeugt einen Datensatz, der an einem angegebenen Punkt beginnt, an einem anderen angegebenen Punkt endet und optional einen Schrittwert verwendet. Die Funktion GENERATE_SERIES arbeitet mit den folgenden Datentypen: 
+
+- Integer
+- Date
+- Timestamp
+
+## Analyze-Syntax
+
+```python
+func.generate_series(<start>, <stop>[, <step_interval>])
+```
+
+## Analyze-Beispiele
+
+```python
+func.generate_series(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+```
+
+## SQL-Syntax
+
+```sql
+GENERATE_SERIES(<start>, <stop>[, <step_interval>])
+```
+
+## Argumente
+
+| Argument      	| Beschreibung                                                                                                                                                                                                	|
+|---------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| start         	| Der Startwert, also die erste Zahl, das erste Datum oder der erste Zeitstempel der Folge.                                                                                                                            	|
+| stop          	| Der Endwert, also die letzte Zahl, das letzte Datum oder der letzte Zeitstempel der Folge.                                                                                                                               	|
+| step_interval 	| Das Schrittintervall, das die Differenz zwischen benachbarten Werten der Folge bestimmt. Bei Ganzzahlfolgen ist der Standardwert 1. Bei Datumsfolgen ist das Standardschrittintervall 1 Tag. Bei Zeitstempelfolgen ist das Standardschrittintervall 1 Mikrosekunde. 	|
+
+
+<Aside>Bei Funktionen wie GENERATE_SERIES und RANGE liegt ein wesentlicher Unterschied in der Behandlung der Grenzen. GENERATE_SERIES ist auf beiden Seiten begrenzt, RANGE dagegen nur auf der linken Seite. So entspricht RANGE(1, 11) beispielsweise GENERATE_SERIES(1, 10).</Aside>
+
+## Rückgabetyp
+
+Gibt eine Liste zurück, die eine fortlaufende Folge von Zahlenwerten, Datumswerten oder Zeitstempeln von *start* bis *stop* enthält.
+
+## SQL-Beispiele
+
+### SQL-Beispiele 1: Numerische Daten, Datums- und Zeitstempeldaten erzeugen
+
+```sql
+SELECT * FROM GENERATE_SERIES(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+
+SELECT * FROM GENERATE_SERIES('2023-03-20'::date, '2023-03-27'::date);
+
+generate_series|
+---------------+
+     2023-03-20|
+     2023-03-21|
+     2023-03-22|
+     2023-03-23|
+     2023-03-24|
+     2023-03-25|
+     2023-03-26|
+     2023-03-27|
+
+SELECT * FROM GENERATE_SERIES('2023-03-26 00:00'::timestamp, '2023-03-27 12:00'::timestamp, 86400000000);
+
+generate_series    |
+-------------------+
+2023-03-26 00:00:00|
+2023-03-27 00:00:00|
+```
+
+### SQL-Beispiele 2: Lücken in Abfrageergebnissen füllen 
+
+Dieses Beispiel verwendet die Funktion GENERATE_SERIES und den Left-Join-Operator, um Lücken in Abfrageergebnissen zu behandeln, die durch fehlende Informationen in bestimmten Bereichen entstehen.
+
+```sql
+CREATE TABLE t_metrics (
+  date Date,
+  value INT
+);
+
+INSERT INTO t_metrics VALUES
+  ('2020-01-01', 200),
+  ('2020-01-01', 300),
+  ('2020-01-04', 300),
+  ('2020-01-04', 300),
+  ('2020-01-05', 400),
+  ('2020-01-10', 700);
+
+SELECT date, SUM(value), COUNT() FROM t_metrics GROUP BY date ORDER BY date;
+
+date      |sum(value)|count()|
+----------+----------+-------+
+2020-01-01|       500|      2|
+2020-01-04|       600|      2|
+2020-01-05|       400|      1|
+2020-01-10|       700|      1|
+```
+
+Um die Lücken zwischen dem 1. und dem 10. Januar 2020 zu schließen, verwenden Sie die folgende Abfrage:
+
+```sql
+SELECT t.date, COALESCE(SUM(t_metrics.value), 0), COUNT(t_metrics.value)
+FROM generate_series(
+  '2020-01-01'::Date,
+  '2020-01-10'::Date
+) AS t(date)
+LEFT JOIN t_metrics ON t_metrics.date = t.date
+GROUP BY t.date ORDER BY t.date;
+
+date      |coalesce(sum(t_metrics.value), 0)|count(t_metrics.value)|
+----------+---------------------------------+----------------------+
+2020-01-01|                              500|                     2|
+2020-01-02|                                0|                     0|
+2020-01-03|                                0|                     0|
+2020-01-04|                              600|                     2|
+2020-01-05|                              400|                     1|
+2020-01-06|                                0|                     0|
+2020-01-07|                                0|                     0|
+2020-01-08|                                0|                     0|
+2020-01-09|                                0|                     0|
+2020-01-10|                              700|                     1|
+```

@@ -1,0 +1,70 @@
+---
+title: REGEXP_REPLACE（Lakehouse v1）
+description: REGEXP_REPLACE——将字符串 expr 中与正则表达式匹配的内容替换为替换字符串。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/06-string-functions/regexp-replace.md
+---
+
+将字符串 `expr` 中与模式 `pat` 指定的正则表达式匹配的内容替换为替换字符串 `repl`，并返回结果字符串。如果 `expr`、`pat` 或 `repl` 为 NULL，则返回值为 NULL。
+
+## Analyze 语法
+
+```python
+func.regexp_replace(<expr>, <pat>, <repl[, pos[, occurrence[, match_type]]]>)
+```
+
+## Analyze 示例
+
+```python
+func.regexp_replace('a b c', 'b', 'X')
+┌────────────────────────────────────────┐
+│ func.regexp_replace('a b c', 'b', 'X') │
+├────────────────────────────────────────┤
+│ a X c                                  │
+└────────────────────────────────────────┘
+```
+
+## SQL 语法
+
+```sql
+REGEXP_REPLACE(<expr>, <pat>, <repl[, pos[, occurrence[, match_type]]]>)
+```
+
+## 参数
+
+| 参数  | 说明                                                                                                             |
+|------------|-------------------------------------------------------------------------------------------------------------------------|
+| expr       | 待匹配的字符串 expr                                                                                      |
+| pat        | 正则表达式                                                                                                  |
+| repl       | 替换字符串                                                                                                  |
+| pos        | 可选。expr 中开始搜索的位置。省略时默认为 1。                              |
+| occurrence | 可选。要替换第几次匹配。省略时默认为 0（表示“替换所有匹配项”）。 |
+| match_type | 可选。指定匹配方式的字符串，含义与 REGEXP_LIKE() 中的说明相同。               |
+
+## 返回类型
+
+`VARCHAR`
+
+## SQL 示例
+
+```sql
+SELECT REGEXP_REPLACE('a b c', 'b', 'X');
+┌───────────────────────────────────┐
+│ REGEXP_REPLACE('a b c', 'b', 'X') │
+├───────────────────────────────────┤
+│ a X c                             │
+└───────────────────────────────────┘
+
+SELECT REGEXP_REPLACE('abc def ghi', '[a-z]+', 'X', 1, 3);
+┌────────────────────────────────────────────────────┐
+│ REGEXP_REPLACE('abc def ghi', '[a-z]+', 'X', 1, 3) │
+├────────────────────────────────────────────────────┤
+│ abc def X                                          │
+└────────────────────────────────────────────────────┘
+
+SELECT REGEXP_REPLACE('周 周周 周周周', '周+', 'X', 3, 2);
+┌───────────────────────────────────────────────────────────┐
+│ REGEXP_REPLACE('周 周周 周周周', '周+', 'X', 3, 2)        │
+├───────────────────────────────────────────────────────────┤
+│ 周 周周 X                                                 │
+└───────────────────────────────────────────────────────────┘
+```

@@ -1,0 +1,83 @@
+---
+title: Mit Oracle Essbase verbinden
+description: Verbinden Sie PlaidCloud mit Oracle Essbase 21c oder Oracle Analytics Cloud und führen Sie eine Live-MDX-Abfrage gegen einen Cube aus oder laden Sie eine Dimensionsstruktur in eine PlaidCloud-Dimension — Cloud-direkt, mit deterministischen Mitgliedsbezeichnungen und einer harten Obergrenze für die Extraktgröße.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit Oracle **Essbase** (21c oder höher, oder Oracle Analytics Cloud), damit ein Workflow eine Live-MDX-Abfrage gegen einen Cube ausführen oder eine Dimensionsstruktur als PlaidCloud-Dimension laden kann. Die Verbindung erreicht die eigene REST-API von Essbase **Cloud-direkt** — für diese Schritte gibt es keinen lokalen Agent-Pfad. Dieser Leitfaden behandelt die Verbindung, das Ausführen einer Abfrage, die Optionen, die Zeilenlimits und Bezeichnungen steuern, und das Laden einer Dimensionshierarchie.
+
+<Aside type="note">
+Dieser Connector ist schreibgeschützt: kein Rückschreiben nach Essbase.
+</Aside>
+
+## Voraussetzungen
+
+Von Ihrem Essbase-Administrator benötigen Sie:
+
+- Den **Essbase-Server-Origin**, zum Beispiel `https://your-host:9001` — ohne nachgestellten Pfad `/essbase/...`.
+- Ein **Servicekonto** — Benutzername und Kennwort — mit Lesezugriff auf die Anwendungen und Cubes, die Ihre Workflows abfragen.
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Oracle Essbase** aus.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `Essbase Prod`. |
+   | Basis-URL | Der Essbase-Server-Origin, z. B. `https://your-host:9001`. |
+   | Standardanwendung | Optional. Wählt diese Anwendung in den Schrittformularen vor. |
+   | Benutzername | Der Benutzername des Servicekontos. |
+   | Kennwort | Das Kennwort des Servicekontos. |
+   | SSL überprüfen | Standardmäßig aktiviert. Nur für einen Host mit selbstsigniertem oder anderweitig nicht überprüfbarem Zertifikat deaktivieren. |
+
+4. Klicken Sie auf `Test Connection`. Ein erfolgreicher Test erreicht den Essbase-Server, listet die Anwendungen auf, die das Servicekonto sehen kann, und meldet, wie viele er gefunden hat — das bestätigt vor dem Erstellen einer Abfrage sowohl die Basis-URL als auch die Anmeldedaten.
+
+5. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Eine Abfrage ausführen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen **Essbase: Cube abfragen**-Schritt hinzu (er befindet sich im Schrittmenü unter **Oracle Essbase**).
+
+2. Legen Sie unter **Konfiguration** **Verbindung**, **Anwendung**, **Cube (Database)** und eine **Zieltabelle** fest.
+
+3. Erstellen Sie das **MDX**:
+
+   - **Geführte Mitgliedsauswahl** — durchsuchen Sie die Dimensionen und Mitglieder des Cubes und wählen Sie aus, was in die Spalten und Zeilen kommt; der Schritt stellt das MDX für Sie zusammen.
+   - **Rohes MDX** — schreiben oder fügen Sie direkt ein MDX-`SELECT` ein, für alles, was die geführte Auswahl nicht abdeckt, etwa berechnete Mitglieder oder Mengenoperatoren.
+
+4. Führen Sie den Schritt aus. Das zurückgegebene Raster landet als Zieltabelle, mit Spalten, die aus dem Raster selbst abgeleitet werden — es muss vorab kein Schema deklariert werden.
+
+</Steps>
+
+## Optionen
+
+- **Mitgliedsbezeichnungen sind deterministisch.** Spaltenbezeichnungen für Mitglieder stammen aus der in der Verbindung konfigurierten Aliastabelle und werden bei jeder Ausführung konsistent angewendet — nicht aus dem eigenen sitzungsbezogenen Standard von Essbase, der je nachdem, wer bei der Abfrage angemeldet war, unterschiedliche Bezeichnungstexte zeigen könnte.
+- **Das Zeilenlimit beträgt standardmäßig 250.000 und lässt sich erhöhen.** Ein nicht gesetztes Zeilenlimit fällt auf eine Obergrenze von 250.000 Zeilen zurück, nicht auf „unbegrenzt“ — eine Abfrage, die mehr Zeilen als das wirksame Limit liefert, wird abgelehnt und nennt Anzahl und Obergrenze, statt unbegrenzt zu laufen oder das Raster stillschweigend abzuschneiden. Grenzen Sie die Abfrage ein oder erhöhen Sie das Zeilenlimit ausdrücklich, um einen berechtigten größeren Extrakt durchzubringen.
+- **Die Nullunterdrückung ist optional und verlustbehaftet.** Das Unterdrücken von Zellen mit dem Wert null ist ein Filter, den Sie bewusst aktivieren, und ein destruktiver: Er verwirft Zellen, die eine tatsächlich gebuchte `0` enthalten, was etwas anderes ist als die eigene Markierung `#Missing` von Essbase für eine Zelle ganz ohne Daten. In einem Planungs-Cube ist eine gebuchte Null aussagekräftig — jemand hat sie eingegeben —, sodass das Unterdrücken von Nullen echte Daten verwerfen kann, nicht nur das Fehlen von Daten. Lassen Sie sie deaktiviert, es sei denn, Sie möchten Nullen ausdrücklich aus dem Ergebnis ausschließen.
+
+## Eine Dimensionshierarchie laden
+
+Der Schritt [Essbase: Dimension lesen](/de/reference/workflow-steps/essbase/essbase-dimension-read/) liest die Struktur einer Essbase-Dimension und lädt sie in die Haupthierarchie einer PlaidCloud-Dimension — Cloud-direkt, über dieselbe Verbindung. Er ist ein eigener Schritt neben Essbase: Cube abfragen: Er liest die Struktur der Outline, keine Cube-Zellen.
+
+Der Schritt lehnt alles, was er nicht abbilden kann, namentlich ab, statt es falsch zu laden: gemeinsame Mitglieder, reine Label-Mitglieder, Dynamic-Calc-Mitglieder, Attributdimensionen, einen anderen Konsolidierungsoperator als `+`/`-` (`*`, `/` und `%` von Essbase haben in PlaidCloud keine Entsprechung) und eine Outline mit mehr als 5.000 Mitgliedern insgesamt. Die vollständige Liste und die Bedeutung jeder Ablehnung finden Sie in der [Schrittreferenz](/de/reference/workflow-steps/essbase/essbase-dimension-read/#was-dieser-schritt-nicht-abbilden-kann).
+
+## Verwandte Themen
+
+- [Essbase: Cube abfragen](/de/reference/workflow-steps/essbase/essbase-query/) — Feldreferenz des Schritts.
+- [Essbase: Dimension lesen](/de/reference/workflow-steps/essbase/essbase-dimension-read/) — eine Dimensionsstruktur als PlaidCloud-Dimension laden.
+- [Oracle-Essbase-Connector](/de/reference/connectors/erp/oracle-essbase/) — Feldreferenz der Verbindung.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

@@ -1,0 +1,101 @@
+---
+title: Claude Code
+description: OAuth 또는 고정 Bearer 토큰을 사용하여 Claude Code(CLI, VSCode 확장, JetBrains 플러그인)가 PlaidCloud의 MCP 도구를 호출하도록 설정합니다.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/claude-code.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Claude Code](https://claude.com/claude-code)는 Anthropic의 코딩 에이전트입니다. CLI, VSCode 확장, JetBrains 플러그인으로 제공되며 세 가지 모두 동일한 MCP 구성을 공유합니다.
+
+## 옵션 A — OAuth (권장)
+
+OAuth는 유지 관리가 가장 적게 드는 방법입니다. Claude Code의 MCP 브리지가 브라우저 리디렉션과 새로 고침을 자동으로 처리합니다.
+
+1. 프로젝트 루트에서 서버를 추가합니다. CLI 형식은 다음과 같습니다.
+
+    ```bash
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp
+    ```
+
+    또는 프로젝트 루트의 `.mcp.json`에 추가합니다.
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp"
+        }
+      }
+    }
+    ```
+
+2. Claude Code를 다시 시작합니다. `plaidcloud_` 도구를 처음 사용하도록 요청하면 브리지가 인증 URL을 표시합니다. 이를 열고 PlaidCloud에 로그인하면 요청하는 애플리케이션과 자격 증명을 보낼 리디렉션 URI가 표시되는 **Application Access Request** 페이지가 나타납니다. 승인하기 전에 이 내용이 Claude Code와 일치하는지 확인하십시오. 승인한 다음 Claude Code가 요청한 콜백 URL을 붙여 넣습니다. 토큰은 로컬에 캐시되고 자동으로 새로 고쳐지며, 새로 고침 토큰이 만료되거나 취소되기 전까지는 이 페이지가 다시 표시되지 않습니다.
+
+3. `claude mcp list`(CLI) 또는 `/mcp`(세션 중)로 확인합니다. 서버가 연결됨으로 표시되어야 합니다.
+
+<Aside>원격/SSH 세션에서 Claude Code가 브라우저의 `localhost`에 접근할 수 없으면 OAuth 브리지 상태가 간혹 멈출 수 있습니다. 그런 경우 옵션 B를 사용하십시오.</Aside>
+
+## 옵션 B — 고정 Bearer 토큰
+
+OAuth를 사용하기 어려운 경우(원격 세션, 개발 컨테이너, 브라우저 리디렉션을 견디지 못하는 에이전트 런타임) Bearer 토큰을 사용합니다.
+
+1. PlaidCloud에 로그인한 브라우저 탭에서 다음을 엽니다.
+
+    ```
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
+    ```
+
+    "Copy snippet"을 클릭합니다.
+
+2. 프로젝트의 `.mcp.json`에서 `mcpServers` 아래에 붙여 넣습니다.
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
+          "headers": {
+            "Authorization": "Bearer eyJhbGc…"
+          }
+        }
+      }
+    }
+    ```
+
+    또는 CLI를 사용합니다.
+
+    ```bash
+    claude mcp add --transport http plaidcloud \
+      https://<your-workspace>.plaid.cloud/mcp \
+      -H "Authorization: Bearer eyJhbGc…"
+    ```
+
+3. Claude Code를 다시 시작합니다. `claude mcp list`에서 서버가 연결됨으로 표시되어야 합니다.
+
+토큰이 만료되면 `/mcp/setup/token` URL을 다시 불러와서 `Authorization` 값을 교체하십시오.
+
+## 멀티 테넌트 설정
+
+여러 PlaidCloud 테넌트를 나란히 구성할 수 있습니다. 각각에 고유한 이름을 지정하십시오.
+
+```json
+{
+  "mcpServers": {
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp"  }
+  }
+}
+```
+
+Claude Code에 작업을 요청할 때 프롬프트에 테넌트를 명시하면("dev 테넌트에서 이름이 `Q4`로 시작하는 프로젝트를 찾아 줘") 올바른 서버를 선택합니다.
+
+## 팁
+
+- 세션 초반에 `mcp_introspect`를 실행하면 Claude Code가 호출할 때마다 전체 매니페스트를 다시 읽지 않고도 도구 구성을 파악합니다.
+- 변경 도구(`*_upsert`, `*_organize`, `*_run`)는 `dry_run=True`를 받습니다. 에이전트가 변경 작업을 스크립트로 실행하게 하면서 먼저 검토할 계획을 받고 싶을 때 유용합니다.
+- 오래 걸리는 작업(워크플로 실행, 쿼리 내보내기)에는 폴링 루프 대신 `*_track` / `*_status` 도구를 사용하십시오. 이 도구들이 유일한 기준 정보이며 에이전트의 컨텍스트가 넘치는 것을 방지합니다.

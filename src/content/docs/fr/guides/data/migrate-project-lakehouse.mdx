@@ -1,0 +1,154 @@
+---
+title: Migrer un projet vers Lakehouse v2
+description: Faites passer un projet de Lakehouse v1 à Lakehouse v2 depuis le menu Outils, avec ce que la vérification de préparation refuse, ce qui change dans vos résultats et le délai dont vous disposez pour annuler.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/migrate-project-lakehouse.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Vous pouvez faire passer un projet à la fois de Lakehouse v1 à Lakehouse v2. Les autres projets du même espace de travail continuent de s'exécuter sur v1 tant que vous ne les migrez pas à leur tour : vous pouvez donc migrer un seul projet et laisser tout le reste intact.
+
+La migration déplace les tables du projet et tout ce qui repose sur elles : requêtes, expressions, vues, jeux de données Superset, colonnes calculées, métriques et règles d'accès aux lignes.
+
+<Aside type="caution" title="Les modifications effectuées pendant une migration sont perdues">
+Une migration copie vos données dans l'état où elles se trouvent au démarrage de l'exécution. Tout ce qui est écrit dans le projet après ce moment (exécution d'un workflow, fichier importé, table modifiée) n'est **pas** reporté et **n'est pas** récupérable à partir de la copie migrée. Les planifications de workflow du projet sont suspendues pendant la migration et rétablies ensuite, mais rien n'empêche une exécution manuelle ou une importation. Un workflow lancé pendant une migration affiche un avertissement. Demandez aux membres du projet de ne pas y toucher tant que la migration n'est pas terminée.
+</Aside>
+
+<Aside type="caution" title="La migration est à sens unique">
+Il n'existe aucune migration inverse. Vous pouvez annuler une migration et ramener le projet à Lakehouse v1 pendant le délai d'annulation, comme décrit dans [Annuler une migration](#annuler-une-migration). Passé ce délai, les données d'origine sont supprimées.
+</Aside>
+
+## Avant de commencer
+
+- **Migrer le projet vers Lakehouse v2…** apparaît dans le menu Outils pour les membres autorisés à modifier les projets. Seuls les Architectes d'un projet peuvent le migrer : démarrer, planifier, annuler et défaire une migration exigent tous un accès Architecte au projet.
+- Vous avez besoin d'un accès Architecte au projet, et le projet doit être déverrouillé.
+- Votre offre doit disposer de l'espace nécessaire pour la copie. Voir [Contrôle du stockage](#contrôle-du-stockage).
+- Toute personne qui peut ouvrir un projet peut exécuter la vérification de préparation.
+- Exécutez d'abord la vérification de préparation et résolvez tout ce qu'elle refuse. Une migration lancée sur un projet qu'elle ne peut pas traduire s'arrête en cours de route.
+- Prévoyez que le projet soit indisponible pendant toute la durée de l'exécution, car les écritures effectuées pendant l'exécution sont perdues.
+- Si d'autres projets lisent les tables de ce projet via un partage de données, migrez d'abord ces projets, ou supprimez le partage. Un projet que d'autres lisent via un partage de données est migré après eux.
+
+## Vérifier la préparation à la migration
+
+La vérification de préparation indique ce qui arrivera au projet avant que vous ne vous engagiez. Elle ne modifie rien.
+
+<Steps>
+
+1. Ouvrez le menu **Outils**.
+
+2. Sélectionnez **Vérifier l'état de préparation de la migration…**.
+
+3. Sélectionnez le projet.
+
+</Steps>
+
+Si le projet est déjà sur Lakehouse v2, la vérification l'indique et précise qu'il n'y a rien à migrer.
+
+Le rapport classe chaque domaine dans l'un des états suivants :
+
+| Statut | Signification |
+| --- | --- |
+| **Effacer** | PlaidCloud a analysé le domaine et n'a rien trouvé. |
+| **À examiner** | Quelque chose va changer, et vous en prenez acte avant l'exécution. |
+| **Bloqué** | La migration ne peut pas démarrer tant que le problème n'est pas résolu. |
+| **Vérifié pendant la migration** | Le domaine est contrôlé pendant la migration ; il n'est donc jamais présenté comme sans problème au préalable. |
+
+Les domaines sont les tables, les vues, les étapes, les tableaux de bord, les partages de données et la capacité. Chaque constat s'accompagne d'une explication en langage clair, et une réécriture suggérée est affichée lorsqu'il en existe une.
+
+### Ce que la vérification de préparation refuse
+
+| Refus | Pourquoi |
+| --- | --- |
+| Une colonne dont le type n'a pas d'équivalent dans Lakehouse v2 | La migration refuse plutôt que de transformer discrètement la colonne en texte. Modifiez le type de la colonne dans le projet, puis relancez la vérification. |
+| L'entrepôt Lakehouse v2 cible ne peut pas être résolu | Le lakehouse v2 de l'espace de travail n'est pas visible du service qui exécute la migration. Il s'agit d'un problème d'administration, que vous ne pouvez pas résoudre depuis le projet. |
+| La protection contre la suppression du bucket de stockage ne peut pas être confirmée | Le délai d'annulation en dépend ; la migration ne démarrera donc pas sans elle. |
+
+Les colonnes JSON sont migrées. Les versions précédentes les refusaient ; elles sont désormais prises en charge.
+
+## Contrôle du stockage
+
+Avant le démarrage d'une exécution, PlaidCloud vérifie que votre offre dispose de l'espace nécessaire pour la copie.
+
+- **Sur une offre avec limite de stockage**, l'exécution est refusée si la copie migrée ne tient pas dans la limite. Les autres migrations en cours comptent dans la limite.
+- **Sur une offre facturée pour le stockage supplémentaire**, l'exécution démarre avec un avertissement indiquant le dépassement attendu.
+
+## Essayer sur v2
+
+**Essayer sur v2…** crée une copie d'essai privée du projet sur Lakehouse v2, afin que vous puissiez vérifier les résultats avant de migrer le projet réel. Dans la copie d'essai, les planifications et les capteurs sont désactivés et la comptabilisation ERP est en mode simulation. Les étapes qui écrivent en dehors de PlaidCloud, comme SFTP, e-mail et les envois REST, sont répertoriées dans un avertissement avant que vous ne confirmiez. **Démarrer l'essai** crée la copie. Un projet qui a déjà un essai propose **Ouvrir l'essai existant** et **Remplacer l'essai…**.
+
+## Exécuter la migration
+
+<Steps>
+
+1. Ouvrez le menu **Outils**.
+
+2. Sélectionnez **Migrer le projet vers Lakehouse v2…**. La fenêtre répertorie les exécutions de migration de l'espace de travail.
+
+3. Lancez une nouvelle exécution et sélectionnez le projet.
+
+4. Lisez le rapport de préparation affiché dans la fenêtre et prenez acte de chaque constat nommé. Accepter un constat ne vaut que pour cet élément précis.
+
+5. Sélectionnez **Démarrer la migration**, ou cochez **Démarrer à une heure planifiée**, définissez l'heure et sélectionnez **Planifier la migration**. Une migration planifiée affiche une bannière sur le projet, et vous pouvez l'annuler avant son démarrage. Au démarrage, PlaidCloud revérifie la préparation, la compatibilité, la capacité et vos autorisations.
+
+6. Lancez l'exécution. La boîte de dialogue de progression affiche chaque table au fur et à mesure de sa copie et de sa vérification. Les planifications de workflow activées du projet sont suspendues pendant l'exécution. Vous pouvez fermer la boîte de dialogue et la rouvrir depuis la liste des exécutions ; l'exécution se poursuit dans les deux cas.
+
+</Steps>
+
+Une fois qu'une exécution est en train de basculer le projet vers Lakehouse v2, elle ne peut plus être arrêtée. Si le basculement lui-même échoue en cours de route, l'exécution affiche **Contact support. Don't retry.** au lieu de proposer **Reprendre**. Contactez le support et laissez l'exécution en l'état.
+
+Lorsque l'exécution se termine, le projet est lié à Lakehouse v2, les requêtes commencent à l'utiliser et les planifications suspendues sont rétablies. Une planification que vous avez modifiée ou supprimée pendant la migration reste telle que vous l'avez laissée et est signalée dans le rapport. La copie Lakehouse v1 d'origine est conservée, inaccessible au projet, pendant le délai d'annulation. Vous êtes averti, par message et par e-mail, de la fin ou de l'échec d'une migration.
+
+### Une migration en échec
+
+Une migration en échec indique la cause de l'échec et l'heure après laquelle les écritures dans la source seront perdues. Sélectionnez **Reprendre** pour la poursuivre. Les vues qui ne peuvent pas s'exécuter sur Lakehouse v2 sont ignorées et répertoriées, au lieu d'interrompre l'exécution.
+
+## Modifications
+
+Après une migration, ouvrez **Modifications…** pour l'exécution concernée. Le rapport répertorie chaque table comme copiée, copiée avec une lacune nommée, ignorée ou en échec, avec les nombres de lignes et les raisons, les vues ignorées, les tables créées ou supprimées dans la source pendant l'exécution, ainsi que les planifications suspendues puis rétablies.
+
+## Le regroupement hebdomadaire se décale d'un jour
+
+Lakehouse v2 commence ses semaines le **dimanche**. Lakehouse v1 les commençait le **lundi**.
+
+Tout ce qui est regroupé par semaine change en conséquence, sans erreur ni avertissement. Une ligne datée du dimanche 14 juin appartenait à la semaine commençant le lundi 8 juin sur v1. Sur v2, elle appartient à la semaine commençant le dimanche 14 juin.
+
+Les totaux de part et d'autre de cette frontière se déplacent. Un graphique hebdomadaire, une table de synthèse hebdomadaire et un rapport regroupé par semaine continuent tous de fonctionner et affichent tous des chiffres différents de ceux d'avant. Après la migration, vérifiez tout chiffre hebdomadaire sur lequel vous vous appuyez, et attendez-vous à un décalage d'un jour plutôt qu'à une erreur.
+
+## Ce qui n'est pas repris
+
+Vos données sont migrées. Certains éléments construits au-dessus de l'ancien moteur, et certains détails de déclaration des colonnes, ne le sont pas.
+
+| Élément | Ce qui se passe |
+| --- | --- |
+| Historique des instantanés, voyage dans le temps et flashback | Non transférés. Les tables migrées repartent avec un historique vierge ; vous ne pouvez donc pas interroger le projet tel qu'il était avant la migration. |
+| Branches et étiquettes de table | Les branches et étiquettes existantes ne sont pas transférées. |
+| Limites de longueur `VARCHAR(n)` | La limite de longueur est abandonnée. Les colonnes de texte deviennent du texte sans contrainte ; les valeurs existantes ne sont pas affectées. |
+| Largeurs d'entiers étroites | Les petits types entiers deviennent des entiers 32 bits. Les valeurs ne sont pas affectées. |
+| Précision des fractions de seconde des horodatages | Une précision déclarée est abandonnée. |
+| Colonnes spatiales, de géométrie et bitmap | Migrées, mais exclues de la comparaison automatique des valeurs : vérifiez-les vous-même. |
+| Colonnes binaires, de tableau et de mappage | Migrées, mais exclues de la comparaison automatique des valeurs : vérifiez-les vous-même. |
+| Colonnes JSON | Migrées avec leurs types conservés. Un nombre contenu dans un JSON et trop grand pour un stockage exact est stocké en double précision et signalé. |
+
+<Aside type="caution" title="Très grands entiers non signés">
+Une colonne d'entiers non signés 64 bits contenant des valeurs supérieures à 9 223 372 036 854 775 807 ne peut pas être représentée sur Lakehouse v2, et ces valeurs ne sont pas signalées par un refus. Si un projet stocke des entiers non signés proches de cette limite, vérifiez-les avant et après la migration.
+</Aside>
+
+## Annuler une migration
+
+Pendant le délai d'annulation qui suit la fin d'une exécution, les données Lakehouse v1 d'origine sont conservées intactes, mais détachées du projet. **Annuler la migration…** ramène le projet à Lakehouse v1 dans ce délai. Vous avez besoin d'un accès Architecte au projet.
+
+L'annulation vous demande de saisir le nom du projet pour confirmer. **Toutes les modifications apportées au projet depuis le passage à Lakehouse v2 sont perdues.** La progression s'affiche pendant l'annulation. Si l'annulation est refusée, la raison est indiquée, par exemple que le délai d'annulation est écoulé.
+
+Utilisez-la si les résultats semblent erronés après la migration (hors chiffres hebdomadaires, dont le décalage est attendu).
+
+Après le délai d'annulation, les données d'origine sont supprimées et la migration est définitive.
+
+## Après la migration
+
+Les sessions déjà ouvertes continuent de lire la copie avec laquelle elles ont démarré jusqu'à leur fin. En particulier, une session d'application Panel de longue durée continue de servir les anciennes données jusqu'à son redémarrage. Redémarrez les sessions de longue durée après une migration pour qu'elles utilisent Lakehouse v2.
+
+## Voir aussi
+
+- [Gestion de Lakehouse](/fr/reference/expressions/lakehouse-v2/lakehouse-management/)
+- [Lier un projet à un lakehouse externe](/fr/guides/connections/external-lakehouse/)
+- [Type de données Vector](/fr/guides/data/vector-data-type/)

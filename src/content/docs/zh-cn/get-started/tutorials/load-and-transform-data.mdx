@@ -1,0 +1,139 @@
+---
+title: 加载、转换和发布数据
+description: 端到端教程：导入 CSV，用表步骤清理数据，并将结果发布给下游使用方。
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+本教程大约需要一小时。完成后，您将得到一个可用的工作流：导入 CSV，通过几个表步骤进行转换，并发布结果。
+
+## 您将构建的内容
+
+一个工作流：读取原始销售 CSV，清理数据，与产品参考表联接，计算派生列，并将结果作为干净的事实表发布。
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区（如果没有，请[开始免费试用](https://app.plaidcloud.com)）
+- 一个用于工作的项目（如有需要，可在**项目**选项卡中创建）
+- 两个要导入的 CSV 文件：本教程使用一个简单的销售交易文件和一个产品目录文件。可以使用自己的文件，也可以用任意电子表格工具生成示例数据
+
+## 步骤 1：创建工作流
+
+<Steps>
+
+1. 打开项目，切换到**工作流**选项卡。
+2. 点击**新建工作流**，起一个描述性的名称，例如“Sales Cleanup”。
+3. 点击**创建**。空的工作流会出现在列表中。
+4. 双击该工作流，打开 Workflow Explorer。
+
+</Steps>
+
+## 步骤 2：导入销售 CSV
+
+<Steps>
+
+1. 在 Workflow Explorer 中，添加一个新步骤。
+2. 选择**导入 → CSV**（或与源格式相匹配的其他导入步骤）。
+3. 在步骤配置中：
+   - **源文件**：指向销售 CSV（上传，或从已连接的文档账户中选取）
+   - **目标表**：命名为 `sales_raw`
+   - **分隔符、引号字符、标题行**：如果文件格式不标准，请相应调整
+4. 运行该步骤。CSV 会作为新表落入项目。
+
+</Steps>
+
+在**表**选项卡中查看 `sales_raw`。点击进入，确认数据看起来正确：列数、示例行、数据类型。
+
+## 步骤 3：导入产品目录
+
+用产品 CSV 重复步骤 2，目标表命名为 `products_raw`。这样就得到了联接所需的两张参考表。
+
+## 步骤 4：过滤掉错误行
+
+真实的销售数据存在缺口：金额为空、测试交易、不希望出现在主事实表中的退款。添加一个筛选步骤来移除它们。
+
+<Steps>
+
+1. 添加一个**表 → Table Lookup** 步骤（或任何允许筛选的表转换）。
+2. 配置：
+   - **源表**：`sales_raw`
+   - **目标表**：`sales_clean`
+   - **筛选条件**：例如 `amount > 0 AND status = 'completed'`
+3. 运行该步骤。`sales_clean` 的行数应少于 `sales_raw`。
+
+</Steps>
+
+<Aside>
+数据从源流向目标时应用筛选，源表保持不变。这是 PlaidCloud 的核心模式：每个步骤从一个或多个源读取，并写入一个或多个目标，原始数据保持不变，便于审计。
+</Aside>
+
+## 步骤 5：与产品目录联接
+
+现在将清理后的销售行与目录中的产品详情合并。
+
+<Steps>
+
+1. 添加一个**表 → Table Inner Join** 步骤。
+2. 配置：
+   - **左表**：`sales_clean`
+   - **右表**：`products_raw`
+   - **联接键**：连接两张表的列（例如 `product_id`）
+   - **目标表**：`sales_enriched`
+3. 运行该步骤。
+
+</Steps>
+
+`sales_enriched` 现在包含两张表的所有列。您可能只需要其中一部分，这将在下一步完成。
+
+## 步骤 6：选择并计算列
+
+清理通常意味着删除不需要的列，并计算派生列。再添加一个表步骤：
+
+<Steps>
+
+1. 添加一个**表 → Table Lookup** 步骤（此处用于列选择和计算）。
+2. 配置：
+   - **源**：`sales_enriched`
+   - **目标**：`sales_final`
+   - **保留的列**：对下游使用方重要的子集
+   - **计算列**：例如 `revenue = amount * price`、`margin = revenue - cost`
+3. 运行该步骤。
+
+</Steps>
+
+对于列级计算，[表达式参考](/zh-cn/reference/expressions/)涵盖了所有可用的函数：字符串操作、日期运算、条件逻辑、聚合。
+
+## 步骤 7：发布结果
+
+让仪表板和下游系统可以使用 `sales_final`。
+
+<Steps>
+
+1. 添加一个**数据 → 发布**步骤（或直接使用表上的**发布**选项）。
+2. 配置谁可以读取已发布的表：通常是工作区的其他成员，加上有权访问的外部系统。
+3. 运行该步骤。
+
+</Steps>
+
+现在，[仪表板](/zh-cn/guides/dashboards/)、BI 工具以及任何具有相应权限的外部使用方都可以访问这张已发布的表。
+
+## 步骤 8：运行整个工作流
+
+对工作流（而不只是某一个步骤）点击**运行**。观察日志，查看各步骤依次执行的情况。完整的流水线从 CSV 导入一直运行到发布。
+
+如果任何步骤出错，[管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)指南介绍了调试方法，最常见的问题是联接键错误（表之间不匹配）以及计算列中出现意外的空值。
+
+## 后续内容
+
+- [构建分摊模型](/zh-cn/get-started/tutorials/build-an-allocation/)：使用驱动因素数据将成本分摊给各使用方
+- [工作流指南](/zh-cn/guides/workflows/)：错误处理、条件、循环、变量
+- [工作流步骤参考](/zh-cn/reference/workflow-steps/)：每种步骤类型及其作用

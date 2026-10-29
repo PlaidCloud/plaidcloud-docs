@@ -1,0 +1,85 @@
+---
+title: NetSuite-Finanzdaten importieren
+description: Holen Sie NetSuite-Salden, Hauptbuchdetails und Stammdaten mit den vorgefertigten NetSuite-Importschritten in Projekttabellen – wählen Sie eine Verbindung, eine Zieltabelle, einen Datumsbereich und eine Tochtergesellschaft und führen Sie den Schritt aus.
+sidebar:
+  label: NetSuite-Finanzdaten importieren
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/import-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Holen Sie die gängigen NetSuite-Finanz- und Referenzdaten mit den vorgefertigten NetSuite-Importschritten in Projekttabellen – ganz ohne SuiteQL zu schreiben. Drei Schritte decken die meisten Abrufe ab: **Salden importieren** für eine Saldenliste, **Hauptbuchdetails importieren** für die dahinterliegenden Buchungszeilen und **Stammdaten importieren** für die Konten, Tochtergesellschaften und Dimensionen, auf die sich diese Abrufe beziehen. Jeder läuft auf einer gemeinsamen Leseschicht, die das OAuth-Token erneuert, große Ergebnisse seitenweise abruft und vorübergehende Fehler wiederholt, sodass ein Abruf über eine volle Periode oder alle Tochtergesellschaften vollständig zurückkommt.
+
+<Aside type="tip">
+Für einen individuellen Abruf, den die vorgefertigten Schritte nicht abdecken, schreiben Sie Ihr eigenes SuiteQL mit dem [REST-Anfrage-Schritt](/de/guides/workflows/rest-request-step/) – siehe [NetSuite-SuiteQL-Abfragebeispiele](/de/guides/connections/netsuite-financial-queries/). Die vorgefertigten Schritte unten sind die einfachere Option für diese gängigen Abrufe.
+</Aside>
+
+## Voraussetzungen
+
+- Eine funktionierende [NetSuite-Verbindung](/de/guides/connections/netsuite/) mit Leseberechtigung für die Datensätze, die Sie lesen möchten.
+- Ein Workflow, dem Sie den Schritt hinzufügen.
+
+## Eine Saldenliste abrufen
+
+<Steps>
+
+1. Fügen Sie Ihrem Workflow einen Schritt **NetSuite: Salden importieren** hinzu.
+
+2. Legen Sie **NetSuite-Verbindung** auf Ihre Verbindung und **Zieltabelle** auf die Projekttabelle fest, in der die Salden landen sollen. Der Schritt überschreibt diese Tabelle bei jeder Ausführung vollständig.
+
+3. Legen Sie **Startdatum** und **Enddatum** auf den gewünschten Zeitraum fest, jeweils als `YYYY-MM-DD` und beide einschließlich. Lassen Sie eines leer, damit dieses Ende des Bereichs unbegrenzt bleibt.
+
+4. Um den Abruf auf eine Tochtergesellschaft zu beschränken, setzen Sie **Subsidiary** auf ihre interne NetSuite-ID; lassen Sie das Feld für alle Tochtergesellschaften leer. (Siehe [Interne IDs auflösen](#interne-ids-mit-stammdaten-auflösen), wenn Sie Namen statt IDs haben.)
+
+5. Lassen Sie bei einem Konto mit Multi-Book Accounting **Accounting Book** leer, um **nur das Primärbuch** abzurufen – der richtige Standard für eine reguläre Saldenliste. Setzen Sie es nur dann auf `all`, wenn Sie bewusst eine buchübergreifende Summe möchten, oder auf die interne ID eines bestimmten Buchs.
+
+6. Grenzen Sie mit **Kontonummer** (ein exaktes Hauptbuchkonto) oder **Posting Period** (die interne ID einer NetSuite-Periode) weiter ein, wenn Sie nicht den gesamten Kontenplan oder jede Periode im Bereich benötigen.
+
+7. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)) und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+<Aside type="caution">
+**Konten mit mehreren Büchern verwenden standardmäßig das Primärbuch.** Bevor dieses Verhalten eingeführt wurde, summierte ein ungefilterter Abruf bei einem Konto mit Multi-Book Accounting alle Bücher zusammen – ein Saldo wurde dabei unbemerkt mehrfach gezählt. Lassen Sie **Accounting Book** leer, ruft der Schritt jetzt nur das Primärbuch ab, wie es eine reguläre Saldenliste erwartet. Wenn Sie sich auf die frühere buchübergreifende Summe verlassen haben, setzen Sie **Accounting Book** ausdrücklich auf `all`.
+</Aside>
+
+## Hauptbuchdetails abrufen
+
+Der Schritt **NetSuite: Hauptbuchdetails importieren** wird genauso konfiguriert – Verbindung, Zieltabelle, Datumsbereich, Tochtergesellschaft, Rechnungslegungsbuch, Kontonummer und Buchungsperiode –, liefert aber Transaktionszeilendetails statt Periodensalden. Verwenden Sie ihn, um abzustimmen, hineinzuzoomen oder eine detaillierte GuV aus den Buchungen hinter Ihren Salden neu aufzubauen.
+
+<Aside type="note">
+Begrenzen Sie den Datumsbereich auf den Ausschnitt, den Sie benötigen. Jede Ausführung ersetzt die gesamte Zieltabelle, sodass ein geplanter Hauptbuchabruf jedes Mal das vollständige Ergebnis neu extrahiert – ein gleitendes Datumsfenster hält einen wiederkehrenden Abruf schnell, statt die gesamte Historie erneut zu lesen.
+</Aside>
+
+<Aside type="note">
+NetSuite begrenzt eine einzelne SuiteQL-Abfrage auf etwa 100.000 Zeilen. Wenn Sie sowohl **Startdatum** als auch **Enddatum** angeben, kann PlaidCloud einen breiten Abruf automatisch in kleinere Datumsabschnitte aufteilen, die unter dieser Obergrenze bleiben, sodass ein Hauptbuchabruf über ein ganzes Jahr vollständig zurückkommt, ohne dass Sie etwas tun müssen. Lassen Sie bei einem Abruf, der groß genug ist, um die Obergrenze zu überschreiten, beide leer, schlägt er jetzt mit einer Meldung fehl, die Sie bittet, einen Datumsbereich hinzuzufügen, statt unbemerkt abgeschnitten zurückzukommen.
+</Aside>
+
+## Interne IDs mit Stammdaten auflösen
+
+Felder für Tochtergesellschaften, Konten und Dimensionen in NetSuite sind interne IDs, keine Namen. Rufen Sie die passende Liste mit **NetSuite: Stammdaten importieren** ab und verknüpfen Sie sie mit Ihren Salden oder Details, um lesbare Namen hinzuzufügen.
+
+<Steps>
+
+1. Fügen Sie einen Schritt **NetSuite: Stammdaten importieren** hinzu und legen Sie **NetSuite-Verbindung** und **Zieltabelle** fest.
+
+2. Legen Sie **Datensatztyp** auf die gewünschte Liste fest: **Konto**, **Tochtergesellschaft**, **Abteilung**, **Klasse**, **Standort**, **Lieferant** oder **Kunde**.
+
+3. Lassen Sie **Include Inactive** ausgeschaltet, um nur aktive Datensätze abzurufen, oder schalten Sie es ein, um inaktive einzuschließen.
+
+4. Führen Sie den Schritt aus und verknüpfen Sie dann seine Tabelle über die interne ID mit Ihren Salden oder Hauptbuchdetails, um jeder Zeile Namen hinzuzufügen.
+
+</Steps>
+
+## Den Abruf planen
+
+Für einen fortlaufenden Feed [planen Sie den Workflow](/de/get-started/tutorials/schedule-a-workflow/). Da jeder Schritt seine Zieltabelle vollständig ersetzt, spiegelt eine geplante Ausführung immer den aktuellen Stand in NetSuite für den von Ihnen begrenzten Zeitraum wider.
+
+## Verwandte Themen
+
+- [NetSuite: Salden importieren](/de/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite: Hauptbuchdetails importieren](/de/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite: Stammdaten importieren](/de/reference/workflow-steps/netsuite/import-master-data/)
+- [Mit NetSuite verbinden](/de/guides/connections/netsuite/) – richten Sie die Verbindung ein, über die diese Schritte lesen
+- [NetSuite-SuiteQL-Abfragebeispiele](/de/guides/connections/netsuite-financial-queries/) – schreiben Sie Ihre eigene Abfrage für einen Abruf, den die vorgefertigten Schritte nicht abdecken

@@ -1,0 +1,141 @@
+---
+title: "작업 재사용: 변수, 매크로, UDF"
+description: 일회성 파이프라인을 확장 가능한 자산으로 바꿉니다. 워크플로 변수로 매개변수화하고, 반복되는 시퀀스를 매크로로 패키징하고, 사용자 정의 변환으로 맞춤 로직을 추가합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/reuse-variables-macros-udfs.mdx
+---
+
+*약 30분 · 변수 하나, 매크로 하나, 사용자 정의 변환 하나*
+
+처음 만드는 워크플로는 대개 모든 것을 하드코딩합니다. 지역 하나, 월 하나, 테이블 이름 하나입니다. 한 번은 작동합니다. 이 튜토리얼은 *사용자*에서 *고급 사용자*로 도약하는 과정입니다. 일회성 파이프라인을 어떤 지역에든 적용하고, 어디서든 호출하고, 직접 작성한 Python으로 확장할 수 있는 자산으로 바꿉니다.
+
+세 가지 도구가 이 작업을 수행하며, 서로 겹쳐서 사용할 수 있습니다.
+
+| 도구 | 없애 주는 것 | 사용하는 경우 |
+|---|---|---|
+| **워크플로 변수** | 단계 곳곳에 흩어진 하드코딩된 값 | 같은 값(월, 지역, 임곗값)이 둘 이상의 단계에 나타날 때 |
+| **매크로** | 복사하여 붙여넣은 단계 시퀀스 | 매개변수화된 *시퀀스*를 지역별, 월별, 드라이버 행별로 여러 번 실행할 때 |
+| **사용자 정의 변환(UDF)** | 표준 단계로는 닿을 수 없는 공백 | 필요한 작업을 수행하는 표준 변환(또는 조합)이 없고 Python으로 작성할 수 있을 때 |
+
+모든 워크플로에 세 가지가 다 필요하지는 않습니다. 각 도구가 해결해 주는 불편이 실제로 나타나는 시점에 하나씩 추가하십시오.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="범위가 가장 작은 것부터 가장 큰 것까지 쌓이는 세 가지 재사용 도구. 워크플로 변수는 단계 전반에서 값 하나를 매개변수화하고, 매크로는 매개변수화된 단계 시퀀스 전체를 재사용할 수 있게 패키징하며, 사용자 정의 변환은 표준 단계로 부족한 곳에 맞춤 Python을 추가합니다." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="rv-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">변수</text>
+  <text x="104" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">값 하나를 매개변수화</text>
+  <path d="M194 75 L234 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="236" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="326" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">매크로</text>
+  <text x="326" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">시퀀스를 패키징</text>
+  <path d="M416 75 L456 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="458" y="48" width="208" height="54" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="562" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-accent)">UDF</text>
+  <text x="562" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">단계로 부족한 곳에 맞춤 Python</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">각 도구는 앞의 도구보다 더 넓은 범위를 다룹니다. 필요할 때 추가하고, 그 전에는 추가하지 마십시오.</figcaption>
+</figure>
+
+## 사전 요구 사항
+
+- PlaidCloud 워크스페이스와 이미 구축한 워크플로가 있는 프로젝트. [데이터 로드, 변환 및 게시](/ko/get-started/tutorials/load-and-transform-data/)에서 만든 워크플로가 이상적입니다.
+- 워크플로 단계를 추가하고 실행하는 데 익숙할 것. 처음이라면 [워크플로 가이드](/ko/guides/workflows/)부터 시작하십시오.
+
+## 1단계: 워크플로 변수로 매개변수화
+
+변수는 단계가 리터럴 대신 읽는 이름이 있는 값입니다. 한 곳에서 변경하면 그 변수를 참조하는 모든 단계가 따라갑니다. PlaidCloud는 변수를 두 가지 범위로 유지합니다. **프로젝트** 변수는 프로젝트의 모든 워크플로에서 공유되고, **워크플로** 변수는 하나의 워크플로에 속하며 단계 간에 정보를 전달하는 데 적합합니다.
+
+1. **워크플로** 계층에서 **변수** 아이콘을 클릭하여 변수 테이블을 엽니다.
+2. 변수를 추가합니다. `target_region`처럼 명확한 이름을 지정하고 현재 값(예: `East`)을 설정합니다.
+3. 현재 해당 값을 하드코딩한 단계에서 리터럴을 입력하는 대신 변수를 참조합니다.
+4. 단계를 실행합니다. 그런 다음 테이블에서 변수 값을 변경하고 다시 실행하면, 단계 자체를 수정하지 않아도 같은 단계가 다른 부분을 처리합니다.
+
+변수 테이블에서는 현재 값을 확인하고, 편집하고, 더 이상 필요하지 않은 변수를 삭제할 수도 있습니다.
+
+> **프로젝트 범위와 워크플로 범위.** 여러 워크플로에 같은 설정이 필요하면 값을 **프로젝트** 범위에 두고, 워크플로 하나의 단계에서만 사용하면 **워크플로** 범위에 두십시오. 확신이 없다면 좁은 범위인 워크플로 변수로 시작하고, 두 번째 워크플로에서 필요해질 때만 프로젝트 범위로 올리십시오.
+
+변수가 어디에 있고 어떻게 관리하는지에 대한 전체 내용은 [워크플로 변수 관리](/ko/guides/workflows/manage-workflow-variables/)를 참조하십시오.
+
+## 2단계: 시퀀스를 매크로로 패키징
+
+변수는 값 하나를 매개변수화합니다. **매크로**는 단계의 *시퀀스* 전체를 매개변수화합니다. 매크로는 입력/출력 계약이 선언된 재사용 가능한 고급(DAG) 워크플로로, "지역 하나의 한 달 매출 처리"와 같은 작업을 다른 워크플로에서 월별, 지역별 또는 둘 다에 대해 한 번씩 호출합니다. 각 호출은 자체의 격리된 스크래치 스키마에서 실행되므로 같은 매크로를 동시에 여러 번 실행해도 실행끼리 충돌하지 않습니다.
+
+> **매크로는 고급 전용 기능입니다.** 먼저 워크플로를 고급으로 변환하십시오. 매크로 내부의 단계는 매크로에서 사용할 수 있어야 합니다. 테이블 변환, 가져오기, 내보내기, 실행 범위 변수 단계, 중첩된 매크로 호출은 사용할 수 있지만, 차원은 프로젝트 전역 상태이므로 차원 가져오기와 차원을 업데이트하는 단계는 거부됩니다.
+
+### 워크플로를 매크로로 전환
+
+1. 프로젝트를 열고 **워크플로** 탭에서 재사용할 워크플로를 선택합니다.
+2. **워크플로 세부 정보** 패널에서 **워크플로 유형**이 **고급**인지 확인합니다. 표준이면 먼저 **고급으로 변환**을 사용하십시오.
+3. **매크로** 섹션에서 **매크로로 변환…** 을 클릭하고 확인합니다. 포트 편집기가 나타납니다.
+4. 매크로가 받거나 생성하는 입력 또는 출력마다 **포트 추가**를 클릭합니다. 모든 포트에 대해 다음을 설정합니다.
+   - **이름** — 호출자가 바인딩하는 식별자(예: `month`, `region_sales`).
+   - **방향** — **입력**(호출자가 제공) 또는 **출력**(매크로가 생성).
+   - **종류** — **테이블**, **스칼라**(문자열/정수/실수/불리언/날짜 단일 값) 또는 **차원**.
+   - **필수** — 이 포트가 바인딩되지 않아도 매크로를 실행할 수 있으면 선택을 해제합니다.
+   - **메모** — 호출자 측 바인딩 양식에서 작성자에게 표시되는 짧은 설명.
+5. **포트 저장**을 클릭합니다.
+
+### 다른 워크플로에서 호출
+
+1. 호출자 워크플로에 **매크로: 실행** 단계를 추가합니다.
+2. **실행할 매크로**에서 프로젝트와 매크로 워크플로를 선택합니다.
+3. **Input Port Bindings** — 각 입력 포트를 바인딩합니다. 스칼라 및 차원 포트에는 호출자 측 워크플로 변수(1단계의 변수)를 사용하는 경우가 많고, 테이블 포트에는 소스 테이블을 지정하며 필요하면 열 프로젝션과 필터를 적용할 수 있습니다.
+4. **Output Port Bindings** — 각 출력 포트가 호출자 측 대상 테이블을 가리키도록 합니다.
+5. 단계를 저장하고 워크플로를 실행합니다.
+
+드라이버 테이블의 행마다(예: 행당 지역 하나) 매크로를 한 번씩 실행하려면 대신 **매크로: 동시 실행** 단계를 사용하고, **동시 실행**으로 한 번에 실행되는 수를 제한하십시오. 각 행은 자체 스크래치 스키마와 대상을 가집니다.
+
+실행 격리 수명 주기를 포함한 필드별 전체 안내는 [매크로 만들기](/ko/guides/workflows/create-a-macro/)에 있습니다.
+
+## 3단계: 사용자 정의 변환으로 맞춤 로직 추가
+
+표준 변환은 거의 모든 것을 다루며 성능도 지속적으로 최적화되므로 먼저 사용하십시오. 그러나 필요한 작업을 수행하는 표준 단계(단독 또는 조합)가 없을 때는 **사용자 정의 변환(UDF)** 을 통해 표준 Python으로 전환할 수 있으며, 전체 PlaidCloud API와 Pandas, NumPy, SciPy 같은 패키지를 사용할 수 있습니다.
+
+UDF는 두 가지 방법으로 작성할 수 있습니다. PlaidCloud에서 직접 작성하고 유지 관리하거나, 연결된 Git 리포지토리의 파일을 지정합니다(다음 실행 시 변경 사항을 자동으로 반영하며, 릴리스 제어를 위한 브랜치와 태그를 지원합니다).
+
+### 함수 작성
+
+1. 워크플로를 열고 **사용자 정의** 탭을 선택한 다음 **사용자 정의 함수 추가**를 클릭합니다.
+2. UDF에 **ID**를 지정한 다음 **Edit function logic** 아이콘을 클릭하여 편집기를 엽니다.
+3. 로직을 작성합니다. 최소한의 UDF는 연결하고, 소스를 읽고, Pandas에서 변환하고, 대상을 저장합니다.
+
+   ```python
+   from plaidcloud.utilities.connect import PlaidConnection
+   from plaidcloud.utilities import frame_manager as fm
+
+   conn = PlaidConnection()
+
+   # Read a table configured as a source on the step
+   source = conn.udf.source_by_name('sales_clean')
+   df = conn.get_data(source)
+
+   # Custom logic the standard steps don't cover
+   df['margin_band'] = df['margin'].apply(
+       lambda m: 'high' if m > 0.4 else 'low'
+   )
+
+   # Write to a table configured as a target on the step.
+   # Sources are read by their configured name; fm.save writes to a table PATH (leading slash).
+   fm.save(df, name='/output/sales_scored', append=False)
+   ```
+
+### 워크플로에 추가
+
+1. **Analyze Steps** 탭에서 표준 변환과 마찬가지로 필요한 위치에 **User Defined Transform** 단계를 추가합니다.
+2. 단계 구성에서 유형을 선택합니다. **UDF 분석**(저장된 함수) 또는 **외부 소스 코드 리포지토리**(Git — 연결, 브랜치, 파일 경로를 선택)입니다.
+3. UDF가 사용하는 **소스 및 대상 테이블**을 정의합니다. 코드에서 테이블에 직접 접근할 *수도* 있지만, 여기에 선언하면 종속성이 등록되고 `conn.udf.source_by_name(...)` / `target_by_name(...)`을 통해 사용할 수 있게 됩니다.
+4. 필요한 경우 **기타 변수** 아래에 단계별 값을 추가할 수 있으며, `conn.udf.variable_by_name(...)`으로 읽을 수 있습니다.
+
+> **코드에만 두지 말고 구성에 테이블을 선언하십시오.** 테이블을 직접 읽는 UDF도 실행은 되지만, PlaidCloud가 해당 테이블이 종속성이라는 것을 알지 못하므로 계보와 실행 순서에 반영되지 않습니다. 단계 구성에 소스와 대상을 나열해야 종속성 그래프가 정확하게 유지됩니다.
+
+1단계의 프로젝트 및 워크플로 변수도 `conn.analyze.workflow.variable_values(...)`와 `conn.analyze.project.variable_values(...)`를 통해 UDF 안에서 사용할 수 있으므로, 같은 매개변수가 표준 단계와 맞춤 코드를 함께 제어합니다. 전체 API 예제는 [사용자 정의 변환 레퍼런스](/ko/reference/workflow-steps/general/user-defined-transform/)에 있습니다.
+
+**이것이 사용자에서 고급 사용자로의 도약입니다.** 일회성 파이프라인을 재사용 가능한 자산으로 바꿨습니다. 변수로 다시 지정할 수 있는 값, 매크로로 어디서나 호출할 수 있는 시퀀스 전체, 표준 단계가 닿지 못하는 곳까지 도달하는 맞춤 Python입니다.
+
+## 다음 단계
+
+- [워크플로 변수 관리](/ko/guides/workflows/manage-workflow-variables/) — 프로젝트 범위와 워크플로 범위, 그리고 변수 테이블.
+- [매크로 만들기](/ko/guides/workflows/create-a-macro/) — 포트, 실행 격리, 행마다 매크로 하나씩 실행하기.
+- [사용자 정의 변환 레퍼런스](/ko/reference/workflow-steps/general/user-defined-transform/) — 맞춤 Python을 위한 전체 API 범위.
+- [워크플로 가이드](/ko/guides/workflows/) — 조건, 루프 및 오케스트레이션 계층이 제공하는 그 밖의 모든 기능.
+- [SQL로 데이터 변환](/ko/get-started/tutorials/transform-with-sql/) — 답이 코드가 아니라 쿼리일 때를 위한 자매 튜토리얼.

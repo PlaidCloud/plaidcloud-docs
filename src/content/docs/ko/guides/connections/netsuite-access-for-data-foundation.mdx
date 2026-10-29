@@ -1,0 +1,121 @@
+---
+title: Data Foundation용 NetSuite 액세스
+description: NetSuite 관리자가 PlaidCloud Data Foundation이 NetSuite를 직접 읽을 수 있도록 설정하는 항목(읽기 전용 역할, OAuth 2.0 통합, 인증서)과 회신할 내용을 설명합니다.
+sidebar:
+  label: Data Foundation용 NetSuite 액세스
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ko/guides/projects/data-foundation/)은 연결한 모든 ERP 시스템과 인스턴스의 데이터를 하나의 Common Finance Model로 통합하며, NetSuite는 Data Foundation이 직접 읽는 ERP 중 하나입니다. NetSuite 연결은 OAuth 2.0 기계 간(M2M) 액세스를 사용합니다. 읽기 전용 역할, 클라이언트 자격 증명 부여를 사용하는 통합 레코드, 인증서로 구성됩니다. 이 페이지는 이를 설정하는 NetSuite 관리자와 관리자에게 설정을 요청하는 PlaidCloud 사용자를 위한 것입니다.
+
+PlaidCloud는 데이터를 읽기만 합니다. 비밀번호, 토큰 시크릿 또는 개인 키를 이메일로 보내는 사람은 없습니다.
+
+## 시작하기 전에: 인증서 만들기
+
+PlaidCloud 사용자의 팀이 RSA 키 쌍을 만들고 개인 키를 보관합니다. NetSuite에는 공개 인증서만 전달합니다. 예를 들어 OpenSSL을 사용합니다.
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+`plaidcloud_netsuite_public.pem`을 관리자에게 보내는 요청에 첨부하십시오. `plaidcloud_netsuite.pem`은 PlaidCloud의 **개인 키** 필드에 사용하도록 보관하십시오.
+
+## 액세스 요청 보내기
+
+프로젝트의 **Foundation** 탭에서 **NetSuite 연결** 아래의 **새 연결 만들기**를 선택합니다. 양식에 전체 요청이 표시됩니다. **요청 복사**를 클릭하여 직접 작성하는 메시지에 붙여넣거나, **이메일 요청**을 클릭하여 제목이 "NetSuite access for PlaidCloud"인 메일 프로그램을 엽니다. 공개 인증서를 첨부하십시오.
+
+## NetSuite 관리자가 설정하는 항목
+
+<Steps>
+
+1. **기능 사용 설정.** **Setup > Company > Enable Features > SuiteCloud**에서 다음을 사용 설정합니다.
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook(SuiteQL에 필요)
+
+2. 다음 권한을 가진 **읽기 전용 역할**을 만듭니다. 예: "PlaidCloud Read Only".
+
+   | 권한 | 수준 |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   PlaidCloud가 보고하는 모든 자회사에 대한 액세스를 역할에 부여하십시오.
+
+3. **통합 레코드를 만듭니다.** **Setup > Integration > Manage Integrations > New**에서 다음과 같이 설정합니다.
+
+   - **이름:** PlaidCloud
+   - **인증:** **Client Credentials (Machine to Machine) Grant**만 선택합니다. 토큰 기반 인증이나 인증 코드 부여는 선택하지 않습니다.
+   - **범위:** REST Web Services 및 RESTlets.
+
+   저장한 후 **클라이언트 ID**를 복사합니다. NetSuite는 확인 페이지에서 이 값을 한 번만 표시합니다.
+
+4. **인증서를 매핑합니다.** **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New**에서 다음과 같이 설정합니다.
+
+   - **엔터티:** PlaidCloud가 대리하는 사용자.
+   - **역할:** 2단계의 역할.
+   - **애플리케이션:** PlaidCloud, 3단계의 통합.
+   - **인증서:** 요청에 첨부된 공개 인증서.
+
+   저장한 후 **인증서 ID**를 복사합니다.
+
+</Steps>
+
+## 회신할 내용
+
+| 관리자가 보내는 항목 | PlaidCloud에 입력하는 위치 |
+|---|---|
+| **Setup > Company > Company Information**의 **계정 ID**. 예: `1234567`, 샌드박스는 `1234567_SB1` | **계정 ID** |
+| 3단계의 **클라이언트 ID** | **클라이언트 ID** |
+| 4단계의 **인증서 ID** | **인증서 ID** |
+| PlaidCloud가 읽을 수 있는 자회사 | PlaidCloud의 **자회사**에서 선택 |
+
+인증서에 대응하는 개인 키는 PlaidCloud 사용자의 팀이 보관합니다. 팀이 직접 PlaidCloud에 **개인 키**로 붙여넣습니다.
+
+<Aside type="caution">
+계정 ID는 NetSuite에 표시된 그대로, 샌드박스의 경우 `_SB1` 접미사를 포함하여 입력하십시오. PlaidCloud는 이 값으로 NetSuite 주소를 결정합니다.
+</Aside>
+
+## 액세스 확인
+
+PlaidCloud로 돌아와 값을 입력하고 **연결 테스트**를 클릭합니다. 각 데이터 세트는 **읽기 가능**, **권한 누락** 또는 **오류**로 표시됩니다.
+
+| 데이터 세트 | 필요한 권한 |
+|---|---|
+| 판매 라인 | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| 재고 잔액 | Lists: Items and Locations (View) |
+| 예산 | Transactions: Budget (View) |
+| 통계 계정 | Reports: General Ledger (View) |
+| 회계 기간 | Setup: Accounting Periods (View) |
+| 자회사 | Lists: Subsidiaries (View) |
+| 환율 | Lists: Consolidated Exchange Rates (View) |
+| 클래스 | Lists: Classes (View) |
+| 위치 | Lists: Locations (View) |
+
+데이터 세트가 누락되면 테스트에서 추가해야 할 권한을 알려 줍니다. 관리자에게 해당 권한을 역할에 추가해 달라고 요청한 후 다시 테스트하십시오. 예산은 선택 사항입니다. 예산을 사용하지 않는 NetSuite 계정도 다른 모든 항목은 로드됩니다. 환율, 클래스, 위치도 로드를 중단시키지 않습니다. 하나를 읽을 수 없으면 로드는 마지막으로 읽은 값을 유지합니다. 환율이 없는 경우에는 **환율** 파일로 환율을 제공하십시오.
+
+## 관련 문서
+
+- [Data Foundation](/ko/guides/projects/data-foundation/)
+- [NetSuite에 연결](/ko/guides/connections/netsuite/)
+- [NetSuite REST 커넥터](/ko/reference/connectors/rest/netsuite/)

@@ -1,0 +1,206 @@
+---
+title: Suivre les allocations avec un agent IA connecté par MCP
+description: Demandez à un agent IA connecté à votre espace de travail par MCP pourquoi le résultat d'une allocation a changé, ce qui l'alimente, où un inducteur est utilisé et quel serait l'effet d'une modification hypothétique.
+sidebar:
+  label: Suivi des allocations
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Une fois que vous avez [connecté un agent IA à votre espace de travail via le Model Context Protocol (MCP)](../getting-started/), vous pouvez lui demander, en langage courant, de suivre les coûts à travers vos étapes d'allocation. Vous n'exécutez pas de rapport et n'écrivez pas de SQL : vous posez une question, et l'agent appelle les outils de suivi des allocations de PlaidCloud pour trouver le modèle, expliquer une variation, parcourir la chaîne et répondre aux questions de simulation.
+
+Cela fonctionne avec n'importe quel client connecté par MCP, qu'il s'agisse d'un agent de conversation (Claude Desktop, ChatGPT) ou d'un agent de codage (Claude Code, Cursor), puisqu'ils accèdent tous aux mêmes outils via le [serveur MCP](../getting-started/).
+
+<Aside>
+Ces outils lisent la **configuration et les résultats** de vos allocations : ils ne modifient rien. Vous pouvez poser vos questions librement ; rien n'est réécrit dans le projet.
+</Aside>
+
+## Prérequis
+
+- Un projet contenant des étapes d'allocation (`allocation_split`, `allocation_rules` ou `allocation_dim`).
+- Un agent IA connecté à votre espace de travail par MCP : voir [Premiers pas avec les agents de codage IA](../getting-started/).
+
+## Ce que vous pouvez demander
+
+| Demandez à l'agent … | Ce qu'il fait | Outil utilisé |
+| --- | --- | --- |
+| « Quels modèles d'allocation contient ce projet ? » | Liste chaque modèle, ses phases et les tables de résultats qu'il produit | `allocation_model_find` |
+| « Comment `cost_line_rev` est-il calculé ? » | Montre le pool de coûts réparti, l'inducteur qui sert à le répartir et la table cible | `allocation_describe` |
+| « Pourquoi `cost_line_rev` a-t-il changé entre 2025 et 2026 ? » | Compare les deux périodes et attribue la variation à la taille du pool ou à la composition de l'inducteur, avec les principaux comptes contributeurs | `allocation_root_cause` |
+| « Qu'est-ce qui alimente `cost_line_rev` ? » | Parcourt la chaîne en amont : inducteurs, pools sources et imports | `allocation_lineage` |
+| « Où `revenue_by_line` est-il utilisé comme inducteur ? » | Liste chaque allocation qui répartit selon cette table | `allocation_driver_usage` |
+| « Que se passe-t-il si le chiffre d'affaires US augmente de 1 M$ ? » | Répartit la variation entre chaque résultat concerné selon sa part actuelle du pool, de façon additive sur une diffusion, et non comme un pire cas par table | `allocation_forward_impact` |
+| « Et si l'inducteur d'effectif du centre de coûts Assemblage augmentait de 10 ? » | Répartit à nouveau le pool fixe selon les nouveaux poids de l'inducteur, en montrant quelles cibles gagnent et lesquelles perdent. Décline la demande lorsque la table de résultats est alimentée par plusieurs étapes, plutôt que de répartir à nouveau un pool qui n'est pas celui de l'allocation, et lorsque l'inducteur ne correspond plus à la répartition effectuée par votre modèle lors de sa dernière exécution | `allocation_driver_scenario` |
+
+## Exemple concret
+
+Un analyste financier remarque qu'une ligne de coût répartie selon le chiffre d'affaires a baissé d'une année sur l'autre et pose une seule question. L'agent y répond de bout en bout, en appelant en coulisses plusieurs outils d'allocation.
+
+> **Vous demandez :** Notre allocation de coûts basée sur le chiffre d'affaires (`cost_line_rev`) semble en baisse en 2026 par rapport à 2025. Que s'est-il passé, de quoi est-elle construite, et quel serait l'effet d'une variation de +1 M$ du chiffre d'affaires US ?
+
+> **L'agent répond :**
+>
+> **De quoi il s'agit.** `cost_line_rev` est la phase de votre modèle de comptabilité par activités (ABC) répartie selon le chiffre d'affaires. Elle prend un pool de coûts (`group_amount`, limité à un ensemble de comptes de résultat) et le répartit selon le **chiffre d'affaires** de `revenue_by_line`, pondéré au sein de chaque entité, année et mois.
+>
+> **Pourquoi la baisse (US, 2025 → 2026).** Le coût alloué aux US est passé de **7,12 M$ à 2,99 M$, soit une baisse de 4,13 M$ (−58,0 %)**. Il ne s'agit **pas** d'un changement de composition : la part des US dans le pool est restée stable, autour de 23 %, les deux années. La cause est la **diminution du pool de coûts total**, concentrée sur quelques comptes :
+>
+> | Compte | 2025 | 2026 | Variation |
+> | --- | --: | --: | --: |
+> | 700000 | 2,58 M$ | 1,09 M$ | **−1,49 M$** |
+> | 701000 | 1,85 M$ | 0,77 M$ | −1,08 M$ |
+> | 610000 | 1,71 M$ | 0,72 M$ | −0,99 M$ |
+> | 670000 | 0,68 M$ | 0,29 M$ | −0,39 M$ |
+> | 702000 | 0,30 M$ | 0,13 M$ | −0,18 M$ |
+>
+> Ces cinq comptes expliquent pratiquement tout le mouvement.
+>
+> **Ce qui l'alimente.** `cost_line_rev` est construite à partir de `revenue_by_line` (l'inducteur de répartition) et de `gl_pool_entity` (le pool de coûts).
+>
+> **Point d'attention : cet inducteur est partagé.** `revenue_by_line` alimente aussi `cost_line_cs` et `cost_line_admin` ; un retraitement du chiffre d'affaires se répercute donc sur les trois.
+>
+> **Votre scénario de +1 M$ US.** Le million est réparti entre les résultats qui partagent cet inducteur selon la **part actuelle de chacun dans le pool** ; les estimations par table **s'additionnent** donc pour donner la variation, au lieu de répéter chacune le million complet. Vous obtenez un chiffre pour `cost_line_rev`, `cost_line_cs` et `cost_line_admin` que vous pouvez totaliser. Si vous limitez la question à une seule cible, l'estimation s'applique à cette seule tranche.
+
+L'analyste obtient une réponse complète (l'ampleur de la variation, les comptes en cause, la filiation et la portée d'une simulation) sans ouvrir une seule table.
+
+## Jusqu'où se fier à une réponse
+
+Une réponse fluide n'est pas forcément correcte. Chaque réponse à une question « pourquoi cela a-t-il changé » s'accompagne désormais d'une appréciation en langage clair de **la confiance à lui accorder**, de sorte qu'un chiffre plausible mais fragile est signalé *avant* que vous n'agissiez, plutôt que noyé dans le texte. En plus de l'explication, l'agent vous indique :
+
+- **Un niveau de confiance** (élevée, moyenne ou faible), qui reflète la netteté avec laquelle la variation se décompose. Une variation due à une cause claire est de confiance élevée ; celle où plusieurs causes se chevauchent, ou dont les chiffres ne se rapprochent pas entièrement, est de confiance moindre. Lorsqu'un résultat provient de plusieurs branches d'allocation, la confiance pondère chaque branche selon la part de la variation qu'elle explique : une petite branche fragile n'abaisse donc pas une réponse par ailleurs nette ; en revanche, une branche dont le chiffre est lui-même douteux (répartition non rapprochée, données obsolètes ou élément impossible à attribuer) tire quand même vers le bas la confiance de l'ensemble de la réponse.
+- **Des réserves en termes simples**, par exemple : la cause est un mélange de facteurs qui se chevauchent plutôt qu'un seul ; la réponse repose sur la hiérarchie ou les poids d'inducteur *actuels* ; une partie de la variation peut être un artefact d'exhaustivité des données (une période dont le chargement n'est pas terminé) plutôt qu'un mouvement réel ; le pool ou l'inducteur qui alimente l'allocation n'a pas été rechargé récemment, de sorte que le chiffre peut reposer sur des données périmées ; ou un chiffre de simulation ne peut pas être additionné entre les cibles.
+- **Une comparaison qui n'a pas pu être faite, signalée explicitement.** La plupart des réponses mesurent l'ampleur du mouvement rapporté, par rapport au même mouvement un an plus tôt et par rapport aux périodes récentes, afin que vous puissiez distinguer une année ordinaire d'une rupture de tendance. Aucune des deux n'est produite pour une table alimentée par une étape qui alloue plusieurs colonnes de valeurs à la fois, car chacune est conçue pour une réponse à colonne unique. Cela restait auparavant muet, de sorte que la réponse semblait avoir été poussée aussi loin que les données le permettent alors qu'elle s'était arrêtée en deçà par conception. C'est désormais indiqué parmi les limites, avec la raison pour laquelle il n'existe pas de question plus étroite à poser à la place, et avec la précision qu'aucun chiffre de la réponse n'en est retiré : les montants sont exacts, c'est le contexte qui fait défaut.
+
+Lorsque l'agent ne peut pas garantir une cause précise, il le dit et vous oriente vers le périmètre ou le filtre qui lui permettrait de répondre nettement, au lieu d'inventer une histoire assurée. Et comme la confiance et les réserves font partie de la réponse, elles la suivent : si vous demandez à un autre agent de la résumer, les signaux de confiance ne sont pas silencieusement supprimés.
+
+<Aside type="note" title="Le signalement des données périmées est facultatif">
+La réserve de fraîcheur, qui abaisse la confiance lorsque les données sous-jacentes n'ont pas été rechargées dans une fenêtre donnée, est **désactivée par défaut** et activée par espace de travail par votre administrateur, qui définit aussi ce qui compte comme récent (davantage pour des données actualisées seulement chaque trimestre ou chaque année). Si votre équipe travaille délibérément avec des données plus anciennes, elle reste en retrait tant que personne ne l'active.
+
+Une fois activée, elle s'applique à toutes les réponses qui lisent votre entrepôt : l'explication « pourquoi cela a-t-il changé » et les deux types de simulation, là où elle importe le plus. Une simulation propage ou repondère en utilisant les parts que votre modèle a réalisées lors de sa dernière exécution ; des données périmées sont donc précisément le cas où l'estimation est la moins fiable.
+
+Deux éléments limitent ce qu'elle peut vous dire, et ils s'appliquent à chaque réponse, pas seulement aux simulations. Elle ne s'enquiert de l'ancienneté que des tables **chargées directement dans PlaidCloud** : une table construite par une étape de workflow ne peut indiquer que la date de la dernière exécution de cette étape, ce qui est une autre question que celle de l'arrivée des données ; elle est donc volontairement laissée de côté plutôt que de recevoir un mauvais chiffre. Et elle nomme la **table la plus ancienne de chaque type** (un pool, un inducteur) : lorsqu'une simulation se diffuse sur plusieurs étapes et que plus d'un inducteur est périmé, on ne vous en signale qu'un. Aucun des deux cas ne présente jamais une table périmée comme fraîche.
+</Aside>
+
+<Aside type="tip" title="Lisez la confiance, pas seulement le chiffre">
+Une confiance **faible** ou **moyenne** n'est pas un échec : c'est l'agent qui reconnaît honnêtement que la variation a plusieurs causes plausibles, ou que quelque chose (un inducteur périmé, une période inachevée) pourrait la fausser. Voyez-y une invitation à ajouter une période, un filtre ou une dimension de ventilation, puis à reposer la question.
+</Aside>
+
+<Aside type="caution" title="Quand un total d'apparence nette cache l'essentiel">
+Deux totaux portant sur l'ensemble du pool peuvent passer pour une croissance nette tout en induisant en erreur, et l'agent détecte désormais les deux : lorsque de fortes hausses et baisses se **compensent** en une petite variation nette (le plus gros mouvement individuel dépasse la variation d'ensemble), et lorsque l'essentiel d'une variation est du **transit**, c'est-à-dire un coût que l'allocation fait passer tel quel sans le répartir selon l'inducteur, de sorte que la part réellement gouvernée par l'inducteur n'est qu'une fraction minime. Dans chaque cas, il abaisse la confiance, indique de combien le montant piloté par l'inducteur a réellement bougé et vous oriente vers la vue au niveau des membres.
+</Aside>
+
+## Bon à savoir
+
+<Aside type="note" title="Les allocations filtrées reçoivent une réponse nette, sur l'ensemble du pool">
+Lorsque les lignes sources d'une allocation sont restreintes (par exemple à un ensemble de comptes de résultat), l'agent applique automatiquement ce filtre et fournit quand même une attribution nette sur l'ensemble du pool : vous n'avez rien à ajouter.
+</Aside>
+
+<Aside type="note" title="Allocations par dimension">
+Pour une allocation pilotée par une **hiérarchie de la dimension** (par exemple, la répartition d'un centre de coûts selon une structure de reporting), l'agent explique désormais la variation : au niveau du total d'ensemble, il l'attribue au pool d'entrée, et lorsque vous filtrez sur une cible précise, il distingue le **mouvement du pool** du déplacement de la **part** de cette cible. La seule chose qu'il ne peut pas encore reconstituer est une cause qui dépend de l'**historique de la hiérarchie à une date donnée**, prévu dans une prochaine version.
+</Aside>
+
+<Aside type="caution" title="Les allocations en cascade nécessitent une tranche">
+Lorsqu'une allocation en alimente une autre (une cascade), un « pourquoi » portant sur tout le projet mélangerait les mauvaises lignes ; l'agent vous demande donc de limiter la question à une tranche (une région, un produit ou un centre de coûts précis), puis l'explique.
+</Aside>
+
+<Aside type="note" title="Résultats construits par plusieurs étapes">
+Si une table de résultats est produite par **plusieurs** étapes d'allocation, l'agent ne devine pas laquelle a provoqué une variation : il liste les étapes candidates et vous demande de nommer celle que vous visez. Lorsque votre question se restreint à des lignes que l'une seule de ces étapes a produites (par exemple une région qu'elle est la seule à allouer), l'agent le reconnaît et suit automatiquement cette étape, en vous l'indiquant.
+
+**Nommer une étape indique à l'agent quelle étape décrire, pas quelles lignes mesurer.** La variation qu'il rapporte est celle de la table entière et elle est exacte ; c'est la *répartition entre facteurs* qui ne peut pas être attribuée à une étape. Sur une table à plusieurs écritures, l'agent retient donc cette répartition, précise que le chiffre couvre toutes les étapes qui écrivent dans la table, et propose de suivre la table à travers chacune des autres tour à tour. Chacune de ces nouvelles exécutions est une mesure distincte : ce n'est ni la part de cette étape dans la variation que vous examinez, ni une mesure de cette étape **seule** : ces étapes écrivent dans la même colonne, ce qui est la raison pour laquelle la répartition a été retenue, de sorte que la variation obtenue les couvre toujours toutes.
+
+Cela vaut **quelle que soit l'autre étape qui écrit**. Une étape qui n'est pas une allocation (par exemple une étape qui ajoute des lignes à la table de résultats) n'est jamais candidate au suivi et ne vous demande donc jamais de choisir, mais ses lignes figurent quand même dans le total, et l'agent le dit désormais au lieu d'intégrer son mouvement dans la répartition.
+</Aside>
+
+<Aside type="note" title="Les simulations de variation de valeur utilisent les parts actuelles">
+Les réponses du type « que se passe-t-il si ce pool augmente de … » répartissent la variation sur une diffusion selon la **part actuelle de chaque cible dans le pool** ; les chiffres par table **s'additionnent** donc, au lieu d'être chacun une enveloppe de pire cas. Elles reflètent les parts du modèle telles qu'elles sont aujourd'hui : une estimation bien délimitée de l'endroit où la variation aboutit, pas une prévision précise. Si vous visez une table d'**inducteur ou de base** plutôt que le pool d'entrée, la demande est traitée comme une simulation d'*inducteur* (voir plus loin), car modifier un inducteur redistribue une répartition fixe au lieu d'ajouter de la valeur.
+
+**Nommez explicitement la période pour celle-ci.** Contrairement à une question « pourquoi cela a-t-il changé » ou à une simulation d'inducteur, une simulation prospective ne détermine *pas* la colonne de période à votre place. Si vous ne l'indiquez pas, l'estimation couvre **toutes les périodes** plutôt que la fenêtre que vous aviez en tête.
+</Aside>
+
+<Aside type="caution" title="Un résultat que la simulation n'a pas pu mesurer ne porte aucun chiffre">
+Une simulation prospective calcule la part de chaque cible en interrogeant l'étape qui l'écrit. Lorsque cette requête échoue (la table de l'étape n'a pas de colonne de période, l'entrepôt la rejette), cette cible n'indique désormais **aucune estimation**, accompagnée de la raison. Elle indiquait auparavant la variation *entière* qui l'atteint, un maximum présenté exactement comme une réponse mesurée, et tout ce qui se trouvait en aval de cette étape était ensuite estimé à partir de ce chiffre, de sorte qu'une branche entière passait pour des chiffres ordinaires.
+
+Trois conséquences en découlent, et la réponse énonce chacune d'elles : les totaux ne couvrent que les cibles qui **ont été** mesurées ; rien en aval d'une étape non mesurée n'est estimé à partir d'elle, de sorte que ces cibles sont absentes de la réponse plutôt que devinées ; et une cible mesurée à partir d'une *partie* seulement de ce qui l'écrit le dit et nomme l'étape qui n'a pas pu être lue. Ce chiffre partiel est une vraie mesure de ce qui a pu être lu, il tient donc, mais il ne représente pas toute la cible, et la partie manquante peut être plus grande, plus petite ou de signe opposé. Ne le lisez pas comme un plancher.
+</Aside>
+
+<Aside type="note" title="Les simulations d'inducteur sont calculées exactement">
+Demandez ce que provoquerait une modification d'un **inducteur** (« et si l'inducteur d'effectif du centre de coûts Assemblage augmentait de 10 ? ») et l'agent répartit à nouveau le pool fixe selon les nouveaux poids, **exactement**, sans réexécuter le modèle. Il montre quelles cibles **gagnent** et lesquelles **perdent**, et les gains et les pertes **s'annulent à zéro**, ce qui sert de contrôle intégré. Il s'en tient à ce qu'il peut calculer exactement : une répartition simple et unique avec un inducteur simple. Tout ce qui est plus complexe (une allocation fondée sur une hiérarchie ou filtrée/conditionnelle, l'ajout d'un tout nouveau membre d'inducteur, ou une modification qui vide un groupe) est **décliné avec la raison** plutôt qu'estimé.
+
+**Nommez la colonne telle que l'écrit la table d'inducteurs.** Lorsqu'une étape reporte une colonne d'inducteur sous un autre nom, c'est le nom propre à la table d'inducteurs qu'il faut utiliser, et c'est celui que la réponse vous renvoie si vous vous trompez. Les résultats se lisent dans l'autre sens : les centres de coûts et les groupes qui ont bougé sont nommés tels que l'écrit la table de *résultats*, car ce sont les noms avec lesquels vous filtrez et lisez les résultats. Sur la plupart des étapes, les deux noms sont identiques.
+</Aside>
+
+<Aside type="note" title="La colonne de période est détectée pour vous">
+Pour une question « pourquoi cela a-t-il changé » ou une simulation d'inducteur, vous n'avez normalement pas à nommer la colonne qui contient la période : l'agent la déduit de la table. Si vous en nommez une explicitement, elle est d'abord vérifiée dans la table : si cette colonne n'existe pas, on vous le signale immédiatement, avec les colonnes qui existent *réellement*, afin que vous puissiez corriger en une seule fois au lieu d'obtenir une analyse qui n'a rien pu totaliser. Si la table comporte deux colonnes de période tout aussi probables (une année et un numéro de période, par exemple), l'agent vous demande d'en choisir une au lieu de deviner. Les simulations prospectives font exception : nommez-y vous-même la période, comme indiqué plus haut.
+</Aside>
+
+<Aside type="note" title="Combinaisons de dimensions, lorsqu'elles sont activées">
+Demander ce qui a provoqué une variation recherche la dimension unique qui l'explique le mieux, sur tous les espaces de travail. Lorsque la recherche par **combinaison** est activée sur votre espace de travail, elle teste aussi des combinaisons de dimensions (un mouvement limité à une région *et* à une gamme de produits, par exemple) au lieu d'une seule dimension à la fois. Les combinaisons doivent franchir un seuil plus élevé qu'une dimension unique avant d'être rapportées, et lorsque rien n'explique le mouvement à lui seul, la réponse le dit plutôt que de retenir n'importe quoi. La recherche par combinaison est désactivée par défaut ; demandez à votre administrateur PlaidCloud si elle est activée pour votre espace de travail.
+</Aside>
+
+<Aside type="note" title="Cette variation est-elle inhabituelle ?">
+En plus du « pourquoi », l'agent juge si une variation sort de l'ordinaire : il compare le mouvement de cette période à l'historique propre au modèle des **variations d'une période à l'autre** et la qualifie de normale, élevée ou extrême, de sorte qu'un décalage courant et un véritable pic ne se lisent pas de la même façon.
+</Aside>
+
+<Aside type="note" title="Les variations concentrées sont signalées">
+Lorsque l'essentiel d'une variation d'une année sur l'autre provient d'un seul groupe (une entité ou un client qui représente la majeure partie du mouvement), le résumé de l'agent le signale explicitement, afin qu'une variation due à une valeur aberrante ne soit pas prise pour un changement généralisé. Ajoutez à votre question une dimension de ventilation telle que l'entité ou le compte pour le voir.
+</Aside>
+
+<Aside type="caution" title="Une ventilation selon un champ sans valeurs">
+Ventiler une variation selon un champ regroupe les lignes qui partagent une valeur, et les lignes **sans** valeur se regroupent aussi. Ainsi, un champ laissé vide sur chaque ligne dans les périodes comparées produisait un seul groupe contenant toute la variation, ce qui se lisait comme le résultat le plus concentré possible : un seul membre, tout le mouvement, pleine confiance.
+
+L'agent vous indique désormais que le champ n'est pas renseigné pour ces lignes et **retient** les chiffres de concentration plutôt que de les présenter comme 100 %. Il suggère soit un champ renseigné, soit d'abandonner complètement la ventilation, auquel cas il trouve lui-même le champ qui explique le mieux la variation. Lorsqu'un second champ de regroupement *est* renseigné, la ventilation est authentique et rapportée comme d'habitude, le champ vide étant simplement noté. Les valeurs vides s'affichent comme *(no value)* ou *(blank)*, et les deux sont distinguées : un champ jamais renseigné et un champ explicitement réglé sur rien sont deux choses différentes.
+
+Seule la ventilation était affectée. La variation d'ensemble, ses totaux et la façon dont elle a été attribuée étaient corrects tout du long.
+</Aside>
+
+<Aside type="caution" title="Quand ce sont les lignes non affectées qui ont bougé">
+Lorsque vous ne nommez aucun champ, l'agent choisit celui qui explique le mieux la variation, et il arrive que la réponse soit les lignes qui n'ont **aucune** valeur pour ce champ. C'est un vrai constat, pas une anomalie, et il est donc rapporté plutôt que masqué : un coût qui a discrètement cessé d'être étiqueté mérite d'être connu.
+
+Mais « les lignes non affectées ont augmenté » signifie tout autre chose sur un champ presque toujours renseigné que sur un champ presque toujours vide. La réponse précise désormais lequel, dans la même phrase : *« la coupe gagnante est constituée des lignes non affectées de `cost_centre` : `cost_centre` porte une valeur sur 12 % des lignes des périodes comparées »*. Un champ renseigné sur 12 % des lignes est à peine utilisé ; un champ renseigné sur 95 % présente une véritable lacune qui mérite d'être explorée. Les champs très peu ou très largement renseignés s'affichent comme *moins de 1 %* et *plus de 99 %* plutôt que 0 % ou 100 %, deux valeurs qui ne pourraient pas être exactes ici.
+</Aside>
+
+<Aside type="note" title="Quand la recherche ne peut pas s'exécuter du tout">
+Avant de chercher, l'agent pose une question rapide aux données pour écarter les champs qui contiennent une seule valeur partout, ou qui sont divisés trop finement pour constituer un regroupement. Lorsque cette question reste sans réponse (type de colonne que l'entrepôt ne peut pas mesurer, ou connexion interrompue), il cherchait auparavant dans tous les champs, levant ces deux limites précisément au moment où quelque chose s'était déjà mal passé.
+
+Il indique désormais que la recherche n'a pas été exécutée, et le dit avec ses propres mots : il s'agit d'une limite de la recherche, pas d'un constat sur les données. Cette formulation diffère de la remarque que vous recevez lorsque les périodes comparées sont simplement trop volumineuses pour être explorées, car ce que vous pouvez y faire diffère aussi : dans ce cas, réduisez les périodes ; ici, nommez le champ à examiner, ce qui fonctionne quelle que soit la cause. Réessayer n'aide que si la défaillance était passagère.
+</Aside>
+
+<Aside type="caution" title="Une ventilation selon un champ absent de la table">
+Demandez une ventilation selon un champ que la table n'a pas, et on vous le dit désormais, avec les champs qu'elle *possède*, afin que vous puissiez corriger la question en une seule fois. Auparavant, la réponse revenait complète et assurée, la ventilation étant simplement absente et rien n'indiquant qu'une ventilation avait été tentée ; la suggestion « pour aller plus loin » pointait ailleurs. Quatre questions consécutives sur un modèle réel revenaient ainsi.
+
+Plus haut dans la chaîne, la règle est volontairement différente. Un champ ajouté par une allocation n'existe que sur les tables situées en aval, de sorte qu'un champ présent sur la table interrogée est souvent réellement absent deux phases en amont. Dans ce cas, le suivi **regroupe selon les champs que cette phase possède** plutôt que de perdre la ventilation de cette phase, et vous indique ceux qu'il a écartés.
+
+Cette remarque concerne la phase antérieure, et le dit : *« la ventilation demandée n'était pas disponible à cette phase »*. Elle ne concerne **pas** la table de membres imprimée par la réponse : celle-ci est la table interrogée, au niveau de regroupement complet demandé. Le regroupement plus grossier de la phase antérieure est celui sur lequel sa propre mesure de concentration est calculée, et ses membres ne sont pas listés. La suggestion qui l'accompagne nomme aussi cette phase : regroupez selon un champ que possède chaque phase suivie si vous voulez aussi ses membres. Jusqu'en août 2026, la remarque indiquait « is not in this answer » et s'expliquait par *« so the members you see are grouped only by the rest »*, et la suggestion disait que le champ ne figurait pas sur « the traced table » ; cela pointait vers la table imprimée, la décrivait comme ce qu'elle n'était pas et conseillait d'abandonner un champ qui fonctionnait.
+
+Et lorsqu'une ventilation manque pour toute autre raison (une défaillance passagère de l'entrepôt, par exemple), la réponse le dit de la même façon, en nommant la phase pour laquelle elle n'a pas pu en produire : les totaux sont mesurés et non affectés, et elle vous propose de réessayer. Le détail est absent, pas erroné.
+</Aside>
+
+<Aside type="caution" title="Un total qui a changé de signe correspond à deux états, pas à une variation">
+Lorsqu'un total passe du positif au négatif entre les deux périodes (un centre de coûts qui était une charge nette et devient un crédit net, par exemple), il n'existe aucun moyen significatif de répartir le mouvement entre ce qui l'a provoqué, ni de pourcentage significatif : un passage d'un petit positif à un grand négatif produit un chiffre comme −10 013 %, qui ne mesure rien.
+
+L'agent refuse de répartir une telle variation, comme il l'a toujours fait. Ce qu'il fait désormais, c'est **le dire** comme raison, au lieu d'ouvrir sur une remarque générale sur la manière dont la mesure est prise, qui se lisait comme l'explication et contredisait la ligne imprimée juste en dessous. Le pourcentage n'est plus du tout affiché pour une variation qui a changé de signe ; les montants de part et d'autre, et la variation elle-même, sont exacts et non affectés.
+
+Lisez les deux périodes comme des chiffres distincts : la réponse imprime désormais les deux sur la ligne qui décline, en indiquant s'il s'agit de la tranche que vous avez demandée ou de la colonne entière. Pour voir ce qui a bougé, ajoutez une dimension de ventilation : le total qui change de signe ne peut pas être décomposé en causes, mais le mouvement **par membre** qui le sous-tend se lit normalement, et c'est généralement là que se trouve la réponse.
+</Aside>
+
+<Aside type="note" title="Là où le suivi s'arrête, il suggère une prochaine étape">
+Chaque réponse se termine par des prochaines étapes que vous pouvez exécuter. Deux situations n'en proposaient aucune, et c'étaient celles où vous étiez le plus bloqué : un total qui a changé de signe, et une phase que l'agent n'a pas pu agréger du tout. Les deux comportent désormais une suggestion, la seconde nommant la table à vérifier et la cause la plus probable (une colonne de période manquante dans la table de cette phase) afin que vous puissiez l'écarter avant de supposer une défaillance passagère de l'entrepôt.
+
+De même, une réponse ne suggère plus de **se limiter à un membre** lorsque vous avez déjà limité votre question à un membre. Ce conseil découlait d'une limitation relevée plus haut dans la chaîne, non de la question posée, et il était répété parmi les limites indiquées comme s'il s'appliquait ici.
+
+Un cas ne propose toujours aucune prochaine étape : lorsqu'une lecture indépendante de la table d'inducteurs diverge de la répartition réalisée, la réponse le signale mais ne peut pas suggérer de nouvelle exécution qui résolve le problème ; la démarche utile consiste alors à examiner directement la table d'inducteurs, ce qui est une autre demande plutôt qu'un ajustement de celle-ci.
+</Aside>
+
+## Conseils
+
+- Désignez les tables par leur **nom** (`cost_line_rev`) ou par leur identifiant : les deux fonctionnent.
+- Pour une question de variation, nommez les **périodes** à comparer (par exemple 2025 par rapport à 2026) et, si utile, une dimension de **ventilation** telle que le compte ou l'entité.
+- Commencez large (« quels modèles d'allocation contient ce projet ? ») puis approfondissez ; l'agent garde le fil, de sorte que les questions suivantes s'appuient sur le même modèle.
+- Il existe **deux types de simulation** : une variation de **valeur** (« ce pool augmente de 1 M$ ») est estimée selon les parts actuelles et s'additionne entre les cibles ; une variation d'**inducteur** (« repondérer cet inducteur ») est répartie exactement et s'annule à zéro. Formulez la question pour celle que vous visez.
+
+## Voir aussi
+
+- [Premiers pas avec les agents de codage IA](../getting-started/) : connectez un agent à votre espace de travail par MCP
+- [Pourquoi les allocations sont utiles](/fr/guides/allocations/getting-started/why-are-allocations-useful/) : concepts d'allocation
+- [Dépannage](../troubleshooting/) : problèmes de connexion et d'authentification

@@ -1,0 +1,128 @@
+---
+title: "ML: Treinar modelo"
+description: Ajuste um modelo scikit-learn em uma tabela e grave uma tabela de modelo que você pode usar para pontuar e consultar.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## Descrição
+
+A etapa **ML: Treinar modelo** ajusta um modelo scikit-learn em uma tabela de origem e grava o resultado como uma **tabela de modelo**. A tabela de modelo flui pelo fluxo de trabalho como qualquer outra tabela: passe-a para uma etapa [ML: Pontuar](/pt-br/reference/workflow-steps/machine-learning/ml-score/) para anexar previsões a uma tabela de dados ou consulte-a diretamente para inspecionar as métricas de treinamento. A etapa é executada como um job gerenciado do PlaidCloud (como a etapa de LLM), de modo que o treinamento não compete por recursos com o restante do fluxo de trabalho.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML: Treinar modelo aprende um modelo a partir de linhas históricas. Linhas de treinamento com colunas de atributos e um rótulo conhecido são enviadas à etapa de treinamento, que produz um artefato de modelo salvo que uma etapa de pontuação usa depois." style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">linhas de treinamento</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">atributos + rótulo conhecido</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Treinar</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">ajustar um algoritmo</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">artefato de modelo</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">salvo, reutilizável</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ usado por ML: Pontuar</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML: Treinar modelo ajusta um algoritmo em linhas cujo rótulo já é conhecido e produz um artefato de modelo salvo que <a href="/pt-br/reference/workflow-steps/machine-learning/ml-score/">ML: Pontuar</a> aplica a novas linhas.</figcaption>
+</figure>
+
+## Guia Modelo
+
+### Origem e saída
+
+- **Tabela de treinamento**: a tabela usada no treinamento. Linhas com valor de destino vazio são excluídas do treinamento.
+- **Tabela de modelo**: a tabela de saída que recebe o registro do modelo.
+
+### Modelo
+
+- **Algoritmo**: o modelo a ser ajustado:
+
+  | Algoritmo | Valor | Família |
+  | --- | --- | --- |
+  | Regressão logística | `logistic_regression` | Classificação |
+  | Classificador de árvore de decisão | `decision_tree` | Classificação |
+  | Classificador de floresta aleatória | `random_forest` | Classificação |
+  | Classificador de gradient boosting (estilo XGBoost) | `xgb_classifier` | Classificação |
+  | Regressão linear | `linear_regression` | Regressão |
+  | Regressor de árvore de decisão | `decision_tree_regressor` | Regressão |
+  | Regressor de floresta aleatória | `random_forest_regressor` | Regressão |
+
+  O algoritmo estilo XGBoost é um `HistGradientBoostingClassifier` do scikit-learn, um substituto estatisticamente equivalente ao XGBoost, e não um wrapper em torno dele. Consulte [Limites e ressalvas](#limites-e-ressalvas).
+
+- **Coluna de destino**: a coluna a ser prevista. É obrigatória, exceto para os algoritmos não supervisionados e para `sota`, cuja coluna de classe é opcional. Os destinos de classificação são tratados como rótulos de texto; os destinos de regressão são convertidos em números, e as linhas cujo destino não pode ser interpretado como número são excluídas.
+
+### Mais algoritmos
+
+A lista **Algoritmo** também oferece estes algoritmos. Os fluxos de trabalho KNIME convertidos também os usam.
+
+| Algoritmos | O que são |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | O próprio XGBoost, com o booster de árvore ou linear |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | Gradient boosting do scikit-learn |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | Máquinas de vetores de suporte, perceptrons multicamadas e modelos de referência do scikit-learn |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | Os próprios aprendizes do KNIME, que produzem os resultados do KNIME; seus hiperparâmetros são as configurações do KNIME |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | Os algoritmos não supervisionados do KNIME: sem coluna de destino, e as colunas de atributos são as colunas numéricas (para `apriori` e `fp_growth`, a única coluna de listas de itens) |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | Os nós do KNIME de agrupamento, amostragem, aprendizado ativo, recomendação (`als`: as colunas de atributos são o usuário e o produto, e o destino é a avaliação), regras de associação e dose-resposta |
+
+`dbscan`, `mds`, `tsne` e os outros algoritmos que não têm modelo separado de seus dados mantêm suas configurações na tabela de modelo, e [ML: Pontuar](/pt-br/reference/workflow-steps/machine-learning/ml-score/) organiza a tabela que recebe.
+
+### Hiperparâmetros
+
+Um objeto JSON opcional com hiperparâmetros do scikit-learn para o algoritmo escolhido, por exemplo `{"max_depth": 5, "n_estimators": 200}`. Chaves desconhecidas são rejeitadas ao salvar a etapa, de modo que um parâmetro digitado incorretamente falha imediatamente em vez de ser ignorado silenciosamente. Os fluxos de trabalho convertidos do Alteryx também podem conter chaves sentinela no estilo do Alteryx, como `max_depth_none`; elas são traduzidas para você.
+
+Alguns parâmetros legados que o scikit-learn removeu são aceitos, mas não aplicados (por exemplo `presort`, ou os ajustes de árvore do XGBoost listados em [Limites e ressalvas](#limites-e-ressalvas)); tudo o que for descartado dessa forma é registrado em `dropped_params`, no `params_json` da tabela de modelo, de modo que nada desaparece silenciosamente.
+
+## Guia Atributos
+
+A guia Atributos mostra uma linha para cada coluna da tabela de origem:
+
+- **Atributo**: marque as colunas a serem usadas no treinamento. Deixe **todas** as caixas desmarcadas para treinar com todas as colunas, exceto o destino. Com todas as caixas desmarcadas, a etapa treina com as colunas que a tabela tiver no momento da execução; liste colunas em **Excluir colunas** (`exclude_columns`) para deixar algumas de fora.
+- **Substituição de tipo**: force o tratamento de uma coluna como **Numérico** ou **Categórico**, ou deixe em **(inferir)** para derivar o tipo do tipo da coluna da tabela.
+
+A preparação dos atributos corresponde ao Alteryx Assisted Modeling: os atributos numéricos são convertidos em números (valores que não podem ser interpretados viram ausentes) e os valores ausentes são imputados com a mediana; os atributos categóricos são tratados como texto, imputados com o valor mais frequente e codificados com one-hot. Valores que um atributo categórico nunca viu durante o treinamento são ignorados no momento da pontuação.
+
+## A tabela de modelo
+
+A tabela de modelo tem estas colunas:
+
+| Coluna | Conteúdo |
+| --- | --- |
+| `model_pickle_b64` | O pipeline scikit-learn ajustado (serializado com pickle, compactado e codificado em base64). Modelos grandes são divididos em várias linhas; consulte [Como o modelo é armazenado](#como-o-modelo-é-armazenado). |
+| `chunk_index` | A posição da parte do modelo desta linha, contada a partir de `0`. |
+| `algorithm` | O valor do algoritmo, por exemplo `logistic_regression`. |
+| `params_json` | JSON: os parâmetros do scikit-learn aplicados, os tipos de atributos usados e quaisquer `dropped_params`. |
+| `feature_names_json` | Matriz JSON: as colunas de atributos, em ordem, que o modelo espera no momento da pontuação. |
+| `class_labels_json` | Matriz JSON de rótulos de classe (classificadores) ou `null` (regressores). |
+| `metrics_json` | Métricas de treinamento em JSON; veja abaixo. |
+| `trained_at` | Carimbo de data/hora UTC da execução do treinamento. |
+
+Como o modelo é uma tabela comum, você pode consultá-lo como tal; por exemplo, extraia `metrics_json` em uma etapa posterior para condicionar um fluxo de trabalho à qualidade do modelo.
+
+`metrics_json` contém uma chave `kind` (`classification` ou `regression`), `train_accuracy` para classificadores ou `train_r2` e `train_rmse` para regressores, e `n_training_rows`.
+
+### Como o modelo é armazenado
+
+Um modelo ajustado pode ser grande (uma floresta aleatória mantida nas cem árvores padrão pode chegar a centenas de megabytes), e isso é mais do que um data warehouse aceita como um único valor. Por isso, o modelo é compactado e, se ainda for grande demais para uma linha, dividido em quantas linhas forem necessárias. Cada linha repete as colunas acima, então qualquer uma delas informa o algoritmo, os parâmetros, os atributos e as métricas; apenas `model_pickle_b64` e `chunk_index` diferem entre elas.
+
+Isso importa em dois casos:
+
+- **Leitura das métricas.** Uma tabela de modelo pode conter mais de uma linha, portanto leia as métricas de uma única linha em vez de presumir que há apenas uma, por exemplo com `WHERE chunk_index = 0`.
+- **Remontagem do modelo por conta própria.** Se você ler `model_pickle_b64` fora do PlaidCloud, concatene as partes na ordem de `chunk_index`, decodifique de base64 e descompacte antes de desserializar com pickle.
+
+Uma etapa [ML: Pontuar](/pt-br/reference/workflow-steps/machine-learning/ml-score/) faz tudo isso por você. Ela também verifica se todas as partes estão presentes e para com um erro se alguma estiver ausente, em vez de pontuar com um modelo incompleto.
+
+## Limites e ressalvas
+
+- **As métricas de treinamento são calculadas sobre o conjunto de treinamento**: não há divisão de reserva (holdout) nem validação cruzada nesta versão. Trate-as como uma verificação de ajuste, não como uma estimativa do desempenho fora da amostra.
+- **Conjunto de trabalho em memória**: a tabela de treinamento é lida na memória, então a etapa é indicada para cerca de um milhão de linhas. Faça amostragem ou agregue tabelas maiores antes.
+- **Tamanho máximo do modelo**: um modelo ajustado é rejeitado se passar de 128 MB depois de compactado, e a etapa para assim que o treinamento termina, com uma mensagem que informa o tamanho e o limite. Para ter uma referência: uma floresta aleatória de cem árvores sobre 17.000 linhas e 17 atributos chega a cerca de 56 MB, então o limite é aproximadamente o dobro disso. Se você o atingir, treine menos árvores (`n_estimators`) ou limite `max_depth`.
+- **Aproximação do XGBoost**: `xgb_classifier` treina um `HistGradientBoostingClassifier` do scikit-learn; os algoritmos `xgboost_*` executam o próprio XGBoost. Os parâmetros de árvore específicos do XGBoost `gamma`, `min_child_weight`, `subsample` e a família `colsample_*` não têm equivalente e são descartados (registrados em `dropped_params` e nas notas de mapeamento da etapa quando ela foi convertida do Alteryx). Valide as métricas do modelo em relação à sua execução de referência antes de confiar na paridade.
+- **A conversão do AutoML escolhe um algoritmo, não uma busca**: uma ferramenta AutoML do Alteryx é fundida a esta etapa da mesma forma que Classification e Regression, mas o AutoML nunca registra qual dos algoritmos candidatos de fato venceu durante a execução no Alteryx. A conversão escolhe o primeiro algoritmo marcado que esta etapa oferece e anota a escolha, em vez de reproduzir uma busca automatizada; nenhum ciclo de seleção de modelo é executado aqui. Compare uma etapa AutoML convertida com seus próprios resultados do Alteryx.
+
+## Relacionados
+
+- [ML: Pontuar](/pt-br/reference/workflow-steps/machine-learning/ml-score/): pontue uma tabela de dados com o modelo treinado.
+- [Migrar fluxos de trabalho do Alteryx](/pt-br/guides/workflows/migrate-alteryx-workflows/#conversões-de-aprendizado-de-máquina-assisted-modeling): como os pipelines do Alteryx Assisted Modeling, incluindo o AutoML, são convertidos para esta etapa.

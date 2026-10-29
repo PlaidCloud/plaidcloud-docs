@@ -1,0 +1,155 @@
+---
+title: Conectar ao NetSuite
+description: Conecte o PlaidCloud ao NetSuite e extraia dados financeiros e operacionais com SuiteQL — pré-requisitos, credenciais, conexão, teste rápido e uma extração agendada.
+sidebar:
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Extraia dados financeiros e operacionais do NetSuite para tabelas do PlaidCloud com SuiteQL. Este guia leva você de uma integração vazia do NetSuite até uma extração agendada e tipada. Para a referência campo a campo por trás dele, consulte o [Conector REST do NetSuite](/pt-br/reference/connectors/rest/netsuite/).
+
+## Pré-requisitos
+
+Você precisa, no NetSuite:
+
+- **OAuth 2.0** e **REST Web Services** ativados (**Setup > Company > Enable Features > SuiteCloud**).
+- Um **par de chaves RSA** — o certificado público enviado ao NetSuite e a chave privada guardada para o PlaidCloud.
+- Um **ID do certificado** (o `kid` do JWT, obtido ao enviar o certificado público), um **ID do cliente** (do registro de integração) e o **ID da sua conta** (produção `1234567` ou sandbox `1234567_SB1`).
+- Uma **função** com REST Web Services, **Log in using OAuth 2.0 Access Tokens**, SuiteAnalytics Workbook (se as suas consultas usarem recursos de análise) e acesso de visualização aos registros que você vai ler.
+
+As etapas completas do lado do NetSuite — gerar o par de chaves, enviar o certificado e criar a integração — estão em [Configuração no lado do NetSuite](/pt-br/reference/connectors/rest/netsuite/#configuração-no-lado-do-netsuite) na referência. Conclua-as primeiro; este guia pressupõe que você já tem os quatro valores em mãos.
+
+<Aside type="caution">
+Informe o ID da conta exatamente como o NetSuite o mostra, **incluindo** o sufixo `_SB1` para um sandbox. O PlaidCloud deduz o host da API a partir dele — a forma errada aponta a extração para a conta errada.
+</Aside>
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **NetSuite** no menu.
+
+   <Aside type="caution">Escolha **NetSuite**, não o tipo genérico **REST**. Somente o tipo NetSuite deduz o host da API a partir do ID da conta e injeta automaticamente os cabeçalhos e a paginação do SuiteQL. Uma conexão REST genérica seria executada sem autenticação e falharia.</Aside>
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `NetSuite Prod`. |
+   | ID do cliente | O ID do cliente do registro de integração. |
+   | ID do certificado | O ID do certificado (`kid`) do envio do certificado público. |
+   | ID da conta do NetSuite | O ID da sua conta, por exemplo `1234567` ou `1234567_SB1`. |
+   | Certificado privado do NetSuite | O bloco PEM completo da chave privada, colado em várias linhas. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+<Aside type="note">
+O campo **Certificado privado do NetSuite** oculta a chave enquanto você a cola, e a chave salva é criptografada e nunca mais é exibida. Ao editar a conexão, o campo fica em branco: deixe-o em branco para manter a chave salva ou cole uma nova para substituí-la.
+</Aside>
+
+<Aside type="tip">
+O ID da conta decide qual instância do NetSuite a conexão alcança, portanto mantenha o sufixo `_SB1` no ID de uma conta de sandbox — por exemplo, `1234567_SB1`. Dê à conexão um nome que diga para qual instância ela aponta, ou mantenha os hosts de produção e de sandbox como dois ambientes em uma única conexão.
+</Aside>
+
+## Testar rapidamente a conexão
+
+Confirme que as credenciais funcionam antes de construir qualquer coisa sobre elas.
+
+<Steps>
+
+1. Adicione uma [etapa Solicitação REST](/pt-br/guides/workflows/rest-request-step/) a um fluxo de trabalho.
+
+2. Na guia **Solicitação**, defina **Conexão** como a sua conexão do NetSuite, **Método** como `POST` e **Endpoint** como `/services/rest/query/v1/suiteql`.
+
+3. No **Corpo**, coloque uma consulta pequena e delimitada:
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 1"}
+   ```
+
+4. Clique em **Enviar solicitação de teste**.
+
+</Steps>
+
+<Aside type="caution">
+Use **Enviar solicitação de teste**, não a guia Visualização — a guia Visualização não aplica a configuração de serviço da conexão e informará resultados incorretos. Um resultado verde em Enviar solicitação de teste significa que o JWT foi assinado, o token foi trocado e o NetSuite respondeu. Se ocorrer um erro, a mensagem traz o detalhe do próprio NetSuite — geralmente um problema de escopo, função ou consulta —, então corrija esse único ponto e teste novamente.
+</Aside>
+
+## Criar a etapa de extração
+
+Com o teste rápido verde, transforme a etapa em uma extração real.
+
+<Steps>
+
+1. No **Corpo**, escreva sua consulta SuiteQL com um `ORDER BY` determinístico. Para pontos de partida prontos para copiar e colar — lançamentos contábeis, balancete, DRE, balanço patrimonial, contas a receber em aberto, pedidos de venda, pedidos de compra, estoque —, consulte [Exemplos de consultas SuiteQL do NetSuite](/pt-br/guides/connections/netsuite-financial-queries/).
+
+   Financeiro — linhas de transação do razão geral de um período:
+
+   ```json
+   {"q": "SELECT tl.transaction AS transaction_id, TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   ```
+
+   Operacional — pedidos de venda em aberto por cliente:
+
+   ```json
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, TO_CHAR(so.trandate, 'YYYY-MM-DD') AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   ```
+
+2. **Não altere** os controles de **Paginação e análise** nem os cabeçalhos `Prefer`/`Content-Type` — a conexão do NetSuite os injeta.
+
+3. Na guia **Resposta**, mantenha o destino como **Tabela** e **defina as colunas com tipos reais**: `Currency`/`Decimal` para valores, `Date`/`Datetime` para datas e `Boolean` para os indicadores `T`/`F`. O SuiteQL retorna tudo como strings; as colunas tipadas dizem ao PlaidCloud como convertê-las.
+
+   <Aside type="caution">
+   O SuiteQL retorna as datas como texto no **formato de exibição da conta** (frequentemente `M/D/YYYY`), que é ambíguo, por isso o PlaidCloud não tenta adivinhá-lo. Para uma coluna que você define como `Date`/`Datetime`, formate a data na consulta — `TO_CHAR(trandate, 'YYYY-MM-DD') AS trandate` (ou `'YYYY-MM-DD HH24:MI:SS'` para data e hora) — ou deixe a coluna como `Text`. Números e indicadores `T`/`F` não precisam desse tratamento. Se um valor não puder ser convertido, a execução falha com uma mensagem que nomeia a coluna e o valor.
+   </Aside>
+
+</Steps>
+
+<Aside type="caution">
+Sem um `ORDER BY`, a paginação por deslocamento duplica e ignora linhas entre as páginas sem aviso — um erro de conciliação financeira que você só percebe ao reconciliar. Toda consulta SuiteQL paginada precisa de uma ordenação estável, como `ORDER BY internalid`.
+</Aside>
+
+<Aside type="caution">
+**Limite de linhas:** o NetSuite limita uma única consulta SuiteQL a aproximadamente 100.000 linhas sem o SuiteAnalytics Connect. Uma consulta escrita à mão que ultrapassaria esse limite agora falha com uma mensagem orientando a restringir o intervalo de datas ou outros filtros, em vez de retornar um resultado truncado sem aviso. Divida uma extração ampla em solicitações delimitadas por data para ficar abaixo do limite, ou use as etapas prontas [NetSuite: Importar saldos / NetSuite: Importar detalhes do razão geral](/pt-br/guides/connections/import-netsuite-financials/), que dividem um intervalo de datas em janelas automaticamente.
+</Aside>
+
+<Aside type="caution">
+**Várias moedas:** em `transaction`/`transactionline`, `amount` está na moeda própria de cada transação. Um `SUM(amount)` entre subsidiárias está **errado do ponto de vista da consolidação** — selecione campos consolidados ou convertidos pela taxa de câmbio ao totalizar entre subsidiárias.
+</Aside>
+
+## Verificar e agendar
+
+<Steps>
+
+1. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)) e verifique a tabela de destino — as contagens de linhas e se as colunas de valor e de data chegaram tipadas, não como texto.
+
+2. Para um fluxo contínuo, [agende o fluxo de trabalho](/pt-br/get-started/tutorials/schedule-a-workflow/).
+
+</Steps>
+
+<Aside type="note">
+Toda extração do NetSuite é uma **substituição completa da tabela** — não há caminho incremental, portanto uma extração agendada reextrai todo o resultado a cada execução. Mantenha a cláusula `WHERE` na fatia de que você realmente precisa (uma janela de datas móvel, por exemplo), em vez de extrair todo o histórico a cada execução.
+</Aside>
+
+## Solução de problemas
+
+| Sintoma | Causa provável |
+|---|---|
+| Solicitação de teste com erro 400 e uma mensagem de escopo ou função | A função não tem REST Web Services / login OAuth 2.0 / SuiteAnalytics, ou a matriz de escopos foi rejeitada — o detalhe exibido a nomeia. |
+| A troca de token falha | Forma errada do ID da conta (sem `_SB1`), ID do certificado (`kid`) errado ou uma chave privada que não corresponde ao certificado público enviado. |
+| Erro de tipo/conversão na importação (nomeia a coluna e o valor) | Uma coluna tipada recebeu um valor que não consegue analisar — com mais frequência, uma coluna `Date`/`Datetime` em que o SuiteQL retornou o formato de exibição da conta. Envolva o campo em `TO_CHAR(col, 'YYYY-MM-DD')` na consulta ou defina o tipo da coluna como `Text`. |
+| Os totais não fecham entre subsidiárias | `amount` está na moeda própria de cada transação — use campos consolidados/convertidos. |
+| Linhas duplicadas ou ausentes em uma extração grande | Falta um `ORDER BY` determinístico em uma consulta paginada por deslocamento. |
+
+## Relacionados
+
+- [Exemplos de consultas SuiteQL do NetSuite](/pt-br/guides/connections/netsuite-financial-queries/) — consultas prontas para executar de lançamentos contábeis, balancete, DRE, contas a receber em aberto e mais.
+- [Conector REST do NetSuite](/pt-br/reference/connectors/rest/netsuite/) — referência de campos e de SuiteQL.
+- [Etapa Solicitação REST](/pt-br/guides/workflows/rest-request-step/) — a etapa em que esta extração é construída.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

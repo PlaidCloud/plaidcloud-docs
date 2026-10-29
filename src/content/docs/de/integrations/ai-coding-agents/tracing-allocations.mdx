@@ -1,0 +1,206 @@
+---
+title: Umlagen mit einem über MCP verbundenen KI-Agent nachverfolgen
+description: Fragen Sie einen über MCP mit Ihrem Workspace verbundenen KI-Agent, warum sich ein Umlageergebnis geändert hat, was es speist, wo ein Treiber verwendet wird und was eine hypothetische Änderung bewirken würde.
+sidebar:
+  label: Umlagen nachverfolgen
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Sobald Sie [einen KI-Agent über das Model Context Protocol (MCP) mit Ihrem Workspace verbunden haben](../getting-started/), können Sie ihn in einfacher Sprache bitten, Kosten durch Ihre Umlageschritte nachzuverfolgen. Sie führen keinen Bericht aus und schreiben kein SQL: Sie stellen eine Frage, und der Agent ruft die Umlage-Nachverfolgungstools von PlaidCloud auf, um das Modell zu finden, eine Änderung zu erklären, die Kette zu durchlaufen und Was-wäre-wenn-Fragen zu beantworten.
+
+Das funktioniert mit jedem MCP-verbundenen Client – einem Chat-Agent (Claude Desktop, ChatGPT) oder einem Coding-Agent (Claude Code, Cursor) –, da alle über den [MCP-Server](../getting-started/) dieselben Tools erreichen.
+
+<Aside>
+Diese Tools lesen die **Konfiguration und die Ergebnisse** Ihrer Umlagen – sie ändern nichts. Sie können beliebig fragen; es wird nichts in das Projekt zurückgeschrieben.
+</Aside>
+
+## Voraussetzungen
+
+- Ein Projekt mit Umlageschritten (`allocation_split`, `allocation_rules` oder `allocation_dim`).
+- Ein über MCP mit Ihrem Workspace verbundener KI-Agent – siehe [Erste Schritte mit KI-Coding-Agents](../getting-started/).
+
+## Was Sie fragen können
+
+| Fragen Sie den Agent … | Was er tut | Zugrunde liegendes Tool |
+| --- | --- | --- |
+| „Welche Umlagemodelle gibt es in diesem Projekt?“ | Listet jedes Modell, seine Stufen und die Ergebnistabellen auf, die es erzeugt | `allocation_model_find` |
+| „Wie wird `cost_line_rev` berechnet?“ | Zeigt den Kostenpool, der aufgeteilt wird, den Treiber, nach dem er aufgeteilt wird, und die Zieltabelle | `allocation_describe` |
+| „Warum hat sich `cost_line_rev` von 2025 auf 2026 geändert?“ | Vergleicht die beiden Perioden und führt die Änderung auf die Größe des Pools gegenüber der Treiberverteilung zurück, mit den Konten, die am meisten beitragen | `allocation_root_cause` |
+| „Was speist `cost_line_rev`?“ | Durchläuft die vorgelagerte Kette – Treiber, Quellpools und Importe | `allocation_lineage` |
+| „Wo wird `revenue_by_line` als Treiber verwendet?“ | Listet jede Umlage auf, die nach dieser Tabelle aufteilt | `allocation_driver_usage` |
+| „Was passiert, wenn der US-Umsatz um 1 Mio. $ steigt?“ | Verteilt die Änderung anhand ihres aktuellen Anteils am Pool auf jedes betroffene Ergebnis – additiv über eine Auffächerung hinweg, kein Worst Case pro Tabelle | `allocation_forward_impact` |
+| „Was passiert, wenn der Headcount-Treiber der Kostenstelle Assembly um 10 steigt?“ | Teilt den festen Pool mit den neuen Treibergewichten neu auf und zeigt, welche Ziele gewinnen und welche verlieren. Lehnt ab, wenn die Ergebnistabelle von mehr als einem Schritt geschrieben wird, statt einen Pool neu aufzuteilen, der nicht der Pool der Umlage selbst ist, sowie wenn der Treiber nicht mehr zu der Aufteilung passt, die Ihr Modell bei seiner letzten Ausführung vorgenommen hat | `allocation_driver_scenario` |
+
+## Durchgespieltes Beispiel
+
+Ein Finanzanalyst bemerkt, dass eine umsatzgetriebene Kostenzeile gegenüber dem Vorjahr gesunken ist, und stellt eine einzige Frage. Der Agent beantwortet sie von Anfang bis Ende und ruft dabei im Hintergrund mehrere Umlagetools auf.
+
+> **Sie fragen:** Unsere umsatzbasierte Kostenumlage (`cost_line_rev`) sieht 2026 gegenüber 2025 niedriger aus. Was ist passiert, woraus besteht sie, und was würde eine Schwankung des US-Umsatzes um +1 Mio. $ bewirken?
+
+> **Der Agent antwortet:**
+>
+> **Was es ist.** `cost_line_rev` ist die umsatzgetriebene Stufe Ihres Modells für Prozesskostenrechnung (Activity-Based Costing, ABC). Sie nimmt einen Kostenpool (`group_amount`, begrenzt auf eine Menge von GuV-Konten) und teilt ihn nach **Umsatz** aus `revenue_by_line` auf, innerhalb jeder Entität, jedes Jahres und jedes Monats gewichtet.
+>
+> **Warum es gesunken ist (USA, 2025 → 2026).** Die den USA zugeordneten Kosten sind von **7,12 Mio. $ auf 2,99 Mio. $ gesunken – ein Rückgang um 4,13 Mio. $ (−58,0 %)**. Das ist **keine** Mix-Verschiebung: Der US-Anteil am Pool blieb in beiden Jahren stabil bei etwa 23 %. Ursache ist der **schrumpfende Gesamtkostenpool**, konzentriert auf wenige Konten:
+>
+> | Konto | 2025 | 2026 | Änderung |
+> | --- | --: | --: | --: |
+> | 700000 | 2,58 Mio. $ | 1,09 Mio. $ | **−1,49 Mio. $** |
+> | 701000 | 1,85 Mio. $ | 0,77 Mio. $ | −1,08 Mio. $ |
+> | 610000 | 1,71 Mio. $ | 0,72 Mio. $ | −0,99 Mio. $ |
+> | 670000 | 0,68 Mio. $ | 0,29 Mio. $ | −0,39 Mio. $ |
+> | 702000 | 0,30 Mio. $ | 0,13 Mio. $ | −0,18 Mio. $ |
+>
+> Diese fünf Konten erklären praktisch die gesamte Veränderung.
+>
+> **Was sie speist.** `cost_line_rev` wird aus `revenue_by_line` (dem Aufteilungstreiber) und `gl_pool_entity` (dem Kostenpool) aufgebaut.
+>
+> **Hinweis – dieser Treiber wird gemeinsam genutzt.** `revenue_by_line` treibt auch `cost_line_cs` und `cost_line_admin`, sodass sich eine Umsatzkorrektur auf alle drei auswirkt.
+>
+> **Ihr Szenario mit +1 Mio. $ in den USA.** Die 1 Mio. $ werden anhand des **aktuellen Anteils am Pool** auf die Ergebnisse verteilt, die diesen Treiber teilen, sodass sich die Schätzungen pro Tabelle zur Änderung **aufsummieren**, statt dass jede die vollen 1 Mio. $ wiederholt – Sie erhalten einen Wert für `cost_line_rev`, `cost_line_cs` und `cost_line_admin`, den Sie summieren können. Grenzen Sie die Frage auf ein einzelnes Ziel ein, wird die Schätzung nur auf diesen Ausschnitt angewendet.
+
+Der Analyst erhält eine vollständige Antwort – Größe der Änderung, die dahinterstehenden Konten, die Herkunft und den Auswirkungsbereich eines Was-wäre-wenn –, ohne eine einzige Tabelle zu öffnen.
+
+## Wie weit Sie einer Antwort vertrauen können
+
+Eine flüssige Antwort ist nicht automatisch eine richtige. Jede „Warum hat sich das geändert“-Antwort kommt jetzt mit einer allgemeinverständlichen Einschätzung, **wie weit Sie ihr vertrauen können**, sodass eine plausible, aber wackelige Zahl gekennzeichnet wird, *bevor* Sie danach handeln, statt im Fließtext unterzugehen. Neben der Erklärung teilt Ihnen der Agent mit:
+
+- **Eine Konfidenzstufe** – hoch, mittel oder niedrig –, die widerspiegelt, wie sauber sich die Änderung zerlegen lässt. Eine Änderung mit einer klaren Ursache liest sich als hoch; eine, bei der sich mehrere Ursachen überlagern oder die Zahlen nicht vollständig abstimmen, als niedriger. Wird ein Ergebnis aus mehreren Umlagezweigen aufgebaut, gewichtet die Konfidenz jeden Zweig danach, wie viel der Änderung er ausmacht – ein kleiner, wackeliger Zweig zieht eine sonst saubere Antwort also nicht herunter –, aber ein Zweig, dessen Zahl selbst fraglich ist (eine nicht abgestimmte Aufteilung, veraltete Daten oder etwas, das sich nicht zuordnen lässt), drückt die Konfidenz der gesamten Antwort weiterhin nach unten.
+- **Vorbehalte in einfachen Worten** – zum Beispiel: Die Ursache ist eine Mischung überlagerter Faktoren statt eines einzelnen; die Antwort stützt sich auf die *aktuelle* Hierarchie oder die aktuellen Treibergewichte; ein Teil der Änderung kann ein Artefakt der Datenvollständigkeit sein (eine Periode, die noch nicht fertig geladen ist) statt einer echten Bewegung; der Pool oder Treiber, der die Umlage speist, wurde in letzter Zeit nicht neu geladen, sodass der Wert auf veralteten Daten beruhen kann; oder ein Was-wäre-wenn-Wert lässt sich nicht über Ziele hinweg addieren.
+- **Ein Vergleich, der nicht möglich war, wird offen gesagt.** Die meisten Antworten setzen die gemeldete Bewegung ins Verhältnis – zur gleichen Bewegung ein Jahr zuvor und zu den letzten Perioden –, sodass Sie ein gewöhnliches Jahr von einem Trendbruch unterscheiden können. Beides wird für eine Tabelle nicht erzeugt, die von einem Schritt geschrieben wird, der mehrere Wertspalten gleichzeitig umlegt, weil beides für eine Antwort mit einer einzelnen Spalte gebaut ist. Das geschah früher stillschweigend, sodass die Antwort so wirkte, als sei sie so weit gegangen, wie die Daten es zulassen, obwohl sie absichtlich früher aufgehört hatte. Es wird jetzt unter den Grenzen genannt, zusammen mit dem Grund, warum es keine engere Frage gibt, die man stattdessen stellen könnte, und mit dem Hinweis, dass dadurch kein Wert der Antwort zurückgenommen wird – die Beträge sind exakt, es fehlt der Kontext.
+
+Kann der Agent keine genaue Ursache vertreten, sagt er das und verweist auf den Umfang oder Filter, mit dem er sauber antworten könnte – statt eine selbstsichere Geschichte zu erfinden. Und weil Konfidenz und Vorbehalte Teil der Antwort sind, begleiten sie sie: Bitten Sie einen Folge-Agent um eine Zusammenfassung, gehen die Vertrauenssignale nicht stillschweigend verloren.
+
+<Aside type="note" title="Kennzeichnung veralteter Daten ist optional">
+Der Aktualitätsvorbehalt – die Konfidenz wird gesenkt, wenn die zugrunde liegenden Daten innerhalb eines festgelegten Zeitfensters nicht neu geladen wurden – ist **standardmäßig aus** und wird pro Workspace von Ihrem Administrator aktiviert, der auch festlegt, wie aktuell als frisch gilt (höher für Daten, die nur vierteljährlich oder jährlich aktualisiert werden). Arbeitet Ihr Team bewusst mit älteren Daten, bleibt er aus dem Weg, bis jemand ihn aktiviert.
+
+Ist er aktiviert, erreicht er jede Antwort, die Ihr Warehouse liest: die „Warum hat sich das geändert“-Erklärung und beide Was-wäre-wenn-Antworten, wo er am wichtigsten ist – ein Was-wäre-wenn überträgt oder gewichtet neu anhand der Anteile, die Ihr Modell bei seiner letzten Ausführung realisiert hat, sodass veraltete Daten genau der Fall sind, in dem die Schätzung am wenigsten verlässlich ist.
+
+Zwei Dinge begrenzen, was er Ihnen sagen kann, und sie gelten für jede Antwort, nicht nur für Was-wäre-wenn-Fragen. Er fragt das Alter nur bei Tabellen ab, die **direkt in PlaidCloud geladen** wurden: Eine Tabelle, die ein Workflow-Schritt aufbaut, kann nur melden, wann dieser Schritt zuletzt lief, was eine andere Frage ist als die, wann die Daten eingetroffen sind – sie bleibt daher bewusst ungefragt, statt mit der falschen Zahl beantwortet zu werden. Und er nennt die **älteste Tabelle jeder Art** – einen Pool, einen Treiber –, sodass Ihnen bei einem Was-wäre-wenn, das sich über mehrere Schritte auffächert und bei dem mehr als ein Treiber veraltet ist, nur einer davon genannt wird. In keinem Fall wird eine veraltete Tabelle als aktuell gemeldet.
+</Aside>
+
+<Aside type="tip" title="Lesen Sie die Konfidenz, nicht nur die Zahl">
+Eine **niedrige** oder **mittlere** Konfidenz ist kein Fehler – der Agent ist damit ehrlich, dass die Änderung mehr als eine plausible Ursache hat oder dass etwas (ein veralteter Treiber, eine unfertige Periode) sie verzerren könnte. Nehmen Sie das als Anlass, eine Periode, einen Filter oder eine Aufschlüsselungsdimension hinzuzufügen und erneut zu fragen.
+</Aside>
+
+<Aside type="caution" title="Wenn eine sauber aussehende Summe die Geschichte verbirgt">
+Zwei Gesamtsummen des ganzen Pools können wie sauberes Wachstum aussehen, aber in die Irre führen, und der Agent erkennt jetzt beide: wenn große Anstiege und Rückgänge sich zu einer kleinen Nettoänderung **ausgleichen** (der größte einzelne Treiber der Bewegung ist größer als die Überschrift selbst), und wenn der Großteil einer Änderung **Durchlauf** ist – Kosten, die die Umlage unverändert durchreicht, ohne sie nach dem Treiber aufzuteilen –, sodass der Teil, den der Treiber tatsächlich steuert, nur ein Bruchteil ist. In beiden Fällen senkt er die Konfidenz, nennt, wie stark sich der vom Treiber gesteuerte Betrag tatsächlich bewegt hat, und verweist Sie auf die Ansicht auf Mitgliedsebene.
+</Aside>
+
+## Gut zu wissen
+
+<Aside type="note" title="Gefilterte Umlagen erhalten eine saubere Antwort über den ganzen Pool">
+Sind die Quellzeilen einer Umlage eingeschränkt (zum Beispiel auf eine Menge von GuV-Konten), wendet der Agent diesen Filter automatisch an und liefert dennoch eine saubere Zuordnung über den ganzen Pool – Sie müssen nichts hinzufügen.
+</Aside>
+
+<Aside type="note" title="Dimensionsumlagen">
+Bei einer Umlage, die von einer **Dimensionshierarchie** gesteuert wird – zum Beispiel die Aufteilung einer Kostenstelle auf eine Berichtsstruktur –, erklärt der Agent die Änderung jetzt: Auf Ebene der Gesamtsumme führt er sie auf den Eingangspool zurück, und wenn Sie auf ein bestimmtes Ziel filtern, trennt er das **Wandern des Pools** von der Verschiebung des **Anteils** dieses Ziels. Das Einzige, was er noch nicht rekonstruieren kann, ist eine Ursache, die von der **Hierarchiehistorie zu einem bestimmten Zeitpunkt** abhängt; das folgt in einer späteren Version.
+</Aside>
+
+<Aside type="caution" title="Kaskadierte Umlagen benötigen einen Ausschnitt">
+Speist eine Umlage eine andere – eine Kaskade –, würde ein projektweites „Warum“ die falschen Zeilen vermischen, daher bittet der Agent Sie, die Frage auf einen Ausschnitt einzugrenzen (eine bestimmte Region, ein Produkt oder eine Kostenstelle), und erklärt ihn dann.
+</Aside>
+
+<Aside type="note" title="Ergebnisse, die von mehr als einem Schritt aufgebaut werden">
+Wird eine Ergebnistabelle von **mehr als einem** Umlageschritt erzeugt, rät der Agent nicht, welcher eine Änderung verursacht hat – er listet die infrage kommenden Schritte auf und bittet Sie, den gemeinten zu nennen. Wenn sich Ihre Frage auf Zeilen eingrenzt, die nur einer dieser Schritte erzeugt hat (zum Beispiel eine Region, die er allein umlegt), erkennt der Agent das und verfolgt diesen Schritt automatisch zurück und teilt Ihnen mit, dass er das getan hat.
+
+**Einen Schritt zu nennen sagt dem Agent, welchen Schritt er beschreiben soll, nicht, welche Zeilen er messen soll.** Die gemeldete Änderung ist die der ganzen Tabelle und exakt; es ist die *Aufteilung zwischen Faktoren*, die sich keinem Schritt zuordnen lässt. Bei einer Tabelle mit mehreren Schreibern hält der Agent diese Aufteilung daher zurück, sagt, dass der Wert jeden Schritt umfasst, der die Tabelle schreibt, und bietet an, die Tabelle nacheinander durch jeden der anderen zu verfolgen. Jede solche erneute Ausführung ist eine eigene Messung – nicht der Anteil dieses Schritts an der Änderung, die Sie ansehen, und keine Messung dieses Schritts **allein**: Diese Schritte schreiben in dieselbe Spalte, weshalb die Aufteilung zurückgehalten wurde, sodass die zurückkommende Änderung weiterhin alle umfasst.
+
+Das gilt, **wer auch immer der andere Schreiber ist**. Ein Schritt, der keine Umlage ist – etwa einer, der Zeilen an die Ergebnistabelle anhängt –, kommt nie als zu verfolgender Kandidat infrage und fordert Sie daher nie zu einer Auswahl auf, aber seine Zeilen sind trotzdem in der Summe enthalten, und der Agent sagt das jetzt, statt seine Bewegung in die Aufteilung einzurechnen.
+</Aside>
+
+<Aside type="note" title="Was-wäre-wenn mit Wertänderung verwendet die heutigen Anteile">
+Antworten auf „Was passiert, wenn dieser Pool um … steigt“ verteilen die Änderung über eine Auffächerung hinweg anhand des **aktuellen Anteils jedes Ziels am Pool**, sodass sich die Werte pro Tabelle **aufsummieren**, statt jeweils eine Worst-Case-Obergrenze zu sein. Sie spiegeln die Anteile des Modells wider, wie sie heute sind – eine gut eingegrenzte Schätzung, wo eine Änderung landet, keine genaue Prognose. Richten Sie eine solche Frage auf eine **Treiber- oder Basistabelle** statt auf den Eingangspool, wird sie stattdessen als *Treiber*-Was-wäre-wenn behandelt (unten), da das Ändern eines Treibers eine feste Aufteilung neu mischt, statt Wert hinzuzufügen.
+
+**Nennen Sie hierbei die Periode ausdrücklich.** Anders als bei einer „Warum hat sich das geändert“-Frage oder einem Treiber-Was-wäre-wenn ermittelt ein Vorwärts-Was-wäre-wenn die Periodenspalte *nicht* für Sie. Lassen Sie sie weg, deckt die Schätzung **alle Perioden** ab statt des Zeitfensters, das Sie im Sinn hatten.
+</Aside>
+
+<Aside type="caution" title="Ein Ergebnis, das das Was-wäre-wenn nicht messen konnte, enthält keinen Wert">
+Ein Vorwärts-Was-wäre-wenn ermittelt den Anteil jedes Ziels, indem es den Schritt abfragt, der es schreibt. Schlägt diese Abfrage fehl – die Tabelle des Schritts hat keine Periodenspalte, das Warehouse lehnt sie ab –, meldet dieses Ziel jetzt **überhaupt keine Schätzung**, zusammen mit dem Grund. Früher meldete es die *gesamte* Änderung, die es erreicht, ein Maximum, das genau wie eine gemessene Antwort dargestellt wurde, und alles unterhalb dieses Schritts wurde dann daraus geschätzt, sodass ein ganzer Zweig wie gewöhnliche Werte aussah.
+
+Daraus folgen drei Dinge, und die Antwort nennt jedes davon: Die Summen decken nur die Ziele ab, die **gemessen wurden**; nichts unterhalb eines nicht gemessenen Schritts wird daraus geschätzt, sodass diese Ziele in der Antwort fehlen, statt erraten zu werden; und ein Ziel, das nur aus einem *Teil* dessen gemessen wurde, was es schreibt, sagt das und nennt den Schritt, der nicht gelesen werden konnte. Dieser Teilwert ist eine echte Messung dessen, was gelesen werden konnte, und gilt daher – aber er ist nicht das ganze Ziel, und der fehlende Teil kann größer, kleiner oder mit umgekehrtem Vorzeichen sein. Lesen Sie ihn nicht als Untergrenze.
+</Aside>
+
+<Aside type="note" title="Treiber-Was-wäre-wenn werden exakt berechnet">
+Fragen Sie, was eine Änderung an einem **Treiber** bewirken würde – „Was passiert, wenn der Headcount-Treiber der Kostenstelle Assembly um 10 steigt?“ –, teilt der Agent den festen Pool mit den neuen Gewichten **exakt** neu auf, ohne erneute Modellausführung. Er zeigt, welche Ziele **gewinnen** und welche **verlieren**, und Gewinne und Verluste **saldieren sich zu null** als eingebaute Prüfung. Er beschränkt sich auf das, was er exakt berechnen kann: eine einzelne einfache Aufteilung mit einem einfachen Treiber. Alles Komplexere – eine hierarchiebasierte oder gefilterte/bedingte Umlage, das Hinzufügen eines ganz neuen Treibermitglieds oder eine Änderung, die eine Gruppe leert – wird **unter Angabe des Grunds abgelehnt**, statt geschätzt zu werden.
+
+**Nennen Sie die Spalte so, wie die Treibertabelle sie schreibt.** Führt ein Schritt eine Treiberspalte unter einem anderen Namen durch, ist der eigene Name der Treibertabelle der, mit dem Sie fragen sollten – und der, den die Antwort zurückmeldet, wenn Sie sich irren. Die Ergebnisse lesen sich umgekehrt: Die Kostenstellen und Gruppen, die sich bewegt haben, werden so benannt, wie die *Ergebnis*tabelle sie schreibt, weil Sie nach diesen Namen filtern und Ergebnisse lesen. Bei den meisten Schritten ist es derselbe Name.
+</Aside>
+
+<Aside type="note" title="Die Periodenspalte wird für Sie erkannt">
+Bei einer „Warum hat sich das geändert“-Frage oder einem Treiber-Was-wäre-wenn nennen Sie normalerweise nicht die Spalte, die die Periode enthält – der Agent ermittelt sie aus der Tabelle. Nennen Sie eine ausdrücklich, wird sie zuerst gegen die Tabelle geprüft: Ist diese Spalte nicht vorhanden, wird Ihnen das sofort mitgeteilt, zusammen mit den Spalten, die es *gibt*, sodass Sie es in einem Schritt korrigieren können, statt eine Analyse zu erhalten, die nichts summieren konnte. Hat die Tabelle zwei gleich wahrscheinliche Periodenspalten (etwa ein Jahr und eine Periodennummer), bittet der Agent Sie, eine auszuwählen, statt zu raten. Vorwärts-Was-wäre-wenn sind die Ausnahme – nennen Sie dort die Periode selbst, wie oben beschrieben.
+</Aside>
+
+<Aside type="note" title="Kombinationen von Dimensionen, wo aktiviert">
+Die Frage, was eine Änderung verursacht hat, sucht in jedem Workspace nach der einzelnen Dimension, die sie am besten erklärt. Ist in Ihrem Workspace zusätzlich die **Kombinationssuche** eingeschaltet, testet er auch Kombinationen von Dimensionen – etwa eine Bewegung, die auf eine Region *und* eine Produktlinie beschränkt ist –, statt jeweils nur eine Dimension. Kombinationen müssen eine höhere Hürde nehmen als eine einzelne Dimension, bevor sie gemeldet werden, und wo nichts die Bewegung für sich allein erklärt, sagt die Antwort das weiterhin, statt etwas auszuwählen. Die Kombinationssuche ist standardmäßig aus; fragen Sie Ihren PlaidCloud-Administrator, ob sie für Ihren Workspace aktiviert ist.
+</Aside>
+
+<Aside type="note" title="Ist diese Änderung ungewöhnlich?">
+Neben dem „Warum“ beurteilt der Agent, ob eine Änderung ungewöhnlich ist – er vergleicht die Bewegung dieser Periode mit der eigenen Historie der **Änderungen von Periode zu Periode** des Modells und nennt sie normal, erhöht oder extrem, sodass sich eine routinemäßige Verschiebung und ein echter Ausschlag unterschiedlich lesen.
+</Aside>
+
+<Aside type="note" title="Konzentrierte Änderungen werden hervorgehoben">
+Stammt der Großteil einer Änderung gegenüber dem Vorjahr aus einer einzigen Gruppe – eine Entität oder ein Kunde macht den Großteil der Bewegung aus –, weist die Zusammenfassung des Agents ausdrücklich darauf hin, sodass eine von einem einzelnen Ausreißer getriebene Änderung nicht mit einer breiten Verschiebung verwechselt wird. Fügen Sie Ihrer Frage eine Aufschlüsselungsdimension wie Entität oder Konto hinzu, um dies zu sehen.
+</Aside>
+
+<Aside type="caution" title="Eine Aufschlüsselung nach einem Feld ohne Werte">
+Eine Aufschlüsselung nach einem Feld fasst die Zeilen zusammen, die einen Wert teilen – und Zeilen **ohne** Wert werden ebenfalls zusammengefasst. Ein Feld, das in den verglichenen Perioden in jeder Zeile leer war, ergab daher eine einzelne Gruppe mit der gesamten Änderung, was wie das konzentrierteste mögliche Ergebnis aussah: ein Mitglied, die ganze Bewegung, volle Konfidenz.
+
+Der Agent teilt Ihnen jetzt mit, dass das Feld für diese Zeilen nicht ausgefüllt ist, und **hält** die Konzentrationswerte **zurück**, statt sie als 100 % zu melden. Er schlägt entweder ein Feld vor, das gefüllt ist, oder den Verzicht auf die Aufschlüsselung, wobei er dann selbst das Feld findet, das die Änderung am besten erklärt. Ist ein zweites Gruppierungsfeld *gefüllt*, ist die Aufschlüsselung echt und wird wie gewohnt gemeldet, wobei das leere Feld lediglich vermerkt wird. Leere Werte erscheinen als *(no value)* oder *(blank)*, und die beiden werden getrennt gehalten: Ein nie ausgefülltes Feld und ein ausdrücklich auf nichts gesetztes Feld sind verschiedene Dinge.
+
+Betroffen war immer nur die Aufschlüsselung. Die Überschriftsänderung, ihre Summen und ihre Zuordnung waren durchgehend korrekt.
+</Aside>
+
+<Aside type="caution" title="Wenn die nicht zugeordneten Zeilen sich bewegt haben">
+Nennen Sie kein Feld, wählt der Agent das, das die Änderung am besten erklärt – und manchmal besteht die Antwort in den Zeilen, die für dieses Feld **gar keinen** Wert haben. Das ist ein echter Befund, kein Fehler, und wird daher gemeldet statt verborgen: Es ist wissenswert, dass Kosten stillschweigend nicht mehr zugeordnet werden.
+
+Doch „die nicht zugeordneten Zeilen sind gewachsen“ bedeutet bei einem Feld, das fast immer ausgefüllt ist, etwas ganz anderes als bei einem, das fast immer leer ist. Die Antwort sagt jetzt im selben Satz, welcher Fall vorliegt – *„der Gewinnerschnitt sind die nicht zugeordneten Zeilen von `cost_centre`: `cost_centre` trägt in den verglichenen Perioden in 12 % der Zeilen einen Wert“*. Ein Feld, das in 12 % der Zeilen ausgefüllt ist, wird kaum verwendet; eines, das in 95 % ausgefüllt ist, hat eine echte Lücke, der nachzugehen sich lohnt. Sehr dünn und sehr vollständig besetzte Felder lauten *weniger als 1 %* und *mehr als 99 %* statt 0 % oder 100 %, von denen hier keines stimmen könnte.
+</Aside>
+
+<Aside type="note" title="Wenn die Suche gar nicht laufen kann">
+Vor der Suche stellt der Agent den Daten eine kurze Frage, um Felder auszuschließen, die durchgehend einen einzigen Wert enthalten oder so fein unterteilt sind, dass sie keine Gruppierung sein können. Lässt sich diese Frage nicht beantworten – ein Spaltentyp, den das Warehouse nicht messen kann, oder eine unterbrochene Verbindung –, durchsuchte er früher stattdessen jedes Feld und hob beide Grenzen genau in dem Moment auf, in dem bereits etwas schiefgegangen war.
+
+Jetzt sagt er, dass die Suche nicht ausgeführt wurde, und zwar in eigenen Worten: Es ist eine Grenze der Suche, kein Befund über die Daten. Diese Formulierung unterscheidet sich von dem Hinweis, den Sie erhalten, wenn die verglichenen Perioden schlicht zu groß für die Suche sind, denn auch das, was Sie dagegen tun können, ist anders – dort grenzen Sie die Perioden ein; hier nennen Sie das Feld, das untersucht werden soll, was unabhängig von der Ursache funktioniert. Ein erneuter Versuch hilft nur, wenn der Fehler vorübergehend war.
+</Aside>
+
+<Aside type="caution" title="Eine Aufschlüsselung nach einem Feld, das nicht in der Tabelle ist">
+Bitten Sie um eine Aufschlüsselung nach einem Feld, das die Tabelle nicht hat, werden Sie jetzt darauf hingewiesen – mit den Feldern, die sie *hat*, sodass Sie die Frage in einem Schritt korrigieren können. Zuvor kam die Antwort vollständig und selbstsicher zurück, ohne die Aufschlüsselung, und nichts sagte, dass eine versucht worden war; der Vorschlag „um weiterzugehen“ zeigte ganz woandershin. Vier aufeinanderfolgende Fragen an ein reales Modell kamen so zurück.
+
+Weiter oben in der Kette gilt bewusst eine andere Regel. Ein Feld, das eine Umlage hinzufügt, existiert nur in nachgelagerten Tabellen, sodass ein Feld, das in der Tabelle Ihrer Frage vorhanden ist, zwei Stufen weiter vorn oft tatsächlich fehlt. Dort **gruppiert die Verfolgung nach den Feldern, die diese Stufe hat**, statt die Aufschlüsselung dieser Stufe zu verlieren, und teilt Ihnen mit, welches sie ausgelassen hat.
+
+Dieser Hinweis betrifft die frühere Stufe und sagt das auch – *„die angeforderte Aufschlüsselung war in dieser Stufe nicht verfügbar“*. Er betrifft **nicht** die Tabelle der Mitglieder, die die Antwort ausgibt: Das ist die Tabelle, nach der Sie gefragt haben, in der vollen Gruppierung, die Sie angefordert haben. Die gröbere Gruppierung der früheren Stufe ist die, auf der ihre eigene Konzentrationskennzahl gemessen wird, und ihre Mitglieder werden nicht aufgelistet. Der zugehörige Vorschlag nennt diese Stufe ebenfalls: Gruppieren Sie nach einem Feld, das jede verfolgte Stufe hat, wenn Sie auch ihre Mitglieder möchten. Bis August 2026 lautete der Hinweis „is not in this answer“ und erklärte sich mit *„so the members you see are grouped only by the rest“*, und der Vorschlag sagte, das Feld sei nicht in „the traced table“ – was auf die ausgegebene Tabelle zeigte, sie als etwas beschrieb, das sie nicht war, und dazu riet, ein funktionierendes Feld wegzulassen.
+
+Und fehlt eine Aufschlüsselung aus einem anderen Grund – etwa einer vorübergehenden Störung im Warehouse –, sagt die Antwort das auf dieselbe Weise und nennt die Stufe, für die sie keine erzeugen konnte: Die Summen sind gemessen und unberührt, und sie bietet Ihnen einen erneuten Versuch an. Das Detail fehlt, es ist nicht falsch.
+</Aside>
+
+<Aside type="caution" title="Eine Summe, die null überquert hat, sind zwei Zustände, nicht eine Änderung">
+Ist eine Summe zwischen den beiden Perioden von positiv zu negativ gewechselt – eine Kostenstelle, die eine Nettobelastung war und zur Nettogutschrift wurde, zum Beispiel –, gibt es keine sinnvolle Möglichkeit, die Bewegung auf die Treiber aufzuteilen, und auch keinen sinnvollen Prozentwert: Ein Umschwung von einem kleinen positiven zu einem großen negativen Wert ergibt eine Zahl wie −10.013 %, die nichts misst.
+
+Der Agent lehnt es ab, eine solche Änderung aufzuteilen, wie er es immer tat. Neu ist, dass er **das** als Grund nennt, statt mit einem allgemeinen Hinweis zur Messweise zu beginnen – der wie die Erklärung klang und der direkt darunter gedruckten Zeile widersprach. Der Prozentwert wird für eine Änderung, die null überquert hat, überhaupt nicht mehr angezeigt; die Beträge auf beiden Seiten und die Änderung selbst sind exakt und unberührt.
+
+Lesen Sie die beiden Perioden als getrennte Werte – die Antwort druckt jetzt beide in der Zeile, die ablehnt, und nennt, ob es der Ausschnitt ist, nach dem Sie gefragt haben, oder die ganze Spalte. Um zu sehen, was sich bewegt hat, fügen Sie eine Aufschlüsselungsdimension hinzu – die Summe, die null überquert, lässt sich nicht in Ursachen zerlegen, aber die Bewegung **pro Mitglied** dahinter liest sich normal, und dort liegt meist die Antwort.
+</Aside>
+
+<Aside type="note" title="Wo die Verfolgung endet, schlägt sie einen nächsten Schritt vor">
+Jede Antwort endet mit nächsten Schritten, die Sie ausführen können. Zwei Situationen boten früher keine an – und es waren die beiden, in denen Sie am meisten festhingen: eine Summe, die null überquert hat, und eine Stufe, die der Agent gar nicht aggregieren konnte. Beide haben jetzt einen Vorschlag, der zweite nennt die zu prüfende Tabelle und die wahrscheinlichste Ursache (eine fehlende Periodenspalte in der Tabelle dieser Stufe), sodass Sie das ausschließen können, bevor Sie eine vorübergehende Warehouse-Störung annehmen.
+
+Ebenso schlägt eine Antwort nicht mehr vor, **auf ein Mitglied einzugrenzen**, wenn Sie Ihre Frage bereits auf eines eingegrenzt haben. Dieser Rat stammte aus einer weiter oben in der Kette erfassten Einschränkung, nicht aus Ihrer Frage, und wurde unter den genannten Grenzen wiederholt, als gelte er hier.
+
+Ein Fall bietet weiterhin keinen nächsten Schritt: Wenn eine unabhängige Lesung der Treibertabelle der realisierten Aufteilung widerspricht, sagt die Antwort das, kann aber keine erneute Ausführung vorschlagen, die es löst – sinnvoll ist dort, die Treibertabelle direkt zu prüfen, was eine andere Anfrage ist und keine Anpassung dieser.
+</Aside>
+
+## Tipps
+
+- Verweisen Sie auf Tabellen über ihren **Namen** (`cost_line_rev`) oder ihre ID – beides funktioniert.
+- Nennen Sie bei einer Frage zu einer Änderung die zu vergleichenden **Perioden** (zum Beispiel 2025 gegenüber 2026) und, wo nützlich, eine **Aufschlüsselungs**dimension wie Konto oder Entität.
+- Beginnen Sie breit („Welche Umlagemodelle gibt es in diesem Projekt?“) und gehen Sie dann ins Detail; der Agent behält den Faden, sodass Folgefragen auf demselben Modell aufbauen.
+- Es gibt **zwei Arten von Was-wäre-wenn**: Eine **Wert**änderung („dieser Pool steigt um 1 Mio. $“) wird anhand der heutigen Anteile geschätzt und summiert sich über Ziele hinweg; eine **Treiber**änderung („diesen Treiber neu gewichten“) wird exakt neu aufgeteilt und saldiert sich zu null. Formulieren Sie die Frage für die Art, die Sie meinen.
+
+## Verwandte Themen
+
+- [Erste Schritte mit KI-Coding-Agents](../getting-started/) – einen Agent über MCP mit Ihrem Workspace verbinden
+- [Warum Umlagen nützlich sind](/de/guides/allocations/getting-started/why-are-allocations-useful/) – Umlagekonzepte
+- [Fehlerbehebung](../troubleshooting/) – Verbindungs- und Authentifizierungsprobleme

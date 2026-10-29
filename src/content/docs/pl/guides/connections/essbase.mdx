@@ -1,0 +1,83 @@
+---
+title: Połączenie z Oracle Essbase
+description: Połącz PlaidCloud z Oracle Essbase 21c lub Oracle Analytics Cloud i uruchom zapytanie MDX na żywo względem kostki albo załaduj zarys wymiaru do wymiaru PlaidCloud — bezpośrednio z chmury, z deterministycznymi etykietami elementów i twardym limitem rozmiaru wyodrębnienia.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Oracle **Essbase** (21c lub nowszym albo Oracle Analytics Cloud), aby przepływ pracy mógł uruchomić zapytanie MDX na żywo względem kostki lub załadować zarys wymiaru jako wymiar PlaidCloud. Połączenie dociera do własnego REST API Essbase **bezpośrednio z chmury** — dla tych kroków nie ma ścieżki przez agenta lokalnego. Ten przewodnik opisuje połączenie, uruchamianie zapytania, opcje kontrolujące limity wierszy i etykietowanie oraz ładowanie hierarchii wymiaru.
+
+<Aside type="note">
+Ten konektor jest tylko do odczytu: bez zapisu zwrotnego do Essbase.
+</Aside>
+
+## Wymagania wstępne
+
+Od administratora Essbase potrzebujesz:
+
+- **Źródła serwera Essbase**, na przykład `https://your-host:9001` — bez końcowej ścieżki `/essbase/...`.
+- **Konta usługi** — nazwy użytkownika i hasła — z dostępem do odczytu aplikacji i kostek, które będą odpytywać Twoje przepływy pracy.
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz **Oracle Essbase** z menu.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `Essbase Prod`. |
+   | Bazowy adres URL | Źródło serwera Essbase, np. `https://your-host:9001`. |
+   | Aplikacja domyślna | Opcjonalna. Wstępnie wybiera tę aplikację w formularzach kroków. |
+   | Nazwa użytkownika | Nazwa użytkownika konta usługi. |
+   | Hasło | Hasło konta usługi. |
+   | Verify SSL | Domyślnie włączone. Wyłącz tylko dla hosta z certyfikatem samopodpisanym lub w inny sposób niemożliwym do zweryfikowania. |
+
+4. Kliknij `Test Connection`. Pomyślny test łączy się z serwerem Essbase, wymienia aplikacje widoczne dla konta usługi i zgłasza, ile znalazł — potwierdzając zarówno bazowy adres URL, jak i dane uwierzytelniające, zanim zbudujesz zapytanie.
+
+5. Kliknij `Create`.
+
+</Steps>
+
+## Uruchamianie zapytania
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Essbase: zapytanie do kostki** (znajduje się w **Oracle Essbase** w menu kroków).
+
+2. W sekcji **Konfiguracja** ustaw **Połączenie**, **Aplikacja**, **Cube (Database)** oraz **Tabela docelowa**.
+
+3. Zbuduj **MDX**:
+
+   - **Prowadzony wybór elementów** — przeglądaj wymiary i elementy kostki i wybierz, co trafi na kolumny i wiersze; krok składa MDX za Ciebie.
+   - **Surowy MDX** — napisz lub wklej bezpośrednio MDX `SELECT`, dla wszystkiego, czego nie obejmuje prowadzony wybór, takiego jak elementy obliczane lub operatory zbiorów.
+
+4. Uruchom krok. Zwrócona siatka trafia jako tabela docelowa, z kolumnami wyprowadzonymi z samej siatki — nie ma schematu do zadeklarowania z góry.
+
+</Steps>
+
+## Opcje
+
+- **Etykiety elementów są deterministyczne.** Etykiety kolumn dla elementów pochodzą z tabeli aliasów skonfigurowanej w połączeniu, stosowanej spójnie przy każdym uruchomieniu — a nie z domyślnej tabeli Essbase dla sesji, która mogłaby pokazywać różny tekst etykiety w zależności od tego, kto był zalogowany podczas uruchomienia zapytania.
+- **Limit wierszy domyślnie wynosi 250 000 i można go zwiększyć.** Nieustawiony Limit wierszy przechodzi na limit 250 000 wierszy, a nie na „bez limitu” — zapytanie zwracające więcej wierszy niż obowiązujący limit jest odrzucane, z podaniem liczby i limitu, zamiast działać bez ograniczeń lub po cichu obcinać siatkę. Zawęź zapytanie albo jawnie zwiększ Limit wierszy, aby przepuścić uzasadnione większe wyodrębnienie.
+- **Pomijanie zer jest opcjonalne i powoduje utratę danych.** Pomijanie komórek z wartością zero to filtr, który włączasz świadomie, i jest destrukcyjny: odrzuca komórki zawierające prawdziwe zaksięgowane `0`, co różni się od własnego znacznika Essbase `#Missing` dla komórki bez żadnych danych. W kostce planistycznej zaksięgowane zero ma znaczenie — ktoś je wprowadził — więc pomijanie zer może odrzucić prawdziwe dane, a nie tylko brak danych. Pozostaw tę opcję wyłączoną, chyba że konkretnie chcesz wykluczyć zera z wyniku.
+
+## Ładowanie hierarchii wymiaru
+
+Krok [Essbase: odczytaj wymiar](/pl/reference/workflow-steps/essbase/essbase-dimension-read/) odczytuje zarys jednego wymiaru Essbase i ładuje go do głównej hierarchii wymiaru PlaidCloud — bezpośrednio z chmury, przez to samo połączenie. To osobny krok od Essbase: zapytanie do kostki: odczytuje strukturę zarysu, a nie komórki kostki.
+
+Krok odmawia, z nazwy, wszystkiego, czego nie potrafi odwzorować, zamiast ładować to błędnie: elementów współdzielonych, elementów tylko z etykietą, elementów Dynamic Calc, wymiarów atrybutów, operatora konsolidacji innego niż `+`/`-` (`*`, `/` i `%` w Essbase nie mają odpowiednika w PlaidCloud) oraz zarysu z więcej niż 5000 elementów zarysu łącznie. Zobacz [opis kroku](/pl/reference/workflow-steps/essbase/essbase-dimension-read/#czego-ten-krok-nie-może-odwzorować), aby poznać pełną listę i znaczenie każdej odmowy.
+
+## Powiązane
+
+- [Essbase: zapytanie do kostki](/pl/reference/workflow-steps/essbase/essbase-query/) — opis pól kroku.
+- [Essbase: odczytaj wymiar](/pl/reference/workflow-steps/essbase/essbase-dimension-read/) — załaduj zarys wymiaru jako wymiar PlaidCloud.
+- [Konektor Oracle Essbase](/pl/reference/connectors/erp/oracle-essbase/) — opis pól połączenia.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

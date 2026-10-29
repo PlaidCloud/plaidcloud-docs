@@ -1,0 +1,50 @@
+---
+title: "Étape D365 F&O: Post Journal Entry"
+description: Comptabilisez des écritures de journal du grand livre dans Dynamics 365 Finance & Operations à partir de tables d'en-tête et de lignes, avec un mode d'aperçu qui valide chaque écriture avant toute comptabilisation.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des écritures de journal du grand livre dans Dynamics 365 Finance & Operations via votre [connexion D365 F&O](/fr/guides/connections/dynamics-365-fo/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-tête (une ligne par écriture de journal) et une table des lignes (une ou plusieurs lignes de débit/crédit par écriture), et soumet chaque écriture à l'action asynchrone de comptabilisation de journal du service personnalisé de D365 F&O. **Validate Only** construit et vérifie chaque écriture sans réservation dans le grand livre et sans comptabilisation ; une table de résultat facultative enregistre le résultat de chaque écriture.
+
+<Aside type="caution">
+Exécutez chaque lot d'abord en **Validate Only**, examinez la table de résultat et rapprochez quelques comptabilisations directement dans D365 F&O avant de compter sur cette étape pour comptabiliser des écritures réelles sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **D365 F&O Connection** — la connexion D365 F&O par laquelle comptabiliser.
+
+### Données
+
+- **Table d'en-tête** — une ligne par écriture de journal : `journal_id` (l'identifiant de votre écriture, obligatoire), `journal_name` (le nom du journal D365 F&O dans lequel comptabiliser, obligatoire), `posting_date`, `description`.
+- **Table des lignes** — une ou plusieurs lignes par `journal_id` : `account`, `debit`, `credit`, et toutes les colonnes de dimension requises par votre grand livre.
+- **Table de résultat** — identifiant de la table de sortie : une ligne par écriture avec `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — coché par défaut. Contrôle préalable uniquement ; pas de réservation dans le grand livre, pas de comptabilisation. Une configuration d'étape qui omet entièrement ce champ (par exemple une configuration créée via l'API REST, MCP ou l'importation d'un lot de workflow) est elle aussi en Validate Only par défaut plutôt qu'en comptabilisation réelle.
+- **Continue On Error** — coché par défaut. Continue de comptabiliser les écritures restantes après l'échec de l'une d'elles ; décoché, le lot s'arrête au premier échec.
+
+## Fonctionnement de la comptabilisation
+
+PlaidCloud soumet chaque écriture à l'action asynchrone de comptabilisation du service personnalisé de D365 F&O, puis interroge le service jusqu'à ce qu'il signale l'état final de l'écriture. Une écriture n'est signalée `posted` que lorsque cet état final est **confirmé** : une écriture acceptée dont l'état final ne se résout jamais reste en quarantaine (ni signalée comme comptabilisée, ni abandonnée en silence) au lieu d'être enregistrée comme réussie du simple fait que la soumission a été acceptée.
+
+## Corriger une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais une écriture comptabilisée. Pour en corriger une, comptabilisez une nouvelle écriture avec les débits et les crédits inversés par rapport à l'originale (une écriture d'extourne comptabilisée) plutôt que de modifier l'originale sur place.
+
+## Limites des capacités
+
+| Limite | Signification |
+|---|---|| L'extourne est une nouvelle écriture, pas une modification sur place | Les corrections comptabilisent une nouvelle écriture d'extourne aux débits et crédits inversés. Il n'existe aucune annulation ni suppression d'une écriture déjà comptabilisée. |
+| La validation des dimensions dépend de la configuration de votre grand livre | Une combinaison de dimensions financières invalide pour la structure de comptes échoue lors de la validation propre à D365 F&O, signalée par une ligne `error` plutôt que détectée plus tôt par PlaidCloud. |
+
+## Voir aussi
+
+- [Se connecter à Dynamics 365 Finance & Operations](/fr/guides/connections/dynamics-365-fo/) — procédure complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur REST Dynamics 365 F&O](/fr/reference/connectors/rest/dynamics-365-fo/)
+- [Étapes D365 F&O](/fr/reference/workflow-steps/dynamics-365-fo/)
+- [Examiner l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

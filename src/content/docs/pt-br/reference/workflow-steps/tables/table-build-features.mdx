@@ -1,0 +1,41 @@
+---
+title: Etapa Build Features
+description: Crie colunas de recursos aritméticas, de interação, de partes de data, de faixas, de escalonamento e de codificação one-hot a partir de uma tabela de origem.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Descrição
+
+A etapa **Build Features** cria uma tabela de colunas de recursos derivadas a partir de uma tabela de origem — combinações aritméticas e de interação, extração de partes de data, faixas, escalonamento e codificação one-hot — em uma única passagem, sem escrever à mão uma expressão por coluna. Ela é executada como uma transformação comum no data warehouse.
+
+## Configuração
+
+- **Origem / Tabelas de saída** — a tabela de entrada e a tabela em que as colunas derivadas são gravadas.
+- **Colunas de passagem direta** (`passthrough_columns`) — colunas de origem que passam adiante sem alteração.
+- **Recursos** (`features`) — uma lista ordenada de especificações de recurso, com pelo menos uma obrigatória. Cada especificação tem um `type` e produz uma ou mais colunas de saída. Os nomes das colunas de saída — as colunas de passagem direta mais o `name` de cada recurso que não seja one-hot — devem ser todos distintos; salvar um nome duplicado, ou um par `(column, prefix)` one-hot duplicado, é recusado.
+
+## Tipos de recurso
+
+| Tipo | Campos | Produz |
+| --- | --- | --- |
+| **Expressão** (`expression`) | `name`, `expression`, `dtype` (padrão `text`) | Uma coluna: uma expressão arbitrária sobre colunas de origem. |
+| **Interação** (`interaction`) | `name`, `columns` (exatamente 2), `op` (`multiply` ou `add`, padrão `multiply`), `dtype` (padrão `numeric`) | Uma coluna: a combinação aritmética em pares de duas colunas numéricas. |
+| **Parte da data** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow` ou `hour`) | Uma coluna: o componente de data/hora extraído. |
+| **Faixa** (`bin`) | `name`, `column`, `thresholds` (crescentes, pelo menos 1), `labels` (exatamente um a mais que `thresholds`) | Uma coluna: o rótulo da faixa em que o valor de `column` se enquadra. Os limites são valores fixos que você informa — consulte [Limites e ressalvas](#limites-e-ressalvas). |
+| **Z-Score** (`zscore`) | `name`, `column`, `dtype` (padrão `numeric`) | Uma coluna: a coluna padronizada para média zero e variância unitária. |
+| **Mín.-máx.** (`minmax`) | `name`, `column`, `out_min` (padrão 0), `out_max` (padrão 1), `dtype` (padrão `numeric`) | Uma coluna: a coluna reescalonada para o intervalo `[out_min, out_max]`. |
+| **Codificação one-hot** (`onehot`) | `column`, `prefix` | Uma coluna por valor distinto de `column`, cada uma com o nome `<prefix><value>`. |
+| **Estatística de coluna** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | Uma coluna: a estatística da coluna inteira, sob o filtro da etapa, em todas as linhas. `moments` é `sql` (padrão, o agregado do data warehouse) ou `welford`, que calcula a média, a soma, a variância e o desvio padrão como momentos correntes de uma passagem sobre a coluna lida na ordem de `order_column`, como fazem `COL_MEAN` e seus equivalentes no Math Formula do KNIME. |
+
+## Limites e ressalvas
+
+- **A criação de faixas precisa de limites fixos desde o início.** `bin` agrupa uma coluna em faixas com base em limites e rótulos que você informa — não há criação de faixas orientada pelos dados (faixas de largura igual ou de frequência igual calculadas a partir dos dados na execução). Calcule os limites você mesmo (por exemplo, a partir de uma etapa de agregação anterior) antes de configurar um recurso `bin`.
+- **Uma tabela por vez.** A Build Features lê e grava uma única tabela de origem; ela não agrega valores entre tabelas relacionadas como faz uma ferramenta de síntese de recursos entre tabelas. Modele qualquer relacionamento entre tabelas como uma junção anterior à etapa.
+- **Sem redução de dimensionalidade nem codificação baseada no alvo nesta etapa.** A Build Features não tem redução de componentes no estilo PCA nem codificação por alvo (uma coluna categórica reexpressa como uma estatística do rótulo, como sua média). Use `onehot` para recursos categóricos. Para redução de componentes, use o algoritmo `pca` de [ML: Treinar modelo](/pt-br/reference/workflow-steps/machine-learning/ml-train/) e use o tratamento de recursos dele se um pipeline de treinamento precisar de uma codificação diferente.
+
+## Relacionados
+
+- [ML: Treinar modelo](/pt-br/reference/workflow-steps/machine-learning/ml-train/) — treina um modelo sobre uma tabela, inclusive uma criada por esta etapa.
+- [Matriz de conversão do Alteryx](/pt-br/reference/alteryx-conversion-matrix/) — como as primitivas da ferramenta Build Features do Alteryx se mapeiam para estes tipos de recurso e quais delas (agregação entre tabelas, PCA, codificação por alvo, criação automática de faixas) não têm equivalente aqui.

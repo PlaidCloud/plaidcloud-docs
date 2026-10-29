@@ -1,0 +1,354 @@
+---
+title: Microsoft 365 Copilot
+description: Pozwól zespołowi zadawać pytania o dane PlaidCloud w Microsoft 365 Copilot — zainstaluj agenta PlaidCloud raz, zaloguj się i przyznaj poziomy dostępu.
+sidebar:
+  label: Microsoft 365 Copilot
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/microsoft-365-copilot.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Udostępnij dane PlaidCloud w **Microsoft 365 Copilot**. Po zainstalowaniu agenta PlaidCloud
+i przyznaniu dostępu użytkownik może pytać Copilota o swoje projekty, tabele, wymiary i
+modele alokacji zwykłym językiem — bez osobnego logowania, bez okna PlaidCloud i bez SQL.
+
+> *„Wyświetl moje projekty PlaidCloud."*
+> *„Jakie tabele są w Enterprise Profitability? Pokaż pierwsze wiersze jednej z nich."*
+> *„Dlaczego zaalokowany koszt IT dla centrum kosztów w Atlancie wzrósł w ostatnim kwartale?"*
+
+<Aside type="note">
+Nie należy tego mylić z [GitHub Copilot](/pl/integrations/ai-coding-agents/copilot/), który łączy
+środowisko IDE programisty z PlaidCloud. Ta strona dotyczy **Microsoft 365 Copilot** — asystenta
+w Teams, Outlooku i aplikacji Microsoft 365, z których korzysta już cały Twój zespół.
+</Aside>
+
+## Jak to działa
+
+PlaidCloud publikuje niewielkiego **agenta**, który łączy się z Microsoft 365 Copilot. Gdy ktoś zadaje
+Copilotowi pytanie o swoje dane, agent bezpiecznie łączy się z Twoim obszarem roboczym PlaidCloud, wykonuje
+żądanie z uprawnieniami tej osoby, a Copilot wyjaśnia odpowiedź.
+
+- **Dla większości osób tylko do odczytu.** Typowy poziom dostępu to dostęp tylko do odczytu — wyświetlanie i opisywanie projektów
+  oraz tabel, odczyt danych tabel, wyświetlanie elementów wymiarów i wyjaśnianie wyników alokacji. Agent nigdy
+  nie zmyśla liczb; każda odpowiedź pochodzi z rzeczywistego zapytania do Twoich danych, a każda odpowiedź zawiera
+  wskaźnik pewności i zastrzeżenia w prostym języku — zobacz [Odpowiedzi, którym można
+  ufać](/pl/integrations/ai-coding-agents/honest-answers/).
+- **Każda osoba widzi tylko własne dane.** Żądania są wykonywane jako zalogowany użytkownik, w granicach tych samych
+  ról i kontroli dostępu PlaidCloud, które już ma. Agent nigdy nie uzyska dostępu do ustawień poświadczeń,
+  tożsamości ani kontroli dostępu.
+- **Brak dostępu do czasu jego przyznania.** Zainstalowanie agenta nie oznacza przyznania dostępu. Zalogowana
+  osoba widzi wyraźny komunikat *„nie przyznano dostępu"*, dopóki administrator PlaidCloud nie nada jej
+  poziomu dostępu. Jest to celowe — zobacz [Poziomy dostępu](#poziomy-dostępu).
+
+Informacje o tym, co dzieje się za kulisami — opublikowany pakiet agenta, dedykowany klient OAuth oraz
+sposób ustalania i egzekwowania poziomów dostępu — znajdziesz w [architekturze
+Copilota](/pl/integrations/ai-architecture/microsoft-365-copilot/).
+
+## Konfiguracja w skrócie
+
+Pełna ścieżka w kolejności. Zaangażowane są maksymalnie trzy role — często jedna osoba pełni kilka z nich.
+**Kroki 1–5 instalują agenta; krok 6 faktycznie umożliwia przepływ danych.**
+
+| # | Krok | Kto | Gdzie |
+|---|---|---|---|
+| 1 | [Pobierz pakiet agenta](#krok-1--pobierz-pakiet-agenta) (`.zip`) | Administrator obszaru roboczego PlaidCloud | Płaszczyzna sterowania PlaidCloud → **Workspaces** |
+| 2 | [Zezwól na aplikacje niestandardowe](#krok-2--zezwól-na-aplikacje-niestandardowe) | Administrator Microsoft 365 / Teams | Centrum administracyjne Teams → **Setup policies** |
+| 3 | [Prześlij pakiet](#krok-3--prześlij-pakiet) | Administrator Microsoft 365 / Teams | Centrum administracyjne Teams → **Manage apps → Actions** |
+| 4 | [Dodaj agenta w Copilocie](#krok-4--dodaj-agenta-w-copilocie) | Każdy użytkownik | Microsoft 365 Copilot → **More agents** |
+| 5 | [Zaloguj się](#krok-5--zaloguj-się) | Każdy użytkownik | Copilot (jednorazowo) |
+| 6 | [Przyznaj poziom dostępu](#krok-6--przyznaj-poziom-dostępu) | Administrator PlaidCloud | PlaidCloud |
+
+<Aside type="caution">
+**Do czasu wykonania kroku 6 agent łączy się, ale nie zwraca danych.** Udane logowanie, po którym pojawia się odpowiedź
+*„nie przyznano dostępu"*, oznacza, że wszystko działa — osoba potrzebuje tylko poziomu
+dostępu. To nie jest błąd.
+</Aside>
+
+## Krok 1 — pobierz pakiet agenta
+
+Pakiet agenta Twojej organizacji to pojedynczy plik `.zip`, który możesz pobrać samodzielnie z
+[płaszczyzny sterowania PlaidCloud](/pl/administration/control-plane/) — nie trzeba o nic prosić ani
+na nic czekać.
+
+<Steps>
+
+1. Zaloguj się do **płaszczyzny sterowania PlaidCloud** i otwórz **Workspaces** w lewym menu nawigacji.
+
+2. Otwórz obszar roboczy, w którym znajdują się Twoje dane (akcja **Edytuj** lub **Widok**).
+
+3. Na dole okna dialogowego obszaru roboczego kliknij **Download Copilot Package** i zapisz plik `.zip`.
+
+</Steps>
+
+<Aside type="note">
+Przycisk **Download Copilot Package** pojawia się dopiero po skonfigurowaniu przez PlaidCloud
+połączenia Copilota dla obszaru roboczego. Jeśli go nie widzisz, połączenie nie jest jeszcze gotowe — skontaktuj się z
+przedstawicielem PlaidCloud. (Przycisk znajduje się na ekranie **Workspaces**, a nie na ekranie Tenants dostępnym tylko dla administratorów).
+</Aside>
+
+## Krok 2 — zezwól na aplikacje niestandardowe
+
+*Administrator Microsoft 365 / Teams.* Domyślnie Microsoft 365 blokuje aplikacje spoza
+publicznego sklepu, więc agenta PlaidCloud nie można zainstalować, dopóki tego nie włączysz.
+
+<Steps>
+
+1. W [centrum administracyjnym Teams](https://admin.teams.microsoft.com/) przejdź do **Teams apps → Setup
+   policies → Global (Org-wide default)**.
+
+2. Ustaw **Upload custom apps** na **Włączone**, a następnie kliknij **Zapisz**.
+
+</Steps>
+
+<Aside type="caution">
+Bycie administratorem globalnym **nie** oznacza włączenia tego ustawienia — to osobna polityka.
+Jeśli ją pominiesz, przesyłanie zakończy się komunikatem *„Uploading custom apps is not allowed."* Zmiany polityk mogą
+być propagowane nawet do około 24 godzin (często znacznie krócej). Aby ograniczyć ustawienie do grupy pilotażowej zamiast
+całej organizacji, utwórz osobną politykę konfiguracji i przypisz ją tym użytkownikom.
+</Aside>
+
+## Krok 3 — prześlij pakiet
+
+*Administrator Microsoft 365 / Teams.* Dodaj plik `.zip` do katalogu aplikacji swojej organizacji.
+
+<Steps>
+
+1. W centrum administracyjnym Teams przejdź do **Teams apps → Manage apps**.
+
+2. Kliknij menu **Actions** w **prawym górnym rogu** strony, a następnie **Upload new app**.
+
+   <Aside type="note">
+   „Upload new app" znajduje się w menu **Actions** w prawym górnym rogu — nie na szarym pasku narzędzi
+   (Edit installs / Edit availability / …), który działa na już wybranej aplikacji.
+   </Aside>
+
+3. Wybierz pobrany plik `.zip`. Aplikacja zostanie przesłana i opublikowana (zobaczysz **Published
+   version 1.0.0**), z obsługą w Teams, Outlooku i Copilocie.
+
+4. Na stronie aplikacji ustaw **Availability** — **Everyone (org-wide default)** przy wdrożeniu ogólnym lub
+   wybraną grupę przy pilotażu.
+
+</Steps>
+
+<Aside type="tip">
+**Chcesz od razu przetestować agenta na sobie, bez wdrażania w całej organizacji?** Pomiń centrum administracyjne: otwórz
+[Microsoft 365 Copilot](https://m365.cloud.microsoft/chat), w sekcji **Agents** wybierz przesłanie
+aplikacji niestandardowej, a następnie wskaż plik `.zip`. Aplikacja zostanie zainstalowana tylko dla Ciebie i pojawi się od razu.
+</Aside>
+
+## Krok 4 — dodaj agenta w Copilocie
+
+Agenta trzeba teraz dodać do Copilota każdej osoby.
+
+<Steps>
+
+1. Otwórz **Microsoft 365 Copilot** ([m365.cloud.microsoft/chat](https://m365.cloud.microsoft/chat)
+   lub w Teams) i kliknij **More agents** na liście Agents.
+
+2. Znajdź agenta **PlaidCloud** i kliknij **Add**. Pojawi się on wtedy na liście Agents, gotowy do
+   otwarcia. Agent każdego obszaru roboczego nosi nazwę **PlaidCloud**; jeśli masz ich kilka, nazwa
+   obszaru roboczego jest widoczna w opisie agenta, co pozwala je odróżnić.
+
+</Steps>
+
+<Aside type="note">
+Nowo **opublikowany w całej organizacji** agent może pojawić się w sekcji **More agents** dopiero po pewnym czasie — po kilku minutach,
+czasem po kilku godzinach, w zależności od propagacji po stronie Microsoft. Aplikacja **zainstalowana lokalnie** (wskazówka w kroku 3)
+pojawia się natychmiast. Aby wstępnie zainstalować agenta wszystkim, tak by nie musieli go dodawać samodzielnie,
+przypnij go za pomocą **polityki konfiguracji** Teams.
+</Aside>
+
+## Krok 5 — zaloguj się
+
+Gdy użytkownik po raz pierwszy otworzy agenta i zada pytanie, Copilot poprosi o **zalogowanie się**.
+Jest to zwykły, jednorazowy krok.
+
+<Steps>
+
+1. Otwórz agenta i zadaj pytanie, na przykład *„Wyświetl moje projekty PlaidCloud."*
+
+2. Po wyświetleniu monitu wybierz **Sign in** i dokończ logowanie do PlaidCloud.
+
+</Steps>
+
+Potem połączenie jest zapamiętane — użytkownicy nie logują się za każdym razem ani codziennie. Ponowne
+logowanie jest potrzebne tylko okazjonalnie (mniej więcej raz w miesiącu) lub gdy zmieni się dostęp.
+
+<Aside type="note">
+Logowanie jest interaktywne, mimo że jesteś już w Microsoft 365 — Copilot otwiera własne
+okno logowania, które nie korzysta z Twojej bieżącej sesji. To normalne. Okno ma
+branding PlaidCloud, więc ekran logowania PlaidCloud jest właściwym ekranem do dokończenia.
+</Aside>
+
+Gdy agent po raz pierwszy odczytuje dane PlaidCloud, Copilot pyta jednorazowo: *„I'll connect to PlaidCloud to help
+with this and future requests. You can manage access anytime in Settings."* Wybierz **Zezwalaj**. Potem
+agent wykonuje swoje wyszukiwania tylko do odczytu bez ponownego pytania, więc pytanie wieloetapowe otrzymuje odpowiedź
+w jednym przebiegu. Wszystkie wyszukiwania danych PlaidCloud wykonywane przez agenta są tylko do odczytu, a dostęp jest nadal ograniczony do tego, na co pozwalają
+poziom dostępu PlaidCloud danej osoby, jej uprawnienia i zabezpieczenia na poziomie wierszy.
+
+## Krok 6 — przyznaj poziom dostępu
+
+To ten krok zamienia komunikat *„nie przyznano dostępu"* w prawdziwe odpowiedzi. Gdy osoba
+się zaloguje, **administrator PlaidCloud** przyznaje jej poziom dostępu (zobacz
+[Poziomy dostępu](#poziomy-dostępu) poniżej). Dostęp jest **domyślnie odmawiany**: bez przypisanego poziomu
+agent łączy się, ale nie zwraca danych.
+
+Każdy poziom to grupa PlaidCloud, a osoba należy do jednej z nich:
+
+| Poziom | Grupa |
+|---|---|
+| Tylko do odczytu | **Microsoft 365 Copilot Read Only** |
+| Odczyt i zapis | **Microsoft 365 Copilot Read and Write** |
+| Pełny | **Microsoft 365 Copilot Full Access** |
+
+Osoba, która nie należy do żadnej z tych grup, otrzymuje komunikat z prośbą o zwrócenie się do administratora o dodanie
+jej do grupy **Microsoft 365 Copilot Read Only** (lub jednej z dwóch pozostałych). Dodaj ją do grupy
+odpowiadającej potrzebnemu dostępowi.
+
+Po przyznaniu poziomu osoba po prostu **pyta ponownie** — nie trzeba się wylogowywać ani
+instalować agenta od nowa. Dostęp jest sprawdzany na bieżąco przy każdym żądaniu, więc następna wiadomość zwraca dane.
+
+<Aside type="note">
+Poziomami dostępu zarządza się po stronie PlaidCloud. Skontaktuj się z przedstawicielem PlaidCloud lub
+[support@plaidcloud.com](mailto:support@plaidcloud.com), aby przyznać (lub zmienić) poziomy użytkownikom, albo — jeśli
+administrator PlaidCloud zarządza tożsamościami bezpośrednio — przypisz poziom w zarządzaniu tożsamościami
+PlaidCloud.
+</Aside>
+
+## Poziomy dostępu
+
+Każdy użytkownik Copilota PlaidCloud ma jeden z trzech poziomów. Poziom stanowi **górną granicę** tego, co
+agent może robić; w jej obrębie nadal obowiązują własne uprawnienia PlaidCloud danej osoby, więc agent nigdy nie
+pokaże ani nie zmieni danych, do których ta osoba nie miałaby dostępu samodzielnie.
+
+| Poziom | Narzędzia ładowane przez agenta | Czy może zapisywać? | Surowy SQL | Typowe zastosowanie |
+|---|---|---|---|---|
+| **Tylko do odczytu** | Tylko narzędzia odczytu i wyszukiwania — wyświetlanie i opisywanie projektów i tabel, odczyt danych tabel, wyświetlanie elementów wymiarów, wyjaśnianie alokacji. | Nie. Tylko odczyt i opis. | Tylko zapytania do odczytu (`SELECT` i operacje na zbiorach); instrukcja, która zapisywałaby dane, jest odrzucana. | Większość osób. Bezpieczna wartość domyślna. |
+| **Odczyt i zapis** | Wszystko z poziomu tylko do odczytu oraz narzędzia zapisu, z których dana osoba może korzystać, takie jak aktualizowanie danych tabel, edytowanie węzłów wymiarów i przesyłanie dokumentów. | Tak — wyłącznie zapisy strukturalne, każdy nadal ograniczony własnymi uprawnieniami osoby. | Tylko zapytania do odczytu. Zmiany przechodzą przez narzędzia zapisu, nigdy przez surowy SQL zapisujący. | Analitycy, którzy utrzymują dane. |
+| **Pełny** *(wycofywany — zostanie usunięty 15 stycznia 2027)* | Kompletny zestaw narzędzi PlaidCloud danej osoby, z wyjątkiem zawsze blokowanych działań wymienionych poniżej. | Tak — zapisy strukturalne oraz surowy SQL zapisujący, w granicach własnej roli bazodanowej osoby. | SQL do odczytu i zapisu. | Zaawansowani użytkownicy i twórcy. |
+
+Na każdym poziomie obowiązuje kilka zasad:
+
+- **Domyślna odmowa.** Brak przypisanego poziomu ⇒ brak dostępu. Nic nie jest udostępniane, dopóki ktoś nie otrzyma
+  poziomu.
+- **Wygrywa najbardziej liberalny.** Jeśli osoba w jakiś sposób ma więcej niż jeden poziom, obowiązuje najwyższy.
+- **Niektóre działania nigdy nie są dostępne dla agenta — nawet na poziomie Pełny.** Narzędzia związane z poświadczeniami, tożsamością,
+  kontrolą dostępu i wdrażaniem kodu pozostają wyłącznie dla ludzi, niezależnie od własnych uprawnień
+  PlaidCloud danej osoby. Agent nigdy, na żadnym poziomie, nie może:
+  - **zmieniać poświadczeń ani kontroli dostępu** — poświadczeń połączeń danych oraz tego, kto jest właścicielem połączenia lub ma do niego
+    dostęp, poświadczeń magazynu dokumentów i ich kontroli dostępu, kontroli dostępu do projektu, trybu księgowania ERP projektu, kont członków, członkostwa w grupach i ról, list
+    dystrybucyjnych, resetowania haseł ani publikowania; oraz
+  - **wdrażać ani tworzyć kodu** — kodu funkcji zdefiniowanych przez użytkownika, aplikacji JupyterLite ani aplikacji Panel.
+
+## Korzystanie z agenta
+
+Otwórz Copilota, wybierz swojego agenta PlaidCloud i zadawaj pytania zwykłym językiem. Dobre punkty wyjścia:
+
+- **Znajdź swoją pracę:** *„Wyświetl moje projekty PlaidCloud."* / *„Jakie tabele są w projekcie X?"*
+- **Odczytaj dane:** *„Pokaż pierwsze 20 wierszy tabeli customers."* / *„Jakie wartości są w wymiarze
+  Region?"*
+- **Wyjaśnij wyniki:** *„Dlaczego zaalokowany koszt dla centrum kosztów w Atlancie zmienił się między Q1
+  a Q2?"*
+- **Zabierz to ze sobą:** *„Wyeksportuj to jako arkusz kalkulacyjny."* Agent tworzy plik CSV, Excel,
+  PowerPoint lub Word z pobranych danych.
+
+Agent wybiera odpowiednie narzędzie, wykonuje zapytanie do Twoich danych, a Copilot odpowiada — najpierw podaje
+wynik, a następnie krótką tabelę lub podsumowanie. Jeśli żądanie wymaga danych, do których nie masz dostępu, lub zmiany
+wykraczającej poza Twój poziom, agent informuje o tym zamiast zgadywać.
+
+## Zadawanie pytań, które dają bezpośrednie odpowiedzi
+
+Copilot znajduje właściwą ścieżkę analizy, projekt i tabelę dla pytania biznesowego, a także odczytuje każdy
+błąd zwrócony przez PlaidCloud, poprawia żądanie i ponawia próbę — po chwilowym problemie nie musisz przeformułowywać pytania. Kilka nawyków
+przyspiesza odpowiedzi i zwiększa ich dokładność:
+
+- **Nazwij miarę i filtr prostymi słowami.** *„EBITDA FY2027 w UDM, Allocated i
+  DairyCheese"* wskazuje miarę (EBITDA) i filtry (rok obrotowy, jednostka miary, scenariusz,
+  jednostka biznesowa). Przefiltrowana suma wraca w jednym wyszukiwaniu.
+- **Powiedz, o jaki zakres chodzi.** Jeśli suma może dotyczyć całej firmy, działu lub jednej jednostki
+  biznesowej, określ, której. Gdy jest to niejednoznaczne, Copilot pyta zamiast zgadywać.
+- **Sprawdź filtry podane przez Copilota.** Każda odpowiedź zawiera listę zastosowanych filtrów. Jeśli któryś nie jest tym,
+  o co Ci chodziło, powiedz o tym, a Copilot uruchomi zapytanie ponownie.
+- **Podaj ścieżkę analizy, gdy używasz więcej niż jednej.** Zobacz [Ścieżki
+  analizy](/pl/integrations/ai-coding-agents/analysis-paths/).
+
+## Pytania, na które agent odpowiada dobrze
+
+Agent działa najlepiej przy konkretnych pytaniach biznesowych. Przykłady:
+
+| Pytasz | Co robi agent |
+|---|---|
+| *„EBITDA FY2027 dla DairyCheese w UDM, Allocated"* | Zwraca przefiltrowaną sumę, korzystając z [definicji metryki](/pl/integrations/ai-coding-agents/metric-definitions/), jeśli istnieje, i wymieniając zastosowane filtry. |
+| *„Pokaż przychody, wolumen i koszt według produktu"* | Sumuje każdą miarę dla każdego produktu w jednym przebiegu po całej tabeli, a nie na próbce wierszy. |
+| *„Jaki jest koszt za funt dla zakładu 12?"* | Odpowiada na nazwaną wartość, taką jak $/lb, na podstawie jej definicji metryki. |
+| *„Jak koszt IT jest alokowany do centrów kosztów?"* | Wyjaśnia metodologię na podstawie Twoich modeli alokacji: jakie klucze są używane i na jakiej podstawie. |
+| *„Wyeksportuj to jako arkusz kalkulacyjny"* | Tworzy plik CSV, Excel, PowerPoint lub Word z właśnie pobranych danych. |
+
+Agent odczytuje też opis każdej ścieżki analizy pod kątem stałych filtrów, konwencji znaków i Twoich
+terminów biznesowych oraz stosuje je do każdego pytania na tej ścieżce.
+
+## Lista kontrolna konfiguracji dla administratora
+
+Agent jest tak precyzyjny, jak kontekst, który dostarczą mu administratorzy. Po zainstalowaniu:
+
+1. **Dodaj opis do każdej ścieżki analizy.** Napisz, czym jest tabela, jakie ma konwencje znaków,
+   jakie filtry zawsze obowiązują i jakie są Twoje terminy biznesowe. Agent odczytuje go przed każdym zapytaniem na tej
+   ścieżce. Zobacz [Jak przygotować ścieżkę dla asystentów
+   AI](/pl/integrations/ai-coding-agents/analysis-paths/#jak-uczynić-ścieżkę-użyteczną-dla-asystentów-ai).
+2. **Zdefiniuj metryki biznesowe, o które pytają użytkownicy.** Gdy projekt ma definicje metryk, agent
+   odpowiada na pytania o nazwane wartości, takie jak przychody lub koszt za funt, na ich podstawie, dzięki czemu wszyscy otrzymują tę samą
+   liczbę. Zobacz [Definicje metryk](/pl/integrations/ai-coding-agents/metric-definitions/).
+3. **Utrzymuj aktualność pakietu.** Tworzenie plików oraz odpowiedzi dotyczące metryk, podziałów i metodologii alokacji
+   wymagają pakietu w wersji 1.4.0 lub nowszej. Pobierz pakiet ponownie i [zaktualizuj
+   go](#aktualizowanie-pakietu-agenta).
+
+## Rozwiązywanie problemów
+
+| Objaw | Przyczyna i rozwiązanie |
+|---|---|
+| Nie można znaleźć **Upload new app** w Manage apps | Opcja znajduje się w menu **Actions** w prawym górnym rogu strony, a nie na szarym pasku narzędzi. Jeśli w ogóle jej nie ma, [zezwolenie na aplikacje niestandardowe](#krok-2--zezwól-na-aplikacje-niestandardowe) nie jest jeszcze włączone. |
+| **„Uploading custom apps is not allowed"** podczas instalacji | Polityka *Upload custom apps* jest wyłączona. Włącz ją ([krok 2](#krok-2--zezwól-na-aplikacje-niestandardowe)), poczekaj na propagację i spróbuj ponownie. |
+| Agenta nie ma na liście Agents w Copilocie | Poszukaj w sekcji **More agents** i kliknij **Add**. Agent opublikowany w całej organizacji może pojawić się z opóźnieniem; aby przetestować od razu, [zainstaluj lokalnie plik `.zip`](#krok-3--prześlij-pakiet) dla siebie. |
+| **„No Microsoft 365 Copilot access has been granted to this user"** | Oczekiwane, dopóki [nie zostanie przyznany poziom dostępu](#krok-6--przyznaj-poziom-dostępu). Osoba jest zalogowana i połączona — brakuje jej tylko poziomu. Zapytaj ponownie zaraz po jego przyznaniu. |
+| **„Ask an administrator to add you to the Microsoft 365 Copilot Read Only group"** (lub innego poziomu) | Osoba nie należy jeszcze do grupy dostępu Copilota. [Dodaj ją do grupy](#krok-6--przyznaj-poziom-dostępu) odpowiadającej potrzebnemu poziomowi, a następnie poproś o ponowne zadanie pytania. |
+| Copilot informuje, że nie ma narzędzia do zapytań do PlaidCloud | Pakiet agenta jest nieaktualny. [Zaktualizuj go](#aktualizowanie-pakietu-agenta) do najnowszej wersji z płaszczyzny sterowania i rozpocznij nowy czat. |
+| Żądanie zmiany danych zostaje odrzucone | Poziom dostępu osoby (lub jej własne uprawnienia PlaidCloud) nie pozwala na taki zapis. W razie potrzeby podnieś jej [poziom dostępu](#poziomy-dostępu). |
+| Ponowna prośba o zalogowanie, mimo że wcześniej działało | Normalne — zapisane połączenie jest okresowo odświeżane (mniej więcej raz w miesiącu). Zaloguj się jeszcze raz i kontynuuj. |
+| Odpowiedzi wydają się wymagać danych, do których osoba nie ma dostępu | Oczekiwane — agent zwraca wyłącznie dane, które zalogowany użytkownik i tak może zobaczyć. |
+| Użytkownik **tylko do odczytu** może się zalogować, ale nie może odczytać tabel | Tymczasowo, w trakcie naprawy: użytkownicy Copilota tylko do odczytu potrzebują obecnie szerszego dostępu do analizy, aby odczytywać tabele — skontaktuj się z [support@plaidcloud.com](mailto:support@plaidcloud.com). |
+
+## Aktualizowanie pakietu agenta
+
+Gdy PlaidCloud wydaje nową wersję pakietu agenta, administrator aktualizuje go w trzech
+krokach:
+
+<Steps>
+
+1. Pobierz pakiet ponownie z płaszczyzny sterowania ([krok 1](#krok-1--pobierz-pakiet-agenta)).
+
+2. W centrum administracyjnym Teams otwórz **Manage apps**, wybierz agenta PlaidCloud i kliknij
+   **Aktualizuj**, aby przesłać nowy plik `.zip` ([krok 3](#krok-3--prześlij-pakiet)).
+
+3. Poproś użytkowników o rozpoczęcie **nowego czatu** z agentem. Już otwarty czat zachowuje
+   wcześniejsze działanie.
+
+</Steps>
+
+Poziomy dostępu i logowania są zachowywane; nikt nie musi logować się ponownie. Jeśli Copilot nadal używa
+poprzedniej wersji po aktualizacji, usuń i dodaj agenta ponownie: otwórz Agent Store, wybierz menu **…**
+agenta i **Uninstall**, a następnie dodaj go ponownie z sekcji **Built by your org**. Potem rozpocznij nowy czat.
+
+## Powiązane
+
+- [Architektura Copilota](/pl/integrations/ai-architecture/microsoft-365-copilot/) — co faktycznie robią kroki konfiguracji i jak egzekwowane są poziomy dostępu
+- [Odpowiedzi, którym można ufać](/pl/integrations/ai-coding-agents/honest-answers/) — jak PlaidCloud ocenia każdą odpowiedź AI i opatruje ją zastrzeżeniami
+- [Śledzenie alokacji](/pl/integrations/ai-coding-agents/tracing-allocations/) — zapytaj, *dlaczego* zmienił się zaalokowany wynik
+- [Ścieżki analizy](/pl/integrations/ai-coding-agents/analysis-paths/) — nazwij kluczowe tabele, aby cały zespół pytał o nie w ten sam sposób
+
+## Potrzebujesz pomocy?
+
+Pakiet agenta pobierasz samodzielnie z płaszczyzny sterowania — zobacz
+[Krok 1](#krok-1--pobierz-pakiet-agenta). W sprawie poziomów dostępu lub wszystkiego, co nie działa
+zgodnie z opisem, skontaktuj się z przedstawicielem PlaidCloud lub
+[support@plaidcloud.com](mailto:support@plaidcloud.com).

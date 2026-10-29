@@ -1,0 +1,128 @@
+---
+title: KI- und LLM-Architektur
+description: Wie PlaidCloud sich mit Large Language Models wie Claude, GPT, Gemini und Grok verbindet – die vier Wege, KI zu nutzen, der gesteuerte Pfad jeder Anfrage und wohin Ihre Daten gelangen und wohin nicht.
+sidebar:
+  label: Übersicht
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/index.mdx
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud hat nicht eine einzige KI-Funktion. Es gibt vier Wege zu einem Modell – den Assistenten im
+Produkt, Microsoft 365 Copilot, externe Coding-Agents und einen LLM-Schritt in einem Workflow – und
+alle vier laufen über denselben gesteuerten Pfad. Das Modell selbst ist austauschbar: Claude, GPT, Gemini, Grok,
+eine Azure-OpenAI-Ressource in Ihrem eigenen Abonnement oder ein Modell, das Sie selbst hosten.
+
+Dieser Abschnitt erklärt die Architektur: was wo läuft, was die Grenze überschreitet und warum.
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="PlaidCloud-KI-Architektur. Vier Client-Oberflächen – der Assistent in der App, Microsoft 365 Copilot, KI-Coding-Agents und der LLM-Workflow-Schritt – treten in die Tenant-Grenze ein, die delegierte Token, den kuratierten MCP-Server, die Zugriffsdurchsetzung, KI-Dienste und Projektdaten enthält. Prompts fließen nach außen zu den LLM-Anbietern; Daten fließen nur innerhalb der Grenze."
+	class="doc-diagram"
+/>
+
+## Die vier Oberflächen
+
+| Oberfläche | Wer sie nutzt | Wie das Modell an Daten gelangt | Wo Sie beginnen |
+|---|---|---|---|
+| **KI-Assistent in der App** | Alle, die in PlaidCloud arbeiten | Die eigenen Agents von PlaidCloud rufen in Ihrem Namen interne Werkzeuge auf | [Weave-KI-Chat](/de/guides/ai-assistant/weave-tab/#weave-ai-chat) |
+| **Microsoft 365 Copilot** | Ganze Teams, in Teams und Outlook | Ein veröffentlichter Agent meldet die Person an und ruft dann den MCP-Server auf | [Microsoft 365 Copilot](/de/integrations/microsoft-365-copilot/) |
+| **KI-Coding-Agents** | Analysten und Entwickler | Ihr Client verbindet sich per OAuth direkt mit dem MCP-Server | [Erste Schritte](/de/integrations/ai-coding-agents/getting-started/) |
+| **LLM-Workflow-Schritt** | Unbeaufsichtigte Pipelines | Bei Anthropic ein Token, das nur auf die von Ihnen gebundenen Objekte beschränkt ist; bei anderen Anbietern gar kein Datenzugriff – siehe [die Regeln des Schritts](/de/integrations/ai-architecture/llm-providers/#der-llm-workflow-schritt-ist-anders) | [LLM-Schritt](/de/reference/workflow-steps/general/llm-step/) |
+
+Sie unterscheiden sich darin, wer steuert und wo die Unterhaltung stattfindet. Sie unterscheiden sich
+nicht darin, worauf das Modell zugreifen darf.
+
+## Ein gesteuerter Pfad
+
+Auf welcher Oberfläche eine Frage auch ankommt, es gelten stets dieselben fünf Punkte.
+
+<Steps>
+
+1. **Das Modell läuft als Person, nicht als Plattform.** Jede Anfrage trägt eine kurzlebige,
+   nach Abschluss widerrufene Berechtigung, die für den angemeldeten Benutzer steht. Hinter der KI
+   steht kein gemeinsames Dienstkonto mit erhöhten Rechten.
+
+2. **Werkzeuge sind der einzige Zugang.** Das Modell kann Ihr Lakehouse nicht direkt abfragen. Es ruft einen
+   kuratierten Katalog von Werkzeugen auf – finden, beschreiben, lesen, ausführen, Upsert – und jeder Aufruf wird
+   einzeln geprüft.
+
+3. **Ihre eigenen Berechtigungen begrenzen es weiterhin.** Eine KI-Anfrage kann nie etwas sehen oder ändern,
+   was Sie nicht auch selbst sehen oder ändern könnten. Die KI-Schicht schränkt den Zugriff ein; sie erweitert ihn nie.
+
+4. **Ein Administrator legt die Obergrenze fest, und sie beginnt geschlossen.** Der **Agent-Zugriff**
+   einer LLM-Verbindung beginnt bei „Nur Lesen“. Microsoft 365 Copilot beginnt bei gar nichts: Solange ein
+   Administrator einer Person keine **Zugriffsstufe** zuweist, erhält sie als angemeldete Person keine Daten. Das sind
+   zwei getrennte Mechanismen, aber das Anheben von beiden begrenzt immer nur, was die KI versuchen darf – es
+   erweitert nie, worauf Sie ohnehin schon zugreifen konnten.
+
+5. **Manches ist dauerhaft tabu.** Anmelde- und Verbindungseinstellungen, Identitäts- und
+   Gruppenverwaltung, Änderungen der Zugriffskontrolle, Veröffentlichung und bereitstellbarer Code können nie von
+   einer KI-Berechtigung aufgerufen werden – unabhängig davon, was ein Administrator gewährt hat, bei jedem Anbieter. Diese bleiben
+   ausschließlich Menschen vorbehalten.
+
+</Steps>
+
+<Aside type="note">
+Das wird im Server durchgesetzt, nicht im Prompt. Ein Prompt-Injection-Versuch, der das Modell dazu bringt,
+ein verbotenes Werkzeug anzufordern, erhält dieselbe Ablehnung wie bei einem sich korrekt verhaltenden Modell.
+</Aside>
+
+## Der Weg einer Frage
+
+Nehmen Sie die Frage *„Warum sind die umgelegten IT-Kosten für Atlanta im letzten Quartal gestiegen?“*, gestellt auf einer beliebigen Oberfläche:
+
+<Steps>
+
+1. **Eine Berechtigung wird ausgestellt** für die fragende Person, eingeschränkt und kurzlebig.
+
+2. **Werkzeuge werden dem Modell bereitgestellt** – auf den Oberflächen, die einschränken, begrenzt auf das, was die Frage
+   voraussichtlich benötigt, auf den anderen aus dem Katalog ermittelt.
+
+3. **Der Prompt geht an das Modell** – die Frage, alle Standardregeln und die Werkzeugbeschreibungen.
+   Noch keine Daten.
+
+4. **Das Modell fordert Daten an** über Werkzeugaufrufe: den Analysepfad auflösen, das Schema lesen,
+   die Umlageverfolgung ausführen, die Treiberzeilen lesen. Jeder Aufruf wird beim Eintreffen auf Berechtigungen geprüft.
+
+5. **Das Modell antwortet** auf Grundlage der Ergebnisse, nennt die Dokumentationsseite, falls es eine herangezogen hat, und
+   liefert ein Konfidenzsignal und Einschränkungen.
+
+6. **Die Berechtigung wird widerrufen.** Ein abgefangenes Token kann nach Ende der Anfrage nicht erneut verwendet werden.
+
+</Steps>
+
+Das Entscheidende ist Schritt 4: Das Modell hat Ihre Daten nicht. Es fordert Ausschnitte davon an, und
+jede Anforderung wird einzeln beurteilt.
+
+## Weiterlesen
+
+<CardGrid>
+	<LinkCard
+		title="LLM-Anbieter und Verbindungen"
+		href="/de/integrations/ai-architecture/llm-providers/"
+		description="Claude, GPT, Gemini, Grok, Azure OpenAI – eine Verbindung, vier Ausführungsadapter und zwei Arten, wie Werkzeuge vermittelt werden."
+	/>
+	<LinkCard
+		title="Microsoft-365-Copilot-Architektur"
+		href="/de/integrations/ai-architecture/microsoft-365-copilot/"
+		description="Warum Copilot ein veröffentlichtes Agent-Paket und einen eigenen OAuth-Client braucht und wie Zugriffsstufen nach dem Prinzip „standardmäßig verweigern“ funktionieren."
+	/>
+	<LinkCard
+		title="Retrieval, Grounding und Analysepfade"
+		href="/de/integrations/ai-architecture/retrieval/"
+		description="Was RAG hier tatsächlich leistet – und warum Ihre Geschäftsdaten live gelesen statt in einem Vektorspeicher indiziert werden."
+	/>
+	<LinkCard
+		title="Ihr eigenes kontrolliertes LLM verwenden"
+		href="/de/integrations/ai-architecture/private-llm/"
+		description="Halten Sie proprietäre Daten, PHI oder vertraglich eingeschränkte Daten innerhalb der Infrastruktur, die Sie kontrollieren."
+	/>
+</CardGrid>
+
+## Verwandte Themen
+
+- [Antworten, denen Sie vertrauen können](/de/integrations/ai-coding-agents/honest-answers/) – wie Antworten bewertet und mit Einschränkungen versehen werden
+- [Analysepfade](/de/integrations/ai-coding-agents/analysis-paths/) – verständliche Namen für die Tabellen, nach denen Ihr Team fragt
+- [Plattformarchitektur](/de/get-started/platform-architecture/) – wo KI in der Gesamtplattform sitzt

@@ -1,0 +1,139 @@
+---
+title: Daten laden, transformieren und veröffentlichen
+description: Ein durchgängiges Tutorial – importieren Sie eine CSV-Datei, bereinigen Sie sie mit Tabellenschritten und veröffentlichen Sie das Ergebnis für nachgelagerte Verbraucher.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Dieses Tutorial dauert etwa eine Stunde. Am Ende haben Sie einen funktionierenden Workflow, der eine CSV-Datei importiert, sie in einigen Tabellenschritten transformiert und das Ergebnis veröffentlicht.
+
+## Was Sie aufbauen
+
+Ein Workflow, der eine rohe CSV-Datei mit Umsätzen übernimmt, sie bereinigt, mit einer Produktreferenztabelle verbindet, abgeleitete Spalten berechnet und das Ergebnis als saubere Faktentabelle veröffentlicht.
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace ([starten Sie eine kostenlose Testversion](https://app.plaidcloud.com), falls Sie noch keinen haben)
+- Ein Projekt, in dem Sie arbeiten (erstellen Sie bei Bedarf auf der Registerkarte **Projekte** eines)
+- Zwei CSV-Dateien zum Importieren – für dieses Tutorial verwenden wir eine einfache Datei mit Umsatztransaktionen und eine Produktkatalogdatei. Sie können Ihre eigenen verwenden oder mit einem beliebigen Tabellenkalkulationsprogramm Beispieldaten erzeugen
+
+## Schritt 1: Den Workflow erstellen
+
+<Steps>
+
+1. Öffnen Sie Ihr Projekt und wechseln Sie zur Registerkarte **Workflows**.
+2. Klicken Sie auf **Neuer Workflow**. Geben Sie ihm einen aussagekräftigen Namen wie „Sales Cleanup“.
+3. Klicken Sie auf **Erstellen**. Der leere Workflow erscheint in Ihrer Liste.
+4. Doppelklicken Sie auf den Workflow, um den Workflow Explorer zu öffnen.
+
+</Steps>
+
+## Schritt 2: Die Umsatz-CSV importieren
+
+<Steps>
+
+1. Fügen Sie im Workflow Explorer einen neuen Schritt hinzu.
+2. Wählen Sie **Import → CSV** (oder den Importschritt, der zu Ihrem Quellformat passt).
+3. Nehmen Sie in der Schrittkonfiguration folgende Einstellungen vor:
+   - **Quelldatei** – verweisen Sie auf Ihre Umsatz-CSV (hochladen oder aus einem verbundenen Dokumentenkonto auswählen)
+   - **Zieltabelle** – nennen Sie sie `sales_raw`
+   - **Trennzeichen, Anführungszeichen, Kopfzeile** – passen Sie diese an, wenn Ihre Datei vom Standard abweicht
+4. Führen Sie den Schritt aus. Die CSV-Datei landet als neue Tabelle in Ihrem Projekt.
+
+</Steps>
+
+Öffnen Sie die Registerkarte **Tabellen**, um `sales_raw` zu sehen. Öffnen Sie die Tabelle und prüfen Sie, ob die Daten stimmen – Spaltenanzahl, Beispielzeilen, Datentypen.
+
+## Schritt 3: Den Produktkatalog importieren
+
+Wiederholen Sie Schritt 2 mit Ihrer Produkt-CSV und legen Sie als Ziel eine Tabelle namens `products_raw` fest. Damit haben Sie beide Referenztabellen, die für den Join nötig sind.
+
+## Schritt 4: Fehlerhafte Zeilen herausfiltern
+
+Echte Umsatzdaten haben Lücken – Nullbeträge, Testtransaktionen, Erstattungen, die Sie nicht in der Haupt-Faktentabelle haben möchten. Fügen Sie einen Filterschritt hinzu, um sie zu entfernen.
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Tabellen → Table Lookup** hinzu (oder eine beliebige Tabellentransformation, mit der Sie filtern können).
+2. Konfigurieren Sie:
+   - **Quelltabelle**: `sales_raw`
+   - **Zieltabelle**: `sales_clean`
+   - **Filterbedingungen**: z. B. `amount > 0 AND status = 'completed'`
+3. Führen Sie den Schritt aus. `sales_clean` sollte weniger Zeilen als `sales_raw` haben.
+
+</Steps>
+
+<Aside>
+Filter wirken, während die Daten von der Quelle zum Ziel fließen. Die Quelltabelle bleibt unverändert. Das ist ein zentrales PlaidCloud-Muster – jeder Schritt liest aus einer oder mehreren Quellen und schreibt in ein oder mehrere Ziele und lässt die Originale zur Nachvollziehbarkeit unangetastet.
+</Aside>
+
+## Schritt 5: Mit dem Produktkatalog verbinden
+
+Kombinieren Sie nun die bereinigten Umsatzzeilen mit den Produktdetails aus dem Katalog.
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Tabellen → Table Inner Join** hinzu.
+2. Konfigurieren Sie:
+   - **Linke Tabelle**: `sales_clean`
+   - **Rechte Tabelle**: `products_raw`
+   - **Join-Schlüssel**: die Spalte, die beide Tabellen verbindet (z. B. `product_id`)
+   - **Zieltabelle**: `sales_enriched`
+3. Führen Sie den Schritt aus.
+
+</Steps>
+
+`sales_enriched` enthält nun jede Spalte aus beiden Tabellen. Wahrscheinlich möchten Sie nur eine Teilmenge – das folgt als Nächstes.
+
+## Schritt 6: Spalten auswählen und berechnen
+
+Bereinigen bedeutet in der Regel, nicht benötigte Spalten zu entfernen und abgeleitete zu berechnen. Fügen Sie einen weiteren Tabellenschritt hinzu:
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Tabellen → Table Lookup** hinzu (hier für Spaltenauswahl und Berechnung verwendet).
+2. Konfigurieren Sie:
+   - **Quelle**: `sales_enriched`
+   - **Ziel**: `sales_final`
+   - **Zu behaltende Spalten**: die Teilmenge, die für nachgelagerte Verbraucher wichtig ist
+   - **Berechnete Spalten**: z. B. `revenue = amount * price`, `margin = revenue - cost`
+3. Führen Sie den Schritt aus.
+
+</Steps>
+
+Für Berechnungen auf Spaltenebene deckt die [Referenz zu Ausdrücken](/de/reference/expressions/) jede verfügbare Funktion ab – Zeichenfolgenoperationen, Datumsberechnungen, bedingte Logik, Aggregationen.
+
+## Schritt 7: Das Ergebnis veröffentlichen
+
+Machen Sie `sales_final` für Dashboards und nachgelagerte Systeme verfügbar.
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Daten → Veröffentlichen** hinzu (oder verwenden Sie die Option **Veröffentlichen** direkt an der Tabelle).
+2. Legen Sie fest, wer die veröffentlichte Tabelle lesen darf – üblicherweise andere Mitglieder des Workspace sowie externe Systeme mit Zugriff.
+3. Führen Sie den Schritt aus.
+
+</Steps>
+
+Die veröffentlichte Tabelle ist nun für [Dashboards](/de/guides/dashboards/), BI-Werkzeuge und jeden externen Verbraucher mit den passenden Berechtigungen erreichbar.
+
+## Schritt 8: Den gesamten Workflow ausführen
+
+Klicken Sie auf **Ausführen** für den Workflow (nicht nur für einen Schritt). Beobachten Sie das Protokoll, während jeder Schritt der Reihe nach ausgeführt wird. Die vollständige Pipeline läuft vom CSV-Import bis zur Veröffentlichung.
+
+Falls ein Schritt einen Fehler meldet, behandelt die Anleitung [Managing step errors](/de/guides/workflows/managing-step-errors/) das Debuggen – die häufigsten Probleme sind fehlerhafte Join-Schlüssel (Abweichung zwischen Tabellen) und unerwartete Nullwerte in berechneten Spalten.
+
+## Wie es weitergeht
+
+- [Build an Allocation Model](/de/get-started/tutorials/build-an-allocation/) – verteilen Sie Kosten mithilfe von Treiberdaten auf Verbraucher
+- [Workflows guide](/de/guides/workflows/) – Fehlerbehandlung, Bedingungen, Schleifen, Variablen
+- [Workflow steps reference](/de/reference/workflow-steps/) – jeder Schritttyp und was er tut

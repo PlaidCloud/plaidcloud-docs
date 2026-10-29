@@ -1,0 +1,145 @@
+---
+title: 按计划自动运行工作流
+description: 让已构建的工作流自动运行：使用事件调度器为其安排计划，查看运行历史记录和日志，并处理首次失败。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/schedule-a-workflow.mdx
+---
+
+*约 25 分钟 · 一次计划运行、一份运行历史记录、一次已处理的失败*
+
+您已经有一个工作流，例如[加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)中的销售数据清理管道。目前，它在您点击**运行**时才会运行。本教程将这项工作交给 PlaidCloud：工作流按日历自动运行，您将学会如何监视它、证明它已运行，以及在运行失败时恢复它。
+
+让手动管道变成自动化管道需要三件事，本教程依次完成：
+
+- **计划**：在您选定的时间触发工作流的规则。
+- **可信的记录**：运行历史记录和日志，告诉您无人值守时发生了什么。
+- **失败预案**：无人值守的作业迟早会遇到错误数据，不应静默失败。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="自动化循环：计划触发工作流，运行产生运行历史记录和日志，失败的运行通过恢复来修复，随后回到运行中。" style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">计划</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">运行</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">运行历史记录</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ 日志</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">恢复</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">从停止的位置继续运行</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">一旦由计划负责运行，历史记录和日志就是您了解运行是否成功的依据；而恢复则是失败时的修复方法。</figcaption>
+</figure>
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区，其中有一个手动运行时已能正确运行的工作流。如果还没有，请先按照[加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)构建。
+- 有权访问该工作区中的 **Analyze → 工具 → 事件调度器**。
+
+> **只为已经通过的工作流安排计划。** 自动化会重复工作流所做的一切，包括它的错误，而且现在是无人值守的。在为其设置计划之前，先手动运行一次，直到干净地完成。
+
+## 步骤 1：确认可手动运行
+
+打开工作流并手动运行一次，以便获得用于对比的基线。
+
+1. 打开项目，进入**工作流**层次结构。
+2. 点击工作流上的**运行**图标，或打开工作流并从**操作**菜单中选择 **Run All**。（工作流表顶部的 **Toggle Start/Stop** 按钮作用相同，并且可以停止正在进行的运行。）
+3. 观察运行过程中的步骤状态图标。每个步骤都会显示其当前状态和已运行的时长，悬停在图标上可查看相应的消息。
+
+您会看到的状态及其含义：
+
+| 状态 | 含义 |
+|---|---|
+| 等待中 | 已排队，尚未开始。 |
+| 运行中 | 正在工作，时长持续累加。 |
+| 已完成 | 成功完成。 |
+| 警告 | 已完成，但标记了值得在日志中查看的内容。 |
+| 错误 | 步骤失败，请参阅[管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)。 |
+| 已跳过 | 被略过：已禁用，或未满足其运行条件。 |
+| 已继续 | 已失败，但设置为出错时继续，因此运行继续进行。 |
+
+干净的运行以每个步骤均为**已完成**结束。这就是您的绿色基线。完整的状态详情请参阅[运行工作流](/zh-cn/guides/workflows/run-a-workflow/)。
+
+## 步骤 2：创建计划
+
+现在把这次运行交给事件调度器。
+
+1. 打开 **Analyze**，选择**工具**，然后点击**事件调度器**。**Events Table** 列出了为工作区配置的所有事件。
+2. 点击**添加计划事件**。
+3. 填写表单中标记的必填字段，将事件指向刚才运行的工作流（及其项目）。
+4. 打开 **Event Schedule** 选项卡，选择 **Schedule type**：
+   - **Use Classic Schedule**：选择具体运行的月份、日期、小时和分钟。可以从很快就会发生的时间开始，例如几分钟之后。
+   - **Use Workday Schedule**：选择财务工作日，而不是时钟时间。工作日计划还可以遵循节假日日历，使运行落在正确的工作日。
+5. 点击**创建**。
+
+**Events Table** 现在会列出您的事件，其描述列显示它是按月、按日/小时/分钟，还是按工作日安排的。
+
+> **除非另行指定，否则时间为伦敦时间。** 新事件默认为 **UTC +0**，会被解读为伦敦时间（包括英国夏令时）。如果“上午 9 点”需要指您所在地的上午 9 点，请在事件上设置**时区**字段，否则计划运行可能与预期相差数小时。大多数其他偏移量同样遵循当地时间，请参阅[事件调度器](/zh-cn/administration/scheduled-events/event-scheduler/#时区)。
+
+> **为测试计划设置上限，避免它永远运行。** **Limit Running** 部分可以让事件仅在设定的时间段内运行设定的次数。对于只是试用的计划，这样可以避免作业悄悄地每隔几分钟触发一次，持续数周。
+
+## 步骤 3：预览运行时间
+
+在信任计划之前，先看看它实际会做什么。
+
+1. 打开 **Upcoming Runs Calendar**。这是只读预览，它展开驱动真实执行的同一批计划，所以您看到的就是将要运行的内容，查看不会触发任何操作。
+2. 在**月**、**周**和**日程**视图之间切换；使用**上一个**、**下一步**和**今天**在时间中移动，并使用**刷新**重新获取最新内容。
+3. 确认事件在预期的时间出现。每次运行都绘制为一个条形，长度与工作流的典型时长成比例。
+
+> **并排的条形表示重叠。** 如果两次运行的条形在同一时间窗口内并排，则这些运行发生冲突；如果它们争用相同的数据或资源，请错开其计划。事件驱动的传感器不会出现在这里，因为它们没有固定的未来时间。请参阅[即将进行的运行日历](/zh-cn/administration/scheduled-events/upcoming-runs-calendar/)。
+
+如果不想等待时钟，可以在 **Events Table** 中选择事件并点击**运行所选事件**立即触发，这是立刻证明计划路径端到端可用的好办法。
+
+## 步骤 4：查看运行历史记录和日志
+
+自动运行发生时您在别处，因此它留下的记录才是真正可依赖的。
+
+- **运行历史记录**与工作流在一起。每次执行都是单独的条目。恢复的运行会记录为*新*运行，只包含重新运行的步骤，原来的运行保留自己的条目，因此历史记录如实反映发生过的事情，而不是一条被覆盖的记录。
+- **工作流日志**记录事件发生时的情况，例如步骤运行、产生的警告。从**项目**区域的**日志**选项卡打开；它也会汇总到更广泛的项目日志中，便于同时监视多个工作流。查看器支持排序和筛选，可以打开任何条目查看详情。请参阅[查看工作流日志](/zh-cn/guides/workflows/viewing-workflow-log/)。
+- **工作流报表**记录工作流的当前状态，包括其步骤、函数和变量。它可通过**工作流**层次结构中的**报表**图标按需生成，当有人询问自动作业究竟做什么时很有用。请参阅[查看工作流报表](/zh-cn/guides/workflows/view-workflow-report/)。
+
+在计划运行或按需运行之后，打开日志，确认预期的运行已在其中，并按预期完成。
+
+## 步骤 5：处理失败
+
+无人值守的作业迟早会遇到错误数据。现在就决定出现这种情况时该怎么办：PlaidCloud 提供三种应对方式，具体选择哪一种取决于步骤。
+
+| 选择 | 结果 | 适用时机 |
+|---|---|---|
+| 停止工作流 | 运行中止，步骤和工作流上都会显示错误指示。 | 默认方式：大多数步骤在真正失败后都不应继续。 |
+| 出错时继续 | 步骤被标记为错误，但运行将其视为已完成并继续。 | 缺少数据时失败也无妨的步骤。 |
+| 补救工作流 | 失败的运行停止，改为启动第二个工作流。 | 希望失败时通知某人或尝试自动修复。 |
+
+有两项设置会影响这一点，都位于步骤表单的**常规**选项卡上（点击工作流表中该步骤的齿轮图标，或右键单击并选择**编辑步骤详细信息**）：
+
+- **重试**：失败的步骤可以重试设定的次数，两次尝试之间的延迟从几秒到几小时不等。仅此一项就能挽救大多数因远程系统短暂不可用而导致的失败。请参阅[管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)。
+- **出错时要执行的操作**：选择**继续**，步骤失败就不会停止工作流。这样设置的步骤在工作流表中带有特殊指示。请参阅[出错时继续](/zh-cn/guides/workflows/continue-on-error/)。
+
+> **出错时继续会让失败对补救计划不可见。** 标记为继续的步骤永远不会停止工作流，因此也永远不会触发补救工作流，只有原本会中止运行的失败才会触发。仅对确实可以忽略的失败使用出错时继续。
+
+计划运行确实失败时，很少需要从头开始。**恢复**会从停止的位置继续已停止或出错的运行：它会重新运行未成功完成的步骤，已完成的步骤保持不变。只要工作流上次运行以暂停、停止或出错结束，就可以使用恢复。
+
+## 步骤 6：需要时暂停
+
+无法关闭的自动化是一种隐患。要在不删除计划的情况下使其离线：
+
+1. 打开 **Analyze → 工具 → 事件调度器**，点击事件上的**编辑**图标。
+2. 取消勾选**活动**复选框，然后点击**更新**。
+
+事件将停止按计划触发，直到重新激活，编辑路径相同，只需再次勾选**活动**。如需永久删除，请改用**删除**图标。处于活动状态的事件会在 **Events Table** 中显示**活动**图标，因此一眼就能看出哪些在运行。
+
+**设置完成。** 现在您有了计划事件、可供查看的运行历史记录，以及处理首次失败的方法，而且可以在不删除的情况下暂停整个流程。
+
+## 后续步骤
+
+- [事件调度器](/zh-cn/administration/scheduled-events/event-scheduler/)：计划事件上的每个字段，包括工作日和节假日日历计划。
+- [计划工作流](/zh-cn/administration/scheduled-events/)：整个工作区的运行窗口、顺序和条件触发器。
+- [即将进行的运行日历](/zh-cn/administration/scheduled-events/upcoming-runs-calendar/)：在冲突的运行窗口相互竞争之前发现它们。
+- [运行工作流](/zh-cn/guides/workflows/run-a-workflow/)：暂停、停止和恢复的完整说明，以及所有步骤状态。
+- [管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)和[出错时继续](/zh-cn/guides/workflows/continue-on-error/)：深入介绍失败处理设置。
+- [工作流指南](/zh-cn/guides/workflows/)：用于更高级自动化的条件、循环和变量。
+- [加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)：构建本教程所自动化的工作流的教程。

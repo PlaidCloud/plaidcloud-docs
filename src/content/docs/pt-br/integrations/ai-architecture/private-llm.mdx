@@ -1,0 +1,117 @@
+---
+title: Como usar seu próprio LLM controlado
+description: Mantenha dados proprietários, PHI ou contratualmente restritos dentro da infraestrutura que você controla — aponte o PlaidCloud para um recurso Azure OpenAI na sua própria assinatura ou para um modelo hospedado por você.
+sidebar:
+  label: Seu próprio LLM
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/private-llm.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Se seus dados incluem informações de saúde protegidas, dados pessoais, segredos comerciais ou qualquer coisa sob um contrato que determine onde podem ser processados, a pergunta que importa não é *qual modelo é o mais inteligente*. É **a infraestrutura de quem enxerga o prompt**.
+
+O PlaidCloud trata o modelo como um componente substituível, para que você mesmo possa responder a essa pergunta.
+
+<img
+	src="/images/ai-private-llm.svg"
+	alt="Comparação de três opções de implantação: uma API de fornecedor, um recurso de modelo em nuvem privada, como o Azure OpenAI na sua própria assinatura, e um modelo autohospedado. As três compartilham a mesma governança dentro do tenant. Um resumo lista o que chega ao modelo e o que nunca chega."
+	class="doc-diagram"
+/>
+
+## As três opções
+
+| | **API de fornecedor** | **Modelo em nuvem privada** | **Modelo autohospedado** |
+|---|---|---|---|
+| **O que é** | A API pública da Anthropic, OpenAI, Google ou xAI | Um recurso Azure OpenAI na sua própria assinatura | Qualquer endpoint compatível com OpenAI que você execute |
+| **Quem vê o prompt** | O fornecedor, sob os termos dele e a sua conta | O seu tenant de nuvem, sob o seu contrato | Somente você |
+| **Região e retenção** | As do fornecedor | Você define | Você define |
+| **Capacidade** | De ponta | De ponta, um passo atrás da API pública | O que você conseguir hospedar |
+| **Você opera** | Nada | Um recurso de nuvem | Servidores e GPUs |
+| **Indicado para** | Análises gerais com dados não sensíveis | Empresas já cobertas por um contrato de nuvem | PHI, dados classificados, isolados da rede (air-gapped) ou contratualmente restritos |
+
+As três são configuradas da mesma forma: uma [conexão de Provedor de LLM](/pt-br/integrations/ai-architecture/llm-providers/) com um provedor, uma chave, um modelo e — nas duas últimas — uma URL base apontando para o seu endpoint.
+
+## Por que vale a pena ter um modelo controlado
+
+**O prompt é a exposição, e o prompt contém seus dados.** Um assistente fundamentado é útil justamente porque linhas reais chegam ao modelo: contagens de pacientes por unidade, preços ainda não divulgados, uma estrutura de custos que você não enviaria por e-mail. Todo o resto da arquitetura — permissões, controle de ferramentas, tokens de curta duração — governa o que sai dos *seus* sistemas. Escolher o modelo governa onde isso chega.
+
+Apontar o PlaidCloud para um modelo que você controla significa:
+
+- **Um processador a menos para formalizar.** Nenhum subprocessador terceiro a acrescentar a um contrato de proteção de dados, a um BAA ou a uma avaliação de fornecedor — porque a inferência acontece em um local que já está coberto.
+- **Residência que você pode comprovar.** "Processado nesta região, nesta conta, sob este contrato" é uma afirmação que você pode evidenciar, e não uma em que precisa confiar.
+- **Retenção e registro nos seus termos.** Você decide se os prompts são retidos, por quanto tempo e quem pode ler os logs.
+- **Sobrevive a uma mudança de política.** Os termos de um fornecedor podem mudar; a infraestrutura que você opera não muda por baixo de você.
+- **Ambientes isolados da rede passam a ter um assistente.** Para redes que não alcançam uma API pública, um modelo autohospedado é a única opção que existe.
+
+<Aside type="caution">
+O PlaidCloud oferece os controles; ele não pode fazer uma determinação de conformidade por você. Se uma determinada configuração atende à HIPAA, ao GDPR, a um BAA ou a um contrato com cliente é uma decisão para suas próprias equipes de privacidade, segurança e jurídico. Leve a elas a arquitetura desta página — ela foi escrita para ser revisável.
+</Aside>
+
+## O que realmente chega ao modelo
+
+Vale ser preciso, porque a resposta é mais restrita do que as pessoas supõem.
+
+**Enviado ao provedor:**
+
+- seu prompt e as regras permanentes da conexão
+- os nomes e as formas dos objetos de que o agente foi informado — nomes de tabelas e colunas, nomes de dimensões, caminhos de documentos vinculados
+- os resultados das chamadas de ferramentas feitas pelo modelo, ou seja, as linhas que ele pediu e teve permissão para receber
+- a conversa em andamento no chat atual
+
+**Nunca enviado:**
+
+- credenciais de conexão, segredos armazenados ou cabeçalhos de autorização resolvidos
+- qualquer coisa fora das permissões da pessoa que perguntou
+- tabelas inteiras que o modelo não solicitou
+- dados de outro tenant
+
+E seu conteúdo não é usado para treinar o modelo de ninguém.
+
+## Em quais superfícies você controla o modelo
+
+Esta é a parte que vale ler duas vezes, porque não é uniforme.
+
+| Superfície | De quem é o modelo que executa |
+|---|---|
+| **Etapa de LLM do fluxo de trabalho** | **Seu.** A etapa usa a conexão de Provedor de LLM que você fixar ou o padrão do espaço de trabalho. |
+| **Assistente de IA no aplicativo** | **Seu**, por meio da conexão de Provedor de LLM padrão do espaço de trabalho. O backend multiagente por trás de alguns recursos do assistente é definido por implantação e pode ser apontado para um modelo autohospedado — combine isso com o PlaidCloud. |
+| **Agentes de programação com IA** | **Deles.** O Claude Code usa a Anthropic; o ChatGPT usa a OpenAI. O PlaidCloud é a fonte de dados, não o host do modelo. |
+| **Microsoft 365 Copilot** | **Da Microsoft.** O Copilot executa nos modelos da Microsoft dentro do seu tenant do M365, sob o seu contrato com a Microsoft. |
+
+<Aside type="caution">
+**Se dados regulados não podem chegar a um fornecedor específico, restringir o modelo não basta — você também precisa governar as superfícies.** No Copilot e nos agentes de programação, o PlaidCloud não escolhe o modelo; quem escolhe é o cliente. Controle essas superfícies pelas alavancas que se aplicam: se o agente do Copilot chega a ser publicado, a quem é concedido um nível de acesso, se o caminho do Copilot está ativado e quais projetos e tabelas as permissões de uma pessoa alcançam.
+</Aside>
+
+## Como configurar
+
+<Steps>
+
+1. **Crie o endpoint.** Crie o recurso e a implantação do Azure OpenAI na sua assinatura ou execute seu modelo por trás de uma API compatível com OpenAI.
+
+2. **Torne-o acessível por HTTPS em um nome de host público resolvível.** As chamadas de saída são validadas antes de serem feitas: a URL base deve usar HTTPS, e endereços de loopback, de faixa privada, link-local ou de metadados de nuvem são recusados, com os redirecionamentos desativados. Coloque um gateway TLS em um nome de host real na frente de um modelo autohospedado e restrinja quem pode alcançá-lo na camada de rede.
+
+3. **Registre a conexão.** Escolha o provedor, cole a chave, defina a URL base e defina o modelo — no Azure OpenAI, o campo de modelo é o seu **nome da implantação**.
+
+4. **Deixe o Acesso do agente como Somente leitura**, a menos que uma tarefa específica precise de mais. É o controle mais barato que você tem.
+
+5. **Adicione suas regras.** As instruções permanentes são o lugar certo para convenções da casa — como tratar identificadores, o que nunca incluir em uma resposta, quais ressalvas declarar sempre.
+
+6. **Defina-o como padrão do espaço de trabalho** ou fixe-o nas etapas de fluxo de trabalho específicas que lidam com dados regulados.
+
+</Steps>
+
+## Um meio-termo razoável
+
+A sensibilidade raramente é uniforme em um espaço de trabalho, e o modelo é escolhido por conexão — portanto, pode ser escolhido por tarefa. Um arranjo comum:
+
+- um **modelo de fornecedor de ponta** como padrão do espaço de trabalho, para perguntas sobre esquema, ajuda com a documentação, criação de expressões e análise de dados não sensíveis
+- um **modelo controlado** fixado nas etapas de fluxo de trabalho que tocam tabelas reguladas
+
+Mesma plataforma, mesmas permissões, mesma trilha de auditoria — dois raios de impacto diferentes, adequados aos dados.
+
+## Relacionados
+
+- [Provedores e conexões de LLM](/pt-br/integrations/ai-architecture/llm-providers/) — os campos e os adaptadores
+- [Arquitetura de IA e LLM](/pt-br/integrations/ai-architecture/) — o caminho governado que toda superfície compartilha
+- [Recuperação, fundamentação e caminhos de análise](/pt-br/integrations/ai-architecture/retrieval/) — por que seus dados nunca são pré-indexados

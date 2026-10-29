@@ -1,0 +1,145 @@
+---
+title: Automatize um fluxo de trabalho com um agendamento
+description: "Pegue um fluxo de trabalho que você já criou e deixe que ele seja executado sozinho: agende-o com o Agendador de eventos, acompanhe o histórico de execuções e os logs e trate a primeira falha."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/schedule-a-workflow.mdx
+---
+
+*~25 minutos · uma execução agendada, um histórico de execuções, uma falha tratada*
+
+Você já tem um fluxo de trabalho, digamos o pipeline de limpeza de vendas de [Carregar, transformar e publicar dados](/pt-br/get-started/tutorials/load-and-transform-data/). Hoje ele é executado quando você clica em **Executar**. Este tutorial passa essa tarefa para o PlaidCloud: o fluxo de trabalho é executado segundo um calendário, por conta própria, e você aprende a acompanhá-lo, a comprovar que ele foi executado e a recuperá-lo quando uma execução falha.
+
+Três coisas transformam um pipeline manual em um automatizado, e este tutorial trata de cada uma delas em sequência:
+
+- **Um agendamento**: uma regra que dispara o fluxo de trabalho nos horários que você escolher.
+- **Um registro em que você pode confiar**: histórico de execuções e logs que dizem o que aconteceu enquanto você não estava olhando.
+- **Um plano para falhas**: porque um job sem supervisão acaba encontrando dados ruins, e ele não deve falhar em silêncio.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="O ciclo de automação: um agendamento dispara o fluxo de trabalho, a execução produz o histórico de execuções e um log, e uma execução com falha é recuperada ao ser retomada, o que volta para a execução." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agendamento</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Execução</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Histórico de execuções</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ log</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Recuperar</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">retomar de onde parou</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Quando um agendamento assume a execução, o histórico e o log são como você sabe que deu certo, e Retomar é como você corrige quando não deu.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Um espaço de trabalho do PlaidCloud com um fluxo de trabalho que já seja executado corretamente quando você o executa manualmente. Se você não tem um, crie-o primeiro com [Carregar, transformar e publicar dados](/pt-br/get-started/tutorials/load-and-transform-data/).
+- Acesso a **Analisar → Ferramentas → Agendador de eventos** nesse espaço de trabalho.
+
+> **Agende um fluxo de trabalho que já passa.** A automação repete tudo o que o fluxo de trabalho faz, inclusive seus erros, agora sem supervisão. Execute-o manualmente até um término limpo uma vez antes de colocá-lo em um agendamento.
+
+## Etapa 1: confirme que ele é executado manualmente
+
+Abra seu fluxo de trabalho e execute-o uma vez, da forma manual, para ter uma linha de base de comparação.
+
+1. Abra seu projeto e vá para a hierarquia de **Fluxos de trabalho**.
+2. Clique no ícone de **Executar** no fluxo de trabalho ou abra o fluxo de trabalho e escolha **Run All** no menu **Ações**. (O botão **Toggle Start/Stop** no topo da tabela do fluxo de trabalho faz o mesmo e interrompe uma execução em andamento.)
+3. Acompanhe os ícones de status das etapas enquanto a execução avança. Cada etapa mostra em que ponto está e há quanto tempo está sendo executada; passe o mouse sobre um ícone para ver a mensagem correspondente.
+
+Os status que você verá e o que cada um significa:
+
+| Status | O que significa |
+|---|---|
+| Aguardando | Na fila, ainda não iniciada. |
+| Em execução | Trabalhando; a duração aumenta. |
+| Concluída | Terminou com sucesso. |
+| Aviso | Terminou, mas sinalizou algo que vale a pena ler no log. |
+| Erro | A etapa falhou; consulte [Gerenciamento de erros de etapas](/pt-br/guides/workflows/managing-step-errors/). |
+| Ignorada | Pulada, por estar desabilitada ou porque suas condições de execução não foram atendidas. |
+| Continuada | Falhou, mas estava configurada para continuar em caso de erro, então a execução prosseguiu. |
+
+Uma execução limpa termina com todas as etapas **Concluídas**. Essa é a sua linha de base verde. Os detalhes completos dos status estão em [Executar um fluxo de trabalho](/pt-br/guides/workflows/run-a-workflow/).
+
+## Etapa 2: crie o agendamento
+
+Agora passe essa execução para o Agendador de eventos.
+
+1. Abra **Analisar**, selecione **Ferramentas** e clique em **Agendador de eventos**. A **Events Table** lista todos os eventos já configurados para o espaço de trabalho.
+2. Clique em **Adicionar evento agendado**.
+3. Preencha os campos obrigatórios que o formulário marca, apontando o evento para o fluxo de trabalho que você acabou de executar (e para o projeto dele).
+4. Abra a guia **Event Schedule** e escolha um **Schedule type**:
+   - **Use Classic Schedule**: escolha os meses, dias, horas e minutos específicos da execução. Comece com algo que você veja acontecer logo, como daqui a alguns minutos.
+   - **Use Workday Schedule**: escolha um dia útil financeiro em vez de um horário de relógio. Os agendamentos por dia útil também podem respeitar calendários de feriados, de modo que a execução caia no dia útil correto.
+5. Clique em **Criar**.
+
+A Events Table agora lista o seu evento, e a coluna de descrição mostra se ele é agendado por mês, por dia/hora/minuto ou por dia útil.
+
+> **Os horários seguem o horário de Londres, a menos que você indique outro.** Novos eventos usam **UTC +0** por padrão, que é lido como horário de Londres, incluindo o horário de verão britânico. Se "9h" precisa significar 9h onde você está, defina o campo **Fuso horário** no evento; caso contrário, uma execução agendada pode cair horas fora do que você esperava. A maioria dos outros deslocamentos também segue o horário local de um lugar; consulte [Agendador de eventos](/pt-br/administration/scheduled-events/event-scheduler/#fuso-horário).
+
+> **Limite um agendamento de teste para que ele não seja executado para sempre.** A seção **Limit Running** executa um evento apenas por um período definido e um número definido de vezes. Em um agendamento que você está apenas experimentando, é assim que você evita um job que dispara discretamente a cada poucos minutos durante semanas.
+
+## Etapa 3: visualize quando ele será executado
+
+Antes de confiar no agendamento, veja o que ele realmente fará.
+
+1. Abra o **Calendário de próximas execuções**. É uma visualização somente leitura: ela expande os mesmos agendamentos que conduzem a execução real, então o que você vê é o que será executado, e olhar nunca dispara nada.
+2. Alterne entre as visões **Mês**, **Semana** e **Agenda**; use **Anterior**, **Avançar** e **Hoje** para se mover no tempo, e **Atualizar** para buscar novamente os dados mais recentes.
+3. Confirme que seu evento aparece quando você espera. Cada execução é desenhada como uma barra dimensionada de acordo com a duração típica do fluxo de trabalho.
+
+> **Barras lado a lado indicam uma sobreposição.** Se as barras de duas execuções ficam lado a lado na mesma janela, essas execuções colidem; escalone seus agendamentos se elas competirem pelos mesmos dados ou recursos. Os sensores orientados a eventos não aparecem aqui, pois não têm horário futuro fixo. Consulte [Calendário de próximas execuções](/pt-br/administration/scheduled-events/upcoming-runs-calendar/).
+
+Se você prefere não esperar o relógio, selecione o evento na Events Table e clique em **Executar eventos selecionados** para disparar imediatamente; é uma boa forma de comprovar agora que o caminho agendado funciona de ponta a ponta.
+
+## Etapa 4: acompanhe o histórico de execuções e o log
+
+Uma execução automatizada acontece enquanto você está em outro lugar, então o registro que ela deixa é aquilo em que você realmente se apoia.
+
+- **O histórico de execuções** fica junto com o fluxo de trabalho. Cada execução é uma entrada própria. Uma execução retomada é registrada como uma *nova* execução contendo apenas as etapas que ela executou novamente, e a original mantém sua própria entrada; assim o histórico se lê como uma sequência fiel do que aconteceu, e não como uma única linha que é sobrescrita.
+- **O log do fluxo de trabalho** captura os eventos conforme acontecem: etapas em execução, avisos gerados. Abra-o na área **Projeto**, na guia **Log**; ele também é consolidado no log mais amplo do projeto, para que você possa acompanhar vários fluxos de trabalho ao mesmo tempo. O visualizador ordena e filtra, e você pode abrir qualquer entrada para ver detalhes. Consulte [Visualizar o log do fluxo de trabalho](/pt-br/guides/workflows/viewing-workflow-log/).
+- **O relatório do fluxo de trabalho** documenta o estado atual do fluxo de trabalho: suas etapas, funções e variáveis. Ele é gerado sob demanda a partir do ícone de **Relatório** na hierarquia de **Fluxos de trabalho**, o que é útil quando alguém pergunta o que um job automatizado realmente faz. Consulte [Visualizar o relatório do fluxo de trabalho](/pt-br/guides/workflows/view-workflow-report/).
+
+Depois de uma execução agendada ou sob demanda, abra o log e confirme que a execução esperada está lá e terminou como você pretendia.
+
+## Etapa 5: trate uma falha
+
+Um job sem supervisão acabará encontrando dados ruins. Decida agora o que deve acontecer quando isso ocorrer: o PlaidCloud oferece três respostas, e a certa depende da etapa.
+
+| Escolha | O que acontece | Use quando |
+|---|---|---|
+| Parar o fluxo de trabalho | A execução é interrompida; um indicador de erro aparece na etapa e no fluxo de trabalho. | O padrão: a maioria das etapas não deve prosseguir após uma falha real. |
+| Continuar em caso de erro | A etapa é marcada com um erro, mas a execução a trata como concluída e prossegue. | Uma etapa que pode falhar sem consequências por falta de dados. |
+| Fluxo de trabalho de remediação | A execução com falha é interrompida e um segundo fluxo de trabalho é iniciado no lugar. | Você quer que uma falha notifique alguém ou tente uma correção automática. |
+
+Duas configurações moldam isso, ambas na guia **Geral** do formulário da etapa (clique no ícone de engrenagem da etapa na tabela do fluxo de trabalho ou clique nela com o botão direito e escolha **Editar detalhes da etapa**):
+
+- **Tentar novamente**: uma etapa com falha pode tentar de novo um número definido de vezes, com um intervalo entre as tentativas que vai de segundos a horas. Só isso resolve a maioria das falhas causadas por um sistema remoto temporariamente indisponível. Consulte [Gerenciamento de erros de etapas](/pt-br/guides/workflows/managing-step-errors/).
+- **Ação a executar em caso de erro**: escolha **Continuar** e a falha da etapa não interromperá o fluxo de trabalho. As etapas configuradas assim têm um indicador especial na tabela do fluxo de trabalho. Consulte [Continuar em caso de erro](/pt-br/guides/workflows/continue-on-error/).
+
+> **Continuar em caso de erro esconde a falha do seu plano de remediação.** Uma etapa marcada para continuar nunca interrompe o fluxo de trabalho, então também nunca dispara um fluxo de trabalho de remediação; isso só acontece com uma falha que, de outra forma, interromperia a execução. Reserve o continuar em caso de erro para falhas que você realmente aceita ignorar.
+
+Quando uma execução agendada de fato falha, raramente é preciso recomeçar. **Retomar** reinicia uma execução interrompida ou com erro de onde ela parou: ele executa novamente as etapas que não terminaram com sucesso e deixa as concluídas em paz. Retomar está disponível sempre que a última execução de um fluxo de trabalho terminou pausada, interrompida ou com erro.
+
+## Etapa 6: pause-o quando precisar
+
+Uma automação que você não consegue desligar é um risco. Para tirar um agendamento do ar sem excluí-lo:
+
+1. Abra **Analisar → Ferramentas → Agendador de eventos** e clique no ícone de **Editar** do evento.
+2. Desmarque a caixa de seleção **Ativo** e clique em **Atualizar**.
+
+O evento deixa de disparar conforme o agendamento até que você o reative, pelo mesmo caminho de edição, com **Ativo** marcado novamente. Para removê-lo definitivamente, use o ícone de **excluir**. Um evento ativo mostra o ícone **Ativo** na Events Table, então basta um olhar para saber o que está em operação.
+
+**Tudo pronto.** Agora você tem um evento agendado, um histórico de execuções para acompanhar e uma forma de tratar a primeira falha, e pode pausar tudo sem excluir.
+
+## Para onde ir em seguida
+
+- [Agendador de eventos](/pt-br/administration/scheduled-events/event-scheduler/): todos os campos de um evento agendado, incluindo o agendamento por dia útil e por calendário de feriados.
+- [Fluxos de trabalho agendados](/pt-br/administration/scheduled-events/): janelas de execução, ordenação e gatilhos condicionais em um espaço de trabalho.
+- [Calendário de próximas execuções](/pt-br/administration/scheduled-events/upcoming-runs-calendar/): identifique janelas de execução em colisão antes que elas compitam.
+- [Executar um fluxo de trabalho](/pt-br/guides/workflows/run-a-workflow/): pausar, interromper e retomar em detalhe, além de todos os status de etapa.
+- [Gerenciamento de erros de etapas](/pt-br/guides/workflows/managing-step-errors/) e [Continuar em caso de erro](/pt-br/guides/workflows/continue-on-error/): as configurações de tratamento de falhas em profundidade.
+- [Guia de fluxos de trabalho](/pt-br/guides/workflows/): condições, laços e variáveis para automações mais avançadas.
+- [Carregar, transformar e publicar dados](/pt-br/get-started/tutorials/load-and-transform-data/): o tutorial que cria o fluxo de trabalho que este automatiza.

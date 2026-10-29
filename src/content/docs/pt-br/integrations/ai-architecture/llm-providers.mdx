@@ -1,0 +1,130 @@
+---
+title: Provedores e conexões de LLM
+description: Registre Claude, GPT, Gemini, Grok, Azure OpenAI ou um modelo hospedado por você como uma conexão de Provedor de LLM — e entenda os adaptadores de execução, o Acesso do agente e a intermediação de ferramentas por trás dela.
+sidebar:
+  label: Provedores de LLM
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/llm-providers.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Uma **conexão de Provedor de LLM** é onde você escolhe o modelo que alimenta a IA no seu espaço de trabalho. Ela guarda o provedor, sua chave de API, um modelo padrão e instruções permanentes — e é o ponto em que um administrador decide quanto o modelo pode fazer.
+
+<img
+	src="/images/ai-llm-providers.svg"
+	alt="Uma conexão de Provedor de LLM seleciona um provedor, que corresponde a um de quatro adaptadores de execução — anthropic, openai_compatible, gemini ou azure. As ferramentas são intermediadas no lado do servidor pelo conector MCP da Anthropic ou no lado do cliente pelo PlaidCloud. A aplicação de permissões é idêntica nos dois casos."
+	class="doc-diagram"
+/>
+
+## O que a conexão guarda
+
+| Campo | O que faz |
+|---|---|
+| **Provedor** | Anthropic, OpenAI, Google Gemini, xAI Grok, Azure OpenAI ou GitHub Models. |
+| **Chave de API** | Sua. O uso é cobrado na sua conta com esse provedor, não revendido pelo PlaidCloud. |
+| **Modelo padrão** | Escolhido na linha atual de modelos do próprio provedor, obtida com sua chave de API. **Outro…** aceita um id de modelo digitado por você, para qualquer modelo que a lista não traga. |
+| **URL base** | Exibida apenas para provedores que a utilizam: obrigatória para o Azure OpenAI (o endpoint do seu recurso) e uma substituição opcional para OpenAI, Grok e GitHub Models. Anthropic e Gemini não a utilizam. |
+| **Versão da API** | Somente Azure OpenAI. |
+| **Regras** | Instruções permanentes inseridas no início de toda mensagem de sistema — convenções da casa, tom, o que nunca fazer. |
+| **Acesso do agente** | O teto do que os agentes e as etapas que usam esta conexão podem fazer. Somente leitura, a menos que seja elevado. |
+
+O nome, o memorando e quem pode ver a conexão também são definidos aqui, e **Testar conexão** verifica a chave antes que você dependa dela.
+
+Um espaço de trabalho pode ter várias conexões; uma é marcada como padrão. Uma etapa do fluxo de trabalho pode fixar uma conexão específica quando precisa de um modelo diferente do padrão do espaço de trabalho.
+
+Um espaço de trabalho também pode ter uma conexão **Anthropic Claude** mais antiga, de antes de o provedor se tornar um campo de um único tipo de conexão. Ela guarda as mesmas configurações e abre no mesmo editor, com o provedor fixado em Anthropic. Crie novas conexões como **Provedor de LLM**.
+
+<Aside type="tip">
+**A lista de modelos vem do provedor, não do PlaidCloud.** Ao abrir a conexão, o PlaidCloud pergunta ao seu provedor quais modelos sua chave alcança, de modo que um modelo lançado hoje de manhã já é oferecido, sem esperar por uma versão do PlaidCloud. Modelos que não conseguem responder a um prompt — modelos de embeddings, fala, imagem e moderação — ficam de fora.
+
+Se o provedor não puder ser alcançado (uma chave ainda não informada, uma chave incorreta ou uma indisponibilidade), a lista recorre à lista integrada do PlaidCloud e avisa isso. **Outro…** continua aceitando qualquer id de modelo que você digitar.
+</Aside>
+
+## Provedores e adaptadores
+
+Seis provedores visíveis ao usuário correspondem a quatro adaptadores de execução. O adaptador define como a solicitação é montada e o que o modelo pode acessar. Os nomes de provedor abaixo são os rótulos como aparecem na lista suspensa do formulário de conexão.
+
+| Provedor | Adaptador | Observações |
+|---|---|---|
+| Anthropic (Claude) | `anthropic` | O único caminho com vinculações restritas de tabelas, dimensões e documentos. |
+| OpenAI (ChatGPT) | `openai_compatible` | |
+| xAI (Grok) | `openai_compatible` | |
+| GitHub Models | `openai_compatible` | Modelos hospedados no GitHub para equipes centradas no GitHub. |
+| Google (Gemini) | `gemini` | |
+| Azure OpenAI | `azure` | O endpoint do seu recurso; o "modelo" é o seu **nome da implantação**, e a versão da API vem da conexão. |
+
+<Aside type="caution">
+**O GitHub Copilot não é uma opção aqui, e isso não é um descuido.** O Copilot não tem uma API de chat independente para a qual você possa apontar um servidor — ele troca um token OAuth por uma autorização de editor. O caminho da Microsoft para modelos GPT da classe Copilot é o **Azure OpenAI** (ou o GitHub Models). O GitHub Copilot *como cliente de IDE* conectando-se ao PlaidCloud é algo totalmente diferente, e funciona — veja [GitHub Copilot](/pt-br/integrations/ai-coding-agents/copilot/).
+</Aside>
+
+## Como as ferramentas são intermediadas
+
+Um LLM só é útil aqui se puder chamar ferramentas do PlaidCloud. Para o assistente **interativo**, existem dois mecanismos, e qual deles executa depende do provedor. (A [etapa de LLM do fluxo de trabalho](#a-etapa-de-llm-do-fluxo-de-trabalho-é-diferente), sem supervisão, funciona de outra forma; leia essa seção também.)
+
+### Conector no lado do servidor — Anthropic
+
+A API da Anthropic se conecta por conta própria ao seu endpoint MCP do PlaidCloud, levando o token delegado de curta duração. A Anthropic gerencia o catálogo de ferramentas do lado dela, então o modelo vê tudo o que o token tem permissão para chamar e descobre as ferramentas sem ajuda.
+
+Este também é o único caminho que oferece suporte a **vinculações restritas** — veja abaixo.
+
+### Laço no lado do cliente — todos os demais
+
+Os outros provedores não têm um conector equivalente, então o PlaidCloud conduz o laço por conta própria: ele se conecta ao seu próprio servidor MCP como cliente, lista as ferramentas, entrega-as ao modelo como definições de função nativas, executa as chamadas que o modelo pede, devolve os resultados e repete até que o modelo produza uma resposta.
+
+Dois limites mantêm esse comportamento previsível:
+
+- **Uma superfície de ferramentas limitada.** Os provedores limitam quantas funções uma única solicitação pode declarar, e cada esquema consome tokens do prompt. O conjunto exposto é limitado, e as metaferramentas de descoberta estão sempre presentes para que o modelo ainda consiga encontrar e invocar qualquer coisa fora da lista direta.
+- **Um limite fixo de idas e vindas.** Um laço de ferramentas descontrolado é interrompido, em vez de queimar tokens indefinidamente.
+
+<Aside type="note">
+Intermediário diferente, mesma aplicação de regras. O laço no lado do cliente chama o mesmo servidor MCP com o mesmo token delegado, de modo que escopos, ACLs, Acesso do agente e a lista de bloqueio se aplicam exatamente como no caminho da Anthropic.
+</Aside>
+
+## A etapa de LLM do fluxo de trabalho é diferente
+
+Tudo o que foi descrito acima trata da IA interativa. A **etapa de LLM do fluxo de trabalho**, executada sem supervisão, não usa o laço no lado do cliente de forma alguma, e vale entender a diferença antes de escolher um provedor para ela.
+
+| Provedor na conexão da etapa | O que a etapa pode fazer |
+|---|---|
+| **Anthropic** | Acessa seus dados por meio do conector MCP, restrita a **vinculações restritas** — as tabelas, dimensões e documentos específicos que você indicou na etapa, cada um marcado como leitura ou gravação. Qualquer coisa fora desses objetos é recusada, mesmo que a ferramenta exista. |
+| **Todos os demais** | **Nenhum acesso a dados.** A etapa é uma única conclusão estruturada: entram prompt, regras e esquema; sai JSON. |
+
+Duas consequências decorrem diretamente disso:
+
+- **As vinculações são ignoradas em uma etapa que não use Anthropic.** Elas não são honradas silenciosamente e também não geram erro — a etapa registra no log que o acesso restrito a dados é exclusivo da Anthropic e executa sem elas. Se você trocar uma etapa com vinculações da Anthropic para outro provedor, ela deixa de ler seus dados.
+- **Um esquema de resultado é obrigatório em uma etapa que não use Anthropic.** Sem ferramentas para chamar, a saída estruturada é a única coisa que a etapa produz.
+
+<Aside type="caution">
+Se uma etapa precisa ler ou gravar objetos do projeto, coloque-a em uma conexão Anthropic. Em qualquer outro provedor, a etapa ainda pode classificar, resumir, extrair ou reescrever texto que você passa no prompt — ela simplesmente não consegue buscar nada por conta própria.
+</Aside>
+
+## Acesso do agente
+
+Toda conexão de LLM tem uma configuração de **Acesso do agente**. Ela é um **teto**, sempre combinado por interseção com as permissões reais da pessoa que está agindo.
+
+| Acesso do agente | O que os agentes e as etapas desta conexão podem fazer |
+|---|---|
+| **Somente leitura** *(padrão)* | Listar, descrever, ler dados de tabelas, ler membros de dimensões, ler documentos e executar SQL somente leitura. |
+| **Leitura e gravação** | O que foi descrito acima, mais as alterações que a pessoa já tem permissão para fazer, por meio das ferramentas de gravação do PlaidCloud. O SQL bruto continua somente leitura. |
+| **Completo** *(obsoleto — removido em 15 de janeiro de 2027)* | O conjunto completo de ferramentas da pessoa, incluindo SQL que grava. Use **Leitura e gravação** no lugar. |
+
+Em todas as configurações de Acesso do agente, aplica-se uma lista de bloqueio incondicional: configurações de conexão e de credenciais, quem é dono de uma conexão ou tem acesso a ela, credenciais e ACLs de contas de documentos, gerenciamento de membros e grupos, redefinição de senha, ACLs de projetos, o modo de lançamento de ERP de um projeto, publicação, código de funções definidas pelo usuário e implantações de aplicativos. Esses itens nunca podem ser chamados por uma credencial de IA.
+
+Em uma etapa de fluxo de trabalho da Anthropic, o Acesso do agente interage com as **vinculações**: em **Leitura e gravação**, a gravação é concedida por objeto vinculado, de modo que uma etapa pode gravar na única tabela que você marcou e em nenhuma outra.
+
+## Resultados estruturados
+
+Quando uma etapa declara um esquema de resultado, a resposta é validada em relação a ele, em vez de ser extraída de texto corrido. Como os provedores expressam esquemas de formas diferentes, o esquema é traduzido para cada provedor — o dialeto de JSON estrito para endpoints compatíveis com OpenAI, o subconjunto OpenAPI para o Gemini — e uma recusa ou uma resposta truncada é apresentada como um erro próprio, em vez de um confuso "JSON inválido".
+
+## Salvaguardas que vale conhecer
+
+- **As URLs de saída são validadas antes de qualquer chamada.** Uma URL base deve usar HTTPS e resolver para um endereço público; endereços de loopback, de faixa privada, link-local e de metadados de nuvem são rejeitados, e os redirecionamentos são desativados para que uma resposta não possa desviar a chamada para outro lugar.
+- **As chaves ficam fora de logs e erros.** Os erros do provedor são higienizados, em vez de serem repetidos com credenciais dentro.
+- **Regras são instruções, não permissões.** As regras permanentes de uma conexão moldam o comportamento do modelo. Elas não podem elevar o que ele tem permissão para acessar.
+
+## Relacionados
+
+- [Arquitetura de IA e LLM](/pt-br/integrations/ai-architecture/) — as superfícies e o caminho compartilhado
+- [Como usar seu próprio LLM controlado](/pt-br/integrations/ai-architecture/private-llm/) — Azure OpenAI e opções autohospedadas
+- [Conexões](/pt-br/guides/connections/) — criação e gerenciamento de conexões em geral

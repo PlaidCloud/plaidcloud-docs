@@ -1,0 +1,116 @@
+---
+title: "Jointure temporelle SCD-2"
+description: "Joignez une table de faits à une table d'historique SCD-2 en renvoyant la version de chaque enregistrement de données de référence qui était en vigueur à la date du fait."
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Joint une table de faits à une table d'historique créée par [Générateur de référentiel SCD-2](/fr/reference/workflow-steps/dimensions/scd2-master-builder/) et renvoie, pour chaque ligne de faits, la version des données de référence qui était **en vigueur à la date de ce fait**, et non la version actuelle.
+
+C'est ainsi que vous rattachez chaque transaction à la région, au centre de coûts, au responsable ou au prix qui s'appliquait *au moment où elle s'est produite*. Il s'agit d'un `LEFT JOIN` : chaque ligne de faits est donc conservée. Une clé sans version correspondante (clé inconnue, ou date antérieure à la première version de la clé) ressort avec des colonnes reportées nulles au lieu d'être supprimée.
+
+## Tables
+
+### Table de faits
+
+Les lignes que vous voulez enrichir : transactions, commandes, événements. Chaque ligne porte une clé métier et une date.
+
+### Table SCD-2
+
+Une table d'historique produite par [Générateur de référentiel SCD-2](/fr/reference/workflow-steps/dimensions/scd2-master-builder/), contenant `valid_from`, `valid_to` et `is_current` en plus des attributs suivis.
+
+### Table de sortie
+
+L'emplacement où les lignes de faits enrichies sont écrites. Il doit s'agir d'une table, et non d'une vue. Toutes les colonnes d'origine des faits sont conservées telles quelles ; les colonnes de données de référence reportées sont ajoutées.
+
+## Date de référence et options
+
+La **date de référence** est le moment auquel chaque ligne de faits est résolue. Indiquez-la d'une seule des deux façons suivantes :
+
+- **Colonne de date de référence des faits** : une colonne de date de la table de faits (par exemple `txn_date`). Chaque ligne est résolue à sa propre date.
+- **Date de référence littérale** : une date unique `YYYY-MM-DD`, ou une variable de workflow telle que `{report_date}`, appliquée à chaque ligne de faits (résout toute la table de faits à une même date de reporting). Une variable est renseignée à l'exécution de l'étape.
+
+<Aside type="caution">Choisissez l'une ou l'autre, pas les deux. L'enregistrement de l'étape est refusé lorsqu'elle spécifie une colonne de faits *et* une date littérale, ou aucune des deux, et l'exécution l'est aussi.</Aside>
+
+Les options de renommage évitent les collisions lorsqu'une colonne reportée porte le même nom qu'une colonne de faits :
+
+- **Préfixe des colonnes reportées** / **Suffixe des colonnes reportées** : ajoutés au nom de sortie de chaque colonne reportée (`prefix` + colonne + `suffix`). Si une colonne reportée entre encore en collision avec une colonne de faits ou une autre colonne reportée après le renommage, l'exécution échoue au lieu d'écraser silencieusement.
+
+## Rôles des colonnes
+
+Utilisez **Inspecter la SCD-2** pour lister les colonnes de la table SCD-2, puis attribuez un rôle à chaque colonne :
+
+| Rôle | Signification |
+|---|---|
+| **Clé métier** | La clé qui relie les faits à l'historique (par exemple `customer_id`). Elle doit correspondre aux colonnes de clé des faits. Au moins une est requise. |
+| **Colonne reportée** | Un attribut à reporter sur la ligne de faits (par exemple `region`). Au moins une est requise. |
+| **(ignorer)** | Les colonnes sans rôle ne sont pas reportées. |
+
+## Ce qui est contrôlé à l'enregistrement
+
+L'enregistrement de l'étape est refusé, avec un message qui nomme la colonne ou la date, lorsque :
+
+- Une colonne est désignée comme Clé métier, ou comme Colonne reportée, plus d'une fois : *'region' is tagged as a Carry Column more than once.*
+- Une colonne est à la fois Clé métier et Colonne reportée : *customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- La **Date de référence littérale** n'est pas une date réelle au format `YYYY-MM-DD` : *The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* Une date qui désigne une variable de workflow est contrôlée lorsque l'exécution la renseigne.
+
+## La borne semi-ouverte
+
+Une ligne de faits correspond à l'unique version d'historique dont l'intervalle contient sa date de référence, selon une comparaison **semi-ouverte** :
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+La borne inférieure est incluse et la borne supérieure est exclue. Cela compte le jour de la limite :
+
+- `as_of == valid_from` → **correspond** à cette version (elle prend effet à sa date de début).
+- `as_of == valid_to` → **ne correspond pas** à cette version ; la ligne passe à la version suivante, dont le `valid_from` est égal à ce `valid_to`.
+
+Comme [Générateur de référentiel SCD-2](/fr/reference/workflow-steps/dimensions/scd2-master-builder/) écrit des versions consécutives de sorte que le `valid_to` de l'une soit le `valid_from` de la suivante, chaque date correspond exactement à une version, sans trou ni chevauchement. Un changement daté du `2026-04-01` signifie que la nouvelle valeur s'applique *le* 1er avril ; une transaction du 31 mars reçoit encore l'ancienne valeur.
+
+<Aside type="note">Les lignes ouvertes (actuelles) portent la date haute sentinelle `9999-12-31` dans `valid_to`. Si une ligne ouverte contenait plutôt un `valid_to` nul, l'étape la traite comme ouverte (via la même sentinelle) afin que la version actuelle ne soit jamais silencieusement manquée.</Aside>
+
+## Exemple détaillé
+
+Dans la continuité de [Générateur de référentiel SCD-2](/fr/reference/workflow-steps/dimensions/scd2-master-builder/), rattachez chaque transaction à la région en vigueur à sa date.
+
+**`customer_scd2` (la table d'historique) :**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (la table de faits) :**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Configuration : **Table de faits** = `transactions`, **Table SCD-2** = `customer_scd2`, **Table de sortie** = `transactions_by_region`, **Colonne de date de référence des faits** = `txn_date`, Clé métier = `customer_id`, Colonne reportée = `region`.
+
+**`transactions_by_region` :**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(null)* |
+
+Notez la limite : **T2, au 2026-04-01, se résout sur Central**, car l'intervalle semi-ouvert fait du 1er avril le premier jour de la version Central, et non le dernier jour de West. **La clé `C9` de T4 est inconnue** ; la ligne est donc conservée avec une région nulle au lieu d'être supprimée.
+
+## Voir aussi
+
+- [Générateur de référentiel SCD-2](/fr/reference/workflow-steps/dimensions/scd2-master-builder/) : construire la table d'historique que cette étape lit.
+- [Dimension Load](/fr/reference/workflow-steps/dimensions/dimension-load/) : charger une hiérarchie à partir d'une table.

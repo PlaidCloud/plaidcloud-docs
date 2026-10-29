@@ -1,0 +1,202 @@
+---
+title: FLATTEN (Lakehouse v1)
+description: FLATTEN — Wandelt verschachtelte JSON-Daten in ein tabellarisches Format um, in dem jedes Element oder Feld als eigene Zeile dargestellt wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/10-semi-structured-functions/flatten.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Wandelt verschachtelte JSON-Daten in ein tabellarisches Format um, in dem jedes Element oder Feld als eigene Zeile dargestellt wird.
+
+## SQL Syntax
+
+```sql
+[LATERAL] FLATTEN ( INPUT => <expr> [ , PATH => <expr> ]
+                                    [ , OUTER => TRUE | FALSE ]
+                                    [ , RECURSIVE => TRUE | FALSE ]
+                                    [ , MODE => 'OBJECT' | 'ARRAY' | 'BOTH' ] )
+```
+
+| Parameter / Schlüsselwort | Beschreibung | Standard |
+|---------------------|--------------|---------|
+| INPUT               | Gibt die JSON- oder Array-Daten an, die verflacht werden. | -       |
+| PATH                | Gibt den Pfad zum Array oder Objekt innerhalb der Eingabedaten an, das verflacht wird. | -       |
+| OUTER               | Bei TRUE werden auch Zeilen ohne Ergebnisse in die Ausgabe aufgenommen, wobei die Werte in den Spalten KEY, INDEX und VALUE dieser Zeilen auf NULL gesetzt werden. | FALSE   |
+| RECURSIVE           | Bei TRUE verflacht die Funktion auch verschachtelte Elemente weiter. | FALSE   |
+| MODE                | Steuert, ob nur Objekte ('OBJECT'), nur Arrays ('ARRAY') oder beides ('BOTH') verflacht werden. | 'BOTH'  |
+| LATERAL             | LATERAL ist ein optionales Schlüsselwort, mit dem Sie auf Spalten verweisen, die links vom Schlüsselwort LATERAL in der FROM-Klausel definiert sind. LATERAL ermöglicht Querverweise zwischen den vorangehenden Tabellenausdrücken und der Funktion. | -       |
+
+## Output
+
+Die folgende Tabelle beschreibt die Ausgabespalten der Funktion FLATTEN:
+
+<Aside>Wenn Sie das Schlüsselwort LATERAL mit FLATTEN verwenden, werden diese Ausgabespalten möglicherweise nicht explizit bereitgestellt, da LATERAL dynamische Querverweise einführt und die Ausgabestruktur dadurch ändert.</Aside>
+
+| Spalte | Beschreibung |
+|--------|--------------|
+| SEQ    | Eine eindeutige Sequenznummer, die der Eingabe zugeordnet ist. |
+| KEY    | Schlüssel zum erweiterten Wert. Enthält das verflachte Element keinen Schlüssel, wird er auf NULL gesetzt. |
+| PATH   | Pfad zum verflachten Element. |
+| INDEX  | Ist das Element ein Array, enthält diese Spalte seinen Index, andernfalls wird sie auf NULL gesetzt. |
+| VALUE  | Wert des verflachten Elements. |
+| THIS   | Diese Spalte kennzeichnet das Element, das gerade verflacht wird. |
+
+## SQL Examples
+
+### SQL-Beispiele 1: Die Parameter PATH, OUTER, RECURSIVE und MODE
+
+Dieses Beispiel zeigt das Verhalten der Funktion FLATTEN in Bezug auf die Parameter PATH, OUTER, RECURSIVE und MODE.
+
+```sql
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    )
+  );
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │               value              │                                                  this                                                 │
+├────────┼──────────────────┼──────────────────┼──────────────────┼──────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│      1 │ address          │ address          │             NULL │ {"city":"New York","state":"NY"} │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ languages        │ languages        │             NULL │ ["English","Spanish","French"]   │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ name             │ name             │             NULL │ "John"                           │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- PATH helps in selecting elements at a specific path from the original JSON data.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    PATH => 'languages'
+  );
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │       value       │              this              │
+├────────┼──────────────────┼──────────────────┼──────────────────┼───────────────────┼────────────────────────────────┤
+│      1 │ NULL             │ languages[0]     │                0 │ "English"         │ ["English","Spanish","French"] │
+│      1 │ NULL             │ languages[1]     │                1 │ "Spanish"         │ ["English","Spanish","French"] │
+│      1 │ NULL             │ languages[2]     │                2 │ "French"          │ ["English","Spanish","French"] │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- RECURSIVE enables recursive flattening of nested structures.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    RECURSIVE => TRUE
+  );
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │               value              │                                                  this                                                 │
+├────────┼──────────────────┼──────────────────┼──────────────────┼──────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│      1 │ address          │ address          │             NULL │ {"city":"New York","state":"NY"} │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ city             │ address.city     │             NULL │ "New York"                       │ {"city":"New York","state":"NY"}                                                                      │
+│      1 │ state            │ address.state    │             NULL │ "NY"                             │ {"city":"New York","state":"NY"}                                                                      │
+│      1 │ languages        │ languages        │             NULL │ ["English","Spanish","French"]   │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ NULL             │ languages[0]     │                0 │ "English"                        │ ["English","Spanish","French"]                                                                        │
+│      1 │ NULL             │ languages[1]     │                1 │ "Spanish"                        │ ["English","Spanish","French"]                                                                        │
+│      1 │ NULL             │ languages[2]     │                2 │ "French"                         │ ["English","Spanish","French"]                                                                        │
+│      1 │ name             │ name             │             NULL │ "John"                           │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+-- MODE specifies whether only objects ('OBJECT'), only arrays ('ARRAY'), or both ('BOTH') should be flattened.
+-- In this example, MODE => 'ARRAY' is used, which means that only arrays within the JSON data will be flattened.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    MODE => 'ARRAY'
+  );
+
+---
+
+
+-- OUTER determines the inclusion of zero-row expansions in the output.
+-- In this first example, OUTER => TRUE is used with an empty JSON array, which results in zero-row expansions. 
+-- Rows are included in the output even when there are no values to flatten.
+SELECT
+  *
+FROM
+  FLATTEN (INPUT => PARSE_JSON ('[]'), OUTER => TRUE);
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │       value       │        this       │
+├────────┼──────────────────┼──────────────────┼──────────────────┼───────────────────┼───────────────────┤
+│      1 │ NULL             │ NULL             │             NULL │ NULL              │ NULL              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- In this second example, OUTER is omitted, and the output shows how rows with zero results are not included when OUTER is not specified.
+SELECT
+  *
+FROM
+  FLATTEN (INPUT => PARSE_JSON ('[]'));
+
+```
+
+### SQL-Beispiele 2: LATERAL FLATTEN
+
+Dieses Beispiel zeigt das Verhalten der Funktion FLATTEN in Verbindung mit dem Schlüsselwort LATERAL.
+
+```sql
+-- Create a table for Tim Hortons transactions with multiple items
+CREATE TABLE tim_hortons_transactions (
+    transaction_id INT,
+    customer_id INT,
+    items VARIANT
+);
+
+-- Insert data for Tim Hortons transactions with multiple items
+INSERT INTO tim_hortons_transactions (transaction_id, customer_id, items)
+VALUES
+    (101, 1, parse_json('[{"item":"coffee", "price":2.50}, {"item":"donut", "price":1.20}]')),
+    (102, 2, parse_json('[{"item":"bagel", "price":1.80}, {"item":"muffin", "price":2.00}]')),
+    (103, 3, parse_json('[{"item":"timbit_assortment", "price":5.00}]'));
+
+-- Show Tim Hortons transactions with multiple items using LATERAL FLATTEN
+SELECT
+    t.transaction_id,
+    t.customer_id,
+    f.value:item::STRING AS purchased_item,
+    f.value:price::FLOAT AS price
+FROM
+    tim_hortons_transactions t,
+    LATERAL FLATTEN(input => t.items) f;
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│  transaction_id │   customer_id   │   purchased_item  │       price       │
+├─────────────────┼─────────────────┼───────────────────┼───────────────────┤
+│             101 │               1 │ coffee            │               2.5 │
+│             101 │               1 │ donut             │               1.2 │
+│             102 │               2 │ bagel             │               1.8 │
+│             102 │               2 │ muffin            │                 2 │
+│             103 │               3 │ timbit_assortment │                 5 │
+└───────────────────────────────────────────────────────────────────────────┘
+
+-- Find maximum, minimum, and average prices of the purchased items
+SELECT
+    MAX(f.value:price::FLOAT) AS max_price,
+    MIN(f.value:price::FLOAT) AS min_price,
+    AVG(f.value:price::FLOAT) AS avg_price
+FROM
+    tim_hortons_transactions t,
+    LATERAL FLATTEN(input => t.items) f;
+
+┌───────────────────────────────────────────────────────────┐
+│     max_price     │     min_price     │     avg_price     │
+├───────────────────┼───────────────────┼───────────────────┤
+│                 5 │               1.2 │               2.5 │
+└───────────────────────────────────────────────────────────┘
+```

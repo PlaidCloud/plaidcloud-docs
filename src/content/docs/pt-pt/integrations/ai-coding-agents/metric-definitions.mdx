@@ -1,0 +1,224 @@
+---
+title: Definições de indicadores
+description: Registe uma só vez como se calcula um número de negócio e o assistente de IA do PlaidCloud, ou um assistente ligado por MCP, calcula-o sempre dessa forma, com o acesso às linhas de cada pessoa.
+sidebar:
+  label: Definições de indicadores
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/metric-definitions.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Uma **definição de indicador** é um número de negócio cujo cálculo foi acordado e registado: *Receita líquida*, *Efetivos (ETC)*, *Unidades expedidas*. Indica de que tabela provém o número, como se somam as linhas, que linhas contam e por que colunas pode ser decomposto.
+
+Sem uma definição, um assistente de IA a quem se pergunta *«qual foi a receita líquida na EMEA no último trimestre?»* decide por si que tabela, coluna e filtros utilizar, e duas pessoas que façam a mesma pergunta podem obter números diferentes. Uma definição de indicador retira essa decisão ao assistente. Um Arquiteto do projeto escreve a definição uma só vez e, a partir do momento em que é guardada, o assistente calcula o valor exatamente como está escrito.
+
+<Aside>
+As definições de indicadores são geridas através de um assistente de IA ligado por [MCP](../getting-started/) ou através da API REST; ainda não existe um ecrã para elas no PlaidCloud. Os indicadores estão disponíveis para o [assistente de IA](/pt-pt/guides/ai-assistant/weave-tab/#chat-do-weave-ai) integrado do PlaidCloud e para qualquer assistente ligado por MCP. O assistente integrado consegue encontrar e calcular indicadores, mas não os pode criar, editar nem retirar.
+</Aside>
+
+**Arquitetos**: comecem em [Definir um indicador](#definir-um-indicador). **Analistas**: comecem em [Questionar sobre um indicador](#questionar-sobre-um-indicador).
+
+Uma definição de indicador é uma receita, não um resultado guardado. É recalculada sempre que é pedida, com o acesso às linhas de quem a pede: quem só pode ver a EMEA obtém valores da EMEA. Duas pessoas podem obter totais diferentes a partir da mesma definição porque veem linhas diferentes; o cálculo é o mesmo.
+
+## O que contém uma definição
+
+| Parte | O que indica | Exemplo |
+|---|---|---|
+| **Nome** | Como as pessoas designam o número. Até 200 carateres. | *Receita líquida* |
+| **Sinónimos** | Outras palavras que as pessoas utilizam para o designar, para que o assistente reconheça a pergunta. Até 25. | *receita*, *vendas* |
+| **Descrição** (`memo` na API) | O que o número significa e quando o utilizar, para o assistente e para as pessoas. Até 1000 carateres. | *Receita após devoluções e descontos. Utilizar para todas as questões sobre receita.* |
+| **Tabela de origem** | A tabela de onde provêm as linhas. | `sales_fact` |
+| **Junções** | Tabelas de consulta associadas à origem através de colunas correspondentes. Cada tabela de consulta deve ter apenas uma linha por chave (uma linha por código de região, por exemplo), caso contrário as linhas que lhe correspondem são contadas duas vezes. | `region_lookup`, fazendo corresponder `region_code` na origem a `code` na tabela de consulta |
+| **Medida** | Como se somam as linhas: `sum`, `count`, `count_distinct`, `min`, `max` ou `avg` de uma coluna, ou `weighted_avg` de uma coluna ponderada por uma segunda coluna (`weight`): a soma do valor vezes o peso nas linhas em que ambos estão definidos, dividida pela soma desses pesos; vazio se os pesos somarem zero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
+| **Filtros** | Que linhas contam sempre. Cada filtro é uma coluna, um operador (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) e os seus valores. | `status` `eq` *Posted* |
+| **Colunas de decomposição** (`grain` na API) | As colunas pelas quais uma pessoa pode agrupar e filtrar quando faz a pergunta. Os filtros são fixos; as colunas de decomposição são escolha de quem pergunta. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Cenário** (opcional) | A coluna que separa as linhas reais das linhas de orçamento, e o valor de cada uma. O indicador corresponde às suas linhas reais; as linhas de orçamento só são lidas para uma [variação](#comparar-ordenar-e-quota). | `scenario`, real *Actual*, orçamento *Budget* |
+| **Dimensões** (opcional, `dimensions` na API) | Uma coluna de decomposição associada a uma dimensão, de modo que as palavras de uma pergunta sejam comparadas com os membros e os aliases dessa dimensão e convertidas nos valores da coluna: consulte [Questionar sobre um indicador](#questionar-sobre-um-indicador). A dimensão tem de existir no projeto. | `region_lookup.region` associada à dimensão *Região* |
+| **Colunas de tempo** (opcional, `time` na API) | Uma coluna de data, ou uma coluna de ano fiscal e uma coluna de período, para que uma pergunta possa pedir um período fiscal e [compará-lo ao longo do tempo](#comparar-ao-longo-do-tempo). | `fiscal_year` e `fiscal_period` |
+
+Uma coluna de uma tabela de consulta escreve-se `<table>.<column>`; o assistente escreve-as por si. Todas as tabelas e colunas de uma definição têm de existir no projeto; uma definição que indique uma que não exista é recusada ao ser guardada. Um indicador com cenário não pode filtrar pela coluna do cenário nem oferecê-la como coluna de decomposição: o cenário determina que linhas são lidas, pelo que um filtro como `scenario` `eq` *Actual* pertence ao cenário, e não aos filtros.
+
+Um indicador pode também ser construído a partir de outros indicadores, como um rácio, uma soma, uma diferença ou um múltiplo: consulte [Derivar um indicador a partir de outros](#derivar-um-indicador-a-partir-de-outros).
+
+Nada impede que dois indicadores de um projeto partilhem um nome ou um sinónimo. Mantenha-os distintos, caso contrário o assistente tem de adivinhar a que indicador se refere, ou perguntar.
+
+## Quem pode fazer o quê
+
+- **Os Arquitetos do projeto** escrevem, editam e retiram definições. Um projeto público atribui a todos os membros a função de Arquiteto apenas nominalmente, e isso não conta: num projeto público ninguém pode definir um indicador, por isso mantenha os indicadores num projeto com a sua própria lista de acesso.
+- **Quem puder ler o projeto** pode ver e executar as definições.
+- **Um projeto bloqueado recusa qualquer alteração.** Definir, editar e retirar aguardam todos que o projeto seja desbloqueado.
+
+## Definir um indicador
+
+Se for Arquiteto do projeto, peça ao seu assistente de IA ligado, em linguagem natural:
+
+> *«No projeto **Vendas**, define um indicador com o nome **Receita líquida**, com os sinónimos receita e vendas: a soma de `net_amount` em `sales_fact`, associada a `region_lookup` através de `region_code`, que possa ser decomposta pela `region` da tabela de consulta, por `product_line` e por `fiscal_year`; as suas linhas reais têm `scenario` Actual e as linhas de orçamento `scenario` Budget.»*
+
+O assistente guarda-o e avisa se uma tabela ou coluna que indicou não existir. O indicador fica ativo assim que é guardado. Cada edição é uma nova **versão** da definição, escrita por quem a fez, e os leitores recebem a nova versão de imediato. Um registo que não altere nada é recusado. A última versão guardada é a **versão atual** do indicador.
+
+Para programadores, a mesma definição através da API REST é:
+
+```json
+POST /rest/v1/analyze/metric/definition
+{
+  "project_id": "<project>",
+  "name": "Net Revenue",
+  "synonyms": ["revenue", "sales"],
+  "memo": "Revenue after returns and discounts. Use for all revenue questions.",
+  "definition": {
+    "source": "sales_fact",
+    "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
+    "measure": {"agg": "sum", "column": "net_amount"},
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
+  }
+}
+```
+
+Cada par em `on` é `[source column, lookup column]`. `time` é `{"year_column", "period_column"}` com um `periods_per_year` opcional, ou `{"column"}` para uma coluna de data com `fiscal_year_start` e `fiscal_year_label` opcionais; consulte [Comparar ao longo do tempo](#comparar-ao-longo-do-tempo).
+
+## O que é verificado ao guardar
+
+Cada gravação executa estas verificações, e uma definição que falhe numa delas é recusada com uma mensagem que indica o problema:
+
+- **Todas as tabelas e colunas existem** no projeto.
+- **Cada tabela de consulta tem uma linha por chave**, nos dados tal como estão nesse momento. Uma tabela de consulta com duas linhas para a mesma chave duplicaria as linhas de origem que lhe correspondem, pelo que a gravação é recusada e indica a tabela. Uma linha de consulta sem valor de chave é ignorada por esta verificação, uma vez que nunca corresponde a uma linha de origem.
+- **Os dados de entrada de um indicador derivado existem** e não estão retirados nem são eles próprios derivados.
+
+<Aside type="caution" title="A verificação da tabela de consulta é executada em cada gravação">
+A verificação de uma linha por chave analisa os dados da tabela de consulta no dia em que guarda. Se essa tabela ganhar mais tarde uma segunda linha para uma chave, o indicador conta duas vezes as linhas de origem que essa chave abrange, e nada o avisa. Para executar a verificação de novo, guarde o indicador outra vez (basta uma alteração à sua descrição). Melhor ainda, mantenha a chave da tabela de consulta única no fluxo de trabalho que a escreve.
+</Aside>
+
+Cada versão regista quem a guardou e quando. Editar um indicador guarda uma nova versão que os leitores recebem de imediato.
+
+## Derivar um indicador a partir de outros
+
+Um **indicador derivado** é aritmética sobre indicadores que já existem: a *Receita líquida por ETC* é a *Receita líquida* dividida pelos *Efetivos (ETC)*. É definido, consultado e retirado como qualquer outro indicador. O que difere é a sua definição, que indica os indicadores a partir dos quais é construído em vez de uma tabela.
+
+| Operação | O que calcula | Dados de entrada |
+|---|---|---|
+| `ratio` | o primeiro dado dividido pelo segundo | dois indicadores |
+| `add` | o primeiro dado mais o segundo | dois indicadores |
+| `subtract` | o primeiro dado menos o segundo | dois indicadores |
+| `scale` | o dado multiplicado por um `factor` fixo | um indicador e um número |
+
+Os dados de entrada são **indicadores base** do mesmo projeto, do tipo definido acima a partir de uma tabela. Um indicador derivado não pode ser construído a partir de outro indicador derivado, nem pode utilizar o mesmo dado de entrada duas vezes.
+
+Peça ao assistente:
+
+> *«No projeto **Vendas**, define um indicador com o nome **Receita líquida por ETC** como o rácio entre a **Receita líquida** e os **Efetivos (ETC)**.»*
+
+Através da API REST, a `definition` indica os dados de entrada pelos respetivos ids, que `metric_find` ou a lista de definições lhe fornece. A ordem é importante: o primeiro id é o numerador de um `ratio` e o indicador do qual se subtrai num `subtract`.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` recebe um dado de entrada e um `factor`: `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` anualiza um valor mensal.
+
+**Como é calculado.** Cada dado de entrada é calculado isoladamente, na decomposição pedida e com o seu acesso às linhas, e os resultados são depois combinados para cada valor da decomposição. Totalizar cada dado de entrada antes de os combinar é o que mantém rigoroso um rácio entre duas tabelas: associar primeiro as linhas contaria uma linha uma vez por cada linha que encontrasse do outro lado. Quando um dado de entrada não tem linhas para um valor da decomposição, o valor derivado correspondente fica vazio, tal como um rácio cujo denominador seja zero; nenhum dos dois é comunicado como zero.
+
+**As colunas de decomposição são calculadas, não declaradas.** Um indicador derivado só pode ser decomposto pelas colunas que *todos* os dados de entrada permitem, e essa lista é apresentada junto da sua definição. Se pretender pedir o indicador derivado por região, atribua a cada dado de entrada `region_lookup.region`, escrita da mesma forma, como coluna de decomposição. Dados de entrada que não partilhem nenhuma coluna de decomposição originam um indicador derivado que só responde como um total único. Uma pergunta que agrupe ou filtre por qualquer outra coisa é recusada, como em qualquer indicador. Uma lista vazia junto de um indicador derivado significa que um dos seus dados de entrada já não é utilizável: está retirado ou em falta.
+
+**Guardar verifica os dados de entrada.** Um indicador derivado só pode ser guardado quando cada dado de entrada existe, não está retirado e não é ele próprio derivado. Tanto os leitores como os Arquitetos obtêm sempre a versão atual de cada dado de entrada e do indicador derivado. Um dado de entrada não está fixado a uma versão: quando é guardada uma versão posterior de um dado de entrada, os valores do indicador derivado mudam com ela.
+
+**Um dado de entrada permanece em utilização enquanto um indicador derivado o usar.** Não pode ser retirado nem convertido num indicador derivado; a recusa indica o indicador que o utiliza. Para retirar um dado de entrada, retire primeiro o indicador derivado ou guarde uma versão dele que não utilize esse dado.
+
+## Questionar sobre um indicador
+
+Quem puder ler o projeto pode questionar o assistente de IA integrado do PlaidCloud, ou um assistente ligado por MCP:
+
+> *«Qual foi a receita líquida por região no AF26?»*
+
+O assistente reconhece o indicador pelo nome ou por um dos seus sinónimos (a pesquisa ignora maiúsculas e minúsculas e corresponde a parte de um nome, pelo que *receita* encontra *Receita líquida*), retira da pergunta a decomposição e os filtros e executa a definição. Uma pergunta só pode agrupar ou filtrar por uma das colunas de decomposição do indicador; uma que peça qualquer outra coisa é recusada em vez de ser respondida com uma suposição. O mesmo acontece com um indicador cuja tabela perdeu uma coluna desde que foi guardado: a recusa indica o indicador e a sua versão, e um Arquiteto tem de corrigir a definição.
+
+**As suas palavras tornam-se os valores da coluna através de uma dimensão.** Quando um Arquiteto associou uma coluna de decomposição a uma dimensão, o assistente procura as palavras da sua pergunta nos nomes e aliases dos membros dessa dimensão, ignorando maiúsculas e minúsculas. Uma palavra que designe um membro torna-se os valores desse membro: uma folha é o seu próprio valor, e um elemento pai como *EMEA* expande-se para todas as folhas abaixo dele, de modo que «receita líquida na EMEA» filtra por todas as regiões da EMEA. Uma palavra que não designe nenhum membro, ou que designe mais do que um (*Seaboard* pode ser um alias de dois membros) sem nenhum deles ter exatamente a grafia que utilizou, regressa como uma lista de candidatos sobre a qual o assistente lhe pergunta; nunca escolhe um por si. Procurar palavras numa dimensão exige permissão para ler dimensões, tal como a leitura de uma dimensão em qualquer outro local do PlaidCloud.
+
+O resultado a partir do qual o assistente trabalha indica o indicador e a sua versão, e diz se o acesso às linhas foi aplicado. Se uma resposta não disser que indicador utilizou, pergunte. No assistente de IA integrado do PlaidCloud, os valores aparecem num cartão próprio com um ✓; consulte [Valores de um indicador](/pt-pt/guides/ai-assistant/weave-tab/#valores-de-um-indicador). Para saber como o PlaidCloud classifica e acompanha de ressalvas as respostas de IA em geral, consulte [Respostas em que pode confiar](../honest-answers/).
+
+**O acesso às linhas é aplicado a todas as tabelas que o indicador lê**, tanto a origem como cada tabela de consulta. Quando uma linha de consulta está oculta para si, mas a linha de origem que ela identifica não está, a linha de origem continua a contar. Suponha que não pode ver a linha de consulta da região *APAC*, mas pode ver as suas vendas: essas vendas estão no seu total, aparecem sob uma região em branco numa decomposição por região e, em geral, ficam de fora se filtrar por região, ou se o próprio indicador filtrar por uma coluna da tabela de consulta.
+
+O acesso às linhas também condiciona a consulta: quando a coluna de decomposição está sujeita a governação, só lhe são oferecidos os valores que o seu acesso permite. Um membro sem nada abaixo dele que possa ver nunca é oferecido, nem como valor nem como candidato, e um elemento pai expande-se apenas para as folhas que pode ver. Um Arquiteto, que lê todas as linhas, vê todos os membros.
+
+Os Arquitetos leem todas as linhas, tal como em qualquer outro local do projeto.
+
+## Comparar, ordenar e quota
+
+Uma pergunta sobre um indicador pode também pedir uma comparação, uma ordenação e uma quota do total. Cada uma é um cálculo fixo sobre os valores do próprio indicador, com o acesso às linhas de quem pergunta; nenhuma é calculada pelo assistente.
+
+| Pedir | O que regressa | Na API |
+|---|---|---|
+| **Variação face ao orçamento** | Para cada valor da decomposição: o valor real, o valor orçamentado, a diferença (`value`) e a diferença como percentagem da dimensão do orçamento (`pct`), que mantém o sinal da diferença quando o orçamento é negativo. | `compare: "variance"` |
+| **Quota do total** | O valor de cada linha dividido pelo total de todas as linhas da decomposição (`share`), ou das linhas que partilham as colunas `within` indicadas. | `share: {"within": ["region"]}`; `{}` para o total global |
+| **N primeiros ou últimos** | Os N valores mais altos, ou os N mais baixos com `order: "asc"`, com o respetivo `rank`; por grupo quando indica colunas `within`. As linhas empatadas partilham uma posição e são todas mantidas, pelo que pode haver mais de N. Para um indicador de custo, *mais acima do orçamento* corresponde aos N primeiros da variação; para um indicador de receita, aos N últimos. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *«Quais são os cinco centros de custo mais acima do orçamento no projeto **Finanças**?»*
+>
+> *«Que quota da despesa total representa cada região e qual é a região maior?»*
+
+Uma variação exige um indicador com **cenário**; um indicador sem cenário, ou um indicador derivado, recusa-a. Cada lado é totalizado isoladamente antes de os dois serem comparados: um valor da decomposição sem linha de orçamento, ou sem linha real, apresenta uma diferença vazia em vez de zero (a exceção é um indicador `count` pedido como total único, em que um lado sem linhas conta zero), e o mesmo acontece com uma percentagem sobre um orçamento nulo.
+
+A ordenação e a quota incidem sobre o valor do indicador, ou sobre a diferença quando é pedida uma variação ou uma [comparação ao longo do tempo](#comparar-ao-longo-do-tempo), pelo que *«que centros de custo explicam a maior parte do excesso de despesa»* é uma variação com quota e ordenação. `pct` é uma percentagem, pelo que `12` significa 12 %, ao passo que `share` é uma fração. A quota é calculada sobre todas as linhas da decomposição antes de os N primeiros manterem algumas, pelo que as quotas das linhas devolvidas não têm de somar um. Um valor vazio fica em último lugar seja qual for a ordem pedida e tem uma quota vazia; o mesmo acontece com uma quota sobre um total nulo.
+
+Uma quota refere-se ao que *o utilizador* consegue ver. Quem tiver o acesso às linhas limitado à EMEA obtém os centros de custo da EMEA como quotas do total da EMEA, e o resultado indica que o acesso às linhas foi aplicado. As colunas `within` de uma quota ou de uma ordenação têm de estar entre as colunas de decomposição pedidas, e é recusada uma pergunta que agrupe por uma coluna com o nome de uma das colunas do próprio resultado (`value` e, quando o operador que a produz é pedido, `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` ou `cumulative`). Uma pergunta com duas comparações, ou duas ordenações, é recusada.
+
+## Comparar ao longo do tempo
+
+Um indicador cuja definição tem **colunas de tempo** (`time` na API) pode ser pedido para um período fiscal, comparado com o período anterior e totalizado período a período. As colunas de tempo indicam onde cada linha se situa no calendário fiscal, de duas formas:
+
+- **Uma coluna de data**, com `fiscal_year_start`, o mês civil em que o ano fiscal começa (`1` para janeiro, o valor predefinido). Os seus períodos são os meses do ano fiscal, numerados a partir do mês de início: com um ano a começar em outubro, o período 1 é outubro e o período 7 é abril. Um trimestre corresponde a três deles. Um ano fiscal que não comece em janeiro recebe, por predefinição, o nome do ano civil em que **termina** (`fiscal_year_label` é `ending`); defina `fiscal_year_label` como `starting` para o designar pelo ano em que começa. Com início em outubro, os meses de outubro de 2025 a setembro de 2026 são o AF2026 por predefinição e o AF2025 com `starting`. As linhas são lidas por intervalo de datas, o que mantém a pergunta rápida numa tabela grande.
+- **Uma coluna de ano fiscal e uma coluna de período**, ambas inteiras, com o ano fiscal (`2026`, não `26`) e o período dentro dele, numerado a partir de 1, com `periods_per_year`: `12` por predefinição, `13` para um calendário de 13 períodos, `52` para semanas, `4` para trimestres. Só existem trimestres quando os períodos se dividem em quatro. Um calendário com anos de 53 semanas pode definir `53`, à custa dos seus trimestres. Uma gravação é recusada se alguma das colunas contiver um valor que não seja um número inteiro, como *2024-01* ou *FY26*, e a recusa indica a coluna e o valor. Dígitos guardados como texto, como `07`, são aceites, tal como um período fora do ano, como o período 0 ou 13 de um razão: uma pergunta sobre um período deixa essas linhas de fora.
+
+Uma pergunta indica então o **período** a que se refere: um ano fiscal, ou um trimestre ou um período dele. **Até à data** estende-o até ao início do ano, pelo que *abril acumulado no ano* corresponde aos primeiros meses do ano até abril, inclusive.
+
+> *«Quais foram as vendas no 1.º trimestre do AF2026 por região e como se comparam com as do trimestre anterior?»*
+>
+> *«As vendas acumuladas no ano até abril face aos mesmos meses do ano passado.»*
+>
+> *«Mostra-me as vendas do AF2026 por mês como total acumulado.»*
+
+| Pedir | O que regressa | Na API |
+|---|---|---|
+| **Um período** | O indicador apenas nesse período, com as decomposições, quotas e ordenações habituais; uma variação face ao orçamento lê ambos os cenários nesse período. | `period: {"year": 2026}`; `{"year": 2026, "quarter": 1}`; `{"year": 2026, "period": 7}` |
+| **Ano contra ano** | Para cada valor da decomposição: o valor do período (`current`), o mesmo período um ano antes (`prior`), a diferença (`value`) e `pct`. A resposta indica o período anterior. | `compare: "yoy"` com um `period` |
+| **Trimestre contra trimestre** | O mesmo, face ao trimestre anterior. O primeiro trimestre é comparado com o quarto do ano anterior. | `compare: "qoq"`; o `period` tem de indicar um `quarter` |
+| **Período contra período** | O mesmo, face ao período anterior. O primeiro período é comparado com o último do ano anterior. Num calendário de 12 períodos, é mês contra mês, de onde vem o nome. | `compare: "mom"`; o `period` tem de indicar um `period` |
+| **Acumulado no ano** | O ano desde o início até ao fim do trimestre ou período indicado, isoladamente ou, com `yoy`, face aos mesmos meses do ano anterior. Recusado com `qoq` ou `mom`. | `"to_date": true` no `period` |
+| **Total acumulado** | Uma linha por cada ano fiscal e período no período pedido, com o valor do próprio período (`value`) e o total até ao momento (`cumulative`). Sem período, percorre da primeira à última linha ao longo dos anos. Não admite comparação, quota nem ordenação. | `cumulative: true` |
+
+`pct` é a diferença como percentagem da dimensão do valor anterior, mantendo o sinal da diferença quando o valor anterior é negativo, tal como numa variação. Cada um dos dois períodos é totalizado isoladamente e os dois totais são emparelhados por valor da decomposição; nada é lido de uma linha vizinha. Assim, um mês sem linhas no ano passado compara-se como vazio, e não com o mês mais próximo que tivesse linhas, e um valor da decomposição com linhas em apenas um dos dois períodos mostra o outro, a diferença e `pct` como vazios em vez de zero.
+
+Um total acumulado destina-se a indicadores `sum` e `count`. Uma média, uma contagem distinta, um mínimo ou um máximo não se somam ao longo do tempo e são recusados. Um período sem linhas não tem linha num total acumulado, e o total prossegue para além dele.
+
+As colunas de tempo não podem ser usadas para filtrar nem agrupar numa pergunta que indique um período, compare ao longo do tempo ou peça um total acumulado: determinam que linhas são lidas e como são colocadas. Uma pergunta que não faça nada disto pode continuar a filtrar e agrupar por elas como por qualquer coluna de decomposição. São também recusados: um período para além do fim do ano (período 13 num calendário de 12 períodos), um trimestre num calendário sem trimestres, uma comparação temporal ou um total acumulado num indicador derivado, e uma pergunta que não indique o tipo de período de que a sua comparação precisa. Um indicador derivado pode ser pedido para um período quando todos os seus dados de entrada têm colunas de tempo no mesmo calendário fiscal, e nesse caso também nenhuma delas pode ser usada para filtrar ou agrupar. Uma comparação temporal é a única comparação da pergunta, pelo que não pode ser combinada com uma variação face ao orçamento, embora uma quota e uma ordenação continuem a aplicar-se à diferença.
+
+## Retirar um indicador
+
+Retirar um indicador tira-o de serviço definitivamente: quem lê o projeto deixa de o ver, os Arquitetos veem-no marcado como retirado com o seu histórico, e deixa de poder ser editado ou executado. Um Arquiteto retira-o pedindo ao assistente, ou com `POST /rest/v1/analyze/metric/retire`. Um indicador a partir do qual é construído um indicador derivado não pode ser retirado até esse indicador derivado ser retirado, ou até ser guardada uma versão dele que já não utilize este dado de entrada. Para substituir um indicador retirado, defina um novo.
+
+## Através de MCP e da API REST
+
+| Ação | Ferramenta MCP | REST |
+|---|---|---|
+| Listar os indicadores de um projeto, cada um com a sua definição completa; `q` mantém os que contêm o texto no nome ou num sinónimo | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
+| Resolver as palavras de uma pergunta nos valores de uma coluna de decomposição | `metric_values` com `column` e `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
+| Ler um indicador | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
+| Definir ou editar | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
+| Retirar | `metric_review` com `action: retire` | `POST /rest/v1/analyze/metric/retire` |
+| Executar | `metric_run` com `group_by`, `filters` e, opcionalmente, `period`, `compare`, `share`, `top` e `cumulative` | `POST /rest/v1/analyze/metric/run` com os mesmos campos |
+| Versões anteriores (apenas Arquitetos) | | `GET /rest/v1/analyze/metric/flashback-versions` |
+
+`metric_upsert` recebe um `spec` de `{name, memo, synonyms, definition}` e aceita `dry_run` para verificar uma definição sem a guardar. A `definition` de um indicador base é `{source, joins, measure, filters, grain, dimensions, scenario, time}`, com `dimensions` como `{<breakdown column>: <dimension id>}`, `measure` como `{agg, column}` ou `{agg: "weighted_avg", column, weight}`, `scenario` como `{column, actual, budget}` e `time` como `{column, fiscal_year_start, fiscal_year_label}` ou `{year_column, period_column, periods_per_year}`. A `definition` de um indicador derivado é `{kind, op, inputs, factor}`; as suas colunas de decomposição calculadas regressam como `grain` junto da definição.
+
+## Ver também
+
+- [Caminhos de análise](../analysis-paths/) — dê nome às tabelas sobre as quais as pessoas perguntam e atribua aos assistentes filtros permanentes e terminologia para cada uma
+- [Respostas em que pode confiar](../honest-answers/) — como o PlaidCloud classifica e acompanha de ressalvas todas as respostas de IA
+- [Controlar o acesso aos dados](/pt-pt/get-started/tutorials/control-data-access/) — o acesso às linhas com que um indicador é executado

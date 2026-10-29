@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: Lance lotes de lançamentos do razão geral no Oracle Fusion Cloud a partir de tabelas de cabeçalho e de linhas através da interface GL FBDI, com um modo de pré-visualização que valida cada lote antes de qualquer lançamento.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lotes de lançamentos do razão geral no Oracle Fusion Cloud através da sua [ligação Oracle Fusion](/pt-pt/guides/connections/oracle-fusion/), encaminhados pelo pipeline de escrita ERP partilhado do PlaidCloud. O passo recebe uma tabela de cabeçalho (uma linha por lote) e uma tabela de linhas (uma ou mais linhas por lote), grava cada lote na tabela de preparação GL_INTERFACE da Oracle como um ficheiro FBDI e submete a tarefa do Enterprise Scheduler Service (ESS) Journal Import Launcher. **Validate Only** constrói e verifica todos os lotes sem reservar o razão e sem lançar; uma tabela de resultados opcional regista o desfecho de cada lote.
+
+<Aside type="caution">
+Execute todos os lotes primeiro em **Validate Only**, reveja a tabela de resultados e reconcilie alguns lançamentos diretamente no Oracle Fusion antes de confiar neste passo para lançar diários reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Ligação
+
+- **Fusion Connection** — a ligação Oracle Fusion através da qual se lança.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por lote: `batch_id` (o identificador do lote, obrigatório), `ledger_id` (obrigatório), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Tabela de linhas** — uma ou mais linhas por `batch_id`: `account_combination` (ou as respetivas colunas de segmento), `entered_debit`, `entered_credit`, `currency_code`.
+- **Tabela de resultados** — id da tabela de saída: uma linha por lote com `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — selecionado por predefinição. Apenas verificação prévia; sem reserva no razão nem lançamento. Uma configuração de passo que omita totalmente este campo — por exemplo, criada através da API REST, do MCP ou de uma importação de pacote de fluxo de trabalho — também assume por predefinição Validate Only, em vez de um lançamento real.
+- **Continue On Error** — selecionado por predefinição. Continua a lançar os restantes lotes depois de um falhar; se estiver desmarcado, a execução pára na primeira falha.
+
+## Como funciona o lançamento
+
+O PlaidCloud carrega cada lote na tabela de preparação GL_INTERFACE da Oracle através de um ficheiro FBDI, depois submete e consulta a tarefa ESS Journal Import Launcher até esta indicar um estado terminal. Um lote só é comunicado como `posted` quando esse estado terminal é **confirmado** — um lote que chega à tabela de interface mas cuja tarefa de importação nunca é concluída permanece em quarentena (não é comunicado como lançado nem descartado em silêncio), em vez de ser registado como sucesso apenas porque os dados preparados existem.
+
+## Corrigir um lançamento registado
+
+Este passo nunca elimina nem reescreve um lote de lançamentos já registado. Para corrigir um, lance um novo lote com débitos e créditos trocados em relação ao original — um lançamento de reversão registado — em vez de editar o original no local.
+
+## Limites de capacidade
+
+| Limitação | O que significa |
+|---|---|| Latência da tarefa ESS | O Journal Import Launcher é executado como uma tarefa agendada — espere que uma execução de lançamento demore bastante mais do que uma escrita direta por API. |
+| A reversão é um novo lote, não uma edição no local | As correções lançam um novo lote de reversão com débitos/créditos trocados. Não é possível anular nem eliminar um lote já registado. |
+
+## Ver também
+
+- [Connect to Oracle Fusion](/pt-pt/guides/connections/oracle-fusion/) — guia completo sobre configuração, pré-visualização e lançamento
+- [Oracle Fusion Connector](/pt-pt/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusion Steps](/pt-pt/reference/workflow-steps/oracle-fusion/)
+- [Review ERP Post History](/pt-pt/guides/connections/erp-post-history/)

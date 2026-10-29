@@ -1,0 +1,131 @@
+---
+title: Oracle Fusion に接続する
+description: OAuth2 資格情報で PlaidCloud を Oracle Fusion Cloud に接続し、OData または BIP 抽出で GL 残高と仕訳バッチを取得して、FBDI と GL インターフェイス経由で転記します。
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud を、OData と BI Publisher（BIP）のレポートエンドポイント経由で Oracle Fusion Cloud ERP に接続し、OData を手書きすることなく総勘定元帳の残高と仕訳バッチを取得します。また、Oracle のファイルベースデータインポート（FBDI）の経路で仕訳エントリを書き戻して転記します。このガイドでは、接続、インポートステップ、転記ステップを説明します。
+
+<Aside type="caution">
+すべてのインポートは、まずテスト環境で実行してください。また、本番で転記する前に、すべての転記バッチで、以下の **Validate Only** を使った確認を行ってください。
+</Aside>
+
+## 前提条件
+
+Oracle Fusion Cloud で、次のものが必要です。
+
+- PlaidCloud 専用の **API ユーザー**。読み取るエンティティ（総勘定元帳の照会）と、転記に使用する FBDI/GL インターフェイスの機能へのアクセス権を持つロールが必要です。
+- Fusion Cloud の**インスタンス URL**（例: `https://yourorg.fa.us2.oraclecloud.com`）。
+- **OAuth2 クライアント資格情報**（クライアント ID とシークレット）、または Fusion Cloud のセキュリティ設定が統合ユーザー向けに発行する基本認証の API 資格情報。テナントのプロビジョニングに合わせたものを使用します。
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections** を開き、`New Connection` をクリックします。
+
+2. メニューから **Oracle Fusion** を選択します。
+
+3. 各フィールドに入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | 分かりやすい名前（例: `Fusion Prod`）。 |
+   | インスタンス URL | Fusion Cloud のインスタンス URL。 |
+   | クライアントID | API ユーザーの OAuth2 クライアント ID（基本認証の場合はユーザー名）。 |
+   | クライアントシークレット | API ユーザーの OAuth2 クライアントシークレット（基本認証の場合はパスワード）。 |
+
+4. `Create` をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. ワークフローに **Import Fusion Entity** ステップを追加します。
+
+2. **Fusion Connection** に接続を、**エンティティタイプ**に `gl_balances` を、**ターゲットテーブル**に作業用のテーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内の単一ステップの実行](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが取り込まれれば、資格情報とインスタンス URL が正しいことが確認できます。エラーが発生した場合は、問題が示されます。資格情報の誤り、インスタンス URL の誤り、またはエンティティの読み取り権限がないロールのいずれかです。
+
+## データをインポートする
+
+2 つのインポートステップが、取得の規模に応じて使い分けられます。
+
+<Steps>
+
+1. 通常の範囲を絞った取得には、**Import Fusion Entity** ステップを追加します。Oracle Fusion の OData または BIP エンドポイントを直接呼び出します。
+
+2. 大規模な抽出には、代わりに **Import Fusion Bulk Extract** ステップを追加します。FBDI/BIP の抽出ジョブを送信し、完了後に生成されたファイルをダウンロードします。
+
+3. **エンティティタイプ**に `gl_balances` または `journal_batches` を設定します。
+
+4. **フィルター**を追加して取得を絞り込みます。日付や会計期間の範囲（`ge`/`le`）、および残高/金額フィールドの数値範囲を指定できます。エンティティごとに、Oracle Fusion がサーバー側で実際にフィルターできるフィールドに限られます。
+
+5. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+### エンティティとフィルター
+
+| エンティティタイプ | 取得される内容 | フィルター可能なフィールド |
+|---|---|---|
+| `gl_balances` | 総勘定元帳の勘定科目残高 | 会計期間の範囲、勘定科目の範囲、残高金額の範囲 |
+| `journal_batches` | 仕訳バッチのヘッダーとステータス | 日付範囲、会計期間の範囲 |
+
+<Aside type="note">
+`gl_balances` と `journal_batches` は、**範囲**フィルター（日付、期間、数値フィールドに対する `ge`/`le`）と、台帳や通貨などの離散的なフィールドに対する等価フィルターの両方を受け付けます。一方の境界のみを指定した範囲フィルターは、もう一方が開いたままになります。
+</Aside>
+
+## 仕訳エントリを転記する
+
+**Oracle Fusion: Post Journal Entry** ステップは、PlaidCloud の共通の ERP 書き込みパイプラインを通じて、Oracle の FBDI GL インターフェイスのロード経路を使用し、総勘定元帳の仕訳エントリを転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル**（仕訳エントリ 1 件につき 1 行）を作成し、`batch_id`（バッチ識別子）、`ledger_id`、`journal_source`、`journal_category`、`accounting_date`、`description` を含めます。
+
+2. **明細テーブル**（`batch_id` ごとに 1 行以上）を作成し、`account_combination`（またはそのセグメント列）、`entered_debit`、`entered_credit`、`currency_code` を含めます。
+
+3. **Oracle Fusion: Post Journal Entry** ステップを追加し、**Fusion Connection**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル**を設定します。
+
+4. **Validate Only** をオンのままにしてステップを実行します。PlaidCloud は、台帳の申請を行わず、何も転記せずに、すべてのバッチを構築してチェックします。
+
+5. 結果テーブルを確認します（バッチごとに 1 行: `batch_id`、`natural_key`、`confirmation_id`、`status`、`message`）。`error` の行を修正し、再度検証します。
+
+6. **Validate Only** をオフにして再度実行すると、実際に転記されます。最初に失敗したバッチで実行を完全に停止したい場合を除き、**Continue On Error** はオンのままにしてください。
+
+</Steps>
+
+### 転記の仕組み
+
+PlaidCloud は、各仕訳バッチを FBDI ファイルとして Oracle の GL_INTERFACE ステージングテーブルに書き込み、**Journal Import Launcher** の Enterprise Scheduler Service（ESS）ジョブを送信して、終了状態が報告されるまで非同期でポーリングします。エントリが `posted` として報告されるのは、その終了状態が**確認済み**になってからです。インターフェイステーブルには取り込まれたものの、インポートジョブが完了しないバッチは、転記済みとして記録されずに隔離されたままになるため、停止した ESS ジョブが成功として見過ごされることはありません。PlaidCloud 独自の台帳の申請は、再試行または再実行されたバッチで、同じバッチが二重にロードされることを防ぎます。
+
+### 転記済みエントリを訂正する
+
+このステップが、転記済みの仕訳バッチを削除したり書き換えたりすることはありません。訂正するには、元のエントリをその場で編集するのではなく、元のエントリの借方と貸方を入れ替えた新しいバッチ、つまり**転記済みの取消仕訳**を転記します。これにより Oracle Fusion 独自の監査証跡が維持され、アプリケーション上で直接訂正する場合の方法とも一致します。
+
+### 機能の制限 — 本番で転記する前にお読みください
+
+<Aside type="caution">
+- **ESS ジョブの待ち時間。** Journal Import Launcher は同期呼び出しではなく、スケジュールされたジョブとして実行されます。転記の実行には、直接 API で書き込む場合よりも大幅に長い時間がかかります。待ち時間が重要な単一エントリの転記には、このステップを使用しないでください。
+- **一括抽出の待ち時間。** `import_fusion_bulk_extract` は FBDI/BIP のエクスポートジョブを待機します。`import_fusion_entity` の直接 OData/BIP 経路では大きすぎる取得にのみ使用してください。
+</Aside>
+
+## 関連情報
+
+- [Oracle Fusion コネクタ](/ja/reference/connectors/erp/oracle-fusion/) — フィールドリファレンス。
+- [Import Fusion Entity ステップ](/ja/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract ステップ](/ja/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry ステップ](/ja/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [ERP 転記履歴を確認する](/ja/guides/connections/erp-post-history/) — すべての Oracle Fusion の転記試行とその現在の状態の継続的な記録です。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

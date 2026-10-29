@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: Contabilice lotes de asientos del libro mayor en Oracle Fusion Cloud a partir de tablas de encabezados y de líneas mediante la interfaz GL de FBDI, con un modo de vista previa que valida cada lote antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza lotes de asientos del libro mayor en Oracle Fusion Cloud a través de su [conexión de Oracle Fusion](/es/guides/connections/oracle-fusion/), mediante la canalización de escritura de ERP compartida de PlaidCloud. El paso toma una tabla de encabezados (una fila por lote) y una tabla de líneas (una o más filas por lote), escribe cada lote en la tabla de preparación GL_INTERFACE de Oracle como un archivo FBDI y envía el trabajo de Enterprise Scheduler Service (ESS) Journal Import Launcher. **Validate Only** genera y comprueba cada lote sin reservar el libro mayor y sin contabilizar; una tabla de resultados opcional registra el resultado de cada lote.
+
+<Aside type="caution">
+Ejecute primero todos los lotes en **Validate Only**, revise la tabla de resultados y concilie algunas contabilizaciones directamente en Oracle Fusion antes de confiar en este paso para contabilizar asientos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **Fusion Connection**: la conexión de Oracle Fusion a través de la cual se contabiliza.
+
+### Datos
+
+- **Tabla de encabezados**: una fila por lote: `batch_id` (el identificador de su lote, obligatorio), `ledger_id` (obligatorio), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Tabla de líneas**: una o más filas por `batch_id`: `account_combination` (o sus columnas de segmento), `entered_debit`, `entered_credit`, `currency_code`.
+- **Tabla de resultados**: id de la tabla de salida: una fila por lote con `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only**: marcada de forma predeterminada. Solo comprobación previa; sin reserva del libro mayor y sin contabilización. Una configuración de paso que omita este campo por completo, por ejemplo una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo, también adopta Validate Only de forma predeterminada en lugar de una contabilización real.
+- **Continue On Error**: marcada de forma predeterminada. Sigue contabilizando los lotes restantes después de que uno falle; si se desmarca, la ejecución se detiene en el primer fallo.
+
+## Cómo funciona la contabilización
+
+PlaidCloud carga cada lote en la tabla de preparación GL_INTERFACE de Oracle mediante un archivo FBDI y, a continuación, envía el trabajo ESS Journal Import Launcher y consulta su estado hasta que informa de un estado terminal. Un lote solo se notifica como `posted` cuando ese estado terminal está **confirmado**: un lote que llega a la tabla de interfaz pero cuyo trabajo de importación nunca se resuelve permanece en cuarentena (no se notifica como contabilizado ni se descarta en silencio) en lugar de registrarse como correcto solo porque los datos preparados existan.
+
+## Corrección de un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un lote de asientos contabilizado. Para corregir uno, contabilice un lote nuevo con los débitos y créditos invertidos respecto al original (un asiento de reversión contabilizado) en lugar de editar el original.
+
+## Límites de la funcionalidad
+
+| Limitación | Qué significa |
+|---|---|| Latencia del trabajo ESS | Journal Import Launcher se ejecuta como un trabajo programado: una ejecución de contabilización tardará bastante más que una escritura directa por API. |
+| La reversión es un lote nuevo, no una edición en el lugar | Las correcciones contabilizan un nuevo lote de reversión con débitos y créditos invertidos. No es posible anular ni eliminar un lote ya contabilizado. |
+
+## Temas relacionados
+
+- [Connect to Oracle Fusion](/es/guides/connections/oracle-fusion/): tutorial completo sobre configuración, vista previa y contabilización
+- [Oracle Fusion Connector](/es/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusion Steps](/es/reference/workflow-steps/oracle-fusion/)
+- [Review ERP Post History](/es/guides/connections/erp-post-history/)

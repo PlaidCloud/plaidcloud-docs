@@ -1,0 +1,121 @@
+---
+title: Data Foundation 的 NetSuite 访问权限
+description: NetSuite 管理员需要设置哪些内容，才能让 PlaidCloud Data Foundation 直接读取 NetSuite——只读角色、OAuth 2.0 集成和证书——以及需要回传哪些信息。
+sidebar:
+  label: Data Foundation 的 NetSuite 访问权限
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/zh-cn/guides/projects/data-foundation/) 将您连接的每个 ERP 系统和实例中的数据汇集到一个 Common Finance Model 中，NetSuite 是它直接读取的 ERP 之一。NetSuite 连接使用 OAuth 2.0 机器对机器访问：一个只读角色、一个使用客户端凭据授权的集成记录，以及一个证书。本页面面向负责进行这些设置的 NetSuite 管理员，以及请他们设置的 PlaidCloud 用户。
+
+PlaidCloud 只读取数据。任何人都无需通过电子邮件发送密码、令牌密钥或私钥。
+
+## 开始之前：创建证书
+
+PlaidCloud 用户的团队创建一个 RSA 密钥对并保管私钥。只有公共证书会交给 NetSuite。例如，使用 OpenSSL：
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+将 `plaidcloud_netsuite_public.pem` 附加到发给管理员的请求中。请保留 `plaidcloud_netsuite.pem`，用于 PlaidCloud 中的**私钥**字段。
+
+## 发送访问请求
+
+在项目的 **Foundation** 选项卡上，在 **NetSuite 连接**下选择**创建新连接**。表单会显示完整的请求。点击**复制请求**可将其粘贴到您自己的邮件中，或点击**通过电子邮件发送请求**，在您的邮件程序中打开它，主题为“NetSuite access for PlaidCloud”。请附上公共证书。
+
+## NetSuite 管理员需要设置的内容
+
+<Steps>
+
+1. **启用功能。** 在 **Setup > Company > Enable Features > SuiteCloud** 下，启用：
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook（SuiteQL 需要）
+
+2. **创建一个只读角色**，例如“PlaidCloud Read Only”，并赋予以下权限：
+
+   | 权限 | 级别 |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   请让该角色能够访问 PlaidCloud 报告所涉及的每家子公司。
+
+3. **创建集成记录。** 在 **Setup > Integration > Manage Integrations > New** 下：
+
+   - **Name：** PlaidCloud
+   - **Authentication：** 仅勾选 **Client Credentials (Machine to Machine) Grant**——不要勾选基于令牌的身份验证和授权码授权。
+   - **Scopes：** REST Web Services 和 RESTlets。
+
+   保存并复制 **Client ID**。NetSuite 只会在确认页面上显示一次。
+
+4. **映射证书。** 在 **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New** 下：
+
+   - **Entity：** PlaidCloud 所代表的用户。
+   - **Role：** 第 2 步中的角色。
+   - **Application：** PlaidCloud，即第 3 步中的集成。
+   - **Certificate：** 附加在请求中的公共证书。
+
+   保存并复制 **Certificate ID**。
+
+</Steps>
+
+## 需要回传的信息
+
+| 管理员发送 | 在 PlaidCloud 中输入为 |
+|---|---|
+| **Account ID**，位于 **Setup > Company > Company Information**——例如 `1234567`，沙盒则为 `1234567_SB1` | **账户 ID** |
+| 第 3 步中的 **Client ID** | **客户端 ID** |
+| 第 4 步中的 **Certificate ID** | **证书 ID** |
+| PlaidCloud 可以读取的子公司 | 在 PlaidCloud 的**子公司**下选择 |
+
+与证书匹配的私钥由 PlaidCloud 用户的团队保管。他们会自行将其作为**私钥**粘贴到 PlaidCloud 中。
+
+<Aside type="caution">
+请按 NetSuite 显示的内容原样输入 Account ID，沙盒须包含 `_SB1` 后缀。PlaidCloud 会据此推算出 NetSuite 地址。
+</Aside>
+
+## 检查访问权限
+
+回到 PlaidCloud，输入这些值并点击**测试连接**。每个数据集会显示为**可读取**、**缺少权限**或**错误**：
+
+| 数据集 | 所需权限 |
+|---|---|
+| 销售明细行 | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| 库存余额 | Lists: Items and Locations (View) |
+| 预算 | Transactions: Budget (View) |
+| 统计账户 | Reports: General Ledger (View) |
+| 会计期间 | Setup: Accounting Periods (View) |
+| 子公司 | Lists: Subsidiaries (View) |
+| 汇率 | Lists: Consolidated Exchange Rates (View) |
+| 类别 | Lists: Classes (View) |
+| 位置 | Lists: Locations (View) |
+
+当某个数据集缺失时，测试会指出需要添加的权限。请管理员将它们添加到该角色，然后再次测试。预算是可选的：不使用预算的 NetSuite 账户仍可加载其他所有内容。汇率、类别和位置同样不会阻止加载：如果其中某项无法读取，加载会保留其上次读取的内容。若没有汇率，请改为在**汇率**文件中提供汇率。
+
+## 相关内容
+
+- [Data Foundation](/zh-cn/guides/projects/data-foundation/)
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/)
+- [NetSuite REST 连接器](/zh-cn/reference/connectors/rest/netsuite/)

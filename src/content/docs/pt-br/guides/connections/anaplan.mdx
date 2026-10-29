@@ -1,0 +1,89 @@
+---
+title: Conectar ao Anaplan
+description: Conecte o PlaidCloud ao Anaplan por meio da API de integração dele para ler uma visão salva, executar uma ação de exportação já existente ou ler listas em uma dimensão do PlaidCloud — somente leitura, direto na nuvem.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/anaplan.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud ao **Anaplan** para que um fluxo de trabalho possa ler uma visão salva pelo caminho de solicitação de leitura de grande volume do Anaplan, executar uma ação de exportação já existente ou ler uma ou mais listas do Anaplan em uma dimensão do PlaidCloud. A conexão alcança a API de integração do próprio Anaplan **diretamente na nuvem** — não há caminho de agente local para essas etapas. Este guia aborda a conexão, a autenticação, uma breve introdução a cada uma das três etapas de leitura e considerações sobre agendamento.
+
+<Aside type="note">
+Este conector é somente leitura. Nada é gravado de volta no Anaplan — não há etapa de gravação de volta nem modo de aplicação parcial.
+</Aside>
+
+## Pré-requisitos
+
+Você precisa, do administrador do espaço de trabalho do Anaplan:
+
+- Um **nome de usuário e senha** do Anaplan, ou um **certificado de CA e sua chave privada** registrados em um usuário do Anaplan pelo administrador do espaço de trabalho — com acesso de leitura ao espaço de trabalho e aos modelos que seus fluxos de trabalho vão ler. Consulte [Autenticação](#autenticação) abaixo.
+- O **ID do espaço de trabalho** e o **ID do modelo** dos modelos dos quais você vai ler, visíveis nas configurações do próprio modelo no Anaplan. Ambos também podem ser descobertos ao vivo a partir da conexão depois que ela for criada.
+- Para **Anaplan: Ler visão** — uma **visão salva**, construída exatamente com o recorte de linhas, colunas e filtros que você quer. Consulte [Anaplan: Ler visão](#anaplan-ler-visão) abaixo.
+- Para **Anaplan: Ler exportação** — uma **ação de exportação que já exista** no modelo.
+- Para **Anaplan: Ler lista** — as **listas** do Anaplan que compõem a hierarquia que você quer ler.
+
+## Autenticação
+
+A conexão tem um **Modo de autenticação**: **Básica** (o padrão) ou **Certificate**. Uma conexão existente continua funcionando sem alterações como Básica.
+
+- **Básica** faz login com um nome de usuário e uma senha do Anaplan.
+- **Certificate** faz login com um certificado emitido por uma CA e sua chave privada, ambos colados como texto PEM. A chave privada deve ser **RSA e não criptografada**, e o certificado deve ser aquele que o administrador do espaço de trabalho do Anaplan registrou em seu usuário do Anaplan — emitido por uma CA em que o Anaplan confia para o seu tenant. O PlaidCloud assina um desafio aleatório com a chave e o troca por um token do Anaplan, seguindo o fluxo de autenticação por certificado do próprio Anaplan; não há mais nada a fazer depois que o certificado e a chave são colados, e a renovação do token funciona da mesma forma que no modo Básica. Ambos os campos mascaram o que você cola, e ambos os segredos são armazenados criptografados, da mesma forma que uma senha no modo Básica, e alternar os modos nunca envia as credenciais do outro modo — se você alternar uma conexão existente de Básica para Certificate, precisará colar o certificado e a chave, pois eles não são transferidos.
+
+A autenticação multifator do Anaplan se aplica a usuários que fazem login com e-mail e senha. A autenticação por certificado é a opção sem senha para uma conexão automatizada e agendada.
+
+O modo Certificate recusa antes de contatar o Anaplan se a chave ou o certificado colado não puder ser lido, se a chave estiver criptografada ou não for RSA, ou se a chave não corresponder ao certificado. Se o próprio Anaplan rejeitar o certificado, o erro informa se ele expirou; as causas habituais são um certificado que não está registrado em um usuário do Anaplan ou uma CA em que o seu tenant não confia.
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Anaplan** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `Anaplan Prod`. |
+   | Host da API | Opcional. Deixe em branco para o `https://api.anaplan.com` padrão do Anaplan. |
+   | Host de autenticação | Opcional. Deixe em branco para o `https://auth.anaplan.com` padrão do Anaplan. |
+   | Modo de autenticação | **Básica** (padrão) ou **Certificate**. Consulte [Autenticação](#autenticação) acima. |
+   | Nome de usuário | O nome de usuário da conta do Anaplan. Somente no modo Básica. |
+   | Senha | A senha da conta do Anaplan. Somente no modo Básica. |
+   | Certificado de CA | Texto PEM do certificado X.509 registrado no Anaplan. Somente no modo Certificate. |
+   | Chave privada | Texto PEM da chave privada RSA do certificado, não criptografada. Somente no modo Certificate. |
+   | ID do espaço de trabalho padrão | Opcional. Um preenchimento prévio de conveniência para o campo Workspace de uma etapa de leitura. |
+   | ID do modelo padrão | Opcional. Um preenchimento prévio de conveniência para o campo Model de uma etapa de leitura. |
+   | Tempo limite (segundos) | O padrão é 30. |
+
+4. Clique em `Test Connection`. Um teste bem-sucedido informa o e-mail da conta do Anaplan para o qual as credenciais são resolvidas.
+
+5. Clique em `Create`.
+
+</Steps>
+
+## Anaplan: Ler visão
+
+Adicione uma etapa **Anaplan: Ler visão** para ler uma visão salva pelo caminho de solicitação de leitura de grande volume do Anaplan. **A visão é lida exatamente como foi salva no Anaplan — não há seleção de linhas, colunas ou páginas nesta etapa.** Para ler um recorte diferente, construa uma visão salva diferente no Anaplan; um item de linha Booleano mais uma visão salva é a forma usual de filtrar lá. Uma coluna de dados só chega com seu tipo declarado no Anaplan quando a visão coloca os **itens de linha no eixo de colunas**; com os itens de linha nas linhas (um layout comum de DRE) ou ausentes da visão, todas as colunas chegam como texto, e a etapa informa isso. Uma visão cujo filtro não corresponde a nada resulta em uma tabela vazia com um aviso. Um valor Number que a etapa não consegue ler sem ambiguidade — na maioria das vezes um que poderia ser igualmente um decimal simples ou uma representação no estilo europeu — é recusado em vez de presumido, a menos que outro valor na mesma coluna esclareça qual leitura é a correta; um valor que é interpretado chega com precisão total, sem erro de arredondamento. Consulte [Anaplan: Ler visão](/pt-br/reference/workflow-steps/anaplan/anaplan-read-view/) para a referência completa de campos e comportamento.
+
+## Anaplan: Ler exportação
+
+Adicione uma etapa **Anaplan: Ler exportação** para executar uma ação de exportação do Anaplan **já existente** e carregar o arquivo que ela produz. A API não consegue criar uma ação de exportação — construa ou edite-a primeiro no Anaplan — e a etapa não consegue restringir o que ela emite: o que a ação estiver configurada para exportar no Anaplan é exatamente o que chega. **Toda coluna chega como texto.** Os números são solicitados com formatação dos EUA; uma coluna que ainda assim volta com separadores de milhar chega sem alteração, como texto, com um aviso nomeado em vez de fazer a execução falhar. A etapa para, em vez de carregar uma tabela, quando a exportação falha, é cancelada, não produz dados, ainda está em execução quando o orçamento de consultas da etapa se esgota, ou produz um arquivo que não pode ser vinculado à exportação ou cuja contagem de linhas discorda da que o próprio Anaplan informa. Consulte [Anaplan: Ler exportação](/pt-br/reference/workflow-steps/anaplan/anaplan-read-export/) para a referência completa.
+
+## Anaplan: Ler lista
+
+Adicione uma etapa **Anaplan: Ler lista** para ler uma ou mais listas do Anaplan em uma dimensão do PlaidCloud. **Uma etapa lê uma hierarquia composta inteira** — nomeie todas as listas que ela abrange, começando pela raiz (por exemplo, Region, depois Country, depois Store), em vez de dividi-la entre várias etapas; a tabela de preparação é substituída a cada execução, então várias etapas apontadas para a mesma tabela de preparação apagariam, cada uma, as linhas da anterior. Cada aresta é consolidada com um simples `+`, pois as hierarquias de lista do Anaplan não carregam peso nem sinal por aresta para serem lidos. Os controles de acesso às listas do Anaplan e a participação em subconjuntos não são importados — são metadados, não dados de dimensão. IDs de nó duplicados, uma referência de pai que não pode ser resolvida, referências de pai conflitantes e um nome de propriedade que colide com os metadados importados são todos recusados antes que qualquer coisa seja carregada. Consulte [Anaplan: Ler lista](/pt-br/reference/workflow-steps/anaplan/anaplan-read-list/) para a referência completa.
+
+## Considerações sobre agendamento
+
+O orçamento de taxa de solicitações do Anaplan é **compartilhado em todo o tenant** — entre todas as integrações que a sua organização executa no tenant do Anaplan, e não apenas a do PlaidCloud — e o PlaidCloud não coordena agendamentos entre execuções simultâneas. Várias etapas do Anaplan caindo no mesmo minuto do cron podem esgotar esse orçamento antes que qualquer uma delas termine. **Escalone os agendamentos dos seus fluxos de trabalho do Anaplan** em vez de executá-los todos ao mesmo tempo.
+
+## Relacionado
+
+- [Anaplan: Ler visão](/pt-br/reference/workflow-steps/anaplan/anaplan-read-view/) — ler uma visão salva, referência de campos.
+- [Anaplan: Ler exportação](/pt-br/reference/workflow-steps/anaplan/anaplan-read-export/) — executar uma ação de exportação, referência de campos.
+- [Anaplan: Ler lista](/pt-br/reference/workflow-steps/anaplan/anaplan-read-list/) — ler listas em uma dimensão, referência de campos.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

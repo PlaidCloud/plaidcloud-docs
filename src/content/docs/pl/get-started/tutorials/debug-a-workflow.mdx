@@ -1,0 +1,137 @@
+---
+title: Debugowanie przepływu pracy
+description: Gdy przepływ pracy przestaje działać, znajdź przyczynę samodzielnie — uruchom jeden krok, wyświetl podgląd jego wyników, przeczytaj dziennik, prześledź dane wejściowe za pomocą audytu zależności i zinterpretuj błąd.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*~25 minut · uruchom jeden krok, wyświetl podgląd danych, przeczytaj dziennik, prześledź dane wejściowe*
+
+Coś w przepływie pracy nie działa — krok jest czerwony, liczba w dalszej części wygląda źle albo uruchomienie zatrzymało się w połowie. Ten samouczek przedstawia ręczny zestaw narzędzi do ustalenia przyczyny: uruchomienie pojedynczego kroku w izolacji, podgląd tego, co wytworzył, odczyt dziennika przepływu pracy, prześledzenie źródeł jego danych wejściowych za pomocą audytu zależności oraz odczytanie samego błędu. Każde narzędzie odpowiada na inne pytanie, a razem zwykle prowadzą do przyczyny bez zgadywania.
+
+> **Wolisz, żeby ktoś Ci to wyjaśnił?** [Ścieżka z asystentem AI](/pl/get-started/tutorials/fix-a-workflow-with-ai/) prowadzi takie samo badanie w formie rozmowy. Ten samouczek to wersja ręczna — wszystko tutaj robisz sam, co warto zrobić przynajmniej raz, aby wiedzieć, na co faktycznie patrzy asystent.
+
+## Pętla debugowania
+
+Większość debugowania przepływów pracy to ta sama krótka pętla, niezależnie od tego, po które narzędzie sięgniesz najpierw:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="Pętla debugowania przepływu pracy: uruchom jeden krok w izolacji, wyświetl podgląd jego danych wyjściowych, przeczytaj dziennik przepływu pracy, aby poznać komunikat o błędzie, prześledź dane wejściowe kroku za pomocą audytu zależności, a następnie napraw i uruchom krok ponownie." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Uruchom jeden krok</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Podgląd danych</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Przeczytaj dziennik</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Prześledź dane wejściowe</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">napraw, a potem uruchom ponownie</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Każde narzędzie odpowiada na jedno pytanie — rzadko potrzebujesz wszystkich czterech, ale używa się ich w tej kolejności.</figcaption>
+</figure>
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud z projektem i przepływem pracy, w którym jest problem do zbadania (czerwony krok, błędny wynik lub zatrzymane uruchomienie).
+- Znajomość [Wizualnego projektanta przepływów pracy](/pl/guides/workflows/advanced-workflows/) — kanwy, na której wykonasz większość tych czynności.
+
+## Krok 1: Uruchom tylko uszkodzony krok
+
+Nie uruchamiaj ponownie całego przepływu pracy, aby przetestować jedną zmianę — jest to wolne i powtarza pracę, której wynikom już ufasz. Uruchom pojedynczy krok, który badasz.
+
+1. Otwórz przepływ pracy w Wizualnym projektancie przepływów pracy.
+2. Kliknij prawym przyciskiem myszy krok, który chcesz przetestować, i wybierz z menu kontekstowego **Uruchom krok**.
+3. Krok uruchamia się w izolacji, na danych, które już istnieją w jego tabelach źródłowych.
+
+Ten ostatni punkt ma znaczenie podczas debugowania: krok czyta ze swoich tabel źródłowych w stanie *z tej chwili*. Jeśli krok nadrzędny jeszcze się nie uruchomił albo działał na nieaktualnych danych, samodzielne uruchomienie tego kroku to odzwierciedli — i właśnie w wychwyceniu tego pomaga [krok 4](#krok-4-prześledź-dane-wejściowe-za-pomocą-audytu-zależności).
+
+Szczegóły znajdziesz w artykule [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/).
+
+## Krok 2: Wyświetl podgląd tego, co wytworzył krok
+
+Po uruchomieniu kroku sprawdź, co faktycznie zapisał, zanim zdecydujesz, czy jest to poprawne. **Szuflada Podgląd danych** pokazuje dane wyjściowe kroku bezpośrednio na kanwie — pierwsze 100 wierszy z typowanymi kolumnami, zadokowane u dołu.
+
+Są trzy sposoby wejścia, wszystkie prowadzą do tej samej szuflady:
+
+- **Najedź kursorem na kafelek kroku** — w prawym dolnym rogu kafelka pojawia się mała ikona przeglądania (tabeli). Kliknij ją.
+- **Kliknij krok prawym przyciskiem myszy** i wybierz **Podgląd danych wyjściowych**.
+- **W Inspektorze** kliknij **ikonę oka** na dowolnej karcie wyniku w sekcji **Wyniki** kroku.
+
+To, co należy sprawdzić, zależy od objawu:
+
+| Objaw | Na co zwrócić uwagę w podglądzie |
+|---|---|
+| Błędne lub brakujące kolumny | Czy krok wytworzył oczekiwane kolumny? Błąd w złączeniu lub wyborze kolumn widać tu najpierw. |
+| Za mało / za dużo wierszy | Nagłówek pokazuje **Showing first N of ~M rows** — czy łączna liczba jest zbliżona do oczekiwanej? |
+| Puste dane wyjściowe | Szuflada informuje *Table is empty* (uruchomiono, zero wierszy) lub *No data yet — run the step* (nigdy nie uruchomiono). |
+| Podejrzane wartości | Posortuj kolumnę, aby wartości puste lub odstające pojawiły się na górze. |
+
+Gdy szuflada jest otwarta, **kliknięcie dowolnego innego kroku przełącza podgląd** na dane wyjściowe tego kroku — możesz więc przejść wzdłuż łańcucha kroków i zobaczyć, gdzie dane po raz pierwszy przestają być poprawne. Gdy potrzebujesz filtrować, wycinać fragmenty lub wyjść poza pierwsze 100 wierszy, kliknij **Otwórz w Eksploratorze tabel** w nagłówku szuflady.
+
+Pełne szczegóły znajdziesz w artykule [Podgląd danych kroku](/pl/guides/workflows/preview-step-data/).
+
+## Krok 3: Przeczytaj dziennik przepływu pracy
+
+Podgląd pokazuje, *jak wyglądają* dane wyjściowe; dziennik mówi, *co się wydarzyło* podczas uruchomienia kroku — w tym zawiera komunikat o błędzie, jeśli krok się nie powiódł.
+
+Gdy kroki są uruchamiane i występują ostrzeżenia, zdarzenia te są zapisywane w **dzienniku przepływu pracy**, który można wyświetlić w obszarze **Projekt** na karcie **Dziennik**. W Wizualnym projektancie przepływów pracy przycisk paska narzędzi **Wyświetl dzienniki** otwiera ten sam widok, już przefiltrowany do otwartego przepływu pracy.
+
+1. Otwórz kartę **Dziennik** (dziennik projektu) — za pomocą przycisku **Wyświetl dzienniki** na pasku narzędzi lub karty **Dziennik** w obszarze Projekt.
+2. Użyj kontrolki filtra obok komunikatów dziennika, aby zawęzić widok do interesującego Cię kroku i uruchomienia.
+3. Otwórz wpis dziennika, aby przeczytać szczegóły — tam znajduje się komunikat o błędzie nieudanego kroku.
+
+Dziennik na poziomie projektu pokazuje pełniejszy obraz obejmujący wiele przepływów pracy, jeśli problem może dotyczyć więcej niż jednego. Zobacz [Wyświetlanie dziennika przepływu pracy](/pl/guides/workflows/viewing-workflow-log/).
+
+> **Odczytywanie komunikatu o błędzie.** Skopiuj dokładny tekst z wpisu dziennika — błędny klucz złączenia, niezgodność typów i brakująca tabela źródłowa wyglądają inaczej. Dwie najczęstsze przyczyny błędu kroku to niezgodne klucze złączenia między tabelami oraz nieoczekiwane wartości puste w kolumnach obliczanych. Gdy komunikat wskazuje na dane, a nie na konfigurację kroku, to sygnał, by prześledzić dane wejściowe.
+
+> **Przykład praktyczny.** Załóżmy, że krok transformacji robi się czerwony. Otwierasz dziennik, a wpis brzmi `column "revenue" does not exist` — tabela źródłowa ma kolumnę `net_revenue`, a nie `revenue`. Poprawką jest jedna linijka: popraw nazwę kolumny w wyrażeniu kroku. Uruchamiasz ponownie tylko ten krok i robi się zielony. To cała pętla w jednym przebiegu.
+
+## Krok 4: Prześledź dane wejściowe za pomocą audytu zależności
+
+Czasami krok jest skonfigurowany poprawnie, a mimo to wytwarza błędne dane — ponieważ działał na danych wejściowych, które zostały wypełnione *w złej kolejności*. Gdy dane już istnieją w tabelach, krok uruchomi się i będzie wyglądać poprawnie, mimo że odczytał nieaktualne lub jeszcze niezaktualizowane dane. To awaria, której dziennik nie pokaże, ponieważ nic nie zgłosiło błędu.
+
+**Audyt zależności przepływu pracy** istnieje właśnie do tego. Analizuje zależności danych i przepływów pracy w powiązanym przepływie pracy i wskazuje kroki, których dane wejściowe są wypełniane w złej kolejności względem momentu ich odczytu.
+
+Użyj go, gdy:
+
+- Wynik kroku jest błędny, ale sam krok nie zgłasza błędu.
+- Zmieniono kolejność kroków lub dodano nowe i chcesz potwierdzić, że żaden krok nie czyta tabeli przed jej zbudowaniem.
+- Przepływ pracy „działa” przy pełnym uruchomieniu, ale uruchomienie pojedynczego kroku daje inne liczby — klasyczny znak zależności kolejności.
+
+W artykule [Wyświetlanie audytu zależności](/pl/guides/workflows/view-a-dependency-audit/) dowiesz się, jak otworzyć i czytać audyt.
+
+## Krok 5: Zdecyduj, jak przepływ pracy ma obsługiwać błąd
+
+Gdy znasz już przyczynę, zdecyduj, co przepływ pracy ma robić, gdy ten krok zawiedzie w przyszłości. Obsługę błędów każdego kroku ustawia się w formularzu kroku, a PlaidCloud oferuje trzy poziomy:
+
+| Zachowanie | Co się dzieje | Kiedy stosować |
+|---|---|---|
+| **Zatrzymaj przepływ pracy** | Uruchomienie zostaje wstrzymane; wskaźnik błędu pojawia się zarówno przy kroku, jak i przy przepływie pracy. | Ustawienie domyślne i najczęstsze — przepływy pracy powinny z reguły działać bez błędów. |
+| **Kontynuuj przetwarzanie** | Krok jest oznaczony błędem, ale przepływ pracy traktuje go jako ukończony i działa dalej. | Kroki, które mogą bezkarnie zgłaszać błąd przy braku danych. Uwaga: przepływ pracy pokazuje wskaźnik *uruchomienia*, a nie błędu. |
+| **Uruchom przepływ pracy naprawczy** | Bieżący przepływ pracy zostaje zatrzymany, a zamiast niego startuje przepływ pracy naprawczy. | Automatyczne powiadomienie lub korekta. *Nie* uruchamia się dla kroków ustawionych na kontynuowanie przetwarzania. |
+
+PlaidCloud może też automatycznie **ponawiać** nieudany krok — określoną liczbę razy, z opcjonalnym opóźnieniem od sekund do godzin. To właściwe narzędzie, gdy krok łączy się z systemem zdalnym lub źródłem danych, które zawodzi sporadycznie, a nie gdy ma rzeczywisty błąd logiczny. Zobacz [Zarządzanie błędami kroków](/pl/guides/workflows/managing-step-errors/).
+
+## Krok 6: Napraw, uruchom ponownie i potwierdź
+
+1. Wprowadź zmianę, na którą wskazało badanie — popraw klucz złączenia, dodaj krok nadrzędny, popraw wyrażenie dające wartości puste lub zmień kolejność kroków.
+2. **Uruchom ponownie tylko ten krok** (krok 1) i **wyświetl podgląd jego wyników** (krok 2). Jeśli szuflada była otwarta podczas uruchomienia, odświeży się automatycznie po jego zakończeniu.
+3. Gdy krok jest poprawny, uruchom przepływ pracy od początku do końca i obserwuj dziennik, aby potwierdzić, że cały potok działa bez błędów.
+
+Aby mieć trwały zapis tego, co robi przepływ pracy — jego kroków, funkcji i zmiennych — wygeneruj na żądanie **Raport przepływu pracy** za pomocą ikony raportu w hierarchii **Przepływy pracy**. Odzwierciedla on bieżący stan przepływu pracy i jest przydatną dokumentacją po wprowadzeniu poprawki. Zobacz [Wyświetlanie raportu przepływu pracy](/pl/guides/workflows/view-workflow-report/).
+
+**To cała pętla.** Uruchomiono jeden krok w izolacji, wyświetlono podgląd tego, co zapisał, przeczytano błąd w dzienniku, prześledzono jego dane wejściowe za pomocą audytu zależności i uruchomiono ponownie, aby potwierdzić poprawkę — to samo badanie wykonuje asystent AI, tyle że teraz możesz je prowadzić samodzielnie.
+
+## Co dalej
+
+- [Naprawianie przepływu pracy z asystentem AI](/pl/get-started/tutorials/fix-a-workflow-with-ai/) — to samo badanie, prowadzone w formie rozmowy
+- [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/) — uruchom pojedynczy krok w izolacji
+- [Podgląd danych kroku](/pl/guides/workflows/preview-step-data/) — szuflada Podgląd danych
+- [Wyświetlanie dziennika przepływu pracy](/pl/guides/workflows/viewing-workflow-log/) — gdzie zapisywane są zdarzenia i błędy uruchomień
+- [Wyświetlanie audytu zależności](/pl/guides/workflows/view-a-dependency-audit/) — wychwytywanie zależności danych w złej kolejności
+- [Zarządzanie błędami kroków](/pl/guides/workflows/managing-step-errors/) — zatrzymanie, kontynuacja, naprawa i ponawianie
+- [Wyświetlanie raportu przepływu pracy](/pl/guides/workflows/view-workflow-report/) — dokumentacja całego przepływu pracy na żądanie

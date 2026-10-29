@@ -1,0 +1,202 @@
+---
+title: FLATTEN (Lakehouse v1)
+description: FLATTEN — przekształca zagnieżdżone dane JSON w format tabelaryczny, w którym każdy element lub pole jest reprezentowane jako osobny wiersz.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/10-semi-structured-functions/flatten.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Przekształca zagnieżdżone dane JSON w format tabelaryczny, w którym każdy element lub pole jest reprezentowane jako osobny wiersz.
+
+## Składnia SQL
+
+```sql
+[LATERAL] FLATTEN ( INPUT => <expr> [ , PATH => <expr> ]
+                                    [ , OUTER => TRUE | FALSE ]
+                                    [ , RECURSIVE => TRUE | FALSE ]
+                                    [ , MODE => 'OBJECT' | 'ARRAY' | 'BOTH' ] )
+```
+
+| Parametr / słowo kluczowe | Opis | Wartość domyślna |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| INPUT               | Określa dane JSON lub tablicę do spłaszczenia.                                                                                                                                                                          | -       |
+| PATH                | Określa ścieżkę do tablicy lub obiektu w danych wejściowych, który ma zostać spłaszczony.                                                                                                                               | -       |
+| OUTER               | Jeśli ustawiono TRUE, wiersze bez wyników nadal zostaną uwzględnione w danych wyjściowych, ale wartości w kolumnach KEY, INDEX i VALUE tych wierszy zostaną ustawione na NULL.                                          | FALSE   |
+| RECURSIVE           | Jeśli ustawiono TRUE, funkcja będzie nadal spłaszczać zagnieżdżone elementy.                                                                                                                                            | FALSE   |
+| MODE                | Określa, czy spłaszczać tylko obiekty ('OBJECT'), tylko tablice ('ARRAY'), czy jedne i drugie ('BOTH').                                                                                                                 | 'BOTH'  |
+| LATERAL             | LATERAL to opcjonalne słowo kluczowe służące do odwoływania się do kolumn zdefiniowanych na lewo od słowa kluczowego LATERAL w klauzuli FROM. LATERAL umożliwia wzajemne odwoływanie się między poprzedzającymi wyrażeniami tabelowymi a funkcją. | -       |
+
+## Dane wyjściowe
+
+Poniższa tabela opisuje kolumny wyjściowe funkcji FLATTEN:
+
+<Aside>Gdy słowa kluczowego LATERAL używa się z FLATTEN, te kolumny wyjściowe mogą nie być jawnie podane, ponieważ LATERAL wprowadza dynamiczne wzajemne odwoływanie się, które zmienia strukturę danych wyjściowych.</Aside>
+
+| Kolumna | Opis                                                                                     |
+|--------|------------------------------------------------------------------------------------------|
+| SEQ    | Unikatowy numer sekwencyjny powiązany z danymi wejściowymi.                              |
+| KEY    | Klucz rozwiniętej wartości. Jeśli spłaszczany element nie zawiera klucza, ustawiana jest wartość NULL.|
+| PATH   | Ścieżka do spłaszczanego elementu.                                                       |
+| INDEX  | Jeśli element jest tablicą, ta kolumna zawiera jego indeks; w przeciwnym razie ustawiana jest wartość NULL. |
+| VALUE  | Wartość spłaszczanego elementu.                                                          |
+| THIS   | Ta kolumna wskazuje element, który jest aktualnie spłaszczany.                           |
+
+## Przykłady SQL
+
+### Przykłady SQL 1: parametry PATH, OUTER, RECURSIVE i MODE w działaniu
+
+Ten przykład pokazuje zachowanie funkcji FLATTEN w odniesieniu do parametrów PATH, OUTER, RECURSIVE i MODE.
+
+```sql
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    )
+  );
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │               value              │                                                  this                                                 │
+├────────┼──────────────────┼──────────────────┼──────────────────┼──────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│      1 │ address          │ address          │             NULL │ {"city":"New York","state":"NY"} │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ languages        │ languages        │             NULL │ ["English","Spanish","French"]   │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ name             │ name             │             NULL │ "John"                           │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- PATH helps in selecting elements at a specific path from the original JSON data.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    PATH => 'languages'
+  );
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │       value       │              this              │
+├────────┼──────────────────┼──────────────────┼──────────────────┼───────────────────┼────────────────────────────────┤
+│      1 │ NULL             │ languages[0]     │                0 │ "English"         │ ["English","Spanish","French"] │
+│      1 │ NULL             │ languages[1]     │                1 │ "Spanish"         │ ["English","Spanish","French"] │
+│      1 │ NULL             │ languages[2]     │                2 │ "French"          │ ["English","Spanish","French"] │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- RECURSIVE enables recursive flattening of nested structures.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    RECURSIVE => TRUE
+  );
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │               value              │                                                  this                                                 │
+├────────┼──────────────────┼──────────────────┼──────────────────┼──────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│      1 │ address          │ address          │             NULL │ {"city":"New York","state":"NY"} │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ city             │ address.city     │             NULL │ "New York"                       │ {"city":"New York","state":"NY"}                                                                      │
+│      1 │ state            │ address.state    │             NULL │ "NY"                             │ {"city":"New York","state":"NY"}                                                                      │
+│      1 │ languages        │ languages        │             NULL │ ["English","Spanish","French"]   │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+│      1 │ NULL             │ languages[0]     │                0 │ "English"                        │ ["English","Spanish","French"]                                                                        │
+│      1 │ NULL             │ languages[1]     │                1 │ "Spanish"                        │ ["English","Spanish","French"]                                                                        │
+│      1 │ NULL             │ languages[2]     │                2 │ "French"                         │ ["English","Spanish","French"]                                                                        │
+│      1 │ name             │ name             │             NULL │ "John"                           │ {"address":{"city":"New York","state":"NY"},"languages":["English","Spanish","French"],"name":"John"} │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+-- MODE specifies whether only objects ('OBJECT'), only arrays ('ARRAY'), or both ('BOTH') should be flattened.
+-- In this example, MODE => 'ARRAY' is used, which means that only arrays within the JSON data will be flattened.
+SELECT
+  *
+FROM
+  FLATTEN (
+    INPUT => PARSE_JSON (
+      '{"name": "John", "languages": ["English", "Spanish", "French"], "address": {"city": "New York", "state": "NY"}}'
+    ),
+    MODE => 'ARRAY'
+  );
+
+---
+
+
+-- OUTER determines the inclusion of zero-row expansions in the output.
+-- In this first example, OUTER => TRUE is used with an empty JSON array, which results in zero-row expansions. 
+-- Rows are included in the output even when there are no values to flatten.
+SELECT
+  *
+FROM
+  FLATTEN (INPUT => PARSE_JSON ('[]'), OUTER => TRUE);
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│   seq  │        key       │       path       │       index      │       value       │        this       │
+├────────┼──────────────────┼──────────────────┼──────────────────┼───────────────────┼───────────────────┤
+│      1 │ NULL             │ NULL             │             NULL │ NULL              │ NULL              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+-- In this second example, OUTER is omitted, and the output shows how rows with zero results are not included when OUTER is not specified.
+SELECT
+  *
+FROM
+  FLATTEN (INPUT => PARSE_JSON ('[]'));
+
+```
+
+### Przykłady SQL 2: LATERAL FLATTEN w działaniu
+
+Ten przykład pokazuje zachowanie funkcji FLATTEN użytej razem ze słowem kluczowym LATERAL.
+
+```sql
+-- Create a table for Tim Hortons transactions with multiple items
+CREATE TABLE tim_hortons_transactions (
+    transaction_id INT,
+    customer_id INT,
+    items VARIANT
+);
+
+-- Insert data for Tim Hortons transactions with multiple items
+INSERT INTO tim_hortons_transactions (transaction_id, customer_id, items)
+VALUES
+    (101, 1, parse_json('[{"item":"coffee", "price":2.50}, {"item":"donut", "price":1.20}]')),
+    (102, 2, parse_json('[{"item":"bagel", "price":1.80}, {"item":"muffin", "price":2.00}]')),
+    (103, 3, parse_json('[{"item":"timbit_assortment", "price":5.00}]'));
+
+-- Show Tim Hortons transactions with multiple items using LATERAL FLATTEN
+SELECT
+    t.transaction_id,
+    t.customer_id,
+    f.value:item::STRING AS purchased_item,
+    f.value:price::FLOAT AS price
+FROM
+    tim_hortons_transactions t,
+    LATERAL FLATTEN(input => t.items) f;
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│  transaction_id │   customer_id   │   purchased_item  │       price       │
+├─────────────────┼─────────────────┼───────────────────┼───────────────────┤
+│             101 │               1 │ coffee            │               2.5 │
+│             101 │               1 │ donut             │               1.2 │
+│             102 │               2 │ bagel             │               1.8 │
+│             102 │               2 │ muffin            │                 2 │
+│             103 │               3 │ timbit_assortment │                 5 │
+└───────────────────────────────────────────────────────────────────────────┘
+
+-- Find maximum, minimum, and average prices of the purchased items
+SELECT
+    MAX(f.value:price::FLOAT) AS max_price,
+    MIN(f.value:price::FLOAT) AS min_price,
+    AVG(f.value:price::FLOAT) AS avg_price
+FROM
+    tim_hortons_transactions t,
+    LATERAL FLATTEN(input => t.items) f;
+
+┌───────────────────────────────────────────────────────────┐
+│     max_price     │     min_price     │     avg_price     │
+├───────────────────┼───────────────────┼───────────────────┤
+│                 5 │               1.2 │               2.5 │
+└───────────────────────────────────────────────────────────┘
+```

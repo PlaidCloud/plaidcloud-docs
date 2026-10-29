@@ -1,0 +1,123 @@
+---
+title: Configurar o SAML do Auth0 para logon único
+description: Configure o Auth0 como provedor de identidade SAML para o logon único do PlaidCloud e habilite a autenticação federada segura para os membros.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/auth0-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud oferece suporte ao logon único (SSO) via SAML 2.0. Este guia mostra como configurar o Auth0 como provedor de identidade SAML para que os usuários da sua organização se autentiquem pelo Auth0 ao acessar o PlaidCloud.
+
+<Aside>A configuração do lado do PlaidCloud é feita pela equipe do PlaidCloud. Sua responsabilidade é configurar o aplicativo SAML no Auth0 e fornecer ao PlaidCloud a **Identity Provider Metadata URL**. O suporte do PlaidCloud concluirá a configuração restante.</Aside>
+
+## Pré-requisitos
+
+- Um tenant do Auth0
+- Uma conta do Auth0 com a função **Administrator**
+- Contato com o suporte do PlaidCloud para coordenar a configuração e trocar os valores de configuração
+
+## Visão geral
+
+O processo de configuração envolve duas partes que trocam metadados SAML:
+
+1. **Você configura** um aplicativo no Auth0 com o addon SAML2 Web App ativado e fornece ao PlaidCloud a Identity Provider Metadata URL.
+2. **O PlaidCloud fornece** o Entity ID do provedor de serviço (SP) e a ACS URL (Assertion Consumer Service URL) necessários para concluir a configuração do seu aplicativo no Auth0.
+
+Coordene com o suporte do PlaidCloud para obter os valores do SP antes de concluir a Etapa 3 abaixo.
+
+## Etapa 1: criar um aplicativo
+
+1. Entre no [Auth0 Dashboard](https://manage.auth0.com).
+2. Na barra lateral esquerda, acesse **Applications** > **Applications**.
+3. Clique em **Create Application**.
+4. Insira um nome para o aplicativo (por exemplo, `PlaidCloud SSO`).
+5. Selecione **Regular Web Applications** como o tipo de aplicativo.
+6. Clique em **Criar**.
+
+## Etapa 2: ativar o addon SAML2 Web App
+
+1. Na página de detalhes do aplicativo, selecione a guia **Addons**.
+2. Clique no addon **SAML2 Web App** para ativá-lo.
+3. O painel de configurações do addon será aberto. Deixe-o aberto, pois você o configurará na próxima etapa.
+
+## Etapa 3: configurar as definições do SAML
+
+<Aside>Você precisará do **SP Entity ID** e da **ACS URL** do PlaidCloud antes de concluir esta etapa. Entre em contato com o suporte do PlaidCloud para obter esses valores.</Aside>
+
+No painel de configurações do addon **SAML2 Web App**:
+
+1. No campo **Application Callback URL**, insira a ACS URL fornecida pelo PlaidCloud.
+2. No editor JSON de **Configurações**, defina o campo `audience` como o SP Entity ID fornecido pelo PlaidCloud:
+
+```json
+{
+  "audience": "your-sp-entity-id-from-plaidcloud",
+  "mappings": {
+    "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "given_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+    "family_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+  },
+  "nameIdentifierFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+  "nameIdentifierProbes": [
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+  ]
+}
+```
+
+3. Clique em **Ativar** (ou **Salvar**) para aplicar as configurações.
+
+## Etapa 4: obter e enviar a Identity Provider Metadata URL
+
+Depois que o addon estiver ativado, localize a URL de metadados e envie-a ao PlaidCloud para que a integração possa ser concluída.
+
+1. No painel de configurações do addon **SAML2 Web App**, selecione a guia **Uso**.
+2. Copie a URL de **Identity Provider Metadata** (no formato `https://{your-auth0-domain}/samlp/metadata/{client-id}`).
+
+**Envie esta Metadata URL ao suporte do PlaidCloud.** Esta é a URL do Entity Descriptor de que o PlaidCloud precisa para configurar a relação de confiança no lado do provedor de identidade. Quando o PlaidCloud receber essa URL, a equipe concluirá a configuração do Keycloak e avisará você quando o SSO estiver pronto para teste.
+
+## Etapa 5: configurar o mapeamento de atributos para grupos (opcional)
+
+Se a sua configuração do PlaidCloud usa atribuições de funções de segurança baseadas em grupos, você pode passar a associação a grupos na asserção SAML usando regras ou ações do Auth0.
+
+### Usar o Auth0 Actions
+
+1. Na barra lateral esquerda, acesse **Ações** > **Library**.
+2. Clique em **Build Custom** e crie uma nova ação para o gatilho **Login / Post Login**.
+3. Adicione a lógica para anexar as informações de grupo à asserção SAML. Por exemplo, se os grupos estiverem armazenados como metadados do usuário:
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const groups = event.user.app_metadata?.groups || [];
+  api.samlResponse.setAttribute("groups", groups);
+};
+```
+
+4. Implante a ação e adicione-a ao fluxo **Login**.
+
+<Aside>Converse com o suporte do PlaidCloud sobre o nome e o formato do atributo de grupo esperados, para que as atribuições de funções de segurança baseadas em grupos funcionem corretamente no PlaidCloud.</Aside>
+
+## Etapa 6: controlar o acesso dos usuários
+
+O Auth0 controla quais usuários podem se autenticar com base nas conexões e nas regras associadas ao aplicativo.
+
+1. Na página de detalhes do aplicativo, selecione a guia **Conexões**.
+2. Ative as conexões apropriadas (por exemplo, a conexão de banco de dados da sua organização, o Active Directory ou conexões sociais) para este aplicativo.
+3. Desative as conexões que não devem ter acesso ao PlaidCloud.
+
+Para restringir o acesso a usuários específicos dentro de uma conexão, use o Auth0 Actions ou Rules para permitir ou negar a autenticação com base em atributos do usuário ou na associação a grupos.
+
+## Testar a integração
+
+Depois que o PlaidCloud confirmar que a configuração está concluída:
+
+1. Acesse o espaço de trabalho do PlaidCloud da sua organização (por exemplo, `https://my-workspace.plaid.cloud`).
+2. Você será redirecionado para a página de login do Auth0 (ou para o login da conexão que você configurou).
+3. Entre com suas credenciais do Auth0.
+4. Após a autenticação bem-sucedida, você será redirecionado de volta ao PlaidCloud.
+
+Se ocorrerem erros, verifique se:
+- A Application Callback URL e o audience correspondem exatamente ao que o PlaidCloud forneceu
+- O addon SAML2 Web App está ativado no aplicativo
+- O `nameIdentifierFormat` está definido como o formato de endereço de e-mail
+- A Metadata URL que você enviou ao PlaidCloud está acessível
+- A conexão do usuário está ativada no aplicativo

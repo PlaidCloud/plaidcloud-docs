@@ -1,0 +1,88 @@
+---
+title: Importer des données Samsara
+description: Connectez PlaidCloud à Samsara avec la connexion Generic REST et importez des listes paginées complètes grâce à une recette de pagination par curseur à copier-coller.
+sidebar:
+  label: Importer des données Samsara
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Utilisez la connexion **Generic REST** et une étape **Requête REST** pour importer des données Samsara. Le jeton d'API reste ainsi dans une connexion réutilisable, et vous utilisez les mêmes contrôles génériques de pagination par curseur que pour toute API qui renvoie un curseur de continuation.
+
+## Avant de commencer
+
+Dans Samsara, créez un jeton d'API avec uniquement les portées de lecture et l'accès aux tags dont l'importation a besoin. Samsara n'affiche le jeton qu'à sa création ; copiez-le donc avant de quitter la page. Consultez [l'authentification de l'API Samsara](https://developers.samsara.com/docs/authentication).
+
+Choisissez l'hôte qui correspond à votre tableau de bord Samsara :
+
+| Tableau de bord Samsara | Hôte ou adresse IP |
+| --- | --- |
+| Cloud États-Unis ou ancien cloud Canada | `api.samsara.com` |
+| UE / Royaume-Uni | `api.eu.samsara.com` |
+| Cloud Canada | `api.ca.samsara.com` |
+
+## Créer la connexion
+
+1. Ouvrez **Connexions** et créez une connexion **Generic REST** nommée `Samsara`.
+2. Saisissez l'hôte correspondant du tableau ci-dessus.
+3. Dans **Authentification**, sélectionnez **Jeton Bearer** et collez le jeton d'API Samsara. N'ajoutez pas vous-même d'en-tête `Authorization`.
+4. Enregistrez la connexion.
+
+<Aside type="note">Un jeton d'API est le choix le plus simple pour importer vos propres données de flotte. Samsara recommande OAuth 2.0 pour les applications de la place de marché qui connectent des organisations clientes.</Aside>
+
+## Importer des véhicules
+
+Cette première importation confirme la connexion et fournit une recette que vous pouvez réutiliser pour d'autres points de terminaison de liste Samsara modernes.
+
+1. Ajoutez une étape **Requête REST** et sélectionnez la connexion `Samsara`.
+2. Définissez **Source du point de terminaison** sur **Manuel**, **Méthode** sur `GET` et **Point de terminaison** sur `/fleet/vehicles`.
+3. Sélectionnez une **Table cible**, par exemple `samsara_vehicles`.
+4. Dans **Paramètres de requête**, ajoutez `limit` avec la valeur `512`.
+5. Dans **Requête**, définissez les valeurs suivantes :
+
+| Champ | Valeur |
+| --- | --- |
+| Format de ligne | `Object` |
+| Mode de diffusion en continu | `Cursor Paging` |
+| Chemin des éléments (format JSON) | `["data"]` |
+| Mode Params (format JSON) | `{"cursor": "after"}` |
+| Mode Paths (format JSON) | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. Sélectionnez **Tester la pagination**. PlaidCloud n'extrait que le nombre de pages nécessaire à l'aperçu, ce qui vous permet de vérifier le résultat avant une exécution complète.
+7. Enregistrez et exécutez l'étape.
+
+Copiez ces valeurs exactement lorsque vous configurez un point de terminaison de liste Samsara moderne :
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+Lorsque Samsara renvoie `hasNextPage: true`, PlaidCloud envoie le `endCursor` renvoyé comme paramètre `after` de la requête suivante. Il continue même lorsqu'une page est vide, car Samsara peut avoir des pages ultérieures contenant des données. Consultez [la pagination Samsara](https://developers.samsara.com/docs/pagination).
+
+## Exécuter efficacement
+
+- Utilisez une étape Requête REST par point de terminaison de liste. Les valeurs de curseur sont opaques et doivent être envoyées exactement telles qu'elles ont été renvoyées.
+- Définissez `limit=512` lorsque le point de terminaison prend en charge `limit` ; 512 est le maximum documenté par Samsara.
+- Évitez la diffusion d'une requête par ligne pour un point de terminaison de liste. Réservez-la aux requêtes de détail réellement indépendantes, et maintenez sa cadence de requêtes dans la limite du point de terminaison.
+- Les points de terminaison `/feed` sont incrémentiels plutôt que des instantanés complets. Conservez le dernier curseur réussi et planifiez le workflow plus souvent que la fenêtre d'expiration des curseurs de Samsara, fixée à 30 jours.
+
+## Résoudre les problèmes
+
+| Problème | Ce qu'il faut vérifier |
+| --- | --- |
+| `401` ou `403` | Vérifiez l'hôte régional, le jeton, l'accès aux tags et la portée de lecture du point de terminaison. |
+| Aucune ligne | Vérifiez qu'il s'agit d'un point de terminaison de liste et que **Chemin des éléments** vaut `["data"]`. |
+| La pagination s'arrête trop tôt | Utilisez le point de terminaison moderne de la référence d'API actuelle de Samsara. Les anciens points de terminaison `/v1/` peuvent utiliser d'autres champs de pagination. |
+| `429` | Réduisez la cadence de requêtes des appels indépendants en diffusion. L'étape Requête REST respecte la réponse `Retry-After` de Samsara lorsqu'elle réessaie une requête de lecture sans risque. |
+
+## Voir aussi
+
+- [Connexion Generic REST](/fr/reference/connectors/rest/generic-rest/)
+- [Étape de workflow Requête REST](/fr/guides/workflows/rest-request-step/)
+- [URL de base Samsara](https://developers.samsara.com/docs/base-url)

@@ -1,0 +1,146 @@
+---
+title: Contabilizar un asiento de diario en NetSuite
+description: "Configure el paso Post NetSuite Journal Entry del flujo de trabajo: asigne los campos de encabezado y de línea, obtenga una vista previa y valide un lote, y luego contabilícelo y lea la tabla de resultados."
+sidebar:
+  label: Contabilizar asientos de diario en NetSuite
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Contabilice asientos de diario desde tablas de proyecto de PlaidCloud en NetSuite con el paso **Post NetSuite Journal Entry** del flujo de trabajo. Esta guía crea un lote a partir de una tabla de encabezados y una tabla de líneas, lo previsualiza sin tocar NetSuite y luego lo contabiliza y lee el resultado.
+
+<Aside type="caution">
+Siga **Vista previa y validación**, más abajo, con cada lote antes de contabilizar en vivo, y concilie algunos asientos directamente en NetSuite la primera vez que lo ejecute en una cuenta real.
+</Aside>
+
+## Requisitos previos
+
+- Una [Conexión de NetSuite](/es/guides/connections/netsuite/) operativa con un rol que pueda crear asientos de diario (acceso **Create** al registro Journal Entry, además de la configuración REST/OAuth que cubre la guía de lectura).
+- Dos tablas de origen en su proyecto:
+  - Una **tabla de encabezados** con una fila por asiento de diario.
+  - Una **tabla de líneas** con una o más filas de débito/crédito por asiento de diario.
+
+<Aside type="note">
+Las tablas de encabezados y de líneas pueden provenir de cualquier punto de su flujo de trabajo: una importación, una transformación previa, una tabla dinámica. El único requisito es que ambas incluyan una columna de ID de asiento que vincule cada línea con su fila de encabezado.
+</Aside>
+
+## Estructure sus tablas de encabezados y de líneas
+
+<Steps>
+
+1. Cree o importe una **tabla de encabezados** con una fila por asiento de diario. Como mínimo necesita:
+
+   | Columna | Se asigna a | Obligatoria |
+   |---|---|---|
+   | Un identificador de asiento | ID de asiento | Sí |
+   | La subsidiaria de NetSuite | Subsidiaria | Sí |
+   | La fecha del asiento | Fecha de contabilización | Sí |
+   | La moneda de NetSuite | Moneda | No |
+   | Un memo a nivel de asiento | Memo | No |
+   | Un ID externo proporcionado por quien llama | ID externo | No |
+
+2. Cree o importe una **tabla de líneas** con una o más filas por asiento de diario, que compartan el mismo identificador de asiento que su fila de encabezado:
+
+   | Columna | Se asigna a | Obligatoria |
+   |---|---|---|
+   | El identificador de asiento | ID de asiento | Sí |
+   | La cuenta del libro mayor | Cuenta | Sí |
+   | El importe del débito (0 si no hay) | Débito | Sí |
+   | El importe del crédito (0 si no hay) | Crédito | Sí |
+   | Un memo a nivel de línea | Memo | No |
+   | Departamento, clase, ubicación, entidad | Departamento / Clase / Ubicación / Entidad | No |
+
+   <Aside type="caution">
+   Las líneas de cada asiento de diario deben cuadrar: el total de débitos debe ser igual al total de créditos hasta el centavo. Un asiento descuadrado nunca se envía a NetSuite; en su lugar se registra como error (consulte [Vista previa y validación](#vista-previa-y-validación)).
+   </Aside>
+
+3. Agrupe los importes en estas dos tablas al nivel en que contabilice (un asiento por día, por documento o por lote) mediante sus [pasos de tabla](/es/reference/workflow-steps/tables/) habituales (una tabla dinámica, una agregación con agrupación o una combinación). El ID de asiento es lo que vincula un conjunto de líneas con su fila de encabezado, así que créelo como una clave única por asiento de diario y compartida por todas las líneas que le pertenecen.
+
+</Steps>
+
+## Configure el paso
+
+<Steps>
+
+1. Agregue un paso **Post NetSuite Journal Entry** a su flujo de trabajo.
+
+2. En la pestaña **Conexión**, establezca **Conexión de NetSuite** en su conexión de NetSuite y elija un **Entorno**.
+
+3. En la pestaña **Datos**:
+
+   - Establezca **Tabla de encabezados de asientos de diario** y **Tabla de líneas de asientos de diario** en las tablas que creó anteriormente.
+   - Deje marcada la opción **Test Only Mode** por ahora; consulte [Vista previa y validación](#vista-previa-y-validación).
+   - Deje marcada la opción **Continue posting remaining entries if one entry fails**, a menos que prefiera que un lote se detenga en seco con su primer asiento defectuoso.
+   - Deje desactivada la opción **Submit Asynchronously**, a menos que necesite específicamente la ruta de aceptación asíncrona de NetSuite para un lote de gran volumen; consulte [Envío asíncrono](#envío-asíncrono) más abajo.
+   - Establezca **Tabla de resultados de la contabilización** en una tabla que PlaidCloud pueda crear o sobrescribir. La necesitará en cada ejecución, no solo en la primera; consulte [Lea la tabla de resultados](#lea-la-tabla-de-resultados).
+
+4. En la pestaña **Asignación de encabezado**, asigne las columnas de su tabla de encabezados a ID de asiento, Subsidiaria, Fecha de contabilización y, si las tiene, Moneda, Memo e ID externo. Use **Filtros de encabezado** si desea contabilizar solo un subconjunto de las filas de encabezado.
+
+5. En la pestaña **Asignación de líneas**, asigne las columnas de su tabla de líneas a ID de asiento, Cuenta, Débito, Crédito y, si las tiene, Memo, Departamento, Clase, Ubicación y Entidad. Use **Filtros de línea** de la misma manera.
+
+</Steps>
+
+<Aside type="note">
+Todos los campos de ID interno (Subsidiaria, Cuenta, Moneda, Departamento, Clase, Ubicación, Entidad) toman el ID interno de NetSuite, no su nombre para mostrar. Si sus datos de origen incluyen el nombre para mostrar, resuélvalo primero al ID interno (una búsqueda en una pequeña tabla de referencia extraída de NetSuite, o una combinación con una que usted mantenga).
+</Aside>
+
+## Vista previa y validación
+
+Con **Test Only Mode** marcada, ejecute el paso. PlaidCloud crea cada asiento de diario a partir de sus datos asignados y realiza las mismas comprobaciones que haría antes de contabilizar (débitos y créditos equilibrados, campos obligatorios presentes, fecha de contabilización válida) sin realizar ni una sola llamada a NetSuite. No se contabiliza nada.
+
+<Steps>
+
+1. Ejecute el paso (consulte [Ejecución de un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Abra la tabla de resultados y confirme que cada fila que esperaba contabilizar muestra `status = validated`. Cualquier fila con `error` indica el ID de asiento y el problema, que suele ser un asiento descuadrado, una cuenta faltante o una subsidiaria o fecha de contabilización en blanco.
+
+3. Corrija los datos de origen (o sus asignaciones y filtros) de cada fila con `error` y vuelva a ejecutar hasta que el lote se valide sin errores.
+
+</Steps>
+
+## Contabilice el lote
+
+Cuando un lote se valide sin errores, desmarque **Test Only Mode** y vuelva a ejecutar el paso. Esta vez PlaidCloud contabiliza realmente cada asiento validado en NetSuite.
+
+<Aside type="caution">
+Contabilizar no es lo mismo que volver a validar: vuelva a ejecutar siempre en Test Only Mode después de cualquier cambio en sus datos de origen o asignaciones, y desactívela solo cuando confíe en el resultado. Un paso programado para ejecutarse sin supervisión debe tratarse igual que cualquier otra escritura desatendida en sus libros contables.
+</Aside>
+
+## Envío asíncrono
+
+**Submit Asynchronously** envía cada asiento con el encabezado de aceptación asíncrona de NetSuite, en lugar de esperar una creación y lectura de confirmación síncronas. NetSuite pone el asiento en cola y responde de inmediato; PlaidCloud lo registra como `pending` con una referencia de envío, en lugar de `posted` o `error`.
+
+<Aside type="caution">
+**Hoy nada resuelve automáticamente un asiento pendiente.** Lo que lo resuelve es volver a ejecutar este paso: el paso busca el asiento pendiente por su referencia de envío y registra su resultado final (`posted` o `error`). Si activa Submit Asynchronously, incorpore la reejecución del paso a su flujo de trabajo (una reejecución programada o un paso posterior en el mismo flujo de trabajo) en lugar de tratar cada fila `pending` como terminada. Déjelo desactivado a menos que lo necesite específicamente para un lote de gran volumen en el que la ruta síncrona sea demasiado lenta.
+</Aside>
+
+## Lea la tabla de resultados
+
+La tabla de resultados contiene una fila por cada asiento de diario intentado, sea cual sea el modo en que se ejecutó el paso:
+
+| Columna | Descripción |
+|---|---|
+| journal_id | El ID de asiento de su tabla de encabezados. |
+| external_id | El ID externo usado para este intento de contabilización (consulte más abajo). |
+| internal_id | El ID interno de NetSuite del asiento creado, o la referencia de envío asíncrono mientras está `pending`. En blanco en Test Only Mode y en caso de error. |
+| status | `validated`, `posted`, `pending` (Submit Asynchronously aceptó el asiento, pero NetSuite no lo ha confirmado) o `error`. |
+| message | Detalle del error en `error`. En blanco en `posted`/`validated`. |
+
+Cree los pasos posteriores (una notificación ante cualquier fila `error`, una combinación con su tabla de encabezados para registrar `internal_id`) a partir de esta tabla y no del estado de ejecución del propio paso, ya que un asiento defectuoso en un lote grande no hace fallar todo el paso cuando **Continue posting remaining entries** está activada.
+
+## Reejecución segura de un lote
+
+Cada asiento se contabiliza con un ID externo determinista construido a partir de su proyecto, conexión, ID de asiento, Fecha de contabilización y los importes de sus líneas. Al volver a ejecutar el paso sobre un asiento **sin cambios**, se reutiliza ese mismo ID externo, y el propio manejo de IDs externos de NetSuite evita que se cree un duplicado, de modo que volver a ejecutar un flujo de trabajo tras un fallo transitorio es seguro para los asientos que no cambiaron.
+
+<Aside type="caution">
+Esa protección cubre únicamente un asiento sin cambios. Si edita las líneas de un asiento (un importe distinto, una línea agregada o eliminada) y vuelve a ejecutar el paso, PlaidCloud calcula un nuevo ID externo y NetSuite lo registra como un **segundo** asiento de diario, no como una actualización del primero. Para corregir un asiento ya contabilizado, hágalo directamente en NetSuite. Si establece su propio valor en la columna ID externo de la tabla de encabezados, este reemplaza al generado por PlaidCloud, por si necesita que los IDs externos sigan su propio esquema.
+</Aside>
+
+## Relacionado
+
+- [Conexión a NetSuite](/es/guides/connections/netsuite/): configure la conexión a través de la cual este paso contabiliza
+- [Referencia de Post NetSuite Journal Entry](/es/reference/workflow-steps/netsuite/post-netsuite-journal-entry/): referencia completa de campos y configuración
+- [Ejemplos de consultas SuiteQL de NetSuite](/es/guides/connections/netsuite-financial-queries/): obtenga las subsidiarias, cuentas y dimensiones que necesitará como IDs internos
+- [Uso avanzado del asignador de datos](/es/reference/workflow-steps/common/advanced-data-mapper-usage/)

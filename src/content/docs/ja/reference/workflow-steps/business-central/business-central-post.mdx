@@ -1,0 +1,55 @@
+---
+title: "Business Central: Post General Journal Lines"
+description: PlaidCloudのヘッダーテーブルと明細テーブルから、既存のBusiness Central仕訳バッチに総勘定元帳仕訳明細を転記します。転記前にすべての仕訳を検証するプレビューモードがあります。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Business Central接続](/ja/guides/connections/business-central/)を通じて、PlaidCloudの共有ERP書き込みパイプライン経由で、Business Centralに総勘定元帳仕訳明細を転記します。このステップは、ヘッダーテーブル（`journal_id`ごとに1行）と明細テーブル（`journal_id`ごとに1行以上）を受け取り、**既存の**仕訳バッチ内に明細を作成して、そのバッチを転記します。**検証のみ**を指定すると、転記せずにすべての仕訳を構築してチェックします。オプションの結果テーブルに結果を記録できます。
+
+<Aside type="caution">
+このステップで本番の仕訳を無人で転記する前に、必ず最初にすべてのバッチを**検証のみ**で実行し、結果テーブルを確認して、いくつかの転記をBusiness Central上で直接照合してください。
+</Aside>
+
+## 設定
+
+### 接続
+
+- **Business Central接続** — 転記に使用するBusiness Central接続です。
+- **環境** — 接続の環境です。
+
+### データ
+
+- **ヘッダーテーブル** — `journal_id`ごとに1行。明細の転記先となるBusiness Centralの仕訳バッチ名、`document_number`、`posting_date`、および通貨ラベルです。
+- **明細テーブル** — `journal_id`ごとに1行以上。符号付きの`amount`（借方は正、貸方は負）、`account_id`または`account_number`、`account_type`、`description`です。
+- **結果テーブル** — 出力テーブルID。`journal_id`ごとに1行で、`journal_id`、`external_id`、`internal_id`、`status`、`message`を含みます。
+- **検証のみ** — デフォルトでオンです。事前チェックのみを行い、元帳の確保や転記は行いません。このフィールドがまったく含まれないステップ設定（たとえばREST API、MCP、ワークフローバンドルのインポートで作成されたもの）も、本番の転記ではなく検証のみがデフォルトになります。
+- **エラー時に続行** — デフォルトでオンです。1つの仕訳が失敗しても、残りの仕訳の転記を続けます。オフにすると、最初の失敗でバッチを停止します。
+
+<Aside type="caution">
+**`journal_id`で指定する仕訳バッチは、Business Centralにあらかじめ存在している必要があります。** このステップはバッチ内に明細を作成しますが、バッチ自体は作成しません。転記する前に、Business Centralで仕訳バッチ（名前、仕訳テンプレート）を設定してください。
+</Aside>
+
+## 転記の仕組み
+
+Business Centralの`Microsoft.NAV.post`バウンドアクションは、このリクエストが作成した明細だけでなく、仕訳バッチ**全体**を転記します。PlaidCloudはこれを呼び出す前にバッチを読み戻し、このリクエストのドキュメント番号が付いていない明細が含まれている場合は、転記せずにエラーを記録します。このガードにより、以前の部分的な失敗で残った明細が、同じバッチへの無関係な後続の転記によって総勘定元帳に紛れ込むことを防ぎます。
+
+`generalLedgerEntries`は読み取り専用で、転記済みのデータのみを含むため、PlaidCloudは仕訳バッチを読み直すのではなく、**そこで**ドキュメント番号を探すことで転記の成功を確認します。`generalLedgerEntries`で一致が見つかれば、明細が作成されただけでなく、実際に転記されたことの証明になります。
+
+## 機能の制限
+
+| 制限事項 | 内容 |
+|---|---|
+| 書き込み可能なドキュメントタイプは1つ | サポートされているのは総勘定元帳仕訳明細の転記のみです。Business Centralのドラフトドキュメントフロー（販売/購買請求書、ドラフト→転記済み）はサポートされていません。そのフローの正確な転記アクションがMicrosoftの公開ドキュメントで特定されていないためです。 |
+| 既存のバッチのみ | このステップが仕訳バッチを作成することはありません。先にBusiness Centralで作成し、`journal_id`をそのバッチに向けてください。 |
+| 同一バッチへの同時転記 | 冪等性ガードの対象はドキュメント番号であり、仕訳バッチではありません。そのため、異なる2つのドキュメント番号を同じバッチに同時に転記した場合、同じドキュメント番号での2回の呼び出しのように直列化されることは保証されません。1つのバッチへの同時転記は避けてください。 |
+
+## 関連項目
+
+- [Business Centralへの接続](/ja/guides/connections/business-central/) — 設定、プレビュー、転記までの手順を説明したウォークスルー
+- [Business Central RESTコネクター](/ja/reference/connectors/rest/business-central/)
+- [Business Centralステップ](/ja/reference/workflow-steps/business-central/)
+- [ERP転記履歴の確認](/ja/guides/connections/erp-post-history/)

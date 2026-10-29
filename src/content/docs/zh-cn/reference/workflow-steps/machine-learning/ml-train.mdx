@@ -1,0 +1,128 @@
+---
+title: "ML：训练模型"
+description: 在表上拟合 scikit-learn 模型，并写入可用于评分和查询的模型表。
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## 描述
+
+**ML：训练模型**步骤在源表上拟合 scikit-learn 模型，并将结果写入**模型表**。模型表与其他表一样在工作流中流转：可将其传递给 [ML：评分](/zh-cn/reference/workflow-steps/machine-learning/ml-score/)步骤，为数据表追加预测结果；也可直接查询它来查看训练指标。该步骤作为受管的 PlaidCloud 作业运行（与 LLM 步骤相同），因此训练不会与工作流中的其他部分争用资源。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML Train 根据历史行学习模型。带有特征列和已知标签的训练行被送入训练步骤，生成已保存的模型工件，供评分步骤随后使用。" style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">训练行</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">特征 + 已知标签</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">训练</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">拟合算法</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">模型工件</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">已保存，可重复使用</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ 供 ML 评分使用</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML Train 在标签已知的行上拟合算法，生成已保存的模型工件，<a href="/zh-cn/reference/workflow-steps/machine-learning/ml-score/">ML Score</a> 再将其应用于新行。</figcaption>
+</figure>
+
+## 模型选项卡
+
+### 源和输出
+
+- **训练表**：用于训练的表。目标值为空的行不参与训练。
+- **模型表**：接收模型记录的输出表。
+
+### 模型
+
+- **算法**：要拟合的模型：
+
+  | 算法 | 值 | 类别 |
+  | --- | --- | --- |
+  | 逻辑回归 | `logistic_regression` | 分类 |
+  | 决策树分类器 | `decision_tree` | 分类 |
+  | 随机森林分类器 | `random_forest` | 分类 |
+  | 梯度提升分类器（XGBoost 风格） | `xgb_classifier` | 分类 |
+  | 线性回归 | `linear_regression` | 回归 |
+  | 决策树回归器 | `decision_tree_regressor` | 回归 |
+  | 随机森林回归器 | `random_forest_regressor` | 回归 |
+
+  XGBoost 风格算法是 scikit-learn 的 `HistGradientBoostingClassifier`：它在统计上等效于 XGBoost，可作为替代，但并不是对 XGBoost 的封装。参见[限制与注意事项](#限制与注意事项)。
+
+- **目标列**：要预测的列。除无监督算法和 `sota` 外必须指定，后两者的类别列为可选。分类目标被视为文本标签；回归目标会被强制转换为数字，目标无法解析为数字的行将被排除。
+
+### 更多算法
+
+**算法**列表还提供以下算法。转换后的 KNIME 工作流也会使用它们。
+
+| 算法 | 说明 |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | XGBoost 本身，使用树或线性增强器 |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | scikit-learn 梯度提升 |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | scikit-learn 支持向量机、多层感知器和基线模型 |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | KNIME 自有的学习器，结果与 KNIME 一致；其超参数即 KNIME 的设置 |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | KNIME 的无监督算法：没有目标列，特征列为数值列（`apriori` 和 `fp_growth` 则为唯一的项目列表列） |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | KNIME 的聚类、采样、主动学习、推荐（`als`：特征列为用户和产品，目标为评分）、关联规则和剂量反应节点 |
+
+`dbscan`、`mds`、`tsne` 以及其他除数据本身外没有模型的算法，会将其设置保存在模型表中，而 [ML：评分](/zh-cn/reference/workflow-steps/machine-learning/ml-score/)会按给定的表原样输出。
+
+### 超参数
+
+所选算法的 scikit-learn 超参数，为可选的 JSON 对象，例如 `{"max_depth": 5, "n_estimators": 200}`。保存步骤时会拒绝未知的键，因此拼写错误的参数会立即失败，而不会被悄悄忽略。从 Alteryx 转换而来的工作流还可能带有 Alteryx 风格的哨兵键，如 `max_depth_none`，这些键会自动转换。
+
+scikit-learn 已移除的一些旧版参数（例如 `presort`，或[限制与注意事项](#限制与注意事项)中列出的 XGBoost 树参数）会被接受但不会应用；以这种方式丢弃的参数都会记录在模型表 `params_json` 的 `dropped_params` 下，因此不会有任何内容悄然消失。
+
+## 特征选项卡
+
+“特征”选项卡为源表的每一列显示一行：
+
+- **特征**：勾选要用于训练的列。**所有**复选框都不勾选时，将使用除目标列以外的所有列训练。所有复选框都不勾选时，步骤会使用运行时表中的列进行训练；若要排除其中某些列，请在**排除列**（`exclude_columns`）中列出。
+- **类型覆盖**：强制将列按**数值**或**分类**方式处理，或保留为 **（推断）**，由表列类型推导。
+
+特征准备与 Alteryx 辅助建模一致：数值特征被强制转换为数字（无法解析的值变为缺失值），缺失值用中位数填补；分类特征被视为文本，用出现频率最高的值填补，并进行独热编码。分类特征在训练期间从未见过的值，在评分时会被忽略。
+
+## 模型表
+
+模型表包含以下列：
+
+| 列 | 内容 |
+| --- | --- |
+| `model_pickle_b64` | 已拟合的 scikit-learn 管道（经 pickle 序列化、压缩并以 base64 编码）。大型模型会拆分到多行，参见[模型的存储方式](#模型的存储方式)。 |
+| `chunk_index` | 此行所含模型片段的位置，从 `0` 开始计数。 |
+| `algorithm` | 算法值，例如 `logistic_regression`。 |
+| `params_json` | JSON：已应用的 scikit-learn 参数、所用的特征类型以及 `dropped_params`（如有）。 |
+| `feature_names_json` | JSON 数组：模型在评分时需要的有序特征列。 |
+| `class_labels_json` | 类别标签的 JSON 数组（分类器），或 `null`（回归器）。 |
+| `metrics_json` | JSON 训练指标，见下文。 |
+| `trained_at` | 训练运行的 UTC 时间戳。 |
+
+由于模型是普通的表，因此可以像查询其他表一样查询它，例如在下游步骤中提取 `metrics_json`，以模型质量作为工作流的控制条件。
+
+`metrics_json` 包含 `kind` 键（`classification` 或 `regression`）、分类器的 `train_accuracy` 或回归器的 `train_r2` 和 `train_rmse`，以及 `n_training_rows`。
+
+### 模型的存储方式
+
+已拟合的模型可能很大：保持默认一百棵树的随机森林可达数百兆字节，超过了数据仓库对单个值的接受范围。因此模型会先被压缩，若仍然过大，则按需拆分到多行。每行都会重复上述各列，因此任何一行都能告诉您算法、参数、特征和指标；各行之间只有 `model_pickle_b64` 和 `chunk_index` 不同。
+
+这在两个方面很重要：
+
+- **读取指标。** 模型表可能包含多行，因此应从单独一行读取指标，而不要假定只有一行，例如使用 `WHERE chunk_index = 0`。
+- **自行重新组装模型。** 如果在 PlaidCloud 之外读取 `model_pickle_b64`，请按 `chunk_index` 顺序拼接各片段，进行 base64 解码，然后解压缩，再进行反序列化。
+
+[ML：评分](/zh-cn/reference/workflow-steps/machine-learning/ml-score/)步骤会为您完成上述全部工作。它还会检查每个片段是否齐全，如有缺失则报错停止，而不会使用不完整的模型评分。
+
+## 限制与注意事项
+
+- **训练指标基于训练集计算**：此版本没有留出集拆分或交叉验证。请将其视为拟合情况检查，而不是样本外性能的估计。
+- **内存中的工作集**：训练表会读入内存，因此该步骤的目标规模约为一百万行。更大的表请先抽样或聚合。
+- **模型大小上限**：已拟合的模型压缩后超过 128 MB 时会被拒绝，训练一结束步骤就会停止，并给出指明大小和限制的消息。作为参考：一百棵树、17,000 行、17 个特征的随机森林约为 56 MB，因此上限约为该值的两倍。如果达到上限，请减少树的数量（`n_estimators`）或限制 `max_depth`。
+- **XGBoost 近似**：`xgb_classifier` 训练的是 scikit-learn 的 `HistGradientBoostingClassifier`；`xgboost_*` 算法运行的是 XGBoost 本身。XGBoost 特有的树参数 `gamma`、`min_child_weight`、`subsample` 以及 `colsample_*` 系列没有对应项，会被丢弃（记录在 `dropped_params` 中；如果步骤是从 Alteryx 转换而来，也会记录在步骤的映射说明中）。在依赖一致性之前，请对照参考运行结果验证模型指标。
+- **AutoML 转换只选择一种算法，而不是搜索**：Alteryx AutoML 工具与分类和回归一样会融合为此步骤，但 AutoML 不会记录其候选算法中哪一个在 Alteryx 运行时胜出。转换会选取此步骤支持的第一个已勾选算法并注明所做选择，而不会重现自动搜索，这里不会运行任何模型选择循环。请将转换后的 AutoML 步骤与您自己的 Alteryx 结果进行对比。
+
+## 相关内容
+
+- [ML：评分](/zh-cn/reference/workflow-steps/machine-learning/ml-score/)：使用训练好的模型为数据表评分。
+- [迁移 Alteryx 工作流](/zh-cn/guides/workflows/migrate-alteryx-workflows/#机器学习辅助建模转换)：Alteryx 辅助建模管道（包括 AutoML）如何转换为此步骤。

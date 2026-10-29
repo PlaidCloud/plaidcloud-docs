@@ -1,0 +1,81 @@
+---
+title: Export Templated (passo)
+description: Renderize tabelas de projeto através de um modelo de documento para produzir um ficheiro de saída formatado em vez de uma simples extração de dados em bruto.
+sidebar:
+  order: 17
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/export/export-templated.mdx
+---
+
+import SnippetCommonDataMapper from '@snippets/pt-pt/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/pt-pt/common-data-filter.mdx';
+
+## Descrição
+
+Renderiza tabelas de projeto através de um modelo para produzir um documento estruturado, em vez da extração em bruto de colunas que os outros passos de exportação escrevem. Utilize-o quando o sistema de destino exige uma estrutura XML específica, ou outro formato de texto, em vez de uma tabela.
+
+## Itens de configuração exclusivos
+
+### Modelo de origem
+
+O modelo Jinja a partir do qual a saída é renderizada. Consulte [O que um modelo pode utilizar](#o-que-um-modelo-pode-utilizar).
+
+### Saída de destino
+
+A conta de documentos, a pasta e o nome de ficheiro do resultado renderizado. O modelo decide o que o ficheiro contém; um nome de ficheiro sem extensão recebe `.xml`.
+
+**Utilizar DataFrames Pandas para os dados da tabela** altera a forma como as linhas de cada origem chegam ao modelo. Consulte [Linhas de origem como tabela](#linhas-de-origem-como-tabela).
+
+### Tabela de origem
+
+Indique as tabelas explicitamente ou encontre-as por caminho e uma regra de pesquisa — exata, começa com, termina com, contém ou glob.
+
+## O que um modelo pode utilizar
+
+O modelo é renderizado num ambiente isolado: lê os dados que o passo lhe fornece e mais nada.
+
+- **Cada origem, pelo seu Nome.** Cada tabela de origem que indicar fica disponível para o modelo através do **Nome** que lhe atribuir, pelo que deve usar um nome que funcione como variável, como `invoices`.
+- **As variáveis do fluxo de trabalho**, como `variable` — por exemplo `{{ variable.region }}`.
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### Linhas de origem como lista
+
+Com **Utilizar DataFrames Pandas para os dados da tabela** desativado, uma origem é uma lista de linhas só de leitura. Percorra-a em ciclo ou utilize `|length`, `keys()`, `first()`, `one()`, `all()`, `scalar()`, `scalars()`, `mappings()`, `fetchmany(n)` e `columns('a', 'b')`. Leia um valor de uma linha como `row.amount`, `row['amount']` ou `row[0]`; `row._mapping`, `row._asdict()` e `row._fields` também funcionam. As linhas de `columns('a', 'b')` aceitam `row.amount` ou `row[0]`, não `row['amount']`.
+
+### Linhas de origem como tabela
+
+Com **Utilizar DataFrames Pandas para os dados da tabela** ativado, uma origem é uma tabela só de leitura. Percorrê-la em ciclo dá cada linha como um dicionário, pelo que `row.amount` e `row['amount']` funcionam ambos. Também pode utilizar:
+
+- `columns`, `empty`, `shape`, `values` e `index`
+- `head(n)` e `tail(n)`
+- `itertuples()`, que coloca a posição da linha em primeiro lugar como `Index`, pelo que `r[1]` é a primeira coluna; `itertuples(index=False)` omite-a
+- `iterrows()`, que dá a posição da linha e a linha
+- `invoices['amount']`, os valores de uma coluna, com `sum()`, `min()`, `max()`, `mean()`, `unique()` e `tolist()`; `sum`, `min`, `max` e `mean` ignoram nulos
+
+Outros métodos do pandas, como `loc` e `groupby`, não estão disponíveis. Molde os dados num passo anterior e exporte o resultado.
+
+### O que um modelo não pode fazer
+
+- Chamar um método cujo nome comece por `to_`, em qualquer valor — `to_csv` e `to_json`, e também os inofensivos, como `to_pydatetime`.
+- Ler um atributo cujo nome comece por um sublinhado, exceto `_mapping`, `_asdict` e `_fields` de uma linha.
+- Escrever ou abrir ficheiros.
+
+Uma chamada `to_` ou uma operação com ficheiros faz o passo falhar. Um atributo com sublinhado que não seja esses três é simplesmente renderizado como vazio.
+
+## Itens de configuração comuns
+
+<SnippetCommonDataMapper checksSourceTable />
+
+<SnippetCommonDataFilter />
+
+## Relacionado
+
+- [Passos de exportação](/pt-pt/reference/workflow-steps/export/)
+- [Export to XML (passo)](/pt-pt/reference/workflow-steps/export/export-to-xml/) — para XML sem modelo
+- [Passos de relatórios](/pt-pt/reference/workflow-steps/reports/) — para relatórios PDF criados a partir de modelos

@@ -1,0 +1,126 @@
+---
+title: AI_TO_SQL (Lakehouse v1)
+description: AI_TO_SQL — 최신 모델을 사용하여 자연어 지침을 SQL 쿼리로 변환합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/01-ai-to-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+최신 모델 `text-davinci-003`을 사용하여 자연어 지침을 SQL 쿼리로 변환합니다.
+
+PlaidCloud Lakehouse는 OLAP와 AI를 결합하여 SQL 쿼리를 효율적으로 작성할 수 있는 솔루션을 제공합니다. 이 함수를 사용하면 자연어로 작성한 지침을 테이블 스키마에 맞는 SQL 쿼리문으로 변환할 수 있습니다. 예를 들어 "10달러 이하의 모든 품목 가져오기"와 같은 문장을 입력으로 제공하면 해당하는 SQL 쿼리 "SELECT * FROM items WHERE price &lt;= 10"을 출력으로 생성합니다.
+
+[업스트림 구현](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs)을 참조하십시오.
+
+<Aside>생성되는 SQL 쿼리문은 PostgreSQL 표준을 따르므로 PlaidCloud Lakehouse 구문에 맞게 수동으로 수정해야 할 수 있습니다.</Aside>
+
+<Aside>PlaidCloud Lakehouse v1.1.47부터 PlaidCloud Lakehouse는 [Azure OpenAI 서비스](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service)를 지원합니다. 이 통합은 향상된 데이터 개인정보 보호를 제공합니다. Azure OpenAI를 사용하려면 `[query]` 섹션에 다음 구성을 추가하십시오. ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+<Aside type="caution">PlaidCloud Lakehouse는 `AI_TO_SQL`에 (Azure) OpenAI를 사용하지만 데이터는 보내지 않고 테이블 스키마만 (Azure) OpenAI로 보냅니다. 이 기능은 PlaidCloud Lakehouse 구성에 `openai_api_key`가 포함된 경우에만 작동하며, 그렇지 않으면 비활성 상태입니다. 이 함수는 Azure OpenAI 키를 사용하는 PlaidCloud Lakehouse에서 기본적으로 사용할 수 있습니다. 이 함수를 사용하면 테이블 스키마가 당사에 의해 Azure OpenAI로 전송된다는 점에 동의하는 것으로 간주됩니다.</Aside>
+
+## Analyze 구문
+
+```python
+func.ai_to_sql('<natural-language-instruction>')
+```
+
+## Analyze 예제
+
+이 예제에서는 AI_TO_SQL 함수로 지침에서 SQL 쿼리문을 생성하고, 생성된 쿼리문을 실행하여 쿼리 결과를 가져옵니다.
+
+```python
+func.ai_to_sql('List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022')
+```
+
+함수가 출력으로 SQL 문을 생성합니다.
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+## SQL 구문
+
+```sql
+USE <your-database>;
+SELECT * FROM ai_to_sql('<natural-language-instruction>');
+```
+
+<Aside>OpenAI API 키 가져오기 및 구성 - OpenAI API 키를 가져오려면 https://platform.openai.com/account/api-keys 에 방문하여 새 키를 생성하십시오. - **databend-query.toml** 파일에 openai_api_key 설정을 구성하십시오. ```toml [query] ... ... openai_api_key = "<your-key>" ```</Aside>
+
+## SQL 예제
+
+이 예제에서는 AI_TO_SQL 함수로 지침에서 SQL 쿼리문을 생성하고, 생성된 쿼리문을 실행하여 쿼리 결과를 가져옵니다.
+
+1. 데이터를 준비합니다.
+
+```sql
+CREATE DATABASE IF NOT EXISTS openai;
+USE openai;
+
+CREATE TABLE users(
+    id INT,
+    name VARCHAR,
+    age INT,
+    country VARCHAR
+);
+
+CREATE TABLE orders(
+    order_id INT,
+    user_id INT,
+    product_name VARCHAR,
+    price DECIMAL(10,2),
+    order_date DATE
+);
+
+-- Insert sample data into the users table
+INSERT INTO users VALUES (1, 'Alice', 31, 'USA'),
+                         (2, 'Bob', 32, 'USA'),
+                         (3, 'Charlie', 45, 'USA'),
+                         (4, 'Diana', 29, 'USA'),
+                         (5, 'Eva', 35, 'Canada');
+
+-- Insert sample data into the orders table
+INSERT INTO orders VALUES (1, 1, 'iPhone', 1000.00, '2022-03-05'),
+                          (2, 1, 'OpenAI Plus', 20.00, '2022-03-06'),
+                          (3, 2, 'OpenAI Plus', 20.00, '2022-03-07'),
+                          (4, 2, 'MacBook Pro', 2000.00, '2022-03-10'),
+                          (5, 3, 'iPad', 500.00, '2022-03-12'),
+                          (6, 3, 'AirPods', 200.00, '2022-03-14');
+```
+
+2. 영어로 작성한 지침을 입력으로 사용하여 AI_TO_SQL 함수를 실행합니다.
+
+```sql
+SELECT * FROM ai_to_sql(
+    'List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022');
+```
+
+함수가 출력으로 SQL 문을 생성합니다.
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+3. 생성된 SQL 문을 실행하여 쿼리 결과를 가져옵니다.
+
+```sql
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
+```
