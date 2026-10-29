@@ -349,7 +349,7 @@ export default defineConfig({
 								'guides/projects/compare-and-merge-projects',
 								'guides/projects/export-to-portable-format',
 								'guides/projects/organizing-with-labels',
-								'guides/projects/data-foundation-enterprise-profitability',
+								'guides/projects/data-foundation',
 							],
 						},
 						{
