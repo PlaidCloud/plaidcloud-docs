@@ -309,13 +309,13 @@ results.append(ok("CJK bold rule + ja noun rule", "never a bare particle" in t.s
 # force-paths
 tmp = Path(tempfile.mkdtemp())
 t.save_json(tmp / "m.json", {f"{lc}/{rel}": t.sha(src) for lc in t.LOCALES})
-t.MANIFEST = tmp / "m.json"
-real_prune, t.prune_deleted = t.prune_deleted, lambda: None  # prepare would prune the real repo's translations
+t.MANIFEST, real_staging, t.STAGING = tmp / "m.json", t.STAGING, REAL / "i18n/_no_staging"  # never created: prepare only unlinks there
+real_prune, t.prune_deleted = t.prune_deleted, lambda: None  # prepare would prune the real repo's translations and staging
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=None))
 results.append(ok("current unit not prepared without force", not list((tmp / "jobs/de").glob("*.json"))))
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=[rel]))
 results.append(ok("--force-paths re-queues a current unit", [i["path"] for i in _json.loads((tmp / "jobs/de/001.json").read_text())["items"]] == [rel]))
-t.prune_deleted = real_prune
+t.prune_deleted, t.STAGING = real_prune, real_staging
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (review round)")
 
