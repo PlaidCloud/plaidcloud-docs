@@ -31,18 +31,6 @@ function walkDocs(dir, out = []) {
 	return out;
 }
 
-function gitLastmod(absPath) {
-	try {
-		const iso = execSync(`git log -1 --format=%aI -- "${absPath}"`, {
-			encoding: 'utf8',
-			stdio: ['ignore', 'pipe', 'ignore'],
-		}).trim();
-		return iso || null;
-	} catch {
-		return null;
-	}
-}
-
 // The production build (Cloudflare Workers Builds) checks out a shallow clone,
 // so `git log` would report the single HEAD commit for every file and every
 // page would share one lastmod (the build time) — defeating freshness signals
@@ -59,12 +47,30 @@ try {
 		execSync('git fetch --unshallow', { stdio: 'ignore', timeout: 60_000 });
 	}
 } catch {
-	// no git / no network / timed out — gitLastmod() falls back to file mtime
+	// no git / no network / timed out — lastmod falls back to file mtime
+}
+
+// One `git log` pass over the docs tree, newest commit first, keeping the first
+// date seen per file. A `git log` per file spawned one process per page, which
+// grows linearly with the corpus.
+const fileToLastmod = new Map();
+try {
+	const log = execSync(`git -C "${DOCS_ROOT}" log --relative --format=%x00%aI --name-only -- .`, {
+		encoding: 'utf8',
+		stdio: ['ignore', 'pipe', 'ignore'],
+		maxBuffer: 1024 * 1024 * 1024,
+	});
+	for (const commit of log.split('\0').slice(1)) {
+		const [iso, ...files] = commit.trim().split('\n');
+		for (const f of files) if (f && !fileToLastmod.has(f)) fileToLastmod.set(f, iso);
+	}
+} catch {
+	// no git — every page falls back to file mtime below
 }
 
 const urlToLastmod = new Map();
 for (const f of walkDocs(DOCS_ROOT)) {
-	const iso = gitLastmod(f) ?? statSync(f).mtime.toISOString();
+	const iso = fileToLastmod.get(relative(DOCS_ROOT, f)) ?? statSync(f).mtime.toISOString();
 	urlToLastmod.set(fileToUrl(f), iso);
 }
 
@@ -121,62 +127,538 @@ export default defineConfig({
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/PlaidCloud/plaidcloud-docs' },
 			],
+			// Sidebar = journey sections. Pages are slug entries (titles/labels come
+			// from frontmatter, per locale); autogenerate only where a folder is
+			// exactly one group. A new guide must be added here by hand.
 			sidebar: [
 				{
-					label: 'Get started',
+					label: 'Get Started',
 					items: [
-						{ label: 'Overview',   link: '/get-started/' },
-						{ label: 'Sign Up',    link: '/get-started/sign-up/' },
-						{ label: 'Quickstart', link: '/get-started/quickstart/' },
-						{ label: 'Platform Architecture', link: '/get-started/platform-architecture/' },
-						{ label: 'Concepts',   link: '/get-started/concepts/' },
-						{ label: 'Tutorials',  link: '/get-started/tutorials/' },
-						{ label: 'Supported Browsers', link: '/get-started/supported-browsers/' },
-						{ label: 'FAQ',        link: '/get-started/faq/' },
+						'get-started',
+						'get-started/sign-up',
+						'get-started/quickstart',
+						'get-started/platform-architecture',
+						'get-started/concepts',
+						'get-started/supported-browsers',
+						'get-started/faq',
+						{
+							label: 'Tutorials',
+							collapsed: true,
+							items: [
+								'get-started/tutorials',
+								{
+									label: 'Start Here',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/first-15-minutes',
+										'get-started/tutorials/csv-to-answer',
+										'get-started/tutorials/start-from-a-project',
+									],
+								},
+								{
+									label: 'Build Your First Pipeline',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/connect-a-data-source',
+										'get-started/tutorials/analyze-netsuite-financials',
+										'get-started/tutorials/analyze-sage-intacct-financials',
+										'get-started/tutorials/load-and-transform-data',
+										'get-started/tutorials/transform-with-sql',
+										'get-started/tutorials/design-a-dimension',
+										'get-started/tutorials/build-an-allocation',
+										'get-started/tutorials/build-a-dashboard',
+									],
+								},
+								{
+									label: 'Work With Confidence',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/snapshots-and-time-travel',
+										'get-started/tutorials/debug-a-workflow',
+										'get-started/tutorials/reuse-variables-macros-udfs',
+										'get-started/tutorials/collaborate-versions-and-sharing',
+									],
+								},
+								{
+									label: 'Operate and Govern',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/schedule-a-workflow',
+										'get-started/tutorials/control-data-access',
+									],
+								},
+								{
+									label: 'Coming From Another Tool',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/migrate-your-first-alteryx-workflow',
+										'get-started/tutorials/excel-with-plaidxl',
+									],
+								},
+								{
+									label: 'Extend With AI',
+									collapsed: true,
+									items: [
+										'get-started/tutorials/fix-a-workflow-with-ai',
+										'get-started/tutorials/mcp-with-ai-agent',
+										'get-started/tutorials/panel-ai-agent',
+									],
+								},
+							],
+						},
 					],
 				},
 				{
-					label: 'Guides',
+					label: 'Basics',
+					collapsed: true,
 					items: [
-						{ label: 'Overview',          link: '/guides/' },
-						{ label: 'AI Assistant',      collapsed: true, items: [{ autogenerate: { directory: 'guides/ai-assistant' } }] },
+						'guides',
+						'guides/launcher',
+						'guides/change-your-language',
+						'guides/projects/sharing-links',
+						'guides/projects/breadcrumbs-and-shareable-links',
+						{ label: 'Mobile App', collapsed: true, items: [{ autogenerate: { directory: 'guides/mobile-app' } }] },
+						{ label: 'Email', collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
+						'guides/time-expense/track-time-and-expenses',
+						{ label: 'Help & Support', collapsed: true, items: [{ autogenerate: { directory: 'guides/support' } }] },
+					],
+				},
+				{
+					label: 'Connect Data',
+					collapsed: true,
+					items: [
 						{
-							label: 'Allocations',
+							label: 'Connections',
 							collapsed: true,
 							items: [
-								{ label: 'Overview',                 link: '/guides/allocations/' },
-								{ label: 'Getting started',          collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/getting-started' } }] },
-								{ label: 'Setup',                    collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/setup' } }] },
-								{ label: 'Results & troubleshooting', collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/results' } }] },
+								'guides/connections',
+								'guides/connections/create-connection',
+								'guides/connections/clone-connection',
+								'guides/connections/external-lakehouse',
+								'guides/connections/singer-sources',
+								'guides/connections/plaidcloud-git',
+								{
+									label: 'ERP & Accounting',
+									collapsed: true,
+									items: [
+										'guides/connections/acumatica',
+										'guides/connections/business-central',
+										'guides/connections/dynamics-365-fo',
+										'guides/connections/oracle-fusion',
+										'guides/connections/quickbooks',
+										'guides/connections/sage-intacct',
+										'guides/connections/s4hana-cloud',
+										'guides/connections/sap-adhoc-extract',
+										'guides/connections/workday-financials',
+										'guides/connections/xero',
+									],
+								},
+								{
+									label: 'NetSuite',
+									collapsed: true,
+									items: [
+										'guides/connections/netsuite',
+										'guides/connections/import-netsuite-financials',
+										'guides/connections/netsuite-access-for-data-foundation',
+										'guides/connections/netsuite-financial-queries',
+										'guides/connections/post-netsuite-journal-entries',
+									],
+								},
+								{
+									label: 'EPM & Planning',
+									collapsed: true,
+									items: [
+										'guides/connections/anaplan',
+										'guides/connections/essbase',
+										'guides/connections/hfm-fccs',
+										'guides/connections/tm1',
+									],
+								},
+								{
+									label: 'CRM & Operations',
+									collapsed: true,
+									items: [
+										'guides/connections/salesforce',
+										'guides/connections/samsara',
+									],
+								},
+								{
+									label: 'Write-Back',
+									collapsed: true,
+									items: [
+										'guides/connections/posting-register',
+										'guides/connections/erp-post-history',
+									],
+								},
 							],
 						},
-						{ label: 'Change your language', link: '/guides/change-your-language/' },
-						{ label: 'Connections',       collapsed: true, items: [{ autogenerate: { directory: 'guides/connections' } }] },
-						{ label: 'Dash apps',         collapsed: true, items: [{ autogenerate: { directory: 'guides/dash-apps' } }] },
-						{ label: 'Dashboards',        collapsed: true, items: [{ autogenerate: { directory: 'guides/dashboards' } }] },
-						{ label: 'Data',              collapsed: true, items: [{ autogenerate: { directory: 'guides/data' } }] },
-						{ label: 'Dimensions',        collapsed: true, items: [{ autogenerate: { directory: 'guides/dimensions' } }] },
 						{
-							label: 'Documents',
+							label: 'Files & Storage',
 							collapsed: true,
 							items: [
-								{ label: 'Overview',           link: '/guides/documents/' },
-								{ label: 'Account management', collapsed: true, items: [{ autogenerate: { directory: 'guides/documents/account-management' } }] },
-								{ label: 'Adding accounts',    collapsed: true, items: [{ autogenerate: { directory: 'guides/documents/adding-accounts' } }] },
-								{ label: 'Searching documents', link: '/guides/documents/searching-documents/' },
-								{ label: 'Using documents',     link: '/guides/documents/using-document/' },
+								'guides/documents',
+								'guides/documents/using-document',
+								'guides/documents/searching-documents',
+								{ label: 'Manage Accounts & Access', collapsed: true, items: [{ autogenerate: { directory: 'guides/documents/account-management' } }] },
+								{
+									label: 'Add Cloud Object Storage',
+									collapsed: true,
+									items: [
+										'guides/documents/adding-accounts',
+										'guides/documents/adding-accounts/add-aws-s3-account',
+										'guides/documents/adding-accounts/add-google-cloud-storage-account',
+										'guides/documents/adding-accounts/add-managed-bucket-account',
+										'guides/documents/adding-accounts/add-wasabi-hot-storage-account',
+										'guides/documents/adding-accounts/add-azure-blob-storage-account',
+										'guides/documents/adding-accounts/add-azure-data-lake-gen2-account',
+										'guides/documents/adding-accounts/add-minio-account',
+										'guides/documents/adding-accounts/add-backblaze-b2-account',
+										'guides/documents/adding-accounts/add-cloudflare-r2-account',
+										'guides/documents/adding-accounts/add-digitalocean-spaces-account',
+										'guides/documents/adding-accounts/add-linode-object-storage-account',
+									],
+								},
+								{
+									label: 'Add File Shares & Servers',
+									collapsed: true,
+									items: [
+										'guides/documents/adding-accounts/add-google-drive-account',
+										'guides/documents/adding-accounts/add-onedrive-account',
+										'guides/documents/adding-accounts/add-ftp-account',
+										'guides/documents/adding-accounts/add-sftp-account',
+										'guides/documents/adding-accounts/add-webdav-account',
+									],
+								},
 							],
 						},
-						{ label: 'Email',             collapsed: true, items: [{ autogenerate: { directory: 'guides/email' } }] },
-						{ label: 'Help & Support',    collapsed: true, items: [{ autogenerate: { directory: 'guides/support' } }] },
-						{ label: 'Launcher',          link: '/guides/launcher/' },
-						{ label: 'Mobile app',        link: '/guides/mobile-app/' },
-						{ label: 'Panel apps',        collapsed: true, items: [{ autogenerate: { directory: 'guides/panel-apps' } }] },
-						{ label: 'PlaidCloud Git',    collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
-						{ label: 'Projects',          collapsed: true, items: [{ autogenerate: { directory: 'guides/projects' } }] },
-						{ label: 'Sandbox',           collapsed: true, items: [{ autogenerate: { directory: 'guides/sandbox' } }] },
-						{ label: 'Time & Expense',    collapsed: true, items: [{ autogenerate: { directory: 'guides/time-expense' } }] },
-						{ label: 'Workflows',         collapsed: true, items: [{ autogenerate: { directory: 'guides/workflows' } }] },
+					],
+				},
+				{
+					label: 'Organize Data',
+					collapsed: true,
+					items: [
+						{
+							label: 'Projects',
+							collapsed: true,
+							items: [
+								'guides/projects',
+								'guides/projects/viewing-projects',
+								'guides/projects/managing-projects',
+								'guides/projects/archive-a-project',
+								'guides/projects/viewing-the-project-log',
+								'guides/projects/compare-and-merge-projects',
+								'guides/projects/export-to-portable-format',
+								'guides/projects/organizing-with-labels',
+								'guides/projects/data-foundation-enterprise-profitability',
+							],
+						},
+						{
+							label: 'Tables & Views',
+							collapsed: true,
+							items: [
+								'guides/data',
+								'guides/data/tables-views',
+								'guides/data/table-explorer',
+								'guides/projects/managing-tables-and-views',
+								'guides/projects/managing-data-editors',
+								'guides/data/publish',
+								'guides/data/table-snapshots',
+								'guides/data/selecting-latest-record-in-large-history-table',
+								'guides/data/currency-data-type',
+								'guides/data/vector-data-type',
+								'guides/data/migrate-project-lakehouse',
+							],
+						},
+						{
+							label: 'Dimensions',
+							collapsed: true,
+							items: [
+								{ autogenerate: { directory: 'guides/dimensions' } },
+								'guides/projects/managing-hierarchies',
+							],
+						},
+					],
+				},
+				{
+					label: 'Transform & Automate',
+					collapsed: true,
+					items: [
+						'guides/workflows',
+						{
+							label: 'Create & Edit',
+							collapsed: true,
+							items: [
+								'guides/workflows/where-are-workflows',
+								'guides/workflows/workflow-explorer',
+								'guides/workflows/create-workflow',
+								'guides/workflows/duplicate-a-workflow',
+								'guides/workflows/advanced-workflows',
+								'guides/workflows/copy-paste-steps',
+								'guides/workflows/change-the-order-of-steps-in-a-workflow',
+								'guides/workflows/step-numbers',
+								'guides/workflows/prettify-code-in-editors',
+								'guides/workflows/column-propagation',
+								'guides/workflows/preview-step-data',
+							],
+						},
+						{
+							label: 'Build Logic',
+							collapsed: true,
+							items: [
+								'guides/workflows/manage-workflow-variables',
+								'guides/workflows/step-conditions',
+								'guides/workflows/create-a-macro',
+								'guides/workflows/multi-table-join-step',
+								'guides/workflows/llm-step',
+								'guides/workflows/rest-request-step',
+								'guides/workflows/notify-email-templates',
+								'guides/workflows/geospatial-analytics',
+							],
+						},
+						{
+							label: 'Run & Control',
+							collapsed: true,
+							items: [
+								'guides/workflows/run-a-workflow',
+								'guides/workflows/running-one-step-in-a-workflow',
+								'guides/workflows/running-a-range-of-steps-in-a-workflow',
+								'guides/workflows/skip-steps-in-a-workflow',
+								'guides/workflows/continue-on-error',
+								'guides/workflows/managing-step-errors',
+								'guides/workflows/controlling-parallel-execution',
+								'guides/workflows/text-alerts',
+							],
+						},
+						{
+							label: 'Monitor & Tune',
+							collapsed: true,
+							items: [
+								'guides/workflows/viewing-workflow-log',
+								'guides/workflows/view-workflow-report',
+								'guides/workflows/view-a-dependency-audit',
+								'guides/workflows/optimize-a-workflow',
+								'guides/workflows/sync-dependencies',
+							],
+						},
+						{ label: 'Scheduling', collapsed: true, items: [{ autogenerate: { directory: 'administration/scheduled-events' } }] },
+					],
+				},
+				{
+					label: 'Migrate From Other Tools',
+					collapsed: true,
+					items: [
+						{
+							label: 'Alteryx',
+							collapsed: true,
+							items: [
+								'guides/workflows/alteryx-migration-readiness-checklist',
+								'guides/workflows/package-alteryx-dependencies',
+								'guides/workflows/convert-yxdb-files-for-import',
+								'guides/workflows/migrate-alteryx-workflows',
+								'guides/workflows/troubleshoot-alteryx-imports',
+								'guides/workflows/validate-converted-alteryx-workflows',
+								'guides/workflows/validate-alteryx-reports-and-artifacts',
+								'guides/workflows/use-converted-alteryx-apps',
+								'guides/workflows/migrate-spatial-alteryx-workflows',
+								'guides/workflows/orchestrate-alteryx-migrations-with-mcp',
+							],
+						},
+						'guides/workflows/migrate-knime-workflows',
+						'guides/workflows/migrate-prophecy-projects',
+						'guides/workflows/migrate-savant-analyses',
+					],
+				},
+				{
+					label: 'Allocate',
+					collapsed: true,
+					items: [
+						'guides/allocations',
+						{ label: 'First Allocation', collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/getting-started' } }] },
+						{ label: 'Setup', collapsed: true, items: [{ autogenerate: { directory: 'guides/allocations/setup' } }] },
+						{
+							label: 'Results & Troubleshooting',
+							collapsed: true,
+							items: [
+								{ autogenerate: { directory: 'guides/allocations/results' } },
+								'integrations/ai-coding-agents/tracing-allocations',
+							],
+						},
+					],
+				},
+				{
+					label: 'Analyze & Report',
+					collapsed: true,
+					items: [
+						{ label: 'Dashboards', collapsed: true, items: [{ autogenerate: { directory: 'guides/dashboards' } }] },
+						'integrations/ai-coding-agents/metric-definitions',
+						'integrations/ai-coding-agents/analysis-paths',
+					],
+				},
+				{
+					label: 'AI Assistant (Weave)',
+					collapsed: true,
+					items: [
+						'guides/ai-assistant',
+						'guides/ai-assistant/weave-tab',
+						{
+							label: 'Review Findings',
+							collapsed: true,
+							items: [
+								'guides/ai-assistant/weave-findings',
+								'guides/ai-assistant/weave-metric-insights',
+								'guides/ai-assistant/weave-readiness',
+								'guides/ai-assistant/weave-reconciliation',
+								'guides/ai-assistant/weave-monthly-summary',
+							],
+						},
+						{
+							label: 'Build With Weave',
+							collapsed: true,
+							items: [
+								'guides/ai-assistant/fixing-workflow-errors',
+								'guides/ai-assistant/generate-sql-extract',
+								'guides/ai-assistant/impact-preview',
+								'guides/ai-assistant/check-while-you-edit',
+								'guides/ai-assistant/weave-documentation',
+							],
+						},
+						{
+							label: 'Govern Weave',
+							collapsed: true,
+							items: [
+								'guides/ai-assistant/weave-activity',
+								'guides/ai-assistant/weave-ai-features',
+							],
+						},
+					],
+				},
+				{
+					label: 'Build Apps',
+					collapsed: true,
+					items: [
+						{
+							label: 'Panel Apps',
+							collapsed: true,
+							items: [
+								'guides/panel-apps',
+								{
+									label: 'Use',
+									collapsed: true,
+									items: [
+										'guides/panel-apps/using',
+										'guides/panel-apps/gallery',
+									],
+								},
+								{
+									label: 'Build',
+									collapsed: true,
+									items: [
+										'guides/panel-apps/creating',
+										'guides/panel-apps/studio',
+										'guides/panel-apps/app-kit',
+										'guides/panel-apps/build-with-weave',
+										'guides/panel-apps/branding',
+										'guides/panel-apps/alerts-and-digests',
+									],
+								},
+								{
+									label: 'Data & Deploy',
+									collapsed: true,
+									items: [
+										'guides/panel-apps/accessing-data',
+										'guides/panel-apps/data-api',
+										'guides/panel-apps/deploy-from-git',
+									],
+								},
+							],
+						},
+						{ label: 'Dash Apps', collapsed: true, items: [{ autogenerate: { directory: 'guides/dash-apps' } }] },
+						{ label: 'Custom App Sandbox', collapsed: true, items: [{ autogenerate: { directory: 'guides/sandbox' } }] },
+						{ label: 'PlaidCloud Git', collapsed: true, items: [{ autogenerate: { directory: 'guides/git' } }] },
+						{
+							label: 'Location APIs',
+							collapsed: true,
+							items: [
+								'guides/data/geocoding-api',
+								'guides/data/drive-time-routing-api',
+							],
+						},
+					],
+				},
+				{
+					label: 'Integrations',
+					collapsed: true,
+					items: [
+						'integrations',
+						{
+							label: 'AI Agents (MCP)',
+							collapsed: true,
+							items: [
+								'integrations/ai-coding-agents',
+								'integrations/ai-coding-agents/getting-started',
+								{
+									label: 'Clients',
+									collapsed: true,
+									items: [
+										'integrations/ai-coding-agents/claude-code',
+										'integrations/ai-coding-agents/claude-desktop',
+										'integrations/ai-coding-agents/chatgpt',
+										'integrations/ai-coding-agents/copilot',
+										'integrations/ai-coding-agents/cursor',
+										'integrations/ai-coding-agents/gemini',
+										'integrations/ai-coding-agents/grok',
+									],
+								},
+								'integrations/ai-coding-agents/honest-answers',
+								'integrations/ai-coding-agents/troubleshooting',
+							],
+						},
+						{ label: 'AI and LLM Architecture', collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-architecture' } }] },
+						'integrations/microsoft-365-copilot',
+						{ label: 'PySpark', collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
+					],
+				},
+				{
+					label: 'Administration',
+					collapsed: true,
+					items: [
+						'administration',
+						{
+							label: 'Access Management',
+							collapsed: true,
+							items: [
+								'administration/access',
+								{ label: 'Organizations & Workspaces', collapsed: true, items: [{ autogenerate: { directory: 'administration/access/overview' } }] },
+								'administration/access/member-management',
+								'administration/access/member-user-identity',
+								'administration/access/member-authentication',
+								'administration/access/managing-security-groups-and-assignments',
+								{
+									label: 'Single Sign-On',
+									collapsed: true,
+									items: [
+										'administration/access/advanced/managing-single-sign-on-for-organization',
+										'administration/access/advanced/entra-saml-setup',
+										'administration/access/advanced/okta-saml-setup',
+										'administration/access/advanced/google-saml-setup',
+										'administration/access/advanced/aws-saml-setup',
+										'administration/access/advanced/auth0-saml-setup',
+									],
+								},
+								{
+									label: 'Advanced',
+									collapsed: true,
+									items: [
+										'administration/access/advanced',
+										'administration/access/advanced/manage-organization-administrators',
+										'administration/access/advanced/setting-member-expiration-period',
+									],
+								},
+								'administration/access/usage-reports',
+							],
+						},
+						{ label: 'Control Plane', collapsed: true, items: [{ autogenerate: { directory: 'administration/control-plane' } }] },
+						'guides/projects/managing-storage',
 					],
 				},
 				// Reference is top-level only — full tree (1,200+ entries from
@@ -187,47 +669,15 @@ export default defineConfig({
 					label: 'Reference',
 					collapsed: true,
 					items: [
-						{ label: 'Overview',       link: '/reference/' },
-						{ label: 'Connectors',     link: '/reference/connectors/' },
-						{ label: 'Workflow steps', link: '/reference/workflow-steps/' },
-						{ label: 'Expressions',    link: '/reference/expressions/' },
-						{ label: 'CLI',            link: '/reference/cli/' },
-						{ label: 'Glossary',       link: '/reference/glossary/' },
+						'reference',
+						'reference/connectors',
+						'reference/workflow-steps',
+						'reference/expressions',
+						'reference/cli',
+						'reference/glossary',
 					],
 				},
-				{
-					label: 'Integrations',
-					items: [
-						{ label: 'Overview',                link: '/integrations/' },
-						{ label: 'AI and LLM Architecture', collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-architecture' } }] },
-						{ label: 'Microsoft 365 Copilot',   link: '/integrations/microsoft-365-copilot/' },
-						{ label: 'AI coding agents',        collapsed: true, items: [{ autogenerate: { directory: 'integrations/ai-coding-agents' } }] },
-						{ label: 'PySpark',                 collapsed: true, items: [{ autogenerate: { directory: 'integrations/pyspark' } }] },
-					],
-				},
-				{
-					label: 'Administration',
-					items: [
-						{ label: 'Overview', link: '/administration/' },
-						{
-							label: 'Access management',
-							collapsed: true,
-							items: [
-								{ label: 'Overview',                link: '/administration/access/' },
-								{ label: 'Organization & workspaces', collapsed: true, items: [{ autogenerate: { directory: 'administration/access/overview' } }] },
-								{ label: 'Member authentication',   collapsed: true, items: [{ autogenerate: { directory: 'administration/access/member-authentication' } }] },
-								{ label: 'Member management',       collapsed: true, items: [{ autogenerate: { directory: 'administration/access/member-management' } }] },
-								{ label: 'Member identity',         collapsed: true, items: [{ autogenerate: { directory: 'administration/access/member-user-identity' } }] },
-								{ label: 'Security groups',         collapsed: true, items: [{ autogenerate: { directory: 'administration/access/managing-security-groups-and-assignments' } }] },
-								{ label: 'Advanced (SSO/SAML)',     collapsed: true, items: [{ autogenerate: { directory: 'administration/access/advanced' } }] },
-								{ label: 'Usage Reports',            link: '/administration/access/usage-reports/' },
-							],
-						},
-						{ label: 'Control plane', collapsed: true, items: [{ autogenerate: { directory: 'administration/control-plane' } }] },
-						{ label: 'Scheduled events', collapsed: true, items: [{ autogenerate: { directory: 'administration/scheduled-events' } }] },
-					],
-				},
-				{ label: "What's new", link: '/releases/' },
+				'releases',
 			],
 			plugins: [
 				starlightLlmsTxt({
