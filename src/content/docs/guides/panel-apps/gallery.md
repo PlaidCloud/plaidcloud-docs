@@ -1,6 +1,6 @@
 ---
 title: The App Gallery
-description: List a Panel app as a template your workspace can start from, and create a new app from a listed one.
+description: Add a Studio app to the gallery or take it out, and create a new app from a listed one.
 sidebar:
   order: 7
 ---
@@ -9,24 +9,24 @@ The app gallery is the shelf your workspace keeps of ready-made Panel apps. Anyo
 
 ## Create an App From the Gallery
 
-1. In **My Panel Apps**, choose **Create app**.
+1. In **My Panel Apps**, choose **New Studio App**.
 2. Under **Start from**, choose **From the gallery**.
-3. Pick an app. Its description shows under the picker.
+3. Pick an app under **Gallery app**. Its description shows under the picker.
 4. Name your app, pick its **Project** and choose **Create**.
 
-You can also open the gallery on its own, where each card shows the app's name, description and project, with **Create app from this…**. The gallery lists only apps in projects you can view.
+You can also choose **Gallery** in the **My Panel Apps** toolbar to browse the gallery on its own. Each card shows the app's name, description and project, with **Create app from this…**. The gallery lists only apps in projects you can view.
 
 The new app is a copy of the listed app's files. Your copy and the original are separate: changing one never changes the other.
 
 ## List Your App
 
-You need edit permission on the app's project, and the app must have been created in [Panel Studio](/guides/panel-apps/studio/) and assigned to a project.
+You need edit access to the app's project. Only apps created in [Panel Studio](/guides/panel-apps/studio/) that belong to a project can be listed; server, WASM and Dash apps can't.
 
-1. Open the app in Studio and choose **Gallery…**.
+1. Open the app in Studio and choose **Gallery…**. The button is available only for an app that belongs to a project.
 2. Enter a **Description** to show on the gallery card.
 3. Choose **List in gallery** and confirm.
 
-To change the description, choose **Update listing**. To remove the app, choose **Take out of gallery**. Moving the app to another project also takes it out of the gallery.
+To change the description, choose **Update listing**. To remove the app from the gallery, open **Gallery…** and choose **Take out of gallery**. Moving the app to another project also takes it out of the gallery.
 
 ## Who Can See What
 
