@@ -1,0 +1,148 @@
+---
+title: Fahrzeit-Routing-API
+description: Rufen Sie die REST-Endpunkte für Fahrzeit-Routing von PlaidCloud auf – Isochronen-Polygone und Ranking der nächstgelegenen Ziele nach Fahrzeit, betrieben von der selbst gehosteten Routing-Engine von PlaidCloud. Opt-in-Vorschau, Best Effort, ohne SLA.
+sidebar:
+  label: Fahrzeit-Routing-API
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud stellt Fahrzeit-Routing als zwei REST-Endpunkte unter `/rest/v1/analyze/route` bereit: einen **Isochronen**-Endpunkt, der ein Polygon mit Fahrzeit (oder Fahrstrecke) um einen Ausgangspunkt zieht, und einen **find-nearest**-Endpunkt, der Zielkandidaten nach tatsächlicher Fahrzeit statt nach Luftlinie einordnet. Beide laufen auf der selbst gehosteten Routing-Engine von PlaidCloud, die aus OpenStreetMap-Straßendaten (ODbL) aufgebaut ist, und verpacken jedes Ergebnis in einen kleinen `plaidcloud`-Umschlag mit Quellenangabe.
+
+<Aside type="caution" title="Opt-in-Vorschau – lesen Sie dies, bevor Sie darauf aufbauen">
+Fahrzeit-Routing ist **standardmäßig deaktiviert** und erreicht nur Tenants, die sich dafür entschieden haben. Es läuft auf einem kleinen, gemeinsam genutzten Routing-Pool und wird **Best Effort ohne SLA** angeboten – es gibt keine garantierte Live-Traffic-Kapazität, und eine Anfrage kann mit `503` abgewiesen werden, wenn der Pool ausgelastet ist, statt für Sie in eine Warteschlange gestellt oder wiederholt zu werden. Wenn Sie dies noch nicht aktiviert haben, wenden Sie sich an PlaidCloud, um sich nach der Vorschau zu erkundigen, bevor Sie eine Abhängigkeit darauf aufbauen.
+</Aside>
+
+## Authentifizierung und Berechtigung
+
+Jeder Routing-Aufruf benötigt:
+
+- Eine normale PlaidCloud-Sitzung oder ein Bearer-Token mit der Rolle **`analyze.table.read`** – derselben Rolle, die auch anderen Lesezugriff auf die Daten eines Projekts steuert. Es gibt keine Routing-spezifische Rolle.
+- Fahrzeit-Routing in Ihrem Tarif – die Fahrzeit-Berechtigung muss für Ihren Tenant aktiviert sein. Ein Tenant, dessen Tarif sie nicht enthält, erhält bei jedem Aufruf ein `403` mit `detail: "drive_time_disabled"` – es gibt keinen teilweisen oder schreibgeschützten Modus.
+
+## Endpunkte
+
+### `isochrone` – Fahrzeit-Polygon um einen Ausgangspunkt
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Feld | Typ | Hinweise |
+|---|---|---|
+| `origin` | `{ lat, lon }`, erforderlich | Eine einzelne Koordinate. Isochrone akzeptiert pro Aufruf einen Ausgangspunkt |
+| `costing` | Zeichenfolge | `auto` (Standard), `truck`, `bike` oder `pedestrian` |
+| `contours_minutes` | Array von Ganzzahlen, erforderlich | Ein Eintrag pro gewünschtem Konturring, jeweils 1–120 Minuten. Bis zu 5 Konturen pro Aufruf |
+| `costing_options.truck.height` | Float, Meter | Optional, > 0 und ≤ 10. Gilt nur bei `truck`-Costing |
+| `costing_options.truck.weight` | Float, Kilogramm | Optional, > 0 und ≤ 100000. Gilt nur bei `truck`-Costing |
+| `costing_options.truck.length` | Float, Meter | Optional, > 0 und ≤ 50. Gilt nur bei `truck`-Costing |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Antwort – das unveränderte Isochronen-GeoJSON der Routing-Engine plus der `plaidcloud`-Umschlag:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest` – nächstgelegene Ziele nach Fahrzeit
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Feld | Typ | Hinweise |
+|---|---|---|
+| `origins` | Array von `{ lat, lon }`, erforderlich | 1–5 Ausgangspunkte |
+| `destinations` | Array von `{ lat, lon }`, erforderlich | 1–500 Kandidaten. Siehe [Vorfilterung der Ziele](#vorfilterung-der-ziele) unten |
+| `costing` | Zeichenfolge | `auto` (Standard), `truck`, `bike` oder `pedestrian` |
+| `top_n` | Ganzzahl | Pro Ausgangspunkt zurückzugebende nächstgelegene Ziele. 1–50, Standard 5 |
+| `costing_options.truck.{height,weight,length}` | wie bei Isochrone | Gilt nur bei `truck`-Costing |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` bezeichnet die Position dieses Ziels in dem von Ihnen übermittelten Array `destinations`, nicht seine Position in einem internen Ranking – behalten Sie ihn, um ein Ergebnis wieder Ihren eigenen Daten zuzuordnen.
+
+#### Vorfilterung der Ziele
+
+Sie können bis zu 500 Ziele übermitteln, aber nur die **50 nächstgelegenen nach Luftlinie** zu einem Ihrer Ausgangspunkte gelangen überhaupt in die eigentliche Fahrzeitberechnung. Übermitteln Sie mehr als 50, grenzt PlaidCloud das Feld mit einem Luftlinien-Vorfilter (Großkreisdistanz) ein, bevor die verbleibenden Ziele nach echter Fahrzeit eingeordnet werden – ein Ziel, das auf der Karte nah liegt, aber jenseits der Luftlinien-Grenze, kann also ausgeschlossen werden, bevor die Fahrzeit je berechnet wird. Bei Zielmengen unter 50 wird jeder Kandidat geroutet, und dies hat keine Auswirkung. `top_n` ist aus demselben Grund auf 50 begrenzt: Es kann nicht mehr Kandidaten zurückgeben, als der Routing-Schritt je berücksichtigt.
+
+### Costing-Modi
+
+`auto`, `truck`, `bike` und `pedestrian` werden unterstützt. Bei `truck`-Costing können Sie die Route zusätzlich über Fahrzeugabmessungen einschränken – `costing_options.truck.height`, `.weight`, `.length` –, sodass eine Route eine niedrige Brücke oder eine gewichtsbeschränkte Straße meiden kann. **Gefahrgut-Routing wird nicht unterstützt.** Keiner der beiden Endpunkte hat einen Gefahrgut-Parameter, und auch indirekt über `truck`-Costing ist keiner verfügbar – diese API routet nicht um Gefahrgutbeschränkungen herum, verlassen Sie sich also bei Gefahrgutfracht nicht darauf.
+
+## Fehler
+
+| Status | Bedeutung |
+|---|---|
+| `403` | Die Rolle `analyze.table.read` fehlt, oder Ihr Tarif enthält die Fahrzeit-Berechtigung nicht |
+| `422` | Ein Anfragefeld hat die Validierung nicht bestanden – zum Beispiel mehr als 5 Konturen, eine Kontur außerhalb von 1–120 Minuten, mehr als 5 Ausgangspunkte oder eine Lkw-Abmessung außerhalb des Bereichs |
+| `503 route_unavailable` | Die Routing-Engine war nicht erreichbar, hat das Zeitlimit überschritten oder einen Fehler zurückgegeben – **oder** das Kontingent gleichzeitiger Anfragen Ihres Tenants war bereits ausgeschöpft (siehe [Limits](#limits)) |
+
+Ein `503` ist hier nie ein rohes `5xx` und nie ein unbegrenztes Hängen – jeder Aufruf der Routing-Engine läuft mit einem begrenzten Zeitlimit, sodass ein langsamer oder hängender Upstream schnell als `503` sichtbar wird, statt Ihre Anfrage offen zu lassen.
+
+## Limits
+
+- **Die Parallelität pro Tenant ist auf 2 gleichzeitige Anfragen begrenzt.** Das spiegelt den gemeinsam genutzten Routing-Pool hinter der Vorschau wider, kein Kontingent pro Tarif – eine dritte gleichzeitige Anfrage desselben Tenants erhält `503 route_unavailable`, bis eine der ersten beiden abgeschlossen ist. Es gibt keine Warteschlange; wiederholen Sie die Anfrage nach kurzer Wartezeit.
+- **Kein Caching von Antworten.** Jeder Aufruf wird live gegen den aktuellen Routing-Index beantwortet.
+- **Koordinaten werden nie protokolliert.** Fehlerprotokolle erfassen den Anfragepfad und die Fehlerart, nicht den Ausgangspunkt, das Ziel oder andere von Ihnen übermittelte Standortdaten.
+- Die Routing-Daten stammen aus OpenStreetMap-Straßendaten (ODbL) – es gelten dieselben Hinweise zu Abdeckung und Aktualität wie bei der [Geocoding-API von PlaidCloud](/de/guides/data/geocoding-api/#abdeckung-und-determinismus--zuerst-lesen): stark in gut kartierten Regionen, andernorts variabler und laufend von der Community bearbeitet statt ein versionierter kommerzieller Datensatz.
+- Wenn Sie Routing-Ergebnisse oder Fahrzeitbereiche einem Endbenutzer anzeigen, zeigen Sie die Zeichenfolge `plaidcloud.attribution` (oder einen gleichwertigen OSM-Hinweis) daneben an – dieselbe ODbL-Verpflichtung, die für Geocoding-Ergebnisse gilt, gilt auch für Routing-Ergebnisse.
+
+## Verwandte Themen
+
+- [Von Google- oder Mapbox-Geocoding migrieren](/de/guides/data/geocoding-api/) – die REST-Geocoding-Endpunkte von PlaidCloud und dieselben OpenStreetMap-Hinweise zur Abdeckung
+- [Schritt REST-Anfrage](/de/guides/workflows/rest-request-step/) – diese Endpunkte aus einem Workflow aufrufen

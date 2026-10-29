@@ -1,0 +1,60 @@
+---
+title: Text NLP AI (paso)
+description: "Ejecuta una tarea respaldada por un LLM sobre cada fila: extracción de entidades, etiquetado gramatical, resumen, clasificación zero-shot, extracción de clave/valor o su propio prompt."
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## Descripción
+
+El paso **Text NLP AI** ejecuta sobre sus datos una de siete tareas por fila, cada una como un lote de llamadas estructuradas (con uso de herramientas forzado) a un LLM: **Reconocimiento de entidades con nombre**, **Etiquetado gramatical (POS)**, **Resumen**, **Clasificación zero-shot**, **Extracción de clave/valor**, **Prompt** e **Incrustación**. Se ejecuta como un trabajo administrado de PlaidCloud (igual que [ML: entrenar modelo](/es/reference/workflow-steps/machine-learning/ml-train/) y el [Paso LLM](/es/reference/workflow-steps/general/llm-step/)), por lo que no compite por recursos con el resto del flujo de trabajo.
+
+Como cada tarea es una llamada real a un LLM, los resultados no son idénticos bit a bit entre ejecuciones; consulte [No determinismo](#no-determinismo-resultados-respaldados-por-llm).
+
+## Configuración
+
+- **Origen / Tablas de salida**: la tabla de entrada y la tabla en la que se escriben los resultados.
+- **Columna de texto** (`field`): la columna que lee cada tarea.
+- **Tarea** (`task`): una de `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. La tarea `embed` no figura en la lista de tareas del formulario; defínala con un asistente de IA o con la API REST.
+- **Idioma** (`language`): el idioma del texto, que se pasa al modelo. El valor predeterminado es `en`.
+- **Conexión de LLM** (`llm_connection_id`): una conexión de LLM para Anthropic, OpenAI, Gemini, Azure OpenAI, Grok o GitHub Models. Déjela en blanco para usar la predeterminada del espacio de trabajo.
+- **Modelo** (`llm_model`): déjelo en blanco para usar el modelo predeterminado de la conexión.
+- **Temperatura** (`temperature`): temperatura de muestreo opcional. Consulte [No determinismo](#no-determinismo-resultados-respaldados-por-llm): los modelos de la generación actual la ignoran.
+- **Máx. de filas** (`max_rows`): responde solo las primeras N filas en el orden del origen. El resto conserva una respuesta vacía. Déjelo en blanco para procesar todas las filas.
+- **Tamaño del lote** (`batch_size`): filas enviadas por llamada al LLM, de 1 a 500. El valor predeterminado es 25. Un lote cuya respuesta se trunca se divide por la mitad y se reintenta en lugar de perder filas.
+
+## Tareas
+
+Cuatro tareas devuelven una fila de salida por cada fila de entrada (**conservan las filas**); tres devuelven cero o más filas por cada fila de entrada y trasladan a cada una las columnas de identificador del origen (`id_columns`) (**multiplican las filas**).
+
+| Tarea | Expansión | Columnas de salida | Campos específicos de la tarea |
+| --- | --- | --- | --- |
+| Reconocimiento de entidades con nombre (`ner`) | Multiplica las filas | `entity_text`, `entity_type` | **Entity Types** (`entity_types`): la lista de tipos permitidos. Si se deja en blanco, el valor predeterminado es `people`, `organizations`, `locations`, `dates`, `quantities`. |
+| Etiquetador POS (`pos`) | Multiplica las filas | `token`, `pos` (etiqueta gramatical universal, por ejemplo `NOUN`, `VERB`, `ADJ`) | Ninguno. |
+| Resumen (`summary`) | Conserva las filas | `summary` | **Summary Length** (`summary_length`): máximo de oraciones, de 1 a 20. El valor predeterminado es 3. |
+| Clasificación zero-shot (`zeroshot`) | Conserva las filas | `label`, `score` (de 0 a 1) | **Campo de etiqueta** (`label_field`): la columna de origen que contiene las etiquetas candidatas de cada fila; sin ella, el modelo no tiene entre qué elegir. **Multi-Label** (`multi`): permite más de una etiqueta por fila (unidas con `, `) en lugar de elegir solo la mejor. |
+| Prompt (`prompt`) | Conserva las filas | `answer`, `error` | **Prompt** (`prompt`): la instrucción que se aplica a todas las filas; obligatoria. **Campos de entrada** (`input_fields`): las columnas que se envían al modelo con el prompt, como un registro por fila; en blanco envía la **Columna de texto**. |
+| Incrustación (`embed`) | Conserva las filas | `embedding` (una matriz JSON de números), `error` | Ninguno. Se define con un asistente de IA o con la API REST. Necesita una conexión compatible con OpenAI o de Azure OpenAI, y el **Modelo** del paso debe nombrar un modelo de incrustación, ya que el predeterminado de la conexión suele ser un modelo de chat; se rechaza una conexión de Anthropic porque no tiene una API de incrustaciones. Una solicitud fallida conserva todas las filas de su lote, con un `embedding` vacío y el motivo en `error`. |
+| Pares clave/valor (`keyvalue`) | Multiplica las filas | `key`, `value` | **Key Field** (`key_field`): la columna de origen que contiene las claves candidatas que se extraerán de cada fila; déjela en blanco para que el modelo encuentre las claves libremente. **Fuzzy** (`fuzzy`): hace coincidir las claves candidatas de forma aproximada en lugar de exacta. |
+
+**Columnas de ID** (`id_columns`) trasladan columnas identificadoras de la tabla de origen a cada fila de salida de una tarea que multiplica las filas, para que pueda rastrear una entidad o un par extraídos hasta su registro de origen. Una columna de ID no puede tener el mismo nombre que una de las columnas de salida de la propia tarea: por ejemplo, llamar `entity_type` a una columna de ID en una tarea `ner` se rechaza al guardar el paso, con *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+La columna `error` contiene el mensaje de la llamada que falló para esa fila. La tarea Prompt sirve para cualquier pregunta por fila que las demás tareas no cubran, como *Clasifique el sentimiento de esta reseña.* Los valores de los campos se envían como datos, nunca como instrucciones al modelo.
+
+En la tarea Prompt, **Columna de documento** (`content_field`) nombra una columna que contiene el documento de cada fila en base64. El paso envía entonces un documento por llamada. El documento llega al proveedor como imagen o PDF cuando el proveedor acepta ese tipo y tamaño. De lo contrario, el paso envía el texto de **Columna de texto alternativo** (`text_fallback_field`), como el texto de un OCR. Los documentos completos salen de PlaidCloud hacia el proveedor, así que compruebe que esto es aceptable para sus datos. Las filas se envían de una en una, por lo que **Tamaño del lote** se ignora. Si un lote falla, sus filas se conservan con un `answer` vacío y el paso emite una advertencia.
+
+También se rechaza guardar sin una tabla de origen (*Source table is required.*), o con un **Tamaño del lote** o una **Summary Length** fuera de los rangos indicados arriba.
+
+## No determinismo (resultados respaldados por LLM)
+
+Cada tarea es una llamada real a un LLM, por lo que los resultados pueden variar entre ejecuciones incluso con una entrada idéntica: no hay garantía de igualdad bit a bit, y esto es lo esperado, no un error.
+
+**Temperatura** presenta una complicación adicional: los modelos de la generación actual (Opus 4.7+, Sonnet 5+, Fable) rechazan por completo una temperatura de muestreo explícita. Si define una, el paso la intenta una vez; se detecta el primer rechazo, la ejecución recurre al valor predeterminado del propio servidor del modelo para el resto de los lotes, y el resultado del paso incluye una nota informativa única en lugar de fallar. Dejar Temperatura en blanco (el valor predeterminado) evita por completo ese viaje de ida y vuelta y es el ajuste recomendado en los modelos actuales.
+
+## Relacionado
+
+- [ML: entrenar modelo](/es/reference/workflow-steps/machine-learning/ml-train/): ajusta un modelo en lugar de llamar a un LLM por fila.
+- [Paso LLM](/es/reference/workflow-steps/general/llm-step/): una llamada de LLM agéntica de formato libre con acceso de lectura y escritura acotado al proyecto, en lugar de una de estas tareas fijas por fila.
+- [Matriz de conversión de Alteryx](/es/reference/alteryx-conversion-matrix/): Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification y Key/Value Pairs se convierten todos a este paso.
+- [Migrar análisis de Savant](/es/guides/workflows/migrate-savant-analyses/): los agentes Savant Infer y Vision se convierten a la tarea Prompt.

@@ -1,0 +1,58 @@
+---
+title: "Acumatica: Post Documents"
+description: Księguj w Acumatica zapisy dziennika, faktury sprzedaży, rachunki i płatności z tabel nagłówków i wierszy, z trybem podglądu, który sprawdza każdy dokument, zanim cokolwiek zostanie zaksięgowane.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje dokumenty w Acumatica przez [Połączenie Acumatica](/pl/guides/connections/acumatica/), za pośrednictwem wspólnego potoku zapisu ERP PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na dokument) i tabelę wierszy (jeden lub więcej wierszy na dokument) i księguje każdy dokument jako **JournalTransaction**, **SalesInvoice**, **Bill** lub **Payment**. **Validate Only** buduje i sprawdza każdy dokument bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników zapisuje wynik dla każdego dokumentu.
+
+<Aside type="caution">
+Zawsze najpierw uruchamiaj każdą partię w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowanych dokumentów bezpośrednio w Acumatica, zanim zaczniesz polegać na tym kroku przy księgowaniu dokumentów na żywo bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **Acumatica Connection** — połączenie Acumatica, przez które odbywa się księgowanie.
+- **Environment** — środowisko połączenia.
+
+### Dane
+
+- **Header Table** — jeden wiersz na dokument: `ref` (Twój identyfikator dokumentu, wymagany), `doc_type` (`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`, wymagany), `posting_date`, `party_id` (klient/dostawca, jeśli typ dokumentu go wymaga), `memo`, `due_date`, `branch_id`. Partia może mieszać typy dokumentów — PlaidCloud dzieli ją według `doc_type` przed zaksięgowaniem.
+- **Lines Table** — jeden lub więcej wierszy na `ref`, dopasowanych do typu dokumentu:
+
+  | Typ dokumentu | Kolumny wierszy |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **Result Table** — identyfikator tabeli wyjściowej: jeden wiersz na dokument z `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — domyślnie zaznaczone. Tylko kontrola wstępna; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, która całkowicie pomija to pole — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie działa w trybie Validate Only, a nie jako księgowanie na żywo.
+- **Continue On Error** — domyślnie zaznaczone. Kontynuuje księgowanie pozostałych dokumentów po niepowodzeniu jednego; po odznaczeniu zatrzymuje partię przy pierwszym niepowodzeniu.
+
+## Jak działa księgowanie
+
+Acumatica tworzy każdy dokument jako **wstrzymany (On Hold)**, a następnie PlaidCloud wywołuje akcję zwolnienia, która działa asynchronicznie — odpowiedź `202` o przyjęciu, sprawdzana do zakończenia, a potem `204` potwierdza zwolnienie. PlaidCloud zgłasza `posted` dopiero wtedy, gdy zwolnienie zostanie **potwierdzone przez ponowny odczyt flagi Hold dokumentu jako false** — dokument, który został utworzony, ale którego zwolnienie nie zostało potwierdzone, pozostaje w kwarantannie (nie jest zgłaszany jako zaksięgowany ani po cichu pomijany), zamiast być zapisany jako sukces tylko dlatego, że dokument istnieje.
+
+## Ograniczenia możliwości
+
+| Ograniczenie | Co oznacza |
+|---|---|
+| Brak natywnego klucza idempotentności | Oparte na PUT API zapisu Acumatica nie ma pola idempotentności. Jedyną ochroną przed podwójnym zaksięgowaniem przy ponowieniu lub ponownym uruchomieniu jest własna rezerwacja w księdze PlaidCloud, a nie klucz po stronie Acumatica. |
+| Odwrócenie jest ręczne | Żaden typ dokumentu nie ma udokumentowanej akcji anulowania/odwrócenia w API opartym na kontrakcie. `reversal_mode` ma wszędzie wartość `NONE` — odrzucane, nigdy nie udawane. Błędnie zaksięgowany dokument popraw bezpośrednio w Acumatica. |
+| Payment nie ma niezawodnego wyszukiwania | Żadne udokumentowane pole nie koreluje Payment z żądaniem PlaidCloud po niejednoznacznym wyniku. Payment o niepewnym stanie trafia do kwarantanny w celu ręcznego rozstrzygnięcia, zamiast być zgadywany. |
+| Filtrowanie wierszy pozycji nie odbywa się po stronie serwera | Filtry po stronie serwera (w kroku importu) nie sięgają do wymiarów pozycji dokumentu — filtruj na poziomie nagłówka/jednostki i zawężaj wiersze w przepływie pracy. |
+
+## Powiązane
+
+- [Połączenie z Acumatica](/pl/guides/connections/acumatica/) — pełny przewodnik obejmujący konfigurację, podgląd i księgowanie
+- [Konektor Acumatica REST](/pl/reference/connectors/rest/acumatica/)
+- [Kroki Acumatica](/pl/reference/workflow-steps/acumatica/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/)

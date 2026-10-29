@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry"
+description: Contabilice asientos de diario del libro mayor en Dynamics 365 Finance & Operations a partir de tablas de encabezados y de líneas, con un modo de vista previa que valida cada asiento antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza asientos de diario del libro mayor en Dynamics 365 Finance & Operations a través de su [conexión de D365 F&O](/es/guides/connections/dynamics-365-fo/), mediante el flujo de escritura de ERP compartido de PlaidCloud. El paso toma una tabla de encabezados (una fila por asiento de diario) y una tabla de líneas (una o más filas de débito/crédito por asiento), y envía cada asiento a la acción asíncrona de contabilización de diarios del servicio personalizado de D365 F&O. **Solo validar** crea y comprueba cada asiento sin reservar el libro mayor y sin contabilizar; una tabla de resultados opcional registra el resultado de cada asiento.
+
+<Aside type="caution">
+Ejecute cada lote primero en **Solo validar**, revise la tabla de resultados y concilie algunas contabilizaciones directamente en D365 F&O antes de confiar en que este paso contabilice asientos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **Conexión de D365 F&O**: la conexión de D365 F&O mediante la cual se contabiliza.
+
+### Datos
+
+- **Tabla de encabezados**: una fila por asiento de diario: `journal_id` (el identificador de su asiento, obligatorio), `journal_name` (el nombre del diario de D365 F&O en el que se contabiliza, obligatorio), `posting_date`, `description`.
+- **Tabla de líneas**: una o más filas por `journal_id`: `account`, `debit`, `credit` y las columnas de dimensión que requiera su libro mayor.
+- **Tabla de resultados**: id de la tabla de salida: una fila por asiento con `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Solo validar**: marcada de forma predeterminada. Solo comprobación previa; sin reserva del libro mayor ni contabilización. Una configuración del paso que omita este campo por completo (por ejemplo, una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo) también adopta como valor predeterminado Solo validar, en lugar de una contabilización real.
+- **Continuar en caso de error**: marcada de forma predeterminada. Sigue contabilizando los asientos restantes después de que uno falle; si se desmarca, el lote se detiene en el primer fallo.
+
+## Cómo funciona la contabilización
+
+PlaidCloud envía cada asiento a la acción asíncrona de contabilización del servicio personalizado de D365 F&O y luego consulta periódicamente hasta que el servicio informa del estado final del asiento. Un asiento solo se notifica como `posted` cuando ese estado final está **confirmado**: un asiento que se acepta pero cuyo estado final nunca se resuelve permanece en cuarentena (ni se notifica como contabilizado ni se descarta en silencio), en lugar de registrarse como correcto solo porque el envío se haya aceptado.
+
+## Corrección de un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un asiento contabilizado. Para corregir uno, contabilice un nuevo asiento con los débitos y créditos invertidos respecto del original (un asiento de reversión contabilizado) en lugar de editar el original en su lugar.
+
+## Límites de funcionalidad
+
+| Limitación | Qué significa |
+|---|---|| La reversión es un asiento nuevo, no una edición en su lugar | Las correcciones contabilizan un nuevo asiento de reversión con débitos y créditos invertidos. No existe la anulación ni la eliminación de un asiento ya contabilizado. |
+| La validación de dimensiones depende de la configuración de su libro mayor | Una combinación de dimensiones financieras no válida para su estructura de cuentas falla en la propia validación de D365 F&O y se muestra como una fila `error`, en lugar de que PlaidCloud la detecte antes. |
+
+## Relacionado
+
+- [Conexión con Dynamics 365 Finance & Operations](/es/guides/connections/dynamics-365-fo/): tutorial completo sobre configuración, vista previa y contabilización
+- [Conector REST de Dynamics 365 F&O](/es/reference/connectors/rest/dynamics-365-fo/)
+- [Pasos de D365 F&O](/es/reference/workflow-steps/dynamics-365-fo/)
+- [Revisar el historial de contabilización de ERP](/es/guides/connections/erp-post-history/)

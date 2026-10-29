@@ -1,0 +1,143 @@
+---
+title: GENERATE_SERIES (Lakehouse v1)
+description: GENERATE_SERIES — 지정한 시작점에서 지정한 끝점까지의 데이터 세트를 생성합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/17-table-functions/05-generate-series.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+지정한 시작점에서 지정한 끝점까지, 필요에 따라 증분 값을 적용하여 데이터 세트를 생성합니다. GENERATE_SERIES 함수는 다음 데이터 유형에서 작동합니다. 
+
+- 정수
+- 날짜
+- 타임스탬프
+
+## Analyze 구문
+
+```python
+func.generate_series(<start>, <stop>[, <step_interval>])
+```
+
+## Analyze 예제
+
+```python
+func.generate_series(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+```
+
+## SQL 구문
+
+```sql
+GENERATE_SERIES(<start>, <stop>[, <step_interval>])
+```
+
+## 인수
+
+| 인수 | 설명 |
+|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| start         | 시작 값으로, 시퀀스의 첫 번째 숫자, 날짜 또는 타임스탬프입니다. |
+| stop          | 종료 값으로, 시퀀스의 마지막 숫자, 날짜 또는 타임스탬프입니다. |
+| step_interval | 시퀀스에서 인접한 값 사이의 차이를 결정하는 증분 간격입니다. 정수 시퀀스의 기본값은 1입니다. 날짜 시퀀스의 기본 증분 간격은 1일입니다. 타임스탬프 시퀀스의 기본 증분 간격은 1마이크로초입니다. |
+
+
+<Aside>GENERATE_SERIES와 RANGE 같은 함수를 다룰 때 핵심적인 차이는 경계 특성에 있습니다. GENERATE_SERIES는 왼쪽과 오른쪽 모두 경계가 포함되지만, RANGE는 왼쪽 경계만 포함됩니다. 예를 들어 RANGE(1, 11)을 사용하는 것은 GENERATE_SERIES(1, 10)과 같습니다.</Aside>
+
+## 반환 유형
+
+*start*부터 *stop*까지 연속된 숫자 값, 날짜 또는 타임스탬프로 구성된 목록을 반환합니다.
+
+## SQL 예제
+
+### SQL 예제 1: 숫자, 날짜, 타임스탬프 데이터 생성
+
+```sql
+SELECT * FROM GENERATE_SERIES(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+
+SELECT * FROM GENERATE_SERIES('2023-03-20'::date, '2023-03-27'::date);
+
+generate_series|
+---------------+
+     2023-03-20|
+     2023-03-21|
+     2023-03-22|
+     2023-03-23|
+     2023-03-24|
+     2023-03-25|
+     2023-03-26|
+     2023-03-27|
+
+SELECT * FROM GENERATE_SERIES('2023-03-26 00:00'::timestamp, '2023-03-27 12:00'::timestamp, 86400000000);
+
+generate_series    |
+-------------------+
+2023-03-26 00:00:00|
+2023-03-27 00:00:00|
+```
+
+### SQL 예제 2: 쿼리 결과의 공백 채우기 
+
+이 예제는 GENERATE_SERIES 함수와 left join 연산자를 사용하여 특정 범위의 정보가 누락되어 쿼리 결과에 생긴 공백을 처리합니다.
+
+```sql
+CREATE TABLE t_metrics (
+  date Date,
+  value INT
+);
+
+INSERT INTO t_metrics VALUES
+  ('2020-01-01', 200),
+  ('2020-01-01', 300),
+  ('2020-01-04', 300),
+  ('2020-01-04', 300),
+  ('2020-01-05', 400),
+  ('2020-01-10', 700);
+
+SELECT date, SUM(value), COUNT() FROM t_metrics GROUP BY date ORDER BY date;
+
+date      |sum(value)|count()|
+----------+----------+-------+
+2020-01-01|       500|      2|
+2020-01-04|       600|      2|
+2020-01-05|       400|      1|
+2020-01-10|       700|      1|
+```
+
+2020년 1월 1일부터 1월 10일 사이의 공백을 채우려면 다음 쿼리를 사용합니다.
+
+```sql
+SELECT t.date, COALESCE(SUM(t_metrics.value), 0), COUNT(t_metrics.value)
+FROM generate_series(
+  '2020-01-01'::Date,
+  '2020-01-10'::Date
+) AS t(date)
+LEFT JOIN t_metrics ON t_metrics.date = t.date
+GROUP BY t.date ORDER BY t.date;
+
+date      |coalesce(sum(t_metrics.value), 0)|count(t_metrics.value)|
+----------+---------------------------------+----------------------+
+2020-01-01|                              500|                     2|
+2020-01-02|                                0|                     0|
+2020-01-03|                                0|                     0|
+2020-01-04|                              600|                     2|
+2020-01-05|                              400|                     1|
+2020-01-06|                                0|                     0|
+2020-01-07|                                0|                     0|
+2020-01-08|                                0|                     0|
+2020-01-09|                                0|                     0|
+2020-01-10|                              700|                     1|
+```

@@ -1,0 +1,127 @@
+---
+title: WINDOW_FUNNEL (Lakehouse v1)
+description: WINDOW_FUNNEL — procura cadeias ordenadas de eventos numa janela de tempo deslizante e devolve o comprimento da correspondência mais longa.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/07-aggregate-functions/aggregate-windowfunnel.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<p align="center">
+<img src="https://datafuse-1253727613.cos.ap-hongkong.myqcloud.com/learn/databend-funnel.png" width="550"/>
+</p>
+
+À semelhança de `windowFunnel` no ClickHouse (foram criadas pelo mesmo autor), procura cadeias de eventos numa janela de tempo deslizante e calcula o número máximo de eventos da cadeia.
+
+A função funciona de acordo com o seguinte algoritmo:
+
+-   A função procura os dados que acionam a primeira condição da cadeia e define o contador de eventos como 1. Este é o momento em que a janela deslizante começa.
+
+-   Se os eventos da cadeia ocorrerem sequencialmente dentro da janela, o contador é incrementado. Se a sequência de eventos for interrompida, o contador não é incrementado.
+
+-   Se os dados tiverem várias cadeias de eventos em diferentes pontos de conclusão, a função devolve apenas o tamanho da cadeia mais longa.
+
+
+## Sintaxe SQL
+```sql
+WINDOW_FUNNEL( <window> )( <timestamp>, <cond1>, <cond2>, ..., <condN> )
+```
+
+**Argumentos**
+
+-   `<timestamp>` — nome da coluna que contém a data e hora. Tipos de dados suportados: tipos inteiros e tipos de data e hora.
+-   `<cond>` — condições ou dados que descrevem a cadeia de eventos. Têm de ser do tipo de dados `Boolean`.
+
+**Parâmetros**
+
+-   `<window>` — duração da janela deslizante, ou seja, o intervalo de tempo entre a primeira e a última condição. A unidade de `window` depende do próprio `timestamp` e varia. É determinada através da expressão `timestamp of cond1 <= timestamp of cond2 <= ... <= timestamp of condN <= timestamp of cond1 + window`.
+
+**Valor devolvido**
+
+O número máximo de condições consecutivas acionadas da cadeia dentro da janela de tempo deslizante.
+São analisadas todas as cadeias da seleção.
+
+Tipo: `UInt8`.
+
+
+**Exemplo**
+
+Determine se um período de tempo definido é suficiente para o utilizador SELECIONAR um telemóvel e comprá-lo duas vezes na loja online.
+
+Defina a seguinte cadeia de eventos:
+
+1. O utilizador iniciou sessão na sua conta da loja (`event_name = 'login'`).
+2. O utilizador chegou à página (`event_name = 'visit'`).
+3. O utilizador adicionou ao carrinho de compras (`event_name = 'cart'`).
+4. O utilizador concluiu a compra (`event_name = 'purchase'`).
+
+
+```sql
+CREATE TABLE events(user_id BIGINT, event_name VARCHAR, event_timestamp TIMESTAMP);
+
+INSERT INTO events VALUES(100123, 'login', '2022-05-14 10:01:00');
+INSERT INTO events VALUES(100123, 'visit', '2022-05-14 10:02:00');
+INSERT INTO events VALUES(100123, 'cart', '2022-05-14 10:04:00');
+INSERT INTO events VALUES(100123, 'purchase', '2022-05-14 10:10:00');
+
+INSERT INTO events VALUES(100125, 'login', '2022-05-15 11:00:00');
+INSERT INTO events VALUES(100125, 'visit', '2022-05-15 11:01:00');
+INSERT INTO events VALUES(100125, 'cart', '2022-05-15 11:02:00');
+
+INSERT INTO events VALUES(100126, 'login', '2022-05-15 12:00:00');
+INSERT INTO events VALUES(100126, 'visit', '2022-05-15 12:01:00');
+```
+
+Tabela de entrada:
+
+```sql
+┌─────────┬────────────┬────────────────────────────┐
+│ user_id │ event_name │ event_timestamp            │
+├─────────┼────────────┼────────────────────────────┤
+│  100123 │ login      │ 2022-05-14 10:01:00.000000 │
+│  100123 │ visit      │ 2022-05-14 10:02:00.000000 │
+│  100123 │ cart       │ 2022-05-14 10:04:00.000000 │
+│  100123 │ purchase   │ 2022-05-14 10:10:00.000000 │
+│  100125 │ login      │ 2022-05-15 11:00:00.000000 │
+│  100125 │ visit      │ 2022-05-15 11:01:00.000000 │
+│  100125 │ cart       │ 2022-05-15 11:02:00.000000 │
+│  100126 │ login      │ 2022-05-15 12:00:00.000000 │
+│  100126 │ visit      │ 2022-05-15 12:01:00.000000 │
+└─────────┴────────────┴────────────────────────────┘
+```
+
+Descubra até onde cada utilizador `user_id` conseguiu avançar na cadeia numa janela deslizante de uma hora.
+
+Consulta:
+
+```sql
+SELECT
+    level,
+    count() AS count
+FROM
+(
+    SELECT
+        user_id,
+        window_funnel(3600000000)(event_timestamp, event_name = 'login', event_name = 'visit', event_name = 'cart', event_name = 'purchase') AS level
+    FROM events
+    GROUP BY user_id
+)
+GROUP BY level ORDER BY level ASC;
+```
+
+<Aside>O tipo de `event_timestamp` é timestamp e `3600000000` é uma janela de tempo de uma hora.</Aside>
+
+Resultado:
+
+```sql
+┌───────┬───────┐
+│ level │ count │
+├───────┼───────┤
+│     2 │     1 │
+│     3 │     1 │
+│     4 │     1 │
+└───────┴───────┘
+```
+
+* O nível do utilizador `100126` é 2 (`login -> visit`) .
+* O nível do utilizador `100125` é 3 (`login -> visit -> cart`).
+* O nível do utilizador `100123` é 4 (`login -> visit -> cart -> purchase`).

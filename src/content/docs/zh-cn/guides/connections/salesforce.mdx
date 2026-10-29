@@ -1,0 +1,158 @@
+---
+title: 连接到 Salesforce
+description: 使用外部客户端应用和 OAuth 客户端凭据流设置 Salesforce 连接，选择 Run As 集成用户，测试连接，并将 CRM 对象提取到项目表中。
+sidebar:
+  order: 21
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/salesforce.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Salesforce 组织，把标准对象和自定义对象（客户、商机、潜在客户、营销活动以及您自己的 `__c` 对象）提取到项目表中，对象列表、字段列表以及每一列的类型均直接从组织中读取。
+
+Salesforce 端的设置由管理员负责，并且处于关键路径上：需要一个**外部客户端应用**、一个供该应用**以其身份运行**的集成用户，以及该应用的使用者密钥和密码。本指南先介绍这些设置，再介绍 PlaidCloud 连接、测试和首次提取。
+
+## 前提条件
+
+在 Salesforce 中，您需要：
+
+- 一位能够在**设置**中创建应用并编辑其策略的管理员。
+- 一个供集成运行所用的 Salesforce 用户。请使用专用的集成用户，而不是某个人的登录账号，因为 PlaidCloud 读取的所有内容都以该用户为范围，而个人账号会随其角色变化而变化。
+- 该用户的配置文件或权限集需启用 **API Enabled**。
+
+在 PlaidCloud 中，您需要具有创建连接的权限（**工具 > 连接**）。
+
+## 查找您的 My Domain 主机
+
+每个 Salesforce 组织都有一个 My Domain，其名称就是 PlaidCloud 所连接的主机。在 Salesforce 中，转到**设置**，在快速查找中搜索 **My Domain**，页面会显示您的域名。您的主机是该域名加上 `.my.salesforce.com`：
+
+| 组织 | 主机 |
+|---|---|
+| 生产环境和 Developer Edition | `mycompany.my.salesforce.com` |
+| 沙盒 | `mycompany--uat.sandbox.my.salesforce.com`：域名、`--`、沙盒名称，然后是 `.sandbox.my.salesforce.com` |
+
+请使用组织自己的 My Domain 主机，而不是 `login.salesforce.com` 或 `test.salesforce.com`。客户端凭据流针对特定组织进行身份验证，而通用登录主机并不指向某个具体组织。
+
+<Aside type="tip">
+沙盒和生产环境是各自独立的组织，具有各自独立的应用和凭据。请以相同方式设置两者，并在同一个连接中将它们放在不同的 PlaidCloud 环境里，这样同一个工作流在开发环境中读取沙盒，在生产环境中读取生产数据。
+</Aside>
+
+## 创建外部客户端应用
+
+<Aside type="caution">
+请创建**外部客户端应用**，而不是连接的应用。Salesforce 已默认禁用创建新的连接的应用（无论通过 UI 还是 Metadata API），并在 Spring '26 版本中逐步推行。管理员如果寻找熟悉的“新建连接的应用”按钮，将找不到它。Salesforce 支持团队可以按个案重新启用该功能，但表示该选项本身也将在未来版本中移除，因此请基于外部客户端应用构建集成。您已有的连接的应用将继续正常工作。
+</Aside>
+
+<Steps>
+
+1. 在**设置**中，于快速查找中搜索 **External Client App Manager**，然后点击 `New External Client App`。
+
+2. 填写 **External Client App Name**（例如 `PlaidCloud Integration`）、自动填充的 **API Name** 和 **Contact Email**。将 **Distribution State** 保持为 `Local`。
+
+3. 在 **API (Enable OAuth)** 下启用 OAuth。尽管此流程不会重定向到任何地方，表单仍要求填写 **Callback URL**，使用 `https://localhost/` 作为占位符即可。
+
+4. 添加 OAuth 范围 **Manage user data via APIs (api)**。REST API 和 Bulk API 正是通过该范围读取数据。
+
+5. 创建应用。
+
+6. 打开应用，转到其 **Policies**，然后点击 `Edit`。启用**客户端凭据流**，并将 **Run As** 设置为您的集成用户。
+
+7. 在同一页面上，将 **Permitted Users** 设置为 `Admin approved users are pre-authorized`，然后通过该用户的配置文件或权限集，将应用分配给 Run As 用户。
+
+8. 转到应用的 **Settings > OAuth Settings**，打开 **Consumer Key and Secret**。Salesforce 会验证您的身份，然后显示这两个值几分钟。请将它们复制并妥善保存，接下来需要把它们粘贴到 PlaidCloud 中，之后无法再从 PlaidCloud 中读取该密码。
+
+</Steps>
+
+<Aside type="note">
+新创建的应用需要几分钟才能在 Salesforce 的整个基础架构中生效。如果在创建应用后首次连接测试立即失败，请等待几分钟后重新测试，不要先更改任何设置。
+</Aside>
+
+## 选择 Run As 用户
+
+客户端凭据流没有交互式登录，因此应用只携带一个 Salesforce 身份：其 **Run As** 设置中指定的用户。PlaidCloud 通过此连接读取的所有内容，都以该用户的身份读取。
+
+请审慎地配置该用户：
+
+- **授予其对您计划提取的对象的访问权限**，通过其配置文件或权限集授予：对象的读取权限，以及您计划选择的字段的字段级读取权限。
+- **授予其所需的共享权限。** 行级访问来自组织的共享模型：角色层次结构、共享规则和记录所有权。在层次结构中位置较低的集成用户，只能看到销售运营用户所能看到记录的一小部分。
+- **授予其 API Enabled**，否则该流程根本无法进行身份验证。
+- **不要让其参与日常管理。** 如果用户的权限因无关原因而变化，每个已保存的提取所返回的内容也会随之变化。
+
+请确认您实际使用的是哪个用户：PlaidCloud 的 **Test Connection** 会向您报告 Run As 用户的名称，这是在应用指向错误身份时、数据传输之前将其发现的最简便方式。
+
+## Run As 用户决定一切范围
+
+这一部分值得读两遍，因为 Run As 用户限制提取的两种方式，其失败表现截然相反。
+
+**行级共享是无声的。** Run As 用户看不到的记录根本不会出现在结果中。没有错误，没有警告，也没有被隐藏数量的统计：从拥有 250,000 条记录的对象中提取 40,000 行，看起来与完整提取一个拥有 40,000 条记录的对象完全一样。PlaidCloud 无法检测到这种差异，因为 Salesforce 从不说明这些行存在。因此，当行数看起来偏少时，请先检查 Run As 用户的角色、共享规则和记录所有权，再检查其他方面。请与在 Salesforce 中**以该用户身份**运行的报表进行比较，而不是以您自己的身份。
+
+**字段级安全是明显的。** PlaidCloud 在发送的查询中明确列出每个选定的字段，因此 Run As 用户无法读取的字段会导致整个提取失败，并给出指明该字段的错误。不会有部分数据写入，也不会出现未被发现的空白数据。
+
+这种不对称性带来一个实际后果：**一旦有人撤销了某个选定字段的字段级读取权限，原本正常运行的已保存步骤就会停止运行。** 步骤没有改变，PlaidCloud 也没有改变；改变的是 Run As 用户的字段访问权限。当一个运行了数月的提取突然失败并指明某个字段时，原因就在于此：请为 Run As 用户恢复该字段的权限，或在步骤中取消勾选该字段。
+
+<Aside type="caution">
+加密字段的失败方式正好相反。当 Run As 用户缺少 **View Encrypted Data** 时，Salesforce 返回的是被屏蔽的字符而不是错误，即看起来像真实数据的整行星号。PlaidCloud 会直接拒绝 `encryptedstring` 字段，而不是写入这种内容，因此它们不会出现在可提取的字段中。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开**工具 > 连接**，点击 `New Connection`。
+
+2. 从菜单中选择 **REST - Salesforce**。
+
+3. 为连接设置一个**账户名称**，例如 `Salesforce Prod`。
+
+4. 将**主机或 IP 地址**设置为上文所述的组织 My Domain 主机。
+
+5. 将应用的使用者密钥粘贴到**客户端 ID**，将其使用者密码粘贴到**客户端密钥**。
+
+6. 设置**安全模型**以控制工作区中哪些成员可以使用该连接，保持勾选**活动（允许访问）**，然后点击 `Create`。
+
+</Steps>
+
+## 对连接进行冒烟测试
+
+点击 `Test Connection`。PlaidCloud 会执行真实的令牌交换并报告三项信息：
+
+| 报告内容 | 需要检查的事项 |
+|---|---|
+| 组织 ID | 确认它是您想要的组织，这是发现将沙盒凭据保存到生产环境中的最快方式。 |
+| API 版本 | 该组织支持的最高版本。提取按连接固定的版本运行，不一定是这个版本。 |
+| Run As 用户 | 确认它是您配置的集成用户，而不是某个人或管理员。 |
+
+身份验证失败时，系统会要求您重新输入客户端 ID 和密钥，因为密钥保存后无法再读取。
+
+## 提取第一个对象
+
+<Steps>
+
+1. 在工作流中添加一个 **Salesforce：查询对象**步骤。
+
+2. 设置 **Salesforce 连接**和**环境**，然后选择**对象**，先从 `Account` 开始。
+
+3. 勾选少量字段。**落入**列显示每一列实际将具有的类型，取自 Salesforce 自身的字段元数据。`Id` 始终包含在内。
+
+4. 将**目标表**设置为一个临时表并运行该步骤（请参阅[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中出现数据，即可确认应用、Run As 用户的访问权限和主机都正确无误。在基于输出构建后续内容之前，请阅读该步骤自己的参考页面：提取窗口只运行一次，不跟踪删除，少数字段类型完全无法提取，而无人值守的定期拉取需要通过其**窗口标记**中的工作流变量为每个窗口命名。
+
+## 故障排除
+
+| 现象 | 原因 | 解决方法 |
+|---|---|---|
+| 创建应用后立即身份验证失败 | 应用尚未在 Salesforce 的整个基础架构中完成传播。 | 等待几分钟后重新测试，不要先更改任何设置。 |
+| 使用刚粘贴的凭据身份验证失败 | 复制的使用者密钥或密码带有前导或尾随空白，或者密码来自另一个应用。 | 从 **Settings > OAuth Settings > Consumer Key and Secret** 重新复制两者并再次粘贴。 |
+| 身份验证失败，但应用看起来正确 | 从未编辑过应用的策略，因此未启用客户端凭据流，或未设置 **Run As** 用户。 | 打开应用的 **Policies**，点击 `Edit`，启用客户端凭据流并设置 **Run As**。 |
+| PlaidCloud 身份验证失败，但同一个应用在您自己的计算机上可以正常工作 | **IP 限制。** Run As 用户配置文件上的 Login IP Ranges，或未放宽 IP 限制的应用，会拒绝令牌交换，而且 Salesforce 不会提示这是原因。 | 要么放宽此应用的 IP 限制，要么将 PlaidCloud 的出站地址添加到配置文件的 Login IP Ranges 中。请向 PlaidCloud 支持团队索取您租户的地址。 |
+| 原本正常的连接停止进行身份验证 | Run As 用户已被停用、应用已被撤销，或组织中的会话或 IP 策略已更改。 | 在 Salesforce 中检查该用户和应用。PlaidCloud 会丢弃过期的令牌并自行重试一次，因此持续失败意味着组织中确实发生了更改。 |
+| 提取失败并指明某一个字段 | Run As 用户失去了某个选定字段的字段级读取权限。 | 请参阅 [Run As 用户决定一切范围](#run-as-用户决定一切范围)。 |
+
+## 相关内容
+
+- [Salesforce：查询对象](/zh-cn/reference/workflow-steps/salesforce/query-salesforce-object/)：该步骤的完整参考，包括提取窗口和被拒绝的字段类型
+- [Salesforce REST 连接器](/zh-cn/reference/connectors/rest/salesforce/)：连接字段参考
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)：编辑、测试、按环境配置和访问控制

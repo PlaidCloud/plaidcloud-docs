@@ -1,0 +1,89 @@
+---
+title: Se connecter à Anaplan
+description: Connectez PlaidCloud à Anaplan via son API d'intégration pour lire une vue enregistrée, exécuter une action d'export existante ou lire des listes dans une dimension PlaidCloud, en lecture seule et en accès direct au cloud.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/anaplan.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à **Anaplan** pour qu'un workflow puisse lire une vue enregistrée par le chemin de requête de lecture à grand volume d'Anaplan, exécuter une action d'export existante, ou lire une ou plusieurs listes Anaplan dans une dimension PlaidCloud. La connexion atteint l'API d'intégration d'Anaplan **en accès direct au cloud** : ces étapes n'utilisent aucun agent local. Ce guide couvre la connexion, l'authentification, une courte présentation de chacune des trois étapes de lecture et les considérations de planification.
+
+<Aside type="note">
+Ce connecteur est en lecture seule. Rien n'est jamais réécrit dans Anaplan : il n'existe aucune étape d'écriture en retour ni aucun mode d'application partielle.
+</Aside>
+
+## Prérequis
+
+Vous avez besoin des éléments suivants, auprès de votre administrateur d'espace de travail Anaplan :
+
+- Soit un **nom d'utilisateur et un mot de passe** Anaplan, soit un **certificat d'AC et sa clé privée** enregistrés pour un utilisateur Anaplan par votre administrateur d'espace de travail, avec un accès en lecture à l'espace de travail et aux modèles que vos workflows liront. Consultez [Authentification](#authentification) ci-dessous.
+- L'**ID de l'espace de travail** et l'**ID du modèle** des modèles à lire, visibles dans les paramètres de modèle d'Anaplan. Les deux peuvent aussi être découverts en direct depuis la connexion une fois celle-ci créée.
+- Pour **Anaplan : lire une vue** : une **vue enregistrée**, construite avec exactement la tranche de lignes, de colonnes et de filtres souhaitée. Consultez [Anaplan : lire une vue](#anaplan-lire-une-vue) ci-dessous.
+- Pour **Anaplan : lire un export** : une **action d'export qui existe déjà** dans le modèle.
+- Pour **Anaplan : lire une liste** : les **listes** Anaplan qui composent la hiérarchie à lire.
+
+## Authentification
+
+La connexion possède un **Mode d'authentification** : **Basique** (par défaut) ou **Certificat**. Une connexion existante continue de fonctionner à l'identique en mode Basique.
+
+- **Basique** se connecte avec un nom d'utilisateur et un mot de passe Anaplan.
+- **Certificat** se connecte avec un certificat émis par une AC et sa clé privée, tous deux collés sous forme de texte PEM. La clé privée doit être **RSA et non chiffrée**, et le certificat doit être celui que votre administrateur d'espace de travail Anaplan a enregistré pour votre utilisateur Anaplan, émis par une AC en laquelle Anaplan a confiance pour votre locataire. PlaidCloud signe un défi aléatoire avec la clé et l'échange contre un jeton Anaplan, selon le flux d'authentification par certificat d'Anaplan lui-même ; il n'y a rien d'autre à faire une fois le certificat et la clé collés, et l'actualisation du jeton fonctionne comme en mode Basique. Les deux champs masquent ce que vous collez, les deux secrets sont stockés chiffrés, comme un mot de passe Basique, et le changement de mode n'envoie jamais les identifiants de l'autre mode : si vous faites passer une connexion existante de Basique à Certificat, vous devrez coller le certificat et la clé, car ils ne sont pas repris.
+
+L'authentification multifacteur d'Anaplan s'applique aux utilisateurs qui se connectent avec une adresse e-mail et un mot de passe. L'authentification par certificat est l'option sans mot de passe pour une connexion automatisée et planifiée.
+
+Le mode Certificat refuse avant de contacter Anaplan si la clé ou le certificat collé est illisible, si la clé est chiffrée ou n'est pas RSA, ou si la clé ne correspond pas au certificat. Si Anaplan rejette lui-même le certificat, l'erreur indique s'il a expiré ; les causes habituelles sont un certificat qui n'est enregistré pour aucun utilisateur Anaplan, ou une AC qui n'est pas approuvée pour votre locataire.
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Anaplan** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom convivial, par exemple `Anaplan Prod`. |
+   | Hôte de l'API | Facultatif. Laissez vide pour utiliser l'adresse standard d'Anaplan, `https://api.anaplan.com`. |
+   | Hôte d'authentification | Facultatif. Laissez vide pour utiliser l'adresse standard d'Anaplan, `https://auth.anaplan.com`. |
+   | Mode d'authentification | **Basique** (par défaut) ou **Certificat**. Consultez [Authentification](#authentification) ci-dessus. |
+   | Nom d'utilisateur | Le nom d'utilisateur du compte Anaplan. Mode Basique uniquement. |
+   | Mot de passe | Le mot de passe du compte Anaplan. Mode Basique uniquement. |
+   | Certificat d'AC | Texte PEM du certificat X.509 enregistré dans Anaplan. Mode Certificat uniquement. |
+   | Clé privée | Texte PEM de la clé privée RSA du certificat, non chiffrée. Mode Certificat uniquement. |
+   | ID de l'espace de travail par défaut | Facultatif. Un préremplissage de confort pour le champ Espace de travail d'une étape de lecture. |
+   | ID du modèle par défaut | Facultatif. Un préremplissage de confort pour le champ Modèle d'une étape de lecture. |
+   | Délai d'expiration (secondes) | 30 par défaut. |
+
+4. Cliquez sur `Test Connection`. Un test réussi indique l'adresse e-mail du compte Anaplan à laquelle correspondent les identifiants.
+
+5. Cliquez sur `Create`.
+
+</Steps>
+
+## Anaplan : lire une vue
+
+Ajoutez une étape **Anaplan : lire une vue** pour lire une vue enregistrée par le chemin de requête de lecture à grand volume d'Anaplan. **La vue est lue exactement telle qu'elle a été enregistrée dans Anaplan : cette étape ne propose aucune sélection de lignes, de colonnes ou de pages.** Pour lire une autre tranche, construisez une autre vue enregistrée dans Anaplan ; une ligne de détail booléenne associée à une vue enregistrée est la méthode habituelle pour y filtrer. Une colonne de données n'est chargée avec son type Anaplan déclaré que lorsque la vue place les **éléments de ligne (Line Items) sur l'axe des colonnes** ; si les éléments de ligne sont sur les lignes (une présentation de compte de résultat ordinaire) ou absents de la vue, toutes les colonnes sont chargées en texte à la place, et l'étape le signale. Une vue dont le filtre ne correspond à rien charge une table vide avec un avertissement. Une valeur Number que l'étape ne peut pas lire sans ambiguïté (le plus souvent une valeur qui pourrait aussi bien être une décimale simple qu'une écriture à l'européenne) est refusée plutôt que devinée, sauf si une autre valeur de la même colonne tranche sur la lecture correcte ; une valeur qui s'analyse correctement est chargée avec toute sa précision, sans erreur d'arrondi. Consultez [Anaplan : lire une vue](/fr/reference/workflow-steps/anaplan/anaplan-read-view/) pour la référence complète des champs et du comportement.
+
+## Anaplan : lire un export
+
+Ajoutez une étape **Anaplan : lire un export** pour exécuter une action d'export Anaplan **existante** et charger le fichier qu'elle produit. L'API ne peut pas créer d'action d'export : construisez-la ou modifiez-la d'abord dans Anaplan. L'étape ne peut pas non plus restreindre ce qu'elle émet : ce que l'action est configurée pour exporter dans Anaplan est exactement ce qui est chargé. **Toutes les colonnes sont chargées en texte.** Les nombres sont demandés au format américain ; une colonne qui revient quand même avec des séparateurs de milliers est chargée telle quelle, en texte, avec un avertissement nommé plutôt que de faire échouer l'exécution. L'étape s'arrête, sans charger de table, lorsque l'export échoue, est annulé, ne produit aucune donnée, est encore en cours une fois le budget d'interrogation de l'étape épuisé, ou produit un fichier qui ne peut pas être rattaché à l'export ou dont le nombre de lignes diffère de celui qu'Anaplan indique lui-même. Consultez [Anaplan : lire un export](/fr/reference/workflow-steps/anaplan/anaplan-read-export/) pour la référence complète.
+
+## Anaplan : lire une liste
+
+Ajoutez une étape **Anaplan : lire une liste** pour lire une ou plusieurs listes Anaplan dans une dimension PlaidCloud. **Une seule étape lit toute une hiérarchie composite** : nommez chaque liste qu'elle couvre, en commençant par la racine (par exemple Région, puis Pays, puis Magasin), plutôt que de la répartir sur plusieurs étapes ; la table de transit est remplacée à chaque exécution, de sorte que plusieurs étapes pointant vers une même table de transit effaceraient chacune les lignes de la précédente. Chaque arête se consolide avec un simple `+`, car les hiérarchies de listes Anaplan ne portent aucune pondération ni aucun signe par arête à lire. Les contrôles d'accès aux listes d'Anaplan et l'appartenance aux sous-ensembles ne sont pas importés : ce sont des métadonnées, pas des données de dimension. Des ID de nœud en double, une référence de parent introuvable, des références de parent contradictoires et un nom de propriété qui entre en collision avec des métadonnées importées sont tous refusés avant tout chargement. Consultez [Anaplan : lire une liste](/fr/reference/workflow-steps/anaplan/anaplan-read-list/) pour la référence complète.
+
+## Considérations de planification
+
+Le budget de débit des requêtes d'Anaplan est **partagé à l'échelle du locataire**, entre toutes les intégrations que votre organisation exécute sur ce locataire Anaplan, et pas seulement celles de PlaidCloud ; PlaidCloud ne coordonne pas les planifications entre exécutions simultanées. Plusieurs étapes Anaplan qui démarrent à la même minute cron peuvent épuiser ce budget avant qu'aucune ne se termine. **Échelonnez les planifications de vos workflows Anaplan** plutôt que de tous les exécuter en même temps.
+
+## Voir aussi
+
+- [Anaplan : lire une vue](/fr/reference/workflow-steps/anaplan/anaplan-read-view/) : lire une vue enregistrée, référence des champs.
+- [Anaplan : lire un export](/fr/reference/workflow-steps/anaplan/anaplan-read-export/) : exécuter une action d'export, référence des champs.
+- [Anaplan : lire une liste](/fr/reference/workflow-steps/anaplan/anaplan-read-list/) : lire des listes dans une dimension, référence des champs.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

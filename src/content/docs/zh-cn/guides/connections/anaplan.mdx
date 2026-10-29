@@ -1,0 +1,89 @@
+---
+title: 连接到 Anaplan
+description: 通过集成 API 将 PlaidCloud 连接到 Anaplan，以读取已保存的视图、运行预先存在的导出操作，或将列表读入 PlaidCloud 维度，仅可读取，直连云端。
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/anaplan.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 **Anaplan**，使工作流可以通过 Anaplan 的大批量读取请求路径读取已保存的视图、运行预先存在的导出操作，或将一个或多个 Anaplan 列表读入 PlaidCloud 维度。该连接**直连云端**访问 Anaplan 自己的集成 API，这些步骤没有本地代理路径。本指南涵盖连接、身份验证、对三个读取步骤的简要介绍以及计划方面的注意事项。
+
+<Aside type="note">
+此连接器是只读的。不会向 Anaplan 写回任何内容：没有写回步骤，也没有部分应用模式。
+</Aside>
+
+## 先决条件
+
+您需要从 Anaplan 工作区管理员处获得：
+
+- Anaplan **用户名和密码**，或由 Anaplan 工作区管理员注册到某个 Anaplan 用户的 **CA 证书及其私钥**，并且对您的工作流将读取的工作区和模型具有读取权限。请参阅下文的[身份验证](#身份验证)。
+- 您将读取的模型的**工作区 ID** 和**模型 ID**，可在 Anaplan 自己的模型设置中看到。连接创建后，也可以通过该连接实时发现这两项。
+- 对于 **Anaplan：读取视图**：一个已保存的**视图**，其行、列和筛选切片正是您想要的。请参阅下文的 [Anaplan：读取视图](#anaplan读取视图)。
+- 对于 **Anaplan：读取导出**：模型中**已存在的导出操作**。
+- 对于 **Anaplan：读取列表**：构成您想读取的层次结构的 Anaplan **列表**。
+
+## 身份验证
+
+连接有一个**身份验证模式**：**基本**（默认）或**证书**。现有连接仍按“基本”模式照常工作。
+
+- **基本**使用 Anaplan 用户名和密码登录。
+- **证书**使用 CA 颁发的证书及其私钥登录，两者都以 PEM 文本粘贴。私钥必须是 **RSA 且未加密**，证书必须是 Anaplan 工作区管理员已注册到您的 Anaplan 用户的那一份，并且由 Anaplan 为您的租户信任的 CA 颁发。PlaidCloud 使用私钥对随机质询进行签名，并按照 Anaplan 自己的证书身份验证流程将其换取 Anaplan 令牌；粘贴证书和私钥之后无需再做任何事，令牌刷新的方式与“基本”模式相同。两个字段都会遮盖您粘贴的内容，两项机密的存储都经过加密，与“基本”模式的密码相同；切换模式绝不会发送另一种模式的凭据，因此如果将现有连接从“基本”切换为“证书”，您需要粘贴证书和私钥，因为它们不会被沿用。
+
+Anaplan 的多重身份验证适用于使用电子邮件和密码登录的用户。证书身份验证是适用于自动化、按计划运行的连接的无密码选项。
+
+在联系 Anaplan 之前，证书模式会在以下情况下直接拒绝：粘贴的私钥或证书无法读取、私钥已加密或不是 RSA，或者私钥与证书不匹配。如果是 Anaplan 本身拒绝了证书，错误会说明它是否已过期；常见原因是证书未注册到某个 Anaplan 用户，或者 CA 未被您的租户信任。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`。
+
+2. 从菜单中选择 **Anaplan**。
+
+3. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 易记的名称，例如 `Anaplan Prod`。 |
+   | API 主机 | 可选。留空则使用 Anaplan 的标准 `https://api.anaplan.com`。 |
+   | 身份验证主机 | 可选。留空则使用 Anaplan 的标准 `https://auth.anaplan.com`。 |
+   | 身份验证模式 | **基本**（默认）或**证书**。请参阅上文的[身份验证](#身份验证)。 |
+   | 用户名 | Anaplan 账户用户名。仅限基本模式。 |
+   | 密码 | Anaplan 账户密码。仅限基本模式。 |
+   | CA 证书 | 在 Anaplan 中注册的 X.509 证书的 PEM 文本。仅限证书模式。 |
+   | 私钥 | 证书的 RSA 私钥的 PEM 文本，未加密。仅限证书模式。 |
+   | 默认工作区 ID | 可选。为读取步骤的“工作区”字段预填的便捷值。 |
+   | 默认模型 ID | 可选。为读取步骤的“模型”字段预填的便捷值。 |
+   | 超时（秒） | 默认为 30。 |
+
+4. 单击 `Test Connection`。测试成功会报告凭据所对应的 Anaplan 账户电子邮件。
+
+5. 单击 `Create`。
+
+</Steps>
+
+## Anaplan：读取视图
+
+添加 **Anaplan：读取视图**步骤，通过 Anaplan 的大批量读取请求路径读取已保存的视图。**视图将按其在 Anaplan 中保存时的样子原样读取，此步骤没有行、列或页面选择。** 要读取不同的切片，请在 Anaplan 中构建另一个已保存的视图；在那里筛选的常用方法是使用布尔行项目加已保存的视图。只有当视图将**行项目放在列轴上**时，数据列才会以其在 Anaplan 中声明的类型导入；如果行项目在行上（普通的损益表布局）或视图中没有行项目，则每一列都会作为文本导入，步骤会对此给出提示。筛选器没有匹配任何内容的视图会导入一个空表并给出警告。如果步骤无法明确读取某个数值，最常见的情况是它既可能是普通小数，也可能是欧式写法，该值会被拒绝而不是猜测，除非同一列中的另一个值能确定哪种读法正确；能够解析的值会以完整精度导入，不会产生舍入误差。完整的字段和行为参考，请参阅 [Anaplan：读取视图](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-view/)。
+
+## Anaplan：读取导出
+
+添加 **Anaplan：读取导出**步骤，运行**预先存在的** Anaplan 导出操作并导入其生成的文件。API 无法创建导出操作，请先在 Anaplan 中构建或编辑它；该步骤也无法缩小其输出范围：Anaplan 中导出操作被配置为导出什么，就会导入什么。**每一列都作为文本导入。** 数字按美国格式请求；仍带有千位分隔符返回的列会原样作为文本导入，并给出具名警告，而不会使运行失败。当导出失败、被取消、没有生成数据、在步骤的轮询预算用尽后仍在运行，或者生成的文件无法与该导出对应起来、或其行数与 Anaplan 自己报告的不一致时，该步骤会停止而不是导入表。完整参考，请参阅 [Anaplan：读取导出](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-export/)。
+
+## Anaplan：读取列表
+
+添加 **Anaplan：读取列表**步骤，将一个或多个 Anaplan 列表读入 PlaidCloud 维度。**一个步骤读取整个复合层次结构**：按从根开始的顺序列出它跨越的每个列表（例如先 Region，再 Country，再 Store），而不是将其拆分到多个步骤；暂存表在每次运行时都会被替换，因此多个步骤指向同一个暂存表时，每个步骤都会清除前一个步骤的行。由于 Anaplan 列表层次结构没有可读取的按边权重或符号，因此每条边都以普通的 `+` 汇总。Anaplan 的列表访问控制和子集成员关系不会导入，因为它们是元数据，而不是维度数据。重复的节点 ID、无法解析的父级引用、相互冲突的父级引用，以及与导入的元数据冲突的属性名称，都会在导入任何内容之前被拒绝。完整参考，请参阅 [Anaplan：读取列表](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-list/)。
+
+## 计划方面的注意事项
+
+Anaplan 的请求速率预算是**租户范围内共享**的，即由您的组织针对该 Anaplan 租户运行的所有集成共享，而不仅仅是 PlaidCloud，并且 PlaidCloud 不会协调并发运行之间的计划。多个 Anaplan 步骤在同一个 cron 分钟落地，可能在其中任何一个完成之前就耗尽该预算。请**错开您的 Anaplan 工作流计划**，而不是让它们同时运行。
+
+## 相关内容
+
+- [Anaplan：读取视图](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-view/)：读取已保存的视图，字段参考。
+- [Anaplan：读取导出](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-export/)：运行导出操作，字段参考。
+- [Anaplan：读取列表](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-list/)：将列表读入维度，字段参考。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

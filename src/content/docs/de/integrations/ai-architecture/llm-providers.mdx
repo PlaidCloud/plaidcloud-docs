@@ -1,0 +1,177 @@
+---
+title: LLM-Anbieter und Verbindungen
+description: Registrieren Sie Claude, GPT, Gemini, Grok, Azure OpenAI oder ein selbst gehostetes Modell als Verbindung vom Typ LLM-Anbieter – und verstehen Sie die Ausführungsadapter, den Agent-Zugriff und die Werkzeugvermittlung dahinter.
+sidebar:
+  label: LLM-Anbieter
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/llm-providers.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Eine **Verbindung vom Typ LLM-Anbieter** legt fest, welches Modell die KI in Ihrem Workspace antreibt. Sie
+enthält den Anbieter, Ihren API-Schlüssel, ein Standardmodell und Standardanweisungen – und an ihr
+entscheidet ein Administrator, wie viel das Modell tun darf.
+
+<img
+	src="/images/ai-llm-providers.svg"
+	alt="Eine Verbindung vom Typ LLM-Anbieter wählt einen Anbieter aus, der auf einen von vier Ausführungsadaptern abgebildet wird – anthropic, openai_compatible, gemini oder azure. Werkzeuge werden entweder serverseitig durch den MCP-Konnektor von Anthropic oder clientseitig durch PlaidCloud vermittelt. Die Durchsetzung der Berechtigungen ist in beiden Fällen identisch."
+	class="doc-diagram"
+/>
+
+## Was die Verbindung enthält
+
+| Feld | Funktion |
+|---|---|
+| **Anbieter** | Anthropic, OpenAI, Google Gemini, xAI Grok, Azure OpenAI oder GitHub Models. |
+| **API-Schlüssel** | Ihr eigener. Die Nutzung wird Ihrem Konto bei diesem Anbieter in Rechnung gestellt und nicht über PlaidCloud weiterverkauft. |
+| **Standardmodell** | Wird aus dem aktuellen Angebot des Anbieters ausgewählt, das mit Ihrem API-Schlüssel abgerufen wird. Unter **Andere…** geben Sie eine Modell-ID für alles ein, was die Liste nicht enthält. |
+| **Basis-URL** | Wird nur für Anbieter angezeigt, die eine lesen: erforderlich für Azure OpenAI (der Endpunkt Ihrer Ressource) und eine optionale Überschreibung für OpenAI, Grok und GitHub Models. Anthropic und Gemini verwenden sie nicht. |
+| **API-Version** | Nur Azure OpenAI. |
+| **Regeln** | Standardanweisungen, die jeder Systemnachricht vorangestellt werden – Hausregeln, Tonalität, was nie getan werden darf. |
+| **Agent-Zugriff** | Die Obergrenze dafür, was Agents und Schritte mit dieser Verbindung tun dürfen. Nur Lesen, sofern nicht angehoben. |
+
+Name, Notiz und wer die Verbindung sehen kann, werden ebenfalls hier festgelegt, und mit **Verbindung testen** prüfen Sie den Schlüssel,
+bevor Sie sich darauf verlassen.
+
+Ein Workspace kann mehrere Verbindungen enthalten; eine ist als Standard markiert. Ein Workflow-Schritt kann eine
+bestimmte Verbindung festlegen, wenn er ein anderes Modell als der Standard des Workspace benötigt.
+
+Ein Workspace kann außerdem eine ältere Verbindung vom Typ **Anthropic Claude** enthalten, aus der Zeit, bevor der Anbieter zu
+einem Feld eines einzigen Verbindungstyps wurde. Sie enthält dieselben Einstellungen und öffnet sich im selben Editor, wobei
+der Anbieter fest auf Anthropic gesetzt ist. Erstellen Sie neue Verbindungen als **LLM-Anbieter**.
+
+<Aside type="tip">
+**Die Modellliste stammt vom Anbieter, nicht von PlaidCloud.** Beim Öffnen der Verbindung wird Ihr
+Anbieter gefragt, welche Modelle Ihr Schlüssel erreichen kann. Ein Modell, das heute Morgen erschienen ist, wird also angeboten, ohne
+auf ein PlaidCloud-Release zu warten. Modelle, die keinen Prompt beantworten können – Embedding-, Sprach-,
+Bild- und Moderationsmodelle – werden ausgelassen.
+
+Ist der Anbieter nicht erreichbar (ein noch nicht eingegebener Schlüssel, ein falscher oder ein Ausfall),
+greift die Liste auf die integrierte Liste von PlaidCloud zurück und weist darauf hin. Unter **Andere…** wird weiterhin jede
+von Ihnen eingegebene Modell-ID akzeptiert.
+</Aside>
+
+## Anbieter und Adapter
+
+Sechs für Benutzer sichtbare Anbieter werden auf vier Ausführungsadapter abgebildet. Der Adapter bestimmt, wie die Anfrage
+aufgebaut ist und worauf das Modell zugreifen kann. Die Anbieternamen unten entsprechen den Bezeichnungen im Dropdown-Menü
+des Verbindungsformulars.
+
+| Anbieter | Adapter | Hinweise |
+|---|---|---|
+| Anthropic (Claude) | `anthropic` | Der einzige Pfad mit eingeschränkten Bindungen für Tabellen, Dimensionen und Dokumente. |
+| OpenAI (ChatGPT) | `openai_compatible` | |
+| xAI (Grok) | `openai_compatible` | |
+| GitHub Models | `openai_compatible` | Von GitHub gehostete Modelle für GitHub-zentrierte Teams. |
+| Google (Gemini) | `gemini` | |
+| Azure OpenAI | `azure` | Der Endpunkt Ihrer Ressource; das „Modell“ ist Ihr **Bereitstellungsname**, und die API-Version stammt aus der Verbindung. |
+
+<Aside type="caution">
+**GitHub Copilot ist hier keine Option, und das ist kein Versehen.** Copilot hat keine eigenständige
+Chat-API, auf die Sie einen Server richten könnten – es tauscht ein OAuth-Token gegen eine Editor-Berechtigung. Der
+Microsoft-Weg für GPT-Modelle der Copilot-Klasse ist **Azure OpenAI** (oder GitHub Models). GitHub Copilot
+*als IDE-Client*, der sich mit PlaidCloud verbindet, ist etwas völlig anderes und funktioniert – siehe
+[GitHub Copilot](/de/integrations/ai-coding-agents/copilot/).
+</Aside>
+
+## Wie Werkzeuge vermittelt werden
+
+Ein LLM ist hier nur nützlich, wenn es PlaidCloud-Werkzeuge aufrufen kann. Für den **interaktiven** Assistenten gibt es
+zwei Mechanismen, und welcher läuft, hängt vom Anbieter ab. (Der unbeaufsichtigte
+[LLM-Workflow-Schritt](#der-llm-workflow-schritt-ist-anders) funktioniert anders; lesen Sie auch diesen Abschnitt.)
+
+### Serverseitiger Konnektor – Anthropic
+
+Die API von Anthropic verbindet sich selbst mit Ihrem PlaidCloud-MCP-Endpunkt und trägt dabei das kurzlebige delegierte
+Token. Anthropic verwaltet den Werkzeugkatalog auf seiner Seite, sodass das Modell alles sieht, was das Token
+aufrufen darf, und Werkzeuge ohne Hilfe entdeckt.
+
+Dies ist auch der einzige Pfad, der **eingeschränkte Bindungen** unterstützt – siehe unten.
+
+### Clientseitige Schleife – alle anderen
+
+Andere Anbieter haben keinen entsprechenden Konnektor, daher steuert PlaidCloud die Schleife selbst: Es verbindet sich als Client mit
+seinem eigenen MCP-Server, listet die Werkzeuge auf, übergibt sie dem Modell als native Funktionsdefinitionen, führt die vom Modell
+angeforderten Aufrufe aus, gibt die Ergebnisse zurück und wiederholt dies, bis das
+Modell eine Antwort liefert.
+
+Zwei Grenzen machen dies berechenbar:
+
+- **Eine begrenzte Werkzeugoberfläche.** Anbieter begrenzen, wie viele Funktionen eine Anfrage deklarieren darf, und jedes
+  Schema kostet Prompt-Token. Die bereitgestellte Menge ist begrenzt, wobei die Meta-Werkzeuge zur Erkennung immer
+  vorhanden sind, damit das Modell alles außerhalb der direkten Liste weiterhin finden und aufrufen kann.
+- **Ein festes Limit für Roundtrips.** Eine außer Kontrolle geratene Werkzeugschleife wird gestoppt, statt unbegrenzt Token zu verbrauchen.
+
+<Aside type="note">
+Anderer Vermittler, gleiche Durchsetzung. Die clientseitige Schleife ruft denselben MCP-Server mit demselben
+delegierten Token auf, sodass Bereiche, ACLs, Agent-Zugriff und die Sperrliste genau so gelten wie auf
+dem Anthropic-Pfad.
+</Aside>
+
+## Der LLM-Workflow-Schritt ist anders
+
+Alles oben Beschriebene betrifft interaktive KI. Der unbeaufsichtigte **LLM-Workflow-Schritt** verwendet die
+clientseitige Schleife überhaupt nicht, und es lohnt sich, den Unterschied zu verstehen, bevor Sie einen Anbieter für
+einen solchen Schritt wählen.
+
+| Anbieter in der Verbindung des Schritts | Was der Schritt tun kann |
+|---|---|
+| **Anthropic** | Greift über den MCP-Konnektor auf Ihre Daten zu, beschränkt auf **eingeschränkte Bindungen** – die konkreten Tabellen, Dimensionen und Dokumente, die Sie im Schritt benannt haben, jeweils mit Lese- oder Schreibmarkierung. Alles außerhalb dieser Objekte wird abgelehnt, obwohl das Werkzeug existiert. |
+| **Alle anderen** | **Kein Datenzugriff.** Der Schritt ist eine einzelne strukturierte Vervollständigung: Prompt, Regeln und Schema gehen hinein, JSON kommt heraus. |
+
+Daraus ergeben sich zwei direkte Folgen:
+
+- **Bindungen werden bei einem Schritt mit einem anderen Anbieter als Anthropic ignoriert.** Sie werden weder stillschweigend berücksichtigt noch
+  führen sie zu einem Fehler – der Schritt protokolliert, dass der eingeschränkte Datenzugriff nur für Anthropic gilt, und läuft ohne sie. Wenn
+  Sie einen Schritt mit Bindungen von Anthropic auf einen anderen Anbieter umstellen, liest er Ihre Daten nicht mehr.
+- **Bei einem Schritt mit einem anderen Anbieter als Anthropic ist ein Ergebnisschema erforderlich.** Ohne Werkzeuge, die er aufrufen könnte, ist strukturierte Ausgabe
+  das Einzige, was der Schritt erzeugt.
+
+<Aside type="caution">
+Wenn ein Schritt Projektobjekte lesen oder schreiben soll, legen Sie ihn auf eine Anthropic-Verbindung. Bei jedem anderen
+Anbieter kann der Schritt weiterhin Text klassifizieren, zusammenfassen, extrahieren oder umschreiben, den Sie im Prompt übergeben –
+er kann nur nichts selbst abrufen.
+</Aside>
+
+## Agent-Zugriff
+
+Jede LLM-Verbindung hat eine Einstellung **Agent-Zugriff**. Sie ist eine **Obergrenze**, die stets mit den tatsächlichen
+Berechtigungen der handelnden Person geschnitten wird.
+
+| Agent-Zugriff | Was Agents und Schritte mit dieser Verbindung tun dürfen |
+|---|---|
+| **Nur Lesen** *(Standard)* | Auflisten, beschreiben, Tabellendaten lesen, Dimensionsmitglieder lesen, Dokumente lesen, schreibgeschützte SQL ausführen. |
+| **Lesen und Schreiben** | Das Obige sowie Änderungen, die die Person ohnehin vornehmen darf, über die Schreibwerkzeuge von PlaidCloud. Rohes SQL bleibt schreibgeschützt. |
+| **Vollständig** *(veraltet – entfällt am 15. Januar 2027)* | Der vollständige Werkzeugsatz der Person, einschließlich SQL mit Schreibzugriff. Verwenden Sie stattdessen **Lesen und Schreiben**. |
+
+Bei jeder Einstellung des Agent-Zugriffs gilt eine bedingungslose Sperrliste: Verbindungs- und Anmeldedateneinstellungen,
+wer eine Verbindung besitzt oder darauf zugreifen darf, Anmeldedaten und ACLs von Dokumentenkonten, Mitglieder- und
+Gruppenverwaltung, Zurücksetzen von Kennwörtern, Projekt-ACLs, der ERP-Buchungsmodus eines Projekts, Veröffentlichung,
+Code benutzerdefinierter Funktionen und App-Bereitstellungen. Diese können von einer KI-Berechtigung nie aufgerufen werden.
+
+Bei einem Anthropic-Workflow-Schritt wirkt der Agent-Zugriff mit den **Bindungen** zusammen: Bei **Lesen und Schreiben** wird Schreibzugriff
+pro gebundenem Objekt gewährt, sodass ein Schritt in die eine Tabelle schreiben kann, die Sie angehakt haben, und in nichts anderes.
+
+## Strukturierte Ergebnisse
+
+Wenn ein Schritt ein Ergebnisschema deklariert, wird die Antwort dagegen validiert, statt sie aus
+Fließtext herauszulesen. Da Anbieter Schemas unterschiedlich ausdrücken, wird das Schema pro Anbieter übersetzt – der
+strikte JSON-Dialekt für OpenAI-kompatible Endpunkte, die OpenAPI-Teilmenge für Gemini – und eine Ablehnung
+oder eine abgeschnittene Antwort wird als eigener Fehler ausgegeben statt als verwirrendes „ungültiges JSON“.
+
+## Wissenswerte Schutzmaßnahmen
+
+- **Ausgehende URLs werden vor jedem Aufruf validiert.** Eine Basis-URL muss HTTPS verwenden und auf eine
+  öffentliche Adresse auflösen; Loopback-, private, Link-Local- und Cloud-Metadaten-Adressen werden abgelehnt,
+  und Weiterleitungen sind deaktiviert, damit eine Antwort den Aufruf nicht an eine andere Stelle umleiten kann.
+- **Schlüssel bleiben aus Protokollen und Fehlermeldungen heraus.** Anbieterfehler werden bereinigt, statt
+  mit den enthaltenen Anmeldedaten zurückgegeben zu werden.
+- **Regeln sind Anweisungen, keine Berechtigungen.** Die Standardregeln einer Verbindung steuern, wie sich das
+  Modell verhält. Sie können nicht erweitern, worauf es zugreifen darf.
+
+## Verwandte Themen
+
+- [KI- und LLM-Architektur](/de/integrations/ai-architecture/) – die Oberflächen und der gemeinsame Pfad
+- [Ihr eigenes kontrolliertes LLM verwenden](/de/integrations/ai-architecture/private-llm/) – Azure OpenAI und selbst gehostete Optionen
+- [Verbindungen](/de/guides/connections/) – Verbindungen allgemein erstellen und verwalten

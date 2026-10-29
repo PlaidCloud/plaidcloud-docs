@@ -1,0 +1,101 @@
+---
+title: Claude Code
+description: Configure o Claude Code (CLI, extensão do VSCode, plug-in do JetBrains) para chamar as ferramentas MCP do PlaidCloud usando OAuth ou um token de portador estático.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/claude-code.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O [Claude Code](https://claude.com/claude-code) é o agente de programação da Anthropic. Ele é fornecido como CLI, extensão do VSCode e plug-in do JetBrains — os três compartilham a mesma configuração de MCP.
+
+## Opção A — OAuth (recomendada)
+
+O OAuth é o caminho de menor manutenção. A ponte MCP do Claude Code cuida do redirecionamento do navegador e da atualização de forma transparente.
+
+1. Na raiz do seu projeto, adicione o servidor. Na forma da CLI:
+
+    ```bash
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp
+    ```
+
+    Ou em `.mcp.json`, na raiz do projeto:
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp"
+        }
+      }
+    }
+    ```
+
+2. Reinicie o Claude Code. Na primeira vez que você pedir que ele use uma ferramenta `plaidcloud_`, a ponte exibirá uma URL de autorização. Abra-a, entre no PlaidCloud e você chegará a uma página de **Solicitação de acesso do aplicativo** que informa o aplicativo solicitante e o URI de redirecionamento para o qual enviará as credenciais — confira se eles correspondem ao Claude Code antes de aprovar. Aprove e, em seguida, cole a URL de retorno que o Claude Code pediu. O token é armazenado em cache localmente e atualizado automaticamente; você não verá esta página novamente até que o token de atualização expire ou seja revogado.
+
+3. Verifique com `claude mcp list` (CLI) ou `/mcp` (dentro da sessão). O servidor deve aparecer como conectado.
+
+<Aside>O estado da ponte OAuth pode, ocasionalmente, travar em sessões remotas/SSH em que o Claude Code não consegue alcançar `localhost` a partir do seu navegador. Se isso acontecer, recorra à Opção B.</Aside>
+
+## Opção B — Token de portador estático
+
+Quando o OAuth não é prático (sessões remotas, devcontainers, runtimes de agentes que não sobrevivem a redirecionamentos do navegador), use um token de portador:
+
+1. Em uma guia do navegador em que você esteja conectado ao PlaidCloud, abra:
+
+    ```
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
+    ```
+
+    Clique em "Copy snippet".
+
+2. Cole-o no `.mcp.json` do seu projeto, em `mcpServers`:
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
+          "headers": {
+            "Authorization": "Bearer eyJhbGc…"
+          }
+        }
+      }
+    }
+    ```
+
+    Ou pela CLI:
+
+    ```bash
+    claude mcp add --transport http plaidcloud \
+      https://<your-workspace>.plaid.cloud/mcp \
+      -H "Authorization: Bearer eyJhbGc…"
+    ```
+
+3. Reinicie o Claude Code. `claude mcp list` deve mostrar o servidor como conectado.
+
+Quando o token expirar, recarregue a URL `/mcp/setup/token` e substitua o valor de `Authorization`.
+
+## Configuração com vários tenants
+
+Você pode configurar vários tenants do PlaidCloud lado a lado — dê a cada um um nome distinto:
+
+```json
+{
+  "mcpServers": {
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp"  }
+  }
+}
+```
+
+Ao pedir ao Claude Code que faça algo, nomeie o tenant no seu prompt ("no tenant dev, encontre os projetos cujo nome começa com `Q4`") para que ele escolha o servidor certo.
+
+## Dicas
+
+- Execute `mcp_introspect` logo no início de uma sessão para que o Claude Code entenda a superfície de ferramentas sem reler o manifesto completo a cada chamada.
+- As ferramentas que alteram dados (`*_upsert`, `*_organize`, `*_run`) aceitam `dry_run=True` — útil quando você deixa um agente automatizar alterações e quer um plano para revisar antes.
+- Para operações de longa duração (execuções de fluxos de trabalho, exportações de consultas), prefira as ferramentas `*_track` / `*_status` a laços de polling — elas são a fonte única da verdade e evitam inundar o contexto do agente.

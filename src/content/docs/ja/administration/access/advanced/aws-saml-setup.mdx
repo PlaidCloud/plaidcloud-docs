@@ -1,0 +1,100 @@
+---
+title: シングルサインオン用のAWS IAM Identity Center SAMLの設定
+description: PlaidCloudのシングルサインオン用にAWS IAM Identity CenterをSAMLプロバイダーとして設定し、メンバーのフェデレーション認証を有効にします。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/aws-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudは、SAML 2.0によるシングルサインオン（SSO）をサポートしています。このガイドでは、組織のユーザーがPlaidCloudにアクセスする際にAWSで認証できるよう、AWS IAM Identity Center（旧AWS SSO）をSAML IDプロバイダーとして構成する手順を説明します。
+
+<Aside>PlaidCloud側の構成はPlaidCloudチームが行います。お客様の作業は、IAM Identity Centerでカスタム SAMLアプリケーションを設定し、**IAM Identity Center SAML Metadata URL**をPlaidCloudに提供することです。残りの構成はPlaidCloudサポートが完了します。</Aside>
+
+## 前提条件
+
+- **IAM Identity Center**が有効になっているAWSアカウント
+- **AWSSSOMasterAccountAdministrator**マネージドポリシーまたは同等の権限を持つIAMユーザーまたはロール
+- IAM Identity Centerにアイデンティティソース（組み込みディレクトリ、Active Directory、または外部IdP）が構成されていること
+- 設定の調整と構成値の交換のために、PlaidCloudサポートと連絡が取れること
+
+## 概要
+
+セットアップでは、2者がSAMLメタデータを交換します。
+
+1. **お客様側の作業：** IAM Identity Centerでカスタム SAMLアプリケーションを構成し、SAML Metadata URLをPlaidCloudに提供します。
+2. **PlaidCloud側の作業：** アプリケーションの構成を完了するために必要なサービスプロバイダー（SP）のエンティティIDとACS URL（Assertion Consumer Service URL）を提供します。
+
+以下のステップ3を完了する前に、PlaidCloudサポートと調整してSPの値を入手してください。
+
+## ステップ1：カスタム SAMLアプリケーションの作成
+
+1. [AWS Management Console](https://console.aws.amazon.com)にサインインし、**IAM Identity Center**に移動します。
+2. 左側のサイドバーで、**Applications**を選択します。
+3. **Add application**をクリックします。
+4. **I have an application I want to set up**を選択し、**Custom SAML 2.0 application**を選びます。
+5. **次へ**をクリックします。
+6. アプリケーションの**Display name**を入力し（例：`PlaidCloud SSO`）、必要に応じて説明も入力します。
+
+## ステップ2：IAM Identity Center SAML Metadata URLの取得
+
+サービスプロバイダーの詳細を構成する前に、IAM Identity CenterのメタデータURLを確認してPlaidCloudに送信します。
+
+1. アプリケーションの構成ページで、**IAM Identity Center metadata**セクションまでスクロールします。
+2. **IAM Identity Center SAML metadata URL**をコピーします（形式：`https://portal.sso.{region}.amazonaws.com/saml/metadata/{instanceId}`）。
+
+**このメタデータURLをPlaidCloudサポートに送信してください。** これは、PlaidCloudがIDプロバイダー側の信頼関係を構成するために必要なEntity Descriptor URLです。PlaidCloudがこのURLを受け取ると、チームがKeycloakの構成を完了し、SSOをテストできる状態になったらお知らせします。
+
+## ステップ3：サービスプロバイダーの詳細の構成
+
+<Aside>この手順を完了するには、PlaidCloudが提供する**SPエンティティID**と**ACS URL**が必要です。これらの値はPlaidCloudサポートにお問い合わせのうえ入手してください。</Aside>
+
+1. **Application properties**セクションまでスクロールします。
+2. **Application ACS URL**フィールドに、PlaidCloudから提供されたACS URLを入力します。
+3. **Application SAML audience**フィールドに、PlaidCloudから提供されたSPエンティティIDを入力します。
+4. **提出**をクリックします。
+
+## ステップ4：属性マッピングの構成
+
+IAM Identity Centerは、SAMLアサーションでユーザー属性をPlaidCloudに渡します。PlaidCloudが必要なユーザー情報を受け取れるよう、属性マッピングを構成します。
+
+1. アプリケーションの詳細ページで、**Attribute mappings**タブを選択します。
+2. **Add new attribute mapping**をクリックし、次のマッピングを追加します。
+
+| アプリケーションのユーザー属性 | IAM Identity Centerの文字列値またはユーザー属性へのマッピング | 形式 |
+|---|---|---|
+| `Subject` | `${user:email}` | emailAddress |
+| `email` | `${user:email}` | unspecified |
+| `firstName` | `${user:givenName}` | unspecified |
+| `lastName` | `${user:familyName}` | unspecified |
+
+3. **Save changes**をクリックします。
+
+### グループメンバーシップ（任意）
+
+IAM Identity Centerは、他のプロバイダーと同じようには、グループメンバーシップをSAML属性としてネイティブに渡しません。PlaidCloudの構成でグループベースのセキュリティロール割り当てが必要な場合は、利用可能な方法についてPlaidCloudサポートと相談してください。一般的な方法としては、グループ割り当てを使った組み込みディレクトリの利用や、Active Directoryなどの外部アイデンティティソースからのグループ同期があります。
+
+<Aside>PlaidCloudでグループベースのセキュリティロール割り当てが正しく機能するよう、グループメンバーシップをどのように渡すかについてPlaidCloudサポートと相談してください。</Aside>
+
+## ステップ5：アプリケーションへのユーザーとグループの割り当て
+
+このSSO構成で認証できるのは、アプリケーションに割り当てられたユーザーとグループのみです。
+
+1. アプリケーションの詳細ページで、**Assign users and groups**タブを選択します。
+2. **Assign users and groups**をクリックします。
+3. PlaidCloudへのSSOアクセスを許可するユーザーまたはグループを検索して選択します。
+4. **Assign users**をクリックします。
+
+## 連携のテスト
+
+PlaidCloudが構成の完了を確認したら、次の手順を行います。
+
+1. 組織のPlaidCloudワークスペース（例：`https://my-workspace.plaid.cloud`）に移動します。
+2. AWS IAM Identity Centerのサインインページにリダイレクトされます。
+3. AWS IAM Identity Centerの認証情報でサインインします。
+4. 認証に成功すると、PlaidCloudにリダイレクトされます。
+
+エラーが発生した場合は、次の点を確認してください。
+- ACS URLとSPエンティティIDが、PlaidCloudから提供された値と完全に一致している
+- ログインしようとしているユーザーが、IAM Identity Centerでアプリケーションに割り当てられている
+- Subject属性が`${user:email}`にマッピングされ、**emailAddress**形式になっている
+- PlaidCloudに送信したメタデータURLに、PlaidCloudのサーバーからアクセスできる

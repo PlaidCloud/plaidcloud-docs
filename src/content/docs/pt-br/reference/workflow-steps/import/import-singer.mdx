@@ -1,0 +1,31 @@
+---
+title: Import Singer Source
+description: Importe dados de uma origem Singer — conectores de SaaS, API e banco de dados, como Stripe, GitHub, Slack e BigQuery — para tabelas de projeto, com descoberta de streams e sincronização de tabela completa ou incremental.
+sidebar:
+  order: 25
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/import/import-singer.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+A etapa **Import Singer Source** (exibida como **Importar: Origem Singer** no seletor de etapas) obtém um ou mais streams de uma origem Singer para tabelas de projeto. Uma origem Singer é uma conexão do tipo **Origem Singer** que encapsula um *tap* do Singer — um conector para um aplicativo SaaS, API ou banco de dados específico, como Stripe, GitHub, Slack ou BigQuery. A etapa descobre os streams disponíveis do tap, você escolhe quais importar e onde cada um é gravado, e o executor extrai os dados e os carrega nos destinos.
+
+Para um passo a passo completo, veja o [guia de Origens Singer](/pt-br/guides/connections/singer-sources/); para as origens disponíveis e a documentação de configuração de cada uma, veja o [catálogo de Origens Singer](/pt-br/reference/connectors/singer-sources/).
+
+## Configuração
+
+* **Conexão** *(obrigatório)* — uma conexão do tipo **Origem Singer**.
+* **Modo de sincronização** *(obrigatório)* — **Tabela completa (substituir a cada execução)**, **Incremental (anexar novos dados)** ou **Upsert (mesclar pela chave)**. O modo incremental funciona apenas para streams que o tap consegue sincronizar de forma incremental (aqueles com uma chave de replicação); a etapa continua da posição da execução anterior. O upsert mescla cada execução no destino pelas colunas-chave do stream.
+* **Descobrir streams** — executa a descoberta do catálogo do tap no executor e lista os streams que ele oferece.
+* **Streams** *(pelo menos um)* — para cada stream descoberto: **Importar este stream** para incluí-lo e uma **Tabela de destino** para onde ele é gravado. Todo stream selecionado precisa de uma tabela de destino. Quando o modo de sincronização é **Upsert (mesclar pela chave)**, cada stream selecionado também precisa de **Colunas-chave** (um nome de coluna por linha) — as colunas pelas quais uma linha é correspondida; por padrão, são a chave primária declarada do tap.
+
+## Comportamento
+
+* A descoberta é executada como um job próprio e pode levar cerca de três minutos em uma partida a frio; o resultado fica em cache, então repetir a descoberta é instantâneo.
+* **Tabela completa** substitui a tabela de destino a cada execução; **incremental** anexa apenas as linhas novas desde a última execução, usando a chave de replicação do tap; **upsert** extrai novamente o stream inteiro e o mescla no destino pelas colunas-chave de cada stream — as linhas correspondentes são atualizadas, as chaves novas são inseridas e as linhas existentes sem correspondência são mantidas. O destino é criado na primeira execução. Linhas com uma coluna-chave nula nunca correspondem e são sempre inseridas, portanto escolha colunas-chave que estejam sempre presentes.
+* Os streams selecionados *são* o conjunto salvo — para alterar a seleção, descubra novamente. Os streams que reaparecem mantêm a tabela de destino e a seleção que você definiu.
+* As credenciais da origem são lidas da conexão no momento da execução, então rotacioná-las na conexão se aplica a todas as etapas que a usam — sem atualizações por etapa.
+
+<Aside>Cada execução chama a origem externa por meio do tap. Para streams incrementais, desmarcar e marcar novamente ou mudar para tabela completa extrai tudo de novo desde o início.</Aside>

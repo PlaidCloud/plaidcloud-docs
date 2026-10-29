@@ -1,0 +1,137 @@
+---
+title: Depure um fluxo de trabalho
+description: Quando um fluxo de trabalho quebra, descubra a causa por conta própria — execute uma etapa, pré-visualize a saída, leia o log, rastreie as entradas com a auditoria de dependências e interprete o erro.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*~25 minutos · execute uma etapa, pré-visualize os dados, leia o log, rastreie as entradas*
+
+Algo em um fluxo de trabalho não está certo — uma etapa está vermelha, um número downstream parece errado ou uma execução parou no meio. Este tutorial percorre o kit manual para descobrir o motivo: executar uma única etapa isoladamente, pré-visualizar o que ela produziu, ler o log do fluxo de trabalho, rastrear de onde vieram as entradas com a auditoria de dependências e ler o próprio erro. Cada ferramenta responde a uma pergunta diferente e, juntas, geralmente levam você à causa sem adivinhação.
+
+> **Prefere que alguém explique para você?** O [caminho assistido por IA](/pt-br/get-started/tutorials/fix-a-workflow-with-ai/) faz a mesma investigação de forma conversacional. Este tutorial é a versão manual — tudo aqui você conduz por conta própria, o que vale a pena fazer pelo menos uma vez para saber o que o assistente realmente está olhando.
+
+## O ciclo de depuração
+
+A maior parte da depuração de fluxos de trabalho é o mesmo ciclo curto, seja qual for a ferramenta que você use primeiro:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="O ciclo de depuração de fluxos de trabalho: execute uma etapa isoladamente, pré-visualize os dados de saída, leia o log do fluxo de trabalho para ver a mensagem de erro, rastreie as entradas da etapa com a auditoria de dependências e então corrija e execute a etapa novamente." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Executar uma etapa</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Pré-visualizar dados</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ler o log</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Rastrear entradas</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">corrigir e executar novamente</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Cada ferramenta responde a uma pergunta — raramente você precisa das quatro, mas elas seguem esta ordem.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Um espaço de trabalho do PlaidCloud com um projeto e um fluxo de trabalho que tenha um problema a investigar (uma etapa vermelha, um resultado errado ou uma execução que parou).
+- Familiaridade com o [Designer visual de fluxo de trabalho](/pt-br/guides/workflows/advanced-workflows/) — a tela onde você fará a maior parte disto.
+
+## Etapa 1: execute apenas a etapa com problema
+
+Não execute o fluxo de trabalho inteiro de novo só para testar uma alteração — é lento e refaz um trabalho em que você já confia. Execute a única etapa que você está investigando.
+
+1. Abra o fluxo de trabalho no Designer visual de fluxo de trabalho.
+2. Clique com o botão direito na etapa que deseja testar e escolha **Executar etapa** no menu de contexto.
+3. A etapa é executada isoladamente, sobre os dados que já existem em suas tabelas de origem.
+
+Esse último ponto importa na depuração: uma etapa lê de suas tabelas de origem como elas estão *neste momento*. Se uma etapa anterior ainda não foi executada, ou foi executada com dados desatualizados, executar esta etapa sozinha reflete isso — exatamente o que a [Etapa 4](#etapa-4-rastreie-as-entradas-com-a-auditoria-de-dependências) ajuda a identificar.
+
+Consulte [Executar uma etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/) para ver todos os detalhes.
+
+## Etapa 2: pré-visualize o que a etapa produziu
+
+Depois que a etapa for executada, veja o que ela realmente gravou antes de decidir se está correto. A **gaveta de pré-visualização de dados** mostra os dados de saída de uma etapa direto na tela — as primeiras 100 linhas com colunas tipadas, encaixada na parte inferior.
+
+Há três formas de chegar lá, todas levando à mesma gaveta:
+
+- **Passe o mouse sobre o bloco da etapa** — um pequeno glifo de navegação (tabela) aparece suavemente no canto inferior direito do bloco. Clique nele.
+- **Clique com o botão direito na etapa** e escolha **Pré-visualizar dados de saída**.
+- **No Inspetor**, clique no **ícone de olho** em qualquer cartão de saída na seção **Saídas** da etapa.
+
+O que verificar depende do sintoma:
+
+| Sintoma | O que procurar na pré-visualização |
+|---|---|
+| Colunas erradas ou ausentes | A etapa produziu as colunas esperadas? Uma junção ou seleção de colunas que deu errado aparece aqui primeiro. |
+| Poucas / muitas linhas | O cabeçalho mostra **Showing first N of ~M rows** — o total é aproximadamente o que deveria ser? |
+| Saída vazia | A gaveta diz *Table is empty* (executou, zero linhas) ou *No data yet — run the step* (nunca executou). |
+| Valores suspeitos | Ordene uma coluna para trazer nulos ou valores atípicos para o topo. |
+
+Enquanto a gaveta está aberta, **clicar em qualquer outra etapa redireciona a pré-visualização** para a saída dessa etapa — assim você pode percorrer uma cadeia de etapas e ver onde os dados começam a dar errado. Quando precisar filtrar, fatiar ou ir além das primeiras 100 linhas, clique em **Abrir no Explorador de tabelas** no cabeçalho da gaveta.
+
+Os detalhes completos estão em [Pré-visualizar dados de uma etapa](/pt-br/guides/workflows/preview-step-data/).
+
+## Etapa 3: leia o log do fluxo de trabalho
+
+A pré-visualização mostra *como* é a saída; o log mostra *o que aconteceu* quando a etapa foi executada — incluindo a mensagem de erro, se ela falhou.
+
+À medida que as etapas são executadas e ocorrem avisos, esses eventos são gravados no **log do fluxo de trabalho**, que pode ser visto na área **Projeto**, na guia **Log**. De dentro do Designer visual de fluxo de trabalho, o botão **Ver logs** da barra de ferramentas abre essa mesma visão já filtrada para o fluxo de trabalho que você tem aberto.
+
+1. Abra a guia **Log** (o log do projeto) — pelo botão **Ver logs** da barra de ferramentas ou pela guia **Log** na área Projeto.
+2. Use o controle de filtro ao lado das mensagens de log para restringir à etapa e à execução que interessam.
+3. Abra uma entrada de log para ler seus detalhes — é aqui que fica a mensagem de erro de uma etapa que falhou.
+
+O log em nível de projeto mostra uma visão mais abrangente de vários fluxos de trabalho, caso o problema possa abranger mais de um. Consulte [Visualizar o log do fluxo de trabalho](/pt-br/guides/workflows/viewing-workflow-log/).
+
+> **Lendo a mensagem de erro.** Copie o texto exato da entrada de log — uma chave de junção incorreta, uma incompatibilidade de tipo ou uma tabela de origem ausente têm mensagens diferentes. As duas causas mais comuns de erro em uma etapa são chaves de junção incompatíveis entre tabelas e valores nulos inesperados em colunas calculadas. Quando a mensagem aponta para os dados e não para a configuração da etapa, é o sinal para rastrear as entradas.
+
+> **Um exemplo prático.** Digamos que uma etapa de transformação fica vermelha. Você abre o log e a entrada diz `column "revenue" does not exist` — a tabela de origem tem uma coluna `net_revenue`, não `revenue`. A correção de uma linha é corrigir o nome da coluna na expressão da etapa. Você executa só essa etapa de novo e ela volta verde. Esse é o ciclo inteiro em uma única passada.
+
+## Etapa 4: rastreie as entradas com a auditoria de dependências
+
+Às vezes uma etapa está configurada corretamente e mesmo assim produz dados errados — porque foi executada sobre entradas preenchidas *fora de ordem*. Quando os dados já existem nas tabelas, uma etapa é executada e parece correta mesmo tendo lido dados desatualizados ou ainda não atualizados. Essa é a falha que o log não consegue mostrar, porque nada deu erro.
+
+A **Auditoria de dependências do fluxo de trabalho** existe exatamente para isso. Ela analisa as dependências de dados e de fluxo de trabalho em um fluxo de trabalho interconectado e identifica etapas cujas entradas são preenchidas na ordem errada em relação ao momento em que são lidas.
+
+Use-a quando:
+
+- A saída de uma etapa está errada, mas a etapa em si não tem erro.
+- Você reordenou ou adicionou etapas e quer confirmar que nenhuma delas lê uma tabela antes de ela ser construída.
+- Um fluxo de trabalho "funciona" em uma execução completa, mas uma execução de uma única etapa dá números diferentes — um sinal clássico de dependência de ordem.
+
+Consulte [Visualizar uma auditoria de dependências](/pt-br/guides/workflows/view-a-dependency-audit/) para saber como abrir e ler a auditoria.
+
+## Etapa 5: decida como o fluxo de trabalho deve tratar o erro
+
+Depois de entender a causa, decida o que o fluxo de trabalho deve fazer quando esta etapa falhar no futuro. O tratamento de erros de cada etapa é definido no formulário da etapa, e o PlaidCloud oferece três níveis:
+
+| Comportamento | O que acontece | Quando usar |
+|---|---|---|
+| **Parar o fluxo de trabalho** | A execução é interrompida; um indicador de erro aparece na etapa e no fluxo de trabalho. | O padrão e o mais comum — os fluxos de trabalho geralmente devem ser executados sem erros. |
+| **Continuar o processamento** | A etapa é marcada com erro, mas o fluxo de trabalho a trata como concluída e continua. | Etapas que podem dar erro sem prejuízo quando faltam dados. Observação: o fluxo de trabalho mostra um indicador de *em execução*, não de erro. |
+| **Acionar um fluxo de trabalho de correção** | O fluxo de trabalho atual é interrompido e, em vez dele, um fluxo de trabalho de correção é iniciado. | Notificação ou correção automática. *Não* é acionado para etapas definidas para continuar o processamento. |
+
+O PlaidCloud também pode **tentar novamente** uma etapa com falha automaticamente — um número definido de vezes, com um atraso opcional de segundos a horas. É a ferramenta certa quando uma etapa acessa um sistema remoto ou uma fonte de dados que falha de forma intermitente, e não uma com um bug de lógica real. Consulte [Gerenciamento de erros de etapa](/pt-br/guides/workflows/managing-step-errors/).
+
+## Etapa 6: corrija, execute novamente e confirme
+
+1. Faça a alteração para a qual sua investigação apontou — corrija a chave de junção, adicione uma etapa anterior, corrija uma expressão que produz nulos ou reordene as etapas.
+2. **Execute só essa etapa novamente** (Etapa 1) e **pré-visualize a saída** (Etapa 2). Se a gaveta estava aberta durante a execução, ela é atualizada automaticamente quando a execução termina.
+3. Quando a etapa estiver certa, execute o fluxo de trabalho de ponta a ponta e acompanhe o log para confirmar que todo o pipeline está limpo.
+
+Para um registro permanente do que o fluxo de trabalho faz — suas etapas, funções e variáveis — gere o **Relatório do fluxo de trabalho** sob demanda pelo ícone de relatório na hierarquia **Fluxos de trabalho**. Ele reflete o estado atual do fluxo de trabalho e é uma boa documentação depois que uma correção é aplicada. Consulte [Visualizar o relatório do fluxo de trabalho](/pt-br/guides/workflows/view-workflow-report/).
+
+**Esse é o ciclo inteiro.** Você executou uma etapa isoladamente, pré-visualizou o que ela gravou, leu o erro no log, rastreou as entradas com a auditoria de dependências e executou novamente para confirmar a correção — a mesma investigação que o assistente de IA faz, só que agora você mesmo a conduz.
+
+## Próximos passos
+
+- [Corrija um fluxo de trabalho com o assistente de IA](/pt-br/get-started/tutorials/fix-a-workflow-with-ai/) — a mesma investigação, feita de forma conversacional
+- [Executar uma etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/) — execute uma única etapa isoladamente
+- [Pré-visualizar dados de uma etapa](/pt-br/guides/workflows/preview-step-data/) — a gaveta de pré-visualização de dados
+- [Visualizar o log do fluxo de trabalho](/pt-br/guides/workflows/viewing-workflow-log/) — onde eventos e erros de execução são registrados
+- [Visualizar uma auditoria de dependências](/pt-br/guides/workflows/view-a-dependency-audit/) — identifique dependências de dados fora de ordem
+- [Gerenciamento de erros de etapa](/pt-br/guides/workflows/managing-step-errors/) — parar, continuar, corrigir e tentar novamente
+- [Visualizar o relatório do fluxo de trabalho](/pt-br/guides/workflows/view-workflow-report/) — documentação sob demanda de todo o fluxo de trabalho

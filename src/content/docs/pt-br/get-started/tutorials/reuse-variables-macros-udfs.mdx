@@ -1,0 +1,141 @@
+---
+title: "Reutilize seu trabalho: variáveis, macros e UDFs"
+description: "Transforme pipelines pontuais em ativos escaláveis: parametrize com variáveis de fluxo de trabalho, empacote uma sequência repetível como uma macro e adicione uma transformação definida pelo usuário para lógica personalizada."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/reuse-variables-macros-udfs.mdx
+---
+
+*~30 minutos · uma variável, uma macro, uma transformação definida pelo usuário*
+
+O primeiro fluxo de trabalho que você cria normalmente tem tudo fixo no código: uma região, um mês, um nome de tabela. Funciona uma vez. Este tutorial é o salto de *usuário* para *usuário avançado*: você pega esse pipeline pontual e o transforma em um ativo que pode ser apontado para qualquer região, chamado de qualquer lugar e estendido com seu próprio Python.
+
+Três ferramentas fazem o trabalho, e elas se complementam:
+
+| Ferramenta | O que ela elimina | Use quando |
+|---|---|---|
+| **Variável de fluxo de trabalho** | Valores fixos no código espalhados por várias etapas | O mesmo valor (um mês, uma região, um limite) aparece em mais de uma etapa |
+| **Macro** | Sequências de etapas copiadas e coladas | Uma *sequência* parametrizada é executada muitas vezes: por região, por mês, por linha de direcionador |
+| **User Defined Transform (UDF)** | A lacuna que as etapas padrão não alcançam | Nenhuma transformação padrão (nem combinação delas) faz o que você precisa, e você consegue escrevê-la em Python |
+
+Você não precisa das três em todo fluxo de trabalho. Adicione cada uma no momento em que a dor que ela elimina realmente aparecer.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="Três ferramentas de reutilização empilhadas do menor para o maior escopo. Uma variável de fluxo de trabalho parametriza um valor em várias etapas; uma macro empacota uma sequência parametrizada inteira de etapas para reutilização; uma User Defined Transform adiciona Python personalizado onde as etapas padrão não bastam." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="rv-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Variável</text>
+  <text x="104" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">parametrize um valor</text>
+  <path d="M194 75 L234 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="236" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="326" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Macro</text>
+  <text x="326" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">empacote uma sequência</text>
+  <path d="M416 75 L456 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="458" y="48" width="208" height="54" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="562" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-accent)">UDF</text>
+  <text x="562" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Python personalizado onde as etapas não bastam</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Cada ferramenta cobre mais terreno que a anterior. Adicione-as conforme a necessidade surgir, e não antes.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Um espaço de trabalho do PlaidCloud e um projeto com um fluxo de trabalho que você já criou, de preferência o de [Carregar, transformar e publicar dados](/pt-br/get-started/tutorials/load-and-transform-data/).
+- Familiaridade com adicionar e executar etapas de fluxo de trabalho. Se isso é novo para você, comece pelo [guia de fluxos de trabalho](/pt-br/guides/workflows/).
+
+## Etapa 1: parametrize com uma variável de fluxo de trabalho
+
+Uma variável é um valor nomeado que suas etapas leem em vez de um literal. Altere-o em um único lugar e todas as etapas que o referenciam o acompanham. O PlaidCloud mantém variáveis em dois escopos: as variáveis de **projeto** são compartilhadas por todos os fluxos de trabalho do projeto; as variáveis de **fluxo de trabalho** pertencem a um único fluxo de trabalho e são a forma natural de passar informações entre as etapas dele.
+
+1. Na hierarquia de **Fluxos de trabalho**, clique no ícone de **variáveis** para abrir a tabela de variáveis.
+2. **Adicionar uma variável**: dê a ela um nome claro, como `target_region`, e defina seu valor atual (por exemplo, `East`).
+3. Em uma etapa que hoje tem esse valor fixo no código, referencie a variável em vez de digitar o literal.
+4. Execute a etapa. Depois, altere o valor da variável na tabela e execute de novo: a mesma etapa agora processa outra fatia, sem nenhuma edição na própria etapa.
+
+A tabela de variáveis também é o lugar onde você vê os valores atuais, os edita e exclui variáveis de que não precisa mais.
+
+> **Escopo de projeto vs. escopo de fluxo de trabalho.** Coloque um valor no escopo de **projeto** quando vários fluxos de trabalho precisarem da mesma configuração, e no escopo de **fluxo de trabalho** quando ele for local às etapas de um único fluxo de trabalho. Na dúvida, comece pelo menor escopo, uma variável de fluxo de trabalho, e promova-a ao projeto somente quando um segundo fluxo de trabalho precisar dela.
+
+Para ver o panorama completo de onde as variáveis ficam e como gerenciá-las, consulte [Gerenciar variáveis de fluxo de trabalho](/pt-br/guides/workflows/manage-workflow-variables/).
+
+## Etapa 2: empacote uma sequência como uma macro
+
+Uma variável parametriza um valor. Uma **Macro** parametriza uma *sequência* inteira de etapas. É um fluxo de trabalho avançado (DAG) reutilizável com um contrato declarado de entrada e saída, algo como "processar um mês de vendas de uma região", que você chama de outro fluxo de trabalho uma vez por mês, por região ou por ambos. Cada chamada é executada em seu próprio esquema de rascunho isolado, então a mesma macro pode ser executada várias vezes ao mesmo tempo sem que as execuções colidam.
+
+> **As macros são um recurso exclusivo de fluxos de trabalho avançados.** Converta primeiro o fluxo de trabalho em avançado. As etapas dentro de uma macro precisam ser seguras para macros: transformações de tabela, importações, exportações, etapas de variável com escopo de execução e chamadas de macro aninhadas são permitidas; importações de dimensão e etapas que atualizam dimensões são rejeitadas, porque as dimensões são estado global do projeto.
+
+### Transforme um fluxo de trabalho em uma macro
+
+1. Abra o projeto e, na guia **Fluxos de trabalho**, selecione o fluxo de trabalho que deseja reutilizar.
+2. No painel **Detalhes do fluxo de trabalho**, confirme que o **Tipo de fluxo de trabalho** é **Avançado**; se for Padrão, use primeiro **Converter em avançado**.
+3. Na seção **Macro**, clique em **Converter em macro…** e confirme. Um editor de portas é exibido.
+4. Clique em **Adicionar porta** para cada entrada ou saída que a macro aceita ou produz. Para cada porta, defina:
+   - **Nome**: o identificador ao qual o chamador se vincula (por exemplo, `month`, `region_sales`).
+   - **Direção**: **Entrada** (o chamador a fornece) ou **Saída** (a macro a produz).
+   - **Tipo**: **Tabela**, **Escalar** (uma única string / int / float / bool / data) ou **Dimensão**.
+   - **Obrigatório**: desmarque se a macro puder ser executada sem que esta porta esteja vinculada.
+   - **Memorando**: uma nota curta exibida aos autores no formulário de vinculação do lado do chamador.
+5. Clique em **Salvar portas**.
+
+### Invoque-a a partir de outro fluxo de trabalho
+
+1. No fluxo de trabalho chamador, adicione uma etapa **Macro: Executar**.
+2. Em **Macro a executar**, selecione o projeto e o fluxo de trabalho da macro.
+3. **Vinculações de portas de entrada**: vincule cada porta de entrada. As portas escalares e de dimensão geralmente recebem uma variável de fluxo de trabalho do lado do chamador (a da Etapa 1); as portas de tabela recebem uma tabela de origem, opcionalmente com projeção de colunas e filtro.
+4. **Vinculações de portas de saída**: aponte cada porta de saída para uma tabela de destino do lado do chamador.
+5. Salve a etapa e execute o fluxo de trabalho.
+
+Para executar a macro uma vez por linha de uma tabela de direcionadores (uma região por linha, por exemplo), use uma etapa **Macro: Execução simultânea** e limite quantas são executadas ao mesmo tempo com **Execuções simultâneas**. Cada linha recebe seu próprio esquema de rascunho e seu próprio destino.
+
+O passo a passo completo, campo por campo, incluindo o ciclo de vida do isolamento de execução, está em [Criar uma macro](/pt-br/guides/workflows/create-a-macro/).
+
+## Etapa 3: adicione lógica personalizada com uma User Defined Transform
+
+As transformações padrão cobrem quase tudo e são continuamente otimizadas para desempenho; recorra primeiro a elas. Mas quando nenhuma etapa padrão (isolada ou combinada) faz o que você precisa, uma **User Defined Transform (UDF)** permite que você recorra a Python padrão, com toda a API do PlaidCloud e pacotes como Pandas, NumPy e SciPy disponíveis.
+
+Você pode criar uma UDF de duas formas: escrevendo e mantendo-a diretamente no PlaidCloud ou apontando para um arquivo em um repositório Git conectado (que incorpora as alterações automaticamente na próxima execução e oferece suporte a branches e tags para controle de versões).
+
+### Crie a função
+
+1. Abra o fluxo de trabalho, selecione a guia **Definido pelo usuário** e clique em **Adicionar função definida pelo usuário**.
+2. Dê à UDF um **ID** e clique no ícone **Editar lógica da função** para abrir o editor.
+3. Escreva sua lógica. Uma UDF mínima conecta, lê uma origem, transforma com Pandas e salva um destino:
+
+   ```python
+   from plaidcloud.utilities.connect import PlaidConnection
+   from plaidcloud.utilities import frame_manager as fm
+
+   conn = PlaidConnection()
+
+   # Read a table configured as a source on the step
+   source = conn.udf.source_by_name('sales_clean')
+   df = conn.get_data(source)
+
+   # Custom logic the standard steps don't cover
+   df['margin_band'] = df['margin'].apply(
+       lambda m: 'high' if m > 0.4 else 'low'
+   )
+
+   # Write to a table configured as a target on the step.
+   # Sources are read by their configured name; fm.save writes to a table PATH (leading slash).
+   fm.save(df, name='/output/sales_scored', append=False)
+   ```
+
+### Adicione-a ao fluxo de trabalho
+
+1. Na guia **Etapas do Analyze**, adicione uma etapa **User Defined Transform** onde precisar, como faria com uma transformação padrão.
+2. Na configuração da etapa, escolha o tipo: **UDF do Analyze** (uma função armazenada) ou **Repositório externo de código-fonte** (Git; depois escolha Conexão, Branch e **Caminho do arquivo**).
+3. Defina as **tabelas de origem e de destino** que a UDF usa. Você *pode* acessar tabelas diretamente no código, mas declará-las aqui registra as dependências e as disponibiliza por meio de `conn.udf.source_by_name(...)` / `target_by_name(...)`.
+4. Opcionalmente, adicione valores específicos da etapa em **Outras variáveis**, que podem ser lidos com `conn.udf.variable_by_name(...)`.
+
+> **Declare suas tabelas na configuração, e não apenas no código.** Uma UDF que lê uma tabela diretamente ainda é executada, mas o PlaidCloud não saberá que a tabela é uma dependência, então a linhagem e a ordem de execução não podem levá-la em conta. Listar origens e destinos na configuração da etapa mantém o grafo de dependências fiel.
+
+As variáveis de projeto e de fluxo de trabalho da Etapa 1 também ficam acessíveis dentro da UDF, por meio de `conn.analyze.workflow.variable_values(...)` e `conn.analyze.project.variable_values(...)`, de modo que o mesmo parâmetro controla tanto as suas etapas padrão quanto o seu código personalizado. Há exemplos completos da API na [referência de User Defined Transform](/pt-br/reference/workflow-steps/general/user-defined-transform/).
+
+**Esse é o salto de usuário para usuário avançado.** Você transformou um pipeline pontual em ativos reutilizáveis: um valor que você pode redirecionar com uma variável, uma sequência inteira que pode ser chamada de qualquer lugar como macro e Python personalizado que alcança o que as etapas padrão não conseguem.
+
+## Para onde ir em seguida
+
+- [Gerenciar variáveis de fluxo de trabalho](/pt-br/guides/workflows/manage-workflow-variables/): escopo de projeto vs. de fluxo de trabalho e a tabela de variáveis.
+- [Criar uma macro](/pt-br/guides/workflows/create-a-macro/): portas, isolamento de execução e execução de uma macro por linha.
+- [Referência de User Defined Transform](/pt-br/reference/workflow-steps/general/user-defined-transform/): toda a superfície da API para Python personalizado.
+- [Guia de fluxos de trabalho](/pt-br/guides/workflows/): condições, laços e tudo o mais que a camada de orquestração oferece.
+- [Transformar dados com SQL](/pt-br/get-started/tutorials/transform-with-sql/): o tutorial irmão para quando a resposta é uma consulta, e não código.

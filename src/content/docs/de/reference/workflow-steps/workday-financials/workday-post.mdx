@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry"
+description: Bucht Buchungsjournale aus Kopf- und Positionstabellen über die SOAP-Operation Submit_Accounting_Journal in Workday Financials, mit einem Vorschaumodus, der jede Buchung prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Buchungsjournale über Ihre [Workday-Financials-Verbindung](/de/guides/connections/workday-financials/) in Workday Financials, geleitet durch die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Journalbuchung) und eine Positionstabelle (eine oder mehrere Soll-/Haben-Zeilen pro Buchung) und ruft für jede Buchung die SOAP-Operation `Submit_Accounting_Journal` von Workday auf. **Validate Only** erstellt und prüft jede Buchung ohne Hauptbuchreservierung und ohne zu buchen; eine optionale Ergebnistabelle hält das Ergebnis jeder Buchung fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in Workday ab, bevor Sie sich darauf verlassen, dass dieser Schritt Live-Buchungen unbeaufsichtigt bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **Workday-Verbindung** — die Workday-Financials-Verbindung, über die gebucht wird.
+
+### Daten
+
+- **Kopftabelle** — eine Zeile pro Journalbuchung: `journal_id` (Ihre Buchungskennung, erforderlich), `company` (erforderlich), `ledger` (erforderlich), `accounting_date`, `memo`.
+- **Positionstabelle** — eine oder mehrere Zeilen pro `journal_id`: `ledger_account`, `debit`, `credit` sowie alle Worktag-Spalten (Kostenstelle, Projekt), die Ihre Journale benötigen.
+- **Ergebnistabelle** — Kennung der Ausgabetabelle: eine Zeile pro Buchung mit `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — standardmäßig aktiviert. Nur Vorabprüfung; keine Hauptbuchreservierung, keine Buchung. Eine Schrittkonfiguration, die dieses Feld ganz weglässt — zum Beispiel eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte —, verwendet ebenfalls standardmäßig Validate Only statt einer Live-Buchung.
+- **Continue On Error** — standardmäßig aktiviert. Bucht die übrigen Buchungen weiter, nachdem eine fehlgeschlagen ist; deaktiviert stoppt den Stapel beim ersten Fehler.
+
+## So funktioniert das Buchen
+
+PlaidCloud ruft `Submit_Accounting_Journal` für jede Buchung auf und fragt den Status des zugehörigen Workday-Geschäftsprozesses ab, bis ein Endzustand erreicht ist — das berücksichtigt einen Geschäftsprozess „Submit Accounting Journal“, der über Genehmigungsschritte läuft, bevor eine Buchung tatsächlich gebucht wird. Eine Buchung wird erst dann als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist — eine Buchung, die eingereicht wurde, aber in der Genehmigung festhängt, bleibt in Quarantäne (nicht als gebucht gemeldet, nicht stillschweigend verworfen), statt allein deshalb als Erfolg erfasst zu werden, weil die Einreichung angenommen wurde.
+
+## Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder ändert nie ein gebuchtes Journal. Um eines zu korrigieren, buchen Sie eine neue Buchung, in der Soll und Haben gegenüber dem Original vertauscht sind — eine gebuchte Stornobuchung —, statt das Original direkt zu bearbeiten.
+
+## Funktionsgrenzen
+
+| Einschränkung | Bedeutung |
+|---|---|| Business-Process-Genehmigung verursacht Latenz | Eine Buchung, die über einen Genehmigungsschritt läuft, bleibt `pending`, bis sie in Workday genehmigt wird; die Abfrage des Endzustands wartet darauf. |
+| Storno ist eine neue Buchung, keine direkte Bearbeitung | Korrekturen buchen eine neue Stornobuchung mit vertauschtem Soll und Haben. Eine bereits gebuchte Buchung kann nicht annulliert oder gelöscht werden. |
+
+## Verwandte Themen
+
+- [Mit Workday Financials verbinden](/de/guides/connections/workday-financials/) — vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [Workday-Financials-Konnektor](/de/reference/connectors/rest/workday-financials/)
+- [Workday-Financials-Schritte](/de/reference/workflow-steps/workday-financials/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

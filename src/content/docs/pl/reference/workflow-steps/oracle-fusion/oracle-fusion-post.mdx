@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: Księguj partie zapisów dziennika księgi głównej w Oracle Fusion Cloud na podstawie tabel nagłówków i wierszy przez interfejs księgi głównej FBDI, z trybem podglądu, który sprawdza każdą partię przed zaksięgowaniem czegokolwiek.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje partie zapisów dziennika księgi głównej w Oracle Fusion Cloud przez [połączenie Oracle Fusion](/pl/guides/connections/oracle-fusion/), korzystając ze wspólnego potoku zapisu ERP w PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na partię) i tabelę wierszy (jeden lub więcej wierszy na partię), zapisuje każdą partię do tabeli pośredniej GL_INTERFACE Oracle jako plik FBDI i uruchamia zadanie Enterprise Scheduler Service (ESS) Journal Import Launcher. **Validate Only** buduje i sprawdza każdą partię bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników rejestruje wynik każdej partii.
+
+<Aside type="caution">
+Zanim zaczniesz polegać na tym kroku przy księgowaniu zapisów na żywo bez nadzoru, uruchom każdą partię najpierw w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowanych pozycji bezpośrednio w Oracle Fusion.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **Fusion Connection** — połączenie Oracle Fusion, przez które odbywa się księgowanie.
+
+### Dane
+
+- **Tabela nagłówka** — jeden wiersz na partię: `batch_id` (identyfikator partii, wymagany), `ledger_id` (wymagany), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Tabela wierszy** — jeden lub więcej wierszy na `batch_id`: `account_combination` (lub jej kolumny segmentów), `entered_debit`, `entered_credit`, `currency_code`.
+- **Tabela wyników** — identyfikator tabeli wyjściowej: jeden wiersz na partię z kolumnami `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — domyślnie zaznaczone. Wyłącznie sprawdzenie wstępne; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Validate Only zamiast księgowania na żywo.
+- **Continue On Error** — domyślnie zaznaczone. Księguje pozostałe partie po niepowodzeniu jednej; po odznaczeniu uruchomienie zatrzymuje się na pierwszym niepowodzeniu.
+
+## Jak działa księgowanie
+
+PlaidCloud ładuje każdą partię do tabeli pośredniej GL_INTERFACE Oracle przez plik FBDI, a następnie uruchamia zadanie ESS Journal Import Launcher i odpytuje je, aż zgłosi stan końcowy. Partia jest zgłaszana jako `posted` dopiero po **potwierdzeniu** tego stanu końcowego — partia, która trafiła do tabeli interfejsu, ale której zadanie importu nigdy się nie zakończyło, pozostaje w kwarantannie (nie jest zgłaszana jako zaksięgowana ani po cichu pomijana), zamiast być zapisana jako sukces tylko dlatego, że przygotowane dane istnieją.
+
+## Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanej partii zapisów dziennika. Aby ją skorygować, zaksięguj nową partię z zamienionymi stronami Winien i Ma względem oryginału — zaksięgowany zapis odwracający — zamiast edytować oryginał w miejscu.
+
+## Ograniczenia możliwości
+
+| Limitation | What it means |
+|---|---|| Opóźnienie zadania ESS | Journal Import Launcher działa jako zadanie harmonogramowane — uruchomienie księgowania potrwa wyraźnie dłużej niż bezpośredni zapis przez API. |
+| Odwrócenie to nowa partia, a nie edycja w miejscu | Korekty księgują nową partię odwracającą z zamienionymi stronami Winien i Ma. Nie ma możliwości anulowania ani usunięcia już zaksięgowanej partii. |
+
+## Powiązane
+
+- [Połączenie z Oracle Fusion](/pl/guides/connections/oracle-fusion/) — pełny przewodnik obejmujący konfigurację, podgląd i księgowanie
+- [Konektor Oracle Fusion](/pl/reference/connectors/erp/oracle-fusion/)
+- [Kroki Oracle Fusion](/pl/reference/workflow-steps/oracle-fusion/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/)

@@ -1,0 +1,168 @@
+---
+title: Transformar datos con SQL y expresiones
+description: "Dé forma a los datos dentro de un paso de tabla de un flujo de trabajo: seleccione y filtre con SQL, combine dos tablas, agregue una columna calculada con una expresión y obtenga una vista previa del resultado antes de ejecutar."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/transform-with-sql.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minutos · un filtro, una combinación, una columna calculada*
+
+La mayor parte del trabajo en un [flujo de trabajo](/es/guides/workflows/) es un movimiento pequeño que se repite: tomar una tabla, remodelarla y escribir el resultado en una tabla nueva. Este tutorial enseña ese movimiento (seleccionar y filtrar filas, combinar una segunda tabla y agregar una columna calculada) con las dos herramientas que usará constantemente: **SQL** y las **expresiones de columna**. Aprenda el patrón una vez y se aplicará a casi todos los pasos de transformación que cree.
+
+El objetivo aquí es la *forma* del trabajo y dónde consultar las cosas, no memorizar funciones. PlaidCloud incluye más de mil funciones SQL; enlazará a esa referencia, nunca la reproducirá.
+
+## Qué va a crear
+
+Un único paso de tabla que lee una tabla `orders` sin procesar, conserva solo los pedidos completados, combina cada uno con una tabla `customers` para obtener la región y agrega una columna calculada `net_amount`, y escribe el resultado en una nueva tabla `orders_clean`.
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+Todas las tablas de origen quedan intactas. Un paso de transformación lee de una o más fuentes y escribe en un destino; los originales permanecen exactamente como estaban, y eso es lo que hace que un flujo de trabajo sea seguro de volver a ejecutar y de auditar.
+
+## Dos formas de dar forma a una columna
+
+Antes de los pasos, la distinción que conviene tener presente:
+
+| Herramienta | Qué es | Dónde se escribe |
+|---|---|---|
+| **SQL** | La consulta que selecciona, filtra y combina tablas completas | El editor de SQL del paso |
+| **Expresión** | Una única fórmula que produce el valor de una columna, fila por fila | La celda de expresión del asignador de columnas |
+
+Recurra a SQL para decidir *qué filas y qué tablas*. Recurra a una expresión para decidir *qué contiene una columna*. Muchos pasos permiten combinar ambas: un paso SQL para dar forma al conjunto y celdas de expresión para calcular las columnas.
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud y un proyecto en el que trabajar ([inicie una prueba gratuita](https://app.plaidcloud.com) si necesita uno).
+- Dos [tablas](/es/guides/data/tables-views/) ya existentes en el proyecto. Este tutorial supone `orders` (con `order_id`, `customer_id`, `status`, `amount`, `tax`) y `customers` (con `customer_id`, `region`). Si no las tiene, el tutorial [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/) importa primero las tablas desde CSV.
+- Un flujo de trabajo abierto en el **Explorador de flujos de trabajo**: abra la pestaña **Flujos de trabajo** de un proyecto y haga doble clic en el flujo de trabajo. Consulte [Crear un flujo de trabajo](/es/guides/workflows/create-workflow/) si aún no tiene uno.
+
+## Paso 1: seleccionar y filtrar con SQL
+
+Empiece por lo más acotado: obtenga solo las columnas y las filas que realmente desea.
+
+<Steps>
+
+1. Agregue un paso de transformación de tabla y abra su editor de SQL.
+2. Apunte el origen del paso a su tabla `orders`.
+3. Escriba una consulta que conserve solo las columnas que necesita y descarte las filas que no:
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+Esa cláusula `WHERE` es el filtro: todo lo que no sea un pedido completado y distinto de cero nunca llega a la tabla de destino. Seleccionar solo cuatro columnas en lugar de `SELECT *` mantiene la tabla posterior compacta y su propósito evidente.
+
+> **Escriba SQL para que se lea.** Una cláusula por línea, una columna por línea, `CASE` / `WHEN` alineados; nunca una sola línea densa. El botón **Embellecer** del editor (o **Shift+Alt+F**, **Shift+Option+F** en macOS) lo reformatea en el mismo lugar sin cambiar lo que hace. Consulte [Embellecer (formatear) el código en los editores](/es/guides/workflows/prettify-code-in-editors/).
+
+## Paso 2: combinar la segunda tabla
+
+Una combinación (join) trae columnas de una segunda tabla junto a las de la primera, emparejadas por una clave compartida. Aquí desea la `region` de cada pedido, que está en `customers`.
+
+<Steps>
+
+1. Agregue `customers` como segundo origen del paso.
+2. Amplíe la consulta para combinar por la clave compartida y traer la columna que necesita:
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` conserva solo los pedidos que tienen un cliente coincidente. Si prefiere conservar todos los pedidos aunque ningún cliente coincida, con `region` en null, use `LEFT JOIN` en su lugar. Una clave de combinación que no coincide o es incorrecta es la causa más común de que una combinación devuelva demasiadas o muy pocas filas, así que confirme el recuento de filas en la vista previa (siguiente paso) antes de continuar.
+
+> **Nombres de tabla en la consulta.** Haga referencia a cada origen por el nombre que le asigna el paso. En los almacenes Lakehouse predeterminados, el identificador físico de una tabla puede contener guiones: enciérrelo entre comillas invertidas cuando los tenga (por ejemplo `` `analyzetable_9f3c...` ``) para que el motor lo lea como un único identificador.
+
+## Paso 3: agregar una columna calculada con una expresión
+
+Ahora calcule un valor que no está en ninguno de los orígenes. Una columna calculada (de expresión) ejecuta una fórmula por fila y escribe el resultado en una columna nueva. Agregue `net_amount`: el importe después de impuestos.
+
+<Steps>
+
+1. En el asignador de columnas del paso, agregue una nueva columna de destino llamada `net_amount`.
+2. En su celda de expresión, escriba la fórmula:
+
+   ```python
+   amount - tax
+   ```
+
+3. Para cualquier caso condicional, las expresiones admiten la lógica habitual. Por ejemplo, un indicador de envío:
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **Una celda de expresión es una única fórmula, no un script.** Se evalúa como una sola expresión simple, por lo que una expresión de varias líneas debe incluir sus propios paréntesis exteriores (como arriba); de lo contrario, falla en tiempo de ejecución. Limite cada celda al valor de una columna; use el paso SQL para todo lo que abarque varias filas o tablas.
+
+Que exista una función determinada, y exactamente cómo se comportan sus argumentos, depende de la generación de Lakehouse en la que se ejecute su proyecto: cada una sigue un motor de código abierto distinto. No adivine el nombre de una función; búsquelo:
+
+| Lakehouse | Biblioteca de funciones |
+|---|---|
+| **v1** | Funciones SQL de Databend |
+| **v2** | Funciones SQL de StarRocks 4.1 |
+
+La [referencia de expresiones](/es/reference/expressions/) es el punto de entrada (operaciones con cadenas, cálculo de fechas, lógica condicional, conversión de tipos y agregaciones), con la sintaxis original de cada generación enlazada. Trátela como la consulta a la que vuelve, no como algo que se lee de principio a fin.
+
+> **Embellecer también da formato a las celdas de expresión**, aplicando el espaciado y los saltos de línea estándar de Python; resulta útil para un condicional largo.
+
+## Paso 4: vista previa antes de ejecutar
+
+No tiene que ejecutar todo el flujo de trabajo para saber si el paso hizo lo que usted pretendía. El **panel de vista previa de datos** muestra la salida de un paso (las primeras 100 filas con columnas tipificadas) directamente en el Explorador de flujos de trabajo.
+
+<Steps>
+
+1. Ejecute solo este paso para que genere su tabla de salida. (Hasta que se haya ejecutado una vez, la vista previa indica *«Aún no hay datos: ejecute el paso para generar esta tabla»*.)
+2. Abra la vista previa: seleccione el paso y elija **Vista previa de los datos de salida** (también está en el menú contextual del paso).
+3. Confirme la forma: las columnas que seleccionó están presentes, `region` llegó a través de la combinación, `net_amount` se calculó correctamente y el recuento de filas refleja el filtro.
+
+</Steps>
+
+Mientras el panel está abierto, al seleccionar cualquier otro paso la vista previa pasa a mostrar la salida de ese paso: recorra una cadena de pasos y vea cómo cambia la forma de los datos en cada etapa. Para ver más allá de las primeras 100 filas, o para segmentar y filtrar, haga clic en **Abrir en el Explorador de tablas**. Encontrará todos los detalles en [Vista previa de los datos de un paso](/es/guides/workflows/preview-step-data/).
+
+## El patrón, generalizado
+
+Cada uno de esos movimientos es la misma primitiva:
+
+> **Lea una o más tablas de origen, remodélelas y escriba un nuevo destino.** SQL decide las filas y las tablas; las expresiones deciden el valor de cada columna; la vista previa confirma el resultado antes de comprometerse con una ejecución completa. Encadene unas cuantas de estas operaciones y tendrá un pipeline: el destino de cada paso se convierte en el origen del siguiente.
+
+Escriba los resultados intermedios en **tablas** cuando un paso posterior o un panel de control necesite los datos materializados, y en **[vistas](/es/guides/data/tables-views/)** cuando prefiera calcular al leer y ahorrar almacenamiento: una vista no contiene datos propios y se actualiza automáticamente cuando cambian sus orígenes.
+
+Cuando una transformación supera por completo a SQL y las expresiones (Python a medida, un paquete externo, lógica personalizada), recurra a una [User Defined Transform](/es/reference/workflow-steps/general/user-defined-transform/). Es la excepción, no el caso cotidiano; SQL y las expresiones cubren la inmensa mayoría del trabajo de transformación.
+
+## Siguientes pasos
+
+- [Referencia de expresiones](/es/reference/expressions/): todas las funciones disponibles para columnas calculadas, por generación de Lakehouse.
+- [Referencia de pasos de flujo de trabajo](/es/reference/workflow-steps/): el catálogo completo de pasos de transformación, importación y exportación.
+- [Guía de flujos de trabajo](/es/guides/workflows/): condiciones, bucles, variables y control de errores alrededor de sus pasos.
+- [Vista previa de los datos de un paso](/es/guides/workflows/preview-step-data/): el panel, en detalle.
+- [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/): el pipeline de principio a fin en el que encaja este paso.

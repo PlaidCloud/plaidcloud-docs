@@ -1,0 +1,113 @@
+---
+title: "NetSuite: SuiteQL 쿼리 가져오기"
+description: 워크플로에서 직접 작성한 NetSuite SuiteQL 쿼리를 실행하고 그 결과를 유형이 지정된 프로젝트 테이블로 로드합니다. 날짜 구간과 페이징은 자동으로 처리됩니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+[NetSuite 연결](/ko/guides/connections/netsuite/)을 통해 NetSuite에 대해 직접 작성한 SuiteQL 쿼리를 실행하고 그 결과를 프로젝트 테이블로 로드합니다. 사용자 지정 레코드, 저장된 검색 방식의 보고서, 자체 모델에 맞춘 조인처럼 미리 만들어진 가져오기 단계가 다루지 않는 데이터에 사용하십시오.
+
+이 단계는 다른 [NetSuite 가져오기 단계](/ko/reference/workflow-steps/netsuite/)와 동일한 계층을 통해 읽습니다. OAuth 토큰을 갱신하고, 큰 결과를 배치로 읽으며, 일시적인 오류를 재시도하고, 긴 날짜 범위를 구간으로 분할하므로 쿼리만 작성하면 됩니다. [Data Foundation](/ko/guides/projects/data-foundation/) 로드 워크플로는 NetSuite 읽기에 이 단계를 사용합니다.
+
+## 구성
+
+이 단계에는 **가져오기 매개변수**라는 탭이 하나 있습니다.
+
+### 소스 및 대상
+
+| 필드 | 필수 | 참고 |
+|---|---|---|
+| NetSuite 연결 | 예 | 읽기에 사용할 NetSuite 연결입니다. NetSuite 연결은 **Tools > Connections**에서 관리합니다. |
+| 환경 | 아니요 | 프로덕션이나 샌드박스와 같이 사용할 연결 환경입니다. |
+| 대상 테이블 | 예 | 결과를 기록할 프로젝트 테이블입니다. 실행할 때마다 덮어쓰기됩니다. |
+
+### SuiteQL 쿼리
+
+실행할 쿼리입니다. 네 가지 자리 표시자를 사용할 수 있으며, 각각 **자리 표시자 값 및 페이징**에 있는 해당 값으로 대체됩니다. PlaidCloud는 각 값을 검사하여 알맞은 종류의 리터럴로 쿼리에 기록하므로, 자리 표시자에 따옴표나 `TO_DATE`를 추가할 필요가 없습니다.
+
+| 자리 표시자 | 대체되는 값 | 기록 형식 |
+|---|---|---|
+| `{subsidiary_id}` | **자회사 ID** | 정수 |
+| `{posting_period_id}` | **전기 기간 ID** | 정수 |
+| `{start_date}` | **시작 날짜** 또는 현재 구간의 시작 | 날짜 |
+| `{end_date}` | **종료 날짜** 또는 현재 구간의 끝 | 날짜 |
+
+중괄호 안의 다른 단어는 거부되며, 값이 비어 있는데 쿼리가 사용하는 자리 표시자도 거부됩니다.
+
+쿼리는 다음과 같이 작성하십시오.
+
+- **고유 키로 `ORDER BY`를 사용해 끝내십시오.** NetSuite는 큰 결과를 배치로 반환하는데, 안정적인 정렬이 없으면 배치에서 행이 누락되거나 중복될 수 있습니다. 내부 ID나 행마다 고유한 다른 키로 정렬하십시오. `ORDER BY`가 없는 쿼리는 중단되며 추가하라는 메시지가 표시됩니다.
+- **날짜는 텍스트로 반환하십시오.** `TO_CHAR(date, 'YYYY-MM-DD')`를 사용합니다. 그렇지 않으면 SuiteQL이 계정의 표시 형식으로 날짜를 반환합니다.
+- **날짜 범위를 읽을 때는 하나의 날짜 열을 `{start_date}`와 `{end_date}` 사이로 필터링하십시오.** 각 행이 정확히 하나의 구간에만 속하도록 단일 날짜 열로 필터링합니다. 시작 날짜나 종료 날짜를 설정한 경우 쿼리는 해당 자리 표시자를 사용해야 합니다.
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### 결과 열
+
+쿼리가 반환하는 각 열의 이름을 지정하고 유형을 지정합니다. 이름은 대소문자를 구분하지 않고 쿼리의 열 별칭과 일치시킵니다. 그리드 위의 추가 및 제거 버튼으로 목록을 관리합니다.
+
+| 열 | 참고 |
+|---|---|
+| 열 이름 | 쿼리의 열 별칭입니다. 모든 결과 열에는 이름이 필요합니다. |
+| 유형 | **텍스트**(기본값), **정수**, **큰 정수**, **작은 정수(Small)**, **작은 정수(Tiny)**, **Serial**, **Big Serial**, **Decimal**, **Numeric**, **통화**, **배정밀도**, **부동 소수점**, **부울**, **날짜**, **타임스탬프** 또는 **UUID**입니다. |
+
+결과 열을 하나 이상 추가하십시오. 열은 여기서 지정한 이름으로 대상 테이블에 기록됩니다. SuiteQL은 모든 값을 텍스트로 반환하며, 유형은 PlaidCloud가 값을 저장하는 방식을 지정합니다. 금액은 **통화** 또는 **Decimal**로, `TO_CHAR`로 반환한 날짜는 **날짜** 또는 **타임스탬프**로, `T`/`F` 플래그는 **부울**로 지정하십시오.
+
+### 자리 표시자 값 및 페이징
+
+| 필드 | 기본값 | 참고 |
+|---|---|---|
+| 자회사 ID | 비어 있음 | `{subsidiary_id}`에 사용되는 NetSuite 자회사 내부 ID입니다. |
+| 전기 기간 ID | 비어 있음 | `{posting_period_id}`에 사용되는 NetSuite 전기 기간 내부 ID입니다. |
+| 시작 날짜 | 비어 있음 | `YYYY-MM-DD`. `{start_date}`에 사용됩니다. 종료 날짜보다 늦을 수 없습니다. |
+| 종료 날짜 | 비어 있음 | `YYYY-MM-DD`. `{end_date}`에 사용됩니다. |
+| 구간 일수 | 90 | 시작 날짜와 종료 날짜를 모두 설정하면 범위를 이 일수 단위의 구간(1~3650)으로 나누어 읽습니다. 쿼리는 구간마다 해당 구간의 날짜로 한 번씩 실행되며 결과는 결합됩니다. |
+| 분당 요청 수 | 0 | 같은 계정의 다른 통합을 위한 여유를 남기기 위해 NetSuite에 대한 단계의 호출 속도를 조절합니다. `0`은 제한이 없음을 뜻합니다. |
+
+이러한 값에는 각각 변수를 사용할 수 있습니다.
+
+## 유효성 검사
+
+다음 항목을 설정하기 전에는 단계를 저장할 수 없습니다.
+
+- **NetSuite 연결** — "NetSuite connection is required."
+- **대상 테이블** — "Target table is required."
+- **SuiteQL 쿼리** — "A SuiteQL query is required."
+- **결과 열** — "Add at least one result column." 및 "Every result column needs a name."
+
+## 참고
+
+- NetSuite는 쿼리 하나를 약 100,000개 행으로 제한합니다. 이 한도를 넘는 쿼리나 구간은 잘린 결과를 로드하는 대신 날짜 범위나 다른 필터를 좁히라는 메시지와 함께 중단됩니다. 각 구간이 한도 아래에 머물도록 **구간 일수**를 낮추십시오.
+- 단계는 필요에 따라 NetSuite 토큰을 갱신하며, 제한되었거나 실패한 요청은 잠시 후 재시도합니다.
+- 대상 테이블은 실행할 때마다 전체가 교체됩니다. 매번 전체 이력을 읽지 말고, 롤링 날짜 구간과 같이 필요한 범위로 `WHERE` 절을 제한하십시오.
+- 행을 반환하지 않는 쿼리는 경고와 함께 완료되고 대상 테이블을 비워 두므로, 이후 단계는 계속 실행됩니다.
+- NetSuite의 오류 메시지는 자격 증명, 토큰, 키가 제거된 상태로 표시되므로 NetSuite의 원래 표현이 일부 빠져 있을 수 있습니다.
+
+<Aside type="caution">
+`transaction`과 `transactionline`에서 `amount`는 각 거래의 자체 통화로 표시됩니다. 통화가 서로 다른 자회사 간의 합계는 연결 금액이 아닙니다. 자회사 간 합계를 낼 때는 연결 금액 또는 환산된 금액을 선택하십시오.
+</Aside>
+
+## 관련 항목
+
+- [NetSuite 단계](/ko/reference/workflow-steps/netsuite/)
+- [NetSuite에 연결](/ko/guides/connections/netsuite/)
+- [NetSuite SuiteQL 쿼리 예제](/ko/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/ko/guides/projects/data-foundation/)

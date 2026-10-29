@@ -1,0 +1,131 @@
+---
+title: "Salesforce : interroger un objet"
+description: "Extrayez un objet Salesforce dans une table de projet via Bulk API 2.0 : choisissez l'objet et les champs à partir du describe de l'organisation, filtrez dans Salesforce et enregistrez chaque colonne avec le type que Salesforce lui déclare."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/salesforce/query-salesforce-object.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Lit un objet Salesforce, standard ou personnalisé, dans une table de projet via Bulk API 2.0 de Salesforce. Choisissez la [connexion Salesforce](/fr/guides/connections/salesforce/), l'objet et les champs. L'étape construit la requête, parcourt tout le jeu de résultats page par page et enregistre chaque colonne avec le type que Salesforce lui déclare. Il n'y a aucune requête à rédiger.
+
+Salesforce est joint directement dans le cloud via son API REST ; cette étape n'a donc pas besoin d'agent PlaidLink.
+
+## Configuration
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| Connexion Salesforce | Oui | Connexion Salesforce à utiliser pour la lecture. Les connexions se gèrent dans **Tools > Connections**. |
+| Environnement | Non | Environnement de la connexion à lire : pointez un environnement de bac à sable vers l'organisation de bac à sable et un environnement de production vers la production. Par défaut, l'environnement `default` de la connexion. |
+| Objet | Oui | Le nom d'API de l'objet : `Account`, `Opportunity`, `Invoice__c`. Le sélecteur liste les objets que l'utilisateur Run As de la connexion peut interroger, et accepte aussi un nom saisi, de sorte qu'une étape enregistrée continue de fonctionner lorsque la découverte est indisponible. |
+| Table cible | Oui | La table de projet dans laquelle les lignes sont enregistrées. |
+| Inclure les enregistrements supprimés et archivés | Non | Lit aussi les enregistrements de la corbeille et les activités archivées, comme le fait un `queryAll` de Salesforce. |
+| Champs | Oui | Cochez les champs à extraire. Au moins un est obligatoire : Bulk API 2.0 rejette une sélection de l'objet entier, la liste des colonnes est donc toujours énumérée. |
+| Filtre | Non | Restreint l'extraction dans Salesforce. Voir [Filtrage dans Salesforce](#filtrage-dans-salesforce). |
+| Étiquette de fenêtre | Non | Nomme la fenêtre d'extraction. Voir [Les fenêtres d'extraction ne s'exécutent qu'une fois](#les-fenêtres-dextraction-ne-sexécutent-quune-fois). |
+
+`Id` est toujours inclus, que vous le cochiez ou non : c'est la clé sur laquelle chaque nouvelle exécution fusionne. Un champ de devise récupère aussi son `CurrencyIsoCode` lorsque l'objet en possède un.
+
+## Comment les lignes sont enregistrées
+
+Chaque exécution lit l'objet en entier, sous réserve de votre filtre, et fusionne chaque page dans la table cible sur `Id`. Une ligne déjà présente dans la table est remplacée sur place : une exécution interrompue qui reprend n'enregistre donc rien en double.
+
+<Aside type="caution">
+**Les suppressions ne sont pas suivies.** La table reflète ce que Salesforce a renvoyé, et un enregistrement supprimé dans Salesforce reste dans la table cible : rien ne le retire. Il s'agit d'une extraction, et non d'une synchronisation bidirectionnelle : les enregistrements fusionnés, supprimés et archivés sont délibérément exclus de ce que l'étape lit, et ne réapparaissent donc jamais non plus sous forme de lignes.
+</Aside>
+
+Les colonnes enregistrées utilisent les types que Salesforce déclare dans les métadonnées de ses propres champs, jamais un type deviné à partir de la première page de données. La colonne **Destination** du sélecteur de champs correspond à ce type déclaré : la forme que vous approuvez dans le formulaire est donc celle que reçoit la table.
+
+## Types de destination
+
+| Type de champ Salesforce | Type de destination |
+|---|---|
+| `id`, `reference`, `string`, `textarea`, `phone`, `url`, `email`, `picklist`, `multipicklist`, `combobox` | texte |
+| `boolean` | booléen |
+| `date` | date |
+| `datetime` | horodatage |
+| `time` | heure |
+| `int` | entier, ou entier 64 bits lorsque le champ déclare 10 chiffres ou plus |
+| `double`, `currency`, `percent` | numérique : un décimal large, 38 chiffres dont 10 décimales |
+
+Trois conventions découlent de ce tableau et méritent d'être connues avant de construire quoi que ce soit sur la sortie :
+
+- **Une devise est enregistrée comme un nombre, et non comme un type monétaire.** Les organisations réelles déclarent des champs de devise avec des échelles de 0, 2, 3 et 4 ; chaque type numérique est donc enregistré dans un seul décimal assez large pour tous. La colonne n'a ni symbole monétaire ni contrainte de nombre de décimales propre à chaque champ. Lorsque l'objet porte `CurrencyIsoCode`, cette colonne accompagne le champ de devise afin que le montant conserve sa devise ; une organisation à devise unique n'a pas ce champ sur l'objet, et aucun n'est inventé.
+- **Un pourcentage est le nombre entier que Salesforce rapporte.** `20` signifie 20 pour cent, et non `0.2`. Rien n'est remis à l'échelle à l'entrée.
+- **Une valeur vide est enregistrée comme NULL.** Les résultats Bulk ne permettent pas de distinguer une vraie valeur nulle d'une chaîne vide explicite : les deux sont donc enregistrées comme `NULL`, dans toutes les colonnes, texte compris. Une colonne qui doit conserver la sémantique de la chaîne vide nécessite un champ formule côté Salesforce.
+
+## Champs que l'étape refuse
+
+Certains types de champs Salesforce ne peuvent pas être enregistrés fidèlement ; le sélecteur de champs les signale donc comme inutilisables et en donne la raison, plutôt que de vous laisser enregistrer une étape qui échouerait à l'exécution. Chaque refus nomme le champ et son type Salesforce.
+
+| Type de champ Salesforce | Pourquoi | Que faire à la place |
+|---|---|---|
+| `address`, `location` (champs composés) | Un champ composé n'a pas de valeur directement lisible dans une requête Bulk. | Cochez ses champs composants : `BillingStreet`, `BillingCity`, `BillingState`, `BillingPostalCode`, `BillingCountry`, ainsi que la latitude et la longitude de la géolocalisation. Le sélecteur nomme les composants du champ que vous avez sous les yeux. |
+| `base64` | Le contenu des fichiers et des blobs n'est jamais renvoyé en ligne ; il nécessite un téléchargement binaire distinct que cette étape n'effectue pas. | Lisez les autres champs de l'enregistrement et traitez les pièces jointes séparément. |
+| `encryptedstring` | Salesforce renvoie une valeur masquée plutôt qu'une erreur lorsque l'utilisateur Run As n'a pas **View Encrypted Data**, et rien ne distingue des données masquées de données réelles. Enregistrer silencieusement des lignes d'astérisques est pire que refuser. | Décidez délibérément si ces données doivent quitter Salesforce ; il n'existe aucun moyen pris en charge de les extraire avec cette étape. |
+| `anyType` | Le type réel peut varier d'une ligne à l'autre, alors qu'une colonne de table n'a qu'un seul type. | Extrayez un champ typé, ou un champ formule qui restitue la valeur sous forme de texte. |
+| Tout type que l'étape ne reconnaît pas | Refusé plutôt qu'enregistré comme texte, ce qui changerait discrètement le sens de la valeur. | Signalez-le au support afin que le type reçoive un mappage. |
+
+<Aside type="note">
+La sécurité au niveau des champs ne fait pas partie de ces refus, car elle n'est pas visible dans les métadonnées des champs. Une requête qui nomme un champ que l'utilisateur Run As ne peut pas lire échoue purement et simplement : voir [The Run As User Scopes Everything](/fr/guides/connections/salesforce/#lutilisateur-run-as-délimite-tout).
+</Aside>
+
+## Les fenêtres d'extraction ne s'exécutent qu'une fois
+
+**Étiquette de fenêtre** nomme la fenêtre de données qu'une exécution charge : une période ou une étiquette de lot telle que `2026-09`. Elle accepte les variables de workflow : une étiquette `{period}` prend la valeur de cette variable à chaque exécution de l'étape.
+
+Une fenêtre d'extraction ne s'exécute qu'une fois. Relancer une fenêtre déjà terminée ne retourne **pas** interroger Salesforce : l'étape indique clairement qu'elle n'a pas relu les données, et précise que le nombre de lignes affiché appartient à l'exécution précédente. C'est un non-événement bruyant, et non silencieux, et c'est ce comportement qui évite qu'une nouvelle exécution ne parcoure une seconde copie d'un jeu de résultats déjà enregistré.
+
+Il existe trois façons d'utiliser l'étape :
+
+- **Laisser l'étiquette vide** et traiter l'étape comme un chargement ponctuel. La première exécution lit les données ; une seconde exécution de cette même étape rejoue et indique qu'elle n'a pas relu. Utilisez cette approche pour construire et valider l'extraction, et pour une table que vous ne chargez qu'une fois.
+- **Saisir une étiquette et la changer lorsque vous chargez la fenêtre suivante** : `2026-09`, puis `2026-10`. Modifier l'étiquette ouvre une nouvelle fenêtre, de sorte qu'un chargement mensuel que quelqu'un fait avancer à la main fonctionne exactement comme il se lit.
+- **Construire l'étiquette à partir d'une variable de workflow** pour une extraction récurrente sans surveillance, par exemple `{period}`, définie par une étape antérieure du workflow sur la période en cours de chargement. Chaque exécution planifiée nomme sa propre fenêtre, et une nouvelle exécution au sein de la même période reprend ou rejoue cette fenêtre au lieu d'en démarrer une autre.
+
+<Aside type="caution">
+Nommez la fenêtre, pas l'exécution. Une étiquette qui change à chaque exécution (par exemple une étiquette construite à partir de `{date}`, qui inclut l'heure courante) ouvre une nouvelle fenêtre à chaque fois : une extraction interrompue ne peut alors jamais reprendre et chaque nouvelle tentative envoie une nouvelle requête à Salesforce. Utilisez une variable qui contient la période ou le lot en cours de chargement.
+</Aside>
+
+Un appelant de l'API REST ou de MCP transmet directement `extract_tag` et fournit lui-même une valeur distincte pour chaque fenêtre.
+
+Une exécution interrompue reprend la même fenêtre : conservez donc la même étiquette aussi longtemps que cette fenêtre peut encore avoir besoin de se terminer. Changer l'étiquette ouvre une nouvelle fenêtre et une nouvelle requête dans Salesforce. Changez l'étiquette chaque fois que vous modifiez le filtre ou les champs : modifier la configuration sous une étiquette déjà exécutée est refusé comme un conflit.
+
+## Filtrage dans Salesforce
+
+Restreignez l'extraction dans Salesforce plutôt que de récupérer l'objet entier puis de filtrer ensuite. Chaque terme de filtre est composé d'un champ, d'un opérateur et d'une valeur ; les termes se combinent avec AND. Une valeur peut utiliser une variable de workflow, par exemple `{region}`.
+
+| Opérateur | Remarques |
+|---|---|
+| `=`, `!=`, `<`, `<=`, `>`, `>=` | Comparé à la valeur telle que saisie. |
+| `LIKE` | Utilisez `%` comme caractère générique, par exemple `Acme%`. |
+| `IN`, `NOT IN` | Donnez une liste de valeurs séparées par des virgules. |
+
+Le champ comme l'opérateur sont vérifiés par rapport aux champs que vous avez sélectionnés avant la construction de la requête, et il n'y a aucune clause `WHERE` en texte libre à rédiger : un filtre ne peut donc pas dépasser le cadre de l'extraction. Filtrez sur un champ que vous avez aussi coché ; un filtre qui nomme un champ non sélectionné par l'extraction est refusé.
+
+L'étape ne propose ni limite de lignes ni tri. Bulk API 2.0 désactive son propre découpage interne lorsqu'une requête comporte l'un ou l'autre, ce qui rend une grosse extraction plus lente et plus susceptible d'expirer. Des critères de filtre sélectifs sont le remède propre à Salesforce pour une requête trop volumineuse ou trop lente.
+
+## Adéquation selon le volume et le renouvellement des données
+
+Ce modèle, qui lit l'objet en entier selon une planification, convient aux objets de volume et de renouvellement modérés : Accounts, Opportunities, Leads, Campaigns et objets personnalisés de taille comparable.
+
+Il est inadapté aux objets à fort volume et à fort renouvellement, tels que `Task`, `EmailMessage` ou un grand objet personnalisé dont des millions de lignes changent chaque jour. Une extraction complète nocturne de ces objets consomme du temps réel et de la capacité d'API qu'une synchronisation incrémentielle épargnerait. Lorsque l'objet est volumineux mais que seule une partie présente un intérêt, un filtre qui délimite l'extraction (plage de dates, type d'enregistrement, propriétaire) la ramène à une extraction de volume modéré.
+
+## Lorsqu'une exécution ne se termine pas
+
+| Ce que vous voyez | Ce qui s'est passé | Que faire |
+|---|---|---|
+| Un avertissement indiquant que la tâche est toujours en cours après 15 minutes | L'étape attend au premier plan que Salesforce termine la requête, et cette attente est bornée. Rien ne fait avancer la tâche en arrière-plan. | Relancez l'étape. Elle reprend l'attente sur la **même** tâche Salesforce et n'en soumet jamais une seconde. Si elle dépasse systématiquement la limite, restreignez l'extraction avec des critères de filtre. |
+| Un avertissement indiquant que la fenêtre était déjà terminée et n'a pas été relue | La fenêtre a déjà été exécutée. Le nombre de lignes affiché est celui de l'exécution précédente. | Lancez l'extraction avec une **étiquette de fenêtre** distincte, ou faites avancer la variable à partir de laquelle l'étiquette est construite : voir [Les fenêtres d'extraction ne s'exécutent qu'une fois](#les-fenêtres-dextraction-ne-sexécutent-quune-fois). |
+| Une erreur qui nomme une tâche en échec ou abandonnée | Une tâche de requête Bulk en échec ne produit aucun résultat partiel et ne peut pas être reprise. La fenêtre est désormais consommée. | Relancez avec une **étiquette de fenêtre distincte**. Relancer la même fenêtre rejoue l'échec sans rien soumettre, et modifier la configuration de l'étape sous la même étiquette est refusé comme un conflit. |
+| Un refus qui nomme la limite de requêtes de Salesforce | Le quota glissant de requêtes d'API sur 24 heures de l'organisation est épuisé. Salesforce ne documente aucun délai de nouvelle tentative. | Attendez que la fenêtre se libère, puis relancez : l'extraction reste reprenable, rien n'a été perdu. |
+| Un refus qui nomme un champ et son type Salesforce | Ce type de champ ne peut pas être enregistré, ou l'utilisateur Run As ne peut pas lire le champ. | Voir [Champs que l'étape refuse](#champs-que-létape-refuse) et la sécurité au niveau des champs de l'utilisateur Run As. |
+
+Salesforce conserve les résultats d'une tâche de requête terminée pendant 7 jours, ce qui rend une extraction interrompue reprenable, et borne le temps pendant lequel une reprise peut attendre avant que les résultats ne disparaissent. Les tâches sont visibles dans Salesforce sous **Setup > Environments > Jobs > Bulk Data Load Jobs**.
+
+## Voir aussi
+
+- [Étapes Salesforce](/fr/reference/workflow-steps/salesforce/)
+- [Se connecter à Salesforce](/fr/guides/connections/salesforce/) : la configuration côté organisation, de bout en bout
+- [Connecteur REST Salesforce](/fr/reference/connectors/rest/salesforce/) : référence des champs de connexion
+- [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)

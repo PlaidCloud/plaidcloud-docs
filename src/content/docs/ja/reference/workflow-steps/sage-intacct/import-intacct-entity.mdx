@@ -1,0 +1,53 @@
+---
+title: "Import Intacct Entityステップ"
+description: XML Gateway の readByQuery/readMore ページネーションを使用して、Sage Intacct のオブジェクトをプロジェクトテーブルに取り込みます。オブジェクトごとに許可されたフィールドと演算子（ge/le の範囲を含む）を使用できます。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/import-intacct-entity.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Sage Intacct接続](/ja/guides/connections/sage-intacct/)を使用して、Sage Intacct の 1 つのオブジェクトをプロジェクトテーブルにインポートします。Intacct XML Gateway の `readByQuery`/`readMore` オペレーションにより、結果セット全体を自動的にページ送りして取得します。接続、オブジェクト、必要なフィルターを選択するだけで、ステップが条件に一致するレコードを取得して書き込みます。ページネーションを手動で管理する必要はありません。
+
+これは汎用の定型ステップで、1 つのステップタイプで 7 つのオブジェクトに対応します。総勘定元帳の取引明細と残高の詳細（`GLDETAIL`、`GLACCOUNTBALANCE`、`GLENTRY`）、ディメンションマスター（`LOCATION`、`DEPARTMENT`、`CLASS`）、受注ドキュメント（`SODOCUMENT`）です。
+
+<Aside type="note">
+このステップは、汎用のフィールドピッカーで**任意の** Intacct オブジェクトを対象にできる [Import Sage Intacct Queryステップ](/ja/reference/workflow-steps/sage-intacct/import-intacct-query/)とは別のものです。`Import Intacct Entity` は、この 7 つのオブジェクト専用のネイティブカタログステップで、オブジェクトごとに厳選されたフィルターの許可リストと、大規模な結果セット向けの自動 `readMore` ページネーションを備えています（特に総勘定元帳の明細は、Intacct API の 1 ページを大きく超えることがあります）。
+</Aside>
+
+## 設定
+
+| フィールド | 必須 | 備考 |
+|---|---|---|
+| Sage接続 | はい | 読み取りに使用する Sage Intacct 接続です。 |
+| ターゲットテーブル | はい | 結果の書き込み先となるプロジェクトテーブルです。実行のたびに全体が上書きされます。 |
+| オブジェクト | はい | 取得する Intacct オブジェクトです。`GLDETAIL`、`GLACCOUNTBALANCE`、`GLENTRY`、`LOCATION`、`DEPARTMENT`、`CLASS`、`SODOCUMENT` のいずれかです。 |
+| フィルター | いいえ | `{field, operator, value}` 句の配列です。演算子には `eq`、`ne`、`gt`、`ge`、`lt`、`le` があります。範囲は、同じフィールドに対する 2 つの句（`ge` と `le`）で表現します。各オブジェクトでは、そのオブジェクト固有のフィールドと演算子の許可リストにあるフィルターのみ使用できます。サポートされていないフィールドと演算子の組み合わせは、黙って無視されるのではなく拒否されます。 |
+
+### オブジェクトと一般的な範囲フィルター
+
+| オブジェクト | 取得内容 | 一般的な範囲フィルター |
+|---|---|---|
+| `GLDETAIL` | 総勘定元帳の取引明細行の詳細 | 転記日（`ge`/`le`）、金額（`ge`/`le`） |
+| `GLACCOUNTBALANCE` | 期間別の勘定科目残高 | 期末日（`ge`/`le`） |
+| `GLENTRY` | 転記済みの仕訳明細行 | 転記日（`ge`/`le`） |
+| `LOCATION` | ロケーションディメンションのマスター | — （等価フィルターのみ） |
+| `DEPARTMENT` | 部門ディメンションのマスター | — （等価フィルターのみ） |
+| `CLASS` | クラスディメンションのマスター | — （等価フィルターのみ） |
+| `SODOCUMENT` | 受注ドキュメント | ドキュメント日付（`ge`/`le`） |
+
+## ページネーションの仕組み
+
+Intacct の XML Gateway は、結果を 1 ページずつ返します。このステップは、最初に `readByQuery` を呼び出し、その後、Intacct が返す結果セット ID を使って、すべてのページを読み取るまで `readMore` を呼び出します。そのため、数万行にわたる `GLDETAIL` の取得でも、ページサイズを調整することなく、ステップを 1 回実行するだけで完了します。
+
+<Aside type="caution">
+`GLDETAIL` や `GLENTRY` に対して、フィルターなしで非常に広い範囲を取得すると、すべてをページ送りするのにかなり時間がかかる場合があります。ページネーションだけに頼って高速化しようとせず、大規模な取得は転記日の範囲で絞り込んでください。
+</Aside>
+
+## 関連項目
+
+- [Sage Intacctステップ](/ja/reference/workflow-steps/sage-intacct/)
+- [Import Sage Intacct Queryステップ](/ja/reference/workflow-steps/sage-intacct/import-intacct-query/) — 任意の Intacct オブジェクトに対する汎用クエリ
+- [Sage Intacctに接続する](/ja/guides/connections/sage-intacct/)
+- [Sage Intacct RESTコネクター](/ja/reference/connectors/rest/sage-intacct/)

@@ -1,0 +1,55 @@
+---
+title: 数值函数（Lakehouse v1）
+description: "Lakehouse v1 SQL 数值函数：用于数字的算术、舍入、对数、幂运算和三角函数辅助函数。"
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/04-numeric-functions/index.md
+---
+
+本节提供 PlaidCloud Lakehouse 中数值函数的参考信息。
+
+## 函数
+
+- [ABS](abs/)
+- [ACOS](acos/)
+- [ADD](add/)
+- [ASIN](asin/)
+- [ATAN](atan/)
+- [ATAN2](atan2/)
+- [CBRT](cbrt/)
+- [CEIL](ceil/)
+- [CEILING](ceiling/)
+- [COS](cos/)
+- [COT](cot/)
+- [CRC32](crc32/)
+- [DEGREES](degrees/)
+- [DIV](div/)
+- [DIV0](div0/)
+- [DIVNULL](divnull/)
+- [EXP](exp/)
+- [FACTORIAL](factorial/)
+- [FLOOR](floor/)
+- [INTDIV](intdiv/)
+- [LN](ln/)
+- [LOG(b, x)](logbx/)
+- [LOG(x)](logx/)
+- [LOG10](log10/)
+- [LOG2](log2/)
+- [MINUS](minus/)
+- [MOD](mod/)
+- [MODULO](modulo/)
+- [NEG](neg/)
+- [NEGATE](negate/)
+- [PI](pi/)
+- [PLUS](plus/)
+- [POW](pow/)
+- [POWER](power/)
+- [RADIANS](radians/)
+- [RAND()](rand/)
+- [RAND(n)](randn/)
+- [ROUND](round/)
+- [SAFE_DIVIDE](safe-divide/)
+- [SIGN](sign/)
+- [SIN](sin/)
+- [SQRT](sqrt/)
+- [SUBTRACT](subtract/)
+- [TAN](tan/)
+- [TRUNCATE](truncate/)

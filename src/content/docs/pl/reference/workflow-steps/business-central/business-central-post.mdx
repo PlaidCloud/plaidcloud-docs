@@ -1,0 +1,55 @@
+---
+title: "Business Central: zaksięguj dziennik ogólny"
+description: Księguj wiersze dziennika ogólnego w istniejącej partii dziennika Business Central z tabel nagłówka i wierszy PlaidCloud, z trybem podglądu, który weryfikuje każdy dziennik, zanim cokolwiek zostanie zaksięgowane.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje wiersze dziennika ogólnego w Business Central przez [połączenie Business Central](/pl/guides/connections/business-central/), z wykorzystaniem wspólnego potoku zapisu ERP w PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na `journal_id`) oraz tabelę wierszy (jeden lub więcej wierszy na `journal_id`), tworzy wiersze w **istniejącej** partii dziennika i księguje tę partię. Opcja **Validate Only** buduje i sprawdza każdy dziennik bez księgowania; opcjonalna tabela wyników zapisuje rezultat.
+
+<Aside type="caution">
+Każdą partię najpierw uruchom w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowań bezpośrednio w Business Central, zanim zaczniesz polegać na tym kroku przy księgowaniu dzienników na żywo bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **Połączenie Business Central** — połączenie Business Central, przez które odbywa się księgowanie.
+- **Środowisko** — środowisko połączenia.
+
+### Dane
+
+- **Tabela nagłówka** — jeden wiersz na `journal_id`: nazwa partii dziennika Business Central, do której trafiają Twoje wiersze, `document_number`, `posting_date` oraz etykieta waluty.
+- **Tabela wierszy** — jeden lub więcej wierszy na `journal_id`: kwota ze znakiem `amount` (dodatnia dla debetu, ujemna dla kredytu), `account_id` lub `account_number`, `account_type`, `description`.
+- **Tabela wyników** — identyfikator tabeli wyjściowej: jeden wiersz na `journal_id` zawierający `journal_id`, `external_id`, `internal_id`, `status`, `message`.
+- **Validate Only** — zaznaczone domyślnie. Tylko kontrola wstępna; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Validate Only, a nie księgowanie na żywo.
+- **Kontynuuj w razie błędu** — zaznaczone domyślnie. Po niepowodzeniu jednego dziennika księguje pozostałe; po odznaczeniu zatrzymuje partię przy pierwszym niepowodzeniu.
+
+<Aside type="caution">
+**Partia dziennika wskazana przez `journal_id` musi już istnieć w Business Central.** Ten krok tworzy wiersze wewnątrz partii — nie tworzy samej partii. Przed księgowaniem skonfiguruj partię dziennika (nazwę, szablon dziennika) w Business Central.
+</Aside>
+
+## Jak działa księgowanie
+
+Akcja powiązana `Microsoft.NAV.post` w Business Central księguje **całą** partię dziennika, a nie tylko wiersze utworzone przez to żądanie. Przed jej wywołaniem PlaidCloud odczytuje partię z powrotem i odmawia księgowania — zapisuje błąd, nic nie jest zaksięgowane — jeśli zawiera ona jakikolwiek wiersz, który nie jest oznaczony numerem dokumentu tego żądania. Ta kontrola zapobiega przypadkowemu zaksięgowaniu w księdze głównej wiersza pozostawionego przez wcześniejsze częściowe niepowodzenie przy niezwiązanym z nim późniejszym księgowaniu do tej samej partii.
+
+Ponieważ `generalLedgerEntries` jest tylko do odczytu i zawiera wyłącznie zaksięgowane zapisy, PlaidCloud potwierdza udane księgowanie, szukając numeru dokumentu **tam**, a nie przez ponowny odczyt partii dziennika — dopasowanie w `generalLedgerEntries` jest dowodem faktycznego zaksięgowania, a nie tylko utworzenia wierszy.
+
+## Ograniczenia możliwości
+
+| Ograniczenie | Co to oznacza |
+|---|---|
+| Jeden typ dokumentu zapisu | Obsługiwane jest tylko księgowanie wierszy dziennika ogólnego. Przepływ dokumentów roboczych Business Central (faktury sprzedaży/zakupu, szkic → zaksięgowany) nie jest obsługiwany — dokładna akcja księgowania dla tego przepływu nie jest określona w opublikowanej dokumentacji Microsoft. |
+| Tylko istniejąca partia | Ten krok nigdy nie tworzy partii dziennika. Najpierw utwórz ją w Business Central, a następnie wskaż ją w `journal_id`. |
+| Równoległe księgowania do tej samej partii | Mechanizm idempotentności jest ograniczony numerem dokumentu, a nie partią dziennika — dwa różne numery dokumentów księgowane jednocześnie do tej samej partii nie są szeregowane w taki sposób, jak dwa wywołania z tym samym numerem dokumentu. Unikaj równoległego księgowania do jednej partii. |
+
+## Powiązane
+
+- [Połączenie z Business Central](/pl/guides/connections/business-central/) — pełny opis konfiguracji, podglądu i księgowania
+- [Konektor REST Business Central](/pl/reference/connectors/rest/business-central/)
+- [Kroki Business Central](/pl/reference/workflow-steps/business-central/)
+- [Przeglądanie historii księgowań ERP](/pl/guides/connections/erp-post-history/)

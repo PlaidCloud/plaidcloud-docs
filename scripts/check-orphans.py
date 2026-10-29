@@ -11,6 +11,11 @@ Also fail if a page in a hand-listed sidebar section is missing from the
 sidebar: guides are slug entries in `astro.config.mjs`, so a new page shows up
 in the menu only when someone adds it there.
 
+Locales: every page's hreflang alternates (the language picker's targets)
+count as links, so `/de/x/` — translated or an English fallback — is reachable
+whenever `/x/` is. In-content links on a fallback page point at English URLs,
+so a locale's own links alone don't reach its reference pages.
+
 Run after `npm run build`, against `dist/`.
 """
 import os
@@ -19,8 +24,11 @@ import re
 import sys
 from collections import defaultdict
 from glob import glob
+from urllib.parse import urlparse
 
 ANCHOR = re.compile(r'<a[^>]+href="([^"]+)"')
+HREFLANG = re.compile(r'<link[^>]*\bhreflang="[^"]+"[^>]*>')
+HREF = re.compile(r'\bhref="([^"]+)"')
 SKIP_PREFIX = ('http', 'mailto:', '#', '//', 'javascript:', 'data:')
 #: Pages with no inbound link by design.
 ALLOWED = {'/', '/404/'}
@@ -56,6 +64,15 @@ def main(root='dist'):
                 target += '/'
             if target in pages:
                 links[src].add(target)
+        for tag in HREFLANG.findall(html):
+            target = urlparse(HREF.search(tag).group(1)).path
+            if target in pages:
+                links[src].add(target)
+
+    # Each locale's 404 (`/de/404/`) is unlinked by design, like the root one.
+    with open(pages['/'], encoding='utf8') as fh:
+        roots = {urlparse(HREF.search(tag).group(1)).path for tag in HREFLANG.findall(fh.read())}
+    allowed = ALLOWED | {f'{root}404/' for root in roots}
 
     seen, stack = {'/'}, ['/']
     while stack:
@@ -65,7 +82,7 @@ def main(root='dist'):
                 stack.append(target)
 
     failed = 0
-    orphans = sorted(set(pages) - seen - ALLOWED)
+    orphans = sorted(set(pages) - seen - allowed)
     if orphans:
         failed = 1
         print(f'{len(orphans)} unreachable page(s) — add a link from the parent '
@@ -91,6 +108,17 @@ def main(root='dist'):
             print(f'  {url}')
     else:
         print('sidebar check: every guide, integration and admin page is in the sidebar')
+
+    # Workers Static Assets refuses the whole deploy past these (see CLAUDE.md, "Stack and constraints").
+    assets = [os.path.join(d, f) for d, _, fs in os.walk(root) for f in fs]
+    big = sorted(f for f in assets if os.path.getsize(f) > 25 * 1024 * 1024)
+    if big or len(assets) > 100_000:
+        failed = 1
+        print(f'\nWorkers Assets limits exceeded ({len(assets)} files, max 100,000; max 25 MiB per file):')
+        for f in big:
+            print(f'  {f} {os.path.getsize(f):,} bytes')
+    else:
+        print(f'asset limits: {len(assets)} files, none over 25 MiB')
     return failed
 
 

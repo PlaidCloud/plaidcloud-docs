@@ -1,0 +1,51 @@
+---
+title: INET_ATON (Lakehouse v1)
+description: INET_ATON convierte una dirección IPv4 en un entero de 32 bits.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/14-ip-address-functions/inet-aton.md
+---
+
+Convierte una dirección IPv4 en un entero de 32 bits.
+
+## Sintaxis de Analyze
+
+```python
+func.inet_aton(<ip>)
+```
+
+## Ejemplos de Analyze
+
+```python
+func.inet_aton('1.2.3.4')
+
+┌───────────────────────────────┐
+│ func.inet_aton('1.2.3.4')     │
+├───────────────────────────────┤
+│                      16909060 │
+└───────────────────────────────┘
+```
+
+## Sintaxis de SQL
+
+```sql
+INET_ATON(<ip>)
+```
+
+## Alias
+
+- [IPV4_STRING_TO_NUM](../ipv4-string-to-num)
+
+## Tipo de retorno
+
+Entero.
+
+## Ejemplos de SQL
+
+```sql
+SELECT IPV4_STRING_TO_NUM('1.2.3.4'), INET_ATON('1.2.3.4');
+
+┌──────────────────────────────────────────────────────┐
+│ ipv4_string_to_num('1.2.3.4') │ inet_aton('1.2.3.4') │
+├───────────────────────────────┼──────────────────────┤
+│                      16909060 │             16909060 │
+└──────────────────────────────────────────────────────┘
+```

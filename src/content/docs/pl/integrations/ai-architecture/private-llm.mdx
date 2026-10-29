@@ -1,0 +1,148 @@
+---
+title: Korzystanie z własnego kontrolowanego LLM
+description: Zachowaj dane zastrzeżone, PHI lub objęte umownymi ograniczeniami w infrastrukturze, którą kontrolujesz — skieruj PlaidCloud na zasób Azure OpenAI w Twojej własnej subskrypcji lub na model hostowany przez Ciebie.
+sidebar:
+  label: Własny LLM
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/private-llm.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Jeśli Twoje dane obejmują chronione informacje zdrowotne, dane osobowe, tajemnice handlowe lub cokolwiek objętego
+umową wskazującą, gdzie można to przetwarzać, liczy się nie to, *który model jest najmądrzejszy*,
+lecz **czyja infrastruktura widzi prompt**.
+
+PlaidCloud traktuje model jako wymienny komponent, abyś mógł odpowiedzieć na to pytanie samodzielnie.
+
+<img
+	src="/images/ai-private-llm.svg"
+	alt="Porównanie trzech wariantów wdrożenia: API dostawcy, prywatny zasób modelu w chmurze, taki jak Azure OpenAI w Twojej własnej subskrypcji, oraz model hostowany we własnym zakresie. Wszystkie trzy mają identyczny nadzór wewnątrz dzierżawy. Podsumowanie wymienia, co trafia do modelu, a co nigdy."
+	class="doc-diagram"
+/>
+
+## Trzy możliwości
+
+| | **API dostawcy** | **Prywatny model w chmurze** | **Model hostowany we własnym zakresie** |
+|---|---|---|---|
+| **Czym jest** | Publiczne API Anthropic, OpenAI, Google lub xAI | Zasób Azure OpenAI w Twojej własnej subskrypcji | Dowolny punkt końcowy zgodny z OpenAI, który sam prowadzisz |
+| **Kto widzi prompt** | Dostawca, na swoich warunkach i w ramach Twojego konta | Twoja dzierżawa chmurowa, na podstawie Twojej umowy | Tylko Ty |
+| **Region i retencja** | Dostawcy | Ustawiasz sam | Ustawiasz sam |
+| **Możliwości** | Czołowe | Czołowe, o krok za publicznym API | Cokolwiek jesteś w stanie hostować |
+| **Co utrzymujesz** | Nic | Zasób chmurowy | Serwery i GPU |
+| **Zastosowanie** | Ogólna analityka na danych niewrażliwych | Przedsiębiorstwa objęte już umową chmurową | PHI, dane niejawne, odizolowane od sieci lub objęte umownymi ograniczeniami |
+
+Wszystkie trzy konfiguruje się tak samo: [połączenie Dostawca
+LLM](/pl/integrations/ai-architecture/llm-providers/) z dostawcą, kluczem, modelem i — w dwóch ostatnich przypadkach —
+bazowym adresem URL wskazującym Twój punkt końcowy.
+
+## Dlaczego kontrolowany model jest wart zachodu
+
+**Ekspozycją jest prompt, a prompt zawiera Twoje dane.** Uziemiony asystent jest użyteczny
+właśnie dlatego, że do modelu trafiają prawdziwe wiersze: liczby pacjentów według placówek, niepublikowane ceny, struktura
+kosztów, której nie wysłałbyś e-mailem. Cała reszta architektury — uprawnienia, bramkowanie narzędzi,
+krótkotrwałe tokeny — nadzoruje to, co opuszcza *Twoje* systemy. Wybór modelu decyduje o tym, gdzie to ląduje.
+
+Skierowanie PlaidCloud na model, który kontrolujesz, oznacza:
+
+- **O jeden podmiot przetwarzający mniej do formalnego uwzględniania.** Nie trzeba dodawać zewnętrznego podprocesora do umowy o ochronie
+  danych, BAA ani przeglądu dostawcy — bo wnioskowanie odbywa się w miejscu, które jest już objęte umową.
+- **Rezydencję danych, którą można udowodnić.** „Przetwarzane w tym regionie, na tym koncie, na podstawie tej umowy" to
+  twierdzenie, które można udokumentować, a nie przyjąć na wiarę.
+- **Retencję i rejestrowanie na Twoich warunkach.** To Ty decydujesz, czy prompty są przechowywane, jak długo
+  i kto może czytać dzienniki.
+- **Odporność na zmianę polityki.** Warunki dostawcy mogą się zmienić; infrastruktura, którą prowadzisz, nie
+  zmienia się pod Tobą.
+- **Środowiska odizolowane od sieci w ogóle dostają asystenta.** Dla sieci, które nie mają dostępu do publicznego API,
+  model hostowany we własnym zakresie jest jedyną istniejącą opcją.
+
+<Aside type="caution">
+PlaidCloud daje Ci mechanizmy kontroli; nie może za Ciebie dokonać oceny zgodności. To, czy dana
+konfiguracja spełnia wymogi HIPAA, RODO, BAA lub umowy z klientem, jest decyzją Twoich własnych zespołów ds.
+prywatności, bezpieczeństwa i prawnego. Przedstaw im architekturę z tej strony — została napisana tak, aby
+można ją było zweryfikować.
+</Aside>
+
+## Co faktycznie trafia do modelu
+
+Warto być precyzyjnym, bo odpowiedź jest węższa, niż ludzie zakładają.
+
+**Wysyłane do dostawcy:**
+
+- Twój prompt i stałe reguły z połączenia
+- nazwy i kształty obiektów, o których agent został poinformowany — nazwy tabel i kolumn, nazwy
+  wymiarów, ścieżki powiązanych dokumentów
+- wyniki wywołań narzędzi wykonanych przez model, czyli wiersze, o które poprosił i które mógł
+  otrzymać
+- bieżąca rozmowa w aktualnym czacie
+
+**Nigdy nie wysyłane:**
+
+- poświadczenia połączeń, przechowywane sekrety ani rozwiązane nagłówki autoryzacji
+- cokolwiek spoza uprawnień osoby pytającej
+- całe tabele, o które model nie poprosił
+- dane innej dzierżawy
+
+Twoje treści nie są też wykorzystywane do trenowania czyjegokolwiek modelu.
+
+## Na których powierzchniach kontrolujesz model
+
+Warto przeczytać to dwukrotnie, bo nie jest jednolite.
+
+| Powierzchnia | Czyj model działa |
+|---|---|
+| **Krok przepływu pracy LLM** | **Twój.** Krok używa połączenia Dostawca LLM, które przypniesz, albo domyślnego dla obszaru roboczego. |
+| **Asystent AI w aplikacji** | **Twój**, przez domyślne połączenie Dostawca LLM obszaru roboczego. Wieloagentowy backend stojący za niektórymi funkcjami asystenta jest ustawiany dla każdego wdrożenia i można go skierować na model hostowany we własnym zakresie — uzgodnij to z PlaidCloud. |
+| **Agenty programistyczne AI** | **Ich.** Claude Code używa Anthropic; ChatGPT używa OpenAI. PlaidCloud jest źródłem danych, a nie hostem modelu. |
+| **Microsoft 365 Copilot** | **Microsoftu.** Copilot działa na modelach Microsoftu w Twojej dzierżawie M365, na podstawie Twojej umowy z Microsoftem. |
+
+<Aside type="caution">
+**Jeśli dane regulowane nie mogą trafić do konkretnego dostawcy, ograniczenie modelu nie wystarczy — musisz
+też nadzorować powierzchnie.** W przypadku Copilot i agentów programistycznych PlaidCloud nie wybiera modelu;
+robi to klient. Kontroluj je za pomocą dźwigni, które mają zastosowanie: czy agent Copilot jest w ogóle
+opublikowany, komu przyznano poziom dostępu, czy ścieżka Copilot jest włączona oraz do jakich
+projektów i tabel sięgają uprawnienia danej osoby.
+</Aside>
+
+## Konfiguracja
+
+<Steps>
+
+1. **Przygotuj punkt końcowy.** Utwórz zasób Azure OpenAI i wdrożenie w swojej subskrypcji
+   albo uruchom swój model za API zgodnym z OpenAI.
+
+2. **Udostępnij go przez HTTPS pod rozwiązywalną publiczną nazwą hosta.** Wywołania wychodzące są walidowane
+   przed wykonaniem: bazowy adres URL musi używać HTTPS, a adres pętli zwrotnej, z zakresu prywatnego, link-local lub
+   metadanych chmury jest odrzucany, przy wyłączonych przekierowaniach. Postaw przed modelem hostowanym we własnym zakresie bramę
+   TLS pod prawdziwą nazwą hosta i ogranicz na poziomie sieci, kto może się z nim połączyć.
+
+3. **Zarejestruj połączenie.** Wybierz dostawcę, wklej klucz, ustaw bazowy adres URL i wskaż
+   model — w przypadku Azure OpenAI pole modelu to Twoja **nazwa wdrożenia**.
+
+4. **Pozostaw Dostęp agenta na Tylko do odczytu**, chyba że konkretne zadanie wymaga więcej. To najtańszy
+   mechanizm kontroli, jaki masz.
+
+5. **Dodaj swoje reguły.** Stałe instrukcje to właściwe miejsce na konwencje firmy — jak
+   postępować z identyfikatorami, czego nigdy nie umieszczać w odpowiedzi, jakie zastrzeżenia zawsze podawać.
+
+6. **Ustaw go jako domyślny dla obszaru roboczego** albo przypnij w konkretnych krokach przepływu pracy, które obsługują
+   dane regulowane.
+
+</Steps>
+
+## Rozsądny kompromis
+
+Wrażliwość rzadko jest jednolita w całym obszarze roboczym, a model wybiera się dla każdego połączenia — więc można go
+wybierać dla każdego zadania. Częsty układ:
+
+- **czołowy model dostawcy** jako domyślny dla obszaru roboczego, do pytań o schemat, pomocy w dokumentacji,
+  tworzenia wyrażeń i analizy danych niewrażliwych
+- **kontrolowany model** przypięty w krokach przepływu pracy, które dotykają tabel regulowanych
+
+Ta sama platforma, te same uprawnienia, ten sam ślad audytu — dwa różne promienie rażenia, dopasowane do danych.
+
+## Powiązane
+
+- [Dostawcy LLM i połączenia](/pl/integrations/ai-architecture/llm-providers/) — pola i adaptery
+- [Architektura AI i LLM](/pl/integrations/ai-architecture/) — nadzorowana ścieżka wspólna dla wszystkich powierzchni
+- [Wyszukiwanie, uziemianie i ścieżki analizy](/pl/integrations/ai-architecture/retrieval/) — dlaczego Twoje dane nigdy nie są wstępnie indeksowane

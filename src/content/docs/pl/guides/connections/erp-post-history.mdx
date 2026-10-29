@@ -1,0 +1,98 @@
+---
+title: Przeglądanie historii księgowań ERP
+description: Zobacz każdą próbę księgowania do ERP wykonaną przez projekt i jej bieżący stan — zaksięgowana, odrzucona, niepewna lub storno — wraz z numerem dokumentu ERP, z filtrowaniem według projektu, przez REST lub narzędzia MCP.
+sidebar:
+  label: Przeglądanie historii księgowań ERP
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Gdy przepływ pracy księguje do ERP — zapis dziennika Sage Intacct lub NetSuite, dokument Acumatica, Business Central lub Xero, zapis dziennika Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials lub SAP S/4HANA Cloud, dokument SAP — PlaidCloud zapisuje każdą próbę księgowania w trwałym rejestrze dla każdego tenanta, dzięki czemu ten sam dokument nigdy nie zostanie zaksięgowany dwukrotnie. **ERP Post History** to widok tylko do odczytu nad tym rejestrem: każda próba i jej bieżący stan, z własnym numerem dokumentu ERP i znacznikami czasu, z filtrowaniem według projektu.
+
+Uzupełnia on tabelę wyników dla poszczególnych uruchomień, którą zapisuje krok księgowania: tabela wyników to wyniki jednego uruchomienia, a Post History to trwały zapis ze wszystkich uruchomień i przepływów pracy, który śledzi każde księgowanie przez cały cykl życia, zamiast zamrażać je w chwili zakończenia uruchomienia.
+
+<Aside type="note">
+Post History jest **tylko do odczytu** — nigdy nie zmienia księgowania ani rejestru. Jest dostępna przez REST API i jako narzędzie MCP, w zakresie jednego projektu, do którego masz dostęp. Dla ekranu na poziomie tenanta, który przegląda księgowania ze wszystkich projektów i połączeń, które możesz widzieć, użyj [Rejestru księgowań](/pl/guides/connections/posting-register/).
+</Aside>
+
+## Co pokazuje każde księgowanie
+
+Każdy wiersz to jeden dokument zaksięgowany (lub próbowany) do jednego środowiska ERP na jednym połączeniu:
+
+| Pole | Znaczenie |
+|---|---|
+| `project_id` | Projekt, z którego wykonano księgowanie. |
+| `connection_id` | Użyte połączenie ERP. |
+| `environment_id` | Środowisko połączenia, do którego księgowano (na przykład piaskownica a produkcja). |
+| `natural_key` | Klucz biznesowy dokumentu, wyznaczony przez krok księgowania. |
+| `state` | Bieżący stan cyklu życia księgowania (zobacz niżej). |
+| `confirmation_id` | Własny numer dokumentu ERP, gdy ERP go przypisze. Nigdy nie jest ustawiony dla księgowania symulowanego. |
+| `run_id` | Uruchomienie przepływu pracy, które wykonało księgowanie. |
+| `submitted_at`, `created_at`, `updated_at` | Kiedy księgowanie zostało przesłane, po raz pierwszy zapisane i ostatnio zmienione. |
+
+Księgowanie wykonane w [trybie symulacji](/pl/guides/workflows/run-a-workflow/#wybór-trybu-księgowania) jest oznaczone jako symulowane, co pozwala odróżnić je od prawdziwego na pierwszy rzut oka — zobacz [Księgowania symulowane](#księgowania-symulowane) poniżej.
+
+## Stany cyklu życia
+
+Księgowanie przechodzi przez te stany, gdy ERP je przetwarza:
+
+| Stan | Znaczenie |
+|---|---|
+| `preflighted` | Zwalidowane i zarezerwowane, jeszcze nie wysłane do ERP. |
+| `submitted` | Wysłane do ERP; wynik nie jest jeszcze znany. |
+| `pending` | Przyjęte do przetwarzania asynchronicznego; oczekuje na wynik końcowy. |
+| `posted` | Potwierdzone jako zaksięgowane; `confirmation_id` zawiera numer dokumentu ERP. |
+| `rejected` | ERP odrzucił księgowanie. |
+| `in_doubt` | Nie udało się potwierdzić wyniku — człowiek musi sprawdzić bezpośrednio w ERP przed jakąkolwiek ponowną próbą. |
+| `reversed` | Wcześniej zaksięgowany dokument został stornowany. |
+
+<Aside type="caution">
+Księgowanie `in_doubt` jest dokładnie tym — nieznane, a nie nieudane. Potwierdź je w samym ERP, zanim zdecydujesz, czy działać; nigdy nie uruchamiaj go ponownie na ślepo.
+
+PlaidCloud zapisuje księgowanie lub storno jako `in_doubt` za każdym razem, gdy nie potrafi stwierdzić, co zrobił ERP — przekroczenie czasu lub błąd serwera, których nie może odczytać z powrotem, albo nierozpoznany status. Nie zapisuje takiej odpowiedzi jako `rejected`, co sugerowałoby, że dokumentu nie ma w ERP, choć może tam być.
+</Aside>
+
+## Księgowania symulowane
+
+Uruchomienie rozpoczęte w [trybie symulacji](/pl/guides/workflows/run-a-workflow/#wybór-trybu-księgowania) waliduje to, co wysłałby krok księgowania, ale nigdy nie kontaktuje się z ERP. To, co zostałoby zaksięgowane, jest nadal tu zapisywane, oznaczone jako symulowane, abyś mógł je przeglądać tak samo jak prawdziwe księgowanie — wraz z jego `natural_key` i zbudowanym żądaniem — bez `confirmation_id`, ponieważ żaden ERP go nie widział.
+
+Wpis symulowany nigdy nie zajmuje ani nie blokuje miejsca, które chroni idempotentny zapis prawdziwego księgowania. Jeśli później uruchomisz ten sam dokument na żywo, prawdziwe księgowanie przebiegnie i zastąpi zapis symulowany. Obszar roboczy bez skonfigurowanego rejestru księgowań nadal normalnie waliduje uruchomienie symulowane — po prostu nic tu nie zapisuje.
+
+Wyczyść symulowane wpisy projektu niezależnie od prawdziwych za pomocą `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (opcjonalnie zawężone przez `connection_id`) lub narzędzia MCP `erp_clear_simulated_postings` z tymi samymi argumentami. W obu przypadkach usuwane są tylko wiersze symulowane — prawdziwe księgowanie nigdy nie jest dotykane — a odpowiedź podaje zarówno wyczyszczone wiersze historii, jak i wiersze własnego magazynu symulacji [Rejestru księgowań](/pl/guides/connections/posting-register/), ponieważ jedno czyszczenie usuwa z obu.
+
+<Aside type="note">
+Kroki księgowania, załączników i RFC SAP są przy Simulate całkowicie pomijane, a nie wykonywane na sucho, więc nigdy nie tworzą wpisu symulowanego. Zobacz [Wybór trybu księgowania](/pl/guides/workflows/run-a-workflow/#wybór-trybu-księgowania).
+</Aside>
+
+## Odczytywanie historii
+
+Ograniczaj każdy odczyt do jednego projektu, do którego masz dostęp. Potrzebujesz dostępu do odczytu tego projektu — tego samego dostępu, którego wymaga reszta Twojej pracy w projekcie.
+
+### Przez REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Opcjonalne parametry zapytania zawężają wynik:
+
+| Parametr | Efekt |
+|---|---|
+| `connection_id` | Tylko księgowania wykonane na tym połączeniu. |
+| `state` | Tylko księgowania w tym stanie (na przykład `state=in_doubt`). |
+| `limit` | Rozmiar strony (domyślnie 100). |
+| `cursor` | `next_cursor` z poprzedniej strony. |
+
+Wyniki wracają od najnowszych. Gdy strona zapełni się do `limit`, odpowiedź zawiera `next_cursor`; przekaż go z powrotem jako `cursor`, aby odczytać następną stronę, i zatrzymaj się, gdy `next_cursor` jest null.
+
+### Przez MCP
+
+Wywołaj narzędzie `erp_post_history` z tymi samymi argumentami — `project_id` (wymagany) oraz opcjonalnymi `connection_id`, `state`, `limit` i `cursor`. Zwraca te same wiersze, stronicowane w ten sam sposób.
+
+## Typowe przeglądy
+
+- **Wszystko, co nadal jest niepewne w projekcie:** `state=in_doubt` — księgowania do potwierdzenia ręcznie w ERP.
+- **Co zaksięgowało konkretne uruchomienie:** odczytaj historię projektu i dopasuj po `run_id`.
+- **Czy dokument faktycznie został zaksięgowany:** znajdź jego wiersz i odczytaj `state` oraz `confirmation_id`.

@@ -1,0 +1,127 @@
+---
+title: WINDOW_FUNNEL (Lakehouse v1)
+description: WINDOW_FUNNEL — スライディング時間ウィンドウ内で順序付きのイベントチェーンを検索し、最長の一致長を返します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/07-aggregate-functions/aggregate-windowfunnel.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+<p align="center">
+<img src="https://datafuse-1253727613.cos.ap-hongkong.myqcloud.com/learn/databend-funnel.png" width="550"/>
+</p>
+
+ClickHouse の `windowFunnel` と同様（作成者は同じです）、スライディング時間ウィンドウ内でイベントチェーンを検索し、チェーン内のイベントの最大数を計算します。
+
+この関数は次のアルゴリズムで動作します。
+
+-   関数は、チェーンの最初の条件を満たすデータを検索し、イベントカウンターを 1 に設定します。これがスライディングウィンドウの開始時点です。
+
+-   チェーンのイベントがウィンドウ内で順番に発生した場合、カウンターが加算されます。イベントの順序が途切れた場合、カウンターは加算されません。
+
+-   データに、完了時点の異なる複数のイベントチェーンがある場合、関数は最も長いチェーンのサイズのみを出力します。
+
+
+## SQLの構文
+```sql
+WINDOW_FUNNEL( <window> )( <timestamp>, <cond1>, <cond2>, ..., <condN> )
+```
+
+**引数**
+
+-   `<timestamp>` — タイムスタンプを含む列の名前。サポートされるデータ型: 整数型と日時型。
+-   `<cond>` — イベントのチェーンを表す条件またはデータ。`Boolean` データ型である必要があります。
+
+**パラメーター**
+
+-   `<window>` — スライディングウィンドウの長さで、最初の条件と最後の条件の間の時間間隔です。`window` の単位は `timestamp` 自体に依存して変わります。次の式を使用して判定されます: `timestamp of cond1 <= timestamp of cond2 <= ... <= timestamp of condN <= timestamp of cond1 + window`。
+
+**戻り値**
+
+スライディング時間ウィンドウ内で、チェーンから連続して満たされた条件の最大数。
+選択範囲内のすべてのチェーンが分析されます。
+
+型: `UInt8`。
+
+
+**例**
+
+オンラインストアで、ユーザーが電話機を選択して 2 回購入するのに、一定の期間で十分かどうかを判定します。
+
+次のイベントチェーンを設定します。
+
+1. ユーザーがストアのアカウントにログインした（`event_name = 'login'`）。
+2. ユーザーがページにアクセスした（`event_name = 'visit'`）。
+3. ユーザーがショッピングカートに追加した（`event_name = 'cart'`）。
+4. ユーザーが購入を完了した（`event_name = 'purchase'`）。
+
+
+```sql
+CREATE TABLE events(user_id BIGINT, event_name VARCHAR, event_timestamp TIMESTAMP);
+
+INSERT INTO events VALUES(100123, 'login', '2022-05-14 10:01:00');
+INSERT INTO events VALUES(100123, 'visit', '2022-05-14 10:02:00');
+INSERT INTO events VALUES(100123, 'cart', '2022-05-14 10:04:00');
+INSERT INTO events VALUES(100123, 'purchase', '2022-05-14 10:10:00');
+
+INSERT INTO events VALUES(100125, 'login', '2022-05-15 11:00:00');
+INSERT INTO events VALUES(100125, 'visit', '2022-05-15 11:01:00');
+INSERT INTO events VALUES(100125, 'cart', '2022-05-15 11:02:00');
+
+INSERT INTO events VALUES(100126, 'login', '2022-05-15 12:00:00');
+INSERT INTO events VALUES(100126, 'visit', '2022-05-15 12:01:00');
+```
+
+入力テーブル:
+
+```sql
+┌─────────┬────────────┬────────────────────────────┐
+│ user_id │ event_name │ event_timestamp            │
+├─────────┼────────────┼────────────────────────────┤
+│  100123 │ login      │ 2022-05-14 10:01:00.000000 │
+│  100123 │ visit      │ 2022-05-14 10:02:00.000000 │
+│  100123 │ cart       │ 2022-05-14 10:04:00.000000 │
+│  100123 │ purchase   │ 2022-05-14 10:10:00.000000 │
+│  100125 │ login      │ 2022-05-15 11:00:00.000000 │
+│  100125 │ visit      │ 2022-05-15 11:01:00.000000 │
+│  100125 │ cart       │ 2022-05-15 11:02:00.000000 │
+│  100126 │ login      │ 2022-05-15 12:00:00.000000 │
+│  100126 │ visit      │ 2022-05-15 12:01:00.000000 │
+└─────────┴────────────┴────────────────────────────┘
+```
+
+1 時間のウィンドウをスライドさせたとき、ユーザー `user_id` がチェーンのどこまで到達できたかを調べます。
+
+クエリ:
+
+```sql
+SELECT
+    level,
+    count() AS count
+FROM
+(
+    SELECT
+        user_id,
+        window_funnel(3600000000)(event_timestamp, event_name = 'login', event_name = 'visit', event_name = 'cart', event_name = 'purchase') AS level
+    FROM events
+    GROUP BY user_id
+)
+GROUP BY level ORDER BY level ASC;
+```
+
+<Aside>`event_timestamp` の型は timestamp で、`3600000000` は 1 時間のウィンドウです。</Aside>
+
+結果:
+
+```sql
+┌───────┬───────┐
+│ level │ count │
+├───────┼───────┤
+│     2 │     1 │
+│     3 │     1 │
+│     4 │     1 │
+└───────┴───────┘
+```
+
+* ユーザー `100126` のレベルは 2 です（`login -> visit`）。
+* ユーザー `100125` のレベルは 3 です（`login -> visit -> cart`）。
+* ユーザー `100123` のレベルは 4 です（`login -> visit -> cart -> purchase`）。

@@ -1,0 +1,43 @@
+---
+title: LEAST (Lakehouse v1)
+description: LEAST — retorna o valor mínimo de um conjunto de valores.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/03-conditional-functions/least.md
+---
+
+Retorna o valor mínimo de um conjunto de valores.
+
+## Sintaxe do Analyze
+
+```python
+func.least((<value1>, <value2> ...))
+```
+
+## Exemplos do Analyze
+
+```python
+func.least((5, 9, 4))
+
+┌───────────────────────┐
+│ func.least((5, 9, 4)) │
+├───────────────────────┤
+│                     4 │
+└───────────────────────┘
+```
+
+## Sintaxe SQL
+
+```sql
+LEAST(<value1>, <value2> ...)
+```
+
+## Exemplos de SQL
+
+```sql
+SELECT LEAST(5, 9, 4);
+
+┌────────────────┐
+│ least(5, 9, 4) │
+├────────────────┤
+│              4 │
+└────────────────┘
+```

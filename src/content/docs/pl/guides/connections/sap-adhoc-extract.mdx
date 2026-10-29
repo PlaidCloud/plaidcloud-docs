@@ -1,0 +1,202 @@
+---
+title: Wyodrębnienia ad hoc z SAP ECC / S/4HANA
+description: Przeszukuj SAP według tabeli, kodu transakcji lub zapisanego zapytania SAP Query, wyświetlaj podgląd i planuj wyodrębnienie oraz zapisuj wynik w tabeli PlaidCloud za pośrednictwem agenta PlaidLink.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+Pobieraj dane z SAP ECC lub S/4HANA samodzielnie, zaczynając od tego, co już znasz: nazwy tabeli, kodu transakcji lub zapisanego zapytania SAP Query. Wybierasz obiekt z wyników wyszukiwania, widzisz jego pola lub ekran selekcji, wyświetlasz podgląd rzeczywistych wierszy, sprawdzasz plan i zapisujesz krok przepływu pracy, który zapisuje wynik w tabeli.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="Krok wyodrębniania z SAP wysyła żądanie przez agenta PlaidLink do SAP, gdzie pakiet PlaidCloud SAP odczytuje dane z uwzględnieniem własnych kontroli autoryzacji SAP, a wiersze wracają przez agenta do tabeli docelowej." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">krok wyodrębniania z SAP</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wyszukiwanie · podgląd · plan</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">agent PlaidLink</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wewnątrz Twojej sieci</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">pakiet PlaidCloud SAP</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP sprawdza użytkownika RFC</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wiersze</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabela docelowa</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Każde wyodrębnienie przechodzi przez agenta PlaidLink i pakiet PlaidCloud SAP, jako użytkownik RFC z połączenia, z uwzględnieniem własnych kontroli autoryzacji SAP.</figcaption>
+</figure>
+
+## Wymagania wstępne
+
+- **Agent PlaidLink z dostępem sieciowym do systemu SAP.** Zobacz [Instalacja PlaidLink](/pl/reference/cli/plaidlink/install/).
+- **Połączenie z instancją SAP ECC / S/4HANA.** Zobacz [Łącznik SAP ECC i S/4HANA](/pl/reference/connectors/erp/sap-ecc/). Użytkownik SAP w tym połączeniu to użytkownik RFC, jako którego działa każde wyodrębnienie.
+- **Pakiet PlaidCloud SAP zainstalowany w SAP.** Twój zespół Basis instaluje go raz dla każdego systemu SAP.
+- **Autoryzacje SAP dla użytkownika RFC** do wyodrębnianych obiektów. Zobacz [Autoryzacje SAP](#autoryzacje-sap).
+
+## Wybór kroku
+
+Wszystkie trzy kroki znajdują się w menu kroków przepływu pracy w sekcji **SAP**.
+
+| Krok | Użyj go, aby |
+|---|---|
+| **SAP: wyodrębnienie ad hoc** | Odczytać tabelę SAP, w całości lub przyrostowo. |
+| **SAP: uruchom transakcję / raport** | Uruchomić kod transakcji lub program raportu ABAP i zapisać jego wynik. |
+| **SAP: uruchom zapytanie (SQ01)** | Uruchomić zapisane zapytanie SAP Query i zapisać jego wynik. |
+
+Każdy krok zaczyna się od tych samych trzech pól — **Agent**, **Połączenie SAP** oraz **Tabela docelowa** na wynik.
+
+## Wyszukiwanie obiektu SAP
+
+Po wybraniu agenta i połączenia wyszukiwarka kroku wyświetla pasujące obiekty SAP — **Tabele**, **Transakcje** lub **Zapytania**, zależnie od kroku. Wpisz nazwę, kod transakcji lub słowa z opisu. Działają symbole wieloznaczne `*` z SAP. Obiekt, którego SAP nie udostępni, nadal się pojawia, wyszarzony, wraz z przyczyną.
+
+Wybranie tabeli wyświetla jej pola wraz z opisami i wypełnia jej pola kluczowe. Wybranie transakcji, raportu lub zapytania pokazuje jego ekran selekcji na karcie **Filtry**, zbudowany z pól zdefiniowanych przez sam SAP dla tego obiektu — bez konieczności znajomości wewnętrznej struktury tabeli lub programu.
+
+## Wyodrębnianie tabeli
+
+Użyj **SAP: wyodrębnienie ad hoc**.
+
+<Steps>
+
+1. Na karcie **Wyodrębnianie z SAP** wyszukaj tabelę i wybierz ją.
+
+2. Wprowadź **Funkcja odczytu RFC** — funkcję odczytu tabeli z pakietu PlaidCloud SAP, zainstalowaną przez Twój zespół Basis.
+
+3. Sprawdź **Kolumny kluczowe**. PlaidCloud wypełnia je na podstawie słownika danych SAP kluczem głównym tabeli, z pominięciem pola klienta. Zaznacz pole potwierdzające, że są dokładnie kluczem głównym. SAP odrzuca każdy inny zestaw kolumn.
+
+4. Na karcie **Filtr ograniczający** dodaj filtry. Kliknij znaną kolumnę, aby dodać wiersz, wybierz **Uwzględnij** lub **Wyklucz**, wybierz **Operator** — równa się, nie równa się, większe niż, większe lub równe, mniejsze niż, mniejsze lub równe, pomiędzy, poza zakresem, zawiera wzorzec lub nie zawiera wzorca — i skorzystaj z pomocy wartości, aby wybierać poprawne wartości bezpośrednio z SAP. Dodaj kilka wierszy dla tej samej kolumny, aby dopasować dowolną z zestawu wartości, i dodaj zakres dla **Pomiędzy** lub **Poza zakresem**. Duża tabela SAP wymaga co najmniej jednego filtra, na przykład zakresu dat lub kodu spółki.
+
+   <Aside type="note">
+   Wykluczenie zakresu, filtr Poza zakresem, dopasowanie wzorca oraz więcej niż jeden warunek dla tej samej kolumny wysyłają do SAP bogatszy predykat filtra, który wymaga aktualnego pakietu PlaidCloud SAP w systemie SAP agenta. Starszy pakiet nadal obsługuje proste filtry równości, nierówności i zakresu w wierszu Uwzględnij lub Wyklucz; poproś zespół Basis o aktualizację pakietu, jeśli bogatszy filtr nie działa.
+   </Aside>
+
+5. Aby przy każdym uruchomieniu odczytywać tylko nowe i zmienione wiersze, skonfiguruj kartę **Przyrostowe**. Zobacz [Przyrostowe wyodrębnianie tabel](#przyrostowe-wyodrębnianie-tabel).
+
+6. Na karcie **Widoczność i definicja** ustaw **Kolumna objęta nadzorem**. Zobacz [Kolumna objęta nadzorem](#kolumna-objęta-nadzorem).
+
+</Steps>
+
+Kolumna kwoty `CURR`, której klucz waluty znajduje się w tej samej tabeli, trafia z prawdziwą wartością. PlaidCloud przesuwa każdą kwotę o liczbę miejsc dziesiętnych jej waluty, więc kwota w jenach japońskich trafia w pełnych jenach. Kolumna kwoty bez klucza waluty trafia tak, jak przechowuje ją SAP, a uruchomienie zgłasza ostrzeżenie wskazujące kolumnę.
+
+**Klient SAP (mandt)** i **Rozmiar porcji** są opcjonalne. Pozostaw klienta pustego, aby użyć domyślnego klienta połączenia.
+
+## Uruchamianie transakcji lub raportu
+
+Użyj **SAP: uruchom transakcję / raport**.
+
+<Steps>
+
+1. Na karcie **Uruchomienie SAP** wyszukaj transakcję i wybierz ją albo wpisz nazwę programu raportu w **Report/Program** i kliknij **Wyszukaj ekran selekcji**. Wybierz jedno albo drugie.
+
+2. Na karcie **Filtry** wypełnij ekran selekcji. Formularz buduje go z własnego ekranu selekcji SAP dla transakcji lub raportu. Puste pole oznacza uruchomienie bez filtrowania dla tego pola.
+
+   Aby zacząć od zapisanego wariantu SAP, wybierz go z **Zacznij od wariantu SAP**. PlaidCloud wypełnia formularz filtrów zapisanymi wartościami wariantu i wyświetla obok formularza te wartości wariantu, których nie udało się przenieść — SAP używa dla nich własnych wartości domyślnych raportu. Wybranie innego wariantu zastępuje wartości formularza; późniejsza edycja pola nie zmienia tego, który wariant jest pokazany jako wybrany.
+
+3. Ustaw **Maks. liczba wierszy** — domyślnie 10 000, do 50 000. SAP i tak uruchamia całą transakcję lub raport, a limit ogranicza wiersze odczytywane z powrotem przez PlaidCloud.
+
+4. Dla długo działającego raportu zaznacz **Run as a background job** i opcjonalnie podaj **Nazwa zadania (tylko asynchronicznie)**.
+
+5. Na karcie **Widoczność i definicja** ustaw **Kolumna objęta nadzorem**.
+
+</Steps>
+
+Raport wymagający interaktywnych danych wejściowych, okna dialogowego lub ekranu nie może działać bez nadzoru. SAP go odrzuca, nic nie jest zapisywane, a krok zgłasza przyczynę podaną przez SAP. Uruchom taki raport w SAP GUI.
+
+## Uruchamianie zapytania SAP Query
+
+Użyj **SAP: uruchom zapytanie (SQ01)**.
+
+<Steps>
+
+1. Na karcie **Uruchomienie SAP** wyszukaj zapytanie i wybierz je. Wybranie zapytania wypełnia **Obszar roboczy**, **Grupa użytkowników** i **Nazwa zapytania**. Możesz też wybrać **Obszar roboczy** i wpisać **Grupa użytkowników** oraz **Nazwa zapytania** bezpośrednio.
+
+2. Na karcie **Filtry** wypełnij własny ekran selekcji zapytania — te same parametry i opcje wyboru, które jego autor skonfigurował w SQ01. Puste pole oznacza uruchomienie bez filtrowania dla tego pola.
+
+3. Ustaw **Maks. liczba wierszy** — domyślnie 10 000, do 50 000.
+
+4. Na karcie **Widoczność i definicja** ustaw **Kolumna objęta nadzorem**.
+
+</Steps>
+
+Zmiana **Obszar roboczy**, **Grupa użytkowników** lub **Nazwa zapytania** czyści formularz filtrów zbudowany dla innego zapytania — po zmianie wyszukaj ekran selekcji ponownie.
+
+## Kolumna objęta nadzorem
+
+Każdy krok wyodrębniania z SAP wymaga **Kolumna objęta nadzorem**: jednej z kolumn zapisywanych przez krok, takiej jak `BUKRS` dla kodu spółki. Krok nie zapisze się bez niej, a uruchomienie nie zapisze żadnych wierszy, jeśli ta kolumna nie należy do zapisywanych kolumn.
+
+## Podgląd, plan i autoryzacje
+
+Grupa **Kontrola wstępna** w każdym kroku ma trzy przyciski. Żaden z nich nie blokuje zapisania kroku.
+
+| Przycisk | Co pokazuje |
+|---|---|
+| **Podgląd** | Przykładowe wiersze. Podgląd tabeli odczytuje pierwsze wiersze bezpośrednio. Dla transakcji, raportu lub zapytania podgląd uruchamia je w SAP jako osobną próbkę ograniczoną do 100 wierszy, więc formularz najpierw prosi o potwierdzenie. Nic nie jest zapisywane. |
+| **Plan** | Jak przebiega wyodrębnienie — jego kolumny kluczowe, szacowana liczba wierszy i selekcja wysyłana do SAP — oraz wszystko, co mogłoby je zatrzymać. Odmowa planu wyłącza **Utwórz i uruchom** oraz **Zapisz i uruchom**, dopóki nie zmienisz konfiguracji lub nie zostanie zwrócony nowy, poprawny plan. Nadal możesz zapisać krok. |
+| **Wymagane autoryzacje SAP** | Autoryzacje SAP potrzebne dla obiektu, do przekazania zespołowi Basis. Ta lista ma charakter informacyjny. |
+
+<Aside type="caution">
+Podgląd transakcji, raportu lub zapytania kosztuje SAP mniej więcej tyle samo, co rzeczywiste uruchomienie, ponieważ SAP wykonuje całość, zanim zwróci jakiekolwiek wiersze.
+</Aside>
+
+## Autoryzacje SAP
+
+Standardowe kontrole autoryzacji SAP mają zastosowanie do użytkownika RFC dokładnie tak, jak wewnątrz SAP.
+
+| Wyodrębnienie | Autoryzacja |
+|---|---|
+| Tabela | `S_TABU_NAM` lub `S_TABU_DIS` wyświetlanie, czynność `03` |
+| Transakcja | `S_TCODE` |
+| Raport | `S_PROGRAM` `SUBMIT` dla grupy autoryzacji raportu |
+
+Brak autoryzacji powoduje niepowodzenie uruchomienia z błędem braku uprawnień SAP i wskazówką naprawczą z listą poprzedzających uprawnień. PlaidCloud nie dodaje własnych kontroli uprawnień i nigdy nie blokuje kroku na podstawie listy **Wymagane autoryzacje SAP**.
+
+## Przyrostowe wyodrębnianie tabel
+
+Na karcie **Przyrostowe** kroku **SAP: wyodrębnienie ad hoc** zaznacz **Run incrementally** i wprowadź **Kolumna znacznika**. Musi to być jedna z następujących:
+
+- Kolumna daty, typ SAP `DATS`
+- Kolumna znacznika czasu UTC, typ SAP `TZNTSTMPS` lub `TZNTSTMPL`
+
+Kolumny znaczników czasu typu SAP `UTCL` nie są obsługiwane, a kolumna znacznika nie może być jednocześnie kolumną filtra ograniczającego.
+
+Pierwsze uruchomienie odczytuje całą tabelę. Każde kolejne odczytuje tylko wiersze od ostatniego znacznika wzwyż, pomniejszonego o **Okres wsteczny**, i scala je według kolumn kluczowych. Znacznik przesuwa się dopiero po zapisaniu całego uruchomienia. Otwarta data SAP `99991231` nigdy nie zostaje znacznikiem. Data późniejsza niż dzień po dacie uruchomienia utrzymuje znacznik na dacie uruchomienia, a znacznik czasu nigdy nie przesuwa go poza początek uruchomienia.
+
+## Jak trafiają kolumny
+
+**SAP: wyodrębnienie ad hoc** zapisuje każdą kolumnę z jej rzeczywistym typem ze słownika danych SAP.
+
+| Typ SAP | Trafia jako |
+|---|---|
+| Data (`DATS`) | Data. Puste, początkowe i nieprawidłowe daty trafiają jako puste (`NULL`). Nieprawidłowa data kończy krok z ostrzeżeniem. |
+| Kwota, ilość, liczba dziesiętna (`CURR` / `QUAN` / `DEC`) | Dokładna liczba dziesiętna. Gdy kolumna klucza waluty kwoty znajduje się w tej samej tabeli i w wyodrębnieniu, PlaidCloud przesuwa kwotę do prawdziwej liczby miejsc dziesiętnych waluty. W przeciwnym razie trafia tak, jak przechowuje ją SAP. Liczba dziesiętna z więcej niż 10 miejscami dziesiętnymi, więcej niż 28 cyframi całkowitymi lub bez zadeklarowanych miejsc dziesiętnych trafia zamiast tego jako tekst, a krok kończy się ostrzeżeniem wskazującym kolumnę. |
+| Liczba całkowita | Liczba całkowita. |
+| Zmiennoprzecinkowa (`FLTP`) | Double. |
+| Dziesiętna zmiennoprzecinkowa (`DF16_*` / `DF34_*`) | Dokładny tekst. |
+| Krótki znacznik czasu UTC (`TZNTSTMPS`) | Znacznik czasu, z dokładnością do sekundy. |
+| Długi znacznik czasu UTC (`TZNTSTMPL`, `UTCL`) | Tekst ISO UTC, taki jak `2026-01-03T10:15:00.123456Z` — zachowuje ułamek, który kolumna znacznika czasu by pominęła. |
+| Czas (`TIMS`), kod (`NUMC`), tekst (`CHAR`) | Tekst dokładnie tak, jak przechowuje go SAP, z zachowanymi zerami wiodącymi. |
+
+Jeśli typ SAP kolumny się zmieni, wyodrębnienie zastępuje całą tabelę z nowym typem kolumny, a krok kończy się ostrzeżeniem wskazującym kolumnę. Wyodrębnienie przyrostowe robi to w tym samym uruchomieniu. Jeśli ten odczyt się nie zakończy, kolejne uruchomienia nadal odczytują całą tabelę, z tym samym ostrzeżeniem, aż jedno się powiedzie — wtedy uruchomienia przyrostowe są wznawiane.
+
+**SAP: uruchom transakcję / raport** zapisuje kolumny kwot jako liczby. Każda inna kolumna trafia jako tekst. **SAP: uruchom zapytanie (SQ01)** zapisuje kolumny kwot, liczb całkowitych i dat z tymi typami. Każda inna kolumna trafia jako tekst. Tam, gdzie potrzebujesz typów, przekonwertuj je w kolejnym kroku.
+
+## Limity uruchomienia
+
+Pojedyncze uruchomienie **SAP: wyodrębnienie ad hoc** wstrzymuje się po odczytaniu 5 000 000 wierszy lub po 240 minutach działania, po dokończeniu bieżącej porcji. Krok kończy się ostrzeżeniem, a nie niepowodzeniem, a następne uruchomienie kontynuuje od miejsca zatrzymania bez utraty wierszy.
+
+## Powiązane
+
+- [Łącznik SAP ECC i S/4HANA](/pl/reference/connectors/erp/sap-ecc/) — pola połączenia.
+- [Kroki SAP](/pl/reference/workflow-steps/sap/) — każdy krok przepływu pracy SAP.
+- [PlaidLink](/pl/reference/cli/plaidlink/) — instalowanie i uaktualnianie agentów.

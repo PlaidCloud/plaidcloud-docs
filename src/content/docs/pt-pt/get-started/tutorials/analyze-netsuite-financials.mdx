@@ -1,0 +1,230 @@
+---
+title: Analisar as Finanças do NetSuite — da Ligação à Demonstração de Resultados
+description: Tutorial completo do NetSuite — ligue, extraia o razão geral com SuiteQL, transforme-o numa demonstração de resultados mensal e numa antiguidade de saldos a receber, coloque-os num painel de controlo e agende a atualização.
+sidebar:
+  label: Analisar as Finanças do NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~45 minutos · uma ligação ativa ao NetSuite, um razão geral carregado, uma demonstração de resultados mensal, uma antiguidade de saldos a receber e uma atualização agendada*
+
+Este é o percurso do primeiro dia para um controller ou analista de FP&A: no final, terá extraído o seu **razão geral** diretamente do NetSuite, transformado-o numa **demonstração de resultados mensal** que se lê como um relatório financeiro, criado uma **antiguidade de saldos a receber**, colocado ambos num painel de controlo e configurado tudo para se atualizar sozinho. Sem exportações para folhas de cálculo, sem reintrodução manual — os números vêm do NetSuite e mantêm-se atuais.
+
+Liga-se uma vez, extrai uma vez e depois faz a parte que realmente importa: transformar as linhas em bruto do razão geral nos resumos que um responsável de negócio lê na manhã de segunda-feira.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Cinco fases da esquerda para a direita: NetSuite, um passo Pedido REST que executa SuiteQL, uma tabela do razão geral carregada, um passo Table Extract que agrupa e resume, e uma demonstração de resultados com painel de controlo, alimentando uma atualização agendada." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Extração SuiteQL</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabela do razão</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agrupar &amp; somar</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Resultados</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Ligue, extraia o razão geral uma vez e transforme-o em demonstrações que pode ler — tudo reexecutável de forma agendada.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Uma área de trabalho PlaidCloud e um projeto para trabalhar ([comece uma avaliação](https://app.plaidcloud.com) se precisar de uma).
+- **Uma ligação ao NetSuite a funcionar.** Siga primeiro [Ligar ao NetSuite](/pt-pt/guides/connections/netsuite/) — precisa de OAuth 2.0 e dos REST Web Services ativados no NetSuite, do ID de cliente da integração, de um ID de certificado, do ID da sua conta e do PEM da chave privada. Confirme que **Enviar pedido de teste** está a verde antes de começar aqui.
+- Não é necessário SQL para transformar os dados — fá-lo-á com passos de transformação padrão. O único texto de consulta é a **extração** do NetSuite, e todas as consultas de extração são fornecidas. Mantenha [Exemplos de consultas SuiteQL do NetSuite](/pt-pt/guides/connections/netsuite-financial-queries/) aberto num separador; este tutorial baseia-se nele.
+
+<Aside type="note">
+O único local onde escreve texto de consulta é a **extração** do NetSuite — isso é **SuiteQL**, que é executado *dentro do NetSuite*. Tudo o que vem depois — agrupar o razão geral numa demonstração de resultados, distribuir os saldos a receber por escalões — é feito com os passos de transformação do PlaidCloud, por apontar e clicar, sem SQL. (Se preferir SQL, existe um passo Extrair SQL para isso, mas não vai precisar dele aqui.)
+</Aside>
+
+## Passo 1: Criar um Fluxo de Trabalho
+
+O fluxo de trabalho é o pipeline que extrai e transforma os dados.
+
+<Steps>
+
+1. Abra o seu projeto e mude para o separador **Fluxos de trabalho**.
+2. Clique em **Novo fluxo de trabalho**, dê-lhe um nome como `NetSuite Financials` e abra-o.
+
+</Steps>
+
+## Passo 2: Extrair o Razão Geral
+
+Uma única consulta SuiteQL fornece um ano de movimentos contabilísticos — todas as contas, todos os meses — o suficiente para criar uma demonstração de resultados e, mais tarde, outras demonstrações.
+
+<Steps>
+
+1. Adicione um [passo Pedido REST](/pt-pt/guides/workflows/rest-request-step/). No separador **Pedido**, defina **Ligação** como a sua ligação ao NetSuite, **Método** como `POST` e **Endpoint** como `/services/rest/query/v1/suiteql`.
+
+2. No **Corpo**, coloque este SuiteQL envolvido em `{"q": "…"}`:
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. No separador **Resposta**, defina o destino como **Tabela** — chame-lhe `netsuite_gl` — e defina os tipos de coluna: `amount` → **Moeda**, tudo o resto → **Texto**. (O SuiteQL devolve números e datas como texto; o tipo é o que permite somar `amount`.)
+
+4. Clique em **Enviar pedido de teste** para confirmar que funciona e, em seguida, execute o passo. Passa a ter uma tabela `netsuite_gl`: uma linha por conta e por mês, com um valor de lançamento com sinal.
+
+</Steps>
+
+<Aside type="note">
+`amount` é **positivo a débito, negativo a crédito** — a convenção do razão geral do NetSuite. É a verdade em bruto; o passo seguinte transforma-a numa demonstração legível. Se os seus livros abrangem mais do que uma subsidiária ou moeda, filtre por uma subsidiária (`t.subsidiary = <id>`) — consulte o aviso sobre multimoeda nos [exemplos de consultas](/pt-pt/guides/connections/netsuite-financial-queries/#convenções-utilizadas-em-todas-as-receitas).
+</Aside>
+
+## Passo 3: Transformar o Razão Geral numa Demonstração de Resultados
+
+Agora a análise, feita com uma única transformação por apontar e clicar — sem SQL. Uma demonstração de resultados é apenas o razão geral agregado: contas de rendimentos e gastos, agrupadas em algumas linhas, com o sinal invertido para que a receita surja positiva. Um [passo Table Extract](/pt-pt/reference/workflow-steps/tables/table-extract/) faz tudo isto nos separadores **Seleção de dados da tabela** e **Filtros de dados**.
+
+<Steps>
+
+1. Adicione um passo **Table Extract**. Defina a **Origem** como `netsuite_gl` e o **Destino** como uma nova tabela, `netsuite_pnl`.
+
+2. No separador **Filtros de dados**, mantenha apenas as contas de rendimentos e gastos (deixe de fora as contas do balanço): adicione um filtro em que **`account_type` é um de** `Income`, `OthIncome`, `COGS`, `Expense`, `OthExpense`.
+
+3. No separador **Seleção de dados da tabela**, clique em **Resumir** para ativar a agregação e, em seguida, configure três colunas de destino:
+
+   - **`period`** — mapeada diretamente a partir da origem. Resumir **Agrupar por**.
+   - **`pnl_line`** — uma **expressão** (abaixo) que transforma cada tipo de conta numa linha do relatório. Resumir **Agrupar por**.
+   - **`amount`** — uma **expressão** `netsuite_gl.amount * -1` (a inversão do sinal). Resumir **Soma**.
+
+   Para `pnl_line`, faça duplo clique na respetiva célula de **expressão** e introduza (o editor permite apontar e clicar nas colunas e na função `case` do grupo **Condições**):
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. Execute o passo.
+
+</Steps>
+
+A expressão `amount * -1` é o único movimento contabilístico: negar o valor positivo a débito torna a **receita positiva e os custos negativos**, pelo que as três linhas de cada mês *somam o resultado líquido*. Depois, **Soma** com **Agrupar por** em `period` e `pnl_line` agrega todas as contas nessas três linhas por mês. As expressões usam o editor de apontar e clicar do PlaidCloud — consulte [Utilização avançada do Data Mapper](/pt-pt/reference/workflow-steps/common/advanced-data-mapper-usage/) e a [referência de expressões](/pt-pt/reference/expressions/).
+
+<Aside type="tip">
+Agrupar várias dezenas de contas em três linhas é deliberadamente grosseiro para uma primeira abordagem. Para repartir os Gastos operacionais por departamento, adicione `department` (através de `BUILTIN.DF(tl.department)`, juntando `transactionline`) à extração do Passo 2 e, em seguida, adicione `department` como mais uma coluna de **Agrupar por** aqui.
+</Aside>
+
+## Passo 4: Ler Como um Profissional de Finanças
+
+Abra a tabela `netsuite_pnl`. Para cada mês, tem três números:
+
+| period | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+Leia diretamente a partir dela:
+
+- **Lucro bruto** = Receita + Custo das mercadorias vendidas (o CMV já é negativo) → `486,200 − 190,540 = 295,660`.
+- **Resultado líquido** = a soma das três linhas → `82,780`.
+- **Margem bruta %** = lucro bruto ÷ receita → ~61%.
+
+A primeira coisa a fazer é **reconciliar**: execute a Demonstração de Resultados do próprio NetSuite para o mesmo mês e confirme que a receita e o resultado líquido coincidem. Se não coincidirem, quase sempre se trata de uma diferença de âmbito — um filtro de subsidiária/moeda, ou o alinhamento entre período contabilístico e data da transação (consulte a [nota sobre períodos](/pt-pt/guides/connections/netsuite-financial-queries/#balancete)). Só confie no pipeline depois de reconciliar.
+
+<Aside type="tip">
+Quer o layout clássico com os meses na parte superior? Adicione um [passo Table Pivot](/pt-pt/reference/workflow-steps/tables/table-pivot/) a ler `netsuite_pnl`: transforme `period` em colunas, mantenha `pnl_line` como linha e some `amount`. Obtém uma coluna por mês e uma linha por rubrica da demonstração de resultados — a evolução mês a mês de relance, sem SQL.
+</Aside>
+
+## Passo 5: Criar uma Antiguidade de Saldos a Receber
+
+O segundo ganho do primeiro dia, que segue a mesma lógica de ligar, extrair e transformar. Comece pela receita de contas a receber em aberto e distribua-as depois por escalões consoante o atraso de cada fatura.
+
+<Steps>
+
+1. Adicione outro passo **Pedido REST** (mesma ligação, `POST`, o endpoint suiteql) com este corpo:
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   Carregue-o como `netsuite_open_ar`, com `invoice_total` e `amount_unpaid` → **Moeda**, `invoice_date` e `due_date` → **Data**, e o resto → **Texto**.
+
+2. Adicione um passo **Table Extract** a ler `netsuite_open_ar` para uma nova tabela `netsuite_ar_aging`. No separador **Seleção de dados da tabela**, clique em **Resumir** e configure três colunas de destino:
+
+   - **`aging_bucket`** — uma **expressão** (abaixo) que classifica cada fatura consoante o atraso. Resumir **Agrupar por**.
+   - **`invoices`** — qualquer coluna, por exemplo `invoice_number`. Resumir **Contagem**.
+   - **`balance`** — mapeada a partir de `amount_unpaid`. Resumir **Soma**.
+
+   Para `aging_bucket`, introduza esta expressão — mede os dias de atraso (uma data menos uma data dá dias) e atribui o escalão:
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. Execute-o. A `netsuite_ar_aging` indica agora, em cinco linhas, quanto está em dia face a quanto está em atraso há 30/60/90+ dias — a vista de cobranças que um responsável de negócio lê primeiro. (`due_date` tem de ter o tipo **Data** para a subtração de datas funcionar — definiu isso no separador **Resposta** do passo Pedido REST acima.)
+
+</Steps>
+
+## Passo 6: Colocá-lo num Painel de Controlo
+
+Os números numa tabela servem, mas um gráfico é o que se envia ao diretor financeiro. [Publique](/pt-pt/get-started/tutorials/load-and-transform-data/#passo-7-publicar-o-resultado) `netsuite_pnl` e `netsuite_ar_aging` e siga depois [Criar um painel de controlo](/pt-pt/get-started/tutorials/build-a-dashboard/) para adicionar:
+
+- um **gráfico de barras** do resultado líquido (ou da receita) por `period`, e
+- um **gráfico circular ou de barras** do `balance` a receber por `aging_bucket`.
+
+Fica com um painel de controlo financeiro do NetSuite em direto — sem exportações, atualizado sempre que o fluxo de trabalho é executado.
+
+## Passo 7: Agendar a Atualização
+
+<Steps>
+
+1. Execute o fluxo de trabalho completo uma vez, do início ao fim, para confirmar que todos os passos estão a verde.
+2. [Agende o fluxo de trabalho](/pt-pt/get-started/tutorials/schedule-a-workflow/) — mensalmente, no ritmo do fecho, ou todas as noites se quiser a antiguidade de saldos atualizada cada manhã.
+
+</Steps>
+
+Como cada extração substitui a tabela inteira, cada execução volta a extrair a parcela definida pela respetiva cláusula `WHERE` — limite-as à janela de que precisa (o ano em curso, apenas faturas em aberto) em vez de todo o histórico.
+
+## O Que Construiu
+
+Partindo de um fluxo de trabalho vazio, extraiu o razão geral e as contas a receber do NetSuite em direto, transformou-os numa **demonstração de resultados mensal** e numa **antiguidade de saldos a receber** com dois passos de transformação padrão — sem SQL —, colocou-os num painel de controlo e configurou-os para se atualizarem — o ciclo de relatórios essencial de uma equipa financeira, agora automatizado.
+
+## Para Onde Ir a Seguir
+
+- [Exemplos de consultas SuiteQL do NetSuite](/pt-pt/guides/connections/netsuite-financial-queries/) — balancete, balanço, encomendas de venda em aberto, encomendas de compra e inventário para adicionar ao mesmo fluxo de trabalho.
+- [Passo Table Extract](/pt-pt/reference/workflow-steps/tables/table-extract/) e [Utilização avançada do Data Mapper](/pt-pt/reference/workflow-steps/common/advanced-data-mapper-usage/) — agrupamento, filtragem e colunas calculadas para uma análise mais aprofundada.
+- [Conceber uma hierarquia de dimensão](/pt-pt/get-started/tutorials/design-a-dimension/) — agregue o seu plano de contas em grupos de relatório que controla.
+- [Criar um painel de controlo](/pt-pt/get-started/tutorials/build-a-dashboard/) — o guia completo do painel de controlo.

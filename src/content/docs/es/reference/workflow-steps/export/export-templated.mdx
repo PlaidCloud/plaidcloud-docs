@@ -1,0 +1,81 @@
+---
+title: Export Templated
+description: Renderice tablas de proyecto mediante una plantilla de documento para producir un archivo de salida con formato en lugar de un volcado de datos sin procesar.
+sidebar:
+  order: 17
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/export/export-templated.mdx
+---
+
+import SnippetCommonDataMapper from '@snippets/es/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/es/common-data-filter.mdx';
+
+## Descripción
+
+Renderiza tablas de proyecto mediante una plantilla para producir un documento estructurado, en lugar del volcado de columnas sin procesar que escriben los demás pasos de exportación. Úselo cuando el sistema receptor requiera una forma XML concreta, u otro formato de texto, en lugar de una tabla.
+
+## Elementos de configuración únicos
+
+### Plantilla de origen
+
+La plantilla Jinja a partir de la cual se renderiza la salida. Consulte [Qué puede usar una plantilla](#qué-puede-usar-una-plantilla).
+
+### Salida de destino
+
+La cuenta de documentos, la carpeta y el nombre de archivo del resultado renderizado. La plantilla decide qué contiene el archivo; a un nombre de archivo sin extensión se le asigna `.xml`.
+
+**Usar DataFrames de Pandas para los datos de la tabla** cambia la forma en que las filas de cada origen llegan a la plantilla. Consulte [Filas de origen como tabla](#filas-de-origen-como-tabla).
+
+### Tabla de origen
+
+Indique las tablas de forma explícita o encuéntrelas por ruta y una regla de búsqueda: exacta, comienza por, termina en, contiene o glob.
+
+## Qué puede usar una plantilla
+
+La plantilla se renderiza en un entorno aislado: lee los datos que le proporciona el paso y nada más.
+
+- **Cada origen, por su Nombre.** Cada tabla de origen que indique está disponible para la plantilla con el **Nombre** que le dé, así que use un nombre que funcione como variable, como `invoices`.
+- **Las variables del flujo de trabajo**, como `variable`; por ejemplo, `{{ variable.region }}`.
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### Filas de origen como lista
+
+Con **Usar DataFrames de Pandas para los datos de la tabla** desactivado, un origen es una lista de filas de solo lectura. Recórrala en un bucle o use `|length`, `keys()`, `first()`, `one()`, `all()`, `scalar()`, `scalars()`, `mappings()`, `fetchmany(n)` y `columns('a', 'b')`. Lea un valor de una fila como `row.amount`, `row['amount']` o `row[0]`; también funcionan `row._mapping`, `row._asdict()` y `row._fields`. Las filas de `columns('a', 'b')` admiten `row.amount` o `row[0]`, no `row['amount']`.
+
+### Filas de origen como tabla
+
+Con **Usar DataFrames de Pandas para los datos de la tabla** activado, un origen es una tabla de solo lectura. Al recorrerla en un bucle se obtiene cada fila como un diccionario, de modo que `row.amount` y `row['amount']` funcionan ambos. También puede usar:
+
+- `columns`, `empty`, `shape`, `values` e `index`
+- `head(n)` y `tail(n)`
+- `itertuples()`, que coloca la posición de la fila en primer lugar como `Index`, de modo que `r[1]` es la primera columna; `itertuples(index=False)` la omite
+- `iterrows()`, que proporciona la posición de la fila y la fila
+- `invoices['amount']`, los valores de una columna, con `sum()`, `min()`, `max()`, `mean()`, `unique()` y `tolist()`; `sum`, `min`, `max` y `mean` omiten los nulos
+
+Otros métodos de pandas, como `loc` y `groupby`, no están disponibles. Dé forma a los datos en un paso anterior y exporte el resultado.
+
+### Lo que una plantilla no puede hacer
+
+- Llamar a un método cuyo nombre empiece por `to_`, en cualquier valor: `to_csv` y `to_json`, y también otros inofensivos como `to_pydatetime`.
+- Leer un atributo cuyo nombre empiece por un guion bajo, salvo `_mapping`, `_asdict` y `_fields` de una fila.
+- Escribir o abrir archivos.
+
+Una llamada a `to_` o una operación con archivos hace fallar el paso. Un atributo con guion bajo distinto de esos tres simplemente no se renderiza.
+
+## Elementos de configuración comunes
+
+<SnippetCommonDataMapper checksSourceTable />
+
+<SnippetCommonDataFilter />
+
+## Relacionado
+
+- [Pasos de exportación](/es/reference/workflow-steps/export/)
+- [Export To XML](/es/reference/workflow-steps/export/export-to-xml/): para XML sin plantilla
+- [Pasos de informe](/es/reference/workflow-steps/reports/): para informes PDF creados a partir de plantillas

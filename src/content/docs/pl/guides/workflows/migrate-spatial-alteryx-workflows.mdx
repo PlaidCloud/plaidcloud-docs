@@ -1,0 +1,120 @@
+---
+title: Migracja przestrzennych przepływów pracy Alteryx
+description: Spakuj zależności przestrzenne, zaimportuj przestrzenny przepływ pracy Alteryx i zweryfikuj skonwertowaną geometrię względem oryginalnych wyników.
+sidebar:
+  order: 37
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-spatial-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud konwertuje przestrzenne przepływy pracy Alteryx na zaawansowane przepływy pracy zbudowane z
+[kroków geoprzestrzennych](/pl/reference/workflow-steps/spatial/). Każde narzędzie z palety Spatial
+programu Alteryx ma swoją trasę konwersji — [tabela pokrycia narzędzi przestrzennych](/pl/reference/alteryx-conversion-matrix/#obsługa-narzędzi-przestrzennych)
+wymienia je narzędzie po narzędziu wraz ze znanymi lukami.
+
+Ten przewodnik omawia mechanikę: pakowanie plików, uruchamianie importu i weryfikację
+wyniku. Informacje o tym, co robią kroki po konwersji, znajdziesz w
+[analizie geoprzestrzennej](/pl/guides/workflows/geospatial-analytics/).
+
+## Pakowanie danych wejściowych przestrzennych
+
+Zbierz wszystkie zależności przestrzenne przed importem. Skonwertowany przepływ pracy może
+odczytać tylko te pliki, które zostały z nim dostarczone.
+
+- Grupy plików shapefile: `.shp` wraz z `.shx`, `.dbf` i `.prj`.
+- Grupy plików MapInfo: `.tab` wraz z `.map`, `.id` i `.dat`.
+- Pliki KML i GeoJSON.
+- Tabele przeglądowe łączące rekordy przestrzenne i nieprzestrzenne.
+- Oczekiwane wyniki przestrzenne, do weryfikacji.
+
+Przechowuj pliki pomocnicze każdej grupy w tym samym folderze co plik główny —
+[Import pliku przestrzennego](/pl/reference/workflow-steps/spatial/spatial-file-import/)
+odczytuje je z tej samej lokalizacji.
+
+<Aside type="caution" title="Plik GeoFile .geo nie podlega konwersji">
+  Własnościowy binarny format `.geo` programu Alteryx nie może zostać odczytany. Konwersja
+  kończy się w tym przypadku odmową, zamiast tworzyć import, który zawiesiłby się
+  w czasie wykonania. Przed importem wyeksportuj te warstwy ponownie jako shapefile lub GeoJSON.
+</Aside>
+
+## Jak konwertowane są narzędzia przestrzenne
+
+Konwersja wybiera najprostszą trasę, która daje poprawny wynik, a trasa
+określa sposób skalowania kroku.
+
+**Trasa bazodanowa (SQL).** Create Points i Distance stają się
+[wyrażeniami Table Extract](/pl/reference/workflow-steps/spatial/spatial-sql-recipes/);
+Spatial Match i Find Nearest stają się krokami [Dopasowanie przestrzenne](/pl/reference/workflow-steps/spatial/spatial-match/) oraz
+[Spatial Find Nearest](/pl/reference/workflow-steps/spatial/spatial-find-nearest/).
+Działają one w całości w hurtowni danych, więc skalują się razem z tabelą.
+
+**Trasa silnika przepływów pracy.** Wszystko, co zmienia kształt geometrii — Buffer, Trade
+Area, Generalize, Smooth, Process, Poly-Build, Poly-Split, Make Grid, Combine,
+Spatial Info oraz import pliku przestrzennego — działa w silniku przepływów pracy
+na bibliotekach Shapely i GDAL, ponieważ tej pracy nie da się wyrazić w SQL bazy danych.
+
+**Raportowanie.** Map i Report Map stają się krokami
+[Report Map](/pl/reference/workflow-steps/reports/report-map/); pakietowe makra Heat Map
+i Pie Wedge Trade Area stają się
+[krokami makr pakietowych](/pl/reference/workflow-steps/macros/).
+
+Każdy skonwertowany krok jest pełnoprawnym typem kroku, który można otworzyć, edytować i odbudować
+ręcznie. Wyjątkiem są Make Grid i Poly-Split: są konwertowane i działają, ale
+na razie konfiguruje się je przez API lub MCP, a nie w formularzu projektanta. Informacje o wymaganiach
+wstępnych dotyczących danych wejściowych narzędzi przestrzennych znajdziesz w sekcji
+[Znane wymagania wstępne dla narzędzi przestrzennych](/pl/reference/alteryx-conversion-matrix/#znane-wymagania-wstępne-dla-danych-przestrzennych).
+
+## Weryfikacja geometrii
+
+Aby sprawdzić zgodność wyników przestrzennych, porównaj:
+
+1. Schemat wyjściowy.
+2. Liczbę wierszy.
+3. Wartości pól klucza.
+4. Wartości geometrii lub miary wyprowadzone z geometrii.
+5. Zachowanie układu współrzędnych.
+6. Odległości, powierzchnie i uproszczoną geometrię, z przyjętą tolerancją.
+
+Kolejność wierszy nie musi być zgodna, chyba że przepływ pracy zależy od kolejności.
+
+<Aside type="note" title="Powierzchnie i długości mogą się różnić — zwykle na korzyść">
+  [Spatial Info](/pl/reference/workflow-steps/spatial/spatial-info/) mierzy geodezyjnie
+  na sferoidzie WGS84. Jeśli porównujesz z pomiarem płaskim, spodziewaj się różnicy
+  rzędu 25% na szerokościach geograficznych USA; wartość geodezyjna jest tą, która
+  odpowiada wynikowi z Alteryx.
+</Aside>
+
+## Weryfikacja artefaktów przestrzennych
+
+W przypadku map i raportów map sprawdź, czy:
+
+1. Warstwy map zawierają oczekiwane rekordy.
+2. Etykiety i pogrupowane obiekty są poprawne.
+3. Granice, punkty i wielokąty pojawiają się w oczekiwanych miejscach.
+4. Artefakt jest użyteczny dla dalszych recenzentów.
+5. Każda zamierzona różnica w artefakcie natywnym dla chmury jest odnotowana.
+
+Moduły renderujące raporty tylko przybliżają wynik z Alteryx — zweryfikuj tabelę
+stojącą za mapą, zanim zaczniesz porównywać układ wizualny.
+
+## Typowe problemy przestrzenne
+
+| Objaw | Co sprawdzić |
+| --- | --- |
+| Import tworzy wiersze z pustą geometrią | Czy pliki pomocnicze znajdują się w tym samym folderze |
+| Współrzędne trafiają w niewłaściwe miejsce | Czy istnieje plik projekcji (`.prj`); współrzędne Create Points są zmiennoprzecinkowe lub całkowite (×1 000 000) długość/szerokość geograficzna — współrzędne rzutowane trzeba najpierw przekształcić do WGS84 wcześniej w przepływie |
+| Powierzchnie lub długości różnią się od oryginału | Pomiar płaski a geodezyjny, zgodnie z powyższą uwagą |
+| Brakuje kolumny Spatial Info | Miarą jest [klucz Peano](/pl/reference/alteryx-conversion-matrix/#znane-wymagania-wstępne-dla-danych-przestrzennych), jedyna miara bez publicznej specyfikacji; konwersja wymienia ją w uwadze |
+| Obszary handlowe mają niewłaściwy rozmiar | Wymiarowanie według czasu dojazdu nie podlega konwersji — tylko stały promień |
+| Krok Find Nearest odmawia z powodu odległości | Krok najbliższej odległości mierzy tylko w milach, kilometrach, metrach lub stopach; jardy, mile morskie i czas dojazdu są odrzucane, podobnie jak maksymalna odległość, która nie jest liczbą |
+| Narzędzie przestrzenne odmawia, wskazując siebie z nazwy | Geocoder nie ma odpowiednika w PlaidCloud — wymaga usługi geokodowania i danych referencyjnych, których platforma nie zawiera; komunikat odmowy podaje, które narzędzie i dlaczego |
+| Liczby wierszy się różnią | Czy w obu uruchomieniach użyto tych samych danych źródłowych |
+
+## Powiązane przewodniki
+
+- [Analiza geoprzestrzenna](/pl/guides/workflows/geospatial-analytics/)
+- [Kroki geoprzestrzenne](/pl/reference/workflow-steps/spatial/)
+- [Pakowanie zależności Alteryx](/pl/guides/workflows/package-alteryx-dependencies/)
+- [Weryfikacja raportów i artefaktów Alteryx](/pl/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/)

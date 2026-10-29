@@ -1,0 +1,72 @@
+---
+title: "ML: スコアリング"
+description: 学習済みのモデルテーブルでデータテーブルをスコアリングし、予測列を追加します。
+sidebar:
+  order: 23
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-score.mdx
+---
+
+## 説明
+
+**ML: スコアリング**ステップは、[ML: モデルの学習](/ja/reference/workflow-steps/machine-learning/ml-train/)で学習したモデルでデータテーブルをスコアリングし、予測列を1つ追加したデータを書き出します。モデルは通常のテーブルとして渡されるため、一度学習すれば多数のテーブルをスコアリングでき、新しいデータが届くたびに再スコアリングもできます。このステップは、管理されたPlaidCloudジョブとして実行されます（LLMステップと同様です）。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 190" role="img" aria-label="ML スコアリングは、学習済みのモデルを新しい行に適用します。保存されたモデルアーティファクトと、特徴量の列だけを持つ新しい行がスコアリングステップに渡され、各行に予測列が追加されます。" style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="ms-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="18" width="158" height="46" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="95" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">モデルアーティファクト</text>
+  <text x="95" y="56" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">ML: モデルの学習から</text>
+  <rect x="16" y="104" width="158" height="52" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="95" y="128" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">新しい行</text>
+  <text x="95" y="145" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">特徴量のみ</text>
+  <path d="M174 46 C214 46 226 86 262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ms-arrow)" />
+  <path d="M174 128 C214 128 226 98 262 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ms-arrow)" />
+  <rect x="264" y="62" width="150" height="60" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">スコアリング</text>
+  <text x="339" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">モデルを適用</text>
+  <path d="M414 92 L484 92" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#ms-arrow)" />
+  <rect x="486" y="62" width="158" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="565" y="86" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">行 + 予測</text>
+  <text x="565" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-accent)">新しい列</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML スコアリングは、保存されたモデルを特徴量のみを持つ新しい行に適用し、各行に予測列を追加します。</figcaption>
+</figure>
+
+## スコアリングタブ
+
+- **データテーブル** — スコアリングするテーブルです。モデルの学習に使用したすべての特徴量の列が含まれている必要があります。
+- **モデルテーブル** — ML: モデルの学習ステップで書き出されたモデルテーブルです。テーブルが空の場合や、保存されたモデルの一部が欠けている場合、ステップは失敗します。
+- **出力テーブル** — スコアリングされたデータの書き込み先です。
+- **予測列** — 追加する列の名前です。空白の場合は `prediction` が使用されます。その名前がデータテーブルにすでに存在する場合、ステップは失敗します。
+
+## 出力
+
+出力テーブルには、データテーブルのすべての列に加えて予測列が含まれます。分類器ではテキストのクラスラベル、回帰器では数値です。特徴量の値は学習時とまったく同じように準備され、学習中にモデルが一度も見ていないカテゴリ値は、エラーにならず無視されます。
+
+モデルテーブルは、ML: モデルの学習ステップが書き出す形式である必要があります。つまり、モデルの列がすべて揃っていて、既知のアルゴリズムであり、保存されたモデルのすべての部分が存在している必要があります。モデル自体は、標準的な科学計算スタック以外のものを拒否する制限下で読み込まれるため、細工されたモデルの行によって任意のコードが実行されることはありません。
+
+### その他の出力列
+
+**スコアリング オプション**セクションには、次のフィールドがあります。変換されたKNIMEワークフローでも使用されます。
+
+- **クラス確率列**（`probability_column_template`）— 分類器では、クラスごとに1つの確率列を追加します。列名はこのテンプレートの `{class}` を置き換えたものになります。**予測の前に確率を配置**（`probabilities_first`）にすると、確率列が予測列の前に配置されます。**学習で最初に現れた順にクラスを並べる**（`classes_in_domain_order`）にすると、クラスは並べ替えられた順ではなく、学習データで最初に現れた順に並びます。
+- **信頼度列**（`confidence_column`）— 分類器では、最も確率の高いクラスの確率を、この名前で追加します。
+- **分散列**（`variance_column`）— フォレスト回帰器では、各ツリーの予測の分散を、この名前で追加します。
+- **モデル数の列**（`model_count_column`）— ツリーモデルでは、ツリーの数を、この名前で追加します。
+- **追加列の順序**（`column_order`）— 追加される列の順序です。空白の場合は、予測、確率、信頼度、分散、モデル数の順です。
+- **代わりに書き込む**（`report`）— スコアリングされたデータの代わりに、`variable_importance`、`coefficients`、`statistics`、`pmml`（PMML ドキュメントとしてのモデル）、`centers`、`cluster_counts`、`association_rules` など、モデル自体のテーブルのいずれかを書き込みます。
+- **モデル形式**（`model_format`）— `pmml` は、PMML ドキュメントを使ってスコアリングします。モデルテーブルがそのドキュメントを保持しているか、PMML形式を持つ学習器のモデルを保持している必要があります。
+- **アルゴリズムの設定**（`algorithm_settings`）— `pca` モデルが射影する成分の数など、モデルのアルゴリズムに固有の、スコアリングまたはレポートの設定です。
+- **3 つ目のテーブル**（`source_c`）— `knn_distance` モデルが使用するランダムフォレストなど、一部のアルゴリズムが読み取る3つ目のテーブルです。
+
+AIアシスタントまたはREST APIでは、`report` を `shap_values` に設定することもできます。
+
+## 制限と注意事項
+
+- **インメモリの作業セット** — データテーブルはメモリに読み込まれるため、このステップは1回の実行あたり約100万行を対象としています。
+- **変換されたAlteryxワークフロー** — 変換されたPredictツールは、予測列の名前を、ターゲット変数の名前に `_predicted` のサフィックスを付けたものに固定します。
+
+## 関連項目
+
+- [ML: モデルの学習](/ja/reference/workflow-steps/machine-learning/ml-train/) — このステップが使用するモデルテーブルを学習します。
+- [Alteryxワークフローの移行](/ja/guides/workflows/migrate-alteryx-workflows/#機械学習アシストモデリングの変換) — AlteryxのPredictツールがこのステップにどのように変換されるかを説明します。

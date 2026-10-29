@@ -1,0 +1,132 @@
+---
+title: Conectar con Xero
+description: Conecte PlaidCloud con Xero mediante una autorización OAuth con un solo clic, extraiga entidades de la API de contabilidad con el paso de importación de entidades predefinidas y luego contabilice asientos manuales, facturas, facturas de proveedor, pagos y notas de crédito.
+sidebar:
+  order: 16
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/xero.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud con la API de contabilidad de Xero para extraer el plan de cuentas, contactos, facturas, notas de crédito, pagos, asientos manuales y más sin escribir ninguna consulta a mano, y para contabilizar documentos de vuelta. Esta guía cubre la conexión, el paso de importación y el paso de contabilización.
+
+<Aside type="caution">
+Ejecute siempre cada importación primero en una organización de demostración y, antes de contabilizar en producción, revise cada lote con **Test Only Mode**, como se describe más abajo.
+</Aside>
+
+## Requisitos previos
+
+En Xero necesita lo siguiente:
+
+- Un inicio de sesión de Xero con acceso a la organización de la que desea leer y en la que desea contabilizar.
+- Permiso para autorizar una aplicación conectada para esa organización: Xero le pide que apruebe la autorización durante la configuración.
+
+Esa es toda la lista. PlaidCloud registra la aplicación OAuth, por lo que no hay que obtener ninguna cuenta de desarrollador, ID de cliente ni secreto de cliente.
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **REST - Xero** en el menú.
+
+3. Asigne un nombre a la conexión, por ejemplo, `Xero Prod`.
+
+4. Haga clic en **Conectar con Xero**, inicie sesión en Xero y apruebe el acceso a las organizaciones a las que desea que llegue PlaidCloud.
+
+5. **Estado de la conexión** informa ahora de cuántas organizaciones abarca la autorización. Elija en **Organización** aquella a la que se dirige esta conexión.
+
+6. Haga clic en `Create`.
+
+</Steps>
+
+<Aside type="note">
+PlaidCloud actualiza los tokens de Xero por usted y almacena cada token de actualización rotado, de modo que una conexión inactiva durante semanas sigue funcionando. Una autorización puede abarcar varias organizaciones, pero una conexión siempre se dirige exactamente a una: cree una segunda conexión de Xero para llegar a una segunda organización. La Demo Company de Xero es una organización como cualquier otra, de modo que una conexión de sandbox es aquella cuya **Organización** apunta a ella.
+</Aside>
+
+## Probar la conexión
+
+<Steps>
+
+1. Agregue un paso **Xero: importar entidad** a un flujo de trabajo.
+
+2. Establezca **Conexión de Xero** en su conexión, **Tipo de entidad** en `Chart of Accounts` y **Tabla de destino** en una tabla de prueba.
+
+3. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Una tabla de destino con datos confirma que la autorización y la selección de organización son correctas. Si hay un error, este indica el problema: una autorización caducada o una organización a la que el inicio de sesión ya no tiene acceso.
+
+## Importar datos
+
+<Steps>
+
+1. Agregue un paso **Xero: importar entidad** y establezca **Conexión de Xero** y **Tabla de destino**.
+
+2. Establezca **Tipo de entidad** en el registro que desea: plan de cuentas, contactos, facturas, notas de crédito, pagos, asientos de diario manuales, transacciones bancarias, artículos, categorías de seguimiento, tasas de impuestos o monedas.
+
+3. Acote la extracción con los filtros opcionales: **Estado** (un único estado de Xero, como `AUTHORISED` o `PAID`), **Fecha desde** y **Fecha hasta** (límites `YYYY-MM-DD` sobre la fecha de la entidad) y **Actualizado después de** (un límite de modificación desde una fecha).
+
+4. Ejecute el paso y revise la tabla de destino.
+
+</Steps>
+
+<Aside type="note">
+**Actualizado después de** no guarda ninguna marca de agua: PlaidCloud no recuerda dónde se detuvo la última ejecución, así que indique usted mismo el límite en cada ejecución para extraer de forma incremental. Artículos y monedas no documentan ningún filtro, y el plan de cuentas y los contactos aceptan un estado pero no un rango de fechas; Xero rechaza un filtro que su entidad no admite, por lo que el paso informa del error en lugar de devolver un conjunto de resultados incorrecto.
+</Aside>
+
+## Contabilizar documentos
+
+El paso **Xero: contabilizar documento** contabiliza cinco tipos de documento a través del mismo canal de escritura compartido que usan todos los pasos de contabilización de ERP: **ManualJournal**, **Invoice**, **Bill**, **Payment** y **CreditNote**.
+
+<Steps>
+
+1. Cree una **tabla de encabezados** (una fila por documento) con columnas para `ref` (el identificador de su documento), `doc_type` (`ManualJournal`, `Invoice`, `Bill`, `Payment` o `CreditNote`), `posting_date` y, cuando el tipo de documento las necesite, `currency_id`, `party_id` (el contacto de Xero), `memo` y `due_date`. Un Payment también admite `total_amt`, `deposit_account_id`, `bank_account_id` y `linked_invoice_id`; un CreditNote admite `credit_note_type` (`ACCRECCREDIT` para ventas, el valor predeterminado, o `ACCPAYCREDIT` para compras). Un solo lote puede mezclar tipos de documento: PlaidCloud lo divide por `doc_type` antes de contabilizar.
+
+2. Cree una **tabla de líneas** (una o más filas por `ref`, cada una con ese `ref`) con la forma que corresponda al tipo de documento:
+
+   | Tipo de documento | Columnas de línea |
+   |---|---|
+   | ManualJournal | `account_id`, `debit`, `credit` y, opcionalmente, `class_id` / `department_id` para el seguimiento |
+   | Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+   | Bill | `account_id`, `amount` |
+   | CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+   | Payment | `linked_txn_id` (la factura a la que se aplica la línea), `amount` |
+
+   `tax_type` y `memo` son opcionales en cualquier línea.
+
+3. Agregue un paso **Xero: contabilizar documento** y establezca **Conexión de Xero**, **Entorno** (cuál de los entornos de PlaidCloud de la conexión se usa para contabilizar), **Tabla de encabezados**, **Tabla de líneas** y una **Tabla de resultados**.
+
+4. Asigne los nombres de sus propias columnas a esos campos en las pestañas **Campos de encabezado** y **Campos de línea**.
+
+5. Deje marcada la opción **Test Only Mode** y ejecute el paso: PlaidCloud construye y comprueba cada documento sin reservar en el libro de PlaidCloud y sin contabilizar nada.
+
+6. Revise la tabla de resultados (una fila por documento: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`, `message`). Corrija cualquier fila `error` y vuelva a validar.
+
+7. Desmarque **Test Only Mode** y ejecute de nuevo para contabilizar de verdad. Deje marcada la opción **Continue posting remaining documents if one document fails**, a menos que desee que un lote se detenga por completo al primer documento fallido.
+
+</Steps>
+
+### Cómo funciona la contabilización
+
+Cada documento se reserva en el libro de idempotencia de PlaidCloud antes de enviarse, de modo que una nueva ejecución nunca contabiliza un documento que ya alcanzó el estado `posted`. La clave del libro lleva como prefijo el tipo de documento, por lo que una factura y una factura de proveedor que comparten el mismo `ref` nunca chocan, aunque Xero contabilice ambas por el mismo punto de conexión.
+
+Cuando un resultado es ambiguo (un tiempo de espera, una respuesta perdida), PlaidCloud consulta a Xero por el número de documento que estampó, y trata una coincidencia como prueba solo cuando el documento está en un estado final de contabilizado. Los números de facturas y de notas de crédito de Xero no están garantizados como únicos, por lo que una coincidencia en borrador, anulada o con número duplicado se pone en cuarentena en lugar de registrarse como el resultado de esta escritura.
+
+### Límites de capacidad: léalos antes de contabilizar en producción
+
+<Aside type="caution">
+- **Los asientos manuales y los pagos no se pueden consultar.** La narración de un asiento manual y la referencia de un pago no se pueden consultar en Xero, por lo que no hay ningún campo con el que correlacionar de vuelta una escritura dudosa con la solicitud de PlaidCloud. Esos casos se ponen en cuarentena para que usted los resuelva directamente en Xero en lugar de adivinar.
+- **La reversión cubre solo asientos manuales y facturas.** Un asiento manual se revierte como un asiento con débitos y créditos invertidos; una factura se revierte como una nota de crédito espejo. Las facturas de proveedor, los pagos y las notas de crédito no tienen una carga documentada de deshacer en la API de Xero, por lo que PlaidCloud rechaza una reversión en lugar de inventarla: corríjalos directamente en Xero.
+- **Los límites de frecuencia son por organización.** Xero permite 60 llamadas por minuto y 5000 por día por organización, con 5 llamadas simultáneas. PlaidCloud regula por conexión los límites por minuto y de simultaneidad y espera antes de reintentar ante una respuesta limitada, por lo que un lote muy grande tarda proporcionalmente más. Programe las extracciones amplias en lugar de ejecutar muchos pasos de Xero a la vez contra la misma organización.
+</Aside>
+
+## Temas relacionados
+
+- [Conector REST de Xero](/es/reference/connectors/rest/xero/): referencia de campos.
+- [Xero: importar entidad](/es/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero: contabilizar documento](/es/reference/workflow-steps/xero/xero-post/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/): el registro permanente de cada intento de contabilización en Xero y su estado actual.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

@@ -1,0 +1,137 @@
+---
+title: Depure un flujo de trabajo
+description: "Cuando un flujo de trabajo falla, averigüe la causa usted mismo: ejecute un paso, obtenga una vista previa de su salida, lea el registro, rastree las entradas con la auditoría de dependencias e interprete el error."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*~25 minutos · ejecute un paso, vea los datos, lea el registro, rastree las entradas*
+
+Algo en un flujo de trabajo no está bien: un paso aparece en rojo, una cifra posterior se ve incorrecta o una ejecución se detuvo a la mitad. Este tutorial recorre el conjunto de herramientas manuales para averiguar por qué: ejecutar un solo paso de forma aislada, obtener una vista previa de lo que produjo, leer el registro del flujo de trabajo, rastrear el origen de sus entradas con la auditoría de dependencias y leer el propio error. Cada herramienta responde una pregunta distinta y, juntas, suelen llevarlo a la causa sin adivinar.
+
+> **¿Prefiere que se lo expliquen?** La [ruta asistida por IA](/es/get-started/tutorials/fix-a-workflow-with-ai/) realiza la misma investigación en forma de conversación. Este tutorial es la versión manual: usted dirige todo, lo cual vale la pena hacer al menos una vez para saber qué está mirando realmente el asistente.
+
+## El ciclo de depuración
+
+Casi toda la depuración de flujos de trabajo es el mismo ciclo corto, sin importar qué herramienta use primero:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="El ciclo de depuración de un flujo de trabajo: ejecutar un paso de forma aislada, obtener una vista previa de sus datos de salida, leer el registro del flujo de trabajo para ver el mensaje de error, rastrear las entradas del paso con la auditoría de dependencias y, después, corregir y ejecutar el paso de nuevo." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ejecutar un paso</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ver los datos</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Leer el registro</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Rastrear entradas</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">corregir y volver a ejecutar</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Cada herramienta responde una pregunta; rara vez necesitará las cuatro, pero se usan en este orden.</figcaption>
+</figure>
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud con un proyecto y un flujo de trabajo que tenga un problema que perseguir (un paso en rojo, un resultado incorrecto o una ejecución que se detuvo).
+- Familiaridad con el [Diseñador visual de flujos de trabajo](/es/guides/workflows/advanced-workflows/): el lienzo donde hará la mayor parte de esto.
+
+## Paso 1: ejecute solo el paso con problemas
+
+No vuelva a ejecutar todo el flujo de trabajo para probar un cambio: es lento y repite trabajo en el que ya confía. Ejecute únicamente el paso que está investigando.
+
+1. Abra el flujo de trabajo en el Diseñador visual de flujos de trabajo.
+2. Haga clic con el botón derecho en el paso que desea probar y elija **Ejecutar paso** en el menú contextual.
+3. El paso se ejecuta de forma aislada, sobre los datos que ya existen en sus tablas de origen.
+
+Ese último punto importa cuando se depura: un paso lee de sus tablas de origen tal como están *en este momento*. Si un paso anterior todavía no se ha ejecutado, o se ejecutó con datos obsoletos, ejecutar este paso por sí solo refleja esa situación, justo lo que el [paso 4](#paso-4-rastree-las-entradas-con-la-auditoría-de-dependencias) le ayuda a detectar.
+
+Consulte [Ejecutar un solo paso de un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/) para ver todos los detalles.
+
+## Paso 2: vea lo que produjo el paso
+
+Cuando el paso se haya ejecutado, mire lo que realmente escribió antes de decidir si es correcto. El **panel de Vista previa de datos** muestra los datos de salida de un paso directamente en el lienzo: las primeras 100 filas con columnas tipadas, acoplado en la parte inferior.
+
+Hay tres formas de llegar, y todas terminan en el mismo panel:
+
+- **Pase el cursor sobre el icono del paso**: aparece un pequeño glifo de exploración (tabla) en la esquina inferior derecha. Haga clic en él.
+- **Haga clic con el botón derecho en el paso** y elija **Vista previa de los datos de salida**.
+- **En el Inspector**, haga clic en el **icono de ojo** de cualquier tarjeta de salida en la sección **Salidas** del paso.
+
+Qué revisar depende del síntoma:
+
+| Síntoma | Qué buscar en la vista previa |
+|---|---|
+| Columnas incorrectas o faltantes | ¿El paso produjo las columnas que esperaba? Una combinación o una selección de columnas mal hecha se nota aquí primero. |
+| Muy pocas o demasiadas filas | El encabezado muestra **Showing first N of ~M rows**: ¿el total es aproximadamente el que debería ser? |
+| Salida vacía | El panel dice *Table is empty* (se ejecutó, cero filas) o *No data yet — run the step* (nunca se ejecutó). |
+| Valores sospechosos | Ordene una columna para que los nulos o los valores atípicos aparezcan arriba. |
+
+Mientras el panel está abierto, **al hacer clic en cualquier otro paso la vista previa cambia** a la salida de ese paso, de modo que puede recorrer una cadena de pasos y ver en qué punto los datos empiezan a salir mal. Cuando necesite filtrar, segmentar o ir más allá de las primeras 100 filas, haga clic en **Abrir en el Explorador de tablas** en el encabezado del panel.
+
+Los detalles completos están en [Vista previa de los datos de un paso](/es/guides/workflows/preview-step-data/).
+
+## Paso 3: lea el registro del flujo de trabajo
+
+La vista previa le dice *cómo se ven* los datos de salida; el registro le dice *qué ocurrió* cuando se ejecutó el paso, incluido el mensaje de error si falló.
+
+A medida que se ejecutan los pasos y ocurren advertencias, esos eventos se escriben en el **registro del flujo de trabajo**, que se puede ver desde el área **Proyecto**, en la pestaña **Registro**. Desde el Diseñador visual de flujos de trabajo, el botón **Ver registros** de la barra de herramientas abre esta misma vista ya filtrada por el flujo de trabajo que tiene abierto.
+
+1. Abra la pestaña **Registro** (el registro del proyecto), desde el botón **Ver registros** de la barra de herramientas o desde la pestaña **Registro** del área Proyecto.
+2. Use el control de filtro junto a los mensajes del registro para limitar la vista al paso y a la ejecución que le interesan.
+3. Abra una entrada del registro para leer sus detalles: ahí está el mensaje de error de un paso que falló.
+
+El registro a nivel de proyecto muestra una vista más completa de varios flujos de trabajo, por si el problema abarca más de uno. Consulte [Visualización del registro del flujo de trabajo](/es/guides/workflows/viewing-workflow-log/).
+
+> **Cómo leer el mensaje de error.** Copie el texto exacto de la entrada del registro: una clave de combinación incorrecta, una discrepancia de tipos y una tabla de origen faltante se leen de forma distinta. Las dos causas más comunes cuando un paso da error son claves de combinación que no coinciden entre tablas y valores nulos inesperados en columnas calculadas. Cuando el mensaje apunta a los datos y no a la configuración del paso, es la señal para rastrear las entradas.
+
+> **Un ejemplo práctico.** Supongamos que un paso de transformación se pone en rojo. Abre el registro y la entrada dice `column "revenue" does not exist`: la tabla de origen tiene una columna `net_revenue`, no `revenue`. La corrección de una línea es cambiar el nombre de la columna en la expresión del paso. Vuelve a ejecutar solo ese paso y queda en verde. Ese es todo el ciclo en una sola pasada.
+
+## Paso 4: rastree las entradas con la auditoría de dependencias
+
+A veces un paso está bien configurado y aun así produce datos incorrectos, porque se ejecutó con entradas que se llenaron *fuera de orden*. Cuando los datos ya existen en las tablas, un paso se ejecuta y parece correcto aunque haya leído datos obsoletos o aún no actualizados. Es el fallo que el registro no puede mostrarle, porque no hubo ningún error.
+
+La **Workflow Dependency Audit** existe justamente para esto. Analiza las dependencias de datos y de flujos de trabajo en un flujo de trabajo interconectado e identifica los pasos cuyas entradas se llenan en un orden incorrecto respecto del momento en que se leen.
+
+Úsela cuando:
+
+- La salida de un paso es incorrecta pero el paso en sí no tiene ningún error.
+- Ha reordenado o agregado pasos y quiere confirmar que ninguno lee una tabla antes de que se construya.
+- Un flujo de trabajo “funciona” en una ejecución completa, pero una ejecución de un solo paso da cifras distintas: una señal clásica de una dependencia de orden.
+
+Consulte [Ver una auditoría de dependencias](/es/guides/workflows/view-a-dependency-audit/) para saber cómo abrir y leer la auditoría.
+
+## Paso 5: decida cómo debe manejar el flujo de trabajo el error
+
+Una vez que entienda la causa, decida qué debe hacer el flujo de trabajo cuando este paso falle en el futuro. El manejo de errores de cada paso se establece en el formulario del paso, y PlaidCloud ofrece tres niveles:
+
+| Comportamiento | Qué ocurre | Cuándo usarlo |
+|---|---|---|
+| **Stop the workflow** | La ejecución se detiene; aparece un indicador de error tanto en el paso como en el flujo de trabajo. | Es el valor predeterminado y el más común: los flujos de trabajo en general deben ejecutarse sin errores. |
+| **Keep processing** | El paso se marca con un error, pero el flujo de trabajo lo trata como completado y continúa. | Pasos que pueden fallar sin consecuencias por falta de datos. Nota: el flujo de trabajo muestra un indicador de *en ejecución*, no de error. |
+| **Trigger a remediation workflow** | El flujo de trabajo actual se detiene y, en su lugar, se inicia un flujo de trabajo de corrección. | Notificación o corrección automática. *No* se activa para los pasos configurados en continuar el procesamiento. |
+
+PlaidCloud también puede **reintentar** un paso fallido automáticamente, una cantidad determinada de veces y con una demora opcional que va de segundos a horas. Es la herramienta adecuada cuando un paso accede a un sistema remoto o a un origen de datos que falla de forma intermitente, y no cuando hay un error real de lógica. Consulte [Administración de errores de pasos](/es/guides/workflows/managing-step-errors/).
+
+## Paso 6: corrija, vuelva a ejecutar y confirme
+
+1. Haga el cambio al que apuntó su investigación: corrija la clave de combinación, agregue un paso anterior, corrija una expresión que produce nulos o reordene los pasos.
+2. **Vuelva a ejecutar solo ese paso** (paso 1) y **vea su salida** (paso 2). Si el panel estaba abierto durante la ejecución, se actualiza automáticamente cuando esta termina.
+3. Cuando el paso esté correcto, ejecute el flujo de trabajo de principio a fin y observe el registro para confirmar que toda la canalización está limpia.
+
+Para tener un registro permanente de lo que hace el flujo de trabajo (sus pasos, funciones y variables), genere el **Workflow Report** a petición desde el icono Informe de la jerarquía **Flujos de trabajo**. Refleja el estado actual del flujo de trabajo y sirve como documentación una vez aplicada la corrección. Consulte [Ver el informe del flujo de trabajo](/es/guides/workflows/view-workflow-report/).
+
+**Ese es todo el ciclo.** Ha ejecutado un paso de forma aislada, visto lo que escribió, leído el error en el registro, rastreado sus entradas con la auditoría de dependencias y vuelto a ejecutar para confirmar la corrección: la misma investigación que hace el asistente de IA, solo que ahora puede dirigirla usted mismo.
+
+## Qué sigue
+
+- [Corrija un flujo de trabajo con el asistente de IA](/es/get-started/tutorials/fix-a-workflow-with-ai/): la misma investigación, hecha en forma de conversación
+- [Ejecutar un solo paso de un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/): ejecute un único paso de forma aislada
+- [Vista previa de los datos de un paso](/es/guides/workflows/preview-step-data/): el panel de Vista previa de datos
+- [Visualización del registro del flujo de trabajo](/es/guides/workflows/viewing-workflow-log/): dónde se registran los eventos y errores de las ejecuciones
+- [Ver una auditoría de dependencias](/es/guides/workflows/view-a-dependency-audit/): detecte dependencias de datos fuera de orden
+- [Administración de errores de pasos](/es/guides/workflows/managing-step-errors/): detener, continuar, corregir y reintentar
+- [Ver el informe del flujo de trabajo](/es/guides/workflows/view-workflow-report/): documentación a petición de todo el flujo de trabajo

@@ -1,0 +1,106 @@
+---
+title: Arquitetura de IA e LLM
+description: Como o PlaidCloud se conecta a grandes modelos de linguagem como Claude, GPT, Gemini e Grok — as quatro formas de acessar a IA, o caminho governado que toda solicitação percorre e por onde seus dados trafegam e não trafegam.
+sidebar:
+  label: Visão geral
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/index.mdx
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+O PlaidCloud não tem um único recurso de IA. Ele oferece quatro formas de acessar um modelo — o assistente dentro do produto, o Microsoft 365 Copilot, agentes externos de programação e uma etapa de LLM dentro de um fluxo de trabalho — e as quatro seguem o mesmo caminho governado. O próprio modelo é intercambiável: Claude, GPT, Gemini, Grok, um recurso Azure OpenAI na sua própria assinatura ou um modelo hospedado por você.
+
+Esta seção explica essa arquitetura: o que executa onde, o que cruza a fronteira e por quê.
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="Arquitetura de IA do PlaidCloud. Quatro superfícies de cliente — o assistente no aplicativo, o Microsoft 365 Copilot, os agentes de programação com IA e a etapa de LLM do fluxo de trabalho — entram na fronteira do tenant, que contém tokens delegados, o servidor MCP curado, a aplicação de acesso, os serviços de IA e os dados do projeto. Os prompts fluem para fora, em direção aos provedores de LLM; os dados fluem apenas dentro da fronteira."
+	class="doc-diagram"
+/>
+
+## As quatro superfícies
+
+| Superfície | Quem usa | Como o modelo acessa os dados | Por onde começar |
+|---|---|---|---|
+| **Assistente de IA no aplicativo** | Qualquer pessoa que trabalhe no PlaidCloud | Os agentes do próprio PlaidCloud chamam ferramentas internas em seu nome | [Chat de IA do Weave](/pt-br/guides/ai-assistant/weave-tab/#chat-do-weave-ai) |
+| **Microsoft 365 Copilot** | Equipes inteiras, no Teams e no Outlook | Um agente publicado autentica a pessoa e depois chama o servidor MCP | [Microsoft 365 Copilot](/pt-br/integrations/microsoft-365-copilot/) |
+| **Agentes de programação com IA** | Analistas e desenvolvedores | O cliente deles se conecta diretamente ao servidor MCP via OAuth | [Primeiros passos](/pt-br/integrations/ai-coding-agents/getting-started/) |
+| **Etapa de LLM do fluxo de trabalho** | Pipelines sem supervisão | No Anthropic, um token restrito apenas aos objetos que você vincula; nos demais provedores, nenhum acesso a dados — veja [as regras da etapa](/pt-br/integrations/ai-architecture/llm-providers/#a-etapa-de-llm-do-fluxo-de-trabalho-é-diferente) | [Etapa de LLM](/pt-br/reference/workflow-steps/general/llm-step/) |
+
+Elas diferem em quem conduz a interação e onde a conversa acontece. Não diferem no que o modelo pode acessar.
+
+## Um caminho governado
+
+Qualquer que seja a superfície em que uma pergunta chegue, as mesmas cinco coisas são verdadeiras.
+
+<Steps>
+
+1. **O modelo executa como uma pessoa, não como a plataforma.** Toda solicitação carrega uma credencial de curta duração, revogada ao terminar, que representa o usuário autenticado. Não há uma conta de serviço compartilhada com direitos elevados por trás da IA.
+
+2. **As ferramentas são a única porta de entrada.** O modelo não consegue consultar seu lakehouse diretamente. Ele chama um catálogo curado de ferramentas — localizar, descrever, ler, executar, fazer upsert — e cada chamada é verificada de forma independente.
+
+3. **Suas próprias permissões continuam limitando o modelo.** Uma solicitação de IA nunca pode ver ou alterar algo que você mesmo não poderia ver ou alterar. A camada de IA restringe o acesso; nunca o amplia.
+
+4. **Um administrador define o teto, e ele começa fechado.** O **Acesso do agente** de uma conexão de LLM começa como somente leitura. O Microsoft 365 Copilot começa sem nada: até que um administrador atribua um **nível de acesso** a alguém, a pessoa autenticada não recebe nenhum dado. São dois mecanismos separados, mas elevar qualquer um deles apenas limita o que a IA pode tentar — nunca amplia o que você já poderia alcançar por conta própria.
+
+5. **Algumas coisas ficam permanentemente fora dos limites.** Configurações de credenciais e de conexão, gerenciamento de identidade e de grupos, alterações de controle de acesso, publicação e código implantável nunca podem ser chamados por uma credencial de IA — independentemente do que um administrador tenha concedido, em qualquer provedor. Isso permanece exclusivo de humanos.
+
+</Steps>
+
+<Aside type="note">
+Essas regras são aplicadas no servidor, não no prompt. Uma tentativa de injeção de prompt que convença o modelo a pedir uma ferramenta proibida recebe a mesma recusa que um modelo bem-comportado receberia.
+</Aside>
+
+## A vida de uma pergunta
+
+Considere *"Por que o custo de TI alocado para Atlanta aumentou no último trimestre?"*, feita a partir de qualquer superfície:
+
+<Steps>
+
+1. **Uma credencial é emitida** para a pessoa que perguntou, com escopo restrito e curta duração.
+
+2. **As ferramentas são colocadas diante do modelo** — restritas ao que a pergunta provavelmente exige nas superfícies que fazem essa restrição, e descobertas a partir do catálogo naquelas que não fazem.
+
+3. **O prompt vai para o modelo** — a pergunta, as regras permanentes e as descrições das ferramentas. Ainda sem dados.
+
+4. **O modelo pede dados** por meio de chamadas de ferramentas: resolver o caminho de análise, ler o esquema, executar o rastreamento da alocação, ler as linhas do direcionador. Cada chamada tem as permissões verificadas na chegada.
+
+5. **O modelo responde** com base no que voltou, cita a página da documentação se consultou alguma e traz um indicador de confiança e ressalvas.
+
+6. **A credencial é revogada.** Um token capturado não pode ser reutilizado depois que a solicitação termina.
+
+</Steps>
+
+O detalhe importante é a etapa 4: o modelo não tem seus dados. Ele pede fatias deles, e cada pedido é avaliado.
+
+## Leia a seguir
+
+<CardGrid>
+	<LinkCard
+		title="Provedores e conexões de LLM"
+		href="/pt-br/integrations/ai-architecture/llm-providers/"
+		description="Claude, GPT, Gemini, Grok, Azure OpenAI — uma conexão, quatro adaptadores de execução e duas formas de intermediar as ferramentas."
+	/>
+	<LinkCard
+		title="Arquitetura do Microsoft 365 Copilot"
+		href="/pt-br/integrations/ai-architecture/microsoft-365-copilot/"
+		description="Por que o Copilot precisa de um pacote de agente publicado e de um cliente OAuth próprio, e como funcionam os níveis de acesso negados por padrão."
+	/>
+	<LinkCard
+		title="Recuperação, fundamentação e caminhos de análise"
+		href="/pt-br/integrations/ai-architecture/retrieval/"
+		description="O que a RAG realmente faz aqui — e por que seus dados de negócio são lidos em tempo real, em vez de indexados em um armazenamento vetorial."
+	/>
+	<LinkCard
+		title="Como usar seu próprio LLM controlado"
+		href="/pt-br/integrations/ai-architecture/private-llm/"
+		description="Mantenha dados proprietários, PHI ou contratualmente restritos dentro da infraestrutura que você controla."
+	/>
+</CardGrid>
+
+## Relacionados
+
+- [Respostas em que você pode confiar](/pt-br/integrations/ai-coding-agents/honest-answers/) — como as respostas são avaliadas e ressalvadas
+- [Caminhos de análise](/pt-br/integrations/ai-coding-agents/analysis-paths/) — nomes amigáveis para as tabelas sobre as quais sua equipe pergunta
+- [Arquitetura da plataforma](/pt-br/get-started/platform-architecture/) — onde a IA se encaixa na plataforma como um todo

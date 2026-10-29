@@ -1,0 +1,174 @@
+---
+title: Analityka geoprzestrzenna
+description: Ładuj pliki przestrzenne, buduj i przekształcaj geometrię, dopasowuj lokalizacje do terytoriów i publikuj wynik — ścieżka geoprzestrzenna w przepływie pracy PlaidCloud.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud traktuje geometrię jako pełnoprawną część przepływu pracy: importujesz
+pliki przestrzenne, budujesz geometrię ze współrzędnych, przekształcasz ją i dopasowujesz,
+a następnie publikujesz wynik — bez opuszczania platformy i bez osobnego narzędzia GIS.
+
+Ten przewodnik opisuje drogę przez te możliwości. Szczegóły referencyjne dowolnego
+kroku znajdziesz w sekcji [Kroki geoprzestrzenne](/pl/reference/workflow-steps/spatial/).
+
+## Geometria to po prostu kolumna
+
+Każdy krok przestrzenny odczytuje i zapisuje geometrię jako **WKT** (well-known text)
+w zwykłej kolumnie tekstowej. Warto z góry znać trzy konsekwencje:
+
+- **Brak deklaracji typu.** Kolumna geometrii to kolumna tekstowa. Nie trzeba nic
+  konfigurować ani migrować.
+- **Kroki łączą się swobodnie.** Wynik dowolnego kroku przestrzennego może zasilać
+  wejście dowolnego innego, w dowolnej kolejności.
+- **SQL i geometria współgrają.** Kolumna geometrii znajduje się obok miar, więc
+  w tym samym kroku możesz filtrować, grupować i złączać według jednych i drugich.
+
+## 1. Wprowadź geometrię do tabeli
+
+Do wyboru masz dwie drogi, zależnie od tego, skąd pochodzi geometria.
+
+**Z pliku przestrzennego.** Użyj kroku
+[Import pliku przestrzennego](/pl/reference/workflow-steps/spatial/spatial-file-import/) dla
+plików MapInfo `.TAB`, ESRI `.shp`, `.kml` lub `.geojson`. Wgraj plik i jego pliki
+towarzyszące do tego samego folderu dokumentów — krok automatycznie odczyta pliki
+pomocnicze (`.shx`/`.dbf`/`.prj` dla shapefile, `.dat`/`.map`/`.id` dla `.TAB`).
+Na wyjściu powstaje jeden wiersz na obiekt, z kolumną geometrii WKT i atrybutami
+pliku.
+
+**Ze współrzędnych, które już masz.** Jeśli dane zawierają kolumny długości i szerokości
+geograficznej, zbuduj punkty za pomocą
+[wyrażenia kroku Table Extract](/pl/reference/workflow-steps/spatial/spatial-sql-recipes/) —
+działa ono w bazie danych, więc żadne wiersze nie opuszczają hurtowni:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="Trzymaj pliki towarzyszące razem">
+  Shapefile bez pliku `.prj` zostanie zaimportowany bez układu współrzędnych, a `.TAB`
+  bez pliku `.dat` nie ma atrybutów. Wgraj całą grupę plików przed uruchomieniem
+  importu.
+</Aside>
+
+**Z adresów — geokodowanie.** Krok **geocode** zamienia kolumny adresowe na
+współrzędne (geokodowanie w przód), a krok **geocode reverse** zamienia parę
+szerokość/długość z powrotem na adres (geokodowanie wsteczne), korzystając z usługi
+geokodowania PlaidCloud. Geokodowanie w przód dołącza `GeocodeLat` /
+`GeocodeLon` (oraz `GeocodeStatus`, `GeocodeConfidence` i dopasowaną etykietę);
+geokodowanie wsteczne dołącza składniki ustalonego adresu.
+
+### Wzbogacanie o kody lokalizacji
+
+Oba kroki geokodowania mogą też dołączyć do każdego wiersza zwarty **kod lokalizacji**,
+obliczany lokalnie na podstawie zwróconej współrzędnej — bez dodatkowego wywołania
+usługi i bez zewnętrznych zależności:
+
+- **Geohash** (`GeocodeGeohash`) — generowany **domyślnie**. Geohash to konwencja
+  analityki danych (Elasticsearch, Redis, Lucene): jego **właściwość prefiksu**
+  oznacza, że krótszy kod jest prefiksem dłuższego dla tego samego punktu, więc
+  `GROUP BY LEFT(GeocodeGeohash, n)` to natychmiastowy podział przestrzenny na koszyki,
+  a złączenie po prefiksie to tania bliskość.
+- **Plus Code** (`GeocodePlusCode`) — opcjonalny, **domyślnie wyłączony**. [Open
+  Location Code](https://maps.google.com/pluscodes/) to forma adresu łatwa do
+  udostępniania, używana w Mapach Google i niektórych rządowych systemach adresowych.
+
+To, które kolumny są generowane, kontroluje ustawienie kroku **`location_codes`**:
+
+| `location_codes` | Dołączane kolumny |
+|---|---|
+| `none` | Brak kodu lokalizacji |
+| `geohash` *(domyślnie)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` i `GeocodePlusCode` |
+
+Dwa opcjonalne ustawienia dostrajają kody: **`geohash_precision`** (domyślnie `9` ≈ komórka
+4,8 m; maksymalnie `12`) oraz **`pluscode_length`** (domyślnie `10` ≈ komórka 14 m).
+Wiersz geokodowania w przód, który nie został przypisany do współrzędnej, pozostawia
+kolumny kodów puste; wiersz geokodowania wstecznego koduje swoją **zapytaną** współrzędną
+nawet wtedy, gdy nie znaleziono adresu.
+
+## 2. Ukształtuj geometrię
+
+Gdy geometria jest w kolumnie, przekształć ją tak, aby odpowiedzieć na faktyczne pytanie.
+
+| Pytanie | Krok |
+|---|---|
+| Co znajduje się w promieniu *n* mil od każdego sklepu? | [Spatial Trade Area](/pl/reference/workflow-steps/spatial/spatial-trade-area/) (krok) |
+| Co znajduje się w stałej odległości od tego kształtu? | [Spatial Buffer](/pl/reference/workflow-steps/spatial/spatial-buffer/) (krok) |
+| Jaki jest łączny obszar każdego regionu? | [Łączenie przestrzenne](/pl/reference/workflow-steps/spatial/spatial-combine/) |
+| Jaki obszar obejmują te punkty? | [Spatial Poly-Build](/pl/reference/workflow-steps/spatial/spatial-poly-build/) (krok) |
+| Gdzie te dwa obszary nakładają się lub różnią? | [Przetwarzanie przestrzenne](/pl/reference/workflow-steps/spatial/spatial-process/) |
+| Jak uczynić te granice tańszymi w rysowaniu? | [Spatial Generalize](/pl/reference/workflow-steps/spatial/spatial-generalize/) (krok) |
+| Jak podzielić ten obszar na równe komórki? | [Spatial Make Grid](/pl/reference/workflow-steps/spatial/spatial-make-grid/) (krok) |
+| Jak rozbić wielokąt na części? | [Spatial Poly-Split](/pl/reference/workflow-steps/spatial/spatial-poly-split/) (krok) |
+
+Trade Area to zwykle punkt wyjścia analizy handlowej lub terytoriów usługowych: podaj mu
+tabelę lokalizacji i zestaw promieni, a zwróci koncentryczne pierścienie, do których
+możesz dopasować klientów.
+
+## 3. Dopasuj lokalizacje do terytoriów
+
+Dwa kroki dopasowania odpowiadają na różne pytania i działają różnymi drogami.
+
+**W którym terytorium znajduje się każdy klient?** Użyj kroku
+[Dopasowanie przestrzenne](/pl/reference/workflow-steps/spatial/spatial-match/). Działa jako
+złączenie z predykatem przestrzennym w bazie danych, więc skaluje się razem z tabelą.
+Wybierz relację — *przecina się*, *zawiera się w* lub *zawiera* — a krok zwróci jeden
+wiersz na każdą pasującą parę.
+
+**Które sklepy są najbliżej każdego klienta?** Użyj kroku
+[Spatial Find Nearest](/pl/reference/workflow-steps/spatial/spatial-find-nearest/) (krok).
+Zachowuje N najbliższych wierszy dla każdego celu i dodaje obliczoną kolumnę odległości
+w wybranej jednostce. Również działa po stronie SQL, więc skaluje się tak samo.
+
+**Którzy klienci znaleźli się poza wszystkimi terytoriami?** Użyj kroku
+[Spatial Match (Intersect / Unmatched)](/pl/reference/workflow-steps/spatial/spatial-match-executor/)
+w trybie *Unmatched*. Ten sam krok zwraca też samą geometrię części wspólnej, gdy
+potrzebujesz przecięcia, a nie parowania.
+
+## 4. Mierz
+
+Krok [Spatial Info](/pl/reference/workflow-steps/spatial/spatial-info/) (krok) dołącza kolumny
+pola powierzchni, długości, centroidu i prostokąta ograniczającego. Są to pomiary
+**geodezyjne WGS84**, więc mile kwadratowe są prawdziwymi milami kwadratowymi, a nie
+przybliżeniem płaskim — co ma znaczenie, gdy porównujesz terytoria na różnych
+szerokościach geograficznych.
+
+Do prostego pomiaru odległości między dwoma kolumnami w tym samym wierszu
+[wyrażenie SQL](/pl/reference/workflow-steps/spatial/spatial-sql-recipes/) jest tańsze niż
+krok.
+
+## 5. Publikuj
+
+Geometria pozostająca w tabeli nie jest odpowiedzią, na podstawie której ktokolwiek może
+działać.
+
+- [Report Map](/pl/reference/workflow-steps/reports/report-map/) (krok) renderuje geometrię w
+  raporcie PDF, obok wykresów i tabel z tego samego przepływu pracy.
+- Tabela wynikowa zasila [pulpity](/pl/guides/dashboards/) jak każda inna tabela —
+  kolumna geometrii jest przenoszona, a miary obok niej to to, co większość
+  pulpitów faktycznie przedstawia na wykresach.
+- [Kroki eksportu](/pl/reference/workflow-steps/export/) zapisują tabelę do CSV,
+  Excela lub zewnętrznej bazy danych, gdy potrzebuje jej dalsze narzędzie GIS.
+
+## Przechodzisz z Alteryx
+
+Każde narzędzie przestrzenne Alteryx ma odpowiednią ścieżkę w PlaidCloud. Skonwertowane
+przepływy pracy wybierają ją automatycznie; [macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/)
+wymienia mapowanie narzędzie po narzędziu, a
+[Migracja przestrzennych przepływów pracy Alteryx](/pl/guides/workflows/migrate-spatial-alteryx-workflows/)
+opisuje pakowanie plików i weryfikację wyniku.
+
+## Powiązane przewodniki
+
+- [Kroki geoprzestrzenne](/pl/reference/workflow-steps/spatial/)
+- [Migracja przestrzennych przepływów pracy Alteryx](/pl/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Zaawansowane przepływy pracy](/pl/guides/workflows/advanced-workflows/)

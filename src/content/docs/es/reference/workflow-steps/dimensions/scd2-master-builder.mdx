@@ -1,0 +1,130 @@
+---
+title: Generador de maestro SCD-2
+description: Construya una tabla de historial a una fecha determinada a partir de un origen de datos maestros, haciendo seguimiento de los cambios en atributos seleccionados a lo largo del tiempo con fechas de vigencia desde y hasta.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-master-builder.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Construye una tabla de historial de **dimensión de cambio lento de tipo 2 (SCD-2)** a partir de una tabla de origen. Mientras que una tabla maestra normal conserva solo el valor actual de cada clave, una tabla SCD-2 conserva todos los valores que ha tenido una clave, cada uno con el intervalo de fechas durante el que estuvo vigente. Esto le permite responder preguntas a una fecha determinada (*¿en qué región estaba este cliente el día de la transacción?*) en lugar de solo *¿en qué región está ahora?*
+
+En cada ejecución se compara la instantánea del origen con el historial previo y, para las claves cuyos atributos con seguimiento cambiaron, se cierra la versión anterior y se abre una nueva. La tabla se recalcula y se intercambia de forma atómica, de modo que volver a ejecutar con las mismas entradas produce el mismo resultado.
+
+Combine este paso con el paso [Combinación SCD-2 a una fecha](/es/reference/workflow-steps/dimensions/scd2-asof-join/) para asociar el valor a una fecha determinada con una tabla de hechos.
+
+## Columnas de salida
+
+Cada ejecución emite tres columnas reservadas junto con las columnas que se trasladan. Usted no les da nombre: siempre son `valid_from`, `valid_to` e `is_current`, y sus columnas de clave de negocio y con seguimiento no pueden reutilizar esos nombres.
+
+| Columna | Significado |
+|---|---|
+| `valid_from` | Fecha en que esta versión entró en vigor (inclusive). |
+| `valid_to` | Fecha en que esta versión dejó de estar vigente (exclusiva). Las filas abiertas (actuales) llevan la fecha máxima centinela `9999-12-31`. |
+| `is_current` | `true` para la versión vigente ahora, `false` para el historial cerrado. |
+
+<Aside type="note">El intervalo es **semiabierto**: `[valid_from, valid_to)`. Una versión abarca desde `valid_from` hasta `valid_to`, *sin incluirlo*. Por tanto, las versiones consecutivas se encuentran sin solaparse: el `valid_to` de una versión es exactamente el `valid_from` de la siguiente, y ninguna fecha pertenece a dos versiones.</Aside>
+
+## Tablas
+
+### Tabla de origen
+
+La instantánea actual de sus datos maestros: una fila por clave de negocio, con los valores de atributo actuales.
+
+### Tabla SCD-2 previa (opcional)
+
+La tabla de historial existente de la ejecución anterior. Déjela vacía (o apúntela a la tabla de resultados) en la **primera ejecución**; el paso construye entonces el historial completo desde cero, abriendo una versión por cada fila de origen en la fecha de vigencia.
+
+### Tabla de resultados
+
+Donde se escribe el historial reconstruido. Debe ser una tabla, no una vista.
+
+## Fecha de vigencia y opciones
+
+Cada ejecución marca sus cambios con una única fecha de vigencia. Indíquela de exactamente una de estas dos maneras; indicar ambas, o ninguna, es un error.
+
+- **Columna de fecha de vigencia**: una columna del origen que contiene la fecha de vigencia. Debe contener el mismo valor en todas las filas de origen (la instantánea es *a una* fecha).
+- **Fecha de vigencia**: una fecha literal `YYYY-MM-DD`, o una variable como `{current_month}`, que se aplica a toda la ejecución.
+
+<Aside type="caution">Elija una, no ambas. Es un XOR estricto: el paso rechaza una ejecución que especifica una columna de fecha de vigencia *y* una fecha literal, y rechaza igualmente la que no especifica ninguna.</Aside>
+
+Otras opciones:
+
+- **Fecha máxima del intervalo abierto**: el centinela que se escribe en `valid_to` para las filas abiertas. El valor predeterminado es `9999-12-31`; rara vez hay motivo para cambiarlo, y debe coincidir con la fecha máxima que usa el paso [Combinación SCD-2 a una fecha](/es/reference/workflow-steps/dimensions/scd2-asof-join/).
+- **Close on Absence**: cuando está habilitada, una clave que desaparece del origen tiene su versión abierta cerrada en la fecha de vigencia (la clave se trata como dada de baja). Cuando está deshabilitada (el valor predeterminado), las claves ausentes conservan su versión abierta existente, de modo que el historial nunca se pierde por una extracción parcial.
+
+El paso se niega a guardar una Fecha de vigencia o una Fecha máxima del intervalo abierto literales que no sean una fecha real con el formato `YYYY-MM-DD`, o una Fecha de vigencia igual o posterior a la Fecha máxima. Una fecha indicada como variable no se comprueba.
+
+## Roles de columna
+
+Use **Inspeccionar origen** para listar las columnas de origen y luego etiquete cada una:
+
+| Rol | Significado |
+|---|---|
+| **Clave de negocio** | La clave natural que identifica una fila a lo largo del tiempo (por ejemplo, `customer_id`). Se requiere al menos una. Los valores deben ser únicos en el origen y no nulos. |
+| **Atributo con seguimiento** | Un atributo cuyos cambios abren una nueva versión (por ejemplo, `region`). Se requiere al menos uno. |
+| **(trasladar)** | Las columnas sin etiquetar se copian sin cambios en cada versión y, por sí solas, no activan una versión nueva. |
+
+## Comportamiento de la combinación
+
+Cuando se proporciona una tabla previa, el paso compara la instantánea del origen únicamente con las versiones **actuales** (nunca con el historial cerrado) y decide por cada clave:
+
+| Situación | Resultado |
+|---|---|
+| Atributos con seguimiento sin cambios | Sin operación: la versión abierta se deja tal cual. |
+| Atributos con seguimiento cambiados | La versión abierta se cierra en la fecha de vigencia y se inserta una nueva versión abierta. |
+| La fecha de vigencia es igual al `valid_from` de la versión abierta | Se trata como una **reformulación del mismo día**: los valores con seguimiento se sobrescriben en el lugar en lugar de crear un intervalo de ancho cero. |
+| Clave ausente del origen | Se deja abierta (o se cierra en la fecha de vigencia si **Close on Absence** está habilitada). |
+
+Protecciones que detienen una ejecución en lugar de corromper el historial en silencio:
+
+- **Se rechazan las fechas desordenadas.** La fecha de vigencia debe ser *posterior* al `valid_from` actual de cada clave afectada. Una ejecución con fecha retroactiva que invertiría un intervalo falla con un error en lugar de producir una versión de ancho negativo.
+- **Se rechazan las claves duplicadas en el origen.** El origen debe ser único en la clave de negocio; los duplicados (o las claves nulas) fallan en lugar de deduplicarse en silencio.
+- La detección de cambios es **segura frente a nulos**, por lo que un valor que cambia hacia o desde vacío se registra correctamente como un cambio.
+
+## Ejemplo práctico
+
+Haga un seguimiento de a qué región pertenecía cada cliente a lo largo del tiempo.
+
+**Origen: `customer_master` (a 2026-01-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | West | SMB |
+| C2 | East | Enterprise |
+
+Primera ejecución: **Tabla de origen** = `customer_master`, **Tabla SCD-2 previa** = vacía, **Tabla de resultados** = `customer_scd2`, **Fecha de vigencia** = `2026-01-01`, Clave de negocio = `customer_id`, Atributo con seguimiento = `region` (`segment` se deja sin etiquetar y se traslada).
+
+**`customer_scd2` tras la primera ejecución:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Ahora C1 pasa a la región Central. **Origen: `customer_master` (a 2026-04-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | Central | SMB |
+| C2 | East | Enterprise |
+
+Segunda ejecución: los mismos roles de tabla, **Tabla SCD-2 previa** = `customer_scd2`, **Fecha de vigencia** = `2026-04-01`.
+
+**`customer_scd2` tras la segunda ejecución:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | SMB | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+La versión West de C1 se cerró en `2026-04-01` y se abrió una versión Central. Debido al intervalo semiabierto, una transacción con fecha `2026-04-01` pertenece a **Central**, no a West. C2 no cambió y no se tocó.
+
+## Relacionado
+
+- [Combinación SCD-2 a una fecha](/es/reference/workflow-steps/dimensions/scd2-asof-join/): asocie el valor a una fecha determinada con una tabla de hechos.
+- [Paso Dimension Load](/es/reference/workflow-steps/dimensions/dimension-load/): cargue una jerarquía desde una tabla.

@@ -1,0 +1,237 @@
+---
+title: Funções personalizadas do PlaidXL
+description: Referência de todas as funções personalizadas do PlaidXL no Excel — liste projetos, tabelas, colunas e dimensões, leia uma tabela, monte e detalhe uma hierarquia e calcule valores consolidados com CELL e CELLS.
+sidebar:
+  label: Funções personalizadas
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/plaidxl/functions.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidXL adiciona ao Excel funções que leem dados do PlaidCloud diretamente nas células. Digite `=PLAIDXL.` em uma célula e o preenchimento automático do Excel as lista, com uma breve descrição de cada argumento.
+
+| Grupo | Funções | Use-as para |
+|---|---|---|
+| Listas | [`LIST_PROJECTS`](#list_projects), [`TABLE.TBL_LIST`](#tbl_list), [`TABLE.GET_COLUMNS`](#get_columns), [`DIMENSION.DIM_LIST`](#dim_list) | Ver o que está disponível para usar como base |
+| Tabelas | [`TABLE.GET_TABLE`](#get_table) | Ler uma tabela inteira em um intervalo |
+| Hierarquias | [`DIMENSION.GET_DIMENSION`](#get_dimension), [`DRILL`](#drill) | Montar os nós de uma dimensão como linhas de relatório |
+| Valores | [`CELL`](#cell), [`CELLS`](#cells) | Calcular um valor consolidado para qualquer combinação de nós |
+| Blocos de construção | [`REPR.TABLE_REPR`](#table_repr), [`REPR.MEASURE`](#measure), [`REPR.MEASURES`](#measures), [`REPR.MEASURE_TYPE`](#measure_type), [`REPR.DIMENSION_REPR`](#dimension_repr), [`REPR.DRILL_KEY`](#drill_key) | Descrever a tabela, a medida, a agregação, os nós e a profundidade de detalhamento que `CELL`, `CELLS` e `DRILL` usam |
+
+[Criar um relatório com funções personalizadas](/pt-br/reference/cli/plaidxl/build-a-report/) mostra essas funções trabalhando juntas.
+
+## Como as funções funcionam
+
+- **Faça login primeiro.** As funções leem com o seu login do PlaidCloud, portanto [faça login](/pt-br/reference/cli/plaidxl/connect/) pelo painel de tarefas antes de usá-las.
+- **Elas leem do projeto selecionado.** Cada função lê do projeto selecionado no painel de tarefas. `GET_TABLE`, `TBL_LIST` e `DIM_LIST` também aceitam um ID de projeto opcional, para ler outro projeto sem alterar a seleção. A seleção é compartilhada por todas as pastas de trabalho que você tiver abertas.
+- **Os resultados se expandem.** Uma função que retorna uma lista ou uma tabela preenche as células abaixo dela (ou à sua direita). Deixe espaço para os resultados; se algo estiver no caminho, o Excel mostra um erro `#SPILL!`.
+- **Recalcule para obter as alterações.** Uma fórmula do PlaidXL busca os dados novamente quando um dos seus argumentos muda. Para obter novos dados no PlaidCloud, ou um projeto diferente selecionado no painel de tarefas, force um recálculo completo — no Windows, pressione **Ctrl+Alt+F9**. **Refresh All Tables** atualiza as tabelas recuperadas, não as fórmulas.
+- **Use nomes exatos.** Digite os nomes de tabelas, colunas, dimensões e nós exatamente como aparecem no PlaidCloud.
+
+Os argumentos entre colchetes são opcionais.
+
+## Listas
+
+### LIST_PROJECTS
+
+`=PLAIDXL.LIST_PROJECTS([horizontal])`
+
+Lista os nomes dos projetos que você pode abrir, em ordem alfabética.
+
+- `horizontal` — `TRUE` para listar ao longo de uma linha. O padrão é `FALSE`, uma coluna.
+
+### TBL_LIST
+
+`=PLAIDXL.TABLE.TBL_LIST([project_id], [horizontal])`
+
+Lista os nomes das tabelas de um projeto, em ordem alfabética.
+
+- `project_id` — o projeto a ser lido. O padrão é o projeto selecionado no painel de tarefas.
+- `horizontal` — `TRUE` para listar ao longo de uma linha. O padrão é `FALSE`, uma coluna.
+
+### GET_COLUMNS
+
+`=PLAIDXL.TABLE.GET_COLUMNS(table_name, [column_filter], [orientation])`
+
+Lista os nomes das colunas de uma tabela do projeto selecionado.
+
+- `table_name` — o nome da tabela no PlaidCloud.
+- `column_filter` — um tipo de dados, como `"text"`, para listar apenas as colunas desse tipo. Omita para listar todas as colunas.
+- `orientation` — `"vertical"` (o padrão) para uma coluna ou `"horizontal"` para uma linha.
+
+### DIM_LIST
+
+`=PLAIDXL.DIMENSION.DIM_LIST([project_id], [horizontal])`
+
+Lista os nomes das dimensões de um projeto.
+
+- `project_id` — o projeto a ser lido. O padrão é o projeto selecionado no painel de tarefas.
+- `horizontal` — `TRUE` para listar ao longo de uma linha. O padrão é `FALSE`, uma coluna.
+
+## Tabelas
+
+### GET_TABLE
+
+`=PLAIDXL.TABLE.GET_TABLE(table_name, [project_id], [limit])`
+
+Retorna as linhas de uma tabela com uma linha de cabeçalho, expandidas a partir da célula da fórmula. Valores vazios retornam como células em branco.
+
+- `table_name` — o nome da tabela no PlaidCloud.
+- `project_id` — o projeto a ser lido. O padrão é o projeto selecionado no painel de tarefas.
+- `limit` — o máximo de linhas a retornar. O padrão é 1.048.575, o máximo que uma planilha comporta abaixo de uma linha de cabeçalho.
+
+`GET_TABLE` retorna todas as colunas. Para escolher colunas ou filtrar linhas, [recupere a tabela pelo painel de tarefas](/pt-br/reference/cli/plaidxl/retrieve/#recuperar-uma-tabela).
+
+## Hierarquias
+
+### GET_DIMENSION
+
+`=PLAIDXL.DIMENSION.GET_DIMENSION(dimension_name, start_node, [hierarchy], [orientation], [generation_limit])`
+
+Monta os nós de uma dimensão, começando em `start_node` e descendo pelos seus descendentes. Cada geração é recuada quatro espaços a mais que o seu pai, e os grupos de estrutura de tópicos do Excel permitem recolher e expandir cada nível.
+
+- `dimension_name` — o nome da dimensão ou o seu caminho no projeto.
+- `start_node` — o nó a partir do qual começar, como a raiz da dimensão.
+- `hierarchy` — a [hierarquia alternativa](/pt-br/guides/dimensions/dimensions/#hierarquias-alternativas-de-atributo) a seguir. O padrão é `"main"`.
+- `orientation` — `"vertical"` (o padrão) para listar os nós em uma coluna ou `"horizontal"` para listá-los ao longo de uma linha.
+- `generation_limit` — quantas gerações retornar, contando `start_node` como a primeira: `2` retorna o nó inicial e seus filhos. Omita para retornar todas as gerações.
+
+### DRILL
+
+`=PLAIDXL.DRILL(dimension_name, start_node, drill_key, [hierarchy])`
+
+Retorna `start_node` e os nós abaixo dele que `drill_key` solicita, em uma coluna, recuados por geração e agrupados em uma estrutura de tópicos do Excel.
+
+- `dimension_name` — o nome da dimensão ou o seu caminho no projeto.
+- `start_node` — o nó a partir do qual detalhar.
+- `drill_key` — a profundidade do detalhamento, de [`DRILL_KEY`](#drill_key): todos os descendentes, apenas as folhas ou um número de níveis.
+- `hierarchy` — a hierarquia alternativa a seguir. O padrão é `"main"`.
+
+Por exemplo, `=PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("leaves"))` lista **Total** seguido de todas as regiões folha abaixo dele.
+
+Os [comandos de detalhamento da faixa de opções](/pt-br/reference/cli/plaidxl/ribbon/#drill-functions) fazem a mesma coisa para uma dimensão e um nó que você digitou em duas células, sem escrever uma fórmula.
+
+## Valores
+
+`CELL` e `CELLS` calculam uma medida — uma coluna numérica de uma tabela — consolidada nos nós que você escolher em uma ou mais dimensões. Pense em cada chamada como uma interseção em um relatório: **Receita** de **EMEA** em **FY2026**.
+
+Você descreve a interseção com as funções de blocos de construção abaixo, geralmente em células próprias, e depois passa essas células para `CELL` ou `CELLS` em qualquer ordem:
+
+| Argumento | Criado com | Obrigatório |
+|---|---|---|
+| A tabela a ser lida | [`TABLE_REPR`](#table_repr) | Exatamente um |
+| A coluna a ser agregada | [`MEASURE`](#measure) para `CELL`, [`MEASURES`](#measures) ou várias células `MEASURE` para `CELLS` | Sim |
+| Como agregá-la | [`MEASURE_TYPE`](#measure_type) | Não — o padrão é `sum` |
+| Um filtro em uma coluna | [`DIMENSION_REPR`](#dimension_repr) | Pelo menos um, um por coluna |
+
+Cada filtro nomeia uma **coluna da tabela** e um valor. Quando essa coluna está vinculada a uma dimensão no PlaidCloud, o valor é um nó, e o filtro inclui tudo o que é consolidado nesse nó na hierarquia principal da dimensão — em uma coluna **Region** vinculada a uma dimensão de geografia, o nó **EMEA** abrange todos os países abaixo dele. Em uma coluna que não está vinculada a uma dimensão, o filtro corresponde exatamente ao valor.
+
+Os exemplos desta página usam uma tabela cujas colunas **Region** e **Period** estão vinculadas a dimensões. Use os nomes de colunas da sua própria tabela.
+
+### CELL
+
+`=PLAIDXL.CELL(table, measure, [measure_type], node, [node], ...)`
+
+Retorna um número: a medida, agregada sobre as linhas que ficam sob cada nó informado.
+
+```text
+A1  =PLAIDXL.REPR.TABLE_REPR("Sales")
+A2  =PLAIDXL.REPR.MEASURE("revenue")
+A3  =PLAIDXL.REPR.MEASURE_TYPE("sum")
+A4  =PLAIDXL.REPR.DIMENSION_REPR("Region", "EMEA")
+A5  =PLAIDXL.REPR.DIMENSION_REPR("Period", "FY2026")
+B1  =PLAIDXL.CELL(A1, A2, A3, A4, A5)
+```
+
+`B1` mostra a receita total de EMEA em FY2026.
+
+### CELLS
+
+`=PLAIDXL.CELLS(table, measures, [measure_type], node, [node], ...)`
+
+Como `CELL`, mas para várias medidas de uma vez. Retorna um número por medida, em uma coluna, na ordem em que você as listou.
+
+```text
+D1:F1  revenue | cost | units
+D2     =PLAIDXL.REPR.MEASURES(D1:F1)
+B2     =PLAIDXL.CELLS(A1, D2#, A3, A4, A5)
+```
+
+`D2#` passa todo o resultado expandido de `MEASURES`. `B2:B4` mostram receita, custo e unidades de EMEA em FY2026.
+
+## Blocos de construção
+
+Essas funções não leem dados por conta própria. Cada uma retorna um pequeno trecho de texto que descreve uma parte de um cálculo, pronto para ser passado a `CELL`, `CELLS` ou `DRILL`. Coloque-as em células que você referencia, para que uma única alteração — um período diferente, por exemplo — atualize todas as fórmulas que as usam.
+
+### TABLE_REPR
+
+`=PLAIDXL.REPR.TABLE_REPR(table_name)`
+
+A tabela da qual `CELL` e `CELLS` leem, pelo seu nome no projeto selecionado.
+
+### MEASURE
+
+`=PLAIDXL.REPR.MEASURE(column_name)`
+
+A coluna numérica que `CELL` agrega.
+
+### MEASURES
+
+`=PLAIDXL.REPR.MEASURES(column_names)`
+
+Várias colunas de medida para `CELLS`, a partir de um intervalo de células que contêm nomes de colunas. O resultado se expande em uma célula por coluna; passe-o para `CELLS` com o operador de expansão, como `D2#`.
+
+### MEASURE_TYPE
+
+`=PLAIDXL.REPR.MEASURE_TYPE(agg_function)`
+
+Como agregar a medida. `agg_function` é um destes valores, em minúsculas:
+
+| Valor | Retorna |
+|---|---|
+| `sum` | O total (o padrão quando você não informa um tipo de medida) |
+| `mean` | A média |
+| `median` | O valor mediano |
+| `min` | O menor valor |
+| `max` | O maior valor |
+| `std` | O desvio padrão |
+| `var` | A variância |
+
+### DIMENSION_REPR
+
+`=PLAIDXL.REPR.DIMENSION_REPR(dimension_name, start_node)`
+
+Um filtro para `CELL` e `CELLS`. Passe um para cada coluna pela qual você quer filtrar.
+
+- `dimension_name` — o nome de uma **coluna da tabela** — a coluna que contém os valores da dimensão, como `"Region"`. Ele deve corresponder exatamente ao nome da coluna; uma coluna que não está na tabela retorna um erro.
+- `start_node` — o nó no qual consolidar, como `"EMEA"`. Em uma coluna que não está vinculada a uma dimensão, o valor a ser correspondido.
+
+Faça referência a uma célula para o nó a fim de montar uma grade: `=PLAIDXL.REPR.DIMENSION_REPR("Region", $A7)`. Espaços no início e no fim são ignorados, então você pode apontá-lo para os nomes de nós recuados que `DRILL` monta.
+
+### DRILL_KEY
+
+`=PLAIDXL.REPR.DRILL_KEY(d_key)`
+
+Até onde [`DRILL`](#drill) vai abaixo do seu nó inicial. `d_key` é texto simples:
+
+| `d_key` | Detalha até |
+|---|---|
+| `"all"` | Todos os descendentes |
+| `"leaves"` | Apenas as folhas — nós sem nada abaixo deles |
+| `"1 level"`, `"2 levels"`, … | Essa quantidade de gerações abaixo |
+
+Escreva o número em algarismos: `"2 levels"`, não `"two levels"`. Um `drill` inicial é ignorado, então `"drill 2 levels"` também funciona.
+
+Com dois ou mais níveis, `DRILL` lista uma geração por vez — todos os filhos, depois todos os netos — em vez de cada nó diretamente sob o seu pai. Para um layout aninhado, use `"all"` ou [`GET_DIMENSION`](#get_dimension) com um `generation_limit`.
+
+<Aside type="note">
+`CELL`, `CELLS` e `DRILL` esperam a saída dessas funções de blocos de construção. Crie cada argumento com a sua função em vez de digitar o texto você mesmo.
+</Aside>
+
+## Relacionados
+
+- [Criar um relatório com funções personalizadas](/pt-br/reference/cli/plaidxl/build-a-report/) — uma hierarquia na lateral, valores no topo
+- [Trabalhar com tabelas e dimensões](/pt-br/reference/cli/plaidxl/retrieve/) — escolha o projeto do qual as funções leem
+- [Uso de dimensões](/pt-br/guides/dimensions/dimensions/) — hierarquias principais e alternativas, e como os nós são consolidados
+- [Projetar uma hierarquia de dimensão](/pt-br/get-started/tutorials/design-a-dimension/) — crie a hierarquia na qual seu relatório é consolidado

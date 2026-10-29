@@ -1,0 +1,173 @@
+---
+title: Geodatenanalyse
+description: Laden Sie Geodateien, erstellen und verändern Sie Geometrien, gleichen Sie Standorte mit Gebieten ab und veröffentlichen Sie das Ergebnis – der Geodatenpfad durch einen PlaidCloud-Workflow.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud behandelt Geometrie als gleichberechtigten Bestandteil eines Workflows: Sie
+importieren Geodateien, erstellen Geometrie aus Koordinaten, formen sie um, gleichen sie ab und veröffentlichen
+das Ergebnis – ohne die Plattform zu verlassen und ohne separates GIS-Werkzeug.
+
+Diese Anleitung zeigt den Weg durch diese Funktionen. Details zu einem einzelnen Schritt finden Sie unter
+[Geodaten-Schritte](/de/reference/workflow-steps/spatial/).
+
+## Geometrie ist einfach eine Spalte
+
+Jeder räumliche Schritt liest und schreibt Geometrie als **WKT** (Well-Known Text) in einer
+gewöhnlichen Textspalte. Das hat drei Folgen, die Sie von Anfang an kennen sollten:
+
+- **Keine Typdeklaration.** Eine Geometriespalte ist eine Textspalte. Es gibt nichts zu
+  konfigurieren und nichts zu migrieren.
+- **Schritte lassen sich frei kombinieren.** Die Ausgabe jedes räumlichen Schritts kann als Eingabe jedes anderen dienen, in
+  beliebiger Reihenfolge.
+- **SQL und Geometrie lassen sich mischen.** Eine Geometriespalte steht neben Ihren Kennzahlen, sodass Sie
+  im selben Schritt nach beiden filtern, gruppieren und verknüpfen können.
+
+## 1. Geometrie in eine Tabelle bringen
+
+Es gibt zwei Wege, je nachdem, woher die Geometrie stammt.
+
+**Aus einer Geodatei.** Verwenden Sie
+[Räumlicher Dateiimport](/de/reference/workflow-steps/spatial/spatial-file-import/) für
+MapInfo-`.TAB`-, ESRI-`.shp`-, `.kml`- oder `.geojson`-Dateien. Laden Sie die Datei und ihre
+Begleitdateien in denselben Dokumentordner hoch – der Schritt liest die zugehörigen Dateien
+(`.shx`/`.dbf`/`.prj` bei einem Shapefile, `.dat`/`.map`/`.id` bei einer `.TAB`)
+automatisch. Ausgegeben wird eine Zeile pro Feature, mit einer WKT-Geometriespalte und den
+Attributen der Datei.
+
+**Aus bereits vorhandenen Koordinaten.** Wenn Ihre Daten Spalten für Längen- und Breitengrad enthalten,
+erstellen Sie Punkte mit einem
+[Table-Extract-Ausdruck](/de/reference/workflow-steps/spatial/spatial-sql-recipes/) –
+dieser wird in der Datenbank ausgeführt, sodass keine Zeilen das Data Warehouse verlassen:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="Begleitdateien zusammenhalten">
+  Ein Shapefile ohne seine `.prj`-Datei wird ohne Koordinatenbezugssystem importiert, und eine
+  `.TAB` ohne ihre `.dat` hat keine Attribute. Laden Sie die gesamte Gruppe hoch, bevor Sie den
+  Import ausführen.
+</Aside>
+
+**Aus Adressen – Geocodierung.** Der Schritt **geocode** wandelt Adressspalten in
+Koordinaten um (vorwärts), und der Schritt **geocode reverse** wandelt ein Breiten-/Längengrad-Paar wieder
+in eine Adresse um (rückwärts), jeweils über den Geocodierungsdienst von PlaidCloud. Die Vorwärts-Geocodierung
+hängt `GeocodeLat` /
+`GeocodeLon` an (zusätzlich `GeocodeStatus`, `GeocodeConfidence` und die abgeglichene Bezeichnung);
+die Rückwärts-Geocodierung hängt die aufgelösten Adressbestandteile an.
+
+### Anreicherung um Standortcodes
+
+Beide Geocodierungsschritte können für jede Zeile außerdem einen kompakten **Standortcode** anhängen,
+der lokal aus der zurückgegebenen Koordinate berechnet wird – ohne zusätzlichen Dienstaufruf und ohne
+externe Abhängigkeit:
+
+- **Geohash** (`GeocodeGeohash`) – wird **standardmäßig** ausgegeben. Ein Geohash ist die
+  Konvention der Datenanalyse (Elasticsearch, Redis, Lucene): Seine **Präfix-Eigenschaft**
+  bedeutet, dass ein kürzerer Code für denselben Punkt ein Präfix eines längeren ist,
+  sodass `GROUP BY LEFT(GeocodeGeohash, n)` ein sofortiges räumliches Bucketing ergibt und ein Präfix-Join
+  eine günstige Nähesuche.
+- **Plus Code** (`GeocodePlusCode`) – optional, **standardmäßig deaktiviert**. Ein
+  [Open Location Code](https://maps.google.com/pluscodes/) ist die
+  gut weitergebbare Adressform, die Google Maps und einige staatliche Adresssysteme verwenden.
+
+Mit der Einstellung **`location_codes`** des Schritts steuern Sie, welche Spalten ausgegeben werden:
+
+| `location_codes` | Angehängte Spalten |
+|---|---|
+| `none` | Kein Standortcode |
+| `geohash` *(Standard)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` und `GeocodePlusCode` |
+
+Zwei optionale Einstellungen passen die Codes an: **`geohash_precision`** (Standard `9` ≈ eine
+Zelle von 4,8 m; begrenzt auf `12`) und **`pluscode_length`** (Standard `10` ≈ eine Zelle von 14 m).
+Eine Vorwärts-Zeile, die sich nicht zu einer Koordinate auflösen ließ, lässt die Codespalten leer; eine
+Rückwärts-Zeile codiert ihre **abgefragte** Koordinate auch dann, wenn keine Adresse gefunden wird.
+
+## 2. Geometrie umformen
+
+Sobald die Geometrie in einer Spalte steht, formen Sie sie so um, dass sie Ihre eigentliche Frage beantwortet.
+
+| Frage | Schritt |
+|---|---|
+| Was liegt im Umkreis von *n* Meilen um jede Filiale? | [Spatial Trade Area](/de/reference/workflow-steps/spatial/spatial-trade-area/) |
+| Was liegt innerhalb eines festen Abstands von dieser Form? | [Spatial Buffer](/de/reference/workflow-steps/spatial/spatial-buffer/) |
+| Wie groß ist die zusammengefasste Fläche jeder Region? | [Räumlich kombinieren](/de/reference/workflow-steps/spatial/spatial-combine/) |
+| Welche Fläche umschließen diese Punkte? | [Spatial Poly-Build](/de/reference/workflow-steps/spatial/spatial-poly-build/) |
+| Wo überlappen sich diese beiden Flächen, oder wo unterscheiden sie sich? | [Räumliche Verarbeitung](/de/reference/workflow-steps/spatial/spatial-process/) |
+| Wie lassen sich diese Grenzen mit weniger Aufwand zeichnen? | [Spatial Generalize](/de/reference/workflow-steps/spatial/spatial-generalize/) |
+| Wie unterteile ich dieses Gebiet in gleich große Zellen? | [Spatial Make Grid](/de/reference/workflow-steps/spatial/spatial-make-grid/) |
+| Wie zerlege ich ein Polygon in seine Teile? | [Spatial Poly-Split](/de/reference/workflow-steps/spatial/spatial-poly-split/) |
+
+Ein Einzugsgebiet (Trade Area) ist meist der Ausgangspunkt einer Handels- oder Servicegebietsanalyse: Geben Sie ihm
+eine Tabelle mit Standorten und eine Reihe von Radien, und es liefert konzentrische Ringe, gegen die Sie
+Kunden abgleichen können.
+
+## 3. Standorte mit Gebieten abgleichen
+
+Die beiden Abgleichsschritte beantworten unterschiedliche Fragen und arbeiten auf verschiedenen Wegen.
+
+**In welchem Gebiet liegt jeder Kunde?** Verwenden Sie
+[Räumlicher Abgleich](/de/reference/workflow-steps/spatial/spatial-match/). Er läuft als
+Join mit räumlichem Prädikat in der Datenbank und skaliert daher mit der Tabelle. Wählen Sie die
+Beziehung – *schneidet*, *innerhalb* oder *enthält* – und er gibt eine Zeile pro
+passendem Paar aus.
+
+**Welche Filialen liegen jedem Kunden am nächsten?** Verwenden Sie
+[Spatial Find Nearest](/de/reference/workflow-steps/spatial/spatial-find-nearest/).
+Er behält pro Ziel die N nächstgelegenen Zeilen und fügt eine berechnete Entfernungsspalte in der
+von Ihnen gewählten Einheit hinzu. Auch er läuft über SQL und skaliert daher genauso.
+
+**Welche Kunden liegen außerhalb aller Gebiete?** Verwenden Sie
+[Spatial Match (Intersect / Unmatched)](/de/reference/workflow-steps/spatial/spatial-match-executor/)
+im Modus *Unmatched*. Derselbe Schritt gibt außerdem die Überlappungsgeometrie selbst aus, wenn Sie
+die Schnittmenge statt der Paarung benötigen.
+
+## 4. Messen
+
+[Spatial Info](/de/reference/workflow-steps/spatial/spatial-info/) hängt Spalten für Fläche,
+Länge, Schwerpunkt und umschließendes Rechteck an. Dabei handelt es sich um **geodätische WGS84**-Messungen,
+sodass Quadratmeilen tatsächliche Quadratmeilen sind und keine ebene
+Näherung – was wichtig wird, sobald Sie Gebiete auf unterschiedlichen
+Breitengraden vergleichen.
+
+Für eine einfache Punkt-zu-Punkt-Entfernung zwischen zwei Spalten derselben Zeile ist ein
+[SQL-Ausdruck](/de/reference/workflow-steps/spatial/spatial-sql-recipes/)
+günstiger als ein Schritt.
+
+## 5. Veröffentlichen
+
+Geometrie, die in einer Tabelle bleibt, ist keine Antwort, auf die jemand reagieren kann.
+
+- [Report Map](/de/reference/workflow-steps/reports/report-map/) rendert Geometrie in
+  einen PDF-Bericht, neben Diagrammen und Tabellen aus demselben Workflow.
+- Die Ergebnistabelle speist [Dashboards](/de/guides/dashboards/) wie jede andere Tabelle –
+  die Geometriespalte wird mitgeführt, und die Kennzahlen daneben sind das, was die meisten
+  Dashboards tatsächlich darstellen.
+- [Exportschritte](/de/reference/workflow-steps/export/) schreiben die Tabelle in CSV,
+  Excel oder eine externe Datenbank, wenn ein nachgelagertes GIS-Werkzeug sie benötigt.
+
+## Umstieg von Alteryx
+
+Für jedes räumliche Alteryx-Werkzeug gibt es einen PlaidCloud-Weg. Konvertierte Workflows wählen ihn
+automatisch; die
+[Alteryx-Konvertierungsmatrix](/de/reference/alteryx-conversion-matrix/) listet die
+Zuordnung Werkzeug für Werkzeug auf, und
+[Räumliche Alteryx-Workflows migrieren](/de/guides/workflows/migrate-spatial-alteryx-workflows/)
+behandelt das Paketieren der Dateien und das Validieren des Ergebnisses.
+
+## Verwandte Anleitungen
+
+- [Geodaten-Schritte](/de/reference/workflow-steps/spatial/)
+- [Räumliche Alteryx-Workflows migrieren](/de/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Erweiterte Workflows](/de/guides/workflows/advanced-workflows/)

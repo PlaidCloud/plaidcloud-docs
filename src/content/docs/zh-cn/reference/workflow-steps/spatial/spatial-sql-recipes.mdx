@@ -1,0 +1,132 @@
+---
+title: Geometry in SQL 步骤
+description: 可移植的 geom_* 表达式函数，以及构建点几何和度量距离的示例，全部在数据库中运行。
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/spatial/spatial-sql-recipes.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+并非每个地理空间操作都需要专门的步骤。任何单行列表达式都可以作为 [Table Extract 步骤](/zh-cn/reference/workflow-steps/tables/table-extract/)的表达式单元格在数据库中运行，没有行离开数据仓库——因此它随表规模扩展，而不是随工作流引擎扩展。[Alteryx 转换](/zh-cn/guides/workflows/migrate-spatial-alteryx-workflows/)对 Alteryx 的 *Create Points* 和 *Distance* 工具就采用这一路径。
+
+## 可移植的几何函数
+
+Lakehouse v1 和 v2 对几何函数的写法不同——`ST_MAKEGEOMPOINT` 对 `ST_POINT`，`ST_ASWKT` 对 `ST_ASTEXT`。`geom_*` 系列会解析为您所运行的工作区对应的正确函数，因此一次编写的表达式在两者上都能工作。
+
+| 表达式 | Lakehouse v1 | Lakehouse v2 |
+|---|---|---|
+| `func.geom_from_wkt(x)` | `ST_GEOMETRYFROMWKT` | `ST_GEOMETRYFROMTEXT` |
+| `func.geom_point(lon, lat)` | `ST_MAKEGEOMPOINT` | `ST_POINT` |
+| `func.geom_as_wkt(g)` | `ST_ASWKT` | `ST_ASTEXT` |
+| `func.geom_contains(a, b)` | `ST_CONTAINS` | `ST_CONTAINS` |
+| `func.geom_within(a, b)` | `ST_WITHIN` | `ST_CONTAINS`，参数互换 |
+| `func.geom_x(g)` | `ST_X` | `ST_X` |
+| `func.geom_y(g)` | `ST_Y` | `ST_Y` |
+
+<Aside type="note" title="并非所有函数都可移植">
+  `geom_area`、`geom_length`、`geom_intersects`、`geom_centroid`、
+  `geom_distance`、`geom_createline` 以及边界框边缘
+  （`st_xmin`/`st_xmax`/`st_ymin`/`st_ymax`）仅存在于 Lakehouse v1——
+  StarRocks 没有提供等效函数。在 v2 工作区上，它们会在表达式编译时失败，并给出指明该函数的消息，而不是产生错误的结果。这些度量请改用
+  [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)；
+  它们在工作流引擎中运行，并在所有数据仓库上给出相同的结果。
+</Aside>
+
+## 创建点
+
+根据经度列和纬度列构建 WKT 点：
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+`geom_as_wkt` 将结果写为 WKT，这是所有 PlaidCloud 空间步骤读写所用的形式。
+
+<Aside type="caution" title="十进制度数或整数经纬度">
+  对于普通的十进制度数坐标，以及按 1,000,000 缩放的整数坐标（Create Points 会将其除回原值），这是精确的。投影坐标系中的坐标需要先重新投影为 WGS84 经纬度——直接根据它们构建点会产生未投影的几何。
+</Aside>
+
+## 两点之间的距离
+
+距离是这里唯一**没有可移植写法**的操作——两种 Lakehouse 在函数及其返回单位上都不一致，因此表达式因版本而异。
+
+<Aside type="caution" title="选择与您的工作区相匹配的形式">
+  `ST_DISTANCE_SPHERE` 仅存在于 Lakehouse v2，`geom_distance` 仅存在于 Lakehouse v1。两者都不会降级为对方。如果希望一个步骤在两者上都能工作，请使用
+  [Spatial Find Nearest 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/)——
+  它会为其所运行的工作区选择正确的表达式。
+</Aside>
+
+### Lakehouse v2
+
+`ST_DISTANCE_SPHERE` 接受四个坐标，返回**米**：
+
+```python
+case(
+    (
+        and_(
+            get_column(table, 'Origin').like('POINT%'),
+            get_column(table, 'Destination').like('POINT%'),
+        ),
+        func.st_distance_sphere(
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Destination'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Destination'))),
+        ) * 0.0006213711922373339,
+    ),
+    else_=null,
+)
+```
+
+| 单位 | 由米换算的系数 |
+|---|---|
+| 英里 | `0.0006213711922373339` |
+| 千米 | `0.001` |
+| 米 | `1` |
+| 英尺 | `3.280839895013123` |
+
+### Lakehouse v1
+
+`geom_distance` 对两个几何进行**平面**计算并返回**度**，因此系数是从度而非米换算：
+
+```python
+func.geom_distance(
+    func.geom_from_wkt(get_column(table, 'Origin')),
+    func.geom_from_wkt(get_column(table, 'Destination')),
+) * 69.1709
+```
+
+| 单位 | 由度换算的系数 |
+|---|---|
+| 英里 | `69.1709` |
+| 千米 | `111.32` |
+| 米 | `111320.0` |
+| 英尺 | `364566.929` |
+
+由于是平面计算，这是一种近似，离赤道越远误差越大——在商圈分析典型的局部距离上没有问题，但跨越整个大陆时就不够理想。
+
+v2 形式中的 `LIKE 'POINT%'` 保护很重要：`ST_DISTANCE_SPHERE` 接受四个坐标，因此任一侧的非点几何都会悄悄地度量出错误的结果。`CASE` 会对这些行返回 null。
+
+## 何时改用步骤
+
+| 您想要 | 使用 |
+|---|---|
+| 每一行到另一个表中其*最近*行的距离 | [Spatial Find Nearest 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/) |
+| 在空间联接中将距离用作筛选器 | [空间匹配](/zh-cn/reference/workflow-steps/spatial/spatial-match/) |
+| 面积、长度、质心或边界框 | [Spatial Info 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-info/) |
+| 任何会改变几何形状的操作 | [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/) |
+
+## 相关内容
+
+- [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)
+- [几何函数（Lakehouse v1）](/zh-cn/reference/expressions/lakehouse-v1/09-geometry-functions/)
+- [地理函数（Lakehouse v1）](/zh-cn/reference/expressions/lakehouse-v1/09-geo-functions/)——H3 和 geohash 索引
+- [空间函数（Lakehouse v2）](/zh-cn/reference/expressions/lakehouse-v2/17-spatial-functions/)

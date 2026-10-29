@@ -1,0 +1,39 @@
+---
+title: DAYS_DIFF (Lakehouse v2)
+description: DAYS_DIFF — renvoie le nombre de jours entre deux dates.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v2/08-date-time-functions/days-diff.md
+---
+
+Renvoie le nombre de jours entre deux dates.
+
+## Syntaxe Analyze
+
+```python
+func.days_diff(<end_date>, <start_date>)
+```
+
+## Exemples Analyze
+
+```python
+func.days_diff('2024-03-01', '2024-01-01')
+
+┌────┐
+│ 60  │
+└────┘
+```
+
+## Syntaxe SQL
+
+```sql
+DAYS_DIFF(<end_date>, <start_date>)
+```
+
+## Exemples SQL
+
+```sql
+SELECT DAYS_DIFF('2024-03-01', '2024-01-01');
+
+┌────┐
+│ 60  │
+└────┘
+```

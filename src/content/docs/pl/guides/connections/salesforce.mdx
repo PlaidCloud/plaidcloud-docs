@@ -1,0 +1,158 @@
+---
+title: Połączenie z Salesforce
+description: Skonfiguruj połączenie Salesforce za pomocą aplikacji External Client App i przepływu OAuth client credentials, wybierz użytkownika integracji Run As, przetestuj połączenie i wyodrębnij obiekty CRM do tabel projektu.
+sidebar:
+  order: 21
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/salesforce.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z organizacją Salesforce, aby wyodrębniać standardowe i niestandardowe obiekty — Accounts, Opportunities, Leads, Campaigns oraz własne obiekty `__c` — do tabel projektu. Lista obiektów, lista pól i typ każdej kolumny są odczytywane bezpośrednio z organizacji.
+
+Konfiguracja po stronie Salesforce należy do administratora i leży na ścieżce krytycznej: potrzebna jest aplikacja **External Client App**, użytkownik integracji, w którego imieniu aplikacja ma działać (**Run As**), oraz klucz konsumenta i klucz tajny aplikacji. Ten przewodnik opisuje tę konfigurację, a następnie połączenie w PlaidCloud, test i pierwsze wyodrębnienie.
+
+## Wymagania wstępne
+
+W Salesforce potrzebujesz:
+
+- Administratora, który może tworzyć aplikacje i edytować ich zasady w sekcji **Konfiguracja**.
+- Użytkownika Salesforce, w imieniu którego będzie działać integracja. Użyj dedykowanego użytkownika integracji zamiast konta osoby — wszystko, co odczytuje PlaidCloud, jest ograniczone do tego użytkownika, a konto osoby zmienia się wraz z jej rolą.
+- Profilu lub zestawu uprawnień tego użytkownika z włączonym uprawnieniem **API Enabled**.
+
+W PlaidCloud potrzebujesz uprawnienia do tworzenia połączeń (**Tools > Connections**).
+
+## Znajdź host My Domain
+
+Każda organizacja Salesforce ma My Domain, a jego nazwa jest hostem, z którym łączy się PlaidCloud. W Salesforce przejdź do sekcji **Konfiguracja** i wyszukaj w Quick Find frazę **My Domain**; na stronie zobaczysz nazwę swojej domeny. Twój host to ta nazwa z dodatkiem `.my.salesforce.com`:
+
+| Organizacja | Host |
+|---|---|
+| Produkcyjna i Developer Edition | `mycompany.my.salesforce.com` |
+| Sandbox | `mycompany--uat.sandbox.my.salesforce.com` — nazwa domeny, `--`, nazwa sandboksa, a następnie `.sandbox.my.salesforce.com` |
+
+Użyj hosta My Domain własnej organizacji, a nie `login.salesforce.com` ani `test.salesforce.com`. Przepływ client credentials uwierzytelnia się w konkretnej organizacji, a ogólne hosty logowania żadnej z nich nie wskazują.
+
+<Aside type="tip">
+Sandboksy i środowisko produkcyjne to osobne organizacje z osobnymi aplikacjami i osobnymi poświadczeniami. Skonfiguruj obie w ten sam sposób i przechowuj je w różnych środowiskach PlaidCloud w jednym połączeniu, aby ten sam przepływ pracy odczytywał sandbox w środowisku programistycznym, a środowisko produkcyjne w produkcji.
+</Aside>
+
+## Utwórz aplikację External Client App
+
+<Aside type="caution">
+Utwórz aplikację **External Client App**, a nie Connected App. Salesforce domyślnie wyłączył tworzenie nowych aplikacji Connected App — zarówno w interfejsie, jak i przez Metadata API — wprowadzając tę zmianę etapami do wersji Spring '26. Administrator szukający znajomego przycisku „New Connected App” go nie znajdzie. Pomoc techniczna Salesforce może włączyć tę opcję ponownie w ramach zgłoszenia, ale zastrzega, że sama ta możliwość zostanie usunięta w przyszłej wersji, dlatego integrację należy zbudować na aplikacji External Client App. Istniejące aplikacje Connected App nadal działają.
+</Aside>
+
+<Steps>
+
+1. W sekcji **Konfiguracja** wyszukaj w Quick Find frazę **External Client App Manager** i kliknij `New External Client App`.
+
+2. Wypełnij pola **External Client App Name** (na przykład `PlaidCloud Integration`), automatycznie wypełnianą **API Name** oraz **Contact Email**. Pozostaw **Distribution State** ustawione na `Local`.
+
+3. W sekcji **API (Enable OAuth)** włącz OAuth. Formularz wymaga podania **Callback URL**, mimo że ten przepływ nigdzie nie przekierowuje — dobrym symbolem zastępczym jest `https://localhost/`.
+
+4. Dodaj zakres OAuth **Manage user data via APIs (api)**. To zakres, w którym działają interfejsy REST i Bulk API.
+
+5. Utwórz aplikację.
+
+6. Otwórz aplikację, przejdź do jej **Policies** i kliknij `Edit`. Włącz **client credentials flow** i ustaw **Run As** na użytkownika integracji.
+
+7. Na tej samej stronie ustaw **Permitted Users** na `Admin approved users are pre-authorized`, a następnie przypisz aplikację użytkownikowi Run As przez jego profil lub zestaw uprawnień.
+
+8. Przejdź do **Settings > OAuth Settings** aplikacji i otwórz **Consumer Key and Secret**. Salesforce zweryfikuje Twoją tożsamość, a następnie na kilka minut wyświetli obie wartości. Skopiuj je w bezpieczne miejsce — za chwilę wkleisz je w PlaidCloud, a klucza tajnego nie da się potem odczytać z PlaidCloud.
+
+</Steps>
+
+<Aside type="note">
+Nowo utworzona aplikacja staje się w pełni użyteczna w infrastrukturze Salesforce dopiero po kilku minutach. Jeśli pierwszy test połączenia nie powiedzie się zaraz po utworzeniu aplikacji, odczekaj kilka minut i przetestuj ponownie, zanim cokolwiek zmienisz.
+</Aside>
+
+## Wybierz użytkownika Run As
+
+Przepływ client credentials nie ma interaktywnego logowania, więc aplikacja ma jedną tożsamość Salesforce: użytkownika wskazanego w ustawieniu **Run As**. Wszystko, co PlaidCloud odczytuje przez to połączenie, jest odczytywane jako ten użytkownik.
+
+Przygotuj tego użytkownika świadomie:
+
+- **Zapewnij mu dostęp do obiektów, które zamierzasz wyodrębniać**, przez jego profil lub zestaw uprawnień — odczyt obiektów oraz odczyt na poziomie pól dla pól, które planujesz wybrać.
+- **Zapewnij mu odpowiednie udostępnianie.** Dostęp na poziomie wierszy wynika z modelu udostępniania organizacji: hierarchii ról, reguł udostępniania i własności rekordów. Użytkownik integracji nisko w hierarchii widzi ułamek rekordów, które widzi użytkownik działu operacji sprzedaży.
+- **Nadaj mu uprawnienie API Enabled**, bo inaczej przepływ w ogóle nie będzie mógł się uwierzytelnić.
+- **Nie angażuj go w codzienną administrację.** Użytkownik, którego uprawnienia zmieniają się z niepowiązanych powodów, zmienia to, co zwraca każde zapisane wyodrębnienie.
+
+Sprawdź, jakiego użytkownika faktycznie otrzymano: **Testuj połączenie** w PlaidCloud zwraca nazwę użytkownika Run As, co jest najtańszym sposobem wychwycenia aplikacji wskazującej złą tożsamość, zanim zacznie przesyłać dane.
+
+## Użytkownik Run As ogranicza wszystko
+
+To część wartą dwukrotnego przeczytania, ponieważ dwa sposoby, w jakie użytkownik Run As ogranicza wyodrębnienie, zawodzą w przeciwnych kierunkach.
+
+**Udostępnianie na poziomie wierszy jest ciche.** Rekordy, których użytkownik Run As nie widzi, po prostu nie trafiają do wyniku. Nie ma błędu, ostrzeżenia ani liczby pominiętych rekordów — wyodrębnienie 40 000 wierszy z obiektu zawierającego 250 000 rekordów wygląda dokładnie tak samo jak kompletne wyodrębnienie obiektu zawierającego 40 000 rekordów. PlaidCloud nie może wykryć różnicy, ponieważ Salesforce nigdy nie informuje, że te wiersze istnieją. Dlatego gdy liczba wierszy wydaje się zbyt mała, najpierw sprawdź rolę użytkownika Run As, reguły udostępniania i własność rekordów, a dopiero potem szukaj gdzie indziej. Porównaj wynik z raportem uruchomionym w Salesforce **jako ten sam użytkownik**, a nie jako Ty.
+
+**Zabezpieczenia na poziomie pól są głośne.** PlaidCloud wymienia jawnie każde wybrane pole w wysyłanym zapytaniu, więc pole, którego użytkownik Run As nie może odczytać, powoduje niepowodzenie całego wyodrębnienia z błędem wskazującym to pole. Nic nie trafia częściowo i nic nie wraca puste bez wykrycia.
+
+Ta asymetria ma praktyczną konsekwencję: **działający zapisany krok przestaje się uruchamiać w chwili, gdy ktoś cofnie odczyt na poziomie pola dla jednego z wybranych pól.** Krok się nie zmienił i PlaidCloud się nie zmienił; zmienił się dostęp użytkownika Run As do pól. Gdy wyodrębnienie działające od miesięcy nagle kończy się niepowodzeniem ze wskazaniem jednego pola, właśnie to się stało — przywróć to pole użytkownikowi Run As albo odznacz pole w kroku.
+
+<Aside type="caution">
+Zaszyfrowane pola zawodzą w odwrotny sposób. Gdy użytkownik Run As nie ma uprawnienia **View Encrypted Data**, Salesforce zwraca zamaskowane znaki zamiast błędu — wiersze gwiazdek wyglądające na prawdziwe dane. PlaidCloud odmawia obsługi pól `encryptedstring`, zamiast zapisywać takie dane, więc nigdy nie są oferowane do wyodrębnienia.
+</Aside>
+
+## Utwórz połączenie
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **REST - Salesforce**.
+
+3. Nadaj połączeniu **Nazwa konta**, na przykład `Salesforce Prod`.
+
+4. Ustaw **Host lub adres IP** na host My Domain organizacji, opisany powyżej.
+
+5. Wklej klucz konsumenta aplikacji w polu **Identyfikator klienta**, a jej klucz tajny konsumenta w polu **Klucz tajny klienta**.
+
+6. Ustaw **Model zabezpieczeń**, aby określić, kto w obszarze roboczym może korzystać z połączenia, pozostaw zaznaczone **Aktywne (zezwalaj na dostęp)** i kliknij `Create`.
+
+</Steps>
+
+## Przetestuj połączenie
+
+Kliknij `Test Connection`. PlaidCloud przeprowadza prawdziwą wymianę tokenu i zgłasza trzy informacje:
+
+| Zgłaszana informacja | Co sprawdzić |
+|---|---|
+| Identyfikator organizacji | Czy to organizacja, o którą chodziło — to najszybszy sposób wychwycenia poświadczeń sandboksa zapisanych w środowisku produkcyjnym. |
+| Wersja API | Najwyższa wersja obsługiwana przez tę organizację. Wyodrębnienia działają na wersji przypiętej do połączenia, niekoniecznie na tej. |
+| Użytkownik Run As | Czy to przygotowany przez Ciebie użytkownik integracji, a nie osoba ani administrator. |
+
+Niepowodzenie uwierzytelniania prosi o ponowne wprowadzenie identyfikatora klienta i klucza tajnego, ponieważ po zapisaniu klucza tajnego nie można go odczytać.
+
+## Wyodrębnij pierwszy obiekt
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Salesforce: zapytanie o obiekt**.
+
+2. Ustaw **Połączenie Salesforce** i **Środowisko**, a następnie wybierz **Obiekt** — zacznij od `Account`.
+
+3. Zaznacz kilka pól. Kolumna **Trafia jako** pokazuje typ, jaki faktycznie będzie miała każda kolumna, na podstawie metadanych pól Salesforce. Pole `Id` jest zawsze uwzględniane.
+
+4. Ustaw **Tabela docelowa** na tabelę roboczą i uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że aplikacja, dostęp użytkownika Run As i host są poprawne. Zanim zaczniesz budować na wynikach, przeczytaj stronę referencyjną samego kroku: okno wyodrębnienia jest uruchamiane jednorazowo, usunięcia nie są śledzone, kilku typów pól w ogóle nie można wyodrębnić, a cykliczne pobieranie bez nadzoru nazywa każde okno za pomocą zmiennej przepływu pracy w polu **Tag okna**.
+
+## Rozwiązywanie problemów
+
+| Co widzisz | Przyczyna | Rozwiązanie |
+|---|---|---|
+| Uwierzytelnianie nie działa zaraz po utworzeniu aplikacji | Aplikacja nie zakończyła jeszcze propagacji w infrastrukturze Salesforce. | Odczekaj kilka minut i przetestuj ponownie, zanim cokolwiek zmienisz. |
+| Uwierzytelnianie nie działa z właśnie wklejonymi poświadczeniami | Klucz konsumenta lub klucz tajny skopiowany z początkowymi lub końcowymi spacjami albo klucz tajny z innej aplikacji. | Skopiuj ponownie oba z **Settings > OAuth Settings > Consumer Key and Secret** i wklej je jeszcze raz. |
+| Uwierzytelnianie nie działa, a aplikacja wygląda poprawnie | Zasady aplikacji nigdy nie były edytowane, więc przepływ client credentials nie jest włączony lub nie ma użytkownika **Run As**. | Otwórz **Policies** aplikacji, kliknij `Edit`, włącz przepływ client credentials i ustaw **Run As**. |
+| Uwierzytelnianie z PlaidCloud nie działa, ale ta sama aplikacja działa z Twojego komputera | **Ograniczenia adresów IP.** Login IP Ranges w profilu użytkownika Run As lub aplikacja bez złagodzenia ograniczeń IP odrzucają wymianę tokenu — a Salesforce nie podaje żadnej wskazówki, że to jest powód. | Złagodź egzekwowanie ograniczeń IP dla tej aplikacji albo dodaj adresy wychodzące PlaidCloud do Login IP Ranges w profilu. Poproś pomoc techniczną PlaidCloud o adresy dla swojego tenanta. |
+| Połączenie, które działało, przestaje się uwierzytelniać | Użytkownik Run As został dezaktywowany, aplikacja została odwołana albo zmieniły się zasady sesji lub IP w organizacji. | Sprawdź użytkownika i aplikację w Salesforce. PlaidCloud odrzuca nieaktualny token i samodzielnie ponawia próbę raz, więc trwałe niepowodzenie oznacza rzeczywistą zmianę w organizacji. |
+| Wyodrębnienie kończy się niepowodzeniem ze wskazaniem jednego pola | Użytkownik Run As utracił odczyt na poziomie pola dla wybranego pola. | Zobacz [Użytkownik Run As ogranicza wszystko](#użytkownik-run-as-ogranicza-wszystko). |
+
+## Powiązane
+
+- [Salesforce: zapytanie o obiekt](/pl/reference/workflow-steps/salesforce/query-salesforce-object/) — pełna dokumentacja kroku, w tym okna wyodrębniania i odrzucane typy pól
+- [Złącze Salesforce REST](/pl/reference/connectors/rest/salesforce/) — dokumentacja pól połączenia
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/) — edycja, testowanie, konfiguracja dla poszczególnych środowisk i kontrola dostępu

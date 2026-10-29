@@ -1,0 +1,53 @@
+---
+title: "Import Intacct Entity 步骤"
+description: 通过 XML Gateway 的 readByQuery/readMore 分页将 Sage Intacct 对象拉取到项目表中，每个对象都有字段和运算符允许列表，包含 ge/le 范围。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/import-intacct-entity.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [Sage Intacct 连接](/zh-cn/guides/connections/sage-intacct/)将一个 Sage Intacct 对象导入到项目表中，使用 Intacct XML Gateway 的 `readByQuery`/`readMore` 操作自动分页读取完整结果集。选择连接、对象和所需的筛选器即可，步骤会拉取匹配的记录并写入，无需手动管理分页。
+
+这是一个通用的预置步骤，一个步骤类型涵盖七个对象：从总账交易和余额明细（`GLDETAIL`、`GLACCOUNTBALANCE`、`GLENTRY`），到维度主数据（`LOCATION`、`DEPARTMENT`、`CLASS`），再到订单单据（`SODOCUMENT`）。
+
+<Aside type="note">
+此步骤不同于 [Import Sage Intacct Query 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-intacct-query/)，后者通过通用字段选择器面向**任何** Intacct 对象。`Import Intacct Entity` 是专门面向这七个对象的原生目录步骤，提供精心整理的每个对象的筛选器允许列表，并为大型结果集提供自动 `readMore` 分页（尤其是总账明细，其数据量可能远超单个 Intacct API 页）。
+</Aside>
+
+## 配置
+
+| 字段 | 必填 | 备注 |
+|---|---|---|
+| Sage 连接 | 是 | 用于读取数据的 Sage Intacct 连接。 |
+| 目标表 | 是 | 写入结果的项目表。每次运行都会完全覆盖该表。 |
+| 对象 | 是 | 要拉取的 Intacct 对象。可选 `GLDETAIL`、`GLACCOUNTBALANCE`、`GLENTRY`、`LOCATION`、`DEPARTMENT`、`CLASS`、`SODOCUMENT` 之一。 |
+| 筛选器 | 否 | 由 `{field, operator, value}` 子句组成的数组。运算符包括 `eq`、`ne`、`gt`、`ge`、`lt`、`le`。范围用同一字段上的两个子句表示：一个 `ge`，一个 `le`。每个对象将筛选器限制在其自身的字段加运算符允许列表内；不支持的字段或运算符组合会被拒绝，而不是被悄悄忽略。 |
+
+### 对象与典型范围筛选器
+
+| 对象 | 拉取内容 | 常用范围筛选器 |
+|---|---|---|
+| `GLDETAIL` | 总账交易行明细 | 过账日期（`ge`/`le`）、金额（`ge`/`le`） |
+| `GLACCOUNTBALANCE` | 按期间划分的科目余额 | 期末日期（`ge`/`le`） |
+| `GLENTRY` | 已过账的日记账分录行 | 过账日期（`ge`/`le`） |
+| `LOCATION` | 位置维度主数据 | —（仅支持等值筛选） |
+| `DEPARTMENT` | 部门维度主数据 | —（仅支持等值筛选） |
+| `CLASS` | 类别维度主数据 | —（仅支持等值筛选） |
+| `SODOCUMENT` | 销售订单单据 | 单据日期（`ge`/`le`） |
+
+## 分页的工作方式
+
+Intacct 的 XML Gateway 一次返回一页结果。此步骤先发出初始的 `readByQuery` 调用，然后使用 Intacct 返回的结果集 ID 接着调用 `readMore`，直到读完所有页，因此涉及数万行的 `GLDETAIL` 拉取只需一次步骤运行即可完成，无需您调整页面大小。
+
+<Aside type="caution">
+对 `GLDETAIL` 或 `GLENTRY` 进行范围很宽且未加筛选的拉取，完整分页读取仍可能耗时很长。请使用过账日期范围限定大型拉取，而不要仅依赖分页来加快速度。
+</Aside>
+
+## 相关内容
+
+- [Sage Intacct 步骤](/zh-cn/reference/workflow-steps/sage-intacct/)
+- [Import Sage Intacct Query 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-intacct-query/)：针对任何 Intacct 对象的通用查询
+- [连接到 Sage Intacct](/zh-cn/guides/connections/sage-intacct/)
+- [Sage Intacct REST 连接器](/zh-cn/reference/connectors/rest/sage-intacct/)

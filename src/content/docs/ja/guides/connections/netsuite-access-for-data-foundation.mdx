@@ -1,0 +1,121 @@
+---
+title: Data Foundation 向けの NetSuite アクセス
+description: PlaidCloud Data Foundation が NetSuite を直接読み取れるように NetSuite 管理者が設定する内容（読み取り専用ロール、OAuth 2.0 の統合、証明書）と、返送する内容を説明します。
+sidebar:
+  label: Data Foundation 向けの NetSuite アクセス
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/) は、接続したすべての ERP システムとインスタンスのデータを 1 つの Common Finance Model にまとめます。NetSuite は、Data Foundation が直接読み取る ERP の 1 つです。NetSuite 接続は、OAuth 2.0 のマシン間アクセスを使用します。必要なのは、読み取り専用ロール、クライアント資格情報グラントを使用する統合レコード、証明書です。このページは、それらを設定する NetSuite 管理者と、設定を依頼する PlaidCloud ユーザー向けです。
+
+PlaidCloud はデータの読み取りのみを行います。パスワード、トークンシークレット、秘密鍵をメールで送る必要はありません。
+
+## 始める前に: 証明書を作成する
+
+PlaidCloud ユーザーのチームが RSA キーペアを作成し、秘密鍵を保管します。NetSuite に渡すのは公開証明書のみです。たとえば、OpenSSL では次のようにします。
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+管理者に送るリクエストに `plaidcloud_netsuite_public.pem` を添付します。`plaidcloud_netsuite.pem` は、PlaidCloud の**秘密鍵**フィールドに入力するために保管してください。
+
+## アクセスリクエストを送信する
+
+プロジェクトの **Foundation** タブで、**NetSuite 接続**の下にある**新しい接続を作成**を選択します。フォームにリクエストの全文が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「PlaidCloud 用の NetSuite アクセス」でメールプログラムで開きます。公開証明書を添付してください。
+
+## NetSuite 管理者が設定する内容
+
+<Steps>
+
+1. **機能を有効にします。** **Setup > Company > Enable Features > SuiteCloud** で、次を有効にします。
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook（SuiteQL に必要）
+
+2. 次の権限を持つ**読み取り専用ロールを作成します**（例: 「PlaidCloud Read Only」）。
+
+   | 権限 | レベル |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   PlaidCloud がレポート対象とするすべての子会社へのアクセスを、このロールに付与します。
+
+3. **統合レコードを作成します。** **Setup > Integration > Manage Integrations > New** で、次のように設定します。
+
+   - **名前:** PlaidCloud
+   - **認証:** **Client Credentials (Machine to Machine) Grant** のみをオンにします。トークンベース認証と認可コードグラントは使用しません。
+   - **スコープ:** REST Web Services と RESTlets。
+
+   保存して、**クライアントID**をコピーします。NetSuite が表示するのは確認ページの 1 回のみです。
+
+4. **証明書をマッピングします。** **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New** で、次のように設定します。
+
+   - **エンティティ:** PlaidCloud が代理で動作するユーザー。
+   - **ロール:** 手順 2 のロール。
+   - **アプリケーション:** PlaidCloud（手順 3 の統合）。
+   - **Certificate:** リクエストに添付した公開証明書。
+
+   保存して、**証明書ID**をコピーします。
+
+</Steps>
+
+## 返送する内容
+
+| 管理者が送るもの | PlaidCloud での入力先 |
+|---|---|
+| **Setup > Company > Company Information** にある**アカウント ID**（例: `1234567`、サンドボックスの場合は `1234567_SB1`） | **アカウント ID** |
+| 手順 3 の**クライアントID** | **クライアントID** |
+| 手順 4 の**証明書ID** | **証明書ID** |
+| PlaidCloud が読み取りを許可される子会社 | PlaidCloud の**子会社**で選択 |
+
+証明書に対応する秘密鍵は、PlaidCloud ユーザーのチームが保管します。チームは、**秘密鍵**として PlaidCloud に自分で貼り付けます。
+
+<Aside type="caution">
+アカウント ID は、サンドボックスの `_SB1` サフィックスを含め、NetSuite に表示されるとおりに正確に入力してください。PlaidCloud は、これをもとに NetSuite のアドレスを判断します。
+</Aside>
+
+## アクセスを確認する
+
+PlaidCloud に戻って値を入力し、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 必要な権限 |
+|---|---|
+| 売上明細 | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| 在庫残高 | Lists: Items and Locations (View) |
+| 予算 | Transactions: Budget (View) |
+| 統計勘定 | Reports: General Ledger (View) |
+| 会計期間 | Setup: Accounting Periods (View) |
+| 子会社 | Lists: Subsidiaries (View) |
+| 為替レート | Lists: Consolidated Exchange Rates (View) |
+| クラス | Lists: Classes (View) |
+| 場所 | Lists: Locations (View) |
+
+データセットが不足している場合、テストは追加すべき権限を示します。管理者にその権限をロールに追加してもらい、再度テストしてください。予算は省略可能です。予算を使用しない NetSuite アカウントでも、それ以外はすべてロードされます。為替レート、クラス、場所も、ロードを止めることはありません。いずれかを読み取れない場合、ロードは最後に読み取った内容を保持します。為替レートがない場合は、代わりに**為替レート**ファイルでレートを指定してください。
+
+## 関連情報
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [NetSuite に接続する](/ja/guides/connections/netsuite/)
+- [NetSuite REST コネクタ](/ja/reference/connectors/rest/netsuite/)

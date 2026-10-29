@@ -1,0 +1,88 @@
+---
+title: Importowanie danych Samsara
+description: Połącz PlaidCloud z Samsara za pomocą połączenia Generic REST i importuj kompletne listy ze stronicowaniem za pomocą gotowej do skopiowania receptury stronicowania kursorem.
+sidebar:
+  label: Importowanie danych Samsara
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Użyj połączenia **Generic REST** i kroku **Żądanie REST** do importu danych Samsara. Dzięki temu token API jest przechowywany w wielokrotnie używanym połączeniu, a stosowane są te same ogólne mechanizmy stronicowania kursorem, które są dostępne dla każdego interfejsu API zwracającego kursor kontynuacji.
+
+## Zanim zaczniesz
+
+W Samsara utwórz token API tylko z zakresami odczytu i dostępem do tagów potrzebnymi do importu. Samsara pokazuje token wyłącznie w chwili jego utworzenia, więc skopiuj go przed opuszczeniem strony. Zobacz [uwierzytelnianie w API Samsara](https://developers.samsara.com/docs/authentication).
+
+Wybierz host odpowiadający Twojemu pulpitowi Samsara:
+
+| Pulpit Samsara | Host lub adres IP |
+| --- | --- |
+| Chmura US lub starsza chmura Canada | `api.samsara.com` |
+| EU / UK | `api.eu.samsara.com` |
+| Chmura Canada | `api.ca.samsara.com` |
+
+## Tworzenie połączenia
+
+1. Otwórz **Connections** i utwórz połączenie **Generic REST** o nazwie `Samsara`.
+2. Wprowadź odpowiedni host z powyższej tabeli.
+3. W sekcji **Uwierzytelnianie** wybierz **Token okaziciela** i wklej token API Samsara. Nie dodawaj samodzielnie nagłówka `Authorization`.
+4. Zapisz połączenie.
+
+<Aside type="note">Token API to najprostszy wybór do importu własnych danych floty. Samsara zaleca OAuth 2.0 dla aplikacji z marketplace, które łączą się z organizacjami klientów.</Aside>
+
+## Importowanie pojazdów
+
+Ten pierwszy import potwierdza połączenie i dostarcza recepturę, którą można ponownie wykorzystać dla innych nowoczesnych punktów końcowych list Samsara.
+
+1. Dodaj krok **Żądanie REST** i wybierz połączenie `Samsara`.
+2. Ustaw **Źródło punktów końcowych** na **Ręcznie**, **Metoda** na `GET`, a **Punkt końcowy** na `/fleet/vehicles`.
+3. Wybierz **Tabela docelowa**, na przykład `samsara_vehicles`.
+4. W sekcji **Parametry zapytania** dodaj `limit` o wartości `512`.
+5. W sekcji **Żądanie** ustaw następujące wartości:
+
+| Pole | Wartość |
+| --- | --- |
+| Format wiersza | `Object` |
+| Tryb strumieniowania | `Cursor Paging` |
+| Ścieżka elementów (Formatowanie JSON) | `["data"]` |
+| Mode Params (Formatowanie JSON) | `{"cursor": "after"}` |
+| Mode Paths (Formatowanie JSON) | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. Wybierz **Testuj stronicowanie**. PlaidCloud pobiera tylko tyle stron, ile potrzeba do podglądu, więc możesz zweryfikować wynik przed pełnym uruchomieniem.
+7. Zapisz i uruchom krok.
+
+Skopiuj te wartości dokładnie podczas konfigurowania nowoczesnego punktu końcowego listy Samsara:
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+Gdy Samsara zwraca `hasNextPage: true`, PlaidCloud wysyła zwrócony `endCursor` jako parametr `after` następnego żądania. Kontynuuje nawet wtedy, gdy strona jest pusta, ponieważ Samsara może mieć dalsze strony z danymi. Zobacz [stronicowanie w Samsara](https://developers.samsara.com/docs/pagination).
+
+## Efektywne uruchamianie
+
+- Używaj jednego kroku Żądanie REST dla każdego punktu końcowego listy. Wartości kursora są nieprzejrzyste i muszą być wysyłane dokładnie tak, jak zostały zwrócone.
+- Ustaw `limit=512`, gdy punkt końcowy obsługuje `limit`; 512 to udokumentowane maksimum Samsara.
+- Unikaj rozgałęzienia „jedno żądanie na wiersz” dla punktu końcowego listy. Stosuj je tylko do naprawdę niezależnych żądań szczegółów i utrzymuj częstotliwość żądań w granicach limitu punktu końcowego.
+- Punkty końcowe `/feed` są przyrostowe, a nie pełnymi migawkami. Zachowuj ostatni udany kursor i uruchamiaj przepływ pracy według harmonogramu częściej niż wynosi 30-dniowy okres wygasania kursora w Samsara.
+
+## Rozwiązywanie problemów
+
+| Problem | Co sprawdzić |
+| --- | --- |
+| `401` lub `403` | Sprawdź regionalny host, token, dostęp do tagów i zakres odczytu punktu końcowego. |
+| Brak wierszy | Upewnij się, że to punkt końcowy listy, a **Ścieżka elementów** to `["data"]`. |
+| Stronicowanie kończy się zbyt wcześnie | Użyj nowoczesnego punktu końcowego z aktualnej dokumentacji API Samsara. Starsze punkty końcowe `/v1/` mogą używać innych pól stronicowania. |
+| `429` | Zmniejsz częstotliwość żądań dla niezależnych wywołań rozgałęzionych. Krok Żądanie REST respektuje odpowiedź `Retry-After` Samsara, gdy ponawia bezpieczne żądanie odczytu. |
+
+## Powiązane
+
+- [Połączenie Generic REST](/pl/reference/connectors/rest/generic-rest/)
+- [Krok przepływu pracy Żądanie REST](/pl/guides/workflows/rest-request-step/)
+- [Bazowe adresy URL Samsara](https://developers.samsara.com/docs/base-url)

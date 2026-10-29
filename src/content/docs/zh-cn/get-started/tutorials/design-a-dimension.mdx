@@ -1,0 +1,161 @@
+---
+title: 设计维度层次结构
+description: 端到端教程：构建维度、添加备用层次结构、从表加载，并在下游的报表和分摊中使用它。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/design-a-dimension.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*约 30 分钟 · 一个维度、一个备用层次结构、在下游使用*
+
+维度是 PlaidCloud 中其他一切功能所依赖的层次结构：分摊以其为目标，仪表板按其切片，报表通过其逐级汇总。然而大多数指南只是*引用*维度，从未教您如何构建。本教程填补这一空白：您将创建一个成本中心维度，为其添加第二种汇总方式，从表中填充数据，并将其交给下游使用者。
+
+## 您将构建的内容
+
+一个成本中心维度，其**主**层次结构按部门对成本中心分组，另有一个**备用**层次结构按区域对同样的成本中心重新分组。然后，您将从源表加载它，并让分摊指向它。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 300" role="img" aria-label="以树形绘制的成本中心维度。主层次结构的根为“公司”，下有两个部门子节点：销售和运营。销售下有叶子成本中心 CC-100 和 CC-200；运营下有叶子成本中心 CC-300 和 CC-400。下方名为“按区域”的备用层次结构将同样的四个叶子重新分组：东部汇集 CC-100 和 CC-300，西部汇集 CC-200 和 CC-400，以跨越主树的虚线连接线表示。" style="width:100%;max-width:640px;height:auto;">
+  <path d="M320 51 L170 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M320 51 L470 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L90 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L250 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L390 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L550 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M240 250 L90 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M240 250 L390 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L250 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L550 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <rect x="270" y="15" width="100" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="320" y="38" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">公司</text>
+  <rect x="120" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="170" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">销售</text>
+  <rect x="420" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="470" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">运营</text>
+  <rect x="50" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="90" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-100</text>
+  <rect x="210" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="250" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-200</text>
+  <rect x="350" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="390" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-300</text>
+  <rect x="510" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="550" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-400</text>
+  <rect x="200" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="240" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">东部</text>
+  <rect x="360" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="400" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">西部</text>
+  <text x="30" y="30" font-size="10" fill="var(--sl-color-gray-3)">主层次结构</text>
+  <text x="30" y="270" font-size="10" fill="var(--sl-color-accent)">按区域</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">主层次结构按部门对成本中心分组；备用层次结构按区域重新汇总同样的四个叶子。叶子相同，父级不同。</figcaption>
+</figure>
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区（如果还没有，可[开始免费试用](https://app.plaidcloud.com)）
+- 一个用于工作的项目（如有需要，可从**项目**选项卡创建）
+- 熟悉[概念](/zh-cn/get-started/concepts/)：工作区、项目、工作流、维度
+- 可选：一个包含成本中心结构的源表，用于步骤 4 中的加载（也可以手动构建树）
+
+> **对这一概念还不熟悉？请先阅读[维度入门](/zh-cn/guides/dimensions/getting-started/)。** 其中说明了何时值得使用维度，以及主层次结构与备用层次结构之间的关系，也就是本教程所假定的基本术语。
+
+## 步骤 1：创建维度
+
+维度位于每个项目的**维度**选项卡中。
+
+<Steps>
+
+1. 打开项目，切换到**维度**选项卡。
+2. 在工具栏的**新建**按钮中，选择**新建维度**。
+3. 输入**名称**（例如 `Cost Centers`）、用于文件夹式组织的**目录**，以及说明性的**备注**。
+4. 点击**创建**。维度立即可用。
+
+</Steps>
+
+现在，您有了一个空维度：它只是一个带有主层次结构的外壳，里面还没有任何内容。下一步将为其添加结构。
+
+## 步骤 2：构建主层次结构
+
+每个维度都有一个**主**层次结构：这是权威的单一事实来源树，每个叶子成员在其中恰好登记一次。请在此处构建部门结构。
+
+<Steps>
+
+1. 打开维度后，选择根节点，点击层次结构工具栏上的**添加成员**，创建顶层父级：`Sales` 和 `Operations`。
+2. 选择一个部门，再次使用**添加成员**，添加汇总到该部门的叶子成本中心：
+
+   | 父级 | 叶子成员 |
+   |---|---|
+   | Sales | CC-100, CC-200 |
+   | Operations | CC-300, CC-400 |
+3. 层次结构工具栏还可以上移、下移成员并直接更改其父级，因此放错的成员都可以修正。
+
+</Steps>
+
+> **每个叶子都必须位于主层次结构中。** 维度中任何位置的内容，首先都是主树的成员，唯一的问题是它位于*哪里*。备用层次结构（下一步）会重用这些叶子，而不会引入新的叶子。
+
+对于大型树，手动排列成员会很繁琐。[Dimension Sort](/zh-cn/reference/workflow-steps/dimensions/dimension-sort/) 工作流步骤可以通过编程方式排序，在加载或大规模重组之后能节省大量时间。
+
+## 步骤 3：添加备用层次结构
+
+**备用层次结构**是同一批叶子的另一种视图。它可以选取子集、以不同方式分组，或使用完全不同的汇总方式。在这里，您将按区域而不是按部门对这四个成本中心重新分组。
+
+<Steps>
+
+1. 为维度添加一个新的备用层次结构，并将其命名为 `By Region`。
+2. 在新的层次结构中，使用**添加成员**创建两个父级：`East` 和 `West`，然后把现有叶子添加到它们下面：
+
+   | 区域父级 | 叶子成员 |
+   |---|---|
+   | East | CC-100, CC-300 |
+   | West | CC-200, CC-400 |
+
+</Steps>
+
+这些叶子与主层次结构中的成员*相同*，您只是在此视图中更改其父级，而不是复制它们。主层次结构中的成员带有属性标签，显示它们还属于哪些备用层次结构，因此一眼就能看出 CC-100 既是销售成本中心，也是东部成本中心。
+
+> **两种常见的备用模式。** *子集视图*把一组特定的叶子拉入一棵树，供某个报表或分摊使用，并会继承主层次结构中成员的变更。*不同的汇总方式*保留所有叶子但重新分组，就像这里的 `By Region` 一样。两者请参阅[使用维度（层次结构）](/zh-cn/guides/dimensions/dimensions/#备用属性层次结构)。
+
+## 步骤 4：从表加载
+
+手动构建几个节点对教程来说足够了。实际操作中，您会通过工作流从源表填充维度，使其随源数据的变化而刷新。PlaidCloud 支持两种数据形状：
+
+| 格式 | 形状 | 最适用于 |
+|---|---|---|
+| **父子** | 两列，一列父级、一列子级，每行一条边 | 深度任意、不规则的层次结构 |
+| **级别** | 每个级别一列，每行一条完整路径 | 深度可预测的规则层次结构 |
+
+<Steps>
+
+1. 切换到**工作流**选项卡，创建一个工作流（例如 `Load Cost Centers`）。
+2. 添加一个 [Dimension Load](/zh-cn/reference/workflow-steps/dimensions/dimension-load/) 步骤。
+3. 将其指向源表，选择**父子**或**级别**，并映射承载结构的列。
+4. 加载所承载的不只是结构，**值、别名和属性**也可以在同一步骤中一并加载。如果源数据中有这些内容，也请映射相应的列。
+5. 运行该步骤，然后重新打开**维度**选项卡，确认树与源数据一致。
+
+</Steps>
+
+> **加载会构建结构，但不会重置维度。** 若要在重新加载之前将维度清空（清除结构、值、别名、属性和备用层次结构），请先使用 [Dimension Clear](/zh-cn/reference/workflow-steps/dimensions/dimension-clear/)。有关完整的往返流程，包括将层次结构导出回平面表以用于报表，请参阅[加载和卸载维度](/zh-cn/guides/dimensions/loading-unloading/)。
+
+## 步骤 5：丰富节点（可选）
+
+层次结构不仅仅是名称构成的树。每个节点都可以携带**属性**（例如成本中心的货币、所属业务部门）、**别名**和**值**。在层次结构工具栏上切换**属性**，即可为每个属性显示一列，并使用**新建属性**添加属性。
+
+您还可以直接在层次结构中计算值。**聚合**会把表中的求和、计数、最小值或最大值引入每个节点，**表达式**则使用数学运算符、条件语句以及 `Column(...)`、`Leafcount()` 和 `Parentvalue(...)` 等函数，基于这些聚合进行计算。完整的函数集请参阅[用于表达式和聚合的维度函数](/zh-cn/guides/dimensions/function-expressions/)。
+
+## 步骤 6：在下游使用
+
+回报在于：只需定义一次树，即可在各处引用。您的维度现在已成为 PlaidCloud 其余部分的目标。
+
+- **分摊**以维度为目标，把成本池分摊到其叶子上，这是下面自然的下一步。
+- **报表和仪表板**可以切片并钻取层次结构，从同样的底层叶子出发，用主树做一种汇总，用 `By Region` 做另一种汇总。
+- [数据编辑器](/zh-cn/guides/projects/managing-data-editors/)中的**维度映射列**，或另一个维度的**选择（维度）** 属性，让用户可以通过成员选择器从您的树中选取成员。
+
+若要为分摊提供数据，请确保维度中的叶子成员名称与驱动因素和源数据中的键完全一致，空格或大小写不一致会导致某个叶子得不到任何分摊。这一约定正是接下来的分摊教程所依据的。
+
+## 后续步骤
+
+- [构建分摊模型](/zh-cn/get-started/tutorials/build-an-allocation/)：把成本池分摊到您刚刚构建的维度上（自然的下一步）
+- [维度入门](/zh-cn/guides/dimensions/getting-started/)：何时使用维度，以及各部分如何配合
+- [使用维度（层次结构）](/zh-cn/guides/dimensions/dimensions/)：完整的管理参考，包括属性、继承、复制和排序
+- [加载和卸载维度](/zh-cn/guides/dimensions/loading-unloading/)：导入结构并将其展平导出
+- [用于表达式和聚合的维度函数](/zh-cn/guides/dimensions/function-expressions/)：层次结构内的计算值

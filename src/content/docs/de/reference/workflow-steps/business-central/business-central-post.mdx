@@ -1,0 +1,55 @@
+---
+title: "Business Central: Post General Journal Lines"
+description: Bucht Sachkonten-Journalzeilen aus PlaidCloud-Kopf- und Positionstabellen in einen vorhandenen Business-Central-Journalstapel, mit einem Vorschaumodus, der jedes Journal prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Sachkonten-Journalzeilen über Ihre [Business-Central-Verbindung](/de/guides/connections/business-central/) in Business Central, geleitet über die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro `journal_id`) und eine Positionstabelle (eine oder mehrere Zeilen pro `journal_id`), erstellt die Zeilen in einem **vorhandenen** Journalstapel und bucht diesen Stapel. **Validate Only** erstellt und prüft jedes Journal, ohne zu buchen; eine optionale Ergebnistabelle hält das Ergebnis fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in Business Central ab, bevor Sie sich darauf verlassen, dass dieser Schritt Live-Journale unbeaufsichtigt bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **Business-Central-Verbindung** – die Business-Central-Verbindung, über die gebucht wird.
+- **Umgebung** – die Umgebung der Verbindung.
+
+### Daten
+
+- **Kopftabelle** – eine Zeile pro `journal_id`: der Name des Business-Central-Journalstapels, in den Ihre Zeilen gebucht werden, `document_number`, `posting_date` und eine Währungsbezeichnung.
+- **Positionstabelle** – eine oder mehrere Zeilen pro `journal_id`: ein vorzeichenbehafteter `amount` (positiv für Soll, negativ für Haben), `account_id` oder `account_number`, `account_type`, `description`.
+- **Ergebnistabelle** – ID der Ausgabetabelle: eine Zeile pro `journal_id` mit `journal_id`, `external_id`, `internal_id`, `status`, `message`.
+- **Validate Only** – standardmäßig aktiviert. Nur Vorabprüfung; keine Reservierung im Hauptbuch, keine Buchung. Eine Schrittkonfiguration, die dieses Feld ganz auslässt – etwa eine über die REST API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig „Validate Only“ statt einer Live-Buchung.
+- **Continue On Error** – standardmäßig aktiviert. Bucht die übrigen Journale weiter, nachdem eines fehlgeschlagen ist; ist die Option deaktiviert, wird der Stapel beim ersten Fehler angehalten.
+
+<Aside type="caution">
+**Der durch `journal_id` benannte Journalstapel muss in Business Central bereits vorhanden sein.** Dieser Schritt erstellt Zeilen innerhalb eines Stapels – den Stapel selbst erstellt er nicht. Richten Sie den Journalstapel (Name, Journalvorlage) in Business Central ein, bevor Sie darin buchen.
+</Aside>
+
+## So funktioniert das Buchen
+
+Die gebundene Aktion `Microsoft.NAV.post` von Business Central bucht den **gesamten** Journalstapel, nicht nur die Zeilen, die diese Anforderung erstellt hat. Bevor sie aufgerufen wird, liest PlaidCloud den Stapel zurück und bucht nicht – es wird ein Fehler erfasst, es wird nichts gebucht –, wenn er eine Zeile enthält, die nicht mit der Belegnummer dieser Anforderung versehen ist. Diese Schutzprüfung verhindert, dass eine Zeile, die ein früherer Teilfehler hinterlassen hat, durch eine unabhängige spätere Buchung in denselben Stapel ins Hauptbuch gelangt.
+
+Da `generalLedgerEntries` schreibgeschützt ist und nur gebuchte Einträge enthält, überprüft PlaidCloud eine erfolgreiche Buchung, indem es **dort** nach der Belegnummer sucht und den Journalstapel nicht erneut liest – ein Treffer in `generalLedgerEntries` belegt eine tatsächliche Buchung und nicht nur, dass Zeilen erstellt wurden.
+
+## Funktionsgrenzen
+
+| Einschränkung | Bedeutung |
+|---|---|
+| Ein Schreibbelegtyp | Unterstützt wird nur das Buchen von Sachkonten-Journalzeilen. Der Entwurfsbeleg-Ablauf von Business Central (Verkaufs-/Einkaufsrechnungen, Entwurf → Gebucht) wird nicht unterstützt – die genaue Buchungsaktion für diesen Ablauf ist in der veröffentlichten Dokumentation von Microsoft nicht festgelegt. |
+| Nur vorhandener Stapel | Dieser Schritt erstellt nie einen Journalstapel. Erstellen Sie ihn zuerst in Business Central und lassen Sie `journal_id` dann darauf zeigen. |
+| Gleichzeitige Buchungen im selben Stapel | Die Idempotenzprüfung bezieht sich auf die Belegnummer, nicht auf den Journalstapel – zwei verschiedene Belegnummern, die gleichzeitig in denselben Stapel gebucht werden, werden nicht garantiert so serialisiert wie zwei Aufrufe mit derselben Belegnummer. Vermeiden Sie gleichzeitige Buchungen in einen Stapel. |
+
+## Verwandte Themen
+
+- [Mit Business Central verbinden](/de/guides/connections/business-central/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [Business Central REST Connector](/de/reference/connectors/rest/business-central/)
+- [Business-Central-Schritte](/de/reference/workflow-steps/business-central/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

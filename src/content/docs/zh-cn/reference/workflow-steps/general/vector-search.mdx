@@ -1,0 +1,123 @@
+---
+title: "AI：向量搜索"
+description: 在 PlaidCloud 工作流步骤中，按余弦或欧氏距离查找表中存储向量与每个查询向量最近的行。
+sidebar:
+  label: "AI：向量搜索"
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/vector-search.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+**AI：向量搜索**按表中[向量](/zh-cn/guides/data/vector-data-type/)列与查询向量的接近程度对行进行排序，并将最近的行连同据以排序的距离写入目标表。可以提供多个查询向量，每个查询向量都会得到各自的一组匹配项，全部在对源表的一次扫描中完成，并写入同一个输出表。
+
+搜索是**精确**的。通过步骤筛选器的每一行都会与每个查询向量进行比较，因此匹配项是真正最近的行，而不是近似结果——工作量会随扫描的行数乘以查询向量数而增长。没有需要构建、调优或回退使用的向量索引。
+
+<Aside type="caution">
+向量列类型以及此步骤需要 **Lakehouse v2 (StarRocks)**。
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="每个查询向量都与要搜索的表中通过筛选器的每一行进行比较，最近的行连同距离列写入目标表。无法测量距离的行会被排除。" style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">每个经过筛选的行都会参与比较——没有索引，没有近似</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">查询向量</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">要搜索的表</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">先筛选</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">距离</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">越小越近</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">目标表</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">每个查询的最佳匹配</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">无法测量距离的行会被排除，而不是排在最前</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">先筛选行，再将每个留下的行与每个查询向量打分，保留最近的行。缩小筛选范围才能让大表变快，因为没有索引可以回退使用。</figcaption>
+</figure>
+
+## 源和目标
+
+- **要搜索的表**——搜索其存储向量的表。
+- **目标表**——写入匹配项的表。
+
+## 搜索
+
+- **向量列**——要搜索的表上用于测量距离的向量列。
+  任何其他数据类型都会被拒绝，并指明该列及其实际持有的类型。
+- **距离度量**——**余弦**或**欧氏（L2）**。余弦度量两个向量之间的夹角，忽略其大小，这正是文本嵌入所需要的；欧氏度量直线距离，并考虑大小。对两者而言，距离越小，行越近。默认为余弦。
+- **每个查询的匹配数**——为每个查询向量保留多少个最近的行。默认为 10。
+
+<Aside type="note">
+**余弦和欧氏是仅有的度量。** 刻意不提供内积：对于未归一化的向量，它并不是距离——向量与自身的距离会是负数——因此针对它设置的阈值以及为它显示的任何得分都会出错，即使排名恰好正确。对于已归一化的嵌入，余弦产生的排名与内积相同。
+</Aside>
+
+## 查询向量
+
+**查询向量**选项卡接受一个 JSON 数组，每个查询一项，每项包含 `id` 和 `vector`：
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+每个查询都会返回各自的一组匹配项，输出中以 `id` 来标识它们。id 必须唯一，每个值必须是有限数，并且每个查询向量包含的值个数必须与存储向量相同——只有宽度相等的向量之间才能定义距离。不匹配时会被拒绝，并指明查询、其包含的值个数，以及该列实际持有或声明的宽度。
+
+<Aside type="caution">
+存储的向量也必须全都包含相同个数的值。对某列进行搜索时，如果其行混有两种宽度，会因底层引擎的原始错误而失败，而不会给出指明该列的消息。声明的向量宽度会在每条加载路径上强制执行——文件导入、连接器、tap、远程查询、写入数据框的工作流步骤、归档或包——因此您声明的宽度就是该列实际持有的宽度。CSV 导入是例外：它无法检查，是唯一可能让列出现混合宽度的途径。参见[向量宽度](/zh-cn/guides/data/vector-data-type/#向量宽度)。
+</Aside>
+
+## 选择数据子集
+
+筛选器限制哪些行可作为候选。行在排名*之前*被筛选，因此匹配项是通过筛选器的行中最近的行，而不是总体最近、事后再筛选的行。这是控制步骤工作量的主要手段；参见[搜索规模估算](#搜索规模估算)。
+
+## 输出列
+
+每个匹配项写为一行，包含您在**表数据选择**选项卡上选择的列，外加两个名称可自行控制的计算列：
+
+- **查询名称列**——该行所对应查询向量的 id。默认为 `query_id`。
+- **距离列**——匹配项与该查询向量之间测得的距离。默认为 `distance`。它也是排名键。
+
+输出中查询名称在最前，接着是您选择的列，距离在最后。输出列名必须唯一。
+
+<Aside>
+表数据选择选项卡上的**汇总**、**非重复**和聚合控件会被此步骤忽略：最佳匹配集按查询向量划分，从不分组。
+</Aside>
+
+## 被排除的行
+
+无法测量距离的行会从匹配项中**排除**，而不是被当作最近的行返回。您会遇到的情况是：向量的大小溢出了 32 位浮点数的范围——这样的向量得不到可测量的距离，而且由于没有任何机制能把无法测量的距离排在最后，纳入这样的行会让搜索最不了解的行出现在每个结果的最前面。
+
+开启**诊断模式**运行工作流即可查看计数。工作流日志随后会报告每个查询排除了多少行，或说明步骤测量了其搜索的每一行。获取该计数需要对表再扫描一遍，因此只在您要求时才会产生这一开销；关闭诊断模式时，日志会说明无法测量的行是有意排除的，并提示您使用诊断模式查看数量。
+
+数组内部含有*缺失值*的存储向量则是另一回事：对任何含有缺失值的数组都无法测量距离，因此搜索会被直接拒绝并指明该列，而不是悄悄返回部分结果。请更正或删除这些行后重新运行。
+
+## 搜索规模估算
+
+一次运行的成本是候选行数乘以查询向量数，如果总数超过一百亿次距离测量，步骤会拒绝该搜索——并报告行数、查询数和上限——而不是开始无法完成的工作。有两点可使搜索远低于该上限：
+
+- **筛选出重要的那一部分。** 将候选缩小到某个实体、某个期间或某个文档集，而不是扫描整个语料库来回答只涉及其中一部分的问题。
+- **按您始终用于筛选的维度拆分表**，并搜索相关的表。减少候选数量比这里提供的任何其他做法都有效得多。
+
+在该列上声明**向量宽度**也有帮助：声明之后，步骤直接从声明中获取宽度，而不是抽样一行来确定。参见[向量数据类型](/zh-cn/guides/data/vector-data-type/#向量宽度)。
+
+## 向量列不能用于什么
+
+向量列不能用作联接键、分组列和聚合目标——在此步骤和所有其他步骤中都是如此。无论是保存步骤时，还是运行以前保存的步骤时，消息都会指明该列及其被用于的角色。请改为使用向量旁边的业务键进行联接和分组。将向量作为普通输出列传过某个步骤是可以的，统计行数和统计非重复值数量也可以。
+
+## 相关内容
+
+- [向量数据类型](/zh-cn/guides/data/vector-data-type/)——声明向量列、设置其宽度，并将嵌入加载到其中
+- [Spatial Find Nearest 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/)——针对几何而非嵌入的同一种最近邻形式
+- [Table Lookup 步骤](/zh-cn/reference/workflow-steps/tables/table-lookup/)——将描述性列带回匹配的行
+- [导入 Parquet](/zh-cn/reference/workflow-steps/import/import-parquet/)——从 Parquet 文件加载嵌入

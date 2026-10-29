@@ -1,0 +1,168 @@
+---
+title: Daten mit SQL und Ausdrücken transformieren
+description: Formen Sie Daten in einem Tabellenschritt eines Workflows – wählen und filtern Sie mit SQL, verknüpfen Sie zwei Tabellen, fügen Sie mit einem Ausdruck eine berechnete Spalte hinzu und prüfen Sie das Ergebnis in der Vorschau, bevor Sie den Workflow ausführen.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/transform-with-sql.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*ca. 30 Minuten · ein Filter, ein Join, eine berechnete Spalte*
+
+Der Großteil der Arbeit in einem [Workflow](/de/guides/workflows/) besteht aus einem kleinen, immer wiederkehrenden Vorgang: Sie nehmen eine Tabelle, formen sie um und schreiben das Ergebnis in eine neue Tabelle. Dieses Tutorial vermittelt genau diesen Vorgang – Zeilen auswählen und filtern, eine zweite Tabelle verknüpfen und eine berechnete Spalte hinzufügen – mit den beiden Werkzeugen, die Sie ständig brauchen: **SQL** und **Spaltenausdrücken**. Wenn Sie das Muster einmal verstanden haben, gilt es für nahezu jeden Transformationsschritt, den Sie je erstellen werden.
+
+Es geht hier um die *Form* der Arbeit und darum, wo Sie Dinge nachschlagen – nicht darum, Funktionen auswendig zu lernen. PlaidCloud bietet über tausend SQL-Funktionen; Sie verlinken in die Referenz, statt sie nachzubilden.
+
+## Was Sie erstellen
+
+Ein einzelner Tabellenschritt, der eine Rohtabelle `orders` liest, nur abgeschlossene Bestellungen behält, jede Bestellung mit einer Tabelle `customers` verknüpft, um die Region zu erhalten, und eine berechnete Spalte `net_amount` hinzufügt – das Ergebnis wird in eine neue Tabelle `orders_clean` geschrieben.
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+Jede Quelltabelle bleibt unverändert. Ein Transformationsschritt liest aus einer oder mehreren Quellen und schreibt in ein Ziel – die Originale bleiben exakt so, wie sie waren. Dadurch lässt sich ein Workflow gefahrlos erneut ausführen und prüfen.
+
+## Zwei Möglichkeiten, eine Spalte zu formen
+
+Vor den Schritten die eine Unterscheidung, die Sie im Kopf behalten sollten:
+
+| Werkzeug | Was es ist | Wo Sie es schreiben |
+|---|---|---|
+| **SQL** | Die Abfrage, die ganze Tabellen auswählt, filtert und verknüpft | Im SQL-Editor des Schritts |
+| **Ausdruck** | Eine einzelne Formel, die den Wert einer Spalte zeilenweise erzeugt | In der Ausdruckszelle des Spaltenmappers |
+
+Mit SQL entscheiden Sie, *welche Zeilen und welche Tabellen* verwendet werden. Mit einem Ausdruck entscheiden Sie, *was eine einzelne Spalte enthält*. Viele Schritte erlauben beides: einen SQL-Schritt, der die Menge formt, und Ausdruckszellen, die die Spalten berechnen.
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace und ein Projekt, in dem Sie arbeiten ([starten Sie eine kostenlose Testversion](https://app.plaidcloud.com), falls Sie noch keines haben).
+- Zwei [Tabellen](/de/guides/data/tables-views/) im Projekt – dieses Tutorial setzt `orders` (mit `order_id`, `customer_id`, `status`, `amount`, `tax`) und `customers` (mit `customer_id`, `region`) voraus. Falls Sie diese nicht haben, importiert das Tutorial [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/) zunächst Tabellen aus CSV.
+- Ein Workflow, der im **Workflow-Explorer** geöffnet ist – öffnen Sie die Registerkarte **Workflows** eines Projekts und doppelklicken Sie auf den Workflow. Siehe [Workflow erstellen](/de/guides/workflows/create-workflow/), falls Sie noch keinen haben.
+
+## Schritt 1: Mit SQL auswählen und filtern
+
+Beginnen Sie eng: Holen Sie nur die Spalten und Zeilen, die Sie wirklich brauchen.
+
+<Steps>
+
+1. Fügen Sie einen Tabellen-Transformationsschritt hinzu und öffnen Sie dessen SQL-Editor.
+2. Legen Sie als Quelle des Schritts Ihre Tabelle `orders` fest.
+3. Schreiben Sie eine Abfrage, die nur die benötigten Spalten behält und die übrigen Zeilen verwirft:
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+Die `WHERE`-Klausel ist der Filter – alles, was keine abgeschlossene Bestellung mit einem Betrag ungleich null ist, erreicht das Ziel nie. Wenn Sie nur vier Spalten statt `SELECT *` auswählen, bleibt die nachgelagerte Tabelle schlank und ihr Zweck klar erkennbar.
+
+> **Schreiben Sie SQL so, dass man es lesen kann.** Eine Klausel pro Zeile, eine Spalte pro Zeile, ausgerichtetes `CASE` / `WHEN` – niemals ein dichter Einzeiler. Die Schaltfläche **Formatieren** des Editors (oder **Umschalt+Alt+F**, unter macOS **Umschalt+Option+F**) formatiert die Abfrage an Ort und Stelle neu, ohne ihre Wirkung zu ändern. Siehe [Code in Editoren formatieren](/de/guides/workflows/prettify-code-in-editors/).
+
+## Schritt 2: Die zweite Tabelle verknüpfen
+
+Ein Join bringt Spalten aus einer zweiten Tabelle neben die der ersten, abgeglichen über einen gemeinsamen Schlüssel. Hier möchten Sie die `region` jeder Bestellung, die in `customers` steht.
+
+<Steps>
+
+1. Fügen Sie `customers` als zweite Quelle zum Schritt hinzu.
+2. Erweitern Sie die Abfrage, sodass sie über den gemeinsamen Schlüssel verknüpft und die benötigte Spalte holt:
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` behält nur Bestellungen mit einem passenden Kunden. Wenn Sie lieber jede Bestellung behalten möchten, auch wenn kein Kunde passt – mit leerer `region` –, verwenden Sie stattdessen `LEFT JOIN`. Ein nicht passender oder falscher Join-Schlüssel ist die häufigste Ursache dafür, dass ein Join zu viele oder zu wenige Zeilen liefert. Prüfen Sie daher die Zeilenanzahl in der Vorschau (nächster Schritt), bevor Sie fortfahren.
+
+> **Tabellennamen in der Abfrage.** Verweisen Sie auf jede Quelle mit dem Namen, den der Schritt ihr gibt. In den standardmäßigen Lakehouse-Warehouses kann eine physische Tabellen-ID Bindestriche enthalten – setzen Sie sie dann in Backticks (zum Beispiel `` `analyzetable_9f3c...` ``), damit die Engine sie als einen einzigen Bezeichner liest.
+
+## Schritt 3: Eine berechnete Spalte mit einem Ausdruck hinzufügen
+
+Berechnen Sie nun einen Wert, der in keiner der beiden Quellen vorhanden ist. Eine berechnete Spalte (Ausdrucksspalte) wertet eine Formel pro Zeile aus und schreibt das Ergebnis in eine neue Spalte. Fügen Sie `net_amount` hinzu – den Betrag nach Steuern.
+
+<Steps>
+
+1. Fügen Sie im Spaltenmapper des Schritts eine neue Zielspalte mit dem Namen `net_amount` hinzu.
+2. Schreiben Sie in ihre Ausdruckszelle die Formel:
+
+   ```python
+   amount - tax
+   ```
+
+3. Für Bedingtes bieten Ausdrücke die übliche Logik. Ein Beispiel ist ein Versandkennzeichen:
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **Eine Ausdruckszelle ist eine einzelne Formel, kein Skript.** Sie wird als ein einziger Ausdruck ausgewertet. Ein mehrzeiliger Ausdruck muss daher seine eigenen äußeren Klammern mitbringen (wie oben) – andernfalls schlägt er zur Laufzeit fehl. Beschränken Sie jede Zelle auf den Wert einer Spalte; nutzen Sie den SQL-Schritt für alles, was mehrere Zeilen oder Tabellen umfasst.
+
+Ob eine bestimmte Funktion existiert und wie sich ihre Argumente genau verhalten, hängt davon ab, auf welcher Lakehouse-Generation Ihr Projekt läuft – die beiden basieren auf unterschiedlichen Upstream-Engines. Raten Sie keinen Funktionsnamen, sondern schlagen Sie ihn nach:
+
+| Lakehouse | Funktionsbibliothek |
+|---|---|
+| **v1** | Databend-SQL-Funktionen |
+| **v2** | StarRocks-4.1-SQL-Funktionen |
+
+Die [Ausdrucksreferenz](/de/reference/expressions/) ist der Einstiegspunkt – Zeichenfolgenoperationen, Datumsberechnungen, bedingte Logik, Typumwandlung und Aggregationen –, jeweils mit verlinkter Upstream-Syntax für jede Generation. Betrachten Sie sie als Nachschlagewerk, zu dem Sie zurückkehren, nicht als Text, den man von vorn bis hinten liest.
+
+> **Formatieren funktioniert auch bei Ausdruckszellen** und wendet die übliche Python-Abstandsregelung und Zeilenumbrüche an – praktisch für lange Bedingungen.
+
+## Schritt 4: Vorschau vor der Ausführung
+
+Sie müssen nicht den ganzen Workflow ausführen, um zu sehen, ob der Schritt das Gewünschte getan hat. Die **Datenvorschau-Leiste** zeigt die Ausgabe eines Schritts – die ersten 100 Zeilen mit typisierten Spalten – direkt im Workflow-Explorer.
+
+<Steps>
+
+1. Führen Sie nur diesen Schritt aus, damit er seine Ausgabetabelle erzeugt. (Solange er noch nie gelaufen ist, meldet die Vorschau *„No data yet — run the step to generate this table."*)
+2. Öffnen Sie die Vorschau: Wählen Sie den Schritt aus und klicken Sie auf **Ausgabedaten in der Vorschau anzeigen** (auch im Kontextmenü des Schritts verfügbar).
+3. Prüfen Sie die Form: Die ausgewählten Spalten sind vorhanden, `region` ist über den Join gekommen, `net_amount` wurde korrekt berechnet, und die Zeilenanzahl spiegelt den Filter wider.
+
+</Steps>
+
+Solange die Leiste geöffnet ist, richtet jeder andere ausgewählte Schritt die Vorschau auf dessen Ausgabe um – gehen Sie eine Kette von Schritten durch und beobachten Sie, wie sich die Daten in jeder Phase verändern. Für alles jenseits der ersten 100 Zeilen oder zum Aufteilen und Filtern klicken Sie auf **Im Tabellen-Explorer öffnen**. Alle Details finden Sie unter [Schrittdaten in der Vorschau anzeigen](/de/guides/workflows/preview-step-data/).
+
+## Das verallgemeinerte Muster
+
+Jeder dieser Vorgänge folgt demselben Grundmuster:
+
+> **Eine oder mehrere Quelltabellen lesen, umformen und eine neue Zieltabelle schreiben.** SQL bestimmt Zeilen und Tabellen; Ausdrücke bestimmen den Wert jeder Spalte; die Vorschau bestätigt das Ergebnis, bevor Sie sich auf eine vollständige Ausführung festlegen. Verketten Sie einige davon, und Sie haben eine Pipeline – das Ziel jedes Schritts wird zur Quelle des nächsten.
+
+Schreiben Sie Zwischenergebnisse in **Tabellen**, wenn ein späterer Schritt oder ein Dashboard die Daten materialisiert benötigt, und in **[Ansichten](/de/guides/data/tables-views/)**, wenn Sie lieber beim Lesen berechnen und Speicher sparen möchten – eine Ansicht enthält keine eigenen Daten und aktualisiert sich automatisch, wenn sich ihre Quellen ändern.
+
+Wenn eine Transformation SQL und Ausdrücke ganz übersteigt – individuelles Python, ein externes Paket, eigene Logik –, greifen Sie zu einer [User Defined Transform-Schritt](/de/reference/workflow-steps/general/user-defined-transform/). Das ist die Ausnahme, nicht der Alltag; SQL und Ausdrücke decken den überwiegenden Teil der Formungsarbeit ab.
+
+## Wie es weitergeht
+
+- [Ausdrucksreferenz](/de/reference/expressions/) – jede für berechnete Spalten verfügbare Funktion, je Lakehouse-Generation.
+- [Referenz der Workflow-Schritte](/de/reference/workflow-steps/) – der vollständige Katalog der Transformations-, Import- und Exportschritte.
+- [Workflow-Leitfaden](/de/guides/workflows/) – Bedingungen, Schleifen, Variablen und Fehlerbehandlung rund um Ihre Schritte.
+- [Schrittdaten in der Vorschau anzeigen](/de/guides/workflows/preview-step-data/) – die Leiste im Detail.
+- [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/) – die durchgängige Pipeline, in die sich dieser Schritt einfügt.

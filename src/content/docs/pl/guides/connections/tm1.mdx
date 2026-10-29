@@ -1,0 +1,111 @@
+---
+title: Połączenie z TM1
+description: Połącz PlaidCloud z serwerem IBM TM1 / Planning Analytics i odczytuj dane kostek lub hierarchie wymiarów — bezpośrednio z chmury albo przez lokalnego agenta PlaidLink, gdy chmura nie ma bezpośredniego dostępu do serwera.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/tm1.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z serwerem IBM **TM1 / Planning Analytics**, aby przepływ pracy mógł odczytywać dane kostki z zapisanego widoku lub zapytania MDX albo ładować hierarchię wymiaru jako wymiar PlaidCloud. Domyślnie połączenie korzysta z własnego interfejsu REST API TM1 **bezpośrednio z chmury**; jeśli serwer TM1 jest dostępny tylko z wnętrza Twojej sieci, korzysta z niego lokalny [agent PlaidLink](/pl/reference/cli/plaidlink/) — zobacz [Odczyt TM1 za zaporą sieciową](#odczyt-tm1-za-zaporą-sieciową) poniżej. Ten przewodnik opisuje połączenie, uruchamianie zapytania bezpośrednio z chmury, wzorzec ekstrakcji przyrostowej pobierającej jeden okres naraz oraz ścieżkę lokalną.
+
+<Aside type="note">
+Ten łącznik działa tylko w trybie odczytu: bez zapisu zwrotnego do TM1 i bez uruchamiania procesów TI.
+</Aside>
+
+## Wymagania wstępne
+
+Od administratora TM1 potrzebujesz:
+
+- **Hosta TM1 REST API**, na przykład `https://tm1-prod.example.com:8010`, albo adresu URL PAaaS.
+- **Konta TM1** — nazwy użytkownika i hasła — z dostępem do odczytu baz danych, kostek i widoków, które będą odpytywane w Twoich przepływach pracy.
+- Informacji, czy to konto uwierzytelnia się w trybie **Native** (użytkownik i hasło TM1), czy **CAM** (SSO Cognos Access Manager), a w przypadku CAM — jaka jest **przestrzeń nazw**.
+- **Nazwy bazy danych (instancji)**, z której będą odczytywać użytkownicy.
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **IBM Planning Analytics (TM1)**.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `TM1 Prod`. |
+   | Host | Host TM1 REST API, np. `https://tm1-prod.example.com:8010`. |
+   | Domyślna baza danych | Opcjonalne. Baza danych TM1 wstępnie wpisywana w polu Baza danych kroku. |
+   | Tryb uwierzytelniania | `Native` lub `CAM`. |
+   | Nazwa użytkownika | Nazwa użytkownika konta TM1. |
+   | Hasło | Hasło konta TM1. |
+   | Przestrzeń nazw CAM | Wymagana tylko wtedy, gdy trybem uwierzytelniania jest CAM. |
+   | Weryfikuj certyfikat SSL | Domyślnie włączone. Wyłącz tylko dla znanego certyfikatu z podpisem własnym na serwerze testowym. |
+   | Limit czasu (sekundy) | Domyślnie 30. |
+
+4. Kliknij `Test Connection`. Pomyślny test zwraca wersję produktu serwera.
+
+5. Kliknij `Create`.
+
+</Steps>
+
+## Uruchamianie zapytania
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **TM1: zapytanie do kostki** (znajdziesz go w menu kroków w sekcji **IBM TM1 / Planning Analytics**).
+
+2. W sekcji **Źródło i cel** ustaw **Połączenie TM1**, **Środowisko**, **Baza danych**, **Cube** oraz **Tabela docelowa**. Opcje kostek są wykrywane na żywo z połączonej bazy danych po jej wybraniu; jeśli wykrywanie nie zwróci nazwy, wpisz ją ręcznie.
+
+3. W sekcji **Wycinek** wybierz **Tryb źródła**:
+
+   - **Według widoku** — wybierz zapisany widok TM1. Opcje widoków są wykrywane na żywo po wybraniu kostki.
+   - **Według MDX** — napisz zapytanie MDX do kostki.
+
+4. Opcjonalnie w sekcji **Punkt widzenia** przypnij elementy wymiarów wykraczające poza to, co widok lub MDX już ustala. Punkt widzenia można zastosować tylko z `By MDX`.
+
+5. Kliknij **Podgląd**, aby uruchomić bieżący wycinek i zobaczyć pierwsze wiersze oraz liczbę komórek przed zapisaniem.
+
+</Steps>
+
+## Ekstrakcje przyrostowe według okresu
+
+TM1 nie śledzi zmian, więc nie ma wywołania zwracającego dane zmienione od danego momentu. Zamiast tego przy każdym uruchomieniu wycinaj dane według **okresu** (lub wersji): przypnij `Period` w punkcie widzenia do zmiennej przepływu pracy `{period}` zamiast do literalnej nazwy elementu — wartości elementów punktu widzenia są podstawiane ze zmiennych samego przepływu pracy w czasie uruchomienia, tak samo jak w polu MDX — dzięki czemu każde uruchomienie pobiera przekazany mu okres, zamiast ponownie odczytywać całą kostkę. Umieść krok w [przepływie pracy z harmonogramem](/pl/administration/scheduled-events/) ze zmienną, która przesuwa się przy każdym uruchomieniu, aby budować historię okres po okresie.
+
+## Opcje
+
+- **Pomijaj komórki zerowe/puste** — domyślnie wyłączone. Odrzuca komórki o wartości zero dopiero **po** ich pobraniu, co nie oszczędza przepustowości, a w kostce planistycznej, w której zaksięgowane `0` jest prawdziwą daną, powoduje jej utratę. Zamiast tego lepiej pomijać zera w samym zapytaniu — za pomocą `NON EMPTY` w MDX lub ustawienia pomijania w zapisanym widoku.
+- **Limit wierszy** — domyślnie 250 000. Nieustawiony Limit wierszy powraca do tego limitu, a nie do „bez ograniczeń”; zapytanie zwracające więcej komórek niż obowiązujący limit jest odrzucane zamiast po cichu obcinane — zawęź zapytanie albo jawnie zwiększ Limit wierszy dla uzasadnionej większej ekstrakcji.
+
+## Ładowanie hierarchii wymiaru
+
+Krok [TM1: odczytaj wymiar](/pl/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) odczytuje elementy jednej hierarchii TM1, relacje nadrzędny/podrzędny oraz atrybuty i ładuje je do wymiaru PlaidCloud — bezpośrednio z chmury, przez to samo połączenie. To osobny krok niż TM1: zapytanie do kostki: odczytuje strukturę wymiaru, a nie komórki kostki. Element TM1 podlegający dwóm konsolidacjom w jednej hierarchii lub waga konsolidacji, której nie można przedstawić jako zwykły znak `+`/`-`/`~`, jest odrzucany lub oznaczany zamiast załadowany błędnie — oba ograniczenia opisano w dokumentacji kroku.
+
+## Odczyt TM1 za zaporą sieciową
+
+Jeśli serwer TM1 nie ma ścieżki sieciowej dostępnej bezpośrednio dla PlaidCloud — brak publicznego punktu końcowego, adresu IP na liście dozwolonych i VPN — odczytuj go przez zainstalowanego **agenta PlaidLink**. Krok [TM1: zapytanie do kostki (agent)](/pl/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) uruchamia to samo zapytanie widoku/MDX/punktu widzenia opisane powyżej, ale przekazuje je agentowi, który łączy się z TM1 w Twojej sieci.
+
+Będziesz potrzebować:
+
+<Steps>
+
+1. **Zainstalowanego agenta PlaidLink** z dostępem sieciowym do serwera TM1. Zobacz [Instalacja PlaidLink](/pl/reference/cli/plaidlink/install/).
+
+2. **Kompilacji agenta obsługującej TM1.** PlaidCloud sprawdza deklarowane możliwości agenta przed przekazaniem zadania, więc agent zainstalowany przed wprowadzeniem obsługi TM1 wymaga ręcznej przebudowy i ponownej instalacji — PlaidLink nie aktualizuje się automatycznie. Zobacz [Aktualizacja PlaidLink](/pl/reference/cli/plaidlink/upgrade/).
+
+3. **Połączenia TM1 udostępnionego temu agentowi** z listy `Actions > Agents` połączenia, oprócz dostępu członków lub grup, który już ma. Zobacz [Model zabezpieczeń](/pl/guides/connections/create-connection/#model-zabezpieczeń).
+
+</Steps>
+
+Dodaj krok **TM1: zapytanie do kostki (agent)**, wybierz agenta i wypełnij te same pola połączenia, bazy danych, kostki i wycinka co w kroku TM1: zapytanie do kostki. W tym kroku nie ma wykrywania na żywo ani podglądu — agent jest osiągalny tylko podczas uruchomienia, a nie przy otwartym formularzu — więc kostkę, widok i MDX wpisuje się ręcznie, a są one walidowane przy uruchomieniu kroku.
+
+## Powiązane
+
+- [TM1: zapytanie do kostki](/pl/reference/workflow-steps/ibm-planning-analytics/tm1-query/) — odczyty kostek, opis pól kroku.
+- [TM1: zapytanie do kostki (agent)](/pl/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) — odczyty kostek przez lokalnego agenta.
+- [TM1: odczytaj wymiar](/pl/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) — ładowanie hierarchii TM1 jako wymiaru PlaidCloud.
+- [Łącznik TM1](/pl/reference/connectors/rest/tm1/) — opis pól połączenia.
+- [PlaidLink](/pl/reference/cli/plaidlink/) — instalowanie i aktualizowanie agentów.
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/)

@@ -1,0 +1,209 @@
+---
+title: Typ danych Wektor
+description: "Przechowuj wstępnie obliczone osadzenia w tabeli projektu za pomocą typu danych kolumny Wektor, zadeklaruj oczekiwaną szerokość i znajdź wiersze najbliższe wektorowi zapytania za pomocą kroku AI: wyszukiwanie wektorowe."
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/vector-data-type.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Wektor** to typ danych kolumny przeznaczony dla wstępnie obliczonych osadzeń. Kolumna typu Wektor przechowuje
+w każdym wierszu tablicę liczb zmiennoprzecinkowych — wynik działania dowolnego używanego już modelu osadzeń — w zwykłej
+tabeli projektu, w tym samym wierszu co tekst, klucze, kwoty i wymiary, które go opisują.
+Ponieważ jest to zwykła kolumna w zwykłej tabeli, można ją złączać z tabelami faktów i ładować tymi samymi
+krokami importu i transformacji co każdą inną kolumnę. Nie trzeba udostępniać, zapełniać ani synchronizować
+z resztą danych osobnego magazynu wektorów.
+
+Krok **AI: wyszukiwanie wektorowe** znajduje następnie wiersze najbliższe jednemu lub kilku wektorom zapytania,
+dzięki czemu wyszukiwanie podobieństwa jest takim samym krokiem przepływu pracy jak każdy inny.
+
+<Aside type="caution">
+Typ Wektor wymaga **Lakehouse v2 (StarRocks)**. W każdym innym silniku typ nie jest oferowany
+na listach typów danych, a żądanie utworzenia tam kolumny Wektor jest odrzucane z podaniem jej nazwy.
+</Aside>
+
+<Aside type="note">
+PlaidCloud przechowuje wektory i je przeszukuje, ale ich nie generuje. Oblicz osadzenia za pomocą
+wybranego modelu i załaduj powstałe tablice tak jak wszystkie inne dane.
+</Aside>
+
+
+## Deklarowanie kolumny Wektor
+
+**Wektor** znajduje się w grupie **Częściowo ustrukturyzowane** na listach typów danych, obok JSON i
+Bitmap — w mapowaniu kolumn wyjściowych kroku przepływu pracy oraz we właściwościach kolumn tabeli. Nie jest
+oferowany jako *źródłowy* typ danych kroku importu: wartości z pliku docierają jako lista liczb i trafiają
+do kolumny, która ma już typ Wektor. Nie jest też oferowany tam, gdzie wymagany jest pojedynczy typ skalarny,
+na przykład w zadeklarowanym typie zmiennej przepływu pracy.
+
+Sam typ nie określa wymiaru. Zamiast rodziny typów, po jednym na każdą szerokość, istnieje jeden
+typ Wektor oraz deklaracja szerokości jego wektorów dla każdej kolumny.
+
+### Szerokość wektora
+
+Otwórz panel szczegółów kolumn tabeli, wybierz kolumnę Wektor i ustaw **Szerokość wektora** na liczbę
+wartości w każdym osadzeniu — 768, 1024, 1536, zależnie od tego, co tworzy model. Pole pojawia się
+przy kolumnie Wektor w projekcie Lakehouse v2 (StarRocks) i nigdzie indziej.
+
+Zadeklarowana szerokość jest wymuszana na każdej ścieżce ładowania. Wiersz, którego wektor ma inną długość,
+jest odrzucany, zanim cokolwiek zostanie zapisane, a komunikat podaje plik, kolumnę, wiersz, znalezioną długość
+i zadeklarowaną szerokość, dzięki czemu wiadomo dokładnie, która wartość się nie zgadza i o ile — a przy
+ładowaniu pliku wiersze są numerowane od 1 w obrębie pliku. Dzięki temu obcięty plik lub zmieniony model osadzeń kończy się
+nieudanym uruchomieniem, które można odczytać.
+
+Sprawdzenie obejmuje każdą drogę, którą docierają osadzenia:
+
+* **Import Parquet**.
+* **Łącznik REST** — w tym QuickBooks, Xero, Sage i Monday.com.
+* **Tap Singer**.
+* **Zapytanie do zdalnej bazy danych** uruchomione bezpośrednio w źródle.
+* **Krok przepływu pracy, który zapisuje ramkę** do tabeli.
+* **Import archiwum** lub **przywrócenie archiwum**, gdzie komunikat o odrzuceniu podaje plik archiwum.
+* **Import pakietu tabeli**. Eksport pakietu zapisuje kolumnę Wektor jako prawdziwy wektor, więc pełny
+  cykl eksportu i importu pakietu zachowuje szerokość.
+
+Dwie rzeczy znajdują się poza tym sprawdzeniem:
+
+* **Import CSV nie jest sprawdzany i nie może być.** Konwersja zamienia tablicę na tekst, zanim
+  można by zbadać szerokość, więc CSV to jedyna droga, która może wprowadzić do kolumny inną szerokość.
+* **Zapisy na poziomie wierszy** — zapisywanie pojedynczych wierszy lub rekordów oraz łącznik z kluczem zapisujący wiersz — są
+  sprawdzane, gdy zapis może rozpoznać, że kolumna jest typu Wektor. To zwykły przypadek, a nie
+  bezwarunkowa gwarancja.
+
+Szerokość pozostawiona w kolumnie, której tabela już nie określa jako Wektor, nie obowiązuje. Zmień typ kolumny
+i deklaracja przestanie decydować o tym, co do niej trafia.
+
+Ma to znaczenie, ponieważ kolumna, której wiersze mają różne szerokości, nie nadaje się do przeszukiwania. Wyszukiwanie wektorowe
+w takiej kolumnie kończy się surowym błędem z silnika bazowego zamiast komunikatu podającego kolumnę. Dlatego
+przy ładowaniu osadzeń jako CSV zadbaj, aby plik dawał zadeklarowaną szerokość — albo przygotuj tablicę
+jako Parquet i zaimportuj ją, a sprawdzenie wykona się za Ciebie.
+
+Zadeklaruj szerokość przed załadowaniem. Szerokość wektora to liczba całkowita równa 1 lub większa i nie ma
+wartości pustej, do której można wrócić — opróżnienie pola przywraca zapisaną wartość — więc potraktuj deklarację jako
+część projektowania kolumny.
+
+Szerokość jest też punktem wyjścia dla wyszukiwania. Jeśli kolumna nie ma zadeklarowanej szerokości, wyszukiwanie musi
+pobrać próbkę wiersza, aby ustalić, jak szerokie są przechowywane wektory, zanim będzie mogło sprawdzić zapytanie względem nich.
+
+
+## Ładowanie wektorów
+
+Kolumnę Wektor ładuje się standardowymi krokami importu i transformacji. Najprostszą drogą jest plik Parquet, którego kolumna to
+lista 32-bitowych liczb zmiennoprzecinkowych: krok **Importuj Parquet** ładuje ją bezpośrednio do kolumny
+Wektor.
+
+Typowy przebieg od początku do końca, wyłącznie ze standardowych kroków:
+
+1. **Importuj Parquet** (lub dowolny inny krok importu) — załaduj osadzenia i ich klucze biznesowe do
+   tabeli, w której kolumna osadzeń ma typ Wektor i zadeklarowaną Szerokość wektora.
+2. **Table Inner Join** (krok) — złącz tę tabelę z tabelą faktów lub tabelą referencyjną, którą opisują osadzenia, po
+   kluczu biznesowym.
+3. **AI: wyszukiwanie wektorowe** — znajdź wiersze najbliższe wektorom zapytania i zapisz dopasowania do
+   tabeli docelowej.
+4. **Table Lookup** (krok) — dołącz do wierszy dopasowań kolumny opisowe, które chcesz wyświetlać.
+
+### Skąd można odczytać plik
+
+Sprawdzenie szerokości wymaga odczytania kolumny wektorowej osobno, a to wymaga konta dokumentów,
+które można odczytywać kolumna po kolumnie. Potrafią to **S3**, **Google Cloud Storage** i **Azure Blob Storage**.
+Import Parquet z dowolnego innego konta dokumentów do tabeli, która deklaruje Szerokość wektora, jest
+odrzucany zamiast ładowany bez sprawdzenia, więc umieść plik w S3, Google Cloud Storage lub Azure Blob
+Storage i zaimportuj go stamtąd. To samo dotyczy przywracania archiwum z takiego konta — przywracanie
+to operacja odzyskiwania, więc przechowuj archiwa na koncie, z którego przywracanie może odczytywać. Tabele
+bez zadeklarowanej Szerokości wektora nie są objęte tym ograniczeniem, podobnie jak każdy inny krok importu.
+
+<Aside type="note">
+Gdy tabela jest rejestrowana jako tabela zewnętrzna, źródłowa kolumna wektorowa trafia jako Wektor w projekcie
+Lakehouse v2 (StarRocks). W projekcie w każdym innym silniku trafia jako Tekst, ponieważ nie można tam
+utworzyć kolumny Wektor.
+</Aside>
+
+
+## Wyszukiwanie najbliższych wierszy
+
+Krok **AI: wyszukiwanie wektorowe** przyjmuje tabelę do przeszukania, jeden lub kilka wektorów zapytania oraz liczbę
+dopasowań do zachowania dla każdego zapytania, a następnie zapisuje najbliższe wiersze do tabeli docelowej wraz z odległością,
+według której zostały uszeregowane.
+
+Dostępne są dwie metryki odległości i w obu mniejsza odległość oznacza bliższy wiersz:
+
+* **Cosinusowa** — kąt między dwoma wektorami, bez uwzględniania ich długości. To właściwy
+  wybór domyślny dla osadzeń tekstu.
+* **Euklidesowa (L2)** — odległość w linii prostej, która uwzględnia długość wektorów.
+
+Iloczyn skalarny celowo nie jest oferowany. Dla wektorów, które nie są znormalizowane, nie jest on w ogóle odległością
+— odległość wektora od samego siebie wychodzi ujemna — więc każdy ustawiony względem niego próg
+i każdy wynik wyświetlony przez krok byłyby pozbawione znaczenia, nawet jeśli kolejność przypadkiem się zgadzała. Dla
+znormalizowanych osadzeń uszeregowanie według odległości cosinusowej daje taką samą kolejność jak iloczyn skalarny, więc
+nic nie tracisz.
+
+Pełną listę parametrów zawiera strona
+[AI: wyszukiwanie wektorowe](/pl/reference/workflow-steps/general/vector-search/).
+
+### Wyszukiwanie jest dokładne, a nie przybliżone
+
+Krok porównuje każdy wiersz, który przechodzi jego filtr, z każdym wektorem zapytania. Nie ma indeksu wektorowego
+ani przybliżenia: wynikiem jest prawdziwy zbiór najbliższych wierszy, a nakład pracy rośnie wraz z liczbą
+przeszukiwanych wierszy pomnożoną przez liczbę wektorów zapytania.
+
+Zaplanuj to odpowiednio. Użyj filtra kroku, aby zawęzić wiersze kandydujące do istotnego wycinka — jednej
+jednostki, jednego okresu, jednego zbioru dokumentów — zamiast skanować cały korpus, by odpowiedzieć na pytanie dotyczące
+jego części. Podział tabeli osadzeń według wymiaru, po którym zawsze filtrujesz, i przeszukiwanie
+odpowiedniej tabeli to najskuteczniejszy sposób skrócenia czasu wyszukiwania.
+
+### Wiersze niemożliwe do zmierzenia są pomijane
+
+Wiersz, którego odległości nie da się zmierzyć, jest wykluczany z dopasowań, zamiast być zwracany tak, jakby
+był najbliższy. Uruchom przepływ pracy z włączonym **Trybem diagnostycznym**, a dziennik poda, ile
+wierszy pominięto dla każdego zapytania, albo poinformuje, że krok zmierzył każdy przeszukany wiersz.
+
+Przechowywany wektor z brakującą wartością wewnątrz tablicy jest odrzucany, a nie pomijany: nie da się zmierzyć żadnej odległości
+względem tablicy, która ją zawiera, więc wyszukiwanie zatrzymuje się i podaje kolumnę zamiast
+zwracać częściową odpowiedź.
+
+
+## Czego nie może robić kolumna Wektor
+
+Osadzenie jest współrzędną, a nie kluczem ani miarą, więc kolumna Wektor jest odrzucana w rolach, które
+traktują ją w ten sposób:
+
+* **Nie jest kluczem złączenia.** Złączaj po kluczu biznesowym znajdującym się obok wektora.
+* **Nie jest kolumną grupowania.** Grupowanie wierszy według surowego osadzenia umieszcza każdy wiersz w osobnej grupie.
+* **Nie jest celem agregacji.** Nie istnieje sensowna suma, średnia, minimum ani maksimum
+  osadzenia.
+
+We wszystkich trzech przypadkach odrzucenie następuje z komunikatem podającym kolumnę i rolę — przy zapisie kroku
+oraz ponownie w czasie uruchomienia dla kroku zapisanego wcześniej. Przepływ pracy zawierający któryś z tych przypadków nie uruchomi się i
+po cichu nie wyprodukuje błędnej liczby. Przekazywanie wektora przez krok jako zwykłej kolumny wyjściowej jest
+dozwolone, podobnie jak zliczanie wierszy i zliczanie unikatowych wartości.
+
+Kolumna Wektor jest również pomijana w profilowaniu kolumn i listach wartości w [Eksploratorze tabel](/pl/guides/data/table-explorer/),
+nie można jej umieścić na wykresie na pulpicie, jest tylko do odczytu w edytorze danych i nie można jej
+powiązać z wymiarem. Minimum, średnia ani lista najczęstszych wartości nic nie mówią o osadzeniu, a
+osadzenie nie jest członkiem niczego.
+
+
+## Odczytywanie wartości wektorów
+
+Odczyt całej kolumny Wektor — w podglądzie, w eksporcie lub przez asystenta AI przez MCP —
+zwraca tekstową reprezentację tablicy zamiast liczb. Aby odzyskać liczby, odczytaj elementy
+pojedynczo.
+
+W siatce danych wartości są pokazywane jako krótki podgląd, który zaczyna się od szerokości, na przykład
+`1536-dim [0.013,-0.046,0.079, ...]`, dzięki czemu kolumna osadzeń pozostaje czytelna bez tysiąca
+liczb w każdej komórce.
+
+
+## Powiązane
+
+* [AI: wyszukiwanie wektorowe](/pl/reference/workflow-steps/general/vector-search/) — pełny opis parametrów
+  kroku
+* [Korzystanie z tabel i widoków](/pl/guides/data/tables-views/) — jak tabele przechowują kolumny i dlaczego typy danych
+  mają znaczenie
+* [Eksplorator tabel](/pl/guides/data/table-explorer/) — sprawdzanie typu danych każdej kolumny i ustawianie jej szczegółów
+  kolumny
+* [Importuj Parquet](/pl/reference/workflow-steps/import/import-parquet/) — ładowanie osadzeń z pliku
+  Parquet
+* [Typ danych Waluta](/pl/guides/data/currency-data-type/) — drugi specjalnie zaprojektowany typ kolumny, dla
+  wartości pieniężnych

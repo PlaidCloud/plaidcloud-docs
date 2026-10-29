@@ -1,0 +1,31 @@
+---
+title: Import Singer Source
+description: Importez des données depuis une source Singer (connecteurs SaaS, API et bases de données tels que Stripe, GitHub, Slack et BigQuery) dans des tables de projet, avec détection des flux et synchronisation de table complète ou incrémentale.
+sidebar:
+  order: 25
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/import/import-singer.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+L'étape **Import Singer Source** (affichée sous **Importation : source Singer** dans le sélecteur d'étapes) récupère un ou plusieurs flux d'une source Singer dans des tables de projet. Une source Singer est une connexion de type **Source Singer** qui encapsule un *tap* Singer, c'est-à-dire un connecteur pour une application SaaS, une API ou une base de données précise, comme Stripe, GitHub, Slack ou BigQuery. L'étape détecte les flux disponibles du tap, vous choisissez ceux à importer et la destination de chacun, puis l'exécuteur extrait les données et les charge dans les cibles.
+
+Pour un guide pas à pas complet, consultez le [guide des sources Singer](/fr/guides/connections/singer-sources/) ; pour les sources disponibles et leur documentation de configuration, consultez le [catalogue des sources Singer](/fr/reference/connectors/singer-sources/).
+
+## Configuration
+
+* **Connexion** *(obligatoire)* : une connexion de type **Source Singer**.
+* **Mode de synchronisation** *(obligatoire)* : **Table complète (remplacée à chaque exécution)**, **Incrémentiel (ajout des nouvelles données)** ou **Upsert (fusion sur la clé)**. Le mode incrémentiel ne fonctionne que pour les flux que le tap peut synchroniser de façon incrémentielle (ceux qui ont une clé de réplication) ; l'étape reprend à la position de l'exécution précédente. L'upsert fusionne chaque exécution dans la cible sur les colonnes clés du flux.
+* **Détecter les flux** : exécute la détection du catalogue du tap sur l'exécuteur et liste les flux qu'il propose.
+* **Flux** *(au moins un)* : pour chaque flux détecté, **Importer ce flux** pour l'inclure, et une **Table cible** pour sa destination. Chaque flux sélectionné nécessite une table cible. Lorsque le mode de synchronisation est **Upsert**, chaque flux sélectionné nécessite aussi des **Colonnes clés** (un nom de colonne par ligne), les colonnes sur lesquelles une ligne est appariée ; elles prennent par défaut la clé primaire déclarée du tap.
+
+## Comportement
+
+* La détection s'exécute comme un job distinct et peut prendre environ trois minutes à froid ; le résultat est mis en cache, de sorte que les détections suivantes sont instantanées.
+* **Table complète** remplace la table cible à chaque exécution ; **incrémentiel** ajoute uniquement les lignes nouvelles depuis la dernière exécution, à l'aide de la clé de réplication du tap ; **upsert** ré-extrait le flux complet et le fusionne dans la cible sur les colonnes clés de chaque flux : les lignes correspondantes sont mises à jour, les nouvelles clés sont insérées et les lignes existantes sans correspondance sont conservées. La cible est créée à la première exécution. Les lignes dont une colonne clé est nulle ne correspondent jamais et sont toujours insérées ; choisissez donc des colonnes clés toujours renseignées.
+* Les flux sélectionnés *sont* l'ensemble enregistré : pour modifier la sélection, relancez la détection. Les flux qui réapparaissent conservent la table cible et la sélection que vous avez définies.
+* Les identifiants de la source sont lus depuis la connexion à l'exécution, de sorte que leur rotation sur la connexion s'applique à chaque étape qui l'utilise, sans mise à jour étape par étape.
+
+<Aside>Chaque exécution appelle la source externe via le tap. Pour les flux incrémentiels, désélectionner puis resélectionner un flux, ou passer à la table complète, ré-extrait les données depuis le début.</Aside>

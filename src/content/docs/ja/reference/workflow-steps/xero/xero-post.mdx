@@ -1,0 +1,76 @@
+---
+title: "Xero: ドキュメントの転記"
+description: ヘッダーテーブルと明細テーブルから、手動仕訳、請求書、請求、支払、クレジットノートを Xero に転記します。転記前にすべてのドキュメントを検証するテストモードを備えています。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Xero接続](/ja/guides/connections/xero/)を使用して、PlaidCloudの共有 ERP 書き込みパイプライン経由で Xero にドキュメントを転記します。このステップは、ヘッダーテーブル（1ドキュメントにつき1行）と明細テーブル（1ドキュメントにつき1行以上）を受け取り、各ドキュメントを **ManualJournal**、**Invoice**、**Bill**、**Payment**、**CreditNote** のいずれかとして転記します。1つのバッチに複数のドキュメントタイプを混在させることができ、PlaidCloudはネットワーク呼び出しの前にバッチをドキュメントタイプ別に分割します。**Test Only Mode** では、台帳の確保も転記も行わずに、すべてのドキュメントを構築して検証します。任意の結果テーブルには、各ドキュメントの結果が記録されます。
+
+<Aside type="caution">
+本番のドキュメントを無人で転記する前に、すべてのバッチをまず **Test Only Mode** で実行して結果テーブルを確認し、いくつかの転記を Xero 上で直接照合してください。
+</Aside>
+
+## 構成
+
+### Xero接続
+
+- **Xero接続** — 転記に使用する Xero 接続です。ドキュメントの転記先となる組織は、この接続が保持しています。
+- **環境** — 転記に使用する、接続の PlaidCloud 環境です。接続を使用するすべてのステップに共通の選択項目です。Xero 自体のデモカンパニーとは無関係です（デモカンパニーは、接続先の組織の属性です）。
+- **Test Only Mode** — デフォルトでオンです。各ドキュメントを検証しますが、転記はしません。台帳の確保も書き込みも行われません。このフィールドをまったく含まないステップ構成（たとえば、REST API、MCP、ワークフローバンドルのインポートで作成されたもの）も、本番での転記ではなく Test Only Mode がデフォルトになります。
+- **Continue posting remaining documents if one document fails** — デフォルトでオンです。オフにすると、バッチは最初の失敗で停止します。
+- **結果テーブル** — ドキュメントごとに1行: `ref`、`doc_type`、`natural_key`、`xero_id`、`status`（`posted`/`validated`/`error`）、`message`。
+
+### テーブルの選択
+
+- **Header Table** — ドキュメントごとに1行です。
+- **Lines Table** — ドキュメントごとに1行以上で、`ref` によってヘッダーと対応付けられます。
+
+### ヘッダーと明細のフィールド
+
+2つのマッピングタブで、独自の列名を Xero が必要とするフィールドにマッピングします。**ヘッダーフィールド**には次のものがあります。
+
+| フィールド | 注記 |
+|---|---|
+| `ref` | 必須。業務キーです。ヘッダー行とその明細を結び付け、べき等性台帳が確保するキーにもなります。 |
+| `doc_type` | 必須。`ManualJournal`、`Invoice`、`Bill`、`Payment`、`CreditNote` のいずれかです。 |
+| `posting_date` | 必須。 |
+| `currency_id`, `party_id`, `memo`, `due_date` | 任意。`party_id` は Xero の取引先です。 |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | 支払のみで、任意です。 |
+| `credit_note_type` | クレジットノートのみで、任意です。`ACCRECCREDIT`（販売、デフォルト）または `ACCPAYCREDIT`（購買）です。 |
+
+**明細フィールド**には、`ref`（必須、ヘッダー行と一致）に加えて、ドキュメントタイプに必要なフィールドがあります。
+
+| ドキュメントタイプ | 明細フィールド |
+|---|---|
+| ManualJournal | `account_id`、`debit`、`credit`、および必要に応じてトラッキング用の `class_id` / `department_id` |
+| Invoice | `item_id`、`qty`、`unit_price`、`amount` |
+| Bill | `account_id`、`amount` |
+| CreditNote | `item_id`、`qty`、`unit_price`、`amount` |
+| Payment | `linked_txn_id`（明細が適用される請求書）、`amount` |
+
+`tax_type` と `memo` は、すべての明細で任意です。
+
+## 転記の仕組み
+
+各ドキュメントは、送信される前に PlaidCloud のべき等性台帳で確保されるため、再実行しても、すでに `posted` に達したドキュメントが転記されることはありません。台帳キーにはドキュメントタイプがプレフィックスとして付くため、請求書と請求が同じ `ref` を共有していても、Xero は両方を同じエンドポイントで転記しますが、衝突しません。
+
+結果が曖昧な場合（タイムアウトや応答の途絶など）、PlaidCloudは付与したドキュメント番号（請求書または請求なら請求書番号、クレジットノートならクレジットノート番号）で Xero に問い合わせます。これらの番号は Xero で一意であることが保証されていないため、一致したドキュメントが終端の転記済みステータスにある場合にのみ、証拠として扱われます。下書き、無効化済み、または番号が重複している一致は未解決として扱われ、この書き込みの結果として記録されるのではなく、隔離されます。
+
+## 機能の制限
+
+| 制限事項 | 意味 |
+|---|---|
+| 手動仕訳と支払は検索できない | 手動仕訳の摘要と支払の参照は Xero ではクエリできないため、結果が不明な書き込みをリクエストに結び付けるためのフィールドがありません。これらは推測せず、手動での解決のために隔離されます。 |
+| 取り消しの対象は手動仕訳と請求書 | 手動仕訳は、借方と貸方を入れ替えた仕訳として取り消されます。請求書は、対応するクレジットノートによって取り消されます。請求、支払、クレジットノートには文書化された取り消し用のペイロードがないため、取り消しは拒否され、偽装されることはありません。 |
+| レート制限は組織ごと | Xero では、組織ごとに1分あたり60回、1日あたり5,000回、同時呼び出し5件までが許可されています。PlaidCloudは1分あたりの制限と同時実行の制限を制御し、スロットルされた応答を受けるとバックオフします。非常に大きなバッチは、それに比例して時間がかかります。 |
+
+## 関連項目
+
+- [Xeroに接続](/ja/guides/connections/xero/) — 構成、プレビュー、転記を網羅した完全なチュートリアル
+- [Xero REST コネクタ](/ja/reference/connectors/rest/xero/)
+- [Xero ステップ](/ja/reference/workflow-steps/xero/)
+- [ERP転記履歴の確認](/ja/guides/connections/erp-post-history/)

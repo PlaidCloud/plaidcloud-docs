@@ -1,0 +1,137 @@
+---
+title: Depurar um fluxo de trabalho
+description: Quando um fluxo de trabalho falha, descubra a causa por si — execute um passo, pré-visualize a respetiva saída, leia o registo, siga as entradas com a auditoria de dependências e interprete o erro.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*~25 minutos · executar um passo, pré-visualizar os dados, ler o registo, seguir as entradas*
+
+Algo num fluxo de trabalho não está certo — um passo está a vermelho, um número a jusante parece errado ou uma execução parou a meio. Este tutorial percorre o conjunto de ferramentas manuais para descobrir porquê: executar um único passo isoladamente, pré-visualizar o que produziu, ler o registo do fluxo de trabalho, seguir a origem das suas entradas com a auditoria de dependências e ler o próprio erro. Cada ferramenta responde a uma pergunta diferente e, em conjunto, levam-no normalmente à causa sem adivinhar.
+
+> **Prefere que lho expliquem?** O [caminho assistido por IA](/pt-pt/get-started/tutorials/fix-a-workflow-with-ai/) faz a mesma investigação em modo de conversa. Este tutorial é a versão manual — tudo o que aqui se descreve é conduzido por si, o que vale a pena fazer pelo menos uma vez para perceber o que o assistente está realmente a analisar.
+
+## O ciclo de depuração
+
+A maior parte da depuração de fluxos de trabalho é o mesmo ciclo curto, seja qual for a ferramenta a que recorre primeiro:
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="O ciclo de depuração de fluxos de trabalho: executar um passo isoladamente, pré-visualizar os dados de saída, ler o registo do fluxo de trabalho para ver a mensagem de erro, seguir as entradas do passo com a auditoria de dependências e, por fim, corrigir e executar o passo novamente." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Executar um passo</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Pré-visualizar dados</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ler o registo</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Seguir as entradas</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">corrigir e executar novamente</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Cada ferramenta responde a uma pergunta — raramente precisa das quatro, mas seguem esta ordem.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Uma área de trabalho do PlaidCloud com um projeto e um fluxo de trabalho que tenha um problema para investigar (um passo a vermelho, um resultado errado ou uma execução que parou).
+- Familiaridade com o [Estruturador visual de fluxos de trabalho](/pt-pt/guides/workflows/advanced-workflows/) — a área de desenho onde fará a maior parte deste trabalho.
+
+## Passo 1: executar apenas o passo com problemas
+
+Não volte a executar o fluxo de trabalho inteiro para testar uma alteração — é lento e repete trabalho em que já confia. Execute apenas o passo que está a investigar.
+
+1. Abra o fluxo de trabalho no Estruturador visual de fluxos de trabalho.
+2. Clique com o botão direito do rato no passo que pretende testar e escolha **Executar passo** no menu de contexto.
+3. O passo é executado isoladamente, sobre os dados que já existem nas suas tabelas de origem.
+
+Este último ponto é importante na depuração: um passo lê das suas tabelas de origem tal como estão *neste momento*. Se um passo a montante ainda não foi executado, ou foi executado com dados desatualizados, executar este passo sozinho reflete isso — que é exatamente o que o [Passo 4](#passo-4-seguir-as-entradas-com-a-auditoria-de-dependências) ajuda a detetar.
+
+Consulte [Executar um passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/) para todos os pormenores.
+
+## Passo 2: pré-visualizar o que o passo produziu
+
+Depois de o passo ser executado, veja o que ele realmente escreveu antes de decidir se está correto. A **gaveta de Pré-visualização de dados** mostra os dados de saída de um passo diretamente na área de desenho — as primeiras 100 linhas com colunas tipificadas, fixada na parte inferior.
+
+Há três formas de lá chegar, todas levando à mesma gaveta:
+
+- **Passe o cursor sobre o mosaico do passo** — um pequeno símbolo de navegação (tabela) surge no canto inferior direito do mosaico. Clique nele.
+- **Clique com o botão direito do rato no passo** e escolha **Pré-visualizar dados de saída**.
+- **No Inspetor**, clique no **ícone de olho** em qualquer cartão de saída na secção **Saídas** do passo.
+
+O que verificar depende do sintoma:
+
+| Sintoma | O que procurar na pré-visualização |
+|---|---|
+| Colunas erradas ou em falta | O passo produziu as colunas que esperava? Uma junção ou seleção de colunas mal feita aparece aqui primeiro. |
+| Demasiadas ou poucas linhas | O cabeçalho mostra **Showing first N of ~M rows** — o total é aproximadamente o esperado? |
+| Saída vazia | A gaveta indica *Table is empty* (executado, zero linhas) ou *No data yet — run the step* (nunca executado). |
+| Valores suspeitos | Ordene uma coluna para fazer surgir nulos ou valores atípicos no topo. |
+
+Enquanto a gaveta estiver aberta, **clicar em qualquer outro passo redireciona a pré-visualização** para a saída desse passo — pode assim percorrer uma cadeia de passos e ver onde os dados começam a ficar errados. Quando precisar de filtrar, segmentar ou ir além das primeiras 100 linhas, clique em **Abrir no Explorador de tabelas** no cabeçalho da gaveta.
+
+Os pormenores completos estão em [Pré-visualizar dados de um passo](/pt-pt/guides/workflows/preview-step-data/).
+
+## Passo 3: ler o registo do fluxo de trabalho
+
+A pré-visualização diz-lhe *o que* a saída contém; o registo diz-lhe *o que aconteceu* quando o passo foi executado — incluindo a mensagem de erro, se falhou.
+
+À medida que os passos são executados e ocorrem avisos, esses eventos são escritos no **registo do fluxo de trabalho**, que pode consultar na área **Projeto**, no separador **Registo**. A partir do Estruturador visual de fluxos de trabalho, o botão **Ver registos** da barra de ferramentas abre esta mesma vista já filtrada para o fluxo de trabalho que tem aberto.
+
+1. Abra o separador **Registo** (o registo do projeto) — através do botão **Ver registos** da barra de ferramentas ou do separador **Registo** na área Projeto.
+2. Utilize o controlo de filtro junto às mensagens do registo para restringir ao passo e à execução que lhe interessam.
+3. Abra uma entrada do registo para ler os seus pormenores — é aqui que está a mensagem de erro de um passo que falhou.
+
+O registo ao nível do projeto mostra uma vista mais abrangente de vários fluxos de trabalho, caso o problema possa abranger mais do que um. Consulte [Consultar o registo do fluxo de trabalho](/pt-pt/guides/workflows/viewing-workflow-log/).
+
+> **Ler a mensagem de erro.** Copie o texto exato da entrada do registo — uma chave de junção incorreta, uma incompatibilidade de tipos ou uma tabela de origem em falta têm leituras diferentes. As duas causas mais comuns quando um passo dá erro são chaves de junção incompatíveis entre tabelas e valores nulos inesperados em colunas calculadas. Quando a mensagem aponta para os dados e não para a configuração do passo, é o sinal para seguir as entradas.
+
+> **Um exemplo prático.** Imagine que um passo de transformação fica a vermelho. Abre o registo e a entrada diz `column "revenue" does not exist` — a tabela de origem tem uma coluna `net_revenue`, não `revenue`. A correção de uma linha é acertar o nome da coluna na expressão do passo. Executa apenas esse passo novamente e ele fica a verde. Esse é o ciclo completo numa só passagem.
+
+## Passo 4: seguir as entradas com a auditoria de dependências
+
+Por vezes um passo está bem configurado e, mesmo assim, produz dados errados — porque foi executado sobre entradas que foram preenchidas *fora de ordem*. Quando já existem dados nas tabelas, um passo é executado e parece correto, embora tenha lido dados desatualizados ou ainda não atualizados. É esta a falha que o registo não consegue mostrar, porque não ocorreu nenhum erro.
+
+A **Auditoria de dependências do fluxo de trabalho** existe precisamente para isto. Analisa as dependências de dados e de fluxos de trabalho num fluxo de trabalho interligado e identifica os passos cujas entradas são preenchidas por uma ordem errada relativamente ao momento em que são lidas.
+
+Utilize-a quando:
+
+- A saída de um passo está errada, mas o passo em si não tem erros.
+- Reordenou ou adicionou passos e quer confirmar que nada lê agora uma tabela antes de ela ser criada.
+- Um fluxo de trabalho "funciona" numa execução completa, mas uma execução de um único passo dá números diferentes — um sinal clássico de uma dependência de ordem.
+
+Consulte [Ver uma auditoria de dependências](/pt-pt/guides/workflows/view-a-dependency-audit/) para saber como abrir e ler a auditoria.
+
+## Passo 5: decidir como o fluxo de trabalho deve tratar o erro
+
+Depois de perceber a causa, decida o que o fluxo de trabalho deve fazer no futuro quando este passo falhar. O tratamento de erros de cada passo é definido no formulário do passo e o PlaidCloud oferece três níveis:
+
+| Comportamento | O que acontece | Quando utilizar |
+|---|---|---|
+| **Parar o fluxo de trabalho** | A execução é interrompida; surge um indicador de erro tanto no passo como no fluxo de trabalho. | O predefinido e o mais comum — os fluxos de trabalho devem, em geral, ser executados sem erros. |
+| **Continuar o processamento** | O passo é marcado com um erro, mas o fluxo de trabalho trata-o como concluído e continua. | Passos que podem falhar sem consequências por falta de dados. Nota: o fluxo de trabalho mostra um indicador de *em execução*, não de erro. |
+| **Acionar um fluxo de trabalho de remediação** | O fluxo de trabalho atual para e, em seu lugar, é iniciado um fluxo de trabalho de remediação. | Notificação ou correção automáticas. *Não* é acionado para passos definidos para continuar o processamento. |
+
+O PlaidCloud também pode **tentar novamente** um passo falhado automaticamente — um número definido de vezes, com um atraso opcional de segundos a horas. É a ferramenta indicada quando um passo acede a um sistema remoto ou a uma origem de dados que falha de forma intermitente, e não a um passo com um erro de lógica real. Consulte [Gerir erros de passos](/pt-pt/guides/workflows/managing-step-errors/).
+
+## Passo 6: corrigir, voltar a executar e confirmar
+
+1. Faça a alteração para a qual a sua investigação apontou — corrija a chave de junção, adicione um passo a montante, corrija uma expressão que produz nulos ou reordene os passos.
+2. **Execute apenas esse passo novamente** (Passo 1) e **pré-visualize a respetiva saída** (Passo 2). Se a gaveta estava aberta durante a execução, é atualizada automaticamente quando a execução termina.
+3. Quando o passo estiver correto, execute o fluxo de trabalho de ponta a ponta e acompanhe o registo para confirmar que todo o pipeline está limpo.
+
+Para um registo permanente do que o fluxo de trabalho faz — os seus passos, funções e variáveis —, gere o **Relatório do fluxo de trabalho** a pedido a partir do ícone Relatório na hierarquia **Fluxos de trabalho**. Reflete o estado atual do fluxo de trabalho e é útil como documentação depois de uma correção. Consulte [Ver o relatório do fluxo de trabalho](/pt-pt/guides/workflows/view-workflow-report/).
+
+**Este é o ciclo completo.** Executou um passo isoladamente, pré-visualizou o que ele escreveu, leu o erro no registo, seguiu as suas entradas com a auditoria de dependências e voltou a executar para confirmar a correção — a mesma investigação que o assistente de IA faz, só que agora pode conduzi-la por si.
+
+## Para onde ir a seguir
+
+- [Corrigir um fluxo de trabalho com o assistente de IA](/pt-pt/get-started/tutorials/fix-a-workflow-with-ai/) — a mesma investigação, feita em modo de conversa
+- [Executar um passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/) — executar um único passo isoladamente
+- [Pré-visualizar dados de um passo](/pt-pt/guides/workflows/preview-step-data/) — a gaveta de Pré-visualização de dados
+- [Consultar o registo do fluxo de trabalho](/pt-pt/guides/workflows/viewing-workflow-log/) — onde os eventos e erros de execução são registados
+- [Ver uma auditoria de dependências](/pt-pt/guides/workflows/view-a-dependency-audit/) — detetar dependências de dados fora de ordem
+- [Gerir erros de passos](/pt-pt/guides/workflows/managing-step-errors/) — parar, continuar, remediar e tentar novamente
+- [Ver o relatório do fluxo de trabalho](/pt-pt/guides/workflows/view-workflow-report/) — documentação a pedido de todo o fluxo de trabalho

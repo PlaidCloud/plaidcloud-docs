@@ -1,0 +1,128 @@
+---
+title: Architecture IA et LLM
+description: "Comment PlaidCloud se connecte à de grands modèles de langage tels que Claude, GPT, Gemini et Grok : les quatre façons d'accéder à l'IA, le chemin gouverné que suit chaque requête, et les endroits où vos données circulent ou non."
+sidebar:
+  label: Vue d'ensemble
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/index.mdx
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud n'a pas une seule fonctionnalité d'IA. Il offre quatre façons d'accéder à un modèle (l'assistant intégré au
+produit, Microsoft 365 Copilot, les agents de codage externes et une étape LLM dans un workflow), et
+toutes les quatre passent par le même chemin gouverné. Le modèle lui-même est interchangeable : Claude, GPT, Gemini, Grok,
+une ressource Azure OpenAI dans votre propre abonnement, ou un modèle que vous hébergez vous-même.
+
+Cette section explique cette architecture : ce qui s'exécute où, ce qui franchit la frontière, et pourquoi.
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="Architecture IA de PlaidCloud. Quatre surfaces clientes (l'assistant intégré, Microsoft 365 Copilot, les agents de codage IA et l'étape de workflow LLM) entrent dans la frontière du tenant, qui contient les jetons délégués, le serveur MCP organisé, l'application des accès, les services d'IA et les données du projet. Les invites sortent vers les fournisseurs de LLM ; les données ne circulent qu'à l'intérieur de la frontière."
+	class="doc-diagram"
+/>
+
+## Les quatre surfaces
+
+| Surface | Qui l'utilise | Comment le modèle accède aux données | Pour commencer |
+|---|---|---|---|
+| **Assistant IA intégré** | Toute personne travaillant dans PlaidCloud | Les agents propres à PlaidCloud appellent des outils internes en votre nom | [Weave AI Chat](/fr/guides/ai-assistant/weave-tab/#chat-weave-ai) |
+| **Microsoft 365 Copilot** | Des équipes entières, dans Teams et Outlook | Un agent publié authentifie la personne, puis appelle le serveur MCP | [Microsoft 365 Copilot](/fr/integrations/microsoft-365-copilot/) |
+| **Agents de codage IA** | Analystes et développeurs | Leur client se connecte directement au serveur MCP via OAuth | [Prise en main](/fr/integrations/ai-coding-agents/getting-started/) |
+| **Étape de workflow LLM** | Pipelines automatisés | Avec Anthropic, un jeton limité aux seuls objets que vous liez ; avec les autres fournisseurs, aucun accès aux données (voir [les règles de l'étape](/fr/integrations/ai-architecture/llm-providers/#létape-de-workflow-llm-est-différente)) | [Étape LLM](/fr/reference/workflow-steps/general/llm-step/) |
+
+Elles diffèrent par la personne qui pilote et par l'endroit où la conversation a lieu. Elles ne diffèrent pas
+par ce que le modèle est autorisé à toucher.
+
+## Un chemin gouverné unique
+
+Quelle que soit la surface par laquelle arrive une question, les cinq mêmes principes s'appliquent.
+
+<Steps>
+
+1. **Le modèle s'exécute en tant que personne, pas en tant que plateforme.** Chaque requête porte un identifiant
+   de courte durée, révoqué dès qu'elle est terminée, qui représente l'utilisateur connecté. Aucun compte de service
+   partagé disposant de droits élevés ne se cache derrière l'IA.
+
+2. **Les outils sont la seule voie d'accès.** Le modèle ne peut pas interroger directement votre Lakehouse. Il appelle un
+   catalogue organisé d'outils (rechercher, décrire, lire, exécuter, upsert), et chaque appel est vérifié
+   indépendamment.
+
+3. **Vos propres autorisations la limitent toujours.** Une requête d'IA ne peut jamais voir ni modifier ce que vous ne
+   pourriez pas voir ou modifier vous-même. La couche d'IA restreint l'accès ; elle ne l'élargit jamais.
+
+4. **Un administrateur fixe le plafond, et il démarre fermé.** L'**Accès de l'agent** d'une connexion LLM
+   commence en lecture seule. Microsoft 365 Copilot commence sans aucun accès : tant qu'un
+   administrateur n'a pas attribué un **niveau d'accès** à une personne, celle-ci connectée n'obtient aucune donnée. Ce sont
+   deux mécanismes distincts, mais relever l'un ou l'autre ne fait que plafonner ce que l'IA peut tenter ; cela n'élargit jamais
+   ce que vous pouviez déjà atteindre vous-même.
+
+5. **Certaines actions sont définitivement interdites.** Les paramètres d'identifiants et de connexion, la gestion des identités et
+   des groupes, les modifications du contrôle d'accès, la publication et le code déployable ne peuvent jamais être appelés par
+   un identifiant d'IA, quelles que soient les autorisations accordées par un administrateur, avec n'importe quel fournisseur. Ces actions restent
+   réservées aux humains.
+
+</Steps>
+
+<Aside type="note">
+Ces règles sont appliquées dans le serveur, pas dans l'invite. Une tentative d'injection d'invite qui pousse le modèle
+à demander un outil interdit reçoit le même refus que celui opposé à un modèle bien comporté.
+</Aside>
+
+## Le parcours d'une question
+
+Prenons la question *« Pourquoi le coût informatique alloué pour Atlanta a-t-il augmenté le trimestre dernier ? »*, posée depuis n'importe quelle surface :
+
+<Steps>
+
+1. **Un identifiant est généré** pour la personne qui pose la question, avec un périmètre limité et une courte durée.
+
+2. **Les outils sont présentés au modèle** : restreints à ce dont la question a vraisemblablement besoin sur les
+   surfaces qui font cette restriction, découverts dans le catalogue sur celles qui ne la font pas.
+
+3. **L'invite est envoyée au modèle** : la question, les éventuelles règles permanentes et les descriptions des outils.
+   Pas encore de données.
+
+4. **Le modèle demande des données** par des appels d'outils : résoudre le chemin d'analyse, lire le schéma, exécuter
+   la trace d'allocation, lire les lignes d'inducteurs. Chaque appel est soumis à un contrôle des autorisations dès son arrivée.
+
+5. **Le modèle répond** à partir de ce qui lui est revenu, cite la page de documentation s'il en a consulté une, et
+   fournit un indicateur de confiance ainsi que des réserves.
+
+6. **L'identifiant est révoqué.** Un jeton capturé ne peut pas être rejoué une fois la requête terminée.
+
+</Steps>
+
+Le détail important se situe à l'étape 4 : le modèle ne possède pas vos données. Il en demande des extraits, et
+chaque demande est examinée.
+
+## À lire ensuite
+
+<CardGrid>
+	<LinkCard
+		title="Fournisseurs LLM et connexions"
+		href="/fr/integrations/ai-architecture/llm-providers/"
+		description="Claude, GPT, Gemini, Grok, Azure OpenAI : une seule connexion, quatre adaptateurs d'exécution et deux façons de relayer les outils."
+	/>
+	<LinkCard
+		title="Architecture de Microsoft 365 Copilot"
+		href="/fr/integrations/ai-architecture/microsoft-365-copilot/"
+		description="Pourquoi Copilot a besoin d'un package d'agent publié et de son propre client OAuth, et comment fonctionnent les niveaux d'accès refusés par défaut."
+	/>
+	<LinkCard
+		title="Récupération, ancrage et chemins d'analyse"
+		href="/fr/integrations/ai-architecture/retrieval/"
+		description="Ce que fait réellement la RAG ici, et pourquoi vos données métier sont lues en direct plutôt qu'indexées dans un magasin vectoriel."
+	/>
+	<LinkCard
+		title="Utiliser votre propre LLM maîtrisé"
+		href="/fr/integrations/ai-architecture/private-llm/"
+		description="Gardez les données propriétaires, de santé (PHI) ou contractuellement confinées dans une infrastructure que vous contrôlez."
+	/>
+</CardGrid>
+
+## Voir aussi
+
+- [Des réponses fiables](/fr/integrations/ai-coding-agents/honest-answers/) : comment les réponses sont notées et assorties de réserves
+- [Chemins d'analyse](/fr/integrations/ai-coding-agents/analysis-paths/) : des noms conviviaux pour les tables sur lesquelles votre équipe pose des questions
+- [Architecture de la plateforme](/fr/get-started/platform-architecture/) : la place de l'IA dans l'ensemble de la plateforme

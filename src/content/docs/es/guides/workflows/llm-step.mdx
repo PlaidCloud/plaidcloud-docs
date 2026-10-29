@@ -1,0 +1,72 @@
+---
+title: Paso LLM
+description: Ejecute un prompt contra un LLM dentro de un flujo de trabajo, con acceso de lectura o escritura limitado a las tablas, dimensiones y documentos de su proyecto, y deje que el modelo escriba sus resultados directamente.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/llm-step.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+El **Paso LLM** ejecuta un prompt contra un modelo de lenguaje de gran tamaño como un paso más de un flujo de trabajo. Usted le da al modelo acceso limitado a tablas, dimensiones y documentos específicos de su proyecto, y elige **Leer**, **Escribir** o ambos para cada uno. El modelo lee los datos que necesita y, donde usted haya concedido **Escribir**, escribe sus resultados directamente en el objeto que seleccionó. No hay un formato de salida aparte que configurar: una vinculación con Escribir habilitado *es* la salida del paso.
+
+Un uso común es resumir una tabla financiera en comentarios por unidad de negocio y hacer que el modelo escriba esos comentarios en una tabla de resultados (o como archivos de documento) que vinculó con acceso de escritura.
+
+<Aside type="note">El acceso limitado a los datos del proyecto (tablas, dimensiones, documentos) está disponible con conexiones de LLM de **Anthropic**, que usan un conector seguro para acceder a las herramientas MCP de PlaidCloud. Otros proveedores pueden ejecutar un prompt y devolver JSON estructurado, pero no obtienen acceso limitado a los datos: un paso con vinculaciones en una de sus conexiones se rechaza al guardarlo, y se requiere un esquema de resultado.</Aside>
+
+## Antes de empezar
+
+Necesitará:
+
+* **Una conexión de LLM.** El paso requiere una conexión de tipo **LLM** (por ejemplo, Anthropic). La conexión contiene la clave de API del proveedor, un modelo predeterminado opcional y un nivel de **Acceso del agente**. Consulte [Conexiones](/es/guides/connections/).
+* **Acceso de escritura en la conexión, solo si alguna vinculación tiene Escribir habilitado.** Una vinculación solo puede escribir si el Acceso del agente de la conexión es **Lectura y escritura**. **Completo** está obsoleto y se eliminará el 15 de enero de 2027. Una conexión de **solo lectura** rechaza las vinculaciones con Escribir al guardar.
+* **Los objetos de destino ya creados.** El modelo escribe *en* los objetos que usted selecciona: una tabla, una dimensión o una cuenta de documentos existentes. Cree y vincule primero el destino; el paso no crea objetos nuevos.
+
+## Agregar un paso LLM
+
+1. Abra el flujo de trabajo y vaya a la pestaña **Analyze Steps**.
+2. Agregue un paso en la posición que desee, igual que agregaría una transformación estándar.
+3. Elija **Paso LLM** como tipo de paso. El editor se abre con tres secciones: **Solicitud de LLM**, **Bindings** y **Límites**.
+
+## Configurar la solicitud
+
+En el grupo **Solicitud de LLM**:
+
+* **Conexión de LLM** *(obligatoria)*: la conexión de LLM que usa el paso.
+* **Modelo** *(opcional)*: un nombre de modelo específico, como `claude-opus-4-7`. Déjelo en blanco para usar el modelo predeterminado de la conexión.
+* **Prompt** *(obligatorio)*: la instrucción que se envía al modelo. Puede hacer referencia a los objetos vinculados dentro del texto con `{{tables.NAME}}`, `{{dimensions.NAME}}` y `{{documents.NAME}}`; cada referencia debe coincidir con una vinculación que declare más abajo. Indíquele al modelo con claridad qué escribir y dónde (por ejemplo, “escribe una fila por unidad de negocio en la tabla `summary`”).
+* **Result schema** *(opcional para conexiones de Anthropic; obligatorio para otros proveedores)*: un esquema JSON para un resumen estructurado de la ejecución, que se conserva como registro. Si proporciona uno, su raíz debe ser un objeto JSON con `"type": "object"`. Con una conexión de Anthropic puede dejarlo en blanco cuando el trabajo real del modelo son las escrituras que realiza mediante MCP; los demás proveedores no tienen acceso a MCP, por lo que la respuesta estructurada es su única salida y se requiere un esquema.
+
+## Vincular datos del proyecto
+
+La sección **Bindings** es donde concede el acceso y elige lo que el paso puede leer y escribir. Tiene tres grupos (**Tablas**, **Dimensiones** y **Documentos**), cada uno con un botón **Agregar**. Cada fila tiene:
+
+* Un **selector** para elegir el objeto: un selector de tablas, un selector de dimensiones o (para documentos) un explorador de cuenta y ruta. Ya no es necesario escribir los ID a mano.
+* Un **Nombre**: la etiqueta a la que hace referencia en el prompt (`{{tables.NAME}}`).
+* Casillas **Leer** y **Escribir**. Marque **Leer** para que el modelo pueda leer el objeto, **Escribir** para que pueda escribir en él, o ambas. Siempre hay al menos una activada.
+* Para los documentos, una sugerencia de **Formato** (como `pdf`).
+
+Cómo escribe el modelo en cada tipo, mediante las herramientas MCP:
+
+| Vinculación | El modelo escribe… |
+|---------|----------------------|
+| **Tabla** (Escribir) | insertando filas, normalmente con un `SELECT` que produce las filas que se agregarán a la tabla vinculada. |
+| **Dimensión** (Escribir) | agregando o actualizando nodos en la jerarquía de la dimensión vinculada. |
+| **Documento** (Escribir) | cargando un archivo en la cuenta de documentos y la ruta vinculadas. |
+
+<Aside type="caution">El acceso se limita exactamente a los objetos que vincula, según cada casilla: el modelo solo puede leer los objetos vinculados con Leer y solo puede escribir en los vinculados con Escribir. No puede acceder a un objeto que no vinculó, y no puede escribir en una vinculación de solo lectura.</Aside>
+
+## Límites
+
+El grupo **Límites** acota la solicitud:
+
+* **Máximo de tokens de salida**: la respuesta más grande que puede devolver el modelo (de 1.024 a 128.000; el valor predeterminado es 16.000).
+* **TTL de credenciales (segundos)**: cuánto tiempo permanece válida la credencial temporal de acceso a datos, con alcance limitado, del paso (de 60 a 3.600; el valor predeterminado es 1.800). El trabajo del paso está acotado por esta ventana, así que configúrela con la duración suficiente para que el modelo termine, pero no más de lo necesario.
+
+## Ejecutar el paso
+
+El paso LLM se ejecuta como cualquier otro paso: como parte de una ejecución completa del flujo de trabajo o por sí solo (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)). Al ejecutarse, el paso genera una credencial de corta duración y alcance limitado, envía su prompt y los objetos vinculados al modelo, y el modelo lee y escribe directamente mediante las herramientas MCP. La credencial se revoca en cuanto termina el paso. La llamada al modelo se ejecuta en su propio trabajo, de modo que un paso de larga duración no bloquea al ejecutor del flujo de trabajo.
+
+<Aside type="caution">Cada ejecución realiza una llamada real, con costo, a su proveedor de LLM y escribe en los objetos vinculados. Trate una vinculación con Escribir como cualquier otro destino de transformación y pruebe en una tabla de prueba antes de apuntar el paso a datos de producción.</Aside>

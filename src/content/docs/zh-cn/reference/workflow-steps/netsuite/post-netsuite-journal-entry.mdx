@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry 步骤
+description: 根据 PlaidCloud 的表头表和表行表向 NetSuite 过账一笔或多笔日记账分录，并提供预览模式，在任何分录过账之前先验证每一笔。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 描述
+
+通过 [NetSuite 连接](/zh-cn/guides/connections/netsuite/)向 NetSuite 过账日记账分录。该步骤接受两个源表：每笔日记账分录一行的表头表，以及每笔分录有一行或多行借/贷记录的行表；它按日记账分录对行分组，并将每笔分录过账到 NetSuite。**Test Only Mode** 会构建并检查每笔分录，但不会对 NetSuite 发起任何调用；可选的结果表会记录每笔分录的结果。
+
+<Aside type="caution">
+请先在 **Test Only Mode** 下运行每个批次，查看结果表，并在 NetSuite 中直接核对少量过账记录，然后再依赖此步骤无人值守地过账正式分录。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **NetSuite 连接**：用于过账的 NetSuite 连接，仅显示 NetSuite 类型的连接。
+- **环境**：连接的环境。
+
+NetSuite 连接在 **Tools > Connections** 下管理，参见[连接到 NetSuite](/zh-cn/guides/connections/netsuite/)。
+
+### 数据
+
+- **日记账分录头表**：每笔日记账分录一行。
+- **日记账分录行表**：每笔日记账分录一行或多行借/贷记录，通过日记账 ID 与其表头行关联。
+- **Test Only Mode**：默认勾选。按下列检查验证每笔日记账分录，但不对 NetSuite 发起任何调用，不会过账。取消勾选才会真正过账。完全省略此字段的步骤配置（例如通过 REST API、MCP 或工作流包导入创作的配置）同样默认为 Test Only Mode，而不是正式过账。
+- **Continue posting remaining entries if one entry fails**：默认勾选。当某笔分录未通过检查或过账失败时，PlaidCloud 会为该分录记录一个错误，并继续处理批次中的其余分录，而不是停止整个批次。
+- **Submit Asynchronously**：默认关闭。使用 NetSuite 的异步 `Prefer: respond-async` 标头提交每笔分录，而不是同步的创建后回读路径。NetSuite 会将作业排队，PlaidCloud 将该分录记录为 `pending` 并附带提交引用，而不是等待其解决。这是按连接做出的选择：对给定连接的每次运行请使用相同设置，不要混用。**目前没有任何机制会自动解决 pending 分录；重新运行此步骤即可解决**，其方式是查找该分录并记录其现已确定的结果。如果开启此项，请计划重新运行该步骤（或直接在 NetSuite 中检查），而不要将 `pending` 行视为已完成。
+- **过账结果表**：可选。如果设置，PlaidCloud 会（覆盖）写入该表，每笔日记账分录一行，参见[结果表列](#结果表列)。
+
+### 标题映射 / 标题筛选器
+
+使用[标准数据映射和筛选器选项卡](/zh-cn/reference/workflow-steps/common/advanced-data-mapper-usage/)，将表头表的列映射到下列日记账分录字段，并可选择筛选要过账的表头行。
+
+| 字段 | 是否必填 | 说明 |
+|---|---|---|
+| 日记账 ID | 是 | 将表头行与其行关联。每个唯一的日记账 ID 对应一行。 |
+| 子公司 | 是 | NetSuite 子公司内部 ID。 |
+| 过账日期 | 是 | 分录的交易日期。 |
+| 货币 | 否 | NetSuite 货币内部 ID。 |
+| 摘要 | 否 | 分录级摘要。 |
+| 外部 ID | 否 | 覆盖 PlaidCloud 为该分录生成的确定性外部 ID，参见[重新过账和重复分录](#重新过账和重复分录)。 |
+
+### 行映射 / 行筛选器
+
+映射行表的列，并可选择筛选要过账的行。
+
+| 字段 | 是否必填 | 说明 |
+|---|---|---|
+| 日记账 ID | 是 | 与表头行的日记账 ID 匹配。 |
+| 科目 | 是 | NetSuite 总账科目内部 ID。 |
+| 借方 | 是 | 借方金额；纯贷方行为 0。 |
+| 贷方 | 是 | 贷方金额；纯借方行为 0。 |
+| 摘要 | 否 | 行级摘要。 |
+| 部门 | 否 | NetSuite 部门内部 ID。 |
+| 类别 | 否 | NetSuite 类别内部 ID。 |
+| 位置 | 否 | NetSuite 位置内部 ID。 |
+| 实体 | 否 | NetSuite 实体（客户或供应商）内部 ID。 |
+
+## 过账的工作方式
+
+PlaidCloud 按日记账 ID 对行表分组，并为每个表头行构建一笔 NetSuite 日记账分录。在过账每笔分录之前（在 Test Only Mode 下则是在将其记录为已验证之前），PlaidCloud 会检查：
+
+- 该分录至少有一行
+- 借方和贷方金额精确到分后平衡
+- 每一行都有科目
+- 表头行有子公司
+- 过账日期是有效日期
+
+任何检查失败都会为该分录记录一个错误行，并且除非关闭了 **Continue posting remaining entries**，否则会继续处理批次中的下一笔分录。
+
+### 重新过账和重复分录
+
+每笔分录都使用确定性外部 ID 过账，该 ID 由项目、连接、日记账 ID、过账日期和各行金额构建。重新过账行未发生变化的分录时，会重用同一外部 ID，NetSuite 自身的外部 ID 处理机制可避免创建重复的日记账分录。更改分录的任何一行（不同的金额，或增加、删除一行），PlaidCloud 就会为其计算新的外部 ID，NetSuite 会将其作为新分录接受，而不是对旧分录的更新。在表头表的外部 ID 列中设置值，即可自行控制该 ID。
+
+<Aside type="caution">
+重新过账只会对 NetSuite 认为与其已有分录相同的分录去重。编辑分录的行并重新运行该步骤，不会更新 NetSuite 中的原始过账记录，而是创建第二笔分录。请直接在 NetSuite 中更正已过账的分录，而不要用更改后的数据重新运行此步骤。
+</Aside>
+
+### 结果表列
+
+| 列 | 描述 |
+|---|---|
+| journal_id | 表头表中的日记账 ID。 |
+| external_id | 此次过账尝试所用的外部 ID。 |
+| internal_id | NetSuite 为所创建日记账分录分配的内部 ID；处于 `pending` 时则为异步提交引用。在 Test Only Mode 下以及出错时为空。 |
+| status | `validated`（Test Only Mode）、`posted`、`pending`（Submit Asynchronously 已接受该分录，但 NetSuite 尚未确认）或 `error`。 |
+| message | 出现 `error` 时的错误详情；出现 `pending` 时说明重新运行该步骤即可解决。`posted`/`validated` 时为空。 |
+
+## 相关内容
+
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/)
+- [过账 NetSuite 日记账分录](/zh-cn/guides/connections/post-netsuite-journal-entries/)：涵盖配置、预览和过账的完整演练
+- [NetSuite REST 连接器](/zh-cn/reference/connectors/rest/netsuite/)
+- [NetSuite 步骤](/zh-cn/reference/workflow-steps/netsuite/)

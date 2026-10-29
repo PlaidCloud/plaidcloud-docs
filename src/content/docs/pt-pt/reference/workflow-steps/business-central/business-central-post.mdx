@@ -1,0 +1,54 @@
+---
+title: "Business Central: Post General Journal Lines"
+description: Lance linhas do diário geral num lote de diário existente do Business Central a partir de tabelas de cabeçalho e de linhas do PlaidCloud, com um modo de pré-visualização que valida cada diário antes de qualquer lançamento.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança linhas do diário geral no Business Central através da sua [ligação Business Central](/pt-pt/guides/connections/business-central/), encaminhadas pelo pipeline partilhado de escrita ERP do PlaidCloud. O passo recebe uma tabela de cabeçalho (uma linha por `journal_id`) e uma tabela de linhas (uma ou mais linhas por `journal_id`), cria as linhas dentro de um lote de diário **existente** e lança esse lote. **Validate Only** constrói e verifica todos os diários sem os lançar; uma tabela de resultados opcional regista o desfecho.
+
+<Aside type="caution">
+Execute cada lote primeiro em **Validate Only**, reveja a tabela de resultados e reconcilie alguns lançamentos diretamente no Business Central antes de confiar neste passo para lançar diários reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Ligação
+
+- **Ligação Business Central** — a ligação Business Central através da qual se lança.
+- **Ambiente** — o ambiente da ligação.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por `journal_id`: o nome do lote de diário do Business Central onde as suas linhas são lançadas, `document_number`, `posting_date` e uma etiqueta de moeda.
+- **Tabela de linhas** — uma ou mais linhas por `journal_id`: um `amount` com sinal (positivo para um débito, negativo para um crédito), `account_id` ou `account_number`, `account_type`, `description`.
+- **Tabela de resultados** — ID da tabela de saída: uma linha por `journal_id` com `journal_id`, `external_id`, `internal_id`, `status`, `message`.
+- **Validate Only** — assinalado por predefinição. Apenas verificação prévia; sem reserva no razão e sem lançamento. Uma configuração de passo que omita este campo por completo — por exemplo, uma criada através da API REST, do MCP ou de uma importação de pacote de fluxo de trabalho — também assume por predefinição Validate Only, em vez de um lançamento real.
+- **Continue On Error** — assinalado por predefinição. Continua a lançar os restantes diários depois de um falhar; se estiver desassinalado, interrompe o lote à primeira falha.
+
+<Aside type="caution">
+**O lote de diário indicado por `journal_id` tem de já existir no Business Central.** Este passo cria linhas dentro de um lote — não cria o próprio lote. Configure o lote de diário (nome, modelo de diário) no Business Central antes de lançar nele.
+</Aside>
+
+## Como funciona o lançamento
+
+A ação associada `Microsoft.NAV.post` do Business Central lança o lote de diário **inteiro**, e não apenas as linhas que este pedido criou. Antes de a chamar, o PlaidCloud volta a ler o lote e recusa o lançamento — registando um erro, sem lançar nada — se ele contiver alguma linha que não esteja marcada com o número de documento deste pedido. Esta salvaguarda impede que uma linha perdida deixada por uma falha parcial anterior seja arrastada para o razão geral por um lançamento posterior, sem relação com ela, no mesmo lote.
+
+Como `generalLedgerEntries` é só de leitura e contém apenas movimentos lançados, o PlaidCloud verifica um lançamento bem-sucedido procurando o número de documento **aí**, e não voltando a ler o lote de diário — uma correspondência em `generalLedgerEntries` é prova de um lançamento efetivo, e não apenas de que as linhas foram criadas.
+
+## Limites de capacidade
+
+| Limitação | O que significa |
+|---|---|
+| Um tipo de documento de escrita | Só é suportado o lançamento de General Journal Line. O fluxo de documentos em rascunho do Business Central (faturas de venda/compra, Rascunho → Lançado) não é suportado — a ação de lançamento exata para esse fluxo não está definida na documentação publicada pela Microsoft. |
+| Apenas lote existente | Este passo nunca cria um lote de diário. Crie-o primeiro no Business Central e aponte `journal_id` para ele. |
+| Lançamentos simultâneos no mesmo lote | A salvaguarda de idempotência tem como âmbito o número de documento, e não o lote de diário — dois números de documento diferentes lançados no mesmo lote em simultâneo não ficam garantidamente em série, como acontece com duas chamadas com o mesmo número de documento. Evite lançamentos simultâneos num único lote. |
+## Relacionado
+
+- [Ligar ao Business Central](/pt-pt/guides/connections/business-central/) — descrição completa da configuração, da pré-visualização e do lançamento
+- [Conector REST do Business Central](/pt-pt/reference/connectors/rest/business-central/)
+- [Passos Business Central](/pt-pt/reference/workflow-steps/business-central/)
+- [Rever o histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/)

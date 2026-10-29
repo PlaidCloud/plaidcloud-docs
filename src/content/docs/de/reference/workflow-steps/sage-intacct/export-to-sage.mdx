@@ -1,0 +1,99 @@
+---
+title: "Intacct: Journalbuchung buchen"
+description: Bucht Journalbuchungen aus PlaidCloud-Projekttabellen in Sage Intacct als Low-Code-Alternative zu einer Buchungs-UDF, mit einer Ergebnistabelle pro Buchung und Vorschauvalidierung.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Journalbuchungen über eine Sage-Intacct-Verbindung mithilfe der REST-v1-API von Intacct in Sage Intacct. Dies ist eine native Low-Code-Alternative zum Schreiben einer benutzerdefinierten Buchungsfunktion (UDF) – wählen Sie die Verbindung, ordnen Sie Ihre Spalten zu, und der Schritt übernimmt Authentifizierung, Stapelverarbeitung und die Fehlerbehandlung pro Buchung für Sie.
+
+Der Schritt liest zwei Tabellen, die Sie vorgelagert aufbereitet haben – eine **Kopftabelle** und eine **Positionstabelle** –, validiert jede Journalbuchung und bucht sie. Er unterstützt den Stapelfall: viele Journalbuchungen in einer einzigen Ausführung, jede einzeln gebucht und nachverfolgt.
+
+<Aside type="danger" title="Kein Duplikatschutz – prüfen Sie die Ergebnistabelle, bevor Sie erneut ausführen">
+Dieser Schritt verfolgt **nicht**, welche Buchungen bereits gebucht wurden. Eine erneute Ausführung bucht **jede** Buchung der Kopftabelle erneut, auch solche, die beim letzten Mal erfolgreich gebucht wurden – es gibt keine Deduplizierung. Öffnen Sie vor einer erneuten Ausführung die Ergebnistabelle der letzten Ausführung und prüfen Sie, welche Buchungen tatsächlich gebucht werden müssen. Wenn eine frühere Ausführung Buchungen mit dem `status` `unknown` hinterlassen hat, lesen Sie zuerst [Ergebnistabelle](#ergebnistabelle) weiter unten, bevor Sie irgendetwas anderes tun.
+</Aside>
+
+## Datenstruktur-Vertrag
+
+Der Schritt leitet nicht ab, welche Zeilen zu welcher Journalbuchung gehören – Sie bauen diese Struktur vorgelagert mit Standardschritten (einem Zuweisungsausdruck, einer Aggregation) auf, bevor dieser Schritt läuft:
+
+- Die **Kopftabelle** hat **genau eine Zeile pro Journalbuchung**, und diese Zeile enthält eine Spalte **`entry_key`** – ein beliebiger Wert, der pro Buchung eindeutig ist (eine Stapelnummer, ein verketteter Wert aus Datum und Beschreibung, eine generierte Sequenz).
+- Die **Positionstabelle** hat eine Zeile pro Buchungsposition, und **jede Position trägt denselben `entry_key`-Wert** wie die Kopfzeile, zu der sie gehört.
+
+Auch eine einzelne Journalbuchung (ohne Stapel) braucht diese Struktur – geben Sie jeder Zeile in beiden Tabellen denselben konstanten `entry_key`.
+
+Der Schritt gruppiert beide Tabellen nach `entry_key`, bevor er validiert oder bucht. Eine Kopfzeile ohne passende Positionen, eine Position ohne passende Kopfzeile oder mehr als eine Kopfzeile für denselben Schlüssel scheitern daher bei der Validierung dieser Buchung, statt eine fehlerhafte Buchung zu erzeugen.
+
+## Besondere Konfigurationselemente
+
+### Sage-Verbindung
+
+Die **Sage-Intacct**-Verbindung, über die gebucht wird. Hier werden nur Sage-Intacct-Verbindungen angeboten – eine generische REST-Verbindung wird nicht akzeptiert, weil das Buchen den Intacct-spezifischen Token-Austausch und die Auflösung von Unternehmen/Entität erfordert, die nur eine Sage-Intacct-Verbindung mitbringt.
+
+Dieselbe Verbindung wird an anderer Stelle zum *Lesen* aus Intacct verwendet (zum Beispiel [Import Sage AP](/de/reference/workflow-steps/sage-intacct/import-sage-ap/) oder [Import Sage Intacct Query](/de/reference/workflow-steps/sage-intacct/import-intacct-query/)) – eine Verbindung dient beiden Richtungen. Siehe [Sage Intacct REST Connector](/de/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+Der Name der Spalte – vorhanden in den Quellspalten von Kopf und Positionen –, die Kopf- und Positionszeilen zu einer Journalbuchung gruppiert. Siehe [Datenstruktur-Vertrag](#datenstruktur-vertrag) oben.
+
+### Quellspalten
+
+Zwei getrennte Spaltenzuordnungen, eine pro Registerkarte – ordnen Sie jeweils eine Quellspalte dem Journalbuchungsfeld zu, das sie speist:
+
+- **Kopfspalten** – die Felder auf Ebene der Journalbuchung: Journal, Buchungsdatum, Beschreibung, Referenznummer, ein optionales `base_location` (die Intacct-Entität bzw. der Standort, unter dem die Buchung gebucht wird – bei einem Unternehmen mit nur einer Entität weglassen), die Korrelationsspalte, die Sie als **Entry Key** benannt haben, und ähnliche Details auf Kopfebene.
+- **Positionsspalten** – die Felder pro Buchungsposition: Hauptbuchkonto, Soll-/Haben-Betrag, Positionsbeschreibung, dieselbe **Entry-Key**-Spalte und Dimensionen (Standort, Abteilung, Mitarbeiter, Klasse und Ähnliches).
+
+Sie müssen Ihre Quellspalten nicht umbenennen – ordnen Sie sie, wie auch immer sie heißen, den oben genannten Zielfeldnamen zu.
+
+### Ergebnistabelle
+
+Die Zieltabelle, in die dieser Schritt pro Journalbuchung eine Zeile schreibt und dabei das Ergebnis der Validierung und (außerhalb der Vorschau) der Buchung festhält. Ihre Spalten und `status`-Werte finden Sie weiter unten unter [Ergebnistabelle](#ergebnistabelle).
+
+### Preview
+
+Ein Kontrollkästchen, **standardmäßig aktiviert**. Bei aktivierter Vorschau validiert der Schritt jede Journalbuchung und schreibt die Ergebnistabelle genau wie bei einer echten Ausführung, authentifiziert sich aber **nicht** bei Intacct und bucht **nichts** – im Vorschaumodus gibt es überhaupt keinen Netzwerkaufruf an Intacct. Die Zeilen landen mit `status = preview` in der Ergebnistabelle und zeigen Ihnen, welche Buchungen sauber gebucht würden und welche an der Validierung scheitern würden, bevor etwas Ihr Hauptbuch erreicht.
+
+Wie eine echte Ausführung **ersetzt** eine Vorschau die Ergebnistabelle durch die Zeilen dieser Ausführung – sie ist die Ausgabe des Schritts pro Ausführung, kein fortlaufendes Protokoll –, sodass eine Vorschau nach einer echten Ausführung deren Zeilen mit `posted` und `unknown` überschreibt. Öffnen und kopieren Sie die Ergebnistabelle der letzten Ausführung, bevor Sie erneut ausführen (Vorschau oder echt), wenn Sie sie noch benötigen.
+
+Die Vorschau validiert nicht Ihre Intacct-**Anmeldedaten** – da sie sich nie verbindet, fällt eine fehlerhafte Verbindung oder abgelaufene Anmeldedaten hier nicht auf. Verwenden Sie die Aktion **Verbindung testen** der Verbindung (unter **Tools > Connections**), um die Anmeldedaten separat zu bestätigen.
+
+Eine Schrittkonfiguration, die dieses Feld ganz weglässt – etwa eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig die Vorschau statt einer Live-Buchung.
+
+Deaktivieren Sie die Vorschau erst, wenn Sie bereit für eine echte Buchung sind. Wir empfehlen, zuerst mit aktivierter Vorschau auszuführen, die Ergebnistabelle zu prüfen und dann mit deaktivierter Vorschau erneut auszuführen.
+
+## Ergebnistabelle
+
+Jede Ausführung – Vorschau oder echt – schreibt pro Journalbuchung eine Zeile in die Ergebnistabelle:
+
+| Spalte | Beschreibung |
+|---|---|
+| `entry_key` | Die Journalbuchung, über die diese Zeile berichtet. |
+| `status` | Eines von `preview`, `posted`, `failed`, `unknown` – siehe unten. |
+| `intacct_key` | Der von Intacct vergebene Schlüssel der gebuchten Buchung, sofern verfügbar. |
+| `http_status` | Der HTTP-Status, den Intacct für den Buchungsversuch zurückgegeben hat, sofern verfügbar. |
+| `error_message` | Eine kurze, bereinigte Beschreibung dessen, was schiefgegangen ist, wenn `status` den Wert `failed` oder `unknown` hat. |
+| `line_count` | Anzahl der Positionen, die dieser Buchung zugeordnet wurden. |
+| `posting_date` | Das Buchungsdatum, das an Intacct gesendet wurde (in der Vorschau: gesendet würde). |
+
+### Statuswerte
+
+- **`preview`** – Vorschaumodus; die Buchung wurde validiert und nicht gebucht.
+- **`posted`** – die Buchung wurde erfolgreich in Intacct gebucht.
+- **`failed`** – Intacct hat die Buchung endgültig abgelehnt (oder sie ist an der Validierung gescheitert, bevor ein Buchungsversuch unternommen wurde). Sie können die zugrunde liegende Ursache gefahrlos beheben und nur diese Buchung erneut buchen.
+- **`unknown`** – das Ergebnis konnte nicht ermittelt werden – ein Timeout, eine unterbrochene Verbindung oder ein Serverfehler ohne eindeutige Antwort von Intacct.
+
+<Aside type="danger" title="unknown bedeutet nicht, dass es fehlgeschlagen ist">
+Eine Buchung mit `unknown` wurde in Intacct möglicherweise bereits erfolgreich gebucht – die Anfrage könnte empfangen und übernommen worden sein, bevor die Verbindung abbrach oder die Antwort nie zurückkam. **Prüfen Sie den Status der Buchung direkt in Intacct, bevor Sie diesen Schritt erneut ausführen.** Eine Buchung mit `unknown` blind erneut zu buchen, riskiert eine doppelte Journalbuchung in Ihrem Hauptbuch.
+</Aside>
+
+Eine Ausführung mit Zeilen, die `failed` oder `unknown` sind, meldet eine Warnung, damit dies ohne Öffnen der Ergebnistabelle sichtbar ist; die Ergebnistabelle selbst ist jedoch die maßgebliche Quelle dafür, was als Nächstes zu tun ist.
+
+## Verwandte Themen
+
+- [Exportschritte](/de/reference/workflow-steps/export/)
+- [Import Sage AP](/de/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query](/de/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Sage Intacct REST Connector](/de/reference/connectors/rest/sage-intacct/)

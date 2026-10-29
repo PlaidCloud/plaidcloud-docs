@@ -1,0 +1,60 @@
+---
+title: Text NLP AI (krok)
+description: Uruchom zadanie oparte na LLM dla każdego wiersza — wyodrębnianie jednostek, tagowanie części mowy, streszczanie, klasyfikację zero-shot, ekstrakcję klucz/wartość lub własny prompt.
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## Opis
+
+Krok **Text NLP AI** uruchamia na danych jedno z siedmiu zadań wykonywanych dla każdego wiersza, każde jako partię ustrukturyzowanych wywołań LLM (z wymuszonym użyciem narzędzi): **Named Entity Recognition**, **POS Tagging**, **Podsumowanie**, **Klasyfikacja zero-shot**, **Ekstrakcja klucz/wartość**, **Prompt** i **Embed**. Działa jako zarządzane zadanie PlaidCloud (podobnie jak [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) i [Krok LLM](/pl/reference/workflow-steps/general/llm-step/)), więc nie konkuruje o zasoby z resztą przepływu pracy.
+
+Ponieważ każde zadanie to prawdziwe wywołanie LLM, wyniki nie są powtarzalne co do bitu między uruchomieniami — zobacz [Niedeterminizm](#niedeterminizm-wyniki-oparte-na-llm).
+
+## Konfiguracja
+
+- **Źródło / Tabele wyjściowe** — tabela wejściowa i tabela, do której zapisywane są wyniki.
+- **Kolumna tekstowa** (`field`) — kolumna odczytywana przez każde zadanie.
+- **Zadanie** (`task`) — jedno z `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. Zadania `embed` nie ma na liście zadań w formularzu; ustaw je za pomocą asystenta AI lub REST API.
+- **Język** (`language`) — język tekstu, przekazywany do modelu. Domyślnie `en`.
+- **Połączenie LLM** (`llm_connection_id`) — połączenie LLM dla Anthropic, OpenAI, Gemini, Azure OpenAI, Grok lub GitHub Models. Pozostaw puste, aby użyć domyślnego połączenia obszaru roboczego.
+- **Model** (`llm_model`) — pozostaw puste, aby użyć domyślnego modelu połączenia.
+- **Temperatura** (`temperature`) — opcjonalna temperatura próbkowania. Zobacz [Niedeterminizm](#niedeterminizm-wyniki-oparte-na-llm): modele bieżącej generacji ją ignorują.
+- **Maks. liczba wierszy** (`max_rows`) — odpowiedź tylko dla pierwszych N wierszy w kolejności źródła. Pozostałe zachowują pustą odpowiedź. Pozostaw puste dla wszystkich wierszy.
+- **Rozmiar partii** (`batch_size`) — liczba wierszy wysyłanych w jednym wywołaniu LLM, od 1 do 500. Domyślnie 25. Partia, której odpowiedź została obcięta, jest dzielona na pół i ponawiana, zamiast tracić wiersze.
+
+## Zadania
+
+Cztery zadania zwracają jeden wiersz wyjściowy na wiersz wejściowy (**zachowujące wiersze**); trzy zwracają zero lub więcej wierszy na wiersz wejściowy i przenoszą na każdy z nich kolumny identyfikatorów źródła (`id_columns`) (**rozwijające wiersze**).
+
+| Zadanie | Rozgałęzienie | Kolumny wyjściowe | Pola specyficzne dla zadania |
+| --- | --- | --- | --- |
+| Named Entity Recognition (`ner`) | Rozwijające wiersze | `entity_text`, `entity_type` | **Typy jednostek** (`entity_types`) — lista dozwolonych typów. Jeśli pozostanie puste, domyślnie `people`, `organizations`, `locations`, `dates`, `quantities`. |
+| POS Tagger (`pos`) | Rozwijające wiersze | `token`, `pos` (uniwersalny znacznik części mowy, na przykład `NOUN`, `VERB`, `ADJ`) | Brak. |
+| Podsumowanie (`summary`) | Zachowujące wiersze | `summary` | **Summary Length** (`summary_length`) — maksymalna liczba zdań, od 1 do 20. Domyślnie 3. |
+| Klasyfikacja zero-shot (`zeroshot`) | Zachowujące wiersze | `label`, `score` (od 0 do 1) | **Pole etykiety** (`label_field`) — kolumna źródłowa zawierająca etykiety kandydujące dla każdego wiersza; bez niej model nie ma z czego wybierać. **Multi-Label** (`multi`) — zezwala na więcej niż jedną etykietę na wiersz (łączone przez `, `) zamiast wybierania jednej najlepszej. |
+| Prompt (`prompt`) | Zachowujące wiersze | `answer`, `error` | **Prompt** (`prompt`) — instrukcja stosowana do każdego wiersza, wymagana. **Pola wejściowe** (`input_fields`) — kolumny wysyłane do modelu wraz z promptem, jako jeden rekord na wiersz; puste wysyła **Kolumnę tekstową**. |
+| Embed (`embed`) | Zachowujące wiersze | `embedding` (tablica JSON z liczbami), `error` | Brak. Ustaw za pomocą asystenta AI lub REST API. Wymaga połączenia zgodnego z OpenAI lub Azure OpenAI, a **Model** kroku musi wskazywać model osadzeń, ponieważ domyślny model połączenia to zwykle model czatu; połączenie Anthropic jest odrzucane, bo nie ma API osadzeń. Nieudane żądanie zachowuje każdy wiersz swojej partii, z pustym `embedding` i przyczyną w `error`. |
+| Pary klucz/wartość (`keyvalue`) | Rozwijające wiersze | `key`, `value` | **Pole klucza** (`key_field`) — kolumna źródłowa zawierająca kandydujące klucze do wyodrębnienia dla każdego wiersza; pozostaw puste, aby model znajdował klucze swobodnie. **Fuzzy** (`fuzzy`) — dopasowuje klucze kandydujące w przybliżeniu zamiast dokładnie. |
+
+**Kolumny identyfikatorów** (`id_columns`) przenoszą kolumny identyfikujące z tabeli źródłowej na każdy wiersz wyjściowy zadania rozwijającego wiersze, dzięki czemu możesz prześledzić wyodrębnioną jednostkę lub parę z powrotem do rekordu źródłowego. Kolumna identyfikatora nie może mieć takiej samej nazwy jak jedna z własnych kolumn wyjściowych zadania: na przykład nazwanie kolumny identyfikatora `entity_type` w zadaniu `ner` jest odrzucane przy zapisie kroku, z komunikatem *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+Kolumna `error` zawiera komunikat wywołania, które zakończyło się niepowodzeniem dla danego wiersza. Zadanie Prompt służy do dowolnego pytania dla każdego wiersza, którego nie obejmują inne zadania, na przykład *Classify the sentiment of this review.* Wartości pól są wysyłane jako dane, nigdy jako instrukcje dla modelu.
+
+W zadaniu Prompt **Kolumna dokumentu** (`content_field`) wskazuje kolumnę, która zawiera dokument każdego wiersza w formacie base64. Krok wysyła wtedy jeden dokument na wywołanie. Dokument trafia do dostawcy jako obraz lub plik PDF, gdy dostawca akceptuje ten typ i rozmiar. W przeciwnym razie krok wysyła tekst z **Zapasowa kolumna tekstowa** (`text_fallback_field`), na przykład tekst z OCR. Całe dokumenty opuszczają PlaidCloud i trafiają do dostawcy, więc sprawdź, czy jest to akceptowalne dla Twoich danych. Wiersze są wysyłane pojedynczo, więc **Rozmiar partii** jest ignorowany. Jeśli partia się nie powiedzie, jej wiersze są zachowywane z pustym `answer`, a krok wyświetla ostrzeżenie.
+
+Zapis jest także odrzucany bez tabeli źródłowej (*Source table is required.*) lub z **Rozmiar partii** albo **Summary Length** poza podanymi wyżej zakresami.
+
+## Niedeterminizm (wyniki oparte na LLM)
+
+Każde zadanie to prawdziwe wywołanie LLM, więc wyniki mogą się różnić między uruchomieniami nawet przy identycznych danych wejściowych — nie ma gwarancji powtarzalności co do bitu, i jest to oczekiwane zachowanie, a nie błąd.
+
+**Temperatura** ujawnia dodatkową komplikację: modele bieżącej generacji (Opus 4.7+, Sonnet 5+, Fable) całkowicie odrzucają jawnie podaną temperaturę próbkowania. Jeśli ją ustawisz, krok próbuje ją zastosować raz; pierwsze odrzucenie zostaje wykryte, uruchomienie przechodzi na własną domyślną wartość serwera modelu dla pozostałych partii, a wynik kroku zawiera jednorazową informację zamiast niepowodzenia. Pozostawienie pustej Temperatury (wartość domyślna) całkowicie pomija tę dodatkową rundę i jest zalecanym ustawieniem dla bieżących modeli.
+
+## Powiązane
+
+- [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) — dopasuj model zamiast wywoływać LLM dla każdego wiersza.
+- [Krok LLM](/pl/reference/workflow-steps/general/llm-step/) — swobodne agentowe wywołanie LLM z ograniczonym dostępem do odczytu i zapisu projektu, zamiast jednego z tych stałych zadań dla każdego wiersza.
+- [Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification i Key/Value Pairs są konwertowane na ten krok.
+- [Migrate Savant Analyses](/pl/guides/workflows/migrate-savant-analyses/) — agenci Savant Infer i Vision są konwertowani na zadanie Prompt.

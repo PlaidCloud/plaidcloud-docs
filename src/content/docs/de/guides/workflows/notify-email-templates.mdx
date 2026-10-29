@@ -1,0 +1,119 @@
+---
+title: Vorlagenbasierte HTML-E-Mail-Benachrichtigungen senden
+description: Erzeugen Sie mit dem Schritt Notify Via Email aus einer Jinja-Vorlage und einer Workflow-Tabelle eine ansprechende HTML-E-Mail.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Der Schritt [Notify Via Email](/de/reference/workflow-steps/notifications/notify-via-email/) erstellt seine E-Mail als ansprechenden HTML-Bericht aus einer **Jinja-Vorlage**, die über eine oder mehrere Tabellen Ihres Workflows gerendert wird. Sie fügen jede Tabelle dem Schritt als benannten **Frame** hinzu, und die Vorlage rendert diese Frames zu einer einzigen E-Mail. Der Schritt öffnet sich direkt im Jinja-Editor, und dieser ist seine einzige Bearbeitungsoberfläche – es gibt kein Nur-Text-Feld für den Inhalt und keinen Modus zum Umschalten. Dieser Leitfaden behandelt den Editor und seine Formatierungsleiste, die Frames, die Sie hinzufügen, die in einer Vorlage verfügbaren Daten, den Helfer `render_table` und die Einschränkungen, die sich aus dem E-Mail-Versand ergeben.
+
+## Der Jinja-Editor
+
+Öffnen Sie einen Schritt **Notify Via Email**, und er landet im Jinja-Editor. Fügen Sie einen oder mehrere **Frames** hinzu (siehe unten), schreiben Sie Ihre Vorlage in den Textbereich und verfolgen Sie, wie sich die **Live-Vorschau** rechts während der Eingabe aktualisiert. **Test an mich senden** schickt die gerenderte E-Mail an Ihre eigene Adresse, damit Sie sie prüfen können, bevor Sie den Workflow per Zeitplan ausführen lassen. Neue Schritte arbeiten ausschließlich mit Jinja – es gibt keinen Nur-Text-Inhalt auszufüllen und keinen Umschalter zwischen formatiertem Text und Nur-Text.
+
+<Aside type="note">Der Editor hat eine eigene, abgeschottete Rendering-Engine. Sie ist [Export Templated](/de/reference/workflow-steps/export/export-templated/) syntaktisch ähnlich – Jinja, benannte Frames, ein Helfer `render_table` –, aber die beiden Engines sind **nicht austauschbar**. Eine für die eine geschriebene Vorlage läuft nicht auf der anderen.</Aside>
+
+## Die Formatierungsleiste
+
+Der Jinja-Editor hat eine Symbolleiste, mit der Sie die Vorlage gestalten, ohne Standardtext von Hand zu tippen:
+
+- **Formatieren** rückt die gesamte Vorlage neu ein und normalisiert sie – einheitliche Einrückung, Abstände bei Tags und Jinja-Blocklayout –, sodass eine Vorlage, die Sie bearbeitet haben, sauber lesbar ist. Es formatiert nur; was die Vorlage rendert, ändert es nie.
+- **Einfügen** setzt einen fertigen Baustein an der Cursorposition ein – einen vorausgefüllten Aufruf `render_table(...)` für einen Frame, den Workspace-Namen `{{ cloud }}`, beliebige Ihrer Projekt- oder Workflow-Variablen, die Zeilenanzahl eines Frames, eine `{% for %}`-Schleife über die Zeilen eines Frames sowie Gerüste für If/Else und Kommentare.
+- **Format** wendet einen Anzeigefilter auf den Wert am Cursor an – Währung, Tausender, Prozent, Rundung und Datumsformate sowie Texthelfer (Großschreibung, Kleinschreibung, Titelschreibweise, Trim) und Listenhelfer (Länge, Join, Summe usw.).
+- **Stil** umschließt den markierten Text mit HTML-Formatierung – fett, kursiv, unterstrichen, drei Überschriftengrößen, Absätze, Aufzählungs- und nummerierte Listen, Blockzitate, Links und Zeilenumbrüche. Jede Option erzeugt nur Markup, das der E-Mail-Sanitizer beibehält (siehe [Die Einschränkung auf zugelassenes HTML](#die-einschränkung-auf-zugelassenes-html)); eine Überschrift erscheint daher als größere fette Zeile statt als `h1`, und Unterstreichung nutzt ein zugelassenes Tag.
+
+Jede Schaltfläche fügt nur Text ein, den Sie auch selbst tippen könnten; nutzen Sie sie als Ausgangspunkt und bearbeiten Sie frei.
+
+## Frames hinzufügen
+
+Ein Schritt berichtet über **Frames** – benannte Einzeltabellen-Auswahlen, die Sie dem Schritt hinzufügen. Fügen Sie einen oder mehrere Frames hinzu; jeder wird in dieselbe E-Mail gerendert. Für jeden Frame geben Sie an:
+
+- einen **Frame-Namen** – die Bezeichnung, über die Sie ihn in der Vorlage ansprechen (`Sales`, `Overdue` usw.);
+- eine **Tabelle** aus dem Kontext des Workflows;
+- optional eine **Spaltenauswahl**, einen **where**-Filter und eine **Aggregation** für diese Tabelle.
+
+Ein Frame ist immer eine einzelne Tabelle. Tabellen zu einem Frame zu verknüpfen oder zu kombinieren wird nicht unterstützt – fügen Sie stattdessen einen zweiten Frame hinzu und sprechen Sie jeden über seinen Namen an.
+
+Jeder Frame ist in der Vorlage über `frames['<Frame Name>']` verfügbar, das die `rows` und `columns` dieses Frames enthält (siehe unten).
+
+## Was in der Vorlage verfügbar ist
+
+Die Vorlage stellt einen schmalen, expliziten Satz von Variablen bereit. Der Verweis auf eine nicht definierte Variable lässt das Rendern fehlschlagen; verwenden Sie daher nur, was hier aufgeführt ist:
+
+| Variable | Inhalt |
+|---|---|
+| `cloud` | Der Workspace-Name. |
+| `frames` | Ein Dictionary Ihrer Frames, geordnet nach Frame-Name. `frames['Sales'].rows` ist die Liste der Zeilenobjekte dieses Frames (eines pro Zeile); `frames['Sales'].columns` ist seine Spaltenliste in der Reihenfolge. |
+| `rows` | Die Zeilen des ersten Frames – eine Komfortbindung, damit eine Vorlage mit einem Frame direkt `rows` verwenden kann. |
+| `columns` | Die Spalten des ersten Frames – dieselbe Komfortbindung wie `rows`. |
+| `variables` | Die Variablen Ihres Projekts und – in einem Workflow – die Variablen des Workflows, nach Namen geordnet: `variables['Fiscal Year']`. Die integrierten `variables['project']`, `variables['model']` und `variables['date']` (die aktuelle UTC-Zeit) sind ebenfalls enthalten. Verwenden Sie die Subscript-Schreibweise, da ein Variablenname kein gültiger Bezeichner sein muss. |
+
+Werte behalten ihre nativen Python-Typen – ein `Decimal` bleibt ein `Decimal`, ein Datum bleibt ein Datum, und eine Null-Spalte kommt als `None` an –, sodass Sie sie genauso formatieren und vergleichen können wie in Python, statt mit in Text umgewandelten Werten zu arbeiten.
+
+## Eine Tabelle mit `render_table` rendern
+
+Statt `<table>`-Markup von Hand zu schreiben, rufen Sie das Makro `render_table` mit den Zeilen und Spalten eines Frames auf. Sprechen Sie jeden Frame über seinen Namen an:
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+Das erzeugt in einem Aufruf eine korrekt aufgebaute HTML-Tabelle für diesen Frame. Rufen Sie es einmal pro Frame auf, den Sie anzeigen möchten.
+
+Eine Vorlage mit einem Frame kann die übergeordneten `rows` und `columns` verwenden, die an den ersten Frame gebunden sind:
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## Ein vollständiges Beispiel
+
+Diese Vorlage hat zwei Frames, `Overdue` und `Paid`. Sie rendert den Workspace-Namen, eine kurze Zusammenfassungszeile und eine Tabelle für jeden Frame:
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Richten Sie jeden Frame auf die Tabelle aus, über die berichtet werden soll, und die gerenderte E-Mail zeigt eine fette Titelzeile, eine aus der Zeilenanzahl berechnete einzeilige Zusammenfassung und eine Tabelle pro Frame. Bei nur einem Frame könnten Sie dieselbe Vorlage stattdessen mit den einfachen `rows` und `columns` schreiben.
+
+## Die Einschränkung auf zugelassenes HTML
+
+Jede gerenderte E-Mail durchläuft vor dem Versand denselben Sanitizer wie die übrige Transaktions-E-Mail von PlaidCloud. Der Sanitizer entfernt alles außerhalb einer kleinen Zulassungsliste:
+
+- **Zugelassene Tags**: die Tabellen-Tags, die `render_table` erzeugt (`table`, `tbody`, `tr`, `th`, `td`), sowie gängige Text-Tags – `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code` und `a`. Überschriften (`h1`–`h6`), `div` und `span` stehen **nicht** auf der Liste – verwenden Sie für einen Titel ein `p` mit einem `strong` darin.
+- **Zugelassene Attribute**: nur `class` und `style` (plus `href` bei `a`).
+- **Kein `<thead>`.** `render_table` erzeugt `table` / `tbody` / `tr` / `th` / `td` – eine Kopfzeile ist ein `tr` mit `th`-Zellen innerhalb von `tbody`, kein eigener `<thead>`-Abschnitt.
+- **Keine `<style>`-Blöcke** und keine externen Ressourcen – ein `url(...)`-Verweis oder ein Tracking-Pixel wird wie jedes andere Tag oder Attribut, das nicht auf der Liste steht, entfernt.
+
+In der Praxis: Bauen Sie Ihre Berichtsstruktur mit `render_table` und einfachen Text-Tags auf und beschränken Sie eigene Gestaltung auf einfache Inline-`style`-Attribute. Alles Aufwendigere – ein `<style>`-Block, ein externes Stylesheet, eigene Schriftarten, Tracking-Pixel – übersteht die Bereinigung nicht und erscheint nicht in der zugestellten E-Mail.
+
+## Bestehende und ältere Schritte
+
+Schritte, die vor der Jinja-Bearbeitung erstellt wurden, öffnen sich direkt im Editor mit ihrem bereits umgewandelten alten Inhalt. Ein standardmäßiger Nur-Text-Inhalt – aufgebaut aus `{project}`, `{model}`, `{cloud}` und `{date}` – wird in die Jinja-Form umgeschrieben (`{{ project }}`, `{{ cloud }}` usw.), sodass Sie dort mit der Bearbeitung weitermachen.
+
+Ein Inhalt, den der Konverter nicht sicher umschreiben kann – ein nicht standardmäßiges Token oder nicht ausgeglichene geschweifte Klammern –, bleibt stattdessen in einem Nur-Text-Ausweichfeld. Dieser Schritt versendet weiterhin genau wie zuvor und nutzt die alte `{token}`-Ersetzung; nur seine Bearbeitung bleibt Nur-Text. Neue Schritte verwenden diesen Pfad nie.
+
+Der Editor prüft Variablennamen während der Eingabe und markiert alle, die nicht aufgelöst werden. Ein aus einem alten Inhalt übernommenes `{{ project }}`, `{{ model }}` oder `{{ date }}` wird markiert, da diese Namen jetzt nur noch über `variables` aufgelöst werden – verwenden Sie stattdessen `variables['project']`, `variables['model']` oder `variables['date']`, ersetzen Sie das Token durch eine Spalte aus einem Ihrer Frames oder entfernen Sie es vor dem Speichern.
+
+## Sicherheit und Egress
+
+Frame-Lesezugriffe unterliegen derselben Sicherheit auf Zeilenebene wie jeder andere Lesezugriff im Projekt – ein Frame liefert nur die Zeilen, die der ausführende Benutzer oder das Automatisierungs-Principal sehen darf. Die Versandgrenzen (Empfänger, Größe und Rate) sind gegenüber dem Nur-Text-Pfad unverändert; der Vorlagenmodus lockert sie nicht und fügt keine hinzu.
+
+## Nächste Schritte
+
+- [Referenz zu Notify Via Email](/de/reference/workflow-steps/notifications/notify-via-email/) – Konfiguration auf Feldebene
+- [Export Templated](/de/reference/workflow-steps/export/export-templated/) – die ähnlich aufgebaute, aber getrennte Engine zum Rendern von Dokumenten aus Tabellen
+- [Workflow-Variablen verwalten](/de/guides/workflows/manage-workflow-variables/) – die `{var}`-Ersetzung, die ältere Nur-Text-Inhalte weiterhin verwenden

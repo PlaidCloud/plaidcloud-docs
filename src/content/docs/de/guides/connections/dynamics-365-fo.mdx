@@ -1,0 +1,138 @@
+---
+title: Mit Dynamics 365 Finance & Operations verbinden
+description: Verbinden Sie PlaidCloud mit Dynamics 365 Finance & Operations über Azure-AD-Client-Credentials, rufen Sie OData-Entitäten oder DMF-Massenextrakte mit dem vorgefertigten Importschritt ab und buchen Sie anschließend Journalbuchungen asynchron.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud über die OData- und Data-Management-Framework-(DMF-)Endpunkte mit Dynamics 365 Finance & Operations (D365 F&O), um Stamm- und Bewegungsdaten ohne handgeschriebenes OData abzurufen und Sachkonten-Journalbuchungen zurückzubuchen. Dieser Leitfaden behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen eine Sandbox-Umgebung aus und arbeiten Sie bei jedem Buchungsstapel den Abschnitt **Validate Only** weiter unten durch, bevor Sie live buchen.
+</Aside>
+
+## Voraussetzungen
+
+In Azure AD und D365 F&O benötigen Sie:
+
+- Eine **Entra-ID-App-Registrierung (Azure AD)** für PlaidCloud mit einem **Client-Secret**, der eine Anwendungsberechtigung (oder eine delegierte, vom Administrator genehmigte Berechtigung) für die D365-F&O-Ressource erteilt wurde.
+- Ihre Azure-AD-**Mandanten-ID**.
+- Die **Umgebungs-URL** der D365-F&O-Umgebung, die PlaidCloud aufrufen soll (zum Beispiel `https://yourorg.operations.dynamics.com`).
+- Einen Wert für **Ressource/Scope** — meist die Umgebungs-URL selbst mit angehängtem `/.default` —, für den die App-Registrierung ein Token anfordert.
+
+<Aside type="note">
+Die Verbindung authentifiziert sich als Anwendung, nicht als Benutzer — mit dem **Client-Credentials-Ablauf** von Entra ID, demselben OAuth2-Mechanismus, den PlaidCloud für andere Microsoft-REST-Verbindungen verwendet. Es gibt keine interaktive Anmeldung.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Dynamics 365 Finance & Operations** aus.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `D365 F&O Prod`. |
+   | Umgebungs-URL | Ihre Umgebungs-URL, z. B. `https://yourorg.operations.dynamics.com`. |
+   | Client-ID | Die Anwendungs-ID (Client-ID) der Entra-App-Registrierung. |
+   | Client-Secret | Das Client-Secret der App-Registrierung. |
+   | Mandanten-ID | Ihre Azure-AD-Mandanten-ID. |
+   | Ressource/Scope | Der anzufordernde OAuth2-Scope, typischerweise die Umgebungs-URL plus `/.default`. |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen **Import D365 F&O Entity**-Schritt hinzu.
+
+2. Legen Sie **D365-F&O-Verbindung** auf Ihre Verbindung, **Entitätstyp** auf `main_accounts` und **Zieltabelle** auf eine Arbeitstabelle fest.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass Mandant, Anmeldedaten und Umgebungs-URL korrekt sind. Ein Fehler benennt das Problem — ein falsches Client-Secret, eine fehlende Berechtigungserteilung oder eine falsche Umgebungs-URL.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen **Import D365 F&O Entity**-Schritt hinzu und legen Sie **D365-F&O-Verbindung** und **Zieltabelle** fest.
+
+2. Legen Sie **Entitätstyp** auf den gewünschten Datensatz und **Synchronisierungsmodus** auf `odata` für einen Abruf normaler Größe oder auf `dmf` für einen Massenextrakt einer großen Entität fest.
+
+3. Fügen Sie **Filter** hinzu, um den Abruf einzugrenzen — Datums-, Konten- und Dimensionsbereiche werden in den OData-`$filter` der Anfrage übersetzt, je Entität beschränkt auf die Felder, nach denen D365 F&O serverseitig tatsächlich filtern kann.
+
+4. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+### Entitäten und Filter
+
+| Entitätstyp | Was abgerufen wird | Filterbare Felder |
+|---|---|---|
+| `main_accounts` | Der Kontenplan | Kontobereich, Dimension |
+| `currencies` | Währungsstammdaten | — |
+| `customers` | Kundenstamm | Kontobereich |
+| `vendors` | Lieferantenstamm | Kontobereich |
+| `released_products` | Stammdaten freigegebener Produkte | — |
+| `ledger_journal_headers` | Journalköpfe ungebuchter und gebuchter Journale | Datumsbereich, Kontobereich, Dimension |
+
+<Aside type="note">
+**Synchronisierungsmodus: OData vs. DMF.** `odata` ruft die standardmäßigen OData-Entitätsendpunkte von D365 F&O direkt auf — der einfachste Weg, geeignet für routinemäßige Abrufe. `dmf` übermittelt einen asynchronen Export-Job des Data Management Framework und lädt das resultierende Paket herunter, sobald er abgeschlossen ist — der Weg für einen Massenextrakt einer großen Entität (zum Beispiel einen vollständigen Verlauf von `ledger_journal_headers`), der über das einfache OData-Paging langsam oder abgeschnitten wäre.
+</Aside>
+
+## Journalbuchungen buchen
+
+Der Schritt **D365 F&O: Post Journal Entry** bucht Hauptbuch-Journalbuchungen über die gemeinsame ERP-Schreib-Pipeline von PlaidCloud, mit der asynchronen Journal-Buchungsaktion des Custom Service von D365 F&O.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** — eine Zeile pro Journalbuchung — mit `journal_id` (Ihre Buchungskennung), `journal_name` (der D365-F&O-Journalname, in den gebucht wird), `posting_date` und `description`.
+
+2. Erstellen Sie eine **Positionstabelle** — eine oder mehrere Zeilen pro `journal_id` — mit `account`, `debit`, `credit` und allen Dimensionsspalten, die Ihr Hauptbuch verlangt.
+
+3. Fügen Sie einen **D365 F&O: Post Journal Entry**-Schritt hinzu und legen Sie **D365-F&O-Verbindung**, **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus — PlaidCloud erstellt und prüft jede Buchung ohne Hauptbuch-Anspruch und ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro Buchung: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Beheben Sie jede `error`-Zeile und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Stapel soll bei der ersten fehlgeschlagenen Buchung sofort anhalten.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+PlaidCloud übermittelt jede Journalbuchung an die asynchrone Buchungsaktion des Custom Service von D365 F&O und fragt dann ab, bis der Dienst den Endzustand der Buchung meldet. Eine Buchung wird erst als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist — eine Buchung, die angenommen wird, deren Endzustand aber nie feststeht, bleibt in Quarantäne, statt als gebucht erfasst zu werden, sodass eine hängende Übermittlung nie stillschweigend als Erfolg durchgeht. Der eigene Hauptbuch-Anspruch von PlaidCloud schützt davor, dieselbe Buchung bei einem wiederholten oder erneut ausgeführten Stapel zweimal zu buchen.
+
+### Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie eine gebuchte Buchung. Um eine zu korrigieren, buchen Sie eine neue Buchung mit gegenüber dem Original vertauschtem Soll und Haben — eine **gebuchte Stornobuchung** — statt das Original an Ort und Stelle zu bearbeiten. Das erhält den eigenen Prüfpfad von D365 F&O und entspricht der Art, wie Korrekturen direkt in der Anwendung vorgenommen werden.
+
+### Funktionsgrenzen — vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Der DMF-Synchronisierungsmodus hat Extraktionslatenz.** Ein `dmf`-Abruf wartet auf einen asynchronen Export-Job — rechnen Sie damit, dass er spürbar länger dauert als ein `odata`-Abruf derselben Größe, und verwenden Sie ihn nicht für einen kleinen, latenzempfindlichen Lesezugriff.
+- **Die Dimensionsfilterung hängt von der Dimensionseinrichtung Ihres Hauptbuchs ab.** Eine Finanzdimension, die nicht Teil Ihrer Kontenstruktur ist, ist serverseitig nicht filterbar; grenzen Sie sie stattdessen in Ihrem Workflow nach dem Abruf ein.
+- **Dieser Connector unterscheidet sich vom generischen [Dynamics-REST-Connector](/de/reference/connectors/rest/dynamics/).** Jener Connector richtet sich an andere Dynamics-365-Anwendungen (zum Beispiel Sales/CRM); verwenden Sie ihn nur, wenn Sie sich nicht mit Finance & Operations verbinden.
+</Aside>
+
+## Verwandte Themen
+
+- [Dynamics-365-F&O-REST-Connector](/de/reference/connectors/rest/dynamics-365-fo/) — Feldreferenz.
+- [Import D365 F&O Entity](/de/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/de/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) — der dauerhafte Nachweis jedes D365-F&O-Buchungsversuchs und seines aktuellen Status.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

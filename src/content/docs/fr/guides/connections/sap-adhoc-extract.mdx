@@ -1,0 +1,202 @@
+---
+title: Extractions ad hoc depuis SAP ECC / S/4HANA
+description: Recherchez dans SAP par table, code de transaction ou requête SAP Query enregistrée, affichez un aperçu et le plan de l'extraction, puis enregistrez le résultat dans une table PlaidCloud via un agent PlaidLink.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+Extrayez vous-même des données de SAP ECC ou S/4HANA, en partant de ce que vous connaissez déjà : un nom de table, un code de transaction ou une requête SAP Query enregistrée. Vous choisissez l'objet à partir d'une recherche, consultez ses champs ou son écran de sélection, affichez un aperçu de lignes réelles, vérifiez le plan, puis enregistrez une étape de workflow qui place le résultat dans une table.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="Une étape d'extraction SAP envoie sa requête à SAP via un agent PlaidLink ; le package SAP PlaidCloud y lit les données sous les contrôles d'autorisation propres à SAP, et les lignes reviennent via l'agent dans une table cible." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Étape d'extraction SAP</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">recherche · aperçu · plan</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agent PlaidLink</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dans votre réseau</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Package SAP PlaidCloud</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP contrôle l'utilisateur RFC</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">lignes</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Table cible</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Chaque extraction passe par votre agent PlaidLink et le package SAP PlaidCloud, sous l'identité de l'utilisateur RFC de la connexion, avec les contrôles d'autorisation propres à SAP.</figcaption>
+</figure>
+
+## Prérequis
+
+- **Un agent PlaidLink ayant accès au réseau du système SAP.** Consultez [Installer PlaidLink](/fr/reference/cli/plaidlink/install/).
+- **Une connexion Instance SAP ECC / S/4HANA.** Consultez [Connecteur SAP ECC et S/4HANA](/fr/reference/connectors/erp/sap-ecc/). L'utilisateur SAP de cette connexion est l'utilisateur RFC sous lequel s'exécute chaque extraction.
+- **Le package SAP PlaidCloud installé dans SAP.** Votre équipe SAP Basis l'installe une seule fois par système SAP.
+- **Les autorisations SAP de l'utilisateur RFC** sur les objets que vous extrayez. Consultez [Autorisations SAP](#autorisations-sap).
+
+## Choisir une étape
+
+Les trois étapes figurent dans le menu des étapes de workflow, sous **SAP**.
+
+| Étape | À utiliser pour |
+|---|---|
+| **SAP : extraction ad hoc** | Lire une table SAP, en totalité ou de manière incrémentale. |
+| **SAP : exécuter une transaction / un rapport** | Exécuter un code de transaction ou un programme de rapport ABAP et enregistrer son résultat. |
+| **SAP : exécuter une requête (SQ01)** | Exécuter une requête SAP Query enregistrée et enregistrer son résultat. |
+
+Chaque étape commence par les trois mêmes champs : **Agent**, **Connexion SAP** et une **Table cible** pour le résultat.
+
+## Trouver un objet SAP
+
+Une fois un agent et une connexion sélectionnés, la recherche de l'étape liste les objets SAP correspondants : **Tables**, **Transactions** ou **Requêtes**, selon l'étape. Saisissez un nom, un code de transaction ou des mots de la description. Les caractères génériques SAP `*` fonctionnent. Un objet que SAP ne fournit pas apparaît tout de même, grisé, avec la raison.
+
+Choisir une table affiche ses champs avec leurs descriptions et renseigne ses champs clés. Choisir une transaction, un rapport ou une requête affiche son écran de sélection dans l'onglet **Filtres**, construit à partir des champs que SAP a lui-même définis pour cet objet, sans qu'il soit nécessaire de connaître les éléments internes de la table ou du programme.
+
+## Extraire une table
+
+Utilisez **SAP : extraction ad hoc**.
+
+<Steps>
+
+1. Dans l'onglet **Extraction SAP**, recherchez la table et sélectionnez-la.
+
+2. Saisissez la **Fonction de lecture RFC** : la fonction de lecture de table du package SAP PlaidCloud, telle que votre équipe Basis l'a installée.
+
+3. Vérifiez les **Colonnes clés**. PlaidCloud les renseigne à partir du dictionnaire de données SAP avec la clé primaire de la table, champ client exclu. Cochez la case qui confirme qu'il s'agit exactement de la clé primaire. SAP refuse tout autre ensemble de colonnes.
+
+4. Dans l'onglet **Filtre de délimitation**, ajoutez des filtres. Cliquez sur une colonne connue pour ajouter une ligne, choisissez **Inclure** ou **Exclure**, sélectionnez un **Opérateur** (égal, différent, supérieur, supérieur ou égal, inférieur, inférieur ou égal, entre, pas entre, contient le motif ou ne contient pas le motif), puis utilisez l'aide à la saisie pour choisir des valeurs valides directement dans SAP. Ajoutez plusieurs lignes pour la même colonne afin de correspondre à n'importe quelle valeur d'un ensemble, et ajoutez une plage pour **Entre** ou **Pas entre**. Une grande table SAP nécessite au moins un filtre, tel qu'une plage de dates ou un code société.
+
+   <Aside type="note">
+   Exclure une plage, un filtre Pas entre, la recherche par motif et plus d'une condition sur la même colonne envoient tous à SAP un prédicat de filtre plus riche, qui nécessite la dernière version du package SAP PlaidCloud sur le système SAP de l'agent. Un package plus ancien exécute encore les filtres simples d'égalité, d'inégalité et de plage, sur une ligne Inclure comme sur une ligne Exclure ; demandez à votre équipe Basis de mettre le package à jour si un filtre plus riche ne prend pas effet.
+   </Aside>
+
+5. Pour ne lire que les lignes nouvelles et modifiées à chaque exécution, configurez l'onglet **Incrémentale**. Consultez [Extractions de tables incrémentales](#extractions-de-tables-incrémentales).
+
+6. Dans l'onglet **Visibilité et définition**, définissez la **Colonne gouvernée**. Consultez [Colonne gouvernée](#colonne-gouvernée).
+
+</Steps>
+
+Une colonne de montant `CURR` dont la clé de devise se trouve dans la même table est enregistrée à sa valeur réelle. PlaidCloud décale chaque montant selon les décimales de sa devise, de sorte qu'un montant en yen japonais est enregistré en yens entiers. Une colonne de montant sans sa clé de devise est enregistrée telle que SAP la stocke, et l'exécution signale un avertissement qui nomme la colonne.
+
+**Client SAP (mandt)** et **Taille de tranche** sont facultatifs. Laissez le client vide pour utiliser le client par défaut de la connexion.
+
+## Exécuter une transaction ou un rapport
+
+Utilisez **SAP : exécuter une transaction / un rapport**.
+
+<Steps>
+
+1. Dans l'onglet **Exécution SAP**, recherchez une transaction et sélectionnez-la, ou saisissez le nom d'un programme de rapport dans **Report/Program** et cliquez sur **Rechercher l'écran de sélection**. Choisissez l'une ou l'autre option.
+
+2. Dans l'onglet **Filtres**, renseignez l'écran de sélection. Le formulaire le construit à partir de l'écran de sélection SAP propre à la transaction ou au rapport. Un champ vide s'exécute sans filtre pour ce champ.
+
+   Pour partir plutôt d'une variante SAP enregistrée, choisissez-la dans **Partir d'une variante SAP**. PlaidCloud renseigne le formulaire de filtres à partir des valeurs enregistrées de la variante, et liste à côté du formulaire celles de ses valeurs qu'il n'a pas pu reprendre : SAP utilise alors la valeur par défaut propre au rapport. Choisir une autre variante remplace les valeurs du formulaire ; modifier ensuite un champ ne change pas la variante affichée comme sélectionnée.
+
+3. Définissez **Nombre max. de lignes** : 10 000 par défaut, jusqu'à 50 000. SAP exécute dans tous les cas la transaction ou le rapport en entier, et le plafond limite les lignes que PlaidCloud relit.
+
+4. Pour un rapport de longue durée, cochez **Run as a background job** et, si vous le souhaitez, indiquez un **Nom de la tâche (asynchrone uniquement)**.
+
+5. Dans l'onglet **Visibilité et définition**, définissez la **Colonne gouvernée**.
+
+</Steps>
+
+Un rapport qui nécessite une saisie interactive, une fenêtre contextuelle ou un écran ne peut pas s'exécuter sans surveillance. SAP le refuse, rien n'est enregistré et l'étape signale la raison fournie par SAP. Exécutez plutôt ce rapport dans SAP GUI.
+
+## Exécuter une requête SAP Query
+
+Utilisez **SAP : exécuter une requête (SQ01)**.
+
+<Steps>
+
+1. Dans l'onglet **Exécution SAP**, recherchez la requête et sélectionnez-la. Choisir une requête renseigne **Espace de travail**, **Groupe d'utilisateurs** et **Nom de la requête**. Vous pouvez aussi choisir l'**Espace de travail** et saisir directement le **Groupe d'utilisateurs** et le **Nom de la requête**.
+
+2. Dans l'onglet **Filtres**, renseignez l'écran de sélection propre à la requête : les mêmes paramètres et select-options que son auteur a définis dans SQ01. Un champ vide s'exécute sans filtre pour ce champ.
+
+3. Définissez **Nombre max. de lignes** : 10 000 par défaut, jusqu'à 50 000.
+
+4. Dans l'onglet **Visibilité et définition**, définissez la **Colonne gouvernée**.
+
+</Steps>
+
+Modifier l'**Espace de travail**, le **Groupe d'utilisateurs** ou le **Nom de la requête** efface un formulaire de filtres construit pour une autre requête : recherchez de nouveau l'écran de sélection après le changement.
+
+## Colonne gouvernée
+
+Chaque étape d'extraction SAP exige une **Colonne gouvernée** : l'une des colonnes que l'étape enregistre, par exemple `BUKRS` pour le code société. L'étape ne s'enregistre pas sans elle, et une exécution n'enregistre aucune ligne si cette colonne ne figure pas parmi les colonnes enregistrées.
+
+## Aperçu, plan et autorisations
+
+Le groupe **Contrôle préalable** de chaque étape comporte trois boutons. Aucun n'empêche d'enregistrer l'étape.
+
+| Bouton | Ce qu'il affiche |
+|---|---|
+| **Aperçu** | Des lignes d'exemple. L'aperçu d'une table lit directement les premières lignes. Pour une transaction, un rapport ou une requête, l'aperçu l'exécute dans SAP comme un échantillon distinct plafonné à 100 lignes ; le formulaire vous demande donc de confirmer d'abord. Rien n'est enregistré. |
+| **Plan** | Le déroulement de l'extraction (ses colonnes clés, l'estimation du nombre de lignes et la sélection envoyée à SAP) ainsi que tout ce qui l'empêcherait de s'exécuter. Un refus du plan désactive **Créer et exécuter** et **Enregistrer et exécuter** tant que vous ne modifiez pas la configuration ou qu'un nouveau plan ne revient pas sans problème. Vous pouvez toujours enregistrer l'étape. |
+| **Autorisations SAP requises** | Les autorisations SAP dont l'objet a besoin, à communiquer à votre équipe Basis. Cette liste est fournie à titre informatif. |
+
+<Aside type="caution">
+L'aperçu d'une transaction, d'un rapport ou d'une requête coûte à SAP à peu près autant qu'une exécution réelle, car SAP exécute l'ensemble avant de renvoyer la moindre ligne.
+</Aside>
+
+## Autorisations SAP
+
+Les contrôles d'autorisation standard de SAP s'appliquent à l'utilisateur RFC, exactement comme dans SAP.
+
+| Extraction | Autorisation |
+|---|---|
+| Table | `S_TABU_NAM` ou `S_TABU_DIS` en affichage, activité `03` |
+| Transaction | `S_TCODE` |
+| Rapport | `S_PROGRAM` `SUBMIT` pour le groupe d'autorisation du rapport |
+
+Une autorisation manquante fait échouer l'exécution avec l'erreur « non autorisé » de SAP et une solution qui liste les droits à accorder au préalable. PlaidCloud n'ajoute aucun contrôle d'autorisation propre et ne bloque jamais une étape en fonction de la liste **Autorisations SAP requises**.
+
+## Extractions de tables incrémentales
+
+Dans l'onglet **Incrémentale** de **SAP : extraction ad hoc**, cochez **Run incrementally** et saisissez une **Colonne de filigrane**. Elle doit être l'une des suivantes :
+
+- Une colonne de date, de type SAP `DATS`
+- Une colonne d'horodatage UTC, de type SAP `TZNTSTMPS` ou `TZNTSTMPL`
+
+Les colonnes d'horodatage de type SAP `UTCL` ne sont pas prises en charge, et la colonne de filigrane ne peut pas être aussi une colonne du filtre de délimitation.
+
+La première exécution lit toute la table. Chaque exécution suivante ne lit que les lignes situées à la date du dernier filigrane ou après, moins la **Période de recul**, et les fusionne sur les colonnes clés. Le filigrane n'avance qu'une fois toute l'exécution enregistrée. La date ouverte de SAP `99991231` ne devient jamais le filigrane. Une date postérieure de plus d'un jour à la date d'exécution maintient le filigrane à la date d'exécution, et un horodatage ne le fait jamais dépasser le début de l'exécution.
+
+## Enregistrement des colonnes
+
+**SAP : extraction ad hoc** enregistre chaque colonne avec son type réel issu du dictionnaire de données SAP.
+
+| Type SAP | Enregistré comme |
+|---|---|
+| Date (`DATS`) | Date. Les dates vides, initiales et non valides sont enregistrées vides (`NULL`). Une date non valide termine l'étape avec un avertissement. |
+| Montant, quantité, décimal (`CURR` / `QUAN` / `DEC`) | Décimal exact. Lorsque la colonne de clé de devise du montant se trouve dans la même table et dans l'extraction, PlaidCloud décale le montant selon les vraies décimales de sa devise. Sinon, il est enregistré tel que SAP le stocke. Un décimal de plus de 10 décimales, de plus de 28 chiffres entiers ou sans décimales déclarées est enregistré en texte, et l'étape se termine avec un avertissement qui nomme la colonne. |
+| Entier | Entier. |
+| Virgule flottante (`FLTP`) | Double. |
+| Flottant décimal (`DF16_*` / `DF34_*`) | Texte exact. |
+| Horodatage UTC court (`TZNTSTMPS`) | Horodatage, à la seconde. |
+| Horodatage UTC long (`TZNTSTMPL`, `UTCL`) | Texte ISO UTC, par exemple `2026-01-03T10:15:00.123456Z`, qui conserve la fraction qu'une colonne d'horodatage perdrait. |
+| Heure (`TIMS`), code (`NUMC`), texte (`CHAR`) | Texte exactement tel que SAP le stocke, zéros de tête conservés. |
+
+Si le type SAP d'une colonne change, l'extraction remplace toute la table avec le nouveau type de la colonne, et l'étape se termine avec un avertissement qui nomme la colonne. Une extraction incrémentale le fait dans la même exécution. Si cette lecture ne se termine pas, les exécutions suivantes continuent de lire toute la table, avec le même avertissement, jusqu'à ce que l'une réussisse ; les exécutions incrémentales reprennent alors.
+
+**SAP : exécuter une transaction / un rapport** enregistre les colonnes de montant sous forme de nombres. Toutes les autres colonnes sont enregistrées en texte. **SAP : exécuter une requête (SQ01)** enregistre les colonnes de montant, d'entier et de date avec ces types. Toutes les autres colonnes sont enregistrées en texte. Convertissez les types dans une étape en aval lorsque vous en avez besoin.
+
+## Limites d'exécution
+
+Une seule exécution de **SAP : extraction ad hoc** se met en pause dès qu'elle a lu 5 000 000 de lignes ou tourné pendant 240 minutes, après avoir terminé la tranche en cours. L'étape se termine par un avertissement et non par un échec, et l'exécution suivante reprend là où la précédente s'est arrêtée, sans perte de lignes.
+
+## Voir aussi
+
+- [Connecteur SAP ECC et S/4HANA](/fr/reference/connectors/erp/sap-ecc/) : les champs de la connexion.
+- [Étapes SAP](/fr/reference/workflow-steps/sap/) : toutes les étapes de workflow SAP.
+- [PlaidLink](/fr/reference/cli/plaidlink/) : installation et mise à niveau des agents.

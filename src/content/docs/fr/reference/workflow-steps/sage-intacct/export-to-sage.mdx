@@ -1,0 +1,99 @@
+---
+title: "Intacct : comptabiliser une écriture de journal"
+description: "Comptabilisez dans Sage Intacct des écritures de journal issues de tables de projet PlaidCloud, comme alternative low-code à une UDF de comptabilisation, avec une table de résultat par écriture et une validation en mode Preview."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des écritures de journal dans Sage Intacct via une connexion Sage Intacct, en utilisant l'API REST v1 d'Intacct. C'est une alternative native et low-code à l'écriture d'une fonction définie par l'utilisateur (UDF) de comptabilisation : choisissez la connexion, mappez vos colonnes, et l'étape se charge de l'authentification, du traitement par lots et de la gestion des erreurs écriture par écriture.
+
+L'étape lit deux tables que vous avez déjà mises en forme en amont, une **table d'en-tête** et une **table des lignes**, valide chaque écriture de journal, puis la comptabilise. Elle gère le cas du traitement par lots : de nombreuses écritures de journal en une seule exécution, chacune comptabilisée et suivie indépendamment.
+
+<Aside type="danger" title="Aucune protection contre les doublons : vérifiez la table de résultat avant de relancer">
+Cette étape ne **suit pas** les écritures déjà comptabilisées. La relancer comptabilise de nouveau **toutes** les écritures de la table d'en-tête, y compris celles qui ont été comptabilisées avec succès la fois précédente : il n'y a aucune déduplication. Avant de relancer, ouvrez la table de résultat de la dernière exécution et vérifiez quelles écritures doivent réellement être comptabilisées. Si une exécution précédente a laissé des écritures avec le `status` `unknown`, consultez [Table de résultat](#table-de-résultat) ci-dessous avant toute autre action.
+</Aside>
+
+## Contrat de structure des données
+
+L'étape ne déduit pas quelles lignes appartiennent à quelle écriture de journal : vous construisez cette structure en amont avec des étapes standard (une expression d'affectation, une agrégation) avant l'exécution de cette étape :
+
+- La **table d'en-tête** contient **exactement une ligne par écriture de journal**, et cette ligne porte une colonne **`entry_key`** : n'importe quelle valeur unique par écriture (un numéro de lot, une concaténation date + description, une séquence générée).
+- La **table des lignes** contient une ligne par ligne de comptabilisation, et **chaque ligne porte la même valeur `entry_key`** que la ligne d'en-tête à laquelle elle appartient.
+
+Une écriture de journal unique (sans traitement par lots) nécessite elle aussi cette structure : donnez à chaque ligne des deux tables la même `entry_key` constante.
+
+L'étape regroupe les deux tables par `entry_key` avant de valider ou de comptabiliser. Une ligne d'en-tête sans lignes correspondantes, une ligne sans en-tête correspondant, ou plusieurs lignes d'en-tête pour la même clé font donc échouer la validation de cette écriture, au lieu de produire une comptabilisation mal formée.
+
+## Éléments de configuration propres à l'étape
+
+### Connexion Sage
+
+La connexion **Sage Intacct** à utiliser pour la comptabilisation. Seules les connexions Sage Intacct sont proposées ici : une connexion REST générique n'est pas acceptée, car la comptabilisation exige l'échange de jetons propre à Intacct et la résolution de la société et de l'entité, que seule une connexion Sage Intacct fournit.
+
+La même connexion sert ailleurs à *lire* dans Intacct (par exemple, [Import Sage AP](/fr/reference/workflow-steps/sage-intacct/import-sage-ap/) (étape) ou [Import Sage Intacct Query](/fr/reference/workflow-steps/sage-intacct/import-intacct-query/) (étape)) : une seule connexion couvre les deux sens. Consultez [Connecteur REST Sage Intacct](/fr/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+Le nom de la colonne, présente à la fois dans les colonnes source d'en-tête et de lignes, qui regroupe les lignes d'en-tête et de détail en une seule écriture de journal. Consultez [Contrat de structure des données](#contrat-de-structure-des-données) ci-dessus.
+
+### Colonnes source
+
+Deux mappages de colonnes distincts, un par onglet. Pour chacun, associez une colonne source au champ d'écriture de journal qu'elle alimente :
+
+- **Colonnes d'en-tête** : les champs au niveau de l'écriture de journal : journal, date de comptabilisation, description, numéro de référence, un `base_location` facultatif (l'entité ou le site Intacct sous lequel l'écriture est comptabilisée ; omettez-le pour une société à entité unique), la colonne de corrélation que vous avez nommée **Entry Key**, et les informations d'en-tête similaires.
+- **Colonnes des lignes** : les champs propres à chaque ligne de comptabilisation : compte du grand livre, montant au débit ou au crédit, description de la ligne, la même colonne **Entry Key**, et les dimensions (site, département, employé, classe et similaires).
+
+Vous n'avez pas à renommer vos colonnes source : associez-les, quel que soit leur nom, aux noms de champs cibles ci-dessus.
+
+### Table de résultat
+
+La table cible dans laquelle cette étape écrit une ligne par écriture de journal, consignant l'issue de sa validation et (hors mode Preview) de sa comptabilisation. Consultez [Table de résultat](#table-de-résultat) ci-dessous pour ses colonnes et les valeurs de `status`.
+
+### Preview
+
+Une case à cocher, **cochée par défaut**. Avec Preview activé, l'étape valide chaque écriture de journal et écrit la table de résultat exactement comme le ferait une exécution réelle, mais elle ne s'authentifie **pas** auprès d'Intacct et ne comptabilise **rien** : aucun appel réseau vers Intacct n'a lieu en mode Preview. Les lignes arrivent dans la table de résultat avec `status = preview`, ce qui vous montre quelles écritures seraient comptabilisées sans problème et lesquelles échoueraient à la validation, avant que quoi que ce soit n'atteigne votre grand livre.
+
+Comme une exécution réelle, un Preview **remplace** la table de résultat par les lignes de cette exécution (c'est la sortie de l'étape pour chaque exécution, et non un journal cumulatif) : un Preview lancé après une exécution réelle écrase donc les lignes `posted` et `unknown` de cette exécution. Ouvrez et copiez la table de résultat de la dernière exécution avant de relancer (en Preview ou en réel) si vous en avez encore besoin.
+
+Preview ne valide pas vos **identifiants** Intacct : comme il ne se connecte jamais, une connexion défaillante ou des identifiants expirés ne s'y manifesteront pas. Utilisez l'action **Tester la connexion** de la connexion (sous **Tools > Connections**) pour vérifier les identifiants séparément.
+
+Une configuration d'étape qui omet entièrement ce champ (par exemple créée via l'API REST, MCP ou l'importation d'un bundle de workflow) est elle aussi en mode Preview par défaut, et non en comptabilisation réelle.
+
+Ne décochez Preview que lorsque vous êtes prêt pour une comptabilisation réelle. Nous recommandons de lancer d'abord l'étape avec Preview activé, d'examiner la table de résultat, puis de la relancer avec Preview désactivé.
+
+## Table de résultat
+
+Chaque exécution, en Preview ou réelle, écrit dans la table de résultat une ligne par écriture de journal :
+
+| Colonne | Description |
+|---|---|
+| `entry_key` | L'écriture de journal sur laquelle porte cette ligne. |
+| `status` | L'une des valeurs `preview`, `posted`, `failed`, `unknown` : voir ci-dessous. |
+| `intacct_key` | La clé attribuée par Intacct à l'écriture comptabilisée, lorsqu'elle est disponible. |
+| `http_status` | Le statut HTTP renvoyé par Intacct pour la tentative de comptabilisation, lorsqu'il est disponible. |
+| `error_message` | Une brève description nettoyée de ce qui a échoué, lorsque `status` vaut `failed` ou `unknown`. |
+| `line_count` | Le nombre de lignes associées à cette écriture. |
+| `posting_date` | La date de comptabilisation envoyée à Intacct (ou, en Preview, qui serait envoyée). |
+
+### Valeurs de statut
+
+- **`preview`** : mode Preview ; l'écriture a été validée et n'a pas été comptabilisée.
+- **`posted`** : l'écriture a été comptabilisée avec succès dans Intacct.
+- **`failed`** : Intacct a définitivement rejeté l'écriture (ou elle a échoué à la validation avant toute tentative de comptabilisation). Vous pouvez sans risque corriger le problème sous-jacent et recomptabiliser cette seule écriture.
+- **`unknown`** : l'issue n'a pas pu être déterminée : expiration du délai, connexion interrompue ou erreur serveur sans réponse définitive d'Intacct.
+
+<Aside type="danger" title="unknown ne signifie pas un échec">
+Une écriture `unknown` a peut-être déjà été comptabilisée avec succès dans Intacct : la requête a pu être reçue et validée avant que la connexion ne soit perdue ou que la réponse ne soit jamais renvoyée. **Vérifiez directement dans Intacct le statut de l'écriture avant de relancer cette étape.** Recomptabiliser à l'aveugle une écriture `unknown` risque de créer une écriture de journal en double dans votre grand livre.
+</Aside>
+
+Une exécution comportant des lignes `failed` ou `unknown` signale un avertissement, visible sans ouvrir la table de résultat, mais la table de résultat elle-même reste la référence pour décider de la suite.
+
+## Voir aussi
+
+- [Étapes d'exportation](/fr/reference/workflow-steps/export/)
+- [Import Sage AP](/fr/reference/workflow-steps/sage-intacct/import-sage-ap/) (étape)
+- [Import Sage Intacct Query](/fr/reference/workflow-steps/sage-intacct/import-intacct-query/) (étape)
+- [Connecteur REST Sage Intacct](/fr/reference/connectors/rest/sage-intacct/)

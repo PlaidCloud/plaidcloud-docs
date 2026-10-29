@@ -1,0 +1,128 @@
+---
+title: "ML: モデルの学習"
+description: テーブルを使って scikit-learn モデルを学習し、スコアリングやクエリに使用できるモデルテーブルを書き出します。
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## 説明
+
+**ML: モデルの学習**ステップは、ソーステーブルに対して scikit-learn モデルを学習し、その結果を**モデルテーブル**として書き出します。モデルテーブルは他のテーブルと同様にワークフローの中を流れます。[ML: スコアリング](/ja/reference/workflow-steps/machine-learning/ml-score/)ステップに渡してデータテーブルに予測を追加したり、直接クエリして学習メトリックを確認したりできます。このステップは（LLMステップと同様に）マネージドな PlaidCloud ジョブとして実行されるため、学習がワークフローの他の処理とリソースを奪い合うことはありません。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML: モデルの学習は過去の行からモデルを学習します。特徴量列と既知のラベルを持つトレーニング行が学習ステップに渡され、保存されたモデルアーティファクトが生成されます。このアーティファクトは後でスコアリングステップが使用します。" style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">トレーニング行</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">特徴量 + 既知のラベル</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">学習</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">アルゴリズムを適合</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">モデルアーティファクト</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">保存済み・再利用可能</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ ML: スコアリングで使用</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML: モデルの学習は、ラベルが既知の行にアルゴリズムを適合させ、保存されたモデルアーティファクトを生成します。<a href="/ja/reference/workflow-steps/machine-learning/ml-score/">ML: スコアリング</a>はこのアーティファクトを新しい行に適用します。</figcaption>
+</figure>
+
+## モデルタブ
+
+### ソースと出力
+
+- **トレーニングテーブル** — 学習に使用するテーブルです。ターゲット値が空の行は学習から除外されます。
+- **モデルテーブル** — モデルレコードを受け取る出力テーブルです。
+
+### モデル
+
+- **アルゴリズム** — 適合させるモデルです。
+
+  | アルゴリズム | 値 | ファミリー |
+  | --- | --- | --- |
+  | ロジスティック回帰 | `logistic_regression` | 分類 |
+  | 決定木分類器 | `decision_tree` | 分類 |
+  | ランダムフォレスト分類器 | `random_forest` | 分類 |
+  | 勾配ブースティング分類器（XGBoost 型） | `xgb_classifier` | 分類 |
+  | 線形回帰 | `linear_regression` | 回帰 |
+  | 決定木回帰器 | `decision_tree_regressor` | 回帰 |
+  | ランダムフォレスト回帰器 | `random_forest_regressor` | 回帰 |
+
+  XGBoost 型のアルゴリズムは scikit-learn の `HistGradientBoostingClassifier` であり、XGBoost と統計的に同等の代替です。XGBoost をラップしたものではありません。[制限事項と注意点](#制限事項と注意点)を参照してください。
+
+- **ターゲット列** — 予測する列です。教師なしアルゴリズムと `sota` を除き必須で、これらではクラス列は任意です。分類のターゲットはテキストラベルとして扱われ、回帰のターゲットは数値に変換されます。ターゲットを数値として解析できない行は除外されます。
+
+### その他のアルゴリズム
+
+**アルゴリズム**リストには、次のアルゴリズムも用意されています。変換された KNIME ワークフローもこれらを使用します。
+
+| アルゴリズム | 内容 |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | ツリーブースターまたは線形ブースターを使用する XGBoost そのもの |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | scikit-learn の勾配ブースティング |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | scikit-learn のサポートベクターマシン、多層パーセプトロン、ベースラインモデル |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | KNIME 独自の学習器で、KNIME と同じ結果が得られます。ハイパーパラメーターは KNIME の設定です |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | KNIME の教師なしアルゴリズムです。ターゲット列はなく、特徴量列は数値列です（`apriori` と `fp_growth` では、アイテムリストの 1 列です） |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | KNIME のクラスタリング、サンプリング、アクティブラーニング、レコメンデーション（`als`：特徴量列はユーザーと製品、ターゲットは評価値）、アソシエーションルール、用量反応の各ノード |
+
+`dbscan`、`mds`、`tsne` など、データとは別にモデルを持たないアルゴリズムは、設定をモデルテーブルに保持します。[ML: スコアリング](/ja/reference/workflow-steps/machine-learning/ml-score/)は、渡されたテーブルをそのままレイアウトします。
+
+### ハイパーパラメーター
+
+選択したアルゴリズム用の scikit-learn ハイパーパラメーターを指定する、任意の JSON オブジェクトです。たとえば `{"max_depth": 5, "n_estimators": 200}` のように指定します。未知のキーはステップの保存時に拒否されるため、入力ミスのあるパラメーターが黙って無視されることはなく、すぐにエラーになります。Alteryx から変換されたワークフローには、`max_depth_none` のような Alteryx 形式のセンチネルキーが含まれることがありますが、これらは自動的に変換されます。
+
+scikit-learn で廃止された一部の旧パラメーター（`presort` や、[制限事項と注意点](#制限事項と注意点)に記載の XGBoost ツリーパラメーターなど）は受け付けられますが、適用されません。このように除外されたものは、モデルテーブルの `params_json` 内の `dropped_params` に記録されるため、黙って消えることはありません。
+
+## 特徴量タブ
+
+特徴量タブには、ソーステーブルの列ごとに 1 行が表示されます。
+
+- **特徴量** — 学習に使用する列にチェックを付けます。**すべて**のチェックボックスをオフのままにすると、ターゲット以外のすべての列で学習します。すべてオフの場合、ステップは実行時にテーブルにある列で学習します。一部の列を除外するには、**列を除外**（`exclude_columns`）に列を指定します。
+- **タイプの上書き** — 列の扱いを**数値**または**カテゴリ**に強制します。**（推測）** のままにすると、テーブル列のタイプから判定されます。
+
+特徴量の準備は Alteryx Assisted Modeling と同じです。数値特徴量は数値に変換され（解析できない値は欠損になります）、欠損値は中央値で補完されます。カテゴリ特徴量はテキストとして扱われ、最頻値で補完されたうえでワンホットエンコードされます。学習時に一度も現れなかったカテゴリ特徴量の値は、スコアリング時に無視されます。
+
+## モデルテーブル
+
+モデルテーブルには次の列があります。
+
+| 列 | 内容 |
+| --- | --- |
+| `model_pickle_b64` | 適合済みの scikit-learn パイプライン（pickle 化、圧縮、base64 エンコード済み）。大きなモデルは複数の行に分割されます。[モデルの保存方法](#モデルの保存方法)を参照してください。 |
+| `chunk_index` | この行が保持するモデルの断片の位置で、`0` から数えます。 |
+| `algorithm` | アルゴリズムの値です（例：`logistic_regression`）。 |
+| `params_json` | JSON。適用された scikit-learn パラメーター、使用された特徴量タイプ、および `dropped_params`。 |
+| `feature_names_json` | JSON 配列。スコアリング時にモデルが必要とする、順序付きの特徴量列。 |
+| `class_labels_json` | クラスラベルの JSON 配列（分類器）、または `null`（回帰器）。 |
+| `metrics_json` | JSON 形式の学習メトリック。後述します。 |
+| `trained_at` | 学習実行時の UTC タイムスタンプ。 |
+
+モデルは通常のテーブルなので、他のテーブルと同じようにクエリできます。たとえば、下流のステップで `metrics_json` を抽出し、モデルの品質に応じてワークフローを制御できます。
+
+`metrics_json` には、`kind` キー（`classification` または `regression`）、分類器の場合は `train_accuracy`、回帰器の場合は `train_r2` と `train_rmse`、および `n_training_rows` が含まれます。
+
+### モデルの保存方法
+
+適合済みのモデルは大きくなることがあります。デフォルトの 100 本の木のままのランダムフォレストは数百メガバイトに達することがあり、ウェアハウスが単一の値として受け付けられるサイズを超えます。そのためモデルは圧縮され、それでも 1 行に収まらない場合は必要な数の行に分割されます。どの行にも上記の列が繰り返されるため、どの 1 行からでもアルゴリズム、パラメーター、特徴量、メトリックを確認できます。行ごとに異なるのは `model_pickle_b64` と `chunk_index` だけです。
+
+これは次の 2 つの場面で重要です。
+
+- **メトリックの読み取り。** モデルテーブルには複数の行が含まれる場合があります。行が 1 つだけと想定せず、たとえば `WHERE chunk_index = 0` のように 1 行からメトリックを読み取ってください。
+- **モデルを自分で再構成する場合。** PlaidCloud の外部で `model_pickle_b64` を読み取る場合は、`chunk_index` の順に断片を連結し、base64 デコードしてから、解凍し、その後に unpickle してください。
+
+[ML: スコアリング](/ja/reference/workflow-steps/machine-learning/ml-score/)ステップは、これらをすべて自動で行います。また、すべての断片がそろっていることを確認し、欠けている場合は不完全なモデルでスコアリングせずにエラーで停止します。
+
+## 制限事項と注意点
+
+- **学習メトリックは学習セットで計算されます** — このリリースでは、ホールドアウト分割や交差検証はありません。メトリックは適合の確認用とし、サンプル外の性能の推定値として扱わないでください。
+- **インメモリのワーキングセット** — トレーニングテーブルはメモリに読み込まれるため、このステップの対象は約 100 万行です。それより大きいテーブルは、先にサンプリングまたは集計してください。
+- **モデルの最大サイズ** — 適合済みモデルが圧縮後に 128 MB を超える場合は拒否され、ステップは学習が終わった時点で、サイズと上限を示すメッセージとともに停止します。目安として、17,000 行・17 特徴量に対する 100 本の木のランダムフォレストは約 56 MB なので、上限はその約 2 倍です。上限に達した場合は、木の数（`n_estimators`）を減らすか、`max_depth` に上限を設けてください。
+- **XGBoost の近似** — `xgb_classifier` は scikit-learn の `HistGradientBoostingClassifier` を学習します。`xgboost_*` アルゴリズムは XGBoost そのものを実行します。XGBoost 固有のツリーパラメーターである `gamma`、`min_child_weight`、`subsample`、および `colsample_*` ファミリーには相当するものがなく、除外されます（`dropped_params` に記録され、Alteryx から変換されたステップの場合はステップのマッピングノートにも記録されます）。同等の結果が得られるとみなす前に、モデルのメトリックを基準となる実行結果と照らして検証してください。
+- **AutoML の変換は検索ではなく 1 つのアルゴリズムを選択します** — Alteryx の AutoML ツールは、分類や回帰と同様にこのステップへ統合されますが、AutoML は Alteryx の実行時に候補アルゴリズムのどれが採用されたかを記録しません。変換では、このステップがサポートするチェック済みのアルゴリズムのうち最初のものを選び、その選択をメモに記録します。自動検索は再現されず、ここではモデル選択のループは実行されません。変換した AutoML ステップは、お客様自身の Alteryx の結果と比較してください。
+
+## 関連項目
+
+- [ML: スコアリング](/ja/reference/workflow-steps/machine-learning/ml-score/) — 学習済みモデルでデータテーブルをスコアリングします。
+- [Alteryx ワークフローの移行](/ja/guides/workflows/migrate-alteryx-workflows/#機械学習アシストモデリングの変換) — AutoML を含む Alteryx Assisted Modeling のパイプラインが、このステップにどのように変換されるかを説明します。

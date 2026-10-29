@@ -1,0 +1,101 @@
+---
+title: Claude Code
+description: 设置 Claude Code（CLI、VSCode 扩展、JetBrains 插件），使用 OAuth 或静态持有者令牌调用 PlaidCloud 的 MCP 工具。
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/claude-code.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Claude Code](https://claude.com/claude-code) 是 Anthropic 的编码代理。它以 CLI、VSCode 扩展和 JetBrains 插件的形式提供，三者共用相同的 MCP 配置。
+
+## 选项 A：OAuth（推荐）
+
+OAuth 是维护成本最低的方式。Claude Code 的 MCP 桥接会自动处理浏览器重定向和刷新。
+
+1. 在项目根目录中添加服务器。CLI 方式：
+
+    ```bash
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp
+    ```
+
+    或者在项目根目录的 `.mcp.json` 中添加：
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp"
+        }
+      }
+    }
+    ```
+
+2. 重启 Claude Code。第一次请求它使用 `plaidcloud_` 工具时，桥接会弹出一个授权 URL。打开该 URL 并登录 PlaidCloud，您将看到 **Application Access Request** 页面，列出发出请求的应用程序以及将向其发送凭据的重定向 URI。批准之前，请检查这些信息是否与 Claude Code 一致。批准后，粘贴 Claude Code 要求的回调 URL。令牌会缓存在本地并自动刷新；在刷新令牌过期或被撤销之前，您不会再次看到此页面。
+
+3. 使用 `claude mcp list`（CLI）或 `/mcp`（会话中）进行验证。服务器应显示为已连接。
+
+<Aside>在远程或 SSH 会话中，如果 Claude Code 无法从您的浏览器访问 `localhost`，OAuth 桥接状态偶尔会卡住。如果发生这种情况，请改用选项 B。</Aside>
+
+## 选项 B：静态持有者令牌
+
+当 OAuth 不适用时（远程会话、开发容器、无法经受浏览器重定向的代理运行时），请使用持有者令牌：
+
+1. 在已登录 PlaidCloud 的浏览器标签页中，打开：
+
+    ```
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
+    ```
+
+    点击“复制代码片段”。
+
+2. 将其粘贴到项目 `.mcp.json` 的 `mcpServers` 下：
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
+          "headers": {
+            "Authorization": "Bearer eyJhbGc…"
+          }
+        }
+      }
+    }
+    ```
+
+    或者通过 CLI：
+
+    ```bash
+    claude mcp add --transport http plaidcloud \
+      https://<your-workspace>.plaid.cloud/mcp \
+      -H "Authorization: Bearer eyJhbGc…"
+    ```
+
+3. 重启 Claude Code。`claude mcp list` 应显示服务器已连接。
+
+令牌过期后，重新加载 `/mcp/setup/token` URL 并替换 `Authorization` 的值。
+
+## 多租户设置
+
+您可以并排配置多个 PlaidCloud 租户，为每个租户指定不同的名称：
+
+```json
+{
+  "mcpServers": {
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp"  }
+  }
+}
+```
+
+请 Claude Code 执行操作时，请在提示词中指明租户（例如“在 dev 租户中，查找名称以 `Q4` 开头的项目”），以便它选择正确的服务器。
+
+## 提示
+
+- 在会话早期运行 `mcp_introspect`，这样 Claude Code 就能了解工具范围，而无需在每次调用时重新读取完整清单。
+- 会产生变更的工具（`*_upsert`、`*_organize`、`*_run`）接受 `dry_run=True`，当您让代理编写变更脚本并希望先审阅计划时很有用。
+- 对于长时间运行的操作（工作流运行、查询导出），请优先使用 `*_track` / `*_status` 工具，而不是轮询循环，它们是唯一的事实来源，可避免淹没代理的上下文。
