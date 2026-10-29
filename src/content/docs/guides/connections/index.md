@@ -32,6 +32,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Use Your Own Warehouse](/guides/connections/external-lakehouse/) — connect your own Snowflake or Databricks warehouse yourself, sign in with your own identity, manage several warehouses, and see what each run costs.
 - [PlaidCloud Git Connection](/guides/connections/plaidcloud-git/) — connect to your workspace's own managed Git server with no server URL or credentials, and automate Panel app builds from it.
 - [Clone a Connection](/guides/connections/clone-connection/) — duplicate an existing connection for a new environment or tenant.
+- [Data Foundation: The Common Finance Model](/guides/projects/data-foundation/) — the Common Finance Model brings together ERP data from multiple ERP systems and instances into one model, with one chart of accounts, one set of entities and one reporting currency, that reports, metrics and AI assistants all read.
 - [Singer Sources](/guides/connections/singer-sources/) — connect to sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables.
 - [Connect to NetSuite](/guides/connections/netsuite/) — set up a NetSuite connection and pull financial and operational data with SuiteQL.
 - [NetSuite Access for Data Foundation](/guides/connections/netsuite-access-for-data-foundation/) — what your NetSuite administrator sets up so Data Foundation can read NetSuite directly, and what to send back.
