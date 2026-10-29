@@ -47,7 +47,7 @@ Select **Column Tree** to search from a window of its own. Each table that has t
 An AI assistant connected over MCP finds the same tables with `table_find(column=...)`, matching the whole name or part of it.
 
 
-### Search Values {#search-values}
+### Search Values
 
 To find which tables hold a value, select **Search Values** on the **Tables** tab, or right-click a table and choose **Search Value** to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values.
 
@@ -117,7 +117,7 @@ Only files ending in `.csv` are accepted. You need permission to create tables a
 *Note: You can also force delete the table(s). Force deletion of the table(s) will leave references broken, so this should be used sparingly.*
 
 
-### Last Read {#last-read}
+### Last Read
 
 The delete window shows when the table was last read, for example **Last read 3 days ago by** a person or step, so you can tell a table nobody uses from one that is still in use. PlaidCloud takes this from your warehouse's own query history and leaves out reads made by its own housekeeping.
 

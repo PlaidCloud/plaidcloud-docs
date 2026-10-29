@@ -34,7 +34,7 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Clone a Connection](/guides/connections/clone-connection/) — duplicate an existing connection for a new environment or tenant.
 - [Singer Sources](/guides/connections/singer-sources/) — connect to sources such as Stripe, GitHub, Slack, and BigQuery with Singer taps, then import their data into project tables.
 - [Connect to NetSuite](/guides/connections/netsuite/) — set up a NetSuite connection and pull financial and operational data with SuiteQL.
-- [NetSuite Access for Data Foundation](/guides/connections/netsuite-access-for-data-foundation/) — what your NetSuite administrator sets up for Data Foundation, and what to send back.
+- [NetSuite Access for Data Foundation](/guides/connections/netsuite-access-for-data-foundation/) — what your NetSuite administrator sets up so Data Foundation can read NetSuite directly, and what to send back.
 - [Import NetSuite Financials](/guides/connections/import-netsuite-financials/) — pull balances, GL detail, and master data with the canned NetSuite import steps, no SuiteQL to write.
 - [Post a NetSuite Journal Entry](/guides/connections/post-netsuite-journal-entries/) — map header and line tables, preview, and post journal entries to NetSuite.
 - [Connect to Acumatica](/guides/connections/acumatica/) — set up an Acumatica connection, import entities, and post journal transactions, invoices, bills, and payments.
