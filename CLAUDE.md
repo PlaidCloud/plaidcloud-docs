@@ -5,7 +5,7 @@ Astro Starlight docs site at [docs.plaidcloud.com](https://docs.plaidcloud.com),
 ## Stack and constraints
 
 - **Astro + Starlight** for the framework; Pagefind for search; no other docs plugins beyond `@astrojs/sitemap` and `starlight-llms-txt`.
-- **Cloudflare Workers Static Assets** for hosting, on the **Workers Paid** plan. The enforced limits are **100,000 files** and **25 MiB per file** (Wrangler ≥ 4.34) — there is **no total-size cap**. The build is ~1,760 English pages, ×10 with the nine locales (untranslated pages still build as fallbacks): ~17,600 pages / ~36,400 files and `dist/` ~2.5 GB; the `Workers Builds` CI check deploys the whole thing successfully, so **file count** (not total bytes) is the constraint to watch. (An earlier version of this note claimed a "100 MB total upload" hard cap — that was never real; the site has long deployed well past it.)
+- **Cloudflare Workers Static Assets** for hosting, on the **Workers Paid** plan. The enforced limits are **100,000 files** and **25 MiB per file** (Wrangler ≥ 4.34) — there is **no total-size cap**. The build is ~1,760 English pages, ×10 with the nine locales (untranslated pages still build as fallbacks): ~17,600 pages / ~36,400 files and `dist/` ~2.5 GB; watch **file count** and **single-file size** (not total bytes). Big generated files are the per-file risk: the sitemap is split (`entryLimit` in `astro.config.mjs`) and `/pages.json` is English-only. `scripts/check-orphans.py` (CI) fails the build on a file over 25 MiB or more than 100,000 files. (An earlier version of this note claimed a "100 MB total upload" hard cap — that was never real; the site has long deployed well past it.)
 - **Node 22+** required for Astro 7.
 
 ## Sidebar architecture (read before touching `astro.config.mjs`)
@@ -304,7 +304,7 @@ Typical findings the agent should look for:
 `.github/workflows/docs-checks.yaml` runs on every PR:
 
 - **Lychee link check** — scans built `dist/` HTML for broken **internal** links and **fails the build** on any (`fail: true`). Runs `--offline` (external URLs aren't checked — that's too slow/flaky per-PR; sweep external rot on a schedule instead) with `--root-dir …/dist` so root-relative links resolve against local files, and a **quoted** `'./dist/**/*.html'` so lychee (not the shell) does the globbing and actually recurses. `--include-fragments` is intentionally off: lychee misparses Starlight's heading-anchor HTML and false-flags anchors that exist. Report uploaded as artifact.
-- **Orphan + sidebar check** (`scripts/check-orphans.py dist`) — fails on any built page unreachable by links from the home page, and on any `get-started/`, `guides/`, `integrations/` or `administration/` page missing from the sidebar.
+- **Orphan + sidebar + asset-limit check** (`scripts/check-orphans.py dist`) — fails on any built page unreachable by links from the home page, on any `get-started/`, `guides/`, `integrations/` or `administration/` page missing from the sidebar, and on any `dist/` file over 25 MiB or more than 100,000 files (the Workers Assets limits).
 - **Vale prose lint** — Google style pack + PlaidCloud vocab (`styles/Vocab/PlaidCloud/accept.txt`). `.vale.ini` disables `Google.Headings` (our own Title Case script owns this), `Google.We` (company voice OK), `Google.Contractions` (matches voice). Fenced code blocks are token-ignored.
 
 If a check fails, fix it before merge — don't disable the rule unless there's an explicit reason captured here.

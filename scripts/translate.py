@@ -1115,6 +1115,8 @@ def cmd_prepare(args):
             old.unlink()
         chunks, chunk, words = [], [], 0
         for _, key, h in (p for p in pairs if p[0] == lc):
+            # A staged file left from an earlier prepare was made from older English; this chunk's sha must not vouch for it.
+            (STAGING / lc / key).unlink(missing_ok=True)
             src = src_path(key).read_text()
             n = len(src.split())
             if chunk and words + n > args.chunk_words:
@@ -1151,7 +1153,9 @@ def cmd_ingest(args):
             else:
                 src = src_path(key).read_text()
                 text, reasons = finalize(lc, key, src, f.read_text())
-                if prepared.get((lc, key), sha(src)) != sha(src):
+                if (lc, key) not in prepared:
+                    reasons.append("not in any prepare chunk")
+                elif prepared[(lc, key)] != sha(src):
                     reasons.append("English source changed since prepare")
             if reasons:
                 failed += 1

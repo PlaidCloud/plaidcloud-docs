@@ -104,6 +104,12 @@ fixed = t.quote_frontmatter(broken)
 fmq = yaml.safe_load(t.split_frontmatter(fixed)[0])
 results.append(ok("quote_frontmatter repairs ': ' value", fmq["description"] == "Referenz für Tools: PlaidLink und PlaidXL" and fmq["sidebar"]["label"] == "CLI"))
 results.append(ok("quote_frontmatter leaves valid YAML untouched", t.quote_frontmatter(src) == src))
+hashy = yaml.safe_load(t.split_frontmatter(t.quote_frontmatter("---\ntitle: Tools: A\nsidebar:\n  label: Schritt #2\n---\n"))[0])
+results.append(ok("quote_frontmatter keeps ' #' out of a YAML comment", hashy["sidebar"]["label"] == "Schritt #2"))
+# ---- inline code wrapped across a line break: compared with the break normalized
+wsrc = "---\ntitle: X\ndescription: d\n---\n\nRun `plaid run --project\nfoo` first, then save.\n"
+results.append(ok("wrapped inline code re-wrapped accepted", t.validate("a.md", wsrc, "---\ntitle: X\ndescription: d\n---\n\nFühren Sie zuerst\n`plaid run --project foo` aus.\n") == []))
+results.append(ok("wrapped inline code edited rejected", any("inline code" in x for x in t.validate("a.md", wsrc, "---\ntitle: X\ndescription: d\n---\n\nFühren Sie zuerst `plaid run --projekt\nfoo` aus.\n"))))
 
 # ---- bold flanking: CJK text around **…** that ends/starts with punctuation
 ja = "---\ntitle: T\n---\n\n**「設定」**を開き、次に**（任意）**の欄を確認します。`**literal**`はそのまま。\n"
@@ -237,6 +243,28 @@ results.append(ok("check passes on ingested output", not any(t.validate(k, t.src
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (with prepare/ingest)")
 
+# ---- a staged file made from older English never installs as current
+tmp = Path(tempfile.mkdtemp())
+t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS = tmp, tmp / "src/content/docs", tmp / "src/snippets", None
+t.I18N = tmp / "i18n"; t.MANIFEST, t.JOBS, t.STAGING = t.I18N / "manifest.json", t.I18N / "jobs", t.I18N / "staging"
+(t.DOCS / "guides").mkdir(parents=True); t.SNIPPETS.mkdir(parents=True)
+eng = t.DOCS / "guides/s.md"
+eng.write_text("---\ntitle: S\ndescription: d\n---\n\nClick **Save** once.\n")
+prep = lambda: t.cmd_prepare(argparse.Namespace(locales=["de"], paths=None, chunk_words=2500, out="i18n/jobs", force_paths=None))
+prep()
+staged = t.STAGING / "de/guides/s.md"
+staged.parent.mkdir(parents=True); staged.write_text("---\ntitle: S\ndescription: d\n---\n\nKlicken Sie einmal auf **Speichern**.\n")
+eng.write_text("---\ntitle: S\ndescription: d\n---\n\nNever click **Save**; it deletes everything.\n")
+t.cmd_ingest(argparse.Namespace(locales=["de"]))
+results.append(ok("stale staged file rejected after English edit", staged.exists() and not (t.DOCS / "de/guides/s.md").exists()))
+prep()
+results.append(ok("re-prepare deletes the stale staged file", not staged.exists()))
+staged.parent.mkdir(parents=True, exist_ok=True); staged.write_text("---\ntitle: S\ndescription: d\n---\n\nKlicken Sie einmal auf **Speichern**.\n")
+shutil.rmtree(t.JOBS)
+t.cmd_ingest(argparse.Namespace(locales=["de"]))
+results.append(ok("staged file with no prepare chunk rejected", not (t.DOCS / "de/guides/s.md").exists() and "de/guides/s.md" not in t.load_json(t.MANIFEST, {})))
+shutil.rmtree(tmp)
+
 # ---- review round: termbase, overrides, recall, typography, emphasis rendering, schema limits, force-paths
 t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS, t.STEP_NAMES = REAL, REAL / "src/content/docs", REAL / "src/snippets", None, None
 t.I18N = REAL / "i18n"; t.MANIFEST, t.JOBS, t.STAGING = t.I18N / "manifest.json", t.I18N / "jobs", t.I18N / "staging"
@@ -282,10 +310,12 @@ results.append(ok("CJK bold rule + ja noun rule", "never a bare particle" in t.s
 tmp = Path(tempfile.mkdtemp())
 t.save_json(tmp / "m.json", {f"{lc}/{rel}": t.sha(src) for lc in t.LOCALES})
 t.MANIFEST = tmp / "m.json"
+real_prune, t.prune_deleted = t.prune_deleted, lambda: None  # prepare would prune the real repo's translations
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=None))
 results.append(ok("current unit not prepared without force", not list((tmp / "jobs/de").glob("*.json"))))
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=[rel]))
 results.append(ok("--force-paths re-queues a current unit", [i["path"] for i in _json.loads((tmp / "jobs/de/001.json").read_text())["items"]] == [rel]))
+t.prune_deleted = real_prune
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (review round)")
 

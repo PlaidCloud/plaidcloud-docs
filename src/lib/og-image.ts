@@ -17,7 +17,7 @@ import { locales } from './locales.mjs';
  */
 export function englishId(id: string): string {
 	const [first, ...rest] = id.split('/');
-	return first !== 'root' && first in locales ? rest.join('/') : id;
+	return first !== 'root' && Object.hasOwn(locales, first) ? rest.join('/') : id;
 }
 
 export function hasGeneratedOG(id: string): boolean {

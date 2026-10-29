@@ -108,6 +108,17 @@ def main(root='dist'):
             print(f'  {url}')
     else:
         print('sidebar check: every guide, integration and admin page is in the sidebar')
+
+    # Workers Static Assets refuses the whole deploy past these (see CLAUDE.md, "Stack and constraints").
+    assets = [os.path.join(d, f) for d, _, fs in os.walk(root) for f in fs]
+    big = sorted(f for f in assets if os.path.getsize(f) > 25 * 1024 * 1024)
+    if big or len(assets) > 100_000:
+        failed = 1
+        print(f'\nWorkers Assets limits exceeded ({len(assets)} files, max 100,000; max 25 MiB per file):')
+        for f in big:
+            print(f'  {f} {os.path.getsize(f):,} bytes')
+    else:
+        print(f'asset limits: {len(assets)} files, none over 25 MiB')
     return failed
 
 

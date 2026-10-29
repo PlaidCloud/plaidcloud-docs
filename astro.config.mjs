@@ -93,6 +93,8 @@ export default defineConfig({
 	},
 	integrations: [
 		sitemap({
+			// Workers Assets caps a file at 25 MiB; one 17.6k-URL sitemap with hreflang alternates is ~28 MB.
+			entryLimit: 5000,
 			// hreflang alternates between a page and its translations.
 			i18n: {
 				defaultLocale: 'en',
