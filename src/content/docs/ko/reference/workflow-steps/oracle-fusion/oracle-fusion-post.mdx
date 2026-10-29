@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry 단계"
+description: FBDI GL 인터페이스를 통해 헤더 및 라인 테이블의 총계정원장 분개 배치를 Oracle Fusion Cloud에 전기하며, 전기 전에 모든 배치를 검증하는 미리보기 모드를 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+[Oracle Fusion 연결](/ko/guides/connections/oracle-fusion/)을 통해 총계정원장 분개 배치를 Oracle Fusion Cloud에 전기하며, PlaidCloud의 공유 ERP 쓰기 파이프라인을 거칩니다. 이 단계는 헤더 테이블(배치당 한 행)과 라인 테이블(배치당 한 개 이상의 행)을 입력으로 받아 각 배치를 FBDI 파일로 Oracle의 GL_INTERFACE 스테이징 테이블에 기록한 다음 Journal Import Launcher Enterprise Scheduler Service(ESS) 작업을 제출합니다. **Validate Only**는 원장 점유와 전기 없이 모든 배치를 생성하고 검사하며, 선택 사항인 결과 테이블에는 각 배치의 결과가 기록됩니다.
+
+<Aside type="caution">
+이 단계로 실제 분개를 무인으로 전기하기 전에, 먼저 모든 배치를 **Validate Only**로 실행하고 결과 테이블을 검토하며 몇 건의 전기 내역을 Oracle Fusion에서 직접 대조하십시오.
+</Aside>
+
+## 구성
+
+### 연결
+
+- **Fusion 연결** — 전기에 사용할 Oracle Fusion 연결입니다.
+
+### 데이터
+
+- **헤더 테이블** — 배치당 한 행: `batch_id`(사용자의 배치 식별자, 필수), `ledger_id`(필수), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **라인 테이블** — `batch_id`당 한 개 이상의 행: `account_combination`(또는 해당 세그먼트 열), `entered_debit`, `entered_credit`, `currency_code`.
+- **결과 테이블** — 출력 테이블 ID: 배치당 한 행이며 `batch_id`, `natural_key`, `confirmation_id`, `status`(`posted`/`validated`/`error`), `message`를 포함합니다.
+- **Validate Only** — 기본적으로 선택되어 있습니다. 사전 점검만 수행하며 원장 점유와 전기는 하지 않습니다. 이 필드를 완전히 생략한 단계 구성(예: REST API, MCP 또는 워크플로 번들 가져오기로 작성한 구성)도 실제 전기가 아니라 Validate Only로 기본 설정됩니다.
+- **Continue On Error** — 기본적으로 선택되어 있습니다. 한 배치가 실패한 후에도 나머지 배치를 계속 전기하며, 선택 해제하면 첫 번째 실패에서 실행을 중지합니다.
+
+## 전기 방식
+
+PlaidCloud는 각 배치를 FBDI 파일을 통해 Oracle의 GL_INTERFACE 스테이징 테이블에 적재한 다음, Journal Import Launcher ESS 작업을 제출하고 작업이 최종 상태를 보고할 때까지 폴링합니다. 이 최종 상태가 **확인됨**이어야만 배치가 `posted`로 보고됩니다. 인터페이스 테이블에는 적재되었지만 가져오기 작업이 끝내 완료되지 않은 배치는 스테이징 데이터가 존재한다는 이유만으로 성공으로 기록되지 않고, 전기된 것으로 보고되지도 조용히 버려지지도 않은 채 격리 상태로 유지됩니다.
+
+## 전기된 전표 정정
+
+이 단계는 전기된 분개 배치를 삭제하거나 다시 쓰지 않습니다. 전기된 배치를 정정하려면 원본을 직접 수정하는 대신, 원본과 차변 및 대변을 맞바꾼 새 배치, 즉 전기된 역분개 전표를 전기하십시오.
+
+## 기능 제한
+
+| 제한 사항 | 의미 |
+|---|---|| ESS 작업 지연 시간 | Journal Import Launcher는 예약된 작업으로 실행되므로, 전기 실행은 직접 API로 쓰는 것보다 훨씬 오래 걸립니다. |
+| 역분개는 제자리 수정이 아니라 새 배치입니다 | 정정은 차변과 대변을 맞바꾼 새 역분개 배치를 전기하여 수행합니다. 이미 전기된 배치를 무효화하거나 삭제할 수는 없습니다. |
+
+## 관련 항목
+
+- [Oracle Fusion에 연결](/ko/guides/connections/oracle-fusion/) — 구성, 미리보기, 전기를 다루는 전체 안내
+- [Oracle Fusion 커넥터](/ko/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusion 단계](/ko/reference/workflow-steps/oracle-fusion/)
+- [ERP 전기 이력 검토](/ko/guides/connections/erp-post-history/)

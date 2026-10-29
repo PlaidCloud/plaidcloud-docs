@@ -1,0 +1,31 @@
+---
+title: Import Singer Source 步骤
+description: 将 Singer 源（Stripe、GitHub、Slack 和 BigQuery 等 SaaS、API 和数据库连接器）中的数据导入项目表，支持流发现以及整表或增量同步。
+sidebar:
+  order: 25
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/import/import-singer.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+**Import Singer Source** 步骤（在步骤选择器中显示为**导入：Singer 源**）将 Singer 源中的一个或多个流拉取到项目表中。Singer 源是类型为 **Singer 源**的连接，它封装了一个 Singer *tap*——针对特定 SaaS 应用、API 或数据库的连接器，例如 Stripe、GitHub、Slack 或 BigQuery。步骤会发现 tap 可用的流，由您选择要导入哪些流以及每个流写入何处，随后运行器提取数据并将其加载到目标中。
+
+完整的操作说明请参阅 [Singer 源指南](/zh-cn/guides/connections/singer-sources/)；有关可用的源及其配置文档，请参阅 [Singer 源目录](/zh-cn/reference/connectors/singer-sources/)。
+
+## 配置
+
+* **连接** *（必填）*——类型为 **Singer 源**的连接。
+* **同步模式** *（必填）*——**整表（每次运行替换）**、**增量（追加新数据）**或**更新插入（按键合并）**。增量仅适用于 tap 能够增量同步的流（即具有复制键的流）；步骤会从上一次运行的位置继续。更新插入会将每次运行按流的键列合并到目标中。
+* **发现流**——在运行器上运行 tap 的目录发现，并列出其提供的流。
+* **流** *（至少一个）*——对于每个已发现的流：用**导入此流**来纳入该流，并用**目标表**指定其写入位置。每个选中的流都需要一个目标表。当同步模式为**更新插入**时，每个选中的流还需要**关键列**（每行一个列名）——用于匹配行的列；默认使用 tap 声明的主键。
+
+## 行为
+
+* 发现作为独立的作业运行，冷启动时最长可能需要约三分钟；结果会被缓存，因此重复发现是即时的。
+* **整表**在每次运行时替换目标表；**增量**使用 tap 的复制键，只追加自上次运行以来新增的行；**更新插入**会重新提取完整的流，并按每个流的键列合并到目标中——匹配的行被更新，新键被插入，未匹配的现有行被保留。目标在首次运行时创建。键列为空的行永远不会匹配，总是被插入，因此请选择始终有值的键列。
+* 选中的流*就是*已保存的集合——要更改选择，请重新发现。重新出现的流会保留您设置的目标表和选择。
+* 源凭据在运行时从连接中读取，因此在连接上轮换凭据会应用于使用该连接的所有步骤——无需逐个步骤更新。
+
+<Aside>每次运行都会通过 tap 调用外部源。对于增量流，取消选择后重新选择，或切换为整表，会从头开始重新提取。</Aside>

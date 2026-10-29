@@ -1,0 +1,202 @@
+---
+title: Ad-hoc-Extrakte aus SAP ECC / S/4HANA
+description: Durchsuchen Sie SAP nach Tabelle, Transaktionscode oder gespeicherter SAP-Abfrage, zeigen Sie den Extrakt in der Vorschau an, planen Sie ihn und legen Sie das Ergebnis über einen PlaidLink-Agent in einer PlaidCloud-Tabelle ab.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+Holen Sie Daten selbst aus SAP ECC oder S/4HANA, ausgehend von dem, was Sie bereits kennen: einem Tabellennamen, einem Transaktionscode oder einer gespeicherten SAP-Abfrage. Sie wählen das Objekt über eine Suche aus, sehen seine Felder oder seinen Selektionsbildschirm, zeigen echte Zeilen in der Vorschau an, prüfen den Plan und speichern einen Workflow-Schritt, der das Ergebnis in einer Tabelle ablegt.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="Ein SAP-Extraktionsschritt sendet seine Anfrage über einen PlaidLink-Agent an SAP, wo das PlaidCloud-SAP-Paket die Daten unter den eigenen Berechtigungsprüfungen von SAP liest, und die Zeilen kommen über den Agent in eine Zieltabelle zurück." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SAP-Extraktionsschritt</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">suchen · Vorschau · Plan</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidLink-Agent</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">in Ihrem Netzwerk</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">PlaidCloud-SAP-Paket</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP prüft den RFC-Benutzer</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Zeilen</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Zieltabelle</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Jeder Extrakt läuft über Ihren PlaidLink-Agent und das PlaidCloud-SAP-Paket, als der RFC-Benutzer der Verbindung und unter den eigenen Berechtigungsprüfungen von SAP.</figcaption>
+</figure>
+
+## Voraussetzungen
+
+- **Ein PlaidLink-Agent mit Netzwerkzugriff auf das SAP-System.** Siehe [PlaidLink installieren](/de/reference/cli/plaidlink/install/).
+- **Eine Verbindung vom Typ SAP-ECC-/S/4HANA-Instanz.** Siehe [SAP-ECC- und S/4HANA-Connector](/de/reference/connectors/erp/sap-ecc/). Der SAP-Benutzer dieser Verbindung ist der RFC-Benutzer, als der jeder Extrakt ausgeführt wird.
+- **Das in SAP installierte PlaidCloud-SAP-Paket.** Ihr SAP-Basis-Team installiert es einmal pro SAP-System.
+- **SAP-Berechtigungen für den RFC-Benutzer** auf den Objekten, die Sie extrahieren. Siehe [SAP-Berechtigungen](#sap-berechtigungen).
+
+## Schritt auswählen
+
+Alle drei Schritte befinden sich im Workflow-Schrittmenü unter **SAP**.
+
+| Schritt | Verwendung |
+|---|---|
+| **SAP: Ad-hoc-Extrakt** | Eine SAP-Tabelle vollständig oder inkrementell lesen. |
+| **SAP: Transaktion / Bericht ausführen** | Einen Transaktionscode oder ein ABAP-Berichtsprogramm ausführen und sein Ergebnis ablegen. |
+| **SAP: Abfrage ausführen (SQ01)** | Eine gespeicherte SAP-Abfrage ausführen und ihr Ergebnis ablegen. |
+
+Jeder Schritt beginnt mit denselben drei Feldern – **Agent**, **SAP-Verbindung** und eine **Zieltabelle** für das Ergebnis.
+
+## SAP-Objekt finden
+
+Sobald ein Agent und eine Verbindung ausgewählt sind, listet die Suche des Schritts passende SAP-Objekte auf – je nach Schritt **Tabellen**, **Transaktionen** oder **Abfragen**. Geben Sie einen Namen, einen Transaktionscode oder Wörter aus der Beschreibung ein. SAP-Platzhalter mit `*` funktionieren. Ein Objekt, das SAP nicht bereitstellt, erscheint trotzdem ausgegraut, mit der Begründung.
+
+Wenn Sie eine Tabelle auswählen, werden ihre Felder mit Beschreibungen aufgelistet und ihre Schlüsselfelder ausgefüllt. Wenn Sie eine Transaktion, einen Bericht oder eine Abfrage auswählen, wird ihr Selektionsbildschirm auf der Registerkarte **Filter** angezeigt, aufgebaut aus den Feldern, die SAP selbst für dieses Objekt definiert hat – ohne dass Tabellen- oder Programminterna erforderlich sind.
+
+## Tabelle extrahieren
+
+Verwenden Sie **SAP: Ad-hoc-Extrakt**.
+
+<Steps>
+
+1. Suchen Sie auf der Registerkarte **SAP-Extrakt** nach der Tabelle und wählen Sie sie aus.
+
+2. Geben Sie die **RFC-Lesefunktion** ein – die Tabellenlesefunktion aus dem PlaidCloud-SAP-Paket, wie Ihr Basis-Team sie installiert hat.
+
+3. Prüfen Sie die **Schlüsselspalten**. PlaidCloud füllt sie aus dem SAP-Datenwörterbuch mit dem Primärschlüssel der Tabelle aus, ohne das Mandantenfeld. Aktivieren Sie das Kontrollkästchen, das bestätigt, dass es genau der Primärschlüssel ist. SAP lehnt jede andere Spaltenzusammenstellung ab.
+
+4. Fügen Sie auf der Registerkarte **Begrenzungsfilter** Filter hinzu. Klicken Sie auf eine bekannte Spalte, um eine Zeile hinzuzufügen, wählen Sie **Einschließen** oder **Ausschließen**, wählen Sie einen **Operator** – gleich, ungleich, größer als, größer oder gleich, kleiner als, kleiner oder gleich, zwischen, nicht zwischen, enthält Muster oder enthält Muster nicht – und nutzen Sie die Wertehilfe, um gültige Werte direkt aus SAP auszuwählen. Fügen Sie mehrere Zeilen für dieselbe Spalte hinzu, um einen von mehreren Werten zu treffen, und fügen Sie für **Zwischen** oder **Nicht zwischen** einen Bereich hinzu. Eine große SAP-Tabelle benötigt mindestens einen Filter, etwa einen Datumsbereich oder einen Buchungskreis.
+
+   <Aside type="note">
+   Das Ausschließen eines Bereichs, ein Filter „Nicht zwischen“, Mustervergleiche und mehr als eine Bedingung für dieselbe Spalte senden SAP jeweils ein umfangreicheres Filterprädikat, für das das aktuelle PlaidCloud-SAP-Paket auf dem SAP-System des Agents erforderlich ist. Ein älteres Paket führt einfache Filter auf Gleichheit, Ungleichheit und Bereiche weiterhin sowohl in einer Zeile „Einschließen“ als auch in einer Zeile „Ausschließen“ aus; bitten Sie Ihr Basis-Team, das Paket zu aktualisieren, wenn ein umfangreicherer Filter nicht greift.
+   </Aside>
+
+5. Um bei jeder Ausführung nur neue und geänderte Zeilen zu lesen, richten Sie die Registerkarte **Inkrementell** ein. Siehe [Inkrementelle Tabellenextrakte](#inkrementelle-tabellenextrakte).
+
+6. Legen Sie auf der Registerkarte **Sichtbarkeit und Definition** die **Gesteuerte Spalte** fest. Siehe [Gesteuerte Spalte](#gesteuerte-spalte).
+
+</Steps>
+
+Eine `CURR`-Betragsspalte, deren Währungsschlüssel in derselben Tabelle steht, wird mit ihrem tatsächlichen Wert abgelegt. PlaidCloud verschiebt jeden Betrag um die Dezimalstellen seiner Währung, sodass ein Betrag in japanischen Yen in ganzen Yen abgelegt wird. Eine Betragsspalte ohne ihren Währungsschlüssel wird so abgelegt, wie SAP sie speichert, und die Ausführung meldet eine Warnung, die die Spalte nennt.
+
+**SAP-Mandant (mandt)** und **Segmentgröße** sind optional. Lassen Sie den Mandanten leer, um den Standardmandanten der Verbindung zu verwenden.
+
+## Transaktion oder Bericht ausführen
+
+Verwenden Sie **SAP: Transaktion / Bericht ausführen**.
+
+<Steps>
+
+1. Suchen Sie auf der Registerkarte **SAP-Ausführung** nach einer Transaktion und wählen Sie sie aus, oder geben Sie den Namen eines Berichtsprogramms in **Report/Program** ein und klicken Sie auf **Selektionsbildschirm nachschlagen**. Wählen Sie das eine oder das andere.
+
+2. Füllen Sie auf der Registerkarte **Filter** den Selektionsbildschirm aus. Das Formular baut ihn aus dem SAP-Selektionsbildschirm der Transaktion bzw. des Berichts auf. Ein leeres Feld läuft für dieses Feld ungefiltert.
+
+   Um stattdessen mit einer gespeicherten SAP-Variante zu beginnen, wählen Sie sie unter **Mit SAP-Variante beginnen** aus. PlaidCloud füllt das Filterformular mit den gespeicherten Werten der Variante und listet neben dem Formular alle eigenen Werte der Variante auf, die es nicht übernehmen konnte – SAP verwendet dafür stattdessen den eigenen Standard des Berichts. Wenn Sie eine andere Variante auswählen, ersetzt das die Werte des Formulars; das nachträgliche Bearbeiten eines Felds ändert nicht, welche Variante als ausgewählt angezeigt wird.
+
+3. Legen Sie **Max. Zeilen** fest – standardmäßig 10.000, bis zu 50.000. SAP führt in beiden Fällen die gesamte Transaktion oder den gesamten Bericht aus, und die Obergrenze begrenzt die Zeilen, die PlaidCloud zurückliest.
+
+4. Aktivieren Sie bei einem lang laufenden Bericht **Run as a background job** und geben Sie optional einen **Auftragsnamen (nur asynchron)** an.
+
+5. Legen Sie auf der Registerkarte **Sichtbarkeit und Definition** die **Gesteuerte Spalte** fest.
+
+</Steps>
+
+Ein Bericht, der interaktive Eingaben, ein Popup oder einen Bildschirm benötigt, kann nicht unbeaufsichtigt laufen. SAP lehnt ihn ab, es wird nichts abgelegt, und der Schritt meldet den Grund von SAP. Führen Sie diesen Bericht stattdessen in der SAP-GUI aus.
+
+## SAP-Abfrage ausführen
+
+Verwenden Sie **SAP: Abfrage ausführen (SQ01)**.
+
+<Steps>
+
+1. Suchen Sie auf der Registerkarte **SAP-Ausführung** nach der Abfrage und wählen Sie sie aus. Durch die Auswahl einer Abfrage werden **Workspace**, **Benutzergruppe** und **Abfragename** ausgefüllt. Sie können den **Workspace** auch auswählen und **Benutzergruppe** sowie **Abfragename** direkt eingeben.
+
+2. Füllen Sie auf der Registerkarte **Filter** den eigenen Selektionsbildschirm der Abfrage aus – dieselben Parameter und Select-Options, die ihr Autor in SQ01 eingerichtet hat. Ein leeres Feld läuft für dieses Feld ungefiltert.
+
+3. Legen Sie **Max. Zeilen** fest – standardmäßig 10.000, bis zu 50.000.
+
+4. Legen Sie auf der Registerkarte **Sichtbarkeit und Definition** die **Gesteuerte Spalte** fest.
+
+</Steps>
+
+Wenn Sie **Workspace**, **Benutzergruppe** oder **Abfragename** ändern, wird ein Filterformular gelöscht, das für eine andere Abfrage aufgebaut wurde – schlagen Sie den Selektionsbildschirm nach dem Wechsel erneut nach.
+
+## Gesteuerte Spalte
+
+Jeder SAP-Extraktionsschritt erfordert eine **Gesteuerte Spalte**: eine der Spalten, die der Schritt ablegt, etwa `BUKRS` für den Buchungskreis. Der Schritt lässt sich ohne sie nicht speichern, und eine Ausführung legt keine Zeilen ab, wenn diese Spalte nicht zu den abgelegten Spalten gehört.
+
+## Vorschau, Plan und Berechtigungen
+
+Die Gruppe **Vorabprüfung** jedes Schritts enthält drei Schaltflächen. Keine davon verhindert das Speichern des Schritts.
+
+| Schaltfläche | Was sie zeigt |
+|---|---|
+| **Vorschau** | Beispielzeilen. Eine Tabellenvorschau liest die ersten Zeilen direkt. Bei einer Transaktion, einem Bericht oder einer Abfrage führt die Vorschau diese in SAP als separate Stichprobe aus, begrenzt auf 100 Zeilen, daher bittet das Formular zuvor um Bestätigung. Es wird nichts abgelegt. |
+| **Plan** | Wie der Extrakt abläuft – seine Schlüsselspalten, die Zeilenschätzung und die an SAP gesendete Selektion – sowie alles, was ihn stoppen würde. Eine Ablehnung des Plans deaktiviert **Erstellen und ausführen** und **Speichern und ausführen**, bis Sie die Konfiguration ändern oder ein neuer Plan fehlerfrei zurückkommt. Sie können den Schritt weiterhin speichern. |
+| **Erforderliche SAP-Berechtigungen** | Die SAP-Berechtigungen, die das Objekt benötigt, zur Weitergabe an Ihr Basis-Team. Diese Liste dient nur zur Information. |
+
+<Aside type="caution">
+Die Vorschau einer Transaktion, eines Berichts oder einer Abfrage kostet SAP etwa so viel wie eine echte Ausführung, weil SAP alles ausführt, bevor es Zeilen zurückgibt.
+</Aside>
+
+## SAP-Berechtigungen
+
+Für den RFC-Benutzer gelten die standardmäßigen Berechtigungsprüfungen von SAP, genau wie innerhalb von SAP.
+
+| Extrakt | Berechtigung |
+|---|---|
+| Tabelle | `S_TABU_NAM` oder `S_TABU_DIS` Anzeige, Aktivität `03` |
+| Transaktion | `S_TCODE` |
+| Bericht | `S_PROGRAM` `SUBMIT` für die Berechtigungsgruppe des Berichts |
+
+Eine fehlende Berechtigung lässt die Ausführung mit dem SAP-Fehler „nicht berechtigt“ und einem Hinweis zur Abhilfe fehlschlagen, der die vorangehenden Berechtigungen auflistet. PlaidCloud fügt keine eigenen Berechtigungsprüfungen hinzu und blockiert einen Schritt nie auf Grundlage der Liste **Erforderliche SAP-Berechtigungen**.
+
+## Inkrementelle Tabellenextrakte
+
+Aktivieren Sie auf der Registerkarte **Inkrementell** von **SAP: Ad-hoc-Extrakt** die Option **Run incrementally** und geben Sie eine **Watermark-Spalte** an. Sie muss eine der folgenden sein:
+
+- Eine Datumsspalte, SAP-Typ `DATS`
+- Eine UTC-Zeitstempelspalte, SAP-Typ `TZNTSTMPS` oder `TZNTSTMPL`
+
+Zeitstempelspalten vom SAP-Typ `UTCL` werden nicht unterstützt, und die Watermark-Spalte darf nicht zugleich eine Spalte des Begrenzungsfilters sein.
+
+Die erste Ausführung liest die gesamte Tabelle. Jede weitere Ausführung liest nur Zeilen ab dem letzten Watermark, abzüglich des **Rückblicks**, und führt sie über die Schlüsselspalten zusammen. Der Watermark rückt erst vor, nachdem die gesamte Ausführung abgelegt wurde. Das offene SAP-Datum `99991231` wird nie zum Watermark. Ein Datum, das mehr als einen Tag nach dem Ausführungsdatum liegt, hält den Watermark auf dem Ausführungsdatum, und ein Zeitstempel verschiebt ihn nie über den Start der Ausführung hinaus.
+
+## So werden Spalten abgelegt
+
+**SAP: Ad-hoc-Extrakt** legt jede Spalte mit ihrem tatsächlichen Typ aus dem SAP-Datenwörterbuch ab.
+
+| SAP-Typ | Abgelegt als |
+|---|---|
+| Datum (`DATS`) | Datum. Leere, initiale und ungültige Datumswerte werden als leer (`NULL`) abgelegt. Ein ungültiges Datum beendet den Schritt mit einer Warnung. |
+| Betrag, Menge, Dezimalzahl (`CURR` / `QUAN` / `DEC`) | Exakte Dezimalzahl. Wenn die Spalte mit dem Währungsschlüssel des Betrags in derselben Tabelle und im Extrakt enthalten ist, verschiebt PlaidCloud den Betrag auf die tatsächlichen Dezimalstellen seiner Währung. Andernfalls wird er so abgelegt, wie SAP ihn speichert. Eine Dezimalzahl mit mehr als 10 Nachkommastellen, mehr als 28 Ganzzahlstellen oder ohne deklarierte Nachkommastellen wird stattdessen als Text abgelegt, und der Schritt endet mit einer Warnung, die die Spalte nennt. |
+| Ganzzahl | Ganzzahl. |
+| Gleitkommazahl (`FLTP`) | Double. |
+| Dezimale Gleitkommazahl (`DF16_*` / `DF34_*`) | Exakter Text. |
+| Kurzer UTC-Zeitstempel (`TZNTSTMPS`) | Zeitstempel, sekundengenau. |
+| Langer UTC-Zeitstempel (`TZNTSTMPL`, `UTCL`) | UTC-ISO-Text, etwa `2026-01-03T10:15:00.123456Z` – so bleibt der Sekundenbruchteil erhalten, den eine Zeitstempelspalte verlieren würde. |
+| Zeit (`TIMS`), Code (`NUMC`), Text (`CHAR`) | Text genau so, wie SAP ihn speichert, mit erhaltenen führenden Nullen. |
+
+Wenn sich der SAP-Typ einer Spalte ändert, ersetzt der Extrakt die gesamte Tabelle mit dem neuen Typ der Spalte, und der Schritt endet mit einer Warnung, die die Spalte nennt. Ein inkrementeller Extrakt tut dies in derselben Ausführung. Wird dieses Lesen nicht abgeschlossen, lesen spätere Ausführungen mit derselben Warnung weiter die gesamte Tabelle, bis eine erfolgreich ist – dann werden die inkrementellen Ausführungen wieder aufgenommen.
+
+**SAP: Transaktion / Bericht ausführen** legt Betragsspalten als Zahlen ab. Jede andere Spalte wird als Text abgelegt. **SAP: Abfrage ausführen (SQ01)** legt Betrags-, Ganzzahl- und Datumsspalten mit diesen Typen ab. Jede andere Spalte wird als Text abgelegt. Konvertieren Sie die Typen in einem nachgelagerten Schritt, wo Sie sie benötigen.
+
+## Ausführungslimits
+
+Eine einzelne Ausführung von **SAP: Ad-hoc-Extrakt** pausiert, sobald sie 5.000.000 Zeilen gelesen hat oder 240 Minuten lang gelaufen ist, nachdem sie das laufende Segment beendet hat. Der Schritt endet mit einer Warnung, nicht mit einem Fehler, und die nächste Ausführung setzt dort fort, wo die vorherige aufgehört hat, ohne dass Zeilen verloren gehen.
+
+## Verwandte Themen
+
+- [SAP-ECC- und S/4HANA-Connector](/de/reference/connectors/erp/sap-ecc/) – die Verbindungsfelder.
+- [SAP-Schritte](/de/reference/workflow-steps/sap/) – alle SAP-Workflow-Schritte.
+- [PlaidLink](/de/reference/cli/plaidlink/) – Installation und Upgrade von Agents.

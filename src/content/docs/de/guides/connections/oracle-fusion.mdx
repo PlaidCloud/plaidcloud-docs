@@ -1,0 +1,131 @@
+---
+title: Mit Oracle Fusion verbinden
+description: Verbinden Sie PlaidCloud mit Oracle Fusion Cloud über OAuth2-Anmeldedaten, rufen Sie Hauptbuchsalden und Journalstapel per OData oder BIP-Extrakten ab und buchen Sie anschließend über FBDI und das GL Interface.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud über die OData- und BI-Publisher-Reporting-Endpunkte (BIP) mit Oracle Fusion Cloud ERP, um Hauptbuchsalden und Journalstapel abzurufen, ohne OData von Hand zu schreiben, und Journalbuchungen über den File-Based-Data-Import-Pfad (FBDI) von Oracle zurückzubuchen. Dieser Leitfaden behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen eine Testumgebung aus und arbeiten Sie bei jedem Buchungsstapel die unten beschriebene Funktion **Validate Only** durch, bevor Sie live buchen.
+</Aside>
+
+## Voraussetzungen
+
+Sie benötigen in Oracle Fusion Cloud:
+
+- Einen dedizierten **API-Benutzer** für PlaidCloud, mit einer Rolle, die Zugriff auf die Entitäten hat, die Sie lesen (Hauptbuchabfrage), und auf die FBDI-/GL-Interface-Funktionen, über die Sie buchen.
+- Die **Instanz-URL** Ihrer Fusion Cloud (zum Beispiel `https://yourorg.fa.us2.oraclecloud.com`).
+- **OAuth2-Client-Anmeldedaten** (Client-ID und Secret) oder die Basic-Auth-API-Anmeldedaten, die Ihre Fusion-Cloud-Sicherheitskonfiguration für Integrationsbenutzer ausstellt – je nachdem, wofür Ihr Mandant bereitgestellt ist.
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Oracle Fusion**.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `Fusion Prod`. |
+   | Instanz-URL | Die URL Ihrer Fusion-Cloud-Instanz. |
+   | Client-ID | Die OAuth2-Client-ID des API-Benutzers (bei Basic Auth der Benutzername). |
+   | Client-Secret | Das OAuth2-Client-Secret des API-Benutzers (bei Basic Auth das Passwort). |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Die Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen Schritt **Import Fusion Entity** hinzu.
+
+2. Legen Sie **Fusion Connection** auf Ihre Verbindung, **Entitätstyp** auf `gl_balances` und **Zieltabelle** auf eine Scratch-Tabelle fest.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass die Anmeldedaten und die Instanz-URL korrekt sind. Ein Fehler benennt das Problem – falsche Anmeldedaten, eine falsche Instanz-URL oder eine Rolle, der die Leseberechtigung für die Entität fehlt.
+
+## Daten importieren
+
+Zwei Importschritte decken unterschiedliche Abrufgrößen ab:
+
+<Steps>
+
+1. Fügen Sie für einen routinemäßigen, begrenzten Abruf einen Schritt **Import Fusion Entity** hinzu – er ruft die OData- oder BIP-Endpunkte von Oracle Fusion direkt auf.
+
+2. Fügen Sie für einen großen Extrakt stattdessen einen Schritt **Import Fusion Bulk Extract** hinzu – er übermittelt einen FBDI-/BIP-Extraktions-Job und lädt die entstehende Datei herunter, sobald dieser abgeschlossen ist.
+
+3. Legen Sie **Entitätstyp** auf `gl_balances` oder `journal_batches` fest.
+
+4. Fügen Sie **Filter** hinzu, um den Abruf zu begrenzen – Datums- und Buchungsperiodenbereiche (`ge`/`le`) sowie numerische Bereiche für Saldo-/Betragsfelder, pro Entität beschränkt auf die Felder, nach denen Oracle Fusion serverseitig tatsächlich filtern kann.
+
+5. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+### Entitäten und Filter
+
+| Entitätstyp | Was abgerufen wird | Filterbare Felder |
+|---|---|---|
+| `gl_balances` | Hauptbuch-Kontensalden | Buchungsperiodenbereich, Kontobereich, Saldobetragsbereich |
+| `journal_batches` | Kopfzeilen und Status von Journalstapeln | Datumsbereich, Buchungsperiodenbereich |
+
+<Aside type="note">
+`gl_balances` und `journal_batches` akzeptieren sowohl **Bereichsfilter** (`ge`/`le` für ein Datums-, Perioden- oder numerisches Feld) als auch Gleichheitsfilter für diskrete Felder wie Ledger oder Währung. Ein Bereichsfilter mit nur einer Grenze ist auf der anderen Seite offen.
+</Aside>
+
+## Journalbuchungen buchen
+
+Der Schritt **Oracle Fusion: Post Journal Entry** bucht Hauptbuch-Journalbuchungen über die gemeinsame ERP-Schreibpipeline von PlaidCloud und nutzt dabei den FBDI-GL-Interface-Ladepfad von Oracle.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** – eine Zeile pro Journalbuchung – mit `batch_id` (Ihre Stapelkennung), `ledger_id`, `journal_source`, `journal_category`, `accounting_date` und `description`.
+
+2. Erstellen Sie eine **Positionstabelle** – eine oder mehrere Zeilen pro `batch_id` – mit `account_combination` (oder seinen Segmentspalten), `entered_debit`, `entered_credit` und `currency_code`.
+
+3. Fügen Sie einen Schritt **Oracle Fusion: Post Journal Entry** hinzu und legen Sie **Fusion Connection**, **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus – PlaidCloud erstellt und prüft jeden Stapel ohne Ledger-Claim und ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro Stapel: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Beheben Sie jede Zeile mit `error` und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Lauf soll beim ersten fehlgeschlagenen Stapel sofort stoppen.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+PlaidCloud schreibt jeden Journalstapel als FBDI-Datei in die Staging-Tabelle GL_INTERFACE von Oracle und übermittelt dann den Enterprise-Scheduler-Service-Job (ESS) **Journal Import Launcher** und fragt ihn asynchron ab, bis er einen Endzustand meldet. Eine Buchung wird erst als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist – ein Stapel, der in der Interface-Tabelle landet, dessen Import-Job aber nie abgeschlossen wird, bleibt in Quarantäne, statt als gebucht erfasst zu werden, sodass ein hängender ESS-Job nie unbemerkt als Erfolg durchgeht. Der eigene Ledger-Claim von PlaidCloud verhindert, dass derselbe Stapel bei einem wiederholten oder erneut ausgeführten Stapel zweimal geladen wird.
+
+### Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie einen gebuchten Journalstapel. Um einen zu korrigieren, buchen Sie einen neuen Stapel mit gegenüber dem Original vertauschtem Soll und Haben – eine **gebuchte Stornobuchung** –, statt das Original direkt zu bearbeiten. Das bewahrt den eigenen Prüfpfad von Oracle Fusion und entspricht der Art, wie Korrekturen direkt in der Anwendung vorgenommen werden.
+
+### Leistungsgrenzen – vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **ESS-Job-Latenz.** Der Journal Import Launcher läuft als geplanter Job, nicht als synchroner Aufruf – rechnen Sie damit, dass eine Buchungsausführung deutlich länger dauert als ein direktes Schreiben über die API, und verwenden Sie diesen Schritt nicht für eine latenzkritische Einzelbuchung.
+- **Latenz bei Bulk-Extrakten.** `import_fusion_bulk_extract` wartet auf einen FBDI-/BIP-Export-Job – reservieren Sie ihn für Abrufe, die für den direkten OData-/BIP-Pfad von `import_fusion_entity` zu groß sind.
+</Aside>
+
+## Verwandte Themen
+
+- [Oracle-Fusion-Connector](/de/reference/connectors/erp/oracle-fusion/) – Feldreferenz.
+- [Import Fusion Entity](/de/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/de/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/de/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) – das dauerhafte Protokoll jedes Oracle-Fusion-Buchungsversuchs und seines Live-Status.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

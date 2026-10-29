@@ -1,0 +1,131 @@
+---
+title: Conectar a Oracle Fusion
+description: Conecte PlaidCloud a Oracle Fusion Cloud con credenciales OAuth2, extraiga saldos del libro mayor y lotes de asientos de diario con extracciones OData o BIP, y contabilice mediante FBDI y la GL Interface.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud a Oracle Fusion Cloud ERP mediante sus puntos de conexión de informes OData y BI Publisher (BIP) para extraer saldos del libro mayor y lotes de asientos de diario sin tener que escribir OData a mano, y contabilice asientos de diario de vuelta mediante la vía File-Based Data Import (FBDI) de Oracle. Esta guía abarca la conexión, el paso de importación y el paso de contabilización.
+
+<Aside type="caution">
+Ejecute primero toda importación en un entorno de prueba y, antes de contabilizar en vivo, recorra **Validate Only** (descrito más abajo) en cada lote de contabilización.
+</Aside>
+
+## Requisitos previos
+
+Necesita, en Oracle Fusion Cloud:
+
+- Un **usuario de API** dedicado para PlaidCloud, con un rol que tenga acceso a las entidades que va a leer (consulta del libro mayor) y a las funciones de FBDI/GL Interface mediante las que contabilizará.
+- La **URL de instancia** de su Fusion Cloud (por ejemplo, `https://yourorg.fa.us2.oraclecloud.com`).
+- **Credenciales de cliente OAuth2** (ID y secreto de cliente) o las credenciales de API con autenticación básica que emite la configuración de seguridad de su Fusion Cloud para los usuarios de integración, según como esté aprovisionado su inquilino.
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **Oracle Fusion** en el menú.
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, por ejemplo `Fusion Prod`. |
+   | URL de instancia | La URL de instancia de su Fusion Cloud. |
+   | ID de cliente | El ID de cliente OAuth2 del usuario de API (o el nombre de usuario, con autenticación básica). |
+   | Secreto de cliente | El secreto de cliente OAuth2 del usuario de API (o la contraseña, con autenticación básica). |
+
+4. Haga clic en `Create`.
+
+</Steps>
+
+## Probar rápidamente la conexión
+
+<Steps>
+
+1. Agregue un paso **Import Fusion Entity** a un flujo de trabajo.
+
+2. Establezca **Fusion Connection** con su conexión, **Tipo de entidad** con `gl_balances` y **Tabla de destino** con una tabla de prueba.
+
+3. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Una tabla de destino con datos confirma que las credenciales y la URL de instancia son correctas. Un error indica el problema: credenciales incorrectas, una URL de instancia equivocada o un rol al que le falta el privilegio de lectura de la entidad.
+
+## Importar datos
+
+Dos pasos de importación cubren distintos tamaños de extracción:
+
+<Steps>
+
+1. Para una extracción rutinaria y acotada, agregue un paso **Import Fusion Entity**: llama directamente a los puntos de conexión OData o BIP de Oracle Fusion.
+
+2. Para una extracción grande, agregue en su lugar un paso **Import Fusion Bulk Extract**: envía un trabajo de extracción FBDI/BIP y descarga el archivo resultante cuando termina.
+
+3. Establezca **Tipo de entidad** con `gl_balances` o `journal_batches`.
+
+4. Agregue **Filtros** para acotar la extracción: intervalos de fechas y de períodos contables (`ge`/`le`) e intervalos numéricos en los campos de saldo/importe, restringidos por entidad a los campos por los que Oracle Fusion realmente puede filtrar en el servidor.
+
+5. Ejecute el paso y revise la tabla de destino.
+
+</Steps>
+
+### Entidades y filtros
+
+| Tipo de entidad | Qué extrae | Campos filtrables |
+|---|---|---|
+| `gl_balances` | Saldos de las cuentas del libro mayor | intervalo de períodos contables, intervalo de cuentas, intervalo de importes de saldo |
+| `journal_batches` | Encabezados y estado de los lotes de asientos de diario | intervalo de fechas, intervalo de períodos contables |
+
+<Aside type="note">
+`gl_balances` y `journal_batches` aceptan tanto filtros de **intervalo** (`ge`/`le` en un campo de fecha, período o numérico) como filtros de igualdad en campos discretos como el libro mayor o la moneda. Un filtro de intervalo con un solo límite queda abierto por el otro lado.
+</Aside>
+
+## Contabilizar asientos de diario
+
+El paso **Oracle Fusion: Post Journal Entry** contabiliza asientos de diario del libro mayor mediante el flujo compartido de escritura en ERP de PlaidCloud, usando la vía de carga GL Interface de FBDI de Oracle.
+
+<Steps>
+
+1. Cree una **tabla de encabezados**, con una fila por asiento de diario, con `batch_id` (su identificador de lote), `ledger_id`, `journal_source`, `journal_category`, `accounting_date` y `description`.
+
+2. Cree una **tabla de líneas**, con una o más filas por `batch_id`, con `account_combination` (o sus columnas de segmento), `entered_debit`, `entered_credit` y `currency_code`.
+
+3. Agregue un paso **Oracle Fusion: Post Journal Entry** y establezca **Fusion Connection**, **Tabla de encabezados**, **Tabla de líneas** y una **Tabla de resultados**.
+
+4. Deje marcada la opción **Validate Only** y ejecute el paso: PlaidCloud crea y comprueba cada lote sin reclamar el libro mayor y sin contabilizar nada.
+
+5. Revise la tabla de resultados (una fila por lote: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija cualquier fila `error` y vuelva a validar.
+
+6. Desmarque **Validate Only** y ejecute de nuevo para contabilizar de verdad. Deje marcada la opción **Continue On Error** a menos que desee que una ejecución se detenga en seco con el primer lote fallido.
+
+</Steps>
+
+### Cómo funciona la contabilización
+
+PlaidCloud escribe cada lote de asientos de diario en la tabla de preparación GL_INTERFACE de Oracle como un archivo FBDI y, a continuación, envía el trabajo del Enterprise Scheduler Service (ESS) **Journal Import Launcher** y lo sondea de forma asíncrona hasta que informa un estado terminal. Un asiento solo se informa como `posted` una vez que ese estado terminal está **confirmado**: un lote que llega a la tabla de interfaz pero cuyo trabajo de importación nunca se resuelve permanece en cuarentena en lugar de registrarse como contabilizado, de modo que un trabajo ESS atascado nunca pasa en silencio por un éxito. La reclamación propia de PlaidCloud sobre el libro mayor evita cargar dos veces el mismo lote cuando se reintenta o se vuelve a ejecutar.
+
+### Corregir un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un lote de asientos de diario contabilizado. Para corregir uno, contabilice un lote nuevo con los débitos y los créditos invertidos respecto del original (un **asiento de reversión contabilizado**) en lugar de editar el original en el lugar. Así se conserva el rastro de auditoría propio de Oracle Fusion y se corresponde con la forma en que se hacen las correcciones directamente en la aplicación.
+
+### Límites de capacidad: léalos antes de contabilizar en vivo
+
+<Aside type="caution">
+- **Latencia del trabajo ESS.** El Journal Import Launcher se ejecuta como un trabajo programado, no como una llamada síncrona: espere que una ejecución de contabilización tarde bastante más que una escritura directa por API y no use este paso para contabilizar un solo asiento cuando la latencia importa.
+- **Latencia de la extracción masiva.** `import_fusion_bulk_extract` espera a un trabajo de exportación FBDI/BIP: resérvelo para extracciones demasiado grandes para la vía OData/BIP directa de `import_fusion_entity`.
+</Aside>
+
+## Relacionado
+
+- [Conector de Oracle Fusion](/es/reference/connectors/erp/oracle-fusion/): referencia de campos.
+- [Paso Import Fusion Entity](/es/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Paso Import Fusion Bulk Extract](/es/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/es/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/): el registro permanente de cada intento de contabilización en Oracle Fusion y su estado actual.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

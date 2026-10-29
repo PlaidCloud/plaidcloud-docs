@@ -1,0 +1,178 @@
+---
+title: "IA : recherche vectorielle"
+description: Trouvez les lignes d'une table dont le vecteur stocké est le plus proche de chaque vecteur de requête, par distance cosinus ou euclidienne, dans une étape de workflow PlaidCloud.
+sidebar:
+  label: "IA : recherche vectorielle"
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/vector-search.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+**IA : recherche vectorielle** classe les lignes d'une table selon la proximité de leur colonne [Vector](/fr/guides/data/vector-data-type/)
+avec un vecteur de requête, et écrit les lignes les plus proches — avec la distance qui les a classées — dans une
+table cible. Fournissez plusieurs vecteurs de requête : chacun obtient son propre jeu de correspondances, en un seul passage
+sur la table source et dans une seule table de sortie.
+
+La recherche est **exacte**. Chaque ligne qui passe le filtre de l'étape est comparée à chaque vecteur
+de requête ; les correspondances sont donc les lignes réellement les plus proches et non une approximation — et le travail croît
+avec le nombre de lignes parcourues multiplié par le nombre de vecteurs de requête. Il n'y a aucun index vectoriel
+à construire, à régler ou sur lequel se rabattre.
+
+<Aside type="caution">
+Le type de colonne Vector, et donc cette étape, nécessite **Lakehouse v2 (StarRocks)**.
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="Chaque vecteur de requête est comparé à chaque ligne de la table à rechercher qui passe le filtre, et les lignes les plus proches sont écrites dans la table cible avec une colonne de distance. Les lignes dont la distance ne peut pas être mesurée sont exclues." style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">chaque ligne filtrée est comparée — ni index, ni approximation</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">vecteurs de requête</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">table à rechercher</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">filtrée d'abord</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">distance</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">plus faible = plus proche</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">table cible</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">meilleures correspondances par requête</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">une ligne dont la distance ne peut pas être mesurée est exclue, et non classée en premier</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Les lignes sont filtrées, puis chaque ligne restante est évaluée par rapport à chaque vecteur de requête et les plus proches sont conservées. Réduire le filtre est ce qui rend rapide une grande table, car il n'y a pas d'index sur lequel se rabattre.</figcaption>
+</figure>
+
+## Source et cible
+
+- **Table à rechercher** — la table dont les vecteurs stockés sont recherchés.
+- **Table cible** — la table dans laquelle les correspondances sont écrites.
+
+## Recherche
+
+- **Colonne vectorielle** — la colonne Vector de la table à rechercher par rapport à laquelle la distance est mesurée.
+  Tout autre type de données est refusé, avec le nom de la colonne et le type qu'elle contient réellement.
+- **Métrique de distance** — **Cosinus** ou **Euclidienne (L2)**. Le cosinus mesure l'angle entre deux
+  vecteurs et ignore leur norme, ce qui convient aux plongements de texte ; la distance euclidienne
+  mesure la distance en ligne droite et tient compte de la norme. Dans les deux cas, une distance plus faible signifie
+  une ligne plus proche. Cosinus est la valeur par défaut.
+- **Correspondances par requête** — le nombre de lignes les plus proches à conserver pour chaque vecteur de requête. La valeur par défaut est 10.
+
+<Aside type="note">
+**Cosinus et Euclidienne sont les seules métriques.** Le produit scalaire n'est volontairement pas proposé : sur des vecteurs
+non normalisés, ce n'est pas une distance — la distance d'un vecteur à lui-même est négative —
+si bien qu'un seuil défini à partir de lui, et tout score affiché pour lui, serait faux, même lorsque le classement
+se trouverait être correct. Sur des plongements normalisés, le cosinus produit le même classement que le produit scalaire.
+</Aside>
+
+## Vecteurs de requête
+
+L'onglet **Vecteurs de requête** attend un tableau JSON avec une entrée par requête, chacune portant un `id` et un
+`vector` :
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+Chaque requête renvoie son propre jeu de correspondances, et c'est l'`id` qui les identifie dans la sortie. Les
+identifiants doivent être uniques, chaque valeur doit être un nombre fini, et chaque vecteur de requête doit contenir le même
+nombre de valeurs que les vecteurs stockés — une distance n'est définie qu'entre des vecteurs de même largeur.
+Une différence est refusée, avec le nom de la requête, le nombre de valeurs qu'elle contient et la largeur que la colonne
+contient ou déclare.
+
+<Aside type="caution">
+Les vecteurs stockés doivent eux aussi tous contenir le même nombre de valeurs. Une recherche sur une colonne dont les lignes
+mélangent deux largeurs échoue avec une erreur brute du moteur sous-jacent plutôt qu'avec un message nommant la
+colonne. Une Largeur du vecteur déclarée est appliquée sur chaque voie de chargement — importation de fichier, connecteur, tap, requête
+distante, étape de workflow écrivant un frame, archive ou lot — de sorte que la largeur que vous déclarez est
+la largeur que la colonne contient. L'importation CSV fait exception : elle ne peut pas être vérifiée, et c'est la seule voie
+qui peut laisser une colonne mixte. Consultez
+[Largeur du vecteur](/fr/guides/data/vector-data-type/#largeur-du-vecteur).
+</Aside>
+
+## Sélectionner un sous-ensemble de données
+
+Un filtre restreint les lignes candidates. Les lignes sont filtrées *avant* d'être classées ; les
+correspondances sont donc les lignes les plus proches parmi celles qui passent le filtre — et non les lignes les plus proches dans l'absolu, filtrées
+ensuite. C'est le principal levier sur la quantité de travail de l'étape ; consultez
+[Dimensionner une recherche](#dimensionner-une-recherche).
+
+## Colonnes de sortie
+
+Chaque correspondance est écrite sous forme d'une ligne portant les colonnes que vous avez sélectionnées dans l'onglet **Sélection des données de la table**,
+plus deux colonnes calculées dont vous contrôlez les noms :
+
+- **Colonne du nom de la requête** — l'identifiant du vecteur de requête auquel cette ligne répond. Par défaut, `query_id`.
+- **Colonne de distance** — la distance mesurée entre la correspondance et ce vecteur de requête. Par défaut,
+  `distance`. C'est aussi la clé de classement.
+
+Le nom de la requête vient en premier dans la sortie, les colonnes que vous avez sélectionnées suivent, et la distance vient
+en dernier. Les noms des colonnes de sortie doivent être uniques.
+
+<Aside>
+Les contrôles **Résumer**, **Distinct** et d'agrégation de l'onglet Sélection des données de la table sont
+ignorés par cette étape : un ensemble de meilleures correspondances est calculé par vecteur de requête et ne regroupe jamais.
+</Aside>
+
+## Lignes exclues
+
+Une ligne dont la distance ne peut pas être mesurée est **exclue** des correspondances plutôt que renvoyée comme
+si elle était la plus proche. Un vecteur dont la norme dépasse la plage d'un flottant 32 bits est
+le cas que vous rencontrerez : aucune distance mesurable n'est renvoyée pour lui, et comme rien de disponible ne classe
+une distance non mesurable en dernier, inclure une telle ligne placerait les lignes que la recherche connaît le moins
+en tête de chaque résultat.
+
+Exécutez le workflow avec le **Mode de diagnostic** activé pour voir le nombre. Le journal du workflow indique alors combien de
+lignes chaque requête a exclues, ou précise que l'étape a mesuré chaque ligne qu'elle a parcourue. L'obtention de ce nombre
+coûte un second passage sur la table, ce qui explique qu'elle ne soit facturée que si vous la demandez ; avec
+le Mode de diagnostic désactivé, le journal précise que les lignes non mesurables sont exclues par conception et vous renvoie vers
+le Mode de diagnostic pour obtenir le nombre.
+
+Un vecteur stocké contenant une *valeur manquante* dans le tableau est un cas différent : aucune distance ne peut être
+mesurée par rapport à un tableau qui en contient une, et la recherche est donc refusée d'emblée, avec le nom de la colonne,
+plutôt que de renvoyer silencieusement un résultat partiel. Corrigez ou supprimez ces lignes, puis réexécutez.
+
+## Dimensionner une recherche
+
+Le coût d'une exécution est le nombre de lignes candidates multiplié par le nombre de vecteurs de requête, et
+l'étape refuse une recherche dont le total dépasse dix milliards de mesures de distance — en indiquant le nombre de lignes,
+le nombre de requêtes et la limite — plutôt que de lancer un travail qui ne pourrait pas aboutir. Deux pratiques maintiennent une
+recherche bien en deçà de cette limite :
+
+- **Filtrez sur la tranche qui compte.** Restreignez les candidats à une entité, une période ou un
+  ensemble de documents plutôt que de parcourir tout un corpus pour répondre à une question sur une partie de celui-ci.
+- **Scindez la table selon la dimension sur laquelle vous filtrez toujours**, et recherchez dans la table pertinente. Réduire
+  le nombre de candidats est bien plus efficace que tout autre moyen disponible ici.
+
+Déclarer une **Largeur du vecteur** sur la colonne aide aussi : lorsqu'elle est déclarée, l'étape prend la largeur
+dans la déclaration au lieu d'échantillonner une ligne pour la découvrir. Consultez
+[Type de données vectorielles](/fr/guides/data/vector-data-type/#largeur-du-vecteur).
+
+## Ce qu'une colonne vectorielle ne peut pas faire
+
+Une colonne Vector est refusée comme clé de jointure, comme colonne de regroupement et comme cible d'agrégation — dans
+cette étape comme dans toutes les autres. Le message nomme la colonne et le rôle dans lequel elle a été utilisée, aussi bien lorsque
+vous enregistrez l'étape que lorsqu'une étape enregistrée plus tôt est exécutée. Joignez et regroupez plutôt sur les clés métier situées à côté
+du vecteur. Transporter un vecteur dans une étape comme colonne de sortie ordinaire est possible, de même que
+compter les lignes et compter les valeurs distinctes.
+
+## Voir aussi
+
+- [Type de données vectorielles](/fr/guides/data/vector-data-type/) — déclarer une colonne Vector, définir sa largeur
+  et y charger des plongements
+- [Spatial Find Nearest](/fr/reference/workflow-steps/spatial/spatial-find-nearest/) — la même logique de plus proche voisin
+  sur des géométries plutôt que sur des plongements
+- [Table Lookup](/fr/reference/workflow-steps/tables/table-lookup/) — rapatrie des colonnes descriptives
+  sur les lignes correspondantes
+- [Importer depuis Parquet](/fr/reference/workflow-steps/import/import-parquet/) — charge des plongements depuis un
+  fichier Parquet

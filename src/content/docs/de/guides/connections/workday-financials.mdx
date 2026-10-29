@@ -1,0 +1,127 @@
+---
+title: Mit Workday Financials verbinden
+description: Verbinden Sie PlaidCloud mit Workday Financial Management über einen Integrationssystembenutzer, rufen Sie Daten über einen Report-as-a-Service-Bericht ab und buchen Sie anschließend Journalbuchungen über SOAP.
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit Workday Financial Management über einen Integrationssystembenutzer (Integration System User, ISU) und einen vom Kunden bereitgestellten Report-as-a-Service-Bericht (RaaS), um Finanzdaten abzurufen und Buchungsjournale über die SOAP-API von Workday zurückzubuchen. Diese Anleitung behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen einen Sandbox-Tenant aus und arbeiten Sie bei jedem Buchungsstapel zuerst den unten beschriebenen Modus **Validate Only** durch, bevor Sie live buchen.
+</Aside>
+
+<Aside type="note">
+Dies ist eine andere Verbindung als der allgemeine [Workday-REST-Konnektor](/de/reference/connectors/rest/workday/), der die REST-API von Workday für HR- und Gehaltsabrechnungsdaten anspricht. Workday Financials verwendet stattdessen die SOAP-Webservices und das RaaS-Reporting von Workday – nutzen Sie diesen Konnektor für Finanzdaten und das Buchen von Journalen.
+</Aside>
+
+## Voraussetzungen
+
+In Workday benötigen Sie:
+
+- Einen **Integrationssystembenutzer (ISU)**, der PlaidCloud vorbehalten ist, mit einer Integration System Security Group, die ihm Zugriff auf die Finanzdaten und den Geschäftsprozess „Submit Accounting Journal“ gewährt.
+- Den **Tenant-Host** Ihres Workday (zum Beispiel `wd5-impl.workday.com`) und den **Tenant-Namen**.
+- Einen von Ihnen in Workday erstellten **Report-as-a-Service-Bericht (RaaS)**, der die zu importierenden Daten liefert und mit **Web Service**-Zugriff veröffentlicht ist, sodass PlaidCloud seine URL direkt aufrufen kann.
+
+<Aside type="note">
+Workday Financials stellt nicht wie NetSuite oder Business Central einen festen Satz vorgefertigter Entitäten bereit – stattdessen erstellen Sie die Extraktion als RaaS-Bericht in Workday (mit dem Berichtseditor von Workday) und geben PlaidCloud die URL dieses Berichts. So bestimmen Sie genau, welche Felder und Zeilen der Import liefert.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Workday Financials**.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `Workday Financials Prod`. |
+   | Tenant-Host | Ihr Workday-Host, z. B. `wd5-impl.workday.com`. |
+   | Tenant-Name | Der Name Ihres Workday-Tenants. |
+   | ISU-Benutzername | Der Benutzername des Integrationssystembenutzers. |
+   | ISU-Passwort | Das Passwort des Integrationssystembenutzers. |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Erstellen Sie in Workday einen kleinen RaaS-Bericht und veröffentlichen Sie ihn mit Web-Service-Zugriff.
+
+2. Fügen Sie einem Workflow einen Schritt **Import Workday Entity** hinzu, setzen Sie **Workday-Verbindung** auf Ihre Verbindung, **RaaS Report URL** auf die URL des Berichts und **Zieltabelle** auf eine Arbeitstabelle.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass ISU-Zugangsdaten, Tenant-Host und Berichts-URL korrekt sind. Ein Fehler benennt das Problem – falsche Zugangsdaten, ein falscher Tenant-Host oder ein ISU ohne Zugriff auf den Bericht.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Import Workday Entity** hinzu und legen Sie **Workday-Verbindung**, **RaaS Report URL** und **Zieltabelle** fest.
+
+2. Fügen Sie **Filter** hinzu, um den Abruf einzugrenzen – `company`, `ledger`, `period`, `accounting_date` (Bereich), `ledger_account` (Bereich) und `cost_center` werden als Berichtsparameter übergeben, wenn Ihr RaaS-Bericht passende Prompts definiert.
+
+3. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+<Aside type="caution">
+Filter erreichen nur einen Berichtsparameter, den Ihr RaaS-Bericht tatsächlich als Prompt definiert. Hat ein von Ihnen gesetzter Filter keinen passenden Prompt im Bericht, lehnt PlaidCloud ihn ab, statt ihn stillschweigend zu ignorieren – fügen Sie den Prompt zuerst in Workday zum Bericht hinzu.
+</Aside>
+
+## Journalbuchungen buchen
+
+Der Schritt **Workday Financials: Post Journal Entry** bucht Buchungsjournale über die gemeinsame ERP-Schreib-Pipeline von PlaidCloud mit der SOAP-Operation `Submit_Accounting_Journal` von Workday.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** – eine Zeile pro Journalbuchung – mit `journal_id` (Ihre Buchungskennung), `company`, `ledger`, `accounting_date` und `memo`.
+
+2. Erstellen Sie eine **Positionstabelle** – eine oder mehrere Zeilen pro `journal_id` – mit `ledger_account`, `debit`, `credit` und allen Worktag-Spalten (Kostenstelle, Projekt), die Ihre Journale benötigen.
+
+3. Fügen Sie einen Schritt **Workday Financials: Post Journal Entry** hinzu und legen Sie **Workday-Verbindung**, **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus – PlaidCloud erstellt und prüft jede Buchung ohne Ledger-Claim und ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro Buchung: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Beheben Sie jede Zeile mit `error` und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Stapel soll bei der ersten fehlgeschlagenen Buchung sofort stoppen.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+PlaidCloud ruft `Submit_Accounting_Journal` für jede Journalbuchung auf und fragt – weil die Genehmigungskette des Geschäftsprozesses von Workday ein eingereichtes Journal zurückhalten kann, bevor es tatsächlich gebucht wird – den Geschäftsprozessstatus der Buchung ab, bis ein Endzustand erreicht ist. Eine Buchung wird erst dann als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist – eine Buchung, die eingereicht ist, aber in einem Genehmigungsschritt festhängt, bleibt in Quarantäne und wird nicht als gebucht erfasst, sodass eine ausstehende Genehmigung nie unbemerkt als Erfolg durchgeht. Der Ledger-Claim von PlaidCloud verhindert, dass dieselbe Buchung bei einem wiederholten oder erneut ausgeführten Stapel zweimal eingereicht wird.
+
+### Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie ein gebuchtes Journal. Um eine Buchung zu korrigieren, buchen Sie eine neue Buchung mit gegenüber dem Original vertauschten Soll- und Habenbeträgen – eine **gebuchte Stornobuchung** –, statt das Original direkt zu bearbeiten. So bleibt der Prüfpfad von Workday erhalten, und es entspricht der Art, wie Korrekturen direkt in der Anwendung vorgenommen werden.
+
+### Funktionsgrenzen – vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Der Import hängt vollständig vom RaaS-Bericht ab, den Sie erstellen.** PlaidCloud hat keine vorgefertigten Workday-Financials-Entitäten – Felder, Prompts und Zugriffskontrolle des Berichts werden in Workday definiert, nicht durch diesen Konnektor. Eine Änderung am Bericht in Workday kann die Form Ihres Imports ändern, ohne dass sich auf der PlaidCloud-Seite etwas ändert.
+- **Die Genehmigung im Geschäftsprozess verursacht Verzögerungen.** Läuft Ihr Geschäftsprozess „Submit Accounting Journal“ über Genehmigungsschritte, kann eine gebuchte Buchung auf `pending` stehen, bis jemand sie in Workday genehmigt – die Abfrage des Endzustands wartet darauf, sodass eine Buchung deutlich länger dauern kann als ein Aufruf an ein ERP ohne Genehmigungskette.
+- **Dieser Konnektor unterscheidet sich vom allgemeinen [Workday-REST-Konnektor](/de/reference/connectors/rest/workday/).** Jener Konnektor spricht die REST-API von Workday (HR/Gehaltsabrechnung) an; verwenden Sie ihn nur, wenn Sie sich nicht mit Workday Financials verbinden.
+</Aside>
+
+## Verwandte Themen
+
+- [Workday-Financials-Konnektor](/de/reference/connectors/rest/workday-financials/) – Feldreferenz.
+- [Import Workday Entity](/de/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/de/reference/workflow-steps/workday-financials/workday-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) – der dauerhafte Nachweis jedes Workday-Financials-Buchungsversuchs und seines aktuellen Status.
+- [Eine Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

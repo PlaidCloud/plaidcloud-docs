@@ -1,0 +1,146 @@
+---
+title: Eine NetSuite-Journalbuchung buchen
+description: Konfigurieren Sie den Workflow-Schritt „Post NetSuite Journal Entry“ – ordnen Sie Kopf- und Positionsfelder zu, prüfen Sie einen Stapel in der Vorschau, validieren Sie ihn, buchen Sie ihn und lesen Sie die Ergebnistabelle.
+sidebar:
+  label: NetSuite-Journalbuchungen buchen
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Buchen Sie Journalbuchungen aus PlaidCloud-Projekttabellen mit dem Workflow-Schritt **Post NetSuite Journal Entry** in NetSuite. Dieser Leitfaden erstellt einen Stapel aus einer Kopftabelle und einer Positionstabelle, prüft ihn in der Vorschau, ohne NetSuite zu berühren, bucht ihn anschließend und liest das Ergebnis zurück.
+
+<Aside type="caution">
+Durchlaufen Sie für jeden Stapel den unten beschriebenen Abschnitt **Vorschau und Validierung**, bevor Sie live buchen, und gleichen Sie bei der ersten Ausführung gegen ein echtes Konto einige Buchungen direkt in NetSuite ab.
+</Aside>
+
+## Voraussetzungen
+
+- Eine funktionierende [NetSuite-Verbindung](/de/guides/connections/netsuite/) mit einer Rolle, die Journalbuchungen erstellen darf (**Create**-Zugriff auf den Datensatz „Journal Entry“, zusätzlich zur REST/OAuth-Einrichtung, die der Leitfaden zum Lesen behandelt).
+- Zwei Quelltabellen in Ihrem Projekt:
+  - Eine **Kopftabelle** mit einer Zeile pro Journalbuchung.
+  - Eine **Positionstabelle** mit einer oder mehreren Soll-/Haben-Zeilen pro Journalbuchung.
+
+<Aside type="note">
+Die Kopf- und Positionstabelle können von beliebiger Stelle in Ihrem Workflow stammen – aus einem Import, einer vorherigen Transformation oder einem Pivot. Die einzige Voraussetzung ist, dass beide eine Spalte „Journal ID“ enthalten, die jede Position mit ihrer Kopfzeile verknüpft.
+</Aside>
+
+## Kopf- und Positionstabelle aufbereiten
+
+<Steps>
+
+1. Erstellen oder importieren Sie eine **Kopftabelle** mit einer Zeile pro Journalbuchung. Sie benötigt mindestens Folgendes:
+
+   | Spalte | Zuordnung zu | Erforderlich |
+   |---|---|---|
+   | Eine Journalkennung | Journal ID | Ja |
+   | Die NetSuite-Tochtergesellschaft | Subsidiary | Ja |
+   | Das Datum der Buchung | Buchungsdatum | Ja |
+   | Die NetSuite-Währung | Currency | Nein |
+   | Ein Memo auf Buchungsebene | Memo | Nein |
+   | Eine vom Aufrufer vergebene externe ID | External ID | Nein |
+
+2. Erstellen oder importieren Sie eine **Positionstabelle** mit einer oder mehreren Zeilen pro Journalbuchung, die dieselbe Journalkennung wie ihre Kopfzeile verwendet:
+
+   | Spalte | Zuordnung zu | Erforderlich |
+   |---|---|---|
+   | Die Journalkennung | Journal ID | Ja |
+   | Das Hauptbuchkonto | Account | Ja |
+   | Der Sollbetrag (0, falls keiner) | Debit | Ja |
+   | Der Habenbetrag (0, falls keiner) | Credit | Ja |
+   | Ein Memo auf Positionsebene | Memo | Nein |
+   | Abteilung, Klasse, Standort, Entität | Department / Class / Location / Entity | Nein |
+
+   <Aside type="caution">
+   Die Positionen jeder Journalbuchung müssen ausgeglichen sein – die Summe der Sollbeträge muss centgenau der Summe der Habenbeträge entsprechen. Eine nicht ausgeglichene Buchung wird nie an NetSuite gesendet, sondern stattdessen als Fehler erfasst (siehe [Vorschau und Validierung](#vorschau-und-validierung)).
+   </Aside>
+
+3. Gruppieren Sie die Beträge auf diesen beiden Tabellen auf der Ebene, auf der Sie buchen – eine Buchung pro Tag, pro Beleg oder pro Stapel – mit Ihren gewohnten [Tabellenschritten](/de/reference/workflow-steps/tables/) (ein Pivot, eine Gruppierung mit Aggregation oder ein Join). Die Journal ID verknüpft eine Gruppe von Positionen mit ihrer Kopfzeile. Bilden Sie sie daher als Schlüssel, der pro Journalbuchung eindeutig ist und von allen zugehörigen Positionen geteilt wird.
+
+</Steps>
+
+## Den Schritt konfigurieren
+
+<Steps>
+
+1. Fügen Sie Ihrem Workflow einen Schritt **Post NetSuite Journal Entry** hinzu.
+
+2. Legen Sie auf der Registerkarte **Connection** unter **NetSuite-Verbindung** Ihre NetSuite-Verbindung fest und wählen Sie eine **Umgebung**.
+
+3. Auf der Registerkarte **Daten**:
+
+   - Legen Sie **Journalbuchungs-Kopftabelle** und **Journalbuchungs-Positionstabelle** auf die oben erstellten Tabellen fest.
+   - Lassen Sie **Test Only Mode** vorerst aktiviert – siehe [Vorschau und Validierung](#vorschau-und-validierung).
+   - Lassen Sie **Continue posting remaining entries if one entry fails** aktiviert, es sei denn, ein Stapel soll bei der ersten fehlerhaften Buchung sofort anhalten.
+   - Lassen Sie **Submit Asynchronously** deaktiviert, es sei denn, Sie benötigen für einen Stapel mit hohem Volumen ausdrücklich den asynchronen Annahmepfad von NetSuite – siehe [Asynchrone Übermittlung](#asynchrone-übermittlung) weiter unten.
+   - Legen Sie als **Buchungsergebnistabelle** eine Tabelle fest, die PlaidCloud erstellen oder überschreiben kann. Sie benötigen sie bei jeder Ausführung, nicht nur bei der ersten – siehe [Die Ergebnistabelle lesen](#die-ergebnistabelle-lesen).
+
+4. Ordnen Sie auf der Registerkarte **Kopfzuordnung** die Spalten Ihrer Kopftabelle den Feldern Journal ID, Subsidiary, Buchungsdatum und (falls vorhanden) Currency, Memo und External ID zu. Verwenden Sie **Kopffilter**, wenn Sie nur eine Teilmenge der Kopfzeilen buchen möchten.
+
+5. Ordnen Sie auf der Registerkarte **Zeilenzuordnung** die Spalten Ihrer Positionstabelle den Feldern Journal ID, Account, Debit, Credit und (falls vorhanden) Memo, Department, Class, Location und Entity zu. Verwenden Sie **Zeilenfilter** auf dieselbe Weise.
+
+</Steps>
+
+<Aside type="note">
+Jedes Feld mit interner ID – Subsidiary, Account, Currency, Department, Class, Location, Entity – erwartet die interne ID von NetSuite, nicht den Anzeigenamen. Enthalten Ihre Quelldaten stattdessen den Anzeigenamen, lösen Sie ihn zuerst in die interne ID auf (über einen Lookup gegen eine kleine, aus NetSuite bezogene Referenztabelle oder über einen Join auf eine Tabelle, die Sie selbst pflegen).
+</Aside>
+
+## Vorschau und Validierung
+
+Führen Sie den Schritt mit aktiviertem **Test Only Mode** aus. PlaidCloud erstellt jede Journalbuchung aus Ihren zugeordneten Daten und führt dieselben Prüfungen durch wie vor dem Buchen – ausgeglichene Soll- und Habenbeträge, vorhandene Pflichtfelder, ein gültiges Buchungsdatum –, ohne NetSuite auch nur ein einziges Mal aufzurufen. Es wird nichts gebucht.
+
+<Steps>
+
+1. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Öffnen Sie die Ergebnistabelle und prüfen Sie, dass jede Zeile, die Sie buchen wollten, `status = validated` zeigt. Jede Zeile mit `error` nennt die Journal ID der Buchung und das Problem – häufig eine nicht ausgeglichene Buchung, ein fehlendes Account oder ein leeres Subsidiary oder Buchungsdatum.
+
+3. Korrigieren Sie bei jeder `error`-Zeile die Quelldaten (oder Ihre Zuordnungen und Filter) und führen Sie den Schritt erneut aus, bis der Stapel fehlerfrei validiert wird.
+
+</Steps>
+
+## Den Stapel buchen
+
+Sobald ein Stapel fehlerfrei validiert wird, deaktivieren Sie **Test Only Mode** und führen den Schritt erneut aus. Diesmal bucht PlaidCloud jede validierte Buchung tatsächlich in NetSuite.
+
+<Aside type="caution">
+Buchen ist nicht dasselbe wie erneutes Validieren – führen Sie nach jeder Änderung an Ihren Quelldaten oder Zuordnungen den Schritt immer erneut im Test Only Mode aus und deaktivieren Sie ihn erst, wenn Sie dem Ergebnis vertrauen. Ein Schritt, der unbeaufsichtigt nach Zeitplan läuft, sollte so behandelt werden wie jeder andere unbeaufsichtigte Schreibzugriff auf Ihre Bücher.
+</Aside>
+
+## Asynchrone Übermittlung
+
+**Submit Asynchronously** sendet jede Buchung mit dem asynchronen Accept-Header von NetSuite, statt auf ein synchrones Erstellen mit anschließendem Zurücklesen zu warten. NetSuite stellt die Buchung in eine Warteschlange und antwortet sofort; PlaidCloud erfasst sie mit einer Übermittlungsreferenz als `pending` statt als `posted` oder `error`.
+
+<Aside type="caution">
+**Derzeit löst nichts eine ausstehende Buchung automatisch auf.** Erst die erneute Ausführung dieses Schritts löst sie auf – der Schritt sucht eine ausstehende Buchung anhand ihrer Übermittlungsreferenz und erfasst ihr nun endgültiges Ergebnis (`posted` oder `error`). Wenn Sie Submit Asynchronously aktivieren, bauen Sie die erneute Ausführung des Schritts in Ihren Workflow ein (eine geplante Wiederholung oder einen nachfolgenden Schritt im selben Workflow), statt jede `pending`-Zeile als abgeschlossen zu betrachten. Lassen Sie diese Option deaktiviert, es sei denn, Sie benötigen sie ausdrücklich für einen Stapel mit hohem Volumen, bei dem der synchrone Pfad zu langsam ist.
+</Aside>
+
+## Die Ergebnistabelle lesen
+
+Die Ergebnistabelle enthält eine Zeile pro versuchter Journalbuchung, unabhängig vom Modus, in dem der Schritt lief:
+
+| Spalte | Beschreibung |
+|---|---|
+| journal_id | Die Journal ID aus Ihrer Kopftabelle. |
+| external_id | Die externe ID, die für diesen Buchungsversuch verwendet wurde (siehe unten). |
+| internal_id | Die interne ID von NetSuite für die erstellte Buchung oder, solange `pending`, die asynchrone Übermittlungsreferenz. Leer im Test Only Mode und bei einem Fehler. |
+| status | `validated`, `posted`, `pending` (Submit Asynchronously hat die Buchung angenommen, aber NetSuite hat sie noch nicht bestätigt) oder `error`. |
+| message | Fehlerdetails bei `error`. Leer bei `posted`/`validated`. |
+
+Bauen Sie nachgelagerte Schritte – eine Benachrichtigung bei jeder `error`-Zeile oder einen Join zurück auf Ihre Kopftabelle, um `internal_id` festzuhalten – auf dieser Tabelle auf und nicht auf dem eigenen Ausführungsstatus des Schritts, da eine fehlerhafte Buchung in einem großen Stapel den gesamten Schritt nicht fehlschlagen lässt, wenn **Continue posting remaining entries** aktiviert ist.
+
+## Einen Stapel sicher erneut ausführen
+
+Jede Buchung wird mit einer deterministischen externen ID gebucht, die aus Ihrem Projekt, der Verbindung, der Journal ID, dem Buchungsdatum und den Positionsbeträgen gebildet wird. Wird der Schritt für eine **unveränderte** Buchung erneut ausgeführt, verwendet er dieselbe externe ID, und die eigene Behandlung externer IDs in NetSuite verhindert ein Duplikat – die erneute Ausführung eines Workflows nach einem vorübergehenden Fehler ist daher für die unveränderten Buchungen unbedenklich.
+
+<Aside type="caution">
+Dieser Schutz gilt nur für eine unveränderte Buchung. Wenn Sie die Positionen einer Buchung ändern – ein anderer Betrag, eine hinzugefügte oder entfernte Position – und den Schritt erneut ausführen, berechnet PlaidCloud eine neue externe ID, und NetSuite erfasst eine **zweite** Journalbuchung statt einer Aktualisierung der ersten. Um eine bereits gebuchte Buchung zu korrigieren, korrigieren Sie sie direkt in NetSuite. Wenn Sie in der Spalte „External ID“ der Kopftabelle einen eigenen Wert setzen, überschreibt er den von PlaidCloud generierten – falls die externen IDs Ihrem eigenen Schema folgen sollen.
+</Aside>
+
+## Verwandte Themen
+
+- [Verbindung zu NetSuite herstellen](/de/guides/connections/netsuite/) – richtet die Verbindung ein, über die dieser Schritt bucht
+- [Referenz zu „Post NetSuite Journal Entry“](/de/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) – vollständige Feld- und Konfigurationsreferenz
+- [Beispiele für NetSuite-SuiteQL-Abfragen](/de/guides/connections/netsuite-financial-queries/) – rufen Sie die Tochtergesellschaften, Konten und Dimensionen ab, die Sie als interne IDs benötigen
+- [Erweiterte Verwendung des Data Mapper](/de/reference/workflow-steps/common/advanced-data-mapper-usage/)

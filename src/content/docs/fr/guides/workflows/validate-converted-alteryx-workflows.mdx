@@ -1,0 +1,177 @@
+---
+title: Valider les workflows Alteryx convertis
+description: Validez les workflows Alteryx convertis grâce à des contrôles structurels, des contrôles de parité des sorties, la validation des macros et la revue des artefacts.
+sidebar:
+  order: 31
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/validate-converted-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+La validation confirme qu'un workflow Alteryx converti est prêt à s'exécuter dans PlaidCloud et, lorsque les sorties attendues sont disponibles, qu'il produit les mêmes résultats métier.
+
+Utilisez ce guide après avoir importé un workflow, une application ou une macro dans PlaidCloud.
+
+<Aside type="note">
+  La parité des sorties signifie la concordance du schéma, du nombre de lignes et des valeurs des lignes. L'ordre des lignes n'a pas besoin de correspondre, sauf si le workflow utilise un tri dans le cadre de la logique métier.
+</Aside>
+
+## Choisir un niveau de validation
+
+La plupart des programmes de migration utilisent deux niveaux de validation.
+
+### Validation structurelle
+
+La validation structurelle confirme que PlaidCloud a créé un workflow complet à partir de la conception Alteryx. Utilisez ce niveau lorsque vous mesurez la préparation à la migration, préparez un inventaire de portefeuille ou convertissez des workflows avant que les sorties attendues ne soient disponibles.
+
+Vérifiez que :
+
+1. Le workflow converti s'ouvre dans le Concepteur visuel de workflow.
+2. Le graphe du workflow contient les branches, jointures, macros et sorties attendues.
+3. Tous les fichiers d'entrée requis ont été téléversés vers le chemin Document sélectionné.
+4. Toutes les macros requises ont été importées ou générées.
+5. Les entrées et sorties de macro sont connectées.
+6. Les questions de l'application analytique sont devenues des variables de workflow avec des champs de saisie contrôlés.
+7. L'exécution du workflow se termine et signale des remarques de préparation claires pour les conditions dépendantes des données.
+
+### Validation de la parité des sorties
+
+La validation de la parité des sorties confirme que le workflow converti produit les mêmes résultats tabulaires que le workflow Alteryx.
+
+Comparez :
+
+1. Le schéma de la table de sortie.
+2. Le nombre de lignes.
+3. Les valeurs des lignes.
+4. La gestion des valeurs nulles.
+5. La précision numérique et les arrondis.
+6. Les valeurs de date et d'heure.
+7. Les valeurs de géométrie lorsque des sorties spatiales font partie du résultat.
+
+Ignorez l'ordre des lignes, sauf si le workflow trie explicitement les données ou si le processus en aval dépend de lignes ordonnées.
+
+Sur le moteur Lakehouse v2 (StarRocks) de PlaidCloud, ces conversions couramment utilisées sont vérifiées valeur par valeur pour correspondre à la sortie d'Alteryx ; vous pouvez donc vous attendre à des résultats concordants sans traitement particulier :
+
+- Mise en casse de titre du texte.
+- Distance sphérique (grand cercle) entre des points.
+- Covariance d'échantillon.
+- Somme et moyenne sur des valeurs numériques stockées sous forme de texte.
+- Découpage de texte en colonnes à l'aide d'une expression régulière.
+- Imputation par la moyenne des valeurs manquantes.
+
+<Aside type="tip" title="Reconvertissez avant de comparer la précision numérique">
+Une colonne Double d'Alteryx se convertit désormais en colonne numérique 64 bits au lieu de 32 bits ; un workflow converti avant ce correctif peut donc présenter des arrondis sur les valeurs au-delà d'environ 7 chiffres significatifs. Réimportez-le avant de comparer la précision numérique, plutôt que de considérer la conversion antérieure comme votre référence. Consultez [Les colonnes Double d'Alteryx conservent leur pleine précision](/fr/guides/workflows/migrate-alteryx-workflows/#les-colonnes-double-dalteryx-conservent-leur-pleine-précision).
+</Aside>
+
+## Prouvez votre migration
+
+**Prouvez votre migration** compare ce qu'un workflow converti a produit avec les sorties produites par Alteryx, afin que vous n'ayez pas à les comparer à la main. Dans un espace de travail arrivé via le rapport de couverture Alteryx, cette action apparaît dans la liste de contrôle de l'accueil sous le nom **Prouvez votre migration** avec un bouton **Comparer**, et le rapport de couverture propose le même bouton.
+
+1. Choisissez **Importer une sortie Alteryx…** et importez chaque fichier de sortie produit par votre workflow Alteryx. **Ajouter une autre sortie** ajoute une paire supplémentaire.
+2. Pour chaque paire, choisissez la **Sortie convertie** et la **Sortie Alteryx** avec laquelle elle doit correspondre.
+3. Choisissez **Comparer**.
+
+PlaidCloud vérifie d'abord les nombres de lignes, puis chaque colonne, et affiche ensuite les lignes présentes d'un seul côté (jusqu'à 20 de chaque), de sorte qu'une différence est rattachée à sa colonne. Chaque sortie indique l'un des résultats suivants.
+
+| Résultat | Signification |
+|---|---|
+| *Correspond à `<output>` : `<n>` lignes des deux côtés, chaque colonne identique.* | Le même nombre de lignes des deux côtés et chaque colonne identique. |
+| *Correspond à `<output>` sur tout ce qui a été comparé : `<n>` lignes des deux côtés.* | Tout ce qui a été comparé correspond. Une remarque telle que *3 colonnes supplémentaires n'ont pas été comparées.* compte les colonnes laissées de côté. |
+| *Diffère de `<output>` : `<n>` lignes converties, `<m>` lignes provenant d'Alteryx.* | Les nombres de lignes, les colonnes ou les valeurs diffèrent. Le rapport liste les colonnes présentes d'un seul côté et, pour chaque colonne, ce qui diffère (par exemple la somme, le minimum ou le nombre de valeurs distinctes). |
+
+Un côté de plus de 5 millions de lignes est trop volumineux pour être comparé ici ; comparez plutôt un extrait filtré de chacun. La ligne de la liste de contrôle de l'accueil affiche le dernier résultat : *Les sorties correspondent*, *Les sorties correspondent sur les colonnes comparées* ou *Certaines sorties diffèrent*.
+
+Sur votre propre [entrepôt Snowflake ou Databricks](/fr/guides/connections/external-lakehouse/#coût-de-lentrepôt-par-exécution), la fenêtre affiche aussi le **Coût de l'entrepôt** de la dernière exécution, marqué *attribué* ou *estimé*, ainsi qu'une estimation pour la prochaine exécution.
+
+## Valider les entrées
+
+Avant de comparer les sorties, vérifiez que le workflow converti utilise les mêmes données sources :
+
+1. Ouvrez le dossier Document sélectionné lors de l'import.
+2. Vérifiez que les fichiers requis et les fichiers associés sont présents.
+3. Vérifiez que les motifs d'entrée dynamique résolvent les fichiers voulus.
+4. Vérifiez que les identifiants de base de données ou d'API sont disponibles dans l'environnement cible.
+5. Vérifiez que les variables de workflow correspondent aux valeurs utilisées lors de l'exécution Alteryx.
+
+Des entrées alignées rendent la validation plus rapide et gardent les comparaisons centrées sur le comportement du workflow.
+
+## Valider les macros
+
+Les macros Alteryx converties deviennent des workflows de macro PlaidCloud. Validez la macro et le workflow appelant ensemble :
+
+1. Ouvrez le workflow de macro généré.
+2. Vérifiez que chaque entrée de macro possède une étape d'entrée de macro correspondante.
+3. Vérifiez que chaque sortie de macro possède une étape de sortie de macro correspondante.
+4. Exécutez un workflow qui appelle la macro.
+5. Vérifiez que les exécutions répétées ou simultanées restent isolées les unes des autres.
+6. Comparez les données de sortie de la macro lorsque vous disposez des sorties de macro attendues.
+7. Pour une macro par lots, vérifiez que chaque passe apparaît dans le résultat rassemblé, y compris pour une exécution dont la macro ne produit aucune passe : celle-ci doit renvoyer un résultat vide plutôt que des lignes restantes d'une exécution précédente. Si la logique de la macro dépend de la façon dont une valeur Double arrive, revérifiez-la : une entrée de macro Double arrive désormais sous forme de nombre plutôt que de texte.
+
+## Valider les applications analytiques
+
+Les applications analytiques Alteryx converties utilisent des variables de workflow pour la saisie utilisateur contrôlée.
+
+Vérifiez que :
+
+- Les zones de texte, entrées numériques, dates, sélecteurs de fichier, sélecteurs de dossier, listes, arborescences, boutons radio, cases à cocher et listes déroulantes exposent les contrôles de saisie attendus.
+- Les valeurs par défaut correspondent à l'application d'origine lorsque des valeurs par défaut existaient.
+- Les valeurs requises sont définies avant l'exécution du workflow.
+- Les conditions produisent les messages, avertissements ou comportements d'arrêt attendus pour les valeurs de saisie configurées.
+
+## Valider les sorties spécialisées
+
+Certains workflows convertis créent des artefacts plutôt que de simples tables. Validez ces sorties selon l'usage qui en est fait.
+
+Pour les rapports, PDF, images, graphiques et cartes :
+
+1. Vérifiez que l'artefact a été créé au chemin Document attendu.
+2. Vérifiez que l'artefact contient les données, libellés, images et la mise en page attendus.
+3. Vérifiez que les consommateurs en aval peuvent ouvrir ou utiliser l'artefact.
+4. Comparez-le à un artefact attendu lorsqu'il en existe un.
+
+Pour les workflows de NLP, de correspondance approximative et spatiaux :
+
+1. Vérifiez que l'exécuteur de travaux géré s'est terminé avec succès.
+2. Examinez les remarques de l'exécuteur.
+3. Comparez les tables ou scores générés aux sorties attendues.
+4. Documentez toute différence d'artefact cloud natif lorsque la sortie PlaidCloud diffère intentionnellement d'une sortie propre à Alteryx Desktop.
+
+Pour les workflows d'apprentissage automatique :
+
+1. Vérifiez que l'étape ML Train a écrit sa table de modèle d'une seule ligne, et examinez les métriques d'entraînement enregistrées.
+2. Comparez la colonne de prédiction de ML Score aux scores d'Alteryx. Pour les modèles XGBoost, attendez-vous à une équivalence statistique plutôt qu'à des valeurs identiques, et examinez les remarques de mappage de l'étape.
+
+## Résoudre les différences de validation
+
+Lorsque la validation révèle une différence, examinez les éléments dans cet ordre :
+
+1. Fichiers d'entrée manquants ou différents.
+2. Valeurs de variables de workflow différentes.
+3. Instantanés de base de données ou réponses d'API différents.
+4. Différences de date, de fuseau horaire, de valeurs nulles, d'arrondi ou de classement des chaînes.
+5. Différences de référence spatiale ou de format de géométrie.
+6. Différences d'artefacts cloud natifs pour les rapports, cartes, formats propriétaires ou moteurs de rendu propres au bureau.
+
+Après avoir corrigé la cause, relancez le workflow et répétez la comparaison.
+
+## Promouvoir un workflow validé
+
+Lorsque la validation réussit :
+
+1. Déplacez ou copiez le workflow vers le projet de production si la migration a été réalisée dans un projet de préproduction.
+2. Vérifiez les chemins Document et les identifiants de production.
+3. Planifiez le workflow.
+4. Surveillez les premières exécutions en production dans l'historique des exécutions.
+5. Conservez les résultats de validation avec le dossier de migration pour l'audit et le support.
+
+## Guides associés
+
+- [Migrer des workflows Alteryx](/fr/guides/workflows/migrate-alteryx-workflows/)
+- [Liste de contrôle de préparation à la migration Alteryx](/fr/guides/workflows/alteryx-migration-readiness-checklist/)
+- [Empaqueter les dépendances Alteryx](/fr/guides/workflows/package-alteryx-dependencies/)
+- [Utiliser les applications Alteryx converties](/fr/guides/workflows/use-converted-alteryx-apps/)
+- [Orchestrer les migrations Alteryx avec MCP](/fr/guides/workflows/orchestrate-alteryx-migrations-with-mcp/)
+- [Valider les rapports et artefacts Alteryx](/fr/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/)
+- [Créer une macro](/fr/guides/workflows/create-a-macro/)
+- [Exécuter un workflow](/fr/guides/workflows/run-a-workflow/)

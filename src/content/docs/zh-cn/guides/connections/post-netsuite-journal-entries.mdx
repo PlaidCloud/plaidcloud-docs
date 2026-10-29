@@ -1,0 +1,146 @@
+---
+title: 过账 NetSuite 日记账分录
+description: 配置 Post NetSuite Journal Entry 步骤：映射标题和行字段，预览并验证批次，然后过账并查看结果表。
+sidebar:
+  label: 过账 NetSuite 日记账分录
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+使用 **Post NetSuite Journal Entry** 步骤，将 PlaidCloud 项目表中的日记账分录过账到 NetSuite。本指南根据标题表和行表构建批次，先在不接触 NetSuite 的情况下预览，再执行过账并读取结果。
+
+<Aside type="caution">
+在正式过账之前，请对每个批次完成下面的**预览和验证**；首次对真实账户运行时，请在 NetSuite 中直接核对少量过账记录。
+</Aside>
+
+## 前提条件
+
+- 一个可用的 [NetSuite 连接](/zh-cn/guides/connections/netsuite/)，其角色可以创建日记账分录（除了读取端指南介绍的 REST/OAuth 设置外，还需要对日记账分录记录具有 **Create** 访问权限）。
+- 项目中的两个源表：
+  - 一个**标题表**，每笔日记账分录一行。
+  - 一个**行表**，每笔日记账分录有一行或多行借/贷记录。
+
+<Aside type="note">
+标题表和行表可以来自工作流中的任何位置，例如导入、先前的转换或透视。唯一的要求是两者都包含一个日记账 ID 列，用于将每一行关联回其标题行。
+</Aside>
+
+## 构建标题表和行表
+
+<Steps>
+
+1. 构建或导入一个**标题表**，每笔日记账分录一行。至少需要以下列：
+
+   | 列 | 映射到 | 是否必需 |
+   |---|---|---|
+   | 日记账标识符 | Journal ID | 是 |
+   | NetSuite 子公司 | Subsidiary | 是 |
+   | 分录日期 | 过账日期 | 是 |
+   | NetSuite 货币 | Currency | 否 |
+   | 分录级备注 | Memo | 否 |
+   | 调用方提供的外部 ID | External ID | 否 |
+
+2. 构建或导入一个**行表**，每笔日记账分录有一行或多行，并与其标题行使用相同的日记账标识符：
+
+   | 列 | 映射到 | 是否必需 |
+   |---|---|---|
+   | 日记账标识符 | Journal ID | 是 |
+   | 总账科目 | Account | 是 |
+   | 借方金额（无则为 0） | Debit | 是 |
+   | 贷方金额（无则为 0） | Credit | 是 |
+   | 行级备注 | Memo | 否 |
+   | 部门、类别、地点、实体 | Department / Class / Location / Entity | 否 |
+
+   <Aside type="caution">
+   每笔日记账分录的各行必须平衡：借方合计必须精确到分地等于贷方合计。不平衡的分录绝不会发送到 NetSuite，而是记录为错误（参见[预览和验证](#预览和验证)）。
+   </Aside>
+
+3. 按您过账的粒度（每天一笔分录、每份单据一笔分录或每个批次一笔分录），使用常用的[表步骤](/zh-cn/reference/workflow-steps/tables/)（透视、分组聚合或联接）将金额汇总到这两个表中。日记账 ID 是将一组行与其标题行关联起来的依据，因此请将其构建为每笔日记账分录唯一、且属于该分录的所有行共享的键。
+
+</Steps>
+
+## 配置步骤
+
+<Steps>
+
+1. 在工作流中添加一个 **Post NetSuite Journal Entry** 步骤。
+
+2. 在**连接**选项卡上，将 **NetSuite 连接**设置为您的 NetSuite 连接，并选择一个**环境**。
+
+3. 在**数据**选项卡上：
+
+   - 将 **Journal Entry Header Table** 和 **Journal Entry Lines Table** 设置为上面构建的表。
+   - 暂时保持勾选 **Test Only Mode**，参见[预览和验证](#预览和验证)。
+   - 保持勾选 **Continue posting remaining entries if one entry fails**，除非您希望批次在遇到第一笔错误分录时立即停止。
+   - 保持关闭 **Submit Asynchronously**，除非高容量批次确实需要使用 NetSuite 的异步接受路径，参见下文的[异步提交](#异步提交)。
+   - 将 **Posting Result Table** 设置为 PlaidCloud 可以创建或覆盖的表。每次运行都需要它，而不仅仅是第一次，参见[查看结果表](#查看结果表)。
+
+4. 在**标题映射**选项卡上，将标题表的列映射到 Journal ID、Subsidiary、过账日期，以及（如果有）Currency、Memo 和 External ID。如果只想过账部分标题行，请使用**标题筛选器**。
+
+5. 在**行映射**选项卡上，将行表的列映射到 Journal ID、Account、Debit、Credit，以及（如果有）Memo、Department、Class、Location 和 Entity。请以同样的方式使用**行筛选器**。
+
+</Steps>
+
+<Aside type="note">
+所有内部 ID 字段（Subsidiary、Account、Currency、Department、Class、Location、Entity）都采用 NetSuite 的内部 ID，而不是其显示名称。如果源数据中是显示名称，请先将其解析为内部 ID（对从 NetSuite 提取的小型参考表进行查找，或与您维护的参考表联接）。
+</Aside>
+
+## 预览和验证
+
+勾选 **Test Only Mode** 后运行该步骤。PlaidCloud 会根据映射的数据构建每笔日记账分录，并执行与过账前相同的检查，包括借贷平衡、必填字段是否齐全、过账日期是否有效，但不会向 NetSuite 发出任何调用。不会有任何内容被过账。
+
+<Steps>
+
+1. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+2. 打开结果表，确认您预期要过账的每一行都显示 `status = validated`。任何显示 `error` 的行都会指出该分录的 Journal ID 及问题，常见问题有分录不平衡、缺少 Account，或 Subsidiary 或过账日期为空。
+
+3. 针对每个 `error` 行，修复源数据（或映射和筛选器）并重新运行，直到批次验证无误。
+
+</Steps>
+
+## 过账批次
+
+批次验证无误后，取消勾选 **Test Only Mode** 并再次运行该步骤。这一次 PlaidCloud 会将每笔已验证的分录实际过账到 NetSuite。
+
+<Aside type="caution">
+过账不等同于重新验证：源数据或映射发生任何更改后，请务必先在 Test Only Mode 下重新运行，确认结果无误后再将其关闭。计划无人值守运行的步骤，应与对待账簿的任何其他无人值守写入操作一样谨慎。
+</Aside>
+
+## 异步提交
+
+**Submit Asynchronously** 使用 NetSuite 的异步接受标头发送每笔分录，而不是等待同步创建并读回。NetSuite 将分录排入队列并立即应答；PlaidCloud 将其记录为带有提交引用的 `pending`，而不是 `posted` 或 `error`。
+
+<Aside type="caution">
+**目前没有任何机制会自动解决待处理分录。** 重新运行此步骤才能解决：该步骤会根据提交引用查找待处理分录，并记录其最终结果（`posted` 或 `error`）。如果启用 Submit Asynchronously，请在工作流中安排重新运行该步骤（计划重新运行，或在同一工作流后面添加后续步骤），而不要把每个 `pending` 行都当作已完成。除非高容量批次的同步路径太慢、确实需要它，否则请保持关闭。
+</Aside>
+
+## 查看结果表
+
+无论步骤以哪种模式运行，结果表中每笔尝试过账的日记账分录占一行：
+
+| 列 | 说明 |
+|---|---|
+| journal_id | 标题表中的 Journal ID。 |
+| external_id | 本次过账尝试使用的外部 ID（见下文）。 |
+| internal_id | NetSuite 为所创建分录生成的内部 ID；处于 `pending` 状态时为异步提交引用。在 Test Only Mode 下以及出错时为空。 |
+| status | `validated`、`posted`、`pending`（Submit Asynchronously 已被接受，但 NetSuite 尚未确认）或 `error`。 |
+| message | 出错（`error`）时的错误详情。`posted`/`validated` 时为空。 |
+
+请基于此表构建下游步骤，例如对任何 `error` 行发送通知，或联接回标题表以记录 `internal_id`，而不要依赖该步骤自身的运行状态，因为开启 **Continue posting remaining entries** 后，大批次中的一笔错误分录不会导致整个步骤失败。
+
+## 安全地重新运行批次
+
+每笔分录都使用确定性的外部 ID 过账，该 ID 由项目、连接、Journal ID、过账日期及其行金额构建而成。对**未更改**的分录重新运行该步骤会复用同一个外部 ID，NetSuite 自身的外部 ID 处理机制会避免创建重复记录，因此在出现暂时性故障后重新运行工作流，对未更改的分录是安全的。
+
+<Aside type="caution">
+这种保护仅适用于未更改的分录。如果您编辑了分录的行（金额不同、增加或删除了行）并重新运行该步骤，PlaidCloud 会计算出新的外部 ID，NetSuite 会将其记录为**第二笔**日记账分录，而不是对第一笔的更新。要更正已过账的分录，请直接在 NetSuite 中更正。如果需要外部 ID 遵循您自己的方案，可以在标题表的 External ID 列中设置自己的值，以覆盖 PlaidCloud 生成的值。
+</Aside>
+
+## 相关内容
+
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/)：设置此步骤用于过账的连接
+- [Post NetSuite Journal Entry 参考](/zh-cn/reference/workflow-steps/netsuite/post-netsuite-journal-entry/)：完整的字段和配置参考
+- [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)：提取您需要作为内部 ID 的子公司、科目和维度
+- [高级数据映射器用法](/zh-cn/reference/workflow-steps/common/advanced-data-mapper-usage/)

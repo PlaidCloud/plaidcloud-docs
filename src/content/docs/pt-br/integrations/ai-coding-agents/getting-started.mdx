@@ -1,0 +1,170 @@
+---
+title: Primeiros Passos com Agentes de Codificação de IA
+description: "Visão geral do servidor MCP do PlaidCloud: o que ele expõe, as opções de autenticação e o básico de que todo cliente de agente de IA precisa."
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/getting-started.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A forma mais rápida de se conectar é dentro do próprio PlaidCloud: clique em **Conecte sua IA** na barra de ferramentas do cabeçalho, logo à esquerda do alternador de tema claro/escuro, escolha o cliente que você usa e siga as etapas exibidas, incluindo a URL do servidor MCP do seu espaço de trabalho, já preenchida. Ela fica disponível sempre que o seu espaço de trabalho tem o direito de uso de IA habilitado. O restante desta página e as páginas por cliente que vêm em seguida continuam sendo a referência: continue lendo se você não estiver na interface web ou se quiser uma visão completa da autenticação e do que o servidor expõe.
+
+## O Que É o Servidor MCP?
+
+O [Model Context Protocol](https://modelcontextprotocol.io) é um padrão aberto que permite que agentes de IA se comuniquem com ferramentas e dados externos. O PlaidCloud executa um servidor MCP em cada espaço de trabalho, que encapsula os mesmos auxiliares centrais usados pela API REST, agrupados por intenção (`find`, `describe`, `upsert`, `run`, `organize`), para que um agente possa navegar pela superfície sem carregar mais de 1.000 nomes de métodos RPC de baixo nível.
+
+O servidor fica em:
+
+```text
+https://<your-workspace>.plaid.cloud/mcp
+```
+
+Substitua `<your-workspace>` pelo subdomínio do seu espaço de trabalho (o mesmo que você usa para entrar na interface do PlaidCloud).
+
+## O Que Ele Expõe
+
+O catálogo cobre a maior parte da superfície do dia a dia de que um agente precisa:
+
+- **Projetos, fluxos de trabalho, etapas** — find/describe/upsert/run/organize, incluindo nova execução no nível da etapa e histórico de versões.
+- **Tabelas, visões, consultas** — introspecção de esquema, execução de consultas, exportações, instantâneos, branches. As visões são as mesmas que você vê no PlaidCloud, quer as tenha criado no explorador de tabelas, quer um fluxo de trabalho as tenha gerado.
+- **Dimensões** — describe, find, upsert, versão, gerenciamento de nós/aliases/propriedades.
+- **Conexões** — find/upsert/test de conexões com sistemas externos.
+- **Lakehouse** — branches, instantâneos, operações de optimize/vacuum.
+- **Identidade** — membros, grupos, sessões, listas de distribuição.
+- **Documentos, painéis, UDFs, editores, agentes, publicações** — ferramentas específicas de cada domínio.
+- **Migração de fluxos de trabalho** — converta exportações do Alteryx (`alteryx_convert`), KNIME (`knime_convert`), Prophecy (`prophecy_convert`) e Savant (`savant_convert`) preparadas em Documentos em fluxos de trabalho do PlaidCloud e coordene o trabalho de migração do portfólio.
+- **Documentação do PlaidCloud** — `docs_search` encontra páginas na documentação do PlaidCloud por palavra-chave, e `docs_fetch` lê uma página por inteiro, para que seu agente possa verificar como um recurso funciona antes de construir com ele.
+- **Logs de fluxos de trabalho e acompanhamento de execuções** — `workflow_logs`, `workflow_run_status`, `workflow_job_track`.
+
+Toda ferramenta retorna um envelope uniforme `{ok, data, next_cursor?, total?}`; as falhas usam `{ok: false, error: {code, retryable, message, hint?}}`. As mutações aceitam `dry_run=True` para validar o plano sem gravar nada.
+
+### Mantendo os Resultados Pequenos
+
+Os resultados das ferramentas são o maior consumidor individual do contexto de um agente, por isso as ferramentas find e describe retornam por padrão uma fatia modesta e permitem que você a amplie:
+
+- **Linhas.** Um find retorna 25 correspondências por página (`step_find` retorna 50). Uma página limitada define `next_cursor`, e as ferramentas find também nomeiam a lista truncada em `truncated`; qualquer um dos dois significa "há mais", não "isso é tudo". `total` sempre informa a contagem completa. Aumente `limit` ou pagine com o cursor.
+- **Colunas.** Passe `fields=['id', 'name', 'update_time']` para receber apenas essas colunas. Um nome de campo que não aparece em nenhum registro é um erro que lista os campos disponíveis, e não uma omissão silenciosa; assim, um erro de digitação falha de forma explícita em vez de retornar discretamente menos do que você pediu. As ferramentas que oferecem conjuntos selecionados também aceitam `field_set='minimal' | 'default' | 'full'`; chame `mcp_introspect` para ver quais parâmetros cada ferramenta aceita.
+- **Contagens.** `count_only=True` dimensiona um conjunto de resultados sem buscá-lo.
+
+### Agrupando Solicitações em Lote
+
+`mcp_batch` reúne várias chamadas de ferramenta em uma única solicitação. Ele aceita no máximo 100 chamadas, executa um número limitado delas por vez e não pode ser aninhado dentro de outro `mcp_batch` ou de uma receita; em vez disso, liste as chamadas em um único lote plano, o que não custa mais para enviar. Um lote acima do limite é recusado com uma mensagem que o identifica, em vez de ser cortado silenciosamente; o limite restringe o trabalho que uma única solicitação pode iniciar, não o total que você pode fazer, portanto divida um trabalho maior em vários lotes.
+
+A receita `paginate_through_listing` para após 200 páginas, por maior que seja o `max_pages` que você informar, e informa `partial: true` quando para antes. Entre esse limite e o limite `max_items`, uma única chamada de paginação sempre termina.
+
+Uma receita recusa uma chave de `params` que ela não reconhece, e a mensagem lista as chaves que essa receita aceita; assim, um parâmetro opcional digitado errado falha de forma explícita em vez de ser descartado, o que faria a chamada responder discretamente a uma pergunta diferente da que você fez. Chame `mcp_recipes(name=...)` para ver as chaves que cada receita aceita.
+
+### Resultados Orientados a Colunas
+
+Um resultado grande, cujas linhas têm todas os mesmos campos, volta orientado a colunas em vez de uma lista de objetos, de modo que os nomes dos campos são enviados uma vez, e não uma vez por linha:
+
+```json
+{"_fmt": "cols", "cols": ["id", "name"], "rows": [["a1", "Sales"], ["b2", "Costs"]]}
+```
+
+A linha *i* é `dict(zip(cols, rows[i]))`. Resultados pequenos, e qualquer resultado cujas linhas não compartilhem um conjunto idêntico de campos, continuam como arrays comuns de objetos; portanto, as duas formas aparecem, e o código que lê essas respostas diretamente deve tratar ambas. O envelope ao redor não muda, e nenhum valor é convertido ou arredondado no caminho. Os agentes são informados sobre esse formato quando se conectam e o leem sem nenhuma orientação sua; a economia é de cerca de 30% dos caracteres e de cerca de 15% do orçamento de leitura de um agente em listagens típicas, o que representa contexto sobrando para a sua pergunta de fato. (Os dois números diferem porque nomes de campo repetidos são baratos para um modelo ler; a economia de caracteres é sempre a maior das duas.)
+
+Para consultar o catálogo ativo, aponte seu agente para o servidor e chame `mcp_introspect` (sem argumentos), que retorna a contagem atual de ferramentas, resumos por domínio e assinaturas de parâmetros. Use `mcp_recipes` para playbooks comuns com várias ferramentas (paginar listas grandes, instantâneo e depois modificar, reexecutar uma etapa com falha etc.).
+
+## Rótulos e Visões
+
+Toda ferramenta upsert que define rótulos, para tabelas, fluxos de trabalho, etapas, projetos, dimensões, visões, editores, UDFs, conexões e warehouses, aceita dois parâmetros: `labels` adiciona rótulos e `remove_labels` os remove. Os demais rótulos do objeto permanecem. As remoções são aplicadas antes das adições, de modo que uma única chamada pode renomear um rótulo:
+
+```json
+{"remove_labels": ["01"], "labels": ["001"]}
+```
+
+Remover um rótulo que o objeto não tem não faz nada.
+
+As ferramentas de visão trabalham com as visões que você vê no PlaidCloud:
+
+- `view_find` lista as visões, e `view_describe` retorna uma por ID ou nome.
+- `view_upsert` cria uma visão ou atualiza uma existente no local. Uma atualização mantém o ID e os rótulos da visão, e você pode alterar apenas os rótulos sem enviar a consulta novamente.
+- `view_organize` exclui, renomeia, duplica e move visões.
+- Escreva os parâmetros de consulta como marcadores `%(name)s`.
+
+As visões compartilham a árvore de pastas das tabelas, portanto use `table_organize` para gerenciar suas pastas.
+
+## Iniciadores de Tarefas
+
+O servidor traz um pequeno conjunto de iniciadores para as tarefas que as pessoas pedem pelo nome. Um cliente que oferece suporte a prompts MCP os lista e os apresenta como um menu (consulte a documentação do seu cliente para saber onde ele os coloca), de modo que você escolhe a tarefa em vez de descrever a sequência de chamadas de ferramenta que ela exige:
+
+| Iniciador | O que você fornece |
+| --- | --- |
+| Importar um arquivo CSV para uma tabela | O arquivo e, opcionalmente, o projeto, a pasta que o contém e um nome para a nova tabela |
+| Explicar uma mudança de custo | A tabela de resultados e, opcionalmente, o projeto e os dois períodos |
+| Depurar um fluxo de trabalho com falha | O fluxo de trabalho e, opcionalmente, o projeto |
+| Explorar os dados do projeto | O que você procura e, opcionalmente, o projeto |
+
+Cada um é uma mensagem inicial, não um comando: seu agente a lê e depois conduz as ferramentas por conta própria, de modo que você pode editá-la ou continuar a conversa a partir dela.
+
+### Importando um Arquivo Sem Conhecer o Modelo de Objetos
+
+O iniciador de importação é o que mais poupa trabalho, porque o caminho ingênuo exige quatro ferramentas na ordem certa (encontrar a conta de documentos, navegar até o arquivo, criar a tabela de destino e, por fim, executar a importação), e um palpite errado em qualquer uma delas encerra o fluxo várias chamadas depois.
+
+Ele lê texto delimitado, como CSV, TSV e similares. Uma pasta de trabalho do Excel ou um arquivo Parquet é rejeitado em vez de ser lido incorretamente; para trazê-los, use a [etapa de importação](/pt-br/reference/workflow-steps/import/) correspondente em um fluxo de trabalho.
+
+Em vez disso, o playbook `bulk_import_csv` recebe a conta pelo **nome** e o arquivo pelo **nome ou caminho**:
+
+```text
+mcp_recipe_run(name='bulk_import_csv', params={
+    'project_id': '<project>',
+    'document_path': 'sales_2026.csv',
+    'document_account': 'Demo Data',
+})
+```
+
+Ele resolve a conta para o seu identificador, localiza o arquivo, cria a tabela com as colunas e os tipos lidos do próprio arquivo e a carrega; assim, você não fornece nem um ID de conta nem uma especificação de colunas. `table_name` assume por padrão o nome do arquivo sem a extensão, e `table_path` assume a raiz do projeto.
+
+Informe a pasta quando a souber (`'document_path': 'raw/sales_2026.csv'`) e a busca fica restrita a ela. Um arquivo informado com uma pasta só é encontrado nessa pasta: um arquivo de mesmo nome mais abaixo é oferecido como opção, e não importado no lugar dele.
+
+Quando um argumento é ambíguo, o resultado pergunta em vez de adivinhar:
+
+```json
+{
+  "needs_choice": "document_account",
+  "question": "More than one document account is named 'Archive'. Which one?",
+  "candidates": [{"id": "...", "name": "Archive"}, {"id": "...", "name": "Archive"}]
+}
+```
+
+Mostre os candidatos à pessoa que você está ajudando e chame o playbook novamente com a resposta dela, devolvendo o candidato exatamente como foi fornecido. Quando o arquivo não é encontrado, a resposta lista os nomes mais próximos e informa quantos arquivos foram pesquisados, para que "não está lá" possa ser distinguido de "não está onde procurei".
+
+<Aside type="note">
+Um nome de arquivo simples é procurado em todos os tipos de conta e, sem uma pasta para restringir, a busca cobre a conta inteira. Em uma conta de armazenamento de objetos (S3, Wasabi, GCS), isso custa uma listagem; no OneDrive, SFTP e Azure Blob, em que a primeira listagem cobre apenas um nível de diretório, a busca faz uma segunda passagem, mais profunda. Informe a pasta ou o caminho completo sempre que o tiver: em uma conta com muitos milhares de arquivos, um nome simples é visivelmente mais lento.
+</Aside>
+
+## Autenticação
+
+O servidor MCP do PlaidCloud aceita dois caminhos de autenticação:
+
+1. **OAuth 2.1 + PKCE via Dynamic Client Registration (DCR).** É o que a interface de conector personalizado do Claude.ai usa e também o padrão da ponte MCP do Claude Code. O cliente se registra sozinho e redireciona você ao login do Keycloak do PlaidCloud. Depois que você entra, o PlaidCloud exibe uma página **Application Access Request** com o nome do aplicativo e o URI de redirecionamento para o qual ele enviará as credenciais; aprove-a uma vez por autorização para obter seu token. Isso é um controle de segurança, não uma formalidade: confirme que o nome do aplicativo e o URI de redirecionamento correspondem ao cliente que você realmente está conectando e não aprove uma solicitação que você não iniciou.
+2. **Token de portador estático em um cabeçalho `Authorization`.** Para ambientes de execução de agentes que não têm um redirecionamento de navegador utilizável ou que querem um token de longa duração em um arquivo de configuração. O PlaidCloud expõe uma página auxiliar para gerar um para você (veja abaixo).
+
+### Obtendo um Token de Portador Estático
+
+Abra esta URL em uma guia do navegador em que você já esteja conectado ao PlaidCloud:
+
+```text
+https://<your-workspace>.plaid.cloud/mcp/setup/token
+```
+
+A página retorna um trecho JSON pronto para colar na configuração MCP do seu agente. Cada espaço de trabalho tem o seu próprio trecho.
+
+A validade do token é regida pela política de duração do token de acesso do realm do seu Keycloak (normalmente de algumas horas a um dia). Para renová-lo, recarregue a mesma URL: a sessão do seu navegador gera o token novamente de forma automática.
+
+<Aside>Esse fluxo se destina a começar a usar e a clientes que não conseguem concluir um redirecionamento OAuth. Para acesso de agente de longa duração em produção (contas de serviço, executores de CI, tarefas agendadas), use OAuth quando o cliente oferecer suporte. Os Tokens de Acesso Pessoal estão planejados, mas ainda não estão disponíveis de forma geral.</Aside>
+
+## Escolha um Cliente
+
+O restante desta seção apresenta a configuração de clientes de agentes de IA específicos:
+
+- [Claude Code](../claude-code/) — o agente de codificação da Anthropic (CLI, extensão do VSCode, plugin do JetBrains).
+- [Claude Desktop e Claude.ai](../claude-desktop/) — o aplicativo Claude para consumidores (desktop) e a versão web (`claude.ai`) usando "Conectores personalizados".
+- [Cursor](../cursor/) — o editor de código nativo de IA.
+- [GitHub Copilot](../copilot/) — o modo agente do Copilot no VSCode.
+- [Google Gemini CLI](../gemini/) — `gemini-cli` e Gemini Code Assist.
+- [ChatGPT](../chatgpt/) — situação atual do suporte e solução alternativa recomendada.
+- [Grok](../grok/) — conexão com os conectores personalizados do Grok.
+- [Solução de Problemas](../troubleshooting/) — erros comuns e como corrigi-los.

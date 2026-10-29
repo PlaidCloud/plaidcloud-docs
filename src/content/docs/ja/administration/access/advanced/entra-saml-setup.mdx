@@ -1,0 +1,100 @@
+---
+title: シングルサインオン用のMicrosoft Entra ID SAMLの設定
+description: PlaidCloudのシングルサインオン用にMicrosoft Entra IDをSAML IDプロバイダーとして構成し、セキュアなフェデレーション認証を有効にします。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/entra-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudは、SAML 2.0によるシングルサインオン（SSO）をサポートしています。このガイドでは、組織のユーザーがPlaidCloudにアクセスする際にEntraで認証できるよう、Microsoft Entra ID（旧Azure Active Directory）をSAML IDプロバイダーとして構成する手順を説明します。
+
+<Aside>PlaidCloud側の構成はPlaidCloudチームが行います。お客様の作業は、EntraでEnterprise Applicationを設定し、**App Federation Metadata URL**をPlaidCloudに提供することです。残りの構成はPlaidCloudサポートが完了します。</Aside>
+
+## 前提条件
+
+- 有効なMicrosoft Entra ID（Azure AD）テナント
+- 次のいずれかのEntraロールを持つアカウント：**Global Administrator**、**Cloud Application Administrator**、**Application Administrator**
+- 設定の調整と構成値の交換のために、PlaidCloudサポートと連絡が取れること
+
+## 概要
+
+セットアップでは、2者がSAMLメタデータを交換します。
+
+1. **お客様側の作業：** Entra IDでEnterprise Applicationを構成し、App Federation Metadata URLをPlaidCloudに提供します。
+2. **PlaidCloud側の作業：** Entraの構成を完了するために必要なサービスプロバイダー（SP）のエンティティIDと応答URL（Assertion Consumer Service URL）を提供します。
+
+以下のステップ3を完了する前に、PlaidCloudサポートと調整してSPの値を入手してください。
+
+## ステップ1：Enterprise Applicationの作成
+
+1. [Azureポータル](https://portal.azure.com)にサインインし、**Microsoft Entra ID**に移動します。
+2. 左側のサイドバーで、**Enterprise Applications**を選択します。
+3. **+ New application**をクリックします。
+4. **+ Create your own application**をクリックします。
+5. アプリケーションの名前を入力します（例：`PlaidCloud SSO`）。
+6. **Integrate any other application you don't find in the gallery (Non-gallery)** を選択します。
+7. **作成**をクリックします。
+
+## ステップ2：SAMLベースのシングルサインオンの有効化
+
+1. アプリケーションが作成されたら、左側のサイドバーの**管理**にある**Single sign-on**を選択します。
+2. 「Select a single sign-on method」画面で、**SAML**をクリックします。
+
+## ステップ3：基本的なSAML設定の構成
+
+<Aside>この手順を完了するには、PlaidCloudが提供する**SPエンティティID**と**応答URL（ACS URL）** が必要です。これらの値はPlaidCloudサポートにお問い合わせのうえ入手してください。</Aside>
+
+1. **Basic SAML Configuration**セクションで、**編集**をクリックします。
+2. **Identifier (Entity ID)** フィールドに、PlaidCloudから提供されたSPエンティティIDを入力します。
+3. **Reply URL (Assertion Consumer Service URL)** フィールドに、PlaidCloudから提供されたACS URLを入力します。
+4. **保存**をクリックします。
+
+## ステップ4：属性とクレームの構成
+
+デフォルトでは、EntraはSAMLアサーションでユーザーのメールアドレスと名前を渡します。PlaidCloudの構成でSSOからのセキュリティグループ割り当てを使用する場合は、グループクレームも含める必要があります。
+
+### グループクレームの追加
+
+1. **Attributes & Claims**セクションで、**編集**をクリックします。
+2. **+ Add a group claim**をクリックします。
+3. **Groups assigned to the application**を選択します（トークンサイズを抑えるために推奨）。
+4. **Source attribute**で、適切な値を選択します。
+   - **グループID** — グループのAzure オブジェクトID（UUID）を渡します
+   - **Cloud-only group display names** — 人が読めるグループ名を渡します（クラウド専用グループの場合）
+   - **sAMAccountName** — オンプレミスのグループ名を渡します（ハイブリッド／同期環境の場合）
+5. **保存**をクリックします。
+
+<Aside>PlaidCloudでグループベースのセキュリティロール割り当てが正しく機能するよう、想定されるグループ属性の形式についてPlaidCloudサポートと相談してください。</Aside>
+
+## ステップ5：アプリケーションへのユーザーとグループの割り当て
+
+このSSO構成で認証できるのは、Enterprise Applicationに割り当てられたユーザーとグループのみです。
+
+1. 左側のサイドバーの**管理**にある**Users and groups**を選択します。
+2. **+ Add user/group**をクリックします。
+3. PlaidCloudへのSSOアクセスを許可するユーザーまたはグループを選択します。
+4. **割り当て**をクリックします。
+
+## ステップ6：App Federation Metadata URLの取得と送信
+
+アプリケーションの構成が完了したら、Federation Metadata URLを確認してPlaidCloudに送信し、連携を完了させます。
+
+1. Enterprise Applicationの**Single sign-on**ページに移動します。
+2. **SAML Certificates**セクションまでスクロールします。
+3. **App Federation Metadata URL**をコピーします。
+
+**このURLをPlaidCloudサポートに送信してください。** これは、PlaidCloudがIDプロバイダー側の信頼関係を構成するために必要なEntity Descriptor URLです。PlaidCloudがこのURLを受け取ると、チームがKeycloakの構成を完了し、SSOをテストできる状態になったらお知らせします。
+
+## 連携のテスト
+
+PlaidCloudが構成の完了を確認したら、次の手順を行います。
+
+1. 組織のPlaidCloudワークスペース（例：`https://my-workspace.plaid.cloud`）に移動します。
+2. Microsoftのログインページにリダイレクトされます。
+3. Entra IDの認証情報でサインインします。
+4. 認証に成功すると、PlaidCloudにリダイレクトされます。
+
+エラーが発生した場合は、次の点を確認してください。
+- SPエンティティIDと応答URLが、PlaidCloudから提供された値と完全に一致している
+- ログインしようとしているユーザーが、Enterprise Applicationに割り当てられている
+- PlaidCloudに送信したApp Federation Metadata URLにアクセスできる（ファイアウォールや条件付きアクセスポリシーでブロックされていない）

@@ -1,0 +1,55 @@
+---
+title: "Business Central: Post General Journal Lines"
+description: "Comptabilisez des lignes de journal général dans un lot de journal Business Central existant à partir de tables d'en-tête et de lignes PlaidCloud, avec un mode d'aperçu qui valide chaque journal avant toute comptabilisation."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des lignes de journal général dans Business Central via votre [connexion Business Central](/fr/guides/connections/business-central/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-tête (une ligne par `journal_id`) et une table de lignes (une ou plusieurs lignes par `journal_id`), crée les lignes dans un lot de journal **existant**, puis comptabilise ce lot. **Valider uniquement** construit et contrôle chaque journal sans le comptabiliser ; une table de résultat facultative consigne l'issue.
+
+<Aside type="caution">
+Exécutez chaque lot d'abord en mode **Valider uniquement**, examinez la table de résultat et rapprochez quelques écritures directement dans Business Central avant de compter sur cette étape pour comptabiliser des journaux réels sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion Business Central** : la connexion Business Central à utiliser pour la comptabilisation.
+- **Environnement** : l'environnement de la connexion.
+
+### Données
+
+- **Table d'en-tête** : une ligne par `journal_id` : le nom du lot de journal Business Central dans lequel vos lignes sont comptabilisées, `document_number`, `posting_date` et un libellé de devise.
+- **Table des lignes** : une ou plusieurs lignes par `journal_id` : un `amount` signé (positif pour un débit, négatif pour un crédit), `account_id` ou `account_number`, `account_type`, `description`.
+- **Table de résultat** : identifiant de la table de sortie : une ligne par `journal_id` avec `journal_id`, `external_id`, `internal_id`, `status`, `message`.
+- **Valider uniquement** : coché par défaut. Contrôle préalable seulement ; aucune réservation au grand livre, aucune comptabilisation. Une configuration d'étape qui omet entièrement ce champ (par exemple créée via l'API REST, MCP ou l'import d'un bundle de workflow) utilise aussi Valider uniquement par défaut, et non une comptabilisation réelle.
+- **Continuer en cas d'erreur** : coché par défaut. Poursuit la comptabilisation des journaux restants après l'échec de l'un d'eux ; décoché, interrompt le lot au premier échec.
+
+<Aside type="caution">
+**Le lot de journal nommé par `journal_id` doit déjà exister dans Business Central.** Cette étape crée des lignes dans un lot ; elle ne crée pas le lot lui-même. Configurez le lot de journal (nom, modèle de journal) dans Business Central avant d'y comptabiliser.
+</Aside>
+
+## Fonctionnement de la comptabilisation
+
+L'action liée `Microsoft.NAV.post` de Business Central comptabilise **tout** le lot de journal, et pas seulement les lignes créées par cette requête. Avant de l'appeler, PlaidCloud relit le lot et refuse de comptabiliser (en consignant une erreur, sans rien comptabiliser) s'il contient une ligne qui ne porte pas le numéro de document de cette requête. Cette protection empêche qu'une ligne résiduelle laissée par un échec partiel antérieur soit intégrée au grand livre par une comptabilisation ultérieure sans rapport dans le même lot.
+
+Comme `generalLedgerEntries` est en lecture seule et ne contient que des écritures comptabilisées, PlaidCloud vérifie qu'une comptabilisation a réussi en y recherchant le numéro de document, et non en relisant le lot de journal : une correspondance dans `generalLedgerEntries` prouve qu'une comptabilisation a réellement eu lieu, et pas seulement que des lignes ont été créées.
+
+## Limites des fonctionnalités
+
+| Limitation | Signification |
+|---|---|
+| Un seul type de document en écriture | Seule la comptabilisation de lignes de journal général est prise en charge. Le flux de documents brouillons de Business Central (factures de vente et d'achat, Brouillon → Comptabilisé) ne l'est pas : l'action de comptabilisation exacte de ce flux n'est pas précisée dans la documentation publiée par Microsoft. |
+| Lot existant uniquement | Cette étape ne crée jamais de lot de journal. Créez-le d'abord dans Business Central, puis faites pointer `journal_id` vers lui. |
+| Comptabilisations simultanées dans un même lot | La protection d'idempotence est délimitée par numéro de document, et non par lot de journal : deux numéros de document différents comptabilisés en même temps dans le même lot ne sont pas garantis d'être sérialisés comme le sont deux appels portant le même numéro de document. Évitez les comptabilisations simultanées dans un même lot. |
+
+## Voir aussi
+
+- [Se connecter à Business Central](/fr/guides/connections/business-central/) : présentation complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur REST Business Central](/fr/reference/connectors/rest/business-central/)
+- [Étapes Business Central](/fr/reference/workflow-steps/business-central/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

@@ -1,0 +1,129 @@
+---
+title: Ajouter un compte OneDrive / SharePoint
+description: Connectez Microsoft OneDrive Entreprise ou SharePoint à PlaidCloud Document avec un accès Sites.Selected à privilèges minimaux, ou un accès à l'échelle du locataire.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Connectez un emplacement Microsoft **OneDrive Entreprise** ou **SharePoint** à PlaidCloud Document. Vous enregistrez une application Entra (Azure AD), choisissez l'étendue de ce à quoi elle peut accéder dans votre locataire, et PlaidCloud l'utilise pour lire et écrire des fichiers.
+
+## Choisir un modèle d'accès
+
+Déterminez l'étendue de votre locataire Microsoft 365 à laquelle l'application peut accéder. C'est le choix le plus important de toute la configuration.
+
+| Modèle | Autorisation d'application Graph | Ce que l'application peut atteindre | À choisir quand |
+|---|---|---|---|
+| **Sites sélectionnés** (recommandé) | `Sites.Selected` | Uniquement les sites spécifiques que vous autorisez explicitement | Un site contient des données sensibles : paie, RH, finance, informations de santé |
+| **Tous les sites** | `Sites.Read.All` (lecture) ou `Sites.ReadWrite.All` (lecture + écriture) | **Tous** les sites du locataire | Aucun site n'est sensible et vous voulez la configuration la plus simple |
+
+**La plupart des organisations devraient choisir Sites sélectionnés.** Si un seul site contient des informations sensibles, l'accès à l'échelle du locataire les expose. Avec `Sites.Selected`, l'application ne peut rien atteindre tant qu'un administrateur ne l'a pas autorisée sur chaque site nommé ; les sites que vous n'autorisez jamais restent donc totalement hors de portée.
+
+<Aside type="caution">
+N'accordez **pas** `Directory.*`, `Files.*` ni `User.Read.All`. Un connecteur de documents n'en a jamais besoin, et `Directory.ReadWrite.All` en particulier autorise la lecture et l'écriture sur l'ensemble de votre annuaire d'identités. Une seule autorisation `Sites.Selected` (ou une seule autorisation `Sites.Read.All` / `Sites.ReadWrite.All`) suffit.
+</Aside>
+
+## Enregistrer l'application dans Azure
+
+1. Connectez-vous au [portail Azure](https://portal.azure.com) et accédez à **Microsoft Entra ID** → **App registrations** → **+ New registration**.
+2. Saisissez un nom (par exemple `PlaidCloud`).
+3. Sous **Supported account types**, choisissez **Accounts in this organizational directory only** (locataire unique, le cas le plus courant).
+4. Laissez le champ **Redirect URI** vide et cliquez sur **Register**.
+5. Sur la page de vue d'ensemble, copiez l'**Application (client) ID** (votre **ID client**) et le **Directory (tenant) ID** (votre **ID du locataire**).
+6. Accédez à **Certificates & secrets** → **+ New client secret**, définissez une description et une expiration, cliquez sur **Add**, puis copiez immédiatement la **Valeur** du secret : elle ne sera plus affichée.
+
+## Accorder l'autorisation d'API
+
+Ajoutez exactement **une** autorisation **Application** Microsoft Graph, correspondant au modèle d'accès que vous avez choisi :
+
+- **Sites sélectionnés :** `Sites.Selected`
+- **Tous les sites :** `Sites.Read.All` (lecture seule) ou `Sites.ReadWrite.All` (lecture + écriture)
+
+Étapes : **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → ajoutez l'unique autorisation ci-dessus → **Grant admin consent**.
+
+<Aside type="note">
+L'octroi du consentement administrateur requiert un **Global Administrator** ou un **Privileged Role Administrator** : un administrateur SharePoint seul ne peut pas donner son consentement à une autorisation d'application.
+</Aside>
+
+Si vous avez choisi **Tous les sites**, votre configuration est terminée : passez à [Ajouter le compte dans PlaidCloud](#ajouter-le-compte-dans-plaidcloud). Si vous avez choisi **Sites sélectionnés**, autorisez ensuite l'application sur chaque site.
+
+## Autoriser l'application sur chaque site (modèle Sites sélectionnés)
+
+`Sites.Selected` n'accorde à l'application aucun accès par lui-même : un administrateur SharePoint ou général doit l'autoriser sur chaque site que vous souhaitez qu'elle atteigne. Il n'existe pas d'écran dans le centre d'administration pour cela ; vous utilisez donc deux appels Microsoft Graph dans [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer). Comme vous autorisez les sites un par un, les sites sensibles ne sont tout simplement jamais autorisés.
+
+**Configuration unique.** Dans Graph Explorer, connecté en tant qu'administrateur SharePoint ou général, ouvrez l'onglet **Modify permissions** et cliquez sur **Consent** pour `Sites.FullControl.All` (cette étendue vous permet de définir les autorisations de site). Si une requête ultérieure renvoie `accessDenied`, c'est ce consentement qui manque : déconnectez-vous puis reconnectez-vous après avoir consenti, afin d'actualiser le jeton.
+
+### Étape 1 : trouver l'ID du site
+
+Listez les sites de votre locataire (méthode **GET**) :
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+Ou résolvez directement un site précis à partir de son URL :
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+Copiez l'`id` du site dans la réponse ; il a la forme `contoso.sharepoint.com,<guid>,<guid>`.
+
+### Étape 2 : autoriser l'application
+
+Définissez la méthode sur **POST** sur la collection `permissions` de ce site (collez l'`id` de l'étape 1) :
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+Dans l'onglet **Request body**, collez ce qui suit : définissez `roles` sur `["read"]` ou `["write"]`, et utilisez l'**Application (client) ID** de votre application :
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+Exécutez la requête. En cas de succès, elle renvoie un objet d'autorisation avec un `id` et vos `roles`. **Répétez l'étape 2 pour chaque site** que PlaidCloud doit pouvoir atteindre. Pour vérifier ce qu'un site a autorisé :
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` est accordé par **site**, et non par dossier ou bibliothèque : autoriser un site expose tout son contenu. Conservez le contenu sensible dans ses propres sites dédiés afin qu'il ne soit jamais inclus avec du contenu que vous avez l'intention de partager.
+</Aside>
+
+## Ajouter le compte dans PlaidCloud
+
+1. Connectez-vous à PlaidCloud et sélectionnez l'espace de travail dans lequel le compte sera créé.
+2. Accédez à `Document` → `Manage Accounts` → **+ Nouveau compte**.
+3. Choisissez **OneDrive** comme **Service**.
+4. Saisissez un nom et une description, puis choisissez un **Modèle de sécurité** (en cas de doute, laissez `Private`).
+5. Sous **Identifiants d'authentification**, collez l'**ID client**, le **Secret client** et l'**ID de locataire OneDrive** issus de l'enregistrement de l'application.
+6. Dans **URL du site SharePoint**, collez l'URL d'un site sur lequel l'application a été autorisée (par exemple `https://contoso.sharepoint.com/sites/TeamName`). La liste **Lecteur/Site** affiche alors les bibliothèques de documents de ce site : choisissez celle à utiliser comme racine du compte. Cela renseigne le **Chemin de départ**.
+7. Sélectionnez **Enregistrer**.
+
+<Aside type="note">
+Un lecteur ou un site est obligatoire : le compte ne peut pas être enregistré sans l'un des deux. Sans cela, le compte listerait des dossiers mais aucun fichier.
+</Aside>
+
+## Créer le compte avec un assistant IA
+
+Un assistant IA connecté via le connecteur MCP de PlaidCloud peut créer ou mettre à jour le compte à votre place avec l'outil `document_account_upsert`, une fois les étapes Azure ci-dessus terminées. Donnez-lui les valeurs issues de l'enregistrement de l'application :
+
+| Champ du compte | Valeur |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | Application (client) ID |
+| `private_key` | Secret client |
+| `tenant_id` | Directory (tenant) ID |
+| `start_path` | ID du lecteur, éventuellement suivi de `/folder` |
+
+Les identifiants sont en écriture seule : `document_account_describe` les masque. L'outil est disponible dans votre propre session MCP connectée, pas dans les étapes de workflow ni dans les agents intégrés à l'application.

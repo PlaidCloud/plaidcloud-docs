@@ -1,0 +1,137 @@
+---
+title: 连接到 Acumatica
+description: 将 PlaidCloud 连接到 Acumatica，使用预置的实体导入步骤提取主数据和交易数据，然后使用 Acumatica 过账步骤过账日记账分录、销售发票、账单和付款。
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Acumatica 基于合约的 REST API，无需手写 OData 即可提取参考数据和交易数据，并将日记账交易、销售发票、账单和付款过账回 Acumatica。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请始终先针对沙盒公司运行每一次导入，并且在实际过账之前，对每个过账批次都完成下文的 **Preview and Validate**。
+</Aside>
+
+## 先决条件
+
+您需要在 Acumatica 中具备：
+
+- **实例基础 URL**（例如 `https://yourcompany.acumatica.com`）。
+- **公司**名称（PlaidCloud 登录时使用的确切公司 ID）；如果使用分支，还需要过账所用的**分支**。
+- 专供 PlaidCloud 使用的**用户名**和**密码**，其角色需有权访问您将读取的实体以及将过账到的单据屏幕。
+- 为该用户启用**基于合约的 REST API** 访问权限（**System > Integration Preferences**，在当前的 Acumatica 版本中默认开启）。
+
+<Aside type="note">
+Acumatica 基于合约的 REST API 是**基于会话**的，而不是基于令牌的：PlaidCloud 针对每个有限的工作单元（一次导入提取、一个过账批次）登录一次，并在完成后注销，而不是在每次调用时都进行身份验证。Acumatica 试用版和较低层级的许可证可能会将**并发** API 会话数限制为低至 2，因此请避免针对同一连接并行运行多个 Acumatica 步骤。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`。
+
+2. 从菜单中选择 **Acumatica**。
+
+3. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 易记的名称，例如 `Acumatica Prod`。 |
+   | 实例基础 URL | 您的实例 URL，例如 `https://yourcompany.acumatica.com`。 |
+   | 端点名称 | 合约端点名称。除非发布了自定义端点，否则为 `Default`。 |
+   | 端点版本 | 可选，例如 `25.200.001`。留空则使用端点的最新已发布版本。 |
+   | 公司/租户 | 确切的 Acumatica 公司 ID。 |
+   | 分支 | 可选。留空则使用登录用户的默认分支。 |
+   | 用户名 | PlaidCloud API 用户。 |
+   | 密码 | PlaidCloud API 用户的密码。 |
+
+4. 单击 `Create`。
+
+</Steps>
+
+## 对连接进行冒烟测试
+
+<Steps>
+
+1. 将 **Import Acumatica Entity** 步骤添加到工作流。
+
+2. 将 **Acumatica 连接**设置为您的连接，将**实体类型**设置为 `account`，将**目标表**设置为一个临时表。
+
+3. 运行该步骤（请参阅[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，即表示登录、公司和分支均正确。如果出错，错误会指出问题所在，例如凭据错误、公司错误，或角色缺少 REST API 访问权限。
+
+## 导入数据
+
+<Steps>
+
+1. 添加 **Import Acumatica Entity** 步骤，并设置 **Acumatica 连接**和**目标表**。
+
+2. 将**实体类型**设置为您想要的记录。主数据和参考列表有 `account`、`subaccount`、`ledger`、`financial_period`、`branch`、`currency`、`currency_rate`、`customer`、`vendor`、`stock_item`、`warehouse`、`employee`、`tax_category`、`project`；交易实体有 `sales_invoice`、`bill`、`sales_order`、`shipment`。
+
+3. 对于带有“活动”标志的实体，保持勾选**仅活动**，则只提取活动记录。
+
+4. 将**更新时间晚于**设置为 ISO 日期或日期时间，则只提取自该时间以来更改的行（这是请求端筛选器，而不是持久化的增量游标，每次运行都需要您提供截止时间）。
+
+5. 添加**筛选器**以限定大型提取的范围，每个筛选器都是一个 `{field, operator, value}` 子句（`eq`、`ne`、`gt`、`ge`、`lt`、`le`、`contains`）或一个 `{field, from, to}` 范围，并按实体限定为 Acumatica 实际能够在服务器端筛选的字段。如果某个实体不支持筛选器字段，PlaidCloud 会拒绝该字段，而不是悄悄丢弃。
+
+6. 运行该步骤并检查目标表。
+
+</Steps>
+
+<Aside type="note">
+试算平衡表、总账交易明细、现有库存、预算和公司间数据，都位于 Acumatica 通用查询（Generic Inquiries）之后，而不是上述基于合约的实体中，PlaidCloud 不会为您生成通用查询。如果需要其中任何一项，请在 Acumatica 中构建通用查询，并改用[通用 REST 连接](/zh-cn/reference/connectors/rest/generic-rest/)来提取。
+</Aside>
+
+## 过账单据
+
+**Acumatica Post** 步骤通过所有 ERP 过账步骤共用的同一条写入管道过账四种单据类型：**JournalTransaction**、**SalesInvoice**、**Bill** 和 **Payment**。
+
+<Steps>
+
+1. 构建**标题表**，每个单据一行，包含以下列：`ref`（您的单据标识符）、`doc_type`（`JournalTransaction`、`SalesInvoice`、`Bill` 或 `Payment`）、`posting_date`、`party_id`（客户/供应商，仅在单据类型需要时）、`memo`、`due_date` 和 `branch_id`。单个批次可以混合多种单据类型，PlaidCloud 会在过账前按 `doc_type` 对其进行分区。
+
+2. 构建**行表**，每个 `ref` 有一行或多行，并根据单据类型确定结构：
+
+   | 单据类型 | 行列 |
+   |---|---|
+   | JournalTransaction | `account`、`subaccount`、`branch`、`debit`、`credit` |
+   | SalesInvoice | `item`、`qty`、`unit_price`、`amount` |
+   | Bill | `account`、`amount` |
+   | Payment | `linked_txn_id`、`amount` |
+
+3. 添加 **Acumatica Post** 步骤，设置 **Acumatica 连接**、**环境**、**标题表**、**行表**以及**结果表**。
+
+4. 保持勾选 **Validate Only** 并运行该步骤，PlaidCloud 会构建并检查每个单据，既不占用总账声明，也不过账任何内容。
+
+5. 查看结果表（每个单据一行：`ref`、`doc_type`、`natural_key`、`confirmation_id`、`status`、`message`）。修复任何 `error` 行并重新验证。
+
+6. 取消勾选 **Validate Only** 并再次运行，以实际过账。除非希望批次在第一个失败的单据处立即停止，否则请保持勾选 **Continue On Error**。
+
+</Steps>
+
+### 过账的工作方式
+
+Acumatica 会将每个单据创建为**挂起（On Hold）**状态，然后 PlaidCloud 调用释放操作，该操作以异步方式运行（返回 `202` 响应，轮询至完成，然后由 `204` 确认已释放）。只有在释放得到**确认**后，PlaidCloud 才会报告单据为 `posted`；已写入但释放始终未得到确认的单据会保持隔离，而不会被记录为已过账，因此卡住的挂起状态绝不会悄悄地被当作成功。
+
+### 能力限制：实际过账前请阅读
+
+<Aside type="caution">
+- **没有原生的幂等键。**Acumatica 的写入 API 没有按单据的幂等字段，因此在重试或重新运行批次时，PlaidCloud 自己的总账声明是防止重复过账的**唯一**保障。请勿通过其他方式过账同一单据来绕过此步骤的总账。
+- **冲销需手动进行。**在 Acumatica 基于合约的 API 中，没有任何单据类型有文档记载的作废/冲销操作，因此 PlaidCloud 绝不会伪造冲销，已过账的单据无法通过此步骤冲销。请直接在 Acumatica 中更正过账错误的单据。
+- **付款没有可靠的查找方式。**在结果不明确（超时、响应丢失）之后，Acumatica 没有公开记载的字段可将付款与 PlaidCloud 的请求相关联。无法确定的付款会被隔离而不是猜测，请直接在 Acumatica 中检查来解决。
+- **行项目成本中心筛选不在服务器端进行。**Acumatica 的 `$filter` 无法深入到单据的行项目维度，因此请在标题/实体级别筛选，并在提取之后于工作流中进行行级范围限定。
+</Aside>
+
+## 相关内容
+
+- [Acumatica REST 连接器](/zh-cn/reference/connectors/rest/acumatica/)：字段参考。
+- [Import Acumatica Entity 步骤](/zh-cn/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents 步骤](/zh-cn/reference/workflow-steps/acumatica/acumatica-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：记录每次 Acumatica 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

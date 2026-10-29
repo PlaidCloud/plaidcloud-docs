@@ -1,0 +1,137 @@
+---
+title: Połączenie z Acumatica
+description: Połącz PlaidCloud z Acumatica i pobieraj dane główne oraz transakcyjne za pomocą gotowego kroku importu jednostek, a następnie księguj zapisy dziennika, faktury, rachunki i płatności za pomocą kroku księgowania Acumatica.
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z opartym na kontraktach REST API Acumatica, aby pobierać dane referencyjne i transakcyjne bez ręcznego pisania OData oraz księgować z powrotem transakcje dziennika, faktury sprzedaży, rachunki i płatności. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import uruchamiaj najpierw w firmie piaskownicy, a przed księgowaniem na żywo przejdź przez poniższą sekcję **Podgląd i walidacja** dla każdej partii księgowań.
+</Aside>
+
+## Wymagania wstępne
+
+W Acumatica potrzebujesz:
+
+- **Bazowego adresu URL instancji** (na przykład `https://yourcompany.acumatica.com`).
+- Nazwy **firmy** (dokładnego identyfikatora firmy, do której loguje się PlaidCloud) oraz, jeśli używasz oddziałów, **oddziału**, w którym księgujesz.
+- Dedykowanej **nazwy użytkownika** i **hasła** dla PlaidCloud, z rolą mającą dostęp do jednostek, które będziesz odczytywać, i ekranów dokumentów, w których będziesz księgować.
+- Włączonego dla tego użytkownika dostępu do **REST API opartego na kontraktach** (**System > Integration Preferences**, domyślnie włączone w aktualnych wersjach Acumatica).
+
+<Aside type="note">
+REST API Acumatica oparte na kontraktach jest **oparte na sesjach**, a nie na tokenach — PlaidCloud loguje się raz na ograniczoną jednostkę pracy (jedno pobranie importu, jedna partia księgowań) i wylogowuje się po jej zakończeniu, zamiast uwierzytelniać się przy każdym wywołaniu. Licencje próbne i niższego poziomu Acumatica mogą ograniczać liczbę **równoczesnych** sesji API nawet do 2, więc unikaj równoległego uruchamiania wielu kroków Acumatica na tym samym połączeniu.
+</Aside>
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz **Acumatica** z menu.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `Acumatica Prod`. |
+   | Bazowy adres URL instancji | Adres URL Twojej instancji, np. `https://yourcompany.acumatica.com`. |
+   | Nazwa punktu końcowego | Nazwa punktu końcowego kontraktu. `Default`, chyba że opublikowano własny punkt końcowy. |
+   | Wersja punktu końcowego | Opcjonalna, np. `25.200.001`. Pozostaw puste, aby użyć najnowszej opublikowanej wersji punktu końcowego. |
+   | Firma / tenant | Dokładny identyfikator firmy Acumatica. |
+   | Gałąź | Opcjonalna. Pozostaw puste, aby użyć domyślnego oddziału logującego się użytkownika. |
+   | Nazwa użytkownika | Użytkownik API PlaidCloud. |
+   | Hasło | Hasło użytkownika API PlaidCloud. |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Szybki test połączenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Import Acumatica Entity**.
+
+2. Ustaw **Połączenie Acumatica** na swoje połączenie, **Typ jednostki** na `account`, a **Tabela docelowa** na tabelę roboczą.
+
+3. Uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że logowanie, firma i oddział są poprawne. Błąd wskazuje problem — nieprawidłowe dane uwierzytelniające, niewłaściwą firmę lub rolę bez dostępu do REST API.
+
+## Importowanie danych
+
+<Steps>
+
+1. Dodaj krok **Import Acumatica Entity** i ustaw **Połączenie Acumatica** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ jednostki** na wybrany rekord. Dane główne i listy referencyjne — `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project` — oraz jednostki transakcyjne — `sales_invoice`, `bill`, `sales_order`, `shipment`.
+
+3. Pozostaw zaznaczone **Tylko aktywne**, aby pobierać tylko aktywne rekordy, dla jednostek, które mają flagę aktywności.
+
+4. Ustaw **Zaktualizowane po** na datę lub datę z godziną w formacie ISO, aby pobrać tylko wiersze zmienione od tego momentu (to filtr po stronie żądania, a nie zapisywany kursor przyrostowy — datę graniczną podajesz przy każdym uruchomieniu).
+
+5. Dodaj **Filtry**, aby ograniczyć duże pobranie — każdy z nich to klauzula `{field, operator, value}` (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) lub zakres `{field, from, to}`, ograniczony dla każdej jednostki do pól, według których Acumatica faktycznie potrafi filtrować po stronie serwera. PlaidCloud odrzuca pole filtru, którego dana jednostka nie obsługuje, zamiast po cichu je pomijać.
+
+6. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+<Aside type="note">
+Zestawienie obrotów i sald, szczegóły transakcji księgi głównej, stany magazynowe, budżety i dane międzyspółkowe znajdują się w Acumatica Generic Inquiries, a nie w opisanych wyżej jednostkach opartych na kontraktach, a PlaidCloud nie generuje dla Ciebie GI. Jeśli potrzebujesz któregoś z nich, zbuduj GI w Acumatica i pobierz je za pomocą [połączenia Generic REST](/pl/reference/connectors/rest/generic-rest/).
+</Aside>
+
+## Księgowanie dokumentów
+
+Krok **Acumatica Post** księguje cztery typy dokumentów przez ten sam wspólny potok zapisu, którego używa każdy krok księgowania ERP: **JournalTransaction**, **SalesInvoice**, **Bill** i **Payment**.
+
+<Steps>
+
+1. Zbuduj **tabelę nagłówka** — jeden wiersz na dokument — z kolumnami `ref` (identyfikator dokumentu), `doc_type` (`JournalTransaction`, `SalesInvoice`, `Bill` lub `Payment`), `posting_date`, `party_id` (klient/dostawca, jeśli typ dokumentu go wymaga), `memo`, `due_date` i `branch_id`. Jedna partia może mieszać typy dokumentów — PlaidCloud dzieli ją według `doc_type` przed księgowaniem.
+
+2. Zbuduj **tabelę wierszy** — jeden lub więcej wierszy na `ref` — o kształcie dopasowanym do typu dokumentu:
+
+   | Typ dokumentu | Kolumny wierszy |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. Dodaj krok **Acumatica Post**, ustaw **Połączenie Acumatica**, **Środowisko**, **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud buduje i sprawdza każdy dokument bez rezerwacji w rejestrze i bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na dokument: `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`). Popraw każdy wiersz `error` i zwaliduj ponownie.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym dokumencie.
+
+</Steps>
+
+### Jak działa księgowanie
+
+Acumatica tworzy każdy dokument jako **wstrzymany (On Hold)**, a następnie PlaidCloud wywołuje akcję zwolnienia, która działa asynchronicznie (odpowiedź `202`, odpytywana do zakończenia, a potem `204` potwierdza zwolnienie). PlaidCloud zgłasza dokument jako `posted` dopiero po **potwierdzeniu** zwolnienia — dokument, który trafił do systemu, ale którego zwolnienie nigdy nie zostało potwierdzone, pozostaje w kwarantannie zamiast zostać zapisany jako zaksięgowany, więc zablokowane wstrzymanie nigdy po cichu nie przechodzi jako sukces.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Brak natywnego klucza idempotentności.** API zapisu Acumatica nie ma pola idempotentności dla dokumentu, więc własna rezerwacja w rejestrze PlaidCloud jest **jedyną** ochroną przed podwójnym zaksięgowaniem przy ponowionej lub ponownie uruchomionej partii. Nie omijaj rejestru tego kroku, księgując ten sam dokument inną drogą.
+- **Storno jest ręczne.** Żaden typ dokumentu nie ma udokumentowanej akcji anulowania/storna w API Acumatica opartym na kontraktach, więc PlaidCloud nigdy jej nie udaje — zaksięgowanego dokumentu nie można cofnąć z tego kroku. Błędnie zaksięgowany dokument popraw bezpośrednio w Acumatica.
+- **Payment nie ma niezawodnego wyszukiwania.** Acumatica nie udostępnia udokumentowanego pola pozwalającego skorelować Payment z żądaniem PlaidCloud po niejednoznacznym wyniku (przekroczenie czasu, utracona odpowiedź). Płatność w niepewnym stanie trafia do kwarantanny zamiast być zgadywana — rozstrzygnij ją, sprawdzając bezpośrednio w Acumatica.
+- **Filtrowanie według miejsca powstawania kosztów na poziomie pozycji nie odbywa się po stronie serwera.** `$filter` w Acumatica nie sięga do wymiarów pozycji dokumentu, więc filtruj na poziomie nagłówka/jednostki, a zawężanie na poziomie wierszy wykonaj w przepływie pracy po pobraniu.
+</Aside>
+
+## Powiązane
+
+- [Konektor REST Acumatica](/pl/reference/connectors/rest/acumatica/) — opis pól.
+- [Import Acumatica Entity](/pl/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents](/pl/reference/workflow-steps/acumatica/acumatica-post/)
+- [Przeglądanie historii księgowań ERP](/pl/guides/connections/erp-post-history/) — trwały zapis każdej próby księgowania w Acumatica i jej bieżącego stanu.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

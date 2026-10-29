@@ -1,0 +1,126 @@
+---
+title: AI_TO_SQL (Lakehouse v1)
+description: AI_TO_SQL — przekształca instrukcje w języku naturalnym w zapytania SQL przy użyciu najnowszego modelu.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/01-ai-to-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Przekształca instrukcje w języku naturalnym w zapytania SQL przy użyciu najnowszego modelu `text-davinci-003`.
+
+PlaidCloud Lakehouse oferuje wydajny sposób tworzenia zapytań SQL dzięki połączeniu OLAP i AI. Za pomocą tej funkcji instrukcje zapisane w języku naturalnym można przekształcić w instrukcje zapytań SQL zgodne ze schematem tabeli. Na przykład do funkcji można przekazać zdanie „Get all items that cost 10 dollars or less” i otrzymać na wyjściu odpowiednie zapytanie SQL „SELECT * FROM items WHERE price &lt;= 10”.
+
+Zobacz [implementację źródłową](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs).
+
+<Aside>Wygenerowane instrukcje zapytań SQL są zgodne ze standardami PostgreSQL, więc mogą wymagać ręcznych poprawek, aby pasowały do składni PlaidCloud Lakehouse.</Aside>
+
+<Aside>Od wersji PlaidCloud Lakehouse v1.1.47 PlaidCloud Lakehouse obsługuje [usługę Azure OpenAI](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service). Ta integracja zapewnia lepszą prywatność danych. Aby używać Azure OpenAI, dodaj następujące ustawienia do sekcji `[query]`: ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+<Aside type="caution">PlaidCloud Lakehouse korzysta z (Azure) OpenAI dla funkcji `AI_TO_SQL`, ale wysyła do (Azure) OpenAI wyłącznie schemat tabeli, a nie dane. Funkcje te działają tylko wtedy, gdy konfiguracja PlaidCloud Lakehouse zawiera `openai_api_key`; w przeciwnym razie są nieaktywne. Ta funkcja jest domyślnie dostępna w PlaidCloud Lakehouse z użyciem klucza Azure OpenAI. Korzystając z nich, potwierdzasz, że schemat Twojej tabeli zostanie przez nas wysłany do Azure OpenAI.</Aside>
+
+## Składnia Analyze
+
+```python
+func.ai_to_sql('<natural-language-instruction>')
+```
+
+## Przykłady Analyze
+
+W tym przykładzie funkcja AI_TO_SQL generuje instrukcję zapytania SQL na podstawie instrukcji, a następnie wygenerowana instrukcja jest wykonywana w celu uzyskania wyników zapytania.
+
+```python
+func.ai_to_sql('List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022')
+```
+
+Funkcja generuje na wyjściu następującą instrukcję SQL:
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+## Składnia SQL
+
+```sql
+USE <your-database>;
+SELECT * FROM ai_to_sql('<natural-language-instruction>');
+```
+
+<Aside>Uzyskaj i skonfiguruj klucz API OpenAI - Aby uzyskać klucz API OpenAI, odwiedź https://platform.openai.com/account/api-keys i wygeneruj nowy klucz. - Skonfiguruj plik **databend-query.toml**, ustawiając openai_api_key. ```toml [query] ... ... openai_api_key = "<your-key>" ```</Aside>
+
+## Przykłady SQL
+
+W tym przykładzie funkcja AI_TO_SQL generuje instrukcję zapytania SQL na podstawie instrukcji, a następnie wygenerowana instrukcja jest wykonywana w celu uzyskania wyników zapytania.
+
+1. Przygotuj dane.
+
+```sql
+CREATE DATABASE IF NOT EXISTS openai;
+USE openai;
+
+CREATE TABLE users(
+    id INT,
+    name VARCHAR,
+    age INT,
+    country VARCHAR
+);
+
+CREATE TABLE orders(
+    order_id INT,
+    user_id INT,
+    product_name VARCHAR,
+    price DECIMAL(10,2),
+    order_date DATE
+);
+
+-- Insert sample data into the users table
+INSERT INTO users VALUES (1, 'Alice', 31, 'USA'),
+                         (2, 'Bob', 32, 'USA'),
+                         (3, 'Charlie', 45, 'USA'),
+                         (4, 'Diana', 29, 'USA'),
+                         (5, 'Eva', 35, 'Canada');
+
+-- Insert sample data into the orders table
+INSERT INTO orders VALUES (1, 1, 'iPhone', 1000.00, '2022-03-05'),
+                          (2, 1, 'OpenAI Plus', 20.00, '2022-03-06'),
+                          (3, 2, 'OpenAI Plus', 20.00, '2022-03-07'),
+                          (4, 2, 'MacBook Pro', 2000.00, '2022-03-10'),
+                          (5, 3, 'iPad', 500.00, '2022-03-12'),
+                          (6, 3, 'AirPods', 200.00, '2022-03-14');
+```
+
+2. Uruchom funkcję AI_TO_SQL, przekazując jako dane wejściowe instrukcję napisaną po angielsku.
+
+```sql
+SELECT * FROM ai_to_sql(
+    'List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022');
+```
+
+Funkcja generuje na wyjściu następującą instrukcję SQL:
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+3. Uruchom wygenerowaną instrukcję SQL, aby uzyskać wyniki zapytania.
+
+```sql
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
+```

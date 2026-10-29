@@ -1,0 +1,281 @@
+---
+title: NetSuite SuiteQL 쿼리 예제
+description: PlaidCloud용으로 바로 실행할 수 있는 NetSuite SuiteQL 쿼리입니다. 분개 항목, 총계정원장, 시산표, 손익계산서, 대차대조표, 미수금, 판매 주문, 구매 주문, 재고를 다룹니다.
+sidebar:
+  label: NetSuite 쿼리 예제
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-financial-queries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[NetSuite 연결](/ko/guides/connections/netsuite/)이 작동하면 이 페이지에서 실제 보고를 빠르게 시작할 수 있습니다. 분개 항목, 총계정원장, 시산표, 손익계산서, 대차대조표, 미수금, 미결 주문, 재고 수량처럼 대부분의 가져오기가 시작되는 재무 및 운영 데이터용 SuiteQL을 복사하여 붙여넣으면 됩니다.
+
+각 레시피는 **출발점**입니다. 실행하고, NetSuite에서 신뢰하는 보고서와 숫자를 대조한 다음, 필터와 열을 사용자의 계정에 맞게 조정하십시오.
+
+<Aside type="tip">
+시산표, 총계정원장 상세, 계정이나 자회사 같은 마스터 목록처럼 일반적인 가져오기에는 기본 제공 NetSuite 가져오기 단계가 더 간단하며 SuiteQL이 필요하지 않습니다. [NetSuite 재무 데이터 가져오기](/ko/guides/connections/import-netsuite-financials/)를 참조하십시오. 이러한 단계로 처리되지 않는 가져오기가 필요할 때 아래 쿼리를 사용하십시오.
+</Aside>
+
+## 레시피 실행 방법
+
+<Steps>
+
+1. 워크플로에 [REST 요청 단계](/ko/guides/workflows/rest-request-step/)를 추가하고 **연결**을 NetSuite 연결로, **메서드**를 `POST`로, **엔드포인트**를 `/services/rest/query/v1/suiteql`로 설정합니다.
+
+2. 쿼리를 **본문**에 단일 JSON 개체로 넣습니다. 쿼리 텍스트는 `q`에 들어갑니다.
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 5"}
+   ```
+
+   아래 레시피는 이해하기 쉽도록 읽기 쉬운 SQL로 표시되어 있습니다. 단계에 붙여넣을 때는 `{"q": "…your query…"}` 형식으로 감싸십시오.
+
+3. **응답** 탭에서 대상을 **테이블**로 유지하고 **각 열의 유형을 설정**합니다(각 레시피 아래의 "열 유형" 참고 사항 참조). SuiteQL은 모든 값을 텍스트로 반환하므로, 유형을 설정해야 금액이 합산되고 날짜가 정렬됩니다.
+
+4. **테스트 요청 보내기**를 클릭하여 실행되는지 확인한 다음 단계를 실행합니다.
+
+</Steps>
+
+<Aside type="caution">
+이 쿼리는 NetSuite의 표준 SuiteQL 스키마(`transaction`, `transactionaccountingline`, `account`, `item`)를 대상으로 합니다. 테이블과 필드의 사용 가능 여부, 계정 유형 코드, 거래 상태 코드는 NetSuite 에디션, 사용 설정한 기능, 계정 사용자 지정에 따라 다릅니다. 모든 레시피를 출발점으로 취급하고, 사용하기 전에 NetSuite 보고서와 대조하여 검증하십시오. 일치하지 않는 항목이 있으면 표시되는 오류에 정확한 필드나 테이블이 명시됩니다.
+</Aside>
+
+## 모든 레시피에 사용되는 규칙
+
+모든 재무 레시피에는 몇 가지 규칙이 공통으로 적용됩니다.
+
+- **`transactionaccountingline`(TAL)이 총계정원장의 기준입니다.** 전기 금액, 차변, 대변은 `transactionline`이 아니라 여기에 있습니다. 모든 재무 레시피는 이를 통해 조인합니다.
+- **전기 항목만:** `tal.posting = 'T'`는 비전기 라인을 제외합니다.
+- **기본 회계 장부:** `tal.accountingbook = 1`. NetSuite Multi-Book을 사용하는 경우에만 변경하십시오.
+- **금액 부호:** NetSuite는 전기 금액을 **차변은 양수, 대변은 음수**로 저장합니다. 따라서 수익(대변)은 음수 `amount`입니다. 손익계산서와 대차대조표 레시피는 자연스러운 "수익이 양수인" 표시가 필요한 곳에서 부호를 반전하며, 각 레시피에 이를 명시합니다.
+- **모든 페이지 단위 쿼리에는 결정적인 `ORDER BY`가 필요합니다.** 그렇지 않으면 페이지 사이에서 행이 조용히 중복되거나 누락됩니다.
+- **쿼리에서 날짜 형식을 지정하십시오:** `TO_CHAR(t.trandate, 'YYYY-MM-DD')` (그렇지 않으면 SuiteQL은 날짜를 계정의 표시 형식으로 반환합니다). 해당 열은 `Date`로 유형을 지정하십시오.
+
+<Aside type="caution">
+**다중 자회사 / 다중 통화:** 이 레시피는 각 거래 자체의 금액을 읽습니다. 통화가 다른 자회사에 걸쳐 합산하면 **연결 기준으로 잘못된 값**이 됩니다. 자회사 전체에 대해 보고할 때는 하나의 자회사(`t.subsidiary = <id>`)로 필터링하거나 연결 / 환율 변환된 금액을 선택하십시오.
+</Aside>
+
+## 재무 레시피
+
+### 분개 항목
+
+한 기간의 분개 항목에 대한 모든 전기 라인과 계정, 차변, 대변입니다.
+
+```sql
+SELECT
+    t.tranid                                AS entry_number,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS entry_date,
+    BUILTIN.DF(t.postingperiod)             AS period,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    tal.debit                               AS debit,
+    tal.credit                              AS credit,
+    tl.memo                                 AS line_memo
+FROM transaction t
+    JOIN transactionaccountingline tal ON tal.transaction = t.id
+    JOIN transactionline tl            ON tl.transaction = tal.transaction
+                                      AND tl.id = tal.transactionline
+    JOIN account a                     ON a.id = tal.account
+WHERE t.type = 'Journal'
+    AND tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY t.tranid, tl.id
+```
+
+**열 유형:** `debit`, `credit` → `Currency`, `entry_date` → `Date`, 나머지는 모두 `Text`.
+
+### 총계정원장 상세
+
+`type = 'Journal'` 필터가 없는 동일한 형태입니다. 모든 거래 유형의 모든 전기 라인이며, 해당 기간의 총계정원장입니다.
+
+```sql
+SELECT
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS posting_date,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    t.type                                  AS transaction_type,
+    t.tranid                                AS document_number,
+    BUILTIN.DF(t.entity)                    AS name,
+    tal.amount                              AS amount,
+    tl.memo                                 AS line_memo
+FROM transactionaccountingline tal
+    JOIN transaction t     ON t.id = tal.transaction
+    JOIN transactionline tl ON tl.transaction = tal.transaction
+                           AND tl.id = tal.transactionline
+    JOIN account a         ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY a.acctnumber, t.trandate, t.tranid, tl.id
+```
+
+**열 유형:** `amount` → `Currency`, `posting_date` → `Date`, 나머지는 `Text`. `amount`는 차변 양수 / 대변 음수입니다.
+
+### 시산표
+
+기간 동안의 계정별 순변동입니다. 장부가 균형을 이루면 모든 계정의 합계는 0입니다.
+
+```sql
+SELECT
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    a.accttype              AS account_type,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.acctnumber, BUILTIN.DF(a.id), a.accttype
+ORDER BY a.acctnumber
+```
+
+**열 유형:** `balance` → `Currency`, 나머지는 `Text`.
+
+<Aside type="note">
+달력 범위 대신 지정한 회계 기간에 맞추려면 `accountingperiod`를 조인하고 해당 기간으로 필터링하십시오. `JOIN accountingperiod ap ON ap.id = t.postingperiod` … `WHERE ap.periodname = 'Jan 2026'`. 항목이 날짜 순서와 다른 기간으로 전기된 경우 기간 보고와 달력 날짜 보고가 다를 수 있습니다.
+</Aside>
+
+### 손익계산서(Profit & Loss, Income Statement)
+
+수익 및 비용 계정으로 제한한 시산표이며, 수익이 양수로, 비용이 음수로 표시되도록 부호를 반전합니다. 따라서 해당 열의 합계가 순이익이 됩니다.
+
+```sql
+SELECT
+    a.accttype                      AS account_type,
+    a.acctnumber                    AS account_number,
+    BUILTIN.DF(a.id)                AS account_name,
+    -SUM(tal.amount)                AS amount
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**열 유형:** `amount` → `Currency`, 나머지는 `Text`. 보고서에서 `account_type`을 수익(`Income`, `OthIncome`), 매출원가(`COGS`), 비용(`Expense`, `OthExpense`)으로 그룹화하십시오. 수익에서 매출원가와 비용을 뺀 값이 순이익입니다.
+
+### 대차대조표
+
+대차대조표 계정(손익 계정이 아닌 모든 계정)에 대한 날짜 **기준** 누적 계정 잔액입니다. 개시부터 기준일까지의 모든 전기 라인이 포함됩니다.
+
+```sql
+SELECT
+    a.accttype              AS account_type,
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype NOT IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate <= TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**열 유형:** `balance` → `Currency`, 나머지는 `Text`. 자산은 양수(차변 정상)로, 부채와 자본은 음수(대변 정상)로 표시되므로 표시할 때는 부호를 반전하십시오. 자산은 부채와 자본의 합계와 같아야 합니다.
+
+## 운영 레시피
+
+### 미수금(미결제 고객 송장)
+
+미결제 금액과 만기일이 포함된 미결제 고객 송장이며, 미수금 연령 분석의 기초가 됩니다.
+
+```sql
+SELECT
+    t.tranid                            AS invoice_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+    TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+    t.foreigntotal                      AS invoice_total,
+    t.foreignamountunpaid               AS amount_unpaid
+FROM transaction t
+WHERE t.type = 'CustInvc'
+    AND t.foreignamountunpaid <> 0
+ORDER BY t.tranid
+```
+
+**열 유형:** `invoice_total`, `amount_unpaid` → `Currency`, `invoice_date`, `due_date` → `Date`, 나머지는 `Text`. 연령 구간은 이후 단계에서 `due_date`로 계산하십시오.
+
+### 미결 판매 주문
+
+아직 완전히 처리되지 않은 판매 주문이며, 고객별로 표시됩니다.
+
+```sql
+SELECT
+    t.tranid                            AS order_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS order_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS order_total
+FROM transaction t
+WHERE t.type = 'SalesOrd'
+    AND t.status IN ('SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E')
+ORDER BY t.tranid
+```
+
+**열 유형:** `order_total` → `Currency`, `order_date` → `Date`, 나머지는 `Text`. `SalesOrd:*` 상태 코드(Pending Fulfillment, Partially Fulfilled, Pending Billing)는 계정마다 다릅니다. "미결"을 의미하는 코드를 확인하거나, 상태 필터를 제거하고 이후 단계에서 필터링하십시오.
+
+### 미결 구매 주문
+
+입고 또는 청구를 기다리는 구매 주문이며, 공급업체별로 표시됩니다.
+
+```sql
+SELECT
+    t.tranid                            AS po_number,
+    BUILTIN.DF(t.entity)                AS vendor,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS po_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS po_total
+FROM transaction t
+WHERE t.type = 'PurchOrd'
+    AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E', 'PurchOrd:F')
+ORDER BY t.tranid
+```
+
+**열 유형:** `po_total` → `Currency`, `po_date` → `Date`, 나머지는 `Text`. 판매 주문과 마찬가지로 계정에서 어떤 `PurchOrd:*` 상태 코드가 "미결"을 의미하는지 확인하십시오.
+
+### 현재 재고 수량
+
+재고 품목의 회사 전체 현재 수량과 사용 가능 수량입니다.
+
+```sql
+SELECT
+    i.itemid            AS item,
+    BUILTIN.DF(i.id)    AS description,
+    i.quantityonhand    AS on_hand,
+    i.quantityavailable AS available
+FROM item i
+WHERE i.itemtype = 'InvtPart'
+    AND i.isinactive = 'F'
+ORDER BY i.itemid
+```
+
+**열 유형:** `on_hand`, `available` → `Decimal`, 나머지는 `Text`. 이는 회사 전체 합계입니다. 위치별 수량은 NetSuite의 재고 위치 데이터에서 가져오며 Multi-Location Inventory 기능에 따라 다르므로, 계정에서 무엇을 제공하는지 확인하십시오.
+
+## 계정에 맞게 조정
+
+- **테스트하는 동안에는 범위를 제한하십시오.** `AND ROWNUM <= 100`(또는 좁은 날짜 범위)을 추가하여 첫 실행이 빠르게 반환되도록 한 다음, 실제 가져오기에서는 제거하십시오.
+- **잘못된 숫자는 커넥터가 아니라 쿼리에서 추적하십시오.** 변환 오류에는 열과 값이 표시됩니다. 합계가 맞지 않는 경우는 거의 항상 자회사/통화 범위 또는 전기/기간 필터 때문이므로 이를 먼저 확인하십시오.
+- **모든 가져오기는 전체 테이블 교체입니다.** 예약된 실행마다 모든 기록을 다시 추출하지 않도록 `WHERE` 절을 필요한 슬라이스(롤링 기간, 미결 항목만 등)로 제한하십시오.
+
+## 관련 문서
+
+- [NetSuite에 연결](/ko/guides/connections/netsuite/) — 먼저 연결을 설정합니다.
+- [NetSuite 재무 데이터 가져오기](/ko/guides/connections/import-netsuite-financials/) — SuiteQL이 필요 없는 잔액, 총계정원장 상세, 마스터 데이터용 기본 제공 가져오기 단계입니다.
+- [NetSuite REST 커넥터](/ko/reference/connectors/rest/netsuite/) — 필드 및 SuiteQL 참조.
+- [REST 요청 단계](/ko/guides/workflows/rest-request-step/) — 이 쿼리가 실행되는 단계입니다.

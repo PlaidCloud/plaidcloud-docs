@@ -1,0 +1,98 @@
+---
+title: 查看 ERP 过账历史
+description: 查看项目进行的每次 ERP 过账尝试及其实时状态（已过账、已拒绝、存疑或已冲销）以及 ERP 单据编号，可按项目筛选，通过 REST 或 MCP 工具访问。
+sidebar:
+  label: 查看 ERP 过账历史
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+当工作流向 ERP 过账时，无论是 Sage Intacct 或 NetSuite 日记账分录，Acumatica、Business Central 或 Xero 单据，Dynamics 365 Finance & Operations、Oracle Fusion、Workday Financials 或 SAP S/4HANA Cloud 日记账分录，还是 SAP 单据，PlaidCloud 都会把每次过账尝试记录在持久的、按租户划分的分类账中，从而确保同一单据绝不会被过账两次。**ERP 过账历史**是该分类账的只读视图：包含每次尝试及其实时状态、ERP 自己的单据编号和时间戳，并可按项目筛选。
+
+它与过账步骤写入的每次运行结果表互为补充：结果表是某一次运行的结果，而过账历史是跨所有运行和工作流的常设记录，并且会跟踪每次过账的完整生命周期，而不是停留在运行结束的那一刻。
+
+<Aside type="note">
+过账历史是**只读**的，绝不会更改过账或分类账。它可通过 REST API 以及 MCP 工具使用，范围限定为您已有权访问的某一个项目。如需跨您有权查看的所有项目和连接审阅过账情况的租户级屏幕，请使用[过账登记簿](/zh-cn/guides/connections/posting-register/)。
+</Aside>
+
+## 每次过账显示的内容
+
+每一行代表在一个连接上向一个 ERP 环境过账（或尝试过账）的一个单据：
+
+| 字段 | 含义 |
+|---|---|
+| `project_id` | 发起过账的项目。 |
+| `connection_id` | 使用的 ERP 连接。 |
+| `environment_id` | 过账到的连接环境（例如沙盒与生产）。 |
+| `natural_key` | 单据的业务键，由过账步骤派生。 |
+| `state` | 过账当前的生命周期状态（见下文）。 |
+| `confirmation_id` | ERP 自己的单据编号，在 ERP 分配之后才有。模拟过账永不设置。 |
+| `run_id` | 进行过账的工作流运行。 |
+| `submitted_at`、`created_at`、`updated_at` | 过账的提交时间、首次记录时间和最后更改时间。 |
+
+在[模拟模式](/zh-cn/guides/workflows/run-a-workflow/#选择过账模式)下进行的过账会被标记为模拟，使您一眼就能将其与真实过账区分开，请参阅下文的[模拟过账](#模拟过账)。
+
+## 生命周期状态
+
+过账在 ERP 处理期间会依次经过以下状态：
+
+| 状态 | 含义 |
+|---|---|
+| `preflighted` | 已验证并已声明，尚未发送到 ERP。 |
+| `submitted` | 已发送到 ERP；结果尚不明确。 |
+| `pending` | 已接受异步处理；等待最终结果。 |
+| `posted` | 已确认过账；`confirmation_id` 保存 ERP 单据编号。 |
+| `rejected` | ERP 拒绝了该过账。 |
+| `in_doubt` | 无法确认结果，在任何重试之前，需要人工直接到 ERP 中检查。 |
+| `reversed` | 之前已过账的单据已被冲销。 |
+
+<Aside type="caution">
+`in_doubt` 过账恰恰就是这个意思：结果未知，而不是失败。在决定是否采取行动之前，请在 ERP 本身中确认；绝不要盲目重新运行。
+
+只要 PlaidCloud 无法判断 ERP 做了什么（超时或无法回读的服务器错误，或无法识别的状态），就会将过账或冲销记录为 `in_doubt`。它不会把这样的响应记录为 `rejected`，因为那会让人以为该单据不在 ERP 中，而实际上它可能已在其中。
+</Aside>
+
+## 模拟过账
+
+在[模拟模式](/zh-cn/guides/workflows/run-a-workflow/#选择过账模式)下启动的运行会验证过账步骤将要发送的内容，但绝不会联系 ERP。本应过账的内容仍会记录在此处，并标记为模拟，因此您可以像审阅真实过账一样审阅它，包括其 `natural_key` 和它构建的请求，但没有 `confirmation_id`，因为没有任何 ERP 见过它。
+
+模拟条目绝不会占用或阻塞保护真实过账幂等写入的槽位。如果您之后对同一单据进行实时运行，真实过账会照常进行并取代模拟记录。未配置过账分类账的工作区仍会正常验证模拟运行，只是不在此处记录任何内容。
+
+可使用 `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>`（可选地用 `connection_id` 进一步缩小范围）或使用相同参数的 `erp_clear_simulated_postings` MCP 工具，独立于真实条目清除项目的模拟条目。无论哪种方式，都只会移除模拟行，绝不会触及真实过账，并且响应会同时报告所清除的历史行和[过账登记簿](/zh-cn/guides/connections/posting-register/)自己的模拟存储行，因为一次清除会同时从两者中移除。
+
+<Aside type="note">
+在“模拟”下，SAP 过账、附件和 RFC 步骤会被直接跳过，而不是试运行，因此它们绝不会产生模拟条目。请参阅[选择过账模式](/zh-cn/guides/workflows/run-a-workflow/#选择过账模式)。
+</Aside>
+
+## 读取历史记录
+
+每次读取都限定在您可以访问的一个项目内。您需要对该项目具有读取权限，即与项目其余工作所需的权限相同。
+
+### 通过 REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+可选的查询参数可缩小结果范围：
+
+| 参数 | 作用 |
+|---|---|
+| `connection_id` | 仅限在此连接上进行的过账。 |
+| `state` | 仅限处于此状态的过账（例如 `state=in_doubt`）。 |
+| `limit` | 页面大小（默认 100）。 |
+| `cursor` | 上一页的 `next_cursor`。 |
+
+结果按最新优先返回。当页面达到 `limit` 时，响应会带有 `next_cursor`；将其作为 `cursor` 传回即可读取下一页，当 `next_cursor` 为 null 时停止。
+
+### 通过 MCP
+
+使用相同的参数调用 `erp_post_history` 工具：必填的 `project_id`，以及可选的 `connection_id`、`state`、`limit` 和 `cursor`。它返回相同的行，分页方式也相同。
+
+## 常见审阅
+
+- **某个项目所有仍存疑的过账：**`state=in_doubt`，即需要在 ERP 中手动确认的过账。
+- **某次特定运行过账了什么：** 读取项目的历史记录并按 `run_id` 匹配。
+- **某个单据是否确实已过账：** 找到它的行并读取 `state` 和 `confirmation_id`。

@@ -1,0 +1,99 @@
+---
+title: "Intacct: contabilizar asiento de diario"
+description: Contabilice en Sage Intacct asientos de diario de tablas de proyecto de PlaidCloud como alternativa de poco código a una UDF de contabilización, con una tabla de resultados por asiento y validación en modo Preview.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza asientos de diario en Sage Intacct mediante una conexión de Sage Intacct, usando la API REST v1 de Intacct. Es una alternativa nativa y de poco código a escribir una función definida por el usuario (UDF) de contabilización: elija la conexión, asigne sus columnas y el paso se encarga de la autenticación, del procesamiento por lotes y del tratamiento de errores de cada asiento.
+
+El paso lee dos tablas que usted ya ha preparado en pasos anteriores, una **tabla de encabezados** y una **tabla de líneas**, valida cada asiento de diario y lo contabiliza. Admite el caso por lotes: muchos asientos de diario en una sola ejecución, cada uno contabilizado y seguido de forma independiente.
+
+<Aside type="danger" title="Sin protección contra duplicados: revise la tabla de resultados antes de volver a ejecutar">
+Este paso **no** registra qué asientos ya se han contabilizado. Volver a ejecutarlo vuelve a contabilizar **todos** los asientos de la tabla de encabezados, incluidos los que se contabilizaron correctamente la vez anterior; no hay eliminación de duplicados. Antes de volver a ejecutarlo, abra la tabla de resultados de la última ejecución y confirme qué asientos necesitan realmente contabilizarse. Si una ejecución anterior dejó asientos con un `status` de `unknown`, consulte [Tabla de resultados](#tabla-de-resultados) más abajo antes de hacer cualquier otra cosa.
+</Aside>
+
+## Contrato de la estructura de datos
+
+El paso no deduce qué filas pertenecen a cada asiento de diario: usted crea esa estructura en pasos anteriores con pasos estándar (una expresión de asignación, una agregación) antes de que se ejecute este paso:
+
+- La **tabla de encabezados** tiene **exactamente una fila por asiento de diario**, y esa fila incluye una columna **`entry_key`**: cualquier valor que sea único por asiento (un número de lote, una concatenación de fecha y descripción, una secuencia generada).
+- La **tabla de líneas** tiene una fila por línea de contabilización, y **cada línea lleva el mismo valor de `entry_key`** que la fila de encabezado a la que pertenece.
+
+Un único asiento de diario (sin procesamiento por lotes) también necesita esta estructura: asigne la misma constante `entry_key` a todas las filas de ambas tablas.
+
+El paso agrupa ambas tablas por `entry_key` antes de validar o contabilizar, de modo que una fila de encabezado sin líneas coincidentes, una línea sin encabezado coincidente o más de una fila de encabezado para la misma clave hacen que falle la validación de ese asiento en lugar de generar una contabilización mal formada.
+
+## Elementos de configuración propios
+
+### Conexión de Sage
+
+La conexión de **Sage Intacct** a través de la cual se contabiliza. Aquí solo se ofrecen conexiones de Sage Intacct: no se acepta una conexión REST genérica, porque la contabilización requiere el intercambio de tokens específico de Intacct y la resolución de empresa/entidad que solo incluye una conexión de Sage Intacct.
+
+La misma conexión se usa en otros pasos para *leer* de Intacct (por ejemplo, [Import Sage AP](/es/reference/workflow-steps/sage-intacct/import-sage-ap/) o [Import Sage Intacct Query](/es/reference/workflow-steps/sage-intacct/import-intacct-query/)): una conexión sirve para ambas direcciones. Consulte [Sage Intacct REST Connector](/es/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+El nombre de la columna, presente tanto en las columnas de origen del encabezado como en las de las líneas, que agrupa las filas de encabezado y de líneas en un asiento de diario. Consulte [Contrato de la estructura de datos](#contrato-de-la-estructura-de-datos) más arriba.
+
+### Columnas de origen
+
+Dos asignaciones de columnas independientes, una por pestaña; en cada una, asigne una columna de origen al campo del asiento de diario al que alimenta:
+
+- **Columnas de encabezado**: los campos del nivel de asiento de diario: diario, fecha de contabilización, descripción, número de referencia, un `base_location` opcional (la entidad o ubicación de Intacct bajo la que se contabiliza el asiento; omítalo en una empresa de una sola entidad), la columna de correlación que nombró como **Entry Key** y detalles similares del encabezado.
+- **Columnas de líneas**: los campos por contabilización: cuenta del libro mayor, importe de débito/crédito, descripción de la línea, la misma columna **Entry Key** y dimensiones (ubicación, departamento, empleado, clase y similares).
+
+No es necesario cambiar el nombre de sus columnas de origen: asigne a los nombres de campo de destino anteriores las columnas, sea cual sea su nombre.
+
+### Tabla de resultados
+
+La tabla de destino en la que este paso escribe una fila por asiento de diario, con el resultado de la validación y (si no está en modo Preview) de la contabilización. Consulte [Tabla de resultados](#tabla-de-resultados) más abajo para ver sus columnas y los valores de `status`.
+
+### Preview
+
+Una casilla, **marcada de forma predeterminada**. Con Preview activado, el paso valida cada asiento de diario y escribe la tabla de resultados exactamente como lo haría una ejecución real, pero **no** se autentica en Intacct y **no** contabiliza nada: en el modo Preview no hay ninguna llamada de red a Intacct. Las filas llegan a la tabla de resultados con `status = preview`, y muestran qué asientos se contabilizarían sin problemas y cuáles fallarían en la validación, antes de que nada llegue a su libro mayor.
+
+Como una ejecución real, una ejecución en Preview **reemplaza** la tabla de resultados con las filas de esta ejecución: es la salida de cada ejecución del paso, no un registro acumulado, de modo que una ejecución en Preview posterior a una ejecución real sobrescribe las filas `posted` y `unknown` de esa ejecución. Abra y copie la tabla de resultados de la última ejecución antes de volver a ejecutar (en Preview o real) si todavía la necesita.
+
+Preview no valida las **credenciales** de Intacct: como nunca se conecta, una conexión incorrecta o una credencial caducada no aparecerá aquí. Use la acción **Probar conexión** de la conexión (en **Tools > Connections**) para confirmar las credenciales por separado.
+
+Una configuración de paso que omita este campo por completo, por ejemplo una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo, también adopta Preview de forma predeterminada en lugar de una contabilización real.
+
+Desmarque Preview solo cuando esté listo para una contabilización real. Recomendamos ejecutar primero con Preview activado, revisar la tabla de resultados y volver a ejecutar con Preview desactivado.
+
+## Tabla de resultados
+
+Cada ejecución, ya sea en Preview o real, escribe en la tabla de resultados una fila por asiento de diario:
+
+| Columna | Descripción |
+|---|---|
+| `entry_key` | El asiento de diario sobre el que informa esta fila. |
+| `status` | Uno de `preview`, `posted`, `failed`, `unknown`; véase más abajo. |
+| `intacct_key` | La clave que Intacct asignó al asiento contabilizado, cuando está disponible. |
+| `http_status` | El estado HTTP que Intacct devolvió para el intento de contabilización, cuando está disponible. |
+| `error_message` | Una descripción breve y depurada de lo que falló, cuando `status` es `failed` o `unknown`. |
+| `line_count` | Número de líneas asociadas a este asiento. |
+| `posting_date` | La fecha de contabilización enviada a Intacct (o, en Preview, que se enviaría). |
+
+### Valores de status
+
+- **`preview`**: modo Preview; el asiento se validó y no se contabilizó.
+- **`posted`**: el asiento se contabilizó correctamente en Intacct.
+- **`failed`**: Intacct rechazó el asiento de forma definitiva (o falló la validación antes de intentar contabilizar). Puede corregir el problema de fondo y volver a contabilizar solo ese asiento sin riesgo.
+- **`unknown`**: no se pudo determinar el resultado: un tiempo de espera agotado, una conexión interrumpida o un error del servidor sin respuesta definitiva de Intacct.
+
+<Aside type="danger" title="unknown no significa que haya fallado">
+Un asiento `unknown` puede haberse contabilizado ya correctamente en Intacct: la solicitud pudo haberse recibido y confirmado antes de que se perdiera la conexión o de que la respuesta llegara a devolverse. **Verifique el estado del asiento directamente en Intacct antes de volver a ejecutar este paso.** Volver a contabilizar a ciegas un asiento `unknown` supone el riesgo de crear un asiento de diario duplicado en su libro mayor.
+</Aside>
+
+Una ejecución con filas `failed` o `unknown` informa de una advertencia para que sea visible sin abrir la tabla de resultados, pero la propia tabla de resultados es la fuente de verdad sobre qué hacer a continuación.
+
+## Temas relacionados
+
+- [Pasos de exportación](/es/reference/workflow-steps/export/)
+- [Import Sage AP](/es/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query](/es/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Sage Intacct REST Connector](/es/reference/connectors/rest/sage-intacct/)

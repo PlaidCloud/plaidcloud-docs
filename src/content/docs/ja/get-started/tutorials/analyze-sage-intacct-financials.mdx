@@ -1,0 +1,218 @@
+---
+title: Sage Intacct の財務を分析する — 接続から試算表まで
+description: Sage Intacct のエンドツーエンドのチュートリアルです。接続し、Sageのインポート ステップでディメンション別の勘定残高を取得し、部門別の試算表と損益計算書に整形します。統計勘定から一人あたりの指標を追加し、ダッシュボードに表示して更新をスケジュールします。
+sidebar:
+  label: Sage Intacct の財務分析
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*約 40 分 · Sage Intacct への接続、取り込み済みの試算表、部門別の損益計算書、ダッシュボード、スケジュールされた更新*
+
+これは、Sage Intacct を使うコントローラーや FP&A アナリストが最初の日に進める手順です。最後まで進めると、Intacct から**ディメンション別の勘定残高**を直接取得し、財務諸表のように読める**部門別の試算表と損益計算書**に変換して、ダッシュボードに表示し、全体が自動的に更新されるように設定できます。既定レポートのエクスポートも、手作業での再入力も不要です。数値は Intacct から取得され、常に最新の状態に保たれます。
+
+接続と取得は一度だけ行い、その後は最も重要な作業に取り組みます。残高の生データを、ビジネス担当者が月曜の朝に読む集計に整形する作業です。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="左から右へ 5 つの段階が並びます。Sage Intacct、ディメンション別の勘定残高を取得する Import Sage ステップ、取り込み済みの試算表テーブル、グループ化して集計する Table Extract ステップ、そして損益計算書とダッシュボードで、これらがスケジュールされた更新につながります。" style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sageのインポート</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">試算表テーブル</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">グループ化と合計</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">損益計算書</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">接続して残高を一度取得し、読みやすい財務諸表に整形します。すべてスケジュールで再実行できます。</figcaption>
+</figure>
+
+## 前提条件
+
+- PlaidCloud ワークスペースと、作業用のプロジェクト（必要な場合は[トライアルを開始](https://app.plaidcloud.com)してください）。
+- **動作する Sage Intacct 接続。** 最初に [Sage Intacct への接続](/ja/guides/connections/sage-intacct/)の手順を完了してください。Web サービスを有効にし、読み取るオブジェクトに対する権限を持つ Web サービスユーザーを用意する必要があります。また、接続には 4 つの認証情報フィールド（**クライアントID**、**クライアントシークレット**、**Webサービスユーザーのユーザー名**、**会社ID**）が必要です。ここから始める前に、接続が機能していることを確認してください。
+- レポート対象の**営業エンティティ**（エンティティ ID）と、損益計算書の勘定科目（収益と費用）が含まれるおおよその**勘定科目番号の範囲**を把握しておいてください。以下の例では、エンティティに `201` と `301`、損益計算書の範囲に `4010`～`9999` を使用しています。お使いの環境に合わせて置き換えてください。
+
+<Aside type="note">
+取得以降の作業はすべてポイント＆クリック操作で行い、SQL もコードも不要です。Intacct 固有なのは **Sageのインポート**ステップだけで、日付と勘定科目の範囲を指定して、Intacct の*ディメンション別の勘定残高*を読み取ります。勘定科目とディメンションの組み合わせごとに 1 行が返され、各行に期首残高、期間残高、期末残高が含まれます。
+</Aside>
+
+## ステップ 1: ワークフローを作成する
+
+ワークフローは、データを取得して整形するパイプラインです。
+
+<Steps>
+
+1. プロジェクトを開き、**ワークフロー**タブに切り替えます。
+2. **新規ワークフロー**をクリックし、`Intacct Financials` などの名前を付けて開きます。
+
+</Steps>
+
+## ステップ 2: 試算表を取得する
+
+[Sageのインポートステップ](/ja/reference/workflow-steps/sage-intacct/import-sage/)は、日付範囲と勘定科目の範囲を指定して勘定残高を取得し、選択したディメンションをすべての行に付与します。これが試算表になります。
+
+<Steps>
+
+1. **Sageのインポート**ステップを追加します。
+
+2. 構成で次の項目を設定します。
+
+   | フィールド | 値 |
+   |---|---|
+   | **接続** | Sage Intacct 接続 |
+   | **会社** | 読み取り元の Intacct の会社 |
+   | **開始日** / **終了日** | 締める期間（例: 月の初日と最終日） |
+   | **Start account** / **End account** | 損益計算書の範囲（例: `4010` ～ `9999`） |
+   | **エンティティ** | 営業エンティティ（例: `201`、`301`） |
+   | **ディメンション** | レポートで使用するものを有効にします。一般的には**場所**、**部門**、**従業員**、**クラス**です |
+
+3. **ターゲット**を、`intacct_trial_balance` という名前の新しいテーブルに設定します。
+
+4. ステップを実行します。これで、勘定科目とディメンションの組み合わせごとに 1 行を持つテーブルができました。`startbalance`、`periodbalance`、`endbalance` の列と、有効にしたディメンションごとの ID と名前のペア（例: `departmentid` / `departmentname`、`locationname`）が含まれます。
+
+</Steps>
+
+<Aside type="caution">
+Intacct はすべての列を**テキスト**として返します。また、Sage の取得は**単一リクエスト**（ページネーションなし）です。勘定残高の結果は小さいためここでは問題ありませんが、このステップを大量の明細データには使用しないでください。実際の列のタイプは、それが必要になる次のステップで設定します。
+</Aside>
+
+<Aside type="note">
+**開始日**と**終了日**の両方を設定する必要があります。開始日または終了日の片方だけでは無視されます。ID と名前が不要なディメンションを有効にした場合は、次のステップで余分な列を削除できます。（**ウェアハウス**ディメンションのチェックボックスは効果がありません。出力にウェアハウスが必要な場合は **Custom dimensions** を使用してください。）
+</Aside>
+
+## ステップ 3: 残高を損益計算書に整形する
+
+ここからが分析です。SQL を使わず、ポイント＆クリック操作の変換 1 つで行います。損益計算書の範囲を、部門ごとに少数の財務諸表の行に集約し、収益がプラスで表示されるように符号を反転します。[Table Extract ステップ](/ja/reference/workflow-steps/tables/table-extract/)の**テーブルデータの選択**タブと**データフィルター**タブで、すべて実行できます。
+
+<Steps>
+
+1. **Table Extract** ステップを追加します。**ソース**に `intacct_trial_balance` を、**ターゲット**に新しいテーブル `intacct_pnl` を設定します。
+
+2. **テーブルデータの選択**タブで、**集計**をクリックして集計を有効にし、ターゲット列を 3 つ設定します。
+
+   - **`departmentname`** — ソースからそのままマッピングします。タイプは**テキスト**、集計は**グループ化**です。
+   - **`pnl_line`** — 勘定科目番号をレポートの行に変換する**式**（下記）です。タイプは**テキスト**、集計は**グループ化**です。
+   - **`amount`** — **式** `func.to_float64(intacct_trial_balance.endbalance) * -1` です。テキストの残高を数値に変換し、符号を反転します。タイプは**通貨**、集計は**合計**です。
+
+   `amount` ターゲット列の**タイプ**を**通貨**に設定することで、テキストの残高を合計できるようになります。`pnl_line` では、その**式**セルをダブルクリックして次のように入力します（列や**条件**グループの `case` 関数をポイント＆クリックで選択できます）。
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. ステップを実行します。
+
+</Steps>
+
+`* -1` が唯一の会計上の操作です。Intacct では収益は貸方（マイナス）、費用は借方（プラス）として保持されるため、期末残高の符号を反転することで**収益がプラス、コストがマイナス**になり、各部門の行を合計すると*純利益*になります。`case()` の勘定科目番号の区切りは、お使いの勘定科目表に合わせて調整してください。式には PlaidCloud のポイント＆クリックエディターを使用します。詳しくは[データマッパーの高度な使い方](/ja/reference/workflow-steps/common/advanced-data-mapper-usage/)と[式のリファレンス](/ja/reference/expressions/)を参照してください。
+
+<Aside type="tip">
+部門別ではなく全社の損益計算書にしたい場合は、ターゲット列から `departmentname` を削除し、`pnl_line`（グループ化）と `amount`（合計）だけを残します。
+</Aside>
+
+## ステップ 4: 財務担当者の目線で読む
+
+`intacct_pnl` テーブルを開きます。部門ごとに 3 つの数値があります。
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+この表から次の値をそのまま読み取れます。
+
+- **売上総利益** = 収益 + 売上原価（売上原価はすでにマイナス）→ `486,200 − 190,540 = 295,660`。
+- **純利益** = 3 つの行の合計 → `82,780`。
+- **売上総利益率（%）** = 売上総利益 ÷ 収益 → 約 61%。
+
+最初に行うべきことは**照合**です。同じ期間とエンティティについて Intacct 自身の損益計算書（財務レポート）を実行し、収益と純利益が一致することを確認します。一致しない場合は、ほとんどが範囲の違いです。含めていないエンティティ、損益計算書の一部が除外される勘定科目の範囲、期間の不一致などが原因として考えられます。照合が取れて初めて、このパイプラインを信頼できます。
+
+<Aside type="tip">
+期間を横に並べた従来のレイアウトにしたい場合は、`intacct_pnl` を読み取る [Table Pivot ステップ](/ja/reference/workflow-steps/tables/table-pivot/)を追加します。期間を列にピボットし、`pnl_line` を行のままにして、`amount` を合計します。そもそも期間の列を作るには、ステップ 3 で `end_date` を**グループ化**の列として追加します。SQL を使わずに前月比をひと目で確認できます。
+</Aside>
+
+## ステップ 5: ダッシュボードに表示する
+
+テーブルの数値でも十分ですが、CFO に送るのはグラフです。`intacct_pnl` を[公開](/ja/get-started/tutorials/load-and-transform-data/#ステップ7結果を公開する)し、[ダッシュボードを作成する](/ja/get-started/tutorials/build-a-dashboard/)の手順に沿って、次を追加します。
+
+- `departmentname` ごとの純利益（または収益）の**棒グラフ**
+- 収益、売上原価、営業費用の構成がひと目でわかるよう、`pnl_line` ごとの**棒グラフ**
+
+これで、エクスポート不要でワークフローが実行されるたびに更新される、Sage Intacct の財務ダッシュボードが完成しました。
+
+## ステップ 6: 更新をスケジュールする
+
+<Steps>
+
+1. ワークフロー全体を最初から最後まで一度実行し、すべてのステップが成功していることを確認します。
+2. [ワークフローをスケジュール](/ja/get-started/tutorials/schedule-a-workflow/)します。決算のサイクルに合わせて月次にするか、月中も数値を最新にしておきたい場合は週次にします。
+
+</Steps>
+
+取得はテーブル全体の置き換えになるため、実行のたびに、設定した日付と勘定科目の範囲の残高が再読み取りされます。履歴全体ではなく、必要な範囲（当期のみ、損益計算書の勘定科目のみなど）に絞ってください。
+
+## ステップ 7: 統計勘定から一人あたりの指標を追加する
+
+Intacct は、財務の勘定科目表と並んで、人員数、床面積、数量などの金額以外の**統計勘定**も管理しています。統計モードに設定した 2 つ目の**Sageのインポート**ステップでこれらを取得し、損益計算書に結合して、部門別の従業員一人あたりの営業費用などの指標を算出します。標準ステップをさらに 3 つ追加するだけで、SQL は引き続き不要です。
+
+<Steps>
+
+1. 2 つ目の**Sageのインポート**ステップを追加します。構成で次の項目を設定します。
+
+   | フィールド | 値 |
+   |---|---|
+   | **接続** | Sage Intacct 接続 |
+   | **会社** | 読み取り元の Intacct の会社 |
+   | **開始日** / **終了日** | ステップ 2 と同じ期間 |
+   | **統計** | **統計のみ** |
+   | **Start account** / **End account** | `0000` ～ `9999`。統計勘定が財務の勘定科目表の番号体系に収まっているとは限らないため、ステップ 2 の損益計算書の範囲ではなく、全範囲を取得します |
+   | **エンティティ** | 営業エンティティ（例: `201`、`301`） |
+   | **ディメンション** | **部門**。一人あたりの指標をレポートする単位となるディメンションです |
+
+2. **ターゲット**を、`intacct_statistics` という名前の新しいテーブルに設定します。
+
+3. ステップを実行します。統計勘定と部門の組み合わせごとに 1 行が得られ、`endbalance` に統計値そのもの（例: 期末時点のその部門の人員数）が入ります。
+
+</Steps>
+
+次に、人員数を損益計算書に取り込んで割り算します。ただし、`intacct_statistics` から直接ではありません。このテーブルには*統計勘定と部門の組み合わせごとに*1 行（人員数、床面積、数量など、管理しているすべての統計）があるため、`departmentname` だけで結合すると、損益計算書のすべての行がその部門の統計勘定の数だけ増えてしまいます。その結果、`amount_per_head` はたまたまその行に結合された統計勘定で割られることになります。先に人員数に絞り込んで、結合が部門ごとに 1 行になるようにすると、比率が意味のあるものになります。
+
+<Steps>
+
+1. **Table Extract** ステップを追加します。**ソース**に `intacct_statistics` を、**ターゲット**に新しいテーブル `intacct_headcount` を設定します。**テーブルデータの選択**では、すべての列をそのまま伝播させます。ここでは集計は不要です。**データフィルター**タブで、ソースデータに対する**データのサブセットを選択**フィルターを追加します: `intacct_statistics.glaccountno == '9000'`。`9000` は、お使いの人員数の統計勘定の番号に置き換えてください（取得結果が勘定科目名の列を返す場合は、その列で絞り込みます。`glaccountno` は引き続きテキストなので、引用符で囲んだ文字列と比較します）。ステップを実行すると、`intacct_headcount` は部門ごとにちょうど 1 行になります。
+
+2. [Table Outer Join ステップ](/ja/reference/workflow-steps/tables/table-outer-join/)を追加します。**Table 1** に `intacct_pnl` を、**Table 2** に `intacct_headcount` を設定し、`departmentname` で結合します。これで部門ごとに 1 対 1 の対応になります。**結合タイプ**はデフォルトの**左結合**のままにします。損益計算書のすべての行が保持され、部門が一致する行には人員数が入ります。ターゲットは新しいテーブル `intacct_pnl_with_headcount` とし、両方のテーブルのすべての列を伝播させます。
+
+3. ステップを実行し、`intacct_pnl_with_headcount` を読み取って新しいテーブル `intacct_pnl_per_head` に出力する **Table Extract** ステップを追加します。**テーブルデータの選択**で既存の列を伝播させ、ターゲット列をもう 1 つ追加します。`amount_per_head` で、**式**は `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`、タイプは**通貨**です。
+
+4. ステップを実行します。
+
+</Steps>
+
+**`3 - Operating Expenses`** の行の `amount_per_head` を見ると、部門別の従業員一人あたりの営業費用を読み取れます。ステップ 4 と同じ読み方で、列が 1 つ増えただけです。損益計算書と並べてダッシュボードに追加するか、ステップ 6 のスケジュールに含めて、他のものと一緒に更新されるようにします。
+
+## 作成した内容
+
+空のワークフローから始めて、Sage Intacct の勘定残高のライブデータを取得し、標準の変換ステップ 1 つで**部門別の損益計算書**に整形しました。さらに統計勘定を結合して一人あたりの指標を算出しました。パイプライン全体で SQL は使っていません。ダッシュボードに表示し、更新をスケジュールしました。財務チームが行う中核的なレポートの流れが、これで自動化されました。
+
+## 次のステップ
+
+- [Sage Intacct への接続](/ja/guides/connections/sage-intacct/) — 接続の設定と、その他の Sage のインポートステップ（買掛金請求書、買掛金明細、アドホックなオブジェクトクエリ）です。
+- [Sage Intacct クエリのインポート](/ja/reference/workflow-steps/sage-intacct/import-intacct-query/) — 任意の Intacct オブジェクト（総勘定元帳の勘定科目、顧客、プロジェクト）を取得して、財務諸表を補強します。
+- [Table Extract ステップ](/ja/reference/workflow-steps/tables/table-extract/)と[データマッパーの高度な使い方](/ja/reference/workflow-steps/common/advanced-data-mapper-usage/) — より深い分析のためのグループ化、フィルター、計算列です。
+- [ディメンション階層を設計する](/ja/get-started/tutorials/design-a-dimension/) — 勘定科目表を、自分で管理できるレポート用のグループに集約します。

@@ -1,0 +1,155 @@
+---
+title: 连接到 NetSuite
+description: 将 PlaidCloud 连接到 NetSuite，并使用 SuiteQL 拉取财务和运营数据——前提条件、凭据、连接、冒烟测试以及计划拉取。
+sidebar:
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+使用 SuiteQL 将 NetSuite 中的财务和运营数据拉取到 PlaidCloud 表中。本指南将带您从一个空白的 NetSuite 集成，一直到计划的、带类型的拉取。有关其背后的逐字段参考，请参阅 [NetSuite REST 连接器](/zh-cn/reference/connectors/rest/netsuite/)。
+
+## 前提条件
+
+在 NetSuite 中，您需要：
+
+- 启用 **OAuth 2.0** 和 **REST Web Services**（**Setup > Company > Enable Features > SuiteCloud**）。
+- 一个 **RSA 密钥对**——公共证书上传到 NetSuite，私钥留给 PlaidCloud。
+- 一个**证书 ID**（JWT 的 `kid`，来自公共证书的上传）、一个**客户端 ID**（来自集成记录）以及您的**账户 ID**（生产环境 `1234567` 或沙盒 `1234567_SB1`）。
+- 一个具有 REST Web Services、**Log in using OAuth 2.0 Access Tokens**、SuiteAnalytics Workbook（如果您的查询涉及分析），以及对您将要读取的记录的查看权限的**角色**。
+
+完整的 NetSuite 端步骤——生成密钥对、上传证书和创建集成——位于参考中的 [NetSuite 端设置](/zh-cn/reference/connectors/rest/netsuite/#netsuite-端设置)。请先完成这些步骤；本指南假定您已拿到这四个值。
+
+<Aside type="caution">
+请按 NetSuite 显示的内容原样输入账户 ID，沙盒**须包含** `_SB1` 后缀。PlaidCloud 会据此推算 API 主机——格式错误会使拉取指向错误的账户。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并点击 `New Connection`。
+
+2. 从菜单中选择 **NetSuite**。
+
+   <Aside type="caution">请选择 **NetSuite**，而不是通用的 **REST** 类型。只有 NetSuite 类型才会根据账户 ID 推算 API 主机，并自动注入 SuiteQL 标头和分页。通用 REST 连接会在未经身份验证的情况下运行并失败。</Aside>
+
+3. 填写字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `NetSuite Prod`。 |
+   | 客户端 ID | 集成记录中的客户端 ID。 |
+   | 证书 ID | 公共证书上传后得到的证书 ID（`kid`）。 |
+   | NetSuite 账户 ID | 您的账户 ID，例如 `1234567` 或 `1234567_SB1`。 |
+   | NetSuite 私有证书 | 完整的私钥 PEM 块，多行粘贴。 |
+
+4. 点击 `Create`。
+
+</Steps>
+
+<Aside type="note">
+**NetSuite 私有证书**字段会在您粘贴时遮盖密钥，保存后的密钥会被加密且不再显示。编辑连接时该字段为空：留空则保留已保存的密钥，粘贴新密钥则将其替换。
+</Aside>
+
+<Aside type="tip">
+账户 ID 决定了连接访问哪个 NetSuite 实例，因此沙盒账户 ID 请保留 `_SB1` 后缀——例如 `1234567_SB1`。请为连接取一个能说明其指向哪个实例的名称，或者在一个连接下将生产主机和沙盒主机作为两个环境保存。
+</Aside>
+
+## 对连接进行冒烟测试
+
+在其上构建任何内容之前，先确认凭据可用。
+
+<Steps>
+
+1. 向工作流中添加一个 [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)。
+
+2. 在**请求**选项卡上，将**连接**设置为您的 NetSuite 连接，**方法**设置为 `POST`，**端点**设置为 `/services/rest/query/v1/suiteql`。
+
+3. 在**正文**中放入一个很小的有界查询：
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 1"}
+   ```
+
+4. 点击**发送测试请求**。
+
+</Steps>
+
+<Aside type="caution">
+请使用**发送测试请求**，而不是“预览”选项卡——预览选项卡不会应用连接的服务配置，会给出错误的报告。发送测试请求显示绿色表示 JWT 已签名、令牌已交换，且 NetSuite 已作出响应。如果出错，消息中会带有 NetSuite 自己的详细信息——通常是范围、角色或查询问题——修复这一处并重新测试即可。
+</Aside>
+
+## 构建拉取步骤
+
+冒烟测试通过后，将该步骤变成真正的拉取。
+
+<Steps>
+
+1. 在**正文**中编写带有确定性 `ORDER BY` 的 SuiteQL 查询。如需可复制粘贴的起点——日记账分录、试算平衡表、损益表、资产负债表、未结应收账款、销售订单、采购订单、库存——请参阅 [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)。
+
+   财务——某期间的总账交易行：
+
+   ```json
+   {"q": "SELECT tl.transaction AS transaction_id, TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   ```
+
+   运营——按客户列出的未结销售订单：
+
+   ```json
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, TO_CHAR(so.trandate, 'YYYY-MM-DD') AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   ```
+
+2. **不要改动**“分页与解析”控件以及 `Prefer`/`Content-Type` 标头——NetSuite 连接会自动注入它们。
+
+3. 在**响应**选项卡上，保持目标为**表**，并**使用真实类型定义各列**：金额使用 `Currency`/`Decimal`，日期使用 `Date`/`Datetime`，`T`/`F` 标志使用 `Boolean`。SuiteQL 将所有内容都作为字符串返回；带类型的列会告诉 PlaidCloud 如何进行强制转换。
+
+   <Aside type="caution">
+   SuiteQL 会以**账户的显示格式**（通常为 `M/D/YYYY`）将日期作为文本返回，这种格式存在歧义，因此 PlaidCloud 不会去猜测。对于您设置为 `Date`/`Datetime` 的列，请在查询中格式化日期——`TO_CHAR(trandate, 'YYYY-MM-DD') AS trandate`（日期时间则使用 `'YYYY-MM-DD HH24:MI:SS'`）——或将该列保留为 `Text`。数字和 `T`/`F` 标志无需此类处理。如果某个值无法转换，运行会失败，并给出指明该列和值的消息。
+   </Aside>
+
+</Steps>
+
+<Aside type="caution">
+没有 `ORDER BY` 时，偏移量分页会在各页之间悄悄重复并遗漏行——这是一种财务对不上的错误，直到您对账时才会发现。每个分页的 SuiteQL 查询都需要稳定的排序，例如 `ORDER BY internalid`。
+</Aside>
+
+<Aside type="caution">
+**行数上限：** 在没有 SuiteAnalytics Connect 的情况下，NetSuite 将单个 SuiteQL 查询限制在大约 100,000 行。现在，如果手写查询会超过该上限，就会失败，并提示您缩小日期范围或其他筛选器，而不是悄悄返回被截断的结果。请将大范围拉取拆分为按日期限定的请求以保持在上限之下，或使用预置的 [NetSuite：导入余额 / 总账明细](/zh-cn/guides/connections/import-netsuite-financials/)步骤，它们会自动为您划分日期窗口。
+</Aside>
+
+<Aside type="caution">
+**多币种：** 在 `transaction`/`transactionline` 上，`amount` 采用每笔交易自身的币种。对各子公司的 `SUM(amount)` 在合并层面是**错误的**——跨子公司求和时，请选择合并或经汇率折算的字段。
+</Aside>
+
+## 验证与计划
+
+<Steps>
+
+1. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）并检查目标表——行数，以及金额/日期列是否已按类型到达，而不是文本。
+
+2. 如需持续的数据馈送，请[为工作流设置计划](/zh-cn/get-started/tutorials/schedule-a-workflow/)。
+
+</Steps>
+
+<Aside type="note">
+每次 NetSuite 拉取都是**整表替换**——没有增量路径，因此计划拉取每次运行都会重新提取整个结果。请让 `WHERE` 子句只覆盖您实际需要的切片（例如滚动日期窗口），而不是每次运行都拉取全部历史数据。
+</Aside>
+
+## 故障排除
+
+| 症状 | 可能原因 |
+|---|---|
+| 测试请求返回 400，并带有范围或角色消息 | 角色缺少 REST Web Services / OAuth 2.0 登录 / SuiteAnalytics，或范围数组被拒绝——所显示的详细信息会指明。 |
+| 令牌交换失败 | 账户 ID 格式错误（缺少 `_SB1`）、证书 ID（`kid`）错误，或私钥与上传的公共证书不匹配。 |
+| 导入时出现类型/转换错误（会指明列和值） | 带类型的列收到了无法解析的值——最常见的是 `Date`/`Datetime` 列中 SuiteQL 返回了账户的显示格式。请在查询中用 `TO_CHAR(col, 'YYYY-MM-DD')` 包装该字段，或将列类型设置为 `Text`。 |
+| 各子公司的合计对不上 | `amount` 采用每笔交易自身的币种——请使用合并/折算后的字段。 |
+| 大型拉取中出现重复或缺失的行 | 偏移量分页的查询没有确定性的 `ORDER BY`。 |
+
+## 相关内容
+
+- [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/) — 可直接运行的日记账分录、试算平衡表、损益表、未结应收账款等查询。
+- [NetSuite REST 连接器](/zh-cn/reference/connectors/rest/netsuite/) — 字段和 SuiteQL 参考。
+- [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/) — 此拉取所基于的步骤。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

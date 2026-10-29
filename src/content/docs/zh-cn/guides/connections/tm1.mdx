@@ -1,0 +1,111 @@
+---
+title: 连接到 TM1
+description: 将 PlaidCloud 连接到 IBM TM1 / Planning Analytics 服务器并读取多维数据集数据或维度层次结构，可直接从云端连接，或对云端无法直接访问的服务器通过本地部署的 PlaidLink 代理连接。
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/tm1.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 IBM **TM1 / Planning Analytics** 服务器，使工作流能够从已保存的视图或 MDX 查询中读取多维数据集数据，或将维度层次结构加载为 PlaidCloud 维度。该连接默认以**云端直连**方式访问 TM1 自己的 REST API；对于仅能从您自己的网络内部访问的 TM1 服务器，则改由本地部署的 [PlaidLink 代理](/zh-cn/reference/cli/plaidlink/)访问，参见下文的[读取防火墙后的 TM1](#读取防火墙后的-tm1)。本指南涵盖连接、运行云端直连查询、逐个期间提取的增量提取模式，以及本地部署路径。
+
+<Aside type="note">
+此连接器是只读的：不支持回写到 TM1，也不支持执行 TI 进程。
+</Aside>
+
+## 先决条件
+
+您需要从 TM1 管理员处获得：
+
+- **TM1 REST API 主机**，例如 `https://tm1-prod.example.com:8010`，或 PAaaS URL。
+- 一个 **TM1 账户**（用户名和密码），对工作流将查询的数据库、多维数据集和视图具有读取权限。
+- 该账户采用 **Native**（TM1 用户/密码）还是 **CAM**（Cognos Access Manager SSO）进行身份验证，对于 CAM，还需要**命名空间**。
+- 用户将从中读取的**数据库（实例）名称**。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections**，然后点击 `New Connection`。
+
+2. 从菜单中选择 **IBM Planning Analytics (TM1)**。
+
+3. 填写以下字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `TM1 Prod`。 |
+   | 主机 | TM1 REST API 主机，例如 `https://tm1-prod.example.com:8010`。 |
+   | 默认数据库 | 可选。用于在步骤的“数据库”字段中预填的 TM1 数据库。 |
+   | 身份验证模式 | `Native` 或 `CAM`。 |
+   | 用户名 | TM1 账户用户名。 |
+   | 密码 | TM1 账户密码。 |
+   | CAM 命名空间 | 仅当身份验证模式为 CAM 时必填。 |
+   | 验证 SSL 证书 | 默认开启。仅对测试服务器上已知的自签名证书才关闭。 |
+   | 超时（秒） | 默认为 30。 |
+
+4. 点击 `Test Connection`。测试成功会报告服务器的产品版本。
+
+5. 点击 `Create`。
+
+</Steps>
+
+## 运行查询
+
+<Steps>
+
+1. 向工作流添加一个 **TM1：查询多维数据集**步骤（它位于步骤菜单中的 **IBM TM1 / Planning Analytics** 下）。
+
+2. 在**源和目标**下，设置 **TM1 连接**、**环境**、**数据库**、**Cube** 和**目标表**。选择数据库后，会从已连接的数据库中实时发现 Cube 选项；如果发现结果中没有，请手动输入名称。
+
+3. 在**切片**下，选择**源模式**：
+
+   - **按视图**：选择已保存的 TM1 视图。选择 Cube 后，会实时发现视图选项。
+   - **按 MDX**：针对该 Cube 编写 MDX 查询。
+
+4. 也可以在**视点**下，固定视图或 MDX 已固定内容之外的维度成员。视点只能与 `By MDX` 一起应用。
+
+5. 点击**预览**，在保存之前运行当前切片，查看前几行和单元格数。
+
+</Steps>
+
+## 按期间增量提取
+
+TM1 不跟踪更改，因此没有可调用的“自某时间以来的更改”接口。取而代之的做法是在每次运行时按**期间**（或版本）切片：在视点中将 `Period` 固定为 `{period}` 工作流变量，而不是字面的成员名称（视点成员值会在运行时从工作流自己的变量中代入，与 MDX 字段相同），这样每次运行都会提取给定的期间，而不是重新读取整个 Cube。将该步骤放入[已设置计划的工作流](/zh-cn/administration/scheduled-events/)，并使用每次运行都会推进的变量，即可逐个期间地累积历史数据。
+
+## 选项
+
+- **隐藏零值/空单元格**：默认关闭。它只会在提取之**后**才丢弃零值单元格，既不节省带宽，而且在计划 Cube 中，已过账的 `0` 是真实数据，丢弃它是错误的。建议改为在查询本身中隐藏零值，即在 MDX 中使用 `NON EMPTY`，或使用已保存视图自身的隐藏设置。
+- **行数限制**：默认为 250,000。未设置行数限制时，会回退到该上限，而不是“无限制”；返回的单元格数超过有效限制的查询会被拒绝，而不是被悄悄截断。请缩小查询范围，或在确有更大规模提取需求时明确调高行数限制。
+
+## 加载维度层次结构
+
+[TM1：读取维度](/zh-cn/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/)步骤会读取一个 TM1 层次结构的元素、父子边和属性，并将其加载到 PlaidCloud 维度中，同样通过同一连接以云端直连方式进行。它是与 TM1：查询多维数据集不同的单独步骤：读取的是维度结构，而不是 Cube 单元格。同一层次结构中位于两个合并项之下的 TM1 元素，或无法表示为普通 `+`/`-`/`~` 符号的合并权重，会被拒绝或标记，而不会被错误加载。这两项限制请参见步骤参考。
+
+## 读取防火墙后的 TM1
+
+如果您的 TM1 服务器没有 PlaidCloud 可以直接访问的网络路径（没有公共端点、没有允许列表中的 IP、没有 VPN），请改为通过已安装的 **PlaidLink 代理**读取。[TM1：查询多维数据集（代理）](/zh-cn/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/)步骤运行与上述相同的视图/MDX/视点查询，但会将其分派给代理，由代理在您自己的网络上访问 TM1。
+
+您需要：
+
+<Steps>
+
+1. **一个已安装的 PlaidLink 代理**，且可通过网络访问 TM1 服务器。参见[安装 PlaidLink](/zh-cn/reference/cli/plaidlink/install/)。
+
+2. **支持 TM1 的代理版本。** PlaidCloud 在分派之前会检查代理所公布的功能，因此在 TM1 支持发布之前安装的现有代理需要手动重新构建并重新安装，PlaidLink 不会自动更新。参见[升级 PlaidLink](/zh-cn/reference/cli/plaidlink/upgrade/)。
+
+3. **与该代理共享的 TM1 连接**，在连接的 `Actions > Agents` 列表中设置，这是在其已有的成员或分组访问权限之外的额外设置。参见[安全模型](/zh-cn/guides/connections/create-connection/#安全模型)。
+
+</Steps>
+
+添加一个 **TM1：查询多维数据集（代理）** 步骤，选择代理，并填写与 TM1：查询多维数据集相同的连接、数据库、Cube 和切片字段。此步骤没有实时发现或预览功能，因为代理仅在运行期间可访问，而在表单打开时无法访问，所以 Cube、视图和 MDX 都需要手动输入，并在步骤运行时进行验证。
+
+## 相关内容
+
+- [TM1：查询多维数据集](/zh-cn/reference/workflow-steps/ibm-planning-analytics/tm1-query/)：Cube 读取，步骤字段参考。
+- [TM1：查询多维数据集（代理）](/zh-cn/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/)：通过本地部署的代理读取 Cube。
+- [TM1：读取维度](/zh-cn/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/)：将 TM1 层次结构加载为 PlaidCloud 维度。
+- [TM1 连接器](/zh-cn/reference/connectors/rest/tm1/)：连接字段参考。
+- [PlaidLink](/zh-cn/reference/cli/plaidlink/)：安装和升级代理。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

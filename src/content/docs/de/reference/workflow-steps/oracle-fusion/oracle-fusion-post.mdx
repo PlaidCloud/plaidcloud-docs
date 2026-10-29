@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: Bucht Hauptbuch-Journalstapel aus Kopf- und Positionstabellen über die FBDI-GL-Schnittstelle in Oracle Fusion Cloud, mit einem Vorschaumodus, der jeden Stapel prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Hauptbuch-Journalstapel über Ihre [Oracle-Fusion-Verbindung](/de/guides/connections/oracle-fusion/) in Oracle Fusion Cloud, geleitet über die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Stapel) und eine Positionstabelle (eine oder mehrere Zeilen pro Stapel), schreibt jeden Stapel als FBDI-Datei in die Staging-Tabelle GL_INTERFACE von Oracle und startet den Enterprise-Scheduler-Service-(ESS-)Job Journal Import Launcher. **Validate Only** erstellt und prüft jeden Stapel ohne Hauptbuchanspruch und ohne Buchung; eine optionale Ergebnistabelle hält das Ergebnis jedes Stapels fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in Oracle Fusion ab, bevor Sie sich darauf verlassen, dass dieser Schritt Live-Journale unbeaufsichtigt bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **Fusion Connection** – die Oracle-Fusion-Verbindung, über die gebucht wird.
+
+### Daten
+
+- **Kopftabelle** – eine Zeile pro Stapel: `batch_id` (Ihre Stapelkennung, erforderlich), `ledger_id` (erforderlich), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Positionstabelle** – eine oder mehrere Zeilen pro `batch_id`: `account_combination` (oder die zugehörigen Segmentspalten), `entered_debit`, `entered_credit`, `currency_code`.
+- **Ergebnistabelle** – Ausgabetabellen-ID: eine Zeile pro Stapel mit `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** – standardmäßig aktiviert. Nur Vorabprüfung; kein Hauptbuchanspruch, keine Buchung. Eine Schrittkonfiguration, die dieses Feld ganz weglässt – etwa eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig Validate Only statt einer Live-Buchung.
+- **Continue On Error** – standardmäßig aktiviert. Bucht die übrigen Stapel weiter, nachdem einer fehlgeschlagen ist; ist die Option deaktiviert, stoppt die Ausführung beim ersten Fehler.
+
+## So funktioniert das Buchen
+
+PlaidCloud lädt jeden Stapel per FBDI-Datei in die Staging-Tabelle GL_INTERFACE von Oracle, startet dann den ESS-Job Journal Import Launcher und fragt ihn ab, bis er einen Endzustand meldet. Ein Stapel wird erst dann als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist – ein Stapel, der in der Schnittstellentabelle landet, dessen Importjob aber nie abgeschlossen wird, bleibt in Quarantäne (weder als gebucht gemeldet noch stillschweigend verworfen), statt allein deshalb als Erfolg zu gelten, weil die Staging-Daten vorhanden sind.
+
+## Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie einen gebuchten Journalstapel. Um einen zu korrigieren, buchen Sie einen neuen Stapel, in dem Soll und Haben gegenüber dem Original vertauscht sind – eine gebuchte Stornobuchung –, statt das Original direkt zu bearbeiten.
+
+## Einschränkungen
+
+| Einschränkung | Bedeutung |
+|---|---|| ESS-Job-Latenz | Der Journal Import Launcher läuft als geplanter Job – rechnen Sie damit, dass eine Buchungsausführung deutlich länger dauert als ein direkter API-Schreibvorgang. |
+| Storno ist ein neuer Stapel, keine Bearbeitung an Ort und Stelle | Korrekturen buchen einen neuen Stornostapel mit vertauschtem Soll und Haben. Einen bereits gebuchten Stapel können Sie weder stornieren noch löschen. |
+
+## Verwandte Themen
+
+- [Mit Oracle Fusion verbinden](/de/guides/connections/oracle-fusion/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [Oracle-Fusion-Konnektor](/de/reference/connectors/erp/oracle-fusion/)
+- [Oracle-Fusion-Schritte](/de/reference/workflow-steps/oracle-fusion/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

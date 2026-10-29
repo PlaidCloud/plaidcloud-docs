@@ -1,0 +1,81 @@
+---
+title: Export Templated 步骤
+description: 通过文档模板渲染项目表，生成格式化的输出文件，而不是原始数据转储。
+sidebar:
+  order: 17
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/export/export-templated.mdx
+---
+
+import SnippetCommonDataMapper from '@snippets/zh-cn/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/zh-cn/common-data-filter.mdx';
+
+## 说明
+
+通过模板渲染项目表，生成结构化文档，而不是其他导出步骤所写入的原始列转储。当接收系统要求特定的 XML 结构或其他文本格式而不是表时，请使用它。
+
+## 独有的配置项
+
+### 源模板
+
+用于渲染输出的 Jinja 模板。请参阅[模板可以使用的内容](#模板可以使用的内容)。
+
+### 目标输出
+
+渲染结果的文档账户、文件夹和文件名。文件包含什么内容由模板决定；没有扩展名的文件名会加上 `.xml`。
+
+**对表数据使用 Pandas DataFrame**会改变每个源的行传递给模板的方式。请参阅[源行作为表](#源行作为表)。
+
+### 源表
+
+可显式指定表名，也可按路径和搜索规则匹配 — 精确、开头为、结尾为、包含或通配符。
+
+## 模板可以使用的内容
+
+模板在沙箱中渲染：它只能读取步骤提供给它的数据，别无其他。
+
+- **每个源，按其名称。** 您列出的每个源表都可通过您为其指定的**名称**在模板中使用，因此请使用能作为变量的名称，例如 `invoices`。
+- **工作流的变量**，以 `variable` 表示 — 例如 `{{ variable.region }}`。
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### 源行作为列表
+
+关闭**对表数据使用 Pandas DataFrame**时，源是只读的行列表。可以对其循环，或使用 `|length`、`keys()`、`first()`、`one()`、`all()`、`scalar()`、`scalars()`、`mappings()`、`fetchmany(n)` 和 `columns('a', 'b')`。可通过 `row.amount`、`row['amount']` 或 `row[0]` 读取行中的值；`row._mapping`、`row._asdict()` 和 `row._fields` 同样可用。来自 `columns('a', 'b')` 的行使用 `row.amount` 或 `row[0]`，而不是 `row['amount']`。
+
+### 源行作为表
+
+开启**对表数据使用 Pandas DataFrame**时，源是只读的表。对其循环时，每一行都以字典形式给出，因此 `row.amount` 和 `row['amount']` 都可用。您还可以使用：
+
+- `columns`、`empty`、`shape`、`values` 和 `index`
+- `head(n)` 和 `tail(n)`
+- `itertuples()`，它将行位置作为 `Index` 放在最前面，因此 `r[1]` 是第一列；`itertuples(index=False)` 则省略它
+- `iterrows()`，它给出行位置和行
+- `invoices['amount']`，即某一列的值，可配合 `sum()`、`min()`、`max()`、`mean()`、`unique()` 和 `tolist()` 使用；`sum`、`min`、`max` 和 `mean` 会跳过空值
+
+其他 pandas 方法（如 `loc` 和 `groupby`）不可用。请在前面的步骤中整理数据，然后导出结果。
+
+### 模板不能做的事
+
+- 对任何值调用名称以 `to_` 开头的方法 — `to_csv` 和 `to_json`，以及 `to_pydatetime` 等无害的方法也不行。
+- 读取名称以下划线开头的属性，行的 `_mapping`、`_asdict` 和 `_fields` 除外。
+- 写入或打开文件。
+
+`to_` 调用或文件操作会使步骤失败。除这三个之外的下划线属性只会渲染为空。
+
+## 通用配置项
+
+<SnippetCommonDataMapper checksSourceTable />
+
+<SnippetCommonDataFilter />
+
+## 相关内容
+
+- [导出步骤](/zh-cn/reference/workflow-steps/export/)
+- [Export to XML 步骤](/zh-cn/reference/workflow-steps/export/export-to-xml/) — 无需模板的 XML
+- [报表步骤](/zh-cn/reference/workflow-steps/reports/) — 基于模板构建的 PDF 报表

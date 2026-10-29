@@ -1,0 +1,119 @@
+---
+title: Wysyłanie powiadomień e-mail w szablonowym HTML
+description: Wygeneruj rozbudowany e-mail HTML z szablonu Jinja i tabeli przepływu pracy za pomocą kroku Notify Via Email.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Krok [Notify Via Email](/pl/reference/workflow-steps/notifications/notify-via-email/) tworzy wiadomość e-mail jako rozbudowany raport HTML z **szablonu Jinja** renderowanego na podstawie jednej lub kilku tabel przepływu pracy. Każdą tabelę dodajesz do kroku jako nazwaną **ramkę**, a szablon renderuje te ramki w jedną wiadomość e-mail. Krok otwiera się bezpośrednio w edytorze Jinja, który jest jedyną powierzchnią tworzenia treści — nie ma pola treści w postaci zwykłego tekstu ani trybu, na który można się przełączyć. Ten przewodnik opisuje edytor i jego pasek narzędzi formatowania, dodawane ramki, dane dostępne w szablonie, pomocnik `render_table` oraz ograniczenia wynikające z wysyłania przez e-mail.
+
+## Edytor Jinja
+
+Otwórz krok **Notify Via Email**, a znajdziesz się w edytorze Jinja. Dodaj jedną lub więcej **ramek** (patrz niżej), napisz szablon w treści i obserwuj, jak **Podgląd na żywo** po prawej stronie aktualizuje się podczas pisania. **Wyślij test do mnie** dostarcza wyrenderowany e-mail na Twój adres, aby można go było sprawdzić przed ustawieniem harmonogramu przepływu pracy. Nowe kroki korzystają wyłącznie z Jinja — nie ma treści w postaci zwykłego tekstu do wypełnienia ani przełącznika między trybem rozbudowanym a zwykłym.
+
+<Aside type="note">Edytor ma własny, izolowany silnik renderowania. Jest składniowo podobny do [Export Templated](/pl/reference/workflow-steps/export/export-templated/) — Jinja, nazwane ramki, pomocnik `render_table` — ale oba silniki **nie są wymienne**. Szablon napisany dla jednego nie zadziała w drugim.</Aside>
+
+## Pasek narzędzi formatowania
+
+Edytor Jinja ma pasek narzędzi do kształtowania szablonu bez ręcznego wpisywania powtarzalnego kodu:
+
+- **Upiększ** zmienia wcięcia i normalizuje cały szablon — spójne wcięcia, odstępy w znacznikach i układ bloków Jinja — dzięki czemu edytowany długo szablon jest czytelny. Tylko formatuje; nigdy nie zmienia tego, co szablon renderuje.
+- **Wstaw** umieszcza w miejscu kursora gotowy fragment — wywołanie `render_table(...)` wstępnie wypełnione dla ramki, nazwę obszaru roboczego `{{ cloud }}`, dowolną ze zmiennych projektu lub przepływu pracy, liczbę wierszy ramki, pętlę `{% for %}` po wierszach ramki oraz szkielety if/else i komentarzy.
+- **Format** stosuje filtr wyświetlania do wartości w miejscu kursora — waluta, tysiące, procenty, zaokrąglanie i formaty dat, a także pomocniki tekstowe (wielkie litery, małe litery, wielkie litery na początku słów, przycięcie) oraz pomocniki list (długość, łączenie, suma itd.).
+- **Styl** otacza zaznaczony tekst formatowaniem HTML — pogrubienie, kursywa, podkreślenie, trzy rozmiary nagłówków, akapity, listy punktowane i numerowane, cytaty blokowe, łącza i podziały wiersza. Każda opcja generuje wyłącznie znaczniki, które zachowuje sanityzator wiadomości e-mail (patrz [Ograniczenie dozwolonego HTML](#ograniczenie-dozwolonego-html)), więc nagłówek pojawia się jako większy pogrubiony wiersz, a nie `h1`, a podkreślenie korzysta z dozwolonego znacznika.
+
+Każdy przycisk po prostu wstawia tekst, który mógłbyś wpisać samodzielnie; potraktuj je jako punkt wyjścia i edytuj swobodnie.
+
+## Dodawanie ramek
+
+Krok raportuje **ramki** — nazwane zaznaczenia pojedynczej tabeli, które dodajesz do kroku. Dodaj jedną ramkę lub kilka; każda jest renderowana w tej samej wiadomości e-mail. Dla każdej ramki podajesz:
+
+- **Nazwa ramki** — etykieta, za pomocą której odwołujesz się do niej w szablonie (`Sales`, `Overdue` itd.);
+- jedną **tabelę** z kontekstu przepływu pracy;
+- opcjonalnie **wybór kolumn**, filtr **where** i **agregację** na tej tabeli.
+
+Ramka to zawsze pojedyncza tabela. Złączanie ani łączenie tabel w jedną ramkę nie jest obsługiwane — zamiast tego dodaj drugą ramkę i odwołuj się do każdej po jej nazwie.
+
+Każda ramka jest dostępna w szablonie przez `frames['<Frame Name>']`, która zawiera `rows` i `columns` tej ramki (patrz niżej).
+
+## Co jest dostępne w szablonie
+
+Szablon udostępnia wąski, jawny zestaw zmiennych. Odwołanie do niezdefiniowanej zmiennej powoduje niepowodzenie renderowania, więc używaj tylko tego, co jest tu wymienione:
+
+| Zmienna | Zawartość |
+|---|---|
+| `cloud` | Nazwa obszaru roboczego. |
+| `frames` | Słownik ramek, indeksowany według Nazwy ramki. `frames['Sales'].rows` to lista obiektów wierszy tej ramki (po jednym na wiersz); `frames['Sales'].columns` to lista jej kolumn w kolejności. |
+| `rows` | Wiersze pierwszej ramki — wygodne powiązanie, dzięki któremu szablon z jedną ramką może używać bezpośrednio `rows`. |
+| `columns` | Kolumny pierwszej ramki — to samo wygodne powiązanie co `rows`. |
+| `variables` | Zmienne projektu, a w przepływie pracy także zmienne przepływu pracy, indeksowane według nazwy: `variables['Fiscal Year']`. Wbudowane `variables['project']`, `variables['model']` i `variables['date']` (bieżący czas UTC) również tu są. Używaj postaci z indeksem, ponieważ nazwa zmiennej nie musi być poprawnym identyfikatorem. |
+
+Wartości zachowują swoje natywne typy Pythona — `Decimal` pozostaje `Decimal`, data pozostaje datą, a kolumna z wartością pustą jest przekazywana jako `None` — dzięki czemu możesz je formatować i porównywać tak samo jak w Pythonie, zamiast pracować na tekście zamienionym na ciąg znaków.
+
+## Renderowanie tabeli za pomocą `render_table`
+
+Zamiast ręcznie pisać znaczniki `<table>`, wywołaj makro `render_table` z wierszami i kolumnami ramki. Odwołuj się do każdej ramki po jej nazwie:
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+Jednym wywołaniem generuje to poprawnie zbudowaną tabelę HTML dla tej ramki. Wywołaj je raz dla każdej ramki, którą chcesz pokazać.
+
+Szablon z jedną ramką może używać najwyższego poziomu `rows` i `columns`, które są powiązane z pierwszą ramką:
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## Kompletny przykład
+
+Ten szablon ma dwie ramki, `Overdue` i `Paid`. Renderuje nazwę obszaru roboczego, krótkie podsumowanie i tabelę dla każdej ramki:
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Wskaż każdą ramkę na tabelę, którą chcesz raportować, a wyrenderowany e-mail pokaże pogrubiony wiersz tytułu, jednowierszowe podsumowanie obliczone z liczby wierszy oraz tabelę dla każdej ramki. Przy jednej ramce ten sam szablon można napisać, używając samych `rows` i `columns`.
+
+## Ograniczenie dozwolonego HTML
+
+Każdy wyrenderowany e-mail przechodzi przed wysłaniem przez ten sam sanityzator co pozostała poczta transakcyjna PlaidCloud. Sanityzator usuwa wszystko spoza małej listy dozwolonych elementów:
+
+- **Dozwolone znaczniki**: znaczniki tabeli generowane przez `render_table` (`table`, `tbody`, `tr`, `th`, `td`) oraz typowe znaczniki tekstowe — `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code` i `a`. Nagłówków (`h1`–`h6`), `div` i `span` **nie ma** na liście — na tytuł użyj `p` z `strong` w środku.
+- **Dozwolone atrybuty**: tylko `class` i `style` (oraz `href` w `a`).
+- **Brak `<thead>`.** `render_table` generuje `table` / `tbody` / `tr` / `th` / `td` — wiersz nagłówka to `tr` z komórkami `th` wewnątrz `tbody`, a nie osobna sekcja `<thead>`.
+- **Brak bloków `<style>`** i zasobów zewnętrznych — odwołanie `url(...)` lub piksel śledzący jest usuwane, tak jak każdy inny znacznik lub atrybut spoza listy.
+
+W praktyce: strukturę raportu buduj za pomocą `render_table` i zwykłych znaczników tekstowych, a niestandardowe stylowanie ogranicz do prostych atrybutów `style` w treści. Wszystko bardziej rozbudowane — blok `<style>`, zewnętrzny arkusz stylów, niestandardowe czcionki, piksele śledzące — nie przetrwa sanityzacji i nie pojawi się w dostarczonym e-mailu.
+
+## Istniejące i starsze kroki
+
+Kroki utworzone przed wprowadzeniem tworzenia w Jinja otwierają się bezpośrednio w edytorze z ich starą treścią już przekonwertowaną. Standardowa treść w postaci zwykłego tekstu — zbudowana z `{project}`, `{model}`, `{cloud}` i `{date}` — jest przepisywana na postać Jinja (`{{ project }}`, `{{ cloud }}` itd.), więc możesz kontynuować edycję od tego miejsca.
+
+Treść, której konwerter nie może bezpiecznie przepisać — niestandardowy token lub niezrównoważone nawiasy klamrowe — pozostaje w zastępczym polu ze zwykłym tekstem. Taki krok nadal wysyła wiadomości dokładnie tak jak wcześniej, używając starszego podstawiania `{token}`; tylko jego tworzenie pozostaje w zwykłym tekście. Nowe kroki nigdy nie korzystają z tej ścieżki.
+
+Edytor sprawdza nazwy zmiennych w trakcie pisania i oznacza te, które nie zostaną rozpoznane. Samo `{{ project }}`, `{{ model }}` lub `{{ date }}` przeniesione ze starszej treści jest oznaczane, ponieważ te nazwy są teraz rozpoznawane tylko przez `variables` — użyj `variables['project']`, `variables['model']` lub `variables['date']`, zastąp token kolumną z jednej ze swoich ramek albo usuń go przed zapisem.
+
+## Bezpieczeństwo i ruch wychodzący
+
+Odczyty ramek przechodzą przez te same zabezpieczenia na poziomie wierszy co każdy inny odczyt w projekcie — ramka zwraca zawsze tylko te wiersze, które uruchamiający użytkownik lub podmiot automatyzacji może zobaczyć. Limity wysyłania (odbiorcy, rozmiar i częstotliwość) są takie same jak w ścieżce ze zwykłym tekstem; tryb szablonu ich nie łagodzi ani nie rozszerza.
+
+## Następne kroki
+
+- [Dokumentacja referencyjna Notify Via Email](/pl/reference/workflow-steps/notifications/notify-via-email/) — konfiguracja na poziomie pól
+- [Export Templated](/pl/reference/workflow-steps/export/export-templated/) — podobnie zbudowany, ale odrębny silnik do renderowania dokumentów z tabel
+- [Zarządzanie zmiennymi przepływu pracy](/pl/guides/workflows/manage-workflow-variables/) — podstawianie `{var}`, którego nadal używają starsze treści w postaci zwykłego tekstu

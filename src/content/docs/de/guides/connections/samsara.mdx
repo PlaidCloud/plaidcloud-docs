@@ -1,0 +1,88 @@
+---
+title: Samsara-Daten importieren
+description: Verbinden Sie PlaidCloud über die generische REST-Verbindung mit Samsara und importieren Sie vollständige paginierte Listen mit einem Cursor-Paging-Rezept zum Kopieren.
+sidebar:
+  label: Samsara-Daten importieren
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Verwenden Sie die Verbindung **Generic REST** und einen Schritt **REST-Anfrage**, um Samsara-Daten zu importieren. So bleibt das API-Token in einer wiederverwendbaren Verbindung, und Sie nutzen dieselben generischen Cursor-Paging-Steuerungen, die für jede API verfügbar sind, die einen Fortsetzungs-Cursor zurückgibt.
+
+## Vorbereitung
+
+Erstellen Sie in Samsara ein API-Token, das nur die Leseberechtigungen und den Tag-Zugriff enthält, die der Import benötigt. Samsara zeigt das Token nur bei der Erstellung an, kopieren Sie es also, bevor Sie die Seite verlassen. Siehe [Samsara-API-Authentifizierung](https://developers.samsara.com/docs/authentication).
+
+Wählen Sie den Host, der zu Ihrem Samsara-Dashboard passt:
+
+| Samsara-Dashboard | Host oder IP-Adresse |
+| --- | --- |
+| US- oder ältere Kanada-Cloud | `api.samsara.com` |
+| EU / UK | `api.eu.samsara.com` |
+| Kanada-Cloud | `api.ca.samsara.com` |
+
+## Verbindung erstellen
+
+1. Öffnen Sie **Verbindungen** und erstellen Sie eine Verbindung **Generic REST** mit dem Namen `Samsara`.
+2. Geben Sie den passenden Host aus der obigen Tabelle ein.
+3. Wählen Sie unter **Authentifizierung** die Option **Bearer-Token** aus und fügen Sie das Samsara-API-Token ein. Fügen Sie nicht selbst einen `Authorization`-Header hinzu.
+4. Speichern Sie die Verbindung.
+
+<Aside type="note">Ein API-Token ist die einfachste Wahl, um Ihre eigenen Flottendaten zu importieren. Samsara empfiehlt OAuth 2.0 für Marketplace-Anwendungen, die Kundenorganisationen anbinden.</Aside>
+
+## Fahrzeuge importieren
+
+Dieser erste Import bestätigt die Verbindung und liefert ein Rezept, das Sie für andere moderne Samsara-Listenendpunkte wiederverwenden können.
+
+1. Fügen Sie einen Schritt **REST-Anfrage** hinzu und wählen Sie die Verbindung `Samsara` aus.
+2. Setzen Sie **Endpunktquelle** auf **Manuell**, **Methode** auf `GET` und **Endpunkt** auf `/fleet/vehicles`.
+3. Wählen Sie eine **Zieltabelle** aus, z. B. `samsara_vehicles`.
+4. Fügen Sie unter **Abfrageparameter** `limit` mit dem Wert `512` hinzu.
+5. Legen Sie unter **Anfrage** die folgenden Werte fest:
+
+| Feld | Wert |
+| --- | --- |
+| Zeilenformat | `Object` |
+| Streaming-Modus | `Cursor Paging` |
+| Elementpfad (JSON formatieren) | `["data"]` |
+| Modusparameter (JSON formatieren) | `{"cursor": "after"}` |
+| Moduspfade (JSON formatieren) | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. Wählen Sie **Paginierung testen**. PlaidCloud ruft nur so viele Seiten ab, wie für die Vorschau nötig sind, sodass Sie das Ergebnis vor einer vollständigen Ausführung prüfen können.
+7. Speichern Sie den Schritt und führen Sie ihn aus.
+
+Kopieren Sie diese Werte exakt, wenn Sie einen modernen Samsara-Listenendpunkt konfigurieren:
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+Wenn Samsara `hasNextPage: true` zurückgibt, sendet PlaidCloud den zurückgegebenen `endCursor` als Parameter `after` der nächsten Anfrage. Der Vorgang wird auch bei einer leeren Seite fortgesetzt, da Samsara spätere Seiten mit Daten haben kann. Siehe [Samsara-Paginierung](https://developers.samsara.com/docs/pagination).
+
+## Effizient ausführen
+
+- Verwenden Sie für jeden Listenendpunkt einen eigenen Schritt „REST-Anfrage“. Cursor-Werte sind undurchsichtig und müssen exakt so gesendet werden, wie sie zurückgegeben wurden.
+- Setzen Sie `limit=512`, wenn der Endpunkt `limit` unterstützt; 512 ist das von Samsara dokumentierte Maximum.
+- Vermeiden Sie bei einem Listenendpunkt ein Fan-out mit einer Anfrage pro Zeile. Nutzen Sie es nur für wirklich voneinander unabhängige Detailanfragen und halten Sie die Anfragerate innerhalb des Limits des Endpunkts.
+- `/feed`-Endpunkte sind inkrementell und keine vollständigen Snapshots. Speichern Sie den zuletzt erfolgreichen Cursor und planen Sie den Workflow häufiger als das 30-tägige Ablaufzeitfenster der Samsara-Cursor.
+
+## Fehlerbehebung
+
+| Problem | Was zu prüfen ist |
+| --- | --- |
+| `401` oder `403` | Prüfen Sie regionalen Host, Token, Tag-Zugriff und Leseberechtigung für den Endpunkt. |
+| Keine Zeilen | Prüfen Sie, ob es sich um einen Listenendpunkt handelt und der **Elementpfad** `["data"]` lautet. |
+| Paging endet zu früh | Verwenden Sie den modernen Endpunkt aus der aktuellen API-Referenz von Samsara. Ältere `/v1/`-Endpunkte können andere Paginierungsfelder verwenden. |
+| `429` | Verringern Sie die Anfragerate bei unabhängigen Fan-out-Aufrufen. Der Schritt „REST-Anfrage“ beachtet die Antwort `Retry-After` von Samsara, wenn er eine sichere Leseanfrage wiederholt. |
+
+## Verwandte Themen
+
+- [Generic-REST-Verbindung](/de/reference/connectors/rest/generic-rest/)
+- [Workflow-Schritt „REST-Anfrage“](/de/guides/workflows/rest-request-step/)
+- [Samsara-Basis-URLs](https://developers.samsara.com/docs/base-url)

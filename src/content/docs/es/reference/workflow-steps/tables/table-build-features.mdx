@@ -1,0 +1,41 @@
+---
+title: Build Features (paso)
+description: Genere columnas de características aritméticas, de interacción, de partes de fecha, de intervalos, de escalado y de codificación one-hot a partir de una tabla de origen.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Descripción
+
+El paso **Build Features** genera una tabla de columnas de características derivadas a partir de una tabla de origen (combinaciones aritméticas y de interacción, extracción de partes de fecha, intervalos, escalado y codificación one-hot) en una sola pasada, sin escribir a mano una expresión por columna. Se ejecuta como una transformación ordinaria sobre el almacén de datos.
+
+## Configuración
+
+- **Origen / Tablas de salida**: la tabla de entrada y la tabla en la que se escriben las columnas derivadas.
+- **Columnas de transferencia directa** (`passthrough_columns`): columnas de origen que se transfieren sin cambios.
+- **Características** (`features`): una lista ordenada de especificaciones de características, con al menos una obligatoria. Cada especificación tiene un `type` y produce una o más columnas de salida. Los nombres de las columnas de salida (las columnas de transferencia directa más el `name` de cada característica que no sea one-hot) deben ser todos distintos; se rechaza guardar un nombre duplicado, o un par `(column, prefix)` one-hot duplicado.
+
+## Tipos de características
+
+| Tipo | Campos | Produce |
+| --- | --- | --- |
+| **Expresión** (`expression`) | `name`, `expression`, `dtype` (predeterminado `text`) | Una columna: una expresión arbitraria sobre columnas de origen. |
+| **Interacción** (`interaction`) | `name`, `columns` (exactamente 2), `op` (`multiply` o `add`, predeterminado `multiply`), `dtype` (predeterminado `numeric`) | Una columna: la combinación aritmética por pares de dos columnas numéricas. |
+| **Parte de la fecha** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow` o `hour`) | Una columna: el componente de fecha u hora extraído. |
+| **Intervalo** (`bin`) | `name`, `column`, `thresholds` (ascendentes, al menos 1), `labels` (exactamente uno más que `thresholds`) | Una columna: la etiqueta del intervalo en el que cae el valor de `column`. Los umbrales son valores fijos que usted proporciona; consulte [Límites y salvedades](#límites-y-salvedades). |
+| **Puntuación Z** (`zscore`) | `name`, `column`, `dtype` (predeterminado `numeric`) | Una columna: la columna estandarizada a media cero y varianza unitaria. |
+| **Mín.-máx.** (`minmax`) | `name`, `column`, `out_min` (predeterminado 0), `out_max` (predeterminado 1), `dtype` (predeterminado `numeric`) | Una columna: la columna reescalada al rango `[out_min, out_max]`. |
+| **Codificación one-hot** (`onehot`) | `column`, `prefix` | Una columna por cada valor distinto de `column`, cada una con el nombre `<prefix><value>`. |
+| **Estadística de columna** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | Una columna: la estadística de toda la columna, bajo el filtro del paso, en cada fila. `moments` es `sql` (predeterminado, el agregado del almacén de datos) o `welford`, que calcula la media, la suma, la varianza y la desviación estándar como momentos acumulados de una sola pasada sobre la columna leída en el orden de `order_column`, como hacen `COL_MEAN` de Math Formula de KNIME y sus funciones hermanas. |
+
+## Límites y salvedades
+
+- **Los intervalos necesitan umbrales fijos desde el principio.** `bin` agrupa una columna según los umbrales y las etiquetas que usted proporciona; no hay intervalos basados en los datos (intervalos de igual anchura o de igual frecuencia calculados a partir de los datos en tiempo de ejecución). Calcule los umbrales usted mismo (por ejemplo, a partir de un paso de agregación previo) antes de configurar una característica `bin`.
+- **Una tabla a la vez.** Build Features lee y escribe una única tabla de origen; no agrega valores de tablas relacionadas como lo hace una herramienta de síntesis de características entre tablas. Modele cualquier relación entre tablas como una combinación previa a este paso.
+- **Sin reducción de dimensionalidad ni codificación orientada al objetivo en este paso.** Build Features no tiene reducción de componentes de tipo PCA ni codificación del objetivo (una columna categórica reexpresada como una estadística de la etiqueta, como su media). Use `onehot` para las características categóricas. Para la reducción de componentes, use el algoritmo `pca` de [ML: entrenar modelo](/es/reference/workflow-steps/machine-learning/ml-train/), y use su propio tratamiento de características si una canalización de entrenamiento necesita una codificación distinta.
+
+## Elementos relacionados
+
+- [ML: entrenar modelo](/es/reference/workflow-steps/machine-learning/ml-train/): entrene un modelo sobre una tabla, incluida una construida con este paso.
+- [Matriz de conversión de Alteryx](/es/reference/alteryx-conversion-matrix/): cómo se asignan las primitivas de la herramienta Build Features de Alteryx a estos tipos de características, y cuáles de sus primitivas (agregación entre tablas, PCA, codificación del objetivo, intervalos automáticos) no tienen equivalente aquí.

@@ -1,0 +1,209 @@
+---
+title: Tipo de datos Vector
+description: "Almacene incrustaciones precalculadas en una tabla de proyecto con el tipo de datos de columna Vector, declare el ancho que espera y encuentre las filas más cercanas a un vector de consulta con un paso IA: búsqueda vectorial."
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/vector-data-type.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Vector** es un tipo de datos de columna para incrustaciones precalculadas. Una columna Vector contiene una matriz
+de números de punto flotante por fila (el resultado del modelo de incrustación que ya utilice) en una
+tabla de proyecto común, en la misma fila que el texto, las claves, los importes y las dimensiones que la describen.
+Como es una columna común en una tabla común, se combina con sus tablas de hechos y se carga mediante
+los mismos pasos de importación y transformación que cualquier otra columna. No hay un almacén de vectores independiente
+que aprovisionar, rellenar o mantener sincronizado con el resto de sus datos.
+
+Un paso **IA: búsqueda vectorial** encuentra después las filas más cercanas a uno o más vectores de consulta, de modo que
+una búsqueda por similitud es un paso del flujo de trabajo como cualquier otro.
+
+<Aside type="caution">
+Vector requiere **Lakehouse v2 (StarRocks)**. En cualquier otro motor, el tipo no se ofrece en
+las listas de tipos de datos, y una solicitud para crear una columna Vector allí se rechaza indicando el motivo.
+</Aside>
+
+<Aside type="note">
+PlaidCloud almacena y busca vectores, pero no los genera. Calcule sus incrustaciones con el
+modelo que prefiera y cargue las matrices resultantes como cualquier otro dato.
+</Aside>
+
+
+## Declaración de una columna Vector
+
+**Vector** aparece en el grupo **Semiestructurado** de las listas de tipos de datos, junto con JSON y
+Bitmap, en la asignación de columnas de salida de un paso del flujo de trabajo y en las propiedades de columna de una tabla. No se
+ofrece como tipo de datos de *origen* de un paso de importación: los valores de un archivo llegan como una lista de números y se depositan
+en una columna que ya tiene el tipo Vector. Tampoco se ofrece donde se requiere un único tipo escalar,
+como el tipo declarado de una variable del flujo de trabajo.
+
+El tipo en sí no incluye ninguna dimensión. En lugar de una familia de tipos, uno por cada ancho, existe un único
+tipo Vector más una declaración por columna del ancho de sus vectores.
+
+### Ancho del vector
+
+Abra el panel de detalles de columna de una tabla, seleccione la columna Vector y establezca **Ancho del vector** con el número
+de valores que contiene cada incrustación: 768, 1024, 1536, el que produzca su modelo. El campo aparece en
+una columna Vector de un proyecto de Lakehouse v2 (StarRocks), y en ningún otro lugar.
+
+El ancho declarado se aplica en todas las rutas de carga. Una fila cuyo vector tiene una longitud distinta
+se rechaza antes de que se cargue nada, y el rechazo indica el archivo, la columna, la fila, la longitud que
+se encontró y el ancho que declaró, de modo que sabrá exactamente qué valor no coincidía y por cuánto; en
+una carga de archivo, las filas se cuentan desde 1 a lo largo del archivo. Así, un archivo truncado o un cambio de modelo de incrustación se convierte en una
+ejecución fallida que puede leer.
+
+La comprobación abarca todas las rutas por las que llegan las incrustaciones:
+
+* Una **importación de Parquet**.
+* Un **conector REST**, incluidos QuickBooks, Xero, Sage y Monday.com.
+* Un **tap de Singer**.
+* Una **consulta a una base de datos remota** ejecutada directamente en el origen.
+* Un **paso del flujo de trabajo que escribe un marco de datos** en la tabla.
+* Una **importación de archivo comprimido** o una **restauración de archivo comprimido**, donde el rechazo indica el archivo comprimido.
+* Una **importación de paquete de tablas**. La exportación de un paquete escribe una columna Vector como un vector real, de modo que un
+  ciclo completo de paquete conserva el ancho intacto.
+
+Dos casos quedan fuera:
+
+* **Una importación de CSV no se comprueba y no puede comprobarse.** La conversión convierte la matriz en texto antes de que se
+  pueda examinar un ancho, de modo que un CSV es la única ruta que puede introducir un ancho distinto en la columna.
+* **Las escrituras a nivel de fila** (guardar filas o registros individuales, y un conector con clave que deposita una fila) se
+  comprueban cuando la escritura puede determinar que la columna es un Vector. Ese es el caso habitual, no una
+  garantía incondicional.
+
+Un ancho que permanece en una columna que la tabla ya no tipifica como Vector no se aplica. Cambie el tipo de la columna y
+la declaración deja de regir lo que se deposita en ella.
+
+Eso importa porque una columna cuyas filas contienen anchos distintos no se puede buscar. Una búsqueda vectorial sobre
+ella falla con un error sin procesar del motor subyacente en lugar de un mensaje que indique la columna. Por eso, si
+carga incrustaciones como CSV, haga que el archivo produzca el ancho que declaró, o prepare la matriz como
+Parquet e impórtela, y la comprobación se ejecutará por usted.
+
+Declare el ancho antes de cargar. Ancho del vector admite un número entero de 1 o más, y no hay ningún
+valor vacío al que volver (si vacía el campo, se restablece lo almacenado), así que trate la declaración como
+parte del diseño de la columna.
+
+El ancho es también aquello con lo que trabaja una búsqueda. Cuando una columna no tiene ninguno declarado, la búsqueda debe muestrear
+una fila para averiguar el ancho de los vectores almacenados antes de poder comprobar una consulta con ellos.
+
+
+## Carga de vectores
+
+Cargue una columna Vector con los pasos estándar de importación y transformación. Un archivo Parquet cuya columna es
+una lista de números flotantes de 32 bits es la ruta más directa: **Importar Parquet** la deposita directamente en una columna
+Vector.
+
+Un flujo típico de principio a fin, con pasos estándar:
+
+1. **Importar Parquet** (o cualquier otro paso de importación): deposite las incrustaciones y sus claves de negocio en una
+   tabla cuya columna de incrustación tenga el tipo Vector con su Ancho del vector declarado.
+2. **Table Inner Join** (paso): combine esa tabla con la tabla de hechos o de referencia que describen las incrustaciones, mediante
+   la clave de negocio.
+3. **IA: búsqueda vectorial**: encuentre las filas más cercanas a sus vectores de consulta y escriba las coincidencias en una
+   tabla de destino.
+4. **Table Lookup** (paso): traiga de vuelta a las filas coincidentes las columnas descriptivas que desea mostrar.
+
+### Desde dónde se puede leer un archivo
+
+Comprobar el ancho implica leer la columna de vectores por sí sola, lo cual requiere una cuenta de documentos
+que se pueda leer columna a columna. **S3**, **Google Cloud Storage** y **Azure Blob Storage** lo permiten.
+Una importación de Parquet desde cualquier otra cuenta de documentos a una tabla que declara un Ancho del vector se
+rechaza en lugar de cargarse sin comprobar, así que prepare el archivo en S3, Google Cloud Storage o Azure Blob
+Storage e impórtelo desde allí. Lo mismo se aplica a la restauración de un archivo comprimido desde una cuenta de ese tipo: una
+restauración es una operación de recuperación, así que mantenga sus archivos comprimidos en una cuenta que una restauración pueda leer. Las tablas sin
+Ancho del vector declarado no se ven afectadas, ni tampoco ningún otro paso de importación.
+
+<Aside type="note">
+Cuando una tabla se registra como tabla externa, una columna de vectores de origen llega como Vector en un
+proyecto de Lakehouse v2 (StarRocks). En un proyecto de cualquier otro motor llega como Texto, porque allí no se puede
+crear una columna Vector.
+</Aside>
+
+
+## Búsqueda de las filas más cercanas
+
+El paso **IA: búsqueda vectorial** toma una tabla en la que buscar, uno o más vectores de consulta y cuántas
+coincidencias conservar por consulta, y escribe las filas más cercanas en una tabla de destino junto con la distancia que
+clasificó cada una.
+
+Hay dos métricas de distancia disponibles, y en ambas una distancia menor significa una fila más cercana:
+
+* **Coseno**: el ángulo entre dos vectores, sin tener en cuenta sus magnitudes. Es la opción predeterminada adecuada
+  para incrustaciones de texto.
+* **Euclidiana (L2)**: distancia en línea recta, que sí tiene en cuenta la magnitud.
+
+El producto interno no se ofrece de forma deliberada. En vectores no normalizados no es una distancia en absoluto
+(la distancia de un vector consigo mismo resulta negativa), por lo que cualquier umbral que establezca con él, y
+cualquier puntuación que el paso le mostrara, carecería de sentido aunque la clasificación resultara correcta. En
+incrustaciones normalizadas, clasificar por coseno da el mismo orden que daría el producto interno, así que
+no se pierde nada.
+
+Para ver la lista completa de parámetros, consulte
+[IA: búsqueda vectorial](/es/reference/workflow-steps/general/vector-search/).
+
+### La búsqueda es exacta, no aproximada
+
+El paso compara cada fila que supera su filtro con cada vector de consulta. No hay índice vectorial
+ni aproximación: el resultado es el conjunto más cercano real, y el trabajo crece con el número de
+filas buscadas multiplicado por el número de vectores de consulta.
+
+Dimensione en consecuencia. Use el filtro del paso para reducir las filas candidatas a la porción que importa (una
+entidad, un período, un conjunto de documentos) en lugar de explorar un corpus completo para responder una pregunta sobre
+una parte. Dividir una tabla de incrustaciones según la dimensión por la que siempre filtra y buscar en la
+tabla pertinente es lo más eficaz que puede hacer para reducir el tiempo de búsqueda.
+
+### Las filas no medibles se excluyen
+
+Una fila cuya distancia no se puede medir se excluye de las coincidencias en lugar de devolverse como si
+fuera la más cercana. Ejecute el flujo de trabajo con el **Modo de diagnóstico** activado y el registro indicará cuántas
+filas dejó fuera cada consulta, o dirá que el paso midió todas las filas que buscó.
+
+Un vector almacenado con un valor ausente dentro de la matriz se rechaza en lugar de omitirse: no se puede
+medir ninguna distancia respecto a una matriz que contenga uno, por lo que la búsqueda se detiene e indica la columna en lugar de
+devolver una respuesta parcial.
+
+
+## Lo que una columna Vector no puede hacer
+
+Una incrustación es una coordenada, no una clave ni una medida, por lo que una columna Vector se rechaza en los roles que
+la tratan como tal:
+
+* **No es una clave de combinación.** Combine por la clave de negocio que acompaña al vector.
+* **No es una columna de agrupación.** Agrupar filas por su incrustación sin procesar coloca cada fila en su propio grupo.
+* **No es un destino de agregación.** No existe una suma, un promedio, un mínimo ni un máximo con sentido de una
+  incrustación.
+
+Las tres situaciones se rechazan con un mensaje que indica la columna y el rol, al guardar el paso
+y de nuevo en tiempo de ejecución para un paso que se guardó antes. Un flujo de trabajo que contenga alguna de ellas no se ejecuta ni
+produce discretamente un número incorrecto. Transportar un vector a través de un paso como una columna de salida común
+no presenta problema, como tampoco contar filas ni contar valores distintos.
+
+Una columna Vector también se excluye de la generación de perfiles de columnas y de las listas de valores del [Explorador de tablas](/es/guides/data/table-explorer/),
+no se puede representar en un gráfico de un panel de control, es de solo lectura en el editor de datos y no se puede
+vincular a una dimensión. Un mínimo, una media o una lista de los valores principales no dice nada sobre una incrustación, y
+una incrustación no es miembro de nada.
+
+
+## Lectura de valores Vector
+
+Leer una columna Vector completa (en una vista previa, una exportación o mediante un asistente de IA a través de MCP)
+devuelve una representación de texto de la matriz en lugar de números. Para recuperar los números, lea los elementos
+de forma individual.
+
+En una cuadrícula de datos, los valores se muestran como una vista previa breve que comienza con el ancho, como
+`1536-dim [0.013,-0.046,0.079, ...]`, de modo que una columna de incrustaciones sigue siendo legible sin mil
+números por celda.
+
+
+## Temas relacionados
+
+* [IA: búsqueda vectorial](/es/reference/workflow-steps/general/vector-search/): la referencia completa de parámetros
+  del paso
+* [Uso de tablas y vistas](/es/guides/data/tables-views/): cómo almacenan las tablas las columnas y por qué importan
+  los tipos de datos
+* [Explorador de tablas](/es/guides/data/table-explorer/): inspeccione el tipo de datos de cada columna y establezca sus detalles
+  de columna
+* [Importar Parquet](/es/reference/workflow-steps/import/import-parquet/): cargue incrustaciones desde un archivo
+  Parquet
+* [Tipo de datos Currency](/es/guides/data/currency-data-type/): el otro tipo de columna de propósito específico, para
+  valores monetarios

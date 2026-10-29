@@ -1,0 +1,99 @@
+---
+title: "Intacct: Lançar lançamento contábil"
+description: Lance lançamentos contábeis de tabelas de projeto do PlaidCloud no Sage Intacct como alternativa de baixo código a uma UDF de lançamento, com uma tabela de resultado por lançamento e validação em Preview.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos contábeis no Sage Intacct por meio de uma conexão Sage Intacct, usando a API REST v1 do Intacct. É uma alternativa nativa e de baixo código a escrever uma função definida pelo usuário (UDF) de lançamento — escolha a conexão, mapeie suas colunas, e a etapa cuida da autenticação, do processamento em lotes e do tratamento de erros por lançamento.
+
+A etapa lê duas tabelas que você já preparou em etapas anteriores — uma **tabela de cabeçalho** e uma **tabela de linhas** —, valida cada lançamento contábil e o lança. Ela trata o caso em lote: vários lançamentos contábeis em uma única execução, cada um lançado e acompanhado de forma independente.
+
+<Aside type="danger" title="Sem proteção contra duplicidade — confira a tabela de resultado antes de executar novamente">
+Esta etapa **não** registra quais lançamentos já foram efetivados. Executá-la novamente lança **todos** os lançamentos da tabela de cabeçalho outra vez, inclusive os que foram lançados com sucesso na vez anterior — não há eliminação de duplicatas. Antes de executar novamente, abra a tabela de resultado da última execução e confirme quais lançamentos realmente precisam ser lançados. Se uma execução anterior deixou algum lançamento com `status` igual a `unknown`, consulte [Tabela de resultado](#tabela-de-resultado) abaixo antes de fazer qualquer outra coisa.
+</Aside>
+
+## Contrato do Formato dos Dados
+
+A etapa não infere quais linhas pertencem a qual lançamento contábil — você monta essa estrutura em etapas anteriores, com etapas padrão (uma expressão de atribuição, uma agregação), antes de esta etapa ser executada:
+
+- A **tabela de cabeçalho** tem **exatamente uma linha por lançamento contábil**, e essa linha traz uma coluna **`entry_key`** — qualquer valor exclusivo por lançamento (um número de lote, uma concatenação de data e descrição, uma sequência gerada).
+- A **tabela de linhas** tem uma linha por linha de lançamento, e **toda linha traz o mesmo valor de `entry_key`** da linha de cabeçalho a que pertence.
+
+Um único lançamento contábil (sem lotes) ainda precisa desse formato — dê a todas as linhas de ambas as tabelas o mesmo `entry_key` constante.
+
+A etapa agrupa as duas tabelas por `entry_key` antes de validar ou lançar, portanto uma linha de cabeçalho sem linhas correspondentes, uma linha sem cabeçalho correspondente, ou mais de uma linha de cabeçalho para a mesma chave fazem a validação desse lançamento falhar, em vez de produzir um lançamento malformado.
+
+## Itens de Configuração Exclusivos
+
+### Conexão Sage
+
+A conexão **Sage Intacct** usada para lançar. Apenas conexões Sage Intacct são oferecidas aqui — uma conexão REST genérica não é aceita, porque o lançamento exige a troca de token específica do Intacct e a resolução de empresa/entidade, que somente uma conexão Sage Intacct possui.
+
+A mesma conexão é usada em outros lugares para *ler* do Intacct (por exemplo, [Import Sage AP](/pt-br/reference/workflow-steps/sage-intacct/import-sage-ap/) ou [Import Sage Intacct Query](/pt-br/reference/workflow-steps/sage-intacct/import-intacct-query/)) — uma conexão atende às duas direções. Consulte [Conector REST do Sage Intacct](/pt-br/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+O nome da coluna — presente nas colunas de origem tanto do cabeçalho quanto das linhas — que agrupa as linhas de cabeçalho e de lançamento em um único lançamento contábil. Consulte [Contrato do formato dos dados](#contrato-do-formato-dos-dados) acima.
+
+### Colunas de origem
+
+Dois mapeamentos de colunas separados, um por guia — em cada um, mapeie uma coluna de origem para o campo do lançamento contábil que ela alimenta:
+
+- **Colunas do cabeçalho** — os campos no nível do lançamento contábil: diário, data de lançamento, descrição, número de referência, um `base_location` opcional (a entidade/localização do Intacct sob a qual o lançamento é efetivado — omita-o em uma empresa de entidade única), a coluna de correlação que você nomeou como **Entry Key** e detalhes semelhantes do nível do cabeçalho.
+- **Colunas das linhas** — os campos por linha de lançamento: conta do razão geral, valor de débito/crédito, descrição da linha, a mesma coluna **Entry Key** e dimensões (localização, departamento, funcionário, classe e semelhantes).
+
+Você não precisa renomear suas colunas de origem — mapeie-as, com o nome que tiverem, para os nomes de campo de destino acima.
+
+### Tabela de resultado
+
+A tabela de destino em que esta etapa grava uma linha por lançamento contábil, registrando o desfecho da validação e (se não estiver em Preview) do lançamento. Consulte [Tabela de resultado](#tabela-de-resultado) abaixo para ver suas colunas e os valores de `status`.
+
+### Preview
+
+Uma caixa de seleção, **marcada por padrão**. Com Preview ativado, a etapa valida cada lançamento contábil e grava a tabela de resultado exatamente como uma execução real faria, mas **não** se autentica no Intacct e **não** lança nada — não há nenhuma chamada de rede ao Intacct no modo Preview. As linhas chegam à tabela de resultado com `status = preview`, mostrando quais lançamentos seriam efetivados sem problemas e quais falhariam na validação, antes que qualquer coisa chegue ao seu razão geral.
+
+Assim como uma execução real, um Preview **substitui** a tabela de resultado pelas linhas desta execução — ela é a saída da etapa por execução, não um log acumulado —, portanto um Preview após uma execução real sobrescreve as linhas `posted` e `unknown` dessa execução. Abra e copie a tabela de resultado da última execução antes de executar novamente (Preview ou real) se ainda precisar dela.
+
+O Preview não valida as suas **credenciais** do Intacct — como nunca se conecta, uma conexão incorreta ou uma credencial expirada não aparecerá aqui. Use a ação **Testar conexão** da conexão (em **Ferramentas > Conexões**) para confirmar as credenciais separadamente.
+
+Uma configuração de etapa que omita totalmente este campo — por exemplo, uma criada pela API REST, pelo MCP ou por uma importação de pacote de fluxo de trabalho — também assume Preview como padrão, em vez de um lançamento real.
+
+Desmarque Preview somente quando estiver pronto para um lançamento real. Recomendamos executar primeiro com Preview ativado, revisar a tabela de resultado e então executar novamente com Preview desativado.
+
+## Tabela de Resultado
+
+Toda execução — Preview ou real — grava uma linha por lançamento contábil na tabela de resultado:
+
+| Coluna | Descrição |
+|---|---|
+| `entry_key` | O lançamento contábil sobre o qual esta linha informa. |
+| `status` | Um entre `preview`, `posted`, `failed` e `unknown` — veja abaixo. |
+| `intacct_key` | A chave atribuída pelo Intacct ao lançamento efetivado, quando disponível. |
+| `http_status` | O status HTTP que o Intacct retornou para a tentativa de lançamento, quando disponível. |
+| `error_message` | Uma descrição curta e higienizada do que deu errado, quando `status` é `failed` ou `unknown`. |
+| `line_count` | Número de linhas associadas a este lançamento. |
+| `posting_date` | A data de lançamento enviada ao Intacct (ou, em Preview, que seria enviada). |
+
+### Valores de Status
+
+- **`preview`** — modo Preview; o lançamento foi validado e não foi efetivado.
+- **`posted`** — o lançamento foi efetivado no Intacct com sucesso.
+- **`failed`** — o Intacct rejeitou o lançamento de forma definitiva (ou ele falhou na validação antes de qualquer tentativa de lançamento). É seguro corrigir o problema de fundo e lançar novamente apenas esse lançamento.
+- **`unknown`** — não foi possível determinar o desfecho — um tempo limite esgotado, uma conexão interrompida ou um erro de servidor sem resposta definitiva do Intacct.
+
+<Aside type="danger" title="unknown não significa que falhou">
+Um lançamento `unknown` pode já ter sido efetivado com sucesso no Intacct — a solicitação pode ter sido recebida e confirmada antes de a conexão ser perdida ou de a resposta nunca ser devolvida. **Verifique o status do lançamento diretamente no Intacct antes de executar esta etapa novamente.** Lançar novamente às cegas um lançamento `unknown` corre o risco de criar um lançamento contábil duplicado no seu razão geral.
+</Aside>
+
+Uma execução com qualquer linha `failed` ou `unknown` informa um aviso para que isso fique visível sem abrir a tabela de resultado, mas a própria tabela de resultado é a fonte de verdade sobre o que fazer em seguida.
+
+## Relacionados
+
+- [Etapas de exportação](/pt-br/reference/workflow-steps/export/)
+- [Import Sage AP](/pt-br/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query](/pt-br/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Conector REST do Sage Intacct](/pt-br/reference/connectors/rest/sage-intacct/)

@@ -1,0 +1,88 @@
+---
+title: Importar Dados do Samsara
+description: Ligue o PlaidCloud ao Samsara com a ligação REST genérica e importe listas paginadas completas com uma receita de paginação por cursor para copiar e colar.
+sidebar:
+  label: Importar Dados do Samsara
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Utilize a ligação **Generic REST** e um passo **Pedido REST** para importar dados do Samsara. Assim, o token da API fica guardado numa ligação reutilizável e utilizam-se os mesmos controlos genéricos de paginação por cursor disponíveis para qualquer API que devolva um cursor de continuação.
+
+## Antes de Começar
+
+No Samsara, crie um token de API apenas com os âmbitos de leitura e o acesso a etiquetas de que a importação necessita. O Samsara mostra o token apenas quando o cria, pelo que deve copiá-lo antes de sair da página. Consulte [Autenticação da API do Samsara](https://developers.samsara.com/docs/authentication).
+
+Escolha o anfitrião que corresponde ao seu painel de controlo do Samsara:
+
+| Painel de controlo do Samsara | Anfitrião ou endereço IP |
+| --- | --- |
+| Nuvem dos EUA ou do Canadá antiga | `api.samsara.com` |
+| UE / Reino Unido | `api.eu.samsara.com` |
+| Nuvem do Canadá | `api.ca.samsara.com` |
+
+## Criar a Ligação
+
+1. Abra **Ligações** e crie uma ligação **Generic REST** com o nome `Samsara`.
+2. Introduza o anfitrião correspondente da tabela acima.
+3. Em **Autenticação**, selecione **Token de portador** e cole o token da API do Samsara. Não adicione você mesmo um cabeçalho `Authorization`.
+4. Guarde a ligação.
+
+<Aside type="note">Um token de API é a escolha mais simples para importar os dados da sua própria frota. O Samsara recomenda OAuth 2.0 para aplicações de marketplace que ligam organizações de clientes.</Aside>
+
+## Importar Veículos
+
+Esta primeira importação confirma a ligação e fornece uma receita que pode reutilizar noutros endpoints de listas modernos do Samsara.
+
+1. Adicione um passo **Pedido REST** e selecione a ligação `Samsara`.
+2. Defina **Origem dos pontos finais** como **Manual**, **Método** como `GET` e **Endpoint** como `/fleet/vehicles`.
+3. Selecione uma **Tabela de destino**, como `samsara_vehicles`.
+4. Em **Parâmetros de consulta**, adicione `limit` com o valor `512`.
+5. Em **Pedido**, defina os seguintes valores:
+
+| Campo | Valor |
+| --- | --- |
+| Formato das linhas | `Object` |
+| Modo de streaming | `Cursor Paging` |
+| Caminho dos itens (formato JSON) | `["data"]` |
+| Parâmetros do modo (formato JSON) | `{"cursor": "after"}` |
+| Caminhos do modo (formato JSON) | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. Selecione **Testar paginação**. O PlaidCloud obtém apenas as páginas suficientes para a pré-visualização, para que possa verificar o resultado antes de uma execução completa.
+7. Guarde e execute o passo.
+
+Copie estes valores exatamente ao configurar um endpoint de lista moderno do Samsara:
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+Quando o Samsara devolve `hasNextPage: true`, o PlaidCloud envia o `endCursor` devolvido como parâmetro `after` do pedido seguinte. Continua mesmo quando uma página está vazia, porque o Samsara pode ter páginas posteriores com dados. Consulte [Paginação do Samsara](https://developers.samsara.com/docs/pagination).
+
+## Executar com Eficiência
+
+- Utilize um passo Pedido REST por cada endpoint de lista. Os valores de cursor são opacos e têm de ser enviados exatamente como foram devolvidos.
+- Defina `limit=512` quando o endpoint suportar `limit`; 512 é o máximo documentado do Samsara.
+- Evite a expansão de um pedido por linha para um endpoint de lista. Utilize-a apenas para pedidos de detalhe genuinamente independentes e mantenha a taxa de pedidos dentro do limite do endpoint.
+- Os endpoints `/feed` são incrementais e não instantâneos completos. Guarde o último cursor bem-sucedido e agende o fluxo de trabalho com maior frequência do que a janela de expiração de cursor de 30 dias do Samsara.
+
+## Resolução de Problemas
+
+| Problema | O que verificar |
+| --- | --- |
+| `401` ou `403` | Confirme o anfitrião regional, o token, o acesso a etiquetas e o âmbito de leitura do endpoint. |
+| Sem linhas | Confirme que se trata de um endpoint de lista e que o **Caminho dos itens** é `["data"]`. |
+| A paginação para demasiado cedo | Utilize o endpoint moderno da referência da API atual do Samsara. Os endpoints `/v1/` antigos podem utilizar campos de paginação diferentes. |
+| `429` | Reduza a taxa de pedidos das chamadas independentes em expansão. O passo Pedido REST respeita a resposta `Retry-After` do Samsara quando repete um pedido de leitura seguro. |
+
+## Relacionado
+
+- [Ligação REST genérica](/pt-pt/reference/connectors/rest/generic-rest/)
+- [Passo Pedido REST do fluxo de trabalho](/pt-pt/guides/workflows/rest-request-step/)
+- [URLs base do Samsara](https://developers.samsara.com/docs/base-url)

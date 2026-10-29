@@ -1,0 +1,138 @@
+---
+title: 从 HFM / FCCS 提取（临时）
+description: 将 PlaidCloud 连接到 Oracle FCCS，并通过视点选择器自助获取数据切片，无需向 HFM 团队提交工单。涵盖连接、构建视点、运行、缓存、行级安全以及计划的定期加载。
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Oracle **FCCS**（Financial Consolidation and Close，属于 Oracle EPM Cloud），让财务用户可以自行提取数据切片，而无需向 HFM 团队提交工单。您在步骤表单中构建**视点（POV）**，点击运行，结果会自动落入一个表中。使用起来就像实时查询——其底层是针对 FCCS 数据导出作业的异步请求 → 轮询 → 获取。本指南涵盖连接、构建视点、运行、缓存、通过行级安全治理结果，以及将其转为计划的定期加载。
+
+<Aside type="note">
+请保持**实体**选择有界——未限定范围的提取可能会在导出作业运行期间长时间锁定 FCCS 应用程序。请将每个视点的范围限定在您实际需要的实体上。
+</Aside>
+
+## 前提条件
+
+在 Oracle EPM Cloud 中，您需要：
+
+- 您的 **EPM Cloud pod/服务 URL**，例如 `https://planning-test-yourdomain.epm.us2.oraclecloud.com`。
+- 您的**身份域**（适用于经典 pod）。PlaidCloud 会将登录名组合为 `identitydomain.username`。
+- 一个专用的**服务账户**——用户名和密码——对 FCCS 应用程序以及自助服务用户将要提取的视点切片具有读取权限。
+- 用户将从中读取数据的**应用程序名称**。
+
+<Aside type="note">
+该连接针对经典 EPM Cloud pod 使用 **HTTP 基本身份验证**。需要 OAuth 持有者令牌的 OCI / Gen 2 pod 不在此连接器的支持范围内。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并点击 `New Connection`。
+
+2. 从菜单中选择 **REST - HFM/FCCS**。
+
+3. 填写字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `FCCS Prod`。 |
+   | EPM Cloud URL | 您的 pod/服务 URL，例如 `https://planning-test-yourdomain.epm.us2.oraclecloud.com`。 |
+   | 身份域 | 您的 EPM Cloud 身份域。仅当用户名已包含域时才可留空。 |
+   | 用户名 | 服务账户的用户名。 |
+   | 密码 | 服务账户的密码。 |
+   | 默认应用程序 | 可选。在步骤的视点选择器中预填的 FCCS 应用程序。 |
+
+4. 点击 `Test Connection`。测试成功表示 PlaidCloud 可以使用配置的凭据访问 HFM/FCCS 服务器。
+
+5. 点击 `Create`。
+
+</Steps>
+
+PlaidCloud 以 `identitydomain.username` 登录（当身份域为空或用户名已包含点号时，则直接使用该用户名）。
+
+## 构建视点
+
+<Steps>
+
+1. 向工作流中添加一个 **HFM/FCCS：读取数据（临时）** 步骤（它位于步骤菜单的 **Oracle EPM (HFM/FCCS)** 下）。
+
+2. 在**源和目标**下，设置 **HFM/FCCS 连接**、**环境**、**应用程序**和**目标表**。
+
+3. 在**视点**下，根据 FCCS 维度构建切片：**Scenario、Year、Period、Entity、Account、Custom1–Custom4、ICP、View、Value**。
+
+   - **Scenario、Year 和 Period 为必填项。**
+   - **Entity 必须是有界切片**——表单会拒绝空选择、“全部”，或超过 500 个成员的选择。请限定其范围，以免导出锁定应用程序。
+   - 其他任何维度留空，则表示该轴上不应用筛选。
+
+</Steps>
+
+<Aside type="note">
+在受支持的 FCCS pod 上，选择连接和应用程序后，成员列表会通过实时元数据发现**自动填充**——选择器提供真实的成员，并在连接或应用程序更改时重新发现。在不提供元数据端点的旧版 pod 上，选择器会回退到**手动输入**：手动键入成员名称。无论哪种方式，保存的视点都可以完整往返。
+</Aside>
+
+## 运行
+
+<Steps>
+
+1. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+2. 导出作业在 FCCS 中运行期间，会显示进度状态（“polling HFM job…”）。
+
+3. 完成后，结果表会自动落地——该表根据返回网格的列创建，因此无需预先定义架构。
+
+</Steps>
+
+## 缓存
+
+再次请求**相同的视点**时，PlaidCloud 会立即提供**已落地的表**，而不是重新向 FCCS 提交导出。运行以应用程序、目标表、视点和一个**截至**标签（默认为 `latest`）作为键；若重复请求解析到已落地的切片，会报告该表已原样保留，而不是被重新写入。若想对同一视点强制重新提取，请更改截至标签。
+
+## 通过行级安全进行治理
+
+落地表的实体轴会被规范化为名为 **`Entity`** 的列，因此该表**可用于行级安全**——管理员可以通过[行访问](/zh-cn/administration/access/managing-security-groups-and-assignments/)对其进行治理，使自助服务用户只能看到其有权访问的实体。
+
+<Aside type="caution">
+这是**由管理员控制的治理，而非自动生效**。由于提取以连接的服务账户运行，PlaidCloud 不允许步骤自行声明安全策略——必须由管理员（架构师）来设置。
+</Aside>
+
+管理员遵循标准的行访问工作流：
+
+<Steps>
+
+1. 为报告**发布**落地表。
+
+2. 将 `Entity` 列**声明**为治理属性（默认拒绝）。
+
+3. **批准**首次受治理的写入。
+
+4. **协调**以使授权生效。
+
+</Steps>
+
+在管理员完成这些操作之前，该表不会被筛选。请参阅[管理安全组和分配](/zh-cn/administration/access/managing-security-groups-and-assignments/)。
+
+## 计划定期加载
+
+要将临时切片提升为每晚刷新，请在步骤上启用**限定目标**：
+
+<Steps>
+
+1. 在步骤的**限定目标**组中，勾选**限定目标（计划的定期加载）**。
+
+2. 可选择设置**关键列**——构成合并键的逗号分隔列（例如 `Entity, Account`）。**留空**则使用落地网格中存在的视点维度列作为合并键。
+
+3. 将该步骤放入[计划的工作流](/zh-cn/administration/scheduled-events/)中。
+
+</Steps>
+
+启用限定目标后，目标成为**持久**表：每次运行都通过键集 upsert **合并**到其中，而不是覆盖；当后续网格带来新列时，架构会**增量扩展**（新列会触发警告，而不会导致失败）。因此，计划运行是累积而非清空——是定期加载，而非破坏性的重新加载。
+
+## 相关内容
+
+- [HFM/FCCS：读取数据（临时）](/zh-cn/reference/workflow-steps/oracle-epm/hfm-fccs-read/) — 步骤字段参考。
+- [HFM / FCCS 连接器](/zh-cn/reference/connectors/rest/hfm-fccs/) — 连接字段参考。
+- [管理安全组和分配](/zh-cn/administration/access/managing-security-groups-and-assignments/) — 行访问如何治理落地表。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

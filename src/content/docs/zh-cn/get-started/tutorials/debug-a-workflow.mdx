@@ -1,0 +1,137 @@
+---
+title: 调试工作流
+description: 工作流出问题时，自己找出原因：运行单个步骤、预览其输出、阅读日志、用依赖审核追踪输入，并解读错误信息。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*约 25 分钟 · 运行单个步骤、预览数据、阅读日志、追踪输入*
+
+工作流出了问题：某个步骤变红、下游数字看起来不对，或者运行到一半停了。本教程介绍一套手动排查工具，帮助找出原因：单独运行一个步骤、预览它生成的数据、阅读工作流日志、用依赖审核追踪其输入的来源，并读懂错误信息本身。每个工具回答不同的问题，组合使用通常无需猜测就能找到原因。
+
+> **希望由 AI 来讲解？** [AI 辅助路径](/zh-cn/get-started/tutorials/fix-a-workflow-with-ai/)以对话方式完成同样的排查。本教程是手动版本，一切都由您自己操作，至少做一次，就能明白助手实际看到的是什么。
+
+## 调试循环
+
+无论先用哪个工具，大多数工作流调试都遵循同一个简短的循环：
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="工作流调试循环：单独运行一个步骤，预览其输出数据，在工作流日志中查看错误信息，用依赖审核追踪该步骤的输入，然后修复并再次运行该步骤。" style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">运行单个步骤</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">预览数据</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">阅读日志</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">追踪输入</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">修复后再次运行</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">每个工具回答一个问题：四个工具未必都要用到，但顺序如上。</figcaption>
+</figure>
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区，其中有一个项目，以及一个存在问题的工作流（步骤变红、结果错误或运行中途停止）。
+- 熟悉[可视化工作流设计器](/zh-cn/guides/workflows/advanced-workflows/)，大部分操作都在这块画布上完成。
+
+## 步骤 1：只运行出错的步骤
+
+不要为了测试一处改动而重新运行整个工作流：既慢，又会重复已经可信的工作。只运行正在排查的那个步骤即可。
+
+1. 在可视化工作流设计器中打开工作流。
+2. 右键单击要测试的步骤，从上下文菜单中选择 **运行步骤**。
+3. 该步骤会单独运行，使用其源表中已有的数据。
+
+调试时最后一点很重要：步骤读取的是源表*此刻*的状态。如果上游步骤尚未运行，或使用了过时的数据，单独运行此步骤就会反映这一点，而这正是[步骤 4](#步骤-4用依赖审核追踪输入)帮助您发现的问题。
+
+详情请参阅[运行工作流中的单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)。
+
+## 步骤 2：预览步骤生成的内容
+
+步骤运行完成后，先看看它实际写入了什么，再判断是否正确。**数据预览**抽屉会直接在画布上显示步骤的输出数据：停靠在底部，展示前 100 行及带类型的列。
+
+有三种进入方式，最终都会打开同一个抽屉：
+
+- **悬停在步骤图块上**：图块右下角会淡入一个小的浏览（表格）图标，点击它。
+- **右键单击步骤**，选择 **预览输出数据**。
+- **在检查器中**，点击步骤**输出**部分任意输出卡片上的**眼睛图标**。
+
+检查内容取决于症状：
+
+| 症状 | 在预览中查看什么 |
+|---|---|
+| 列错误或缺失 | 步骤是否生成了预期的列？联接或列选择出错时，最先会在这里表现出来。 |
+| 行数过少或过多 | 标题会显示 **Showing first N of ~M rows**，总数是否大致符合预期？ |
+| 输出为空 | 抽屉显示 *Table is empty*（已运行，零行）或 *No data yet — run the step*（从未运行）。 |
+| 可疑的值 | 对某一列排序，让空值或异常值浮到顶部。 |
+
+抽屉打开时，**点击任何其他步骤都会把预览切换**到该步骤的输出，因此可以沿着步骤链逐个查看，观察数据是从哪里开始出错的。需要筛选、切片或查看前 100 行以外的数据时，点击抽屉标题栏中的 **在表资源管理器中打开**。
+
+完整说明请参阅[预览步骤数据](/zh-cn/guides/workflows/preview-step-data/)。
+
+## 步骤 3：阅读工作流日志
+
+预览告诉您输出*是什么样子*；日志则告诉您步骤运行时*发生了什么*，包括失败时的错误信息。
+
+步骤运行和出现警告时，这些事件会写入**工作流日志**，可在**项目**区域的 **日志**选项卡中查看。在可视化工作流设计器内，工具栏上的 **查看日志**按钮会打开同一视图，并已按当前打开的工作流筛选。
+
+1. 打开 **日志**选项卡（项目日志）：使用工具栏上的 **查看日志**按钮，或项目区域中的 **日志**选项卡。
+2. 使用日志消息旁边的筛选控件，缩小到关注的步骤和运行。
+3. 打开一条日志，阅读其详细信息，失败步骤的错误信息就在这里。
+
+项目级日志可跨多个工作流提供更全面的视图，适用于问题可能涉及多个工作流的情况。请参阅[查看工作流日志](/zh-cn/guides/workflows/viewing-workflow-log/)。
+
+> **阅读错误信息。** 从日志中复制准确的文本：联接键错误、类型不匹配、源表缺失，读起来各不相同。步骤出错最常见的两个原因是表之间的联接键不匹配，以及计算列中出现意外的空值。如果错误信息指向数据而非步骤配置，就该去追踪输入了。
+
+> **一个实际示例。** 假设某个转换步骤变红。打开日志，条目内容为 `column "revenue" does not exist`，而源表中的列是 `net_revenue`，不是 `revenue`。只需一行修改，在步骤的表达式中更正列名。再次只运行该步骤，它就变绿了。整个循环一遍就走完了。
+
+## 步骤 4：用依赖审核追踪输入
+
+有时步骤配置正确，却仍然产生错误的数据，原因是它读取的输入是*乱序*填充的。当表中已有数据时，步骤即使读取了过时或尚未更新的数据，也会照常运行并看起来正确。这是日志无法显示的失败，因为并没有任何报错。
+
+**工作流依赖审核**正是为此而设。它分析相互关联的工作流中的数据依赖和工作流依赖，找出输入填充顺序与读取时间不一致的步骤。
+
+在以下情况使用：
+
+- 步骤的输出错误，但步骤本身没有报错。
+- 重新排列或新增了步骤，想确认没有步骤在表构建之前就读取它。
+- 工作流完整运行时“正常”，但单步运行得出的数字不同，这是存在顺序依赖的典型迹象。
+
+如何打开和阅读审核结果，请参阅[查看依赖审核](/zh-cn/guides/workflows/view-a-dependency-audit/)。
+
+## 步骤 5：决定工作流如何处理错误
+
+弄清原因后，决定以后该步骤失败时工作流应如何处理。每个步骤的错误处理在步骤表单中设置，PlaidCloud 提供三个级别：
+
+| 行为 | 结果 | 适用场景 |
+|---|---|---|
+| **停止工作流** | 运行中止，步骤和工作流上都会出现错误标记。 | 默认且最常见的选择，工作流通常应当干净地运行。 |
+| **继续处理** | 步骤被标记为错误，但工作流视其为已完成并继续。 | 可能因缺少数据而无害出错的步骤。注意：工作流显示的是*运行中*标记，而不是错误标记。 |
+| **触发补救工作流** | 当前工作流停止，转而启动补救工作流。 | 自动通知或纠正。对设置为继续处理的步骤*不会*触发。 |
+
+PlaidCloud 还可以自动**重试**失败的步骤：重试次数可设定，并可选择从几秒到几小时的延迟。如果步骤访问的远程系统或数据源时好时坏，而不是存在真正的逻辑错误，这就是合适的做法。请参阅[管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)。
+
+## 步骤 6：修复、重新运行并确认
+
+1. 按排查结果做出修改：修正联接键、添加上游步骤、更正产生空值的表达式，或重新排列步骤。
+2. **再次只运行该步骤**（步骤 1），并**预览其输出**（步骤 2）。如果运行期间抽屉保持打开，运行完成后它会自动刷新。
+3. 步骤正确后，端到端运行整个工作流，并观察日志，确认整条流水线都是干净的。
+
+若要永久记录工作流的内容（其步骤、函数和变量），可在**工作流**层次结构中点击报表图标，生成按需的**工作流报表**。它反映工作流的当前状态，修复完成后可作为有用的文档。请参阅[查看工作流报表](/zh-cn/guides/workflows/view-workflow-report/)。
+
+**整个循环就是这样。** 您已经单独运行了一个步骤、预览了它写入的内容、在日志中读到了错误、用依赖审核追踪了它的输入，并通过重新运行确认了修复，这与 AI 助手所做的排查完全相同，只是现在可以由您自己来主导。
+
+## 后续内容
+
+- [借助 AI 助手修复工作流](/zh-cn/get-started/tutorials/fix-a-workflow-with-ai/)：同样的排查，以对话方式完成
+- [运行工作流中的单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)：单独运行一个步骤
+- [预览步骤数据](/zh-cn/guides/workflows/preview-step-data/)：数据预览抽屉
+- [查看工作流日志](/zh-cn/guides/workflows/viewing-workflow-log/)：运行事件和错误的记录位置
+- [查看依赖审核](/zh-cn/guides/workflows/view-a-dependency-audit/)：发现乱序的数据依赖
+- [管理步骤错误](/zh-cn/guides/workflows/managing-step-errors/)：停止、继续、补救和重试
+- [查看工作流报表](/zh-cn/guides/workflows/view-workflow-report/)：整个工作流的按需文档

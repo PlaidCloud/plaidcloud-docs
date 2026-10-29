@@ -1,0 +1,128 @@
+---
+title: "ML: trenuj model"
+description: Dopasuj model scikit-learn do tabeli i zapisz tabelę modelu, której możesz używać do oceniania i zapytań.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## Opis
+
+Krok **ML: trenuj model** dopasowuje model scikit-learn do tabeli źródłowej i zapisuje wynik jako **tabelę modelu**. Tabela modelu przepływa przez przepływ pracy jak każda inna tabela — przekaż ją do kroku [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/), aby dołączyć prognozy do tabeli danych, lub zapytaj ją bezpośrednio, aby sprawdzić metryki trenowania. Krok działa jako zarządzane zadanie PlaidCloud (podobnie jak krok LLM), dlatego trenowanie nie konkuruje o zasoby z resztą przepływu pracy.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML Train uczy model na danych historycznych. Wiersze treningowe z kolumnami cech i znaną etykietą trafiają do kroku trenowania, który tworzy zapisany artefakt modelu używany później przez krok oceniania." style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">wiersze treningowe</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">cechy + znana etykieta</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Trenowanie</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dopasuj algorytm</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">artefakt modelu</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">zapisany, wielokrotnego użytku</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ używany przez ML: oceniaj</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Krok ML: trenuj model dopasowuje algorytm do wierszy ze znaną już etykietą i tworzy zapisany artefakt modelu, który krok <a href="/pl/reference/workflow-steps/machine-learning/ml-score/">ML: oceniaj</a> stosuje do nowych wierszy.</figcaption>
+</figure>
+
+## Karta Model
+
+### Źródło i dane wyjściowe
+
+- **Tabela treningowa** — tabela, na której odbywa się trenowanie. Wiersze z pustą wartością docelową są pomijane w trenowaniu.
+- **Tabela modelu** — tabela wyjściowa, która otrzymuje rekord modelu.
+
+### Model
+
+- **Algorytm** — model do dopasowania:
+
+  | Algorytm | Wartość | Rodzina |
+  | --- | --- | --- |
+  | Regresja logistyczna | `logistic_regression` | Klasyfikacja |
+  | Klasyfikator drzewa decyzyjnego | `decision_tree` | Klasyfikacja |
+  | Klasyfikator lasu losowego | `random_forest` | Klasyfikacja |
+  | Klasyfikator gradient boosting (w stylu XGBoost) | `xgb_classifier` | Klasyfikacja |
+  | Regresja liniowa | `linear_regression` | Regresja |
+  | Regresor drzewa decyzyjnego | `decision_tree_regressor` | Regresja |
+  | Regresor lasu losowego | `random_forest_regressor` | Regresja |
+
+  Algorytm w stylu XGBoost to `HistGradientBoostingClassifier` z biblioteki scikit-learn — statystycznie równoważny zamiennik XGBoost, a nie nakładka na niego. Zobacz [Ograniczenia i zastrzeżenia](#ograniczenia-i-zastrzeżenia).
+
+- **Kolumna docelowa** — kolumna do przewidywania. Jest wymagana, z wyjątkiem algorytmów nienadzorowanych i `sota`, w których kolumna klas jest opcjonalna. Cele klasyfikacji są traktowane jako etykiety tekstowe; cele regresji są konwertowane na liczby, a wiersze, których cel nie daje się sparsować jako liczba, są pomijane.
+
+### Więcej algorytmów
+
+Lista **Algorytm** oferuje także poniższe algorytmy. Korzystają z nich również przekonwertowane przepływy pracy KNIME.
+
+| Algorytmy | Czym są |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | Sam XGBoost, z boosterem drzewiastym lub liniowym |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | Gradient boosting z biblioteki scikit-learn |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | Maszyny wektorów nośnych, perceptrony wielowarstwowe i modele bazowe z biblioteki scikit-learn |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | Własne algorytmy uczące KNIME, dające wyniki zgodne z KNIME; ich hiperparametry to ustawienia KNIME |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | Algorytmy nienadzorowane KNIME: bez kolumny docelowej, a kolumnami cech są kolumny liczbowe (dla `apriori` i `fp_growth` — jedna kolumna z listami elementów) |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | Węzły KNIME do klasteryzacji, próbkowania, uczenia aktywnego, rekomendacji (`als`: kolumnami cech są użytkownik i produkt, a celem ocena), reguł asocjacyjnych oraz krzywych dawka-odpowiedź |
+
+`dbscan`, `mds`, `tsne` i pozostałe algorytmy, które nie mają modelu poza własnymi danymi, przechowują swoje ustawienia w tabeli modelu, a [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/) układa przekazaną mu tabelę.
+
+### Hiperparametry
+
+Opcjonalny obiekt JSON z hiperparametrami scikit-learn dla wybranego algorytmu — na przykład `{"max_depth": 5, "n_estimators": 200}`. Nieznane klucze są odrzucane podczas zapisywania kroku, więc błędnie wpisany parametr powoduje natychmiastowy błąd zamiast być po cichu ignorowany. Przepływy pracy przekonwertowane z Alteryx mogą również zawierać klucze zastępcze w stylu Alteryx, takie jak `max_depth_none`; są one tłumaczone automatycznie.
+
+Kilka przestarzałych parametrów, które scikit-learn usunął, jest akceptowanych, ale nie jest stosowanych (na przykład `presort` lub parametry drzew XGBoost wymienione w sekcji [Ograniczenia i zastrzeżenia](#ograniczenia-i-zastrzeżenia)); wszystko, co zostało w ten sposób pominięte, jest zapisywane w `params_json` tabeli modelu w polu `dropped_params`, więc nic nie znika po cichu.
+
+## Karta Cechy
+
+Karta Cechy pokazuje jeden wiersz na kolumnę tabeli źródłowej:
+
+- **Cecha** — zaznacz kolumny, na których ma odbywać się trenowanie. Pozostaw **wszystkie** pola niezaznaczone, aby trenować na każdej kolumnie poza docelową. Gdy żadne pole nie jest zaznaczone, krok trenuje na kolumnach, które tabela ma w chwili uruchomienia; wymień kolumny w polu **Wyklucz kolumny** (`exclude_columns`), aby część z nich pominąć.
+- **Nadpisanie typu** — wymuś obsługę kolumny jako **Liczbowy** lub **Kategorialny** albo pozostaw **(wnioskuj)**, aby typ został wyprowadzony z typu kolumny tabeli.
+
+Przygotowanie cech odpowiada Assisted Modeling w Alteryx: cechy liczbowe są konwertowane na liczby (wartości, których nie da się sparsować, stają się brakujące), a brakujące wartości są uzupełniane medianą; cechy kategorialne są traktowane jako tekst, uzupełniane najczęstszą wartością i kodowane metodą one-hot. Wartości, których cecha kategorialna nie widziała podczas trenowania, są ignorowane podczas oceniania.
+
+## Tabela modelu
+
+Tabela modelu ma następujące kolumny:
+
+| Kolumna | Zawartość |
+| --- | --- |
+| `model_pickle_b64` | Dopasowany potok scikit-learn (spakowany metodą pickle, skompresowany i zakodowany w base64). Duże modele są dzielone na wiele wierszy — zobacz [Jak przechowywany jest model](#jak-przechowywany-jest-model). |
+| `chunk_index` | Pozycja fragmentu modelu zapisanego w tym wierszu, licząc od `0`. |
+| `algorithm` | Wartość algorytmu, na przykład `logistic_regression`. |
+| `params_json` | JSON: zastosowane parametry scikit-learn, użyte typy cech oraz ewentualne `dropped_params`. |
+| `feature_names_json` | Tablica JSON: uporządkowane kolumny cech, których model oczekuje podczas oceniania. |
+| `class_labels_json` | Tablica JSON z etykietami klas (klasyfikatory) lub `null` (regresory). |
+| `metrics_json` | Metryki trenowania w formacie JSON — zobacz poniżej. |
+| `trained_at` | Znacznik czasu UTC uruchomienia trenowania. |
+
+Ponieważ model jest zwykłą tabelą, możesz ją odpytywać jak każdą inną — na przykład wyodrębnić `metrics_json` w kolejnym kroku, aby uzależnić dalszy przebieg przepływu pracy od jakości modelu.
+
+`metrics_json` zawiera klucz `kind` (`classification` lub `regression`), `train_accuracy` dla klasyfikatorów albo `train_r2` i `train_rmse` dla regresorów oraz `n_training_rows`.
+
+### Jak przechowywany jest model
+
+Dopasowany model może być duży — las losowy z domyślną liczbą stu drzew może zajmować setki megabajtów — a to więcej, niż hurtownia danych przyjmie jako pojedynczą wartość. Dlatego model jest kompresowany i, jeśli nadal jest zbyt duży na jeden wiersz, dzielony na tyle wierszy, ile potrzeba. Każdy wiersz powtarza powyższe kolumny, więc z dowolnego z nich odczytasz algorytm, parametry, cechy i metryki; różnią się tylko `model_pickle_b64` i `chunk_index`.
+
+Ma to znaczenie w dwóch miejscach:
+
+- **Odczyt metryk.** Tabela modelu może zawierać więcej niż jeden wiersz, więc odczytuj metryki z jednego wiersza, zamiast zakładać, że jest tylko jeden — na przykład za pomocą `WHERE chunk_index = 0`.
+- **Samodzielne składanie modelu.** Jeśli odczytujesz `model_pickle_b64` poza PlaidCloud, połącz fragmenty w kolejności `chunk_index`, zdekoduj base64, a następnie zdekompresuj przed odtworzeniem obiektu.
+
+Krok [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/) robi to wszystko za Ciebie. Sprawdza także, czy każdy fragment jest obecny, i kończy się błędem, jeśli któregoś brakuje, zamiast oceniać na niekompletnym modelu.
+
+## Ograniczenia i zastrzeżenia
+
+- **Metryki trenowania są obliczane na zbiorze treningowym** — w tym wydaniu nie ma podziału na zbiór testowy ani walidacji krzyżowej. Traktuj je jako sprawdzenie dopasowania, a nie szacunek skuteczności poza próbą.
+- **Zbiór roboczy w pamięci** — tabela treningowa jest wczytywana do pamięci, więc krok jest przeznaczony dla około miliona wierszy. Większe tabele najpierw próbkuj lub agreguj.
+- **Maksymalny rozmiar modelu** — dopasowany model jest odrzucany, jeśli po kompresji przekracza 128 MB, a krok zatrzymuje się natychmiast po zakończeniu trenowania, wyświetlając komunikat z rozmiarem i limitem. Dla porównania: las losowy ze stu drzew na 17 000 wierszy i 17 cechach zajmuje około 56 MB, więc limit jest mniej więcej dwukrotnie większy. Jeśli go osiągniesz, trenuj mniej drzew (`n_estimators`) lub ogranicz `max_depth`.
+- **Przybliżenie XGBoost** — `xgb_classifier` trenuje `HistGradientBoostingClassifier` z biblioteki scikit-learn; algorytmy `xgboost_*` uruchamiają sam XGBoost. Parametry drzew specyficzne dla XGBoost — `gamma`, `min_child_weight`, `subsample` oraz rodzina `colsample_*` — nie mają odpowiedników i są pomijane (zapisywane w `dropped_params` oraz w notatkach mapowania kroku, gdy został przekonwertowany z Alteryx). Przed poleganiem na zgodności zweryfikuj metryki modelu względem uruchomienia referencyjnego.
+- **Konwersja AutoML wybiera jeden algorytm, a nie przeszukuje** — narzędzie AutoML z Alteryx jest scalane z tym krokiem tak samo jak Classification i Regression, ale AutoML nigdy nie zapisuje, który z algorytmów kandydujących faktycznie wygrał podczas uruchomienia w Alteryx. Konwersja wybiera pierwszy zaznaczony algorytm obsługiwany przez ten krok i odnotowuje wybór, zamiast odtwarzać zautomatyzowane przeszukiwanie — żadna pętla wyboru modelu tu nie działa. Porównaj przekonwertowany krok AutoML z własnymi wynikami z Alteryx.
+
+## Powiązane
+
+- [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/) — oceń tabelę danych za pomocą wytrenowanego modelu.
+- [Migracja przepływów pracy Alteryx](/pl/guides/workflows/migrate-alteryx-workflows/#konwersje-uczenia-maszynowego-assisted-modeling) — jak potoki Alteryx Assisted Modeling, w tym AutoML, są konwertowane na ten krok.

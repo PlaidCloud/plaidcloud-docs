@@ -1,0 +1,85 @@
+---
+title: Importar datos financieros de NetSuite
+description: "Traiga saldos, detalle del libro mayor y datos maestros de NetSuite a tablas del proyecto con los pasos de importación predefinidos de NetSuite: elija una conexión, una tabla de destino, un intervalo de fechas y una subsidiaria, y ejecute."
+sidebar:
+  label: Importar datos financieros de NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/import-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Traiga los datos financieros y de referencia habituales de NetSuite a tablas del proyecto con los pasos de importación predefinidos de NetSuite, sin tener que escribir SuiteQL. Tres pasos cubren la mayoría de las extracciones: **Importar saldos** para un balance de comprobación, **Importar detalle del libro mayor** para las líneas a nivel de asiento que lo respaldan e **Importar datos maestros** para las cuentas, subsidiarias y dimensiones a las que hacen referencia esas extracciones. Cada uno se ejecuta sobre una capa de lectura compartida que actualiza el token de OAuth, recorre página por página los resultados grandes y reintenta los errores transitorios, de modo que una extracción de un período completo o de todas las subsidiarias se obtiene completa.
+
+<Aside type="tip">
+Para una extracción a medida que los pasos predefinidos no cubren, escriba su propio SuiteQL con el [paso Solicitud REST](/es/guides/workflows/rest-request-step/); consulte [Ejemplos de consultas SuiteQL de NetSuite](/es/guides/connections/netsuite-financial-queries/). Los pasos predefinidos que se describen a continuación son la opción más sencilla para estas extracciones habituales.
+</Aside>
+
+## Requisitos previos
+
+- Una [conexión de NetSuite](/es/guides/connections/netsuite/) que funcione, con acceso de visualización a los registros que desea leer.
+- Un flujo de trabajo al que agregar el paso.
+
+## Extraer un balance de comprobación
+
+<Steps>
+
+1. Agregue un paso **NetSuite: importar saldos** a su flujo de trabajo.
+
+2. Establezca **Conexión de NetSuite** con su conexión y **Tabla de destino** con la tabla del proyecto en la que deben cargarse los saldos. El paso sobrescribe esta tabla por completo en cada ejecución.
+
+3. Establezca **Fecha de inicio** y **Fecha de fin** con el período que desea, cada una con el formato `YYYY-MM-DD` y ambas inclusivas. Deje cualquiera de las dos en blanco para dejar ese extremo del intervalo sin límite.
+
+4. Para restringir la extracción a una subsidiaria, establezca **Subsidiary** con su ID interno de NetSuite; déjelo en blanco para todas las subsidiarias. (Consulte [Resolver ID internos](#resolver-id-internos-con-datos-maestros) si tiene nombres en lugar de ID).
+
+5. En una cuenta con Multi-Book Accounting, deje **Accounting Book** en blanco para extraer **solo el libro principal**, que es el valor predeterminado correcto para un balance de comprobación estándar. Establézcalo en `all` solo si desea deliberadamente un total entre libros, o en el ID interno de un libro específico.
+
+6. Acote aún más con **Número de cuenta** (una cuenta exacta del libro mayor) o **Posting Period** (el ID interno de un período de NetSuite) si no necesita todo el plan de cuentas ni todos los períodos del intervalo.
+
+7. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)) y revise la tabla de destino.
+
+</Steps>
+
+<Aside type="caution">
+**Las cuentas con varios libros usan de forma predeterminada el libro principal.** Antes de que este comportamiento estuviera disponible, una extracción sin filtrar en una cuenta con Multi-Book Accounting sumaba todos los libros juntos, contando en silencio un saldo N veces. Ahora, dejar **Accounting Book** en blanco extrae solo el libro principal, lo que coincide con lo que espera un balance de comprobación estándar. Si dependía de la antigua suma entre libros, establezca **Accounting Book** en `all` de forma explícita.
+</Aside>
+
+## Extraer el detalle del libro mayor
+
+El paso **NetSuite: importar detalle del libro mayor** se configura de la misma manera (conexión, tabla de destino, intervalo de fechas, subsidiaria, libro contable, número de cuenta y período contable), pero devuelve el detalle a nivel de línea de transacción en lugar de saldos por período. Úselo para conciliar, profundizar o reconstruir un estado de pérdidas y ganancias detallado a partir de los asientos que respaldan sus saldos.
+
+<Aside type="note">
+Acote el intervalo de fechas al segmento que necesita. Cada ejecución reemplaza toda la tabla de destino, por lo que una extracción programada del libro mayor vuelve a extraer el resultado completo cada vez; una ventana de fechas móvil mantiene rápida una extracción periódica en lugar de releer todo el historial.
+</Aside>
+
+<Aside type="note">
+NetSuite limita una sola consulta SuiteQL a aproximadamente 100 000 filas. Si indica tanto **Fecha de inicio** como **Fecha de fin**, PlaidCloud divide automáticamente una extracción amplia en fragmentos de fechas más pequeños que se mantienen por debajo de ese límite, de modo que una extracción del libro mayor de un año completo se obtiene completa sin que usted haga nada. Si deja ambas en blanco en una extracción lo bastante grande como para superar el límite, ahora falla con un mensaje que le pide agregar un intervalo de fechas, en lugar de devolverse truncada en silencio.
+</Aside>
+
+## Resolver ID internos con datos maestros
+
+Los campos de subsidiaria, cuenta y dimensión de NetSuite son ID internos, no nombres. Extraiga la lista correspondiente con **NetSuite: importar datos maestros** y combínela con sus saldos o con el detalle para agregar nombres legibles.
+
+<Steps>
+
+1. Agregue un paso **NetSuite: importar datos maestros** y establezca **Conexión de NetSuite** y **Tabla de destino**.
+
+2. Establezca **Tipo de registro** con la lista que desea: **cuenta**, **subsidiaria**, **departamento**, **clase**, **ubicación**, **proveedor** o **cliente**.
+
+3. Deje **Include Inactive** desactivado para extraer solo los registros activos, o actívelo para incluir los inactivos.
+
+4. Ejecute el paso y, a continuación, combine su tabla con sus saldos o con el detalle del libro mayor mediante el ID interno para incorporar los nombres a cada fila.
+
+</Steps>
+
+## Programar la extracción
+
+Para un flujo continuo, [programe el flujo de trabajo](/es/get-started/tutorials/schedule-a-workflow/). Como cada paso reemplaza por completo su tabla de destino, una ejecución programada siempre refleja el estado actual de NetSuite para el período que acotó.
+
+## Relacionado
+
+- [NetSuite: importar saldos](/es/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite: importar detalle del libro mayor](/es/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite: importar datos maestros](/es/reference/workflow-steps/netsuite/import-master-data/)
+- [Conectar a NetSuite](/es/guides/connections/netsuite/): configure la conexión a través de la cual leen estos pasos
+- [Ejemplos de consultas SuiteQL de NetSuite](/es/guides/connections/netsuite-financial-queries/): escriba su propia consulta para una extracción que los pasos predefinidos no cubren

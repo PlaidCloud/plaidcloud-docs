@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entryステップ"
+description: ヘッダーテーブルと明細テーブルから、FBDI GL インターフェースを通じて Oracle Fusion Cloud に総勘定元帳の仕訳バッチを転記します。プレビューモードでは、転記前にすべてのバッチを検証します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Oracle Fusion接続](/ja/guides/connections/oracle-fusion/)を使用して、Oracle Fusion Cloud に総勘定元帳の仕訳バッチを転記します。転記は PlaidCloud 共通の ERP 書き込みパイプラインを経由します。このステップは、ヘッダーテーブル（バッチごとに 1 行）と明細テーブル（バッチごとに 1 行以上）を受け取り、各バッチを FBDI ファイルとして Oracle の GL_INTERFACE ステージングテーブルに書き込み、Journal Import Launcher の Enterprise Scheduler Service（ESS）ジョブを送信します。**Validate Only** では、元帳の確保も転記も行わずに、すべてのバッチを構築して検証します。オプションの結果テーブルには、各バッチの結果が記録されます。
+
+<Aside type="caution">
+本番の仕訳を無人で転記する前に、まずすべてのバッチを **Validate Only** で実行して結果テーブルを確認し、いくつかの転記内容を Oracle Fusion 上で直接照合してください。
+</Aside>
+
+## 設定
+
+### 接続
+
+- **Fusion Connection** — 転記に使用する Oracle Fusion 接続です。
+
+### データ
+
+- **ヘッダーテーブル** — バッチごとに 1 行です。`batch_id`（バッチ識別子、必須）、`ledger_id`（必須）、`journal_source`、`journal_category`、`accounting_date`、`description` を含みます。
+- **明細テーブル** — `batch_id` ごとに 1 行以上です。`account_combination`（またはそのセグメント列）、`entered_debit`、`entered_credit`、`currency_code` を含みます。
+- **結果テーブル** — 出力テーブル ID です。バッチごとに 1 行で、`batch_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message` を含みます。
+- **Validate Only** — デフォルトでオンです。事前チェックのみを行い、元帳の確保も転記も行いません。このフィールドが完全に省略されたステップ設定（たとえば REST API、MCP、またはワークフローバンドルのインポートで作成された設定）でも、本番の転記ではなく Validate Only がデフォルトになります。
+- **Continue On Error** — デフォルトでオンです。1 つのバッチが失敗しても、残りのバッチの転記を続行します。オフにすると、最初の失敗で実行が停止します。
+
+## 転記の仕組み
+
+PlaidCloud は、各バッチを FBDI ファイル経由で Oracle の GL_INTERFACE ステージングテーブルにロードし、Journal Import Launcher の ESS ジョブを送信して、終了状態になるまでポーリングします。バッチが `posted` と報告されるのは、その終了状態が**確認済み**の場合だけです。インターフェーステーブルには到達したもののインポートジョブが完了しないバッチは、ステージングされたデータが存在するだけで成功と記録されることなく、隔離されたままになります（転記済みとは報告されず、黙って破棄されることもありません）。
+
+## 転記済みの仕訳の訂正
+
+このステップが、転記済みの仕訳バッチを削除したり書き換えたりすることはありません。訂正するには、元のバッチを直接編集するのではなく、元のバッチと借方・貸方を入れ替えた新しいバッチ（転記済みの取消仕訳）を転記します。
+
+## 機能上の制限
+
+| 制限 | 内容 |
+|---|---|| ESS ジョブの待ち時間 | Journal Import Launcher はスケジュールジョブとして実行されるため、転記の実行には直接 API で書き込む場合よりかなり長い時間がかかります。 |
+| 取消は新しいバッチであり、元の仕訳の編集ではない | 訂正では、借方・貸方を入れ替えた新しい取消バッチを転記します。転記済みのバッチを無効にしたり削除したりすることはできません。 |
+
+## 関連項目
+
+- [Oracle Fusionに接続する](/ja/guides/connections/oracle-fusion/) — 設定、プレビュー、転記までをカバーする完全な手順
+- [Oracle Fusionコネクター](/ja/reference/connectors/erp/oracle-fusion/)
+- [Oracle Fusionステップ](/ja/reference/workflow-steps/oracle-fusion/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/)

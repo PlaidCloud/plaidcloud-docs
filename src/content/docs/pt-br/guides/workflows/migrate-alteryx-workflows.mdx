@@ -1,0 +1,440 @@
+---
+title: Migrar fluxos de trabalho do Alteryx
+description: Converta fluxos de trabalho, aplicativos e macros do Alteryx em fluxos de trabalho avançados do PlaidCloud com dependências armazenadas em Documentos, entradas tipadas, validação e execuções repetíveis.
+sidebar:
+  order: 30
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud converte fluxos de trabalho, aplicativos analíticos e macros do Alteryx em fluxos de trabalho avançados que podem ser revisados, agendados, parametrizados e executados no PlaidCloud. O importador preserva o grafo do fluxo de trabalho, carrega os arquivos referenciados em Documentos, cria fluxos de trabalho de macro quando necessário e mapeia as ferramentas para etapas nativas de fluxo de trabalho ou para executores de jobs gerenciados.
+
+Use este guia ao migrar um único fluxo de trabalho, um grupo de fluxos de trabalho relacionados ou um portfólio maior do Alteryx para o PlaidCloud.
+
+<Aside type="note">
+  Os fluxos de trabalho convertidos foram projetados para exigir muito pouco esforço manual. Para fluxos de trabalho de produção, a validação do PlaidCloud oferece às equipes um registro claro de prontidão antes de agendar execuções regulares.
+</Aside>
+
+## O que o PlaidCloud cria
+
+O PlaidCloud cria um fluxo de trabalho avançado executável a partir do design do Alteryx:
+
+- As ferramentas do fluxo de trabalho se tornam etapas de fluxo de trabalho do PlaidCloud, com as relações originais a montante e a jusante preservadas.
+- As macros do Alteryx se tornam fluxos de trabalho de macro do PlaidCloud, com entradas e saídas de macro explícitas.
+- As perguntas dos aplicativos analíticos se tornam variáveis de fluxo de trabalho controladas que os usuários podem definir antes de uma execução.
+- Arquivos de entrada, arquivos de saída, arquivos auxiliares espaciais, imagens, PDFs e artefatos gerados são armazenados em Documentos no caminho selecionado durante a importação.
+- Os pipelines do Assisted Modeling (aprendizado de máquina) se tornam as etapas nativas de fluxo de trabalho ML Train e ML Score.
+- Operações avançadas, como correspondência aproximada, processamento espacial, extração de PDF, OCR, PLN e geração de relatórios, são executadas pelos executores de jobs gerenciados do PlaidCloud quando uma operação nativa de SQL ou de fluxo de trabalho não é a melhor opção.
+- As caixas de comentário e os Tool Containers chegam à tela do fluxo de trabalho como observações, caixas de destaque e grupos. Eles explicam o fluxo de trabalho convertido exatamente como explicavam o original e não adicionam nenhum trabalho de execução.
+- O Browse e outros objetos apenas de visualização chegam como parte da tela, e não como etapas, portanto não adicionam nenhum trabalho de execução — a tabela de saída de cada etapa já está disponível para consulta.
+
+## Antes de começar
+
+Reúna os arquivos do fluxo de trabalho e as dependências antes de importar:
+
+1. Inclua os arquivos de fluxo de trabalho, aplicativo e macro do Alteryx: `.yxmd`, `.yxwz` e `.yxmc`.
+2. Inclua os arquivos de dados de entrada, como CSV, Excel, Access, YXDB, XML, JSON e extrações de banco de dados.
+3. Inclua juntos os arquivos auxiliares espaciais. Por exemplo, mantenha os grupos de shapefiles e os arquivos MapInfo na mesma pasta.
+4. Inclua os ativos de relatório, como imagens, PDFs, camadas de mapa e modelos.
+5. Escolha o projeto do PlaidCloud em que os fluxos de trabalho convertidos devem ser criados.
+6. Escolha a conta de documentos e a pasta em que o PlaidCloud deve carregar os arquivos importados.
+7. Decida se esta migração exige apenas validação estrutural ou validação de paridade de saída.
+
+## Importar um fluxo de trabalho
+
+1. Abra o projeto de destino no PlaidCloud.
+2. Abra **Ferramentas → Importar fluxo de trabalho do Alteryx**.
+3. Escolha o projeto de destino e selecione o arquivo `.yxmd`, `.yxwz` ou `.yxmc` a importar.
+4. Se quiser, defina prefixos para os nomes de fluxo de trabalho, etapa e tabela. Os nomes de tabela já recebem como prefixo o nome do próprio fluxo de trabalho — consulte [Nomes de tabela em um fluxo de trabalho convertido](#nomes-de-tabela-em-um-fluxo-de-trabalho-convertido) abaixo.
+5. Escolha a conta de documentos e a pasta em que os arquivos importados devem ser armazenados.
+6. Adicione os arquivos ou pastas referenciados de que o fluxo de trabalho precisa em tempo de execução.
+7. Inicie a importação.
+8. Em uma importação sem problemas, a janela se fecha sozinha e abre o fluxo de trabalho avançado gerado — você não precisa fechá-la manualmente. Qualquer coisa que mereça uma segunda olhada aparece depois como uma notificação, sem atrasar a importação.
+9. Se o fluxo de trabalho tiver uma etapa que não foi convertida, um arquivo que ele lê estiver ausente ou outro problema precisar de atenção, a janela permanece aberta e mostra o relatório de conversão para que você o revise antes de continuar.
+
+Quando alguma etapa precisa de atenção — uma ferramenta descartada ou não convertida —, a janela de importação substitui o formulário por um relatório de conversão: um resumo de quantas etapas foram mapeadas com alta confiança e quantas precisam de revisão, e uma tabela das etapas de menor confiança ou com ressalvas, listando o nome, a operação, a confiança e as observações de cada etapa. Use-o para ir direto às etapas que vale a pena verificar antes de executar o fluxo de trabalho; cada uma dessas etapas também traz a mesma observação de confiança no memorando da etapa na tela.
+
+O PlaidCloud armazena as dependências importadas no local de Documentos selecionado durante a importação. As etapas convertidas passam então a referenciar esses caminhos de Documentos, de modo que o fluxo de trabalho pode ser executado repetidamente sem depender de um sistema de arquivos de desktop.
+
+### Arquivos ausentes
+
+A importação não falha mais apenas porque um arquivo lido pelo fluxo de trabalho está ausente — por exemplo, um caminho de compartilhamento de rede que nunca foi carregado. O fluxo de trabalho ainda é convertido, e o relatório de conversão lista cada arquivo ausente com:
+
+- O caminho de Documentos para o qual carregá-lo.
+- O caminho original do Alteryx de onde ele era lido.
+- As planilhas que o fluxo de trabalho espera dele.
+- As ferramentas do Alteryx que o leem.
+
+Para a maioria dos arquivos, carregue-o no caminho indicado pelo relatório e execute o fluxo de trabalho novamente — não é preciso reimportar. Alguns tipos de arquivo ausente são lidos no momento da conversão, e não na execução, portanto o relatório orienta a importar o fluxo de trabalho novamente depois que o arquivo estiver no lugar: um arquivo de layout ASCII fixo do Alteryx, uma entrada com curinga, um modelo de Dynamic Input e uma origem de renomeação FirstRow se enquadram nesse grupo.
+
+Um arquivo lido apenas por uma ferramenta dentro de um Tool Container desativado nunca aparece nesta lista e nunca é copiado para Documentos. Essas ferramentas nem chegam a ser importadas — consulte [Comentários e Tool Containers na tela](#comentários-e-tool-containers-na-tela) —, portanto o fluxo de trabalho convertido não tem nenhuma etapa que precise do arquivo. Ative o contêiner no Alteryx, ou importe com a opção que traz as ferramentas de um contêiner desativado como etapas comuns, para trazer o arquivo também.
+
+<Aside type="note" title="Um arquivo ainda ausente quando o fluxo de trabalho é executado">
+Se o arquivo de origem de uma etapa de Input ou de importação convertida não tiver sido carregado quando você executar o fluxo de trabalho, a etapa termina com o aviso "No files found at &lt;path&gt;; the target table was created empty." e o fluxo de trabalho continua, como qualquer outra etapa de importação. Carregue o arquivo e execute o fluxo de trabalho novamente para carregá-lo.
+</Aside>
+
+Outros problemas em um fluxo de trabalho — uma macro ou um layout de arquivo simples que o PlaidCloud não consegue ler, um arquivo que já existe no caminho de destino com conteúdo diferente, uma ferramenta que não pode ser convertida — sinalizam apenas aquela etapa com um aviso, em vez de falhar toda a importação, para que o restante do fluxo de trabalho ainda seja trazido.
+
+### Quando a importação é recusada
+
+Se o arquivo que você carregar não puder ser convertido de forma alguma, a importação é recusada de imediato, em vez de produzir um resultado parcial, e o erro informa o que fazer. Isso acontece quando o arquivo não é um fluxo de trabalho do Alteryx; quando é um pacote do Alteryx (`.yxzp`), caso em que você deve exportar o fluxo de trabalho `.yxmd` do Alteryx Designer e carregá-lo com os arquivos que ele usa; quando o arquivo do fluxo de trabalho está ausente ou você não tem permissão para lê-lo; ou quando um nome de tabela de que ele precisa gera uma colisão que a importação não consegue resolver sozinha.
+
+Se o próprio conversor encontrar um defeito interno ao processar seu fluxo de trabalho, a importação é recusada com uma mensagem que nomeia o defeito: "PlaidCloud could not convert this workflow because of a converter defect (&lt;error&gt;). It has been logged for the PlaidCloud team; include the request ID when you contact support." Nesse caso não há nada de errado com seu arquivo — entre em contato com o suporte informando o ID da solicitação da mensagem para que a equipe analise a falha registrada.
+
+### Nomes de tabela em um fluxo de trabalho convertido
+
+Cada etapa convertida grava a própria tabela, com o nome da ferramenta do Alteryx de onde veio — `tool_4_out` para a Tool 4. O Alteryx numera as ferramentas por arquivo, de modo que esses nomes se repetem entre fluxos de trabalho, e um projeto do PlaidCloud é um único namespace de tabelas. Por isso, toda importação coloca como prefixo das tabelas o nome do próprio fluxo de trabalho, gerando `03_measure_the_quality_of_data_tool_4_out`. É isso que permite que uma pasta inteira de fluxos de trabalho do Alteryx entre em um único projeto sem que um sobrescreva os resultados do outro.
+
+<Aside type="caution" title="Dois fluxos de trabalho com o mesmo nome">
+O nome do fluxo de trabalho é a única coisa que diferencia duas importações. Dois arquivos com o mesmo nome — ou com nomes que diferem apenas em pontuação ou espaçamento, como `Sales Report` e `Sales-Report` — ainda produzem o mesmo prefixo, assim como um arquivo sem nome algum. Defina você mesmo um **prefixo de nome de tabela** ao importá-los, ou importe-os em projetos separados.
+
+Essas importações não se sobrescrevem mais: uma importação que pede um nome de tabela que o projeto já possui recebe a própria tabela, com o sufixo `-duplicate-` no nome, e suas etapas a usam. Cada importação mantém seus resultados, mas os nomes de tabela da segunda são mais difíceis de ler — portanto vale a pena definir um prefixo próprio.
+</Aside>
+
+Importar o mesmo fluxo de trabalho duas vezes, o que acontece quando uma primeira importação precisa de correção, funciona da mesma forma: a segunda importação recebe o próprio conjunto de tabelas em vez de sobrescrever as da primeira. Exclua o fluxo de trabalho e as tabelas da importação anterior quando estiver satisfeito com a nova.
+
+Defina seu próprio **prefixo de nome de tabela** durante a importação para substituir o padrão, ou deixe-o vazio para voltar aos nomes simples `tool_4_out`. Nada depende desses nomes além das próprias etapas convertidas, portanto renomear uma tabela depois significa reapontar as etapas que a leem.
+
+### Saídas gravadas como Parquet
+
+Uma ferramenta Output Data que grava `.parquet` ou `.avro` é convertida em uma etapa de exportação para esse formato. Uma que grava `.yxdb`, `.hyper` ou `.dbf` é gravada como Parquet. Para uma saída `.yxdb`, o arquivo é um `.parquet` de mesmo nome na mesma pasta.
+
+Um fluxo de trabalho convertido que lê esse arquivo `.yxdb` lê o `.parquet` automaticamente: a etapa [Importar Alteryx YXDB](/pt-br/reference/workflow-steps/import/import-alteryx-yxdb/) recorre ao `.parquet` de mesmo nome quando o `.yxdb` não existe e exibe um aviso informando isso.
+
+### Comentários e Tool Containers na tela
+
+As observações e os grupos que um autor do Alteryx desenhou em volta do seu trabalho chegam junto com ele:
+
+- Uma caixa de comentário com texto se torna uma **observação** na tela, na posição e no tamanho em que foi desenhada.
+- Uma caixa de comentário desenhada como um contorno vazio em volta de um conjunto de ferramentas se torna uma **caixa de destaque**, que é o que ela fazia no Alteryx.
+- Uma caixa de comentário que exibe um documento vinculado mantém o link como texto.
+- Um **Tool Container** se torna um **grupo** com as etapas que foram desenhadas dentro dele, mantendo a legenda, se estava recolhido e se estava desativado. Contêineres aninhados chegam como grupos aninhados, e uma etapa dentro de ambos pertence aos dois.
+
+Mova, edite, mude a cor ou exclua qualquer um deles da mesma forma que faria com um que você mesmo desenhou.
+
+Duas coisas se comportam de maneira diferente do original:
+
+- **As ferramentas de um Tool Container desativado não são importadas.** O Alteryx também não as executa, então importá-las colocaria no fluxo de trabalho etapas que nunca fazem nada. O próprio contêiner ainda chega, como uma caixa de destaque com sua legenda, para que você veja o que havia ali. Para trazer as ferramentas dele, ative o contêiner no Alteryx e importe novamente. (A importação pela API ou por um agente de IA também aceita uma opção para importar as ferramentas de um contêiner desativado como etapas comuns e executáveis — útil para fluxos de trabalho de exemplo que vêm com tudo desativado.)
+- **As cores das caixas não são trazidas.** A tela oferece um conjunto fixo de seis cores, e as caixas do Alteryx são quase sempre brancas ou cinza, então todas chegariam com o mesmo tom. Elas entram com a cor padrão da tela; defina a cor que quiser pelo menu de contexto.
+
+O texto de uma observação agora é exibido em cinza neutro. Antes, ele entrava em âmbar/laranja sobre a tela escura — uma cor que parece um aviso mesmo em um comentário comum trazido diretamente do Alteryx.
+
+Um Tool Container que acaba sem nenhuma etapa — porque estava desativado ou porque continha apenas comentários — ainda aparece, como uma caixa de destaque com sua legenda, em vez de desaparecer da tela.
+
+Um fluxo de trabalho que é apenas comentários — uma página de documentação sem nenhuma ferramenta — é importado como uma tela com esses comentários e informa que foi convertido em nenhuma etapa executável. Esse é o resultado honesto, não uma falha: não havia nada para executar.
+
+### Control Containers
+
+Um **Control Container** do Alteryx executa as ferramentas dentro dele somente quando o fluxo ligado à sua entrada **Controle** traz registros. Esse controle chega com o contêiner, e não apenas o contorno do contêiner:
+
+- O contêiner se torna um **grupo** na tela, como qualquer outro, mantendo sua legenda e seu conteúdo.
+- Toda etapa que estava dentro dele é importada já configurada para ser executada somente quando os dados controlados têm linhas e para ser ignorada quando não têm. As etapas em contêineres aninhados dentro dele são controladas da mesma forma. Você não precisa ligar a condição por conta própria.
+- Um Control Container sem nada ligado à sua entrada **Controle** era apenas um agrupamento visual e é convertido exatamente como um Tool Container.
+- Um Control Container desenhado em volta de nada mantém sua legenda na tela como uma caixa de destaque.
+
+<Aside type="caution" title="Um controle que a importação não conseguiu interpretar">
+Às vezes a ferramenta que alimenta a entrada **Controle** não produz dados para testar, então não há nada a partir do qual construir o controle. A importação não ignora mais isso silenciosamente. O contêiner chega como uma etapa marcada como não convertida, com uma observação informando que as ferramentas dentro dele seriam executadas sempre, e é listado no relatório de conversão como uma etapa em que você precisa agir. Essa etapa falha quando o fluxo de trabalho chega a ela, de modo que a conversão não pode ser executada como se nada estivesse errado.
+
+Antes, o interior era importado para ser executado incondicionalmente e nada na tela informava isso, o que é a versão silenciosa do mesmo problema.
+
+Para resolver, altere o fluxo de trabalho do Alteryx para que a entrada **Controle** venha de uma ferramenta que produza dados e importe novamente, ou exclua a etapa sinalizada e coloque você mesmo o controle nas etapas que estavam dentro do contêiner — consulte [Condições de etapa](/pt-br/guides/workflows/step-conditions/).
+</Aside>
+
+### A ferramenta Browse
+
+Um **Browse** do Alteryx é um visualizador. Ele exibe os registros que chegam até ele, não altera nada e não tem conector de saída. No PlaidCloud, a tabela de saída de cada etapa já está disponível para abrir, então aquilo para que o autor desenhou um Browse está a um clique da etapa acima dele — selecione essa etapa e veja a tabela.
+
+Um Browse, portanto, chega como parte da tela, e não como uma etapa. Ele não cria etapa, não reivindica tabela e não é contado entre as ferramentas que a conversão não conseguiu tratar:
+
+- **Nenhuma tabela é criada para ele.** Cada Browse costumava se tornar uma etapa que não fazia nada e que o fluxo de trabalho depois descartava, mas ainda reivindicava uma tabela própria no data warehouse que nada gravava e nada lia. No nosso conjunto de referência de 179 fluxos de trabalho do Alteryx, eram 152 tabelas.
+- **Um ramo quebrado é relatado uma vez, na ferramenta que o quebrou.** Um Browse costumava ser listado no relatório de conversão como uma ferramenta que falhou na conversão sempre que a ferramenta que o *alimentava* falhava, de modo que o mesmo problema aparecia duas vezes — uma na ferramenta que você realmente precisa corrigir e outra em um visualizador que nunca poderia ter sido executado. Quatorze das falhas relatadas desse conjunto de referência eram desse tipo. Essas entradas sumiram; a ferramenta realmente responsável continua sendo relatada.
+
+Isso remove entradas enganosas do relatório de conversão, e não as falhas por trás delas. O número de fluxos de trabalho que são convertidos com todas as ferramentas convertidas é o mesmo de antes.
+
+<Aside type="caution" title="Um fluxo de trabalho que agora para, nomeando uma tabela">
+Um formato de fluxo de trabalho agora para onde antes era executado, e isso é a correção, não uma nova quebra.
+
+Quando um fluxo de trabalho numera uma ferramenta dentro de uma macro da mesma forma que uma ferramenta na tela que a chama, uma etapa abaixo da macro era resolvida para o nome de tabela do Browse em vez da saída da própria macro. Reimporte esse fluxo de trabalho e essa etapa agora para, nomeando uma tabela que não existe.
+
+A etapa nunca estava lendo os registros do Browse. Essa tabela era criada na importação e depois nunca era gravada por nada — o próprio Browse era descartado antes de o fluxo de trabalho ser construído —, então a etapa lia uma tabela **vazia**, e a execução informava sucesso sem ter processado nenhum registro. Os números que ela produzia vinham do nada, e nada avisava isso. Com a tabela não sendo mais criada, a etapa passa a avisar.
+
+**O reparo:** reaponte essa etapa para a tabela que ela foi desenhada para ler — a saída da etapa de macro acima dela — e execute o fluxo de trabalho novamente.
+</Aside>
+
+Os fluxos de trabalho que você importou antes desta versão mantêm a conversão que receberam, tabelas incluídas. Importe-os novamente para obter esta mudança.
+
+### Bancos de dados Calgary
+
+Um **banco de dados Calgary** do Alteryx (um arquivo `.cydb`) é um armazenamento indexado proprietário. O PlaidCloud não tem como ler o formato do arquivo, e não há especificação aberta para ele. Em vez de recusar toda ferramenta que toca em um, a conversão trata cada caminho `.cydb` como representando uma tabela comum do PlaidCloud, chamada `calgary_<database name>` sob o prefixo de tabela aplicado pela importação. Quando o banco de dados é uma tabela comum, as ferramentas construídas em torno dele se tornam operações comuns: uma consulta salva é um filtro, os intervalos de contagem cruzada são contagens condicionais e a lista de campos de um carregador é um conjunto de colunas.
+
+- Um **Calgary Loader** convertido grava essa tabela a partir de sua entrada. Os tipos de índice declarados são descartados durante a conversão — um data warehouse cria seus próprios índices —, mas a lista de campos é mantida.
+- Um **Calgary Input** convertido lê a tabela de volta, aplicando sua consulta salva como filtro. As colunas da própria tabela são resolvidas quando a etapa é executada, já que nada no arquivo do fluxo de trabalho registra o que o banco de dados continha.
+- Um **Calgary Input (Count Only)** ou **Calgary Cross Count** convertido lê a tabela como um agregado: os campos indexados simples agrupam as linhas, e cada valor nomeado de um campo personalizado se torna uma coluna contada.
+- Um **Calgary Join** convertido compara cada registro de entrada com a tabela, mantendo os registros que corresponderam e levando adiante as colunas da própria entrada. Ele é convertido quando o campo de entrada é um valor simples e não espacial — consulte [Calgary Join e Cross Count Append](#calgary-join-e-cross-count-append) abaixo para os casos em que não é.
+- Um **Calgary Cross Count Append** convertido compara cada registro de entrada com a tabela da mesma forma e depois informa quantos registros do banco de dados correspondeu, anexado à entrada — novamente quando o campo de entrada é um valor simples e não espacial.
+
+<Aside type="caution" title="Dois bancos de dados com o mesmo nome">
+Dois arquivos `.cydb` de mesmo nome em diretórios diferentes nomeiam a mesma tabela do PlaidCloud, e não há como saber pelo fluxo de trabalho qual deles um leitor deveria usar. Tanto o Loader quanto qualquer leitor envolvido recusam, nomeando ambos os arquivos, em vez de adivinhar. Renomeie um dos bancos de dados de origem e importe novamente.
+</Aside>
+
+**Um fluxo de trabalho que lê um banco de dados que ele mesmo não construiu recebe uma etapa que para, nomeando a tabela.** Os arquivos `.cydb` demográficos e de referência que o Alteryx fornece são o caso comum — nada no seu fluxo de trabalho os gravou, então ainda não há tabela do PlaidCloud para ler. Até que essa tabela exista, a etapa convertida para e a nomeia, em vez de ler nada silenciosamente e informar sucesso. Exporte os dados de origem para a tabela nomeada — do `.cydb` original, se você tiver o Alteryx disponível para lê-lo, ou de onde os dados realmente estiverem — antes de executar o fluxo de trabalho.
+
+#### Or, And e Not em uma consulta Calgary
+
+Uma consulta Calgary é uma árvore de `And`, `Or` e `Not` sobre os campos indexados do banco de dados, e a árvore agora é convertida como foi escrita: um `Or` em qualquer ponto dela e um `Not` em torno de mais de uma condição são ambos convertidos. Um termo de contém ou começa com também é convertido — para um SQL LIKE no caminho de contagem e uma correspondência de substring na leitura de registros. Isso abrange a leitura de registros de um Calgary Input, sua leitura somente de contagem, o Calgary Cross Count e os intervalos dentro dos campos personalizados de um Cross Count.
+
+Alguns formatos de consulta ainda não são convertidos, cada um identificando-se no relatório de conversão e na etapa:
+
+- Uma consulta que usa uma busca espacial (ou um contém/começa com negado) em vez de uma comparação de colunas — uma operação de índice sem equivalente em nível de coluna.
+- Uma leitura limitada por **Skip Records** ou **Max Records** — a tabela substituta não tem ordem de registros em relação à qual pular ou limitar.
+- Um Cross Count agrupado por mais de um campo personalizado. As contagens são, de fato, um único agregado sobre o banco de dados, mas o Alteryx não documenta como nomeia ou ordena as colunas resultantes, e não há nenhum exemplo à mão para conferir.
+- Uma leitura somente de contagem que não nomeia nenhuma coluna sobre a qual contar, já que as colunas do próprio banco de dados não podem ser lidas a partir do arquivo do fluxo de trabalho.
+- Um **Calgary Loader** que não armazena nenhum campo de dados, o que gravaria uma tabela sem colunas.
+- Uma ferramenta Calgary que não nomeia nenhum banco de dados.
+
+#### Calgary Join e Cross Count Append
+
+**Calgary Join** e **Calgary Cross Count Append** comparam cada registro de entrada com o banco de dados por meio de um de seus índices, e o arquivo do fluxo de trabalho registra o *nome* do índice, mas não o seu *tipo*. A mesma configuração significa uma junção de igualdade quando o índice contém valores comuns e uma correspondência de "quais pontos caem dentro desta forma" quando contém geometria espacial — o arquivo não permite saber qual.
+
+A conversão decide usando o **tipo declarado do próprio campo de entrada**: um índice espacial só pode ter sido combinado com um campo espacial, portanto
+
+- um campo de entrada do tipo objeto espacial para, nomeando o campo, a leitura que produziu e a tabela substituta contra a qual reconstruir a correspondência como uma etapa **Spatial Match**;
+- um campo de entrada cujo tipo não pôde ser determinado para, nomeando isso como motivo — nunca é adivinhado;
+- um campo de entrada comum e não espacial é convertido, comparando com a tabela substituta.
+
+De qualquer forma, a etapa registra a leitura que fez e o tipo de campo a partir do qual a fez, de modo que uma conversão com a qual você discorda mostra seu raciocínio, em vez de deixar você inferi-lo.
+
+**O Calgary Cross Count Append é convertido em um campo de entrada simples e não espacial**, da mesma forma que um Calgary Join. Enquanto o Join mantém os registros correspondentes, o Append informa quantos registros do banco de dados cada registro de entrada correspondeu: ele conta, por registro de entrada, as correspondências e anexa essa contagem à entrada. Um registro de entrada que não correspondeu a nada conta zero em vez de desaparecer, e dois registros de entrada idênticos mantêm cada um a própria linha — a contagem é por registro, e não por conjunto distinto de valores. Um único campo simples de contagem cruzada é convertido dessa forma; uma grade de valores personalizados *nomeados* **não** é, porque anexaria uma coluna de contagem por valor e o Alteryx não documenta quantas colunas isso é nem como as nomeia.
+
+Um **Calgary Join no modo Count Only** é convertido da mesma forma — ele conta, por registro de entrada, os registros do banco de dados correspondidos, com um registro sem correspondência contando zero — em vez de manter os registros correspondidos.
+
+Um **Calgary Join ou Cross Count Append** também para, identificando-se, quando compara com um intervalo de valores de índice em vez de um único valor, quando sua saída de registros sem correspondência está ligada a algo a jusante, quando não nomeia nenhum campo para comparar com o banco de dados e quando nada está ligado à sua entrada para que ele compare os registros.
+
+Um Loader convertido e os leitores do que ele gravou são ligados entre si, de modo que um leitor não pode ser executado ao lado da gravação que preenche sua tabela.
+
+As colunas de um Calgary Input chegam como texto: a tabela substituta fornece seus nomes, não os tipos do próprio banco de dados.
+
+### Ferramentas In-Database
+
+Um fluxo de trabalho In-Database envia seu trabalho ao data warehouse em vez de ao mecanismo do Alteryx, e uma etapa do PlaidCloud já *é* SQL de data warehouse — portanto as ferramentas de **operação** In-Database são convertidas exatamente nas mesmas etapas que seus equivalentes em memória. Filter In-DB se torna um filtro, Formula In-DB uma fórmula, Summarize In-DB um agregado, e Join, Select, Sample, Sort, Union e Browse da mesma forma.
+
+O que não é convertido é o par de ferramentas em cada extremidade da cadeia. **Connect In-DB** e **Write Data In-DB** abrem uma conexão ativa com o data warehouse que as ferramentas entre elas mantêm e usam para enviar SQL, e o PlaidCloud não tem equivalente a essa conexão mantida aberta. Cada uma chega como uma etapa sinalizada para revisão, nomeando a ferramenta e apontando sua substituta: uma etapa de importação ou exportação de SQL vinculada a uma conexão do PlaidCloud. Troque as duas extremidades por essas etapas e as ferramentas de operação entre elas são convertidas sem alterações.
+
+Data Stream In, Data Stream Out, Dynamic Input In-DB, Dynamic Output In-DB e In-Database Macro Input/Output são recusados por nome pelo mesmo motivo.
+
+### Um Union alimentado por um Join por posição ou por uma Multi-Row Formula
+
+Um fluxo de trabalho com um **Union** lendo de um **Join** combinado por posição de registro, ou de uma **Multi-Row Formula**, era convertido sem problemas, mas podia falhar quando executado — parando no meio com uma coluna que não conseguia resolver. A conversão parecia correta; só executar o fluxo de trabalho revelava o problema.
+
+Isso foi corrigido: esse fluxo de trabalho agora é executado até um resultado correto. Se você encontrou esse erro em um fluxo de trabalho importado anteriormente, execute-o novamente — não é preciso reimportar.
+
+### Colunas de saída do Join Multiple
+
+Quando um **Join Multiple** lista todos os campos em sua guia Select, o Alteryx Designer nomeia cada um como `Input_#1_<field>`, `Input_#2_<field>` e assim por diante. A Junção de várias tabelas convertida mantém essas colunas com seus nomes de saída normais e aplica as renomeações e desmarcações da guia. Um Join Multiple convertido antes desta correção vinha sem colunas de saída e sua etapa falhava quando executada; importe esse fluxo de trabalho novamente para obter a correção.
+
+### Colunas de percentual e total do Cross Tab
+
+Um **Cross Tab** com um de seus métodos derivados — **Percent Row**, **Percent Column**, **Total Column** ou **Total Row** — costumava interromper a conversão e levar consigo todas as etapas abaixo dele. Os quatro agora são convertidos:
+
+- **Percent Row** e **Percent Column** são a participação da célula no total da linha, ou da coluna, do campo de dados.
+- **Total Column** é esse total da linha, com o nome que a ferramenta registrou para ele.
+- **Total Row** é um registro extra com os totais, sem valor nos campos de agrupamento.
+
+Todo total é uma soma do campo de dados, quaisquer que sejam os métodos que a ferramenta calcula para cada célula.
+
+<Aside type="caution" title="Confira a escala do percentual uma vez">
+As colunas de percentual são gravadas em uma escala de 0 a 100. O Alteryx documenta esses métodos apenas como o cálculo de "a percent based on the values" e nunca diz a que escala se refere, portanto essa leitura é inferida de como o Alteryx exibe as colunas, e não de algo que ele afirme. Compare um Cross Tab convertido com uma execução do original antes que seus números cheguem a um relatório publicado.
+</Aside>
+
+Dois formatos ainda são sinalizados para revisão em vez de convertidos: um **Total Row** em um Cross Tab sem campo de agrupamento, que produziria o mesmo registro duas vezes sem nada que distinguisse as cópias, e um **Total Column** cujo nome a ferramenta nunca registrou, que de outra forma estaria totalmente ausente da saída.
+
+### As colunas Alteryx de precisão dupla mantêm a precisão total
+
+Uma coluna **Precisão dupla** do Alteryx agora é convertida em uma coluna numérica de 64 bits, igualando a precisão com que o próprio Alteryx calcula. Antes, ela era convertida em uma coluna de 32 bits — cerca de 7 dígitos significativos —, de modo que qualquer valor com mais dígitos era arredondado silenciosamente na leitura, e todo cálculo construído sobre ele herdava o erro. Um caso real: 16.862.441,27 voltava como 16.862.442,00.
+
+Dentro de uma macro convertida, uma coluna de precisão dupla passada como entrada de macro costumava chegar como texto; agora chega como número. Se a lógica da macro dependia do antigo comportamento de texto — concatenação de strings, formatação com zeros à esquerda, correspondência de padrão de texto —, revise-a após reconverter, já que um número genuíno em mãos pode se comportar de maneira diferente.
+
+Os fluxos de trabalho convertidos antes desta correção mantêm os tipos de coluna com que foram convertidos. Importe-os novamente para obter esta mudança.
+
+### Macros em um fluxo de trabalho convertido
+
+As macros são convertidas em construtos nativos do PlaidCloud — e não em uma emulação do mecanismo de macros do Alteryx. Cada tipo de macro é mapeado para um recurso de fluxo de trabalho de primeira classe, de modo que uma macro convertida executa a mesma lógica com o mesmo comportamento por registro ou por iteração do original, com fidelidade total:
+
+- As **macros padrão** são embutidas no fluxo de trabalho que as chama: as ferramentas da macro se tornam etapas comuns na tela, então não há caixa-preta em que confiar — toda etapa permanece visível, revisável e editável. As macros padrão aninhadas são embutidas em qualquer profundidade, e uma macro que acaba chamando a si mesma é detectada e nomeada, em vez de entrar em loop para sempre.
+- As **macros em lote** se tornam um fluxo de trabalho de macro executado uma vez por registro do parâmetro de controle, com a saída de cada passagem coletada de volta em um único fluxo — a mesma execução por grupo que o Alteryx realiza. O parâmetro de controle é vinculado como uma variável por passagem, exatamente como conduz o lote no Alteryx.
+- As **macros iterativas** se tornam um loop nativo de fluxo de trabalho que carrega o estado entre passagens e é executado até a macro convergir. O limite de passagens do loop é o **Maximum Number of Iterations** da própria macro, a mesma configuração com a qual o Alteryx a executa; quando ele é deixado no padrão de proteção contra descontrole do Alteryx, ou não é definido, a conversão aplica seu próprio teto. Se uma macro ainda não convergiu nesse limite, a execução **para e informa isso** — nomeando o limite atingido — em vez de relatar um resultado parcial como resposta final. Uma macro que realmente precisa de mais passagens do que o teto permite pode ser reimportada com um teto maior: a opção `iteration_ceiling` da importação o define.
+- Os **parâmetros de controle, as portas Macro Input e Macro Output, as ferramentas Action e as ramificações Detour** são todos convertidos em seus equivalentes nativos, de modo que o mecanismo que liga uma macro é preservado — e não aproximado. Uma macro chamada de dentro de uma macro em lote ou iterativa é resolvida e convertida junto com quem a chama.
+
+Dois arranjos são recusados por nome em vez de convertidos, para que você saiba na hora da importação: uma macro de loop aninhada dentro de outra macro de loop e as ferramentas In-Database Macro Input/Output.
+
+<Aside type="caution" title="Macros em lote que antes travavam agora são concluídas">
+As conversões anteriores faziam cada passagem gravar a própria tabela de saída, com a etapa que reunia os resultados lendo todas de volta pelo nome — de modo que uma macro conduzida por apenas algumas dezenas de registros criava uma consulta abrangendo essa quantidade de tabelas, e o banco de dados se recusava a planejá-la. O fluxo de trabalho parava no meio, sem nada útil a apontar como causa.
+
+As passagens agora se acumulam em uma única tabela que a etapa de reunião lê diretamente, e essa tabela é esvaziada corretamente no início de cada execução, de modo que uma execução cuja macro não produz passagens retorna um resultado vazio em vez de servir novamente as linhas da execução anterior.
+
+Se um fluxo de trabalho de macro em lote costumava travar ou falhar no meio, reimporte-o para obter a correção.
+</Aside>
+
+<Aside type="tip" title="O caso de distância linear do Otimizador de localização é convertido de forma nativa">
+Um **Location Optimizer** cuja pontuação é uma minimização de distância linear sem modificações — escolher K locais minimizando a distância total ou ponderada até a demanda — é convertido diretamente na etapa nativa [Otimizador de localização](/pt-br/reference/workflow-steps/optimization/location-optimizer/), um MIP de p-mediana resolvido no solver HiGHS do PlaidCloud. As tabelas de candidatos e de demanda e o número de locais são mantidos; confirme as colunas de distância antes de confiar no resultado.
+</Aside>
+
+<Aside type="caution" title="Outras macros do Location Optimizer são recusadas">
+Uma macro **Location Optimizer** é apenas a passagem de pontuação de uma busca. A busca em si — gerar conjuntos de locais candidatos, o número de locais, os limites de geração e a semente — fica na ferramenta que chama e no mecanismo do Alteryx, e não no arquivo do fluxo de trabalho. Fora do caso de distância linear acima — um kernel gravitacional, uma macro de pontuação sob medida, um objetivo em que maior é melhor ou qualquer transformação da distância antes da pontuação (um custo fixo de instalação, um Summarize, uma junção) —, o PlaidCloud não tem equivalente para esse loop de otimização. A chamada da macro agora chega como uma etapa sinalizada para revisão, nomeando a macro, a entrada em que seus conjuntos candidatos chegam, a saída que os classifica e se uma pontuação alta ou baixa vence.
+
+**Uma macro assim costumava ser convertida e executada em verde, e seus números estavam errados.** Ela era tratada como uma macro comum, então a passagem de pontuação era executada exatamente uma vez contra um único conjunto de candidatos e a execução informava sucesso — um resultado que parecia uma resposta, mas era um palpite pontuado, e não uma otimização. Se você reimportar um fluxo de trabalho assim e vir uma recusa onde antes funcionava, o resultado anterior não era algo em que você devesse ter confiado.
+</Aside>
+
+### Relatórios em um fluxo de trabalho convertido
+
+Uma imagem a que um layout de relatório se refere agora é empacotada com o fluxo de trabalho, de modo que um relatório convertido a encontra em Documentos em vez de falhar por causa de um ativo que só existia na máquina do Alteryx. Isso abrange uma imagem nomeada por um caminho fixo — uma imagem cujos bytes estão incorporados no fluxo de trabalho, ou cujo caminho vem de uma coluna por registro, não tem arquivo separado a buscar.
+
+Uma parte de relatório cujos dados de origem não puderam ser lidos agora é relatada como tal. Quando as colunas de uma tabela não puderam ser lidas, um trecho de relatório construído a partir dela costumava ser ignorado e uma seção de tabela do relatório costumava sair vazia, ambos em execuções que informavam sucesso. A etapa agora para e informa que as informações das colunas não puderam ser lidas, e por quê. **Um relatório que antes saía com uma seção ausente pode agora parar com uma explicação** — consulte a entrada Corrigido correspondente em [agosto de 2026](/pt-br/releases/2026-08/).
+
+## Usar o fluxo de trabalho convertido
+
+Após a importação, use o fluxo de trabalho como qualquer outro fluxo de trabalho avançado do PlaidCloud:
+
+1. Abra a tela do fluxo de trabalho convertido.
+2. Revise as etapas e os ramos gerados.
+3. Defina as variáveis do fluxo de trabalho para quaisquer perguntas de aplicativo ou parâmetros de execução convertidos.
+4. Execute o fluxo de trabalho.
+5. Revise o histórico de execuções, as saídas das etapas, as observações de prontidão e os artefatos gerados.
+6. Agende o fluxo de trabalho quando ele estiver pronto para operação repetível.
+
+Uma ferramenta **Download** convertida se torna uma etapa [Solicitação REST](/pt-br/reference/workflow-steps/general/rest-request/), que alcança um endpoint externo por meio de uma conexão REST, e não de uma URL fixada na etapa. Atribua uma conexão REST à etapa antes de executá-la — o conversor sinaliza isso no momento da importação com uma observação de prontidão. Consulte [Criar uma conexão](/pt-br/guides/connections/create-connection/) para configurar uma.
+
+As macros convertidas ficam disponíveis como fluxos de trabalho de macro do PlaidCloud. Um fluxo de trabalho que chamava uma macro do Alteryx chamará a macro gerada do PlaidCloud por meio da etapa de macro. As execuções de macro são isoladas umas das outras, de modo que execuções simultâneas de fluxos de trabalho podem usar com segurança a mesma definição de macro.
+
+## Validar a conversão
+
+O PlaidCloud oferece dois níveis práticos de validação.
+
+### Validação estrutural
+
+A validação estrutural confirma que o fluxo de trabalho foi convertido em um DAG executável do PlaidCloud:
+
+- Toda ferramenta do Alteryx tem uma rota de conversão do PlaidCloud.
+- As macros necessárias foram encontradas ou geradas.
+- Os arquivos de entrada necessários foram carregados em Documentos.
+- As entradas e saídas de macro estão conectadas.
+- Foram criadas variáveis de fluxo de trabalho para as entradas controladas pelo usuário.
+- O fluxo de trabalho gerado abre e pode ser executado no PlaidCloud.
+
+A validação estrutural é útil para a prontidão da migração, a revisão do inventário e a conversão antecipada do portfólio.
+
+### Validação de paridade de saída
+
+A validação de paridade de saída compara a execução do PlaidCloud com saídas confiáveis do Alteryx:
+
+- Os esquemas de saída coincidem.
+- As contagens de linhas coincidem.
+- Os valores das linhas coincidem.
+- A ordem das linhas é ignorada, a menos que o fluxo de trabalho dependa explicitamente da ordenação.
+
+Para fluxos de trabalho que criam relatórios, mapas, PDFs, imagens ou artefatos de modelo, valide o artefato gerado ou os dados por trás dele de acordo com a forma como sua equipe usa a saída.
+
+Consulte [Validar fluxos de trabalho do Alteryx convertidos](/pt-br/guides/workflows/validate-converted-alteryx-workflows/) para uma lista de verificação de validação detalhada.
+
+### Amostragem aleatória
+
+Os valores das linhas são o único ponto em que uma ferramenta de amostragem é uma exceção deliberada.
+**Create Samples** e **Random % Sample** sorteiam ambos de forma aleatória, e o Alteryx retorna
+os mesmos registros a cada execução quando uma semente é definida. O PlaidCloud sorteia com seu próprio
+gerador, portanto:
+
+- Os tamanhos das amostras, os percentuais e as proporções da divisão Estimation / Validation / Holdout
+  são mantidos exatamente.
+- **Os registros dentro de cada amostra não são os que o Alteryx escolhe, e uma nova execução
+  escolhe outro conjunto.**
+
+Cada etapa convertida informa isso no relatório de conversão e na própria etapa, e
+nenhuma é relatada como uma ferramenta que falhou na conversão. Valide essas etapas pelas contagens de linhas
+e proporções, e não pelos valores das linhas.
+
+Quando importa em qual amostra cada registro cai — um modelo que você precisa
+reproduzir exatamente, ou um holdout contra o qual você já publicou resultados —,
+decida a amostra com uma coluna: uma etapa **Formula** que calcula a
+atribuição da amostra e uma etapa **Filter** por amostra.
+
+## Conversões de aprendizado de máquina (Assisted Modeling)
+
+Os pipelines de aprendizado de máquina do Alteryx criados com a família de ferramentas Machine Learning são convertidos nas etapas nativas de ML do PlaidCloud:
+
+- Uma ferramenta **Classification** ou **Regression**, junto com seus estágios Assisted Modeling e Transformation a montante e a ferramenta **Fit** a jusante, se funde em uma única etapa [ML: Treinar modelo](/pt-br/reference/workflow-steps/machine-learning/ml-train/). A etapa carrega o algoritmo exato, a variável alvo, as colunas de atributos e os hiperparâmetros do fluxo de trabalho do Alteryx, e grava o modelo treinado como uma tabela de modelo de uma linha com as métricas de treinamento registradas nela.
+- Cada ferramenta **Predict** se torna uma etapa [ML: Pontuar](/pt-br/reference/workflow-steps/machine-learning/ml-score/) que lê a tabela do modelo treinado e sua entrada de dados. A coluna de previsão recebe o nome da variável alvo com o sufixo `_predicted`.
+- Os **classificadores XGBoost** são convertidos com uma observação de aproximação: o modelo é treinado como um classificador de gradient boosting do scikit-learn, e quaisquer parâmetros de árvore específicos do XGBoost sem equivalente são listados nas observações de mapeamento da etapa. Valide as métricas do modelo em relação à execução do Alteryx antes de confiar na paridade.
+- Uma ferramenta **Image Recognition** treina um classificador de imagens no fluxo de trabalho e pontua novas imagens com ele, inteiramente no local — sem conta externa, e nenhum dado de imagem sai do PlaidCloud. Um **Predict** a jusante apontado para o modelo pontua com ele. Duas coisas são mantidas de forma diferente do restante da família de ML, portanto valide-as antes de confiar na paridade. Primeiro, o classificador é treinado novamente a partir das suas imagens rotuladas, e não copiado do Alteryx, e esse treinamento é não determinístico — duas conversões do mesmo fluxo de trabalho produzem modelos ligeiramente diferentes, de modo que as previsões são uma aproximação fiel, não uma correspondência bit a bit. Segundo, o treinamento é executado em CPU, então um conjunto de algumas centenas a poucos milhares de imagens leva vários minutos. O Image Recognition é habilitado por espaço de trabalho; peça ao administrador que o ative se um fluxo de trabalho convertido informar que ele não está habilitado.
+- Uma ferramenta **AutoML** se funde em uma etapa [ML: Treinar modelo](/pt-br/reference/workflow-steps/machine-learning/ml-train/) da mesma forma que Classification e Regression. O AutoML não registra qual de seus algoritmos candidatos realmente venceu no momento da execução no Alteryx, então a conversão escolhe o primeiro algoritmo marcado que o ML Train suporta e anota a escolha, em vez de reproduzir uma busca automatizada. Compare uma etapa AutoML convertida com seus próprios resultados do Alteryx.
+- Um **assistente Assisted Modeling** cujo modelo foi escolhido de forma interativa (e nunca salvo no arquivo do fluxo de trabalho) não pode ser convertido — o importador mantém uma etapa substituta cujas observações registram a variável alvo recuperada, para que você construa manualmente a etapa ML Train.
+- Um **estágio autônomo de one-hot encoding** é sinalizado no relatório de conversão. A etapa ML Train fundida faz one-hot encoding dos atributos categóricos internamente, portanto o estágio autônomo geralmente não precisa de substituição.
+
+Como toda conversão, as etapas fundidas carregam sua confiança e suas observações no relatório de conversão e na tela, de modo que os pipelines que merecem dupla verificação são fáceis de encontrar.
+
+## Revisar a cobertura da conversão
+
+A [Matriz de conversão do Alteryx](/pt-br/reference/alteryx-conversion-matrix/) lista cada objeto do Alteryx compatível, seu nível de cobertura e a operação do PlaidCloud usada durante a conversão.
+
+Use a matriz para entender como o importador trata cada família de ferramentas:
+
+- Etapas nativas de DAG para preparação de dados comum, junções, filtros, fórmulas, ordenação, uniões, amostragem e remodelagem.
+- Etapas de macro para entradas de macro, saídas de macro, invocação de macro, parâmetros de controle e simultaneidade de macro.
+- Variáveis de fluxo de trabalho controladas para perguntas de aplicativos analíticos, como caixas de seleção, listas suspensas, caixas de texto, botões de opção, seletores de pasta e seletores de arquivo.
+- Operações de arquivo baseadas em Documentos para o comportamento de arquivos de entrada, saída, diretório e dinâmicos.
+- Etapas nativas ML Train e ML Score para pipelines de aprendizado de máquina do Assisted Modeling.
+- Uma tabela substituta para cada banco de dados Calgary do Alteryx, de modo que as ferramentas Calgary Loader, Input, Cross Count e Join sejam convertidas contra uma tabela comum em vez de serem recusadas de imediato — consulte [Bancos de dados Calgary](#bancos-de-dados-calgary).
+- Executores de jobs gerenciados para trabalho especializado com dados espaciais, correspondência aproximada, PDF, OCR, PLN, relatórios e artefatos.
+- Equivalentes nativos da nuvem, quando o PlaidCloud cria um artefato durável e compartilhável em vez de reproduzir um renderizador de desktop específico do Alteryx ou um formato de arquivo proprietário.
+
+## Seu relatório de cobertura do Alteryx
+
+Veja o que há nos seus fluxos de trabalho do Alteryx antes de se cadastrar.
+
+1. Abra a página pública em `https://app.plaidcloud.com/#coverage-report`, intitulada **See what's in your Alteryx workflows**.
+2. Solte um arquivo em **Drop an Alteryx workflow here** ou escolha **Escolher um arquivo**. Ela aceita um fluxo de trabalho (`.yxmd`), uma macro (`.yxmc`) ou um pacote (`.yxzp`) de até 10 MB. O PlaidCloud lê o arquivo e mostra as ferramentas encontradas e as mais usadas. As credenciais armazenadas no arquivo são removidas.
+3. Informe seu **Work email**, aceite os Termos de Serviço e a Política de Privacidade e escolha **Email me a verification link**.
+
+Seu relatório completo é construído no seu próprio espaço de trabalho gratuito do PlaidCloud. O PlaidCloud converte o upload em um projeto chamado **Alteryx migration**, e o primeiro administrador do espaço de trabalho que abrir a Home vê **Seu relatório de cobertura do Alteryx**. Ele lista cada fluxo de trabalho com quantas de suas ferramentas o PlaidCloud reconheceu e pode converter, quantas estão **Para revisar** e um botão **Abrir** para o fluxo de trabalho convertido. Os arquivos de dados não fazem parte do relatório; carregue os arquivos que seus fluxos de trabalho leem e depois execute-os. Os botões do relatório levam a **Usar seu próprio data warehouse** e **Comprove sua migração**. Um upload é mantido por 7 dias.
+
+Se você já tem uma conta do PlaidCloud, o endereço de e-mail informado recebe uma mensagem, **Your coverage report is ready — sign in to view it**, com um link. Faça login, abra-o, escolha o **Espaço de trabalho** e escolha **Add the report**. Somente um administrador da organização do espaço de trabalho pode adicioná-lo, e o relatório abre na próxima vez que você abrir o espaço de trabalho. Ignorar o e-mail não altera nada no seu espaço de trabalho. Um link inválido ou expirado informa isso, e um upload expirado precisa ser carregado novamente.
+
+Após uma conversão, [comprove que ela corresponde](/pt-br/guides/workflows/validate-converted-alteryx-workflows/#comprove-sua-migração) às suas saídas do Alteryx.
+
+## Prática de migração recomendada
+
+Para um portfólio grande, migre em lotes:
+
+1. Importe os fluxos de trabalho e as macros em um projeto de migração.
+2. Conclua os pacotes de dependências antes de revisar fórmulas individuais ou a lógica de negócios.
+3. Execute a validação estrutural em todo o lote.
+4. Priorize a validação de paridade de saída para fluxos de trabalho de produção, fluxos de trabalho regulatórios e fluxos de trabalho com consumidores a jusante.
+5. Promova os fluxos de trabalho validados para o projeto de produção de destino.
+6. Agende as execuções de produção e monitore o histórico de execuções.
+
+## Guias relacionados
+
+- [Lista de verificação de prontidão para migração do Alteryx](/pt-br/guides/workflows/alteryx-migration-readiness-checklist/)
+- [Empacotar dependências do Alteryx](/pt-br/guides/workflows/package-alteryx-dependencies/)
+- [Validar fluxos de trabalho do Alteryx convertidos](/pt-br/guides/workflows/validate-converted-alteryx-workflows/)
+- [Usar aplicativos do Alteryx convertidos](/pt-br/guides/workflows/use-converted-alteryx-apps/)
+- [Orquestrar migrações do Alteryx com MCP](/pt-br/guides/workflows/orchestrate-alteryx-migrations-with-mcp/)
+- [Ajustar importações do Alteryx](/pt-br/guides/workflows/troubleshoot-alteryx-imports/)
+- [Validar relatórios e artefatos do Alteryx](/pt-br/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Migrar fluxos de trabalho espaciais do Alteryx](/pt-br/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Criar uma macro](/pt-br/guides/workflows/create-a-macro/)
+- [Executar um fluxo de trabalho](/pt-br/guides/workflows/run-a-workflow/)
+- [Gerenciar variáveis do fluxo de trabalho](/pt-br/guides/workflows/manage-workflow-variables/)
+- [Matriz de conversão do Alteryx](/pt-br/reference/alteryx-conversion-matrix/)
+
+## Conjunto de documentação de migração
+
+Para migrações maiores, use estes guias específicos junto com este guia de migração:
+
+- [Lista de verificação de prontidão para migração do Alteryx](/pt-br/guides/workflows/alteryx-migration-readiness-checklist/) para o planejamento da migração e a revisão de pacotes.
+- [Empacotar dependências do Alteryx](/pt-br/guides/workflows/package-alteryx-dependencies/) para arquivos, pastas, macros, arquivos auxiliares espaciais e saídas esperadas.
+- [Usar aplicativos do Alteryx convertidos](/pt-br/guides/workflows/use-converted-alteryx-apps/) para variáveis de fluxo de trabalho controladas e execuções no estilo de aplicativo.
+- [Orquestrar migrações do Alteryx com MCP](/pt-br/guides/workflows/orchestrate-alteryx-migrations-with-mcp/) para usar um agente de IA para organizar arquivos, trabalhar a partir de armazenamento compartilhado conectado e coordenar muitas conversões por meio do servidor MCP do PlaidCloud.
+- [Ajustar importações do Alteryx](/pt-br/guides/workflows/troubleshoot-alteryx-imports/) para conclusão de dependências, resolução de macros, variáveis, comparações de validação e observações de prontidão do executor.
+- [Validar relatórios e artefatos do Alteryx](/pt-br/guides/workflows/validate-alteryx-reports-and-artifacts/) para PDFs, imagens, mapas, gráficos, painéis e artefatos de modelo.
+- [Migrar fluxos de trabalho espaciais do Alteryx](/pt-br/guides/workflows/migrate-spatial-alteryx-workflows/) para arquivos espaciais, lógica de geometria em SQL, executores espaciais gerenciados e validação espacial.

@@ -1,0 +1,85 @@
+---
+title: Importar dados financeiros do NetSuite
+description: Traga saldos, detalhes do razão geral e dados mestres do NetSuite para tabelas de projeto com as etapas de importação prontas do NetSuite — escolha uma conexão, uma tabela de destino, um intervalo de datas e uma subsidiária, e execute.
+sidebar:
+  label: Importar dados financeiros do NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/import-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Traga os dados financeiros e de referência mais comuns do NetSuite para tabelas de projeto com as etapas de importação prontas do NetSuite — sem escrever SuiteQL. Três etapas cobrem a maioria das extrações: **Importar saldos** para um balancete, **Importar detalhes do razão geral** para as linhas de lançamento que o compõem e **Importar dados mestres** para as contas, subsidiárias e dimensões a que essas extrações fazem referência. Cada uma é executada sobre uma camada de leitura compartilhada que renova o token OAuth, percorre resultados grandes por páginas e repete tentativas após erros transitórios, de modo que uma extração de período completo ou de todas as subsidiárias volte completa.
+
+<Aside type="tip">
+Para uma extração personalizada que as etapas prontas não cobrem, escreva seu próprio SuiteQL com a [etapa Solicitação REST](/pt-br/guides/workflows/rest-request-step/) — consulte [Exemplos de consultas SuiteQL do NetSuite](/pt-br/guides/connections/netsuite-financial-queries/). As etapas prontas abaixo são a opção mais simples para essas extrações comuns.
+</Aside>
+
+## Pré-requisitos
+
+- Uma [conexão do NetSuite](/pt-br/guides/connections/netsuite/) em funcionamento, com acesso de visualização aos registros que você quer ler.
+- Um fluxo de trabalho ao qual adicionar a etapa.
+
+## Extrair um balancete
+
+<Steps>
+
+1. Adicione uma etapa **NetSuite: Importar saldos** ao seu fluxo de trabalho.
+
+2. Defina **Conexão do NetSuite** como a sua conexão e **Tabela de destino** como a tabela de projeto em que os saldos devem ser gravados. A etapa sobrescreve essa tabela por completo a cada execução.
+
+3. Defina **Data inicial** e **Data final** para o período desejado, cada uma no formato `YYYY-MM-DD` e ambas inclusivas. Deixe qualquer uma em branco para deixar essa extremidade do intervalo sem limite.
+
+4. Para restringir a extração a uma subsidiária, defina **Subsidiária** como o ID interno dela no NetSuite; deixe em branco para todas as subsidiárias. (Consulte [Resolver IDs internos](#resolver-ids-internos-com-dados-mestres) se você tiver nomes em vez de IDs.)
+
+5. Em uma conta com Multi-Book Accounting, deixe **Livro contábil** em branco para extrair **somente o livro principal** — o padrão correto para um balancete convencional. Defina como `all` somente se você quiser deliberadamente um total entre livros, ou como o ID interno de um livro específico.
+
+6. Restrinja ainda mais com **Número da conta** (uma conta exata do razão geral) ou **Período de lançamento** (um ID interno de período do NetSuite) se você não precisar de todo o plano de contas nem de todos os períodos do intervalo.
+
+7. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)) e verifique a tabela de destino.
+
+</Steps>
+
+<Aside type="caution">
+**As contas com vários livros usam por padrão o livro principal.** Antes de esse comportamento ser lançado, uma extração sem filtros em uma conta com Multi-Book Accounting somava todos os livros — contando um saldo N vezes, sem aviso. Deixar **Livro contábil** em branco agora extrai somente o livro principal, o que corresponde ao esperado em um balancete convencional. Se você dependia da antiga soma entre livros, defina **Livro contábil** como `all` explicitamente.
+</Aside>
+
+## Extrair os detalhes do razão geral
+
+A etapa **NetSuite: Importar detalhes do razão geral** é configurada da mesma forma — conexão, tabela de destino, intervalo de datas, subsidiária, livro contábil, número da conta e período de lançamento —, mas retorna o detalhe em nível de linha de transação, em vez de saldos por período. Use-a para reconciliar, detalhar ou reconstruir uma demonstração do resultado detalhada a partir dos lançamentos por trás dos seus saldos.
+
+<Aside type="note">
+Delimite o intervalo de datas à fatia de que você precisa. Cada execução substitui toda a tabela de destino, portanto uma extração agendada do razão geral reextrai o resultado completo a cada vez — uma janela de datas móvel mantém uma extração recorrente rápida, em vez de reler todo o histórico.
+</Aside>
+
+<Aside type="note">
+O NetSuite limita uma única consulta SuiteQL a aproximadamente 100.000 linhas. Informar **Data inicial** e **Data final** permite que o PlaidCloud divida automaticamente uma extração ampla em intervalos de datas menores, que ficam abaixo desse limite, de modo que uma extração do razão geral de um ano inteiro volte completa sem nenhuma ação sua. Deixar as duas em branco em uma extração grande o bastante para ultrapassar o limite agora falha com uma mensagem pedindo que você adicione um intervalo de datas, em vez de voltar truncada sem aviso.
+</Aside>
+
+## Resolver IDs internos com dados mestres
+
+Os campos de subsidiária, conta e dimensão no NetSuite são IDs internos, não nomes. Extraia a lista correspondente com **NetSuite: Importar dados mestres** e junte-a aos seus saldos ou detalhes para adicionar nomes legíveis.
+
+<Steps>
+
+1. Adicione uma etapa **NetSuite: Importar dados mestres** e defina **Conexão do NetSuite** e **Tabela de destino**.
+
+2. Defina **Tipo de registro** como a lista desejada: **account**, **subsidiary**, **department**, **class**, **location**, **vendor** ou **customer**.
+
+3. Deixe **Include Inactive** desativado para extrair somente os registros ativos, ou ative-o para incluir os inativos.
+
+4. Execute a etapa e depois junte a tabela dela aos seus saldos ou ao detalhe do razão geral pelo ID interno, para levar os nomes a todas as linhas.
+
+</Steps>
+
+## Agendar a extração
+
+Para um fluxo contínuo, [agende o fluxo de trabalho](/pt-br/get-started/tutorials/schedule-a-workflow/). Como cada etapa substitui sua tabela de destino por completo, uma execução agendada sempre reflete o estado atual do NetSuite para o período que você delimitou.
+
+## Relacionados
+
+- [NetSuite: Importar saldos](/pt-br/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite: Importar detalhes do razão geral](/pt-br/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite: Importar dados mestres](/pt-br/reference/workflow-steps/netsuite/import-master-data/)
+- [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/) — configure a conexão pela qual essas etapas leem
+- [Exemplos de consultas SuiteQL do NetSuite](/pt-br/guides/connections/netsuite-financial-queries/) — escreva sua própria consulta para uma extração que as etapas prontas não cobrem

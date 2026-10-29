@@ -1,0 +1,136 @@
+---
+title: Créer un modèle d'allocation
+description: Tutoriel de bout en bout — répartissez un pool de coûts entre des consommateurs à l'aide de données d'inducteurs et d'une hiérarchie.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/build-an-allocation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ce tutoriel vous guide dans la création d'une allocation de coûts complète dans PlaidCloud. À la fin, vous disposerez d'un modèle opérationnel qui répartit un pool de coûts sur une dimension cible à partir de données d'inducteurs — le fondement de la comptabilité par activités, de la refacturation informatique et de la répartition des services partagés.
+
+Il prend environ une heure. Les allocations sont la fonctionnalité la plus distinctive de PlaidCloud ; c'est la meilleure façon de comprendre le modèle.
+
+## Ce que vous allez construire
+
+Répartir le coût total du service informatique entre les unités opérationnelles, pondéré par le nombre d'utilisateurs de chaque unité.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Prérequis
+
+- Un espace de travail PlaidCloud ([démarrez un essai gratuit](https://app.plaidcloud.com) si vous n'en avez pas)
+- Un projet contenant, ou capable d'importer :
+  - **Valeurs à allouer** — le coût informatique par mois, au total ou par sous-catégorie
+  - **Données d'inducteurs** — le nombre d'utilisateurs par unité opérationnelle
+  - **Une dimension** — la hiérarchie des unités opérationnelles (unités → divisions → société)
+- Connaissance des [Concepts](/fr/get-started/concepts/) — espace de travail, projet, workflow, dimension, allocation
+
+<Aside>
+Si vous ne disposez pas encore des données sources, vous pouvez préparer de petits fichiers CSV et suivre [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/) pour les importer d'abord.
+</Aside>
+
+## Étape 1 : préparer les entrées
+
+Vérifiez que votre projet contient ces trois éléments :
+
+| Objet | Ce qu'il contient |
+|---|---|
+| Table `it_cost` | Le coût informatique total (par exemple une ligne par mois avec le montant) |
+| Table `users_by_bu` | Une ligne par unité opérationnelle avec une colonne `user_count` |
+| Dimension `business_units` | La hiérarchie des unités opérationnelles, dont les nœuds feuilles correspondent aux noms d'unités de `users_by_bu` |
+
+S'il manque quelque chose, chargez-le via un workflow avant de continuer.
+
+## Étape 2 : créer le workflow d'allocation
+
+<Steps>
+
+1. Ouvrez le projet et passez à l'onglet **Workflows**.
+2. Cliquez sur **Nouveau workflow**. Nommez-le « IT Cost Allocation ».
+3. Ouvrez le nouveau workflow dans l'explorateur de workflows.
+
+</Steps>
+
+## Étape 3 : ajouter l'étape d'allocation
+
+<Steps>
+
+1. Ajoutez une nouvelle étape de la catégorie **Allocation**. Choisissez **Allocation Rules** — l'option la plus flexible.
+2. Configurez la source :
+   - **Table source** : `it_cost`
+   - **Source amount column** : la colonne contenant le montant en devise
+3. Configurez l'inducteur :
+   - **Table d'inducteurs** : `users_by_bu`
+   - **Driver value column** : `user_count`
+   - **Driver match column** : la colonne contenant le nom de l'unité opérationnelle
+4. Configurez la cible :
+   - **Target dimension** : `business_units`
+   - **Target level** : choisissez le niveau de la hiérarchie auquel allouer (généralement le niveau feuille)
+5. Configurez la sortie :
+   - **Table de résultat** : `it_cost_allocated`
+
+</Steps>
+
+## Étape 4 : exécuter et inspecter
+
+<Steps>
+
+1. Exécutez l'étape.
+2. Ouvrez l'onglet **Tables** et cliquez sur `it_cost_allocated`.
+3. Chaque ligne représente une part de coût attribuée à une unité opérationnelle. Les colonnes comprennent :
+   - Le montant source (par exemple le coût informatique total du mois)
+   - L'unité opérationnelle cible
+   - La valeur de l'inducteur utilisée (le nombre d'utilisateurs de cette unité)
+   - Le taux d'allocation (nombre d'utilisateurs ÷ nombre total d'utilisateurs de toutes les unités)
+   - Le montant alloué (source × taux)
+
+</Steps>
+
+## Étape 5 : vérifier les chiffres
+
+Trois contrôles que toute allocation doit réussir :
+
+1. **Rapprochement du total** — la somme des montants alloués est égale au total source (dans la limite de la tolérance d'arrondi)
+2. **Somme des taux** — les taux d'allocation totalisent 1,0 (= 100 %) par ligne source
+3. **Couverture** — chaque unité opérationnelle de votre dimension qui doit recevoir une part en a bien reçu une
+
+Le guide [Résultats d'allocation](/fr/guides/allocations/results/allocation-results/) propose une liste de contrôle complète pour la vérification.
+
+Si quelque chose ne va pas, les problèmes les plus fréquents sont :
+- **Données d'inducteur manquantes** — une unité opérationnelle de la dimension sans ligne dans `users_by_bu` ne recevra aucune allocation
+- **Noms qui ne correspondent pas** — la table d'inducteurs indique « Sales East » alors que la dimension indique « Sales-East » (des espaces ou une casse différents ne correspondent pas)
+- **Inducteurs nuls ou négatifs** — ils produisent des allocations nulles ou inattendues
+
+## Étape 6 : utiliser les résultats
+
+La table de résultat est comme n'importe quelle autre table PlaidCloud — elle peut être :
+
+- **Jointe** à d'autres tables dans d'autres étapes du workflow (par exemple pour ajouter une colonne de coût complet au grand livre)
+- **Publiée** pour des tableaux de bord ou des consommateurs externes
+- **Réallouée** comme source du cycle d'allocation suivant (pour les modèles en cascade)
+
+## Variantes à essayer
+
+Une fois le modèle de base fonctionnel, voici des extensions courantes :
+
+- **Plusieurs pools de coûts** — remplacez la ligne unique `it_cost` par une ligne par sous-catégorie informatique (calcul, stockage, licences) et allouez chacune indépendamment avec des inducteurs différents
+- **Multipériode** — partitionnez la source par mois et produisez un résultat d'allocation par période
+- **Allocations en couches** — allouez les frais généraux de la division aux unités, puis les coûts des unités aux produits, puis les coûts des produits aux clients. Chaque couche est sa propre étape d'allocation
+- **Allocations récursives** — lorsque des services partagés se consomment mutuellement (l'informatique sert les RH, les RH servent l'informatique). Consultez [Allocations récursives](/fr/guides/allocations/setup/recursive-allocations/)
+- **Affectation par règles** — lorsque la répartition dépend de plusieurs inducteurs et varie selon la source, créez une dimension d'allocation avec l'assistant guidé plutôt que de câbler une seule table d'inducteurs. Consultez [Créer une dimension d'allocation](/fr/guides/dimensions/dimensions/#créer-une-dimension-dallocation)
+
+## Et ensuite
+
+- [Guide des allocations](/fr/guides/allocations/) — toutes les options et tous les choix de configuration
+- [Étiquetage par règles](/fr/guides/allocations/getting-started/rule-based-tagging/) — des règles d'allocation différentes selon la ligne source
+- [Référence des étapes d'allocation](/fr/reference/workflow-steps/allocation/) — toutes les étapes de workflow de la catégorie Allocation
+- [Guide des dimensions](/fr/guides/dimensions/) — création des hiérarchies ciblées par les allocations

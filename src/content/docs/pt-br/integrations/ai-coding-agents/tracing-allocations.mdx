@@ -1,0 +1,206 @@
+---
+title: Rastreando alocações com um agente de IA conectado por MCP
+description: Pergunte a um agente de IA conectado ao seu espaço de trabalho por MCP por que o resultado de uma alocação mudou, o que o alimenta, onde um direcionador é usado e o que uma mudança hipotética causaria.
+sidebar:
+  label: Rastreando alocações
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Depois de [conectar um agente de IA ao seu espaço de trabalho por meio do Model Context Protocol (MCP)](../getting-started/), você pode pedir a ele, em linguagem natural, que rastreie o custo pelas suas etapas de alocação. Você não executa um relatório nem escreve SQL: faz uma pergunta, e o agente chama as ferramentas de rastreamento de alocação do PlaidCloud para encontrar o modelo, explicar uma mudança, percorrer a cadeia e responder a perguntas do tipo "e se".
+
+Isso funciona em qualquer cliente conectado por MCP, seja um agente de chat (Claude Desktop, ChatGPT) ou um agente de codificação (Claude Code, Cursor), pois todos alcançam as mesmas ferramentas pelo [servidor MCP](../getting-started/).
+
+<Aside>
+Essas ferramentas leem a **configuração e os resultados** das suas alocações, e não alteram nada. Você pode perguntar à vontade; nada é gravado de volta no projeto.
+</Aside>
+
+## Pré-requisitos
+
+- Um projeto que contenha etapas de alocação (`allocation_split`, `allocation_rules` ou `allocation_dim`).
+- Um agente de IA conectado ao seu espaço de trabalho por MCP; consulte [Introdução aos agentes de codificação com IA](../getting-started/).
+
+## O que você pode perguntar
+
+| Pergunte ao agente … | O que ele faz | Ferramenta usada |
+| --- | --- | --- |
+| "Quais modelos de alocação existem neste projeto?" | Lista cada modelo, seus estágios e as tabelas de resultado que ele produz | `allocation_model_find` |
+| "Como `cost_line_rev` é calculado?" | Mostra o pool de custos que está sendo dividido, o direcionador pelo qual é dividido e a tabela de destino | `allocation_describe` |
+| "Por que `cost_line_rev` mudou de 2025 para 2026?" | Compara os dois períodos e atribui a mudança ao tamanho do pool versus ao mix do direcionador, com as principais contas contribuintes | `allocation_root_cause` |
+| "O que alimenta `cost_line_rev`?" | Percorre a cadeia a montante: direcionadores, pools de origem e importações | `allocation_lineage` |
+| "Onde `revenue_by_line` é usada como direcionador?" | Lista todas as alocações que dividem por essa tabela | `allocation_driver_usage` |
+| "O que acontece se a receita dos EUA aumentar em US$ 1 milhão?" | Divide a mudança entre cada resultado afetado pela sua participação atual no pool, de forma aditiva em uma distribuição em leque, e não como o pior caso por tabela | `allocation_forward_impact` |
+| "E se o direcionador de quadro de pessoal do centro de custo Assembly aumentasse em 10?" | Redistribui o pool fixo sob os novos pesos do direcionador, mostrando quais destinos ganham e quais perdem. Recusa quando a tabela de resultado é gravada por mais de uma etapa, em vez de redistribuir um pool que não é o da própria alocação, e quando o direcionador não corresponde mais à divisão que o seu modelo fez na última execução | `allocation_driver_scenario` |
+
+## Exemplo prático
+
+Uma analista financeira percebe que uma linha de custo baseada em receita caiu de um ano para o outro e faz uma única pergunta. O agente a responde de ponta a ponta, chamando várias ferramentas de alocação nos bastidores.
+
+> **Você pergunta:** Nossa alocação de custos baseada em receita (`cost_line_rev`) parece menor em 2026 em comparação com 2025. O que aconteceu, do que ela é composta e o que uma variação de +US$ 1 milhão na receita dos EUA causaria?
+
+> **O agente responde:**
+>
+> **O que é.** `cost_line_rev` é o estágio baseado em receita do seu modelo de custeio baseado em atividades (ABC). Ele pega um pool de custos (`group_amount`, limitado a um conjunto de contas da DRE) e o divide pela **receita** de `revenue_by_line`, ponderada dentro de cada entidade, ano e mês.
+>
+> **Por que caiu (EUA, 2025 → 2026).** O custo alocado aos EUA caiu de **US$ 7,12 milhões para US$ 2,99 milhões, uma queda de US$ 4,13 milhões (−58,0%)**. Isso **não** é uma mudança de mix: a participação dos EUA no pool se manteve estável, em cerca de 23% nos dois anos. O fator é o **encolhimento do pool total de custos**, concentrado em algumas contas:
+>
+> | Conta | 2025 | 2026 | Variação |
+> | --- | --: | --: | --: |
+> | 700000 | US$ 2,58 mi | US$ 1,09 mi | **−US$ 1,49 mi** |
+> | 701000 | US$ 1,85 mi | US$ 0,77 mi | −US$ 1,08 mi |
+> | 610000 | US$ 1,71 mi | US$ 0,72 mi | −US$ 0,99 mi |
+> | 670000 | US$ 0,68 mi | US$ 0,29 mi | −US$ 0,39 mi |
+> | 702000 | US$ 0,30 mi | US$ 0,13 mi | −US$ 0,18 mi |
+>
+> Essas cinco contas explicam essencialmente toda a variação.
+>
+> **O que a alimenta.** `cost_line_rev` é construída a partir de `revenue_by_line` (o direcionador da divisão) e `gl_pool_entity` (o pool de custos).
+>
+> **Atenção: esse direcionador é compartilhado.** `revenue_by_line` também alimenta `cost_line_cs` e `cost_line_admin`, portanto uma reapresentação da receita repercute nas três.
+>
+> **Seu cenário de +US$ 1 milhão nos EUA.** O US$ 1 milhão é distribuído entre os resultados que compartilham esse direcionador de acordo com a **participação atual de cada um no pool**, de modo que as estimativas por tabela **somam** a variação, em vez de cada uma repetir o US$ 1 milhão inteiro: você obtém um valor para `cost_line_rev`, `cost_line_cs` e `cost_line_admin` que pode totalizar. Se restringir a pergunta a um único destino, a estimativa é aplicada apenas a essa fatia.
+
+A analista recebe uma resposta completa (o tamanho da mudança, as contas por trás dela, a linhagem e o alcance do impacto de um cenário hipotético) sem abrir uma única tabela.
+
+## Até que ponto confiar em uma resposta
+
+Uma resposta fluente não é automaticamente uma resposta correta. Toda resposta do tipo "por que isso mudou" agora vem com uma avaliação em linguagem clara de **até que ponto confiar nela**, de modo que um número plausível, mas frágil, seja sinalizado *antes* de você agir, e não enterrado no texto. Junto com a explicação, o agente informa:
+
+- **Um nível de confiança** (alto, médio ou baixo) que reflete a clareza com que a mudança se decompõe. Uma mudança causada por um único motivo claro tem confiança alta; uma em que várias causas se sobrepõem, ou em que os valores não fecham totalmente, tem confiança menor. Quando um resultado é construído a partir de várias ramificações de alocação, a confiança pondera cada ramificação pela parcela da mudança que ela explica, de modo que uma ramificação pequena e frágil não derruba uma resposta que, no restante, é limpa; mas uma ramificação cujo número esteja, ele mesmo, em dúvida (uma divisão não reconciliada, dados desatualizados ou algo que não pode ser atribuído) ainda mantém baixa a confiança da resposta inteira.
+- **Ressalvas em linguagem clara**, por exemplo: a causa é uma mistura de fatores sobrepostos, e não um único; a resposta se baseia na hierarquia ou nos pesos do direcionador *atuais*; parte da mudança pode ser um artefato de completude dos dados (um período que ainda não terminou de ser carregado) e não uma variação real; o pool ou o direcionador que alimenta a alocação não é recarregado há algum tempo, portanto o valor pode se basear em dados desatualizados; ou um valor de cenário hipotético não pode ser somado entre destinos.
+- **Uma comparação que não pôde ser feita, dita em voz alta.** A maioria das respostas dimensiona a variação que relata, contra a mesma variação um ano antes e contra períodos recentes, para que você distinga um ano comum de uma quebra de tendência. Nenhuma das duas é produzida para uma tabela gravada por uma etapa que aloca várias colunas de valor ao mesmo tempo, porque cada uma é construída para uma resposta de coluna única. Isso antes era silencioso, de modo que a resposta parecia ter ido até onde os dados permitem, quando havia parado antes por projeto. Agora isso é declarado entre os limites, junto com o motivo de não haver uma pergunta mais restrita a fazer no lugar e com o fato de que nenhum valor da resposta é retirado por isso: os valores são exatos e o que falta é o contexto.
+
+Quando o agente não consegue sustentar uma causa precisa, ele diz isso e indica o escopo ou o filtro que lhe permitiria responder com clareza, em vez de inventar uma história confiante. E, como a confiança e as ressalvas fazem parte da resposta, elas a acompanham: se você pedir a outro agente que a resuma, os sinais de confiabilidade não são descartados silenciosamente.
+
+<Aside type="note" title="A sinalização de dados desatualizados é opcional">
+A ressalva de atualidade, que reduz a confiança quando os dados subjacentes não foram recarregados dentro de uma janela definida, vem **desativada por padrão** e é ativada por espaço de trabalho pelo seu administrador, que também define o que conta como recente (mais tempo para dados atualizados apenas trimestral ou anualmente). Se a sua equipe trabalha deliberadamente com dados mais antigos, ela não interfere até que alguém a ative.
+
+Depois de ativada, ela alcança toda resposta que lê o seu data warehouse: a explicação de "por que isso mudou" e ambas as respostas de cenário hipotético, que é onde ela mais importa: um cenário hipotético propaga ou reajusta pesos usando as participações que o seu modelo realizou na última execução, portanto dados desatualizados são exatamente o caso em que a estimativa é menos confiável.
+
+Duas coisas limitam o que ela pode informar, e ambas se aplicam a toda resposta, não apenas aos cenários hipotéticos. Ela pergunta a idade somente das tabelas **carregadas diretamente no PlaidCloud**: uma tabela construída por uma etapa de fluxo de trabalho só pode informar quando essa etapa foi executada pela última vez, o que é uma pergunta diferente de quando os dados chegaram, por isso essa pergunta é deliberadamente deixada de lado em vez de respondida com o número errado. E ela nomeia a **tabela mais antiga de cada tipo** (um pool, um direcionador), de modo que, quando um cenário hipotético se distribui por várias etapas e mais de um direcionador está desatualizado, você é informado sobre um deles. Nenhum dos casos jamais informa uma tabela desatualizada como atualizada.
+</Aside>
+
+<Aside type="tip" title="Leia a confiança, não apenas o número">
+Uma confiança **baixa** ou **média** não é uma falha: é o agente sendo honesto ao dizer que a mudança tem mais de uma causa plausível, ou que algo (um direcionador desatualizado, um período inacabado) pode estar distorcendo o resultado. Trate-a como um convite para adicionar um período, um filtro ou uma dimensão de detalhamento e perguntar de novo.
+</Aside>
+
+<Aside type="caution" title="Quando um total de aparência limpa esconde a história">
+Dois totais do pool inteiro podem parecer um crescimento limpo, mas enganar, e o agente agora detecta ambos: quando grandes altas e baixas se **compensam** em uma pequena variação líquida (o maior fator individual é maior do que a própria variação principal) e quando a maior parte de uma mudança é **repasse direto**, ou seja, custo que a alocação leva adiante sem dividi-lo pelo direcionador, de modo que a parte que o direcionador realmente governa é apenas uma fração. Em cada caso, ele reduz a confiança, informa quanto o valor controlado pelo direcionador realmente se moveu e leva você à visão em nível de membro.
+</Aside>
+
+## Bom saber
+
+<Aside type="note" title="Alocações filtradas recebem uma resposta limpa, do pool inteiro">
+Quando as linhas de origem de uma alocação são restritas (por exemplo, a um conjunto de contas da DRE), o agente aplica esse filtro automaticamente e ainda fornece uma atribuição limpa do pool inteiro; você não precisa acrescentar nada.
+</Aside>
+
+<Aside type="note" title="Alocações por dimensão">
+Para uma alocação orientada por uma **hierarquia de dimensão** (por exemplo, dividir um centro de custo por uma estrutura de relatórios), o agente agora explica a mudança: no nível do total geral, ele a atribui ao pool de entrada e, quando você filtra por um destino específico, separa a **movimentação do pool** da mudança na **participação** desse destino. A única coisa que ele ainda não consegue reconstruir é uma causa que dependa do **histórico da hierarquia em um ponto no tempo**, o que ficará para uma versão futura.
+</Aside>
+
+<Aside type="caution" title="Alocações em cascata precisam de um recorte">
+Quando uma alocação alimenta outra (uma cascata), um "por quê" em todo o projeto misturaria as linhas erradas, então o agente pede que você restrinja a pergunta a um recorte (uma região, um produto ou um centro de custo específico) e depois a explica.
+</Aside>
+
+<Aside type="note" title="Resultados construídos por mais de uma etapa">
+Se uma tabela de resultado é produzida por **mais de uma** etapa de alocação, o agente não adivinha qual delas causou uma mudança: ele lista as etapas candidatas e pede que você nomeie a que quer dizer. Quando a sua pergunta se restringe a linhas que apenas uma dessas etapas produziu (por exemplo, uma região que somente ela aloca), o agente reconhece isso e rastreia essa etapa automaticamente, informando que fez isso.
+
+**Nomear uma etapa diz ao agente qual etapa descrever, não quais linhas medir.** A mudança que ele relata é a da tabela inteira e é exata; o que não pode ser atribuído a uma única etapa é a *divisão entre fatores*, portanto, em uma tabela com vários escritores, o agente retém essa divisão, informa que o valor abrange todas as etapas que gravam a tabela e se oferece para rastrear a tabela por cada uma das outras, uma de cada vez. Cada nova execução desse tipo é uma medição separada: não é a parcela dessa etapa na mudança que você está observando, nem uma medição dessa etapa **isoladamente**: essas etapas gravam na mesma coluna, que é o motivo de a divisão ter sido retida, portanto a mudança que volta ainda abrange todas elas.
+
+Isso vale **seja qual for o outro escritor**. Uma etapa que não é de alocação (uma que acrescenta linhas à tabela de resultado, por exemplo) nunca é candidata a rastreamento e, portanto, nunca pede que você escolha, mas suas linhas estão no total do mesmo jeito, e o agente agora informa isso em vez de incorporar a movimentação delas à divisão.
+</Aside>
+
+<Aside type="note" title="Cenários hipotéticos de mudança de valor usam as participações de hoje">
+As respostas a "o que acontece se este pool aumentar em …" dividem a mudança, em uma distribuição em leque, pela **participação atual de cada destino no pool**, de modo que os valores por tabela **somam** em vez de cada um ser um envelope de pior caso. Elas refletem as participações do modelo como estão hoje: uma estimativa bem delimitada de onde a mudança chega, não uma previsão precisa. Aponte uma para uma tabela de **direcionador ou de base**, em vez do pool de entrada, e ela será tratada como um cenário hipotético de *direcionador* (abaixo), pois alterar um direcionador redistribui uma divisão fixa em vez de acrescentar valor.
+
+**Nesse caso, nomeie o período explicitamente.** Diferentemente de uma pergunta "por que isso mudou" ou de um cenário hipotético de direcionador, um cenário hipotético prospectivo *não* descobre a coluna de período por você. Se você não a informar, a estimativa abrange **todos os períodos**, e não a janela que você tinha em mente.
+</Aside>
+
+<Aside type="caution" title="Um resultado que o cenário hipotético não pôde medir não traz valor algum">
+Um cenário hipotético prospectivo calcula a participação de cada destino consultando a etapa que o grava. Quando essa consulta falha (a tabela da etapa não tem coluna de período, o data warehouse a rejeita), esse destino agora informa **nenhuma estimativa**, junto com o motivo. Antes, ele informava a mudança *inteira* que o alcançava, um máximo apresentado exatamente como uma resposta medida, e tudo abaixo dessa etapa era então estimado a partir dele, de modo que uma ramificação inteira parecia ter valores comuns.
+
+Três coisas decorrem disso, e a resposta declara cada uma: os totais abrangem somente os destinos que **foram** medidos; nada a jusante de uma etapa não medida é estimado a partir dela, portanto esses destinos ficam ausentes da resposta em vez de serem adivinhados; e um destino medido a partir de apenas *parte* do que o grava informa isso e nomeia a etapa que não pôde ser lida. Esse valor parcial é uma medição real do que pôde ser lido, portanto vale, mas não é o destino inteiro, e a parte que falta pode ser maior, menor ou de sinal oposto. Não o interprete como um piso.
+</Aside>
+
+<Aside type="note" title="Cenários hipotéticos de direcionador são calculados com exatidão">
+Pergunte o que uma mudança em um **direcionador** causaria ("e se o direcionador de quadro de pessoal do centro de custo Assembly aumentasse em 10?") e o agente redistribui o pool fixo sob os novos pesos com **exatidão**, sem reexecutar o modelo. Ele mostra quais destinos **ganham** e quais **perdem**, e os ganhos e as perdas **se anulam** como verificação embutida. Ele se limita ao que consegue calcular com exatidão: uma única divisão direta com um direcionador simples. Qualquer coisa mais complexa (uma alocação baseada em hierarquia ou filtrada/condicional, a inclusão de um membro de direcionador totalmente novo ou uma mudança que esvazia um grupo) é **recusada com o motivo**, em vez de estimada.
+
+**Nomeie a coluna como a tabela de direcionadores a escreve.** Quando uma etapa leva uma coluna de direcionador adiante com outro nome, o nome da própria tabela de direcionadores é o que deve ser usado na pergunta, e é o que a resposta cita de volta se você errar. Os resultados são lidos no sentido inverso: os centros de custo e os grupos que se moveram são nomeados como a tabela de *resultado* os escreve, porque esses são os nomes pelos quais você filtra e lê os resultados. Na maioria das etapas, os dois são o mesmo nome.
+</Aside>
+
+<Aside type="note" title="A coluna de período é detectada para você">
+Em uma pergunta "por que isso mudou" ou em um cenário hipotético de direcionador, você normalmente não nomeia a coluna que contém o período: o agente a descobre a partir da tabela. Se você nomear uma explicitamente, ela é verificada na tabela primeiro: se essa coluna não existir, você é informado imediatamente, junto com as colunas que *existem*, para corrigir em um único passo, em vez de receber uma análise que não conseguiu totalizar nada. Se a tabela tiver duas colunas de período igualmente prováveis (um ano e um número de período, por exemplo), o agente pede que você escolha uma em vez de adivinhar. Os cenários hipotéticos prospectivos são a exceção: nesses, informe você mesmo o período, como observado acima.
+</Aside>
+
+<Aside type="note" title="Combinações de dimensões, quando habilitadas">
+Perguntar o que causou uma mudança procura a dimensão única que melhor a explica, em todos os espaços de trabalho. Quando o seu espaço de trabalho também tem a busca por **combinações** ativada, ela testa também combinações de dimensões (uma movimentação restrita a uma região *e* uma linha de produtos, por exemplo), e não apenas uma dimensão por vez. As combinações precisam superar um critério mais alto do que uma única dimensão antes de serem relatadas e, quando nada explica a movimentação isoladamente, a resposta ainda diz isso em vez de escolher algo. A busca por combinações vem desativada por padrão; pergunte ao administrador do PlaidCloud se ela está ativada no seu espaço de trabalho.
+</Aside>
+
+<Aside type="note" title="Esta mudança é incomum?">
+Junto com o "porquê", o agente avalia se uma mudança foge do comum: ele compara a movimentação deste período com o histórico de **variações de um período para o outro** do próprio modelo e a classifica como normal, elevada ou extrema, de modo que uma mudança de rotina e um pico genuíno sejam lidos de forma diferente.
+</Aside>
+
+<Aside type="note" title="Mudanças concentradas são destacadas">
+Quando a maior parte de uma mudança ano contra ano vem de um único grupo (uma entidade ou um cliente respondendo pela maior parte da movimentação), o resumo do agente a sinaliza explicitamente, para que uma mudança causada por um único caso atípico não seja confundida com uma mudança generalizada. Acrescente à sua pergunta uma dimensão de detalhamento, como entidade ou conta, para ver isso.
+</Aside>
+
+<Aside type="caution" title="Um detalhamento por um campo sem valores">
+Detalhar uma mudança por um campo reúne as linhas que compartilham um valor, e as linhas **sem** valor também se reúnem. Assim, um campo deixado em branco em todas as linhas dos períodos comparados produzia um único grupo contendo a mudança inteira, o que parecia o resultado mais concentrado possível: um membro, toda a movimentação, confiança total.
+
+O agente agora informa que o campo não está preenchido para essas linhas e **retém** os números de concentração em vez de relatá-los como 100%. Ele sugere um campo que esteja preenchido ou abrir mão do detalhamento, caso em que ele mesmo encontra o campo que melhor explica a mudança. Quando um segundo campo de agrupamento *está* preenchido, o detalhamento é genuíno e é relatado normalmente, apenas com a observação do campo em branco. Os valores em branco aparecem como *(no value)* ou *(blank)*, e os dois são mantidos separados: um campo nunca preenchido e um campo explicitamente definido como vazio são coisas diferentes.
+
+Apenas o detalhamento foi afetado. A mudança principal, seus totais e a forma como foi atribuída estiveram corretos o tempo todo.
+</Aside>
+
+<Aside type="caution" title="Quando as linhas não atribuídas são o que se moveu">
+Quando você não nomeia um campo, o agente escolhe o que melhor explica a mudança, e às vezes a resposta são as linhas que **não** têm valor algum nesse campo. Isso é uma constatação real, não uma falha, e por isso é relatada em vez de ocultada: um custo que silenciosamente deixou de ser marcado merece ser conhecido.
+
+Mas "as linhas não atribuídas cresceram" significa algo bem diferente em um campo quase sempre preenchido e em um quase sempre em branco. A resposta agora diz qual é o caso, na mesma frase: *"o recorte vencedor são as linhas não atribuídas de `cost_centre`: `cost_centre` tem um valor em 12% das linhas dos períodos comparados"*. Um campo preenchido em 12% das linhas mal está em uso; um preenchido em 95% tem uma lacuna genuína que vale a pena investigar. Campos muito esparsos e muito completos aparecem como *menos de 1%* e *mais de 99%*, e não como 0% ou 100%, nenhum dos quais poderia ser verdadeiro aqui.
+</Aside>
+
+<Aside type="note" title="Quando a busca não pode ser executada">
+Antes de pesquisar, o agente faz uma pergunta rápida aos dados para descartar campos que contêm um único valor em toda a tabela ou que são divididos de forma tão fina que não servem como agrupamento. Quando essa pergunta não pode ser respondida (um tipo de coluna que o data warehouse não consegue medir, ou uma conexão que caiu), ele antes pesquisava todos os campos, suspendendo esses dois limites exatamente no momento em que algo já tinha dado errado.
+
+Agora ele informa que a busca não foi executada, e o faz com palavras próprias: isso é um limite da busca, não uma constatação sobre os dados. Essa redação difere da observação que você recebe quando os períodos comparados são simplesmente grandes demais para pesquisar, porque o que você pode fazer a respeito também difere: nesse caso, restrinja os períodos; aqui, nomeie o campo que deseja examinar, o que funciona seja qual for a causa. Tentar de novo só ajuda se a falha foi passageira.
+</Aside>
+
+<Aside type="caution" title="Um detalhamento por um campo que não está na tabela">
+Peça um detalhamento por um campo que a tabela não tem e você agora é informado disso, com os campos que ela *tem*, para corrigir a pergunta em um único passo. Antes, a resposta voltava completa e confiante, com o detalhamento simplesmente ausente e nada indicando que um havia sido tentado; a sugestão de "para ir além" apontava para outro lugar. Quatro perguntas consecutivas em um modelo real voltaram assim.
+
+Mais acima na cadeia, a regra é diferente, de propósito. Um campo adicionado por uma alocação só existe nas tabelas a jusante dela, portanto um campo que está na tabela sobre a qual você perguntou muitas vezes está genuinamente ausente dois estágios antes. Nesse caso, o rastreamento **agrupa pelos campos que esse estágio tem**, em vez de perder o detalhamento desse estágio, e informa quais deixou de fora.
+
+Essa observação é sobre o estágio anterior e diz isso: *"o detalhamento que você pediu não estava disponível neste estágio"*. Ela **não** é sobre a tabela de membros que a resposta imprime: essa é a tabela sobre a qual você perguntou, no agrupamento completo que você pediu. O agrupamento mais grosseiro do estágio anterior é aquele sobre o qual sua própria medida de concentração é calculada, e seus membros não são listados. A sugestão que o acompanha também nomeia esse estágio: agrupe por um campo que todos os estágios rastreados tenham, se quiser também os membros dele. Até agosto de 2026, a observação dizia "is not in this answer" e se explicava como *"so the members you see are grouped only by the rest"*, e a sugestão dizia que o campo não estava na "traced table", o que apontava para a tabela impressa, a descrevia como algo que ela não era e aconselhava descartar um campo que estava funcionando.
+
+E quando um detalhamento está ausente por qualquer outro motivo (uma falha passageira do data warehouse, por exemplo), a resposta informa isso da mesma maneira, nomeando o estágio para o qual não conseguiu produzir um: os totais são medidos e não são afetados, e ela se oferece para tentar de novo. O detalhe está ausente, não errado.
+</Aside>
+
+<Aside type="caution" title="Um total que cruzou o zero são dois estados, não uma mudança">
+Quando um total passou de positivo para negativo entre os dois períodos (um centro de custo que era um encargo líquido e passou a ser um crédito líquido, por exemplo), não há uma forma significativa de dividir a movimentação entre os fatores que a causaram, nem uma porcentagem significativa: uma oscilação de um pequeno valor positivo para um grande valor negativo produz um número como −10.013%, que não mede nada.
+
+O agente se recusa a repartir uma mudança assim, como sempre fez. O que ele faz agora é **dizer isso** como motivo, em vez de abrir com uma observação geral sobre como a medição é feita, que parecia ser a explicação e contradizia a linha impressa logo abaixo. A porcentagem não é mais exibida para uma mudança que cruzou o zero; os valores de cada lado e a própria mudança são exatos e não são afetados.
+
+Leia os dois períodos como valores separados: a resposta agora imprime ambos na linha que recusa, informando se são o recorte sobre o qual você perguntou ou a coluna inteira. Para ver o que se moveu, acrescente uma dimensão de detalhamento: o total que cruza o zero não pode ser dividido em causas, mas a movimentação **por membro** por trás dele é lida normalmente, e é geralmente aí que está a resposta.
+</Aside>
+
+<Aside type="note" title="Onde o rastreamento para, ele sugere o próximo passo">
+Toda resposta termina com próximos passos que você pode executar. Duas situações antes não ofereciam nenhum, e eram justamente aquelas em que você ficava mais travado: um total que cruzou o zero e um estágio que o agente não conseguiu agregar. Ambas agora trazem uma sugestão, a segunda nomeando a tabela a verificar e a causa mais provável (uma coluna de período ausente na tabela desse estágio), para que você possa descartá-la antes de presumir uma falha passageira do data warehouse.
+
+Da mesma forma, uma resposta não sugere mais **restringir a um membro** quando você já restringiu a pergunta a um. Esse conselho vinha de uma limitação registrada mais acima na cadeia, e não da pergunta que você fez, e era repetido entre os limites declarados como se se aplicasse aqui.
+
+Um caso ainda não oferece próximo passo: quando uma leitura independente da tabela de direcionadores discorda da divisão realizada, a resposta informa isso, mas não consegue sugerir uma nova execução que resolva; o que vale a pena fazer nesse caso é inspecionar diretamente a tabela de direcionadores, o que é uma solicitação diferente, e não um ajuste a esta.
+</Aside>
+
+## Dicas
+
+- Refira-se às tabelas pelo **nome** (`cost_line_rev`) ou pelo id; ambos funcionam.
+- Em uma pergunta sobre mudança, nomeie os **períodos** a comparar (por exemplo, 2025 contra 2026) e, quando útil, uma dimensão de **detalhamento**, como conta ou entidade.
+- Comece de forma ampla ("quais modelos de alocação existem neste projeto?") e aprofunde; o agente mantém o fio da conversa, de modo que as perguntas seguintes se baseiam no mesmo modelo.
+- Há **dois tipos de cenário hipotético**: uma mudança de **valor** ("este pool aumenta em US$ 1 milhão") é estimada pelas participações de hoje e soma entre os destinos; uma mudança de **direcionador** ("reajuste este direcionador") é redistribuída com exatidão e se anula. Formule a pergunta para aquele que você quer dizer.
+
+## Relacionados
+
+- [Introdução aos agentes de codificação com IA](../getting-started/) — conecte um agente ao seu espaço de trabalho por MCP
+- [Por que as alocações são úteis](/pt-br/guides/allocations/getting-started/why-are-allocations-useful/) — conceitos de alocação
+- [Solução de problemas](../troubleshooting/) — problemas de conexão e autenticação

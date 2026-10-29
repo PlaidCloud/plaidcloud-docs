@@ -1,0 +1,76 @@
+---
+title: "Xero：过账单据"
+description: 根据标题表和行表向 Xero 过账手工日记账、发票、账单、付款和贷项通知单，并提供测试模式，在任何内容过账之前验证每份单据。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过您的 [Xero 连接](/zh-cn/guides/connections/xero/)向 Xero 过账单据，经由 PlaidCloud 共享的 ERP 写入管道路由。该步骤接收一个标题表（每份单据一行）和一个行表（每份单据一行或多行），并将每份单据作为 **ManualJournal**、**Invoice**、**Bill**、**Payment** 或 **CreditNote** 过账。一个批次可以混合多种单据类型——PlaidCloud 会在任何网络调用之前按单据类型对批次进行划分。**仅测试模式**会构建并检查每份单据，但不占用总账声明，也不过账；可选的结果表会记录每份单据的结果。
+
+<Aside type="caution">
+请务必先在**仅测试模式**下运行每个批次，查看结果表，并在 Xero 中直接核对少量过账记录，然后再依赖此步骤无人值守地实际过账单据。
+</Aside>
+
+## 配置
+
+### Xero 连接
+
+- **Xero 连接** — 用于过账的 Xero 连接。每份单据都会过账到该连接所属的组织。
+- **环境** — 通过连接的哪个 PlaidCloud 环境过账，与每个由连接驱动的步骤所带的选择器相同。这与 Xero 自带的演示公司无关，后者是连接所指向组织的属性。
+- **仅测试模式** — 默认选中。验证每份单据但不过账：不占用总账声明，也不写入。如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创作的配置），同样默认为仅测试模式，而不是实际过账。
+- **如果某份单据失败，继续过账其余单据** — 默认选中。取消选中后，批次会在第一次失败时停止。
+- **结果表** — 每份单据一行：`ref`、`doc_type`、`natural_key`、`xero_id`、`status`（`posted`/`validated`/`error`）和 `message`。
+
+### 表选择
+
+- **标题表** — 每份单据一行。
+- **行表** — 每份单据一行或多行，通过 `ref` 与标题关联。
+
+### 标题字段和行字段
+
+两个映射选项卡将您自己的列名映射到 Xero 所需的字段。**标题字段**包括：
+
+| 字段 | 备注 |
+|---|---|
+| `ref` | 必填。您的业务键——将标题行与其行关联，同时也是幂等性账本所声明的键。 |
+| `doc_type` | 必填。`ManualJournal`、`Invoice`、`Bill`、`Payment` 或 `CreditNote`。 |
+| `posting_date` | 必填。 |
+| `currency_id`、`party_id`、`memo`、`due_date` | 可选。`party_id` 是 Xero 联系人。 |
+| `total_amt`、`deposit_account_id`、`bank_account_id`、`linked_invoice_id` | 仅限付款，可选。 |
+| `credit_note_type` | 仅限贷项通知单，可选。`ACCRECCREDIT`（销售，默认）或 `ACCPAYCREDIT`（采购）。 |
+
+**行字段**包括 `ref`（必填，与标题行匹配），以及单据类型所需的字段：
+
+| 单据类型 | 行字段 |
+|---|---|
+| ManualJournal | `account_id`、`debit`、`credit`，以及用于跟踪的可选 `class_id` / `department_id` |
+| Invoice | `item_id`、`qty`、`unit_price`、`amount` |
+| Bill | `account_id`、`amount` |
+| CreditNote | `item_id`、`qty`、`unit_price`、`amount` |
+| Payment | `linked_txn_id`（该行所应用的发票）、`amount` |
+
+`tax_type` 和 `memo` 在每一行上都是可选的。
+
+## 过账的工作方式
+
+每份单据在提交之前，都会先在 PlaidCloud 的幂等性账本中被声明，因此重新运行绝不会重复过账已达到 `posted` 状态的单据。账本键带有单据类型前缀，因此共用同一个 `ref` 的发票和账单即使通过 Xero 的同一端点过账，也不会冲突。
+
+当结果不明确时（例如超时或响应丢失），PlaidCloud 会按其写入的单据编号反向查询 Xero：发票或账单使用发票编号，贷项通知单使用贷项通知单编号。只有当单据处于最终的已过账状态时，匹配才算作证明，因为这些编号在 Xero 中不保证唯一——草稿、已作废或编号重复的匹配会被视为未解决并隔离，而不会记录为本次写入的结果。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|
+| 无法查找手工日记账和付款 | Xero 中无法查询手工日记账的摘要和付款的参考号，因此没有字段可将存疑的写入关联回请求。这些单据会被隔离，等待人工处理，而不是靠猜测。 |
+| 冲销涵盖手工日记账和发票 | 手工日记账通过借贷互换的日记账冲销；发票通过镜像的贷项通知单冲销。账单、付款和贷项通知单没有已记录的撤销载荷，因此冲销会被拒绝，绝不会伪造。 |
+| 速率限制按组织计算 | Xero 允许每个组织每分钟 60 次调用、每天 5,000 次调用，并发调用上限为 5 次。PlaidCloud 控制每分钟调用数和并发数，并在响应被限流时退避；非常大的批次耗时相应更长。 |
+
+## 相关内容
+
+- [连接到 Xero](/zh-cn/guides/connections/xero/) — 涵盖配置、预览和过账的完整操作指南
+- [Xero REST 连接器](/zh-cn/reference/connectors/rest/xero/)
+- [Xero 步骤](/zh-cn/reference/workflow-steps/xero/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

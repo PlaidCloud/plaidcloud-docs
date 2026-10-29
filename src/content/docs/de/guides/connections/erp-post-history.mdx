@@ -1,0 +1,98 @@
+---
+title: ERP-Buchungsverlauf prüfen
+description: Sehen Sie jeden ERP-Buchungsversuch Ihres Projekts und seinen aktuellen Status — gebucht, abgelehnt, ungeklärt oder storniert — mit der ERP-Belegnummer, nach Projekt filterbar, über REST oder die MCP-Tools.
+sidebar:
+  label: ERP-Buchungsverlauf prüfen
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Wenn ein Workflow in ein ERP bucht — eine Journalbuchung in Sage Intacct oder NetSuite, einen Beleg in Acumatica, Business Central oder Xero, eine Journalbuchung in Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials oder SAP S/4HANA Cloud, einen SAP-Beleg —, erfasst PlaidCloud jeden Buchungsversuch in einem dauerhaften Hauptbuch pro Mandant, sodass derselbe Beleg nie zweimal gebucht wird. Der **ERP-Buchungsverlauf** ist die schreibgeschützte Sicht auf dieses Hauptbuch: jeder Versuch und sein aktueller Status, mit der eigenen Belegnummer und den Zeitstempeln des ERP, nach Projekt filterbar.
+
+Er ergänzt die Ergebnistabelle pro Ausführung, die ein Buchungsschritt schreibt: Die Ergebnistabelle zeigt die Ergebnisse einer Ausführung, während der Buchungsverlauf der dauerhafte Nachweis über alle Ausführungen und Workflows hinweg ist und jede Buchung durch ihren gesamten Lebenszyklus verfolgt, statt sie im Moment des Ausführungsendes einzufrieren.
+
+<Aside type="note">
+Der Buchungsverlauf ist **schreibgeschützt** — er ändert nie eine Buchung oder das Hauptbuch. Er ist über die REST-API und als MCP-Tool verfügbar, begrenzt auf ein Projekt, auf das Sie bereits Zugriff haben. Für eine mandantenweite Ansicht, die Buchungen über alle Projekte und Verbindungen prüft, die Sie sehen dürfen, verwenden Sie das [Buchungsregister](/de/guides/connections/posting-register/).
+</Aside>
+
+## Was jede Buchung zeigt
+
+Jede Zeile ist ein Beleg, der in eine ERP-Umgebung über eine Verbindung gebucht (oder dessen Buchung versucht) wurde:
+
+| Feld | Bedeutung |
+|---|---|
+| `project_id` | Das Projekt, aus dem gebucht wurde. |
+| `connection_id` | Die verwendete ERP-Verbindung. |
+| `environment_id` | Die Verbindungsumgebung, in die gebucht wurde (zum Beispiel Sandbox oder Produktion). |
+| `natural_key` | Der fachliche Schlüssel des Belegs, wie ihn der Buchungsschritt abgeleitet hat. |
+| `state` | Der aktuelle Lebenszyklusstatus der Buchung (siehe unten). |
+| `confirmation_id` | Die eigene Belegnummer des ERP, sobald das ERP eine vergibt. Wird bei einer simulierten Buchung nie gesetzt. |
+| `run_id` | Die Workflow-Ausführung, die die Buchung vorgenommen hat. |
+| `submitted_at`, `created_at`, `updated_at` | Wann die Buchung übermittelt, erstmals erfasst und zuletzt geändert wurde. |
+
+Eine Buchung im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) ist als simuliert gekennzeichnet, sodass sie sich auf einen Blick von einer echten Buchung unterscheidet — siehe [Simulierte Buchungen](#simulierte-buchungen) weiter unten.
+
+## Die Lebenszyklusstatus
+
+Eine Buchung durchläuft diese Status, während das ERP sie verarbeitet:
+
+| Status | Bedeutung |
+|---|---|
+| `preflighted` | Validiert und beansprucht, noch nicht an das ERP gesendet. |
+| `submitted` | An das ERP gesendet; das Ergebnis ist noch nicht bekannt. |
+| `pending` | Zur asynchronen Verarbeitung angenommen; wartet auf ein Endergebnis. |
+| `posted` | Als gebucht bestätigt; `confirmation_id` enthält die ERP-Belegnummer. |
+| `rejected` | Das ERP hat die Buchung abgelehnt. |
+| `in_doubt` | Das Ergebnis konnte nicht bestätigt werden — ein Mensch muss vor jedem erneuten Versuch direkt im ERP nachsehen. |
+| `reversed` | Ein zuvor gebuchter Beleg wurde storniert. |
+
+<Aside type="caution">
+Eine `in_doubt`-Buchung ist genau das — unbekannt, nicht fehlgeschlagen. Bestätigen Sie sie im ERP selbst, bevor Sie entscheiden, ob Sie darauf reagieren; führen Sie sie nie blind erneut aus.
+
+PlaidCloud erfasst eine Buchung oder Stornierung als `in_doubt`, wenn es nicht feststellen kann, was das ERP getan hat — eine Zeitüberschreitung oder ein Serverfehler, den es nicht zurücklesen kann, oder ein Status, den es nicht erkennt. Eine solche Antwort erfasst es nicht als `rejected`, was suggerieren würde, dass der Beleg nicht im ERP ist, obwohl er es sein könnte.
+</Aside>
+
+## Simulierte Buchungen
+
+Eine im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) gestartete Ausführung validiert, was ein Buchungsschritt senden würde, kontaktiert das ERP aber nie. Was gebucht worden wäre, wird hier dennoch als simuliert gekennzeichnet erfasst, sodass Sie es genauso prüfen können wie eine echte Buchung — einschließlich ihres `natural_key` und der erstellten Anfrage —, jedoch ohne `confirmation_id`, da kein ERP sie je gesehen hat.
+
+Ein simulierter Eintrag belegt oder blockiert nie den Platz, der den idempotenten Schreibvorgang einer echten Buchung schützt. Führen Sie denselben Beleg später live aus, wird die echte Buchung durchgeführt und ersetzt den simulierten Eintrag. Ein Workspace ohne konfiguriertes Buchungshauptbuch validiert eine simulierte Ausführung weiterhin normal — er erfasst hier lediglich nichts.
+
+Leeren Sie die simulierten Einträge eines Projekts unabhängig von echten mit `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (optional eingegrenzt mit `connection_id`) oder mit dem MCP-Tool `erp_clear_simulated_postings` mit denselben Argumenten. In beiden Fällen werden nur simulierte Zeilen entfernt — eine echte Buchung wird nie angetastet —, und die Antwort meldet sowohl die geleerten Verlaufszeilen als auch die geleerten Zeilen des Simulationsspeichers des [Buchungsregisters](/de/guides/connections/posting-register/), da ein Leeren aus beiden entfernt.
+
+<Aside type="note">
+SAP-Buchungs-, Anhangs- und RFC-Schritte werden unter Simulate ganz übersprungen, nicht im Probelauf ausgeführt, und erzeugen daher nie einen simulierten Eintrag. Siehe [Buchungsmodus wählen](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen).
+</Aside>
+
+## Den Verlauf lesen
+
+Begrenzen Sie jeden Lesezugriff auf ein Projekt, auf das Sie zugreifen können. Sie benötigen Lesezugriff auf dieses Projekt — denselben Zugriff, den der Rest Ihrer Projektarbeit erfordert.
+
+### Über REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Optionale Abfrageparameter grenzen das Ergebnis ein:
+
+| Parameter | Wirkung |
+|---|---|
+| `connection_id` | Nur Buchungen über diese Verbindung. |
+| `state` | Nur Buchungen in diesem Status (zum Beispiel `state=in_doubt`). |
+| `limit` | Seitengröße (Standard 100). |
+| `cursor` | Der `next_cursor` der vorherigen Seite. |
+
+Die Ergebnisse kommen neueste zuerst. Füllt sich eine Seite bis `limit`, enthält die Antwort einen `next_cursor`; geben Sie ihn als `cursor` zurück, um die nächste Seite zu lesen, und hören Sie auf, wenn `next_cursor` null ist.
+
+### Über MCP
+
+Rufen Sie das Tool `erp_post_history` mit denselben Argumenten auf — `project_id` (erforderlich) und optional `connection_id`, `state`, `limit` und `cursor`. Es liefert dieselben Zeilen, auf dieselbe Weise seitenweise.
+
+## Häufige Prüfungen
+
+- **Alles, was für ein Projekt noch ungeklärt ist:** `state=in_doubt` — die Buchungen, die Sie von Hand im ERP bestätigen müssen.
+- **Was eine bestimmte Ausführung gebucht hat:** den Verlauf des Projekts lesen und nach `run_id` abgleichen.
+- **Ob ein Beleg tatsächlich gebucht wurde:** seine Zeile finden und `state` und `confirmation_id` lesen.

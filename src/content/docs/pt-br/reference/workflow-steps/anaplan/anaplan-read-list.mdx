@@ -1,0 +1,60 @@
+---
+title: "Anaplan: Ler lista"
+description: Leia uma ou mais listas do Anaplan — uma hierarquia composta inteira, começando pela raiz — em uma dimensão do PlaidCloud. Sinalizadores de controle de acesso e subconjuntos não são importados, e toda aresta é consolidada com um sinal de mais simples.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lê uma ou mais listas do Anaplan por meio da sua [conexão do Anaplan](/pt-br/guides/connections/anaplan/) e as carrega em uma dimensão do PlaidCloud. **Uma única etapa lê uma hierarquia composta inteira** — informe todas as listas que ela abrange, começando pela raiz (por exemplo, Region, depois Country e depois Store) — em vez de dividi-la em várias etapas: a tabela de preparação é substituída por completo a cada execução, portanto várias etapas apontadas para a mesma tabela de preparação apagariam, cada uma, as linhas da anterior.
+
+Esta etapa aparece no menu de etapas em **Anaplan**, com o nome **Leitura de lista**.
+
+A etapa acessa o Anaplan **diretamente na nuvem** por meio da Integration API — não há caminho por agente local.
+
+<Aside type="tip">
+Este conector é somente leitura e se autentica com credenciais Basic (usuário e senha) ou com Certificado de CA — consulte [Autenticação](/pt-br/guides/connections/anaplan/#autenticação). O orçamento de solicitações do Anaplan é compartilhado por todo o tenant, portanto escalone o agendamento desta etapa em relação aos seus outros fluxos de trabalho do Anaplan — consulte [Considerações sobre agendamento](/pt-br/guides/connections/anaplan/#considerações-sobre-agendamento).
+</Aside>
+
+## Configuração
+
+### Origem Anaplan
+
+| Campo | Obrigatório | Observações |
+|---|---|---|
+| Conexão do Anaplan | Sim | A [conexão do Anaplan](/pt-br/guides/connections/anaplan/) usada para a leitura. |
+| Ambiente | Sim | O ambiente da conexão. |
+| Modelo | Não | Substitui o ID do modelo salvo na conexão. Descoberto ao vivo a partir da conexão ou digitado manualmente. |
+| Listas | Sim | Todas as listas do Anaplan que a hierarquia abrange, em uma lista ordenada. Adicione listas descobertas no modelo escolhido ou digite um ID manualmente e depois reordene com Mover para cima / Mover para baixo. Listá-las começando pela raiz facilita a leitura, mas a ordem não altera o que é carregado — todas as listas são lidas antes de qualquer pai ser resolvido. |
+| Tabela de preparação | Sim | As linhas brutas de pai/filho/consolidação/nome e de propriedades chegam aqui antes de a dimensão do PlaidCloud ser construída a partir delas. |
+
+### Dimensão de destino do PlaidCloud
+
+| Campo | Obrigatório | Observações |
+|---|---|---|
+| Especificar dimensão dinamicamente | Um dos dois | Nome da dimensão de destino, que pode conter tokens `{variable}` resolvidos no momento da execução. Selecionado por padrão. |
+| Usar dimensão específica | Um dos dois | Escolha uma dimensão já existente do PlaidCloud. |
+
+## O que esta etapa não consegue representar
+
+| Limitação | O que significa |
+|---|---|
+| Toda aresta é consolidada com um `+` simples | As hierarquias de lista do Anaplan não têm peso nem sinal por aresta — não há nada a ler, então nada se perde na tradução, mas também nada além disso pode ser representado. Se um modelo expressa exclusões ou consolidações negativas por meio de um item de linha ou de uma propriedade, essa lógica não é levada para a dimensão e precisa ser reconstruída adiante no fluxo. |
+| Sinalizadores de controle de acesso e participação em subconjuntos não são importados | Os sinalizadores de leitura/gravação do Selective Access e a participação de cada item em subconjuntos da lista são metadados do Anaplan, não dados de dimensão — importar cada subconjunto como uma coluna própria colidiria com propriedades reais em um espaço de nomes compartilhado e em crescimento. Uma propriedade genuína da lista cujo nome colida com qualquer um dos dois é recusada, em vez de ser carregada silenciosamente sob o nome do outro. |
+| Subconjuntos de itens de linha não podem ser lidos como dimensões | O Anaplan os expõe apenas por meio de um endpoint genérico de itens de dimensão, não como uma lista que esta etapa consiga ler. |
+| Uma lista com mais de 1.000.000 de registros não pode ser lida por este caminho | O endpoint de itens que esta etapa lê recusa a solicitação acima desse limite documentado em vez de retornar um resultado parcial, e não oferece como contorná-lo com paginação — por isso a etapa recusa e informa o limite, em vez de carregar uma dimensão parcial. Enquanto isso, divida a lista no Anaplan ou leia um subconjunto dela. |
+| Um nó fica sob exatamente um pai | Um item cujo nome de pai e ID de pai não coincidem, cujo pai está em uma lista que esta etapa não lê, ou cujo pai nomeado não existe é recusado pelo nome, em vez de ser realocado silenciosamente para a raiz da dimensão. |
+| O item de nível superior de uma lista não é importado | O item de nível superior do Anaplan é um nó de consolidação que fica acima de todos os itens da lista, e não um item da própria lista, portanto nunca é retornado pelos itens que esta etapa lê. A dimensão resultante tem um nível a menos do que a lista do Anaplan, e as raízes da própria lista passam a ser as raízes da dimensão. A etapa emite um aviso quando uma lista lida declara um item desse tipo. |
+| Os IDs dos nós devem ser exclusivos entre todas as listas lidas em conjunto | O ID de um nó é o código do item no Anaplan ou, se não houver código, o nome dele — e um código do Anaplan só tem exclusividade garantida dentro de uma lista. Duas listas que reutilizam os mesmos códigos curtos são recusadas pelo nome, em vez de serem fundidas silenciosamente em um único nó. |
+| Hierarquias alternativas não são compatíveis | Toda lista é carregada na hierarquia principal da dimensão. |
+| Somente leitura | Nada é gravado de volta no Anaplan. |
+
+## Relacionados
+
+- [Conectar ao Anaplan (guia)](/pt-br/guides/connections/anaplan/) — crie a conexão.
+- [Anaplan: Ler visão](/pt-br/reference/workflow-steps/anaplan/anaplan-read-view/) — leia uma visão salva exatamente como ela foi salva.
+- [Anaplan: Ler exportação](/pt-br/reference/workflow-steps/anaplan/anaplan-read-export/) — execute uma ação de exportação já existente.
+- [Dimension Load](/pt-br/reference/workflow-steps/dimensions/dimension-load/) — o mesmo mecanismo de carga de dimensão em que esta etapa se baseia.
+- [Etapas do Anaplan](/pt-br/reference/workflow-steps/anaplan/)

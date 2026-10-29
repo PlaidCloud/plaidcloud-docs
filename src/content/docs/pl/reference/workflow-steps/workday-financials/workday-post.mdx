@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry (krok)"
+description: Księguj zapisy dziennika w Workday Financials na podstawie tabel nagłówków i wierszy przez operację SOAP Submit_Accounting_Journal, z trybem podglądu, który weryfikuje każdy zapis, zanim cokolwiek zostanie zaksięgowane.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje zapisy dziennika w Workday Financials przez [połączenie Workday Financials](/pl/guides/connections/workday-financials/), za pośrednictwem współdzielonego potoku zapisu ERP PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na zapis dziennika) i tabelę wierszy (jeden lub więcej wierszy debetowych/kredytowych na zapis) i wywołuje operację SOAP Workday `Submit_Accounting_Journal` dla każdego zapisu. **Validate Only** buduje i sprawdza każdy zapis bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników rejestruje wynik każdego zapisu.
+
+<Aside type="caution">
+Uruchamiaj każdą partię najpierw w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowanych pozycji bezpośrednio w Workday, zanim zaczniesz polegać na tym kroku przy księgowaniu zapisów na żywo bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **Połączenie Workday** — połączenie Workday Financials, przez które odbywa się księgowanie.
+
+### Dane
+
+- **Tabela nagłówka** — jeden wiersz na zapis dziennika: `journal_id` (identyfikator Twojego zapisu, wymagany), `company` (wymagana), `ledger` (wymagana), `accounting_date`, `memo`.
+- **Tabela wierszy** — jeden lub więcej wierszy na `journal_id`: `ledger_account`, `debit`, `credit` oraz wszelkie kolumny worktag (centrum kosztów, projekt) wymagane przez Twoje dzienniki.
+- **Tabela wyników** — identyfikator tabeli wyjściowej: jeden wiersz na zapis z polami `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — domyślnie zaznaczone. Tylko kontrola wstępna; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, która w ogóle pomija to pole — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Validate Only zamiast księgowania na żywo.
+- **Continue On Error** — domyślnie zaznaczone. Kontynuuje księgowanie pozostałych zapisów po niepowodzeniu jednego; odznaczone zatrzymuje partię przy pierwszym niepowodzeniu.
+
+## Jak działa księgowanie
+
+PlaidCloud wywołuje `Submit_Accounting_Journal` dla każdego zapisu i odpytuje status jego procesu biznesowego Workday, aż osiągnie stan końcowy — uwzględniając proces biznesowy Submit Accounting Journal, który przechodzi przez kroki zatwierdzania, zanim zapis zostanie faktycznie zaksięgowany. Zapis jest zgłaszany jako `posted` dopiero wtedy, gdy ten stan końcowy zostanie **potwierdzony** — zapis, który został przesłany, ale utknął w oczekiwaniu na zatwierdzenie, pozostaje w kwarantannie (nie jest zgłaszany jako zaksięgowany ani po cichu odrzucany), zamiast być odnotowany jako sukces tylko dlatego, że samo przesłanie zostało przyjęte.
+
+## Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego dziennika. Aby go skorygować, zaksięguj nowy zapis ze zamienionymi debetami i kredytami względem oryginału — zaksięgowany zapis odwracający — zamiast edytować oryginał w miejscu.
+
+## Ograniczenia możliwości
+
+| Ograniczenie | Co to oznacza |
+|---|---|| Zatwierdzanie w procesie biznesowym zwiększa opóźnienie | Zapis przekazany przez krok zatwierdzania pozostaje `pending` do czasu zatwierdzenia w Workday; odpytywanie stanu końcowego na to czeka. |
+| Odwrócenie to nowy zapis, a nie edycja w miejscu | Korekty księgują nowy zapis odwracający z zamienionymi debetami i kredytami. Nie ma unieważnienia ani usunięcia już zaksięgowanego zapisu. |
+
+## Powiązane
+
+- [Connect to Workday Financials](/pl/guides/connections/workday-financials/) — pełny przewodnik obejmujący konfigurację, podgląd i księgowanie
+- [Konektor Workday Financials](/pl/reference/connectors/rest/workday-financials/)
+- [Kroki Workday Financials](/pl/reference/workflow-steps/workday-financials/)
+- [Review ERP Post History](/pl/guides/connections/erp-post-history/)

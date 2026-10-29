@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry
+description: Lance um ou mais lançamentos contábeis no NetSuite a partir de tabelas de cabeçalho e de linhas do PlaidCloud, com um modo de pré-visualização que valida cada lançamento antes de qualquer envio.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos contábeis no NetSuite por meio da sua [conexão do NetSuite](/pt-br/guides/connections/netsuite/). A etapa recebe duas tabelas de origem, uma tabela de cabeçalho com uma linha por lançamento contábil e uma tabela de linhas com uma ou mais linhas de débito/crédito por lançamento, agrupa as linhas por lançamento contábil e lança cada lançamento no NetSuite. O **Test Only Mode** monta e verifica todos os lançamentos sem fazer nenhuma chamada ao NetSuite, e uma tabela de resultado opcional registra o desfecho de cada lançamento.
+
+<Aside type="caution">
+Execute cada lote primeiro no **Test Only Mode**, revise a tabela de resultado e concilie alguns lançamentos diretamente no NetSuite antes de confiar que esta etapa lance lançamentos reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Conexão
+
+- **Conexão do NetSuite**: a conexão do NetSuite pela qual lançar, filtrada para conexões do tipo NetSuite.
+- **Ambiente**: o ambiente da conexão.
+
+As conexões do NetSuite são gerenciadas em **Tools > Connections**; consulte [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/).
+
+### Dados
+
+- **Tabela de cabeçalho do lançamento contábil**: uma linha por lançamento contábil.
+- **Tabela de linhas do lançamento contábil**: uma ou mais linhas de débito/crédito por lançamento contábil, vinculadas à sua linha de cabeçalho pelo ID do lançamento contábil.
+- **Test Only Mode**: marcado por padrão. Valida cada lançamento contábil de acordo com as verificações abaixo, mas não faz nenhuma chamada ao NetSuite; nada é lançado. Desmarque para lançar de verdade. Uma configuração de etapa que omita este campo por completo, por exemplo uma criada pela API REST, pelo MCP ou pela importação de um pacote de fluxo de trabalho, também usa o Test Only Mode por padrão, em vez de um lançamento real.
+- **Continue posting remaining entries if one entry fails**: marcado por padrão. Quando um lançamento falha em uma verificação ou no próprio envio, o PlaidCloud registra um erro para esse lançamento e segue para o restante do lote, em vez de interrompê-lo.
+- **Submit Asynchronously**: desativado por padrão. Envia cada lançamento com o cabeçalho assíncrono `Prefer: respond-async` do NetSuite, em vez do caminho síncrono de criar e depois reler. O NetSuite enfileira o job e o PlaidCloud registra o lançamento como `pending` com uma referência de envio, em vez de esperar que ele seja resolvido. Esta é uma escolha por conexão: use a mesma configuração em toda execução contra uma determinada conexão, sem misturar. **No momento, nada resolve automaticamente um lançamento pendente; reexecutar esta etapa é o que o resolve**, consultando o lançamento e registrando seu desfecho agora definitivo. Se você ativar esta opção, planeje reexecutar a etapa (ou verificar o NetSuite diretamente) em vez de tratar uma linha `pending` como concluída.
+- **Tabela de resultado do lançamento**: opcional. Se definida, o PlaidCloud a grava (ou sobrescreve) com uma linha por lançamento contábil; consulte [Colunas da tabela de resultado](#colunas-da-tabela-de-resultado).
+
+### Mapa de cabeçalho / Filtros de cabeçalho
+
+Mapeie as colunas da tabela de cabeçalho para os campos de lançamento contábil abaixo e, se quiser, filtre quais linhas de cabeçalho são lançadas, usando as [guias padrão de mapeamento de dados e filtros](/pt-br/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Campo | Obrigatório | Observações |
+|---|---|---|
+| ID do lançamento contábil | Sim | Vincula uma linha de cabeçalho às suas linhas. Uma linha por ID de lançamento contábil exclusivo. |
+| Subsidiária | Sim | ID interno da subsidiária do NetSuite. |
+| Data de lançamento | Sim | A data da transação do lançamento. |
+| Moeda | Não | ID interno da moeda do NetSuite. |
+| Memorando | Não | Memorando no nível do lançamento. |
+| ID externo | Não | Substitui o ID externo determinístico que o PlaidCloud gera para o lançamento; consulte [Relançamento e lançamentos duplicados](#relançamento-e-lançamentos-duplicados). |
+
+### Mapa de linhas / Filtros de linhas
+
+Mapeie as colunas da tabela de linhas e, se quiser, filtre quais linhas são lançadas.
+
+| Campo | Obrigatório | Observações |
+|---|---|---|
+| ID do lançamento contábil | Sim | Corresponde ao ID do lançamento contábil de uma linha de cabeçalho. |
+| Conta | Sim | ID interno da conta do razão geral do NetSuite. |
+| Débito | Sim | O valor do débito; 0 para uma linha somente de crédito. |
+| Crédito | Sim | O valor do crédito; 0 para uma linha somente de débito. |
+| Memorando | Não | Memorando no nível da linha. |
+| Departamento | Não | ID interno do departamento do NetSuite. |
+| Classe | Não | ID interno da classe do NetSuite. |
+| Local | Não | ID interno do local do NetSuite. |
+| Entidade | Não | ID interno da entidade (cliente ou fornecedor) do NetSuite. |
+
+## Como funciona o lançamento
+
+O PlaidCloud agrupa a tabela de linhas pelo ID do lançamento contábil e monta um lançamento contábil do NetSuite para cada linha de cabeçalho. Antes de lançar cada lançamento (ou, no Test Only Mode, antes de registrá-lo como validado), o PlaidCloud verifica se:
+
+- o lançamento tem pelo menos uma linha
+- seus débitos e créditos fecham ao centavo
+- toda linha tem uma Conta
+- a linha de cabeçalho tem uma Subsidiária
+- a Data de lançamento é uma data válida
+
+Qualquer verificação que falhe registra uma linha de erro para esse lançamento e, a menos que **Continue posting remaining entries** esteja desativado, segue para o próximo lançamento do lote.
+
+### Relançamento e lançamentos duplicados
+
+Cada lançamento é enviado com um ID externo determinístico, montado a partir do projeto, da conexão, do ID do lançamento contábil, da Data de lançamento e dos valores das linhas. Relançar um lançamento cujas linhas não mudaram reutiliza o mesmo ID externo, e o tratamento de ID externo do próprio NetSuite impede a criação de um lançamento contábil duplicado. Se você alterar qualquer linha de um lançamento (um valor diferente, uma linha adicionada ou removida), o PlaidCloud calcula um novo ID externo para ele, que o NetSuite aceita como um novo lançamento, e não como uma atualização do antigo. Defina um valor na coluna ID externo da tabela de cabeçalho para controlar o ID por conta própria.
+
+<Aside type="caution">
+O relançamento só elimina duplicidade de um lançamento que o NetSuite considera idêntico a um que ele já tem. Editar as linhas de um lançamento e reexecutar a etapa não atualiza o lançamento original no NetSuite: cria um segundo lançamento. Corrija um lançamento já lançado diretamente no NetSuite, e não reexecutando esta etapa com dados alterados.
+</Aside>
+
+### Colunas da tabela de resultado
+
+| Coluna | Descrição |
+|---|---|
+| journal_id | O ID do lançamento contábil da tabela de cabeçalho. |
+| external_id | O ID externo usado nesta tentativa de lançamento. |
+| internal_id | O ID interno do NetSuite para o lançamento contábil criado, ou a referência de envio assíncrono enquanto estiver `pending`. Em branco no Test Only Mode e em caso de erro. |
+| status | `validated` (Test Only Mode), `posted`, `pending` (o Submit Asynchronously aceitou o lançamento, mas o NetSuite ainda não o confirmou) ou `error`. |
+| message | Detalhe do erro em `error`; em `pending`, uma observação de que reexecutar a etapa o resolve. Em branco em `posted`/`validated`. |
+
+## Relacionados
+
+- [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/)
+- [Lançar um lançamento contábil no NetSuite](/pt-br/guides/connections/post-netsuite-journal-entries/): passo a passo completo, com configuração, pré-visualização e lançamento
+- [Conector REST do NetSuite](/pt-br/reference/connectors/rest/netsuite/)
+- [Etapas do NetSuite](/pt-br/reference/workflow-steps/netsuite/)

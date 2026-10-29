@@ -1,0 +1,135 @@
+---
+title: 导入 Excel
+description: 以工作流步骤的形式将 Excel 电子表格文件导入 PlaidCloud，支持工作表选择、区域和数据类型映射等选项。
+sidebar:
+  order: 3
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/import/import-excel.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import SnippetNoExamples from '@snippets/zh-cn/no-examples.mdx';
+import SnippetCommonImportFileSourceTargetSelection from '@snippets/zh-cn/common-import-file-source-target-selection.mdx';
+import SnippetCommonRemoveNonAscii from '@snippets/zh-cn/common-remove-non-ascii.mdx';
+import SnippetCommonDeleteFilesAfterImport from '@snippets/zh-cn/common-delete-files-after-import.mdx';
+import SnippetCommonSkipIfUnchanged from '@snippets/zh-cn/common-skip-if-unchanged.mdx';
+import SnippetCommonDataMapper from '@snippets/zh-cn/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/zh-cn/common-data-filter.mdx';
+
+## 说明
+
+从 PlaidCloud 文档中导入 Microsoft Excel 文件的指定工作表。Analyze 同时支持旧版 Excel 格式（XP/2003）和新格式（2007/2010/2013），包括但不限于以下文件类型：
+
+* XLS
+* XLSX
+* XLSB
+* XLSM
+
+二进制工作簿（XLSB）、旧版 XLS 和 ODS 文件导入工作表和单元格区域的方式与 XLSX 相同。
+
+Excel 导入通过临时存储以流式方式处理，而不是将整个工作簿加载到内存中，因此导入超大文件也不会耗尽内存。源数据类型（小数、日期和时间戳）会保留在目标表中，而不是以文本形式传递。
+
+## 示例
+
+<SnippetNoExamples />
+
+---
+
+## 导入参数
+
+<SnippetCommonImportFileSourceTargetSelection />
+
+<SnippetCommonRemoveNonAscii />
+
+<SnippetCommonDeleteFilesAfterImport />
+
+<SnippetCommonSkipIfUnchanged />
+
+### 标题行
+
+由于 Excel 文件可能包含也可能不包含标题行，PlaidCloud 提供了三种方式：使用标题行、忽略标题行，或使用列顺序来确定列的对齐方式。
+* **无标题行**：文件不包含标题行。使用*数据映射器*中的源列表来确定列的对齐方式
+* **有标题行 - 使用标题行并覆盖字段列表**：文件有标题行。使用指定的标题名称，并忽略*数据映射器*中的源列表。
+* **有标题行 - 跳过标题行并改用字段列表**：文件有标题行，但应忽略。使用*数据映射器*中源列表指定的标题名称。
+
+标题单元格中开头和结尾的空格及换行符会从列名中去除。
+
+### 行选择
+
+对于含有多余记录的输入文件，可以指定在处理数据之前要跳过的行数。如果文件中包含必须先跳过才能到达表格数据的标题块，这一设置会很有用。
+
+选择**Keep Empty Text Cells As Empty String**，可将空文本单元格加载为空字符串而不是 NULL。
+
+**更多 Excel 选项**包含以下字段：
+
+* **排除工作表隐藏的行**（`skip_hidden_rows`）——不导入工作表隐藏的行。
+* **将公式错误单元格作为错误文本（#DIV/0!）导入，而不是留空**（`keep_error_cells`）——公式错误单元格会导入为其错误文本（例如 `#DIV/0!`），而不是留空。
+* **有效位数**（`significant_digits`）——将每个小数四舍五入到此有效位数。Excel 保留 15 位。
+* **工作表位置**（`sheet_index`）——导入工作簿中此位置（从 0 开始）的工作表，以取代按名称选择的工作表。
+
+在**要导入的工作表**中，选择**导入第一个包含数据的工作表**（`sheet_first_with_data`），可导入第一个包含数据的工作表，并跳过它之前的空工作表。如果没有任何工作表包含数据，则读取工作簿的第一个工作表。
+
+### 工作簿
+
+**工作簿密码变量**用于打开受密码保护的工作簿。请输入保存密码的工作流变量或项目变量（例如 `{xlsx_password}`），而不是密码本身：保存时，如果步骤的密码字段中不是变量引用，就会被拒绝，因此密码不会出现在步骤、步骤版本或副本中。在此规则出台之前保存过键入密码的步骤，其密码已被自动移入新的项目变量（仅架构师可见），步骤现在引用该变量。
+
+### 读取内容
+
+导入中的每个条目会选择一个工作表、一个由工作簿定义的命名区域或一个特定的单元格区域——三者地位平等，一次导入可以在多个条目中混合使用。
+
+* **工作表**：按名称选择并读取整个工作表。
+* **命名区域**：读取工作簿自身为其定义了名称的区域。命名区域与工作表一起列在选择器中（见下文*在所选文件中查找工作表*），因此选择方式与选择工作表相同。
+* **单元格区域**：读取不依附于工作表或工作簿名称的特定矩形区域。选择该区域所在的工作表，然后在 `$` 之后输入区域。支持三种形式：
+  * `Sheet1$A1:J100`——有界区域。
+  * `Sheet1$A1:J`——开放式；从 `A1` 开始，向下读取 A 到 J 列直至最后一行。
+  * `Sheet1$A:BJ`——整列；读取工作表的 A 到 BJ 列，这是 Alteryx 为 Excel 输入写出的形式。
+
+命名区域从 XLSX 和 XLSM 工作簿中读取。XLSB、XLS 和 ODS 工作簿提供工作表和单元格区域。
+
+<Aside type="caution">如果命名区域指向多个不相连的区域，或单元格区域超出工作表范围或方向颠倒（例如结束单元格位于起始单元格的上方或左侧），将报错并被拒绝，而不会导入——因此导入绝不会悄悄读取错误的单元格。</Aside>
+
+#### 要导入的工作表
+
+由于工作簿可能包含许多数据各异的工作表，因此可以选择在当前导入过程中导入哪些工作表。选项如下：
+
+* 所有工作表
+* 匹配搜索的工作表
+* 所选工作表
+
+#### 使用工作表搜索
+
+工作表搜索功能可纳入符合搜索条件的工作表。搜索条件包括：
+* **开头为**：工作表名称以搜索文本开头
+* **包含**：工作表名称包含搜索文本
+* **结尾为**：工作表名称以搜索文本结尾
+
+#### 在所选文件中查找工作表
+
+“查找工作表”按钮会打开 Excel 文件，并在表格中列出可用的工作表和命名区域。勾选表格中要纳入导入的工作表和/或命名区域。`.zip` 文件内的工作簿同样适用：其工作表和命名区域也会被列出。
+
+<Aside>填充*数据映射器*时，将使用列表中找到的第一个工作表、命名区域或单元格区域。请确保导入步骤中包含的所有内容格式相似。</Aside>
+
+#### 工作表映射
+
+**工作表映射**可为每个工作簿读取不同的工作表集合。请选择一个**工作表映射表**，其中每行对应一个要读取的工作表，由其**工作簿列**保存工作簿的路径或文件名，由其**工作表列**保存工作表。设置工作表映射后，只读取该表中列出的工作簿，每个工作簿只读取其对应的工作表，并按表中的行顺序读取。工作表留空则读取该工作簿的第一个工作表。
+
+#### 不含所选工作表的文件
+
+当导入读取多个文件时，如果某个文件不包含所选的工作表，或没有与您的工作表搜索相匹配的工作表，则该文件会被跳过。步骤完成时会给出警告，指明被跳过的文件并列出该文件实际包含的工作表，其他文件仍会正常导入。如果所有文件都被跳过，步骤仍然成功，目标表保持为空，并给出警告说明原因。工作表名称必须完全匹配，包括大小写。
+
+即使开启了*导入后删除文件*，被跳过的文件也会保留在文件夹中，并在每次运行时再次发出警告，直到您删除或修复它。多文件导入的警告会显示在步骤上：最多列出五条，其余只显示数量。
+
+<Aside>多工作表导入中的空工作表会从该工作表加载零行——不会导致导入失败。</Aside>
+
+## 表数据选择
+
+<SnippetCommonDataMapper />
+
+### 一个源列对应多个目标列
+
+一个源列可以为多个目标列提供数据。在两个或更多目标行上映射同一个源列，每行有各自的名称、类型或表达式。例如，将 `Amount` 先读取为文本列，再读取为数值列，或者用同一单元格构建两个文本列。数值目标列不再在您的表达式运行之前转换源数据，因此表达式可以先清理类似 `1,500` 的值。
+
+除导入 CSV 外，所有使用数据映射器的文件导入都以相同方式工作：导入 Excel、固定宽度、JSON、Avro、Parquet、DBF、XML 和 YXDB。
+
+## 数据筛选器
+
+<SnippetCommonDataFilter />

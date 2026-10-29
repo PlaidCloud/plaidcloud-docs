@@ -1,0 +1,251 @@
+---
+title: GoogleまたはMapboxのジオコーディングからの移行
+description: Google Geocoding API または Mapbox Geocoding の連携を PlaidCloud の REST ジオコーディングエンドポイントへ移行します。エンドポイントの対応、レスポンスエンベロープ、location_type の対応、認証、レート制限、カバレッジの限界を説明します。
+sidebar:
+  label: ジオコーディングAPI
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/geocoding-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud は、フォワードジオコーディング、構造化ジオコーディング、リバースジオコーディング、オートコンプリート、場所の検索を、`/rest/v1/analyze/geocode` 配下の REST エンドポイントとして提供しています。これらは PlaidCloud のジオコーディングサービスにリクエストを中継します。このサービスは、信頼できるオープンな建物単位の住所データと行政区域データ（ODbL ライセンスの OpenStreetMap を含む）から構築されています。すべての結果は小さな `plaidcloud` エンベロープで包まれるため、呼び出し側はサービス内部のフィールドを直接解析しなくても、一致の精度を判断できます。
+
+このガイドは、既存の Google Geocoding API または Mapbox Geocoding の連携を PlaidCloud へ移行する方を対象としています。リクエストの形式が近い部分と、そうでない部分を説明します。
+
+<Aside type="caution" title="移行前にお読みください">
+PlaidCloud のジオコーダーは、ライセンスされた商用データセットではなく、オープンな地理空間データ（OpenStreetMap（ODbL）を含む、信頼できる建物単位の住所および行政区域のデータソース）から構築されています。Google や Mapbox のすべてのユースケースをそのまま置き換えられるわけではありません。住所の正確性が重要な用途に採用する前に、[カバレッジと決定性](#カバレッジと決定性--最初にお読みください)をご確認ください。
+</Aside>
+
+## 認証と利用権限
+
+すべてのジオコーディング呼び出しには、次のものが必要です。
+
+- **`analyze.table.read`** ロールを持つ通常の PlaidCloud セッションまたはベアラートークン。このロールは、プロジェクトのデータに対するその他の読み取りアクセスを制御するロールと同じものです。ジオコーディング専用のロールはありません。
+- プランにジオコーディングが含まれていること。つまり、テナントでジオコーディングの利用権限が有効になっている必要があります。プランに含まれていないテナントでは、すべての呼び出しが `403` になります。
+
+## レート制限
+
+ジオコーディングのエンドポイントには、PlaidCloud の既定の REST レート制限より高い上限が設定されています。呼び出し元 IP ごとに **1分あたり1,200リクエスト** で、他のほとんどの `/rest/v1` エンドポイントの1分あたり600リクエストよりも大きな値です。上限を超えると、`Retry-After: 60` ヘッダー付きで `429` が返されます。
+
+ジオコーディングサービスの前段にリクエスト単位のキャッシュはなく、すべての呼び出しにリアルタイムで応答します。同じクエリを繰り返す場合は、呼び出し側で結果をキャッシュしてください。
+
+## エンドポイントの対応
+
+| 現在の呼び出し | PlaidCloud のエンドポイント | 備考 |
+|---|---|---|
+| Google Geocoding API（住所 → 座標） | `GET /rest/v1/analyze/geocode/search` | 自由形式のクエリ |
+| Google Geocoding API（構造化コンポーネント） | `GET /rest/v1/analyze/geocode/search/structured` | フィールドごと |
+| Google Reverse Geocoding | `GET /rest/v1/analyze/geocode/reverse` | 座標から場所 |
+| Google Places Autocomplete | `GET /rest/v1/analyze/geocode/autocomplete` | 入力補完。エラーを返さず、空の結果に縮退します。[オートコンプリートはエラーにならず縮退する](#オートコンプリートはエラーにならず縮退する)を参照してください |
+| Google Place Details（`place_id` の検索） | `GET /rest/v1/analyze/geocode/place/{gid}` | `gid` は `place_id` のような永続的な識別子では**ありません**。[カバレッジと決定性](#カバレッジと決定性--最初にお読みください)を参照してください |
+| Mapbox Geocoding API（フォワード） | `GET /rest/v1/analyze/geocode/search` または `/search/structured` | |
+| Mapbox Geocoding API（リバース） | `GET /rest/v1/analyze/geocode/reverse` | |
+
+### `search` — 自由形式のフォワードジオコーディング
+
+| クエリパラメーター | 型 | 備考 |
+|---|---|---|
+| `text` | 文字列、必須 | 1～300文字 |
+| `focus.point.lat`, `focus.point.lon` | 浮動小数点数 | ランキングを緩やかに偏らせるもので、フィルターではありません |
+| `boundary.country` | 文字列 | 厳密なフィルター。ISO alpha-2 の国コードをカンマ区切りで指定します（最大300文字） |
+| `layers` | 文字列 | 対象を絞り込むジオコーディングレイヤーをカンマ区切りで指定します（最大300文字） |
+| `size` | 整数 | 1～40、デフォルトは10 |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&size=5
+```
+
+### `search/structured` — フィールドごとのフォワードジオコーディング
+
+| クエリパラメーター | 型 | 備考 |
+|---|---|---|
+| `address` | 文字列 | 番地 + 通り |
+| `neighbourhood`, `borough`, `county` | 文字列 | |
+| `locality` | 文字列 | 市区町村 |
+| `region` | 文字列 | 州または都道府県 |
+| `postalcode` | 文字列 | |
+| `country` | 文字列 | ISO alpha-2/3 または国名 |
+| `size` | 整数 | 1～40、デフォルトは10 |
+
+上記のフィールドはすべて省略可能で、それぞれ300文字までです。わかっているものだけを指定すれば、すべてを揃える必要はありません。
+
+```
+GET /rest/v1/analyze/geocode/search/structured?address=350+5th+Ave&locality=New+York&region=NY&country=US
+```
+
+### `reverse` — 座標から最寄りの場所
+
+| クエリパラメーター | 型 | 備考 |
+|---|---|---|
+| `point.lat` | 浮動小数点数、必須 | -90～90 |
+| `point.lon` | 浮動小数点数、必須 | -180～180 |
+| `size` | 整数 | 1～40、デフォルトは1 |
+| `layers` | 文字列 | ジオコーディングレイヤーをカンマ区切りで指定します（最大300文字） |
+
+```
+GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
+```
+
+### `autocomplete` — 入力補完
+
+| クエリパラメーター | 型 | 備考 |
+|---|---|---|
+| `text` | 文字列、必須 | 1～300文字、部分的なクエリ |
+| `focus.point.lat`, `focus.point.lon` | 浮動小数点数 | ランキングを緩やかに偏らせます |
+| `layers` | 文字列 | ジオコーディングレイヤーをカンマ区切りで指定します（最大300文字） |
+
+```
+GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
+```
+
+### `place/{gid}` — 場所レコードの解決
+
+| パスパラメーター | 型 | 備考 |
+|---|---|---|
+| `gid` | 文字列、必須 | 1～300文字。ジオコーディングサービスのグローバル ID で、以前の結果の `properties.gid` から取得します |
+
+```
+GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
+```
+
+## `plaidcloud` レスポンスエンベロープ
+
+すべてのエンドポイントは、ジオコーディングサービスの GeoJSON `FeatureCollection` をそのまま返し、**各フィーチャー**に `plaidcloud` オブジェクトを1つ追加します。
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+      "properties": {
+        "gid": "openstreetmap:venue:node/61785451",
+        "layer": "venue",
+        "name": "Empire State Building",
+        "confidence": 0.94,
+        "accuracy": "point",
+        "label": "Empire State Building, New York, NY, USA"
+      },
+      "plaidcloud": {
+        "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+        "location_type": "geometric_center",
+        "confidence": 0.94,
+        "match_type": "exact"
+      }
+    }
+  ]
+}
+```
+
+`plaidcloud` 内のフィールドは次のとおりです。
+
+| フィールド | 型 | 備考 |
+|---|---|---|
+| `attribution` | 文字列 | 固定の OSM ODbL 帰属表示の文字列。下記の[帰属表示は必須です](#帰属表示は必須です)を参照してください |
+| `location_type` | 文字列 | [`location_type` と Google の分類との対応](#location_type-と-google-の分類との対応)を参照してください |
+| `confidence` | 浮動小数点数または `null` | ジオコーディングサービス自身の信頼度スコアをそのまま渡したものです。PlaidCloud は再調整せず、スケールも文書化していません |
+| `match_type` | `"exact"` \| `"partial"` | **`search` のみ。** `confidence >= 0.9` の場合は `"exact"`、それ以外は `"partial"` です。`search/structured`、`reverse`、`autocomplete`、`place` のレスポンスには含まれません |
+| `geohash` | 文字列 | `location_codes=none` でない限り含まれます。下記の [`location_codes`](#location_codes--geohash-と-plus-code) を参照してください |
+| `plus_code` | 文字列 | `location_codes=geohash+pluscode` の場合のみ含まれます。下記の [`location_codes`](#location_codes--geohash-と-plus-code) を参照してください |
+
+**一致が0件のクエリはエラーではなく、`200` です。** ジオコーディングサービスがフィーチャーを1件も返さない場合、レスポンスには**空の `features` 配列**が含まれ、フィーチャーごとではなく**最上位**に `plaidcloud` オブジェクトが付きます。
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "none"
+  }
+}
+```
+
+### `location_type` と Google の分類との対応
+
+サービスの `layer` と `accuracy` のフィールドは、Google Geocoding 自身の `location_type` 列挙型に合わせた、4つの値の `location_type` にまとめられます。
+
+| PlaidCloud の `location_type` | 意味 | Google での最も近い値 |
+|---|---|---|
+| `rooftop` | 正確な地点を持つ住所レベルの一致 | `ROOFTOP` |
+| `interpolated` | 直接ジオコーディングされた地点ではなく、道路区間に沿った補間で一致した住所。**v1 では返されません**（住所範囲の補間はまだ有効になっていません） | `RANGE_INTERPOLATED` |
+| `geometric_center` | 施設や POI（建物、店舗）の中心点 | `GEOMETRIC_CENTER` |
+| `approximate` | それより粗いもの。市区町村、地域、国のレベル、または PlaidCloud が分類しないレイヤー | `APPROXIMATE` |
+| `none` | 一致するフィーチャーが0件 | *（Google には該当なし。Google は型付きの空の結果ではなく、結果をまったく返しません）* |
+
+これは意図的に粗い4つの値による対応であり、サービス自身のレイヤー分類の完全な複製ではありません。一致の精度をどの程度信頼してよいかを呼び出し側が判断するには十分ですが、精度を保証するものではありません。
+
+### `location_codes` — geohash と Plus Code
+
+すべてのエンドポイントは `location_codes` クエリパラメーターを受け付けます。これにより、生の座標だけでなく、計算可能なコンパクトな位置コードを各一致に付けて取得できます。
+
+| 値 | 意味 |
+|---|---|
+| `geohash` | **デフォルト。** 各フィーチャーの `plaidcloud` エンベロープに `geohash` を追加します。 |
+| `geohash+pluscode` | `geohash` と `plus_code` の両方を追加します。 |
+| `none` | 両方を省略します。エンベロープには `attribution`、`location_type`、`confidence`、および（`search` の場合）`match_type` のみが含まれます。 |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&location_codes=geohash+pluscode
+```
+
+どちらのコードも、フィーチャー自身の座標からローカルで計算されます。追加の検索や外部サービスは不要で、**geohash の精度は9**、**Plus Code の長さは10** です。これは、[ジオコードのワークフローステップ](/ja/guides/workflows/geospatial-analytics/#ロケーションコードによる拡張)がデフォルト設定で生成する値と一致するため、同じ座標のペアについて、REST で計算した値とワークフローステップで計算した値は一致します。
+
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+  "properties": { "gid": "openstreetmap:venue:node/61785451", "name": "Empire State Building" },
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "geometric_center",
+    "confidence": 0.94,
+    "match_type": "exact",
+    "geohash": "dr5rsjhzz",
+    "plus_code": "87G7PX7V+XX"
+  }
+}
+```
+
+`geohash` は geohash 文字列、`plus_code` は Open Location Code（Plus Code）です。クエリの一致が0件の場合、どちらも含まれません。空の結果の最上位にある `plaidcloud` オブジェクトには、`attribution` と `location_type: "none"` のみが含まれます。
+
+### 帰属表示は必須です
+
+この API の背後にあるジオコーディングデータとベースマップデータには、**Open Database License（ODbL）** でライセンスされた OpenStreetMap のデータが含まれています。ODbL では、データを利用する際に OpenStreetMap のクレジットを表記することが求められます。**ジオコーディングの結果をエンドユーザーに表示する場合（地図上、住所リスト内など、場所を問わず）は、結果と併せて `attribution` の文字列（または同等の OSM のクレジット）を表示する必要があります。** これはデータの利用者であるお客様に課されるライセンス上の義務であり、PlaidCloud のスタイル上の推奨事項ではありません。
+
+## エラー
+
+| ステータス | 意味 |
+|---|---|
+| `403` | `analyze.table.read` ロールがないか、プランにジオコーディングの利用権限が含まれていません |
+| `404` | `place/{gid}` でその ID のレコードが見つからなかったか、`reverse` でジオコーディングサービス自体が 404 を返す座標に当たりました |
+| `422` | クエリパラメーターの検証に失敗しました。たとえば `text` が300文字を超えている、`point.lat` が範囲外である場合です |
+| `429` | レート制限を超えました。[レート制限](#レート制限)を参照してください |
+| `503 geocoding_unavailable` | ジオコーディングサービスに接続できないか、タイムアウトしたか、エラーを返しました |
+
+ここでの `503` は、生の `5xx` になることも、際限なく待たされることも意図的にありません。プロキシはジオコーディングサービスへのすべての呼び出しに短い（数秒の）タイムアウトを適用するため、上流が遅い、またはハングしている場合でも、リクエストが開いたままになるのではなく、すぐに `503` として表面化します。
+
+### オートコンプリートはエラーにならず縮退する
+
+`autocomplete` は、上記の `503` の動作に対する唯一の例外です。キーストロークごとに呼び出されるため、上流で一時的な問題が発生した場合は、`503` ではなく**空の結果セットを伴う `200`** が返されます（実際に一致が0件のクエリと同じ形式で、`location_type: "none"` になります）。Google Places Autocomplete ではバックエンドの障害がエラーとして表面化し、クライアントコードがそれで分岐しますが、PlaidCloud のオートコンプリートでは、ステータスコードだけでは「候補なし」と区別できません。このエンドポイントではエラー経路に頼らず、どちらの場合も候補リストが空であることを前提に UI を構築してください。
+
+## カバレッジと決定性 — 最初にお読みください
+
+本番トラフィックをこの API に向ける前に、この API が何であるかを正しく理解しておいてください。
+
+- **ライセンスされた商用の住所データセットではなく、オープンな地理空間データから構築されています。** カバレッジの品質は、各地域がこれらのオープンなデータソースでどれだけカバーされているかに左右されます。一般に、北米、ヨーロッパ、その他の地図の整備が進んだ都市部では高く、それ以外の地域では一定しません。PlaidCloud は、国や地域ごとのカバレッジを保証していません。
+- **建物単位の精度は地域によって異なります。** オープンなデータソースに直接ジオコーディングされた地点がある場合は、本来の `rooftop` の結果が得られます。ない場合は、より粗い道路単位や市区町村単位の一致にフォールバックします。住所範囲の**補間**は v1 では有効になっていないため、推定した地点で隙間が埋められることはありません。そのため、カバレッジの高くない地域では `approximate` の結果が多くなります。
+- **集合住宅の部屋番号や区画レベルの詳細はありません。** 建物内の区画の情報は返されません。得られるのは、せいぜい建物単位または道路単位の精度です。
+- **深い行政区域の階層はありません。** Google の多階層の `address_components`（サブローカリティの階層、`administrative_area_level_1/2/3` など）に慣れている場合、ここでの内訳はより浅くなります。
+- **`gid` は永続的な識別子ではありません。** Google の `place_id` は、数か月後や数年後に保存して再解決できる、安定した長期的な参照です。ジオコーディングサービスの `gid` にはそのような保証がありません。セッション中や短期間のワークフロー内でのみ有効なものとして扱い、お客様自身のデータへの永続的な外部キーとして使用しないでください。
+- **結果が時間の経過に対して決定的であることは保証されません。** この API の背後にある OpenStreetMap やその他のオープンなデータソースは、クラウドソーシングによって継続的に編集されています。基になる地図データ自体が変わるため、同じクエリでも、今日と3か月後とで異なる結果、異なる `gid`、異なるランキングが返されることがあります。バージョン管理された商用データセットのように、バイト単位で再現可能なジオコーディング結果を移行計画の前提としている場合、この API はそれを提供しません。
+- **v1 ではレスポンスのキャッシュはありません。** すべての呼び出しは、現在のジオコーディングインデックスに対してリアルタイムで応答します。頼れる ETag やキャッシュ制御の仕組みはまだありません。
+
+これらは、この API が不向きであることを意味するものではありません。住所の正規化、地図表示、汎用的な位置情報の検索には適しています。永続的な場所の識別子、あらゆる場所での建物単位の精度の保証、時間をまたいだビット単位で再現可能な結果が必要な場合には、適していません。
+
+## 関連項目
+
+- [REST Requestステップ](/ja/guides/workflows/rest-request-step/) — ワークフローからこれらのエンドポイントを呼び出します
+- [汎用 REST 接続](/ja/reference/connectors/rest/generic-rest/) — ジオコーディングを保存済みの接続として構成する場合

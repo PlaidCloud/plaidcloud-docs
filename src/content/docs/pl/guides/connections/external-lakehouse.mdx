@@ -1,0 +1,229 @@
+---
+title: Użyj własnej hurtowni danych
+description: Samodzielnie połącz własną hurtownię danych Snowflake lub Databricks, przechowuj w niej tabele obszaru roboczego i uruchamiaj jego przepływy pracy, loguj się własną tożsamością w hurtowni, zarządzaj wieloma hurtowniami i sprawdzaj, ile kosztuje każde uruchomienie.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Tabele projektu zwykle znajdują się we wbudowanym PlaidCloud Lakehouse. Administrator obszaru roboczego może zamiast tego połączyć **własną hurtownię danych Snowflake lub Databricks** bezpośrednio z poziomu PlaidCloud, bez pomocy pracowników PlaidCloud. Przepływy pracy odczytują wtedy tabele projektu i zapisują je bezpośrednio w Twojej hurtowni. Dane pozostają na Twoim koncie, pod Twoim nadzorem i rozliczeniem, a PlaidCloud steruje przekształceniami, przepływami pracy i pulpitami opartymi na tych danych.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 190" role="img" aria-label="Projekt PlaidCloud uruchamia przepływy pracy, które odczytują i zapisują tabele bezpośrednio w własnym lakehouse klienta w Snowflake lub Databricks, gdzie pozostają dane." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="xl-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="66" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="90" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">projekt PlaidCloud</text>
+  <text x="91" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">przepływy pracy + pulpity</text>
+  <path d="M166 88 L262 88" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <text x="214" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">odczyt / zapis</text>
+  <rect x="264" y="60" width="180" height="70" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="354" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">połączenie</text>
+  <text x="354" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Snowflake lub Databricks</text>
+  <path d="M444 95 L540 95" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <rect x="514" y="60" width="150" height="70" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="88" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Twój lakehouse</text>
+  <text x="589" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dane zostają tutaj</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Tabele projektu znajdują się w Twojej hurtowni danych. PlaidCloud odczytuje je i zapisuje na miejscu, zamiast kopiować dane do własnego magazynu.</figcaption>
+</figure>
+
+## Połącz swoją hurtownię danych
+
+Tylko administrator obszaru roboczego może połączyć, zmienić lub usunąć hurtownię danych.
+
+1. Otwórz menu użytkownika i wybierz **Użyj własnej hurtowni danych**. Możesz też wybrać **Połącz** w wierszu **Użyj swojej hurtowni danych** na liście kontrolnej na stronie głównej albo wybrać **Użyj tego jako hurtowni danych** w oknie połączenia Snowflake lub Databricks.
+2. Wybierz **Snowflake** lub **Databricks**.
+3. Połącz na jeden z dwóch sposobów: **Sign in with Snowflake** lub **Sign in with Databricks** (najszybszy, opisany w sekcji [Logowanie przez Snowflake lub Databricks](#logowanie-przez-snowflake-lub-databricks)) albo uruchom skrypt konfiguracyjny i wklej dane uwierzytelniające, które wygeneruje (poniżej).
+
+### 1. Najpierw uruchom skrypt konfiguracyjny
+
+<Aside type="caution">Uruchom skrypt konfiguracyjny przed połączeniem. Do tego czasu sprawdzenie połączenia kończy się niepowodzeniem.</Aside>
+
+Okno tworzy skrypt konfiguracyjny na podstawie wybranych przez Ciebie nazw i aktualizuje go w trakcie wpisywania. Skopiuj go za pomocą **Kopiuj skrypt** i uruchom na własnym koncie. Skrypt nigdy nie zmienia Twoich istniejących hurtowni danych.
+
+| | Snowflake | Databricks |
+|---|---|---|
+| Uruchamiany jako | `ACCOUNTADMIN` | Administrator obszaru roboczego i metastore |
+| Tworzy | Hurtownię danych, która wstrzymuje działanie po 60 sekundach bezczynności, z miesięcznym limitem kredytów powiadamiającym przy 90 procentach i wstrzymującym działanie przy 100 procentach; bazę danych; rolę; użytkownika usługi | Service principal; SQL warehouse, który zatrzymuje się po bezczynności; katalog, o ile jeszcze nie istnieje |
+| Nazwy, które możesz zmienić | Warehouse, Size, Monthly credit cap, Database, Role, Service user | Service principal name, SQL warehouse name, Size, Stop after idle minutes, Catalog |
+| Wartości domyślne | `PLAIDCLOUD_WH` (`XSMALL`, 100 kredytów miesięcznie), `PLAIDCLOUD`, `PLAIDCLOUD_ROLE`, `PLAIDCLOUD_SVC` | `plaidcloud`, `PlaidCloud` (`2X-Small`, 10 minut bezczynności), katalog `plaidcloud` |
+| Uwierzytelnianie | Para kluczy (skrypt pokazuje, jak ją wygenerować) | Sekret OAuth dla service principal |
+
+Skrypt konfiguruje również następujące elementy.
+
+- **Dostęp sieciowy.** PlaidCloud łączy się z adresu `130.211.116.97/32`. Skrypt Snowflake tworzy politykę sieciową, która dla użytkownika usługi dopuszcza wyłącznie ten adres. W Databricks, jeśli Twój obszar roboczy już wymusza listy dostępu IP, skrypt zawiera instrukcję, która go dopuszcza. Dodaj ten adres do każdej polityki sieciowej lub listy dostępu IP chroniącej Twoje konto.
+- **Polityki są zachowywane.** W Snowflake rola otrzymuje uprawnienia do stosowania polityk i tagów dostępu do wierszy, maskowania, projekcji, agregacji i złączeń, dzięki czemu Twoje polityki pozostają w mocy, gdy PlaidCloud przebudowuje tabelę. W Databricks nadaj service principal uprawnienie `EXECUTE` do każdej używanej funkcji filtra wierszy lub maski kolumny.
+- **Koszty uruchomień.** Rola Snowflake otrzymuje rolę bazodanową `SNOWFLAKE.GOVERNANCE_VIEWER`, która pozwala PlaidCloud odczytać kredyty przypisane do każdego uruchomienia i obejmuje także [Ostatni odczyt](/pl/guides/projects/managing-tables-and-views/#ostatni-odczyt). Databricks otrzymuje dostęp do odczytu historii zapytań i rozmiarów hurtowni w katalogu `system`.
+- **Ostatni odczyt.** W Databricks skrypt nadaje też `USE SCHEMA` na `system.access` oraz `SELECT` na `system.access.table_lineage`, których potrzebują informacje o ostatnim odczycie tabeli. Zobacz [Koszt hurtowni danych na uruchomienie](#koszt-hurtowni-danych-na-uruchomienie).
+
+### 2. Połącz
+
+| Pole | Silnik | Co wprowadzić |
+|---|---|---|
+| Adres URL konta | Snowflake | Host Twojego konta, na przykład `myorg-myaccount.snowflakecomputing.com`. |
+| Klucz prywatny | Snowflake | Klucz prywatny użytkownika usługi (PEM). Para kluczy nigdy nie wygasa. |
+| Adres URL obszaru roboczego | Databricks | Host Twojego obszaru roboczego, na przykład `adb-1234567890123456.7.azuredatabricks.net`. |
+| Ścieżka HTTP SQL warehouse | Databricks | Na przykład `/sql/1.0/warehouses/abc123def456`. |
+| Identyfikator aplikacji | Databricks | Identyfikator aplikacji (klienta) service principal. |
+| Sekret OAuth | Databricks | Sekret OAuth service principal. PlaidCloud odnawia go za Ciebie. |
+
+W sekcji **Zaawansowane** możesz zamiast tego użyć programowego tokenu dostępu Snowflake lub osobistego tokenu dostępu Databricks. Tokeny wygasają: po tej dacie PlaidCloud przestaje mieć dostęp do Twojej hurtowni, dopóki nie dodasz nowego tokenu. Czternaście dni przed wygaśnięciem i po nim baner informuje o dacie i oferuje przycisk **Odnów**. Para kluczy lub sekret OAuth eliminuje problem wygasania.
+
+Adres musi być publicznym adresem URL Twojego konta, kończącym się na `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` lub `.gcp.databricks.com`. Prywatne i niestandardowe punkty końcowe nie są obsługiwane.
+
+### 3. Sprawdź, a następnie użyj
+
+- **Sprawdź połączenie** testuje adres, logowanie i każde uprawnienie potrzebne PlaidCloud, i niczego nie zapisuje.
+- **Użyj jako mojej hurtowni danych** wykonuje to samo sprawdzenie, dołącza hurtownię danych, ustawia ją jako domyślną i czeka, aż obszar roboczy się na nią przełączy. Zwykle trwa to kilka minut i możesz zamknąć okno. Nowe projekty w obszarze roboczym używają wtedy Twojej hurtowni danych.
+
+Sprawdzenie zakończone niepowodzeniem opisuje problem i sposób jego rozwiązania prostym językiem. Brakujące wymagane uprawnienia są wypisane jako gotowe do uruchomienia instrukcje `GRANT` z przyciskiem **Kopiuj**, przyciskiem **Kopiuj wszystko** i opcją **Pokaż skrypt konfiguracyjny**. **Kopiuj dla pomocy technicznej** kopiuje komunikat o błędzie samej hurtowni danych na potrzeby pomocy technicznej PlaidCloud.
+
+Sprawdzenie osobno wymienia też uprawnienia w sekcji **Zalecane — włącza „Ostatni odczyt”**, każde z przyciskiem **Kopiuj**. Pozwalają one, aby informacje o [ostatnim odczycie](/pl/guides/projects/managing-tables-and-views/#ostatni-odczyt) tabeli mogły odczytywać historię Twojej hurtowni danych. Nigdy nie uniemożliwiają korzystania z hurtowni danych: bez nich połączenie działa poprawnie, a Ostatni odczyt pokazuje **Read history incomplete**.
+
+- **Snowflake:** `GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE <role>;` (działa też `IMPORTED PRIVILEGES` na bazie danych `SNOWFLAKE`). Ostatni odczyt wymaga Access History, której nie ma w wersji Snowflake Standard.
+- **Databricks:** `USE CATALOG` na `system`, `USE SCHEMA` na `system.access` oraz `SELECT` na `system.access.table_lineage` dla service principal.
+
+| Co widzisz | Rozwiązanie |
+|---|---|
+| Użytkownik usługi nie może użyć obiektu | Nadaj jego roli uprawnienie do tego obiektu. Skrypt konfiguracyjny zawiera wszystkie uprawnienia. |
+| Twoja hurtownia danych jest wstrzymana lub nie istnieje | Sprawdź nazwę hurtowni danych i czy może uruchamiać się samodzielnie (`AUTO_RESUME` w Snowflake, działający SQL warehouse w Databricks). |
+| Twoja hurtownia danych wykorzystała limit kredytów | Zwiększ limit monitora zasobów lub budżet albo poczekaj na jego wyzerowanie. |
+| Polityka sieciowa blokuje PlaidCloud | Dopuść `130.211.116.97/32` w polityce, tak jak robi to skrypt konfiguracyjny. |
+| Token lub klucz wygasł albo przestał być ważny | Utwórz nowy token lub przejdź na parę kluczy. |
+| Unity Catalog odmówił dostępu service principal | Nadaj `USE CATALOG`, `CREATE SCHEMA` i `USE SCHEMA` na katalogu. |
+| PlaidCloud nie mógł się zalogować | Sprawdź użytkownika lub service principal oraz jego klucz, token lub sekret. |
+| PlaidCloud nie mógł połączyć się z Twoją hurtownią danych | Sprawdź adres URL i dopuść adres PlaidCloud w każdej polityce sieciowej lub liście dostępu IP. |
+| Prywatne lub niestandardowe punkty końcowe nie są obsługiwane | Użyj publicznego adresu URL swojego konta. |
+
+## Logowanie przez Snowflake lub Databricks
+
+Zamiast wklejać klucz, sekret lub token, administrator może dołączyć hurtownię danych, logując się. Każda osoba loguje się wtedy własną tożsamością Snowflake lub Databricks, więc pulpity i zapytania działają z jej własnymi uprawnieniami w Twojej hurtowni danych.
+
+### Co administrator konfiguruje najpierw
+
+Jednorazowo, na własnym koncie, administrator konta rejestruje PlaidCloud jako aplikację logowania. Okno **Użyj własnej hurtowni danych** pokazuje dokładny tekst do użycia, w tym adres URL przekierowania PlaidCloud.
+
+- **Snowflake.** Uruchom instrukcję `CREATE SECURITY INTEGRATION` pokazaną w oknie, a następnie skopiuj `OAUTH_CLIENT_ID` z wyniku instrukcji `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS`.
+- **Databricks.** W konsoli konta, w sekcji **Settings > App connections**, dodaj aplikację o nazwie `PlaidCloud`. Podaj adres URL przekierowania pokazany w oknie i dostęp do wszystkich API, pozostaw wyłączoną opcję **Generate a client secret** i skopiuj jej identyfikator klienta.
+
+### Dołącz hurtownię danych
+
+1. W sekcji **Quickest: sign in with Snowflake** (lub Databricks) wprowadź **Adres URL konta** (lub **Adres URL obszaru roboczego**) oraz **Identyfikator klienta**.
+2. W Snowflake wprowadź **Baza danych** i **Rola danych dla PlaidCloud**. Pole **Magazyn** jest opcjonalne i domyślnie przyjmuje Twoją wartość. W Databricks wprowadź **Ścieżka HTTP SQL warehouse**. Pole **Katalog** jest opcjonalne i domyślnie przyjmuje Twoją wartość.
+3. Wybierz **Sign in with Snowflake** lub **Sign in with Databricks**, zaloguj się na konto u dostawcy i zatwierdź.
+
+PlaidCloud tworzy na Twoim koncie własną tożsamość usługi, przeznaczoną wyłącznie dla tej hurtowni danych. Przepływy pracy, harmonogramy i wszystko inne, za czym nie stoi żadna osoba, działają jako ta tożsamość.
+
+- **Snowflake.** PlaidCloud tworzy nowego użytkownika usługi z parą kluczy, który ma wyłącznie wskazaną przez Ciebie rolę danych. Rola musi być zwykłą rolą danych. PlaidCloud odrzuca rolę, która jest tą, którą się logujesz, która jest rolą `ACCOUNTADMIN`, `SECURITYADMIN`, `USERADMIN`, `SYSADMIN` lub `ORGADMIN` albo je dziedziczy, która ma uprawnienia `CREATE USER`, `CREATE ROLE`, `MANAGE GRANTS`, `CREATE INTEGRATION` lub `CREATE NETWORK POLICY` albo jest właścicielem użytkownika. Rola może mieć uprawnienia `APPLY ROW ACCESS POLICY`, `APPLY MASKING POLICY`, `APPLY PROJECTION POLICY`, `APPLY AGGREGATION POLICY`, `APPLY JOIN POLICY` i `APPLY TAG` ze skryptu konfiguracyjnego, których potrzebują przebudowane tabele, aby zachować swoje polityki. PlaidCloud odmawia też ponownego użycia istniejącego użytkownika Snowflake. Rola, którą się logujesz, musi mieć możliwość tworzenia użytkowników i nadawania roli danych.
+- **Databricks.** PlaidCloud tworzy nowy service principal z dostępem wyłącznie do SQL warehouse i uprawnień do danych w katalogu. Zaloguj się jako administrator obszaru roboczego, aby PlaidCloud mógł go utworzyć.
+
+Jeśli brakuje Ci uprawnienia, którego potrzebuje tożsamość usługi, hurtownia danych nadal zostaje dołączona dla zalogowanych osób wraz z ostrzeżeniem wskazującym to uprawnienie, a uruchomienia przepływów pracy są odrzucane z tym samym powodem, dopóki administrator nie zaloguje się ponownie.
+
+### Każdy się loguje
+
+Gdy obszar roboczy ma hurtownię danych dostępną przez logowanie, każdy członek widzi w menu użytkownika opcję **Zaloguj się do swojej hurtowni**. Wybierz ją, a następnie **Sign in with Snowflake** lub **Sign in with Databricks**. PlaidCloud utrzymuje Twoje logowanie. Pulpit otwarty bez logowania lub po wygaśnięciu Twojego logowania pokazuje komunikat *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.* (lub *Databricks*). Zaloguj się ponownie z tej pozycji menu.
+
+Pulpit w takiej hurtowni danych działa z własnymi uprawnieniami przeglądającego w tej hurtowni. Przeglądający, który się nie zalogował, widzi komunikat: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
+
+## Zarządzanie hurtowniami danych
+
+Administrator obszaru roboczego otwiera menu użytkownika i wybiera **Zarządzaj hurtowniami danych**. Okno **Twoje hurtownie danych** wyświetla dla każdej hurtowni **Nazwa**, **Typ**, **Domyślny**, **Projekty** i **Stan**.
+
+| Przycisk | Co robi |
+|---|---|
+| **Dodaj warehouse** | Otwiera ten sam proces co łączenie, zatytułowany **Dodaj hurtownię danych**. Twoja hurtownia danych zostaje dodana, a domyślna dla nowych projektów nie zmienia się. |
+| **Ustaw jako domyślną** | Nowe projekty używają tej hurtowni danych. Projekty już utworzone pozostają przy hurtowni, na której zostały utworzone. |
+| **Usuń** | Odłącza hurtownię danych. Jest dostępny tylko wtedy, gdy hurtownia nie jest domyślna i żaden projekt jej nie używa. |
+
+<Aside type="note">Dodanie nowej hurtowni danych do Twojego obszaru roboczego może potrwać kilka minut. Każdy obszar roboczy działa w izolacji od pozostałych i samodzielnie pobiera zmiany konfiguracji, więc dopóki zmiana nie dotrze, hurtownia nie jest wymieniona, a projekty nie mogą jeszcze z niej korzystać. Jeśli po godzinie nadal się nie pojawi, skontaktuj się z pomocą techniczną PlaidCloud.</Aside>
+
+Po usunięciu hurtowni danych PlaidCloud unieważnia jej dane uwierzytelniające na Twoim koncie (w tym każde logowanie i tożsamość usługi) i usuwa swoją kopię. Twoje dane pozostają w Twojej hurtowni danych. Jeśli nie można unieważnić danych uwierzytelniających, PlaidCloud prosi o samodzielne ich unieważnienie na Twoim koncie.
+
+## Koszt hurtowni danych na uruchomienie
+
+W Twojej własnej hurtowni danych historia uruchomień przekonwertowanego przepływu pracy Alteryx pokazuje kolumnę **Koszt hurtowni danych**, a okno [Udowodnij poprawność migracji](/pl/guides/workflows/validate-converted-alteryx-workflows/#udowodnij-poprawność-migracji) pokazuje koszt ostatniego uruchomienia i oszacowanie kolejnego. Koszty są podawane w kredytach w Snowflake i w DBU w Databricks.
+
+| Etykieta | Znaczenie |
+|---|---|
+| *attributed* | Snowflake naliczył te kredyty zapytaniom uruchomienia, odczytane dzięki uprawnieniu `GOVERNANCE_VIEWER`. Przypisanie pojawia się po opóźnieniu raportowania Snowflake. |
+| *estimated* | Obliczone na podstawie czasu wykonania zapytań i rozmiaru hurtowni danych, pokazane z poprzedzającym symbolem ≈. W Databricks jest to zawsze ten przypadek, a w Snowflake dotyczy sytuacji przed nadejściem przypisania lub bez uprawnienia. |
+
+Koszt obejmuje kroki wykonane przez silnik PlaidCloud. Uruchomienie wycenione częściowo jest oznaczone jako *partial*, a uruchomienie, którego koszt nie został jeszcze zgłoszony, informuje o tym.
+
+## Twoje polityki i opisy są zachowywane
+
+Opisy schematów, tabel i kolumn ustawione w PlaidCloud są zapisywane jako komentarze we własnym katalogu Twojej hurtowni danych. Polityki dostępu do wierszy, maskowania, projekcji, agregacji i złączeń w Snowflake oraz filtry wierszy i maski kolumn w Databricks pozostają dołączone, gdy PlaidCloud zastępuje, odtwarza lub klonuje tabelę. Jeśli polityki nie można przenieść, PlaidCloud pozostawia tabelę bez zmian, a komunikat wskazuje politykę i powód.
+
+## Powiąż projekt ze swoją hurtownią danych
+
+Gdy do obszaru roboczego podłączono hurtownię danych, okno **Nowy projekt** (**Analyze > Projekty > Nowy projekt**) oferuje wybór lakehouse: wybierz **Domyślne dla tenanta** lub wskaż konkretną hurtownię danych. **Domyślne dla tenanta** oznacza wbudowany PlaidCloud Lakehouse, chyba że domyślną jest hurtownia danych — wtedy nowe projekty trafiają do niej automatycznie. Aby ustawić wartość domyślną, użyj **Użyj jako mojej hurtowni danych** lub **Ustaw jako domyślną** w sekcji [Zarządzanie hurtowniami danych](#zarządzanie-hurtowniami-danych). Dotyczy to tylko projektów tworzonych później; istniejące projekty zachowują backend, z którym zostały utworzone. Od tego momentu:
+
+- Każda tabela, którą przepływy pracy projektu tworzą, ładują lub przekształcają, jest tworzona i zapisywana w Twoim lakehouse.
+- Odczyty — w krokach, widokach i pulpitach — działają jako zapytania do Twojej hurtowni danych.
+- Nic nie jest kopiowane do PlaidCloud Lakehouse; dane pozostają na Twoim koncie.
+
+Twórz przepływy pracy dokładnie tak samo jak we wbudowanym lakehouse — kroki importu, przekształcania, złączania i publikowania działają tak samo. Backend jest ustawiany podczas tworzenia projektu i dotyczy całego projektu.
+
+## Import plików do projektu powiązanego z lakehouse
+
+Import pliku CSV, Parquet, XML lub Access do projektu powiązanego z lakehouse ładuje go przez **natywną, równoległą ścieżkę masowego ładowania** Twojej hurtowni danych: wewnętrzny obszar tymczasowy Snowflake plus `COPY INTO` dla Snowflake, zarządzany wolumen Databricks plus `COPY INTO` dla Databricks — zamiast pośredniego umieszczania pliku w zewnętrznym zasobniku w chmurze. Nie trzeba konfigurować dodatkowego IAM w chmurze, a całość działa tak samo niezależnie od tego, w jakiej chmurze działa Twoja hurtownia danych.
+
+## Eksport wyników zapytań i tabel
+
+Eksport wyników zapytań lub tabel z projektu powiązanego z lakehouse dostarcza je bezpośrednio do magazynu w chmurze, zamiast przesyłać każdy wiersz z powrotem przez PlaidCloud:
+
+- **Snowflake** — eksport działa jako zdejmowanie danych po stronie serwera Snowflake (`COPY INTO` do obszaru tymczasowego), więc hurtownia danych zapisuje wyniki bezpośrednio w magazynie. Duże eksporty są automatycznie dzielone na wiele plików (wcześniej eksport przekraczający limit pojedynczego pliku Snowflake kończył się niepowodzeniem).
+- **Databricks** — eksport działa jako zdejmowanie danych po stronie serwera Databricks (`INSERT OVERWRITE DIRECTORY` do zarządzanego wolumenu Unity Catalog), więc hurtownia danych sama zapisuje i koduje wyniki, a PlaidCloud jedynie przekazuje gotowe pliki do magazynu. Duże eksporty są automatycznie rozdzielane na wiele plików, a CSV może być dostarczany skompresowany gzip.
+
+## Pulpity oparte na danych lakehouse
+
+Pulpity działają na obu silnikach.
+
+- **Databricks** — pulpity łączą się przez sterownik Databricks, używając danych uwierzytelniających OAuth service principal (lub osobistego tokenu dostępu). W hurtowni danych dołączonej przez [logowanie](#logowanie-przez-snowflake-lub-databricks) pulpit każdego przeglądającego działa z jego własną tożsamością Databricks.
+- **Snowflake** — pulpity łączą się za pomocą użytkownika usługi hurtowni danych i pary kluczy. W hurtowni danych dołączonej przez [logowanie](#logowanie-przez-snowflake-lub-databricks) pulpit każdego przeglądającego działa zamiast tego z jego własną tożsamością Snowflake. Pulpit projektu jest konfigurowany podczas tworzenia lub publikowania projektu.
+
+## Zlecenie rejestracji hurtowni danych PlaidCloud
+
+Nie musisz łączyć hurtowni danych samodzielnie. Przekaż swojej osobie kontaktowej w PlaidCloud poniższe dane dla silnika, który łączysz, a administrator zarejestruje ją w Twoim imieniu.
+
+### Snowflake
+
+| Pole | Co podać |
+|---|---|
+| Nazwa hosta | Host Twojego konta Snowflake. |
+| Superużytkownik | Użytkownik Snowflake, jako którego uwierzytelnia się PlaidCloud. |
+| Baza danych | Baza danych, w której PlaidCloud tworzy schematy projektów i nimi zarządza. |
+| Magazyn | Hurtownia obliczeniowa, w której PlaidCloud uruchamia zapytania. |
+| Rola | Rola Snowflake, w której działa PlaidCloud. |
+| Klucz prywatny | **Surowy, niezaszyfrowany** klucz prywatny PEM do uwierzytelniania parą kluczy — wklej sam tekst klucza, a nie kopię zakodowaną w base64. Klucze chronione hasłem nie są jeszcze obsługiwane. |
+
+Wygeneruj parę kluczy i przypisz klucz publiczny superużytkownikowi Snowflake, zanim przekażesz klucz prywatny. Rola musi mieć możliwość tworzenia, odczytu i zapisu tabel w docelowej bazie danych.
+
+### Databricks
+
+| Pole | Co podać |
+|---|---|
+| Nazwa hosta | Adres URL Twojego obszaru roboczego Databricks. |
+| Ścieżka HTTP | Ścieżka HTTP SQL warehouse, w którym PlaidCloud uruchamia zapytania. |
+| Unity Catalog | Katalog Unity Catalog, w którym PlaidCloud tworzy schematy projektów i nimi zarządza. |
+| Osobisty token dostępu | Token PAT Databricks do uwierzytelniania. |
+
+Tożsamość tokenu musi mieć możliwość tworzenia, odczytu i zapisu tabel w tym katalogu.
+
+Żadna z rejestracji nie wymaga podania schematu — każdy projekt otrzymuje własny, wyznaczany automatycznie na podstawie jego DSN, gdy projekt wiąże się z lakehouse.
+
+Formularz rejestracji ma przycisk **Testuj połączenie**, który otwiera połączenie na żywo z wprowadzonymi danymi i zgłasza sukces lub przyczynę niepowodzenia, niczego nie zapisując — dzięki temu dane uwierzytelniające można zweryfikować przed zarejestrowaniem lakehouse. Test Snowflake wymaga surowego, niezaszyfrowanego klucza prywatnego PEM (klucz chroniony hasłem jest zgłaszany jako nieobsługiwany); test Databricks używa tokenu PAT.
+
+Zarejestrowana hurtownia danych nie nadaje się do użycia w chwili zapisania. Jej pojawienie się w obszarze roboczym może potrwać kilka minut, z tego samego powodu co w przypadku hurtowni danych dodawanej samodzielnie (zobacz **Zarządzanie hurtowniami danych**).
+
+<Aside type="note">Połączenie z katalogiem Iceberg/Lakekeeper jest rejestrowane osobno i jest opcjonalne — nie jest wymagane do korzystania z hurtowni danych Snowflake ani Databricks.</Aside>
+
+## Powiązane
+
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/)
+- [Dokumentacja referencyjna łącznika Snowflake](/pl/reference/connectors/databases/snowflake/)
+- [Dokumentacja referencyjna łącznika Azure Databricks](/pl/reference/connectors/databases/azure-databricks/)
+- [Jednokrotne logowanie dla Twojego obszaru roboczego](/pl/administration/control-plane/workspace-configuration/#logowanie-jednokrotne)
+- [Zarządzanie projektami](/pl/guides/projects/managing-projects/)

@@ -1,0 +1,129 @@
+---
+title: Dodawanie konta OneDrive / SharePoint
+description: Połącz Microsoft OneDrive for Business lub SharePoint z PlaidCloud Document, korzystając z dostępu o minimalnych uprawnieniach Sites.Selected albo z dostępu do całego tenanta.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Połącz lokalizację Microsoft **OneDrive for Business** lub **SharePoint** z PlaidCloud Document. Rejestrujesz aplikację Entra (Azure AD), wybierasz zakres dostępu do swojego tenanta, a PlaidCloud używa jej do odczytu i zapisu plików.
+
+## Wybór modelu dostępu
+
+Zdecyduj, do jakiej części tenanta Microsoft 365 aplikacja ma mieć dostęp. To najważniejszy wybór w całej konfiguracji.
+
+| Model | Uprawnienie aplikacji Graph | Do czego aplikacja ma dostęp | Kiedy wybrać |
+|---|---|---|---|
+| **Wybrane witryny** (zalecane) | `Sites.Selected` | Tylko do witryn, do których jawnie przyznasz dostęp | Którakolwiek witryna zawiera dane wrażliwe — płace, HR, finanse, dane zdrowotne |
+| **Wszystkie witryny** | `Sites.Read.All` (odczyt) lub `Sites.ReadWrite.All` (odczyt i zapis) | **Każda** witryna w tenancie | Żadna witryna nie jest wrażliwa i zależy Ci na najprostszej konfiguracji |
+
+**Większość organizacji powinna wybrać model Wybrane witryny.** Jeśli choć jedna witryna zawiera informacje wrażliwe, dostęp do całego tenanta je ujawnia. W przypadku `Sites.Selected` aplikacja nie ma dostępu do niczego, dopóki administrator nie przyzna go dla każdej wskazanej witryny, więc witryny, dla których nie przyznasz dostępu, pozostają całkowicie niedostępne.
+
+<Aside type="caution">
+**Nie** przyznawaj uprawnień `Directory.*`, `Files.*` ani `User.Read.All`. Konektor dokumentów nigdy ich nie potrzebuje, a w szczególności `Directory.ReadWrite.All` umożliwia odczyt i zapis w całym katalogu tożsamości. Wystarczy jedno uprawnienie `Sites.Selected` (albo jedno z `Sites.Read.All` / `Sites.ReadWrite.All`).
+</Aside>
+
+## Rejestracja aplikacji w Azure
+
+1. Zaloguj się do [portalu Azure](https://portal.azure.com) i przejdź do **Microsoft Entra ID** → **App registrations** → **+ New registration**.
+2. Wpisz nazwę (na przykład `PlaidCloud`).
+3. W polu **Supported account types** wybierz **Accounts in this organizational directory only** (jeden tenant — najczęstszy przypadek).
+4. Pozostaw pole **Redirect URI** puste i kliknij **Register**.
+5. Na stronie przeglądu skopiuj **Application (client) ID** (Twój **Identyfikator klienta**) oraz **Directory (tenant) ID** (Twój **ID tenanta**).
+6. Przejdź do **Certificates & secrets** → **+ New client secret**, ustaw opis i datę wygaśnięcia, kliknij **Add** i od razu skopiuj **Wartość** klucza tajnego — nie będzie ona wyświetlona ponownie.
+
+## Przyznanie uprawnienia API
+
+Dodaj dokładnie **jedno** uprawnienie **Application** Microsoft Graph, zgodne z wybranym modelem dostępu:
+
+- **Wybrane witryny:** `Sites.Selected`
+- **Wszystkie witryny:** `Sites.Read.All` (tylko odczyt) lub `Sites.ReadWrite.All` (odczyt i zapis)
+
+Kroki: **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → dodaj powyższe uprawnienie → **Grant admin consent**.
+
+<Aside type="note">
+Udzielenie zgody administratora wymaga roli **Global Administrator** lub **Privileged Role Administrator** — sam administrator SharePoint nie może wyrazić zgody na uprawnienie aplikacji.
+</Aside>
+
+Jeśli wybrano **Wszystkie witryny**, konfiguracja jest gotowa — przejdź do sekcji [Dodawanie konta w PlaidCloud](#dodawanie-konta-w-plaidcloud). Jeśli wybrano **Wybrane witryny**, w następnym kroku przyznaj aplikacji dostęp do poszczególnych witryn.
+
+## Przyznanie aplikacji dostępu do każdej witryny (model Wybrane witryny)
+
+`Sites.Selected` samo w sobie nie daje aplikacji żadnego dostępu — administrator SharePoint lub Global musi przyznać go dla każdej witryny, do której aplikacja ma mieć dostęp. W centrum administracyjnym nie ma do tego ekranu, więc używasz dwóch wywołań Microsoft Graph w narzędziu [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer). Ponieważ dostęp przyznajesz witrynom pojedynczo, witryny wrażliwe po prostu nigdy go nie otrzymują.
+
+**Jednorazowa konfiguracja.** W Graph Explorer, zalogowany jako administrator SharePoint/Global, otwórz kartę **Modify permissions** i kliknij **Consent** przy `Sites.FullControl.All` (ten zakres umożliwia ustawianie uprawnień witryn). Jeśli późniejsze zapytanie zwróci `accessDenied`, brakuje właśnie tej zgody — po jej udzieleniu wyloguj się i zaloguj ponownie, aby odświeżyć token.
+
+### Krok 1 — Znajdź identyfikator witryny
+
+Wyświetl witryny w swoim tenancie (metoda **GET**):
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+Albo pobierz pojedynczą witrynę bezpośrednio na podstawie jej adresu URL:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+Skopiuj `id` witryny z odpowiedzi — ma postać `contoso.sharepoint.com,<guid>,<guid>`.
+
+### Krok 2 — Przyznaj dostęp aplikacji
+
+Ustaw metodę **POST** dla kolekcji `permissions` tej witryny (wklej `id` z kroku 1):
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+Na karcie **Request body** wklej poniższy kod — ustaw `roles` na `["read"]` lub `["write"]` i użyj **Application (client) ID** swojej aplikacji:
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+Uruchom zapytanie. W przypadku powodzenia zwracany jest obiekt uprawnienia z `id` i Twoimi `roles`. **Powtórz krok 2 dla każdej witryny**, do której PlaidCloud ma mieć dostęp. Aby sprawdzić, co zostało przyznane dla witryny:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` jest przyznawane dla **witryny**, a nie dla folderu ani biblioteki — przyznanie dostępu do witryny ujawnia wszystko, co w niej jest. Przechowuj treści wrażliwe we własnych, dedykowanych witrynach, aby nigdy nie zostały objęte razem z treściami przeznaczonymi do udostępnienia.
+</Aside>
+
+## Dodawanie konta w PlaidCloud
+
+1. Zaloguj się do PlaidCloud i wybierz obszar roboczy, w którym ma się znajdować konto.
+2. Przejdź do `Document` → `Manage Accounts` → **+ New Account**.
+3. Wybierz **OneDrive** jako **Usługę**.
+4. Wpisz nazwę i opis oraz wybierz **Model zabezpieczeń** (w razie wątpliwości pozostaw `Private`).
+5. W sekcji **Dane uwierzytelniające** wklej **Identyfikator klienta**, **Klucz tajny klienta** i **ID dzierżawy OneDrive** z rejestracji aplikacji.
+6. W polu **URL witryny SharePoint** wklej adres URL witryny, do której aplikacja ma przyznany dostęp (na przykład `https://contoso.sharepoint.com/sites/TeamName`). Lista **Dysk/Witryna** pokaże wtedy biblioteki dokumentów tej witryny — wybierz tę, która ma być katalogiem głównym konta. Spowoduje to wypełnienie pola **Ścieżka początkowa**.
+7. Wybierz **Zapisz**.
+
+<Aside type="note">
+Dysk lub witryna są wymagane — konta nie można zapisać bez nich. Bez nich konto wyświetlałoby foldery, ale nie pliki.
+</Aside>
+
+## Tworzenie konta za pomocą asystenta AI
+
+Asystent AI połączony przez konektor MCP PlaidCloud może utworzyć lub zaktualizować konto za pomocą narzędzia `document_account_upsert`, po wykonaniu powyższych kroków w Azure. Podaj mu wartości z rejestracji aplikacji:
+
+| Pole konta | Wartość |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | Application (client) ID |
+| `private_key` | Klucz tajny klienta |
+| `tenant_id` | Directory (tenant) ID |
+| `start_path` | Identyfikator dysku, opcjonalnie z dopiskiem `/folder` |
+
+Dane uwierzytelniające są tylko do zapisu: `document_account_describe` je ukrywa. Narzędzie jest dostępne w Twojej własnej zalogowanej sesji MCP, a nie dla kroków przepływu pracy ani agentów w aplikacji.

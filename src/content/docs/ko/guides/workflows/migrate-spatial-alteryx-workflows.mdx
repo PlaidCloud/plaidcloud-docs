@@ -1,0 +1,99 @@
+---
+title: 공간 Alteryx 워크플로 마이그레이션
+description: 공간 종속 항목을 패키징하고, Alteryx 공간 워크플로를 가져오고, 변환된 지오메트리를 원본 출력과 비교하여 검증합니다.
+sidebar:
+  order: 37
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-spatial-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud는 Alteryx 공간 워크플로를 [지리 공간 단계](/ko/reference/workflow-steps/spatial/)로 구성된 고급 워크플로로 변환합니다. Alteryx 공간 팔레트의 모든 도구에는 변환 경로가 있습니다.
+[공간 도구 지원 현황 표](/ko/reference/alteryx-conversion-matrix/#공간-도구-지원-범위)에서 도구별 지원 내용과 알려진 제약 사항을 확인할 수 있습니다.
+
+이 가이드에서는 파일 패키징, 가져오기 실행, 결과 검증 방법을 설명합니다. 변환된 단계가 하는 일은 [지리 공간 분석](/ko/guides/workflows/geospatial-analytics/)을 참조하십시오.
+
+## 공간 입력 패키징
+
+가져오기 전에 모든 공간 종속 항목을 수집하십시오. 변환된 워크플로는 함께 가져온 파일만 읽을 수 있습니다.
+
+- 셰이프파일 그룹: `.shp`와 `.shx`, `.dbf`, `.prj`
+- MapInfo 그룹: `.tab`과 `.map`, `.id`, `.dat`
+- KML 및 GeoJSON 파일
+- 공간 레코드와 비공간 레코드를 조인하는 조회 테이블
+- 검증에 사용할 예상 공간 출력
+
+각 그룹의 부속 파일은 주 파일과 같은 폴더에 두십시오.
+[Spatial File Import](/ko/reference/workflow-steps/spatial/spatial-file-import/) 단계는 주 파일과 같은 위치에서 부속 파일을 읽습니다.
+
+<Aside type="caution" title=".geo GeoFile은 변환되지 않습니다">
+  Alteryx 고유의 바이너리 `.geo` 형식은 읽을 수 없습니다. 변환은 실행 시점에 오류가 나는 가져오기를 생성하는 대신, 이 형식을 만나면 실패 처리됩니다. 가져오기 전에 해당 레이어를 셰이프파일 또는 GeoJSON으로 다시 내보내십시오.
+</Aside>
+
+## 공간 도구가 변환되는 방식
+
+변환은 올바른 결과를 얻을 수 있는 가장 단순한 경로를 선택하며, 어떤 경로를 쓰는지에 따라 단계의 확장 방식이 달라집니다.
+
+**데이터베이스(SQL) 경로.** Create Points와 Distance는
+[Table Extract 식](/ko/reference/workflow-steps/spatial/spatial-sql-recipes/)으로 변환되고,
+Spatial Match와 Find Nearest는 각각
+[공간 매치](/ko/reference/workflow-steps/spatial/spatial-match/) 단계와
+[Spatial Find Nearest](/ko/reference/workflow-steps/spatial/spatial-find-nearest/) 단계로 변환됩니다.
+이 단계들은 전적으로 웨어하우스 안에서 실행되므로 테이블 크기에 맞춰 확장됩니다.
+
+**워크플로 엔진 경로.** Buffer, Trade Area, Generalize, Smooth, Process, Poly-Build, Poly-Split, Make Grid, Combine, Spatial Info, 공간 파일 가져오기처럼 지오메트리의 형태를 바꾸는 모든 작업은 데이터베이스 SQL로 표현할 수 없으므로 워크플로 엔진에서 Shapely와 GDAL로 실행됩니다.
+
+**보고.** Map과 Report Map은 [Report Map](/ko/reference/workflow-steps/reports/report-map/) 단계로 변환되고, Heat Map과 Pie Wedge Trade Area 패키지 매크로는 [패키지 매크로 단계](/ko/reference/workflow-steps/macros/)로 변환됩니다.
+
+변환된 모든 단계는 직접 열어서 편집하고 수동으로 다시 만들 수 있는 정식 단계 유형입니다. 다만 Make Grid와 Poly-Split은 예외입니다. 이 두 단계는 변환되어 실행되지만, 현재는 디자이너 양식이 아닌 API 또는 MCP를 통해 구성합니다. 공간 도구의 입력 사전 요구 사항은
+[알려진 공간 사전 요구 사항](/ko/reference/alteryx-conversion-matrix/#알려진-공간-사전-요구-사항)을 참조하십시오.
+
+## 지오메트리 검증
+
+공간 출력이 동일한지 확인하려면 다음 항목을 비교하십시오.
+
+1. 출력 스키마
+2. 행 수
+3. 키 필드 값
+4. 지오메트리 값 또는 지오메트리에서 파생된 측정값
+5. 좌표 참조 동작
+6. 거리, 면적, 단순화된 지오메트리(허용 오차 범위 내)
+
+워크플로가 순서에 의존하지 않는 한 행 순서는 일치하지 않아도 됩니다.
+
+<Aside type="note" title="면적과 길이가 다를 수 있으며, 대개 더 정확합니다">
+  [Spatial Info](/ko/reference/workflow-steps/spatial/spatial-info/) 단계는 WGS84 회전타원체를 기준으로 측지 측정을 합니다. 평면 측정값과 비교하면 미국 위도에서는 약 25%의 차이가 날 수 있으며, Alteryx와 일치하는 값은 측지 측정값입니다.
+</Aside>
+
+## 공간 결과물 검증
+
+지도와 Report Map의 경우 다음을 확인하십시오.
+
+1. 지도 레이어에 예상한 레코드가 들어 있습니다.
+2. 레이블과 그룹화된 피처가 올바릅니다.
+3. 경계, 점, 다각형이 예상한 위치에 표시됩니다.
+4. 다운스트림 검토자가 결과물을 사용할 수 있습니다.
+5. 클라우드 네이티브 결과물로 인한 의도적인 차이가 있다면 기록되어 있습니다.
+
+보고서 렌더러는 Alteryx 출력을 근사하는 방식이므로, 시각적 레이아웃을 비교하기 전에 지도의 기반이 되는 테이블부터 검증하십시오.
+
+## 일반적인 공간 문제
+
+| 증상 | 확인 사항 |
+| --- | --- |
+| 가져오기 결과에 지오메트리가 비어 있는 행이 생성됩니다 | 부속 파일이 같은 폴더에 있는지 확인합니다 |
+| 좌표가 엉뚱한 위치에 표시됩니다 | 프로젝션 파일(`.prj`)이 있는지 확인합니다. Create Points의 좌표는 부동 소수점 또는 정수(×1,000,000) 형식의 경도/위도여야 하며, 투영 좌표는 먼저 업스트림에서 WGS84로 재투영해야 합니다 |
+| 면적이나 길이가 원본과 다릅니다 | 위의 참고 사항에 설명된 평면 측정과 측지 측정의 차이를 확인합니다 |
+| Spatial Info 열이 없습니다 | 해당 측정값이 [Peano 키](/ko/reference/alteryx-conversion-matrix/#알려진-공간-사전-요구-사항)인지 확인합니다. 공개 사양이 없는 유일한 측정값이며, 변환 시 참고 메모에 이름이 표시됩니다 |
+| 상권 크기가 올바르지 않습니다 | 이동 시간 기준 크기 설정은 변환되지 않으며 고정 반경만 변환됩니다 |
+| Find Nearest 단계가 거리 때문에 거부됩니다 | 최근접 거리 단계는 마일, 킬로미터, 미터, 피트 단위로만 측정합니다. 야드, 해리, 이동 시간은 거부되며, 숫자가 아닌 최대 거리도 거부됩니다 |
+| 공간 도구가 자신의 이름을 밝히며 거부됩니다 | Geocoder는 PlaidCloud에 대응하는 도구가 없습니다. 플랫폼이 제공하지 않는 지오코딩 서비스와 참조 데이터가 필요하며, 거부 메시지에 어떤 도구이고 이유가 무엇인지 표시됩니다 |
+| 행 수가 다릅니다 | 두 실행에서 같은 소스 데이터를 사용했는지 확인합니다 |
+
+## 관련 가이드
+
+- [지리 공간 분석](/ko/guides/workflows/geospatial-analytics/)
+- [지리 공간 단계](/ko/reference/workflow-steps/spatial/)
+- [Alteryx 종속 항목 패키징](/ko/guides/workflows/package-alteryx-dependencies/)
+- [Alteryx 보고서 및 결과물 검증](/ko/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Alteryx 변환 매트릭스](/ko/reference/alteryx-conversion-matrix/)

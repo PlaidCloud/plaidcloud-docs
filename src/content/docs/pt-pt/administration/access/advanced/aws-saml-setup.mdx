@@ -1,0 +1,100 @@
+---
+title: Configurar o SAML do AWS IAM Identity Center para início de sessão único
+description: Configure o AWS IAM Identity Center como fornecedor SAML para o início de sessão único do PlaidCloud e permita a autenticação federada dos membros.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/aws-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud suporta o início de sessão único (SSO) através de SAML 2.0. Este guia explica como configurar o AWS IAM Identity Center (anteriormente AWS SSO) como fornecedor de identidade SAML, para que os utilizadores da sua organização possam autenticar-se através da AWS ao aceder ao PlaidCloud.
+
+<Aside>A configuração do lado do PlaidCloud é tratada pela equipa do PlaidCloud. Cabe-lhe configurar a aplicação SAML personalizada no IAM Identity Center e fornecer ao PlaidCloud o seu **IAM Identity Center SAML Metadata URL**. O suporte do PlaidCloud concluirá a restante configuração.</Aside>
+
+## Pré-requisitos
+
+- Uma conta AWS com o **IAM Identity Center** ativado
+- Um utilizador ou função do IAM com a política gerida **AWSSSOMasterAccountAdministrator** ou permissões equivalentes
+- O IAM Identity Center tem de estar configurado com uma origem de identidade (o diretório integrado, o Active Directory ou um IdP externo)
+- Contacto com o suporte do PlaidCloud para coordenar a configuração e trocar os valores de configuração
+
+## Descrição geral
+
+O processo de configuração envolve duas partes que trocam metadados SAML:
+
+1. **Configura** uma aplicação SAML personalizada no IAM Identity Center e fornece ao PlaidCloud o seu SAML Metadata URL.
+2. **O PlaidCloud fornece-lhe** o Entity ID do fornecedor de serviços (SP) e o ACS URL (Assertion Consumer Service URL) necessários para concluir a configuração da aplicação.
+
+Coordene com o suporte do PlaidCloud a obtenção dos valores do SP antes de concluir o Passo 3 abaixo.
+
+## Passo 1: Criar uma aplicação SAML personalizada
+
+1. Inicie sessão na [AWS Management Console](https://console.aws.amazon.com) e aceda ao **IAM Identity Center**.
+2. Na barra lateral esquerda, selecione **Applications**.
+3. Clique em **Add application**.
+4. Selecione **I have an application I want to set up** e escolha **Custom SAML 2.0 application**.
+5. Clique em **Seguinte**.
+6. Introduza um **Display name** para a aplicação (por exemplo, `PlaidCloud SSO`) e, opcionalmente, uma descrição.
+
+## Passo 2: Obter o IAM Identity Center SAML Metadata URL
+
+Antes de configurar os detalhes do fornecedor de serviços, localize o URL de metadados do IAM Identity Center para o enviar ao PlaidCloud.
+
+1. Na página de configuração da aplicação, desloque-se até à secção **IAM Identity Center metadata**.
+2. Copie o **IAM Identity Center SAML metadata URL** (com o formato `https://portal.sso.{region}.amazonaws.com/saml/metadata/{instanceId}`).
+
+**Envie este Metadata URL ao suporte do PlaidCloud.** Este é o URL do Entity Descriptor de que o PlaidCloud precisa para configurar a relação de confiança do lado do fornecedor de identidade. Assim que o PlaidCloud receber este URL, a equipa concluirá a configuração do Keycloak e avisá-lo-á quando o SSO estiver pronto para teste.
+
+## Passo 3: Configurar os detalhes do fornecedor de serviços
+
+<Aside>Vai precisar do **SP Entity ID** e do **ACS URL** do PlaidCloud antes de concluir este passo. Contacte o suporte do PlaidCloud para obter estes valores.</Aside>
+
+1. Desloque-se até à secção **Application properties**.
+2. No campo **Application ACS URL**, introduza o ACS URL fornecido pelo PlaidCloud.
+3. No campo **Application SAML audience**, introduza o SP Entity ID fornecido pelo PlaidCloud.
+4. Clique em **Submeter**.
+
+## Passo 4: Configurar os mapeamentos de atributos
+
+O IAM Identity Center transmite os atributos do utilizador ao PlaidCloud na asserção SAML. Configure os mapeamentos de atributos para que o PlaidCloud receba os detalhes de utilizador necessários.
+
+1. Na página de detalhes da aplicação, selecione o separador **Attribute mappings**.
+2. Clique em **Add new attribute mapping** e adicione o seguinte:
+
+| User attribute in the application | Maps to this string value or user attribute in IAM Identity Center | Format |
+|---|---|---|
+| `Subject` | `${user:email}` | emailAddress |
+| `email` | `${user:email}` | unspecified |
+| `firstName` | `${user:givenName}` | unspecified |
+| `lastName` | `${user:familyName}` | unspecified |
+
+3. Clique em **Save changes**.
+
+### Associação a grupos (opcional)
+
+O IAM Identity Center não transmite nativamente a associação a grupos como atributo SAML da mesma forma que outros fornecedores. Se a sua configuração do PlaidCloud exigir atribuições de funções de segurança baseadas em grupos, analise as opções disponíveis com o suporte do PlaidCloud. As abordagens habituais incluem utilizar o diretório integrado com atribuições de grupos ou sincronizar grupos a partir de uma origem de identidade externa, como o Active Directory.
+
+<Aside>Combine com o suporte do PlaidCloud como a associação a grupos deve ser transmitida, para que as atribuições de funções de segurança baseadas em grupos funcionem corretamente no PlaidCloud.</Aside>
+
+## Passo 5: Atribuir utilizadores e grupos à aplicação
+
+Apenas os utilizadores e grupos atribuídos à aplicação poderão autenticar-se através desta configuração de SSO.
+
+1. Na página de detalhes da aplicação, selecione o separador **Assign users and groups**.
+2. Clique em **Assign users and groups**.
+3. Pesquise e selecione os utilizadores ou grupos que devem ter acesso SSO ao PlaidCloud.
+4. Clique em **Assign users**.
+
+## Testar a integração
+
+Depois de o PlaidCloud confirmar que a configuração está concluída:
+
+1. Aceda à área de trabalho PlaidCloud da sua organização (por exemplo, `https://my-workspace.plaid.cloud`).
+2. Será redirecionado para a página de início de sessão do AWS IAM Identity Center.
+3. Inicie sessão com as suas credenciais do AWS IAM Identity Center.
+4. Após a autenticação com êxito, será redirecionado de volta para o PlaidCloud.
+
+Se ocorrerem erros, verifique se:
+- O ACS URL e o SP Entity ID correspondem exatamente ao que o PlaidCloud forneceu
+- O utilizador que tenta iniciar sessão está atribuído à aplicação no IAM Identity Center
+- O atributo Subject está mapeado para `${user:email}` com o formato **emailAddress**
+- O Metadata URL que enviou ao PlaidCloud está acessível a partir dos servidores do PlaidCloud

@@ -1,0 +1,113 @@
+---
+title: "NetSuite:导入 SuiteQL 查询"
+description: 在工作流中运行您自己的 NetSuite SuiteQL 查询，并将结果加载到带类型的项目表中，日期窗口和分页由系统处理。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 描述
+
+通过 [NetSuite 连接](/zh-cn/guides/connections/netsuite/)对 NetSuite 运行您编写的 SuiteQL 查询，并将结果加载到项目表中。适用于预置导入步骤未涵盖的数据，例如自定义记录、类似已保存搜索的报表，或为您自己的模型量身定制的联接。
+
+该步骤通过与其他 [NetSuite 导入步骤](/zh-cn/reference/workflow-steps/netsuite/)相同的层读取数据：刷新 OAuth 令牌、分批读取大型结果、重试暂时性错误，并将较长的日期范围拆分为多个窗口，因此您只需编写查询。[Data Foundation](/zh-cn/guides/projects/data-foundation/) 加载工作流使用此步骤读取 NetSuite 数据。
+
+## 配置
+
+该步骤只有一个选项卡：**导入参数**。
+
+### 源和目标
+
+| 字段 | 是否必填 | 说明 |
+|---|---|---|
+| NetSuite 连接 | 是 | 用于读取的 NetSuite 连接。NetSuite 连接在 **Tools > Connections** 中管理。 |
+| 环境 | 否 | 要使用的连接环境，例如生产环境或沙盒环境。 |
+| 目标表 | 是 | 写入结果的项目表。每次运行都会覆盖该表。 |
+
+### SuiteQL 查询
+
+要运行的查询。它可以使用四个占位符，每个占位符会被**占位符值和分页**下对应的值替换。PlaidCloud 会检查每个值，并将其作为相应类型的字面量写入查询，因此无需在占位符周围添加引号或 `TO_DATE`。
+
+| 占位符 | 替换为 | 写入为 |
+|---|---|---|
+| `{subsidiary_id}` | **子公司 ID** | 整数 |
+| `{posting_period_id}` | **过账期间 ID** | 整数 |
+| `{start_date}` | **开始日期**，或当前窗口的开始日期 | 日期 |
+| `{end_date}` | **结束日期**，或当前窗口的结束日期 | 日期 |
+
+大括号中的任何其他词都会被拒绝；查询使用了某个占位符而其值为空时，也会被拒绝。
+
+编写查询时应做到：
+
+- **以唯一键的 `ORDER BY` 结尾。** NetSuite 分批返回大型结果，如果没有稳定的排序，各批可能会跳过或重复行。请按内部 ID 或每行唯一的其他键排序。没有 `ORDER BY` 的查询会停止并要求您添加。
+- **使用 `TO_CHAR(date, 'YYYY-MM-DD')` 将日期作为文本返回。** 否则 SuiteQL 会按账户的显示格式返回日期。
+- **读取日期范围时，对一个日期列在 `{start_date}` 和 `{end_date}` 之间筛选。** 只对单个日期列筛选，使每一行恰好落在一个窗口内。如果设置了开始日期或结束日期，查询必须使用其占位符。
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### 结果列
+
+为查询返回的每一列命名并指定类型。名称与查询的列别名匹配，不区分大小写。使用网格上方的添加和删除按钮管理列表。
+
+| 列 | 说明 |
+|---|---|
+| 列名称 | 查询的列别名。每个结果列都需要名称。 |
+| 类型 | **文本**（默认）、**整数**、**大整数**、**小整数**、**微整数**、**序列**、**大序列**、**十进制数**、**数值**、**货币**、**双精度**、**浮点数**、**布尔值**、**日期**、**时间戳**或 **UUID**。 |
+
+至少添加一个结果列。各列将以此处指定的名称存入目标表。SuiteQL 将每个值都作为文本返回；类型用于告知 PlaidCloud 如何存储。金额请指定为**货币**或**十进制数**，经 `TO_CHAR` 返回的日期请指定为**日期**或**时间戳**，`T`/`F` 标志请指定为**布尔值**。
+
+### 占位符值和分页
+
+| 字段 | 默认 | 说明 |
+|---|---|---|
+| 子公司 ID | 空 | 用于 `{subsidiary_id}` 的 NetSuite 子公司内部 ID。 |
+| 过账期间 ID | 空 | 用于 `{posting_period_id}` 的 NetSuite 过账期间内部 ID。 |
+| 开始日期 | 空 | `YYYY-MM-DD`。用于 `{start_date}`。不得晚于结束日期。 |
+| 结束日期 | 空 | `YYYY-MM-DD`。用于 `{end_date}`。 |
+| 窗口天数 | 90 | 同时设置开始日期和结束日期时，范围会按此天数（1 到 3650）为窗口读取。查询会针对每个窗口使用该窗口的日期各运行一次，然后合并结果。 |
+| 每分钟请求数 | 0 | 控制该步骤对 NetSuite 的调用节奏，为同一账户上的其他集成留出余量。`0` 表示不限制。 |
+
+这些值都可以使用变量。
+
+## 验证
+
+设置以下各项之前，无法保存该步骤：
+
+- **NetSuite 连接**：“需要 NetSuite 连接。”
+- **目标表**：“需要目标表。”
+- **SuiteQL 查询**：“需要 SuiteQL 查询。”
+- **结果列**：“请至少添加一个结果列。”和“每个结果列都需要名称。”
+
+## 备注
+
+- NetSuite 将单个查询限制在约 100,000 行。超出该上限的查询或窗口会停止，并给出消息提示您缩小日期范围或其他筛选器，而不会加载被截断的结果。请降低**窗口天数**，使每个窗口保持在上限之内。
+- 该步骤会按需刷新其 NetSuite 令牌，并在暂停后重试被限流或失败的请求。
+- 目标表在每次运行时都会被完全替换。请将 `WHERE` 子句限定在所需的范围内，例如滚动日期窗口，而不要每次都读取全部历史数据。
+- 没有返回任何行的查询会带着警告完成，并保持目标表为空，因此后续步骤仍会运行。
+- 来自 NetSuite 的错误消息在显示时会去除凭据、令牌和密钥，因此所含的 NetSuite 原始措辞可能会减少。
+
+<Aside type="caution">
+在 `transaction` 和 `transactionline` 上，`amount` 采用每笔交易自身的货币。对不同货币的子公司求得的合计不是合并数字。跨子公司汇总时，请选择合并金额或已转换的金额。
+</Aside>
+
+## 相关内容
+
+- [NetSuite 步骤](/zh-cn/reference/workflow-steps/netsuite/)
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/)
+- [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/zh-cn/guides/projects/data-foundation/)

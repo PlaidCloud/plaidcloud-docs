@@ -1,0 +1,121 @@
+---
+title: Accès NetSuite pour Data Foundation
+description: Ce qu'un administrateur NetSuite configure pour que PlaidCloud Data Foundation puisse lire NetSuite directement (un rôle en lecture seule, une intégration OAuth 2.0 et un certificat) et ce qu'il doit renvoyer.
+sidebar:
+  label: Accès NetSuite pour Data Foundation
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/fr/guides/projects/data-foundation/) rassemble les données de chaque système et instance ERP que vous connectez dans un seul Common Finance Model, et NetSuite fait partie des ERP qu'il lit directement. La connexion NetSuite utilise un accès machine à machine OAuth 2.0 : un rôle en lecture seule, un enregistrement d'intégration qui utilise l'octroi d'identifiants client, et un certificat. Cette page s'adresse à l'administrateur NetSuite qui effectue cette configuration, ainsi qu'à l'utilisateur PlaidCloud qui la lui demande.
+
+PlaidCloud ne fait que lire les données. Personne n'envoie de mot de passe, de secret de jeton ou de clé privée par e-mail.
+
+## Avant de commencer : créer le certificat
+
+L'équipe de l'utilisateur PlaidCloud crée une paire de clés RSA et conserve la clé privée. Seul le certificat public est transmis à NetSuite. Par exemple, avec OpenSSL :
+
+```bash
+openssl req -new -x509 -newkey rsa:3072 -nodes -days 730 \
+    -keyout plaidcloud_netsuite.pem \
+    -out plaidcloud_netsuite_public.pem \
+    -subj "/CN=PlaidCloud"
+```
+
+Joignez `plaidcloud_netsuite_public.pem` à la demande que vous envoyez à l'administrateur. Conservez `plaidcloud_netsuite.pem` pour le champ **Clé privée** dans PlaidCloud.
+
+## Envoyer la demande d'accès
+
+Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion** sous **Connexion NetSuite**. Le formulaire affiche la demande complète. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Accès NetSuite pour PlaidCloud ». Joignez le certificat public.
+
+## Ce que l'administrateur NetSuite configure
+
+<Steps>
+
+1. **Activer les fonctionnalités.** Sous **Setup > Company > Enable Features > SuiteCloud**, activez :
+
+   - REST Web Services
+   - OAuth 2.0
+   - SuiteAnalytics Workbook (nécessaire pour SuiteQL)
+
+2. **Créer un rôle en lecture seule**, par exemple « PlaidCloud Read Only », avec ces autorisations :
+
+   | Autorisation | Niveau |
+   |---|---|
+   | Setup: REST Web Services | Full |
+   | Setup: Log in using OAuth 2.0 Access Tokens | Full |
+   | Transactions: Invoice, Cash Sale and Credit Memo | View |
+   | Lists: Items and Locations | View |
+   | Transactions: Budget | View |
+   | Reports: General Ledger | View |
+   | Setup: Accounting Periods | View |
+   | Lists: Subsidiaries | View |
+   | Lists: Accounts | View |
+   | Lists: Departments | View |
+   | Lists: Classes | View |
+   | Lists: Locations | View |
+   | Lists: Customers | View |
+   | Lists: Currency | View |
+   | Lists: Consolidated Exchange Rates | View |
+
+   Donnez au rôle l'accès à chaque filiale sur laquelle PlaidCloud produit des rapports.
+
+3. **Créer un enregistrement d'intégration.** Sous **Setup > Integration > Manage Integrations > New** :
+
+   - **Nom :** PlaidCloud
+   - **Authentification :** cochez uniquement **Client Credentials (Machine to Machine) Grant** : pas d'authentification par jeton ni d'octroi par code d'autorisation.
+   - **Portées :** REST Web Services et RESTlets.
+
+   Enregistrez-le et copiez l'**ID client**. NetSuite ne l'affiche qu'une fois, sur la page de confirmation.
+
+4. **Associer le certificat.** Sous **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup > Create New** :
+
+   - **Entité :** l'utilisateur sous l'identité duquel PlaidCloud agit.
+   - **Rôle :** le rôle de l'étape 2.
+   - **Application :** PlaidCloud, l'intégration de l'étape 3.
+   - **Certificat :** le certificat public joint à la demande.
+
+   Enregistrez-le et copiez l'**ID du certificat**.
+
+</Steps>
+
+## Ce qu'il faut renvoyer
+
+| L'administrateur envoie | Saisi dans PlaidCloud comme |
+|---|---|
+| L'**ID de compte**, depuis **Setup > Company > Company Information** (par exemple `1234567`, ou `1234567_SB1` pour un bac à sable) | **ID de compte** |
+| L'**ID client** de l'étape 3 | **ID client** |
+| L'**ID du certificat** de l'étape 4 | **ID du certificat** |
+| Les filiales que PlaidCloud peut lire | Choisies sous **Filiales** dans PlaidCloud |
+
+La clé privée correspondant au certificat reste auprès de l'équipe de l'utilisateur PlaidCloud, qui la colle elle-même dans PlaidCloud comme **Clé privée**.
+
+<Aside type="caution">
+Saisissez l'ID de compte exactement tel que NetSuite l'affiche, y compris le suffixe `_SB1` pour un bac à sable. PlaidCloud en déduit l'adresse NetSuite.
+</Aside>
+
+## Vérifier l'accès
+
+De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+
+| Jeu de données | Autorisation requise |
+|---|---|
+| Lignes de vente | Transactions: Invoice, Cash Sale and Credit Memo (View) |
+| Soldes de stock | Lists: Items and Locations (View) |
+| Budgets | Transactions: Budget (View) |
+| Comptes statistiques | Reports: General Ledger (View) |
+| Périodes comptables | Setup: Accounting Periods (View) |
+| Filiales | Lists: Subsidiaries (View) |
+| Taux de change | Lists: Consolidated Exchange Rates (View) |
+| Classes | Lists: Classes (View) |
+| Emplacements | Lists: Locations (View) |
+
+Lorsqu'un jeu de données est manquant, le test nomme les autorisations à ajouter. Demandez à l'administrateur de les ajouter au rôle et testez à nouveau. Les budgets sont facultatifs : un compte NetSuite qui n'utilise pas de budgets charge quand même tout le reste. Les taux de change, les classes et les emplacements n'interrompent pas non plus un chargement : si l'un d'eux ne peut pas être lu, le chargement conserve ce qu'il a lu en dernier. Sans taux de change, fournissez les taux dans un fichier **Taux de change** à la place.
+
+## Voir aussi
+
+- [Data Foundation](/fr/guides/projects/data-foundation/)
+- [Se connecter à NetSuite](/fr/guides/connections/netsuite/)
+- [Connecteur REST NetSuite](/fr/reference/connectors/rest/netsuite/)

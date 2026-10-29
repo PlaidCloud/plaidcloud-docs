@@ -1,0 +1,136 @@
+---
+title: Ein Umlagemodell erstellen
+description: Durchgängiges Tutorial – einen Kostenpool mithilfe von Treiberdaten und einer Hierarchie auf Empfänger verteilen.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/build-an-allocation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Dieses Tutorial führt Sie durch den Aufbau einer vollständigen Kostenumlage in PlaidCloud. Am Ende haben Sie ein funktionierendes Modell, das mithilfe von Treiberdaten einen Kostenpool auf eine Zieldimension verteilt – die Grundlage von Prozesskostenrechnung, IT-Weiterbelastung und der Verteilung von Shared Services.
+
+Es dauert etwa eine Stunde. Umlagen sind das markanteste Merkmal von PlaidCloud; so verstehen Sie das Modell am besten.
+
+## Was Sie Erstellen
+
+Die gesamten Kosten der IT-Abteilung werden auf Geschäftseinheiten verteilt, gewichtet nach der Benutzerzahl jeder Einheit.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace ([starten Sie eine kostenlose Testphase](https://app.plaidcloud.com), falls Sie noch keinen haben)
+- Ein Projekt, das Folgendes enthält oder importieren kann:
+  - **Umzulegende Werte** – IT-Kosten pro Monat, insgesamt oder nach Unterkategorie
+  - **Treiberdaten** – Benutzerzahl pro Geschäftseinheit
+  - **Eine Dimension** – Hierarchie der Geschäftseinheiten (Einheiten → Bereiche → Unternehmen)
+- Vertrautheit mit den [Konzepten](/de/get-started/concepts/) – Workspace, Projekt, Workflow, Dimension, Umlage
+
+<Aside>
+Wenn Sie die Quelldaten noch nicht haben, können Sie kleine CSV-Dateien vorbereiten und zuerst [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/) folgen, um sie zu importieren.
+</Aside>
+
+## Schritt 1: Die Eingaben Einrichten
+
+Stellen Sie sicher, dass Sie diese drei Dinge in Ihrem Projekt haben:
+
+| Objekt | Was es enthält |
+|---|---|
+| Tabelle `it_cost` | Gesamte IT-Kosten (z. B. eine Zeile pro Monat mit dem Betrag) |
+| Tabelle `users_by_bu` | Eine Zeile pro Geschäftseinheit mit einer Spalte `user_count` |
+| Dimension `business_units` | Hierarchie der Geschäftseinheiten, deren Blattknoten mit den Einheitennamen in `users_by_bu` übereinstimmen |
+
+Falls etwas fehlt, laden Sie es über einen Workflow, bevor Sie fortfahren.
+
+## Schritt 2: Den Umlage-Workflow Erstellen
+
+<Steps>
+
+1. Öffnen Sie das Projekt und wechseln Sie zur Registerkarte **Workflows**.
+2. Klicken Sie auf **Neuer Workflow**. Nennen Sie ihn „IT Cost Allocation“.
+3. Öffnen Sie den neuen Workflow im Workflow-Explorer.
+
+</Steps>
+
+## Schritt 3: Den Umlageschritt Hinzufügen
+
+<Steps>
+
+1. Fügen Sie einen neuen Schritt aus der Kategorie **Allocation** hinzu. Wählen Sie **Allocation Rules** – die flexibelste Option.
+2. Konfigurieren Sie die Quelle:
+   - **Quelltabelle**: `it_cost`
+   - **Quellbetragsspalte**: die Spalte mit dem Dollarbetrag
+3. Konfigurieren Sie den Treiber:
+   - **Treibertabelle**: `users_by_bu`
+   - **Treiberwert-Spalte**: `user_count`
+   - **Treiber-Zuordnungsspalte**: die Spalte mit dem Namen der Geschäftseinheit
+4. Konfigurieren Sie das Ziel:
+   - **Zieldimension**: `business_units`
+   - **Zielebene**: wählen Sie, auf welche Ebene der Hierarchie umgelegt wird (meist die Blattebene)
+5. Konfigurieren Sie die Ausgabe:
+   - **Ergebnistabelle**: `it_cost_allocated`
+
+</Steps>
+
+## Schritt 4: Ausführen und Prüfen
+
+<Steps>
+
+1. Führen Sie den Schritt aus.
+2. Öffnen Sie die Registerkarte **Tabellen** und klicken Sie auf `it_cost_allocated`.
+3. Jede Zeile stellt einen Kostenanteil dar, der an eine Geschäftseinheit geht. Die Spalten umfassen:
+   - Den Quellbetrag (z. B. die gesamten IT-Kosten des Monats)
+   - Die Ziel-Geschäftseinheit
+   - Den verwendeten Treiberwert (die Benutzerzahl dieser Einheit)
+   - Den Umlagesatz (Benutzerzahl ÷ gesamte Benutzerzahl aller Einheiten)
+   - Den umgelegten Betrag (Quelle × Satz)
+
+</Steps>
+
+## Schritt 5: Die Zahlen Prüfen
+
+Drei Prüfungen, die jede Umlage bestehen sollte:
+
+1. **Gesamtabstimmung** – die Summe der umgelegten Beträge entspricht der Quellsumme (innerhalb der Rundungstoleranz)
+2. **Satzsumme** – die Umlagesätze ergeben pro Quellzeile 1,0 (= 100 %)
+3. **Abdeckung** – jede Geschäftseinheit Ihrer Dimension, die einen Anteil erhalten soll, hat tatsächlich einen erhalten
+
+Die Anleitung [Umlageergebnisse](/de/guides/allocations/results/allocation-results/) enthält eine vollständige Checkliste für die Überprüfung.
+
+Wenn etwas nicht stimmt, sind dies die häufigsten Ursachen:
+- **Fehlende Treiberdaten** – eine Geschäftseinheit in der Dimension ohne Zeile in `users_by_bu` erhält keine Umlage
+- **Abweichende Namen** – die Treibertabelle sagt „Sales East“, die Dimension aber „Sales-East“ (unterschiedliche Leerzeichen oder Groß-/Kleinschreibung stimmen nicht überein)
+- **Treiber mit null oder negativen Werten** – führen zu Umlagen von null oder zu unerwarteten Ergebnissen
+
+## Schritt 6: Die Ergebnisse Verwenden
+
+Die Ergebnistabelle ist wie jede andere PlaidCloud-Tabelle – sie kann:
+
+- in weiteren Workflow-Schritten mit anderen Tabellen **verknüpft** werden (z. B. um dem Hauptbuch eine Spalte mit den Vollkosten hinzuzufügen)
+- für Dashboards oder externe Abnehmer **veröffentlicht** werden
+- als Quelle für die nächste Umlagerunde **erneut umgelegt** werden (bei kaskadierenden Modellen)
+
+## Variationen zum Ausprobieren
+
+Sobald das Grundmodell funktioniert, bieten sich diese Erweiterungen an:
+
+- **Mehrere Kostenpools** – ersetzen Sie die einzelne Zeile `it_cost` durch eine Zeile pro IT-Unterkategorie (Rechenleistung, Speicher, Lizenzen) und legen Sie jede unabhängig mit unterschiedlichen Treibern um
+- **Mehrere Perioden** – partitionieren Sie die Quelle nach Monat und erzeugen Sie ein Umlageergebnis pro Periode
+- **Gestufte Umlagen** – legen Sie Bereichsgemeinkosten auf Einheiten um, dann Einheitenkosten auf Produkte und dann Produktkosten auf Kunden. Jede Stufe ist ein eigener Umlageschritt
+- **Rekursive Umlagen** – wenn Shared Services sich gegenseitig beanspruchen (die IT bedient HR, HR bedient die IT). Siehe [Rekursive Umlagen](/de/guides/allocations/setup/recursive-allocations/)
+- **Regelbasierte Zuordnung** – wenn die Verteilung von mehr als einem Treiber abhängt und je nach Quelle variiert, erstellen Sie mit dem geführten Builder eine Umlagedimension, statt eine einzelne Treibertabelle zu verdrahten. Siehe [Eine Umlagedimension erstellen](/de/guides/dimensions/dimensions/#eine-umlagedimension-erstellen)
+
+## Wie es Weitergeht
+
+- [Leitfaden zu Umlagen](/de/guides/allocations/) – jede Option und Konfigurationsmöglichkeit
+- [Regelbasiertes Tagging](/de/guides/allocations/getting-started/rule-based-tagging/) – unterschiedliche Umlageregeln pro Quellzeile
+- [Referenz zum Umlageschritt](/de/reference/workflow-steps/allocation/) – jeder Workflow-Schritt der Kategorie „Allocation“
+- [Leitfaden zu Dimensionen](/de/guides/dimensions/) – Aufbau der Hierarchien, auf die Umlagen zielen

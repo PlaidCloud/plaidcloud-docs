@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry 步骤"
+description: 根据标题表和行表将总账日记账分录过账到 Dynamics 365 Finance & Operations，并提供预览模式，在任何内容过账之前验证每一笔分录。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过您的 [D365 F&O 连接](/zh-cn/guides/connections/dynamics-365-fo/)，经由 PlaidCloud 共享的 ERP 写入管道，将总账日记账分录过账到 Dynamics 365 Finance & Operations。该步骤接收一张标题表（每笔日记账分录一行）和一张行表（每笔分录一行或多行借贷记录），并将每笔分录提交给 D365 F&O 的异步自定义服务日记账过账操作。**Validate Only** 会构建并检查每笔分录，但不占用账簿也不过账；可选的结果表会记录每笔分录的结果。
+
+<Aside type="caution">
+请先对每个批次运行 **Validate Only**，查看结果表，并在 D365 F&O 中直接核对少量过账记录，然后再依赖此步骤无人值守地过账正式分录。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **D365 F&O 连接** — 用于过账的 D365 F&O 连接。
+
+### 数据
+
+- **标题表** — 每笔日记账分录一行：`journal_id`（您的分录标识符，必填）、`journal_name`（要过账到的 D365 F&O 日记账名称，必填）、`posting_date`、`description`。
+- **行表** — 每个 `journal_id` 一行或多行：`account`、`debit`、`credit`，以及账簿要求的任何维度列。
+- **结果表** — 输出表 ID：每笔分录一行，包含 `journal_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message`。
+- **Validate Only** — 默认勾选。仅做预检；不占用账簿，不过账。完全省略此字段的步骤配置（例如通过 REST API、MCP 或工作流包导入编写的配置）同样默认为 Validate Only，而不是正式过账。
+- **出错时继续** — 默认勾选。一笔分录失败后继续过账其余分录；取消勾选则在第一次失败时停止批次。
+
+## 过账的工作方式
+
+PlaidCloud 将每笔分录提交给 D365 F&O 的异步自定义服务过账操作，然后轮询，直到服务报告该分录的终态。只有在该终态得到**确认**后，分录才会被报告为 `posted` — 已被接受但终态始终未能确定的分录会保持隔离状态（既不报告为已过账，也不会被悄悄丢弃），而不会仅因提交被接受就记录为成功。
+
+## 更正已过账的分录
+
+此步骤从不删除或改写已过账的分录。若要更正，请过账一笔与原分录借贷互换的新分录（即已过账的冲销分录），而不是就地编辑原分录。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|| 冲销是新分录，而非就地编辑 | 更正会过账一笔借贷互换的新冲销分录。无法作废或删除已过账的分录。 |
+| 维度验证取决于账簿设置 | 对于您的科目结构无效的财务维度组合，会在 D365 F&O 自身的验证中失败，并以 `error` 行呈现，而不是由 PlaidCloud 提前拦截。 |
+
+## 相关内容
+
+- [连接到 Dynamics 365 Finance & Operations](/zh-cn/guides/connections/dynamics-365-fo/) — 涵盖配置、预览和过账的完整演练
+- [Dynamics 365 F&O REST 连接器](/zh-cn/reference/connectors/rest/dynamics-365-fo/)
+- [D365 F&O 步骤](/zh-cn/reference/workflow-steps/dynamics-365-fo/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

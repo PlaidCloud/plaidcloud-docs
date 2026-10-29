@@ -1,0 +1,146 @@
+---
+title: NetSuite仕訳エントリの転記
+description: Post NetSuite Journal Entryワークフローステップを設定します。ヘッダーフィールドと明細フィールドをマッピングし、バッチをプレビューして検証したうえで転記し、結果テーブルを読み取ります。
+sidebar:
+  label: NetSuite仕訳エントリの転記
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+**Post NetSuite Journal Entry**ステップを使用して、PlaidCloudのプロジェクトテーブルから NetSuite に仕訳エントリを転記します。このガイドでは、ヘッダーテーブルと明細テーブルからバッチを作成し、NetSuite には一切触れずにプレビューしたうえで転記し、結果を読み取ります。
+
+<Aside type="caution">
+実際に転記する前に、すべてのバッチで下記の**プレビューと検証**を実施してください。また、実際のアカウントで初めて実行する際は、いくつかの転記を NetSuite 上で直接照合してください。
+</Aside>
+
+## 前提条件
+
+- 仕訳エントリを作成できるロールを持つ、動作する [NetSuite 接続](/ja/guides/connections/netsuite/)（読み取り側のガイドで説明している REST/OAuth の設定に加えて、Journal Entry レコードに対する**作成**アクセスが必要です）。
+- プロジェクト内の 2 つのソーステーブル。
+  - 仕訳エントリごとに 1 行を持つ**ヘッダーテーブル**。
+  - 仕訳エントリごとに 1 行以上の借方/貸方行を持つ**明細テーブル**。
+
+<Aside type="note">
+ヘッダーテーブルと明細テーブルは、インポート、先行する変換、ピボットなど、ワークフロー内のどこから作成したものでも構いません。唯一の要件は、各明細行をヘッダー行に結び付ける Journal ID 列を両方のテーブルが持っていることです。
+</Aside>
+
+## ヘッダーテーブルと明細テーブルの準備
+
+<Steps>
+
+1. 仕訳エントリごとに 1 行を持つ**ヘッダーテーブル**を作成またはインポートします。最低限、次の列が必要です。
+
+   | 列 | マッピング先 | 必須 |
+   |---|---|---|
+   | 仕訳の識別子 | Journal ID | はい |
+   | NetSuite のサブシディアリ | Subsidiary | はい |
+   | エントリの日付 | 転記日 | はい |
+   | NetSuite の通貨 | Currency | いいえ |
+   | エントリレベルのメモ | Memo | いいえ |
+   | 呼び出し元が指定する外部 ID | External ID | いいえ |
+
+2. 仕訳エントリごとに 1 行以上を持つ**明細テーブル**を作成またはインポートします。各行はヘッダー行と同じ仕訳の識別子を共有します。
+
+   | 列 | マッピング先 | 必須 |
+   |---|---|---|
+   | 仕訳の識別子 | Journal ID | はい |
+   | GL 勘定科目 | Account | はい |
+   | 借方金額（なしの場合は 0） | Debit | はい |
+   | 貸方金額（なしの場合は 0） | Credit | はい |
+   | 明細レベルのメモ | Memo | いいえ |
+   | 部門、クラス、ロケーション、エンティティ | Department / Class / Location / Entity | いいえ |
+
+   <Aside type="caution">
+   各仕訳エントリの明細は貸借が一致している必要があります。借方の合計と貸方の合計が 1 セントの差もなく等しくなければなりません。貸借が一致しないエントリは NetSuite に送信されず、代わりにエラーとして記録されます（[プレビューと検証](#プレビューと検証)を参照）。
+   </Aside>
+
+3. 転記する粒度（1 日ごと、ドキュメントごと、バッチごとに 1 エントリなど）に合わせて、通常の[テーブルステップ](/ja/reference/workflow-steps/tables/)（ピボット、グループ化集計、結合）を使用し、金額をこの 2 つのテーブルに集約します。Journal ID は明細の集合をヘッダー行に結び付けるものです。仕訳エントリごとに一意で、そのエントリに属するすべての明細行が共有するキーとして作成してください。
+
+</Steps>
+
+## ステップの設定
+
+<Steps>
+
+1. ワークフローに **Post NetSuite Journal Entry** ステップを追加します。
+
+2. **接続**タブで、**NetSuite接続**に使用する NetSuite 接続を設定し、**環境**を選択します。
+
+3. **データ**タブで次のように設定します。
+
+   - **仕訳エントリヘッダーテーブル**と**仕訳エントリ明細行テーブル**に、上記で作成したテーブルを設定します。
+   - 当面は **Test Only Mode** をオンのままにします。[プレビューと検証](#プレビューと検証)を参照してください。
+   - バッチを最初の不正なエントリで即座に停止させたい場合を除き、**Continue posting remaining entries if one entry fails** はオンのままにします。
+   - 大量バッチのために NetSuite の非同期受付パスが特に必要な場合を除き、**Submit Asynchronously** はオフのままにします。後述の[非同期送信](#非同期送信)を参照してください。
+   - **転記結果テーブル**には、PlaidCloud が作成または上書きできるテーブルを設定します。初回だけでなく毎回の実行でこのテーブルが必要になります。[結果テーブルの読み取り](#結果テーブルの読み取り)を参照してください。
+
+4. **ヘッダーマップ**タブで、ヘッダーテーブルの列を Journal ID、Subsidiary、転記日、および（ある場合は）Currency、Memo、External ID にマッピングします。ヘッダー行の一部だけを転記したい場合は、**ヘッダーフィルター**を使用します。
+
+5. **明細マップ**タブで、明細テーブルの列を Journal ID、Account、Debit、Credit、および（ある場合は）Memo、Department、Class、Location、Entity にマッピングします。**明細フィルター**も同様に使用します。
+
+</Steps>
+
+<Aside type="note">
+すべての内部 ID フィールド（Subsidiary、Account、Currency、Department、Class、Location、Entity）には、表示名ではなく NetSuite の内部 ID を指定します。ソースデータが表示名を保持している場合は、先に内部 ID に解決してください（NetSuite から取得した小さな参照テーブルに対するルックアップ、または自分で管理しているテーブルとの結合）。
+</Aside>
+
+## プレビューと検証
+
+**Test Only Mode** をオンにした状態でステップを実行します。PlaidCloud はマッピングされたデータからすべての仕訳エントリを組み立て、転記時と同じチェック（貸借の一致、必須フィールドの存在、有効な転記日）を実行しますが、NetSuite への呼び出しは一切行いません。何も転記されません。
+
+<Steps>
+
+1. ステップを実行します（[ワークフロー内の 1 つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+2. 結果テーブルを開き、転記を予定していたすべての行が `status = validated` になっていることを確認します。`error` となっている行には、そのエントリの Journal ID と問題点が示されます。よくある原因は、貸借の不一致、Account の欠落、Subsidiary または転記日の空欄です。
+
+3. `error` の行については、ソースデータ（またはマッピングとフィルター）を修正し、バッチがエラーなしで検証されるまで再実行します。
+
+</Steps>
+
+## バッチの転記
+
+バッチがエラーなしで検証されたら、**Test Only Mode** をオフにして、もう一度ステップを実行します。今度は PlaidCloud が、検証済みの各エントリを実際に NetSuite へ転記します。
+
+<Aside type="caution">
+転記は再検証と同じではありません。ソースデータまたはマッピングを変更した場合は、必ず Test Only Mode で再実行し、結果に確信が持てた場合にのみオフにしてください。無人で実行するようスケジュールしたステップは、帳簿に対するほかの無人の書き込みと同じように扱ってください。
+</Aside>
+
+## 非同期送信
+
+**Submit Asynchronously** は、同期的な作成と読み戻しを待つ代わりに、NetSuite の非同期受付ヘッダー付きで各エントリを送信します。NetSuite はエントリをキューに入れてすぐに応答し、PlaidCloud はそのエントリを `posted` や `error` ではなく、送信参照付きの `pending` として記録します。
+
+<Aside type="caution">
+**現在、保留中のエントリを自動的に解決する仕組みはありません。** 保留中のエントリは、このステップを再実行することで解決されます。ステップは送信参照によって保留中のエントリを検索し、確定した結果（`posted` または `error`）を記録します。Submit Asynchronously をオンにする場合は、すべての `pending` 行を完了済みとして扱うのではなく、ステップの再実行をワークフローに組み込んでください（スケジュールによる再実行、または同じワークフローの後続ステップ）。同期パスでは遅すぎる大量バッチで特に必要な場合を除き、オフのままにしてください。
+</Aside>
+
+## 結果テーブルの読み取り
+
+結果テーブルには、ステップがどのモードで実行されたかにかかわらず、処理を試みた仕訳エントリごとに 1 行が格納されます。
+
+| 列 | 説明 |
+|---|---|
+| journal_id | ヘッダーテーブルの Journal ID。 |
+| external_id | この転記の試行に使用された外部 ID（下記を参照）。 |
+| internal_id | 作成されたエントリの NetSuite 内部 ID。`pending` の間は非同期の送信参照。Test Only Mode の場合とエラー時は空欄。 |
+| status | `validated`、`posted`、`pending`（Submit Asynchronously によりエントリは受け付けられたが、NetSuite がまだ確認していない状態）、または `error`。 |
+| message | `error` の場合のエラー詳細。`posted`/`validated` の場合は空欄。 |
+
+**Continue posting remaining entries** がオンの場合、大量のバッチ内の不正なエントリが 1 件あってもステップ全体は失敗しません。そのため、`error` 行に対する通知や、`internal_id` を記録するためのヘッダーテーブルへの結合といった後続のステップは、ステップ自体の実行ステータスではなく、このテーブルに基づいて構築してください。
+
+## バッチの安全な再実行
+
+各エントリは、プロジェクト、接続、Journal ID、転記日、および明細金額から作成される決定的な外部 ID を付けて転記されます。**変更のない**エントリに対してステップを再実行すると、同じ外部 ID が再利用され、NetSuite 独自の外部 ID の処理により重複の作成が防がれます。そのため、一時的な障害の後にワークフローを再実行しても、変更のないエントリについては安全です。
+
+<Aside type="caution">
+この保護の対象は、変更のないエントリのみです。エントリの明細を編集して（金額の変更、明細行の追加や削除など）ステップを再実行すると、PlaidCloud は新しい外部 ID を計算し、NetSuite はそれを最初のエントリの更新ではなく、**2 件目**の仕訳エントリとして記録します。すでに転記されたエントリを訂正するには、NetSuite 上で直接訂正してください。外部 ID を PlaidCloud が生成したものではなく独自の方式に従わせる必要がある場合は、ヘッダーテーブルの External ID 列に独自の値を設定すると、生成された値が上書きされます。
+</Aside>
+
+## 関連項目
+
+- [NetSuite への接続](/ja/guides/connections/netsuite/) — このステップが転記に使用する接続を設定します
+- [Post NetSuite Journal Entry リファレンス](/ja/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) — フィールドと設定の詳細なリファレンス
+- [NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/) — 内部 ID として必要になるサブシディアリ、勘定科目、ディメンションを取得します
+- [高度なデータマッパーの使用方法](/ja/reference/workflow-steps/common/advanced-data-mapper-usage/)

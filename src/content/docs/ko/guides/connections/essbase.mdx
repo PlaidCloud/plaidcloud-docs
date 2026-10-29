@@ -1,0 +1,83 @@
+---
+title: Oracle Essbase에 연결
+description: PlaidCloud를 Oracle Essbase 21c 또는 Oracle Analytics Cloud에 연결하여 큐브에 대해 실시간 MDX 쿼리를 실행하거나 차원 아웃라인을 PlaidCloud 차원으로 로드합니다. 클라우드에 직접 연결되며 멤버 레이블은 결정적이고 추출 크기에는 엄격한 상한이 있습니다.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud를 Oracle **Essbase**(21c 이상 또는 Oracle Analytics Cloud)에 연결하면 워크플로가 큐브에 대해 실시간 MDX 쿼리를 실행하거나 차원 아웃라인을 PlaidCloud 차원으로 로드할 수 있습니다. 이 연결은 Essbase 자체 REST API에 **클라우드로 직접** 연결되며, 이러한 단계에는 온프레미스 에이전트 경로가 없습니다. 이 가이드에서는 연결, 쿼리 실행, 행 제한과 레이블 지정을 제어하는 옵션, 차원 계층 로드를 다룹니다.
+
+<Aside type="note">
+이 커넥터는 읽기 전용이며 Essbase에 다시 기록하지 않습니다.
+</Aside>
+
+## 사전 요구 사항
+
+Essbase 관리자로부터 다음이 필요합니다.
+
+- **Essbase 서버 원본**(예: `https://your-host:9001`). 끝에 `/essbase/...` 경로를 붙이지 않습니다.
+- 워크플로가 쿼리할 애플리케이션과 큐브에 대한 읽기 권한이 있는 **서비스 계정**(사용자 이름과 암호).
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **Oracle Essbase**를 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알아보기 쉬운 이름(예: `Essbase Prod`). |
+   | 기본 URL | Essbase 서버 원본(예: `https://your-host:9001`). |
+   | 기본 애플리케이션 | 선택 사항. 단계 양식에서 이 애플리케이션을 미리 선택합니다. |
+   | 사용자 이름 | 서비스 계정 사용자 이름. |
+   | 암호 | 서비스 계정 암호. |
+   | SSL 확인 | 기본적으로 켜져 있습니다. 자체 서명되었거나 확인할 수 없는 인증서를 사용하는 호스트에 대해서만 끄십시오. |
+
+4. `Test Connection`을 클릭합니다. 테스트에 성공하면 Essbase 서버에 접속하여 서비스 계정이 볼 수 있는 애플리케이션을 나열하고 찾은 개수를 보고하므로, 쿼리를 만들기 전에 기본 URL과 자격 증명을 모두 확인할 수 있습니다.
+
+5. `Create`를 클릭합니다.
+
+</Steps>
+
+## 쿼리 실행
+
+<Steps>
+
+1. 워크플로에 **Essbase: 큐브 쿼리** 단계를 추가합니다(단계 메뉴의 **Oracle Essbase** 아래에 있습니다).
+
+2. **구성**에서 **연결**, **애플리케이션**, **큐브(데이터베이스)**, **대상 테이블**을 설정합니다.
+
+3. **MDX**를 작성합니다.
+
+   - **안내식 멤버 선택** — 큐브의 차원과 멤버를 탐색하여 열과 행에 들어갈 항목을 선택하면 단계가 MDX를 대신 조립합니다.
+   - **원시 MDX** — 계산된 멤버나 집합 연산자처럼 안내식 선택기로 다룰 수 없는 경우 MDX `SELECT`를 직접 작성하거나 붙여 넣습니다.
+
+4. 단계를 실행합니다. 반환된 그리드가 대상 테이블로 가져와지며, 열은 그리드 자체에서 파생되므로 미리 선언할 스키마가 없습니다.
+
+</Steps>
+
+## 옵션
+
+- **멤버 레이블은 결정적입니다.** 멤버의 열 레이블은 연결에 구성된 별칭 테이블에서 가져오며 실행할 때마다 일관되게 적용됩니다. 쿼리를 실행할 때 로그인한 사람에 따라 레이블 텍스트가 달라질 수 있는 Essbase 자체의 세션별 기본값을 사용하지 않습니다.
+- **행 제한 기본값은 250,000이며 늘릴 수 있습니다.** 행 제한을 설정하지 않으면 "무제한"이 아니라 250,000행 상한이 적용됩니다. 유효한 제한보다 많은 행을 반환하는 쿼리는 제한 없이 실행되거나 그리드를 조용히 잘라 내는 대신 개수와 상한을 알려 주며 거부됩니다. 정당한 대형 추출을 가져오려면 쿼리를 좁히거나 행 제한을 명시적으로 늘리십시오.
+- **0 억제는 선택 사항이며 손실이 있습니다.** 값이 0인 셀을 억제하는 것은 의도적으로 켜는 필터이며 파괴적입니다. 데이터가 전혀 없는 셀에 대한 Essbase 자체의 `#Missing` 표시와는 다른, 실제로 전기된 `0`을 담은 셀도 버려집니다. 계획 큐브에서 전기된 0은 누군가 입력한 값이므로 의미가 있으며, 0을 억제하면 데이터의 부재만이 아니라 실제 데이터가 삭제될 수 있습니다. 결과에서 0을 제외하려는 경우가 아니라면 꺼 두십시오.
+
+## 차원 계층 로드
+
+[Essbase: 차원 읽기](/ko/reference/workflow-steps/essbase/essbase-dimension-read/) 단계는 Essbase 차원 하나의 아웃라인을 읽어 같은 연결을 통해 클라우드로 직접 PlaidCloud 차원의 기본 계층으로 로드합니다. Essbase: 큐브 쿼리와는 별도의 단계이며, 큐브 셀이 아니라 아웃라인 구조를 읽습니다.
+
+이 단계는 표현할 수 없는 항목을 잘못 로드하지 않고 이름을 지정하여 거부합니다. 공유 멤버, 레이블 전용 멤버, Dynamic Calc 멤버, 속성 차원, `+`/`-` 이외의 통합 연산자(Essbase의 `*`, `/`, `%`에는 PlaidCloud 대응 항목이 없음), 전체 아웃라인 멤버가 5,000개를 초과하는 아웃라인이 해당합니다. 전체 목록과 각 거부의 의미는 [단계 참조](/ko/reference/workflow-steps/essbase/essbase-dimension-read/#이-단계에서-표현할-수-없는-항목)를 참조하십시오.
+
+## 관련 항목
+
+- [Essbase: 큐브 쿼리](/ko/reference/workflow-steps/essbase/essbase-query/) — 단계 필드 참조.
+- [Essbase: 차원 읽기](/ko/reference/workflow-steps/essbase/essbase-dimension-read/) — 차원 아웃라인을 PlaidCloud 차원으로 로드합니다.
+- [Oracle Essbase 커넥터](/ko/reference/connectors/erp/oracle-essbase/) — 연결 필드 참조.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

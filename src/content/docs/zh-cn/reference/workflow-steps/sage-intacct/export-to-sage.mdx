@@ -1,0 +1,99 @@
+---
+title: "Intacct：过账日记账分录"
+description: 将 PlaidCloud 项目表中的日记账分录过账到 Sage Intacct，作为过账 UDF 的低代码替代方案，提供每条分录的结果表和预览验证。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 Sage Intacct 连接，使用 Intacct 的 REST v1 API 将日记账分录过账到 Sage Intacct。这是编写过账用户定义函数（UDF）的低代码原生替代方案：选择连接、映射列，步骤会为您处理身份验证、批处理以及每条分录的错误处理。
+
+该步骤读取您已在上游整理好的两个表，即**标题表**和**行表**，验证每条日记账分录并将其过账。它支持批量场景：一次运行中包含多条日记账分录，每条分录独立过账和跟踪。
+
+<Aside type="danger" title="无重复保护：重新运行前请检查结果表">
+此步骤**不会**跟踪哪些分录已经过账。重新运行会重新过账标题表中的**每一条**分录，包括上次已成功过账的分录，没有任何去重机制。重新运行之前，请打开上次运行的结果表，确认哪些分录确实需要过账。如果上次运行留下了 `status` 为 `unknown` 的分录，请先参阅下面的[结果表](#结果表)，再进行其他操作。
+</Aside>
+
+## 数据结构约定
+
+步骤不会推断哪些行属于哪条日记账分录，您需要在此步骤运行之前，使用标准步骤（赋值表达式、聚合）在上游构建这一结构：
+
+- **标题表**中**每条日记账分录恰好一行**，该行带有 **`entry_key`** 列，其值可以是每条分录唯一的任何值（批次号、日期与描述的拼接、生成的序列号）。
+- **行表**中每个过账行一行，且**每一行都带有**与其所属标题行相同的 `entry_key` 值。
+
+即使只有单条日记账分录（不分批），也需要这种结构：让两个表中的每一行都使用相同的常量 `entry_key`。
+
+步骤在验证或过账之前，会先按 `entry_key` 对两个表分组，因此没有匹配行的标题行、没有匹配标题的行，或同一个键对应多个标题行，都会导致该条分录验证失败，而不会生成格式错误的过账。
+
+## 特有配置项
+
+### Sage 连接
+
+用于过账的 **Sage Intacct** 连接。此处仅提供 Sage Intacct 连接，通用 REST 连接不被接受，因为过账需要 Intacct 特有的令牌交换以及公司/实体解析，只有 Sage Intacct 连接才具备。
+
+同一个连接也用于在其他地方*读取* Intacct（例如 [Import Sage AP 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-sage-ap/)或 [Import Sage Intacct Query 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-intacct-query/)），一个连接即可满足两个方向。请参阅 [Sage Intacct REST 连接器](/zh-cn/reference/connectors/rest/sage-intacct/)。
+
+### 条目键
+
+同时存在于标题和行源列中的列的名称，用于将标题行和明细行归组为一条日记账分录。请参阅上面的[数据结构约定](#数据结构约定)。
+
+### 源列
+
+两个独立的列映射，每个选项卡一个：对每个映射，将一个源列映射到它所提供数据的日记账分录字段：
+
+- **标题列**：日记账分录级别的字段，包括日记账、过账日期、描述、参考编号、可选的 `base_location`（分录所过账的 Intacct 实体/位置，单实体公司可省略）、您指定为**条目键**的关联列，以及类似的标题级详细信息。
+- **行列**：每个过账行的字段，包括总账科目、借/贷金额、行描述、相同的**条目键**列，以及维度（位置、部门、员工、类别等）。
+
+无需重命名您的源列，只需把它们的现有名称映射到上述目标字段名即可。
+
+### 结果表
+
+此步骤为每条日记账分录向其写入一行的目标表，记录验证和（非预览时）过账的结果。其列和 `status` 值请参阅下面的[结果表](#结果表)。
+
+### 预览
+
+一个复选框，**默认勾选**。启用预览时，步骤会像正式运行一样验证每条日记账分录并写入结果表，但**不会**向 Intacct 进行身份验证，也**不会**过账任何内容，预览模式下完全没有对 Intacct 的网络调用。各行会以 `status = preview` 写入结果表，让您在任何内容进入总账之前，看到哪些分录可以顺利过账，哪些会验证失败。
+
+与正式运行一样，预览会用本次运行的行**替换**结果表，它是步骤每次运行的输出，而不是持续累积的日志，因此在一次正式运行之后再进行预览，会覆盖该次运行的 `posted` 和 `unknown` 行。如果仍需要上次运行的结果表，请在重新运行（无论预览还是正式）之前将其打开并复制。
+
+预览不会验证您的 Intacct **凭据**：由于它从不连接，错误的连接或过期的凭据不会在这里暴露。请使用连接的**测试连接**操作（位于 **Tools > Connections** 下）单独确认凭据。
+
+如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创建的配置），同样默认为预览，而不是正式过账。
+
+只有在准备好正式过账时才取消勾选预览。我们建议先启用预览运行，查看结果表，再关闭预览重新运行。
+
+## 结果表
+
+每次运行（无论预览还是正式）都会为每条日记账分录向结果表写入一行：
+
+| 列 | 说明 |
+|---|---|
+| `entry_key` | 此行所报告的日记账分录。 |
+| `status` | `preview`、`posted`、`failed`、`unknown` 之一，详见下文。 |
+| `intacct_key` | 已过账分录的 Intacct 分配键（如果有）。 |
+| `http_status` | Intacct 为该过账尝试返回的 HTTP 状态（如果有）。 |
+| `error_message` | 当 `status` 为 `failed` 或 `unknown` 时，对出错原因的简短、经过净化的描述。 |
+| `line_count` | 与此分录匹配的行数。 |
+| `posting_date` | 发送给 Intacct 的过账日期（预览模式下为将会发送的过账日期）。 |
+
+### 状态值
+
+- **`preview`**：预览模式；分录已通过验证，但未过账。
+- **`posted`**：分录已成功过账到 Intacct。
+- **`failed`**：Intacct 明确拒绝了该分录（或在尝试过账之前验证就已失败）。可以放心修复根本问题，并仅重新过账该分录。
+- **`unknown`**：无法确定结果，原因可能是超时、连接中断，或 Intacct 没有给出明确响应的服务器错误。
+
+<Aside type="danger" title="unknown 并不意味着失败">
+`unknown` 分录可能已在 Intacct 成功过账，请求可能在连接中断或响应未返回之前就已被接收并提交。**重新运行此步骤之前，请直接在 Intacct 中核实该分录的状态。**盲目重新过账 `unknown` 分录，可能会在您的总账中产生重复的日记账分录。
+</Aside>
+
+只要有任何 `failed` 或 `unknown` 行，运行就会报告一条警告，无需打开结果表即可看到，但下一步该怎么做，仍以结果表本身为准。
+
+## 相关内容
+
+- [导出步骤](/zh-cn/reference/workflow-steps/export/)
+- [Import Sage AP 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Sage Intacct REST 连接器](/zh-cn/reference/connectors/rest/sage-intacct/)

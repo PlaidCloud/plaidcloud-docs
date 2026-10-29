@@ -1,0 +1,60 @@
+---
+title: "Anaplan: Liste lesen"
+description: Liest eine oder mehrere Anaplan-Listen – eine vollständige zusammengesetzte Hierarchie, beginnend mit der Wurzel – in eine PlaidCloud-Dimension. Zugriffssteuerungs-Flags und Teilmengen werden nicht importiert, und jede Kante wird als einfaches Pluszeichen aufsummiert.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Liest eine oder mehrere Anaplan-Listen über Ihre [Anaplan-Verbindung](/de/guides/connections/anaplan/) und lädt sie in eine PlaidCloud-Dimension. **Ein Schritt liest eine vollständige zusammengesetzte Hierarchie** – nennen Sie alle Listen, die sie umfasst, beginnend mit der Wurzel (zum Beispiel Region, dann Land, dann Filiale) –, statt sie auf mehrere Schritte zu verteilen: Die Staging-Tabelle wird bei jeder Ausführung vollständig ersetzt. Mehrere Schritte, die auf dieselbe Staging-Tabelle zeigen, würden daher jeweils die Zeilen des vorherigen Schritts löschen.
+
+Dieser Schritt erscheint im Schrittmenü unter **Anaplan** mit der Bezeichnung **Listen lesen**.
+
+Der Schritt greift **Cloud-direkt** über die Integration API auf Anaplan zu – einen Pfad über einen lokalen Agent gibt es nicht.
+
+<Aside type="tip">
+Dieser Konnektor ist schreibgeschützt und authentifiziert sich mit Basic-Anmeldedaten (Benutzername und Passwort) oder mit einem CA-Zertifikat – siehe [Authentifizierung](/de/guides/connections/anaplan/#authentifizierung). Das Anfragebudget von Anaplan wird mandantenweit geteilt. Staffeln Sie daher den Zeitplan dieses Schritts gegenüber Ihren anderen Anaplan-Workflows – siehe [Überlegungen zum Zeitplan](/de/guides/connections/anaplan/#überlegungen-zum-zeitplan).
+</Aside>
+
+## Konfiguration
+
+### Anaplan-Quelle
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| Anaplan-Verbindung | Ja | Die [Anaplan-Verbindung](/de/guides/connections/anaplan/), über die gelesen wird. |
+| Umgebung | Ja | Die Umgebung der Verbindung. |
+| Modell | Nein | Überschreibt die in der Verbindung gespeicherte Modell-ID. Wird live über die Verbindung ermittelt oder von Hand eingegeben. |
+| Listen | Ja | Alle Anaplan-Listen, die die Hierarchie umfasst, als geordnete Liste. Fügen Sie aus dem gewählten Modell ermittelte Listen hinzu oder geben Sie eine ID von Hand ein und ordnen Sie sie dann mit Nach oben / Nach unten neu an. Es ist übersichtlich, sie beginnend mit der Wurzel aufzuführen, die Reihenfolge ändert aber nichts am Ergebnis – jede Liste wird gelesen, bevor ein übergeordnetes Element aufgelöst wird. |
+| Staging-Tabelle | Ja | Die Rohzeilen für übergeordnetes Element, untergeordnetes Element, Konsolidierung, Name und Eigenschaften landen hier, bevor die PlaidCloud-Dimension daraus aufgebaut wird. |
+
+### PlaidCloud-Zieldimension
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| Dimension dynamisch angeben | Eines von beiden | Name der Zieldimension, der `{variable}`-Token enthalten darf, die zur Laufzeit aufgelöst werden. Standardmäßig ausgewählt. |
+| Bestimmte Dimension verwenden | Eines von beiden | Wählen Sie stattdessen eine bereits vorhandene PlaidCloud-Dimension aus. |
+
+## Was dieser Schritt nicht abbilden kann
+
+| Einschränkung | Bedeutung |
+|---|---|
+| Jede Kante wird mit einem einfachen `+` aufsummiert | Anaplan-Listenhierarchien enthalten kein Gewicht und kein Vorzeichen pro Kante – es gibt nichts zu lesen, bei der Übertragung geht also nichts verloren, es kann aber auch nichts darüber hinaus abgebildet werden. Wenn ein Modell Ausschlüsse oder negative Aufsummierungen über eine Zeilenposition oder eine Eigenschaft ausdrückt, wird diese Logik nicht in die Dimension übernommen und muss nachgelagert neu aufgebaut werden. |
+| Zugriffssteuerungs-Flags und Teilmengenzugehörigkeit werden nicht importiert | Die Lese-/Schreib-Flags des selektiven Zugriffs und die Listenteilmengen-Zugehörigkeit der einzelnen Elemente sind Anaplan-Metadaten und keine Dimensionsdaten – würde jede Teilmenge als eigene Spalte importiert, kollidierte sie in einem wachsenden, gemeinsam genutzten Namensraum mit echten Eigenschaften. Eine echte Listeneigenschaft, deren Name mit einem von beiden kollidiert, wird abgewiesen, statt stillschweigend unter dem Namen des anderen zu landen. |
+| Teilmengen von Zeilenpositionen sind nicht als Dimensionen lesbar | Anaplan stellt sie nur über einen generischen Endpunkt für Dimensionselemente bereit, nicht als Liste, die dieser Schritt lesen kann. |
+| Eine Liste mit mehr als 1.000.000 Datensätzen kann auf diesem Pfad nicht gelesen werden | Der Elemente-Endpunkt, aus dem dieser Schritt liest, lehnt Anfragen oberhalb dieser dokumentierten Obergrenze rundweg ab, statt ein Teilergebnis zu liefern, und bietet keine Möglichkeit, sie per Seitenabruf zu umgehen. Der Schritt bricht daher ab und nennt die Obergrenze, statt eine unvollständige Dimension zu laden. Teilen Sie die Liste in Anaplan auf oder lesen Sie vorerst eine Teilmenge davon. |
+| Ein Knoten hängt unter genau einem übergeordneten Element | Ein Element, dessen übergeordneter Name und übergeordnete ID nicht übereinstimmen, dessen übergeordnetes Element in einer Liste liegt, die dieser Schritt nicht liest, oder dessen benanntes übergeordnetes Element gar nicht existiert, wird unter Namensnennung abgewiesen, statt stillschweigend der Wurzel der Dimension zugeordnet zu werden. |
+| Das oberste Element einer Liste wird nicht importiert | Das oberste Element in Anaplan ist ein Aufsummierungsknoten, der über allen Elementen der Liste liegt und kein Element der Liste selbst ist; die Elemente, die dieser Schritt liest, enthalten es daher nie. Die Dimension ist dadurch eine Ebene flacher als die Anaplan-Liste, und die eigenen Wurzeln der Liste werden zu den Wurzeln der Dimension. Der Schritt gibt eine Warnung aus, wenn eine gelesene Liste ein solches Element deklariert. |
+| Knoten-IDs müssen über alle gemeinsam gelesenen Listen hinweg eindeutig sein | Die ID eines Knotens ist der Anaplan-Code des Elements oder, falls es keinen hat, sein Name – und ein Anaplan-Code ist nur innerhalb einer Liste garantiert eindeutig. Zwei Listen, die dieselben kurzen Codes wiederverwenden, werden unter Namensnennung abgewiesen, statt stillschweigend zu einem Knoten zusammengeführt zu werden. |
+| Alternativhierarchien werden nicht unterstützt | Jede Liste wird in die Haupthierarchie der Dimension geladen. |
+| Schreibgeschützt | Es wird nie etwas nach Anaplan zurückgeschrieben. |
+
+## Verwandte Themen
+
+- [Mit Anaplan verbinden (Leitfaden)](/de/guides/connections/anaplan/) – die Verbindung erstellen.
+- [Anaplan: Ansicht lesen](/de/reference/workflow-steps/anaplan/anaplan-read-view/) – eine gespeicherte Ansicht genau so lesen, wie sie gespeichert wurde.
+- [Anaplan: Export lesen](/de/reference/workflow-steps/anaplan/anaplan-read-export/) – eine bereits vorhandene Exportaktion ausführen.
+- [Dimension Load](/de/reference/workflow-steps/dimensions/dimension-load/) – derselbe Mechanismus zum Laden von Dimensionen, auf dem dieser Schritt aufbaut.
+- [Anaplan-Schritte](/de/reference/workflow-steps/anaplan/)

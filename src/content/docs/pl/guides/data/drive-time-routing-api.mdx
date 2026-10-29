@@ -1,0 +1,148 @@
+---
+title: API wyznaczania tras według czasu przejazdu
+description: Wywołuj punkty końcowe REST PlaidCloud do wyznaczania tras według czasu przejazdu — wielokąty izochron i ranking najbliższych według czasu przejazdu, oparte na własnym silniku routingu PlaidCloud. Wersja zapoznawcza na zasadzie opt-in, bez gwarancji, bez umowy SLA.
+sidebar:
+  label: API wyznaczania tras według czasu przejazdu
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud udostępnia wyznaczanie tras według czasu przejazdu jako dwa punkty końcowe REST pod `/rest/v1/analyze/route`: punkt końcowy **isochrone**, który rysuje wielokąt czasu przejazdu (lub odległości przejazdu) wokół punktu początkowego, oraz punkt końcowy **find-nearest**, który klasyfikuje kandydatów na miejsca docelowe według rzeczywistego czasu przejazdu, a nie odległości w linii prostej. Oba działają na własnym silniku routingu PlaidCloud, zbudowanym na danych drogowych OpenStreetMap (ODbL), i opakowują każdy wynik w niewielką kopertę `plaidcloud` z informacją o źródle danych.
+
+<Aside type="caution" title="Wersja zapoznawcza na zasadzie opt-in — przeczytaj to, zanim zaczniesz coś na niej budować">
+Wyznaczanie tras według czasu przejazdu jest **domyślnie wyłączone** i dociera tylko do tenantów, którzy się na nie zdecydowali. Działa na małej, współdzielonej puli routingu i jest oferowane **na zasadzie best-effort, bez umowy SLA** — nie ma gwarantowanej przepustowości dla ruchu na żywo, a żądanie może zostać odrzucone z kodem `503`, gdy pula jest zajęta, zamiast być kolejkowane lub ponawiane za Ciebie. Jeśli nie masz tej funkcji jeszcze włączonej, skontaktuj się z PlaidCloud w sprawie wersji zapoznawczej, zanim uzależnisz od niej swoje rozwiązanie.
+</Aside>
+
+## Uwierzytelnianie i uprawnienia
+
+Każde wywołanie routingu wymaga:
+
+- Zwykłej sesji PlaidCloud lub tokenu okaziciela z rolą **`analyze.table.read`** — tą samą rolą, która chroni inny dostęp odczytu do danych projektu. Nie ma roli specyficznej dla routingu.
+- Wyznaczania tras według czasu przejazdu uwzględnionego w Twoim planie — uprawnienia do czasu przejazdu włączonego dla Twojego tenanta. Tenant, którego plan go nie obejmuje, dostaje przy każdym wywołaniu `403` z `detail: "drive_time_disabled"` — nie ma trybu częściowego ani tylko do odczytu.
+
+## Punkty końcowe
+
+### `isochrone` — wielokąt czasu przejazdu wokół punktu początkowego
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Pole | Typ | Uwagi |
+|---|---|---|
+| `origin` | `{ lat, lon }`, wymagane | Pojedyncza współrzędna. Isochrone przyjmuje jeden punkt początkowy na wywołanie |
+| `costing` | ciąg znaków | `auto` (domyślnie), `truck`, `bike` lub `pedestrian` |
+| `contours_minutes` | tablica liczb całkowitych, wymagane | Jeden wpis na każdy żądany pierścień konturu, każdy w zakresie 1–120 minut. Do 5 konturów na wywołanie |
+| `costing_options.truck.height` | liczba zmiennoprzecinkowa, metry | Opcjonalne, > 0 i ≤ 10. Dotyczy tylko kosztowania `truck` |
+| `costing_options.truck.weight` | liczba zmiennoprzecinkowa, kilogramy | Opcjonalne, > 0 i ≤ 100000. Dotyczy tylko kosztowania `truck` |
+| `costing_options.truck.length` | liczba zmiennoprzecinkowa, metry | Opcjonalne, > 0 i ≤ 50. Dotyczy tylko kosztowania `truck` |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Odpowiedź — własny GeoJSON izochron silnika routingu, niezmodyfikowany, plus koperta `plaidcloud`:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest` — najbliższe miejsca docelowe według czasu przejazdu
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Pole | Typ | Uwagi |
+|---|---|---|
+| `origins` | tablica `{ lat, lon }`, wymagane | 1–5 punktów początkowych |
+| `destinations` | tablica `{ lat, lon }`, wymagane | 1–500 kandydatów. Zobacz [wstępne filtrowanie miejsc docelowych](#wstępne-filtrowanie-miejsc-docelowych) poniżej |
+| `costing` | ciąg znaków | `auto` (domyślnie), `truck`, `bike` lub `pedestrian` |
+| `top_n` | liczba całkowita | Liczba najbliższych miejsc docelowych zwracanych dla każdego punktu początkowego. 1–50, domyślnie 5 |
+| `costing_options.truck.{height,weight,length}` | tak samo jak w isochrone | Dotyczy tylko kosztowania `truck` |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` odnosi się do pozycji tego miejsca docelowego w przesłanej tablicy `destinations`, a nie do jego pozycji w jakimkolwiek wewnętrznym rankingu — zachowaj go, aby przypisać wynik z powrotem do własnych danych.
+
+#### Wstępne filtrowanie miejsc docelowych
+
+Możesz przesłać do 500 miejsc docelowych, ale do właściwego obliczenia tras według czasu przejazdu trafia tylko **50 najbliższych w linii prostej** do któregokolwiek z Twoich punktów początkowych. Jeśli prześlesz więcej niż 50, PlaidCloud zawęża zbiór wstępnym filtrem w linii prostej (po ortodromie), zanim uszereguje pozostałe według rzeczywistego czasu przejazdu — więc miejsce docelowe, które jest blisko na mapie, ale leży po drugiej stronie granicy odcięcia w linii prostej, może zostać wykluczone, zanim czas przejazdu w ogóle zostanie obliczony. W zbiorach mniejszych niż 50 każdy kandydat jest trasowany i nie ma to żadnego wpływu. `top_n` jest ograniczone do 50 z tego samego powodu: nie może zwrócić więcej kandydatów, niż krok routingu kiedykolwiek rozważa.
+
+### Tryby kosztowania
+
+Obsługiwane są `auto`, `truck`, `bike` i `pedestrian`. Przy kosztowaniu `truck` możesz dodatkowo ograniczyć trasę wymiarami pojazdu — `costing_options.truck.height`, `.weight`, `.length` — tak aby trasa mogła omijać niski most lub drogę z ograniczeniem masy. **Routing materiałów niebezpiecznych nie jest obsługiwany.** Żaden z punktów końcowych nie ma parametru hazmat i nie jest on dostępny nawet pośrednio przez kosztowanie `truck` — to API nie omija ograniczeń dotyczących materiałów niebezpiecznych, więc nie polegaj na nim w przypadku transportu regulowanego przepisami o materiałach niebezpiecznych.
+
+## Błędy
+
+| Stan | Znaczenie |
+|---|---|
+| `403` | Brak roli `analyze.table.read` lub Twój plan nie obejmuje uprawnienia do czasu przejazdu |
+| `422` | Pole żądania nie przeszło walidacji — na przykład więcej niż 5 konturów, kontur poza zakresem 1–120 minut, więcej niż 5 punktów początkowych lub wymiar ciężarówki poza zakresem |
+| `503 route_unavailable` | Silnik routingu był nieosiągalny, przekroczył limit czasu lub zwrócił błąd — **albo** limit równoczesnych żądań Twojego tenanta był już wykorzystany (zobacz [Limity](#limity)) |
+
+`503` w tym przypadku nigdy nie jest surowym `5xx` i nigdy nie oznacza nieograniczonego zawieszenia — każde wywołanie silnika routingu działa z ograniczonym limitem czasu, więc wolny lub zawieszony serwer nadrzędny szybko kończy się kodem `503`, zamiast pozostawiać Twoje żądanie otwarte.
+
+## Limity
+
+- **Równoczesność na tenanta jest ograniczona do 2 jednoczesnych żądań.** Odzwierciedla to współdzieloną pulę routingu stojącą za wersją zapoznawczą, a nie limit na plan — trzecie równoczesne żądanie od tego samego tenanta otrzymuje `503 route_unavailable`, dopóki jedno z pierwszych dwóch się nie zakończy. Nie ma kolejkowania; ponów po krótkim opóźnieniu.
+- **Brak buforowania odpowiedzi.** Każde wywołanie jest obsługiwane na żywo względem bieżącego indeksu routingu.
+- **Współrzędne nigdy nie są logowane.** Dzienniki błędów rejestrują ścieżkę żądania i typ błędu, a nie punkt początkowy, miejsce docelowe ani żadne inne przesłane dane o lokalizacji.
+- Dane routingu są zbudowane na danych drogowych OpenStreetMap (ODbL) — obowiązują te same zastrzeżenia dotyczące pokrycia i aktualności, które dotyczą [API geokodowania PlaidCloud](/pl/guides/data/geocoding-api/#pokrycie-i-deterministyczność--przeczytaj-to-najpierw): silne w dobrze zmapowanych regionach, bardziej zmienne gdzie indziej i stale edytowane przez społeczność, a nie wersjonowany zbiór komercyjny.
+- Jeśli wyświetlasz wyniki routingu lub obszary czasu przejazdu użytkownikowi końcowemu, wyświetl obok nich ciąg `plaidcloud.attribution` (lub równoważne uznanie autorstwa OSM) — to samo zobowiązanie wynikające z ODbL, które dotyczy wyników geokodowania, dotyczy wyników routingu.
+
+## Powiązane
+
+- [Migracja z geokodowania Google lub Mapbox](/pl/guides/data/geocoding-api/) — punkty końcowe REST geokodowania PlaidCloud i te same zastrzeżenia dotyczące pokrycia OpenStreetMap
+- [Krok Żądanie REST](/pl/guides/workflows/rest-request-step/) — wywołuj te punkty końcowe z przepływu pracy

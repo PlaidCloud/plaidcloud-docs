@@ -1,0 +1,146 @@
+---
+title: Lançar um lançamento contábil no NetSuite
+description: Configure a etapa de fluxo de trabalho Post NetSuite Journal Entry — mapeie campos de cabeçalho e de linhas, visualize e valide um lote, depois lance-o e leia a tabela de resultado.
+sidebar:
+  label: Lançar lançamentos contábeis no NetSuite
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Lance lançamentos contábeis de tabelas de projeto do PlaidCloud no NetSuite com a etapa de fluxo de trabalho **Post NetSuite Journal Entry**. Este guia monta um lote a partir de uma tabela de cabeçalho e uma tabela de linhas, o visualiza sem tocar no NetSuite, depois o lança e lê o resultado.
+
+<Aside type="caution">
+Siga **Visualizar e validar** abaixo em todo lote antes de lançar de verdade, e concilie alguns lançamentos diretamente no NetSuite na primeira vez que executar isso em uma conta real.
+</Aside>
+
+## Pré-requisitos
+
+- Uma [conexão do NetSuite](/pt-br/guides/connections/netsuite/) funcionando, com uma função que possa criar lançamentos contábeis (acesso de **Criar** no registro Journal Entry, além da configuração REST/OAuth que o guia de leitura aborda).
+- Duas tabelas de origem no seu projeto:
+  - Uma **tabela de cabeçalho** com uma linha por lançamento contábil.
+  - Uma **tabela de linhas** com uma ou mais linhas de débito/crédito por lançamento contábil.
+
+<Aside type="note">
+As tabelas de cabeçalho e de linhas podem vir de qualquer lugar do seu fluxo de trabalho — uma importação, uma transformação anterior, uma tabela dinâmica. O único requisito é que ambas tenham uma coluna Journal ID que vincule cada linha à sua linha de cabeçalho.
+</Aside>
+
+## Estruture suas tabelas de cabeçalho e de linhas
+
+<Steps>
+
+1. Crie ou importe uma **tabela de cabeçalho** com uma linha por lançamento contábil. No mínimo, ela precisa de:
+
+   | Coluna | Mapeia para | Obrigatória |
+   |---|---|---|
+   | Um identificador do lançamento | Journal ID | Sim |
+   | A subsidiária do NetSuite | Subsidiary | Sim |
+   | A data do lançamento | Data de lançamento | Sim |
+   | A moeda do NetSuite | Currency | Não |
+   | Uma observação no nível do lançamento | Memo | Não |
+   | Um ID externo informado por quem chama | External ID | Não |
+
+2. Crie ou importe uma **tabela de linhas** com uma ou mais linhas por lançamento contábil, compartilhando o mesmo identificador do lançamento da sua linha de cabeçalho:
+
+   | Coluna | Mapeia para | Obrigatória |
+   |---|---|---|
+   | O identificador do lançamento | Journal ID | Sim |
+   | A conta do razão geral | Account | Sim |
+   | O valor do débito (0 se não houver) | Debit | Sim |
+   | O valor do crédito (0 se não houver) | Credit | Sim |
+   | Uma observação no nível da linha | Memo | Não |
+   | Departamento, classe, localização, entidade | Department / Class / Location / Entity | Não |
+
+   <Aside type="caution">
+   As linhas de cada lançamento contábil precisam estar balanceadas — o total de débitos deve ser igual ao total de créditos, até o centavo. Um lançamento desbalanceado nunca é enviado ao NetSuite; ele é registrado como erro (consulte [Visualizar e validar](#visualizar-e-validar)).
+   </Aside>
+
+3. Agrupe os valores nessas duas tabelas no nível em que você está lançando — um lançamento por dia, por documento, por lote — usando suas [etapas de tabela](/pt-br/reference/workflow-steps/tables/) habituais (uma tabela dinâmica, uma agregação com agrupamento ou uma junção). O Journal ID é o que liga um conjunto de linhas à sua linha de cabeçalho, então crie-o como uma chave exclusiva por lançamento contábil e compartilhada por todas as linhas que pertencem a ele.
+
+</Steps>
+
+## Configure a etapa
+
+<Steps>
+
+1. Adicione uma etapa **Post NetSuite Journal Entry** ao seu fluxo de trabalho.
+
+2. Na guia **Conexão**, defina **Conexão do NetSuite** como sua conexão do NetSuite e escolha um **Ambiente**.
+
+3. Na guia **Dados**:
+
+   - Defina **Tabela de cabeçalho do lançamento contábil** e **Tabela de linhas do lançamento contábil** como as tabelas que você criou acima.
+   - Deixe **Test Only Mode** marcado por enquanto — consulte [Visualizar e validar](#visualizar-e-validar).
+   - Deixe **Continue posting remaining entries if one entry fails** marcado, a menos que você prefira que um lote pare de imediato no primeiro lançamento com problema.
+   - Deixe **Submit Asynchronously** desativado, a menos que você precise especificamente do caminho de aceitação assíncrona do NetSuite para um lote de alto volume — consulte [Envio assíncrono](#envio-assíncrono) abaixo.
+   - Defina **Tabela de resultado do lançamento** como uma tabela que o PlaidCloud possa criar ou sobrescrever. Você vai querer isso em toda execução, não só na primeira — consulte [Leia a tabela de resultado](#leia-a-tabela-de-resultado).
+
+4. Na guia **Mapa de cabeçalho**, mapeie as colunas da sua tabela de cabeçalho para Journal ID, Subsidiary, Data de lançamento e (se você as tiver) Currency, Memo e External ID. Use **Filtros de cabeçalho** se quiser lançar apenas um subconjunto das linhas de cabeçalho.
+
+5. Na guia **Mapa de linhas**, mapeie as colunas da sua tabela de linhas para Journal ID, Account, Debit, Credit e (se você as tiver) Memo, Department, Class, Location e Entity. Use **Filtros de linhas** da mesma forma.
+
+</Steps>
+
+<Aside type="note">
+Todo campo de ID interno — Subsidiary, Account, Currency, Department, Class, Location, Entity — recebe o ID interno do NetSuite, não o nome de exibição. Se os seus dados de origem trazem o nome de exibição, resolva-o primeiro para o ID interno (uma consulta a uma pequena tabela de referência extraída do NetSuite, ou uma junção com uma que você mantém).
+</Aside>
+
+## Visualizar e validar
+
+Com **Test Only Mode** marcado, execute a etapa. O PlaidCloud monta cada lançamento contábil a partir dos seus dados mapeados e executa as mesmas verificações que faria antes de lançar — débitos e créditos balanceados, campos obrigatórios presentes, uma data de lançamento válida — sem fazer nenhuma chamada ao NetSuite. Nada é lançado.
+
+<Steps>
+
+1. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Abra a tabela de resultado e confirme que toda linha que você esperava lançar mostra `status = validated`. Qualquer linha com `error` informa o Journal ID do lançamento e o problema — geralmente um lançamento desbalanceado, uma Account ausente, ou uma Subsidiary ou Data de lançamento em branco.
+
+3. Corrija os dados de origem (ou seus mapeamentos e filtros) de qualquer linha `error` e execute novamente até que o lote seja validado sem erros.
+
+</Steps>
+
+## Lançar o lote
+
+Quando um lote for validado sem erros, desmarque **Test Only Mode** e execute a etapa novamente. Desta vez, o PlaidCloud realmente lança cada lançamento validado no NetSuite.
+
+<Aside type="caution">
+Lançar não é o mesmo que revalidar — sempre execute novamente em Test Only Mode após qualquer alteração nos dados de origem ou nos mapeamentos, e só o desative quando estiver confiante no resultado. Uma etapa agendada para execução sem supervisão deve ser tratada como você trataria qualquer outra gravação sem supervisão nos seus livros contábeis.
+</Aside>
+
+## Envio assíncrono
+
+**Submit Asynchronously** envia cada lançamento com o cabeçalho de aceitação assíncrona do NetSuite, em vez de aguardar uma criação e leitura de confirmação síncronas. O NetSuite coloca o lançamento na fila e responde imediatamente; o PlaidCloud o registra como `pending`, com uma referência de envio, em vez de `posted` ou `error`.
+
+<Aside type="caution">
+**Hoje nada resolve um lançamento pendente automaticamente.** Executar esta etapa novamente é o que o resolve — a etapa procura um lançamento pendente pela sua referência de envio e registra o resultado final (`posted` ou `error`). Se você ativar Submit Asynchronously, inclua a reexecução da etapa no seu fluxo de trabalho (uma reexecução agendada ou uma etapa posterior no mesmo fluxo de trabalho), em vez de tratar toda linha `pending` como concluída. Deixe isso desativado, a menos que você precise especificamente disso para um lote de alto volume em que o caminho síncrono seja lento demais.
+</Aside>
+
+## Leia a tabela de resultado
+
+A tabela de resultado contém uma linha por lançamento contábil tentado, em qualquer modo em que a etapa tenha sido executada:
+
+| Coluna | Descrição |
+|---|---|
+| journal_id | O Journal ID da sua tabela de cabeçalho. |
+| external_id | O ID externo usado nesta tentativa de lançamento (veja abaixo). |
+| internal_id | O ID interno do NetSuite para o lançamento criado, ou a referência de envio assíncrono enquanto estiver `pending`. Em branco em Test Only Mode e em caso de erro. |
+| status | `validated`, `posted`, `pending` (Submit Asynchronously aceitou o lançamento, mas o NetSuite ainda não o confirmou) ou `error`. |
+| message | Detalhes do erro em `error`. Em branco em `posted`/`validated`. |
+
+Crie as etapas seguintes — uma notificação para qualquer linha `error`, uma junção de volta à sua tabela de cabeçalho para registrar `internal_id` — a partir desta tabela, e não a partir do status de execução da própria etapa, já que um lançamento com problema em um lote grande não faz a etapa inteira falhar quando **Continue posting remaining entries** está ativado.
+
+## Reexecutando um lote com segurança
+
+Cada lançamento é enviado com um ID externo determinístico, construído a partir do seu projeto, da conexão, do Journal ID, da Data de lançamento e dos valores de suas linhas. Reexecutar a etapa sobre um lançamento **inalterado** reutiliza o mesmo ID externo, e o tratamento de ID externo do próprio NetSuite impede a criação de uma duplicata — portanto, reexecutar um fluxo de trabalho após uma falha transitória é seguro para os lançamentos que não mudaram.
+
+<Aside type="caution">
+Essa proteção cobre apenas um lançamento inalterado. Se você editar as linhas de um lançamento — um valor diferente, uma linha adicionada ou removida — e reexecutar a etapa, o PlaidCloud calcula um novo ID externo e o NetSuite o registra como um **segundo** lançamento contábil, não como uma atualização do primeiro. Para corrigir um lançamento que já foi lançado, corrija-o diretamente no NetSuite. Definir seu próprio valor na coluna External ID da tabela de cabeçalho substitui o valor gerado pelo PlaidCloud, caso você precise que os IDs externos sigam o seu próprio esquema.
+</Aside>
+
+## Relacionados
+
+- [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/) — configure a conexão pela qual esta etapa lança
+- [Referência de Post NetSuite Journal Entry](/pt-br/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) — referência completa de campos e configuração
+- [Exemplos de consultas SuiteQL do NetSuite](/pt-br/guides/connections/netsuite-financial-queries/) — extraia as subsidiárias, contas e dimensões de que você precisará como IDs internos
+- [Uso avançado do Data Mapper](/pt-br/reference/workflow-steps/common/advanced-data-mapper-usage/)

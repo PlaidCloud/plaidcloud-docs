@@ -1,0 +1,170 @@
+---
+title: AI 编码代理入门
+description: PlaidCloud MCP 服务器概览：它提供的功能、身份验证选项，以及每个 AI 代理客户端都需要了解的基础知识。
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/getting-started.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+最快的连接方式就在 PlaidCloud 内部：点击页眉工具栏中浅色/深色主题切换开关左侧的 **连接您的 AI**，选择您使用的客户端，然后按显示的步骤操作，其中已填好您工作区的 MCP 服务器 URL。只要工作区启用了 AI 权益，就可以使用该按钮。本页其余部分以及后面的各客户端页面仍然是参考资料：如果您不在 Web 界面中，或想全面了解身份验证和服务器提供的功能，请继续阅读。
+
+## 什么是 MCP 服务器？
+
+[模型上下文协议](https://modelcontextprotocol.io)是一项开放标准，用于让 AI 代理与外部工具和数据交互。PlaidCloud 在每个工作区上运行一个 MCP 服务器，它封装了与 REST API 相同的核心辅助功能，并按意图分组（`find`、`describe`、`upsert`、`run`、`organize`），使代理无需加载 1,000 多个底层 RPC 方法名称即可浏览整个接口。
+
+服务器地址为：
+
+```text
+https://<your-workspace>.plaid.cloud/mcp
+```
+
+将 `<your-workspace>` 替换为您的工作区子域名（即登录 PlaidCloud 界面时使用的子域名）。
+
+## 提供的功能
+
+该目录涵盖了代理日常所需的大部分接口：
+
+- **项目、工作流、步骤**：查找/描述/upsert/运行/整理，包括步骤级重新运行和版本历史。
+- **表、视图、查询**：架构自省、查询执行、导出、快照、分支。这里的视图与您在 PlaidCloud 中看到的相同，无论是在表资源管理器中创建的，还是由工作流生成的。
+- **维度**：描述、查找、upsert、版本管理，以及管理节点/别名/属性。
+- **连接**：查找/upsert/测试与外部系统的连接。
+- **Lakehouse**：分支、快照、优化/清理（vacuum）操作。
+- **身份**：成员、分组、会话、分发列表。
+- **文档、仪表板、UDF、编辑器、代理、发布**：特定领域的工具。
+- **工作流迁移**：将暂存在文档中的 Alteryx（`alteryx_convert`）、KNIME（`knime_convert`）、Prophecy（`prophecy_convert`）和 Savant（`savant_convert`）导出文件转换为 PlaidCloud 工作流，并协调组合迁移工作。
+- **PlaidCloud 文档**：`docs_search` 按关键字查找 PlaidCloud 文档中的页面，`docs_fetch` 读取整页内容，使代理可以在构建之前先确认某项功能的工作方式。
+- **工作流日志与运行跟踪**：`workflow_logs`、`workflow_run_status`、`workflow_job_track`。
+
+每个工具都返回统一的信封格式 `{ok, data, next_cursor?, total?}`；失败时使用 `{ok: false, error: {code, retryable, message, hint?}}`。变更类工具接受 `dry_run=True`，用于只规划、不写入的验证。
+
+### 保持结果精简
+
+工具结果是占用代理上下文最多的单项内容，因此 find 和 describe 工具默认只返回一小部分，并允许您扩大范围：
+
+- **行。** find 每页返回 25 条匹配项（`step_find` 返回 50 条）。被截断的页面会设置 `next_cursor`，find 工具还会在 `truncated` 中指出被截断的列表。任何一个都表示“还有更多”，而不是“只有这些”。`total` 始终报告完整数量。可以提高 `limit`，或使用游标翻页。
+- **列。** 传入 `fields=['id', 'name', 'update_time']`，只返回这些列。任何记录中都不存在的字段名会报错并列出可用字段，而不是被悄悄忽略，因此拼写错误会明确失败，而不是悄悄返回比您要求更少的内容。提供精选字段集的工具还接受 `field_set='minimal' | 'default' | 'full'`；调用 `mcp_introspect` 可查看某个工具接受哪些参数。
+- **计数。** `count_only=True` 可在不获取数据的情况下估算结果集的大小。
+
+### 批量请求
+
+`mcp_batch` 将多个工具调用打包成一个请求。它最多接受 100 个调用，同一时间只运行有限数量的调用，并且不能嵌套在另一个 `mcp_batch` 或配方（recipe）中；请改为将调用列在一个扁平的批次中，发送成本不会更高。超出上限的批次会被拒绝并给出说明，而不是被悄悄截断；该上限限制的是单个请求可启动的工作量，而不是您可执行的总量，因此较大的任务请拆分为多个批次。
+
+`paginate_through_listing` 配方无论您传入多大的 `max_pages`，都会在 200 页后停止，并在提前停止时报告 `partial: true`。加上它的 `max_items` 限制，单次分页调用总能结束。
+
+配方会拒绝它不认识的 `params` 键，并在消息中列出该配方接受的键。因此拼错的可选参数会明确失败，而不是被丢弃，否则调用会悄悄回答与您所问不同的问题。调用 `mcp_recipes(name=...)` 可查看某个配方接受的键。
+
+### 列式结果
+
+当一个大型结果的所有行都带有相同字段时，它会以列式而非对象列表的形式返回，这样字段名只发送一次，而不是每行发送一次：
+
+```json
+{"_fmt": "cols", "cols": ["id", "name"], "rows": [["a1", "Sales"], ["b2", "Costs"]]}
+```
+
+第 *i* 行为 `dict(zip(cols, rows[i]))`。较小的结果，以及各行字段集合不完全相同的结果，仍为对象数组，因此两种形状都会出现，直接读取这些响应的代码应同时处理两种形状。外层信封保持不变，也不会对任何值进行转换或舍入。代理在连接时就会被告知这种形状，无需您作任何提示即可读取；在典型的列表流量上，这可节省约 30% 的字符数和约 15% 的代理阅读预算，这些预算可留给您的实际问题。（两个数字不同，是因为重复的字段名对模型来说读取成本很低，所以字符节省量总是更大的那个。）
+
+要查看实时目录，请让代理连接到服务器并调用 `mcp_introspect`（不带参数），它会返回当前的工具数量、各领域的摘要和参数签名。使用 `mcp_recipes` 可获取常见的多工具操作手册（分页遍历大型列表、先快照再修改、重新运行失败的步骤等）。
+
+## 标签与视图
+
+每个设置标签的 upsert 工具（适用于表、工作流、步骤、项目、维度、视图、编辑器、UDF、连接和仓库）都接受两个参数：`labels` 添加标签，`remove_labels` 移除标签。对象上的其他标签保持不变。移除先于添加执行，因此一次调用即可重命名标签：
+
+```json
+{"remove_labels": ["01"], "labels": ["001"]}
+```
+
+移除对象上不存在的标签不会产生任何效果。
+
+视图工具用于处理您在 PlaidCloud 中看到的视图：
+
+- `view_find` 列出视图，`view_describe` 按 ID 或名称返回某个视图。
+- `view_upsert` 创建视图或原地更新视图。更新会保留视图的 ID 和标签，并且无需重新发送查询即可只修改其标签。
+- `view_organize` 用于删除、重命名、复制和移动视图。
+- 将查询参数写成 `%(name)s` 占位符。
+
+视图与表共用同一个文件夹树，因此请使用 `table_organize` 管理它们的文件夹。
+
+## 任务启动器
+
+服务器内置了一小组启动器，对应人们常按名称提出的任务。支持 MCP 提示的客户端会将它们列出并以菜单形式提供（请查阅您客户端的文档了解其位置），这样您只需选择任务，而不必描述它需要调用哪些工具、按什么顺序调用：
+
+| 启动器 | 需要提供的内容 |
+| --- | --- |
+| 将 CSV 文件导入表 | 文件，以及可选的项目、存放该文件的文件夹和新表的名称 |
+| 解释成本变化 | 结果表，以及可选的项目和两个期间 |
+| 调试失败的工作流 | 工作流，以及可选的项目 |
+| 探索项目数据 | 您要查找的内容，以及可选的项目 |
+
+每个启动器只是一条起始消息，而不是命令：代理读取它之后自行调用各种工具，因此您可以修改它，或从它开始继续对话。
+
+### 无需了解对象模型即可导入文件
+
+导入启动器最能节省工作量，因为直接做法需要按正确顺序使用四个工具：查找文档账户、浏览到文件、创建目标表，然后运行导入；其中任何一步猜错，都会在几次调用之后导致流程中断。
+
+它读取分隔文本，例如 CSV、TSV 等。Excel 工作簿或 Parquet 文件会被拒绝而不是被错误读取；请改为在工作流中使用相应的[导入步骤](/zh-cn/reference/workflow-steps/import/)来导入这些文件。
+
+`bulk_import_csv` 手册则按**名称**接收账户，按**名称或路径**接收文件：
+
+```text
+mcp_recipe_run(name='bulk_import_csv', params={
+    'project_id': '<project>',
+    'document_path': 'sales_2026.csv',
+    'document_account': 'Demo Data',
+})
+```
+
+它会将账户解析为其标识符，定位文件，根据文件本身读取的列和类型创建表并加载数据，因此您既不需要提供账户 ID，也不需要提供列规范。`table_name` 默认为不含扩展名的文件名，`table_path` 默认为项目根目录。
+
+如果知道文件夹，请一并给出，例如 `'document_path': 'raw/sales_2026.csv'`，这样搜索就只限于该文件夹。指定了文件夹的文件只会在该文件夹中匹配：更深层同名的文件会作为选项提供，而不是代替它被导入。
+
+当某个参数有歧义时，结果会提问，而不是猜测：
+
+```json
+{
+  "needs_choice": "document_account",
+  "question": "More than one document account is named 'Archive'. Which one?",
+  "candidates": [{"id": "...", "name": "Archive"}, {"id": "...", "name": "Archive"}]
+}
+```
+
+请将候选项展示给您正在协助的人员，然后带着他们的回答再次调用该手册，并将所选候选项原样传回。找不到文件时，回复会改为列出最接近的名称，并报告搜索了多少个文件，这样“不存在”就可以与“不在我找的位置”区分开来。
+
+<Aside type="note">
+只给出裸文件名时，会在所有账户类型上搜索；没有文件夹来缩小范围时，搜索会覆盖整个账户。在对象存储账户（S3、Wasabi、GCS）上，这需要一次列表操作；在 OneDrive、SFTP 和 Azure Blob 上，第一次列表只覆盖一级目录，因此搜索会进行第二次更深层的遍历。只要有文件夹或完整路径，就请提供；在包含数万个文件的账户上，仅给出裸文件名会明显更慢。
+</Aside>
+
+## 身份验证
+
+PlaidCloud 的 MCP 服务器接受两种身份验证方式：
+
+1. **通过动态客户端注册（DCR）进行 OAuth 2.1 + PKCE。** 这是 Claude.ai 自定义连接器界面所使用的方式，也是 Claude Code 的 MCP 桥接的默认方式。客户端会自行注册，并将您重定向到 PlaidCloud 的 Keycloak 登录页面。登录后，PlaidCloud 会显示 **Application Access Request** 页面，列出应用程序名称以及凭据将发送到的重定向 URI；每次授权批准一次，即可获得令牌。这是一项安全控制，而不是走形式：请确认应用程序名称和重定向 URI 与您实际连接的客户端一致，不要批准不是由您发起的请求。
+2. **在 `Authorization` 标头中使用静态持有者令牌。** 适用于没有可用浏览器重定向的代理运行时，或希望在配置文件中使用长期令牌的场景。PlaidCloud 提供了一个辅助页面来为您生成令牌（见下文）。
+
+### 获取静态持有者令牌
+
+在已登录 PlaidCloud 的浏览器标签页中打开以下 URL：
+
+```text
+https://<your-workspace>.plaid.cloud/mcp/setup/token
+```
+
+该页面会返回一段 JSON 代码片段，可直接粘贴到代理的 MCP 配置中。每个工作区都有各自的代码片段。
+
+令牌的有效期由您的 Keycloak 领域的访问令牌有效期策略决定（通常为几小时到一天）。如需刷新，请重新加载同一个 URL，浏览器会话会自动重新生成令牌。
+
+<Aside>此方式适用于入门，以及无法完成 OAuth 重定向的客户端。对于生产环境中的长期代理访问（服务账户、CI 运行器、计划作业），请在客户端支持的情况下使用 OAuth。个人访问令牌正在规划中，但尚未全面提供。</Aside>
+
+## 选择客户端
+
+本节其余部分将介绍特定 AI 代理客户端的设置：
+
+- [Claude Code](../claude-code/)：Anthropic 的编码代理（CLI、VSCode 扩展、JetBrains 插件）。
+- [Claude Desktop 和 Claude.ai](../claude-desktop/)：使用“自定义连接器”的 Claude 消费级应用（桌面版）和网页版（`claude.ai`）。
+- [Cursor](../cursor/)：AI 原生代码编辑器。
+- [GitHub Copilot](../copilot/)：VSCode 中的 Copilot 代理模式。
+- [Google Gemini CLI](../gemini/)：`gemini-cli` 和 Gemini Code Assist。
+- [ChatGPT](../chatgpt/)：当前的支持状态和推荐的变通办法。
+- [Grok](../grok/)：连接 Grok 的自定义连接器。
+- [故障排除](../troubleshooting/)：常见错误及其解决方法。

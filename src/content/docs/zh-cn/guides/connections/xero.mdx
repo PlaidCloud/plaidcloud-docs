@@ -1,0 +1,132 @@
+---
+title: 连接到 Xero
+description: 通过一键 OAuth 授权将 PlaidCloud 连接到 Xero，使用现成的实体导入步骤提取 Accounting API 实体，然后过账手工日记账、发票、账单、付款和贷项通知单。
+sidebar:
+  order: 16
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/xero.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Xero 的 Accounting API，无需手写查询即可提取会计科目表、联系人、发票、贷项通知单、付款、手工日记账等数据，并将单据过账回去。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请先在演示组织上运行每一次导入，并在正式过账之前，对每个过账批次完成下文的 **Test Only Mode** 测试。
+</Aside>
+
+## 先决条件
+
+在 Xero 中，您需要具备：
+
+- 一个 Xero 登录账号，且有权访问您要读取和过账的组织。
+- 为该组织授权已连接应用的权限，Xero 会在设置过程中要求您批准授权。
+
+仅此而已。PlaidCloud 会注册 OAuth 应用，因此无需获取开发者账户、客户端 ID 或客户端密钥。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections**，然后点击 `New Connection`。
+
+2. 从菜单中选择 **REST - Xero**。
+
+3. 为连接命名，例如 `Xero Prod`。
+
+4. 点击**连接到 Xero**，登录 Xero，并批准对您希望 PlaidCloud 访问的组织的访问权限。
+
+5. **连接状态**现在会报告该授权涵盖了多少个组织。从**组织**中选择此连接所针对的组织。
+
+6. 点击 `Create`。
+
+</Steps>
+
+<Aside type="note">
+PlaidCloud 会为您刷新 Xero 令牌并存储每个轮换后的刷新令牌，因此闲置数周的连接仍能继续工作。一个授权可以涵盖多个组织，但一个连接始终只针对一个组织；要访问第二个组织，请创建第二个 Xero 连接。Xero 的 Demo Company 与其他组织没有区别，因此沙盒连接就是其**组织**指向它的连接。
+</Aside>
+
+## 冒烟测试连接
+
+<Steps>
+
+1. 向工作流添加一个 **Xero：导入实体**步骤。
+
+2. 将 **Xero 连接**设置为您的连接，将**实体类型**设置为 `Chart of Accounts`，并将**目标表**设置为一个临时表。
+
+3. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，说明授权和组织选择均正确无误。如果出现错误，错误信息会指明问题所在，例如授权已过期，或登录账号不再有权访问该组织。
+
+## 导入数据
+
+<Steps>
+
+1. 添加一个 **Xero：导入实体**步骤，并设置 **Xero 连接**和**目标表**。
+
+2. 将**实体类型**设置为所需的记录：会计科目表、联系人、发票、贷项通知单、付款、手工日记账、银行交易、物品、跟踪类别、税率或币种。
+
+3. 使用可选筛选器缩小提取范围：**状态**（单个 Xero 状态，例如 `AUTHORISED` 或 `PAID`）、**起始日期**和**截止日期**（实体日期的 `YYYY-MM-DD` 边界），以及**更新时间晚于**（修改时间截止点）。
+
+4. 运行该步骤并检查目标表。
+
+</Steps>
+
+<Aside type="note">
+**更新时间晚于**不带已保存的水位线，PlaidCloud 不会记住上次运行在哪里停止，因此要进行增量提取，每次运行都需要自行提供截止点。物品和币种完全没有记录任何筛选器，会计科目表和联系人支持状态但不支持日期范围；Xero 会拒绝其实体不支持的筛选器，因此步骤会报告错误，而不是返回错误的结果集。
+</Aside>
+
+## 过账单据
+
+**Xero：过账单据**步骤通过每个 ERP 过账步骤共用的同一写入管道，过账五种单据类型：**ManualJournal**、**Invoice**、**Bill**、**Payment** 和 **CreditNote**。
+
+<Steps>
+
+1. 构建一个**标题表**，每个单据一行，包含以下列：`ref`（单据标识符）、`doc_type`（`ManualJournal`、`Invoice`、`Bill`、`Payment` 或 `CreditNote`）、`posting_date`，以及单据类型需要时的 `currency_id`、`party_id`（Xero 联系人）、`memo` 和 `due_date`。Payment 还需要 `total_amt`、`deposit_account_id`、`bank_account_id` 和 `linked_invoice_id`；CreditNote 需要 `credit_note_type`（销售使用 `ACCRECCREDIT`，这是默认值；采购使用 `ACCPAYCREDIT`）。单个批次可以混合多种单据类型，PlaidCloud 会在过账前按 `doc_type` 对其分区。
+
+2. 构建一个**行表**，每个 `ref` 对应一行或多行，每行都带有该 `ref`，并按单据类型组织：
+
+   | 单据类型 | 行列 |
+   |---|---|
+   | ManualJournal | `account_id`、`debit`、`credit`，以及可选的用于跟踪的 `class_id` / `department_id` |
+   | Invoice | `item_id`、`qty`、`unit_price`、`amount` |
+   | Bill | `account_id`、`amount` |
+   | CreditNote | `item_id`、`qty`、`unit_price`、`amount` |
+   | Payment | `linked_txn_id`（该行所应用到的发票）、`amount` |
+
+   任何行上都可以选填 `tax_type` 和 `memo`。
+
+3. 添加一个 **Xero：过账单据**步骤，设置 **Xero 连接**、**环境**（通过连接的哪个 PlaidCloud 环境进行过账）、**标题表**、**行表**和**结果表**。
+
+4. 在**标题字段**和**行字段**选项卡上，将您自己的列名映射到这些字段。
+
+5. 保持勾选 **Test Only Mode** 并运行该步骤，PlaidCloud 会构建并检查每个单据，不占用账本声明，也不会过账任何内容。
+
+6. 查看结果表（每个单据一行：`ref`、`doc_type`、`natural_key`、`xero_id`、`status`、`message`）。修复所有 `error` 行并重新验证。
+
+7. 取消勾选 **Test Only Mode** 并再次运行，以进行真实过账。除非希望批次在第一个失败的单据处立即停止，否则请保持勾选 **Continue posting remaining documents if one document fails**。
+
+</Steps>
+
+### 过账的工作原理
+
+每个单据在提交之前，都会先在 PlaidCloud 的幂等账本中被声明，因此重新运行绝不会过账已达到 `posted` 状态的单据。账本键带有单据类型前缀，因此即使 Xero 通过同一端点过账发票和账单，共用同一 `ref` 的发票和账单也绝不会冲突。
+
+如果结果不明确（例如超时或响应丢失），PlaidCloud 会按其所标记的单据编号回查 Xero，并且仅当单据处于最终的已过账状态时，才将匹配视为证据。Xero 的发票和贷项通知单编号不保证唯一，因此草稿、已作废或编号重复的匹配会被隔离，而不会被记录为本次写入的结果。
+
+### 功能限制：实际过账前请阅读
+
+<Aside type="caution">
+- **无法查找手工日记账和付款。** 手工日记账的说明（narration）和付款的引用在 Xero 中不可查询，因此没有可用于将存疑的写入与 PlaidCloud 的请求关联起来的字段。这些记录会被隔离，由您直接在 Xero 中解决，而不会靠猜测处理。
+- **冲销仅涵盖手工日记账和发票。** 手工日记账以借贷方向互换的日记账进行冲销；发票以镜像的贷项通知单进行冲销。账单、付款和贷项通知单在 Xero 的 API 中没有文档记载的撤销载荷，因此 PlaidCloud 会拒绝冲销，而不是凭空编造，请直接在 Xero 中更正这些单据。
+- **速率限制按组织计算。** Xero 允许每个组织每分钟 60 次调用、每天 5,000 次调用，并发调用 5 次。PlaidCloud 按连接管控每分钟和并发限制，并在响应被限流时退避，因此非常大的批次所需时间会相应增加。请为大范围提取设置计划，而不是对同一个组织同时运行多个 Xero 步骤。
+</Aside>
+
+## 相关内容
+
+- [Xero REST 连接器](/zh-cn/reference/connectors/rest/xero/)：字段参考。
+- [Xero：导入实体](/zh-cn/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero：过账单据](/zh-cn/reference/workflow-steps/xero/xero-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：每次 Xero 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

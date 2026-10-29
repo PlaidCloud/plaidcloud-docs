@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry 단계"
+description: 헤더 테이블과 라인 테이블에서 Dynamics 365 Finance & Operations로 총계정원장 분개 전표를 전기하며, 아무것도 전기하기 전에 모든 전표를 검증하는 미리 보기 모드를 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+[D365 F&O 연결](/ko/guides/connections/dynamics-365-fo/)을 통해 PlaidCloud의 공유 ERP 쓰기 파이프라인을 거쳐 Dynamics 365 Finance & Operations로 총계정원장 분개 전표를 전기합니다. 이 단계는 헤더 테이블(분개 전표당 한 행)과 라인 테이블(전표당 하나 이상의 차변/대변 행)을 받아 각 전표를 D365 F&O의 비동기 사용자 지정 서비스 분개 전기 작업에 제출합니다. **검증만 수행**은 원장 선점 없이, 전기하지 않고 모든 전표를 작성하고 검사하며, 선택 사항인 결과 테이블에는 각 전표의 결과가 기록됩니다.
+
+<Aside type="caution">
+이 단계로 실제 전표를 무인으로 전기하기 전에 모든 배치를 먼저 **검증만 수행**으로 실행하고 결과 테이블을 검토하며, 몇 건의 전기 내역을 D365 F&O에서 직접 대조하십시오.
+</Aside>
+
+## 구성
+
+### 연결
+
+- **D365 F&O 연결** — 전기에 사용할 D365 F&O 연결입니다.
+
+### 데이터
+
+- **헤더 테이블** — 분개 전표당 한 행입니다. `journal_id`(전표 식별자, 필수), `journal_name`(전기할 D365 F&O 분개 이름, 필수), `posting_date`, `description`이 있습니다.
+- **라인 테이블** — `journal_id`당 하나 이상의 행입니다. `account`, `debit`, `credit` 및 원장에 필요한 차원 열이 있습니다.
+- **결과 테이블** — 출력 테이블 ID입니다. 전표당 한 행이며 `journal_id`, `natural_key`, `confirmation_id`, `status`(`posted`/`validated`/`error`), `message`가 있습니다.
+- **검증만 수행** — 기본적으로 선택되어 있습니다. 사전 점검만 수행하며 원장 선점도 전기도 하지 않습니다. 이 필드가 아예 없는 단계 구성, 예를 들어 REST API, MCP 또는 워크플로 번들 가져오기로 작성한 구성도 실제 전기가 아니라 검증만 수행으로 기본 설정됩니다.
+- **오류 발생 시 계속** — 기본적으로 선택되어 있습니다. 한 전표가 실패한 후에도 나머지 전표를 계속 전기하며, 선택을 해제하면 첫 번째 실패에서 배치를 중지합니다.
+
+## 전기 작동 방식
+
+PlaidCloud는 각 전표를 D365 F&O의 비동기 사용자 지정 서비스 전기 작업에 제출한 다음 서비스가 전표의 최종 상태를 보고할 때까지 폴링합니다. 전표는 최종 상태가 **확인된** 후에만 `posted`로 보고됩니다. 제출이 수락되었다는 것만으로 성공으로 기록하지 않고, 수락되었지만 최종 상태가 확정되지 않는 전표는 전기된 것으로 보고하지도 조용히 누락하지도 않은 채 격리 상태로 유지됩니다.
+
+## 전기된 전표 정정
+
+이 단계는 전기된 전표를 삭제하거나 다시 쓰지 않습니다. 전표를 정정하려면 원본을 제자리에서 수정하는 대신, 원본과 차변과 대변을 바꾼 새 전표, 즉 전기된 역분개 전표를 전기하십시오.
+
+## 기능 제한
+
+| 제한 사항 | 의미 |
+|---|---|| 역분개는 제자리 수정이 아니라 새 전표입니다 | 정정은 차변/대변을 바꾼 새 역분개 전표로 전기됩니다. 이미 전기된 전표를 무효화하거나 삭제할 수는 없습니다. |
+| 차원 검증은 원장 설정에 따라 달라집니다 | 계정 구조에 유효하지 않은 재무 차원 조합은 D365 F&O 자체 검증에서 실패하며, PlaidCloud가 더 일찍 잡아내는 것이 아니라 `error` 행으로 표시됩니다. |
+
+## 관련 항목
+
+- [Dynamics 365 Finance & Operations에 연결](/ko/guides/connections/dynamics-365-fo/) — 구성, 미리 보기 및 전기를 다루는 전체 안내
+- [Dynamics 365 F&O REST 커넥터](/ko/reference/connectors/rest/dynamics-365-fo/)
+- [D365 F&O 단계](/ko/reference/workflow-steps/dynamics-365-fo/)
+- [ERP 전기 내역 검토](/ko/guides/connections/erp-post-history/)

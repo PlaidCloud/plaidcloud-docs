@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry
+description: Contabilice en NetSuite uno o más asientos de diario a partir de tablas de encabezados y líneas de PlaidCloud, con un modo de vista previa que valida cada asiento antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza asientos de diario en NetSuite a través de su [conexión de NetSuite](/es/guides/connections/netsuite/). El paso toma dos tablas de origen (una tabla de encabezados con una fila por asiento de diario y una tabla de líneas con una o más filas de débito/crédito por asiento), agrupa las líneas por asiento de diario y contabiliza cada asiento en NetSuite. **Test Only Mode** genera y comprueba cada asiento sin hacer ninguna llamada a NetSuite, y una tabla de resultados opcional registra el resultado de cada asiento.
+
+<Aside type="caution">
+Ejecute cada lote primero en **Test Only Mode**, revise la tabla de resultados y concilie directamente en NetSuite unas cuantas contabilizaciones antes de confiar en que este paso contabilice asientos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **Conexión de NetSuite**: la conexión de NetSuite por la que se contabiliza, filtrada a las conexiones de tipo NetSuite.
+- **Entorno**: el entorno de la conexión.
+
+Las conexiones de NetSuite se administran en **Tools > Connections**; consulte [Conectarse a NetSuite](/es/guides/connections/netsuite/).
+
+### Datos
+
+- **Tabla de encabezados de asientos de diario**: una fila por asiento de diario.
+- **Tabla de líneas de asientos de diario**: una o más filas de débito/crédito por asiento de diario, vinculadas a su fila de encabezado mediante el ID del diario.
+- **Test Only Mode**: marcado de forma predeterminada. Valida cada asiento de diario con las comprobaciones siguientes, pero no hace ninguna llamada a NetSuite; no se contabiliza nada. Desmárquelo para contabilizar de verdad. Una configuración del paso que omita este campo por completo (por ejemplo, una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo) también adopta de forma predeterminada Test Only Mode, en lugar de una contabilización real.
+- **Continue posting remaining entries if one entry fails**: marcado de forma predeterminada. Cuando un asiento no supera una comprobación o falla la propia contabilización, PlaidCloud registra un error para ese asiento y continúa con el resto del lote en lugar de detenerlo.
+- **Submit Asynchronously**: desactivado de forma predeterminada. Envía cada asiento con el encabezado asíncrono `Prefer: respond-async` de NetSuite, en lugar de la ruta síncrona de crear y volver a leer. NetSuite pone el trabajo en cola y PlaidCloud registra el asiento como `pending` con una referencia de envío, sin esperar a que se resuelva. Es una decisión por conexión: use la misma configuración en cada ejecución contra una conexión determinada, sin mezclarlas. **Actualmente nada resuelve automáticamente un asiento pendiente; lo que lo resuelve es volver a ejecutar este paso**, que busca el asiento y registra su resultado ya definitivo. Si activa esta opción, planee volver a ejecutar el paso (o consultar NetSuite directamente) en lugar de dar por terminada una fila `pending`.
+- **Tabla de resultados de la contabilización**: opcional. Si se define, PlaidCloud la escribe (o sobrescribe) con una fila por asiento de diario; consulte [Columnas de la tabla de resultados](#columnas-de-la-tabla-de-resultados).
+
+### Asignación de encabezado / Filtros de encabezado
+
+Asigne las columnas de la tabla de encabezados a los campos del asiento de diario que se indican a continuación y, opcionalmente, filtre qué filas de encabezado se contabilizan, con las [pestañas estándar de asignación de datos y de filtros](/es/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Campo | Obligatorio | Notas |
+|---|---|---|
+| ID del diario | Sí | Vincula una fila de encabezado con sus líneas. Una fila por cada ID del diario único. |
+| Subsidiaria | Sí | ID interno de la subsidiaria de NetSuite. |
+| Fecha de contabilización | Sí | La fecha de transacción del asiento. |
+| Moneda | No | ID interno de la moneda de NetSuite. |
+| Memorando | No | Memorando a nivel de asiento. |
+| ID externo | No | Reemplaza el ID externo determinista que PlaidCloud genera para el asiento; consulte [Recontabilización y asientos duplicados](#recontabilización-y-asientos-duplicados). |
+
+### Asignación de líneas / Filtros de línea
+
+Asigne las columnas de la tabla de líneas y, opcionalmente, filtre qué filas de línea se contabilizan.
+
+| Campo | Obligatorio | Notas |
+|---|---|---|
+| ID del diario | Sí | Coincide con el ID del diario de una fila de encabezado. |
+| Cuenta | Sí | ID interno de la cuenta del libro mayor de NetSuite. |
+| Débito | Sí | El importe del débito; 0 en una línea solo de crédito. |
+| Crédito | Sí | El importe del crédito; 0 en una línea solo de débito. |
+| Memorando | No | Memorando a nivel de línea. |
+| Departamento | No | ID interno del departamento de NetSuite. |
+| Clase | No | ID interno de la clase de NetSuite. |
+| Ubicación | No | ID interno de la ubicación de NetSuite. |
+| Entidad | No | ID interno de la entidad de NetSuite (cliente o proveedor). |
+
+## Cómo funciona la contabilización
+
+PlaidCloud agrupa la tabla de líneas por ID del diario y genera un asiento de diario de NetSuite por cada fila de encabezado. Antes de contabilizar cada asiento (o, en Test Only Mode, antes de registrarlo como validado), PlaidCloud comprueba que:
+
+- el asiento tenga al menos una línea
+- sus débitos y créditos cuadren al centavo
+- todas las líneas tengan una cuenta
+- la fila de encabezado tenga una subsidiaria
+- la fecha de contabilización sea una fecha válida
+
+Cualquier comprobación que falle registra una fila de error para ese asiento y, a menos que **Continue posting remaining entries** esté desactivado, continúa con el siguiente asiento del lote.
+
+### Recontabilización y asientos duplicados
+
+Cada asiento se contabiliza con un ID externo determinista, generado a partir del proyecto, la conexión, el ID del diario, la fecha de contabilización y los importes de las líneas. Al recontabilizar un asiento cuyas líneas no han cambiado se reutiliza ese mismo ID externo, y el propio tratamiento de IDs externos de NetSuite evita que se cree un asiento de diario duplicado. Si cambia cualquier línea de un asiento (un importe distinto, una línea agregada o eliminada), PlaidCloud calcula un nuevo ID externo para él, que NetSuite acepta como un asiento nuevo y no como una actualización del anterior. Defina un valor en la columna ID externo de la tabla de encabezados para controlar usted mismo el ID.
+
+<Aside type="caution">
+La recontabilización solo evita duplicados en un asiento que NetSuite considera idéntico a uno que ya tiene. Editar las líneas de un asiento y volver a ejecutar el paso no actualiza la contabilización original en NetSuite: crea un segundo asiento. Corrija un asiento contabilizado directamente en NetSuite, en lugar de volver a ejecutar este paso con datos modificados.
+</Aside>
+
+### Columnas de la tabla de resultados
+
+| Columna | Descripción |
+|---|---|
+| journal_id | El ID del diario de la tabla de encabezados. |
+| external_id | El ID externo usado en este intento de contabilización. |
+| internal_id | El ID interno de NetSuite del asiento de diario creado, o la referencia de envío asíncrono mientras está `pending`. En blanco en Test Only Mode y en caso de error. |
+| status | `validated` (Test Only Mode), `posted`, `pending` (Submit Asynchronously aceptó el asiento, pero NetSuite aún no lo ha confirmado) o `error`. |
+| message | Detalle del error en `error`; una nota en `pending` que indica que volver a ejecutar el paso lo resuelve. En blanco en `posted`/`validated`. |
+
+## Relacionado
+
+- [Conectarse a NetSuite](/es/guides/connections/netsuite/)
+- [Contabilizar un asiento de diario de NetSuite](/es/guides/connections/post-netsuite-journal-entries/): tutorial completo que abarca la configuración, la vista previa y la contabilización
+- [Conector REST de NetSuite](/es/reference/connectors/rest/netsuite/)
+- [Pasos de NetSuite](/es/reference/workflow-steps/netsuite/)

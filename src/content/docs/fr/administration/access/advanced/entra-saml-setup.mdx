@@ -1,0 +1,100 @@
+---
+title: Configurer SAML Microsoft Entra ID pour l'authentification unique
+description: Configurez Microsoft Entra ID comme fournisseur d'identité SAML pour l'authentification unique PlaidCloud afin de permettre une authentification fédérée sécurisée.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/entra-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud prend en charge l'authentification unique (SSO) via SAML 2.0. Ce guide explique comment configurer Microsoft Entra ID (anciennement Azure Active Directory) comme fournisseur d'identité SAML afin que les utilisateurs de votre organisation puissent s'authentifier via Entra pour accéder à PlaidCloud.
+
+<Aside>L'équipe PlaidCloud se charge de la configuration côté PlaidCloud. De votre côté, vous configurez l'Enterprise Application dans Entra et vous communiquez à PlaidCloud votre **App Federation Metadata URL**. L'assistance PlaidCloud effectue le reste de la configuration.</Aside>
+
+## Prérequis
+
+- Un locataire Microsoft Entra ID (Azure AD) actif
+- Un compte doté de l'un des rôles Entra suivants : **Global Administrator**, **Cloud Application Administrator** ou **Application Administrator**
+- Un contact avec l'assistance PlaidCloud pour coordonner la configuration et échanger les valeurs de configuration
+
+## Vue d'ensemble
+
+La configuration repose sur un échange de métadonnées SAML entre deux parties :
+
+1. **Vous configurez** une Enterprise Application dans Entra ID et vous communiquez à PlaidCloud votre App Federation Metadata URL.
+2. **PlaidCloud vous fournit** l'Entity ID du fournisseur de services (SP) et la Reply URL (Assertion Consumer Service URL) nécessaires pour terminer votre configuration Entra.
+
+Coordonnez-vous avec l'assistance PlaidCloud pour obtenir les valeurs du SP avant de terminer l'étape 3 ci-dessous.
+
+## Étape 1 : créer une Enterprise Application
+
+1. Connectez-vous au [portail Azure](https://portal.azure.com) et accédez à **Microsoft Entra ID**.
+2. Dans la barre latérale gauche, sélectionnez **Enterprise Applications**.
+3. Cliquez sur **+ New application**.
+4. Cliquez sur **+ Create your own application**.
+5. Saisissez un nom pour l'application (par exemple, `PlaidCloud SSO`).
+6. Sélectionnez **Integrate any other application you don't find in the gallery (Non-gallery)**.
+7. Cliquez sur **Créer**.
+
+## Étape 2 : activer l'authentification unique basée sur SAML
+
+1. Une fois l'application créée, sélectionnez **Single sign-on** dans la barre latérale gauche, sous **Gérer**.
+2. Sur l'écran « Select a single sign-on method », cliquez sur **SAML**.
+
+## Étape 3 : configurer les paramètres SAML de base
+
+<Aside>Vous avez besoin du **SP Entity ID** et de la **Reply URL (ACS URL)** fournis par PlaidCloud avant de terminer cette étape. Contactez l'assistance PlaidCloud pour obtenir ces valeurs.</Aside>
+
+1. Dans la section **Basic SAML Configuration**, cliquez sur **Modifier**.
+2. Dans le champ **Identifier (Entity ID)**, saisissez le SP Entity ID fourni par PlaidCloud.
+3. Dans le champ **Reply URL (Assertion Consumer Service URL)**, saisissez l'ACS URL fournie par PlaidCloud.
+4. Cliquez sur **Enregistrer**.
+
+## Étape 4 : configurer les attributs et les revendications
+
+Par défaut, Entra transmet l'adresse e-mail et le nom de l'utilisateur dans l'assertion SAML. Si votre configuration PlaidCloud utilise des affectations de groupes de sécurité issues de l'authentification unique, vous devez également inclure des revendications de groupe.
+
+### Ajouter des revendications de groupe
+
+1. Dans la section **Attributes & Claims**, cliquez sur **Modifier**.
+2. Cliquez sur **+ Add a group claim**.
+3. Choisissez **Groups assigned to the application** (recommandé pour limiter la taille du jeton).
+4. Sous **Source attribute**, sélectionnez une valeur appropriée :
+   - **ID du groupe** — transmet l'Object ID Azure (UUID) du groupe
+   - **Cloud-only group display names** — transmet le nom lisible du groupe (pour les groupes uniquement cloud)
+   - **sAMAccountName** — transmet le nom du groupe local (pour les environnements hybrides ou synchronisés)
+5. Cliquez sur **Enregistrer**.
+
+<Aside>Convenez avec l'assistance PlaidCloud du format d'attribut de groupe attendu, afin que les affectations de rôles de sécurité basées sur les groupes fonctionnent correctement dans PlaidCloud.</Aside>
+
+## Étape 5 : affecter des utilisateurs et des groupes à l'application
+
+Seuls les utilisateurs et les groupes affectés à l'Enterprise Application peuvent s'authentifier avec cette configuration d'authentification unique.
+
+1. Dans la barre latérale gauche, sélectionnez **Users and groups** sous **Gérer**.
+2. Cliquez sur **+ Add user/group**.
+3. Sélectionnez les utilisateurs ou les groupes qui doivent disposer de l'accès SSO à PlaidCloud.
+4. Cliquez sur **Affecter**.
+
+## Étape 6 : récupérer et envoyer l'App Federation Metadata URL
+
+Une fois l'application configurée, repérez la Federation Metadata URL et envoyez-la à PlaidCloud afin de finaliser l'intégration.
+
+1. Accédez à la page **Single sign-on** de votre Enterprise Application.
+2. Faites défiler jusqu'à la section **SAML Certificates**.
+3. Copiez l'**App Federation Metadata URL**.
+
+**Envoyez cette URL à l'assistance PlaidCloud.** Il s'agit de l'Entity Descriptor URL dont PlaidCloud a besoin pour configurer la relation de confiance côté fournisseur d'identité. Une fois cette URL reçue, l'équipe termine la configuration de Keycloak et vous prévient lorsque l'authentification unique est prête à être testée.
+
+## Tester l'intégration
+
+Une fois que PlaidCloud a confirmé que la configuration est terminée :
+
+1. Accédez à l'espace de travail PlaidCloud de votre organisation (par exemple, `https://my-workspace.plaid.cloud`).
+2. Vous êtes redirigé vers la page de connexion Microsoft.
+3. Connectez-vous avec vos identifiants Entra ID.
+4. Une fois l'authentification réussie, vous êtes redirigé vers PlaidCloud.
+
+Si vous rencontrez des erreurs, vérifiez les points suivants :
+- Le SP Entity ID et la Reply URL correspondent exactement à ce que PlaidCloud a fourni
+- L'utilisateur qui tente de se connecter est affecté à l'Enterprise Application
+- L'App Federation Metadata URL que vous avez envoyée à PlaidCloud est accessible (non bloquée par un pare-feu ou une stratégie d'accès conditionnel)

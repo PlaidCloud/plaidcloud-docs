@@ -1,0 +1,134 @@
+---
+title: Type de données Vecteur
+description: "Stockez des embeddings précalculés dans une table de projet avec le type de données de colonne Vecteur, déclarez la largeur attendue et trouvez les lignes les plus proches d'un vecteur de requête avec une étape IA : recherche vectorielle."
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/vector-data-type.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Vecteur** est un type de données de colonne destiné aux embeddings précalculés. Une colonne Vecteur contient, pour chaque ligne, un tableau de nombres à virgule flottante — la sortie du modèle d'embedding que vous utilisez déjà — dans une table de projet ordinaire, sur la même ligne que le texte, les clés, les montants et les dimensions qui le décrivent.
+Comme il s'agit d'une colonne ordinaire dans une table ordinaire, elle peut être jointe à vos tables de faits et se charge avec les mêmes étapes d'importation et de transformation que toutes les autres colonnes. Il n'y a aucun magasin de vecteurs distinct à provisionner, à alimenter ou à maintenir synchronisé avec le reste de vos données.
+
+Une étape **IA : recherche vectorielle** trouve ensuite les lignes les plus proches d'un ou plusieurs vecteurs de requête, de sorte qu'une recherche de similarité est une étape de workflow comme une autre.
+
+<Aside type="caution">
+Le type Vecteur nécessite **Lakehouse v2 (StarRocks)**. Sur tout autre moteur, le type n'est pas proposé dans les listes de types de données, et toute demande de création d'une colonne Vecteur y est refusée avec un message explicite.
+</Aside>
+
+<Aside type="note">
+PlaidCloud stocke et recherche des vecteurs ; il ne les génère pas. Calculez vos embeddings avec le modèle de votre choix et chargez les tableaux obtenus comme n'importe quelles autres données.
+</Aside>
+
+
+## Déclarer une colonne vectorielle
+
+**Vecteur** apparaît dans le groupe **Semi-structuré** des listes de types de données, aux côtés de JSON et de Bitmap — dans le mappage des colonnes de sortie d'une étape de workflow et dans les propriétés de colonne d'une table. Il n'est pas proposé comme type de données *source* d'une étape d'importation : les valeurs d'un fichier arrivent sous forme de liste de nombres et atterrissent dans une colonne déjà typée Vecteur. Il n'est pas non plus proposé là où un type scalaire unique est requis, comme le type déclaré d'une variable de workflow.
+
+Le type lui-même ne porte aucune dimension. Plutôt qu'une famille de types, un par largeur, il existe un seul type Vecteur et une déclaration par colonne de la largeur de ses vecteurs.
+
+### Largeur du vecteur
+
+Ouvrez le panneau de détails des colonnes d'une table, sélectionnez la colonne Vecteur et définissez la **Largeur du vecteur** sur le nombre de valeurs que contient chaque embedding — 768, 1024, 1536, selon ce que produit votre modèle. Ce champ apparaît sur une colonne Vecteur dans un projet Lakehouse v2 (StarRocks), et nulle part ailleurs.
+
+La largeur déclarée est appliquée sur chaque chemin de chargement. Une ligne dont le vecteur a une longueur différente est refusée avant que quoi que ce soit ne soit chargé, et le refus indique le fichier, la colonne, la ligne, la longueur constatée et la largeur que vous avez déclarée, ce qui vous permet de savoir exactement quelle valeur diverge et de combien — et, pour un chargement de fichier, les lignes sont comptées à partir de 1 sur l'ensemble du fichier. Un fichier tronqué ou un changement de modèle d'embedding devient ainsi une exécution en échec que vous pouvez lire.
+
+La vérification couvre toutes les voies par lesquelles arrivent les embeddings :
+
+* Une **importation Parquet**.
+* Un **connecteur REST** — y compris QuickBooks, Xero, Sage et Monday.com.
+* Un **tap Singer**.
+* Une **requête sur une base de données distante** exécutée directement sur la source.
+* Une **étape de workflow qui écrit un frame** dans la table.
+* Une **importation d'archive** ou une **restauration d'archive**, où le refus indique le fichier d'archive.
+* Une **importation de bundle de tables**. Une exportation de bundle écrit une colonne Vecteur sous forme de véritable vecteur, de sorte qu'un aller-retour par bundle conserve la largeur intacte.
+
+Deux cas échappent à cette vérification :
+
+* **Une importation CSV n'est pas vérifiée, et ne peut pas l'être.** La conversion transforme le tableau en texte avant qu'une largeur puisse être examinée ; le CSV est donc la seule voie qui peut introduire une largeur étrangère dans la colonne.
+* **Les écritures au niveau des lignes** — enregistrement de lignes ou d'enregistrements individuels, et connecteur à clés qui dépose une ligne — sont vérifiées lorsque l'écriture peut voir que la colonne est de type Vecteur. C'est le cas ordinaire, mais pas une garantie inconditionnelle.
+
+Une largeur laissée sur une colonne que la table ne type plus comme Vecteur ne s'applique pas. Retapez la colonne et la déclaration cesse de régir ce qui y est chargé.
+
+Cela compte, car une colonne dont les lignes contiennent des largeurs différentes ne peut pas être recherchée. Une recherche vectorielle sur celle-ci échoue avec une erreur brute du moteur sous-jacent plutôt qu'avec un message nommant la colonne. Si vous chargez donc des embeddings en CSV, faites en sorte que le fichier produise la largeur que vous avez déclarée — ou placez le tableau en zone de préparation au format Parquet et importez-le à la place : la vérification s'exécute alors pour vous.
+
+Déclarez la largeur avant le chargement. La largeur du vecteur est un nombre entier supérieur ou égal à 1, et il n'existe aucune valeur vide à laquelle revenir — vider le champ restaure ce qui était stocké — considérez donc la déclaration comme faisant partie de la conception de la colonne.
+
+La largeur est aussi ce sur quoi s'appuie une recherche. Lorsqu'une colonne n'en déclare aucune, la recherche doit échantillonner une ligne pour connaître la largeur des vecteurs stockés avant de pouvoir y confronter une requête.
+
+
+## Charger des vecteurs
+
+Chargez une colonne Vecteur avec les étapes standard d'importation et de transformation. Un fichier Parquet dont la colonne est une liste de flottants 32 bits est la voie la plus directe : l'étape **Importer depuis Parquet** le charge directement dans une colonne Vecteur.
+
+Un enchaînement typique de bout en bout, avec uniquement des étapes standard :
+
+1. **Importer depuis Parquet** (ou toute autre étape d'importation) — chargez les embeddings et leurs clés métier dans une table dont la colonne d'embedding est typée Vecteur avec sa largeur de vecteur déclarée.
+2. Étape **Table Inner Join** — joignez cette table à la table de faits ou de référence que décrivent les embeddings, sur la clé métier.
+3. **IA : recherche vectorielle** — trouvez les lignes les plus proches de vos vecteurs de requête et écrivez les correspondances dans une table cible.
+4. Étape **Table Lookup** — rapportez sur les lignes de correspondance les colonnes descriptives que vous souhaitez afficher.
+
+### D'où un fichier peut être lu
+
+Vérifier la largeur suppose de lire la colonne vectorielle seule, ce qui nécessite un compte de documents lisible colonne par colonne. **S3**, **Google Cloud Storage** et **Azure Blob Storage** le permettent. Une importation Parquet depuis tout autre compte de documents vers une table qui déclare une largeur de vecteur est refusée plutôt que chargée sans vérification : placez donc le fichier dans S3, Google Cloud Storage ou Azure Blob Storage et importez-le à partir de là. Il en va de même pour la restauration d'une archive depuis un tel compte — une restauration est une opération de reprise, conservez donc vos archives sur un compte qu'une restauration peut lire. Les tables sans largeur de vecteur déclarée ne sont pas concernées, pas plus que les autres étapes d'importation.
+
+<Aside type="note">
+Lorsqu'une table est enregistrée comme table externe, une colonne vectorielle source arrive en tant que Vecteur dans un projet Lakehouse v2 (StarRocks). Dans un projet sur tout autre moteur, elle arrive en tant que Texte, car une colonne Vecteur ne peut pas y être créée.
+</Aside>
+
+
+## Rechercher les lignes les plus proches
+
+L'étape **IA : recherche vectorielle** prend une table à rechercher, un ou plusieurs vecteurs de requête et le nombre de correspondances à conserver par requête, puis écrit les lignes les plus proches dans une table cible, avec la distance qui a servi à les classer.
+
+Deux métriques de distance sont disponibles ; pour les deux, une distance plus faible signifie une ligne plus proche :
+
+* **Cosinus** — l'angle entre deux vecteurs, indépendamment de leur norme. C'est le bon choix par défaut pour les embeddings de texte.
+* **Euclidienne (L2)** — la distance en ligne droite, qui tient compte de la norme.
+
+Le produit scalaire n'est volontairement pas proposé. Sur des vecteurs non normalisés, ce n'est pas du tout une distance — la distance d'un vecteur à lui-même est négative — de sorte que tout seuil que vous définiriez à partir de lui, et tout score affiché par l'étape, n'aurait aucun sens, même si le classement se trouvait être correct. Sur des embeddings normalisés, un classement par cosinus donne le même ordre que le produit scalaire ; rien n'est donc perdu.
+
+Pour la liste complète des paramètres, consultez
+[IA : recherche vectorielle](/fr/reference/workflow-steps/general/vector-search/).
+
+### La recherche est exacte, pas approximative
+
+L'étape compare chaque ligne qui passe son filtre à chaque vecteur de requête. Il n'y a ni index vectoriel ni approximation : le résultat est le véritable ensemble des plus proches voisins, et le travail croît avec le nombre de lignes recherchées multiplié par le nombre de vecteurs de requête.
+
+Dimensionnez en conséquence. Utilisez le filtre de l'étape pour restreindre les lignes candidates à la tranche qui compte — une entité, une période, un ensemble de documents — plutôt que de parcourir tout un corpus pour répondre à une question qui ne porte que sur une partie. Scinder une table d'embeddings selon la dimension sur laquelle vous filtrez toujours, puis rechercher dans la table pertinente, est la mesure la plus efficace pour réduire le temps de recherche.
+
+### Les lignes non mesurables sont écartées
+
+Une ligne dont la distance ne peut pas être mesurée est exclue des correspondances au lieu d'être renvoyée comme si elle était la plus proche. Exécutez le workflow avec le **Mode de diagnostic** activé : le journal indique combien de lignes chaque requête a écartées, ou précise que l'étape a mesuré toutes les lignes qu'elle a parcourues.
+
+Un vecteur stocké qui contient une valeur manquante dans le tableau est refusé plutôt qu'ignoré : aucune distance ne peut être mesurée par rapport à un tableau qui en contient une, de sorte que la recherche s'arrête et nomme la colonne au lieu de renvoyer une réponse partielle.
+
+
+## Ce qu'une colonne vectorielle ne peut pas faire
+
+Un embedding est une coordonnée, pas une clé ni une mesure ; une colonne Vecteur est donc refusée dans les rôles qui la traitent comme telle :
+
+* **Pas de clé de jointure.** Joignez sur la clé métier située à côté du vecteur.
+* **Pas de colonne de regroupement.** Regrouper les lignes selon leur embedding brut place chaque ligne dans son propre groupe.
+* **Pas de cible d'agrégation.** Il n'existe pas de somme, de moyenne, de minimum ou de maximum significatif d'un embedding.
+
+Ces trois cas sont refusés avec un message nommant la colonne et le rôle — à l'enregistrement de l'étape, puis de nouveau à l'exécution pour une étape enregistrée auparavant. Un workflow qui en contient un ne s'exécute pas et ne produit pas silencieusement un chiffre erroné. Transporter un vecteur à travers une étape comme colonne de sortie ordinaire ne pose pas de problème, pas plus que compter les lignes ou compter les valeurs distinctes.
+
+Une colonne Vecteur est également exclue du profilage de colonnes et des listes de valeurs de l'[Explorateur de tables](/fr/guides/data/table-explorer/), ne peut pas être représentée dans un graphique de tableau de bord, est en lecture seule dans l'éditeur de données et ne peut pas être liée à une dimension. Un minimum, une moyenne ou une liste des valeurs principales ne dit rien d'un embedding, et un embedding n'est membre de rien.
+
+
+## Relire les valeurs vectorielles
+
+La lecture d'une colonne Vecteur entière — dans un aperçu, une exportation ou via un assistant IA par MCP — renvoie une représentation textuelle du tableau plutôt que des nombres. Pour récupérer des nombres, lisez les éléments individuellement.
+
+Dans une grille de données, les valeurs sont affichées sous forme d'un court aperçu qui commence par la largeur, par exemple `1536-dim [0.013,-0.046,0.079, ...]`, de sorte qu'une colonne d'embeddings reste lisible sans un millier de nombres par cellule.
+
+
+## Voir aussi
+
+* [IA : recherche vectorielle](/fr/reference/workflow-steps/general/vector-search/) — la référence complète des paramètres de l'étape
+* [Utiliser les tables et les vues](/fr/guides/data/tables-views/) — comment les tables stockent les colonnes et pourquoi les types de données comptent
+* [Explorateur de tables](/fr/guides/data/table-explorer/) — inspectez le type de données de chaque colonne et définissez ses détails de colonne
+* [Importer depuis Parquet](/fr/reference/workflow-steps/import/import-parquet/) — chargez des embeddings depuis un fichier Parquet
+* [Type de données Devise](/fr/guides/data/currency-data-type/) — l'autre type de colonne spécialisé, pour les valeurs monétaires

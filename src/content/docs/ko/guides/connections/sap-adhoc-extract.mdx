@@ -1,0 +1,202 @@
+---
+title: SAP ECC / S/4HANA에서 임시 추출
+description: 테이블, 트랜잭션 코드 또는 저장된 SAP Query로 SAP를 검색하고, 추출을 미리 보고 계획한 다음, PlaidLink 에이전트를 통해 결과를 PlaidCloud 테이블에 저장합니다.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+이미 알고 있는 테이블 이름, 트랜잭션 코드 또는 저장된 SAP Query에서 시작하여 SAP ECC 또는 S/4HANA의 데이터를 직접 가져옵니다. 검색으로 개체를 선택하고, 해당 필드나 선택 화면을 확인하고, 실제 행을 미리 보고, 계획을 점검한 다음, 결과를 테이블에 저장하는 워크플로 단계를 저장합니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="SAP 추출 단계가 PlaidLink 에이전트를 통해 SAP로 요청을 보내면, PlaidCloud SAP 패키지가 SAP 자체의 권한 검사에 따라 데이터를 읽고, 행이 에이전트를 거쳐 대상 테이블로 돌아옵니다." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SAP 추출 단계</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">검색 · 미리 보기 · 계획</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidLink 에이전트</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">사용자 네트워크 내부</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">PlaidCloud SAP 패키지</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP가 RFC 사용자를 확인</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">행</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">대상 테이블</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">모든 추출은 PlaidLink 에이전트와 PlaidCloud SAP 패키지를 통해, 연결에 지정된 RFC 사용자로서 SAP 자체의 권한 검사에 따라 실행됩니다.</figcaption>
+</figure>
+
+## 사전 요구 사항
+
+- **SAP 시스템에 네트워크로 접근할 수 있는 PlaidLink 에이전트.** [PlaidLink 설치](/ko/reference/cli/plaidlink/install/)를 참조하십시오.
+- **SAP ECC / S/4HANA 인스턴스 연결.** [SAP ECC 및 S/4HANA 커넥터](/ko/reference/connectors/erp/sap-ecc/)를 참조하십시오. 해당 연결의 SAP 사용자가 모든 추출을 실행하는 RFC 사용자입니다.
+- **SAP에 설치된 PlaidCloud SAP 패키지.** SAP Basis 팀이 SAP 시스템당 한 번 설치합니다.
+- 추출하는 개체에 대한 **RFC 사용자의 SAP 권한**. [SAP 권한](#sap-권한)을 참조하십시오.
+
+## 단계 선택
+
+세 단계 모두 워크플로 단계 메뉴의 **SAP** 아래에 있습니다.
+
+| 단계 | 용도 |
+|---|---|
+| **SAP: 임시 추출** | SAP 테이블을 전체 또는 증분 방식으로 읽습니다. |
+| **SAP: 트랜잭션 / 보고서 실행** | 트랜잭션 코드 또는 ABAP 보고서 프로그램을 실행하고 결과를 저장합니다. |
+| **SAP: 쿼리 실행(SQ01)** | 저장된 SAP Query를 실행하고 결과를 저장합니다. |
+
+모든 단계는 동일한 세 필드, 즉 **에이전트**, **SAP 연결**, 결과를 저장할 **대상 테이블**로 시작합니다.
+
+## SAP 개체 찾기
+
+에이전트와 연결을 선택하면 단계의 검색 기능이 일치하는 SAP 개체를 나열합니다. 단계에 따라 **테이블**, **트랜잭션** 또는 **쿼리**가 표시됩니다. 이름, 트랜잭션 코드 또는 설명에 포함된 단어를 입력하십시오. SAP `*` 와일드카드를 사용할 수 있습니다. SAP가 제공하지 않는 개체도 이유와 함께 회색으로 표시됩니다.
+
+테이블을 선택하면 설명이 포함된 필드가 나열되고 키 필드가 자동으로 채워집니다. 트랜잭션, 보고서 또는 쿼리를 선택하면 **필터** 탭에 선택 화면이 표시되며, 이 화면은 SAP가 해당 개체에 대해 직접 정의한 필드로 구성됩니다. 테이블이나 프로그램의 내부 구조를 알 필요가 없습니다.
+
+## 테이블 추출
+
+**SAP: 임시 추출**을 사용합니다.
+
+<Steps>
+
+1. **SAP 추출** 탭에서 테이블을 검색하여 선택합니다.
+
+2. **RFC 읽기 함수**를 입력합니다. Basis 팀이 설치한 PlaidCloud SAP 패키지의 테이블 읽기 함수입니다.
+
+3. **키 열**을 확인합니다. PlaidCloud는 SAP 데이터 사전에서 클라이언트 필드를 제외한 테이블의 기본 키를 가져와 채웁니다. 이 열이 정확히 기본 키임을 확인하는 확인란을 선택합니다. SAP는 그 외의 열 집합을 거부합니다.
+
+4. **제한 필터** 탭에서 필터를 추가합니다. 알려진 열을 클릭하여 행을 추가하고, **포함** 또는 **제외**를 선택하고, **연산자**(같음, 같지 않음, 보다 큼, 크거나 같음, 보다 작음, 작거나 같음, 사이, 사이 아님, 패턴 포함, 패턴 미포함)를 선택한 다음, 값 도움말을 사용해 SAP에서 올바른 값을 바로 선택합니다. 같은 열에 여러 행을 추가하면 값 집합 중 하나와 일치하는 행을 가져오며, **사이** 또는 **사이 아님**에는 범위를 추가합니다. 큰 SAP 테이블에는 날짜 범위나 회사 코드 같은 필터가 적어도 하나 필요합니다.
+
+   <Aside type="note">
+   범위 제외, 사이 아님 필터, 패턴 일치, 같은 열에 대한 둘 이상의 조건은 모두 SAP에 더 복잡한 필터 조건식을 보내며, 이를 위해서는 에이전트의 SAP 시스템에 최신 PlaidCloud SAP 패키지가 있어야 합니다. 이전 패키지에서도 포함 행 또는 제외 행의 단순한 같음, 부등, 범위 필터는 계속 실행됩니다. 복잡한 필터가 적용되지 않으면 Basis 팀에 패키지 업데이트를 요청하십시오.
+   </Aside>
+
+5. 실행할 때마다 새로 추가되거나 변경된 행만 읽으려면 **증분** 탭을 설정합니다. [증분 테이블 추출](#증분-테이블-추출)을 참조하십시오.
+
+6. **가시성 및 정의** 탭에서 **관리 대상 열**을 설정합니다. [관리 대상 열](#관리-대상-열)을 참조하십시오.
+
+</Steps>
+
+통화 키가 같은 테이블에 있는 `CURR` 금액 열은 실제 값으로 저장됩니다. PlaidCloud는 각 금액을 해당 통화의 소수 자릿수만큼 이동하므로 일본 엔화 금액은 정수 엔 단위로 저장됩니다. 통화 키가 없는 금액 열은 SAP에 저장된 그대로 저장되며, 실행 시 해당 열을 지목하는 경고가 보고됩니다.
+
+**SAP 클라이언트(mandt)** 와 **슬라이스 크기**는 선택 사항입니다. 클라이언트를 비워 두면 연결의 기본 클라이언트가 사용됩니다.
+
+## 트랜잭션 또는 보고서 실행
+
+**SAP: 트랜잭션 / 보고서 실행**을 사용합니다.
+
+<Steps>
+
+1. **SAP 실행** 탭에서 트랜잭션을 검색하여 선택하거나, **Report/Program**에 보고서 프로그램 이름을 입력하고 **선택 화면 조회**를 클릭합니다. 둘 중 하나만 선택하십시오.
+
+2. **필터** 탭에서 선택 화면을 채웁니다. 폼은 트랜잭션 또는 보고서의 SAP 선택 화면으로 구성됩니다. 비워 둔 필드는 해당 필드에 필터를 적용하지 않고 실행합니다.
+
+   저장된 SAP 변형에서 시작하려면 **SAP 변형에서 시작**에서 변형을 선택합니다. PlaidCloud는 변형에 저장된 값으로 필터 폼을 채우고, 가져오지 못한 변형 값이 있으면 폼 옆에 나열합니다. 해당 값에는 SAP가 보고서의 기본값을 대신 사용합니다. 다른 변형을 선택하면 폼의 값이 바뀌며, 이후 필드를 편집해도 선택된 것으로 표시되는 변형은 바뀌지 않습니다.
+
+3. **최대 행 수**를 설정합니다. 기본값은 10,000이고 최대 50,000까지 설정할 수 있습니다. 어느 쪽이든 SAP는 트랜잭션 또는 보고서 전체를 실행하며, 이 상한은 PlaidCloud가 다시 읽어 오는 행 수를 제한합니다.
+
+4. 오래 걸리는 보고서의 경우 **Run as a background job**을 선택하고 필요하면 **작업 이름(비동기 전용)** 을 지정합니다.
+
+5. **가시성 및 정의** 탭에서 **관리 대상 열**을 설정합니다.
+
+</Steps>
+
+대화형 입력, 팝업 또는 화면이 필요한 보고서는 무인으로 실행할 수 없습니다. SAP가 이를 거부하고, 아무것도 저장되지 않으며, 단계는 SAP가 알려 준 이유를 보고합니다. 이러한 보고서는 SAP GUI에서 실행하십시오.
+
+## SAP Query 실행
+
+**SAP: 쿼리 실행(SQ01)** 을 사용합니다.
+
+<Steps>
+
+1. **SAP 실행** 탭에서 쿼리를 검색하여 선택합니다. 쿼리를 선택하면 **워크스페이스**, **사용자 그룹**, **쿼리 이름**이 채워집니다. **워크스페이스**를 선택하고 **사용자 그룹**과 **쿼리 이름**을 직접 입력할 수도 있습니다.
+
+2. **필터** 탭에서 쿼리 자체의 선택 화면, 즉 작성자가 SQ01에서 설정한 것과 동일한 매개변수와 select-option을 채웁니다. 비워 둔 필드는 해당 필드에 필터를 적용하지 않고 실행합니다.
+
+3. **최대 행 수**를 설정합니다. 기본값은 10,000이고 최대 50,000까지 설정할 수 있습니다.
+
+4. **가시성 및 정의** 탭에서 **관리 대상 열**을 설정합니다.
+
+</Steps>
+
+**워크스페이스**, **사용자 그룹** 또는 **쿼리 이름**을 변경하면 다른 쿼리용으로 구성된 필터 폼이 지워집니다. 전환한 후에는 선택 화면을 다시 조회하십시오.
+
+## 관리 대상 열
+
+모든 SAP 추출 단계에는 **관리 대상 열**이 필요합니다. 단계가 저장하는 열 중 하나이며, 예를 들어 회사 코드를 나타내는 `BUKRS`가 있습니다. 이 열이 없으면 단계가 저장되지 않으며, 해당 열이 저장되는 열에 포함되어 있지 않으면 실행 시 행이 저장되지 않습니다.
+
+## 미리 보기, 계획 및 권한
+
+각 단계의 **사전 점검** 그룹에는 세 개의 버튼이 있습니다. 어느 것도 단계 저장을 막지 않습니다.
+
+| 버튼 | 표시되는 내용 |
+|---|---|
+| **미리 보기** | 샘플 행. 테이블 미리 보기는 처음 몇 행을 직접 읽습니다. 트랜잭션, 보고서 또는 쿼리의 경우 미리 보기는 최대 100행으로 제한된 별도의 샘플로 SAP에서 실행하므로, 폼에서 먼저 확인을 요청합니다. 아무것도 저장되지 않습니다. |
+| **계획** | 키 열, 행 추정치, SAP로 보내는 선택 조건을 포함한 추출 실행 방식과, 실행을 막을 수 있는 모든 사항. 계획이 거부되면 구성을 변경하거나 새 계획이 문제없이 반환될 때까지 **만들기 및 실행**과 **저장 및 실행**이 비활성화됩니다. 단계는 계속 저장할 수 있습니다. |
+| **SAP 권한 필요** | 개체에 필요한 SAP 권한으로, Basis 팀과 공유할 수 있습니다. 이 목록은 참고용입니다. |
+
+<Aside type="caution">
+SAP는 행을 반환하기 전에 전체를 실행하므로, 트랜잭션, 보고서 또는 쿼리를 미리 보면 SAP에 실제 실행과 거의 같은 부하가 발생합니다.
+</Aside>
+
+## SAP 권한
+
+SAP의 표준 권한 검사가 SAP 내부에서와 똑같이 RFC 사용자에게 적용됩니다.
+
+| 추출 | 권한 |
+|---|---|
+| 테이블 | `S_TABU_NAM` 또는 `S_TABU_DIS` 표시, 활동 `03` |
+| 트랜잭션 | `S_TCODE` |
+| 보고서 | 보고서의 권한 그룹에 대한 `S_PROGRAM` `SUBMIT` |
+
+권한이 없으면 SAP의 권한 없음 오류와 앞서 나열한 권한 부여를 안내하는 해결 방법과 함께 실행이 실패합니다. PlaidCloud는 자체 권한 검사를 추가하지 않으며, **SAP 권한 필요** 목록을 근거로 단계를 막지도 않습니다.
+
+## 증분 테이블 추출
+
+**SAP: 임시 추출**의 **증분** 탭에서 **Run incrementally**를 선택하고 **워터마크 열**을 입력합니다. 다음 중 하나여야 합니다.
+
+- 날짜 열, SAP 형식 `DATS`
+- UTC 타임스탬프 열, SAP 형식 `TZNTSTMPS` 또는 `TZNTSTMPL`
+
+SAP 형식이 `UTCL`인 타임스탬프 열은 지원되지 않으며, 워터마크 열은 제한 필터 열로도 사용할 수 없습니다.
+
+첫 번째 실행은 테이블 전체를 읽습니다. 이후 실행은 마지막 워터마크에서 **룩백**을 뺀 시점 이후의 행만 읽고, 키 열을 기준으로 병합합니다. 워터마크는 실행 전체가 저장된 후에만 앞으로 이동합니다. SAP의 열린 종료 날짜 `99991231`은 워터마크가 되지 않습니다. 실행 날짜보다 하루 넘게 이후인 날짜는 워터마크를 실행 날짜에 고정하며, 타임스탬프는 워터마크를 실행 시작 시점 이후로 이동하지 않습니다.
+
+## 열이 저장되는 방식
+
+**SAP: 임시 추출**은 SAP 데이터 사전의 실제 형식으로 모든 열을 저장합니다.
+
+| SAP 형식 | 저장 형식 |
+|---|---|
+| 날짜(`DATS`) | 날짜. 비어 있거나, 초기값이거나, 유효하지 않은 날짜는 빈 값(`NULL`)으로 저장됩니다. 유효하지 않은 날짜가 있으면 단계가 경고와 함께 완료됩니다. |
+| 금액, 수량, 소수(`CURR` / `QUAN` / `DEC`) | 정확한 소수. 금액의 통화 키 열이 같은 테이블에 있고 추출에 포함되어 있으면 PlaidCloud는 금액을 해당 통화의 실제 소수 자릿수로 이동합니다. 그렇지 않으면 SAP에 저장된 그대로 저장됩니다. 소수 자릿수가 10자리를 넘거나, 정수 자릿수가 28자리를 넘거나, 소수 자릿수가 선언되지 않은 소수는 대신 텍스트로 저장되며, 단계가 해당 열을 지목하는 경고와 함께 완료됩니다. |
+| 정수 | 정수. |
+| 부동 소수점(`FLTP`) | Double. |
+| 십진 부동 소수점(`DF16_*` / `DF34_*`) | 정확한 텍스트. |
+| 짧은 UTC 타임스탬프(`TZNTSTMPS`) | 초 단위까지의 타임스탬프. |
+| 긴 UTC 타임스탬프(`TZNTSTMPL`, `UTCL`) | `2026-01-03T10:15:00.123456Z` 같은 UTC ISO 텍스트. 타임스탬프 열에서는 잘려 나가는 소수 부분을 유지합니다. |
+| 시간(`TIMS`), 코드(`NUMC`), 텍스트(`CHAR`) | SAP에 저장된 그대로의 텍스트이며 앞의 0이 유지됩니다. |
+
+열의 SAP 형식이 변경되면 추출은 테이블 전체를 열의 새 형식으로 바꾸고, 단계가 해당 열을 지목하는 경고와 함께 완료됩니다. 증분 추출은 같은 실행에서 이 작업을 수행합니다. 해당 읽기가 완료되지 않으면 이후 실행은 같은 경고와 함께 성공할 때까지 테이블 전체를 계속 읽으며, 성공하면 증분 실행이 재개됩니다.
+
+**SAP: 트랜잭션 / 보고서 실행**은 금액 열을 숫자로 저장하고 그 외 모든 열은 텍스트로 저장합니다. **SAP: 쿼리 실행(SQ01)** 은 금액, 정수, 날짜 열을 해당 형식으로 저장하고 그 외 모든 열은 텍스트로 저장합니다. 형식이 필요한 경우 다운스트림 단계에서 변환하십시오.
+
+## 실행 제한
+
+**SAP: 임시 추출**의 단일 실행은 5,000,000행을 읽거나 240분 동안 실행되면 진행 중인 슬라이스를 마친 후 일시 중지됩니다. 단계는 실패가 아닌 경고와 함께 종료되며, 다음 실행은 행 손실 없이 중단된 지점부터 계속됩니다.
+
+## 관련 문서
+
+- [SAP ECC 및 S/4HANA 커넥터](/ko/reference/connectors/erp/sap-ecc/) - 연결 필드.
+- [SAP 단계](/ko/reference/workflow-steps/sap/) - 모든 SAP 워크플로 단계.
+- [PlaidLink](/ko/reference/cli/plaidlink/) - 에이전트 설치 및 업그레이드.

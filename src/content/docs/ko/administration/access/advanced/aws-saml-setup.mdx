@@ -1,0 +1,100 @@
+---
+title: 싱글 사인온을 위한 AWS IAM Identity Center SAML 설정
+description: PlaidCloud 싱글 사인온을 위해 AWS IAM Identity Center를 SAML 공급자로 설정하여 멤버를 위한 페더레이션 인증을 사용합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/aws-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud는 SAML 2.0을 통한 싱글 사인온(SSO)을 지원합니다. 이 가이드에서는 조직의 사용자가 PlaidCloud에 접속할 때 AWS를 통해 인증할 수 있도록 AWS IAM Identity Center(이전 이름: AWS SSO)를 SAML ID 공급자로 구성하는 방법을 안내합니다.
+
+<Aside>PlaidCloud 측 구성은 PlaidCloud 팀이 처리합니다. 사용자는 IAM Identity Center에서 사용자 지정 SAML 애플리케이션을 설정하고 **IAM Identity Center SAML Metadata URL**을 PlaidCloud에 제공해야 합니다. 나머지 구성은 PlaidCloud 지원팀이 완료합니다.</Aside>
+
+## 사전 요구 사항
+
+- **IAM Identity Center**가 사용 설정된 AWS 계정
+- **AWSSSOMasterAccountAdministrator** 관리형 정책 또는 이에 상응하는 권한이 있는 IAM 사용자 또는 역할
+- IAM Identity Center에 ID 소스(기본 제공 디렉터리, Active Directory 또는 외부 IdP)가 구성되어 있어야 합니다.
+- 설정을 조율하고 구성 값을 주고받기 위한 PlaidCloud 지원팀과의 연락
+
+## 개요
+
+설정 과정에서는 두 당사자가 SAML 메타데이터를 교환합니다.
+
+1. **사용자가 구성합니다.** IAM Identity Center에서 사용자 지정 SAML 애플리케이션을 구성하고, SAML Metadata URL을 PlaidCloud에 제공합니다.
+2. **PlaidCloud가 제공합니다.** 애플리케이션 구성을 완료하는 데 필요한 서비스 공급자(SP) Entity ID와 ACS URL(Assertion Consumer Service URL)을 제공합니다.
+
+아래 3단계를 완료하기 전에 PlaidCloud 지원팀과 협의하여 SP 값을 받으십시오.
+
+## 1단계: 사용자 지정 SAML 애플리케이션 만들기
+
+1. [AWS Management Console](https://console.aws.amazon.com)에 로그인하여 **IAM Identity Center**로 이동합니다.
+2. 왼쪽 사이드바에서 **Applications**를 선택합니다.
+3. **Add application**을 클릭합니다.
+4. **I have an application I want to set up**을 선택하고 **Custom SAML 2.0 application**을 선택합니다.
+5. **다음**을 클릭합니다.
+6. 애플리케이션의 **Display name**을 입력하고(예: `PlaidCloud SSO`) 필요하면 설명도 입력합니다.
+
+## 2단계: IAM Identity Center SAML Metadata URL 확인
+
+서비스 공급자 세부 정보를 구성하기 전에 PlaidCloud에 보낼 IAM Identity Center 메타데이터 URL을 확인합니다.
+
+1. 애플리케이션 구성 페이지에서 **IAM Identity Center metadata** 섹션까지 스크롤합니다.
+2. **IAM Identity Center SAML metadata URL**을 복사합니다(형식: `https://portal.sso.{region}.amazonaws.com/saml/metadata/{instanceId}`).
+
+**이 Metadata URL을 PlaidCloud 지원팀에 보내십시오.** 이 URL은 PlaidCloud가 ID 공급자 측에서 신뢰 관계를 구성하는 데 필요한 Entity Descriptor URL입니다. PlaidCloud가 이 URL을 받으면 팀에서 Keycloak 구성을 완료하고 SSO를 테스트할 준비가 되었을 때 알려 드립니다.
+
+## 3단계: 서비스 공급자 세부 정보 구성
+
+<Aside>이 단계를 완료하려면 PlaidCloud에서 받은 **SP Entity ID**와 **ACS URL**이 필요합니다. 이 값은 PlaidCloud 지원팀에 문의하여 받으십시오.</Aside>
+
+1. **Application properties** 섹션까지 스크롤합니다.
+2. **Application ACS URL** 필드에 PlaidCloud에서 제공한 ACS URL을 입력합니다.
+3. **Application SAML audience** 필드에 PlaidCloud에서 제공한 SP Entity ID를 입력합니다.
+4. **제출**을 클릭합니다.
+
+## 4단계: 속성 매핑 구성
+
+IAM Identity Center는 SAML 어설션으로 사용자 속성을 PlaidCloud에 전달합니다. PlaidCloud가 필요한 사용자 정보를 받을 수 있도록 속성 매핑을 구성합니다.
+
+1. 애플리케이션 상세 페이지에서 **Attribute mappings** 탭을 선택합니다.
+2. **Add new attribute mapping**을 클릭하고 다음을 추가합니다.
+
+| 애플리케이션의 사용자 속성 | IAM Identity Center에서 매핑되는 문자열 값 또는 사용자 속성 | 형식 |
+|---|---|---|
+| `Subject` | `${user:email}` | emailAddress |
+| `email` | `${user:email}` | unspecified |
+| `firstName` | `${user:givenName}` | unspecified |
+| `lastName` | `${user:familyName}` | unspecified |
+
+3. **Save changes**를 클릭합니다.
+
+### 그룹 멤버십(선택 사항)
+
+IAM Identity Center는 다른 공급자와 같은 방식으로 그룹 멤버십을 SAML 속성으로 기본 전달하지 않습니다. PlaidCloud 구성에서 그룹 기반 보안 역할 할당이 필요한 경우 사용 가능한 옵션을 PlaidCloud 지원팀과 협의하십시오. 일반적인 방법으로는 그룹 할당이 포함된 기본 제공 디렉터리를 사용하거나 Active Directory와 같은 외부 ID 소스에서 그룹을 동기화하는 방법이 있습니다.
+
+<Aside>PlaidCloud에서 그룹 기반 보안 역할 할당이 올바르게 작동하려면 그룹 멤버십을 어떻게 전달해야 하는지 PlaidCloud 지원팀과 협의하십시오.</Aside>
+
+## 5단계: 애플리케이션에 사용자 및 그룹 할당
+
+애플리케이션에 할당된 사용자와 그룹만 이 SSO 구성을 통해 인증할 수 있습니다.
+
+1. 애플리케이션 상세 페이지에서 **Assign users and groups** 탭을 선택합니다.
+2. **Assign users and groups**를 클릭합니다.
+3. PlaidCloud SSO 액세스 권한을 부여할 사용자 또는 그룹을 검색하여 선택합니다.
+4. **Assign users**를 클릭합니다.
+
+## 통합 테스트
+
+PlaidCloud에서 구성이 완료되었다고 확인한 후 다음을 수행합니다.
+
+1. 조직의 PlaidCloud 워크스페이스로 이동합니다(예: `https://my-workspace.plaid.cloud`).
+2. AWS IAM Identity Center 로그인 페이지로 리디렉션됩니다.
+3. AWS IAM Identity Center 자격 증명으로 로그인합니다.
+4. 인증에 성공하면 PlaidCloud로 다시 리디렉션됩니다.
+
+오류가 발생하면 다음을 확인하십시오.
+- ACS URL과 SP Entity ID가 PlaidCloud에서 제공한 값과 정확히 일치하는지 확인합니다.
+- 로그인하려는 사용자가 IAM Identity Center의 애플리케이션에 할당되어 있는지 확인합니다.
+- Subject 속성이 **emailAddress** 형식으로 `${user:email}`에 매핑되어 있는지 확인합니다.
+- PlaidCloud에 보낸 Metadata URL에 PlaidCloud 서버에서 접근할 수 있는지 확인합니다.

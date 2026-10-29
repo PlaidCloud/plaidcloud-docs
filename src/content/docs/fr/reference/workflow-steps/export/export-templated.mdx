@@ -1,0 +1,81 @@
+---
+title: Étape Export Templated
+description: Générez le rendu de tables de projet via un modèle de document pour produire un fichier de sortie mis en forme plutôt qu'un simple vidage de données brutes.
+sidebar:
+  order: 17
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/export/export-templated.mdx
+---
+
+import SnippetCommonDataMapper from '@snippets/fr/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/fr/common-data-filter.mdx';
+
+## Description
+
+Génère le rendu de tables de projet via un modèle pour produire un document structuré, au lieu du vidage brut de colonnes qu'écrivent les autres étapes d'exportation. Utilisez-la lorsque le système destinataire exige une structure XML précise, ou un autre format texte, plutôt qu'une table.
+
+## Éléments de configuration spécifiques
+
+### Modèle source
+
+Le modèle Jinja à partir duquel la sortie est générée. Voir [Ce qu'un modèle peut utiliser](#ce-quun-modèle-peut-utiliser).
+
+### Sortie cible
+
+Le compte de documents, le dossier et le nom de fichier du résultat généré. Le modèle décide du contenu du fichier ; un nom de fichier sans extension reçoit `.xml`.
+
+**Utiliser des DataFrames Pandas pour les données de table** modifie la façon dont les lignes de chaque source parviennent au modèle. Voir [Lignes sources sous forme de table](#lignes-sources-sous-forme-de-table).
+
+### Table source
+
+Nommez les tables explicitement, ou trouvez-les par chemin et par règle de recherche : exact, commence par, se termine par, contient ou glob.
+
+## Ce qu'un modèle peut utiliser
+
+Le modèle est rendu dans un bac à sable : il lit les données que l'étape lui fournit, et rien d'autre.
+
+- **Chaque source, par son Nom.** Chaque table source que vous listez est disponible dans le modèle sous le **Nom** que vous lui donnez ; utilisez donc un nom valable comme variable, tel que `invoices`.
+- **Les variables du workflow**, sous la forme `variable`, par exemple `{{ variable.region }}`.
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### Lignes sources sous forme de liste
+
+Lorsque **Utiliser des DataFrames Pandas pour les données de table** est désactivé, une source est une liste de lignes en lecture seule. Parcourez-la dans une boucle, ou utilisez `|length`, `keys()`, `first()`, `one()`, `all()`, `scalar()`, `scalars()`, `mappings()`, `fetchmany(n)` et `columns('a', 'b')`. Lisez une valeur d'une ligne avec `row.amount`, `row['amount']` ou `row[0]` ; `row._mapping`, `row._asdict()` et `row._fields` fonctionnent aussi. Les lignes issues de `columns('a', 'b')` acceptent `row.amount` ou `row[0]`, mais pas `row['amount']`.
+
+### Lignes sources sous forme de table
+
+Lorsque **Utiliser des DataFrames Pandas pour les données de table** est activé, une source est une table en lecture seule. La parcourir dans une boucle fournit chaque ligne sous forme de dictionnaire, de sorte que `row.amount` et `row['amount']` fonctionnent tous deux. Vous pouvez aussi utiliser :
+
+- `columns`, `empty`, `shape`, `values` et `index`
+- `head(n)` et `tail(n)`
+- `itertuples()`, qui place la position de la ligne en premier sous le nom `Index`, de sorte que `r[1]` est la première colonne ; `itertuples(index=False)` l'omet
+- `iterrows()`, qui fournit la position de la ligne et la ligne
+- `invoices['amount']`, les valeurs d'une colonne, avec `sum()`, `min()`, `max()`, `mean()`, `unique()` et `tolist()` ; `sum`, `min`, `max` et `mean` ignorent les valeurs nulles
+
+Les autres méthodes pandas, telles que `loc` et `groupby`, ne sont pas disponibles. Mettez les données en forme dans une étape antérieure et exportez le résultat.
+
+### Ce qu'un modèle ne peut pas faire
+
+- Appeler une méthode dont le nom commence par `to_`, sur n'importe quelle valeur : `to_csv` et `to_json`, mais aussi des méthodes inoffensives comme `to_pydatetime`.
+- Lire un attribut dont le nom commence par un trait de soulignement, autre que `_mapping`, `_asdict` et `_fields` d'une ligne.
+- Écrire ou ouvrir des fichiers.
+
+Un appel `to_` ou une opération sur un fichier fait échouer l'étape. Un attribut à trait de soulignement autre que ces trois-là ne produit simplement rien.
+
+## Éléments de configuration communs
+
+<SnippetCommonDataMapper checksSourceTable />
+
+<SnippetCommonDataFilter />
+
+## Voir aussi
+
+- [Étapes Export](/fr/reference/workflow-steps/export/)
+- [Étape Export to XML](/fr/reference/workflow-steps/export/export-to-xml/) — pour du XML sans modèle
+- [Étapes Report](/fr/reference/workflow-steps/reports/) — pour des rapports PDF construits à partir de modèles

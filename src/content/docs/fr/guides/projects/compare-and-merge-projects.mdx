@@ -1,0 +1,155 @@
+---
+title: Comparer et fusionner des projets
+description: Comparez deux projets Analyze côte à côte — workflows, étapes, variables, dimensions, etc. — et fusionnez de manière sélective les modifications d'un projet dans un autre.
+sidebar:
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/compare-and-merge-projects.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+La comparaison vous permet de voir exactement ce qui diffère entre deux projets et, pour les éléments qui peuvent être copiés en toute sécurité, de fusionner des modifications sélectionnées de l'un dans l'autre. Elle est conçue pour deux situations courantes :
+
+- **Promouvoir des modifications entre environnements** — examinez ce qui diffère entre un projet QA (développement) et son équivalent de Production, puis ne déplacez vers la Production que les modifications souhaitées.
+- **Comparer à un instantané ou à une copie antérieure** — comparez un projet à une copie de lui-même (par exemple un clone mensuel) pour voir ce qui a changé.
+
+Vous gardez le contrôle tout du long : rien n'est écrit tant que vous n'avez pas sélectionné des éléments précis et que vous ne les avez pas appliqués, et vous pouvez d'abord valider avec une simulation.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 210" role="img" aria-label="Comparaison de deux projets. Un projet QA et un projet de Production sont appariés élément par élément ; la comparaison marque chaque élément comme modifié, ajouté ou identique. Vous sélectionnez les modifications à fusionner, et seules celles-ci sont écrites dans la Production." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="cm-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="150" height="132" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">QA (développement)</text>
+  <text x="30" y="80" font-size="11" fill="var(--sl-color-text)">workflow : Load</text>
+  <text x="30" y="110" font-size="11" fill="var(--sl-color-text)">étape : Filter</text>
+  <text x="30" y="140" font-size="11" fill="var(--sl-color-text)">variable : year</text>
+  <path d="M166 112 L206 112" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cm-arrow)" />
+  <rect x="210" y="40" width="212" height="146" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="222" y="34" font-size="12" font-weight="700" fill="var(--sl-color-accent)">Comparer</text>
+  <text x="228" y="80" font-size="11" fill="var(--sl-color-text)">● modifié</text>
+  <text x="228" y="110" font-size="11" fill="var(--sl-color-text)">＋ ajouté</text>
+  <text x="228" y="140" font-size="11" fill="var(--sl-color-gray-3)">＝ identique</text>
+  <text x="360" y="80" font-size="10" fill="var(--sl-color-gray-3)">fusionner ?</text>
+  <text x="360" y="110" font-size="10" fill="var(--sl-color-gray-3)">fusionner ?</text>
+  <text x="360" y="140" font-size="10" fill="var(--sl-color-gray-3)">ignorer</text>
+  <path d="M422 112 L494 112" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cm-arrow)" />
+  <text x="458" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">fusionner la sélection</text>
+  <rect x="496" y="46" width="150" height="132" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="571" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">Production</text>
+  <text x="510" y="112" font-size="10" fill="var(--sl-color-gray-3)">rien n'est écrit tant que</text>
+  <text x="510" y="128" font-size="10" fill="var(--sl-color-gray-3)">vous n'appliquez pas (simulation d'abord)</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Appariés élément par élément (par identifiant pour les copies, par nom pour les projets indépendants), chaque différence est marquée comme modifiée, ajoutée ou identique. Vous choisissez ce qui est fusionné — rien n'arrive en Production tant que vous n'appliquez pas.</figcaption>
+</figure>
+
+## Fonctionnement de l'appariement
+
+Pour comparer deux projets, PlaidCloud doit décider quel élément de gauche correspond à quel élément de droite. Il choisit la stratégie automatiquement :
+
+- **Les copies et instantanés d'un même projet** sont appariés par leur identifiant interne (un clone conserve les mêmes identifiants), de sorte que même les éléments renommés se retrouvent avec précision.
+- **Les projets indépendants** — comme un projet QA et un projet de Production construit séparément — ne partagent aucun identifiant ; ils sont donc appariés **par nom**. Dans ce cas, les éléments sont étiquetés `(name-matched)`.
+
+L'appariement par nom est ce qui rend utile une comparaison QA-Production, puisque les deux projets ont été construits séparément. Il a aussi des limites : les éléments portant des noms en double ne peuvent pas toujours être appariés un à un, et un élément signalé `ambiguous match` signifie que plusieurs candidats partageaient le même nom — examinez-les à la main avant de fusionner.
+
+Il existe une troisième méthode d'appariement, utilisée lorsqu'un projet a été construit par copie depuis l'autre : l'appariement par la filiation de copie enregistrée, de sorte qu'une copie renommée retrouve toujours son original. Elle n'est pas choisie automatiquement — vous la demandez avec **Resynchroniser vers...**, décrite dans [Resynchroniser depuis le projet dont vous avez fait la copie](#resynchroniser-depuis-le-projet-dont-vous-avez-fait-la-copie).
+
+## Ouvrir une comparaison
+
+1. Ouvrez **Analyze**
+2. Sélectionnez **Projets** dans la barre de menus supérieure
+3. Faites un clic droit sur le projet de départ (ou utilisez son menu d'actions) et choisissez **Comparer à...**
+4. Dans la fenêtre **Comparer les projets**, le projet de départ est renseigné comme **Source**
+5. Choisissez le projet **Cible** dans la liste déroulante — le projet avec lequel vous voulez comparer
+6. Cliquez sur **Comparer**
+
+<Aside>Utilisez **Permuter** pour inverser la Source et la Cible avant de comparer — le sens compte, car une fusion copie *de* la Source *vers* la Cible.</Aside>
+
+Les deux projets doivent se trouver dans le même espace de travail.
+
+## Lire la comparaison
+
+Le côté gauche regroupe chaque différence sous sa catégorie : **Workflows** (avec leurs **Étapes** imbriquées en dessous), **Variables**, **Dimensions**, **Éditeurs**, **UDF**, **Vues** et **Tables**.
+
+Chaque élément porte un badge indiquant son statut :
+
+- **Ajouté** — présent dans la Source mais pas dans la Cible (il serait créé dans la Cible)
+- **Modifié** — présent dans les deux, mais la configuration diffère
+- **Supprimé** — présent dans la Cible mais pas dans la Source
+- **Inchangé** — identique des deux côtés (masqué par défaut)
+
+Sélectionnez un élément modifié pour voir ses détails à droite : une table **Champ / Source / Cible** de ce qui a changé, avec la **Différence de configuration** complète en dessous. Si la différence d'un élément est très volumineuse, elle est tronquée — cliquez sur **Développer la différence complète** pour charger la version complète.
+
+### Cibler la liste
+
+- **Filtrer par nom ou chemin** réduit l'arborescence aux éléments correspondants.
+- Les cases à cocher de statut affichent ou masquent les éléments **Ajouté**, **Modifié**, **Supprimé** et **Inchangé**.
+- **Intervention manuelle requise** n'affiche que les modifications qui ne peuvent pas être fusionnées automatiquement (voir ci-dessous).
+
+## Ce qui peut être fusionné
+
+Toutes les différences ne peuvent pas être copiées en toute sécurité entre projets. La comparaison étiquette chaque élément pour que vous sachiez toujours ce qui est fusionnable :
+
+- Les **workflows, étapes et variables** peuvent être fusionnés.
+- Les **dimensions, éditeurs, UDF, vues et tables** sont en **lecture seule** — ils apparaissent dans la comparaison pour que vous puissiez les examiner, mais vous les copiez avec leurs propres outils dédiés, pas depuis ici.
+
+Certaines modifications individuelles sont également marquées **manuel** (avec un cadenas) même dans une catégorie fusionnable, car leur application automatique ne serait pas sûre. Le volet de détail explique pourquoi et ce qu'il faut faire à la place. Les cas les plus courants :
+
+- **Les étapes dans une comparaison par nom (QA et Production)** sont en examen seul — la configuration d'une étape peut référencer des connexions et des agents propres à un environnement ; elle se copie donc à la main. Utilisez la différence pour voir précisément ce qu'il faut changer dans la Cible.
+- **La suppression de variable** n'est pas appliquée pour vous — supprimez la variable à la main dans le projet Cible.
+
+La ligne de synthèse vous donne la répartition en un coup d'œil, par exemple *« 12 fusionnables · 5 en lecture seule »* et *« 3 nécessitent une intervention manuelle »*.
+
+## Fusionner les modifications
+
+1. Sélectionnez les éléments à copier de la Source vers la Cible. Utilisez **Tout sélectionner** pour choisir tous les éléments fusionnables actuellement affichés, ou sélectionnez plusieurs lignes individuellement. Les éléments en lecture seule et manuels ne peuvent pas être sélectionnés.
+2. Cliquez sur **Simulation** pour valider la sélection sans rien écrire. PlaidCloud indique combien d'opérations s'appliqueraient (nouvelles ou mises à jour) et signale celles qui échoueraient.
+3. Quand la simulation vous convient, cliquez sur **Appliquer** (depuis le résultat de la simulation ou depuis le pied de page).
+4. Confirmez l'opération dans la boîte de dialogue **Confirmer la fusion**.
+
+Les éléments fusionnés conservent leur identité dans la Cible ; vous pouvez donc relancer la comparaison plus tard et fusionner d'autres modifications sans créer de doublons.
+
+<Aside type="caution">Une fusion copie *dans* le projet Cible et le modifie. Examinez la différence et effectuez d'abord une simulation, et assurez-vous que la Source et la Cible sont dans le bon sens.</Aside>
+
+### En cas de problème
+
+- **La cible a changé** — si quelqu'un d'autre a modifié la Cible après le chargement de la comparaison, la fusion s'arrête pour éviter d'écraser son travail. Actualisez la comparaison et appliquez de nouveau.
+- **Fusion partiellement appliquée** — si une opération échoue en cours de route, les autres sont signalées comme restantes. Corrigez la cause et choisissez **Réessayer les restantes**, ou annulez et actualisez.
+
+## Resynchroniser depuis le projet dont vous avez fait la copie
+
+La comparaison fonctionne entre deux projets quelconques d'un espace de travail. Mais lorsque la Cible a été **construite par copie depuis la Source** — avec [Copier le projet](/fr/guides/projects/managing-projects/#copie-dun-projet) vers un projet existant —, PlaidCloud mémorise quel objet de la Cible provient de quel objet de la Source. **Resynchroniser** utilise cette mémoire pour comparer les deux selon leur lien réel, plutôt qu'en devinant à partir des identifiants et des noms.
+
+C'est ce qui permet à un même tenant de contenir **Dev, QA et Production sous forme de projets distincts** et d'y promouvoir les modifications de proche en proche. Vous copiez Dev dans QA une fois ; ensuite, la resynchronisation de QA par rapport à Dev ne montre que ce qui a changé dans Dev depuis, et vous permet de déplacer vers QA les éléments de votre choix — puis de QA vers Production de la même façon. Sans exportation, sans archive, sans second espace de travail.
+
+### Pourquoi c'est important
+
+Une comparaison ordinaire de deux projets construits indépendamment doit apparier les éléments **par nom**, car ils ne partagent aucun identifiant. Cela fonctionne tant que la copie n'a rien renommé. Lorsque Copier le projet dépose dans la Cible un objet dont le nom ou l'identifiant existait déjà, il donne à l'objet entrant une nouvelle identité (` copy` ajouté) — une comparaison simple voit donc la copie renommée comme sans lien avec son original de la Source : l'élément de la Source apparaît comme **Ajouté** et sa propre copie dans la Cible comme **Supprimé**, côte à côte. Vous verriez deux moitiés du même objet sans moyen de les aligner.
+
+La resynchronisation les apparie par **filiation** à la place — la lignée de copie enregistrée —, de sorte qu'un objet renommé ou renuméroté retrouve celui dont il provient, et seules les vraies modifications apparaissent comme des différences.
+
+### Lancer une resynchronisation
+
+1. Ouvrez **Analyze**
+2. Sélectionnez **Projets**
+3. Faites un clic droit sur le projet dont vous avez fait la copie — la Source, p. ex. Dev — ou utilisez son menu d'actions, et choisissez **Resynchroniser vers...**
+4. Choisissez la Cible dans laquelle vous avez copié auparavant — p. ex. QA
+5. Cliquez sur **Resynchroniser**
+
+La fenêtre est la même fenêtre **Comparer les projets**, et tout ce qui figure dans [Lire la comparaison](#lire-la-comparaison), [Ce qui peut être fusionné](#ce-qui-peut-être-fusionné) et [Fusionner les modifications](#fusionner-les-modifications) s'applique sans changement. La seule différence est la manière dont les éléments sont appariés.
+
+<Aside>Vous vous placez sur la Source et resynchronisez *vers* la Cible ; le sens est donc déjà correct — une fusion copie toujours *de* la Source *vers* la Cible, exactement comme dans une comparaison ordinaire.</Aside>
+
+### Quand il n'y a pas de filiation à utiliser
+
+La resynchronisation nécessite une copie enregistrée entre les deux projets. Si vous resynchronisez une paire qui n'a jamais été reliée par Copier le projet — ou qui ne l'a été que partiellement —, PlaidCloud vous le dit au lieu de faire semblant :
+
+- **Aucune filiation** — une bannière indique que la comparaison est revenue à l'appariement ordinaire et n'est *pas* une resynchronisation. Elle se comporte exactement comme une comparaison normale, y compris la répartition Ajouté/Supprimé pour tout ce qu'une copie antérieure aurait renommé. C'est ce que vous voyez si vous resynchronisez deux projets sans lien, ou une paire de projets reliée par une importation d'archive plutôt que par Copier le projet.
+- **Filiation partielle** — si la copie ne couvrait que certaines catégories, une bannière nomme celles qui sont revenues à l'appariement ordinaire. Ces catégories sont alors appariées par nom, ce qui fusionne le même sous-ensemble sûr qu'une comparaison QA et Production — les variables et les modifications d'enregistrement de workflow passent, tandis que les étapes et les workflows nouvellement ajoutés passent en examen seul (voir [Ce qui peut être fusionné](#ce-qui-peut-être-fusionné)).
+
+Dans les deux cas, l'appariement que vous avez réellement obtenu est celui que la fenêtre affiche et fusionne — une resynchronisation ne revient jamais discrètement à un appariement par nom en prétendant s'être appuyée sur la filiation.
+
+## Voir aussi
+
+- [Gérer les projets](/fr/guides/projects/managing-projects/) — versions et suivi des points dans le temps au sein d'un seul projet
+- [Archiver un projet](/fr/guides/projects/archive-a-project/) — capturez un instantané ponctuel auquel vous pourrez comparer plus tard
+- [Workflows](/fr/guides/workflows/) — la primitive d'automatisation que fusionne une comparaison entre projets

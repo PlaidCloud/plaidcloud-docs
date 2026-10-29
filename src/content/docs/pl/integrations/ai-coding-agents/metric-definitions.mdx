@@ -1,0 +1,224 @@
+---
+title: Definicje metryk
+description: Zapisz raz, jak liczona jest dana liczba biznesowa, a asystent AI PlaidCloud — lub asystent połączony przez MCP — będzie ją za każdym razem liczyć tak samo, z uwzględnieniem dostępu do wierszy każdej osoby.
+sidebar:
+  label: Definicje metryk
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/metric-definitions.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+**Definicja metryki** to liczba biznesowa, której sposób obliczania został uzgodniony i zapisany: *Net Revenue*, *Headcount (FTE)*, *Units Shipped*. Określa, z której tabeli pochodzi liczba, jak sumowane są wiersze, które wiersze się liczą i według jakich kolumn można ją rozbić.
+
+Bez takiej definicji asystent AI zapytany *„jaki był przychód netto w EMEA w ostatnim kwartale?”* sam decyduje, której tabeli, kolumny i filtrów użyć, a dwie osoby zadające to samo pytanie mogą dostać dwie różne liczby. Definicja metryki odbiera tę decyzję asystentowi. Architekt projektu zapisuje definicję raz, a od chwili jej zapisania asystent oblicza wartość dokładnie tak, jak jest zapisana.
+
+<Aside>
+Definicjami metryk zarządza się przez asystenta AI połączonego przez [MCP](../getting-started/) lub przez REST API; w PlaidCloud nie ma jeszcze dla nich ekranu. Metryki są dostępne dla wbudowanego [asystenta AI](/pl/guides/ai-assistant/weave-tab/#czat-weave-ai) PlaidCloud i dla każdego asystenta połączonego przez MCP. Wbudowany asystent potrafi wyszukiwać i obliczać metryki, ale nie może ich tworzyć, edytować ani wycofywać.
+</Aside>
+
+**Architekci**: zacznijcie od sekcji [Definiowanie metryki](#definiowanie-metryki). **Analitycy**: zacznijcie od sekcji [Pytanie o metrykę](#pytanie-o-metrykę).
+
+Definicja metryki jest przepisem, a nie zapisanym wynikiem. Jest obliczana ponownie przy każdym zapytaniu, z uwzględnieniem dostępu do wierszy osoby pytającej: ktoś, kto widzi tylko EMEA, dostaje dane dla EMEA. Dwie osoby mogą uzyskać różne sumy z tej samej definicji, ponieważ widzą różne wiersze; obliczenie jest takie samo.
+
+## Z czego składa się definicja
+
+| Część | Co określa | Przykład |
+|---|---|---|
+| **Nazwa** | Jak ludzie nazywają daną liczbę. Do 200 znaków. | *Net Revenue* |
+| **Synonimy** | Inne słowa, których ludzie używają, aby asystent rozpoznał pytanie. Do 25. | *revenue*, *sales* |
+| **Opis** (`memo` w API) | Co oznacza liczba i kiedy jej używać — dla asystenta i dla ludzi. Do 1000 znaków. | *Revenue after returns and discounts. Use for all revenue questions.* |
+| **Tabela źródłowa** | Tabela, z której pochodzą wiersze. | `sales_fact` |
+| **Złączenia** | Tabele wyszukiwania dołączane do źródła według pasujących kolumn. Każda tabela wyszukiwania musi mieć tylko jeden wiersz dla każdego klucza (na przykład jeden wiersz na kod regionu), w przeciwnym razie dopasowane wiersze są liczone podwójnie. | `region_lookup`, dopasowanie `region_code` w źródle do `code` w tabeli wyszukiwania |
+| **Miara** | Jak sumowane są wiersze: `sum`, `count`, `count_distinct`, `min`, `max` lub `avg` z kolumny albo `weighted_avg` z kolumny ważonej drugą kolumną (`weight`): suma iloczynów wartości i wagi dla wierszy, w których obie są ustawione, podzielona przez sumę tych wag; wynik jest pusty, jeśli wagi sumują się do zera. | `sum` z `net_amount`; `weighted_avg` z `unit_price` według `units` |
+| **Filtry** | Które wiersze są zawsze liczone. Każdy filtr to kolumna, operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) i jego wartości. | `status` `eq` *Posted* |
+| **Kolumny podziału** (`grain` w API) | Kolumny, według których osoba pytająca może grupować i filtrować. Filtry są stałe; kolumny podziału wybiera pytający. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Scenariusz** (opcjonalnie) | Kolumna oddzielająca wiersze rzeczywiste od budżetowych oraz wartość każdego z tych rodzajów. Metryką są jej wiersze rzeczywiste; wiersze budżetowe są odczytywane tylko na potrzeby [odchylenia](#porównanie-ranking-i-udział). | `scenario`, rzeczywiste *Actual*, budżet *Budget* |
+| **Wymiary** (opcjonalnie, `dimensions` w API) | Kolumna podziału powiązana z wymiarem, dzięki czemu słowa z pytania są dopasowywane do elementów i aliasów tego wymiaru i zamieniane na wartości kolumny: zobacz [Pytanie o metrykę](#pytanie-o-metrykę). Wymiar musi istnieć w projekcie. | `region_lookup.region` powiązana z wymiarem *Region* |
+| **Kolumny czasu** (opcjonalnie, `time` w API) | Kolumna daty albo kolumna roku obrotowego i kolumna okresu, aby pytanie mogło dotyczyć jednego okresu obrotowego i [porównywać go w czasie](#porównanie-w-czasie). | `fiscal_year` i `fiscal_period` |
+
+Kolumna z tabeli wyszukiwania jest zapisywana jako `<table>.<column>`; asystent zapisuje je za Ciebie. Każda tabela i kolumna w definicji musi istnieć w projekcie; definicja, która wskazuje nieistniejącą, jest odrzucana przy zapisie. Metryka ze scenariuszem nie może filtrować po kolumnie scenariusza ani udostępniać jej jako kolumny podziału: scenariusz decyduje o tym, które wiersze są odczytywane, więc filtr taki jak `scenario` `eq` *Actual* należy do scenariusza, a nie do filtrów.
+
+Metrykę można też zbudować z innych metryk — jako iloraz, sumę, różnicę lub wielokrotność: zobacz [Tworzenie metryki z innych metryk](#tworzenie-metryki-z-innych-metryk).
+
+Nic nie stoi na przeszkodzie, aby dwie metryki w projekcie miały tę samą nazwę lub synonim. Zachowaj ich odrębność, bo inaczej asystent musi zgadywać, o którą chodzi, albo zapytać.
+
+## Kto co może robić
+
+- **Architekci projektu** tworzą, edytują i wycofują definicje. Projekt publiczny nadaje każdemu członkowi rolę Architekta tylko z nazwy i to się nie liczy: w projekcie publicznym nikt nie może definiować metryk, więc trzymaj metryki w projekcie z własną listą dostępu.
+- **Każdy, kto może czytać projekt**, może przeglądać i uruchamiać definicje.
+- **Zablokowany projekt odrzuca każdą zmianę.** Definiowanie, edycja i wycofywanie czekają, aż projekt zostanie odblokowany.
+
+## Definiowanie metryki
+
+Jeśli jesteś Architektem projektu, poproś połączonego asystenta AI zwykłym językiem:
+
+> *„W projekcie **Sales** zdefiniuj metrykę o nazwie **Net Revenue** z synonimami revenue i sales: suma `net_amount` w `sales_fact`, złączona z `region_lookup` po `region_code`, z możliwością podziału według `region` z tabeli wyszukiwania, według `product_line` i według `fiscal_year`; jej wiersze rzeczywiste mają `scenario` równe Actual, a wiersze budżetowe `scenario` równe Budget.”*
+
+Asystent ją zapisuje i informuje, jeśli wskazana tabela lub kolumna nie istnieje. Metryka działa od razu po zapisaniu. Każda edycja to nowa **wersja** definicji, zapisana przez osobę, która ją wykonała, a czytelnicy dostają nową wersję natychmiast. Zapis, który niczego nie zmienia, jest odrzucany. Ostatnia zapisana wersja to **bieżąca wersja** metryki.
+
+Dla programistów ta sama definicja przez REST API wygląda tak:
+
+```json
+POST /rest/v1/analyze/metric/definition
+{
+  "project_id": "<project>",
+  "name": "Net Revenue",
+  "synonyms": ["revenue", "sales"],
+  "memo": "Revenue after returns and discounts. Use for all revenue questions.",
+  "definition": {
+    "source": "sales_fact",
+    "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
+    "measure": {"agg": "sum", "column": "net_amount"},
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
+  }
+}
+```
+
+Każda para w `on` to `[source column, lookup column]`. `time` ma postać `{"year_column", "period_column"}` z opcjonalnym `periods_per_year` albo `{"column"}` dla kolumny daty z opcjonalnymi `fiscal_year_start` i `fiscal_year_label`; zobacz [Porównanie w czasie](#porównanie-w-czasie).
+
+## Co jest sprawdzane przy zapisie
+
+Każdy zapis uruchamia poniższe sprawdzenia, a definicja, która któregoś nie przejdzie, jest odrzucana z komunikatem wskazującym problem:
+
+- **Każda tabela i kolumna istnieje** w projekcie.
+- **Każda tabela wyszukiwania ma jeden wiersz na klucz**, w danych w tym momencie. Tabela wyszukiwania z dwoma wierszami dla tego samego klucza podwoiłaby dopasowywane wiersze źródła, więc zapis jest odrzucany z podaniem nazwy tabeli. Wiersz wyszukiwania bez wartości klucza jest przez to sprawdzenie ignorowany, ponieważ nigdy nie pasuje do wiersza źródła.
+- **Dane wejściowe metryki pochodnej istnieją** i nie są ani wycofane, ani same pochodne.
+
+<Aside type="caution" title="Sprawdzenie tabeli wyszukiwania jest uruchamiane przy każdym zapisie">
+Sprawdzenie „jeden wiersz na klucz” analizuje dane tabeli wyszukiwania z dnia zapisu. Jeśli ta tabela później zyska drugi wiersz dla jakiegoś klucza, metryka policzy podwójnie wiersze źródła pasujące do tego klucza i nic Cię o tym nie ostrzeże. Aby uruchomić sprawdzenie ponownie, zapisz metrykę jeszcze raz (wystarczy zmiana jej opisu). Lepiej jednak zadbać o unikatowość klucza tabeli wyszukiwania w przepływie pracy, który ją zapisuje.
+</Aside>
+
+Każda wersja zapisuje, kto i kiedy ją zapisał. Edycja metryki zapisuje nową wersję, którą czytelnicy dostają natychmiast.
+
+## Tworzenie metryki z innych metryk
+
+**Metryka pochodna** to działanie arytmetyczne na metrykach, które już istnieją: *Net Revenue per FTE* to *Net Revenue* podzielone przez *Headcount (FTE)*. Definiuje się ją, pyta o nią i wycofuje tak jak każdą inną metrykę. Różni się jej definicja, która zamiast tabeli wskazuje metryki, z których jest zbudowana.
+
+| Operacja | Co oblicza | Dane wejściowe |
+|---|---|---|
+| `ratio` | pierwsze dane wejściowe podzielone przez drugie | dwie metryki |
+| `add` | pierwsze dane wejściowe plus drugie | dwie metryki |
+| `subtract` | pierwsze dane wejściowe minus drugie | dwie metryki |
+| `scale` | dane wejściowe pomnożone przez stały `factor` | jedna metryka i liczba |
+
+Dane wejściowe to **metryki bazowe** tego samego projektu, czyli rodzaj definiowany powyżej na podstawie tabeli. Metryka pochodna nie może być zbudowana z innej metryki pochodnej ani użyć tych samych danych wejściowych dwa razy.
+
+Poproś asystenta:
+
+> *„W projekcie **Sales** zdefiniuj metrykę o nazwie **Net Revenue per FTE** jako iloraz **Net Revenue** i **Headcount (FTE)**.”*
+
+Przez REST API `definition` wskazuje dane wejściowe przez ich identyfikatory, które podaje `metric_find` lub lista definicji. Kolejność ma znaczenie: pierwszy identyfikator jest licznikiem w `ratio` i metryką, od której odejmuje się w `subtract`.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` przyjmuje jedne dane wejściowe i `factor`: `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` przelicza wartość miesięczną na roczną.
+
+**Jak jest obliczana.** Każde dane wejściowe są obliczane osobno, w zadanym podziale i z uwzględnieniem Twojego dostępu do wierszy, a następnie wyniki są łączone dla każdej wartości podziału. Zsumowanie każdych danych wejściowych przed ich połączeniem sprawia, że iloraz z dwóch tabel pozostaje rzetelny: gdyby najpierw złączyć wiersze, każdy wiersz byłby liczony tyle razy, ile wierszy napotkał po drugiej stronie. Jeśli jedne dane wejściowe nie mają wierszy dla danej wartości podziału, wartość pochodna dla niej jest pusta, podobnie jak iloraz z zerowym mianownikiem; żadna z nich nie jest raportowana jako zero.
+
+**Kolumny podziału są obliczane, a nie deklarowane.** Metrykę pochodną można rozbić tylko według kolumn, które dopuszczają *wszystkie* dane wejściowe, a ta lista jest pokazana obok jej definicji. Aby zapytać o metrykę pochodną według regionu, nadaj każdym danym wejściowym `region_lookup.region`, zapisane tak samo, jako kolumnę podziału. Dane wejściowe bez wspólnej kolumny podziału dają metrykę pochodną odpowiadającą wyłącznie pojedynczą sumą. Pytanie, które grupuje lub filtruje według czegokolwiek innego, jest odrzucane, tak jak dla każdej metryki. Pusta lista obok metryki pochodnej oznacza, że jedne z jej danych wejściowych nie nadają się już do użytku: są wycofane lub brakuje ich.
+
+**Zapis sprawdza dane wejściowe.** Metrykę pochodną można zapisać tylko wtedy, gdy każde dane wejściowe istnieją, nie są wycofane i same nie są pochodne. Czytelnicy i Architekci zawsze dostają bieżącą wersję każdych danych wejściowych i metryki pochodnej. Dane wejściowe nie są przypięte do wersji: po zapisaniu nowszej wersji danych wejściowych wartości metryki pochodnej zmieniają się razem z nią.
+
+**Dane wejściowe pozostają w użyciu, dopóki korzysta z nich metryka pochodna.** Nie można ich wycofać ani zmienić w metrykę pochodną; odmowa wskazuje metrykę, która z nich korzysta. Aby wycofać dane wejściowe, wycofaj najpierw metrykę pochodną albo zapisz jej wersję, która nie używa tych danych wejściowych.
+
+## Pytanie o metrykę
+
+Każdy, kto może czytać projekt, może zapytać wbudowanego asystenta AI PlaidCloud lub asystenta połączonego przez MCP:
+
+> *„Jaki był przychód netto według regionu w FY26?”*
+
+Asystent rozpoznaje metrykę po nazwie lub jednym z synonimów (wyszukiwanie ignoruje wielkość liter i dopasowuje fragment nazwy, więc *revenue* znajduje *Net Revenue*), bierze podział i filtry z Twojego pytania i uruchamia definicję. Pytanie może grupować lub filtrować tylko według jednej z kolumn podziału metryki; pytanie o cokolwiek innego jest odrzucane zamiast odpowiadać zgadywaniem. Tak samo jest z metryką, której tabela utraciła kolumnę od chwili zapisu: odmowa wskazuje metrykę i jej wersję, a Architekt musi poprawić definicję.
+
+**Twoje słowa stają się wartościami kolumny przez wymiar.** Gdy Architekt powiązał kolumnę podziału z wymiarem, asystent dopasowuje słowa z pytania do nazw elementów i aliasów tego wymiaru, ignorując wielkość liter. Słowo, które nazywa jeden element, staje się wartościami tego elementu: liść jest własną wartością, a element nadrzędny, taki jak *EMEA*, rozwija się do każdego liścia pod nim, więc „przychód netto w EMEA” filtruje według wszystkich regionów EMEA. Słowo, które nie nazywa żadnego elementu albo nazywa więcej niż jeden (*Seaboard* może być aliasem dwóch elementów), a żaden z nich nie ma dokładnie takiej pisowni, jakiej użyto, wraca jako lista kandydatów, o które asystent zapyta Ciebie; nigdy nie wybiera jednego za Ciebie. Wyszukiwanie słów w wymiarze wymaga uprawnienia do odczytu wymiarów, tak jak odczyt wymiaru w jakimkolwiek innym miejscu PlaidCloud.
+
+Wynik, z którego korzysta asystent, wskazuje metrykę i jej wersję oraz informuje, czy zastosowano dostęp do wierszy. Jeśli odpowiedź nie podaje, której metryki użyto, zapytaj. We wbudowanym asystencie AI PlaidCloud liczby pojawiają się we własnej karcie ze znakiem ✓; zobacz [Liczby z metryki](/pl/guides/ai-assistant/weave-tab/#wartości-z-metryki). Informacje o tym, jak PlaidCloud ocenia odpowiedzi AI i opatruje je zastrzeżeniami, znajdziesz w artykule [Odpowiedzi, którym można zaufać](../honest-answers/).
+
+**Dostęp do wierszy jest stosowany do każdej tabeli, którą czyta metryka**, zarówno źródłowej, jak i każdej tabeli wyszukiwania. Jeśli wiersz wyszukiwania jest przed Tobą ukryty, ale wiersz źródła, który on opisuje, nie jest, wiersz źródła nadal się liczy. Załóżmy, że nie widzisz wiersza wyszukiwania dla regionu *APAC*, ale widzisz jego sprzedaż: ta sprzedaż jest w Twojej sumie, w podziale według regionu pojawia się pod pustym regionem i zwykle jest pomijana, jeśli filtrujesz według regionu lub jeśli sama metryka filtruje według kolumny tabeli wyszukiwania.
+
+Dostęp do wierszy kształtuje też tabelę wyszukiwania: gdy kolumna podziału jest objęta regułami, oferowane są tylko wartości dozwolone przez Twój dostęp. Element, pod którym nie ma nic, co możesz zobaczyć, nigdy nie jest oferowany — ani jako wartość, ani jako kandydat — a element nadrzędny rozwija się tylko do liści, które możesz zobaczyć. Architekt, który czyta każdy wiersz, widzi każdy element.
+
+Architekci czytają każdy wiersz, tak jak wszędzie indziej w projekcie.
+
+## Porównanie, ranking i udział
+
+Pytanie o metrykę może też zażądać jednego porównania, jednego rankingu i udziału w sumie. Każde z nich jest stałym obliczeniem na własnych wartościach metryki, z uwzględnieniem dostępu do wierszy pytającego; żadne nie jest wyliczane przez asystenta.
+
+| O co poprosić | Co wraca | W API |
+|---|---|---|
+| **Odchylenie od budżetu** | Dla każdej wartości podziału: wartość rzeczywista, wartość budżetowa, różnica (`value`) i różnica jako procent wielkości budżetu (`pct`), który zachowuje znak różnicy, gdy budżet jest ujemny. | `compare: "variance"` |
+| **Udział w sumie** | Wartość każdego wiersza podzielona przez sumę po wszystkich wierszach podziału (`share`) albo po wierszach mających te same kolumny `within`, które wskażesz. | `share: {"within": ["region"]}`; `{}` dla sumy ogólnej |
+| **N największych lub najmniejszych** | N najwyższych wartości albo N najniższych z `order: "asc"`, wraz z ich `rank`; osobno dla każdej grupy, gdy wskażesz kolumny `within`. Wiersze remisujące mają tę samą pozycję i wszystkie są zachowywane, więc może ich być więcej niż N. Dla metryki kosztowej *największe przekroczenie budżetu* to N największych odchyleń; dla metryki przychodowej to N najmniejszych. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *„Które pięć centrów kosztów najbardziej przekracza budżet w projekcie **Finance**?”*
+>
+> *„Jaki udział w łącznych wydatkach ma każdy region i który region jest największy?”*
+
+Odchylenie wymaga metryki ze **scenariuszem**; metryka bez niego lub metryka pochodna je odrzuca. Każda strona jest sumowana osobno przed porównaniem: wartość podziału bez wiersza budżetowego lub bez wiersza rzeczywistego pokazuje pustą różnicę zamiast zera (wyjątkiem jest metryka `count` pytana jako pojedyncza suma, w której strona bez wierszy liczy zero), tak samo jak procent względem zerowego budżetu.
+
+Ranking i udział dotyczą wartości metryki albo różnicy, gdy zażądano odchylenia lub [porównania w czasie](#porównanie-w-czasie), więc *„które centra kosztów odpowiadają za największą część przekroczenia”* to odchylenie z udziałem i rankingiem. `pct` jest procentem, więc `12` oznacza 12%, podczas gdy `share` jest ułamkiem. Udział jest wyliczany po wszystkich wierszach podziału, zanim top N zachowa część z nich, więc udziały zwróconych wierszy nie muszą się sumować do jedności. Pusta wartość jest w rankingu ostatnia niezależnie od zadanego porządku i ma pusty udział; tak samo udział względem zerowej sumy.
+
+Udział dotyczy tego, co *Ty* widzisz. Osoba, której dostęp do wierszy ogranicza ją do EMEA, dostaje centra kosztów EMEA jako udziały w sumie EMEA, a wynik informuje, że zastosowano dostęp do wierszy. Kolumny `within` udziału lub rankingu muszą należeć do kolumn podziału, o które poprosiłeś, a pytanie, które grupuje według kolumny nazwanej tak jak jedna z kolumn wyniku (`value` oraz `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` lub `cumulative`, gdy zażądano operatora, który ją tworzy), jest odrzucane. Pytanie z dwoma porównaniami lub dwoma rankingami jest odrzucane.
+
+## Porównanie w czasie
+
+Metrykę, której definicja ma **kolumny czasu** (`time` w API), można zapytać o jeden okres obrotowy, porównać z okresem poprzedzającym i zsumować narastająco okres po okresie. Kolumny czasu określają, gdzie każdy wiersz leży w kalendarzu obrotowym, na jeden z dwóch sposobów:
+
+- **Kolumna daty** z `fiscal_year_start`, czyli miesiącem kalendarzowym, w którym zaczyna się rok obrotowy (`1` dla stycznia, wartość domyślna). Jej okresami są miesiące roku obrotowego, numerowane od miesiąca początkowego: przy roku zaczynającym się w październiku okres 1 to październik, a okres 7 to kwiecień. Kwartał to trzy z nich. Rok obrotowy, który nie zaczyna się w styczniu, domyślnie nazywany jest od roku kalendarzowego, w którym **się kończy** (`fiscal_year_label` ma wartość `ending`); ustaw `fiscal_year_label` na `starting`, aby nazwać go od roku, w którym się zaczyna. Przy początku w październiku miesiące od października 2025 do września 2026 są domyślnie FY2026, a z `starting` — FY2025. Wiersze są odczytywane według zakresu dat, co przyspiesza zapytanie na dużej tabeli.
+- **Kolumna roku obrotowego i kolumna okresu**, obie będące liczbami całkowitymi zawierającymi rok obrotowy (`2026`, a nie `26`) i okres w jego obrębie, numerowany od 1, z `periods_per_year`: domyślnie `12`, `13` dla kalendarza 13-okresowego, `52` dla tygodni, `4` dla kwartałów. Kwartały istnieją tylko wtedy, gdy okresy dzielą się na cztery. Kalendarz z latami 53-tygodniowymi może ustawić `53`, kosztem kwartałów. Zapis jest odrzucany, jeśli któraś kolumna zawiera wartość, która nie jest liczbą całkowitą, taką jak *2024-01* lub *FY26*, a odmowa wskazuje kolumnę i wartość. Cyfry zapisane jako tekst, takie jak `07`, są akceptowane, podobnie jak okres spoza roku, taki jak okres 0 lub 13 w księdze: pytanie o okres pomija te wiersze.
+
+Pytanie wskazuje następnie **okres**, którego dotyczy: rok obrotowy albo jeden jego kwartał lub okres. **Od początku roku** rozciąga go wstecz do początku roku, więc *kwiecień od początku roku* to pierwsze miesiące roku do kwietnia włącznie.
+
+> *„Jaka była sprzedaż w FY2026 Q1 według regionu i jak wypada w porównaniu z poprzednim kwartałem?”*
+>
+> *„Sprzedaż od początku roku do kwietnia w porównaniu z tymi samymi miesiącami zeszłego roku.”*
+>
+> *„Pokaż sprzedaż FY2026 według miesięcy jako sumę narastającą.”*
+
+| O co poprosić | Co wraca | W API |
+|---|---|---|
+| **Jeden okres** | Metryka wyłącznie w tym okresie, ze zwykłymi podziałami, udziałami i rankingami; odchylenie od budżetu odczytuje w nim oba scenariusze. | `period: {"year": 2026}`; `{"year": 2026, "quarter": 1}`; `{"year": 2026, "period": 7}` |
+| **Rok do roku** | Dla każdej wartości podziału: wartość za okres (`current`), ten sam okres rok wcześniej (`prior`), różnica (`value`) i `pct`. Odpowiedź wskazuje okres poprzedni. | `compare: "yoy"` z `period` |
+| **Kwartał do kwartału** | To samo, względem poprzedniego kwartału. Pierwszy kwartał jest porównywany z czwartym kwartałem poprzedniego roku. | `compare: "qoq"`; `period` musi wskazywać `quarter` |
+| **Okres do okresu** | To samo, względem poprzedniego okresu. Pierwszy okres jest porównywany z ostatnim okresem poprzedniego roku. W kalendarzu 12-okresowym jest to miesiąc do miesiąca, stąd nazwa. | `compare: "mom"`; `period` musi wskazywać `period` |
+| **Od początku roku** | Rok od początku do końca wskazanego kwartału lub okresu — samodzielnie albo, z `yoy`, względem tych samych miesięcy roku poprzedniego. Odrzucane z `qoq` lub `mom`. | `"to_date": true` w `period` |
+| **Suma narastająca** | Jeden wiersz dla każdego roku obrotowego i okresu w żądanym okresie, z wartością własną okresu (`value`) i sumą dotychczasową (`cumulative`). Bez okresu biegnie od pierwszego do ostatniego wiersza przez wszystkie lata. Nie przyjmuje porównania, udziału ani rankingu. | `cumulative: true` |
+
+`pct` to różnica jako procent wielkości poprzedniej wartości, z zachowaniem znaku różnicy, gdy poprzednia wartość jest ujemna, tak jak w odchyleniu. Każdy z dwóch okresów jest sumowany osobno, a obie sumy są dopasowywane według wartości podziału; nic nie jest odczytywane z sąsiedniego wiersza. Dlatego miesiąc bez wierszy w zeszłym roku porównuje się jako pusty, a nie jako najbliższy miesiąc, który je miał, a wartość podziału z wierszami tylko w jednym z dwóch okresów pokazuje drugą wartość, różnicę i `pct` jako puste zamiast zera.
+
+Suma narastająca jest przeznaczona dla metryk `sum` i `count`. Średnia, liczba unikatowych wartości, minimum lub maksimum nie sumują się w czasie i są odrzucane. Okres bez wierszy nie ma wiersza w sumie narastającej, a suma trwa dalej ponad nim.
+
+Kolumn czasu nie można filtrować ani grupować w pytaniu, które wskazuje okres, porównuje w czasie lub żąda sumy narastającej: to one decydują, które wiersze są odczytywane i jak są rozmieszczone. Pytanie, które nie robi żadnej z tych rzeczy, nadal może według nich filtrować i grupować jak według każdej kolumny podziału. Odrzucane są też: okres poza końcem roku (okres 13 w kalendarzu 12-okresowym), kwartał w kalendarzu bez kwartałów, porównanie w czasie lub suma narastająca dla metryki pochodnej oraz pytanie, które nie wskazuje rodzaju okresu potrzebnego do jego porównania. Metrykę pochodną można zapytać o jeden okres, gdy każde z jej danych wejściowych ma kolumny czasu w tym samym kalendarzu obrotowym, i wtedy żadnej z nich nie można filtrować ani grupować. Porównanie w czasie jest jedynym porównaniem w pytaniu, więc nie można go łączyć z odchyleniem od budżetu, choć udział i ranking nadal dotyczą różnicy.
+
+## Wycofanie metryki
+
+Wycofanie metryki wyłącza ją z użycia na stałe: osoby czytające projekt już jej nie widzą, Architekci widzą ją oznaczoną jako wycofaną wraz z historią, a nie można jej już edytować ani uruchamiać. Architekt wycofuje ją, prosząc asystenta, lub za pomocą `POST /rest/v1/analyze/metric/retire`. Metryki, z której zbudowana jest metryka pochodna, nie można wycofać, dopóki ta metryka pochodna nie zostanie wycofana albo nie zostanie zapisana jej wersja, która nie używa już tych danych wejściowych. Aby zastąpić wycofaną metrykę, zdefiniuj nową.
+
+## Przez MCP i REST API
+
+| Akcja | Narzędzie MCP | REST |
+|---|---|---|
+| Wyświetlenie metryk projektu, każda z pełną definicją; `q` zachowuje te, których nazwa lub synonim go zawiera | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
+| Zamiana słów z pytania na wartości kolumny podziału | `metric_values` z `column` i `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
+| Odczyt jednej metryki | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
+| Definiowanie lub edycja | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
+| Wycofanie | `metric_review` z `action: retire` | `POST /rest/v1/analyze/metric/retire` |
+| Uruchomienie | `metric_run` z `group_by`, `filters` i opcjonalnymi `period`, `compare`, `share`, `top` i `cumulative` | `POST /rest/v1/analyze/metric/run` z tymi samymi polami |
+| Wcześniejsze wersje (tylko Architekci) | | `GET /rest/v1/analyze/metric/flashback-versions` |
+
+`metric_upsert` przyjmuje `spec` w postaci `{name, memo, synonyms, definition}` i obsługuje `dry_run`, aby sprawdzić definicję bez jej zapisywania. `definition` metryki bazowej ma postać `{source, joins, measure, filters, grain, dimensions, scenario, time}`, gdzie `dimensions` to `{<breakdown column>: <dimension id>}`, `measure` to `{agg, column}` lub `{agg: "weighted_avg", column, weight}`, `scenario` to `{column, actual, budget}`, a `time` to `{column, fiscal_year_start, fiscal_year_label}` lub `{year_column, period_column, periods_per_year}`. `definition` metryki pochodnej ma postać `{kind, op, inputs, factor}`; jej obliczone kolumny podziału wracają jako `grain` obok definicji.
+
+## Powiązane
+
+- [Ścieżki analizy](../analysis-paths/) — nazwij tabele, o które pytają ludzie, i nadaj asystentom stałe filtry oraz terminologię dla każdej z nich
+- [Odpowiedzi, którym można zaufać](../honest-answers/) — jak PlaidCloud ocenia każdą odpowiedź AI i opatruje ją zastrzeżeniami
+- [Kontrola dostępu do danych](/pl/get-started/tutorials/control-data-access/) — dostęp do wierszy, z którym działa metryka

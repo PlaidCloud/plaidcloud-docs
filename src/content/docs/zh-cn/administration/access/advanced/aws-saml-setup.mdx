@@ -1,0 +1,100 @@
+---
+title: 设置 AWS IAM Identity Center SAML 单点登录
+description: 将 AWS IAM Identity Center 设置为 PlaidCloud 单点登录的 SAML 提供商，为成员启用联合身份验证。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/aws-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 通过 SAML 2.0 支持单点登录 (SSO)。本指南介绍如何将 AWS IAM Identity Center（原 AWS SSO）配置为 SAML 身份提供商，使贵组织的用户在访问 PlaidCloud 时可以通过 AWS 进行身份验证。
+
+<Aside>PlaidCloud 一侧的配置由 PlaidCloud 团队负责。您需要在 IAM Identity Center 中设置自定义 SAML 应用程序，并向 PlaidCloud 提供您的 **IAM Identity Center SAML Metadata URL**。其余配置由 PlaidCloud 支持团队完成。</Aside>
+
+## 前提条件
+
+- 一个已启用 **IAM Identity Center** 的 AWS 账户
+- 拥有 **AWSSSOMasterAccountAdministrator** 托管策略或同等权限的 IAM 用户或角色
+- IAM Identity Center 必须已配置身份源（内置目录、Active Directory 或外部 IdP）
+- 与 PlaidCloud 支持团队保持联系，以协调设置并交换配置值
+
+## 概述
+
+设置过程涉及双方交换 SAML 元数据：
+
+1. **您在 IAM Identity Center 中配置** 一个自定义 SAML 应用程序，并向 PlaidCloud 提供您的 SAML Metadata URL。
+2. **PlaidCloud 向您提供** 完成应用程序配置所需的服务提供商 (SP) Entity ID 和 ACS URL（断言使用方服务 URL）。
+
+请在完成下面的第 3 步之前，联系 PlaidCloud 支持团队获取 SP 值。
+
+## 第 1 步：创建自定义 SAML 应用程序
+
+1. 登录 [AWS Management Console](https://console.aws.amazon.com)，导航到 **IAM Identity Center**。
+2. 在左侧边栏中，选择 **Applications**。
+3. 点击 **Add application**。
+4. 选择 **I have an application I want to set up**，然后选择 **Custom SAML 2.0 application**。
+5. 点击 **下一步**。
+6. 为应用程序输入 **Display name**（例如 `PlaidCloud SSO`），也可以选填说明。
+
+## 第 2 步：获取 IAM Identity Center SAML Metadata URL
+
+在配置服务提供商详细信息之前，先找到 IAM Identity Center 的元数据 URL 并发送给 PlaidCloud。
+
+1. 在应用程序配置页面上，滚动到 **IAM Identity Center metadata** 部分。
+2. 复制 **IAM Identity Center SAML metadata URL**（格式为 `https://portal.sso.{region}.amazonaws.com/saml/metadata/{instanceId}`）。
+
+**请将此 Metadata URL 发送给 PlaidCloud 支持团队。** 这是 PlaidCloud 在身份提供商一侧配置信任关系所需的 Entity Descriptor URL。PlaidCloud 收到此 URL 后，团队将完成 Keycloak 配置，并在 SSO 可以测试时通知您。
+
+## 第 3 步：配置服务提供商详细信息
+
+<Aside>完成此步骤之前，您需要从 PlaidCloud 获得 **SP Entity ID** 和 **ACS URL**。请联系 PlaidCloud 支持团队获取这些值。</Aside>
+
+1. 滚动到 **Application properties** 部分。
+2. 在 **Application ACS URL** 字段中，输入 PlaidCloud 提供的 ACS URL。
+3. 在 **Application SAML audience** 字段中，输入 PlaidCloud 提供的 SP Entity ID。
+4. 点击 **提交**。
+
+## 第 4 步：配置属性映射
+
+IAM Identity Center 在 SAML 断言中将用户属性传递给 PlaidCloud。请配置属性映射，使 PlaidCloud 获得所需的用户详细信息。
+
+1. 在应用程序详情页面上，选择 **Attribute mappings** 选项卡。
+2. 点击 **Add new attribute mapping**，添加以下内容：
+
+| 应用程序中的用户属性 | 映射到 IAM Identity Center 中的此字符串值或用户属性 | 格式 |
+|---|---|---|
+| `Subject` | `${user:email}` | emailAddress |
+| `email` | `${user:email}` | unspecified |
+| `firstName` | `${user:givenName}` | unspecified |
+| `lastName` | `${user:familyName}` | unspecified |
+
+3. 点击 **Save changes**。
+
+### 分组成员关系（可选）
+
+IAM Identity Center 不会像其他提供商那样，原生地将分组成员关系作为 SAML 属性传递。如果您的 PlaidCloud 配置需要基于分组的安全角色分配，请与 PlaidCloud 支持团队讨论可行的方案。常见做法包括使用带分组分配的内置目录，或从 Active Directory 等外部身份源同步分组。
+
+<Aside>请与 PlaidCloud 支持团队讨论应如何传递分组成员关系，以确保基于分组的安全角色分配在 PlaidCloud 中正常工作。</Aside>
+
+## 第 5 步：将用户和分组分配给应用程序
+
+只有分配给该应用程序的用户和分组才能通过此 SSO 配置进行身份验证。
+
+1. 在应用程序详情页面上，选择 **Assign users and groups** 选项卡。
+2. 点击 **Assign users and groups**。
+3. 搜索并选择应拥有 PlaidCloud SSO 访问权限的用户或分组。
+4. 点击 **Assign users**。
+
+## 测试集成
+
+PlaidCloud 确认配置完成后：
+
+1. 导航到贵组织的 PlaidCloud 工作区（例如 `https://my-workspace.plaid.cloud`）。
+2. 您将被重定向到 AWS IAM Identity Center 登录页面。
+3. 使用您的 AWS IAM Identity Center 凭据登录。
+4. 身份验证成功后，您将被重定向回 PlaidCloud。
+
+如果遇到错误，请确认：
+- ACS URL 和 SP Entity ID 与 PlaidCloud 提供的完全一致
+- 尝试登录的用户已在 IAM Identity Center 中分配给该应用程序
+- Subject 属性已映射到 `${user:email}`，格式为 **emailAddress**
+- 您发送给 PlaidCloud 的 Metadata URL 可从 PlaidCloud 的服务器访问

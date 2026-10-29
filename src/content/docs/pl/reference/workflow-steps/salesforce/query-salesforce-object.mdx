@@ -1,0 +1,131 @@
+---
+title: "Salesforce: zapytanie o obiekt"
+description: Wyodrębnij jeden obiekt Salesforce do tabeli projektu przez Bulk API 2.0 — wybierz obiekt i pola z opisu (describe) samej organizacji, filtruj w Salesforce i zapisz każdą kolumnę jako typ zadeklarowany dla niej przez Salesforce.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/salesforce/query-salesforce-object.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Odczytuje jeden obiekt Salesforce — standardowy lub niestandardowy — do tabeli projektu przez Bulk API 2.0 Salesforce. Wybierz [połączenie Salesforce](/pl/guides/connections/salesforce/), obiekt i pola; krok buduje zapytanie, stronicuje cały zestaw wyników i zapisuje każdą kolumnę jako typ zadeklarowany dla niej przez Salesforce. Nie trzeba pisać żadnego zapytania.
+
+Salesforce jest osiągany bezpośrednio z chmury przez jego REST API, więc ten krok nie wymaga agenta PlaidLink.
+
+## Konfiguracja
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Połączenie Salesforce | Tak | Połączenie Salesforce, przez które odbywa się odczyt. Połączeniami zarządza się w **Tools > Connections**. |
+| Environment | Nie | Które ze środowisk połączenia odczytać — skieruj środowisko sandbox na organizację sandbox, a produkcyjne na produkcyjną. Domyślnie środowisko `default` połączenia. |
+| Object | Tak | Nazwa API obiektu — `Account`, `Opportunity`, `Invoice__c`. Selektor wyświetla obiekty, które użytkownik Run As połączenia może odpytywać, i przyjmuje także wpisaną nazwę, dzięki czemu zapisany krok działa nadal, gdy wykrywanie jest niedostępne. |
+| Tabela docelowa | Tak | Tabela projektu, w której lądują wiersze. |
+| Uwzględnij usunięte i zarchiwizowane rekordy | Nie | Odczytuje także rekordy z Kosza oraz zarchiwizowane aktywności, tak jak Salesforce `queryAll`. |
+| Fields | Tak | Zaznacz pola do wyodrębnienia. Wymagane jest co najmniej jedno: Bulk API 2.0 odrzuca wybór całego obiektu, więc lista kolumn jest zawsze wyliczana. |
+| Filter | Nie | Zawęża wyodrębnienie w Salesforce. Zobacz [Filtrowanie w Salesforce](#filtrowanie-w-salesforce). |
+| Tag okna | Nie | Nazywa okno wyodrębnienia. Zobacz [Okna wyodrębnienia uruchamiane jednokrotnie](#okna-wyodrębnienia-uruchamiane-jednokrotnie). |
+
+`Id` jest zawsze uwzględniane, niezależnie od tego, czy je zaznaczysz — to klucz, po którym scala każde ponowne uruchomienie. Pole walutowe pobiera także swoje `CurrencyIsoCode`, jeśli obiekt je ma.
+
+## Jak lądują wiersze
+
+Każde uruchomienie odczytuje obiekt w całości, z uwzględnieniem filtra, i scala każdą stronę z tabelą docelową po `Id`. Wiersz już obecny w tabeli jest zastępowany w miejscu, więc przerwane uruchomienie, które jest wznawiane, niczego nie ładuje dwa razy.
+
+<Aside type="caution">
+**Usunięcia nie są śledzone.** Tabela odzwierciedla to, co zwrócił Salesforce, a rekord usunięty w Salesforce pozostaje w tabeli docelowej — nic go nie usuwa. To wyodrębnienie, a nie dwukierunkowa synchronizacja: rekordy scalone, usunięte i zarchiwizowane są celowo wyłączone z tego, co krok odczytuje, więc nie pojawiają się też ponownie jako wiersze.
+</Aside>
+
+Załadowane kolumny używają typów zadeklarowanych w własnych metadanych pól Salesforce, nigdy typu zgadywanego na podstawie pierwszej strony danych. Kolumna **Trafia jako** w selektorze pól to ten zadeklarowany typ, więc kształt zatwierdzony w formularzu jest kształtem, jaki otrzyma tabela.
+
+## Co w co się zamienia
+
+| Typ pola Salesforce | Trafia jako |
+|---|---|
+| `id`, `reference`, `string`, `textarea`, `phone`, `url`, `email`, `picklist`, `multipicklist`, `combobox` | tekst |
+| `boolean` | wartość logiczna |
+| `date` | data |
+| `datetime` | znacznik czasu |
+| `time` | czas |
+| `int` | liczba całkowita lub 64-bitowa liczba całkowita, gdy pole deklaruje 10 lub więcej cyfr |
+| `double`, `currency`, `percent` | liczbowy — szeroka liczba dziesiętna, 38 cyfr z 10 miejscami po przecinku |
+
+Z tej tabeli wynikają trzy konwencje, które warto znać, zanim zaczniesz budować na wyniku:
+
+- **Waluta trafia jako liczba, a nie jako typ walutowy.** Rzeczywiste organizacje deklarują pola walutowe ze skalami 0, 2, 3 i 4, więc każdy typ liczbowy trafia do jednej liczby dziesiętnej dość szerokiej dla wszystkich. Kolumna nie ma symbolu waluty ani ograniczenia liczby miejsc po przecinku dla pola. Tam, gdzie obiekt ma `CurrencyIsoCode`, ta kolumna dołącza obok pola walutowego, aby kwota zachowała swoją walutę; organizacja jednowalutowa nie ma takiego pola w obiekcie i żadne nie jest wymyślane.
+- **Procent to liczba całkowita raportowana przez Salesforce.** `20` oznacza 20 procent, a nie `0.2`. Nic nie jest przeskalowywane przy imporcie.
+- **Pusta wartość trafia jako NULL.** Wyniki zbiorcze nie odróżniają prawdziwego null od jawnego pustego ciągu, więc oba trafiają jako `NULL` — w każdej kolumnie, także tekstowej. Kolumna, która musi zachować semantykę pustego ciągu, wymaga pola formuły po stronie Salesforce.
+
+## Pola odrzucane przez krok
+
+Niektórych typów pól Salesforce nie da się zapisać rzetelnie, więc selektor pól oznacza je jako nieużywalne i podaje powód, zamiast pozwolić zapisać krok, który zawiedzie w czasie działania. Każde odrzucenie wskazuje pole i jego typ w Salesforce.
+
+| Typ pola Salesforce | Dlaczego | Co zrobić zamiast tego |
+|---|---|---|
+| `address`, `location` (pola złożone) | Pole złożone nie ma bezpośrednio odczytywalnej wartości w zapytaniu zbiorczym. | Zaznacz jego pola składowe — `BillingStreet`, `BillingCity`, `BillingState`, `BillingPostalCode`, `BillingCountry` oraz szerokość i długość geograficzną geolokalizacji. Selektor wskazuje składowe dla pola, które masz przed sobą. |
+| `base64` | Zawartość plików i obiektów blob nigdy nie jest zwracana w treści; wymaga osobnego pobrania binarnego, którego ten krok nie wykonuje. | Odczytaj pozostałe pola rekordu, a załączniki obsłuż osobno. |
+| `encryptedstring` | Salesforce zwraca zamaskowaną wartość zamiast błędu, gdy użytkownik Run As nie ma uprawnienia **View Encrypted Data**, i nic nie odróżnia danych zamaskowanych od prawdziwych. Ciche ładowanie wierszy gwiazdek jest gorsze niż odmowa. | Zdecyduj świadomie, czy dane w ogóle powinny opuszczać Salesforce; nie ma obsługiwanego sposobu wyodrębnienia ich tym krokiem. |
+| `anyType` | Rzeczywisty typ może różnić się w zależności od wiersza, a kolumna tabeli ma dokładnie jeden typ. | Wyodrębnij pole o określonym typie lub pole formuły, które renderuje wartość jako tekst. |
+| Dowolny typ nierozpoznany przez krok | Odrzucany zamiast ładowania jako tekst, co po cichu zmieniłoby znaczenie wartości. | Zgłoś go do pomocy technicznej, aby typ otrzymał mapowanie. |
+
+<Aside type="note">
+Zabezpieczenia na poziomie pól nie należą do tych odrzuceń, ponieważ nie są widoczne w metadanych pól. Zapytanie wskazujące pole, którego użytkownik Run As nie może odczytać, kończy się niepowodzeniem — zobacz [Użytkownik Run As wyznacza zakres wszystkiego](/pl/guides/connections/salesforce/#użytkownik-run-as-ogranicza-wszystko).
+</Aside>
+
+## Okna wyodrębnienia uruchamiane jednokrotnie
+
+**Tag okna** nazywa okno danych, które uruchomienie ładuje — okres lub etykietę partii, taką jak `2026-09`. Przyjmuje zmienne przepływu pracy: tag `{period}` przy każdym uruchomieniu kroku zamienia się na wartość tej zmiennej.
+
+Okno wyodrębnienia uruchamia się raz. Ponowne uruchomienie okna, które już się zakończyło, **nie** wraca do Salesforce: krok jasno zgłasza, że nie odczytał danych ponownie, i informuje, że pokazana liczba wierszy pochodzi z wcześniejszego uruchomienia. To głośny brak działania, a nie cichy, i to właśnie to zachowanie chroni przed ponownym stronicowaniem drugiej kopii zestawu wyników, który już został załadowany.
+
+Są trzy sposoby użycia kroku:
+
+- **Pozostaw tag pusty** i traktuj krok jako jednorazowe ładowanie. Pierwsze uruchomienie odczytuje; drugie uruchomienie tego samego kroku odtwarza wynik i zgłasza, że nie odczytało danych ponownie. Użyj tego do zbudowania i sprawdzenia wyodrębnienia oraz dla tabeli ładowanej jednorazowo.
+- **Wpisz tag i zmień go przy ładowaniu następnego okna** — `2026-09`, potem `2026-10`. Edycja tagu rozpoczyna nowe okno, więc miesięczne ładowanie, które ktoś przesuwa ręcznie, działa dokładnie tak, jak to wygląda.
+- **Zbuduj tag ze zmiennej przepływu pracy** dla cyklicznego pobierania bez nadzoru — na przykład `{period}`, ustawionej przez wcześniejszy krok przepływu pracy na ładowany okres. Każde zaplanowane uruchomienie nazywa własne okno, a ponowne uruchomienie w tym samym okresie wznawia lub odtwarza to okno zamiast rozpoczynać kolejne.
+
+<Aside type="caution">
+Nazywaj okno, a nie uruchomienie. Tag zmieniający się przy każdym uruchomieniu — zbudowany z `{date}`, która zawiera bieżący czas — rozpoczyna nowe okno za każdym razem, więc przerwane wyodrębnienie nigdy nie może zostać wznowione, a każda ponowna próba wysyła do Salesforce nowe zapytanie. Użyj zmiennej, która przechowuje ładowany okres lub partię.
+</Aside>
+
+Wywołujący REST API lub MCP przekazuje `extract_tag` bezpośrednio i sam dostarcza odrębną wartość dla każdego okna.
+
+Przerwane uruchomienie wznawia to samo okno, więc utrzymuj stały tag tak długo, jak to okno może jeszcze wymagać ukończenia. Zmiana tagu rozpoczyna nowe okno i nowe zapytanie w Salesforce. Zmieniaj tag za każdym razem, gdy zmieniasz filtr lub pola: edycja konfiguracji pod tagiem, który już został uruchomiony, jest odrzucana jako konflikt.
+
+## Filtrowanie w Salesforce
+
+Zawężaj wyodrębnienie w Salesforce, zamiast pobierać cały obiekt i filtrować potem. Każdy warunek filtra to pole, operator i wartość; warunki łączą się przez AND. Wartość może używać zmiennej przepływu pracy, np. `{region}`.
+
+| Operator | Uwagi |
+|---|---|
+| `=`, `!=`, `<`, `<=`, `>`, `>=` | Porównanie z wartością w postaci wpisanej. |
+| `LIKE` | Użyj `%` jako symbolu wieloznacznego, na przykład `Acme%`. |
+| `IN`, `NOT IN` | Podaj listę wartości rozdzielonych przecinkami. |
+
+Zarówno pole, jak i operator są sprawdzane względem wybranych pól przed zbudowaniem zapytania, a nie ma swobodnej klauzuli `WHERE` do napisania — więc filtr nie może sięgnąć poza wyodrębnienie. Filtruj po polu, które również zaznaczono; filtr wskazujący pole, którego wyodrębnienie nie wybiera, jest odrzucany.
+
+Krok nie oferuje limitu wierszy ani sortowania. Bulk API 2.0 wyłącza własne wewnętrzne dzielenie na fragmenty, gdy zapytanie zawiera jedno z nich, co spowalnia duże wyodrębnienie i zwiększa ryzyko przekroczenia limitu czasu. Selektywne kryteria filtra to własne lekarstwo Salesforce na zapytanie, które jest zbyt duże lub zbyt wolne.
+
+## Dopasowanie do wolumenu i zmienności
+
+Ten kształt — odczyt obiektu w całości, według harmonogramu — pasuje do obiektów o umiarkowanym wolumenie i umiarkowanej zmienności: Accounts, Opportunities, Leads, Campaigns oraz obiektów niestandardowych o podobnej wielkości.
+
+To złe narzędzie dla obiektów o dużym wolumenie i dużej zmienności, takich jak `Task`, `EmailMessage` lub duży obiekt niestandardowy z milionami wierszy zmieniających się codziennie. Nocne pełne pobranie takich obiektów zużywa czas zegarowy i moc API, której synchronizacja przyrostowa by nie zużyła. Gdy obiekt jest duży, ale interesuje Cię tylko jego część, filtr ograniczający wyodrębnienie — zakres dat, typ rekordu, właściciel — zamienia je z powrotem w pobranie o umiarkowanym wolumenie.
+
+## Gdy uruchomienie się nie kończy
+
+| Co widzisz | Co się stało | Co zrobić |
+|---|---|---|
+| Ostrzeżenie, że zadanie nadal działa po 15 minutach | Krok czeka na pierwszym planie, aż Salesforce zakończy zapytanie, a to oczekiwanie jest ograniczone. Nic nie posuwa zadania naprzód w tle. | Uruchom krok ponownie. Wznawia oczekiwanie na **to samo** zadanie Salesforce i nigdy nie przesyła drugiego. Jeśli stale przekracza limit, zawęź wyodrębnienie kryteriami filtra. |
+| Ostrzeżenie, że okno zostało już ukończone i nie zostało odczytane ponownie | Okno było już uruchamiane. Pokazana liczba wierszy pochodzi z wcześniejszego uruchomienia. | Uruchom wyodrębnienie z odrębnym **tagiem okna** lub przesuń zmienną, z której zbudowano tag — zobacz [Okna wyodrębnienia uruchamiane jednokrotnie](#okna-wyodrębnienia-uruchamiane-jednokrotnie). |
+| Błąd wskazujący nieudane lub przerwane zadanie | Nieudane zadanie zapytania zbiorczego nie daje częściowych wyników i nie można go wznowić. Okno jest teraz zużyte. | Uruchom ponownie z **odrębnym tagiem okna**. Ponowne uruchomienie tego samego okna odtwarza niepowodzenie i niczego nie przesyła, a edycja konfiguracji kroku pod tym samym tagiem jest odrzucana jako konflikt. |
+| Odmowa wskazująca limit żądań Salesforce | Wyczerpano kroczący 24-godzinny limit żądań API organizacji. Salesforce nie dokumentuje dla niego czasu ponowienia. | Poczekaj na ustąpienie okna, a następnie uruchom ponownie — wyodrębnienie nadal można wznowić, nic nie zostało utracone. |
+| Odmowa wskazująca jedno pole i jego typ w Salesforce | Tego typu pola nie można załadować lub użytkownik Run As nie może odczytać pola. | Zobacz [Pola odrzucane przez krok](#pola-odrzucane-przez-krok) oraz zabezpieczenia na poziomie pól użytkownika Run As. |
+
+Salesforce utrzymuje wyniki ukończonego zadania zapytania możliwe do pobrania przez 7 dni, co umożliwia wznowienie przerwanego wyodrębnienia — i ogranicza, jak długo wznowienie może czekać, zanim wyniki znikną. Zadania są widoczne w Salesforce w **Setup > Environments > Jobs > Bulk Data Load Jobs**.
+
+## Powiązane
+
+- [Kroki Salesforce](/pl/reference/workflow-steps/salesforce/)
+- [Połączenie z Salesforce](/pl/guides/connections/salesforce/) — konfiguracja po stronie organizacji, od początku do końca
+- [Konektor REST Salesforce](/pl/reference/connectors/rest/salesforce/) — opis pól połączenia
+- [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)

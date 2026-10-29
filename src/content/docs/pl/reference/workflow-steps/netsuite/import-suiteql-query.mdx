@@ -1,0 +1,113 @@
+---
+title: "NetSuite: importuj zapytanie SuiteQL"
+description: Uruchom własne zapytanie SuiteQL w NetSuite w przepływie pracy i załaduj wynik do tabeli projektu z typami kolumn, z obsługą okien dat i stronicowania.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Uruchamia napisane przez Ciebie zapytanie SuiteQL w NetSuite przez [połączenie NetSuite](/pl/guides/connections/netsuite/) i ładuje wynik do tabeli projektu. Używaj go dla danych, których nie obejmują gotowe kroki importu — rekordu niestandardowego, raportu w stylu zapisanego wyszukiwania lub złączenia dopasowanego do własnego modelu.
+
+Krok odczytuje dane przez tę samą warstwę co pozostałe [kroki importu NetSuite](/pl/reference/workflow-steps/netsuite/): odświeża token OAuth, odczytuje duże wyniki partiami, ponawia próby po błędach przejściowych i dzieli długi zakres dat na okna, więc piszesz tylko zapytanie. Przepływ pracy Load w [Data Foundation](/pl/guides/projects/data-foundation/) używa tego kroku do odczytów z NetSuite.
+
+## Konfiguracja
+
+Krok ma jedną kartę, **Parametry importu**.
+
+### Źródło i cel
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Połączenie NetSuite | Tak | Połączenie NetSuite, przez które odbywa się odczyt. Połączenia NetSuite są zarządzane w **Narzędzia > Połączenia**. |
+| Środowisko | Nie | Środowisko połączenia do użycia, na przykład produkcyjne lub piaskownica. |
+| Tabela docelowa | Tak | Tabela projektu, do której zapisywany jest wynik. Przy każdym uruchomieniu jest nadpisywana. |
+
+### Zapytanie SuiteQL
+
+Zapytanie do uruchomienia. Może używać czterech symboli zastępczych, z których każdy jest zastępowany odpowiednią wartością z sekcji **Wartości zastępcze i stronicowanie**. PlaidCloud sprawdza każdą wartość i wstawia ją do zapytania jako literał właściwego rodzaju, więc nie dodajesz cudzysłowów ani `TO_DATE` wokół symbolu zastępczego.
+
+| Symbol zastępczy | Zastępowany przez | Zapisywany jako |
+|---|---|---|
+| `{subsidiary_id}` | **Identyfikator spółki zależnej** | Liczba całkowita |
+| `{posting_period_id}` | **Identyfikator okresu księgowania** | Liczba całkowita |
+| `{start_date}` | **Data początkowa** lub początek bieżącego okna | Data |
+| `{end_date}` | **Data końcowa** lub koniec bieżącego okna | Data |
+
+Każde inne słowo w nawiasach klamrowych jest odrzucane, podobnie jak symbol zastępczy użyty w zapytaniu, gdy jego wartość jest pusta.
+
+Napisz zapytanie tak, aby:
+
+- **Kończyło się klauzulą `ORDER BY` po unikatowym kluczu.** NetSuite zwraca duży wynik partiami, a bez stabilnego sortowania partie mogą pomijać lub powtarzać wiersze. Sortuj po identyfikatorze wewnętrznym lub innym kluczu unikatowym dla wiersza. Zapytanie bez `ORDER BY` zatrzymuje się z prośbą o jego dodanie.
+- **Zwracało daty jako tekst** za pomocą `TO_CHAR(date, 'YYYY-MM-DD')`. W przeciwnym razie SuiteQL zwraca daty w formacie wyświetlania konta.
+- **Filtrowało jedną kolumnę daty między `{start_date}` a `{end_date}`**, gdy odczytujesz zakres dat. Filtruj po jednej kolumnie daty, aby każdy wiersz trafiał dokładnie do jednego okna. Jeśli ustawisz datę początkową lub końcową, zapytanie musi używać jej symbolu zastępczego.
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### Kolumny wyniku
+
+Nazwij każdą kolumnę zwracaną przez zapytanie i nadaj jej typ. Nazwy są dopasowywane do aliasów kolumn zapytania bez uwzględniania wielkości liter. Użyj przycisków dodawania i usuwania nad siatką, aby zarządzać listą.
+
+| Kolumna | Uwagi |
+|---|---|
+| Nazwa kolumny | Alias kolumny w zapytaniu. Każda kolumna wyniku wymaga nazwy. |
+| Typ | **Tekst** (domyślnie), **Liczba całkowita**, **Big Integer**, **Small Integer**, **Tiny Integer**, **Serial**, **Big Serial**, **Decimal**, **Liczbowy**, **Waluta**, **Double**, **Float**, **Boolean**, **Data**, **Znacznik czasu** lub **UUID**. |
+
+Dodaj co najmniej jedną kolumnę wyniku. Kolumny trafiają do tabeli docelowej pod nazwami podanymi tutaj. SuiteQL zwraca każdą wartość jako tekst; typ mówi PlaidCloud, jak ją zapisać. Kwoty określ jako **Waluta** lub **Decimal**, daty zwracane przez `TO_CHAR` jako **Data** lub **Znacznik czasu**, a flagi `T`/`F` jako **Boolean**.
+
+### Wartości zastępcze i stronicowanie
+
+| Pole | Domyślnie | Uwagi |
+|---|---|---|
+| Identyfikator spółki zależnej | puste | Wewnętrzny identyfikator spółki zależnej NetSuite używany dla `{subsidiary_id}`. |
+| Identyfikator okresu księgowania | puste | Wewnętrzny identyfikator okresu księgowania NetSuite używany dla `{posting_period_id}`. |
+| Data początkowa | puste | `YYYY-MM-DD`. Używana dla `{start_date}`. Nie może być późniejsza niż data końcowa. |
+| Data końcowa | puste | `YYYY-MM-DD`. Używana dla `{end_date}`. |
+| Dni okna | 90 | Gdy ustawiono zarówno datę początkową, jak i końcową, zakres jest odczytywany w oknach o tej liczbie dni, od 1 do 3650. Zapytanie jest uruchamiane raz dla każdego okna z jego datami, a wyniki są łączone. |
+| Żądania na minutę | 0 | Reguluje tempo wywołań kroku do NetSuite, aby zostawić zapas dla innych integracji na tym samym koncie. `0` oznacza brak limitu. |
+
+Każda z tych wartości może używać zmiennej.
+
+## Walidacja
+
+Kroku nie można zapisać, dopóki nie zostaną ustawione:
+
+- **Połączenie NetSuite** — „NetSuite connection is required."
+- **Tabela docelowa** — „Target table is required."
+- **Zapytanie SuiteQL** — „A SuiteQL query is required."
+- **Kolumny wyniku** — „Add at least one result column." oraz „Every result column needs a name."
+
+## Uwagi
+
+- NetSuite ogranicza pojedyncze zapytanie do około 100 000 wierszy. Zapytanie lub okno, które by to przekroczyło, zatrzymuje się z komunikatem o zawężeniu zakresu dat lub innych filtrów, zamiast ładować obcięty wynik. Zmniejsz **Dni okna**, aby każde okno mieściło się w limicie.
+- Krok w razie potrzeby odświeża token NetSuite i po przerwie ponawia ograniczone lub nieudane żądanie.
+- Tabela docelowa jest w całości zastępowana przy każdym uruchomieniu. Ogranicz klauzulę `WHERE` do potrzebnego wycinka, na przykład przesuwanego okna dat, zamiast za każdym razem odczytywać całą historię.
+- Zapytanie, które nie zwraca wierszy, kończy się ostrzeżeniem i zostawia tabelę docelową pustą, dzięki czemu kolejne kroki nadal się uruchamiają.
+- Komunikaty o błędach z NetSuite są wyświetlane z usuniętymi poświadczeniami, tokenami i kluczami, więc mogą zawierać mniej oryginalnej treści NetSuite.
+
+<Aside type="caution">
+W `transaction` i `transactionline` pole `amount` jest wyrażone w walucie danej transakcji. Suma dla spółek zależnych z różnymi walutami nie jest wartością skonsolidowaną. Wybieraj kwoty skonsolidowane lub przeliczone, gdy sumujesz dla wielu spółek zależnych.
+</Aside>
+
+## Powiązane
+
+- [Kroki NetSuite](/pl/reference/workflow-steps/netsuite/)
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/)
+- [Przykłady zapytań SuiteQL dla NetSuite](/pl/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/pl/guides/projects/data-foundation/)

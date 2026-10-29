@@ -1,0 +1,153 @@
+---
+title: MCPによるAlteryx移行のオーケストレーション
+description: MCP接続されたAIエージェントを使って、AlteryxポートフォリオのPlaidCloudへの移行を調整します。
+sidebar:
+  order: 38
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/orchestrate-alteryx-migrations-with-mcp.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudのMCPサーバーを使うと、AIエージェントが多数のAlteryxワークフローにまたがる移行を調整できます。エージェントは、Document内のファイルのステージングと整理、ワークフローパッケージのインベントリ作成、Alteryxコンバーターの呼び出し、生成されたワークフローの整理、検証ワークフローの実行、移行チーム向けの進捗の要約を支援できます。
+
+<Aside type="note">
+  MCPは、ポートフォリオ規模の調整に最適です。変換自体は引き続きPlaidCloudのインポーターが行い、エージェントは作業の計画、順序付け、実行、要約を支援します。
+</Aside>
+
+## MCPを使用するタイミング
+
+多数のワークフローを移行する場合や、繰り返し行う移行タスクをAIエージェントに支援してほしい場合は、MCPオーケストレーションを使用します。
+
+- Documentにステージングされた Alteryx ファイルのインベントリを作成する。
+- Documentツールを使って、移行ファイルをアップロード、コピー、移動、名前変更、整理する。
+- OneDrive、Google ドライブ、SharePoint、S3、Azure Blob、SFTPなど、接続済みの共有ストレージアカウントから作業する。
+- ワークフロー、アプリ、マクロを移行バッチにグループ化する。
+- 各 `.yxmd`、`.yxwz`、`.yxmc` ファイルをPlaidCloudに変換する。
+- ポートフォリオ全体で変換結果を追跡する。
+- 変換したワークフローまたは検証ワークフローを実行する。
+- レビュー用の移行サマリーを作成する。
+
+単一のワークフローであれば、多くの場合はインポートフォームが最も手早い方法です。ポートフォリオの場合、MCPを使うと、エージェントが同じPlaidCloudの機能を繰り返し調整するための構造化された手段が得られます。
+
+## エージェントが呼び出せるもの
+
+MCPツールカタログには、`alteryx_convert` という名前のAlteryx変換ツールが含まれています。このツールは、Documentに保存されたAlteryxファイルからPlaidCloudワークフローを作成します。
+
+変換の呼び出しには、次の内容が含まれます。
+
+- Alteryxファイルのソースとなるドキュメントアカウントとパス。
+- 変換先のPlaidCloudプロジェクト。
+- 変換アーティファクトの保存先となるドキュメントアカウントとパス。
+- 任意のワークフロー、ステップ、テーブルのプレフィックス。テーブルのプレフィックスのデフォルトはワークフロー自身の名前で、これにより1つのプロジェクト内の2つの変換が互いのテーブルを使わないようになります。接頭辞なしの名前にするには、空のプレフィックスを渡します。
+- ワークフローのタイプ。デフォルトは高度なワークフローです。
+
+エージェントは、これを通常のMCPのプロジェクト、ワークフロー、Document、ワークフロー実行、テーブルの各ツールと組み合わせて、移行全体を管理できます。
+
+## エージェントでファイルを準備する
+
+MCP接続されたエージェントは、変換の前後に必要なファイル準備作業を支援できます。
+
+- Document内の `.yxmd`、`.yxwz`、`.yxmc` ファイルを見つける。
+- 入力ファイル、マクロファイル、レポートアセット、空間データのサイドカー、期待される出力の候補を特定する。
+- 整理された移行用のフォルダー構造を作成する。
+- ファイルをその構造にコピー、移動、名前変更する。
+- 関連するワークフロー、マクロ、データ、空間、レポート、検証のファイルをまとめて保持する。
+- 変換前にパッケージを要約する。
+
+移行パッケージに多数のフォルダーが含まれる場合や、変換を始める前に再現可能なインベントリをエージェントに作成させたい場合に便利です。
+
+## アップロードせずに共有ストレージを使用する
+
+移行の前に、PlaidCloudが所有する新しいフォルダーへファイルをアップロードする必要はありません。PlaidCloud Documentは、Alteryx移行パッケージがすでに入っている共有ストレージに直接接続できます。
+
+一般的なオプションは次のとおりです。
+
+- [Google ドライブ](/ja/guides/documents/adding-accounts/add-google-drive-account/)
+- [OneDriveまたはSharePoint](/ja/guides/documents/adding-accounts/add-onedrive-account/)
+- [AWS S3](/ja/guides/documents/adding-accounts/add-aws-s3-account/)
+- [Azure Blob Storage](/ja/guides/documents/adding-accounts/add-azure-blob-storage-account/)
+- [SFTP](/ja/guides/documents/adding-accounts/add-sftp-account/)
+
+ドキュメントアカウントを接続すると、エージェントはそのドキュメントアカウントとパスから作業できます。これにより、移行がお客様の既存の共有ストレージの近くで行われ、別途アップロードする手順を省けます。
+
+## Documentでファイルをステージングまたは選択する
+
+エージェントに移行のオーケストレーションを依頼する前に、次のいずれかの方法を選択します。
+
+- 既存の共有ストレージの場所をドキュメントアカウントとして接続する。
+- ワークフローパッケージをドキュメントアカウントにアップロードする。
+- すでにDocumentにあるファイルを整理するようエージェントに依頼する。
+
+そのうえで、次の点を確認します。
+
+1. ワークフロー、アプリ、マクロ、入力ファイル、空間データのサイドカー、レポート、期待される出力がDocument経由で利用できる。
+2. 変換先のプロジェクトが選択されている。
+3. 変換されたワークフローの依存関係とアーティファクト用のDocumentパスが選択されている。
+4. エージェントに、関連するMCPのDocumentツールとワークフローツールを使用する権限がある。
+
+これで、エージェントはコンバーターを呼び出すときに、安定したDocumentパスを参照できます。
+
+## エージェントへのプロンプト例
+
+MCP接続されたエージェントには、次のようなプロンプトを使用します。
+
+```text
+In PlaidCloud, migrate the Alteryx workflows in the connected Document account
+"Migration Share" under /q4-alteryx-package into the project "Q4 Migration".
+
+First inventory the .yxmd, .yxwz, and .yxmc files. Organize the package by
+workflow, macro, input, spatial, report, and expected-output files. Group macros
+with the workflows that call them. Then convert the workflows as Advanced
+workflows using the Document output path /q4-alteryx-converted. Prefix created
+workflows with "Q4 - ". After each conversion, summarize the generated workflow,
+macros, readiness notes, and next validation step. Ask before making mutating calls.
+```
+
+プロジェクト名、ソースパス、変換先パス、プレフィックスは、移行バッチに合わせて調整してください。
+
+## 推奨されるオーケストレーションの流れ
+
+ポートフォリオの移行では、エージェントに次の流れに従うよう依頼してください。
+
+1. 移行パッケージを含むドキュメントアカウントを接続または選択する。
+2. ソースのDocumentフォルダーのインベントリを作成する。
+3. `.yxmd`、`.yxwz`、`.yxmc` ファイルを特定する。
+4. ファイルを、ワークフロー、マクロ、入力、空間、レポート、期待される出力のグループに整理する。
+5. 関連するワークフローとマクロをグループ化する。
+6. 変換先のプロジェクトとDocumentの出力パスを確認する。
+7. マクロとワークフローを高度なワークフローに変換する。
+8. 生成されたワークフローを開く、または説明を取得する。
+9. 構造の検証を実行する。
+10. 期待される出力がある場合は、出力パリティの検証を実行する。
+11. 変換されたワークフロー、生成されたマクロ、アーティファクト、検証状況を要約する。
+
+これにより、各変換にはPlaidCloud標準のインポーターを使いながら、移行チームはポートフォリオ全体について1つの進捗レポートを得られます。
+
+## 変更を伴う呼び出しを確認する
+
+ほとんどのMCPクライアントは、ツール呼び出しを実行する前に表示します。特に本番プロジェクトでは、変換やワークフロー実行の呼び出しを承認する前に確認してください。
+
+ステージング用の移行には、専用の移行プロジェクトとDocumentフォルダーを使用します。検証後に、変換されたワークフローを本番プロジェクトに昇格させます。
+
+## 結果を追跡する
+
+エージェントに、次の項目を含む移行テーブルを作成するよう依頼します。
+
+- ソースのAlteryxファイル。
+- 生成されたPlaidCloudワークフロー。
+- 生成されたマクロワークフロー。
+- 変換ステータス。
+- 検証レベル。
+- 出力のDocumentパス。
+- フォローアップのためのメモ。
+
+このサマリーは、プロジェクトの報告、引き継ぎ、本番稼働の準備状況のレビューに役立ちます。
+
+## 関連ガイド
+
+- [AIエージェント（MCP）](/ja/integrations/ai-coding-agents/)
+- [AIコーディングエージェントの利用開始](/ja/integrations/ai-coding-agents/getting-started/)
+- [ドキュメントアカウントの追加](/ja/guides/documents/adding-accounts/)
+- [Alteryxワークフローの移行](/ja/guides/workflows/migrate-alteryx-workflows/)
+- [Alteryxの依存関係のパッケージ化](/ja/guides/workflows/package-alteryx-dependencies/)
+- [変換されたAlteryxワークフローの検証](/ja/guides/workflows/validate-converted-alteryx-workflows/)

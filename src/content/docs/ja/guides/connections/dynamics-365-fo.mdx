@@ -1,0 +1,138 @@
+---
+title: Dynamics 365 Finance & Operationsに接続する
+description: Azure ADのクライアント資格情報でPlaidCloudをDynamics 365 Finance & Operationsに接続し、標準のインポートステップでODataエンティティまたはDMF一括抽出を取得して、仕訳エントリを非同期で転記します。
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudをDynamics 365 Finance & Operations（D365 F&O）のODataおよびData Management Framework（DMF）エンドポイントに接続すると、ODataを手書きすることなくマスターデータとトランザクションデータを取得でき、総勘定元帳の仕訳エントリを書き戻すこともできます。このガイドでは、接続、インポートステップ、転記ステップについて説明します。
+
+<Aside type="caution">
+インポートは必ず最初にサンドボックス環境に対して実行し、本番に転記する前に、すべての転記バッチで下記の**Validate Only**を実施してください。
+</Aside>
+
+## 前提条件
+
+Azure ADとD365 F&Oで次のものが必要です。
+
+- PlaidCloud用の**Entra ID（Azure AD）アプリ登録**と**クライアントシークレット**。D365 F&Oリソースに対するアプリケーションのアクセス許可（または管理者が同意した委任されたアクセス許可）が付与されている必要があります。
+- Azure ADの**テナントID**。
+- PlaidCloudが呼び出すD365 F&O環境の**環境URL**（例: `https://yourorg.operations.dynamics.com`）。
+- **リソース/スコープ**の値。通常は環境URL自体に`/.default`を付加したもので、アプリ登録がトークンを要求する対象です。
+
+<Aside type="note">
+この接続は、ユーザーとしてではなくアプリケーションとして認証します。Entra IDの**クライアント資格情報**フローで、PlaidCloudが他のMicrosoft REST接続で使用するOAuth2の仕組みと同じです。対話的なサインインはありません。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections**を開き、`New Connection`をクリックします。
+
+2. メニューから**Dynamics 365 Finance & Operations**を選択します。
+
+3. フィールドを入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例: `D365 F&O Prod`）。 |
+   | 環境URL | 環境のURL（例: `https://yourorg.operations.dynamics.com`）。 |
+   | クライアントID | Entraアプリ登録のアプリケーション（クライアント）ID。 |
+   | クライアントシークレット | アプリ登録のクライアントシークレット。 |
+   | テナントID | Azure ADのテナントID。 |
+   | リソース/スコープ | 要求するOAuth2スコープ。通常は環境URLに`/.default`を付加したものです。 |
+
+4. `Create`をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. ワークフローに**Import D365 F&O Entity**ステップを追加します。
+
+2. **D365 F&O接続**に作成した接続を、**エンティティタイプ**に`main_accounts`を、**ターゲットテーブル**に作業用テーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内で1つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが入っていれば、テナント、認証情報、環境URLがすべて正しいことを確認できます。エラーが出た場合は、問題が示されます。クライアントシークレットの誤り、アクセス許可の付与漏れ、環境URLの誤りなどです。
+
+## データをインポートする
+
+<Steps>
+
+1. **Import D365 F&O Entity**ステップを追加し、**D365 F&O接続**と**ターゲットテーブル**を設定します。
+
+2. **エンティティタイプ**に取得するレコードを設定し、**同期モード**は、通常のサイズの取得なら`odata`、大きなエンティティの一括抽出なら`dmf`に設定します。
+
+3. 取得を絞り込むには**フィルター**を追加します。日付、勘定科目、ディメンションの範囲は、リクエストのOData `$filter`に変換され、エンティティごとに、D365 F&Oがサーバー側で実際にフィルターできるフィールドに限られます。
+
+4. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+### エンティティとフィルター
+
+| エンティティタイプ | 取得する内容 | フィルター可能なフィールド |
+|---|---|---|
+| `main_accounts` | 勘定科目表 | 勘定科目の範囲、ディメンション |
+| `currencies` | 通貨マスター | — |
+| `customers` | 顧客マスター | 勘定科目の範囲 |
+| `vendors` | 仕入先マスター | 勘定科目の範囲 |
+| `released_products` | リリース済み製品マスター | — |
+| `ledger_journal_headers` | 未転記および転記済みの仕訳ヘッダー | 日付の範囲、勘定科目の範囲、ディメンション |
+
+<Aside type="note">
+**同期モード: ODataとDMF。**`odata`は、D365 F&O標準のODataエンティティエンドポイントを直接呼び出します。最も単純な方法で、日常的な取得に適しています。`dmf`は、非同期のData Management Frameworkエクスポートジョブを送信し、完了後に生成されたパッケージをダウンロードします。通常のODataのページングでは遅くなったり切り捨てられたりする、大きなエンティティの一括抽出（たとえば`ledger_journal_headers`の全履歴）に向いた方法です。
+</Aside>
+
+## 仕訳エントリを転記する
+
+**D365 F&O: Post Journal Entry**ステップは、D365 F&Oの非同期カスタムサービスの仕訳転記アクションを使って、PlaidCloudの共通ERP書き込みパイプラインを通じて総勘定元帳の仕訳エントリを転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル**（仕訳エントリごとに1行）を作成します。`journal_id`（エントリの識別子）、`journal_name`（転記先のD365 F&O仕訳帳名）、`posting_date`、`description`を含めます。
+
+2. **明細テーブル**（`journal_id`ごとに1行以上）を作成します。`account`、`debit`、`credit`と、元帳で必要なディメンション列を含めます。
+
+3. **D365 F&O: Post Journal Entry**ステップを追加し、**D365 F&O接続**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル**を設定します。
+
+4. **Validate Only**をオンのままステップを実行します。PlaidCloudは、台帳の請求を行わず、何も転記せずに、すべてのエントリを作成してチェックします。
+
+5. 結果テーブル（エントリごとに1行: `journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）を確認します。`error`行があれば修正して、再検証します。
+
+6. **Validate Only**をオフにして再度実行し、実際に転記します。バッチが最初に失敗したエントリで完全に停止してよい場合を除き、**Continue On Error**はオンのままにしてください。
+
+</Steps>
+
+### 転記の仕組み
+
+PlaidCloudは、各仕訳エントリをD365 F&Oの非同期カスタムサービスの転記アクションに送信し、サービスがエントリの最終状態を報告するまでポーリングします。エントリは、その最終状態が**確認された**場合にのみ`posted`として報告されます。受け付けられたものの最終状態が確定しないエントリは、転記済みとして記録されず隔離されたままになるため、停止した送信が黙って成功として扱われることはありません。PlaidCloud独自の台帳請求によって、再試行または再実行されたバッチで同じエントリが二重に転記されることを防ぎます。
+
+### 転記済みエントリを訂正する
+
+このステップが、転記済みのエントリを削除したり書き換えたりすることはありません。訂正するには、元のエントリを直接編集するのではなく、元のエントリと借方と貸方を入れ替えた新しいエントリ（**転記済みの反対仕訳エントリ**）を転記します。これにより、D365 F&O自体の監査証跡が保たれ、アプリケーション上で直接訂正する場合のやり方とも一致します。
+
+### 機能の制限 — 本番に転記する前にお読みください
+
+<Aside type="caution">
+- **DMF同期モードには抽出の待ち時間があります。**`dmf`による取得は非同期のエクスポートジョブを待つため、同じサイズの`odata`による取得よりもかなり長くかかります。小規模で待ち時間に敏感な読み取りには使用しないでください。
+- **ディメンションのフィルターは、元帳のディメンション設定に依存します。** 勘定科目構造に含まれていない財務ディメンションは、サーバー側でフィルターできません。取得後にワークフロー内で絞り込んでください。
+- **このコネクタは、汎用の[Dynamics RESTコネクタ](/ja/reference/connectors/rest/dynamics/)とは別のものです。** そちらは他のDynamics 365アプリケーション（たとえばSales/CRM）を対象としています。Finance & Operationsに接続しない場合にのみ使用してください。
+</Aside>
+
+## 関連項目
+
+- [Dynamics 365 F&O RESTコネクタ](/ja/reference/connectors/rest/dynamics-365-fo/) — フィールドリファレンス。
+- [Import D365 F&O Entityステップ](/ja/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entryステップ](/ja/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/) — D365 F&Oへのすべての転記試行とその最新の状態を記録した常設の履歴。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

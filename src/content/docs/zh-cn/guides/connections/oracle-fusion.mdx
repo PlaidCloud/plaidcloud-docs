@@ -1,0 +1,131 @@
+---
+title: 连接到 Oracle Fusion
+description: 使用 OAuth2 凭据将 PlaidCloud 连接到 Oracle Fusion Cloud，通过 OData 或 BIP 提取拉取总账余额和日记账批次，然后通过 FBDI 和 GL Interface 过账。
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+通过 OData 和 BI Publisher（BIP）报表端点将 PlaidCloud 连接到 Oracle Fusion Cloud ERP，无需手写 OData 即可拉取总账余额和日记账批次，并通过 Oracle 的基于文件的数据导入（FBDI）路径将日记账分录过账回去。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请务必先在测试环境中运行每次导入，并在实时过账之前，对每个过账批次按照下文的**仅验证**流程操作。
+</Aside>
+
+## 前提条件
+
+在 Oracle Fusion Cloud 中，您需要：
+
+- 一个供 PlaidCloud 使用的专用 **API 用户**，其角色可访问您将要读取的实体（总账查询）以及您将通过其过账的 FBDI/GL Interface 功能。
+- 您的 Fusion Cloud **实例 URL**（例如 `https://yourorg.fa.us2.oraclecloud.com`）。
+- **OAuth2 客户端凭据**（客户端 ID 和密钥），或 Fusion Cloud 安全设置为集成用户签发的基本身份验证 API 凭据——取决于您的租户是按哪种方式配置的。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并点击 `New Connection`。
+
+2. 从菜单中选择 **Oracle Fusion**。
+
+3. 填写字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `Fusion Prod`。 |
+   | 实例 URL | 您的 Fusion Cloud 实例 URL。 |
+   | 客户端 ID | API 用户的 OAuth2 客户端 ID（基本身份验证则为用户名）。 |
+   | 客户端密钥 | API 用户的 OAuth2 客户端密钥（基本身份验证则为密码）。 |
+
+4. 点击 `Create`。
+
+</Steps>
+
+## 对连接进行冒烟测试
+
+<Steps>
+
+1. 向工作流中添加一个 **Import Fusion Entity** 步骤。
+
+2. 将 **Fusion 连接**设置为您的连接，**实体类型**设置为 `gl_balances`，**目标表**设置为一个临时表。
+
+3. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据即可确认凭据和实例 URL 正确。出错时，消息会指明问题——凭据错误、实例 URL 错误，或角色缺少该实体的读取权限。
+
+## 导入数据
+
+两个导入步骤适用于不同的拉取规模：
+
+<Steps>
+
+1. 对于常规的有界拉取，请添加 **Import Fusion Entity** 步骤——它会直接调用 Oracle Fusion 的 OData 或 BIP 端点。
+
+2. 对于大型提取，请改为添加 **Import Fusion Bulk Extract** 步骤——它会提交 FBDI/BIP 提取作业，并在作业完成后下载生成的文件。
+
+3. 将**实体类型**设置为 `gl_balances` 或 `journal_batches`。
+
+4. 添加**筛选器**以限定拉取范围——日期和会计期间范围（`ge`/`le`），以及余额/金额字段上的数值范围，且按实体仅限于 Oracle Fusion 实际可在服务器端筛选的字段。
+
+5. 运行该步骤并检查目标表。
+
+</Steps>
+
+### 实体和筛选器
+
+| 实体类型 | 拉取内容 | 可筛选的字段 |
+|---|---|---|
+| `gl_balances` | 总账科目余额 | 会计期间范围、科目范围、余额金额范围 |
+| `journal_batches` | 日记账批次表头和状态 | 日期范围、会计期间范围 |
+
+<Aside type="note">
+`gl_balances` 和 `journal_batches` 既接受**范围**筛选器（对日期、期间或数值字段使用 `ge`/`le`），也接受对分类字段（如账簿或币种）的相等筛选器。只有一个边界的范围筛选器，在另一侧是开放的。
+</Aside>
+
+## 过账日记账分录
+
+**Oracle Fusion：过账日记账分录**步骤通过 PlaidCloud 共享的 ERP 写入管道，使用 Oracle 的 FBDI GL Interface 加载路径过账总账日记账分录。
+
+<Steps>
+
+1. 构建一个**表头表**——每个日记账分录一行——包含 `batch_id`（您的批次标识符）、`ledger_id`、`journal_source`、`journal_category`、`accounting_date` 和 `description`。
+
+2. 构建一个**行表**——每个 `batch_id` 对应一行或多行——包含 `account_combination`（或其段列）、`entered_debit`、`entered_credit` 和 `currency_code`。
+
+3. 添加一个 **Oracle Fusion：过账日记账分录**步骤，设置 **Fusion 连接**、**标题表**、**行表**和**结果表**。
+
+4. 保持勾选**仅验证**并运行该步骤——PlaidCloud 会构建并检查每个批次，不占用账本声明，也不过账任何内容。
+
+5. 查看结果表（每个批次一行：`batch_id`、`natural_key`、`confirmation_id`、`status`、`message`）。修复所有 `error` 行并重新验证。
+
+6. 取消勾选**仅验证**并再次运行，以真正过账。除非希望运行在第一个失败的批次处直接停止，否则请保持勾选**出错时继续**。
+
+</Steps>
+
+### 过账的工作方式
+
+PlaidCloud 将每个日记账批次作为 FBDI 文件写入 Oracle 的 GL_INTERFACE 暂存表，然后提交并异步轮询 **Journal Import Launcher** Enterprise Scheduler Service（ESS）作业，直到其报告终止状态。只有在该终止状态得到**确认**后，分录才会被报告为 `posted`——已进入接口表但其导入作业始终未能完成的批次，会保持隔离状态，而不会被记录为已过账，因此卡住的 ESS 作业绝不会悄悄地被当作成功。PlaidCloud 自身的账本声明可防止在重试或重新运行批次时重复加载同一批次。
+
+### 更正已过账的分录
+
+该步骤绝不会删除或重写已过账的日记账批次。要更正某个批次，请针对原批次过账一个借贷方互换的新批次——即**已过账的冲销分录**——而不是就地编辑原批次。这样可以保留 Oracle Fusion 自身的审计追踪，也与直接在应用程序中进行更正的方式一致。
+
+### 功能限制——实时过账前请阅读
+
+<Aside type="caution">
+- **ESS 作业延迟。** Journal Import Launcher 作为计划作业运行，而不是同步调用——预计过账运行所需时间会明显长于直接 API 写入，请勿将此步骤用于对延迟敏感的单条分录过账。
+- **批量提取延迟。** `import_fusion_bulk_extract` 会等待 FBDI/BIP 导出作业——请仅将其用于对 `import_fusion_entity` 的直接 OData/BIP 路径而言过大的拉取。
+</Aside>
+
+## 相关内容
+
+- [Oracle Fusion 连接器](/zh-cn/reference/connectors/erp/oracle-fusion/) — 字段参考。
+- [Import Fusion Entity](/zh-cn/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/zh-cn/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion：过账日记账分录](/zh-cn/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [查看 ERP 过账历史记录](/zh-cn/guides/connections/erp-post-history/) — 每次 Oracle Fusion 过账尝试及其实时状态的常备记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

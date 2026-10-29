@@ -1,0 +1,81 @@
+---
+title: Export Templatedステップ
+description: プロジェクトテーブルをドキュメントテンプレートに通してレンダリングし、生のデータダンプではなく、書式設定された出力ファイルを生成します。
+sidebar:
+  order: 17
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/export/export-templated.mdx
+---
+
+import SnippetCommonDataMapper from '@snippets/ja/common-data-mapper.mdx';
+import SnippetCommonDataFilter from '@snippets/ja/common-data-filter.mdx';
+
+## 説明
+
+プロジェクトテーブルをテンプレートに通してレンダリングし、ほかのエクスポートステップが書き込む生の列ダンプではなく、構造化されたドキュメントを生成します。受け取り側のシステムが、テーブルではなく、特定のXML形式やその他のテキスト形式を必要とする場合に使用します。
+
+## 固有の設定項目
+
+### ソーステンプレート
+
+出力のレンダリング元となるJinjaテンプレートです。[テンプレートで使用できるもの](#テンプレートで使用できるもの)を参照してください。
+
+### ターゲット出力
+
+レンダリング結果を書き込むドキュメントアカウント、フォルダー、ファイル名です。ファイルの内容はテンプレートによって決まります。拡張子のないファイル名には `.xml` が付きます。
+
+**テーブルデータにPandas DataFrameを使用**は、各ソースの行がテンプレートに渡される方法を変更します。[テーブルとしてのソース行](#テーブルとしてのソース行)を参照してください。
+
+### ソーステーブル
+
+テーブルを明示的に指定するか、パスと検索ルール（完全一致、前方一致、後方一致、部分一致、glob）で照合します。
+
+## テンプレートで使用できるもの
+
+テンプレートはサンドボックス内でレンダリングされます。ステップが渡すデータのみを読み取り、それ以外は読み取れません。
+
+- **各ソースは、その名前（Name）で参照します。** 一覧に追加した各ソーステーブルは、指定した**名前**でテンプレートから利用できます。そのため、`invoices` のように、変数として使える名前を付けてください。
+- **ワークフローの変数**は `variable` として利用できます。たとえば `{{ variable.region }}` です。
+
+```jinja
+<Invoices>
+{% for row in invoices %}
+  <Invoice id="{{ row.invoice_id }}" amount="{{ row.amount }}" />
+{% endfor %}
+</Invoices>
+```
+
+### リストとしてのソース行
+
+**テーブルデータにPandas DataFrameを使用**がオフの場合、ソースは行の読み取り専用リストになります。ループで処理するか、`|length`、`keys()`、`first()`、`one()`、`all()`、`scalar()`、`scalars()`、`mappings()`、`fetchmany(n)`、`columns('a', 'b')` を使用します。行の値は `row.amount`、`row['amount']`、`row[0]` として読み取ります。`row._mapping`、`row._asdict()`、`row._fields` も使用できます。`columns('a', 'b')` から得られる行では、`row.amount` または `row[0]` を使用し、`row['amount']` は使用できません。
+
+### テーブルとしてのソース行
+
+**テーブルデータにPandas DataFrameを使用**がオンの場合、ソースは読み取り専用のテーブルになります。ループで処理すると、各行が辞書として得られるため、`row.amount` と `row['amount']` の両方が使用できます。次のものも使用できます。
+
+- `columns`、`empty`、`shape`、`values`、`index`
+- `head(n)` と `tail(n)`
+- `itertuples()`。行の位置を `Index` として先頭に置くため、`r[1]` が最初の列になります。`itertuples(index=False)` では、これが省かれます
+- `iterrows()`。行の位置と行を返します
+- `invoices['amount']`。1つの列の値で、`sum()`、`min()`、`max()`、`mean()`、`unique()`、`tolist()` と併用できます。`sum`、`min`、`max`、`mean` はNULLをスキップします
+
+`loc` や `groupby` など、そのほかのpandasのメソッドは使用できません。データの整形は前のステップで行い、その結果をエクスポートしてください。
+
+### テンプレートでできないこと
+
+- 名前が `to_` で始まるメソッドを、任意の値に対して呼び出すこと。`to_csv` や `to_json` のほか、`to_pydatetime` のような無害なものも含まれます。
+- 名前がアンダースコアで始まる属性を読み取ること。ただし、行の `_mapping`、`_asdict`、`_fields` は除きます。
+- ファイルを書き込む、または開くこと。
+
+`to_` の呼び出しやファイル操作は、ステップを失敗させます。この3つ以外のアンダースコア属性は、何も表示されません。
+
+## 共通の設定項目
+
+<SnippetCommonDataMapper checksSourceTable />
+
+<SnippetCommonDataFilter />
+
+## 関連項目
+
+- [エクスポートステップ](/ja/reference/workflow-steps/export/)
+- [Export to XMLステップ](/ja/reference/workflow-steps/export/export-to-xml/) — テンプレートを使用しないXML向けです
+- [レポートステップ](/ja/reference/workflow-steps/reports/) — テンプレートから作成するPDFレポート向けです

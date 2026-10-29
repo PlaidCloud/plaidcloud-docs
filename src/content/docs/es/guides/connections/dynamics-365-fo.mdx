@@ -1,0 +1,138 @@
+---
+title: Conectar con Dynamics 365 Finance & Operations
+description: Conecte PlaidCloud con Dynamics 365 Finance & Operations mediante credenciales de cliente de Azure AD, extraiga entidades OData o extracciones masivas de DMF con el paso predefinido de importación y después contabilice asientos de diario de forma asíncrona.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud con Dynamics 365 Finance & Operations (D365 F&O) a través de sus puntos de conexión OData y del marco de administración de datos (DMF, Data Management Framework) para extraer datos maestros y transaccionales sin tener que escribir OData a mano, y para contabilizar de vuelta asientos del diario general. Esta guía abarca la conexión, el paso de importación y el paso de contabilización.
+
+<Aside type="caution">
+Ejecute siempre primero cada importación en un entorno de pruebas (sandbox) y, antes de contabilizar en producción, repase **Validate Only**, más abajo, con cada lote de contabilización.
+</Aside>
+
+## Requisitos previos
+
+Necesita, en Azure AD y D365 F&O:
+
+- Un **registro de aplicación de Entra ID (Azure AD)** para PlaidCloud con un **secreto de cliente**, al que se haya concedido un permiso de aplicación (o un permiso delegado con consentimiento del administrador) sobre el recurso de D365 F&O.
+- El **ID de inquilino** de Azure AD.
+- La **URL del entorno** de D365 F&O al que debe llamar PlaidCloud (por ejemplo, `https://yourorg.operations.dynamics.com`).
+- Un valor de **recurso o ámbito** (normalmente la propia URL del entorno con `/.default` al final) para el que el registro de aplicación solicita un token.
+
+<Aside type="note">
+La conexión se autentica como una aplicación, no como un usuario: mediante el flujo de **credenciales de cliente** de Entra ID, el mismo mecanismo de OAuth2 que PlaidCloud usa con otras conexiones REST de Microsoft. No hay inicio de sesión interactivo.
+</Aside>
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **Dynamics 365 Finance & Operations** en el menú.
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, p. ej., `D365 F&O Prod`. |
+   | URL del entorno | La URL de su entorno, p. ej., `https://yourorg.operations.dynamics.com`. |
+   | ID de cliente | El ID de aplicación (cliente) del registro de aplicación de Entra. |
+   | Secreto de cliente | El secreto de cliente del registro de aplicación. |
+   | ID de inquilino | El ID de inquilino de su Azure AD. |
+   | Recurso/Ámbito | El ámbito de OAuth2 que se solicita, normalmente la URL del entorno más `/.default`. |
+
+4. Haga clic en `Create`.
+
+</Steps>
+
+## Probar la conexión rápidamente
+
+<Steps>
+
+1. Agregue un paso **Import D365 F&O Entity** a un flujo de trabajo.
+
+2. Establezca **D365 F&O Connection** con su conexión, **Tipo de entidad** en `main_accounts` y **Tabla de destino** con una tabla de prueba.
+
+3. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Una tabla de destino con datos confirma que el inquilino, las credenciales y la URL del entorno son correctos. Un error indica el problema: un secreto de cliente incorrecto, un permiso no concedido o una URL de entorno equivocada.
+
+## Importar datos
+
+<Steps>
+
+1. Agregue un paso **Import D365 F&O Entity** y establezca **D365 F&O Connection** y **Tabla de destino**.
+
+2. Establezca **Tipo de entidad** en el registro que desea y **Modo de sincronización** en `odata` para una extracción de tamaño normal o en `dmf` para una extracción masiva de una entidad grande.
+
+3. Agregue **Filtros** para acotar la extracción: los rangos de fechas, cuentas y dimensiones se traducen al `$filter` de OData de la solicitud, restringidos en cada entidad a los campos por los que D365 F&O realmente puede filtrar en el servidor.
+
+4. Ejecute el paso y revise la tabla de destino.
+
+</Steps>
+
+### Entidades y filtros
+
+| Tipo de entidad | Qué extrae | Campos filtrables |
+|---|---|---|
+| `main_accounts` | El plan de cuentas | rango de cuentas, dimensión |
+| `currencies` | Datos maestros de monedas | — |
+| `customers` | Datos maestros de clientes | rango de cuentas |
+| `vendors` | Datos maestros de proveedores | rango de cuentas |
+| `released_products` | Datos maestros de productos liberados | — |
+| `ledger_journal_headers` | Encabezados de diario contabilizados y sin contabilizar | rango de fechas, rango de cuentas, dimensión |
+
+<Aside type="note">
+**Modo de sincronización: OData frente a DMF.** `odata` llama directamente a los puntos de conexión de entidades OData estándar de D365 F&O: la ruta más sencilla, adecuada para extracciones rutinarias. `dmf` envía un trabajo de exportación asíncrono del marco de administración de datos y descarga el paquete resultante una vez completado: la ruta para una extracción masiva de una entidad grande (por ejemplo, todo el historial de `ledger_journal_headers`) que sería lenta o quedaría truncada con la paginación OData simple.
+</Aside>
+
+## Contabilizar asientos de diario
+
+El paso **D365 F&O: Post Journal Entry** contabiliza asientos de diario del libro mayor a través de la canalización de escritura de ERP compartida de PlaidCloud, mediante la acción asíncrona de contabilización de diarios del servicio personalizado de D365 F&O.
+
+<Steps>
+
+1. Cree una **tabla de encabezados** (una fila por asiento de diario) con `journal_id` (el identificador de su asiento), `journal_name` (el nombre del diario de D365 F&O en el que contabilizar), `posting_date` y `description`.
+
+2. Cree una **tabla de líneas** (una o más filas por `journal_id`) con `account`, `debit`, `credit` y las columnas de dimensión que requiera su libro mayor.
+
+3. Agregue un paso **D365 F&O: Post Journal Entry**, y establezca **D365 F&O Connection**, **Tabla de encabezados**, **Tabla de líneas** y una **Tabla de resultados**.
+
+4. Deje marcada la opción **Validate Only** y ejecute el paso: PlaidCloud construye y comprueba cada asiento sin reservar nada en el libro y sin contabilizar nada.
+
+5. Revise la tabla de resultados (una fila por asiento: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija cualquier fila `error` y vuelva a validar.
+
+6. Desmarque **Validate Only** y ejecute de nuevo para contabilizar de verdad. Deje marcada la opción **Continue On Error** a menos que quiera que un lote se detenga en seco con el primer asiento fallido.
+
+</Steps>
+
+### Cómo funciona la contabilización
+
+PlaidCloud envía cada asiento de diario a la acción asíncrona de contabilización del servicio personalizado de D365 F&O y luego consulta periódicamente hasta que el servicio informa del estado terminal del asiento. Un asiento solo se informa como `posted` cuando ese estado terminal está **confirmado**: un asiento que se acepta, pero cuyo estado terminal nunca se resuelve, queda en cuarentena en lugar de registrarse como contabilizado, de modo que un envío atascado nunca pasa en silencio por un éxito. La propia reserva en el libro de PlaidCloud protege contra la contabilización del mismo asiento dos veces en un lote reintentado o vuelto a ejecutar.
+
+### Corregir un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un asiento contabilizado. Para corregir uno, contabilice un asiento nuevo con los débitos y créditos invertidos respecto al original (un **asiento de reversión contabilizado**) en lugar de editar el original. Esto conserva el propio rastro de auditoría de D365 F&O y coincide con la forma de hacer correcciones directamente en la aplicación.
+
+### Límites de capacidad: léalos antes de contabilizar en producción
+
+<Aside type="caution">
+- **El modo de sincronización DMF tiene latencia de extracción.** Una extracción `dmf` espera a un trabajo de exportación asíncrono: cuente con que tarde bastante más que una extracción `odata` del mismo tamaño, y no la use para una lectura pequeña y sensible a la latencia.
+- **El filtrado por dimensión depende de la configuración de dimensiones de su libro mayor.** Una dimensión financiera que no forma parte de su estructura de cuentas no se puede filtrar en el servidor; acótela en su flujo de trabajo después de la extracción.
+- **Este conector es distinto del [conector REST de Dynamics](/es/reference/connectors/rest/dynamics/) genérico.** Ese conector está dirigido a otras aplicaciones de Dynamics 365 (por ejemplo, Sales/CRM); úselo solo si no se conecta a Finance & Operations.
+</Aside>
+
+## Temas relacionados
+
+- [Conector REST de Dynamics 365 F&O](/es/reference/connectors/rest/dynamics-365-fo/): referencia de campos.
+- [Import D365 F&O Entity](/es/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/es/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/): el registro permanente de cada intento de contabilización en D365 F&O y su estado actual.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

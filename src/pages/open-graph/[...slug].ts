@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Resvg } from '@resvg/resvg-js';
 import sharp from 'sharp';
-import { hasGeneratedOG } from '../../lib/og-image';
+import { englishId, hasGeneratedOG } from '../../lib/og-image';
 
 // Anchor to the project root (cwd during `astro build`) rather than
 // `import.meta.url` — the endpoint runs from a Vite-bundled chunk whose
@@ -139,7 +139,7 @@ interface CardProps {
 export async function getStaticPaths() {
 	const docs = await getCollection('docs');
 	const paths = docs
-		.filter((entry) => hasGeneratedOG(entry.id || 'index'))
+		.filter((entry) => englishId(entry.id) === entry.id && hasGeneratedOG(entry.id || 'index'))
 		.map((entry) => ({
 			// The `.png` extension is part of the slug so the emitted file is
 			// `<slug>.png` — this keeps a page card (e.g. `administration.png`)

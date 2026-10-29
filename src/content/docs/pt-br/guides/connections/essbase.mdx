@@ -1,0 +1,83 @@
+---
+title: Conectar ao Oracle Essbase
+description: Conecte o PlaidCloud ao Oracle Essbase 21c ou ao Oracle Analytics Cloud e execute uma consulta MDX ao vivo em um cubo ou carregue o outline de uma dimensão em uma dimensão do PlaidCloud — direto na nuvem, com rótulos de membros determinísticos e um limite rígido para o tamanho da extração.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud ao Oracle **Essbase** (21c ou posterior, ou Oracle Analytics Cloud) para que um fluxo de trabalho possa executar uma consulta MDX ao vivo em um cubo ou carregar o outline de uma dimensão como uma dimensão do PlaidCloud. A conexão alcança a API REST do próprio Essbase **diretamente na nuvem** — não há caminho de agente local para essas etapas. Este guia aborda a conexão, a execução de uma consulta, as opções que controlam limites de linhas e rotulagem e o carregamento de uma hierarquia de dimensão.
+
+<Aside type="note">
+Este conector é somente leitura: não há gravação de volta no Essbase.
+</Aside>
+
+## Pré-requisitos
+
+Você precisa, do seu administrador do Essbase:
+
+- A **origem do servidor Essbase**, por exemplo `https://your-host:9001` — sem o caminho `/essbase/...` no final.
+- Uma **conta de serviço** — nome de usuário e senha — com acesso de leitura aos aplicativos e cubos que seus fluxos de trabalho vão consultar.
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Oracle Essbase** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `Essbase Prod`. |
+   | URL base | A origem do servidor Essbase, por exemplo `https://your-host:9001`. |
+   | Aplicativo padrão | Opcional. Pré-seleciona este aplicativo nos formulários das etapas. |
+   | Nome de usuário | O nome de usuário da conta de serviço. |
+   | Senha | A senha da conta de serviço. |
+   | Verify SSL | Ativado por padrão. Desative somente para um host com certificado autoassinado ou de outra forma não verificável. |
+
+4. Clique em `Test Connection`. Um teste bem-sucedido alcança o servidor Essbase, lista os aplicativos que a conta de serviço consegue ver e informa quantos encontrou — confirmando tanto a URL base quanto as credenciais antes de você construir uma consulta.
+
+5. Clique em `Create`.
+
+</Steps>
+
+## Executar uma consulta
+
+<Steps>
+
+1. Adicione uma etapa **Essbase: Consultar cubo** a um fluxo de trabalho (ela fica em **Oracle Essbase** no menu de etapas).
+
+2. Em **Configuração**, defina **Conexão**, **Aplicativo**, **Cube (Database)** e uma **Tabela de destino**.
+
+3. Construa o **MDX**:
+
+   - **Seleção guiada de membros** — navegue pelas dimensões e membros do cubo e escolha o que vai nas colunas e nas linhas; a etapa monta o MDX para você.
+   - **MDX bruto** — escreva ou cole diretamente um `SELECT` MDX, para qualquer coisa que o seletor guiado não cubra, como membros calculados ou operadores de conjunto.
+
+4. Execute a etapa. A grade retornada chega como a tabela de destino, com colunas derivadas da própria grade — não há esquema a declarar antecipadamente.
+
+</Steps>
+
+## Opções
+
+- **Os rótulos de membros são determinísticos.** Os rótulos de coluna dos membros vêm da tabela de aliases configurada na conexão, aplicada de forma consistente a cada execução — e não do padrão por sessão do próprio Essbase, que poderia mostrar textos de rótulo diferentes dependendo de quem estava conectado quando a consulta foi executada.
+- **O Limite de linhas tem padrão de 250.000 e pode ser aumentado.** Um Limite de linhas não definido recai sobre um teto de 250.000 linhas, não sobre "ilimitado" — uma consulta que retorna mais linhas que o limite efetivo é recusada, informando a contagem e o teto, em vez de ser executada sem limite ou truncar a grade silenciosamente. Restrinja a consulta, ou aumente o Limite de linhas explicitamente, para passar uma extração maior legítima.
+- **A supressão de zeros é opcional e causa perda de dados.** Suprimir células com valor zero é um filtro que você ativa deliberadamente, e é destrutivo: ele descarta células que contêm um `0` genuinamente lançado, o que é diferente do marcador `#Missing` do próprio Essbase para uma célula sem nenhum dado. Em um cubo de planejamento, um zero lançado é significativo — alguém o informou —, então suprimir zeros pode descartar dados reais, e não apenas a ausência de dados. Deixe desativada, a menos que você queira especificamente excluir zeros do resultado.
+
+## Carregar uma hierarquia de dimensão
+
+A etapa [Essbase: Ler dimensão](/pt-br/reference/workflow-steps/essbase/essbase-dimension-read/) lê o outline de uma dimensão do Essbase e o carrega na hierarquia principal de uma dimensão do PlaidCloud — direto na nuvem, pela mesma conexão. É uma etapa separada de Essbase: Consultar cubo: ela lê a estrutura do outline, não as células do cubo.
+
+A etapa recusa, pelo nome, qualquer coisa que não consiga representar, em vez de carregá-la de forma errada: membros compartilhados, membros somente de rótulo, membros Dynamic Calc, dimensões de atributo, um operador de consolidação diferente de `+`/`-` (`*`, `/` e `%` do Essbase não têm equivalente no PlaidCloud) e um outline com mais de 5.000 membros no total. Consulte a [referência da etapa](/pt-br/reference/workflow-steps/essbase/essbase-dimension-read/#o-que-esta-etapa-não-consegue-representar) para a lista completa e o significado de cada recusa.
+
+## Relacionado
+
+- [Essbase: Consultar cubo](/pt-br/reference/workflow-steps/essbase/essbase-query/) — referência de campos da etapa.
+- [Essbase: Ler dimensão](/pt-br/reference/workflow-steps/essbase/essbase-dimension-read/) — carregar o outline de uma dimensão como uma dimensão do PlaidCloud.
+- [Conector Oracle Essbase](/pt-br/reference/connectors/erp/oracle-essbase/) — referência de campos da conexão.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

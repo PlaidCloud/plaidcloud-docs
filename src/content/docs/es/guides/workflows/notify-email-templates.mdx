@@ -1,0 +1,119 @@
+---
+title: Enviar notificaciones por correo electrónico HTML con plantillas
+description: Genere un correo electrónico HTML enriquecido a partir de una plantilla Jinja y una tabla del flujo de trabajo con el paso Notify Via Email.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+El paso [Notify Via Email](/es/reference/workflow-steps/notifications/notify-via-email/) redacta su correo electrónico como un informe HTML enriquecido a partir de una **plantilla Jinja** que se procesa sobre una o más tablas de su flujo de trabajo. Cada tabla se agrega al paso como un **marco** con nombre, y la plantilla procesa esos marcos en un único correo. El paso se abre directamente en el editor de Jinja, que es su única superficie de edición: no hay un cuadro de cuerpo en texto sin formato ni un modo al que cambiar. Esta guía explica el editor y su barra de herramientas de formato, los marcos que agrega, los datos disponibles dentro de una plantilla, el asistente `render_table` y las restricciones propias del envío por correo electrónico.
+
+## El editor de Jinja
+
+Abra un paso **Notify Via Email** y se abrirá en el editor de Jinja. Agregue uno o más **marcos** (consulte más abajo), escriba la plantilla en el cuerpo y observe cómo se actualiza la **Vista previa en vivo** a la derecha mientras escribe. **Enviarme una prueba** entrega el correo procesado a su propia dirección para que pueda comprobarlo antes de programar el flujo de trabajo. Los pasos nuevos usan solo Jinja: no hay un cuerpo en texto sin formato que completar ni un interruptor entre texto enriquecido y texto sin formato.
+
+<Aside type="note">El editor tiene su propio motor de procesamiento aislado. Su sintaxis es similar a la de [Export Templated](/es/reference/workflow-steps/export/export-templated/) (Jinja, marcos con nombre y un asistente `render_table`), pero los dos motores **no son intercambiables**. Una plantilla escrita para uno no funcionará en el otro.</Aside>
+
+## La barra de herramientas de formato
+
+El editor de Jinja incluye una barra de herramientas para dar forma a la plantilla sin escribir a mano el código repetitivo:
+
+- **Embellecer** vuelve a aplicar la sangría y normaliza toda la plantilla (sangría uniforme, espaciado de etiquetas y disposición de los bloques de Jinja) para que una plantilla que ha ido editando se lea con claridad. Solo cambia el formato; nunca modifica lo que procesa la plantilla.
+- **Insertar** coloca en el cursor un fragmento ya preparado: una llamada a `render_table(...)` rellenada para un marco, el nombre del espacio de trabajo `{{ cloud }}`, cualquiera de las variables de su proyecto o flujo de trabajo, el recuento de filas de un marco, un bucle `{% for %}` sobre las filas de un marco, y estructuras base de if/else y de comentarios.
+- **Formato** aplica un filtro de visualización al valor situado en el cursor: moneda, millares, porcentaje, redondeo y formatos de fecha, además de asistentes de texto (mayúsculas, minúsculas, mayúsculas iniciales, recortar) y de lista (longitud, unir, suma, etc.).
+- **Estilo** envuelve el texto seleccionado en formato HTML: negrita, cursiva, subrayado, tres tamaños de encabezado, párrafos, listas con viñetas y numeradas, citas en bloque, vínculos y saltos de línea. Todas las opciones generan únicamente el marcado que conserva el sanitizador de correo (consulte [La restricción de HTML permitido](#la-restricción-de-html-permitido)), por lo que un encabezado se muestra como una línea en negrita más grande en lugar de un `h1`, y el subrayado usa una etiqueta permitida.
+
+Cada botón solo inserta texto que usted mismo podría escribir; úselos como punto de partida y edite con libertad.
+
+## Agregar marcos
+
+Un paso informa sobre **marcos**: selecciones de una sola tabla, con nombre, que usted agrega al paso. Agregue un marco o varios; cada uno se procesa en el mismo correo. Para cada marco indique:
+
+- un **Nombre del marco**: la etiqueta con la que se hace referencia a él en la plantilla (`Sales`, `Overdue`, etc.);
+- una **tabla** del contexto del flujo de trabajo;
+- opcionalmente, una **selección de columnas**, un filtro **where** y una **agregación** sobre esa tabla.
+
+Un marco es siempre una sola tabla. No se admite unir ni combinar tablas en un solo marco: agregue un segundo marco y haga referencia a cada uno por su nombre.
+
+Cada marco se expone dentro de la plantilla mediante `frames['<Frame Name>']`, que contiene las `rows` y `columns` de ese marco (consulte más abajo).
+
+## Qué hay disponible dentro de la plantilla
+
+La plantilla expone un conjunto reducido y explícito de variables. Hacer referencia a una variable no definida hace fallar el procesamiento, así que use solo lo que se indica aquí:
+
+| Variable | Contenido |
+|---|---|
+| `cloud` | El nombre del espacio de trabajo. |
+| `frames` | Un diccionario de sus marcos, con el Nombre del marco como clave. `frames['Sales'].rows` es la lista de objetos de fila de ese marco (uno por fila); `frames['Sales'].columns` es su lista de columnas, en orden. |
+| `rows` | Las filas del primer marco: un enlace de conveniencia para que una plantilla de un solo marco pueda usar `rows` directamente. |
+| `columns` | Las columnas del primer marco: el mismo enlace de conveniencia que `rows`. |
+| `variables` | Las variables de su proyecto y, en un flujo de trabajo, las variables del flujo de trabajo, con el nombre como clave: `variables['Fiscal Year']`. Aquí también están las variables integradas `variables['project']`, `variables['model']` y `variables['date']` (la hora UTC actual). Use la forma con subíndice, ya que el nombre de una variable no tiene por qué ser un identificador válido. |
+
+Los valores conservan sus tipos nativos de Python: un `Decimal` sigue siendo un `Decimal`, una fecha sigue siendo una fecha y una columna nula llega como `None`, de modo que puede darles formato y compararlos igual que lo haría en Python, en lugar de trabajar con texto convertido en cadena.
+
+## Procesar una tabla con `render_table`
+
+En lugar de escribir a mano el marcado `<table>`, llame a la macro `render_table` con las filas y columnas de un marco. Haga referencia a cada marco por su nombre:
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+Esto genera en una sola llamada una tabla HTML correctamente estructurada para ese marco. Llámela una vez por cada marco que desee mostrar.
+
+Una plantilla de un solo marco puede usar `rows` y `columns` de nivel superior, que están enlazados al primer marco:
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## Un ejemplo completo
+
+Esta plantilla tiene dos marcos, `Overdue` y `Paid`. Procesa el nombre del espacio de trabajo, una breve línea de resumen y una tabla para cada marco:
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Dirija cada marco a la tabla sobre la que desea informar, y el correo procesado mostrará una línea de título en negrita, un resumen de una línea calculado a partir del recuento de filas y una tabla por marco. Con un solo marco, podría escribir la misma plantilla usando directamente `rows` y `columns`.
+
+## La restricción de HTML permitido
+
+Todo correo procesado pasa por el mismo sanitizador que el resto del correo transaccional de PlaidCloud antes de enviarse. El sanitizador elimina todo lo que quede fuera de una lista reducida de elementos permitidos:
+
+- **Etiquetas permitidas**: las etiquetas de tabla que genera `render_table` (`table`, `tbody`, `tr`, `th`, `td`), además de etiquetas de texto habituales: `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code` y `a`. Los encabezados (`h1`–`h6`), `div` y `span` **no** están en la lista; para un título, use un `p` con un `strong` dentro.
+- **Atributos permitidos**: solo `class` y `style` (más `href` en `a`).
+- **Sin `<thead>`.** `render_table` genera `table` / `tbody` / `tr` / `th` / `td`: una fila de encabezado es un `tr` de celdas `th` dentro de `tbody`, no una sección `<thead>` independiente.
+- **Sin bloques `<style>`** ni recursos externos: una referencia `url(...)` o un píxel de seguimiento se elimina, igual que cualquier otra etiqueta o atributo que no figure en la lista.
+
+En la práctica: construya la estructura del informe con `render_table` y etiquetas de texto sencillas, y limite el estilo personalizado a atributos `style` en línea simples. Cualquier cosa más elaborada (un bloque `<style>`, una hoja de estilos externa, fuentes personalizadas, píxeles de seguimiento) no supera la sanitización y no aparece en el correo entregado.
+
+## Pasos existentes y heredados
+
+Los pasos creados antes de la edición con Jinja se abren directamente en el editor con su cuerpo anterior ya convertido. Un cuerpo estándar en texto sin formato, construido con `{project}`, `{model}`, `{cloud}` y `{date}`, se reescribe a la forma de Jinja (`{{ project }}`, `{{ cloud }}`, etc.) para que usted continúe la edición desde ahí.
+
+Un cuerpo que el convertidor no puede reescribir con seguridad (un token no estándar o llaves sin equilibrar) permanece en un cuadro alternativo de texto sin formato. Ese paso sigue enviando exactamente igual que antes, con la sustitución heredada de `{token}`; solo su edición sigue siendo en texto sin formato. Los pasos nuevos nunca usan esta vía.
+
+El editor comprueba los nombres de variables mientras escribe y señala los que no se resolverán. Un `{{ project }}`, `{{ model }}` o `{{ date }}` sueltos procedentes de un cuerpo heredado se señalan, porque esos nombres ahora se resuelven solo a través de `variables`: use `variables['project']`, `variables['model']` o `variables['date']`, sustituya el token por una columna de uno de sus marcos, o elimínelo antes de guardar.
+
+## Seguridad y salida de datos
+
+Las lecturas de marcos pasan por la misma seguridad a nivel de fila que cualquier otra lectura del proyecto: un marco solo devuelve las filas que el usuario o la entidad de automatización que lo ejecuta puede ver. Los límites de envío (destinatarios, tamaño y frecuencia) no cambian respecto de la vía de texto sin formato; el modo de plantilla no los relaja ni añade otros.
+
+## Pasos siguientes
+
+- [Referencia de Notify Via Email](/es/reference/workflow-steps/notifications/notify-via-email/): configuración campo por campo
+- [Export Templated](/es/reference/workflow-steps/export/export-templated/): el motor de forma similar pero independiente para generar documentos a partir de tablas
+- [Administrar variables del flujo de trabajo](/es/guides/workflows/manage-workflow-variables/): la sustitución `{var}` que los cuerpos heredados en texto sin formato siguen usando

@@ -1,0 +1,83 @@
+---
+title: 连接到 Oracle Essbase
+description: 将 PlaidCloud 连接到 Oracle Essbase 21c 或 Oracle Analytics Cloud，对多维数据集运行实时 MDX 查询，或将维度大纲加载到 PlaidCloud 维度中，直连云端，成员标签具有确定性，并对提取规模设有硬性上限。
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Oracle **Essbase**（21c 或更高版本，或 Oracle Analytics Cloud），使工作流可以对多维数据集运行实时 MDX 查询，或将维度大纲加载为 PlaidCloud 维度。该连接**直连云端**访问 Essbase 自己的 REST API，这些步骤没有本地代理路径。本指南涵盖连接、运行查询、控制行数限制和标签的选项，以及加载维度层次结构。
+
+<Aside type="note">
+此连接器是只读的：不会向 Essbase 写回。
+</Aside>
+
+## 先决条件
+
+您需要从 Essbase 管理员处获得：
+
+- **Essbase 服务器源**，例如 `https://your-host:9001`，不带结尾的 `/essbase/...` 路径。
+- **服务账户**（用户名和密码），对您的工作流将查询的应用程序和多维数据集具有读取权限。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`。
+
+2. 从菜单中选择 **Oracle Essbase**。
+
+3. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 易记的名称，例如 `Essbase Prod`。 |
+   | 基础 URL | Essbase 服务器源，例如 `https://your-host:9001`。 |
+   | 默认应用程序 | 可选。在步骤表单中预先选择此应用程序。 |
+   | 用户名 | 服务账户用户名。 |
+   | 密码 | 服务账户密码。 |
+   | 验证 SSL | 默认开启。仅对使用自签名证书或无法以其他方式验证证书的主机关闭。 |
+
+4. 单击 `Test Connection`。测试成功表示已连上 Essbase 服务器，列出服务账户可见的应用程序，并报告找到的数量，从而在您构建查询之前同时确认基础 URL 和凭据。
+
+5. 单击 `Create`。
+
+</Steps>
+
+## 运行查询
+
+<Steps>
+
+1. 将 **Essbase：查询多维数据集**步骤添加到工作流（它位于步骤菜单的 **Oracle Essbase** 下）。
+
+2. 在**配置**下，设置**连接**、**应用程序**、**Cube (Database)** 和**目标表**。
+
+3. 构建 **MDX**：
+
+   - **Guided member selection**：浏览多维数据集的维度和成员，并选取放在列和行上的内容；步骤会为您组装 MDX。
+   - **Raw MDX**：直接编写或粘贴 MDX `SELECT`，用于引导式选取器未涵盖的任何内容，例如计算成员或集合运算符。
+
+4. 运行该步骤。返回的网格会作为目标表导入，其列由网格本身派生，无需预先声明架构。
+
+</Steps>
+
+## 选项
+
+- **成员标签是确定性的。** 成员的列标签来自连接上配置的别名表，每次运行都一致地应用，而不是 Essbase 自己每个会话的默认值，后者可能会因查询运行时登录的人不同而显示不同的标签文本。
+- **行数限制默认为 250,000，并且可以提高。** 未设置**行数限制**时，会回退到 250,000 行的上限，而不是“无限制”：返回的行数超过有效限制的查询会被拒绝，并指出行数和上限，而不是无限制地运行或悄悄截断网格。请缩小查询范围，或明确提高**行数限制**，以便让合理的较大提取通过。
+- **零值抑制需要手动开启，并且会丢失数据。** 抑制值为零的单元格是您主动开启的筛选器，而且是破坏性的：它会丢弃保存了真实已过账 `0` 的单元格，这与 Essbase 自己用于表示完全没有数据的单元格的 `#Missing` 标记是两回事。在规划多维数据集中，已过账的零是有意义的，因为有人输入了它，所以抑制零值可能会丢掉真实数据，而不仅仅是没有数据的情况。除非您明确希望从结果中排除零值，否则请保持关闭。
+
+## 加载维度层次结构
+
+[Essbase：读取维度](/zh-cn/reference/workflow-steps/essbase/essbase-dimension-read/)步骤读取一个 Essbase 维度的大纲，并将其加载到 PlaidCloud 维度的主层次结构中，通过同一连接直连云端。它是有别于 Essbase：查询多维数据集的独立步骤：它读取大纲结构，而不是多维数据集的单元格。
+
+对于无法表示的内容，该步骤会按名称拒绝，而不是错误地加载：共享成员、仅标签成员、动态计算成员、属性维度、`+`/`-` 以外的合并运算符（Essbase 的 `*`、`/` 和 `%` 在 PlaidCloud 中没有对应项），以及总大纲成员数超过 5,000 的大纲。完整列表以及每种拒绝的含义，请参阅[步骤参考](/zh-cn/reference/workflow-steps/essbase/essbase-dimension-read/#此步骤无法表示的内容)。
+
+## 相关内容
+
+- [Essbase：查询多维数据集](/zh-cn/reference/workflow-steps/essbase/essbase-query/)：步骤字段参考。
+- [Essbase：读取维度](/zh-cn/reference/workflow-steps/essbase/essbase-dimension-read/)：将维度大纲加载为 PlaidCloud 维度。
+- [Oracle Essbase 连接器](/zh-cn/reference/connectors/erp/oracle-essbase/)：连接字段参考。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

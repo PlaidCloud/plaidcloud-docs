@@ -1,0 +1,161 @@
+---
+title: Concevoir une hiérarchie de dimension
+description: Tutoriel de bout en bout — créez une dimension, ajoutez une hiérarchie alternative, chargez-la depuis une table et utilisez-la en aval dans les rapports et les allocations.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/design-a-dimension.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minutes · une dimension, une hiérarchie alternative, utilisées en aval*
+
+Les dimensions sont les hiérarchies sur lesquelles tout le reste de PlaidCloud s'appuie — les allocations les ciblent, les tableaux de bord les utilisent pour segmenter, les rapports se consolident à travers elles. Pourtant, la plupart des guides *font référence* aux dimensions sans jamais vous apprendre à en construire une. Ce tutoriel comble cette lacune : vous allez créer une dimension de centres de coûts, lui donner une seconde façon de se consolider, la remplir à partir d'une table et la confier à un consommateur en aval.
+
+## Ce que vous allez construire
+
+Une dimension de centres de coûts avec une hiérarchie **principale** qui regroupe les centres par département, plus une hiérarchie **alternative** qui regroupe les mêmes centres par région. Vous la chargerez ensuite depuis une table source et vous y pointerez une allocation.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 300" role="img" aria-label="Une dimension de centres de coûts représentée sous forme d'arbre. La hiérarchie principale a une racine, Company, avec deux départements enfants, Sales et Operations. Sales a pour feuilles les centres de coûts CC-100 et CC-200 ; Operations a pour feuilles CC-300 et CC-400. En dessous, une hiérarchie alternative nommée By Region regroupe autrement les mêmes quatre feuilles : East rassemble CC-100 et CC-300, West rassemble CC-200 et CC-400, avec des connecteurs en pointillés qui croisent l'arbre principal." style="width:100%;max-width:640px;height:auto;">
+  <path d="M320 51 L170 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M320 51 L470 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L90 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L250 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L390 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L550 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M240 250 L90 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M240 250 L390 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L250 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L550 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <rect x="270" y="15" width="100" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="320" y="38" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">Company</text>
+  <rect x="120" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="170" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sales</text>
+  <rect x="420" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="470" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Operations</text>
+  <rect x="50" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="90" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-100</text>
+  <rect x="210" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="250" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-200</text>
+  <rect x="350" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="390" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-300</text>
+  <rect x="510" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="550" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-400</text>
+  <rect x="200" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="240" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">East</text>
+  <rect x="360" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="400" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">West</text>
+  <text x="30" y="30" font-size="10" fill="var(--sl-color-gray-3)">Principale</text>
+  <text x="30" y="270" font-size="10" fill="var(--sl-color-accent)">By Region</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">La hiérarchie principale regroupe les centres de coûts par département ; la hiérarchie alternative consolide les mêmes quatre feuilles par région. Mêmes feuilles, parents différents.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud ([démarrez un essai gratuit](https://app.plaidcloud.com) si vous n'en avez pas)
+- Un projet dans lequel travailler (créez-en un depuis l'onglet **Projets** si nécessaire)
+- Une bonne connaissance des [concepts](/fr/get-started/concepts/) — espace de travail, projet, workflow, dimension
+- Facultatif : une table source contenant la structure des centres de coûts pour le chargement de l'étape 4 (vous pouvez aussi construire l'arbre à la main)
+
+> **Cette notion est nouvelle pour vous ? Lisez d'abord [Premiers pas avec les dimensions](/fr/guides/dimensions/getting-started/).** Il explique quand une dimension se justifie et comment les hiérarchies principale et alternative sont liées — le vocabulaire que suppose ce tutoriel.
+
+## Étape 1 : créer la dimension
+
+Les dimensions se trouvent dans l'onglet **Dimensions** de chaque projet.
+
+<Steps>
+
+1. Ouvrez votre projet et passez à l'onglet **Dimensions**.
+2. Depuis le bouton **Nouveau** de la barre d'outils, choisissez **Nouvelle dimension**.
+3. Saisissez un **nom** (par exemple `Cost Centers`), un **répertoire** pour l'organisation en dossiers et un **mémo** descriptif.
+4. Cliquez sur **Créer**. La dimension est immédiatement prête.
+
+</Steps>
+
+Vous avez maintenant une dimension vide — une coquille avec une hiérarchie principale et rien dedans pour l'instant. L'étape suivante lui donne une structure.
+
+## Étape 2 : construire la hiérarchie principale
+
+Chaque dimension possède une seule hiérarchie **principale** : l'arbre canonique, source unique de vérité, où chaque membre feuille est enregistré exactement une fois. Construisez ici la structure par département.
+
+<Steps>
+
+1. Dimension ouverte, sélectionnez la racine et cliquez sur **Ajouter un membre** dans la barre d'outils de la hiérarchie pour créer les parents de premier niveau — `Sales` et `Operations`.
+2. Sélectionnez un département et utilisez de nouveau **Ajouter un membre** pour ajouter les centres de coûts feuilles qui s'y consolident :
+
+   | Parent | Membres feuilles |
+   |---|---|
+   | Sales | CC-100, CC-200 |
+   | Operations | CC-300, CC-400 |
+3. La barre d'outils de la hiérarchie permet aussi de monter et descendre les membres et de les rattacher directement à un autre parent, ce qui vous permet de corriger tout membre mal placé.
+
+</Steps>
+
+> **Chaque feuille doit se trouver dans la hiérarchie principale.** Tout élément d'une dimension est d'abord un membre de l'arbre principal — la seule question ouverte est *où* il se situe. Les hiérarchies alternatives (étape suivante) réutilisent ces feuilles ; elles n'en introduisent jamais de nouvelles.
+
+Pour les grands arbres, organiser les membres à la main devient fastidieux. L'étape de workflow [Dimension Sort](/fr/reference/workflow-steps/dimensions/dimension-sort/) trie par programmation — un vrai gain de temps après un chargement ou une restructuration importante.
+
+## Étape 3 : ajouter une hiérarchie alternative
+
+Une **hiérarchie alternative** est une autre vue des mêmes feuilles. Elle peut en retenir un sous-ensemble, les regrouper différemment ou utiliser une consolidation entièrement différente. Ici, vous allez regrouper les quatre centres de coûts par région plutôt que par département.
+
+<Steps>
+
+1. Ajoutez une nouvelle hiérarchie alternative à la dimension et nommez-la `By Region`.
+2. Dans la nouvelle hiérarchie, utilisez **Ajouter un membre** pour créer deux parents — `East` et `West` — puis ajoutez les feuilles existantes en dessous :
+
+   | Parent régional | Membres feuilles |
+   |---|---|
+   | East | CC-100, CC-300 |
+   | West | CC-200, CC-400 |
+
+</Steps>
+
+Les feuilles sont les *mêmes* membres que dans la hiérarchie principale — vous les rattachez à de nouveaux parents pour cette vue, vous ne les dupliquez pas. Les membres de la hiérarchie principale portent des étiquettes d'attribut indiquant à quelles hiérarchies alternatives ils appartiennent aussi, de sorte que vous voyez d'un coup d'œil que CC-100 est à la fois un centre Sales et un centre East.
+
+> **Deux modèles courants de hiérarchie alternative.** Une *vue en sous-ensemble* regroupe un ensemble ciblé de feuilles dans un arbre pour un rapport ou une allocation ; elle hérite des modifications de membres de la hiérarchie principale. Une *consolidation différente* conserve toutes les feuilles mais les regroupe autrement, comme le fait ici `By Region`. Consultez [Utiliser les dimensions (hiérarchies)](/fr/guides/dimensions/dimensions/#hiérarchies-alternatives-dattributs) pour les deux.
+
+## Étape 4 : la charger depuis une table
+
+Construire quelques nœuds à la main convient pour un tutoriel. En pratique, vous alimentez une dimension depuis une table source via un workflow, afin qu'elle s'actualise lorsque la source change. PlaidCloud lit deux formes de données :
+
+| Format | Forme | Idéal pour |
+|---|---|---|
+| **Parent-Child** | Deux colonnes — un parent, un enfant — une arête par ligne | Hiérarchies irrégulières de profondeur arbitraire |
+| **Levels** | Une colonne par niveau, un chemin complet par ligne | Hiérarchies régulières de profondeur prévisible |
+
+<Steps>
+
+1. Passez à l'onglet **Workflows** et créez un workflow (par exemple `Load Cost Centers`).
+2. Ajoutez une étape [Dimension Load](/fr/reference/workflow-steps/dimensions/dimension-load/).
+3. Pointez-la vers votre table source, choisissez **Parent-Child** ou **Levels**, et mappez les colonnes qui portent la structure.
+4. Un chargement peut porter plus que la structure — les **valeurs, les alias et les propriétés** peuvent voyager dans la même étape. Mappez aussi ces colonnes si votre source en contient.
+5. Exécutez l'étape, puis rouvrez l'onglet **Dimensions** pour vérifier que l'arbre correspond à votre source.
+
+</Steps>
+
+> **Un chargement construit la structure ; il ne réinitialise pas la dimension.** Pour vider complètement une dimension avant de la recharger — en effaçant la structure, les valeurs, les alias, les propriétés et les hiérarchies alternatives — utilisez d'abord [Dimension Clear](/fr/reference/workflow-steps/dimensions/dimension-clear/). Consultez [Charger et décharger des dimensions](/fr/guides/dimensions/loading-unloading/) pour l'aller-retour complet, y compris l'export de la hiérarchie vers une table à plat pour le reporting.
+
+## Étape 5 : enrichir les nœuds (facultatif)
+
+Une hiérarchie peut être plus qu'un arbre de noms. Chaque nœud peut porter des **propriétés** (la devise d'un centre de coûts, son unité opérationnelle propriétaire), des **alias** et des **valeurs**. Activez **Propriétés** dans la barre d'outils de la hiérarchie pour afficher une colonne par propriété, et ajoutez-en une avec **Nouvelle propriété**.
+
+Vous pouvez aussi calculer des valeurs directement dans la hiérarchie. Les **Agrégations** ramènent dans chaque nœud des valeurs sommées, comptées, minimales ou maximales issues d'une table, et les **Expressions** calculent à partir de ces agrégations à l'aide d'opérateurs mathématiques, de conditions et de fonctions comme `Column(...)`, `Leafcount()` et `Parentvalue(...)`. Consultez [Fonctions de dimension pour les expressions et les agrégations](/fr/guides/dimensions/function-expressions/) pour l'ensemble complet.
+
+## Étape 6 : l'utiliser en aval
+
+La récompense : définir l'arbre une fois et le référencer partout. Votre dimension est maintenant une cible pour le reste de PlaidCloud.
+
+- Les **allocations** ciblent une dimension pour répartir un pool de coûts sur ses feuilles — la prochaine étape naturelle ci-dessous.
+- Les **rapports et tableaux de bord** segmentent et explorent la hiérarchie, en utilisant l'arbre principal pour une consolidation et `By Region` pour une autre, à partir des mêmes feuilles.
+- Les **colonnes mappées sur une dimension** dans un [Éditeur de données](/fr/guides/projects/managing-data-editors/) ou dans la propriété **Sélection (dimension)** d'une autre dimension permettent aux utilisateurs de choisir des membres de votre arbre grâce à un sélecteur de membres.
+
+Pour alimenter une allocation, gardez les noms des membres feuilles de votre dimension identiques aux clés de vos données d'inducteurs et de vos données sources — une différence d'espacement ou de casse fait qu'une feuille ne reçoit rien. C'est précisément ce contrat que le tutoriel sur les allocations développe ensuite.
+
+## Pour aller plus loin
+
+- [Construire un modèle d'allocation](/fr/get-started/tutorials/build-an-allocation/) — répartissez un pool de coûts sur la dimension que vous venez de construire (la prochaine étape naturelle)
+- [Premiers pas avec les dimensions](/fr/guides/dimensions/getting-started/) — quand recourir à une dimension et comment les éléments s'articulent
+- [Utiliser les dimensions (hiérarchies)](/fr/guides/dimensions/dimensions/) — la référence de gestion complète : propriétés, héritage, copie, tri
+- [Charger et décharger des dimensions](/fr/guides/dimensions/loading-unloading/) — importer la structure et la remettre à plat
+- [Fonctions de dimension pour les expressions et les agrégations](/fr/guides/dimensions/function-expressions/) — valeurs calculées au sein d'une hiérarchie

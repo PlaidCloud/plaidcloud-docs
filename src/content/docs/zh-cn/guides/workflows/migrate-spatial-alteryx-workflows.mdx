@@ -1,0 +1,91 @@
+---
+title: 迁移空间 Alteryx 工作流
+description: 打包空间依赖项，导入 Alteryx 空间工作流，并对照原始输出验证转换后的几何图形。
+sidebar:
+  order: 37
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-spatial-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 会将 Alteryx 空间工作流转换为由[地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)构建的高级工作流。Alteryx Spatial 面板中的每个工具都有对应的转换路径，[空间工具覆盖表](/zh-cn/reference/alteryx-conversion-matrix/#空间工具覆盖范围)逐个工具列出了它们，并说明已知的差距。
+
+本指南介绍具体操作：打包文件、运行导入以及验证结果。转换后各步骤的作用，请参阅[地理空间分析](/zh-cn/guides/workflows/geospatial-analytics/)。
+
+## 打包空间输入
+
+导入之前先收集所有空间依赖项。转换后的工作流只能读取您随它一起带来的文件。
+
+- Shapefile 文件组：`.shp` 以及 `.shx`、`.dbf` 和 `.prj`。
+- MapInfo 文件组：`.tab` 以及 `.map`、`.id` 和 `.dat`。
+- KML 和 GeoJSON 文件。
+- 联接空间记录与非空间记录的查找表。
+- 用于验证的预期空间输出。
+
+请将每个文件组的附属文件与其主文件放在同一文件夹中，[空间文件导入](/zh-cn/reference/workflow-steps/spatial/spatial-file-import/)会从主文件旁边读取它们。
+
+<Aside type="caution" title=".geo GeoFile 不会转换">
+  无法读取 Alteryx 专有的二进制 `.geo` 格式。遇到该格式时，转换会以失败告终，而不是生成一个在运行时崩溃的导入。请在导入之前将这些图层重新导出为 shapefile 或 GeoJSON。
+</Aside>
+
+## 空间工具如何转换
+
+转换会选择能给出正确答案的最简单路径，而该路径决定了步骤的扩展方式。
+
+**数据库 (SQL) 路径。** Create Points 和 Distance 会变成[Table Extract 表达式](/zh-cn/reference/workflow-steps/spatial/spatial-sql-recipes/)；Spatial Match 和 Find Nearest 会变成[空间匹配](/zh-cn/reference/workflow-steps/spatial/spatial-match/)和 [Spatial Find Nearest](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/)。它们完全在仓库中运行，因此会随表的规模扩展。
+
+**工作流引擎路径。** 所有重塑几何图形的工具（Buffer、Trade Area、Generalize、Smooth、Process、Poly-Build、Poly-Split、Make Grid、Combine、Spatial Info 以及空间文件导入）都在工作流引擎中使用 Shapely 和 GDAL 运行，因为这些工作无法用数据库 SQL 表达。
+
+**报表。** Map 和 Report Map 会变成 [Report Map](/zh-cn/reference/workflow-steps/reports/report-map/) 步骤；Heat Map 和 Pie Wedge Trade Area 打包宏会变成[打包宏步骤](/zh-cn/reference/workflow-steps/macros/)。
+
+每个转换后的步骤都是一等步骤类型，您可以打开、编辑并手动重建。Make Grid 和 Poly-Split 是例外：它们可以转换并运行，但目前需要通过 API 或 MCP 配置，而不是设计器表单。有关空间工具所需的输入前提，请参阅[已知的空间前提条件](/zh-cn/reference/alteryx-conversion-matrix/#已知的空间前提条件)。
+
+## 验证几何图形
+
+为使空间输出保持一致，请比较：
+
+1. 输出架构。
+2. 行数。
+3. **键字段**值。
+4. 几何值，或由几何图形得出的度量值。
+5. 坐标参考系行为。
+6. 距离、面积和简化后的几何图形，以可接受的容差为准。
+
+除非工作流依赖排序，否则行顺序无需一致。
+
+<Aside type="note" title="面积和长度可能不同，通常更准确">
+  [Spatial Info](/zh-cn/reference/workflow-steps/spatial/spatial-info/) 在 WGS84 椭球体上按测地线度量。如果与平面度量相比较，在美国纬度地区会出现约 25% 的差异；与 Alteryx 一致的是测地线值。
+</Aside>
+
+## 验证空间产物
+
+对于地图和报表地图，请确认：
+
+1. 地图图层包含预期的记录。
+2. 标签和分组要素正确。
+3. 边界、点和多边形出现在预期位置。
+4. 下游审阅者可以使用该产物。
+5. 已记录任何有意为之的云原生产物差异。
+
+报表渲染器是对 Alteryx 输出的近似，因此在比较视觉布局之前，请先验证地图背后的表。
+
+## 常见空间问题
+
+| 现象 | 检查项 |
+| --- | --- |
+| 导入产生的行几何图形为空 | 附属文件是否位于同一文件夹 |
+| 坐标落在错误的位置 | 是否存在投影文件 (`.prj`)；Create Points 的坐标是浮点或整数（×1,000,000）的经纬度，投影坐标需要先在上游重新投影到 WGS84 |
+| 面积或长度与原始结果不同 | 平面度量与测地线度量的差异，见上面的备注 |
+| 缺少 Spatial Info 列 | 该度量是 [Peano 键](/zh-cn/reference/alteryx-conversion-matrix/#已知的空间前提条件)，是唯一没有公开规范的度量；转换会在备注中指明它 |
+| 商圈大小不对 | 驾车时间的大小设置不会转换，只转换固定半径 |
+| Find Nearest 步骤因距离而拒绝 | 最近距离步骤只按英里、公里、米或英尺度量；码、海里和驾车时间会被拒绝，非数字的最大距离也一样 |
+| 空间工具拒绝并指明自身 | Geocoder 在 PlaidCloud 中没有对应项，它需要平台不提供的地理编码服务和参考数据；拒绝信息会说明是哪个工具及原因 |
+| 行数不同 | 两次运行是否使用了相同的源数据 |
+
+## 相关指南
+
+- [地理空间分析](/zh-cn/guides/workflows/geospatial-analytics/)
+- [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)
+- [打包 Alteryx 依赖项](/zh-cn/guides/workflows/package-alteryx-dependencies/)
+- [验证 Alteryx 报表和产物](/zh-cn/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/)

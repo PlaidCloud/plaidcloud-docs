@@ -1,0 +1,157 @@
+---
+title: Geometry in SQL
+description: Funções de expressão geom_* portáteis e receitas para construir geometria de pontos e medir distâncias, todas executadas na base de dados.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/spatial/spatial-sql-recipes.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Nem todas as operações geoespaciais precisam de um passo dedicado. Tudo o que seja uma
+expressão de coluna de uma só linha é executado como célula de expressão do passo [Table Extract](/pt-pt/reference/workflow-steps/tables/table-extract/),
+na base de dados, sem que nenhuma linha saia do armazém de dados — pelo que
+escala com a tabela e não com o motor de fluxos de trabalho. Esta é a via que a
+[conversão do Alteryx](/pt-pt/guides/workflows/migrate-spatial-alteryx-workflows/) escolhe
+para as ferramentas *Create Points* e *Distance* do Alteryx.
+
+## Funções de geometria portáteis
+
+O Lakehouse v1 e o v2 escrevem as suas funções de geometria de forma diferente — `ST_MAKEGEOMPOINT`
+contra `ST_POINT`, `ST_ASWKT` contra `ST_ASTEXT`. A família `geom_*` resolve
+para a correta consoante a área de trabalho em que está a executar, pelo que uma expressão escrita
+uma só vez funciona em ambas.
+
+| Expressão | Lakehouse v1 | Lakehouse v2 |
+|---|---|---|
+| `func.geom_from_wkt(x)` | `ST_GEOMETRYFROMWKT` | `ST_GEOMETRYFROMTEXT` |
+| `func.geom_point(lon, lat)` | `ST_MAKEGEOMPOINT` | `ST_POINT` |
+| `func.geom_as_wkt(g)` | `ST_ASWKT` | `ST_ASTEXT` |
+| `func.geom_contains(a, b)` | `ST_CONTAINS` | `ST_CONTAINS` |
+| `func.geom_within(a, b)` | `ST_WITHIN` | `ST_CONTAINS`, com os argumentos trocados |
+| `func.geom_x(g)` | `ST_X` | `ST_X` |
+| `func.geom_y(g)` | `ST_Y` | `ST_Y` |
+
+<Aside type="note" title="Nem tudo é portátil">
+  `geom_area`, `geom_length`, `geom_intersects`, `geom_centroid`,
+  `geom_distance`, `geom_createline` e os limites da caixa delimitadora
+  (`st_xmin`/`st_xmax`/`st_ymin`/`st_ymax`) existem apenas no Lakehouse v1 —
+  o StarRocks não inclui nenhum equivalente. Numa área de trabalho v2, falham quando a
+  expressão é compilada, com uma mensagem que indica a função, em vez de
+  produzirem uma resposta errada. Utilize antes os
+  [passos geoespaciais](/pt-pt/reference/workflow-steps/spatial/) para essas medidas;
+  são executados no motor de fluxos de trabalho e dão a mesma resposta em todos os
+  armazéns de dados.
+</Aside>
+
+## Criar pontos
+
+Construa um ponto WKT a partir de uma coluna de longitude e de uma coluna de latitude:
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+`geom_as_wkt` escreve o resultado como WKT, a forma que todos os passos espaciais da PlaidCloud
+leem e escrevem.
+
+<Aside type="caution" title="Longitude/latitude em graus decimais ou inteiros">
+  Isto é exato para coordenadas simples em graus decimais e para coordenadas
+  inteiras multiplicadas por 1 000 000 (o Create Points divide-as de volta).
+  As coordenadas num sistema de coordenadas projetado têm de ser primeiro reprojetadas para
+  longitude/latitude WGS84 — construir um ponto diretamente a partir delas produz geometria
+  não projetada.
+</Aside>
+
+## Distância entre dois pontos
+
+A distância é a única operação aqui **sem grafia portátil** — os dois
+lakehouses divergem tanto na função como na unidade devolvida, pelo que a expressão
+difere consoante a versão.
+
+<Aside type="caution" title="Escolha a forma que corresponde à sua área de trabalho">
+  `ST_DISTANCE_SPHERE` existe apenas no Lakehouse v2 e `geom_distance` apenas no
+  Lakehouse v1. Nenhuma se degrada para a outra. Se pretender um só passo que
+  funcione em ambos, utilize
+  [Spatial Find Nearest](/pt-pt/reference/workflow-steps/spatial/spatial-find-nearest/) —
+  escolhe a expressão certa para a área de trabalho em que é executado.
+</Aside>
+
+### Lakehouse v2
+
+`ST_DISTANCE_SPHERE` recebe quatro coordenadas e devolve **metros**:
+
+```python
+case(
+    (
+        and_(
+            get_column(table, 'Origin').like('POINT%'),
+            get_column(table, 'Destination').like('POINT%'),
+        ),
+        func.st_distance_sphere(
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Destination'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Destination'))),
+        ) * 0.0006213711922373339,
+    ),
+    else_=null,
+)
+```
+
+| Unidade | Fator a partir de metros |
+|---|---|
+| Milhas | `0.0006213711922373339` |
+| Quilómetros | `0.001` |
+| Metros | `1` |
+| Pés | `3.280839895013123` |
+
+### Lakehouse v1
+
+`geom_distance` é **planar** sobre duas geometrias e devolve **graus**, pelo que o
+fator converte a partir de graus e não de metros:
+
+```python
+func.geom_distance(
+    func.geom_from_wkt(get_column(table, 'Origin')),
+    func.geom_from_wkt(get_column(table, 'Destination')),
+) * 69.1709
+```
+
+| Unidade | Fator a partir de graus |
+|---|---|
+| Milhas | `69.1709` |
+| Quilómetros | `111.32` |
+| Metros | `111320.0` |
+| Pés | `364566.929` |
+
+Por ser planar, é uma aproximação que se degrada longe do equador — adequada
+nas distâncias locais típicas da análise de áreas de captação, menos num
+continente inteiro.
+
+A guarda `LIKE 'POINT%'` na forma v2 é importante: `ST_DISTANCE_SPHERE` recebe quatro
+coordenadas, pelo que uma geometria que não seja um ponto, de qualquer dos lados, mediria
+silenciosamente a coisa errada. O `CASE` devolve nulo para essas linhas.
+
+## Quando usar antes um passo
+
+| Pretende | Utilize |
+|---|---|
+| A distância de cada linha às suas linhas *mais próximas* noutra tabela | [Spatial Find Nearest](/pt-pt/reference/workflow-steps/spatial/spatial-find-nearest/) |
+| A distância como filtro numa junção espacial | [Spatial Match](/pt-pt/reference/workflow-steps/spatial/spatial-match/) |
+| Área, comprimento, centroide ou caixa delimitadora | [Spatial Info](/pt-pt/reference/workflow-steps/spatial/spatial-info/) |
+| Qualquer coisa que altere a forma de uma geometria | [Passos geoespaciais](/pt-pt/reference/workflow-steps/spatial/) |
+
+## Relacionado
+
+- [Passos geoespaciais](/pt-pt/reference/workflow-steps/spatial/)
+- [Funções de geometria (Lakehouse v1)](/pt-pt/reference/expressions/lakehouse-v1/09-geometry-functions/)
+- [Funções de geografia (Lakehouse v1)](/pt-pt/reference/expressions/lakehouse-v1/09-geo-functions/) — indexação H3 e geohash
+- [Funções espaciais (Lakehouse v2)](/pt-pt/reference/expressions/lakehouse-v2/17-spatial-functions/)

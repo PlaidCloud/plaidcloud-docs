@@ -1,0 +1,281 @@
+---
+title: NetSuite SuiteQL 查询示例
+description: 可直接运行的 PlaidCloud NetSuite SuiteQL 查询——日记账分录、总账、试算平衡表、损益表、资产负债表、未结应收账款、销售订单、采购订单和库存。
+sidebar:
+  label: NetSuite 查询示例
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-financial-queries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[NetSuite 连接](/zh-cn/guides/connections/netsuite/)正常工作后，本页面可帮助您快速进入真正的报表：复制粘贴即可使用的 SuiteQL，涵盖大多数拉取起步时所需的财务和运营数据——日记账分录、总账、试算平衡表、损益表、资产负债表、未结应收账款、未结订单和现有库存。
+
+每个示例都是一个**起点**。运行它，对照 NetSuite 中您信任的报表确认数字，然后根据您的账户调整筛选器和列。
+
+<Aside type="tip">
+对于常见的拉取——试算平衡表、总账明细，或科目、子公司之类的主列表——预置的 NetSuite 导入步骤是更简单的选择，无需编写 SuiteQL。请参阅[导入 NetSuite 财务数据](/zh-cn/guides/connections/import-netsuite-financials/)。当您需要这些步骤未涵盖的拉取时，再使用下面的查询。
+</Aside>
+
+## 如何运行示例
+
+<Steps>
+
+1. 向工作流中添加一个 [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)，将**连接**设置为您的 NetSuite 连接，**方法**设置为 `POST`，**端点**设置为 `/services/rest/query/v1/suiteql`。
+
+2. 将查询作为单个 JSON 对象放入**正文**——查询文本放在 `q` 中：
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 5"}
+   ```
+
+   为清晰起见，下面的示例以可读的 SQL 形式给出；将其粘贴到步骤中时，请包装为 `{"q": "…your query…"}`。
+
+3. 在**响应**选项卡上，保持目标为**表**，并**设置每一列的类型**（参见每个示例下的“列类型”说明）。SuiteQL 将所有内容都作为文本返回，因此设置类型才能使金额可以相加、日期可以排序。
+
+4. 点击**发送测试请求**确认其可以运行，然后运行该步骤。
+
+</Steps>
+
+<Aside type="caution">
+这些查询针对 NetSuite 的标准 SuiteQL 架构（`transaction`、`transactionaccountingline`、`account`、`item`）。表和字段的可用性、科目类型代码以及交易状态代码，会随您的 NetSuite 版本、启用的功能和账户定制而有所不同——请将每个示例都视为起点，并在依赖它之前对照 NetSuite 报表进行验证。当有内容不匹配时，所显示的错误会指明确切的字段或表。
+</Aside>
+
+## 所有示例通用的约定
+
+以下几条规则贯穿所有财务示例：
+
+- **`transactionaccountingline`（TAL）是总账的依据。** 过账金额、借方和贷方都在这里——而不在 `transactionline` 上。每个财务示例都通过它联接。
+- **仅限过账分录：** `tal.posting = 'T'` 会排除非过账行。
+- **主账簿：** `tal.accountingbook = 1`。仅当您运行 NetSuite 多账簿时才更改此项。
+- **金额符号：** NetSuite 存储的过账金额为**借方为正、贷方为负**。因此收入（贷方）的 `amount` 为负。损益表和资产负债表示例在需要以自然的“收入为正”方式呈现时会取反，并且各自都会说明。
+- **每个分页查询都需要确定性的 `ORDER BY`**，否则各页之间的行会悄悄重复或遗漏。
+- **在查询中格式化日期：** `TO_CHAR(t.trandate, 'YYYY-MM-DD')`（否则 SuiteQL 会以账户的显示格式返回日期）。将这些列的类型设置为 `Date`。
+
+<Aside type="caution">
+**多子公司 / 多币种：** 这些示例读取每笔交易自身的金额。对币种不同的各子公司求和在合并层面是**错误的**——跨子公司报告时，请筛选到单一子公司（`t.subsidiary = <id>`），或选择合并金额 / 经汇率折算的金额。
+</Aside>
+
+## 财务示例
+
+### 日记账分录
+
+某期间内日记账分录的每条过账行，包含科目、借方和贷方。
+
+```sql
+SELECT
+    t.tranid                                AS entry_number,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS entry_date,
+    BUILTIN.DF(t.postingperiod)             AS period,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    tal.debit                               AS debit,
+    tal.credit                              AS credit,
+    tl.memo                                 AS line_memo
+FROM transaction t
+    JOIN transactionaccountingline tal ON tal.transaction = t.id
+    JOIN transactionline tl            ON tl.transaction = tal.transaction
+                                      AND tl.id = tal.transactionline
+    JOIN account a                     ON a.id = tal.account
+WHERE t.type = 'Journal'
+    AND tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY t.tranid, tl.id
+```
+
+**列类型：** `debit`、`credit` → `Currency`；`entry_date` → `Date`；其余全部 → `Text`。
+
+### 总账明细
+
+形式相同，但没有 `type = 'Journal'` 筛选器——涵盖所有交易类型的每条过账行，即该期间的总账。
+
+```sql
+SELECT
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS posting_date,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    t.type                                  AS transaction_type,
+    t.tranid                                AS document_number,
+    BUILTIN.DF(t.entity)                    AS name,
+    tal.amount                              AS amount,
+    tl.memo                                 AS line_memo
+FROM transactionaccountingline tal
+    JOIN transaction t     ON t.id = tal.transaction
+    JOIN transactionline tl ON tl.transaction = tal.transaction
+                           AND tl.id = tal.transactionline
+    JOIN account a         ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY a.acctnumber, t.trandate, t.tranid, tl.id
+```
+
+**列类型：** `amount` → `Currency`；`posting_date` → `Date`；其余 → `Text`。`amount` 为借方为正 / 贷方为负。
+
+### 试算平衡表
+
+各科目在某期间内的净发生额。账簿平衡时，所有科目的合计净额为零。
+
+```sql
+SELECT
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    a.accttype              AS account_type,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.acctnumber, BUILTIN.DF(a.id), a.accttype
+ORDER BY a.acctnumber
+```
+
+**列类型：** `balance` → `Currency`；其余 → `Text`。
+
+<Aside type="note">
+若要按指定的会计期间而非日历范围对齐，请联接 `accountingperiod` 并据此筛选：`JOIN accountingperiod ap ON ap.id = t.postingperiod` … `WHERE ap.periodname = 'Jan 2026'`。当分录未按日期顺序过账到某期间时，按期间报告与按日历日期报告可能有所不同。
+</Aside>
+
+### 损益表（利润表）
+
+仅限收入和费用科目的试算平衡表，经取反后收入为正、费用为负——这样该列的总和即为净收入。
+
+```sql
+SELECT
+    a.accttype                      AS account_type,
+    a.acctnumber                    AS account_number,
+    BUILTIN.DF(a.id)                AS account_name,
+    -SUM(tal.amount)                AS amount
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**列类型：** `amount` → `Currency`；其余 → `Text`。在报表中将 `account_type` 分组为收入（`Income`、`OthIncome`）、COGS（`COGS`）和费用（`Expense`、`OthExpense`）；收入减去 COGS 再减去费用即为净收入。
+
+### 资产负债表
+
+截至某日期的累计科目余额——针对资产负债表科目（所有非损益表科目），包含从开账至截止日期的每条过账行。
+
+```sql
+SELECT
+    a.accttype              AS account_type,
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype NOT IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate <= TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**列类型：** `balance` → `Currency`；其余 → `Text`。资产为正（借方为正常余额方向）；负债和权益为负（贷方为正常余额方向）——呈现时请对其取反。资产应等于负债加权益。
+
+## 运营示例
+
+### 未结应收账款（未付客户发票）
+
+仍未结清的客户发票，包含尚欠金额和到期日——这是应收账款账龄分析的基础。
+
+```sql
+SELECT
+    t.tranid                            AS invoice_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+    TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+    t.foreigntotal                      AS invoice_total,
+    t.foreignamountunpaid               AS amount_unpaid
+FROM transaction t
+WHERE t.type = 'CustInvc'
+    AND t.foreignamountunpaid <> 0
+ORDER BY t.tranid
+```
+
+**列类型：** `invoice_total`、`amount_unpaid` → `Currency`；`invoice_date`、`due_date` → `Date`；其余 → `Text`。请在后续步骤中根据 `due_date` 计算账龄区间。
+
+### 未结销售订单
+
+尚未完全处理的销售订单，按客户列出。
+
+```sql
+SELECT
+    t.tranid                            AS order_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS order_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS order_total
+FROM transaction t
+WHERE t.type = 'SalesOrd'
+    AND t.status IN ('SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E')
+ORDER BY t.tranid
+```
+
+**列类型：** `order_total` → `Currency`；`order_date` → `Date`；其余 → `Text`。`SalesOrd:*` 状态代码（待履行、部分履行、待开票）因账户而异——请确认哪些代码对您而言表示“未结”，或者去掉状态筛选器并在下游进行筛选。
+
+### 未结采购订单
+
+等待收货或开票的采购订单，按供应商列出。
+
+```sql
+SELECT
+    t.tranid                            AS po_number,
+    BUILTIN.DF(t.entity)                AS vendor,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS po_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS po_total
+FROM transaction t
+WHERE t.type = 'PurchOrd'
+    AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E', 'PurchOrd:F')
+ORDER BY t.tranid
+```
+
+**列类型：** `po_total` → `Currency`；`po_date` → `Date`；其余 → `Text`。与销售订单一样，请确认在您的账户中哪些 `PurchOrd:*` 状态代码表示“未结”。
+
+### 现有库存
+
+库存商品的全公司现有数量和可用数量。
+
+```sql
+SELECT
+    i.itemid            AS item,
+    BUILTIN.DF(i.id)    AS description,
+    i.quantityonhand    AS on_hand,
+    i.quantityavailable AS available
+FROM item i
+WHERE i.itemtype = 'InvtPart'
+    AND i.isinactive = 'F'
+ORDER BY i.itemid
+```
+
+**列类型：** `on_hand`、`available` → `Decimal`；其余 → `Text`。这些是全公司范围的合计；各位置的数量来自 NetSuite 的库存位置数据，这取决于多位置库存功能——请检查您的账户公开了哪些内容。
+
+## 根据您的账户进行调整
+
+- **测试时设定范围。** 添加 `AND ROWNUM <= 100`（或收紧的日期范围），使首次运行快速返回，然后在正式拉取时将其移除。
+- **将错误的数字追溯到查询，而不是连接器。** 转换错误会指明列和值；合计对不上几乎总是由于子公司/币种范围，或过账/期间筛选器造成的——请先检查这些。
+- **每次拉取都是整表替换。** 请让 `WHERE` 子句只覆盖您需要的切片（滚动期间、仅未结项目），而不是在每次计划运行时重新提取全部历史数据。
+
+## 相关内容
+
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/) — 先设置连接。
+- [导入 NetSuite 财务数据](/zh-cn/guides/connections/import-netsuite-financials/) — 用于余额、总账明细和主数据的预置导入步骤，无需 SuiteQL。
+- [NetSuite REST 连接器](/zh-cn/reference/connectors/rest/netsuite/) — 字段和 SuiteQL 参考。
+- [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/) — 运行这些查询的步骤。

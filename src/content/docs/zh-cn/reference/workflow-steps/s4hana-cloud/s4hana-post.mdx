@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry 步骤"
+description: 通过 JournalEntryBulkCreateRequest_In SOAP 服务，根据标题表和行表将总账日记账分录过账到 SAP S/4HANA Cloud，并提供预览模式，在任何过账之前验证每条分录。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [S/4HANA Cloud 连接](/zh-cn/guides/connections/s4hana-cloud/)，经由 PlaidCloud 共享的 ERP 写入管道，将总账日记账分录过账到 SAP S/4HANA Cloud。该步骤接收一个标题表（每条日记账分录一行）和一个行表（每条分录一行或多行借贷行），并将每条分录提交到 S/4HANA Cloud 的 `JournalEntryBulkCreateRequest_In` SOAP 服务。**Validate Only** 会构建并检查每条分录，但不占用分类账，也不过账；可选的结果表会记录每条分录的结果。
+
+<Aside type="caution">
+请先在 **Validate Only** 模式下运行每个批次并查看结果表，同时在 S/4HANA 中直接核对少量过账记录，然后再依赖此步骤无人值守地过账正式分录。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **S/4HANA Connection**：用于过账的 S/4HANA Cloud 连接。
+
+### 数据
+
+- **标题表**：每条日记账分录一行，包含 `journal_id`（您的分录标识符，必填）、`company_code`（必填）、`document_date`、`posting_date`、`fiscal_year`、`ledger`、`header_text`。
+- **行表**：每个 `journal_id` 对应一行或多行，包含 `gl_account`、`debit`、`credit`，以及您的分类账所需的任何 `cost_center`/`profit_center` 维度列。
+- **结果表**：输出表 ID，每条分录一行，包含 `journal_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message`。
+- **Validate Only**：默认勾选。仅做预检，不占用分类账，也不过账。如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创建的配置），同样默认为 Validate Only，而不是正式过账。
+- **Continue On Error**：默认勾选。某条分录失败后继续过账其余分录；取消勾选则在第一次失败时停止该批次。
+
+## 过账的工作方式
+
+PlaidCloud 通过 `JournalEntryBulkCreateRequest_In` 提交每条分录，并轮询相应的 `JournalEntryBulkCreateConfirmation_Out` 消息，该消息会报告分录的终止处理状态。只有在**收到**该确认后，分录才会被报告为 `posted`。如果分录已被接受，但其确认始终没有到达，则该分录会保持隔离状态（不会被报告为已过账，也不会被悄悄丢弃），而不会仅因提交已被接受就被记录为成功。
+
+## 更正已过账的分录
+
+此步骤从不删除或改写已过账的分录。如需更正，请过账一条新分录，将借贷方向与原分录对调，即已过账的冲销分录，而不是直接修改原分录。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|| 确认延迟 | 批量创建服务以异步方式处理请求；终止状态轮询会等待确认消息，而不是获得同步结果。 |
+| 冲销是新分录，而不是就地编辑 | 更正会过账一条借贷对调的新冲销分录。已过账的分录无法作废或删除。 |
+| 维度验证取决于您的分类账设置 | 对于您的科目结构无效的成本对象或维度组合，会在 S/4HANA 自身的验证环节失败，并以 `error` 行的形式呈现，而不是由 PlaidCloud 提前捕获。 |
+
+## 相关内容
+
+- [连接到 SAP S/4HANA Cloud](/zh-cn/guides/connections/s4hana-cloud/)：涵盖配置、预览和过账的完整演练
+- [SAP S/4HANA Cloud REST 连接器](/zh-cn/reference/connectors/rest/s4hana-cloud/)
+- [S/4HANA Cloud 步骤](/zh-cn/reference/workflow-steps/s4hana-cloud/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

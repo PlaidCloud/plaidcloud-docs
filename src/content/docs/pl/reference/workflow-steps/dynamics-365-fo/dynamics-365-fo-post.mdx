@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry (krok)"
+description: Księguj zapisy dziennika księgi głównej w Dynamics 365 Finance & Operations z tabel nagłówków i wierszy, z trybem podglądu, który waliduje każdy zapis przed zaksięgowaniem czegokolwiek.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje zapisy dziennika księgi głównej w Dynamics 365 Finance & Operations przez [połączenie D365 F&O](/pl/guides/connections/dynamics-365-fo/), z użyciem wspólnego potoku zapisu ERP w PlaidCloud. Krok przyjmuje tabelę nagłówka (jeden wiersz na zapis dziennika) i tabelę wierszy (jeden lub więcej wierszy debetowych/kredytowych na zapis) i przesyła każdy zapis do asynchronicznej akcji księgowania dziennika w usłudze niestandardowej D365 F&O. **Validate Only** buduje i sprawdza każdy zapis bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników rejestruje wynik każdego zapisu.
+
+<Aside type="caution">
+Każdą partię uruchamiaj najpierw w trybie **Validate Only**, przejrzyj tabelę wyników i uzgodnij kilka zaksięgowań bezpośrednio w D365 F&O, zanim zaczniesz polegać na tym kroku przy księgowaniu rzeczywistych zapisów bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie
+
+- **D365 F&O Connection** — połączenie D365 F&O, przez które odbywa się księgowanie.
+
+### Dane
+
+- **Tabela nagłówka** — jeden wiersz na zapis dziennika: `journal_id` (identyfikator zapisu, wymagany), `journal_name` (nazwa dziennika D365 F&O, do którego księgować, wymagana), `posting_date`, `description`.
+- **Tabela wierszy** — jeden lub więcej wierszy na `journal_id`: `account`, `debit`, `credit` oraz wszelkie kolumny wymiarów wymagane przez księgę.
+- **Tabela wyników** — identyfikator tabeli wyjściowej: jeden wiersz na zapis z `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — domyślnie zaznaczone. Tylko kontrola wstępna; bez rezerwacji w księdze i bez księgowania. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Validate Only, a nie księgowanie na żywo.
+- **Continue On Error** — domyślnie zaznaczone. Księguje pozostałe zapisy po niepowodzeniu jednego; po odznaczeniu zatrzymuje partię przy pierwszym niepowodzeniu.
+
+## Jak działa księgowanie
+
+PlaidCloud przesyła każdy zapis do asynchronicznej akcji księgowania usługi niestandardowej D365 F&O, a następnie odpytuje, aż usługa zgłosi końcowy stan zapisu. Zapis jest raportowany jako `posted` dopiero po **potwierdzeniu** tego stanu końcowego — zapis, który został przyjęty, ale jego stan końcowy nigdy się nie rozstrzyga, pozostaje w kwarantannie (nie jest raportowany jako zaksięgowany ani po cichu pomijany), zamiast być zapisany jako sukces tylko dlatego, że przesłanie zostało przyjęte.
+
+## Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego zapisu. Aby go skorygować, zaksięguj nowy zapis z zamienionymi debetami i kredytami względem oryginału — zaksięgowany zapis odwracający — zamiast edytować oryginał w miejscu.
+
+## Ograniczenia możliwości
+
+| Ograniczenie | Co oznacza |
+|---|---|| Odwrócenie jest nowym zapisem, a nie edycją w miejscu | Korekty księgują nowy zapis odwracający z zamienionymi debetami i kredytami. Nie ma anulowania ani usuwania już zaksięgowanego zapisu. |
+| Walidacja wymiarów zależy od konfiguracji księgi | Kombinacja wymiarów finansowych nieprawidłowa dla struktury kont kończy się niepowodzeniem w walidacji samego D365 F&O, co jest pokazywane jako wiersz `error`, a nie wychwytywane wcześniej przez PlaidCloud. |
+
+## Powiązane
+
+- [Połączenie z Dynamics 365 Finance & Operations](/pl/guides/connections/dynamics-365-fo/) — pełne omówienie konfiguracji, podglądu i księgowania
+- [Złącze REST Dynamics 365 F&O](/pl/reference/connectors/rest/dynamics-365-fo/)
+- [Kroki D365 F&O](/pl/reference/workflow-steps/dynamics-365-fo/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/)

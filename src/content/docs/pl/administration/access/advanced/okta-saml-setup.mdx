@@ -1,0 +1,108 @@
+---
+title: Konfiguracja SAML w Okta na potrzeby jednokrotnego logowania
+description: Skonfiguruj Okta jako dostawcę tożsamości SAML dla jednokrotnego logowania w PlaidCloud, aby umożliwić członkom bezpieczne uwierzytelnianie federacyjne.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/okta-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud obsługuje jednokrotne logowanie (SSO) przez SAML 2.0. Ten przewodnik opisuje konfigurację Okta jako dostawcy tożsamości SAML, tak aby użytkownicy Twojej organizacji mogli uwierzytelniać się przez Okta podczas uzyskiwania dostępu do PlaidCloud.
+
+<Aside>Konfiguracją po stronie PlaidCloud zajmuje się zespół PlaidCloud. Twoim zadaniem jest skonfigurowanie aplikacji SAML w Okta i przekazanie PlaidCloud **Identity Provider Metadata URL**. Pomoc techniczna PlaidCloud dokończy pozostałą konfigurację.</Aside>
+
+## Wymagania wstępne
+
+- Konto Okta z rolą **Administrator** (Super Admin lub Org Admin)
+- Kontakt z pomocą techniczną PlaidCloud w celu skoordynowania konfiguracji i wymiany wartości konfiguracyjnych
+
+## Przegląd
+
+Proces konfiguracji polega na wymianie metadanych SAML między dwiema stronami:
+
+1. **Ty konfigurujesz** aplikację SAML w Okta i przekazujesz PlaidCloud swój Identity Provider Metadata URL.
+2. **PlaidCloud przekazuje Ci** identyfikator Service Provider (SP) Entity ID oraz Single Sign-On URL (ACS URL), potrzebne do ukończenia konfiguracji aplikacji Okta.
+
+Skontaktuj się z pomocą techniczną PlaidCloud, aby uzyskać wartości SP przed ukończeniem kroku 3 poniżej.
+
+## Krok 1: Utwórz nową aplikację SAML
+
+1. Zaloguj się do [konsoli administracyjnej Okta](https://your-org.okta.com/admin).
+2. W lewym panelu bocznym przejdź do **Applications** > **Applications**.
+3. Kliknij **Create App Integration**.
+4. Jako metodę logowania wybierz **SAML 2.0**.
+5. Kliknij **Dalej**.
+6. Wpisz nazwę aplikacji (np. `PlaidCloud SSO`) i opcjonalnie prześlij logo.
+7. Kliknij **Dalej**.
+
+## Krok 2: Skonfiguruj ustawienia SAML
+
+<Aside>Przed ukończeniem tego kroku potrzebujesz od PlaidCloud wartości **SP Entity ID** i **Single Sign-On URL (ACS URL)**. Skontaktuj się z pomocą techniczną PlaidCloud, aby je uzyskać.</Aside>
+
+1. W polu **Single sign-on URL** wpisz adres ACS URL przekazany przez PlaidCloud.
+2. W polu **Audience URI (SP Entity ID)** wpisz SP Entity ID przekazany przez PlaidCloud.
+3. Pozostaw pole **Default RelayState** puste, chyba że pomoc techniczna PlaidCloud zaleci inaczej.
+4. Ustaw **Name ID format** na **EmailAddress**.
+5. Ustaw **Application username** na **E-mail**.
+6. Kliknij **Dalej**.
+
+## Krok 3: Skonfiguruj instrukcje atrybutów
+
+Na tym samym ekranie ustawień SAML dodaj instrukcje atrybutów, aby PlaidCloud otrzymywał dane użytkownika w asercji SAML.
+
+### Atrybuty użytkownika
+
+W sekcji **Attribute Statements** dodaj następujące pozycje:
+
+| Nazwa | Format nazwy | Wartość |
+|---|---|---|
+| `email` | Nieokreślony | `user.email` |
+| `firstName` | Nieokreślony | `user.firstName` |
+| `lastName` | Nieokreślony | `user.lastName` |
+
+### Atrybuty grup (opcjonalnie)
+
+Jeśli Twoja konfiguracja PlaidCloud korzysta z przypisywania ról zabezpieczeń na podstawie grup, dodaj instrukcję atrybutu grupy, aby członkostwo w grupach było przekazywane w asercji.
+
+W sekcji **Group Attribute Statements** dodaj następujące pozycje:
+
+| Nazwa | Format nazwy | Filtr |
+|---|---|---|
+| `groups` | Nieokreślony | **Matches regex** — `.*` (lub bardziej szczegółowy wzorzec ograniczający uwzględniane grupy) |
+
+<Aside>Ustal z pomocą techniczną PlaidCloud, jaka nazwa i filtr atrybutu grupy są oczekiwane, aby przypisywanie ról zabezpieczeń na podstawie grup działało poprawnie w PlaidCloud.</Aside>
+
+Kliknij **Dalej**, następnie wybierz **I'm an Okta customer adding an internal app** i kliknij **Finish**.
+
+## Krok 4: Pobierz i prześlij Identity Provider Metadata URL
+
+Po utworzeniu aplikacji znajdź adres URL metadanych i prześlij go do PlaidCloud, aby dokończyć integrację.
+
+1. Na stronie szczegółów aplikacji wybierz kartę **Sign On**.
+2. Przewiń do sekcji **SAML 2.0** i kliknij **More details**.
+3. Skopiuj **Metadata URL** (w formacie `https://your-org.okta.com/app/your-app-id/sso/saml/metadata`).
+
+**Prześlij ten Metadata URL do pomocy technicznej PlaidCloud.** To adres URL Entity Descriptor, którego PlaidCloud potrzebuje do skonfigurowania relacji zaufania po stronie dostawcy tożsamości. Gdy PlaidCloud otrzyma ten adres, zespół dokończy konfigurację Keycloak i powiadomi Cię, że SSO jest gotowe do testów.
+
+## Krok 5: Przypisz użytkowników i grupy do aplikacji
+
+Uwierzytelniać się w ramach tej konfiguracji SSO będą mogli tylko użytkownicy i grupy przypisani do aplikacji.
+
+1. Na stronie szczegółów aplikacji wybierz kartę **Assignments**.
+2. Kliknij **Przypisz** i wybierz **Assign to People** lub **Assign to Groups**.
+3. Wybierz użytkowników lub grupy, które powinny mieć dostęp SSO do PlaidCloud, i kliknij **Przypisz**.
+4. Kliknij **Gotowe**.
+
+## Testowanie integracji
+
+Gdy PlaidCloud potwierdzi, że konfiguracja jest ukończona:
+
+1. Przejdź do obszaru roboczego PlaidCloud Twojej organizacji (np. `https://my-workspace.plaid.cloud`).
+2. Zostaniesz przekierowany na stronę logowania Okta.
+3. Zaloguj się, używając poświadczeń Okta.
+4. Po pomyślnym uwierzytelnieniu zostaniesz przekierowany z powrotem do PlaidCloud.
+
+Jeśli wystąpią błędy, sprawdź, czy:
+- ACS URL i SP Entity ID dokładnie odpowiadają wartościom przekazanym przez PlaidCloud
+- użytkownik próbujący się zalogować jest przypisany do aplikacji w Okta
+- Name ID format jest ustawiony na **EmailAddress**, a Application username na **E-mail**
+- Metadata URL przesłany do PlaidCloud jest dostępny

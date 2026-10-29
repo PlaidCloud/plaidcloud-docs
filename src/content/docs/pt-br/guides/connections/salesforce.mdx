@@ -1,0 +1,158 @@
+---
+title: Conectar ao Salesforce
+description: Configure uma conexão do Salesforce com um External Client App e o fluxo de credenciais de cliente OAuth, escolha o usuário de integração Run As, teste a conexão e extraia objetos de CRM para tabelas de projeto.
+sidebar:
+  order: 21
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/salesforce.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud a uma organização do Salesforce para extrair objetos padrão e personalizados (Contas, Oportunidades, Leads, Campanhas e os seus próprios objetos `__c`) para tabelas de projeto, com a lista de objetos, a lista de campos e o tipo de cada coluna lidos da própria organização.
+
+O lado do Salesforce é trabalho de um administrador e está no caminho crítico: um **External Client App**, um usuário de integração para o aplicativo **executar como** e a chave e o segredo do consumidor do aplicativo. Este guia aborda essa configuração e, em seguida, a conexão do PlaidCloud, o teste e a primeira extração.
+
+## Pré-requisitos
+
+No Salesforce, você precisa de:
+
+- Um administrador que possa criar aplicativos e editar suas políticas em **Configuração**.
+- Um usuário do Salesforce para a integração executar como. Use um usuário de integração dedicado em vez do login de uma pessoa: tudo o que o PlaidCloud lê fica limitado a esse usuário, e a conta de uma pessoa muda conforme o cargo dela muda.
+- O perfil ou conjunto de permissões desse usuário com **API Enabled**.
+
+No PlaidCloud, você precisa de permissão para criar conexões (**Tools > Connections**).
+
+## Encontrar o host do My Domain
+
+Toda organização do Salesforce tem um My Domain, e o nome dele é o host ao qual o PlaidCloud se conecta. No Salesforce, acesse **Configuração** e pesquise **My Domain** no Quick Find; a página mostra o nome do seu domínio. O seu host é esse nome mais `.my.salesforce.com`:
+
+| Organização | Host |
+|---|---|
+| Produção e Developer Edition | `mycompany.my.salesforce.com` |
+| Sandbox | `mycompany--uat.sandbox.my.salesforce.com`: o nome do domínio, `--`, o nome do sandbox e depois `.sandbox.my.salesforce.com` |
+
+Use o host My Domain da própria organização, não `login.salesforce.com` nem `test.salesforce.com`. O fluxo de credenciais de cliente se autentica em uma organização específica, e os hosts de login genéricos não indicam nenhuma.
+
+<Aside type="tip">
+Sandboxes e produção são organizações separadas, com aplicativos e credenciais separados. Configure ambos da mesma forma e mantenha-os em ambientes diferentes do PlaidCloud em uma única conexão, para que o mesmo fluxo de trabalho leia o sandbox no seu ambiente de desenvolvimento e a produção no ambiente de produção.
+</Aside>
+
+## Criar um External Client App
+
+<Aside type="caution">
+Crie um **External Client App**, não um Connected App. O Salesforce desativou por padrão a criação de novos Connected Apps, tanto pela interface quanto pela Metadata API, de forma gradual até o Spring '26. Um administrador que procurar o conhecido botão "New Connected App" não o encontrará. O Suporte do Salesforce pode reativá-lo mediante um caso e informa que essa opção também será removida em uma versão futura; portanto, construa a integração sobre um External Client App. Os Connected Apps que você já tem continuam funcionando.
+</Aside>
+
+<Steps>
+
+1. Em **Configuração**, pesquise **External Client App Manager** no Quick Find e clique em `New External Client App`.
+
+2. Preencha **External Client App Name** (por exemplo, `PlaidCloud Integration`), o **API Name** preenchido automaticamente e um **Contact Email**. Deixe **Distribution State** como `Local`.
+
+3. Em **API (Enable OAuth)**, ative o OAuth. O formulário exige uma **Callback URL**, embora este fluxo nunca redirecione para lugar nenhum; `https://localhost/` é um marcador adequado.
+
+4. Adicione o escopo OAuth **Manage user data via APIs (api)**. É o escopo pelo qual as APIs REST e Bulk fazem a leitura.
+
+5. Crie o aplicativo.
+
+6. Abra o aplicativo, vá para as suas **Policies** e clique em `Edit`. Habilite o **client credentials flow** e defina **Run As** como o seu usuário de integração.
+
+7. Na mesma página, defina **Permitted Users** como `Admin approved users are pre-authorized` e, em seguida, atribua o aplicativo ao usuário Run As por meio do perfil ou de um conjunto de permissões desse usuário.
+
+8. Vá para **Settings > OAuth Settings** do aplicativo e abra **Consumer Key and Secret**. O Salesforce verifica a sua identidade e depois mostra os dois valores por alguns minutos. Copie-os para um local seguro: você os colará no PlaidCloud em seguida, e o segredo não poderá ser lido de volta no PlaidCloud depois.
+
+</Steps>
+
+<Aside type="note">
+Um aplicativo recém-criado leva alguns minutos para ficar utilizável em toda a infraestrutura do Salesforce. Se o primeiro teste de conexão falhar imediatamente após a criação do aplicativo, aguarde alguns minutos e teste novamente antes de alterar qualquer coisa.
+</Aside>
+
+## Escolher o usuário Run As
+
+O fluxo de credenciais de cliente não tem login interativo; portanto, o aplicativo carrega uma única identidade do Salesforce: o usuário indicado na configuração **Run As**. Tudo o que o PlaidCloud lê por meio desta conexão é lido como esse usuário.
+
+Provisione esse usuário com cuidado:
+
+- **Dê a ele acesso aos objetos que você pretende extrair**, por meio do perfil ou de um conjunto de permissões: acesso de leitura aos objetos e leitura em nível de campo nos campos que você pretende selecionar.
+- **Dê a ele o compartilhamento de que precisa.** O acesso em nível de linha vem do modelo de compartilhamento da organização: hierarquia de funções, regras de compartilhamento e propriedade dos registros. Um usuário de integração em um nível baixo da hierarquia vê uma fração dos registros que um usuário de operações de vendas vê.
+- **Dê a ele API Enabled**, ou o fluxo não consegue se autenticar.
+- **Mantenha-o fora da administração do dia a dia.** Um usuário cujas permissões mudam por motivos alheios muda o que cada extração salva retorna.
+
+Confirme qual usuário você realmente obteve: **Testar conexão** do PlaidCloud informa o nome do usuário Run As, que é a maneira mais barata de detectar um aplicativo apontado para a identidade errada antes que ele envie dados.
+
+## O usuário Run As delimita tudo
+
+Esta é a parte que vale a pena ler duas vezes, porque as duas formas pelas quais um usuário Run As limita uma extração falham em direções opostas.
+
+**O compartilhamento em nível de linha é silencioso.** Os registros que o usuário Run As não pode ver simplesmente não aparecem no resultado. Não há erro, aviso nem contagem do que foi omitido: uma extração de 40.000 linhas de um objeto com 250.000 registros parece exatamente uma extração completa de um objeto com 40.000 registros. Nada no PlaidCloud consegue detectar a diferença, porque o Salesforce nunca informa que as linhas existem. Portanto, quando a contagem de linhas parecer baixa, verifique a função, as regras de compartilhamento e a propriedade dos registros do usuário Run As antes de procurar em qualquer outro lugar. Compare com um relatório executado no Salesforce **como esse mesmo usuário**, não como você.
+
+**A segurança em nível de campo é ruidosa.** O PlaidCloud nomeia explicitamente cada campo selecionado na consulta que envia; portanto, um campo que o usuário Run As não pode ler faz toda a extração falhar com um erro que nomeia esse campo. Nada parcial é gravado, e nada volta em branco sem ser detectado.
+
+Essa assimetria tem uma consequência prática: **uma etapa salva que funciona deixa de ser executada no momento em que alguém revoga a leitura em nível de campo de um campo selecionado.** A etapa não mudou e o PlaidCloud não mudou; o que mudou foi o acesso do usuário Run As aos campos. Quando uma extração que funcionou por meses falha de repente nomeando um único campo, foi isso que aconteceu: restaure o campo para o usuário Run As ou desmarque o campo na etapa.
+
+<Aside type="caution">
+Os campos criptografados falham do modo inverso. Quando o usuário Run As não tem **View Encrypted Data**, o Salesforce retorna caracteres mascarados em vez de um erro: linhas de aparência real preenchidas com asteriscos. O PlaidCloud recusa totalmente os campos `encryptedstring` em vez de gravar isso; por isso, eles nunca são oferecidos para extração.
+</Aside>
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **REST - Salesforce** no menu.
+
+3. Dê à conexão um **Nome da conta**, por exemplo, `Salesforce Prod`.
+
+4. Defina **Host ou endereço IP** como o host My Domain da organização indicado acima.
+
+5. Cole a chave do consumidor do aplicativo em **ID do cliente** e o segredo do consumidor em **Segredo do cliente**.
+
+6. Defina o **Modelo de segurança** para controlar quem no espaço de trabalho pode usar a conexão, deixe **Ativo (permitir acesso)** marcado e clique em `Create`.
+
+</Steps>
+
+## Testar a conexão
+
+Clique em `Test Connection`. O PlaidCloud realiza a troca real de token e informa três itens:
+
+| Informado | O que verificar |
+|---|---|
+| Organization id | Que seja a organização que você pretendia: a forma mais rápida de detectar credenciais de sandbox salvas em um ambiente de produção. |
+| Versão da API | A versão mais alta que esta organização suporta. As extrações são executadas na versão fixada na conexão, não necessariamente nesta. |
+| Usuário Run As | Que seja o usuário de integração que você provisionou, e não uma pessoa nem um administrador. |
+
+Uma falha de autenticação pede que você insira novamente o ID e o segredo do cliente, porque o segredo não pode ser lido de volta depois de salvo.
+
+## Extrair o primeiro objeto
+
+<Steps>
+
+1. Adicione uma etapa **Salesforce: Consultar objeto** a um fluxo de trabalho.
+
+2. Defina **Conexão do Salesforce** e **Ambiente** e, em seguida, escolha **Objeto**; comece com `Account`.
+
+3. Marque alguns campos. A coluna **Gravado como** mostra o tipo que cada coluna realmente terá, obtido dos metadados de campo do próprio Salesforce. `Id` é sempre incluído.
+
+4. Defina **Tabela de destino** como uma tabela temporária e execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que o aplicativo, o acesso do usuário Run As e o host estão corretos. Antes de construir sobre a saída, leia a página de referência da própria etapa: uma janela de extração é executada uma única vez, as exclusões não são rastreadas, alguns tipos de campo não podem ser extraídos de forma alguma e uma extração recorrente sem supervisão nomeia cada janela por meio de uma variável de fluxo de trabalho em sua **Tag da janela**.
+
+## Solução de problemas
+
+| O que você vê | Causa | Solução |
+|---|---|---|
+| A autenticação falha logo após você criar o aplicativo | O aplicativo ainda não terminou de se propagar pela infraestrutura do Salesforce. | Aguarde alguns minutos e teste novamente antes de alterar qualquer coisa. |
+| A autenticação falha com as credenciais que você acabou de colar | Uma chave ou segredo do consumidor copiado com espaços no início ou no fim, ou um segredo de outro aplicativo. | Copie novamente os dois em **Settings > OAuth Settings > Consumer Key and Secret** e cole-os de novo. |
+| A autenticação falha e o aplicativo parece correto | As políticas do aplicativo nunca foram editadas; portanto, o client credentials flow não está habilitado ou não tem usuário **Run As**. | Abra as **Policies** do aplicativo, clique em `Edit`, habilite o client credentials flow e defina **Run As**. |
+| A autenticação falha a partir do PlaidCloud, mas o mesmo aplicativo funciona na sua máquina | **Restrições de IP.** Os Login IP Ranges no perfil do usuário Run As, ou um aplicativo sem relaxamento de IP, rejeitam a troca de token, e o Salesforce não dá nenhuma pista de que esse é o motivo. | Relaxe a imposição de IP para este aplicativo ou adicione os endereços de saída do PlaidCloud aos Login IP Ranges do perfil. Peça ao suporte do PlaidCloud os endereços do seu tenant. |
+| Uma conexão que funcionava deixa de se autenticar | O usuário Run As foi desativado, o aplicativo foi revogado ou uma política de sessão ou de IP mudou na organização. | Verifique o usuário e o aplicativo no Salesforce. O PlaidCloud descarta um token obsoleto e tenta novamente uma vez por conta própria; portanto, uma falha persistente indica uma mudança real na organização. |
+| Uma extração falha nomeando um campo | O usuário Run As perdeu a leitura em nível de campo de um campo selecionado. | Consulte [O usuário Run As delimita tudo](#o-usuário-run-as-delimita-tudo). |
+
+## Relacionados
+
+- [Salesforce: Consultar objeto](/pt-br/reference/workflow-steps/salesforce/query-salesforce-object/): a referência completa da etapa, incluindo janelas de extração e tipos de campo recusados
+- [Conector REST do Salesforce](/pt-br/reference/connectors/rest/salesforce/): referência dos campos da conexão
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/): edição, teste, configuração por ambiente e controle de acesso

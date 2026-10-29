@@ -1,0 +1,119 @@
+---
+title: Envoyer des notifications par e-mail HTML à partir de modèles
+description: Générez un e-mail HTML riche à partir d'un modèle Jinja et d'une table de workflow avec l'étape Notify Via Email.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+L'étape [Notify Via Email](/fr/reference/workflow-steps/notifications/notify-via-email/) compose son e-mail sous forme de rapport HTML riche à partir d'un **modèle Jinja** rendu sur une ou plusieurs tables de votre workflow. Vous ajoutez chaque table à l'étape sous la forme d'un **cadre** nommé, et le modèle assemble ces cadres en un seul e-mail. L'étape s'ouvre directement dans l'éditeur Jinja, qui est sa seule surface de création : il n'y a ni zone de corps en texte brut, ni mode vers lequel basculer. Ce guide présente l'éditeur et sa barre d'outils de mise en forme, les cadres que vous ajoutez, les données disponibles dans un modèle, l'assistant `render_table` et les contraintes liées à l'envoi par e-mail.
+
+## L'éditeur Jinja
+
+Ouvrez une étape **Notify Via Email** : elle s'ouvre dans l'éditeur Jinja. Ajoutez un ou plusieurs **cadres** (voir ci-dessous), rédigez votre modèle dans le corps et regardez l'**Aperçu en direct**, à droite, se mettre à jour pendant que vous tapez. **M'envoyer un test** envoie l'e-mail généré à votre propre adresse afin que vous puissiez le vérifier avant de planifier le workflow. Les nouvelles étapes fonctionnent uniquement avec Jinja : il n'y a pas de corps en texte brut à renseigner ni de commutateur entre texte enrichi et texte brut.
+
+<Aside type="note">L'éditeur dispose de son propre moteur de rendu isolé. Sa syntaxe ressemble à celle de [Export Templated](/fr/reference/workflow-steps/export/export-templated/) (Jinja, cadres nommés, assistant `render_table`), mais les deux moteurs ne sont **pas interchangeables**. Un modèle écrit pour l'un ne fonctionnera pas sur l'autre.</Aside>
+
+## La barre d'outils de mise en forme
+
+L'éditeur Jinja propose une barre d'outils pour façonner le modèle sans saisir à la main du code répétitif :
+
+- **Mettre en forme** réindente et normalise l'ensemble du modèle (indentation cohérente, espacement des balises et disposition des blocs Jinja) pour que le modèle que vous avez modifié reste lisible. Il ne fait que reformater ; il ne change jamais ce que le modèle génère.
+- **Insérer** place un extrait prêt à l'emploi au niveau du curseur : un appel `render_table(...)` prérempli pour un cadre, le nom de l'espace de travail `{{ cloud }}`, l'une de vos variables de projet ou de workflow, le nombre de lignes d'un cadre, une boucle `{% for %}` sur les lignes d'un cadre, ainsi que des squelettes if/else et de commentaires.
+- **Format** applique un filtre d'affichage à la valeur située au niveau du curseur : devise, milliers, pourcentage, arrondi et formats de date, ainsi que des assistants de texte (majuscules, minuscules, casse de titre, suppression des espaces) et de liste (longueur, jointure, somme, etc.).
+- **Style** entoure le texte sélectionné d'une mise en forme HTML : gras, italique, souligné, trois tailles de titre, paragraphes, listes à puces et numérotées, citations, liens et sauts de ligne. Chaque option n'émet que du balisage que le filtre d'e-mail conserve (voir [La contrainte du HTML autorisé](#la-contrainte-du-html-autorisé)) : un titre ressort donc comme une ligne en gras plus grande plutôt que comme un `h1`, et le souligné s'appuie sur une balise autorisée.
+
+Chaque bouton se contente d'insérer du texte que vous pourriez saisir vous-même ; servez-vous-en comme point de départ et modifiez librement.
+
+## Ajouter des cadres
+
+Une étape produit un rapport sur des **cadres**, des sélections nommées d'une seule table que vous ajoutez à l'étape. Ajoutez un cadre ou plusieurs ; chacun est rendu dans le même e-mail. Pour chaque cadre, vous indiquez :
+
+- un **Nom du cadre** : le libellé par lequel vous le référencez dans le modèle (`Sales`, `Overdue`, etc.) ;
+- une **table** du contexte du workflow ;
+- éventuellement une **sélection de colonnes**, un filtre **where** et une **agrégation** sur cette table.
+
+Un cadre correspond toujours à une seule table. Joindre ou combiner des tables en un seul cadre n'est pas pris en charge : ajoutez plutôt un second cadre et référencez chacun par son nom.
+
+Chaque cadre est exposé dans le modèle par `frames['<Frame Name>']`, qui contient ses `rows` et ses `columns` (voir ci-dessous).
+
+## Ce qui est disponible dans le modèle
+
+Le modèle expose un ensemble restreint et explicite de variables. Référencer une variable non définie fait échouer le rendu ; n'utilisez donc que ce qui est listé ici :
+
+| Variable | Contenu |
+|---|---|
+| `cloud` | Le nom de l'espace de travail. |
+| `frames` | Un dictionnaire de vos cadres, indexé par nom de cadre. `frames['Sales'].rows` est la liste des objets ligne de ce cadre (un par ligne) ; `frames['Sales'].columns` est sa liste de colonnes, dans l'ordre. |
+| `rows` | Les lignes du premier cadre, une liaison pratique pour qu'un modèle à cadre unique puisse utiliser `rows` directement. |
+| `columns` | Les colonnes du premier cadre, la même liaison pratique que `rows`. |
+| `variables` | Les variables de votre projet et, dans un workflow, celles du workflow, indexées par nom : `variables['Fiscal Year']`. Les variables intégrées `variables['project']`, `variables['model']` et `variables['date']` (l'heure UTC actuelle) y figurent aussi. Utilisez la forme avec indice, car un nom de variable n'est pas forcément un identifiant valide. |
+
+Les valeurs conservent leurs types Python natifs : un `Decimal` reste un `Decimal`, une date reste une date et une colonne nulle arrive sous la forme `None`. Vous pouvez donc les formater et les comparer comme en Python, sans travailler sur du texte converti en chaîne.
+
+## Afficher une table avec `render_table`
+
+Plutôt que d'écrire à la main du balisage `<table>`, appelez la macro `render_table` avec les lignes et les colonnes d'un cadre. Référencez chaque cadre par son nom :
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+Cet appel génère en une fois une table HTML correctement structurée pour ce cadre. Appelez-le une fois par cadre à afficher.
+
+Un modèle à cadre unique peut utiliser les `rows` et `columns` de premier niveau, qui sont liés au premier cadre :
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## Un exemple complet
+
+Ce modèle comporte deux cadres, `Overdue` et `Paid`. Il affiche le nom de l'espace de travail, une courte ligne de synthèse et une table pour chaque cadre :
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Faites pointer chaque cadre vers la table à présenter, et l'e-mail généré affiche une ligne de titre en gras, une synthèse d'une ligne calculée à partir du nombre de lignes et une table par cadre. Avec un seul cadre, vous pourriez écrire le même modèle avec `rows` et `columns` directement.
+
+## La contrainte du HTML autorisé
+
+Chaque e-mail généré passe, avant son envoi, par le même filtre de nettoyage que le reste des e-mails transactionnels de PlaidCloud. Ce filtre supprime tout ce qui ne figure pas dans une courte liste d'éléments autorisés :
+
+- **Balises autorisées** : les balises de table émises par `render_table` (`table`, `tbody`, `tr`, `th`, `td`), plus les balises de texte courantes : `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code` et `a`. Les titres (`h1`–`h6`), `div` et `span` ne figurent **pas** dans la liste : pour un titre, utilisez un `p` contenant un `strong`.
+- **Attributs autorisés** : `class` et `style` uniquement (plus `href` sur `a`).
+- **Pas de `<thead>`.** `render_table` émet `table` / `tbody` / `tr` / `th` / `td` : une ligne d'en-tête est un `tr` de cellules `th` à l'intérieur de `tbody`, et non une section `<thead>` distincte.
+- **Pas de blocs `<style>`** ni de ressources externes : une référence `url(...)` ou un pixel espion est supprimé, tout comme toute autre balise ou tout autre attribut absent de la liste.
+
+En pratique : construisez la structure de votre rapport avec `render_table` et des balises de texte simples, et limitez la mise en forme personnalisée à de simples attributs `style` en ligne. Tout ce qui est plus élaboré (bloc `<style>`, feuille de style externe, polices personnalisées, pixels espions) ne survit pas au nettoyage et n'apparaît pas dans l'e-mail remis.
+
+## Étapes existantes et héritées
+
+Les étapes créées avant la création avec Jinja s'ouvrent directement dans l'éditeur, avec leur ancien corps déjà converti. Un corps standard en texte brut, construit à partir de `{project}`, `{model}`, `{cloud}` et `{date}`, est réécrit sous forme Jinja (`{{ project }}`, `{{ cloud }}`, etc.) pour que vous poursuiviez la modification à partir de là.
+
+Un corps que le convertisseur ne peut pas réécrire en toute sécurité (jeton non standard ou accolades non équilibrées) reste dans une zone de secours en texte brut. Cette étape continue d'envoyer exactement comme auparavant, avec l'ancienne substitution de jetons `{token}` ; seule sa création reste en texte brut. Les nouvelles étapes n'empruntent jamais ce chemin.
+
+L'éditeur vérifie les noms de variables pendant la saisie et signale ceux qui ne se résoudront pas. Un `{{ project }}`, `{{ model }}` ou `{{ date }}` nu, hérité d'un ancien corps, est signalé, car ces noms ne se résolvent plus que par `variables` : utilisez `variables['project']`, `variables['model']` ou `variables['date']`, remplacez le jeton par une colonne de l'un de vos cadres, ou supprimez-le avant d'enregistrer.
+
+## Sécurité et sorties réseau
+
+Les lectures de cadres passent par la même sécurité au niveau des lignes que toute autre lecture du projet : un cadre ne renvoie que les lignes que l'utilisateur ou le principal d'automatisation qui exécute l'étape est autorisé à voir. Les limites d'envoi (destinataires, taille et débit) sont inchangées par rapport au chemin en texte brut ; le mode modèle ne les assouplit ni n'en ajoute.
+
+## Étapes suivantes
+
+- [Référence de Notify Via Email](/fr/reference/workflow-steps/notifications/notify-via-email/) : configuration champ par champ
+- [Export Templated](/fr/reference/workflow-steps/export/export-templated/) : le moteur de forme similaire mais distinct pour générer des documents à partir de tables
+- [Gérer les variables de workflow](/fr/guides/workflows/manage-workflow-variables/) : la substitution `{var}` que les anciens corps en texte brut utilisent encore

@@ -1,0 +1,136 @@
+---
+title: Crie um modelo de alocação
+description: Tutorial completo — distribua um conjunto de custos entre consumidores usando dados de direcionadores e uma hierarquia.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/build-an-allocation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Este tutorial mostra como criar uma alocação de custos completa no PlaidCloud. Ao final, você terá um modelo funcional que distribui um conjunto de custos por uma dimensão de destino usando dados de direcionadores — a base do custeio baseado em atividades, do chargeback de TI e da distribuição de serviços compartilhados.
+
+Leva cerca de uma hora. As alocações são o recurso mais distintivo do PlaidCloud; esta é a melhor maneira de entender o modelo.
+
+## O que você vai construir
+
+Distribuir o custo total do departamento de TI entre unidades de negócio, ponderado pelo número de usuários de cada unidade.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Pré-requisitos
+
+- Um espaço de trabalho do PlaidCloud ([inicie um teste gratuito](https://app.plaidcloud.com) se você não tiver um)
+- Um projeto que contenha ou possa importar:
+  - **Valores a alocar** — custo de TI por mês, total ou por subcategoria
+  - **Dados de direcionadores** — número de usuários por unidade de negócio
+  - **Uma dimensão** — hierarquia de unidades de negócio (unidades → divisões → empresa)
+- Familiaridade com [Conceitos](/pt-br/get-started/concepts/) — espaço de trabalho, projeto, fluxo de trabalho, dimensão, alocação
+
+<Aside>
+Se você ainda não tem os dados de origem, pode preparar pequenos arquivos CSV e seguir [Carregue, transforme e publique dados](/pt-br/get-started/tutorials/load-and-transform-data/) para importá-los primeiro.
+</Aside>
+
+## Etapa 1: configure as entradas
+
+Confirme que você tem estes três itens no seu projeto:
+
+| Objeto | O que contém |
+|---|---|
+| Tabela `it_cost` | Custo total de TI (por exemplo, uma linha por mês com o valor) |
+| Tabela `users_by_bu` | Uma linha por unidade de negócio com uma coluna `user_count` |
+| Dimensão `business_units` | Hierarquia de unidades de negócio, com nós folha correspondentes aos nomes das unidades em `users_by_bu` |
+
+Se algo estiver faltando, carregue por meio de um fluxo de trabalho antes de continuar.
+
+## Etapa 2: crie o fluxo de trabalho de alocação
+
+<Steps>
+
+1. Abra o projeto e vá para a guia **Fluxos de trabalho**.
+2. Clique em **Novo fluxo de trabalho**. Dê a ele o nome "IT Cost Allocation".
+3. Abra o novo fluxo de trabalho no Workflow Explorer.
+
+</Steps>
+
+## Etapa 3: adicione a etapa de alocação
+
+<Steps>
+
+1. Adicione uma nova etapa da categoria **Allocation**. Escolha **Allocation Rules** — a opção mais flexível.
+2. Configure a origem:
+   - **Tabela de origem**: `it_cost`
+   - **Coluna de valor de origem**: a coluna com o valor em dólares
+3. Configure o direcionador:
+   - **Tabela de direcionadores**: `users_by_bu`
+   - **Coluna de valor do direcionador**: `user_count`
+   - **Coluna de correspondência do direcionador**: a coluna com o nome da unidade de negócio
+4. Configure o destino:
+   - **Dimensão de destino**: `business_units`
+   - **Nível de destino**: escolha para qual nível da hierarquia alocar (geralmente o nível folha)
+5. Configure a saída:
+   - **Tabela de resultado**: `it_cost_allocated`
+
+</Steps>
+
+## Etapa 4: execute e inspecione
+
+<Steps>
+
+1. Execute a etapa.
+2. Abra a guia **Tabelas** e clique em `it_cost_allocated`.
+3. Cada linha representa uma fatia de custo destinada a uma unidade de negócio. As colunas incluem:
+   - O valor de origem (por exemplo, o custo total de TI do mês)
+   - A unidade de negócio de destino
+   - O valor do direcionador usado (o número de usuários dessa unidade)
+   - A taxa de alocação (número de usuários ÷ número total de usuários em todas as unidades)
+   - O valor alocado (origem × taxa)
+
+</Steps>
+
+## Etapa 5: verifique os números
+
+Três verificações que toda alocação deve passar:
+
+1. **Reconciliação total** — a soma dos valores alocados é igual ao total de origem (dentro da tolerância de arredondamento)
+2. **Soma das taxas** — as taxas de alocação somam 1,0 (= 100%) por linha de origem
+3. **Cobertura** — toda unidade de negócio da sua dimensão que deveria receber uma fatia realmente recebeu uma
+
+O guia [Resultados da alocação](/pt-br/guides/allocations/results/allocation-results/) tem uma lista de verificação completa.
+
+Se algo estiver errado, os problemas mais comuns são:
+- **Dados de direcionador ausentes** — uma unidade de negócio na dimensão sem linha em `users_by_bu` não receberá alocação
+- **Nomes divergentes** — a tabela de direcionadores diz "Sales East", mas a dimensão diz "Sales-East" (espaçamento/capitalização diferentes não correspondem)
+- **Direcionadores zero ou negativos** — produzem alocações zero ou inesperadas
+
+## Etapa 6: use os resultados
+
+A tabela de resultado é como qualquer outra tabela do PlaidCloud — ela pode ser:
+
+- **Unida** a outras tabelas em etapas posteriores do fluxo de trabalho (por exemplo, para adicionar uma coluna de custo totalmente carregado ao razão geral)
+- **Publicada** para painéis ou consumidores externos
+- **Realocada** como origem para a próxima rodada de alocações (em modelos em cascata)
+
+## Variações para experimentar
+
+Depois que o modelo básico funcionar, extensões comuns:
+
+- **Vários conjuntos de custos** — substitua a linha única de `it_cost` por uma linha por subcategoria de TI (computação, armazenamento, licenciamento) e aloque cada uma de forma independente com direcionadores diferentes
+- **Vários períodos** — particione a origem por mês e produza um resultado de alocação por período
+- **Alocações em camadas** — aloque o overhead divisional às unidades, depois os custos das unidades aos produtos e, em seguida, os custos dos produtos aos clientes. Cada camada é sua própria etapa de alocação
+- **Alocações recursivas** — quando serviços compartilhados consomem uns aos outros (a TI atende o RH, o RH atende a TI). Veja [Alocações recursivas](/pt-br/guides/allocations/setup/recursive-allocations/)
+- **Atribuição baseada em regras** — quando a distribuição depende de mais de um direcionador e varia por origem, crie uma dimensão de alocação com o construtor guiado em vez de ligar uma única tabela de direcionadores. Veja [Criação de uma dimensão de alocação](/pt-br/guides/dimensions/dimensions/#criando-uma-dimensão-de-alocação)
+
+## Próximos passos
+
+- [Guia de alocações](/pt-br/guides/allocations/) — todas as opções e escolhas de configuração
+- [Marcação baseada em regras](/pt-br/guides/allocations/getting-started/rule-based-tagging/) — regras de alocação diferentes por linha de origem
+- [Referência das etapas de alocação](/pt-br/reference/workflow-steps/allocation/) — todas as etapas de fluxo de trabalho da categoria Allocation
+- [Guia de dimensões](/pt-br/guides/dimensions/) — como construir as hierarquias que as alocações usam como destino

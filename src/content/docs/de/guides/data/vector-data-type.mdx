@@ -1,0 +1,202 @@
+---
+title: Vektor-Datentyp
+description: "Speichern Sie vorberechnete Embeddings mit dem Spaltendatentyp Vektor in einer Projekttabelle, legen Sie die erwartete Breite fest und finden Sie mit einem Schritt „KI: Vektorsuche“ die nächstgelegenen Zeilen zu einem Abfragevektor."
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/vector-data-type.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Vektor** ist ein Spaltendatentyp für vorberechnete Embeddings. Eine Vektorspalte enthält pro Zeile ein Array
+von Gleitkommazahlen – die Ausgabe des Embedding-Modells, das Sie ohnehin verwenden – in einer
+gewöhnlichen Projekttabelle, in derselben Zeile wie der Text, die Schlüssel, Beträge und Dimensionen, die ihn beschreiben.
+Da es sich um eine gewöhnliche Spalte in einer gewöhnlichen Tabelle handelt, lässt sie sich mit Ihren Faktentabellen verknüpfen und wird
+mit denselben Import- und Transformationsschritten geladen wie jede andere Spalte. Es gibt keinen separaten Vektorspeicher,
+den Sie bereitstellen, befüllen oder mit Ihren übrigen Daten abgleichen müssten.
+
+Ein Schritt **KI: Vektorsuche** findet anschließend die Zeilen, die einem oder mehreren Abfragevektoren am nächsten liegen, sodass
+eine Ähnlichkeitssuche ein Schritt wie jeder andere in einem Workflow ist.
+
+<Aside type="caution">
+Vektor erfordert **Lakehouse v2 (StarRocks)**. Auf jeder anderen Engine wird der Typ in den
+Datentyplisten nicht angeboten, und die Anforderung, dort eine Vektorspalte zu erstellen, wird unter Nennung des Typs abgelehnt.
+</Aside>
+
+<Aside type="note">
+PlaidCloud speichert und durchsucht Vektoren, erzeugt sie aber nicht. Berechnen Sie Ihre Embeddings mit dem
+Modell Ihrer Wahl und laden Sie die resultierenden Arrays wie alle anderen Daten.
+</Aside>
+
+
+## Eine Vektorspalte deklarieren
+
+**Vektor** erscheint in den Datentyplisten in der Gruppe **Halbstrukturiert**, neben JSON und
+Bitmap – in der Zuordnung der Ausgabespalten eines Workflow-Schritts und in den Spalteneigenschaften einer Tabelle. Als *Quell*-Datentyp
+eines Importschritts wird er nicht angeboten: Die Werte einer Datei kommen als Liste von Zahlen an und landen
+in einer Spalte, die bereits als Vektor typisiert ist. Er wird auch dort nicht angeboten, wo ein einzelner skalarer Typ erforderlich ist,
+etwa beim deklarierten Typ einer Workflow-Variable.
+
+Der Typ selbst hat keine Dimension. Statt einer Familie von Typen, einer pro Breite, gibt es einen
+Vektortyp und eine Deklaration pro Spalte, wie breit ihre Vektoren sind.
+
+### Vektorbreite
+
+Öffnen Sie das Detailfenster der Spalten einer Tabelle, wählen Sie die Vektorspalte aus und legen Sie **Vektorbreite** auf die Anzahl
+der Werte fest, die jedes Embedding enthält – 768, 1024, 1536, je nachdem, was Ihr Modell erzeugt. Das Feld erscheint bei
+einer Vektorspalte in einem Lakehouse-v2-Projekt (StarRocks) und nirgendwo sonst.
+
+Die deklarierte Breite wird auf jedem Ladeweg durchgesetzt. Eine Zeile, deren Vektor eine andere Länge hat, wird
+abgelehnt, bevor irgendetwas geschrieben wird. Die Ablehnung nennt die Datei, die Spalte, die Zeile, die gefundene Länge und die von Ihnen
+deklarierte Breite, sodass Sie genau wissen, welcher Wert abweicht und um wie viel – und bei einem
+Dateiladen werden die Zeilen ab 1 über die Datei gezählt. So wird aus einer abgeschnittenen Datei oder einem gewechselten Embedding-Modell eine
+fehlgeschlagene Ausführung, die Sie nachvollziehen können.
+
+Die Prüfung deckt jeden Weg ab, auf dem Embeddings ankommen:
+
+* Ein **Parquet-Import**.
+* Ein **REST-Konnektor** – einschließlich QuickBooks, Xero, Sage und Monday.com.
+* Ein **Singer-Tap**.
+* Eine **Abfrage gegen eine Remote-Datenbank**, die direkt gegen die Quelle ausgeführt wird.
+* Ein **Workflow-Schritt, der einen Frame in die Tabelle schreibt**.
+* Ein **Archivimport** oder eine **Archivwiederherstellung**, wobei die Ablehnung die Archivdatei nennt.
+* Ein **Tabellenbündel-Import**. Ein Bündelexport schreibt eine Vektorspalte als echten Vektor, sodass ein Bündel-Roundtrip
+  die Breite erhält.
+
+Zwei Dinge fallen nicht darunter:
+
+* **Ein CSV-Import wird nicht geprüft und kann es auch nicht werden.** Die Konvertierung wandelt das Array in Text um, bevor eine
+  Breite untersucht werden könnte, daher ist CSV der einzige Weg, der eine abweichende Breite in die Spalte bringen kann.
+* **Zeilenweise Schreibvorgänge** – das Speichern einzelner Zeilen oder Datensätze und ein schlüsselbasierter Konnektor, der eine Zeile schreibt – werden
+  geprüft, wenn der Schreibvorgang erkennen kann, dass die Spalte ein Vektor ist. Das ist der Normalfall, aber keine
+  bedingungslose Garantie.
+
+Eine Breite, die an einer Spalte verbleibt, die die Tabelle nicht mehr als Vektor typisiert, wird nicht angewendet. Typisieren Sie die Spalte neu,
+und die Deklaration bestimmt nicht mehr, was in ihr landet.
+
+Das ist wichtig, weil eine Spalte, deren Zeilen unterschiedliche Breiten enthalten, nicht durchsuchbar ist. Eine Vektorsuche
+darüber schlägt mit einem rohen Fehler der zugrunde liegenden Engine fehl statt mit einer Meldung, die die Spalte nennt. Wenn Sie
+Embeddings als CSV laden, sorgen Sie also dafür, dass die Datei die deklarierte Breite erzeugt – oder stellen Sie das Array als
+Parquet bereit und importieren Sie dieses stattdessen, dann läuft die Prüfung für Sie.
+
+Deklarieren Sie die Breite vor dem Laden. Die Vektorbreite ist eine ganze Zahl ab 1, und es gibt
+keinen leeren Wert, zu dem Sie zurückkehren könnten – das Leeren des Felds stellt den gespeicherten Wert wieder her –, betrachten Sie die Deklaration daher als
+Teil des Spaltenentwurfs.
+
+Die Breite ist auch die Grundlage einer Suche. Ist für eine Spalte keine deklariert, muss eine Suche eine Zeile
+abtasten, um herauszufinden, wie breit die gespeicherten Vektoren sind, bevor sie eine Abfrage damit vergleichen kann.
+
+
+## Vektoren laden
+
+Laden Sie eine Vektorspalte mit den Standard-Import- und -Transformationsschritten. Eine Parquet-Datei, deren Spalte eine
+Liste von 32-Bit-Gleitkommazahlen ist, ist der direkteste Weg: **Parquet importieren** schreibt sie direkt in eine Vektorspalte.
+
+Ein typischer durchgängiger Ablauf, ausschließlich mit Standardschritten:
+
+1. **Parquet importieren** (oder ein anderer Importschritt) – laden Sie die Embeddings und ihre Geschäftsschlüssel in eine
+   Tabelle, deren Embedding-Spalte als Vektor typisiert ist und für die die Vektorbreite deklariert wurde.
+2. **Table Inner Join**-Schritt – verknüpfen Sie diese Tabelle über den Geschäftsschlüssel mit der Fakten- oder Referenztabelle, die die Embeddings beschreiben.
+3. **KI: Vektorsuche** – finden Sie die nächstgelegenen Zeilen zu Ihren Abfragevektoren und schreiben Sie die Treffer in eine
+   Zieltabelle.
+4. **Table Lookup**-Schritt – bringen Sie die beschreibenden Spalten, die Sie anzeigen möchten, zurück auf die Trefferzeilen.
+
+### Woher eine Datei gelesen werden kann
+
+Für die Prüfung der Breite muss die Vektorspalte einzeln gelesen werden. Dafür ist ein Dokumentenkonto erforderlich, das
+spaltenweise gelesen werden kann. **S3**, **Google Cloud Storage** und **Azure Blob Storage** können das.
+Ein Parquet-Import aus einem anderen Dokumentenkonto in eine Tabelle mit deklarierter Vektorbreite wird
+abgelehnt, statt ungeprüft geladen zu werden. Stellen Sie die Datei daher in S3, Google Cloud Storage oder Azure Blob
+Storage bereit und importieren Sie sie von dort. Dasselbe gilt für die Wiederherstellung eines Archivs aus einem solchen Konto – eine
+Wiederherstellung ist ein Recovery-Vorgang, bewahren Sie Ihre Archive also auf einem Konto auf, das eine Wiederherstellung lesen kann. Tabellen
+ohne deklarierte Vektorbreite sind nicht betroffen, ebenso wenig jeder andere Importschritt.
+
+<Aside type="note">
+Wenn eine Tabelle als externe Tabelle registriert wird, kommt eine Quell-Vektorspalte in einem Lakehouse-v2-Projekt (StarRocks) als Vektor an. In einem Projekt auf einer anderen Engine kommt sie als Text an, da dort
+keine Vektorspalte erstellt werden kann.
+</Aside>
+
+
+## Nach nächstgelegenen Zeilen suchen
+
+Der Schritt **KI: Vektorsuche** nimmt eine zu durchsuchende Tabelle, einen oder mehrere Abfragevektoren und die Anzahl der
+Treffer, die pro Abfrage behalten werden, und schreibt die nächstgelegenen Zeilen zusammen mit der Distanz, nach der jede einzelne eingestuft wurde, in eine Zieltabelle.
+
+Es stehen zwei Distanzmetriken zur Verfügung, bei beiden bedeutet eine geringere Distanz eine näher gelegene Zeile:
+
+* **Kosinus** – der Winkel zwischen zwei Vektoren, unabhängig von ihren Beträgen. Das ist die richtige Standardwahl
+  für Text-Embeddings.
+* **Euklidisch (L2)** – die geradlinige Distanz, die den Betrag berücksichtigt.
+
+Das innere Produkt wird bewusst nicht angeboten. Bei nicht normalisierten Vektoren ist es überhaupt keine Distanz –
+die Distanz eines Vektors zu sich selbst fällt negativ aus –, sodass jeder Schwellenwert, den Sie darauf anwenden, und
+jeder Wert, den der Schritt Ihnen anzeigte, bedeutungslos wäre, selbst wenn die Rangfolge zufällig stimmte. Bei
+normalisierten Embeddings liefert die Rangfolge nach Kosinus dieselbe Reihenfolge wie das innere Produkt,
+es geht also nichts verloren.
+
+Die vollständige Parameterliste finden Sie unter
+[KI: Vektorsuche](/de/reference/workflow-steps/general/vector-search/).
+
+### Die Suche ist exakt, nicht näherungsweise
+
+Der Schritt vergleicht jede Zeile, die seinen Filter passiert, mit jedem Abfragevektor. Es gibt keinen Vektorindex
+und keine Näherung: Das Ergebnis ist die tatsächlich nächstgelegene Menge, und der Aufwand wächst mit der Anzahl der
+durchsuchten Zeilen multipliziert mit der Anzahl der Abfragevektoren.
+
+Planen Sie entsprechend. Verwenden Sie den Filter des Schritts, um die Kandidatenzeilen auf den relevanten Ausschnitt einzugrenzen – eine
+Entität, eine Periode, ein Dokumentensatz –, statt einen ganzen Korpus zu durchsuchen, um eine Frage zu einem Teil davon zu beantworten. Eine Embedding-Tabelle entlang der Dimension aufzuteilen, nach der Sie immer filtern, und die
+passende Tabelle zu durchsuchen, ist die wirksamste Maßnahme für die Suchzeit.
+
+### Nicht messbare Zeilen werden ausgelassen
+
+Eine Zeile, deren Distanz nicht gemessen werden kann, wird von den Treffern ausgeschlossen, statt so zurückgegeben zu werden, als
+wäre sie die nächstgelegene. Führen Sie den Workflow mit aktiviertem **Diagnosemodus** aus, dann meldet das Protokoll, wie viele
+Zeilen jede Abfrage ausgelassen hat, oder dass der Schritt jede durchsuchte Zeile gemessen hat.
+
+Ein gespeicherter Vektor mit einem fehlenden Wert im Array wird abgelehnt statt übersprungen: Gegen ein Array, das einen solchen Wert enthält, lässt sich keine Distanz
+messen, daher bricht die Suche ab und nennt die Spalte, statt
+eine Teilantwort zu liefern.
+
+
+## Was eine Vektorspalte nicht kann
+
+Ein Embedding ist eine Koordinate, kein Schlüssel und keine Kennzahl, daher wird eine Vektorspalte in Rollen abgelehnt, die sie
+als solche behandeln:
+
+* **Kein Join-Schlüssel.** Verknüpfen Sie über den Geschäftsschlüssel neben dem Vektor.
+* **Keine Gruppierungsspalte.** Wenn Zeilen nach ihrem rohen Embedding gruppiert werden, bildet jede Zeile ihre eigene Gruppe.
+* **Kein Aggregationsziel.** Es gibt keine sinnvolle Summe, keinen Durchschnitt, kein Minimum und kein Maximum eines
+  Embeddings.
+
+Alle drei werden mit einer Meldung abgelehnt, die die Spalte und die Rolle nennt – beim Speichern des Schritts
+und erneut zur Laufzeit bei einem Schritt, der zuvor gespeichert wurde. Ein Workflow mit einem dieser Fälle wird nicht ausgeführt und
+liefert nicht stillschweigend eine falsche Zahl. Einen Vektor als gewöhnliche Ausgabespalte durch einen Schritt zu führen,
+ist in Ordnung, ebenso das Zählen von Zeilen und das Zählen eindeutiger Werte.
+
+Eine Vektorspalte wird außerdem von der Spaltenprofilierung und den Wertelisten des [Tabellen-Explorers](/de/guides/data/table-explorer/)
+ausgenommen, kann nicht in einem Dashboard als Diagramm dargestellt werden, ist im Dateneditor schreibgeschützt und kann nicht
+mit einer Dimension verknüpft werden. Ein Minimum, ein Mittelwert oder eine Liste der häufigsten Werte sagt nichts über ein Embedding aus, und
+ein Embedding ist kein Mitglied von irgendetwas.
+
+
+## Vektorwerte zurücklesen
+
+Das Lesen einer ganzen Vektorspalte – in einer Vorschau, in einem Export oder über einen KI-Assistenten per MCP –
+liefert eine Textdarstellung des Arrays statt Zahlen. Um wieder Zahlen zu erhalten, lesen Sie die Elemente
+einzeln.
+
+In einem Datenraster werden die Werte als kurze Vorschau angezeigt, die mit der Breite beginnt, zum Beispiel
+`1536-dim [0.013,-0.046,0.079, ...]`, damit eine Spalte mit Embeddings lesbar bleibt, ohne tausend
+Zahlen pro Zelle.
+
+
+## Verwandte Themen
+
+* [KI: Vektorsuche](/de/reference/workflow-steps/general/vector-search/) – die vollständige Parameterreferenz
+  des Schritts
+* [Tabellen und Ansichten verwenden](/de/guides/data/tables-views/) – wie Tabellen Spalten speichern und warum Datentypen
+  wichtig sind
+* [Tabellen-Explorer](/de/guides/data/table-explorer/) – prüfen Sie den Datentyp jeder Spalte und legen Sie ihre Spaltendetails fest
+* [Parquet importieren](/de/reference/workflow-steps/import/import-parquet/) – laden Sie Embeddings aus einer Parquet-Datei
+* [Währungsdatentyp](/de/guides/data/currency-data-type/) – der andere speziell entwickelte Spaltentyp, für
+  Geldwerte

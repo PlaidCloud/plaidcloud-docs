@@ -1,0 +1,58 @@
+---
+title: "Etapa Acumatica: Post Documents"
+description: Lance transações de diário, faturas de venda, faturas de fornecedor e pagamentos no Acumatica a partir de tabelas de cabeçalho e de linhas, com um modo de pré-visualização que valida cada documento antes de qualquer lançamento.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança documentos no Acumatica pela sua [Conexão do Acumatica](/pt-br/guides/connections/acumatica/), por meio do pipeline compartilhado de gravação em ERP do PlaidCloud. A etapa recebe uma tabela de cabeçalho (uma linha por documento) e uma tabela de linhas (uma ou mais linhas por documento) e lança cada documento como **JournalTransaction**, **SalesInvoice**, **Bill** ou **Payment**. **Validate Only** monta e verifica todos os documentos sem reserva no razão e sem lançamento; uma tabela de resultado opcional registra o desfecho de cada documento.
+
+<Aside type="caution">
+Execute todo lote primeiro em **Validate Only**, revise a tabela de resultado e concilie alguns lançamentos diretamente no Acumatica antes de confiar nesta etapa para lançar documentos reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Conexão
+
+- **Conexão do Acumatica** — a conexão do Acumatica pela qual lançar.
+- **Ambiente** — o ambiente da conexão.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por documento: `ref` (o identificador do seu documento, obrigatório), `doc_type` (`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`, obrigatório), `posting_date`, `party_id` (cliente/fornecedor, quando o tipo de documento exige um), `memo`, `due_date`, `branch_id`. Um lote pode misturar tipos de documento — o PlaidCloud o particiona por `doc_type` antes de lançar.
+- **Tabela de linhas** — uma ou mais linhas por `ref`, no formato do tipo de documento:
+
+  | Tipo de documento | Colunas de linha |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **Tabela de resultado** — id da tabela de saída: uma linha por documento com `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — marcado por padrão. Apenas verificação prévia; sem reserva no razão e sem lançamento. Uma configuração de etapa que omite esse campo por completo — por exemplo, uma criada pela API REST, pelo MCP ou por uma importação de pacote de fluxo de trabalho — também usa Validate Only como padrão, em vez de um lançamento real.
+- **Continuar em caso de erro** — marcado por padrão. Continua lançando os documentos restantes depois que um falha; desmarcado, interrompe o lote na primeira falha.
+
+## Como funciona o lançamento
+
+O Acumatica cria todos os documentos **em retenção (Hold)**; em seguida, o PlaidCloud chama a ação de liberação, que é executada de forma assíncrona — uma resposta `202` de aceitação, consultada até a conclusão, e então um `204` confirma a liberação. O PlaidCloud só informa `posted` quando a liberação é **confirmada pela releitura do indicador Hold do documento como falso** — um documento que chega, mas cuja liberação nunca é confirmada, fica em quarentena (não é informado como lançado nem descartado em silêncio), em vez de ser registrado como sucesso apenas porque o documento existe.
+
+## Limitações de capacidade
+
+| Limitação | O que significa |
+|---|---|
+| Sem chave de idempotência nativa | A API de gravação do Acumatica baseada em PUT não tem campo de idempotência. A reserva no razão do próprio PlaidCloud, e não uma chave do lado do Acumatica, é a única proteção contra lançamento duplicado em uma nova tentativa ou nova execução. |
+| A reversão é manual | Nenhum tipo de documento tem uma ação de anulação/reversão documentada na API baseada em contrato. `reversal_mode` é `NONE` em todos os casos — recusado, nunca simulado. Corrija um documento lançado incorretamente diretamente no Acumatica. |
+| Payment não tem consulta confiável | Nenhum campo documentado correlaciona um Payment de volta à solicitação do PlaidCloud após um resultado ambíguo. Um Payment em dúvida é colocado em quarentena para resolução manual, em vez de ser adivinhado. |
+| A filtragem por item de linha não é feita no servidor | Os filtros do lado do servidor (na etapa de importação) não alcançam as dimensões de item de linha de um documento — filtre no nível de cabeçalho/entidade e delimite as linhas no seu fluxo de trabalho. |
+
+## Relacionados
+
+- [Conectar ao Acumatica](/pt-br/guides/connections/acumatica/) — passo a passo completo que abrange configuração, pré-visualização e lançamento
+- [Conector REST do Acumatica](/pt-br/reference/connectors/rest/acumatica/)
+- [Etapas do Acumatica](/pt-br/reference/workflow-steps/acumatica/)
+- [Revisar o histórico de lançamentos em ERP](/pt-br/guides/connections/erp-post-history/)

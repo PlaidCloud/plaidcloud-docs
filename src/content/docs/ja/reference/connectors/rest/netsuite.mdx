@@ -1,0 +1,191 @@
+---
+title: NetSuite RESTコネクター
+description: PlaidCloudでNetSuite REST API接続を設定し、RESTリクエストステップでSuiteQLを使用して財務データと業務データを取得します。
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/connectors/rest/netsuite.mdx
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+## APIドキュメント
+
+[NetSuite REST APIブラウザー](https://system.netsuite.com/help/helpcenter/en_US/APIs/REST_API_Browser/record/v1/2023.1/index.html)にレコードのエンドポイントが記載されています。また、[SuiteQLリファレンス](https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156257770590.html)に、このコネクターが表形式のデータを取得するために使用するクエリ言語が記載されています。
+
+<Aside type="tip">
+NetSuite側のセットアップ、接続の作成、テスト、取得ステップの構築まで、最初から最後までの手順については、[NetSuiteへの接続](/ja/guides/connections/netsuite/)ガイドに従ってください。このページは、そのガイドの背後にあるフィールドとレシピのリファレンスです。
+</Aside>
+
+## 認証の仕組み
+
+このコネクターは、**PS256**のJWTクライアントアサーションを使用した**OAuth 2.0クライアント資格情報**でサインインします。対話型のログインはなく、リフレッシュトークンもありません。RSAキーペアを生成し、**公開**証明書をNetSuiteにアップロードして、対応する**秘密鍵**と3つのIDをPlaidCloudに渡します。取得のたびに、PlaidCloudは有効期間の短いアサーションを作成して署名し、アクセストークンに交換してREST APIを呼び出します。
+
+<Aside type="caution">
+以下のロール、スコープ、権限に関する詳細は、NetSuiteの文書化された仕様に基づいて作成されており、**本番切り替え時に確認されます**。トークン交換やクエリが拒否された場合は、NetSuiteから返されるエラーに原因（スコープ、ロール、クエリ）が示されるため、該当する1点だけを調整または修正できます。
+</Aside>
+
+## NetSuite側のセットアップ
+
+PlaidCloudの接続を作成する前に、NetSuiteで次の手順を行ってください。管理者権限が必要で、全体の作業のクリティカルパスになります。
+
+### 1. 機能を有効にする
+
+**Setup > Company > Enable Features > SuiteCloud**で、**OAuth 2.0**と**SuiteTalk (SOAP and REST Web Services)** を有効にします。
+
+### 2. RSAキーペアを作成する
+
+PS256に対応したダイジェストで、2048ビット以上のRSAキーペアを生成します。たとえばOpenSSLでは次のようにします。
+
+```bash
+openssl genrsa -out plaidcloud_netsuite.pem 2048
+openssl rsa -in plaidcloud_netsuite.pem -pubout -out plaidcloud_netsuite_public.pem
+```
+
+秘密鍵（`plaidcloud_netsuite.pem`）は機密として保管してください。PlaidCloudに登録するもので、NetSuiteには登録しません。
+
+### 3. 公開証明書をアップロードする → 証明書ID
+
+**Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup**で、公開証明書をインテグレーション、エンティティ、ロールにマッピングします。NetSuiteは、アップロードした公開鍵に対する**証明書ID**を返します。これはJWTの`kid`であり、シークレットでは**ありません**。控えておいてください。
+
+### 4. インテグレーションレコードを作成する → クライアントID
+
+**Setup > Integration > Manage Integrations > New**で、**OAuth 2.0**を有効にし、**Client Credentials**グラントを選択したインテグレーションを作成します。NetSuiteが**クライアントID**（コンシューマーキー）を発行します。控えておいてください。クライアント資格情報とアサーションのフローには、**クライアントシークレットはありません**。
+
+### 5. ロールと権限
+
+M2Mマッピングで使用するロールに、読み取る対象をカバーする権限のセットを割り当てます。
+
+- **REST Web Services**（Setup） — REST呼び出しには必ず必要です。
+- **SuiteAnalytics Workbook** — SuiteQLが分析/ワークブックのデータにアクセスする場合に必要です。
+- **Log in using OAuth 2.0 Access Tokens** — トークン交換に必要です。
+- クエリが読み取るすべてのレコードタイプ（トランザクション、勘定科目、エンティティなど）に対するレコードレベルの表示権限。
+
+### 6. アカウントID
+
+アカウントIDは、**Setup > Company > Company Information**の**Account ID**フィールドで確認できます。これによってAPIホストが決まります。
+
+| 環境 | アカウントIDの形式 | APIホスト |
+|---|---|---|
+| 本番 | `1234567` | `1234567.suitetalk.api.netsuite.com` |
+| サンドボックス | `1234567_SB1` | `1234567-sb1.suitetalk.api.netsuite.com` |
+
+PlaidCloudは、アカウントIDからホストを自動的に導出します（小文字に変換し、`_`を`-`に置き換えます）。アカウントIDは、サンドボックスの`_SB1`サフィックスを含め、NetSuiteが表示するとおりに入力してください。
+
+## 設定
+
+**NetSuite**の接続タイプで接続を作成します（汎用のRESTタイプではありません。ホストの導出とSuiteQLのページング動作の挿入を行うのはNetSuiteの種類だけです）。フォームには次のフィールドが表示されます。
+
+### 識別情報
+
+| フィールド | タイプ | 説明 |
+|---|---|---|
+| 名前 | テキスト | この接続の表示名。 |
+| エイリアス | テキスト（複数行） | 接続に関する任意のエイリアスまたはメモ。 |
+| 有効 | トグル | 接続を有効にするかどうか。削除せずに一時停止するには無効にします。 |
+| DB読み取り専用 | トグル | 接続を読み取り専用の操作に制限します。 |
+| アクセスタイプ | 選択 | この接続の読み取り専用、書き込み専用、読み取り/書き込みのいずれかのアクセスレベル。 |
+
+### NetSuite資格情報
+
+| フィールド | タイプ | 説明 |
+|---|---|---|
+| クライアントID | テキスト | インテグレーションレコードの**クライアントID**（手順4）。 |
+| 証明書ID | テキスト | 公開証明書をアップロードしたときに返された**証明書ID**（JWTの`kid`）（手順3）。シークレットではありません。 |
+| NetSuiteアカウントID | テキスト | **アカウントID**（手順6）。たとえば`1234567`や`1234567_SB1`。 |
+| NetSuite秘密証明書 | テキスト（PEM） | **秘密鍵**（手順2）。複数行のPEMブロック全体として貼り付けます。暗号化して保存され、平文で返されることはありません。 |
+
+<Aside type="note">
+**NetSuite秘密証明書**フィールドは、貼り付けた鍵をマスクします。保存済みの接続を開き直すと空白で表示されます。保存済みの鍵を保持するには空白のままにし、置き換えるには新しい鍵を貼り付けます。
+</Aside>
+
+## SuiteQLでデータを取得する
+
+NetSuiteのレコードAPIは、行ごとに`{id, links}`のみを返します。そのため、PlaidCloudは[RESTリクエストステップ](/ja/guides/workflows/rest-request-step/)で**SuiteQL**を使用して、表形式のデータを取得します。NetSuite接続に対して、ステップを次のように設定します。
+
+- **メソッド** — `POST`
+- **エンドポイント** — `/services/rest/query/v1/suiteql`（このとおりのパス。ホストは接続から取得されます）
+- **本文** — JSONとしてのクエリ：`{"q": "SELECT ... FROM ... ORDER BY internalid"}`
+
+<Aside type="caution">
+**オフセットでページングするSuiteQLクエリには、必ず決定的な`ORDER BY`を指定してください**（たとえば`ORDER BY internalid`）。NetSuiteは数値のオフセットでページングします。安定したソートがないと、ページ間で行が黙って重複したり欠落したりし、財務合計が合わなくなります。
+</Aside>
+
+### ページングやヘッダーを手動で設定しない
+
+NetSuite接続では、ステップがSuiteQL固有の設定を**自動的に挿入**します。
+
+- `Prefer: transient`および`Content-Type: application/json`ヘッダー。
+- レスポンスの`items` / `hasMore`フィールドに基づく、サービスで固定されたページサイズでのオフセットページング。
+
+**ページングと解析**のコントロールとこれらのヘッダーには触れないでください。接続が設定します。設定するのは、**エンドポイント**、**本文**、および（後述の）**列**のみです。
+
+### 金額列と日付列に型を指定する
+
+SuiteQLは**すべての**値をJSON文字列（`"1234.56"`、`"2026-01-15"`、`"T"`）として返します。出力列は実際の型で手動定義してください。金額には`Currency`/`Decimal`、日付には`Date`/`Datetime`、`"T"`/`"F"`のフラグには`Boolean`を指定します。PlaidCloudは、テーブルに取り込む際に文字列を型付きの列に変換します。空文字列は`null`にマッピングされます。（自動スキーマ推測は接続のサービス設定を適用しないため、この処理はできません。列は自分で定義してください。）
+
+<Aside type="caution">
+SuiteQLは、日付を**アカウントの表示形式**（多くは`M/D/YYYY`）で返します。これは曖昧なため、PlaidCloudは推測しません。`Date`/`Datetime`列では、クエリ内でフィールドを`TO_CHAR(col, 'YYYY-MM-DD')`（または`'YYYY-MM-DD HH24:MI:SS'`）で整形するか、列を`Text`のままにしてください。変換できない値があると、実行は列名と値を示すメッセージとともに失敗します。
+</Aside>
+
+## 既知の制限事項
+
+| 制限事項 | 意味 |
+|---|---|
+| 列の手動定義が必要 | スキーマの自動推測はNetSuiteのサービス設定を適用しないため、金額/日付/ブール値の列とその型を手動で定義してください。 |
+| ページングはサービスで固定 | ページングモード、パス、ページサイズは接続によって設定され、ステップでは調整**できません**。 |
+| テーブル全体の置き換えのみ | 取得のたびに結果全体を再抽出します。**増分/差分**のパスは**ありません**。スケジュールされた取得では実行のたびにテーブル全体を再読み取りするため、`WHERE`句は必要な範囲に絞ってください。 |
+| マルチ通貨/子会社 | `transaction`/`transactionline`では、`amount`はトランザクション**自身の**通貨です。子会社をまたいだ単純な`SUM(amount)`は**連結として誤り**です。子会社をまたいで合計する場合は、連結済みまたは為替レート換算済みのフィールドを選択してください。 |
+| 約100,000行のSuiteQL上限 | NetSuiteは、SuiteAnalytics Connectがない場合、1回のクエリを約100,000行に制限しています。この上限を超える手書きのクエリは、黙って切り捨てられるのではなく、日付範囲の絞り込みなどのフィルター追加を求めるメッセージとともに明示的に失敗します。標準の[NetSuite: Import Balances / GL Detail](/ja/reference/workflow-steps/netsuite/)ステップは、この上限を下回るように日付範囲を自動的にウィンドウ分割します。 |
+| マルチブック会計 | マルチブック会計のアカウントでは、`TransactionAccountingLine`にはトランザクション明細行ごと、ブックごとに1行が含まれます。ブックをまたいでフィルターなしで`SUM`すると、二重（またはN重）にカウントされます。標準のインポートステップはデフォルトでプライマリブックを対象とします。手書きのクエリでは、ブックをまたいだ合計が本当に必要な場合を除き、`accountingbook = 1`（または選択したブック）を明示的にフィルターしてください。 |
+| レスポンスエンベロープ | 正確なレスポンスエンベロープと、受け付けられるスコープ/ロールは**本番切り替え時に確認されます**。このコネクターは、NetSuiteの文書化された仕様に合わせて作られています。 |
+
+## クエリの例
+
+財務 — 期間内の総勘定元帳トランザクション明細行（型指定と並べ替え済み）：
+
+```sql
+SELECT
+    tl.transaction   AS transaction_id,
+    t.trandate       AS tran_date,
+    a.acctnumber     AS account_number,
+    tl.subsidiary    AS subsidiary_id,
+    tl.foreignamount AS amount
+FROM   transactionline tl
+JOIN   transaction     t ON t.id = tl.transaction
+JOIN   account         a ON a.id = tl.expenseaccount
+WHERE  t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                      AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY tl.transaction, tl.id
+```
+
+業務 — 顧客別の未処理の販売注文：
+
+```sql
+SELECT
+    so.tranid        AS order_number,
+    so.entity        AS customer_id,
+    so.trandate      AS order_date,
+    so.status        AS order_status
+FROM   transaction so
+WHERE  so.type = 'SalesOrd'
+  AND  so.status = 'SalesOrd:B'
+ORDER BY so.id
+```
+
+<LinkCard
+  title="NetSuiteへの接続（ガイド）"
+  href="/ja/guides/connections/netsuite/"
+  description="NetSuite側のセットアップ、接続の作成、テストを行い、財務と業務のSuiteQL取得を構築するまでの手順。"
+/>
+
+<LinkCard
+  title="NetSuiteの財務データを分析する（チュートリアル）"
+  href="/ja/get-started/tutorials/analyze-netsuite-financials/"
+  description="初日のチュートリアル：総勘定元帳を取得し、月次の損益計算書と売掛金エージングに整形します。"
+/>
+
+<LinkCard
+  title="NetSuite SuiteQLクエリの例"
+  href="/ja/guides/connections/netsuite-financial-queries/"
+  description="コピーして使えるクエリ：仕訳、試算表、損益計算書、貸借対照表、未回収の売掛金、販売注文、発注書、在庫。"
+/>

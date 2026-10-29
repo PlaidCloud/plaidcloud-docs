@@ -1,0 +1,218 @@
+---
+title: Analyser les données financières Sage Intacct — de la connexion à la balance générale
+description: Tutoriel Sage Intacct de bout en bout — connectez-vous, récupérez les soldes de comptes par dimension avec l'étape Importer depuis Sage, transformez-les en balance générale et compte de résultat par département, ajoutez une métrique par employé à partir des comptes statistiques, affichez-les sur un tableau de bord et planifiez l'actualisation.
+sidebar:
+  label: Analyser les données financières Sage Intacct
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~40 minutes · une connexion Sage Intacct active, une balance générale importée, un compte de résultat par département, un tableau de bord et une actualisation planifiée*
+
+Voici le parcours du premier jour pour un contrôleur de gestion ou un analyste FP&A sous Sage Intacct : à la fin, vous aurez récupéré les **soldes de comptes par dimension** directement depuis Intacct, les aurez transformés en une **balance générale et un compte de résultat par département** que vous pouvez lire comme un état financier, les aurez placés sur un tableau de bord et aurez configuré l'ensemble pour qu'il s'actualise tout seul. Pas d'export de rapport prédéfini, pas de ressaisie manuelle — les chiffres proviennent d'Intacct et restent à jour.
+
+Vous vous connecterez une fois, récupérerez les données une fois, puis vous ferez ce qui compte vraiment : transformer des soldes bruts en synthèses qu'un décideur lit le lundi matin.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Cinq phases de gauche à droite : Sage Intacct, une étape Importer depuis Sage qui récupère les soldes de comptes par dimension, une table de balance générale importée, une étape Table Extract qui regroupe et résume, puis un compte de résultat et un tableau de bord, alimentant une actualisation planifiée." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Importer depuis Sage</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Table de la BG</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Regrouper et sommer</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Résultat</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Connectez-vous, récupérez les soldes une fois, puis transformez-les en états lisibles — le tout peut être réexécuté selon une planification.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud et un projet dans lequel travailler ([démarrez un essai](https://app.plaidcloud.com) si besoin).
+- **Une connexion Sage Intacct fonctionnelle.** Suivez d'abord [Se connecter à Sage Intacct](/fr/guides/connections/sage-intacct/) — vous avez besoin des services web activés, d'un utilisateur de services web disposant des droits sur les objets que vous lirez, et des quatre champs d'identification de la connexion : **ID client**, **Secret client**, **Nom d'utilisateur du service web** et **ID de la société**. Vérifiez que la connexion fonctionne avant de commencer ici.
+- Connaissez vos **entités opérationnelles** (les identifiants d'entité sur lesquels vous produisez des rapports) et la **plage de numéros de comptes** approximative qui contient vos comptes de résultat (produits et charges). Les exemples ci-dessous utilisent `201` et `301` pour les entités et `4010`–`9999` pour la plage du compte de résultat — remplacez-les par les vôtres.
+
+<Aside type="note">
+Tout ce qui suit la récupération se fait en pointer-cliquer — sans SQL ni code. Le seul élément propre à Intacct est l'étape **Importer depuis Sage**, qui lit les *soldes de comptes par dimension* d'Intacct pour une date et une plage de comptes. Elle renvoie une ligne par compte et par combinaison de dimensions, avec un solde d'ouverture, de période et de clôture sur chacune.
+</Aside>
+
+## Étape 1 : créer un workflow
+
+Le workflow est le pipeline qui récupère et transforme les données.
+
+<Steps>
+
+1. Ouvrez votre projet et passez à l'onglet **Workflows**.
+2. Cliquez sur **Nouveau workflow**, donnez-lui un nom tel que `Intacct Financials`, puis ouvrez-le.
+
+</Steps>
+
+## Étape 2 : récupérer la balance générale
+
+L'[étape Importer depuis Sage](/fr/reference/workflow-steps/sage-intacct/import-sage/) récupère les soldes de comptes pour une plage de dates et une plage de comptes, en reportant sur chaque ligne les dimensions que vous choisissez — c'est votre balance générale.
+
+<Steps>
+
+1. Ajoutez une étape **Importer depuis Sage**.
+
+2. Dans sa configuration, définissez :
+
+   | Champ | Valeur |
+   |---|---|
+   | **Connexion** | votre connexion Sage Intacct |
+   | **Société** | la société Intacct à lire |
+   | **Start date** / **End date** | la période que vous clôturez — par exemple le premier et le dernier jour du mois |
+   | **Start account** / **End account** | votre plage de compte de résultat, par exemple `4010` à `9999` |
+   | **Entités** | vos entités opérationnelles, par exemple `201`, `301` |
+   | **Dimensions** | activez celles selon lesquelles vous produisez des rapports — généralement **Emplacement**, **Département**, **Employé** et **Classe** |
+
+3. Définissez la **Cible** sur une nouvelle table nommée `intacct_trial_balance`.
+
+4. Exécutez l'étape. Vous disposez maintenant d'une ligne par compte et par combinaison de dimensions, avec les colonnes `startbalance`, `periodbalance` et `endbalance`, ainsi qu'une paire identifiant/nom pour chaque dimension activée (par exemple `departmentid` / `departmentname`, `locationname`).
+
+</Steps>
+
+<Aside type="caution">
+Intacct renvoie chaque colonne sous forme de **texte**, et les récupérations Sage sont des **requêtes uniques** (sans pagination) — les résultats de soldes de comptes sont petits, ce n'est donc pas un problème ici, mais n'utilisez pas cette étape pour le détail de lignes à fort volume. Vous définirez les vrais types de colonnes à l'étape suivante, là où ils comptent.
+</Aside>
+
+<Aside type="note">
+**Start date** et **End date** doivent toutes deux être renseignées — une date de début ou de fin isolée est ignorée. Si vous avez activé une dimension dont vous n'avez pas besoin de l'identifiant et du nom, vous pouvez supprimer la colonne en trop à l'étape suivante. (La case de la dimension **Entrepôt de données** n'a aucun effet ; utilisez **Custom dimensions** si vous avez besoin de l'entrepôt en sortie.)
+</Aside>
+
+## Étape 3 : transformer les soldes en compte de résultat
+
+Place à l'analyse, réalisée avec une seule transformation en pointer-cliquer — sans SQL. Votre plage de compte de résultat est agrégée en quelques lignes d'état, par département, avec le signe inversé pour que les revenus soient positifs. Une [étape Table Extract](/fr/reference/workflow-steps/tables/table-extract/) fait tout cela dans ses onglets **Sélection des données de la table** et **Filtres de données**.
+
+<Steps>
+
+1. Ajoutez une étape **Table Extract**. Définissez sa **Source** sur `intacct_trial_balance` et sa **Cible** sur une nouvelle table, `intacct_pnl`.
+
+2. Dans l'onglet **Sélection des données de la table**, cliquez sur **Résumer** pour activer l'agrégation, puis configurez trois colonnes cibles :
+
+   - **`departmentname`** — mappée directement depuis la source. Type **Texte**, résumer : **Regrouper par**.
+   - **`pnl_line`** — une **expression** (ci-dessous) qui transforme le numéro de compte en ligne d'état. Type **Texte**, résumer : **Regrouper par**.
+   - **`amount`** — une **expression** `func.to_float64(intacct_trial_balance.endbalance) * -1`, qui convertit le solde texte en nombre et inverse le signe. Type **Devise**, résumer : **Somme**.
+
+   Définir le **Type** de la colonne cible `amount` sur **Devise** est ce qui permet au solde texte de s'additionner. Pour `pnl_line`, double-cliquez sur sa cellule **expression** et saisissez ce qui suit (sélectionnez les colonnes et la fonction `case` du groupe **Conditions** en pointer-cliquer) :
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. Exécutez l'étape.
+
+</Steps>
+
+Le `* -1` est la seule manipulation comptable : Intacct porte les revenus au crédit (négatif) et les charges au débit (positif) ; inverser le solde de clôture rend donc les **revenus positifs et les coûts négatifs** — les lignes de chaque département *s'additionnent* alors *pour donner le résultat net*. Ajustez les seuils de numéros de compte dans le `case()` pour qu'ils correspondent à votre plan comptable. Les expressions utilisent l'éditeur en pointer-cliquer de PlaidCloud — consultez [Utilisation avancée du Data Mapper](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/) et la [référence des expressions](/fr/reference/expressions/).
+
+<Aside type="tip">
+Vous voulez un compte de résultat pour toute la société plutôt que par département ? Retirez `departmentname` des colonnes cibles et ne conservez que `pnl_line` (Regrouper par) et `amount` (Somme).
+</Aside>
+
+## Étape 4 : le lire comme un financier
+
+Ouvrez la table `intacct_pnl`. Pour chaque département, vous avez trois chiffres :
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+Lisez directement à partir de la table :
+
+- **Marge brute** = revenus + coût des ventes (ce dernier est déjà négatif) → `486,200 − 190,540 = 295,660`.
+- **Résultat net** = somme des trois lignes → `82,780`.
+- **Taux de marge brute** = marge brute ÷ revenus → environ 61 %.
+
+La première chose à faire est de **rapprocher les chiffres** : exécutez le compte de résultat natif d'Intacct (Financial Reports) pour la même période et les mêmes entités, et vérifiez que les revenus et le résultat net concordent. Si ce n'est pas le cas, il s'agit presque toujours d'une différence de périmètre — une entité que vous n'avez pas incluse, une plage de comptes qui tronque une partie du compte de résultat, ou un décalage de période. Ne faites confiance au pipeline qu'une fois les chiffres rapprochés.
+
+<Aside type="tip">
+Vous voulez la présentation classique avec les périodes en colonnes ? Ajoutez une [étape Table Pivot](/fr/reference/workflow-steps/tables/table-pivot/) qui lit `intacct_pnl` : pivotez la période en colonnes, conservez `pnl_line` comme ligne et additionnez `amount`. Pour obtenir une colonne de période au départ, ajoutez `end_date` comme colonne **Regrouper par** à l'étape 3. Vous obtenez l'évolution mensuelle d'un coup d'œil, sans SQL.
+</Aside>
+
+## Étape 5 : l'afficher sur un tableau de bord
+
+Des chiffres dans une table, c'est bien ; un graphique, c'est ce que l'on envoie au directeur financier. [Publiez](/fr/get-started/tutorials/load-and-transform-data/#étape-7-publier-le-résultat) `intacct_pnl`, puis suivez [Créer un tableau de bord](/fr/get-started/tutorials/build-a-dashboard/) pour ajouter :
+
+- un **histogramme** du résultat net (ou des revenus) par `departmentname`, et
+- un **histogramme** de chaque `pnl_line` pour que la répartition revenus / coût des ventes / charges d'exploitation soit visible d'un coup d'œil.
+
+Vous obtenez un tableau de bord financier Sage Intacct en direct — sans export, actualisé à chaque exécution du workflow.
+
+## Étape 6 : planifier l'actualisation
+
+<Steps>
+
+1. Exécutez une fois le workflow complet, de haut en bas, pour vérifier que chaque étape est au vert.
+2. [Planifiez le workflow](/fr/get-started/tutorials/schedule-a-workflow/) — mensuellement selon le rythme de clôture, ou chaque semaine si vous voulez des chiffres à jour tout au long du mois.
+
+</Steps>
+
+Comme la récupération remplace intégralement la table, chaque exécution relit les soldes pour la plage de dates et de comptes que vous avez définie — limitez-la à la fenêtre dont vous avez besoin (la période en cours, vos comptes de résultat) plutôt qu'à tout l'historique.
+
+## Étape 7 : ajouter une métrique par employé avec les comptes statistiques
+
+Intacct suit aussi des **comptes statistiques** non monétaires — effectif, surface en mètres carrés, unités — en parallèle de votre plan comptable. Récupérez-les avec une seconde étape **Importer depuis Sage** en mode statistique, puis joignez-les au compte de résultat pour lire une métrique telle que les charges d'exploitation par employé, par département. Trois étapes standard supplémentaires, toujours sans SQL.
+
+<Steps>
+
+1. Ajoutez une seconde étape **Importer depuis Sage**. Dans sa configuration, définissez :
+
+   | Champ | Valeur |
+   |---|---|
+   | **Connexion** | votre connexion Sage Intacct |
+   | **Société** | la société Intacct à lire |
+   | **Start date** / **End date** | la même période qu'à l'étape 2 |
+   | **Statistique** | **Statistique uniquement** |
+   | **Start account** / **End account** | `0000` à `9999` — les comptes statistiques ne sont pas garantis de se situer dans la numérotation de votre plan comptable financier ; récupérez donc la plage complète plutôt que la plage du compte de résultat de l'étape 2 |
+   | **Entités** | vos entités opérationnelles, par exemple `201`, `301` |
+   | **Dimensions** | **Département** — la dimension selon laquelle vous produisez des rapports par employé |
+
+2. Définissez la **Cible** sur une nouvelle table nommée `intacct_statistics`.
+
+3. Exécutez l'étape. Vous obtenez une ligne par compte statistique et par département, `endbalance` portant la statistique elle-même — par exemple l'effectif de ce département à la fin de la période.
+
+</Steps>
+
+Joignez maintenant l'effectif au compte de résultat et divisez — mais pas directement à partir de `intacct_statistics`. Cette table contient une ligne *par compte statistique et par département* (effectif, surface, unités, tout ce que vous suivez) ; une jointure sur `departmentname` seul multiplierait donc chaque ligne du compte de résultat autant de fois qu'il y a de comptes statistiques dans ce département, et `amount_per_head` diviserait par le compte statistique qui se trouverait par hasard sur la ligne. Filtrez d'abord sur l'effectif pour que la jointure donne une ligne par département et que le ratio ait un sens.
+
+<Steps>
+
+1. Ajoutez une étape **Table Extract**. Définissez sa **Source** sur `intacct_statistics` et sa **Cible** sur une nouvelle table, `intacct_headcount`. Dans **Sélection des données de la table**, propagez toutes les colonnes sans modification — aucune agrégation n'est nécessaire ici. Dans l'onglet **Filtres de données**, ajoutez un filtre **Sélectionner un sous-ensemble de données** sur les données source : `intacct_statistics.glaccountno == '9000'` — remplacez `9000` par le numéro de votre propre compte statistique d'effectif (filtrez plutôt sur la colonne du nom de compte si c'est ce que renvoie votre récupération ; `glaccountno` reste du texte, comparez-le donc à une chaîne entre guillemets). Exécutez l'étape — `intacct_headcount` contient maintenant exactement une ligne par département.
+
+2. Ajoutez une [étape Table Outer Join](/fr/reference/workflow-steps/tables/table-outer-join/). Définissez **Table 1** sur `intacct_pnl` et **Table 2** sur `intacct_headcount`, et joignez sur `departmentname` — désormais une correspondance 1:1 propre par département. Laissez **Type de jointure** sur sa valeur par défaut **Jointure gauche** — chaque ligne du compte de résultat est conservée, l'effectif étant renseigné lorsque le département correspond. Ciblez une nouvelle table, `intacct_pnl_with_headcount`, et propagez toutes les colonnes des deux tables.
+
+3. Exécutez l'étape, puis ajoutez une étape **Table Extract** qui lit `intacct_pnl_with_headcount` et cible une nouvelle table, `intacct_pnl_per_head`. Dans **Sélection des données de la table**, propagez les colonnes existantes, puis ajoutez une colonne cible supplémentaire : `amount_per_head`, une **expression** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, de type **Devise**.
+
+4. Exécutez l'étape.
+
+</Steps>
+
+Lisez le `amount_per_head` de la ligne **`3 - Operating Expenses`** pour obtenir les charges d'exploitation par employé, par département — la même lecture qu'à l'étape 4, avec une colonne de plus. Ajoutez-le au tableau de bord à côté du compte de résultat, ou intégrez-le à la planification de l'étape 6 pour qu'il s'actualise avec tout le reste.
+
+## Ce que vous avez construit
+
+En partant d'un workflow vide, vous avez récupéré les soldes de comptes Sage Intacct en direct, les avez transformés en un **compte de résultat par département** avec une seule étape de transformation standard, avez joint les comptes statistiques pour obtenir une métrique par employé — sans SQL dans tout le pipeline —, l'avez placé sur un tableau de bord et avez configuré son actualisation — la boucle de reporting essentielle d'une équipe financière, désormais automatisée.
+
+## Pour aller plus loin
+
+- [Se connecter à Sage Intacct](/fr/guides/connections/sage-intacct/) — configuration de la connexion et autres étapes d'importation Sage (factures fournisseurs, lignes de factures, requêtes d'objets ad hoc).
+- [Importer une requête Sage Intacct](/fr/reference/workflow-steps/sage-intacct/import-intacct-query/) — récupérez n'importe quel objet Intacct (comptes du grand livre, clients, projets) pour enrichir vos états.
+- [Étape Table Extract](/fr/reference/workflow-steps/tables/table-extract/) et [Utilisation avancée du Data Mapper](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/) — regroupement, filtrage et colonnes calculées pour des analyses plus poussées.
+- [Concevoir une hiérarchie de dimension](/fr/get-started/tutorials/design-a-dimension/) — regroupez votre plan comptable en groupes de reporting que vous contrôlez.

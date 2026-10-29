@@ -1,0 +1,106 @@
+---
+title: AI 与 LLM 架构
+description: PlaidCloud 如何连接 Claude、GPT、Gemini 和 Grok 等大语言模型：人们使用 AI 的四种方式、每个请求经过的受管控路径，以及您的数据会经过和不会经过的位置。
+sidebar:
+  label: 概览
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/index.mdx
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud 并不只有一个 AI 功能，而是提供四种访问模型的方式：产品内的助手、Microsoft 365 Copilot、外部编码代理，以及工作流中的 LLM 步骤。这四种方式都运行在同一条受管控的路径上。模型本身可以替换：Claude、GPT、Gemini、Grok、您自己订阅中的 Azure OpenAI 资源，或您自行托管的模型。
+
+本节介绍这一架构：什么在哪里运行、什么会跨越边界，以及为什么这样设计。
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="PlaidCloud AI 架构。四个客户端入口（应用内助手、Microsoft 365 Copilot、AI 编码代理和 LLM 工作流步骤）进入租户边界，边界内包含委托令牌、精选的 MCP 服务器、访问控制执行、AI 服务和项目数据。提示词向外流向 LLM 提供商；数据只在边界内流动。"
+	class="doc-diagram"
+/>
+
+## 四个入口
+
+| 入口 | 使用者 | 模型如何访问数据 | 从哪里开始 |
+|---|---|---|---|
+| **应用内 AI 助手** | 在 PlaidCloud 中工作的任何人 | PlaidCloud 自己的代理代表您调用内部工具 | [Weave AI Chat](/zh-cn/guides/ai-assistant/weave-tab/#weave-ai-聊天) |
+| **Microsoft 365 Copilot** | 整个团队，在 Teams 和 Outlook 中 | 已发布的代理让用户登录，然后调用 MCP 服务器 | [Microsoft 365 Copilot](/zh-cn/integrations/microsoft-365-copilot/) |
+| **AI 编码代理** | 分析师和开发人员 | 其客户端通过 OAuth 直接连接到 MCP 服务器 | [入门](/zh-cn/integrations/ai-coding-agents/getting-started/) |
+| **LLM 工作流步骤** | 无人值守的管道 | 在 Anthropic 上，使用仅限于您所绑定对象的令牌；在其他提供商上，完全没有数据访问权限，参见[该步骤的规则](/zh-cn/integrations/ai-architecture/llm-providers/#llm-工作流步骤有所不同) | [LLM 步骤](/zh-cn/reference/workflow-steps/general/llm-step/) |
+
+它们的区别在于由谁主导以及对话发生在哪里，而不在于模型被允许接触什么。
+
+## 一条受管控的路径
+
+无论问题从哪个入口提出，以下五点始终成立。
+
+<Steps>
+
+1. **模型以个人身份运行，而不是以平台身份运行。** 每个请求都携带一个短期有效、用完即撤销的凭据，代表已登录的用户。AI 背后没有拥有更高权限的共享服务账户。
+
+2. **工具是唯一的入口。** 模型无法直接查询您的 Lakehouse。它调用一套精选的工具目录，包括查找、描述、读取、运行和 upsert，并且每次调用都会被独立检查。
+
+3. **您自己的权限仍然是边界。** AI 请求永远无法查看或更改您自己无法查看或更改的内容。AI 层只会收窄访问范围，绝不会扩大。
+
+4. **由管理员设定上限，且默认关闭。** LLM 连接的**代理访问**默认为只读。Microsoft 365 Copilot 默认没有任何权限：在管理员为某人分配**访问级别**之前，已登录的用户无法获得任何数据。这是两种独立的机制，但提高其中任何一个，都只是限定 AI 可以尝试的范围，绝不会扩大您本来就能访问的内容。
+
+5. **有些事情永远禁止。** 凭据和连接设置、身份和分组管理、访问控制变更、发布以及可部署代码，永远不能由 AI 凭据调用，无论管理员授予了什么权限，也无论使用哪个提供商。这些操作始终只能由人工完成。
+
+</Steps>
+
+<Aside type="note">
+这些限制由服务器强制执行，而不是依靠提示词。即使提示词注入攻击诱使模型请求被禁止的工具，得到的拒绝结果也与表现良好的模型相同。
+</Aside>
+
+## 一个问题的生命周期
+
+以“为什么上个季度亚特兰大分摊的 IT 成本上升了？”为例，无论从哪个入口提出：
+
+<Steps>
+
+1. **为提问者生成凭据**，范围受限且有效期很短。
+
+2. **将工具提供给模型**：在会进行收窄的入口上，会收窄到问题可能需要的范围；在不进行收窄的入口上，则从目录中自行发现。
+
+3. **提示词发送给模型**，包含问题、所有固定规则和工具描述，此时还没有任何数据。
+
+4. **模型通过工具调用请求数据**：解析分析路径、读取架构、运行分摊追踪、读取动因行。每次调用在到达时都会进行权限检查。
+
+5. **模型根据返回的内容作答**，如果查阅过文档页面则会引用该页面，并附带置信度信号和注意事项。
+
+6. **凭据被撤销。** 请求结束后，被截获的令牌无法重放。
+
+</Steps>
+
+关键在于第 4 步：模型并不持有您的数据。它只请求数据的一部分，并且每次请求都会经过裁决。
+
+## 后续阅读
+
+<CardGrid>
+	<LinkCard
+		title="LLM 提供商与连接"
+		href="/zh-cn/integrations/ai-architecture/llm-providers/"
+		description="Claude、GPT、Gemini、Grok、Azure OpenAI：一个连接、四种执行适配器，以及两种工具代理方式。"
+	/>
+	<LinkCard
+		title="Microsoft 365 Copilot 架构"
+		href="/zh-cn/integrations/ai-architecture/microsoft-365-copilot/"
+		description="为什么 Copilot 需要已发布的代理包和专属 OAuth 客户端，以及默认拒绝的访问级别如何运作。"
+	/>
+	<LinkCard
+		title="检索、依据与分析路径"
+		href="/zh-cn/integrations/ai-architecture/retrieval/"
+		description="RAG 在这里实际做了什么，以及为什么您的业务数据是实时读取的，而不是被索引到向量存储中。"
+	/>
+	<LinkCard
+		title="使用您自己控制的 LLM"
+		href="/zh-cn/integrations/ai-architecture/private-llm/"
+		description="将专有数据、PHI 或合同限定的数据保留在您控制的基础设施内。"
+	/>
+</CardGrid>
+
+## 相关内容
+
+- [可信赖的答案](/zh-cn/integrations/ai-coding-agents/honest-answers/)：答案如何分级并附加注意事项
+- [分析路径](/zh-cn/integrations/ai-coding-agents/analysis-paths/)：为您的团队常问的表起一个易记的名称
+- [平台架构](/zh-cn/get-started/platform-architecture/)：AI 在整个平台中的位置

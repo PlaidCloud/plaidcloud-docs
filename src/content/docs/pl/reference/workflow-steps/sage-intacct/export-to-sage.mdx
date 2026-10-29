@@ -1,0 +1,99 @@
+---
+title: "Intacct: zaksięguj zapis dziennika"
+description: Księguj zapisy dziennika z tabel projektu PlaidCloud w Sage Intacct jako rozwiązanie low-code zamiast UDF księgującej, z tabelą wyników dla każdego zapisu i walidacją w trybie Preview.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje zapisy dziennika w Sage Intacct przez połączenie Sage Intacct, korzystając z interfejsu REST v1 API Intacct. To natywna alternatywa low-code dla pisania księgującej funkcji definiowanej przez użytkownika (UDF) — wybierz połączenie, zmapuj kolumny, a krok zajmie się uwierzytelnianiem, grupowaniem w partie i obsługą błędów dla każdego zapisu.
+
+Krok odczytuje dwie tabele, które wcześniej przygotowano w przepływie — **tabelę nagłówka** i **tabelę wierszy** — sprawdza każdy zapis dziennika i go księguje. Obsługuje przypadek wsadowy: wiele zapisów dziennika w jednym uruchomieniu, każdy księgowany i śledzony niezależnie.
+
+<Aside type="danger" title="Brak ochrony przed duplikatami — sprawdź tabelę wyników przed ponownym uruchomieniem">
+Ten krok **nie** śledzi, które zapisy zostały już zaksięgowane. Ponowne uruchomienie księguje ponownie **każdy** zapis z tabeli nagłówka, także te zaksięgowane poprzednio z powodzeniem — nie ma deduplikacji. Przed ponownym uruchomieniem otwórz tabelę wyników z ostatniego uruchomienia i potwierdź, które zapisy rzeczywiście wymagają zaksięgowania. Jeśli poprzednie uruchomienie pozostawiło jakiekolwiek zapisy ze `status` równym `unknown`, zanim zrobisz cokolwiek innego, zobacz [Tabela wyników](#tabela-wyników) poniżej.
+</Aside>
+
+## Kontrakt kształtu danych
+
+Krok nie wnioskuje, które wiersze należą do którego zapisu dziennika — tę strukturę budujesz wcześniej w przepływie standardowymi krokami (wyrażenie przypisania, agregacja), zanim ten krok się uruchomi:
+
+- **Tabela nagłówka** ma **dokładnie jeden wiersz na zapis dziennika**, a ten wiersz zawiera kolumnę **`entry_key`** — dowolną wartość unikatową dla zapisu (numer partii, połączona data i opis, wygenerowana sekwencja).
+- **Tabela wierszy** ma jeden wiersz na pozycję księgowania, a **każdy wiersz zawiera tę samą wartość `entry_key`** co wiersz nagłówka, do którego należy.
+
+Pojedynczy zapis dziennika (bez grupowania) również wymaga tego kształtu — nadaj każdemu wierszowi w obu tabelach tę samą stałą wartość `entry_key`.
+
+Krok grupuje obie tabele według `entry_key` przed sprawdzaniem lub księgowaniem, więc wiersz nagłówka bez pasujących wierszy, wiersz bez pasującego nagłówka lub więcej niż jeden wiersz nagłówka dla tego samego klucza powodują niepowodzenie walidacji tego zapisu, zamiast tworzyć błędne księgowanie.
+
+## Unikatowe elementy konfiguracji
+
+### Połączenie Sage
+
+Połączenie **Sage Intacct**, przez które odbywa się księgowanie. Dostępne są tu tylko połączenia Sage Intacct — ogólne połączenie REST nie jest akceptowane, ponieważ księgowanie wymaga specyficznej dla Intacct wymiany tokenów oraz rozpoznawania firmy/jednostki, które zapewnia wyłącznie połączenie Sage Intacct.
+
+To samo połączenie służy w innych miejscach do *odczytu* z Intacct (na przykład [Import Sage AP](/pl/reference/workflow-steps/sage-intacct/import-sage-ap/) lub [Import Sage Intacct Query](/pl/reference/workflow-steps/sage-intacct/import-intacct-query/)) — jedno połączenie obsługuje oba kierunki. Zobacz [Konektor REST Sage Intacct](/pl/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+Nazwa kolumny — obecnej zarówno w kolumnach źródłowych nagłówka, jak i wierszy — która grupuje wiersze nagłówka i wierszy w jeden zapis dziennika. Zobacz [Kontrakt kształtu danych](#kontrakt-kształtu-danych) powyżej.
+
+### Kolumny źródłowe
+
+Dwa oddzielne mapowania kolumn, po jednym na kartę — w każdym zmapuj kolumnę źródłową na pole zapisu dziennika, które zasila:
+
+- **Kolumny nagłówka** — pola na poziomie zapisu dziennika: dziennik, data księgowania, opis, numer referencyjny, opcjonalne `base_location` (jednostka/lokalizacja Intacct, w której zapis jest księgowany — pomiń je dla firmy jednojednostkowej), kolumna korelacji wskazana jako **Entry Key** oraz podobne szczegóły na poziomie nagłówka.
+- **Kolumny wierszy** — pola dla poszczególnych księgowań: konto księgi głównej, kwota Winien/Ma, opis wiersza, ta sama kolumna **Entry Key** oraz wymiary (lokalizacja, dział, pracownik, klasa i podobne).
+
+Nie musisz zmieniać nazw kolumn źródłowych — zmapuj je, jakkolwiek się nazywają, na powyższe nazwy pól docelowych.
+
+### Tabela wyników
+
+Tabela docelowa, do której ten krok zapisuje jeden wiersz na zapis dziennika, rejestrując wynik jego sprawdzenia i (jeśli nie w trybie Preview) zaksięgowania. Kolumny i wartości `status` opisano w sekcji [Tabela wyników](#tabela-wyników) poniżej.
+
+### Preview
+
+Pole wyboru, **domyślnie zaznaczone**. Przy włączonym Preview krok sprawdza każdy zapis dziennika i zapisuje tabelę wyników dokładnie tak jak rzeczywiste uruchomienie, ale **nie** uwierzytelnia się w Intacct i **niczego** nie księguje — w trybie Preview w ogóle nie ma wywołania sieciowego do Intacct. Wiersze trafiają do tabeli wyników ze `status = preview`, pokazując, które zapisy zostałyby zaksięgowane bez problemów, a które nie przeszłyby walidacji, zanim cokolwiek dotrze do Twojej księgi głównej.
+
+Podobnie jak rzeczywiste uruchomienie, Preview **zastępuje** tabelę wyników wierszami z tego uruchomienia — to wynik kroku dla danego uruchomienia, a nie dziennik narastający — więc Preview po rzeczywistym uruchomieniu nadpisuje wiersze `posted` i `unknown` z tamtego uruchomienia. Jeśli nadal potrzebujesz tabeli wyników z ostatniego uruchomienia, otwórz ją i skopiuj przed ponownym uruchomieniem (Preview lub rzeczywistym).
+
+Preview nie sprawdza Twoich **poświadczeń** Intacct — ponieważ nigdy się nie łączy, nieprawidłowe połączenie lub wygasłe poświadczenie nie ujawni się tutaj. Aby osobno potwierdzić poświadczenia, użyj akcji **Testuj połączenie** połączenia (w **Tools > Connections**).
+
+Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie przyjmuje Preview zamiast księgowania na żywo.
+
+Odznacz Preview dopiero wtedy, gdy będziesz gotowy na rzeczywiste księgowanie. Zalecamy najpierw uruchomić z włączonym Preview, przejrzeć tabelę wyników, a następnie uruchomić ponownie z wyłączonym Preview.
+
+## Tabela wyników
+
+Każde uruchomienie — Preview lub rzeczywiste — zapisuje do tabeli wyników jeden wiersz na zapis dziennika:
+
+| Kolumna | Opis |
+|---|---|
+| `entry_key` | Zapis dziennika, którego dotyczy ten wiersz. |
+| `status` | Jedna z wartości `preview`, `posted`, `failed`, `unknown` — zobacz poniżej. |
+| `intacct_key` | Klucz nadany przez Intacct zaksięgowanemu zapisowi, jeśli jest dostępny. |
+| `http_status` | Status HTTP zwrócony przez Intacct dla próby księgowania, jeśli jest dostępny. |
+| `error_message` | Krótki, oczyszczony opis tego, co poszło nie tak, gdy `status` to `failed` lub `unknown`. |
+| `line_count` | Liczba wierszy dopasowanych do tego zapisu. |
+| `posting_date` | Data księgowania wysłana do Intacct (lub, w Preview, taka, która zostałaby wysłana). |
+
+### Wartości statusu
+
+- **`preview`** — tryb Preview; zapis przeszedł walidację i nie został zaksięgowany.
+- **`posted`** — zapis został pomyślnie zaksięgowany w Intacct.
+- **`failed`** — Intacct jednoznacznie odrzucił zapis (albo nie przeszedł on walidacji przed jakąkolwiek próbą księgowania). Można bezpiecznie usunąć przyczynę i ponownie zaksięgować tylko ten zapis.
+- **`unknown`** — nie udało się ustalić wyniku — przekroczenie limitu czasu, zerwane połączenie lub błąd serwera bez jednoznacznej odpowiedzi z Intacct.
+
+<Aside type="danger" title="unknown nie oznacza niepowodzenia">
+Zapis o statusie `unknown` mógł już zostać pomyślnie zaksięgowany w Intacct — żądanie mogło zostać odebrane i zatwierdzone, zanim połączenie zostało utracone lub odpowiedź nigdy nie wróciła. **Przed ponownym uruchomieniem tego kroku sprawdź status zapisu bezpośrednio w Intacct.** Ślepe ponowne księgowanie zapisu `unknown` grozi utworzeniem zduplikowanego zapisu dziennika w Twojej księdze głównej.
+</Aside>
+
+Uruchomienie z jakimikolwiek wierszami `failed` lub `unknown` zgłasza ostrzeżenie, aby było widoczne bez otwierania tabeli wyników, ale to sama tabela wyników jest źródłem prawdy o tym, co robić dalej.
+
+## Powiązane
+
+- [Kroki eksportu](/pl/reference/workflow-steps/export/)
+- [Import Sage AP](/pl/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query](/pl/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Konektor REST Sage Intacct](/pl/reference/connectors/rest/sage-intacct/)

@@ -1,0 +1,108 @@
+---
+title: シングルサインオン用のGoogle Workspace SAMLの設定
+description: PlaidCloudのシングルサインオン用にGoogle WorkspaceをSAML IDプロバイダーとして設定し、セキュアなフェデレーション認証を有効にします。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/google-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudは、SAML 2.0によるシングルサインオン（SSO）をサポートしています。このガイドでは、組織のユーザーがPlaidCloudにアクセスする際にGoogleで認証できるよう、Google WorkspaceをSAML IDプロバイダーとして構成する手順を説明します。
+
+<Aside>PlaidCloud側の構成はPlaidCloudチームが行います。お客様の作業は、Google Workspaceでカスタム SAMLアプリを設定し、**IdP Metadata URL**をPlaidCloudに提供することです。残りの構成はPlaidCloudサポートが完了します。</Aside>
+
+## 前提条件
+
+- Google Workspaceアカウント（Business Starter以上）
+- **Super Admin**ロールを持つGoogle Workspaceアカウント
+- 設定の調整と構成値の交換のために、PlaidCloudサポートと連絡が取れること
+
+## 概要
+
+セットアップでは、2者がSAMLメタデータを交換します。
+
+1. **お客様側の作業：** Google Workspaceでカスタム SAMLアプリを構成し、IdP Metadata URLをPlaidCloudに提供します。
+2. **PlaidCloud側の作業：** Google Workspaceの構成を完了するために必要なサービスプロバイダー（SP）のエンティティIDとACS URL（Assertion Consumer Service URL）を提供します。
+
+以下のステップ3を完了する前に、PlaidCloudサポートと調整してSPの値を入手してください。
+
+## ステップ1：カスタム SAMLアプリの作成
+
+1. Super Adminとして[Google Admin console](https://admin.google.com)にサインインします。
+2. **アプリ** > **Web and mobile apps**に移動します。
+3. **Add app** > **Add custom SAML app**をクリックします。
+4. アプリの名前を入力します（例：`PlaidCloud SSO`）。必要に応じて、説明とアイコンも追加します。
+5. **続行**をクリックします。
+
+## ステップ2：IdP Metadata URLの取得
+
+**Google Identity Provider details**画面に、PlaidCloudが必要とするIDプロバイダー情報が表示されます。
+
+1. **SSO URL**と**Entity ID**をコピーし、**Certificate**をダウンロードします。または、
+2. **IDP metadata**のURLの横にある**コピー**をクリックします（形式：`https://accounts.google.com/o/saml2/idp?idpid=XXXXXXXXX`）。
+
+**このIdP Metadata URLをPlaidCloudサポートに送信してください。** これは、PlaidCloudがIDプロバイダー側の信頼関係を構成するために必要なEntity Descriptor URLです。PlaidCloudがこのURLを受け取ると、チームがKeycloakの構成を完了し、SSOをテストできる状態になったらお知らせします。
+
+3. **続行**をクリックして、サービスプロバイダーの構成に進みます。
+
+## ステップ3：サービスプロバイダーの詳細の構成
+
+<Aside>この手順を完了するには、PlaidCloudが提供する**SPエンティティID**と**ACS URL**が必要です。これらの値はPlaidCloudサポートにお問い合わせのうえ入手してください。</Aside>
+
+1. **ACS URL**フィールドに、PlaidCloudから提供されたACS URLを入力します。
+2. **Entity ID**フィールドに、PlaidCloudから提供されたSPエンティティIDを入力します。
+3. PlaidCloudサポートから別途指示がない限り、**Start URL**は空白のままにします。
+4. **Name ID format**を**EMAIL**に設定します。
+5. **Name ID**を**基本情報 > Primary email**に設定します。
+6. **続行**をクリックします。
+
+## ステップ4：属性マッピングの構成
+
+Google Workspaceは、SAMLアサーションでユーザー属性をPlaidCloudに渡します。少なくとも、ユーザーのメールアドレスをマッピングします。PlaidCloudの構成でグループベースのセキュリティロール割り当てを使用する場合は、グループメンバーシップもマッピングします。
+
+### 基本的な属性マッピング
+
+**Attribute mapping**画面で、次の属性マッピングを追加します。
+
+| Googleディレクトリの属性 | アプリの属性 |
+|---|---|
+| Primary email | `email` |
+| First name | `firstName` |
+| Last name | `lastName` |
+
+**Add mapping**をクリックして、各行を追加します。
+
+### グループメンバーシップ（任意）
+
+Googleのグループメンバーシップに基づいて、PlaidCloudでユーザーをセキュリティグループに自動的に割り当てる場合は、次の手順を行います。
+
+1. **Add mapping**をクリックします。
+2. **Google Directory attributes**で**Group membership**を選択し、該当するGoogleグループを選びます。
+3. **App attribute**の名前を`groups`に設定します（想定される名前はPlaidCloudサポートに確認してください）。
+
+<Aside>PlaidCloudでグループベースのセキュリティロール割り当てが正しく機能するよう、想定されるグループ属性の名前と形式についてPlaidCloudサポートと相談してください。</Aside>
+
+**Finish**をクリックします。
+
+## ステップ5：ユーザー向けのアプリの有効化
+
+デフォルトでは、新しいSAMLアプリはすべてのユーザーに対して無効になっています。適切な組織部門またはグループに対して有効にします。
+
+1. アプリの詳細ページで、**User access**をクリックします。
+2. PlaidCloudへのSSOアクセスを許可する組織部門またはグループを選択します。
+3. サービスのステータスを**有効**に設定します。
+4. **保存**をクリックします。
+
+## 連携のテスト
+
+PlaidCloudが構成の完了を確認したら、次の手順を行います。
+
+1. 組織のPlaidCloudワークスペース（例：`https://my-workspace.plaid.cloud`）に移動します。
+2. Googleのサインインページにリダイレクトされます。
+3. Google Workspaceの認証情報でサインインします。
+4. 認証に成功すると、PlaidCloudにリダイレクトされます。
+
+エラーが発生した場合は、次の点を確認してください。
+- SPエンティティIDとACS URLが、PlaidCloudから提供された値と完全に一致している
+- ログインしようとしているユーザーが、アプリが有効になっている組織部門またはグループに属している
+- Name ID formatが**EMAIL**に設定され、**Primary email**にマッピングされている
+- PlaidCloudに送信したIdP Metadata URLにアクセスできる

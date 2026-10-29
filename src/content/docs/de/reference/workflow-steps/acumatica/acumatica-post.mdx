@@ -1,0 +1,57 @@
+---
+title: "Acumatica: Post Documents"
+description: Veröffentlichen Sie Journalbuchungen, Ausgangsrechnungen, Eingangsrechnungen und Zahlungen aus Kopf- und Positionstabellen in Acumatica, mit einem Vorschaumodus, der jedes Dokument prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Dokumente über Ihre [Acumatica-Verbindung](/de/guides/connections/acumatica/) in Acumatica, geleitet durch die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Dokument) und eine Positionstabelle (eine oder mehrere Zeilen pro Dokument) und bucht jedes Dokument als **JournalTransaction**, **SalesInvoice**, **Bill** oder **Payment**. **Validate Only** erstellt und prüft jedes Dokument ohne Hauptbuchanspruch und ohne Buchung; eine optionale Ergebnistabelle hält das Ergebnis jedes Dokuments fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in Acumatica ab, bevor Sie sich darauf verlassen, dass dieser Schritt Dokumente unbeaufsichtigt live bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **Acumatica-Verbindung** — die Acumatica-Verbindung, über die gebucht wird.
+- **Umgebung** — die Umgebung der Verbindung.
+
+### Daten
+
+- **Kopftabelle** — eine Zeile pro Dokument: `ref` (Ihre Dokumentkennung, erforderlich), `doc_type` (`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`, erforderlich), `posting_date`, `party_id` (Kunde/Lieferant, sofern der Dokumenttyp einen benötigt), `memo`, `due_date`, `branch_id`. Ein Stapel kann Dokumenttypen mischen — PlaidCloud teilt vor dem Buchen nach `doc_type` auf.
+- **Positionstabelle** — eine oder mehrere Zeilen pro `ref`, passend zum Dokumenttyp:
+
+  | Dokumenttyp | Positionsspalten |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **Ergebnistabelle** — Ausgabetabellen-ID: eine Zeile pro Dokument mit `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — standardmäßig aktiviert. Nur Vorabprüfung; kein Hauptbuchanspruch, keine Buchung. Eine Schrittkonfiguration, die dieses Feld ganz auslässt — zum Beispiel eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte —, verwendet ebenfalls standardmäßig Validate Only statt einer Live-Buchung.
+- **Continue On Error** — standardmäßig aktiviert. Bucht die übrigen Dokumente weiter, nachdem eines fehlgeschlagen ist; deaktiviert, stoppt den Stapel beim ersten Fehler.
+
+## So funktioniert das Buchen
+
+Acumatica erstellt jedes Dokument **in der Warteschleife (On Hold)**, dann ruft PlaidCloud die Freigabeaktion auf, die asynchron läuft — eine Antwort `202` Accepted, bis zum Abschluss abgefragt, dann bestätigt ein `204` die Freigabe. PlaidCloud meldet erst dann `posted`, wenn die Freigabe **durch erneutes Lesen des Hold-Flags des Dokuments als false bestätigt ist** — ein Dokument, das angelegt wird, dessen Freigabe aber nie bestätigt wird, bleibt in Quarantäne (nicht als gebucht gemeldet, nicht stillschweigend verworfen), statt allein deshalb als Erfolg verbucht zu werden, weil das Dokument existiert.
+
+## Funktionsgrenzen
+
+| Einschränkung | Bedeutung |
+|---|---|
+| Kein nativer Idempotenzschlüssel | Die PUT-basierte Schreib-API von Acumatica hat kein Idempotenzfeld. Der eigene Hauptbuchanspruch von PlaidCloud, nicht ein Schlüssel auf Acumatica-Seite, ist der einzige Schutz vor einer Doppelbuchung bei einem Wiederholungsversuch oder einer erneuten Ausführung. |
+| Storno erfolgt manuell | Kein Dokumenttyp hat in der vertragsbasierten API eine dokumentierte Storno-/Umkehraktion. `reversal_mode` ist überall `NONE` — abgelehnt, nie vorgetäuscht. Korrigieren Sie ein fehlerhaft gebuchtes Dokument direkt in Acumatica. |
+| Payment hat keine verlässliche Suche | Kein dokumentiertes Feld ordnet eine Zahlung nach einem mehrdeutigen Ergebnis der Anfrage von PlaidCloud zu. Eine unklare Zahlung wird zur manuellen Klärung in Quarantäne gestellt, statt geraten zu werden. |
+| Positionsfilterung erfolgt nicht serverseitig | Serverseitige Filter (im Import-Schritt) erreichen die Positionsdimensionen eines Dokuments nicht — filtern Sie auf Kopf-/Entitätsebene und grenzen Sie Positionen in Ihrem Workflow ein. |
+## Verwandte Themen
+
+- [Mit Acumatica verbinden](/de/guides/connections/acumatica/) — vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [Acumatica-REST-Konnektor](/de/reference/connectors/rest/acumatica/)
+- [Acumatica-Schritte](/de/reference/workflow-steps/acumatica/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

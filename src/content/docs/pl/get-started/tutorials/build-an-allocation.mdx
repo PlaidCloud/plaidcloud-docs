@@ -1,0 +1,136 @@
+---
+title: Tworzenie modelu alokacji
+description: Kompletny samouczek — rozdziel pulę kosztów między odbiorców, korzystając z danych kluczy alokacji i hierarchii.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/build-an-allocation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ten samouczek prowadzi przez budowę kompletnej alokacji kosztów w PlaidCloud. Na końcu będziesz mieć działający model, który rozdziela pulę kosztów na wymiar docelowy na podstawie danych klucza alokacji — fundament rachunku kosztów działań, rozliczeń wewnętrznych za IT i rozdziału usług wspólnych.
+
+Zajmuje około godziny. Alokacje to najbardziej wyróżniająca się funkcja PlaidCloud; to najlepszy sposób, by zrozumieć ten model.
+
+## Co zbudujesz
+
+Rozdzielisz łączny koszt działu IT między jednostki biznesowe, ważąc go liczbą użytkowników każdej jednostki.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud ([rozpocznij bezpłatny okres próbny](https://app.plaidcloud.com), jeśli go nie masz)
+- Projekt zawierający lub umożliwiający zaimportowanie:
+  - **Wartości do alokacji** — koszt IT według miesięcy, łącznie lub według podkategorii
+  - **Dane klucza alokacji** — liczba użytkowników według jednostki biznesowej
+  - **Wymiar** — hierarchia jednostek biznesowych (jednostki → pion → firma)
+- Znajomość artykułu [Koncepcje](/pl/get-started/concepts/) — obszar roboczy, projekt, przepływ pracy, wymiar, alokacja
+
+<Aside>
+Jeśli nie masz jeszcze danych źródłowych, możesz przygotować małe pliki CSV i najpierw je zaimportować, korzystając z samouczka [Ładowanie, przekształcanie i publikowanie danych](/pl/get-started/tutorials/load-and-transform-data/).
+</Aside>
+
+## Krok 1: przygotuj dane wejściowe
+
+Upewnij się, że w projekcie masz te trzy elementy:
+
+| Obiekt | Co zawiera |
+|---|---|
+| Tabela `it_cost` | Łączny koszt IT (np. jeden wiersz na miesiąc z kwotą) |
+| Tabela `users_by_bu` | Jeden wiersz na jednostkę biznesową z kolumną `user_count` |
+| Wymiar `business_units` | Hierarchia jednostek biznesowych, w której węzły liści odpowiadają nazwom jednostek w `users_by_bu` |
+
+Jeśli czegoś brakuje, załaduj to przepływem pracy, zanim przejdziesz dalej.
+
+## Krok 2: utwórz przepływ pracy alokacji
+
+<Steps>
+
+1. Otwórz projekt i przełącz się na kartę **Przepływy pracy**.
+2. Kliknij **Nowy przepływ pracy**. Nadaj mu nazwę „IT Cost Allocation”.
+3. Otwórz nowy przepływ pracy w Workflow Explorer.
+
+</Steps>
+
+## Krok 3: dodaj krok alokacji
+
+<Steps>
+
+1. Dodaj nowy krok z kategorii **Alokacje**. Wybierz **Allocation Rules** — to najbardziej elastyczna opcja.
+2. Skonfiguruj źródło:
+   - **Tabela źródłowa**: `it_cost`
+   - **Kolumna kwoty źródłowej**: kolumna z kwotą w dolarach
+3. Skonfiguruj klucz alokacji:
+   - **Tabela sterująca**: `users_by_bu`
+   - **Kolumna wartości nośnika kosztów**: `user_count`
+   - **Kolumna dopasowania nośnika kosztów**: kolumna z nazwą jednostki biznesowej
+4. Skonfiguruj cel:
+   - **Wymiar docelowy**: `business_units`
+   - **Poziom docelowy**: wybierz poziom hierarchii, na który alokować (zwykle poziom liści)
+5. Skonfiguruj wynik:
+   - **Tabela wyników**: `it_cost_allocated`
+
+</Steps>
+
+## Krok 4: uruchom i sprawdź
+
+<Steps>
+
+1. Uruchom krok.
+2. Otwórz kartę **Tabele** i wejdź do `it_cost_allocated`.
+3. Każdy wiersz przedstawia jeden wycinek kosztu trafiający do jednej jednostki biznesowej. Kolumny obejmują:
+   - Kwotę źródłową (np. łączny koszt IT za miesiąc)
+   - Docelową jednostkę biznesową
+   - Użytą wartość klucza alokacji (liczba użytkowników tej jednostki)
+   - Stawkę alokacji (liczba użytkowników ÷ łączna liczba użytkowników we wszystkich jednostkach)
+   - Alokowaną kwotę (kwota źródłowa × stawka)
+
+</Steps>
+
+## Krok 5: zweryfikuj liczby
+
+Trzy sprawdzenia, które powinna przejść każda alokacja:
+
+1. **Uzgodnienie sum** — suma alokowanych kwot jest równa sumie źródłowej (w granicach tolerancji zaokrągleń)
+2. **Suma stawek** — stawki alokacji sumują się do 1,0 (= 100%) na każdy wiersz źródłowy
+3. **Pokrycie** — każda jednostka biznesowa w wymiarze, która powinna otrzymać wycinek, faktycznie go otrzymała
+
+Przewodnik [Wyniki alokacji](/pl/guides/allocations/results/allocation-results/) zawiera pełną listę kontrolną weryfikacji.
+
+Jeśli coś się nie zgadza, najczęstsze problemy to:
+- **Brakujące dane klucza alokacji** — jednostka biznesowa w wymiarze bez wiersza w `users_by_bu` nie otrzyma alokacji
+- **Niezgodne nazwy** — tabela sterująca zawiera „Sales East”, a wymiar „Sales-East” (inne odstępy lub wielkość liter nie będą pasować)
+- **Zerowe lub ujemne wartości klucza** — dają zerowe lub nieoczekiwane alokacje
+
+## Krok 6: wykorzystaj wyniki
+
+Tabela wyników jest taka jak każda inna tabela PlaidCloud — można ją:
+
+- **Złączyć** z innymi tabelami w kolejnych krokach przepływu pracy (np. dodać do księgi głównej kolumnę kosztu pełnego)
+- **Opublikować** dla pulpitów lub zewnętrznych odbiorców
+- **Alokować ponownie** jako źródło dla kolejnej rundy alokacji (w modelach kaskadowych)
+
+## Warianty do wypróbowania
+
+Gdy podstawowy model działa, typowe rozszerzenia to:
+
+- **Wiele pul kosztów** — zastąp pojedynczy wiersz `it_cost` jednym wierszem na podkategorię IT (moc obliczeniowa, przechowywanie, licencje) i alokuj każdą niezależnie z różnymi kluczami
+- **Wiele okresów** — podziel źródło według miesięcy i uzyskaj jeden wynik alokacji na okres
+- **Alokacje warstwowe** — alokuj koszty ogólne pionu na jednostki, następnie koszty jednostek na produkty, a koszty produktów na klientów. Każda warstwa to osobny krok alokacji
+- **Alokacje rekurencyjne** — gdy usługi wspólne korzystają ze swoich usług nawzajem (IT obsługuje HR, HR obsługuje IT). Zobacz [Alokacje rekurencyjne](/pl/guides/allocations/setup/recursive-allocations/)
+- **Przypisanie oparte na regułach** — gdy rozdział zależy od więcej niż jednego klucza i różni się w zależności od źródła, zbuduj wymiar alokacji za pomocą kreatora zamiast łączyć pojedynczą tabelę sterującą. Zobacz [Tworzenie wymiaru alokacji](/pl/guides/dimensions/dimensions/#tworzenie-wymiaru-alokacji)
+
+## Co dalej
+
+- [Przewodnik po alokacjach](/pl/guides/allocations/) — każda opcja i wybór konfiguracji
+- [Tagowanie według reguł](/pl/guides/allocations/getting-started/rule-based-tagging/) — różne reguły alokacji dla każdego wiersza źródłowego
+- [Dokumentacja kroków alokacji](/pl/reference/workflow-steps/allocation/) — każdy krok przepływu pracy z kategorii Alokacje
+- [Przewodnik po wymiarach](/pl/guides/dimensions/) — budowanie hierarchii, na które kierowane są alokacje

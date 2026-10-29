@@ -1,0 +1,148 @@
+---
+title: Conectar un origen de datos en vivo
+description: Tutorial integral. Cree una conexión a una base de datos externa o a un servicio en la nube, cargue sus datos en una tabla del proyecto, obtenga una vista previa y configúrela para que se actualice según una programación.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/connect-a-data-source.mdx
+---
+
+*~30 minutos · una conexión, una tabla cargada, una actualización programada*
+
+Los demás tutoriales parten de un CSV que usted carga. Los datos reales suelen estar en otro lugar (una base de datos, un almacén de datos, una aplicación SaaS, un almacenamiento en la nube) y lo que desea es que PlaidCloud los lea *directamente*, no una exportación obsoleta. Este tutorial conecta uno de esos sistemas, carga sus datos en una tabla del proyecto, muestra una vista previa del resultado y lo configura para que se actualice, de modo que la tabla se mantenga al día por sí sola.
+
+Hará cuatro cosas: **crear una conexión**, **cargar datos mediante un paso de flujo de trabajo**, **obtener una vista previa** y **programar la actualización**. Cada una corresponde a uno de los componentes básicos de PlaidCloud, y la misma estructura funciona sea cual sea el sistema al que se conecte.
+
+## Lo que va a crear
+
+Una tabla de proyecto que se llena sola desde un origen externo y vuelve a leerlo según una programación, sin recargas manuales.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 700 150" role="img" aria-label="Un origen externo se conecta a PlaidCloud mediante una conexión guardada. Un paso de importación de un flujo de trabajo lee a través de esa conexión y escribe en una tabla del proyecto. El explorador de tablas muestra una vista previa de la tabla. Una programación vuelve a ejecutar el flujo de trabajo para que la tabla se mantenga al día." style="width:100%;max-width:700px;height:auto;">
+  <defs><marker id="cs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="8" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="68" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">origen externo</text>
+  <text x="68" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">BD · SaaS · nube</text>
+  <path d="M128 75 L160 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="162" y="52" width="120" height="46" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="222" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-accent)">Conexión</text>
+  <text x="222" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Herramientas &gt; Conexiones</text>
+  <path d="M282 75 L314 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="316" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="376" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">paso de importación</text>
+  <text x="376" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">en un flujo de trabajo</text>
+  <path d="M436 75 L468 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="470" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="530" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabla del proyecto</text>
+  <text x="530" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">vista previa · publicar</text>
+  <path d="M530 98 C530 128 376 128 376 108" stroke="var(--sl-color-gray-3)" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#cs-arrow)" />
+  <text x="452" y="140" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">la programación vuelve a ejecutar el flujo de trabajo</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">La conexión guarda las credenciales una sola vez; el paso de importación lee a través de ella hacia una tabla; una programación mantiene esa tabla al día.</figcaption>
+</figure>
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud ([inicie una prueba gratuita](https://app.plaidcloud.com) si no tiene uno)
+- Un proyecto en el que trabajar y un flujo de trabajo dentro de él (cree uno desde la pestaña **Flujos de trabajo**; consulte [Crear un flujo de trabajo](/es/guides/workflows/create-workflow/))
+- Las credenciales del origen al que se conecta: un host y un inicio de sesión de base de datos, un token de API, una clave de almacenamiento en la nube, lo que use ese sistema
+
+## Paso 1: Elegir su conector
+
+PlaidCloud se comunica con cada tipo de sistema externo mediante un **conector** diseñado a propósito que conoce la autenticación y el protocolo de ese proveedor. Encuentre el suyo en la [referencia de conectores](/es/reference/connectors/); las categorías son:
+
+| Categoría | Ejemplos |
+|---|---|
+| Bases de datos y lagos de datos | PostgreSQL, SQL Server, Snowflake, BigQuery, Databricks, Redshift, Iceberg, Delta Lake |
+| REST / SaaS | Salesforce, NetSuite, Workday, QuickBooks, Stripe |
+| Sistemas ERP | SAP ECC, S/4HANA, Oracle EBS/Fusion, Infor |
+| Nube, Google, colaboración | Servicios en la nube, Google Sheets/BigQuery, Slack, Microsoft Teams |
+| Orígenes Singer | Más de 130 orígenes basados en taps: Stripe, GitHub, HubSpot y más |
+| Proveedores de Git | GitHub, GitLab, Bitbucket, además de PlaidCloud Git administrado |
+
+> **¿No hay un conector dedicado? Use el genérico.** Para un servicio sin entrada propia, la [conexión REST genérica](/es/reference/connectors/rest/generic-rest/) llega a cualquier API HTTP. Tenga en cuenta que los nombres exactos de los campos que necesita cada conector están en su página de referencia.
+
+Este tutorial recorre un [origen Singer](/es/guides/connections/singer-sources/) como ejemplo concreto, porque carga los datos de principio a fin con la menor cantidad de piezas. Un conector de base de datos o de almacenamiento en la nube sigue los mismos tres movimientos (conexión, paso de importación y tabla de destino), con campos específicos de ese sistema.
+
+## Paso 2: Crear la conexión
+
+Una **conexión** es una configuración guardada que contiene el punto de conexión y las credenciales una sola vez, de modo que cada paso del flujo de trabajo la reutilice por su nombre.
+
+1. Abra **Herramientas > Conexiones**.
+2. Haga clic en **Nueva conexión** en la barra de herramientas y elija su sistema en el menú.
+3. Complete el formulario de la conexión. Las pestañas varían según el tipo, pero normalmente definirá lo siguiente:
+   - **Configuración de la conexión** (o **Detalles de la conexión** en REST): el **Nombre** de la conexión, una **Nota** opcional, el host, el puerto y la base de datos (o el host y el tipo de autenticación), el interruptor **Uso** en **Activo** y el **Modelo de seguridad**.
+   - Credenciales: en un grupo **Credenciales de autenticación** en una conexión de base de datos, o en una pestaña **Autenticación** específica en una conexión REST.
+   - **Configuración de SSL** / **Configuración de SSH**: active el cifrado o el túnel a través de un host bastión si su origen lo requiere.
+4. Haga clic en **Crear**. La conexión aparece en la lista, con usted como propietario.
+
+El **Modelo de seguridad** determina quién más puede usarla, desde **Privado (solo propietarios)** hasta **Todos los miembros del espacio de trabajo**. Consulte [Crear y administrar una conexión](/es/guides/connections/create-connection/) para ver el recorrido completo campo por campo y cómo conceder acceso.
+
+> **Los secretos son de solo escritura.** Los campos de contraseña y token aparecen en blanco cuando vuelve a abrir una conexión guardada; si deja uno en blanco al guardar, se conserva el valor almacenado. Vuelva a escribirlo solo cuando lo esté cambiando.
+
+> **Una conexión, varios entornos.** Una sola conexión puede contener una configuración distinta por **entorno** (un host de desarrollo y uno de producción bajo un mismo nombre), que se elige en el selector de entorno de la barra de herramientas. Configúrelo ahora si más adelante va a promover el mismo flujo de trabajo entre entornos.
+
+## Paso 3: Probar la conexión
+
+Confirme que PlaidCloud realmente puede llegar al origen antes de construir sobre él.
+
+- Guarde primero la conexión: las pruebas se ejecutan sobre la configuración *almacenada*, no sobre ediciones sin guardar.
+- Una conexión de base de datos con SSH ofrece una prueba del túnel en su pestaña **Configuración de SSH**.
+- La conexión REST genérica tiene una pestaña **Pruebas** que envía una solicitud ad hoc a través de la conexión guardada.
+
+Si la prueba falla, las causas habituales son un host o puerto incorrecto, un firewall que no permite la salida de PlaidCloud o una credencial que debe volver a escribirse (recuerde que los secretos se leen en blanco).
+
+## Paso 4: Cargar los datos en una tabla
+
+Los datos entran en un proyecto mediante un **paso de importación de flujo de trabajo** que hace referencia a su conexión y escribe en una **tabla de destino**. Las vistas no pueden ser destinos de importación: una tabla contiene las filas físicas.
+
+Con un origen Singer como ejemplo práctico:
+
+1. Haga doble clic en su flujo de trabajo para abrirlo en el **Workflow Explorer**.
+2. Agregue un paso y elija **Importar: origen Singer**. El editor se abre con una pestaña **Origen** y una pestaña **Flujos**.
+3. En la pestaña **Origen**, elija su **Conexión**, seleccione un **Modo de sincronización** (se explica en el paso 6) y luego haga clic en **Detectar flujos**. La detección se ejecuta en el motor de ejecución en segundo plano y la primera vez puede tardar hasta unos tres minutos.
+4. En la pestaña **Flujos**, abra el flujo que desea, marque **Importar este flujo** y defina su **Tabla de destino**, la tabla en la que se cargan las filas.
+5. Guarde el paso y ejecútelo. Las filas se cargan en la tabla de destino.
+
+> **El paso almacena una referencia a la conexión, no una copia de sus credenciales.** Cada ejecución lee las credenciales actuales de la conexión en el momento de ejecutarse, por lo que, al rotar un token, lo actualiza una sola vez en la conexión y cada paso lo toma en su siguiente ejecución.
+
+En un conector de base de datos o de almacenamiento en la nube, el paso de importación cambia pero la estructura es idéntica: apúntelo a la conexión, asigne un nombre a una tabla de destino y ejecútelo. La [referencia de conectores](/es/reference/connectors/) enlaza el paso específico que usa cada conector, y la [guía de flujos de trabajo](/es/guides/workflows/) explica cómo crear y ejecutar pasos.
+
+## Paso 5: Ver una vista previa de los datos cargados
+
+Siempre que PlaidCloud muestra una tabla o una vista, al hacer clic en ella se abre el [Explorador de tablas](/es/guides/data/table-explorer/), de modo que verificar la importación está a un clic desde la pestaña **Tablas**.
+
+- La vista **Cuadrícula** muestra las filas (límite predeterminado de 5,000). El selector **Superior / Aleatorio** controla qué filas la llenan; cambie a **Aleatorio** para comprobar por muestreo la calidad de una tabla grande en lugar de solo las primeras filas.
+- La vista **Detalles** resume cada columna: recuentos de valores únicos y estadísticas de tipo mínimo, máximo, media y suma para las columnas numéricas.
+- Si una columna se cargó con un tipo incorrecto, se corrige con los asignadores de columnas de los pasos de su flujo de trabajo, no aquí.
+
+Compruebe que el recuento de filas y algunos valores de muestra coinciden con lo que espera del origen. Si es así, la conexión y la importación funcionan.
+
+## Paso 6: Configurarlo para que se actualice
+
+Una importación única es una instantánea. Para mantener la tabla al día, elija **cómo** concilia cada ejecución los datos nuevos y luego programe las ejecuciones.
+
+**Cómo concilia cada ejecución**: se define en el paso de importación. En un origen Singer, los modos de sincronización son:
+
+| Modo de sincronización | Qué hace cada ejecución | Úselo cuando |
+|---|---|---|
+| Tabla completa (reemplazar en cada ejecución) | Vuelve a extraer todo y reemplaza el destino | Orígenes pequeños o que se actualizan por completo |
+| Incremental (anexar datos nuevos) | Extrae solo las filas nuevas desde la última ejecución y las anexa | Orígenes con una clave de replicación (una fecha de actualización o un ID incremental) |
+| Upsert (combinar por clave) | Vuelve a extraer el flujo y lo combina por las columnas clave: actualiza las coincidencias, inserta las claves nuevas y conserva el resto | Orígenes cuyos registros existentes cambian y de los que desea una fila por clave |
+
+Otros conectores ofrecen sus propios equivalentes; el principio (reemplazar, anexar o combinar) es el mismo.
+
+**Cuándo se realizan las ejecuciones**: programe el flujo de trabajo para que se vuelva a ejecutar por sí solo. Configure una ejecución periódica en [Eventos programados](/es/administration/scheduled-events/); a partir de entonces la tabla se actualiza con esa cadencia sin ningún paso manual. También puede [ejecutar el flujo de trabajo](/es/guides/workflows/run-a-workflow/) a mano en cualquier momento en que desee una actualización inmediata.
+
+> **Elija columnas clave que siempre estén presentes (Upsert).** Upsert empareja las filas por el valor exacto de la clave, y una clave nula nunca coincide: las filas con clave nula se insertan en cada ejecución y se acumulan. Use una columna que el origen siempre complete.
+
+## Opcional: publicar la tabla
+
+Si los paneles de control, PlaidXL o herramientas externas de BI van a consumir esta tabla, asígnele un nombre de informe publicado para que destaque de las tablas intermedias. Haga clic con el botón derecho en la tabla en la pestaña **Tablas** y elija **Set Published Table Reporting Name**; consulte [Publicar tablas](/es/guides/data/publish/). Solo los nombres publicados llegan a las herramientas posteriores.
+
+## Adónde ir después
+
+- [Guía de conexiones](/es/guides/connections/): crear, probar, clonar y controlar el acceso a las conexiones
+- [Orígenes Singer](/es/guides/connections/singer-sources/): el origen basado en taps que se usa en este recorrido, con todo detalle
+- [Referencia de conectores](/es/reference/connectors/): todos los sistemas admitidos y los campos exactos que necesita cada uno
+- [Explorador de tablas](/es/guides/data/table-explorer/) y [Tablas y vistas](/es/guides/data/tables-views/): inspeccione y comprenda lo que se cargó
+- [Eventos programados](/es/administration/scheduled-events/): ejecute la actualización según una programación periódica
+- [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/): limpie y reorganice la tabla que acaba de cargar
+- [Crear un modelo de asignación](/es/get-started/tutorials/build-an-allocation/): ponga los datos conectados a trabajar en un modelo

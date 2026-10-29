@@ -1,0 +1,128 @@
+---
+title: "ML : entraîner un modèle"
+description: Ajustez un modèle scikit-learn sur une table et écrivez une table de modèle que vous pouvez utiliser pour scorer et interroger.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## Description
+
+L'étape **ML : entraîner un modèle** ajuste un modèle scikit-learn sur une table source et écrit le résultat sous forme de **table de modèle**. La table de modèle circule dans le workflow comme n'importe quelle autre table : transmettez-la à une étape [ML : scorer](/fr/reference/workflow-steps/machine-learning/ml-score/) pour ajouter des prédictions à une table de données, ou interrogez-la directement pour consulter les métriques d'entraînement. L'étape s'exécute comme un job PlaidCloud géré (comme l'étape LLM) : l'entraînement n'entre donc pas en concurrence avec le reste du workflow pour les ressources.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML : entraîner un modèle apprend un modèle à partir de lignes historiques. Des lignes d'entraînement comportant des colonnes de caractéristiques et une étiquette connue sont fournies à l'étape d'entraînement, qui produit un artefact de modèle enregistré qu'une étape de scoring utilise ensuite." style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">lignes d'entraînement</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">caractéristiques + étiquette connue</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Entraîner</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">ajuste un algorithme</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">artefact de modèle</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">enregistré, réutilisable</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ utilisé par ML : scorer</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML : entraîner un modèle ajuste un algorithme sur des lignes dont l'étiquette est déjà connue et produit un artefact de modèle enregistré que <a href="/fr/reference/workflow-steps/machine-learning/ml-score/">ML : scorer</a> applique à de nouvelles lignes.</figcaption>
+</figure>
+
+## Onglet Modèle
+
+### Source et sortie
+
+- **Table d'entraînement** : la table sur laquelle entraîner le modèle. Les lignes dont la valeur cible est vide sont exclues de l'entraînement.
+- **Table du modèle** : la table de sortie qui reçoit l'enregistrement du modèle.
+
+### Modèle
+
+- **Algorithme** : le modèle à ajuster :
+
+  | Algorithme | Valeur | Famille |
+  | --- | --- | --- |
+  | Régression logistique | `logistic_regression` | Classification |
+  | Classifieur par arbre de décision | `decision_tree` | Classification |
+  | Classifieur par forêt aléatoire | `random_forest` | Classification |
+  | Classifieur à gradient boosting (de type XGBoost) | `xgb_classifier` | Classification |
+  | Régression linéaire | `linear_regression` | Régression |
+  | Régresseur par arbre de décision | `decision_tree_regressor` | Régression |
+  | Régresseur par forêt aléatoire | `random_forest_regressor` | Régression |
+
+  L'algorithme de type XGBoost est un `HistGradientBoostingClassifier` de scikit-learn : un équivalent statistique de XGBoost, et non une surcouche de celui-ci. Consultez [Limites et réserves](#limites-et-réserves).
+
+- **Colonne cible** : la colonne à prédire. Elle est obligatoire, sauf pour les algorithmes non supervisés et `sota`, dont la colonne de classe est facultative. Les cibles de classification sont traitées comme des étiquettes textuelles ; les cibles de régression sont converties en nombres, et les lignes dont la cible ne peut pas être interprétée comme un nombre sont exclues.
+
+### Autres algorithmes
+
+La liste **Algorithme** propose également les algorithmes suivants. Les workflows KNIME convertis les utilisent aussi.
+
+| Algorithmes | Description |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | XGBoost lui-même, avec le booster à arbres ou linéaire |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | Gradient boosting de scikit-learn |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | Machines à vecteurs de support, perceptrons multicouches et modèles de référence de scikit-learn |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | Les propres apprenants de KNIME, qui donnent les résultats de KNIME ; leurs hyperparamètres correspondent aux paramètres de KNIME |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | Les algorithmes non supervisés de KNIME : aucune colonne cible, et les colonnes de caractéristiques sont les colonnes numériques (pour `apriori` et `fp_growth`, l'unique colonne de listes d'éléments) |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | Les nœuds KNIME de clustering, d'échantillonnage, d'apprentissage actif, de recommandation (`als` : les colonnes de caractéristiques sont l'utilisateur et le produit, la cible est la note), de règles d'association et de dose-réponse |
+
+`dbscan`, `mds`, `tsne` et les autres algorithmes qui n'ont pas de modèle distinct de leurs données conservent leurs paramètres dans la table de modèle, et [ML : scorer](/fr/reference/workflow-steps/machine-learning/ml-score/) restitue la table qui lui est fournie.
+
+### Hyperparamètres
+
+Un objet JSON facultatif d'hyperparamètres scikit-learn pour l'algorithme choisi, par exemple `{"max_depth": 5, "n_estimators": 200}`. Les clés inconnues sont rejetées à l'enregistrement de l'étape : un paramètre mal saisi échoue donc immédiatement au lieu d'être ignoré en silence. Les workflows convertis depuis Alteryx peuvent aussi contenir des clés sentinelles de style Alteryx, comme `max_depth_none` ; elles sont traduites automatiquement.
+
+Quelques paramètres historiques que scikit-learn a supprimés sont acceptés mais non appliqués (par exemple `presort`, ou les paramètres d'arbre XGBoost énumérés sous [Limites et réserves](#limites-et-réserves)) ; tout ce qui est abandonné de cette façon est consigné dans `params_json` de la table de modèle, sous `dropped_params` : rien ne disparaît donc silencieusement.
+
+## Onglet Caractéristiques
+
+L'onglet Caractéristiques affiche une ligne par colonne de la table source :
+
+- **Caractéristique** : cochez les colonnes sur lesquelles entraîner le modèle. Laissez **toutes** les cases décochées pour entraîner le modèle sur toutes les colonnes, sauf la cible. Lorsque aucune case n'est cochée, l'étape s'entraîne sur les colonnes que la table contient au moment de l'exécution ; indiquez des colonnes dans **Exclure des colonnes** (`exclude_columns`) pour en écarter certaines.
+- **Remplacement de type** : forcez le traitement d'une colonne en **Numérique** ou **Catégoriel**, ou laissez **(déduire)** pour déduire le type à partir du type de la colonne de la table.
+
+La préparation des caractéristiques correspond à Alteryx Assisted Modeling : les caractéristiques numériques sont converties en nombres (les valeurs non interprétables deviennent manquantes) et les valeurs manquantes sont imputées par la médiane ; les caractéristiques catégorielles sont traitées comme du texte, imputées par la valeur la plus fréquente, puis encodées en one-hot. Les valeurs qu'une caractéristique catégorielle n'a jamais rencontrées pendant l'entraînement sont ignorées lors du scoring.
+
+## La table du modèle
+
+La table du modèle contient les colonnes suivantes :
+
+| Colonne | Contenu |
+| --- | --- |
+| `model_pickle_b64` | Le pipeline scikit-learn ajusté (sérialisé avec pickle, compressé et encodé en base64). Les modèles volumineux sont répartis sur plusieurs lignes ; consultez [Stockage du modèle](#stockage-du-modèle). |
+| `chunk_index` | La position du fragment de modèle de cette ligne, en comptant à partir de `0`. |
+| `algorithm` | La valeur de l'algorithme, par exemple `logistic_regression`. |
+| `params_json` | JSON : les paramètres scikit-learn appliqués, les types de caractéristiques utilisés et les éventuels `dropped_params`. |
+| `feature_names_json` | Tableau JSON : les colonnes de caractéristiques ordonnées que le modèle attend lors du scoring. |
+| `class_labels_json` | Tableau JSON des étiquettes de classe (classifieurs) ou `null` (régresseurs). |
+| `metrics_json` | Métriques d'entraînement au format JSON ; voir ci-dessous. |
+| `trained_at` | Horodatage UTC de l'exécution de l'entraînement. |
+
+Comme le modèle est une table ordinaire, vous pouvez l'interroger comme telle : par exemple, extrayez `metrics_json` dans une étape en aval pour conditionner un workflow à la qualité du modèle.
+
+`metrics_json` contient une clé `kind` (`classification` ou `regression`), `train_accuracy` pour les classifieurs ou `train_r2` et `train_rmse` pour les régresseurs, ainsi que `n_training_rows`.
+
+### Stockage du modèle
+
+Un modèle ajusté peut être volumineux (une forêt aléatoire conservant ses cent arbres par défaut peut atteindre plusieurs centaines de mégaoctets), ce qui dépasse ce qu'un entrepôt de données accepte comme valeur unique. Le modèle est donc compressé et, s'il reste trop gros pour une seule ligne, réparti sur autant de lignes que nécessaire. Chaque ligne répète les colonnes ci-dessus : n'importe laquelle vous indique donc l'algorithme, les paramètres, les caractéristiques et les métriques ; seules `model_pickle_b64` et `chunk_index` diffèrent d'une ligne à l'autre.
+
+Cela a des conséquences à deux endroits :
+
+- **Lecture des métriques.** Une table de modèle peut contenir plusieurs lignes ; lisez donc les métriques à partir d'une seule ligne au lieu de supposer qu'il n'y en a qu'une, par exemple avec `WHERE chunk_index = 0`.
+- **Réassemblage du modèle par vos soins.** Si vous lisez `model_pickle_b64` en dehors de PlaidCloud, concaténez les fragments dans l'ordre de `chunk_index`, décodez le base64, puis décompressez avant de désérialiser avec pickle.
+
+Une étape [ML : scorer](/fr/reference/workflow-steps/machine-learning/ml-score/) fait tout cela pour vous. Elle vérifie aussi que chaque fragment est présent et s'arrête avec une erreur si l'un d'eux manque, plutôt que de scorer avec un modèle incomplet.
+
+## Limites et réserves
+
+- **Les métriques d'entraînement sont calculées sur le jeu d'entraînement** : cette version ne propose ni découpage de réserve (holdout) ni validation croisée. Considérez-les comme un contrôle d'ajustement, et non comme une estimation de la performance hors échantillon.
+- **Jeu de travail en mémoire** : la table d'entraînement est lue en mémoire ; l'étape vise donc environ un million de lignes. Échantillonnez ou agrégez d'abord les tables plus volumineuses.
+- **Taille maximale du modèle** : un modèle ajusté est rejeté s'il dépasse 128 Mo une fois compressé, et l'étape s'arrête dès la fin de l'entraînement avec un message indiquant la taille et la limite. À titre de repère : une forêt aléatoire de cent arbres sur 17 000 lignes et 17 caractéristiques représente environ 56 Mo ; la limite est donc à peu près le double. Si vous l'atteignez, entraînez moins d'arbres (`n_estimators`) ou plafonnez `max_depth`.
+- **Approximation de XGBoost** : `xgb_classifier` entraîne un `HistGradientBoostingClassifier` de scikit-learn ; les algorithmes `xgboost_*` exécutent XGBoost lui-même. Les paramètres d'arbre propres à XGBoost `gamma`, `min_child_weight`, `subsample` et la famille `colsample_*` n'ont pas d'équivalent et sont abandonnés (consignés dans `dropped_params`, ainsi que dans les notes de mappage de l'étape lorsqu'elle a été convertie depuis Alteryx). Validez les métriques du modèle par rapport à votre exécution de référence avant de vous fier à la parité.
+- **La conversion AutoML choisit un seul algorithme, sans recherche** : un outil Alteryx AutoML fusionne vers cette étape de la même manière que Classification et Regression, mais AutoML n'enregistre jamais lequel de ses algorithmes candidats l'a réellement emporté lors de l'exécution dans Alteryx. La conversion retient le premier algorithme coché que cette étape prend en charge et consigne ce choix, au lieu de reproduire une recherche automatisée : aucune boucle de sélection de modèle ne s'exécute ici. Comparez une étape AutoML convertie à vos propres résultats Alteryx.
+
+## Voir aussi
+
+- [ML : scorer](/fr/reference/workflow-steps/machine-learning/ml-score/) : scorer une table de données avec le modèle entraîné.
+- [Migrate Alteryx Workflows](/fr/guides/workflows/migrate-alteryx-workflows/#conversions-dapprentissage-automatique-assisted-modeling) : comment les pipelines Alteryx Assisted Modeling, AutoML compris, sont convertis vers cette étape.

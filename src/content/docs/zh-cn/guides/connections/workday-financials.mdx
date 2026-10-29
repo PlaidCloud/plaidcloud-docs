@@ -1,0 +1,127 @@
+---
+title: 连接到 Workday Financials
+description: 使用 Integration System User 将 PlaidCloud 连接到 Workday Financial Management，通过 Report-as-a-Service 报表提取数据，然后通过 SOAP 过账日记账分录。
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+使用 Integration System User (ISU) 和客户提供的 Report-as-a-Service (RaaS) 报表将 PlaidCloud 连接到 Workday Financial Management 以提取财务数据，并通过 Workday 的 SOAP API 将会计日记账过账回去。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请先在沙盒租户上运行每一次导入，并在正式过账之前，对每个过账批次完成下文的 **Validate Only** 验证。
+</Aside>
+
+<Aside type="note">
+这与通用的 [Workday REST 连接器](/zh-cn/reference/connectors/rest/workday/)是不同的连接，后者面向 Workday 的 REST API，用于人力资源和薪资数据。Workday Financials 则使用 Workday 的 SOAP Web 服务和 RaaS 报表，财务数据和日记账过账请使用此连接器。
+</Aside>
+
+## 先决条件
+
+在 Workday 中，您需要具备：
+
+- 一个专用于 PlaidCloud 的 **Integration System User (ISU)**，并通过 Integration System Security Group 授予其访问财务数据和 Submit Accounting Journal 业务流程的权限。
+- Workday **租户主机**（例如 `wd5-impl.workday.com`）和**租户名称**。
+- 一个您在 Workday 中构建的 **Report-as-a-Service (RaaS) 报表**，它返回您想要导入的数据，并以 **Web Service** 访问方式发布，以便 PlaidCloud 可以直接调用其 URL。
+
+<Aside type="note">
+Workday Financials 不像 NetSuite 或 Business Central 那样提供一组固定的现成实体。您需要在 Workday 中使用 Workday 自己的报表编写器将提取内容构建为 RaaS 报表，并把该报表的 URL 提供给 PlaidCloud。这样您就能完全控制导入返回哪些字段和行。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections**，然后点击 `New Connection`。
+
+2. 从菜单中选择 **Workday Financials**。
+
+3. 填写以下字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `Workday Financials Prod`。 |
+   | 租户主机 | 您的 Workday 主机，例如 `wd5-impl.workday.com`。 |
+   | 租户名称 | 您的 Workday 租户名称。 |
+   | ISU 用户名 | Integration System User 的用户名。 |
+   | ISU 密码 | Integration System User 的密码。 |
+
+4. 点击 `Create`。
+
+</Steps>
+
+## 冒烟测试连接
+
+<Steps>
+
+1. 在 Workday 中构建一个小型 RaaS 报表，并以 Web Service 访问方式发布。
+
+2. 向工作流添加一个 **Import Workday Entity** 步骤，将 **Workday 连接**设置为您的连接，将 **RaaS Report URL** 设置为该报表的 URL，并将**目标表**设置为一个临时表。
+
+3. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，说明 ISU 凭据、租户主机和报表 URL 均正确无误。如果出现错误，错误信息会指明问题所在，例如凭据错误、租户主机错误，或 ISU 没有该报表的访问权限。
+
+## 导入数据
+
+<Steps>
+
+1. 添加一个 **Import Workday Entity** 步骤，并设置 **Workday 连接**、**RaaS Report URL** 和**目标表**。
+
+2. 添加**筛选器**以限定提取范围：当您的 RaaS 报表定义了匹配的提示时，`company`、`ledger`、`period`、`accounting_date`（范围）、`ledger_account`（范围）和 `cost_center` 会作为报表参数传递。
+
+3. 运行该步骤并检查目标表。
+
+</Steps>
+
+<Aside type="caution">
+筛选器只能到达 RaaS 报表中实际定义为提示的报表参数。如果您设置的筛选器在报表上没有匹配的提示，PlaidCloud 会拒绝它，而不是悄悄忽略，请先在 Workday 中为报表添加该提示。
+</Aside>
+
+## 过账日记账分录
+
+**Workday Financials: Post Journal Entry** 步骤通过 PlaidCloud 共享的 ERP 写入管道，使用 Workday 的 `Submit_Accounting_Journal` SOAP 操作来过账会计日记账。
+
+<Steps>
+
+1. 构建一个**标题表**，每个日记账分录一行，包含 `journal_id`（分录标识符）、`company`、`ledger`、`accounting_date` 和 `memo`。
+
+2. 构建一个**行表**，每个 `journal_id` 对应一行或多行，包含 `ledger_account`、`debit`、`credit`，以及日记账所需的任何 worktag（成本中心、项目）列。
+
+3. 添加一个 **Workday Financials: Post Journal Entry** 步骤，设置 **Workday 连接**、**标题表**、**行表**和**结果表**。
+
+4. 保持勾选 **Validate Only** 并运行该步骤，PlaidCloud 会构建并检查每个分录，不占用账本声明，也不会过账任何内容。
+
+5. 查看结果表（每个分录一行：`journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）。修复所有 `error` 行并重新验证。
+
+6. 取消勾选 **Validate Only** 并再次运行，以进行真实过账。除非希望批次在第一个失败的分录处立即停止，否则请保持勾选**出错时**继续。
+
+</Steps>
+
+### 过账的工作原理
+
+PlaidCloud 为每个日记账分录调用 `Submit_Accounting_Journal`；由于 Workday 自身的业务流程审批链可能会在已提交的日记账实际过账之前将其搁置，PlaidCloud 会轮询该分录的业务流程状态，直到其达到最终状态。只有该最终状态得到**确认**后，分录才会被报告为 `posted`。已提交但卡在某个审批步骤的分录会保持隔离状态，而不会被记录为已过账，因此待处理的审批绝不会被悄悄当作成功。PlaidCloud 自身的账本声明可防止在重试或重新运行的批次中重复提交同一分录。
+
+### 更正已过账的分录
+
+此步骤从不删除或改写已过账的日记账。要更正日记账，请针对原分录过账一个借贷方向互换的新分录，即**已过账的冲销分录**，而不是就地编辑原分录。这样可以保留 Workday 自身的审计轨迹，也与直接在应用程序中进行更正的方式一致。
+
+### 功能限制：实际过账前请阅读
+
+<Aside type="caution">
+- **导入完全取决于您构建的 RaaS 报表。** PlaidCloud 没有现成的 Workday Financials 实体，报表的字段、提示和访问控制都在 Workday 中定义，而不是由此连接器定义。Workday 中报表的更改可能会改变导入的结构，而 PlaidCloud 一侧无需任何更改。
+- **业务流程审批会增加延迟。** 如果您的 Submit Accounting Journal 业务流程要经过审批步骤，已过账的分录可能会一直处于 `pending`，直到有人在 Workday 中批准；终态轮询会等待这一过程，因此过账所需的时间可能会明显长于调用没有审批链的 ERP。
+- **本连接器有别于通用的 [Workday REST 连接器](/zh-cn/reference/connectors/rest/workday/)。** 后者面向 Workday 的 REST API（人力资源/薪资）；仅当您不是连接到 Workday Financials 时才使用它。
+</Aside>
+
+## 相关内容
+
+- [Workday Financials 连接器](/zh-cn/reference/connectors/rest/workday-financials/)：字段参考。
+- [Import Workday Entity](/zh-cn/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/zh-cn/reference/workflow-steps/workday-financials/workday-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：每次 Workday Financials 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

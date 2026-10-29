@@ -1,0 +1,171 @@
+---
+title: Analyse géospatiale
+description: "Chargez des fichiers spatiaux, construisez et remodelez des géométries, faites correspondre des lieux à des territoires et publiez le résultat : le parcours géospatial d'un workflow PlaidCloud."
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud traite la géométrie comme un élément à part entière d'un workflow : vous importez
+des fichiers spatiaux, construisez des géométries à partir de coordonnées, les remodelez et les faites correspondre, puis publiez
+le résultat, sans quitter la plateforme et sans outil SIG distinct.
+
+Ce guide présente le parcours à travers ces fonctionnalités. Pour le détail de référence d'une
+étape en particulier, consultez [Étapes géospatiales](/fr/reference/workflow-steps/spatial/).
+
+## La géométrie n'est qu'une colonne
+
+Chaque étape spatiale lit et écrit la géométrie au format **WKT** (well-known text) dans une
+colonne de texte ordinaire. Cela a trois conséquences à connaître dès le départ :
+
+- **Aucune déclaration de type.** Une colonne de géométrie est une colonne de texte. Rien à
+  configurer, rien à migrer.
+- **Les étapes se composent librement.** La sortie de n'importe quelle étape spatiale alimente l'entrée de n'importe quelle autre, dans
+  n'importe quel ordre.
+- **SQL et géométrie se combinent.** Une colonne de géométrie côtoie vos mesures ; vous
+  pouvez donc filtrer, regrouper et joindre sur les deux dans la même étape.
+
+## 1. Intégrer la géométrie dans une table
+
+Il y a deux voies d'accès, selon l'origine de la géométrie.
+
+**À partir d'un fichier spatial.** Utilisez
+l'étape [Importation de fichier spatial](/fr/reference/workflow-steps/spatial/spatial-file-import/) pour
+les fichiers MapInfo `.TAB`, ESRI `.shp`, `.kml` ou `.geojson`. Téléversez le fichier et ses
+fichiers associés dans le même dossier de documents : l'étape lit automatiquement les fichiers compagnons
+(`.shx`/`.dbf`/`.prj` pour un shapefile, `.dat`/`.map`/`.id` pour un `.TAB`). Elle produit
+une ligne par entité, avec une colonne de géométrie WKT et les attributs du
+fichier.
+
+**À partir de coordonnées que vous possédez déjà.** Si vos données contiennent des colonnes de longitude et de latitude,
+construisez des points avec une
+[expression Table Extract](/fr/reference/workflow-steps/spatial/spatial-sql-recipes/) :
+elle s'exécute dans la base de données, donc aucune ligne ne quitte l'entrepôt :
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="Gardez les fichiers associés ensemble">
+  Un shapefile sans son `.prj` s'importe sans système de coordonnées de référence, et un
+  `.TAB` sans son `.dat` n'a pas d'attributs. Téléversez tout le groupe avant d'exécuter
+  l'importation.
+</Aside>
+
+**À partir d'adresses : le géocodage.** L'étape **geocode** transforme des colonnes d'adresse en
+coordonnées (géocodage direct), et l'étape **geocode reverse** transforme une paire lat/lon en
+adresse (géocodage inverse), via le service de géocodage de PlaidCloud. Le géocodage direct ajoute `GeocodeLat` /
+`GeocodeLon` (ainsi que `GeocodeStatus`, `GeocodeConfidence` et le libellé correspondant) ;
+le géocodage inverse ajoute les composantes de l'adresse résolue.
+
+### Enrichissement par code de localisation
+
+Les deux étapes de géocodage peuvent aussi ajouter un **code de localisation** compact pour chaque ligne,
+calculé localement à partir de la coordonnée renvoyée, sans appel de service supplémentaire et sans
+dépendance externe :
+
+- **Geohash** (`GeocodeGeohash`) : produit **par défaut**. Un geohash est la
+  convention de l'analytique de données (Elasticsearch, Redis, Lucene) : sa **propriété de
+  préfixe** signifie qu'un code plus court est un préfixe d'un code plus long pour le même point,
+  de sorte que `GROUP BY LEFT(GeocodeGeohash, n)` donne instantanément un regroupement spatial
+  et qu'une jointure sur préfixe offre une proximité peu coûteuse.
+- **Plus Code** (`GeocodePlusCode`) : facultatif, **désactivé par défaut**. Un
+  [Open Location Code](https://maps.google.com/pluscodes/) est la forme d'adresse
+  partageable par les humains utilisée par Google Maps et par certains systèmes d'adressage publics.
+
+Contrôlez les colonnes produites avec le paramètre **`location_codes`** de l'étape :
+
+| `location_codes` | Colonnes ajoutées |
+|---|---|
+| `none` | Aucun code de localisation |
+| `geohash` *(par défaut)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` et `GeocodePlusCode` |
+
+Deux paramètres facultatifs règlent les codes : **`geohash_precision`** (`9` par défaut, soit environ une
+cellule de 4,8 m ; plafonné à `12`) et **`pluscode_length`** (`10` par défaut, soit environ une cellule de 14 m).
+Une ligne de géocodage direct qui n'a pas abouti à une coordonnée laisse les colonnes de code vides ; une
+ligne de géocodage inverse encode sa coordonnée **interrogée** même lorsqu'aucune adresse n'est trouvée.
+
+## 2. Remodeler la géométrie
+
+Une fois la géométrie dans une colonne, remodelez-la pour répondre à la question que vous vous posez réellement.
+
+| Question | Étape |
+|---|---|
+| Qu'y a-t-il à moins de *n* miles de chaque magasin ? | [Spatial Trade Area](/fr/reference/workflow-steps/spatial/spatial-trade-area/) (étape) |
+| Qu'y a-t-il à une distance fixe de cette forme ? | [Spatial Buffer](/fr/reference/workflow-steps/spatial/spatial-buffer/) (étape) |
+| Quelle est l'empreinte combinée de chaque région ? | [Combinaison spatiale](/fr/reference/workflow-steps/spatial/spatial-combine/) (étape) |
+| Quelle surface ces points délimitent-ils ? | [Spatial Poly-Build](/fr/reference/workflow-steps/spatial/spatial-poly-build/) (étape) |
+| Où ces deux empreintes se chevauchent-elles ou diffèrent-elles ? | [Traitement spatial](/fr/reference/workflow-steps/spatial/spatial-process/) (étape) |
+| Comment rendre ces limites moins coûteuses à dessiner ? | [Spatial Generalize](/fr/reference/workflow-steps/spatial/spatial-generalize/) (étape) |
+| Comment découper cette zone en cellules égales ? | [Spatial Make Grid](/fr/reference/workflow-steps/spatial/spatial-make-grid/) (étape) |
+| Comment décomposer un polygone en ses parties ? | [Spatial Poly-Split](/fr/reference/workflow-steps/spatial/spatial-poly-split/) (étape) |
+
+La zone de chalandise est généralement le point de départ d'une analyse de commerce de détail ou de territoire de service : donnez-lui
+une table de lieux et un ensemble de rayons, et elle renvoie des anneaux concentriques avec lesquels vous pouvez
+faire correspondre des clients.
+
+## 3. Faire correspondre les lieux aux territoires
+
+Les deux étapes de correspondance répondent à des questions différentes et suivent des voies différentes.
+
+**Dans quel territoire se trouve chaque client ?** Utilisez
+l'étape [Correspondance spatiale](/fr/reference/workflow-steps/spatial/spatial-match/). Elle s'exécute comme une
+jointure à prédicat spatial dans la base de données, et passe donc à l'échelle avec la table. Choisissez la
+relation (*intersects*, *within* ou *contains*) et elle produit une ligne par paire
+correspondante.
+
+**Quels sont les magasins les plus proches de chaque client ?** Utilisez
+l'étape [Spatial Find Nearest](/fr/reference/workflow-steps/spatial/spatial-find-nearest/).
+Elle conserve les N lignes les plus proches par cible et ajoute une colonne de distance calculée dans
+l'unité de votre choix. Elle passe aussi par SQL et passe donc à l'échelle de la même façon.
+
+**Quels clients se trouvent en dehors de tous les territoires ?** Utilisez
+l'étape [Spatial Match (Intersect / Unmatched)](/fr/reference/workflow-steps/spatial/spatial-match-executor/)
+en mode *Unmatched*. La même étape produit aussi la géométrie de chevauchement elle-même lorsque vous
+avez besoin de l'intersection plutôt que de l'appariement.
+
+## 4. Mesurer
+
+L'étape [Spatial Info](/fr/reference/workflow-steps/spatial/spatial-info/) ajoute des colonnes de surface,
+de longueur, de centroïde et de rectangle englobant. Ce sont des mesures **géodésiques WGS84**,
+de sorte que les miles carrés sont de vrais miles carrés et non une approximation
+plane, ce qui compte dès que vous comparez des territoires situés à des latitudes différentes.
+
+Pour une distance point à point en ligne droite entre deux colonnes d'une même ligne, une
+[expression SQL](/fr/reference/workflow-steps/spatial/spatial-sql-recipes/) est
+moins coûteuse qu'une étape.
+
+## 5. Publier
+
+Une géométrie qui reste dans une table n'est pas une réponse sur laquelle quelqu'un peut agir.
+
+- [Report Map](/fr/reference/workflow-steps/reports/report-map/) (étape) restitue la géométrie dans
+  un rapport PDF, aux côtés des graphiques et des tables du même workflow.
+- La table de résultat alimente les [tableaux de bord](/fr/guides/dashboards/) comme n'importe quelle autre table :
+  la colonne de géométrie est conservée, et les mesures qui l'accompagnent sont ce que la plupart des
+  tableaux de bord représentent réellement.
+- Les [étapes d'export](/fr/reference/workflow-steps/export/) écrivent la table dans un fichier CSV ou
+  Excel, ou dans une base de données externe lorsqu'un outil SIG en aval en a besoin.
+
+## Si vous venez d'Alteryx
+
+Chaque outil spatial d'Alteryx a une voie dans PlaidCloud. Les workflows convertis la choisissent
+automatiquement ; la
+[matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/) présente la
+correspondance outil par outil, et
+[Migrer des workflows Alteryx spatiaux](/fr/guides/workflows/migrate-spatial-alteryx-workflows/)
+explique comment empaqueter les fichiers et valider le résultat.
+
+## Guides associés
+
+- [Étapes géospatiales](/fr/reference/workflow-steps/spatial/)
+- [Migrer des workflows Alteryx spatiaux](/fr/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Workflows avancés](/fr/guides/workflows/advanced-workflows/)
