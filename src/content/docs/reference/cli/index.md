@@ -1,6 +1,8 @@
 ---
 title: CLI Tools
 description: Reference for PlaidCloud command-line tools — PlaidLink agent, PlaidXL Excel add-in, and the Jupyter CLI for notebook integration.
+sidebar:
+  label: CLI
 ---
 
 PlaidCloud provides three command-line and on-machine tools for working with workspaces outside the web UI:
