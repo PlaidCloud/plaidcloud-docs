@@ -55,7 +55,7 @@ try {
 // grows linearly with the corpus.
 const fileToLastmod = new Map();
 try {
-	const log = execSync(`git -C "${DOCS_ROOT}" log --relative --format=%x00%aI --name-only -- .`, {
+	const log = execSync(`git -C "${DOCS_ROOT}" -c core.quotePath=off log --relative --format=%x00%aI --name-only -- .`, {
 		encoding: 'utf8',
 		stdio: ['ignore', 'pipe', 'ignore'],
 		maxBuffer: 1024 * 1024 * 1024,

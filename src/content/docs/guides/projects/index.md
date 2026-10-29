@@ -12,7 +12,7 @@ Most teams start with one project per analytical area: a project for headcount c
 ## What's in This Section
 
 - [Manage projects](/guides/projects/managing-projects/) — create, configure, and organize projects in your workspace
-- [Data Foundation: Enterprise Profitability](/guides/projects/data-foundation-enterprise-profitability/) — start a profitability project from a template, load NetSuite or CSV and Excel data, and check readiness
+- [Data Foundation: Enterprise Profitability](/guides/projects/data-foundation-enterprise-profitability/) — build a profitability project from any ERP's data, loaded as files or read directly from NetSuite, and check readiness
 - [View projects](/guides/projects/viewing-projects/) — find and open existing projects
 - [Manage hierarchies](/guides/projects/managing-hierarchies/) — folder structure for organizing many projects
 - [Manage tables and views](/guides/projects/managing-tables-and-views/) — the data layer inside a project
