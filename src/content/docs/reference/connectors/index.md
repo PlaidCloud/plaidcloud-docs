@@ -2,7 +2,7 @@
 title: Data and Service Connectors
 description: Connect PlaidCloud to external data sources and services including databases, ERPs, REST APIs, cloud storage, and Git repositories.
 sidebar:
-  label: Data and Service Connectors
+  label: Connectors
 ---
 
 PlaidCloud connects to external data sources and services through purpose-built connectors. Each connector handles the authentication, protocol, and data-shape specifics of one provider family.

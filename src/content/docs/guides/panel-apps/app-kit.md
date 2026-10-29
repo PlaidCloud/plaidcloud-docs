@@ -34,7 +34,7 @@ The command stops without writing anything if `app.py` already exists. Commit th
 
 ## An Example App
 
-This app filters a sales table by region and year, shows two headline numbers, a chart, and a grid with paging of the matching rows. Every piece follows the filters.
+This app filters a sales table by region and year, shows two headline numbers, a chart, and a grid with paging of the matching rows. The grid shows amounts with thousands separators and margins as percentages. Every piece follows the filters.
 
 ```python
 import panel as pn
@@ -57,7 +57,7 @@ def by_region(t):
 
 
 def grid(t):
-    return pcp.DataGrid(t, key="id", totals={"amount": "sum"})
+    return pcp.DataGrid(t, key="id", totals={"amount": "sum"}, formats={"amount": "0,0", "margin": "0.0%"})
 
 
 pcp.App(
@@ -89,7 +89,7 @@ The pattern is the same in every kit app: build a `FilterBar` over a table, then
 
 ## FilterBar
 
-`pcp.FilterBar(table, "region", "year", amount=pn.widgets.IntInput(name="Amount"))` makes one multi-select per column you name, listing that column's distinct values (up to 1,000, with a notice when the list is cut). Pass your own widgets by column name for anything else.
+`pcp.FilterBar(table, "region", "year", amount=pn.widgets.IntInput(name="Amount"))` makes one searchable multi-choice box per column you name, listing that column's distinct values (up to 1,000, with a notice when the list is cut). A box shows **All** when nothing is picked. Pass your own widgets by column name for anything else.
 
 - `bar.table` is the table narrowed by the current selections. A blank widget does not narrow the data.
 - Selections are saved in the page URL (`?region=EU`), so a filtered view can be shared as a link.
@@ -108,6 +108,7 @@ Pass `drill_to=grid`, a `DataGrid`, to add a **View rows** button under the numb
 - **Sorting** — click a column header. The sort applies to the whole table, not only the visible page.
 - **Totals** — `totals` maps a column to `sum`, `count`, `avg`, `min` or `max`. The server calculates each one over every matching row and pins the result as the last row of the grid.
 - **Export** — **CSV** and **XLSX** buttons download every matching row in the current sort, up to `export_cap` rows (100,000 by default). When the table is larger, a notice tells you to narrow the filters. Text cells that start with `=`, `+`, `-` or `@` are prefixed with an apostrophe so a spreadsheet reads them as text.
+- **Number formats** — `formats={"margin": "0.0%", "amount": "0,0"}` sets a display format per column, using [numbro](https://numbrojs.com/format.html) format strings. A `%` format multiplies by 100. The Total row uses the same format. Float columns without a format show up to two decimals with thousands separators. **Copy**, **CSV** and **XLSX** keep the raw values.
 - **Key** — `key` is the column, or list of columns, that uniquely identifies a row. Always pass it. See [Stable Paging](/guides/panel-apps/data-api/#stable-paging).
 
 - **Group by** — `group_by=["region"]` shows one row per group, with the `totals` measures and a `rows` count, all calculated by the server, and a **Total** row over every matching row. Pass `groupable=["region", "year"]` to add a **Group by** selector so viewers choose the columns. A grid shows up to 1,000 groups and tells you when it has cut the list. Group rows have no **Open** links.
@@ -124,7 +125,7 @@ The grid is subject to the viewer's row-level security: it reads through the vie
 
 ## Chart
 
-`pcp.Chart(obj, title=None, height=320)` puts a chart in a titled card. `obj` can be a Bokeh figure, an hvPlot or HoloViews plot, a Plotly figure, a Matplotlib figure, or a `pn.bind(...)` that returns any of them.
+`pcp.Chart(obj, title=None, height=320)` puts a chart in a titled card. `obj` can be a Bokeh figure, an hvPlot or HoloViews plot, a Plotly figure, a Matplotlib figure, or a `pn.bind(...)` that returns any of them. Numeric axes on Bokeh figures show thousands separators, so 800000 reads 800,000.
 
 ## Form
 

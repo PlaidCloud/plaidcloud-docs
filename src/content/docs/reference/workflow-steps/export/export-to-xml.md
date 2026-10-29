@@ -13,4 +13,4 @@ The XML structure mirrors the table: one element per row, child elements for eac
 
 ## If the File Exists
 
-Set `if_exists` with an AI assistant or the REST API. `overwrite` (default) replaces a file that is already there; `fail` stops the step, writing nothing, when a file it would write already exists.
+Under **If the File Exists**, **A File That Exists** (`if_exists`) decides what happens when the file is already there. **Overwrite it** (`overwrite`, default) replaces a file that is already there; **Fail the step, writing nothing** (`fail`) stops the step, writing nothing, when a file it would write already exists.

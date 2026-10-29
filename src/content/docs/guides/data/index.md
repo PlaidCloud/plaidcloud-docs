@@ -2,7 +2,7 @@
 title: Data Management - Tabular
 description: Manage tabular data in PlaidCloud using tables, views, and the high-performance Lakehouse engine for any-scale data processing.
 sidebar:
-  label: Data Management - Tabular
+  label: Overview
 ---
 
 PlaidCloud's data layer is built around **tables** (structured row-and-column data) and **views** (saved queries over tables). Both live inside a project and are powered by the Lakehouse engine, which scales from small reference tables to billion-row analytical datasets without configuration changes.
