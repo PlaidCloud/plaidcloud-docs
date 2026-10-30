@@ -10,7 +10,7 @@ Panel Studio is the editor for Panel apps inside PlaidCloud. It shows the app's 
 ## Open Panel Studio
 
 - On a project's **Home** board, choose **Open in Studio** on a Panel app.
-- In **My Panel Apps**, choose **Open in Studio** on an app's row.
+- In **My Panel Apps**, choose **Studio** on an app's row.
 
 To start a new app, choose **New Studio App**. It is the first button in the **My Panel Apps** toolbar, and it is in the **Panel Apps** box on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
 
@@ -101,7 +101,7 @@ The **Insights** tab shows how people use the app and how quickly it responds. C
 
 When a period holds more activity than Insights can read, it says the figures are partial. When page loads go over the app's [performance budget](/guides/panel-apps/app-kit/#performance-budgets), Insights warns you how many did and which queries were slow. Insights never shows the data a query returned or the names of the people who opened the app.
 
-Both tabs need the app to be assigned to a project; an unassigned app shows a prompt to assign it.
+The **History** and **Insights** tabs need the app to be assigned to a project; an unassigned app shows a prompt to assign it.
 
 ## Alerts and Digests
 

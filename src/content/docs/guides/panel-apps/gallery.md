@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-The app gallery is the shelf your workspace keeps of ready-made Panel apps. Anyone who can view a listed app's project can create their own copy and change it, so a good app becomes a starting point instead of something people rebuild.
+The app gallery is the shelf your workspace keeps of ready-made Panel apps. Anyone who can view a listed app's project can create their own copy in a project they can edit and change it, so a good app becomes a starting point instead of something people rebuild.
 
 ## Create an App From the Gallery
 
@@ -14,7 +14,7 @@ The app gallery is the shelf your workspace keeps of ready-made Panel apps. Anyo
 3. Pick an app under **Gallery app**. Its description shows under the picker.
 4. Name your app, pick its **Project** and choose **Create**.
 
-You can also choose **Gallery** in the **My Panel Apps** toolbar to browse the gallery on its own. Each card shows the app's name, description and project, with **Create app from this…**. The gallery lists only apps in projects you can view.
+You can also choose **Gallery** in the **My Panel Apps** toolbar to browse the gallery on its own. It lists each app with its name, project and description, and **Create app from this…**. The gallery lists only apps in projects you can view.
 
 The new app is a copy of the listed app's files. Your copy and the original are separate: changing one never changes the other.
 

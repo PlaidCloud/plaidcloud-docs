@@ -247,13 +247,13 @@ The number of rows, columns, and the data size for each table is shown in the ta
 ## Create a Panel App From a Table
 
 
-Select a table or view and choose **Create Panel App** from the **New** menu or the right-click menu. The **New Studio App** dialog opens with the project and the table already chosen. Name the app and choose **Create**, and Panel Studio opens it with Weave ready to build its first page. The command is available when you select a single table or view, have edit access to the project, and the project isn't read-only. See [Creating a Panel App](/guides/panel-apps/creating/#start-from-a-table).
+Select a table or view and choose **Create Panel App** from the **New** menu or the right-click menu. The **New Studio App** dialog opens with the project and the table already chosen. The app takes the table's name; change it if you like, then choose **Create**, and Panel Studio opens it with Weave ready to build its first page. The command is available when you select a single table or view, have edit access to the project, and the project isn't read-only. See [Creating a Panel App](/guides/panel-apps/creating/#start-from-a-table).
 
 
 ## See What Tables Store
 
 
-The **Tables** list shows **Current data**, **History** and **Note** columns beside each table's size, and **Time Travel Days** after them. Above the list, a line gives the project's total: how much it stores, and how much of that is current data and how much is history. A table PlaidCloud hasn't measured yet has no sizes.
+The **Tables** list shows **Current data**, **History**, **Time Travel Days** and **Note** columns beside each table's size. **Time Travel Days** is the table's own setting; **1** means it uses the project's default. The status bar below the list gives the project's total: how much it stores, and how much of that is current data and how much is history. Sizes marked **Estimated** come from the table's shape until PlaidCloud measures it.
 
 Choose **Storage** on the toolbar to open the project's **Storage** window, with suggestions for freeing space and the time travel settings. See [Managing Storage](/guides/projects/managing-storage/#the-storage-window-for-a-project).
 

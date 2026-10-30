@@ -256,7 +256,7 @@ Wählen Sie eine Tabelle oder Ansicht aus und wählen Sie **Panel-App erstellen*
 
 Die Liste **Tabellen** zeigt neben der Größe jeder Tabelle die Spalten **Aktuelle Daten**, **Verlauf** und **Hinweis**, danach **Time-Travel-Tage**. Über der Liste nennt eine Zeile die Summe des Projekts: wie viel es speichert und wie viel davon aktuelle Daten und wie viel Verlauf ist. Eine Tabelle, die PlaidCloud noch nicht gemessen hat, hat keine Größen.
 
-Wählen Sie **Speicher** in der Symbolleiste, um das Fenster **Speicher** des Projekts zu öffnen, mit Vorschlägen zum Freigeben von Platz und den Einstellungen für Time Travel. Siehe [Speicher verwalten](/de/guides/projects/managing-storage/#das-speicherfenster-für-ein-projekt).
+Wählen Sie **Speicher** in der Symbolleiste, um das Fenster **Speicher** des Projekts zu öffnen, mit Vorschlägen zum Freigeben von Platz und den Einstellungen für Time Travel. Siehe [Speicher verwalten](/de/guides/projects/managing-storage/#das-fenster-speicher-für-ein-projekt).
 
 
 ## Einen Dateneditor aus einer Tabelle erstellen
