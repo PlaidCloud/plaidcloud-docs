@@ -620,6 +620,32 @@ def validate(rel, src, out):
     return reasons
 
 
+# Function words that are common in one language and rare in the others; UI labels and step names stay English, so
+# a translation is judged by its connective tissue, not its nouns.
+FUNCTION_WORDS = {
+    "en": "the and of with that this you your are is from which when will can be by it an".split(),
+    "de": "der die das und ist mit den nicht sie für ein eine zu auf im von wird werden".split(),
+    "es": "el la los las que y en para con una del se por es lo".split(),
+    "fr": "le la les des et est pour dans une du que vous sur avec pas".split(),
+    "pt": "o os as que e em para com uma um do da não no na".split(),
+    "pl": "i w z na się do nie jest że dla aby lub oraz przez jeśli".split(),
+}
+SCRIPT_RE = {"ja": re.compile(r"[぀-ヿ]"), "ko": re.compile(r"[가-힯]"), "zh-cn": re.compile(r"[一-鿿]")}
+
+
+def wrong_language(lc, text):
+    """Reject a translation whose prose is still English: validate() only checks structure."""
+    fm, body = split_frontmatter(text)
+    prose = LINK_RE.sub(r"\1)", TAG_RE.sub(" ", INLINE_CODE_RE.sub(" ", strip_code(body))))
+    prose += " " + " ".join(str(v) for p, v in fm_values(yaml.safe_load(fm or "") or {}).items() if translatable(p))
+    words = [w.lower() for w in re.findall(r"[^\W\d]+", prose) if not w.isupper()]  # FOO_OF_BAR and SQL keywords aren't prose
+    english = sum(w in FUNCTION_WORDS["en"] for w in words)
+    native = (len(SCRIPT_RE[lc].findall(prose)) if lc in SCRIPT_RE
+              else sum(w in FUNCTION_WORDS[lc.split("-")[0]] for w in words))
+    # 4 is the lowest floor with no hit across the 16k shipped translations; it still catches ~80% of English pages.
+    return [f"prose is not {lc}: {english} English function words vs {native} {lc}"] if english >= 4 and native < english else []
+
+
 MD = None
 
 
@@ -884,7 +910,7 @@ def fix_bold_flanking(text):
 def finalize(lc, key, src, raw):
     """Post-process a raw translation exactly as collect/ingest write it; returns (text, rejection reasons)."""
     text = set_edit_url(localize_links(fix_bold_flanking(quote_frontmatter(clean_output(src, raw))), lc), key)
-    return text, validate(key, src, text)
+    return text, validate(key, src, text) + wrong_language(lc, text)
 
 
 # ---------------------------------------------------------------- commands
@@ -1069,7 +1095,6 @@ def report(record, batch):
         print(f"batch wall time: {batch.ended_at - batch.created_at}")
 
 
-JOBS = I18N / "jobs"
 STAGING = I18N / "staging"
 WORKER_MD = """# Translation worker
 
@@ -1103,6 +1128,10 @@ def cmd_prepare(args):
         pairs += [(lc, k, sha(src_path(k).read_text())) for lc in args.locales
                   for k in select_units(args.force_paths) if (lc, k) not in have]
     glossaries = {lc: load_glossary(lc) for lc in args.locales}
+    # "<lc>/<key>" -> English sha each queued unit was prepared from, whatever --out was; ingest trusts only this.
+    prepared = load_json(STAGING / "_prepared.json", {})
+    rejects = load_json(STAGING / "_rejects.json", [])
+    rejected, requeued = {(r["locale"], r["path"]) for r in rejects}, set()
     (out / "prompts").mkdir(parents=True, exist_ok=True)
     (out / "WORKER.md").write_text(WORKER_MD)
     terms = {}
@@ -1113,10 +1142,16 @@ def cmd_prepare(args):
                                f"- Snippets (`kind: snippet`):{SNIPPET_NOTE}\n")
         for old in (out / lc).glob("*.json") if (out / lc).exists() else []:
             old.unlink()
-        chunks, chunk, words = [], [], 0
+        chunks, chunk, words, kept = [], [], 0, 0
         for _, key, h in (p for p in pairs if p[0] == lc):
-            # A staged file left from an earlier prepare was made from older English; this chunk's sha must not vouch for it.
-            (STAGING / lc / key).unlink(missing_ok=True)
+            staged = STAGING / lc / key
+            if staged.is_file() and prepared.get(f"{lc}/{key}") == h and (lc, key) not in rejected:
+                kept += 1  # finished from this exact English and not rejected: ingest it rather than pay for it again
+                continue
+            # Anything else staged was made from older English (or failed); this chunk's sha must not vouch for it.
+            staged.unlink(missing_ok=True)
+            prepared[f"{lc}/{key}"] = h
+            requeued.add((lc, key))
             src = src_path(key).read_text()
             n = len(src.split())
             if chunk and words + n > args.chunk_words:
@@ -1134,14 +1169,16 @@ def cmd_prepare(args):
             save_json(out / lc / f"{i:03}.json", {"locale": lc, "prompt_file": rel_or_abs(prompt_file),
                                                    "items": items})
         print(f"{lc}: {len(chunks)} chunks, {sum(map(len, chunks))} units, "
-              f"{sum(i['words'] for c in chunks for i in c):,} words")
+              f"{sum(i['words'] for c in chunks for i in c):,} words"
+              + (f"; {kept} already staged, run ingest" if kept else ""))
+    save_json(STAGING / "_prepared.json", prepared)
+    if rejected & requeued:  # a stale rejection must not make the next prepare discard the fresh translation
+        save_json(STAGING / "_rejects.json", [r for r in rejects if (r["locale"], r["path"]) not in requeued])
 
 
 def cmd_ingest(args):
     manifest = load_json(MANIFEST, {})
-    # Every `prepare --out` dir counts; the most recently written chunk names the source a staged file was made from.
-    chunks = sorted(JOBS.parent.glob(f"{JOBS.name}*/*/*.json"), key=lambda f: f.stat().st_mtime)
-    prepared = {(j["locale"], i["path"]): i["sha"] for f in chunks for j in [load_json(f, {})] for i in j.get("items", [])}
+    prepared = load_json(STAGING / "_prepared.json", {})
     rejects_file = STAGING / "_rejects.json"
     rejects = load_json(rejects_file, [])
     passed, failed, why, touched = 0, 0, Counter(), set()
@@ -1153,9 +1190,9 @@ def cmd_ingest(args):
             else:
                 src = src_path(key).read_text()
                 text, reasons = finalize(lc, key, src, f.read_text())
-                if (lc, key) not in prepared:
+                if f"{lc}/{key}" not in prepared:
                     reasons.append("not in any prepare chunk")
-                elif prepared[(lc, key)] != sha(src):
+                elif prepared[f"{lc}/{key}"] != sha(src):
                     reasons.append("English source changed since prepare")
             if reasons:
                 failed += 1
@@ -1169,10 +1206,14 @@ def cmd_ingest(args):
             dest.write_text(text)
             manifest[mkey(lc, key)] = sha(src)
             f.unlink()
+            prepared.pop(f"{lc}/{key}")
             rejects = [r for r in rejects if (r["locale"], r["path"]) != (lc, key)]
             passed += 1
             touched.add(lc)
     save_json(MANIFEST, manifest)
+    save_json(STAGING / "_prepared.json", prepared)
+    # prepare deletes staged files it re-queues; their old rejections no longer describe anything.
+    rejects = [r for r in rejects if (STAGING / r["locale"] / r["path"]).is_file()]
     if rejects or rejects_file.exists():
         save_json(rejects_file, rejects)
     # Cross-page anchors need every translated target of the locale, so relink the whole locale, not just new files.
@@ -1185,12 +1226,18 @@ def cmd_ingest(args):
 
 
 def cmd_check_anchors(args):
-    """Every /<locale>/…#frag link in the built site must hit an id on the target page."""
+    """Every #frag link into a /<locale>/ page of the built site (absolute, relative or same-page) must hit an id."""
     dist = ROOT / args.dist
     ids, bad, total = {}, Counter(), 0
-    href_re = re.compile(r'href="(/(?:' + "|".join(map(re.escape, LOCALES)) + r')/[^"#]*)#([^"]+)"')
+    in_locale = re.compile(r"^/(?:" + "|".join(map(re.escape, LOCALES)) + r")/")
     for page in sorted(dist.rglob("index.html")):
-        for path, frag in href_re.findall(page.read_text()):
+        here = page.parent.relative_to(dist).as_posix()
+        base = "/" if here == "." else f"/{here}/"
+        for href, frag in re.findall(r'href="([^"#]*)#([^"]+)"', page.read_text()):
+            # Same-page and relative links count too: resolve them against the page's own URL.
+            path = urllib.parse.urlsplit(urllib.parse.urljoin(base, html.unescape(href))).path
+            if href.startswith(("http:", "https:", "//")) or not in_locale.match(path):
+                continue
             frag = urllib.parse.unquote(html.unescape(frag))
             target = dist / path.strip("/") / "index.html"
             if target not in ids:
@@ -1221,6 +1268,10 @@ def cmd_check(args):
             missing = [f for f in re.findall(rf"^import .*['\"]@snippets/{re.escape(lc)}/([^'\"]+)", text, re.M)
                        if not (SNIPPETS / lc / f).is_file()]
             reasons += [f"imports missing translated snippet {f}" for f in missing]
+            # Every used snippet is translated (else it is "missing" below), so an English import shows English text.
+            reasons += [f"imports English snippet {f}" for f in
+                        re.findall(rf"^import .*['\"]@snippets/(?!(?:{'|'.join(map(re.escape, LOCALES))})/)([^'\"]+)", text, re.M)]
+            reasons += wrong_language(lc, text)
             if not key.startswith(SNIPPET) and set_edit_url(text, key) != text:
                 reasons.append("editUrl missing")
             if reasons:
