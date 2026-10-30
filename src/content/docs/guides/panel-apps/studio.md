@@ -10,23 +10,23 @@ Panel Studio is the editor for Panel apps inside PlaidCloud. It shows the app's 
 ## Open Panel Studio
 
 - On a project's **Home** board, choose **Open in Studio** on a Panel app.
-- In **My Panel Apps**, choose **Open in Studio** on an app's row.
+- In **My Panel Apps**, choose **Studio** on an app's row.
 
-To start a new app, choose **Create app** in either place.
+To start a new app, choose **New Studio App**. It is the first button in the **My Panel Apps** toolbar, and it is in the **Panel Apps** box on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
 
 ## Create an App
 
-The **Create app** dialog starts you from one of five places:
+The **New Studio App** dialog starts you from one of five places:
 
 | Start from | You get |
 |---|---|
-| **Blank** | A minimal app with an `app.py` and a `requirements.txt`. |
-| **Table** | An app built on the table you pick. |
-| **View** | The same, built on a project view. |
-| **Template** | A ready-made app from the [Panel App Kit](/guides/panel-apps/app-kit/#start-from-a-template). |
+| **Blank app** | A minimal app with an `app.py` and a `requirements.txt`. |
+| **From a table** | An app built on the table you pick. |
+| **From a view** | The same, built on a project view. |
+| **From another Studio app** | A copy of one of your Studio apps. |
 | **From the gallery** | A copy of an app your workspace has listed in the [app gallery](/guides/panel-apps/gallery/). |
 
-Name the app, pick its **Project**, and choose **Create**. Studio opens the new app with its files listed on the left.
+Name the app, pick its **Project**, and choose **Create**. Studio opens the new app with its files listed on the left. For a table or a view, Weave's prompt to build the app's first page is ready to send. See [Creating a Panel App](/guides/panel-apps/creating/).
 
 ## Edit
 
@@ -101,7 +101,7 @@ The **Insights** tab shows how people use the app and how quickly it responds. C
 
 When a period holds more activity than Insights can read, it says the figures are partial. When page loads go over the app's [performance budget](/guides/panel-apps/app-kit/#performance-budgets), Insights warns you how many did and which queries were slow. Insights never shows the data a query returned or the names of the people who opened the app.
 
-Both tabs need the app to be assigned to a project; an unassigned app shows a prompt to assign it.
+The **History** and **Insights** tabs need the app to be assigned to a project; an unassigned app shows a prompt to assign it.
 
 ## Alerts and Digests
 
@@ -109,7 +109,7 @@ Choose **Alerts & Digests** to set up notifications that watch a number in the a
 
 ## List an App in the Gallery
 
-Choose **Gallery…** to list the app as a template anyone who can view its project can create their own app from, or to take it out of the gallery. See [The App Gallery](/guides/panel-apps/gallery/).
+Choose **Gallery…** in Studio. Choose **List in gallery** to list the app as a template anyone who can view its project can create their own app from, or **Take out of gallery** to remove it. The button is available for apps that belong to a project. You need edit access to the project. See [The App Gallery](/guides/panel-apps/gallery/).
 
 ## Pin to Home
 
@@ -122,7 +122,7 @@ Deleting a Panel app asks you to confirm first. In **My Panel Apps**, use the **
 ## Next Steps
 
 - [Build Panel Apps With Weave](/guides/panel-apps/build-with-weave/) — describe the app and approve the exact change.
-- [The Panel App Kit](/guides/panel-apps/app-kit/) — the components Studio's table, view and template starts use.
+- [The Panel App Kit](/guides/panel-apps/app-kit/) — the components Studio's table and view starts use.
 - [Alerts and Digests](/guides/panel-apps/alerts-and-digests/) — notify people when a number crosses a limit, or on a schedule.
 - [The App Gallery](/guides/panel-apps/gallery/) — share an app as a starting point for others.
 - [Using a Panel App](/guides/panel-apps/using/) — logs, usage and rebuilds after you publish.
