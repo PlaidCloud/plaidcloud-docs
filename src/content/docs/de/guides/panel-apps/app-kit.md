@@ -182,7 +182,7 @@ Die eigenen Texte des Kits, etwa Schaltflächen, Hinweise, die Befehlspalette, d
 
 ## Leistungsbudgets
 
-Ein Seitenaufruf, dessen erste Darstellung länger als 3.000 ms dauert oder der eine Abfrage ausführt, die langsamer als 2.000 ms ist, schreibt eine Warnung in das Protokoll der App, die nennt, was die Grenze überschritten hat. Dieselben Werte erscheinen auf der Registerkarte **Einblicke** in [Panel Studio](/de/guides/panel-apps/studio/#einblicke). Um für eine App andere Grenzwerte festzulegen, setzen Sie diese Umgebungsvariablen:
+Ein Seitenaufruf, dessen erste Darstellung länger als 3.000 ms dauert oder der eine Abfrage ausführt, die langsamer als 2.000 ms ist, schreibt eine Warnung in das Protokoll der App, die nennt, was die Grenze überschritten hat. Dieselben Werte erscheinen auf der Registerkarte **Einblicke** in [Panel Studio](/de/guides/panel-apps/studio/#erkenntnisse). Um für eine App andere Grenzwerte festzulegen, setzen Sie diese Umgebungsvariablen:
 
 | Variable | Standard | Legt fest |
 |---|---|---|

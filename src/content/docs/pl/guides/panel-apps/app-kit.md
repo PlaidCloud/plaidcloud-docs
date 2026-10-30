@@ -182,7 +182,7 @@ Własny tekst zestawu, taki jak przyciski, komunikaty, paleta poleceń, przewodn
 
 ## Budżety wydajności
 
-Ładowanie strony, w którym pierwsze wyrenderowanie trwa dłużej niż 3000 ms lub które uruchamia zapytanie wolniejsze niż 2000 ms, zapisuje w dzienniku aplikacji ostrzeżenie wskazujące, co przekroczyło limit. Te same wartości pojawiają się na karcie **Wgląd** w [Panel Studio](/pl/guides/panel-apps/studio/#wgląd). Aby ustawić inne limity dla aplikacji, ustaw te zmienne środowiskowe:
+Ładowanie strony, w którym pierwsze wyrenderowanie trwa dłużej niż 3000 ms lub które uruchamia zapytanie wolniejsze niż 2000 ms, zapisuje w dzienniku aplikacji ostrzeżenie wskazujące, co przekroczyło limit. Te same wartości pojawiają się na karcie **Wgląd** w [Panel Studio](/pl/guides/panel-apps/studio/#wnioski). Aby ustawić inne limity dla aplikacji, ustaw te zmienne środowiskowe:
 
 | Zmienna | Domyślnie | Ustawia |
 |---|---|---|

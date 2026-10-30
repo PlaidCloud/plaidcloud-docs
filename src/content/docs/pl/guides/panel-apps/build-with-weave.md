@@ -22,7 +22,7 @@ Gdy Weave chce zmienić kod aplikacji, pokazuje kartę zatwierdzenia z pełną r
 1. Przeczytaj różnicę.
 2. Wybierz **Zatwierdź**, aby zapisać zmianę w wersji roboczej aplikacji, lub **Odrzuć**, aby ją odrzucić.
 
-Zatwierdzenie zapisuje wersję roboczą. Nie publikuje jej. Obejrzyj wynik w podglądzie, a gdy będziesz zadowolony, [opublikuj](/pl/guides/panel-apps/studio/#publikacja) ją.
+Zatwierdzenie zapisuje wersję roboczą. Nie publikuje jej. Obejrzyj wynik w podglądzie, a gdy będziesz zadowolony, [opublikuj](/pl/guides/panel-apps/studio/#opublikuj) ją.
 
 ### Zatwierdzanie tylko w przeglądarce
 
