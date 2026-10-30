@@ -1,0 +1,224 @@
+---
+title: Définitions de métriques
+description: Consignez une fois pour toutes la façon dont un chiffre d'activité est calculé, et l'assistant IA de PlaidCloud, ou un assistant connecté via MCP, le calcule toujours de la même manière, selon l'accès aux lignes de chaque personne.
+sidebar:
+  label: Définitions de métriques
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/metric-definitions.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Une **définition de métrique** est un chiffre d'activité dont le calcul a été convenu et consigné : *Net Revenue*, *Headcount (FTE)*, *Units Shipped*. Elle indique de quelle table provient le chiffre, comment les lignes sont additionnées, quelles lignes comptent et selon quelles colonnes il peut être ventilé.
+
+Sans définition, un assistant IA à qui l'on demande *« quel a été le chiffre d'affaires net en EMEA le trimestre dernier ? »* décide lui-même de la table, de la colonne et des filtres à utiliser, et deux personnes posant la même question peuvent obtenir deux chiffres différents. Une définition de métrique retire cette décision à l'assistant. Un Architecte de projet rédige la définition une seule fois et, dès qu'elle est enregistrée, l'assistant calcule le chiffre exactement comme elle l'indique.
+
+<Aside>
+Les définitions de métriques se gèrent via un assistant IA connecté par [MCP](../getting-started/), ou via l'API REST ; PlaidCloud n'offre pas encore d'écran dédié. Les métriques sont disponibles pour l'[assistant IA](/fr/guides/ai-assistant/weave-tab/#chat-weave-ai) intégré de PlaidCloud et pour tout assistant connecté par MCP. L'assistant intégré peut rechercher et calculer des métriques, mais ne peut ni les créer, ni les modifier, ni les retirer.
+</Aside>
+
+**Architectes** : commencez par [Définir une métrique](#définir-une-métrique). **Analystes** : commencez par [Interroger une métrique](#interroger-une-métrique).
+
+Une définition de métrique est une recette, pas un résultat stocké. Elle est recalculée à chaque demande, selon l'accès aux lignes de la personne qui la demande : quelqu'un qui ne voit que la zone EMEA obtient des chiffres EMEA. Deux personnes peuvent obtenir des totaux différents à partir de la même définition parce qu'elles voient des lignes différentes ; le calcul, lui, est identique.
+
+## Contenu d'une définition
+
+| Élément | Ce qu'il indique | Exemple |
+|---|---|---|
+| **Nom** | Le nom que les gens donnent au chiffre. 200 caractères maximum. | *Net Revenue* |
+| **Synonymes** | Les autres mots que les gens utilisent pour le désigner, afin que l'assistant reconnaisse la question. 25 maximum. | *revenue*, *sales* |
+| **Description** (`memo` dans l'API) | Ce que signifie le chiffre et quand l'utiliser, pour l'assistant et pour les personnes. 1 000 caractères maximum. | *Chiffre d'affaires après retours et remises. À utiliser pour toutes les questions sur le chiffre d'affaires.* |
+| **Table source** | La table d'où proviennent les lignes. | `sales_fact` |
+| **Jointures** | Tables de référence jointes à la source sur des colonnes correspondantes. Chaque table de référence ne doit avoir qu'une ligne par clé (une ligne par code de région, par exemple), sans quoi les lignes correspondantes sont comptées deux fois. | `region_lookup`, avec correspondance entre `region_code` dans la source et `code` dans la table de référence |
+| **Mesure** | La façon d'additionner les lignes : `sum`, `count`, `count_distinct`, `min`, `max` ou `avg` d'une colonne, ou `weighted_avg` d'une colonne pondérée par une seconde colonne (`weight`) : somme de la valeur multipliée par le poids sur les lignes où les deux sont renseignés, divisée par la somme de ces poids ; vide si la somme des poids est nulle. | `sum` de `net_amount` ; `weighted_avg` de `unit_price` pondéré par `units` |
+| **Filtres** | Les lignes qui comptent toujours. Chaque filtre se compose d'une colonne, d'un opérateur (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) et de ses valeurs. | `status` `eq` *Posted* |
+| **Colonnes de ventilation** (`grain` dans l'API) | Les colonnes selon lesquelles une personne peut regrouper et filtrer lorsqu'elle pose sa question. Les filtres sont fixes ; les colonnes de ventilation sont au choix de la personne qui interroge. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Scénario** (facultatif) | La colonne qui distingue les lignes réelles des lignes budgétaires, et la valeur de chacune. La métrique correspond à ses lignes réelles ; les lignes budgétaires ne sont lues que pour un [écart](#comparer-classer-et-partager). | `scenario`, réel *Actual*, budget *Budget* |
+| **Dimensions** (facultatif, `dimensions` dans l'API) | Une colonne de ventilation liée à une dimension, de sorte que les mots d'une question sont rapprochés des membres et des alias de cette dimension et transformés en valeurs de la colonne : consultez [Interroger une métrique](#interroger-une-métrique). La dimension doit exister dans le projet. | `region_lookup.region` liée à la dimension *Region* |
+| **Colonnes temporelles** (facultatif, `time` dans l'API) | Une colonne de date, ou une colonne d'exercice fiscal et une colonne de période, afin qu'une question puisse demander une période fiscale et [la comparer dans le temps](#comparer-dans-le-temps). | `fiscal_year` et `fiscal_period` |
+
+Une colonne d'une table de référence s'écrit `<table>.<column>` ; l'assistant les écrit pour vous. Chaque table et chaque colonne d'une définition doit exister dans le projet ; une définition qui en nomme une qui n'existe pas est refusée à l'enregistrement. Une métrique avec scénario ne peut pas filtrer sur la colonne de scénario ni la proposer comme colonne de ventilation : le scénario décide des lignes lues, de sorte qu'un filtre tel que `scenario` `eq` *Actual* relève du scénario et non des filtres.
+
+Une métrique peut aussi être construite à partir d'autres métriques, sous forme de ratio, de somme, de différence ou de multiple : consultez [Dériver une métrique à partir d'autres](#dériver-une-métrique-à-partir-dautres).
+
+Rien n'empêche deux métriques d'un projet de partager un nom ou un synonyme. Gardez-les distincts, sans quoi l'assistant doit deviner laquelle vous voulez dire, ou vous le demander.
+
+## Qui peut faire quoi
+
+- **Les Architectes de projet** rédigent, modifient et retirent les définitions. Un projet public attribue à chaque membre le rôle d'Architecte de nom seulement, ce qui ne compte pas : dans un projet public, personne ne peut définir de métrique ; conservez donc vos métriques dans un projet doté de sa propre liste d'accès.
+- **Toute personne pouvant lire le projet** peut voir et exécuter les définitions.
+- **Un projet verrouillé refuse toute modification.** La définition, la modification et le retrait attendent tous que le projet soit déverrouillé.
+
+## Définir une métrique
+
+Si vous êtes Architecte de projet, demandez en langage courant à votre assistant IA connecté :
+
+> *« Dans le projet **Sales**, définis une métrique nommée **Net Revenue**, avec les synonymes revenue et sales : la somme de `net_amount` dans `sales_fact`, jointe à `region_lookup` sur `region_code`, ventilable selon le `region` de la table de référence, selon `product_line` et selon `fiscal_year` ; ses lignes réelles ont `scenario` Actual et ses lignes budgétaires `scenario` Budget. »*
+
+L'assistant l'enregistre et vous signale si une table ou une colonne qu'il nomme n'existe pas. La métrique est active dès son enregistrement. Chaque modification crée une nouvelle **version** de la définition, rédigée par la personne qui l'a faite, et les lecteurs obtiennent immédiatement la nouvelle version. Un enregistrement qui ne change rien est refusé. La dernière version enregistrée est la **version actuelle** de la métrique.
+
+Pour les développeurs, la même définition via l'API REST est la suivante :
+
+```json
+POST /rest/v1/analyze/metric/definition
+{
+  "project_id": "<project>",
+  "name": "Net Revenue",
+  "synonyms": ["revenue", "sales"],
+  "memo": "Revenue after returns and discounts. Use for all revenue questions.",
+  "definition": {
+    "source": "sales_fact",
+    "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
+    "measure": {"agg": "sum", "column": "net_amount"},
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
+  }
+}
+```
+
+Chaque paire de `on` est `[source column, lookup column]`. `time` est soit `{"year_column", "period_column"}` avec un `periods_per_year` facultatif, soit `{"column"}` pour une colonne de date avec des `fiscal_year_start` et `fiscal_year_label` facultatifs ; consultez [Comparer dans le temps](#comparer-dans-le-temps).
+
+## Ce qui est vérifié à l'enregistrement
+
+Chaque enregistrement exécute ces contrôles, et une définition qui en échoue un est refusée avec un message qui nomme le problème :
+
+- **Chaque table et chaque colonne existe** dans le projet.
+- **Chaque table de référence a une ligne par clé**, dans les données telles qu'elles sont à ce moment-là. Une table de référence avec deux lignes pour la même clé doublerait les lignes sources correspondantes ; l'enregistrement est donc refusé et nomme la table. Une ligne de référence sans valeur de clé est ignorée par ce contrôle, puisqu'elle ne correspond jamais à une ligne source.
+- **Les entrées d'une métrique dérivée existent** et ne sont ni retirées ni elles-mêmes dérivées.
+
+<Aside type="caution" title="Le contrôle des tables de référence s'exécute à chaque enregistrement">
+Le contrôle d'une ligne par clé examine les données de la table de référence le jour de l'enregistrement. Si cette table reçoit plus tard une seconde ligne pour une clé, la métrique compte en double les lignes sources que cette clé rapproche, et rien ne vous avertit. Pour exécuter à nouveau le contrôle, enregistrez de nouveau la métrique (une modification de sa description suffit). Mieux vaut encore garder la clé de la table de référence unique dans le workflow qui l'alimente.
+</Aside>
+
+Chaque version enregistre qui l'a sauvegardée et quand. Modifier une métrique enregistre une nouvelle version que les lecteurs obtiennent immédiatement.
+
+## Dériver une métrique à partir d'autres
+
+Une **métrique dérivée** est une opération arithmétique sur des métriques existantes : *Net Revenue per FTE* est *Net Revenue* divisé par *Headcount (FTE)*. Elle se définit, s'interroge et se retire comme n'importe quelle autre métrique. Ce qui diffère, c'est sa définition, qui nomme les métriques dont elle est construite au lieu d'une table.
+
+| Opération | Ce qu'elle calcule | Entrées |
+|---|---|---|
+| `ratio` | la première entrée divisée par la seconde | deux métriques |
+| `add` | la première entrée plus la seconde | deux métriques |
+| `subtract` | la première entrée moins la seconde | deux métriques |
+| `scale` | l'entrée multipliée par un `factor` fixe | une métrique et un nombre |
+
+Les entrées sont des **métriques de base** du même projet, c'est-à-dire du type défini à partir d'une table ci-dessus. Une métrique dérivée ne peut pas être construite à partir d'une autre métrique dérivée, ni utiliser deux fois la même entrée.
+
+Demandez à l'assistant :
+
+> *« Dans le projet **Sales**, définis une métrique nommée **Net Revenue per FTE** comme le ratio de **Net Revenue** à **Headcount (FTE)**. »*
+
+Via l'API REST, la `definition` nomme les entrées par leurs identifiants, que vous fournit `metric_find` ou la liste des définitions. L'ordre compte : le premier identifiant est le numérateur d'un `ratio`, et la métrique dont on soustrait dans un `subtract`.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` prend une entrée et un `factor` : `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` annualise un chiffre mensuel.
+
+**Comment elle est calculée.** Chaque entrée est calculée séparément, selon la ventilation demandée et sous votre accès aux lignes, puis les résultats sont combinés pour chaque valeur de ventilation. Totaliser chaque entrée avant de les combiner est ce qui garantit l'exactitude d'un ratio entre deux tables : joindre d'abord les lignes ferait compter une ligne autant de fois qu'elle a rencontré de lignes de l'autre côté. Lorsqu'une entrée n'a aucune ligne pour une valeur de ventilation, la valeur dérivée correspondante est vide, tout comme un ratio dont le dénominateur est nul ; aucun des deux n'est indiqué comme zéro.
+
+**Les colonnes de ventilation sont calculées, pas déclarées.** Une métrique dérivée ne peut être ventilée que selon les colonnes que *toutes* ses entrées autorisent, et cette liste est affichée à côté de sa définition. Si vous voulez interroger la métrique dérivée par région, donnez à chaque entrée `region_lookup.region`, écrit de la même façon, comme colonne de ventilation. Des entrées sans colonne de ventilation commune donnent une métrique dérivée qui ne répond que par un total unique. Une question qui regroupe ou filtre selon autre chose est refusée, comme pour toute métrique. Une liste vide à côté d'une métrique dérivée signifie que l'une de ses entrées n'est plus utilisable : retirée ou manquante.
+
+**L'enregistrement vérifie les entrées.** Une métrique dérivée ne peut être enregistrée que si chaque entrée existe, n'est pas retirée et n'est pas elle-même dérivée. Les lecteurs comme les Architectes obtiennent toujours la version actuelle de chaque entrée et de la métrique dérivée. Une entrée n'est pas figée sur une version : lorsqu'une version ultérieure d'une entrée est enregistrée, les chiffres de la métrique dérivée changent avec elle.
+
+**Une entrée reste en service tant qu'une métrique dérivée l'utilise.** Elle ne peut pas être retirée ni transformée en métrique dérivée ; le refus nomme la métrique qui l'utilise. Pour retirer une entrée, retirez d'abord la métrique dérivée, ou enregistrez-en une version qui n'utilise pas l'entrée.
+
+## Interroger une métrique
+
+Toute personne pouvant lire le projet peut interroger l'assistant IA intégré de PlaidCloud, ou un assistant connecté par MCP :
+
+> *« Quel a été le chiffre d'affaires net par région sur l'exercice FY26 ? »*
+
+L'assistant reconnaît la métrique par son nom ou l'un de ses synonymes (la recherche ignore la casse et fonctionne sur une partie du nom, de sorte que *revenue* trouve *Net Revenue*), tire la ventilation et les filtres de votre question, puis exécute la définition. Une question ne peut regrouper ou filtrer que selon l'une des colonnes de ventilation de la métrique ; une question qui demande autre chose est refusée plutôt que de recevoir une réponse approximative. Il en va de même pour une métrique dont la table a perdu une colonne depuis son enregistrement : le refus nomme la métrique et sa version, et un Architecte doit corriger la définition.
+
+**Vos mots deviennent les valeurs de la colonne par le biais d'une dimension.** Lorsqu'un Architecte a lié une colonne de ventilation à une dimension, l'assistant recherche les mots de votre question parmi les noms et les alias des membres de cette dimension, sans tenir compte de la casse. Un mot qui désigne un seul membre devient les valeurs de ce membre : une feuille est sa propre valeur, et un parent tel que *EMEA* s'étend à toutes les feuilles qu'il contient ; « chiffre d'affaires net en EMEA » filtre donc sur toutes les régions d'EMEA. Un mot qui ne désigne aucun membre, ou plus d'un (*Seaboard* peut être un alias de deux membres) sans qu'aucun ne corresponde exactement à l'orthographe utilisée, revient sous forme de liste de candidats que l'assistant vous soumet ; il n'en choisit jamais un à votre place. La recherche de mots dans une dimension requiert l'autorisation de lire les dimensions, comme pour la lecture d'une dimension partout ailleurs dans PlaidCloud.
+
+Le résultat sur lequel l'assistant s'appuie nomme la métrique et sa version, et indique si l'accès aux lignes a été appliqué. Si une réponse n'indique pas quelle métrique elle a utilisée, posez la question. Dans l'assistant IA intégré de PlaidCloud, les chiffres apparaissent dans leur propre carte avec un ✓ ; consultez [Chiffres issus d'une métrique](/fr/guides/ai-assistant/weave-tab/#chiffres-issus-dune-métrique). Pour savoir comment PlaidCloud note et nuance plus généralement les réponses de l'IA, consultez [Des réponses fiables](../honest-answers/).
+
+**L'accès aux lignes est appliqué à chaque table que lit la métrique**, la source comme chaque table de référence. Lorsqu'une ligne de référence vous est masquée mais que la ligne source qu'elle étiquette ne l'est pas, la ligne source compte quand même. Supposons que vous ne puissiez pas voir la ligne de référence de la région *APAC* mais que vous voyiez ses ventes : ces ventes figurent dans votre total, apparaissent sous une région vide dans une ventilation par région, et sont généralement exclues si vous filtrez sur la région, ou si la métrique filtre elle-même sur une colonne de référence.
+
+L'accès aux lignes façonne aussi la table de référence : lorsque la colonne de ventilation est régie par des règles d'accès, seules les valeurs que votre accès autorise vous sont proposées. Un membre sans rien en dessous que vous puissiez voir n'est jamais proposé, ni comme valeur ni comme candidat, et un parent ne s'étend qu'aux feuilles que vous pouvez voir. Un Architecte, qui lit toutes les lignes, voit tous les membres.
+
+Les Architectes lisent toutes les lignes, comme partout ailleurs dans le projet.
+
+## Comparer, classer et partager
+
+Une question sur une métrique peut aussi demander une comparaison, un classement et une part du total. Chacun est un calcul fixe sur les chiffres propres à la métrique, selon l'accès aux lignes de la personne qui interroge ; aucun n'est établi par l'assistant.
+
+| Demande | Ce qui est renvoyé | Dans l'API |
+|---|---|---|
+| **Écart par rapport au budget** | Pour chaque valeur de ventilation : le chiffre réel, le chiffre budgété, la différence (`value`) et la différence en pourcentage de la taille du budget (`pct`), qui conserve le signe de la différence lorsque le budget est négatif. | `compare: "variance"` |
+| **Part du total** | Le chiffre de chaque ligne divisé par le total de toutes les lignes de la ventilation (`share`), ou des lignes qui partagent les colonnes `within` que vous nommez. | `share: {"within": ["region"]}` ; `{}` pour le total général |
+| **N premiers ou derniers** | Les N chiffres les plus élevés, ou les N les plus bas avec `order: "asc"`, avec leur `rank` ; par groupe lorsque vous nommez des colonnes `within`. Les lignes à égalité partagent un rang et sont toutes conservées, il peut donc y en avoir plus de N. Pour une métrique de coût, *le plus au-dessus du budget* correspond aux N premiers de l'écart ; pour une métrique de chiffre d'affaires, aux N derniers. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *« Quels sont les cinq centres de coûts les plus au-dessus du budget dans le projet **Finance** ? »*
+>
+> *« Quelle part des dépenses totales représente chaque région, et quelle région est la plus importante ? »*
+
+Un écart exige une métrique dotée d'un **scénario** ; une métrique sans scénario, ou une métrique dérivée, le refuse. Chaque côté est totalisé séparément avant la comparaison : une valeur de ventilation sans ligne budgétaire, ou sans ligne réelle, affiche une différence vide plutôt que zéro (l'exception est une métrique `count` demandée comme total unique, où un côté sans ligne compte zéro), et il en va de même pour un pourcentage sur un budget nul.
+
+Le classement et la part portent sur le chiffre de la métrique, ou sur la différence lorsqu'un écart ou une [comparaison dans le temps](#comparer-dans-le-temps) est demandé ; *« quels centres de coûts expliquent l'essentiel du dépassement »* est donc un écart avec une part et un classement. `pct` est un pourcentage, donc `12` signifie 12 %, alors que `share` est une fraction. La part est calculée sur toutes les lignes de la ventilation avant qu'un classement des N premiers n'en conserve certaines ; les parts des lignes obtenues ne totalisent donc pas nécessairement un. Un chiffre vide se classe dernier quel que soit l'ordre demandé, et a une part vide ; il en va de même pour une part sur un total nul.
+
+Une part porte sur ce que *vous* pouvez voir. Quelqu'un dont l'accès aux lignes se limite à EMEA obtient les centres de coûts d'EMEA sous forme de parts du total d'EMEA, et le résultat indique que l'accès aux lignes a été appliqué. Les colonnes `within` d'une part ou d'un classement doivent figurer parmi les colonnes de ventilation demandées, et une question qui regroupe selon une colonne nommée comme l'une des colonnes du résultat (`value`, ainsi que `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` ou `cumulative` lorsque l'opérateur qui la produit est demandé) est refusée. Une question comportant deux comparaisons, ou deux classements, est refusée.
+
+## Comparer dans le temps
+
+Une métrique dont la définition comporte des **colonnes temporelles** (`time` dans l'API) peut être demandée pour une période fiscale, comparée à la période précédente et totalisée période par période. Les colonnes temporelles indiquent où se situe chaque ligne dans le calendrier fiscal, de deux façons :
+
+- **Une colonne de date**, avec `fiscal_year_start`, le mois civil où commence l'exercice fiscal (`1` pour janvier, valeur par défaut). Ses périodes sont les mois de l'exercice, numérotés à partir du mois de début : avec un exercice commençant en octobre, la période 1 est octobre et la période 7 est avril. Un trimestre en compte trois. Un exercice fiscal qui ne commence pas en janvier porte par défaut le nom de l'année civile dans laquelle il **se termine** (`fiscal_year_label` vaut `ending`) ; définissez `fiscal_year_label` sur `starting` pour le nommer d'après l'année où il commence. Avec un début en octobre, les mois d'octobre 2025 à septembre 2026 forment l'exercice FY2026 par défaut, et FY2025 avec `starting`. Les lignes sont lues par plage de dates, ce qui garde la question rapide sur une grande table.
+- **Une colonne d'exercice fiscal et une colonne de période**, toutes deux entières, contenant l'exercice fiscal (`2026`, et non `26`) et la période au sein de celui-ci, numérotée à partir de 1, avec `periods_per_year` : `12` par défaut, `13` pour un calendrier à 13 périodes, `52` pour des semaines, `4` pour des trimestres. Les trimestres n'existent que si les périodes se divisent en quatre. Un calendrier comportant des années de 53 semaines peut définir `53`, au prix de ses trimestres. Un enregistrement est refusé si l'une des colonnes contient une valeur qui n'est pas un nombre entier, comme *2024-01* ou *FY26*, et le refus nomme la colonne et la valeur. Les chiffres stockés sous forme de texte, comme `07`, sont acceptés, tout comme une période hors de l'exercice, telle que la période 0 ou 13 d'un grand livre : une question portant sur une période exclut ces lignes.
+
+Une question nomme alors la **période** concernée : un exercice fiscal, ou un trimestre ou une période de celui-ci. **Cumul à ce jour** étend cela jusqu'au début de l'exercice, de sorte que *cumul annuel à avril* correspond aux premiers mois de l'exercice jusqu'à avril inclus.
+
+> *« Quelles ont été les ventes du T1 de l'exercice FY2026 par région, et comment se comparent-elles au trimestre précédent ? »*
+>
+> *« Ventes cumulées de l'exercice jusqu'à avril, par rapport aux mêmes mois de l'an dernier. »*
+>
+> *« Montre-moi les ventes de FY2026 par mois sous forme de total cumulé. »*
+
+| Demande | Ce qui est renvoyé | Dans l'API |
+|---|---|---|
+| **Une période** | La métrique sur cette seule période, avec les ventilations, parts et classements habituels ; un écart par rapport au budget lit les deux scénarios sur cette période. | `period: {"year": 2026}` ; `{"year": 2026, "quarter": 1}` ; `{"year": 2026, "period": 7}` |
+| **D'une année sur l'autre** | Pour chaque valeur de ventilation : le chiffre de la période (`current`), celui de la même période un an plus tôt (`prior`), la différence (`value`) et `pct`. La réponse nomme la période antérieure. | `compare: "yoy"` avec un `period` |
+| **D'un trimestre sur l'autre** | Idem, par rapport au trimestre précédent. Le premier trimestre est comparé au quatrième de l'année précédente. | `compare: "qoq"` ; le `period` doit nommer un `quarter` |
+| **D'une période sur l'autre** | Idem, par rapport à la période précédente. La première période est comparée à la dernière de l'année précédente. Sur un calendrier à 12 périodes, c'est une comparaison de mois à mois, d'où le nom. | `compare: "mom"` ; le `period` doit nommer un `period` |
+| **Cumul à ce jour** | L'exercice depuis son début jusqu'à la fin du trimestre ou de la période nommé, seul ou, avec `yoy`, par rapport aux mêmes mois de l'année précédente. Refusé avec `qoq` ou `mom`. | `"to_date": true` dans le `period` |
+| **Total cumulé** | Une ligne pour chaque exercice fiscal et chaque période de la période demandée, avec le chiffre propre à la période (`value`) et le total à ce stade (`cumulative`). Sans période, il court de la première ligne à la dernière sur l'ensemble des années. Il n'admet ni comparaison, ni part, ni classement. | `cumulative: true` |
+
+`pct` est la différence en pourcentage de la taille du chiffre antérieur, en conservant le signe de la différence lorsque le chiffre antérieur est négatif, comme pour un écart. Chacune des deux périodes est totalisée séparément, et les deux totaux sont rapprochés par valeur de ventilation ; rien n'est lu sur une ligne voisine. Un mois sans ligne l'an dernier est donc comparé comme vide, et non comme le mois le plus proche qui en avait, et une valeur de ventilation qui n'a de lignes que sur l'une des deux périodes affiche l'autre, la différence et `pct` comme vides plutôt que nuls.
+
+Un total cumulé est réservé aux métriques `sum` et `count`. Une moyenne, un décompte distinct, un minimum ou un maximum ne s'additionne pas dans le temps et est refusé. Une période sans ligne n'a pas de ligne dans un total cumulé, et le total se poursuit au-delà.
+
+Les colonnes temporelles ne peuvent être ni filtrées ni regroupées dans une question qui nomme une période, compare dans le temps ou demande un total cumulé : elles décident des lignes lues et de leur placement. Une question qui ne fait rien de tout cela peut en revanche les filtrer et les regrouper comme n'importe quelle colonne de ventilation. Sont également refusés : une période au-delà de la fin de l'exercice (période 13 sur un calendrier à 12 périodes), un trimestre sur un calendrier sans trimestres, une comparaison temporelle ou un total cumulé sur une métrique dérivée, et une question qui ne nomme pas le type de période dont sa comparaison a besoin. Une métrique dérivée peut être interrogée pour une période lorsque chacune de ses entrées possède des colonnes temporelles sur le même calendrier fiscal, et aucune d'elles ne peut alors être filtrée ni regroupée non plus. Une comparaison temporelle est l'unique comparaison de la question ; elle ne peut donc pas être combinée avec un écart par rapport au budget, bien qu'une part et un classement s'appliquent toujours à la différence.
+
+## Retirer une métrique
+
+Retirer une métrique la met définitivement hors service : les personnes qui lisent le projet ne la voient plus, les Architectes la voient marquée comme retirée avec son historique, et elle ne peut plus être modifiée ni exécutée. Un Architecte retire une métrique en le demandant à l'assistant, ou avec `POST /rest/v1/analyze/metric/retire`. Une métrique à partir de laquelle une métrique dérivée est construite ne peut pas être retirée tant que cette métrique dérivée n'est pas retirée, ou qu'une de ses versions n'utilisant plus cette entrée n'est pas enregistrée. Pour remplacer une métrique retirée, définissez-en une nouvelle.
+
+## Via MCP et l'API REST
+
+| Action | Outil MCP | REST |
+|---|---|---|
+| Lister les métriques d'un projet, chacune avec sa définition complète ; `q` ne conserve que celles dont le nom ou un synonyme le contient | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
+| Résoudre les mots d'une question en valeurs d'une colonne de ventilation | `metric_values` avec `column` et `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
+| Lire une métrique | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
+| Définir ou modifier | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
+| Retirer | `metric_review` avec `action: retire` | `POST /rest/v1/analyze/metric/retire` |
+| Exécuter | `metric_run` avec `group_by`, `filters`, et les champs facultatifs `period`, `compare`, `share`, `top` et `cumulative` | `POST /rest/v1/analyze/metric/run` avec les mêmes champs |
+| Versions antérieures (Architectes uniquement) | | `GET /rest/v1/analyze/metric/flashback-versions` |
+
+`metric_upsert` accepte un `spec` de la forme `{name, memo, synonyms, definition}` et prend en charge `dry_run` pour vérifier une définition sans l'enregistrer. La `definition` d'une métrique de base est `{source, joins, measure, filters, grain, dimensions, scenario, time}`, avec `dimensions` sous la forme `{<breakdown column>: <dimension id>}`, `measure` sous la forme `{agg, column}` ou `{agg: "weighted_avg", column, weight}`, `scenario` sous la forme `{column, actual, budget}` et `time` sous la forme `{column, fiscal_year_start, fiscal_year_label}` ou `{year_column, period_column, periods_per_year}`. La `definition` d'une métrique dérivée est `{kind, op, inputs, factor}` ; ses colonnes de ventilation calculées sont renvoyées sous `grain` à côté de la définition.
+
+## Voir aussi
+
+- [Chemins d'analyse](../analysis-paths/) — nommez les tables sur lesquelles les gens posent des questions et donnez aux assistants des filtres permanents et une terminologie pour chacune
+- [Des réponses fiables](../honest-answers/) — comment PlaidCloud note et nuance chaque réponse de l'IA
+- [Contrôler l'accès aux données](/fr/get-started/tutorials/control-data-access/) — l'accès aux lignes sous lequel s'exécute une métrique

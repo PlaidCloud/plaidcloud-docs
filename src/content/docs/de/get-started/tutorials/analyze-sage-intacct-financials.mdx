@@ -1,0 +1,218 @@
+---
+title: Sage-Intacct-Finanzdaten analysieren – von der Verbindung zur Saldenliste
+description: Durchgängiges Sage-Intacct-Tutorial – Verbindung herstellen, Kontensalden nach Dimension mit dem Schritt „Sage importieren“ abrufen, sie zu einer Saldenliste und GuV nach Abteilung aufbereiten, eine Pro-Kopf-Kennzahl aus statistischen Konten ergänzen, auf einem Dashboard darstellen und die Aktualisierung planen.
+sidebar:
+  label: Sage-Intacct-Finanzdaten analysieren
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~40 Minuten · eine aktive Sage-Intacct-Verbindung, eine geladene Saldenliste, eine GuV nach Abteilung, ein Dashboard und eine geplante Aktualisierung*
+
+Dies ist der Einstieg für Controller und FP&A-Analysten mit Sage Intacct: Am Ende haben Sie **Kontensalden nach Dimension** direkt aus Intacct abgerufen, sie in eine **Saldenliste und GuV nach Abteilung** verwandelt, die Sie wie einen Abschluss lesen können, auf einem Dashboard dargestellt und das Ganze so eingerichtet, dass es sich von selbst aktualisiert. Kein Export vorgefertigter Berichte, kein manuelles Neuerfassen – die Zahlen stammen aus Intacct und bleiben aktuell.
+
+Sie verbinden sich einmal, rufen die Daten einmal ab und erledigen dann den Teil, auf den es wirklich ankommt: rohe Salden in die Zusammenfassungen zu verwandeln, die ein Fachanwender am Montagmorgen liest.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Fünf Phasen von links nach rechts: Sage Intacct, ein Schritt „Sage importieren“, der Kontensalden nach Dimension abruft, eine geladene Saldenlistentabelle, ein Table-Extract-Schritt, der gruppiert und summiert, sowie eine GuV mit Dashboard, die eine geplante Aktualisierung speist." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage importieren</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Saldenliste</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Gruppieren &amp; summieren</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">GuV</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Verbinden, die Salden einmal abrufen und dann zu lesbaren Abschlüssen aufbereiten – alles nach Zeitplan wiederholbar.</figcaption>
+</figure>
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace und ein Projekt, in dem Sie arbeiten ([Testphase starten](https://app.plaidcloud.com), falls Sie noch keinen haben).
+- **Eine funktionierende Sage-Intacct-Verbindung.** Folgen Sie zuerst der Anleitung [Mit Sage Intacct verbinden](/de/guides/connections/sage-intacct/) – Sie benötigen aktivierte Web Services, einen Webservice-Benutzer mit Berechtigung für die Objekte, die Sie lesen, und die vier Zugangsdatenfelder der Verbindung: **Client-ID**, **Client-Secret**, **Benutzername des Webservice-Benutzers** und **Unternehmens-ID**. Stellen Sie sicher, dass die Verbindung funktioniert, bevor Sie hier beginnen.
+- Kennen Sie Ihre **operativen Entitäten** (die Entitäts-IDs, für die Sie berichten) und ungefähr den **Kontonummernbereich**, in dem Ihre GuV-Konten (Erlöse und Aufwand) liegen. Die folgenden Beispiele verwenden `201` und `301` für Entitäten und `4010`–`9999` für den GuV-Bereich – ersetzen Sie sie durch Ihre eigenen Werte.
+
+<Aside type="note">
+Alles nach dem Abruf geschieht per Mausklick – kein SQL, kein Code. Die einzige Intacct-spezifische Komponente ist der Schritt **Sage importieren**, der die *Kontensalden nach Dimension* von Intacct für einen Datums- und Kontenbereich liest. Er liefert eine Zeile pro Konto und Dimensionskombination, jeweils mit Anfangs-, Perioden- und Endsaldo.
+</Aside>
+
+## Schritt 1: Workflow Erstellen
+
+Der Workflow ist die Pipeline, die die Daten abruft und aufbereitet.
+
+<Steps>
+
+1. Öffnen Sie Ihr Projekt und wechseln Sie zur Registerkarte **Workflows**.
+2. Klicken Sie auf **Neuer Workflow**, geben Sie ihm einen Namen wie `Intacct Financials` und öffnen Sie ihn.
+
+</Steps>
+
+## Schritt 2: Die Saldenliste Abrufen
+
+Der [Schritt „Sage importieren“](/de/reference/workflow-steps/sage-intacct/import-sage/) ruft Kontensalden für einen Datumsbereich und einen Kontenbereich ab und überträgt die von Ihnen gewählten Dimensionen in jede Zeile – das ist Ihre Saldenliste.
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Sage importieren** hinzu.
+
+2. Legen Sie in seiner Konfiguration Folgendes fest:
+
+   | Feld | Wert |
+   |---|---|
+   | **Verbindung** | Ihre Sage-Intacct-Verbindung |
+   | **Unternehmen** | das Intacct-Unternehmen, aus dem gelesen wird |
+   | **Startdatum** / **Enddatum** | die Periode, die Sie abschließen – z. B. der erste und der letzte Tag des Monats |
+   | **Start account** / **End account** | Ihr GuV-Bereich, z. B. `4010` bis `9999` |
+   | **Entitäten** | Ihre operativen Entitäten, z. B. `201`, `301` |
+   | **Dimensionen** | aktivieren Sie die, nach denen Sie berichten – üblich sind **Standort**, **Abteilung**, **Mitarbeiter** und **Klasse** |
+
+3. Legen Sie als **Ziel** eine neue Tabelle namens `intacct_trial_balance` fest.
+
+4. Führen Sie den Schritt aus. Jetzt haben Sie eine Zeile pro Konto und Dimensionskombination mit den Spalten `startbalance`, `periodbalance` und `endbalance` sowie einem ID-/Namenspaar für jede aktivierte Dimension (z. B. `departmentid` / `departmentname`, `locationname`).
+
+</Steps>
+
+<Aside type="caution">
+Intacct liefert jede Spalte als **Text**, und Sage-Abrufe sind **Einzelanfragen** (ohne Paginierung) – Kontensaldoergebnisse sind klein, das ist hier also unproblematisch, aber verwenden Sie diesen Schritt nicht für umfangreiche Einzelpostendetails. Die tatsächlichen Spaltentypen legen Sie im nächsten Schritt fest, wo sie ins Gewicht fallen.
+</Aside>
+
+<Aside type="note">
+Sowohl **Startdatum** als auch **Enddatum** müssen gesetzt sein – ein einzelnes Start- oder Enddatum wird ignoriert. Wenn Sie eine Dimension aktiviert haben, deren ID und Namen Sie nicht benötigen, können Sie die überzählige Spalte im nächsten Schritt weglassen. (Das Kontrollkästchen der Dimension **Warehouse** hat keine Wirkung; verwenden Sie **Custom dimensions**, wenn Sie das Warehouse in der Ausgabe benötigen.)
+</Aside>
+
+## Schritt 3: Die Salden zur GuV Aufbereiten
+
+Nun folgt die Analyse, erledigt mit einer einzigen Transformation per Mausklick – ohne SQL. Ihr GuV-Bereich wird pro Abteilung zu wenigen Abschlusszeilen zusammengefasst, mit umgekehrtem Vorzeichen, damit Erlöse positiv erscheinen. Ein [Table-Extract-Schritt](/de/reference/workflow-steps/tables/table-extract/) erledigt all das auf seinen Registerkarten **Tabellendatenauswahl** und **Datenfilter**.
+
+<Steps>
+
+1. Fügen Sie einen **Table Extract**-Schritt hinzu. Legen Sie seine **Quelle** auf `intacct_trial_balance` und sein **Ziel** auf eine neue Tabelle `intacct_pnl` fest.
+
+2. Klicken Sie auf der Registerkarte **Tabellendatenauswahl** auf **Zusammenfassen**, um die Aggregation einzuschalten, und richten Sie dann drei Zielspalten ein:
+
+   - **`departmentname`** – direkt aus der Quelle zugeordnet. Typ **Text**, Zusammenfassen: **Gruppieren nach**.
+   - **`pnl_line`** – ein **Ausdruck** (siehe unten), der die Kontonummer in eine Berichtszeile übersetzt. Typ **Text**, Zusammenfassen: **Gruppieren nach**.
+   - **`amount`** – ein **Ausdruck** `func.to_float64(intacct_trial_balance.endbalance) * -1`, der den Textsaldo in eine Zahl umwandelt und das Vorzeichen umkehrt. Typ **Währung**, Zusammenfassen: **Summe**.
+
+   Erst wenn Sie den **Typ** der Zielspalte `amount` auf **Währung** setzen, lässt sich der Textsaldo summieren. Doppelklicken Sie bei `pnl_line` auf die Zelle **Ausdruck** und geben Sie Folgendes ein (Spalten und die Funktion `case` aus der Gruppe **Bedingungen** lassen sich per Mausklick auswählen):
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. Führen Sie den Schritt aus.
+
+</Steps>
+
+Das `* -1` ist der eine buchhalterische Kniff: Intacct führt Erlöse als Haben (negativ) und Aufwendungen als Soll (positiv), sodass die Negierung des Endsaldos **Erlöse positiv und Kosten negativ** darstellt – die Zeilen jeder Abteilung *ergeben dann den Jahresüberschuss*. Passen Sie die Kontonummern-Grenzen in `case()` an Ihren Kontenplan an. Ausdrücke verwenden den Mausklick-Editor von PlaidCloud – siehe [Erweiterte Data-Mapper-Nutzung](/de/reference/workflow-steps/common/advanced-data-mapper-usage/) und die [Ausdrucksreferenz](/de/reference/expressions/).
+
+<Aside type="tip">
+Sie möchten eine unternehmensweite GuV statt einer nach Abteilung? Entfernen Sie `departmentname` aus den Zielspalten und behalten Sie nur `pnl_line` (Gruppieren nach) und `amount` (Summe).
+</Aside>
+
+## Schritt 4: Wie ein Finanzprofi Lesen
+
+Öffnen Sie die Tabelle `intacct_pnl`. Für jede Abteilung haben Sie drei Zahlen:
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+Direkt daraus ablesbar:
+
+- **Rohertrag** = Erlöse + Herstellkosten (die Herstellkosten sind bereits negativ) → `486,200 − 190,540 = 295,660`.
+- **Jahresüberschuss** = Summe der drei Zeilen → `82,780`.
+- **Rohertragsmarge in %** = Rohertrag ÷ Erlöse → ca. 61 %.
+
+Das Erste, was Sie tun sollten, ist der **Abgleich**: Führen Sie die eigene GuV von Intacct (Financial Reports) für dieselbe Periode und dieselben Entitäten aus und prüfen Sie, ob Erlöse und Jahresüberschuss übereinstimmen. Falls nicht, liegt es fast immer an einem Unterschied im Umfang – eine nicht einbezogene Entität, ein Kontenbereich, der einen Teil der GuV abschneidet, oder eine abweichende Periodenzuordnung. Vertrauen Sie der Pipeline erst, wenn der Abgleich stimmt.
+
+<Aside type="tip">
+Sie möchten das klassische Layout mit den Perioden oben? Fügen Sie einen [Table-Pivot-Schritt](/de/reference/workflow-steps/tables/table-pivot/) hinzu, der `intacct_pnl` liest: Pivotieren Sie die Periode in Spalten, behalten Sie `pnl_line` als Zeile und summieren Sie `amount`. Damit überhaupt eine Periodenspalte vorhanden ist, fügen Sie in Schritt 3 `end_date` als Spalte für **Gruppieren nach** hinzu. So haben Sie den Monatsvergleich auf einen Blick, ohne SQL.
+</Aside>
+
+## Schritt 5: Auf einem Dashboard Darstellen
+
+Zahlen in einer Tabelle sind in Ordnung; ein Diagramm schicken Sie an den CFO. [Veröffentlichen](/de/get-started/tutorials/load-and-transform-data/#schritt-7-das-ergebnis-veröffentlichen) Sie `intacct_pnl` und folgen Sie dann [Dashboard erstellen](/de/get-started/tutorials/build-a-dashboard/), um Folgendes hinzuzufügen:
+
+- ein **Balkendiagramm** des Jahresüberschusses (oder der Erlöse) nach `departmentname` und
+- ein **Balkendiagramm** je `pnl_line`, damit die Mischung aus Erlösen, Herstellkosten und Betriebskosten auf einen Blick sichtbar ist.
+
+Damit haben Sie ein aktuelles Sage-Intacct-Finanz-Dashboard – ohne Export, aktualisiert bei jeder Ausführung des Workflows.
+
+## Schritt 6: Die Aktualisierung Planen
+
+<Steps>
+
+1. Führen Sie den gesamten Workflow einmal von oben nach unten aus, um sicherzustellen, dass jeder Schritt grün ist.
+2. [Planen Sie den Workflow](/de/get-started/tutorials/schedule-a-workflow/) – monatlich im Takt des Abschlusses oder wöchentlich, wenn die Zahlen im Lauf des Monats aktuell sein sollen.
+
+</Steps>
+
+Da der Abruf die gesamte Tabelle ersetzt, liest jede Ausführung die Salden für den von Ihnen festgelegten Datums- und Kontenbereich neu ein – beschränken Sie diese auf das benötigte Fenster (die laufende Periode, Ihre GuV-Konten) statt auf die gesamte Historie.
+
+## Schritt 7: Eine Pro-Kopf-Kennzahl mit Statistischen Konten Ergänzen
+
+Intacct führt neben Ihrem Finanzkontenplan auch nichtmonetäre **statistische Konten** – Mitarbeiterzahl, Fläche, Einheiten. Rufen Sie sie mit einem zweiten Schritt **Sage importieren** im statistischen Modus ab und verknüpfen Sie sie dann mit der GuV, um eine Kennzahl wie Betriebskosten pro Mitarbeiter nach Abteilung zu lesen. Drei weitere Standardschritte, weiterhin ohne SQL.
+
+<Steps>
+
+1. Fügen Sie einen zweiten Schritt **Sage importieren** hinzu. Legen Sie in seiner Konfiguration Folgendes fest:
+
+   | Feld | Wert |
+   |---|---|
+   | **Verbindung** | Ihre Sage-Intacct-Verbindung |
+   | **Unternehmen** | das Intacct-Unternehmen, aus dem gelesen wird |
+   | **Startdatum** / **Enddatum** | dieselbe Periode wie in Schritt 2 |
+   | **Statistisch** | **Nur statistisch** |
+   | **Start account** / **End account** | `0000` bis `9999` – statistische Konten liegen nicht zwingend innerhalb der Nummerierung Ihres Finanzkontenplans, rufen Sie daher den vollen Bereich statt des GuV-Bereichs aus Schritt 2 ab |
+   | **Entitäten** | Ihre operativen Entitäten, z. B. `201`, `301` |
+   | **Dimensionen** | **Abteilung** – die Dimension, nach der Sie pro Kopf berichten |
+
+2. Legen Sie als **Ziel** eine neue Tabelle namens `intacct_statistics` fest.
+
+3. Führen Sie den Schritt aus. Sie erhalten eine Zeile pro statistischem Konto und Abteilung, wobei `endbalance` die Statistik selbst enthält – z. B. die Mitarbeiterzahl dieser Abteilung am Periodenende.
+
+</Steps>
+
+Bringen Sie nun die Mitarbeiterzahl auf die GuV und dividieren Sie – aber nicht direkt aus `intacct_statistics`. Diese Tabelle hat eine Zeile *pro statistischem Konto und Abteilung* (Mitarbeiterzahl, Fläche, Einheiten, was immer Sie führen); ein Join allein über `departmentname` würde daher jede GuV-Zeile für jedes statistische Konto dieser Abteilung vervielfachen, und `amount_per_head` würde durch das statistische Konto geteilt, das zufällig in der Zeile landet. Filtern Sie zuerst auf die Mitarbeiterzahl, damit der Join eine Zeile pro Abteilung ergibt und die Kennzahl tatsächlich aussagekräftig ist.
+
+<Steps>
+
+1. Fügen Sie einen **Table Extract**-Schritt hinzu. Legen Sie seine **Quelle** auf `intacct_statistics` und sein **Ziel** auf eine neue Tabelle `intacct_headcount` fest. Übernehmen Sie unter **Tabellendatenauswahl** alle Spalten unverändert – hier ist keine Aggregation nötig. Fügen Sie auf der Registerkarte **Datenfilter** einen Filter **Teilmenge der Daten auswählen** auf die Quelldaten hinzu: `intacct_statistics.glaccountno == '9000'` – ersetzen Sie `9000` durch die Nummer Ihres eigenen statistischen Kontos für die Mitarbeiterzahl (filtern Sie stattdessen auf die Spalte mit dem Kontonamen, wenn Ihr Abruf diese liefert; `glaccountno` ist weiterhin Text, vergleichen Sie es daher mit einer Zeichenfolge in Anführungszeichen). Führen Sie den Schritt aus – `intacct_headcount` hat nun genau eine Zeile pro Abteilung.
+
+2. Fügen Sie einen [Table-Outer-Join-Schritt](/de/reference/workflow-steps/tables/table-outer-join/) hinzu. Legen Sie **Table 1** auf `intacct_pnl` und **Table 2** auf `intacct_headcount` fest und verknüpfen Sie über `departmentname` – jetzt eine saubere 1:1-Zuordnung pro Abteilung. Belassen Sie den **Verknüpfungstyp** auf dem Standardwert **Left Join** – jede GuV-Zeile bleibt erhalten, die Mitarbeiterzahl wird eingetragen, wo die Abteilung übereinstimmt. Legen Sie als Ziel eine neue Tabelle `intacct_pnl_with_headcount` fest und übernehmen Sie alle Spalten aus beiden Tabellen.
+
+3. Führen Sie den Schritt aus und fügen Sie dann einen **Table Extract**-Schritt hinzu, der `intacct_pnl_with_headcount` liest und in eine neue Tabelle `intacct_pnl_per_head` schreibt. Übernehmen Sie unter **Tabellendatenauswahl** die vorhandenen Spalten und fügen Sie eine weitere Zielspalte hinzu: `amount_per_head`, ein **Ausdruck** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, Typ **Währung**.
+
+4. Führen Sie den Schritt aus.
+
+</Steps>
+
+Lesen Sie `amount_per_head` in der Zeile **`3 - Operating Expenses`** für die Betriebskosten pro Mitarbeiter nach Abteilung – dieselbe Lesart wie in Schritt 4, nur eine Spalte tiefer. Fügen Sie sie dem Dashboard neben der GuV hinzu oder nehmen Sie sie in den Zeitplan aus Schritt 6 auf, damit sie sich mit allem anderen aktualisiert.
+
+## Was Sie Erstellt Haben
+
+Ausgehend von einem leeren Workflow haben Sie aktuelle Sage-Intacct-Kontensalden abgerufen, mit einem einzigen Standard-Transformationsschritt zu einer **GuV nach Abteilung** aufbereitet, statistische Konten für eine Pro-Kopf-Kennzahl hinzugefügt – nirgends in der Pipeline SQL –, auf einem Dashboard dargestellt und zur Aktualisierung eingeplant – der zentrale Berichtskreislauf eines Finanzteams, jetzt automatisiert.
+
+## Wie es Weitergeht
+
+- [Mit Sage Intacct verbinden](/de/guides/connections/sage-intacct/) – Einrichtung der Verbindung und die weiteren Sage-Importschritte (Eingangsrechnungen, Rechnungspositionen, Ad-hoc-Objektabfragen).
+- [Import-Sage-Intacct-Query-Schritt](/de/reference/workflow-steps/sage-intacct/import-intacct-query/) – rufen Sie beliebige Intacct-Objekte (Sachkonten, Kunden, Projekte) ab, um Ihre Abschlüsse anzureichern.
+- [Table-Extract-Schritt](/de/reference/workflow-steps/tables/table-extract/) und [Erweiterte Data-Mapper-Nutzung](/de/reference/workflow-steps/common/advanced-data-mapper-usage/) – Gruppieren, Filtern und berechnete Spalten für tiefergehende Analysen.
+- [Eine Dimensionshierarchie entwerfen](/de/get-started/tutorials/design-a-dimension/) – fassen Sie Ihren Kontenplan zu Berichtsgruppen zusammen, die Sie selbst steuern.

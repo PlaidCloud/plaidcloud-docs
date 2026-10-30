@@ -1,0 +1,230 @@
+---
+title: NetSuite の財務を分析する — 接続から損益計算書まで
+description: NetSuite のエンドツーエンドのチュートリアルです。接続し、SuiteQL で総勘定元帳を取得し、月次の損益計算書と売掛金エージングに整形してダッシュボードに表示し、更新をスケジュールします。
+sidebar:
+  label: NetSuite の財務分析
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*約 45 分 · NetSuite への接続、取り込み済みの総勘定元帳、月次の損益計算書、売掛金エージング、スケジュールされた更新*
+
+これは、コントローラーや FP&A アナリストが最初の日に進める手順です。最後まで進めると、NetSuite から**総勘定元帳**を直接取得し、財務諸表のように読める**月次損益計算書**に変換し、**売掛金エージング**を作成して、両方をダッシュボードに表示し、全体が自動的に更新されるように設定できます。スプレッドシートへのエクスポートも、手作業での再入力も不要です。数値は NetSuite から取得され、常に最新の状態に保たれます。
+
+接続と取得は一度だけ行い、その後は最も重要な作業に取り組みます。GL の生データの行を、ビジネス担当者が月曜の朝に読む集計に整形する作業です。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="左から右へ 5 つの段階が並びます。NetSuite、SuiteQL を実行する REST リクエストステップ、取り込み済みの総勘定元帳テーブル、グループ化して集計する Table Extract ステップ、そして損益計算書とダッシュボードで、これらがスケジュールされた更新につながります。" style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SuiteQL の取得</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">GLテーブル</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">グループ化と合計</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">損益計算書</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">接続して GL を一度取得し、読みやすい財務諸表に整形します。すべてスケジュールで再実行できます。</figcaption>
+</figure>
+
+## 前提条件
+
+- PlaidCloud ワークスペースと、作業用のプロジェクト（必要な場合は[トライアルを開始](https://app.plaidcloud.com)してください）。
+- **動作する NetSuite 接続。** 最初に [NetSuite への接続](/ja/guides/connections/netsuite/)の手順を完了してください。NetSuite で OAuth 2.0 と REST Web サービスを有効にし、統合のクライアント ID、証明書 ID、アカウント ID、秘密鍵の PEM を用意する必要があります。ここから始める前に、**テストリクエストを送信**が成功していることを確認してください。
+- データの整形に SQL は不要です。標準の変換ステップで行います。クエリを書くのは NetSuite からの**取得**だけで、取得用のクエリはすべて提供されています。このチュートリアルはその内容に基づいているため、[NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/)をタブで開いておいてください。
+
+<Aside type="note">
+クエリを書くのは NetSuite からの**取得**の部分だけで、これは *NetSuite の内部で*実行される **SuiteQL** です。それ以降の作業、つまり GL を損益計算書にグループ化する処理や売掛金をバケットに分類する処理は、すべて PlaidCloud のポイント＆クリック操作による変換ステップで行い、SQL は使いません。（SQL に慣れている場合は SQL抽出 ステップも使えますが、ここでは必要ありません。）
+</Aside>
+
+## ステップ 1: ワークフローを作成する
+
+ワークフローは、データを取得して整形するパイプラインです。
+
+<Steps>
+
+1. プロジェクトを開き、**ワークフロー**タブに切り替えます。
+2. **新規ワークフロー**をクリックし、`NetSuite Financials` などの名前を付けて開きます。
+
+</Steps>
+
+## ステップ 2: 総勘定元帳を取得する
+
+1 回の SuiteQL クエリで、1 年分の転記アクティビティ（すべての勘定科目、すべての月）を取得できます。これは損益計算書を作成するのに十分で、後で他の財務諸表を作成する場合にも使えます。
+
+<Steps>
+
+1. [RESTリクエストステップ](/ja/guides/workflows/rest-request-step/)を追加します。**リクエスト**タブで、**接続**に NetSuite 接続を、**メソッド**に `POST` を、**エンドポイント**に `/services/rest/query/v1/suiteql` を設定します。
+
+2. **本文**に、`{"q": "…"}` の形式で包んだ次の SuiteQL を入力します。
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. **レスポンス**タブで、出力先を**テーブル**に設定して `netsuite_gl` という名前を付け、列のタイプを設定します。`amount` は**通貨**、それ以外はすべて**テキスト**にします。（SuiteQL は数値と日付をテキストとして返します。タイプを設定することで、`amount` を合計できるようになります。）
+
+4. **テストリクエストを送信**をクリックして実行できることを確認し、ステップを実行します。これで、勘定科目ごと・月ごとに 1 行、符号付きの転記金額を持つ `netsuite_gl` テーブルができました。
+
+</Steps>
+
+<Aside type="note">
+`amount` は NetSuite の GL の慣例に従い、**借方が正、貸方が負**です。これは生のデータそのものであり、次のステップで読みやすい財務諸表に変換します。帳簿が複数の子会社または通貨にまたがる場合は、1 つの子会社に絞り込んでください（`t.subsidiary = <id>`）。複数通貨に関する注意事項は、[クエリの例](/ja/guides/connections/netsuite-financial-queries/#すべてのレシピで共通の規則)を参照してください。
+</Aside>
+
+## ステップ 3: GL を損益計算書に整形する
+
+ここからが分析です。SQL を使わず、ポイント＆クリック操作の変換 1 つで行います。損益計算書は GL を集約したものにすぎません。収益と費用の勘定科目を少数の行にグループ化し、収益がプラスで表示されるように符号を反転します。[Table Extract ステップ](/ja/reference/workflow-steps/tables/table-extract/)の**テーブルデータの選択**タブと**データフィルター**タブで、すべて実行できます。
+
+<Steps>
+
+1. **Table Extract** ステップを追加します。**ソース**に `netsuite_gl` を、**ターゲット**に新しいテーブル `netsuite_pnl` を設定します。
+
+2. **データフィルター**タブで、収益と費用の勘定科目だけを残します（貸借対照表の勘定科目は除外します）。 **`account_type`** が **いずれかに一致** `Income`、`OthIncome`、`COGS`、`Expense`、`OthExpense` となるフィルターを追加します。
+
+3. **テーブルデータの選択**タブで、**集計**をクリックして集計を有効にし、ターゲット列を 3 つ設定します。
+
+   - **`period`** — ソースからそのままマッピングします。集計は**グループ化**です。
+   - **`pnl_line`** — 各勘定科目タイプをレポートの行に変換する**式**（下記）です。集計は**グループ化**です。
+   - **`amount`** — **式** `netsuite_gl.amount * -1`（符号の反転）です。集計は**合計**です。
+
+   `pnl_line` では、その**式**セルをダブルクリックして次のように入力します（エディターでは、列や**条件**グループの `case` 関数をポイント＆クリックで選択できます）。
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. ステップを実行します。
+
+</Steps>
+
+`amount * -1` という式が、唯一の会計上の操作です。借方がプラスの金額の符号を反転することで、**収益がプラス、コストがマイナス**になり、各月の 3 つの行を合計すると*純利益*になります。次に、`period` と `pnl_line` を**グループ化**して**合計**することで、すべての勘定科目が月ごとにこの 3 つの行へ集約されます。式には PlaidCloud のポイント＆クリックエディターを使用します。詳しくは[データマッパーの高度な使い方](/ja/reference/workflow-steps/common/advanced-data-mapper-usage/)と[式のリファレンス](/ja/reference/expressions/)を参照してください。
+
+<Aside type="tip">
+数十の勘定科目を 3 つの行にまとめるのは、最初の試行としてあえて粗くしています。営業費用を部門別に分けるには、ステップ 2 の取得クエリに `department` を追加し（`transactionline` を結合して `BUILTIN.DF(tl.department)` を使用します）、ここでも `department` を**グループ化**の列として追加します。
+</Aside>
+
+## ステップ 4: 財務担当者の目線で読む
+
+`netsuite_pnl` テーブルを開きます。月ごとに 3 つの数値があります。
+
+| period | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+この表から次の値をそのまま読み取れます。
+
+- **売上総利益** = 収益 + 売上原価（売上原価はすでにマイナス）→ `486,200 − 190,540 = 295,660`。
+- **純利益** = 3 つの行の合計 → `82,780`。
+- **売上総利益率（%）** = 売上総利益 ÷ 収益 → 約 61%。
+
+最初に行うべきことは**照合**です。同じ月について NetSuite 自身の損益計算書を実行し、収益と純利益が一致することを確認します。一致しない場合は、ほとんどが範囲の違いです。子会社や通貨のフィルター、または転記期間と取引日付の不一致が原因として考えられます（[期間に関する注記](/ja/guides/connections/netsuite-financial-queries/#試算表)を参照）。照合が取れて初めて、このパイプラインを信頼できます。
+
+<Aside type="tip">
+月を横に並べた従来のレイアウトにしたい場合は、`netsuite_pnl` を読み取る [Table Pivot ステップ](/ja/reference/workflow-steps/tables/table-pivot/)を追加します。`period` を列にピボットし、`pnl_line` を行のままにして、`amount` を合計します。月ごとに 1 列、損益計算書の行ごとに 1 行になり、SQL を使わずに前月比をひと目で確認できます。
+</Aside>
+
+## ステップ 5: 売掛金エージングを作成する
+
+最初の日に得られる 2 つ目の成果です。接続、取得、整形という同じ流れで進めます。未回収の売掛金を取得するレシピから始め、各請求書の延滞状況に応じてバケットに分類します。
+
+<Steps>
+
+1. もう 1 つ **RESTリクエスト**ステップを追加し（同じ接続、`POST`、suiteql エンドポイント）、次の本文を設定します。
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   結果を `netsuite_open_ar` として取り込み、`invoice_total` と `amount_unpaid` は**通貨**、`invoice_date` と `due_date` は**日付**、それ以外は**テキスト**にします。
+
+2. `netsuite_open_ar` を読み取り、新しいテーブル `netsuite_ar_aging` に出力する **Table Extract** ステップを追加します。**テーブルデータの選択**タブで**集計**をクリックし、ターゲット列を 3 つ設定します。
+
+   - **`aging_bucket`** — 各請求書を延滞状況でラベル付けする**式**（下記）です。集計は**グループ化**です。
+   - **`invoices`** — 任意の列（例: `invoice_number`）です。集計は**件数**です。
+   - **`balance`** — `amount_unpaid` からマッピングします。集計は**合計**です。
+
+   `aging_bucket` には次の式を入力します。支払期日からの経過日数（日付から日付を引くと日数になります）を計算し、該当する区分のラベルを付けます。
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. 実行します。`netsuite_ar_aging` を見ると、期限内の金額と 30 日、60 日、90 日以上延滞している金額が 5 行で把握できます。これは、ビジネス担当者が最初に確認する督促向けのビューです。（日付の引き算を行うには、`due_date` を**日付**タイプにする必要があります。これは上記の RESTリクエスト ステップの**レスポンス**タブで設定済みです。）
+
+</Steps>
+
+## ステップ 6: ダッシュボードに表示する
+
+テーブルの数値でも十分ですが、CFO に送るのはグラフです。`netsuite_pnl` と `netsuite_ar_aging` を[公開](/ja/get-started/tutorials/load-and-transform-data/#ステップ7結果を公開する)し、[ダッシュボードを作成する](/ja/get-started/tutorials/build-a-dashboard/)の手順に沿って、次を追加します。
+
+- `period` ごとの純利益（または収益）の**棒グラフ**
+- `aging_bucket` ごとの売掛金 `balance` の**円グラフまたは棒グラフ**
+
+これで、エクスポート不要でワークフローが実行されるたびに更新される、NetSuite の財務ダッシュボードが完成しました。
+
+## ステップ 7: 更新をスケジュールする
+
+<Steps>
+
+1. ワークフロー全体を最初から最後まで一度実行し、すべてのステップが成功していることを確認します。
+2. [ワークフローをスケジュール](/ja/get-started/tutorials/schedule-a-workflow/)します。決算のサイクルに合わせて月次にするか、売掛金エージングを毎朝最新にしたい場合は毎晩にします。
+
+</Steps>
+
+取得はすべてテーブル全体の置き換えになるため、実行のたびに `WHERE` 句で定義した範囲が再抽出されます。履歴全体ではなく、必要な範囲（当年のみ、未回収の請求書のみなど）に絞ってください。
+
+## 作成した内容
+
+空のワークフローから始めて、NetSuite の GL と売掛金のライブデータを取得し、標準の変換ステップ 2 つで**月次損益計算書**と**売掛金エージング**に整形しました。SQL は使っていません。さらにダッシュボードに表示し、更新をスケジュールしました。財務チームが行う中核的なレポートの流れが、これで自動化されました。
+
+## 次のステップ
+
+- [NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/) — 同じワークフローに追加できる試算表、貸借対照表、未処理の販売注文、発注書、在庫のクエリです。
+- [Table Extract ステップ](/ja/reference/workflow-steps/tables/table-extract/)と[データマッパーの高度な使い方](/ja/reference/workflow-steps/common/advanced-data-mapper-usage/) — より深い分析のためのグループ化、フィルター、計算列です。
+- [ディメンション階層を設計する](/ja/get-started/tutorials/design-a-dimension/) — 勘定科目表を、自分で管理できるレポート用のグループに集約します。
+- [ダッシュボードを作成する](/ja/get-started/tutorials/build-a-dashboard/) — ダッシュボード作成の詳しい手順です。

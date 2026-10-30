@@ -1,0 +1,70 @@
+---
+title: AI_EMBEDDING_VECTOR (Lakehouse v1)
+description: PlaidCloud Lakehouse의 ai_embedding_vector 함수를 사용하여 임베딩을 생성합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/02-ai-embedding-vector.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+이 문서는 PlaidCloud Lakehouse의 ai_embedding_vector 함수에 대한 개요를 제공하고, 이 함수를 사용하여 문서 임베딩을 생성하는 방법을 설명합니다.
+
+[업스트림 구현](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/common/openai/src/embedding.rs)을 참조하십시오.
+
+기본적으로 PlaidCloud Lakehouse는 임베딩을 생성하는 데 [text-embedding-ada](https://platform.openai.com/docs/models/embeddings) 모델을 사용합니다.
+
+<Aside>PlaidCloud Lakehouse v1.1.47부터 PlaidCloud Lakehouse는 [Azure OpenAI 서비스](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service)를 지원합니다. 이 통합은 향상된 데이터 개인정보 보호를 제공합니다. Azure OpenAI를 사용하려면 `[query]` 섹션에 다음 구성을 추가하십시오. ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+
+<Aside type="caution">PlaidCloud Lakehouse는 `AI_EMBEDDING_VECTOR`에 (Azure) OpenAI를 사용하며 임베딩 열 데이터를 (Azure) OpenAI로 보냅니다. 이 기능은 PlaidCloud Lakehouse 구성에 `openai_api_key`가 포함된 경우에만 작동하며, 그렇지 않으면 비활성 상태입니다. 이 함수는 Azure OpenAI 키를 사용하는 PlaidCloud Lakehouse에서 기본적으로 사용할 수 있습니다. 이 함수를 사용하면 데이터가 당사에 의해 Azure OpenAI로 전송된다는 점에 동의하는 것으로 간주됩니다.</Aside>
+
+## Ai_embedding_vector 개요
+
+PlaidCloud Lakehouse의 `ai_embedding_vector` 함수는 텍스트 데이터의 벡터 임베딩을 생성하는 기본 제공 함수입니다. 문서 유사도, 클러스터링, 추천 시스템과 같은 자연어 처리 작업에 유용합니다.
+
+이 함수는 텍스트를 입력으로 받아 입력 텍스트의 의미와 맥락을 나타내는 고차원 벡터를 반환합니다. 임베딩은 대규모 텍스트 코퍼스로 사전 학습된 모델을 사용해 생성되며, 단어와 구 사이의 관계를 연속 공간에 담아냅니다.
+
+## Ai_embedding_vector를 사용하여 임베딩 생성
+
+`ai_embedding_vector` 함수로 텍스트 문서의 임베딩을 생성하려면 아래 예제를 따르십시오.
+1. 문서를 저장할 테이블을 만듭니다.
+```sql
+CREATE TABLE documents (
+                           id INT,
+                           title VARCHAR,
+                           content VARCHAR,
+                           embedding ARRAY(FLOAT32)
+);
+```
+
+2. 테이블에 예제 문서를 삽입합니다.
+```sql
+INSERT INTO documents(id, title, content)
+VALUES
+    (1, 'A Brief History of AI', 'Artificial intelligence (AI) has been a fascinating concept of science fiction for decades...'),
+    (2, 'Machine Learning vs. Deep Learning', 'Machine learning and deep learning are two subsets of artificial intelligence...'),
+    (3, 'Neural Networks Explained', 'A neural network is a series of algorithms that endeavors to recognize underlying relationships...'),
+```
+
+3. 임베딩을 생성합니다.
+```sql
+UPDATE documents SET embedding = ai_embedding_vector(content) WHERE length(embedding) = 0;
+```
+쿼리를 실행하면 테이블의 embedding 열에 생성된 임베딩이 채워집니다.
+
+임베딩은 `ARRAY(FLOAT32)` 열 유형인 embedding 열에 `FLOAT32` 값의 배열로 저장됩니다.
+
+이제 이 임베딩을 유사한 문서 찾기나 내용에 따른 문서 클러스터링과 같은 다양한 자연어 처리 작업에 사용할 수 있습니다.
+
+4. 임베딩을 확인합니다.
+
+```sql
+SELECT length(embedding) FROM documents;
+┌───────────────────┐
+│ length(embedding) │
+├───────────────────┤
+│              1536 │
+│              1536 │
+│              1536 │
+└───────────────────┘
+```
+위 쿼리는 생성된 임베딩의 길이가 각 문서마다 1536(차원)임을 보여 줍니다.

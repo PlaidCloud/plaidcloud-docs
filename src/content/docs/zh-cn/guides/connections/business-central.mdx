@@ -1,0 +1,132 @@
+---
+title: 连接到 Business Central
+description: 使用 Azure AD 客户端凭据将 PlaidCloud 连接到 Microsoft Dynamics 365 Business Central，使用预置的导入步骤提取 OData 实体，并过账总账日记账行。
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 Business Central 的标准 OData v2.0 REST API，无需手写 OData 即可提取科目、分类账分录、客户、供应商、物料和日记账，并将总账日记账行过账回 Business Central。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请始终先针对沙盒环境运行每一次导入，并且在实际过账之前，对每个过账批次都完成下文的 **Preview and Validate**。
+</Aside>
+
+## 先决条件
+
+您需要在 Azure AD 和 Business Central 中具备：
+
+- 为 PlaidCloud 创建的 **Entra ID (Azure AD) 应用注册**，带有**客户端密钥**，并已被授予 Business Central 的 **API 权限**（`Dynamics 365 Business Central > API.ReadWrite.All`，或管理员颁发的更窄权限）。
+- 您的 Azure AD **租户 ID**。
+- PlaidCloud 应调用的 **Business Central 环境**名称（例如 `Production` 或沙盒环境）。
+- PlaidCloud 读取和过账所针对的**公司**：Business Central 每次将实体读取和日记账过账都限定在一个公司内。
+
+<Aside type="note">
+该连接以应用程序而不是用户的身份进行身份验证，即 Entra ID **客户端凭据（S2S）**流程，与 PlaidCloud 用于其他 Microsoft REST 连接的 OAuth2 客户端凭据机制相同。没有交互式登录。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`。
+
+2. 从菜单中选择 **Business Central**。
+
+3. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 易记的名称，例如 `BC Prod`。 |
+   | 客户端 ID | Entra 应用注册的应用程序（客户端）ID。 |
+   | 客户端密钥 | 应用注册的客户端密钥。 |
+   | 租户 ID | 您的 Azure AD 租户 ID。 |
+   | 环境 | Business Central 环境名称，例如 `Production`。 |
+   | 公司 | 要读取和过账所针对的 Business Central 公司 ID。 |
+
+4. 单击 `Create`。
+
+</Steps>
+
+## 对连接进行冒烟测试
+
+<Steps>
+
+1. 将 **Import Business Central Entity** 步骤添加到工作流。
+
+2. 将 **Business Central 连接**设置为您的连接，将**实体类型**设置为 `accounts`，将**目标表**设置为一个临时表。
+
+3. 运行该步骤（请参阅[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，即表示租户、凭据、环境和公司均正确。如果出错，错误会指出问题所在，例如客户端密钥错误、缺少 API 权限授予，或环境/公司错误。
+
+## 导入数据
+
+<Steps>
+
+1. 添加 **Import Business Central Entity** 步骤，并设置 **Business Central 连接**和**目标表**。
+
+2. 将**实体类型**设置为您想要的记录：`accounts`、`generalLedgerEntries`、`customers`、`vendors`、`items` 或 `journals`。
+
+3. 添加**筛选器**：`{field, operator, value}` 行以 AND 方式合并到请求的 `$filter` 中，并对照该实体自己的可查询字段允许列表进行检查。留空则提取整个实体。
+
+4. 运行该步骤并检查目标表。
+
+</Steps>
+
+<Aside type="note">
+**公司来自连接，而不是步骤。**Business Central 将每次读取都限定在一个公司内，连接会同时携带该公司和环境，因此导入步骤没有公司或环境字段。要从第二个公司提取同一个实体，请创建指向它的第二个 Business Central 连接。
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` 是 Business Central 的**只读、仅已过账**分类账：它绝不会显示仍处于未过账日记账批次中的行，因此提取试算平衡表或总账明细时应使用该实体，而不是直接查询日记账。
+</Aside>
+
+## 过账总账日记账行
+
+**Business Central Post** 步骤将行过账到**现有的**总账日记账批次，然后过账该批次。
+
+<Steps>
+
+1. 构建**标题表**，每个 `journal_id` 一行，包含您的行要过账到的 Business Central 日记账批次名称，以及 `document_number`、`posting_date` 和货币标签。
+
+2. 构建**行表**，每个 `journal_id` 有一行或多行，包含带符号的 `amount`（借方为正，贷方为负）、`account_id` 或 `account_number`、`account_type` 和 `description`。
+
+3. 添加 **Business Central Post** 步骤，设置 **Business Central 连接**、**环境**、**标题表**、**行表**以及**结果表**。
+
+4. 保持勾选 **Validate Only** 并运行该步骤，PlaidCloud 会构建并检查每个日记账，但不过账任何内容。
+
+5. 查看结果表（每个 `journal_id` 一行：`journal_id`、`external_id`、`internal_id`、`status`、`message`）。修复任何 `error` 行并重新验证。
+
+6. 取消勾选 **Validate Only** 并再次运行，以实际过账。除非希望批次在第一个失败的日记账处立即停止，否则请保持勾选 **Continue On Error**。
+
+</Steps>
+
+<Aside type="caution">
+**`journal_id` 中指定的日记账批次必须已经存在于 Business Central 中**：此步骤在批次内创建行，不会创建批次本身。请先在 Business Central 中设置日记账批次（名称、日记账模板），然后让 `journal_id` 指向它。
+</Aside>
+
+### 过账的工作方式
+
+Business Central 的 `Microsoft.NAV.post` 操作会过账**整个**日记账批次，而不仅仅是 PlaidCloud 刚创建的行，因此在调用它之前，PlaidCloud 会回读该批次，如果其中有任何行未标记本次请求的单据编号，就会拒绝过账（记录一个错误，不过账任何内容）。设置该保护的目的，正是为了确保较早的部分失败遗留的零散行，绝不会被之后针对同一批次的无关过账卷入总账。
+
+### 能力限制：实际过账前请阅读
+
+<Aside type="caution">
+- **仅一种写入单据类型。**仅支持总账日记账行过账。不支持 Business Central 的草稿单据流程（销售/采购发票从草稿变为已过账）：Microsoft 文档中没有明确该流程的确切过账操作，而 PlaidCloud 不会为涉及资金流动的写入去猜测未经验证的端点。
+- **仅过账到现有批次。**此步骤绝不会创建日记账批次，请先在 Business Central 中创建（见上文）。
+- **尚未进行实时验证。**该步骤是按照 Business Central 文档记载的 OData v2.0 合约构建的；请将第一个实时批次视为验证运行，并直接在 Business Central 中对账。
+- **同一批次的并发过账未完全串行化。**幂等保护的范围是单据编号，而不是日记账批次，因此对于同时过账到同一批次的两个不同单据编号，不能保证像使用相同单据编号的两次调用那样串行化。请避免向同一个日记账批次并发过账。
+</Aside>
+
+## 相关内容
+
+- [Business Central REST 连接器](/zh-cn/reference/connectors/rest/business-central/)：字段参考。
+- [Import Business Central Entity 步骤](/zh-cn/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines 步骤](/zh-cn/reference/workflow-steps/business-central/business-central-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：记录每次 Business Central 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

@@ -1,0 +1,145 @@
+---
+title: Automatiser un workflow avec une planification
+description: "Reprenez un workflow que vous avez déjà créé et laissez-le s'exécuter seul : planifiez-le avec le Planificateur d'événements, suivez son historique des exécutions et ses journaux, et gérez la première défaillance."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/schedule-a-workflow.mdx
+---
+
+*~25 minutes · une exécution planifiée, un historique des exécutions, une défaillance gérée*
+
+Vous avez déjà un workflow, par exemple le pipeline de nettoyage des ventes de [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/). Pour l'instant, il s'exécute quand vous cliquez sur **Exécuter**. Ce tutoriel confie cette tâche à PlaidCloud : le workflow s'exécute selon un calendrier, de lui-même, et vous apprenez à le surveiller, à prouver qu'il s'est exécuté et à le rétablir quand une exécution échoue.
+
+Trois éléments font d'un pipeline manuel un pipeline automatisé, et ce tutoriel les aborde tour à tour :
+
+- **Une planification** : une règle qui déclenche le workflow aux moments que vous choisissez.
+- **Un enregistrement fiable** : un historique des exécutions et des journaux qui vous disent ce qui s'est passé pendant que vous ne regardiez pas.
+- **Un plan en cas de défaillance** : car une tâche sans surveillance finit par rencontrer de mauvaises données, et elle ne doit pas échouer en silence.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="La boucle d'automatisation : une planification déclenche le workflow, l'exécution produit un historique des exécutions et un journal, et une exécution en échec est rétablie en la reprenant, ce qui reboucle sur l'exécution." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Planification</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Exécution</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Historique des exécutions</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ journal</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Rétablir</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">reprendre là où elle s'est arrêtée</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Une fois que l'exécution dépend d'une planification, l'historique et le journal vous disent si elle a fonctionné, et Reprendre vous permet de la corriger quand ce n'est pas le cas.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud contenant un workflow qui s'exécute déjà correctement lorsque vous le lancez à la main. Si vous n'en avez pas, créez-le d'abord avec [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/).
+- L'accès à **Analyser → Outils → Planificateur d'événements** dans cet espace de travail.
+
+> **Planifiez un workflow qui réussit déjà.** L'automatisation répète tout ce que fait le workflow, y compris ses erreurs, désormais sans surveillance. Exécutez-le une fois manuellement jusqu'à une fin propre avant de le placer dans une planification.
+
+## Étape 1 : vérifier qu'il s'exécute à la main
+
+Ouvrez votre workflow et exécutez-le une fois, manuellement, afin de disposer d'une référence de comparaison.
+
+1. Ouvrez votre projet et accédez à la hiérarchie **Workflows**.
+2. Cliquez sur l'icône **exécuter** du workflow, ou ouvrez le workflow et choisissez **Run All** dans le menu **Actions**. (Le bouton **Toggle Start/Stop** en haut de la table des workflows fait la même chose et arrête une exécution en cours.)
+3. Observez les icônes d'état des étapes au fil de l'exécution. Chaque étape indique où elle en est et depuis combien de temps elle s'exécute ; survolez une icône pour voir le message associé.
+
+Les états que vous verrez, et leur signification :
+
+| État | Signification |
+|---|---|
+| En attente | Dans la file, pas encore démarrée. |
+| En cours | En cours de traitement ; sa durée augmente. |
+| Terminée | Terminée avec succès. |
+| Avertissement | Terminée, mais a signalé quelque chose qui mérite d'être lu dans le journal. |
+| Erreur | L'étape a échoué ; consultez [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/). |
+| Ignorée | Passée : désactivée, ou ses conditions d'exécution n'étaient pas remplies. |
+| Poursuivie | A échoué mais est configurée pour continuer en cas d'erreur ; l'exécution s'est donc poursuivie. |
+
+Une exécution propre se termine avec toutes les étapes **Terminée**. C'est votre référence « verte ». Les détails complets des états figurent dans [Exécuter un workflow](/fr/guides/workflows/run-a-workflow/).
+
+## Étape 2 : créer la planification
+
+Confiez maintenant cette exécution au Planificateur d'événements.
+
+1. Ouvrez **Analyser**, sélectionnez **Outils** et cliquez sur **Planificateur d'événements**. L'**Events Table** liste tous les événements déjà configurés pour l'espace de travail.
+2. Cliquez sur **Ajouter un événement planifié**.
+3. Renseignez les champs obligatoires indiqués par le formulaire, en faisant pointer l'événement vers le workflow que vous venez d'exécuter (et son projet).
+4. Ouvrez l'onglet **Event Schedule** et choisissez un **Schedule type** :
+   - **Use Classic Schedule** : choisissez les mois, jours, heures et minutes précis d'exécution. Commencez par un horaire que vous verrez arriver bientôt, par exemple dans quelques minutes.
+   - **Use Workday Schedule** : choisissez un jour ouvré financier plutôt qu'une heure d'horloge. Les planifications par jour ouvré peuvent aussi respecter les calendriers de jours fériés, de sorte qu'une exécution tombe le bon jour ouvré.
+5. Cliquez sur **Créer**.
+
+L'Events Table liste maintenant votre événement, et sa colonne de description indique s'il est planifié par mois, par jour/heure/minute ou par jour ouvré.
+
+> **Les heures sont celles de Londres, sauf indication contraire.** Les nouveaux événements sont par défaut en **UTC +0**, interprété comme l'heure de Londres, heure d'été britannique comprise. Si « 9 h » doit signifier 9 h là où vous êtes, renseignez le champ **Fuseau horaire** de l'événement ; sinon, une exécution planifiée peut tomber avec plusieurs heures d'écart par rapport à ce que vous attendiez. La plupart des autres décalages suivent également l'heure locale d'un lieu ; consultez [Planificateur d'événements](/fr/administration/scheduled-events/event-scheduler/#fuseau-horaire).
+
+> **Plafonnez une planification de test pour qu'elle ne s'exécute pas indéfiniment.** La section **Limit Running** n'exécute un événement que sur une période donnée et un nombre de fois donné. Sur une planification que vous ne faites qu'essayer, c'est ce qui évite qu'une tâche se déclenche discrètement toutes les quelques minutes pendant des semaines.
+
+## Étape 3 : prévisualiser quand elle s'exécutera
+
+Avant de vous fier à la planification, regardez ce qu'elle fera réellement.
+
+1. Ouvrez l'**Upcoming Runs Calendar**. C'est un aperçu en lecture seule : il développe les mêmes planifications que celles qui pilotent l'exécution réelle, donc ce que vous voyez est ce qui s'exécutera, et le consulter ne déclenche jamais rien.
+2. Basculez entre les vues **Mois**, **Semaine** et **Agenda** ; utilisez **Précédent**, **Suivant** et **Aujourd'hui** pour vous déplacer dans le temps, et **Actualiser** pour récupérer les dernières données.
+3. Vérifiez que votre événement apparaît au moment attendu. Chaque exécution est dessinée sous forme de barre dont la taille correspond à la durée habituelle du workflow.
+
+> **Des barres côte à côte signalent un chevauchement.** Si les barres de deux exécutions se trouvent l'une à côté de l'autre dans la même fenêtre, ces exécutions entrent en collision : décalez leurs planifications si elles se disputent les mêmes données ou ressources. Les capteurs déclenchés par des événements n'apparaissent pas ici, car ils n'ont pas d'heure future fixe. Consultez [Calendrier des exécutions à venir](/fr/administration/scheduled-events/upcoming-runs-calendar/).
+
+Si vous préférez ne pas attendre l'horloge, sélectionnez l'événement dans l'Events Table et cliquez sur **Exécuter les événements sélectionnés** pour le déclencher immédiatement : c'est un bon moyen de prouver, tout de suite, que le chemin planifié fonctionne de bout en bout.
+
+## Étape 4 : suivre l'historique des exécutions et le journal
+
+Une exécution automatisée a lieu pendant que vous êtes ailleurs ; la trace qu'elle laisse est donc ce sur quoi vous vous appuyez réellement.
+
+- **L'historique des exécutions** est rattaché au workflow. Chaque exécution constitue sa propre entrée. Une exécution reprise est enregistrée comme une *nouvelle* exécution ne contenant que les étapes qu'elle a relancées, et l'originale conserve sa propre entrée : l'historique se lit ainsi comme une séquence fidèle de ce qui s'est passé, et non comme une ligne unique qui serait écrasée.
+- **Le journal du workflow** consigne les événements au fur et à mesure : étapes en cours d'exécution, avertissements émis. Ouvrez-le depuis la zone **Projet**, sous l'onglet **Journal** ; il remonte aussi dans le journal plus large du projet, ce qui vous permet de suivre plusieurs workflows à la fois. La visionneuse permet de trier et de filtrer, et vous pouvez ouvrir n'importe quelle entrée pour en voir le détail. Consultez [Afficher le journal du workflow](/fr/guides/workflows/viewing-workflow-log/).
+- **Le rapport du workflow** documente l'état actuel du workflow : ses étapes, ses fonctions et ses variables. Il est généré à la demande depuis l'icône **Rapport** de la hiérarchie **Workflows**, ce qui est pratique quand quelqu'un demande ce que fait réellement une tâche automatisée. Consultez [Afficher le rapport du workflow](/fr/guides/workflows/view-workflow-report/).
+
+Après une exécution planifiée ou à la demande, ouvrez le journal et vérifiez que l'exécution attendue y figure et s'est terminée comme prévu.
+
+## Étape 5 : gérer une défaillance
+
+Une tâche sans surveillance finira par rencontrer de mauvaises données. Décidez dès maintenant de ce qui doit se passer dans ce cas : PlaidCloud propose trois réponses, et la bonne dépend de l'étape.
+
+| Choix | Ce qui se passe | À utiliser quand |
+|---|---|---|
+| Arrêter le workflow | L'exécution s'interrompt ; un indicateur d'erreur s'affiche sur l'étape et sur le workflow. | Par défaut : la plupart des étapes ne doivent pas continuer après une vraie défaillance. |
+| Continuer en cas d'erreur | L'étape est marquée en erreur, mais l'exécution la considère comme terminée et se poursuit. | Une étape qui peut échouer sans conséquence en l'absence de données. |
+| Workflow de remédiation | L'exécution en échec s'arrête et un second workflow démarre à sa place. | Vous voulez qu'une défaillance prévienne quelqu'un ou tente une correction automatique. |
+
+Deux paramètres déterminent ce comportement, tous deux dans l'onglet **Général** du formulaire de l'étape (cliquez sur l'icône d'engrenage de l'étape dans la table des workflows, ou faites un clic droit dessus et choisissez **Modifier les détails de l'étape**) :
+
+- **Réessayer** : une étape en échec peut être relancée un nombre défini de fois, avec un délai entre les tentatives allant de quelques secondes à plusieurs heures. Cela suffit à rattraper la plupart des défaillances dues à l'indisponibilité momentanée d'un système distant. Consultez [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/).
+- **Action à effectuer en cas d'erreur** : choisissez **Continuer** et la défaillance de l'étape n'arrêtera pas le workflow. Les étapes configurées ainsi portent un indicateur spécial dans la table des workflows. Consultez [Continuer en cas d'erreur](/fr/guides/workflows/continue-on-error/).
+
+> **Continuer en cas d'erreur masque la défaillance à votre plan de remédiation.** Une étape configurée pour continuer n'arrête jamais le workflow, donc elle ne déclenche jamais non plus de workflow de remédiation : seule une défaillance qui interromprait autrement l'exécution le fait. Réservez l'option de continuation en cas d'erreur aux défaillances que vous acceptez réellement d'ignorer.
+
+Quand une exécution planifiée échoue, il est rare de devoir tout recommencer. **Reprendre** relance une exécution arrêtée ou en erreur là où elle s'était interrompue : elle relance les étapes qui ne se sont pas terminées avec succès et laisse les étapes terminées intactes. Reprendre est disponible chaque fois que la dernière exécution d'un workflow s'est terminée en pause, à l'arrêt ou en erreur.
+
+## Étape 6 : la mettre en pause quand c'est nécessaire
+
+Une automatisation que l'on ne peut pas désactiver est un risque. Pour mettre une planification hors ligne sans la supprimer :
+
+1. Ouvrez **Analyser → Outils → Planificateur d'événements** et cliquez sur l'icône **modifier** de l'événement.
+2. Décochez la case **Actif** et cliquez sur **Mettre à jour**.
+
+L'événement cesse de se déclencher selon sa planification jusqu'à ce que vous le réactiviez, par le même chemin de modification, avec **Actif** coché de nouveau. Pour le supprimer définitivement, utilisez plutôt l'icône **supprimer**. Un événement actif affiche l'icône **Actif** dans l'Events Table, ce qui permet de voir d'un coup d'œil ce qui est en service.
+
+**Vous êtes prêt.** Vous disposez maintenant d'un événement planifié, d'un historique des exécutions à surveiller et d'un moyen de gérer la première défaillance, et vous pouvez tout mettre en pause sans rien supprimer.
+
+## Pour aller plus loin
+
+- [Planificateur d'événements](/fr/administration/scheduled-events/event-scheduler/) : tous les champs d'un événement planifié, y compris la planification par jour ouvré et par calendrier de jours fériés.
+- [Workflows planifiés](/fr/administration/scheduled-events/) : fenêtres d'exécution, ordonnancement et déclencheurs conditionnels dans un espace de travail.
+- [Calendrier des exécutions à venir](/fr/administration/scheduled-events/upcoming-runs-calendar/) : repérez les fenêtres d'exécution en collision avant qu'elles ne se concurrencent.
+- [Exécuter un workflow](/fr/guides/workflows/run-a-workflow/) : pause, arrêt et reprise en détail, ainsi que tous les états d'étape.
+- [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/) et [Continuer en cas d'erreur](/fr/guides/workflows/continue-on-error/) : les paramètres de gestion des défaillances en détail.
+- [Guide des workflows](/fr/guides/workflows/) : conditions, boucles et variables pour une automatisation plus avancée.
+- [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/) : le tutoriel qui construit le workflow automatisé ici.

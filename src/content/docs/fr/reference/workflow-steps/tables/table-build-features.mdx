@@ -1,0 +1,41 @@
+---
+title: Étape Build Features
+description: Construisez à partir d'une table source des colonnes de variables dérivées arithmétiques, d'interaction, de partie de date, de discrétisation, de mise à l'échelle et d'encodage one-hot.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Description
+
+L'étape **Build Features** construit à partir d'une table source une table de colonnes de variables dérivées — combinaisons arithmétiques et d'interaction, extraction de parties de date, discrétisation, mise à l'échelle et encodage one-hot — en une seule passe, sans écrire à la main une expression par colonne. Elle s'exécute comme une transformation ordinaire sur l'entrepôt.
+
+## Configuration
+
+- **Source / Tables de sortie** — la table d'entrée et la table dans laquelle les colonnes dérivées sont écrites.
+- **Colonnes transmises directement** (`passthrough_columns`) — colonnes source reportées inchangées.
+- **Variables dérivées** (`features`) — une liste ordonnée de spécifications de variables, au moins une requise. Chaque spécification a un `type` et produit une ou plusieurs colonnes de sortie. Les noms des colonnes de sortie — colonnes transmises directement plus le `name` de chaque variable hors one-hot — doivent tous être distincts ; l'enregistrement d'un nom en double, ou d'une paire `(column, prefix)` one-hot en double, est rejeté.
+
+## Types de variables dérivées
+
+| Type | Champs | Produit |
+| --- | --- | --- |
+| **Expression** (`expression`) | `name`, `expression`, `dtype` (`text` par défaut) | Une colonne : une expression arbitraire portant sur les colonnes source. |
+| **Interaction** (`interaction`) | `name`, `columns` (exactement 2), `op` (`multiply` ou `add`, `multiply` par défaut), `dtype` (`numeric` par défaut) | Une colonne : la combinaison arithmétique par paire de deux colonnes numériques. |
+| **Partie de date** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow` ou `hour`) | Une colonne : le composant de date/heure extrait. |
+| **Intervalle** (`bin`) | `name`, `column`, `thresholds` (croissants, au moins 1), `labels` (exactement un de plus que `thresholds`) | Une colonne : l'étiquette de l'intervalle dans lequel tombe la valeur de `column`. Les seuils sont des valeurs fixes que vous fournissez — consultez [Limites et réserves](#limites-et-réserves). |
+| **Score Z** (`zscore`) | `name`, `column`, `dtype` (`numeric` par défaut) | Une colonne : la colonne standardisée à moyenne nulle et variance unitaire. |
+| **Min-max** (`minmax`) | `name`, `column`, `out_min` (0 par défaut), `out_max` (1 par défaut), `dtype` (`numeric` par défaut) | Une colonne : la colonne remise à l'échelle dans la plage `[out_min, out_max]`. |
+| **One-hot** (`onehot`) | `column`, `prefix` | Une colonne par valeur distincte de `column`, chacune nommée `<prefix><value>`. |
+| **Statistique de colonne** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | Une colonne : la statistique de la colonne entière, sous le filtre de l'étape, sur chaque ligne. `moments` vaut `sql` (par défaut, l'agrégat de l'entrepôt) ou `welford`, qui calcule la moyenne, la somme, la variance et l'écart type sous forme de moments glissants en une passe sur la colonne lue dans l'ordre de `order_column`, comme le font `COL_MEAN` de la Math Formula de KNIME et ses équivalents. |
+
+## Limites et réserves
+
+- **La discrétisation exige des seuils fixes dès le départ.** `bin` répartit une colonne selon des seuils et des étiquettes que vous fournissez — il n'existe pas de discrétisation pilotée par les données (intervalles de largeur ou de fréquence égales calculés à partir des données à l'exécution). Calculez vous-même les seuils (par exemple à partir d'une étape d'agrégation précédente) avant de configurer une variable `bin`.
+- **Une seule table à la fois.** Build Features lit et écrit une seule table source ; elle n'agrège pas les valeurs de tables liées comme le fait un outil de synthèse de variables entre tables. Modélisez toute relation entre tables sous forme de jointure en amont de l'étape.
+- **Pas de réduction de dimensionnalité ni d'encodage sensible à la cible dans cette étape.** Build Features n'a ni réduction de composantes de type ACP ni encodage par la cible (une colonne catégorielle réexprimée comme une statistique de l'étiquette, telle que sa moyenne). Utilisez `onehot` pour les variables catégorielles. Pour la réduction de composantes, utilisez l'algorithme `pca` de [ML : entraîner un modèle](/fr/reference/workflow-steps/machine-learning/ml-train/), et son propre traitement des variables si un pipeline d'entraînement requiert un autre encodage.
+
+## Voir aussi
+
+- [ML : entraîner un modèle](/fr/reference/workflow-steps/machine-learning/ml-train/) — entraîne un modèle sur une table, y compris une table construite par cette étape.
+- [Matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/) — comment les primitives de l'outil Build Features d'Alteryx correspondent à ces types de variables, et lesquelles (agrégation entre tables, ACP, encodage par la cible, discrétisation automatique) n'ont pas d'équivalent ici.

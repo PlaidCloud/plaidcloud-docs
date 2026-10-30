@@ -1,0 +1,148 @@
+---
+title: API de routage par temps de trajet
+description: "Appelez les points de terminaison REST de routage par temps de trajet de PlaidCloud : polygones isochrones et classement des plus proches par temps de trajet, fournis par le moteur de routage auto-hébergé de PlaidCloud. Préversion sur inscription, au mieux, sans SLA."
+sidebar:
+  label: API de routage par temps de trajet
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud expose le routage par temps de trajet sous la forme de deux points de terminaison REST sous `/rest/v1/analyze/route` : un point de terminaison **isochrone** qui trace un polygone de temps de trajet (ou de distance de trajet) autour d'une origine, et un point de terminaison **find-nearest** qui classe des destinations candidates selon le temps de trajet réel plutôt que la distance à vol d'oiseau. Les deux s'exécutent sur le moteur de routage auto-hébergé de PlaidCloud, construit à partir des données routières d'OpenStreetMap (ODbL), et enveloppent chaque résultat dans une petite enveloppe `plaidcloud` portant l'attribution.
+
+<Aside type="caution" title="Préversion sur inscription : à lire avant de développer dessus">
+Le routage par temps de trajet est **désactivé par défaut** et n'atteint que les tenants qui s'y sont inscrits. Il s'exécute sur un petit pool de routage partagé et est proposé **au mieux, sans SLA** : il n'y a aucune capacité garantie de trafic en direct, et une requête peut être refusée avec un `503` lorsque le pool est occupé, au lieu d'être mise en file d'attente ou retentée pour vous. Si vous n'avez pas déjà activé cette fonction, contactez PlaidCloud pour vous renseigner sur la préversion avant de créer une dépendance envers elle.
+</Aside>
+
+## Authentification et droits
+
+Chaque appel de routage nécessite :
+
+- Une session PlaidCloud normale ou un jeton porteur avec le rôle **`analyze.table.read`**, le même rôle qui contrôle les autres accès en lecture aux données d'un projet. Il n'existe pas de rôle propre au routage.
+- Le routage par temps de trajet inclus dans votre offre, c'est-à-dire le droit d'utilisation du temps de trajet activé pour votre tenant. Un tenant dont l'offre ne l'inclut pas reçoit un `403` avec `detail: "drive_time_disabled"` à chaque appel : il n'existe aucun mode partiel ou en lecture seule.
+
+## Points de terminaison
+
+### `isochrone` : polygone de temps de trajet autour d'une origine
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Champ | Type | Remarques |
+|---|---|---|
+| `origin` | `{ lat, lon }`, obligatoire | Une seule coordonnée. Isochrone accepte une origine par appel |
+| `costing` | chaîne | `auto` (par défaut), `truck`, `bike` ou `pedestrian` |
+| `contours_minutes` | tableau d'entiers, obligatoire | Une entrée par anneau de contour souhaité, de 1 à 120 minutes chacune. Jusqu'à 5 contours par appel |
+| `costing_options.truck.height` | flottant, mètres | Facultatif, > 0 et ≤ 10. S'applique uniquement avec le coût `truck` |
+| `costing_options.truck.weight` | flottant, kilogrammes | Facultatif, > 0 et ≤ 100000. S'applique uniquement avec le coût `truck` |
+| `costing_options.truck.length` | flottant, mètres | Facultatif, > 0 et ≤ 50. S'applique uniquement avec le coût `truck` |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Réponse : le GeoJSON isochrone du moteur de routage lui-même, non modifié, plus l'enveloppe `plaidcloud` :
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest` : destinations les plus proches par temps de trajet
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Champ | Type | Remarques |
+|---|---|---|
+| `origins` | tableau de `{ lat, lon }`, obligatoire | 1 à 5 origines |
+| `destinations` | tableau de `{ lat, lon }`, obligatoire | 1 à 500 candidates. Voir le [préfiltrage des destinations](#préfiltrage-des-destinations) ci-dessous |
+| `costing` | chaîne | `auto` (par défaut), `truck`, `bike` ou `pedestrian` |
+| `top_n` | entier | Nombre de destinations les plus proches à renvoyer par origine. 1 à 50, 5 par défaut |
+| `costing_options.truck.{height,weight,length}` | identique à isochrone | S'applique uniquement avec le coût `truck` |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` renvoie à la position de cette destination dans le tableau `destinations` que vous avez soumis, et non à sa position dans un classement interne : conservez-le pour rattacher un résultat à vos propres données.
+
+#### Préfiltrage des destinations
+
+Vous pouvez soumettre jusqu'à 500 destinations, mais seules les **50 plus proches à vol d'oiseau** de l'une de vos origines sont réellement envoyées dans le calcul de routage par temps de trajet. Si vous en soumettez plus de 50, PlaidCloud restreint le champ avec un préfiltre à vol d'oiseau (grand cercle) avant de classer les survivantes selon le temps de trajet réel ; une destination proche sur la carte mais située au-delà d'un seuil à vol d'oiseau peut donc être exclue avant même que le temps de trajet soit calculé. Pour les ensembles de destinations déjà inférieurs à 50, chaque candidate est routée et cela n'a aucun effet. `top_n` est plafonné à 50 pour la même raison : il ne peut pas renvoyer plus de candidates que l'étape de routage n'en considère.
+
+### Modes de coût
+
+`auto`, `truck`, `bike` et `pedestrian` sont pris en charge. Avec le coût `truck`, vous pouvez aussi contraindre l'itinéraire par les dimensions du véhicule (`costing_options.truck.height`, `.weight`, `.length`), afin qu'un itinéraire évite un pont bas ou une route à poids limité. **Le routage de matières dangereuses n'est pas pris en charge.** Il n'existe aucun paramètre de matières dangereuses sur l'un ou l'autre des points de terminaison, et aucun n'est disponible, même indirectement, via le coût `truck` : cette API ne contourne pas les restrictions relatives aux matières dangereuses ; ne vous y fiez donc pas pour le fret réglementé en matières dangereuses.
+
+## Erreurs
+
+| Statut | Signification |
+|---|---|
+| `403` | Rôle `analyze.table.read` manquant, ou votre offre n'inclut pas le droit d'utilisation du temps de trajet |
+| `422` | Un champ de la requête a échoué à la validation, par exemple plus de 5 contours, un contour hors de 1 à 120 minutes, plus de 5 origines ou une dimension de camion hors plage |
+| `503 route_unavailable` | Le moteur de routage n'a pas pu être joint, a dépassé le délai ou a renvoyé une erreur, **ou** l'allocation de requêtes simultanées de votre tenant était déjà utilisée (voir [Limites](#limites)) |
+
+Un `503` ici n'est jamais un `5xx` brut et jamais une attente illimitée : chaque appel au moteur de routage s'exécute sous un délai d'expiration borné, de sorte qu'un service en amont lent ou bloqué se traduit rapidement par un `503` au lieu de laisser votre requête ouverte.
+
+## Limites
+
+- **La simultanéité par tenant est plafonnée à 2 requêtes simultanées.** Cela reflète le pool de routage partagé derrière la préversion, et non un quota par offre : une troisième requête simultanée du même tenant reçoit `503 route_unavailable` jusqu'à ce que l'une des deux premières se termine. Il n'y a pas de mise en file d'attente ; réessayez après un court délai d'attente.
+- **Aucune mise en cache des réponses.** Chaque appel est traité en direct sur l'index de routage actuel.
+- **Les coordonnées ne sont jamais journalisées.** Les journaux d'échec enregistrent le chemin de la requête et le type d'erreur, pas l'origine, la destination ni aucune autre donnée de localisation que vous avez soumise.
+- Les données de routage sont construites à partir des données routières d'OpenStreetMap (ODbL) : les mêmes réserves de couverture et d'actualité que celles qui s'appliquent à l'[API de géocodage de PlaidCloud](/fr/guides/data/geocoding-api/#couverture-et-déterminisme-à-lire-en-premier) s'appliquent ici : solides dans les régions bien cartographiées, plus variables ailleurs, et éditées en continu par la communauté plutôt que issues d'un jeu de données commercial versionné.
+- Si vous affichez des résultats de routage ou des zones de temps de trajet à un utilisateur final, affichez la chaîne `plaidcloud.attribution` (ou une mention OSM équivalente) à côté ; l'obligation ODbL qui s'applique aux résultats de géocodage s'applique aussi aux résultats de routage.
+
+## Voir aussi
+
+- [Migrer depuis le géocodage Google ou Mapbox](/fr/guides/data/geocoding-api/) : les points de terminaison REST de géocodage de PlaidCloud et les mêmes réserves de couverture OpenStreetMap
+- [Étape Requête REST](/fr/guides/workflows/rest-request-step/) : appelez ces points de terminaison depuis un workflow

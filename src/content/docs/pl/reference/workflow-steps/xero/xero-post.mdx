@@ -1,0 +1,76 @@
+---
+title: "Xero: zaksięguj dokument"
+description: Księguje w Xero ręczne zapisy dziennika, faktury, rachunki, płatności i noty kredytowe z tabel nagłówków i wierszy, z trybem testowym, który sprawdza każdy dokument, zanim cokolwiek zostanie zaksięgowane.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Księguje dokumenty w Xero za pośrednictwem [połączenia Xero](/pl/guides/connections/xero/), kierując je przez wspólny potok zapisu ERP w PlaidCloud. Krok przyjmuje tabelę nagłówków (jeden wiersz na dokument) oraz tabelę wierszy (jeden lub więcej wierszy na dokument) i księguje każdy dokument jako **ManualJournal**, **Invoice**, **Bill**, **Payment** lub **CreditNote**. Partia może mieszać typy dokumentów — PlaidCloud dzieli ją według typu dokumentu przed jakimkolwiek wywołaniem sieciowym. **Test Only Mode** buduje i sprawdza każdy dokument bez rezerwacji w księdze i bez księgowania; opcjonalna tabela wyników rejestruje wynik każdego dokumentu.
+
+<Aside type="caution">
+Każdą partię uruchom najpierw w trybie **Test Only Mode**, przejrzyj tabelę wyników i uzgodnij kilka zapisów bezpośrednio w Xero, zanim zaczniesz polegać na tym kroku przy księgowaniu dokumentów na żywo bez nadzoru.
+</Aside>
+
+## Konfiguracja
+
+### Połączenie Xero
+
+- **Połączenie Xero** — połączenie Xero, przez które odbywa się księgowanie. Niesie ono organizację, do której księgowany jest każdy dokument.
+- **Środowisko** — które ze środowisk PlaidCloud połączenia ma być użyte do księgowania; to ten sam selektor, który ma każdy krok oparty na połączeniu. Nie ma to związku z firmą demonstracyjną (Demo Company) Xero, która jest właściwością organizacji wskazywanej przez połączenie.
+- **Test Only Mode** — domyślnie zaznaczone. Sprawdza każdy dokument, ale go nie księguje: bez rezerwacji w księdze i bez zapisu. Konfiguracja kroku, w której to pole w ogóle pominięto — na przykład utworzona przez REST API, MCP lub import pakietu przepływu pracy — również domyślnie działa w trybie Test Only Mode, a nie w księgowaniu na żywo.
+- **Continue posting remaining documents if one document fails** — domyślnie zaznaczone. Po odznaczeniu partia zatrzymuje się na pierwszym niepowodzeniu.
+- **Tabela wyników** — jeden wiersz na dokument: `ref`, `doc_type`, `natural_key`, `xero_id`, `status` (`posted`/`validated`/`error`) i `message`.
+
+### Wybór tabeli
+
+- **Tabela nagłówka** — jeden wiersz na dokument.
+- **Tabela wierszy** — jeden lub więcej wierszy na dokument, powiązanych z nagłówkiem przez `ref`.
+
+### Pola nagłówka i wiersza
+
+Dwie karty mapowania przypisują nazwy Twoich kolumn do pól, których potrzebuje Xero. **Pola nagłówka** obejmują:
+
+| Pole | Uwagi |
+|---|---|
+| `ref` | Wymagane. Twój klucz biznesowy — łączy wiersze nagłówka z ich wierszami i jest kluczem rezerwowanym w księdze idempotencji. |
+| `doc_type` | Wymagane. `ManualJournal`, `Invoice`, `Bill`, `Payment` lub `CreditNote`. |
+| `posting_date` | Wymagane. |
+| `currency_id`, `party_id`, `memo`, `due_date` | Opcjonalne. `party_id` to kontakt w Xero. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | Tylko dla płatności, opcjonalne. |
+| `credit_note_type` | Tylko dla noty kredytowej, opcjonalne. `ACCRECCREDIT` (sprzedaż, domyślnie) lub `ACCPAYCREDIT` (zakup). |
+
+**Pola wiersza** obejmują `ref` (wymagane, zgodne z wierszem nagłówka) oraz pola, których wymaga dany typ dokumentu:
+
+| Typ dokumentu | Pola wiersza |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit` oraz opcjonalnie `class_id` / `department_id` do śledzenia |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id` (faktura, której dotyczy wiersz), `amount` |
+
+`tax_type` i `memo` są opcjonalne w każdym wierszu.
+
+## Jak działa księgowanie
+
+Każdy dokument jest rezerwowany w księdze idempotencji PlaidCloud przed wysłaniem, więc ponowne uruchomienie nigdy nie zaksięguje dokumentu, który osiągnął już stan `posted`. Klucz księgi ma prefiks typu dokumentu, więc faktura i rachunek o tym samym `ref` nigdy nie kolidują, mimo że Xero księguje oba przez ten sam punkt końcowy.
+
+Gdy wynik jest niejednoznaczny — przekroczenie czasu, utracona odpowiedź — PlaidCloud odpytuje Xero o dokument według numeru, który nadał: numeru faktury dla faktury lub rachunku, numeru noty kredytowej dla noty kredytowej. Dopasowanie liczy się jako dowód tylko wtedy, gdy dokument ma końcowy status zaksięgowania, ponieważ te numery nie są w Xero gwarantowane jako unikatowe — dopasowanie szkicu, unieważnionego dokumentu lub dokumentu z zduplikowanym numerem jest traktowane jako nierozstrzygnięte i poddawane kwarantannie, zamiast być zapisywane jako wynik tego zapisu.
+
+## Ograniczenia możliwości
+
+| Ograniczenie | Co to oznacza |
+|---|---|
+| Ręcznych zapisów dziennika i płatności nie można wyszukać | Opis ręcznego zapisu dziennika i odwołanie do płatności nie są przeszukiwalne w Xero, więc nie ma pola, które pozwoliłoby powiązać wątpliwy zapis z żądaniem. Są one poddawane kwarantannie do ręcznego rozstrzygnięcia zamiast zgadywania. |
+| Storno obejmuje ręczne zapisy dziennika i faktury | Ręczny zapis dziennika jest odwracany jako zapis z zamienionymi stronami Wn/Ma; faktura jest odwracana jako lustrzana nota kredytowa. Rachunki, płatności i noty kredytowe nie mają udokumentowanego ładunku cofnięcia, więc storno jest odrzucane, a nigdy markowane. |
+| Limity szybkości dotyczą organizacji | Xero dopuszcza 60 wywołań na minutę i 5000 dziennie na organizację, z 5 jednoczesnymi wywołaniami. PlaidCloud zarządza limitami na minutę i współbieżnością oraz wycofuje się przy odpowiedzi o ograniczeniu; bardzo duża partia trwa proporcjonalnie dłużej. |
+
+## Powiązane
+
+- [Połącz z Xero](/pl/guides/connections/xero/) — pełny przewodnik obejmujący konfigurację, podgląd i księgowanie
+- [Konektor REST Xero](/pl/reference/connectors/rest/xero/)
+- [Kroki Xero](/pl/reference/workflow-steps/xero/)
+- [Przeglądaj historię księgowania ERP](/pl/guides/connections/erp-post-history/)

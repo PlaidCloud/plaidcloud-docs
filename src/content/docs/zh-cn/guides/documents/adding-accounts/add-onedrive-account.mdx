@@ -1,0 +1,129 @@
+---
+title: 添加 OneDrive / SharePoint 账户
+description: 通过最小权限的 Sites.Selected 访问或租户范围访问，将 Microsoft OneDrive for Business 或 SharePoint 连接到 PlaidCloud 文档。
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+将 Microsoft **OneDrive for Business** 或 **SharePoint** 位置连接到 PlaidCloud 文档。您需要注册一个 Entra（Azure AD）应用程序，选择它可以访问租户的范围，之后 PlaidCloud 即可使用它读取和写入文件。
+
+## 选择访问模型
+
+确定应用程序可以访问 Microsoft 365 租户的范围。这是整个设置中最重要的选择。
+
+| 模型 | Graph 应用程序权限 | 应用可访问的内容 | 适用场景 |
+|---|---|---|---|
+| **选定站点**（推荐） | `Sites.Selected` | 仅限您明确授权的特定站点 | 任何站点包含敏感数据，例如薪资、人力资源、财务、PHI |
+| **所有站点** | `Sites.Read.All`（读取）或 `Sites.ReadWrite.All`（读取和写入） | 租户中的**每个**站点 | 没有站点涉及敏感数据，且希望设置最简单 |
+
+**大多数组织应选择“选定站点”。** 只要有一个站点包含敏感信息，租户范围的访问就会使其暴露。使用 `Sites.Selected` 时，管理员为每个指定站点授权之前，应用程序无法访问任何内容，因此从未授权的站点始终完全不可访问。
+
+<Aside type="caution">
+请**勿**授予 `Directory.*`、`Files.*` 或 `User.Read.All`。文档连接器从不需要这些权限，其中 `Directory.ReadWrite.All` 尤其会允许对整个身份目录进行读写。只需要一个 `Sites.Selected`（或一个 `Sites.Read.All` / `Sites.ReadWrite.All`）即可。
+</Aside>
+
+## 在 Azure 中注册应用程序
+
+1. 登录 [Azure 门户](https://portal.azure.com)，转到 **Microsoft Entra ID** → **App registrations** → **+ New registration**。
+2. 输入名称（例如 `PlaidCloud`）。
+3. 在 **Supported account types** 下，选择 **Accounts in this organizational directory only**（单租户，最常见）。
+4. 将 **Redirect URI** 留空，然后单击 **Register**。
+5. 在概览页面上，复制 **Application (client) ID**（即客户端 ID）和 **Directory (tenant) ID**（即租户 ID）。
+6. 转到 **Certificates & secrets** → **+ New client secret**，设置说明和有效期，单击 **Add**，然后立即复制机密的**值**，该值不会再次显示。
+
+## 授予 API 权限
+
+根据所选的访问模型，仅添加**一个** Microsoft Graph **应用程序**权限：
+
+- **选定站点：** `Sites.Selected`
+- **所有站点：** `Sites.Read.All`（只读）或 `Sites.ReadWrite.All`（读取和写入）
+
+操作步骤：**API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → 添加上述权限之一 → **Grant admin consent**。
+
+<Aside type="note">
+授予管理员同意需要**全局管理员**或**特权角色管理员**，仅有 SharePoint 管理员无法同意应用程序权限。
+</Aside>
+
+如果选择了**所有站点**，则设置已完成，请跳到[在 PlaidCloud 中添加账户](#在-plaidcloud-中添加账户)。如果选择了**选定站点**，接下来需要为每个站点授权该应用。
+
+## 授予应用对每个站点的访问权限（选定站点模型）
+
+`Sites.Selected` 本身不授予应用程序任何访问权限，SharePoint 管理员或全局管理员必须针对您希望应用访问的每个站点单独授权。管理中心中没有用于此操作的屏幕，因此需要在 [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer) 中调用两次 Microsoft Graph。由于站点是逐个授权的，敏感站点自然永远不会被授权。
+
+**一次性设置。** 以 SharePoint 管理员或全局管理员身份登录 Graph Explorer，打开 **Modify permissions** 选项卡，单击 `Sites.FullControl.All` 上的 **Consent**（此范围允许您设置站点授权）。如果之后的查询返回 `accessDenied`，说明缺少此同意，请在同意后注销并重新登录以刷新令牌。
+
+### 步骤 1：查找站点 ID
+
+列出租户中的站点（方法为 **GET**）：
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+或者通过 URL 直接解析单个站点：
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+从响应中复制站点的 `id`，其格式为 `contoso.sharepoint.com,<guid>,<guid>`。
+
+### 步骤 2：授权应用
+
+将方法设置为 **POST**，目标为该站点的 `permissions` 集合（粘贴步骤 1 中的 `id`）：
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+在 **Request body** 选项卡上粘贴以下内容，将 `roles` 设置为 `["read"]` 或 `["write"]`，并使用应用的 **Application (client) ID**：
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+运行查询。成功时会返回包含 `id` 和您所设 `roles` 的权限对象。**对每个希望 PlaidCloud 访问的站点重复步骤 2。** 要查看站点已授予的权限：
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` 按**站点**授权，而不是按文件夹或库授权，授权某个站点会暴露其中的所有内容。请将敏感内容放在专用站点中，避免与您打算共享的内容一并被授权。
+</Aside>
+
+## 在 PlaidCloud 中添加账户
+
+1. 登录 PlaidCloud，选择账户所在的工作区。
+2. 转到 `Document` → `Manage Accounts` → **+ New Account**。
+3. 选择 **OneDrive** 作为**服务**。
+4. 输入名称和说明，并选择**安全模型**（不确定时保留 `Private`）。
+5. 在**身份验证凭据**下，粘贴应用注册中的**客户端 ID**、**客户端密钥**和 **OneDrive 租户 ID**。
+6. 在 **SharePoint 站点 URL** 中，粘贴已授权给该应用的站点的 URL（例如 `https://contoso.sharepoint.com/sites/TeamName`）。随后**驱动器/站点**列表会显示该站点的文档库，选择其中一个作为账户的根。这会自动填写**起始路径**。
+7. 选择**保存**。
+
+<Aside type="note">
+必须指定驱动器或站点，否则无法保存账户。没有它，账户只会列出文件夹而不显示文件。
+</Aside>
+
+## 使用 AI 助手创建账户
+
+完成上述 Azure 步骤后，通过 PlaidCloud MCP 连接器连接的 AI 助手可以使用 `document_account_upsert` 工具为您创建或更新账户。请提供应用注册中的以下值：
+
+| 账户字段 | 值 |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | 应用程序（客户端）ID |
+| `private_key` | 客户端密钥 |
+| `tenant_id` | 目录（租户）ID |
+| `start_path` | 驱动器 ID，后面可选地跟 `/folder` |
+
+凭据为只写：`document_account_describe` 会隐藏它们。该工具仅在您自己已登录的 MCP 会话中可用，工作流步骤和应用内代理无法使用。

@@ -1,0 +1,41 @@
+---
+title: Build Features (Schritt)
+description: Erzeugen Sie aus einer Quelltabelle Merkmalsspalten für Arithmetik, Interaktion, Datumsteile, Klassierung, Skalierung und One-Hot-Kodierung.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Beschreibung
+
+Der Schritt **Build Features** erzeugt in einem Durchgang eine Tabelle abgeleiteter Merkmalsspalten aus einer Quelltabelle — arithmetische und Interaktionskombinationen, Extraktion von Datumsteilen, Klassierung, Skalierung und One-Hot-Kodierung —, ohne dass Sie für jede Spalte von Hand einen Ausdruck schreiben müssen. Er läuft als gewöhnliche Transformation im Data Warehouse.
+
+## Konfiguration
+
+- **Quelle / Ausgabetabellen** — die Eingabetabelle und die Tabelle, in die die abgeleiteten Spalten geschrieben werden.
+- **Durchgereichte Spalten** (`passthrough_columns`) — Quellspalten, die unverändert übernommen werden.
+- **Merkmale** (`features`) — eine geordnete Liste von Merkmalsspezifikationen, mindestens eine ist erforderlich. Jede Spezifikation hat einen `type` und erzeugt eine oder mehrere Ausgabespalten. Die Namen der Ausgabespalten — durchgereichte Spalten plus der `name` jedes Nicht-One-Hot-Merkmals — müssen alle eindeutig sein; das Speichern eines doppelten Namens oder eines doppelten One-Hot-Paars `(column, prefix)` wird abgelehnt.
+
+## Merkmalstypen
+
+| Typ | Felder | Erzeugt |
+| --- | --- | --- |
+| **Ausdruck** (`expression`) | `name`, `expression`, `dtype` (Standard `text`) | Eine Spalte: ein beliebiger Ausdruck über Quellspalten. |
+| **Interaktion** (`interaction`) | `name`, `columns` (genau 2), `op` (`multiply` oder `add`, Standard `multiply`), `dtype` (Standard `numeric`) | Eine Spalte: die paarweise arithmetische Kombination zweier numerischer Spalten. |
+| **Datumsteil** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow` oder `hour`) | Eine Spalte: die extrahierte Datums- bzw. Zeitkomponente. |
+| **Klasse** (`bin`) | `name`, `column`, `thresholds` (aufsteigend, mindestens 1), `labels` (genau eines mehr als `thresholds`) | Eine Spalte: die Bezeichnung der Klasse, in die der Wert von `column` fällt. Die Schwellenwerte sind feste Werte, die Sie angeben — siehe [Grenzen und Einschränkungen](#grenzen-und-einschränkungen). |
+| **Z-Score** (`zscore`) | `name`, `column`, `dtype` (Standard `numeric`) | Eine Spalte: die Spalte standardisiert auf Mittelwert null und Einheitsvarianz. |
+| **Min-Max** (`minmax`) | `name`, `column`, `out_min` (Standard 0), `out_max` (Standard 1), `dtype` (Standard `numeric`) | Eine Spalte: die Spalte, neu skaliert auf den Bereich `[out_min, out_max]`. |
+| **One-Hot** (`onehot`) | `column`, `prefix` | Eine Spalte pro eindeutigem Wert von `column`, jeweils benannt `<prefix><value>`. |
+| **Spaltenstatistik** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | Eine Spalte: die Statistik der gesamten Spalte unter dem Filter des Schritts, in jeder Zeile. `moments` ist `sql` (Standard, die Aggregation des Data Warehouse) oder `welford`; dieser Wert berechnet Mittelwert, Summe, Varianz und Standardabweichung als laufende Momente in einem Durchlauf über die in der Reihenfolge von `order_column` gelesene Spalte, so wie `COL_MEAN` und seine Geschwister in KNIMEs Math Formula. |
+
+## Grenzen und Einschränkungen
+
+- **Die Klassierung braucht vorab feste Schwellenwerte.** `bin` ordnet eine Spalte anhand von Schwellenwerten und Bezeichnungen zu, die Sie angeben — es gibt keine datengetriebene Klassierung (Klassen gleicher Breite oder gleicher Häufigkeit, die zur Laufzeit aus den Daten berechnet werden). Berechnen Sie die Schwellenwerte selbst (zum Beispiel aus einem vorherigen Aggregationsschritt), bevor Sie ein `bin`-Merkmal konfigurieren.
+- **Immer nur ein Frame.** Build Features liest und schreibt eine einzelne Quelltabelle; es aggregiert keine Werte über verwandte Tabellen hinweg, wie es ein Tool für tabellenübergreifende Merkmalssynthese tut. Bilden Sie jede tabellenübergreifende Beziehung stattdessen als Join vor dem Schritt ab.
+- **Keine Dimensionsreduktion und keine zielabhängige Kodierung in diesem Schritt.** Build Features kennt keine PCA-artige Komponentenreduktion und keine Zielkodierung (eine kategoriale Spalte, die als Statistik des Labels ausgedrückt wird, etwa ihr Mittelwert). Verwenden Sie `onehot` für kategoriale Merkmale. Für die Komponentenreduktion verwenden Sie den Algorithmus `pca` von [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) und nutzen dessen eigene Merkmalsverarbeitung, wenn eine Trainingspipeline eine andere Kodierung braucht.
+
+## Weiterführende Informationen
+
+- [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) — trainiert ein Modell auf einer Tabelle, auch auf einer, die mit diesem Schritt erstellt wurde.
+- [Alteryx-Konvertierungsmatrix](/de/reference/alteryx-conversion-matrix/) — wie die Primitive des Alteryx-Tools Build Features auf diese Merkmalstypen abgebildet werden und welche seiner Primitive (tabellenübergreifende Aggregation, PCA, Zielkodierung, automatische Klassierung) hier kein Äquivalent haben.

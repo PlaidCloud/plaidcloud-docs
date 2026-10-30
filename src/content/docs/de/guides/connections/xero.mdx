@@ -1,0 +1,132 @@
+---
+title: Mit Xero verbinden
+description: Verbinden Sie PlaidCloud per OAuth-Freigabe mit einem Klick mit Xero, rufen Sie Entitäten der Accounting API mit dem vorgefertigten Entitätsimport-Schritt ab und buchen Sie anschließend manuelle Journale, Rechnungen, Abrechnungen, Zahlungen und Gutschriften.
+sidebar:
+  order: 16
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/xero.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit der Accounting API von Xero, um Kontenplan, Kontakte, Rechnungen, Gutschriften, Zahlungen, manuelle Journale und mehr abzurufen, ohne eine Abfrage von Hand zu schreiben, und um Belege zurückzubuchen. Diese Anleitung behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen eine Demo-Organisation aus und arbeiten Sie bei jedem Buchungsstapel zuerst den unten beschriebenen **Test Only Mode** durch, bevor Sie live buchen.
+</Aside>
+
+## Voraussetzungen
+
+In Xero benötigen Sie:
+
+- Ein Xero-Login mit Zugriff auf die Organisation, aus der Sie lesen und in die Sie buchen möchten.
+- Die Berechtigung, eine verbundene App für diese Organisation zu autorisieren – Xero fordert Sie bei der Einrichtung auf, die Freigabe zu bestätigen.
+
+Das ist die gesamte Liste. PlaidCloud registriert die OAuth-App, sodass Sie weder ein Entwicklerkonto noch eine Client-ID oder ein Client-Secret beschaffen müssen.
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **REST – Xero**.
+
+3. Geben Sie der Verbindung einen Namen, zum Beispiel `Xero Prod`.
+
+4. Klicken Sie auf **Mit Xero verbinden**, melden Sie sich bei Xero an und genehmigen Sie den Zugriff auf die Organisationen, die PlaidCloud erreichen soll.
+
+5. **Verbindungsstatus** meldet nun, wie viele Organisationen die Freigabe umfasst. Wählen Sie unter **Organisation** diejenige aus, auf die diese Verbindung zielt.
+
+6. Klicken Sie auf `Create`.
+
+</Steps>
+
+<Aside type="note">
+PlaidCloud aktualisiert die Xero-Tokens für Sie und speichert jedes rotierte Refresh-Token, sodass eine wochenlang ungenutzte Verbindung weiter funktioniert. Eine Freigabe kann mehrere Organisationen umfassen, eine Verbindung zielt aber immer auf genau eine – erstellen Sie eine zweite Xero-Verbindung, um eine zweite Organisation zu erreichen. Die Demo Company von Xero ist eine Organisation wie jede andere, eine Sandbox-Verbindung ist also eine, deren **Organisation** darauf verweist.
+</Aside>
+
+## Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen Schritt **Xero: Entität importieren** hinzu.
+
+2. Setzen Sie **Xero-Verbindung** auf Ihre Verbindung, **Entitätstyp** auf `Chart of Accounts` und **Zieltabelle** auf eine Arbeitstabelle.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass Freigabe und Organisationsauswahl korrekt sind. Ein Fehler benennt das Problem – eine abgelaufene Freigabe oder eine Organisation, auf die das Login keinen Zugriff mehr hat.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Xero: Entität importieren** hinzu und legen Sie **Xero-Verbindung** und **Zieltabelle** fest.
+
+2. Setzen Sie **Entitätstyp** auf den gewünschten Datensatz: Kontenplan, Kontakte, Rechnungen, Gutschriften, Zahlungen, manuelle Journale, Banktransaktionen, Artikel, Tracking-Kategorien, Steuersätze oder Währungen.
+
+3. Grenzen Sie den Abruf mit den optionalen Filtern ein – **Status** (ein einzelner Xero-Status wie `AUTHORISED` oder `PAID`), **Datum von** und **Datum bis** (Grenzen im Format `YYYY-MM-DD` für das Datum der Entität) und **Aktualisiert nach** (ein Stichtag für Änderungen).
+
+4. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+<Aside type="note">
+**Aktualisiert nach** hat keine gespeicherte Wasserstandsmarke – PlaidCloud merkt sich nicht, wo die letzte Ausführung endete. Geben Sie den Stichtag daher bei jeder Ausführung selbst an, um inkrementell abzurufen. Für Artikel und Währungen sind überhaupt keine Filter dokumentiert, und Kontenplan und Kontakte akzeptieren einen Status, aber keinen Datumsbereich; Xero lehnt einen Filter ab, den seine Entität nicht unterstützt, sodass der Schritt den Fehler meldet, statt ein falsches Ergebnis zu liefern.
+</Aside>
+
+## Belege buchen
+
+Der Schritt **Xero: Beleg buchen** bucht fünf Belegtypen über dieselbe gemeinsame Schreib-Pipeline, die jeder ERP-Buchungsschritt verwendet: **ManualJournal**, **Invoice**, **Bill**, **Payment** und **CreditNote**.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** – eine Zeile pro Beleg – mit Spalten für `ref` (Ihre Belegkennung), `doc_type` (`ManualJournal`, `Invoice`, `Bill`, `Payment` oder `CreditNote`), `posting_date` und, sofern der Belegtyp sie benötigt, `currency_id`, `party_id` (der Xero-Kontakt), `memo` und `due_date`. Eine Zahlung (Payment) benötigt zusätzlich `total_amt`, `deposit_account_id`, `bank_account_id` und `linked_invoice_id`; eine Gutschrift (CreditNote) benötigt `credit_note_type` (`ACCRECCREDIT` für Verkäufe, der Standard, oder `ACCPAYCREDIT` für Einkäufe). Ein einzelner Stapel kann Belegtypen mischen – PlaidCloud unterteilt ihn vor dem Buchen nach `doc_type`.
+
+2. Erstellen Sie eine **Positionstabelle** – eine oder mehrere Zeilen pro `ref`, jede mit diesem `ref` – passend zum Belegtyp:
+
+   | Belegtyp | Positionsspalten |
+   |---|---|
+   | ManualJournal | `account_id`, `debit`, `credit` und optional `class_id` / `department_id` für das Tracking |
+   | Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+   | Bill | `account_id`, `amount` |
+   | CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+   | Payment | `linked_txn_id` (die Rechnung, auf die sich die Position bezieht), `amount` |
+
+   `tax_type` und `memo` sind in jeder Position optional.
+
+3. Fügen Sie einen Schritt **Xero: Beleg buchen** hinzu und legen Sie **Xero-Verbindung**, **Umgebung** (über welche der PlaidCloud-Umgebungen der Verbindung gebucht wird), **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Ordnen Sie Ihre eigenen Spaltennamen auf den Registerkarten **Kopffelder** und **Positionsfelder** diesen Feldern zu.
+
+5. Lassen Sie **Test Only Mode** aktiviert und führen Sie den Schritt aus – PlaidCloud erstellt und prüft jeden Beleg ohne Ledger-Claim und ohne etwas zu buchen.
+
+6. Prüfen Sie die Ergebnistabelle (eine Zeile pro Beleg: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`, `message`). Beheben Sie jede Zeile mit `error` und validieren Sie erneut.
+
+7. Deaktivieren Sie **Test Only Mode** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue posting remaining documents if one document fails** aktiviert, es sei denn, ein Stapel soll beim ersten fehlgeschlagenen Beleg sofort stoppen.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+Jeder Beleg wird im Idempotenz-Ledger von PlaidCloud beansprucht, bevor er übermittelt wird, sodass eine erneute Ausführung nie einen Beleg bucht, der bereits den Status `posted` erreicht hat. Der Ledger-Schlüssel ist mit dem Belegtyp präfixiert, sodass eine Rechnung und eine Abrechnung mit demselben `ref` nie kollidieren, obwohl Xero beide über denselben Endpunkt bucht.
+
+Ist ein Ergebnis mehrdeutig – ein Timeout, eine abgebrochene Antwort –, fragt PlaidCloud Xero anhand der von ihm vergebenen Belegnummer zurück und wertet einen Treffer nur dann als Nachweis, wenn sich der Beleg in einem endgültigen gebuchten Status befindet. Die Nummern von Rechnungen und Gutschriften in Xero sind nicht garantiert eindeutig, daher wird ein Entwurf, ein stornierter Beleg oder ein Treffer mit doppelter Nummer in Quarantäne gestellt, statt als Ergebnis dieses Schreibvorgangs erfasst zu werden.
+
+### Funktionsgrenzen – vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Manuelle Journale und Zahlungen lassen sich nicht nachschlagen.** Die Beschreibung eines manuellen Journals und die Referenz einer Zahlung sind in Xero nicht abfragbar, sodass es kein Feld gibt, um einen unklaren Schreibvorgang der Anfrage von PlaidCloud zuzuordnen. Diese werden in Quarantäne gestellt, damit Sie sie direkt in Xero klären, statt zu raten.
+- **Die Stornierung umfasst nur manuelle Journale und Rechnungen.** Ein manuelles Journal wird als Journal mit vertauschten Soll- und Habenbeträgen storniert; eine Rechnung wird durch eine spiegelnde Gutschrift storniert. Für Abrechnungen, Zahlungen und Gutschriften gibt es in der API von Xero keine dokumentierte Rückgängig-Nutzlast, daher lehnt PlaidCloud eine Stornierung ab, statt eine zu erfinden – korrigieren Sie diese direkt in Xero.
+- **Ratenlimits gelten pro Organisation.** Xero erlaubt pro Organisation 60 Aufrufe pro Minute und 5.000 pro Tag, bei 5 gleichzeitigen Aufrufen. PlaidCloud steuert die Limits pro Minute und für Gleichzeitigkeit pro Verbindung und weicht bei einer gedrosselten Antwort zurück, sodass ein sehr großer Stapel entsprechend länger dauert. Planen Sie umfangreiche Abrufe per Zeitplan, statt viele Xero-Schritte gleichzeitig gegen dieselbe Organisation auszuführen.
+</Aside>
+
+## Verwandte Themen
+
+- [Xero-REST-Konnektor](/de/reference/connectors/rest/xero/) – Feldreferenz.
+- [Xero: Entität importieren](/de/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero: Beleg buchen](/de/reference/workflow-steps/xero/xero-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) – der dauerhafte Nachweis jedes Xero-Buchungsversuchs und seines aktuellen Status.
+- [Eine Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

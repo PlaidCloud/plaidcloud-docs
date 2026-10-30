@@ -1,0 +1,131 @@
+---
+title: "Salesforce: Consultar objeto"
+description: Extraia um objeto do Salesforce para uma tabela de projeto pela Bulk API 2.0 — escolha o objeto e os campos a partir do describe da própria organização, filtre no Salesforce e grave cada coluna com o tipo que o Salesforce declara para ela.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/salesforce/query-salesforce-object.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lê um objeto do Salesforce — padrão ou personalizado — para uma tabela de projeto pela Bulk API 2.0 do Salesforce. Escolha a [conexão do Salesforce](/pt-br/guides/connections/salesforce/), o objeto e os campos; a etapa monta a consulta, percorre todo o conjunto de resultados e grava cada coluna com o tipo que o Salesforce declara para ela. Não há consulta a escrever.
+
+O Salesforce é acessado diretamente na nuvem, pela sua API REST, portanto esta etapa não precisa de um agente PlaidLink.
+
+## Configuração
+
+| Campo | Obrigatório | Observações |
+|---|---|---|
+| Conexão do Salesforce | Sim | A conexão do Salesforce usada para a leitura. As conexões são gerenciadas em **Ferramentas > Conexões**. |
+| Environment | Não | Qual dos ambientes da conexão ler — aponte um ambiente de sandbox para a organização sandbox e um de produção para a produção. O padrão é o ambiente `default` da conexão. |
+| Object | Sim | O nome de API do objeto — `Account`, `Opportunity`, `Invoice__c`. O seletor lista os objetos que o usuário Run As da conexão pode consultar e também aceita um nome digitado, de modo que uma etapa salva continua funcionando enquanto a descoberta estiver indisponível. |
+| Tabela de destino | Sim | A tabela do projeto em que as linhas são gravadas. |
+| Incluir registros excluídos e arquivados | Não | Também lê os registros da Lixeira e as atividades arquivadas, como faz um `queryAll` do Salesforce. |
+| Fields | Sim | Marque os campos a extrair. É necessário pelo menos um: a Bulk API 2.0 rejeita a seleção do objeto inteiro, portanto a lista de colunas é sempre enumerada. |
+| Filter | Não | Restringe a extração no Salesforce. Consulte [Filtrando no Salesforce](#filtrando-no-salesforce). |
+| Tag da janela | Não | Dá nome à janela de extração. Consulte [Janelas de Extração Executam Uma Vez](#janelas-de-extração-executam-uma-vez). |
+
+`Id` é sempre incluído, quer você o marque ou não — é a chave na qual cada nova execução faz a mesclagem. Um campo de moeda também importa o seu `CurrencyIsoCode`, quando o objeto tem um.
+
+## Como as Linhas São Gravadas
+
+Cada execução lê o objeto por inteiro, sujeito ao seu filtro, e mescla cada página na tabela de destino por `Id`. Uma linha que já está na tabela é substituída no lugar, de modo que uma execução interrompida que é retomada não grava nada duas vezes.
+
+<Aside type="caution">
+**As exclusões não são acompanhadas.** A tabela reflete o que o Salesforce retornou, e um registro excluído no Salesforce permanece na tabela de destino — nada o remove. Esta é uma extração, não uma sincronização bidirecional: registros mesclados, excluídos e arquivados são deliberadamente excluídos do que a etapa lê, portanto também nunca reaparecem como linhas.
+</Aside>
+
+As colunas gravadas usam os tipos que o Salesforce declara nos metadados dos próprios campos, nunca um tipo deduzido a partir da primeira página de dados. A coluna **Gravado como** no seletor de campos é esse tipo declarado, de modo que o formato que você aprova no formulário é o formato que a tabela recebe.
+
+## O Que É Gravado como Quê
+
+| Tipo de campo do Salesforce | Gravado como |
+|---|---|
+| `id`, `reference`, `string`, `textarea`, `phone`, `url`, `email`, `picklist`, `multipicklist`, `combobox` | texto |
+| `boolean` | booleano |
+| `date` | data |
+| `datetime` | carimbo de data/hora |
+| `time` | hora |
+| `int` | inteiro, ou inteiro de 64 bits quando o campo declara 10 ou mais dígitos |
+| `double`, `currency`, `percent` | numérico — um decimal largo, de 38 dígitos com 10 casas decimais |
+
+Três convenções decorrem dessa tabela e vale conhecê-las antes de construir algo sobre a saída:
+
+- **A moeda é gravada como número, não como um tipo de moeda.** Organizações reais declaram campos de moeda com escalas de 0, 2, 3 e 4, portanto todo tipo numérico é gravado em um decimal largo o bastante para todos eles. Não há símbolo de moeda na coluna nem restrição de casas decimais por campo. Quando o objeto traz `CurrencyIsoCode`, essa coluna vem junto ao lado do campo de moeda para que o valor mantenha a sua moeda; uma organização com uma única moeda não tem esse campo no objeto, e nenhum é inventado.
+- **Um percentual é o número inteiro que o Salesforce informa.** `20` significa 20 por cento, não `0.2`. Nada é reescalado na entrada.
+- **Um valor vazio é gravado como NULL.** Os resultados em massa não distinguem um nulo verdadeiro de uma cadeia vazia explícita, portanto ambos são gravados como `NULL` — em todas as colunas, inclusive as de texto. Uma coluna que precisa manter a semântica de cadeia vazia exige um campo de fórmula no lado do Salesforce.
+
+## Campos que a Etapa Recusa
+
+Alguns tipos de campo do Salesforce não podem ser gravados fielmente, então o seletor de campos os marca como inutilizáveis e informa o motivo, em vez de deixar você salvar uma etapa que falha em tempo de execução. Cada recusa nomeia o campo e o seu tipo no Salesforce.
+
+| Tipo de campo do Salesforce | Por quê | O que fazer em vez disso |
+|---|---|---|
+| `address`, `location` (campos compostos) | Um campo composto não tem valor diretamente legível em uma consulta em massa. | Marque os campos que o compõem — `BillingStreet`, `BillingCity`, `BillingState`, `BillingPostalCode`, `BillingCountry` e a latitude e a longitude da geolocalização. O seletor nomeia os componentes do campo que você está vendo. |
+| `base64` | O conteúdo de arquivos e blobs nunca é retornado em linha; ele exige um download binário separado que esta etapa não faz. | Leia os outros campos do registro e trate os anexos separadamente. |
+| `encryptedstring` | O Salesforce retorna um valor mascarado, em vez de um erro, quando o usuário Run As não tem **View Encrypted Data**, e nada distingue dados mascarados de dados reais. Gravar silenciosamente linhas de asteriscos é pior do que recusar. | Decida deliberadamente se os dados devem sair do Salesforce; não há uma forma com suporte de extraí-los por esta etapa. |
+| `anyType` | O tipo real pode variar de linha para linha, e uma coluna de tabela tem exatamente um tipo. | Extraia um campo tipado ou um campo de fórmula que apresente o valor como texto. |
+| Qualquer tipo que a etapa não reconheça | É recusado em vez de gravado como texto, o que alteraria silenciosamente o significado do valor. | Fale com o suporte para que o tipo receba um mapeamento. |
+
+<Aside type="note">
+A segurança em nível de campo não está entre essas recusas, porque não é visível nos metadados dos campos. Uma consulta que nomeia um campo que o usuário Run As não pode ler falha por completo — consulte [O Usuário Run As Define o Escopo de Tudo](/pt-br/guides/connections/salesforce/#o-usuário-run-as-delimita-tudo).
+</Aside>
+
+## Janelas de Extração Executam Uma Vez
+
+**Tag da janela** dá nome à janela de dados que uma execução está carregando — um período ou um rótulo de lote como `2026-09`. Ela aceita variáveis de fluxo de trabalho: uma tag `{period}` é resolvida para o valor dessa variável a cada execução da etapa.
+
+Uma janela de extração é executada uma vez. Executar novamente uma janela que já foi concluída **não** volta ao Salesforce: a etapa informa claramente que não leu de novo e diz que a contagem de linhas exibida pertence à execução anterior. Isso é uma operação nula ruidosa, não silenciosa, e é o comportamento que impede que uma nova execução percorra uma segunda cópia de um conjunto de resultados já gravado.
+
+Há três formas de usar a etapa:
+
+- **Deixe a tag em branco** e trate a etapa como uma carga única. A primeira execução lê; uma segunda execução dessa mesma etapa reproduz o resultado e informa que não leu de novo. Use isso para construir e validar a extração e para uma tabela que você carrega uma única vez.
+- **Digite uma tag e mude-a ao carregar a próxima janela** — `2026-09`, depois `2026-10`. Editar a tag inicia uma nova janela, portanto uma carga mensal que alguém avança manualmente funciona exatamente como parece.
+- **Monte a tag a partir de uma variável de fluxo de trabalho** para uma importação recorrente sem supervisão — por exemplo `{period}`, definida por uma etapa anterior do fluxo de trabalho como o período que está sendo carregado. Cada execução agendada nomeia a sua própria janela, e uma nova execução dentro do mesmo período retoma ou reproduz essa janela em vez de iniciar outra.
+
+<Aside type="caution">
+Dê nome à janela, não à execução. Uma tag que muda a cada execução — como uma montada com `{date}`, que inclui a hora atual — inicia uma nova janela a cada vez, de modo que uma extração interrompida nunca pode ser retomada e cada nova tentativa envia uma nova consulta ao Salesforce. Use uma variável que contenha o período ou o lote que está sendo carregado.
+</Aside>
+
+Um chamador da API REST ou do MCP passa `extract_tag` diretamente e fornece por conta própria um valor distinto para cada janela.
+
+Uma execução interrompida retoma a mesma janela, portanto mantenha a tag constante enquanto essa janela ainda puder precisar ser concluída. Mudar a tag inicia uma nova janela e uma nova consulta no Salesforce. Mude a tag sempre que mudar o filtro ou os campos: editar a configuração sob uma tag que já foi executada é recusado como conflito.
+
+## Filtrando no Salesforce
+
+Restrinja a extração no Salesforce em vez de importar o objeto inteiro e filtrar depois. Cada termo de filtro é um campo, um operador e um valor; os termos se combinam com AND. Um valor pode usar uma variável de fluxo de trabalho, como `{region}`.
+
+| Operador | Observações |
+|---|---|
+| `=`, `!=`, `<`, `<=`, `>`, `>=` | Comparado com o valor como digitado. |
+| `LIKE` | Use `%` como curinga, por exemplo `Acme%`. |
+| `IN`, `NOT IN` | Informe uma lista de valores separados por vírgula. |
+
+Tanto o campo quanto o operador são verificados em relação aos campos que você selecionou antes de a consulta ser montada, e não há cláusula `WHERE` de texto livre para escrever — portanto um filtro não pode ir além da extração. Filtre por um campo que você também marcou; um filtro que nomeia um campo que a extração não seleciona é recusado.
+
+A etapa não oferece limite de linhas nem ordenação. A Bulk API 2.0 desativa o seu próprio fracionamento interno quando uma consulta traz um dos dois, o que torna uma extração grande mais lenta e mais propensa a esgotar o tempo limite. Critérios de filtro seletivos são o remédio do próprio Salesforce para uma consulta grande ou lenta demais.
+
+## Adequação a Volume e Rotatividade
+
+Este formato — ler o objeto por inteiro, em um agendamento — serve para objetos de volume e rotatividade moderados: Accounts, Opportunities, Leads, Campaigns e objetos personalizados de porte semelhante.
+
+É a ferramenta errada para objetos de alto volume e alta rotatividade, como `Task`, `EmailMessage` ou um objeto personalizado grande com milhões de linhas mudando por dia. Uma importação completa noturna desses objetos gasta tempo real e capacidade de API que uma sincronização incremental não gastaria. Quando o objeto é grande mas só parte dele interessa, um filtro que delimite a extração — um intervalo de datas, um tipo de registro, um proprietário — a transforma novamente em uma importação de volume moderado.
+
+## Quando uma Execução Não Termina
+
+| O que você vê | O que aconteceu | O que fazer |
+|---|---|---|
+| Um aviso de que o job ainda está em execução após 15 minutos | A etapa aguarda em primeiro plano o Salesforce concluir a consulta, e essa espera tem limite. Nada avança o job em segundo plano. | Execute a etapa novamente. Ela retoma a espera no **mesmo** job do Salesforce e nunca envia um segundo. Se continuar excedendo o limite, restrinja a extração com critérios de filtro. |
+| Um aviso de que a janela já foi concluída e não foi lida de novo | A janela já foi executada antes. A contagem de linhas exibida é a da execução anterior. | Execute a extração com uma **Tag da janela** diferente ou avance a variável a partir da qual a tag é montada — consulte [Janelas de Extração Executam Uma Vez](#janelas-de-extração-executam-uma-vez). |
+| Um erro que nomeia um job com falha ou abortado | Um job de consulta em massa com falha não produz resultados parciais e não pode ser retomado. A janela agora está consumida. | Execute novamente com uma **Tag da janela diferente**. Executar novamente a mesma janela reproduz a falha e não envia nada, e editar a configuração da etapa sob a mesma tag é recusado como conflito. |
+| Uma recusa que nomeia o limite de solicitações do Salesforce | A cota contínua de solicitações de API de 24 horas da organização está esgotada. O Salesforce não documenta nenhum tempo de nova tentativa para isso. | Aguarde a janela liberar e execute novamente — a extração ainda pode ser retomada, nada foi perdido. |
+| Uma recusa que nomeia um campo e o seu tipo no Salesforce | Esse tipo de campo não pode ser gravado, ou o usuário Run As não pode ler o campo. | Consulte [Campos que a Etapa Recusa](#campos-que-a-etapa-recusa) e a segurança em nível de campo do usuário Run As. |
+
+O Salesforce mantém os resultados de um job de consulta concluído disponíveis por 7 dias, o que torna uma extração interrompida retomável — e limita por quanto tempo uma retomada pode esperar antes que os resultados desapareçam. Os jobs ficam visíveis no Salesforce em **Setup > Environments > Jobs > Bulk Data Load Jobs**.
+
+## Relacionados
+
+- [Etapas do Salesforce](/pt-br/reference/workflow-steps/salesforce/)
+- [Conectar ao Salesforce](/pt-br/guides/connections/salesforce/) — a configuração no lado da organização, do início ao fim
+- [Conector REST do Salesforce](/pt-br/reference/connectors/rest/salesforce/) — referência dos campos de conexão
+- [Executando uma Etapa em um Fluxo de Trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)

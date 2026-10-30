@@ -1,0 +1,251 @@
+---
+title: Google 또는 Mapbox 지오코딩에서 마이그레이션
+description: Google Geocoding API 또는 Mapbox Geocoding 통합을 PlaidCloud의 REST 지오코딩 엔드포인트로 옮깁니다. 엔드포인트 매핑, 응답 엔벨로프, location_type 대응 값, 인증, 속도 제한, 그리고 적용 범위의 한계를 안내합니다.
+sidebar:
+  label: 지오코딩 API
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/geocoding-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud는 정방향 지오코딩, 구조화 지오코딩, 역지오코딩, 자동 완성, 장소 조회를 `/rest/v1/analyze/geocode` 아래의 REST 엔드포인트로 제공합니다. 이 엔드포인트는 신뢰할 수 있는 오픈 지붕(rooftop) 주소 데이터와 행정 구역 데이터(ODbL 라이선스의 OpenStreetMap 포함)로 구축된 PlaidCloud 지오코딩 서비스의 프록시이며, 모든 결과를 작은 `plaidcloud` 엔벨로프로 감쌉니다. 따라서 호출자는 서비스의 내부 필드를 직접 구문 분석하지 않고도 일치 결과가 얼마나 정밀한지 알 수 있습니다.
+
+이 가이드는 기존 Google Geocoding API 또는 Mapbox Geocoding 통합을 PlaidCloud로 옮기려는 분을 위한 것으로, 요청 형식이 거의 그대로 대응하는 부분과 그렇지 않은 부분을 설명합니다.
+
+<Aside type="caution" title="마이그레이션하기 전에 읽어 보십시오">
+PlaidCloud의 지오코더는 라이선스를 받은 상용 데이터 세트가 아니라 OpenStreetMap(ODbL)을 포함한 신뢰할 수 있는 지붕 주소 및 행정 구역 소스 등 오픈 지리 공간 데이터로 구축되었습니다. 모든 Google 또는 Mapbox 사용 사례를 그대로 대체할 수 있는 것은 아닙니다. 주소가 중요한 용도로 사용하기 전에 [적용 범위와 결정성](#적용-범위와-결정성--먼저-읽어-보십시오)을 확인하십시오.
+</Aside>
+
+## 인증 및 권한
+
+모든 지오코딩 호출에는 다음이 필요합니다.
+
+- **`analyze.table.read`** 역할을 가진 일반 PlaidCloud 세션 또는 베어러 토큰. 프로젝트 데이터에 대한 다른 읽기 액세스를 제어하는 것과 같은 역할입니다. 지오코딩 전용 역할은 없습니다.
+- 요금제에 포함된 지오코딩. 즉 테넌트에 지오코딩 권한이 활성화되어 있어야 합니다. 요금제에 지오코딩이 포함되지 않은 테넌트는 모든 호출에서 `403`을 받습니다.
+
+## 속도 제한
+
+지오코딩 엔드포인트는 PlaidCloud의 기본 REST 속도 제한보다 높은 한도를 적용합니다. 대부분의 다른 `/rest/v1` 엔드포인트는 분당 600건이지만, 지오코딩은 **호출 IP당 분당 1,200건**입니다. 이를 초과하면 `Retry-After: 60` 헤더와 함께 `429`가 반환됩니다.
+
+지오코딩 서비스 앞에는 요청별 캐시가 없으며, 모든 호출에 실시간으로 응답합니다. 같은 쿼리를 반복할 가능성이 있다면 결과를 사용자 측에서 캐시하십시오.
+
+## 엔드포인트 매핑
+
+| 현재 호출 | PlaidCloud 엔드포인트 | 참고 |
+|---|---|---|
+| Google Geocoding API(주소 → 좌표) | `GET /rest/v1/analyze/geocode/search` | 자유 텍스트 쿼리 |
+| Google Geocoding API(구조화된 구성 요소) | `GET /rest/v1/analyze/geocode/search/structured` | 필드별 입력 |
+| Google 역지오코딩 | `GET /rest/v1/analyze/geocode/reverse` | 좌표에서 장소 찾기 |
+| Google Places Autocomplete | `GET /rest/v1/analyze/geocode/autocomplete` | 입력 중 자동 완성. 오류를 반환하지 않고 빈 결과로 대체됩니다. [자동 완성은 오류 대신 결과를 줄입니다](#자동-완성은-오류-대신-결과를-줄입니다)를 참조하십시오 |
+| Google Place Details(`place_id` 조회) | `GET /rest/v1/analyze/geocode/place/{gid}` | `gid`는 `place_id`와 달리 영구 식별자가 **아닙니다**. [적용 범위와 결정성](#적용-범위와-결정성--먼저-읽어-보십시오)을 참조하십시오 |
+| Mapbox Geocoding API(정방향) | `GET /rest/v1/analyze/geocode/search` 또는 `/search/structured` | |
+| Mapbox Geocoding API(역방향) | `GET /rest/v1/analyze/geocode/reverse` | |
+
+### `search` — 자유 텍스트 정방향 지오코딩
+
+| 쿼리 매개변수 | 유형 | 참고 |
+|---|---|---|
+| `text` | 문자열, 필수 | 1~300자 |
+| `focus.point.lat`, `focus.point.lon` | 부동 소수점 | 필터가 아닌 소프트 순위 가중치 |
+| `boundary.country` | 문자열 | 하드 필터. 쉼표로 구분한 ISO alpha-2 국가 코드, 최대 300자 |
+| `layers` | 문자열 | 결과를 제한할 지오코딩 레이어를 쉼표로 구분, 최대 300자 |
+| `size` | 정수 | 1~40, 기본값 10 |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&size=5
+```
+
+### `search/structured` — 필드별 정방향 지오코딩
+
+| 쿼리 매개변수 | 유형 | 참고 |
+|---|---|---|
+| `address` | 문자열 | 건물 번호 + 도로명 |
+| `neighbourhood`, `borough`, `county` | 문자열 | |
+| `locality` | 문자열 | 도시 |
+| `region` | 문자열 | 주/도 |
+| `postalcode` | 문자열 | |
+| `country` | 문자열 | ISO alpha-2/3 또는 국가 전체 이름 |
+| `size` | 정수 | 1~40, 기본값 10 |
+
+위의 모든 필드는 선택 사항이며 각각 300자로 제한됩니다. 가지고 있는 만큼만 제공하면 되며, 모두 필요하지는 않습니다.
+
+```
+GET /rest/v1/analyze/geocode/search/structured?address=350+5th+Ave&locality=New+York&region=NY&country=US
+```
+
+### `reverse` — 좌표에서 가까운 장소 찾기
+
+| 쿼리 매개변수 | 유형 | 참고 |
+|---|---|---|
+| `point.lat` | 부동 소수점, 필수 | -90~90 |
+| `point.lon` | 부동 소수점, 필수 | -180~180 |
+| `size` | 정수 | 1~40, 기본값 1 |
+| `layers` | 문자열 | 지오코딩 레이어를 쉼표로 구분, 최대 300자 |
+
+```
+GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
+```
+
+### `autocomplete` — 입력 중 자동 완성
+
+| 쿼리 매개변수 | 유형 | 참고 |
+|---|---|---|
+| `text` | 문자열, 필수 | 1~300자, 부분 쿼리 |
+| `focus.point.lat`, `focus.point.lon` | 부동 소수점 | 소프트 순위 가중치 |
+| `layers` | 문자열 | 지오코딩 레이어를 쉼표로 구분, 최대 300자 |
+
+```
+GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
+```
+
+### `place/{gid}` — 장소 레코드 확인
+
+| 경로 매개변수 | 유형 | 참고 |
+|---|---|---|
+| `gid` | 문자열, 필수 | 1~300자. 지오코딩 서비스의 글로벌 ID로, 이전 결과의 `properties.gid`에서 가져옵니다 |
+
+```
+GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
+```
+
+## `plaidcloud` 응답 엔벨로프
+
+모든 엔드포인트는 지오코딩 서비스의 GeoJSON `FeatureCollection`을 수정 없이 반환하되, **각 피처**에 `plaidcloud` 객체 하나를 추가합니다.
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+      "properties": {
+        "gid": "openstreetmap:venue:node/61785451",
+        "layer": "venue",
+        "name": "Empire State Building",
+        "confidence": 0.94,
+        "accuracy": "point",
+        "label": "Empire State Building, New York, NY, USA"
+      },
+      "plaidcloud": {
+        "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+        "location_type": "geometric_center",
+        "confidence": 0.94,
+        "match_type": "exact"
+      }
+    }
+  ]
+}
+```
+
+`plaidcloud` 안의 필드는 다음과 같습니다.
+
+| 필드 | 유형 | 참고 |
+|---|---|---|
+| `attribution` | 문자열 | 고정된 OSM ODbL 출처 표기 문자열. 아래의 [출처 표기](#출처-표기는-선택-사항이-아닙니다)를 참조하십시오 |
+| `location_type` | 문자열 | [`location_type`과 Google 분류 체계의 매핑](#location_type과-google-분류-체계의-매핑)을 참조하십시오 |
+| `confidence` | 부동 소수점 또는 `null` | 지오코딩 서비스 자체의 원시 신뢰도 점수로, 수정 없이 그대로 전달됩니다. PlaidCloud는 이 점수를 다시 보정하거나 척도를 문서화하지 않습니다 |
+| `match_type` | `"exact"` \| `"partial"` | **`search` 전용입니다.** `confidence >= 0.9`이면 `"exact"`, 그렇지 않으면 `"partial"`입니다. `search/structured`, `reverse`, `autocomplete`, `place` 응답에는 없습니다 |
+| `geohash` | 문자열 | `location_codes=none`이 아니면 포함됩니다. 아래의 [`location_codes`](#location_codes--geohash와-plus-code)를 참조하십시오 |
+| `plus_code` | 문자열 | `location_codes=geohash+pluscode`일 때만 포함됩니다. 아래의 [`location_codes`](#location_codes--geohash와-plus-code)를 참조하십시오 |
+
+**일치 항목이 없는 쿼리는 오류가 아니라 `200`입니다.** 지오코딩 서비스가 피처를 반환하지 않으면, 응답에는 **빈 `features` 배열**이 들어 있고 피처별 객체 대신 **최상위** `plaidcloud` 객체가 포함됩니다.
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "none"
+  }
+}
+```
+
+### `location_type`과 Google 분류 체계의 매핑
+
+서비스의 `layer` 및 `accuracy` 필드는 Google Geocoding 자체의 `location_type` 열거형과 맞도록 네 가지 값의 `location_type`으로 통합됩니다.
+
+| PlaidCloud `location_type` | 의미 | 가장 가까운 Google 대응 값 |
+|---|---|---|
+| `rooftop` | 정밀한 지점이 있는 주소 수준 일치 | `ROOFTOP` |
+| `interpolated` | 직접 지오코딩된 지점이 아니라 도로 구간을 따라 보간하여 일치시킨 주소. **v1에서는 반환되지 않습니다**(주소 범위 보간이 아직 활성화되지 않았습니다) | `RANGE_INTERPOLATED` |
+| `geometric_center` | 장소나 관심 지점(건물, 사업체)의 중심점 | `GEOMETRIC_CENTER` |
+| `approximate` | 그보다 거친 모든 결과. 지역(locality), 지역(region), 국가 수준 또는 PlaidCloud가 별도로 분류하지 않는 레이어 | `APPROXIMATE` |
+| `none` | 일치하는 피처 없음 | *(Google 대응 값 없음. Google은 유형이 지정된 빈 결과가 아니라 결과를 전혀 반환하지 않습니다)* |
+
+이는 서비스 자체의 레이어 분류 체계를 그대로 복제한 것이 아니라 의도적으로 거칠게 나눈 네 가지 값의 매핑입니다. 일치 결과의 정밀도를 어느 정도 신뢰할 수 있는지 알려 주는 용도이며, 정밀도를 보장하지는 않습니다.
+
+### `location_codes` — geohash와 Plus Code
+
+모든 엔드포인트는 `location_codes` 쿼리 매개변수를 받습니다. 이 매개변수를 사용하면 원시 좌표만 받는 대신, 각 일치 결과와 함께 계산 가능한 간결한 위치 코드를 요청할 수 있습니다.
+
+| 값 | 의미 |
+|---|---|
+| `geohash` | **기본값.** 각 피처의 `plaidcloud` 엔벨로프에 `geohash`를 추가합니다. |
+| `geohash+pluscode` | `geohash`와 `plus_code`를 모두 추가합니다. |
+| `none` | 둘 다 생략합니다. 엔벨로프에는 `attribution`, `location_type`, `confidence`, 그리고(`search`에서는) `match_type`만 포함됩니다. |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&location_codes=geohash+pluscode
+```
+
+두 코드는 피처 자체의 좌표로 로컬에서 계산되며, 추가 조회나 외부 서비스가 필요하지 않습니다. **geohash 정밀도 9**와 **Plus Code 길이 10**을 사용하며, 이는 [지오코딩 워크플로 단계](/ko/guides/workflows/geospatial-analytics/#위치-코드-보강)가 기본 설정에서 생성하는 값과 같습니다. 따라서 같은 좌표 쌍에 대해 REST로 계산한 값과 워크플로 단계로 계산한 값이 일치합니다.
+
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+  "properties": { "gid": "openstreetmap:venue:node/61785451", "name": "Empire State Building" },
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "geometric_center",
+    "confidence": 0.94,
+    "match_type": "exact",
+    "geohash": "dr5rsjhzz",
+    "plus_code": "87G7PX7V+XX"
+  }
+}
+```
+
+`geohash`는 geohash 문자열이고, `plus_code`는 Open Location Code(Plus Code)입니다. 쿼리와 일치하는 피처가 없으면 둘 다 포함되지 않으며, 빈 결과의 최상위 `plaidcloud` 객체에는 `attribution`과 `location_type: "none"`만 들어 있습니다.
+
+### 출처 표기는 선택 사항이 아닙니다
+
+이 API의 기반이 되는 지오코딩 및 기본 지도 데이터에는 **ODbL(Open Database License)** 라이선스의 OpenStreetMap 데이터가 포함되어 있습니다. ODbL은 데이터를 어떤 용도로 사용하든 OpenStreetMap을 명시하도록 요구합니다. **지오코딩 결과를 지도, 주소 목록 등 어디에서든 최종 사용자에게 표시한다면 `attribution` 문자열(또는 이와 동등한 OSM 출처 표기)을 결과와 함께 반드시 표시해야 합니다.** 이는 PlaidCloud의 스타일 권고가 아니라 데이터 사용자인 귀하에게 부과되는 라이선스상의 의무입니다.
+
+## 오류
+
+| 상태 | 의미 |
+|---|---|
+| `403` | `analyze.table.read` 역할이 없거나 요금제에 지오코딩 권한이 포함되어 있지 않음 |
+| `404` | `place/{gid}`에서 해당 ID의 레코드를 찾지 못했거나, `reverse`가 지오코딩 서비스 자체에서 404를 반환하는 좌표에 도달함 |
+| `422` | 쿼리 매개변수가 유효성 검사에 실패함(예: `text`가 300자 초과, `point.lat`가 범위를 벗어남) |
+| `429` | 속도 제한 초과. [속도 제한](#속도-제한)을 참조하십시오 |
+| `503 geocoding_unavailable` | 지오코딩 서비스에 연결할 수 없거나, 시간이 초과되었거나, 오류를 반환함 |
+
+여기서 `503`은 의도적으로 원시 `5xx`도, 무한정 대기하는 상태도 아닙니다. 프록시는 지오코딩 서비스에 대한 모든 호출에 제한된 시간 제한(몇 초)을 적용하므로, 업스트림이 느리거나 응답하지 않아도 요청이 계속 열려 있지 않고 곧바로 `503`으로 나타납니다.
+
+### 자동 완성은 오류 대신 결과를 줄입니다
+
+`autocomplete`는 위의 `503` 동작에 대한 유일한 예외입니다. 키를 누를 때마다 호출되므로, 업스트림에서 일시적인 문제가 생기면 `503` 대신 **빈 결과 집합과 함께 `200`**(실제로 일치 항목이 없는 쿼리와 같은 형태인 `location_type: "none"`)이 반환됩니다. 백엔드 오류가 클라이언트 코드가 분기 처리하는 오류로 나타나는 Google Places Autocomplete에서 마이그레이션하는 경우, PlaidCloud의 자동 완성은 상태 코드만으로는 "제안 없음"과 구분할 수 없다는 점에 유의하십시오. 이 부분에서는 오류 경로에 의존하지 말고 어느 경우든 빈 제안 목록을 기준으로 UI를 구성하십시오.
+
+## 적용 범위와 결정성 — 먼저 읽어 보십시오
+
+운영 트래픽을 연결하기 전에 이 API가 무엇인지 정확히 파악하십시오.
+
+- **라이선스를 받은 상용 주소 데이터 세트가 아니라 오픈 지리 공간 데이터로 구축되었습니다.** 적용 범위의 품질은 해당 지역이 이러한 오픈 소스에 얼마나 잘 반영되어 있는지에 좌우됩니다. 일반적으로 북미, 유럽 및 지도가 잘 작성된 다른 도시 지역에서는 우수하지만 그 밖의 지역에서는 일관되지 않습니다. PlaidCloud는 국가나 지역별 적용 범위를 보장하지 않습니다.
+- **지붕 수준 정밀도는 지역마다 다릅니다.** 오픈 소스에 직접 지오코딩된 지점이 있으면 진정한 `rooftop` 결과를 얻고, 없으면 거리 또는 지역 수준의 더 거친 일치로 대체됩니다. 주소 범위 **보간**은 v1에서 활성화되지 않았으므로 추정 지점으로 빈틈을 채우지 않습니다. 따라서 적용 범위가 충분하지 않은 지역에서는 `approximate` 결과가 흔합니다.
+- **아파트/호실/세대 수준의 세부 정보는 없습니다.** 하위 건물(subpremise) 정보는 반환되지 않으며, 최상의 경우에도 건물 또는 거리 수준의 정밀도입니다.
+- **깊은 행정 구역 계층은 없습니다.** Google의 다단계 `address_components`(하위 지역 단계, `administrative_area_level_1/2/3` 등)에 익숙하다면, 여기서는 더 얕은 구분이 제공된다고 생각하십시오.
+- **`gid`는 영구 식별자가 아닙니다.** Google의 `place_id`는 몇 달 또는 몇 년 뒤에도 저장해 두었다가 다시 확인할 수 있는 안정적이고 수명이 긴 참조입니다. 지오코딩 서비스의 `gid`에는 그런 보장이 없습니다. 세션 또는 단기 워크플로 동안만 유효한 값으로 취급하고, 자체 데이터의 영구 외래 키로 사용하지 마십시오.
+- **결과가 시간이 지나도 동일하다고 보장되지 않습니다.** OpenStreetMap과 이 API의 기반이 되는 다른 오픈 소스는 크라우드소싱으로 계속 편집됩니다. 기반 지도 데이터 자체가 바뀌기 때문에 오늘 실행한 쿼리를 3개월 뒤에 다시 실행하면 다른 결과, 다른 `gid`, 다른 순위가 나올 수 있습니다. 버전이 관리되는 상용 데이터 세트처럼 지오코딩 결과가 바이트 단위로 재현된다고 가정하고 마이그레이션 계획을 세웠다면, 이 API는 그것을 제공하지 않습니다.
+- **v1에는 응답 캐시가 없습니다.** 모든 호출이 현재 지오코딩 인덱스에 대해 실시간으로 응답되며, 아직 활용할 수 있는 ETag나 cache-control 체계가 없습니다.
+
+이러한 점이 API를 부적합하게 만드는 것은 아닙니다. 주소 정규화, 지도 표시, 일반적인 위치 조회에는 충분히 적합합니다. 다만 영구적인 장소 식별자, 모든 곳에서 보장되는 지붕 수준 정밀도, 시간이 지나도 비트 단위로 재현되는 결과가 필요하다면 맞지 않는 도구입니다.
+
+## 관련 항목
+
+- [REST 요청 단계](/ko/guides/workflows/rest-request-step/) — 워크플로에서 이 엔드포인트 호출
+- [일반 REST 연결](/ko/reference/connectors/rest/generic-rest/) — 지오코딩을 저장된 연결로 구성하려는 경우

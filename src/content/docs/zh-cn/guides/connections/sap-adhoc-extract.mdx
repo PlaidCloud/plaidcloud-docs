@@ -1,0 +1,202 @@
+---
+title: 从 SAP ECC / S/4HANA 临时提取数据
+description: 按表、事务代码或已保存的 SAP 查询搜索 SAP，预览并规划提取，然后通过 PlaidLink 代理将结果落入 PlaidCloud 表。
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+从已知信息出发，自行从 SAP ECC 或 S/4HANA 中提取数据：表名、事务代码或已保存的 SAP 查询。通过搜索选择对象，查看其字段或选择屏幕，预览真实行，检查计划，然后保存一个将结果落入表中的工作流步骤。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="SAP 提取步骤通过 PlaidLink 代理将请求发送到 SAP，PlaidCloud SAP 包在 SAP 自身的授权检查下读取数据，行经由代理返回并进入目标表。" style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SAP 提取步骤</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">搜索 · 预览 · 计划</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidLink 代理</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">位于您的网络内</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">PlaidCloud SAP 包</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP 检查 RFC 用户</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">行</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">目标表</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">每次提取都通过您的 PlaidLink 代理和 PlaidCloud SAP 包运行，以连接上的 RFC 用户身份，在 SAP 自身的授权检查下执行。</figcaption>
+</figure>
+
+## 先决条件
+
+- **一个可通过网络访问 SAP 系统的 PlaidLink 代理。** 参见[安装 PlaidLink](/zh-cn/reference/cli/plaidlink/install/)。
+- **一个 SAP ECC / S/4HANA 实例连接。** 参见 [SAP ECC 和 S/4HANA 连接器](/zh-cn/reference/connectors/erp/sap-ecc/)。该连接上的 SAP 用户就是每次提取所使用的 RFC 用户。
+- **在 SAP 中安装 PlaidCloud SAP 包。** 您的 SAP Basis 团队为每个 SAP 系统安装一次。
+- **RFC 用户对所提取对象的 SAP 授权。** 参见 [SAP 授权](#sap-授权)。
+
+## 选择步骤
+
+这三个步骤都位于工作流步骤菜单的 **SAP** 下。
+
+| 步骤 | 用途 |
+|---|---|
+| **SAP：临时提取** | 完整或增量读取一个 SAP 表。 |
+| **SAP：运行事务/报表** | 运行事务代码或 ABAP 报表程序并落入其结果。 |
+| **SAP：运行查询 (SQ01)** | 运行已保存的 SAP 查询并落入其结果。 |
+
+每个步骤都以相同的三个字段开头：**代理**、**SAP 连接**，以及用于存放结果的**目标表**。
+
+## 查找 SAP 对象
+
+选择代理和连接后，步骤的搜索会列出匹配的 SAP 对象，即**表**、**事务**或**查询**，具体取决于步骤。输入名称、事务代码或描述中的词语。支持 SAP 的 `*` 通配符。SAP 不提供服务的对象仍会显示，但呈灰色，并附有原因。
+
+选择表会列出其字段及说明，并自动填入其关键字段。选择事务、报表或查询会在**筛选器**选项卡上显示其选择屏幕，该屏幕由 SAP 自己为该对象定义的字段构建，无需了解表或程序的内部细节。
+
+## 提取表
+
+使用 **SAP：临时提取**。
+
+<Steps>
+
+1. 在 **SAP 提取**选项卡上，搜索并选择该表。
+
+2. 输入 **RFC 读取函数**，即 PlaidCloud SAP 包中的表读取函数，与您的 Basis 团队所安装的一致。
+
+3. 检查**关键列**。PlaidCloud 会根据 SAP 数据字典，用表的主键填入这些列，不含客户端字段。勾选复选框，确认它们恰好就是主键。SAP 会拒绝任何其他列集合。
+
+4. 在**限定筛选器**选项卡上添加筛选器。点击一个已知列以添加一行，选择**包含**或**排除**，选择**运算符**（等于、不等于、大于、大于或等于、小于、小于或等于、介于、不介于、包含模式或不包含模式），并使用值帮助直接从 SAP 中选取有效值。为同一列添加多行，可匹配一组值中的任意一个；对于**介于**或**不介于**，则添加一个范围。大型 SAP 表至少需要一个筛选器，例如日期范围或公司代码。
+
+   <Aside type="note">
+   排除范围、“不介于”筛选器、模式匹配以及同一列上多个条件，都会向 SAP 发送更丰富的筛选谓词，这需要代理所连 SAP 系统上安装当前版本的 PlaidCloud SAP 包。旧版包仍可在“包含”或“排除”行上运行简单的等于、不等于和范围筛选器；如果更丰富的筛选器未生效，请让您的 Basis 团队更新该包。
+   </Aside>
+
+5. 若要在每次运行时只读取新增和已更改的行，请设置**增量**选项卡。参见[增量表提取](#增量表提取)。
+
+6. 在**可见性与定义**选项卡上，设置**受管控列**。参见[受管控列](#受管控列)。
+
+</Steps>
+
+货币键位于同一张表中的 `CURR` 金额列，会按其真实值落入。PlaidCloud 会按货币的小数位数对每个金额进行偏移，因此日元金额会以整日元落入。没有货币键的金额列则按 SAP 的存储方式落入，并且运行会报告一条指明该列的警告。
+
+**SAP 客户端（mandt）**和**分片大小**是可选的。将客户端留空即使用连接的默认客户端。
+
+## 运行事务或报表
+
+使用 **SAP：运行事务/报表**。
+
+<Steps>
+
+1. 在 **SAP 运行**选项卡上，搜索并选择一个事务，或在 **Report/Program** 中输入报表程序名称并点击**查找选择屏幕**。二者选其一。
+
+2. 在**筛选器**选项卡上，填写选择屏幕。表单根据事务或报表自身的 SAP 选择屏幕构建。空白字段表示对该字段不做筛选。
+
+   若要改为从已保存的 SAP 变式开始，请从**从 SAP 变式开始**中选择它。PlaidCloud 会用变式的已存储值填写筛选表单，并在表单旁列出变式自身无法带入的值，对于这些值，SAP 会改用报表自己的默认值。选择另一个变式会替换表单中的值；之后编辑某个字段不会改变所显示的已选变式。
+
+3. 设置**最大行数**，默认为 10,000，最高为 50,000。无论如何，SAP 都会运行完整的事务或报表，该上限只限制 PlaidCloud 读回的行数。
+
+4. 对于长时间运行的报表，请勾选 **Run as a background job**，并可选择填写**作业名称（仅异步）**。
+
+5. 在**可见性与定义**选项卡上，设置**受管控列**。
+
+</Steps>
+
+需要交互式输入、弹出窗口或屏幕的报表无法无人值守地运行。SAP 会拒绝它，不会有任何数据落入，并且步骤会报告 SAP 给出的原因。请改在 SAP GUI 中运行该报表。
+
+## 运行 SAP 查询
+
+使用 **SAP：运行查询 (SQ01)**。
+
+<Steps>
+
+1. 在 **SAP 运行**选项卡上，搜索并选择该查询。选择查询会自动填入**工作区**、**用户组**和**查询名称**。您也可以选择**工作区**，并直接输入**用户组**和**查询名称**。
+
+2. 在**筛选器**选项卡上，填写该查询自身的选择屏幕，即其作者在 SQ01 中设置的相同参数和选择选项。空白字段表示对该字段不做筛选。
+
+3. 设置**最大行数**，默认为 10,000，最高为 50,000。
+
+4. 在**可见性与定义**选项卡上，设置**受管控列**。
+
+</Steps>
+
+更改**工作区**、**用户组**或**查询名称**会清除为其他查询构建的筛选表单，因此切换之后请重新查找选择屏幕。
+
+## 受管控列
+
+每个 SAP 提取步骤都需要一个**受管控列**：该步骤所落入的列之一，例如表示公司代码的 `BUKRS`。没有它，步骤无法保存；如果该列不在所落入的列之中，运行将不会落入任何行。
+
+## 预览、计划和授权
+
+每个步骤的**预检**分组包含三个按钮，它们都不会阻止保存步骤。
+
+| 按钮 | 显示内容 |
+|---|---|
+| **预览** | 示例行。表预览直接读取前几行。对于事务、报表或查询，预览会在 SAP 中作为单独的示例运行，上限为 100 行，因此表单会先要求您确认。不会有任何数据落入。 |
+| **计划** | 提取的运行方式，包括其关键列、行数估计和发送给 SAP 的选择条件，以及任何会使其停止的因素。计划被拒绝会禁用**创建并运行**和**保存并运行**，直到您更改配置或新的计划检查通过。您仍然可以保存该步骤。 |
+| **需要的 SAP 授权** | 该对象所需的 SAP 授权，可与您的 Basis 团队共享。此列表仅供参考。 |
+
+<Aside type="caution">
+预览事务、报表或查询给 SAP 带来的开销与真实运行大致相当，因为 SAP 在返回任何行之前会执行整个操作。
+</Aside>
+
+## SAP 授权
+
+SAP 的标准授权检查适用于 RFC 用户，与在 SAP 内部完全一样。
+
+| 提取 | 授权 |
+|---|---|
+| 表 | `S_TABU_NAM` 或 `S_TABU_DIS` 显示，活动 `03` |
+| 事务 | `S_TCODE` |
+| 报表 | 报表授权组的 `S_PROGRAM` `SUBMIT` |
+
+缺少授权会导致运行失败，并显示 SAP 的未授权错误以及列出上述授权的补救办法。PlaidCloud 自身不添加任何权限检查，也绝不会根据**需要的 SAP 授权**列表阻止某个步骤。
+
+## 增量表提取
+
+在 **SAP：临时提取**的**增量**选项卡上，勾选 **Run incrementally** 并输入**水位线列**。它必须是以下之一：
+
+- 日期列，SAP 类型为 `DATS`
+- UTC 时间戳列，SAP 类型为 `TZNTSTMPS` 或 `TZNTSTMPL`
+
+不支持 SAP 类型为 `UTCL` 的时间戳列，并且水位线列不能同时是限定筛选器列。
+
+首次运行会读取整个表。之后的每次运行仅读取等于或晚于上一个水位线（减去**回溯期**）的行，并按关键列合并。只有整个运行全部落入之后，水位线才会前移。SAP 的开放式日期 `99991231` 永远不会成为水位线。晚于运行日期一天以上的日期会使水位线保持在运行日期，而时间戳永远不会使其越过运行的开始时间。
+
+## 列如何落入
+
+**SAP：临时提取**会按 SAP 数据字典中的真实类型落入每一列。
+
+| SAP 类型 | 落入为 |
+|---|---|
+| 日期（`DATS`） | 日期。空白、初始和无效的日期落入为空（`NULL`）。无效日期会使步骤以警告结束。 |
+| 金额、数量、小数（`CURR` / `QUAN` / `DEC`） | 精确小数。当金额的货币键列位于同一张表中且包含在提取内时，PlaidCloud 会将金额偏移到其货币的真实小数位数；否则按 SAP 的存储方式落入。小数位数超过 10 位、整数位数超过 28 位或未声明小数位数的小数，会改为以文本落入，并且步骤会以指明该列的警告结束。 |
+| 整数 | 整数。 |
+| 浮点数（`FLTP`） | 双精度。 |
+| 十进制浮点数（`DF16_*` / `DF34_*`） | 精确文本。 |
+| 短 UTC 时间戳（`TZNTSTMPS`） | 时间戳，精确到秒。 |
+| 长 UTC 时间戳（`TZNTSTMPL`、`UTCL`） | UTC ISO 文本，例如 `2026-01-03T10:15:00.123456Z`，这样可保留时间戳列会丢弃的小数部分。 |
+| 时间（`TIMS`）、代码（`NUMC`）、文本（`CHAR`） | 与 SAP 存储完全一致的文本，保留前导零。 |
+
+如果某一列的 SAP 类型发生变化，提取会用该列的新类型替换整个表，并且步骤会以指明该列的警告结束。增量提取会在同一次运行中完成此操作。如果该读取未能完成，之后的运行会继续读取整个表并给出相同的警告，直到某次成功，增量运行才会恢复。
+
+**SAP：运行事务/报表**将金额列落入为数字，其他所有列落入为文本。**SAP：运行查询 (SQ01)** 将金额、整数和日期列按这些类型落入，其他所有列落入为文本。需要时，请在下游步骤中转换类型。
+
+## 运行限制
+
+**SAP：临时提取**的单次运行在读取了 5,000,000 行或运行了 240 分钟后会暂停，并在完成当前分片之后停止。步骤以警告而不是失败结束，下一次运行会从中断处继续，不会丢失任何行。
+
+## 相关内容
+
+- [SAP ECC 和 S/4HANA 连接器](/zh-cn/reference/connectors/erp/sap-ecc/)：连接字段。
+- [SAP 步骤](/zh-cn/reference/workflow-steps/sap/)：所有 SAP 工作流步骤。
+- [PlaidLink](/zh-cn/reference/cli/plaidlink/)：安装和升级代理。

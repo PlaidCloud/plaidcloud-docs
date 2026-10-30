@@ -1,0 +1,191 @@
+---
+title: Konektor REST NetSuite
+description: Skonfiguruj połączenie z interfejsem REST API NetSuite w PlaidCloud i pobieraj dane finansowe i operacyjne za pomocą SuiteQL w kroku Żądanie REST.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/connectors/rest/netsuite.mdx
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+## Dokumentacja API
+
+[Przeglądarka NetSuite REST API Browser](https://system.netsuite.com/help/helpcenter/en_US/APIs/REST_API_Browser/record/v1/2023.1/index.html) opisuje punkty końcowe rekordów, a [dokumentacja SuiteQL](https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156257770590.html) opisuje język zapytań, którego ten konektor używa do pobierania danych tabelarycznych.
+
+<Aside type="tip">
+Pełny opis od początku do końca — konfiguracja po stronie NetSuite, tworzenie połączenia, jego testowanie i budowanie kroku pobierania — znajdziesz w przewodniku [Połączenie z NetSuite](/pl/guides/connections/netsuite/). Ta strona jest opisem pól i przepisów, na którym opiera się ten przewodnik.
+</Aside>
+
+## Jak działa uwierzytelnianie
+
+Konektor loguje się za pomocą **poświadczeń klienta OAuth 2.0** z asercją klienta JWT podpisaną algorytmem **PS256** — nie ma interaktywnego logowania ani tokenu odświeżania. Generujesz parę kluczy RSA, przesyłasz do NetSuite **publiczny** certyfikat i przekazujesz PlaidCloud odpowiadający mu **klucz prywatny** oraz trzy identyfikatory. Przy każdym pobraniu PlaidCloud tworzy i podpisuje krótkotrwałą asercję, wymienia ją na token dostępu i wywołuje interfejs REST API.
+
+<Aside type="caution">
+Szczegóły dotyczące roli, zakresu i uprawnień poniżej zostały przygotowane zgodnie z udokumentowanym kształtem NetSuite i są **potwierdzane podczas uruchomienia produkcyjnego** — jeśli wymiana tokenu lub zapytanie zostaną odrzucone, zwrócony błąd NetSuite wskaże przyczynę (zakres, rolę lub zapytanie), dzięki czemu możesz ograniczyć lub poprawić dokładnie tę jedną rzecz.
+</Aside>
+
+## Konfiguracja po stronie NetSuite
+
+Wykonaj te czynności w NetSuite przed utworzeniem połączenia w PlaidCloud. Wymaga to uprawnień administratora i leży na ścieżce krytycznej.
+
+### 1. Włącz funkcję
+
+Włącz **OAuth 2.0** i **SuiteTalk (SOAP and REST Web Services)** w menu **Setup > Company > Enable Features > SuiteCloud**.
+
+### 2. Utwórz parę kluczy RSA
+
+Wygeneruj parę kluczy RSA o długości co najmniej 2048 bitów z obsługą skrótu zgodnego z PS256. Na przykład za pomocą OpenSSL:
+
+```bash
+openssl genrsa -out plaidcloud_netsuite.pem 2048
+openssl rsa -in plaidcloud_netsuite.pem -pubout -out plaidcloud_netsuite_public.pem
+```
+
+Zachowaj klucz prywatny (`plaidcloud_netsuite.pem`) w tajemnicy — trafia on do PlaidCloud, nigdy do NetSuite.
+
+### 3. Prześlij certyfikat publiczny → identyfikator certyfikatu
+
+W menu **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup** zmapuj certyfikat publiczny na integrację, jednostkę i rolę. NetSuite zwraca **identyfikator certyfikatu** przesłanego klucza publicznego — to wartość `kid` w JWT i **nie** jest to tajemnica. Zapisz ją.
+
+### 4. Utwórz rekord integracji → identyfikator klienta
+
+W menu **Setup > Integration > Manage Integrations > New** utwórz integrację z włączonym **OAuth 2.0** i wybranym typem przyznania **Client Credentials**. NetSuite wystawia **identyfikator klienta** (consumer key). Zapisz go. W przepływie poświadczeń klienta z asercją **nie ma klucza tajnego klienta**.
+
+### 5. Rola i uprawnienia
+
+Przypisz roli użytej w mapowaniu M2M zestaw uprawnień obejmujący to, co będziesz odczytywać:
+
+- **REST Web Services** (Setup) — wymagane dla każdego wywołania REST.
+- **SuiteAnalytics Workbook** — wymagane, jeśli Twoje zapytanie SuiteQL dotyczy danych analitycznych lub skoroszytów.
+- **Log in using OAuth 2.0 Access Tokens** — wymagane do wymiany tokenu.
+- Uprawnienia do podglądu na poziomie rekordów dla każdego typu rekordu odczytywanego przez zapytania (transakcje, konta, jednostki itd.).
+
+### 6. Identyfikator konta
+
+Identyfikator konta znajdziesz w menu **Setup > Company > Company Information** (pole **Account ID**). Określa on host API:
+
+| Środowisko | Postać identyfikatora konta | Host API |
+|---|---|---|
+| Produkcyjne | `1234567` | `1234567.suitetalk.api.netsuite.com` |
+| Piaskownica | `1234567_SB1` | `1234567-sb1.suitetalk.api.netsuite.com` |
+
+PlaidCloud automatycznie wyprowadza host z identyfikatora konta (zamieniając litery na małe i `_` na `-`). Wprowadź identyfikator konta dokładnie tak, jak pokazuje go NetSuite, w tym sufiks `_SB1` dla piaskownicy.
+
+## Konfiguracja
+
+Utwórz połączenie z typem połączenia **NetSuite** (nie ogólnym typem REST — tylko rodzaj NetSuite wyprowadza host i wstrzykuje zachowanie stronicowania SuiteQL). Formularz zawiera następujące pola:
+
+### Identyfikacja
+
+| Pole | Typ | Opis |
+|---|---|---|
+| Nazwa | Tekst | Wyświetlana nazwa tego połączenia. |
+| Alias | Tekst (wielowierszowy) | Opcjonalny alias lub uwagi dotyczące połączenia. |
+| Aktywne | Przełącznik | Określa, czy połączenie jest włączone. Wyłącz, aby wstrzymać je bez usuwania. |
+| Baza danych tylko do odczytu | Przełącznik | Ogranicza połączenie do operacji tylko do odczytu. |
+| Typ dostępu | Lista wyboru | Poziom dostępu dla tego połączenia: tylko odczyt, tylko zapis lub odczyt i zapis. |
+
+### Dane uwierzytelniające NetSuite
+
+| Pole | Typ | Opis |
+|---|---|---|
+| Identyfikator klienta | Tekst | **Identyfikator klienta** z rekordu integracji (krok 4). |
+| ID certyfikatu | Tekst | **Identyfikator certyfikatu** (`kid` w JWT) zwrócony po przesłaniu certyfikatu publicznego (krok 3). To nie jest tajemnica. |
+| ID konta NetSuite | Tekst | **Identyfikator konta** (krok 6), na przykład `1234567` lub `1234567_SB1`. |
+| Certyfikat prywatny NetSuite | Tekst (PEM) | **Klucz prywatny** (krok 2), wklejony jako pełny wielowierszowy blok PEM. Przechowywany w postaci zaszyfrowanej i nigdy nie jest zwracany jawnym tekstem. |
+
+<Aside type="note">
+Pole **Certyfikat prywatny NetSuite** maskuje klucz podczas wklejania. Po ponownym otwarciu zapisanego połączenia jest puste: pozostaw je puste, aby zachować zapisany klucz, lub wklej nowy, aby go zastąpić.
+</Aside>
+
+## Pobieranie danych za pomocą SuiteQL
+
+Interfejs rekordów NetSuite zwraca tylko `{id, links}` dla każdego wiersza, dlatego PlaidCloud pobiera dane tabelaryczne za pomocą **SuiteQL** w [kroku Żądanie REST](/pl/guides/workflows/rest-request-step/). Skonfiguruj krok względem połączenia NetSuite:
+
+- **Metoda** — `POST`
+- **Punkt końcowy** — `/services/rest/query/v1/suiteql` (dosłowna ścieżka; host pochodzi z połączenia)
+- **Treść żądania** — zapytanie w formacie JSON: `{"q": "SELECT ... FROM ... ORDER BY internalid"}`
+
+<Aside type="caution">
+**Zawsze podawaj w zapytaniu SuiteQL ze stronicowaniem przesunięciem deterministyczną klauzulę `ORDER BY`** (na przykład `ORDER BY internalid`). NetSuite stronicuje według liczbowego przesunięcia; bez stabilnego sortowania strony po cichu duplikują i pomijają wiersze, co zaburza sumy finansowe.
+</Aside>
+
+### Nie konfiguruj ręcznie stronicowania ani nagłówków
+
+W przypadku połączenia NetSuite krok **automatycznie wstrzykuje** szczegóły SuiteQL:
+
+- Nagłówki `Prefer: transient` i `Content-Type: application/json`.
+- Stronicowanie przesunięciem względem pól `items` / `hasMore` odpowiedzi, przy stałym rozmiarze strony ustalonym przez usługę.
+
+Nie zmieniaj ustawień **Stronicowanie i analiza** ani tych nagłówków — ustawia je połączenie. Ustaw tylko **Punkt końcowy**, **Treść żądania** i **kolumny** (poniżej).
+
+### Określ typy kolumn kwot i dat
+
+SuiteQL zwraca **każdą** wartość jako ciąg JSON (`"1234.56"`, `"2026-01-15"`, `"T"`). Zdefiniuj kolumny wyjściowe ręcznie z ich rzeczywistymi typami — `Currency`/`Decimal` dla kwot, `Date`/`Datetime` dla dat, `Boolean` dla flag `"T"`/`"F"` — a PlaidCloud przekształci ciągi na typowane kolumny podczas ładowania do tabeli. Puste ciągi są mapowane na `null`. (Automatyczne zgadywanie schematu nie stosuje konfiguracji usługi połączenia, więc nie zrobi tego za Ciebie — zdefiniuj kolumny samodzielnie.)
+
+<Aside type="caution">
+SuiteQL zwraca daty w **formacie wyświetlania konta** (często `M/D/YYYY`), który jest niejednoznaczny, dlatego PlaidCloud go nie zgaduje. Dla kolumny `Date`/`Datetime` sformatuj pole w zapytaniu — `TO_CHAR(col, 'YYYY-MM-DD')` (lub `'YYYY-MM-DD HH24:MI:SS'`) — albo pozostaw kolumnę jako `Text`. Wartość, której nie można przekonwertować, powoduje niepowodzenie uruchomienia z komunikatem wskazującym kolumnę i wartość.
+</Aside>
+
+## Znane ograniczenia
+
+| Ograniczenie | Co to oznacza |
+|---|---|
+| Wymagane ręczne kolumny | Automatyczne zgadywanie schematu nie stosuje konfiguracji usługi NetSuite, więc kolumny kwot, dat i wartości logicznych oraz ich typy definiujesz ręcznie. |
+| Stronicowanie ustala usługa | Tryb stronicowania, ścieżki i rozmiar strony są ustawiane przez połączenie i **nie** można ich zmieniać w kroku. |
+| Tylko pełne zastąpienie tabeli | Każde pobranie wyodrębnia cały wynik od nowa — **nie ma** ścieżki przyrostowej ani różnicowej. Zaplanowane pobranie przy każdym uruchomieniu odczytuje całą tabelę, więc ogranicz klauzulę `WHERE` do potrzebnego wycinka. |
+| Wiele walut / jednostek zależnych | W `transaction`/`transactionline` wartość `amount` jest wyrażona w **własnej** walucie transakcji. Naiwna suma `SUM(amount)` między jednostkami zależnymi jest **błędna z punktu widzenia konsolidacji** — przy sumowaniu między jednostkami zależnymi wybieraj pola skonsolidowane lub przeliczone według kursu walutowego. |
+| Limit SuiteQL ok. 100 000 wierszy | NetSuite ogranicza pojedyncze zapytanie do około 100 000 wierszy bez SuiteAnalytics Connect. Ręcznie napisane zapytanie, które by go przekroczyło, kończy się wyraźnym błędem z prośbą o węższy zakres dat lub inne filtry, zamiast po cichu obcinać wyniki. Gotowe kroki [NetSuite: importuj salda i NetSuite: importuj szczegóły księgi głównej](/pl/reference/workflow-steps/netsuite/) automatycznie dzielą zakres dat na okna, aby się w nim zmieścić. |
+| Księgowość wieloksięgowa | Na koncie z funkcją Multi-Book Accounting `TransactionAccountingLine` zawiera jeden wiersz na księgę dla każdej pozycji transakcji — niefiltrowane `SUM` w różnych księgach liczy podwójnie (lub N-krotnie). Gotowe kroki importu domyślnie używają księgi podstawowej; ręcznie napisane zapytanie powinno jawnie filtrować `accountingbook = 1` (lub wybraną księgę), chyba że rzeczywiście potrzebujesz sumy ze wszystkich ksiąg. |
+| Koperta odpowiedzi | Dokładna koperta odpowiedzi oraz akceptowany zakres/rola są **potwierdzane podczas uruchomienia produkcyjnego**; konektor jest zbudowany zgodnie z udokumentowanym kształtem NetSuite. |
+
+## Przykładowe zapytania
+
+Finansowe — pozycje transakcji księgi głównej dla okresu, z typami i sortowaniem:
+
+```sql
+SELECT
+    tl.transaction   AS transaction_id,
+    t.trandate       AS tran_date,
+    a.acctnumber     AS account_number,
+    tl.subsidiary    AS subsidiary_id,
+    tl.foreignamount AS amount
+FROM   transactionline tl
+JOIN   transaction     t ON t.id = tl.transaction
+JOIN   account         a ON a.id = tl.expenseaccount
+WHERE  t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                      AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY tl.transaction, tl.id
+```
+
+Operacyjne — otwarte zamówienia sprzedaży według klienta:
+
+```sql
+SELECT
+    so.tranid        AS order_number,
+    so.entity        AS customer_id,
+    so.trandate      AS order_date,
+    so.status        AS order_status
+FROM   transaction so
+WHERE  so.type = 'SalesOrd'
+  AND  so.status = 'SalesOrd:B'
+ORDER BY so.id
+```
+
+<LinkCard
+  title="Połączenie z NetSuite (przewodnik)"
+  href="/pl/guides/connections/netsuite/"
+  description="Krok po kroku: konfiguracja po stronie NetSuite, tworzenie połączenia, jego testowanie oraz budowanie finansowego i operacyjnego pobrania SuiteQL."
+/>
+
+<LinkCard
+  title="Analiza danych finansowych NetSuite (samouczek)"
+  href="/pl/get-started/tutorials/analyze-netsuite-financials/"
+  description="Przewodnik na pierwszy dzień: pobierz księgę główną i przekształć ją w miesięczny rachunek zysków i strat oraz zestawienie wiekowania należności."
+/>
+
+<LinkCard
+  title="Przykładowe zapytania SuiteQL dla NetSuite"
+  href="/pl/guides/connections/netsuite-financial-queries/"
+  description="Zapytania do skopiowania: zapisy dziennika, zestawienie obrotów i sald, rachunek zysków i strat, bilans, otwarte należności, zamówienia sprzedaży, zamówienia zakupu i zapasy."
+/>

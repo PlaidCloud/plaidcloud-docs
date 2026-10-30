@@ -1,0 +1,148 @@
+---
+title: API de encaminhamento por tempo de condução
+description: Chame os pontos finais REST de encaminhamento por tempo de condução do PlaidCloud — polígonos de isócrona e classificação do mais próximo por tempo de condução, assentes no motor de encaminhamento autoalojado do PlaidCloud. Pré-visualização por adesão, com melhor esforço, sem SLA.
+sidebar:
+  label: API de encaminhamento por tempo de condução
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud expõe o encaminhamento por tempo de condução como dois pontos finais REST em `/rest/v1/analyze/route`: um ponto final de **isócrona**, que desenha um polígono de tempo de condução (ou distância de condução) em torno de uma origem, e um ponto final **find-nearest**, que classifica os destinos candidatos pelo tempo de condução real em vez da distância em linha reta. Ambos funcionam no motor de encaminhamento autoalojado do PlaidCloud, criado a partir de dados de estradas do OpenStreetMap (ODbL), e envolvem cada resultado num pequeno envelope `plaidcloud` que contém a atribuição.
+
+<Aside type="caution" title="Pré-visualização por adesão — leia isto antes de desenvolver com base nela">
+O encaminhamento por tempo de condução está **desativado por predefinição** e só chega aos inquilinos que aderiram. Funciona num conjunto de encaminhamento pequeno e partilhado e é oferecido com **melhor esforço e sem SLA** — não há capacidade de trânsito em direto garantida, e um pedido pode ser recusado com um `503` quando o conjunto está ocupado, em vez de ser colocado em fila ou repetido por si. Se ainda não o tem ativado, contacte o PlaidCloud para perguntar sobre a pré-visualização antes de criar uma dependência dela.
+</Aside>
+
+## Autenticação e direito de utilização
+
+Cada chamada de encaminhamento requer:
+
+- Uma sessão normal do PlaidCloud ou um token de portador com a função **`analyze.table.read`** — a mesma função que controla o outro acesso de leitura aos dados de um projeto. Não existe nenhuma função específica de encaminhamento.
+- O encaminhamento por tempo de condução incluído no seu plano — o direito de utilização de tempo de condução ativado para o seu inquilino. Um inquilino cujo plano não o inclui recebe um `403` com `detail: "drive_time_disabled"` em cada chamada — não existe modo parcial nem só de leitura.
+
+## Pontos finais
+
+### `isochrone` — polígono de tempo de condução em torno de uma origem
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `origin` | `{ lat, lon }`, obrigatório | Uma única coordenada. A isócrona aceita uma origem por chamada |
+| `costing` | cadeia de carateres | `auto` (predefinido), `truck`, `bike` ou `pedestrian` |
+| `contours_minutes` | matriz de inteiros, obrigatório | Uma entrada por cada anel de contorno pretendido, cada uma com 1–120 minutos. Até 5 contornos por chamada |
+| `costing_options.truck.height` | decimal, metros | Opcional, > 0 e ≤ 10. Aplica-se apenas com o custeio `truck` |
+| `costing_options.truck.weight` | decimal, quilogramas | Opcional, > 0 e ≤ 100000. Aplica-se apenas com o custeio `truck` |
+| `costing_options.truck.length` | decimal, metros | Opcional, > 0 e ≤ 50. Aplica-se apenas com o custeio `truck` |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Resposta — o GeoJSON de isócrona do próprio motor de encaminhamento, sem modificações, mais o envelope `plaidcloud`:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest` — destinos mais próximos por tempo de condução
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `origins` | matriz de `{ lat, lon }`, obrigatório | 1–5 origens |
+| `destinations` | matriz de `{ lat, lon }`, obrigatório | 1–500 candidatos. Consulte [pré-filtragem de destinos](#pré-filtragem-de-destinos) abaixo |
+| `costing` | cadeia de carateres | `auto` (predefinido), `truck`, `bike` ou `pedestrian` |
+| `top_n` | inteiro | Destinos mais próximos a devolver por origem. 1–50, predefinido 5 |
+| `costing_options.truck.{height,weight,length}` | igual à isócrona | Aplica-se apenas com o custeio `truck` |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` refere-se à posição desse destino na matriz `destinations` que submeteu, e não à sua posição em qualquer classificação interna — guarde-o para associar um resultado de volta aos seus próprios dados.
+
+#### Pré-filtragem de destinos
+
+Pode submeter até 500 destinos, mas apenas os **50 mais próximos em distância em linha reta** de qualquer uma das suas origens são enviados para o cálculo de encaminhamento por tempo de condução propriamente dito. Se submeter mais de 50, o PlaidCloud restringe o conjunto com um pré-filtro em linha reta (círculo máximo) antes de classificar os restantes pelo tempo de condução real — pelo que um destino que está próximo no mapa mas do outro lado de um limite em linha reta pode ser excluído antes de o tempo de condução ser sequer calculado. Para conjuntos de destinos que já têm menos de 50, todos os candidatos são encaminhados e isto não tem efeito. `top_n` está limitado a 50 pelo mesmo motivo: não pode devolver mais candidatos do que os que o passo de encaminhamento considera.
+
+### Modos de custeio
+
+São suportados `auto`, `truck`, `bike` e `pedestrian`. Com o custeio `truck` também pode restringir o percurso por dimensões do veículo — `costing_options.truck.height`, `.weight`, `.length` — para que um percurso possa evitar uma ponte baixa ou uma estrada com restrição de peso. **O encaminhamento de matérias perigosas não é suportado.** Não existe nenhum parâmetro de matérias perigosas em nenhum dos pontos finais, e nenhum está disponível, nem mesmo indiretamente, através do custeio `truck` — esta API não contorna as restrições de materiais perigosos, pelo que não dependa dela para transporte de mercadorias regulamentadas como perigosas.
+
+## Erros
+
+| Estado | Significado |
+|---|---|
+| `403` | Falta a função `analyze.table.read` ou o seu plano não inclui o direito de utilização de tempo de condução |
+| `422` | Um campo do pedido não passou na validação — por exemplo, mais de 5 contornos, um contorno fora de 1–120 minutos, mais de 5 origens ou uma dimensão de camião fora do intervalo |
+| `503 route_unavailable` | Não foi possível alcançar o motor de encaminhamento, excedeu o tempo limite ou devolveu um erro — **ou** a quota de pedidos em simultâneo do seu inquilino já estava em uso (consulte [Limites](#limites)) |
+
+Um `503` aqui nunca é um `5xx` em bruto e nunca uma espera sem limite — cada chamada ao motor de encaminhamento é executada com um tempo limite definido, pelo que um serviço a montante lento ou bloqueado surge rapidamente como `503` em vez de deixar o pedido aberto.
+
+## Limites
+
+- **A simultaneidade por inquilino está limitada a 2 pedidos em simultâneo.** Isto reflete o conjunto de encaminhamento partilhado por trás da pré-visualização, e não uma quota por plano — um terceiro pedido em simultâneo do mesmo inquilino recebe `503 route_unavailable` até um dos dois primeiros terminar. Não há fila; tente novamente após um breve intervalo.
+- **Sem colocação das respostas em cache.** Cada chamada é respondida em direto face ao índice de encaminhamento atual.
+- **As coordenadas nunca são registadas.** Os registos de falhas guardam o caminho do pedido e o tipo de erro, e não a origem, o destino nem quaisquer outros dados de localização que tenha submetido.
+- Os dados de encaminhamento são criados a partir de dados de estradas do OpenStreetMap (ODbL) — aplicam-se aqui as mesmas ressalvas de cobertura e atualidade que se aplicam à [API de geocodificação do PlaidCloud](/pt-pt/guides/data/geocoding-api/#cobertura-e-determinismo--leia-isto-primeiro): forte em regiões bem mapeadas, mais variável noutras e editada continuamente pela comunidade, em vez de um conjunto de dados comercial versionado.
+- Se apresentar resultados de encaminhamento ou áreas de tempo de condução a um utilizador final, apresente a cadeia `plaidcloud.attribution` (ou o crédito equivalente do OSM) junto com eles — a mesma obrigação da ODbL que se aplica aos resultados de geocodificação aplica-se aos resultados de encaminhamento.
+
+## Relacionado
+
+- [Migrar da geocodificação do Google ou do Mapbox](/pt-pt/guides/data/geocoding-api/) — os pontos finais REST de geocodificação do PlaidCloud e as mesmas ressalvas de cobertura do OpenStreetMap
+- [Passo Pedido REST](/pt-pt/guides/workflows/rest-request-step/) — chame estes pontos finais a partir de um fluxo de trabalho

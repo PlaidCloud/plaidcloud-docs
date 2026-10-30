@@ -1,0 +1,138 @@
+---
+title: Połączenie z Dynamics 365 Finance & Operations
+description: Połącz PlaidCloud z Dynamics 365 Finance & Operations przez poświadczenia klienta Azure AD, pobieraj jednostki OData lub zbiorcze wyodrębnienia DMF gotowym krokiem importu, a następnie księguj zapisy dziennika asynchronicznie.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Dynamics 365 Finance & Operations (D365 F&O) przez jego punkty końcowe OData i Data Management Framework (DMF), aby pobierać dane główne i transakcyjne bez ręcznego pisania OData oraz księgować z powrotem zapisy dziennika ogólnego. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import uruchamiaj najpierw w środowisku piaskownicy, a przed księgowaniem na żywo przejdź przez poniższą opcję **Validate Only** dla każdej partii księgowań.
+</Aside>
+
+## Wymagania wstępne
+
+W Azure AD i D365 F&O potrzebujesz:
+
+- **Rejestracji aplikacji Entra ID (Azure AD)** dla PlaidCloud z **kluczem tajnym klienta**, z przyznanym uprawnieniem aplikacji (lub uprawnieniem delegowanym zatwierdzonym przez administratora) do zasobu D365 F&O.
+- **Identyfikatora tenanta** Azure AD.
+- **Adresu URL środowiska** D365 F&O, które PlaidCloud ma wywoływać (na przykład `https://yourorg.operations.dynamics.com`).
+- Wartości **zasobu/zakresu** — zwykle samego adresu URL środowiska z dopisanym `/.default` — dla której rejestracja aplikacji żąda tokenu.
+
+<Aside type="note">
+Połączenie uwierzytelnia się jako aplikacja, a nie użytkownik — przepływ **poświadczeń klienta** Entra ID, ten sam mechanizm OAuth2, którego PlaidCloud używa w innych połączeniach REST Microsoft. Nie ma interaktywnego logowania.
+</Aside>
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz **Dynamics 365 Finance & Operations** z menu.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `D365 F&O Prod`. |
+   | Adres URL środowiska | Adres URL Twojego środowiska, np. `https://yourorg.operations.dynamics.com`. |
+   | Identyfikator klienta | Identyfikator aplikacji (klienta) z rejestracji aplikacji Entra. |
+   | Klucz tajny klienta | Klucz tajny klienta z rejestracji aplikacji. |
+   | ID tenanta | Identyfikator tenanta Azure AD. |
+   | Zasób/zakres | Zakres OAuth2, o który należy zażądać, zwykle adres URL środowiska plus `/.default`. |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Szybki test połączenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Import D365 F&O Entity**.
+
+2. Ustaw **Połączenie D365 F&O** na swoje połączenie, **Typ jednostki** na `main_accounts`, a **Tabela docelowa** na tabelę roboczą.
+
+3. Uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że tenant, dane uwierzytelniające i adres URL środowiska są poprawne. Błąd wskazuje problem — nieprawidłowy klucz tajny klienta, brak przyznanego uprawnienia lub niewłaściwy adres URL środowiska.
+
+## Importowanie danych
+
+<Steps>
+
+1. Dodaj krok **Import D365 F&O Entity** i ustaw **Połączenie D365 F&O** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ jednostki** na wybrany rekord, a **Tryb synchronizacji** na `odata` dla pobrania o normalnym rozmiarze lub `dmf` dla zbiorczego wyodrębnienia dużej jednostki.
+
+3. Dodaj **Filtry**, aby ograniczyć pobranie — zakresy dat, kont i wymiarów są tłumaczone na OData `$filter` żądania, ograniczone dla każdej jednostki do pól, według których D365 F&O faktycznie potrafi filtrować po stronie serwera.
+
+4. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+### Jednostki i filtry
+
+| Typ jednostki | Co pobiera | Pola, po których można filtrować |
+|---|---|---|
+| `main_accounts` | Plan kont | zakres kont, wymiar |
+| `currencies` | Dane główne walut | — |
+| `customers` | Dane główne klientów | zakres kont |
+| `vendors` | Dane główne dostawców | zakres kont |
+| `released_products` | Dane główne wydanych produktów | — |
+| `ledger_journal_headers` | Nagłówki dzienników niezaksięgowanych i zaksięgowanych | zakres dat, zakres kont, wymiar |
+
+<Aside type="note">
+**Tryb synchronizacji: OData a DMF.** `odata` wywołuje standardowe punkty końcowe jednostek OData D365 F&O bezpośrednio — najprostsza ścieżka, odpowiednia do rutynowych pobrań. `dmf` przesyła asynchroniczne zadanie eksportu Data Management Framework i pobiera powstały pakiet po jego zakończeniu — ścieżka do zbiorczego wyodrębnienia dużej jednostki (na przykład pełnej historii `ledger_journal_headers`), które byłoby wolne lub obcięte przy zwykłym stronicowaniu OData.
+</Aside>
+
+## Księgowanie zapisów dziennika
+
+Krok **D365 F&O: Post Journal Entry** księguje zapisy dziennika księgi głównej przez wspólny potok zapisu ERP PlaidCloud, używając asynchronicznej akcji księgowania dziennika w usłudze niestandardowej D365 F&O.
+
+<Steps>
+
+1. Zbuduj **tabelę nagłówka** — jeden wiersz na zapis dziennika — z `journal_id` (identyfikator zapisu), `journal_name` (nazwa dziennika D365 F&O, do którego księgujesz), `posting_date` i `description`.
+
+2. Zbuduj **tabelę wierszy** — jeden lub więcej wierszy na `journal_id` — z `account`, `debit`, `credit` i wszystkimi kolumnami wymiarów wymaganymi przez Twoją księgę.
+
+3. Dodaj krok **D365 F&O: Post Journal Entry**, ustaw **Połączenie D365 F&O**, **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud buduje i sprawdza każdy zapis bez rezerwacji w rejestrze i bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na zapis: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Popraw każdy wiersz `error` i zwaliduj ponownie.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym zapisie.
+
+</Steps>
+
+### Jak działa księgowanie
+
+PlaidCloud przesyła każdy zapis dziennika do asynchronicznej akcji księgowania w usłudze niestandardowej D365 F&O, a następnie odpytuje, aż usługa zgłosi końcowy stan zapisu. Zapis jest zgłaszany jako `posted` dopiero po **potwierdzeniu** tego stanu końcowego — zapis, który został przyjęty, ale którego stan końcowy nigdy się nie rozstrzyga, pozostaje w kwarantannie zamiast zostać zapisany jako zaksięgowany, więc zablokowane przesłanie nigdy po cichu nie przechodzi jako sukces. Własna rezerwacja w rejestrze PlaidCloud chroni przed podwójnym zaksięgowaniem tego samego zapisu przy ponowionej lub ponownie uruchomionej partii.
+
+### Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego zapisu. Aby go skorygować, zaksięguj nowy zapis ze zamienionymi względem oryginału debetami i kredytami — **zaksięgowany zapis storno** — zamiast edytować oryginał w miejscu. Zachowuje to własną ścieżkę audytu D365 F&O i odpowiada sposobowi wprowadzania korekt bezpośrednio w aplikacji.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Tryb synchronizacji DMF ma opóźnienie wyodrębnienia.** Pobranie `dmf` czeka na asynchroniczne zadanie eksportu — spodziewaj się, że potrwa wyraźnie dłużej niż pobranie `odata` o tym samym rozmiarze, i nie używaj go do małego odczytu wrażliwego na opóźnienia.
+- **Filtrowanie według wymiarów zależy od konfiguracji wymiarów Twojej księgi.** Wymiar finansowy, który nie jest częścią struktury kont, nie może być filtrowany po stronie serwera; zawęź go zamiast tego w przepływie pracy po pobraniu.
+- **Ten konektor różni się od ogólnego [konektora Dynamics REST](/pl/reference/connectors/rest/dynamics/).** Tamten konektor dotyczy innych aplikacji Dynamics 365 (na przykład Sales/CRM); użyj go tylko wtedy, gdy nie łączysz się z Finance & Operations.
+</Aside>
+
+## Powiązane
+
+- [Konektor REST Dynamics 365 F&O](/pl/reference/connectors/rest/dynamics-365-fo/) — opis pól.
+- [Import D365 F&O Entity](/pl/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/pl/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [Przeglądanie historii księgowań ERP](/pl/guides/connections/erp-post-history/) — trwały zapis każdej próby księgowania w D365 F&O i jej bieżącego stanu.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

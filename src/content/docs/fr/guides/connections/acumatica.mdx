@@ -1,0 +1,137 @@
+---
+title: Se connecter à Acumatica
+description: Connectez PlaidCloud à Acumatica et récupérez les données de base et transactionnelles avec l'étape d'importation d'entité prête à l'emploi, puis comptabilisez écritures de journal, factures, factures fournisseur et paiements avec l'étape de comptabilisation Acumatica.
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à l'API REST basée sur les contrats d'Acumatica pour récupérer des données de référence et transactionnelles sans écrire d'OData à la main, et comptabiliser en retour des transactions de journal, des factures de vente, des factures fournisseur et des paiements. Ce guide couvre la connexion, l'étape d'importation et l'étape de comptabilisation.
+
+<Aside type="caution">
+Exécutez chaque importation d'abord sur une société de test (sandbox), et parcourez **Preview and Validate** ci-dessous pour chaque lot à comptabiliser avant de comptabiliser en production.
+</Aside>
+
+## Prérequis
+
+Dans Acumatica, vous avez besoin des éléments suivants :
+
+- Une **URL de base de l'instance** (par exemple `https://yourcompany.acumatica.com`).
+- Un nom de **société** (l'ID exact de la société sur laquelle PlaidCloud se connecte) et, si vous utilisez des succursales, la **succursale** sous laquelle comptabiliser.
+- Un **nom d'utilisateur** et un **mot de passe** dédiés à PlaidCloud, avec un rôle qui donne accès aux entités que vous lirez et aux écrans de documents dans lesquels vous comptabiliserez.
+- L'accès à l'**API REST basée sur les contrats** activé pour cet utilisateur (**System > Integration Preferences**, activé par défaut dans les versions récentes d'Acumatica).
+
+<Aside type="note">
+L'API REST basée sur les contrats d'Acumatica fonctionne par **session** et non par jeton : PlaidCloud ouvre une session une fois par unité de travail bornée (une récupération d'importation, un lot de comptabilisation) et la ferme à la fin, au lieu de s'authentifier à chaque appel. Les licences d'essai et de niveau inférieur d'Acumatica peuvent limiter les sessions d'API **simultanées** à 2 seulement ; évitez donc d'exécuter de nombreuses étapes Acumatica en parallèle sur la même connexion.
+</Aside>
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Acumatica** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom convivial, par exemple `Acumatica Prod`. |
+   | URL de base de l'instance | L'URL de votre instance, par exemple `https://yourcompany.acumatica.com`. |
+   | Nom du point de terminaison | Le nom du point de terminaison du contrat. `Default`, sauf si un point de terminaison personnalisé a été publié. |
+   | Version du point de terminaison | Facultatif, par exemple `25.200.001`. Laissez vide pour utiliser la dernière version publiée du point de terminaison. |
+   | Société / locataire | L'ID exact de la société Acumatica. |
+   | Succursale | Facultatif. Laissez vide pour utiliser la succursale par défaut de l'utilisateur de connexion. |
+   | Nom d'utilisateur | L'utilisateur d'API PlaidCloud. |
+   | Mot de passe | Le mot de passe de l'utilisateur d'API PlaidCloud. |
+
+4. Cliquez sur `Create`.
+
+</Steps>
+
+## Tester la connexion
+
+<Steps>
+
+1. Ajoutez une étape **Import Acumatica Entity** à un workflow.
+
+2. Définissez **Connexion Acumatica** sur votre connexion, **Type d'entité** sur `account` et **Table cible** sur une table temporaire.
+
+3. Exécutez l'étape (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Une table cible remplie confirme que la connexion, la société et la succursale sont corrects. Une erreur nomme le problème : identifiants incorrects, mauvaise société ou rôle sans accès à l'API REST.
+
+## Importer des données
+
+<Steps>
+
+1. Ajoutez une étape **Import Acumatica Entity** et définissez **Connexion Acumatica** et **Table cible**.
+
+2. Définissez **Type d'entité** sur l'enregistrement souhaité. Données de base et listes de référence : `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project` ; entités transactionnelles : `sales_invoice`, `bill`, `sales_order`, `shipment`.
+
+3. Laissez **Actifs uniquement** coché pour ne récupérer que les enregistrements actifs, pour les entités qui portent un indicateur Active.
+
+4. Définissez **Mis à jour après** sur une date ou une date-heure ISO pour ne récupérer que les lignes modifiées depuis (un filtre côté requête, et non un curseur incrémental persistant : vous fournissez la date limite à chaque exécution).
+
+5. Ajoutez des **Filtres** pour borner une récupération volumineuse : chacun est une clause `{field, operator, value}` (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) ou une plage `{field, from, to}`, limitée pour chaque entité aux champs qu'Acumatica peut réellement filtrer côté serveur. PlaidCloud rejette un champ de filtre que l'entité ne prend pas en charge plutôt que de l'ignorer silencieusement.
+
+6. Exécutez l'étape et vérifiez la table cible.
+
+</Steps>
+
+<Aside type="note">
+La balance de vérification, le détail des transactions du grand livre, les stocks disponibles, les budgets et les données intersociétés se trouvent tous derrière des Generic Inquiries d'Acumatica plutôt que dans les entités basées sur les contrats ci-dessus, et PlaidCloud ne génère pas de GI à votre place. Si vous en avez besoin, créez la GI dans Acumatica et récupérez-la avec une [connexion REST générique](/fr/reference/connectors/rest/generic-rest/) à la place.
+</Aside>
+
+## Comptabiliser des documents
+
+L'étape **Acumatica Post** comptabilise quatre types de documents par le même pipeline d'écriture partagé que toutes les étapes de comptabilisation ERP : **JournalTransaction**, **SalesInvoice**, **Bill** et **Payment**.
+
+<Steps>
+
+1. Créez une **table d'en-tête** (une ligne par document) avec les colonnes `ref` (l'identifiant de votre document), `doc_type` (`JournalTransaction`, `SalesInvoice`, `Bill` ou `Payment`), `posting_date`, `party_id` (client/fournisseur, lorsque le type de document en exige un), `memo`, `due_date` et `branch_id`. Un même lot peut mélanger des types de documents : PlaidCloud le partitionne par `doc_type` avant la comptabilisation.
+
+2. Créez une **table des lignes** (une ou plusieurs lignes par `ref`) adaptée au type de document :
+
+   | Type de document | Colonnes de lignes |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. Ajoutez une étape **Acumatica Post**, puis définissez **Connexion Acumatica**, **Environnement**, **Table d'en-tête**, **Table des lignes** et une **Table de résultat**.
+
+4. Laissez **Validate Only** coché et exécutez l'étape : PlaidCloud construit et contrôle chaque document sans réservation dans le registre et sans rien comptabiliser.
+
+5. Examinez la table de résultat (une ligne par document : `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`). Corrigez toute ligne `error` et validez de nouveau.
+
+6. Décochez **Validate Only** et exécutez de nouveau pour comptabiliser réellement. Laissez **Continue On Error** coché, sauf si vous voulez qu'un lot s'arrête net au premier document en échec.
+
+</Steps>
+
+### Fonctionnement de la comptabilisation
+
+Acumatica crée chaque document **en attente (Hold)**, puis PlaidCloud appelle l'action de libération, qui s'exécute de façon asynchrone (une réponse `202`, interrogée jusqu'à son terme, puis un `204` confirme la libération). PlaidCloud ne signale un document comme `posted` qu'une fois la libération **confirmée** : un document qui arrive mais dont la libération n'est jamais confirmée reste en quarantaine au lieu d'être enregistré comme comptabilisé, de sorte qu'un Hold bloqué ne passe jamais silencieusement pour un succès.
+
+### Limites de capacités : à lire avant de comptabiliser en production
+
+<Aside type="caution">
+- **Aucune clé d'idempotence native.** L'API d'écriture d'Acumatica n'a pas de champ d'idempotence par document ; la réservation dans le registre de PlaidCloud est donc **la seule** protection contre une double comptabilisation lors d'une nouvelle tentative ou d'une réexécution d'un lot. Ne contournez pas le registre de cette étape en comptabilisant le même document d'une autre manière.
+- **L'annulation est manuelle.** Aucun type de document n'a d'action d'annulation ou d'extourne documentée dans l'API basée sur les contrats d'Acumatica, et PlaidCloud n'en simule donc jamais une : un document comptabilisé ne peut pas être annulé depuis cette étape. Corrigez un document mal comptabilisé directement dans Acumatica.
+- **Aucune recherche fiable pour Payment.** Acumatica n'expose aucun champ documenté permettant de rapprocher un Payment de la requête de PlaidCloud après un résultat ambigu (délai dépassé, réponse perdue). Un Payment dont l'issue est incertaine est mis en quarantaine plutôt que deviné ; résolvez-le en vérifiant directement dans Acumatica.
+- **Le filtrage par centre de coûts au niveau des lignes n'est pas effectué côté serveur.** Le `$filter` d'Acumatica n'atteint pas les dimensions des lignes d'un document ; filtrez donc au niveau de l'en-tête ou de l'entité et effectuez la restriction au niveau des lignes dans votre workflow après la récupération.
+</Aside>
+
+## Voir aussi
+
+- [Connecteur REST Acumatica](/fr/reference/connectors/rest/acumatica/) : référence des champs.
+- [Import Acumatica Entity](/fr/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents](/fr/reference/workflow-steps/acumatica/acumatica-post/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/) : l'enregistrement permanent de chaque tentative de comptabilisation Acumatica et de son état en direct.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

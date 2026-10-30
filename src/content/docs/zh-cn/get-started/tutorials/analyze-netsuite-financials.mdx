@@ -1,0 +1,230 @@
+---
+title: 分析 NetSuite 财务数据：从连接到损益表
+description: NetSuite 端到端教程：建立连接，使用 SuiteQL 提取总账，将其整理为月度损益表和应收账款账龄，放到仪表板上，并计划刷新。
+sidebar:
+  label: 分析 NetSuite 财务数据
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*约 45 分钟 · 一个可用的 NetSuite 连接、一张已加载的总账、一张月度损益表、一份应收账款账龄，以及一个计划刷新*
+
+这是财务总监或 FP&A 分析师的入门路径：完成后，您将直接从 NetSuite 提取**总账**，将其转换为可像报表一样阅读的**月度损益表**，构建**应收账款账龄**，把两者放到仪表板上，并让整个流程自动刷新。无需导出电子表格，也无需手动重新录入，数据来自 NetSuite 并保持最新。
+
+您只需连接一次、提取一次，然后做真正重要的部分：将原始总账行整理成业务人员周一早上要看的汇总。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="从左到右的五个阶段：NetSuite、运行 SuiteQL 的 REST 请求步骤、已加载的总账表、进行分组和汇总的 Table Extract 步骤，以及损益表和仪表板，并由计划刷新驱动。" style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">SuiteQL 提取</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">总账表</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">分组并求和</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">损益表</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">建立连接，提取一次总账，再将其整理成可阅读的报表，整个流程都可按计划重新运行。</figcaption>
+</figure>
+
+## 先决条件
+
+- 一个 PlaidCloud 工作区和一个用于操作的项目（如果需要，请[开始试用](https://app.plaidcloud.com)）。
+- **一个可用的 NetSuite 连接。**请先按照[连接到 NetSuite](/zh-cn/guides/connections/netsuite/) 操作：需要在 NetSuite 中启用 OAuth 2.0 和 REST Web 服务，并准备好集成的客户端 ID、证书 ID、账户 ID 和私钥 PEM。开始之前，请确认**发送测试请求**显示为绿色。
+- 整理数据无需 SQL，使用标准转换步骤即可完成。唯一的查询文本是从 NetSuite **提取**数据的部分，所有提取查询都已提供。请在另一个标签页中打开 [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)，本教程的内容取自该页面。
+
+<Aside type="note">
+唯一需要编写查询文本的地方是从 NetSuite **提取**数据，即 **SuiteQL**，它在 *NetSuite 内部*运行。之后的所有操作，例如将总账分组为损益表、对应收账款分档，都使用 PlaidCloud 的点选式转换步骤完成，无需 SQL。（如果您熟悉 SQL，也可以使用“提取 SQL”步骤，但这里用不到。）
+</Aside>
+
+## 步骤 1：创建工作流
+
+工作流是提取并整理数据的管道。
+
+<Steps>
+
+1. 打开项目，切换到**工作流**选项卡。
+2. 单击**新建工作流**，将其命名为例如 `NetSuite Financials`，然后打开。
+
+</Steps>
+
+## 步骤 2：提取总账
+
+一条 SuiteQL 查询即可得到一整年的过账活动（每个科目、每个月），足以构建损益表，以及之后的其他报表。
+
+<Steps>
+
+1. 添加一个 [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)。在**请求**选项卡上，将**连接**设为您的 NetSuite 连接，将**方法**设为 `POST`，将**端点**设为 `/services/rest/query/v1/suiteql`。
+
+2. 在**正文**中，放入以下 SuiteQL，并包装为 `{"q": "…"}`：
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. 在**响应**选项卡上，将目标设为**表**，命名为 `netsuite_gl`，并设置列类型：`amount` → **货币**，其余 → **文本**。（SuiteQL 将数字和日期作为文本返回；设置类型后 `amount` 才能求和。）
+
+4. 单击**发送测试请求**确认可以运行，然后运行该步骤。现在您有了一张 `netsuite_gl` 表：每个科目每个月一行，带有带符号的过账金额。
+
+</Steps>
+
+<Aside type="note">
+`amount` 是**借方为正、贷方为负**，这是 NetSuite 的总账惯例，也是原始数据的真实情况；下一步会把它转换为易读的报表。如果您的账簿涉及多个子公司或多种货币，请筛选到某一个子公司（`t.subsidiary = <id>`），参见[查询示例](/zh-cn/guides/connections/netsuite-financial-queries/#所有示例通用的约定)中关于多币种的注意事项。
+</Aside>
+
+## 步骤 3：将总账整理为损益表
+
+接下来是分析，只需一次点选式转换，无需 SQL。损益表其实就是汇总后的总账：收入和费用科目归入几个项目，并翻转符号，使收入显示为正数。[Table Extract 步骤](/zh-cn/reference/workflow-steps/tables/table-extract/)可以在其**表数据选择**和**数据筛选器**选项卡上完成全部操作。
+
+<Steps>
+
+1. 添加一个 **Table Extract** 步骤。将其**源**设为 `netsuite_gl`，**目标**设为新表 `netsuite_pnl`。
+
+2. 在**数据筛选器**选项卡上，仅保留收入和费用科目（排除资产负债表科目）：添加一个筛选器，条件为 `account_type` **属于其中之一** `Income`、`OthIncome`、`COGS`、`Expense`、`OthExpense`。
+
+3. 在**表数据选择**选项卡上，单击**汇总**以启用聚合，然后设置三个目标列：
+
+   - `period`：直接从源映射。汇总方式为**分组依据**。
+   - `pnl_line`：一个**表达式**（见下文），将每种科目类型转换为一个报表项目。汇总方式为**分组依据**。
+   - `amount`：表达式为 `netsuite_gl.amount * -1`（翻转符号）。汇总方式为**求和**。
+
+   对于 `pnl_line`，双击其**表达式**单元格并输入以下内容（编辑器允许您点选各列，以及**条件**分组中的 `case` 函数）：
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. 运行该步骤。
+
+</Steps>
+
+`amount * -1` 表达式是唯一的会计处理：将借方为正的金额取反，使**收入为正、成本为负**，因此每个月的三个项目*相加即为净利润*。随后以 `period` 和 `pnl_line` 为**分组依据**并**求和**，即可将所有科目汇总为每月三个项目。表达式使用 PlaidCloud 的点选式编辑器，参见[高级数据映射器用法](/zh-cn/reference/workflow-steps/common/advanced-data-mapper-usage/)和[表达式参考](/zh-cn/reference/expressions/)。
+
+<Aside type="tip">
+作为第一次尝试，将几十个科目分成三个项目是有意为之的粗略做法。若要将运营费用细分到各部门，请在步骤 2 的提取中加入 `department`（通过 `BUILTIN.DF(tl.department)`，并联接 `transactionline`），然后在此处将 `department` 添加为另一个**分组依据**列。
+</Aside>
+
+## 步骤 4：像财务人员一样阅读
+
+打开 `netsuite_pnl` 表。每个月有三个数字：
+
+| period | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+可以直接从中读出：
+
+- **毛利润** = 收入 + 销货成本（销货成本已是负数）→ `486,200 − 190,540 = 295,660`。
+- **净利润** = 三个项目之和 → `82,780`。
+- **毛利率** = 毛利润 ÷ 收入 → 约 61%。
+
+首先要做的是**核对**：针对同一个月运行 NetSuite 自带的损益表，确认收入和净利润一致。如果不一致，几乎总是范围不同：子公司或货币筛选器，或者过账期间与交易日期未对齐（参见[关于期间的说明](/zh-cn/guides/connections/netsuite-financial-queries/#试算平衡表)）。只有核对一致后，才能信任这条管道。
+
+<Aside type="tip">
+想要把月份放在顶部的经典布局？添加一个读取 `netsuite_pnl` 的 [Table Pivot 步骤](/zh-cn/reference/workflow-steps/tables/table-pivot/)：将 `period` 透视为列，保留 `pnl_line` 作为行，并对 `amount` 求和。这样每个月一列、每个损益项目一行，月度对比一目了然，无需 SQL。
+</Aside>
+
+## 步骤 5：构建应收账款账龄
+
+这是第二个入门成果，遵循同样的“连接、提取、整理”模式。从未结应收账款的查询开始，然后按每张发票的逾期时间分档。
+
+<Steps>
+
+1. 再添加一个 **REST 请求**步骤（相同的连接，`POST`，suiteql 端点），正文如下：
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   将其加载为 `netsuite_open_ar`，其中 `invoice_total` 和 `amount_unpaid` → **货币**，`invoice_date` 和 `due_date` → **日期**，其余 → **文本**。
+
+2. 添加一个 **Table Extract** 步骤，读取 `netsuite_open_ar` 并写入新表 `netsuite_ar_aging`。在**表数据选择**选项卡上，单击**汇总**并设置三个目标列：
+
+   - `aging_bucket`：一个**表达式**（见下文），根据每张发票的逾期时间为其打标签。汇总方式为**分组依据**。
+   - `invoices`：任意列，例如 `invoice_number`。汇总方式为**计数**。
+   - `balance`：从 `amount_unpaid` 映射。汇总方式为**求和**。
+
+   对于 `aging_bucket`，输入以下表达式，它计算逾期天数（日期减日期得到天数）并标记所属区间：
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. 运行。`netsuite_ar_aging` 现在用五行告诉您，有多少款项未到期，有多少款项逾期 30/60/90 天以上，这是业务人员首先查看的催收视图。（`due_date` 必须设为**日期**类型，日期相减才能生效，您已在上面 REST 请求步骤的**响应**选项卡上完成了设置。）
+
+</Steps>
+
+## 步骤 6：放到仪表板上
+
+表中的数字尚可，但发给首席财务官的应当是图表。[发布](/zh-cn/get-started/tutorials/load-and-transform-data/#步骤-7发布结果) `netsuite_pnl` 和 `netsuite_ar_aging`，然后按照[构建仪表板](/zh-cn/get-started/tutorials/build-a-dashboard/)添加：
+
+- 按 `period` 显示净利润（或收入）的**条形图**，以及
+- 按 `aging_bucket` 显示应收账款 `balance` 的**饼图或条形图**。
+
+这就是一个实时的 NetSuite 财务仪表板，无需导出，每次运行工作流时都会刷新。
+
+## 步骤 7：计划刷新
+
+<Steps>
+
+1. 从头到尾运行整个工作流一次，确认每个步骤都显示为绿色。
+2. [为工作流设置计划](/zh-cn/get-started/tutorials/schedule-a-workflow/)：按结账节奏每月运行，或者如果希望每天早晨都有最新的应收账款账龄，则每晚运行。
+
+</Steps>
+
+由于每次提取都会完整替换整张表，每次运行都会重新提取其 `WHERE` 子句定义的数据范围，因此请将范围限制在所需的时间窗口内（当年、仅未结发票），而不是全部历史数据。
+
+## 您已构建的内容
+
+从一个空工作流开始，您提取了实时的 NetSuite 总账和应收账款，使用两个标准转换步骤（无需 SQL）将其整理为**月度损益表**和**应收账款账龄**，放到仪表板上，并设置为自动刷新。这是财务团队运行的核心报表循环，现在已经实现自动化。
+
+## 后续方向
+
+- [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)：试算平衡表、资产负债表、未结销售订单、采购订单和库存，可添加到同一个工作流中。
+- [Table Extract 步骤](/zh-cn/reference/workflow-steps/tables/table-extract/)和[高级数据映射器用法](/zh-cn/reference/workflow-steps/common/advanced-data-mapper-usage/)：用于更深入分析的分组、筛选和计算列。
+- [设计维度层次结构](/zh-cn/get-started/tutorials/design-a-dimension/)：将会计科目表汇总为由您控制的报表分组。
+- [构建仪表板](/zh-cn/get-started/tutorials/build-a-dashboard/)：完整的仪表板演练。

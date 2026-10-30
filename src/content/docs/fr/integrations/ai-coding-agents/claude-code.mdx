@@ -1,0 +1,101 @@
+---
+title: Claude Code
+description: Configurez Claude Code (CLI, extension VSCode, module JetBrains) pour appeler les outils MCP de PlaidCloud, avec OAuth ou avec un jeton Bearer statique.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/claude-code.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Claude Code](https://claude.com/claude-code) est l'agent de codage d'Anthropic. Il est proposé sous forme de CLI, d'extension VSCode et de module JetBrains, qui partagent tous la même configuration MCP.
+
+## Option A : OAuth (recommandé)
+
+OAuth est la voie qui demande le moins de maintenance. Le pont MCP de Claude Code gère de façon transparente la redirection du navigateur et l'actualisation.
+
+1. Depuis la racine de votre projet, ajoutez le serveur. Avec la CLI :
+
+    ```bash
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp
+    ```
+
+    Ou dans `.mcp.json` à la racine du projet :
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp"
+        }
+      }
+    }
+    ```
+
+2. Redémarrez Claude Code. La première fois que vous lui demandez d'utiliser un outil `plaidcloud_`, le pont affiche une URL d'autorisation. Ouvrez-la, connectez-vous à PlaidCloud, et vous arriverez sur une page **Application Access Request** qui nomme l'application demandeuse et l'URI de redirection vers laquelle elle enverra les identifiants ; vérifiez qu'elles correspondent à Claude Code avant d'approuver. Approuvez, puis collez l'URL de rappel que Claude Code a demandée. Le jeton est mis en cache localement et actualisé automatiquement ; vous ne reverrez pas cette page tant que le jeton d'actualisation n'a pas expiré ou n'a pas été révoqué.
+
+3. Vérifiez avec `claude mcp list` (CLI) ou `/mcp` (en session). Le serveur doit apparaître comme connecté.
+
+<Aside>L'état du pont OAuth peut parfois se bloquer lors de sessions distantes ou SSH où Claude Code ne peut pas joindre `localhost` depuis votre navigateur. Dans ce cas, repliez-vous sur l'option B.</Aside>
+
+## Option B : jeton Bearer statique
+
+Lorsque OAuth n'est pas pratique (sessions distantes, devcontainers, environnements d'exécution d'agents qui ne survivent pas aux redirections du navigateur), utilisez un jeton porteur :
+
+1. Dans un onglet de navigateur où vous êtes connecté à PlaidCloud, ouvrez :
+
+    ```
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
+    ```
+
+    Cliquez sur « Copy snippet ».
+
+2. Collez-le dans le fichier `.mcp.json` de votre projet sous `mcpServers` :
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
+          "headers": {
+            "Authorization": "Bearer eyJhbGc…"
+          }
+        }
+      }
+    }
+    ```
+
+    Ou via la CLI :
+
+    ```bash
+    claude mcp add --transport http plaidcloud \
+      https://<your-workspace>.plaid.cloud/mcp \
+      -H "Authorization: Bearer eyJhbGc…"
+    ```
+
+3. Redémarrez Claude Code. `claude mcp list` doit afficher le serveur comme connecté.
+
+Lorsque le jeton expire, rechargez l'URL `/mcp/setup/token` et remplacez la valeur de `Authorization`.
+
+## Configuration multi-tenant
+
+Vous pouvez configurer plusieurs tenants PlaidCloud côte à côte ; donnez à chacun un nom distinct :
+
+```json
+{
+  "mcpServers": {
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp"  }
+  }
+}
+```
+
+Lorsque vous demandez à Claude Code de faire quelque chose, nommez le tenant dans votre invite (« dans le tenant dev, trouve les projets dont le nom commence par `Q4` ») pour qu'il choisisse le bon serveur.
+
+## Astuces
+
+- Exécutez `mcp_introspect` tôt dans une session pour que Claude Code comprenne la surface des outils sans relire tout le manifeste à chaque appel.
+- Les outils de modification (`*_upsert`, `*_organize`, `*_run`) acceptent `dry_run=True`, ce qui est utile lorsque vous laissez un agent scripter des modifications et que vous voulez d'abord un plan à examiner.
+- Pour les opérations de longue durée (exécutions de workflow, exports de requêtes), privilégiez les outils `*_track` / `*_status` plutôt que des boucles d'interrogation : ils constituent la source de vérité unique et évitent de saturer le contexte de l'agent.

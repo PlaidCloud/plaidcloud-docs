@@ -1,0 +1,138 @@
+---
+title: Aus HFM / FCCS extrahieren (Ad-hoc)
+description: Verbinden Sie PlaidCloud mit Oracle FCCS und holen Sie sich einen Datenausschnitt selbst per Betrachtungspunkt-Auswahl – ohne Ticket an das HFM-Team. Behandelt die Verbindung, das Erstellen eines Betrachtungspunkts, die Ausführung, das Caching, die Sicherheit auf Zeilenebene und ein geplantes wiederkehrendes Laden.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit Oracle **FCCS** (Financial Consolidation and Close, Teil von Oracle EPM Cloud), damit ein Finanzanwender einen Datenausschnitt selbst abrufen kann, statt ein Ticket beim HFM-Team zu erstellen. Sie erstellen im Schrittformular einen **Betrachtungspunkt (Point of View, POV)**, klicken auf „Ausführen“, und das Ergebnis landet automatisch als Tabelle. Es fühlt sich wie eine Live-Abfrage an – im Hintergrund ist es eine asynchrone Anfrage mit anschließendem Abfragen (Polling) und Abrufen des Datenexport-Jobs von FCCS. Dieser Leitfaden behandelt die Verbindung, das Erstellen eines Betrachtungspunkts, die Ausführung, das Caching, die Absicherung des Ergebnisses mit Sicherheit auf Zeilenebene und die Umwandlung in ein geplantes wiederkehrendes Laden.
+
+<Aside type="note">
+Halten Sie die Auswahl der **Entität** begrenzt – ein nicht eingegrenzter Extrakt kann die FCCS-Anwendung für lange Zeit sperren, während der Export-Job läuft. Beschränken Sie jeden Betrachtungspunkt auf die Entitäten, die Sie tatsächlich benötigen.
+</Aside>
+
+## Voraussetzungen
+
+Sie benötigen in Oracle EPM Cloud:
+
+- Die **Pod-/Dienst-URL Ihrer EPM Cloud**, zum Beispiel `https://planning-test-yourdomain.epm.us2.oraclecloud.com`.
+- Ihre **Identitätsdomäne** (bei einem klassischen Pod). PlaidCloud setzt die Anmeldung als `identitydomain.username` zusammen.
+- Ein dediziertes **Servicekonto** – Benutzername und Passwort – mit Lesezugriff auf die FCCS-Anwendungen und die Betrachtungspunkt-Ausschnitte, die Ihre Self-Service-Benutzer abrufen werden.
+- Den bzw. die **Anwendungsnamen**, aus denen die Benutzer lesen werden.
+
+<Aside type="note">
+Die Verbindung authentifiziert sich mit **HTTP Basic Auth** gegenüber einem klassischen EPM-Cloud-Pod. OCI-/Gen-2-Pods, die ein OAuth-Bearer-Token erfordern, werden von diesem Connector nicht unterstützt.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **REST – HFM/FCCS**.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `FCCS Prod`. |
+   | EPM-Cloud-URL | Die URL Ihres Pods bzw. Dienstes, z. B. `https://planning-test-yourdomain.epm.us2.oraclecloud.com`. |
+   | Identitätsdomäne | Die Identitätsdomäne Ihrer EPM Cloud. Lassen Sie das Feld nur leer, wenn Ihr Benutzername die Domäne bereits enthält. |
+   | Benutzername | Der Benutzername des Servicekontos. |
+   | Passwort | Das Passwort des Servicekontos. |
+   | Standardanwendung | Optional. Eine FCCS-Anwendung, die in der POV-Auswahl des Schritts vorbelegt wird. |
+
+4. Klicken Sie auf `Test Connection`. Ein erfolgreicher Test bestätigt, dass PlaidCloud den HFM/FCCS-Server mit den konfigurierten Anmeldedaten erreichen kann.
+
+5. Klicken Sie auf `Create`.
+
+</Steps>
+
+PlaidCloud meldet sich als `identitydomain.username` an (oder mit dem Benutzernamen unverändert, wenn die Identitätsdomäne leer ist oder der Benutzername bereits einen Punkt enthält).
+
+## Betrachtungspunkt erstellen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen Schritt **HFM/FCCS: Daten lesen (Ad-hoc)** hinzu (er befindet sich im Schrittmenü unter **Oracle EPM (HFM/FCCS)**).
+
+2. Legen Sie unter **Quelle und Ziel** die **HFM/FCCS-Verbindung**, die **Umgebung**, die **Anwendung** und eine **Zieltabelle** fest.
+
+3. Erstellen Sie unter **Betrachtungspunkt** den Ausschnitt aus den FCCS-Dimensionen: **Szenario, Jahr, Periode, Entität, Konto, Custom1–Custom4, ICP, Ansicht, Wert**.
+
+   - **Szenario, Jahr und Periode sind erforderlich.**
+   - **Die Entität muss ein begrenzter Ausschnitt sein** – das Formular lehnt eine leere Auswahl, „all“ oder eine Auswahl mit mehr als 500 Mitgliedern ab. Halten Sie sie eingegrenzt, damit der Export die Anwendung nicht sperrt.
+   - Lassen Sie jede andere Dimension leer, um auf dieser Achse keinen Filter anzuwenden.
+
+</Steps>
+
+<Aside type="note">
+Auf unterstützten FCCS-Pods werden die Mitgliederlisten durch die Live-Metadatenerkennung **automatisch gefüllt**, sobald Sie eine Verbindung und eine Anwendung gewählt haben – die Auswahl bietet echte Mitglieder und erkennt sie neu, sobald sich Verbindung oder Anwendung ändern. Auf älteren Pods, die den Metadaten-Endpunkt nicht bereitstellen, wechselt die Auswahl zur **manuellen Eingabe**: Geben Sie Mitgliedsnamen von Hand ein. Ein gespeicherter Betrachtungspunkt bleibt in beiden Fällen unverändert erhalten.
+</Aside>
+
+## Ausführen
+
+<Steps>
+
+1. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Während der Export-Job in FCCS läuft, wird ein Fortschrittsstatus („polling HFM job…“) angezeigt.
+
+3. Nach Abschluss landet die Ergebnistabelle automatisch – die Tabelle wird aus den Spalten des zurückgegebenen Rasters erstellt, sodass Sie vorab kein Schema definieren müssen.
+
+</Steps>
+
+## Caching
+
+Fordern Sie **denselben Betrachtungspunkt erneut** an, liefert PlaidCloud die **bereits gelandete Tabelle** sofort, statt den Export erneut an FCCS zu senden. Eine Ausführung wird über Anwendung, Zieltabelle, Betrachtungspunkt und ein **As-of**-Tag (Standard `latest`) identifiziert; eine Wiederholung, die auf einen bereits gelandeten Ausschnitt aufgelöst wird, meldet, dass die Tabelle unverändert gelassen statt neu geschrieben wurde. Ändern Sie das As-of-Tag, wenn Sie einen frischen Extrakt desselben Betrachtungspunkts erzwingen möchten.
+
+## Mit Sicherheit auf Zeilenebene absichern
+
+Die Entitätsachse der gelandeten Tabelle wird auf eine Spalte mit genau dem Namen **`Entity`** normalisiert, sodass die Tabelle **für Sicherheit auf Zeilenebene bereit** ist – ein Administrator kann sie mit [Zeilenzugriff](/de/administration/access/managing-security-groups-and-assignments/) absichern, sodass Self-Service-Benutzer nur die Entitäten sehen, für die sie berechtigt sind.
+
+<Aside type="caution">
+Dies wird **unter Kontrolle des Administrators abgesichert und nicht automatisch**. Da der Extrakt unter dem Servicekonto der Verbindung läuft, lässt PlaidCloud nicht zu, dass der Schritt seine eigene Sicherheit festlegt – ein Administrator (Architect) muss sie einrichten.
+</Aside>
+
+Ein Administrator folgt dem Standardablauf für Zeilenzugriff:
+
+<Steps>
+
+1. **Veröffentlichen** Sie die gelandete Tabelle für das Reporting.
+
+2. **Deklarieren** Sie die Spalte `Entity` als steuerndes Attribut (standardmäßig verweigern).
+
+3. **Genehmigen** Sie den ersten abgesicherten Schreibvorgang.
+
+4. **Gleichen Sie ab** (Reconcile), damit die Berechtigungen wirksam werden.
+
+</Steps>
+
+Bis ein Administrator dies tut, wird die Tabelle nicht gefiltert. Siehe [Sicherheitsgruppen und Zuweisungen verwalten](/de/administration/access/managing-security-groups-and-assignments/).
+
+## Wiederkehrendes Laden planen
+
+Um einen Ad-hoc-Ausschnitt in eine nächtliche Aktualisierung zu überführen, aktivieren Sie im Schritt **Gebundenes Ziel**:
+
+<Steps>
+
+1. Aktivieren Sie in der Gruppe **Gebundenes Ziel** des Schritts **Gebundenes Ziel (geplantes wiederkehrendes Laden)**.
+
+2. Legen Sie optional **Schlüsselspalten** fest – die durch Kommas getrennten Spalten, die den Merge-Schlüssel bilden (zum Beispiel `Entity, Account`). **Lassen Sie das Feld leer**, um die im gelandeten Raster vorhandenen POV-Dimensionsspalten als Merge-Schlüssel zu verwenden.
+
+3. Platzieren Sie den Schritt in einem [geplanten Workflow](/de/administration/scheduled-events/).
+
+</Steps>
+
+Bei aktiviertem „Gebundenes Ziel“ wird das Ziel zu einer **persistenten** Tabelle: Jede Ausführung **führt** per Keyset-Upsert Daten **zusammen**, statt zu überschreiben, und das Schema **wächst additiv**, wenn ein späteres Raster neue Spalten mitbringt (eine neue Spalte löst eine Warnung aus, nie einen Fehler). Eine geplante Ausführung sammelt also an, statt zu löschen – ein wiederkehrendes Laden, kein destruktives Neuladen.
+
+## Verwandte Themen
+
+- [HFM/FCCS: Daten lesen (Ad-hoc)](/de/reference/workflow-steps/oracle-epm/hfm-fccs-read/) – Feldreferenz des Schritts.
+- [HFM / FCCS Connector](/de/reference/connectors/rest/hfm-fccs/) – Feldreferenz der Verbindung.
+- [Sicherheitsgruppen und Zuweisungen verwalten](/de/administration/access/managing-security-groups-and-assignments/) – wie Zeilenzugriff die gelandete Tabelle absichert.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

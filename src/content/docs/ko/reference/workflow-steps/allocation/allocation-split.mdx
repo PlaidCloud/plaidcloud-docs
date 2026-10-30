@@ -1,0 +1,115 @@
+---
+title: Allocation Split 단계
+description: PlaidCloud 워크플로 단계에서 드라이버 데이터를 기준으로 값을 분할하고 배부하여 비용 분배와 활동 기반 분석에 활용합니다.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/allocation/allocation-split.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import SnippetCommonAllocationSourceMap from '@snippets/ko/common-allocation-source-map.mdx';
+import SnippetCommonDataFilter from '@snippets/ko/common-data-filter.mdx';
+import SnippetCommonAllocationDriverMap from '@snippets/ko/common-allocation-driver-map.mdx';
+
+## 설명
+
+
+
+소스 행의 값을 조각으로 나누고 각 조각을 서로 다른 대상으로 보내며, 비율은 드라이버 데이터가 결정합니다. [Allocation Rules 단계](/ko/reference/workflow-steps/allocation/allocation-rules/)보다 단순하므로, 할당 차원 없이 값을 여러 곳으로 나누기만 하면 될 때 사용합니다.
+
+일반적인 패턴: 총액을 가져와 드라이버 테이블의 비율이나 가중치에 따라 여러 수령자에게 나누고, 수령자당 하나의 출력 행을 생성합니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 200" role="img" aria-label="Allocation Split은 소스 행의 값을 조각으로 나누어 드라이버 데이터가 정한 비율에 따라 서로 다른 대상으로 보냅니다. 1,000달러의 소스가 세 대상에 40%, 35%, 25%로 분할되며 대상마다 출력 행이 하나씩 생성됩니다." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="as-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="84" width="150" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="89" y="108" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">소스 값</text>
+  <text x="89" y="126" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">$1,000</text>
+  <path d="M164 112 L230 112" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#as-arrow)" />
+  <rect x="232" y="82" width="130" height="60" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="297" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">분할</text>
+  <text x="297" y="124" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">드라이버 가중치 기준</text>
+  <path d="M362 102 C424 84 428 60 470 60" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#as-arrow)" /><text x="424" y="72" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">40%</text>
+  <path d="M362 112 L470 112" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#as-arrow)" /><text x="424" y="106" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">35%</text>
+  <path d="M362 122 C424 140 428 164 470 164" stroke="var(--sl-color-gray-3)" stroke-width="1.5" fill="none" marker-end="url(#as-arrow)" /><text x="424" y="158" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">25%</text>
+  <rect x="472" y="40" width="156" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="550" y="65" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">대상 A — $400</text>
+  <rect x="472" y="92" width="156" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="550" y="117" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">대상 B — $350</text>
+  <rect x="472" y="144" width="156" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="550" y="169" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">대상 C — $250</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Allocation Split은 하나의 소스 값을 드라이버 가중치에 비례하여 여러 대상으로 나눕니다. 대상마다 출력 행이 하나씩 생성됩니다. 값을 나누기만 하면 될 때는 Allocation Rules보다 단순합니다.</figcaption>
+</figure>
+
+## 데이터 테이블 설정
+
+**배부할 값 테이블**, **드라이버 데이터 테이블**, **배부 결과 테이블**은 동적 또는 정적으로 선택할 수 있습니다.
+
+### 동적 테이블 선택
+동적 테이블 옵션을 사용하면 텍스트와 변수로 테이블을 지정할 수 있습니다. 테이블 또는 뷰 참조가 지정한 변수에 따라 달라지는 변수 기반 워크플로를 사용할 때 유용합니다.
+
+`current_month` 변수를 사용하여 테이블을 동적으로 가리키는 예:
+
+```text
+legal_entity/inputs/{current_month}/ledger_values
+```
+
+### 정적 테이블 선택
+특정 테이블을 소스로 사용하려면 *Dynamic* 상자를 선택하지 않은 채로 두고 드롭다운 메뉴에서 소스 테이블을 선택합니다.
+
+
+테이블 탐색기는 모든 테이블 선택에서 항상 사용할 수 있습니다. 테이블 선택 오른쪽에 있는 테이블 탐색기 버튼을 클릭하면 테이블 탐색기 창이 열립니다.
+
+<Aside>**배부 결과 테이블**은 뷰가 아니라 테이블이어야 합니다.</Aside>
+
+### 배부할 값 테이블
+
+배부할 값이 들어 있는 테이블입니다. 보통 비용 또는 수익 값입니다.
+
+
+### 드라이버 데이터 테이블
+
+드라이버 데이터 테이블에는 배부 단계가 비용을 배부하는 데 사용할 값이 들어 있습니다.
+
+
+예:
+
+- 공급망에서 고객에게 비용을 할당하려면 배송 건수나 배송 중량을 드라이버로 하는 배송 데이터를 사용할 수 있습니다.
+- IT 헬프 데스크가 지원하는 부서에 비용을 할당하려면 드라이버 데이터는 원가 센터별 티켓 수가 됩니다.
+
+#### Driver Data Sign Rule
+드라이버 데이터에는 양수와 음수가 모두 포함될 수 있습니다. **Driver Data Sign Rule**을 사용하면 부호가 충돌할 때의 처리 방식을 정할 수 있습니다.
+- **Error on conficting signs** - 부호 충돌이 발견되면 배부 단계가 오류를 내고 중지합니다.
+- **Proceed with warning on conflicting signs** - 배부 단계가 음수와 양수 드라이버 값을 모두 사용하되 경고를 표시합니다.
+- **Use only positive driver values** - 배부 단계가 양수 드라이버 값만 사용하고 음수 값은 무시합니다.
+- **Use only negative driver values** - 배부 단계가 음수 드라이버 값만 사용하고 양수 값은 무시합니다.
+- **Use absolute values of driver data** - 배부 단계가 드라이버 데이터의 절댓값을 사용합니다.
+
+
+### 배부 결과 테이블
+
+
+
+#### 결과를 대상 테이블에 추가
+이 상자를 선택하면 배부 결과가 배부 결과 테이블에 추가됩니다.
+이 상자를 선택하지 않으면 배부 단계가 실행될 때마다 배부 결과 테이블을 덮어씁니다.
+
+#### 배부 결과용 별도 열
+
+이 상자를 선택하면 결과 테이블에 각 배부 레코드의 금액과 각 드라이버 레코드에 실제로 배부된 금액이 함께 표시됩니다.
+
+## 배부 소스 맵
+
+<SnippetCommonAllocationSourceMap />
+
+## 배부 소스 필터
+
+<SnippetCommonDataFilter />
+
+## 드라이버 데이터 맵
+
+<SnippetCommonAllocationDriverMap />
+
+<Aside>이러한 역할을 설정하기 전에는 단계가 저장되지 않습니다. **분할 값** 열 하나, **소스 관계 (분모)** 하나 이상, **배부 대상 (분자)** 하나 이상이 필요합니다. 저장할 때 누락된 항목이 표시됩니다. [배부 문제 해결](/ko/guides/allocations/results/troubleshooting-allocations/#배부-단계가-저장되지-않는-이유)을 참고하십시오.</Aside>
+
+## 드라이버 데이터 필터
+
+<SnippetCommonDataFilter />

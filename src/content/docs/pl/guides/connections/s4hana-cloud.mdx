@@ -1,0 +1,136 @@
+---
+title: Połącz z SAP S/4HANA Cloud
+description: Połącz PlaidCloud bezpośrednio z SAP S/4HANA Cloud Public Edition za pomocą OAuth2 client-credentials, bez agenta. Pobierz zestawienie obrotów i sald oraz pozycje zapisów dziennika, a następnie księguj zapisy dziennika, korzystając z zaksięgowanego zapisu odwracającego do korekt.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud bezpośrednio z SAP S/4HANA Cloud Public Edition za pośrednictwem jego interfejsów OData i SOAP, aby pobierać zestawienie obrotów i sald oraz pozycje zapisów dziennika bez ręcznego pisania zapytań OData, a także księgować zapisy dziennika z powrotem w systemie. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import najpierw uruchom w tenancie piaskownicy, a przy każdej partii do zaksięgowania wykonaj opisaną poniżej procedurę **Validate Only**, zanim zaksięgujesz dane na żywo.
+</Aside>
+
+<Aside type="note">
+To inne połączenie niż [łącznik SAP ECC / S/4HANA](/pl/reference/connectors/erp/sap-s4/), który łączy się z systemem S/4HANA działającym lokalnie lub w chmurze prywatnej za pośrednictwem agenta PlaidLink i wywołań RFC. Ten łącznik komunikuje się bezpośrednio z SAP S/4HANA Cloud **Public Edition** przez internet — nie trzeba instalować agenta ani konfigurować miejsca docelowego RFC.
+</Aside>
+
+## Wymagania wstępne
+
+W SAP S/4HANA Cloud potrzebujesz:
+
+- **Communication Arrangement** opartego na Communication Scenario, który udostępnia interfejsy API Trial Balance i Journal Entry Item (odczyt) oraz usługę księgowania zapisów dziennika (zapis), z **Communication User** skonfigurowanym do OAuth2 client-credentials zamiast uwierzytelniania podstawowego.
+- **Hosta** swojego tenanta S/4HANA Cloud (na przykład `https://yourorg.s4hana.ondemand.com`) oraz jego **adresu URL tokenu OAuth2** (na przykład `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- **Identyfikatora klienta i klucza tajnego klienta OAuth2** z Communication Arrangement.
+
+<Aside type="note">
+Połączenie uwierzytelnia się jako aplikacja, a nie jako użytkownik — za pomocą przepływu OAuth2 **client-credentials**, czyli tego samego mechanizmu, którego PlaidCloud używa w innych połączeniach REST z chmurowymi systemami ERP. Nie ma interaktywnego logowania.
+</Aside>
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **SAP S/4HANA Cloud**.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `S/4HANA Cloud Prod`. |
+   | Host | Host tenanta S/4HANA Cloud, np. `https://yourorg.s4hana.ondemand.com`. |
+   | Adres URL tokenu OAuth2 | Punkt końcowy tokenu OAuth2 z Communication Arrangement. |
+   | Identyfikator klienta | Identyfikator klienta OAuth2 z Communication Arrangement. |
+   | Klucz tajny klienta | Klucz tajny klienta OAuth2 z Communication Arrangement. |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Test połączenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Import S/4HANA Entity**.
+
+2. Ustaw **S/4HANA Connection** na swoje połączenie, **Typ jednostki** na `trial_balance`, dodaj filtr **CompanyCode** dla jednej spółki i ustaw **Tabela docelowa** na tymczasową tabelę.
+
+3. Uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że host, adres URL tokenu i dane uwierzytelniające klienta są poprawne. Błąd wskazuje problem — nieprawidłowy klucz tajny klienta, brak wymaganego zakresu w Communication Arrangement lub błędny host.
+
+## Importowanie danych
+
+<Steps>
+
+1. Dodaj krok **Import S/4HANA Entity** i ustaw **S/4HANA Connection** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ jednostki** na rekord, który chcesz pobrać.
+
+3. Dodaj **Filtry**, aby ograniczyć pobierane dane — kod spółki, konto i zakresy dat są tłumaczone na parametr `$filter` protokołu OData w żądaniu, ograniczony dla każdej jednostki do pól, według których S/4HANA faktycznie może filtrować po stronie serwera.
+
+4. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+### Jednostki i filtry
+
+| Typ jednostki | Co pobiera | Usługa OData | Pola z możliwością filtrowania |
+|---|---|---|---|
+| `trial_balance` | Zagregowane salda kont księgi głównej na koniec okresu | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | Zaksięgowane pozycje zapisów dziennika | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate` (zakres), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear` i `FiscalPeriod` przyjmują filtry **zakresu** (granice `ge`/`le`); pozostałe są filtrami równości. Filtr zakresu z tylko jedną granicą jest otwarty po drugiej stronie. Przed pobraniem `journal_entry_items` z danych produkcyjnych ustaw co najmniej jedną granicę — nieograniczone pobranie szczegółowych pozycji może być bardzo duże.
+</Aside>
+
+## Księgowanie zapisów dziennika
+
+Krok **S/4HANA: Post Journal Entry** księguje zapisy dziennika księgi głównej za pośrednictwem wspólnego potoku zapisu ERP w PlaidCloud, korzystając z usługi zbiorczego tworzenia zapisów dziennika SOAP w S/4HANA Cloud.
+
+<Steps>
+
+1. Utwórz **tabelę nagłówka** — jeden wiersz na zapis dziennika — z kolumnami `journal_id` (identyfikator zapisu), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger` i `header_text`.
+
+2. Utwórz **tabelę wierszy** — co najmniej jeden wiersz na każdy `journal_id` — z kolumnami `gl_account`, `debit`, `credit` oraz wszelkimi kolumnami wymiarów `cost_center`/`profit_center` wymaganymi przez księgę.
+
+3. Dodaj krok **S/4HANA: Post Journal Entry**, ustaw **S/4HANA Connection**, **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud tworzy i sprawdza każdy zapis bez rezerwacji w księdze i bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na zapis: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Popraw każdy wiersz ze stanem `error` i ponownie zweryfikuj.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym zapisie.
+
+</Steps>
+
+### Jak działa księgowanie
+
+PlaidCloud przesyła każdy zapis dziennika za pośrednictwem usługi SOAP `JournalEntryBulkCreateRequest_In` w S/4HANA Cloud, a następnie odpytuje o odpowiedni komunikat `JournalEntryBulkCreateConfirmation_Out`, który zgłasza końcowy stan przetwarzania zapisu. Zapis jest raportowany jako `posted` dopiero po otrzymaniu tego potwierdzenia — zapis, który został przyjęty, ale którego potwierdzenie nigdy nie nadeszło, pozostaje w kwarantannie i nie jest odnotowywany jako zaksięgowany, więc zawieszone przesłanie nigdy po cichu nie uchodzi za sukces. Rezerwacja w księdze PlaidCloud chroni przed dwukrotnym zaksięgowaniem tego samego zapisu przy ponowieniu lub ponownym uruchomieniu partii.
+
+### Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego zapisu. Aby go skorygować, zaksięguj nowy zapis z zamienionymi stronami debetu i kredytu względem oryginału — **zaksięgowany zapis odwracający** — zamiast edytować oryginał w miejscu. Dzięki temu zachowany jest własny ślad audytowy S/4HANA, a korekty są wykonywane tak samo jak bezpośrednio w aplikacji.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Opóźnienie potwierdzenia.** Usługa SOAP przetwarza żądania zbiorczego tworzenia asynchronicznie — należy się spodziewać, że odpytywanie o stan końcowy potrwa wyraźnie dłużej niż synchroniczny zapis OData, więc nie używaj tego kroku do księgowania pojedynczych zapisów wrażliwych na opóźnienia.
+- **Pola z możliwością filtrowania zależą od wymiarów udostępnianych przez Communication Scenario.** Obiekt kosztowy lub wymiar, który nie należy do pól udostępnianych przez scenariusz, nie może być filtrowany po stronie serwera; zawęź go w przepływie pracy po pobraniu danych.
+- **Ten łącznik różni się od [łącznika SAP ECC / S/4HANA](/pl/reference/connectors/erp/sap-s4/).** Tamten łączy się z systemem lokalnym lub w chmurze prywatnej za pośrednictwem agenta PlaidLink i wywołań RFC; używaj go tylko wtedy, gdy nie łączysz się z S/4HANA Cloud Public Edition.
+</Aside>
+
+## Powiązane
+
+- [Łącznik REST SAP S/4HANA Cloud](/pl/reference/connectors/rest/s4hana-cloud/) — opis pól.
+- [Import S/4HANA Entity](/pl/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/pl/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/) — stały rejestr każdej próby księgowania w S/4HANA Cloud wraz z jej bieżącym stanem.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

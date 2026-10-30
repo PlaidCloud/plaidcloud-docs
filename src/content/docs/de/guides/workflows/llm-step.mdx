@@ -1,0 +1,72 @@
+---
+title: LLM-Schritt
+description: Führen Sie in einem Workflow einen Prompt gegen ein LLM aus – mit eingeschränktem Lese- und/oder Schreibzugriff auf die Tabellen, Dimensionen und Dokumente Ihres Projekts – und lassen Sie das Modell seine Ergebnisse direkt zurückschreiben.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/llm-step.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Der **LLM-Schritt** führt als ein Schritt in einem Workflow einen Prompt gegen ein großes Sprachmodell aus. Sie geben dem Modell eingeschränkten Zugriff auf bestimmte Tabellen, Dimensionen und Dokumente in Ihrem Projekt und wählen für jedes Objekt **Lesen**, **Schreiben** oder beides. Das Modell liest die benötigten Daten und schreibt – sofern Sie **Schreiben** gewährt haben – seine Ergebnisse direkt in das ausgewählte Objekt zurück. Es muss kein separates Ausgabeformat konfiguriert werden: Eine Bindung mit Schreibzugriff *ist* die Ausgabe des Schritts.
+
+Ein typischer Einsatz ist, eine Finanztabelle zu Kommentaren pro Geschäftsbereich zusammenzufassen und das Modell diese Kommentare in eine Ergebnistabelle (oder als Dokumentdateien) schreiben zu lassen, die Sie mit Schreibzugriff gebunden haben.
+
+<Aside type="note">Eingeschränkter Zugriff auf Projektdaten (Tabellen, Dimensionen, Dokumente) ist mit **Anthropic**-LLM-Verbindungen verfügbar, die über einen sicheren Konnektor auf die MCP-Tools von PlaidCloud zugreifen. Andere Anbieter können weiterhin einen Prompt ausführen und strukturiertes JSON zurückgeben, erhalten aber keinen eingeschränkten Datenzugriff – ein Schritt mit Bindungen an eine ihrer Verbindungen wird beim Speichern abgelehnt, und ein Ergebnisschema ist erforderlich.</Aside>
+
+## Bevor Sie beginnen
+
+Sie benötigen:
+
+* **Eine LLM-Verbindung.** Der Schritt erfordert eine Verbindung vom Typ **LLM** (zum Beispiel Anthropic). Die Verbindung enthält den API-Schlüssel des Anbieters, ein optionales Standardmodell und eine Stufe für den **Agent-Zugriff**. Siehe [Verbindungen](/de/guides/connections/).
+* **Schreibzugriff für die Verbindung – nur wenn eine Bindung Schreibzugriff hat.** Eine Bindung kann nur schreiben, wenn der Agent-Zugriff der Verbindung auf **Lesen und Schreiben** steht. **Vollständig** ist veraltet und wird am 15. Januar 2027 entfernt. Eine **schreibgeschützte** Verbindung lehnt Bindungen mit Schreibzugriff beim Speichern ab.
+* **Die bereits erstellten Zielobjekte.** Das Modell schreibt *in* Objekte, die Sie auswählen – eine vorhandene Tabelle, Dimension oder ein Dokumentenkonto. Erstellen und binden Sie das Ziel zuerst; der Schritt legt keine neuen Objekte an.
+
+## LLM-Schritt hinzufügen
+
+1. Öffnen Sie den Workflow und wechseln Sie zur Registerkarte **Analyze Steps**.
+2. Fügen Sie einen Schritt an der gewünschten Position hinzu, genauso wie bei einer Standardtransformation.
+3. Wählen Sie **LLM-Schritt** als Schritttyp. Der Editor öffnet sich mit drei Abschnitten: **LLM-Anfrage**, **Bindings** und **Limits**.
+
+## Anfrage konfigurieren
+
+In der Gruppe **LLM-Anfrage**:
+
+* **LLM-Verbindung** *(erforderlich)* – die LLM-Verbindung, die der Schritt verwendet.
+* **Modell** *(optional)* – ein bestimmter Modellname, etwa `claude-opus-4-7`. Lassen Sie das Feld leer, um das Standardmodell der Verbindung zu verwenden.
+* **Prompt** *(erforderlich)* – die Anweisung, die an das Modell gesendet wird. Sie können gebundene Objekte inline mit `{{tables.NAME}}`, `{{dimensions.NAME}}` und `{{documents.NAME}}` referenzieren; jede Referenz muss zu einer unten deklarierten Bindung passen. Sagen Sie dem Modell klar, was es wohin schreiben soll (zum Beispiel: „Schreibe eine Zeile pro Geschäftsbereich in die Tabelle `summary`“).
+* **Ergebnisschema** *(bei Anthropic-Verbindungen optional; bei anderen Anbietern erforderlich)* – ein JSON-Schema für eine strukturierte Zusammenfassung der Ausführung, die zur Dokumentation festgehalten wird. Wenn Sie eines angeben, muss sein Stamm ein JSON-Objekt mit `"type": "object"` sein. Bei einer Anthropic-Verbindung können Sie es leer lassen, wenn die eigentliche Arbeit des Modells aus den Schreibvorgängen über MCP besteht; andere Anbieter haben keinen MCP-Zugriff, daher ist die strukturierte Antwort ihre einzige Ausgabe und ein Schema erforderlich.
+
+## Projektdaten binden
+
+Im Abschnitt **Bindings** gewähren Sie Zugriff und legen fest, was der Schritt lesen und schreiben darf. Er enthält drei Gruppen – **Tabellen**, **Dimensionen** und **Dokumente** – jeweils mit einer Schaltfläche **Hinzufügen**. Jede Zeile enthält:
+
+* Eine **Auswahl** für das Objekt: eine Tabellenauswahl, eine Dimensionsauswahl oder (bei Dokumenten) einen Browser für Konto und Pfad. IDs müssen nicht mehr von Hand eingegeben werden.
+* Einen **Namen** – die Bezeichnung, mit der Sie im Prompt darauf verweisen (`{{tables.NAME}}`).
+* Kontrollkästchen **Lesen** und **Schreiben**. Aktivieren Sie **Lesen**, damit das Modell das Objekt lesen darf, **Schreiben**, damit es in das Objekt schreiben darf, oder beides. Mindestens eines ist immer gesetzt.
+* Bei Dokumenten einen Hinweis zum **Format** (etwa `pdf`).
+
+So schreibt das Modell über die MCP-Tools in die einzelnen Arten:
+
+| Bindung | Das Modell schreibt durch … |
+|---------|----------------------|
+| **Tabelle** (Schreiben) | Einfügen von Zeilen – typischerweise ein `SELECT`, das die Zeilen erzeugt, die der gebundenen Tabelle hinzugefügt werden. |
+| **Dimension** (Schreiben) | Hinzufügen oder Aktualisieren von Knoten in der Hierarchie der gebundenen Dimension. |
+| **Dokument** (Schreiben) | Hochladen einer Datei in das gebundene Dokumentenkonto und den gebundenen Pfad. |
+
+<Aside type="caution">Der Zugriff ist pro Kontrollkästchen genau auf die Objekte beschränkt, die Sie binden: Das Modell kann nur Objekte lesen, die mit Lesen gebunden sind, und nur Objekte beschreiben, die mit Schreiben gebunden sind. Auf ein Objekt, das Sie nicht gebunden haben, kann es nicht zugreifen, und in eine schreibgeschützte Bindung kann es nicht schreiben.</Aside>
+
+## Limits
+
+Die Gruppe **Limits** begrenzt die Anfrage:
+
+* **Maximale Ausgabetokens** – die größte Antwort, die das Modell zurückgeben darf (1.024 bis 128.000; Standard 16.000).
+* **Gültigkeitsdauer der Anmeldedaten (Sekunden)** – wie lange die eingeschränkten, temporären Datenzugriffs-Anmeldedaten des Schritts gültig bleiben (60 bis 3.600; Standard 1.800). Die Aufgabe des Schritts ist auf dieses Zeitfenster begrenzt. Wählen Sie es daher lang genug, damit das Modell fertig werden kann, aber nicht länger als nötig.
+
+## Den Schritt ausführen
+
+Der LLM-Schritt läuft wie jeder andere Schritt – als Teil einer vollständigen Workflow-Ausführung oder einzeln (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)). Bei der Ausführung erzeugt der Schritt kurzlebige, eingeschränkte Anmeldedaten, sendet Ihren Prompt und die gebundenen Objekte an das Modell, und das Modell liest und schreibt direkt über die MCP-Tools. Die Anmeldedaten werden widerrufen, sobald der Schritt endet. Der Modellaufruf läuft in einem eigenen Job, sodass ein lang laufender Schritt den Workflow-Runner nicht blockiert.
+
+<Aside type="caution">Jede Ausführung erzeugt einen echten, kostenpflichtigen Aufruf bei Ihrem LLM-Anbieter und schreibt in Ihre gebundenen Objekte. Behandeln Sie eine Bindung mit Schreibzugriff wie jedes andere Transformationsziel und testen Sie zuerst mit einer Scratch-Tabelle, bevor Sie den Schritt auf Produktionsdaten richten.</Aside>

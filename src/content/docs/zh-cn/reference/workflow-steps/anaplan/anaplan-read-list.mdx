@@ -1,0 +1,60 @@
+---
+title: "Anaplan：读取列表"
+description: 将一个或多个 Anaplan 列表（包括从根开始的完整复合层次结构）读取到 PlaidCloud 维度中。不导入访问控制标志和子集，所有边均以普通加号汇总。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [Anaplan 连接](/zh-cn/guides/connections/anaplan/)读取一个或多个 Anaplan 列表，并将其加载到 PlaidCloud 维度中。**一个步骤即可读取整个复合层次结构**：按从根开始的顺序列出其涉及的所有列表（例如先 Region，再 Country，然后 Store），无需拆分到多个步骤中。每次运行时暂存表都会被整体替换，因此如果多个步骤指向同一个暂存表，每个步骤都会清除前一个步骤写入的行。
+
+此步骤在步骤菜单的 **Anaplan** 下显示，标签为**列表读取**。
+
+此步骤通过 Anaplan 的 Integration API 以**云直连**方式访问 Anaplan，不提供本地代理路径。
+
+<Aside type="tip">
+此连接器为只读，使用基本身份验证（用户名和密码）或 CA 证书凭据进行身份验证，请参阅[身份验证](/zh-cn/guides/connections/anaplan/#身份验证)。Anaplan 的请求配额由整个租户共享，因此请将此步骤的计划与其他 Anaplan 工作流错开，请参阅[计划注意事项](/zh-cn/guides/connections/anaplan/#计划方面的注意事项)。
+</Aside>
+
+## 配置
+
+### Anaplan 源
+
+| 字段 | 必填 | 备注 |
+|---|---|---|
+| Anaplan 连接 | 是 | 用于读取的 [Anaplan 连接](/zh-cn/guides/connections/anaplan/)。 |
+| 环境 | 是 | 连接的环境。 |
+| 模型 | 否 | 覆盖连接上保存的模型 ID。可从连接实时发现，也可手动输入。 |
+| 列表 | 是 | 层次结构涉及的所有 Anaplan 列表，以有序列表形式提供。可添加从所选模型中发现的列表，或手动输入 ID，然后使用上移/下移调整顺序。按从根开始的顺序列出便于阅读，但顺序不会改变最终载入的内容，因为在解析任何父级之前会先读取所有列表。 |
+| 暂存表 | 是 | 原始的父级/子级/合并/名称和属性行会先载入此表，然后再据此构建 PlaidCloud 维度。 |
+
+### 目标 PlaidCloud 维度
+
+| 字段 | 必填 | 备注 |
+|---|---|---|
+| 动态指定维度 | 二选一 | 目标维度名称，可包含在运行时解析的 `{variable}` 标记。默认选中。 |
+| 使用特定维度 | 二选一 | 改为选择已有的 PlaidCloud 维度。 |
+
+## 此步骤无法表示的内容
+
+| 限制 | 含义 |
+|---|---|
+| 每条边都以普通的 `+` 汇总 | Anaplan 列表层次结构不带每条边的权重或符号，没有可读取的内容，因此转换时不会丢失任何信息，但也无法表示更多内容。如果模型通过行项目或属性表达排除或负向汇总，该逻辑不会带入维度，需要在下游重新构建。 |
+| 不导入访问控制标志和子集成员关系 | 选择性访问的读/写标志以及每个项目的列表子集成员关系属于 Anaplan 元数据，而非维度数据。否则，将每个子集作为独立列导入，会在不断增长的共享命名空间中与真实属性冲突。名称与其中任一项冲突的真实列表属性会被拒绝，而不是悄悄地以另一方的名称载入。 |
+| 行项目子集无法作为维度读取 | Anaplan 仅通过通用的维度项目端点公开它们，而不是作为此步骤可读取的列表。 |
+| 无法通过此路径读取超过 1,000,000 条记录的列表 | 此步骤读取的项目端点在超过该文档所述上限时会直接拒绝，而不会返回部分结果，也无法分页绕过。因此，此步骤会拒绝并指明该上限，而不会载入不完整的维度。在此期间，请在 Anaplan 中拆分该列表，或读取其子集。 |
+| 一个节点只能位于一个父级之下 | 如果某项目的父级名称与父级 ID 不一致、其父级位于此步骤未读取的列表中，或其指定的父级根本不存在，则会按名称拒绝该项目，而不是悄悄地将其重新挂到维度的根下。 |
+| 不导入列表的顶级项目 | Anaplan 的顶级项目是位于列表中所有项目之上的汇总节点，而不是列表本身的项目，因此此步骤读取的项目中从不包含它。维度的层级会比 Anaplan 列表少一级，列表自身的根成为维度的根。如果您读取的列表声明了顶级项目，此步骤会发出警告。 |
+| 节点 ID 在一起读取的所有列表中必须唯一 | 节点 ID 为项目的 Anaplan 代码，没有代码时为其名称，而 Anaplan 代码仅保证在单个列表内唯一。如果两个列表重复使用相同的短代码，会按名称拒绝，而不是悄悄地合并为一个节点。 |
+| 不支持备用层次结构 | 每个列表都加载到维度的主层次结构中。 |
+| 只读 | 绝不会向 Anaplan 写回任何内容。 |
+
+## 相关内容
+
+- [连接到 Anaplan（指南）](/zh-cn/guides/connections/anaplan/)：创建连接。
+- [Anaplan：读取视图](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-view/)：按保存时的原样读取已保存的视图。
+- [Anaplan：读取导出](/zh-cn/reference/workflow-steps/anaplan/anaplan-read-export/)：运行已有的导出操作。
+- [Dimension Load 步骤](/zh-cn/reference/workflow-steps/dimensions/dimension-load/)：此步骤所基于的同一套维度加载机制。
+- [Anaplan 步骤](/zh-cn/reference/workflow-steps/anaplan/)

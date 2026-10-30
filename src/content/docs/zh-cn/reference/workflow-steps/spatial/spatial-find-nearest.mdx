@@ -1,0 +1,75 @@
+---
+title: Spatial Find Nearest 步骤
+description: 在 PlaidCloud 工作流步骤中，针对目标表的每一行，按两个几何列之间的距离找出全集表中最近的 N 行。
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/spatial/spatial-find-nearest.mdx
+---
+
+## 说明
+
+**查找最近点**步骤将*目标*表的每一行与*全集*表中在地理位置上最接近它的行配对。对每个目标行，保留 `N` 个最近的全集行（按两侧各自几何列之间的距离衡量），并添加计算得出的 `Distance` 列。
+
+它是 Alteryx *Find Nearest* 工具的 SQL 原生等效实现：整个运算以按距离排序的交叉联接形式在数据库中运行，因此可扩展到大型表，而无需将行拉取到工作流引擎。
+
+两个几何列都以 **WKT**（well-known text，已知文本）形式存放几何，这与其他 PlaidCloud 空间辅助功能生成和使用的表示形式相同。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 460 200" role="img" aria-label="查找最近点将每个目标行关联到地理位置最近的 N 个全集行，并添加 Distance 列。中心的目标点与其最近的两个全集点相连；更远的点则不连线。" style="width:100%;max-width:460px;height:auto;">
+  <line x1="230" y1="108" x2="305" y2="66" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <line x1="230" y1="108" x2="188" y2="56" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <circle cx="118" cy="150" r="6" fill="var(--sl-color-gray-5)" />
+  <circle cx="352" cy="152" r="6" fill="var(--sl-color-gray-5)" />
+  <circle cx="112" cy="78" r="6" fill="var(--sl-color-gray-5)" />
+  <circle cx="356" cy="104" r="6" fill="var(--sl-color-gray-5)" />
+  <circle cx="305" cy="66" r="7" fill="var(--sl-color-accent)" />
+  <circle cx="188" cy="56" r="7" fill="var(--sl-color-accent)" />
+  <circle cx="230" cy="108" r="8" fill="var(--sl-color-accent)" stroke="var(--sl-color-gray-6)" stroke-width="2" />
+  <text x="230" y="128" text-anchor="middle" font-size="10" fill="var(--sl-color-text)">目标</text>
+  <text x="272" y="82" text-anchor="middle" font-size="9" fill="var(--sl-color-accent)">d₁</text>
+  <text x="204" y="80" text-anchor="middle" font-size="9" fill="var(--sl-color-accent)">d₂</text>
+  <text x="230" y="184" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">每个目标 → 其 N 个最近的全集行，并带有 Distance 列</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">查找最近点为每个目标行保留 <code>N</code> 个最近的全集行（按几何到几何的距离衡量），并追加计算得出的 <code>Distance</code>。</figcaption>
+</figure>
+
+## 源和选项
+
+- **目标表**——需要为其查找邻近点的行。每个符合条件的目标行都会出现在输出中（与其最近的全集行配对）。
+- **全集表**——被搜索的候选邻近点。
+- **输出表**——结果写入的表。
+- **目标几何 / 全集几何**——两侧各自用于计算距离的 WKT 几何列。
+- **最近点数量 (N)**——每个目标行保留多少个最近的全集行（默认 1）。
+- **最大距离**——可选。设置后，与目标距离超过此值的全集行会在排序前被排除。留空（或 0）表示不限制。
+- **距离单位**——`Distance` 输出和*最大距离*所采用的单位：英里、千米、米或英尺。
+- **忽略零距离匹配**——跳过恰好位于目标上的全集行（距离为 0），例如在目标和全集为同一数据集时，避免某个点与自身匹配。
+
+## 目标和全集映射
+
+每个输入都有自己的映射选项卡，列出该表可用的列，既用于驱动上述几何选择器，也用于使列可供输出使用。
+
+## 输出列
+
+选择要带入输出的列，以及每列来自哪一侧（目标或全集），并可按需重命名。计算得出的 **Distance** 列（到匹配的全集行的平面距离，采用所选单位）会自动添加；您可以重命名它或将其关闭。
+
+### 过时列
+
+“输出列”中的某一行可能指定了其对应侧的映射选项卡（**目标映射**或**全集映射**）已不再列出的列。步骤不会自动移除此类行，而是将列名以红色显示在 ⚠ 警告标志之后，将鼠标悬停其上会提示哪个映射缺少该列。不会对未列出任何列的映射进行检查。
+
+保存仍有被标记行的步骤时，会出现**发现过时列**对话框列出这些行，并提供三个选项：
+
+- **全部移除并保存**——移除被标记的行，然后保存。
+- **仍然保存**——按现状保存步骤。
+- **取消**——返回步骤而不保存。
+
+若要保留某行并清除其警告，请在其映射选项卡上重新添加该列，或选择映射中列出的列。
+
+## 备注
+
+距离为平面距离（基于几何坐标计算，并换算为所请求的单位），与其他 PlaidCloud 空间步骤一致。对于经度/纬度数据，这是一种近似，在最近邻分析典型的局部距离（如门店辐射范围、服务区域等）上足够准确。
+
+## 相关内容
+
+- [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)
+- [空间匹配](/zh-cn/reference/workflow-steps/spatial/spatial-match/)
+- [Geometry in SQL 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-sql-recipes/)

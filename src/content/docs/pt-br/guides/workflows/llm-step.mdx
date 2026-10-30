@@ -1,0 +1,72 @@
+---
+title: Etapa de LLM
+description: Execute um prompt em um LLM dentro de um fluxo de trabalho — com acesso de leitura e/ou gravação delimitado às tabelas, dimensões e documentos do seu projeto — e deixe o modelo gravar os resultados diretamente.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/llm-step.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+A **Etapa de LLM** executa um prompt em um modelo de linguagem grande como uma etapa de um fluxo de trabalho. Você dá ao modelo acesso delimitado a tabelas, dimensões e documentos específicos do seu projeto, escolhendo **Leitura**, **Gravação** ou ambos para cada um. O modelo lê os dados de que precisa e — onde você concedeu **Gravação** — grava seus resultados diretamente no objeto selecionado. Não há formato de saída separado para configurar: uma vinculação com Gravação habilitada *é* a saída da etapa.
+
+Um uso comum é resumir uma tabela financeira em comentários por unidade de negócios e fazer o modelo gravar esse comentário em uma tabela de resultados (ou como arquivos de documento) que você vinculou com acesso de Gravação.
+
+<Aside type="note">O acesso delimitado aos dados do projeto (tabelas, dimensões, documentos) está disponível com conexões de LLM da **Anthropic**, que usam um conector seguro para acessar as ferramentas MCP do PlaidCloud. Outros provedores ainda podem executar um prompt e retornar JSON estruturado, mas não têm acesso delimitado aos dados — uma etapa com vinculações em uma de suas conexões é recusada ao salvar, e um esquema de resultado é obrigatório.</Aside>
+
+## Antes de começar
+
+Você vai precisar de:
+
+* **Uma conexão de LLM.** A etapa exige uma conexão do tipo **LLM** (por exemplo, Anthropic). A conexão guarda a chave de API do provedor, um modelo padrão opcional e um nível de **Acesso do agente**. Consulte [Conexões](/pt-br/guides/connections/).
+* **Acesso de gravação na conexão — somente se alguma vinculação tiver Gravação habilitada.** Uma vinculação só pode gravar se o Acesso do agente da conexão for **Leitura e gravação**. **Completo** está obsoleto e será removido em 15 de janeiro de 2027. Uma conexão **somente leitura** rejeita vinculações de Gravação ao salvar.
+* **Os objetos de destino já criados.** O modelo grava *nos* objetos que você seleciona — uma tabela, dimensão ou conta de documentos existente. Crie e vincule o destino primeiro; a etapa não cria novos objetos.
+
+## Adicionar uma etapa de LLM
+
+1. Abra o fluxo de trabalho e vá para a guia **Analyze Steps**.
+2. Adicione uma etapa na posição desejada, da mesma forma que adicionaria uma transformação padrão.
+3. Escolha **Etapa de LLM** como o tipo de etapa. O editor abre com três seções: **Solicitação de LLM**, **Bindings** e **Limites**.
+
+## Configurar a solicitação
+
+No grupo **Solicitação de LLM**:
+
+* **Conexão de LLM** *(obrigatório)* — a conexão de LLM que a etapa usa.
+* **Modelo** *(opcional)* — o nome de um modelo específico, como `claude-opus-4-7`. Deixe em branco para usar o modelo padrão da conexão.
+* **Prompt** *(obrigatório)* — a instrução enviada ao modelo. Você pode referenciar objetos vinculados no próprio texto com `{{tables.NAME}}`, `{{dimensions.NAME}}` e `{{documents.NAME}}`; cada referência deve corresponder a uma vinculação que você declarar abaixo. Diga ao modelo com clareza o que gravar e onde (por exemplo, "grave uma linha por unidade de negócios na tabela `summary`").
+* **Result schema** *(opcional para conexões da Anthropic; obrigatório para outros provedores)* — um Esquema JSON para um resumo estruturado da execução, capturado para registro. Se você fornecer um, a raiz deve ser um objeto JSON com `"type": "object"`. Com uma conexão da Anthropic, você pode deixá-lo em branco quando o trabalho real do modelo for as gravações que ele faz por meio do MCP; outros provedores não têm acesso ao MCP, então a resposta estruturada é a única saída deles e um esquema é obrigatório.
+
+## Vincular dados do projeto
+
+A seção **Bindings** é onde você concede acesso e escolhe o que a etapa pode ler e gravar. Ela tem três grupos — **Tabelas**, **Dimensões** e **Documentos** — cada um com um botão **Adicionar**. Cada linha tem:
+
+* Um **seletor** para escolher o objeto: um seletor de tabela, um seletor de dimensão ou (para documentos) um navegador de conta e caminho. Chega de digitar IDs manualmente.
+* Um **Nome** — o rótulo que você referencia no prompt (`{{tables.NAME}}`).
+* Caixas de seleção **Leitura** e **Gravação**. Marque **Leitura** para permitir que o modelo leia o objeto, **Gravação** para permitir que ele grave no objeto, ou ambas. Pelo menos uma está sempre definida.
+* Para documentos, uma dica de **Formato** (como `pdf`).
+
+Como o modelo grava em cada tipo, por meio das ferramentas MCP:
+
+| Vinculação | O modelo grava… |
+|---------|----------------------|
+| **Tabela** (Gravação) | inserindo linhas — normalmente um `SELECT` que produz as linhas a adicionar à tabela vinculada. |
+| **Dimensão** (Gravação) | adicionando ou atualizando nós na hierarquia da dimensão vinculada. |
+| **Documento** (Gravação) | enviando um arquivo para a conta de documentos e o caminho vinculados. |
+
+<Aside type="caution">O acesso é restrito exatamente aos objetos que você vincula, por caixa de seleção: o modelo só pode ler objetos vinculados com Leitura e só pode gravar nos vinculados com Gravação. Ele não consegue acessar um objeto que você não vinculou e não pode gravar em uma vinculação somente de leitura.</Aside>
+
+## Limites
+
+O grupo **Limites** delimita a solicitação:
+
+* **Máximo de tokens de saída** — a maior resposta que o modelo pode retornar (de 1.024 a 128.000; padrão de 16.000).
+* **TTL da credencial (segundos)** — por quanto tempo a credencial temporária e delimitada de acesso a dados da etapa permanece válida (de 60 a 3.600; padrão de 1.800). O trabalho da etapa é limitado por essa janela, então defina um valor longo o bastante para o modelo terminar, mas não maior que o necessário.
+
+## Executar a etapa
+
+A Etapa de LLM é executada como qualquer outra etapa — como parte de uma execução completa do fluxo de trabalho ou isoladamente (consulte [Executar uma etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)). Ao ser executada, a etapa gera uma credencial de curta duração e delimitada, envia seu prompt e os objetos vinculados ao modelo, e o modelo lê e grava diretamente pelas ferramentas MCP. A credencial é revogada assim que a etapa termina. A chamada ao modelo é executada em seu próprio job, então uma etapa de longa duração não ocupa o executor do fluxo de trabalho.
+
+<Aside type="caution">Cada execução faz uma chamada real e cobrada ao seu provedor de LLM e grava nos objetos vinculados. Trate uma vinculação de Gravação como qualquer outro destino de transformação e teste em uma tabela de rascunho antes de apontar a etapa para dados de produção.</Aside>

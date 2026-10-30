@@ -1,0 +1,98 @@
+---
+title: Consulter l'historique des comptabilisations ERP
+description: Consultez chaque tentative de comptabilisation ERP effectuée par votre projet et son état en direct (comptabilisée, rejetée, incertaine ou extournée), avec le numéro de document de l'ERP, filtrable par projet, via REST ou les outils MCP.
+sidebar:
+  label: Consulter l'historique des comptabilisations ERP
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Lorsqu'un workflow comptabilise dans un ERP (une écriture de journal Sage Intacct ou NetSuite, un document Acumatica, Business Central ou Xero, une écriture de journal Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials ou SAP S/4HANA Cloud, un document SAP), PlaidCloud enregistre chaque tentative de comptabilisation dans un registre durable propre au locataire, afin que le même document ne soit jamais comptabilisé deux fois. **L'historique des comptabilisations ERP** est la vue en lecture seule de ce registre : chaque tentative et son état en direct, avec le numéro de document et les horodatages propres à l'ERP, filtrable par projet.
+
+Il complète la table de résultat par exécution qu'écrit une étape de comptabilisation : la table de résultat contient les résultats d'une seule exécution, tandis que l'historique des comptabilisations est l'enregistrement permanent de toutes les exécutions et de tous les workflows, et suit chaque comptabilisation tout au long de son cycle de vie complet au lieu de la figer au moment où l'exécution s'est terminée.
+
+<Aside type="note">
+L'historique des comptabilisations est en **lecture seule** : il ne modifie jamais une comptabilisation ni le registre. Il est disponible via l'API REST et comme outil MCP, limité à un projet auquel vous avez déjà accès. Pour un écran au niveau du locataire qui passe en revue les comptabilisations de tous les projets et connexions que vous avez le droit de voir, utilisez le [Registre des écritures](/fr/guides/connections/posting-register/).
+</Aside>
+
+## Ce que montre chaque comptabilisation
+
+Chaque ligne correspond à un document comptabilisé (ou dont la comptabilisation a été tentée) dans un environnement ERP sur une connexion :
+
+| Champ | Signification |
+|---|---|
+| `project_id` | Le projet depuis lequel la comptabilisation a été effectuée. |
+| `connection_id` | La connexion ERP utilisée. |
+| `environment_id` | L'environnement de la connexion dans lequel la comptabilisation a eu lieu (par exemple test ou production). |
+| `natural_key` | La clé métier du document, telle que l'étape de comptabilisation l'a déterminée. |
+| `state` | L'état actuel du cycle de vie de la comptabilisation (voir ci-dessous). |
+| `confirmation_id` | Le numéro de document propre à l'ERP, une fois que l'ERP en attribue un. Jamais renseigné pour une comptabilisation simulée. |
+| `run_id` | L'exécution du workflow qui a effectué la comptabilisation. |
+| `submitted_at`, `created_at`, `updated_at` | Quand la comptabilisation a été soumise, enregistrée pour la première fois et modifiée pour la dernière fois. |
+
+Une comptabilisation effectuée en [mode Simulation](/fr/guides/workflows/run-a-workflow/#choisir-un-mode-de-comptabilisation) est signalée comme simulée, ce qui la distingue d'un coup d'œil d'une comptabilisation réelle ; consultez [Comptabilisations simulées](#comptabilisations-simulées) ci-dessous.
+
+## Les états du cycle de vie
+
+Une comptabilisation passe par ces états au fur et à mesure que l'ERP la traite :
+
+| État | Signification |
+|---|---|
+| `preflighted` | Validée et réservée, pas encore envoyée à l'ERP. |
+| `submitted` | Envoyée à l'ERP ; le résultat n'est pas encore connu. |
+| `pending` | Acceptée pour un traitement asynchrone ; en attente d'un résultat final. |
+| `posted` | Comptabilisation confirmée ; `confirmation_id` contient le numéro de document de l'ERP. |
+| `rejected` | L'ERP a refusé la comptabilisation. |
+| `in_doubt` | Le résultat n'a pas pu être confirmé : une personne doit vérifier directement dans l'ERP avant toute nouvelle tentative. |
+| `reversed` | Un document précédemment comptabilisé a été extourné. |
+
+<Aside type="caution">
+Une comptabilisation `in_doubt` est exactement cela : inconnue, et non en échec. Confirmez-la dans l'ERP lui-même avant de décider d'agir ; ne la réexécutez jamais à l'aveugle.
+
+PlaidCloud enregistre une comptabilisation ou une extourne comme `in_doubt` chaque fois qu'il ne peut pas savoir ce que l'ERP a fait : un délai dépassé ou une erreur de serveur qu'il ne peut pas relire, ou un statut qu'il ne reconnaît pas. Il n'enregistre pas une telle réponse comme `rejected`, ce qui laisserait entendre que le document n'est pas dans l'ERP alors qu'il peut y être.
+</Aside>
+
+## Comptabilisations simulées
+
+Une exécution lancée en [mode Simulation](/fr/guides/workflows/run-a-workflow/#choisir-un-mode-de-comptabilisation) valide ce qu'une étape de comptabilisation enverrait, mais ne contacte jamais l'ERP. Ce qu'elle aurait comptabilisé est tout de même enregistré ici, signalé comme simulé, afin que vous puissiez l'examiner comme une comptabilisation réelle, y compris sa `natural_key` et la requête construite, sans `confirmation_id`, puisqu'aucun ERP ne l'a jamais vue.
+
+Une entrée simulée n'occupe ni ne bloque jamais l'emplacement qui protège l'écriture idempotente d'une comptabilisation réelle. Si vous exécutez ensuite le même document en réel, la comptabilisation réelle se déroule et remplace l'enregistrement simulé. Un espace de travail sans registre de comptabilisation configuré valide quand même normalement une exécution simulée ; il n'enregistre simplement rien ici.
+
+Effacez les entrées simulées d'un projet indépendamment des entrées réelles avec `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (éventuellement restreint avec `connection_id`), ou avec l'outil MCP `erp_clear_simulated_postings` et les mêmes arguments. Dans les deux cas, seules les lignes simulées sont supprimées (une comptabilisation réelle n'est jamais touchée), et la réponse indique à la fois les lignes d'historique et les lignes du magasin de simulation du [Registre des écritures](/fr/guides/connections/posting-register/) effacées, puisqu'un seul effacement supprime dans les deux.
+
+<Aside type="note">
+Les étapes de comptabilisation, de pièce jointe et de RFC SAP sont ignorées purement et simplement en mode Simulation, et non exécutées à blanc ; elles ne produisent donc jamais d'entrée simulée. Consultez [Choisir un mode de comptabilisation](/fr/guides/workflows/run-a-workflow/#choisir-un-mode-de-comptabilisation).
+</Aside>
+
+## Lire l'historique
+
+Limitez chaque lecture à un projet auquel vous avez accès. Vous avez besoin d'un accès en lecture à ce projet, le même accès que celui qu'exige le reste de votre travail sur le projet.
+
+### Via REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Des paramètres de requête facultatifs restreignent le résultat :
+
+| Paramètre | Effet |
+|---|---|
+| `connection_id` | Uniquement les comptabilisations effectuées sur cette connexion. |
+| `state` | Uniquement les comptabilisations dans cet état (par exemple `state=in_doubt`). |
+| `limit` | Taille de la page (100 par défaut). |
+| `cursor` | Le `next_cursor` de la page précédente. |
+
+Les résultats sont renvoyés du plus récent au plus ancien. Lorsqu'une page atteint `limit`, la réponse contient un `next_cursor` ; renvoyez-le comme `cursor` pour lire la page suivante, et arrêtez-vous lorsque `next_cursor` est nul.
+
+### Via MCP
+
+Appelez l'outil `erp_post_history` avec les mêmes arguments : `project_id` (obligatoire) et, facultativement, `connection_id`, `state`, `limit` et `cursor`. Il renvoie les mêmes lignes, paginées de la même façon.
+
+## Revues courantes
+
+- **Tout ce qui est encore incertain pour un projet :** `state=in_doubt` — les comptabilisations à confirmer à la main dans l'ERP.
+- **Ce qu'une exécution précise a comptabilisé :** lisez l'historique du projet et filtrez sur `run_id`.
+- **Si un document a réellement été comptabilisé :** trouvez sa ligne et lisez `state` et `confirmation_id`.

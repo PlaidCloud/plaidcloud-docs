@@ -1,0 +1,129 @@
+---
+title: Obtenção, fundamentação e caminhos de análise
+description: O que o RAG realmente faz no PlaidCloud — obtenção por palavras-chave na documentação, seleção semântica de ferramentas e leituras em direto, com verificação de permissões, dos seus próprios dados através de caminhos de análise.
+sidebar:
+  label: Obtenção e RAG
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/retrieval.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+"RAG" costuma significar uma só coisa: dividir o corpus em fragmentos, incorporá-los num armazém de vetores e
+colar no prompt as correspondências mais próximas. O PlaidCloud faz isso para um único corpus — a documentação
+do produto — e deliberadamente **não** o faz aos seus dados.
+
+As suas tabelas são lidas em direto, no momento em que se pergunta sobre elas, com as suas permissões. Não se trata de uma
+decisão de desempenho; é o que torna uma resposta fiável e um controlo de acesso significativo.
+
+<img
+	src="/images/ai-retrieval.svg"
+	alt="Três vias de obtenção. A primeira seleciona as ferramentas a oferecer com recurso a incorporações das descrições das ferramentas. A segunda é a obtenção por palavras-chave BM25 sobre o corpus da documentação publicada. A terceira lê os seus próprios dados em direto através de caminhos de análise e ferramentas MCP. Em conjunto, produzem uma resposta fundamentada com confiança e ressalvas."
+	class="doc-diagram"
+/>
+
+## Via 1 — Escolher que ferramentas oferecer
+
+Esta via aplica-se ao **assistente integrado**, que tem o seu próprio catálogo de ferramentas. Cada descrição
+de ferramenta que mostra ao modelo consome tokens do prompt em cada turno, pelo que, antes de o modelo ver o que quer que seja,
+a pergunta é comparada por semelhança semântica com **as descrições das ferramentas** — nunca com
+os seus dados — e só são oferecidas as ferramentas plausivelmente relevantes.
+
+Nas outras superfícies, o catálogo de ferramentas é gerido pela ligação MCP: o conector da Anthropic
+gere-o no servidor e o ciclo no cliente limita a superfície que declara. As vias 2 e
+3 abaixo aplicam-se em todo o lado.
+
+Três pormenores são importantes:
+
+- **As incorporações descrevem ferramentas, não conteúdo.** São calculadas uma vez a partir dos nomes e
+  descrições das ferramentas, ficam em cache e são reconstruídas automaticamente quando uma descrição muda.
+- **Algumas ferramentas estão sempre presentes** para que o agente se oriente — perceba quem pergunta e em
+  que projeto — mesmo quando a pergunta não menciona nenhum dos dois.
+- **Com pouca confiança, recorre-se à lista completa.** Uma restrição confiantemente errada é pior do que pagar
+  o custo total em tokens uma vez, pelo que uma correspondência incerta mostra simplesmente tudo. Os turnos muito curtos
+  ("obrigado", "ok") dispensam por completo este passo.
+
+## Via 2 — Fundamentação na documentação
+
+Esta é a verdadeira via de geração aumentada por obtenção e responde a *"como faço…"*, *"o que
+é…"* e *"onde configuro…"*.
+
+A documentação publicada é obtida como um corpus estruturado — uma entrada por página — e indexada
+em memória com o **Okapi BM25**, uma função de classificação por palavras-chave. O agente trabalha então em dois movimentos:
+
+1. **Pesquisar** devolve uma lista restrita de páginas por ordem de relevância: slug, título, descrição, pontuação.
+2. **Obter** extrai uma página, ou uma única secção com nome, depois de o agente ter decidido qual
+   é realmente necessária.
+
+<Aside type="note">
+**Porquê classificação por palavras-chave e não incorporações?** Foi medido, não presumido. Uma lista restrita BM25
+reclassificada pelo modelo de conversação superou a abordagem de incorporações e armazém de vetores em todas as métricas de obtenção
+para este corpus, pelo que o armazém de vetores foi descontinuado. A documentação do produto está repleta de termos exatos —
+nomes de passos, nomes de funções, etiquetas de campos — que é precisamente onde a classificação por palavras-chave é forte.
+</Aside>
+
+O ponto de conceção é que **o agente decide quando pesquisar** e quanto ler. A injeção passiva
+cola algo em todos os prompts, quer ajude quer não; a obtenção conduzida por ferramentas mantém as páginas
+irrelevantes totalmente fora da janela de contexto e permite ao agente citar a página que utilizou, para que
+possa dar seguimento.
+
+Se o corpus da documentação estiver brevemente inacessível, o agente responde sem ele em vez de fazer
+falhar o turno.
+
+## Via 3 — Ler os seus próprios dados
+
+As perguntas sobre os *seus* números não são respondidas por obtenção. O agente lê o que precisa,
+quando precisa, através de ferramentas com verificação de permissões: esquemas de tabelas, linhas, membros de dimensões, linhagem de
+fluxos de trabalho, rastreios de alocação.
+
+É por isso que as respostas estão atualizadas — refletem os dados como estão agora, não como estavam quando algo
+foi indexado pela última vez — e é por isso que o controlo de acesso funciona: não existe um índice pré-construído que possa fugir
+através de uma fronteira de permissões, porque não há índice.
+
+### Caminhos de análise — a camada de nomenclatura
+
+As leituras em direto precisam de saber *qual* tabela. Os **caminhos de análise** são o vocabulário partilhado que torna isso
+simples: um nome amigável — *"Resultados operacionais"*, *"a demonstração de resultados"*, *"Efetivos"* — associado uma só vez a um
+projeto e a uma tabela reais, e utilizável por todos na área de trabalho a partir daí.
+
+- **Pergunte pelo nome** em vez de indicar um projeto e uma tabela de cada vez.
+- **Marque um como predefinição da área de trabalho** para que um *"o que mudou no último trimestre?"* sem destino
+  caia num local sensato.
+- **Todos querem dizer o mesmo.** Quando toda a equipa diz "a demonstração de resultados", chega à mesma tabela.
+
+Um administrador regista-os; qualquer pessoa os pode utilizar; cada pergunta continua a ser executada com as permissões
+da pessoa que pergunta. Funcionam de forma idêntica a partir do assistente integrado, do Microsoft 365 Copilot
+e de um agente de programação ligado. Consulte [Caminhos de análise](/pt-pt/integrations/ai-coding-agents/analysis-paths/)
+para saber como os configurar.
+
+### O catálogo de expressões
+
+Quando o assistente escreve uma expressão, não adivinha nomes de funções de memória. Consulta um
+catálogo estruturado de todas as funções de expressão do PlaidCloud — nome, assinatura, ligação para a documentação,
+categoria — confrontado com as funções que o seu armazém realmente disponibiliza, com sugestões de correspondência aproximada quando um nome está quase certo. Uma consulta, não uma pesquisa por semelhança, porque em nomes
+de funções "quase certo" é errado.
+
+## Fundamentação não é treino
+
+Duas coisas com que as pessoas razoavelmente se preocupam:
+
+- **Nada do que aqui é obtido treina um modelo.** A fundamentação coloca informação num único pedido. Não
+  altera os pesos do modelo, e o seu conteúdo não é utilizado para treinar o modelo de ninguém.
+- **O índice de obtenção contém apenas documentação pública.** Nenhum conteúdo de clientes é incorporado nele.
+
+Para onde vão os seus dados — e como mantê-los dentro de infraestrutura que controla — é abordado em
+[Utilizar o seu próprio LLM controlado](/pt-pt/integrations/ai-architecture/private-llm/).
+
+## Porque produz melhores respostas
+
+A fundamentação é o que permite ao assistente dizer *"não sei"* em vez de inventar algo. Como
+cada valor provém de uma consulta real e cada afirmação sobre o produto de uma página de documentação real, uma
+resposta pode ser classificada: cada uma tem um indicador de confiança e ressalvas em linguagem simples, e um
+resumo narrativo é verificado para que não possa omitir discretamente uma limitação nem citar um número que a análise
+nunca produziu. Consulte [Respostas em que pode confiar](/pt-pt/integrations/ai-coding-agents/honest-answers/).
+
+## Relacionado
+
+- [Caminhos de análise](/pt-pt/integrations/ai-coding-agents/analysis-paths/) — configurar os nomes partilhados
+- [Rastrear alocações](/pt-pt/integrations/ai-coding-agents/tracing-allocations/) — perguntar *porquê* um resultado se alterou
+- [Arquitetura de IA e LLM](/pt-pt/integrations/ai-architecture/) — as superfícies e o caminho partilhado

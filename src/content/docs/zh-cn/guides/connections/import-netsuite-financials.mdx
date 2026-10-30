@@ -1,0 +1,85 @@
+---
+title: 导入 NetSuite 财务数据
+description: 使用预置的 NetSuite 导入步骤，将 NetSuite 余额、总账明细和主数据拉取到项目表中——选择连接、目标表、日期范围和子公司，然后运行。
+sidebar:
+  label: 导入 NetSuite 财务数据
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/import-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+使用预置的 NetSuite 导入步骤，将常用的 NetSuite 财务数据和参考数据拉取到项目表中——无需编写 SuiteQL。三个步骤涵盖大多数拉取场景：用于试算平衡表的 **Import Balances**，用于其背后记账级明细行的 **Import GL Detail**，以及用于这些拉取所引用的科目、子公司和维度的 **Import Master Data**。每个步骤都运行在共享的读取层上，该层会刷新 OAuth 令牌、对大型结果分页并重试瞬时错误，因此整个期间或所有子公司的拉取都能完整返回。
+
+<Aside type="tip">
+对于预置步骤未涵盖的定制拉取，请使用 [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)编写您自己的 SuiteQL——参见 [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/)。对于这些常见的拉取，下面的预置步骤是更简单的选择。
+</Aside>
+
+## 前提条件
+
+- 一个可用的 [NetSuite 连接](/zh-cn/guides/connections/netsuite/)，并具有对您要读取的记录的查看权限。
+- 一个用于添加该步骤的工作流。
+
+## 拉取试算平衡表
+
+<Steps>
+
+1. 向工作流中添加一个 **NetSuite：导入余额**步骤。
+
+2. 将 **NetSuite 连接**设置为您的连接，并将**目标表**设置为余额要落入的项目表。每次运行时，该步骤都会完全覆盖此表。
+
+3. 将**开始日期**和**结束日期**设置为所需的期间，均采用 `YYYY-MM-DD` 格式且都包含在内。任一项留空，则表示范围的该端不设限。
+
+4. 若要将拉取限制为某一家子公司，请将 **Subsidiary** 设置为其 NetSuite 内部 ID；留空则表示所有子公司。（如果您手头只有名称而没有 ID，请参阅[使用主数据解析内部 ID](#使用主数据解析内部-id)。）
+
+5. 在启用了多账簿会计（Multi-Book Accounting）的账户上，将 **Accounting Book** 留空则**仅拉取主账簿**——这是标准试算平衡表的正确默认值。仅当您确实需要跨账簿合计时才将其设置为 `all`，或设置为某个特定账簿的内部 ID。
+
+6. 如果不需要整个会计科目表或范围内的每个期间，可通过**科目编号**（精确的总账科目）或 **Posting Period**（NetSuite 期间内部 ID）进一步缩小范围。
+
+7. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）并检查目标表。
+
+</Steps>
+
+<Aside type="caution">
+**多账簿账户默认使用主账簿。** 在此行为发布之前，对多账簿会计账户进行未筛选的拉取会将所有账簿合并求和——悄无声息地将余额重复计算 N 次。现在将 **Accounting Book** 留空则仅拉取主账簿，符合标准试算平衡表的预期。如果您依赖过去的跨账簿求和，请将 **Accounting Book** 显式设置为 `all`。
+</Aside>
+
+## 拉取总账明细
+
+**NetSuite：导入总账明细**步骤的配置方式相同——连接、目标表、日期范围、子公司、账簿、科目编号和记账期间——但返回的是交易行明细，而不是期间余额。可用它来对账、深入查看，或根据余额背后的过账重建详细的损益表。
+
+<Aside type="note">
+请将日期范围限定在您需要的切片内。每次运行都会替换整个目标表，因此计划的总账拉取每次都会重新提取完整结果——滚动日期窗口可使定期拉取保持快速，而不必重新读取全部历史数据。
+</Aside>
+
+<Aside type="note">
+NetSuite 将单个 SuiteQL 查询限制在大约 100,000 行。同时提供**开始日期**和**结束日期**后，PlaidCloud 会自动将大范围拉取拆分为更小的日期分块，使其保持在该上限之下，因此整年的总账拉取无需您做任何操作即可完整返回。如果两者都留空，而拉取量大到会超过上限，现在会失败并提示您添加日期范围，而不是悄悄返回被截断的结果。
+</Aside>
+
+## 使用主数据解析内部 ID
+
+NetSuite 中的子公司、科目和维度字段是内部 ID，而不是名称。请使用 **NetSuite：导入主数据**拉取对应的列表，并将其与余额或明细联接，以添加可读的名称。
+
+<Steps>
+
+1. 添加一个 **NetSuite：导入主数据**步骤，并设置 **NetSuite 连接**和**目标表**。
+
+2. 将**记录类型**设置为所需的列表：**account**、**subsidiary**、**department**、**class**、**location**、**vendor** 或 **customer**。
+
+3. 保持 **Include Inactive** 关闭则仅拉取活动记录，开启则包含非活动记录。
+
+4. 运行该步骤，然后按内部 ID 将其表与余额或总账明细联接，把名称带到每一行上。
+
+</Steps>
+
+## 计划拉取
+
+如需持续的数据馈送，请[为工作流设置计划](/zh-cn/get-started/tutorials/schedule-a-workflow/)。由于每个步骤都会完整替换其目标表，计划运行始终反映您所限定期间在 NetSuite 中的当前状态。
+
+## 相关内容
+
+- [NetSuite：导入余额](/zh-cn/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite：导入总账明细](/zh-cn/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite：导入主数据](/zh-cn/reference/workflow-steps/netsuite/import-master-data/)
+- [连接到 NetSuite](/zh-cn/guides/connections/netsuite/) — 设置这些步骤读取数据所用的连接
+- [NetSuite SuiteQL 查询示例](/zh-cn/guides/connections/netsuite-financial-queries/) — 为预置步骤未涵盖的拉取编写您自己的查询

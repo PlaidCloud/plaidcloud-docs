@@ -1,0 +1,76 @@
+---
+title: "Xero: 문서 전기"
+description: 헤더 및 라인 테이블에서 수동 분개, 송장, 청구서, 결제, 대변 메모를 Xero로 전기합니다. 무엇이든 전기하기 전에 모든 문서를 검증하는 테스트 모드를 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+PlaidCloud의 공유 ERP 쓰기 파이프라인을 통해 [Xero 연결](/ko/guides/connections/xero/)로 Xero에 문서를 전기합니다. 이 단계는 헤더 테이블(문서당 한 행)과 라인 테이블(문서당 한 행 이상)을 입력으로 받아 각 문서를 **ManualJournal**, **Invoice**, **Bill**, **Payment** 또는 **CreditNote**로 전기합니다. 한 배치에 여러 문서 유형을 섞을 수 있으며, PlaidCloud는 네트워크 호출 전에 문서 유형별로 배치를 나눕니다. **Test Only Mode**는 원장 점유와 전기 없이 모든 문서를 만들고 검사합니다. 선택적인 결과 테이블에는 각 문서의 결과가 기록됩니다.
+
+<Aside type="caution">
+이 단계로 실제 문서를 무인으로 전기하기 전에 모든 배치를 먼저 **Test Only Mode**로 실행하고, 결과 테이블을 검토하고, 몇 건의 전기 내용을 Xero에서 직접 대사하십시오.
+</Aside>
+
+## 구성
+
+### Xero 연결
+
+- **Xero 연결** — 전기에 사용할 Xero 연결입니다. 모든 문서가 전기될 조직 정보를 담고 있습니다.
+- **환경** — 연결의 PlaidCloud 환경 중 전기에 사용할 환경으로, 모든 연결 기반 단계에 있는 것과 같은 선택기입니다. 연결이 가리키는 조직의 속성인 Xero 자체의 Demo Company와는 관련이 없습니다.
+- **Test Only Mode** — 기본적으로 선택되어 있습니다. 각 문서를 검증하지만 전기하지는 않습니다. 원장 점유도, 쓰기도 없습니다. 이 필드가 아예 없는 단계 구성(예: REST API, MCP 또는 워크플로 번들 가져오기로 작성한 구성)도 실제 전기가 아니라 Test Only Mode로 기본 설정됩니다.
+- **Continue posting remaining documents if one document fails** — 기본적으로 선택되어 있습니다. 선택을 해제하면 배치가 첫 번째 실패에서 중지됩니다.
+- **결과 테이블** — 문서당 한 행: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`(`posted`/`validated`/`error`), `message`.
+
+### 테이블 선택
+
+- **헤더 테이블** — 문서당 한 행입니다.
+- **라인 테이블** — 문서당 한 행 이상이며, `ref`로 헤더와 연결됩니다.
+
+### 헤더 및 라인 필드
+
+두 개의 매핑 탭에서 사용자의 열 이름을 Xero가 필요로 하는 필드에 매핑합니다. **헤더 필드**는 다음을 포함합니다.
+
+| 필드 | 참고 |
+|---|---|
+| `ref` | 필수. 비즈니스 키로, 헤더 행을 해당 라인에 연결하며 멱등성 원장이 점유하는 키입니다. |
+| `doc_type` | 필수. `ManualJournal`, `Invoice`, `Bill`, `Payment` 또는 `CreditNote`. |
+| `posting_date` | 필수. |
+| `currency_id`, `party_id`, `memo`, `due_date` | 선택. `party_id`는 Xero 연락처입니다. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | 결제에만 해당, 선택. |
+| `credit_note_type` | 대변 메모에만 해당, 선택. `ACCRECCREDIT`(판매, 기본값) 또는 `ACCPAYCREDIT`(구매). |
+
+**라인 필드**는 `ref`(필수, 헤더 행과 일치해야 함)와 문서 유형에 필요한 필드를 포함합니다.
+
+| 문서 유형 | 라인 필드 |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit`, 그리고 추적용으로 선택적인 `class_id` / `department_id` |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id`(라인이 적용되는 송장), `amount` |
+
+`tax_type`과 `memo`는 모든 라인에서 선택 사항입니다.
+
+## 전기 방식
+
+각 문서는 제출 전에 PlaidCloud의 멱등성 원장에서 점유되므로, 다시 실행해도 이미 `posted` 상태에 도달한 문서는 전기되지 않습니다. 원장 키에는 문서 유형이 접두사로 붙으므로, 같은 `ref`를 가진 송장과 청구서가 Xero에서 같은 엔드포인트로 전기되더라도 서로 충돌하지 않습니다.
+
+시간 초과나 응답 누락처럼 결과가 모호한 경우, PlaidCloud는 자신이 부여한 문서 번호(송장 또는 청구서는 송장 번호, 대변 메모는 대변 메모 번호)로 Xero에 다시 조회합니다. Xero에서 이러한 번호가 고유하다는 보장이 없으므로, 문서가 최종 전기 상태일 때만 일치를 증거로 인정합니다. 초안, 무효 처리 또는 번호가 중복된 일치 항목은 이번 쓰기의 결과로 기록되지 않고 미해결로 간주되어 격리됩니다.
+
+## 기능 제한
+
+| 제한 사항 | 의미 |
+|---|---|
+| 수동 분개와 결제는 조회할 수 없음 | Xero에서는 수동 분개의 설명과 결제의 참조를 쿼리할 수 없으므로, 불확실한 쓰기를 요청과 대응시킬 필드가 없습니다. 이러한 항목은 추측하지 않고 수동 해결을 위해 격리됩니다. |
+| 되돌리기는 수동 분개와 송장에만 적용 | 수동 분개는 차변/대변이 바뀐 분개로 되돌려지고, 송장은 이를 상쇄하는 대변 메모로 되돌려집니다. 청구서, 결제, 대변 메모에는 문서화된 취소 페이로드가 없으므로 되돌리기는 흉내 내지 않고 거부됩니다. |
+| 속도 제한은 조직별로 적용 | Xero는 조직당 분당 60회, 하루 5,000회 호출과 동시 호출 5건을 허용합니다. PlaidCloud는 분당 제한과 동시 실행 제한을 관리하고 제한 응답을 받으면 대기 후 재시도하므로, 매우 큰 배치는 그에 비례해 더 오래 걸립니다. |
+
+## 관련 항목
+
+- [Xero에 연결](/ko/guides/connections/xero/) — 구성, 미리 보기, 전기를 다루는 전체 안내
+- [Xero REST 커넥터](/ko/reference/connectors/rest/xero/)
+- [Xero 단계](/ko/reference/workflow-steps/xero/)
+- [ERP 전기 이력 검토](/ko/guides/connections/erp-post-history/)

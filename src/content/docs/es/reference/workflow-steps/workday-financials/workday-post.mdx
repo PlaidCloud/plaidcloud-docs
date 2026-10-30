@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry (paso)"
+description: Contabiliza asientos de diario en Workday Financials a partir de tablas de encabezados y de líneas mediante la operación SOAP Submit_Accounting_Journal, con un modo de vista previa que valida todos los asientos antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza asientos de diario en Workday Financials a través de su [conexión de Workday Financials](/es/guides/connections/workday-financials/), mediante la canalización de escritura de ERP compartida de PlaidCloud. El paso toma una tabla de encabezados (una fila por asiento de diario) y una tabla de líneas (una o más filas de débito y crédito por asiento), y llama a la operación SOAP `Submit_Accounting_Journal` de Workday para cada asiento. **Validate Only** crea y comprueba todos los asientos sin reservar el libro y sin contabilizar; una tabla de resultados opcional registra el resultado de cada asiento.
+
+<Aside type="caution">
+Ejecute cada lote primero en **Validate Only**, revise la tabla de resultados y concilie directamente en Workday unas cuantas contabilizaciones antes de confiar en que este paso contabilice asientos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **Conexión de Workday**: la conexión de Workday Financials por la que se contabiliza.
+
+### Datos
+
+- **Tabla de encabezados**: una fila por asiento de diario: `journal_id` (el identificador de su asiento, obligatorio), `company` (obligatorio), `ledger` (obligatorio), `accounting_date`, `memo`.
+- **Tabla de líneas**: una o más filas por `journal_id`: `ledger_account`, `debit`, `credit` y las columnas de worktag (centro de costo, proyecto) que requieran sus asientos.
+- **Tabla de resultados**: id de la tabla de salida: una fila por asiento con `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only**: marcada de forma predeterminada. Solo comprobación previa; sin reserva en el libro y sin contabilización. Una configuración de paso que omite este campo por completo (por ejemplo, una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo) también adopta como valor predeterminado Validate Only en lugar de una contabilización real.
+- **Continue On Error**: marcada de forma predeterminada. Sigue contabilizando los asientos restantes después de que uno falle; si se desmarca, el lote se detiene en el primer error.
+
+## Cómo funciona la contabilización
+
+PlaidCloud llama a `Submit_Accounting_Journal` para cada asiento y consulta periódicamente el estado de su proceso de negocio de Workday hasta que alcanza un estado terminal, teniendo en cuenta que un proceso de negocio Submit Accounting Journal puede pasar por pasos de aprobación antes de que un asiento se contabilice realmente. Un asiento solo se informa como `posted` cuando ese estado terminal está **confirmado**: un asiento que se ha enviado pero está detenido pendiente de aprobación queda en cuarentena (no se informa como contabilizado ni se descarta en silencio) en lugar de registrarse como correcto solo porque el envío se haya aceptado.
+
+## Corrección de un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un asiento de diario contabilizado. Para corregir uno, contabilice un asiento nuevo con los débitos y créditos invertidos respecto al original (un asiento de reversión contabilizado) en lugar de editar el original directamente.
+
+## Limitaciones de capacidad
+
+| Limitación | Qué significa |
+|---|---|| La aprobación del proceso de negocio agrega latencia | Un asiento que pasa por un paso de aprobación permanece `pending` hasta que se aprueba en Workday; la consulta periódica del estado terminal espera a que eso ocurra. |
+| La reversión es un asiento nuevo, no una edición directa | Las correcciones contabilizan un nuevo asiento de reversión con débito y crédito invertidos. No se puede anular ni eliminar un asiento ya contabilizado. |
+
+## Relacionado
+
+- [Conectarse a Workday Financials](/es/guides/connections/workday-financials/): guía completa que abarca la configuración, la vista previa y la contabilización
+- [Conector de Workday Financials](/es/reference/connectors/rest/workday-financials/)
+- [Pasos de Workday Financials](/es/reference/workflow-steps/workday-financials/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/)

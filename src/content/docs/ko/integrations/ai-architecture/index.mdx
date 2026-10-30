@@ -1,0 +1,106 @@
+---
+title: AI 및 LLM 아키텍처
+description: PlaidCloud가 Claude, GPT, Gemini, Grok 같은 대규모 언어 모델에 연결되는 방식, 즉 AI에 접근하는 네 가지 방법, 모든 요청이 거치는 관리형 경로, 데이터가 이동하는 범위와 이동하지 않는 범위를 설명합니다.
+sidebar:
+  label: 개요
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-architecture/index.mdx
+---
+
+import { Aside, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud에는 AI 기능이 하나만 있는 것이 아닙니다. 모델에 접근하는 방법은 제품 안의 어시스턴트, Microsoft 365 Copilot, 외부 코딩 에이전트, 워크플로 안의 LLM 단계 등 네 가지이며, 네 가지 모두 동일한 관리형 경로를 통해 실행됩니다. 모델 자체는 교체할 수 있습니다. Claude, GPT, Gemini, Grok, 사용자의 구독에 있는 Azure OpenAI 리소스, 직접 호스팅하는 모델 중에서 선택할 수 있습니다.
+
+이 섹션에서는 무엇이 어디에서 실행되는지, 무엇이 경계를 넘는지, 그리고 그 이유를 설명합니다.
+
+<img
+	src="/images/ai-llm-architecture.svg"
+	alt="PlaidCloud AI 아키텍처. 앱 내 어시스턴트, Microsoft 365 Copilot, AI 코딩 에이전트, LLM 워크플로 단계의 네 가지 클라이언트 접점이 테넌트 경계로 들어오며, 이 경계 안에는 위임된 토큰, 큐레이션된 MCP 서버, 액세스 적용, AI 서비스, 프로젝트 데이터가 있습니다. 프롬프트는 LLM 공급자로 나가고, 데이터는 경계 안에서만 흐릅니다."
+	class="doc-diagram"
+/>
+
+## 네 가지 접점
+
+| 접점 | 사용자 | 모델이 데이터에 접근하는 방식 | 시작할 곳 |
+|---|---|---|---|
+| **앱 내 AI 어시스턴트** | PlaidCloud에서 작업하는 모든 사용자 | PlaidCloud의 자체 에이전트가 사용자를 대신하여 내부 도구를 호출합니다 | [Weave AI 채팅](/ko/guides/ai-assistant/weave-tab/#weave-ai-채팅) |
+| **Microsoft 365 Copilot** | Teams와 Outlook을 사용하는 팀 전체 | 게시된 에이전트가 사용자를 로그인시킨 다음 MCP 서버를 호출합니다 | [Microsoft 365 Copilot](/ko/integrations/microsoft-365-copilot/) |
+| **AI 코딩 에이전트** | 분석가와 개발자 | 클라이언트가 OAuth를 통해 MCP 서버에 직접 연결합니다 | [시작하기](/ko/integrations/ai-coding-agents/getting-started/) |
+| **LLM 워크플로 단계** | 무인 파이프라인 | Anthropic에서는 사용자가 바인딩한 개체로만 범위가 제한된 토큰을 사용하고, 다른 공급자에서는 데이터 액세스가 전혀 없습니다. [이 단계의 규칙](/ko/integrations/ai-architecture/llm-providers/#llm-워크플로-단계는-다릅니다)을 참조하십시오 | [LLM 단계](/ko/reference/workflow-steps/general/llm-step/) |
+
+이들은 누가 주도하는지, 대화가 어디에서 이루어지는지에서 차이가 있을 뿐, 모델이 접근할 수 있는 범위는 다르지 않습니다.
+
+## 하나의 관리형 경로
+
+질문이 어떤 접점에서 들어오든 다음 다섯 가지가 동일하게 적용됩니다.
+
+<Steps>
+
+1. **모델은 플랫폼이 아니라 사람으로서 실행됩니다.** 모든 요청에는 로그인한 사용자를 대신하는, 수명이 짧고 완료되면 폐기되는 자격 증명이 포함됩니다. AI 뒤에 상승된 권한을 가진 공유 서비스 계정은 없습니다.
+
+2. **도구만이 유일한 진입 경로입니다.** 모델은 레이크하우스를 직접 쿼리할 수 없습니다. 찾기, 설명, 읽기, 실행, 업서트로 구성된 큐레이션된 도구 카탈로그를 호출하며, 모든 호출은 개별적으로 검사됩니다.
+
+3. **사용자 본인의 권한이 여전히 범위를 제한합니다.** AI 요청은 사용자가 직접 보거나 변경할 수 없는 것을 보거나 변경할 수 없습니다. AI 계층은 액세스를 좁힐 뿐 넓히지 않습니다.
+
+4. **관리자가 상한을 정하며, 처음에는 닫혀 있습니다.** LLM 연결의 **에이전트 액세스**는 읽기 전용에서 시작합니다. Microsoft 365 Copilot은 아무 권한 없이 시작합니다. 관리자가 누군가에게 **액세스 수준**을 할당하기 전까지는 로그인한 사용자에게 데이터가 제공되지 않습니다. 이 둘은 별개의 메커니즘이지만, 어느 쪽을 높이더라도 AI가 시도할 수 있는 범위의 상한만 정해질 뿐이며 사용자가 이미 접근할 수 있던 범위를 넓히지는 않습니다.
+
+5. **일부는 영구적으로 금지됩니다.** 자격 증명 및 연결 설정, ID 및 그룹 관리, 액세스 제어 변경, 게시, 배포 가능한 코드는 관리자가 무엇을 부여했든, 어떤 공급자에서든 AI 자격 증명으로 호출할 수 없습니다. 이러한 작업은 사람만 수행할 수 있습니다.
+
+</Steps>
+
+<Aside type="note">
+이러한 제한은 프롬프트가 아니라 서버에서 적용됩니다. 프롬프트 인젝션 공격으로 모델이 금지된 도구를 요청하도록 유도하더라도, 올바르게 동작하는 모델이 받는 것과 동일한 거부 응답을 받습니다.
+</Aside>
+
+## 질문 하나의 처리 과정
+
+어떤 접점에서든 *"지난 분기에 애틀랜타에 배부된 IT 비용이 왜 증가했나요?"*라고 질문했다고 가정해 보겠습니다.
+
+<Steps>
+
+1. 질문한 사람을 위해 **자격 증명이 발급됩니다**. 범위가 제한되고 수명이 짧습니다.
+
+2. **도구가 모델에 제공됩니다**. 범위를 좁히는 접점에서는 질문에 필요해 보이는 도구로 좁혀지고, 그렇지 않은 접점에서는 카탈로그에서 검색됩니다.
+
+3. **프롬프트가 모델로 전달됩니다**. 질문, 상시 규칙, 도구 설명이 포함되며 아직 데이터는 포함되지 않습니다.
+
+4. **모델이 도구 호출을 통해 데이터를 요청합니다**. 분석 경로를 확인하고, 스키마를 읽고, 배부 추적을 실행하고, 드라이버 행을 읽습니다. 각 호출은 도착 시점에 권한이 검사됩니다.
+
+5. **모델이 답변합니다**. 반환된 결과를 바탕으로 답하고, 문서 페이지를 참조했다면 해당 페이지를 인용하며, 신뢰도 신호와 유의 사항을 함께 제공합니다.
+
+6. **자격 증명이 폐기됩니다**. 요청이 끝난 뒤에는 탈취된 토큰을 재사용할 수 없습니다.
+
+</Steps>
+
+중요한 부분은 4단계입니다. 모델은 사용자의 데이터를 가지고 있지 않습니다. 데이터의 일부를 요청할 뿐이며, 요청마다 심사를 거칩니다.
+
+## 다음 읽을거리
+
+<CardGrid>
+	<LinkCard
+		title="LLM 공급자 및 연결"
+		href="/ko/integrations/ai-architecture/llm-providers/"
+		description="Claude, GPT, Gemini, Grok, Azure OpenAI. 하나의 연결, 네 가지 실행 어댑터, 도구를 중개하는 두 가지 방식."
+	/>
+	<LinkCard
+		title="Microsoft 365 Copilot 아키텍처"
+		href="/ko/integrations/ai-architecture/microsoft-365-copilot/"
+		description="Copilot에 게시된 에이전트 패키지와 별도의 OAuth 클라이언트가 필요한 이유, 그리고 기본 거부 액세스 수준의 작동 방식."
+	/>
+	<LinkCard
+		title="검색, 그라운딩, 분석 경로"
+		href="/ko/integrations/ai-architecture/retrieval/"
+		description="여기서 RAG가 실제로 하는 일, 그리고 비즈니스 데이터를 벡터 스토어에 인덱싱하지 않고 실시간으로 읽는 이유."
+	/>
+	<LinkCard
+		title="자체 관리 LLM 사용하기"
+		href="/ko/integrations/ai-architecture/private-llm/"
+		description="독점 데이터, PHI 또는 계약상 제한된 데이터를 직접 관리하는 인프라 안에 유지합니다."
+	/>
+</CardGrid>
+
+## 관련 문서
+
+- [신뢰할 수 있는 답변](/ko/integrations/ai-coding-agents/honest-answers/) — 답변을 평가하고 유의 사항을 표시하는 방식
+- [분석 경로](/ko/integrations/ai-coding-agents/analysis-paths/) — 팀이 질문하는 테이블에 붙이는 알기 쉬운 이름
+- [플랫폼 아키텍처](/ko/get-started/platform-architecture/) — 더 넓은 플랫폼에서 AI가 차지하는 위치

@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry
+description: Comptabilisez une ou plusieurs écritures de journal dans NetSuite à partir de tables d'en-têtes et de lignes PlaidCloud, avec un mode aperçu qui valide chaque écriture avant toute comptabilisation.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des écritures de journal dans NetSuite via votre [connexion NetSuite](/fr/guides/connections/netsuite/). L'étape prend deux tables source (une table d'en-têtes avec une ligne par écriture de journal et une table de lignes avec une ou plusieurs lignes de débit/crédit par écriture), regroupe les lignes par écriture de journal et comptabilise chaque écriture dans NetSuite. **Test Only Mode** construit et contrôle chaque écriture sans effectuer le moindre appel à NetSuite, et une table de résultat facultative consigne le résultat de chaque écriture.
+
+<Aside type="caution">
+Exécutez chaque lot en **Test Only Mode** d'abord, examinez la table de résultat et rapprochez quelques comptabilisations directement dans NetSuite avant de compter sur cette étape pour comptabiliser des écritures réelles sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion NetSuite** : la connexion NetSuite à utiliser pour la comptabilisation, filtrée sur les connexions de type NetSuite.
+- **Environnement** : l'environnement de la connexion.
+
+Les connexions NetSuite se gèrent sous **Tools > Connections** ; consultez [Se connecter à NetSuite](/fr/guides/connections/netsuite/).
+
+### Données
+
+- **Table d'en-tête d'écriture de journal** : une ligne par écriture de journal.
+- **Table de lignes d'écriture de journal** : une ou plusieurs lignes de débit/crédit par écriture de journal, reliées à sa ligne d'en-tête par l'ID d'écriture.
+- **Test Only Mode** : coché par défaut. Valide chaque écriture de journal selon les contrôles ci-dessous, mais n'effectue aucun appel à NetSuite : rien n'est comptabilisé. Décochez-le pour comptabiliser réellement. Une configuration d'étape qui omet complètement ce champ (par exemple, une configuration créée via l'API REST, MCP ou l'importation d'un bundle de workflow) utilise elle aussi Test Only Mode par défaut plutôt qu'une comptabilisation réelle.
+- **Continue posting remaining entries if one entry fails** : coché par défaut. Lorsqu'une écriture échoue à un contrôle ou à la comptabilisation elle-même, PlaidCloud consigne une erreur pour cette écriture et passe au reste du lot au lieu de l'interrompre.
+- **Submit Asynchronously** : désactivé par défaut. Soumet chaque écriture avec l'en-tête asynchrone `Prefer: respond-async` de NetSuite, au lieu du chemin synchrone de création puis relecture. NetSuite met la tâche en file d'attente et PlaidCloud consigne l'écriture comme `pending`, avec une référence de soumission, sans attendre sa résolution. C'est un choix propre à chaque connexion : utilisez le même réglage à chaque exécution sur une connexion donnée, sans alterner. **Rien ne résout actuellement automatiquement une écriture en attente ; c'est la réexécution de cette étape qui la résout**, en recherchant l'écriture et en consignant son résultat désormais définitif. Si vous activez cette option, prévoyez de réexécuter l'étape (ou de vérifier directement dans NetSuite) au lieu de considérer une ligne `pending` comme terminée.
+- **Table de résultat de comptabilisation** : facultative. Si elle est définie, PlaidCloud l'écrit (ou l'écrase) avec une ligne par écriture de journal ; consultez [Colonnes de la table de résultat](#colonnes-de-la-table-de-résultat).
+
+### Mappage des en-têtes / Filtres des en-têtes
+
+Mappez les colonnes de la table d'en-têtes sur les champs d'écriture de journal ci-dessous et, si vous le souhaitez, filtrez les lignes d'en-tête à comptabiliser, à l'aide des [onglets standard de mappage et de filtre des données](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| ID d'écriture | Oui | Relie une ligne d'en-tête à ses lignes. Une ligne par ID d'écriture unique. |
+| Filiale | Oui | ID interne de la filiale NetSuite. |
+| Date de comptabilisation | Oui | La date de transaction de l'écriture. |
+| Devise | Non | ID interne de la devise NetSuite. |
+| Mémo | Non | Mémo au niveau de l'écriture. |
+| ID externe | Non | Remplace l'ID externe déterministe que PlaidCloud génère pour l'écriture ; consultez [Recomptabilisation et écritures en double](#recomptabilisation-et-écritures-en-double). |
+
+### Mappage des lignes / Filtres des lignes
+
+Mappez les colonnes de la table de lignes et, si vous le souhaitez, filtrez les lignes à comptabiliser.
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| ID d'écriture | Oui | Correspond à l'ID d'écriture d'une ligne d'en-tête. |
+| Compte | Oui | ID interne du compte du grand livre NetSuite. |
+| Débit | Oui | Le montant au débit ; 0 pour une ligne uniquement au crédit. |
+| Crédit | Oui | Le montant au crédit ; 0 pour une ligne uniquement au débit. |
+| Mémo | Non | Mémo au niveau de la ligne. |
+| Département | Non | ID interne du département NetSuite. |
+| Classe | Non | ID interne de la classe NetSuite. |
+| Emplacement | Non | ID interne de l'emplacement NetSuite. |
+| Entité | Non | ID interne de l'entité NetSuite (client ou fournisseur). |
+
+## Fonctionnement de la comptabilisation
+
+PlaidCloud regroupe la table de lignes par ID d'écriture et construit une écriture de journal NetSuite par ligne d'en-tête. Avant de comptabiliser chaque écriture (ou, en Test Only Mode, avant de la consigner comme validée), PlaidCloud vérifie que :
+
+- l'écriture comporte au moins une ligne ;
+- ses débits et ses crédits s'équilibrent au centime près ;
+- chaque ligne possède un compte ;
+- la ligne d'en-tête possède une filiale ;
+- la date de comptabilisation est une date valide.
+
+Tout contrôle qui échoue consigne une ligne d'erreur pour cette écriture et, sauf si **Continue posting remaining entries** est désactivé, passe à l'écriture suivante du lot.
+
+### Recomptabilisation et écritures en double
+
+Chaque écriture est comptabilisée avec un ID externe déterministe, construit à partir du projet, de la connexion, de l'ID d'écriture, de la date de comptabilisation et des montants des lignes. Recomptabiliser une écriture dont les lignes n'ont pas changé réutilise ce même ID externe, et la gestion native des ID externes de NetSuite l'empêche de créer une écriture de journal en double. Si vous modifiez une ligne de l'écriture (un montant différent, une ligne ajoutée ou supprimée), PlaidCloud calcule un nouvel ID externe, que NetSuite accepte comme une nouvelle écriture plutôt que comme une mise à jour de l'ancienne. Renseignez une valeur dans la colonne ID externe de la table d'en-têtes pour contrôler vous-même l'ID.
+
+<Aside type="caution">
+La recomptabilisation ne déduplique qu'une écriture que NetSuite considère comme identique à une écriture qu'il possède déjà. Modifier les lignes d'une écriture et réexécuter l'étape ne met pas à jour la comptabilisation d'origine dans NetSuite : cela crée une seconde écriture. Corrigez une écriture déjà comptabilisée directement dans NetSuite plutôt qu'en réexécutant cette étape avec des données modifiées.
+</Aside>
+
+### Colonnes de la table de résultat
+
+| Colonne | Description |
+|---|---|
+| journal_id | L'ID d'écriture de la table d'en-têtes. |
+| external_id | L'ID externe utilisé pour cette tentative de comptabilisation. |
+| internal_id | L'ID interne NetSuite de l'écriture de journal créée, ou la référence de soumission asynchrone tant que le statut est `pending`. Vide en Test Only Mode et en cas d'erreur. |
+| status | `validated` (Test Only Mode), `posted`, `pending` (Submit Asynchronously a accepté l'écriture, mais NetSuite ne l'a pas encore confirmée) ou `error`. |
+| message | Détail de l'erreur pour `error` ; pour `pending`, une note indiquant que la réexécution de l'étape la résout. Vide pour `posted`/`validated`. |
+
+## Voir aussi
+
+- [Se connecter à NetSuite](/fr/guides/connections/netsuite/)
+- [Comptabiliser une écriture de journal NetSuite](/fr/guides/connections/post-netsuite-journal-entries/) : procédure complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur REST NetSuite](/fr/reference/connectors/rest/netsuite/)
+- [Étapes NetSuite](/fr/reference/workflow-steps/netsuite/)

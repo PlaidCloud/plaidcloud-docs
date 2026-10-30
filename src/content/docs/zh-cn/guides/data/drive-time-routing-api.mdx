@@ -1,0 +1,148 @@
+---
+title: 行车时间路线规划 API
+description: 调用 PlaidCloud 的 REST 行车时间路线规划端点：等时线多边形和按行车时间排序的最近点，由 PlaidCloud 自托管的路线规划引擎提供支持。需选择加入的预览功能，尽力而为，无 SLA。
+sidebar:
+  label: 行车时间路线规划 API
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 在 `/rest/v1/analyze/route` 下以两个 REST 端点提供行车时间路线规划：**isochrone** 端点围绕起点绘制行车时间（或行车距离）多边形，**find-nearest** 端点则按实际行车时间而不是直线距离对候选目的地排序。两者都运行在 PlaidCloud 自托管的路线规划引擎上，该引擎基于 OpenStreetMap 道路数据（ODbL）构建，并将每个结果包装在带有署名信息的小型 `plaidcloud` 信封中。
+
+<Aside type="caution" title="需选择加入的预览功能：构建之前请先阅读">
+行车时间路线规划**默认关闭**，仅对已选择加入的租户开放。它运行在一个小型共享路线规划池上，以**尽力而为、无 SLA** 的方式提供，不保证有实时路况容量，当池繁忙时，请求可能会被以 `503` 拒绝，而不是为您排队或重试。如果您尚未启用此功能，请在构建依赖之前联系 PlaidCloud 咨询该预览功能。
+</Aside>
+
+## 身份验证和授权
+
+每次路线规划调用都需要：
+
+- 一个携带 **`analyze.table.read`** 角色的常规 PlaidCloud 会话或持有者令牌，该角色同样用于控制对项目数据的其他读取访问。不存在路线规划专用的角色。
+- 您的套餐包含行车时间路线规划，即已为您的租户启用行车时间授权。套餐不包含该功能的租户，每次调用都会收到 `403` 和 `detail: "drive_time_disabled"`，不存在部分或只读模式。
+
+## 端点
+
+### `isochrone`：围绕起点的行车时间多边形
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| 字段 | 类型 | 备注 |
+|---|---|---|
+| `origin` | `{ lat, lon }`，必填 | 单个坐标。isochrone 每次调用只接受一个起点 |
+| `costing` | 字符串 | `auto`（默认）、`truck`、`bike` 或 `pedestrian` |
+| `contours_minutes` | 整数数组，必填 | 每个所需的等值环对应一个条目，每个为 1–120 分钟。每次调用最多 5 个等值环 |
+| `costing_options.truck.height` | 浮点数，米 | 可选，> 0 且 ≤ 10。仅适用于 `truck` 计费 |
+| `costing_options.truck.weight` | 浮点数，千克 | 可选，> 0 且 ≤ 100000。仅适用于 `truck` 计费 |
+| `costing_options.truck.length` | 浮点数，米 | 可选，> 0 且 ≤ 50。仅适用于 `truck` 计费 |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+响应：路线规划引擎自身的等时线 GeoJSON（未经修改），外加 `plaidcloud` 信封：
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest`：按行车时间排序的最近目的地
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| 字段 | 类型 | 备注 |
+|---|---|---|
+| `origins` | `{ lat, lon }` 数组，必填 | 1–5 个起点 |
+| `destinations` | `{ lat, lon }` 数组，必填 | 1–500 个候选。参见下面的[目的地预筛选](#目的地预筛选) |
+| `costing` | 字符串 | `auto`（默认）、`truck`、`bike` 或 `pedestrian` |
+| `top_n` | 整数 | 每个起点返回的最近目的地数量。1–50，默认 5 |
+| `costing_options.truck.{height,weight,length}` | 与 isochrone 相同 | 仅适用于 `truck` 计费 |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` 指的是该目的地在您提交的 `destinations` 数组中的位置，而不是它在任何内部排序中的位置，请保留它，以便将结果映射回您自己的数据。
+
+#### 目的地预筛选
+
+您最多可以提交 500 个目的地，但只有按直线距离距您任一起点**最近的 50 个**才会被送入实际的行车时间路线计算。如果您提交的超过 50 个，PlaidCloud 会先用直线（大圆）预筛选缩小范围，再按真实行车时间对留下的目的地排序，因此在地图上很近、但落在直线截断范围之外的目的地，可能在计算行车时间之前就被排除。对于已不足 50 个的目的地集，每个候选都会参与路线计算，该机制不起作用。`top_n` 出于同样的原因上限为 50：它返回的候选数量不能超过路线规划步骤实际考虑的数量。
+
+### 计费模式
+
+支持 `auto`、`truck`、`bike` 和 `pedestrian`。在 `truck` 计费下，还可以按车辆尺寸（`costing_options.truck.height`、`.weight`、`.length`）约束路线，使路线能够避开低矮的桥梁或限重道路。**不支持危险品路线规划。** 两个端点都没有危险品参数，即使通过 `truck` 计费也无法间接获得，此 API 不会绕开危险品限制规划路线，因此请勿将其用于受危险品法规管制的货运。
+
+## 错误
+
+| 状态 | 含义 |
+|---|---|
+| `403` | 缺少 `analyze.table.read` 角色，或您的套餐不包含行车时间授权 |
+| `422` | 请求字段未通过验证，例如超过 5 个等值环、等值环超出 1–120 分钟、超过 5 个起点，或卡车尺寸超出范围 |
+| `503 route_unavailable` | 无法连接路线规划引擎、超时或返回错误，**或者**您租户的并发请求配额已被占满（参见[限制](#限制)） |
+
+此处的 `503` 绝不会是原始的 `5xx`，也绝不会无限期挂起：每次对路线规划引擎的调用都在有界超时下运行，因此上游缓慢或挂起会迅速以 `503` 的形式暴露，而不会让您的请求一直保持打开。
+
+## 限制
+
+- **每个租户的并发数上限为 2 个同时进行的请求。** 这反映的是预览功能背后的共享路线规划池，而不是按套餐划分的配额：同一租户的第三个并发请求会收到 `503 route_unavailable`，直到前两个请求之一完成。不会排队；请在短暂退避后重试。
+- **无响应缓存。** 每次调用都针对当前路线规划索引实时应答。
+- **绝不记录坐标。** 失败日志只记录请求路径和错误类型，不记录您提交的起点、目的地或任何其他位置数据。
+- 路线规划数据基于 OpenStreetMap 道路数据（ODbL）构建，适用于 [PlaidCloud 地理编码 API](/zh-cn/guides/data/geocoding-api/#覆盖范围与确定性请先阅读) 的覆盖范围和时效性提示同样适用于此：在地图绘制完善的地区表现良好，其他地区则差异较大，并且由社区持续编辑，而不是带版本的商业数据集。
+- 如果向最终用户展示路线规划结果或行车时间区域，请同时显示 `plaidcloud.attribution` 字符串（或等效的 OSM 署名），适用于地理编码结果的同一 ODbL 义务同样适用于路线规划结果。
+
+## 相关内容
+
+- [从 Google 或 Mapbox 地理编码迁移](/zh-cn/guides/data/geocoding-api/)：PlaidCloud 的 REST 地理编码端点，以及同样的 OpenStreetMap 覆盖范围提示
+- [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)：从工作流调用这些端点

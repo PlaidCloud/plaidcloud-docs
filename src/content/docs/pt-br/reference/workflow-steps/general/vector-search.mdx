@@ -1,0 +1,178 @@
+---
+title: "IA: Pesquisa vetorial"
+description: Encontre as linhas de uma tabela cujo vetor armazenado é o mais próximo de cada vetor de consulta, por distância de cosseno ou euclidiana, em uma etapa de fluxo de trabalho do PlaidCloud.
+sidebar:
+  label: "IA: Pesquisa vetorial"
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/vector-search.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+**IA: Pesquisa vetorial** classifica as linhas de uma tabela pela proximidade de sua coluna [Vector](/pt-br/guides/data/vector-data-type/)
+em relação a um vetor de consulta e grava as linhas mais próximas — com a distância que as classificou — em uma
+tabela de destino. Informe vários vetores de consulta e cada um recebe seu próprio conjunto de correspondências, tudo em uma única passagem
+pela tabela de origem e tudo em uma única tabela de saída.
+
+A pesquisa é **exata**. Cada linha que passa pelo filtro da etapa é comparada com cada vetor
+de consulta, de modo que as correspondências são as linhas realmente mais próximas, e não uma aproximação — e o trabalho cresce
+com o número de linhas examinadas multiplicado pelo número de vetores de consulta. Não há índice vetorial
+para criar, ajustar ou usar como alternativa.
+
+<Aside type="caution">
+O tipo de coluna Vector, e portanto esta etapa, exige o **Lakehouse v2 (StarRocks)**.
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="Cada vetor de consulta é comparado com todas as linhas da tabela a pesquisar que passam pelo filtro, e as linhas mais próximas são gravadas na tabela de destino com uma coluna de distância. As linhas cuja distância não pode ser medida ficam de fora." style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">toda linha filtrada é comparada — sem índice, sem aproximação</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">vetores de consulta</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabela a pesquisar</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">filtrada primeiro</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">distância</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">menor é mais próximo</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabela de destino</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">melhores por consulta</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">uma linha cuja distância não pode ser medida fica de fora, e não em primeiro lugar</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">As linhas são filtradas; depois, cada sobrevivente é pontuado em relação a cada vetor de consulta e as mais próximas são mantidas. Restringir o filtro é o que torna rápida uma tabela grande, porque não há índice como alternativa.</figcaption>
+</figure>
+
+## Origem e destino
+
+- **Tabela a pesquisar** — a tabela cujos vetores armazenados são pesquisados.
+- **Tabela de destino** — a tabela em que as correspondências são gravadas.
+
+## Pesquisa
+
+- **Coluna de vetor** — a coluna Vector da tabela a pesquisar em relação à qual a distância é medida.
+  Qualquer outro tipo de dados é recusado, com uma mensagem que nomeia a coluna e o tipo que ela realmente contém.
+- **Métrica de distância** — **Cosseno** ou **Euclidiana (L2)**. O cosseno mede o ângulo entre dois
+  vetores e ignora suas magnitudes, o que é desejável para embeddings de texto; a euclidiana
+  mede a distância em linha reta e leva a magnitude em conta. Em ambas, uma distância menor significa
+  uma linha mais próxima. Cosseno é o padrão.
+- **Correspondências por consulta** — quantas linhas mais próximas manter para cada vetor de consulta. O padrão é 10.
+
+<Aside type="note">
+**Cosseno e euclidiana são as únicas métricas.** O produto interno não é oferecido de propósito: em vetores
+que não são normalizados, ele não é uma distância — a distância de um vetor para ele mesmo resulta negativa —
+portanto um limite definido com base nele, e qualquer pontuação exibida para ele, estaria errado mesmo quando a classificação
+por acaso se mantivesse. Em embeddings normalizados, o cosseno produz a mesma classificação que o produto interno produziria.
+</Aside>
+
+## Vetores de consulta
+
+A guia **Vetores de consulta** aceita um array JSON com uma entrada por consulta, cada uma contendo um `id` e um
+`vector`:
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+Cada consulta retorna seu próprio conjunto de correspondências, e o `id` é o que as identifica na saída. Os
+ids devem ser exclusivos, todo valor deve ser um número finito e todo vetor de consulta deve conter o mesmo
+número de valores que os vetores armazenados — uma distância só é definida entre vetores de mesma largura.
+Uma divergência é recusada, com uma mensagem que nomeia a consulta, o número de valores que ela contém e a largura que a coluna
+contém ou declara.
+
+<Aside type="caution">
+Os vetores armazenados também devem conter todos o mesmo número de valores. Uma pesquisa em uma coluna cujas linhas
+misturam duas larguras falha com um erro bruto do mecanismo subjacente, e não com uma mensagem que nomeie a
+coluna. Uma Largura do vetor declarada é imposta em todos os caminhos de carga — importação de arquivo, conector, tap, consulta
+remota, etapa de fluxo de trabalho que grava um frame, arquivo compactado ou bundle — de modo que a largura que você declara é
+a largura que a coluna contém. A importação de CSV é a exceção: ela não pode ser verificada e é a única via
+que pode deixar uma coluna misturada. Consulte
+[Largura do vetor](/pt-br/guides/data/vector-data-type/#largura-do-vetor).
+</Aside>
+
+## Selecionar subconjunto de dados
+
+Um filtro restringe quais linhas são candidatas. As linhas são filtradas *antes* de serem classificadas, de modo que as
+correspondências são as linhas mais próximas que passam pelo filtro — e não as linhas mais próximas no geral, filtradas
+depois. Este é o principal controle sobre quanto trabalho a etapa faz; consulte
+[Dimensionar uma pesquisa](#dimensionar-uma-pesquisa).
+
+## Colunas de saída
+
+Cada correspondência é gravada como uma linha contendo as colunas que você selecionou na guia **Seleção de dados da tabela**,
+mais duas colunas calculadas cujos nomes você controla:
+
+- **Coluna do nome da consulta** — o id do vetor de consulta a que esta linha responde. O padrão é `query_id`.
+- **Coluna de distância** — a distância medida entre a correspondência e esse vetor de consulta. O padrão é
+  `distance`. Esta também é a chave de classificação.
+
+O nome da consulta vem primeiro na saída, as colunas que você selecionou vêm em seguida e a distância vem
+por último. Os nomes das colunas de saída devem ser exclusivos.
+
+<Aside>
+Os controles **Resumir**, **Distintos** e de agregação na guia Seleção de dados da tabela são
+ignorados por esta etapa: um conjunto das melhores correspondências é por vetor de consulta e nunca agrupa.
+</Aside>
+
+## Linhas que ficam de fora
+
+Uma linha cuja distância não pode ser medida é **excluída** das correspondências, em vez de ser retornada como
+se fosse a mais próxima. Um vetor cuja magnitude estoura o intervalo de um float de 32 bits é
+o caso que você encontrará: nenhuma distância mensurável é retornada para ele e, como nada disponível ordena
+uma distância não mensurável por último, incluir essa linha colocaria no topo de todos os resultados as linhas sobre as quais a pesquisa
+menos sabe.
+
+Execute o fluxo de trabalho com o **Modo de diagnóstico** ativado para ver a contagem. O log do fluxo de trabalho então informa quantas
+linhas cada consulta deixou de fora, ou declara que a etapa mediu todas as linhas que pesquisou. Obter essa contagem
+custa uma segunda passagem pela tabela, e por isso ela só é cobrada quando você a solicita; com o
+Modo de diagnóstico desativado, o log declara que as linhas não mensuráveis são deixadas de fora por projeto e indica o
+Modo de diagnóstico para obter o número.
+
+Um vetor armazenado que contenha um *valor ausente* dentro do array é outra questão: nenhuma distância pode ser
+medida em relação a qualquer array que contenha um, portanto a pesquisa é recusada de imediato, com uma mensagem que nomeia a coluna,
+em vez de retornar silenciosamente um resultado parcial. Corrija ou remova essas linhas e execute novamente.
+
+## Dimensionar uma pesquisa
+
+O custo de uma execução é o número de linhas candidatas multiplicado pelo número de vetores de consulta, e a
+etapa recusa uma pesquisa cujo total exceda dez bilhões de medições de distância — informando a contagem de linhas,
+a contagem de consultas e o limite — em vez de iniciar um trabalho que não pode terminar. Duas coisas mantêm uma
+pesquisa bem abaixo desse limite:
+
+- **Filtre pela fatia que importa.** Restrinja os candidatos a uma entidade, um período ou um
+  conjunto de documentos, em vez de varrer um corpus inteiro para responder a uma pergunta sobre parte dele.
+- **Divida a tabela pela dimensão pela qual você sempre filtra** e pesquise a tabela relevante. Reduzir
+  a contagem de candidatos é muito mais eficaz do que qualquer outra coisa disponível aqui.
+
+Declarar uma **Largura do vetor** na coluna também ajuda: com ela declarada, a etapa obtém a largura
+da declaração, em vez de amostrar uma linha para descobri-la. Consulte
+[Tipo de dados Vector](/pt-br/guides/data/vector-data-type/#largura-do-vetor).
+
+## Para que uma coluna Vector não pode ser usada
+
+Uma coluna Vector é recusada como chave de junção, como coluna de agrupamento e como alvo de agregação — nesta
+etapa e em todas as outras. A mensagem nomeia a coluna e o papel em que ela foi usada, tanto ao
+salvar a etapa quanto ao executar uma etapa salva anteriormente. Em vez disso, faça junções e agrupamentos pelas chaves de negócio ao lado
+do vetor. Levar um vetor por uma etapa como uma coluna de saída comum não há problema, assim como
+contar linhas e contar valores distintos.
+
+## Relacionados
+
+- [Tipo de dados Vector](/pt-br/guides/data/vector-data-type/) — declarar uma coluna Vector, definir sua largura
+  e carregar embeddings nela
+- [Spatial Find Nearest (etapa)](/pt-br/reference/workflow-steps/spatial/spatial-find-nearest/) — o mesmo formato de
+  vizinho mais próximo, sobre geometria em vez de embeddings
+- [Table Lookup (etapa)](/pt-br/reference/workflow-steps/tables/table-lookup/) — traga colunas descritivas de volta
+  para as linhas correspondentes
+- [Importar Parquet](/pt-br/reference/workflow-steps/import/import-parquet/) — carregue embeddings de um
+  arquivo Parquet

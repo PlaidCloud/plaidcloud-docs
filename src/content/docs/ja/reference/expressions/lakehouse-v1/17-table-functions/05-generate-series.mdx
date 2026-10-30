@@ -1,0 +1,143 @@
+---
+title: GENERATE_SERIES（Lakehouse v1）
+description: GENERATE_SERIES — 指定した開始点から終了点までのデータセットを生成します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/17-table-functions/05-generate-series.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+指定した開始点から指定した終了点まで、必要に応じて一定の増分で、データセットを生成します。GENERATE_SERIES関数は、次のデータ型で使用できます。 
+
+- 整数
+- 日付
+- タイムスタンプ
+
+## Analyzeの構文
+
+```python
+func.generate_series(<start>, <stop>[, <step_interval>])
+```
+
+## Analyzeの例
+
+```python
+func.generate_series(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+```
+
+## SQLの構文
+
+```sql
+GENERATE_SERIES(<start>, <stop>[, <step_interval>])
+```
+
+## 引数
+
+| 引数      	| 説明                                                                                                                                                                                                	|
+|---------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| start         	| 開始値。シーケンスの最初の数値、日付、またはタイムスタンプです。                                                                                                                            	|
+| stop          	| 終了値。シーケンスの最後の数値、日付、またはタイムスタンプです。                                                                                                                               	|
+| step_interval 	| ステップ間隔。シーケンス内の隣り合う値の差を決定します。整数のシーケンスでは、デフォルト値は1です。日付のシーケンスでは、デフォルトのステップ間隔は1日です。タイムスタンプのシーケンスでは、デフォルトのステップ間隔は1マイクロ秒です。 	|
+
+
+<Aside>GENERATE_SERIESやRANGEなどの関数では、境界の扱いに重要な違いがあります。GENERATE_SERIESは左右の両端を含みますが、RANGEは左端のみを含みます。たとえば、RANGE(1, 11)はGENERATE_SERIES(1, 10)と同等です。</Aside>
+
+## 戻り値の型
+
+*start* から *stop* までの、連続した数値、日付、またはタイムスタンプのシーケンスを含むリストを返します。
+
+## SQLの例
+
+### SQLの例1: 数値、日付、タイムスタンプのデータを生成する
+
+```sql
+SELECT * FROM GENERATE_SERIES(1, 10, 2);
+
+generate_series|
+---------------+
+              1|
+              3|
+              5|
+              7|
+              9|
+
+SELECT * FROM GENERATE_SERIES('2023-03-20'::date, '2023-03-27'::date);
+
+generate_series|
+---------------+
+     2023-03-20|
+     2023-03-21|
+     2023-03-22|
+     2023-03-23|
+     2023-03-24|
+     2023-03-25|
+     2023-03-26|
+     2023-03-27|
+
+SELECT * FROM GENERATE_SERIES('2023-03-26 00:00'::timestamp, '2023-03-27 12:00'::timestamp, 86400000000);
+
+generate_series    |
+-------------------+
+2023-03-26 00:00:00|
+2023-03-27 00:00:00|
+```
+
+### SQLの例2: クエリ結果の欠落を埋める 
+
+この例では、GENERATE_SERIES関数と左結合演算子を使用して、特定の範囲で情報が欠けているために生じたクエリ結果の欠落を処理します。
+
+```sql
+CREATE TABLE t_metrics (
+  date Date,
+  value INT
+);
+
+INSERT INTO t_metrics VALUES
+  ('2020-01-01', 200),
+  ('2020-01-01', 300),
+  ('2020-01-04', 300),
+  ('2020-01-04', 300),
+  ('2020-01-05', 400),
+  ('2020-01-10', 700);
+
+SELECT date, SUM(value), COUNT() FROM t_metrics GROUP BY date ORDER BY date;
+
+date      |sum(value)|count()|
+----------+----------+-------+
+2020-01-01|       500|      2|
+2020-01-04|       600|      2|
+2020-01-05|       400|      1|
+2020-01-10|       700|      1|
+```
+
+2020年1月1日から1月10日までの欠落を埋めるには、次のクエリを使用します。
+
+```sql
+SELECT t.date, COALESCE(SUM(t_metrics.value), 0), COUNT(t_metrics.value)
+FROM generate_series(
+  '2020-01-01'::Date,
+  '2020-01-10'::Date
+) AS t(date)
+LEFT JOIN t_metrics ON t_metrics.date = t.date
+GROUP BY t.date ORDER BY t.date;
+
+date      |coalesce(sum(t_metrics.value), 0)|count(t_metrics.value)|
+----------+---------------------------------+----------------------+
+2020-01-01|                              500|                     2|
+2020-01-02|                                0|                     0|
+2020-01-03|                                0|                     0|
+2020-01-04|                              600|                     2|
+2020-01-05|                              400|                     1|
+2020-01-06|                                0|                     0|
+2020-01-07|                                0|                     0|
+2020-01-08|                                0|                     0|
+2020-01-09|                                0|                     0|
+2020-01-10|                              700|                     1|
+```

@@ -1,0 +1,128 @@
+---
+title: "ML: 모델 학습"
+description: 테이블로 scikit-learn 모델을 학습시키고, 점수 산출과 쿼리에 사용할 수 있는 모델 테이블을 생성합니다.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/machine-learning/ml-train.mdx
+---
+
+## 설명
+
+**ML: 모델 학습** 단계는 소스 테이블로 scikit-learn 모델을 학습시키고, 그 결과를 **모델 테이블**로 기록합니다. 모델 테이블은 다른 테이블과 마찬가지로 워크플로를 따라 전달됩니다. [ML: 점수 산출](/ko/reference/workflow-steps/machine-learning/ml-score/) 단계에 전달하여 데이터 테이블에 예측값을 추가하거나, 직접 쿼리하여 학습 지표를 확인할 수 있습니다. 이 단계는 LLM 단계와 마찬가지로 관리형 PlaidCloud 작업으로 실행되므로, 학습이 워크플로의 나머지 부분과 리소스를 놓고 경쟁하지 않습니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 660 180" role="img" aria-label="ML 학습은 과거 행으로부터 모델을 학습합니다. 특성 열과 알려진 레이블을 가진 학습 행이 학습 단계로 입력되고, 학습 단계는 저장된 모델 아티팩트를 생성하며 이후 점수 산출 단계에서 이를 사용합니다." style="width:100%;max-width:660px;height:auto;">
+  <defs><marker id="mt-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="60" width="176" height="60" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="84" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">학습 행</text>
+  <text x="104" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">특성 + 알려진 레이블</text>
+  <path d="M192 90 L262 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="264" y="58" width="150" height="64" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="339" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">학습</text>
+  <text x="339" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">알고리즘 적합</text>
+  <path d="M414 90 L484 90" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#mt-arrow)" />
+  <rect x="486" y="60" width="158" height="60" rx="8" fill="var(--sl-color-accent)" fill-opacity="0.12" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="565" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">모델 아티팩트</text>
+  <text x="565" y="102" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">저장됨, 재사용 가능</text>
+  <text x="565" y="150" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">→ ML 점수 산출에서 사용</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">ML 학습은 레이블이 이미 알려진 행으로 알고리즘을 학습시켜 저장된 모델 아티팩트를 생성하며, <a href="/ko/reference/workflow-steps/machine-learning/ml-score/">ML 점수 산출</a>은 이 아티팩트를 새로운 행에 적용합니다.</figcaption>
+</figure>
+
+## 모델 탭
+
+### 소스 및 출력
+
+- **학습 테이블** — 학습에 사용할 테이블입니다. 대상 값이 비어 있는 행은 학습에서 제외됩니다.
+- **모델 테이블** — 모델 레코드를 받는 출력 테이블입니다.
+
+### 모델
+
+- **알고리즘** — 학습시킬 모델입니다.
+
+  | 알고리즘 | 값 | 계열 |
+  | --- | --- | --- |
+  | 로지스틱 회귀 | `logistic_regression` | 분류 |
+  | 의사 결정 트리 분류기 | `decision_tree` | 분류 |
+  | 랜덤 포레스트 분류기 | `random_forest` | 분류 |
+  | 그래디언트 부스팅 분류기(XGBoost 방식) | `xgb_classifier` | 분류 |
+  | 선형 회귀 | `linear_regression` | 회귀 |
+  | 의사 결정 트리 회귀기 | `decision_tree_regressor` | 회귀 |
+  | 랜덤 포레스트 회귀기 | `random_forest_regressor` | 회귀 |
+
+  XGBoost 방식 알고리즘은 scikit-learn의 `HistGradientBoostingClassifier`로, XGBoost를 감싼 래퍼가 아니라 통계적으로 동등한 대체 구현입니다. [제한 사항 및 주의 사항](#제한-사항-및-주의-사항)을 참조하십시오.
+
+- **대상 열** — 예측할 열입니다. 비지도 알고리즘과 `sota`를 제외하고는 필수이며, 이 둘은 클래스 열이 선택 사항입니다. 분류 대상은 텍스트 레이블로 처리되고, 회귀 대상은 숫자로 변환되며, 대상 값을 숫자로 구문 분석할 수 없는 행은 제외됩니다.
+
+### 추가 알고리즘
+
+**알고리즘** 목록에는 다음 알고리즘도 있습니다. 변환된 KNIME 워크플로도 이 알고리즘을 사용합니다.
+
+| 알고리즘 | 설명 |
+| --- | --- |
+| `xgboost_classifier`, `xgboost_regressor`, `xgboost_linear_classifier`, `xgboost_linear_regressor` | 트리 또는 선형 부스터를 사용하는 XGBoost 자체 |
+| `gradient_boosting_classifier`, `gradient_boosting_regressor` | scikit-learn 그래디언트 부스팅 |
+| `svm`, `svm_regressor`, `mlp`, `mlp_regressor`, `dummy`, `dummy_regressor` | scikit-learn 서포트 벡터 머신, 다층 퍼셉트론, 기준선 모델 |
+| `knime_decision_tree`, `knime_tree_ensemble`, `naive_bayes`, `knn`, `lda`, `pnn_dda`, `fuzzy_rules`, `sota` | KNIME 고유의 학습기로, KNIME과 동일한 결과를 제공합니다. 하이퍼파라미터는 KNIME의 설정입니다 |
+| `kmeans`, `dbscan`, `optics`, `pca`, `mds`, `tsne`, `isolation_forest`, `apriori`, `fp_growth` | KNIME의 비지도 알고리즘으로, 대상 열이 없으며 특성 열은 숫자 열입니다(`apriori`와 `fp_growth`는 항목 목록이 담긴 하나의 열) |
+| `kmedoids`, `fuzzy_cmeans`, `hierarchical`, `hierarchical_tree`, `silhouette`, `h2o_pca`, `mds_projection`, `smote`, `target_shuffling`, `knn_distance`, `prediction_fusion`, `al_uncertainty`, `al_combiner`, `al_selector`, `al_density`, `al_density_table`, `distribution_creator`, `distribution_splitter`, `weak_label`, `als`, `rule_table`, `optics_table`, `dose_response` | KNIME의 클러스터링, 샘플링, 능동 학습, 추천(`als`: 특성 열은 사용자와 제품, 대상은 평점), 연관 규칙, 용량-반응 노드 |
+
+`dbscan`, `mds`, `tsne`처럼 데이터와 별개의 모델이 없는 알고리즘은 설정을 모델 테이블에 보관하며, [ML: 점수 산출](/ko/reference/workflow-steps/machine-learning/ml-score/)은 전달받은 테이블을 배치하여 처리합니다.
+
+### 하이퍼파라미터
+
+선택한 알고리즘에 사용할 scikit-learn 하이퍼파라미터를 담은 선택적 JSON 객체입니다. 예: `{"max_depth": 5, "n_estimators": 200}`. 알 수 없는 키는 단계를 저장할 때 거부되므로, 잘못 입력한 매개변수는 조용히 무시되지 않고 즉시 실패합니다. Alteryx에서 변환된 워크플로에는 `max_depth_none`과 같은 Alteryx 방식의 센티널 키가 포함될 수 있으며, 이러한 키는 자동으로 변환됩니다.
+
+scikit-learn에서 제거된 일부 레거시 매개변수(예: `presort`, 또는 [제한 사항 및 주의 사항](#제한-사항-및-주의-사항)에 나열된 XGBoost 트리 관련 매개변수)는 허용되지만 적용되지는 않습니다. 이렇게 제외된 항목은 모델 테이블의 `params_json`에 있는 `dropped_params`에 기록되므로 아무것도 조용히 사라지지 않습니다.
+
+## 특성 탭
+
+특성 탭에는 소스 테이블의 열마다 한 행이 표시됩니다.
+
+- **특성** — 학습에 사용할 열을 선택합니다. **모든** 확인란을 선택하지 않으면 대상을 제외한 모든 열로 학습합니다. 모든 확인란을 선택하지 않은 경우 단계는 실행 시점에 테이블이 가진 열로 학습하며, 일부 열을 제외하려면 **열 제외**(`exclude_columns`)에 해당 열을 나열합니다.
+- **유형 재정의** — 열을 **Numeric** 또는 **Categorical** 처리로 강제하거나, **(추론)** 으로 두어 테이블 열 유형에서 유형을 도출합니다.
+
+특성 준비 방식은 Alteryx Assisted Modeling과 동일합니다. 숫자 특성은 숫자로 변환되고(구문 분석할 수 없는 값은 결측값이 됨) 결측값은 중앙값으로 대체됩니다. 범주형 특성은 텍스트로 처리되어 최빈값으로 대체된 뒤 원-핫 인코딩됩니다. 범주형 특성이 학습 중에 본 적 없는 값은 점수 산출 시 무시됩니다.
+
+## 모델 테이블
+
+모델 테이블에는 다음 열이 있습니다.
+
+| 열 | 내용 |
+| --- | --- |
+| `model_pickle_b64` | 학습된 scikit-learn 파이프라인(피클링, 압축, base64 인코딩됨). 큰 모델은 여러 행으로 분할됩니다. [모델 저장 방식](#모델-저장-방식)을 참조하십시오. |
+| `chunk_index` | 이 행이 담고 있는 모델 조각의 위치로, `0`부터 셉니다. |
+| `algorithm` | 알고리즘 값입니다. 예: `logistic_regression`. |
+| `params_json` | JSON: 적용된 scikit-learn 매개변수, 사용된 특성 유형, 그리고 `dropped_params`. |
+| `feature_names_json` | JSON 배열: 점수 산출 시 모델이 기대하는, 순서가 있는 특성 열. |
+| `class_labels_json` | 클래스 레이블의 JSON 배열(분류기) 또는 `null`(회귀기). |
+| `metrics_json` | JSON 학습 지표입니다. 아래를 참조하십시오. |
+| `trained_at` | 학습 실행의 UTC 타임스탬프. |
+
+모델 테이블은 일반 테이블이므로 다른 테이블처럼 쿼리할 수 있습니다. 예를 들어 다운스트림 단계에서 `metrics_json`을 추출하여 모델 품질에 따라 워크플로 진행 여부를 결정할 수 있습니다.
+
+`metrics_json`에는 `kind` 키(`classification` 또는 `regression`), 분류기의 경우 `train_accuracy`, 회귀기의 경우 `train_r2`와 `train_rmse`, 그리고 `n_training_rows`가 들어 있습니다.
+
+### 모델 저장 방식
+
+학습된 모델은 클 수 있습니다. 기본값인 트리 100개로 두면 랜덤 포레스트가 수백 메가바이트에 이를 수 있으며, 이는 웨어하우스가 단일 값으로 허용하는 크기를 넘습니다. 따라서 모델은 압축되고, 그래도 한 행에 담기에 너무 크면 필요한 만큼의 행으로 분할됩니다. 모든 행에는 위의 열이 반복되므로 어느 행을 보더라도 알고리즘, 매개변수, 특성, 지표를 알 수 있으며, 행마다 다른 것은 `model_pickle_b64`와 `chunk_index`뿐입니다.
+
+이는 두 곳에서 중요합니다.
+
+- **지표 읽기.** 모델 테이블에는 행이 둘 이상 있을 수 있으므로 행이 하나뿐이라고 가정하지 말고 단일 행에서 지표를 읽으십시오. 예를 들어 `WHERE chunk_index = 0`을 사용합니다.
+- **모델 직접 재조립.** PlaidCloud 외부에서 `model_pickle_b64`를 읽는 경우, 조각을 `chunk_index` 순서로 연결하고 base64 디코딩한 다음, 압축을 풀고 나서 언피클링하십시오.
+
+[ML: 점수 산출](/ko/reference/workflow-steps/machine-learning/ml-score/) 단계는 이 모든 작업을 자동으로 수행합니다. 또한 모든 조각이 존재하는지 확인하며, 조각이 하나라도 없으면 불완전한 모델로 점수를 산출하지 않고 오류와 함께 중단합니다.
+
+## 제한 사항 및 주의 사항
+
+- **학습 지표는 학습 세트에서 계산됩니다** — 이 릴리스에는 홀드아웃 분할이나 교차 검증이 없습니다. 지표는 표본 외 성능의 추정치가 아니라 적합도 검사로 간주하십시오.
+- **메모리 내 작업 세트** — 학습 테이블이 메모리로 읽혀 들어가므로, 이 단계는 대략 100만 행을 대상으로 합니다. 더 큰 테이블은 먼저 샘플링하거나 집계하십시오.
+- **최대 모델 크기** — 학습된 모델은 압축 후 128MB를 초과하면 거부되며, 학습이 끝나는 즉시 단계가 중단되고 크기와 한도를 알리는 메시지가 표시됩니다. 참고로 17,000개 행과 17개 특성에 대해 트리 100개로 학습한 랜덤 포레스트는 약 56MB이므로, 한도는 그 약 두 배입니다. 한도에 도달하면 트리 수(`n_estimators`)를 줄이거나 `max_depth`에 상한을 두십시오.
+- **XGBoost 근사** — `xgb_classifier`는 scikit-learn `HistGradientBoostingClassifier`를 학습시키며, `xgboost_*` 알고리즘은 XGBoost 자체를 실행합니다. XGBoost 고유의 트리 매개변수 `gamma`, `min_child_weight`, `subsample` 및 `colsample_*` 계열은 대응하는 항목이 없어 제외되며(`dropped_params`에 기록되고, 단계가 Alteryx에서 변환된 경우 단계의 매핑 참고 사항에도 기록됨), 결과 동등성에 의존하기 전에 모델 지표를 기준 실행 결과와 비교하여 검증하십시오.
+- **AutoML 변환은 탐색이 아니라 알고리즘 하나를 선택합니다** — Alteryx AutoML 도구는 분류 및 회귀와 같은 방식으로 이 단계에 통합되지만, AutoML은 Alteryx 실행 시점에 후보 알고리즘 중 실제로 어느 것이 선택되었는지 기록하지 않습니다. 변환은 자동 탐색을 재현하는 대신, 이 단계가 지원하는 알고리즘 중 처음으로 선택된 것을 고르고 그 선택을 기록합니다. 여기서는 모델 선택 루프가 실행되지 않습니다. 변환된 AutoML 단계를 직접 보유한 Alteryx 결과와 비교하십시오.
+
+## 관련 항목
+
+- [ML: 점수 산출](/ko/reference/workflow-steps/machine-learning/ml-score/) — 학습된 모델로 데이터 테이블의 점수를 산출합니다.
+- [Alteryx 워크플로 마이그레이션](/ko/guides/workflows/migrate-alteryx-workflows/#머신-러닝assisted-modeling-변환) — AutoML을 포함한 Alteryx Assisted Modeling 파이프라인이 이 단계로 변환되는 방식입니다.

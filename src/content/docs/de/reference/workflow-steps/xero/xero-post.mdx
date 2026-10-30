@@ -1,0 +1,76 @@
+---
+title: "Xero: Beleg buchen"
+description: Bucht manuelle Journale, Rechnungen, Eingangsrechnungen, Zahlungen und Gutschriften aus Kopf- und Positionstabellen in Xero, mit einem Testmodus, der jeden Beleg prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Belege über Ihre [Xero-Verbindung](/de/guides/connections/xero/) in Xero, geleitet über die gemeinsame ERP-Schreib-Pipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Beleg) und eine Positionstabelle (eine oder mehrere Zeilen pro Beleg) und bucht jeden Beleg als **ManualJournal**, **Invoice**, **Bill**, **Payment** oder **CreditNote**. Ein Stapel kann verschiedene Belegtypen mischen – PlaidCloud teilt ihn vor jedem Netzwerkaufruf nach Belegtyp auf. **Test Only Mode** erstellt und prüft jeden Beleg ohne Ledger-Anspruch und ohne zu buchen; eine optionale Ergebnistabelle hält das Ergebnis jedes Belegs fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst im **Test Only Mode** aus, prüfen Sie die Ergebnistabelle und stimmen Sie einige Buchungen direkt in Xero ab, bevor Sie sich darauf verlassen, dass dieser Schritt Belege unbeaufsichtigt live bucht.
+</Aside>
+
+## Konfiguration
+
+### Xero-Verbindung
+
+- **Xero-Verbindung** – die Xero-Verbindung, über die gebucht wird. Sie enthält die Organisation, in die jeder Beleg gebucht wird.
+- **Umgebung** – über welche der PlaidCloud-Umgebungen der Verbindung gebucht wird; dieselbe Auswahl, die jeder verbindungsgesteuerte Schritt bietet. Dies steht in keinem Zusammenhang mit Xeros eigener Demo Company, die eine Eigenschaft der Organisation ist, auf die die Verbindung zeigt.
+- **Test Only Mode** – standardmäßig aktiviert. Prüft jeden Beleg, bucht ihn aber nicht: kein Ledger-Anspruch, kein Schreibvorgang. Eine Schrittkonfiguration, in der dieses Feld ganz fehlt – etwa eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig den Test Only Mode statt einer Livebuchung.
+- **Continue posting remaining documents if one document fails** – standardmäßig aktiviert. Ist die Option deaktiviert, hält der Stapel beim ersten Fehler an.
+- **Ergebnistabelle** – eine Zeile pro Beleg: `ref`, `doc_type`, `natural_key`, `xero_id`, `status` (`posted`/`validated`/`error`) und `message`.
+
+### Tabellenauswahl
+
+- **Kopftabelle** – eine Zeile pro Beleg.
+- **Positionstabelle** – eine oder mehrere Zeilen pro Beleg, über `ref` dem Kopf zugeordnet.
+
+### Kopf- und Positionsfelder
+
+Zwei Zuordnungsregisterkarten ordnen Ihre eigenen Spaltennamen den Feldern zu, die Xero benötigt. **Kopffelder** umfasst:
+
+| Feld | Hinweise |
+|---|---|
+| `ref` | Erforderlich. Ihr Geschäftsschlüssel – verknüpft Kopfzeilen mit ihren Positionen und ist der Schlüssel, den das Idempotenz-Ledger beansprucht. |
+| `doc_type` | Erforderlich. `ManualJournal`, `Invoice`, `Bill`, `Payment` oder `CreditNote`. |
+| `posting_date` | Erforderlich. |
+| `currency_id`, `party_id`, `memo`, `due_date` | Optional. `party_id` ist der Xero-Kontakt. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | Nur für Zahlungen, optional. |
+| `credit_note_type` | Nur für Gutschriften, optional. `ACCRECCREDIT` (Verkauf, Standard) oder `ACCPAYCREDIT` (Einkauf). |
+
+**Positionsfelder** umfasst `ref` (erforderlich, entspricht einer Kopfzeile) sowie die Felder, die der Belegtyp benötigt:
+
+| Belegtyp | Positionsfelder |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit` und optional `class_id` / `department_id` für das Tracking |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id` (die Rechnung, auf die sich die Position bezieht), `amount` |
+
+`tax_type` und `memo` sind bei jeder Position optional.
+
+## So funktioniert das Buchen
+
+Jeder Beleg wird im Idempotenz-Ledger von PlaidCloud beansprucht, bevor er übermittelt wird. Eine erneute Ausführung bucht daher nie einen Beleg, der bereits den Status `posted` erreicht hat. Der Ledger-Schlüssel erhält den Belegtyp als Präfix, sodass eine Rechnung und eine Eingangsrechnung mit derselben `ref` nie kollidieren, obwohl Xero beide über denselben Endpunkt bucht.
+
+Ist ein Ergebnis nicht eindeutig – etwa bei einer Zeitüberschreitung oder einer abgebrochenen Antwort –, fragt PlaidCloud Xero anhand der Belegnummer ab, die es vergeben hat: einer Rechnungsnummer für eine Rechnung oder eine Eingangsrechnung, einer Gutschriftnummer für eine Gutschrift. Ein Treffer gilt nur dann als Nachweis, wenn sich der Beleg in einem endgültig gebuchten Status befindet, da diese Nummern in Xero nicht garantiert eindeutig sind. Ein Treffer als Entwurf, stornierter Beleg oder Beleg mit doppelter Nummer wird als ungeklärt behandelt und in Quarantäne gestellt, statt als Ergebnis dieses Schreibvorgangs erfasst zu werden.
+
+## Funktionsgrenzen
+
+| Einschränkung | Bedeutung |
+|---|---|
+| Manuelle Journale und Zahlungen lassen sich nicht nachschlagen | Die Beschreibung eines manuellen Journals und die Referenz einer Zahlung sind in Xero nicht abfragbar, sodass es kein Feld gibt, um einen unklaren Schreibvorgang der Anfrage zuzuordnen. Diese werden zur manuellen Klärung in Quarantäne gestellt, statt geraten zu werden. |
+| Die Stornierung umfasst manuelle Journale und Rechnungen | Ein manuelles Journal wird als Journal mit vertauschter Soll-/Haben-Seite storniert, eine Rechnung durch eine spiegelnde Gutschrift. Für Eingangsrechnungen, Zahlungen und Gutschriften gibt es keine dokumentierte Rückgängig-Nutzlast, daher wird eine Stornierung abgelehnt und nie vorgetäuscht. |
+| Ratenbegrenzungen gelten pro Organisation | Xero erlaubt pro Organisation 60 Aufrufe pro Minute und 5.000 pro Tag bei 5 gleichzeitigen Aufrufen. PlaidCloud steuert die Grenzen pro Minute und für die Gleichzeitigkeit und weicht bei einer gedrosselten Antwort zurück; ein sehr großer Stapel dauert entsprechend länger. |
+
+## Verwandte Themen
+
+- [Mit Xero verbinden](/de/guides/connections/xero/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [Xero-REST-Connector](/de/reference/connectors/rest/xero/)
+- [Xero-Schritte](/de/reference/workflow-steps/xero/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

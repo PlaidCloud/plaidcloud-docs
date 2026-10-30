@@ -1,0 +1,129 @@
+---
+title: Agregar una cuenta de OneDrive / SharePoint
+description: Conecte Microsoft OneDrive para la Empresa o SharePoint a PlaidCloud Document con acceso Sites.Selected de privilegios mínimos o con acceso a todo el inquilino.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Conecte una ubicación de Microsoft **OneDrive para la Empresa** o **SharePoint** a PlaidCloud Document. Usted registra una aplicación de Entra (Azure AD), elige hasta dónde puede llegar en su inquilino y PlaidCloud la usa para leer y escribir archivos.
+
+## Elegir un modelo de acceso
+
+Decida hasta dónde puede llegar la aplicación en su inquilino de Microsoft 365. Esta es la decisión más importante de toda la configuración.
+
+| Modelo | Permiso de aplicación de Graph | A qué puede acceder la aplicación | Elíjalo cuando |
+|---|---|---|---|
+| **Sitios seleccionados** (recomendado) | `Sites.Selected` | Solo los sitios específicos a los que usted otorgue acceso de forma explícita | Algún sitio contiene datos confidenciales: nómina, recursos humanos, finanzas, información de salud protegida |
+| **Todos los sitios** | `Sites.Read.All` (lectura) o `Sites.ReadWrite.All` (lectura y escritura) | **Todos** los sitios del inquilino | Ningún sitio es confidencial y desea la configuración más sencilla |
+
+**La mayoría de las organizaciones deberían elegir Sitios seleccionados.** Si incluso un solo sitio contiene información confidencial, el acceso a todo el inquilino la expone. Con `Sites.Selected`, la aplicación no puede acceder a nada hasta que un administrador le otorgue acceso a cada sitio indicado, de modo que los sitios que nunca otorgue quedan completamente fuera de su alcance.
+
+<Aside type="caution">
+**No** otorgue `Directory.*`, `Files.*` ni `User.Read.All`. Un conector de documentos nunca los necesita, y `Directory.ReadWrite.All` en particular permite leer y escribir en todo su directorio de identidades. Basta con un único `Sites.Selected` (o un único `Sites.Read.All` / `Sites.ReadWrite.All`).
+</Aside>
+
+## Registrar la aplicación en Azure
+
+1. Inicie sesión en el [portal de Azure](https://portal.azure.com) y vaya a **Microsoft Entra ID** → **App registrations** → **+ New registration**.
+2. Escriba un nombre (por ejemplo, `PlaidCloud`).
+3. En **Supported account types**, elija **Accounts in this organizational directory only** (inquilino único, lo más habitual).
+4. Deje en blanco el **Redirect URI** y haga clic en **Register**.
+5. En la página de información general, copie el **Application (client) ID** (su **ID de cliente**) y el **Directory (tenant) ID** (su **ID de inquilino**).
+6. Vaya a **Certificates & secrets** → **+ New client secret**, defina una descripción y una fecha de vencimiento, haga clic en **Add** y copie de inmediato el **Value** del secreto: no se vuelve a mostrar.
+
+## Otorgar el permiso de API
+
+Agregue exactamente **un** permiso de **aplicación** de Microsoft Graph, según el modelo de acceso que haya elegido:
+
+- **Sitios seleccionados:** `Sites.Selected`
+- **Todos los sitios:** `Sites.Read.All` (solo lectura) o `Sites.ReadWrite.All` (lectura y escritura)
+
+Pasos: **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → agregue el permiso indicado arriba → **Grant admin consent**.
+
+<Aside type="note">
+Para otorgar el consentimiento del administrador se necesita un **Administrador global** o un **Administrador de roles con privilegios**: un administrador de SharePoint por sí solo no puede dar consentimiento a un permiso de aplicación.
+</Aside>
+
+Si eligió **Todos los sitios**, la configuración ha terminado: pase a [Agregar la cuenta en PlaidCloud](#agregar-la-cuenta-en-plaidcloud). Si eligió **Sitios seleccionados**, a continuación otorgue acceso a la aplicación en cada sitio.
+
+## Otorgar a la aplicación acceso a cada sitio (modelo Sitios seleccionados)
+
+`Sites.Selected` no otorga ningún acceso a la aplicación por sí solo: un administrador de SharePoint o global debe otorgarlo en cada sitio al que quiera que la aplicación acceda. No hay una pantalla del centro de administración para esto, por lo que se usan dos llamadas de Microsoft Graph en [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer). Como el acceso se otorga sitio por sitio, los sitios confidenciales simplemente nunca se otorgan.
+
+**Configuración única.** En Graph Explorer, con la sesión iniciada como administrador de SharePoint o global, abra la pestaña **Modify permissions** y haga clic en **Consent** en `Sites.FullControl.All` (este ámbito es el que le permite definir los accesos a sitios). Si una consulta posterior devuelve `accessDenied`, lo que falta es este consentimiento: cierre sesión y vuelva a iniciarla después de dar el consentimiento para actualizar el token.
+
+### Paso 1: encontrar el ID del sitio
+
+Enumere los sitios de su inquilino (método **GET**):
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+O resuelva un solo sitio directamente a partir de su URL:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+Copie el `id` del sitio de la respuesta: tiene el formato `contoso.sharepoint.com,<guid>,<guid>`.
+
+### Paso 2: otorgar acceso a la aplicación
+
+Defina el método como **POST** sobre la colección `permissions` de ese sitio (pegue el `id` del paso 1):
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+En la pestaña **Request body**, pegue lo siguiente: defina `roles` como `["read"]` o `["write"]` y use el **Application (client) ID** de su aplicación:
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+Ejecute la consulta. Si se realiza correctamente, devuelve un objeto de permiso con un `id` y sus `roles`. **Repita el paso 2 para cada sitio** al que quiera que PlaidCloud acceda. Para revisar qué ha otorgado un sitio:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` se otorga por **sitio**, no por carpeta ni biblioteca: al otorgar acceso a un sitio se expone todo su contenido. Mantenga el contenido confidencial en sitios propios y dedicados para que nunca quede incluido junto con el contenido que sí desea compartir.
+</Aside>
+
+## Agregar la cuenta en PlaidCloud
+
+1. Inicie sesión en PlaidCloud y seleccione el espacio de trabajo en el que residirá la cuenta.
+2. Vaya a `Document` → `Manage Accounts` → **+ New Account**.
+3. Elija **OneDrive** como **Servicio**.
+4. Escriba un nombre y una descripción, y elija un **Modelo de seguridad** (deje `Private` si no está seguro).
+5. En **Credenciales de autenticación**, pegue el **ID de cliente**, el **Secreto de cliente** y el **ID de inquilino de OneDrive** del registro de la aplicación.
+6. En **URL del sitio de SharePoint**, pegue la URL de un sitio al que se haya otorgado acceso a la aplicación (por ejemplo, `https://contoso.sharepoint.com/sites/TeamName`). La lista **Unidad/Sitio** muestra entonces las bibliotecas de documentos de ese sitio: elija la que se usará como raíz de la cuenta. Con ello se completa la **Ruta de inicio**.
+7. Seleccione **Guardar**.
+
+<Aside type="note">
+Se requiere una unidad o un sitio: la cuenta no se puede guardar sin uno. Sin él, la cuenta mostraría carpetas pero ningún archivo.
+</Aside>
+
+## Crear la cuenta con un asistente de IA
+
+Un asistente de IA conectado mediante el conector MCP de PlaidCloud puede crear o actualizar la cuenta por usted con la herramienta `document_account_upsert`, después de que usted complete los pasos de Azure anteriores. Proporciónele los valores del registro de la aplicación:
+
+| Campo de la cuenta | Valor |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | Application (client) ID |
+| `private_key` | Secreto de cliente |
+| `tenant_id` | Directory (tenant) ID |
+| `start_path` | ID de la unidad, seguido opcionalmente de `/folder` |
+
+Las credenciales son de solo escritura: `document_account_describe` las oculta. La herramienta está disponible en su propia sesión de MCP con la sesión iniciada, no para los pasos de los flujos de trabajo ni para los agentes integrados en la aplicación.

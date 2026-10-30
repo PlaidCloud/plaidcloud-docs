@@ -1,0 +1,96 @@
+---
+title: INFER_SCHEMA (Lakehouse v1)
+description: INFER_SCHEMA — detecta automaticamente o esquema de metadados do arquivo e obtém as definições de coluna.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/17-table-functions/01-infer-schema.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Detecta automaticamente o esquema de metadados do arquivo e obtém as definições de coluna.
+
+<Aside type="caution">Atualmente, `infer_schema` oferece suporte apenas ao formato de arquivo parquet.</Aside>
+
+## Sintaxe SQL
+
+```sql
+INFER_SCHEMA(
+  LOCATION => '{ internalStage | externalStage }'
+  [ PATTERN => '<regex_pattern>']
+)
+```
+
+Em que:
+
+### Internalstage
+
+```sql
+internalStage ::= @<internal_stage_name>[/<path>]
+```
+
+### Externalstage
+
+```sql
+externalStage ::= @<external_stage_name>[/<path>]
+```
+
+### PATTERN = 'regex_pattern'
+
+Uma string de padrão de expressão regular baseada em [PCRE2](https://www.pcre.org/current/doc/html/), entre aspas simples, que especifica os nomes de arquivo a corresponder. Veja um exemplo [abaixo](#infer_schema-com-correspondência-de-padrão). Para a sintaxe PCRE2, consulte http://www.pcre.org/current/doc/html/pcre2syntax.html.
+
+## Exemplos de SQL
+
+Gere um arquivo parquet em um stage:
+
+```sql
+CREATE STAGE infer_parquet FILE_FORMAT = (TYPE = PARQUET);
+COPY INTO @infer_parquet FROM (SELECT * FROM numbers(10)) FILE_FORMAT = (TYPE = PARQUET);
+```
+
+```sql
+LIST @infer_parquet;
+┌───────────────────────────────────────────────────────┬──────┬────────────────────────────────────┬───────────────────────────────┬─────────┐
+│ name                                                  │ size │ md5                                │ last_modified                 │ creator │
+├───────────────────────────────────────────────────────┼──────┼────────────────────────────────────┼───────────────────────────────┼─────────┤
+│ data_e0fd9cba-f45c-4c43-aa07-d6d87d134378_0_0.parquet │  258 │ "7DCC9FFE04EA1F6882AED2CF9640D3D4" │ 2023-02-09 05:21:52.000 +0000 │ NULL    │
+└───────────────────────────────────────────────────────┴──────┴────────────────────────────────────┴───────────────────────────────┴─────────┘
+```
+
+### `infer_schema`
+
+
+```sql
+SELECT * FROM INFER_SCHEMA(location => '@infer_parquet/data_e0fd9cba-f45c-4c43-aa07-d6d87d134378_0_0.parquet');
+┌─────────────┬─────────────────┬──────────┬──────────┐
+│ column_name │ type            │ nullable │ order_id │
+├─────────────┼─────────────────┼──────────┼──────────┤
+│ number      │ BIGINT UNSIGNED │        0 │        0 │
+└─────────────┴─────────────────┴──────────┴──────────┘
+```
+
+### `infer_schema` com correspondência de padrão
+
+```sql
+SELECT * FROM infer_schema(location => '@infer_parquet/', pattern => '.*parquet');
+┌─────────────┬─────────────────┬──────────┬──────────┐
+│ column_name │ type            │ nullable │ order_id │
+├─────────────┼─────────────────┼──────────┼──────────┤
+│ number      │ BIGINT UNSIGNED │        0 │        0 │
+└─────────────┴─────────────────┴──────────┴──────────┘
+```
+
+### Criar uma tabela a partir de um arquivo parquet
+
+O `infer_schema` só consegue exibir o esquema de um arquivo parquet e não cria uma tabela a partir dele. 
+
+Para criar uma tabela a partir de um arquivo parquet:
+
+```sql
+CREATE TABLE mytable AS SELECT * FROM @infer_parquet/ (pattern=>'.*parquet') LIMIT 0;
+
+DESC mytable;
+┌────────┬─────────────────┬──────┬─────────┬───────┐
+│ Field  │ Type            │ Null │ Default │ Extra │
+├────────┼─────────────────┼──────┼─────────┼───────┤
+│ number │ BIGINT UNSIGNED │ NO   │ 0       │       │
+└────────┴─────────────────┴──────┴─────────┴───────┘
+```

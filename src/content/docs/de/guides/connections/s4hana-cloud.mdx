@@ -1,0 +1,136 @@
+---
+title: Mit SAP S/4HANA Cloud verbinden
+description: Verbinden Sie PlaidCloud direkt mit SAP S/4HANA Cloud Public Edition über OAuth2-Client-Credentials – ohne Agent –, rufen Sie Saldenlisten- und Journalbuchungspositionen ab und buchen Sie Journalbuchungen, wobei Korrekturen über eine gebuchte Stornobuchung erfolgen.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud über die OData- und SOAP-APIs direkt mit SAP S/4HANA Cloud Public Edition, um Daten der Saldenliste und der Journalbuchungspositionen abzurufen, ohne OData von Hand schreiben zu müssen, und um Journalbuchungen zurückzubuchen. Diese Anleitung behandelt die Verbindung, den Import-Schritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen einen Sandbox-Tenant aus, und arbeiten Sie bei jedem Buchungsstapel zuerst die unten beschriebene Option **Validate Only** durch, bevor Sie live buchen.
+</Aside>
+
+<Aside type="note">
+Dies ist eine andere Verbindung als der [SAP-ECC-/S/4HANA-Connector](/de/reference/connectors/erp/sap-s4/), der ein lokales oder in einer privaten Cloud betriebenes S/4HANA-System über einen PlaidLink-Agent und RFC-Aufrufe erreicht. Dieser Connector kommuniziert über das Internet direkt mit SAP S/4HANA Cloud **Public Edition** – es muss kein Agent installiert und kein RFC-Ziel konfiguriert werden.
+</Aside>
+
+## Voraussetzungen
+
+In SAP S/4HANA Cloud benötigen Sie Folgendes:
+
+- Eine **Communication Arrangement**, die auf einem Communication Scenario basiert, das die APIs für Saldenliste und Journalbuchungspositionen (lesend) sowie den Buchungsdienst für Journalbuchungen (schreibend) bereitstellt, mit einem **Communication User**, der für OAuth2-Client-Credentials statt für die Standardauthentifizierung konfiguriert ist.
+- Den **Host** Ihres S/4HANA-Cloud-Tenants (zum Beispiel `https://yourorg.s4hana.ondemand.com`) und dessen **OAuth2-Token-URL** (zum Beispiel `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- Die **OAuth2-Client-ID und das Secret** der Communication Arrangement.
+
+<Aside type="note">
+Die Verbindung authentifiziert sich als Anwendung, nicht als Benutzer – über den OAuth2-Ablauf **Client-Credentials**, denselben Mechanismus, den PlaidCloud auch für andere REST-Verbindungen zu Cloud-ERP-Systemen verwendet. Es gibt keine interaktive Anmeldung.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **SAP S/4HANA Cloud** aus.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein aussagekräftiger Name, z. B. `S/4HANA Cloud Prod`. |
+   | Host | Der Host Ihres S/4HANA-Cloud-Tenants, z. B. `https://yourorg.s4hana.ondemand.com`. |
+   | Token URL | Der OAuth2-Token-Endpunkt der Communication Arrangement. |
+   | Client ID | Die OAuth2-Client-ID der Communication Arrangement. |
+   | Client Secret | Das OAuth2-Client-Secret der Communication Arrangement. |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Verbindung mit einem Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen Schritt **Import S/4HANA Entity** hinzu.
+
+2. Setzen Sie **S/4HANA Connection** auf Ihre Verbindung und **Entity Type** auf `trial_balance`, fügen Sie einen **CompanyCode**-Filter für eine Gesellschaft hinzu und setzen Sie **Target Table** auf eine Testtabelle.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine gefüllte Zieltabelle bestätigt, dass Host, Token-URL und Client-Credentials korrekt sind. Ein Fehler benennt das Problem – ein falsches Client-Secret, eine Communication Arrangement ohne den erforderlichen Scope oder ein falscher Host.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen Schritt **Import S/4HANA Entity** hinzu und legen Sie **S/4HANA Connection** und **Target Table** fest.
+
+2. Setzen Sie **Entity Type** auf den gewünschten Datensatztyp.
+
+3. Fügen Sie **Filters** hinzu, um den Abruf einzugrenzen – Buchungskreis, Konto und Datumsbereiche werden in den OData-`$filter` der Anfrage übersetzt, und zwar je Entität beschränkt auf die Felder, nach denen S/4HANA serverseitig tatsächlich filtern kann.
+
+4. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+### Entitäten und Filter
+
+| Entitätstyp | Was abgerufen wird | OData-Dienst | Filterbare Felder |
+|---|---|---|---|
+| `trial_balance` | Aggregierte Hauptbuchkontensalden zum Periodenende | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | Gebuchte Journalbuchungspositionen | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate` (Bereich), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear` und `FiscalPeriod` akzeptieren **Bereichsfilter** (Grenzen mit `ge`/`le`); alle übrigen sind Gleichheitsfilter. Ein Bereichsfilter mit nur einer Grenze ist auf der anderen Seite offen. Setzen Sie mindestens eine Grenze, bevor Sie `journal_entry_items` gegen Produktivdaten abrufen – ein unbegrenzter Abruf von Positionsdetails kann sehr groß werden.
+</Aside>
+
+## Journalbuchungen buchen
+
+Der Schritt **S/4HANA: Post Journal Entry** bucht Hauptbuch-Journalbuchungen über die gemeinsame ERP-Schreibpipeline von PlaidCloud und verwendet dazu den SOAP-Dienst für das Massenanlegen von Journalbuchungen in S/4HANA Cloud.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** – eine Zeile pro Journalbuchung – mit `journal_id` (Ihre Buchungskennung), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger` und `header_text`.
+
+2. Erstellen Sie eine **Positionstabelle** – eine oder mehrere Zeilen pro `journal_id` – mit `gl_account`, `debit`, `credit` sowie allen `cost_center`-/`profit_center`-Dimensionsspalten, die Ihr Ledger erfordert.
+
+3. Fügen Sie einen Schritt **S/4HANA: Post Journal Entry** hinzu und legen Sie **S/4HANA Connection**, **Header Table**, **Lines Table** und eine **Result Table** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus – PlaidCloud erstellt und prüft jede Buchung ohne Ledger-Claim und ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro Buchung: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Beheben Sie jede Zeile mit `error` und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Stapel soll bei der ersten fehlgeschlagenen Buchung sofort abbrechen.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+PlaidCloud übermittelt jede Journalbuchung über den SOAP-Dienst `JournalEntryBulkCreateRequest_In` von S/4HANA Cloud und fragt anschließend die zugehörige Nachricht `JournalEntryBulkCreateConfirmation_Out` ab, die den endgültigen Verarbeitungszustand der Buchung meldet. Eine Buchung wird erst dann als `posted` gemeldet, wenn diese Bestätigung eingegangen ist – eine Buchung, die zwar angenommen wurde, deren Bestätigung aber nie eintrifft, bleibt in Quarantäne, statt als gebucht erfasst zu werden, sodass eine hängende Übermittlung nie unbemerkt als Erfolg durchgeht. Der Ledger-Claim von PlaidCloud verhindert, dass dieselbe Buchung bei einem wiederholten oder erneut ausgeführten Stapel doppelt gebucht wird.
+
+### Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt eine gebuchte Buchung nie. Um eine Buchung zu korrigieren, buchen Sie eine neue Buchung, bei der Soll und Haben gegenüber dem Original vertauscht sind – eine **gebuchte Stornobuchung** –, statt das Original direkt zu bearbeiten. So bleibt der eigene Prüfpfad von S/4HANA erhalten, und es entspricht der Art, wie Korrekturen direkt in der Anwendung vorgenommen werden.
+
+### Funktionsgrenzen – vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Bestätigungslatenz.** Der SOAP-Dienst verarbeitet Massenanlagen asynchron – rechnen Sie damit, dass die Abfrage des Endzustands deutlich länger dauert als ein synchroner OData-Schreibvorgang, und verwenden Sie diesen Schritt nicht für latenzkritische Einzelbuchungen.
+- **Die filterbaren Felder hängen von den bereitgestellten Dimensionen Ihres Communication Scenario ab.** Ein Kostenobjekt oder eine Dimension, die nicht zu den bereitgestellten Feldern des Szenarios gehört, lässt sich nicht serverseitig filtern; grenzen Sie sie stattdessen nach dem Abruf in Ihrem Workflow ein.
+- **Dieser Connector unterscheidet sich vom [SAP-ECC-/S/4HANA-Connector](/de/reference/connectors/erp/sap-s4/).** Jener Connector erreicht ein lokales oder in einer privaten Cloud betriebenes System über einen PlaidLink-Agent und RFC-Aufrufe; verwenden Sie ihn nur, wenn Sie keine Verbindung zu S/4HANA Cloud Public Edition herstellen.
+</Aside>
+
+## Verwandte Themen
+
+- [SAP S/4HANA Cloud REST Connector](/de/reference/connectors/rest/s4hana-cloud/) – Feldreferenz.
+- [Import S/4HANA Entity](/de/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/de/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) – der dauerhafte Nachweis jedes Buchungsversuchs in S/4HANA Cloud und seines aktuellen Zustands.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

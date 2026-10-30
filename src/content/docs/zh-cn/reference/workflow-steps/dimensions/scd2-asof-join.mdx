@@ -1,0 +1,116 @@
+---
+title: SCD-2 截至日期联接
+description: 将事实表与 SCD-2 历史表联接，返回在事实日期当天生效的每条主数据记录的版本。
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+将事实表与 [SCD-2 主数据构建器](/zh-cn/reference/workflow-steps/dimensions/scd2-master-builder/)历史表联接，并为每个事实行返回**在该事实日期当天生效**的主数据版本，而不是当前的版本。
+
+通过它，可以将每笔交易归属到*发生当时*适用的区域、成本中心、负责人或价格。这是一个 `LEFT JOIN`，因此每个事实行都会保留：没有匹配版本的键（未知键，或日期早于该键的第一个版本）会返回空的携带列，而不会被丢弃。
+
+## 表
+
+### 事实表
+
+要丰富的行，例如交易、订单、事件。每行都带有业务键和日期。
+
+### SCD-2 表
+
+由 [SCD-2 主数据构建器](/zh-cn/reference/workflow-steps/dimensions/scd2-master-builder/)生成的历史表，除跟踪的属性外，还包含 `valid_from`、`valid_to` 和 `is_current`。
+
+### 输出表
+
+写入丰富后事实行的位置。必须是表，而不是视图。每个原始事实列都原样传递，携带的主数据列会追加在后面。
+
+## 截至日期和选项
+
+**截至日期**是解析每个事实行所依据的时间点。请以以下两种方式之一（且仅一种）提供：
+
+- **事实截至日期列**：事实表中的日期列（例如 `txn_date`）。每行按其自身的日期解析。
+- **固定截至日期**：单个 `YYYY-MM-DD` 日期，或诸如 `{report_date}` 的工作流变量，应用于每个事实行（将整个事实表按同一个报告日期解析）。变量会在步骤运行时填入。
+
+<Aside type="caution">请二选一，不要同时使用。如果步骤同时指定了事实列*和*固定日期，或者两者都未指定，则保存步骤会被拒绝，运行也会被拒绝。</Aside>
+
+当携带的列与事实列同名时，可使用重命名选项避免冲突：
+
+- **携带前缀** / **携带后缀**：添加到每个携带列的输出名称上（`prefix` + 列名 + `suffix`）。如果重命名后携带列仍与某个事实列或另一个携带列冲突，运行将失败，而不是悄悄地覆盖。
+
+## 列角色
+
+使用**检查 SCD-2**列出 SCD-2 表的列，然后为每一列标记角色：
+
+| 角色 | 含义 |
+|---|---|
+| **业务键** | 将事实与历史联接的键（例如 `customer_id`）。必须与事实的键列匹配。至少需要一个。 |
+| **携带列** | 要带到事实行上的属性（例如 `region`）。至少需要一个。 |
+| **（忽略）** | 未标记的列不会被携带。 |
+
+## 保存时的检查
+
+出现以下情况时，保存步骤会被拒绝，并给出指明相应列或日期的消息：
+
+- 某列被多次标记为业务键或携带列：*'region' is tagged as a Carry Column more than once.*
+- 某列同时是业务键和携带列：*customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- **固定截至日期**不是 `YYYY-MM-DD` 格式的有效日期：*The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* 指定为工作流变量的日期会在运行填入该变量时检查。
+
+## 半开边界
+
+事实行匹配其截至日期所在区间对应的那一个历史版本，使用**半开**比较：
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+下界为包含，上界为不包含。这在边界当天很重要：
+
+- `as_of == valid_from` → **匹配**该版本（该版本在其起始日期生效）。
+- `as_of == valid_to` → **不匹配**该版本；它归入下一个版本，其 `valid_from` 等于此处的 `valid_to`。
+
+由于 [SCD-2 主数据构建器](/zh-cn/reference/workflow-steps/dimensions/scd2-master-builder/)写入连续版本时，使前一个版本的 `valid_to` 就是下一个版本的 `valid_from`，因此每个日期恰好对应一个版本，没有空隙，也没有重叠。日期为 `2026-04-01` 的变更表示新值从 4 月 1 日*当天*起适用；3 月 31 日的交易仍使用旧值。
+
+<Aside type="note">开放（当前）行在 `valid_to` 中带有哨兵上限日期 `9999-12-31`。如果某个开放行的 `valid_to` 为 null，此步骤会（通过同一哨兵）将其视为开放，因此不会悄悄地漏掉当前版本。</Aside>
+
+## 示例
+
+接续 [SCD-2 主数据构建器](/zh-cn/reference/workflow-steps/dimensions/scd2-master-builder/)中的示例，将每笔交易归属到其日期当天生效的区域。
+
+**`customer_scd2`（历史表）：**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions`（事实表）：**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+配置：**事实表** = `transactions`，**SCD-2 表** = `customer_scd2`，**输出表** = `transactions_by_region`，**事实截至日期列** = `txn_date`，业务键 = `customer_id`，携带列 = `region`。
+
+**`transactions_by_region`：**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(null)* |
+
+请注意边界情况：**2026-04-01 的 T2 解析为 Central**，因为半开区间使 4 月 1 日成为 Central 版本的第一天，而不是 West 的最后一天。**T4 的键 `C9` 未知**，因此它被保留，区域为 null，而不是被丢弃。
+
+## 相关内容
+
+- [SCD-2 主数据构建器](/zh-cn/reference/workflow-steps/dimensions/scd2-master-builder/)：构建此步骤所读取的历史表。
+- [Dimension Load 步骤](/zh-cn/reference/workflow-steps/dimensions/dimension-load/)：从表加载层次结构。

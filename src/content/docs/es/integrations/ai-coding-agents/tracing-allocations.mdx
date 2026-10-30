@@ -1,0 +1,206 @@
+---
+title: Rastreo de asignaciones con un agente de IA conectado por MCP
+description: Pregunte a un agente de IA conectado a su espacio de trabajo mediante MCP por qué cambió el resultado de una asignación, qué lo alimenta, dónde se usa un inductor y qué efecto tendría un cambio hipotético.
+sidebar:
+  label: Rastreo de asignaciones
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Una vez que haya [conectado un agente de IA a su espacio de trabajo mediante el Model Context Protocol (MCP)](../getting-started/), puede pedirle, en lenguaje natural, que rastree el costo a través de sus pasos de asignación. No ejecuta ningún informe ni escribe SQL: usted formula una pregunta y el agente llama a las herramientas de rastreo de asignaciones de PlaidCloud para encontrar el modelo, explicar un cambio, recorrer la cadena y responder preguntas del tipo “qué pasaría si”.
+
+Esto funciona desde cualquier cliente conectado por MCP, ya sea un agente de chat (Claude Desktop, ChatGPT) o un agente de programación (Claude Code, Cursor), ya que todos acceden a las mismas herramientas mediante el [servidor MCP](../getting-started/).
+
+<Aside>
+Estas herramientas leen la **configuración y los resultados** de sus asignaciones; no modifican nada. Puede preguntar con libertad: no se escribe nada de vuelta en el proyecto.
+</Aside>
+
+## Requisitos previos
+
+- Un proyecto que contenga pasos de asignación (`allocation_split`, `allocation_rules` o `allocation_dim`).
+- Un agente de IA conectado a su espacio de trabajo mediante MCP; consulte [Introducción a los agentes de programación con IA](../getting-started/).
+
+## Qué puede preguntar
+
+| Pregunte al agente … | Qué hace | Herramienta que lo respalda |
+| --- | --- | --- |
+| “¿Qué modelos de asignación hay en este proyecto?” | Enumera cada modelo, sus etapas y las tablas de resultados que produce | `allocation_model_find` |
+| “¿Cómo se calcula `cost_line_rev`?” | Muestra el conjunto de costos que se divide, el inductor por el que se divide y la tabla de destino | `allocation_describe` |
+| “¿Por qué cambió `cost_line_rev` de 2025 a 2026?” | Compara los dos períodos y atribuye el cambio al tamaño del conjunto frente a la combinación del inductor, con las cuentas que más contribuyen | `allocation_root_cause` |
+| “¿Qué alimenta `cost_line_rev`?” | Recorre la cadena ascendente: inductores, conjuntos de origen e importaciones | `allocation_lineage` |
+| “¿Dónde se usa `revenue_by_line` como inductor?” | Enumera todas las asignaciones que se dividen por esa tabla | `allocation_driver_usage` |
+| “¿Qué ocurre si los ingresos de EE. UU. suben 1 millón de dólares?” | Reparte el cambio entre cada resultado afectado según su participación actual en el conjunto: aditivo a lo largo de una ramificación, no un peor caso por tabla | `allocation_forward_impact` |
+| “¿Qué pasaría si el inductor de plantilla del centro de costo Assembly subiera 10?” | Vuelve a repartir el conjunto fijo con las nuevas ponderaciones del inductor y muestra qué destinos ganan y cuáles pierden. Se niega cuando la tabla de resultados la escribe más de un paso, en lugar de volver a repartir un conjunto que no es el de la propia asignación, y cuando el inductor ya no coincide con la división que su modelo realizó en su última ejecución | `allocation_driver_scenario` |
+
+## Ejemplo práctico
+
+Un analista financiero observa que una línea de costo basada en ingresos ha caído de un año a otro y formula una sola pregunta. El agente la responde de principio a fin, llamando a varias herramientas de asignación en segundo plano.
+
+> **Usted pregunta:** Nuestra asignación de costos basada en ingresos (`cost_line_rev`) parece menor en 2026 que en 2025. ¿Qué ocurrió, de qué se compone y qué efecto tendría una variación de 1 millón de dólares en los ingresos de EE. UU.?
+
+> **El agente responde:**
+>
+> **Qué es.** `cost_line_rev` es la etapa basada en ingresos de su modelo de costeo basado en actividades (ABC). Toma un conjunto de costos (`group_amount`, limitado a un conjunto de cuentas de pérdidas y ganancias) y lo divide por los **ingresos** de `revenue_by_line`, ponderados dentro de cada entidad, año y mes.
+>
+> **Por qué bajó (EE. UU., 2025 → 2026).** El costo asignado a EE. UU. cayó de **7,12 M$ a 2,99 M$, una caída de 4,13 M$ (−58,0 %)**. **No** se trata de un cambio de combinación: la participación de EE. UU. en el conjunto se mantuvo estable en torno al 23 % en ambos años. La causa es la **reducción del conjunto total de costos**, concentrada en unas pocas cuentas:
+>
+> | Cuenta | 2025 | 2026 | Cambio |
+> | --- | --: | --: | --: |
+> | 700000 | 2,58 M$ | 1,09 M$ | **−1,49 M$** |
+> | 701000 | 1,85 M$ | 0,77 M$ | −1,08 M$ |
+> | 610000 | 1,71 M$ | 0,72 M$ | −0,99 M$ |
+> | 670000 | 0,68 M$ | 0,29 M$ | −0,39 M$ |
+> | 702000 | 0,30 M$ | 0,13 M$ | −0,18 M$ |
+>
+> Esas cinco cuentas explican prácticamente todo el movimiento.
+>
+> **Qué lo alimenta.** `cost_line_rev` se construye a partir de `revenue_by_line` (el inductor de la división) y `gl_pool_entity` (el conjunto de costos).
+>
+> **Aviso: ese inductor es compartido.** `revenue_by_line` también impulsa `cost_line_cs` y `cost_line_admin`, de modo que una reexpresión de ingresos se propaga a los tres.
+>
+> **Su escenario de +1 millón de dólares en EE. UU.** El millón se reparte entre los resultados que comparten este inductor según la **participación actual de cada uno en el conjunto**, de modo que las estimaciones por tabla **suman** el cambio en lugar de repetir cada una el millón completo: obtiene una cifra para `cost_line_rev`, `cost_line_cs` y `cost_line_admin` que puede totalizar. Si acota la pregunta a un único destino, la estimación se aplica solo a esa porción.
+
+El analista obtiene una respuesta completa (la magnitud del cambio, las cuentas que lo explican, el linaje y el alcance de un escenario hipotético) sin abrir una sola tabla.
+
+## Hasta qué punto confiar en una respuesta
+
+Una respuesta fluida no es automáticamente una respuesta correcta. Cada respuesta a un “por qué cambió esto” incluye ahora una valoración en lenguaje claro de **hasta qué punto confiar en ella**, de modo que un número verosímil pero poco sólido se señale *antes* de que actúe en consecuencia, en lugar de quedar enterrado en el texto. Junto con la explicación, el agente le indica:
+
+- **Un nivel de confianza** (alto, medio o bajo) que refleja con qué limpieza se descompone el cambio. Un cambio debido a una causa clara tiene confianza alta; uno en el que se superponen varias causas, o cuyas cifras no concilian del todo, tiene confianza más baja. Cuando un resultado se construye a partir de varias ramas de asignación, la confianza pondera cada rama según la parte del cambio que explica, de modo que una rama pequeña y poco sólida no arrastra hacia abajo una respuesta que por lo demás es limpia; pero una rama cuyo número es en sí mismo dudoso (una división sin conciliar, datos obsoletos o algo que no puede atribuirse) sigue limitando la confianza de toda la respuesta.
+- **Salvedades en palabras sencillas**: por ejemplo, que la causa es una mezcla de factores superpuestos y no uno solo; que la respuesta se apoya en la jerarquía o las ponderaciones del inductor *actuales*; que parte de un cambio puede ser un artefacto de integridad de los datos (un período que no ha terminado de cargarse) y no un movimiento real; que el conjunto o el inductor que alimenta la asignación no se ha vuelto a cargar recientemente, por lo que la cifra puede apoyarse en datos desactualizados; o que una cifra hipotética no puede sumarse entre destinos.
+- **Una comparación que no pudo realizarse, indicada de forma explícita.** La mayoría de las respuestas dimensionan el movimiento que notifican, frente al mismo movimiento un año antes y frente a períodos recientes, para que pueda distinguir un año ordinario de una ruptura de tendencia. Ninguna de las dos se produce para una tabla escrita por un paso que asigna varias columnas de valores a la vez, porque cada una está concebida para una respuesta de una sola columna. Antes eso se omitía en silencio, y la respuesta parecía haber llegado tan lejos como lo permiten los datos cuando se había detenido antes por diseño. Ahora se indica entre los límites, junto con el motivo por el que no hay una pregunta más acotada que formular en su lugar, y con el hecho de que ninguna cifra de la respuesta queda retirada por ello: los importes son exactos y lo que falta es el contexto.
+
+Cuando el agente no puede respaldar una causa precisa, lo dice y le señala el ámbito o filtro que le permitiría responder con claridad, en lugar de inventar una historia segura. Y como la confianza y las salvedades forman parte de la respuesta, la acompañan: si pide a otro agente que la resuma, las señales de confianza no se pierden silenciosamente.
+
+<Aside type="note" title="La señalización de datos obsoletos es opcional">
+La salvedad de actualidad, que reduce la confianza cuando los datos subyacentes no se han vuelto a cargar dentro de una ventana determinada, está **desactivada de forma predeterminada** y su administrador la activa por espacio de trabajo; además, él establece cuán reciente se considera actual (un valor mayor para datos que solo se actualizan trimestral o anualmente). Si su equipo trabaja deliberadamente con datos más antiguos, no interfiere hasta que alguien la active.
+
+Una vez activada, llega a todas las respuestas que leen su almacén de datos: la explicación de “por qué cambió esto” y ambas respuestas hipotéticas, que es donde más importa: una respuesta hipotética propaga o vuelve a ponderar usando las participaciones que su modelo realizó en su última ejecución, por lo que los datos desactualizados son precisamente el caso en que la estimación es menos fiable.
+
+Dos cosas limitan lo que puede indicarle, y se aplican a todas las respuestas, no solo a las hipotéticas. Solo pregunta la antigüedad de las tablas **cargadas directamente en PlaidCloud**: una tabla que construye un paso de un flujo de trabajo solo puede informar de cuándo se ejecutó ese paso por última vez, lo cual es una pregunta distinta de cuándo llegaron los datos, por lo que se deja deliberadamente sin formular en lugar de responderla con un número erróneo. Y nombra la **tabla más antigua de cada tipo** (un conjunto, un inductor), de modo que cuando una respuesta hipotética se ramifica por varios pasos y más de un inductor está desactualizado, se le informa de uno de ellos. En ningún caso se notifica una tabla obsoleta como actual.
+</Aside>
+
+<Aside type="tip" title="Lea la confianza, no solo el número">
+Una confianza **baja** o **media** no es un fallo: es el agente siendo honesto en que el cambio tiene más de una causa plausible, o en que algo (un inductor obsoleto, un período sin terminar) podría estar distorsionándolo. Tómela como una invitación a añadir un período, un filtro o una dimensión de desglose y volver a preguntar.
+</Aside>
+
+<Aside type="caution" title="Cuando un total de aspecto limpio oculta la historia">
+Dos totales del conjunto completo pueden parecer un crecimiento limpio pero inducir a error, y el agente ahora detecta ambos: cuando grandes subidas y bajadas se **compensan** hasta dar un cambio neto pequeño (el mayor movimiento individual es mayor que la cifra principal misma), y cuando la mayor parte de un cambio es **de paso**, es decir, costo que la asignación transfiere directamente sin dividirlo por el inductor, de modo que la parte que el inductor realmente gobierna es solo una fracción mínima. En cada caso reduce la confianza, indica cuánto se movió realmente el importe controlado por el inductor y le remite a la vista a nivel de miembro.
+</Aside>
+
+## Conviene saber
+
+<Aside type="note" title="Las asignaciones filtradas obtienen una respuesta limpia sobre el conjunto completo">
+Cuando las filas de origen de una asignación están restringidas (por ejemplo, a un conjunto de cuentas de pérdidas y ganancias), el agente aplica ese filtro automáticamente y aun así ofrece una atribución limpia sobre el conjunto completo; no necesita añadir nada.
+</Aside>
+
+<Aside type="note" title="Asignaciones por dimensión">
+Para una asignación impulsada por una **jerarquía de dimensión** (por ejemplo, dividir un centro de costo a lo largo de una estructura de informes), el agente ahora explica el cambio: a nivel del total completo lo atribuye al conjunto de entrada y, cuando usted filtra por un destino concreto, separa el **movimiento del conjunto** del cambio en la **participación** de ese destino. Lo único que todavía no puede reconstruir es una causa que depende del **historial de la jerarquía en un momento dado**, que llegará en una versión posterior.
+</Aside>
+
+<Aside type="caution" title="Las asignaciones en cascada necesitan una porción">
+Cuando una asignación alimenta a otra (una cascada), un “por qué” a nivel de todo el proyecto mezclaría las filas equivocadas, por lo que el agente le pide que acote la pregunta a una porción (una región, producto o centro de costo concretos) y luego la explica.
+</Aside>
+
+<Aside type="note" title="Resultados construidos por más de un paso">
+Si una tabla de resultados la produce **más de un** paso de asignación, el agente no adivina cuál originó un cambio: enumera los pasos candidatos y le pide que nombre el que usted quiere decir. Cuando su pregunta se acota a filas que solo produjo uno de esos pasos (por ejemplo, una región que asigna únicamente ese), el agente lo reconoce y rastrea ese paso automáticamente, indicándole que lo hizo.
+
+**Nombrar un paso indica al agente qué paso describir, no qué filas medir.** El cambio que notifica es el de toda la tabla y es exacto; lo que no puede atribuirse a un paso es la *división entre factores*, por lo que, en una tabla con varios escritores, el agente omite esa división, indica que la cifra abarca todos los pasos que escriben la tabla y se ofrece a rastrear la tabla a través de cada uno de los demás por turno. Cada una de esas nuevas ejecuciones es una medición independiente: no es la parte de ese paso en el cambio que usted está viendo, ni una medición de ese paso **por sí solo**: estos pasos escriben en la misma columna, que es el motivo por el que se omitió la división, de modo que el cambio que se obtiene sigue abarcándolos a todos.
+
+Esto se aplica **sea cual sea el otro escritor**. Un paso que no es una asignación (uno que añade filas a la tabla de resultados, por ejemplo) nunca es candidato para rastrearse y por tanto nunca le pide que elija, pero sus filas están en el total igualmente, y el agente ahora lo indica en lugar de incorporar su movimiento a la división.
+</Aside>
+
+<Aside type="note" title="Los escenarios hipotéticos de cambio de valor usan las participaciones actuales">
+Las respuestas a “qué ocurre si este conjunto sube en …” reparten el cambio a lo largo de una ramificación según la **participación actual de cada destino en el conjunto**, de modo que las cifras por tabla **suman** en lugar de ser cada una una envolvente del peor caso. Reflejan las participaciones del modelo tal como están hoy: una estimación bien acotada de dónde recae un cambio, no un pronóstico preciso. Si lo dirige a una tabla de **inductor o base** en lugar del conjunto de entrada, se trata como un escenario hipotético de *inductor* (más abajo), ya que cambiar un inductor reordena una división fija en lugar de añadir valor.
+
+**Indique el período explícitamente en este caso.** A diferencia de una pregunta de “por qué cambió esto” o de un escenario hipotético de inductor, un escenario hipotético hacia adelante *no* deduce por usted la columna de período. Si no la indica, la estimación abarca **todos los períodos** en lugar de la ventana que usted tenía en mente.
+</Aside>
+
+<Aside type="caution" title="Un resultado que el escenario hipotético no pudo medir no lleva cifra">
+Un escenario hipotético hacia adelante calcula la participación de cada destino consultando el paso que lo escribe. Cuando esa consulta falla (la tabla del paso no tiene columna de período, el almacén de datos la rechaza), ese destino ahora notifica **ninguna estimación**, junto con el motivo. Antes notificaba el cambio *completo* que le llegaba, un máximo presentado exactamente igual que una respuesta medida, y todo lo que había por debajo de ese paso se estimaba a partir de él, de modo que toda una rama parecía cifras ordinarias.
+
+De ello se derivan tres cosas, y la respuesta indica cada una: los totales abarcan solo los destinos que **sí** se midieron; nada posterior a un paso sin medir se estima a partir de él, por lo que esos destinos faltan en la respuesta en lugar de adivinarse; y un destino medido a partir de solo *parte* de lo que lo escribe lo indica y nombra el paso que no pudo leerse. Esa cifra parcial es una medición real de lo que pudo leerse, por lo que se mantiene, pero no es el destino completo, y la parte que falta puede ser mayor, menor o de signo opuesto. No la interprete como un mínimo.
+</Aside>
+
+<Aside type="note" title="Los escenarios hipotéticos de inductor se calculan de forma exacta">
+Pregunte qué haría un cambio en un **inductor** (“¿qué pasaría si el inductor de plantilla del centro de costo Assembly subiera 10?”) y el agente vuelve a repartir el conjunto fijo con las nuevas ponderaciones **de forma exacta**, sin volver a ejecutar el modelo. Muestra qué destinos **ganan** y cuáles **pierden**, y las ganancias y pérdidas **suman cero en términos netos** como comprobación integrada. Se limita a lo que puede calcular con exactitud: una división única y sencilla con un inductor simple. Cualquier cosa más compleja (una asignación basada en jerarquía o filtrada/condicional, añadir un miembro de inductor completamente nuevo o un cambio que vacía un grupo) se **rechaza con el motivo** en lugar de estimarse.
+
+**Indique la columna tal como la escribe la tabla de inductores.** Cuando un paso transfiere una columna de inductor con un nombre distinto, el nombre propio de la tabla de inductores es el que debe usar al preguntar, y es el que la respuesta le devuelve si se equivoca. Los resultados se leen al revés: los centros de costo y grupos que se movieron se nombran tal como los escribe la tabla de *resultados*, porque esos son los nombres por los que usted filtra y lee los resultados. En la mayoría de los pasos, los dos nombres coinciden.
+</Aside>
+
+<Aside type="note" title="La columna de período se detecta por usted">
+En una pregunta de “por qué cambió esto” o en un escenario hipotético de inductor, normalmente no necesita nombrar la columna que contiene el período: el agente la deduce de la tabla. Si usted nombra una explícitamente, se comprueba primero contra la tabla: si esa columna no existe, se le informa de inmediato, junto con las columnas que *sí* existen, de modo que pueda corregirla en un solo paso en lugar de obtener un análisis que no pudo totalizar nada. Si la tabla tiene dos columnas de período igualmente probables (un año y un número de período, por ejemplo), el agente le pide que elija una en lugar de adivinar. Los escenarios hipotéticos hacia adelante son la excepción: allí debe indicar usted mismo el período, como se señaló antes.
+</Aside>
+
+<Aside type="note" title="Combinaciones de dimensiones, donde estén habilitadas">
+Al preguntar qué originó un cambio se busca la dimensión individual que mejor lo explica, en todos los espacios de trabajo. Cuando su espacio de trabajo también tiene activada la búsqueda de **combinaciones**, esta prueba también combinaciones de dimensiones (un movimiento confinado a una región *y* a una línea de producto, por ejemplo) en lugar de solo una dimensión a la vez. Las combinaciones deben superar un umbral más alto que una dimensión individual antes de notificarse, y cuando nada explica el movimiento por sí solo, la respuesta lo dice en lugar de elegir algo. La búsqueda de combinaciones está desactivada de forma predeterminada; pregunte a su administrador de PlaidCloud si está habilitada en su espacio de trabajo.
+</Aside>
+
+<Aside type="note" title="¿Es inusual este cambio?">
+Junto con el “por qué”, el agente evalúa si un cambio se sale de lo normal: compara el movimiento de este período con el historial propio del modelo de **cambios de un período a otro** y lo califica como normal, elevado o extremo, de modo que un cambio rutinario y un pico genuino se lean de forma distinta.
+</Aside>
+
+<Aside type="note" title="Se señalan los cambios concentrados">
+Cuando la mayor parte de un cambio interanual procede de un único grupo (una entidad o un cliente que representa el grueso del movimiento), el resumen del agente lo señala explícitamente, de modo que un cambio impulsado por un valor atípico no se confunda con un cambio generalizado. Añada a su pregunta una dimensión de desglose, como entidad o cuenta, para verlo.
+</Aside>
+
+<Aside type="caution" title="Un desglose por un campo sin valores">
+Desglosar un cambio por un campo reúne las filas que comparten un valor, y las filas **sin** valor también se reúnen. Por eso un campo dejado en blanco en todas las filas de los períodos comparados producía un único grupo que contenía todo el cambio, lo que parecía el resultado más concentrado posible: un miembro, todo el movimiento, plena confianza.
+
+El agente ahora le indica que el campo no está completado en esas filas y **omite** las cifras de concentración en lugar de notificarlas como 100 %. Sugiere usar un campo que esté completado o prescindir por completo del desglose, en cuyo caso encuentra por sí mismo el campo que mejor explica el cambio. Cuando un segundo campo de agrupación *sí* está completado, el desglose es genuino y se notifica como de costumbre, señalando simplemente el campo en blanco. Los valores en blanco se muestran como *(no value)* o *(blank)*, y ambos se mantienen separados: un campo nunca completado y un campo establecido explícitamente en nada son cosas distintas.
+
+Solo se vio afectado el desglose. El cambio principal, sus totales y la forma en que se atribuyó fueron correctos en todo momento.
+</Aside>
+
+<Aside type="caution" title="Cuando lo que se movió son las filas sin asignar">
+Cuando usted no nombra un campo, el agente elige el que mejor explica el cambio, y a veces la respuesta son las filas que **no** tienen ningún valor en ese campo. Es un hallazgo real, no un fallo, y por eso se notifica en lugar de ocultarse: vale la pena saber que un costo ha dejado de etiquetarse silenciosamente.
+
+Pero “las filas sin asignar crecieron” significa algo muy distinto en un campo que casi siempre está completado que en uno que casi siempre está en blanco. La respuesta ahora indica cuál de los dos casos es, en la misma frase: *“el corte ganador son las filas sin asignar de `cost_centre`: `cost_centre` tiene un valor en el 12 % de las filas de los períodos comparados”*. Un campo completado en el 12 % de las filas apenas se usa; uno completado en el 95 % tiene una brecha genuina que vale la pena investigar. Los campos muy dispersos y muy completos se muestran como *menos del 1 %* y *más del 99 %* en lugar de 0 % o 100 %, ninguno de los cuales podría ser cierto aquí.
+</Aside>
+
+<Aside type="note" title="Cuando la búsqueda no puede ejecutarse en absoluto">
+Antes de buscar, el agente hace una pregunta rápida a los datos para descartar los campos que contienen un único valor en todas las filas, o que están divididos con tanta finura que no sirven como agrupación. Cuando esa pregunta no puede responderse (un tipo de columna que el almacén de datos no puede medir, o una conexión que se interrumpió), antes buscaba en todos los campos, eliminando ambos límites justo en el momento en que algo ya había salido mal.
+
+Ahora indica que la búsqueda no se ejecutó, y lo dice con sus propias palabras: es un límite de la búsqueda, no un hallazgo sobre los datos. Esa redacción difiere de la nota que recibe cuando los períodos comparados son simplemente demasiado grandes para buscar, porque también difiere lo que puede hacer al respecto: en ese caso, acote los períodos; aquí, nombre el campo que desea examinar, algo que funciona sea cual sea la causa. Reintentar solo ayuda si el fallo fue pasajero.
+</Aside>
+
+<Aside type="caution" title="Un desglose por un campo que no está en la tabla">
+Si solicita un desglose por un campo que la tabla no tiene, ahora se le informa de ello, junto con los campos que *sí* tiene, para que pueda corregir la pregunta en un solo paso. Antes la respuesta llegaba completa y con seguridad, con el desglose simplemente ausente y sin nada que indicara que se había intentado uno; la sugerencia de “para ir más allá” apuntaba a otro lugar por completo. Cuatro preguntas consecutivas sobre un modelo real devolvieron ese resultado.
+
+Más arriba en la cadena la regla es distinta, deliberadamente. Un campo añadido por una asignación solo existe en las tablas posteriores a ella, por lo que un campo presente en la tabla por la que usted preguntó a menudo está genuinamente ausente dos etapas atrás. Allí el rastreo **agrupa por los campos que esa etapa sí tiene** en lugar de perder el desglose de esa etapa, e indica cuáles omitió.
+
+Esa nota se refiere a la etapa anterior, y lo dice: *“el desglose que solicitó no estaba disponible en esta etapa”*. **No** se refiere a la tabla de miembros que imprime la respuesta: esos son los de la tabla por la que usted preguntó, con la agrupación completa que solicitó. La agrupación más gruesa de la etapa anterior es aquella sobre la que se mide su propia cifra de concentración, y sus miembros no se enumeran. La sugerencia que la acompaña también nombra esa etapa: agrupe por un campo que tengan todas las etapas rastreadas si desea también sus miembros. Hasta agosto de 2026 la nota decía “is not in this answer” y se explicaba como *“so the members you see are grouped only by the rest”*, y la sugerencia decía que el campo no estaba en “the traced table”, lo cual apuntaba a la tabla impresa, la describía como algo que no era y aconsejaba prescindir de un campo que funcionaba.
+
+Y cuando falta un desglose por cualquier otro motivo (un fallo pasajero del almacén de datos, por ejemplo), la respuesta lo indica de la misma manera, nombrando la etapa para la que no pudo producir uno: los totales están medidos y no se ven afectados, y se ofrece a reintentarlo. El detalle está ausente, no es erróneo.
+</Aside>
+
+<Aside type="caution" title="Un total que cruzó el cero son dos estados, no un cambio">
+Cuando un total pasó de positivo a negativo entre los dos períodos (un centro de costo que era un cargo neto y pasó a ser un crédito neto, por ejemplo), no existe una forma significativa de repartir el movimiento entre las causas que lo originaron, ni tampoco un porcentaje significativo: un salto de un valor positivo pequeño a uno negativo grande produce una cifra como −10 013 %, que no mide nada.
+
+El agente se niega a repartir un cambio así, como siempre lo hizo. Lo que ahora hace es **decirlo** como su motivo, en lugar de abrir con una nota general sobre cómo se toma la medición, que parecía ser la explicación y discrepaba con la línea impresa justo debajo. El porcentaje ya no se muestra en absoluto para un cambio que cruzó el cero; los importes de ambos lados y el cambio en sí son exactos y no se ven afectados.
+
+Lea los dos períodos como cifras separadas: la respuesta ahora imprime ambas en la línea que rechaza, indicando si son la porción por la que usted preguntó o la columna completa. Para ver qué se movió, añada una dimensión de desglose: el total que cruza el cero no puede dividirse en causas, pero el movimiento **por miembro** que hay detrás se lee con normalidad, y ahí suele estar la respuesta.
+</Aside>
+
+<Aside type="note" title="Donde el rastreo se detiene, sugiere un siguiente paso">
+Cada respuesta termina con siguientes pasos que puede ejecutar. Dos situaciones antes no ofrecían ninguno, y eran aquellas en las que más atascado quedaba: un total que cruzó el cero y una etapa que el agente no pudo agregar en absoluto. Ambas incluyen ahora una sugerencia; la segunda nombra la tabla que debe comprobar y la causa más probable (falta una columna de período en la tabla de esa etapa) para que pueda descartarla antes de suponer un fallo pasajero del almacén de datos.
+
+Del mismo modo, una respuesta ya no sugiere **acotar a un miembro** cuando usted ya ha acotado su pregunta a uno. Ese consejo procedía de una limitación registrada más arriba en la cadena, no de la pregunta que usted formuló, y se repetía entre los límites indicados como si se aplicara aquí.
+
+Un caso sigue sin ofrecer siguiente paso: cuando una lectura independiente de la tabla de inductores discrepa de la división realizada, la respuesta lo indica pero no puede sugerir una nueva ejecución que lo resuelva; lo útil en ese caso es inspeccionar directamente la tabla de inductores, lo cual es una solicitud distinta y no un ajuste de esta.
+</Aside>
+
+## Consejos
+
+- Haga referencia a las tablas por su **nombre** (`cost_line_rev`) o por su ID; ambos funcionan.
+- Para una pregunta de cambio, nombre los **períodos** que desea comparar (por ejemplo, 2025 frente a 2026) y, cuando resulte útil, una dimensión de **desglose** como cuenta o entidad.
+- Comience con preguntas amplias (“¿qué modelos de asignación hay en este proyecto?”) y profundice; el agente mantiene el hilo, de modo que las preguntas de seguimiento se basan en el mismo modelo.
+- Hay **dos tipos de escenarios hipotéticos**: un cambio de **valor** (“este conjunto sube 1 millón de dólares”) se estima con las participaciones actuales y suma entre destinos; un cambio de **inductor** (“volver a ponderar este inductor”) se reparte de forma exacta y suma cero en términos netos. Formule la pregunta para el que usted quiere decir.
+
+## Temas relacionados
+
+- [Introducción a los agentes de programación con IA](../getting-started/): conecte un agente a su espacio de trabajo mediante MCP
+- [Por qué son útiles las asignaciones](/es/guides/allocations/getting-started/why-are-allocations-useful/): conceptos de asignación
+- [Solución de problemas](../troubleshooting/): problemas de conexión y autenticación

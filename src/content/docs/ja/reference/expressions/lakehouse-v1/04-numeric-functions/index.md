@@ -1,0 +1,55 @@
+---
+title: 数値関数（Lakehouse v1）
+description: "Lakehouse v1 の SQL 数値関数：数値に対する算術、丸め、対数、べき乗、三角関数のヘルパーです。"
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/04-numeric-functions/index.md
+---
+
+このセクションでは、PlaidCloud Lakehouse の数値関数のリファレンス情報を提供します。
+
+## 関数
+
+- [ABS](abs/)
+- [ACOS](acos/)
+- [ADD](add/)
+- [ASIN](asin/)
+- [ATAN](atan/)
+- [ATAN2](atan2/)
+- [CBRT](cbrt/)
+- [CEIL](ceil/)
+- [CEILING](ceiling/)
+- [COS](cos/)
+- [COT](cot/)
+- [CRC32](crc32/)
+- [DEGREES](degrees/)
+- [DIV](div/)
+- [DIV0](div0/)
+- [DIVNULL](divnull/)
+- [EXP](exp/)
+- [FACTORIAL](factorial/)
+- [FLOOR](floor/)
+- [INTDIV](intdiv/)
+- [LN](ln/)
+- [LOG(b, x)](logbx/)
+- [LOG(x)](logx/)
+- [LOG10](log10/)
+- [LOG2](log2/)
+- [MINUS](minus/)
+- [MOD](mod/)
+- [MODULO](modulo/)
+- [NEG](neg/)
+- [NEGATE](negate/)
+- [PI](pi/)
+- [PLUS](plus/)
+- [POW](pow/)
+- [POWER](power/)
+- [RADIANS](radians/)
+- [RAND()](rand/)
+- [RAND(n)](randn/)
+- [ROUND](round/)
+- [SAFE_DIVIDE](safe-divide/)
+- [SIGN](sign/)
+- [SIN](sin/)
+- [SQRT](sqrt/)
+- [SUBTRACT](subtract/)
+- [TAN](tan/)
+- [TRUNCATE](truncate/)

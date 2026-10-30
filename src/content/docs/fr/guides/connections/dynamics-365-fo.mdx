@@ -1,0 +1,138 @@
+---
+title: Se connecter à Dynamics 365 Finance & Operations
+description: Connectez PlaidCloud à Dynamics 365 Finance & Operations avec les identifiants client Azure AD, récupérez des entités OData ou des extractions DMF en masse avec l'étape d'importation prête à l'emploi, puis comptabilisez des écritures de journal de façon asynchrone.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à Dynamics 365 Finance & Operations (D365 F&O) via ses points de terminaison OData et Data Management Framework (DMF) pour récupérer des données de base et transactionnelles sans écrire d'OData à la main, et comptabiliser en retour des écritures de journal général. Ce guide couvre la connexion, l'étape d'importation et l'étape de comptabilisation.
+
+<Aside type="caution">
+Exécutez chaque importation d'abord sur un environnement de test (sandbox), et parcourez **Validate Only** ci-dessous pour chaque lot à comptabiliser avant de comptabiliser en production.
+</Aside>
+
+## Prérequis
+
+Dans Azure AD et D365 F&O, vous avez besoin des éléments suivants :
+
+- Un **enregistrement d'application Entra ID (Azure AD)** pour PlaidCloud avec un **secret client**, disposant d'une autorisation d'application (ou d'une autorisation déléguée consentie par un administrateur) sur la ressource D365 F&O.
+- L'**ID du locataire** Azure AD.
+- L'**URL de l'environnement** D365 F&O que PlaidCloud doit appeler (par exemple `https://yourorg.operations.dynamics.com`).
+- Une valeur de **ressource/portée** (scope), généralement l'URL de l'environnement elle-même suivie de `/.default`, pour laquelle l'enregistrement d'application demande un jeton.
+
+<Aside type="note">
+La connexion s'authentifie en tant qu'application et non en tant qu'utilisateur : flux d'**identifiants client** d'Entra ID, le même mécanisme OAuth2 que PlaidCloud utilise pour d'autres connexions REST Microsoft. Il n'y a aucune connexion interactive.
+</Aside>
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Dynamics 365 Finance & Operations** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom convivial, par exemple `D365 F&O Prod`. |
+   | URL de l'environnement | L'URL de votre environnement, par exemple `https://yourorg.operations.dynamics.com`. |
+   | ID client | L'ID d'application (client) de l'enregistrement d'application Entra. |
+   | Secret client | Le secret client de l'enregistrement d'application. |
+   | ID du locataire | L'ID de votre locataire Azure AD. |
+   | Ressource/portée | La portée OAuth2 à demander, généralement l'URL de l'environnement suivie de `/.default`. |
+
+4. Cliquez sur `Create`.
+
+</Steps>
+
+## Tester la connexion
+
+<Steps>
+
+1. Ajoutez une étape **Import D365 F&O Entity** à un workflow.
+
+2. Définissez **Connexion D365 F&O** sur votre connexion, **Type d'entité** sur `main_accounts` et **Table cible** sur une table temporaire.
+
+3. Exécutez l'étape (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Une table cible remplie confirme que le locataire, les identifiants et l'URL de l'environnement sont corrects. Une erreur nomme le problème : un secret client incorrect, une autorisation non accordée ou une URL d'environnement erronée.
+
+## Importer des données
+
+<Steps>
+
+1. Ajoutez une étape **Import D365 F&O Entity** et définissez **Connexion D365 F&O** et **Table cible**.
+
+2. Définissez **Type d'entité** sur l'enregistrement souhaité, et **Mode de synchronisation** sur `odata` pour une récupération de taille normale ou sur `dmf` pour une extraction en masse d'une grande entité.
+
+3. Ajoutez des **Filtres** pour borner la récupération : les plages de dates, de comptes et de dimensions sont traduites dans le `$filter` OData de la requête, limitées pour chaque entité aux champs que D365 F&O peut réellement filtrer côté serveur.
+
+4. Exécutez l'étape et vérifiez la table cible.
+
+</Steps>
+
+### Entités et filtres
+
+| Type d'entité | Ce qu'il récupère | Champs filtrables |
+|---|---|---|
+| `main_accounts` | Le plan comptable | plage de comptes, dimension |
+| `currencies` | Données de base des devises | — |
+| `customers` | Données de base des clients | plage de comptes |
+| `vendors` | Données de base des fournisseurs | plage de comptes |
+| `released_products` | Données de base des produits libérés | — |
+| `ledger_journal_headers` | En-têtes de journal non comptabilisés et comptabilisés | plage de dates, plage de comptes, dimension |
+
+<Aside type="note">
+**Mode de synchronisation : OData ou DMF.** `odata` appelle directement les points de terminaison d'entités OData standard de D365 F&O : le chemin le plus simple, adapté aux récupérations courantes. `dmf` soumet une tâche d'export asynchrone du Data Management Framework et télécharge le paquet obtenu une fois celle-ci terminée : le chemin pour une extraction en masse d'une grande entité (par exemple tout l'historique de `ledger_journal_headers`) qui serait lente ou tronquée avec la pagination OData simple.
+</Aside>
+
+## Comptabiliser des écritures de journal
+
+L'étape **D365 F&O: Post Journal Entry** comptabilise des écritures de journal du grand livre par le pipeline d'écriture ERP partagé de PlaidCloud, en utilisant l'action de comptabilisation de journal asynchrone du service personnalisé de D365 F&O.
+
+<Steps>
+
+1. Créez une **table d'en-tête** (une ligne par écriture de journal) avec `journal_id` (l'identifiant de votre écriture), `journal_name` (le nom du journal D365 F&O dans lequel comptabiliser), `posting_date` et `description`.
+
+2. Créez une **table des lignes** (une ou plusieurs lignes par `journal_id`) avec `account`, `debit`, `credit` et toutes les colonnes de dimensions exigées par votre grand livre.
+
+3. Ajoutez une étape **D365 F&O: Post Journal Entry**, puis définissez **Connexion D365 F&O**, **Table d'en-tête**, **Table des lignes** et une **Table de résultat**.
+
+4. Laissez **Validate Only** coché et exécutez l'étape : PlaidCloud construit et contrôle chaque écriture sans réservation dans le registre et sans rien comptabiliser.
+
+5. Examinez la table de résultat (une ligne par écriture : `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrigez toute ligne `error` et validez de nouveau.
+
+6. Décochez **Validate Only** et exécutez de nouveau pour comptabiliser réellement. Laissez **Continue On Error** coché, sauf si vous voulez qu'un lot s'arrête net à la première écriture en échec.
+
+</Steps>
+
+### Fonctionnement de la comptabilisation
+
+PlaidCloud soumet chaque écriture de journal à l'action de comptabilisation asynchrone du service personnalisé de D365 F&O, puis interroge jusqu'à ce que le service indique l'état terminal de l'écriture. Une écriture n'est signalée comme `posted` qu'une fois cet état terminal **confirmé** : une écriture acceptée dont l'état terminal ne se résout jamais reste en quarantaine au lieu d'être enregistrée comme comptabilisée, de sorte qu'une soumission bloquée ne passe jamais silencieusement pour un succès. La réservation dans le registre de PlaidCloud protège contre la comptabilisation de la même écriture deux fois lors d'une nouvelle tentative ou d'une réexécution d'un lot.
+
+### Corriger une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais une écriture comptabilisée. Pour en corriger une, comptabilisez une nouvelle écriture dont les débits et les crédits sont inversés par rapport à l'originale (une **écriture d'extourne comptabilisée**) plutôt que de modifier l'originale sur place. Cela préserve la piste d'audit propre à D365 F&O et correspond à la façon dont les corrections sont effectuées directement dans l'application.
+
+### Limites de capacités : à lire avant de comptabiliser en production
+
+<Aside type="caution">
+- **Le mode de synchronisation DMF a une latence d'extraction.** Une récupération `dmf` attend une tâche d'export asynchrone ; comptez un délai nettement plus long qu'une récupération `odata` de même taille, et ne l'utilisez pas pour une lecture de petite taille sensible à la latence.
+- **Le filtrage par dimension dépend de la configuration des dimensions de votre grand livre.** Une dimension financière qui ne fait pas partie de votre structure de comptes n'est pas filtrable côté serveur ; restreignez-la plutôt dans votre workflow après la récupération.
+- **Ce connecteur est distinct du [connecteur Dynamics REST](/fr/reference/connectors/rest/dynamics/) générique.** Ce dernier cible d'autres applications Dynamics 365 (par exemple Sales/CRM) ; n'y recourez que si vous ne vous connectez pas à Finance & Operations.
+</Aside>
+
+## Voir aussi
+
+- [Connecteur REST Dynamics 365 F&O](/fr/reference/connectors/rest/dynamics-365-fo/) : référence des champs.
+- [Import D365 F&O Entity](/fr/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry](/fr/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/) : l'enregistrement permanent de chaque tentative de comptabilisation D365 F&O et de son état en direct.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

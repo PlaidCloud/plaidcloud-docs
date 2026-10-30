@@ -1,0 +1,440 @@
+---
+title: Alteryx-Workflows migrieren
+description: Konvertieren Sie Alteryx-Workflows, Apps und Makros in erweiterte PlaidCloud-Workflows mit Dokumenten-gestützten Abhängigkeiten, typisierten Eingaben, Validierung und wiederholbaren Ausführungen.
+sidebar:
+  order: 30
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud konvertiert Alteryx-Workflows, Analytic Apps und Makros in erweiterte Workflows, die in PlaidCloud geprüft, per Zeitplan gesteuert, parametrisiert und ausgeführt werden können. Der Importer erhält den Workflow-Graphen, lädt referenzierte Dateien in Dokumente hoch, erstellt bei Bedarf Makro-Workflows und ordnet Tools nativen Workflow-Schritten oder verwalteten Job-Executors zu.
+
+Verwenden Sie diese Anleitung, wenn Sie einen einzelnen Workflow, eine Gruppe zusammengehöriger Workflows oder ein größeres Alteryx-Portfolio nach PlaidCloud verschieben.
+
+<Aside type="note">
+  Konvertierte Workflows sind darauf ausgelegt, nur sehr wenig manuellen Aufwand zu erfordern. Für Produktions-Workflows liefert die PlaidCloud-Validierung den Teams einen klaren Bereitschaftsnachweis, bevor regelmäßige Ausführungen eingeplant werden.
+</Aside>
+
+## Was PlaidCloud erstellt
+
+PlaidCloud erstellt aus dem Alteryx-Entwurf einen ausführbaren erweiterten Workflow:
+
+- Workflow-Tools werden zu PlaidCloud-Workflow-Schritten, wobei die ursprünglichen vor- und nachgelagerten Beziehungen erhalten bleiben.
+- Alteryx-Makros werden zu PlaidCloud-Makro-Workflows mit expliziten Makro-Eingaben und Makro-Ausgaben.
+- Fragen von Analytic Apps werden zu kontrollierten Workflow-Variablen, die Benutzer vor einer Ausführung festlegen können.
+- Eingabedateien, Ausgabedateien, räumliche Begleitdateien, Bilder, PDFs und erzeugte Artefakte werden in Dokumenten unter dem beim Import gewählten Pfad gespeichert.
+- Pipelines des Assisted Modeling (Maschinelles Lernen) werden zu nativen Workflow-Schritten ML Train und ML Score.
+- Erweiterte Vorgänge wie Fuzzy-Matching, räumliche Verarbeitung, PDF-Extraktion, OCR, NLP und Berichterstellung werden über die verwalteten Job-Executors von PlaidCloud ausgeführt, wenn ein nativer SQL- oder Workflow-Vorgang nicht die beste Wahl ist.
+- Kommentarfelder und Tool-Container erscheinen auf der Workflow-Arbeitsfläche als Notizen, Hervorhebungsfelder und Gruppen. Sie erläutern den konvertierten Workflow genauso, wie sie den ursprünglichen erläutert haben, und verursachen keine Laufzeitarbeit.
+- Browse und andere reine Anzeigeobjekte werden als Teil der Arbeitsfläche übernommen statt als Schritte und verursachen daher keine Laufzeitarbeit – die Ausgabetabelle jedes Schritts steht ohnehin zur Ansicht bereit.
+
+## Bevor Sie beginnen
+
+Stellen Sie die Workflow-Dateien und Abhängigkeiten vor dem Import zusammen:
+
+1. Nehmen Sie die Alteryx-Workflow-, App- und Makrodateien auf: `.yxmd`, `.yxwz` und `.yxmc`.
+2. Nehmen Sie Eingabedateien wie CSV, Excel, Access, YXDB, XML, JSON und Datenbankextrakte auf.
+3. Legen Sie räumliche Begleitdateien zusammen ab. Halten Sie beispielsweise Shapefile-Gruppen und MapInfo-Dateien im selben Ordner.
+4. Nehmen Sie Berichtsressourcen wie Bilder, PDFs, Kartenebenen und Vorlagen auf.
+5. Wählen Sie das PlaidCloud-Projekt aus, in dem die konvertierten Workflows erstellt werden sollen.
+6. Wählen Sie das Dokumentenkonto und den Ordner aus, in die PlaidCloud die importierten Dateien hochladen soll.
+7. Entscheiden Sie, ob diese Migration nur eine strukturelle Validierung oder eine Validierung der Ausgabeparität erfordert.
+
+## Einen Workflow importieren
+
+1. Öffnen Sie das Zielprojekt in PlaidCloud.
+2. Öffnen Sie **Tools → Alteryx-Workflow importieren**.
+3. Wählen Sie das Zielprojekt aus und markieren Sie die zu importierende Datei `.yxmd`, `.yxwz` oder `.yxmc`.
+4. Legen Sie optional Präfixe für Workflow-, Schritt- und Tabellennamen fest. Tabellennamen tragen bereits den Namen des Workflows als Präfix – siehe [Tabellennamen in einem konvertierten Workflow](#tabellennamen-in-einem-konvertierten-workflow) weiter unten.
+5. Wählen Sie das Dokumentenkonto und den Ordner aus, in denen die importierten Dateien gespeichert werden sollen.
+6. Fügen Sie alle referenzierten Dateien oder Ordner hinzu, die der Workflow zur Laufzeit benötigt.
+7. Starten Sie den Import.
+8. Bei einem sauberen Import schließt sich das Fenster von selbst und öffnet den erzeugten erweiterten Workflow – Sie müssen es nicht von Hand schließen. Alles, was einen zweiten Blick verdient, erscheint anschließend als Toast-Meldung, statt den Import aufzuhalten.
+9. Wenn der Workflow einen Schritt enthält, der nicht konvertiert wurde, eine Datei fehlt, die er liest, oder ein anderes Problem Aufmerksamkeit erfordert, bleibt das Fenster stattdessen geöffnet und zeigt den Konvertierungsbericht an, damit Sie ihn prüfen können, bevor Sie fortfahren.
+
+Wenn ein Schritt Aufmerksamkeit erfordert – ein verworfenes oder nicht konvertiertes Tool –, ersetzt das Importfenster sein Formular durch einen Konvertierungsbericht: eine Zusammenfassung, wie viele Schritte mit hoher Konfidenz zugeordnet wurden und wie viele geprüft werden müssen, sowie eine Tabelle der Schritte mit geringerer Konfidenz oder Vorbehalten, die Name, Vorgang, Konfidenz und Hinweise jedes Schritts auflistet. Nutzen Sie ihn, um direkt zu den Schritten zu gelangen, die eine Prüfung lohnen, bevor Sie den Workflow ausführen; jeder dieser Schritte trägt denselben Konfidenzhinweis auch in seinem Schrittmemo auf der Arbeitsfläche.
+
+PlaidCloud speichert importierte Abhängigkeiten an dem beim Import gewählten Dokumentenspeicherort. Konvertierte Schritte verweisen dann auf diese Dokumentenpfade, sodass der Workflow wiederholt ausgeführt werden kann, ohne auf ein lokales Desktop-Dateisystem angewiesen zu sein.
+
+### Fehlende Dateien
+
+Der Import schlägt nicht mehr allein deshalb fehl, weil eine Datei fehlt, die der Workflow liest – zum Beispiel ein Netzwerkfreigabepfad, der nie hochgeladen wurde. Der Workflow wird trotzdem konvertiert, und der Konvertierungsbericht listet jede fehlende Datei auf mit:
+
+- Dem Dokumentenpfad, in den sie hochzuladen ist.
+- Dem ursprünglichen Alteryx-Pfad, aus dem sie gelesen wurde.
+- Allen Blättern, die der Workflow aus ihr erwartet.
+- Den Alteryx-Tools, die sie lesen.
+
+Laden Sie die Datei bei den meisten Dateien in den Pfad hoch, den der Bericht nennt, und führen Sie den Workflow erneut aus – ein erneuter Import ist nicht nötig. Einige Arten fehlender Dateien werden zur Konvertierungszeit statt zur Laufzeit gelesen, daher fordert Sie der Bericht auf, den Workflow erneut zu importieren, sobald die Datei vorhanden ist: eine Alteryx-Layoutdatei mit flachem ASCII-Format, eine Platzhaltereingabe (Wildcard), eine Dynamic-Input-Vorlage und eine FirstRow-Umbenennungsquelle gehören zu dieser Gruppe.
+
+Eine Datei, die nur von einem Tool in einem ausgeschalteten Tool-Container gelesen wird, erscheint nie in dieser Liste und wird nie nach Dokumente kopiert. Diese Tools werden gar nicht erst importiert – siehe [Kommentare und Tool-Container auf der Arbeitsfläche](#kommentare-und-tool-container-auf-der-arbeitsfläche) –, daher enthält der konvertierte Workflow keinen Schritt, der die Datei braucht. Schalten Sie den Container in Alteryx ein oder importieren Sie mit der Option, die die Tools eines ausgeschalteten Containers als gewöhnliche Schritte übernimmt, um auch die Datei einzubinden.
+
+<Aside type="note" title="Eine Datei fehlt noch, wenn der Workflow ausgeführt wird">
+Wenn die Quelldatei eines konvertierten Eingabe- oder Importschritts nicht hochgeladen wurde, wenn Sie den Workflow ausführen, endet der Schritt mit der Warnung „No files found at &lt;path&gt;; the target table was created empty.“, und der Workflow läuft weiter, wie bei jedem anderen Importschritt. Laden Sie die Datei hoch und führen Sie den Workflow erneut aus, um sie zu laden.
+</Aside>
+
+Andere Probleme in einem Workflow – ein Makro oder Flat-File-Layout, das PlaidCloud nicht lesen kann, eine Datei, die am Zielpfad bereits mit anderem Inhalt existiert, ein Tool, das nicht konvertiert werden kann – markieren nur den jeweiligen Schritt mit einer Warnung, statt den gesamten Import scheitern zu lassen, sodass der Rest des Workflows trotzdem übernommen wird.
+
+### Wenn der Import abgelehnt wird
+
+Wenn die hochgeladene Datei überhaupt nicht konvertiert werden kann, wird der Import ausdrücklich abgelehnt, statt ein Teilergebnis zu liefern, und die Fehlermeldung sagt Ihnen, was zu tun ist. Das geschieht, wenn die Datei kein Alteryx-Workflow ist; wenn sie ein Alteryx-Paket (`.yxzp`) ist – exportieren Sie in diesem Fall den `.yxmd`-Workflow aus Alteryx Designer und laden Sie ihn zusammen mit den Dateien hoch, die er verwendet; wenn die Workflow-Datei fehlt oder Sie keine Berechtigung zum Lesen haben; oder wenn ein benötigter Tabellenname so kollidiert, dass der Import es nicht selbstständig auflösen kann.
+
+Wenn der Konverter bei Ihrem Workflow selbst auf einen internen Fehler stößt, wird der Import mit einer Meldung abgelehnt, die den Fehler benennt: „PlaidCloud could not convert this workflow because of a converter defect (&lt;error&gt;). It has been logged for the PlaidCloud team; include the request ID when you contact support.“ In diesem Fall ist an Ihrer Datei nichts falsch – wenden Sie sich mit der Anfrage-ID aus der Meldung an den Support, damit das Team den protokollierten Fehler untersuchen kann.
+
+### Tabellennamen in einem konvertierten Workflow
+
+Jeder konvertierte Schritt schreibt seine eigene Tabelle, benannt nach dem Alteryx-Tool, aus dem er stammt – `tool_4_out` für Tool 4. Alteryx nummeriert Tools pro Datei, sodass sich diese Namen über Workflows hinweg wiederholen, und ein PlaidCloud-Projekt ist ein einziger Tabellennamensraum. Jeder Import stellt seinen Tabellen daher den Namen des Workflows als Präfix voran, was `03_measure_the_quality_of_data_tool_4_out` ergibt. Dadurch kann ein ganzer Ordner mit Alteryx-Workflows in ein Projekt gehen, ohne dass sie gegenseitig ihre Ergebnisse überschreiben.
+
+<Aside type="caution" title="Zwei Workflows mit demselben Namen">
+Der Workflow-Name ist das Einzige, was zwei Importe voneinander unterscheidet. Zwei Dateien mit demselben Namen – oder Namen, die sich nur in Satzzeichen oder Leerzeichen unterscheiden, etwa `Sales Report` und `Sales-Report` – ergeben dennoch dasselbe Präfix, ebenso eine Datei ohne jeden Namen. Legen Sie für solche Importe selbst ein **Tabellennamenpräfix** fest oder importieren Sie sie in getrennte Projekte.
+
+Diese Importe überschreiben sich nicht mehr gegenseitig: Ein Import, der einen Tabellennamen anfordert, den das Projekt bereits enthält, erhält eine eigene Tabelle mit dem Suffix `-duplicate-` im Namen, und seine Schritte verwenden sie. Jeder Import behält seine eigenen Ergebnisse, aber die Tabellennamen des zweiten sind schwerer lesbar – ein eigenes Präfix zu setzen lohnt sich also weiterhin.
+</Aside>
+
+Wenn Sie denselben Workflow zweimal importieren, was passiert, wenn ein erster Import korrigiert werden muss, funktioniert das genauso: Der zweite Import erhält einen eigenen Satz von Tabellen, statt den ersten zu überschreiben. Löschen Sie den Workflow und die Tabellen des früheren Imports, sobald Sie mit dem neuen zufrieden sind.
+
+Legen Sie beim Import ein eigenes **Tabellennamenpräfix** fest, um den Standard zu überschreiben, oder lassen Sie es leer, um die einfachen Namen wie `tool_4_out` zurückzubekommen. Außer den konvertierten Schritten selbst hängt nichts von diesen Namen ab, daher bedeutet das spätere Umbenennen einer Tabelle, dass Sie die Schritte, die sie lesen, neu darauf ausrichten müssen.
+
+### Als Parquet geschriebene Ausgaben
+
+Ein Output-Data-Tool, das `.parquet` oder `.avro` schreibt, wird zu einem Exportschritt für dieses Format konvertiert. Eines, das `.yxdb`, `.hyper` oder `.dbf` schreibt, wird als Parquet geschrieben. Bei einer `.yxdb`-Ausgabe ist die Datei eine gleichnamige `.parquet` im selben Ordner.
+
+Ein konvertierter Workflow, der diese `.yxdb`-Datei liest, liest automatisch die `.parquet`: Der Schritt [Alteryx YXDB importieren](/de/reference/workflow-steps/import/import-alteryx-yxdb/) greift auf die gleichnamige `.parquet` zurück, wenn die `.yxdb` nicht existiert, und zeigt eine entsprechende Warnung an.
+
+### Kommentare und Tool-Container auf der Arbeitsfläche
+
+Die Notizen und Gruppen, die ein Alteryx-Autor um seine Arbeit gezeichnet hat, werden mit übernommen:
+
+- Ein Kommentarfeld mit Text wird zu einer **Notiz** auf der Arbeitsfläche, an der Position und in der Größe, in der es gezeichnet wurde.
+- Ein Kommentarfeld, das als leerer Rahmen um eine Gruppe von Tools gezeichnet wurde, wird zu einem **Hervorhebungsfeld**, was es auch in Alteryx war.
+- Ein Kommentarfeld, das ein verknüpftes Dokument anzeigt, behält die Verknüpfung als Text.
+- Ein **Tool-Container** wird zu einer **Gruppe**, die die Schritte enthält, die in ihm gezeichnet waren, und behält seine Beschriftung, ob er zugeklappt war und ob er ausgeschaltet war. Verschachtelte Container werden als verschachtelte Gruppen übernommen, und ein Schritt, der in beiden liegt, gehört zu beiden.
+
+Verschieben, bearbeiten, färben oder löschen Sie sie genauso wie eine Notiz, die Sie selbst gezeichnet haben.
+
+Zwei Dinge verhalten sich anders als im Original:
+
+- **Die Tools eines ausgeschalteten Tool-Containers werden überhaupt nicht importiert.** Alteryx führt sie ebenfalls nicht aus, ihr Import würde also Schritte in den Workflow bringen, die nie etwas tun. Der Container selbst wird trotzdem übernommen, und zwar als Hervorhebungsfeld mit seiner Beschriftung, damit Sie sehen können, was dort war. Um seine Tools einzubinden, schalten Sie den Container in Alteryx ein und importieren Sie erneut. (Beim Import über die API oder von einem KI-Agenten aus gibt es außerdem eine Option, die Tools eines deaktivierten Containers als gewöhnliche, ausführbare Schritte zu importieren – nützlich für Beispiel-Workflows, die alles ausgeschaltet ausliefern.)
+- **Feldfarben werden nicht übernommen.** Die Arbeitsfläche bietet einen festen Satz von sechs Farben, und Alteryx-Felder sind fast immer weiß oder grau, sodass jedes davon im selben Farbton ankäme. Sie kommen stattdessen mit dem Standard der Arbeitsfläche an; legen Sie die gewünschte Farbe im Kontextmenü fest.
+
+Der Text einer Notiz wird jetzt in einem neutralen Grau dargestellt. Zuvor erschien er vor der dunklen Arbeitsfläche in Bernstein/Orange – eine Farbe, die selbst bei einem unauffälligen, aus Alteryx übernommenen Kommentar wie eine Warnung wirkt.
+
+Ein Tool-Container, der am Ende überhaupt keine Schritte enthält – weil er ausgeschaltet war oder nur Kommentare enthielt –, erscheint trotzdem als Hervorhebungsfeld mit seiner Beschriftung, statt von der Arbeitsfläche zu verschwinden.
+
+Ein Workflow, der nur aus Kommentaren besteht – eine Dokumentationsseite ohne Tools –, wird als Arbeitsfläche mit diesen Kommentaren importiert und meldet, dass er in keinen ausführbaren Schritt konvertiert wurde. Das ist das ehrliche Ergebnis, kein Fehler: Es gab nichts auszuführen.
+
+### Control Containers
+
+Ein Alteryx-**Control Container** führt die Tools in seinem Inneren nur aus, wenn der an seinen **Control**-Eingang angeschlossene Datenstrom Datensätze enthält. Dieses Gate wird mit dem Container übernommen, nicht nur der Umriss des Containers:
+
+- Der Container wird wie jeder andere zu einer **Gruppe** auf der Arbeitsfläche und behält seine Beschriftung und seinen Inhalt.
+- Jeder Schritt, der in ihm lag, wird bereits so importiert, dass er nur ausgeführt wird, wenn die gesteuerten Daten Zeilen enthalten, und übersprungen wird, wenn nicht. Schritte in darin verschachtelten Containern werden auf dieselbe Weise gesteuert. Sie müssen die Bedingung nicht selbst verdrahten.
+- Ein Control Container, an dessen **Control**-Eingang nichts angeschlossen ist, war immer nur eine optische Gruppierung und wird genau wie ein Tool-Container konvertiert.
+- Ein Control Container, der um nichts gezeichnet ist, behält seine Beschriftung auf der Arbeitsfläche als Hervorhebungsfeld.
+
+<Aside type="caution" title="Ein Gate, das der Import nicht interpretieren konnte">
+Manchmal erzeugt das Tool, das den **Control**-Eingang speist, keine Daten, gegen die geprüft werden könnte, sodass es nichts gibt, woraus sich das Gate bauen ließe. Der Import übergeht das nicht mehr stillschweigend. Der Container kommt als Schritt an, der als nicht konvertiert markiert ist und einen Hinweis trägt, dass die Tools in seinem Inneren sonst jedes Mal ausgeführt würden, und er wird im Konvertierungsbericht als Schritt aufgeführt, um den Sie sich kümmern müssen. Dieser Schritt schlägt fehl, wenn der Workflow ihn erreicht, sodass die Konvertierung nicht durchlaufen werden kann, als wäre nichts falsch.
+
+Zuvor wurde das Innere so importiert, dass es bedingungslos ausgeführt wurde, und nichts auf der Arbeitsfläche wies darauf hin – das ist die stille Variante desselben Problems.
+
+Zur Behebung ändern Sie entweder den Alteryx-Workflow so, dass der **Control**-Eingang von einem Tool kommt, das Daten erzeugt, und importieren erneut, oder Sie löschen den markierten Schritt und setzen das Gate selbst auf die Schritte, die im Container lagen – siehe [Schrittbedingungen](/de/guides/workflows/step-conditions/).
+</Aside>
+
+### Das Browse-Tool
+
+Ein Alteryx-**Browse** ist ein Viewer. Er zeigt die ankommenden Datensätze an, ändert nichts und hat keinen Ausgangsanschluss. In PlaidCloud steht die Ausgabetabelle jedes Schritts ohnehin zum Öffnen bereit, sodass das, wofür ein Autor ein Browse gezeichnet hat, einen Klick vom darüberliegenden Schritt entfernt ist – wählen Sie diesen Schritt aus und sehen Sie sich seine Tabelle an.
+
+Ein Browse wird daher als Teil der Arbeitsfläche übernommen statt als Schritt. Es erzeugt keinen Schritt, belegt keine Tabelle und wird nicht zu den Tools gezählt, die die Konvertierung nicht verarbeiten konnte:
+
+- **Für ein Browse wird keine Tabelle erstellt.** Früher wurde jedes Browse zu einem Schritt ohne Funktion, den der Workflow dann verwarf, während er trotzdem eine eigene Warehouse-Tabelle belegte, in die nichts schrieb und aus der nichts las. In unserem Alteryx-Referenzsatz mit 179 Workflows waren das 152 Tabellen.
+- **Ein defekter Zweig wird einmal gemeldet, und zwar beim Tool, das ihn kaputt gemacht hat.** Ein Browse wurde im Konvertierungsbericht früher als nicht konvertiertes Tool aufgeführt, wann immer das Tool *vor* ihm fehlschlug, sodass dasselbe Problem doppelt auftauchte – einmal beim Tool, das Sie tatsächlich reparieren müssen, und einmal bei einem Viewer, der nie hätte laufen können. Vierzehn der gemeldeten Fehler dieses Referenzsatzes waren von dieser Art. Diese Einträge sind verschwunden; das tatsächlich verantwortliche Tool wird weiterhin gemeldet.
+
+Das entfernt irreführende Einträge aus dem Konvertierungsbericht, nicht die Fehler dahinter. Die Anzahl der Workflows, die mit vollständig konvertierten Tools konvertiert werden, ist dieselbe wie zuvor.
+
+<Aside type="caution" title="Ein Workflow, der jetzt anhält und eine Tabelle benennt">
+Eine Form von Workflow hält jetzt an, wo sie früher lief, und das ist die Korrektur, kein neuer Fehler.
+
+Wenn ein Workflow ein Tool in einem Makro genauso nummeriert wie ein Tool auf der aufrufenden Arbeitsfläche, wurde ein Schritt unterhalb des Makros auf den Tabellennamen des Browse statt auf die eigene Ausgabe des Makros aufgelöst. Importieren Sie einen solchen Workflow erneut, hält dieser Schritt jetzt an und nennt eine Tabelle, die nicht existiert.
+
+Der Schritt hat nie die Datensätze des Browse gelesen. Diese Tabelle wurde beim Import erstellt und danach von nichts beschrieben – das Browse selbst wurde verworfen, bevor der Workflow gebaut wurde –, sodass der Schritt eine **leere** Tabelle las und die Ausführung Erfolg meldete, ohne einen einzigen Datensatz verarbeitet zu haben. Die erzeugten Zahlen stammten aus dem Nichts, und nichts wies darauf hin. Da die Tabelle nicht mehr erstellt wird, sagt der Schritt es jetzt.
+
+**Die Reparatur:** Richten Sie diesen Schritt auf die Tabelle aus, die er lesen sollte – die Ausgabe des Makroschritts darüber – und führen Sie den Workflow erneut aus.
+</Aside>
+
+Workflows, die Sie vor diesem Release importiert haben, behalten die Konvertierung, die sie erhalten haben, samt Tabellen. Importieren Sie sie erneut, um die Änderung zu übernehmen.
+
+### Calgary-Datenbanken
+
+Eine Alteryx-**Calgary-Datenbank** (eine `.cydb`-Datei) ist ein proprietärer indizierter Speicher. PlaidCloud kann das Dateiformat nicht lesen, und es gibt keine offene Spezifikation dafür. Statt jedes Tool abzulehnen, das eine berührt, behandelt die Konvertierung jeden `.cydb`-Pfad als Stellvertreter für eine gewöhnliche PlaidCloud-Tabelle mit dem Namen `calgary_<database name>` unter dem Tabellenpräfix, das der Import anwendet. Sobald die Datenbank eine gewöhnliche Tabelle ist, werden die darum herum gebauten Tools zu gewöhnlichen Vorgängen: Eine gespeicherte Abfrage ist ein Filter, Cross-Count-Buckets sind bedingte Zählungen, und die Feldliste eines Loaders ist eine Menge von Spalten.
+
+- Ein konvertierter **Calgary Loader** schreibt diese Tabelle aus seiner Eingabe. Seine deklarierten Indextypen werden bei der Konvertierung verworfen – ein Warehouse indiziert selbst –, aber die Feldliste wird übernommen.
+- Ein konvertierter **Calgary Input** liest die Tabelle zurück und wendet seine gespeicherte Abfrage als Filter an. Die eigenen Spalten der Tabelle werden beim Ausführen des Schritts aufgelöst, da nichts in der Workflow-Datei festhält, was die Datenbank enthielt.
+- Ein konvertierter **Calgary Input (Count Only)** oder **Calgary Cross Count** liest die Tabelle als Aggregat: Einfache indizierte Felder gruppieren die Zeilen, und jeder benannte Wert eines benutzerdefinierten Felds wird zu einer gezählten Spalte.
+- Ein konvertierter **Calgary Join** gleicht jeden eingehenden Datensatz mit der Tabelle ab, behält die Datensätze, die übereinstimmten, und führt die eigenen Spalten der Eingabe weiter. Er wird konvertiert, wenn das eingehende Feld ein einfacher, nicht räumlicher Wert ist – siehe [Calgary Join und Cross Count Append](#calgary-join-und-cross-count-append) weiter unten für den Fall, dass dem nicht so ist.
+- Ein konvertierter **Calgary Cross Count Append** gleicht jeden eingehenden Datensatz auf dieselbe Weise mit der Tabelle ab und meldet dann, wie viele Datenbankdatensätze er getroffen hat, angehängt an die Eingabe – wiederum, wenn das eingehende Feld ein einfacher, nicht räumlicher Wert ist.
+
+<Aside type="caution" title="Zwei Datenbanken mit demselben Namen">
+Zwei `.cydb`-Dateien mit demselben Namen in verschiedenen Verzeichnissen benennen dieselbe PlaidCloud-Tabelle, und aus dem Workflow lässt sich nicht erkennen, welche ein Leser verwenden sollte. Sowohl der Loader als auch jeder beteiligte Leser lehnen ab und nennen beide Dateien, statt zu raten. Benennen Sie eine der Quelldatenbanken um und importieren Sie erneut.
+</Aside>
+
+**Ein Workflow, der eine Datenbank liest, die er nicht selbst erstellt hat, erhält einen Schritt, der anhält und die Tabelle nennt.** Die demografischen und Referenz-`.cydb`-Dateien, die Alteryx mitliefert, sind der übliche Fall – nichts in Ihrem Workflow hat sie geschrieben, daher gibt es noch keine PlaidCloud-Tabelle zum Lesen. Bis diese Tabelle existiert, hält der konvertierte Schritt an und nennt sie, statt stillschweigend nichts zu lesen und Erfolg zu melden. Exportieren Sie die Quelldaten in die genannte Tabelle – aus der ursprünglichen `.cydb`, falls Sie Alteryx zum Lesen zur Verfügung haben, oder von dort, wo die Daten tatsächlich liegen –, bevor Sie den Workflow ausführen.
+
+#### Or, And und Not in einer Calgary-Abfrage
+
+Eine Calgary-Abfrage ist ein Baum aus `And`, `Or` und `Not` über die indizierten Felder der Datenbank, und der Baum wird jetzt wie geschrieben konvertiert: ein `Or` an beliebiger Stelle darin und ein `Not` um mehr als eine Bedingung werden beide konvertiert. Ein Enthält- oder Beginnt-mit-Term wird ebenfalls konvertiert – auf dem Zählpfad zu einem SQL-LIKE und beim Datensatzlesen zu einem Teilzeichenfolgenvergleich. Das gilt für das Datensatzlesen eines Calgary Input, sein Count-Only-Lesen, Calgary Cross Count und die Buckets innerhalb der benutzerdefinierten Felder eines Cross Count.
+
+Eine Handvoll Abfrageformen wird weiterhin nicht konvertiert, wobei sich jede im Konvertierungsbericht und im Schritt selbst benennt:
+
+- Eine Abfrage, die statt eines Spaltenvergleichs eine räumliche Suche (oder ein negiertes Enthält/Beginnt-mit) verwendet – ein Indexvorgang ohne Entsprechung auf Spaltenebene.
+- Ein Lesevorgang, der durch **Skip Records** oder **Max Records** begrenzt ist – die Stellvertretertabelle hat keine Datensatzreihenfolge, anhand derer übersprungen oder begrenzt werden könnte.
+- Ein Cross Count, der nach mehr als einem benutzerdefinierten Feld gruppiert ist. Die Zählungen sind tatsächlich ein Aggregat über die Datenbank, aber Alteryx dokumentiert nicht, wie es die resultierenden Spalten benennt oder ordnet, und es liegt kein Beispiel zum Abgleich vor.
+- Ein Count-Only-Lesevorgang, der keine Spalte zum Zählen benennt, da die eigenen Spalten der Datenbank aus der Workflow-Datei nicht lesbar sind.
+- Ein **Calgary Loader**, der kein Datenfeld speichert und damit eine Tabelle ohne Spalten schreiben würde.
+- Ein Calgary-Tool, das überhaupt keine Datenbank benennt.
+
+#### Calgary Join und Cross Count Append
+
+**Calgary Join** und **Calgary Cross Count Append** gleichen jeden eingehenden Datensatz über einen ihrer Indizes mit der Datenbank ab, und die Workflow-Datei hält den *Namen* des Index fest, aber nicht seine *Art*. Dieselbe Konfiguration bedeutet einen Gleichheits-Join, wenn der Index gewöhnliche Werte enthält, und einen Abgleich „welche Punkte liegen innerhalb dieser Form“, wenn er räumliche Geometrie enthält – die Datei gibt keinen Hinweis darauf, welcher von beiden gemeint ist.
+
+Die Konvertierung entscheidet anhand des **deklarierten Typs des eingehenden Felds**: Ein räumlicher Index kann immer nur mit einem räumlichen Feld gepaart gewesen sein, daher gilt:
+
+- ein eingehendes Feld vom Typ räumliches Objekt hält an und nennt das Feld, die entstandene Lesart und die Stellvertretertabelle, gegen die der Abgleich als **Spatial Match**-Schritt neu aufzubauen ist;
+- ein eingehendes Feld, dessen Typ nicht ermittelt werden konnte, hält an und nennt dies als Grund – es wird nie geraten;
+- ein gewöhnliches, nicht räumliches eingehendes Feld wird konvertiert und gleicht gegen die Stellvertretertabelle ab.
+
+Wie auch immer es ausgeht: Der Schritt hält die gewählte Lesart und den Feldtyp fest, aus dem er sie gelesen hat, sodass eine Konvertierung, der Sie nicht zustimmen, ihre Herleitung zeigt, statt Sie darauf schließen zu lassen.
+
+**Calgary Cross Count Append wird bei einem einfachen, nicht räumlichen eingehenden Feld konvertiert**, genau wie ein Calgary Join. Wo der Join die übereinstimmenden Datensätze behält, meldet der Append, wie viele Datenbankdatensätze jeder Eingabedatensatz getroffen hat: Er zählt pro Eingabedatensatz die Treffer und hängt diese Zahl an die Eingabe an. Ein Eingabedatensatz ohne Treffer zählt null, statt wegzufallen, und zwei identische Eingabedatensätze behalten jeweils ihre eigene Zeile – die Zählung gilt pro Datensatz, nicht pro eindeutiger Wertemenge. Ein einzelnes einfaches Cross-Count-Feld wird auf diese Weise konvertiert; ein Raster *benannter* benutzerdefinierter Werte wird **nicht** konvertiert, weil es pro Wert eine Zählspalte anhängen würde und Alteryx weder dokumentiert, wie viele Spalten das sind, noch wie sie heißen.
+
+Ein **Calgary Join im Count-Only-Modus** wird auf dieselbe Weise konvertiert – er zählt pro Eingabedatensatz die getroffenen Datenbankdatensätze, wobei ein Datensatz ohne Treffer null zählt –, statt die übereinstimmenden Datensätze zu behalten.
+
+Ein **Calgary Join oder Cross Count Append** hält außerdem an und benennt sich selbst, wenn er gegen einen Bereich von Indexwerten statt gegen einen einzelnen Wert abgleicht, wenn sein Ausgang für nicht übereinstimmende Datensätze mit etwas Nachgelagertem verbunden ist, wenn er kein Feld benennt, anhand dessen die Datenbank abgeglichen werden soll, und wenn nichts an seinen Eingang angeschlossen ist, aus dem er Datensätze abgleichen könnte.
+
+Ein konvertierter Loader und die Leser dessen, was er geschrieben hat, sind miteinander verbunden, sodass ein Leser nicht neben dem Schreibvorgang laufen kann, der seine Tabelle füllt.
+
+Die Spalten eines Calgary Input kommen als Text an: Die Stellvertretertabelle liefert ihre Namen, nicht die eigenen Typen der Datenbank.
+
+### In-Database-Tools
+
+Ein In-Database-Workflow verlagert seine Arbeit ins Warehouse statt in die Alteryx-Engine, und ein PlaidCloud-Schritt *ist* bereits Warehouse-SQL – daher werden die In-Database-**Vorgangs**-Tools zu genau denselben Schritten konvertiert wie ihre In-Memory-Zwillinge. Filter In-DB wird zu einem Filter, Formula In-DB zu einer Formel, Summarize In-DB zu einem Aggregat, und ebenso Join, Select, Sample, Sort, Union und Browse.
+
+Nicht konvertiert wird das Paar von Tools an beiden Enden der Kette. **Connect In-DB** und **Write Data In-DB** öffnen eine aktive Warehouse-Verbindung, die die Tools dazwischen halten und gegen die sie SQL ausführen, und PlaidCloud hat keine Entsprechung für diese dauerhaft geöffnete Verbindung. Jedes kommt als Schritt an, der zur Prüfung markiert ist, das Tool benennt und auf seinen Ersatz verweist: einen SQL-Import- oder -Exportschritt, der an eine PlaidCloud-Verbindung gebunden ist. Tauschen Sie die beiden Endpunkte gegen diese Schritte aus, und die Vorgangs-Tools dazwischen werden unverändert konvertiert.
+
+Data Stream In, Data Stream Out, Dynamic Input In-DB, Dynamic Output In-DB und In-Database Macro Input/Output werden aus demselben Grund namentlich abgelehnt.
+
+### Ein Union, das von einem positionsbasierten Join oder einer Multi-Row-Formel gespeist wird
+
+Ein Workflow mit einem **Union**, das aus einem nach Datensatzposition verknüpften **Join** oder aus einer **Multi-Row Formula** liest, wurde sauber konvertiert, konnte aber bei der Ausführung fehlschlagen – er hielt mittendrin mit einer Spalte an, die er nicht auflösen konnte. Die Konvertierung sah einwandfrei aus; erst die Ausführung des Workflows brachte das Problem ans Licht.
+
+Das ist behoben: Ein solcher Workflow läuft jetzt zu einem korrekten Ergebnis durch. Wenn dieser Fehler bei einem früher importierten Workflow auftritt, führen Sie ihn erneut aus – ein erneuter Import ist nicht nötig.
+
+### Ausgabespalten bei Join Multiple
+
+Wenn ein **Join Multiple** jedes Feld auf seiner Registerkarte „Select“ auflistet, benennt Alteryx Designer jedes davon `Input_#1_<field>`, `Input_#2_<field>` und so weiter. Der konvertierte Mehrtabellen-Join behält diese Spalten unter ihren normalen Ausgabenamen und wendet die Umbenennungen und Abwahlen der Registerkarte an. Ein vor dieser Korrektur konvertierter Join Multiple kam ohne Ausgabespalten an, und sein Schritt schlug bei der Ausführung fehl; importieren Sie diesen Workflow erneut, um die Korrektur zu übernehmen.
+
+### Prozent- und Summenspalten bei Cross Tab
+
+Ein **Cross Tab** mit einer seiner abgeleiteten Methoden – **Percent Row**, **Percent Column**, **Total Column** oder **Total Row** – stoppte früher die Konvertierung und riss jeden Schritt darunter mit. Alle vier werden jetzt konvertiert:
+
+- **Percent Row** und **Percent Column** sind der Anteil der Zelle an der Summe des Datenfelds ihrer Zeile bzw. ihrer Spalte.
+- **Total Column** ist diese Zeilensumme unter dem Namen, den das Tool dafür festgehalten hat.
+- **Total Row** ist ein zusätzlicher Datensatz mit den Summen, ohne Wert in den Gruppierungsfeldern.
+
+Jede Summe ist eine Summe des Datenfelds, unabhängig davon, welche Methoden das Tool für jede Zelle berechnet.
+
+<Aside type="caution" title="Die Prozentskala einmal prüfen">
+Die Prozentspalten werden auf einer Skala von 0 bis 100 geschrieben. Alteryx dokumentiert diese Methoden nur als Berechnung „eines Prozentwerts auf Grundlage der Werte“ und sagt nie, welche Skala gemeint ist; diese Lesart ist daher aus der Darstellung der Spalten in Alteryx abgeleitet und nicht aus etwas, das Alteryx festlegt. Vergleichen Sie einen konvertierten Cross Tab mit einem Lauf des Originals, bevor seine Zahlen in einen veröffentlichten Bericht gelangen.
+</Aside>
+
+Zwei Formen werden weiterhin zur Prüfung markiert, statt konvertiert zu werden: ein **Total Row** bei einem Cross Tab ohne Gruppierungsfeld, der denselben Datensatz zweimal erzeugen würde, ohne dass etwas die Kopien unterscheidet, und ein **Total Column**, dessen Namen das Tool nie festgehalten hat und der sonst in der Ausgabe ganz fehlen würde.
+
+### Alteryx-Double-Spalten behalten die volle Genauigkeit
+
+Eine Alteryx-**Double**-Spalte wird jetzt in eine 64-Bit-Numerikspalte konvertiert, die der Genauigkeit entspricht, mit der Alteryx selbst rechnet. Zuvor wurde sie in eine 32-Bit-Spalte konvertiert – etwa 7 signifikante Stellen –, sodass jeder Wert mit mehr Stellen beim Lesen stillschweigend gerundet wurde und jede darauf aufbauende Berechnung den Fehler erbte. Ein realer Fall: 16.862.441,27 kam als 16.862.442,00 zurück.
+
+In einem konvertierten Makro kam eine als Makro-Eingabe übergebene Double-Spalte früher als Text an; jetzt kommt sie als Zahl an. Wenn die Makrologik vom früheren Textverhalten abhing – Zeichenfolgenverkettung, Formatierung mit führenden Nullen, ein Textmuster-Abgleich –, prüfen Sie sie nach der erneuten Konvertierung, da sich eine echte Zahl anders verhalten kann.
+
+Workflows, die vor dieser Korrektur konvertiert wurden, behalten die Spaltentypen, mit denen sie konvertiert wurden. Importieren Sie sie erneut, um die Änderung zu übernehmen.
+
+### Makros in einem konvertierten Workflow
+
+Makros werden in native PlaidCloud-Konstrukte konvertiert – nicht in eine Emulation der Alteryx-Makro-Engine. Jede Makro-Variante wird einem erstklassigen Workflow-Feature zugeordnet, sodass ein konvertiertes Makro dieselbe Logik mit demselben Verhalten pro Datensatz bzw. pro Iteration wie das Original ausführt, in voller Treue:
+
+- **Standardmakros** werden in den aufrufenden Workflow eingebettet: Die Tools des Makros werden zu gewöhnlichen Schritten auf der Arbeitsfläche, sodass es keine Blackbox gibt, der man vertrauen müsste – jeder Schritt bleibt sichtbar, prüfbar und bearbeitbar. Verschachtelte Standardmakros werden bis in beliebige Tiefe eingebettet, und ein Makro, das sich am Ende selbst aufruft, wird erkannt und benannt, statt endlos zu laufen.
+- **Batch-Makros** werden zu einem Makro-Workflow, der einmal pro Datensatz des Steuerparameters ausgeführt wird, wobei die Ausgabe jedes Durchlaufs wieder zu einem einzigen Datenstrom gesammelt wird – dieselbe gruppenweise Ausführung, die Alteryx vornimmt. Der Steuerparameter wird als Variable pro Durchlauf gebunden, genau wie er in Alteryx den Batch steuert.
+- **Iterative Makros** werden zu einer nativen Workflow-Schleife, die zwischen den Durchläufen den Zustand mitführt und läuft, bis das Makro konvergiert. Das Durchlauflimit der Schleife ist die **Maximum Number of Iterations** des Makros selbst, dieselbe Einstellung, mit der Alteryx es ausführt; bleibt sie auf dem Runaway-Guard-Standard von Alteryx oder ist sie gar nicht gesetzt, wendet die Konvertierung stattdessen eine eigene Obergrenze an. Wenn ein Makro bei diesem Limit noch nicht konvergiert ist, **hält die Ausführung an und sagt es** – unter Nennung des erreichten Limits –, statt ein Teilergebnis als endgültige Antwort zu melden. Ein Makro, das tatsächlich mehr Durchläufe braucht, als die Obergrenze zulässt, kann mit einer höheren Obergrenze erneut importiert werden: Die Importoption `iteration_ceiling` legt sie fest.
+- **Steuerparameter, Macro-Input- und Macro-Output-Ports, Action-Tools und Detour-Verzweigungen** werden alle in ihre nativen Entsprechungen konvertiert, sodass die Mechanik, die ein Makro zusammenhält, erhalten bleibt – nicht angenähert. Ein Makro, das aus einem Batch- oder iterativen Makro heraus aufgerufen wird, wird zusammen mit seinem Aufrufer aufgelöst und konvertiert.
+
+Zwei Anordnungen werden namentlich abgelehnt, statt konvertiert zu werden, sodass Sie es schon beim Import wissen: ein Schleifenmakro, das in einem anderen Schleifenmakro verschachtelt ist, und In-Database Macro Input/Output-Tools.
+
+<Aside type="caution" title="Batch-Makros, die früher hängen blieben, werden jetzt abgeschlossen">
+Frühere Konvertierungen ließen jeden Durchlauf seine eigene Ausgabetabelle schreiben, wobei der Schritt, der die Ergebnisse sammelte, sie alle namentlich zurücklas – ein Makro, das von nur einigen Dutzend Datensätzen gesteuert wurde, baute also eine Abfrage über ebenso viele Tabellen, und die Datenbank weigerte sich, sie zu planen. Der Workflow hielt mittendrin an, ohne dass etwas Brauchbares als Ursache erkennbar war.
+
+Die Durchläufe sammeln sich jetzt in einer einzigen Tabelle, die der sammelnde Schritt direkt liest, und diese Tabelle wird zu Beginn jeder Ausführung ordnungsgemäß geleert, sodass eine Ausführung, deren Makro keine Durchläufe erzeugt, ein leeres Ergebnis liefert, statt die Zeilen der vorherigen Ausführung erneut auszuliefern.
+
+Wenn ein Batch-Makro-Workflow früher mittendrin hängen blieb oder fehlschlug, importieren Sie ihn erneut, um die Korrektur zu übernehmen.
+</Aside>
+
+<Aside type="tip" title="Der Linear-Distance-Fall des Location Optimizer wird nativ konvertiert">
+Ein **Location Optimizer**, dessen Score eine unveränderte lineare Distanzminimierung ist – K Standorte wählen, die die gesamte oder gewichtete Distanz zur Nachfrage minimieren –, wird direkt in den nativen Schritt [Standortoptimierer](/de/reference/workflow-steps/optimization/location-optimizer/) konvertiert, ein p-Median-MIP, das auf dem HiGHS-Solver von PlaidCloud gelöst wird. Die Kandidaten- und Nachfragetabellen sowie die Standortanzahl werden übernommen; bestätigen Sie die Distanzspalten, bevor Sie sich auf das Ergebnis verlassen.
+</Aside>
+
+<Aside type="caution" title="Andere Location-Optimizer-Makros werden abgelehnt">
+Ein **Location Optimizer**-Makro ist nur der Bewertungsdurchlauf einer Suche. Die Suche selbst – das Erzeugen von Kandidatenstandortmengen, die Anzahl der Standorte, die Erzeugungslimits und der Seed – liegt im aufrufenden Tool und in der Alteryx-Engine statt in der Workflow-Datei. Außerhalb des obigen Linear-Distance-Falls – ein Gravity-Kernel, ein individuelles Bewertungsmakro, ein Ziel „höher ist besser“ oder jede Transformation der Distanz vor der Bewertung (feste Anlagenkosten, ein Summarize, ein Join) – hat PlaidCloud keine Entsprechung für diese Optimierungsschleife. Der Makroaufruf kommt jetzt als Schritt an, der zur Prüfung markiert ist und das Makro benennt, die Eingabe, auf der seine Kandidatenmengen ankommen, die Ausgabe, die sie einstuft, und ob ein hoher oder ein niedriger Score gewinnt.
+
+**Ein solches Makro wurde früher konvertiert und lief grün, und seine Zahlen waren falsch.** Es wurde wie ein gewöhnliches Makro behandelt, sodass der Bewertungsdurchlauf genau einmal gegen eine einzige Kandidatenmenge lief und die Ausführung Erfolg meldete – ein Ergebnis, das wie eine Antwort aussah, aber ein einzelner bewerteter Tipp statt einer optimierten Lösung war. Wenn Sie einen solchen Workflow erneut importieren und dort eine Ablehnung sehen, wo er früher funktionierte, war das frühere Ergebnis keines, auf das Sie sich hätten verlassen sollen.
+</Aside>
+
+### Berichte in einem konvertierten Workflow
+
+Ein Bild, auf das ein Berichtslayout verweist, wird jetzt mit dem Workflow gepackt, sodass ein konvertierter Bericht es in Dokumenten findet, statt an einer Ressource zu scheitern, die nur auf dem Alteryx-Rechner existierte. Das gilt für ein Bild, das über einen festen Pfad benannt ist – ein Bild, dessen Bytes im Workflow eingebettet sind oder dessen Pfad pro Datensatz aus einer Spalte stammt, hat keine separate Datei, die abgerufen werden könnte.
+
+Ein Berichtsteil, dessen Quelldaten nicht gelesen werden konnten, wird jetzt als solcher gemeldet. Wo die Spalten einer Tabelle nicht gelesen werden konnten, wurde ein daraus gebautes Berichts-Snippet früher übersprungen, und ein Berichtstabellenabschnitt kam leer heraus – beides bei Ausführungen, die Erfolg meldeten. Der Schritt hält jetzt an und sagt, dass die Spalteninformationen nicht gelesen werden konnten und warum. **Ein Bericht, der zuvor mit fehlendem Abschnitt herauskam, kann jetzt mit einer Erklärung anhalten** – siehe den Eintrag unter „Behoben“ dazu im [August 2026](/de/releases/2026-08/).
+
+## Den konvertierten Workflow verwenden
+
+Verwenden Sie den Workflow nach dem Import wie jeden anderen erweiterten PlaidCloud-Workflow:
+
+1. Öffnen Sie die Arbeitsfläche des konvertierten Workflows.
+2. Prüfen Sie die erzeugten Schritte und Zweige.
+3. Legen Sie Workflow-Variablen für alle konvertierten App-Fragen oder Laufzeitparameter fest.
+4. Führen Sie den Workflow aus.
+5. Prüfen Sie den Ausführungsverlauf, die Schrittausgaben, die Bereitschaftshinweise und die erzeugten Artefakte.
+6. Planen Sie den Workflow per Zeitplan ein, wenn er für den wiederholbaren Betrieb bereit ist.
+
+Ein konvertiertes **Download**-Tool wird zu einem Schritt [REST-Anfrage](/de/reference/workflow-steps/general/rest-request/), der einen externen Endpunkt über eine REST-Verbindung erreicht statt über eine im Schritt fest hinterlegte URL. Weisen Sie dem Schritt eine REST-Verbindung zu, bevor Sie ihn ausführen – der Konverter weist beim Import mit einem Bereitschaftshinweis darauf hin. Wie Sie eine einrichten, finden Sie unter [Eine Verbindung erstellen](/de/guides/connections/create-connection/).
+
+Konvertierte Makros stehen als PlaidCloud-Makro-Workflows zur Verfügung. Ein Workflow, der ein Alteryx-Makro aufgerufen hat, ruft über den Makroschritt das erzeugte PlaidCloud-Makro auf. Makro-Ausführungen sind voneinander isoliert, sodass gleichzeitige Workflow-Ausführungen sicher dieselbe Makrodefinition verwenden können.
+
+## Die Konvertierung validieren
+
+PlaidCloud unterstützt zwei praktische Validierungsstufen.
+
+### Strukturelle Validierung
+
+Die strukturelle Validierung bestätigt, dass der Workflow in einen ausführbaren PlaidCloud-DAG konvertiert wurde:
+
+- Jedes Alteryx-Tool hat einen PlaidCloud-Konvertierungspfad.
+- Erforderliche Makros wurden gefunden oder erzeugt.
+- Erforderliche Eingabedateien wurden nach Dokumente hochgeladen.
+- Makro-Eingaben und Makro-Ausgaben sind verbunden.
+- Für benutzergesteuerte Eingaben wurden Workflow-Variablen erstellt.
+- Der erzeugte Workflow lässt sich öffnen und kann in PlaidCloud ausgeführt werden.
+
+Die strukturelle Validierung ist nützlich für die Migrationsbereitschaft, die Bestandsprüfung und die frühe Konvertierung von Portfolios.
+
+### Validierung der Ausgabeparität
+
+Die Validierung der Ausgabeparität vergleicht die PlaidCloud-Ausführung mit vertrauenswürdigen Alteryx-Ausgaben:
+
+- Die Ausgabeschemas stimmen überein.
+- Die Zeilenanzahlen stimmen überein.
+- Die Zeilenwerte stimmen überein.
+- Die Zeilenreihenfolge wird ignoriert, es sei denn, der Workflow hängt ausdrücklich von der Reihenfolge ab.
+
+Validieren Sie bei Workflows, die Berichte, Karten, PDFs, Bilder oder Modellartefakte erzeugen, das erzeugte Artefakt oder die Daten dahinter entsprechend der Art, wie Ihr Team die Ausgabe verwendet.
+
+Eine ausführliche Validierungs-Checkliste finden Sie unter [Konvertierte Alteryx-Workflows validieren](/de/guides/workflows/validate-converted-alteryx-workflows/).
+
+### Zufallsstichproben
+
+Bei den Zeilenwerten sind Sampling-Tools eine bewusste Ausnahme.
+**Create Samples** und **Random % Sample** ziehen beide zufällig, und Alteryx liefert bei
+gesetztem Seed bei jeder Ausführung dieselben Datensätze. PlaidCloud zieht mit einem eigenen
+Generator, daher gilt:
+
+- Stichprobengrößen, Prozentsätze und die Proportionen der Aufteilung in Estimation / Validation / Holdout
+  werden exakt übernommen.
+- **Die Datensätze innerhalb jeder Stichprobe sind nicht die, die Alteryx auswählt, und eine erneute
+  Ausführung wählt wieder eine andere Menge aus.**
+
+Jeder konvertierte Schritt sagt dies im Konvertierungsbericht und im Schritt selbst, und
+keiner wird als Tool gemeldet, das nicht konvertiert werden konnte. Validieren Sie diese anhand der Zeilenanzahlen
+und Proportionen statt anhand der Zeilenwerte.
+
+Wenn es wirklich darauf ankommt, welcher Datensatz in welcher Stichprobe landet – ein Modell, das Sie exakt
+reproduzieren müssen, oder ein Holdout, gegen den Sie bereits Ergebnisse veröffentlicht haben –,
+legen Sie die Stichprobe stattdessen über eine Spalte fest: einen **Formula**-Schritt, der die
+Stichprobenzuordnung berechnet, und einen **Filter**-Schritt pro Stichprobe.
+
+## Konvertierung von Maschinellem Lernen (Assisted Modeling)
+
+Alteryx-Pipelines für Maschinelles Lernen, die mit der Tool-Familie Machine Learning gebaut wurden, werden in die nativen ML-Schritte von PlaidCloud konvertiert:
+
+- Ein **Classification**- oder **Regression**-Tool wird zusammen mit seinen vorgelagerten Assisted-Modeling- und Transformationsstufen und dem nachgelagerten **Fit**-Tool zu einem einzigen Schritt [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) verschmolzen. Der Schritt übernimmt den exakten Algorithmus, die Zielvariable, die Merkmalsspalten und die Hyperparameter aus dem Alteryx-Workflow und schreibt das trainierte Modell als einzeilige Modelltabelle, in der die Trainingsmetriken festgehalten sind.
+- Jedes **Predict**-Tool wird zu einem Schritt [ML: Bewerten](/de/reference/workflow-steps/machine-learning/ml-score/), der die trainierte Modelltabelle und seinen Dateneingang liest. Die Vorhersagespalte wird nach der Zielvariablen mit dem Suffix `_predicted` benannt.
+- **XGBoost-Klassifikatoren** werden mit einem Näherungshinweis konvertiert: Das Modell wird als Gradient-Boosted-Klassifikator von scikit-learn trainiert, und alle XGBoost-spezifischen Baumparameter ohne Entsprechung sind in den Zuordnungshinweisen des Schritts aufgeführt. Validieren Sie die Modellmetriken gegen die Alteryx-Ausführung, bevor Sie sich auf Parität verlassen.
+- Ein **Image Recognition**-Tool trainiert im Workflow einen Bildklassifikator und bewertet neue Bilder gegen ihn, vollständig vor Ort – ohne externes Konto, und keine Bilddaten verlassen PlaidCloud. Ein nachgelagertes **Predict**, das auf das Modell zeigt, bewertet gegen dieses. Zwei Dinge werden anders übernommen als beim Rest der ML-Familie, validieren Sie sie also, bevor Sie sich auf Parität verlassen. Erstens wird der Klassifikator aus Ihren beschrifteten Bildern neu trainiert, statt aus Alteryx kopiert zu werden, und dieses Training ist nicht deterministisch – zwei Konvertierungen desselben Workflows erzeugen leicht unterschiedliche Modelle, die Vorhersagen sind also eine treue Annäherung, keine bitgenaue Übereinstimmung. Zweitens läuft das Training auf der CPU, sodass ein Satz von Hunderten bis niedrigen Tausenden Bildern mehrere Minuten dauert. Image Recognition wird pro Workspace aktiviert; bitten Sie Ihren Administrator, es einzuschalten, wenn ein konvertierter Workflow meldet, dass es nicht aktiviert ist.
+- Ein **AutoML**-Tool wird auf dieselbe Weise zu einem Schritt [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) verschmolzen wie Classification und Regression. AutoML hält nicht fest, welcher seiner Kandidatenalgorithmen zur Alteryx-Laufzeit tatsächlich gewonnen hat, daher wählt die Konvertierung den ersten angekreuzten Algorithmus, den ML Train unterstützt, und vermerkt die Wahl, statt eine automatisierte Suche nachzubilden. Vergleichen Sie einen konvertierten AutoML-Schritt mit Ihren eigenen Alteryx-Ergebnissen.
+- Ein **Assisted-Modeling-Assistent**, dessen Modell interaktiv gewählt (und nie in der Workflow-Datei gespeichert) wurde, kann nicht konvertiert werden – der Importer behält einen Platzhalterschritt, dessen Hinweise die wiederhergestellte Zielvariable festhalten, damit Sie den ML-Train-Schritt von Hand bauen können.
+- Eine **eigenständige One-Hot-Encoding-Stufe** wird im Konvertierungsbericht markiert. Der verschmolzene ML-Train-Schritt kodiert kategoriale Merkmale intern per One-Hot, sodass die eigenständige Stufe meist keinen Ersatz braucht.
+
+Wie jede Konvertierung tragen die verschmolzenen Schritte ihre Konfidenz und ihre Hinweise im Konvertierungsbericht und auf der Arbeitsfläche, sodass die Pipelines, die eine doppelte Prüfung verdienen, leicht zu finden sind.
+
+## Konvertierungsabdeckung prüfen
+
+Die [Alteryx-Konvertierungsmatrix](/de/reference/alteryx-conversion-matrix/) listet jedes unterstützte Alteryx-Objekt, seine Abdeckungsstufe und den bei der Konvertierung verwendeten PlaidCloud-Vorgang auf.
+
+Anhand der Matrix verstehen Sie, wie der Importer mit jeder Tool-Familie umgeht:
+
+- Native DAG-Schritte für gängige Datenaufbereitung, Joins, Filter, Formeln, Sortierung, Unions, Sampling und Umformung.
+- Makroschritte für Makro-Eingaben, Makro-Ausgaben, Makroaufruf, Steuerparameter und Makro-Parallelität.
+- Kontrollierte Workflow-Variablen für Fragen von Analytic Apps wie Kontrollkästchen, Dropdown-Listen, Textfelder, Optionsfelder, Ordnerauswahlen und Dateiauswahlen.
+- Dokumenten-gestützte Dateivorgänge für Eingabe, Ausgabe, Verzeichnisse und dynamisches Dateiverhalten.
+- Native ML-Train- und ML-Score-Schritte für Pipelines des Assisted Modeling im Maschinellen Lernen.
+- Eine Stellvertretertabelle für jede Alteryx-Calgary-Datenbank, sodass die Tools Calgary Loader, Input, Cross Count und Join gegen eine gewöhnliche Tabelle konvertiert werden, statt rundweg abgelehnt zu werden – siehe [Calgary-Datenbanken](#calgary-datenbanken).
+- Verwaltete Job-Executors für spezialisierte Arbeiten mit räumlichen Daten, Fuzzy-Matching, PDF, OCR, NLP, Berichten und Artefakten.
+- Cloud-native Entsprechungen, wo PlaidCloud ein dauerhaftes, teilbares Artefakt erstellt, statt einen Alteryx-spezifischen Desktop-Renderer oder ein proprietäres Dateiformat nachzubilden.
+
+## Ihr Alteryx-Abdeckungsbericht
+
+Sehen Sie, was in Ihren Alteryx-Workflows steckt, bevor Sie sich registrieren.
+
+1. Öffnen Sie die öffentliche Seite `https://app.plaidcloud.com/#coverage-report` mit dem Titel **See what's in your Alteryx workflows**.
+2. Legen Sie eine Datei auf **Drop an Alteryx workflow here** ab oder wählen Sie **Datei auswählen**. Akzeptiert werden ein Workflow (`.yxmd`), ein Makro (`.yxmc`) oder ein Paket (`.yxzp`) bis 10 MB. PlaidCloud liest die Datei und zeigt die gefundenen Tools und die am häufigsten verwendeten an. In der Datei gespeicherte Anmeldedaten werden entfernt.
+3. Geben Sie Ihre **Work email** ein, akzeptieren Sie die Nutzungsbedingungen und die Datenschutzerklärung und wählen Sie **Email me a verification link**.
+
+Ihr vollständiger Bericht wird in Ihrem eigenen kostenlosen PlaidCloud-Workspace erstellt. PlaidCloud konvertiert den Upload in ein Projekt namens **Alteryx migration**, und der erste Workspace-Administrator, der Home öffnet, sieht **Ihr Alteryx-Abdeckungsbericht**. Er listet jeden Workflow auf, mit der Anzahl seiner Tools, die PlaidCloud erkannt hat und konvertieren kann, der Anzahl derer, die **Zu prüfen** sind, und einer Schaltfläche **Öffnen** für den konvertierten Workflow. Datendateien sind nicht Teil des Berichts; laden Sie die Dateien hoch, die Ihre Workflows lesen, und führen Sie sie dann aus. Die Schaltflächen des Berichts führen zu **Eigenes Warehouse verwenden** und **Migration nachweisen**. Ein Upload wird 7 Tage lang aufbewahrt.
+
+Wenn Sie bereits ein PlaidCloud-Konto haben, erhält die von Ihnen eingegebene E-Mail-Adresse eine Nachricht, **Your coverage report is ready — sign in to view it**, mit einem Link. Melden Sie sich an, öffnen Sie ihn, wählen Sie den **Workspace** und wählen Sie **Add the report**. Nur ein Administrator der Organisation des Workspace kann ihn hinzufügen, und der Bericht öffnet sich beim nächsten Öffnen des Workspace. Die E-Mail zu ignorieren ändert nichts an Ihrem Workspace. Ein ungültiger oder abgelaufener Link sagt dies, und ein abgelaufener Upload muss erneut hochgeladen werden.
+
+Nach einer Konvertierung [weisen Sie nach, dass sie übereinstimmt](/de/guides/workflows/validate-converted-alteryx-workflows/#migration-nachweisen), und zwar anhand Ihrer Alteryx-Ausgaben.
+
+## Empfohlene Migrationspraxis
+
+Migrieren Sie ein großes Portfolio in Batches:
+
+1. Importieren Sie die Workflows und Makros in ein Migrationsprojekt.
+2. Vervollständigen Sie die Abhängigkeitspakete, bevor Sie einzelne Formeln oder Geschäftslogik prüfen.
+3. Führen Sie die strukturelle Validierung über den gesamten Batch aus.
+4. Priorisieren Sie die Validierung der Ausgabeparität für Produktions-Workflows, regulatorische Workflows und Workflows mit nachgelagerten Verbrauchern.
+5. Überführen Sie validierte Workflows in das Zielprojekt der Produktion.
+6. Planen Sie Produktionsausführungen per Zeitplan ein und überwachen Sie den Ausführungsverlauf.
+
+## Verwandte Anleitungen
+
+- [Checkliste zur Alteryx-Migrationsbereitschaft](/de/guides/workflows/alteryx-migration-readiness-checklist/)
+- [Alteryx-Abhängigkeiten paketieren](/de/guides/workflows/package-alteryx-dependencies/)
+- [Konvertierte Alteryx-Workflows validieren](/de/guides/workflows/validate-converted-alteryx-workflows/)
+- [Konvertierte Alteryx-Apps verwenden](/de/guides/workflows/use-converted-alteryx-apps/)
+- [Alteryx-Migrationen mit MCP orchestrieren](/de/guides/workflows/orchestrate-alteryx-migrations-with-mcp/)
+- [Alteryx-Importe feinabstimmen](/de/guides/workflows/troubleshoot-alteryx-imports/)
+- [Alteryx-Berichte und -Artefakte validieren](/de/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Räumliche Alteryx-Workflows migrieren](/de/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Ein Makro erstellen](/de/guides/workflows/create-a-macro/)
+- [Einen Workflow ausführen](/de/guides/workflows/run-a-workflow/)
+- [Workflow-Variablen verwalten](/de/guides/workflows/manage-workflow-variables/)
+- [Alteryx-Konvertierungsmatrix](/de/reference/alteryx-conversion-matrix/)
+
+## Migrationsdokumentation
+
+Für größere Migrationen verwenden Sie diese gezielten Anleitungen zusammen mit dieser Migrationsanleitung:
+
+- [Checkliste zur Alteryx-Migrationsbereitschaft](/de/guides/workflows/alteryx-migration-readiness-checklist/) für die Migrationsplanung und die Paketprüfung.
+- [Alteryx-Abhängigkeiten paketieren](/de/guides/workflows/package-alteryx-dependencies/) für Dateien, Ordner, Makros, räumliche Begleitdateien und erwartete Ausgaben.
+- [Konvertierte Alteryx-Apps verwenden](/de/guides/workflows/use-converted-alteryx-apps/) für kontrollierte Workflow-Variablen und App-artige Ausführungen.
+- [Alteryx-Migrationen mit MCP orchestrieren](/de/guides/workflows/orchestrate-alteryx-migrations-with-mcp/), um mit einem KI-Agenten Dateien zu organisieren, mit verbundenem gemeinsamem Speicher zu arbeiten und viele Konvertierungen über den MCP-Server von PlaidCloud zu koordinieren.
+- [Alteryx-Importe feinabstimmen](/de/guides/workflows/troubleshoot-alteryx-imports/) für Abhängigkeitsvervollständigung, Makroauflösung, Variablen, Validierungsvergleiche und Bereitschaftshinweise zu Executors.
+- [Alteryx-Berichte und -Artefakte validieren](/de/guides/workflows/validate-alteryx-reports-and-artifacts/) für PDFs, Bilder, Karten, Diagramme, Dashboards und Modellartefakte.
+- [Räumliche Alteryx-Workflows migrieren](/de/guides/workflows/migrate-spatial-alteryx-workflows/) für räumliche Dateien, SQL-Geometrielogik, verwaltete räumliche Executors und räumliche Validierung.

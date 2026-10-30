@@ -1,0 +1,132 @@
+---
+title: Conectar ao Xero
+description: Conecte o PlaidCloud ao Xero com uma concessão OAuth de um clique, extraia entidades da Accounting API com a etapa de importação de entidades prontas e depois lance lançamentos manuais, faturas, contas a pagar, pagamentos e notas de crédito.
+sidebar:
+  order: 16
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/xero.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud à Accounting API do Xero para extrair plano de contas, contatos, faturas, notas de crédito, pagamentos, lançamentos manuais e mais, sem nenhuma consulta para escrever manualmente, e para lançar documentos de volta. Este guia aborda a conexão, a etapa de importação e a etapa de lançamento.
+
+<Aside type="caution">
+Execute toda importação primeiro em uma organização de demonstração e percorra a opção **Test Only Mode** descrita abaixo em cada lote de lançamentos antes de lançar em produção.
+</Aside>
+
+## Pré-requisitos
+
+No Xero, você precisa de:
+
+- Um login do Xero com acesso à organização da qual você deseja ler e na qual deseja lançar.
+- Permissão para autorizar um aplicativo conectado para essa organização: o Xero pede que você aprove a concessão durante a configuração.
+
+Essa é a lista completa. O PlaidCloud registra o aplicativo OAuth; portanto, não há conta de desenvolvedor, ID de cliente nem segredo de cliente para obter.
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **REST - Xero** no menu.
+
+3. Dê um nome à conexão, por exemplo, `Xero Prod`.
+
+4. Clique em **Conectar ao Xero**, entre no Xero e aprove o acesso às organizações que você deseja que o PlaidCloud alcance.
+
+5. **Status da conexão** agora informa quantas organizações a concessão abrange. Escolha em **Organização** aquela à qual esta conexão se destina.
+
+6. Clique em `Create`.
+
+</Steps>
+
+<Aside type="note">
+O PlaidCloud atualiza os tokens do Xero para você e armazena cada token de atualização rotacionado; portanto, uma conexão deixada inativa por semanas continua funcionando. Uma concessão pode abranger várias organizações, mas uma conexão sempre se destina a exatamente uma: crie uma segunda conexão do Xero para alcançar uma segunda organização. A Demo Company do Xero é uma organização como qualquer outra; portanto, uma conexão de sandbox é aquela cuja **Organização** aponta para ela.
+</Aside>
+
+## Testar a conexão
+
+<Steps>
+
+1. Adicione uma etapa **Xero: Importar entidade** a um fluxo de trabalho.
+
+2. Defina **Conexão do Xero** como a sua conexão, **Tipo de entidade** como `Chart of Accounts` e **Tabela de destino** como uma tabela temporária.
+
+3. Execute a etapa (consulte [Executar uma única etapa em um fluxo de trabalho](/pt-br/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que a concessão e a seleção da organização estão corretas. Um erro indica o problema: uma concessão expirada ou uma organização à qual o login não tem mais acesso.
+
+## Importar dados
+
+<Steps>
+
+1. Adicione uma etapa **Xero: Importar entidade** e defina **Conexão do Xero** e **Tabela de destino**.
+
+2. Defina **Tipo de entidade** como o registro desejado: Plano de contas, Contatos, Faturas, Notas de crédito, Pagamentos, Lançamentos manuais, Transações bancárias, Itens, Categorias de rastreamento, Alíquotas de imposto ou Moedas.
+
+3. Restrinja a extração com os filtros opcionais: **Status** (um único status do Xero, como `AUTHORISED` ou `PAID`), **Data inicial** e **Data final** (limites `YYYY-MM-DD` na data da entidade) e **Atualizado após** (um corte de modificação desde).
+
+4. Execute a etapa e verifique a tabela de destino.
+
+</Steps>
+
+<Aside type="note">
+**Atualizado após** não carrega nenhuma marca-d'água salva: o PlaidCloud não se lembra de onde a última execução parou; portanto, informe você mesmo o corte a cada execução para extrair de forma incremental. Itens e Moedas não documentam nenhum filtro, e Plano de contas e Contatos aceitam um status, mas não um intervalo de datas; o Xero rejeita um filtro que sua entidade não suporta, de modo que a etapa informa o erro em vez de retornar um conjunto de resultados errado.
+</Aside>
+
+## Lançar documentos
+
+A etapa **Xero: Lançar documento** registra cinco tipos de documento pelo mesmo pipeline de gravação compartilhado que toda etapa de lançamento em ERP usa: **ManualJournal**, **Invoice**, **Bill**, **Payment** e **CreditNote**.
+
+<Steps>
+
+1. Crie uma **tabela de cabeçalho**, com uma linha por documento, com colunas para `ref` (o identificador do seu documento), `doc_type` (`ManualJournal`, `Invoice`, `Bill`, `Payment` ou `CreditNote`), `posting_date` e, quando o tipo de documento as exigir, `currency_id`, `party_id` (o contato do Xero), `memo` e `due_date`. Um Payment também aceita `total_amt`, `deposit_account_id`, `bank_account_id` e `linked_invoice_id`; um CreditNote aceita `credit_note_type` (`ACCRECCREDIT` para vendas, o padrão, ou `ACCPAYCREDIT` para compras). Um único lote pode misturar tipos de documento: o PlaidCloud o particiona por `doc_type` antes de lançar.
+
+2. Crie uma **tabela de linhas**, com uma ou mais linhas por `ref`, cada uma carregando esse `ref`, no formato do tipo de documento:
+
+   | Tipo de documento | Colunas de linha |
+   |---|---|
+   | ManualJournal | `account_id`, `debit`, `credit` e, opcionalmente, `class_id` / `department_id` para rastreamento |
+   | Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+   | Bill | `account_id`, `amount` |
+   | CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+   | Payment | `linked_txn_id` (a fatura à qual a linha se aplica), `amount` |
+
+   `tax_type` e `memo` são opcionais em qualquer linha.
+
+3. Adicione uma etapa **Xero: Lançar documento**, defina **Conexão do Xero**, **Ambiente** (qual dos ambientes do PlaidCloud da conexão usar para lançar), **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultado**.
+
+4. Mapeie os nomes das suas próprias colunas para esses campos nas guias **Campos de cabeçalho** e **Campos de linha**.
+
+5. Deixe **Test Only Mode** marcado e execute a etapa: o PlaidCloud monta e verifica cada documento sem reivindicação no razão e sem lançar nada.
+
+6. Revise a tabela de resultado (uma linha por documento: `ref`, `doc_type`, `natural_key`, `xero_id`, `status`, `message`). Corrija qualquer linha com `error` e valide novamente.
+
+7. Desmarque **Test Only Mode** e execute novamente para lançar de fato. Deixe **Continue posting remaining documents if one document fails** marcado, a menos que você queira que um lote pare imediatamente no primeiro documento com falha.
+
+</Steps>
+
+### Como funciona o lançamento
+
+Cada documento é reivindicado no razão de idempotência do PlaidCloud antes de ser enviado; portanto, uma nova execução nunca lança um documento que já chegou a `posted`. A chave do razão é prefixada pelo tipo de documento; assim, uma fatura e uma conta a pagar que compartilham o mesmo `ref` nunca colidem, embora o Xero lance ambas pelo mesmo endpoint.
+
+Quando um resultado é ambíguo (um timeout, uma resposta perdida), o PlaidCloud consulta o Xero de volta pelo número do documento que estampou e trata uma correspondência como prova somente quando o documento está em um status final de lançado. Os números de fatura e de nota de crédito do Xero não têm unicidade garantida; portanto, uma correspondência rascunho, anulada ou com número duplicado é colocada em quarentena em vez de ser registrada como o resultado desta gravação.
+
+### Limites de capacidade: leia antes de lançar em produção
+
+<Aside type="caution">
+- **Lançamentos manuais e pagamentos não podem ser consultados.** A narração de um lançamento manual e a referência de um pagamento não podem ser consultadas no Xero; portanto, não há campo para correlacionar uma gravação em dúvida de volta à solicitação do PlaidCloud. Eles são colocados em quarentena para que você os resolva diretamente no Xero, em vez de adivinhados.
+- **O estorno cobre apenas lançamentos manuais e faturas.** Um lançamento manual é estornado como um lançamento com débito/crédito invertidos; uma fatura é estornada como uma nota de crédito espelhada. Contas a pagar, pagamentos e notas de crédito não têm payload de desfazer documentado na API do Xero; portanto, o PlaidCloud recusa um estorno em vez de inventar um: corrija-os diretamente no Xero.
+- **Os limites de taxa são por organização.** O Xero permite 60 chamadas por minuto e 5.000 por dia por organização, com 5 chamadas simultâneas. O PlaidCloud governa os limites por minuto e de simultaneidade por conexão e reduz o ritmo diante de uma resposta de limitação; portanto, um lote muito grande leva proporcionalmente mais tempo. Agende extrações amplas em vez de executar muitas etapas do Xero ao mesmo tempo na mesma organização.
+</Aside>
+
+## Relacionados
+
+- [Conector REST do Xero](/pt-br/reference/connectors/rest/xero/): referência de campos.
+- [Xero: Importar entidade](/pt-br/reference/workflow-steps/xero/import-xero-entity/)
+- [Xero: Lançar documento](/pt-br/reference/workflow-steps/xero/xero-post/)
+- [Revisar o histórico de lançamentos em ERP](/pt-br/guides/connections/erp-post-history/): o registro permanente de cada tentativa de lançamento no Xero e seu estado atual.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

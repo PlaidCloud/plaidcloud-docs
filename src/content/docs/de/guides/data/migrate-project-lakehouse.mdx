@@ -1,0 +1,154 @@
+---
+title: Ein Projekt zu Lakehouse v2 migrieren
+description: Verschieben Sie ein einzelnes Projekt über das Menü „Werkzeuge“ von Lakehouse v1 zu Lakehouse v2 – einschließlich dessen, was die Bereitschaftsprüfung ablehnt, was sich an Ihren Ergebnissen ändert und wie lange Sie zum Abbrechen Zeit haben.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/migrate-project-lakehouse.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Sie können jeweils ein Projekt von Lakehouse v1 zu Lakehouse v2 verschieben. Andere Projekte im selben Workspace laufen weiter auf v1, bis Sie auch diese migrieren. So können Sie ein einzelnes Projekt migrieren und alles andere unberührt lassen.
+
+Die Migration verschiebt die Tabellen des Projekts und alles, was darauf aufbaut: Abfragen, Ausdrücke, Ansichten, Superset-Datasets, berechnete Spalten, Kennzahlen und Zeilenzugriffsregeln.
+
+<Aside type="caution" title="Änderungen während einer Migration gehen verloren">
+Eine Migration kopiert Ihre Daten in dem Zustand, den sie beim Start der Ausführung haben. Alles, was danach in das Projekt geschrieben wird – eine Workflow-Ausführung, eine importierte Datei, eine bearbeitete Tabelle –, wird **nicht** übernommen und lässt sich **nicht** aus der migrierten Kopie wiederherstellen. Die Zeitpläne der Workflows des Projekts werden während der Migration pausiert und danach wiederhergestellt, aber eine manuelle Ausführung oder ein Import wird nicht verhindert. Ein Workflow, der während einer Migration gestartet wird, zeigt eine Warnung an. Weisen Sie die Projektmitglieder an, dem Projekt fernzubleiben, bis die Migration abgeschlossen ist.
+</Aside>
+
+<Aside type="caution" title="Die Migration ist eine Einbahnstraße">
+Es gibt keine Rückmigration. Sie können eine Migration innerhalb des Rückgängig-Zeitfensters rückgängig machen und das Projekt zu Lakehouse v1 zurückführen, wie unter [Eine Migration rückgängig machen](#eine-migration-rückgängig-machen) beschrieben. Danach werden die Originaldaten gelöscht.
+</Aside>
+
+## Bevor Sie beginnen
+
+- **Projekt zu Lakehouse v2 migrieren…** erscheint im Menü „Werkzeuge“ für Mitglieder, die Projekte bearbeiten dürfen. Nur die Architects eines Projekts können es migrieren: Das Starten, Planen, Abbrechen und Rückgängigmachen einer Migration erfordert jeweils Architect-Zugriff auf das Projekt.
+- Sie benötigen Architect-Zugriff auf das Projekt, und das Projekt muss entsperrt sein.
+- Ihr Tarif benötigt Platz für die Kopie. Siehe [Speicherprüfung](#speicherprüfung).
+- Jeder, der ein Projekt öffnen kann, kann die Bereitschaftsprüfung ausführen.
+- Führen Sie zuerst die Bereitschaftsprüfung aus und beheben Sie alles, was sie ablehnt. Eine Migration, die für ein Projekt startet, das sie nicht übersetzen kann, bricht mittendrin ab.
+- Planen Sie ein, dass das Projekt für die Dauer der Ausführung nicht verfügbar ist, weil Schreibvorgänge während der Ausführung verloren gehen.
+- Wenn andere Projekte die Tabellen dieses Projekts über eine Datenfreigabe lesen, migrieren Sie zuerst jene Projekte oder entfernen Sie die Freigabe. Ein Projekt, das andere über eine Datenfreigabe lesen, wird nach diesen migriert.
+
+## Migrationsbereitschaft prüfen
+
+Die Bereitschaftsprüfung meldet, was mit dem Projekt geschehen wird, bevor Sie sich auf etwas festlegen. Sie ändert nichts.
+
+<Steps>
+
+1. Öffnen Sie das Menü **Werkzeuge**.
+
+2. Wählen Sie **Migrationsbereitschaft prüfen…**.
+
+3. Wählen Sie das Projekt aus.
+
+</Steps>
+
+Ist das Projekt bereits auf Lakehouse v2, teilt die Prüfung dies mit und weist darauf hin, dass nichts zu migrieren ist.
+
+Der Bericht führt jeden Bereich mit einem der folgenden Status auf:
+
+| Status | Bedeutung |
+| --- | --- |
+| **Leeren** | PlaidCloud hat den Bereich gescannt und nichts gefunden. |
+| **Prüfung erforderlich** | Etwas wird sich ändern, und Sie bestätigen dies vor der Ausführung. |
+| **Blockiert** | Die Migration kann erst starten, wenn der Punkt behoben ist. |
+| **Wird während der Migration geprüft** | Der Bereich wird geprüft, während die Migration läuft, und wird daher vorab nie als unbedenklich angezeigt. |
+
+Die Bereiche sind Tabellen, Ansichten, Schritte, Dashboards, Datenfreigaben und Kapazität. Zu jedem Befund gibt es eine verständliche Erklärung, und wo vorhanden, wird ein Umschreibungsvorschlag angezeigt.
+
+### Was die Bereitschaftsprüfung ablehnt
+
+| Ablehnung | Grund |
+| --- | --- |
+| Eine Spalte, deren Typ in Lakehouse v2 keine Entsprechung hat | Die Migration lehnt dies ab, statt die Spalte stillschweigend in Text umzuwandeln. Ändern Sie den Typ der Spalte im Projekt und führen Sie die Prüfung erneut aus. |
+| Das Ziel-Warehouse von Lakehouse v2 kann nicht aufgelöst werden | Das v2-Lakehouse des Workspace ist für den Dienst, der die Migration ausführt, nicht sichtbar. Dies ist ein administratives Problem, das sich nicht im Projekt beheben lässt. |
+| Der Löschschutz für den Storage-Bucket kann nicht bestätigt werden | Das Rückgängig-Zeitfenster hängt davon ab, daher startet die Migration ohne ihn nicht. |
+
+JSON-Spalten werden migriert. Frühere Versionen haben sie abgelehnt; inzwischen werden sie unterstützt.
+
+## Speicherprüfung
+
+Bevor eine Ausführung startet, prüft PlaidCloud, ob Ihr Tarif Platz für die Kopie hat.
+
+- **Bei einem Tarif mit Speicherlimit** wird die Ausführung abgelehnt, wenn die migrierte Kopie nicht hineinpasst. Andere laufende Migrationen zählen auf das Limit.
+- **Bei einem Tarif, bei dem zusätzlicher Speicher berechnet wird,** startet die Ausführung mit einer Warnung zur erwarteten Überschreitung.
+
+## Mit v2 testen
+
+**Auf v2 testen…** erstellt eine private Testkopie des Projekts auf Lakehouse v2, damit Sie die Ergebnisse prüfen können, bevor Sie das eigentliche Projekt migrieren. In der Testkopie sind Zeitpläne und Sensoren ausgeschaltet, und die ERP-Buchung läuft im Simulationsmodus. Schritte, die außerhalb von PlaidCloud schreiben, etwa SFTP, E-Mail und REST-Posts, werden vor der Bestätigung als Warnung aufgelistet. **Test starten** erstellt die Kopie. Bei einem Projekt, das bereits einen Test hat, stehen **Vorhandenen Test öffnen** und **Test ersetzen…** zur Verfügung.
+
+## Die Migration ausführen
+
+<Steps>
+
+1. Öffnen Sie das Menü **Werkzeuge**.
+
+2. Wählen Sie **Projekt zu Lakehouse v2 migrieren…**. Das Fenster listet die Migrationsausführungen für den Workspace auf.
+
+3. Starten Sie eine neue Ausführung und wählen Sie das Projekt aus.
+
+4. Lesen Sie den im Fenster angezeigten Bereitschaftsbericht und bestätigen Sie jeden genannten Befund. Die Annahme eines Befunds gilt nur für diesen konkreten Eintrag.
+
+5. Wählen Sie **Migration starten**, oder aktivieren Sie **Zu einem geplanten Zeitpunkt starten**, legen Sie die Zeit fest und wählen Sie **Migration planen**. Eine geplante Migration zeigt ein Banner am Projekt, und Sie können sie vor dem Start abbrechen. Wenn sie startet, prüft PlaidCloud Bereitschaft, Kompatibilität, Kapazität und Ihre Berechtigungen erneut.
+
+6. Starten Sie die Ausführung. Der Fortschrittsdialog zeigt jede Tabelle, während sie kopiert und geprüft wird. Die aktivierten Workflow-Zeitpläne des Projekts werden für die Ausführung pausiert. Sie können den Dialog schließen und aus der Liste der Ausführungen erneut öffnen; die Ausführung läuft in jedem Fall weiter.
+
+</Steps>
+
+Sobald eine Ausführung das Projekt auf Lakehouse v2 umschaltet, kann sie nicht mehr angehalten werden. Schlägt die Umschaltung selbst zur Hälfte fehl, zeigt die Ausführung **Contact support. Don't retry.** an, statt **Fortsetzen** anzubieten. Wenden Sie sich an den Support und lassen Sie die Ausführung unverändert.
+
+Wenn die Ausführung abgeschlossen ist, ist das Projekt an Lakehouse v2 gebunden, Abfragen verwenden es, und die pausierten Zeitpläne werden wiederhergestellt. Ein Zeitplan, den Sie während der Migration bearbeitet oder gelöscht haben, bleibt so, wie Sie ihn hinterlassen haben, und wird im Bericht genannt. Die ursprüngliche Lakehouse-v1-Kopie bleibt für das Rückgängig-Zeitfenster erhalten, ist für das Projekt aber nicht verfügbar. Sie werden per Nachricht und E-Mail benachrichtigt, wenn eine Migration abgeschlossen ist oder fehlschlägt.
+
+### Eine fehlgeschlagene Migration
+
+Eine fehlgeschlagene Migration zeigt, warum sie fehlgeschlagen ist, sowie den Zeitpunkt, nach dem Schreibvorgänge in die Quelle verloren gehen. Wählen Sie **Fortsetzen**, um sie weiterzuführen. Ansichten, die auf Lakehouse v2 nicht laufen können, werden übersprungen und aufgelistet, statt die Ausführung anzuhalten.
+
+## Was sich geändert hat
+
+Öffnen Sie nach einer Migration **Was sich geändert hat…** für die Ausführung. Dort wird jede Tabelle als kopiert, mit einer benannten Lücke kopiert, übersprungen oder fehlgeschlagen aufgeführt, mit Zeilenanzahlen und Gründen, außerdem die übersprungenen Ansichten, die während der Ausführung in der Quelle erstellten oder gelöschten Tabellen und die Zeitpläne, die pausiert und wiederhergestellt wurden.
+
+## Wöchentliche Gruppierung verschiebt sich um einen Tag
+
+Lakehouse v2 beginnt seine Wochen am **Sonntag**. Lakehouse v1 begann sie am **Montag**.
+
+Alles, was nach Woche gruppiert ist, ändert sich entsprechend – ohne Fehler und ohne Warnung. Eine Zeile mit dem Datum Sonntag, 14. Juni gehörte auf v1 zur Woche, die am Montag, 8. Juni begann. Auf v2 gehört sie zur Woche, die am Sonntag, 14. Juni beginnt.
+
+Die Summen auf beiden Seiten dieser Grenze verschieben sich. Ein Wochendiagramm, eine wöchentliche Übersichtstabelle und ein nach Woche gruppierter Bericht funktionieren weiterhin und zeigen alle andere Zahlen als zuvor. Prüfen Sie nach der Migration jede wöchentliche Kennzahl, auf die Sie sich verlassen, und rechnen Sie mit einer Verschiebung um einen Tag statt mit einem Fehler.
+
+## Was nicht übernommen wird
+
+Ihre Daten werden migriert. Manches, was auf der alten Engine aufbaut, und einige Details der Spaltendeklaration werden nicht übernommen.
+
+| Element | Was geschieht |
+| --- | --- |
+| Snapshot-Verlauf, Time Travel und Flashback | Wird nicht übertragen. Die migrierten Tabellen beginnen mit einem neuen Verlauf, sodass Sie das Projekt nicht zum Stand eines Zeitpunkts vor der Migration abfragen können. |
+| Tabellen-Branches und Tags | Vorhandene Branches und Tags werden nicht übertragen. |
+| Längenbegrenzungen von `VARCHAR(n)` | Die Längenbegrenzung entfällt. Textspalten werden zu unbegrenztem Text; vorhandene Werte bleiben unverändert. |
+| Schmale Integer-Breiten | Kleine Integer-Typen werden zu 32-Bit-Integern. Die Werte bleiben unverändert. |
+| Sekundenbruchteil-Genauigkeit bei Zeitstempeln | Eine deklarierte Genauigkeit entfällt. |
+| Spatial-, Geometry- und Bitmap-Spalten | Werden migriert, aber vom automatischen Wertevergleich ausgenommen – prüfen Sie sie selbst. |
+| Binary-, Array- und Map-Spalten | Werden migriert, aber vom automatischen Wertevergleich ausgenommen – prüfen Sie sie selbst. |
+| JSON-Spalten | Werden unter Beibehaltung ihrer Typen migriert. Eine Zahl in JSON, die für exakte Speicherung zu groß ist, wird mit doppelter Genauigkeit gespeichert und gemeldet. |
+
+<Aside type="caution" title="Sehr große vorzeichenlose Integer">
+Eine vorzeichenlose 64-Bit-Integer-Spalte mit Werten über 9.223.372.036.854.775.807 lässt sich auf Lakehouse v2 nicht darstellen, und diese Werte werden nicht als Ablehnung gemeldet. Wenn ein Projekt vorzeichenlose Integer nahe dieser Grenze speichert, prüfen Sie sie vor und nach der Migration.
+</Aside>
+
+## Eine Migration rückgängig machen
+
+Für das Rückgängig-Zeitfenster nach Abschluss einer Ausführung bleiben die ursprünglichen Lakehouse-v1-Daten unversehrt erhalten, sind aber vom Projekt getrennt. **Migration rückgängig machen…** führt das Projekt in diesem Zeitfenster zu Lakehouse v1 zurück. Sie benötigen Architect-Zugriff auf das Projekt.
+
+Zur Bestätigung müssen Sie beim Rückgängigmachen den Projektnamen eingeben. **Alle Änderungen, die seit der Umschaltung auf Lakehouse v2 am Projekt vorgenommen wurden, gehen verloren.** Während des Rückgängigmachens wird der Fortschritt angezeigt. Wird das Rückgängigmachen abgelehnt, wird der Grund genannt, zum Beispiel dass das Rückgängig-Zeitfenster abgelaufen ist.
+
+Nutzen Sie dies, wenn die Ergebnisse nach der Migration falsch aussehen – wöchentliche Kennzahlen ausgenommen, bei denen eine Verschiebung zu erwarten ist.
+
+Nach Ablauf des Rückgängig-Zeitfensters werden die Originaldaten gelöscht, und die Migration ist endgültig.
+
+## Nach der Migration
+
+Bereits geöffnete Sitzungen lesen weiter die Kopie, mit der sie gestartet sind, bis sie enden. Insbesondere eine langlebige Panel-Anwendungssitzung liefert weiter die alten Daten, bis sie neu gestartet wird. Starten Sie langlaufende Sitzungen nach einer Migration neu, damit sie Lakehouse v2 verwenden.
+
+## Verwandte Themen
+
+- [Lakehouse-Verwaltung](/de/reference/expressions/lakehouse-v2/lakehouse-management/)
+- [Ein Projekt an ein externes Lakehouse binden](/de/guides/connections/external-lakehouse/)
+- [Datentyp Vector](/de/guides/data/vector-data-type/)

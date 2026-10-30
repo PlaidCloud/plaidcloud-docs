@@ -1,0 +1,139 @@
+---
+title: Wczytywanie, przekształcanie i publikowanie danych
+description: Samouczek od początku do końca — zaimportuj plik CSV, wyczyść go krokami tabel i opublikuj wynik dla dalszych odbiorców.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ten samouczek zajmuje około godziny. Na koniec będziesz mieć działający przepływ pracy, który importuje plik CSV, przekształca go kilkoma krokami tabel i publikuje wynik.
+
+## Co zbudujesz
+
+Przepływ pracy, który bierze surowy plik CSV ze sprzedażą, czyści go, łączy z tabelą referencyjną produktów, oblicza kolumny pochodne i publikuje wynik jako czystą tabelę faktów.
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud ([rozpocznij bezpłatny okres próbny](https://app.plaidcloud.com), jeśli go nie masz)
+- Projekt, w którym będziesz pracować (w razie potrzeby utwórz go na karcie **Projekty**)
+- Dwa pliki CSV do zaimportowania — w tym samouczku użyjemy prostego pliku z transakcjami sprzedaży i pliku z katalogiem produktów. Możesz użyć własnych lub wygenerować przykładowe dane dowolnym arkuszem kalkulacyjnym
+
+## Krok 1: Utwórz przepływ pracy
+
+<Steps>
+
+1. Otwórz swój projekt i przełącz się na kartę **Przepływy pracy**.
+2. Kliknij **Nowy przepływ pracy**. Nadaj mu opisową nazwę, np. „Sales Cleanup”.
+3. Kliknij **Utwórz**. Pusty przepływ pracy pojawi się na Twojej liście.
+4. Kliknij dwukrotnie przepływ pracy, aby otworzyć Eksplorator przepływów pracy.
+
+</Steps>
+
+## Krok 2: Zaimportuj plik CSV ze sprzedażą
+
+<Steps>
+
+1. W Eksploratorze przepływów pracy dodaj nowy krok.
+2. Wybierz **Import → CSV** (lub inny krok importu pasujący do formatu Twojego źródła).
+3. W konfiguracji kroku:
+   - **Plik źródłowy** — wskaż swój plik CSV ze sprzedażą (prześlij go lub wybierz z podłączonego konta dokumentów)
+   - **Tabela docelowa** — nadaj jej nazwę `sales_raw`
+   - **Separator, znak cudzysłowu, wiersz nagłówka** — dostosuj, jeśli plik jest niestandardowy
+4. Uruchom krok. Plik CSV zostanie wczytany jako nowa tabela w Twoim projekcie.
+
+</Steps>
+
+Sprawdź kartę **Tabele**, aby zobaczyć `sales_raw`. Wejdź w nią, aby sprawdzić, czy dane wyglądają poprawnie — liczba kolumn, przykładowe wiersze, typy danych.
+
+## Krok 3: Zaimportuj katalog produktów
+
+Powtórz krok 2 z plikiem CSV produktów, wskazując tabelę o nazwie `products_raw`. Dzięki temu masz obie tabele referencyjne potrzebne do złączenia.
+
+## Krok 4: Odfiltruj błędne wiersze
+
+Rzeczywiste dane sprzedażowe mają luki — puste kwoty, transakcje testowe, zwroty, których nie chcesz w głównej tabeli faktów. Dodaj krok filtrujący, aby je usunąć.
+
+<Steps>
+
+1. Dodaj krok **Tables → Table Lookup** (lub dowolną transformację tabeli, która pozwala filtrować).
+2. Skonfiguruj:
+   - **Tabela źródłowa**: `sales_raw`
+   - **Tabela docelowa**: `sales_clean`
+   - **Warunki filtrowania**: np. `amount > 0 AND status = 'completed'`
+3. Uruchom krok. `sales_clean` powinna mieć mniej wierszy niż `sales_raw`.
+
+</Steps>
+
+<Aside>
+Filtry są stosowane w trakcie przepływu danych ze źródła do celu. Tabela źródłowa pozostaje bez zmian. To podstawowy wzorzec PlaidCloud — każdy krok czyta z jednego lub kilku źródeł i zapisuje do jednego lub kilku celów, pozostawiając oryginały nienaruszone na potrzeby audytu.
+</Aside>
+
+## Krok 5: Złącz z katalogiem produktów
+
+Teraz połącz oczyszczone wiersze sprzedaży ze szczegółami produktów z katalogu.
+
+<Steps>
+
+1. Dodaj krok **Tables → Table Inner Join**.
+2. Skonfiguruj:
+   - **Tabela lewa**: `sales_clean`
+   - **Tabela prawa**: `products_raw`
+   - **Klucze złączenia**: kolumna łącząca obie tabele (np. `product_id`)
+   - **Tabela docelowa**: `sales_enriched`
+3. Uruchom krok.
+
+</Steps>
+
+`sales_enriched` ma teraz wszystkie kolumny z obu tabel. Prawdopodobnie potrzebujesz podzbioru — to następny etap.
+
+## Krok 6: Wybierz i oblicz kolumny
+
+Czyszczenie zwykle oznacza usunięcie niepotrzebnych kolumn i obliczenie pochodnych. Dodaj kolejny krok tabeli:
+
+<Steps>
+
+1. Dodaj krok **Tables → Table Lookup** (używany tu do wyboru i obliczania kolumn).
+2. Skonfiguruj:
+   - **Źródło**: `sales_enriched`
+   - **Cel**: `sales_final`
+   - **Kolumny do zachowania**: podzbiór istotny dla dalszych odbiorców
+   - **Kolumny obliczane**: np. `revenue = amount * price`, `margin = revenue - cost`
+3. Uruchom krok.
+
+</Steps>
+
+Obliczenia na poziomie kolumn opisuje [dokumentacja referencyjna wyrażeń](/pl/reference/expressions/), która obejmuje każdą dostępną funkcję — operacje na ciągach znaków, arytmetykę dat, logikę warunkową, agregacje.
+
+## Krok 7: Opublikuj wynik
+
+Udostępnij `sales_final` pulpitom i systemom dalszym.
+
+<Steps>
+
+1. Dodaj krok **Data → Publish** (lub użyj opcji **Opublikuj** bezpośrednio na tabeli).
+2. Skonfiguruj, kto może czytać opublikowaną tabelę — zwykle pozostali członkowie obszaru roboczego oraz wszelkie systemy zewnętrzne, które mają dostęp.
+3. Uruchom krok.
+
+</Steps>
+
+Opublikowana tabela jest teraz dostępna dla [pulpitów](/pl/guides/dashboards/), narzędzi BI i każdego zewnętrznego odbiorcy z odpowiednimi uprawnieniami.
+
+## Krok 8: Uruchom cały przepływ pracy
+
+Kliknij **Uruchom** dla przepływu pracy (nie tylko jednego kroku). Obserwuj dziennik, gdy każdy krok wykonuje się po kolei. Cały potok działa od importu pliku CSV aż do publikacji.
+
+Jeśli któryś krok zgłosi błąd, debugowanie opisuje przewodnik [Zarządzanie błędami kroków](/pl/guides/workflows/managing-step-errors/) — najczęstsze problemy to błędne klucze złączenia (niezgodność między tabelami) i nieoczekiwane wartości puste w kolumnach obliczanych.
+
+## Co dalej
+
+- [Tworzenie modelu alokacji](/pl/get-started/tutorials/build-an-allocation/) — rozdziel koszty między odbiorców, używając danych sterujących
+- [Przewodnik po przepływach pracy](/pl/guides/workflows/) — obsługa błędów, warunki, pętle, zmienne
+- [Dokumentacja referencyjna kroków przepływu pracy](/pl/reference/workflow-steps/) — każdy typ kroku i jego działanie

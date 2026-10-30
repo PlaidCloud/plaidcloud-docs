@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entryステップ"
+description: ヘッダーテーブルと明細テーブルから、Submit_Accounting_Journal SOAP操作を通じてWorkday Financialsに会計仕訳を転記します。プレビューモードでは、転記前にすべての仕訳を検証します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Workday Financials接続](/ja/guides/connections/workday-financials/)を通じて、PlaidCloudの共有ERP書き込みパイプライン経由で、Workday Financialsに会計仕訳を転記します。このステップは、ヘッダーテーブル（仕訳ごとに1行）と明細テーブル（仕訳ごとに1行以上の借方／貸方の行）を受け取り、仕訳ごとにWorkdayの `Submit_Accounting_Journal` SOAP操作を呼び出します。**Validate Only** は、元帳の確保も転記も行わずに、すべての仕訳を作成してチェックします。オプションの結果テーブルには、各仕訳の結果が記録されます。
+
+<Aside type="caution">
+このステップに、無人でのライブ仕訳の転記を任せる前に、すべてのバッチをまず **Validate Only** で実行し、結果テーブルを確認し、いくつかの転記をWorkdayで直接照合してください。
+</Aside>
+
+## 設定
+
+### 接続
+
+- **Workday接続** — 転記に使用するWorkday Financials接続。
+
+### データ
+
+- **ヘッダーテーブル** — 仕訳ごとに1行: `journal_id`（仕訳の識別子、必須）、`company`（必須）、`ledger`（必須）、`accounting_date`、`memo`。
+- **明細テーブル** — `journal_id` ごとに1行以上: `ledger_account`、`debit`、`credit`、および仕訳に必要なワークタグ（コストセンター、プロジェクト）の列。
+- **結果テーブル** — 出力テーブルのID: 仕訳ごとに1行で、`journal_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message` を持ちます。
+- **Validate Only** — デフォルトでオンです。事前チェックのみで、元帳の確保も転記も行いません。このフィールドをまったく含まないステップ設定（たとえば、REST API、MCP、ワークフローバンドルのインポートで作成されたもの）も、ライブでの転記ではなく、Validate Onlyがデフォルトになります。
+- **Continue On Error** — デフォルトでオンです。1つの仕訳が失敗した後も、残りの仕訳の転記を続けます。オフにすると、最初の失敗でバッチを停止します。
+
+## 転記の仕組み
+
+PlaidCloudは、仕訳ごとに `Submit_Accounting_Journal` を呼び出し、Workdayのビジネスプロセスのステータスが終了状態になるまでポーリングします。これは、仕訳が実際に転記される前に、Submit Accounting Journalのビジネスプロセスが承認ステップを経由する場合があるためです。仕訳が `posted` として報告されるのは、その終了状態が**確認済み**になった場合だけです。送信されたものの承認待ちで止まっている仕訳は、送信が受け付けられたというだけで成功として記録されることなく、隔離されたままになります（転記済みとは報告されず、黙って破棄されることもありません）。
+
+## 転記済みの仕訳の修正
+
+このステップは、転記済みの仕訳を削除したり書き換えたりすることはありません。修正するには、元の仕訳を直接編集するのではなく、元の仕訳に対して借方と貸方を入れ替えた新しい仕訳（転記済みの反対仕訳）を転記します。
+
+## 機能の制限
+
+| 制限 | 意味 |
+|---|---|| ビジネスプロセスの承認によって遅延が発生する | 承認ステップを経由する仕訳は、Workdayで承認されるまで `pending` のままになります。終了状態のポーリングは、その間待機します。 |
+| 取消は新しい仕訳であり、その場での編集ではない | 修正は、借方と貸方を入れ替えた新しい反対仕訳として転記されます。転記済みの仕訳を無効にしたり削除したりすることはできません。 |
+
+## 関連項目
+
+- [Workday Financialsへの接続](/ja/guides/connections/workday-financials/) — 設定、プレビュー、転記までを網羅した解説
+- [Workday Financialsコネクタ](/ja/reference/connectors/rest/workday-financials/)
+- [Workday Financialsのステップ](/ja/reference/workflow-steps/workday-financials/)
+- [ERP転記履歴のレビュー](/ja/guides/connections/erp-post-history/)

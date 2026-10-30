@@ -1,0 +1,138 @@
+---
+title: Geometry in SQL
+description: ポータブルなgeom_*式関数と、ポイントジオメトリの作成や距離の測定のためのレシピです。すべてデータベース内で実行されます。
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/spatial/spatial-sql-recipes.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+すべての地理空間操作に専用のステップが必要なわけではありません。単一行の列式で表現できる処理は、[Table Extract](/ja/reference/workflow-steps/tables/table-extract/)ステップの式セルとして、行がウェアハウスの外に出ることなくデータベース内で実行されます。そのため、ワークフローエンジンではなくテーブルの規模に合わせてスケールします。[Alteryxの変換](/ja/guides/workflows/migrate-spatial-alteryx-workflows/)では、Alteryxの*Create Points*ツールと*Distance*ツールにこの方法が選ばれます。
+
+## ポータブルなジオメトリ関数
+
+Lakehouse v1とv2では、ジオメトリ関数の名称が異なります。たとえば、`ST_MAKEGEOMPOINT`に対して`ST_POINT`、`ST_ASWKT`に対して`ST_ASTEXT`です。`geom_*`ファミリーは、実行しているワークスペースに合った関数に解決されるため、1回書いた式が両方で動作します。
+
+| 式 | Lakehouse v1 | Lakehouse v2 |
+|---|---|---|
+| `func.geom_from_wkt(x)` | `ST_GEOMETRYFROMWKT` | `ST_GEOMETRYFROMTEXT` |
+| `func.geom_point(lon, lat)` | `ST_MAKEGEOMPOINT` | `ST_POINT` |
+| `func.geom_as_wkt(g)` | `ST_ASWKT` | `ST_ASTEXT` |
+| `func.geom_contains(a, b)` | `ST_CONTAINS` | `ST_CONTAINS` |
+| `func.geom_within(a, b)` | `ST_WITHIN` | `ST_CONTAINS`（引数を入れ替え） |
+| `func.geom_x(g)` | `ST_X` | `ST_X` |
+| `func.geom_y(g)` | `ST_Y` | `ST_Y` |
+
+<Aside type="note" title="すべてがポータブルなわけではありません">
+  `geom_area`、`geom_length`、`geom_intersects`、`geom_centroid`、
+  `geom_distance`、`geom_createline`、および外接矩形の端
+  （`st_xmin`/`st_xmax`/`st_ymin`/`st_ymax`）はLakehouse v1にのみ存在します。
+  StarRocksには同等の関数がありません。v2ワークスペースでは、誤った結果を
+  返すのではなく、式のコンパイル時に関数名を示すメッセージとともに失敗します。
+  これらの測定値には、代わりに
+  [地理空間ステップ](/ja/reference/workflow-steps/spatial/)を使用してください。
+  これらのステップはワークフローエンジンで実行され、どのウェアハウスでも同じ結果になります。
+</Aside>
+
+## ポイントの作成
+
+経度の列と緯度の列からWKTポイントを作成します。
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+`geom_as_wkt`は結果をWKTとして書き込みます。これは、PlaidCloudのすべての空間ステップが読み書きする形式です。
+
+<Aside type="caution" title="10進度または整数の経度・緯度">
+  これは、通常の10進度の座標、および1,000,000倍した整数の座標
+  （Create Pointsが元の値に戻します）に対しては正確です。
+  投影座標系の座標は、まずWGS84の経度・緯度に再投影する必要があります。
+  そのまま使ってポイントを作成すると、投影されていないジオメトリになります。
+</Aside>
+
+## 2点間の距離
+
+距離は、ここで扱う操作の中で唯一、**ポータブルな記述がない**ものです。2つのLakehouseでは、関数と戻り値の単位の両方が異なるため、式はバージョンによって異なります。
+
+<Aside type="caution" title="ワークスペースに合った形式を選択してください">
+  `ST_DISTANCE_SPHERE`はLakehouse v2にのみ、`geom_distance`はLakehouse v1にのみ存在します。
+  どちらも他方に置き換えて動作することはありません。両方で動作する1つのステップが必要な場合は、
+  [Spatial Find Nearestステップ](/ja/reference/workflow-steps/spatial/spatial-find-nearest/)を使用してください。
+  実行されるワークスペースに合った式が選ばれます。
+</Aside>
+
+### Lakehouse v2
+
+`ST_DISTANCE_SPHERE`は4つの座標を受け取り、**メートル**で返します。
+
+```python
+case(
+    (
+        and_(
+            get_column(table, 'Origin').like('POINT%'),
+            get_column(table, 'Destination').like('POINT%'),
+        ),
+        func.st_distance_sphere(
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Origin'))),
+            func.geom_x(func.geom_from_wkt(get_column(table, 'Destination'))),
+            func.geom_y(func.geom_from_wkt(get_column(table, 'Destination'))),
+        ) * 0.0006213711922373339,
+    ),
+    else_=null,
+)
+```
+
+| 単位 | メートルからの係数 |
+|---|---|
+| マイル | `0.0006213711922373339` |
+| キロメートル | `0.001` |
+| メートル | `1` |
+| フィート | `3.280839895013123` |
+
+### Lakehouse v1
+
+`geom_distance`は2つのジオメトリ間の**平面**距離を**度**で返すため、係数はメートルではなく度からの換算になります。
+
+```python
+func.geom_distance(
+    func.geom_from_wkt(get_column(table, 'Origin')),
+    func.geom_from_wkt(get_column(table, 'Destination')),
+) * 69.1709
+```
+
+| 単位 | 度からの係数 |
+|---|---|
+| マイル | `69.1709` |
+| キロメートル | `111.32` |
+| メートル | `111320.0` |
+| フィート | `364566.929` |
+
+平面距離であるため、これは赤道から離れるほど精度が下がる近似値です。商圏分析で一般的な局所的な距離であれば問題ありませんが、大陸をまたぐ距離には向きません。
+
+v2の式にある`LIKE 'POINT%'`のガードは重要です。`ST_DISTANCE_SPHERE`は4つの座標を受け取るため、どちらかの側にポイント以外のジオメトリがあると、誤ったものを黙って測定してしまいます。`CASE`は、そのような行にはnullを返します。
+
+## 代わりにステップを使用する場合
+
+| 目的 | 使用するもの |
+|---|---|
+| 各行から別のテーブルの*最も近い*行までの距離 | [Spatial Find Nearestステップ](/ja/reference/workflow-steps/spatial/spatial-find-nearest/) |
+| 空間結合のフィルターとしての距離 | [空間照合](/ja/reference/workflow-steps/spatial/spatial-match/) |
+| 面積、長さ、重心、外接矩形 | [Spatial Infoステップ](/ja/reference/workflow-steps/spatial/spatial-info/) |
+| ジオメトリの形状を変更する処理すべて | [地理空間ステップ](/ja/reference/workflow-steps/spatial/) |
+
+## 関連情報
+
+- [地理空間ステップ](/ja/reference/workflow-steps/spatial/)
+- [ジオメトリ関数（Lakehouse v1）](/ja/reference/expressions/lakehouse-v1/09-geometry-functions/)
+- [ジオグラフィ関数（Lakehouse v1）](/ja/reference/expressions/lakehouse-v1/09-geo-functions/) — H3とジオハッシュのインデックス
+- [空間関数（Lakehouse v2）](/ja/reference/expressions/lakehouse-v2/17-spatial-functions/)

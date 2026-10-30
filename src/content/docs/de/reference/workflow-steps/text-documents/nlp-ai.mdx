@@ -1,0 +1,60 @@
+---
+title: Text NLP AI
+description: Führt pro Zeile eine LLM-gestützte Aufgabe aus — Entitätsextraktion, Wortartenkennzeichnung, Zusammenfassung, Zero-Shot-Klassifizierung, Schlüssel-Wert-Extraktion oder ein eigener Prompt.
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## Beschreibung
+
+Der Schritt **Text NLP AI** führt eine von sieben Aufgaben pro Zeile über Ihre Daten aus, jeweils als Stapel strukturierter LLM-Aufrufe (erzwungene Tool-Nutzung): **Erkennung benannter Entitäten**, **POS-Tagging**, **Zusammenfassung**, **Zero-Shot-Klassifizierung**, **Schlüssel-Wert-Extraktion**, **Prompt** und **Embedding**. Er läuft als verwalteter PlaidCloud-Job (wie [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) und der [LLM-Schritt](/de/reference/workflow-steps/general/llm-step/)), sodass er nicht mit dem Rest des Workflows um Ressourcen konkurriert.
+
+Da jede Aufgabe ein echter LLM-Aufruf ist, sind die Ergebnisse zwischen Ausführungen nicht Bit für Bit reproduzierbar — siehe [Nichtdeterminismus](#nichtdeterminismus-ergebnisse-aus-llm-aufrufen).
+
+## Konfiguration
+
+- **Quelle / Ausgabetabellen** — die Eingabetabelle und die Tabelle, in die die Ergebnisse geschrieben werden.
+- **Textspalte** (`field`) — die Spalte, die jede Aufgabe liest.
+- **Aufgabe** (`task`) — eine von `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. Die Aufgabe `embed` steht nicht in der Aufgabenliste des Formulars; legen Sie sie mit einem KI-Assistenten oder der REST-API fest.
+- **Sprache** (`language`) — die Sprache des Texts, die an das Modell übergeben wird. Standard ist `en`.
+- **LLM-Verbindung** (`llm_connection_id`) — eine LLM-Verbindung für Anthropic, OpenAI, Gemini, Azure OpenAI, Grok oder GitHub Models. Lassen Sie sie leer, um den Standard des Workspace zu verwenden.
+- **Modell** (`llm_model`) — lassen Sie es leer, um das Standardmodell der Verbindung zu verwenden.
+- **Temperatur** (`temperature`) — optionale Sampling-Temperatur. Siehe [Nichtdeterminismus](#nichtdeterminismus-ergebnisse-aus-llm-aufrufen): aktuelle Modellgenerationen ignorieren sie.
+- **Max. Zeilen** (`max_rows`) — beantwortet nur die ersten N Zeilen in Quellreihenfolge. Die übrigen behalten eine leere Antwort. Lassen Sie das Feld leer für jede Zeile.
+- **Stapelgröße** (`batch_size`) — pro LLM-Aufruf gesendete Zeilen, 1 bis 500. Standard ist 25. Ein Stapel, dessen Antwort abgeschnitten wird, wird halbiert und erneut versucht, statt Zeilen zu verlieren.
+
+## Aufgaben
+
+Vier Aufgaben liefern pro Eingabezeile eine Ausgabezeile (**zeilenerhaltend**); drei liefern pro Eingabezeile null oder mehr Zeilen und übertragen die Kennungsspalten der Quelle (`id_columns`) auf jede davon (**zeilenaufspaltend**).
+
+| Aufgabe | Auffächerung | Ausgabespalten | Aufgabenspezifische Felder |
+| --- | --- | --- | --- |
+| Erkennung benannter Entitäten (`ner`) | Zeilenaufspaltend | `entity_text`, `entity_type` | **Entitätstypen** (`entity_types`) — die Liste der zulässigen Typen. Standardmäßig `people`, `organizations`, `locations`, `dates`, `quantities`, wenn leer gelassen. |
+| POS-Tagger (`pos`) | Zeilenaufspaltend | `token`, `pos` (universelles POS-Tag, zum Beispiel `NOUN`, `VERB`, `ADJ`) | Keine. |
+| Zusammenfassung (`summary`) | Zeilenerhaltend | `summary` | **Summary Length** (`summary_length`) — maximale Satzanzahl, 1 bis 20. Standard ist 3. |
+| Zero-Shot-Klassifizierung (`zeroshot`) | Zeilenerhaltend | `label`, `score` (0 bis 1) | **Bezeichnungsfeld** (`label_field`) — die Quellspalte mit den Kandidatenbezeichnungen jeder Zeile; ohne sie hat das Modell nichts zur Auswahl. **Multi-Label** (`multi`) — erlaubt mehr als eine Bezeichnung pro Zeile (verbunden mit `, `), statt nur die beste auszuwählen. |
+| Prompt (`prompt`) | Zeilenerhaltend | `answer`, `error` | **Prompt** (`prompt`) — die Anweisung, die auf jede Zeile angewendet wird, erforderlich. **Eingabefelder** (`input_fields`) — die Spalten, die zusammen mit dem Prompt als ein Datensatz pro Zeile an das Modell gesendet werden; leer sendet die **Textspalte**. |
+| Embedding (`embed`) | Zeilenerhaltend | `embedding` (ein JSON-Array von Zahlen), `error` | Keine. Festlegung mit einem KI-Assistenten oder der REST-API. Erfordert eine OpenAI-kompatible oder eine Azure-OpenAI-Verbindung, und das **Modell** des Schritts muss ein Embedding-Modell benennen, da das Standardmodell der Verbindung meist ein Chat-Modell ist; eine Anthropic-Verbindung wird abgelehnt, weil sie keine Embeddings-API hat. Eine fehlgeschlagene Anfrage behält jede Zeile ihres Stapels, mit leerem `embedding` und dem Grund in `error`. |
+| Schlüssel-Wert-Paare (`keyvalue`) | Zeilenaufspaltend | `key`, `value` | **Schlüsselfeld** (`key_field`) — die Quellspalte mit den Kandidatenschlüsseln jeder Zeile, die extrahiert werden sollen; leer lassen, damit das Modell Schlüssel frei findet. **Fuzzy** (`fuzzy`) — gleicht Kandidatenschlüssel unscharf statt exakt ab. |
+
+**ID-Spalten** (`id_columns`) übertragen Kennungsspalten aus der Quelltabelle auf jede Ausgabezeile einer zeilenaufspaltenden Aufgabe, sodass Sie eine extrahierte Entität oder ein extrahiertes Paar bis zum Quelldatensatz zurückverfolgen können. Eine ID-Spalte darf nicht denselben Namen wie eine der eigenen Ausgabespalten der Aufgabe haben: Eine ID-Spalte mit dem Namen `entity_type` bei einer `ner`-Aufgabe wird beispielsweise beim Speichern des Schritts abgelehnt, mit *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+Die Spalte `error` enthält die Meldung des Aufrufs, der für diese Zeile fehlgeschlagen ist. Die Prompt-Aufgabe dient für jede zeilenweise Frage, die die anderen Aufgaben nicht abdecken, etwa *Classify the sentiment of this review.* Feldwerte werden als Daten gesendet, nie als Anweisungen an das Modell.
+
+Bei der Prompt-Aufgabe benennt **Dokumentspalte** (`content_field`) eine Spalte, die das Dokument jeder Zeile als Base64 enthält. Der Schritt sendet dann ein Dokument pro Aufruf. Das Dokument geht als Bild oder PDF an den Anbieter, wenn der Anbieter diesen Typ und diese Größe akzeptiert. Andernfalls sendet der Schritt den Text in der **Text-Ersatzspalte** (`text_fallback_field`), etwa OCR-Text. Ganze Dokumente verlassen PlaidCloud in Richtung des Anbieters, prüfen Sie daher, ob das für Ihre Daten zulässig ist. Zeilen werden einzeln gesendet, daher wird die **Stapelgröße** ignoriert. Schlägt ein Stapel fehl, bleiben seine Zeilen mit leerer `answer` erhalten, und der Schritt gibt eine Warnung aus.
+
+Das Speichern wird außerdem abgelehnt ohne Quelltabelle (*Source table is required.*) oder mit einer **Stapelgröße** oder **Summary Length** außerhalb der oben genannten Bereiche.
+
+## Nichtdeterminismus (Ergebnisse aus LLM-Aufrufen)
+
+Jede Aufgabe ist ein echter Aufruf an ein LLM, daher können die Ergebnisse zwischen Ausführungen selbst bei identischer Eingabe abweichen — es gibt keine Bit-für-Bit-Garantie, und das ist zu erwarten und kein Fehler.
+
+**Temperatur** bringt eine weitere Besonderheit mit sich: Aktuelle Modellgenerationen (Opus 4.7+, Sonnet 5+, Fable) lehnen eine explizite Sampling-Temperatur grundsätzlich ab. Wenn Sie eine festlegen, versucht der Schritt sie einmal; die erste Ablehnung wird erkannt, die Ausführung fällt für die übrigen Stapel auf den eigenen Server-Standard des Modells zurück, und das Ergebnis des Schritts enthält einen einmaligen Hinweis, statt fehlzuschlagen. Wenn Sie Temperatur leer lassen (der Standard), entfällt dieser Umweg ganz, und das ist bei aktuellen Modellen die empfohlene Einstellung.
+
+## Verwandte Themen
+
+- [ML: Modell trainieren](/de/reference/workflow-steps/machine-learning/ml-train/) — ein Modell anpassen, statt pro Zeile ein LLM aufzurufen.
+- [LLM-Schritt](/de/reference/workflow-steps/general/llm-step/) — ein freier agentischer LLM-Aufruf mit begrenztem Lese-/Schreibzugriff auf das Projekt, statt dieser festen Aufgaben pro Zeile.
+- [Alteryx-Konvertierungsmatrix](/de/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification und Key/Value Pairs werden alle in diesen Schritt konvertiert.
+- [Savant-Analysen migrieren](/de/guides/workflows/migrate-savant-analyses/) — Savant-Infer- und Vision-Agenten werden in die Prompt-Aufgabe konvertiert.

@@ -1,0 +1,101 @@
+---
+title: Claude Code
+description: Richten Sie Claude Code (CLI, VSCode-Erweiterung, JetBrains-Plugin) so ein, dass es die MCP-Werkzeuge von PlaidCloud entweder über OAuth oder mit einem statischen Bearer-Token aufruft.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/claude-code.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+[Claude Code](https://claude.com/claude-code) ist der Coding-Agent von Anthropic. Er wird als CLI, als VSCode-Erweiterung und als JetBrains-Plugin angeboten – alle drei verwenden dieselbe MCP-Konfiguration.
+
+## Option A – OAuth (empfohlen)
+
+OAuth ist der wartungsärmste Weg. Die MCP-Bridge von Claude Code übernimmt die Browser-Weiterleitung und die Aktualisierung transparent.
+
+1. Fügen Sie den Server im Stammverzeichnis Ihres Projekts hinzu. Die CLI-Form:
+
+    ```bash
+    claude mcp add --transport http plaidcloud https://<your-workspace>.plaid.cloud/mcp
+    ```
+
+    Oder in `.mcp.json` im Projektstamm:
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp"
+        }
+      }
+    }
+    ```
+
+2. Starten Sie Claude Code neu. Wenn Sie es das erste Mal bitten, ein `plaidcloud_`-Werkzeug zu verwenden, blendet die Bridge eine Autorisierungs-URL ein. Öffnen Sie sie, melden Sie sich bei PlaidCloud an, und Sie gelangen zu einer Seite **Anfrage für Anwendungszugriff**, auf der die anfragende Anwendung und die Weiterleitungs-URI genannt werden, an die die Anmeldedaten gesendet werden – prüfen Sie vor der Genehmigung, ob diese mit Claude Code übereinstimmen. Genehmigen Sie die Anfrage und fügen Sie dann die Callback-URL ein, nach der Claude Code gefragt hat. Das Token wird lokal zwischengespeichert und automatisch aktualisiert; Sie sehen diese Seite erst wieder, wenn das Aktualisierungs-Token abläuft oder widerrufen wird.
+
+3. Prüfen Sie mit `claude mcp list` (CLI) oder `/mcp` (in der Sitzung). Der Server sollte als verbunden angezeigt werden.
+
+<Aside>Der Zustand der OAuth-Bridge kann gelegentlich bei Remote- oder SSH-Sitzungen hängen bleiben, in denen Claude Code `localhost` nicht von Ihrem Browser aus erreichen kann. Wenn das passiert, weichen Sie auf Option B aus.</Aside>
+
+## Option B – Statisches Bearer-Token
+
+Wenn OAuth nicht praktikabel ist (Remote-Sitzungen, Devcontainer, Agent-Laufzeitumgebungen, die Browser-Weiterleitungen nicht überstehen), verwenden Sie ein Bearer-Token:
+
+1. Öffnen Sie in einem Browser-Tab, in dem Sie bei PlaidCloud angemeldet sind:
+
+    ```
+    https://<your-workspace>.plaid.cloud/mcp/setup/token
+    ```
+
+    Klicken Sie auf „Copy snippet“.
+
+2. Fügen Sie es in die `.mcp.json` Ihres Projekts unter `mcpServers` ein:
+
+    ```json
+    {
+      "mcpServers": {
+        "plaidcloud": {
+          "type": "http",
+          "url": "https://<your-workspace>.plaid.cloud/mcp",
+          "headers": {
+            "Authorization": "Bearer eyJhbGc…"
+          }
+        }
+      }
+    }
+    ```
+
+    Oder über die CLI:
+
+    ```bash
+    claude mcp add --transport http plaidcloud \
+      https://<your-workspace>.plaid.cloud/mcp \
+      -H "Authorization: Bearer eyJhbGc…"
+    ```
+
+3. Starten Sie Claude Code neu. `claude mcp list` sollte den Server als verbunden anzeigen.
+
+Wenn das Token abläuft, laden Sie die URL `/mcp/setup/token` neu und ersetzen Sie den Wert von `Authorization`.
+
+## Einrichtung mit mehreren Tenants
+
+Sie können mehrere PlaidCloud-Tenants nebeneinander konfigurieren – geben Sie jedem einen eigenen Namen:
+
+```json
+{
+  "mcpServers": {
+    "plaidcloud-prod":  { "type": "http", "url": "https://prod.plaid.cloud/mcp" },
+    "plaidcloud-dev":   { "type": "http", "url": "https://dev.plaid.cloud/mcp"  }
+  }
+}
+```
+
+Wenn Sie Claude Code etwas aufgeben, nennen Sie den Tenant in Ihrem Prompt („suche im Dev-Tenant Projekte, deren Name mit `Q4` beginnt“), damit es den richtigen Server wählt.
+
+## Tipps
+
+- Führen Sie `mcp_introspect` früh in einer Sitzung aus, damit Claude Code die Werkzeugoberfläche versteht, ohne bei jedem Aufruf das vollständige Manifest erneut zu lesen.
+- Verändernde Werkzeuge (`*_upsert`, `*_organize`, `*_run`) akzeptieren `dry_run=True` – nützlich, wenn Sie einen Agent Änderungen per Skript ausführen lassen und zuerst einen Plan zur Prüfung haben möchten.
+- Bevorzugen Sie bei lang laufenden Vorgängen (Workflow-Ausführungen, Abfrageexporte) die Werkzeuge `*_track` / `*_status` statt Polling-Schleifen – sie sind die einzige maßgebliche Quelle und verhindern, dass der Kontext des Agents überflutet wird.

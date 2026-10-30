@@ -1,0 +1,132 @@
+---
+title: Se connecter à Business Central
+description: Connectez PlaidCloud à Microsoft Dynamics 365 Business Central avec les identifiants client Azure AD, récupérez des entités OData avec l'étape d'importation prête à l'emploi et comptabilisez des lignes de journal général.
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à l'API REST OData v2.0 standard de Business Central pour récupérer comptes, écritures comptables, clients, fournisseurs, articles et journaux sans écrire d'OData à la main, et comptabiliser en retour des lignes de journal général. Ce guide couvre la connexion, l'étape d'importation et l'étape de comptabilisation.
+
+<Aside type="caution">
+Exécutez chaque importation d'abord sur un environnement de test (sandbox), et parcourez **Preview and Validate** ci-dessous pour chaque lot à comptabiliser avant de comptabiliser en production.
+</Aside>
+
+## Prérequis
+
+Dans Azure AD et Business Central, vous avez besoin des éléments suivants :
+
+- Un **enregistrement d'application Entra ID (Azure AD)** pour PlaidCloud avec un **secret client**, disposant d'**autorisations d'API** sur Business Central (`Dynamics 365 Business Central > API.ReadWrite.All` ou l'autorisation plus restreinte que fournit votre administrateur).
+- L'**ID du locataire** Azure AD.
+- Le nom de l'**environnement Business Central** que PlaidCloud doit appeler (par exemple `Production` ou un environnement de test).
+- La **société** sur laquelle PlaidCloud lit et comptabilise : Business Central limite les lectures d'entités comme les comptabilisations de journaux à une seule société à la fois.
+
+<Aside type="note">
+La connexion s'authentifie en tant qu'application et non en tant qu'utilisateur : flux d'**identifiants client (S2S)** d'Entra ID, le même mécanisme OAuth2 d'identifiants client que PlaidCloud utilise pour d'autres connexions REST Microsoft. Il n'y a aucune connexion interactive.
+</Aside>
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Business Central** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom convivial, par exemple `BC Prod`. |
+   | ID client | L'ID d'application (client) de l'enregistrement d'application Entra. |
+   | Secret client | Le secret client de l'enregistrement d'application. |
+   | ID du locataire | L'ID de votre locataire Azure AD. |
+   | Environnement | Le nom de l'environnement Business Central, par exemple `Production`. |
+   | Société | L'ID de la société Business Central sur laquelle lire et comptabiliser. |
+
+4. Cliquez sur `Create`.
+
+</Steps>
+
+## Tester la connexion
+
+<Steps>
+
+1. Ajoutez une étape **Import Business Central Entity** à un workflow.
+
+2. Définissez **Connexion Business Central** sur votre connexion, **Type d'entité** sur `accounts` et **Table cible** sur une table temporaire.
+
+3. Exécutez l'étape (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Une table cible remplie confirme que le locataire, les identifiants, l'environnement et la société sont corrects. Une erreur nomme le problème : un secret client incorrect, une autorisation d'API non accordée ou un environnement ou une société erroné.
+
+## Importer des données
+
+<Steps>
+
+1. Ajoutez une étape **Import Business Central Entity** et définissez **Connexion Business Central** et **Table cible**.
+
+2. Définissez **Type d'entité** sur l'enregistrement souhaité : `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items` ou `journals`.
+
+3. Ajoutez des **Filtres** : des lignes `{field, operator, value}` combinées par AND dans le `$filter` de la requête, vérifiées par rapport à la liste autorisée des champs interrogeables de l'entité. Laissez vide pour récupérer toute l'entité.
+
+4. Exécutez l'étape et vérifiez la table cible.
+
+</Steps>
+
+<Aside type="note">
+**La société provient de la connexion, pas de l'étape.** Business Central limite chaque lecture à une seule société, et la connexion porte cette société avec l'environnement ; l'étape d'importation n'a donc ni champ de société ni champ d'environnement. Pour récupérer la même entité d'une seconde société, créez une seconde connexion Business Central qui pointe vers elle.
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` est le grand livre **en lecture seule et limité aux écritures comptabilisées** de Business Central : il n'affiche jamais une ligne encore présente dans un lot de journal non comptabilisé ; c'est donc l'entité à récupérer pour une balance de vérification ou le détail du grand livre, plutôt que d'interroger directement un journal.
+</Aside>
+
+## Comptabiliser des lignes de journal général
+
+L'étape **Business Central Post** comptabilise des lignes dans un lot de journal général **existant**, puis comptabilise ce lot.
+
+<Steps>
+
+1. Créez une **table d'en-tête** (une ligne par `journal_id`) avec le nom du lot de journal Business Central dans lequel vos lignes sont comptabilisées, ainsi que `document_number`, `posting_date` et un libellé de devise.
+
+2. Créez une **table des lignes** (une ou plusieurs lignes par `journal_id`) avec un `amount` signé (positif pour un débit, négatif pour un crédit), `account_id` ou `account_number`, `account_type` et `description`.
+
+3. Ajoutez une étape **Business Central Post**, puis définissez **Connexion Business Central**, **Environnement**, **Table d'en-tête**, **Table des lignes** et une **Table de résultat**.
+
+4. Laissez **Validate Only** coché et exécutez l'étape : PlaidCloud construit et contrôle chaque journal sans rien comptabiliser.
+
+5. Examinez la table de résultat (une ligne par `journal_id` : `journal_id`, `external_id`, `internal_id`, `status`, `message`). Corrigez toute ligne `error` et validez de nouveau.
+
+6. Décochez **Validate Only** et exécutez de nouveau pour comptabiliser réellement. Laissez **Continue On Error** coché, sauf si vous voulez qu'un lot s'arrête net au premier journal en échec.
+
+</Steps>
+
+<Aside type="caution">
+**Le lot de journal nommé dans `journal_id` doit déjà exister dans Business Central** : cette étape crée des lignes à l'intérieur de ce lot, elle ne crée pas le lot elle-même. Configurez d'abord le lot de journal (nom, modèle de journal) dans Business Central, puis faites pointer `journal_id` vers lui.
+</Aside>
+
+### Fonctionnement de la comptabilisation
+
+L'action `Microsoft.NAV.post` de Business Central comptabilise le lot de journal **entier**, et pas seulement les lignes que PlaidCloud vient de créer ; avant de l'appeler, PlaidCloud relit donc le lot et refuse de comptabiliser (en enregistrant une erreur, sans rien comptabiliser) s'il contient une ligne qui ne porte pas le numéro de document de cette requête. Cette protection existe précisément pour qu'une ligne parasite laissée par un échec partiel antérieur ne soit jamais entraînée dans le grand livre par une comptabilisation sans rapport ultérieure dans le même lot.
+
+### Limites de capacités : à lire avant de comptabiliser en production
+
+<Aside type="caution">
+- **Un seul type de document en écriture.** Seule la comptabilisation de lignes de journal général est prise en charge. Le flux de documents brouillons de Business Central (factures de vente et d'achat passant de Brouillon à Comptabilisé) ne l'est pas : l'action de comptabilisation exacte de ce flux n'est pas précisée dans la documentation de Microsoft, et PlaidCloud ne devine pas un point de terminaison non vérifié pour une écriture qui déplace de l'argent.
+- **Comptabilisation dans un lot existant uniquement.** Cette étape ne crée jamais de lot de journal : créez-le d'abord dans Business Central (voir ci-dessus).
+- **Pas encore de validation en conditions réelles.** Conçue d'après le contrat OData v2.0 documenté de Business Central ; considérez le premier lot réel comme une exécution de validation et réconciliez-le directement dans Business Central.
+- **Les comptabilisations simultanées dans un même lot ne sont pas entièrement sérialisées.** La protection d'idempotence est limitée par numéro de document, et non par lot de journal : deux numéros de document différents comptabilisés en même temps dans le même lot ne sont pas garantis d'être sérialisés comme le sont deux appels portant le même numéro de document. Évitez d'exécuter des comptabilisations simultanées dans un même lot de journal.
+</Aside>
+
+## Voir aussi
+
+- [Connecteur REST Business Central](/fr/reference/connectors/rest/business-central/) : référence des champs.
+- [Import Business Central Entity](/fr/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/fr/reference/workflow-steps/business-central/business-central-post/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/) : l'enregistrement permanent de chaque tentative de comptabilisation Business Central et de son état en direct.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

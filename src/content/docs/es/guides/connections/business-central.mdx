@@ -1,0 +1,132 @@
+---
+title: Conectar con Business Central
+description: Conecte PlaidCloud con Microsoft Dynamics 365 Business Central mediante credenciales de cliente de Azure AD, extraiga entidades OData con el paso predefinido de importación y contabilice líneas del diario general.
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud con la API REST OData v2.0 estándar de Business Central para extraer cuentas, asientos del libro mayor, clientes, proveedores, artículos y diarios sin tener que escribir OData a mano, y para contabilizar de vuelta líneas del diario general. Esta guía abarca la conexión, el paso de importación y el paso de contabilización.
+
+<Aside type="caution">
+Ejecute siempre primero cada importación en un entorno de pruebas (sandbox) y, antes de contabilizar en producción, repase **Vista previa y validación**, más abajo, con cada lote de contabilización.
+</Aside>
+
+## Requisitos previos
+
+Necesita, en Azure AD y Business Central:
+
+- Un **registro de aplicación de Entra ID (Azure AD)** para PlaidCloud con un **secreto de cliente**, al que se hayan concedido **permisos de API** para Business Central (`Dynamics 365 Business Central > API.ReadWrite.All` o el permiso más restringido que emita su administrador).
+- El **ID de inquilino** de Azure AD.
+- El nombre del **entorno de Business Central** al que debe llamar PlaidCloud (por ejemplo, `Production` o un entorno de pruebas).
+- La **empresa** con la que PlaidCloud lee y contabiliza: Business Central limita tanto las lecturas de entidades como las contabilizaciones de diarios a una empresa a la vez.
+
+<Aside type="note">
+La conexión se autentica como una aplicación, no como un usuario: mediante el flujo de **credenciales de cliente (S2S)** de Entra ID, el mismo mecanismo de credenciales de cliente de OAuth2 que PlaidCloud usa con otras conexiones REST de Microsoft. No hay inicio de sesión interactivo.
+</Aside>
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **Business Central** en el menú.
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, p. ej., `BC Prod`. |
+   | ID de cliente | El ID de aplicación (cliente) del registro de aplicación de Entra. |
+   | Secreto de cliente | El secreto de cliente del registro de aplicación. |
+   | ID de inquilino | El ID de inquilino de su Azure AD. |
+   | Entorno | El nombre del entorno de Business Central, p. ej., `Production`. |
+   | Empresa | El ID de la empresa de Business Central con la que leer y contabilizar. |
+
+4. Haga clic en `Create`.
+
+</Steps>
+
+## Probar la conexión rápidamente
+
+<Steps>
+
+1. Agregue un paso **Import Business Central Entity** a un flujo de trabajo.
+
+2. Establezca **Conexión de Business Central** con su conexión, **Tipo de entidad** en `accounts` y **Tabla de destino** con una tabla de prueba.
+
+3. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Una tabla de destino con datos confirma que el inquilino, las credenciales, el entorno y la empresa son correctos. Un error indica el problema: un secreto de cliente incorrecto, un permiso de API no concedido o un entorno o empresa equivocados.
+
+## Importar datos
+
+<Steps>
+
+1. Agregue un paso **Import Business Central Entity** y establezca **Conexión de Business Central** y **Tabla de destino**.
+
+2. Establezca **Tipo de entidad** en el registro que desea: `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items` o `journals`.
+
+3. Agregue **Filtros**: filas `{field, operator, value}` combinadas con AND en el `$filter` de la solicitud y comprobadas con la lista de campos consultables permitidos de la propia entidad. Déjelo en blanco para extraer la entidad completa.
+
+4. Ejecute el paso y revise la tabla de destino.
+
+</Steps>
+
+<Aside type="note">
+**La empresa procede de la conexión, no del paso.** Business Central limita cada lectura a una empresa, y la conexión incluye esa empresa junto con el entorno, por lo que el paso de importación no tiene un campo de empresa ni de entorno. Para extraer la misma entidad de una segunda empresa, cree una segunda conexión de Business Central que apunte a ella.
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` es el libro mayor de **solo lectura y solo contabilizado** de Business Central: nunca muestra una línea que siga en un lote de diario sin contabilizar, por lo que es la entidad que conviene extraer para un balance de comprobación o el detalle del libro mayor, en lugar de consultar un diario directamente.
+</Aside>
+
+## Contabilizar líneas del diario general
+
+El paso **Business Central Post** contabiliza líneas en un lote de diario general **existente** y después contabiliza ese lote.
+
+<Steps>
+
+1. Cree una **tabla de encabezados** (una fila por `journal_id`) con el nombre del lote de diario de Business Central en el que se contabilizarán sus líneas, además de `document_number`, `posting_date` y una etiqueta de moneda.
+
+2. Cree una **tabla de líneas** (una o más filas por `journal_id`) con un `amount` con signo (positivo para un débito, negativo para un crédito), `account_id` o `account_number`, `account_type` y `description`.
+
+3. Agregue un paso **Business Central Post**, y establezca **Conexión de Business Central**, **Entorno**, **Tabla de encabezados**, **Tabla de líneas** y una **Tabla de resultados**.
+
+4. Deje marcada la opción **Validate Only** y ejecute el paso: PlaidCloud construye y comprueba cada diario sin contabilizar nada.
+
+5. Revise la tabla de resultados (una fila por `journal_id`: `journal_id`, `external_id`, `internal_id`, `status`, `message`). Corrija cualquier fila `error` y vuelva a validar.
+
+6. Desmarque **Validate Only** y ejecute de nuevo para contabilizar de verdad. Deje marcada la opción **Continue On Error** a menos que quiera que un lote se detenga en seco con el primer diario fallido.
+
+</Steps>
+
+<Aside type="caution">
+**El lote de diario indicado en `journal_id` ya debe existir en Business Central**: este paso crea líneas dentro de él, no crea el lote. Configure primero el lote de diario (nombre, plantilla de diario) en Business Central y luego apunte `journal_id` a él.
+</Aside>
+
+### Cómo funciona la contabilización
+
+La acción `Microsoft.NAV.post` de Business Central contabiliza el lote de diario **completo**, no solo las líneas que PlaidCloud acaba de crear. Por eso, antes de llamarla, PlaidCloud vuelve a leer el lote y se niega a contabilizar (registra un error y no contabiliza nada) si contiene alguna línea que no lleve el número de documento de esta solicitud. Esa protección existe precisamente para que una línea suelta que haya quedado de un fallo parcial anterior nunca se cuele en el libro mayor por una contabilización posterior e independiente en el mismo lote.
+
+### Límites de capacidad: léalos antes de contabilizar en producción
+
+<Aside type="caution">
+- **Un solo tipo de documento de escritura.** Solo se admite la contabilización de líneas del diario general. El flujo de documentos en borrador de Business Central (facturas de venta y de compra que pasan de Borrador a Contabilizado) no se admite: la acción de contabilización exacta para ese flujo no está precisada en la documentación de Microsoft, y PlaidCloud no adivina un punto de conexión sin verificar para una escritura que mueve dinero.
+- **Solo contabiliza en un lote existente.** Este paso nunca crea un lote de diario: créelo primero en Business Central (vea más arriba).
+- **Aún sin validación en producción.** Se ha creado según el contrato OData v2.0 documentado de Business Central; trate el primer lote en producción como una ejecución de validación y concílielo directamente en Business Central.
+- **Las contabilizaciones simultáneas en un mismo lote no se serializan por completo.** La protección de idempotencia se limita por número de documento, no por lote de diario: no se garantiza que dos números de documento distintos contabilizados en el mismo lote al mismo tiempo se serialicen como lo hacen dos llamadas con el mismo número de documento. Evite ejecutar contabilizaciones simultáneas en un mismo lote de diario.
+</Aside>
+
+## Temas relacionados
+
+- [Conector REST de Business Central](/es/reference/connectors/rest/business-central/): referencia de campos.
+- [Import Business Central Entity](/es/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/es/reference/workflow-steps/business-central/business-central-post/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/): el registro permanente de cada intento de contabilización en Business Central y su estado actual.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

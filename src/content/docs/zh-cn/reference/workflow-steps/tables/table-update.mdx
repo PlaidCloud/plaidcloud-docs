@@ -1,0 +1,68 @@
+---
+title: Table Update 步骤
+description: 在 PlaidCloud 工作流中更新与筛选器匹配的行，将每个源行写入目标表，未匹配的行保持不变。
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-update.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import SnippetCommonTableSourceAndTarget from '@snippets/zh-cn/common-table-source-and-target.mdx';
+
+## 说明
+
+更新与筛选器匹配的行，并将结果写入目标表。每个源行都会到达目标表：匹配筛选器的行带有新值，其他行则保持原样。目标表的行数始终等于源表的行数。
+
+筛选器选择的是哪些行被 *更改*，而不是哪些行会返回。这正是此步骤与 [Table Extract](/zh-cn/reference/workflow-steps/tables/table-extract/) 的区别：后者的筛选器会移除不匹配的行。
+
+<Aside type="note" title="此步骤不再更改源表">
+它过去会就地更新源表。现在它不会改动源表，而是写入单独的目标表，因此原始数据仍可用于比较，并且该步骤可在所有仓库上运行，包括那些不允许就地更改表的仓库。在此更改之前保存的步骤需要先选择目标表才能运行，而任何读取源表并期望看到已更新行的步骤，都必须改为指向新的目标表。
+</Aside>
+
+## 更新参数
+
+<SnippetCommonTableSourceAndTarget />
+
+目标必须是与源不同的表。此步骤会读取每个源行并将其写出，因此如果指回其自身的源，就会把结果追加到它刚读取的数据中。
+
+<Aside type="note" title="源必须是表，而不是视图">
+视图可以被选为 **目标**（在这里是不错的选择，因为视图不存储数据，每次读取时都会针对源重新计算），但不能作为 **源**：此步骤从源表自身的架构获取目标的列列表，而视图不带有该架构。
+</Aside>
+
+目标的列始终与源的列保持一致，因此无需选择。未更新的列会原样保留，包括在此步骤上次打开之后添加到源中的任何列。
+
+## 要更新的列
+
+在 **表数据选择** 选项卡上，为要更改的每一列添加一行，并且恰好设置以下其中一项：
+
+- **常量** — 固定值。
+- **表达式** — 计算，可以引用同一行的其他列。
+- **设为 Null** — 清空该列。
+
+未列出的列保持不变。
+
+如果左侧的源列没有列出某个 **更新列**，则该列会显示为红色并带有 ⚠ 警告标志，即使该行设置了 **常量**、**表达式** 或 **设为 Null** 也是如此，因为步骤是按确切名称更新该列的。保存带有此类行的步骤时，会打开 **发现过时列** 对话框，提供 **全部移除并保存**、**仍然保存** 或 **取消**。
+
+保存时还会按确切名称，针对源表的当前状态检查每个 **更新列**，无论源列列出了什么。表中没有的更新列会在 **缺少源列** 对话框中列出，因为步骤运行时会在该列上失败。源列列表本身不会与表进行核对：此步骤读取的是表的当前状态，而不是该列表。
+
+<Aside type="caution" title="表达式读取的是行的原始值">
+表达式看到的是更新 *之前* 的行，因此两列可以在单个步骤中安全地互换值。
+</Aside>
+
+## 更新的数据筛选器
+
+在 **更新的数据筛选器** 选项卡上，输入用于标识要更改的行的条件。留空则更新每一行。
+
+如果某一行的条件无法求值（最常见的原因是它所测试的列为 null），则该行被视为不匹配，并原样通过。这与数据库对同一条件的求值方式一致。
+
+## 示例
+
+在此示例中，在“Ledger Value to be allocated”中，当 Version 等于“Actual”时，将 Account 设置为 41000。具有任何其他 Version 的行会以其原始 Account 到达目标表。
+
+**表数据选择** 选项卡，将 Account 设置为常量：
+
+![Table Update 列映射](/images/table_in-place_update_1.png)
+
+**更新的数据筛选器** 选项卡，其中包含用于选出要更改的行的条件：
+
+![Table Update 数据筛选器](/images/table_in-place_table_filter.png)

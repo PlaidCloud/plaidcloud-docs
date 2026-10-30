@@ -1,0 +1,126 @@
+---
+title: AI_TO_SQL (Lakehouse v1)
+description: AI_TO_SQL — converte instruções em linguagem natural em consultas SQL com o modelo mais recente.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/01-ai-to-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Converte instruções em linguagem natural em consultas SQL com o modelo mais recente, `text-davinci-003`.
+
+O PlaidCloud Lakehouse oferece uma solução eficiente para construir consultas SQL combinando OLAP e IA. Com essa função, instruções escritas em linguagem natural podem ser convertidas em instruções de consulta SQL compatíveis com o esquema da tabela. Por exemplo, você pode fornecer à função uma frase como "Get all items that cost 10 dollars or less" como entrada e obter como saída a consulta SQL correspondente "SELECT * FROM items WHERE price &lt;= 10".
+
+Consulte a [implementação upstream](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs).
+
+<Aside>As instruções de consulta SQL geradas seguem os padrões do PostgreSQL, portanto podem exigir revisões manuais para se alinhar à sintaxe do PlaidCloud Lakehouse.</Aside>
+
+<Aside>A partir do PlaidCloud Lakehouse v1.1.47, o PlaidCloud Lakehouse oferece suporte ao [serviço Azure OpenAI](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service). Essa integração oferece maior privacidade de dados. Para usar o Azure OpenAI, adicione as seguintes configurações à seção `[query]`: ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+<Aside type="caution">O PlaidCloud Lakehouse depende do (Azure) OpenAI para `AI_TO_SQL`, mas envia ao (Azure) OpenAI apenas o esquema da tabela, não os dados. Essas funções só funcionam quando a configuração do PlaidCloud Lakehouse inclui o `openai_api_key`; caso contrário, ficam inativas. Esta função está disponível por padrão no PlaidCloud Lakehouse usando uma chave do Azure OpenAI. Ao usá-las, você reconhece que o esquema da sua tabela será enviado por nós ao Azure OpenAI.</Aside>
+
+## Sintaxe no Analyze
+
+```python
+func.ai_to_sql('<natural-language-instruction>')
+```
+
+## Exemplos no Analyze
+
+Neste exemplo, uma instrução de consulta SQL é gerada a partir de uma instrução com a função AI_TO_SQL, e a instrução resultante é executada para obter os resultados da consulta.
+
+```python
+func.ai_to_sql('List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022')
+```
+
+Uma instrução SQL é gerada pela função como saída:
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+## Sintaxe SQL
+
+```sql
+USE <your-database>;
+SELECT * FROM ai_to_sql('<natural-language-instruction>');
+```
+
+<Aside>Obtenha e configure a chave de API do OpenAI - Para obter sua chave de API do openAI, acesse https://platform.openai.com/account/api-keys e gere uma nova chave. - Configure o arquivo **databend-query.toml** com a configuração openai_api_key. ```toml [query] ... ... openai_api_key = "<your-key>" ```</Aside>
+
+## Exemplos de SQL
+
+Neste exemplo, uma instrução de consulta SQL é gerada a partir de uma instrução com a função AI_TO_SQL, e a instrução resultante é executada para obter os resultados da consulta.
+
+1. Prepare os dados.
+
+```sql
+CREATE DATABASE IF NOT EXISTS openai;
+USE openai;
+
+CREATE TABLE users(
+    id INT,
+    name VARCHAR,
+    age INT,
+    country VARCHAR
+);
+
+CREATE TABLE orders(
+    order_id INT,
+    user_id INT,
+    product_name VARCHAR,
+    price DECIMAL(10,2),
+    order_date DATE
+);
+
+-- Insert sample data into the users table
+INSERT INTO users VALUES (1, 'Alice', 31, 'USA'),
+                         (2, 'Bob', 32, 'USA'),
+                         (3, 'Charlie', 45, 'USA'),
+                         (4, 'Diana', 29, 'USA'),
+                         (5, 'Eva', 35, 'Canada');
+
+-- Insert sample data into the orders table
+INSERT INTO orders VALUES (1, 1, 'iPhone', 1000.00, '2022-03-05'),
+                          (2, 1, 'OpenAI Plus', 20.00, '2022-03-06'),
+                          (3, 2, 'OpenAI Plus', 20.00, '2022-03-07'),
+                          (4, 2, 'MacBook Pro', 2000.00, '2022-03-10'),
+                          (5, 3, 'iPad', 500.00, '2022-03-12'),
+                          (6, 3, 'AirPods', 200.00, '2022-03-14');
+```
+
+2. Execute a função AI_TO_SQL com uma instrução escrita em inglês como entrada.
+
+```sql
+SELECT * FROM ai_to_sql(
+    'List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022');
+```
+
+Uma instrução SQL é gerada pela função como saída:
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+3. Execute a instrução SQL gerada para obter os resultados da consulta.
+
+```sql
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
+```

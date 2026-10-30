@@ -1,0 +1,218 @@
+---
+title: Sage Intacct 재무 데이터 분석 — 연결부터 시산표까지
+description: Sage Intacct 엔드투엔드 튜토리얼입니다. 연결하고, Sage 가져오기 단계로 차원별 계정 잔액을 가져와 부서별 시산표와 손익계산서로 구성하고, 통계 계정으로 인당 지표를 추가한 뒤, 대시보드에 올리고 새로 고침을 예약합니다.
+sidebar:
+  label: Sage Intacct 재무 데이터 분석
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*약 40분 · 실시간 Sage Intacct 연결, 가져온 시산표, 부서별 손익계산서, 대시보드, 예약된 새로 고침*
+
+Sage Intacct를 사용하는 컨트롤러나 FP&A 분석가가 첫날 따라 할 수 있는 경로입니다. 끝까지 진행하면 Intacct에서 **차원별 계정 잔액**을 바로 가져오고, 재무제표처럼 읽을 수 있는 **부서별 시산표와 손익계산서**로 바꾸고, 대시보드에 올리고, 전체가 자동으로 새로 고쳐지도록 설정하게 됩니다. 기성 보고서를 내보내거나 수동으로 다시 입력할 필요가 없으며, 숫자는 Intacct에서 가져와 최신 상태로 유지됩니다.
+
+한 번 연결하고 한 번 가져온 다음, 정말 중요한 작업을 합니다. 원시 잔액을 월요일 아침에 비즈니스 담당자가 읽는 요약으로 구성하는 것입니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="왼쪽에서 오른쪽으로 다섯 단계가 이어집니다. Sage Intacct, 차원별 계정 잔액을 가져오는 Sage 가져오기 단계, 가져온 시산표 테이블, 그룹화하고 요약하는 Table Extract 단계, 손익계산서와 대시보드이며, 예약된 새로 고침으로 이어집니다." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage 가져오기</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">시산표 테이블</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">그룹화 &amp; 합계</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">손익계산서</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">연결하고, 잔액을 한 번 가져온 다음, 읽을 수 있는 재무제표로 구성합니다. 모든 과정은 일정에 따라 다시 실행할 수 있습니다.</figcaption>
+</figure>
+
+## 사전 요구 사항
+
+- PlaidCloud 워크스페이스와 작업할 프로젝트([필요하면 체험을 시작하세요](https://app.plaidcloud.com)).
+- **작동하는 Sage Intacct 연결.** 먼저 [Sage Intacct에 연결](/ko/guides/connections/sage-intacct/)을 따라 하십시오. Web Services가 활성화되어 있어야 하고, 읽을 개체에 대한 권한이 있는 Web Services 사용자가 있어야 하며, 연결의 자격 증명 필드 네 개인 **클라이언트 ID**, **클라이언트 시크릿**, **웹 서비스 사용자 이름**, **회사 ID**가 필요합니다. 여기서 시작하기 전에 연결이 작동하는지 확인하십시오.
+- **운영 엔터티**(보고 대상 엔터티 ID)와 손익계산서 계정(수익 및 비용)이 포함된 **계정 번호 범위**를 대략적으로 알고 있어야 합니다. 아래 예제에서는 엔터티로 `201`과 `301`을, 손익계산서 범위로 `4010`~`9999`를 사용하므로 사용자의 값으로 바꾸십시오.
+
+<Aside type="note">
+가져온 이후의 모든 작업은 클릭 방식이며 SQL이나 코드가 필요 없습니다. Intacct 전용 부분은 **Sage 가져오기** 단계 하나뿐이며, 이 단계는 날짜와 계정 범위에 대해 Intacct의 *차원별 계정 잔액*을 읽습니다. 계정과 차원 조합마다 한 행을 반환하며, 각 행에는 기초 잔액, 기간 잔액, 기말 잔액이 있습니다.
+</Aside>
+
+## 1단계: 워크플로 만들기
+
+워크플로는 데이터를 가져오고 구성하는 파이프라인입니다.
+
+<Steps>
+
+1. 프로젝트를 열고 **워크플로** 탭으로 전환합니다.
+2. **새 워크플로**를 클릭하고 `Intacct Financials`와 같은 이름을 지정한 다음 엽니다.
+
+</Steps>
+
+## 2단계: 시산표 가져오기
+
+[Sage 가져오기 단계](/ko/reference/workflow-steps/sage-intacct/import-sage/)는 날짜 범위와 계정 범위에 대한 계정 잔액을 가져오며, 선택한 차원을 모든 행에 함께 담습니다. 이것이 시산표입니다.
+
+<Steps>
+
+1. **Sage 가져오기** 단계를 추가합니다.
+
+2. 구성에서 다음을 설정합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | **연결** | Sage Intacct 연결 |
+   | **회사** | 읽어 올 Intacct 회사 |
+   | **시작 날짜** / **종료 날짜** | 마감하는 기간(예: 해당 월의 첫날과 마지막 날) |
+   | **Start account** / **End account** | 손익계산서 범위(예: `4010`~`9999`) |
+   | **엔터티** | 운영 엔터티(예: `201`, `301`) |
+   | **Dimensions** | 보고 기준으로 사용하는 차원을 켭니다. 보통 **위치**, **부서**, **직원**, **클래스**입니다. |
+
+3. **대상**을 `intacct_trial_balance`라는 새 테이블로 설정합니다.
+
+4. 단계를 실행합니다. 이제 계정과 차원 조합마다 한 행이 있고, `startbalance`, `periodbalance`, `endbalance` 열과 함께 사용하도록 설정한 각 차원의 ID/이름 쌍(예: `departmentid` / `departmentname`, `locationname`)이 포함된 테이블이 만들어졌습니다.
+
+</Steps>
+
+<Aside type="caution">
+Intacct는 모든 열을 **텍스트**로 반환하며, Sage 가져오기는 **단일 요청**(페이지 매김 없음)입니다. 계정 잔액 결과는 크기가 작아 여기서는 문제가 없지만, 대용량 라인 항목 상세에는 이 단계를 사용하지 마십시오. 실제 열 유형은 유형이 중요해지는 다음 단계에서 설정합니다.
+</Aside>
+
+<Aside type="note">
+**시작 날짜**와 **종료 날짜**를 모두 설정해야 하며, 둘 중 하나만 설정하면 무시됩니다. ID와 이름이 필요 없는 차원을 켰다면 다음 단계에서 불필요한 열을 제거할 수 있습니다. (**웨어하우스** 차원 확인란은 효과가 없으므로, 출력에 웨어하우스가 필요하면 **Custom dimensions**를 사용하십시오.)
+</Aside>
+
+## 3단계: 잔액을 손익계산서로 구성하기
+
+이제 분석 단계이며, SQL 없이 클릭 방식 변환 하나로 처리합니다. 손익계산서 범위가 부서별로 몇 개의 재무제표 항목으로 집계되며, 매출이 양수로 보이도록 부호를 뒤집습니다. [Table Extract 단계](/ko/reference/workflow-steps/tables/table-extract/)가 **테이블 데이터 선택** 탭과 **데이터 필터** 탭에서 이 모든 작업을 처리합니다.
+
+<Steps>
+
+1. **Table Extract** 단계를 추가합니다. **소스**를 `intacct_trial_balance`로, **대상**을 새 테이블 `intacct_pnl`로 설정합니다.
+
+2. **테이블 데이터 선택** 탭에서 **요약**을 클릭해 집계를 켠 다음, 대상 열 세 개를 설정합니다.
+
+   - **`departmentname`**: 소스에서 그대로 매핑합니다. 유형은 **텍스트**, 요약은 **그룹화 기준**입니다.
+   - **`pnl_line`**: 계정 번호를 보고서 항목으로 바꾸는 **식**(아래 참조)입니다. 유형은 **텍스트**, 요약은 **그룹화 기준**입니다.
+   - **`amount`**: **식** `func.to_float64(intacct_trial_balance.endbalance) * -1`로, 텍스트 잔액을 숫자로 변환하고 부호를 뒤집습니다. 유형은 **통화**, 요약은 **합계**입니다.
+
+   `amount` 대상 열의 **유형**을 **통화**로 설정해야 텍스트 잔액을 합산할 수 있습니다. `pnl_line`의 **식** 셀을 두 번 클릭하고 다음을 입력합니다(열과 **조건** 그룹의 `case` 함수를 클릭으로 선택할 수 있습니다).
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. 단계를 실행합니다.
+
+</Steps>
+
+`* -1`이 유일한 회계 처리입니다. Intacct는 수익을 대변(음수)으로, 비용을 차변(양수)으로 보관하므로, 기말 잔액의 부호를 뒤집으면 **매출은 양수, 비용은 음수**로 표시되고 각 부서의 항목을 더하면 *당기순이익*이 됩니다. `case()`의 계정 번호 기준값은 사용 중인 계정과목표에 맞게 조정하십시오. 식은 PlaidCloud의 클릭 방식 편집기를 사용합니다. [고급 데이터 매퍼 사용법](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/)과 [식 참조](/ko/reference/expressions/)를 확인하십시오.
+
+<Aside type="tip">
+부서별이 아니라 전사 손익계산서가 필요하신가요? 대상 열에서 `departmentname`을 빼고 `pnl_line`(그룹화 기준)과 `amount`(합계)만 남기십시오.
+</Aside>
+
+## 4단계: 재무 담당자처럼 읽기
+
+`intacct_pnl` 테이블을 엽니다. 부서마다 세 개의 숫자가 있습니다.
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+여기서 바로 읽을 수 있는 값은 다음과 같습니다.
+
+- **매출총이익** = 매출 + 매출원가(매출원가는 이미 음수) → `486,200 − 190,540 = 295,660`.
+- **당기순이익** = 세 항목의 합계 → `82,780`.
+- **매출총이익률(%)** = 매출총이익 ÷ 매출 → 약 61%.
+
+가장 먼저 **대조**해야 합니다. 같은 기간과 엔터티에 대해 Intacct 자체의 손익계산서(재무 보고서)를 실행하여 매출과 당기순이익이 일치하는지 확인하십시오. 일치하지 않는다면 거의 항상 범위 차이 때문입니다. 포함하지 않은 엔터티, 손익계산서 일부를 잘라 내는 계정 범위, 또는 기간 정렬 불일치가 원인입니다. 대조가 맞은 뒤에야 파이프라인을 신뢰하십시오.
+
+<Aside type="tip">
+기간이 위쪽에 가로로 나열되는 전통적인 레이아웃이 필요하신가요? `intacct_pnl`을 읽는 [Table Pivot 단계](/ko/reference/workflow-steps/tables/table-pivot/)를 추가하여 기간을 열로 피벗하고, `pnl_line`을 행으로 유지하고, `amount`를 합산하십시오. 처음부터 기간 열을 만들려면 3단계에서 `end_date`를 **그룹화 기준** 열로 추가하십시오. 그러면 SQL 없이 전월 대비 변화를 한눈에 볼 수 있습니다.
+</Aside>
+
+## 5단계: 대시보드에 올리기
+
+테이블의 숫자도 괜찮지만, CFO에게 보내는 것은 차트입니다. `intacct_pnl`을 [게시](/ko/get-started/tutorials/load-and-transform-data/#7단계-결과-게시하기)한 다음 [대시보드 만들기](/ko/get-started/tutorials/build-a-dashboard/)를 따라 다음을 추가하십시오.
+
+- `departmentname`별 당기순이익(또는 매출)의 **막대 차트**
+- 매출, 매출원가, 운영비의 구성이 한눈에 보이도록 각 `pnl_line`의 **막대 차트**
+
+이것으로 내보내기 없이 워크플로가 실행될 때마다 새로 고쳐지는 실시간 Sage Intacct 재무 대시보드가 완성되었습니다.
+
+## 6단계: 새로 고침 예약하기
+
+<Steps>
+
+1. 전체 워크플로를 위에서 아래로 한 번 실행하여 모든 단계가 녹색인지 확인합니다.
+2. [워크플로를 예약](/ko/get-started/tutorials/schedule-a-workflow/)합니다. 결산 주기에 맞춰 매월 실행하거나, 월중에도 숫자를 최신 상태로 유지하려면 매주 실행합니다.
+
+</Steps>
+
+가져오기는 테이블 전체를 교체하므로, 실행할 때마다 설정한 날짜와 계정 범위의 잔액을 다시 읽습니다. 전체 이력이 아니라 필요한 기간(현재 기간, 손익계산서 계정)으로 한정하십시오.
+
+## 7단계: 통계 계정으로 인당 지표 추가하기
+
+Intacct는 재무 계정과목표와 함께 인원수, 면적, 수량과 같은 비금전 **통계 계정**도 관리합니다. 통계 모드로 설정한 두 번째 **Sage 가져오기** 단계로 이를 가져온 다음 손익계산서에 조인하면, 부서별 직원당 운영비와 같은 지표를 볼 수 있습니다. 표준 단계 세 개를 더 사용하며, 여기서도 SQL은 필요하지 않습니다.
+
+<Steps>
+
+1. 두 번째 **Sage 가져오기** 단계를 추가합니다. 구성에서 다음을 설정합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | **연결** | Sage Intacct 연결 |
+   | **회사** | 읽어 올 Intacct 회사 |
+   | **시작 날짜** / **종료 날짜** | 2단계와 같은 기간 |
+   | **통계** | **통계만** |
+   | **Start account** / **End account** | `0000`~`9999`. 통계 계정이 재무 계정과목표의 번호 체계 안에 있다고 보장되지 않으므로, 2단계의 손익계산서 범위가 아니라 전체 범위를 가져옵니다. |
+   | **엔터티** | 운영 엔터티(예: `201`, `301`) |
+   | **Dimensions** | **부서**: 인당 보고 기준으로 사용하는 차원 |
+
+2. **대상**을 `intacct_statistics`라는 새 테이블로 설정합니다.
+
+3. 단계를 실행합니다. 통계 계정과 부서마다 한 행이 만들어지며, `endbalance`에는 통계 값 자체(예: 기말 시점의 해당 부서 인원수)가 담깁니다.
+
+</Steps>
+
+이제 인원수를 손익계산서에 연결하여 나누지만, `intacct_statistics`에서 바로 나누지는 않습니다. 이 테이블에는 *통계 계정과 부서마다* 한 행(인원수, 면적, 수량 등 관리하는 모든 항목)이 있으므로, `departmentname`만으로 조인하면 해당 부서의 통계 계정 수만큼 손익계산서의 모든 행이 늘어나고, `amount_per_head`는 우연히 그 행에 걸린 통계 계정으로 나누게 됩니다. 먼저 인원수만 남기도록 필터링하여 부서마다 한 행이 되게 해야 비율이 의미를 갖습니다.
+
+<Steps>
+
+1. **Table Extract** 단계를 추가합니다. **소스**를 `intacct_statistics`로, **대상**을 새 테이블 `intacct_headcount`로 설정합니다. **테이블 데이터 선택**에서 모든 열을 변경 없이 전달하며, 여기서는 집계가 필요하지 않습니다. **데이터 필터** 탭에서 소스 데이터에 **데이터 하위 집합 선택** 필터를 추가합니다: `intacct_statistics.glaccountno == '9000'`. `9000`을 사용 중인 인원수 통계 계정 번호로 바꾸십시오(가져온 결과에 계정 이름 열이 있다면 대신 그 열로 필터링합니다. `glaccountno`는 여전히 텍스트이므로 따옴표로 묶은 문자열과 비교하십시오). 단계를 실행하면 `intacct_headcount`에는 부서마다 정확히 한 행이 있습니다.
+
+2. [Table Outer Join 단계](/ko/reference/workflow-steps/tables/table-outer-join/)를 추가합니다. **Table 1**을 `intacct_pnl`로, **Table 2**를 `intacct_headcount`로 설정하고 `departmentname`으로 조인합니다. 이제 부서마다 깔끔한 1:1 일치가 됩니다. **조인 유형**은 기본값인 **왼쪽 조인**으로 둡니다. 손익계산서의 모든 행이 유지되고, 부서가 일치하는 곳에 인원수가 채워집니다. 대상은 새 테이블 `intacct_pnl_with_headcount`로 지정하고 두 테이블의 모든 열을 전달합니다.
+
+3. 단계를 실행한 다음, `intacct_pnl_with_headcount`를 읽어 새 테이블 `intacct_pnl_per_head`에 쓰는 **Table Extract** 단계를 추가합니다. **테이블 데이터 선택**에서 기존 열을 전달한 다음 대상 열을 하나 더 추가합니다. `amount_per_head`는 **식** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`이며, 유형은 **통화**입니다.
+
+4. 단계를 실행합니다.
+
+</Steps>
+
+**`3 - Operating Expenses`** 행의 `amount_per_head`를 보면 부서별 직원당 운영비를 알 수 있습니다. 4단계와 같은 방식으로 읽되 열이 하나 더 깊어진 것입니다. 손익계산서와 함께 대시보드에 추가하거나, 6단계의 일정에 포함하여 나머지와 함께 새로 고쳐지게 하십시오.
+
+## 완성한 내용
+
+빈 워크플로에서 시작하여 실시간 Sage Intacct 계정 잔액을 가져오고, 표준 변환 단계 하나로 **부서별 손익계산서**로 구성하고, 통계 계정을 조인하여 인당 지표를 만들고(파이프라인 어디에도 SQL이 없습니다), 대시보드에 올리고, 새로 고침을 설정했습니다. 재무 팀이 실행하는 핵심 보고 루프가 이제 자동화되었습니다.
+
+## 다음 단계
+
+- [Sage Intacct에 연결](/ko/guides/connections/sage-intacct/): 연결 설정과 그 밖의 Sage 가져오기 단계(AP 청구서, AP 라인, 임시 개체 쿼리).
+- [Sage Intacct 쿼리 가져오기](/ko/reference/workflow-steps/sage-intacct/import-intacct-query/): 모든 Intacct 개체(총계정원장 계정, 고객, 프로젝트)를 가져와 재무제표를 보강합니다.
+- [Table Extract 단계](/ko/reference/workflow-steps/tables/table-extract/)와 [고급 데이터 매퍼 사용법](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/): 더 깊은 분석을 위한 그룹화, 필터링, 계산 열.
+- [차원 계층 설계](/ko/get-started/tutorials/design-a-dimension/): 계정과목표를 직접 제어하는 보고 그룹으로 집계합니다.

@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry"
+description: Buchen Sie Hauptbuch-Journalbuchungen aus Kopf- und Positionstabellen in Dynamics 365 Finance & Operations, mit einem Vorschaumodus, der jede Buchung prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Hauptbuch-Journalbuchungen über Ihre [D365-F&O-Verbindung](/de/guides/connections/dynamics-365-fo/) in Dynamics 365 Finance & Operations, geleitet durch die gemeinsame ERP-Schreibpipeline von PlaidCloud. Der Schritt nimmt eine Kopftabelle (eine Zeile pro Journalbuchung) und eine Positionstabelle (eine oder mehrere Soll-/Haben-Zeilen pro Buchung) und übergibt jede Buchung an die asynchrone Custom-Service-Buchungsaktion von D365 F&O für Journale. **Validate Only** erstellt und prüft jede Buchung ohne Hauptbuchanspruch und ohne Buchung; eine optionale Ergebnistabelle hält das Ergebnis jeder Buchung fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst mit **Validate Only** aus, prüfen Sie die Ergebnistabelle und gleichen Sie einige Buchungen direkt in D365 F&O ab, bevor Sie sich darauf verlassen, dass dieser Schritt Buchungen unbeaufsichtigt live bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **D365 F&O Connection** – die D365-F&O-Verbindung, über die gebucht wird.
+
+### Daten
+
+- **Kopftabelle** – eine Zeile pro Journalbuchung: `journal_id` (Ihre Buchungskennung, erforderlich), `journal_name` (der Name des D365-F&O-Journals, in das gebucht wird, erforderlich), `posting_date`, `description`.
+- **Positionstabelle** – eine oder mehrere Zeilen pro `journal_id`: `account`, `debit`, `credit` sowie alle Dimensionsspalten, die Ihr Hauptbuch verlangt.
+- **Ergebnistabelle** – ID der Ausgabetabelle: eine Zeile pro Buchung mit `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** – standardmäßig aktiviert. Nur Vorabprüfung; kein Hauptbuchanspruch, keine Buchung. Eine Schrittkonfiguration, in der dieses Feld ganz fehlt – etwa eine, die über die REST-API, MCP oder einen Workflow-Bundle-Import erstellt wurde –, verwendet ebenfalls standardmäßig Validate Only statt einer Livebuchung.
+- **Continue On Error** – standardmäßig aktiviert. Bucht die übrigen Buchungen weiter, nachdem eine fehlgeschlagen ist; deaktiviert, stoppt der Stapel beim ersten Fehler.
+
+## So funktioniert das Buchen
+
+PlaidCloud übergibt jede Buchung an die asynchrone Custom-Service-Buchungsaktion von D365 F&O und fragt dann so lange ab, bis der Service den Endzustand der Buchung meldet. Eine Buchung wird erst als `posted` gemeldet, wenn dieser Endzustand **bestätigt** ist – eine Buchung, die zwar angenommen wurde, deren Endzustand aber nie feststeht, bleibt in Quarantäne (nicht als gebucht gemeldet, nicht stillschweigend verworfen), statt allein deshalb als Erfolg zu gelten, weil die Übergabe angenommen wurde.
+
+## Eine gebuchte Buchung korrigieren
+
+Dieser Schritt löscht oder überschreibt nie eine gebuchte Buchung. Um eine zu korrigieren, buchen Sie eine neue Buchung mit gegenüber dem Original vertauschten Soll- und Habenbeträgen – eine gebuchte Stornobuchung –, statt das Original direkt zu bearbeiten.
+
+## Funktionsgrenzen
+
+| Einschränkung | Bedeutung |
+|---|---|| Stornierung ist eine neue Buchung, keine direkte Bearbeitung | Korrekturen buchen eine neue Stornobuchung mit vertauschten Soll- und Habenbeträgen. Eine bereits gebuchte Buchung lässt sich weder stornieren noch löschen. |
+| Die Dimensionsvalidierung hängt von Ihrem Hauptbuch-Setup ab | Eine für Ihre Kontenstruktur ungültige Kombination finanzieller Dimensionen schlägt bei der eigenen Validierung von D365 F&O fehl und erscheint als `error`-Zeile, statt früher von PlaidCloud abgefangen zu werden. |
+
+## Verwandte Themen
+
+- [Mit Dynamics 365 Finance & Operations verbinden](/de/guides/connections/dynamics-365-fo/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchen
+- [Dynamics 365 F&O REST Connector](/de/reference/connectors/rest/dynamics-365-fo/)
+- [D365-F&O-Schritte](/de/reference/workflow-steps/dynamics-365-fo/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/)

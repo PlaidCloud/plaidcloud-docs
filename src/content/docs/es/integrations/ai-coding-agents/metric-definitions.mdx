@@ -1,0 +1,224 @@
+---
+title: Definiciones de métricas
+description: Escriba una sola vez cómo se calcula un número del negocio, y el asistente de IA de PlaidCloud, o uno conectado mediante MCP, lo calculará de esa manera siempre, con el acceso a filas de cada persona.
+sidebar:
+  label: Definiciones de métricas
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/metric-definitions.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Una **definición de métrica** es un número del negocio cuyo cálculo se ha acordado y documentado: *Net Revenue*, *Headcount (FTE)*, *Units Shipped*. Indica de qué tabla proviene el número, cómo se suman las filas, qué filas cuentan y por qué columnas se puede desglosar.
+
+Sin una definición, cuando se pregunta a un asistente de IA *“¿cuáles fueron los ingresos netos en EMEA el trimestre pasado?”*, el asistente decide por sí mismo qué tabla, columna y filtros usar, y dos personas que hacen la misma pregunta pueden obtener dos números distintos. Una definición de métrica quita esa decisión al asistente. Un Arquitecto del proyecto escribe la definición una sola vez y, desde el momento en que se guarda, el asistente calcula la cifra exactamente como está escrita.
+
+<Aside>
+Las definiciones de métricas se administran mediante un asistente de IA conectado por [MCP](../getting-started/), o mediante la API REST; todavía no hay una pantalla para ellas en PlaidCloud. Las métricas están disponibles para el [asistente de IA](/es/guides/ai-assistant/weave-tab/#chat-de-weave-ai) integrado de PlaidCloud y para cualquier asistente conectado mediante MCP. El asistente integrado puede buscar y calcular métricas, pero no puede crearlas, editarlas ni retirarlas.
+</Aside>
+
+**Arquitectos**: comiencen en [Definir una métrica](#definir-una-métrica). **Analistas**: comiencen en [Preguntar sobre una métrica](#preguntar-sobre-una-métrica).
+
+Una definición de métrica es una receta, no un resultado almacenado. Se vuelve a calcular cada vez que se solicita, con el acceso a filas de la persona que la solicita: quien solo puede ver EMEA obtiene cifras de EMEA. Dos personas pueden obtener totales distintos de la misma definición porque ven filas distintas; el cálculo es el mismo.
+
+## Qué contiene una definición
+
+| Parte | Qué indica | Ejemplo |
+|---|---|---|
+| **Nombre** | Cómo llama la gente al número. Hasta 200 caracteres. | *Net Revenue* |
+| **Sinónimos** | Otras palabras que la gente usa para referirse a él, para que el asistente reconozca la pregunta. Hasta 25. | *revenue*, *sales* |
+| **Descripción** (`memo` en la API) | Qué significa el número y cuándo usarlo, para el asistente y para las personas. Hasta 1000 caracteres. | *Ingresos después de devoluciones y descuentos. Úsela para todas las preguntas sobre ingresos.* |
+| **Tabla de origen** | La tabla de la que provienen las filas. | `sales_fact` |
+| **Combinaciones** | Tablas de búsqueda combinadas con la tabla de origen mediante columnas coincidentes. Cada tabla de búsqueda debe tener una sola fila por cada clave (por ejemplo, una fila por código de región); de lo contrario, las filas con las que coincide se cuentan dos veces. | `region_lookup`, que hace coincidir `region_code` en el origen con `code` en la búsqueda |
+| **Medida** | Cómo se suman las filas: `sum`, `count`, `count_distinct`, `min`, `max` o `avg` de una columna, o `weighted_avg` de una columna ponderada por una segunda columna (`weight`): la suma del valor por el peso sobre las filas en las que ambos están establecidos, dividida entre la suma de esos pesos; vacío si los pesos suman cero. | `sum` de `net_amount`; `weighted_avg` de `unit_price` por `units` |
+| **Filtros** | Qué filas cuentan siempre. Cada filtro es una columna, un operador (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) y sus valores. | `status` `eq` *Posted* |
+| **Columnas de desglose** (`grain` en la API) | Las columnas por las que una persona puede agrupar y filtrar cuando pregunta. Los filtros son fijos; las columnas de desglose las elige quien pregunta. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Escenario** (opcional) | La columna que separa las filas reales de las filas de presupuesto, y el valor de cada una. La métrica son sus filas reales; las filas de presupuesto se leen solo para una [varianza](#comparar-clasificar-y-repartir). | `scenario`, real *Actual*, presupuesto *Budget* |
+| **Dimensiones** (opcional, `dimensions` en la API) | Una columna de desglose vinculada a una dimensión, de modo que las palabras de una pregunta se comparan con los miembros y alias de esa dimensión y se convierten en los valores de la columna: consulte [Preguntar sobre una métrica](#preguntar-sobre-una-métrica). La dimensión debe existir en el proyecto. | `region_lookup.region` vinculada a la dimensión *Region* |
+| **Columnas de tiempo** (opcional, `time` en la API) | Una columna de fecha, o una columna de año fiscal y una columna de período, para que una pregunta pueda solicitar un período fiscal y [compararlo a lo largo del tiempo](#comparar-a-lo-largo-del-tiempo). | `fiscal_year` y `fiscal_period` |
+
+Una columna de una tabla de búsqueda se escribe como `<table>.<column>`; el asistente las escribe por usted. Cada tabla y cada columna de una definición deben existir en el proyecto; una definición que nombre alguna que no exista se rechaza al guardarla. Una métrica con escenario no puede filtrar por la columna del escenario ni ofrecerla como columna de desglose: el escenario decide qué filas se leen, por lo que un filtro como `scenario` `eq` *Actual* pertenece al escenario, no a los filtros.
+
+Una métrica también puede construirse a partir de otras métricas, como razón, suma, diferencia o múltiplo: consulte [Derivar una métrica a partir de otras](#derivar-una-métrica-a-partir-de-otras).
+
+Nada impide que dos métricas de un proyecto compartan un nombre o un sinónimo. Manténgalos distintos; de lo contrario, el asistente tiene que adivinar a cuál se refiere, o preguntar.
+
+## Quién puede hacer qué
+
+- **Los Arquitectos del proyecto** escriben, editan y retiran definiciones. Un proyecto público otorga a todos los miembros el rol de Arquitecto solo de nombre, y eso no cuenta: en un proyecto público nadie puede definir una métrica, así que mantenga las métricas en un proyecto con su propia lista de acceso.
+- **Cualquier persona que pueda leer el proyecto** puede ver y ejecutar las definiciones.
+- **Un proyecto bloqueado rechaza todos los cambios.** Definir, editar y retirar esperan hasta que el proyecto se desbloquee.
+
+## Definir una métrica
+
+Si es Arquitecto del proyecto, pida a su asistente de IA conectado, en lenguaje natural:
+
+> *“En el proyecto **Sales**, defina una métrica llamada **Net Revenue**, con los sinónimos revenue y sales: la suma de `net_amount` en `sales_fact`, combinada con `region_lookup` mediante `region_code`, que se pueda desglosar por `region` de la búsqueda, por `product_line` y por `fiscal_year`; sus filas reales tienen `scenario` Actual y sus filas de presupuesto `scenario` Budget.”*
+
+El asistente la guarda y le avisa si una tabla o columna que nombra no existe. La métrica queda activa en cuanto se guarda. Cada edición es una nueva **versión** de la definición, escrita por quien la hizo, y los lectores obtienen la nueva versión de inmediato. Se rechaza un guardado que no cambia nada. La última versión guardada es la **versión actual** de la métrica.
+
+Para los desarrolladores, la misma definición mediante la API REST es:
+
+```json
+POST /rest/v1/analyze/metric/definition
+{
+  "project_id": "<project>",
+  "name": "Net Revenue",
+  "synonyms": ["revenue", "sales"],
+  "memo": "Revenue after returns and discounts. Use for all revenue questions.",
+  "definition": {
+    "source": "sales_fact",
+    "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
+    "measure": {"agg": "sum", "column": "net_amount"},
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
+  }
+}
+```
+
+Cada par de `on` es `[source column, lookup column]`. `time` es `{"year_column", "period_column"}` con un `periods_per_year` opcional, o `{"column"}` para una columna de fecha con `fiscal_year_start` y `fiscal_year_label` opcionales; consulte [Comparar a lo largo del tiempo](#comparar-a-lo-largo-del-tiempo).
+
+## Qué se comprueba al guardar
+
+Cada guardado ejecuta estas comprobaciones, y una definición que no supera alguna se rechaza con un mensaje que nombra el problema:
+
+- **Cada tabla y cada columna existe** en el proyecto.
+- **Cada tabla de búsqueda tiene una fila por clave**, en los datos tal como están en ese momento. Una tabla de búsqueda con dos filas para la misma clave duplicaría las filas de origen con las que coincide, por lo que se rechaza el guardado y se nombra la tabla. Esta comprobación ignora una fila de búsqueda sin valor de clave, ya que nunca coincide con una fila de origen.
+- **Existen las entradas de una métrica derivada** y no están retiradas ni son derivadas.
+
+<Aside type="caution" title="La comprobación de búsqueda se ejecuta en cada guardado">
+La comprobación de una fila por clave examina los datos de la tabla de búsqueda el día en que usted guarda. Si esa tabla gana más adelante una segunda fila para una clave, la métrica cuenta dos veces las filas de origen con las que coincide esa clave, y nada se lo advierte. Para ejecutar la comprobación de nuevo, guarde la métrica otra vez (basta con cambiar su descripción). Es mejor mantener único el valor de clave de la búsqueda en el flujo de trabajo que la escribe.
+</Aside>
+
+Cada versión registra quién la guardó y cuándo. Al editar una métrica se guarda una nueva versión que los lectores obtienen de inmediato.
+
+## Derivar una métrica a partir de otras
+
+Una **métrica derivada** es aritmética sobre métricas que ya existen: *Net Revenue per FTE* es *Net Revenue* dividido entre *Headcount (FTE)*. Se define, se consulta y se retira como cualquier otra métrica. Lo que cambia es su definición, que nombra las métricas a partir de las cuales se construye en lugar de una tabla.
+
+| Operación | Qué calcula | Entradas |
+|---|---|---|
+| `ratio` | la primera entrada dividida entre la segunda | dos métricas |
+| `add` | la primera entrada más la segunda | dos métricas |
+| `subtract` | la primera entrada menos la segunda | dos métricas |
+| `scale` | la entrada multiplicada por un `factor` fijo | una métrica y un número |
+
+Las entradas son **métricas base** del mismo proyecto, del tipo que se define a partir de una tabla, como se explicó antes. Una métrica derivada no puede construirse a partir de otra métrica derivada ni usar dos veces la misma entrada.
+
+Pida al asistente:
+
+> *“En el proyecto **Sales**, defina una métrica llamada **Net Revenue per FTE** como la razón de **Net Revenue** entre **Headcount (FTE)**.”*
+
+Mediante la API REST, la `definition` nombra las entradas por sus identificadores, que le dan `metric_find` o la lista de definiciones. El orden importa: el primer identificador es el numerador de un `ratio` y la métrica de la que se resta en un `subtract`.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` toma una entrada y un `factor`: `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` anualiza una cifra mensual.
+
+**Cómo se calcula.** Cada entrada se calcula por separado, con el desglose que usted pidió y con su acceso a filas, y luego los resultados se combinan para cada valor de desglose. Totalizar cada entrada antes de combinarlas es lo que mantiene fiable una razón entre dos tablas: combinar primero las filas contaría una fila una vez por cada fila con la que coincidiera del otro lado. Cuando una entrada no tiene filas para un valor de desglose, el valor derivado correspondiente está vacío, y también lo está una razón cuyo denominador es cero; ninguno se informa como cero.
+
+**Las columnas de desglose se calculan, no se declaran.** Una métrica derivada solo puede desglosarse por las columnas que admiten *todas* las entradas, y esa lista se muestra junto a su definición. Si desea pedir la métrica derivada por región, asigne a cada entrada `region_lookup.region`, escrita de la misma manera, como columna de desglose. Las entradas que no comparten ninguna columna de desglose dan una métrica derivada que solo responde como un total único. Una pregunta que agrupa o filtra por cualquier otra cosa se rechaza, como en cualquier métrica. Una lista vacía junto a una métrica derivada significa que una de sus entradas ya no se puede usar: está retirada o falta.
+
+**Al guardar se comprueban las entradas.** Una métrica derivada solo se puede guardar cuando cada entrada existe, no está retirada y no es en sí misma derivada. Los lectores y los Arquitectos obtienen siempre la versión actual de cada entrada y de la métrica derivada. Una entrada no queda fijada a una versión: cuando se guarda una versión posterior de una entrada, las cifras de la métrica derivada cambian con ella.
+
+**Una entrada sigue en servicio mientras una métrica derivada la use.** No se puede retirar ni convertir en una métrica derivada; el rechazo nombra la métrica que la usa. Para retirar una entrada, retire primero la métrica derivada, o guarde una versión de ella que no use la entrada.
+
+## Preguntar sobre una métrica
+
+Cualquier persona que pueda leer el proyecto puede preguntar al asistente de IA integrado de PlaidCloud, o a un asistente conectado mediante MCP:
+
+> *“¿Cuáles fueron los ingresos netos por región en FY26?”*
+
+El asistente reconoce la métrica por su nombre o por uno de sus sinónimos (la búsqueda ignora mayúsculas y minúsculas y coincide con parte de un nombre, de modo que *revenue* encuentra *Net Revenue*), toma el desglose y los filtros de su pregunta y ejecuta la definición. Una pregunta solo puede agrupar o filtrar por una de las columnas de desglose de la métrica; una que pida cualquier otra cosa se rechaza en lugar de responderse con una conjetura. Lo mismo ocurre con una métrica cuya tabla ha perdido una columna desde que se guardó: el rechazo nombra la métrica y su versión, y un Arquitecto debe corregir la definición.
+
+**Sus palabras se convierten en los valores de la columna mediante una dimensión.** Cuando un Arquitecto ha vinculado una columna de desglose a una dimensión, el asistente busca las palabras de su pregunta entre los nombres y alias de los miembros de esa dimensión, sin distinguir mayúsculas de minúsculas. Una palabra que nombra un solo miembro se convierte en los valores de ese miembro: una hoja es su propio valor, y un padre como *EMEA* se expande a todas las hojas que tiene debajo, de modo que “net revenue in EMEA” filtra por todas las regiones de EMEA. Una palabra que no nombra ningún miembro, o que nombra más de uno (*Seaboard* puede ser un alias de dos miembros) y ninguno de ellos con exactamente la grafía que usted empleó, se devuelve como una lista de candidatos para que el asistente se lo pregunte; nunca elige uno por usted. Buscar palabras en una dimensión requiere permiso para leer dimensiones, igual que leer una dimensión en cualquier otra parte de PlaidCloud.
+
+El resultado con el que trabaja el asistente nombra la métrica y su versión, e indica si se aplicó el acceso a filas. Si una respuesta no dice qué métrica usó, pregúntelo. En el asistente de IA integrado de PlaidCloud, las cifras aparecen en su propia tarjeta con una ✓; consulte [Cifras de una métrica](/es/guides/ai-assistant/weave-tab/#cifras-de-una-métrica). Para saber cómo PlaidCloud califica y matiza las respuestas de IA en general, consulte [Respuestas en las que puede confiar](../honest-answers/).
+
+**El acceso a filas se aplica a todas las tablas que lee la métrica**, tanto el origen como cada tabla de búsqueda. Cuando una fila de búsqueda está oculta para usted pero la fila de origen que etiqueta no lo está, la fila de origen se sigue contando. Supongamos que no puede ver la fila de búsqueda de la región *APAC*, pero sí sus ventas: esas ventas están en su total, aparecen bajo una región en blanco en un desglose por región y normalmente se excluyen si filtra por región, o si la propia métrica filtra por una columna de búsqueda.
+
+El acceso a filas también da forma a la búsqueda: cuando la columna de desglose está gobernada, solo se le ofrecen los valores que permite su acceso. Nunca se ofrece un miembro sin nada debajo que usted pueda ver, ni como valor ni como candidato, y un padre solo se expande a las hojas que usted puede ver. Un Arquitecto, que lee todas las filas, ve todos los miembros.
+
+Los Arquitectos leen todas las filas, como en el resto del proyecto.
+
+## Comparar, clasificar y repartir
+
+Una pregunta sobre una métrica también puede pedir una comparación, una clasificación y una participación en el total. Cada una es un cálculo fijo sobre las cifras de la propia métrica, con el acceso a filas de quien pregunta; ninguna la calcula el asistente.
+
+| Solicitar | Qué se devuelve | En la API |
+|---|---|---|
+| **Varianza frente al presupuesto** | Para cada valor de desglose: la cifra real, la cifra de presupuesto, la diferencia (`value`) y la diferencia como porcentaje del tamaño del presupuesto (`pct`), que conserva el signo de la diferencia cuando el presupuesto es negativo. | `compare: "variance"` |
+| **Participación en el total** | La cifra de cada fila dividida entre el total de todas las filas del desglose (`share`), o de las filas que comparten las columnas `within` que usted nombre. | `share: {"within": ["region"]}`; `{}` para el total general |
+| **Los N primeros o últimos** | Las N cifras más altas, o las N más bajas con `order: "asc"`, con su `rank`; por grupo cuando se nombran columnas `within`. Las filas empatadas comparten posición y se conservan todas, por lo que puede haber más de N. Para una métrica de costo, *más por encima del presupuesto* son los N primeros de la varianza; para una métrica de ingresos, son los N últimos. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *“¿Qué cinco centros de costo están más por encima del presupuesto en el proyecto **Finance**?”*
+>
+> *“¿Qué participación del gasto total corresponde a cada región y cuál es la mayor?”*
+
+Una varianza necesita una métrica con **escenario**; una métrica sin él, o una métrica derivada, la rechaza. Cada lado se totaliza por separado antes de compararlos: un valor de desglose sin fila de presupuesto, o sin fila real, muestra una diferencia vacía en lugar de cero (la excepción es una métrica `count` solicitada como total único, donde un lado sin filas cuenta cero), y lo mismo ocurre con un porcentaje sobre un presupuesto de cero.
+
+La clasificación y la participación se calculan sobre la cifra de la métrica, o sobre la diferencia cuando se solicita una varianza o una [comparación a lo largo del tiempo](#comparar-a-lo-largo-del-tiempo), de modo que *“qué centros de costo explican la mayor parte del sobregasto”* es una varianza con una participación y una clasificación. `pct` es un porcentaje, por lo que `12` significa 12 %, mientras que `share` es una fracción. La participación se calcula sobre todas las filas del desglose antes de que un top N conserve algunas de ellas, por lo que las participaciones de las filas que se devuelven no tienen por qué sumar uno. Una cifra vacía queda en último lugar con cualquier orden que se pida, y tiene una participación vacía; lo mismo ocurre con una participación sobre un total de cero.
+
+Una participación es de lo que *usted* puede ver. Quien tiene el acceso a filas limitado a EMEA obtiene los centros de costo de EMEA como participaciones del total de EMEA, y el resultado indica que se aplicó el acceso a filas. Las columnas `within` de una participación o una clasificación deben estar entre las columnas de desglose que usted pidió, y se rechaza una pregunta que agrupa por una columna con el nombre de alguna de las propias columnas del resultado (`value`, y `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` o `cumulative` cuando se solicita el operador que la produce). Se rechaza una pregunta con dos comparaciones o dos clasificaciones.
+
+## Comparar a lo largo del tiempo
+
+A una métrica cuya definición tiene **columnas de tiempo** (`time` en la API) se le puede pedir un período fiscal, compararlo con el período anterior y totalizarlo período por período. Las columnas de tiempo indican dónde se sitúa cada fila en el calendario fiscal, de dos maneras:
+
+- **Una columna de fecha**, con `fiscal_year_start`, el mes natural en el que comienza el año fiscal (`1` para enero, el valor predeterminado). Sus períodos son los meses del año fiscal, numerados a partir del mes de inicio: con un año que comienza en octubre, el período 1 es octubre y el período 7 es abril. Un trimestre son tres de ellos. Un año fiscal que no comienza en enero se denomina de forma predeterminada con el año natural en el que **termina** (`fiscal_year_label` es `ending`); establezca `fiscal_year_label` en `starting` para denominarlo con el año en que comienza. Con inicio en octubre, los meses de octubre de 2025 a septiembre de 2026 son FY2026 de forma predeterminada, y FY2025 con `starting`. Las filas se leen por intervalo de fechas, lo que mantiene rápida la consulta en una tabla grande.
+- **Una columna de año fiscal y una columna de período**, ambas enteras, que contienen el año fiscal (`2026`, no `26`) y el período dentro de él, numerado desde 1, con `periods_per_year`: `12` de forma predeterminada, `13` para un calendario de 13 períodos, `52` para semanas, `4` para trimestres. Los trimestres solo existen cuando los períodos se dividen en cuatro. Un calendario con años de 53 semanas puede establecer `53`, a costa de sus trimestres. Se rechaza un guardado si alguna de las columnas contiene un valor que no es un número entero, como *2024-01* o *FY26*, y el rechazo nombra la columna y el valor. Se aceptan los dígitos almacenados como texto, como `07`, y también un período fuera del año, como el período 0 o 13 de un libro mayor: una pregunta sobre un período deja fuera esas filas.
+
+Una pregunta nombra entonces el **período** al que se refiere: un año fiscal, o un trimestre o un período de él. **Acumulado del año** lo extiende hasta el inicio del año, de modo que *abril acumulado del año* son los primeros meses del año hasta abril inclusive.
+
+> *“¿Cuáles fueron las ventas del primer trimestre de FY2026 por región y cómo se comparan con el trimestre anterior?”*
+>
+> *“Ventas acumuladas del año hasta abril frente a los mismos meses del año pasado.”*
+>
+> *“Muéstreme las ventas de FY2026 por mes como un total acumulado.”*
+
+| Solicitar | Qué se devuelve | En la API |
+|---|---|---|
+| **Un período** | La métrica solo durante ese período, con los desgloses, participaciones y clasificaciones habituales; una varianza frente al presupuesto lee ambos escenarios durante él. | `period: {"year": 2026}`; `{"year": 2026, "quarter": 1}`; `{"year": 2026, "period": 7}` |
+| **Interanual** | Para cada valor de desglose: la cifra del período (`current`), el mismo período un año antes (`prior`), la diferencia (`value`) y `pct`. La respuesta nombra el período anterior. | `compare: "yoy"` con un `period` |
+| **Trimestre contra trimestre** | Lo mismo, frente al trimestre anterior. El primer trimestre se compara con el cuarto del año anterior. | `compare: "qoq"`; el `period` debe nombrar un `quarter` |
+| **Período contra período** | Lo mismo, frente al período anterior. El primer período se compara con el último del año anterior. En un calendario de 12 períodos es mes contra mes, de donde proviene el nombre. | `compare: "mom"`; el `period` debe nombrar un `period` |
+| **Acumulado del año** | El año desde su inicio hasta el final del trimestre o período nombrado, por sí solo o, con `yoy`, frente a los mismos meses del año anterior. Se rechaza con `qoq` o `mom`. | `"to_date": true` en el `period` |
+| **Total acumulado** | Una fila por cada año fiscal y período del período solicitado, con la cifra propia del período (`value`) y el total hasta el momento (`cumulative`). Sin período, va desde la primera fila hasta la última a lo largo de los años. No admite comparación, participación ni clasificación. | `cumulative: true` |
+
+`pct` es la diferencia como porcentaje del tamaño de la cifra anterior, conservando el signo de la diferencia cuando la cifra anterior es negativa, como en una varianza. Cada uno de los dos períodos se totaliza por separado, y los dos totales se emparejan por valor de desglose; no se lee nada de una fila vecina. Así, un mes sin filas el año pasado se compara como vacío, no como el mes más cercano que sí las tuvo, y un valor de desglose con filas en solo uno de los dos períodos muestra vacíos el otro, la diferencia y `pct`, en lugar de cero.
+
+Un total acumulado es para métricas `sum` y `count`. Un promedio, un recuento distinto, un mínimo o un máximo no se suman a lo largo del tiempo y se rechazan. Un período sin filas no tiene fila en un total acumulado, y el total continúa más allá de él.
+
+Las columnas de tiempo no se pueden filtrar ni agrupar en una pregunta que nombra un período, compara a lo largo del tiempo o solicita un total acumulado: esas columnas deciden qué filas se leen y cómo se ubican. Una pregunta que no hace nada de esto sí puede filtrar y agrupar por ellas como por cualquier columna de desglose. También se rechaza un período posterior al fin del año (el período 13 en un calendario de 12 períodos), un trimestre en un calendario sin trimestres, una comparación de tiempo o un total acumulado en una métrica derivada, y una pregunta que no nombra el tipo de período que necesita su comparación. A una métrica derivada se le puede pedir un período cuando todas sus entradas tienen columnas de tiempo en el mismo calendario fiscal, y entonces tampoco se pueden filtrar ni agrupar por ellas. Una comparación de tiempo es la única comparación de la pregunta, por lo que no se puede combinar con una varianza frente al presupuesto, aunque una participación y una clasificación sí se aplican a la diferencia.
+
+## Retirar una métrica
+
+Retirar una métrica la saca de servicio de forma definitiva: quienes leen el proyecto ya no la ven, los Arquitectos la ven marcada como retirada con su historial, y ya no se puede editar ni ejecutar. Un Arquitecto retira una pidiéndoselo al asistente, o con `POST /rest/v1/analyze/metric/retire`. Una métrica a partir de la cual se construye una métrica derivada no se puede retirar hasta que se retire esa métrica derivada, o se guarde una versión de ella que ya no use esta entrada. Para reemplazar una métrica retirada, defina una nueva.
+
+## Mediante MCP y la API REST
+
+| Acción | Herramienta MCP | REST |
+|---|---|---|
+| Enumerar las métricas de un proyecto, cada una con su definición completa; `q` conserva aquellas cuyo nombre o un sinónimo lo contiene | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
+| Resolver las palabras de una pregunta en los valores de una columna de desglose | `metric_values` con `column` y `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
+| Leer una métrica | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
+| Definir o editar | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
+| Retirar | `metric_review` con `action: retire` | `POST /rest/v1/analyze/metric/retire` |
+| Ejecutar | `metric_run` con `group_by`, `filters` y los opcionales `period`, `compare`, `share`, `top` y `cumulative` | `POST /rest/v1/analyze/metric/run` con los mismos campos |
+| Versiones anteriores (solo Arquitectos) | | `GET /rest/v1/analyze/metric/flashback-versions` |
+
+`metric_upsert` toma un `spec` de `{name, memo, synonyms, definition}` y acepta `dry_run` para comprobar una definición sin guardarla. La `definition` de una métrica base es `{source, joins, measure, filters, grain, dimensions, scenario, time}`, con `dimensions` como `{<breakdown column>: <dimension id>}`, `measure` como `{agg, column}` o `{agg: "weighted_avg", column, weight}`, `scenario` como `{column, actual, budget}` y `time` como `{column, fiscal_year_start, fiscal_year_label}` o `{year_column, period_column, periods_per_year}`. La `definition` de una métrica derivada es `{kind, op, inputs, factor}`; sus columnas de desglose calculadas se devuelven como `grain` junto a la definición.
+
+## Relacionado
+
+- [Rutas de análisis](../analysis-paths/): nombre las tablas sobre las que la gente pregunta y proporcione a los asistentes filtros permanentes y terminología para cada una
+- [Respuestas en las que puede confiar](../honest-answers/): cómo PlaidCloud califica y matiza cada respuesta de IA
+- [Controlar el acceso a los datos](/es/get-started/tutorials/control-data-access/): el acceso a filas con el que se ejecuta una métrica

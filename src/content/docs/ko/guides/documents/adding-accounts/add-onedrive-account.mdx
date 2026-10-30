@@ -1,0 +1,129 @@
+---
+title: OneDrive / SharePoint 계정 추가
+description: 최소 권한 Sites.Selected 액세스 또는 테넌트 전체 액세스로 Microsoft OneDrive for Business 또는 SharePoint를 PlaidCloud Document에 연결합니다.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Microsoft **OneDrive for Business** 또는 **SharePoint** 위치를 PlaidCloud Document에 연결합니다. Entra(Azure AD) 애플리케이션을 등록하고, 애플리케이션이 접근할 수 있는 테넌트 범위를 선택하면, PlaidCloud가 이를 사용하여 파일을 읽고 씁니다.
+
+## 액세스 모델 선택
+
+애플리케이션이 접근할 수 있는 Microsoft 365 테넌트의 범위를 결정합니다. 이는 전체 설정에서 가장 중요한 선택입니다.
+
+| 모델 | Graph 애플리케이션 권한 | 앱이 접근할 수 있는 범위 | 선택 기준 |
+|---|---|---|---|
+| **선택한 사이트**(권장) | `Sites.Selected` | 명시적으로 권한을 부여한 특정 사이트만 | 급여, 인사, 재무, PHI 등 민감한 데이터가 있는 사이트가 하나라도 있는 경우 |
+| **모든 사이트** | `Sites.Read.All`(읽기) 또는 `Sites.ReadWrite.All`(읽기 + 쓰기) | 테넌트의 **모든** 사이트 | 민감한 사이트가 없고 가장 간단한 설정을 원하는 경우 |
+
+**대부분의 조직은 선택한 사이트를 선택해야 합니다.** 민감한 정보가 있는 사이트가 하나라도 있다면 테넌트 전체 액세스는 해당 정보를 노출합니다. `Sites.Selected`를 사용하면 관리자가 이름이 지정된 각 사이트에 애플리케이션 권한을 부여하기 전까지는 애플리케이션이 아무것도 접근할 수 없으므로, 권한을 부여하지 않은 사이트는 완전히 접근할 수 없는 상태로 유지됩니다.
+
+<Aside type="caution">
+`Directory.*`, `Files.*`, `User.Read.All`은 부여하지 **마십시오**. 문서 커넥터에는 이러한 권한이 전혀 필요하지 않으며, 특히 `Directory.ReadWrite.All`은 전체 ID 디렉터리에 대한 읽기/쓰기를 허용합니다. `Sites.Selected` 하나(또는 `Sites.Read.All` / `Sites.ReadWrite.All` 중 하나)만 있으면 충분합니다.
+</Aside>
+
+## Azure에서 애플리케이션 등록
+
+1. [Azure portal](https://portal.azure.com)에 로그인하여 **Microsoft Entra ID** → **App registrations** → **+ New registration**으로 이동합니다.
+2. 이름을 입력합니다(예: `PlaidCloud`).
+3. **Supported account types**에서 **Accounts in this organizational directory only**(단일 테넌트, 가장 일반적)를 선택합니다.
+4. **Redirect URI**는 비워 두고 **Register**를 클릭합니다.
+5. 개요 페이지에서 **Application (client) ID**(**클라이언트 ID**)와 **Directory (tenant) ID**(**테넌트 ID**)를 복사합니다.
+6. **Certificates & secrets** → **+ New client secret**으로 이동하여 설명과 만료 기간을 설정하고 **Add**를 클릭한 다음, 시크릿 **Value**를 즉시 복사합니다. 이 값은 다시 표시되지 않습니다.
+
+## API 권한 부여
+
+선택한 액세스 모델에 맞는 Microsoft Graph **애플리케이션** 권한을 정확히 **하나** 추가합니다.
+
+- **선택한 사이트:** `Sites.Selected`
+- **모든 사이트:** `Sites.Read.All`(읽기 전용) 또는 `Sites.ReadWrite.All`(읽기 + 쓰기)
+
+단계: **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → 위의 권한 하나 추가 → **Grant admin consent**.
+
+<Aside type="note">
+관리자 동의를 부여하려면 **전역 관리자** 또는 **Privileged Role Administrator**여야 합니다. SharePoint 관리자만으로는 애플리케이션 권한에 동의할 수 없습니다.
+</Aside>
+
+**모든 사이트**를 선택했다면 설정이 끝났으므로 [PlaidCloud에 계정 추가](#plaidcloud에-계정-추가)로 건너뜁니다. **선택한 사이트**를 선택했다면 다음으로 각 사이트에 앱 권한을 부여합니다.
+
+## 각 사이트에 앱 액세스 권한 부여(선택한 사이트 모델)
+
+`Sites.Selected`는 그 자체로는 애플리케이션에 아무 액세스 권한도 부여하지 않습니다. SharePoint 관리자 또는 전역 관리자가 앱이 접근할 각 사이트에 권한을 부여해야 합니다. 이를 위한 관리 센터 화면은 없으므로 [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer)에서 Microsoft Graph 호출을 두 번 사용합니다. 사이트를 하나씩 권한 부여하므로 민감한 사이트는 권한이 부여되지 않은 채로 유지됩니다.
+
+**일회성 설정.** SharePoint/전역 관리자로 로그인한 Graph Explorer에서 **Modify permissions** 탭을 열고 `Sites.FullControl.All`에서 **Consent**를 클릭합니다(이 범위가 있어야 사이트 권한을 설정할 수 있습니다). 이후 쿼리에서 `accessDenied`가 반환되면 이 동의가 누락된 것입니다. 동의한 후 로그아웃했다가 다시 로그인하여 토큰을 새로 고칩니다.
+
+### 1단계 — 사이트 ID 찾기
+
+테넌트의 사이트를 나열합니다(메서드 **GET**).
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+또는 URL로 단일 사이트를 직접 확인합니다.
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+응답에서 사이트의 `id`를 복사합니다. 형식은 `contoso.sharepoint.com,<guid>,<guid>`입니다.
+
+### 2단계 — 앱에 권한 부여
+
+해당 사이트의 `permissions` 컬렉션에 대해 메서드를 **POST**로 설정합니다(1단계의 `id`를 붙여넣음).
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+**Request body** 탭에 다음을 붙여넣습니다. `roles`는 `["read"]` 또는 `["write"]`로 설정하고, 앱의 **Application (client) ID**를 사용합니다.
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+쿼리를 실행합니다. 성공하면 `id`와 `roles`가 포함된 권한 객체가 반환됩니다. PlaidCloud가 접근하도록 할 **각 사이트마다 2단계를 반복**합니다. 사이트에 어떤 권한이 부여되었는지 확인하려면 다음을 사용합니다.
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected`는 폴더나 라이브러리가 아니라 **사이트** 단위로 부여됩니다. 사이트에 권한을 부여하면 그 안의 모든 항목이 노출됩니다. 공유할 의도가 없는 콘텐츠가 함께 포함되지 않도록 민감한 콘텐츠는 전용 사이트에 따로 보관하십시오.
+</Aside>
+
+## PlaidCloud에 계정 추가
+
+1. PlaidCloud에 로그인하여 계정을 둘 워크스페이스를 선택합니다.
+2. `Document` → `Manage Accounts` → **+ 새 계정**으로 이동합니다.
+3. **서비스**로 **OneDrive**를 선택합니다.
+4. 이름과 설명을 입력하고 **보안 모델**을 선택합니다(잘 모르겠으면 `Private`로 둡니다).
+5. **인증 자격 증명**에서 앱 등록의 **클라이언트 ID**, **클라이언트 시크릿**, **OneDrive 테넌트 ID**를 붙여넣습니다.
+6. **SharePoint 사이트 URL**에 앱에 권한이 부여된 사이트의 URL을 붙여넣습니다(예: `https://contoso.sharepoint.com/sites/TeamName`). 그러면 **드라이브/사이트** 목록에 해당 사이트의 문서 라이브러리가 표시되며, 계정의 루트로 사용할 라이브러리를 선택합니다. 이 선택으로 **시작 경로**가 채워집니다.
+7. **저장**을 선택합니다.
+
+<Aside type="note">
+드라이브 또는 사이트는 필수이며, 없으면 계정을 저장할 수 없습니다. 없으면 계정에 폴더는 나열되지만 파일은 나열되지 않습니다.
+</Aside>
+
+## AI 어시스턴트로 계정 만들기
+
+위의 Azure 단계를 마친 후에는 PlaidCloud MCP 커넥터로 연결된 AI 어시스턴트가 `document_account_upsert` 도구로 계정을 만들거나 업데이트할 수 있습니다. 앱 등록의 값을 어시스턴트에게 제공하십시오.
+
+| 계정 필드 | 값 |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | 애플리케이션(클라이언트) ID |
+| `private_key` | 클라이언트 시크릿 |
+| `tenant_id` | 디렉터리(테넌트) ID |
+| `start_path` | 드라이브 ID이며, 필요하면 뒤에 `/folder`를 붙임 |
+
+자격 증명은 쓰기 전용이며 `document_account_describe`에서는 숨겨집니다. 이 도구는 사용자가 직접 로그인한 MCP 세션에서 사용할 수 있으며, 워크플로 단계나 앱 내 에이전트에서는 사용할 수 없습니다.

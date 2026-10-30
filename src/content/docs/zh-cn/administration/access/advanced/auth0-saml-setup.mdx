@@ -1,0 +1,123 @@
+---
+title: 设置 Auth0 SAML 单点登录
+description: 将 Auth0 配置为 PlaidCloud 单点登录的 SAML 身份提供商，为成员启用安全的联合身份验证。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/auth0-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 通过 SAML 2.0 支持单点登录 (SSO)。本指南介绍如何将 Auth0 配置为 SAML 身份提供商，使贵组织的用户在访问 PlaidCloud 时可以通过 Auth0 进行身份验证。
+
+<Aside>PlaidCloud 一侧的配置由 PlaidCloud 团队负责。您需要在 Auth0 中设置 SAML 应用程序，并向 PlaidCloud 提供您的 **Identity Provider Metadata URL**。其余配置由 PlaidCloud 支持团队完成。</Aside>
+
+## 前提条件
+
+- 一个 Auth0 租户
+- 具有 **Administrator** 角色的 Auth0 账户
+- 与 PlaidCloud 支持团队保持联系，以协调设置并交换配置值
+
+## 概述
+
+设置过程涉及双方交换 SAML 元数据：
+
+1. **您配置** 一个启用了 SAML2 Web App 插件的 Auth0 应用程序，并向 PlaidCloud 提供您的 Identity Provider Metadata URL。
+2. **PlaidCloud 向您提供** 完成 Auth0 应用程序配置所需的服务提供商 (SP) Entity ID 和 ACS URL（断言使用方服务 URL）。
+
+请在完成下面的第 3 步之前，联系 PlaidCloud 支持团队获取 SP 值。
+
+## 第 1 步：创建应用程序
+
+1. 登录 [Auth0 Dashboard](https://manage.auth0.com)。
+2. 在左侧边栏中，导航到 **Applications** > **Applications**。
+3. 点击 **Create Application**。
+4. 输入应用程序的名称（例如 `PlaidCloud SSO`）。
+5. 选择 **Regular Web Applications** 作为应用程序类型。
+6. 点击 **Create**。
+
+## 第 2 步：启用 SAML2 Web App 插件
+
+1. 在应用程序详情页面上，选择 **Addons** 选项卡。
+2. 点击 **SAML2 Web App** 插件以启用它。
+3. 插件设置面板将会打开。保持其打开状态，下一步将对其进行配置。
+
+## 第 3 步：配置 SAML 设置
+
+<Aside>完成此步骤之前，您需要从 PlaidCloud 获得 **SP Entity ID** 和 **ACS URL**。请联系 PlaidCloud 支持团队获取这些值。</Aside>
+
+在 **SAML2 Web App** 插件设置面板中：
+
+1. 在 **Application Callback URL** 字段中，输入 PlaidCloud 提供的 ACS URL。
+2. 在 **Settings** JSON 编辑器中，将 `audience` 字段设置为 PlaidCloud 提供的 SP Entity ID：
+
+```json
+{
+  "audience": "your-sp-entity-id-from-plaidcloud",
+  "mappings": {
+    "email": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+    "given_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+    "family_name": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+  },
+  "nameIdentifierFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+  "nameIdentifierProbes": [
+    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+  ]
+}
+```
+
+3. 点击 **Enable**（或 **Save**）以应用这些设置。
+
+## 第 4 步：获取并发送 Identity Provider Metadata URL
+
+启用插件后，找到元数据 URL 并将其发送给 PlaidCloud，以便完成集成。
+
+1. 在 **SAML2 Web App** 插件设置面板中，选择 **Usage** 选项卡。
+2. 复制 **Identity Provider Metadata** URL（格式为 `https://{your-auth0-domain}/samlp/metadata/{client-id}`）。
+
+**请将此 Metadata URL 发送给 PlaidCloud 支持团队。** 这是 PlaidCloud 在身份提供商一侧配置信任关系所需的 Entity Descriptor URL。PlaidCloud 收到此 URL 后，团队将完成 Keycloak 配置，并在 SSO 可以测试时通知您。
+
+## 第 5 步：配置分组的属性映射（可选）
+
+如果您的 PlaidCloud 配置使用基于分组的安全角色分配，可以通过 Auth0 规则或操作，在 SAML 断言中传递分组成员关系。
+
+### 使用 Auth0 Actions
+
+1. 在左侧边栏中，导航到 **Actions** > **Library**。
+2. 点击 **Build Custom**，为 **Login / Post Login** 触发器创建一个新的 action。
+3. 添加逻辑，将分组信息追加到 SAML 断言中。例如，分组存储为用户元数据时：
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const groups = event.user.app_metadata?.groups || [];
+  api.samlResponse.setAttribute("groups", groups);
+};
+```
+
+4. 部署该 action，并将其添加到 **Login** 流程中。
+
+<Aside>请与 PlaidCloud 支持团队讨论所需的分组属性名称和格式，以确保基于分组的安全角色分配在 PlaidCloud 中正常工作。</Aside>
+
+## 第 6 步：控制用户访问
+
+Auth0 根据附加到应用程序的连接和规则来控制哪些用户可以进行身份验证。
+
+1. 在应用程序详情页面上，选择 **Connections** 选项卡。
+2. 为此应用程序启用合适的连接（例如贵组织的数据库连接、Active Directory 或社交连接）。
+3. 禁用任何不应访问 PlaidCloud 的连接。
+
+如需限制连接内的特定用户访问，请使用 Auth0 Actions 或 Rules，根据用户属性或分组成员关系允许或拒绝身份验证。
+
+## 测试集成
+
+PlaidCloud 确认配置完成后：
+
+1. 导航到贵组织的 PlaidCloud 工作区（例如 `https://my-workspace.plaid.cloud`）。
+2. 您将被重定向到 Auth0 登录页面（或所配置连接的登录页面）。
+3. 使用您的 Auth0 凭据登录。
+4. 身份验证成功后，您将被重定向回 PlaidCloud。
+
+如果遇到错误，请确认：
+- Application Callback URL 和 audience 与 PlaidCloud 提供的完全一致
+- 应用程序上已启用 SAML2 Web App 插件
+- `nameIdentifierFormat` 已设置为电子邮件地址格式
+- 您发送给 PlaidCloud 的 Metadata URL 可以访问
+- 用户所属的连接已在应用程序上启用

@@ -1,0 +1,116 @@
+---
+title: Buforowanie pulpitów
+description: Jak pulpity PlaidCloud buforują wyniki wykresów, kiedy zbuforowany wynik jest odrzucany i jak przechowywać wyniki dłużej, aby powtórne wyświetlenia ładowały się z bufora.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dashboards/dashboard-caching.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Pulpit buforuje wynik każdego rysowanego wykresu. Pierwsza osoba, która otworzy
+pulpit, uruchamia jego zapytania w hurtowni danych; wszyscy, którzy otworzą go
+później, otrzymują zamiast tego zapisany wynik, dlatego drugie wyświetlenie jest
+znacznie szybsze niż pierwsze.
+
+Zbuforowany wynik jest odrzucany — a następne wyświetlenie ponownie odpytuje
+hurtownię — w dwóch sytuacjach: tabela stojąca za wykresem została ponownie
+opublikowana lub wynik osiągnął koniec czasu życia w buforze.
+
+## Ponowna publikacja tabeli czyści jej zbuforowane wyniki
+
+Gdy uruchomienie przepływu pracy ponownie publikuje tabelę, każdy wykres
+odczytujący tę tabelę natychmiast odrzuca zbuforowane wyniki. Następna osoba,
+która otworzy pulpit, widzi odświeżone liczby, bez czekania i bez ręcznego
+wymuszania odświeżenia.
+
+Oznacza to, że pulpit nigdy nie pokazuje liczb sprzed odświeżenia z powodu
+buforowania. Jeśli pulpit wygląda na nieaktualny po uruchomieniu przepływu pracy,
+przyczyną jest przepływ pracy — sprawdź, czy uruchomienie się zakończyło i czy
+ponownie opublikowało oczekiwaną tabelę — a nie bufor.
+
+<Aside type="caution" title="Publikuj pod stałą nazwą">
+Zbuforowane wyniki są śledzone dla każdej opublikowanej tabeli. Jeśli przebudujesz
+tabelę pod inną opublikowaną nazwą, wykresy nadal wskazujące starą nazwę będą
+dalej udostępniać dane starej tabeli. Publikuj ponownie pod tą samą nazwą, aby
+zbudowane już wykresy pozostały z nią powiązane.
+</Aside>
+
+## Czas życia w buforze
+
+Każdy zbuforowany wynik ma także czas życia, po którym wygasa samoczynnie.
+Wartość domyślna to **1 godzina**.
+
+Czas życia nie utrzymuje aktualności pulpitu — robi to ponowna publikacja. Dlatego
+w przypadku danych zmieniających się tylko wtedy, gdy uruchamia się przepływ pracy,
+krótki czas życia niczego nie daje, a kosztuje bardzo wiele: każde wyświetlenie po
+wygaśnięciu ostatniego wyniku ponownie odpytuje hurtownię od zera. Pulpity używane
+w seriach — poranny przegląd, zamknięcie miesiąca — płacą ten koszt przy niemal
+każdym załadowaniu.
+
+Do sierpnia 2026 wartość domyślna wynosiła 5 minut. Była krótka, ponieważ ponowna
+publikacja nie czyściła niezawodnie zbuforowanych wyników, więc jedynie wygasanie
+utrzymywało aktualność pulpitu. Teraz, gdy ponowna publikacja je czyści, godzina
+jest zarówno bezpieczna, jak i znacznie tańsza.
+
+Zwiększ ją jeszcze bardziej dla tabel, które zmieniają się rzadziej — doba pasuje do
+tabeli ładowanej ponownie w nocy — a przepływ pracy ładujący tabelę nadal czyści
+bufor w chwili pojawienia się nowych danych.
+
+<Aside type="caution">
+Długi czas życia jest bezpieczny tylko dla danych zmieniających się za pośrednictwem
+PlaidCloud. Jeśli wykres odczytuje tabelę, do której zapisuje coś spoza PlaidCloud,
+nic nie sygnalizuje pulpitowi, by odrzucił bufor, a jedynym, co go odświeża, jest
+czas życia. Ustaw krótki czas życia dla takich zbiorów danych — przy domyślnej
+wartości 1 godziny mogą być teraz opóźnione nawet o godzinę, podczas gdy wcześniej
+były opóźnione najwyżej o 5 minut.
+</Aside>
+
+## Zmiana czasu życia w buforze
+
+Ustaw czas życia w sekundach, albo w bazie danych, albo w pojedynczym zbiorze
+danych. Wartość w zbiorze danych ma pierwszeństwo przed wartością w jego bazie
+danych, a domyślna wartość 1 godziny obowiązuje tam, gdzie nie ustawiono żadnej z
+nich. Zmiana każdej z nich wymaga odpowiedniego uprawnienia do edycji w obszarze
+Pulpity.
+
+**Dla każdego zbioru danych w bazie danych:**
+
+1. Przejdź do **Data → Databases** w obszarze Pulpity
+2. Kliknij ikonę edycji bazy danych
+3. Otwórz kartę **Advanced**, a następnie **Performance**
+4. Wpisz wartość w sekundach w polu **Chart cache timeout** — na przykład `3600`
+   dla jednej godziny
+5. Kliknij **Finish**
+
+**Dla pojedynczego zbioru danych:**
+
+1. Przejdź do **Data → Datasets**
+2. Kliknij ikonę edycji zbioru danych
+3. Otwórz kartę **Settings**
+4. Wpisz wartość w sekundach w polu **Cache timeout**
+5. Kliknij **Save**
+
+Dwie wartości mają szczególne znaczenie: `0` oznacza brak wygasania, więc wynik
+jest czyszczony wyłącznie przez ponowną publikację, a `-1` całkowicie wyłącza
+buforowanie dla tej bazy danych lub zbioru danych.
+
+Zmiana dotyczy wyników buforowanych od tej chwili. Wyniki już znajdujące się w
+buforze zachowują czas życia, z jakim zostały zapisane, dopóki nie wygasną lub
+tabela nie zostanie ponownie opublikowana.
+
+## Ręczne odświeżanie pulpitu
+
+Rzadko jest to potrzebne, ale możesz samodzielnie odrzucić zbuforowane wyniki
+pulpitu: otwórz menu obok **Edit dashboard** i wybierz **Force refresh dashboard**.
+Jeśli wykres udostępnia starszy wynik, notatka w prawym górnym rogu informuje,
+jak dawno dane zostały zbuforowane, a kliknięcie jej wymusza to samo odświeżenie.
+
+Wybieraj jedną z tych metod zamiast przeładowania strony w przeglądarce —
+przeładowanie w przeglądarce ponownie żąda wykresów, ale nadal otrzymuje wyniki z
+bufora.
+
+## Powiązane
+
+- [Korzystanie z pulpitów](/pl/guides/dashboards/using-dashboards/)
+- [Poznawanie pulpitów](/pl/guides/dashboards/learning-dashboard/)

@@ -1,0 +1,126 @@
+---
+title: AI_TO_SQL (Lakehouse v1)
+description: AI_TO_SQL convertit des instructions en langage naturel en requêtes SQL grâce au modèle le plus récent.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/01-ai-to-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Convertit des instructions en langage naturel en requêtes SQL grâce au modèle le plus récent, `text-davinci-003`.
+
+PlaidCloud Lakehouse propose une solution efficace pour construire des requêtes SQL en combinant OLAP et IA. Cette fonction permet de convertir des instructions rédigées en langage naturel en instructions de requête SQL conformes au schéma de la table. Par exemple, vous pouvez lui fournir en entrée une phrase telle que « Get all items that cost 10 dollars or less » et obtenir en sortie la requête SQL correspondante « SELECT * FROM items WHERE price &lt;= 10 ».
+
+Consultez l'[implémentation en amont](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs).
+
+<Aside>Les instructions de requête SQL générées respectent les standards PostgreSQL ; elles peuvent donc nécessiter des modifications manuelles pour correspondre à la syntaxe de PlaidCloud Lakehouse.</Aside>
+
+<Aside>À partir de PlaidCloud Lakehouse v1.1.47, PlaidCloud Lakehouse prend en charge le [service Azure OpenAI](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service). Cette intégration offre une meilleure confidentialité des données. Pour utiliser Azure OpenAI, ajoutez les configurations suivantes à la section `[query]` : ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+<Aside type="caution">PlaidCloud Lakehouse s'appuie sur (Azure) OpenAI pour `AI_TO_SQL`, mais n'envoie à (Azure) OpenAI que le schéma de la table, pas les données. Cette fonction ne s'active que si la configuration de PlaidCloud Lakehouse inclut `openai_api_key` ; sinon, elle reste inactive. Elle est disponible par défaut sur PlaidCloud Lakehouse avec une clé Azure OpenAI. Si vous l'utilisez, vous reconnaissez que le schéma de votre table sera envoyé à Azure OpenAI par nos soins.</Aside>
+
+## Syntaxe Analyze
+
+```python
+func.ai_to_sql('<natural-language-instruction>')
+```
+
+## Exemples Analyze
+
+Dans cet exemple, une instruction de requête SQL est générée à partir d'une instruction avec la fonction AI_TO_SQL, puis l'instruction obtenue est exécutée pour récupérer les résultats de la requête.
+
+```python
+func.ai_to_sql('List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022')
+```
+
+La fonction génère en sortie l'instruction SQL suivante :
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+## Syntaxe SQL
+
+```sql
+USE <your-database>;
+SELECT * FROM ai_to_sql('<natural-language-instruction>');
+```
+
+<Aside>Obtenir et configurer la clé API OpenAI - Pour obtenir votre clé API OpenAI, rendez-vous sur https://platform.openai.com/account/api-keys et générez-en une nouvelle. - Configurez le fichier **databend-query.toml** avec le paramètre openai_api_key. ```toml [query] ... ... openai_api_key = "<your-key>" ```</Aside>
+
+## Exemples SQL
+
+Dans cet exemple, une instruction de requête SQL est générée à partir d'une instruction avec la fonction AI_TO_SQL, puis l'instruction obtenue est exécutée pour récupérer les résultats de la requête.
+
+1. Préparez les données.
+
+```sql
+CREATE DATABASE IF NOT EXISTS openai;
+USE openai;
+
+CREATE TABLE users(
+    id INT,
+    name VARCHAR,
+    age INT,
+    country VARCHAR
+);
+
+CREATE TABLE orders(
+    order_id INT,
+    user_id INT,
+    product_name VARCHAR,
+    price DECIMAL(10,2),
+    order_date DATE
+);
+
+-- Insert sample data into the users table
+INSERT INTO users VALUES (1, 'Alice', 31, 'USA'),
+                         (2, 'Bob', 32, 'USA'),
+                         (3, 'Charlie', 45, 'USA'),
+                         (4, 'Diana', 29, 'USA'),
+                         (5, 'Eva', 35, 'Canada');
+
+-- Insert sample data into the orders table
+INSERT INTO orders VALUES (1, 1, 'iPhone', 1000.00, '2022-03-05'),
+                          (2, 1, 'OpenAI Plus', 20.00, '2022-03-06'),
+                          (3, 2, 'OpenAI Plus', 20.00, '2022-03-07'),
+                          (4, 2, 'MacBook Pro', 2000.00, '2022-03-10'),
+                          (5, 3, 'iPad', 500.00, '2022-03-12'),
+                          (6, 3, 'AirPods', 200.00, '2022-03-14');
+```
+
+2. Exécutez la fonction AI_TO_SQL avec une instruction rédigée en anglais en entrée.
+
+```sql
+SELECT * FROM ai_to_sql(
+    'List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022');
+```
+
+La fonction génère en sortie l'instruction SQL suivante :
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+3. Exécutez l'instruction SQL générée pour obtenir les résultats de la requête.
+
+```sql
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
+```

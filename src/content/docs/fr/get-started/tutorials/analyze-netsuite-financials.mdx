@@ -1,0 +1,230 @@
+---
+title: Analyser les données financières NetSuite — de la connexion au compte de résultat
+description: Tutoriel NetSuite de bout en bout — connectez-vous, récupérez le grand livre avec SuiteQL, transformez-le en compte de résultat mensuel et en balance âgée des créances clients, affichez-les sur un tableau de bord et planifiez l'actualisation.
+sidebar:
+  label: Analyser les données financières NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~45 minutes · une connexion NetSuite active, un grand livre importé, un compte de résultat mensuel, une balance âgée des créances clients et une actualisation planifiée*
+
+Voici le parcours du premier jour pour un contrôleur de gestion ou un analyste FP&A : à la fin, vous aurez récupéré votre **grand livre** directement depuis NetSuite, l'aurez transformé en un **compte de résultat mensuel** que vous pouvez lire comme un état financier, aurez créé une **balance âgée des créances clients**, aurez placé les deux sur un tableau de bord et aurez configuré l'ensemble pour qu'il s'actualise tout seul. Pas d'export vers un tableur, pas de ressaisie manuelle — les chiffres proviennent de NetSuite et restent à jour.
+
+Vous vous connecterez une fois, récupérerez les données une fois, puis vous ferez ce qui compte vraiment : transformer des lignes brutes du grand livre en synthèses qu'un décideur lit le lundi matin.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Cinq phases de gauche à droite : NetSuite, une étape Requête REST exécutant SuiteQL, une table de grand livre importée, une étape Table Extract qui regroupe et résume, puis un compte de résultat et un tableau de bord, alimentant une actualisation planifiée." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Requête SuiteQL</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Table du GL</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Regrouper et sommer</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Résultat</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Connectez-vous, récupérez le grand livre une fois, puis transformez-le en états lisibles — le tout peut être réexécuté selon une planification.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud et un projet dans lequel travailler ([démarrez un essai](https://app.plaidcloud.com) si besoin).
+- **Une connexion NetSuite fonctionnelle.** Suivez d'abord [Se connecter à NetSuite](/fr/guides/connections/netsuite/) — vous avez besoin d'OAuth 2.0 et des services web REST activés dans NetSuite, de l'ID client de l'intégration, d'un ID de certificat, de l'ID de votre compte et de la clé privée au format PEM. Vérifiez que **Envoyer une requête de test** est au vert avant de commencer ici.
+- Aucun SQL n'est nécessaire pour transformer les données — vous le ferez avec des étapes de transformation standard. Le seul texte de requête est la **récupération** depuis NetSuite, et toutes les requêtes de récupération sont fournies. Gardez [Exemples de requêtes SuiteQL pour NetSuite](/fr/guides/connections/netsuite-financial-queries/) ouvert dans un onglet ; ce tutoriel s'en inspire.
+
+<Aside type="note">
+Le seul endroit où vous écrivez du texte de requête est la **récupération** depuis NetSuite — c'est du **SuiteQL**, qui s'exécute *dans NetSuite*. Tout ce qui suit — regrouper le grand livre en compte de résultat, répartir les créances en tranches — se fait avec les étapes de transformation de PlaidCloud, en pointer-cliquer, sans SQL. (Si vous aimez le SQL, il existe une étape Extraire SQL pour cela, mais vous n'en aurez pas besoin ici.)
+</Aside>
+
+## Étape 1 : créer un workflow
+
+Le workflow est le pipeline qui récupère et transforme les données.
+
+<Steps>
+
+1. Ouvrez votre projet et passez à l'onglet **Workflows**.
+2. Cliquez sur **Nouveau workflow**, donnez-lui un nom tel que `NetSuite Financials`, puis ouvrez-le.
+
+</Steps>
+
+## Étape 2 : récupérer le grand livre
+
+Une seule requête SuiteQL vous donne un an d'activité comptabilisée — chaque compte, chaque mois — ce qui suffit pour construire un compte de résultat et, plus tard, d'autres états.
+
+<Steps>
+
+1. Ajoutez une [étape Requête REST](/fr/guides/workflows/rest-request-step/). Dans l'onglet **Requête**, définissez **Connexion** sur votre connexion NetSuite, **Méthode** sur `POST` et **Point de terminaison** sur `/services/rest/query/v1/suiteql`.
+
+2. Dans le **Corps**, placez ce SuiteQL encapsulé sous la forme `{"q": "…"}` :
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. Dans l'onglet **Réponse**, définissez la destination sur **Table** — nommez-la `netsuite_gl` — et définissez les types de colonnes : `amount` → **Devise**, toutes les autres → **Texte**. (SuiteQL renvoie les nombres et les dates sous forme de texte ; c'est le type qui permet à `amount` de s'additionner.)
+
+4. Cliquez sur **Envoyer une requête de test** pour vérifier qu'elle s'exécute, puis exécutez l'étape. Vous disposez maintenant d'une table `netsuite_gl` : une ligne par compte et par mois, avec un montant comptabilisé signé.
+
+</Steps>
+
+<Aside type="note">
+`amount` est **positif au débit, négatif au crédit** — la convention du grand livre de NetSuite. C'est la donnée brute ; l'étape suivante la transforme en un état lisible. Si vos livres couvrent plusieurs filiales ou devises, filtrez sur une seule filiale (`t.subsidiary = <id>`) — consultez la mise en garde sur le multidevise dans les [exemples de requêtes](/fr/guides/connections/netsuite-financial-queries/#conventions-utilisées-dans-chaque-recette).
+</Aside>
+
+## Étape 3 : transformer le grand livre en compte de résultat
+
+Place à l'analyse, réalisée avec une seule transformation en pointer-cliquer — sans SQL. Un compte de résultat n'est que le grand livre agrégé : les comptes de produits et de charges, regroupés en quelques lignes, avec le signe inversé pour que les revenus soient positifs. Une [étape Table Extract](/fr/reference/workflow-steps/tables/table-extract/) fait tout cela dans ses onglets **Sélection des données de la table** et **Filtres de données**.
+
+<Steps>
+
+1. Ajoutez une étape **Table Extract**. Définissez sa **Source** sur `netsuite_gl` et sa **Cible** sur une nouvelle table, `netsuite_pnl`.
+
+2. Dans l'onglet **Filtres de données**, ne conservez que les comptes de produits et de charges (excluez les comptes de bilan) : ajoutez un filtre où **`account_type` est l'une de** `Income`, `OthIncome`, `COGS`, `Expense`, `OthExpense`.
+
+3. Dans l'onglet **Sélection des données de la table**, cliquez sur **Résumer** pour activer l'agrégation, puis configurez trois colonnes cibles :
+
+   - **`period`** — mappée directement depuis la source. Résumer : **Regrouper par**.
+   - **`pnl_line`** — une **expression** (ci-dessous) qui transforme chaque type de compte en ligne d'état. Résumer : **Regrouper par**.
+   - **`amount`** — une **expression** `netsuite_gl.amount * -1` (l'inversion du signe). Résumer : **Somme**.
+
+   Pour `pnl_line`, double-cliquez sur sa cellule **expression** et saisissez ce qui suit (l'éditeur vous permet de sélectionner les colonnes et la fonction `case` du groupe **Conditions** en pointer-cliquer) :
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. Exécutez l'étape.
+
+</Steps>
+
+L'expression `amount * -1` est la seule manipulation comptable : inverser le montant positif au débit rend les **revenus positifs et les coûts négatifs**, de sorte que les trois lignes de chaque mois *s'additionnent pour donner le résultat net*. Ensuite, **Somme** avec **Regrouper par** sur `period` et `pnl_line` regroupe tous les comptes en ces trois lignes par mois. Les expressions utilisent l'éditeur en pointer-cliquer de PlaidCloud — consultez [Utilisation avancée du Data Mapper](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/) et la [référence des expressions](/fr/reference/expressions/).
+
+<Aside type="tip">
+Regrouper plusieurs dizaines de comptes en trois lignes est volontairement grossier pour une première approche. Pour ventiler les charges d'exploitation par département, ajoutez `department` (via `BUILTIN.DF(tl.department)`, en joignant `transactionline`) à la requête de l'étape 2, puis ajoutez `department` comme colonne **Regrouper par** supplémentaire ici.
+</Aside>
+
+## Étape 4 : le lire comme un financier
+
+Ouvrez la table `netsuite_pnl`. Pour chaque mois, vous avez trois chiffres :
+
+| period | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+Lisez directement à partir de la table :
+
+- **Marge brute** = revenus + coût des ventes (ce dernier est déjà négatif) → `486,200 − 190,540 = 295,660`.
+- **Résultat net** = somme des trois lignes → `82,780`.
+- **Taux de marge brute** = marge brute ÷ revenus → environ 61 %.
+
+La première chose à faire est de **rapprocher les chiffres** : exécutez le compte de résultat natif de NetSuite pour le même mois et vérifiez que les revenus et le résultat net concordent. Si ce n'est pas le cas, il s'agit presque toujours d'une différence de périmètre — un filtre de filiale ou de devise, ou un décalage entre la période comptable et la date de transaction (consultez la [remarque sur les périodes](/fr/guides/connections/netsuite-financial-queries/#balance-générale)). Ne faites confiance au pipeline qu'une fois les chiffres rapprochés.
+
+<Aside type="tip">
+Vous voulez la présentation classique avec les mois en colonnes ? Ajoutez une [étape Table Pivot](/fr/reference/workflow-steps/tables/table-pivot/) qui lit `netsuite_pnl` : pivotez `period` en colonnes, conservez `pnl_line` comme ligne et additionnez `amount`. Vous obtenez une colonne par mois et une ligne par ligne du compte de résultat — l'évolution mensuelle d'un coup d'œil, sans SQL.
+</Aside>
+
+## Étape 5 : créer une balance âgée des créances clients
+
+Le deuxième gain du premier jour, qui suit le même schéma connexion, récupération, transformation. Partez de la requête sur les créances ouvertes, puis répartissez-les par tranche selon le retard de chaque facture.
+
+<Steps>
+
+1. Ajoutez une autre étape **Requête REST** (même connexion, `POST`, le point de terminaison suiteql) avec ce corps :
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   Importez-la sous le nom `netsuite_open_ar`, avec `invoice_total` et `amount_unpaid` → **Devise**, `invoice_date` et `due_date` → **Date**, les autres → **Texte**.
+
+2. Ajoutez une étape **Table Extract** qui lit `netsuite_open_ar` vers une nouvelle table `netsuite_ar_aging`. Dans l'onglet **Sélection des données de la table**, cliquez sur **Résumer** et configurez trois colonnes cibles :
+
+   - **`aging_bucket`** — une **expression** (ci-dessous) qui étiquette chaque facture selon son retard. Résumer : **Regrouper par**.
+   - **`invoices`** — n'importe quelle colonne, par exemple `invoice_number`. Résumer : **Nombre**.
+   - **`balance`** — mappée depuis `amount_unpaid`. Résumer : **Somme**.
+
+   Pour `aging_bucket`, saisissez cette expression — elle mesure le nombre de jours de retard (une date moins une date donne des jours) et étiquette la tranche :
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. Exécutez-la. `netsuite_ar_aging` vous indique désormais, en cinq lignes, quelle part est à jour et quelle part est en retard de 30, 60 ou plus de 90 jours — la vue de recouvrement qu'un décideur consulte en premier. (`due_date` doit être typée **Date** pour que la soustraction de dates fonctionne — vous l'avez défini dans l'onglet **Réponse** de l'étape Requête REST ci-dessus.)
+
+</Steps>
+
+## Étape 6 : l'afficher sur un tableau de bord
+
+Des chiffres dans une table, c'est bien ; un graphique, c'est ce que l'on envoie au directeur financier. [Publiez](/fr/get-started/tutorials/load-and-transform-data/#étape-7-publier-le-résultat) `netsuite_pnl` et `netsuite_ar_aging`, puis suivez [Créer un tableau de bord](/fr/get-started/tutorials/build-a-dashboard/) pour ajouter :
+
+- un **histogramme** du résultat net (ou des revenus) par `period`, et
+- un **graphique en secteurs ou en barres** du `balance` des créances par `aging_bucket`.
+
+Vous obtenez un tableau de bord financier NetSuite en direct — sans export, actualisé à chaque exécution du workflow.
+
+## Étape 7 : planifier l'actualisation
+
+<Steps>
+
+1. Exécutez une fois le workflow complet, de haut en bas, pour vérifier que chaque étape est au vert.
+2. [Planifiez le workflow](/fr/get-started/tutorials/schedule-a-workflow/) — mensuellement selon le rythme de clôture, ou chaque nuit si vous voulez une balance âgée à jour chaque matin.
+
+</Steps>
+
+Comme chaque récupération remplace intégralement la table, chaque exécution réextrait la tranche définie par sa clause `WHERE` — limitez-la à la fenêtre dont vous avez besoin (l'année en cours, uniquement les factures ouvertes) plutôt qu'à tout l'historique.
+
+## Ce que vous avez construit
+
+En partant d'un workflow vide, vous avez récupéré le grand livre et les créances NetSuite en direct, les avez transformés en un **compte de résultat mensuel** et une **balance âgée des créances clients** avec deux étapes de transformation standard — sans SQL —, les avez placés sur un tableau de bord et avez configuré leur actualisation — la boucle de reporting essentielle d'une équipe financière, désormais automatisée.
+
+## Pour aller plus loin
+
+- [Exemples de requêtes SuiteQL pour NetSuite](/fr/guides/connections/netsuite-financial-queries/) — balance générale, bilan, commandes clients ouvertes, commandes d'achat et stocks à ajouter au même workflow.
+- [Étape Table Extract](/fr/reference/workflow-steps/tables/table-extract/) et [Utilisation avancée du Data Mapper](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/) — regroupement, filtrage et colonnes calculées pour des analyses plus poussées.
+- [Concevoir une hiérarchie de dimension](/fr/get-started/tutorials/design-a-dimension/) — regroupez votre plan comptable en groupes de reporting que vous contrôlez.
+- [Créer un tableau de bord](/fr/get-started/tutorials/build-a-dashboard/) — le pas-à-pas complet du tableau de bord.

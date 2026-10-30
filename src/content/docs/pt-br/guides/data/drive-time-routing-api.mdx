@@ -1,0 +1,148 @@
+---
+title: API de roteamento por tempo de condução
+description: Chame os endpoints REST de roteamento por tempo de condução do PlaidCloud — polígonos de isócrona e classificação dos mais próximos por tempo de condução, com base no mecanismo de roteamento hospedado pelo próprio PlaidCloud. Prévia opcional, em regime de melhor esforço, sem SLA.
+sidebar:
+  label: API de roteamento por tempo de condução
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud expõe o roteamento por tempo de condução como dois endpoints REST em `/rest/v1/analyze/route`: um endpoint de **isócrona**, que desenha um polígono de tempo de condução (ou distância de condução) ao redor de uma origem, e um endpoint de **find-nearest**, que classifica destinos candidatos pelo tempo de condução real em vez da distância em linha reta. Ambos são executados no mecanismo de roteamento hospedado pelo próprio PlaidCloud, criado a partir de dados viários do OpenStreetMap (ODbL), e envolvem cada resultado em um pequeno envelope `plaidcloud` que traz a atribuição.
+
+<Aside type="caution" title="Prévia opcional — leia isto antes de criar algo com base nela">
+O roteamento por tempo de condução está **desativado por padrão** e só chega aos tenants que o ativaram. Ele é executado em um pequeno pool de roteamento compartilhado e é oferecido em **regime de melhor esforço, sem SLA** — não há capacidade garantida com tráfego em tempo real, e uma solicitação pode ser recusada com um `503` quando o pool está ocupado, em vez de ser enfileirada ou repetida para você. Se você ainda não tem isso ativado, entre em contato com o PlaidCloud para perguntar sobre a prévia antes de criar uma dependência dela.
+</Aside>
+
+## Autenticação e direito de uso
+
+Toda chamada de roteamento exige:
+
+- Uma sessão normal do PlaidCloud ou um token de portador com a função **`analyze.table.read`** — a mesma função que controla outros acessos de leitura aos dados de um projeto. Não existe uma função específica de roteamento.
+- O roteamento por tempo de condução incluído no seu plano — o direito de uso de tempo de condução ativado para o seu tenant. Um tenant cujo plano não o inclui recebe um `403` com `detail: "drive_time_disabled"` em todas as chamadas — não há modo parcial nem somente leitura.
+
+## Endpoints
+
+### `isochrone` — polígono de tempo de condução ao redor de uma origem
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Campo | Tipo | Observações |
+|---|---|---|
+| `origin` | `{ lat, lon }`, obrigatório | Uma única coordenada. A isócrona aceita uma origem por chamada |
+| `costing` | string | `auto` (padrão), `truck`, `bike` ou `pedestrian` |
+| `contours_minutes` | array de inteiros, obrigatório | Uma entrada por anel de contorno desejado, cada uma de 1 a 120 minutos. Até 5 contornos por chamada |
+| `costing_options.truck.height` | float, metros | Opcional, > 0 e ≤ 10. Só se aplica com o costing `truck` |
+| `costing_options.truck.weight` | float, quilogramas | Opcional, > 0 e ≤ 100000. Só se aplica com o costing `truck` |
+| `costing_options.truck.length` | float, metros | Opcional, > 0 e ≤ 50. Só se aplica com o costing `truck` |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Resposta — o GeoJSON de isócrona do próprio mecanismo de roteamento, sem modificações, mais o envelope `plaidcloud`:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest` — destinos mais próximos por tempo de condução
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Campo | Tipo | Observações |
+|---|---|---|
+| `origins` | array de `{ lat, lon }`, obrigatório | De 1 a 5 origens |
+| `destinations` | array de `{ lat, lon }`, obrigatório | De 1 a 500 candidatos. Consulte [pré-filtragem de destinos](#pré-filtragem-de-destinos) abaixo |
+| `costing` | string | `auto` (padrão), `truck`, `bike` ou `pedestrian` |
+| `top_n` | integer | Destinos mais próximos a retornar por origem. De 1 a 50, padrão 5 |
+| `costing_options.truck.{height,weight,length}` | igual à isócrona | Só se aplica com o costing `truck` |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` refere-se à posição desse destino no array `destinations` que você enviou, não à posição em qualquer classificação interna — guarde-o para associar um resultado de volta aos seus próprios dados.
+
+#### Pré-filtragem de destinos
+
+Você pode enviar até 500 destinos, mas apenas os **50 mais próximos em linha reta** de qualquer uma das suas origens chegam a entrar no cálculo real de roteamento por tempo de condução. Se você enviar mais de 50, o PlaidCloud reduz o conjunto com um pré-filtro em linha reta (círculo máximo) antes de classificar os restantes pelo tempo de condução real — portanto, um destino que está perto no mapa, mas do outro lado de um corte em linha reta, pode ser excluído antes mesmo de o tempo de condução ser calculado. Para conjuntos de destinos com menos de 50, todos os candidatos são roteados e isso não tem efeito. `top_n` é limitado a 50 pelo mesmo motivo: ele não pode retornar mais candidatos do que a etapa de roteamento chega a considerar.
+
+### Modos de costing
+
+`auto`, `truck`, `bike` e `pedestrian` são aceitos. Com o costing `truck`, você também pode restringir a rota pelas dimensões do veículo — `costing_options.truck.height`, `.weight`, `.length` —, de modo que uma rota possa evitar um viaduto baixo ou uma via com restrição de peso. **O roteamento de materiais perigosos não é aceito.** Não há parâmetro de materiais perigosos em nenhum dos endpoints, e nenhum está disponível nem indiretamente pelo costing `truck` — esta API não traça rotas que contornem restrições de materiais perigosos, portanto não conte com ela para cargas regulamentadas como materiais perigosos.
+
+## Erros
+
+| Status | Significado |
+|---|---|
+| `403` | Falta a função `analyze.table.read` ou o seu plano não inclui o direito de uso de tempo de condução |
+| `422` | Um campo da solicitação falhou na validação — por exemplo, mais de 5 contornos, um contorno fora do intervalo de 1 a 120 minutos, mais de 5 origens ou uma dimensão de caminhão fora do intervalo |
+| `503 route_unavailable` | O mecanismo de roteamento não pôde ser alcançado, excedeu o tempo limite ou retornou um erro — **ou** a cota de solicitações simultâneas do seu tenant já estava em uso (consulte [Limites](#limites)) |
+
+Um `503` aqui nunca é um `5xx` bruto e nunca uma espera indefinida — toda chamada ao mecanismo de roteamento é executada com um tempo limite definido, de modo que um serviço de origem lento ou travado aparece rapidamente como `503`, em vez de deixar sua solicitação aberta.
+
+## Limites
+
+- **A simultaneidade por tenant é limitada a 2 solicitações simultâneas.** Isso reflete o pool de roteamento compartilhado por trás da prévia, e não uma cota por plano — uma terceira solicitação simultânea do mesmo tenant recebe `503 route_unavailable` até que uma das duas primeiras termine. Não há enfileiramento; tente novamente após um breve intervalo.
+- **Sem cache de respostas.** Toda chamada é respondida ao vivo, com base no índice de roteamento atual.
+- **As coordenadas nunca são registradas em log.** Os logs de falha registram o caminho da solicitação e o tipo de erro, e não a origem, o destino nem quaisquer outros dados de localização que você enviou.
+- Os dados de roteamento são criados a partir de dados viários do OpenStreetMap (ODbL) — valem aqui as mesmas ressalvas de cobertura e atualização que se aplicam à [API de geocodificação do PlaidCloud](/pt-br/guides/data/geocoding-api/#cobertura-e-determinismo--leia-isto-primeiro): forte em regiões bem mapeadas, mais variável em outras e editada continuamente pela comunidade, em vez de ser um conjunto de dados comercial versionado.
+- Se você exibir resultados de roteamento ou áreas de tempo de condução a um usuário final, exiba a string `plaidcloud.attribution` (ou o crédito equivalente do OSM) junto com eles — a mesma obrigação da ODbL que se aplica aos resultados de geocodificação se aplica aos resultados de roteamento.
+
+## Relacionados
+
+- [Migrar da geocodificação do Google ou do Mapbox](/pt-br/guides/data/geocoding-api/) — os endpoints REST de geocodificação do PlaidCloud e as mesmas ressalvas de cobertura do OpenStreetMap
+- [Etapa Solicitação REST](/pt-br/guides/workflows/rest-request-step/) — chame esses endpoints a partir de um fluxo de trabalho

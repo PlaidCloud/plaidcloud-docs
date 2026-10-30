@@ -1,0 +1,91 @@
+---
+title: 空間Alteryxワークフローの移行
+description: 空間依存ファイルをパッケージ化し、Alteryxの空間ワークフローをインポートして、変換後のジオメトリを元の出力と照合して検証します。
+sidebar:
+  order: 37
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-spatial-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudは、Alteryxの空間ワークフローを[地理空間ステップ](/ja/reference/workflow-steps/spatial/)で構成された高度なワークフローに変換します。AlteryxのSpatialパレットにあるすべてのツールに変換ルートがあります。ツールごとの一覧と既知の制約は、[空間ツールの対応表](/ja/reference/alteryx-conversion-matrix/#空間ツールの対応範囲)にまとめています。
+
+このガイドでは、ファイルのパッケージ化、インポートの実行、結果の検証といった手順を説明します。変換後のステップの動作については、[地理空間分析](/ja/guides/workflows/geospatial-analytics/)を参照してください。
+
+## 空間入力のパッケージ化
+
+インポートする前に、すべての空間依存ファイルを集めてください。変換後のワークフローが読み取れるのは、一緒に持ち込んだファイルだけです。
+
+- シェープファイルのグループ: `.shp`と、`.shx`、`.dbf`、`.prj`。
+- MapInfoのグループ: `.tab`と、`.map`、`.id`、`.dat`。
+- KMLファイルとGeoJSONファイル。
+- 空間レコードと非空間レコードを結合するルックアップテーブル。
+- 検証用の、期待される空間出力。
+
+各グループのサイドカーファイルは、メインファイルと同じフォルダーに置いてください。[空間ファイルのインポート](/ja/reference/workflow-steps/spatial/spatial-file-import/)ステップは、メインファイルと同じ場所からそれらを読み取ります。
+
+<Aside type="caution" title=".geo GeoFileは変換されません">
+  Alteryx独自のバイナリ形式である`.geo`は読み取れません。実行時にクラッシュするインポートを出力するのではなく、変換はこの形式で安全側に失敗します。インポートする前に、これらのレイヤーをシェープファイルまたはGeoJSONとして再エクスポートしてください。
+</Aside>
+
+## 空間ツールの変換方法
+
+変換は、正しい結果が得られる最も単純なルートを選択し、そのルートによってステップのスケーラビリティが決まります。
+
+**データベース（SQL）ルート。** Create PointsとDistanceは[Table Extract式](/ja/reference/workflow-steps/spatial/spatial-sql-recipes/)になり、Spatial MatchとFind Nearestは[空間照合](/ja/reference/workflow-steps/spatial/spatial-match/)と[Spatial Find Nearest](/ja/reference/workflow-steps/spatial/spatial-find-nearest/)になります。これらは完全にウェアハウス内で実行されるため、テーブルの規模に応じてスケールします。
+
+**ワークフローエンジンルート。** ジオメトリを整形するもの、つまりBuffer、Trade Area、Generalize、Smooth、Process、Poly-Build、Poly-Split、Make Grid、Combine、Spatial Info、空間ファイルのインポートは、データベースのSQLでは表現できない処理のため、ShapelyとGDALを使用してワークフローエンジンで実行されます。
+
+**レポート。** MapとReport Mapは[Report Map](/ja/reference/workflow-steps/reports/report-map/)ステップになり、Heat MapとPie Wedge Trade Areaのパッケージ化マクロは[パッケージ化マクロステップ](/ja/reference/workflow-steps/macros/)になります。
+
+変換されたステップはすべて、開いて編集し、手作業で作り直せる標準のステップタイプです。例外はMake GridとPoly-Splitで、変換されて実行はできますが、現時点ではデザイナーフォームではなくAPIまたはMCPから設定します。空間ツールの入力要件については、[既知の空間要件](/ja/reference/alteryx-conversion-matrix/#空間に関する既知の前提条件)を参照してください。
+
+## ジオメトリの検証
+
+空間出力の同等性を確認するには、次の項目を比較します。
+
+1. 出力スキーマ。
+2. 行数。
+3. キーフィールドの値。
+4. ジオメトリの値、またはジオメトリから導出した測定値。
+5. 座標参照系の動作。
+6. 距離、面積、簡略化したジオメトリ（許容される誤差の範囲内で）。
+
+ワークフローが順序に依存していない限り、行の順序を一致させる必要はありません。
+
+<Aside type="note" title="面積と長さは異なる場合があります（多くはより正確になります）">
+  [Spatial Info](/ja/reference/workflow-steps/spatial/spatial-info/)ステップは、WGS84楕円体上で測地線に基づいて計測します。平面上の測定値と比較する場合、米国の緯度では約25%の差が生じます。Alteryxと一致するのは測地線に基づく値です。
+</Aside>
+
+## 空間アーティファクトの検証
+
+マップとレポートマップについては、次の点を確認してください。
+
+1. マップレイヤーに期待どおりのレコードが含まれている。
+2. ラベルとグループ化されたフィーチャーが正しい。
+3. 境界、ポイント、ポリゴンが期待どおりの位置に表示される。
+4. 下流のレビュアーがアーティファクトを利用できる。
+5. クラウドネイティブなアーティファクトの意図的な違いが記録されている。
+
+レポートレンダラーはAlteryxの出力の近似です。ビジュアルレイアウトを比較する前に、マップの元になっているテーブルを検証してください。
+
+## よくある空間の問題
+
+| 症状 | 確認事項 |
+| --- | --- |
+| インポートした行のジオメトリが空になる | サイドカーファイルが同じフォルダーにあるか |
+| 座標が誤った位置に表示される | 投影ファイル（`.prj`）があるか。Create Pointsの座標は浮動小数点、または整数（×1,000,000）の経度/緯度であるため、投影座標の場合は、上流で先にWGS84に再投影する必要があります |
+| 面積や長さが元と異なる | 上記の注記にあるとおり、平面計測と測地線計測の違い |
+| Spatial Infoの列がない | その測定値が[Peanoキー](/ja/reference/alteryx-conversion-matrix/#空間に関する既知の前提条件)であるか。これは公開仕様のない唯一の測定値で、変換時に注記でその旨が示されます |
+| 商圏のサイズが正しくない | 所要時間によるサイズ指定は変換されず、固定半径のみ変換されます |
+| Find Nearestステップが距離で拒否される | 最近傍距離のステップが計測できる単位は、マイル、キロメートル、メートル、フィートのみです。ヤード、海里、所要時間は拒否され、数値でない最大距離も拒否されます |
+| 空間ツールが自身の名前を挙げて拒否される | GeocoderにはPlaidCloudの同等機能がありません。プラットフォームが備えていないジオコーディングサービスと参照データが必要です。拒否メッセージには、どのツールか、およびその理由が示されます |
+| 行数が異なる | 両方の実行で同じソースデータを使用しているか |
+
+## 関連ガイド
+
+- [地理空間分析](/ja/guides/workflows/geospatial-analytics/)
+- [地理空間ステップ](/ja/reference/workflow-steps/spatial/)
+- [Alteryx依存ファイルのパッケージ化](/ja/guides/workflows/package-alteryx-dependencies/)
+- [Alteryxのレポートとアーティファクトの検証](/ja/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Alteryx変換マトリックス](/ja/reference/alteryx-conversion-matrix/)

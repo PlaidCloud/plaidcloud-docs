@@ -1,0 +1,127 @@
+---
+title: Ligar ao Workday Financials
+description: Ligue o PlaidCloud ao Workday Financial Management com um Utilizador do sistema de integração, extraia dados através de um relatório Report-as-a-Service e depois lance lançamentos de diário por SOAP.
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud ao Workday Financial Management através de um Utilizador do sistema de integração (ISU) e de um relatório Report-as-a-Service (RaaS) fornecido pelo cliente para extrair dados financeiros, e lance diários contabilísticos de volta através da API SOAP do Workday. Este guia abrange a ligação, o passo de importação e o passo de lançamento.
+
+<Aside type="caution">
+Execute sempre cada importação primeiro num tenant de sandbox e, em cada lote de lançamentos, percorra a opção **Validate Only** abaixo antes de lançar em produção.
+</Aside>
+
+<Aside type="note">
+Esta ligação é diferente do [conector REST Workday](/pt-pt/reference/connectors/rest/workday/) genérico, que se destina à API REST do Workday para dados de RH e de processamento salarial. O Workday Financials utiliza, em vez disso, os serviços Web SOAP e os relatórios RaaS do Workday — utilize este conector para dados financeiros e lançamento de diários.
+</Aside>
+
+## Pré-requisitos
+
+No Workday, é necessário:
+
+- Um **Utilizador do sistema de integração (ISU)** dedicado ao PlaidCloud, com um Grupo de segurança do sistema de integração que lhe conceda acesso aos dados financeiros e ao processo de negócio Submit Accounting Journal.
+- O **anfitrião do tenant** Workday (por exemplo, `wd5-impl.workday.com`) e o **nome do tenant**.
+- Um **relatório Report-as-a-Service (RaaS)** que tenha criado no Workday e que devolva os dados que pretende importar, publicado com acesso **Web Service** para que o PlaidCloud possa chamar diretamente o respetivo URL.
+
+<Aside type="note">
+O Workday Financials não expõe um conjunto fixo de entidades predefinidas, como o NetSuite ou o Business Central — em vez disso, cria a extração como um relatório RaaS no Workday (com o gerador de relatórios do próprio Workday) e fornece ao PlaidCloud o URL desse relatório. Assim, controla exatamente que campos e linhas a importação devolve.
+</Aside>
+
+## Criar a Ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Workday Financials** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome intuitivo, por exemplo `Workday Financials Prod`. |
+   | Anfitrião do tenant | O seu anfitrião Workday, por exemplo `wd5-impl.workday.com`. |
+   | Nome do tenant | O nome do seu tenant Workday. |
+   | Nome de utilizador do ISU | O nome de utilizador do Utilizador do sistema de integração. |
+   | Palavra-passe do ISU | A palavra-passe do Utilizador do sistema de integração. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar a Ligação
+
+<Steps>
+
+1. Crie um pequeno relatório RaaS no Workday e publique-o com acesso Web Service.
+
+2. Adicione um passo **Import Workday Entity** a um fluxo de trabalho, defina **Ligação Workday** com a sua ligação, **RaaS Report URL** com o URL do relatório e **Tabela de destino** com uma tabela temporária.
+
+3. Execute o passo (consulte [Executar um único passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que as credenciais do ISU, o anfitrião do tenant e o URL do relatório estão todos corretos. Um erro indica o problema: credenciais incorretas, um anfitrião do tenant errado ou um ISU sem acesso ao relatório.
+
+## Importar Dados
+
+<Steps>
+
+1. Adicione um passo **Import Workday Entity** e defina **Ligação Workday**, **RaaS Report URL** e **Tabela de destino**.
+
+2. Adicione **Filtros** para limitar a extração — `company`, `ledger`, `period`, `accounting_date` (intervalo), `ledger_account` (intervalo) e `cost_center` são transmitidos como parâmetros do relatório quando o seu relatório RaaS define pedidos de introdução correspondentes.
+
+3. Execute o passo e verifique a tabela de destino.
+
+</Steps>
+
+<Aside type="caution">
+Os filtros só chegam a um parâmetro do relatório que o seu relatório RaaS defina realmente como pedido de introdução. Se um filtro que definir não tiver um pedido de introdução correspondente no relatório, o PlaidCloud rejeita-o em vez de o ignorar silenciosamente — adicione primeiro o pedido de introdução ao relatório no Workday.
+</Aside>
+
+## Lançar Lançamentos de Diário
+
+O passo **Workday Financials: Post Journal Entry** lança diários contabilísticos através do pipeline de escrita ERP partilhado do PlaidCloud, utilizando a operação SOAP `Submit_Accounting_Journal` do Workday.
+
+<Steps>
+
+1. Crie uma **tabela de cabeçalho**, com uma linha por lançamento de diário, com `journal_id` (o identificador do lançamento), `company`, `ledger`, `accounting_date` e `memo`.
+
+2. Crie uma **tabela de linhas**, com uma ou mais linhas por `journal_id`, com `ledger_account`, `debit`, `credit` e quaisquer colunas de worktag (centro de custo, projeto) exigidas pelos seus diários.
+
+3. Adicione um passo **Workday Financials: Post Journal Entry**, defina **Ligação Workday**, **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultados**.
+
+4. Deixe **Validate Only** selecionado e execute o passo. O PlaidCloud constrói e verifica cada lançamento sem reserva no razão e sem lançar nada.
+
+5. Reveja a tabela de resultados (uma linha por lançamento: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija qualquer linha `error` e valide novamente.
+
+6. Desmarque **Validate Only** e execute novamente para lançar de facto. Deixe **Continue On Error** selecionado, a menos que pretenda que um lote pare de imediato no primeiro lançamento falhado.
+
+</Steps>
+
+### Como Funciona o Lançamento
+
+O PlaidCloud chama `Submit_Accounting_Journal` para cada lançamento de diário e, como a própria cadeia de aprovação de processos de negócio do Workday pode reter um diário submetido antes de ser efetivamente lançado, consulta o estado do processo de negócio do lançamento até este atingir um estado final. Um lançamento só é comunicado como `posted` depois de esse estado final ser **confirmado**. Um lançamento submetido mas preso num passo de aprovação permanece em quarentena, em vez de ser registado como lançado, para que uma aprovação pendente nunca passe silenciosamente por êxito. A reserva no razão do próprio PlaidCloud impede a submissão do mesmo lançamento duas vezes num lote repetido ou reexecutado.
+
+### Corrigir um Lançamento Já Lançado
+
+Este passo nunca elimina nem reescreve um diário já lançado. Para corrigir um, lance um novo lançamento com os débitos e créditos trocados em relação ao original, um **lançamento de estorno registado**, em vez de editar o original. Isto preserva a própria pista de auditoria do Workday e corresponde à forma como as correções são feitas diretamente na aplicação.
+
+### Limites de Capacidade: Leia Antes de Lançar em Produção
+
+<Aside type="caution">
+- **A importação depende inteiramente do relatório RaaS que criar.** O PlaidCloud não tem entidades predefinidas do Workday Financials — os campos, os pedidos de introdução e o controlo de acesso do relatório são todos definidos no Workday, não por este conector. Uma alteração ao relatório no Workday pode alterar a forma da sua importação sem qualquer alteração do lado do PlaidCloud.
+- **A aprovação do processo de negócio acrescenta latência.** Se o seu processo de negócio Submit Accounting Journal passar por passos de aprovação, um lançamento pode ficar `pending` até alguém o aprovar no Workday — a consulta do estado final aguarda por isso, pelo que um lançamento pode demorar materialmente mais do que uma chamada a um ERP sem cadeia de aprovação.
+- **Este conector é distinto do [conector REST Workday](/pt-pt/reference/connectors/rest/workday/) genérico.** Esse conector destina-se à API REST do Workday (RH/processamento salarial); utilize-o apenas se não estiver a ligar ao Workday Financials.
+</Aside>
+
+## Relacionado
+
+- [Conector Workday Financials](/pt-pt/reference/connectors/rest/workday-financials/) — referência de campos.
+- [Import Workday Entity](/pt-pt/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/pt-pt/reference/workflow-steps/workday-financials/workday-post/)
+- [Rever o histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/) — o registo permanente de cada tentativa de lançamento no Workday Financials e do respetivo estado atual.
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)

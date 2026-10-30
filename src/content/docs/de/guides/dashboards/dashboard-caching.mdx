@@ -1,0 +1,112 @@
+---
+title: Dashboard-Caching
+description: Wie PlaidCloud-Dashboards Diagrammergebnisse zwischenspeichern, wann ein zwischengespeichertes Ergebnis verworfen wird und wie Sie Ergebnisse länger vorhalten, damit wiederholte Aufrufe aus dem Cache geladen werden.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dashboards/dashboard-caching.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Ein Dashboard speichert das Ergebnis jedes Diagramms, das es zeichnet, im Cache. Die erste
+Person, die ein Dashboard öffnet, führt dessen Abfragen gegen das Data Warehouse aus; alle,
+die es danach öffnen, erhalten stattdessen das gespeicherte Ergebnis – deshalb ist ein
+zweiter Aufruf deutlich schneller als der erste.
+
+Ein zwischengespeichertes Ergebnis wird verworfen – und der nächste Aufruf fragt das Warehouse
+erneut ab – in zwei Fällen: Die Tabelle hinter dem Diagramm wird erneut veröffentlicht, oder
+das Ergebnis erreicht das Ende seiner Cache-Lebensdauer.
+
+## Erneutes Veröffentlichen einer Tabelle leert ihre zwischengespeicherten Ergebnisse
+
+Wenn eine Workflow-Ausführung eine Tabelle erneut veröffentlicht, verwirft jedes Diagramm, das
+diese Tabelle liest, seine zwischengespeicherten Ergebnisse sofort. Die nächste Person, die das
+Dashboard öffnet, sieht die aktualisierten Zahlen – ohne Wartezeit und ohne manuell eine
+Aktualisierung erzwingen zu müssen.
+
+Das heißt: Ein Dashboard zeigt nie wegen des Cachings Zahlen von vor der Aktualisierung. Wirkt
+ein Dashboard nach einer Workflow-Ausführung veraltet, liegt die Ursache beim Workflow – prüfen
+Sie, ob die Ausführung abgeschlossen wurde und die erwartete Tabelle erneut veröffentlicht hat –,
+nicht beim Cache.
+
+<Aside type="caution" title="Unter einem stabilen Namen veröffentlichen">
+Zwischengespeicherte Ergebnisse werden pro veröffentlichter Tabelle verfolgt. Wenn Sie eine
+Tabelle unter einem anderen veröffentlichten Namen neu erstellen, liefern die Diagramme, die
+noch auf den alten Namen zeigen, weiterhin die Daten der alten Tabelle. Veröffentlichen Sie
+unter demselben Namen erneut, damit die bereits erstellten Diagramme mit ihr verbunden bleiben.
+</Aside>
+
+## Cache-Lebensdauer
+
+Jedes zwischengespeicherte Ergebnis hat außerdem eine Lebensdauer, nach der es von selbst
+abläuft. Der Standard beträgt **1 Stunde**.
+
+Die Lebensdauer hält ein Dashboard nicht aktuell – das leistet das erneute Veröffentlichen. Bei
+Daten, die sich nur ändern, wenn ein Workflow ausgeführt wird, bringt eine kurze Lebensdauer
+daher nichts und kostet viel: Jeder Aufruf, nachdem das letzte Ergebnis abgelaufen ist, fragt das
+Warehouse von Grund auf neu ab. Dashboards, die stoßweise genutzt werden – eine Morgenbesprechung,
+ein Monatsabschluss –, zahlen diese Kosten bei fast jedem Laden.
+
+Bis August 2026 betrug der Standard 5 Minuten. Er war kurz, weil das erneute Veröffentlichen
+zwischengespeicherte Ergebnisse nicht zuverlässig leerte und der Ablauf daher das Einzige war,
+was ein Dashboard aktuell hielt. Da das erneute Veröffentlichen sie nun leert, ist eine Stunde
+sowohl sicher als auch deutlich günstiger.
+
+Erhöhen Sie den Wert weiter bei Tabellen, die sich seltener ändern – ein Tag passt zu einer, die
+über Nacht neu geladen wird –, und der Workflow, der die Tabelle neu lädt, leert den Cache
+trotzdem in dem Moment, in dem neue Daten eintreffen.
+
+<Aside type="caution">
+Eine lange Lebensdauer ist nur für Daten unbedenklich, die sich über PlaidCloud ändern. Liest ein
+Diagramm eine Tabelle, in die etwas außerhalb von PlaidCloud schreibt, signalisiert nichts dem
+Dashboard, seinen Cache zu verwerfen, und die Lebensdauer ist das Einzige, was ihn aktualisiert.
+Legen Sie für solche Datasets eine kurze Lebensdauer fest – mit dem Standard von 1 Stunde können
+sie nun bis zu eine Stunde hinterherhinken, wo sie zuvor höchstens 5 Minuten zurücklagen.
+</Aside>
+
+## Die Cache-Lebensdauer ändern
+
+Legen Sie die Lebensdauer in Sekunden fest, entweder an einer Datenbank oder an einem einzelnen
+Dataset. Ein Wert am Dataset hat Vorrang vor dem Wert seiner Datenbank, und der Standard von
+1 Stunde gilt, wo Sie keines von beiden festgelegt haben. Für beide Änderungen benötigen Sie die
+entsprechende Bearbeitungsberechtigung im Dashboard-Bereich.
+
+**Für jedes Dataset einer Datenbank:**
+
+1. Gehen Sie im Dashboard-Bereich zu **Data → Databases**
+2. Klicken Sie auf das Bearbeiten-Symbol der Datenbank
+3. Öffnen Sie die Registerkarte **Erweitert** und dann **Performance**
+4. Geben Sie in **Chart cache timeout** einen Wert in Sekunden ein – zum Beispiel `3600` für
+   eine Stunde
+5. Klicken Sie auf **Finish**
+
+**Für ein einzelnes Dataset:**
+
+1. Gehen Sie zu **Data → Datasets**
+2. Klicken Sie auf das Bearbeiten-Symbol des Datasets
+3. Öffnen Sie die Registerkarte **Einstellungen**
+4. Geben Sie in **Cache timeout** einen Wert in Sekunden ein
+5. Klicken Sie auf **Speichern**
+
+Zwei Werte haben besondere Bedeutungen: `0` bedeutet, dass das Ergebnis nie abläuft und nur
+durch ein erneutes Veröffentlichen geleert wird, und `-1` deaktiviert das Caching für diese
+Datenbank bzw. dieses Dataset vollständig.
+
+Die Änderung gilt für Ergebnisse, die ab diesem Zeitpunkt zwischengespeichert werden. Bereits im
+Cache befindliche Ergebnisse behalten die Lebensdauer, mit der sie gespeichert wurden, bis sie
+ablaufen oder die Tabelle erneut veröffentlicht wird.
+
+## Ein Dashboard manuell aktualisieren
+
+Das ist selten nötig, aber Sie können die zwischengespeicherten Ergebnisse eines Dashboards
+selbst verwerfen: Öffnen Sie das Menü neben **Edit dashboard** und wählen Sie **Force refresh
+dashboard**. Liefert ein Diagramm ein älteres Ergebnis, nennt ein Hinweis oben rechts, wie lange
+die Daten bereits im Cache liegen, und ein Klick darauf erzwingt dieselbe Aktualisierung.
+
+Bevorzugen Sie eines davon gegenüber dem Neuladen der Browserseite – ein Neuladen im Browser
+fordert die Diagramme erneut an, erhält aber weiterhin die zwischengespeicherten Ergebnisse.
+
+## Verwandte Themen
+
+- [Dashboards verwenden](/de/guides/dashboards/using-dashboards/)
+- [Mehr über Dashboards erfahren](/de/guides/dashboards/learning-dashboard/)

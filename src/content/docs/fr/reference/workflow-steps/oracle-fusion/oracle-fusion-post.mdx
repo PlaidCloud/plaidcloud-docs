@@ -1,0 +1,50 @@
+---
+title: "Oracle Fusion: Post Journal Entry"
+description: "Comptabilisez dans Oracle Fusion Cloud des lots d'écritures du grand livre à partir de tables d'en-tête et de lignes, via l'interface GL FBDI, avec un mode aperçu qui valide chaque lot avant toute comptabilisation."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/oracle-fusion/oracle-fusion-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des lots d'écritures du grand livre dans Oracle Fusion Cloud via votre [connexion Oracle Fusion](/fr/guides/connections/oracle-fusion/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-tête (une ligne par lot) et une table des lignes (une ou plusieurs lignes par lot), écrit chaque lot dans la table de transit GL_INTERFACE d'Oracle sous forme de fichier FBDI, puis soumet la tâche Enterprise Scheduler Service (ESS) Journal Import Launcher. **Validate Only** construit et vérifie chaque lot sans réservation sur le grand livre et sans comptabilisation. Une table de résultat facultative consigne l'issue de chaque lot.
+
+<Aside type="caution">
+Exécutez d'abord chaque lot en mode **Validate Only**, examinez la table de résultat et rapprochez quelques écritures directement dans Oracle Fusion avant de vous fier à cette étape pour comptabiliser des écritures réelles sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion Fusion** : la connexion Oracle Fusion à utiliser pour la comptabilisation.
+
+### Données
+
+- **Table d'en-tête** : une ligne par lot : `batch_id` (votre identifiant de lot, obligatoire), `ledger_id` (obligatoire), `journal_source`, `journal_category`, `accounting_date`, `description`.
+- **Table des lignes** : une ou plusieurs lignes par `batch_id` : `account_combination` (ou ses colonnes de segments), `entered_debit`, `entered_credit`, `currency_code`.
+- **Table de résultat** : identifiant de la table de sortie : une ligne par lot avec `batch_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** : case cochée par défaut. Contrôle préalable uniquement : aucune réservation sur le grand livre, aucune comptabilisation. Une configuration d'étape qui omet entièrement ce champ (par exemple créée via l'API REST, MCP ou l'importation d'un bundle de workflow) est elle aussi en mode Validate Only par défaut, et non en comptabilisation réelle.
+- **Continue On Error** : case cochée par défaut. Poursuit la comptabilisation des lots restants après l'échec de l'un d'eux. Si elle est décochée, l'exécution s'arrête au premier échec.
+
+## Fonctionnement de la comptabilisation
+
+PlaidCloud charge chaque lot dans la table de transit GL_INTERFACE d'Oracle via un fichier FBDI, puis soumet la tâche ESS Journal Import Launcher et l'interroge jusqu'à ce qu'elle atteigne un état terminal. Un lot n'est signalé comme `posted` qu'une fois cet état terminal **confirmé** : un lot qui arrive dans la table d'interface mais dont la tâche d'importation ne se termine jamais reste en quarantaine (il n'est ni signalé comme comptabilisé, ni abandonné silencieusement), au lieu d'être enregistré comme réussi du simple fait que les données de transit existent.
+
+## Correction d'une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais un lot d'écritures comptabilisé. Pour en corriger un, comptabilisez un nouveau lot dont les débits et les crédits sont inversés par rapport à l'original (une écriture d'extourne comptabilisée) plutôt que de modifier l'original sur place.
+
+## Limites de fonctionnement
+
+| Limite | Signification |
+|---|---|| ESS job latency | The Journal Import Launcher runs as a scheduled job — expect a posting run to take materially longer than a direct API write. |
+| Reversal is a new batch, not an in-place edit | Corrections post a new debit/credit-swapped reversing batch. There is no void or delete of an already-posted batch. |
+
+## Voir aussi
+
+- [Se connecter à Oracle Fusion](/fr/guides/connections/oracle-fusion/) : procédure complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur Oracle Fusion](/fr/reference/connectors/erp/oracle-fusion/)
+- [Étapes Oracle Fusion](/fr/reference/workflow-steps/oracle-fusion/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

@@ -1,0 +1,57 @@
+---
+title: "Acumatica: Post Documents"
+description: Comptabilisez dans Acumatica des écritures de journal, des factures de vente, des factures fournisseur et des paiements à partir de tables d'en-têtes et de lignes, avec un mode d'aperçu qui valide chaque document avant toute comptabilisation.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des documents dans Acumatica via votre [connexion Acumatica](/fr/guides/connections/acumatica/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-têtes (une ligne par document) et une table de lignes (une ou plusieurs lignes par document), et comptabilise chaque document comme **JournalTransaction**, **SalesInvoice**, **Bill** ou **Payment**. **Validate Only** construit et vérifie chaque document sans réservation dans le registre et sans comptabilisation ; une table de résultat facultative enregistre le résultat de chaque document.
+
+<Aside type="caution">
+Exécutez chaque lot d'abord avec **Validate Only**, examinez la table de résultat et rapprochez quelques écritures directement dans Acumatica avant de compter sur cette étape pour comptabiliser des documents réels sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion Acumatica** : la connexion Acumatica à utiliser pour la comptabilisation.
+- **Environnement** : l'environnement de la connexion.
+
+### Données
+
+- **Table d'en-tête** : une ligne par document : `ref` (votre identifiant de document, obligatoire), `doc_type` (`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`, obligatoire), `posting_date`, `party_id` (client/fournisseur, lorsque le type de document en exige un), `memo`, `due_date`, `branch_id`. Un lot peut mélanger plusieurs types de documents : PlaidCloud les répartit par `doc_type` avant la comptabilisation.
+- **Table des lignes** : une ou plusieurs lignes par `ref`, adaptées au type de document :
+
+  | Type de document | Colonnes de lignes |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **Table de résultat** : identifiant de la table de sortie : une ligne par document avec `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** : coché par défaut. Contrôle préalable uniquement ; aucune réservation dans le registre, aucune comptabilisation. Une configuration d'étape qui omet entièrement ce champ, par exemple une configuration créée via l'API REST, MCP ou l'importation d'un lot de workflows, adopte également Validate Only par défaut au lieu d'une comptabilisation réelle.
+- **Continue On Error** : coché par défaut. Poursuit la comptabilisation des documents restants après l'échec de l'un d'eux ; décoché, il arrête le lot au premier échec.
+
+## Fonctionnement de la comptabilisation
+
+Acumatica crée chaque document **en attente (Hold)**, puis PlaidCloud appelle l'action de validation (release), qui s'exécute de façon asynchrone : une réponse `202` acceptée, interrogée jusqu'à son terme, puis un `204` confirme la validation. PlaidCloud ne signale `posted` qu'une fois la validation **confirmée par une relecture de l'indicateur Hold du document à false**. Un document qui arrive dans Acumatica mais dont la validation n'est jamais confirmée reste en quarantaine (il n'est pas déclaré comptabilisé ni abandonné en silence), au lieu d'être enregistré comme un succès du simple fait que le document existe.
+
+## Limites de capacités
+
+| Limite | Signification |
+|---|---|
+| Pas de clé d'idempotence native | L'API d'écriture d'Acumatica, fondée sur PUT, n'a pas de champ d'idempotence. C'est la réservation dans le registre propre à PlaidCloud, et non une clé côté Acumatica, qui constitue l'unique protection contre une double comptabilisation lors d'une nouvelle tentative ou d'une réexécution. |
+| L'annulation est manuelle | Aucun type de document n'a d'action d'annulation documentée dans l'API par contrat. `reversal_mode` vaut `NONE` partout : refusé, jamais simulé. Corrigez un document mal comptabilisé directement dans Acumatica. |
+| Le paiement n'a pas de recherche fiable | Aucun champ documenté ne permet de rattacher un paiement à la requête de PlaidCloud après un résultat ambigu. Un paiement dont l'issue est incertaine est mis en quarantaine pour résolution manuelle plutôt que deviné. |
+| Le filtrage par ligne n'est pas côté serveur | Les filtres côté serveur (sur l'étape d'importation) n'atteignent pas les dimensions des lignes d'un document : filtrez au niveau de l'en-tête ou de l'entité et limitez les lignes dans votre workflow. |
+## Voir aussi
+
+- [Se connecter à Acumatica](/fr/guides/connections/acumatica/) : présentation complète de la configuration, de l'aperçu et de la comptabilisation
+- [Connecteur REST Acumatica](/fr/reference/connectors/rest/acumatica/)
+- [Étapes Acumatica](/fr/reference/workflow-steps/acumatica/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

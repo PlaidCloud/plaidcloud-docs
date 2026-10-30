@@ -1,0 +1,179 @@
+---
+title: "IA: búsqueda vectorial"
+description: Encuentre en un paso de flujo de trabajo de PlaidCloud las filas de una tabla cuyo vector almacenado está más cerca de cada vector de consulta, por distancia coseno o euclidiana.
+sidebar:
+  label: "IA: búsqueda vectorial"
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/vector-search.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+**IA: búsqueda vectorial** ordena las filas de una tabla según lo cerca que esté su columna
+[Vector](/es/guides/data/vector-data-type/) de un vector de consulta, y escribe las filas más cercanas,
+con la distancia que las ordenó, en una tabla de destino. Si le da varios vectores de consulta, cada
+uno obtiene su propio conjunto de coincidencias, todo en una sola pasada sobre la tabla de origen y
+todo en una sola tabla de salida.
+
+La búsqueda es **exacta**. Cada fila que pasa el filtro del paso se compara con cada vector de
+consulta, de modo que las coincidencias son las filas más cercanas reales y no una aproximación, y el
+trabajo crece con el número de filas examinadas multiplicado por el número de vectores de consulta.
+No hay ningún índice vectorial que crear, ajustar o al que recurrir.
+
+<Aside type="caution">
+El tipo de columna Vector, y por tanto este paso, requiere **Lakehouse v2 (StarRocks)**.
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="Cada vector de consulta se compara con todas las filas de la tabla en la que buscar que pasan el filtro, y las filas más cercanas se escriben en la tabla de destino con una columna de distancia. Las filas cuya distancia no se puede medir se excluyen." style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">se compara cada fila filtrada: sin índice, sin aproximación</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">vectores de consulta</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabla en la que buscar</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">filtrada primero</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">distancia</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">menor es más cercano</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabla de destino</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">mejores coincidencias por consulta</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">una fila cuya distancia no se puede medir se excluye, no se coloca en primer lugar</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Las filas se filtran, después cada superviviente se puntúa frente a cada vector de consulta y se conservan las más cercanas. Reducir el filtro es lo que hace rápida una tabla grande, porque no hay ningún índice al que recurrir.</figcaption>
+</figure>
+
+## Origen y destino
+
+- **Tabla en la que buscar**: la tabla cuyos vectores almacenados se buscan.
+- **Tabla de destino**: la tabla en la que se escriben las coincidencias.
+
+## Búsqueda
+
+- **Columna de vectores**: la columna Vector de la tabla en la que buscar con la que se mide la distancia.
+  Cualquier otro tipo de datos se rechaza, con un mensaje que nombra la columna y el tipo que contiene realmente.
+- **Métrica de distancia**: **Coseno** o **Euclidiana (L2)**. Coseno mide el ángulo entre dos
+  vectores e ignora sus magnitudes, que es lo que conviene para incrustaciones de texto; Euclidiana
+  mide la distancia en línea recta y tiene en cuenta la magnitud. En ambas, una distancia menor significa
+  una fila más cercana. Coseno es la opción predeterminada.
+- **Coincidencias por consulta**: cuántas de las filas más cercanas se conservan para cada vector de consulta. El valor predeterminado es 10.
+
+<Aside type="note">
+**Coseno y euclidiana son las únicas métricas.** El producto interno no se ofrece deliberadamente: en vectores
+que no están normalizados no es una distancia (la distancia de un vector consigo mismo resulta negativa),
+de modo que un umbral establecido con él, y cualquier puntuación que se muestre, serían incorrectos incluso donde el orden
+resultara correcto. En incrustaciones normalizadas, coseno produce el mismo orden que produciría el producto interno.
+</Aside>
+
+## Vectores de consulta
+
+La pestaña **Vectores de consulta** admite una matriz JSON con una entrada por consulta, cada una con un `id` y un
+`vector`:
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+Cada consulta devuelve su propio conjunto de coincidencias, y el `id` es lo que las identifica en la salida. Los
+ids deben ser únicos, todos los valores deben ser números finitos y todos los vectores de consulta deben contener el mismo
+número de valores que los vectores almacenados: una distancia solo está definida entre vectores del mismo ancho.
+Una discrepancia se rechaza, con un mensaje que nombra la consulta, el número de valores que contiene y el ancho que
+tiene o declara la columna.
+
+<Aside type="caution">
+Los vectores almacenados también deben contener todos el mismo número de valores. Una búsqueda en una columna cuyas filas
+mezclan dos anchos falla con un error sin procesar del motor subyacente en lugar de un mensaje que nombre la
+columna. El ancho del vector declarado se aplica en todas las vías de carga (una importación de archivo, un conector, un tap, una
+consulta remota, un paso de flujo de trabajo que escribe un marco, un archivo comprimido o un paquete), de modo que el ancho que usted declara es
+el ancho que contiene la columna. Una importación de CSV es la excepción: no se puede comprobar y es la única vía
+que puede dejar una columna mezclada. Consulte
+[Ancho del vector](/es/guides/data/vector-data-type/#ancho-del-vector).
+</Aside>
+
+## Seleccionar subconjunto de datos
+
+Un filtro restringe qué filas son candidatas. Las filas se filtran *antes* de ordenarse, de modo que las
+coincidencias son las filas más cercanas que pasan el filtro, no las filas más cercanas en general filtradas
+después. Este es el principal control sobre cuánto trabajo realiza el paso; consulte
+[Dimensionar una búsqueda](#dimensionar-una-búsqueda).
+
+## Columnas de salida
+
+Cada coincidencia se escribe como una fila con las columnas que seleccionó en la pestaña **Selección de datos de la tabla**,
+más dos columnas calculadas cuyos nombres usted controla:
+
+- **Columna de nombre de consulta**: el id del vector de consulta al que responde esta fila. El valor predeterminado es `query_id`.
+- **Columna de distancia**: la distancia medida entre la coincidencia y ese vector de consulta. El valor predeterminado es
+  `distance`. También es la clave de ordenación.
+
+El nombre de la consulta va primero en la salida, le siguen las columnas que seleccionó y la distancia va
+al final. Los nombres de las columnas de salida deben ser únicos.
+
+<Aside>
+Los controles **Resumir**, **Distinto** y de agregación de la pestaña Selección de datos de la tabla
+se ignoran en este paso: un conjunto de mejores coincidencias es por vector de consulta y nunca agrupa.
+</Aside>
+
+## Filas que se excluyen
+
+Una fila cuya distancia no se puede medir se **excluye** de las coincidencias en lugar de devolverse como
+si fuera la más cercana. El caso que encontrará es el de un vector cuya magnitud desborda el intervalo de un número de coma flotante de 32 bits:
+no se obtiene ninguna distancia medible para él y, como nada de lo disponible coloca
+una distancia no medible en último lugar, incluir esa fila situaría las filas sobre las que la búsqueda sabe menos
+al principio de cada resultado.
+
+Ejecute el flujo de trabajo con **Modo de diagnóstico** activado para ver el recuento. El registro del flujo de trabajo informa entonces de cuántas
+filas excluyó cada consulta, o indica que el paso midió todas las filas que buscó. Obtener ese recuento
+cuesta una segunda pasada sobre la tabla, por lo que solo se cobra cuando lo solicita; con
+el Modo de diagnóstico desactivado, el registro indica que las filas no medibles se excluyen por diseño y le remite al
+Modo de diagnóstico para obtener el número.
+
+Un vector almacenado que contiene un *valor ausente* dentro de la matriz es un asunto distinto: no se puede medir ninguna distancia
+frente a una matriz que contenga uno, de modo que la búsqueda se rechaza por completo, con un mensaje que nombra la columna,
+en lugar de devolver en silencio un resultado parcial. Corrija o elimine esas filas y vuelva a ejecutar.
+
+## Dimensionar una búsqueda
+
+El costo de una ejecución es el número de filas candidatas multiplicado por el número de vectores de consulta, y el
+paso rechaza una búsqueda cuyo total supere diez mil millones de mediciones de distancia (e informa del recuento de filas,
+del recuento de consultas y del límite) en lugar de iniciar un trabajo que no puede terminar. Dos cosas mantienen una
+búsqueda bien por debajo de ese límite:
+
+- **Filtre hasta la parte que importa.** Reduzca los candidatos a una entidad, un período o un conjunto de documentos
+  en lugar de recorrer un corpus entero para responder una pregunta sobre una parte.
+- **Divida la tabla por la dimensión por la que siempre filtra** y busque en la tabla pertinente. Reducir
+  el número de candidatos es mucho más eficaz que cualquier otra cosa disponible aquí.
+
+Declarar un **Ancho del vector** en la columna también ayuda: con él declarado, el paso toma el ancho
+de la declaración en lugar de muestrear una fila para averiguarlo. Consulte
+[Tipo de datos Vector](/es/guides/data/vector-data-type/#ancho-del-vector).
+
+## Para qué no se puede usar una columna Vector
+
+Una columna Vector se rechaza como clave de combinación, como columna de agrupación y como destino de agregación, en
+este paso y en todos los demás. El mensaje nombra la columna y la función en la que se usó, tanto al
+guardar el paso como al ejecutar un paso guardado antes. En su lugar, combine y agrupe por las claves de negocio que acompañan
+al vector. Llevar un vector a través de un paso como columna de salida normal no supone ningún problema, como tampoco contar
+filas ni contar valores distintos.
+
+## Relacionado
+
+- [Tipo de datos Vector](/es/guides/data/vector-data-type/): declarar una columna Vector, establecer su ancho
+  y cargar incrustaciones en ella
+- [Spatial Find Nearest](/es/reference/workflow-steps/spatial/spatial-find-nearest/): la misma forma de vecino
+  más cercano sobre geometría en lugar de incrustaciones
+- [Table Lookup](/es/reference/workflow-steps/tables/table-lookup/): devuelve columnas descriptivas
+  a las filas coincidentes
+- [Importar Parquet](/es/reference/workflow-steps/import/import-parquet/): carga incrustaciones desde un
+  archivo Parquet

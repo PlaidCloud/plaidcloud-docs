@@ -1,0 +1,116 @@
+---
+title: Combinación SCD-2 a una fecha
+description: Combine una tabla de hechos con una tabla de historial SCD-2 y obtenga la versión de cada registro de datos maestros que estaba vigente en la fecha del hecho.
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Combina una tabla de hechos con una tabla de historial del [Generador de maestro SCD-2](/es/reference/workflow-steps/dimensions/scd2-master-builder/) y devuelve, para cada fila de hechos, la versión de los datos maestros que **estaba vigente en la fecha de ese hecho**, no la versión que es la actual.
+
+Así se atribuye cada transacción a la región, el centro de costo, el responsable o el precio que se aplicaba *cuando ocurrió*. Es una combinación `LEFT JOIN`, por lo que se conservan todas las filas de hechos: una clave sin versión coincidente (clave desconocida, o fecha anterior a la primera versión de la clave) devuelve columnas trasladadas nulas en lugar de descartarse.
+
+## Tablas
+
+### Tabla de hechos
+
+Las filas que desea enriquecer: transacciones, pedidos, eventos. Cada fila lleva una clave de negocio y una fecha.
+
+### Tabla SCD-2
+
+Una tabla de historial producida por el [Generador de maestro SCD-2](/es/reference/workflow-steps/dimensions/scd2-master-builder/), que contiene `valid_from`, `valid_to` e `is_current` junto con los atributos con seguimiento.
+
+### Tabla de salida
+
+Donde se escriben las filas de hechos enriquecidas. Debe ser una tabla, no una vista. Todas las columnas originales de hechos pasan sin cambios; las columnas de datos maestros trasladadas se anexan.
+
+## Fecha de corte y opciones
+
+La **fecha de corte** es el momento en el que se resuelve cada fila de hechos. Indíquela de exactamente una de estas dos maneras:
+
+- **Columna de fecha de corte de hechos**: una columna de fecha de la tabla de hechos (por ejemplo, `txn_date`). Cada fila se resuelve en su propia fecha.
+- **Fecha de corte literal**: una única fecha `YYYY-MM-DD`, o una variable de flujo de trabajo como `{report_date}`, que se aplica a todas las filas de hechos (resuelve toda la tabla de hechos a una sola fecha de informe). Una variable se completa cuando se ejecuta el paso.
+
+<Aside type="caution">Elija una, no ambas. Se rechaza guardar el paso cuando especifica una columna de hechos *y* una fecha literal, o ninguna de las dos, y lo mismo ocurre con una ejecución.</Aside>
+
+Las opciones de cambio de nombre evitan colisiones cuando una columna trasladada comparte nombre con una columna de hechos:
+
+- **Prefijo de traslado** / **Sufijo de traslado**: se agregan al nombre de salida de cada columna trasladada (`prefix` + columna + `suffix`). Si una columna trasladada siguiera colisionando con una columna de hechos u otra columna trasladada después del cambio de nombre, la ejecución falla en lugar de sobrescribir en silencio.
+
+## Roles de columna
+
+Use **Inspeccionar SCD-2** para listar las columnas de la tabla SCD-2 y luego etiquete cada columna:
+
+| Rol | Significado |
+|---|---|
+| **Clave de negocio** | La clave que une los hechos con el historial (por ejemplo, `customer_id`). Debe coincidir con las columnas de clave de los hechos. Se requiere al menos una. |
+| **Columna a trasladar** | Un atributo que se lleva a la fila de hechos (por ejemplo, `region`). Se requiere al menos una. |
+| **(omitir)** | Las columnas sin etiquetar no se trasladan. |
+
+## Qué se comprueba al guardar
+
+Se rechaza guardar el paso, con un mensaje que indica la columna o la fecha, cuando:
+
+- Una columna se etiqueta como Clave de negocio, o como Columna a trasladar, más de una vez: *'region' is tagged as a Carry Column more than once.*
+- Una columna es a la vez una Clave de negocio y una Columna a trasladar: *customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- La **Fecha de corte literal** no es una fecha real con el formato `YYYY-MM-DD`: *The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* Una fecha que nombra una variable de flujo de trabajo se comprueba cuando la ejecución la completa.
+
+## El límite semiabierto
+
+Una fila de hechos coincide con la única versión del historial cuyo intervalo contiene su fecha de corte, mediante una comparación **semiabierta**:
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+El límite inferior es inclusivo y el superior es exclusivo. Esto importa el día del límite:
+
+- `as_of == valid_from` → **coincide** con esa versión (entra en vigor en su fecha de inicio).
+- `as_of == valid_to` → **no coincide** con esa versión; pasa a la versión siguiente, cuyo `valid_from` es igual a este `valid_to`.
+
+Como el [Generador de maestro SCD-2](/es/reference/workflow-steps/dimensions/scd2-master-builder/) escribe versiones consecutivas de modo que el `valid_to` de una es el `valid_from` de la siguiente, cada fecha corresponde exactamente a una versión, sin huecos ni solapamientos. Un cambio con fecha `2026-04-01` significa que el valor nuevo se aplica *el* 1 de abril; una transacción del 31 de marzo sigue obteniendo el valor anterior.
+
+<Aside type="note">Las filas abiertas (actuales) llevan en `valid_to` la fecha máxima centinela `9999-12-31`. Si alguna fila abierta tuviera en cambio un `valid_to` nulo, el paso la trata como abierta (mediante el mismo centinela), de modo que la versión actual nunca se pierde en silencio.</Aside>
+
+## Ejemplo práctico
+
+Continuando con el [Generador de maestro SCD-2](/es/reference/workflow-steps/dimensions/scd2-master-builder/), se atribuye cada transacción a la región vigente en su fecha.
+
+**`customer_scd2` (la tabla de historial):**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (la tabla de hechos):**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Configuración: **Tabla de hechos** = `transactions`, **Tabla SCD-2** = `customer_scd2`, **Tabla de salida** = `transactions_by_region`, **Columna de fecha de corte de hechos** = `txn_date`, Clave de negocio = `customer_id`, Columna a trasladar = `region`.
+
+**`transactions_by_region`:**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(nulo)* |
+
+Observe el límite: **T2, del 2026-04-01, se resuelve como Central**, porque el intervalo semiabierto hace del 1 de abril el primer día de la versión Central y no el último día de West. **La clave `C9` de T4 es desconocida**, por lo que se conserva con una región nula en lugar de descartarse.
+
+## Relacionado
+
+- [Generador de maestro SCD-2](/es/reference/workflow-steps/dimensions/scd2-master-builder/): construya la tabla de historial que lee este paso.
+- [Paso Dimension Load](/es/reference/workflow-steps/dimensions/dimension-load/): cargue una jerarquía desde una tabla.

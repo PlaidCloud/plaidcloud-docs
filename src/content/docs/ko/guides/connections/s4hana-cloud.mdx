@@ -1,0 +1,136 @@
+---
+title: SAP S/4HANA Cloud에 연결
+description: 에이전트 없이 OAuth2 클라이언트 자격 증명으로 PlaidCloud를 SAP S/4HANA Cloud Public Edition에 직접 연결하여 시산표와 분개 항목을 가져오고, 수정 시에는 전기된 역분개를 사용해 분개를 전기합니다.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud를 OData 및 SOAP API를 통해 SAP S/4HANA Cloud Public Edition에 직접 연결하면, OData를 직접 작성하지 않고도 시산표와 분개 항목 데이터를 가져오고 분개를 다시 전기할 수 있습니다. 이 가이드에서는 연결, 가져오기 단계, 전기 단계를 설명합니다.
+
+<Aside type="caution">
+모든 가져오기는 먼저 샌드박스 테넌트에서 실행하고, 실제 전기 전에 모든 전기 배치에 대해 아래의 **Validate Only** 절차를 거치십시오.
+</Aside>
+
+<Aside type="note">
+이 연결은 [SAP ECC / S/4HANA 커넥터](/ko/reference/connectors/erp/sap-s4/)와는 다릅니다. 해당 커넥터는 PlaidLink 에이전트와 RFC 호출을 통해 온프레미스 또는 프라이빗 클라우드 S/4HANA 시스템에 접속합니다. 이 커넥터는 인터넷을 통해 SAP S/4HANA Cloud **Public Edition**과 직접 통신하므로 설치할 에이전트나 구성할 RFC 대상이 없습니다.
+</Aside>
+
+## 사전 요구 사항
+
+SAP S/4HANA Cloud에서 다음이 필요합니다.
+
+- 시산표 및 분개 항목 API(읽기)와 분개 전기 서비스(쓰기)를 노출하는 Communication Scenario를 기반으로 하는 **Communication Arrangement**, 그리고 기본 인증이 아닌 OAuth2 클라이언트 자격 증명으로 구성된 **Communication User**.
+- S/4HANA Cloud 테넌트의 **호스트**(예: `https://yourorg.s4hana.ondemand.com`)와 **OAuth2 토큰 URL**(예: `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- Communication Arrangement의 **OAuth2 클라이언트 ID와 시크릿**.
+
+<Aside type="note">
+이 연결은 사용자가 아닌 애플리케이션으로 인증합니다. PlaidCloud가 다른 클라우드 ERP REST 연결에 사용하는 것과 동일한 OAuth2 **클라이언트 자격 증명** 흐름입니다. 대화형 로그인은 없습니다.
+</Aside>
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **SAP S/4HANA Cloud**를 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알아보기 쉬운 이름(예: `S/4HANA Cloud Prod`). |
+   | 호스트 | S/4HANA Cloud 테넌트 호스트(예: `https://yourorg.s4hana.ondemand.com`). |
+   | 토큰 URL | Communication Arrangement의 OAuth2 토큰 엔드포인트. |
+   | 클라이언트 ID | Communication Arrangement의 OAuth2 클라이언트 ID. |
+   | 클라이언트 시크릿 | Communication Arrangement의 OAuth2 클라이언트 시크릿. |
+
+4. `Create`를 클릭합니다.
+
+</Steps>
+
+## 연결 스모크 테스트
+
+<Steps>
+
+1. 워크플로에 **Import S/4HANA Entity** 단계를 추가합니다.
+
+2. **S/4HANA Connection**을 사용할 연결로 설정하고, **엔터티 유형**을 `trial_balance`로 설정한 다음, 한 회사에 대한 **CompanyCode** 필터를 추가하고 **대상 테이블**을 임시 테이블로 설정합니다.
+
+3. 단계를 실행합니다([워크플로에서 단일 단계 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+</Steps>
+
+대상 테이블에 데이터가 채워지면 호스트, 토큰 URL, 클라이언트 자격 증명이 모두 올바른 것입니다. 오류가 발생하면 문제의 원인이 표시됩니다. 예를 들어 클라이언트 시크릿이 잘못되었거나, Communication Arrangement에 필요한 범위가 없거나, 호스트가 잘못된 경우입니다.
+
+## 데이터 가져오기
+
+<Steps>
+
+1. **Import S/4HANA Entity** 단계를 추가하고 **S/4HANA Connection**과 **대상 테이블**을 설정합니다.
+
+2. **엔터티 유형**을 가져올 레코드로 설정합니다.
+
+3. **필터**를 추가해 가져올 범위를 제한합니다. 회사 코드, 계정, 날짜 범위는 요청의 OData `$filter`로 변환되며, 엔터티별로 S/4HANA가 서버 측에서 실제로 필터링할 수 있는 필드로 제한됩니다.
+
+4. 단계를 실행하고 대상 테이블을 확인합니다.
+
+</Steps>
+
+### 엔터티와 필터
+
+| 엔터티 유형 | 가져오는 내용 | OData 서비스 | 필터링 가능한 필드 |
+|---|---|---|---|
+| `trial_balance` | 기간 말 총계정원장 계정 잔액 집계 | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | 전기된 분개 라인 항목 | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate`(범위), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear`, `FiscalPeriod`는 **범위** 필터(`ge`/`le` 경계)를 허용하고, 나머지는 동등 필터입니다. 한쪽 경계만 있는 범위 필터는 반대쪽이 열려 있습니다. 운영 데이터에 대해 `journal_entry_items`를 가져오기 전에 적어도 한쪽 경계를 설정하십시오. 제한 없이 라인 항목 상세를 가져오면 데이터가 매우 클 수 있습니다.
+</Aside>
+
+## 분개 전기
+
+**S/4HANA: Post Journal Entry** 단계는 S/4HANA Cloud의 SOAP 분개 일괄 생성 서비스를 사용하여 PlaidCloud의 공유 ERP 쓰기 파이프라인을 통해 총계정원장 분개를 전기합니다.
+
+<Steps>
+
+1. 분개 한 건당 한 행으로 구성된 **헤더 테이블**을 만듭니다. `journal_id`(분개 식별자), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text` 열이 필요합니다.
+
+2. `journal_id`당 하나 이상의 행으로 구성된 **라인 테이블**을 만듭니다. `gl_account`, `debit`, `credit` 열과 원장에 필요한 `cost_center`/`profit_center` 차원 열이 필요합니다.
+
+3. **S/4HANA: Post Journal Entry** 단계를 추가하고 **S/4HANA Connection**, **헤더 테이블**, **라인 테이블**, **결과 테이블**을 설정합니다.
+
+4. **Validate Only**를 선택한 상태로 두고 단계를 실행합니다. PlaidCloud는 원장 클레임 없이, 아무것도 전기하지 않은 채 모든 분개를 구성하고 검사합니다.
+
+5. 결과 테이블(분개당 한 행: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`)을 검토합니다. `error` 행이 있으면 수정한 후 다시 검증합니다.
+
+6. **Validate Only** 선택을 해제하고 다시 실행하여 실제로 전기합니다. 첫 번째 분개가 실패했을 때 배치를 즉시 중단하려는 경우가 아니라면 **Continue On Error**를 선택한 상태로 두십시오.
+
+</Steps>
+
+### 전기 방식
+
+PlaidCloud는 S/4HANA Cloud의 `JournalEntryBulkCreateRequest_In` SOAP 서비스를 통해 각 분개를 제출한 다음, 해당 분개의 최종 처리 상태를 알리는 `JournalEntryBulkCreateConfirmation_Out` 메시지를 폴링합니다. 이 확인 메시지를 받은 후에만 분개가 `posted`로 보고됩니다. 접수되었지만 확인 메시지가 도착하지 않은 분개는 전기된 것으로 기록되지 않고 격리 상태로 유지되므로, 멈춘 제출이 조용히 성공으로 처리되는 일은 없습니다. PlaidCloud 자체의 원장 클레임은 배치를 재시도하거나 다시 실행할 때 같은 분개가 두 번 전기되는 것을 방지합니다.
+
+### 전기된 분개 수정
+
+이 단계는 전기된 분개를 삭제하거나 다시 쓰지 않습니다. 분개를 수정하려면 원본을 직접 편집하는 대신, 원본과 차변 및 대변을 맞바꾼 새 분개, 즉 **전기된 역분개**를 전기하십시오. 이렇게 하면 S/4HANA 자체의 감사 추적이 보존되며, 애플리케이션에서 직접 수정하는 방식과 일치합니다.
+
+### 기능 제한 - 실제 전기 전에 읽어 보십시오
+
+<Aside type="caution">
+- **확인 지연.** SOAP 서비스는 일괄 생성 요청을 비동기로 처리하므로, 최종 상태 폴링은 동기식 OData 쓰기보다 훨씬 오래 걸릴 수 있습니다. 지연에 민감한 단건 전기에는 이 단계를 사용하지 마십시오.
+- **필터링 가능한 필드는 Communication Scenario가 노출하는 차원에 따라 달라집니다.** 시나리오가 노출하는 필드에 포함되지 않은 비용 객체나 차원은 서버 측에서 필터링할 수 없으므로, 가져온 후 워크플로에서 범위를 지정하십시오.
+- **이 커넥터는 [SAP ECC / S/4HANA 커넥터](/ko/reference/connectors/erp/sap-s4/)와 별개입니다.** 해당 커넥터는 PlaidLink 에이전트와 RFC 호출을 통해 온프레미스 또는 프라이빗 클라우드 시스템에 접속합니다. S/4HANA Cloud Public Edition에 연결하지 않는 경우에만 사용하십시오.
+</Aside>
+
+## 관련 문서
+
+- [SAP S/4HANA Cloud REST 커넥터](/ko/reference/connectors/rest/s4hana-cloud/) - 필드 참조.
+- [Import S/4HANA Entity](/ko/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/ko/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [ERP 전기 이력 검토](/ko/guides/connections/erp-post-history/) - 모든 S/4HANA Cloud 전기 시도와 현재 상태에 대한 상시 기록.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

@@ -1,0 +1,53 @@
+---
+title: "Import Intacct Entity"
+description: Importe un objeto de Sage Intacct a una tabla de proyecto mediante la paginación readByQuery/readMore del XML Gateway, con una lista de campos y operadores permitidos por objeto que incluye rangos ge/le.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/import-intacct-entity.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Importa un objeto de Sage Intacct a una tabla de proyecto a través de su [conexión de Sage Intacct](/es/guides/connections/sage-intacct/), usando las operaciones `readByQuery`/`readMore` del XML Gateway de Intacct para recorrer automáticamente todo el conjunto de resultados. Elija la conexión, el objeto y los filtros que necesite; el paso extrae los registros coincidentes y los escribe, sin que tenga que gestionar la paginación manualmente.
+
+Es un paso genérico predefinido: un único tipo de paso cubre siete objetos, desde el detalle de transacciones y saldos del libro mayor (`GLDETAIL`, `GLACCOUNTBALANCE`, `GLENTRY`) hasta los maestros de dimensiones (`LOCATION`, `DEPARTMENT`, `CLASS`) y los documentos de pedidos (`SODOCUMENT`).
+
+<Aside type="note">
+Este paso es distinto de [Import Sage Intacct Query](/es/reference/workflow-steps/sage-intacct/import-intacct-query/), que se dirige a **cualquier** objeto de Intacct con un selector de campos de uso general. `Import Intacct Entity` es el paso de catálogo nativo específico para estos siete objetos, con una lista de filtros permitidos seleccionada por objeto y paginación automática con `readMore` para conjuntos de resultados grandes (el detalle del libro mayor, en particular, puede superar con creces una sola página de la API de Intacct).
+</Aside>
+
+## Configuración
+
+| Campo | Obligatorio | Notas |
+|---|---|---|
+| Conexión de Sage | Sí | La conexión de Sage Intacct a través de la cual se leen los datos. |
+| Tabla de destino | Sí | La tabla de proyecto en la que se escriben los resultados. Se sobrescribe por completo en cada ejecución. |
+| Nombre del objeto | Sí | El objeto de Intacct que se extrae. Uno de `GLDETAIL`, `GLACCOUNTBALANCE`, `GLENTRY`, `LOCATION`, `DEPARTMENT`, `CLASS`, `SODOCUMENT`. |
+| Filtros | No | Una matriz de cláusulas `{field, operator, value}`. Los operadores incluyen `eq`, `ne`, `gt`, `ge`, `lt`, `le`. Un rango se expresa con dos cláusulas sobre el mismo campo: una `ge` y otra `le`. Cada objeto limita los filtros a su propia lista de campos y operadores permitidos; una combinación de campo u operador no admitida se rechaza, no se descarta en silencio. |
+
+### Objetos y filtros de rango habituales
+
+| Objeto | Qué extrae | Filtros de rango habituales |
+|---|---|---|
+| `GLDETAIL` | Detalle de líneas de transacciones del libro mayor | fecha de contabilización (`ge`/`le`), importe (`ge`/`le`) |
+| `GLACCOUNTBALANCE` | Saldos de cuentas por período | fecha de fin de período (`ge`/`le`) |
+| `GLENTRY` | Líneas de asientos de diario contabilizados | fecha de contabilización (`ge`/`le`) |
+| `LOCATION` | Maestro de la dimensión de ubicación | — (solo filtros de igualdad) |
+| `DEPARTMENT` | Maestro de la dimensión de departamento | — (solo filtros de igualdad) |
+| `CLASS` | Maestro de la dimensión de clase | — (solo filtros de igualdad) |
+| `SODOCUMENT` | Documentos de pedidos de venta | fecha del documento (`ge`/`le`) |
+
+## Cómo funciona la paginación
+
+El XML Gateway de Intacct devuelve los resultados página por página. Este paso emite la llamada inicial `readByQuery` y, a continuación, encadena llamadas `readMore` con el ID del conjunto de resultados que devuelve Intacct, hasta leer todas las páginas, de modo que una extracción de `GLDETAIL` que abarque decenas de miles de líneas se completa en una sola ejecución del paso sin que tenga que ajustar el tamaño de página.
+
+<Aside type="caution">
+Una extracción muy amplia y sin filtros sobre `GLDETAIL` o `GLENTRY` aún puede tardar mucho en recorrerse por completo. Acote una extracción grande con un rango de fechas de contabilización en lugar de confiar solo en la paginación para que sea rápida.
+</Aside>
+
+## Temas relacionados
+
+- [Sage Intacct Steps](/es/reference/workflow-steps/sage-intacct/)
+- [Import Sage Intacct Query](/es/reference/workflow-steps/sage-intacct/import-intacct-query/): consulta de uso general sobre cualquier objeto de Intacct
+- [Connect to Sage Intacct](/es/guides/connections/sage-intacct/)
+- [Sage Intacct REST Connector](/es/reference/connectors/rest/sage-intacct/)

@@ -1,0 +1,138 @@
+---
+title: Dynamics 365 Finance & Operations에 연결
+description: Azure AD 클라이언트 자격 증명을 사용하여 PlaidCloud를 Dynamics 365 Finance & Operations에 연결하고, 표준 가져오기 단계로 OData 엔터티 또는 대량 DMF 추출을 가져온 다음 분개를 비동기로 전기합니다.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud를 OData 및 Data Management Framework(DMF) 엔드포인트를 통해 Dynamics 365 Finance & Operations(D365 F&O)에 연결하면 OData를 직접 작성하지 않고도 마스터 및 트랜잭션 데이터를 가져오고 일반 분개를 다시 전기할 수 있습니다. 이 가이드에서는 연결, 가져오기 단계, 전기 단계를 다룹니다.
+
+<Aside type="caution">
+모든 가져오기는 먼저 샌드박스 환경을 대상으로 실행하고, 실제로 전기하기 전에 모든 전기 배치에 대해 아래의 **Validate Only**를 거치십시오.
+</Aside>
+
+## 사전 요구 사항
+
+Azure AD와 D365 F&O에서 다음이 필요합니다.
+
+- **클라이언트 시크릿**이 있는 PlaidCloud용 **Entra ID(Azure AD) 앱 등록**. D365 F&O 리소스에 대한 애플리케이션 권한(또는 관리자 동의를 받은 위임된 권한)이 부여되어 있어야 합니다.
+- Azure AD **테넌트 ID**.
+- PlaidCloud가 호출할 D365 F&O 환경의 **환경 URL**(예: `https://yourorg.operations.dynamics.com`).
+- **리소스/범위** 값. 일반적으로 환경 URL 자체에 `/.default`를 덧붙인 값이며, 앱 등록이 이에 대한 토큰을 요청합니다.
+
+<Aside type="note">
+이 연결은 사용자가 아니라 애플리케이션으로 인증합니다. PlaidCloud가 다른 Microsoft REST 연결에 사용하는 것과 동일한 OAuth2 메커니즘인 Entra ID **클라이언트 자격 증명** 흐름입니다. 대화형 로그인은 없습니다.
+</Aside>
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **Dynamics 365 Finance & Operations**를 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알아보기 쉬운 이름(예: `D365 F&O Prod`). |
+   | 환경 URL | 환경 URL(예: `https://yourorg.operations.dynamics.com`). |
+   | 클라이언트 ID | Entra 앱 등록의 애플리케이션(클라이언트) ID. |
+   | 클라이언트 시크릿 | 앱 등록의 클라이언트 시크릿. |
+   | 테넌트 ID | Azure AD 테넌트 ID. |
+   | 리소스/범위 | 요청할 OAuth2 범위. 일반적으로 환경 URL에 `/.default`를 더한 값입니다. |
+
+4. `Create`를 클릭합니다.
+
+</Steps>
+
+## 연결 테스트
+
+<Steps>
+
+1. 워크플로에 **Import D365 F&O Entity** 단계를 추가합니다.
+
+2. **D365 F&O Connection**을 만든 연결로, **엔터티 유형**을 `main_accounts`로, **대상 테이블**을 임시 테이블로 설정합니다.
+
+3. 단계를 실행합니다([워크플로에서 단계 하나 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+</Steps>
+
+대상 테이블에 데이터가 채워지면 테넌트, 자격 증명, 환경 URL이 모두 올바른 것입니다. 오류가 발생하면 잘못된 클라이언트 시크릿, 누락된 권한 부여, 잘못된 환경 URL 등 문제가 무엇인지 오류에 표시됩니다.
+
+## 데이터 가져오기
+
+<Steps>
+
+1. **Import D365 F&O Entity** 단계를 추가하고 **D365 F&O Connection**과 **대상 테이블**을 설정합니다.
+
+2. **엔터티 유형**을 원하는 레코드로 설정하고, 일반적인 크기의 가져오기에는 **동기화 모드**를 `odata`로, 대형 엔터티의 대량 추출에는 `dmf`로 설정합니다.
+
+3. 가져오기 범위를 제한하려면 **필터**를 추가합니다. 날짜, 계정, 차원 범위가 요청의 OData `$filter`로 변환되며, 엔터티별로 D365 F&O가 서버 측에서 실제로 필터링할 수 있는 필드로 제한됩니다.
+
+4. 단계를 실행하고 대상 테이블을 확인합니다.
+
+</Steps>
+
+### 엔터티와 필터
+
+| 엔터티 유형 | 가져오는 내용 | 필터링 가능한 필드 |
+|---|---|---|
+| `main_accounts` | 계정과목표 | 계정 범위, 차원 |
+| `currencies` | 통화 마스터 | — |
+| `customers` | 고객 마스터 | 계정 범위 |
+| `vendors` | 공급업체 마스터 | 계정 범위 |
+| `released_products` | 릴리스된 제품 마스터 | — |
+| `ledger_journal_headers` | 미전기 및 전기된 분개 헤더 | 날짜 범위, 계정 범위, 차원 |
+
+<Aside type="note">
+**동기화 모드: OData와 DMF.** `odata`는 D365 F&O의 표준 OData 엔터티 엔드포인트를 직접 호출합니다. 가장 간단한 경로이며 일상적인 가져오기에 적합합니다. `dmf`는 비동기 Data Management Framework 내보내기 작업을 제출하고 작업이 완료되면 생성된 패키지를 다운로드합니다. 일반 OData 페이징으로는 느리거나 잘릴 수 있는 대형 엔터티(예: `ledger_journal_headers` 전체 이력)의 대량 추출에 사용하는 경로입니다.
+</Aside>
+
+## 분개 전기
+
+**D365 F&O: Post Journal Entry** 단계는 D365 F&O의 비동기 사용자 지정 서비스 분개 전기 작업을 사용하여 PlaidCloud의 공유 ERP 쓰기 파이프라인을 통해 총계정원장 분개를 전기합니다.
+
+<Steps>
+
+1. 분개당 한 행으로 구성된 **헤더 테이블**을 만들고, `journal_id`(분개 식별자), `journal_name`(전기할 D365 F&O 분개장 이름), `posting_date`, `description`을 포함합니다.
+
+2. `journal_id`당 한 개 이상의 행으로 구성된 **라인 테이블**을 만들고, `account`, `debit`, `credit`과 원장에 필요한 모든 차원 열을 포함합니다.
+
+3. **D365 F&O: Post Journal Entry** 단계를 추가하고 **D365 F&O Connection**, **헤더 테이블**, **라인 테이블**, **결과 테이블**을 설정합니다.
+
+4. **Validate Only**를 선택한 상태로 두고 단계를 실행합니다. PlaidCloud가 원장 클레임 없이, 아무것도 전기하지 않고 모든 분개를 만들고 검사합니다.
+
+5. 결과 테이블(분개당 한 행: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`)을 검토합니다. `error` 행을 수정하고 다시 검증합니다.
+
+6. **Validate Only**를 선택 해제하고 다시 실행하여 실제로 전기합니다. 첫 번째 실패한 분개에서 배치가 즉시 중단되기를 원하지 않는다면 **Continue On Error**를 선택한 상태로 둡니다.
+
+</Steps>
+
+### 전기 방식
+
+PlaidCloud는 각 분개를 D365 F&O의 비동기 사용자 지정 서비스 전기 작업에 제출한 다음, 서비스가 분개의 최종 상태를 보고할 때까지 폴링합니다. 분개는 그 최종 상태가 **확인**된 후에만 `posted`로 보고됩니다. 접수되었지만 최종 상태가 확정되지 않는 분개는 전기된 것으로 기록되지 않고 격리 상태로 남으므로, 멈춘 제출이 조용히 성공으로 처리되는 일은 없습니다. PlaidCloud 자체의 원장 클레임은 재시도되거나 다시 실행된 배치에서 같은 분개가 두 번 전기되는 것을 방지합니다.
+
+### 전기된 분개 수정
+
+이 단계는 전기된 분개를 삭제하거나 다시 쓰지 않습니다. 분개를 수정하려면 원본을 직접 편집하지 말고 원본과 차변 및 대변을 맞바꾼 새 분개, 즉 **전기된 역분개**를 전기하십시오. 이렇게 하면 D365 F&O 자체의 감사 추적이 보존되며, 애플리케이션에서 직접 수정하는 방식과도 일치합니다.
+
+### 기능 제한 — 실제 전기 전에 읽어 보십시오
+
+<Aside type="caution">
+- **DMF 동기화 모드에는 추출 지연이 있습니다.** `dmf` 가져오기는 비동기 내보내기 작업을 기다리므로 같은 크기의 `odata` 가져오기보다 상당히 오래 걸립니다. 작고 지연에 민감한 읽기에는 사용하지 마십시오.
+- **차원 필터링은 원장의 차원 설정에 따라 달라집니다.** 계정 구조에 포함되지 않은 재무 차원은 서버 측에서 필터링할 수 없으므로, 가져온 후 워크플로에서 범위를 지정하십시오.
+- **이 커넥터는 일반 [Dynamics REST 커넥터](/ko/reference/connectors/rest/dynamics/)와 다릅니다.** 해당 커넥터는 다른 Dynamics 365 애플리케이션(예: Sales/CRM)을 대상으로 합니다. Finance & Operations에 연결하지 않는 경우에만 사용하십시오.
+</Aside>
+
+## 관련 항목
+
+- [Dynamics 365 F&O REST 커넥터](/ko/reference/connectors/rest/dynamics-365-fo/) — 필드 참조.
+- [Import D365 F&O Entity 단계](/ko/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry 단계](/ko/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [ERP 전기 이력 검토](/ko/guides/connections/erp-post-history/) — 모든 D365 F&O 전기 시도와 현재 상태에 대한 상시 기록.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

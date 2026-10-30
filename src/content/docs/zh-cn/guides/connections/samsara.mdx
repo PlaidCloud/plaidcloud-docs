@@ -1,0 +1,88 @@
+---
+title: 导入 Samsara 数据
+description: 使用通用 REST 连接将 PlaidCloud 连接到 Samsara，并通过可直接复制粘贴的游标分页方案导入完整的分页列表。
+sidebar:
+  label: 导入 Samsara 数据
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+使用**通用 REST**连接和 **REST 请求**步骤导入 Samsara 数据。这样可将 API 令牌保存在可重复使用的连接中，并使用与任何返回延续游标的 API 相同的通用游标分页控件。
+
+## 开始之前
+
+在 Samsara 中，创建一个仅包含导入所需读取范围和标签访问权限的 API 令牌。Samsara 仅在创建令牌时显示一次，因此请在离开页面之前复制它。请参阅 [Samsara API 身份验证](https://developers.samsara.com/docs/authentication)。
+
+选择与您的 Samsara 仪表板相匹配的主机：
+
+| Samsara 仪表板 | 主机或 IP 地址 |
+| --- | --- |
+| 美国或旧版加拿大云 | `api.samsara.com` |
+| 欧盟/英国 | `api.eu.samsara.com` |
+| 加拿大云 | `api.ca.samsara.com` |
+
+## 创建连接
+
+1. 打开**连接**，创建一个名为 `Samsara` 的**通用 REST**连接。
+2. 输入上表中对应的主机。
+3. 在**身份验证**中，选择**持有者令牌**并粘贴 Samsara API 令牌。请勿自行添加 `Authorization` 标头。
+4. 保存连接。
+
+<Aside type="note">导入您自己的车队数据时，API 令牌是最简单的选择。对于连接客户组织的市场应用，Samsara 建议使用 OAuth 2.0。</Aside>
+
+## 导入车辆
+
+首次导入用于确认连接，并提供一个可复用于其他新版 Samsara 列表端点的方案。
+
+1. 添加一个 **REST 请求**步骤并选择 `Samsara` 连接。
+2. 将**端点来源**设置为**手动**，将**方法**设置为 `GET`，将**端点**设置为 `/fleet/vehicles`。
+3. 选择一个**目标表**，例如 `samsara_vehicles`。
+4. 在**查询参数**中，添加 `limit`，值为 `512`。
+5. 在**请求**中，设置以下值：
+
+| 字段 | 值 |
+| --- | --- |
+| 行格式 | `Object` |
+| 流式处理模式 | `Cursor Paging` |
+| 项路径（JSON 格式化） | `["data"]` |
+| 模式参数（JSON 格式化） | `{"cursor": "after"}` |
+| 模式路径（JSON 格式化） | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. 选择**测试分页**。PlaidCloud 只获取预览所需的页数，因此您可以在完整运行之前验证结果。
+7. 保存并运行该步骤。
+
+配置新版 Samsara 列表端点时，请原样复制这些值：
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+当 Samsara 返回 `hasNextPage: true` 时，PlaidCloud 会将返回的 `endCursor` 作为下一个请求的 `after` 参数发送。即使某一页为空，它也会继续，因为 Samsara 的后续页面可能仍有数据。请参阅 [Samsara 分页](https://developers.samsara.com/docs/pagination)。
+
+## 高效运行
+
+- 每个列表端点使用一个 REST 请求步骤。游标值是不透明的，必须按返回的原样发送。
+- 当端点支持 `limit` 时，设置 `limit=512`；512 是 Samsara 文档中规定的最大值。
+- 对于列表端点，避免逐行发送一个请求的扇出方式。仅在确实相互独立的详细信息请求中使用它，并使请求速率保持在端点的限制之内。
+- `/feed` 端点是增量的，而不是完整快照。请保存最后一次成功的游标，并使工作流的计划频率高于 Samsara 的 30 天游标过期期限。
+
+## 故障排除
+
+| 问题 | 检查内容 |
+| --- | --- |
+| `401` 或 `403` | 确认区域主机、令牌、标签访问权限和端点读取范围。 |
+| 没有行 | 确认这是列表端点，并且**项路径**为 `["data"]`。 |
+| 分页过早停止 | 请使用 Samsara 当前 API 参考中的新版端点。旧版 `/v1/` 端点可能使用不同的分页字段。 |
+| `429` | 降低独立扇出调用的请求速率。REST 请求步骤在重试安全的读取请求时，会遵循 Samsara 的 `Retry-After` 响应。 |
+
+## 相关内容
+
+- [通用 REST 连接](/zh-cn/reference/connectors/rest/generic-rest/)
+- [REST 请求工作流步骤](/zh-cn/guides/workflows/rest-request-step/)
+- [Samsara 基础 URL](https://developers.samsara.com/docs/base-url)

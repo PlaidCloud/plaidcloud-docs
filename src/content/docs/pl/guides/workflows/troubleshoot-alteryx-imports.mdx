@@ -1,0 +1,152 @@
+---
+title: Dostrajanie importów Alteryx
+description: Dostrajaj migracje Alteryx dzięki uzupełnianiu zależności, rozpoznawaniu makr, zmiennym, porównaniom walidacyjnym i zarządzanym wykonawcom.
+sidebar:
+  order: 35
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/troubleshoot-alteryx-imports.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud importuje przepływy pracy Alteryx do zaawansowanych przepływów pracy i raportuje szczegóły konwersji podczas importu. Skorzystaj z tego przewodnika, aby szybko uzupełnić pakiety zależności, przejrzeć wygenerowane makra, dostroić zmienne i zinterpretować porównania walidacyjne.
+
+<Aside type="note">
+  Zacznij od podsumowania konwersji. Wyróżnia ono elementy dotyczące zależności, makr, zmiennych, wykonawców i walidacji, zanim będzie trzeba sprawdzać poszczególne kroki.
+</Aside>
+
+## Uzupełnianie plików wejściowych
+
+Objawy:
+
+- Raport konwersji wymienia brakujący plik.
+- Uruchomienie kończy się ostrzeżeniem „No files found at &lt;path&gt;; the target table was created empty.”
+- Wejście dynamiczne nie znajduje żadnych plików.
+- Liczby wierszy w walidacji są niższe od oczekiwanych.
+
+Przepływ pracy jest konwertowany nawet wtedy, gdy brakuje pliku, który odczytuje, więc raport to najszybszy sposób, by zobaczyć, co zostało do zrobienia — podaje ścieżkę Document, do której należy przesłać każdy brakujący plik, oryginalną ścieżkę Alteryx, wszelkie oczekiwane arkusze oraz narzędzia, które go odczytują.
+
+Plik odczytywany tylko przez narzędzie wewnątrz wyłączonego kontenera narzędzi Alteryx (Tool Container) nigdy nie pojawia się na tej liście, ponieważ to narzędzie również nie jest importowane — zobacz [Komentarze i kontenery narzędzi na kanwie](/pl/guides/workflows/migrate-alteryx-workflows/#komentarze-i-tool-container-na-kanwie). Włącz kontener albo zaimportuj ponownie z opcją, która wprowadza narzędzia wyłączonego kontenera jako zwykłe kroki, jeśli chcesz, aby ten plik został uwzględniony.
+
+Działania:
+
+1. Prześlij każdy plik wymieniony w raporcie do ścieżki Document, którą podaje.
+2. W przypadku większości plików po przesłaniu uruchom przepływ pracy ponownie — ponowny import nie jest potrzebny.
+3. W przypadku brakującego układu płaskiego pliku ASCII, wejścia z symbolem wieloznacznym, szablonu Dynamic Input lub źródła zmiany nazw FirstRow zaimportuj przepływ pracy ponownie zamiast tylko uruchamiać go ponownie — te elementy są odczytywane w czasie konwersji.
+4. Upewnij się, że dynamiczne wzorce plików nadal pasują po przesłaniu.
+
+## Uzupełnianie plików dodatkowych danych przestrzennych
+
+Objawy:
+
+- Wejście przestrzenne wymaga pliku towarzyszącego.
+- Pola geometrii są puste.
+- Wynik przestrzenny różni się od oczekiwanego.
+
+Działania:
+
+1. Upewnij się, że uwzględniono wszystkie pliki dodatkowe shapefile lub MapInfo.
+2. Trzymaj pliki dodatkowe w tym samym folderze Document.
+3. Upewnij się, że pliki odwzorowań są obecne, gdy przepływ pracy zależy od zachowania układu współrzędnych.
+4. Uruchom przepływ pracy ponownie po poprawieniu pakietu.
+
+## Uzupełnianie lub wyjaśnianie makr
+
+Objawy:
+
+- Wywołanie makra nie może zostać rozpoznane.
+- Wejścia lub wyjścia makra nie są połączone.
+- Przepływ pracy został zaimportowany strukturalnie i wyjście makra wymaga połączenia.
+
+Działania:
+
+1. Dołącz plik `.yxmc` dla każdego przywoływanego makra.
+2. Dołącz zagnieżdżone makra wywoływane przez te makra.
+3. Unikaj zduplikowanych nazw makr, chyba że pakiet celowo zawiera makra w różnych wersjach.
+4. Upewnij się, że wygenerowane makro PlaidCloud ma kroki wejścia makra i wyjścia makra.
+
+## Nieczytelne pliki .yxdb
+
+Objawy:
+
+- Plik `.yxdb` nie importuje się, podczas gdy inne pliki z tego samego pakietu importują się poprawnie.
+- Pierwsze bajty pliku brzmią `Alteryx e2 Database file` zamiast `Alteryx Database File`.
+
+Plik został zapisany przez silnik Alteryx AMP w zastrzeżonym formacie, którego PlaidCloud nie może odczytać. Zapisz go ponownie w Alteryx Designer, dopóki go masz — zapisz pliki pojedynczo ponownie albo przekonwertuj cały folder zbiorczo do CSV za pomocą przepływu pracy do pobrania. Zobacz [Konwertowanie plików .yxdb do importu](/pl/guides/workflows/convert-yxdb-files-for-import/).
+
+## Nieczytelne bazy danych .cydb (Calgary)
+
+Objawy:
+
+- Skonwertowany krok Calgary zatrzymuje się i wskazuje tabelę `calgary_<database>`, która jeszcze nie istnieje.
+- Źródłem jest plik `.cydb` — często licencjonowana baza danych demograficznych lub referencyjnych dostarczana z Alteryx (Experian, Census i podobne).
+
+Baza danych Alteryx Calgary to zastrzeżony indeksowany magazyn bez otwartego czytnika, więc PlaidCloud nie może załadować pliku `.cydb` bezpośrednio. Same narzędzia Calgary są konwertowane — każdy `.cydb` staje się zwykłą [tabelą zastępczą](/pl/guides/workflows/migrate-alteryx-workflows/#bazy-danych-calgary) o nazwie `calgary_<database>` — ale dane tej tabeli musisz dostarczyć sam:
+
+1. W Alteryx dodaj Calgary Input odczytujący `.cydb`, a następnie wyeksportuj jego rekordy ponownie do otwartego formatu — narzędziem **Output Data** do CSV lub Parquet albo do tabeli w hurtowni danych.
+2. Zaimportuj ten plik do PlaidCloud jako tabelę `calgary_<database>`, której oczekuje skonwertowany przepływ pracy.
+3. W przypadku odczytu ograniczonego przez Skip Records lub Max Records dołącz do eksportu kolumnę kolejności — tabela zastępcza nie ma wrodzonej kolejności rekordów.
+
+W przypadku licencjonowanych baz referencyjnych, których nie możesz ponownie wyeksportować, użyj własnej licencjonowanej kopii tych samych danych i załaduj ją do wskazanej tabeli.
+
+## Problemy ze zmiennymi przepływu pracy
+
+Objawy:
+
+- Wejście skonwertowanej aplikacji nie jest ustawione.
+- Warunek uruchamia się nieoczekiwanie.
+- Zmienna pliku lub folderu wskazuje ścieżkę na pulpicie.
+
+Działania:
+
+1. Przejrzyj zmienne przepływu pracy przed uruchomieniem.
+2. Ustaw wymagane wartości.
+3. Zastąp ścieżki plików na pulpicie ścieżkami plików lub folderów Document.
+4. Upewnij się, że kontrolowane wybory odpowiadają oczekiwanemu wyborowi w aplikacji.
+5. Uruchom przepływ pracy ponownie.
+
+## Różnice w walidacji
+
+Objawy:
+
+- Schemat się różni.
+- Liczba wierszy się różni.
+- Wartości wierszy się różnią.
+- Wynik artefaktu ma różnicę do przejrzenia.
+
+Działania:
+
+1. Upewnij się, że w obu uruchomieniach użyto tych samych danych wejściowych.
+2. Upewnij się, że wartości zmiennych są zgodne.
+3. Upewnij się, że systemy źródłowe pochodzą z tej samej daty migawki.
+4. Przejrzyj obsługę wartości pustych, obsługę dat, precyzję liczbową i sortowanie ciągów znaków.
+5. W przypadku wyników przestrzennych przejrzyj format geometrii i zachowanie układu współrzędnych.
+6. W przypadku artefaktów upewnij się co do zamierzonego wyniku natywnego dla chmury i porównaj zawartość biznesową.
+
+## Uwagi o wykonawcach
+
+Wyspecjalizowane operacje, takie jak dopasowywanie rozmyte, przetwarzanie przestrzenne, wyodrębnianie z PDF, OCR, NLP i raportowanie, mogą być uruchamiane przez zarządzanych wykonawców. (Potoki uczenia maszynowego są konwertowane na natywne kroki [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) i [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/).)
+
+Jeśli wykonawca zgłasza uwagę:
+
+1. Otwórz szczegóły uruchomienia przepływu pracy.
+2. Przejrzyj uwagę przy kroku.
+3. Upewnij się, że wymagane dane wejściowe i parametry są obecne.
+4. Upewnij się, że oczekiwane dane wyjściowe są dostępne, jeśli wymagana jest walidacja zgodności.
+5. Uruchom ponownie po poprawieniu danych wejściowych lub ustawień.
+
+## Kiedy importować ponownie
+
+Zaimportuj ponownie, gdy:
+
+- Ważne pliki lub makra zostały dodane po utworzeniu oryginalnego pakietu.
+- Wybrano niewłaściwą ścieżkę Document.
+- Nowsza wersja przepływu pracy powinna zastąpić zaimportowaną wersję.
+- Pakiet przepływu pracy wymaga czytelniejszego układu zależności.
+
+Jeśli zmieniła się tylko wartość zmiennej, poświadczenia lub ścieżka Document, wystarczy zaktualizować skonwertowany przepływ pracy.
+
+## Powiązane przewodniki
+
+- [Pakowanie zależności Alteryx](/pl/guides/workflows/package-alteryx-dependencies/)
+- [Walidacja skonwertowanych przepływów pracy Alteryx](/pl/guides/workflows/validate-converted-alteryx-workflows/)
+- [Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/)

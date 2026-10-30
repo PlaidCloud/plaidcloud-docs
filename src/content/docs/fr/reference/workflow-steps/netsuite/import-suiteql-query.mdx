@@ -1,0 +1,113 @@
+---
+title: "NetSuite : importer une requête SuiteQL"
+description: Exécutez votre propre requête SuiteQL NetSuite dans un workflow et chargez le résultat dans une table de projet typée, les fenêtres de dates et la pagination étant gérées pour vous.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Exécute sur NetSuite, via votre [connexion NetSuite](/fr/guides/connections/netsuite/), une requête SuiteQL que vous écrivez, et charge le résultat dans une table de projet. Utilisez-la pour les données que les étapes d'importation prédéfinies ne couvrent pas : un enregistrement personnalisé, un rapport de type recherche enregistrée ou une jointure adaptée à votre propre modèle.
+
+L'étape lit les données par la même couche que les autres [étapes d'importation NetSuite](/fr/reference/workflow-steps/netsuite/) : elle actualise le jeton OAuth, lit les résultats volumineux par lots, relance les erreurs transitoires et découpe une longue plage de dates en fenêtres, de sorte que vous n'avez qu'à écrire la requête. Le workflow de chargement de [Data Foundation](/fr/guides/projects/data-foundation/) utilise cette étape pour ses lectures NetSuite.
+
+## Configuration
+
+L'étape comporte un seul onglet, **Paramètres d'importation**.
+
+### Source et cible
+
+| Champ | Obligatoire | Remarques |
+|---|---|---|
+| Connexion NetSuite | Oui | La connexion NetSuite à utiliser pour la lecture. Les connexions NetSuite se gèrent dans **Tools > Connections**. |
+| Environnement | Non | L'environnement de la connexion à utiliser, par exemple production ou sandbox. |
+| Table cible | Oui | La table de projet dans laquelle le résultat est écrit. Elle est écrasée à chaque exécution. |
+
+### Requête SuiteQL
+
+La requête à exécuter. Elle peut utiliser quatre espaces réservés, chacun remplacé par la valeur correspondante sous **Valeurs d'espace réservé et pagination**. PlaidCloud vérifie chaque valeur et l'écrit dans la requête sous forme de littéral du bon type : vous n'ajoutez donc ni guillemets ni `TO_DATE` autour d'un espace réservé.
+
+| Espace réservé | Remplacé par | Écrit sous forme de |
+|---|---|---|
+| `{subsidiary_id}` | **ID de la filiale** | Un nombre entier |
+| `{posting_period_id}` | **ID de la période comptable** | Un nombre entier |
+| `{start_date}` | **Date de début**, ou début de la fenêtre en cours | Une date |
+| `{end_date}` | **Date de fin**, ou fin de la fenêtre en cours | Une date |
+
+Tout autre mot entre accolades est refusé, tout comme un espace réservé que la requête utilise alors que sa valeur est vide.
+
+Écrivez la requête de façon à ce qu'elle :
+
+- **Se termine par `ORDER BY` sur une clé unique.** NetSuite renvoie un résultat volumineux par lots ; sans tri stable, les lots peuvent sauter ou répéter des lignes. Triez sur un ID interne ou sur une autre clé unique par ligne. Une requête sans `ORDER BY` s'arrête et vous demande d'en ajouter un.
+- **Renvoie les dates sous forme de texte** avec `TO_CHAR(date, 'YYYY-MM-DD')`. Sinon, SuiteQL renvoie les dates dans le format d'affichage du compte.
+- **Filtre une colonne de date entre `{start_date}` et `{end_date}`** lorsque vous lisez une plage de dates. Filtrez sur une seule colonne de date afin que chaque ligne tombe dans une seule fenêtre. Si vous renseignez une date de début ou une date de fin, la requête doit utiliser l'espace réservé correspondant.
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### Colonnes de résultat
+
+Nommez chaque colonne que la requête renvoie et attribuez-lui un type. Les noms sont mis en correspondance avec les alias de colonne de la requête, sans tenir compte de la casse. Utilisez les boutons d'ajout et de suppression au-dessus de la grille pour gérer la liste.
+
+| Colonne | Remarques |
+|---|---|
+| Nom de la colonne | L'alias de colonne de la requête. Chaque colonne de résultat doit avoir un nom. |
+| Type | **Texte** (valeur par défaut), **Entier**, **Grand entier**, **Petit entier**, **Très petit entier**, **Série**, **Grande série**, **Décimal**, **Numérique**, **Devise**, **Double**, **Flottant**, **Booléen**, **Date**, **Horodatage** ou **UUID**. |
+
+Ajoutez au moins une colonne de résultat. Les colonnes arrivent dans la table cible sous les noms que vous indiquez ici. SuiteQL renvoie chaque valeur sous forme de texte ; le type indique à PlaidCloud comment la stocker. Typez les montants en **Devise** ou **Décimal**, les dates renvoyées avec `TO_CHAR` en **Date** ou **Horodatage**, et les indicateurs `T`/`F` en **Booléen**.
+
+### Valeurs d'espace réservé et pagination
+
+| Champ | Par défaut | Remarques |
+|---|---|---|
+| ID de la filiale | vide | L'ID interne de la filiale NetSuite utilisé pour `{subsidiary_id}`. |
+| ID de la période comptable | vide | L'ID interne de la période comptable NetSuite utilisé pour `{posting_period_id}`. |
+| Date de début | vide | `YYYY-MM-DD`. Utilisée pour `{start_date}`. Ne doit pas être postérieure à la date de fin. |
+| Date de fin | vide | `YYYY-MM-DD`. Utilisée pour `{end_date}`. |
+| Jours par fenêtre | 90 | Lorsque la date de début et la date de fin sont toutes deux renseignées, la plage est lue par fenêtres de ce nombre de jours, de 1 à 3650. La requête s'exécute une fois par fenêtre avec les dates de celle-ci, et les résultats sont combinés. |
+| Requêtes par minute | 0 | Cadence les appels de l'étape vers NetSuite, pour laisser de la place aux autres intégrations sur le même compte. `0` signifie aucune limite. |
+
+Chacune de ces valeurs peut utiliser une variable.
+
+## Validation
+
+L'étape ne peut pas être enregistrée tant que les éléments suivants ne sont pas renseignés :
+
+- **Connexion NetSuite** : « NetSuite connection is required. »
+- **Table cible** : « Target table is required. »
+- **Requête SuiteQL** : « A SuiteQL query is required. »
+- **Colonnes de résultat** : « Add at least one result column. » et « Every result column needs a name. »
+
+## Remarques
+
+- NetSuite limite une requête à environ 100 000 lignes. Une requête ou une fenêtre qui dépasserait cette limite s'arrête avec un message vous invitant à restreindre la plage de dates ou les autres filtres, plutôt que de charger un résultat tronqué. Réduisez **Jours par fenêtre** pour garder chaque fenêtre sous la limite.
+- L'étape actualise son jeton NetSuite selon les besoins et relance après une pause une requête limitée ou échouée.
+- La table cible est entièrement remplacée à chaque exécution. Limitez la clause `WHERE` à la tranche dont vous avez besoin, par exemple une fenêtre de dates glissante, au lieu de relire tout l'historique à chaque fois.
+- Une requête qui ne renvoie aucune ligne se termine avec un avertissement et laisse la table cible vide, de sorte que les étapes suivantes s'exécutent quand même.
+- Les messages d'erreur de NetSuite sont affichés sans les identifiants, jetons et clés ; ils peuvent donc reprendre moins du libellé d'origine de NetSuite.
+
+<Aside type="caution">
+Sur `transaction` et `transactionline`, `amount` est exprimé dans la devise propre à chaque transaction. Un total sur plusieurs filiales ayant des devises différentes n'est pas un chiffre consolidé. Sélectionnez des montants consolidés ou convertis lorsque vous totalisez plusieurs filiales.
+</Aside>
+
+## Voir aussi
+
+- [Étapes NetSuite](/fr/reference/workflow-steps/netsuite/)
+- [Se connecter à NetSuite](/fr/guides/connections/netsuite/)
+- [Exemples de requêtes SuiteQL NetSuite](/fr/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/fr/guides/projects/data-foundation/)

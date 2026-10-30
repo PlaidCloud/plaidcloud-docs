@@ -1,0 +1,76 @@
+---
+title: "Etapa Xero: Lançar documento"
+description: Lance no Xero lançamentos manuais, faturas, faturas de compra, pagamentos e notas de crédito a partir de tabelas de cabeçalho e de linhas, com um modo de teste que valida cada documento antes de qualquer lançamento.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/xero/xero-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança documentos no Xero por meio da sua [conexão do Xero](/pt-br/guides/connections/xero/), encaminhados pelo pipeline compartilhado de gravação em ERP do PlaidCloud. A etapa recebe uma tabela de cabeçalho (uma linha por documento) e uma tabela de linhas (uma ou mais linhas por documento) e lança cada documento como **ManualJournal**, **Invoice**, **Bill**, **Payment** ou **CreditNote**. Um lote pode misturar tipos de documento — o PlaidCloud o particiona por tipo de documento antes de qualquer chamada de rede. O **Test Only Mode** monta e verifica cada documento sem reivindicação no razão e sem lançar; uma tabela de resultado opcional registra o desfecho de cada documento.
+
+<Aside type="caution">
+Execute cada lote primeiro em **Test Only Mode**, revise a tabela de resultado e concilie alguns lançamentos diretamente no Xero antes de confiar nesta etapa para lançar documentos reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Conexão do Xero
+
+- **Conexão do Xero** — a conexão do Xero pela qual lançar. Ela carrega a organização na qual cada documento é lançado.
+- **Ambiente** — qual dos ambientes do PlaidCloud da conexão usar para lançar, o mesmo seletor presente em toda etapa orientada por conexão. Não tem relação com a Demo Company do próprio Xero, que é uma propriedade da organização para a qual a conexão aponta.
+- **Test Only Mode** — marcado por padrão. Valida cada documento, mas não o lança: sem reivindicação no razão e sem gravação. Uma configuração de etapa que omite totalmente esse campo — por exemplo, uma criada pela API REST, pelo MCP ou pela importação de um pacote de fluxo de trabalho — também assume por padrão o Test Only Mode, em vez de um lançamento real.
+- **Continue posting remaining documents if one document fails** — marcado por padrão. Desmarcado, o lote para na primeira falha.
+- **Tabela de resultado** — uma linha por documento: `ref`, `doc_type`, `natural_key`, `xero_id`, `status` (`posted`/`validated`/`error`) e `message`.
+
+### Seleção de tabelas
+
+- **Tabela de cabeçalho** — uma linha por documento.
+- **Tabela de linhas** — uma ou mais linhas por documento, correlacionadas ao cabeçalho por `ref`.
+
+### Campos de cabeçalho e de linha
+
+Duas guias de mapeamento relacionam os nomes das suas próprias colunas aos campos de que o Xero precisa. **Campos de cabeçalho** abrange:
+
+| Campo | Observações |
+|---|---|
+| `ref` | Obrigatório. Sua chave de negócio — liga as linhas de cabeçalho às suas linhas e é a chave que o razão de idempotência reivindica. |
+| `doc_type` | Obrigatório. `ManualJournal`, `Invoice`, `Bill`, `Payment` ou `CreditNote`. |
+| `posting_date` | Obrigatório. |
+| `currency_id`, `party_id`, `memo`, `due_date` | Opcionais. `party_id` é o contato do Xero. |
+| `total_amt`, `deposit_account_id`, `bank_account_id`, `linked_invoice_id` | Somente para pagamentos, opcionais. |
+| `credit_note_type` | Somente para notas de crédito, opcional. `ACCRECCREDIT` (venda, o padrão) ou `ACCPAYCREDIT` (compra). |
+
+**Campos de linha** abrange `ref` (obrigatório, correspondendo a uma linha de cabeçalho), além dos campos de que o tipo de documento precisa:
+
+| Tipo de documento | Campos de linha |
+|---|---|
+| ManualJournal | `account_id`, `debit`, `credit` e, opcionalmente, `class_id` / `department_id` para rastreamento |
+| Invoice | `item_id`, `qty`, `unit_price`, `amount` |
+| Bill | `account_id`, `amount` |
+| CreditNote | `item_id`, `qty`, `unit_price`, `amount` |
+| Payment | `linked_txn_id` (a fatura à qual a linha se aplica), `amount` |
+
+`tax_type` e `memo` são opcionais em todas as linhas.
+
+## Como funciona o lançamento
+
+Cada documento é reivindicado no razão de idempotência do PlaidCloud antes de ser enviado; assim, uma nova execução nunca lança um documento que já chegou a `posted`. A chave do razão recebe como prefixo o tipo de documento, de modo que uma fatura e uma fatura de compra com o mesmo `ref` nunca colidem, mesmo que o Xero lance ambas pelo mesmo endpoint.
+
+Quando um desfecho é ambíguo — um tempo limite esgotado, uma resposta perdida —, o PlaidCloud consulta o Xero pelo número de documento que ele registrou: um número de fatura para uma fatura ou uma fatura de compra, um número de nota de crédito para uma nota de crédito. Uma correspondência só vale como prova quando o documento está em um status de lançamento terminal, pois esses números não têm unicidade garantida no Xero — uma correspondência em rascunho, anulada ou com número duplicado é tratada como não resolvida e colocada em quarentena, em vez de registrada como o desfecho desta gravação.
+
+## Limites de capacidade
+
+| Limitação | O que significa |
+|---|---|
+| Lançamentos manuais e pagamentos não podem ser consultados | A descrição de um lançamento manual e a referência de um pagamento não são consultáveis no Xero; portanto, não há campo para correlacionar uma gravação em dúvida com a solicitação. Esses casos são colocados em quarentena para resolução manual, em vez de adivinhados. |
+| O estorno abrange lançamentos manuais e faturas | Um lançamento manual é estornado como um lançamento com débito e crédito invertidos; uma fatura é estornada como uma nota de crédito espelhada. Faturas de compra, pagamentos e notas de crédito não têm um payload de desfazer documentado; portanto, o estorno é recusado, nunca simulado. |
+| Os limites de taxa são por organização | O Xero permite 60 chamadas por minuto e 5.000 por dia por organização, com 5 chamadas simultâneas. O PlaidCloud governa os limites por minuto e de simultaneidade e recua diante de uma resposta de limitação; um lote muito grande leva proporcionalmente mais tempo. |
+
+## Relacionados
+
+- [Conectar ao Xero](/pt-br/guides/connections/xero/) — passo a passo completo, abrangendo configuração, visualização prévia e lançamento
+- [Conector REST do Xero](/pt-br/reference/connectors/rest/xero/)
+- [Etapas do Xero](/pt-br/reference/workflow-steps/xero/)
+- [Revisar o histórico de lançamentos em ERP](/pt-br/guides/connections/erp-post-history/)

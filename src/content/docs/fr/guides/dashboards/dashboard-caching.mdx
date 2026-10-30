@@ -1,0 +1,114 @@
+---
+title: Mise en cache des tableaux de bord
+description: Comment les tableaux de bord PlaidCloud mettent en cache les résultats des graphiques, quand un résultat en cache est supprimé et comment conserver les résultats plus longtemps pour que les affichages répétés se chargent depuis le cache.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dashboards/dashboard-caching.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Un tableau de bord met en cache le résultat de chaque graphique qu'il dessine. La première
+personne qui ouvre un tableau de bord exécute ses requêtes sur l'entrepôt de données ;
+toutes celles qui l'ouvrent ensuite obtiennent le résultat stocké, ce qui explique
+pourquoi un deuxième affichage est beaucoup plus rapide que le premier.
+
+Un résultat en cache est supprimé, et l'affichage suivant interroge de nouveau l'entrepôt,
+dans deux situations : la table qui alimente le graphique est republiée, ou le résultat
+atteint la fin de sa durée de vie dans le cache.
+
+## Republier une table vide ses résultats en cache
+
+Lorsqu'une exécution de workflow republie une table, chaque graphique qui lit cette table
+supprime immédiatement ses résultats en cache. La personne suivante qui ouvre le tableau
+de bord voit les chiffres actualisés, sans attendre et sans forcer une actualisation à la main.
+
+Cela signifie qu'un tableau de bord n'affiche jamais de chiffres antérieurs à l'actualisation
+à cause de la mise en cache. Si un tableau de bord semble périmé après une exécution de
+workflow, la cause est le workflow (vérifiez que l'exécution s'est terminée et qu'elle a
+republié la table attendue), et non le cache.
+
+<Aside type="caution" title="Publier sous un nom stable">
+Les résultats en cache sont suivis par table publiée. Si vous reconstruisez une table sous
+un autre nom publié, les graphiques qui pointent encore vers l'ancien nom continuent de
+servir les données de l'ancienne table. Republiez sous le même nom afin que les graphiques
+déjà créés restent rattachés à la table.
+</Aside>
+
+## Durée de vie du cache
+
+Chaque résultat en cache porte aussi une durée de vie, à l'issue de laquelle il expire de
+lui-même. La valeur par défaut est de **1 heure**.
+
+Ce n'est pas la durée de vie qui maintient un tableau de bord à jour : c'est la republication.
+Ainsi, pour des données qui ne changent que lorsqu'un workflow s'exécute, une durée de vie
+courte n'apporte rien et coûte très cher : tout affichage après l'expiration du dernier
+résultat interroge de nouveau l'entrepôt depuis zéro. Les tableaux de bord utilisés par
+rafales (une revue du matin, une clôture de fin de mois) paient ce coût à presque chaque
+chargement.
+
+La valeur par défaut était de 5 minutes jusqu'en août 2026. Elle était courte parce que la
+republication ne vidait pas de façon fiable les résultats en cache, et l'expiration était donc
+la seule chose qui maintenait un tableau de bord à jour. Maintenant que la republication les
+vide, une heure est à la fois sûre et bien moins coûteuse.
+
+Augmentez-la encore pour les tables qui changent moins souvent (un jour convient à une table
+rechargée pendant la nuit), et le workflow qui recharge la table vide toujours le cache dès que
+les nouvelles données arrivent.
+
+<Aside type="caution">
+La durée de vie ne peut rester longue sans risque que pour des données qui changent via
+PlaidCloud. Si un graphique lit une table dans laquelle quelque chose d'extérieur à PlaidCloud
+écrit, rien n'indique au tableau de bord de vider son cache, et la durée de vie est la seule
+chose qui l'actualise. Définissez une durée de vie courte pour ces jeux de données : avec la
+valeur par défaut de 1 heure, ils peuvent désormais avoir jusqu'à une heure de retard, alors
+qu'ils avaient auparavant au plus 5 minutes de retard.
+</Aside>
+
+## Modifier la durée de vie du cache
+
+Définissez la durée de vie en secondes, soit sur une base de données, soit sur un jeu de
+données individuel. Une valeur sur le jeu de données l'emporte sur celle de sa base de
+données, et la valeur par défaut de 1 heure s'applique lorsque vous n'avez défini ni l'une
+ni l'autre. Modifier l'une ou l'autre nécessite l'autorisation de modification correspondante
+dans la zone Tableaux de bord.
+
+**Pour chaque jeu de données d'une base de données :**
+
+1. Accédez à **Data → Databases** dans la zone Tableaux de bord
+2. Cliquez sur l'icône de modification de la base de données
+3. Ouvrez l'onglet **Avancé**, puis **Performance**
+4. Saisissez une valeur en secondes dans **Chart cache timeout** (par exemple, `3600` pour
+   une heure)
+5. Cliquez sur **Finish**
+
+**Pour un seul jeu de données :**
+
+1. Accédez à **Data → Datasets**
+2. Cliquez sur l'icône de modification du jeu de données
+3. Ouvrez l'onglet **Paramètres**
+4. Saisissez une valeur en secondes dans **Cache timeout**
+5. Cliquez sur **Enregistrer**
+
+Deux valeurs ont une signification particulière : `0` signifie qu'il n'y a jamais d'expiration,
+le résultat n'étant alors vidé que par une republication, et `-1` désactive entièrement la mise
+en cache pour cette base de données ou ce jeu de données.
+
+La modification s'applique aux résultats mis en cache à partir de ce moment. Les résultats déjà
+présents dans le cache conservent la durée de vie avec laquelle ils ont été stockés jusqu'à leur
+expiration ou jusqu'à la republication de la table.
+
+## Actualiser un tableau de bord à la main
+
+Vous en aurez rarement besoin, mais vous pouvez supprimer vous-même les résultats en cache d'un
+tableau de bord : ouvrez le menu à côté de **Edit dashboard** et choisissez **Force refresh dashboard**.
+Si un graphique sert un résultat plus ancien, une note en haut à droite indique depuis combien de
+temps les données ont été mises en cache, et un clic dessus force la même actualisation.
+
+Préférez l'une ou l'autre de ces méthodes au rechargement de la page du navigateur : un rechargement
+redemande les graphiques, mais reçoit toujours les résultats en cache.
+
+## Voir aussi
+
+- [Utiliser les tableaux de bord](/fr/guides/dashboards/using-dashboards/)
+- [Découvrir les tableaux de bord](/fr/guides/dashboards/learning-dashboard/)

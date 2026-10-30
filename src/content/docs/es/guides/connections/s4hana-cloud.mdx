@@ -1,0 +1,136 @@
+---
+title: Conectar con SAP S/4HANA Cloud
+description: Conecte PlaidCloud directamente con SAP S/4HANA Cloud Public Edition mediante credenciales de cliente OAuth2, sin necesidad de agente, para extraer el balance de comprobación y las partidas de asientos de diario, y luego contabilizar asientos de diario con un asiento de reversión contabilizado para las correcciones.
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud directamente con SAP S/4HANA Cloud Public Edition a través de sus API OData y SOAP para extraer datos del balance de comprobación y de las partidas de asientos de diario sin escribir OData a mano, y para contabilizar asientos de diario de vuelta. Esta guía cubre la conexión, el paso de importación y el paso de contabilización.
+
+<Aside type="caution">
+Ejecute siempre cada importación primero en un tenant de sandbox y, antes de contabilizar en producción, revise cada lote con **Validate Only**, como se describe más abajo.
+</Aside>
+
+<Aside type="note">
+Esta conexión es distinta del [conector de SAP ECC / S/4HANA](/es/reference/connectors/erp/sap-s4/), que llega a un sistema S/4HANA local o en nube privada mediante un agente de PlaidLink y llamadas RFC. Este conector se comunica directamente con SAP S/4HANA Cloud **Public Edition** a través de internet: no hay ningún agente que instalar ni destino RFC que configurar.
+</Aside>
+
+## Requisitos previos
+
+En SAP S/4HANA Cloud necesita lo siguiente:
+
+- Un **Communication Arrangement** basado en un Communication Scenario que exponga las API de balance de comprobación y de partidas de asientos de diario (lectura) y el servicio de contabilización de asientos de diario (escritura), con un **Communication User** configurado para credenciales de cliente OAuth2 en lugar de autenticación básica.
+- El **host** de su tenant de S/4HANA Cloud (por ejemplo, `https://yourorg.s4hana.ondemand.com`) y su **URL del token OAuth2** (por ejemplo, `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`).
+- El **ID de cliente y el secreto de OAuth2** del Communication Arrangement.
+
+<Aside type="note">
+La conexión se autentica como una aplicación, no como un usuario: utiliza el flujo de **credenciales de cliente** de OAuth2, el mismo mecanismo que PlaidCloud emplea en otras conexiones REST de ERP en la nube. No hay inicio de sesión interactivo.
+</Aside>
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **SAP S/4HANA Cloud** en el menú.
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, por ejemplo, `S/4HANA Cloud Prod`. |
+   | Host | El host de su tenant de S/4HANA Cloud, por ejemplo, `https://yourorg.s4hana.ondemand.com`. |
+   | URL del token OAuth2 | El punto de conexión del token OAuth2 del Communication Arrangement. |
+   | ID de cliente | El ID de cliente OAuth2 del Communication Arrangement. |
+   | Secreto de cliente | El secreto de cliente OAuth2 del Communication Arrangement. |
+
+4. Haga clic en `Create`.
+
+</Steps>
+
+## Probar la conexión
+
+<Steps>
+
+1. Agregue un paso **Import S/4HANA Entity** a un flujo de trabajo.
+
+2. Establezca **S/4HANA Connection** en su conexión, **Tipo de entidad** en `trial_balance`, agregue un filtro **CompanyCode** para una sola empresa y establezca **Tabla de destino** en una tabla de prueba.
+
+3. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Una tabla de destino con datos confirma que el host, la URL del token y las credenciales de cliente son correctos. Si hay un error, este indica el problema: un secreto de cliente incorrecto, un Communication Arrangement sin el alcance necesario o un host equivocado.
+
+## Importar datos
+
+<Steps>
+
+1. Agregue un paso **Import S/4HANA Entity** y establezca **S/4HANA Connection** y **Tabla de destino**.
+
+2. Establezca **Tipo de entidad** en el registro que desea.
+
+3. Agregue **Filtros** para acotar la extracción: el código de empresa, la cuenta y los rangos de fechas se traducen en el `$filter` de OData de la solicitud, limitados en cada entidad a los campos que S/4HANA realmente puede filtrar en el servidor.
+
+4. Ejecute el paso y revise la tabla de destino.
+
+</Steps>
+
+### Entidades y filtros
+
+| Tipo de entidad | Qué extrae | Servicio OData | Campos filtrables |
+|---|---|---|---|
+| `trial_balance` | Saldos agregados de cuentas del libro mayor al cierre del período | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `FiscalYear`, `FiscalPeriod`, `Ledger` |
+| `journal_entry_items` | Partidas de asientos de diario contabilizados | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`, `GLAccount`, `CostCenter`, `ProfitCenter`, `PostingDate` (rango), `FiscalYear`, `FiscalPeriod`, `Ledger` |
+
+<Aside type="note">
+`PostingDate`, `FiscalYear` y `FiscalPeriod` aceptan filtros de **rango** (límites `ge`/`le`); el resto son filtros de igualdad. Un filtro de rango con un solo límite queda abierto en el otro extremo. Establezca al menos un límite antes de extraer `journal_entry_items` con datos de producción: una extracción sin límites del detalle de partidas puede ser muy grande.
+</Aside>
+
+## Contabilizar asientos de diario
+
+El paso **S/4HANA: Post Journal Entry** contabiliza asientos de diario del libro mayor a través del canal compartido de escritura de ERP de PlaidCloud, mediante el servicio SOAP de creación masiva de asientos de diario de S/4HANA Cloud.
+
+<Steps>
+
+1. Cree una **tabla de encabezados** (una fila por asiento de diario) con `journal_id` (el identificador de su asiento), `company_code`, `document_date`, `posting_date`, `fiscal_year`, `ledger` y `header_text`.
+
+2. Cree una **tabla de líneas** (una o más filas por `journal_id`) con `gl_account`, `debit`, `credit` y las columnas de dimensión `cost_center`/`profit_center` que requiera su libro.
+
+3. Agregue un paso **S/4HANA: Post Journal Entry** y establezca **S/4HANA Connection**, **Tabla de encabezados**, **Tabla de líneas** y una **Tabla de resultados**.
+
+4. Deje marcada la opción **Validate Only** y ejecute el paso: PlaidCloud construye y comprueba cada asiento sin reservar en el libro de PlaidCloud y sin contabilizar nada.
+
+5. Revise la tabla de resultados (una fila por asiento: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrija cualquier fila `error` y vuelva a validar.
+
+6. Desmarque **Validate Only** y ejecute de nuevo para contabilizar de verdad. Deje marcada la opción **Continue On Error**, a menos que desee que un lote se detenga por completo al primer asiento fallido.
+
+</Steps>
+
+### Cómo funciona la contabilización
+
+PlaidCloud envía cada asiento de diario mediante el servicio SOAP `JournalEntryBulkCreateRequest_In` de S/4HANA Cloud y luego consulta periódicamente el mensaje `JournalEntryBulkCreateConfirmation_Out` correspondiente, que informa del estado final de procesamiento del asiento. Un asiento solo se informa como `posted` cuando se recibe esa confirmación: un asiento que se acepta pero cuya confirmación nunca llega queda en cuarentena en lugar de registrarse como contabilizado, de modo que un envío atascado nunca pasa en silencio como correcto. La reserva en el libro propio de PlaidCloud evita contabilizar dos veces el mismo asiento en un lote reintentado o vuelto a ejecutar.
+
+### Corregir un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un asiento contabilizado. Para corregir uno, contabilice un nuevo asiento con los débitos y créditos invertidos respecto del original (un **asiento de reversión contabilizado**) en lugar de editar el original directamente. Esto conserva el rastro de auditoría propio de S/4HANA y coincide con la forma en que se hacen las correcciones directamente en la aplicación.
+
+### Límites de capacidad: léalos antes de contabilizar en producción
+
+<Aside type="caution">
+- **Latencia de confirmación.** El servicio SOAP procesa las solicitudes de creación masiva de forma asíncrona: espere que la consulta del estado final tarde bastante más que una escritura OData síncrona, y no use este paso para contabilizar un solo asiento cuando la latencia sea crítica.
+- **Los campos filtrables dependen de las dimensiones expuestas por su Communication Scenario.** Un objeto de costo o una dimensión que no forme parte de los campos expuestos del escenario no se puede filtrar en el servidor; acótelo en su flujo de trabajo después de la extracción.
+- **Este conector es distinto del [conector de SAP ECC / S/4HANA](/es/reference/connectors/erp/sap-s4/).** Aquel llega a un sistema local o en nube privada mediante un agente de PlaidLink y llamadas RFC; úselo solo si no se conecta a S/4HANA Cloud Public Edition.
+</Aside>
+
+## Temas relacionados
+
+- [Conector REST de SAP S/4HANA Cloud](/es/reference/connectors/rest/s4hana-cloud/): referencia de campos.
+- [Import S/4HANA Entity](/es/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/es/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/): el registro permanente de cada intento de contabilización en S/4HANA Cloud y su estado actual.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

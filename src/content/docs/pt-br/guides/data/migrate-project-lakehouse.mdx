@@ -1,0 +1,154 @@
+---
+title: Migrar um projeto para o Lakehouse v2
+description: Mova um único projeto do Lakehouse v1 para o Lakehouse v2 a partir do menu Ferramentas, incluindo o que a verificação de prontidão recusa, o que muda nos seus resultados e quanto tempo você tem para abortar.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/migrate-project-lakehouse.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Você pode mover um projeto por vez do Lakehouse v1 para o Lakehouse v2. Os outros projetos do mesmo espaço de trabalho continuam em execução na v1 até que você também os migre, portanto é possível migrar um único projeto e deixar todo o resto como está.
+
+A migração move as tabelas do projeto e tudo o que é construído sobre elas: consultas, expressões, visões, conjuntos de dados do Superset, colunas calculadas, métricas e regras de acesso a linhas.
+
+<Aside type="caution" title="Alterações feitas durante uma migração são perdidas">
+Uma migração copia seus dados como estão quando a execução começa. Tudo o que for gravado no projeto depois disso — uma execução de fluxo de trabalho, um arquivo importado, uma tabela editada — **não** é levado para a cópia migrada e **não** pode ser recuperado dela. Os agendamentos de fluxo de trabalho do próprio projeto são pausados enquanto a migração é executada e restaurados depois, mas nada impede uma execução manual ou uma importação. Um fluxo de trabalho iniciado durante uma migração exibe um aviso. Peça aos membros do projeto que não usem o projeto até que a migração termine.
+</Aside>
+
+<Aside type="caution" title="A migração é de mão única">
+Não existe migração de volta. Você pode desfazer uma migração e devolver o projeto ao Lakehouse v1 dentro da janela de desfazer, conforme descrito em [Desfazer uma migração](#desfazer-uma-migração). Depois disso, os dados originais são excluídos.
+</Aside>
+
+## Antes de começar
+
+- **Migrar projeto para o Lakehouse v2…** aparece no menu Ferramentas para os membros que podem editar projetos. Somente os Arquitetos de um projeto podem migrá-lo: iniciar, agendar, cancelar e desfazer uma migração exigem acesso de Arquiteto ao projeto.
+- Você precisa de acesso de Arquiteto ao projeto, e o projeto deve estar desbloqueado.
+- Seu plano precisa ter espaço para a cópia. Consulte [Verificação de armazenamento](#verificação-de-armazenamento).
+- Qualquer pessoa que consiga abrir um projeto pode executar a verificação de prontidão.
+- Execute primeiro a verificação de prontidão e resolva tudo o que ela recusar. Uma migração iniciada em um projeto que ela não consegue traduzir é interrompida no meio.
+- Planeje a indisponibilidade do projeto durante toda a execução, porque as gravações feitas durante a execução são perdidas.
+- Se outros projetos leem as tabelas deste projeto por meio de um compartilhamento de dados, migre esses projetos primeiro ou remova o compartilhamento. Um projeto que outros leem por meio de um compartilhamento de dados é migrado depois deles.
+
+## Verificar a prontidão da migração
+
+A verificação de prontidão informa o que acontecerá com o projeto antes de você se comprometer com qualquer coisa. Ela não altera nada.
+
+<Steps>
+
+1. Abra o menu **Ferramentas**.
+
+2. Selecione **Verificar prontidão da migração…**.
+
+3. Selecione o projeto.
+
+</Steps>
+
+Se o projeto já estiver no Lakehouse v2, a verificação informa isso e que não há nada a migrar.
+
+O relatório lista cada área com um destes status:
+
+| Status | Significado |
+| --- | --- |
+| **Limpar** | O PlaidCloud analisou a área e não encontrou nada. |
+| **Requer revisão** | Algo vai mudar, e você deve reconhecer isso antes da execução. |
+| **Bloqueado** | A migração não pode começar até que isso seja resolvido. |
+| **Verificado durante a migração** | A área é verificada enquanto a migração é executada, portanto nunca é mostrada como limpa de antemão. |
+
+As áreas são tabelas, visões, etapas, painéis, compartilhamentos de dados e capacidade. Cada constatação vem com uma explicação em linguagem simples, e uma sugestão de reescrita é exibida quando existe uma.
+
+### O que a verificação de prontidão recusa
+
+| Recusa | Motivo |
+| --- | --- |
+| Uma coluna cujo tipo não tem equivalente no Lakehouse v2 | A migração recusa em vez de transformar a coluna silenciosamente em texto. Altere o tipo da coluna no projeto e execute a verificação novamente. |
+| O warehouse de destino do Lakehouse v2 não pode ser resolvido | O lakehouse v2 do espaço de trabalho não está visível para o serviço que executa a migração. Este é um problema administrativo, que não pode ser resolvido no projeto. |
+| A proteção contra exclusão do bucket de armazenamento não pode ser confirmada | A janela de desfazer depende dela, portanto a migração não será iniciada sem ela. |
+
+As colunas JSON são migradas. As versões anteriores as recusavam; agora elas são compatíveis.
+
+## Verificação de armazenamento
+
+Antes de uma execução começar, o PlaidCloud verifica se o seu plano tem espaço para a cópia.
+
+- **Em um plano com limite de armazenamento**, a execução é recusada se a cópia migrada não couber. As outras migrações em andamento contam para o limite.
+- **Em um plano cobrado por armazenamento extra**, a execução começa com um aviso do excedente esperado.
+
+## Testar na v2
+
+**Testar na v2…** cria uma cópia de avaliação privada do projeto no Lakehouse v2 para que você confira os resultados antes de migrar o projeto real. Na cópia de avaliação, os agendamentos e os sensores ficam desativados e a contabilização no ERP fica em modo de simulação. As etapas que gravam fora do PlaidCloud, como SFTP, e-mail e posts REST, são listadas como um aviso antes de você confirmar. **Iniciar avaliação** cria a cópia. Um projeto que já tem uma avaliação oferece **Abrir avaliação existente** e **Substituir avaliação…**.
+
+## Executar a migração
+
+<Steps>
+
+1. Abra o menu **Ferramentas**.
+
+2. Selecione **Migrar projeto para o Lakehouse v2…**. A janela lista as execuções de migração do espaço de trabalho.
+
+3. Inicie uma nova execução e selecione o projeto.
+
+4. Leia o relatório de prontidão exibido na janela e reconheça cada constatação listada. Aceitar uma constatação a aceita somente para aquele item específico.
+
+5. Selecione **Iniciar migração** ou marque **Iniciar em um horário agendado**, defina o horário e selecione **Agendar migração**. Uma migração agendada exibe um banner no projeto, e você pode cancelá-la antes que ela comece. Quando ela começa, o PlaidCloud verifica novamente a prontidão, a compatibilidade, a capacidade e as suas permissões.
+
+6. Inicie a execução. A caixa de diálogo de progresso mostra cada tabela à medida que ela é copiada e verificada. Os agendamentos de fluxo de trabalho habilitados do projeto são pausados durante a execução. Você pode fechar a caixa de diálogo e reabri-la a partir da lista de execuções; a execução continua de qualquer forma.
+
+</Steps>
+
+Depois que uma execução começa a transferir o projeto para o Lakehouse v2, ela não pode ser interrompida. Se a própria transferência falhar no meio, a execução exibe **Contact support. Don't retry.** em vez de oferecer **Retomar**. Entre em contato com o suporte e deixe a execução como está.
+
+Quando a execução termina, o projeto fica vinculado ao Lakehouse v2, as consultas passam a usá-lo e os agendamentos pausados são restaurados. Um agendamento que você editou ou excluiu durante a migração é deixado como você o deixou e é citado no relatório. A cópia original do Lakehouse v1 é mantida, indisponível para o projeto, durante a janela de desfazer. Você é notificado, por mensagem e por e-mail, quando uma migração termina ou falha.
+
+### Uma migração com falha
+
+Uma migração com falha mostra por que falhou e o horário após o qual as gravações na origem serão perdidas. Selecione **Retomar** para continuá-la. As visões que não podem ser executadas no Lakehouse v2 são ignoradas e listadas, em vez de interromper a execução.
+
+## O que mudou
+
+Depois de uma migração, abra **O que mudou…** para a execução. Ele lista cada tabela como copiada, copiada com uma lacuna nomeada, ignorada ou com falha, com contagens de linhas e motivos, as visões que foram ignoradas, as tabelas criadas ou removidas na origem durante a execução e os agendamentos que foram pausados e restaurados.
+
+## O agrupamento semanal muda em um dia
+
+O Lakehouse v2 inicia suas semanas no **domingo**. O Lakehouse v1 as iniciava na **segunda-feira**.
+
+Tudo o que é agrupado por semana muda de acordo, sem erro e sem aviso. Uma linha com data de domingo, 14 de junho, pertencia à semana iniciada na segunda-feira, 8 de junho, na v1. Na v2, ela pertence à semana iniciada no domingo, 14 de junho.
+
+Os totais de cada lado dessa fronteira se movem. Um gráfico semanal, uma tabela de resumo semanal e um relatório agrupado por semana continuam funcionando e mostram números diferentes dos de antes. Confira depois da migração qualquer valor semanal em que você confie e espere uma mudança de um dia, e não um erro.
+
+## O que não é transferido
+
+Seus dados são migrados. Algumas coisas construídas sobre o mecanismo antigo, e alguns detalhes de como as colunas foram declaradas, não são.
+
+| Item | O que acontece |
+| --- | --- |
+| Histórico de instantâneos, viagem no tempo e flashback | Não transferidos. As tabelas migradas começam com um histórico novo, portanto não é possível consultar o projeto como ele estava antes da migração. |
+| Branches e tags de tabela | Os branches e as tags existentes não são transferidos. |
+| Limites de comprimento `VARCHAR(n)` | O limite de comprimento é descartado. As colunas de texto passam a ser texto sem restrição; os valores existentes não são afetados. |
+| Larguras estreitas de inteiros | Os tipos de inteiros pequenos passam a ser inteiros de 32 bits. Os valores não são afetados. |
+| Precisão de fração de segundo em timestamps | Uma precisão declarada é descartada. |
+| Colunas espaciais, de geometria e de bitmap | Migradas, mas excluídas da comparação automática de valores — confira-as você mesmo. |
+| Colunas binárias, de array e de mapa | Migradas, mas excluídas da comparação automática de valores — confira-as você mesmo. |
+| Colunas JSON | Migradas com seus tipos mantidos. Um número dentro de um JSON grande demais para armazenamento exato é armazenado com precisão dupla e informado. |
+
+<Aside type="caution" title="Inteiros sem sinal muito grandes">
+Uma coluna de inteiros sem sinal de 64 bits com valores acima de 9.223.372.036.854.775.807 não pode ser representada no Lakehouse v2, e esses valores não são informados como uma recusa. Se um projeto armazena inteiros sem sinal próximos desse limite, confira-os antes e depois da migração.
+</Aside>
+
+## Desfazer uma migração
+
+Durante a janela de desfazer após a conclusão de uma execução, os dados originais do Lakehouse v1 são mantidos intactos, mas desvinculados do projeto. **Desfazer migração…** devolve o projeto ao Lakehouse v1 nessa janela. Você precisa de acesso de Arquiteto ao projeto.
+
+Desfazer pede que você digite o nome do projeto para confirmar. **Todas as alterações feitas no projeto desde a mudança para o Lakehouse v2 são perdidas.** O progresso é exibido enquanto o desfazer é executado. Se o desfazer for recusado, o motivo é informado, por exemplo, que a janela de desfazer foi encerrada.
+
+Use-o se os resultados parecerem errados depois da migração — exceto os valores semanais, que devem mudar.
+
+Depois da janela de desfazer, os dados originais são excluídos e a migração se torna definitiva.
+
+## Depois da migração
+
+As sessões que já estavam abertas continuam lendo a cópia com a qual começaram até serem encerradas. Uma sessão de aplicativo Panel de longa duração, em particular, continua servindo os dados antigos até ser reiniciada. Reinicie as sessões de longa duração depois de uma migração para que elas passem a usar o Lakehouse v2.
+
+## Relacionados
+
+- [Gerenciamento do Lakehouse](/pt-br/reference/expressions/lakehouse-v2/lakehouse-management/)
+- [Vincular um projeto a um Lakehouse externo](/pt-br/guides/connections/external-lakehouse/)
+- [Tipo de dados Vector](/pt-br/guides/data/vector-data-type/)

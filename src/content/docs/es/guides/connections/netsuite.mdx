@@ -1,0 +1,155 @@
+---
+title: Conectar a NetSuite
+description: "Conecte PlaidCloud a NetSuite y extraiga datos financieros y operativos con SuiteQL: requisitos previos, credenciales, conexión, prueba rápida y una extracción programada."
+sidebar:
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Extraiga datos financieros y operativos de NetSuite a tablas de PlaidCloud con SuiteQL. Esta guía le lleva desde una integración de NetSuite vacía hasta una extracción programada y con tipos definidos. Para la referencia campo por campo, consulte el [conector REST de NetSuite](/es/reference/connectors/rest/netsuite/).
+
+## Requisitos previos
+
+Necesita, en NetSuite:
+
+- **OAuth 2.0** y **REST Web Services** habilitados (**Setup > Company > Enable Features > SuiteCloud**).
+- Un **par de claves RSA**: el certificado público se carga en NetSuite y la clave privada se conserva para PlaidCloud.
+- Un **ID de certificado** (el `kid` del JWT, obtenido al cargar el certificado público), un **ID de cliente** (del registro de integración) y su **ID de cuenta** (producción `1234567` o sandbox `1234567_SB1`).
+- Un **rol** con REST Web Services, **Log in using OAuth 2.0 Access Tokens**, SuiteAnalytics Workbook (si sus consultas acceden a análisis) y acceso de visualización a los registros que va a leer.
+
+Los pasos completos del lado de NetSuite (generar el par de claves, cargar el certificado y crear la integración) están en la sección [Configuración del lado de NetSuite](/es/reference/connectors/rest/netsuite/#configuración-del-lado-de-netsuite) de la referencia. Complételos primero; esta guía supone que ya tiene a mano los cuatro valores.
+
+<Aside type="caution">
+Escriba el ID de cuenta exactamente como lo muestra NetSuite, **incluido** el sufijo `_SB1` en un sandbox. PlaidCloud deduce de él el host de la API: la forma incorrecta apunta la extracción a la cuenta equivocada.
+</Aside>
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **NetSuite** en el menú.
+
+   <Aside type="caution">Elija **NetSuite**, no el tipo **REST** genérico. Solo el tipo NetSuite deduce el host de la API a partir del ID de cuenta e inserta automáticamente los encabezados y la paginación de SuiteQL. Una conexión REST genérica se ejecutaría sin autenticar y fallaría.</Aside>
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, por ejemplo `NetSuite Prod`. |
+   | ID de cliente | El ID de cliente del registro de integración. |
+   | ID de certificado | El ID de certificado (`kid`) de la carga del certificado público. |
+   | ID de cuenta de NetSuite | Su ID de cuenta, por ejemplo `1234567` o `1234567_SB1`. |
+   | Certificado privado de NetSuite | El bloque PEM completo de la clave privada, pegado en varias líneas. |
+
+4. Haga clic en `Create`.
+
+</Steps>
+
+<Aside type="note">
+El campo **Certificado privado de NetSuite** enmascara la clave mientras la pega, y la clave guardada se cifra y no se vuelve a mostrar. Cuando edita la conexión, el campo aparece en blanco: déjelo en blanco para conservar la clave guardada, o pegue una nueva para reemplazarla.
+</Aside>
+
+<Aside type="tip">
+El ID de cuenta decide a qué instancia de NetSuite accede la conexión, así que conserve el sufijo `_SB1` en el ID de cuenta de un sandbox, por ejemplo `1234567_SB1`. Dé a la conexión un nombre que indique a qué instancia apunta, o mantenga los hosts de producción y sandbox como dos entornos bajo una misma conexión.
+</Aside>
+
+## Probar rápidamente la conexión
+
+Confirme que las credenciales funcionan antes de construir nada sobre ellas.
+
+<Steps>
+
+1. Agregue un [paso Solicitud REST](/es/guides/workflows/rest-request-step/) a un flujo de trabajo.
+
+2. En la pestaña **Solicitud**, establezca **Conexión** con su conexión de NetSuite, **Método** con `POST` y **Punto de conexión** con `/services/rest/query/v1/suiteql`.
+
+3. En el **Cuerpo**, escriba una consulta pequeña y acotada:
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 1"}
+   ```
+
+4. Haga clic en **Enviar solicitud de prueba**.
+
+</Steps>
+
+<Aside type="caution">
+Use **Enviar solicitud de prueba**, no la pestaña Vista previa: la pestaña Vista previa no aplica la configuración de servicio de la conexión y mostrará información errónea. Una Enviar solicitud de prueba en verde significa que el JWT se firmó, el token se intercambió y NetSuite respondió. Si da error, el mensaje incluye el detalle propio de NetSuite (normalmente un problema de ámbito, de rol o de consulta), así que corrija ese único punto y vuelva a probar.
+</Aside>
+
+## Crear el paso de extracción
+
+Con la prueba rápida en verde, convierta el paso en una extracción real.
+
+<Steps>
+
+1. En el **Cuerpo**, escriba su consulta SuiteQL con un `ORDER BY` determinista. Para puntos de partida que puede copiar y pegar (asientos de diario, balance de comprobación, pérdidas y ganancias, balance general, cuentas por cobrar abiertas, pedidos de venta, órdenes de compra, inventario), consulte [Ejemplos de consultas SuiteQL de NetSuite](/es/guides/connections/netsuite-financial-queries/).
+
+   Financiero: líneas de transacciones del libro mayor de un período:
+
+   ```json
+   {"q": "SELECT tl.transaction AS transaction_id, TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   ```
+
+   Operativo: pedidos de venta abiertos por cliente:
+
+   ```json
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, TO_CHAR(so.trandate, 'YYYY-MM-DD') AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   ```
+
+2. **No modifique** los controles de **Paginación y análisis** ni los encabezados `Prefer`/`Content-Type`: la conexión de NetSuite los inserta.
+
+3. En la pestaña **Respuesta**, mantenga el destino como **Tabla** y **defina las columnas con tipos reales**: `Currency`/`Decimal` para importes, `Date`/`Datetime` para fechas, `Boolean` para indicadores `T`/`F`. SuiteQL devuelve todo como cadenas; las columnas con tipo indican a PlaidCloud cómo convertirlas.
+
+   <Aside type="caution">
+   SuiteQL devuelve las fechas como texto en el **formato de visualización de la cuenta** (a menudo `M/D/YYYY`), que es ambiguo, por lo que PlaidCloud no lo adivina. Para una columna a la que asigne el tipo `Date`/`Datetime`, dé formato a la fecha en la consulta (`TO_CHAR(trandate, 'YYYY-MM-DD') AS trandate`, o `'YYYY-MM-DD HH24:MI:SS'` para una fecha y hora) o deje la columna como `Text`. Los números y los indicadores `T`/`F` no requieren este tratamiento. Si un valor no se puede convertir, la ejecución falla con un mensaje que indica la columna y el valor.
+   </Aside>
+
+</Steps>
+
+<Aside type="caution">
+Sin un `ORDER BY`, la paginación por desplazamiento duplica y omite filas en silencio entre páginas: un descuadre financiero que no verá hasta que concilie. Toda consulta SuiteQL paginada necesita un orden estable, como `ORDER BY internalid`.
+</Aside>
+
+<Aside type="caution">
+**Límite de filas:** sin SuiteAnalytics Connect, NetSuite limita una sola consulta SuiteQL a aproximadamente 100 000 filas. Una consulta escrita a mano que superaría ese límite ahora falla con un mensaje que le indica que acote el intervalo de fechas u otros filtros, en lugar de devolver en silencio un resultado truncado. Divida una extracción amplia en solicitudes acotadas por fechas para mantenerse por debajo del límite, o use los pasos predefinidos [NetSuite: importar saldos / detalle del libro mayor](/es/guides/connections/import-netsuite-financials/), que dividen un intervalo de fechas en ventanas automáticamente.
+</Aside>
+
+<Aside type="caution">
+**Varias monedas:** en `transaction`/`transactionline`, `amount` está en la moneda propia de cada transacción. Un `SUM(amount)` entre subsidiarias es **incorrecto desde el punto de vista de la consolidación**: seleccione campos consolidados o convertidos con el tipo de cambio cuando totalice entre subsidiarias.
+</Aside>
+
+## Verificar y programar
+
+<Steps>
+
+1. Ejecute el paso (consulte [Ejecutar un solo paso en un flujo de trabajo](/es/guides/workflows/running-one-step-in-a-workflow/)) y revise la tabla de destino: los recuentos de filas y que las columnas de importes y fechas hayan llegado con tipo, no como texto.
+
+2. Para un flujo continuo, [programe el flujo de trabajo](/es/get-started/tutorials/schedule-a-workflow/).
+
+</Steps>
+
+<Aside type="note">
+Toda extracción de NetSuite es un **reemplazo completo de la tabla**: no existe una vía incremental, por lo que una extracción programada vuelve a extraer el resultado completo en cada ejecución. Limite la cláusula `WHERE` al segmento que realmente necesita (por ejemplo, una ventana de fechas móvil) en lugar de extraer todo el historial en cada ejecución.
+</Aside>
+
+## Solución de problemas
+
+| Síntoma | Causa probable |
+|---|---|
+| La solicitud de prueba devuelve 400 con un mensaje de ámbito o de rol | Al rol le falta REST Web Services / inicio de sesión con OAuth 2.0 / SuiteAnalytics, o se rechazó la matriz de ámbitos; el detalle que se muestra lo indica. |
+| Falla el intercambio de tokens | Forma incorrecta del ID de cuenta (falta `_SB1`), ID de certificado (`kid`) incorrecto o una clave privada que no coincide con el certificado público cargado. |
+| Error de tipo/conversión al importar (indica la columna y el valor) | Una columna con tipo recibió un valor que no puede analizar, casi siempre una columna `Date`/`Datetime` en la que SuiteQL devolvió el formato de visualización de la cuenta. Envuelva el campo en `TO_CHAR(col, 'YYYY-MM-DD')` en la consulta o cambie el tipo de la columna a `Text`. |
+| Los totales no cuadran entre subsidiarias | `amount` está en la moneda propia de cada transacción: use campos consolidados o convertidos. |
+| Filas duplicadas o faltantes en una extracción grande | No hay un `ORDER BY` determinista en una consulta paginada por desplazamiento. |
+
+## Relacionado
+
+- [Ejemplos de consultas SuiteQL de NetSuite](/es/guides/connections/netsuite-financial-queries/): consultas listas para ejecutar de asientos de diario, balance de comprobación, pérdidas y ganancias, cuentas por cobrar abiertas y más.
+- [Conector REST de NetSuite](/es/reference/connectors/rest/netsuite/): referencia de campos y de SuiteQL.
+- [Paso Solicitud REST](/es/guides/workflows/rest-request-step/): el paso sobre el que se construye esta extracción.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

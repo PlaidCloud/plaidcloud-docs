@@ -1,0 +1,150 @@
+---
+title: 地理空间分析
+description: 加载空间文件，构建并重塑几何图形，将位置与区域匹配，然后发布结果，这就是 PlaidCloud 工作流中的地理空间处理路径。
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 将几何图形作为工作流的一等公民来处理：导入空间文件，根据坐标构建几何图形，
+对其进行重塑和匹配，然后发布结果，既无需离开平台，也无需单独的 GIS 工具。
+
+本指南介绍使用这些功能的完整路径。有关任一步骤的详细参考，
+请参阅[地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)。
+
+## 几何图形只是一列
+
+所有空间步骤都以 **WKT**（已知文本）格式，在普通文本列中读取和写入几何图形。
+这带来三个值得事先了解的结果：
+
+- **无需声明类型。** 几何列就是文本列，无需配置，也无需迁移。
+- **步骤可自由组合。** 任一空间步骤的输出都可以按任意顺序作为其他步骤的输入。
+- **SQL 与几何图形可混合使用。** 几何列与度量值并列，因此可以在同一步骤中对二者同时进行筛选、
+  分组和联接。
+
+## 1. 将几何图形导入表
+
+根据几何图形的来源，有两条途径。
+
+**来自空间文件。** 对于 MapInfo `.TAB`、ESRI `.shp`、`.kml` 或 `.geojson`，
+请使用 [Spatial File Import](/zh-cn/reference/workflow-steps/spatial/spatial-file-import/) 步骤。
+将文件及其附属文件上传到同一个文档文件夹，该步骤会自动读取配套文件
+（shapefile 为 `.shx`/`.dbf`/`.prj`，`.TAB` 为 `.dat`/`.map`/`.id`）。
+每个要素输出一行，包含 WKT 几何列和文件的属性。
+
+**来自已有的坐标。** 如果数据包含经度和纬度列，可以使用
+[Table Extract 表达式](/zh-cn/reference/workflow-steps/spatial/spatial-sql-recipes/)构建点，
+这在数据库中运行，因此没有任何行会离开数据仓库：
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="将附属文件放在一起">
+  没有 `.prj` 的 shapefile 导入后没有坐标参考系，没有 `.dat` 的 `.TAB`
+  则没有属性。请在运行导入之前上传整组文件。
+</Aside>
+
+**来自地址：地理编码。** **geocode** 步骤将地址列转换为坐标（正向），
+**geocode reverse** 步骤则将经纬度对转换回地址（反向），均使用 PlaidCloud 的地理编码服务。
+正向地理编码会追加 `GeocodeLat` /
+`GeocodeLon`（以及 `GeocodeStatus`、`GeocodeConfidence` 和匹配到的标签）；
+反向地理编码会追加解析出的地址组成部分。
+
+### 位置编码扩充
+
+两个地理编码步骤还可以为每一行追加一个紧凑的 **位置编码**，
+根据返回的坐标在本地计算，无需额外的服务调用，也没有外部依赖：
+
+- **Geohash**（`GeocodeGeohash`）：**默认** 输出。Geohash 是数据分析领域的通行约定（Elasticsearch、Redis、Lucene），
+  其 **前缀特性** 意味着同一个点较短的编码是较长编码的前缀，
+  因此 `GROUP BY LEFT(GeocodeGeohash, n)` 可以即时完成空间分桶，前缀联接则能以很低的成本实现邻近查询。
+- **Plus Code**（`GeocodePlusCode`）：可选，**默认关闭**。
+  [Open Location Code](https://maps.google.com/pluscodes/) 是 Google 地图和一些政府地址系统使用的、便于人工分享的地址形式。
+
+通过步骤的 **`location_codes`** 设置控制输出哪些列：
+
+| `location_codes` | 追加的列 |
+|---|---|
+| `none` | 无位置编码 |
+| `geohash` *（默认）* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` 和 `GeocodePlusCode` |
+
+另有两个可选设置用于调整编码：**`geohash_precision`**（默认 `9`，约相当于 4.8 米的单元格，上限为 `12`）和
+**`pluscode_length`**（默认 `10`，约相当于 14 米的单元格）。
+未能解析出坐标的正向行，其编码列留空；反向行即使未找到地址，也会对其 **查询的** 坐标进行编码。
+
+## 2. 重塑几何图形
+
+几何图形进入列之后，可以对其重塑，以回答您真正关心的问题。
+
+| 问题 | 步骤 |
+|---|---|
+| 每家门店周围 *n* 英里内有什么？ | [Spatial Trade Area 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-trade-area/) |
+| 距离此形状固定距离内有什么？ | [Spatial Buffer 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-buffer/) |
+| 每个区域的合并覆盖范围是什么？ | [空间合并步骤](/zh-cn/reference/workflow-steps/spatial/spatial-combine/) |
+| 这些点围合出多大面积？ | [Spatial Poly-Build 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-poly-build/) |
+| 这两个覆盖范围在哪里重叠或不同？ | [空间处理步骤](/zh-cn/reference/workflow-steps/spatial/spatial-process/) |
+| 如何降低这些边界的绘制开销？ | [Spatial Generalize 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-generalize/) |
+| 如何将此区域划分为大小相等的单元格？ | [Spatial Make Grid 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-make-grid/) |
+| 如何将多边形拆分为各个部分？ | [Spatial Poly-Split 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-poly-split/) |
+
+商圈分析通常是零售或服务区域分析的起点：为它提供一个位置表和一组半径，
+它会返回一组同心环，可用于匹配客户。
+
+## 3. 将位置与区域匹配
+
+两个匹配步骤回答不同的问题，且运行路径不同。
+
+**每个客户位于哪个区域？** 请使用
+[空间匹配步骤](/zh-cn/reference/workflow-steps/spatial/spatial-match/)。
+它在数据库中作为空间谓词联接运行，因此可随表规模扩展。选择关系：*相交*、*位于其内* 或 *包含*，
+它会为每个匹配对输出一行。
+
+**每个客户最近的门店有哪些？** 请使用
+[Spatial Find Nearest 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/)。
+它为每个目标保留最近的 N 行，并以您选择的单位添加计算出的距离列。它同样走 SQL 路径，因此扩展方式相同。
+
+**哪些客户落在所有区域之外？** 请使用
+[Spatial Match (Intersect / Unmatched) 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-match-executor/)
+的 *Unmatched* 模式。需要交集而不是配对结果时，同一步骤也可以输出重叠部分的几何图形本身。
+
+## 4. 度量
+
+[Spatial Info 步骤](/zh-cn/reference/workflow-steps/spatial/spatial-info/)会追加面积、
+长度、质心和边界矩形列。这些是 **WGS84 大地测量** 值，
+因此平方英里就是真实的平方英里，而不是平面近似值，一旦要比较不同纬度的区域，这一点就很重要。
+
+对于同一行中两列之间的直线点对点距离，
+[SQL 表达式](/zh-cn/reference/workflow-steps/spatial/spatial-sql-recipes/)比使用步骤更经济。
+
+## 5. 发布
+
+停留在表中的几何图形无法作为可供行动的结论。
+
+- [Report Map 步骤](/zh-cn/reference/workflow-steps/reports/report-map/)将几何图形渲染到
+  PDF 报表中，与同一工作流中的图表和表一起呈现。
+- 结果表与其他任何表一样可用于[仪表板](/zh-cn/guides/dashboards/)：几何列会一并带入，
+  而它旁边的度量值才是大多数仪表板实际绘制的内容。
+- 当下游 GIS 工具需要时，[导出步骤](/zh-cn/reference/workflow-steps/export/)可将表写出为 CSV、
+  Excel 或外部数据库。
+
+## 从 Alteryx 迁移
+
+Alteryx 的每个空间工具在 PlaidCloud 中都有对应路径。转换后的工作流会自动选用；
+[Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/)逐个工具列出了映射关系，
+[迁移空间类 Alteryx 工作流](/zh-cn/guides/workflows/migrate-spatial-alteryx-workflows/)
+介绍了如何打包文件并验证结果。
+
+## 相关指南
+
+- [地理空间步骤](/zh-cn/reference/workflow-steps/spatial/)
+- [迁移空间类 Alteryx 工作流](/zh-cn/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [高级工作流](/zh-cn/guides/workflows/advanced-workflows/)

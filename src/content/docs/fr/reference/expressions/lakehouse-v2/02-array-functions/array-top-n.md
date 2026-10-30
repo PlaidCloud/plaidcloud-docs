@@ -1,0 +1,39 @@
+---
+title: ARRAY_TOP_N (Lakehouse v2)
+description: ARRAY_TOP_N — renvoie les N premiers éléments d'un tableau.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v2/02-array-functions/array-top-n.md
+---
+
+Renvoie les N premiers éléments d'un tableau.
+
+## Syntaxe Analyze
+
+```python
+func.array_top_n([3,1,4,1,5], 3)
+```
+
+## Exemples Analyze
+
+```python
+func.array_top_n([3, 1, 4, 1, 5], 3)
+
+┌─────────┐
+│ [5,4,3] │
+└─────────┘
+```
+
+## Syntaxe SQL
+
+```sql
+ARRAY_TOP_N([3,1,4,1,5], 3)
+```
+
+## Exemples SQL
+
+```sql
+SELECT ARRAY_TOP_N([3, 1, 4, 1, 5], 3);
+
+┌─────────┐
+│ [5,4,3] │
+└─────────┘
+```
