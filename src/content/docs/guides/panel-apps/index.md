@@ -7,7 +7,7 @@ sidebar:
 
 Panel Apps let you publish interactive [HoloViz Panel](https://panel.holoviz.org/) applications — parameterized inputs, live charts, and embedded data tables — directly from PlaidCloud. You manage them from the **My Panel Apps** screen, which lists every app alongside its runtime, build status, and URL.
 
-There are two runtimes, shown in the **Runtime** column:
+Start in [Panel Studio](/guides/panel-apps/studio/): choose **New Studio App** to build an app in PlaidCloud from a blank app, a table, a view or the gallery, with no repository to set up. For bespoke needs, publish with one of the runtimes below, shown in the **Runtime** column:
 
 - **WASM** — a static app that runs entirely in the browser (Pyodide). You publish a pre-built HTML file from a document account. There is no server process and nothing to scale; it is served immediately.
 - **Server** — an app built from a git repository and run server-side. On publish, PlaidCloud builds your repository into a container that idles at zero replicas, wakes on the first request to its URL, serves (including live updates), and scales back to zero when idle. This is the right choice for apps that need a Python runtime, server-side compute, or libraries that can't run in the browser.
@@ -55,10 +55,10 @@ There are two runtimes, shown in the **Runtime** column:
 
 ## Next Steps
 
-- [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) — the complete path from repository to a served app, using a managed no-credentials connection.
 - [Panel Studio](/guides/panel-apps/studio/) — create, edit, preview and publish an app in PlaidCloud, with no repository to set up.
+- [Deploy a Panel App From PlaidCloud Git](/guides/panel-apps/deploy-from-git/) — the complete path from repository to a served app, using a managed no-credentials connection.
 - [Build Panel Apps With Weave](/guides/panel-apps/build-with-weave/) — describe the app and approve the exact change Weave proposes.
-- [Creating a Panel App](/guides/panel-apps/creating/) — publish a server app from git, or a WASM app from a file.
+- [Creating a Panel App](/guides/panel-apps/creating/) — start a Studio app from a blank app, a table or the gallery, or publish a server app from git or a WASM app from a file.
 - [The Panel App Kit](/guides/panel-apps/app-kit/) — build apps that look like PlaidCloud, in light and dark, with filters, headline numbers, a server-paged data grid, charts, forms, run buttons, saved settings and printing.
 - [The Data API for Panel Apps](/guides/panel-apps/data-api/) — filter, page, count and aggregate tables on the server.
 - [Alerts and Digests](/guides/panel-apps/alerts-and-digests/) — get a push notification, email, Slack or Teams message when a number crosses a limit, or a scheduled summary.

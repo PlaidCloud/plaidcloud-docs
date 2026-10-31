@@ -90,7 +90,7 @@ Agora aponte uma implantação de servidor para essa conexão.
 4. Em **Tempo de execução**, escolha **CPU**, **Memória**, **Design** (**FAST** para o visual moderno do PlaidCloud) e a janela de **Idle**. Marque **Permitir acesso público** somente se o aplicativo deve ser acessível sem logon.
 5. Clique em **Publicar**.
 
-Cada campo desta caixa de diálogo é descrito em [Criando um aplicativo Panel](/pt-br/guides/panel-apps/creating/#publique-o-aplicativo).
+Cada campo desta caixa de diálogo é descrito em [Criando um aplicativo Panel](/pt-br/guides/panel-apps/creating/#publicar-o-aplicativo).
 
 ## 5. Abra o aplicativo — e leia os logs se ele não iniciar
 

@@ -153,6 +153,18 @@ pg = (docs / "de/ref/p.mdx").read_text()
 results.append(ok("page imports rewritten to translated snippets", "'@snippets/de/a.mdx'" in pg and "'@snippets/de/sub/b.mdx'" in pg))
 results.append(ok("nested snippet import rewritten", "'@snippets/de/sub/b.mdx'" in (snips / "de/a.mdx").read_text()))
 results.append(ok("validator accepts localized snippet import", t.validate("ref/p.mdx", page, pg) == []))
+import io, contextlib
+def run_check(fn, *a):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        try: fn(*a)
+        except SystemExit: pass
+    return buf.getvalue()
+(docs / "de/ref/p.mdx").write_text(pg.replace("'@snippets/de/a.mdx'", "'@snippets/a.mdx'"))
+out = run_check(t.cmd_check, None)
+results.append(ok("check flags a translated page importing the English snippet", "invalid  de/ref/p.mdx: imports English snippet a.mdx" in out
+                  and "invalid  snippets/de/a.mdx" not in out))
+(docs / "de/ref/p.mdx").write_text(pg)
 t.link_snippets("de")
 results.append(ok("link_snippets idempotent", (docs / "de/ref/p.mdx").read_text() == pg))
 results.append(ok("stale pairs include snippets", {k for _, k, _ in t.stale_pairs(["de"], t.english_units())} == {"ref/p.mdx", "@snippets/a.mdx", "@snippets/sub/b.mdx"}))
@@ -199,19 +211,20 @@ for f in re.findall(r"@snippets/([^']+)'", (docs / "reference/workflow-steps/imp
     shutil.copy(REAL / "src/snippets" / f, snips / f)
 (docs / "guides/small.md").write_text("---\ntitle: Small\ndescription: d\n---\n\nSee [macro](/guides/workflows/create-a-macro/#steps).\n\n## Steps\n\nClick **Save**.\n")
 t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS = tmp, docs, snips, None
-t.I18N = tmp / "i18n"; t.MANIFEST, t.JOBS, t.STAGING = t.I18N / "manifest.json", t.I18N / "jobs", t.I18N / "staging"
+t.I18N = tmp / "i18n"; t.MANIFEST, t.STAGING = t.I18N / "manifest.json", t.I18N / "staging"
+jobs = t.I18N / "jobs"
 t.GLOSSARY_DIR = REAL / "i18n/glossary"
 t.cmd_prepare(argparse.Namespace(locales=["de", "ja"], paths=None, chunk_words=2500, out="i18n/jobs", force_paths=None))
-chunks = sorted((t.JOBS / "de").glob("*.json"))
+chunks = sorted((jobs / "de").glob("*.json"))
 c1 = _json.loads(chunks[0].read_text())
 items = [i for c in chunks for i in _json.loads(c.read_text())["items"]]
 results.append(ok(f"prepare: {len(chunks)} de chunks, every unit once", sorted(i["path"] for i in items) == sorted(t.english_units())))
 results.append(ok("prepare: item shape", set(c1["items"][0]) >= {"path", "kind", "source_file", "glossary", "output_file"} and c1["prompt_file"] == "i18n/jobs/prompts/de.md"))
 results.append(ok("prepare: snippet kind + staging path", any(i["kind"] == "snippet" and i["output_file"].startswith("i18n/staging/de/@snippets/") for i in items)))
 results.append(ok("prepare: chunks respect word budget (big page alone)", all(sum(i["words"] for i in _json.loads(c.read_text())["items"]) <= 2500 or len(_json.loads(c.read_text())["items"]) == 1 for c in chunks)))
-pr = (t.JOBS / "prompts/de.md").read_text()
+pr = (jobs / "prompts/de.md").read_text()
 results.append(ok("prepare: prompt has system prompt + per-file rules", pr.startswith(t.system_prompt("de")) and t.MDX_RULE in pr and t.SNIPPET_NOTE.strip() in pr))
-results.append(ok("prepare: WORKER.md written", (t.JOBS / "WORKER.md").read_text() == t.WORKER_MD))
+results.append(ok("prepare: WORKER.md written", (jobs / "WORKER.md").read_text() == t.WORKER_MD))
 # worker output: one good page (with preamble + fence), one good snippet, one broken page, one good ja page
 st = t.STAGING
 (st / "de/guides").mkdir(parents=True); (st / "de/@snippets").mkdir(parents=True); (st / "ja/guides").mkdir(parents=True)
@@ -221,6 +234,7 @@ small = (docs / "guides/small.md").read_text()
 macro = (docs / "guides/workflows/create-a-macro.mdx").read_text()
 (st / "de/guides/workflows").mkdir(parents=True)
 (st / "de/guides/workflows/create-a-macro.mdx").write_text(macro.replace("## Steps", "## Schritte").replace("`month`", "`Monat`"))
+real_lang, t.wrong_language = t.wrong_language, lambda lc, text: []  # these fixtures are English with translated headings
 sn = (snips / "no-examples.mdx").read_text()
 (st / "de/@snippets/no-examples.mdx").write_text(sn)
 t.cmd_ingest(argparse.Namespace(locales=["de", "ja"]))
@@ -240,13 +254,15 @@ results.append(ok(f"ingest: manifest {sorted(man)}", sorted(man) == ["de/guides/
 t.cmd_ingest(argparse.Namespace(locales=["de"]))
 results.append(ok("re-ingest: anchor rewritten to translated slug", "(/de/guides/workflows/create-a-macro/#schritte)" in (docs / "de/guides/small.md").read_text()))
 results.append(ok("check passes on ingested output", not any(t.validate(k, t.src_path(k).read_text(), p.read_text()) for lc in ("de", "ja") for k, p in t.translated_units(lc))))
+t.wrong_language = real_lang
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (with prepare/ingest)")
 
 # ---- a staged file made from older English never installs as current
 tmp = Path(tempfile.mkdtemp())
 t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS = tmp, tmp / "src/content/docs", tmp / "src/snippets", None
-t.I18N = tmp / "i18n"; t.MANIFEST, t.JOBS, t.STAGING = t.I18N / "manifest.json", t.I18N / "jobs", t.I18N / "staging"
+t.I18N = tmp / "i18n"; t.MANIFEST, t.STAGING = t.I18N / "manifest.json", t.I18N / "staging"
+jobs = t.I18N / "jobs"
 (t.DOCS / "guides").mkdir(parents=True); t.SNIPPETS.mkdir(parents=True)
 eng = t.DOCS / "guides/s.md"
 eng.write_text("---\ntitle: S\ndescription: d\n---\n\nClick **Save** once.\n")
@@ -259,15 +275,30 @@ t.cmd_ingest(argparse.Namespace(locales=["de"]))
 results.append(ok("stale staged file rejected after English edit", staged.exists() and not (t.DOCS / "de/guides/s.md").exists()))
 prep()
 results.append(ok("re-prepare deletes the stale staged file", not staged.exists()))
+staged.parent.mkdir(parents=True, exist_ok=True); staged.write_text("---\ntitle: S\ndescription: d\n---\n\nKlicken Sie nie auf **Speichern**.\n")
+prep()
+results.append(ok("a fresh translation of a once-rejected unit survives the next prepare", staged.exists()))
 staged.parent.mkdir(parents=True, exist_ok=True); staged.write_text("---\ntitle: S\ndescription: d\n---\n\nKlicken Sie einmal auf **Speichern**.\n")
-shutil.rmtree(t.JOBS)
+(t.STAGING / "_prepared.json").unlink()
 t.cmd_ingest(argparse.Namespace(locales=["de"]))
-results.append(ok("staged file with no prepare chunk rejected", not (t.DOCS / "de/guides/s.md").exists() and "de/guides/s.md" not in t.load_json(t.MANIFEST, {})))
+results.append(ok("staged file with no prepare record rejected", not (t.DOCS / "de/guides/s.md").exists() and "de/guides/s.md" not in t.load_json(t.MANIFEST, {})))
+staged.unlink(); t.cmd_ingest(argparse.Namespace(locales=["de"]))
+results.append(ok("rejection dropped once its staged file is gone", t.load_json(t.STAGING / "_rejects.json", None) == []))
+# finished work survives a re-prepare, and ingest trusts a prepare whatever its --out was
+other = lambda: t.cmd_prepare(argparse.Namespace(locales=["de"], paths=None, chunk_words=2500, out=str(tmp / "elsewhere"), force_paths=None))
+shutil.rmtree(jobs)  # only the out-of-tree prepare may vouch for what follows
+other()
+staged.parent.mkdir(parents=True, exist_ok=True); staged.write_text("---\ntitle: S\ndescription: d\n---\n\nKlicken Sie nie auf **Speichern**.\n")
+other()
+results.append(ok("re-prepare keeps a finished staged file and does not re-queue it", staged.exists() and not list((tmp / "elsewhere/de").glob("*.json"))))
+t.cmd_ingest(argparse.Namespace(locales=["de"]))
+results.append(ok("ingest installs work prepared outside i18n/jobs*", (t.DOCS / "de/guides/s.md").is_file() and not staged.exists()
+                  and t.load_json(t.MANIFEST, {}).get("de/guides/s.md") == t.sha(eng.read_text())))
 shutil.rmtree(tmp)
 
 # ---- review round: termbase, overrides, recall, typography, emphasis rendering, schema limits, force-paths
 t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS, t.STEP_NAMES = REAL, REAL / "src/content/docs", REAL / "src/snippets", None, None
-t.I18N = REAL / "i18n"; t.MANIFEST, t.JOBS, t.STAGING = t.I18N / "manifest.json", t.I18N / "jobs", t.I18N / "staging"
+t.I18N = REAL / "i18n"; t.MANIFEST, t.STAGING = t.I18N / "manifest.json", t.I18N / "staging"
 t.GLOSSARY_DIR, t.OVERRIDES_DIR, t.TERMBASE_DIR = t.I18N / "glossary", t.I18N / "glossary_overrides", t.I18N / "termbase"
 rel = "guides/workflows/create-a-macro.mdx"; src = (t.DOCS / rel).read_text()
 good = t.set_edit_url(t.localize_links(fake_translate(src), "fr"), rel)
@@ -309,14 +340,14 @@ results.append(ok("CJK bold rule + ja noun rule", "never a bare particle" in t.s
 # force-paths
 tmp = Path(tempfile.mkdtemp())
 t.save_json(tmp / "m.json", {f"{lc}/{rel}": t.sha(src) for lc in t.LOCALES})
-t.MANIFEST, real_staging, t.STAGING = tmp / "m.json", t.STAGING, REAL / "i18n/_no_staging"  # never created: prepare only unlinks there
+t.MANIFEST, real_staging, t.STAGING = tmp / "m.json", t.STAGING, Path(tempfile.mkdtemp(dir=REAL / "i18n"))  # under ROOT, as output_file needs
 real_prune, t.prune_deleted = t.prune_deleted, lambda: None  # prepare would prune the real repo's translations and staging
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=None))
 results.append(ok("current unit not prepared without force", not list((tmp / "jobs/de").glob("*.json"))))
 t.cmd_prepare(argparse.Namespace(locales=["de"], paths=[rel], chunk_words=12000, out=str(tmp / "jobs"), force_paths=[rel]))
 results.append(ok("--force-paths re-queues a current unit", [i["path"] for i in _json.loads((tmp / "jobs/de/001.json").read_text())["items"]] == [rel]))
-t.prune_deleted, t.STAGING = real_prune, real_staging
-shutil.rmtree(tmp)
+t.prune_deleted = real_prune
+shutil.rmtree(t.STAGING); t.STAGING = real_staging; shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (review round)")
 
 # ---- anchors into translated snippet headings (snippets slugged separately)
@@ -352,5 +383,25 @@ shutil.rmtree(tmp)
 # ---- ESM detection: wrapped prose starting with "export" is not an export statement
 results.append(ok("ESM_RE ignores prose 'export it as CSV'", not t.ESM_RE.match("export it as CSV or PDF.") and bool(t.ESM_RE.match("export const x = 1;")) and bool(t.ESM_RE.match("import { Aside } from '@astrojs/starlight/components';"))))
 
+
+# ---- prose left in English is rejected; shipped translations are not
+t.DOCS, t.SNIPPETS = REPO / 'src/content/docs', REPO / 'src/snippets'
+rel = "guides/workflows/create-a-macro.mdx"; src = (t.DOCS / rel).read_text()
+for lc in ("de", "pl", "ja", "zh-cn"):
+    results.append(ok(f"{lc}: English left untranslated rejected at ingest", any("prose is not" in r for r in t.finalize(lc, rel, src, src)[1])))
+    results.append(ok(f"{lc}: shipped translation accepted", t.wrong_language(lc, (t.DOCS / lc / rel).read_text()) == []))
+results.append(ok("FOO_OF_BAR names and SQL keywords are not English prose",
+                  t.wrong_language("de", "---\ntitle: T\ndescription: d\n---\n\n- [TO_START_OF_HOUR](x)\n- [TO_START_OF_THE_DAY](y)\n\nIS NOT NULL AND THE OF\n") == []))
+
+# ---- check-anchors resolves same-page and relative links on locale pages
+tmp = Path(tempfile.mkdtemp())
+page_html = lambda ids, hrefs: "".join(f'<h2 id="{i}"></h2>' for i in ids) + "".join(f'<a href="{h}">x</a>' for h in hrefs)
+for path, ids, hrefs in (("de/guides/a", ["ok"], ["#ok", "#bad", "../b/#here", "../b/#gone", "/de/guides/b/#here", "https://x.com/de/y/#z"]),
+                         ("de/guides/b", ["here"], []), ("guides/a", [], ["#english-not-checked"])):
+    (tmp / path).mkdir(parents=True); (tmp / path / "index.html").write_text(page_html(ids, hrefs))
+out = run_check(t.cmd_check_anchors, argparse.Namespace(dist=str(tmp)))
+results.append(ok(f"check-anchors: same-page + relative broken anchors caught {out.splitlines()}",
+                  "missing  /de/guides/a/#bad" in out and "missing  /de/guides/b/#gone" in out and "5 locale anchor links checked: 2 broken" in out))
+shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (all)")
 sys.exit(0 if all(results) else 1)

@@ -53,7 +53,7 @@ Eine Server-App wird bei Inaktivität auf null skaliert, um Ressourcen zu sparen
 
 ### Darstellung
 
-Server-Panel-Apps verwenden standardmäßig das moderne **FAST**-Design von PlaidCloud, doch über die Einstellung **Design** der App können Sie wieder zum **Standard**-Styling von Panel wechseln, wenn vorhandenes CSS darauf angewiesen ist. Das Theme – hell, dunkel oder ein Hell/Dunkel-Umschalter, den Betrachter selbst betätigen können – legen Sie in der Vorlage Ihrer App fest. Die Muster dafür finden Sie unter [Theme festlegen](/de/guides/panel-apps/creating/#das-design-festlegen-hell-dunkel-oder-umschaltbar) im Leitfaden zum Erstellen. Wenn die Tabellen oder das benutzerdefinierte Styling Ihrer App für einen hellen Hintergrund ausgelegt sind, lassen Sie sie auf „hell“ festgelegt.
+Server-Panel-Apps verwenden standardmäßig das moderne **FAST**-Design von PlaidCloud, doch über die Einstellung **Design** der App können Sie wieder zum **Standard**-Styling von Panel wechseln, wenn vorhandenes CSS darauf angewiesen ist. Das Theme – hell, dunkel oder ein Hell/Dunkel-Umschalter, den Betrachter selbst betätigen können – legen Sie in der Vorlage Ihrer App fest. Die Muster dafür finden Sie unter [Theme festlegen](/de/guides/panel-apps/creating/#das-design-festlegen-hell-dunkel-oder-umschalter) im Leitfaden zum Erstellen. Wenn die Tabellen oder das benutzerdefinierte Styling Ihrer App für einen hellen Hintergrund ausgelegt sind, lassen Sie sie auf „hell“ festgelegt.
 
 ## Protokolle anzeigen (Server-Apps)
 
