@@ -37,7 +37,7 @@ The **By Workflow** folder at the end of the **Tables** tab groups tables under 
 
 ### By Column
 
-Type a column name in the column search box on the **Tables** tab to show only the tables that have a column with that name. Select **Contains** to match part of a column name instead of the whole name. Clear the box to show every table again. A long search can return in pages and the status line says when it is still searching or may be incomplete.
+Type a column name in the column search box on the **Tables** tab and press Enter, or select the magnifier beside it, to show only the tables that have a column with that name. The search reads column names, not the data, so it is fast. Select **Contains** to match part of a column name instead of the whole name. Clear the box to show every table again. A long search can return in pages and the status line says when it is still searching or may be incomplete.
 
 Select **Column Tree** to search from a window of its own. Each table that has the column opens to two lists:
 
@@ -49,10 +49,11 @@ An AI assistant connected over MCP finds the same tables with `table_find(column
 
 ### Search Values
 
-To find which tables hold a value, select **Search Values** on the **Tables** tab, or right-click a table and choose **Search Value** to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values.
+To find which tables hold a value, choose **Search values in data… (slow)** from the **Actions** menu on the **Tables** tab, or right-click a table and choose it to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values. Double-click a table, or press Enter on it, to open it in the Table Explorer. A column opens the table filtered to the rows that match. If the column search box holds text, it fills in the value to find.
 
 Before you search, know that:
 
+* The search reads every row of every table searched, so it can be very slow and use a lot of warehouse resources. The window warns you, and the search buttons stay off until a search finishes.
 * You see only rows you could already open. Row-level security applies to every search.
 * Your warehouse's query history records the values you search for.
 * The search covers the text columns of tables. Tables that haven't been built are skipped and named in a warning.
@@ -133,6 +134,14 @@ When PlaidCloud can't read the whole history, the line says **Read history incom
 
 An AI assistant connected over MCP gets the same answer from `table_describe(include=['last_read'])`.
 
+
+
+## See a Table's Columns
+
+
+Selecting a table opens its details panel. Its **Columns** section lists each column with its **Type** and **Description**, the description coming from **Column Properties**. Point at a row to read a long description in full.
+
+A table that isn't in the warehouse right now, because its data expired or no step has built it, has no columns to list. The section says so and shows how many columns the table has. Run a step that writes the table to list them.
 
 
 ## See Where a Table Is Used
@@ -233,6 +242,20 @@ The number of rows, columns, and the data size for each table is shown in the ta
 
 1. Selecting the table
 2. Click on the duplicate button on the top toolbar.
+
+
+## Create a Panel App From a Table
+
+
+Select a table or view and choose **Create Panel App** from the **New** menu or the right-click menu. The **New Studio App** dialog opens with the project and the table already chosen. The app takes the table's name; change it if you like, then choose **Create**, and Panel Studio opens it with Weave ready to build its first page. The command is available when you select a single table or view, have edit access to the project, and the project isn't read-only. See [Creating a Panel App](/guides/panel-apps/creating/#start-from-a-table).
+
+
+## See What Tables Store
+
+
+The **Tables** list shows **Current data**, **History**, **Time Travel Days** and **Note** columns beside each table's size. **Time Travel Days** is the table's own setting; **1** means it uses the project's default. The status bar below the list gives the project's total: how much it stores, and how much of that is current data and how much is history. Sizes marked **Estimated** come from the table's shape until PlaidCloud measures it.
+
+Choose **Storage** on the toolbar to open the project's **Storage** window, with suggestions for freeing space and the time travel settings. See [Managing Storage](/guides/projects/managing-storage/#the-storage-window-for-a-project).
 
 
 ## Create a Data Editor from a Table

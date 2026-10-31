@@ -53,7 +53,7 @@ Une application serveur revient à zéro instance lorsqu'elle est inactive afin 
 
 ### Apparence
 
-Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les lecteurs peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème--clair-sombre-ou-commutable) dans le guide de création pour connaître les schémas à utiliser. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, maintenez-la sur le thème clair.
+Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les lecteurs peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème-clair-sombre-ou-commutateur) dans le guide de création pour connaître les schémas à utiliser. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, maintenez-la sur le thème clair.
 
 ## Afficher les journaux (applications serveur)
 

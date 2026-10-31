@@ -1,44 +1,44 @@
 ---
 title: Panel Studio
-description: Twórz, edytuj, przeglądaj i publikuj aplikacje Panel bez opuszczania PlaidCloud — następnie przywracaj wcześniejszą wersję, sprawdzaj użycie i szybkość aplikacji, konfiguruj alerty i podsumowania, wystawiaj ją w galerii i przypinaj do strony głównej.
+description: Twórz, edytuj, wyświetlaj w podglądzie i publikuj aplikacje Panel bez opuszczania PlaidCloud — a następnie przywracaj wcześniejszą wersję, sprawdzaj użycie i szybkość aplikacji, konfiguruj alerty i zestawienia, dodawaj ją do galerii i przypinaj do strony głównej.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/studio.md
 ---
 
-Panel Studio to edytor aplikacji Panel wewnątrz PlaidCloud. Pokazuje pliki aplikacji obok edytora, buduje prywatny podgląd, który możesz otworzyć, i publikuje aplikację, gdy jesteś gotowy. Nie potrzebujesz repozytorium git, aby zacząć.
+Panel Studio to edytor aplikacji Panel w PlaidCloud. Pokazuje pliki aplikacji obok edytora, buduje prywatny podgląd, który możesz otworzyć, i publikuje aplikację, gdy jesteś gotowy. Nie potrzebujesz repozytorium git, aby zacząć.
 
-## Otwieranie Panel Studio
+## Otwórz Panel Studio
 
-- Na tablicy **Strona główna** projektu wybierz **Open in Studio** przy aplikacji Panel.
-- W **Moje aplikacje Panel** wybierz **Open in Studio** w wierszu aplikacji.
+- Na tablicy **Strona główna** projektu wybierz **Otwórz w Studio** przy aplikacji Panel.
+- W obszarze **Moje aplikacje Panel** wybierz **Studio** w wierszu aplikacji.
 
-Aby rozpocząć nową aplikację, wybierz **Create app** w jednym z tych miejsc.
+Aby rozpocząć nową aplikację, wybierz **Nowa aplikacja Studio**. To pierwszy przycisk na pasku narzędzi **Moje aplikacje Panel**; znajduje się też w polu **Aplikacje Panel** na karcie **Strona główna** projektu. Aby zbudować aplikację na tabeli, zaznacz ją na karcie **Tabele** projektu i wybierz **Utwórz aplikację Panel**.
 
-## Tworzenie aplikacji
+## Utwórz aplikację
 
-Okno **Create app** pozwala zacząć od jednego z pięciu miejsc:
+Okno **Nowa aplikacja Studio** pozwala zacząć z jednego z pięciu miejsc:
 
 | Zacznij od | Otrzymujesz |
 |---|---|
-| **Blank** | Minimalną aplikację z plikami `app.py` i `requirements.txt`. |
-| **Tabela** | Aplikację zbudowaną na wybranej tabeli. |
-| **Widok** | To samo, zbudowane na widoku projektu. |
-| **Szablon** | Gotową aplikację z [zestawu narzędzi aplikacji Panel](/pl/guides/panel-apps/app-kit/#zacznij-od-szablonu). |
-| **From the gallery** | Kopię aplikacji wystawionej przez Twój obszar roboczy w [galerii aplikacji](/pl/guides/panel-apps/gallery/). |
+| **Pusta aplikacja** | Minimalną aplikację z plikami `app.py` i `requirements.txt`. |
+| **Z tabeli** | Aplikację zbudowaną na wybranej tabeli. |
+| **Z widoku** | To samo, zbudowane na widoku projektu. |
+| **Z innej aplikacji Studio** | Kopię jednej z twoich aplikacji Studio. |
+| **Z galerii** | Kopię aplikacji, którą twój obszar roboczy dodał do [galerii aplikacji](/pl/guides/panel-apps/gallery/). |
 
-Nazwij aplikację, wybierz jej **Projekt** i wybierz **Utwórz**. Studio otwiera nową aplikację z listą plików po lewej stronie.
+Nazwij aplikację, wybierz jej **Projekt** i wybierz **Utwórz**. Studio otwiera nową aplikację z listą plików po lewej stronie. W przypadku tabeli lub widoku gotowy do wysłania jest monit Weave o zbudowanie pierwszej strony aplikacji. Zobacz [Tworzenie aplikacji Panel](/pl/guides/panel-apps/creating/).
 
-## Edycja
+## Edytuj
 
-Wybierz plik z listy, aby edytować go w edytorze. Wymień zależności Python w `requirements.txt`, jeden pakiet w wierszu. Są one instalowane podczas budowania aplikacji.
+Wybierz plik na liście, aby edytować go w edytorze. Wypisz zależności Pythona w pliku `requirements.txt`, po jednym pakiecie w wierszu. Są instalowane podczas budowania aplikacji.
 
-Wybierz **Ask Weave**, aby Weave napisał lub zmienił aplikację za Ciebie. Zobacz [Tworzenie aplikacji Panel z Weave](/pl/guides/panel-apps/build-with-weave/).
+Wybierz **Zapytaj Weave**, aby Weave napisał lub zmienił aplikację za ciebie. Zobacz [Tworzenie aplikacji Panel z Weave](/pl/guides/panel-apps/build-with-weave/).
 
-## Zapis, podgląd i publikowanie
+## Zapis, podgląd i publikacja
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 660 150" role="img" aria-label="Zapis zachowuje wersję roboczą, którą widzisz tylko Ty. Podgląd buduje prywatną kopię wersji roboczej dla edytora. Publikowanie zastępuje działającą aplikację po Twoim potwierdzeniu." style="width:100%;max-width:660px;height:auto;">
+<svg viewBox="0 0 660 150" role="img" aria-label="Zapis zachowuje wersję roboczą widoczną tylko dla ciebie. Podgląd buduje prywatną kopię wersji roboczej dla edytora. Publikacja zastępuje aplikację na żywo po potwierdzeniu." style="width:100%;max-width:660px;height:auto;">
   <defs>
     <marker id="ps-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
   </defs>
@@ -52,14 +52,14 @@ Wybierz **Ask Weave**, aby Weave napisał lub zmienił aplikację za Ciebie. Zob
   <path d="M410 70 L468 70" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ps-arrow)" />
   <rect x="470" y="40" width="170" height="60" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
   <text x="555" y="66" text-anchor="middle" font-size="13" fill="var(--sl-color-text)">Opublikuj</text>
-  <text x="555" y="86" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">działająca aplikacja</text>
+  <text x="555" y="86" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">aplikacja na żywo</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Twoje zmiany docierają do przeglądających dopiero po opublikowaniu.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Twoje zmiany docierają do odbiorców dopiero po opublikowaniu.</figcaption>
 </figure>
 
-### Zapis
+### Zapisz
 
-**Zapisz** przechowuje zmiany jako wersję roboczą. Działająca aplikacja się nie zmienia, a nikt inny nie widzi wersji roboczej.
+**Zapisz** przechowuje twoje zmiany jako wersję roboczą. Aplikacja na żywo się nie zmienia, a nikt inny nie widzi wersji roboczej.
 
 ### Podgląd
 
@@ -69,61 +69,61 @@ Wybierz **Ask Weave**, aby Weave napisał lub zmienił aplikację za Ciebie. Zob
 - Obszar roboczy może mieć jednocześnie do 10 podglądów.
 - Zapisz ponownie i wybierz **Podgląd**, aby zobaczyć najnowsze zmiany.
 
-### Publikowanie
+### Opublikuj
 
-**Opublikuj** zastępuje działającą aplikację zapisaną wersją roboczą. Wymaga uprawnienia do edycji projektu aplikacji, a Studio najpierw prosi o potwierdzenie.
+**Opublikuj** zastępuje aplikację na żywo zapisaną wersją roboczą. Wymaga uprawnienia do edycji projektu aplikacji, a Studio najpierw prosi o potwierdzenie.
 
-Jeśli ktoś inny opublikował zmianę po otwarciu przez Ciebie aplikacji, Studio zgłasza konflikt zamiast nadpisać jego pracę. Wczytaj aplikację ponownie, przenieś swoje zmiany i opublikuj jeszcze raz.
+Jeśli ktoś inny opublikował zmianę po otwarciu przez ciebie aplikacji, Studio zgłasza konflikt zamiast nadpisać jego pracę. Załaduj aplikację ponownie, przenieś swoje zmiany i opublikuj jeszcze raz.
 
-## Stan kompilacji i błędy
+## Stan budowania i błędy
 
-Karta **Zbuduj** pokazuje stan najnowszej kompilacji i aktualizuje się w trakcie jej trwania. Gdy kompilacja się nie powiedzie, karta wymienia każdy błąd wraz z plikiem i numerem wiersza, abyś mógł przejść prosto do wiersza. Problemy z zależnościami w `requirements.txt` zawierają wskazówkę dotyczącą naprawy.
+Karta **Zbuduj** pokazuje stan ostatniego budowania i aktualizuje się w trakcie jego trwania. Gdy budowanie się nie powiedzie, karta wymienia każdy błąd z plikiem i numerem wiersza, dzięki czemu możesz przejść od razu do danego wiersza. Problemy z zależnościami w `requirements.txt` zawierają wskazówkę dotyczącą naprawy.
 
 Błędy i ostrzeżenia są też oznaczone w swoich wierszach w edytorze, więc widzisz problem tam, gdzie jest.
 
-Co oznacza każdy stan po opublikowaniu aplikacji, wyjaśnia [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/#stan-kompilacji-aplikacje-serwerowe).
+Co oznacza każdy stan po opublikowaniu aplikacji, opisuje [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/#stan-kompilacji-aplikacje-serwerowe).
 
 ## Historia i przywracanie
 
-Karta **Historia** wymienia wszystkie opublikowane wersje aplikacji, od najnowszej, wraz ze stanem kompilacji. Wybierz **Załaduj więcej**, aby zobaczyć starsze.
+Karta **Historia** wymienia każdą opublikowaną wersję aplikacji, od najnowszej, wraz ze stanem jej budowania. Wybierz **Załaduj więcej**, aby zobaczyć starsze.
 
-Aby wrócić do wcześniejszej wersji, wybierz przy niej **Przywróć** i potwierdź. Przywrócona wersja staje się działającą aplikacją i jest przebudowywana. Twoja niezapisana wersja robocza nie przepada: pozostaje w wersji roboczej i zacznie działać na wierzchu przywróconej wersji przy następnym opublikowaniu. Jeśli aplikacja już odpowiada tej wersji, Studio informuje o tym i niczego nie zmienia. Jeśli ktoś opublikował zmiany w trakcie przywracania, Studio niczego nie przywraca i prosi o ponowną próbę.
+Aby wrócić do wcześniejszej wersji, wybierz przy niej **Przywróć** i potwierdź. Przywrócona wersja staje się aplikacją na żywo i jest budowana ponownie. Twoja niezapisana wersja robocza nie przepada: pozostaje w wersji roboczej i trafia na żywo na wierzch przywróconej wersji przy następnej publikacji. Jeśli aplikacja już odpowiada tej wersji, Studio informuje o tym i niczego nie zmienia. Jeśli ktoś opublikował zmiany podczas przywracania, Studio niczego nie przywraca i prosi o ponowną próbę.
 
-## Wgląd
+## Wnioski
 
-Karta **Wgląd** pokazuje, jak ludzie korzystają z aplikacji i jak szybko ona odpowiada. Wybierz ostatnie 7, 14 lub 30 dni.
+Karta **Wnioski** pokazuje, jak ludzie korzystają z aplikacji i jak szybko odpowiada. Wybierz ostatnie 7, 14 lub 30 dni.
 
 | Sekcja | Pokazuje |
 |---|---|
-| **Views per day** | Ile razy aplikacja była otwierana każdego dnia. |
-| **Page load** | Medianę czasu ładowania oraz czas, który pokonuje 95 procent wczytań, na podstawie wczytań stron w danym okresie. |
-| **Slowest queries** | Zapytania, które trwały najdłużej, wraz z liczbą ich uruchomień oraz ich medianą, czasem na wolnym końcu i najwolniejszym czasem. |
-| **Błędy** | Co poszło nie tak w danym okresie, według rodzaju błędu i miejsca w aplikacji, w którym wystąpił. |
+| **Wyświetlenia dziennie** | Ile razy aplikacja była otwierana każdego dnia. |
+| **Wczytanie strony** | Medianę czasu wczytania oraz czas, który 95 procent wczytań przekracza w tym okresie. |
+| **Najwolniejsze zapytania** | Zapytania, które trwały najdłużej, z częstotliwością ich uruchamiania oraz medianą, wolnym końcem i najwolniejszym czasem. |
+| **Błędy** | Co poszło nie tak w tym okresie, według rodzaju błędu i miejsca w aplikacji, w którym wystąpił. |
 
-Gdy okres zawiera więcej aktywności, niż Wgląd potrafi odczytać, informuje, że liczby są częściowe. Gdy wczytania stron przekraczają [budżet wydajności](/pl/guides/panel-apps/app-kit/#budżety-wydajności) aplikacji, Wgląd ostrzega, ile ich było i które zapytania były wolne. Wgląd nigdy nie pokazuje danych zwróconych przez zapytanie ani nazw osób, które otworzyły aplikację.
+Gdy okres zawiera więcej aktywności, niż Wnioski mogą odczytać, informują, że dane są częściowe. Gdy wczytania stron przekraczają [budżet wydajności](/pl/guides/panel-apps/app-kit/#budżety-wydajności) aplikacji, Wnioski ostrzegają, ile ich było i które zapytania były wolne. Wnioski nigdy nie pokazują danych zwróconych przez zapytanie ani nazw osób, które otworzyły aplikację.
 
-Obie karty wymagają przypisania aplikacji do projektu; nieprzypisana aplikacja pokazuje monit o przypisanie.
+Karty **Historia** i **Wnioski** wymagają przypisania aplikacji do projektu; nieprzypisana aplikacja wyświetla monit o przypisanie.
 
-## Alerty i podsumowania
+## Alerty i zestawienia
 
-Wybierz **Alerts & Digests**, aby skonfigurować powiadomienia, które obserwują liczbę w danych aplikacji i informują, gdy przekroczy ona limit, lub wysyłają podsumowanie według harmonogramu. Zobacz [Alerty i podsumowania](/pl/guides/panel-apps/alerts-and-digests/).
+Wybierz **Alerty i zestawienia**, aby skonfigurować powiadomienia, które obserwują liczbę w danych aplikacji i informują, gdy przekroczy limit, albo wysyłają podsumowanie według harmonogramu. Zobacz [Alerty i zestawienia](/pl/guides/panel-apps/alerts-and-digests/).
 
-## Wystawianie aplikacji w galerii
+## Dodaj aplikację do galerii
 
-Wybierz **Gallery…**, aby wystawić aplikację jako szablon, na podstawie którego każdy, kto może wyświetlać jej projekt, może utworzyć własną aplikację, lub aby usunąć ją z galerii. Zobacz [Galeria aplikacji](/pl/guides/panel-apps/gallery/).
+Wybierz **Galeria…** w Studio. Wybierz **Wyświetlaj w galerii**, aby dodać aplikację jako szablon, na podstawie którego każdy, kto może wyświetlić jej projekt, może utworzyć własną aplikację, albo **Usuń z galerii**, aby ją usunąć. Przycisk jest dostępny dla aplikacji należących do projektu. Potrzebujesz dostępu do edycji projektu. Zobacz [Galeria aplikacji](/pl/guides/panel-apps/gallery/).
 
-## Przypinanie do strony głównej
+## Przypnij do strony głównej
 
-Wybierz **Pin to Home**, aby dodać aplikację do tablicy **Strona główna** projektu, a **Unpin from Home**, aby ją usunąć.
+Wybierz **Przypnij do strony głównej**, aby dodać aplikację do tablicy **Strona główna** projektu, oraz **Odepnij od strony głównej**, aby ją usunąć.
 
-## Usuwanie aplikacji
+## Usuń aplikację
 
-Usunięcie aplikacji Panel najpierw prosi o potwierdzenie. W **Moje aplikacje Panel** użyj ikony **minus** w wierszu aplikacji. Cofnięcie publikacji również prosi o potwierdzenie.
+Usunięcie aplikacji Panel najpierw prosi o potwierdzenie. W obszarze **Moje aplikacje Panel** użyj ikony **minus** w wierszu aplikacji. Cofnięcie publikacji również prosi o potwierdzenie.
 
 ## Następne kroki
 
 - [Tworzenie aplikacji Panel z Weave](/pl/guides/panel-apps/build-with-weave/) — opisz aplikację i zatwierdź dokładną zmianę.
-- [Zestaw narzędzi aplikacji Panel](/pl/guides/panel-apps/app-kit/) — komponenty, z których korzystają starty ze Studio z tabeli, widoku i szablonu.
-- [Alerty i podsumowania](/pl/guides/panel-apps/alerts-and-digests/) — powiadamiaj osoby, gdy liczba przekroczy limit, lub według harmonogramu.
+- [Zestaw narzędzi aplikacji Panel](/pl/guides/panel-apps/app-kit/) — komponenty używane przy rozpoczęciu w Studio od tabeli i widoku.
+- [Alerty i zestawienia](/pl/guides/panel-apps/alerts-and-digests/) — powiadamiaj ludzi, gdy liczba przekroczy limit, lub według harmonogramu.
 - [Galeria aplikacji](/pl/guides/panel-apps/gallery/) — udostępnij aplikację jako punkt wyjścia dla innych.
-- [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/) — dzienniki, użycie i przebudowy po opublikowaniu.
+- [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/) — dzienniki, użycie i ponowne budowanie po opublikowaniu.

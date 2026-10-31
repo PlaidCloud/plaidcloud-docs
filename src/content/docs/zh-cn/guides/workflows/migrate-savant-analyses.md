@@ -145,7 +145,7 @@ Savant 导出文件描述了数据的来源，但不携带数据和凭据。使�
 | Format（`format`） | 带有重命名、重设类型、隐藏和填充的 Table Extract，或用于以行替换名称的 [Promote Header](/zh-cn/reference/workflow-steps/tables/table-promote-header/) 步骤。 | 对非文本列的填充会将默认值转换为该列的类型。对未声明列的源提升标题行时，会读取 CSV、Excel、XLS、JSON、Parquet 和 Avro 文件中的每一列。请参阅[未声明列的文件](#未声明列的文件)。 |
 | Spatial Match 代理（`spatial_match`） | [空间匹配（执行器）](/zh-cn/reference/workflow-steps/spatial/spatial-match-executor/)步骤，适用于 intersects、within、contains、touches、crosses、overlaps、equals 和 disjoint，可组合多条规则；交叉匹配使用交叉联接；最近匹配使用[查找最近点](/zh-cn/reference/workflow-steps/spatial/spatial-find-nearest/)。 | 最近匹配与 Savant 一样，按大圆距离排序和筛选。与其他规则组合的最近规则会先找出最近的记录，再应用其他规则：使用 AND 时结果保留满足每条规则的记录，使用 OR 时则将最近的记录与其他规则匹配的记录取并集。既无数量也无最大距离的最近规则只保留最近的一条记录。距离内匹配同样可转换，规则未给出单位时以公里计，并测量任意几何图形（不仅是点）之间的测地线距离。无法解析的几何图形给出 NULL 或无匹配，并发出警告。 |
 | Spatial Summarize 代理（`spatial_summarize`） | 用于并集、交集和边界框的[空间合并](/zh-cn/reference/workflow-steps/spatial/spatial-combine/)，以及用于几何中心和线或多边形构建的 [Spatial Centroid](/zh-cn/reference/workflow-steps/spatial/spatial-centroid/)、[Spatial Point to Line](/zh-cn/reference/workflow-steps/spatial/spatial-point-to-line/) 和 [Spatial Line to Polygon](/zh-cn/reference/workflow-steps/spatial/spatial-line-to-polygon/)。 | 由少于 3 个点构建的多边形是空多边形。 |
-| Destination 代理（`destination`） | 导出到您所绑定目标的导出步骤；未绑定时为项目表或文件。请参阅[目标](#目标)。 | 请参阅[仍然受限的内容](#what-stays-limited)。 |
+| Destination 代理（`destination`） | 导出到您所绑定目标的导出步骤；未绑定时为项目表或文件。请参阅[目标](#目标)。 | 请参阅[边界情况](#边界情况)。 |
 
 `GEO_POINT`、`GEO_TYPE` 和 `GEO_SPATIAL_DISTANCE` 转换为表达式。整个表达式就是另一个 `GEO_*` 函数（如 `GEO_AREA` 或 `GEO_UNION`）的编辑，会转换为对应的空间步骤，包括 [Spatial Info](/zh-cn/reference/workflow-steps/spatial/spatial-info/)。几何图形以 WKT 文本传输。以英里为单位的 `GEO_AREA`、`GEO_PERIMETER` 和 `GEO_SPATIAL_DISTANCE` 使用法定英里。
 
@@ -298,7 +298,7 @@ API 代理的标头、URL 路径、查询或正文中的凭据，会移入导入
 | Sample（`sample`） | 每个分组或整体的前 N 行、随机百分比或随机行数，或每 N 行取一行。 |
 | Time Series（`rollup`） | 在可选的开始和结束日期之间，按分组生成日、周、月、季度、年和十年期间。月份期间标记为 `YYYY-MM`，没有记录的期间以零显示。日期为 NULL 的记录会被排除。 |
 | Pivot（`pivot`） | COUNT 统计行数。 |
-| XML（`xml`） | SELECT 提取元素，路径可以带命名空间，TO_JSON 将 XML 转换为 JSON。任何 **XPath 1.0** 路径都可转换，包括谓词、属性测试、通配符以及 `count()`、`name()` 和 `contains()` 等函数，[XML 解析](/zh-cn/reference/workflow-steps/tables/table-xml-parse/)步骤将其作为 XPath 读取。`processNs` 关闭时，名称按字面匹配，包括前缀。转换时缺失的 XML 文件，会在工作流运行时解析其根元素。 |
+| XML（`xml`） | SELECT 提取元素，路径可以带命名空间，TO_JSON 将 XML 转换为 JSON。任何 XPath 1.0 路径都可转换，包括谓词、属性测试、通配符以及 `count()`、`name()` 和 `contains()` 等函数，[XML 解析](/zh-cn/reference/workflow-steps/tables/table-xml-parse/)步骤将其作为 XPath 读取。`processNs` 关闭时，名称按字面匹配，包括前缀。转换时缺失的 XML 文件，会在工作流运行时解析其根元素。 |
 | JSON（`json`） | 展平为宽列。不是有效 JSON 的文本给出 NULL，数组以文本形式输出。 |
 | Split（`split`） | 拆分为列或行，列数在每次运行工作流时从数据中读取。 |
 
