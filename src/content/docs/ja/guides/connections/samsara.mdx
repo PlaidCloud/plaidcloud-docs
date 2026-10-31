@@ -1,0 +1,88 @@
+---
+title: Samsaraのデータをインポートする
+description: Generic REST接続でPlaidCloudをSamsaraに接続し、コピー＆ペーストで使えるカーソルページングのレシピで、ページ分割された一覧全体をインポートします。
+sidebar:
+  label: Samsaraのデータをインポートする
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/samsara.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Samsaraのデータをインポートするには、**Generic REST** 接続と **RESTリクエスト** ステップを使用します。これにより、APIトークンを再利用可能な接続に保管でき、継続カーソルを返すあらゆるAPIで利用できる汎用のカーソルページング設定を使用できます。
+
+## 始める前に
+
+Samsaraで、インポートに必要な読み取りスコープとタグアクセスだけを持つAPIトークンを作成します。Samsaraはトークンを作成時にしか表示しないため、ページを離れる前にコピーしてください。[SamsaraのAPI認証](https://developers.samsara.com/docs/authentication)を参照してください。
+
+Samsaraダッシュボードに対応するホストを選択します。
+
+| Samsaraダッシュボード | ホストまたはIPアドレス |
+| --- | --- |
+| USまたは従来のカナダクラウド | `api.samsara.com` |
+| EU / UK | `api.eu.samsara.com` |
+| カナダクラウド | `api.ca.samsara.com` |
+
+## 接続を作成する
+
+1. **接続** を開き、`Samsara` という名前の **Generic REST** 接続を作成します。
+2. 上の表から対応するホストを入力します。
+3. **認証** で **ベアラートークン** を選択し、SamsaraのAPIトークンを貼り付けます。`Authorization` ヘッダーを自分で追加しないでください。
+4. 接続を保存します。
+
+<Aside type="note">自社のフリートデータをインポートする場合は、APIトークンが最も簡単な選択肢です。Samsaraは顧客組織に接続するマーケットプレイスアプリケーションには、OAuth 2.0を推奨しています。</Aside>
+
+## 車両をインポートする
+
+この最初のインポートで接続を確認でき、Samsaraの他の新しい一覧エンドポイントでも再利用できるレシピが得られます。
+
+1. **RESTリクエスト** ステップを追加し、`Samsara` 接続を選択します。
+2. **エンドポイントソース** を **手動** に、**メソッド** を `GET` に、**エンドポイント** を `/fleet/vehicles` に設定します。
+3. **ターゲットテーブル** を選択します（例: `samsara_vehicles`）。
+4. **クエリパラメーター** で、値が `512` の `limit` を追加します。
+5. **リクエスト** で、次の値を設定します。
+
+| フィールド | 値 |
+| --- | --- |
+| 行の形式 | `Object` |
+| ストリーミングモード | `Cursor Paging` |
+| 項目パス（JSONの整形） | `["data"]` |
+| モードパラメーター（JSONの整形） | `{"cursor": "after"}` |
+| モードパス（JSONの整形） | `{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}` |
+
+6. **ページングのテスト** を選択します。PlaidCloudはプレビューに必要な分のページだけを取得するため、完全な実行の前に結果を確認できます。
+7. ステップを保存して実行します。
+
+Samsaraの新しい一覧エンドポイントを設定する際は、次の値をそのままコピーしてください。
+
+```json
+{"cursor": "after"}
+```
+
+```json
+{"has_more": ["pagination", "hasNextPage"], "cursor": ["pagination", "endCursor"]}
+```
+
+Samsaraが `hasNextPage: true` を返すと、PlaidCloudは返された `endCursor` を次のリクエストの `after` パラメーターとして送信します。Samsaraでは後続のページにデータがある場合があるため、ページが空であっても続行します。[Samsaraのページネーション](https://developers.samsara.com/docs/pagination)を参照してください。
+
+## 効率的に実行する
+
+- 一覧エンドポイントごとに1つのRESTリクエストステップを使用します。カーソル値は不透明な値であり、返されたとおりに送信する必要があります。
+- エンドポイントが `limit` をサポートしている場合は、`limit=512` を設定します。512はSamsaraが文書化している最大値です。
+- 一覧エンドポイントで、1行ごとに1リクエストを展開する方法は避けてください。本当に独立した詳細リクエストにのみ使用し、リクエストレートはエンドポイントの制限内に収めます。
+- `/feed` エンドポイントは完全なスナップショットではなく、増分です。最後に成功したカーソルを保存し、Samsaraの30日というカーソル有効期限よりも短い間隔でワークフローをスケジュールしてください。
+
+## トラブルシューティング
+
+| 問題 | 確認すること |
+| --- | --- |
+| `401` または `403` | リージョンのホスト、トークン、タグアクセス、エンドポイントの読み取りスコープを確認します。 |
+| 行がない | 一覧エンドポイントであること、および **項目パス** が `["data"]` であることを確認します。 |
+| ページングが早く止まる | Samsaraの最新のAPIリファレンスにある新しいエンドポイントを使用します。従来の `/v1/` エンドポイントは、異なるページネーション項目を使用することがあります。 |
+| `429` | 独立した展開呼び出しのリクエストレートを下げます。RESTリクエストステップは、安全な読み取りリクエストを再試行する際に、Samsaraの `Retry-After` レスポンスに従います。 |
+
+## 関連情報
+
+- [Generic REST接続](/ja/reference/connectors/rest/generic-rest/)
+- [RESTリクエストワークフローステップ](/ja/guides/workflows/rest-request-step/)
+- [SamsaraのベースURL](https://developers.samsara.com/docs/base-url)

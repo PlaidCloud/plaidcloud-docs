@@ -1,0 +1,191 @@
+---
+title: NetSuite REST 连接器
+description: 在 PlaidCloud 中设置 NetSuite REST API 连接，并通过 REST 请求步骤使用 SuiteQL 拉取财务和运营数据。
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/connectors/rest/netsuite.mdx
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+## API 文档
+
+[NetSuite REST API Browser](https://system.netsuite.com/help/helpcenter/en_US/APIs/REST_API_Browser/record/v1/2023.1/index.html) 记录了记录端点，[SuiteQL 参考](https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156257770590.html)记录了此连接器用于拉取表格数据的查询语言。
+
+<Aside type="tip">
+如需从头到尾的演练——NetSuite 端设置、创建连接、测试连接以及构建拉取步骤——请按照[连接到 NetSuite](/zh-cn/guides/connections/netsuite/)指南操作。本页是该指南背后的字段与方案参考。
+</Aside>
+
+## 身份验证的工作方式
+
+连接器使用 **OAuth 2.0 客户端凭据**和 **PS256** JWT 客户端断言登录——没有交互式登录，也没有刷新令牌。您需要生成一对 RSA 密钥，将**公钥**证书上传到 NetSuite，并向 PlaidCloud 提供匹配的**私钥**以及三个 ID。每次拉取时，PlaidCloud 都会构建并签署一个短期有效的断言，用它换取访问令牌，然后调用 REST API。
+
+<Aside type="caution">
+下文中的角色、范围和权限细节是按照 NetSuite 文档记录的形态构建的，并将**在正式切换时确认**——如果令牌交换或查询被拒绝，NetSuite 返回的错误会指明原因（范围、角色或查询），以便您只调整或更正那一处。
+</Aside>
+
+## NetSuite 端设置
+
+请先在 NetSuite 中完成以下操作，再创建 PlaidCloud 连接。这需要管理员权限，并且位于关键路径上。
+
+### 1. 启用功能
+
+在 **Setup > Company > Enable Features > SuiteCloud** 下启用 **OAuth 2.0** 和 **SuiteTalk (SOAP and REST Web Services)**。
+
+### 2. 创建 RSA 密钥对
+
+生成 2048 位（或更长）且支持 PS256 的 RSA 密钥对。例如使用 OpenSSL：
+
+```bash
+openssl genrsa -out plaidcloud_netsuite.pem 2048
+openssl rsa -in plaidcloud_netsuite.pem -pubout -out plaidcloud_netsuite_public.pem
+```
+
+请妥善保管私钥（`plaidcloud_netsuite.pem`）——它只用于 PlaidCloud，绝不能提供给 NetSuite。
+
+### 3. 上传公钥证书 → 证书 ID
+
+在 **Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup** 下，将公钥证书映射到集成、实体和角色。NetSuite 会为上传的公钥返回一个**证书 ID**——它就是 JWT 的 `kid`，**不是**机密信息。请记录下来。
+
+### 4. 创建集成记录 → 客户端 ID
+
+在 **Setup > Integration > Manage Integrations > New** 下，创建一个启用 **OAuth 2.0** 并选择 **Client Credentials** 授权的集成。NetSuite 会签发一个**客户端 ID**（consumer key）。请记录下来。在客户端凭据加断言流程中**没有客户端密钥**。
+
+### 5. 角色和权限
+
+为 M2M 映射中使用的角色分配一组权限，涵盖您将要读取的内容：
+
+- **REST Web Services**（Setup）——任何 REST 调用都需要。
+- **SuiteAnalytics Workbook**——如果您的 SuiteQL 涉及分析/工作簿数据，则需要。
+- **Log in using OAuth 2.0 Access Tokens**——令牌交换需要。
+- 对查询读取的每种记录类型（交易、科目、实体等）的记录级查看权限。
+
+### 6. 账户 ID
+
+在 **Setup > Company > Company Information** 下（**Account ID** 字段）找到您的账户 ID。它决定 API 主机：
+
+| 环境 | 账户 ID 形式 | API 主机 |
+|---|---|---|
+| 生产 | `1234567` | `1234567.suitetalk.api.netsuite.com` |
+| 沙盒 | `1234567_SB1` | `1234567-sb1.suitetalk.api.netsuite.com` |
+
+PlaidCloud 会根据账户 ID 自动推导主机（转为小写并将 `_` 换成 `-`）。请按 NetSuite 显示的原样输入账户 ID，沙盒需包含 `_SB1` 后缀。
+
+## 配置
+
+使用 **NetSuite** 连接类型创建连接（不要使用通用 REST 类型——只有 NetSuite 类型才会推导主机并注入 SuiteQL 分页行为）。表单上显示以下字段：
+
+### 标识
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| 名称 | 文本 | 此连接的显示名称。 |
+| 别名 | 文本（多行） | 关于该连接的可选别名或备注。 |
+| 是否启用 | 开关 | 连接是否启用。停用可暂停连接而无需删除。 |
+| 数据库只读 | 开关 | 将连接限制为只读操作。 |
+| 访问类型 | 选择 | 此连接的只读、只写或读写访问级别。 |
+
+### NetSuite 凭据
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| 客户端 ID | 文本 | 来自集成记录的**客户端 ID**（步骤 4）。 |
+| 证书 ID | 文本 | 上传公钥证书时返回的**证书 ID**（JWT `kid`，步骤 3）。不是机密信息。 |
+| NetSuite 账户 ID | 文本 | **账户 ID**（步骤 6），例如 `1234567` 或 `1234567_SB1`。 |
+| NetSuite 私有证书 | 文本（PEM） | **私钥**（步骤 2），以完整的多行 PEM 块粘贴。加密存储，绝不以明文返回。 |
+
+<Aside type="note">
+粘贴时，**NetSuite 私有证书**字段会对密钥进行掩码。重新打开已保存的连接时该字段为空：保持为空可保留已保存的密钥，或粘贴新密钥进行替换。
+</Aside>
+
+## 使用 SuiteQL 拉取数据
+
+NetSuite 的记录 API 每行只返回 `{id, links}`，因此 PlaidCloud 通过 [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)使用 **SuiteQL** 拉取表格数据。针对 NetSuite 连接配置该步骤：
+
+- **方法**——`POST`
+- **端点**——`/services/rest/query/v1/suiteql`（字面路径；主机来自连接）
+- **正文**——JSON 格式的查询：`{"q": "SELECT ... FROM ... ORDER BY internalid"}`
+
+<Aside type="caution">
+**始终为偏移分页的 SuiteQL 查询指定确定性的 `ORDER BY`**（例如 `ORDER BY internalid`）。NetSuite 按数字偏移分页；没有稳定的排序，分页会悄悄地重复并跳过行，导致财务合计对不上。
+</Aside>
+
+### 不要手动配置分页或标头
+
+对于 NetSuite 连接，该步骤会**自动注入** SuiteQL 的特定设置：
+
+- `Prefer: transient` 和 `Content-Type: application/json` 标头。
+- 针对响应的 `items` / `hasMore` 字段、按服务固定页面大小进行的偏移分页。
+
+请不要改动**分页与解析**控件和这些标头——它们由连接设置。只需设置您的**端点**、**正文**以及**列**（见下文）。
+
+### 为金额和日期列指定类型
+
+SuiteQL 将**所有**值都以 JSON 字符串形式返回（`"1234.56"`、`"2026-01-15"`、`"T"`）。请手动定义输出列并指定其真实类型——金额使用 `Currency`/`Decimal`，日期使用 `Date`/`Datetime`，`"T"`/`"F"` 标志使用 `Boolean`——PlaidCloud 会在数据进入表时将字符串转换为带类型的列。空字符串映射为 `null`。（自动架构推测不会应用连接的服务配置，因此无法替您完成这一点——请自行定义列。）
+
+<Aside type="caution">
+SuiteQL 以**账户的显示格式**（通常为 `M/D/YYYY`）返回日期，这种格式存在歧义，因此 PlaidCloud 不会去猜测。对于 `Date`/`Datetime` 列，请在查询中格式化该字段——`TO_CHAR(col, 'YYYY-MM-DD')`（或 `'YYYY-MM-DD HH24:MI:SS'`）——或将该列保留为 `Text`。无法转换的值会使运行失败，并给出指明列和值的消息。
+</Aside>
+
+## 已知限制
+
+| 限制 | 含义 |
+|---|---|
+| 必须手动定义列 | 架构自动推测不会应用 NetSuite 服务配置，因此请手动定义金额/日期/布尔列及其类型。 |
+| 分页由服务固定 | 分页模式、路径和页面大小由连接设置，**不能**在步骤上调整。 |
+| 仅支持整表替换 | 每次拉取都会重新提取整个结果——**没有增量/差异**路径。计划拉取每次运行都会重新读取整个表，因此请让 `WHERE` 子句只覆盖您需要的切片。 |
+| 多币种 / 子公司 | 在 `transaction`/`transactionline` 上，`amount` 采用交易**自身**的币种。跨子公司直接使用 `SUM(amount)` 会导致**合并结果错误**——跨子公司汇总时请选择已合并或已按汇率换算的字段。 |
+| 约 100,000 行的 SuiteQL 上限 | 没有 SuiteAnalytics Connect 时，NetSuite 将单个查询限制为大约 100,000 行。手写查询若会超出该上限，会明确失败并提示缩小日期范围或添加其他筛选器，而不是悄悄截断。预置的 [NetSuite：导入余额 / 总账明细](/zh-cn/reference/workflow-steps/netsuite/)步骤会自动为您划分日期范围窗口，以保持在上限之内。 |
+| 多账簿会计 | 在启用多账簿会计的账户上，`TransactionAccountingLine` 对每个交易行的每个账簿各有一行——未经筛选就跨账簿 `SUM` 会重复计算（或 N 倍计算）。预置的导入步骤默认使用主账簿；手写查询应明确筛选 `accountingbook = 1`（或您选择的账簿），除非您确实想要跨账簿合计。 |
+| 响应信封 | 确切的响应信封以及可接受的范围/角色将**在正式切换时确认**；连接器是按 NetSuite 文档记录的形态构建的。 |
+
+## 示例查询
+
+财务——某期间的总账交易行，已指定类型并排序：
+
+```sql
+SELECT
+    tl.transaction   AS transaction_id,
+    t.trandate       AS tran_date,
+    a.acctnumber     AS account_number,
+    tl.subsidiary    AS subsidiary_id,
+    tl.foreignamount AS amount
+FROM   transactionline tl
+JOIN   transaction     t ON t.id = tl.transaction
+JOIN   account         a ON a.id = tl.expenseaccount
+WHERE  t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                      AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY tl.transaction, tl.id
+```
+
+运营——按客户列出的未结销售订单：
+
+```sql
+SELECT
+    so.tranid        AS order_number,
+    so.entity        AS customer_id,
+    so.trandate      AS order_date,
+    so.status        AS order_status
+FROM   transaction so
+WHERE  so.type = 'SalesOrd'
+  AND  so.status = 'SalesOrd:B'
+ORDER BY so.id
+```
+
+<LinkCard
+  title="连接到 NetSuite（指南）"
+  href="/zh-cn/guides/connections/netsuite/"
+  description="分步说明：NetSuite 端设置、创建连接、测试连接，并构建财务和运营 SuiteQL 拉取。"
+/>
+
+<LinkCard
+  title="分析 NetSuite 财务数据（教程）"
+  href="/zh-cn/get-started/tutorials/analyze-netsuite-financials/"
+  description="第一天演练：拉取总账并将其整理为月度损益表和应收账款账龄。"
+/>
+
+<LinkCard
+  title="NetSuite SuiteQL 查询示例"
+  href="/zh-cn/guides/connections/netsuite-financial-queries/"
+  description="可直接复制的查询：日记账分录、试算平衡表、损益表、资产负债表、未结应收账款、销售订单、采购订单和库存。"
+/>

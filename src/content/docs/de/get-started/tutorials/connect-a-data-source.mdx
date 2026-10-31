@@ -1,0 +1,148 @@
+---
+title: Eine Live-Datenquelle verbinden
+description: Durchgängiges Tutorial – eine Verbindung zu einer externen Datenbank oder einem Cloud-Dienst erstellen, die Daten in eine Projekttabelle laden, eine Vorschau anzeigen und die Aktualisierung nach Zeitplan einrichten.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/connect-a-data-source.mdx
+---
+
+*~30 Minuten · eine Verbindung, eine geladene Tabelle, eine geplante Aktualisierung*
+
+Die anderen Tutorials beginnen mit einer hochgeladenen CSV-Datei. Echte Daten liegen meist woanders – in einer Datenbank, einem Warehouse, einer SaaS-App, einem Cloud-Speicher –, und PlaidCloud soll sie *direkt* lesen, nicht aus einem veralteten Export. Dieses Tutorial verbindet eines dieser Systeme, lädt dessen Daten in eine Projekttabelle, zeigt das Ergebnis in einer Vorschau und richtet die Aktualisierung so ein, dass die Tabelle von selbst aktuell bleibt.
+
+Sie erledigen vier Dinge: **eine Verbindung erstellen**, **Daten über einen Workflow-Schritt laden**, **eine Vorschau anzeigen** und **die Aktualisierung planen**. Jedes entspricht einem der Bausteine von PlaidCloud, und dasselbe Muster funktioniert, womit auch immer Sie sich verbinden.
+
+## Was Sie Erstellen
+
+Eine Projekttabelle, die sich aus einer externen Quelle füllt und diese nach Zeitplan erneut liest – ohne manuelles erneutes Hochladen.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 700 150" role="img" aria-label="Eine externe Quelle ist über eine gespeicherte Verbindung mit PlaidCloud verbunden. Ein Import-Schritt im Workflow liest über diese Verbindung und schreibt in eine Projekttabelle. Der Tabellen-Explorer zeigt eine Vorschau der Tabelle. Ein Zeitplan führt den Workflow erneut aus, damit die Tabelle aktuell bleibt." style="width:100%;max-width:700px;height:auto;">
+  <defs><marker id="cs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="8" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="68" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">externe Quelle</text>
+  <text x="68" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">DB · SaaS · Cloud</text>
+  <path d="M128 75 L160 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="162" y="52" width="120" height="46" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="222" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-accent)">Verbindung</text>
+  <text x="222" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Tools &gt; Connections</text>
+  <path d="M282 75 L314 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="316" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="376" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Import-Schritt</text>
+  <text x="376" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">in einem Workflow</text>
+  <path d="M436 75 L468 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cs-arrow)" />
+  <rect x="470" y="52" width="120" height="46" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="530" y="72" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Projekttabelle</text>
+  <text x="530" y="88" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Vorschau · Veröffentlichen</text>
+  <path d="M530 98 C530 128 376 128 376 108" stroke="var(--sl-color-gray-3)" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#cs-arrow)" />
+  <text x="452" y="140" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Zeitplan führt den Workflow erneut aus</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Die Verbindung hält die Zugangsdaten einmalig vor; der Import-Schritt liest darüber in eine Tabelle; ein Zeitplan hält diese Tabelle aktuell.</figcaption>
+</figure>
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace ([starten Sie eine kostenlose Testphase](https://app.plaidcloud.com), falls Sie noch keinen haben)
+- Ein Projekt, in dem Sie arbeiten, und ein Workflow darin (erstellen Sie einen auf der Registerkarte **Workflows** – siehe [Einen Workflow erstellen](/de/guides/workflows/create-workflow/))
+- Zugangsdaten für die Quelle, mit der Sie sich verbinden – ein Datenbank-Host mit Anmeldung, ein API-Token, ein Cloud-Speicherschlüssel, was auch immer das System verwendet
+
+## Schritt 1: Den Konnektor Auswählen
+
+PlaidCloud erreicht jede Art von externem System über einen eigens dafür entwickelten **Konnektor**, der Authentifizierung und Protokoll des jeweiligen Anbieters kennt. Ihren finden Sie in der [Konnektorreferenz](/de/reference/connectors/) – die Kategorien sind:
+
+| Kategorie | Beispiele |
+|---|---|
+| Datenbanken und Data Lakes | PostgreSQL, SQL Server, Snowflake, BigQuery, Databricks, Redshift, Iceberg, Delta Lake |
+| REST / SaaS | Salesforce, NetSuite, Workday, QuickBooks, Stripe |
+| ERP-Systeme | SAP ECC, S/4HANA, Oracle EBS/Fusion, Infor |
+| Cloud, Google, Zusammenarbeit | Cloud-Dienste, Google Sheets/BigQuery, Slack, Microsoft Teams |
+| Singer-Quellen | über 130 Tap-basierte Quellen – Stripe, GitHub, HubSpot und mehr |
+| Git-Anbieter | GitHub, GitLab, Bitbucket sowie das verwaltete PlaidCloud Git |
+
+> **Kein eigener Konnektor? Verwenden Sie den generischen.** Für einen Dienst ohne eigenen Eintrag erreicht die [generische REST-Verbindung](/de/reference/connectors/rest/generic-rest/) jede HTTP-API. Beachten Sie: Die genauen Feldnamen, die ein Konnektor benötigt, stehen auf seiner Referenzseite.
+
+Dieses Tutorial führt eine [Singer-Quelle](/de/guides/connections/singer-sources/) als konkretes Beispiel durch, weil sie Daten mit den wenigsten Teilen durchgängig lädt. Ein Datenbank- oder Cloud-Speicher-Konnektor folgt denselben drei Schritten – Verbindung, Import-Schritt, Zieltabelle – mit Feldern, die für das jeweilige System spezifisch sind.
+
+## Schritt 2: Die Verbindung Erstellen
+
+Eine **Verbindung** ist eine gespeicherte Konfiguration, die Endpunkt und Zugangsdaten einmalig vorhält, sodass jeder Workflow-Schritt sie über ihren Namen wiederverwendet.
+
+1. Öffnen Sie **Tools > Connections**.
+2. Klicken Sie in der Symbolleiste auf **Neue Verbindung** und wählen Sie Ihr System aus dem Menü.
+3. Füllen Sie das Verbindungsformular aus. Die Registerkarten variieren je nach Typ, üblicherweise legen Sie aber Folgendes fest:
+   - **Verbindungskonfiguration** (bei REST **Verbindungsdetails**) – den Verbindungs-**Namen**, eine optionale **Notiz**, Host/Port/Datenbank (oder Host/Authentifizierungstyp), den Schalter **Verwendung** auf **Aktiv** und das **Sicherheitsmodell**.
+   - Zugangsdaten – in einer Gruppe **Authentifizierungsdaten** bei einer Datenbankverbindung oder auf einer eigenen Registerkarte **Authentifizierung** bei einer REST-Verbindung.
+   - **SSL-Konfiguration** / **SSH-Konfiguration** – aktivieren Sie Verschlüsselung oder tunneln Sie über einen Bastion-Host, wenn Ihre Quelle das verlangt.
+4. Klicken Sie auf **Erstellen**. Die Verbindung erscheint in der Liste, Sie sind ihr Eigentümer.
+
+Das **Sicherheitsmodell** legt fest, wer sie sonst noch verwenden kann – von **Privat (nur Eigentümer)** bis **Alle Arbeitsbereichsmitglieder**. Die vollständige Beschreibung Feld für Feld und wie Sie Zugriff erteilen, finden Sie unter [Eine Verbindung erstellen und verwalten](/de/guides/connections/create-connection/).
+
+> **Geheimnisse sind schreibgeschützt.** Passwort- und Token-Felder erscheinen leer, wenn Sie eine gespeicherte Verbindung erneut öffnen; lassen Sie eines beim Speichern leer, bleibt der gespeicherte Wert erhalten. Tippen Sie es nur neu ein, wenn Sie es ändern.
+
+> **Eine Verbindung, viele Umgebungen.** Eine einzelne Verbindung kann pro **Umgebung** eine andere Konfiguration enthalten – einen Entwicklungs-Host und einen Produktions-Host unter einem Namen –, ausgewählt über die Umgebungsauswahl in der Symbolleiste. Richten Sie das jetzt ein, wenn Sie denselben Workflow später zwischen Umgebungen übertragen.
+
+## Schritt 3: Die Verbindung Testen
+
+Stellen Sie sicher, dass PlaidCloud die Quelle tatsächlich erreicht, bevor Sie darauf aufbauen.
+
+- Speichern Sie die Verbindung zuerst – Tests laufen gegen die *gespeicherte* Konfiguration, nicht gegen ungespeicherte Änderungen.
+- Eine Datenbankverbindung mit SSH bietet auf ihrer Registerkarte **SSH-Konfiguration** einen Tunneltest.
+- Die generische REST-Verbindung hat eine Registerkarte **Testen**, die über die gespeicherte Verbindung eine Ad-hoc-Anfrage absetzt.
+
+Schlägt der Test fehl, sind die üblichen Ursachen ein falscher Host oder Port, eine Firewall, die den ausgehenden Verkehr von PlaidCloud nicht zulässt, oder Zugangsdaten, die neu eingegeben werden müssen (denken Sie daran, dass Geheimnisse leer zurückgelesen werden).
+
+## Schritt 4: Die Daten in eine Tabelle Laden
+
+Daten gelangen über einen **Workflow-Import-Schritt** in ein Projekt, der auf Ihre Verbindung verweist und in eine **Zieltabelle** schreibt. Ansichten können keine Importziele sein – eine Tabelle enthält die physischen Zeilen.
+
+Am Beispiel einer Singer-Quelle:
+
+1. Doppelklicken Sie auf Ihren Workflow, um ihn im **Workflow-Explorer** zu öffnen.
+2. Fügen Sie einen Schritt hinzu und wählen Sie **Import: Singer-Quelle**. Der Editor öffnet sich mit einer Registerkarte **Quelle** und einer Registerkarte **Streams**.
+3. Wählen Sie auf der Registerkarte **Quelle** Ihre **Verbindung**, einen **Synchronisierungsmodus** (siehe Schritt 6) und klicken Sie dann auf **Streams ermitteln**. Die Ermittlung läuft auf der Hintergrund-Ausführungsengine und kann beim ersten Mal bis zu etwa drei Minuten dauern.
+4. Öffnen Sie auf der Registerkarte **Streams** den gewünschten Stream, aktivieren Sie **Diesen Stream importieren** und legen Sie seine **Zieltabelle** fest – die Tabelle, in die die Zeilen geladen werden.
+5. Speichern Sie den Schritt und führen Sie ihn aus. Die Zeilen werden in die Zieltabelle geladen.
+
+> **Der Schritt speichert einen Verweis auf die Verbindung, keine Kopie ihrer Zugangsdaten.** Jede Ausführung liest zur Laufzeit die aktuellen Zugangsdaten der Verbindung – wenn Sie also ein Token austauschen, aktualisieren Sie es einmal an der Verbindung, und jeder Schritt übernimmt es bei seiner nächsten Ausführung.
+
+Bei einem Datenbank- oder Cloud-Speicher-Konnektor unterscheidet sich der Import-Schritt, das Muster ist aber identisch: auf die Verbindung verweisen, eine Zieltabelle benennen, ausführen. Die [Konnektorreferenz](/de/reference/connectors/) verlinkt den jeweils verwendeten Schritt, und der [Workflow-Leitfaden](/de/guides/workflows/) behandelt Aufbau und Ausführung von Schritten.
+
+## Schritt 5: Eine Vorschau der Geladenen Daten Anzeigen
+
+Überall dort, wo PlaidCloud eine Tabelle oder Ansicht zeigt, öffnet ein Klick darauf den [Tabellen-Explorer](/de/guides/data/table-explorer/) – die Prüfung des Imports ist also einen Klick von der Registerkarte **Tabellen** entfernt.
+
+- Die Ansicht **Raster** zeigt die Zeilen (Standardlimit 5.000). Die Auswahl **Oben / Zufällig** steuert, welche Zeilen sie füllen – wechseln Sie zu **Zufällig**, um die Qualität bei einer großen Tabelle stichprobenartig zu prüfen, statt nur die ersten Zeilen.
+- Die Ansicht **Details** fasst jede Spalte zusammen: Anzahl eindeutiger Werte und Statistiken wie Min/Max/Mittelwert/Summe für numerische Spalten.
+- Wenn eine Spalte mit dem falschen Typ geladen wurde, beheben Sie das mit den Spaltenzuordnungen in Ihren Workflow-Schritten, nicht hier.
+
+Prüfen Sie, ob die Zeilenanzahl und einige Beispielwerte zu dem passen, was Sie von der Quelle erwarten. Wenn ja, funktionieren Verbindung und Import.
+
+## Schritt 6: Die Aktualisierung Einrichten
+
+Ein einmaliger Import ist eine Momentaufnahme. Damit die Tabelle aktuell bleibt, legen Sie fest, **wie** jede Ausführung neue Daten abgleicht, und planen Sie dann die Ausführungen.
+
+**Wie jede Ausführung abgleicht** – wird im Import-Schritt festgelegt. Bei einer Singer-Quelle sind die Synchronisierungsmodi:
+
+| Synchronisierungsmodus | Was jede Ausführung tut | Verwenden, wenn |
+|---|---|---|
+| Gesamte Tabelle (bei jeder Ausführung ersetzen) | Extrahiert alles neu und ersetzt das Ziel | Kleine oder vollständig aktualisierte Quellen |
+| Inkrementell (neue Daten anhängen) | Extrahiert nur Zeilen, die seit der letzten Ausführung neu sind, und hängt sie an | Quellen mit einem Replikationsschlüssel (einem Änderungszeitstempel oder einer aufsteigenden ID) |
+| Upsert (über Schlüssel zusammenführen) | Extrahiert den Stream erneut und führt über Schlüsselspalten zusammen – aktualisiert Treffer, fügt neue Schlüssel ein, behält den Rest | Quellen, deren vorhandene Datensätze sich ändern und bei denen Sie eine Zeile pro Schlüssel wünschen |
+
+Andere Konnektoren bieten ihre eigenen Entsprechungen; das Prinzip – ersetzen, anhängen oder zusammenführen – ist dasselbe.
+
+**Wann die Ausführungen stattfinden** – planen Sie den Workflow, damit er sich von selbst erneut ausführt. Richten Sie unter [Geplante Ereignisse](/de/administration/scheduled-events/) eine wiederkehrende Ausführung ein; von da an wird die Tabelle in diesem Takt ohne manuellen Schritt aktualisiert. Sie können den [Workflow](/de/guides/workflows/run-a-workflow/) auch jederzeit von Hand ausführen, wenn Sie sofort aktualisieren möchten.
+
+> **Wählen Sie Schlüsselspalten, die immer vorhanden sind (Upsert).** Upsert gleicht Zeilen über den exakten Schlüsselwert ab, und ein Nullschlüssel stimmt nie überein – Zeilen mit Nullschlüssel werden bei jeder Ausführung eingefügt und häufen sich an. Verwenden Sie eine Spalte, die die Quelle immer füllt.
+
+## Optional: Die Tabelle Veröffentlichen
+
+Wenn Dashboards, PlaidXL oder externe BI-Werkzeuge diese Tabelle nutzen, geben Sie ihr einen veröffentlichten Berichtsnamen, damit sie sich von Zwischentabellen abhebt. Klicken Sie die Tabelle auf der Registerkarte **Tabellen** mit der rechten Maustaste an und wählen Sie **Set Published Table Reporting Name** – siehe [Tabellen veröffentlichen](/de/guides/data/publish/). Nur veröffentlichte Namen erreichen nachgelagerte Werkzeuge.
+
+## Wie es Weitergeht
+
+- [Leitfaden zu Verbindungen](/de/guides/connections/) – Verbindungen erstellen, testen, klonen und den Zugriff darauf steuern
+- [Singer-Quellen](/de/guides/connections/singer-sources/) – die in dieser Anleitung verwendete Tap-basierte Quelle im Detail
+- [Konnektorreferenz](/de/reference/connectors/) – jedes unterstützte System und die genauen Felder, die es benötigt
+- [Tabellen-Explorer](/de/guides/data/table-explorer/) und [Tabellen und Ansichten](/de/guides/data/tables-views/) – das Geladene prüfen und verstehen
+- [Geplante Ereignisse](/de/administration/scheduled-events/) – die Aktualisierung nach wiederkehrendem Zeitplan ausführen
+- [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/) – die soeben geladene Tabelle bereinigen und umformen
+- [Ein Umlagemodell erstellen](/de/get-started/tutorials/build-an-allocation/) – verbundene Daten in einem Modell einsetzen

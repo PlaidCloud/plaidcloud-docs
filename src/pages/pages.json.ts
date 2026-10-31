@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
+import { locales } from '../lib/locales.mjs';
 
 /**
  * Structured per-page corpus for the docs AI assistant's retriever
@@ -36,7 +37,8 @@ function cleanBody(raw: string): string {
 export const GET: APIRoute = async () => {
 	const entries = await getCollection('docs');
 	const pages = entries
-		.filter((entry) => entry.id !== '404')
+		// English only: the retriever indexes English, and all ten locales would be ~53 MB, past the 25 MiB asset cap.
+		.filter((entry) => entry.id !== '404' && !Object.hasOwn(locales, entry.id.split('/')[0]))
 		.map((entry) => ({
 			slug: toSlug(entry.id),
 			title: entry.data.title ?? '',

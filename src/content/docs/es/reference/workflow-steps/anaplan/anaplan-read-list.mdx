@@ -1,0 +1,60 @@
+---
+title: "Anaplan: leer lista"
+description: Lea una o más listas de Anaplan (una jerarquía compuesta completa, empezando por la raíz) en una dimensión de PlaidCloud. No se importan las marcas de control de acceso ni los subconjuntos, y cada arista se consolida con un signo más simple.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Lee una o más listas de Anaplan a través de su [conexión de Anaplan](/es/guides/connections/anaplan/) y las carga en una dimensión de PlaidCloud. **Un solo paso lee una jerarquía compuesta completa**: indique todas las listas que abarca, empezando por la raíz (por ejemplo, Región, luego País y luego Tienda), en lugar de repartirla entre varios pasos. La tabla de ensayo se reemplaza por completo en cada ejecución, de modo que varios pasos que apunten a una misma tabla de ensayo borrarían cada uno las filas del anterior.
+
+Este paso aparece en el menú de pasos bajo **Anaplan**, con la etiqueta **Lectura de lista**.
+
+El paso se conecta a Anaplan **directamente en la nube** a través de su API de integración; no existe una ruta mediante un agente local.
+
+<Aside type="tip">
+Este conector es de solo lectura y se autentica con credenciales básicas (usuario y contraseña) o con un certificado de CA. Consulte [Autenticación](/es/guides/connections/anaplan/#autenticación). El presupuesto de solicitudes de Anaplan se comparte en todo el inquilino, por lo que conviene escalonar la programación de este paso respecto de sus otros flujos de trabajo de Anaplan. Consulte [Consideraciones sobre la programación](/es/guides/connections/anaplan/#consideraciones-sobre-la-programación).
+</Aside>
+
+## Configuración
+
+### Origen de Anaplan
+
+| Campo | Obligatorio | Notas |
+|---|---|---|
+| Conexión de Anaplan | Sí | La [conexión de Anaplan](/es/guides/connections/anaplan/) mediante la que se realiza la lectura. |
+| Entorno | Sí | El entorno de la conexión. |
+| Modelo | No | Reemplaza el ID de modelo guardado en la conexión. Se detecta en vivo desde la conexión o se escribe a mano. |
+| Listas | Sí | Todas las listas de Anaplan que abarca la jerarquía, como una lista ordenada. Agregue las listas detectadas del modelo elegido o escriba un ID a mano, y luego reordénelas con Subir / Bajar. Indicarlas empezando por la raíz resulta cómodo de leer, pero el orden no cambia lo que se carga: todas las listas se leen antes de resolver cualquier elemento principal. |
+| Tabla de ensayo | Sí | Las filas sin procesar de elemento principal, elemento secundario, consolidación, nombre y propiedades se cargan aquí antes de construir a partir de ellas la dimensión de PlaidCloud. |
+
+### Dimensión de PlaidCloud de destino
+
+| Campo | Obligatorio | Notas |
+|---|---|---|
+| Especificar la dimensión de forma dinámica | Una de las dos | Nombre de la dimensión de destino, que puede contener tokens `{variable}` que se resuelven en tiempo de ejecución. Está seleccionada de forma predeterminada. |
+| Usar una dimensión específica | Una de las dos | Elija en su lugar una dimensión de PlaidCloud ya existente. |
+
+## Lo que este paso no puede representar
+
+| Limitación | Qué significa |
+|---|---|
+| Cada arista se consolida con un `+` simple | Las jerarquías de listas de Anaplan no tienen peso ni signo por arista: no hay nada que leer, por lo que no se pierde nada en la traducción, pero tampoco se puede representar nada más. Si un modelo expresa exclusiones o consolidaciones negativas mediante un elemento de línea o una propiedad, esa lógica no pasa a la dimensión y debe reconstruirse más adelante en el flujo. |
+| No se importan las marcas de control de acceso ni la pertenencia a subconjuntos | Las marcas de lectura y escritura de Acceso selectivo y la pertenencia de cada elemento a un subconjunto de la lista son metadatos de Anaplan, no datos de la dimensión. Importar cada subconjunto como su propia columna chocaría con propiedades reales en un espacio de nombres compartido que no deja de crecer. Una propiedad de lista genuina cuyo nombre coincida con alguno de ellos se rechaza, en lugar de cargarse en silencio bajo el nombre del otro. |
+| Los subconjuntos de elementos de línea no se pueden leer como dimensiones | Anaplan los expone solo mediante un punto de conexión genérico de elementos de dimensión, no como una lista que este paso pueda leer. |
+| No se puede leer por esta ruta una lista de más de 1 000 000 de registros | El punto de conexión de elementos que lee este paso se niega por completo por encima de ese límite documentado, en lugar de devolver un resultado parcial, y no ofrece forma de paginar para sortearlo. Por eso el paso se rechaza e indica el límite, en lugar de cargar una dimensión parcial. Mientras tanto, divida la lista en Anaplan o lea un subconjunto de ella. |
+| Un nodo cuelga de un único elemento principal | Un elemento cuyo nombre y cuyo ID de elemento principal no coinciden, cuyo elemento principal está en una lista que este paso no lee, o cuyo elemento principal indicado no existe, se rechaza por su nombre en lugar de reasignarse en silencio a la raíz de la dimensión. |
+| No se importa el elemento de nivel superior de una lista | El elemento de nivel superior de Anaplan es un nodo de consolidación situado por encima de todos los elementos de la lista, no un elemento de la lista en sí, por lo que nunca lo devuelven los elementos que lee este paso. La dimensión resultante tiene un nivel menos que la lista de Anaplan, y las raíces propias de la lista pasan a ser las raíces de la dimensión. El paso emite una advertencia cuando una lista que usted lee declara uno. |
+| Los ID de nodo deben ser únicos en todas las listas que se leen juntas | El ID de un nodo es el código de Anaplan del elemento, o su nombre si no tiene código, y un código de Anaplan solo tiene garantía de ser único dentro de una lista. Dos listas que reutilicen los mismos códigos cortos se rechazan por su nombre, en lugar de fusionarse en silencio en un solo nodo. |
+| No se admiten jerarquías alternativas | Todas las listas se cargan en la jerarquía principal de la dimensión. |
+| Solo lectura | Nunca se escribe nada de vuelta en Anaplan. |
+
+## Relacionado
+
+- [Conectarse a Anaplan (guía)](/es/guides/connections/anaplan/): cree la conexión.
+- [Anaplan: leer vista](/es/reference/workflow-steps/anaplan/anaplan-read-view/): lea una vista guardada tal como se guardó.
+- [Anaplan: leer exportación](/es/reference/workflow-steps/anaplan/anaplan-read-export/): ejecute una acción de exportación ya existente.
+- Paso [Dimension Load](/es/reference/workflow-steps/dimensions/dimension-load/): el mismo mecanismo de carga de dimensiones en el que se basa este paso.
+- [Pasos de Anaplan](/es/reference/workflow-steps/anaplan/)

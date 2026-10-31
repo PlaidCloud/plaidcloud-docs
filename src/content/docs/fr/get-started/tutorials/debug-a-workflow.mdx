@@ -1,0 +1,137 @@
+---
+title: Déboguer un workflow
+description: Quand un workflow tombe en panne, trouvez la cause vous-même — exécutez une étape, prévisualisez sa sortie, lisez le journal, tracez les entrées avec l'audit des dépendances et interprétez l'erreur.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/debug-a-workflow.mdx
+---
+
+*~25 minutes · exécuter une étape, prévisualiser les données, lire le journal, tracer les entrées*
+
+Quelque chose ne va pas dans un workflow — une étape est en rouge, un chiffre en aval semble faux ou une exécution s'est arrêtée en cours de route. Ce tutoriel présente la boîte à outils manuelle pour comprendre pourquoi : exécuter une seule étape de façon isolée, prévisualiser ce qu'elle a produit, lire le journal du workflow, tracer l'origine de ses entrées avec l'audit des dépendances et lire l'erreur elle-même. Chaque outil répond à une question différente, et ensemble ils vous mènent généralement à la cause sans tâtonner.
+
+> **Vous préférez qu'on vous guide ?** Le [parcours assisté par l'IA](/fr/get-started/tutorials/fix-a-workflow-with-ai/) mène la même investigation sous forme de conversation. Ce tutoriel en est la version manuelle — tout ce qui suit, vous le pilotez vous-même, ce qui vaut la peine d'être fait au moins une fois pour savoir ce que l'assistant examine réellement.
+
+## La boucle de débogage
+
+Presque tout débogage de workflow suit la même courte boucle, quel que soit l'outil par lequel vous commencez :
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="La boucle de débogage d'un workflow : exécuter une étape de façon isolée, prévisualiser ses données de sortie, lire le journal du workflow pour trouver le message d'erreur, tracer les entrées de l'étape avec l'audit des dépendances, puis corriger et exécuter à nouveau l'étape." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="dbg-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="73" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Exécuter une étape</text>
+  <path d="M132 76 L162 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="162" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="221" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Prévisualiser</text>
+  <path d="M280 76 L310 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="310" y="56" width="118" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="369" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Lire le journal</text>
+  <path d="M428 76 L458 76" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" />
+  <rect x="458" y="56" width="118" height="40" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="517" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tracer les entrées</text>
+  <path d="M517 56 C517 22, 73 22, 73 54" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#dbg-arrow)" stroke-dasharray="4 3" />
+  <text x="295" y="28" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">corriger, puis exécuter à nouveau</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Chaque outil répond à une question — vous avez rarement besoin des quatre, mais ils s'enchaînent dans cet ordre.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud avec un projet et un workflow présentant un problème à élucider (une étape en rouge, un résultat erroné ou une exécution interrompue).
+- Une bonne connaissance du [Concepteur visuel de workflow](/fr/guides/workflows/advanced-workflows/) — le canevas où vous ferez l'essentiel de ce travail.
+
+## Étape 1 : exécuter uniquement l'étape défaillante
+
+Ne ré-exécutez pas tout le workflow pour tester une modification — c'est lent, et cela refait un travail auquel vous faites déjà confiance. Exécutez uniquement l'étape que vous examinez.
+
+1. Ouvrez le workflow dans le Concepteur visuel de workflow.
+2. Faites un clic droit sur l'étape à tester et choisissez **Exécuter l'étape** dans le menu contextuel.
+3. L'étape s'exécute de façon isolée, sur les données qui existent déjà dans ses tables sources.
+
+Ce dernier point est important quand vous déboguez : une étape lit ses tables sources telles qu'elles sont *à cet instant*. Si une étape en amont n'a pas encore été exécutée, ou l'a été avec des données périmées, exécuter cette étape seule en reflète les conséquences — ce que l'[étape 4](#étape-4-tracer-les-entrées-avec-laudit-des-dépendances) vous aide justement à repérer.
+
+Consultez [Exécuter une seule étape d'un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/) pour tous les détails.
+
+## Étape 2 : prévisualiser ce que l'étape a produit
+
+Une fois l'étape exécutée, examinez ce qu'elle a réellement écrit avant de décider si c'est correct. Le **tiroir Aperçu des données** affiche les données de sortie d'une étape directement sur le canevas — les 100 premières lignes avec leurs colonnes typées, ancré en bas.
+
+Il y a trois façons d'y accéder, qui mènent toutes au même tiroir :
+
+- **Survolez la vignette de l'étape** — un petit symbole de navigation (table) apparaît en fondu dans le coin inférieur droit de la vignette. Cliquez dessus.
+- **Faites un clic droit sur l'étape** et choisissez **Prévisualiser les données de sortie**.
+- **Dans l'inspecteur**, cliquez sur l'**icône en forme d'œil** de n'importe quelle carte de sortie dans la section **Sorties** de l'étape.
+
+Ce qu'il faut vérifier dépend du symptôme :
+
+| Symptôme | Ce qu'il faut chercher dans l'aperçu |
+|---|---|
+| Colonnes erronées ou manquantes | L'étape a-t-elle produit les colonnes attendues ? Une jointure ou une sélection de colonnes mal faite se voit ici en premier. |
+| Trop peu / trop de lignes | L'en-tête affiche **Showing first N of ~M rows** — le total est-il à peu près celui attendu ? |
+| Sortie vide | Le tiroir indique *Table is empty* (exécutée, zéro ligne) ou *No data yet — run the step* (jamais exécutée). |
+| Valeurs suspectes | Triez une colonne pour faire remonter en haut les valeurs nulles ou aberrantes. |
+
+Tant que le tiroir est ouvert, **un clic sur une autre étape redirige l'aperçu** vers la sortie de cette étape — vous pouvez ainsi parcourir une chaîne d'étapes et repérer où les données deviennent fausses pour la première fois. Si vous devez filtrer, découper ou aller au-delà des 100 premières lignes, cliquez sur **Ouvrir dans l'explorateur de tables** dans l'en-tête du tiroir.
+
+Tous les détails se trouvent dans [Prévisualiser les données d'une étape](/fr/guides/workflows/preview-step-data/).
+
+## Étape 3 : lire le journal du workflow
+
+L'aperçu vous montre *à quoi ressemble* la sortie ; le journal vous dit *ce qui s'est passé* lors de l'exécution de l'étape — y compris le message d'erreur en cas d'échec.
+
+Lorsque les étapes s'exécutent et que des avertissements surviennent, ces événements sont écrits dans le **journal du workflow**, consultable depuis la zone **Projet** sous l'onglet **Journal**. Depuis le Concepteur visuel de workflow, le bouton **Afficher les journaux** de la barre d'outils ouvre cette même vue, déjà filtrée sur le workflow que vous avez ouvert.
+
+1. Ouvrez l'onglet **Journal** (le journal du projet) — depuis le bouton **Afficher les journaux** de la barre d'outils ou l'onglet **Journal** de la zone Projet.
+2. Utilisez le contrôle de filtre à côté des messages du journal pour cibler l'étape et l'exécution qui vous intéressent.
+3. Ouvrez une entrée du journal pour lire ses détails — c'est là que se trouve le message d'erreur d'une étape en échec.
+
+Le journal au niveau du projet offre une vue plus complète sur plusieurs workflows, si un problème peut en concerner plusieurs. Consultez [Consulter le journal du workflow](/fr/guides/workflows/viewing-workflow-log/).
+
+> **Lire le message d'erreur.** Copiez le texte exact de l'entrée du journal — une mauvaise clé de jointure, une incompatibilité de type ou une table source manquante se lisent chacune différemment. Les deux causes les plus fréquentes d'erreur d'une étape sont des clés de jointure incompatibles entre des tables et des valeurs nulles inattendues dans des colonnes calculées. Lorsque le message pointe vers les données plutôt que vers la configuration de l'étape, c'est le signal qu'il faut tracer les entrées.
+
+> **Un exemple concret.** Imaginons qu'une étape de transformation passe au rouge. Vous ouvrez le journal et l'entrée indique `column "revenue" does not exist` — la table source contient une colonne `net_revenue`, pas `revenue`. La correction tient en une ligne : corriger le nom de la colonne dans l'expression de l'étape. Vous exécutez à nouveau uniquement cette étape, et elle repasse au vert. Voilà toute la boucle en un seul passage.
+
+## Étape 4 : tracer les entrées avec l'audit des dépendances
+
+Parfois, une étape est correctement configurée et produit pourtant des données erronées — parce qu'elle s'est exécutée sur des entrées alimentées *dans le désordre*. Quand des données existent déjà dans les tables, une étape s'exécute et semble correcte même si elle a lu des données périmées ou pas encore mises à jour. C'est l'échec que le journal ne peut pas vous montrer, car aucune erreur n'a été signalée.
+
+L'**audit des dépendances du workflow** existe précisément pour cela. Il analyse les dépendances de données et de workflow d'un workflow interconnecté et identifie les étapes dont les entrées sont alimentées dans le mauvais ordre par rapport au moment où elles sont lues.
+
+Utilisez-le lorsque :
+
+- La sortie d'une étape est erronée alors que l'étape elle-même n'a aucune erreur.
+- Vous avez réordonné ou ajouté des étapes et voulez vous assurer qu'aucune ne lit désormais une table avant qu'elle soit construite.
+- Un workflow « fonctionne » en exécution complète mais l'exécution d'une seule étape donne des chiffres différents — un signe classique de dépendance d'ordre.
+
+Consultez [Afficher un audit des dépendances](/fr/guides/workflows/view-a-dependency-audit/) pour savoir comment ouvrir et lire l'audit.
+
+## Étape 5 : décider comment le workflow doit gérer l'erreur
+
+Une fois la cause comprise, décidez de ce que le workflow doit faire à l'avenir si cette étape échoue. La gestion des erreurs de chaque étape se définit dans le formulaire de l'étape, et PlaidCloud propose trois niveaux :
+
+| Comportement | Ce qui se passe | Quand l'utiliser |
+|---|---|---|
+| **Arrêter le workflow** | L'exécution s'interrompt ; un indicateur d'erreur apparaît sur l'étape et sur le workflow. | Le comportement par défaut et le plus courant — les workflows doivent généralement s'exécuter sans erreur. |
+| **Continuer le traitement** | L'étape est marquée en erreur, mais le workflow la considère comme terminée et continue. | Les étapes qui peuvent sans conséquence échouer faute de données. À noter : le workflow affiche un indicateur d'*exécution en cours*, pas d'erreur. |
+| **Déclencher un workflow de remédiation** | Le workflow en cours s'arrête et un workflow de remédiation démarre à sa place. | Notification ou correction automatique. Ne se déclenche *pas* pour les étapes configurées pour continuer le traitement. |
+
+PlaidCloud peut aussi **réessayer** automatiquement une étape en échec — un nombre de fois défini, avec un délai facultatif allant de quelques secondes à plusieurs heures. C'est le bon outil lorsqu'une étape accède à un système distant ou à une source de données qui échoue par intermittence, plutôt qu'une étape comportant un vrai bogue de logique. Consultez [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/).
+
+## Étape 6 : corriger, ré-exécuter et confirmer
+
+1. Apportez la modification vers laquelle votre investigation pointait — corrigez la clé de jointure, ajoutez une étape en amont, corrigez une expression qui produit des valeurs nulles ou réordonnez les étapes.
+2. **Exécutez à nouveau uniquement cette étape** (étape 1) et **prévisualisez sa sortie** (étape 2). Si le tiroir était ouvert pendant l'exécution, il s'actualise automatiquement à la fin de celle-ci.
+3. Quand l'étape est correcte, exécutez le workflow de bout en bout et surveillez le journal pour confirmer que tout le pipeline est sain.
+
+Pour conserver une trace permanente de ce que fait le workflow — ses étapes, ses fonctions et ses variables — générez le **rapport de workflow** à la demande depuis l'icône Rapport dans la hiérarchie **Workflows**. Il reflète l'état actuel du workflow et constitue une documentation utile une fois la correction faite. Consultez [Afficher le rapport du workflow](/fr/guides/workflows/view-workflow-report/).
+
+**Voilà toute la boucle.** Vous avez exécuté une étape de façon isolée, prévisualisé ce qu'elle a écrit, lu l'erreur dans le journal, tracé ses entrées avec l'audit des dépendances et ré-exécuté pour confirmer la correction — la même investigation que fait l'assistant IA, mais cette fois vous la pilotez vous-même.
+
+## Pour aller plus loin
+
+- [Corriger un workflow avec l'assistant IA](/fr/get-started/tutorials/fix-a-workflow-with-ai/) — la même investigation, menée sous forme de conversation
+- [Exécuter une seule étape d'un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/) — exécuter une seule étape de façon isolée
+- [Prévisualiser les données d'une étape](/fr/guides/workflows/preview-step-data/) — le tiroir Aperçu des données
+- [Consulter le journal du workflow](/fr/guides/workflows/viewing-workflow-log/) — où les événements et les erreurs d'exécution sont enregistrés
+- [Afficher un audit des dépendances](/fr/guides/workflows/view-a-dependency-audit/) — repérer les dépendances de données dans le désordre
+- [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/) — arrêter, continuer, remédier et réessayer
+- [Afficher le rapport du workflow](/fr/guides/workflows/view-workflow-report/) — documentation à la demande de l'ensemble du workflow

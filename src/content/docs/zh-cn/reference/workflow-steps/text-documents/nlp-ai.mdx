@@ -1,0 +1,60 @@
+---
+title: Text NLP AI 步骤
+description: 对每一行运行由 LLM 支持的任务，包括实体提取、词性标注、摘要、零样本分类、键/值提取，或您自己的提示词。
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## 说明
+
+**Text NLP AI** 步骤对您的数据运行七种逐行任务之一，每种任务都是一批结构化（强制工具调用）的 LLM 调用：**命名实体识别**、**词性标注**、**摘要**、**零样本分类**、**键/值提取**、**提示词** 和 **嵌入**。它作为受管理的 PlaidCloud 作业运行（与 [ML：训练模型](/zh-cn/reference/workflow-steps/machine-learning/ml-train/)和 [LLM 步骤](/zh-cn/reference/workflow-steps/general/llm-step/)相同），因此不会与工作流的其余部分争用资源。
+
+由于每个任务都是真实的 LLM 调用，各次运行的结果不会逐位完全一致，请参阅[非确定性](#非确定性llm-支持的结果)。
+
+## 配置
+
+- **源 / 输出表** — 输入表以及写入结果的表。
+- **文本列** (`field`) — 每个任务读取的列。
+- **任务** (`task`) — `ner`、`pos`、`summary`、`zeroshot`、`keyvalue`、`prompt` 之一。`embed` 任务不在表单的任务列表中，请通过 AI 助手或 REST API 设置。
+- **语言** (`language`) — 文本的语言，会传递给模型。默认为 `en`。
+- **LLM 连接** (`llm_connection_id`) — Anthropic、OpenAI、Gemini、Azure OpenAI、Grok 或 GitHub Models 的 LLM 连接。留空则使用工作区默认连接。
+- **模型** (`llm_model`) — 留空则使用该连接的默认模型。
+- **温度** (`temperature`) — 可选的采样温度。请参阅[非确定性](#非确定性llm-支持的结果)：当前一代模型会忽略它。
+- **最大行数** (`max_rows`) — 仅回答按源顺序的前 N 行。其余行的答案保持为空。留空则处理所有行。
+- **批大小** (`batch_size`) — 每次 LLM 调用发送的行数，1 到 500。默认为 25。响应被截断的批次会被对半拆分后重试，而不会丢失行。
+
+## 任务
+
+四个任务为每个输入行返回一个输出行（**保留行数**）；三个任务为每个输入行返回零个或多个行，并把源的标识列 (`id_columns`) 带到每一行上（**展开行**）。
+
+| 任务 | 扇出 | 输出列 | 任务专用字段 |
+| --- | --- | --- | --- |
+| 命名实体识别 (`ner`) | 展开行 | `entity_text`、`entity_type` | **实体类型** (`entity_types`) — 允许的类型列表。留空则默认为 `people`、`organizations`、`locations`、`dates`、`quantities`。 |
+| 词性标注 (`pos`) | 展开行 | `token`、`pos`（通用词性标记，例如 `NOUN`、`VERB`、`ADJ`） | 无。 |
+| 摘要 (`summary`) | 保留行数 | `summary` | **摘要长度** (`summary_length`) — 最大句数，1 到 20。默认为 3。 |
+| 零样本分类 (`zeroshot`) | 保留行数 | `label`、`score`（0 到 1） | **标签字段** (`label_field`) — 保存每行候选标签的源列；没有它，模型就无从选择。**多标签** (`multi`) — 允许每行有多个标签（以 `, ` 连接），而不是只选出最佳的一个。 |
+| 提示词 (`prompt`) | 保留行数 | `answer`、`error` | **提示词** (`prompt`) — 应用于每一行的指令，必填。**输入字段** (`input_fields`) — 连同提示词一起发送给模型的列，每行一条记录；留空则发送 **文本列**。 |
+| 嵌入 (`embed`) | 保留行数 | `embedding`（数字的 JSON 数组）、`error` | 无。通过 AI 助手或 REST API 设置。需要兼容 OpenAI 的连接或 Azure OpenAI 连接，并且步骤的 **模型** 必须指定嵌入模型，因为连接的默认模型通常是聊天模型；Anthropic 连接会被拒绝，因为它没有嵌入 API。请求失败时会保留其批次中的每一行，`embedding` 为空，原因记录在 `error` 中。 |
+| 键/值对 (`keyvalue`) | 展开行 | `key`、`value` | **关键字段** (`key_field`) — 保存每行要提取的候选键的源列；留空则让模型自由发现键。**模糊** (`fuzzy`) — 对候选键进行宽松匹配，而不是精确匹配。 |
+
+**ID 列** (`id_columns`) 会把源表中的标识列带到展开行任务的每个输出行上，因此您可以把提取出的实体或键值对追溯到其源记录。ID 列不能与该任务自身的输出列同名：例如，在 `ner` 任务中把 ID 列命名为 `entity_type`，保存步骤时会被拒绝，并提示 *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+`error` 列保存该行失败调用的消息。提示词任务适用于其他任务未涵盖的任何逐行问题，例如 *Classify the sentiment of this review.* 字段值作为数据发送，绝不会作为给模型的指令。
+
+对于提示词任务，**文档列** (`content_field`) 指定一个以 Base64 保存每行文档的列。此时步骤每次调用发送一个文档。当提供方接受该类型和大小时，文档会作为图像或 PDF 发送给提供方。否则，步骤会发送 **文本备用列** (`text_fallback_field`) 中的文本，例如 OCR 文本。整个文档会离开 PlaidCloud 发送给提供方，因此请确认这对您的数据是可接受的。各行逐一发送，因此 **批大小** 会被忽略。如果某个批次失败，其行会被保留，`answer` 为空，并且步骤会发出警告。
+
+没有源表（*Source table is required.*），或者 **批大小** 或 **摘要长度** 超出上述范围时，保存同样会被拒绝。
+
+## 非确定性（LLM 支持的结果）
+
+每个任务都是对 LLM 的真实调用，因此即使输入完全相同，各次运行的结果也可能不同，不保证逐位一致，这是预期行为，而不是缺陷。
+
+**温度** 还带来另一个问题：当前一代模型（Opus 4.7+、Sonnet 5+、Fable）会直接拒绝显式的采样温度。如果您设置了温度，步骤会尝试一次；检测到第一次拒绝后，运行会在其余批次中回退到模型自身的服务器默认值，并且步骤的结果会带有一条一次性的提示信息，而不是失败。将温度留空（默认）可完全跳过这次往返，也是当前模型上的推荐设置。
+
+## 相关内容
+
+- [ML：训练模型](/zh-cn/reference/workflow-steps/machine-learning/ml-train/) — 拟合模型，而不是对每一行调用 LLM。
+- [LLM 步骤](/zh-cn/reference/workflow-steps/general/llm-step/) — 具有限定范围的项目读写访问权限的自由格式代理式 LLM 调用，而不是这些固定的逐行任务之一。
+- [Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/) — Named Entity Recognition、POS Tagger、Text Summary、Zero-shot Text Classification 和 Key/Value Pairs 都会转换为此步骤。
+- [迁移 Savant 分析](/zh-cn/guides/workflows/migrate-savant-analyses/) — Savant 的 Infer 和 Vision 代理会转换为提示词任务。

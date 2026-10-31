@@ -1,0 +1,129 @@
+---
+title: "AI: wyszukiwanie wektorowe"
+description: Znajdź wiersze tabeli, których zapisany wektor jest najbliższy każdemu wektorowi zapytania, według odległości cosinusowej lub euklidesowej, w kroku przepływu pracy PlaidCloud.
+sidebar:
+  label: "AI: wyszukiwanie wektorowe"
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/vector-search.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+**AI: wyszukiwanie wektorowe** szereguje wiersze tabeli według tego, jak blisko wektora zapytania znajduje się ich kolumna [wektorowa](/pl/guides/data/vector-data-type/), i zapisuje najbliższe wiersze — wraz z odległością, która o tym zdecydowała — w tabeli docelowej. Podaj kilka wektorów zapytań, a każdy z nich otrzyma własny zestaw dopasowań, wszystko w jednym przejściu po tabeli źródłowej i w jednej tabeli wyjściowej.
+
+Wyszukiwanie jest **dokładne**. Każdy wiersz, który przechodzi filtr kroku, jest porównywany z każdym wektorem zapytania, więc dopasowania to rzeczywiście najbliższe wiersze, a nie przybliżenie — a nakład pracy rośnie wraz z liczbą przeszukiwanych wierszy pomnożoną przez liczbę wektorów zapytań. Nie ma indeksu wektorowego do zbudowania, dostrojenia ani do awaryjnego użycia.
+
+<Aside type="caution">
+Typ kolumny Wektor, a tym samym ten krok, wymaga **Lakehouse v2 (StarRocks)**.
+</Aside>
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 520 200" role="img" aria-label="Każdy wektor zapytania jest porównywany z każdym wierszem przeszukiwanej tabeli, który przechodzi filtr, a najbliższe wiersze są zapisywane w tabeli docelowej z kolumną odległości. Wiersze, których odległości nie da się zmierzyć, są pomijane." style="width:100%;max-width:520px;height:auto;">
+  <defs>
+    <marker id="vs-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="260" y="20" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">każdy przefiltrowany wiersz jest porównywany — bez indeksu, bez przybliżenia</text>
+  <rect x="14" y="44" width="122" height="42" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">wektory zapytań</text>
+  <rect x="14" y="118" width="122" height="46" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="75" y="138" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabela do przeszukania</text>
+  <text x="75" y="153" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">najpierw filtrowana</text>
+  <rect x="204" y="82" width="112" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.8" />
+  <text x="260" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-accent)">odległość</text>
+  <text x="260" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">mniej = bliżej</text>
+  <path d="M136 65 L200 94" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <path d="M136 140 L200 114" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#vs-arrow)" />
+  <rect x="386" y="82" width="120" height="44" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="446" y="101" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">tabela docelowa</text>
+  <text x="446" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">najlepsze dopasowania na zapytanie</text>
+  <path d="M316 104 L382 104" stroke="var(--sl-color-accent)" stroke-width="1.8" fill="none" marker-end="url(#vs-arrow)" />
+  <text x="260" y="180" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wiersz, którego odległości nie da się zmierzyć, jest pomijany, a nie stawiany na pierwszym miejscu</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Wiersze są filtrowane, następnie każdy z pozostałych jest oceniany względem każdego wektora zapytania, a najbliższe są zachowywane. To zawężenie filtra sprawia, że duża tabela jest szybka, ponieważ nie ma indeksu, na którym można by się oprzeć.</figcaption>
+</figure>
+
+## Źródło i cel
+
+- **Tabela do przeszukania** — tabela, której zapisane wektory są przeszukiwane.
+- **Tabela docelowa** — tabela, do której zapisywane są dopasowania.
+
+## Wyszukiwanie
+
+- **Kolumna wektorowa** — kolumna Wektor w tabeli do przeszukania, względem której mierzona jest odległość.
+  Każdy inny typ danych jest odrzucany, z podaniem kolumny i typu, który faktycznie zawiera.
+- **Metryka odległości** — **Cosinusowa** lub **Euklidesowa (L2)**. Odległość cosinusowa mierzy kąt między dwoma wektorami i ignoruje ich długości, co jest właściwe dla osadzeń tekstu; euklidesowa mierzy odległość w linii prostej i uwzględnia długość. W obu przypadkach mniejsza odległość oznacza bliższy wiersz. Domyślnie wybrana jest cosinusowa.
+- **Liczba dopasowań na zapytanie** — ile najbliższych wierszy zachować dla każdego wektora zapytania. Wartość domyślna to 10.
+
+<Aside type="note">
+**Cosinusowa i euklidesowa to jedyne metryki.** Iloczyn skalarny celowo nie jest oferowany: dla wektorów, które nie są znormalizowane, nie jest on odległością — odległość wektora od samego siebie wychodzi ujemna — więc próg ustawiony względem niego i każdy pokazany dla niego wynik byłyby błędne, nawet gdy ranking akurat by się zgadzał. Dla znormalizowanych osadzeń odległość cosinusowa daje taki sam ranking jak iloczyn skalarny.
+</Aside>
+
+## Wektory zapytań
+
+Karta **Wektory zapytań** przyjmuje tablicę JSON z jednym wpisem na zapytanie, każdy z `id` i `vector`:
+
+```json
+[
+  {"id": "q1", "vector": [0.1, 0.2, 0.3]},
+  {"id": "q2", "vector": [0.4, 0.5, 0.6]}
+]
+```
+
+Każde zapytanie zwraca własny zestaw dopasowań, a `id` identyfikuje je w wyniku. Identyfikatory muszą być unikatowe, każda wartość musi być liczbą skończoną, a każdy wektor zapytania musi mieć tyle samo wartości co wektory zapisane — odległość jest zdefiniowana tylko między wektorami o równej szerokości. Niezgodność jest odrzucana, z podaniem zapytania, liczby jego wartości i szerokości, którą ma lub deklaruje kolumna.
+
+<Aside type="caution">
+Zapisane wektory również muszą mieć tę samą liczbę wartości. Wyszukiwanie w kolumnie, której wiersze mają dwie różne szerokości, kończy się surowym błędem z silnika bazowego, a nie komunikatem wskazującym kolumnę. Zadeklarowana Szerokość wektora jest egzekwowana na każdej ścieżce ładowania — imporcie pliku, łączniku, tapie, zdalnym zapytaniu, kroku przepływu pracy zapisującym ramkę, archiwum lub pakiecie — więc zadeklarowana szerokość jest szerokością, którą ma kolumna. Wyjątkiem jest import CSV: nie można go sprawdzić i jest jedyną ścieżką, która może pozostawić kolumnę o mieszanych szerokościach. Zobacz
+[Szerokość wektora](/pl/guides/data/vector-data-type/#szerokość-wektora).
+</Aside>
+
+## Wybierz podzbiór danych
+
+Filtr ogranicza, które wiersze są kandydatami. Wiersze są filtrowane *przed* szeregowaniem, więc dopasowania to najbliższe wiersze spośród tych, które przechodzą filtr — a nie najbliższe ogółem, filtrowane później. To główny sposób kontrolowania, ile pracy wykonuje krok; zobacz
+[Dobór rozmiaru wyszukiwania](#dobór-rozmiaru-wyszukiwania).
+
+## Kolumny wyjściowe
+
+Każde dopasowanie jest zapisywane jako jeden wiersz zawierający kolumny wybrane na karcie **Wybór danych tabeli** oraz dwie kolumny obliczane, których nazwami możesz sterować:
+
+- **Kolumna nazwy zapytania** — identyfikator wektora zapytania, na który odpowiada ten wiersz. Domyślnie `query_id`.
+- **Kolumna odległości** — zmierzona odległość między dopasowaniem a tym wektorem zapytania. Domyślnie `distance`. Jest to również klucz szeregowania.
+
+Nazwa zapytania jest w wyniku pierwsza, po niej następują wybrane kolumny, a odległość jest ostatnia. Nazwy kolumn wyjściowych muszą być unikatowe.
+
+<Aside>
+Elementy sterujące **Podsumuj**, **Unikalne** i agregacji na karcie Wybór danych tabeli są przez ten krok ignorowane: zestaw najlepszych dopasowań dotyczy wektora zapytania i nigdy nie grupuje.
+</Aside>
+
+## Pomijane wiersze
+
+Wiersz, którego odległości nie da się zmierzyć, jest **wykluczany** z dopasowań, zamiast być zwracany tak, jakby był najbliższy. Z takim przypadkiem się spotkasz, gdy wartość bezwzględna wektora przekracza zakres 32-bitowej liczby zmiennoprzecinkowej: nie jest dla niego zwracana żadna mierzalna odległość, a ponieważ nic dostępnego nie umieszcza niemierzalnej odległości na końcu, uwzględnienie takiego wiersza umieściłoby na szczycie każdego wyniku wiersze, o których wyszukiwanie wie najmniej.
+
+Uruchom przepływ pracy z włączonym **Tryb diagnostyczny**, aby zobaczyć liczbę. Dziennik przepływu pracy raportuje wtedy, ile wierszy pominęło każde zapytanie, lub informuje, że krok zmierzył każdy przeszukany wiersz. Policzenie ich wymaga drugiego przejścia po tabeli, dlatego jest naliczane tylko na żądanie; przy wyłączonym trybie diagnostycznym dziennik informuje, że niemierzalne wiersze są pomijane z założenia, i odsyła do trybu diagnostycznego po liczbę.
+
+Zapisany wektor zawierający *brakującą wartość* wewnątrz tablicy to inna sprawa: nie można zmierzyć odległości względem żadnej tablicy, która ją zawiera, więc wyszukiwanie jest odrzucane w całości, z podaniem kolumny, zamiast po cichu zwracać częściowy wynik. Popraw lub usuń te wiersze i uruchom ponownie.
+
+## Dobór rozmiaru wyszukiwania
+
+Koszt uruchomienia to liczba wierszy-kandydatów pomnożona przez liczbę wektorów zapytań, a krok odrzuca wyszukiwanie, którego suma przekracza dziesięć miliardów pomiarów odległości — raportując liczbę wierszy, liczbę zapytań i limit — zamiast zaczynać pracę, której nie da się ukończyć. Dwie rzeczy utrzymują wyszukiwanie dobrze w tych granicach:
+
+- **Filtruj do istotnego wycinka.** Zawęź kandydatów do jednej jednostki, jednego okresu lub jednego zbioru dokumentów, zamiast skanować cały korpus, by odpowiedzieć na pytanie dotyczące jego części.
+- **Podziel tabelę według wymiaru, według którego zawsze filtrujesz**, i przeszukuj odpowiednią tabelę. Ograniczenie liczby kandydatów jest znacznie skuteczniejsze niż cokolwiek innego, co tu dostępne.
+
+Zadeklarowanie **Szerokość wektora** dla kolumny również pomaga: po jej zadeklarowaniu krok bierze szerokość z deklaracji zamiast próbkować wiersz, by ją poznać. Zobacz
+[Typ danych Wektor](/pl/guides/data/vector-data-type/#szerokość-wektora).
+
+## Do czego nie można użyć kolumny wektorowej
+
+Kolumna Wektor jest odrzucana jako klucz złączenia, kolumna grupowania i cel agregacji — w tym kroku i w każdym innym. Komunikat wskazuje kolumnę i rolę, w której ją użyto, zarówno przy zapisie kroku, jak i przy uruchomieniu kroku zapisanego wcześniej. Zamiast tego łącz i grupuj według kluczy biznesowych obok wektora. Przekazywanie wektora przez krok jako zwykłej kolumny wyjściowej jest dozwolone, podobnie jak zliczanie wierszy i zliczanie unikalnych wartości.
+
+## Powiązane
+
+- [Typ danych Wektor](/pl/guides/data/vector-data-type/) — deklarowanie kolumny Wektor, ustawianie jej szerokości
+  i ładowanie do niej osadzeń
+- [Spatial Find Nearest](/pl/reference/workflow-steps/spatial/spatial-find-nearest/) — ten sam schemat najbliższych sąsiadów dla geometrii zamiast osadzeń
+- [Table Lookup](/pl/reference/workflow-steps/tables/table-lookup/) — przywróć kolumny opisowe
+  do dopasowanych wierszy
+- [Importuj Parquet](/pl/reference/workflow-steps/import/import-parquet/) — załaduj osadzenia z pliku
+  Parquet

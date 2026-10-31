@@ -1,0 +1,130 @@
+---
+title: Kreator tabeli głównej SCD-2
+description: Zbuduj tabelę historii na dany moment ze źródła danych głównych, śledząc zmiany wybranych atrybutów w czasie za pomocą dat valid-from i valid-to.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-master-builder.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Buduje tabelę historii **wolno zmieniającego się wymiaru typu 2 (SCD-2)** z tabeli źródłowej. Zwykła tabela główna przechowuje tylko dzisiejszą wartość dla każdego klucza, a tabela SCD-2 przechowuje każdą wartość, jaką klucz kiedykolwiek miał, opatrzoną zakresem dat jej obowiązywania. Pozwala to odpowiadać na pytania dotyczące danego momentu — *w jakim regionie był ten klient w dniu transakcji?* — zamiast tylko *w jakim regionie jest teraz?*
+
+Każde uruchomienie porównuje migawkę źródła z poprzednią historią i dla kluczy, których śledzone atrybuty się zmieniły, zamyka starą wersję i otwiera nową. Tabela jest przeliczana i podmieniana atomowo, więc ponowne uruchomienie z tymi samymi danymi wejściowymi daje ten sam wynik.
+
+Połącz ten krok z krokiem [Złączenie SCD-2 na dzień](/pl/reference/workflow-steps/dimensions/scd2-asof-join/), aby dołączyć wartość z danego momentu do tabeli faktów.
+
+## Kolumny wyjściowe
+
+Każde uruchomienie tworzy trzy zarezerwowane kolumny obok kolumn przenoszonych bez zmian. Nie nadajesz im nazw — zawsze są to `valid_from`, `valid_to` i `is_current`, a Twoje kolumny kluczy biznesowych i śledzone nie mogą używać tych nazw.
+
+| Kolumna | Znaczenie |
+|---|---|
+| `valid_from` | Data, od której ta wersja obowiązuje (włącznie). |
+| `valid_to` | Data, w której ta wersja przestała obowiązywać (wyłącznie). Otwarte (bieżące) wiersze mają wartownika w postaci odległej daty `9999-12-31`. |
+| `is_current` | `true` dla wersji obowiązującej obecnie, `false` dla zamkniętej historii. |
+
+<Aside type="note">Przedział jest **półotwarty**: `[valid_from, valid_to)`. Wersja obejmuje `valid_from` aż do `valid_to`, *ale bez niego*. Kolejne wersje stykają się więc bez nakładania: `valid_to` jednej wersji jest dokładnie `valid_from` następnej i żadna data nie należy do dwóch wersji.</Aside>
+
+## Tabele
+
+### Tabela źródłowa
+
+Bieżąca migawka Twoich danych głównych — jeden wiersz na klucz biznesowy, zawierający dzisiejsze wartości atrybutów.
+
+### Poprzednia tabela SCD-2 (opcjonalna)
+
+Istniejąca tabela historii z poprzedniego uruchomienia. Przy **pierwszym uruchomieniu** pozostaw ją pustą (lub wskaż tabelę wyników); krok zbuduje wtedy pełną historię od zera, otwierając po jednej wersji na wiersz źródła w dniu obowiązywania.
+
+### Tabela wyników
+
+Miejsce, do którego zapisywana jest przebudowana historia. Musi to być tabela, a nie widok.
+
+## Data obowiązywania i opcje
+
+Każde uruchomienie opatruje swoje zmiany jedną datą obowiązywania. Podaj ją dokładnie na jeden z dwóch sposobów — podanie obu lub żadnego jest błędem.
+
+- **Kolumna daty obowiązywania** — kolumna w źródle zawierająca datę obowiązywania. Musi mieć tę samą wartość w każdym wierszu źródła (migawka jest *na dzień* jednej daty).
+- **Data obowiązywania** — literalna data `YYYY-MM-DD` lub zmienna, taka jak `{current_month}`, stosowana do całego uruchomienia.
+
+<Aside type="caution">Wybierz jedno, nie oba. To twarde XOR: krok odrzuca uruchomienie, które określa kolumnę daty obowiązywania *i* datę literalną, i tak samo odrzuca takie, które nie określa żadnej.</Aside>
+
+Pozostałe opcje:
+
+- **Górna data otwartego przedziału** — wartownik zapisywany w `valid_to` dla otwartych wierszy. Domyślnie `9999-12-31`; rzadko jest powód, by go zmieniać, i musi odpowiadać górnej dacie używanej przez [Złączenie SCD-2 na dzień](/pl/reference/workflow-steps/dimensions/scd2-asof-join/).
+- **Zamykaj przy braku** — po włączeniu klucz, który zniknął ze źródła, ma swoją otwartą wersję zamkniętą w dniu obowiązywania (klucz jest traktowany jako wycofany). Gdy opcja jest wyłączona (domyślnie), brakujące klucze zachowują istniejącą otwartą wersję, aby historia nigdy nie ginęła przez częściowe wyodrębnienie.
+
+Krok odmawia zapisania literalnej Daty obowiązywania lub Górnej daty otwartego przedziału, która nie jest prawdziwą datą w formacie `YYYY-MM-DD`, ani Daty obowiązywania równej Górnej dacie lub późniejszej od niej. Data podana jako zmienna nie jest sprawdzana.
+
+## Role kolumn
+
+Użyj **Sprawdź źródło**, aby wyświetlić kolumny źródła, a następnie oznacz każdą z nich:
+
+| Rola | Znaczenie |
+|---|---|
+| **Klucz biznesowy** | Klucz naturalny identyfikujący wiersz w czasie (np. `customer_id`). Wymagany jest co najmniej jeden. Wartości muszą być unikatowe w źródle i niepuste. |
+| **Atrybut śledzony** | Atrybut, którego zmiany otwierają nową wersję (np. `region`). Wymagany jest co najmniej jeden. |
+| **(przenieś bez zmian)** | Nieoznaczone kolumny są kopiowane do każdej wersji bez zmian i same z siebie nie powodują utworzenia nowej wersji. |
+
+## Zachowanie scalania
+
+Gdy podano poprzednią tabelę, krok porównuje migawkę źródła wyłącznie z **bieżącymi** wersjami (nigdy z zamkniętą historią) i decyduje dla każdego klucza:
+
+| Sytuacja | Wynik |
+|---|---|
+| Śledzone atrybuty bez zmian | Brak operacji — otwarta wersja pozostaje bez zmian. |
+| Śledzone atrybuty zmienione | Otwarta wersja jest zamykana w dniu obowiązywania i wstawiana jest nowa otwarta wersja. |
+| Data obowiązywania równa `valid_from` otwartej wersji | Traktowane jako **korekta tego samego dnia** — śledzone wartości są nadpisywane w miejscu, zamiast tworzyć przedział o zerowej szerokości. |
+| Klucza brak w źródle | Pozostaje otwarty (lub jest zamykany w dniu obowiązywania, jeśli włączono **Zamykaj przy braku**). |
+
+Zabezpieczenia, które zatrzymują uruchomienie zamiast po cichu uszkodzić historię:
+
+- **Daty w złej kolejności są odrzucane.** Data obowiązywania musi być *późniejsza* niż bieżące `valid_from` każdego dotkniętego klucza. Uruchomienie z datą wsteczną, które odwróciłoby przedział, kończy się błędem, zamiast tworzyć wersję o ujemnej szerokości.
+- **Zduplikowane klucze źródła są odrzucane.** Źródło musi być unikatowe względem klucza biznesowego; duplikaty (lub puste klucze) powodują błąd, zamiast być po cichu usuwane.
+- Wykrywanie zmian jest **bezpieczne względem null**, więc zmiana wartości na pustą lub z pustej jest poprawnie rejestrowana jako zmiana.
+
+## Przykład
+
+Śledź, do którego regionu należał każdy klient w czasie.
+
+**Źródło — `customer_master` (na dzień 2026-01-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | West | SMB |
+| C2 | East | Enterprise |
+
+Pierwsze uruchomienie: **Tabela źródłowa** = `customer_master`, **Poprzednia tabela SCD-2** = pusta, **Tabela wyników** = `customer_scd2`, **Data obowiązywania** = `2026-01-01`, Klucz biznesowy = `customer_id`, Atrybut śledzony = `region` (`segment` pozostawiony bez oznaczenia, przenoszony bez zmian).
+
+**`customer_scd2` po pierwszym uruchomieniu:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Teraz C1 przenosi się do regionu Central. **Źródło — `customer_master` (na dzień 2026-04-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | Central | SMB |
+| C2 | East | Enterprise |
+
+Drugie uruchomienie: te same role tabel, **Poprzednia tabela SCD-2** = `customer_scd2`, **Data obowiązywania** = `2026-04-01`.
+
+**`customer_scd2` po drugim uruchomieniu:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | SMB | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Wersja West klienta C1 została zamknięta w dniu `2026-04-01` i otwarto wersję Central. Dzięki przedziałowi półotwartemu transakcja z datą `2026-04-01` należy do **Central**, a nie West. C2 nie zmienił się i pozostał nietknięty.
+
+## Powiązane
+
+- [Złączenie SCD-2 na dzień](/pl/reference/workflow-steps/dimensions/scd2-asof-join/) — dołącz wartość z danego momentu do tabeli faktów.
+- [Krok Dimension Load](/pl/reference/workflow-steps/dimensions/dimension-load/) — załaduj hierarchię z tabeli.

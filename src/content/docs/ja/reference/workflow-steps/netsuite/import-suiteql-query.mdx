@@ -1,0 +1,113 @@
+---
+title: "NetSuite: SuiteQL クエリのインポート"
+description: 独自の NetSuite SuiteQL クエリをワークフローで実行し、結果を型付きのプロジェクトテーブルに読み込みます。日付ウィンドウとページングは自動で処理されます。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[NetSuite 接続](/ja/guides/connections/netsuite/)を使用して、ご自身で記述した SuiteQL クエリを NetSuite に対して実行し、結果をプロジェクトテーブルに読み込みます。カスタムレコード、保存検索のようなレポート、独自のモデルに合わせた結合など、あらかじめ用意されたインポートステップでは対応できないデータに使用します。
+
+このステップは、他の [NetSuite インポートステップ](/ja/reference/workflow-steps/netsuite/)と同じレイヤーを通じて読み取ります。OAuth トークンの更新、大きな結果のバッチ読み取り、一時的なエラーの再試行、長い日付範囲のウィンドウ分割を自動的に行うため、記述するのはクエリだけです。[Data Foundation](/ja/guides/projects/data-foundation/) の Load ワークフローは、NetSuite の読み取りにこのステップを使用します。
+
+## 設定
+
+このステップには、**インポートパラメーター**という 1 つのタブがあります。
+
+### ソースとターゲット
+
+| フィールド | 必須 | 備考 |
+|---|---|---|
+| NetSuite接続 | はい | 読み取りに使用する NetSuite 接続です。NetSuite 接続は **Tools > Connections** で管理します。 |
+| 環境 | いいえ | 使用する接続の環境です（本番やサンドボックスなど）。 |
+| ターゲットテーブル | はい | 結果の書き込み先のプロジェクトテーブルです。実行のたびに上書きされます。 |
+
+### SuiteQL クエリ
+
+実行するクエリです。4 つのプレースホルダーを使用でき、それぞれ**プレースホルダ値とページング**の対応する値に置き換えられます。PlaidCloud は各値を検証し、適切な種類のリテラルとしてクエリに書き込むため、プレースホルダーに引用符や `TO_DATE` を付ける必要はありません。
+
+| プレースホルダー | 置き換えられる値 | 書き込まれる形式 |
+|---|---|---|
+| `{subsidiary_id}` | **子会社ID** | 整数 |
+| `{posting_period_id}` | **転記期間ID** | 整数 |
+| `{start_date}` | **開始日**、または現在のウィンドウの開始日 | 日付 |
+| `{end_date}` | **終了日**、または現在のウィンドウの終了日 | 日付 |
+
+波括弧で囲まれたその他の語は拒否されます。また、値が空白のままクエリで使用されているプレースホルダーも拒否されます。
+
+クエリは次のように記述してください。
+
+- **一意のキーによる `ORDER BY` で終わらせる。** NetSuite は大きな結果をバッチで返すため、安定したソートがないと、バッチ間で行が欠落したり重複したりすることがあります。内部 ID など、行ごとに一意のキーでソートしてください。`ORDER BY` のないクエリは、追加を求めるメッセージとともに停止します。
+- **日付をテキストで返す。** `TO_CHAR(date, 'YYYY-MM-DD')` を使用します。そうしないと、SuiteQL はアカウントの表示形式で日付を返します。
+- **日付範囲を読み取る場合は、1 つの日付列を `{start_date}` と `{end_date}` の間でフィルターする。** 各行がちょうど 1 つのウィンドウに入るよう、単一の日付列でフィルターしてください。開始日または終了日を設定した場合、クエリでそのプレースホルダーを使用する必要があります。
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### 結果列
+
+クエリが返す各列に名前を付け、タイプを指定します。名前は、大文字と小文字を区別せずにクエリの列エイリアスと照合されます。グリッドの上にある追加ボタンと削除ボタンで、リストを管理します。
+
+| 列 | 備考 |
+|---|---|
+| 列名 | クエリの列エイリアスです。すべての結果列に名前が必要です。 |
+| タイプ | **テキスト**（デフォルト）、**整数**、**大整数**、**小整数**、**極小整数**、**シリアル**、**大シリアル**、**10進数**、**数値**、**通貨**、**倍精度浮動小数点数**、**浮動小数点数**、**ブール**、**日付**、**タイムスタンプ**、**UUID**。 |
+
+結果列を少なくとも 1 つ追加してください。列は、ここで指定した名前でターゲットテーブルに格納されます。SuiteQL はすべての値をテキストとして返すため、タイプによって PlaidCloud がどのように格納するかが決まります。金額は**通貨**または**10進数**、`TO_CHAR` で返した日付は**日付**または**タイムスタンプ**、`T`/`F` のフラグは**ブール**に設定してください。
+
+### プレースホルダ値とページング
+
+| フィールド | デフォルト | 備考 |
+|---|---|---|
+| 子会社ID | 空白 | `{subsidiary_id}` に使用される NetSuite の子会社の内部 ID です。 |
+| 転記期間ID | 空白 | `{posting_period_id}` に使用される NetSuite の転記期間の内部 ID です。 |
+| 開始日 | 空白 | `YYYY-MM-DD`。`{start_date}` に使用されます。終了日より後の日付は指定できません。 |
+| 終了日 | 空白 | `YYYY-MM-DD`。`{end_date}` に使用されます。 |
+| ウィンドウ日数 | 90 | 開始日と終了日の両方を設定した場合、範囲はこの日数（1 から 3650）のウィンドウに分けて読み取られます。クエリはウィンドウごとにそのウィンドウの日付で 1 回実行され、結果が結合されます。 |
+| 1 分あたりのリクエスト数 | 0 | 同じアカウントの他の連携に余裕を残すため、このステップの NetSuite への呼び出し頻度を調整します。`0` は制限なしです。 |
+
+これらの値にはいずれも変数を使用できます。
+
+## 検証
+
+次の項目が設定されるまで、ステップは保存できません。
+
+- **NetSuite接続** — 「NetSuite connection is required.」
+- **ターゲットテーブル** — 「Target table is required.」
+- **SuiteQL クエリ** — 「A SuiteQL query is required.」
+- **結果列** — 「Add at least one result column.」および「Every result column needs a name.」
+
+## 注記
+
+- NetSuite は 1 回のクエリを約 100,000 行に制限します。この上限を超えるクエリまたはウィンドウは、切り詰められた結果を読み込むのではなく、日付範囲やその他のフィルターを絞り込むよう求めるメッセージとともに停止します。各ウィンドウを上限以内に収めるには、**ウィンドウ日数**を小さくしてください。
+- ステップは必要に応じて NetSuite トークンを更新し、スロットリングされた、または失敗したリクエストを一定時間待機してから再試行します。
+- ターゲットテーブルは実行のたびに全体が置き換えられます。毎回全履歴を読み取るのではなく、ローリングの日付ウィンドウなど、必要な範囲に `WHERE` 句を絞り込んでください。
+- 行を返さないクエリは、警告とともに終了し、ターゲットテーブルは空のままになるため、後続のステップは引き続き実行されます。
+- NetSuite からのエラーメッセージは、認証情報、トークン、キーを除去して表示されるため、NetSuite 元の文言が一部省略されることがあります。
+
+<Aside type="caution">
+`transaction` と `transactionline` では、`amount` は各トランザクション自体の通貨での金額です。通貨が異なる子会社をまたいだ合計は、連結後の数値ではありません。子会社をまたいで合計する場合は、連結後または換算後の金額を選択してください。
+</Aside>
+
+## 関連項目
+
+- [NetSuite ステップ](/ja/reference/workflow-steps/netsuite/)
+- [NetSuite への接続](/ja/guides/connections/netsuite/)
+- [NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/ja/guides/projects/data-foundation/)

@@ -1,0 +1,155 @@
+---
+title: Comparar e fundir projetos
+description: Compare dois projetos do Analyze lado a lado — fluxos de trabalho, passos, variáveis, dimensões e mais — e funda seletivamente as alterações de um projeto noutro.
+sidebar:
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/compare-and-merge-projects.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A comparação permite ver exatamente o que difere entre dois projetos e, nas partes que podem ser copiadas com segurança, fundir alterações selecionadas de um projeto no outro. Foi concebida para duas situações do dia a dia:
+
+- **Promover alterações entre ambientes** — rever o que é diferente entre um projeto de QA (desenvolvimento) e o seu equivalente de produção e, depois, passar para produção apenas as alterações pretendidas.
+- **Rever em relação a um instantâneo ou cópia anterior** — comparar um projeto com uma cópia de si próprio (por exemplo, um clone mês a mês) para ver o que mudou.
+
+Mantém o controlo em todo o processo: nada é gravado até selecionar itens específicos e aplicá-los, e pode validar primeiro com uma execução de teste.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 210" role="img" aria-label="Comparação de dois projetos. Um projeto de QA e um projeto de produção são emparelhados item a item; a comparação marca cada item como alterado, adicionado ou igual. Seleciona as alterações a fundir e apenas essas são gravadas em produção." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="cm-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="150" height="132" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">QA (desenvolvimento)</text>
+  <text x="30" y="80" font-size="11" fill="var(--sl-color-text)">fluxo de trabalho: Load</text>
+  <text x="30" y="110" font-size="11" fill="var(--sl-color-text)">passo: Filter</text>
+  <text x="30" y="140" font-size="11" fill="var(--sl-color-text)">variável: year</text>
+  <path d="M166 112 L206 112" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cm-arrow)" />
+  <rect x="210" y="40" width="212" height="146" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="222" y="34" font-size="12" font-weight="700" fill="var(--sl-color-accent)">Comparar</text>
+  <text x="228" y="80" font-size="11" fill="var(--sl-color-text)">● alterado</text>
+  <text x="228" y="110" font-size="11" fill="var(--sl-color-text)">＋ adicionado</text>
+  <text x="228" y="140" font-size="11" fill="var(--sl-color-gray-3)">＝ igual</text>
+  <text x="360" y="80" font-size="10" fill="var(--sl-color-gray-3)">fundir?</text>
+  <text x="360" y="110" font-size="10" fill="var(--sl-color-gray-3)">fundir?</text>
+  <text x="360" y="140" font-size="10" fill="var(--sl-color-gray-3)">ignorar</text>
+  <path d="M422 112 L494 112" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#cm-arrow)" />
+  <text x="458" y="104" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">fundir selecionados</text>
+  <rect x="496" y="46" width="150" height="132" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="571" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">Produção</text>
+  <text x="510" y="112" font-size="10" fill="var(--sl-color-gray-3)">nada é gravado até</text>
+  <text x="510" y="128" font-size="10" fill="var(--sl-color-gray-3)">aplicar (teste primeiro)</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Emparelhada item a item (por id nas cópias, por nome nos projetos independentes), cada diferença é marcada como alterada, adicionada ou igual. Escolhe o que fundir — nada chega à produção até aplicar.</figcaption>
+</figure>
+
+## Como funciona o emparelhamento
+
+Para comparar dois projetos, o PlaidCloud tem de decidir que item da esquerda corresponde a que item da direita. Escolhe a estratégia automaticamente:
+
+- **As cópias e os instantâneos do mesmo projeto** são emparelhados pelo respetivo id interno (um clone mantém os mesmos ids), pelo que mesmo os itens com o nome alterado ficam alinhados com precisão.
+- **Os projetos independentes** — como um projeto de QA e um projeto de produção criado separadamente — não partilham ids, pelo que são emparelhados **por nome**. Quando isto acontece, os itens são etiquetados com `(name-matched)`.
+
+O emparelhamento por nome é o que torna útil uma comparação entre QA e produção, uma vez que os dois projetos foram criados separadamente. Tem também limites: os itens com nomes duplicados nem sempre podem ser emparelhados um a um, e um item assinalado com `ambiguous match` significa que mais do que um candidato partilhava o mesmo nome — reveja-os manualmente antes de fundir.
+
+Existe uma terceira forma de emparelhar, utilizada quando um projeto foi criado por cópia do outro: o emparelhamento pela linhagem de cópia registada, de modo que uma cópia com o nome alterado continue alinhada com o original. Não é escolhida automaticamente — pede-a com **Voltar a sincronizar para...**, descrito em [Voltar a sincronizar a partir do projeto de que copiou](#voltar-a-sincronizar-a-partir-do-projeto-de-que-copiou).
+
+## Abrir uma comparação
+
+1. Abra o **Analyze**
+2. Selecione **Projetos** na barra de menus superior
+3. Clique com o botão direito do rato no projeto de que pretende partir (ou utilize o respetivo menu de ações) e escolha **Comparar com...**
+4. Na janela **Comparar projetos**, o projeto de que partiu está preenchido como **Origem**
+5. Escolha o projeto de **Destino** na lista pendente — o projeto com o qual pretende comparar
+6. Clique em **Comparar**
+
+<Aside>Utilize **Trocar** para inverter a Origem e o Destino antes de comparar — a direção é importante, porque uma fusão copia *da* Origem *para* o Destino.</Aside>
+
+Ambos os projetos têm de estar na mesma área de trabalho.
+
+## Ler a comparação
+
+O lado esquerdo agrupa todas as diferenças pela respetiva categoria: **Fluxos de trabalho** (com os respetivos **Passos** aninhados por baixo), **Variáveis**, **Dimensões**, **Editores**, **UDFs**, **Vistas** e **Tabelas**.
+
+Cada item tem um selo com o respetivo estado:
+
+- **Adicionado** — presente na Origem mas não no Destino (seria criado no Destino)
+- **Modificado** — presente em ambos, mas com configuração diferente
+- **Eliminado** — presente no Destino mas não na Origem
+- **Inalterado** — idêntico nos dois lados (oculto por predefinição)
+
+Selecione um item alterado para ver os detalhes à direita: uma tabela **Campo / Origem / Destino** com o que mudou, com a **Diferença de configuração** completa por baixo. Se a diferença de um item for muito grande, é truncada — clique em **Expandir diferença completa** para carregar a versão completa.
+
+### Focar a lista
+
+- **Filtrar por nome ou caminho** restringe a árvore aos itens correspondentes.
+- As caixas de estado mostram ou ocultam os itens **Adicionado**, **Modificado**, **Eliminado** e **Inalterado**.
+- **Requer atenção manual** mostra apenas as alterações que não podem ser fundidas automaticamente (ver abaixo).
+
+## O que pode ser fundido
+
+Nem todas as diferenças podem ser copiadas com segurança entre projetos. A comparação etiqueta cada item para que saiba sempre o que pode ser fundido:
+
+- **Os fluxos de trabalho, os passos e as variáveis** podem ser fundidos.
+- **As dimensões, os editores, as UDFs, as vistas e as tabelas** são **só de consulta** — aparecem na comparação para que as possa rever, mas copia-as através das respetivas ferramentas dedicadas, e não a partir daqui.
+
+Algumas alterações individuais também são marcadas como **manual** (com um cadeado) mesmo numa categoria que pode ser fundida, porque aplicá-las automaticamente não seria seguro. O painel de detalhe explica o motivo e o que fazer em alternativa. Os casos mais comuns:
+
+- **Os passos numa comparação por nome (QA vs produção)** são só de revisão — a configuração de um passo pode referenciar ligações e agentes específicos do ambiente, pelo que é copiada manualmente. Utilize a diferença para ver exatamente o que alterar no Destino.
+- **A eliminação de variáveis** não é aplicada por si — remova a variável manualmente no projeto de Destino.
+
+A linha de resumo indica a divisão num relance, por exemplo *"12 podem ser fundidos · 5 só de consulta"* e *"3 requerem atenção manual."*
+
+## Fundir alterações
+
+1. Selecione os itens que pretende copiar da Origem para o Destino. Utilize **Selecionar tudo** para escolher todos os itens que podem ser fundidos e estão atualmente visíveis, ou selecione várias linhas individuais. Os itens só de consulta e os manuais não podem ser selecionados.
+2. Clique em **Execução de teste** para validar a seleção sem gravar nada. O PlaidCloud indica quantas operações seriam aplicadas (novas vs. atualizadas) e assinala as que falhariam.
+3. Quando a execução de teste estiver correta, clique em **Aplicar** (no resultado da execução de teste ou no rodapé).
+4. Confirme a operação na caixa de diálogo **Confirmar fusão**.
+
+Os itens fundidos mantêm a sua identidade no Destino, pelo que pode voltar a executar a comparação mais tarde e fundir outras alterações sem criar duplicados.
+
+<Aside type="caution">Uma fusão copia *para* o projeto de Destino e altera-o. Reveja a diferença e execute primeiro uma execução de teste, e certifique-se de que a Origem e o Destino estão no sentido correto.</Aside>
+
+### Se algo correr mal
+
+- **Destino alterado** — se outra pessoa modificou o Destino depois de carregar a comparação, a fusão pára para evitar substituir o trabalho dela. Atualize a comparação e aplique novamente.
+- **Fusão aplicada parcialmente** — se uma operação falhar a meio, as restantes são comunicadas como pendentes. Corrija a causa e escolha **Tentar novamente as restantes**, ou cancele e atualize.
+
+## Voltar a sincronizar a partir do projeto de que copiou
+
+A comparação funciona entre quaisquer dois projetos de uma área de trabalho. Mas quando o Destino foi **criado por cópia da Origem** — com [Copiar projeto](/pt-pt/guides/projects/managing-projects/#copiar-um-projeto) para um projeto existente —, o PlaidCloud lembra-se de que objeto do Destino veio de que objeto da Origem. **Voltar a sincronizar** utiliza essa memória para comparar os dois da forma como estão realmente relacionados, em vez de adivinhar a partir de ids e nomes.
+
+É isto que permite a um único inquilino ter **Dev, QA e produção como projetos separados** e promover alterações de um para o seguinte. Copia o Dev para o QA uma vez; a partir daí, voltar a sincronizar o QA com o Dev mostra apenas o que mudou no Dev desde então e permite passar para o QA as partes que escolher — e depois do QA para produção da mesma forma. Sem exportação, sem arquivo, sem segunda área de trabalho.
+
+### Porque é importante
+
+Uma comparação normal de dois projetos criados de forma independente tem de emparelhar os itens **por nome**, porque não partilham ids. Isto funciona até a cópia ter mudado o nome a alguma coisa. Quando Copiar projeto traz um objeto cujo nome ou id já existia no Destino, atribui ao objeto recebido uma nova identidade (com ` copy` acrescentado) — de modo que uma comparação simples vê a cópia com o nome alterado como não relacionada com o original da Origem: o item da Origem aparece como **Adicionado** e a sua própria cópia no Destino como **Eliminado**, lado a lado. Estaria a ver duas metades do mesmo objeto sem forma de as alinhar.
+
+Voltar a sincronizar emparelha-os antes por **descendência** — a linhagem de cópia registada —, pelo que um objeto com o nome ou a numeração alterados continua alinhado com aquele de onde veio, e só as alterações genuínas aparecem como diferenças.
+
+### Executar uma nova sincronização
+
+1. Abra o **Analyze**
+2. Selecione **Projetos**
+3. Clique com o botão direito do rato no projeto de que copiou — a Origem, por exemplo o Dev — ou utilize o respetivo menu de ações, e escolha **Voltar a sincronizar para...**
+4. Escolha o Destino para onde copiou anteriormente — por exemplo o QA
+5. Clique em **Re-sync**
+
+A janela é a mesma janela **Comparar projetos**, e tudo o que consta em [Ler a comparação](#ler-a-comparação), [O que pode ser fundido](#o-que-pode-ser-fundido) e [Fundir alterações](#fundir-alterações) se aplica sem alterações. A única diferença é a forma como os itens são emparelhados.
+
+<Aside>Parte da Origem e volta a sincronizar *para* o Destino, pelo que a direção já está correta — uma fusão continua a copiar *da* Origem *para* o Destino, exatamente como numa comparação normal.</Aside>
+
+### Quando não há linhagem a utilizar
+
+Voltar a sincronizar precisa de uma cópia registada entre os dois projetos. Se voltar a sincronizar um par que nunca esteve ligado por Copiar projeto — ou que o esteve apenas em parte —, o PlaidCloud di-lo em vez de fingir:
+
+- **Nenhuma linhagem** — um aviso indica que a comparação recorreu ao emparelhamento normal e *não* é uma nova sincronização. Comporta-se exatamente como uma comparação normal, incluindo a divisão Adicionado/Eliminado para tudo o que uma cópia anterior teria renomeado. É o que vê se voltar a sincronizar dois projetos não relacionados, ou um par de projetos ligado por uma importação de arquivo e não por Copiar projeto.
+- **Linhagem parcial** — se a cópia abrangeu apenas algumas categorias, um aviso indica as que recorreram ao emparelhamento alternativo. Essas categorias são então emparelhadas por nome, o que funde o mesmo subconjunto seguro que uma comparação QA vs produção — as variáveis e as alterações aos registos de fluxos de trabalho passam, enquanto os passos e os fluxos de trabalho recém-adicionados passam a ser só de revisão (ver [O que pode ser fundido](#o-que-pode-ser-fundido)).
+
+Em qualquer dos casos, o emparelhamento que realmente obteve é o que a janela mostra e funde — uma nova sincronização nunca recua silenciosamente para um emparelhamento por nome ao mesmo tempo que lhe diz que emparelhou por linhagem.
+
+## Relacionado
+
+- [Gerir projetos](/pt-pt/guides/projects/managing-projects/) — controlo de versões e rastreio pontual dentro de um único projeto
+- [Arquivar um projeto](/pt-pt/guides/projects/archive-a-project/) — capturar um instantâneo num determinado momento com o qual possa comparar mais tarde
+- [Fluxos de trabalho](/pt-pt/guides/workflows/) — o elemento de automatização que uma comparação funde entre projetos

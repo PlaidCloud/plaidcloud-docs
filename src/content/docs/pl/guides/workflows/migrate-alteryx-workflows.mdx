@@ -1,0 +1,439 @@
+---
+title: Migracja przepływów pracy Alteryx
+description: Konwertuj przepływy pracy, aplikacje i makra Alteryx na zaawansowane przepływy pracy PlaidCloud z zależnościami opartymi na Document, typowanymi wejściami, walidacją i powtarzalnymi uruchomieniami.
+sidebar:
+  order: 30
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud konwertuje przepływy pracy, aplikacje analityczne i makra Alteryx na zaawansowane przepływy pracy, które można przeglądać, harmonogramować, parametryzować i uruchamiać w PlaidCloud. Importer zachowuje graf przepływu pracy, przesyła przywoływane pliki do Document, w razie potrzeby tworzy przepływy pracy makr oraz mapuje narzędzia na natywne kroki przepływu pracy lub zarządzane wykonawców zadań.
+
+Skorzystaj z tego przewodnika, gdy przenosisz do PlaidCloud pojedynczy przepływ pracy, grupę powiązanych przepływów pracy lub większe portfolio Alteryx.
+
+<Aside type="note">
+  Skonwertowane przepływy pracy są zaprojektowane tak, aby wymagały bardzo niewiele ręcznej pracy. W przypadku przepływów pracy produkcyjnych walidacja PlaidCloud daje zespołom czytelny zapis gotowości, zanim zaczną planować regularne uruchomienia.
+</Aside>
+
+## Co tworzy PlaidCloud
+
+PlaidCloud tworzy uruchamialny zaawansowany przepływ pracy na podstawie projektu Alteryx:
+
+- Narzędzia przepływu pracy stają się krokami przepływu pracy PlaidCloud z zachowanymi oryginalnymi zależnościami między elementami poprzedzającymi i następującymi.
+- Makra Alteryx stają się przepływami pracy makr PlaidCloud z jawnymi wejściami i wyjściami makra.
+- Pytania aplikacji analitycznej stają się kontrolowanymi zmiennymi przepływu pracy, które użytkownicy mogą ustawić przed uruchomieniem.
+- Pliki wejściowe, pliki wyjściowe, pliki towarzyszące danych przestrzennych, obrazy, pliki PDF i wygenerowane artefakty są przechowywane w Document w ścieżce wybranej podczas importu.
+- Potoki Assisted Modeling (uczenie maszynowe) stają się natywnymi krokami przepływu pracy ML Train i ML Score.
+- Zaawansowane operacje, takie jak dopasowanie rozmyte, przetwarzanie przestrzenne, wyodrębnianie z PDF, OCR, NLP i raportowanie, działają przez zarządzanych wykonawców zadań PlaidCloud, gdy natywna operacja SQL lub przepływu pracy nie jest najlepszym rozwiązaniem.
+- Pola komentarzy i Tool Container trafiają na kanwę przepływu pracy jako notatki, pola wyróżnienia i grupy. Wyjaśniają skonwertowany przepływ pracy dokładnie tak, jak wyjaśniały oryginał, i nie dodają żadnej pracy w czasie wykonania.
+- Narzędzie Browse i inne obiekty służące wyłącznie do podglądu trafiają na kanwę jako jej część, a nie jako kroki, więc nie dodają żadnej pracy w czasie wykonania — tabela wyjściowa każdego kroku jest już dostępna do przejrzenia.
+
+## Zanim zaczniesz
+
+Przed importem zbierz razem pliki przepływów pracy i zależności:
+
+1. Dołącz pliki przepływów pracy, aplikacji i makr Alteryx: `.yxmd`, `.yxwz` i `.yxmc`.
+2. Dołącz pliki danych wejściowych, takie jak CSV, Excel, Access, YXDB, XML, JSON i wyodrębnienia z baz danych.
+3. Dołącz razem pliki towarzyszące danych przestrzennych. Na przykład trzymaj grupy plików shapefile i pliki MapInfo w tym samym folderze.
+4. Dołącz zasoby raportów, takie jak obrazy, pliki PDF, warstwy map i szablony.
+5. Wybierz projekt PlaidCloud, w którym mają zostać utworzone skonwertowane przepływy pracy.
+6. Wybierz konto dokumentów i folder, do których PlaidCloud ma przesłać importowane pliki.
+7. Zdecyduj, czy ta migracja wymaga wyłącznie walidacji strukturalnej, czy walidacji zgodności wyników.
+
+## Importowanie przepływu pracy
+
+1. Otwórz projekt docelowy w PlaidCloud.
+2. Otwórz **Tools → Importuj przepływ pracy Alteryx**.
+3. Wybierz projekt docelowy i zaznacz plik `.yxmd`, `.yxwz` lub `.yxmc` do zaimportowania.
+4. Opcjonalnie ustaw prefiksy nazw przepływu pracy, kroków i tabel. Nazwy tabel mają już prefiks z nazwą samego przepływu pracy — zobacz [Nazwy tabel w skonwertowanym przepływie pracy](#nazwy-tabel-w-skonwertowanym-przepływie-pracy) poniżej.
+5. Wybierz konto dokumentów i folder, w którym mają być przechowywane importowane pliki.
+6. Dodaj wszystkie przywoływane pliki lub foldery, których przepływ pracy potrzebuje w czasie wykonania.
+7. Rozpocznij import.
+8. Przy czystym imporcie okno zamyka się samo i otwiera wygenerowany zaawansowany przepływ pracy — nie musisz zamykać go ręcznie. Wszystko, co zasługuje na dodatkowe spojrzenie, pojawia się później jako komunikat toast, zamiast wstrzymywać import.
+9. Jeśli w przepływie pracy jest krok, który nie został skonwertowany, brakuje pliku, który odczytuje, lub inny problem wymaga uwagi, okno pozostaje otwarte i pokazuje raport z konwersji, abyś mógł go przejrzeć, zanim przejdziesz dalej.
+
+Gdy jakikolwiek krok wymaga uwagi — pominięte lub nieskonwertowane narzędzie — okno importu zastępuje swój formularz raportem z konwersji: podsumowaniem, ile kroków zmapowano z wysoką pewnością, a ile wymaga przeglądu, oraz tabelą kroków o niższej pewności lub z zastrzeżeniami, w której podano nazwę, operację, pewność i uwagi każdego kroku. Dzięki temu przejdziesz od razu do kroków wartych sprawdzenia przed uruchomieniem przepływu pracy; każdy z tych kroków ma też taką samą notatkę o pewności w memo kroku na kanwie.
+
+PlaidCloud przechowuje importowane zależności w lokalizacji Document wybranej podczas importu. Skonwertowane kroki odwołują się następnie do tych ścieżek Document, dzięki czemu przepływ pracy może działać wielokrotnie bez polegania na systemie plików komputera stacjonarnego.
+
+### Brakujące pliki
+
+Import nie kończy się już niepowodzeniem tylko dlatego, że brakuje pliku odczytywanego przez przepływ pracy — na przykład ścieżki udziału sieciowego, która nigdy nie została przesłana. Przepływ pracy nadal się konwertuje, a raport z konwersji wymienia każdy brakujący plik wraz z:
+
+- Ścieżką w Document, do której należy go przesłać.
+- Oryginalną ścieżką Alteryx, z której był odczytywany.
+- Wszystkimi arkuszami, których przepływ pracy oczekuje z tego pliku.
+- Narzędziami Alteryx, które go odczytują.
+
+W przypadku większości plików prześlij go do ścieżki wskazanej w raporcie i uruchom przepływ pracy ponownie — ponowny import nie jest potrzebny. Kilka rodzajów brakujących plików jest odczytywanych w czasie konwersji, a nie w czasie wykonania, więc raport każe zaimportować przepływ pracy ponownie, gdy plik znajdzie się na miejscu: do tej grupy należą plik układu płaskiego ASCII Alteryx, wejście z symbolem wieloznacznym, szablon Dynamic Input oraz źródło zmiany nazw FirstRow.
+
+Plik odczytywany wyłącznie przez narzędzie wewnątrz wyłączonego Tool Container nigdy nie pojawia się na tej liście i nigdy nie jest kopiowany do Document. Takie narzędzia w ogóle nie są importowane — zobacz [Komentarze i Tool Container na kanwie](#komentarze-i-tool-container-na-kanwie) — więc skonwertowany przepływ pracy nie ma kroku, który potrzebuje tego pliku. Włącz kontener w Alteryx lub zaimportuj z opcją, która wprowadza narzędzia wyłączonego kontenera jako zwykłe kroki, aby sprowadzić także ten plik.
+
+<Aside type="note" title="Plik nadal brakuje podczas uruchamiania przepływu pracy">
+Jeśli plik źródłowy skonwertowanego kroku Input lub importu nie został przesłany w chwili uruchomienia przepływu pracy, krok kończy się ostrzeżeniem „No files found at &lt;path&gt;; the target table was created empty.”, a przepływ pracy działa dalej, jak każdy inny krok importu. Prześlij plik i uruchom przepływ pracy ponownie, aby go załadować.
+</Aside>
+
+Inne problemy w przepływie pracy — makro lub układ pliku płaskiego, których PlaidCloud nie może odczytać, plik, który już istnieje w ścieżce docelowej z inną zawartością, narzędzie, którego nie można skonwertować — oznaczają ostrzeżeniem tylko ten jeden krok zamiast powodować niepowodzenie całego importu, dzięki czemu reszta przepływu pracy nadal zostaje przeniesiona.
+
+### Gdy import jest odrzucany
+
+Jeśli przesłanego pliku nie można w ogóle skonwertować, import jest odrzucany od razu, zamiast tworzyć wynik częściowy, a komunikat o błędzie podpowiada, co zrobić. Dzieje się tak, gdy plik nie jest przepływem pracy Alteryx; gdy jest pakietem Alteryx (`.yxzp`) — wtedy wyeksportuj jego przepływ pracy `.yxmd` z Alteryx Designer i prześlij go razem z używanymi plikami; gdy brakuje pliku przepływu pracy lub nie masz uprawnień do jego odczytu; albo gdy potrzebna nazwa tabeli koliduje w sposób, którego import nie potrafi sam rozwiązać.
+
+Jeśli sam konwerter napotka wewnętrzny defekt podczas pracy nad Twoim przepływem pracy, import jest odrzucany z komunikatem wskazującym ten defekt: „PlaidCloud could not convert this workflow because of a converter defect (&lt;error&gt;). It has been logged for the PlaidCloud team; include the request ID when you contact support.” W takim przypadku z Twoim plikiem wszystko jest w porządku — skontaktuj się z pomocą techniczną, podając identyfikator żądania z komunikatu, aby zespół mógł przyjrzeć się zarejestrowanemu niepowodzeniu.
+
+### Nazwy tabel w skonwertowanym przepływie pracy
+
+Każdy skonwertowany krok zapisuje własną tabelę, nazwaną według narzędzia Alteryx, z którego pochodzi — `tool_4_out` dla Tool 4. Alteryx numeruje narzędzia w obrębie pliku, więc te nazwy powtarzają się w różnych przepływach pracy, a projekt PlaidCloud jest jedną przestrzenią nazw tabel. Dlatego każdy import poprzedza nazwy swoich tabel nazwą samego przepływu pracy, co daje `03_measure_the_quality_of_data_tool_4_out`. Dzięki temu cały folder przepływów pracy Alteryx może trafić do jednego projektu bez nadpisywania nawzajem swoich wyników.
+
+<Aside type="caution" title="Dwa przepływy pracy o tej samej nazwie">
+Jedynym, co odróżnia dwa importy, jest nazwa przepływu pracy. Dwa pliki o tej samej nazwie — lub o nazwach różniących się tylko interpunkcją lub odstępami, takich jak `Sales Report` i `Sales-Report` — nadal dają ten sam prefiks, podobnie jak plik, który w ogóle nie ma nazwy. Przy importowaniu takich plików ustaw własny **prefiks nazwy tabeli** lub zaimportuj je do oddzielnych projektów.
+
+Takie importy nie nadpisują się już nawzajem: import, który żąda nazwy tabeli już istniejącej w projekcie, dostaje własną tabelę o nazwie z sufiksem `-duplicate-`, a jego kroki jej używają. Każdy import zachowuje własne wyniki, ale nazwy tabel drugiego importu są trudniejsze do odczytania — dlatego własny prefiks nadal warto ustawić.
+</Aside>
+
+Importowanie tego samego przepływu pracy dwa razy, co zdarza się, gdy pierwszy import wymaga poprawki, działa tak samo: drugi import dostaje własny zestaw tabel zamiast nadpisywać pierwszy. Gdy nowy import Ci odpowiada, usuń przepływ pracy i tabele wcześniejszego importu.
+
+Ustaw własny **prefiks nazwy tabeli** podczas importu, aby zastąpić domyślny, lub ustaw go jako pusty, aby wrócić do gołych nazw `tool_4_out`. Nic poza samymi skonwertowanymi krokami nie zależy od tych nazw, więc zmiana nazwy tabeli później oznacza ponowne wskazanie kroków, które ją odczytują.
+
+### Wyjścia zapisywane jako Parquet
+
+Narzędzie Output Data, które zapisuje `.parquet` lub `.avro`, konwertuje się na krok eksportu dla tego formatu. Narzędzie zapisujące `.yxdb`, `.hyper` lub `.dbf` zapisuje w formacie Parquet. W przypadku wyjścia `.yxdb` plikiem jest `.parquet` o tej samej nazwie w tym samym folderze.
+
+Skonwertowany przepływ pracy, który odczytuje ten plik `.yxdb`, automatycznie odczytuje `.parquet`: krok [Import Alteryx YXDB](/pl/reference/workflow-steps/import/import-alteryx-yxdb/) (krok) wraca do pliku `.parquet` o tej samej nazwie, gdy `.yxdb` nie istnieje, i wyświetla o tym ostrzeżenie.
+
+### Komentarze i Tool Container na kanwie
+
+Notatki i grupy, które autor w Alteryx narysował wokół swojej pracy, przechodzą razem z nią:
+
+- Pole komentarza z tekstem staje się **notatką** na kanwie, w pozycji i o rozmiarze, w jakich zostało narysowane.
+- Pole komentarza narysowane jako pusty obrys wokół zestawu narzędzi staje się **polem wyróżnienia**, czyli tym, czym było w Alteryx.
+- Pole komentarza wyświetlające powiązany dokument zachowuje łącze jako swój tekst.
+- **Tool Container** staje się **grupą** zawierającą kroki, które były w nim narysowane, z zachowaniem podpisu, informacji, czy był zwinięty, i czy był wyłączony. Zagnieżdżone kontenery trafiają jako zagnieżdżone grupy, a krok znajdujący się w obu należy do obu.
+
+Przesuwaj, edytuj, zmieniaj kolor lub usuwaj dowolny z nich tak samo jak element narysowany samodzielnie.
+
+Dwie rzeczy działają inaczej niż w oryginale:
+
+- **Narzędzia wyłączonego Tool Container w ogóle nie są importowane.** Alteryx również ich nie uruchamia, więc ich import dodałby do przepływu pracy kroki, które nigdy nic nie robią. Sam kontener nadal trafia na kanwę jako pole wyróżnienia z podpisem, abyś widział, co tam było. Aby sprowadzić jego narzędzia, włącz kontener w Alteryx i zaimportuj ponownie. (Import przez API lub z agenta AI przyjmuje także opcję importowania narzędzi wyłączonego kontenera jako zwykłych, uruchamialnych kroków — przydatną w przykładowych przepływach pracy, które są dostarczane z wszystkim wyłączonym.)
+- **Kolory pól nie są przenoszone.** Kanwa oferuje stały zestaw sześciu kolorów, a pola Alteryx są prawie zawsze białe lub szare, więc każde z nich miałoby ten sam odcień. Trafiają z domyślnym kolorem kanwy; ustaw wybrany kolor z menu prawego przycisku myszy.
+
+Tekst notatki jest teraz wyświetlany w neutralnym szarym kolorze. Wcześniej pojawiał się w kolorze bursztynowym/pomarańczowym na ciemnej kanwie — kolorze, który kojarzy się z ostrzeżeniem nawet przy nieistotnym komentarzu przeniesionym wprost z Alteryx.
+
+Tool Container, który kończy bez żadnego kroku — bo był wyłączony lub zawierał wyłącznie komentarze — nadal się pojawia, jako pole wyróżnienia z podpisem, zamiast znikać z kanwy.
+
+Przepływ pracy składający się wyłącznie z komentarzy — strona dokumentacji bez żadnych narzędzi — importuje się jako kanwa z tymi komentarzami i informuje, że skonwertował się na zero uruchamialnych kroków. To uczciwy wynik, a nie niepowodzenie: nie było czego uruchamiać.
+
+### Control Container
+
+**Control Container** Alteryx uruchamia znajdujące się w nim narzędzia tylko wtedy, gdy strumień podłączony do jego wejścia **Control** niesie rekordy. Ta bramka przechodzi razem z kontenerem, a nie tylko jego obrys:
+
+- Kontener staje się **grupą** na kanwie jak każdy inny, z zachowaniem podpisu i zawartości.
+- Każdy krok, który był w jego wnętrzu, jest importowany już ustawiony tak, by uruchamiać się tylko wtedy, gdy dane przechodzące przez bramkę mają wiersze, i być pomijany, gdy ich nie mają. Kroki w kontenerach zagnieżdżonych w nim są bramkowane tak samo. Nie musisz samodzielnie podłączać warunku.
+- Control Container, do którego wejścia **Control** nic nie jest podłączone, był zawsze jedynie wizualnym grupowaniem i konwertuje się dokładnie jak Tool Container.
+- Control Container narysowany wokół niczego zachowuje swój podpis na kanwie jako pole wyróżnienia.
+
+<Aside type="caution" title="Bramka, której import nie potrafił zinterpretować">
+Czasami narzędzie zasilające wejście **Control** nie produkuje danych, na podstawie których można by sprawdzić warunek, więc nie ma z czego zbudować bramki. Import nie pomija już tego po cichu. Kontener trafia jako krok oznaczony jako nieskonwertowany, z notatką, że znajdujące się w nim narzędzia uruchamiałyby się w przeciwnym razie za każdym razem, i jest wymieniony w raporcie z konwersji jako krok, którym musisz się zająć. Ten krok kończy się niepowodzeniem, gdy przepływ pracy do niego dotrze, więc konwersji nie da się przeprowadzić tak, jakby nic nie było nie tak.
+
+Wcześniej wnętrze było importowane tak, by uruchamiało się bezwarunkowo, i nic na kanwie o tym nie mówiło, co jest cichą wersją tego samego problemu.
+
+Aby to rozwiązać, zmień przepływ pracy Alteryx tak, aby wejście **Control** pochodziło z narzędzia produkującego dane, i zaimportuj ponownie, albo usuń oznaczony krok i samodzielnie ustaw bramkę na krokach, które były wewnątrz kontenera — zobacz [Warunki kroków](/pl/guides/workflows/step-conditions/).
+</Aside>
+
+### Narzędzie Browse
+
+**Browse** w Alteryx to przeglądarka. Wyświetla docierające do niej rekordy, niczego nie zmienia i nie ma złącza wyjściowego. W PlaidCloud tabela wyjściowa każdego kroku jest już dostępna do otwarcia, więc to, do czego autor rysował Browse, jest o jedno kliknięcie od kroku powyżej — zaznacz ten krok i spójrz na jego tabelę.
+
+Browse trafia więc na kanwę jako jej część, a nie jako krok. Nie tworzy kroku, nie rezerwuje tabeli i nie jest liczony wśród narzędzi, z którymi konwersja sobie nie poradziła:
+
+- **Nie jest dla niego tworzona żadna tabela.** Każdy Browse stawał się kiedyś krokiem niczego niewykonującym, który przepływ pracy następnie odrzucał, rezerwując przy tym własną tabelę hurtowni, do której nic nie zapisywało i z której nic nie czytało. W naszym referencyjnym zestawie 179 przepływów pracy Alteryx było to 152 tabel.
+- **Uszkodzona gałąź jest zgłaszana raz, przy narzędziu, które ją uszkodziło.** Browse bywał wymieniany w raporcie z konwersji jako narzędzie, którego nie udało się skonwertować, ilekroć nie powiodło się narzędzie *zasilające* go, więc ten sam problem pojawiał się dwa razy — raz przy narzędziu, które faktycznie trzeba naprawić, i raz przy przeglądarce, która nigdy nie mogła się uruchomić. Czternaście zgłoszonych niepowodzeń w tym zestawie referencyjnym było tego rodzaju. Te wpisy zniknęły; narzędzie faktycznie odpowiedzialne jest nadal zgłaszane.
+
+Usuwa to z raportu z konwersji mylące wpisy, a nie stojące za nimi niepowodzenia. Liczba przepływów pracy, które konwertują się z każdym narzędziem skonwertowanym, jest taka sama jak wcześniej.
+
+<Aside type="caution" title="Przepływ pracy, który teraz się zatrzymuje, wskazując tabelę">
+Jeden kształt przepływu pracy zatrzymuje się teraz tam, gdzie wcześniej działał, i jest to poprawka, a nie nowe uszkodzenie.
+
+Gdy przepływ pracy numeruje narzędzie wewnątrz makra tak samo jak narzędzie na kanwie, które je wywołuje, krok poniżej makra odwoływał się do nazwy tabeli Browse zamiast do własnego wyjścia makra. Po ponownym imporcie takiego przepływu pracy ten krok zatrzymuje się teraz, wskazując tabelę, która nie istnieje.
+
+Ten krok nigdy nie odczytywał rekordów Browse. Ta tabela była tworzona przy imporcie, a potem nic do niej nie zapisywało — sam Browse został pominięty, zanim zbudowano przepływ pracy — więc krok odczytywał **pustą** tabelę, a uruchomienie raportowało sukces, nie przetworzywszy żadnych rekordów. Liczby, które produkował, pochodziły z niczego, i nic tego nie sygnalizowało. Ponieważ tabela nie jest już tworzona, krok to teraz zgłasza.
+
+**Naprawa:** skieruj ten krok ponownie na tabelę, którą miał odczytywać — wyjście kroku makra powyżej — i uruchom przepływ pracy ponownie.
+</Aside>
+
+Przepływy pracy zaimportowane przed tym wydaniem zachowują nadaną im konwersję, wraz z tabelami. Zaimportuj je ponownie, aby uzyskać tę poprawkę.
+
+### Bazy danych Calgary
+
+**Baza danych Calgary** Alteryx (plik `.cydb`) to zastrzeżony indeksowany magazyn. PlaidCloud nie ma sposobu na odczytanie formatu tego pliku, a otwarta specyfikacja nie istnieje. Zamiast odrzucać każde narzędzie, które go dotyka, konwersja traktuje każdą ścieżkę `.cydb` jako reprezentującą jedną zwykłą tabelę PlaidCloud o nazwie `calgary_<database name>` pod prefiksem tabeli stosowanym przez import. Gdy baza danych jest zwykłą tabelą, narzędzia zbudowane wokół niej stają się zwykłymi operacjami: zapisane zapytanie to filtr, przedziały cross-count to zliczenia warunkowe, a lista pól modułu ładującego to zestaw kolumn.
+
+- Skonwertowany **Calgary Loader** zapisuje tę tabelę na podstawie swojego wejścia. Zadeklarowane typy indeksów są podczas konwersji pomijane — hurtownia indeksuje na własną rękę — ale lista pól jest przenoszona.
+- Skonwertowany **Calgary Input** odczytuje tabelę z powrotem, stosując zapisane zapytanie jako filtr. Kolumny tabeli są ustalane podczas uruchamiania kroku, ponieważ nic w pliku przepływu pracy nie zapisuje, co zawierała baza danych.
+- Skonwertowany **Calgary Input (Count Only)** lub **Calgary Cross Count** odczytuje tabelę jako agregat: zwykłe indeksowane pola grupują wiersze, a każda nazwana wartość pola niestandardowego staje się jedną zliczaną kolumną.
+- Skonwertowany **Calgary Join** dopasowuje każdy rekord przychodzący do tabeli, zachowując rekordy, które się dopasowały, i przenosząc kolumny własne wejścia. Konwertuje się, gdy pole przychodzące ma zwykłą, nieprzestrzenną wartość — zobacz [Calgary Join i Cross Count Append](#calgary-join-i-cross-count-append) poniżej, aby poznać przypadki, gdy tak nie jest.
+- Skonwertowany **Calgary Cross Count Append** dopasowuje każdy rekord przychodzący do tabeli w ten sam sposób, a następnie podaje, ile rekordów bazy danych dopasował, dołączone do wejścia — ponownie, gdy pole przychodzące ma zwykłą, nieprzestrzenną wartość.
+
+<Aside type="caution" title="Dwie bazy danych o jednej nazwie">
+Dwa pliki `.cydb` o tej samej nazwie w różnych katalogach wskazują tę samą tabelę PlaidCloud, a z przepływu pracy nie da się stwierdzić, której z nich miał użyć czytnik. Zarówno Loader, jak i każdy zaangażowany czytnik odmawiają, wskazując oba pliki, zamiast zgadywać. Zmień nazwę jednej z baz źródłowych i zaimportuj ponownie.
+</Aside>
+
+**Przepływ pracy, który odczytuje bazę danych, której sam nie zbudował, dostaje krok, który się zatrzymuje, wskazując tabelę.** Typowy przypadek to pliki `.cydb` z danymi demograficznymi i referencyjnymi dostarczane przez Alteryx — nic w Twoim przepływie pracy ich nie zapisało, więc nie ma jeszcze tabeli PlaidCloud do odczytania. Dopóki ta tabela nie istnieje, skonwertowany krok zatrzymuje się i ją wskazuje, zamiast po cichu nic nie odczytywać i raportować sukces. Przed uruchomieniem przepływu pracy wyeksportuj dane źródłowe do wskazanej tabeli — z oryginalnego `.cydb`, jeśli masz dostępny Alteryx, który go odczyta, lub stamtąd, gdzie dane faktycznie się znajdują.
+
+#### Or, And i Not w zapytaniu Calgary
+
+Zapytanie Calgary to drzewo `And`, `Or` i `Not` nad indeksowanymi polami bazy danych, a drzewo konwertuje się teraz tak, jak zostało zapisane: `Or` w dowolnym miejscu oraz `Not` obejmujące więcej niż jeden warunek konwertują się obie. Konwertuje się też człon contains lub starts-with — na SQL LIKE w ścieżce zliczania i dopasowanie podciągu przy odczycie rekordów. Obejmuje to odczyt rekordów Calgary Input, jego odczyt count-only, Calgary Cross Count oraz przedziały wewnątrz pól niestandardowych Cross Count.
+
+Garstka kształtów zapytań nadal się nie konwertuje, a każdy z nich wskazuje siebie w raporcie z konwersji i na kroku:
+
+- Zapytanie używające wyszukiwania przestrzennego (lub zanegowanego contains/starts-with) zamiast porównania kolumn — operacja indeksu bez odpowiednika na poziomie kolumn.
+- Odczyt ograniczony przez **Skip Records** lub **Max Records** — tabela zastępcza nie niesie kolejności rekordów, względem której można by pomijać lub ograniczać.
+- Cross Count pogrupowany według więcej niż jednego pola niestandardowego. Zliczenia są w istocie jednym agregatem nad bazą danych, ale Alteryx nie dokumentuje, jak nazywa wynikowe kolumny ani jak je porządkuje, a nie ma pod ręką przykładu, z którym można by to porównać.
+- Odczyt count-only, który nie wskazuje żadnej kolumny do zliczania, ponieważ własne kolumny bazy danych nie są możliwe do odczytania z pliku przepływu pracy.
+- **Calgary Loader**, który nie przechowuje żadnego pola danych, zapisałby tabelę bez kolumn.
+- Narzędzie Calgary, które w ogóle nie wskazuje bazy danych.
+
+#### Calgary Join i Cross Count Append
+
+**Calgary Join** i **Calgary Cross Count Append** dopasowują każdy rekord przychodzący do bazy danych przez jeden z jej indeksów, a plik przepływu pracy zapisuje *nazwę* indeksu, ale nie jego *rodzaj*. Ta sama konfiguracja oznacza złączenie przez równość, gdy indeks zawiera zwykłe wartości, i dopasowanie „które punkty leżą wewnątrz tego kształtu”, gdy zawiera geometrię przestrzenną — plik nie pozwala stwierdzić, które z nich.
+
+Konwersja rozstrzyga na podstawie **zadeklarowanego typu pola przychodzącego**: indeks przestrzenny mógł być sparowany tylko z polem przestrzennym, więc
+
+- pole przychodzące typu obiektu przestrzennego zatrzymuje się, wskazując pole, odczyt, który wytworzyło, oraz tabelę zastępczą, względem której należy odbudować dopasowanie jako krok **Spatial Match**;
+- pole przychodzące, którego typu nie dało się ustalić, zatrzymuje się, wskazując to jako powód — nigdy nie jest zgadywane;
+- zwykłe, nieprzestrzenne pole przychodzące konwertuje się, dopasowując względem tabeli zastępczej.
+
+Tak czy inaczej, krok zapisuje przyjęty odczyt i typ pola, z którego go odczytał, więc konwersja, z którą się nie zgadzasz, pokazuje swoje rozumowanie, zamiast zmuszać Cię do domyślania się.
+
+**Calgary Cross Count Append konwertuje się na zwykłym, nieprzestrzennym polu przychodzącym**, tak samo jak Calgary Join. Tam, gdzie Join zachowuje dopasowane rekordy, Append podaje, ile rekordów bazy danych dopasował każdy rekord wejściowy: zlicza dopasowania dla każdego rekordu wejściowego i dołącza tę liczbę do wejścia. Rekord wejściowy, który niczego nie dopasował, liczy się jako zero, zamiast odpadać, a dwa identyczne rekordy wejściowe zachowują każdy swój wiersz — zliczenie jest dla rekordu, a nie dla odrębnego zestawu wartości. Pojedyncze zwykłe pole cross-count konwertuje się w ten sposób; siatka *nazwanych* wartości niestandardowych **nie**, ponieważ dołączyłaby po jednej kolumnie zliczenia na wartość, a Alteryx nie dokumentuje ani ile to kolumn, ani jak je nazywa.
+
+**Calgary Join w trybie Count Only** konwertuje się tak samo — zlicza dla każdego rekordu wejściowego dopasowane rekordy bazy danych, przy czym rekord niedopasowujący niczego liczy się jako zero — zamiast zachowywać dopasowane rekordy.
+
+**Calgary Join lub Cross Count Append** zatrzymuje się również, wskazując siebie, gdy dopasowuje względem zakresu wartości indeksu, a nie pojedynczej wartości, gdy jego wyjście rekordów niedopasowanych jest podłączone do czegoś dalej, gdy nie wskazuje żadnego pola, według którego ma dopasowywać bazę danych, oraz gdy do jego wejścia nic nie jest podłączone, skąd mógłby dopasowywać rekordy.
+
+Skonwertowany Loader i czytniki tego, co zapisał, są ze sobą połączone, więc czytnik nie może działać obok zapisu, który wypełnia jego tabelę.
+
+Kolumny Calgary Input trafiają jako tekst: tabela zastępcza podaje ich nazwy, a nie własne typy bazy danych.
+
+### Narzędzia In-Database
+
+Przepływ pracy In-Database przekazuje swoją pracę do hurtowni, a nie do silnika Alteryx, a krok PlaidCloud już *jest* SQL hurtowni — więc **operacyjne** narzędzia In-Database konwertują się na dokładnie te same kroki co ich odpowiedniki w pamięci. Filter In-DB staje się filtrem, Formula In-DB formułą, Summarize In-DB agregatem, a Join, Select, Sample, Sort, Union i Browse analogicznie.
+
+Nie konwertuje się para narzędzi na obu końcach łańcucha. **Connect In-DB** i **Write Data In-DB** otwierają żywe połączenie z hurtownią, które narzędzia pomiędzy nimi utrzymują i wysyłają przez nie SQL, a PlaidCloud nie ma odpowiednika takiego utrzymywanego połączenia. Każde z nich trafia jako krok oznaczony do przeglądu, wskazujący narzędzie i jego zamiennik: krok importu lub eksportu SQL powiązany z połączeniem PlaidCloud. Zamień oba końce na te kroki, a narzędzia operacyjne pomiędzy nimi konwertują się bez zmian.
+
+Data Stream In, Data Stream Out, Dynamic Input In-DB, Dynamic Output In-DB oraz In-Database Macro Input/Output są odrzucane z nazwy z tego samego powodu.
+
+### Union zasilany złączeniem według pozycji lub Multi-Row Formula
+
+Przepływ pracy z narzędziem **Union** czytającym z narzędzia **Join** dopasowanego według pozycji rekordu lub z **Multi-Row Formula** konwertował się czysto, ale mógł zawieść po uruchomieniu — zatrzymując się w połowie z kolumną, której nie potrafił rozwiązać. Konwersja wyglądała dobrze; problem ujawniało dopiero uruchomienie przepływu pracy.
+
+Zostało to naprawione: taki przepływ pracy działa teraz i daje poprawny wynik. Jeśli napotkasz ten błąd w przepływie pracy zaimportowanym wcześniej, uruchom go ponownie — ponowny import nie jest potrzebny.
+
+### Wiele kolumn wyjściowych Join Multiple
+
+Gdy **Join Multiple** wymienia każde pole na swojej karcie Select, Alteryx Designer nazywa każde z nich `Input_#1_<field>`, `Input_#2_<field>` i tak dalej. Skonwertowany Złączenie wielu tabel zachowuje te kolumny pod ich zwykłymi nazwami wyjściowymi i stosuje zmiany nazw oraz odznaczenia z tej karty. Join Multiple skonwertowany przed tą poprawką trafiał bez kolumn wyjściowych, a jego krok kończył się niepowodzeniem po uruchomieniu; zaimportuj ten przepływ pracy ponownie, aby uzyskać poprawkę.
+
+### Kolumny procentowe i sum w Cross Tab
+
+**Cross Tab** z jedną ze swoich metod pochodnych — **Percent Row**, **Percent Column**, **Total Column** lub **Total Row** — zatrzymywał kiedyś konwersję i zabierał ze sobą każdy krok poniżej. Wszystkie cztery konwertują się teraz:
+
+- **Percent Row** i **Percent Column** to udział komórki w sumie jej wiersza lub kolumny dla pola danych.
+- **Total Column** to ta suma wiersza, pod nazwą, jaką zapisało narzędzie.
+- **Total Row** to dodatkowy rekord niosący sumy, bez wartości w polach grupujących.
+
+Każda suma jest sumą pola danych, niezależnie od tego, które metody narzędzie oblicza dla każdej komórki.
+
+<Aside type="caution" title="Sprawdź skalę procentową raz">
+Kolumny procentowe są zapisywane w skali od 0 do 100. Alteryx dokumentuje te metody wyłącznie jako obliczanie „percent based on the values” i nigdy nie mówi, o jaką skalę chodzi, więc ten odczyt jest wywnioskowany z tego, jak Alteryx renderuje kolumny, a nie z czegokolwiek, co deklaruje. Porównaj jeden skonwertowany Cross Tab z uruchomieniem oryginału, zanim jego wartości trafią do opublikowanego raportu.
+</Aside>
+
+Dwa kształty nadal są oznaczane do przeglądu zamiast konwertowane: **Total Row** na Cross Tab bez pola grupującego, który dałby ten sam rekord dwa razy bez niczego, co odróżniałoby kopie, oraz **Total Column**, której nazwy narzędzie nigdy nie zapisało, a która w przeciwnym razie całkowicie by zniknęła z wyjścia.
+
+### Kolumny Double w Alteryx zachowują pełną precyzję
+
+Kolumna **Double** w Alteryx konwertuje się teraz na kolumnę liczbową 64-bitową, zgodnie z precyzją, z jaką sam Alteryx liczy. Wcześniej konwertowała się na kolumnę 32-bitową — około 7 cyfr znaczących — więc każda wartość mająca więcej cyfr była po cichu zaokrąglana przy odczycie, a każde obliczenie na niej oparte dziedziczyło ten błąd. Rzeczywisty przypadek: 16 862 441,27 wracało jako 16 862 442,00.
+
+Wewnątrz skonwertowanego makra kolumna Double przekazana jako wejście makra trafiała kiedyś jako tekst; teraz trafia jako liczba. Jeśli logika makra zależała od dawnego zachowania tekstowego — łączenia ciągów, formatowania z zerami wiodącymi, dopasowania wzorca tekstowego — przejrzyj ją po ponownej konwersji, ponieważ prawdziwa liczba może zachowywać się inaczej.
+
+Przepływy pracy skonwertowane przed tą poprawką zachowują typy kolumn, z którymi zostały skonwertowane. Zaimportuj je ponownie, aby uzyskać poprawkę.
+
+### Makra w skonwertowanym przepływie pracy
+
+Makra konwertują się na natywne konstrukcje PlaidCloud — a nie na emulację silnika makr Alteryx. Każdy rodzaj makra mapuje się na pełnoprawną funkcję przepływu pracy, więc skonwertowane makro uruchamia tę samą logikę z tym samym zachowaniem na rekord lub na iterację co oryginał, z pełną wiernością:
+
+- **Makra standardowe** są wstawiane w wywołujący przepływ pracy: narzędzia makra stają się zwykłymi krokami na kanwie, więc nie ma czarnej skrzynki, której trzeba ufać — każdy krok pozostaje widoczny, przeglądalny i edytowalny. Zagnieżdżone makra standardowe są wstawiane na dowolną głębokość, a makro, które kończy wywołując samo siebie, jest wychwytywane i wskazywane z nazwy zamiast zapętlać się w nieskończoność.
+- **Makra wsadowe (batch)** stają się przepływem pracy makra uruchamianym raz dla każdego rekordu parametru kontrolnego, z wyjściem każdego przebiegu zebranym z powrotem w jeden strumień — to samo wykonanie według grup, które wykonuje Alteryx. Parametr kontrolny jest powiązany jako zmienna na przebieg, dokładnie tak, jak steruje wsadem w Alteryx.
+- **Makra iteracyjne** stają się natywną pętlą przepływu pracy, która przenosi stan między przebiegami i działa, aż makro się zbiegnie. Limit przebiegów pętli to własne ustawienie makra **Maximum Number of Iterations**, to samo, z którym Alteryx je uruchamia; jeśli pozostawiono je na domyślnej wartości zabezpieczenia przed niekontrolowanym działaniem Alteryx lub w ogóle nie ustawiono, konwersja stosuje własny pułap. Jeśli makro nadal nie zbiegło się przy tym limicie, uruchomienie **zatrzymuje się i to zgłasza** — wskazując osiągnięty limit — zamiast raportować wynik częściowy jako ostateczną odpowiedź. Makro, które naprawdę potrzebuje więcej przebiegów, niż pozwala pułap, można zaimportować ponownie z wyższym: opcja importu `iteration_ceiling` go ustawia.
+- **Parametry kontrolne, porty Macro Input i Macro Output, narzędzia Action oraz rozgałęzienia Detour** konwertują się na swoje natywne odpowiedniki, więc mechanizm łączący makro jest zachowany — a nie przybliżony. Makro wywołane z wnętrza makra Batch lub Iterative jest rozwiązywane i konwertowane razem z wywołującym.
+
+Dwa układy są odrzucane z nazwy, a nie konwertowane, abyś wiedział o tym w czasie importu: makro pętlowe zagnieżdżone w innym makrze pętlowym oraz narzędzia In-Database Macro Input/Output.
+
+<Aside type="caution" title="Makra wsadowe, które kiedyś się zacinały, teraz się kończą">
+We wcześniejszych konwersjach każdy przebieg zapisywał własną tabelę wyjściową, a krok zbierający wyniki odczytywał je wszystkie z powrotem po nazwie — więc makro sterowane zaledwie kilkudziesięcioma rekordami budowało jedno zapytanie obejmujące tyle tabel, a baza danych odmawiała jego zaplanowania. Przepływ pracy zatrzymywał się w połowie, bez niczego użytecznego, co wskazywałoby przyczynę.
+
+Przebiegi kumulują się teraz w jednej tabeli, którą krok zbierający odczytuje bezpośrednio, a ta tabela jest poprawnie opróżniana na początku każdego uruchomienia, więc uruchomienie, w którym makro nie wytwarza przebiegów, zwraca pusty wynik zamiast ponownie serwować wiersze z poprzedniego uruchomienia.
+
+Jeśli przepływ pracy z makrem wsadowym kiedyś się zacinał lub kończył niepowodzeniem w połowie, zaimportuj go ponownie, aby uzyskać poprawkę.
+</Aside>
+
+<Aside type="tip" title="Przypadek odległości liniowej Location Optimizer konwertuje się natywnie">
+**Location Optimizer**, którego wynik to niezmodyfikowana minimalizacja odległości liniowej — wybierz K lokalizacji minimalizujących całkowitą lub ważoną odległość do popytu — konwertuje się bezpośrednio na natywny krok [Optymalizator lokalizacji](/pl/reference/workflow-steps/optimization/location-optimizer/), czyli p-median MIP rozwiązywany na solverze HiGHS w PlaidCloud. Tabele kandydatów i popytu oraz liczba lokalizacji są przenoszone; potwierdź kolumny odległości, zanim zaufasz wynikowi.
+</Aside>
+
+<Aside type="caution" title="Inne makra Location Optimizer są odrzucane">
+Makro **Location Optimizer** to tylko przebieg oceniający w ramach wyszukiwania. Samo wyszukiwanie — generowanie zestawów lokalizacji kandydujących, liczba lokalizacji, limity generowania i ziarno — znajduje się w narzędziu wywołującym i w silniku Alteryx, a nie w pliku przepływu pracy. Poza powyższym przypadkiem odległości liniowej — jądro grawitacyjne, własne makro oceniające, cel typu im-więcej-tym-lepiej lub jakakolwiek transformacja odległości przed oceną (stały koszt obiektu, Summarize, złączenie) — PlaidCloud nie ma odpowiednika dla tej pętli optymalizacji. Wywołanie makra trafia teraz jako krok oznaczony do przeglądu, wskazujący makro, wejście, na które docierają jego zestawy kandydatów, wyjście, które je szereguje, oraz to, czy wygrywa wysoki, czy niski wynik.
+
+**Takie makro kiedyś się konwertowało i działało na zielono, a jego wartości były błędne.** Było traktowane jak zwykłe makro, więc przebieg oceniający uruchamiał się dokładnie raz względem jednego zestawu kandydatów, a uruchomienie raportowało sukces — wynik, który wyglądał jak odpowiedź, ale był jednym ocenionym strzałem, a nie zoptymalizowanym rozwiązaniem. Jeśli po ponownym imporcie takiego przepływu pracy widzisz odmowę tam, gdzie wcześniej działał, wcześniejszy wynik nie był takim, na którym należało polegać.
+</Aside>
+
+### Raporty w skonwertowanym przepływie pracy
+
+Obraz, do którego odwołuje się układ raportu, jest teraz pakowany razem z przepływem pracy, więc skonwertowany raport znajduje go w Document, zamiast zawodzić na zasobie, który istniał wyłącznie na maszynie Alteryx. Dotyczy to obrazu nazwanego stałą ścieżką — obraz, którego bajty są osadzone w przepływie pracy lub którego ścieżka jest pobierana z kolumny dla każdego rekordu, nie ma osobnego pliku do pobrania.
+
+Element raportu, którego danych źródłowych nie udało się odczytać, jest teraz tak zgłaszany. Gdy nie udało się odczytać kolumn tabeli, fragment raportu zbudowany na jej podstawie był kiedyś pomijany, a sekcja tabeli raportu wychodziła pusta, w obu przypadkach przy uruchomieniach raportujących sukces. Krok zatrzymuje się teraz i informuje, że nie udało się odczytać informacji o kolumnach, oraz dlaczego. **Raport, który wcześniej wychodził z brakującą sekcją, może teraz zatrzymać się z wyjaśnieniem** — zobacz wpis Fixed w [sierpniu 2026](/pl/releases/2026-08/).
+
+## Korzystanie ze skonwertowanego przepływu pracy
+
+Po imporcie używaj przepływu pracy jak każdego innego zaawansowanego przepływu pracy PlaidCloud:
+
+1. Otwórz kanwę skonwertowanego przepływu pracy.
+2. Przejrzyj wygenerowane kroki i gałęzie.
+3. Ustaw zmienne przepływu pracy dla wszystkich skonwertowanych pytań aplikacji lub parametrów czasu wykonania.
+4. Uruchom przepływ pracy.
+5. Przejrzyj historię uruchomień, wyjścia kroków, notatki o gotowości i wygenerowane artefakty.
+6. Zaharmonogramuj przepływ pracy, gdy jest gotowy do powtarzalnej pracy.
+
+Skonwertowane narzędzie **Download** staje się krokiem [REST Request](/pl/reference/workflow-steps/general/rest-request/) (Żądanie REST), który dociera do zewnętrznego punktu końcowego przez połączenie REST, a nie przez adres URL wpisany na stałe w kroku. Przed uruchomieniem przypisz do kroku połączenie REST — konwerter oznacza to w czasie importu notatką o gotowości. Aby je skonfigurować, zobacz [Tworzenie połączenia](/pl/guides/connections/create-connection/).
+
+Skonwertowane makra są dostępne jako przepływy pracy makr PlaidCloud. Przepływ pracy, który wywoływał makro Alteryx, będzie wywoływał wygenerowane makro PlaidCloud przez krok makra. Uruchomienia makr są od siebie odizolowane, więc równoległe uruchomienia przepływów pracy mogą bezpiecznie używać tej samej definicji makra.
+
+## Walidacja konwersji
+
+PlaidCloud obsługuje dwa praktyczne poziomy walidacji.
+
+### Walidacja strukturalna
+
+Walidacja strukturalna potwierdza, że przepływ pracy został skonwertowany na uruchamialny graf DAG PlaidCloud:
+
+- Każde narzędzie Alteryx ma ścieżkę konwersji do PlaidCloud.
+- Wymagane makra zostały znalezione lub wygenerowane.
+- Wymagane pliki wejściowe zostały przesłane do Document.
+- Wejścia i wyjścia makr są połączone.
+- Dla wejść kontrolowanych przez użytkownika utworzono zmienne przepływu pracy.
+- Wygenerowany przepływ pracy otwiera się i można go uruchomić w PlaidCloud.
+
+Walidacja strukturalna jest przydatna do oceny gotowości migracji, przeglądu inwentarza i wczesnej konwersji portfolio.
+
+### Walidacja zgodności wyników
+
+Walidacja zgodności wyników porównuje uruchomienie w PlaidCloud z zaufanymi wynikami Alteryx:
+
+- Schematy wyjściowe są zgodne.
+- Liczby wierszy są zgodne.
+- Wartości wierszy są zgodne.
+- Kolejność wierszy jest ignorowana, chyba że przepływ pracy jawnie zależy od kolejności.
+
+W przypadku przepływów pracy tworzących raporty, mapy, pliki PDF, obrazy lub artefakty modeli zwaliduj wygenerowany artefakt lub dane za nim stojące, zgodnie ze sposobem, w jaki Twój zespół używa wyniku.
+
+Szczegółową listę kontrolną walidacji znajdziesz w [Walidacja skonwertowanych przepływów pracy Alteryx](/pl/guides/workflows/validate-converted-alteryx-workflows/).
+
+### Próbkowanie losowe
+
+Wartości wierszy to jedyne miejsce, w którym narzędzie próbkujące jest celowym wyjątkiem.
+**Create Samples** i **Random % Sample** losują losowo, a Alteryx zwraca
+te same rekordy przy każdym uruchomieniu, gdy ustawiono ziarno. PlaidCloud losuje własnym
+generatorem, więc:
+
+- Rozmiary próbek, procenty i proporcje podziału Estimation / Validation / Holdout
+  są przenoszone dokładnie.
+- **Rekordy wewnątrz każdej próbki nie są tymi, które wybiera Alteryx, a ponowne uruchomienie
+  znowu wybiera inny zestaw.**
+
+Każdy skonwertowany krok mówi o tym w raporcie z konwersji i na samym kroku, a
+żaden nie jest zgłaszany jako narzędzie, którego nie udało się skonwertować. Waliduj je na podstawie liczby wierszy
+i proporcji, a nie wartości wierszy.
+
+Tam, gdzie ma znaczenie, który rekord trafia do której próbki — model, który trzeba odtworzyć dokładnie, lub zbiór wstrzymany, względem którego opublikowano już wyniki —
+rozstrzygnij próbkę za pomocą kolumny: krok **Formula**, który oblicza
+przypisanie do próbki, oraz krok **Filter** dla każdej próbki.
+
+## Konwersje uczenia maszynowego (Assisted Modeling)
+
+Potoki uczenia maszynowego Alteryx zbudowane za pomocą rodziny narzędzi Machine Learning konwertują się na natywne kroki ML PlaidCloud:
+
+- Narzędzie **Classification** lub **Regression**, razem z etapami Assisted Modeling i Transformation powyżej oraz narzędziem **Fit** poniżej, łączy się w jeden krok [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/). Krok przenosi dokładny algorytm, zmienną docelową, kolumny cech i hiperparametry z przepływu pracy Alteryx oraz zapisuje wytrenowany model jako jednowierszową tabelę modelu z metrykami treningu zapisanymi w niej.
+- Każde narzędzie **Predict** staje się krokiem [ML: oceniaj](/pl/reference/workflow-steps/machine-learning/ml-score/), który odczytuje tabelę wytrenowanego modelu i jej wejście danych. Kolumna predykcji nosi nazwę zmiennej docelowej z sufiksem `_predicted`.
+- **Klasyfikatory XGBoost** konwertują się z notatką o przybliżeniu: model trenuje się jako klasyfikator gradient-boosted ze scikit-learn, a wszelkie parametry drzew specyficzne dla XGBoost bez odpowiednika są wymienione w notatkach mapowania kroku. Zwaliduj metryki modelu względem uruchomienia w Alteryx, zanim zaufasz zgodności.
+- Narzędzie **Image Recognition** trenuje klasyfikator obrazów w przepływie pracy i ocenia względem niego nowe obrazy, w całości na miejscu — bez zewnętrznego konta i bez opuszczania PlaidCloud przez dane obrazów. Narzędzie **Predict** skierowane na model ocenia względem niego. Dwie rzeczy przenoszą się inaczej niż w reszcie rodziny ML, więc zwaliduj je, zanim zaufasz zgodności. Po pierwsze, klasyfikator jest trenowany ponownie na podstawie Twoich oznaczonych obrazów, a nie kopiowany z Alteryx, a ten trening jest niedeterministyczny — dwie konwersje tego samego przepływu pracy dają nieco różne modele, więc predykcje są wiernym przybliżeniem, a nie dopasowaniem bit po bicie. Po drugie, trening działa na CPU, więc zestaw od setek do niskich tysięcy obrazów zajmuje kilka minut. Image Recognition jest włączane dla każdego obszaru roboczego; poproś administratora o jego włączenie, jeśli skonwertowany przepływ pracy zgłasza, że nie jest włączone.
+- Narzędzie **AutoML** łączy się w krok [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) tak samo jak Classification i Regression. AutoML nie zapisuje, który z jego algorytmów kandydujących faktycznie wygrał w czasie uruchomienia w Alteryx, więc konwersja wybiera pierwszy zaznaczony algorytm obsługiwany przez ML Train i odnotowuje ten wybór, zamiast odtwarzać zautomatyzowane przeszukiwanie. Porównaj skonwertowany krok AutoML z własnymi wynikami z Alteryx.
+- **Kreator Assisted Modeling**, którego model wybrano interaktywnie (i nigdy nie zapisano w pliku przepływu pracy), nie może się skonwertować — importer zachowuje krok zastępczy, którego notatki zapisują odzyskaną zmienną docelową, abyś mógł ręcznie zbudować krok ML Train.
+- **Samodzielny etap one-hot encoding** jest oznaczany w raporcie z konwersji. Połączony krok ML Train koduje cechy kategorialne metodą one-hot wewnętrznie, więc samodzielny etap zwykle nie wymaga zamiennika.
+
+Jak każda konwersja, połączone kroki niosą swoją pewność i notatki w raporcie z konwersji oraz na kanwie, więc potoki warte podwójnego sprawdzenia łatwo znaleźć.
+
+## Przegląd pokrycia konwersji
+
+[Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/) wymienia każdy obsługiwany obiekt Alteryx, jego poziom pokrycia oraz operację PlaidCloud użytą podczas konwersji.
+
+Użyj macierzy, aby zrozumieć, jak importer obsługuje każdą rodzinę narzędzi:
+
+- Natywne kroki DAG dla typowego przygotowania danych, złączeń, filtrów, formuł, sortowania, sum, próbkowania i zmiany kształtu.
+- Kroki makr dla wejść makr, wyjść makr, wywoływania makr, parametrów kontrolnych i współbieżności makr.
+- Kontrolowane zmienne przepływu pracy dla pytań aplikacji analitycznej, takich jak pola wyboru, listy rozwijane, pola tekstowe, przyciski opcji, selektory folderów i selektory plików.
+- Operacje na plikach oparte na Document dla zachowań wejścia, wyjścia, katalogów i plików dynamicznych.
+- Natywne kroki ML Train i ML Score dla potoków uczenia maszynowego Assisted Modeling.
+- Tabela zastępcza dla każdej bazy danych Calgary w Alteryx, dzięki czemu narzędzia Calgary Loader, Input, Cross Count i Join konwertują się względem zwykłej tabeli zamiast być od razu odrzucane — zobacz [Bazy danych Calgary](#bazy-danych-calgary).
+- Zarządzani wykonawcy zadań dla wyspecjalizowanej pracy z danymi przestrzennymi, dopasowaniem rozmytym, PDF, OCR, NLP, raportowaniem i artefaktami.
+- Odpowiedniki natywne dla chmury tam, gdzie PlaidCloud tworzy trwały, udostępnialny artefakt, zamiast odtwarzać renderer komputerowy specyficzny dla Alteryx lub zastrzeżony format pliku.
+
+## Raport pokrycia Alteryx
+
+Zobacz, co zawierają Twoje przepływy pracy Alteryx, zanim się zarejestrujesz.
+
+1. Otwórz publiczną stronę `https://app.plaidcloud.com/#coverage-report`, zatytułowaną **See what's in your Alteryx workflows**.
+2. Upuść plik w polu **Drop an Alteryx workflow here** lub wybierz **Wybierz plik**. Akceptuje przepływ pracy (`.yxmd`), makro (`.yxmc`) lub pakiet (`.yxzp`) do 10 MB. PlaidCloud odczytuje plik i pokazuje znalezione narzędzia oraz te używane najczęściej. Poświadczenia zapisane w pliku są usuwane.
+3. Wprowadź swój **Work email**, zaakceptuj Warunki korzystania z usługi i Politykę prywatności i wybierz **Email me a verification link**.
+
+Twój pełny raport jest budowany w Twoim własnym bezpłatnym obszarze roboczym PlaidCloud. PlaidCloud konwertuje przesłany plik na projekt o nazwie **Alteryx migration**, a pierwszy administrator obszaru roboczego, który otworzy Home, zobaczy **Raport pokrycia Alteryx**. Wymienia on każdy przepływ pracy wraz z tym, ile jego narzędzi PlaidCloud rozpoznał i może skonwertować, ile jest **Do przejrzenia**, oraz przycisk **Otwórz** dla skonwertowanego przepływu pracy. Pliki danych nie są częścią raportu; prześlij pliki, które odczytują Twoje przepływy pracy, a następnie je uruchom. Przyciski raportu prowadzą do **Użyj własnej hurtowni danych** i **Udowodnij poprawność migracji**. Przesłany plik jest przechowywany przez 7 dni.
+
+Jeśli masz już konto PlaidCloud, adres e-mail, który wprowadzisz, otrzyma wiadomość **Your coverage report is ready — sign in to view it** z łączem. Zaloguj się, otwórz ją, wybierz **Obszar roboczy** i wybierz **Add the report**. Dodać go może tylko administrator organizacji obszaru roboczego, a raport otworzy się przy następnym otwarciu obszaru roboczego. Zignorowanie wiadomości niczego nie zmienia w Twoim obszarze roboczym. Link nieprawidłowy lub wygasły informuje o tym, a wygasły plik trzeba przesłać ponownie.
+
+Po konwersji [udowodnij zgodność](/pl/guides/workflows/validate-converted-alteryx-workflows/#udowodnij-poprawność-migracji) względem swoich wyników z Alteryx.
+
+## Zalecana praktyka migracji
+
+W przypadku dużego portfolio migruj partiami:
+
+1. Zaimportuj przepływy pracy i makra do projektu migracji.
+2. Uzupełnij pakiety zależności, zanim zaczniesz przeglądać poszczególne formuły lub logikę biznesową.
+3. Uruchom walidację strukturalną dla całej partii.
+4. Nadaj priorytet walidacji zgodności wyników dla przepływów pracy produkcyjnych, regulacyjnych i takich, które mają odbiorców końcowych.
+5. Promuj zwalidowane przepływy pracy do docelowego projektu produkcyjnego.
+6. Zaharmonogramuj uruchomienia produkcyjne i monitoruj historię uruchomień.
+
+## Powiązane przewodniki
+
+- [Lista kontrolna gotowości migracji Alteryx](/pl/guides/workflows/alteryx-migration-readiness-checklist/)
+- [Pakowanie zależności Alteryx](/pl/guides/workflows/package-alteryx-dependencies/)
+- [Walidacja skonwertowanych przepływów pracy Alteryx](/pl/guides/workflows/validate-converted-alteryx-workflows/)
+- [Korzystanie ze skonwertowanych aplikacji Alteryx](/pl/guides/workflows/use-converted-alteryx-apps/)
+- [Orkiestracja migracji Alteryx za pomocą MCP](/pl/guides/workflows/orchestrate-alteryx-migrations-with-mcp/)
+- [Dostrajanie importów Alteryx](/pl/guides/workflows/troubleshoot-alteryx-imports/)
+- [Walidacja raportów i artefaktów Alteryx](/pl/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Migracja przestrzennych przepływów pracy Alteryx](/pl/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [Tworzenie makra](/pl/guides/workflows/create-a-macro/)
+- [Uruchamianie przepływu pracy](/pl/guides/workflows/run-a-workflow/)
+- [Zarządzanie zmiennymi przepływu pracy](/pl/guides/workflows/manage-workflow-variables/)
+- [Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/)
+
+## Zestaw dokumentacji migracji
+
+W przypadku większych migracji używaj tych wyspecjalizowanych przewodników razem z tym przewodnikiem migracji:
+
+- [Lista kontrolna gotowości migracji Alteryx](/pl/guides/workflows/alteryx-migration-readiness-checklist/) do planowania migracji i przeglądu pakietów.
+- [Pakowanie zależności Alteryx](/pl/guides/workflows/package-alteryx-dependencies/) dla plików, folderów, makr, plików towarzyszących danych przestrzennych i oczekiwanych wyników.
+- [Korzystanie ze skonwertowanych aplikacji Alteryx](/pl/guides/workflows/use-converted-alteryx-apps/) dla kontrolowanych zmiennych przepływu pracy i uruchomień w stylu aplikacji.
+- [Orkiestracja migracji Alteryx za pomocą MCP](/pl/guides/workflows/orchestrate-alteryx-migrations-with-mcp/) do użycia agenta AI do porządkowania plików, pracy z podłączonym magazynem współdzielonym i koordynowania wielu konwersji przez serwer MCP PlaidCloud.
+- [Dostrajanie importów Alteryx](/pl/guides/workflows/troubleshoot-alteryx-imports/) dla uzupełniania zależności, rozwiązywania makr, zmiennych, porównań walidacyjnych i notatek o gotowości wykonawców.
+- [Walidacja raportów i artefaktów Alteryx](/pl/guides/workflows/validate-alteryx-reports-and-artifacts/) dla plików PDF, obrazów, map, wykresów, pulpitów i artefaktów modeli.
+- [Migracja przestrzennych przepływów pracy Alteryx](/pl/guides/workflows/migrate-spatial-alteryx-workflows/) dla plików przestrzennych, logiki geometrii SQL, zarządzanych wykonawców przestrzennych i walidacji przestrzennej.

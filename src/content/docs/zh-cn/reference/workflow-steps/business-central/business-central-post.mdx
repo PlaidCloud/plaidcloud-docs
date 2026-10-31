@@ -1,0 +1,55 @@
+---
+title: "Business Central: Post General Journal Lines 步骤"
+description: 根据 PlaidCloud 的标题表和行表，将总账日记账行过账到现有的 Business Central 日记账批次，并提供预览模式，在过账之前验证每个日记账。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/business-central/business-central-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过 [Business Central 连接](/zh-cn/guides/connections/business-central/)，经由 PlaidCloud 共享的 ERP 写入管道过账总账日记账行。此步骤接收一个标题表（每个 `journal_id` 一行）和一个行表（每个 `journal_id` 一行或多行），在**现有**日记账批次中创建行，然后过账该批次。**仅验证**会构建并检查每个日记账但不过账；可选的结果表会记录结果。
+
+<Aside type="caution">
+请务必先以**仅验证**模式运行每个批次并检查结果表，然后在 Business Central 中直接核对少量过账记录，之后再依赖此步骤无人值守地过账正式日记账。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **Business Central 连接**：用于过账的 Business Central 连接。
+- **环境**：连接的环境。
+
+### 数据
+
+- **标题表**：每个 `journal_id` 一行：行要过账到的 Business Central 日记账批次名称、`document_number`、`posting_date` 和货币标签。
+- **行表**：每个 `journal_id` 一行或多行：带符号的 `amount`（借方为正，贷方为负）、`account_id` 或 `account_number`、`account_type`、`description`。
+- **结果表**：输出表 ID：每个 `journal_id` 一行，包含 `journal_id`、`external_id`、`internal_id`、`status`、`message`。
+- **仅验证**：默认选中。仅执行预检；不占用账本，也不过账。如果步骤配置完全省略此字段（例如通过 REST API、MCP 或工作流包导入创建的配置），同样默认为仅验证，而不是正式过账。
+- **出错时继续**：默认选中。某个日记账失败后继续过账其余日记账；取消选中则在第一次失败时停止该批次。
+
+<Aside type="caution">
+**`journal_id` 所指定的日记账批次必须已在 Business Central 中存在。** 此步骤在批次内创建行，不会创建批次本身。在向其过账之前，请先在 Business Central 中设置好日记账批次（名称、日记账模板）。
+</Aside>
+
+## 过账的工作方式
+
+Business Central 的 `Microsoft.NAV.post` 绑定操作会过账**整个**日记账批次，而不仅仅是本次请求创建的行。在调用它之前，PlaidCloud 会回读该批次，如果其中有任何行未标有本次请求的单据编号，就会拒绝过账，记录一个错误，不过账任何内容。此防护可防止早先部分失败遗留的零散行，被之后对同一批次的无关过账一并带入总账。
+
+由于 `generalLedgerEntries` 为只读且仅含已过账数据，PlaidCloud 通过在**该处**查找单据编号来验证过账成功，而不是重新读取日记账批次。在 `generalLedgerEntries` 中匹配到即证明确实已过账，而不仅仅是行已创建。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|
+| 仅支持一种写入单据类型 | 仅支持总账日记账行过账。不支持 Business Central 的草稿单据流程（销售/采购发票，草稿 → 已过账），因为 Microsoft 公开文档中并未明确该流程的确切过账操作。 |
+| 仅限现有批次 | 此步骤从不创建日记账批次。请先在 Business Central 中创建，然后将 `journal_id` 指向它。 |
+| 同一批次的并发过账 | 幂等性防护的范围是单据编号，而不是日记账批次。两个不同的单据编号同时过账到同一批次时，不保证像两次使用相同单据编号的调用那样串行执行。请避免向同一批次并发过账。 |
+
+## 相关内容
+
+- [连接到 Business Central](/zh-cn/guides/connections/business-central/)：涵盖配置、预览和过账的完整演练
+- [Business Central REST 连接器](/zh-cn/reference/connectors/rest/business-central/)
+- [Business Central 步骤](/zh-cn/reference/workflow-steps/business-central/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

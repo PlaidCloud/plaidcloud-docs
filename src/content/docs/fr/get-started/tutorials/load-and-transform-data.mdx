@@ -1,0 +1,139 @@
+---
+title: Charger, transformer et publier des données
+description: Tutoriel de bout en bout — importez un CSV, nettoyez-le avec des étapes de table et publiez le résultat pour les consommateurs en aval.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ce tutoriel dure environ une heure. À la fin, vous disposerez d'un workflow fonctionnel qui importe un CSV, le transforme avec quelques étapes de table et publie le résultat.
+
+## Ce que vous allez construire
+
+Un workflow qui prend un CSV de ventes brut, le nettoie, le joint à une table de référence de produits, calcule des colonnes dérivées et publie le résultat sous la forme d'une table de faits propre.
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Prérequis
+
+- Un espace de travail PlaidCloud ([démarrez un essai gratuit](https://app.plaidcloud.com) si vous n'en avez pas)
+- Un projet dans lequel travailler (créez-en un depuis l'onglet **Projets** si nécessaire)
+- Deux fichiers CSV à importer — pour ce tutoriel, nous utiliserons un fichier simple de transactions de ventes et un fichier de catalogue de produits. Vous pouvez utiliser les vôtres ou générer des données d'exemple avec n'importe quel tableur
+
+## Étape 1 : créer le workflow
+
+<Steps>
+
+1. Ouvrez votre projet et passez à l'onglet **Workflows**.
+2. Cliquez sur **Nouveau workflow**. Donnez-lui un nom descriptif comme « Sales Cleanup ».
+3. Cliquez sur **Créer**. Le workflow vide apparaît dans votre liste.
+4. Double-cliquez sur le workflow pour ouvrir l'explorateur de workflows.
+
+</Steps>
+
+## Étape 2 : importer le CSV des ventes
+
+<Steps>
+
+1. Dans l'explorateur de workflows, ajoutez une nouvelle étape.
+2. Choisissez **Import → CSV** (ou l'étape d'importation qui correspond au format de votre source).
+3. Dans la configuration de l'étape :
+   - **Fichier source** — pointez vers votre CSV de ventes (téléversement, ou choix dans un compte de documents connecté)
+   - **Table cible** — nommez-la `sales_raw`
+   - **Délimiteur, caractère de citation, ligne d'en-tête** — ajustez-les si votre fichier n'est pas standard
+4. Exécutez l'étape. Le CSV est chargé comme nouvelle table dans votre projet.
+
+</Steps>
+
+Consultez l'onglet **Tables** pour voir `sales_raw`. Cliquez dessus pour vérifier que les données semblent correctes — nombre de colonnes, lignes d'exemple, types de données.
+
+## Étape 3 : importer le catalogue de produits
+
+Répétez l'étape 2 avec votre CSV de produits, en ciblant une table nommée `products_raw`. Vous disposez ainsi des deux tables de référence nécessaires à la jointure.
+
+## Étape 4 : filtrer les lignes erronées
+
+Les vraies données de ventes comportent des lacunes — montants nuls, transactions de test, remboursements que vous ne voulez pas dans la table de faits principale. Ajoutez une étape de filtrage pour les retirer.
+
+<Steps>
+
+1. Ajoutez une étape **Tables → Table Lookup** (ou toute transformation de table qui permet de filtrer).
+2. Configurez :
+   - **Table source** : `sales_raw`
+   - **Table cible** : `sales_clean`
+   - **Conditions de filtre** : par exemple `amount > 0 AND status = 'completed'`
+3. Exécutez l'étape. `sales_clean` devrait contenir moins de lignes que `sales_raw`.
+
+</Steps>
+
+<Aside>
+Les filtres s'appliquent au fil du passage des données de la source vers la cible. La table source n'est pas modifiée. C'est un modèle central de PlaidCloud — chaque étape lit une ou plusieurs sources et écrit dans une ou plusieurs cibles, en laissant les originaux intacts à des fins d'auditabilité.
+</Aside>
+
+## Étape 5 : joindre le catalogue de produits
+
+Combinez maintenant les lignes de ventes nettoyées avec les détails de produits du catalogue.
+
+<Steps>
+
+1. Ajoutez une étape **Tables → Table Inner Join**.
+2. Configurez :
+   - **Table de gauche** : `sales_clean`
+   - **Table de droite** : `products_raw`
+   - **Clés de jointure** : la colonne qui relie les deux tables (par exemple `product_id`)
+   - **Table cible** : `sales_enriched`
+3. Exécutez l'étape.
+
+</Steps>
+
+`sales_enriched` contient désormais toutes les colonnes des deux tables. Vous voudrez probablement un sous-ensemble — c'est l'étape suivante.
+
+## Étape 6 : sélectionner et calculer des colonnes
+
+Nettoyer, c'est généralement supprimer les colonnes inutiles et en calculer de dérivées. Ajoutez une autre étape de table :
+
+<Steps>
+
+1. Ajoutez une étape **Tables → Table Lookup** (utilisée ici pour la sélection et le calcul de colonnes).
+2. Configurez :
+   - **Source** : `sales_enriched`
+   - **Cible** : `sales_final`
+   - **Colonnes à conserver** : le sous-ensemble utile aux consommateurs en aval
+   - **Colonnes calculées** : par exemple `revenue = amount * price`, `margin = revenue - cost`
+3. Exécutez l'étape.
+
+</Steps>
+
+Pour les calculs au niveau des colonnes, la [référence des expressions](/fr/reference/expressions/) couvre chaque fonction disponible — opérations sur les chaînes, calculs de dates, logique conditionnelle, agrégations.
+
+## Étape 7 : publier le résultat
+
+Rendez `sales_final` disponible pour les tableaux de bord et les systèmes en aval.
+
+<Steps>
+
+1. Ajoutez une étape **Data → Publish** (ou utilisez directement l'option **Publier** sur la table).
+2. Configurez qui peut lire la table publiée — généralement les autres membres de l'espace de travail ainsi que les systèmes externes qui y ont accès.
+3. Exécutez l'étape.
+
+</Steps>
+
+La table publiée est désormais accessible aux [tableaux de bord](/fr/guides/dashboards/), aux outils de BI et à tout consommateur externe disposant des bonnes autorisations.
+
+## Étape 8 : exécuter tout le workflow
+
+Cliquez sur **Exécuter** sur le workflow (pas seulement sur une étape). Surveillez le journal pendant que chaque étape s'exécute dans l'ordre. Le pipeline complet s'exécute de l'import du CSV jusqu'à la publication.
+
+Si une étape échoue, le guide [Gérer les erreurs d'étape](/fr/guides/workflows/managing-step-errors/) traite du débogage — les problèmes les plus courants sont des clés de jointure erronées (incompatibilité entre les tables) et des valeurs nulles inattendues dans les colonnes calculées.
+
+## Et ensuite
+
+- [Construire un modèle d'allocation](/fr/get-started/tutorials/build-an-allocation/) — répartissez les coûts entre des consommateurs à l'aide de données d'inducteurs
+- [Guide des workflows](/fr/guides/workflows/) — gestion des erreurs, conditions, boucles, variables
+- [Référence des étapes de workflow](/fr/reference/workflow-steps/) — chaque type d'étape et son rôle

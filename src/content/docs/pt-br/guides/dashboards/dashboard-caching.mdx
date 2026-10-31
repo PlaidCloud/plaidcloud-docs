@@ -1,0 +1,108 @@
+---
+title: Cache de painéis
+description: Como os painéis do PlaidCloud armazenam em cache os resultados dos gráficos, quando um resultado em cache é descartado e como mantê-los por mais tempo para que visualizações repetidas carreguem do cache.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dashboards/dashboard-caching.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Um painel armazena em cache o resultado de cada gráfico que desenha. A primeira pessoa a abrir um
+painel executa as consultas dele no data warehouse; quem o abre depois disso
+recebe o resultado armazenado, e é por isso que uma segunda visualização é muito mais rápida que
+a primeira.
+
+Um resultado em cache é descartado — e a próxima visualização consulta o data warehouse novamente — em duas
+situações: a tabela por trás do gráfico é republicada ou o resultado chega ao fim
+do seu tempo de vida no cache.
+
+## Republicar uma tabela limpa seus resultados em cache
+
+Quando uma execução de fluxo de trabalho republica uma tabela, todo gráfico que lê essa tabela descarta
+seus resultados em cache imediatamente. A próxima pessoa a abrir o painel vê os
+números atualizados, sem esperar e sem forçar uma atualização manual.
+
+Isso significa que um painel nunca mostra números anteriores à atualização por causa do cache. Se um
+painel parecer desatualizado depois de uma execução de fluxo de trabalho, a causa é o fluxo de trabalho — verifique se
+a execução terminou e se ela republicou a tabela esperada — e não o cache.
+
+<Aside type="caution" title="Publique com um nome estável">
+Os resultados em cache são rastreados por tabela publicada. Se você recriar uma tabela com um
+nome publicado diferente, os gráficos que ainda apontam para o nome antigo continuam servindo os
+dados da tabela antiga. Republique com o mesmo nome para que os gráficos já criados continuem
+vinculados a ela.
+</Aside>
+
+## Tempo de vida do cache
+
+Todo resultado em cache também tem um tempo de vida, após o qual expira por conta própria. O
+padrão é **1 hora**.
+
+O tempo de vida não é o que mantém um painel atualizado — a republicação é. Portanto, em
+dados que só mudam quando um fluxo de trabalho é executado, um tempo de vida curto não traz benefício e custa
+muito: qualquer visualização depois que o último resultado expira consulta o data warehouse do
+zero. Painéis usados em rajadas — uma revisão matinal, um fechamento de fim de mês — pagam esse
+custo em quase todo carregamento.
+
+O padrão era de 5 minutos até agosto de 2026. Era curto porque a republicação não
+limpava os resultados em cache de forma confiável, então a expiração era a única coisa que mantinha um painel
+atualizado. Agora que a republicação os limpa, uma hora é ao mesmo tempo segura e muito mais barata.
+
+Aumente-o ainda mais em tabelas que mudam com menos frequência — um dia serve para uma que é recarregada
+durante a noite — e o fluxo de trabalho que recarrega a tabela ainda limpa o cache no momento
+em que os novos dados chegam.
+
+<Aside type="caution">
+Deixar o tempo de vida longo só é seguro para dados que mudam por meio do PlaidCloud. Se
+um gráfico lê uma tabela na qual algo de fora do PlaidCloud grava, nada sinaliza
+ao painel para descartar o cache, e o tempo de vida é a única coisa que o atualiza.
+Defina um tempo de vida curto nesses conjuntos de dados — com o padrão de 1 hora, eles podem agora
+ficar até uma hora defasados, quando antes ficavam no máximo 5 minutos defasados.
+</Aside>
+
+## Alterar o tempo de vida do cache
+
+Defina o tempo de vida em segundos, em um banco de dados ou em um conjunto de dados individual. Um valor
+no conjunto de dados prevalece sobre o valor do banco de dados dele, e o padrão de 1 hora se aplica
+onde você não definiu nenhum dos dois. Alterar qualquer um deles exige a permissão de edição correspondente na
+área de Painéis.
+
+**Para todos os conjuntos de dados de um banco de dados:**
+
+1. Vá para **Data → Databases** na área de Painéis
+2. Clique no ícone de edição do banco de dados
+3. Abra a guia **Avançado** e depois **Performance**
+4. Informe um valor em segundos em **Chart cache timeout** — por exemplo, `3600` para uma
+   hora
+5. Clique em **Finish**
+
+**Para um único conjunto de dados:**
+
+1. Vá para **Data → Datasets**
+2. Clique no ícone de edição do conjunto de dados
+3. Abra a guia **Configurações**
+4. Informe um valor em segundos em **Cache timeout**
+5. Clique em **Salvar**
+
+Dois valores têm significados especiais: `0` significa nunca expirar, de modo que o resultado só é
+limpo por uma republicação, e `-1` desativa totalmente o cache para esse banco de dados ou
+conjunto de dados.
+
+A alteração se aplica aos resultados armazenados em cache a partir desse momento. Os resultados que já estão no cache
+mantêm o tempo de vida com que foram armazenados até expirarem ou a tabela ser republicada.
+
+## Atualizar um painel manualmente
+
+Raramente é necessário, mas você mesmo pode descartar os resultados em cache de um painel: abra
+o menu ao lado de **Edit dashboard** e escolha **Force refresh dashboard**. Se um gráfico
+estiver servindo um resultado mais antigo, uma observação no canto superior direito informa há quanto tempo os dados foram
+armazenados em cache, e clicar nela força a mesma atualização.
+
+Prefira qualquer um desses métodos a recarregar a página do navegador — recarregar o navegador solicita novamente os
+gráficos, mas ainda recebe os resultados em cache.
+
+## Relacionados
+
+- [Usar painéis](/pt-br/guides/dashboards/using-dashboards/)
+- [Conhecer os painéis](/pt-br/guides/dashboards/learning-dashboard/)

@@ -1,0 +1,60 @@
+---
+title: Text NLP AI
+description: "Exécutez une tâche s'appuyant sur un LLM pour chaque ligne : extraction d'entités, étiquetage des parties du discours, résumé, classification zero-shot, extraction clé/valeur, ou votre propre invite."
+sidebar:
+  order: 33
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/text-documents/nlp-ai.mdx
+---
+
+## Description
+
+L'étape **Text NLP AI** exécute sur vos données l'une de sept tâches par ligne, chacune sous forme d'un lot d'appels LLM structurés (utilisation d'outil forcée) : **Reconnaissance d'entités nommées**, **Étiquetage POS**, **Résumé**, **Classification zero-shot**, **Extraction clé/valeur**, **Invite** et **Embed**. Elle s'exécute comme un job PlaidCloud géré (comme [ML : entraîner un modèle](/fr/reference/workflow-steps/machine-learning/ml-train/) et l'[Étape LLM](/fr/reference/workflow-steps/general/llm-step/)) et ne se dispute donc pas les ressources avec le reste du workflow.
+
+Comme chaque tâche est un véritable appel à un LLM, les résultats ne sont pas reproductibles à l'identique d'une exécution à l'autre : consultez [Non-déterminisme](#non-déterminisme-résultats-issus-dun-llm).
+
+## Configuration
+
+- **Source / Tables de sortie** — la table d'entrée et la table dans laquelle les résultats sont écrits.
+- **Colonne de texte** (`field`) — la colonne que lit chaque tâche.
+- **Tâche** (`task`) — l'une des valeurs `ner`, `pos`, `summary`, `zeroshot`, `keyvalue`, `prompt`. La tâche `embed` ne figure pas dans la liste des tâches du formulaire ; définissez-la avec un assistant IA ou l'API REST.
+- **Langue** (`language`) — la langue du texte, transmise au modèle. La valeur par défaut est `en`.
+- **Connexion LLM** (`llm_connection_id`) — une connexion LLM pour Anthropic, OpenAI, Gemini, Azure OpenAI, Grok ou GitHub Models. Laissez vide pour utiliser la valeur par défaut de l'espace de travail.
+- **Modèle** (`llm_model`) — laissez vide pour utiliser le modèle par défaut de la connexion.
+- **Température** (`temperature`) — température d'échantillonnage facultative. Consultez [Non-déterminisme](#non-déterminisme-résultats-issus-dun-llm) : les modèles de génération actuelle l'ignorent.
+- **Nb max. de lignes** (`max_rows`) — ne répond qu'aux N premières lignes dans l'ordre de la source. Les autres conservent une réponse vide. Laissez vide pour traiter toutes les lignes.
+- **Taille du lot** (`batch_size`) — nombre de lignes envoyées par appel LLM, de 1 à 500. La valeur par défaut est 25. Un lot dont la réponse est tronquée est divisé en deux et réessayé plutôt que de perdre des lignes.
+
+## Tâches
+
+Quatre tâches renvoient une ligne de sortie par ligne d'entrée (**conservation des lignes**) ; trois renvoient zéro ligne ou plus par ligne d'entrée et reportent sur chacune les colonnes d'identifiant de la source (`id_columns`) (**multiplication des lignes**).
+
+| Tâche | Démultiplication | Colonnes de sortie | Champs propres à la tâche |
+| --- | --- | --- | --- |
+| Reconnaissance d'entités nommées (`ner`) | Multiplication des lignes | `entity_text`, `entity_type` | **Types d'entité** (`entity_types`) — la liste des types autorisés. Par défaut, `people`, `organizations`, `locations`, `dates`, `quantities` si le champ est vide. |
+| Étiqueteur POS (`pos`) | Multiplication des lignes | `token`, `pos` (étiquette universelle de partie du discours, par exemple `NOUN`, `VERB`, `ADJ`) | Aucun. |
+| Résumé (`summary`) | Conservation des lignes | `summary` | **Summary Length** (`summary_length`) — nombre maximal de phrases, de 1 à 20. La valeur par défaut est 3. |
+| Classification zero-shot (`zeroshot`) | Conservation des lignes | `label`, `score` (0 à 1) | **Champ d'étiquette** (`label_field`) — la colonne source qui contient les étiquettes candidates de chaque ligne ; sans elle, le modèle n'a rien parmi quoi choisir. **Multi-Label** (`multi`) — autorise plusieurs étiquettes par ligne (jointes par `, `) au lieu de ne retenir que la meilleure. |
+| Invite (`prompt`) | Conservation des lignes | `answer`, `error` | **Invite** (`prompt`) — l'instruction appliquée à chaque ligne, obligatoire. **Champs d'entrée** (`input_fields`) — les colonnes envoyées au modèle avec l'invite, sous forme d'un enregistrement par ligne ; si le champ est vide, la **Colonne de texte** est envoyée. |
+| Embed (`embed`) | Conservation des lignes | `embedding` (un tableau JSON de nombres), `error` | Aucun. Définissez-la avec un assistant IA ou l'API REST. Nécessite une connexion compatible OpenAI ou Azure OpenAI, et le **Modèle** de l'étape doit nommer un modèle de plongement, car le modèle par défaut de la connexion est généralement un modèle de conversation ; une connexion Anthropic est refusée, faute d'API de plongements. Une requête en échec conserve toutes les lignes de son lot, avec un `embedding` vide et la raison dans `error`. |
+| Paires clé/valeur (`keyvalue`) | Multiplication des lignes | `key`, `value` | **Champ clé** (`key_field`) — la colonne source qui contient les clés candidates à extraire pour chaque ligne ; laissez vide pour que le modèle trouve librement les clés. **Fuzzy** (`fuzzy`) — fait correspondre les clés candidates de façon approximative plutôt qu'exacte. |
+
+**Colonnes d'ID** (`id_columns`) reporte des colonnes d'identification de la table source sur chaque ligne de sortie d'une tâche à multiplication des lignes, ce qui permet de remonter d'une entité ou d'une paire extraite jusqu'à son enregistrement source. Une colonne d'ID ne peut pas porter le même nom qu'une colonne de sortie de la tâche : nommer par exemple une colonne d'ID `entity_type` sur une tâche `ner` est refusé à l'enregistrement de l'étape, avec le message *ID column 'entity_type' has the name of a column the ner task writes; rename or remove it.*
+
+La colonne `error` contient le message de l'appel qui a échoué pour cette ligne. La tâche Invite sert à toute question par ligne que les autres tâches ne couvrent pas, comme *Classify the sentiment of this review.* Les valeurs des champs sont envoyées comme des données, jamais comme des instructions au modèle.
+
+Pour la tâche Invite, **Colonne de document** (`content_field`) nomme une colonne qui contient le document de chaque ligne en base64. L'étape envoie alors un document par appel. Le document est transmis au fournisseur sous forme d'image ou de PDF lorsque le fournisseur accepte ce type et cette taille. Sinon, l'étape envoie le texte de la **Colonne de texte de secours** (`text_fallback_field`), par exemple un texte issu de l'OCR. Les documents entiers quittent PlaidCloud pour le fournisseur : vérifiez que cela est acceptable pour vos données. Les lignes sont envoyées une à une, et la **Taille du lot** est donc ignorée. Si un lot échoue, ses lignes sont conservées avec un `answer` vide et l'étape émet un avertissement.
+
+L'enregistrement est également refusé sans table source (*Source table is required.*), ou avec une **Taille du lot** ou une **Summary Length** en dehors des plages ci-dessus.
+
+## Non-déterminisme (résultats issus d'un LLM)
+
+Chaque tâche est un véritable appel à un LLM : les résultats peuvent donc varier d'une exécution à l'autre, même avec une entrée identique. Il n'y a aucune garantie de reproductibilité à l'identique, et c'est un comportement attendu, pas un bogue.
+
+**Température** ajoute une subtilité : les modèles de génération actuelle (Opus 4.7+, Sonnet 5+, Fable) rejettent purement et simplement une température d'échantillonnage explicite. Si vous en définissez une, l'étape l'essaie une fois ; le premier rejet est détecté, l'exécution revient à la valeur par défaut du serveur du modèle pour le reste des lots, et le résultat de l'étape comporte une note informative unique au lieu d'échouer. Laisser Température vide (la valeur par défaut) évite totalement cet aller-retour et constitue le réglage recommandé avec les modèles actuels.
+
+## Voir aussi
+
+- [ML : entraîner un modèle](/fr/reference/workflow-steps/machine-learning/ml-train/) — ajuster un modèle plutôt que d'appeler un LLM par ligne.
+- [Étape LLM](/fr/reference/workflow-steps/general/llm-step/) — un appel LLM agentique libre avec un accès en lecture/écriture limité au projet, plutôt que l'une de ces tâches fixes par ligne.
+- [Matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/) — Named Entity Recognition, POS Tagger, Text Summary, Zero-shot Text Classification et Key/Value Pairs sont tous convertis vers cette étape.
+- [Migrate Savant Analyses](/fr/guides/workflows/migrate-savant-analyses/) — les agents Savant Infer et Vision sont convertis vers la tâche Invite.

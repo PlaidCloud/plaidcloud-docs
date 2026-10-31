@@ -1,0 +1,141 @@
+---
+title: "复用成果：变量、宏和 UDF"
+description: 将一次性管道转变为可扩展的资产：用工作流变量参数化，将可重复的序列打包为宏，并为自定义逻辑添加用户定义转换。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/reuse-variables-macros-udfs.mdx
+---
+
+*约 30 分钟 · 一个变量、一个宏、一个用户定义转换*
+
+构建的第一个工作流通常会把一切都写死：一个区域、一个月份、一个表名。它只能用一次。本教程帮助您从*普通用户*跃升为*高级用户*：把那个一次性管道变成可以指向任何区域、可以在任何地方调用、还能用自己的 Python 扩展的资产。
+
+三种工具各司其职，并且可以叠加使用：
+
+| 工具 | 消除的问题 | 适用时机 |
+|---|---|---|
+| **工作流变量** | 分散在各步骤中的硬编码值 | 同一个值（月份、区域、阈值）出现在多个步骤中 |
+| **宏** | 复制粘贴的步骤序列 | 一个参数化的*序列*需要运行多次，例如按区域、按月份、按驱动因素行运行 |
+| **User Defined Transform（UDF）** | 标准步骤无法覆盖的空白 | 没有标准转换（或组合）能满足需求，而您可以用 Python 编写 |
+
+并非每个工作流都需要这三种工具。当某种工具所能消除的痛点真正出现时，再添加它。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="三种复用工具，按范围从小到大排列。工作流变量在各步骤间参数化一个值；宏将整个参数化的步骤序列打包以便复用；User Defined Transform 在标准步骤不足时添加自定义 Python。" style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="rv-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">变量</text>
+  <text x="104" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">参数化一个值</text>
+  <path d="M194 75 L234 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="236" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="326" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">宏</text>
+  <text x="326" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">打包一个序列</text>
+  <path d="M416 75 L456 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="458" y="48" width="208" height="54" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="562" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-accent)">UDF</text>
+  <text x="562" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">步骤不足时使用自定义 Python</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">每种工具覆盖的范围都比前一种更大。有需要时再添加，不必提前。</figcaption>
+</figure>
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区，以及一个包含已构建工作流的项目，最好是[加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)中的那个工作流。
+- 熟悉添加和运行工作流步骤。如果这对您来说还很陌生，请先阅读[工作流指南](/zh-cn/guides/workflows/)。
+
+## 步骤 1：使用工作流变量参数化
+
+变量是一个有名称的值，步骤读取它而不是字面量。只需在一处修改，所有引用它的步骤都会随之更新。PlaidCloud 在两个范围保存变量：**项目**变量由项目中的所有工作流共享；**工作流**变量属于单个工作流，是在其步骤之间传递信息的自然方式。
+
+1. 在**工作流**层次结构中，点击**变量**图标打开变量表。
+2. **添加变量**：为其指定清晰的名称（如 `target_region`），并设置当前值（例如 `East`）。
+3. 在目前将该值写死的步骤中，引用该变量而不是输入字面量。
+4. 运行该步骤。然后在表中修改变量的值并再次运行，同一个步骤现在会处理不同的数据切片，无需编辑步骤本身。
+
+变量表也用于查看当前值、编辑值以及删除不再需要的变量。
+
+> **项目范围与工作流范围。** 当多个工作流需要相同的设置时，将值放在**项目**范围；当它只属于某个工作流的步骤时，放在**工作流**范围。拿不准时，先从较窄的范围（工作流变量）开始，只有在第二个工作流需要时再提升到项目范围。
+
+有关变量所在位置及管理方法的完整说明，请参阅[管理工作流变量](/zh-cn/guides/workflows/manage-workflow-variables/)。
+
+## 步骤 2：将序列打包为宏
+
+变量参数化一个值，而**宏**参数化整个步骤*序列*。它是一个可复用的高级（DAG）工作流，带有声明的输入/输出约定（例如“处理某一个区域一个月的销售”），可以从另一个工作流中按月份、按区域或两者兼有的方式多次调用。每次调用都在各自独立的临时架构中运行，因此同一个宏可以同时运行多次而不会相互冲突。
+
+> **宏是高级工作流独有的功能。** 请先将工作流转换为高级。宏内部的步骤必须是宏安全的：表转换、导入、导出、运行范围的变量步骤以及嵌套的宏调用均可使用；维度导入和更新维度的步骤会被拒绝，因为维度是项目全局状态。
+
+### 将工作流转换为宏
+
+1. 打开项目，在**工作流**选项卡上选择要复用的工作流。
+2. 在**工作流详细信息**面板中，确认**工作流类型**为**高级**；如果是标准类型，请先使用**转换为高级**。
+3. 在**宏**部分，点击**转换为宏…** 并确认。随后会出现端口编辑器。
+4. 对宏接受或生成的每个输入或输出，点击**添加端口**。为每个端口设置：
+   - **名称**：调用方绑定时使用的标识符（例如 `month`、`region_sales`）。
+   - **方向**：**输入**（由调用方提供）或**输出**（由宏生成）。
+   - **类型**：**表**、**标量**（单个字符串 / 整数 / 浮点数 / 布尔值 / 日期）或**维度**。
+   - **必填**：如果宏在不绑定此端口的情况下也能运行，请清除此项。
+   - **备注**：显示在调用方绑定表单中供作者查看的简短说明。
+5. 点击**保存端口**。
+
+### 从另一个工作流调用
+
+1. 在调用方工作流中，添加一个 **宏：运行** 步骤。
+2. 在**要运行的宏**中，选择项目和宏工作流。
+3. **Input Port Bindings**：绑定每个输入端口。标量和维度端口通常采用调用方的工作流变量（即步骤 1 中的那个）；表端口采用源表，还可以选择性地进行列投影和筛选。
+4. **Output Port Bindings**：将每个输出端口指向调用方的目标表。
+5. 保存步骤并运行工作流。
+
+如果要对驱动表的每一行各运行一次宏（例如每行一个区域），请改用 **宏：并发运行** 步骤，并通过**并发运行**限制同时运行的数量。每一行都有自己的临时架构和目标。
+
+完整的逐字段演练（包括运行隔离的生命周期）请参阅[创建宏](/zh-cn/guides/workflows/create-a-macro/)。
+
+## 步骤 3：使用 User Defined Transform 添加自定义逻辑
+
+标准转换几乎涵盖所有场景，而且持续针对性能进行调优，应优先使用。但是，当没有任何标准步骤（单独或组合）能满足需求时，**User Defined Transform（UDF）** 允许您使用标准 Python，并可使用完整的 PlaidCloud API 以及 Pandas、NumPy 和 SciPy 等软件包。
+
+可以通过两种方式编写 UDF：直接在 PlaidCloud 中编写和维护，或者指向已连接的 Git 仓库中的文件（下次运行时会自动获取更改，并支持用分支和标签控制发布）。
+
+### 编写函数
+
+1. 打开工作流，选择**用户定义**选项卡，然后点击**添加用户定义函数**。
+2. 为 UDF 指定一个 **ID**，然后点击 **Edit function logic** 图标打开编辑器。
+3. 编写逻辑。一个最简单的 UDF 会连接、读取源、在 Pandas 中转换并保存目标：
+
+   ```python
+   from plaidcloud.utilities.connect import PlaidConnection
+   from plaidcloud.utilities import frame_manager as fm
+
+   conn = PlaidConnection()
+
+   # Read a table configured as a source on the step
+   source = conn.udf.source_by_name('sales_clean')
+   df = conn.get_data(source)
+
+   # Custom logic the standard steps don't cover
+   df['margin_band'] = df['margin'].apply(
+       lambda m: 'high' if m > 0.4 else 'low'
+   )
+
+   # Write to a table configured as a target on the step.
+   # Sources are read by their configured name; fm.save writes to a table PATH (leading slash).
+   fm.save(df, name='/output/sales_scored', append=False)
+   ```
+
+### 将其添加到工作流
+
+1. 在 **Analyze Steps** 选项卡上，像添加标准转换一样，在需要的位置添加 User Defined Transform 步骤。
+2. 在步骤配置中选择类型：**分析 UDF**（存储的函数）或**外部源代码仓库**（Git，然后选择连接、分支和**文件路径**）。
+3. 定义 UDF 使用的**源表和目标表**。您*可以*在代码中直接访问表，但在此处声明它们会注册依赖关系，并使其可通过 `conn.udf.source_by_name(...)` / `target_by_name(...)` 使用。
+4. 还可以在**其他变量**下添加特定于步骤的值，可通过 `conn.udf.variable_by_name(...)` 读取。
+
+> **请在配置中声明表，而不仅仅是在代码中。** 直接读取表的 UDF 仍然可以运行，但 PlaidCloud 不会知道该表是依赖项，因此血缘关系和运行顺序无法考虑到它。在步骤配置中列出源和目标，可以保证依赖关系图准确无误。
+
+步骤 1 中的项目变量和工作流变量在 UDF 内部同样可以访问，方法是 `conn.analyze.workflow.variable_values(...)` 和 `conn.analyze.project.variable_values(...)`，因此同一个参数既驱动标准步骤，也驱动自定义代码。完整的 API 示例请参阅 [User Defined Transform 参考](/zh-cn/reference/workflow-steps/general/user-defined-transform/)。
+
+**这就是从普通用户到高级用户的跃升。** 您已把一次性管道变成可复用的资产：可以通过变量重新指向的值，可以作为宏在任何地方调用的整个序列，以及能够完成标准步骤无法完成之事的自定义 Python。
+
+## 后续步骤
+
+- [管理工作流变量](/zh-cn/guides/workflows/manage-workflow-variables/)：项目范围与工作流范围，以及变量表。
+- [创建宏](/zh-cn/guides/workflows/create-a-macro/)：端口、运行隔离，以及按行驱动一个宏。
+- [User Defined Transform 参考](/zh-cn/reference/workflow-steps/general/user-defined-transform/)：自定义 Python 的完整 API。
+- [工作流指南](/zh-cn/guides/workflows/)：条件、循环以及编排层提供的其他所有功能。
+- [使用 SQL 转换数据](/zh-cn/get-started/tutorials/transform-with-sql/)：姊妹教程，适用于答案是查询而不是代码的情况。

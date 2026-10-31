@@ -1,0 +1,554 @@
+---
+title: Einen KI-Agenten in einer Panel-App erstellen
+description: Geben Sie einem KI-Agenten die PlaidCloud-REST-API als Werkzeuge in einer Server-Panel-App – er antwortet so als die fragende Person, mit deren Berechtigungen und ohne gespeicherte Anmeldedaten.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/panel-ai-agent.mdx
+---
+
+*~30 Minuten · etwa 200 Zeilen Python · Panel + OpenAI*
+
+> **Bevor Sie beginnen.** Sie benötigen eine **Server**-Panel-App, die aus einem Git-Repository bereitgestellt wird, einen OpenAI-API-Schlüssel, der nicht in diesem Repository liegt, sowie `panel`, `openai` und `requests` in den Anforderungen der App. Die vollständige Liste finden Sie unter [Voraussetzungen](#voraussetzungen).
+
+Erstellen Sie eine Chat-Oberfläche, die Ihre Benutzer im Browser öffnen und die Fragen zu PlaidCloud-Daten beantwortet – **als die fragende Person, mit deren Berechtigungen und ohne gespeicherte Anmeldedaten.** Sie geben einem KI-Agenten die [REST-API](/de/reference/) als Werkzeuge, sodass der Agent genau das sieht, was der Betrachter sehen darf, und nichts darüber hinaus.
+
+Eine Server-Panel-App ist bereits angemeldet, bevor Ihr Code läuft: PlaidCloud authentifiziert den Betrachter und übergibt Ihrer App dessen eigenes Zugriffstoken. Dieser Leitfaden verwendet dieses Token als Schlüssel des Agenten zu PlaidCloud.
+
+Dies gilt nur für **Server**-Apps. WASM-Apps laufen vollständig im Browser, haben keine serverseitige Sitzung und können dies nicht.
+
+## Wie die Authentifizierung funktioniert
+
+Das sollten Sie vor jedem Code verstehen, denn es macht die App sicher genug, um sie einem Raum voller Menschen mit unterschiedlichen Berechtigungen zu überlassen.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 300" role="img" aria-label="Wie eine Panel-App einen KI-Agenten als den Betrachter authentifiziert. Der Betrachter öffnet die App-URL; PlaidCloud meldet ihn per Single Sign-on an; die Panel-Sitzung stellt die E-Mail-Adresse des Betrachters als pn.state.user und sein Token als pn.state.access_token bereit; der Agent ruft die REST-API mit diesem Token als Bearer-Berechtigungsnachweis auf; PlaidCloud antwortet als dieser Betrachter und liefert nur dessen Projekte und Zeilenfreigaben." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="ag-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="200" y="14" width="280" height="38" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="38" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Betrachter öffnet die App-URL</text>
+  <path d="M340 52 L340 74" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ag-arrow)" />
+  <rect x="170" y="76" width="340" height="38" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="100" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidCloud meldet ihn an (Single Sign-on)</text>
+  <path d="M340 114 L340 136" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ag-arrow)" />
+  <rect x="150" y="138" width="380" height="46" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="340" y="158" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Panel-Sitzung</text>
+  <text x="340" y="175" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">pn.state.user · pn.state.access_token</text>
+  <path d="M340 184 L340 206" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ag-arrow)" />
+  <rect x="150" y="208" width="380" height="38" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="232" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agent ruft REST-API auf — Authorization: Bearer &lt;token&gt;</text>
+  <path d="M340 246 L340 268" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ag-arrow)" />
+  <rect x="170" y="270" width="340" height="26" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="288" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">PlaidCloud antwortet als dieser Betrachter — seine Projekte, seine Zeilen</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Das eigene Token des Betrachters fließt aus der Panel-Sitzung in jeden REST-Aufruf, sodass der Agent als er handelt – nie mit mehr Rechten.</figcaption>
+</figure>
+
+Daraus ergeben sich drei Konsequenzen, und alle drei sind der Sinn der Sache:
+
+- **Es gibt kein Dienstkonto und kein gespeichertes Geheimnis.** Ihre App besitzt nie eigene Anmeldedaten für PlaidCloud. Nichts, was rotiert werden müsste, nichts, was durchsickern könnte, nichts, was versehentlich eingecheckt wird.
+- **Der Agent kann den Betrachter nicht übertreffen.** Wenn der Betrachter ein Projekt nicht öffnen kann, kann es der Agent auch nicht – die Prüfung findet in PlaidCloud statt, nicht in Ihrem Code, sodass Sie sie nicht falsch umsetzen können.
+- **Die Sicherheit auf Zeilenebene wirkt durch.** Der Agent eines Regionalleiters liest dessen Region. Dieselbe App, dieselbe Frage, eine andere Antwort pro Person.
+
+> **Die eine Regel, auf die es ankommt: Lesen Sie das Token innerhalb der Anfrage, niemals einmalig beim Import.** Ein einzelner Panel-App-Prozess bedient alle Betrachter gleichzeitig. Ein Token, das auf Modulebene erfasst wurde – oder eine `requests.Session`, die einmal mit einem Header erstellt wurde –, ist die Anmeldedaten *einer* Person, und jeder spätere Betrachter würde unbemerkt als diese Person handeln. Jedes Beispiel unten liest `pn.state.access_token` im Moment des Aufrufs – das ist das einzige Muster, das unter Nebenläufigkeit korrekt ist.
+
+> **Sie lesen bereits Tabellen? Dann brauchen Sie das hier möglicherweise nicht.** Für einfachen Datenzugriff authentifiziert `PlaidConnection(project_id=...)` bereits für Sie als den Betrachter – siehe [Daten lesen und der angemeldete Benutzer](/de/guides/panel-apps/accessing-data/). Greifen Sie direkt zum Token, wie hier, wenn Sie REST-Endpunkte benötigen, die diese Verbindung nicht abdeckt: Projekte auflisten, Tabellen durchsuchen, Zeilen in der Vorschau anzeigen oder eine vom Agenten verfasste Abfrage ausführen.
+
+## Voraussetzungen
+
+- Eine **Server**-Panel-App, die aus einem Git-Repository bereitgestellt wird. Siehe [Eine Panel-App aus PlaidCloud Git bereitstellen](/de/guides/panel-apps/deploy-from-git/).
+- `panel`, `openai` und `requests` in den Anforderungen der App.
+- Ein OpenAI-API-Schlüssel, der der App zur Verfügung steht – siehe den Achtung-Hinweis unten.
+- Die URL Ihres Workspace, z. B. `https://acme.plaid.cloud`.
+
+> **Der OpenAI-Schlüssel sind die Anmeldedaten Ihrer App, nicht die des Betrachters.** Anders als das PlaidCloud-Token gehört der API-Schlüssel des Modells der App und ist für alle, die sie nutzen, derselbe. Halten Sie ihn aus dem Repository heraus, aus dem die App bereitgestellt wird, und aus allem, was die App darstellt oder protokolliert. Die Fragen aller Betrachter werden darüber abgerechnet. Betrachten Sie daher sowohl die Kosten als auch den Schlüssel selbst als Ihre Verantwortung, nicht als deren.
+
+## Schritt 1: Die API als Betrachter aufrufen
+
+Sie erstellen in den Schritten 1–4 eine einzige App-Datei. **Jeder Codeblock wird der Reihe nach an dieselbe Datei angehängt** – Importe können dort bleiben, wo sie gezeigt werden, oder an den Anfang verschoben werden – und der Abschnitt [Alles zusammenfügen](#alles-zusammenfügen) am Ende zeigt die fertige Datei vollständig. Beginnen Sie mit der Authentifizierung, die aus genau diesen wenigen Zeilen besteht:
+
+```python
+import os
+import panel as pn
+import requests
+
+HOST = "https://acme.plaid.cloud"        # your workspace URL
+
+
+def viewer_token() -> str:
+    """The access token of the person currently using the app."""
+    token = pn.state.access_token
+    if not token:
+        raise RuntimeError("No signed-in viewer — is this a Server app with auth enabled?")
+    return token
+
+
+def api_get(path: str, **params):
+    response = requests.get(
+        f"{HOST}/rest/v1{path}",
+        params=params,
+        headers={"Authorization": f"Bearer {viewer_token()}"},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def api_post(path: str, payload: dict):
+    response = requests.post(
+        f"{HOST}/rest/v1{path}",
+        json=payload,
+        headers={"Authorization": f"Bearer {viewer_token()}"},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+```
+
+`viewer_token()` wird bei jeder Anfrage aufgerufen, statt gespeichert zu werden. Das ist Absicht – es ist die Regel aus dem vorherigen Abschnitt in Codeform, und es bedeutet außerdem, dass ein von Panel mitten in der Sitzung erneuertes Token automatisch übernommen wird.
+
+### Vor dem Weitermachen prüfen
+
+Bevor Sie den Rest schreiben, belegen Sie, dass das Token funktioniert. Fügen Sie vorübergehend diese eine Zeile hinzu, stellen Sie bereit und öffnen Sie die App – wenn sie eine Liste von Scopes darstellt, funktioniert die gesamte Authentifizierungskette, und alles Weitere ist gewöhnliches Python:
+
+```python
+pn.pane.JSON(api_get("/identity/me/scopes")).servable()  # smoke test — delete before adding the real app
+```
+
+Öffnen Sie sie als zweiter, weniger privilegierter Benutzer, und Sie sollten eine kürzere Liste sehen. Dieser Unterschied *ist* die Funktion. Diese Zeile ist nur vorübergehend: Entfernen Sie sie, sobald Sie die Scopes gesehen haben, denn die Chat-Oberfläche in Schritt 4 liefert das eigentliche `.servable()` der App.
+
+## Schritt 2: Dem Agenten einige Werkzeuge geben
+
+Ein Werkzeug ist eine gewöhnliche Python-Funktion plus eine Beschreibung davon für das Modell. Vier genügen, um echte Fragen zu beantworten:
+
+```python
+def list_projects():
+    """Projects this viewer can see."""
+    return api_get("/analyze/project/projects", keys=["id", "name"])
+
+
+def list_tables(project_id: str):
+    """Tables and views in one project."""
+    return api_get(
+        "/analyze/table/tables",
+        project_id=project_id,
+        keys=["id", "name", "row_count"],
+    )
+
+
+def preview_table(project_id: str, table_id: str, limit: int = 20):
+    """The first rows of a table, no SQL needed."""
+    return api_get(
+        "/analyze/query/table",
+        project_id=project_id,
+        table_id=table_id,
+        limit=limit,
+    )
+
+
+def run_sql(project_id: str, query: str):
+    """Aggregate or join across tables."""
+    return api_post("/analyze/query/query", {"project_id": project_id, "query": query})
+```
+
+Zwei Dinge sollten Sie darüber wissen, wie diese zusammenspielen:
+
+- **Die `id` einer Tabelle ist der Name, den Sie in SQL verwenden.** `list_tables` liefert IDs wie `analyzetable_9f3c…`, und das ist die physische Tabelle. Auf Databend und StarRocks – den Standard-Warehouses – läuft die Abfrage gegen das projekteigene Schema, sodass die ID allein genügt; da sie Bindestriche enthält, muss sie in Backticks gesetzt werden.
+- **`preview_table` ist die günstigere Gewohnheit.** Es braucht kein SQL, sodass das Modell nichts falsch machen kann, und es wendet die Zeilenfreigaben des Betrachters an. Heben Sie sich `run_sql` für Fragen auf, die wirklich eine Aggregation erfordern.
+
+Beschreiben Sie sie nun dem Modell. Diese Beschreibungen sind die einzigen Anweisungen, die es zu Ihren Daten erhält, daher verdienen sie ihre Länge:
+
+```python
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "list_projects",
+            "description": "List the PlaidCloud projects this user can access. Start here.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_tables",
+            "description": "List tables and views in one project, with row counts.",
+            "parameters": {
+                "type": "object",
+                "properties": {"project_id": {"type": "string"}},
+                "required": ["project_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "preview_table",
+            "description": (
+                "Read the first rows of a table. Use this to see what columns a table "
+                "has before writing any SQL."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string"},
+                    "table_id": {"type": "string", "description": "id from list_tables"},
+                    "limit": {"type": "integer", "description": "1-500, default 20"},
+                },
+                "required": ["project_id", "table_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_sql",
+            "description": (
+                "Run a read-only SQL query against one project. Refer to tables by the "
+                "id from list_tables, quoted in backticks, e.g. "
+                "SELECT region, SUM(net_amount) FROM `analyzetable_9f3c...` GROUP BY region. "
+                "Always preview a table first so you use real column names."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string"},
+                    "query": {"type": "string"},
+                },
+                "required": ["project_id", "query"],
+            },
+        },
+    },
+]
+
+DISPATCH = {
+    "list_projects": list_projects,
+    "list_tables": list_tables,
+    "preview_table": preview_table,
+    "run_sql": run_sql,
+}
+```
+
+## Schritt 3: Die Agentenschleife
+
+Ein Agent ist eine Schleife: Sie senden die Unterhaltung an das Modell, und wenn es ein Werkzeug anfordert, führen Sie es aus und senden das Ergebnis zurück. Das geht so lange weiter, bis das Modell stattdessen in Worten antwortet.
+
+```python
+import json
+from openai import OpenAI
+
+client = OpenAI()                         # reads OPENAI_API_KEY
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
+
+SYSTEM = (
+    "You are a data analyst inside a PlaidCloud app. "
+    "Find the answer using the tools rather than guessing, and say which table each "
+    "number came from. You are acting as the person asking, with their permissions: "
+    "if a tool says access is denied, tell them so plainly rather than trying another route."
+)
+
+
+def answer(question: str, history: list) -> str:
+    history.append({"role": "user", "content": question})
+
+    for _ in range(8):  # a hard stop, so a confused model can't loop forever
+        completion = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "system", "content": SYSTEM}] + history,
+            tools=TOOLS,
+        )
+        message = completion.choices[0].message
+        history.append(message)
+
+        if not message.tool_calls:
+            return message.content
+
+        for call in message.tool_calls:
+            arguments = json.loads(call.function.arguments)
+            try:
+                result = DISPATCH[call.function.name](**arguments)
+            except Exception as exc:
+                result = {"error": str(exc)}
+            history.append({
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": json.dumps(result, default=str)[:20000],
+            })
+
+    return "I couldn't get to an answer within the tool-call limit."
+```
+
+Drei Details dieser Schleife sind wichtiger, als sie aussehen:
+
+- **Fehlgeschlagene Werkzeugaufrufe werden an das Modell zurückgegeben, nicht ausgelöst.** Ein Modell, dem „Zugriff verweigert“ gemeldet wird, kann das sagen; ein Traceback beendet die Unterhaltung nur. Das ist hier wichtiger als in einem Skript, weil ein Berechtigungsfehler ein normales Ergebnis ist, wenn jeder Betrachter anders ist.
+- **Ergebnisse werden gekürzt.** Eine Vorschau einer breiten Tabelle kann weit größer sein als der Kontext des Modells.
+- **Die Begrenzung der Iterationen ist Absicht.** Ohne sie wiederholt ein Modell, das eine fehlschlagende Abfrage immer wieder versucht, dies so lange, bis Ihre API-Rechnung es bemerkt.
+
+## Schritt 4: Die Chat-Oberfläche
+
+Panel liefert die gesamte Oberfläche. Dieser letzte Block vervollständigt die Datei – hängen Sie ihn nach der Agentenschleife an:
+
+```python
+pn.extension()
+
+conversation = []                         # one per browser session
+
+
+def respond(contents, user, instance):
+    return answer(contents, conversation)
+
+
+chat = pn.chat.ChatInterface(
+    callback=respond,
+    callback_exception="verbose",
+    show_rerun=False,
+    show_undo=False,
+)
+chat.send(
+    f"Signed in as {pn.state.user}. Ask me about your PlaidCloud data — "
+    "try 'which projects can I see?'",
+    user="Assistant",
+    respond=False,
+)
+
+pn.Column(
+    pn.pane.Markdown("## Ask your data"),
+    chat,
+    sizing_mode="stretch_both",
+).servable()
+```
+
+`conversation` ist hier der Kürze halber eine Liste auf Modulebene, und das ist nur deshalb sicher, weil Panel das App-Skript einmal pro Browsersitzung ausführt – jeder Betrachter erhält seine eigene. Wenn Sie den Verlauf an einen gemeinsam genutzten Ort verlagern, etwa `pn.state.cache`, versehen Sie ihn mit `pn.state.user` als Schlüssel, sonst geben Sie die Unterhaltung einer Person – und deren Daten – an eine andere weiter.
+
+## Schritt 5: Bereitstellen und testen
+
+1. Committen Sie die App in das Repository, auf das Ihre Panel-Bereitstellung verweist, mit `panel`, `openai` und `requests` in den Anforderungen.
+2. Stellen Sie sie bereit und öffnen Sie sie unter `https://<your-workspace>.plaid.cloud/serve/<your-app>/`.
+3. Fragen Sie *welche Projekte kann ich sehen?* – damit werden Token, Werkzeuge und Schleife mit einer einzigen Frage geprüft.
+4. **Öffnen Sie sie dann als jemand anderes.** Ein zweiter Benutzer mit engerem Zugriff sollte eine kürzere Liste erhalten und bei den Projekten, die er nicht öffnen kann, abgewiesen werden. Dieser Test ist der, den man nach jeder Änderung an dieser App wiederholen sollte.
+
+Wenn das Modell nach etwas greift und nichts erhält, fragen Sie es, was es versucht hat. Da Werkzeugfehler in die Unterhaltung zurückfließen, kann es Ihnen das meist sagen.
+
+## Sicherheitshinweise
+
+> **Freies SQL und Zeilenzugriff.** In einem Projekt, in dem ein Administrator den Zeilenzugriff aktiviert hat, wird eine vom Agenten selbst verfasste Abfrage für jeden abgelehnt, der nicht Architect des Projekts ist – es gibt keine einzelne Tabelle, auf die sich die Zeilenfreigaben als Filter anwenden ließen. `preview_table` funktioniert weiterhin, weil es eine einzelne benannte Tabelle liest und die Freigaben des jeweiligen Betrachters anwendet. Bevorzugen Sie es, dann verhält sich Ihre App in verwalteten und nicht verwalteten Projekten gleichermaßen korrekt.
+
+> **Lassen Sie das Token niemals den Server verlassen.** Das Token des Betrachters ist ein Berechtigungsnachweis, der bis zu seinem Ablauf überall als diese Person handelt. Es sollte die PlaidCloud-API erreichen und sonst nichts: Protokollieren Sie es nicht, stellen Sie es nicht auf der Seite dar, nehmen Sie es nicht in den Prompt auf, den Sie an OpenAI senden, und hängen Sie es an keine Anfrage an Dritte an. Die obigen Beispiele übergeben es nur im `Authorization`-Header eines Aufrufs an Ihren eigenen Workspace.
+
+> **Der Agent kann alles tun, was der Betrachter tun kann.** Diese vier Werkzeuge lesen nur, aber das Token des Betrachters ist nicht auf Lesen beschränkt – ein schreibendes Werkzeug ist nur wenige Zeilen entfernt und läuft mit der vollen Berechtigung dieser Person, sobald das Modell beschließt, es aufzurufen. Beschränken Sie den Werkzeugsatz auf den Zweck der App, und geben Sie dem Modell kein Werkzeug, für das Sie dem Betrachter keine Schaltfläche geben würden.
+
+## Alles zusammenfügen
+
+Hier ist die gesamte App als eine Datei – die Blöcke aus den Schritten 1–4 der Reihe nach aneinandergefügt, die Importe an den Anfang verschoben und der Smoke-Test aus Schritt 1 entfernt. Es ist genau der oben gezeigte Code; speichern Sie ihn als Ihre App-Datei und stellen Sie ihn bereit.
+
+```python
+import json
+import os
+
+import panel as pn
+import requests
+from openai import OpenAI
+
+HOST = "https://acme.plaid.cloud"        # your workspace URL
+
+
+def viewer_token() -> str:
+    """The access token of the person currently using the app."""
+    token = pn.state.access_token
+    if not token:
+        raise RuntimeError("No signed-in viewer — is this a Server app with auth enabled?")
+    return token
+
+
+def api_get(path: str, **params):
+    response = requests.get(
+        f"{HOST}/rest/v1{path}",
+        params=params,
+        headers={"Authorization": f"Bearer {viewer_token()}"},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def api_post(path: str, payload: dict):
+    response = requests.post(
+        f"{HOST}/rest/v1{path}",
+        json=payload,
+        headers={"Authorization": f"Bearer {viewer_token()}"},
+        timeout=120,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def list_projects():
+    """Projects this viewer can see."""
+    return api_get("/analyze/project/projects", keys=["id", "name"])
+
+
+def list_tables(project_id: str):
+    """Tables and views in one project."""
+    return api_get(
+        "/analyze/table/tables",
+        project_id=project_id,
+        keys=["id", "name", "row_count"],
+    )
+
+
+def preview_table(project_id: str, table_id: str, limit: int = 20):
+    """The first rows of a table, no SQL needed."""
+    return api_get(
+        "/analyze/query/table",
+        project_id=project_id,
+        table_id=table_id,
+        limit=limit,
+    )
+
+
+def run_sql(project_id: str, query: str):
+    """Aggregate or join across tables."""
+    return api_post("/analyze/query/query", {"project_id": project_id, "query": query})
+
+
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "list_projects",
+            "description": "List the PlaidCloud projects this user can access. Start here.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_tables",
+            "description": "List tables and views in one project, with row counts.",
+            "parameters": {
+                "type": "object",
+                "properties": {"project_id": {"type": "string"}},
+                "required": ["project_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "preview_table",
+            "description": (
+                "Read the first rows of a table. Use this to see what columns a table "
+                "has before writing any SQL."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string"},
+                    "table_id": {"type": "string", "description": "id from list_tables"},
+                    "limit": {"type": "integer", "description": "1-500, default 20"},
+                },
+                "required": ["project_id", "table_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_sql",
+            "description": (
+                "Run a read-only SQL query against one project. Refer to tables by the "
+                "id from list_tables, quoted in backticks, e.g. "
+                "SELECT region, SUM(net_amount) FROM `analyzetable_9f3c...` GROUP BY region. "
+                "Always preview a table first so you use real column names."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "project_id": {"type": "string"},
+                    "query": {"type": "string"},
+                },
+                "required": ["project_id", "query"],
+            },
+        },
+    },
+]
+
+DISPATCH = {
+    "list_projects": list_projects,
+    "list_tables": list_tables,
+    "preview_table": preview_table,
+    "run_sql": run_sql,
+}
+
+client = OpenAI()                         # reads OPENAI_API_KEY
+MODEL = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini")
+
+SYSTEM = (
+    "You are a data analyst inside a PlaidCloud app. "
+    "Find the answer using the tools rather than guessing, and say which table each "
+    "number came from. You are acting as the person asking, with their permissions: "
+    "if a tool says access is denied, tell them so plainly rather than trying another route."
+)
+
+
+def answer(question: str, history: list) -> str:
+    history.append({"role": "user", "content": question})
+
+    for _ in range(8):  # a hard stop, so a confused model can't loop forever
+        completion = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "system", "content": SYSTEM}] + history,
+            tools=TOOLS,
+        )
+        message = completion.choices[0].message
+        history.append(message)
+
+        if not message.tool_calls:
+            return message.content
+
+        for call in message.tool_calls:
+            arguments = json.loads(call.function.arguments)
+            try:
+                result = DISPATCH[call.function.name](**arguments)
+            except Exception as exc:
+                result = {"error": str(exc)}
+            history.append({
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": json.dumps(result, default=str)[:20000],
+            })
+
+    return "I couldn't get to an answer within the tool-call limit."
+
+
+pn.extension()
+
+conversation = []                         # one per browser session
+
+
+def respond(contents, user, instance):
+    return answer(contents, conversation)
+
+
+chat = pn.chat.ChatInterface(
+    callback=respond,
+    callback_exception="verbose",
+    show_rerun=False,
+    show_undo=False,
+)
+chat.send(
+    f"Signed in as {pn.state.user}. Ask me about your PlaidCloud data — "
+    "try 'which projects can I see?'",
+    user="Assistant",
+    respond=False,
+)
+
+pn.Column(
+    pn.pane.Markdown("## Ask your data"),
+    chat,
+    sizing_mode="stretch_both",
+).servable()
+```
+
+## Wie es weitergeht
+
+- **Weitere Endpunkte.** Alles, was die PlaidCloud-Benutzeroberfläche tut, tut sie über diese API. Ihr Workspace veröffentlicht das vollständige Schema unter `https://<your-workspace>.plaid.cloud/openapi_rest.json` – lesen Sie es und fügen Sie die Aufrufe hinzu, die Ihre App braucht, etwa einen Workflow auszuführen oder Ergebnisse in eine Tabelle zurückzuschreiben.
+- **Den Rechenweg zeigen.** Die Werkzeugergebnisse sind strukturierte Daten. Statt das Modell Zahlen in Prosa abtippen zu lassen, stellen Sie die abgerufenen Zeilen neben seiner Antwort in einem `pn.widgets.Tabulator` dar – schneller, günstiger und arithmetisch nicht falsch zu bekommen.
+- **PlaidCloud das Modell ausführen lassen.** Wenn es darum geht, Zeilen in großer Zahl anzureichern oder zu klassifizieren, erledigt das der LLM-Schritt innerhalb eines Workflows, ohne dass etwas gehostet werden muss.
+- [Daten lesen und der angemeldete Benutzer](/de/guides/panel-apps/accessing-data/) – der `PlaidConnection`-Weg, wenn Sie keine rohen REST-Endpunkte benötigen.

@@ -1,0 +1,124 @@
+---
+title: 사용자 지정 함수로 보고서 작성
+description: PlaidXL로 실시간 Excel 보고서를 작성합니다. 차원을 행 방향으로 드릴하고, 기간을 열에 배치하고, 모든 교차 지점을 CELL 수식으로 채운 다음 값만 있는 사본을 보냅니다.
+sidebar:
+  label: 보고서 작성
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/plaidxl/build-a-report.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidXL 보고서는 일반적인 Excel 그리드입니다. 한쪽에는 차원의 노드가, 위쪽에는 다른 차원의 노드가 있고, 각 교차 지점에는 PlaidCloud 테이블에서 측정값을 롤업하는 `PLAIDXL.CELL` 수식이 있습니다. 숫자가 수식이므로 보고서를 매달 다시 만드는 대신 최신 데이터를 기준으로 다시 계산됩니다.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 270" role="img" aria-label="보고서 그리드입니다. 행은 DRILL로 만든 리전 노드인 합계, EMEA, APAC, Americas이고, 열은 기간 FY2025와 FY2026입니다. EMEA와 FY2026 위치에 강조 표시된 셀은 Sales 테이블, revenue 측정값, 합계, 행의 리전 노드, 열의 기간 노드를 결합하는 CELL 수식입니다." style="width:100%;max-width:680px;height:auto;">
+  <defs>
+    <marker id="rp-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <text x="30" y="30" font-size="11" fill="var(--sl-color-gray-3)">PLAIDXL.DRILL로 만든 행</text>
+  <rect x="30" y="40" width="130" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="40" y="62" font-size="12" fill="var(--sl-color-gray-3)">리전</text>
+  <rect x="160" y="40" width="110" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="215" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">FY2025</text>
+  <rect x="270" y="40" width="110" height="34" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="325" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">FY2026</text>
+  <rect x="30" y="74" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="40" y="96" font-size="12" font-weight="700" fill="var(--sl-color-text)">합계</text>
+  <rect x="30" y="108" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="130" font-size="12" fill="var(--sl-color-text)">EMEA</text>
+  <rect x="30" y="142" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="164" font-size="12" fill="var(--sl-color-text)">APAC</text>
+  <rect x="30" y="176" width="130" height="34" fill="none" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="198" font-size="12" fill="var(--sl-color-text)">Americas</text>
+  <rect x="160" y="74" width="110" height="136" fill="none" stroke="var(--sl-color-gray-5)" />
+  <rect x="270" y="74" width="110" height="136" fill="none" stroke="var(--sl-color-gray-5)" />
+  <path d="M160 108 L380 108 M160 142 L380 142 M160 176 L380 176" stroke="var(--sl-color-gray-5)" fill="none" />
+  <rect x="270" y="108" width="110" height="34" fill="none" stroke="var(--sl-color-accent)" stroke-width="2.5" />
+  <text x="325" y="130" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">=CELL(…)</text>
+  <path d="M160 125 L265 125" stroke="var(--sl-color-gray-3)" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#rp-arrow)" />
+  <path d="M325 74 L325 104" stroke="var(--sl-color-gray-3)" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#rp-arrow)" />
+  <rect x="440" y="40" width="220" height="190" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="550" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">PLAIDXL.CELL이 결합하는 항목</text>
+  <text x="458" y="92" font-size="11" fill="var(--sl-color-text)">TABLE_REPR("Sales")</text>
+  <text x="458" y="116" font-size="11" fill="var(--sl-color-text)">MEASURE("revenue")</text>
+  <text x="458" y="140" font-size="11" fill="var(--sl-color-text)">MEASURE_TYPE("sum")</text>
+  <text x="458" y="164" font-size="11" fill="var(--sl-color-text)">DIMENSION_REPR("Region", 행)</text>
+  <text x="458" y="188" font-size="11" fill="var(--sl-color-text)">DIMENSION_REPR("Period", 열)</text>
+  <text x="458" y="214" font-size="11" fill="var(--sl-color-gray-3)">→ FY2026의 EMEA 수익</text>
+  <path d="M435 125 L386 125" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rp-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">각 셀은 해당 행의 노드와 해당 열의 노드를 가져와 두 노드 모두를 기준으로 측정값을 롤업합니다.</figcaption>
+</figure>
+
+## 시작하기 전에
+
+- [로그인](/ko/reference/cli/plaidxl/connect/)하고 데이터가 있는 프로젝트를 선택합니다.
+- 보고 대상이 되는 숫자 열(예: **revenue**)이 있는 테이블과, 보고 기준으로 사용할 각 차원(예: **Region**과 **Period**)에 대한 열이 필요하며, 이 열은 PlaidCloud에서 해당 차원에 연결되어 있어야 합니다. `CELL`은 열 이름으로 필터링하며, 연결된 열에서만 차원을 통해 노드를 롤업합니다. [값](/ko/reference/cli/plaidxl/functions/#값)을 참조하십시오.
+- 정확한 이름을 모르십니까? `=PLAIDXL.TABLE.TBL_LIST()`, `=PLAIDXL.TABLE.GET_COLUMNS("Sales")`, `=PLAIDXL.DIMENSION.DIM_LIST()`로 임시 시트에 이름을 나열할 수 있습니다.
+
+## 보고서 작성
+
+다음 단계에서는 측정값 열 **revenue**와 차원 열 **Region**(행) 및 **Period**(열)이 있는 **Sales** 테이블을 사용하며, 이 열은 이름이 같은 차원에 연결되어 있습니다. 자신의 이름으로 바꾸어 사용하십시오. `DRILL`에는 차원 이름을, `DIMENSION_REPR`에는 테이블의 열 이름을 사용합니다.
+
+<Steps>
+
+1. **측정 대상을 설명합니다.** 시트 맨 위의 세 셀에 다음을 입력합니다.
+
+   ```text
+   B1  =PLAIDXL.REPR.TABLE_REPR("Sales")
+   B2  =PLAIDXL.REPR.MEASURE("revenue")
+   B3  =PLAIDXL.REPR.MEASURE_TYPE("sum")
+   ```
+
+   보고서의 모든 값이 이 셀을 참조하므로, 예를 들어 `"sum"` 대신 `"mean"`을 사용하는 것처럼 하나를 바꾸면 보고서 전체가 바뀝니다.
+
+2. **행을 배치합니다.** `A6`에서 최상위 노드부터 행 차원을 드릴합니다.
+
+   ```text
+   A6  =PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("1 level"))
+   ```
+
+   **Total**과 그 하위 노드가 A열 아래로 펼쳐지며, 부모 아래에 들여쓰기되고 접을 수 있도록 그룹화됩니다. 모든 수준을 표시하려면 `"all"`을, 최하위 수준만 표시하려면 `"leaves"`를 사용합니다. 행 노드를 직접 입력하려면 각 셀에 노드 이름을 하나씩 입력합니다.
+
+3. **열을 배치합니다.** `B5`부터 5행에 열 노드를 입력합니다. 예를 들어 `FY2025`와 `FY2026`입니다.
+
+4. **첫 번째 값을 채웁니다.** `B6`에 다음을 입력합니다.
+
+   ```text
+   =PLAIDXL.CELL($B$1, $B$2, $B$3, PLAIDXL.REPR.DIMENSION_REPR("Region", $A6), PLAIDXL.REPR.DIMENSION_REPR("Period", B$5))
+   ```
+
+   `$` 기호는 테이블, 측정값, 유형, A열의 행 노드, 5행의 열 노드를 고정합니다. `DRILL`이 노드 이름에 추가하는 들여쓰기는 무시됩니다.
+
+5. **그리드를 채웁니다.** `B6`을 마지막 기간까지 오른쪽으로, 마지막 행까지 아래로 복사합니다. 각 셀에는 해당 행의 리전에 대한 해당 열의 기간 수익이 표시됩니다.
+
+</Steps>
+
+보고서 전체에 적용되는 필터(예: 하나의 제품 라인)를 추가하려면 맨 위의 셀에 `B4  =PLAIDXL.REPR.DIMENSION_REPR("Product", "Hardware")`와 같이 `DIMENSION_REPR`을 하나 더 추가하고 모든 `CELL`에 `$B$4`를 전달합니다.
+
+각 행에 여러 측정값을 표시하려면 [`PLAIDXL.REPR.MEASURES`](/ko/reference/cli/plaidxl/functions/#cells)와 함께 [`PLAIDXL.CELLS`](/ko/reference/cli/plaidxl/functions/#measures)를 사용합니다.
+
+## 보고서를 최신 상태로 유지
+
+- **전체 다시 계산을 강제로 실행**하여 최신 값을 모든 PlaidXL 수식으로 가져옵니다. Windows에서는 **Ctrl+Alt+F9**를 누릅니다. 일반적인 다시 계산은 수식의 인수가 바뀌지 않으면 데이터를 다시 가져오지 않습니다.
+- **범위 변경**은 구성 요소 셀을 편집하여 수행합니다. 다른 테이블, 측정값, 집계 또는 다른 최상위 필터 노드를 지정할 수 있습니다. 해당 셀을 사용하는 수식이 즉시 업데이트됩니다.
+- **다른 프로젝트에 대한 보고**는 작업 창에서 해당 프로젝트를 선택한 다음 전체 다시 계산을 강제로 실행합니다. 수식은 선택된 프로젝트에서 데이터를 읽으므로, 테이블, 열, 차원 이름을 공유하는 각 프로젝트에 대해 같은 통합 문서로 보고할 수 있습니다.
+
+## 값만 있는 사본 공유
+
+PlaidXL이 없거나 프로젝트에 액세스할 수 없는 사람에게는 PlaidXL 수식 대신 오류가 표시됩니다. 숫자를 보내려면 먼저 수식을 값으로 바꿉니다.
+
+1. 보고서를 저장한 다음 전송용으로 새 이름의 사본을 저장합니다.
+2. 사본에서 **PlaidCloud → Sanitize Workbook**을 클릭합니다.
+3. 사본을 보냅니다.
+
+**Sanitize Workbook**은 통합 문서의 모든 수식을 현재 값으로 바꿉니다. **Restore Workbook**은 수식을 되돌리지만 `DRILL`처럼 결과가 펼쳐지는 수식은 깔끔하게 복원하지 못하며, 정리한 후에 변경한 내용은 덮어씁니다. 원본을 보관하십시오. 실시간 보고서를 확실하게 되찾는 방법입니다. [정리 및 복원](/ko/reference/cli/plaidxl/ribbon/#control-functions)을 참조하십시오.
+
+<Aside type="caution">보내려는 사본을 정리해야 하며, 하나뿐인 작업용 보고서를 정리해서는 안 됩니다. 정리는 PlaidXL 함수가 아닌 수식을 포함하여 통합 문서의 모든 수식에 영향을 줍니다.</Aside>
+
+## 관련 항목
+
+- [PlaidXL 사용자 지정 함수](/ko/reference/cli/plaidxl/functions/) — 모든 함수와 인수
+- [PlaidCloud 리본](/ko/reference/cli/plaidxl/ribbon/) — 두 셀에서 드릴하고 공유를 위해 정리하기
+- [차원 계층 설계](/ko/get-started/tutorials/design-a-dimension/) — 행이 롤업되는 계층 구축

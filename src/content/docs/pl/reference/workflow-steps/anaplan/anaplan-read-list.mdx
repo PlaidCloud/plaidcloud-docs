@@ -1,0 +1,60 @@
+---
+title: "Anaplan: odczytaj listę"
+description: Odczytaj jedną lub więcej list Anaplan — całą złożoną hierarchię, od korzenia — do wymiaru PlaidCloud. Flagi kontroli dostępu i podzbiory nie są importowane, a każda krawędź jest agregowana zwykłym znakiem plus.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/anaplan/anaplan-read-list.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Odczytuje jedną lub więcej list Anaplan przez [połączenie Anaplan](/pl/guides/connections/anaplan/) i ładuje je do wymiaru PlaidCloud. **Jeden krok odczytuje całą złożoną hierarchię** — podaj wszystkie listy, które obejmuje, zaczynając od korzenia (na przykład Region, następnie Kraj, następnie Sklep) — zamiast dzielić ją na kilka kroków: tabela przejściowa jest przy każdym uruchomieniu zastępowana w całości, więc kilka kroków wskazujących tę samą tabelę przejściową kasowałoby nawzajem swoje wiersze.
+
+Ten krok jest widoczny w menu kroków w sekcji **Anaplan** pod nazwą **Odczyt listy**.
+
+Krok łączy się z Anaplan **bezpośrednio z chmury** przez jego Integration API — nie istnieje ścieżka przez agenta lokalnego.
+
+<Aside type="tip">
+Ten konektor jest tylko do odczytu i uwierzytelnia się za pomocą danych Basic (nazwa użytkownika i hasło) lub Certyfikat CA — zobacz [Uwierzytelnianie](/pl/guides/connections/anaplan/#uwierzytelnianie). Limit żądań Anaplan jest współdzielony w całej dzierżawie, więc rozłóż w czasie harmonogram tego kroku względem innych przepływów pracy Anaplan — zobacz [Uwagi dotyczące harmonogramu](/pl/guides/connections/anaplan/#kwestie-związane-z-harmonogramem).
+</Aside>
+
+## Konfiguracja
+
+### Źródło Anaplan
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Połączenie Anaplan | Tak | [Połączenie Anaplan](/pl/guides/connections/anaplan/), przez które odbywa się odczyt. |
+| Środowisko | Tak | Środowisko połączenia. |
+| Model | Nie | Zastępuje identyfikator modelu zapisany w połączeniu. Wykrywany na żywo z połączenia lub wpisywany ręcznie. |
+| Listy | Tak | Wszystkie listy Anaplan, które obejmuje hierarchia, jako uporządkowana lista. Dodaj listy wykryte w wybranym modelu lub wpisz identyfikator ręcznie, a następnie zmień kolejność przyciskami Przenieś w górę / Przenieś w dół. Podanie list od korzenia jest czytelne, ale kolejność nie wpływa na wynik — wszystkie listy są odczytywane, zanim zostanie rozwiązany jakikolwiek element nadrzędny. |
+| Tabela przejściowa | Tak | Surowe wiersze rodzic/dziecko/konsolidacja/nazwa oraz właściwości trafiają tutaj, zanim zostanie z nich zbudowany wymiar PlaidCloud. |
+
+### Docelowy wymiar PlaidCloud
+
+| Pole | Wymagane | Uwagi |
+|---|---|---|
+| Określ wymiar dynamicznie | Jedno z dwóch | Nazwa wymiaru docelowego, która może zawierać tokeny `{variable}` rozwiązywane w czasie uruchomienia. Wybrane domyślnie. |
+| Użyj określonego wymiaru | Jedno z dwóch | Wybierz zamiast tego istniejący wymiar PlaidCloud. |
+
+## Czego ten krok nie może odwzorować
+
+| Ograniczenie | Co to oznacza |
+|---|---|
+| Każda krawędź jest agregowana zwykłym `+` | Hierarchie list Anaplan nie niosą wagi ani znaku dla poszczególnych krawędzi — nie ma czego odczytać, więc przy przekształceniu nic nie ginie, ale nie można też odwzorować niczego więcej. Jeśli model wyraża wykluczenia lub ujemne agregacje przez pozycję wierszową albo właściwość, ta logika nie jest przenoszona do wymiaru i należy ją odtworzyć w dalszej części przepływu. |
+| Flagi kontroli dostępu i członkostwo w podzbiorach nie są importowane | Flagi odczytu/zapisu Selective Access oraz przynależność każdego elementu do podzbiorów listy to metadane Anaplan, a nie dane wymiaru — zaimportowanie każdego podzbioru jako osobnej kolumny kolidowałoby z rzeczywistymi właściwościami w rosnącej, wspólnej przestrzeni nazw. Rzeczywista właściwość listy, której nazwa koliduje z którąkolwiek z nich, jest odrzucana, zamiast być po cichu zapisana pod nazwą drugiej. |
+| Podzbiorów pozycji wierszowych nie można odczytać jako wymiarów | Anaplan udostępnia je tylko przez ogólny punkt końcowy elementów wymiaru, a nie jako listę, którą ten krok może odczytać. |
+| Listy powyżej 1 000 000 rekordów nie można odczytać tą ścieżką | Punkt końcowy elementów, z którego korzysta ten krok, odmawia obsługi powyżej tego udokumentowanego limitu zamiast zwracać wynik częściowy i nie umożliwia stronicowania w celu jego obejścia — dlatego krok kończy się odmową i wskazuje ten limit, zamiast załadować częściowy wymiar. W międzyczasie podziel listę w Anaplan lub odczytaj jej podzbiór. |
+| Węzeł ma dokładnie jeden element nadrzędny | Element, w którym nazwa i identyfikator elementu nadrzędnego się nie zgadzają, którego element nadrzędny znajduje się na liście nieodczytywanej przez ten krok albo którego wskazany element nadrzędny w ogóle nie istnieje, jest odrzucany z podaniem nazwy, zamiast być po cichu przeniesiony do korzenia wymiaru. |
+| Element najwyższego poziomu listy nie jest importowany | Element najwyższego poziomu w Anaplan jest węzłem agregującym, który leży nad wszystkimi elementami listy, a nie elementem samej listy, więc nigdy nie jest zwracany wśród elementów odczytywanych przez ten krok. Wymiar jest więc o jeden poziom płytszy niż lista Anaplan, a własne korzenie listy stają się korzeniami wymiaru. Krok ostrzega, gdy odczytywana lista deklaruje taki element. |
+| Identyfikatory węzłów muszą być unikatowe we wszystkich razem odczytywanych listach | Identyfikator węzła to kod elementu w Anaplan lub jego nazwa, gdy kodu brak — a kod Anaplan jest gwarantowany jako unikatowy tylko w obrębie jednej listy. Dwie listy używające tych samych krótkich kodów są odrzucane z podaniem nazwy, zamiast być po cichu scalone w jeden węzeł. |
+| Hierarchie alternatywne nie są obsługiwane | Każda lista jest ładowana do głównej hierarchii wymiaru. |
+| Tylko do odczytu | Nic nie jest zapisywane z powrotem do Anaplan. |
+
+## Powiązane
+
+- [Połączenie z Anaplan (przewodnik)](/pl/guides/connections/anaplan/) — utwórz połączenie.
+- [Anaplan: odczytaj widok](/pl/reference/workflow-steps/anaplan/anaplan-read-view/) — odczytaj zapisany widok dokładnie tak, jak został zapisany.
+- [Anaplan: odczytaj eksport](/pl/reference/workflow-steps/anaplan/anaplan-read-export/) — uruchom istniejącą akcję eksportu.
+- [Dimension Load](/pl/reference/workflow-steps/dimensions/dimension-load/) — ten sam mechanizm ładowania wymiaru, na którym opiera się ten krok.
+- [Kroki Anaplan](/pl/reference/workflow-steps/anaplan/)

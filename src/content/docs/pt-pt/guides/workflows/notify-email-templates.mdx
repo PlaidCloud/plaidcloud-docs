@@ -1,0 +1,119 @@
+---
+title: Enviar notificações por email em HTML com modelos
+description: Gere um email HTML rico a partir de um modelo Jinja e de uma tabela do fluxo de trabalho com o passo Notify Via Email.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/notify-email-templates.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O passo [Notify Via Email](/pt-pt/reference/workflow-steps/notifications/notify-via-email/) compõe o seu email como um relatório HTML rico, a partir de um **modelo Jinja** gerado sobre uma ou mais tabelas do seu fluxo de trabalho. Adiciona cada tabela ao passo como um **frame** com nome, e o modelo gera esses frames num único email. O passo abre diretamente no editor Jinja, que é a sua única superfície de criação — não há caixa de corpo em texto simples nem modo para alternar. Este guia descreve o editor e a respetiva barra de ferramentas de formatação, os frames que adiciona, os dados disponíveis num modelo, o auxiliar `render_table` e as restrições que decorrem do envio por email.
+
+## O editor Jinja
+
+Abra um passo **Notify Via Email** e este abre no editor Jinja. Adicione um ou mais **frames** (ver abaixo), escreva o modelo no corpo e veja a **Pré-visualização em direto** à direita atualizar-se à medida que escreve. **Enviar teste para mim** entrega o email gerado ao seu próprio endereço, para que o possa verificar antes de agendar o fluxo de trabalho. Os passos novos são apenas Jinja — não há corpo em texto simples para preencher nem alternância entre rico e simples.
+
+<Aside type="note">O editor tem o seu próprio motor de geração isolado (sandbox). É sintaticamente semelhante ao [Export Templated](/pt-pt/reference/workflow-steps/export/export-templated/) — Jinja, frames com nome, um auxiliar `render_table` —, mas os dois motores **não são intermutáveis**. Um modelo escrito para um não funciona no outro.</Aside>
+
+## A barra de ferramentas de formatação
+
+O editor Jinja inclui uma barra de ferramentas para dar forma ao modelo sem escrever código repetitivo à mão:
+
+- **Embelezar** reindenta e normaliza todo o modelo — indentação consistente, espaçamento das etiquetas e disposição dos blocos Jinja — para que um modelo que tem vindo a editar seja de leitura limpa. Apenas reformata; nunca altera o que o modelo gera.
+- **Inserir** coloca um fragmento pronto no cursor — uma chamada `render_table(...)` previamente preenchida para um frame, o nome da área de trabalho `{{ cloud }}`, qualquer uma das suas variáveis de projeto ou de fluxo de trabalho, a contagem de linhas de um frame, um ciclo `{% for %}` sobre as linhas de um frame e estruturas de if/else e de comentário.
+- **Formato** aplica um filtro de apresentação ao valor no cursor — moeda, milhares, percentagem, arredondamento e formatos de data, além de auxiliares de texto (maiúsculas, minúsculas, capitalização, remover espaços) e auxiliares de lista (comprimento, junção, soma, etc.).
+- **Estilo** envolve o texto selecionado em formatação HTML — negrito, itálico, sublinhado, três tamanhos de título, parágrafos, listas com marcas e numeradas, citações em bloco, ligações e quebras de linha. Todas as opções emitem apenas marcação que o sanitizador de email mantém (ver [A restrição de HTML permitido](#a-restrição-de-html-permitido)), pelo que um título surge como uma linha a negrito maior em vez de um `h1`, e o sublinhado recorre a uma etiqueta permitida.
+
+Cada botão limita-se a inserir texto que também poderia escrever; utilize-os como ponto de partida e edite livremente.
+
+## Adicionar frames
+
+Um passo reporta **frames** — seleções de uma única tabela, com nome, que adiciona ao passo. Adicione um frame ou vários; cada um é gerado no mesmo email. Para cada frame, indica:
+
+- um **Nome do frame** — a etiqueta com que o referencia no modelo (`Sales`, `Overdue`, etc.);
+- uma **tabela** do contexto do fluxo de trabalho;
+- opcionalmente, uma **seleção de colunas**, um filtro **where** e uma **agregação** sobre essa tabela.
+
+Um frame é sempre uma única tabela. Unir ou combinar tabelas num só frame não é suportado — adicione antes um segundo frame e referencie cada um pelo respetivo nome.
+
+Cada frame é exposto no modelo através de `frames['<Frame Name>']`, que contém as `rows` e as `columns` desse frame (ver abaixo).
+
+## O que está disponível no modelo
+
+O modelo expõe um conjunto restrito e explícito de variáveis. Referenciar uma variável não definida faz falhar a geração, pelo que deve utilizar apenas o que está listado aqui:
+
+| Variável | Conteúdo |
+|---|---|
+| `cloud` | O nome da área de trabalho. |
+| `frames` | Um dicionário dos seus frames, indexado pelo Nome do frame. `frames['Sales'].rows` é a lista de objetos de linha desse frame (um por linha); `frames['Sales'].columns` é a respetiva lista de colunas, por ordem. |
+| `rows` | As linhas do primeiro frame — uma ligação de conveniência para que um modelo de um só frame possa usar `rows` diretamente. |
+| `columns` | As colunas do primeiro frame — a mesma ligação de conveniência que `rows`. |
+| `variables` | As variáveis do seu projeto e — num fluxo de trabalho — as variáveis do fluxo de trabalho, indexadas pelo nome: `variables['Fiscal Year']`. As variáveis incorporadas `variables['project']`, `variables['model']` e `variables['date']` (a hora UTC atual) também estão aqui. Utilize a forma com índice, uma vez que o nome de uma variável não tem de ser um identificador válido. |
+
+Os valores mantêm os seus tipos nativos de Python — um `Decimal` continua a ser um `Decimal`, uma data continua a ser uma data e uma coluna nula chega como `None` — pelo que pode formatá-los e compará-los tal como faria em Python, em vez de trabalhar a partir de texto convertido.
+
+## Gerar uma tabela com `render_table`
+
+Em vez de escrever à mão a marcação `<table>`, chame a macro `render_table` com as linhas e as colunas de um frame. Referencie cada frame pelo respetivo nome:
+
+```jinja
+{{ render_table(frames['Sales'].rows, frames['Sales'].columns) }}
+```
+
+Isto emite, numa só chamada, uma tabela HTML corretamente estruturada para esse frame. Chame-a uma vez por cada frame que pretenda mostrar.
+
+Um modelo de um só frame pode usar os `rows` e `columns` de nível superior, que estão ligados ao primeiro frame:
+
+```jinja
+{{ render_table(rows, columns) }}
+```
+
+## Um exemplo completo
+
+Este modelo tem dois frames, `Overdue` e `Paid`. Gera o nome da área de trabalho, uma linha de resumo e uma tabela para cada frame:
+
+```jinja
+<p><strong>Invoice Status — {{ cloud }}</strong></p>
+
+<p>{{ frames['Overdue'].rows|length }} invoice(s) are past due as of today.</p>
+
+{{ render_table(frames['Overdue'].rows, frames['Overdue'].columns) }}
+
+<p><strong>Recently Paid</strong></p>
+
+{{ render_table(frames['Paid'].rows, frames['Paid'].columns) }}
+
+{% if frames['Overdue'].rows|length == 0 %}
+<p>No overdue invoices — nothing further to review.</p>
+{% endif %}
+```
+
+Aponte cada frame para a tabela que pretende reportar e o email gerado mostra uma linha de título a negrito, um resumo de uma linha calculado a partir da contagem de linhas e uma tabela por frame. Com um único frame, poderia escrever o mesmo modelo com os simples `rows` e `columns`.
+
+## A restrição de HTML permitido
+
+Todos os emails gerados passam, antes de serem enviados, pelo mesmo sanitizador que o restante correio transacional do PlaidCloud. O sanitizador remove tudo o que estiver fora de uma pequena lista de permissões:
+
+- **Etiquetas permitidas**: as etiquetas de tabela que o `render_table` emite (`table`, `tbody`, `tr`, `th`, `td`), mais etiquetas de texto comuns — `p`, `br`, `strong`/`b`, `em`/`i`, `ul`/`ol`/`li`, `blockquote`, `code` e `a`. Os títulos (`h1`–`h6`), `div` e `span` **não** estão na lista — para um título, utilize um `p` com um `strong` no interior.
+- **Atributos permitidos**: apenas `class` e `style` (mais `href` em `a`).
+- **Sem `<thead>`.** O `render_table` emite `table` / `tbody` / `tr` / `th` / `td` — uma linha de cabeçalho é um `tr` de células `th` dentro de `tbody`, e não uma secção `<thead>` separada.
+- **Sem blocos `<style>`** nem recursos externos — uma referência `url(...)` ou um pixel de rastreio é removido, tal como qualquer outra etiqueta ou atributo que não conste da lista.
+
+Na prática: construa a estrutura do relatório com `render_table` e etiquetas de texto simples, e limite qualquer estilo personalizado a atributos `style` em linha simples. Qualquer coisa mais elaborada — um bloco `<style>`, uma folha de estilos externa, tipos de letra personalizados, pixels de rastreio — não sobrevive à sanitização e não aparece no email entregue.
+
+## Passos existentes e legados
+
+Os passos criados antes da criação em Jinja abrem diretamente no editor com o corpo antigo já convertido. Um corpo de texto simples padrão — construído com `{project}`, `{model}`, `{cloud}` e `{date}` — é reescrito para a forma Jinja (`{{ project }}`, `{{ cloud }}`, etc.), para que retome a edição a partir daí.
+
+Um corpo que o conversor não consegue reescrever em segurança — um token fora do padrão ou chavetas desequilibradas — permanece numa caixa alternativa de texto simples. Esse passo continua a enviar exatamente como antes, com a substituição legada de `{token}`; apenas a sua criação permanece em texto simples. Os passos novos nunca utilizam este caminho.
+
+O editor verifica os nomes das variáveis à medida que escreve e assinala os que não vão ser resolvidos. Um `{{ project }}`, `{{ model }}` ou `{{ date }}` isolado, transportado de um corpo legado, é assinalado, porque esses nomes só se resolvem agora através de `variables` — utilize `variables['project']`, `variables['model']` ou `variables['date']`, substitua o token por uma coluna de um dos seus frames ou remova-o antes de guardar.
+
+## Segurança e saída de dados
+
+As leituras dos frames passam pela mesma segurança ao nível da linha que qualquer outra leitura no projeto — um frame devolve apenas as linhas que o utilizador em execução ou o principal de automatização tem permissão para ver. Os limites de envio (destinatários, tamanho e taxa) são os mesmos do caminho em texto simples; o modo de modelo não os alivia nem acrescenta outros.
+
+## Passos seguintes
+
+- [Referência do Notify Via Email](/pt-pt/reference/workflow-steps/notifications/notify-via-email/) — configuração ao nível dos campos
+- [Export Templated](/pt-pt/reference/workflow-steps/export/export-templated/) — o motor de forma semelhante, mas separado, para gerar documentos a partir de tabelas
+- [Gerir variáveis de fluxo de trabalho](/pt-pt/guides/workflows/manage-workflow-variables/) — a substituição `{var}` que os corpos legados em texto simples ainda utilizam

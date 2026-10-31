@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entry (passo)"
+description: Lance lançamentos de diário do razão geral no Dynamics 365 Finance & Operations a partir de tabelas de cabeçalho e de linhas, com um modo de pré-visualização que valida cada lançamento antes de se lançar o que quer que seja.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos de diário do razão geral no Dynamics 365 Finance & Operations através da sua [ligação D365 F&O](/pt-pt/guides/connections/dynamics-365-fo/), encaminhados pelo pipeline partilhado de escrita ERP do PlaidCloud. O passo recebe uma tabela de cabeçalho (uma linha por lançamento de diário) e uma tabela de linhas (uma ou mais linhas de débito/crédito por lançamento), e submete cada lançamento à ação assíncrona de lançamento de diário do serviço personalizado do D365 F&O. **Apenas validar** constrói e verifica cada lançamento sem reserva no razão e sem o lançar; uma tabela de resultados opcional regista o resultado de cada lançamento.
+
+<Aside type="caution">
+Execute cada lote primeiro em **Apenas validar**, reveja a tabela de resultados e reconcilie alguns lançamentos diretamente no D365 F&O antes de confiar neste passo para lançar lançamentos reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Ligação
+
+- **Ligação D365 F&O** — a ligação D365 F&O através da qual lançar.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por lançamento de diário: `journal_id` (o identificador do seu lançamento, obrigatório), `journal_name` (o nome do diário do D365 F&O no qual lançar, obrigatório), `posting_date`, `description`.
+- **Tabela de linhas** — uma ou mais linhas por `journal_id`: `account`, `debit`, `credit` e quaisquer colunas de dimensão que o seu razão exija.
+- **Tabela de resultados** — id da tabela de saída: uma linha por lançamento com `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Apenas validar** — marcado por predefinição. Apenas verificação prévia; sem reserva no razão e sem lançamento. Uma configuração de passo que omita totalmente este campo — por exemplo, uma criada através da API REST, do MCP ou de uma importação de pacote de fluxo de trabalho — também assume por predefinição Apenas validar, em vez de um lançamento real.
+- **Continuar em caso de erro** — marcado por predefinição. Continua a lançar os restantes lançamentos depois de um falhar; desmarcado, interrompe o lote à primeira falha.
+
+## Como funciona o lançamento
+
+O PlaidCloud submete cada lançamento à ação assíncrona de lançamento do serviço personalizado do D365 F&O e, em seguida, consulta repetidamente até o serviço comunicar o estado final do lançamento. Um lançamento só é comunicado como `posted` quando esse estado final é **Confirmado** — um lançamento que é aceite mas cujo estado final nunca se resolve permanece em quarentena (não comunicado como lançado, nem descartado em silêncio), em vez de ser registado como bem-sucedido apenas porque a submissão foi aceite.
+
+## Corrigir um lançamento já efetuado
+
+Este passo nunca elimina nem reescreve um lançamento já efetuado. Para corrigir um, lance um novo lançamento com débitos e créditos trocados em relação ao original — um lançamento de estorno efetuado — em vez de editar o original no local.
+
+## Limites de capacidade
+
+| Limitação | O que significa |
+|---|---|| A reversão é um novo lançamento, não uma edição no local | As correções lançam um novo lançamento de estorno com débito/crédito trocados. Não existe anulação nem eliminação de um lançamento já efetuado. |
+| A validação de dimensões depende da configuração do seu razão | Uma combinação de dimensões financeiras inválida para a estrutura da sua conta falha na validação do próprio D365 F&O, surgindo como uma linha `error` em vez de ser detetada antes pelo PlaidCloud. |
+
+## Relacionado
+
+- [Ligar ao Dynamics 365 Finance & Operations](/pt-pt/guides/connections/dynamics-365-fo/) — guia completo sobre configuração, pré-visualização e lançamento
+- [Conector REST do Dynamics 365 F&O](/pt-pt/reference/connectors/rest/dynamics-365-fo/)
+- [Passos D365 F&O](/pt-pt/reference/workflow-steps/dynamics-365-fo/)
+- [Rever o histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/)

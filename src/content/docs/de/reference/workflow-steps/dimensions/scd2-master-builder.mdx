@@ -1,0 +1,130 @@
+---
+title: SCD-2-Stammdaten-Builder
+description: Baut aus einer Stammdatenquelle eine zeitpunktbezogene Verlaufstabelle auf, die Änderungen ausgewählter Attribute im Zeitverlauf mit Gültig-ab- und Gültig-bis-Datum verfolgt.
+sidebar:
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-master-builder.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Baut aus einer Quelltabelle eine Verlaufstabelle vom Typ **Slowly Changing Dimension Typ 2 (SCD-2)** auf. Während eine gewöhnliche Stammdatentabelle für jeden Schlüssel nur den heutigen Wert hält, bewahrt eine SCD-2-Tabelle jeden Wert, den ein Schlüssel je hatte, jeweils mit dem Datumsbereich versehen, in dem er galt. So können Sie zeitpunktbezogene Fragen beantworten – *in welcher Region war dieser Kunde am Tag der Transaktion?* – statt nur *in welcher Region ist er jetzt?*
+
+Jede Ausführung vergleicht den Quell-Snapshot mit dem bisherigen Verlauf und schließt für Schlüssel, deren verfolgte Attribute sich geändert haben, die alte Version und eröffnet eine neue. Die Tabelle wird neu berechnet und atomar ausgetauscht, sodass eine erneute Ausführung mit denselben Eingaben dasselbe Ergebnis liefert.
+
+Kombinieren Sie diesen Schritt mit dem [SCD-2-As-of-Join](/de/reference/workflow-steps/dimensions/scd2-asof-join/), um den zeitpunktbezogenen Wert an eine Faktentabelle anzuhängen.
+
+## Ausgabespalten
+
+Jede Ausführung erzeugt neben Ihren durchgereichten Spalten drei reservierte Spalten. Sie benennen diese nicht selbst – sie heißen immer `valid_from`, `valid_to` und `is_current`, und Ihre Geschäftsschlüssel- und verfolgten Spalten dürfen diese Namen nicht verwenden.
+
+| Spalte | Bedeutung |
+|---|---|
+| `valid_from` | Datum, an dem diese Version wirksam wurde (eingeschlossen). |
+| `valid_to` | Datum, an dem diese Version nicht mehr galt (ausgeschlossen). Offene (aktuelle) Zeilen tragen das Sentinel-Enddatum `9999-12-31`. |
+| `is_current` | `true` für die derzeit gültige Version, `false` für abgeschlossenen Verlauf. |
+
+<Aside type="note">Das Intervall ist **halboffen**: `[valid_from, valid_to)`. Eine Version deckt `valid_from` bis *ausschließlich* `valid_to` ab. Aufeinanderfolgende Versionen schließen daher ohne Überschneidung aneinander an – das `valid_to` einer Version ist genau das `valid_from` der nächsten, und kein Datum gehört zu zwei Versionen.</Aside>
+
+## Tabellen
+
+### Quelltabelle
+
+Der aktuelle Snapshot Ihrer Stammdaten – eine Zeile pro Geschäftsschlüssel mit den heutigen Attributwerten.
+
+### Prior SCD-2 Table (optional)
+
+Die vorhandene Verlaufstabelle aus der vorherigen Ausführung. Lassen Sie sie bei der **ersten Ausführung** leer (oder lassen Sie sie auf die Ergebnistabelle zeigen); der Schritt baut dann den vollständigen Verlauf von Grund auf auf und eröffnet zum Gültigkeitsdatum eine Version pro Quellzeile.
+
+### Ergebnistabelle
+
+Hierhin wird der neu aufgebaute Verlauf geschrieben. Dies muss eine Tabelle sein, keine Ansicht.
+
+## Gültigkeitsdatum und Optionen
+
+Jede Ausführung versieht ihre Änderungen mit einem einzigen Gültigkeitsdatum. Geben Sie es auf genau eine von zwei Arten an – wenn Sie beide oder keine angeben, ist das ein Fehler.
+
+- **Gültigkeitsdatumsspalte** – eine Spalte in der Quelle, die das Gültigkeitsdatum enthält. Sie muss in jeder Quellzeile denselben Wert enthalten (der Snapshot gilt *zu* einem Datum).
+- **Gültigkeitsdatum** – ein festes Datum im Format `YYYY-MM-DD` oder eine Variable wie `{current_month}`, das bzw. die auf die gesamte Ausführung angewendet wird.
+
+<Aside type="caution">Wählen Sie eines von beiden, nicht beide. Das ist ein striktes XOR: Der Schritt weist eine Ausführung ab, die eine Gültigkeitsdatumsspalte *und* ein festes Datum angibt, und ebenso eine, die keines von beiden angibt.</Aside>
+
+Weitere Optionen:
+
+- **Enddatum offener Intervalle** – der Sentinel, der für offene Zeilen in `valid_to` geschrieben wird. Standard ist `9999-12-31`; es gibt selten einen Grund, ihn zu ändern, und er muss mit dem Enddatum übereinstimmen, das der [SCD-2-As-of-Join](/de/reference/workflow-steps/dimensions/scd2-asof-join/) verwendet.
+- **Close on Absence** – wenn aktiviert, wird für einen Schlüssel, der aus der Quelle verschwindet, seine offene Version zum Gültigkeitsdatum geschlossen (der Schlüssel gilt als stillgelegt). Wenn deaktiviert (Standard), behalten fehlende Schlüssel ihre bestehende offene Version, sodass der Verlauf durch einen Teilextrakt nie verloren geht.
+
+Der Schritt lehnt das Speichern eines festen Gültigkeitsdatums oder Enddatums offener Intervalle ab, das kein echtes Datum im Format `YYYY-MM-DD` ist, ebenso ein Gültigkeitsdatum am oder nach dem Enddatum. Ein als Variable angegebenes Datum wird nicht geprüft.
+
+## Spaltenrollen
+
+Verwenden Sie **Quelle untersuchen**, um die Quellspalten aufzulisten, und kennzeichnen Sie dann jede einzelne:
+
+| Rolle | Bedeutung |
+|---|---|
+| **Geschäftsschlüssel** | Der natürliche Schlüssel, der eine Zeile über die Zeit hinweg identifiziert (z. B. `customer_id`). Mindestens einer ist erforderlich. Die Werte müssen in der Quelle eindeutig und nicht null sein. |
+| **Verfolgtes Attribut** | Ein Attribut, dessen Änderungen eine neue Version eröffnen (z. B. `region`). Mindestens eines ist erforderlich. |
+| **(durchreichen)** | Nicht gekennzeichnete Spalten werden unverändert in jede Version kopiert und lösen für sich allein keine neue Version aus. |
+
+## Zusammenführungsverhalten
+
+Wenn eine vorherige Tabelle angegeben ist, vergleicht der Schritt den Quell-Snapshot nur mit den **aktuellen** Versionen (nie mit abgeschlossenem Verlauf) und entscheidet pro Schlüssel:
+
+| Situation | Ergebnis |
+|---|---|
+| Verfolgte Attribute unverändert | Keine Aktion – die offene Version bleibt unverändert. |
+| Verfolgte Attribute geändert | Die offene Version wird zum Gültigkeitsdatum geschlossen und eine neue offene Version eingefügt. |
+| Gültigkeitsdatum entspricht dem `valid_from` der offenen Version | Wird als **Korrektur am selben Tag** behandelt – die verfolgten Werte werden an Ort und Stelle überschrieben, statt ein Intervall der Breite null zu erzeugen. |
+| Schlüssel fehlt in der Quelle | Bleibt offen (oder wird zum Gültigkeitsdatum geschlossen, wenn **Close on Absence** aktiviert ist). |
+
+Schutzmechanismen, die eine Ausführung anhalten, statt den Verlauf stillschweigend zu beschädigen:
+
+- **Datumsangaben außer der Reihe werden abgewiesen.** Das Gültigkeitsdatum muss *nach* dem aktuellen `valid_from` jedes betroffenen Schlüssels liegen. Eine rückdatierte Ausführung, die ein Intervall umkehren würde, schlägt mit einem Fehler fehl, statt eine Version mit negativer Breite zu erzeugen.
+- **Doppelte Quellschlüssel werden abgewiesen.** Die Quelle muss auf dem Geschäftsschlüssel eindeutig sein; Duplikate (oder Nullschlüssel) führen zum Fehler, statt stillschweigend dedupliziert zu werden.
+- Die Änderungserkennung ist **nullsicher**, sodass ein Wert, der zu oder von leer wechselt, korrekt als Änderung erfasst wird.
+
+## Durchgerechnetes Beispiel
+
+Verfolgen Sie, zu welcher Region jeder Kunde im Zeitverlauf gehörte.
+
+**Quelle – `customer_master` (Stand 2026-01-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | West | SMB |
+| C2 | East | Enterprise |
+
+Erste Ausführung: **Quelltabelle** = `customer_master`, **Prior SCD-2 Table** = leer, **Ergebnistabelle** = `customer_scd2`, **Gültigkeitsdatum** = `2026-01-01`, Geschäftsschlüssel = `customer_id`, Verfolgtes Attribut = `region` (`segment` bleibt ungekennzeichnet und wird durchgereicht).
+
+**`customer_scd2` nach der ersten Ausführung:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Nun wechselt C1 in die Region Central. **Quelle – `customer_master` (Stand 2026-04-01):**
+
+| customer_id | region | segment |
+|---|---|---|
+| C1 | Central | SMB |
+| C2 | East | Enterprise |
+
+Zweite Ausführung: dieselben Tabellenrollen, **Prior SCD-2 Table** = `customer_scd2`, **Gültigkeitsdatum** = `2026-04-01`.
+
+**`customer_scd2` nach der zweiten Ausführung:**
+
+| customer_id | region | segment | valid_from | valid_to | is_current |
+|---|---|---|---|---|---|
+| C1 | West | SMB | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | SMB | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | Enterprise | 2026-01-01 | 9999-12-31 | true |
+
+Die Version West von C1 wurde zum `2026-04-01` geschlossen und eine Version Central eröffnet. Wegen des halboffenen Intervalls gehört eine Transaktion mit dem Datum `2026-04-01` zu **Central**, nicht zu West. C2 blieb unverändert und wurde nicht angetastet.
+
+## Verwandte Themen
+
+- [SCD-2-As-of-Join](/de/reference/workflow-steps/dimensions/scd2-asof-join/) – den zeitpunktbezogenen Wert an eine Faktentabelle anhängen.
+- [Dimension Load](/de/reference/workflow-steps/dimensions/dimension-load/) – eine Hierarchie aus einer Tabelle laden.

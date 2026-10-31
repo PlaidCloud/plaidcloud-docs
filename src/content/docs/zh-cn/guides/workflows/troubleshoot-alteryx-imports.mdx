@@ -1,0 +1,152 @@
+---
+title: 调优 Alteryx 导入
+description: 通过依赖项补全、宏解析、变量、验证比较和托管执行器来调优 Alteryx 迁移。
+sidebar:
+  order: 35
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/troubleshoot-alteryx-imports.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 会将 Alteryx 工作流导入为高级工作流，并在导入期间报告转换详情。本指南可帮助您快速补全依赖项包、审核生成的宏、调优变量，并解读验证比较结果。
+
+<Aside type="note">
+  请先查看转换摘要。它会在您需要检查各个步骤之前，突出显示依赖项、宏、变量、执行器和验证方面的项目。
+</Aside>
+
+## 补全输入文件
+
+症状：
+
+- 转换报告列出了缺失的文件。
+- 运行结束时出现警告“No files found at &lt;path&gt;; the target table was created empty.”
+- 动态输入未解析到任何文件。
+- 验证的行数低于预期。
+
+即使工作流读取的文件缺失，工作流也会完成转换，因此报告是了解待处理事项的最快方式：它会指明每个缺失文件应上传到的 Document 路径、原始 Alteryx 路径、预期的工作表，以及读取该文件的工具。
+
+只被已关闭的 Alteryx Tool Container 内的工具读取的文件，不会出现在此列表中，因为该工具同样不会被导入，请参阅[画布上的注释和 Tool Container](/zh-cn/guides/workflows/migrate-alteryx-workflows/#画布上的注释和工具容器)。如果希望读取该文件，请打开该容器，或使用将已关闭容器中的工具作为普通步骤引入的选项重新导入。
+
+操作：
+
+1. 将报告列出的每个文件上传到其指明的 Document 路径。
+2. 对于大多数文件，上传后重新运行工作流即可，无需重新导入。
+3. 对于缺失的平面 ASCII 布局、通配符输入、Dynamic Input 模板或 FirstRow 重命名源，请重新导入工作流，而不是仅仅重新运行，因为这些内容是在转换时读取的。
+4. 确认上传后动态文件模式仍然匹配。
+
+## 补全空间附属文件
+
+症状：
+
+- 空间输入需要伴随文件。
+- 几何字段为空。
+- 空间输出与预期结果不同。
+
+操作：
+
+1. 确认已包含所有 shapefile 或 MapInfo 附属文件。
+2. 将附属文件放在同一个 Document 文件夹中。
+3. 当工作流依赖坐标参考系行为时，确认存在投影文件。
+4. 更正包之后重新运行工作流。
+
+## 补全或澄清宏
+
+症状：
+
+- 宏调用无法解析。
+- 宏的输入或输出未连接。
+- 工作流在结构上已导入，但需要连接某个宏输出。
+
+操作：
+
+1. 为每个被引用的宏包含 `.yxmc` 文件。
+2. 包含这些宏所调用的嵌套宏。
+3. 除非包中有意包含带版本的宏，否则避免宏名称重复。
+4. 确认生成的 PlaidCloud 宏具有宏输入和宏输出步骤。
+
+## 无法读取的 .yxdb 文件
+
+症状：
+
+- 某个 `.yxdb` 文件导入失败，而同一包中的其他文件导入正常。
+- 该文件的前几个字节显示为 `Alteryx e2 Database file`，而不是 `Alteryx Database File`。
+
+该文件由 Alteryx AMP 引擎以 PlaidCloud 无法读取的专有格式写入。请趁仍有 Alteryx Designer 时用它重新写入：可逐个重新保存文件，也可以使用可下载的工作流将整个文件夹批量转换为 CSV。请参阅[转换 .yxdb 文件以便导入](/zh-cn/guides/workflows/convert-yxdb-files-for-import/)。
+
+## 无法读取的 .cydb (Calgary) 数据库
+
+症状：
+
+- 转换后的 Calgary 步骤停止，并指出一个尚不存在的 `calgary_<database>` 表。
+- 源是一个 `.cydb` 文件，通常是 Alteryx 随附的获得许可的人口统计或参考数据库（Experian、Census 及类似数据库）。
+
+Alteryx Calgary 数据库是一种没有开放读取器的专有索引存储，因此 PlaidCloud 无法直接加载 `.cydb`。Calgary 工具本身可以转换：每个 `.cydb` 都会成为名为 `calgary_<database>` 的普通[替代表](/zh-cn/guides/workflows/migrate-alteryx-workflows/#calgary-数据库)，但该表的数据需要您自行提供：
+
+1. 在 Alteryx 中，添加读取该 `.cydb` 的 Calgary Input，然后将其记录重新导出为开放格式：使用 **Output Data** 工具导出为 CSV 或 Parquet，或导出到仓库表。
+2. 将该文件作为转换后的工作流所期望的 `calgary_<database>` 表导入 PlaidCloud。
+3. 对于受 Skip Records 或 Max Records 限制的读取，请在导出中包含一个排序列，因为替代表本身不带有固有的记录顺序。
+
+对于无法重新导出的获得许可的参考数据库，请自备同一数据的授权副本，并将其加载到指定的表中。
+
+## 工作流变量问题
+
+症状：
+
+- 转换后的应用输入未设置。
+- 某个条件意外触发。
+- 文件或文件夹变量指向桌面路径。
+
+操作：
+
+1. 运行之前先审核工作流变量。
+2. 设置必需的值。
+3. 将桌面文件路径替换为 Document 文件或文件夹路径。
+4. 确认受控选项与预期的应用选择相符。
+5. 重新运行工作流。
+
+## 验证差异
+
+症状：
+
+- 架构不同。
+- 行数不同。
+- 行值不同。
+- 工件输出存在需要审核的差异。
+
+操作：
+
+1. 确认两次运行使用了相同的输入数据。
+2. 确认变量值一致。
+3. 确认源系统来自同一个快照日期。
+4. 审核空值处理、日期处理、数值精度和字符串排序规则。
+5. 对于空间输出，审核几何格式和坐标参考系行为。
+6. 对于工件，确认预期的云原生输出，并比较业务内容。
+
+## 执行器说明
+
+模糊匹配、空间处理、PDF 提取、OCR、NLP 和报表等专门操作可以通过托管执行器运行。（机器学习管道会改为转换为原生的 [ML：训练模型](/zh-cn/reference/workflow-steps/machine-learning/ml-train/)和 [ML：评分](/zh-cn/reference/workflow-steps/machine-learning/ml-score/)步骤。）
+
+如果执行器报告了说明：
+
+1. 打开工作流运行详情。
+2. 查看步骤说明。
+3. 确认存在必需的输入和参数。
+4. 如果需要一致性验证，确认预期的输出可用。
+5. 更正输入或设置后重新运行。
+
+## 何时重新导入
+
+在以下情况下重新导入：
+
+- 在原始包之后又添加了重要的文件或宏。
+- 选择了错误的 Document 路径。
+- 较新的工作流版本应替换已导入的版本。
+- 工作流包需要更清晰的依赖项布局。
+
+如果只是变量值、凭据或 Document 路径发生了变化，更新转换后的工作流可能就足够了。
+
+## 相关指南
+
+- [打包 Alteryx 依赖项](/zh-cn/guides/workflows/package-alteryx-dependencies/)
+- [验证转换后的 Alteryx 工作流](/zh-cn/guides/workflows/validate-converted-alteryx-workflows/)
+- [Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/)

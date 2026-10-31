@@ -1,0 +1,132 @@
+---
+title: Połączenie z Business Central
+description: Połącz PlaidCloud z Microsoft Dynamics 365 Business Central przez poświadczenia klienta Azure AD, pobieraj jednostki OData gotowym krokiem importu i księguj wiersze dziennika ogólnego.
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud ze standardowym REST API OData v2.0 Business Central, aby pobierać konta, zapisy księgowe, klientów, dostawców, towary i dzienniki bez ręcznego pisania OData oraz księgować z powrotem wiersze dziennika ogólnego. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import uruchamiaj najpierw w środowisku piaskownicy, a przed księgowaniem na żywo przejdź przez poniższą sekcję **Podgląd i walidacja** dla każdej partii księgowań.
+</Aside>
+
+## Wymagania wstępne
+
+W Azure AD i Business Central potrzebujesz:
+
+- **Rejestracji aplikacji Entra ID (Azure AD)** dla PlaidCloud z **kluczem tajnym klienta**, z przyznanymi **uprawnieniami API** do Business Central (`Dynamics 365 Business Central > API.ReadWrite.All` lub węższym uprawnieniem wydanym przez administratora).
+- **Identyfikatora tenanta** Azure AD.
+- Nazwy **środowiska Business Central**, które PlaidCloud ma wywoływać (na przykład `Production` lub środowisko piaskownicy).
+- **Firmy**, w której PlaidCloud odczytuje i księguje — Business Central ogranicza zarówno odczyty jednostek, jak i księgowania dziennika do jednej firmy naraz.
+
+<Aside type="note">
+Połączenie uwierzytelnia się jako aplikacja, a nie użytkownik — przepływ **poświadczeń klienta (S2S)** Entra ID, ten sam mechanizm OAuth2 client-credentials, którego PlaidCloud używa w innych połączeniach REST Microsoft. Nie ma interaktywnego logowania.
+</Aside>
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz **Business Central** z menu.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `BC Prod`. |
+   | Identyfikator klienta | Identyfikator aplikacji (klienta) z rejestracji aplikacji Entra. |
+   | Klucz tajny klienta | Klucz tajny klienta z rejestracji aplikacji. |
+   | ID tenanta | Identyfikator tenanta Azure AD. |
+   | Środowisko | Nazwa środowiska Business Central, np. `Production`. |
+   | Firma | Identyfikator firmy Business Central, w której odczytujesz i księgujesz. |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Szybki test połączenia
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **Import Business Central Entity**.
+
+2. Ustaw **Połączenie Business Central** na swoje połączenie, **Typ jednostki** na `accounts`, a **Tabela docelowa** na tabelę roboczą.
+
+3. Uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że tenant, dane uwierzytelniające, środowisko i firma są poprawne. Błąd wskazuje problem — nieprawidłowy klucz tajny klienta, brak przyznanego uprawnienia API lub niewłaściwe środowisko/firmę.
+
+## Importowanie danych
+
+<Steps>
+
+1. Dodaj krok **Import Business Central Entity** i ustaw **Połączenie Business Central** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ jednostki** na wybrany rekord: `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items` lub `journals`.
+
+3. Dodaj **Filtry** — wiersze `{field, operator, value}` łączone operatorem AND w `$filter` żądania, sprawdzane względem własnej listy dozwolonych pól jednostki, po których można zapytać. Pozostaw puste, aby pobrać całą jednostkę.
+
+4. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+<Aside type="note">
+**Firma pochodzi z połączenia, a nie z kroku.** Business Central ogranicza każdy odczyt do jednej firmy, a połączenie niesie tę firmę razem ze środowiskiem — dlatego krok importu nie ma pola firmy ani środowiska. Aby pobrać tę samą jednostkę z drugiej firmy, utwórz drugie połączenie Business Central wskazujące na nią.
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` to **tylko do odczytu, tylko zaksięgowana** księga Business Central — nigdy nie pokazuje wiersza, który nadal leży w niezaksięgowanej partii dziennika, więc to ta jednostka jest właściwa do pobrania zestawienia obrotów i sald lub szczegółów księgi głównej, zamiast odpytywania dziennika bezpośrednio.
+</Aside>
+
+## Księgowanie wierszy dziennika ogólnego
+
+Krok **Business Central Post** księguje wiersze w **istniejącej** partii dziennika ogólnego, a następnie księguje tę partię.
+
+<Steps>
+
+1. Zbuduj **tabelę nagłówka** — jeden wiersz na `journal_id` — z nazwą partii dziennika Business Central, do której trafią Twoje wiersze, oraz `document_number`, `posting_date` i etykietą waluty.
+
+2. Zbuduj **tabelę wierszy** — jeden lub więcej wierszy na `journal_id` — ze znakowaną kwotą `amount` (dodatnia dla debetu, ujemna dla kredytu), `account_id` lub `account_number`, `account_type` i `description`.
+
+3. Dodaj krok **Business Central Post**, ustaw **Połączenie Business Central**, **Środowisko**, **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud buduje i sprawdza każdy dziennik bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na `journal_id`: `journal_id`, `external_id`, `internal_id`, `status`, `message`). Popraw każdy wiersz `error` i zwaliduj ponownie.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym dzienniku.
+
+</Steps>
+
+<Aside type="caution">
+**Partia dziennika wskazana w `journal_id` musi już istnieć w Business Central** — ten krok tworzy wiersze wewnątrz niej, ale sam nie tworzy partii. Najpierw skonfiguruj partię dziennika (nazwę, szablon dziennika) w Business Central, a potem wskaż ją w `journal_id`.
+</Aside>
+
+### Jak działa księgowanie
+
+Akcja `Microsoft.NAV.post` Business Central księguje **całą** partię dziennika, a nie tylko wiersze, które PlaidCloud właśnie utworzył — dlatego przed jej wywołaniem PlaidCloud odczytuje partię z powrotem i odmawia księgowania (zapisując błąd, nic nie jest zaksięgowane), jeśli zawiera jakikolwiek wiersz nieoznaczony numerem dokumentu tego żądania. To zabezpieczenie istnieje właśnie po to, aby zabłąkany wiersz pozostawiony po wcześniejszym częściowym niepowodzeniu nigdy nie trafił do księgi głównej przy niezwiązanym, późniejszym księgowaniu do tej samej partii.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Jeden typ dokumentu do zapisu.** Obsługiwane jest tylko księgowanie wierszy dziennika ogólnego (General Journal Line). Przepływ dokumentów roboczych Business Central (faktury sprzedaży/zakupu przechodzące z wersji roboczej do zaksięgowanej) nie jest obsługiwany — dokładna akcja księgowania dla tego przepływu nie jest określona w dokumentacji Microsoft, a PlaidCloud nie zgaduje niezweryfikowanego punktu końcowego dla zapisu przesuwającego pieniądze.
+- **Księguje tylko do istniejącej partii.** Ten krok nigdy nie tworzy partii dziennika — utwórz ją najpierw w Business Central (zobacz wyżej).
+- **Brak jeszcze walidacji na żywo.** Zbudowano zgodnie z udokumentowanym kontraktem OData v2.0 Business Central; potraktuj pierwszą partię na żywo jako przebieg walidacyjny i uzgodnij ją bezpośrednio w Business Central.
+- **Równoczesne księgowania do tej samej partii nie są w pełni serializowane.** Zabezpieczenie idempotentności jest ograniczone numerem dokumentu, a nie partią dziennika — dwa różne numery dokumentów księgowane jednocześnie do tej samej partii nie mają gwarancji serializacji w taki sposób, jak dwa wywołania z tym samym numerem dokumentu. Unikaj równoczesnych księgowań do jednej partii dziennika.
+</Aside>
+
+## Powiązane
+
+- [Konektor REST Business Central](/pl/reference/connectors/rest/business-central/) — opis pól.
+- [Import Business Central Entity](/pl/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/pl/reference/workflow-steps/business-central/business-central-post/)
+- [Przeglądanie historii księgowań ERP](/pl/guides/connections/erp-post-history/) — trwały zapis każdej próby księgowania w Business Central i jej bieżącego stanu.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

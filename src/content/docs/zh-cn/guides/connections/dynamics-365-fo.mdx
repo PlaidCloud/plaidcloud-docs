@@ -1,0 +1,138 @@
+---
+title: 连接到 Dynamics 365 Finance & Operations
+description: 使用 Azure AD 客户端凭据将 PlaidCloud 连接到 Dynamics 365 Finance & Operations，使用预置的导入步骤提取 OData 实体或 DMF 批量提取数据，然后异步过账日记账分录。
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+通过 OData 和数据管理框架（DMF）端点将 PlaidCloud 连接到 Dynamics 365 Finance & Operations（D365 F&O），无需手写 OData 即可提取主数据和交易数据，并将总账日记账分录过账回 D365 F&O。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请始终先针对沙盒环境运行每一次导入，并且在实际过账之前，对每个过账批次都完成下文的 **Validate Only**。
+</Aside>
+
+## 先决条件
+
+您需要在 Azure AD 和 D365 F&O 中具备：
+
+- 为 PlaidCloud 创建的 **Entra ID (Azure AD) 应用注册**，带有**客户端密钥**，并已被授予对 D365 F&O 资源的应用程序权限（或经管理员同意的委派权限）。
+- 您的 Azure AD **租户 ID**。
+- PlaidCloud 应调用的 D365 F&O 环境的**环境 URL**（例如 `https://yourorg.operations.dynamics.com`）。
+- **资源/范围**值：通常是环境 URL 本身再加上 `/.default`，应用注册据此请求令牌。
+
+<Aside type="note">
+该连接以应用程序而不是用户的身份进行身份验证，即 Entra ID **客户端凭据**流程，与 PlaidCloud 用于其他 Microsoft REST 连接的 OAuth2 机制相同。没有交互式登录。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`。
+
+2. 从菜单中选择 **Dynamics 365 Finance & Operations**。
+
+3. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 易记的名称，例如 `D365 F&O Prod`。 |
+   | 环境 URL | 您的环境 URL，例如 `https://yourorg.operations.dynamics.com`。 |
+   | 客户端 ID | Entra 应用注册的应用程序（客户端）ID。 |
+   | 客户端密钥 | 应用注册的客户端密钥。 |
+   | 租户 ID | 您的 Azure AD 租户 ID。 |
+   | 资源/范围 | 要请求的 OAuth2 范围，通常是环境 URL 加上 `/.default`。 |
+
+4. 单击 `Create`。
+
+</Steps>
+
+## 对连接进行冒烟测试
+
+<Steps>
+
+1. 将 **Import D365 F&O Entity** 步骤添加到工作流。
+
+2. 将 **D365 F&O 连接**设置为您的连接，将**实体类型**设置为 `main_accounts`，将**目标表**设置为一个临时表。
+
+3. 运行该步骤（请参阅[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，即表示租户、凭据和环境 URL 均正确。如果出错，错误会指出问题所在，例如客户端密钥错误、缺少权限授予，或环境 URL 错误。
+
+## 导入数据
+
+<Steps>
+
+1. 添加 **Import D365 F&O Entity** 步骤，并设置 **D365 F&O 连接**和**目标表**。
+
+2. 将**实体类型**设置为您想要的记录，并将**同步模式**设置为：常规规模的提取用 `odata`，大型实体的批量提取用 `dmf`。
+
+3. 添加**筛选器**以限定提取范围：日期、科目和维度范围会被转换为请求的 OData `$filter`，并按实体限定为 D365 F&O 实际能够在服务器端筛选的字段。
+
+4. 运行该步骤并检查目标表。
+
+</Steps>
+
+### 实体与筛选器
+
+| 实体类型 | 提取内容 | 可筛选的字段 |
+|---|---|---|
+| `main_accounts` | 会计科目表 | 科目范围、维度 |
+| `currencies` | 货币主数据 | — |
+| `customers` | 客户主数据 | 科目范围 |
+| `vendors` | 供应商主数据 | 科目范围 |
+| `released_products` | 已发布产品主数据 | — |
+| `ledger_journal_headers` | 未过账和已过账的日记账标题 | 日期范围、科目范围、维度 |
+
+<Aside type="note">
+**同步模式：OData 与 DMF。**`odata` 直接调用 D365 F&O 的标准 OData 实体端点，这是最简单的路径，适合常规提取。`dmf` 提交异步的数据管理框架导出作业，并在其完成后下载生成的包，适用于大型实体（例如完整的 `ledger_journal_headers` 历史记录）的批量提取，这类提取通过普通 OData 分页会很慢或被截断。
+</Aside>
+
+## 过账日记账分录
+
+**D365 F&O: Post Journal Entry** 步骤通过 PlaidCloud 共用的 ERP 写入管道，使用 D365 F&O 的异步自定义服务日记账过账操作来过账总账日记账分录。
+
+<Steps>
+
+1. 构建**标题表**，每个日记账分录一行，包含 `journal_id`（您的分录标识符）、`journal_name`（要过账到的 D365 F&O 日记账名称）、`posting_date` 和 `description`。
+
+2. 构建**行表**，每个 `journal_id` 有一行或多行，包含 `account`、`debit`、`credit`，以及您的分类账所需的任何维度列。
+
+3. 添加 **D365 F&O: Post Journal Entry** 步骤，设置 **D365 F&O 连接**、**标题表**、**行表**以及**结果表**。
+
+4. 保持勾选 **Validate Only** 并运行该步骤，PlaidCloud 会构建并检查每个分录，既不占用总账声明，也不过账任何内容。
+
+5. 查看结果表（每个分录一行：`journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）。修复任何 `error` 行并重新验证。
+
+6. 取消勾选 **Validate Only** 并再次运行，以实际过账。除非希望批次在第一个失败的分录处立即停止，否则请保持勾选 **Continue On Error**。
+
+</Steps>
+
+### 过账的工作方式
+
+PlaidCloud 将每个日记账分录提交给 D365 F&O 的异步自定义服务过账操作，然后轮询，直到服务报告该分录的最终状态。只有在该最终状态得到**确认**后，才会将分录报告为 `posted`；已被接受但最终状态始终未能确定的分录会保持隔离，而不会被记录为已过账，因此卡住的提交绝不会悄悄地被当作成功。在重试或重新运行的批次中，PlaidCloud 自己的总账声明可防止同一分录被过账两次。
+
+### 更正已过账的分录
+
+此步骤绝不会删除或重写已过账的分录。要更正某个分录，请过账一个借贷方向与原分录相反的新分录，即**已过账的冲销分录**，而不是就地编辑原分录。这样可以保留 D365 F&O 自身的审计线索，也与直接在应用程序中进行更正的方式一致。
+
+### 能力限制：实际过账前请阅读
+
+<Aside type="caution">
+- **DMF 同步模式存在提取延迟。**`dmf` 提取要等待异步导出作业，预计耗时会明显长于相同规模的 `odata` 提取，请勿将其用于小型的、对延迟敏感的读取。
+- **维度筛选取决于您的分类账维度设置。**不属于您科目结构的财务维度无法在服务器端筛选，请改为在提取之后于工作流中限定其范围。
+- **此连接器有别于通用的 [Dynamics REST 连接器](/zh-cn/reference/connectors/rest/dynamics/)。**后者面向其他 Dynamics 365 应用程序（例如销售/CRM），仅当您不是连接到 Finance & Operations 时才使用它。
+</Aside>
+
+## 相关内容
+
+- [Dynamics 365 F&O REST 连接器](/zh-cn/reference/connectors/rest/dynamics-365-fo/)：字段参考。
+- [Import D365 F&O Entity 步骤](/zh-cn/reference/workflow-steps/dynamics-365-fo/import-d365fo-entity/)
+- [D365 F&O: Post Journal Entry 步骤](/zh-cn/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：记录每次 D365 F&O 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

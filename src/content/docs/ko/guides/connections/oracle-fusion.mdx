@@ -1,0 +1,131 @@
+---
+title: Oracle Fusion에 연결
+description: OAuth2 자격 증명으로 PlaidCloud를 Oracle Fusion Cloud에 연결하고, OData 또는 BIP 추출로 총계정원장 잔액과 분개 배치를 가져온 다음 FBDI와 GL Interface를 통해 전기합니다.
+sidebar:
+  order: 13
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+OData와 BI Publisher(BIP) 보고 엔드포인트를 통해 PlaidCloud를 Oracle Fusion Cloud ERP에 연결하면 OData를 직접 작성하지 않고도 총계정원장 잔액과 분개 배치를 가져올 수 있고, Oracle의 파일 기반 데이터 가져오기(FBDI) 경로로 분개 항목을 다시 전기할 수 있습니다. 이 가이드는 연결, 가져오기 단계, 전기 단계를 다룹니다.
+
+<Aside type="caution">
+모든 가져오기는 먼저 테스트 환경에서 실행하고, 모든 전기 배치는 실제 전기 전에 아래의 **검증만 수행**을 거치십시오.
+</Aside>
+
+## 사전 요구 사항
+
+Oracle Fusion Cloud에서 다음이 필요합니다.
+
+- 읽으려는 엔터티(총계정원장 조회)와 전기에 사용할 FBDI/GL Interface 기능에 대한 접근 권한이 있는 역할을 가진 PlaidCloud 전용 **API 사용자**.
+- Fusion Cloud **인스턴스 URL**(예: `https://yourorg.fa.us2.oraclecloud.com`).
+- **OAuth2 클라이언트 자격 증명**(클라이언트 ID와 시크릿) 또는 Fusion Cloud 보안 설정에서 통합 사용자에게 발급하는 기본 인증 API 자격 증명 중 테넌트에 프로비저닝된 것.
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **Oracle Fusion**을 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알기 쉬운 이름(예: `Fusion Prod`). |
+   | 인스턴스 URL | Fusion Cloud 인스턴스 URL. |
+   | 클라이언트 ID | API 사용자의 OAuth2 클라이언트 ID(기본 인증의 경우 사용자 이름). |
+   | 클라이언트 시크릿 | API 사용자의 OAuth2 클라이언트 시크릿(기본 인증의 경우 비밀번호). |
+
+4. `Create`를 클릭합니다.
+
+</Steps>
+
+## 연결 스모크 테스트
+
+<Steps>
+
+1. 워크플로에 **Import Fusion Entity** 단계를 추가합니다.
+
+2. **Fusion 연결**을 사용 중인 연결로, **엔터티 유형**을 `gl_balances`로, **대상 테이블**을 임시 테이블로 설정합니다.
+
+3. 단계를 실행합니다([워크플로에서 단일 단계 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+</Steps>
+
+대상 테이블에 데이터가 채워지면 자격 증명과 인스턴스 URL이 올바른 것입니다. 오류가 발생하면 문제의 원인(잘못된 자격 증명, 잘못된 인스턴스 URL, 엔터티 읽기 권한이 없는 역할)이 메시지에 표시됩니다.
+
+## 데이터 가져오기
+
+두 가지 가져오기 단계가 서로 다른 규모의 가져오기를 처리합니다.
+
+<Steps>
+
+1. 일반적이고 범위가 제한된 가져오기에는 **Import Fusion Entity** 단계를 추가합니다. Oracle Fusion의 OData 또는 BIP 엔드포인트를 직접 호출합니다.
+
+2. 대용량 추출에는 대신 **Import Fusion Bulk Extract** 단계를 추가합니다. FBDI/BIP 추출 작업을 제출하고 완료되면 결과 파일을 다운로드합니다.
+
+3. **엔터티 유형**을 `gl_balances` 또는 `journal_batches`로 설정합니다.
+
+4. **필터**를 추가해 가져오기 범위를 제한합니다. 날짜 및 회계 기간 범위(`ge`/`le`)와 잔액/금액 필드의 숫자 범위를 지정할 수 있으며, 엔터티별로 Oracle Fusion이 서버 측에서 실제로 필터링할 수 있는 필드로 제한됩니다.
+
+5. 단계를 실행하고 대상 테이블을 확인합니다.
+
+</Steps>
+
+### 엔터티 및 필터
+
+| 엔터티 유형 | 가져오는 항목 | 필터링 가능한 필드 |
+|---|---|---|
+| `gl_balances` | 총계정원장 계정 잔액 | 회계 기간 범위, 계정 범위, 잔액 금액 범위 |
+| `journal_batches` | 분개 배치 헤더 및 상태 | 날짜 범위, 회계 기간 범위 |
+
+<Aside type="note">
+`gl_balances`와 `journal_batches`는 **범위** 필터(날짜, 기간 또는 숫자 필드에 대한 `ge`/`le`)와 원장이나 통화 같은 개별 필드에 대한 동등 필터를 모두 지원합니다. 한쪽 경계만 있는 범위 필터는 반대쪽이 열려 있습니다.
+</Aside>
+
+## 분개 항목 전기
+
+**Oracle Fusion: Post Journal Entry** 단계는 PlaidCloud의 공유 ERP 쓰기 파이프라인을 통해 Oracle의 FBDI GL Interface 로드 경로를 사용하여 총계정원장 분개 항목을 전기합니다.
+
+<Steps>
+
+1. 분개 항목당 한 행으로 구성된 **헤더 테이블**을 만듭니다. `batch_id`(배치 식별자), `ledger_id`, `journal_source`, `journal_category`, `accounting_date`, `description`이 필요합니다.
+
+2. `batch_id`당 한 행 이상으로 구성된 **라인 테이블**을 만듭니다. `account_combination`(또는 세그먼트 열), `entered_debit`, `entered_credit`, `currency_code`가 필요합니다.
+
+3. **Oracle Fusion: Post Journal Entry** 단계를 추가하고 **Fusion 연결**, **헤더 테이블**, **라인 테이블**, **결과 테이블**을 설정합니다.
+
+4. **검증만 수행**을 선택한 상태로 단계를 실행합니다. PlaidCloud는 원장 클레임이나 실제 전기 없이 모든 배치를 구성하고 검사합니다.
+
+5. 결과 테이블을 검토합니다(배치당 한 행: `batch_id`, `natural_key`, `confirmation_id`, `status`, `message`). `error` 행을 수정하고 다시 검증합니다.
+
+6. **검증만 수행**을 선택 해제하고 다시 실행하여 실제로 전기합니다. 첫 번째 실패한 배치에서 실행이 즉시 중단되기를 원하지 않는 한 **오류 발생 시 계속**을 선택한 상태로 두십시오.
+
+</Steps>
+
+### 전기 작동 방식
+
+PlaidCloud는 각 분개 배치를 FBDI 파일로 Oracle의 GL_INTERFACE 스테이징 테이블에 쓴 다음, **Journal Import Launcher** Enterprise Scheduler Service(ESS) 작업을 제출하고 최종 상태를 보고할 때까지 비동기로 폴링합니다. 항목은 최종 상태가 **확인된** 후에만 `posted`로 보고됩니다. 인터페이스 테이블에는 들어왔지만 가져오기 작업이 끝나지 않은 배치는 전기된 것으로 기록되지 않고 격리 상태로 남으므로, 멈춘 ESS 작업이 조용히 성공으로 처리되는 일은 없습니다. PlaidCloud 자체 원장 클레임은 재시도되거나 다시 실행된 배치에서 같은 배치가 두 번 로드되는 것을 방지합니다.
+
+### 전기된 항목 수정
+
+이 단계는 전기된 분개 배치를 삭제하거나 다시 쓰지 않습니다. 수정하려면 원본을 직접 편집하는 대신 원본과 차변 및 대변을 맞바꾼 새 배치, 즉 **전기된 반대 분개**를 전기하십시오. 이렇게 하면 Oracle Fusion 자체의 감사 추적이 유지되며 애플리케이션에서 직접 수정하는 방식과 일치합니다.
+
+### 기능 제한 — 실제 전기 전에 읽어 보십시오
+
+<Aside type="caution">
+- **ESS 작업 지연.** Journal Import Launcher는 동기 호출이 아니라 예약된 작업으로 실행되므로, 전기 실행은 직접 API 쓰기보다 상당히 오래 걸립니다. 지연에 민감한 단일 항목 전기에는 이 단계를 사용하지 마십시오.
+- **대량 추출 지연.** `import_fusion_bulk_extract`는 FBDI/BIP 내보내기 작업을 기다립니다. `import_fusion_entity`의 직접 OData/BIP 경로로는 처리하기에 너무 큰 가져오기에만 사용하십시오.
+</Aside>
+
+## 관련 항목
+
+- [Oracle Fusion 커넥터](/ko/reference/connectors/erp/oracle-fusion/) — 필드 참조.
+- [Import Fusion Entity](/ko/reference/workflow-steps/oracle-fusion/import-fusion-entity/)
+- [Import Fusion Bulk Extract](/ko/reference/workflow-steps/oracle-fusion/import-fusion-bulk-extract/)
+- [Oracle Fusion: Post Journal Entry](/ko/reference/workflow-steps/oracle-fusion/oracle-fusion-post/)
+- [ERP 전기 기록 검토](/ko/guides/connections/erp-post-history/) — 모든 Oracle Fusion 전기 시도와 현재 상태에 대한 상시 기록.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

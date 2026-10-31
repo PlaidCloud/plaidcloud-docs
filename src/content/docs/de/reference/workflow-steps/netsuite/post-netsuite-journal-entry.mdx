@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry
+description: Buchen Sie eine oder mehrere Journalbuchungen aus PlaidCloud-Kopf- und Positionstabellen nach NetSuite, mit einem Vorschaumodus, der jede Buchung prüft, bevor etwas gebucht wird.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Bucht Journalbuchungen über Ihre [NetSuite-Verbindung](/de/guides/connections/netsuite/) nach NetSuite. Der Schritt nimmt zwei Quelltabellen – eine Kopftabelle mit einer Zeile pro Journalbuchung und eine Positionstabelle mit einer oder mehreren Soll-/Haben-Zeilen pro Buchung –, gruppiert die Positionen nach Journalbuchung und bucht jede Buchung nach NetSuite. Der **Test Only Mode** erstellt und prüft jede Buchung, ohne einen Aufruf an NetSuite abzusetzen, und eine optionale Ergebnistabelle hält das Ergebnis jeder Buchung fest.
+
+<Aside type="caution">
+Führen Sie jeden Stapel zuerst im **Test Only Mode** aus, prüfen Sie die Ergebnistabelle und stimmen Sie einige Buchungen direkt in NetSuite ab, bevor Sie sich darauf verlassen, dass dieser Schritt Buchungen unbeaufsichtigt live bucht.
+</Aside>
+
+## Konfiguration
+
+### Verbindung
+
+- **NetSuite-Verbindung** – die NetSuite-Verbindung, über die gebucht wird, gefiltert auf Verbindungen vom Typ NetSuite.
+- **Umgebung** – die Umgebung der Verbindung.
+
+NetSuite-Verbindungen werden unter **Tools > Connections** verwaltet – siehe [Mit NetSuite verbinden](/de/guides/connections/netsuite/).
+
+### Daten
+
+- **Journalbuchungs-Kopftabelle** – eine Zeile pro Journalbuchung.
+- **Journalbuchungs-Positionstabelle** – eine oder mehrere Soll-/Haben-Zeilen pro Journalbuchung, über die Journal-ID mit ihrer Kopfzeile verknüpft.
+- **Test Only Mode** – standardmäßig aktiviert. Validiert jede Journalbuchung anhand der unten aufgeführten Prüfungen, setzt aber keinen Aufruf an NetSuite ab; es wird nichts gebucht. Deaktivieren Sie die Option, um tatsächlich zu buchen. Eine Schrittkonfiguration, die dieses Feld ganz auslässt – etwa eine über die REST-API, MCP oder einen Workflow-Bundle-Import erstellte –, verwendet ebenfalls standardmäßig den Test Only Mode statt einer Livebuchung.
+- **Continue posting remaining entries if one entry fails** – standardmäßig aktiviert. Wenn eine Buchung eine Prüfung oder die Buchung selbst nicht besteht, hält PlaidCloud für diese Buchung einen Fehler fest und fährt mit dem Rest des Stapels fort, statt ihn anzuhalten.
+- **Submit Asynchronously** – standardmäßig aus. Übermittelt jede Buchung mit dem asynchronen `Prefer: respond-async`-Header von NetSuite statt über den synchronen Weg „erstellen, dann zurücklesen". NetSuite reiht den Job ein, und PlaidCloud hält die Buchung mit einer Übermittlungsreferenz als `pending` fest, statt auf ihre Auflösung zu warten. Das ist eine Entscheidung pro Verbindung – verwenden Sie bei jeder Ausführung gegen eine bestimmte Verbindung dieselbe Einstellung, keine Mischung. **Derzeit löst nichts eine ausstehende Buchung automatisch auf; die erneute Ausführung dieses Schritts löst sie auf**, indem sie die Buchung nachschlägt und ihr nun endgültiges Ergebnis festhält. Wenn Sie die Option aktivieren, planen Sie ein, den Schritt erneut auszuführen (oder direkt in NetSuite nachzusehen), statt eine `pending`-Zeile als erledigt zu betrachten.
+- **Buchungsergebnistabelle** – optional. Ist sie festgelegt, (über)schreibt PlaidCloud sie mit einer Zeile pro Journalbuchung – siehe [Spalten der Ergebnistabelle](#spalten-der-ergebnistabelle).
+
+### Kopfzuordnung / Kopffilter
+
+Ordnen Sie die Spalten der Kopftabelle den unten stehenden Feldern der Journalbuchung zu und filtern Sie optional, welche Kopfzeilen gebucht werden, mithilfe der [standardmäßigen Registerkarten für Datenzuordnung und Filter](/de/reference/workflow-steps/common/advanced-data-mapper-usage/).
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| Journal ID | Ja | Verknüpft eine Kopfzeile mit ihren Positionen. Eine Zeile pro eindeutiger Journal-ID. |
+| Tochtergesellschaft | Ja | Interne ID der NetSuite-Tochtergesellschaft. |
+| Buchungsdatum | Ja | Das Transaktionsdatum der Buchung. |
+| Währung | Nein | Interne ID der NetSuite-Währung. |
+| Memo | Nein | Memo auf Buchungsebene. |
+| External ID | Nein | Überschreibt die deterministische externe ID, die PlaidCloud für die Buchung erzeugt – siehe [Erneutes Buchen und doppelte Buchungen](#erneutes-buchen-und-doppelte-buchungen). |
+
+### Zeilenzuordnung / Zeilenfilter
+
+Ordnen Sie die Spalten der Positionstabelle zu und filtern Sie optional, welche Positionszeilen gebucht werden.
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| Journal ID | Ja | Entspricht der Journal-ID einer Kopfzeile. |
+| Konto | Ja | Interne ID des NetSuite-Hauptbuchkontos. |
+| Soll | Ja | Der Sollbetrag; 0 bei einer reinen Habenzeile. |
+| Haben | Ja | Der Habenbetrag; 0 bei einer reinen Sollzeile. |
+| Memo | Nein | Memo auf Zeilenebene. |
+| Abteilung | Nein | Interne ID der NetSuite-Abteilung. |
+| Klasse | Nein | Interne ID der NetSuite-Klasse. |
+| Speicherort | Nein | Interne ID des NetSuite-Standorts. |
+| Entität | Nein | Interne ID der NetSuite-Entität (Kunde oder Lieferant). |
+
+## So funktioniert das Buchen
+
+PlaidCloud gruppiert die Positionstabelle nach Journal-ID und erstellt pro Kopfzeile eine NetSuite-Journalbuchung. Bevor jede Buchung gebucht wird – oder im Test Only Mode, bevor sie als validiert festgehalten wird –, prüft PlaidCloud, dass:
+
+- die Buchung mindestens eine Position hat
+- Soll und Haben auf den Cent ausgeglichen sind
+- jede Position ein Konto hat
+- die Kopfzeile eine Tochtergesellschaft hat
+- das Buchungsdatum ein gültiges Datum ist
+
+Schlägt eine Prüfung fehl, wird für diese Buchung eine Fehlerzeile festgehalten, und es geht mit der nächsten Buchung des Stapels weiter, sofern **Continue posting remaining entries** nicht deaktiviert ist.
+
+### Erneutes Buchen und doppelte Buchungen
+
+Jede Buchung wird mit einer deterministischen externen ID gebucht, die aus Projekt, Verbindung, Journal-ID, Buchungsdatum und den Positionsbeträgen gebildet wird. Beim erneuten Buchen einer Buchung, deren Positionen sich nicht geändert haben, wird dieselbe externe ID wiederverwendet, und die eigene Behandlung externer IDs in NetSuite verhindert, dass eine doppelte Journalbuchung entsteht. Ändern Sie eine beliebige Position einer Buchung – einen anderen Betrag, eine hinzugefügte oder entfernte Position –, berechnet PlaidCloud eine neue externe ID dafür, die NetSuite als neue Buchung statt als Aktualisierung der alten akzeptiert. Tragen Sie einen Wert in die Spalte „External ID" der Kopftabelle ein, um die ID stattdessen selbst zu steuern.
+
+<Aside type="caution">
+Das erneute Buchen entdoppelt nur eine Buchung, die NetSuite als identisch mit einer bereits vorhandenen ansieht. Wenn Sie die Positionen einer Buchung bearbeiten und den Schritt erneut ausführen, wird die ursprüngliche Buchung in NetSuite nicht aktualisiert – es entsteht eine zweite Buchung. Korrigieren Sie eine gebuchte Buchung direkt in NetSuite, statt diesen Schritt mit geänderten Daten erneut auszuführen.
+</Aside>
+
+### Spalten der Ergebnistabelle
+
+| Spalte | Beschreibung |
+|---|---|
+| journal_id | Die Journal-ID aus der Kopftabelle. |
+| external_id | Die externe ID, die für diesen Buchungsversuch verwendet wurde. |
+| internal_id | Die interne ID von NetSuite für die erstellte Journalbuchung bzw. die asynchrone Übermittlungsreferenz, solange `pending`. Leer im Test Only Mode und bei einem Fehler. |
+| status | `validated` (Test Only Mode), `posted`, `pending` (Submit Asynchronously hat die Buchung angenommen, aber NetSuite hat sie noch nicht bestätigt) oder `error`. |
+| message | Fehlerdetail bei `error`; bei `pending` ein Hinweis, dass die erneute Ausführung des Schritts sie auflöst. Leer bei `posted`/`validated`. |
+
+## Verwandte Themen
+
+- [Mit NetSuite verbinden](/de/guides/connections/netsuite/)
+- [Eine NetSuite-Journalbuchung buchen](/de/guides/connections/post-netsuite-journal-entries/) – vollständige Anleitung zu Konfiguration, Vorschau und Buchung
+- [NetSuite-REST-Konnektor](/de/reference/connectors/rest/netsuite/)
+- [NetSuite-Schritte](/de/reference/workflow-steps/netsuite/)

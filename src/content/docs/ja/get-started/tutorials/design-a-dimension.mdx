@@ -1,0 +1,161 @@
+---
+title: ディメンション階層を設計する
+description: エンドツーエンドのチュートリアルです。ディメンションを作成し、代替階層を追加し、テーブルから読み込んで、レポートや配賦で下流に活用します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/design-a-dimension.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*約30分 · ディメンション、代替階層、下流での活用*
+
+ディメンションは、PlaidCloudのあらゆる機能の土台となる階層です。配賦はディメンションを対象にし、ダッシュボードはディメンションでスライスし、レポートはディメンションをたどって集計します。それにもかかわらず、多くのガイドはディメンションを*参照*するだけで、作り方を教えてくれません。このチュートリアルはその隙間を埋めます。コストセンターのディメンションを作成し、2つ目の集計方法を追加し、テーブルから値を読み込み、下流の利用側に引き渡します。
+
+## 作成するもの
+
+部門ごとにコストセンターをグループ化する**メイン**階層と、同じコストセンターを地域ごとにグループ化し直す**代替**階層を持つ、コストセンターのディメンションです。続いてソーステーブルから読み込み、配賦の対象に指定します。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 300" role="img" aria-label="ツリーとして描かれたコストセンターのディメンションです。メイン階層のルートはCompanyで、子として2つの部門SalesとOperationsがあります。Salesの下にはリーフのコストセンターCC-100とCC-200、Operationsの下にはリーフのコストセンターCC-300とCC-400があります。下には、By Regionという名前の代替階層があり、同じ4つのリーフをグループ化し直しています。EastにはCC-100とCC-300、WestにはCC-200とCC-400が集まり、メインのツリーと交差する破線のコネクターで示されています。" style="width:100%;max-width:640px;height:auto;">
+  <path d="M320 51 L170 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M320 51 L470 70" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L90 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M170 106 L250 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L390 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M470 106 L550 150" stroke="var(--sl-color-gray-5)" stroke-width="1.4" fill="none" />
+  <path d="M240 250 L90 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M240 250 L390 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L250 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <path d="M400 250 L550 182" stroke="var(--sl-color-accent)" stroke-width="1.3" stroke-dasharray="4 3" fill="none" />
+  <rect x="270" y="15" width="100" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="320" y="38" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">Company</text>
+  <rect x="120" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="170" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sales</text>
+  <rect x="420" y="70" width="100" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="470" y="93" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Operations</text>
+  <rect x="50" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="90" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-100</text>
+  <rect x="210" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="250" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-200</text>
+  <rect x="350" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="390" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-300</text>
+  <rect x="510" y="150" width="80" height="32" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="550" y="171" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">CC-400</text>
+  <rect x="200" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="240" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">East</text>
+  <rect x="360" y="250" width="80" height="32" rx="7" fill="none" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="400" y="271" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">West</text>
+  <text x="30" y="30" font-size="10" fill="var(--sl-color-gray-3)">メイン</text>
+  <text x="30" y="270" font-size="10" fill="var(--sl-color-accent)">By Region</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">メイン階層は部門ごとにコストセンターをグループ化します。代替階層は、同じ4つのリーフを地域ごとに集計し直します。リーフは同じで、親が異なります。</figcaption>
+</figure>
+
+## 前提条件
+
+- PlaidCloudワークスペース（お持ちでない場合は[無料トライアルを開始](https://app.plaidcloud.com)してください）
+- 作業用のプロジェクト（必要に応じて**プロジェクト**タブから作成してください）
+- [概念](/ja/get-started/concepts/)（ワークスペース、プロジェクト、ワークフロー、ディメンション）に関する知識
+- 必要に応じて、ステップ4の読み込みに使う、コストセンターの構造を持つソーステーブル（ツリーを手作業で作成することもできます）
+
+> **初めての場合は、先に[ディメンションの基本](/ja/guides/dimensions/getting-started/)をお読みください。** ディメンションをいつ使うべきか、メイン階層と代替階層がどう関係するかを説明しています。このチュートリアルは、その用語を前提にしています。
+
+## ステップ1：ディメンションを作成する
+
+ディメンションは、各プロジェクトの**ディメンション**タブにあります。
+
+<Steps>
+
+1. プロジェクトを開き、**ディメンション**タブに切り替えます。
+2. ツールバーの**新規**ボタンから、**新規ディメンション**を選択します。
+3. **名前**（例：`Cost Centers`）、フォルダー形式で整理するための**ディレクトリ**、わかりやすい**メモ**を入力します。
+4. **作成**をクリックします。ディメンションはすぐに使えるようになります。
+
+</Steps>
+
+これで空のディメンションができました。メイン階層はありますが、まだ何も入っていません。次のステップで、構造を与えます。
+
+## ステップ2：メイン階層を構築する
+
+すべてのディメンションには、1つの**メイン**階層があります。すべてのリーフメンバーが1回だけ登録される、正準で唯一の信頼できるツリーです。ここで部門の構造を構築します。
+
+<Steps>
+
+1. ディメンションを開いた状態で、ルートを選択し、階層ツールバーの**メンバーを追加**をクリックして、最上位の親（`Sales` と `Operations`）を作成します。
+2. 部門を選択し、もう一度**メンバーを追加**を使って、その部門に集計されるリーフのコストセンターを追加します。
+
+   | 親 | リーフメンバー |
+   |---|---|
+   | Sales | CC-100, CC-200 |
+   | Operations | CC-300, CC-400 |
+3. 階層ツールバーでは、メンバーを上下に移動したり、親を付け替えたりすることもできるため、配置を誤ったメンバーを修正できます。
+
+</Steps>
+
+> **すべてのリーフは、メイン階層に存在する必要があります。** ディメンション内のあらゆるものは、まずメインツリーのメンバーです。未決定なのは、それが*どこに*あるかだけです。代替階層（次のステップ）はこれらのリーフを再利用し、新しいリーフを追加することはありません。
+
+大きなツリーでは、メンバーを手作業で並べるのは面倒です。[Dimension Sort](/ja/reference/workflow-steps/dimensions/dimension-sort/)ステップは、プログラムで並べ替えます。読み込み後や大規模な再構成の後に、作業時間を大きく節約できます。
+
+## ステップ3：代替階層を追加する
+
+**代替階層**は、同じリーフを別の観点で見るものです。サブセットを選んだり、異なるグループ化をしたり、まったく別の集計方法を使ったりできます。ここでは、4つのコストセンターを、部門ではなく地域でグループ化し直します。
+
+<Steps>
+
+1. ディメンションに新しい代替階層を追加し、`By Region` という名前を付けます。
+2. 新しい階層で、**メンバーを追加**を使って2つの親（`East` と `West`）を作成し、既存のリーフをその下に追加します。
+
+   | 地域の親 | リーフメンバー |
+   |---|---|
+   | East | CC-100, CC-300 |
+   | West | CC-200, CC-400 |
+
+</Steps>
+
+リーフは、メイン階層の*同じ*メンバーです。複製ではなく、このビュー用に親を付け替えています。メイン階層のメンバーには、どの代替階層にも属しているかを示す属性ラベルが付くため、CC-100がSalesのセンターであると同時にEastのセンターでもあることが、ひと目でわかります。
+
+> **代替階層の一般的なパターンは2つあります。** *サブセットビュー*は、1つのレポートや配賦のために、焦点を絞ったリーフの集合をツリーにまとめるもので、メインでのメンバーの変更を引き継ぎます。*異なる集計*は、ここでの `By Region` のように、すべてのリーフを保ったままグループ化し直します。どちらについても、[ディメンション（階層）の使用](/ja/guides/dimensions/dimensions/#代替属性階層)をご覧ください。
+
+## ステップ4：テーブルから読み込む
+
+チュートリアルなら、手作業で数ノードを作るのでも構いません。実際には、ワークフローを使ってソーステーブルからディメンションを生成し、ソースの変更に合わせて更新されるようにします。PlaidCloudは、2つのデータ形状を読み取ります。
+
+| 形式 | 形状 | 適した用途 |
+|---|---|---|
+| **Parent-Child** | 2つの列（親と子）で、1行が1つのエッジ | 深さが任意で、不規則な階層 |
+| **Levels** | 1レベルにつき1列で、1行が1つの完全なパス | 深さが予測できる規則的な階層 |
+
+<Steps>
+
+1. **ワークフロー**タブに切り替え、ワークフロー（例：`Load Cost Centers`）を作成します。
+2. [Dimension Load](/ja/reference/workflow-steps/dimensions/dimension-load/)ステップを追加します。
+3. ソーステーブルを指定し、**Parent-Child**または**Levels**を選択して、構造を表す列をマッピングします。
+4. 読み込みで扱えるのは構造だけではありません。**値、エイリアス、プロパティ**も、同じステップで一緒に読み込めます。ソースにそれらがある場合は、その列もマッピングします。
+5. ステップを実行し、**ディメンション**タブを開き直して、ツリーがソースと一致していることを確認します。
+
+</Steps>
+
+> **読み込みは構造を作成しますが、ディメンションをリセットはしません。** 再読み込みの前にディメンションを空の状態に戻す（構造、値、エイリアス、プロパティ、代替階層をすべて消去する）には、先に[Dimension Clear](/ja/reference/workflow-steps/dimensions/dimension-clear/)を使います。階層をフラットなテーブルにエクスポートしてレポートに使う方法を含む往復の流れについては、[ディメンションの読み込みとアンロード](/ja/guides/dimensions/loading-unloading/)をご覧ください。
+
+## ステップ5：ノードを充実させる（任意）
+
+階層は、名前のツリーにとどまりません。各ノードに、**プロパティ**（コストセンターの通貨、所属する事業部門など）、**エイリアス**、**値**を持たせられます。階層ツールバーで**プロパティ**を切り替えると、プロパティごとに列が表示されます。追加するには**新規プロパティ**を使います。
+
+階層内で値を直接計算することもできます。**集計**は、テーブルから合計、件数、最小、最大の値を各ノードに取り込みます。**式**は、それらの集計をもとに、算術演算子、条件、`Column(...)`、`Leafcount()`、`Parentvalue(...)` などの関数を使って計算します。全体像については、[式と集計のためのディメンション関数](/ja/guides/dimensions/function-expressions/)をご覧ください。
+
+## ステップ6：下流で活用する
+
+その成果として、ツリーを一度定義すれば、あらゆる場所から参照できます。このディメンションは、PlaidCloudの他の機能の対象になります。
+
+- **配賦**はディメンションを対象にして、コストプールをリーフに分配します。次のステップとして最適です。
+- **レポートとダッシュボード**は、階層をスライスしてドリルスルーします。同じリーフから、メインのツリーで1つの集計を、`By Region` で別の集計を行えます。
+- [データエディター](/ja/guides/projects/managing-data-editors/)内、または別のディメンションの**選択（ディメンション）**プロパティ内の**ディメンションにマッピングされた列**では、メンバーピッカーを使って、ユーザーがこのツリーからメンバーを選べます。
+
+配賦に利用するには、ディメンション内のリーフメンバー名を、ドライバーやソースデータのキーと完全に一致させてください。スペースや大文字小文字が異なると、そのリーフには何も配賦されません。この約束事こそ、次の配賦チュートリアルが前提にしているものです。
+
+## 次のステップ
+
+- [配賦モデルを構築する](/ja/get-started/tutorials/build-an-allocation/) — 作成したディメンションにコストプールを分配します（次のステップとして最適です）
+- [ディメンションの基本](/ja/guides/dimensions/getting-started/) — ディメンションを使うべき場面と、各要素の関係
+- [ディメンション（階層）の使用](/ja/guides/dimensions/dimensions/) — 管理の詳細なリファレンス：プロパティ、継承、コピー、並べ替え
+- [ディメンションの読み込みとアンロード](/ja/guides/dimensions/loading-unloading/) — 構造の取り込みと、フラットなテーブルへの書き出し
+- [式と集計のためのディメンション関数](/ja/guides/dimensions/function-expressions/) — 階層内の計算値

@@ -1,0 +1,41 @@
+---
+title: Build Features 步骤
+description: 根据源表构建算术、交互、日期部分、分箱、缩放和独热编码的特征列。
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## 说明
+
+**Build Features** 步骤根据源表一次性构建一个派生特征列的表——包括算术和交互组合、日期部分提取、分箱、缩放和独热编码——而无需为每一列手写表达式。它作为针对数据仓库的普通转换运行。
+
+## 配置
+
+- **源 / 输出表**——输入表以及写入派生列的表。
+- **直通列**（`passthrough_columns`）——原样传递的源列。
+- **特征**（`features`）——有序的特征规格列表，至少需要一个。每个规格都有一个 `type`，并生成一个或多个输出列。输出列名——直通列加上每个非独热特征的 `name`——必须各不相同；保存重复的名称或重复的独热 `(column, prefix)` 组合会被拒绝。
+
+## 特征类型
+
+| 类型 | 字段 | 生成 |
+| --- | --- | --- |
+| **表达式**（`expression`） | `name`、`expression`、`dtype`（默认 `text`） | 一列：基于源列的任意表达式。 |
+| **交互**（`interaction`） | `name`、`columns`（恰好 2 个）、`op`（`multiply` 或 `add`，默认 `multiply`）、`dtype`（默认 `numeric`） | 一列：两个数值列的逐对算术组合。 |
+| **日期部分**（`datepart`） | `name`、`column`、`part`（`year`、`month`、`day`、`dow` 或 `hour`） | 一列：提取出的日期/时间分量。 |
+| **分箱**（`bin`） | `name`、`column`、`thresholds`（升序，至少 1 个）、`labels`（恰好比 `thresholds` 多一个） | 一列：`column` 的值所落入分桶的标签。阈值是您提供的固定值——请参阅[限制和注意事项](#限制和注意事项)。 |
+| **Z 分数**（`zscore`） | `name`、`column`、`dtype`（默认 `numeric`） | 一列：标准化为零均值、单位方差的列。 |
+| **最小-最大**（`minmax`） | `name`、`column`、`out_min`（默认 0）、`out_max`（默认 1）、`dtype`（默认 `numeric`） | 一列：重新缩放到 `[out_min, out_max]` 范围的列。 |
+| **独热**（`onehot`） | `column`、`prefix` | `column` 的每个不同值对应一列，各命名为 `<prefix><value>`。 |
+| **列统计量**（`column_mean`、`column_sum`、`column_variance`、`column_stddev`、`column_min`、`column_max`） | `name`、`column`、`dtype`、`moments`、`order_column` | 一列：在步骤的筛选器之下，整个列的统计量，出现在每一行上。`moments` 为 `sql`（默认，数据仓库聚合）或 `welford`，后者按 `order_column` 顺序读取该列，以单遍运行矩的方式计算均值、总和、方差和标准差，与 KNIME 的 Math Formula `COL_MEAN` 及其同类函数一致。 |
+
+## 限制和注意事项
+
+- **分箱需要预先确定固定阈值。**`bin` 根据您提供的阈值和标签对列分桶——不支持由数据驱动的分箱（在运行时根据数据计算等宽或等频分箱）。请先自行计算阈值（例如通过前面的聚合步骤），再配置 `bin` 特征。
+- **一次一个数据框。** Build Features 读取并写入单个源表；它不像跨表特征合成工具那样跨相关表聚合值。请将任何跨表关系建模为该步骤上游的联接。
+- **此步骤不提供降维或目标感知编码。** Build Features 没有 PCA 式的成分降维，也没有目标编码（将分类列重新表示为标签的统计量，如其均值）。分类特征请使用 `onehot`。如需成分降维，请使用 [ML：训练模型](/zh-cn/reference/workflow-steps/machine-learning/ml-train/)的 `pca` 算法；如果训练流水线需要不同的编码，请使用其自身的特征处理。
+
+## 相关内容
+
+- [ML：训练模型](/zh-cn/reference/workflow-steps/machine-learning/ml-train/)——在表上训练模型，包括由此步骤构建的表。
+- [Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/)——Alteryx Build Features 工具的基本操作如何映射到这些特征类型，以及其哪些基本操作（跨表聚合、PCA、目标编码、自动分箱）在此没有对应项。

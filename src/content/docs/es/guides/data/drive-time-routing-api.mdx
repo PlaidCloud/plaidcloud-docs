@@ -1,0 +1,148 @@
+---
+title: API de enrutamiento por tiempo de conducción
+description: "Llame a los endpoints REST de enrutamiento por tiempo de conducción de PlaidCloud: polígonos isócronos y clasificación de lo más cercano por tiempo de conducción, respaldados por el motor de enrutamiento autoalojado de PlaidCloud. Versión preliminar opcional, de mejor esfuerzo y sin SLA."
+sidebar:
+  label: API de enrutamiento por tiempo de conducción
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/drive-time-routing-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud expone el enrutamiento por tiempo de conducción como dos endpoints REST bajo `/rest/v1/analyze/route`: un endpoint de **isócrona** que dibuja un polígono de tiempo de conducción (o de distancia de conducción) alrededor de un origen, y un endpoint de **find-nearest** que clasifica los destinos candidatos por el tiempo de conducción real en lugar de la distancia en línea recta. Ambos se ejecutan en el motor de enrutamiento autoalojado de PlaidCloud, creado a partir de datos viales de OpenStreetMap (ODbL), y envuelven cada resultado en un pequeño sobre `plaidcloud` que contiene la atribución.
+
+<Aside type="caution" title="Versión preliminar opcional: léalo antes de basarse en ella">
+El enrutamiento por tiempo de conducción está **desactivado de forma predeterminada** y solo llega a los inquilinos que lo han solicitado. Se ejecuta en un grupo de enrutamiento pequeño y compartido, y se ofrece **de mejor esfuerzo y sin SLA**: no hay capacidad garantizada de tráfico en vivo, y una solicitud puede rechazarse con un `503` cuando el grupo está ocupado, en lugar de ponerse en cola o reintentarse por usted. Si todavía no lo tiene habilitado, comuníquese con PlaidCloud para consultar sobre la versión preliminar antes de crear una dependencia de ella.
+</Aside>
+
+## Autenticación y derechos de uso
+
+Toda llamada de enrutamiento necesita:
+
+- Una sesión normal de PlaidCloud o un token de portador con el rol **`analyze.table.read`**, el mismo rol que controla otros accesos de lectura a los datos de un proyecto. No existe un rol específico de enrutamiento.
+- El enrutamiento por tiempo de conducción incluido en su plan: el derecho de uso de tiempo de conducción habilitado para su inquilino. Un inquilino cuyo plan no lo incluye recibe un `403` con `detail: "drive_time_disabled"` en cada llamada; no existe un modo parcial ni de solo lectura.
+
+## Endpoints
+
+### `isochrone`: polígono de tiempo de conducción alrededor de un origen
+
+```
+POST /rest/v1/analyze/route/isochrone
+```
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `origin` | `{ lat, lon }`, obligatorio | Una sola coordenada. La isócrona toma un origen por llamada |
+| `costing` | cadena | `auto` (predeterminado), `truck`, `bike` o `pedestrian` |
+| `contours_minutes` | matriz de enteros, obligatorio | Una entrada por cada anillo de contorno que desee, cada una de 1 a 120 minutos. Hasta 5 contornos por llamada |
+| `costing_options.truck.height` | decimal, metros | Opcional, > 0 y ≤ 10. Solo se aplica con el costeo `truck` |
+| `costing_options.truck.weight` | decimal, kilogramos | Opcional, > 0 y ≤ 100000. Solo se aplica con el costeo `truck` |
+| `costing_options.truck.length` | decimal, metros | Opcional, > 0 y ≤ 50. Solo se aplica con el costeo `truck` |
+
+```json
+{
+  "origin": { "lon": -122.4194, "lat": 37.7749 },
+  "costing": "auto",
+  "contours_minutes": [10, 20, 30]
+}
+```
+
+Respuesta: el GeoJSON de isócronas del propio motor de enrutamiento, sin modificar, más el sobre `plaidcloud`:
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "contour": 10, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.44, 37.79], [-122.40, 37.79], [-122.40, 37.76], [-122.44, 37.76], [-122.44, 37.79]]] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "contour": 20, "metric": "time" },
+      "geometry": { "type": "Polygon", "coordinates": [[[-122.47, 37.81], [-122.37, 37.81], [-122.37, 37.74], [-122.47, 37.74], [-122.47, 37.81]]] }
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+### `find-nearest`: destinos más cercanos por tiempo de conducción
+
+```
+POST /rest/v1/analyze/route/find-nearest
+```
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `origins` | matriz de `{ lat, lon }`, obligatorio | De 1 a 5 orígenes |
+| `destinations` | matriz de `{ lat, lon }`, obligatorio | De 1 a 500 candidatos. Consulte el [prefiltrado de destinos](#prefiltrado-de-destinos) más abajo |
+| `costing` | cadena | `auto` (predeterminado), `truck`, `bike` o `pedestrian` |
+| `top_n` | entero | Destinos más cercanos que se devuelven por origen. De 1 a 50, el valor predeterminado es 5 |
+| `costing_options.truck.{height,weight,length}` | igual que en isochrone | Solo se aplica con el costeo `truck` |
+
+```json
+{
+  "origins": [{ "lon": -122.4194, "lat": 37.7749 }],
+  "destinations": [
+    { "lon": -122.4310, "lat": 37.7660 },
+    { "lon": -122.4010, "lat": 37.7890 },
+    { "lon": -122.4200, "lat": 37.7700 }
+  ],
+  "costing": "auto",
+  "top_n": 2
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "origin_index": 0,
+      "nearest": [
+        { "destination_index": 2, "destination": { "lon": -122.4200, "lat": 37.7700 }, "time_seconds": 184, "distance_km": 1.2 },
+        { "destination_index": 0, "destination": { "lon": -122.4310, "lat": 37.7660 }, "time_seconds": 412, "distance_km": 2.8 }
+      ]
+    }
+  ],
+  "plaidcloud": {
+    "attribution": "Routing data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright)."
+  }
+}
+```
+
+`destination_index` se refiere a la posición de ese destino en la matriz `destinations` que usted envió, no a su posición en ninguna clasificación interna: consérvelo para asociar un resultado con sus propios datos.
+
+#### Prefiltrado de destinos
+
+Puede enviar hasta 500 destinos, pero solo los **50 más cercanos en línea recta** a cualquiera de sus orígenes se envían realmente al cálculo de enrutamiento por tiempo de conducción. Si envía más de 50, PlaidCloud reduce el conjunto con un prefiltro en línea recta (círculo máximo) antes de clasificar los restantes por tiempo de conducción real; por eso, un destino que está cerca en el mapa pero queda al otro lado de un corte en línea recta puede excluirse antes de calcular el tiempo de conducción. En los conjuntos de destinos que ya tienen menos de 50, se enruta cada candidato y esto no tiene ningún efecto. `top_n` está limitado a 50 por el mismo motivo: no puede devolver más candidatos de los que el paso de enrutamiento llega a considerar.
+
+### Modos de costeo
+
+Se admiten `auto`, `truck`, `bike` y `pedestrian`. Con el costeo `truck` también puede restringir la ruta por las dimensiones del vehículo (`costing_options.truck.height`, `.weight`, `.length`), de modo que una ruta pueda evitar un puente bajo o una carretera con restricción de peso. **El enrutamiento de materiales peligrosos no es compatible.** No hay ningún parámetro de materiales peligrosos en ninguno de los dos endpoints, y tampoco está disponible ni siquiera de forma indirecta mediante el costeo `truck`: esta API no enruta evitando las restricciones de materiales peligrosos, así que no cuente con ella para cargas reguladas como materiales peligrosos.
+
+## Errores
+
+| Estado | Significado |
+|---|---|
+| `403` | Falta el rol `analyze.table.read`, o su plan no incluye el derecho de uso de tiempo de conducción |
+| `422` | Un campo de la solicitud no superó la validación; por ejemplo, más de 5 contornos, un contorno fuera de 1 a 120 minutos, más de 5 orígenes o una dimensión del camión fuera de rango |
+| `503 route_unavailable` | No se pudo acceder al motor de enrutamiento, agotó el tiempo de espera o devolvió un error, **o** la asignación de solicitudes simultáneas de su inquilino ya estaba en uso (consulte [Límites](#límites)) |
+
+Un `503` aquí nunca es un `5xx` sin procesar ni una espera indefinida: cada llamada al motor de enrutamiento se ejecuta con un tiempo de espera acotado, de modo que un servicio ascendente lento o bloqueado aparece rápidamente como `503` en lugar de dejar su solicitud abierta.
+
+## Límites
+
+- **La simultaneidad por inquilino está limitada a 2 solicitudes simultáneas.** Esto refleja el grupo de enrutamiento compartido que respalda la versión preliminar, no una cuota por plan: una tercera solicitud simultánea del mismo inquilino recibe `503 route_unavailable` hasta que termine una de las dos primeras. No hay cola; reintente después de una breve espera.
+- **Sin almacenamiento en caché de respuestas.** Cada llamada se responde en vivo con el índice de enrutamiento actual.
+- **Las coordenadas nunca se registran.** Los registros de fallos anotan la ruta de la solicitud y el tipo de error, no el origen, el destino ni ningún otro dato de ubicación que haya enviado.
+- Los datos de enrutamiento se crean a partir de datos viales de OpenStreetMap (ODbL): se aplican aquí las mismas salvedades de cobertura y actualidad que a la [API de geocodificación de PlaidCloud](/es/guides/data/geocoding-api/#cobertura-y-determinismo-lea-esto-primero): sólida en regiones bien cartografiadas, más variable en otras, y editada continuamente por la comunidad en lugar de ser un conjunto de datos comercial con versiones.
+- Si muestra resultados de enrutamiento o áreas de tiempo de conducción a un usuario final, muestre la cadena `plaidcloud.attribution` (o un crédito equivalente de OSM) junto a ellos: la misma obligación de la ODbL que se aplica a los resultados de geocodificación se aplica a los resultados de enrutamiento.
+
+## Relacionado
+
+- [Migrar desde la geocodificación de Google o Mapbox](/es/guides/data/geocoding-api/): los endpoints REST de geocodificación de PlaidCloud y las mismas salvedades de cobertura de OpenStreetMap
+- [Paso Solicitud REST](/es/guides/workflows/rest-request-step/): llame a estos endpoints desde un flujo de trabajo

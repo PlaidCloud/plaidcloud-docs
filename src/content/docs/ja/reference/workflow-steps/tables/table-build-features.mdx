@@ -1,0 +1,41 @@
+---
+title: Build Features ステップ
+description: ソーステーブルから、算術、交互作用、日付の部分、ビン分割、スケーリング、ワンホットエンコードの特徴量列を生成します。
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## 説明
+
+**Build Features** ステップは、ソーステーブルから派生した特徴量列のテーブル（算術と交互作用の組み合わせ、日付の部分の抽出、ビン分割、スケーリング、ワンホットエンコード）を、列ごとに式を手書きすることなく 1 回の処理で生成します。ウェアハウスに対する通常のトランスフォームとして実行されます。
+
+## 設定
+
+- **ソース / 出力テーブル** — 入力テーブルと、派生列の書き込み先テーブル。
+- **パススルー列** (`passthrough_columns`) — 変更せずにそのまま引き継ぐソース列。
+- **特徴量** (`features`) — 順序付きの特徴量仕様のリスト。1 つ以上が必須です。各仕様には `type` があり、1 つ以上の出力列を生成します。出力列名（パススルー列と、ワンホット以外のすべての特徴量の `name`）は、すべて一意である必要があります。名前が重複している場合や、ワンホットの `(column, prefix)` の組が重複している場合は、保存が拒否されます。
+
+## 特徴量タイプ
+
+| タイプ | フィールド | 生成されるもの |
+| --- | --- | --- |
+| **式** (`expression`) | `name`, `expression`, `dtype`（デフォルトは `text`） | 1 列: ソース列に対する任意の式。 |
+| **交互作用** (`interaction`) | `name`, `columns`（ちょうど 2 つ）、`op`（`multiply` または `add`、デフォルトは `multiply`）、`dtype`（デフォルトは `numeric`） | 1 列: 2 つの数値列のペアごとの算術的な組み合わせ。 |
+| **日付の部分** (`datepart`) | `name`, `column`, `part`（`year`、`month`、`day`、`dow`、`hour` のいずれか） | 1 列: 抽出された日付/時刻の要素。 |
+| **ビン** (`bin`) | `name`, `column`, `thresholds`（昇順、1 つ以上）、`labels`（`thresholds` よりちょうど 1 つ多い数） | 1 列: `column` の値が属するバケットのラベル。しきい値は指定する固定値です。[制限事項と注意点](#制限事項と注意点)を参照してください。 |
+| **Zスコア** (`zscore`) | `name`, `column`, `dtype`（デフォルトは `numeric`） | 1 列: 平均 0、分散 1 に標準化された列。 |
+| **最小-最大** (`minmax`) | `name`, `column`, `out_min`（デフォルトは 0）、`out_max`（デフォルトは 1）、`dtype`（デフォルトは `numeric`） | 1 列: `[out_min, out_max]` の範囲に再スケーリングされた列。 |
+| **ワンホット** (`onehot`) | `column`, `prefix` | `column` の異なる値ごとに 1 列。それぞれ `<prefix><value>` という名前になります。 |
+| **列の統計** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | 1 列: ステップのフィルターを適用した、列全体の統計量を全行に設定します。`moments` は `sql`（デフォルト、ウェアハウスの集計）または `welford` です。後者は、KNIME の Math Formula の `COL_MEAN` とその仲間と同様に、`order_column` の順に読み取った列に対する 1 パスの逐次モーメントとして、平均、合計、分散、標準偏差を計算します。 |
+
+## 制限事項と注意点
+
+- **ビン分割には、事前に固定のしきい値が必要です。** `bin` は、指定したしきい値とラベルに対して列をバケットに分けます。データから実行時に計算される等幅ビンや等頻度ビンのような、データ駆動型のビン分割はありません。`bin` 特徴量を設定する前に、しきい値を自分で（たとえば先行する集計ステップから）計算してください。
+- **一度に扱えるフレームは 1 つです。** Build Features ステップは単一のソーステーブルを読み書きします。クロステーブルの特徴量合成ツールのように、関連するテーブル間で値を集計することはありません。テーブル間の関係は、このステップの上流の結合としてモデル化してください。
+- **このステップには、次元削減やターゲットを考慮したエンコードはありません。** Build Features ステップには、PCA 型の成分削減も、ターゲットエンコード（カテゴリ列を、平均などのラベルの統計量として再表現するもの）もありません。カテゴリ特徴量には `onehot` を使用してください。成分削減には [ML: モデルの学習](/ja/reference/workflow-steps/machine-learning/ml-train/)の `pca` アルゴリズムを使用し、学習パイプラインで別のエンコードが必要な場合は、その独自の特徴量処理を使用してください。
+
+## 関連項目
+
+- [ML: モデルの学習](/ja/reference/workflow-steps/machine-learning/ml-train/) — このステップで構築したものを含め、テーブルでモデルを学習します。
+- [Alteryx 変換マトリックス](/ja/reference/alteryx-conversion-matrix/) — Alteryx の Build Features ツールのプリミティブがこれらの特徴量タイプにどう対応するか、およびここに相当するものがないプリミティブ（クロステーブル集計、PCA、ターゲットエンコード、自動ビン分割）について説明します。

@@ -1,0 +1,132 @@
+---
+title: Mit Business Central verbinden
+description: Verbinden Sie PlaidCloud mit Microsoft Dynamics 365 Business Central über Azure-AD-Client-Credentials, rufen Sie OData-Entitäten mit dem vorgefertigten Importschritt ab und buchen Sie Sachkonten-Journalzeilen.
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit der Standard-OData-v2.0-REST-API von Business Central, um Konten, Hauptbuchposten, Kunden, Lieferanten, Artikel und Journale ohne handgeschriebenes OData abzurufen und Sachkonten-Journalzeilen zurückzubuchen. Dieser Leitfaden behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen eine Sandbox-Umgebung aus und arbeiten Sie bei jedem Buchungsstapel den Abschnitt **Preview and Validate** weiter unten durch, bevor Sie live buchen.
+</Aside>
+
+## Voraussetzungen
+
+In Azure AD und Business Central benötigen Sie:
+
+- Eine **Entra-ID-App-Registrierung (Azure AD)** für PlaidCloud mit einem **Client-Secret**, der **API-Berechtigungen** für Business Central erteilt wurden (`Dynamics 365 Business Central > API.ReadWrite.All` oder die engere Berechtigung, die Ihr Administrator ausstellt).
+- Ihre Azure-AD-**Mandanten-ID**.
+- Den Namen der **Business-Central-Umgebung**, die PlaidCloud aufrufen soll (zum Beispiel `Production` oder eine Sandbox-Umgebung).
+- Das **Unternehmen**, in dem PlaidCloud liest und bucht — Business Central begrenzt sowohl Entitätslesezugriffe als auch Journalbuchungen jeweils auf ein Unternehmen.
+
+<Aside type="note">
+Die Verbindung authentifiziert sich als Anwendung, nicht als Benutzer — mit dem **Client-Credentials-Ablauf (S2S)** von Entra ID, demselben OAuth2-Client-Credentials-Mechanismus, den PlaidCloud für andere Microsoft-REST-Verbindungen verwendet. Es gibt keine interaktive Anmeldung.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Business Central** aus.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `BC Prod`. |
+   | Client-ID | Die Anwendungs-ID (Client-ID) der Entra-App-Registrierung. |
+   | Client-Secret | Das Client-Secret der App-Registrierung. |
+   | Mandanten-ID | Ihre Azure-AD-Mandanten-ID. |
+   | Umgebung | Der Name der Business-Central-Umgebung, z. B. `Production`. |
+   | Unternehmen | Die Business-Central-Unternehmens-ID, in der gelesen und gebucht wird. |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen **Import Business Central Entity**-Schritt hinzu.
+
+2. Legen Sie **Business-Central-Verbindung** auf Ihre Verbindung, **Entitätstyp** auf `accounts` und **Zieltabelle** auf eine Arbeitstabelle fest.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass Mandant, Anmeldedaten, Umgebung und Unternehmen korrekt sind. Ein Fehler benennt das Problem — ein falsches Client-Secret, eine fehlende API-Berechtigung oder eine falsche Umgebung bzw. ein falsches Unternehmen.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen **Import Business Central Entity**-Schritt hinzu und legen Sie **Business-Central-Verbindung** und **Zieltabelle** fest.
+
+2. Legen Sie **Entitätstyp** auf den gewünschten Datensatz fest: `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items` oder `journals`.
+
+3. Fügen Sie **Filter** hinzu — Zeilen der Form `{field, operator, value}`, die per UND im `$filter` der Anfrage verknüpft und gegen die Positivliste der abfragbaren Felder der Entität geprüft werden. Leer lassen, um die ganze Entität abzurufen.
+
+4. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+<Aside type="note">
+**Das Unternehmen stammt aus der Verbindung, nicht aus dem Schritt.** Business Central begrenzt jeden Lesezugriff auf ein Unternehmen, und die Verbindung trägt dieses Unternehmen zusammen mit der Umgebung — der Importschritt hat daher kein Feld für Unternehmen oder Umgebung. Um dieselbe Entität aus einem zweiten Unternehmen abzurufen, erstellen Sie eine zweite Business-Central-Verbindung, die darauf zeigt.
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` ist das **schreibgeschützte Hauptbuch nur mit gebuchten Posten** von Business Central — es zeigt nie eine Zeile, die noch in einem ungebuchten Journalstapel liegt. Es ist daher die Entität, die Sie für eine Saldenliste oder Hauptbuchdetails abrufen, statt ein Journal direkt abzufragen.
+</Aside>
+
+## Sachkonten-Journalzeilen buchen
+
+Der Schritt **Business Central Post** bucht Zeilen in einen **vorhandenen** Sachkonten-Journalstapel und bucht anschließend diesen Stapel.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** — eine Zeile pro `journal_id` — mit dem Namen des Business-Central-Journalstapels, in den Ihre Zeilen gebucht werden, sowie `document_number`, `posting_date` und einer Währungsbezeichnung.
+
+2. Erstellen Sie eine **Positionstabelle** — eine oder mehrere Zeilen pro `journal_id` — mit einem vorzeichenbehafteten `amount` (positiv für Soll, negativ für Haben), `account_id` oder `account_number`, `account_type` und `description`.
+
+3. Fügen Sie einen **Business Central Post**-Schritt hinzu und legen Sie **Business-Central-Verbindung**, **Umgebung**, **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus — PlaidCloud erstellt und prüft jedes Journal, ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro `journal_id`: `journal_id`, `external_id`, `internal_id`, `status`, `message`). Beheben Sie jede `error`-Zeile und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Stapel soll beim ersten fehlgeschlagenen Journal sofort anhalten.
+
+</Steps>
+
+<Aside type="caution">
+**Der in `journal_id` genannte Journalstapel muss in Business Central bereits vorhanden sein** — dieser Schritt erstellt Zeilen darin, er erstellt den Stapel nicht selbst. Richten Sie den Journalstapel (Name, Journalvorlage) zuerst in Business Central ein und lassen Sie dann `journal_id` darauf zeigen.
+</Aside>
+
+### So funktioniert das Buchen
+
+Die Aktion `Microsoft.NAV.post` von Business Central bucht den **gesamten** Journalstapel, nicht nur die Zeilen, die PlaidCloud gerade erstellt hat — daher liest PlaidCloud den Stapel vor dem Aufruf zurück und bucht nicht (es wird ein Fehler erfasst, nichts gebucht), wenn er eine Zeile enthält, die nicht mit der Belegnummer dieser Anfrage gekennzeichnet ist. Diese Absicherung gibt es genau dafür, dass eine verwaiste Zeile aus einem früheren Teilfehler nie durch eine unabhängige spätere Buchung in denselben Stapel ins Hauptbuch gelangt.
+
+### Funktionsgrenzen — vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Ein Schreib-Belegtyp.** Unterstützt wird nur das Buchen von Sachkonten-Journalzeilen. Der Entwurfsbeleg-Ablauf von Business Central (Verkaufs-/Einkaufsrechnungen von Entwurf nach Gebucht) wird nicht unterstützt — die genaue Buchungsaktion für diesen Ablauf ist in der Microsoft-Dokumentation nicht eindeutig festgelegt, und PlaidCloud rät bei einem Schreibvorgang, der Geld bewegt, nicht an einem ungeprüften Endpunkt.
+- **Bucht nur in einen vorhandenen Stapel.** Dieser Schritt erstellt nie einen Journalstapel — erstellen Sie ihn zuerst in Business Central (siehe oben).
+- **Noch keine Live-Validierung.** Er wurde nach dem dokumentierten OData-v2.0-Vertrag von Business Central entwickelt; behandeln Sie den ersten Live-Stapel als Validierungslauf und stimmen Sie ihn direkt in Business Central ab.
+- **Gleichzeitige Buchungen in denselben Stapel werden nicht vollständig serialisiert.** Der Idempotenzschutz bezieht sich auf die Belegnummer, nicht auf den Journalstapel — zwei verschiedene Belegnummern, die gleichzeitig in denselben Stapel gebucht werden, werden nicht garantiert so serialisiert wie zwei Aufrufe mit derselben Belegnummer. Vermeiden Sie gleichzeitige Buchungen in einen Journalstapel.
+</Aside>
+
+## Verwandte Themen
+
+- [Business-Central-REST-Connector](/de/reference/connectors/rest/business-central/) — Feldreferenz.
+- [Import Business Central Entity](/de/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/de/reference/workflow-steps/business-central/business-central-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) — der dauerhafte Nachweis jedes Business-Central-Buchungsversuchs und seines aktuellen Status.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

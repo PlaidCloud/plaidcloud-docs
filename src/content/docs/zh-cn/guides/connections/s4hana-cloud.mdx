@@ -1,0 +1,136 @@
+---
+title: 连接到 SAP S/4HANA Cloud
+description: 使用 OAuth2 客户端凭据将 PlaidCloud 直接连接到 SAP S/4HANA Cloud Public Edition，无需代理，提取试算平衡表和日记账分录行项目，然后过账日记账分录，并通过已过账的冲销分录进行更正。
+sidebar:
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/s4hana-cloud.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+通过 OData 和 SOAP API 将 PlaidCloud 直接连接到 SAP S/4HANA Cloud Public Edition，无需手写 OData 即可提取试算平衡表和日记账分录行项目数据，并将日记账分录过账回去。本指南涵盖连接、导入步骤和过账步骤。
+
+<Aside type="caution">
+请先在沙盒租户上运行每一次导入，并在正式过账之前，对每个过账批次完成下文的 **Validate Only** 验证。
+</Aside>
+
+<Aside type="note">
+这与 [SAP ECC / S/4HANA 连接器](/zh-cn/reference/connectors/erp/sap-s4/)是不同的连接，后者通过 PlaidLink 代理和 RFC 调用访问本地部署或私有云的 S/4HANA 系统。本连接器通过互联网直接与 SAP S/4HANA Cloud **Public Edition** 通信，无需安装代理，也无需配置 RFC 目标。
+</Aside>
+
+## 先决条件
+
+在 SAP S/4HANA Cloud 中，您需要具备：
+
+- 一个 **Communication Arrangement**，它基于一个 Communication Scenario 构建，该场景开放试算平衡表和日记账分录行项目 API（读取）以及日记账分录过账服务（写入），并配置了使用 OAuth2 客户端凭据（而非基本身份验证）的 **Communication User**。
+- S/4HANA Cloud 租户的**主机**（例如 `https://yourorg.s4hana.ondemand.com`）及其 **OAuth2 令牌 URL**（例如 `https://yourorg.s4hana.ondemand.com/sap/bc/sec/oauth2/token`）。
+- Communication Arrangement 的 **OAuth2 客户端 ID 和密钥**。
+
+<Aside type="note">
+该连接以应用程序而非用户的身份进行身份验证，采用 OAuth2 **客户端凭据**流程，与 PlaidCloud 用于其他云 ERP REST 连接的机制相同。不存在交互式登录。
+</Aside>
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections**，然后点击 `New Connection`。
+
+2. 从菜单中选择 **SAP S/4HANA Cloud**。
+
+3. 填写以下字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 名称 | 一个易记的名称，例如 `S/4HANA Cloud Prod`。 |
+   | 主机 | S/4HANA Cloud 租户主机，例如 `https://yourorg.s4hana.ondemand.com`。 |
+   | 令牌 URL | Communication Arrangement 的 OAuth2 令牌端点。 |
+   | 客户端 ID | Communication Arrangement 的 OAuth2 客户端 ID。 |
+   | 客户端密钥 | Communication Arrangement 的 OAuth2 客户端密钥。 |
+
+4. 点击 `Create`。
+
+</Steps>
+
+## 冒烟测试连接
+
+<Steps>
+
+1. 向工作流添加一个 **Import S/4HANA Entity** 步骤。
+
+2. 将 **S/4HANA 连接**设置为您的连接，将**实体类型**设置为 `trial_balance`，为某一个公司添加 **CompanyCode** 筛选器，并将**目标表**设置为一个临时表。
+
+3. 运行该步骤（参见[在工作流中运行单个步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)）。
+
+</Steps>
+
+目标表中有数据，说明主机、令牌 URL 和客户端凭据均正确无误。如果出现错误，错误信息会指明问题所在，例如客户端密钥错误、Communication Arrangement 缺少所需的范围，或主机错误。
+
+## 导入数据
+
+<Steps>
+
+1. 添加一个 **Import S/4HANA Entity** 步骤，并设置 **S/4HANA 连接**和**目标表**。
+
+2. 将**实体类型**设置为所需的记录。
+
+3. 添加**筛选器**以限定提取范围。公司代码、科目和日期范围会被转换为请求的 OData `$filter`，并按实体限制为 S/4HANA 实际可以在服务器端筛选的字段。
+
+4. 运行该步骤并检查目标表。
+
+</Steps>
+
+### 实体和筛选器
+
+| 实体类型 | 提取内容 | OData 服务 | 可筛选字段 |
+|---|---|---|---|
+| `trial_balance` | 汇总的期末总账科目余额 | `API_OPLACCTGDOCITEMCUBE_SRV` | `CompanyCode`、`GLAccount`、`CostCenter`、`ProfitCenter`、`FiscalYear`、`FiscalPeriod`、`Ledger` |
+| `journal_entry_items` | 已过账的日记账分录行项目 | `API_JOURNALENTRYITEMBASIC_SRV` | `CompanyCode`、`GLAccount`、`CostCenter`、`ProfitCenter`、`PostingDate`（范围）、`FiscalYear`、`FiscalPeriod`、`Ledger` |
+
+<Aside type="note">
+`PostingDate`、`FiscalYear` 和 `FiscalPeriod` 接受**范围**筛选器（`ge`/`le` 边界），其余字段为相等筛选器。只有一个边界的范围筛选器在另一侧不设限。针对生产数据提取 `journal_entry_items` 之前，请至少设置一个边界，因为不设限地提取行项目明细可能会非常庞大。
+</Aside>
+
+## 过账日记账分录
+
+**S/4HANA: Post Journal Entry** 步骤通过 PlaidCloud 共享的 ERP 写入管道，使用 S/4HANA Cloud 的 SOAP 日记账分录批量创建服务来过账总账日记账分录。
+
+<Steps>
+
+1. 构建一个**标题表**，每个日记账分录一行，包含 `journal_id`（分录标识符）、`company_code`、`document_date`、`posting_date`、`fiscal_year`、`ledger` 和 `header_text`。
+
+2. 构建一个**行表**，每个 `journal_id` 对应一行或多行，包含 `gl_account`、`debit`、`credit`，以及总账所需的任何 `cost_center`/`profit_center` 维度列。
+
+3. 添加一个 **S/4HANA: Post Journal Entry** 步骤，设置 **S/4HANA 连接**、**标题表**、**行表**和**结果表**。
+
+4. 保持勾选 **Validate Only** 并运行该步骤，PlaidCloud 会构建并检查每个分录，不占用账本声明，也不会过账任何内容。
+
+5. 查看结果表（每个分录一行：`journal_id`、`natural_key`、`confirmation_id`、`status`、`message`）。修复所有 `error` 行并重新验证。
+
+6. 取消勾选 **Validate Only** 并再次运行，以进行真实过账。除非希望批次在第一个失败的分录处立即停止，否则请保持勾选 **Continue On Error**。
+
+</Steps>
+
+### 过账的工作原理
+
+PlaidCloud 通过 S/4HANA Cloud 的 `JournalEntryBulkCreateRequest_In` SOAP 服务提交每个日记账分录，然后轮询对应的 `JournalEntryBulkCreateConfirmation_Out` 消息，该消息会报告分录的最终处理状态。只有收到该确认消息后，分录才会被报告为 `posted`。已被接受但始终未收到确认的分录会保持隔离状态，而不会被记录为已过账，因此卡住的提交绝不会被悄悄当作成功。PlaidCloud 自身的账本声明可防止在重试或重新运行的批次中重复过账同一分录。
+
+### 更正已过账的分录
+
+此步骤从不删除或改写已过账的分录。要更正分录，请针对原分录过账一个借贷方向互换的新分录，即**已过账的冲销分录**，而不是就地编辑原分录。这样可以保留 S/4HANA 自身的审计轨迹，也与直接在应用程序中进行更正的方式一致。
+
+### 功能限制：实际过账前请阅读
+
+<Aside type="caution">
+- **确认延迟。** SOAP 服务以异步方式处理批量创建请求，终态轮询所需的时间会明显长于同步 OData 写入，因此请勿将此步骤用于对延迟敏感的单个分录过账。
+- **可筛选字段取决于 Communication Scenario 所开放的维度。** 不属于该场景所开放字段的成本对象或维度无法在服务器端筛选，请在提取之后于工作流中限定其范围。
+- **本连接器有别于 [SAP ECC / S/4HANA 连接器](/zh-cn/reference/connectors/erp/sap-s4/)。** 后者通过 PlaidLink 代理和 RFC 调用访问本地部署或私有云系统；仅当您不是连接到 S/4HANA Cloud Public Edition 时才使用它。
+</Aside>
+
+## 相关内容
+
+- [SAP S/4HANA Cloud REST 连接器](/zh-cn/reference/connectors/rest/s4hana-cloud/)：字段参考。
+- [Import S/4HANA Entity](/zh-cn/reference/workflow-steps/s4hana-cloud/import-s4hana-entity/)
+- [S/4HANA: Post Journal Entry](/zh-cn/reference/workflow-steps/s4hana-cloud/s4hana-post/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)：每次 S/4HANA Cloud 过账尝试及其实时状态的常设记录。
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)

@@ -1,0 +1,138 @@
+---
+title: Extraire depuis HFM / FCCS (ad hoc)
+description: Connectez PlaidCloud à Oracle FCCS et extrayez vous-même une tranche de données grâce à un sélecteur de point de vue, sans ticket auprès de l'équipe HFM. Couvre la connexion, la création d'un point de vue, son exécution, la mise en cache, la sécurité au niveau des lignes et un chargement récurrent planifié.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/hfm-fccs.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à Oracle **FCCS** (Financial Consolidation and Close, qui fait partie d'Oracle EPM Cloud) pour qu'un utilisateur finance puisse extraire lui-même une tranche de données au lieu d'ouvrir un ticket auprès de l'équipe HFM. Vous construisez un **point de vue (POV)** dans le formulaire de l'étape, vous cliquez sur Exécuter, et le résultat arrive automatiquement sous forme de table. L'expérience ressemble à une requête en direct ; en réalité, il s'agit d'une requête asynchrone, d'une interrogation périodique puis d'une récupération auprès du job d'export de données de FCCS. Ce guide couvre la connexion, la création d'un POV, son exécution, la mise en cache, la gouvernance du résultat par la sécurité au niveau des lignes et sa transformation en chargement récurrent planifié.
+
+<Aside type="note">
+Gardez la sélection **Entité** bornée : une extraction sans périmètre peut verrouiller l'application FCCS pendant longtemps tant que le job d'export s'exécute. Limitez chaque point de vue aux entités dont vous avez réellement besoin.
+</Aside>
+
+## Prérequis
+
+Vous avez besoin, dans Oracle EPM Cloud, des éléments suivants :
+
+- L'**URL du pod ou du service EPM Cloud**, par exemple `https://planning-test-yourdomain.epm.us2.oraclecloud.com`.
+- Votre **domaine d'identité** (pour un pod classique). PlaidCloud compose l'identifiant de connexion sous la forme `identitydomain.username`.
+- Un **compte de service** dédié (nom d'utilisateur et mot de passe) disposant d'un accès en lecture aux applications FCCS et aux tranches de point de vue que vos utilisateurs en libre-service extrairont.
+- Le ou les **noms d'application** que les utilisateurs liront.
+
+<Aside type="note">
+La connexion s'authentifie par **authentification de base HTTP** auprès d'un pod EPM Cloud classique. Les pods OCI / Gen 2 qui exigent un jeton porteur OAuth sont hors du périmètre de ce connecteur.
+</Aside>
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **REST - HFM/FCCS** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom explicite, par exemple `FCCS Prod`. |
+   | URL EPM Cloud | L'URL de votre pod ou service, par exemple `https://planning-test-yourdomain.epm.us2.oraclecloud.com`. |
+   | Domaine d'identité | Le domaine d'identité de votre EPM Cloud. Laissez vide uniquement si votre nom d'utilisateur inclut déjà le domaine. |
+   | Nom d'utilisateur | Le nom d'utilisateur du compte de service. |
+   | Mot de passe | Le mot de passe du compte de service. |
+   | Application par défaut | Facultatif. Une application FCCS à préremplir dans le sélecteur de POV de l'étape. |
+
+4. Cliquez sur `Test Connection`. Un test réussi confirme que PlaidCloud peut joindre le serveur HFM/FCCS avec les identifiants configurés.
+
+5. Cliquez sur `Create`.
+
+</Steps>
+
+PlaidCloud se connecte sous la forme `identitydomain.username` (ou avec le nom d'utilisateur tel quel lorsque le domaine d'identité est vide ou que le nom d'utilisateur contient déjà un point).
+
+## Construire un point de vue
+
+<Steps>
+
+1. Ajoutez une étape **HFM/FCCS : lire les données (ad hoc)** à un workflow (elle se trouve sous **Oracle EPM (HFM/FCCS)** dans le menu des étapes).
+
+2. Sous **Source et cible**, définissez **Connexion HFM/FCCS**, **Environnement**, **Application** et une **Table cible**.
+
+3. Sous **Point de vue**, construisez la tranche à partir des dimensions FCCS : **Scenario, Year, Period, Entity, Account, Custom1–Custom4, ICP, View, Value**.
+
+   - **Scenario, Year et Period sont obligatoires.**
+   - **Entity doit être une tranche bornée** : le formulaire rejette une sélection vide, « all » ou une sélection de plus de 500 membres. Gardez-la limitée pour que l'export ne verrouille pas l'application.
+   - Laissez toute autre dimension non définie pour n'appliquer aucun filtre sur cet axe.
+
+</Steps>
+
+<Aside type="note">
+Sur les pods FCCS pris en charge, les listes de membres se **remplissent automatiquement** à partir de la découverte de métadonnées en direct dès que vous choisissez une connexion et une application : le sélecteur propose de vrais membres et relance la découverte à chaque changement de connexion ou d'application. Sur les pods plus anciens qui n'exposent pas le point de terminaison de métadonnées, le sélecteur bascule en **saisie manuelle** : saisissez les noms de membres à la main. Un POV enregistré est de toute façon restitué à l'identique dans les deux cas.
+</Aside>
+
+## Exécuter
+
+<Steps>
+
+1. Exécutez l'étape (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Un statut de progression (« polling HFM job… ») s'affiche pendant l'exécution du job d'export dans FCCS.
+
+3. Une fois terminé, la table de résultat arrive automatiquement : elle est créée à partir des colonnes de la grille renvoyée, vous n'avez donc aucun schéma à définir au préalable.
+
+</Steps>
+
+## Mise en cache
+
+Demandez **le même POV à nouveau** et PlaidCloud sert instantanément la **table déjà chargée**, au lieu de soumettre de nouveau l'export à FCCS. Une exécution est identifiée par l'application, la table cible, le point de vue et une balise **as-of** (par défaut `latest`) ; une répétition qui correspond à une tranche déjà chargée signale que la table a été laissée en place plutôt que réécrite. Modifiez la balise as-of lorsque vous voulez forcer une nouvelle extraction du même POV.
+
+## Gouverner avec la sécurité au niveau des lignes
+
+L'axe entité de la table chargée est normalisé dans une colonne nommée exactement **`Entity`**, ce qui rend la table **prête pour la sécurité au niveau des lignes** : un administrateur peut la gouverner avec [Accès aux lignes](/fr/administration/access/managing-security-groups-and-assignments/) pour que les utilisateurs en libre-service ne voient que les entités auxquelles ils ont droit.
+
+<Aside type="caution">
+Cette gouvernance est **placée sous le contrôle de l'administrateur, elle n'est pas automatique**. Comme l'extraction s'exécute sous le compte de service de la connexion, PlaidCloud ne permet pas à l'étape de déclarer sa propre sécurité : un administrateur (Architecte) doit la configurer.
+</Aside>
+
+Un administrateur suit le workflow standard d'accès aux lignes :
+
+<Steps>
+
+1. **Publiez** la table chargée pour le reporting.
+
+2. **Déclarez** la colonne `Entity` comme attribut de gouvernance (refus par défaut).
+
+3. **Approuvez** la première écriture gouvernée.
+
+4. **Réconciliez** pour que les autorisations prennent effet.
+
+</Steps>
+
+Tant qu'un administrateur n'a pas effectué ces opérations, la table n'est pas filtrée. Consultez [Gérer les groupes de sécurité et les affectations](/fr/administration/access/managing-security-groups-and-assignments/).
+
+## Planifier un chargement récurrent
+
+Pour transformer une tranche ad hoc en actualisation nocturne, activez **Cible liée** sur l'étape :
+
+<Steps>
+
+1. Dans le groupe **Cible liée** de l'étape, cochez **Cible liée (chargement récurrent planifié)**.
+
+2. Définissez éventuellement **Colonnes clés** : les colonnes, séparées par des virgules, qui forment la clé de fusion (par exemple `Entity, Account`). **Laissez vide** pour utiliser comme clé de fusion les colonnes de dimension du POV présentes dans la grille chargée.
+
+3. Placez l'étape dans un [workflow planifié](/fr/administration/scheduled-events/).
+
+</Steps>
+
+Lorsque la cible liée est activée, la cible devient une table **persistante** : chaque exécution y **fusionne** les données par un upsert sur jeu de clés au lieu de les écraser, et le schéma **s'étend de façon additive** lorsqu'une grille ultérieure apporte de nouvelles colonnes (une nouvelle colonne déclenche un avertissement, jamais un échec). Une exécution planifiée accumule donc les données au lieu de les effacer : c'est un chargement récurrent, pas un rechargement destructeur.
+
+## Voir aussi
+
+- [HFM/FCCS : lire les données (ad hoc)](/fr/reference/workflow-steps/oracle-epm/hfm-fccs-read/) : référence des champs de l'étape.
+- [Connecteur HFM / FCCS](/fr/reference/connectors/rest/hfm-fccs/) : référence des champs de connexion.
+- [Gérer les groupes de sécurité et les affectations](/fr/administration/access/managing-security-groups-and-assignments/) : comment l'accès aux lignes gouverne la table chargée.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

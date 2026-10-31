@@ -1,0 +1,168 @@
+---
+title: 使用 SQL 和表达式转换数据
+description: 在工作流的表步骤中整理数据：用 SQL 选择和筛选、联接两个表、用表达式添加计算列，并在运行前预览结果。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/transform-with-sql.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*约 30 分钟 · 一次筛选、一次联接、一个计算列*
+
+[工作流](/zh-cn/guides/workflows/)中的大部分工作都是在重复同一个小动作：读取一个表，对其重新整理，再把结果写入新表。本教程讲解的就是这个动作：选择并筛选行、联接第二个表、添加计算列，用到的是您会经常用到的两种工具：**SQL** 和**列表达式**。掌握一次这个模式，就能应用到您将来构建的几乎所有转换步骤中。
+
+这里的重点是工作的*整体思路*以及去哪里查阅，而不是死记函数。PlaidCloud 提供一千多个 SQL 函数，您只需链接到该参考，无需复述其内容。
+
+## 您将构建的内容
+
+一个表步骤：读取原始的 `orders` 表，只保留已完成的订单，将每个订单与 `customers` 表联接以获取地区，并添加计算列 `net_amount`，最后把结果写入新的 `orders_clean` 表。
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+所有源表都保持不变。转换步骤从一个或多个源读取数据并写入目标，原始数据始终原样保留，这正是工作流可以放心重复运行和审计的原因。
+
+## 整理列的两种方式
+
+在开始操作之前，先记住这一点区别：
+
+| 工具 | 说明 | 在哪里编写 |
+|---|---|---|
+| **SQL** | 用于选择、筛选和联接整个表的查询 | 步骤的 SQL 编辑器 |
+| **表达式** | 逐行生成某一列取值的单个公式 | 列映射器的表达式单元格 |
+
+用 SQL 决定*要哪些行、哪些表*；用表达式决定*某一列包含什么*。许多步骤允许两者混用：用 SQL 步骤确定数据集，用表达式单元格计算各列。
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区和一个可以操作的项目（如果还没有，请[开始免费试用](https://app.plaidcloud.com)）。
+- 项目中已有两个[表](/zh-cn/guides/data/tables-views/)。本教程假定有 `orders`（包含 `order_id`、`customer_id`、`status`、`amount`、`tax`）和 `customers`（包含 `customer_id`、`region`）。如果没有，请先按[加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)教程从 CSV 导入表。
+- 在 **Workflow Explorer** 中打开一个工作流：打开项目的**工作流**选项卡，双击该工作流。如果还没有工作流，请参阅[创建工作流](/zh-cn/guides/workflows/create-workflow/)。
+
+## 步骤 1：用 SQL 选择和筛选
+
+先从小处着手：只取出您真正需要的列和行。
+
+<Steps>
+
+1. 添加一个表转换步骤，并打开其 SQL 编辑器。
+2. 将步骤的源指向 `orders` 表。
+3. 编写一个只保留所需列、并去掉不需要的行的查询：
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+其中的 `WHERE` 子句就是筛选条件：凡是不属于已完成、金额非零的订单，都不会进入目标表。只选择四列而不用 `SELECT *`，可以让下游的表保持精简，用途也一目了然。
+
+> **编写便于阅读的 SQL。** 每个子句一行，每列一行，`CASE` / `WHEN` 对齐，切勿写成密集的单行。编辑器的**美化**按钮（或 **Shift+Alt+F**，macOS 上为 **Shift+Option+F**）可以就地重新格式化，而不改变其作用。请参阅[美化（格式化）编辑器中的代码](/zh-cn/guides/workflows/prettify-code-in-editors/)。
+
+## 步骤 2：联接第二个表
+
+联接会基于共同的键，把第二个表中的列并入第一个表。这里需要每个订单的 `region`，它位于 `customers` 中。
+
+<Steps>
+
+1. 将 `customers` 添加为步骤的第二个源。
+2. 扩展查询，基于共同的键进行联接并取出所需的列：
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` 只保留有匹配客户的订单。如果希望即使没有匹配的客户也保留所有订单（`region` 留空），请改用 `LEFT JOIN`。联接键不匹配或有误，是联接返回行数过多或过少的最常见原因，因此在继续之前，请先在预览（下一步）中确认行数。
+
+> **查询中的表名。** 请按步骤给每个源指定的名称来引用它。在默认的 Lakehouse 仓库中，物理表 ID 可能包含连字符，此时请用反引号将其括起来（例如 `` `analyzetable_9f3c...` ``），使引擎将其作为一个标识符读取。
+
+## 步骤 3：用表达式添加计算列
+
+现在计算一个两个源中都没有的值。计算（表达式）列对每一行运行一个公式，并把结果写入新列。添加 `net_amount`，即税后金额。
+
+<Steps>
+
+1. 在步骤的列映射器中，添加一个名为 `net_amount` 的新目标列。
+2. 在它的表达式单元格中，写入公式：
+
+   ```python
+   amount - tax
+   ```
+
+3. 对于条件逻辑，表达式也支持常见的写法。例如运费标记：
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **表达式单元格是单个公式，而不是脚本。** 它按一个单独的表达式求值，因此多行表达式必须自带最外层括号（如上所示），否则会在运行时失败。每个单元格只用于计算一列的值；涉及多行或多个表的逻辑请使用 SQL 步骤。
+
+某个函数是否存在、参数的具体行为如何，取决于您的项目运行在哪一代 Lakehouse 上，这两代对应不同的上游引擎。请不要凭猜测使用函数名，而要去查阅：
+
+| Lakehouse | 函数库 |
+|---|---|
+| **v1** | Databend SQL 函数 |
+| **v2** | StarRocks 4.1 SQL 函数 |
+
+[表达式参考](/zh-cn/reference/expressions/)是入口，涵盖字符串操作、日期计算、条件逻辑、类型转换和聚合，并为每一代链接了对应的上游规范语法。请把它当作随时回来查阅的资料，而不是需要从头读到尾的内容。
+
+> **美化也会格式化表达式单元格**，应用标准的 Python 空格和换行风格，对较长的条件表达式很有用。
+
+## 步骤 4：运行前先预览
+
+无需运行整个工作流，就能看出该步骤是否达到了预期。**数据预览抽屉**会直接在 Workflow Explorer 中显示步骤的输出：前 100 行，并带有类型化的列。
+
+<Steps>
+
+1. 只运行此步骤，使其生成输出表。（在首次运行之前，预览会提示*“暂无数据，请运行该步骤以生成此表。”*）
+2. 打开预览：选择该步骤，然后选择**预览输出数据**（也可在步骤的右键菜单中找到）。
+3. 确认结果的形态：所选的列都在，`region` 已通过联接带入，`net_amount` 计算正确，行数体现了筛选的效果。
+
+</Steps>
+
+抽屉打开期间，选择任何其他步骤，预览都会切换到该步骤的输出，因此可以逐个查看一连串步骤，观察数据在每个阶段如何变化。如需查看前 100 行之后的内容，或要切片和筛选，请单击**在表资源管理器中打开**。详情请参阅[预览步骤数据](/zh-cn/guides/workflows/preview-step-data/)。
+
+## 通用模式
+
+上面每一步都是同一个基本动作：
+
+> **读取一个或多个源表，对其重新整理，写入新的目标表。** SQL 决定行和表；表达式决定每一列的值；预览则在您提交完整运行之前确认结果。把几个这样的步骤串联起来，就是一条管道，每个步骤的目标就是下一个步骤的源。
+
+当后续步骤或仪表板需要实际存储数据时，请把中间结果写入**表**；如果希望读取时再计算并节省存储空间，请写入 **[视图](/zh-cn/guides/data/tables-views/)**。视图本身不保存数据，并会在其源更改时自动更新。
+
+当转换复杂到 SQL 和表达式完全无法胜任时，例如需要定制的 Python、外部包或自定义逻辑，请使用 [User Defined Transform](/zh-cn/reference/workflow-steps/general/user-defined-transform/) 步骤。这属于例外情况，而非日常用法；SQL 和表达式足以应对绝大多数数据整理工作。
+
+## 后续步骤
+
+- [表达式参考](/zh-cn/reference/expressions/)：计算列可用的所有函数，按 Lakehouse 代际划分。
+- [工作流步骤参考](/zh-cn/reference/workflow-steps/)：转换、导入和导出步骤的完整目录。
+- [工作流指南](/zh-cn/guides/workflows/)：围绕步骤的条件、循环、变量和错误处理。
+- [预览步骤数据](/zh-cn/guides/workflows/preview-step-data/)：抽屉功能的完整说明。
+- [加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)：本步骤所属的端到端管道。

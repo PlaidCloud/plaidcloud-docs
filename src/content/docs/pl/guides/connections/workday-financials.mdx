@@ -1,0 +1,127 @@
+---
+title: Połącz z Workday Financials
+description: Połącz PlaidCloud z Workday Financial Management za pomocą użytkownika systemu integracji, pobieraj dane przez raport Report-as-a-Service, a następnie księguj zapisy dziennika przez SOAP.
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z Workday Financial Management za pomocą użytkownika systemu integracji (Integration System User, ISU) i dostarczonego przez klienta raportu Report-as-a-Service (RaaS), aby pobierać dane finansowe, a następnie księguj dzienniki księgowe z powrotem przez interfejs SOAP API Workday. Ten przewodnik opisuje połączenie, krok importu i krok księgowania.
+
+<Aside type="caution">
+Każdy import najpierw uruchom w tenancie piaskownicy, a przy każdej partii do zaksięgowania wykonaj opisaną poniżej procedurę **Validate Only**, zanim zaksięgujesz dane na żywo.
+</Aside>
+
+<Aside type="note">
+To inne połączenie niż ogólny [łącznik Workday REST](/pl/reference/connectors/rest/workday/), który korzysta z interfejsu REST API Workday dla danych kadrowych i płacowych. Workday Financials używa zamiast tego usług internetowych SOAP i raportowania RaaS Workday — użyj tego łącznika do danych finansowych i księgowania zapisów dziennika.
+</Aside>
+
+## Wymagania wstępne
+
+W Workday potrzebujesz:
+
+- **Użytkownika systemu integracji (ISU)** przeznaczonego dla PlaidCloud, z Integration System Security Group przyznającą mu dostęp do danych finansowych i procesu biznesowego Submit Accounting Journal.
+- **Hosta tenanta** Workday (na przykład `wd5-impl.workday.com`) oraz **nazwy tenanta**.
+- **Raportu Report-as-a-Service (RaaS)** zbudowanego w Workday, który zwraca dane do zaimportowania, opublikowanego z dostępem **Web Service**, aby PlaidCloud mógł wywołać jego adres URL bezpośrednio.
+
+<Aside type="note">
+Workday Financials nie udostępnia stałego zestawu gotowych jednostek, tak jak NetSuite czy Business Central — zamiast tego budujesz wyodrębnienie jako raport RaaS w Workday (za pomocą własnego edytora raportów Workday) i podajesz PlaidCloud adres URL tego raportu. Dzięki temu masz pełną kontrolę nad tym, jakie pola i wiersze zwraca import.
+</Aside>
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`.
+
+2. Wybierz z menu **Workday Financials**.
+
+3. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Nazwa | Przyjazna nazwa, np. `Workday Financials Prod`. |
+   | Host tenanta | Twój host Workday, np. `wd5-impl.workday.com`. |
+   | Nazwa tenanta | Nazwa Twojego tenanta Workday. |
+   | Nazwa użytkownika ISU | Nazwa użytkownika Użytkownika systemu integracji. |
+   | Hasło ISU | Hasło Użytkownika systemu integracji. |
+
+4. Kliknij `Create`.
+
+</Steps>
+
+## Test połączenia
+
+<Steps>
+
+1. Zbuduj w Workday mały raport RaaS i opublikuj go z dostępem Web Service.
+
+2. Dodaj do przepływu pracy krok **Import Workday Entity**, ustaw **Połączenie Workday** na swoje połączenie, **RaaS Report URL** na adres URL raportu, a **Tabela docelowa** na tymczasową tabelę.
+
+3. Uruchom krok (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Wypełniona tabela docelowa potwierdza, że dane uwierzytelniające ISU, host tenanta i adres URL raportu są poprawne. Błąd wskazuje problem — nieprawidłowe dane uwierzytelniające, błędny host tenanta lub ISU bez dostępu do raportu.
+
+## Importowanie danych
+
+<Steps>
+
+1. Dodaj krok **Import Workday Entity** i ustaw **Połączenie Workday**, **RaaS Report URL** oraz **Tabela docelowa**.
+
+2. Dodaj **Filtry**, aby ograniczyć pobierane dane — `company`, `ledger`, `period`, `accounting_date` (zakres), `ledger_account` (zakres) i `cost_center` są przekazywane jako parametry raportu, gdy raport RaaS definiuje pasujące monity.
+
+3. Uruchom krok i sprawdź tabelę docelową.
+
+</Steps>
+
+<Aside type="caution">
+Filtry docierają tylko do parametru raportu, który raport RaaS faktycznie definiuje jako monit. Jeśli ustawiony filtr nie ma pasującego monitu w raporcie, PlaidCloud go odrzuca, zamiast po cichu ignorować — najpierw dodaj monit do raportu w Workday.
+</Aside>
+
+## Księgowanie zapisów dziennika
+
+Krok **Workday Financials: Post Journal Entry** księguje dzienniki księgowe za pośrednictwem wspólnego potoku zapisu ERP w PlaidCloud, korzystając z operacji SOAP Workday `Submit_Accounting_Journal`.
+
+<Steps>
+
+1. Utwórz **tabelę nagłówka** — jeden wiersz na zapis dziennika — z kolumnami `journal_id` (identyfikator zapisu), `company`, `ledger`, `accounting_date` i `memo`.
+
+2. Utwórz **tabelę wierszy** — co najmniej jeden wiersz na każdy `journal_id` — z kolumnami `ledger_account`, `debit`, `credit` oraz wszelkimi kolumnami worktag (centrum kosztów, projekt) wymaganymi przez Twoje dzienniki.
+
+3. Dodaj krok **Workday Financials: Post Journal Entry**, ustaw **Połączenie Workday**, **Tabela nagłówka**, **Tabela wierszy** oraz **Tabela wyników**.
+
+4. Pozostaw zaznaczone **Validate Only** i uruchom krok — PlaidCloud tworzy i sprawdza każdy zapis bez rezerwacji w księdze i bez księgowania czegokolwiek.
+
+5. Przejrzyj tabelę wyników (jeden wiersz na zapis: `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Popraw każdy wiersz ze stanem `error` i ponownie zweryfikuj.
+
+6. Odznacz **Validate Only** i uruchom ponownie, aby zaksięgować naprawdę. Pozostaw zaznaczone **Continue On Error**, chyba że chcesz, aby partia zatrzymała się natychmiast po pierwszym nieudanym zapisie.
+
+</Steps>
+
+### Jak działa księgowanie
+
+PlaidCloud wywołuje `Submit_Accounting_Journal` dla każdego zapisu dziennika i, ponieważ własny łańcuch zatwierdzania procesu biznesowego Workday może wstrzymać przesłany dziennik, zanim zostanie faktycznie zaksięgowany, odpytuje o stan procesu biznesowego zapisu aż do osiągnięcia stanu końcowego. Zapis jest raportowany jako `posted` dopiero po **potwierdzeniu** tego stanu końcowego — zapis, który został przesłany, ale utknął na etapie zatwierdzania, pozostaje w kwarantannie i nie jest odnotowywany jako zaksięgowany, więc oczekujące zatwierdzenie nigdy po cichu nie uchodzi za sukces. Rezerwacja w księdze PlaidCloud chroni przed dwukrotnym przesłaniem tego samego zapisu przy ponowieniu lub ponownym uruchomieniu partii.
+
+### Korygowanie zaksięgowanego zapisu
+
+Ten krok nigdy nie usuwa ani nie przepisuje zaksięgowanego dziennika. Aby go skorygować, zaksięguj nowy zapis z zamienionymi stronami debetu i kredytu względem oryginału — **zaksięgowany zapis odwracający** — zamiast edytować oryginał w miejscu. Dzięki temu zachowany jest własny ślad audytowy Workday, a korekty są wykonywane tak samo jak bezpośrednio w aplikacji.
+
+### Ograniczenia możliwości — przeczytaj przed księgowaniem na żywo
+
+<Aside type="caution">
+- **Import zależy w całości od zbudowanego przez Ciebie raportu RaaS.** PlaidCloud nie ma gotowych jednostek Workday Financials — pola raportu, monity i kontrola dostępu są definiowane w Workday, a nie przez ten łącznik. Zmiana raportu w Workday może zmienić kształt importu bez żadnej zmiany po stronie PlaidCloud.
+- **Zatwierdzanie w procesie biznesowym zwiększa opóźnienie.** Jeśli Twój proces biznesowy Submit Accounting Journal przechodzi przez etapy zatwierdzania, zaksięgowany zapis może pozostawać w stanie `pending`, dopóki ktoś go nie zatwierdzi w Workday — odpytywanie o stan końcowy na to czeka, więc księgowanie może trwać wyraźnie dłużej niż wywołanie ERP bez łańcucha zatwierdzania.
+- **Ten łącznik różni się od ogólnego [łącznika Workday REST](/pl/reference/connectors/rest/workday/).** Tamten korzysta z interfejsu REST API Workday (kadry/płace); używaj go tylko wtedy, gdy nie łączysz się z Workday Financials.
+</Aside>
+
+## Powiązane
+
+- [Łącznik Workday Financials](/pl/reference/connectors/rest/workday-financials/) — opis pól.
+- [Import Workday Entity](/pl/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/pl/reference/workflow-steps/workday-financials/workday-post/)
+- [Przegląd historii księgowań ERP](/pl/guides/connections/erp-post-history/) — stały rejestr każdej próby księgowania w Workday Financials wraz z jej bieżącym stanem.
+- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/)

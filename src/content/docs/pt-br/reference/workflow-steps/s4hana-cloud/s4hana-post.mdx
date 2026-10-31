@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry"
+description: Lance lançamentos contábeis do razão geral no SAP S/4HANA Cloud a partir de tabelas de cabeçalho e de linhas pelo serviço SOAP JournalEntryBulkCreateRequest_In, com um modo de pré-visualização que valida cada lançamento antes de qualquer envio.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos contábeis do razão geral no SAP S/4HANA Cloud por meio da sua [conexão do S/4HANA Cloud](/pt-br/guides/connections/s4hana-cloud/), usando o pipeline de gravação ERP compartilhado do PlaidCloud. A etapa recebe uma tabela de cabeçalho (uma linha por lançamento contábil) e uma tabela de linhas (uma ou mais linhas de débito/crédito por lançamento) e envia cada lançamento ao serviço SOAP `JournalEntryBulkCreateRequest_In` do S/4HANA Cloud. **Validate Only** monta e verifica cada lançamento sem reservar o razão e sem lançar; uma tabela de resultado opcional registra o desfecho de cada lançamento.
+
+<Aside type="caution">
+Execute todos os lotes primeiro em **Validate Only**, revise a tabela de resultado e concilie alguns lançamentos diretamente no S/4HANA antes de confiar nesta etapa para lançar lançamentos reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Conexão
+
+- **S/4HANA Connection** — a conexão do S/4HANA Cloud usada para lançar.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por lançamento contábil: `journal_id` (o identificador do seu lançamento, obrigatório), `company_code` (obrigatório), `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text`.
+- **Tabela de linhas** — uma ou mais linhas por `journal_id`: `gl_account`, `debit`, `credit` e quaisquer colunas de dimensão `cost_center`/`profit_center` exigidas pelo seu razão.
+- **Tabela de resultado** — id da tabela de saída: uma linha por lançamento com `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — marcado por padrão. Apenas verificação prévia; sem reserva no razão e sem lançamento. Uma configuração de etapa que omita totalmente este campo — por exemplo, uma criada pela API REST, pelo MCP ou por uma importação de pacote de fluxo de trabalho — também assume Validate Only como padrão, em vez de um lançamento real.
+- **Continue On Error** — marcado por padrão. Continua lançando os lançamentos restantes depois que um falha; desmarcado, interrompe o lote na primeira falha.
+
+## Como o Lançamento Funciona
+
+O PlaidCloud envia cada lançamento por meio de `JournalEntryBulkCreateRequest_In` e consulta a mensagem `JournalEntryBulkCreateConfirmation_Out` correspondente, que informa o estado final de processamento do lançamento. Um lançamento só é informado como `posted` quando essa confirmação é **recebida** — um lançamento que é aceito, mas cuja confirmação nunca chega, permanece em quarentena (não é informado como lançado nem descartado silenciosamente), em vez de ser registrado como sucesso apenas porque o envio foi aceito.
+
+## Corrigindo um Lançamento Efetivado
+
+Esta etapa nunca exclui nem reescreve um lançamento já efetivado. Para corrigir um, lance um novo lançamento com débitos e créditos invertidos em relação ao original — um lançamento de estorno efetivado — em vez de editar o original no lugar.
+
+## Limites de Capacidade
+
+| Limitação | O que significa |
+|---|---|| Latência da confirmação | O serviço de criação em massa processa as solicitações de forma assíncrona; a consulta do estado final aguarda a mensagem de confirmação em vez de receber um resultado síncrono. |
+| O estorno é um novo lançamento, não uma edição no lugar | As correções lançam um novo lançamento de estorno com débito/crédito invertidos. Não há como anular ou excluir um lançamento já efetivado. |
+| A validação de dimensões depende da configuração do seu razão | Um objeto de custo ou uma combinação de dimensões inválida para a sua estrutura de contas falha na própria validação do S/4HANA e aparece como uma linha `error`, em vez de ser detectada antes pelo PlaidCloud. |
+
+## Relacionados
+
+- [Conectar ao SAP S/4HANA Cloud](/pt-br/guides/connections/s4hana-cloud/) — passo a passo completo de configuração, pré-visualização e lançamento
+- [Conector REST do SAP S/4HANA Cloud](/pt-br/reference/connectors/rest/s4hana-cloud/)
+- [Etapas do S/4HANA Cloud](/pt-br/reference/workflow-steps/s4hana-cloud/)
+- [Revisar o histórico de lançamentos do ERP](/pt-br/guides/connections/erp-post-history/)

@@ -1,0 +1,132 @@
+---
+title: Business Centralに接続する
+description: Azure ADのクライアント資格情報でPlaidCloudをMicrosoft Dynamics 365 Business Centralに接続し、標準のインポートステップでODataエンティティを取得して、総勘定元帳の仕訳明細を転記します。
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudをBusiness Centralの標準OData v2.0 REST APIに接続すると、ODataを手書きすることなく、勘定科目、元帳エントリ、顧客、仕入先、品目、仕訳帳を取得でき、総勘定元帳の仕訳明細を書き戻すこともできます。このガイドでは、接続、インポートステップ、転記ステップについて説明します。
+
+<Aside type="caution">
+インポートは必ず最初にサンドボックス環境に対して実行し、本番に転記する前に、すべての転記バッチで下記の**プレビューと検証**を行ってください。
+</Aside>
+
+## 前提条件
+
+Azure ADとBusiness Centralで次のものが必要です。
+
+- PlaidCloud用の**Entra ID（Azure AD）アプリ登録**と**クライアントシークレット**。Business Centralへの**APIアクセス許可**（`Dynamics 365 Business Central > API.ReadWrite.All`、または管理者が発行するより限定的なアクセス許可）が付与されている必要があります。
+- Azure ADの**テナントID**。
+- PlaidCloudが呼び出す**Business Central環境**の名前（例: `Production`またはサンドボックス環境）。
+- PlaidCloudが読み取りと転記を行う**会社**。Business Centralでは、エンティティの読み取りと仕訳の転記のどちらも、一度に1つの会社に限定されます。
+
+<Aside type="note">
+この接続は、ユーザーとしてではなくアプリケーションとして認証します。Entra IDの**クライアント資格情報（S2S）**フローで、PlaidCloudが他のMicrosoft REST接続で使用するOAuth2クライアント資格情報と同じ仕組みです。対話的なサインインはありません。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections**を開き、`New Connection`をクリックします。
+
+2. メニューから**Business Central**を選択します。
+
+3. フィールドを入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | わかりやすい名前（例: `BC Prod`）。 |
+   | クライアントID | Entraアプリ登録のアプリケーション（クライアント）ID。 |
+   | クライアントシークレット | アプリ登録のクライアントシークレット。 |
+   | テナントID | Azure ADのテナントID。 |
+   | 環境 | Business Central環境の名前（例: `Production`）。 |
+   | 会社 | 読み取りと転記の対象となるBusiness Centralの会社ID。 |
+
+4. `Create`をクリックします。
+
+</Steps>
+
+## 接続をスモークテストする
+
+<Steps>
+
+1. ワークフローに**Import Business Central Entity**ステップを追加します。
+
+2. **Business Central接続**に作成した接続を、**エンティティタイプ**に`accounts`を、**ターゲットテーブル**に作業用テーブルを設定します。
+
+3. ステップを実行します（[ワークフロー内で1つのステップを実行する](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）。
+
+</Steps>
+
+ターゲットテーブルにデータが入っていれば、テナント、認証情報、環境、会社がすべて正しいことを確認できます。エラーが出た場合は、問題が示されます。クライアントシークレットの誤り、APIアクセス許可の付与漏れ、環境または会社の誤りなどです。
+
+## データをインポートする
+
+<Steps>
+
+1. **Import Business Central Entity**ステップを追加し、**Business Central接続**と**ターゲットテーブル**を設定します。
+
+2. **エンティティタイプ**に、取得するレコードとして`accounts`、`generalLedgerEntries`、`customers`、`vendors`、`items`、`journals`のいずれかを設定します。
+
+3. **フィルター**を追加します。`{field, operator, value}`の行がANDでリクエストの`$filter`に結合され、エンティティ自身のクエリ可能フィールドの許可リストに照らしてチェックされます。エンティティ全体を取得するには、空白のままにします。
+
+4. ステップを実行し、ターゲットテーブルを確認します。
+
+</Steps>
+
+<Aside type="note">
+**会社はステップではなく、接続から決まります。** Business Centralはすべての読み取りを1つの会社に限定しており、接続が環境とともにその会社も保持するため、インポートステップには会社や環境のフィールドがありません。同じエンティティを別の会社から取得するには、その会社を指す2つ目のBusiness Central接続を作成してください。
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries`は、Business Centralの**読み取り専用で、転記済みのみ**の元帳です。未転記の仕訳帳バッチに残っている明細行は表示されないため、試算表や総勘定元帳の明細を取得するには、仕訳帳を直接クエリするのではなく、このエンティティを使用します。
+</Aside>
+
+## 総勘定元帳の仕訳明細を転記する
+
+**Business Central Post**ステップは、**既存の**総勘定元帳の仕訳帳バッチに明細行を転記し、そのバッチを転記します。
+
+<Steps>
+
+1. **ヘッダーテーブル**（`journal_id`ごとに1行）を作成します。明細行の転記先となるBusiness Centralの仕訳帳バッチ名に加えて、`document_number`、`posting_date`、通貨ラベルを含めます。
+
+2. **明細テーブル**（`journal_id`ごとに1行以上）を作成します。符号付きの`amount`（借方は正、貸方は負）、`account_id`または`account_number`、`account_type`、`description`を含めます。
+
+3. **Business Central Post**ステップを追加し、**Business Central接続**、**環境**、**ヘッダーテーブル**、**明細テーブル**、**結果テーブル**を設定します。
+
+4. **Validate Only**をオンのままステップを実行します。PlaidCloudは、何も転記せずに、すべての仕訳を作成してチェックします。
+
+5. 結果テーブル（`journal_id`ごとに1行: `journal_id`、`external_id`、`internal_id`、`status`、`message`）を確認します。`error`行があれば修正して、再検証します。
+
+6. **Validate Only**をオフにして再度実行し、実際に転記します。バッチが最初に失敗した仕訳で完全に停止してよい場合を除き、**Continue On Error**はオンのままにしてください。
+
+</Steps>
+
+<Aside type="caution">
+**`journal_id`で指定する仕訳帳バッチは、Business Centralにすでに存在している必要があります。** このステップはバッチの中に明細行を作成しますが、バッチ自体は作成しません。先にBusiness Centralで仕訳帳バッチ（名前、仕訳帳テンプレート）を設定してから、`journal_id`でそれを指定してください。
+</Aside>
+
+### 転記の仕組み
+
+Business Centralの`Microsoft.NAV.post`アクションは、PlaidCloudが作成した明細行だけでなく、仕訳帳バッチ**全体**を転記します。そのため、呼び出す前にPlaidCloudはバッチを読み戻し、このリクエストのドキュメント番号が付いていない明細行が含まれている場合は、転記を拒否します（エラーを記録し、何も転記しません）。このガードは、以前の部分的な失敗で残った明細行が、同じバッチへの無関係な後続の転記によって総勘定元帳に紛れ込まないようにするために、特に設けられています。
+
+### 機能の制限 — 本番に転記する前にお読みください
+
+<Aside type="caution">
+- **書き込めるドキュメントタイプは1つです。** サポートされるのは総勘定元帳の仕訳明細の転記のみです。Business Centralの下書きドキュメントのフロー（売上/購買請求書の下書きから転記済みへの移行）はサポートされません。このフローの正確な転記アクションがMicrosoftのドキュメントで明確にされておらず、PlaidCloudは、資金が動く書き込みについて、検証されていないエンドポイントを推測して使用することはしません。
+- **既存のバッチにのみ転記します。** このステップが仕訳帳バッチを作成することはありません。先にBusiness Centralで作成してください（上記を参照）。
+- **まだ本番での検証は行われていません。** Business Centralの文書化されたOData v2.0コントラクトに基づいて構築されています。最初の本番バッチは検証用の実行として扱い、Business Central上で直接照合してください。
+- **同一バッチへの同時転記は完全には直列化されません。** 冪等性のガードは、仕訳帳バッチではなくドキュメント番号を単位としているため、異なる2つのドキュメント番号を同じバッチに同時に転記した場合、同じドキュメント番号で2回呼び出した場合のようには直列化されることが保証されません。1つの仕訳帳バッチへの転記を同時に実行しないでください。
+</Aside>
+
+## 関連項目
+
+- [Business Central RESTコネクタ](/ja/reference/connectors/rest/business-central/) — フィールドリファレンス。
+- [Import Business Central Entityステップ](/ja/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Linesステップ](/ja/reference/workflow-steps/business-central/business-central-post/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/) — Business Centralへのすべての転記試行とその最新の状態を記録した常設の履歴。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

@@ -1,0 +1,85 @@
+---
+title: Importowanie danych finansowych z NetSuite
+description: Pobieraj salda, szczegóły księgi głównej i dane podstawowe z NetSuite do tabel projektu za pomocą gotowych kroków importu NetSuite — wybierz połączenie, tabelę docelową, zakres dat i spółkę zależną, a następnie uruchom.
+sidebar:
+  label: Importowanie danych finansowych z NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/import-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Pobieraj typowe dane finansowe i referencyjne z NetSuite do tabel projektu za pomocą gotowych kroków importu NetSuite — bez pisania SuiteQL. Większość pobrań obejmują trzy kroki: **Import Balances** dla zestawienia obrotów i sald, **Import GL Detail** dla pozycji księgowań stojących za nim oraz **Import Master Data** dla kont, spółek zależnych i wymiarów, do których odwołują się te pobrania. Każdy działa na wspólnej warstwie odczytu, która odświeża token OAuth, stronicuje duże wyniki i ponawia próby po błędach przejściowych, dzięki czemu pobranie całego okresu lub wszystkich spółek zależnych zwraca komplet danych.
+
+<Aside type="tip">
+W przypadku niestandardowego pobrania, którego nie obejmują gotowe kroki, napisz własne zapytanie SuiteQL za pomocą [kroku Żądanie REST](/pl/guides/workflows/rest-request-step/) — zobacz [Przykłady zapytań SuiteQL dla NetSuite](/pl/guides/connections/netsuite-financial-queries/). Gotowe kroki opisane poniżej to prostsza opcja dla tych typowych pobrań.
+</Aside>
+
+## Wymagania wstępne
+
+- Działające [połączenie NetSuite](/pl/guides/connections/netsuite/) z dostępem do podglądu rekordów, które chcesz odczytać.
+- Przepływ pracy, do którego dodasz krok.
+
+## Pobierz zestawienie obrotów i sald
+
+<Steps>
+
+1. Dodaj do przepływu pracy krok **NetSuite: importuj salda**.
+
+2. Ustaw **Połączenie NetSuite** na swoje połączenie, a **Tabela docelowa** na tabelę projektu, w której mają się znaleźć salda. Krok przy każdym uruchomieniu w całości nadpisuje tę tabelę.
+
+3. Ustaw **Data początkowa** i **Data końcowa** na żądany okres, każdą w formacie `YYYY-MM-DD`, obie włącznie. Pozostaw jedną z nich pustą, aby nie ograniczać tego końca zakresu.
+
+4. Aby ograniczyć pobranie do jednej spółki zależnej, ustaw **Subsidiary** na jej wewnętrzny identyfikator NetSuite; pozostaw puste dla wszystkich spółek zależnych. (Zobacz [Rozpoznawanie identyfikatorów wewnętrznych](#rozpoznawanie-identyfikatorów-wewnętrznych-za-pomocą-danych-podstawowych), jeśli masz nazwy zamiast identyfikatorów.)
+
+5. W koncie z Multi-Book Accounting pozostaw **Accounting Book** puste, aby pobrać **tylko księgę podstawową** — to prawidłowa wartość domyślna dla standardowego zestawienia obrotów i sald. Ustaw `all` tylko wtedy, gdy celowo chcesz uzyskać sumę ze wszystkich ksiąg, albo wewnętrzny identyfikator konkretnej księgi.
+
+6. Zawęź dalej za pomocą **Numer konta** (dokładne konto księgi głównej) lub **Posting Period** (wewnętrzny identyfikator okresu NetSuite), jeśli nie potrzebujesz całego planu kont ani każdego okresu z zakresu.
+
+7. Uruchom krok (zobacz [Uruchamianie pojedynczego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)) i sprawdź tabelę docelową.
+
+</Steps>
+
+<Aside type="caution">
+**Konta wielu ksiąg domyślnie używają księgi podstawowej.** Zanim to zachowanie zostało udostępnione, niefiltrowane pobranie dla konta Multi-Book Accounting sumowało wszystkie księgi razem — po cichu wielokrotnie zliczając saldo. Pozostawienie pustego pola **Accounting Book** pobiera teraz tylko księgę podstawową, zgodnie z oczekiwaniami standardowego zestawienia obrotów i sald. Jeśli polegasz na dawnej sumie ze wszystkich ksiąg, jawnie ustaw **Accounting Book** na `all`.
+</Aside>
+
+## Pobierz szczegóły księgi głównej
+
+Krok **NetSuite: importuj szczegóły księgi głównej** konfiguruje się tak samo — połączenie, tabela docelowa, zakres dat, spółka zależna, księga rachunkowa, numer konta i okres księgowania — ale zwraca szczegóły na poziomie pozycji transakcji, a nie salda okresowe. Użyj go do uzgodnienia, analizy szczegółowej lub odtworzenia szczegółowego rachunku zysków i strat na podstawie księgowań stojących za saldami.
+
+<Aside type="note">
+Ogranicz zakres dat do potrzebnego wycinka. Każde uruchomienie zastępuje całą tabelę docelową, więc zaplanowane pobranie księgi głównej za każdym razem wyodrębnia pełny wynik — kroczące okno dat sprawia, że cykliczne pobranie jest szybkie i nie odczytuje ponownie całej historii.
+</Aside>
+
+<Aside type="note">
+NetSuite ogranicza pojedyncze zapytanie SuiteQL do około 100 000 wierszy. Podanie zarówno **Data początkowa**, jak i **Data końcowa** pozwala PlaidCloud automatycznie podzielić szerokie pobranie na mniejsze okna dat mieszczące się poniżej tego limitu, więc pobranie księgi głównej za cały rok zwraca komplet danych bez żadnych działań z Twojej strony. Pozostawienie obu pustych przy pobraniu na tyle dużym, że przekroczy limit, kończy się teraz komunikatem z prośbą o dodanie zakresu dat, zamiast po cichu zwrócić obcięty wynik.
+</Aside>
+
+## Rozpoznawanie identyfikatorów wewnętrznych za pomocą danych podstawowych
+
+Pola spółki zależnej, konta i wymiarów w NetSuite to identyfikatory wewnętrzne, a nie nazwy. Pobierz odpowiadającą im listę za pomocą **NetSuite: importuj dane główne** i połącz ją z saldami lub szczegółami, aby dodać czytelne nazwy.
+
+<Steps>
+
+1. Dodaj krok **NetSuite: importuj dane główne** i ustaw **Połączenie NetSuite** oraz **Tabela docelowa**.
+
+2. Ustaw **Typ rekordu** na żądaną listę: **account**, **subsidiary**, **department**, **class**, **location**, **vendor** lub **customer**.
+
+3. Pozostaw **Include Inactive** wyłączone, aby pobrać tylko aktywne rekordy, albo włącz je, aby uwzględnić nieaktywne.
+
+4. Uruchom krok, a następnie połącz jego tabelę z saldami lub szczegółami księgi głównej po identyfikatorze wewnętrznym, aby przenieść nazwy do każdego wiersza.
+
+</Steps>
+
+## Zaplanuj pobieranie
+
+Aby uzyskać stały strumień danych, [zaplanuj przepływ pracy](/pl/get-started/tutorials/schedule-a-workflow/). Ponieważ każdy krok w całości zastępuje swoją tabelę docelową, zaplanowane uruchomienie zawsze odzwierciedla bieżący stan w NetSuite dla wyznaczonego okresu.
+
+## Powiązane
+
+- [NetSuite: importuj salda](/pl/reference/workflow-steps/netsuite/import-balances/)
+- [NetSuite: importuj szczegóły księgi głównej](/pl/reference/workflow-steps/netsuite/import-gl-detail/)
+- [NetSuite: importuj dane główne](/pl/reference/workflow-steps/netsuite/import-master-data/)
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/) — skonfiguruj połączenie, przez które te kroki odczytują dane
+- [Przykłady zapytań SuiteQL dla NetSuite](/pl/guides/connections/netsuite-financial-queries/) — napisz własne zapytanie dla pobrania, którego nie obejmują gotowe kroki

@@ -1,0 +1,41 @@
+---
+title: Build Features (krok)
+description: Twórz kolumny cech arytmetycznych, interakcji, części daty, podziału na przedziały, skalowania i kodowania one-hot z tabeli źródłowej.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/tables/table-build-features.mdx
+---
+
+## Opis
+
+Krok **Build Features** buduje tabelę pochodnych kolumn cech z tabeli źródłowej — kombinacje arytmetyczne i interakcji, wyodrębnianie części daty, podział na przedziały, skalowanie i kodowanie one-hot — w jednym przebiegu, bez ręcznego pisania wyrażenia dla każdej kolumny. Działa jako zwykła transformacja w hurtowni danych.
+
+## Konfiguracja
+
+- **Źródło / Tabele wyjściowe** — tabela wejściowa i tabela, do której zapisywane są kolumny pochodne.
+- **Kolumny przekazywane bez zmian** (`passthrough_columns`) — kolumny źródłowe przenoszone bez zmian.
+- **Cechy** (`features`) — uporządkowana lista specyfikacji cech, wymagana co najmniej jedna. Każda specyfikacja ma `type` i tworzy jedną lub więcej kolumn wyjściowych. Nazwy kolumn wyjściowych — kolumny przekazywane bez zmian oraz `name` każdej cechy innej niż one-hot — muszą być wszystkie różne; zapis zduplikowanej nazwy lub zduplikowanej pary one-hot `(column, prefix)` jest odrzucany.
+
+## Typy cech
+
+| Typ | Pola | Tworzy |
+| --- | --- | --- |
+| **Wyrażenie** (`expression`) | `name`, `expression`, `dtype` (domyślnie `text`) | Jedna kolumna: dowolne wyrażenie na kolumnach źródłowych. |
+| **Interakcja** (`interaction`) | `name`, `columns` (dokładnie 2), `op` (`multiply` lub `add`, domyślnie `multiply`), `dtype` (domyślnie `numeric`) | Jedna kolumna: arytmetyczna kombinacja par dwóch kolumn liczbowych. |
+| **Część daty** (`datepart`) | `name`, `column`, `part` (`year`, `month`, `day`, `dow` lub `hour`) | Jedna kolumna: wyodrębniony składnik daty/czasu. |
+| **Podział na przedziały** (`bin`) | `name`, `column`, `thresholds` (rosnąco, co najmniej 1), `labels` (dokładnie o jedną więcej niż `thresholds`) | Jedna kolumna: etykieta przedziału, do którego trafia wartość `column`. Progi to stałe wartości, które podajesz — zobacz [Ograniczenia i zastrzeżenia](#ograniczenia-i-zastrzeżenia). |
+| **Z-score** (`zscore`) | `name`, `column`, `dtype` (domyślnie `numeric`) | Jedna kolumna: kolumna ustandaryzowana do zerowej średniej i jednostkowej wariancji. |
+| **Min-maks** (`minmax`) | `name`, `column`, `out_min` (domyślnie 0), `out_max` (domyślnie 1), `dtype` (domyślnie `numeric`) | Jedna kolumna: kolumna przeskalowana do zakresu `[out_min, out_max]`. |
+| **One-hot** (`onehot`) | `column`, `prefix` | Jedna kolumna na każdą unikatową wartość `column`, każda nazwana `<prefix><value>`. |
+| **Statystyka kolumny** (`column_mean`, `column_sum`, `column_variance`, `column_stddev`, `column_min`, `column_max`) | `name`, `column`, `dtype`, `moments`, `order_column` | Jedna kolumna: statystyka całej kolumny, przy filtrze kroku, w każdym wierszu. `moments` ma wartość `sql` (domyślnie, agregat hurtowni danych) lub `welford`, który oblicza średnią, sumę, wariancję i odchylenie standardowe jako jednoprzebiegowe momenty bieżące na kolumnie odczytywanej w kolejności `order_column`, tak jak robią to `COL_MEAN` z Math Formula w KNIME i jego pokrewne funkcje. |
+
+## Ograniczenia i zastrzeżenia
+
+- **Podział na przedziały wymaga z góry ustalonych progów.** `bin` przypisuje kolumnę do przedziałów względem podanych przez Ciebie progów i etykiet — nie ma podziału opartego na danych (przedziały o równej szerokości lub równej liczebności obliczane z danych w czasie wykonania). Oblicz progi samodzielnie (na przykład na podstawie wcześniejszego kroku agregacji) przed skonfigurowaniem cechy `bin`.
+- **Jedna ramka naraz.** Build Features odczytuje i zapisuje jedną tabelę źródłową; nie agreguje wartości z powiązanych tabel tak, jak robi to narzędzie do syntezy cech między tabelami. Każdą zależność między tabelami modeluj jako złączenie przed tym krokiem.
+- **Brak redukcji wymiarowości i kodowania uwzględniającego cel w tym kroku.** Build Features nie ma redukcji składowych w stylu PCA ani kodowania celu (kolumny kategorialnej wyrażonej jako statystyka etykiety, na przykład jej średnia). Dla cech kategorialnych użyj `onehot`. Do redukcji składowych użyj algorytmu `pca` kroku [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) i jego własnej obsługi cech, jeśli potok trenowania wymaga innego kodowania.
+
+## Powiązane
+
+- [ML: trenuj model](/pl/reference/workflow-steps/machine-learning/ml-train/) — wytrenuj model na tabeli, w tym zbudowanej przez ten krok.
+- [Macierz konwersji Alteryx](/pl/reference/alteryx-conversion-matrix/) — jak prymitywy narzędzia Build Features z Alteryx mapują się na te typy cech i które z jego prymitywów (agregacja między tabelami, PCA, kodowanie celu, automatyczny podział na przedziały) nie mają tutaj odpowiednika.

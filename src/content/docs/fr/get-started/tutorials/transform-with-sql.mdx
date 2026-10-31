@@ -1,0 +1,168 @@
+---
+title: Transformer les données avec SQL et des expressions
+description: Façonnez les données dans une étape de table d'un workflow — sélectionnez et filtrez avec SQL, joignez deux tables, ajoutez une colonne calculée avec une expression et prévisualisez le résultat avant l'exécution.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/transform-with-sql.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minutes · un filtre, une jointure, une colonne calculée*
+
+L'essentiel du travail dans un [workflow](/fr/guides/workflows/) tient en un petit geste répété : prendre une table, la remodeler, écrire le résultat dans une nouvelle table. Ce tutoriel vous apprend ce geste — sélectionner et filtrer des lignes, joindre une seconde table et ajouter une colonne calculée — avec les deux outils que vous utiliserez en permanence : **SQL** et les **expressions de colonne**. Apprenez ce schéma une fois, et il s'appliquera à presque toutes les étapes de transformation que vous construirez.
+
+L'objectif ici est de comprendre la *forme* du travail et où chercher l'information — pas de mémoriser des fonctions. PlaidCloud fournit plus d'un millier de fonctions SQL ; vous renverrez vers cette référence sans jamais la reproduire.
+
+## Ce que vous allez construire
+
+Une seule étape de table qui lit une table brute `orders`, ne conserve que les commandes terminées, joint chacune à une table `customers` pour obtenir la région, et ajoute une colonne calculée `net_amount` — en écrivant le résultat dans une nouvelle table `orders_clean`.
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+Aucune table source n'est modifiée. Une étape de transformation lit une ou plusieurs sources et écrit dans une cible — les originaux restent exactement tels quels, ce qui permet de ré-exécuter et d'auditer un workflow en toute sécurité.
+
+## Deux façons de façonner une colonne
+
+Avant les étapes, une distinction à garder en tête :
+
+| Outil | Ce que c'est | Où l'écrire |
+|---|---|---|
+| **SQL** | La requête qui sélectionne, filtre et joint des tables entières | L'éditeur SQL de l'étape |
+| **Expression** | Une formule unique qui produit la valeur d'une colonne, ligne par ligne | La cellule d'expression du mappeur de colonnes |
+
+Vous utilisez SQL pour décider *quelles lignes et quelles tables*. Vous utilisez une expression pour décider *ce que contient une colonne*. De nombreuses étapes permettent de combiner les deux — une étape SQL pour façonner l'ensemble, des cellules d'expression pour calculer les colonnes.
+
+## Prérequis
+
+- Un espace de travail PlaidCloud et un projet dans lequel travailler ([démarrez un essai gratuit](https://app.plaidcloud.com) si vous n'en avez pas).
+- Deux [tables](/fr/guides/data/tables-views/) déjà présentes dans le projet — ce tutoriel suppose `orders` (avec `order_id`, `customer_id`, `status`, `amount`, `tax`) et `customers` (avec `customer_id`, `region`). Si vous ne les avez pas, le tutoriel [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/) commence par importer des tables à partir de fichiers CSV.
+- Un workflow ouvert dans le **Workflow Explorer** — ouvrez l'onglet **Workflows** d'un projet et double-cliquez sur le workflow. Consultez [Créer un workflow](/fr/guides/workflows/create-workflow/) si vous n'en avez pas encore.
+
+## Étape 1 : sélectionner et filtrer avec SQL
+
+Commencez par restreindre : ne récupérez que les colonnes et les lignes dont vous avez réellement besoin.
+
+<Steps>
+
+1. Ajoutez une étape de transformation de table et ouvrez son éditeur SQL.
+2. Faites pointer la source de l'étape vers votre table `orders`.
+3. Écrivez une requête qui ne conserve que les colonnes nécessaires et écarte les lignes inutiles :
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+Cette clause `WHERE` est le filtre — tout ce qui n'est pas une commande terminée et non nulle n'atteint jamais la cible. Sélectionner seulement quatre colonnes plutôt que `SELECT *` garde la table en aval légère et son intention évidente.
+
+> **Écrivez du SQL pour qu'il soit lu.** Une clause par ligne, une colonne par ligne, `CASE` / `WHEN` alignés — jamais une longue ligne dense. Le bouton **Mettre en forme** de l'éditeur (ou **Maj+Alt+F**, **Maj+Option+F** sur macOS) reformate le code sur place sans changer son comportement. Consultez [Mettre en forme le code dans les éditeurs](/fr/guides/workflows/prettify-code-in-editors/).
+
+## Étape 2 : joindre la seconde table
+
+Une jointure place les colonnes d'une seconde table à côté de celles de la première, en les appariant sur une clé commune. Ici, vous voulez la `region` de chaque commande, qui se trouve dans `customers`.
+
+<Steps>
+
+1. Ajoutez `customers` comme seconde source de l'étape.
+2. Étendez la requête pour joindre sur la clé commune et récupérer la colonne dont vous avez besoin :
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` ne conserve que les commandes qui ont un client correspondant. Si vous préférez garder toutes les commandes même sans client correspondant — avec `region` à null — utilisez plutôt `LEFT JOIN`. Une clé de jointure erronée ou mal appariée est la cause la plus courante d'une jointure qui renvoie trop ou pas assez de lignes ; vérifiez donc le nombre de lignes dans l'aperçu (étape suivante) avant de poursuivre.
+
+> **Noms de tables dans la requête.** Désignez chaque source par le nom que lui attribue l'étape. Sur les entrepôts Lakehouse par défaut, l'identifiant physique d'une table peut contenir des tirets — placez-le alors entre accents graves (par exemple `` `analyzetable_9f3c...` ``) pour que le moteur le lise comme un seul identifiant.
+
+## Étape 3 : ajouter une colonne calculée avec une expression
+
+Calculez maintenant une valeur qui ne figure dans aucune des deux sources. Une colonne calculée (d'expression) exécute une formule par ligne et écrit le résultat dans une nouvelle colonne. Ajoutez `net_amount` — le montant après taxe.
+
+<Steps>
+
+1. Dans le mappeur de colonnes de l'étape, ajoutez une nouvelle colonne cible nommée `net_amount`.
+2. Dans sa cellule d'expression, écrivez la formule :
+
+   ```python
+   amount - tax
+   ```
+
+3. Pour tout ce qui est conditionnel, les expressions disposent de la logique habituelle. Par exemple, un indicateur d'expédition :
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **Une cellule d'expression est une formule unique, pas un script.** Elle est évaluée comme une expression nue ; une expression sur plusieurs lignes doit donc fournir ses propres parenthèses extérieures (comme ci-dessus), faute de quoi elle échoue à l'exécution. Limitez chaque cellule à la valeur d'une seule colonne ; utilisez l'étape SQL pour tout ce qui porte sur plusieurs lignes ou plusieurs tables.
+
+L'existence d'une fonction donnée, et le comportement exact de ses arguments, dépendent de la génération de Lakehouse utilisée par votre projet — les deux s'appuient sur des moteurs différents. Ne devinez pas un nom de fonction ; cherchez-le :
+
+| Lakehouse | Bibliothèque de fonctions |
+|---|---|
+| **v1** | Fonctions SQL de Databend |
+| **v2** | Fonctions SQL de StarRocks 4.1 |
+
+La [référence des expressions](/fr/reference/expressions/) est le point d'entrée — opérations sur les chaînes, calculs de dates, logique conditionnelle, conversions de type et agrégations — avec un lien vers la syntaxe officielle de chaque génération. Considérez-la comme une référence à consulter au besoin, pas comme un texte à lire de bout en bout.
+
+> **Le bouton Mettre en forme formate aussi les cellules d'expression**, en appliquant les espacements et les sauts de ligne Python standard — pratique pour une longue condition.
+
+## Étape 4 : prévisualiser avant d'exécuter
+
+Inutile d'exécuter tout le workflow pour savoir si l'étape a fait ce que vous vouliez. Le **volet Aperçu des données** affiche la sortie d'une étape — les 100 premières lignes avec leurs colonnes typées — directement dans le Workflow Explorer.
+
+<Steps>
+
+1. Exécutez uniquement cette étape pour qu'elle produise sa table de sortie. (Tant qu'elle n'a pas été exécutée une fois, l'aperçu indique *« Aucune donnée pour le moment — exécutez l'étape pour générer cette table. »*)
+2. Ouvrez l'aperçu : sélectionnez l'étape et choisissez **Prévisualiser les données de sortie** (également disponible dans le menu contextuel de l'étape).
+3. Vérifiez la forme du résultat : les colonnes sélectionnées sont présentes, `region` est bien arrivée par la jointure, `net_amount` est correctement calculée et le nombre de lignes reflète le filtre.
+
+</Steps>
+
+Tant que le volet est ouvert, sélectionner une autre étape redirige l'aperçu vers la sortie de cette étape — parcourez une chaîne d'étapes et observez la forme des données évoluer à chaque stade. Au-delà des 100 premières lignes, ou pour découper et filtrer, cliquez sur **Ouvrir dans l'explorateur de tables**. Tous les détails dans [Prévisualiser les données d'une étape](/fr/guides/workflows/preview-step-data/).
+
+## Le schéma, généralisé
+
+Chacun de ces gestes repose sur la même primitive :
+
+> **Lire une ou plusieurs tables sources, les remodeler, écrire une nouvelle cible.** SQL décide des lignes et des tables ; les expressions décident de la valeur de chaque colonne ; l'aperçu confirme le résultat avant de lancer une exécution complète. Enchaînez quelques-unes de ces étapes et vous obtenez un pipeline — la cible de chaque étape devient la source de la suivante.
+
+Écrivez les résultats intermédiaires dans des **tables** lorsqu'une étape ultérieure ou un tableau de bord a besoin que les données soient matérialisées, et dans des **[vues](/fr/guides/data/tables-views/)** lorsque vous préférez calculer à la lecture et économiser du stockage — une vue ne contient aucune donnée propre et se met à jour automatiquement lorsque ses sources changent.
+
+Lorsqu'une transformation dépasse les possibilités de SQL et des expressions — Python sur mesure, paquet externe, logique personnalisée — utilisez une étape [User Defined Transform](/fr/reference/workflow-steps/general/user-defined-transform/). C'est l'exception, pas le cas courant ; SQL et les expressions couvrent l'écrasante majorité du travail de façonnage.
+
+## Pour aller plus loin
+
+- [Référence des expressions](/fr/reference/expressions/) — toutes les fonctions disponibles pour les colonnes calculées, par génération de Lakehouse.
+- [Référence des étapes de workflow](/fr/reference/workflow-steps/) — le catalogue complet des étapes de transformation, d'importation et d'exportation.
+- [Guide des workflows](/fr/guides/workflows/) — conditions, boucles, variables et gestion des erreurs autour de vos étapes.
+- [Prévisualiser les données d'une étape](/fr/guides/workflows/preview-step-data/) — le volet, en détail.
+- [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/) — le pipeline de bout en bout dans lequel s'insère cette étape.

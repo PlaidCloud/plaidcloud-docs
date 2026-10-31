@@ -1,0 +1,72 @@
+---
+title: Krok LLM
+description: Uruchom prompt na modelu LLM wewnątrz przepływu pracy — z ograniczonym dostępem do odczytu i/lub zapisu tabel, wymiarów i dokumentów projektu — i pozwól modelowi zapisywać wyniki bezpośrednio.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/llm-step.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+**Krok LLM** uruchamia prompt na dużym modelu językowym jako jeden krok przepływu pracy. Dajesz modelowi ograniczony dostęp do wybranych tabel, wymiarów i dokumentów projektu, wybierając dla każdego **Odczyt**, **Zapis** lub oba. Model odczytuje potrzebne dane i — tam, gdzie przyznano **Zapis** — zapisuje wyniki bezpośrednio w wybranym obiekcie. Nie trzeba konfigurować osobnego formatu wyjściowego: powiązanie z włączonym zapisem *jest* wyjściem kroku.
+
+Typowe zastosowanie to podsumowanie tabeli finansowej w komentarz dla każdej jednostki biznesowej i zapisanie go przez model w tabeli wynikowej (lub jako plików dokumentów) powiązanej z dostępem Zapis.
+
+<Aside type="note">Ograniczony dostęp do danych projektu (tabel, wymiarów, dokumentów) jest dostępny w połączeniach LLM **Anthropic**, które używają bezpiecznego konektora do narzędzi MCP PlaidCloud. Inni dostawcy nadal mogą uruchomić prompt i zwrócić ustrukturyzowany JSON, ale nie dostają ograniczonego dostępu do danych — krok z powiązaniami w ich połączeniu jest odrzucany przy zapisie, a schemat wyniku jest wymagany.</Aside>
+
+## Zanim zaczniesz
+
+Potrzebujesz:
+
+* **Połączenia LLM.** Krok wymaga połączenia rodzaju **LLM** (na przykład Anthropic). Połączenie zawiera klucz API dostawcy, opcjonalny model domyślny oraz poziom **Dostępu agenta**. Zobacz [Połączenia](/pl/guides/connections/).
+* **Dostępu do zapisu w połączeniu — tylko jeśli jakiekolwiek powiązanie ma włączony zapis.** Powiązanie może zapisywać tylko wtedy, gdy Dostęp agenta połączenia ma wartość **Odczyt i zapis**. Wartość **Pełny** jest przestarzała i zostanie usunięta 15 stycznia 2027 r. Połączenie tylko do odczytu odrzuca powiązania z zapisem przy zapisywaniu.
+* **Utworzonych wcześniej obiektów docelowych.** Model zapisuje *do* wybranych obiektów — istniejącej tabeli, wymiaru lub konta dokumentów. Najpierw utwórz i powiąż obiekt docelowy; krok nie tworzy nowych obiektów.
+
+## Dodawanie kroku LLM
+
+1. Otwórz przepływ pracy i przejdź na kartę **Analyze Steps**.
+2. Dodaj krok w wybranej pozycji, tak samo jak standardową transformację.
+3. Jako typ kroku wybierz **Krok LLM**. Edytor otwiera się z trzema sekcjami: **Żądanie LLM**, **Powiązania** i **Limity**.
+
+## Konfigurowanie żądania
+
+W grupie **Żądanie LLM**:
+
+* **Połączenie LLM** *(wymagane)* — połączenie LLM używane przez krok.
+* **Model** *(opcjonalne)* — konkretna nazwa modelu, na przykład `claude-opus-4-7`. Pozostaw puste, aby użyć modelu domyślnego połączenia.
+* **Prompt** *(wymagane)* — instrukcja wysyłana do modelu. Możesz odwoływać się do powiązanych obiektów w treści za pomocą `{{tables.NAME}}`, `{{dimensions.NAME}}` i `{{documents.NAME}}`; każde odwołanie musi odpowiadać powiązaniu zadeklarowanemu poniżej. Powiedz modelowi wprost, co ma zapisać i gdzie (na przykład „zapisz jeden wiersz na jednostkę biznesową w tabeli `summary`").
+* **Schemat wyniku** *(opcjonalny dla połączeń Anthropic; wymagany dla innych dostawców)* — Schemat JSON ustrukturyzowanego podsumowania uruchomienia, zachowywanego w dokumentacji. Jeśli go podasz, jego korzeniem musi być obiekt JSON z `"type": "object"`. W połączeniu Anthropic możesz zostawić go pustym, gdy faktyczną pracą modelu są zapisy wykonywane przez MCP; inni dostawcy nie mają dostępu do MCP, więc ich jedynym wyjściem jest odpowiedź ustrukturyzowana i schemat jest wymagany.
+
+## Powiązywanie danych projektu
+
+Sekcja **Powiązania** to miejsce, w którym przyznajesz dostęp i wybierasz, co krok może odczytywać i zapisywać. Ma trzy grupy — **Tabele**, **Wymiary** i **Dokumenty** — każda z przyciskiem **Dodaj**. Każdy wiersz zawiera:
+
+* **Selektor** do wyboru obiektu: selektor tabeli, selektor wymiaru lub (dla dokumentów) przeglądarkę konta i ścieżki. Koniec z ręcznym wpisywaniem identyfikatorów.
+* **Nazwę** — etykietę, do której odwołujesz się w prompcie (`{{tables.NAME}}`).
+* Pola wyboru **Odczyt** i **Zapis**. Zaznacz **Odczyt**, aby model mógł odczytywać obiekt, **Zapis**, aby mógł do niego zapisywać, lub oba. Zawsze ustawione jest co najmniej jedno.
+* Dla dokumentów — podpowiedź **Format** (na przykład `pdf`).
+
+Sposób, w jaki model zapisuje do każdego rodzaju obiektu za pomocą narzędzi MCP:
+
+| Powiązanie | Model zapisuje przez… |
+|---------|----------------------|
+| **Tabela** (Zapis) | wstawianie wierszy — zwykle za pomocą `SELECT`, który tworzy wiersze do dodania do powiązanej tabeli. |
+| **Wymiar** (Zapis) | dodawanie lub aktualizowanie węzłów w hierarchii powiązanego wymiaru. |
+| **Dokument** (Zapis) | wgrywanie pliku na powiązane konto dokumentów i do powiązanej ścieżki. |
+
+<Aside type="caution">Dostęp jest ograniczony dokładnie do powiązanych obiektów, osobno dla każdego pola wyboru: model może odczytywać tylko obiekty z Odczytem i zapisywać tylko do obiektów z Zapisem. Nie ma dostępu do obiektu, którego nie powiązano, i nie może zapisywać do powiązania tylko do odczytu.</Aside>
+
+## Limity
+
+Grupa **Limity** ogranicza żądanie:
+
+* **Maks. liczba tokenów wyjściowych** — największa odpowiedź, jaką model może zwrócić (od 1024 do 128 000; domyślnie 16 000).
+* **TTL poświadczeń (sekundy)** — jak długo ważne jest ograniczone, tymczasowe poświadczenie dostępu do danych kroku (od 60 do 3600; domyślnie 1800). Zadanie kroku jest ograniczone tym oknem, więc ustaw je tak długo, aby model zdążył skończyć, ale nie dłużej niż to konieczne.
+
+## Uruchamianie kroku
+
+Krok LLM jest uruchamiany jak każdy inny krok — w ramach pełnego uruchomienia przepływu pracy lub samodzielnie (zobacz [Uruchamianie jednego kroku w przepływie pracy](/pl/guides/workflows/running-one-step-in-a-workflow/)). Podczas uruchomienia krok wystawia krótkotrwałe, ograniczone poświadczenie, wysyła do modelu prompt i powiązane obiekty, a model odczytuje i zapisuje bezpośrednio przez narzędzia MCP. Poświadczenie jest unieważniane natychmiast po zakończeniu kroku. Wywołanie modelu działa we własnym zadaniu, więc długo trwający krok nie blokuje modułu uruchamiającego przepływy pracy.
+
+<Aside type="caution">Każde uruchomienie wykonuje rzeczywiste, płatne wywołanie do dostawcy LLM i zapisuje w powiązanych obiektach. Traktuj powiązanie z zapisem jak każdy inny cel transformacji i przetestuj na tabeli roboczej, zanim skierujesz krok na dane produkcyjne.</Aside>

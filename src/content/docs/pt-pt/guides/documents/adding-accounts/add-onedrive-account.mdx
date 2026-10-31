@@ -1,0 +1,129 @@
+---
+title: Adicionar conta OneDrive / SharePoint
+description: Ligue o Microsoft OneDrive for Business ou o SharePoint ao PlaidCloud Document com acesso de privilégio mínimo através de Sites.Selected, ou com acesso a todo o inquilino.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-onedrive-account.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Ligue uma localização do Microsoft **OneDrive for Business** ou do **SharePoint** ao PlaidCloud Document. Regista uma aplicação Entra (Azure AD), define até onde esta pode chegar no seu inquilino e o PlaidCloud utiliza-a para ler e escrever ficheiros.
+
+## Escolher um modelo de acesso
+
+Decida até que ponto do seu inquilino Microsoft 365 a aplicação pode chegar. Esta é a escolha mais importante de toda a configuração.
+
+| Modelo | Permissão de aplicação do Graph | O que a aplicação pode alcançar | Escolha quando |
+|---|---|---|---|
+| **Sites selecionados** (recomendado) | `Sites.Selected` | Apenas os sites específicos que conceder explicitamente | Qualquer site contém dados sensíveis — salários, recursos humanos, finanças, informações de saúde |
+| **Todos os sites** | `Sites.Read.All` (leitura) ou `Sites.ReadWrite.All` (leitura + escrita) | **Todos** os sites do inquilino | Nenhum site é sensível e pretende a configuração mais simples |
+
+**A maioria das organizações deve escolher Sites selecionados.** Se um único site contiver informação sensível, o acesso a todo o inquilino expõe-na. Com `Sites.Selected`, a aplicação não consegue aceder a nada até um administrador a autorizar em cada site indicado, pelo que os sites que nunca autorizar ficam totalmente inacessíveis.
+
+<Aside type="caution">
+**Não** conceda `Directory.*`, `Files.*` nem `User.Read.All`. Um conector de documentos nunca precisa destas permissões e, em particular, `Directory.ReadWrite.All` permite ler e escrever em todo o seu diretório de identidades. Basta uma única permissão `Sites.Selected` (ou uma única `Sites.Read.All` / `Sites.ReadWrite.All`).
+</Aside>
+
+## Registar a aplicação no Azure
+
+1. Inicie sessão no [portal do Azure](https://portal.azure.com) e aceda a **Microsoft Entra ID** → **App registrations** → **+ New registration**.
+2. Introduza um nome (por exemplo, `PlaidCloud`).
+3. Em **Supported account types**, escolha **Accounts in this organizational directory only** (inquilino único — o caso mais comum).
+4. Deixe o **Redirect URI** em branco e clique em **Register**.
+5. Na página de resumo, copie o **Application (client) ID** (o seu **ID do cliente**) e o **Directory (tenant) ID** (o seu **ID do inquilino**).
+6. Aceda a **Certificates & secrets** → **+ New client secret**, defina uma descrição e uma data de expiração, selecione **Add** e copie imediatamente o **Valor** do segredo — não volta a ser apresentado.
+
+## Conceder a permissão de API
+
+Adicione exatamente **uma** permissão de **aplicação** do Microsoft Graph, correspondente ao modelo de acesso que escolheu:
+
+- **Sites selecionados:** `Sites.Selected`
+- **Todos os sites:** `Sites.Read.All` (só de leitura) ou `Sites.ReadWrite.All` (leitura + escrita)
+
+Passos: **API permissions** → **+ Add a permission** → **Microsoft Graph** → **Application permissions** → adicione a permissão acima → **Grant admin consent**.
+
+<Aside type="note">
+Conceder o consentimento do administrador exige um **Global Administrator** ou um **Privileged Role Administrator** — um SharePoint Administrator, por si só, não pode dar consentimento a uma permissão de aplicação.
+</Aside>
+
+Se escolheu **Todos os sites**, a configuração está concluída — avance para [Adicionar a conta no PlaidCloud](#adicionar-a-conta-no-plaidcloud). Se escolheu **Sites selecionados**, conceda agora a aplicação a cada site.
+
+## Conceder à aplicação acesso a cada site (modelo Sites selecionados)
+
+`Sites.Selected` não concede à aplicação qualquer acesso por si só — um administrador do SharePoint ou global tem de a autorizar em cada site que pretende que alcance. Não existe um ecrã no centro de administração para isto, pelo que utiliza duas chamadas do Microsoft Graph no [Graph Explorer](https://developer.microsoft.com/graph/graph-explorer). Como os sites são concedidos um a um, os sites sensíveis simplesmente nunca são concedidos.
+
+**Configuração única.** No Graph Explorer, com sessão iniciada como administrador do SharePoint/global, abra o separador **Modify permissions** e clique em **Consent** em `Sites.FullControl.All` (este âmbito é o que permite definir as concessões de sites). Se uma consulta posterior devolver `accessDenied`, é este consentimento que falta — termine a sessão e volte a iniciá-la depois de dar o consentimento, para atualizar o token.
+
+### Passo 1 — Encontrar o ID do site
+
+Liste os sites do seu inquilino (método **GET**):
+
+```text
+GET https://graph.microsoft.com/v1.0/sites?search=*&$select=displayName,webUrl,id
+```
+
+Ou obtenha diretamente um único site através do respetivo URL:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/contoso.sharepoint.com:/sites/TeamName
+```
+
+Copie o `id` do site a partir da resposta — tem a forma `contoso.sharepoint.com,<guid>,<guid>`.
+
+### Passo 2 — Conceder a aplicação
+
+Defina o método como **POST** na coleção `permissions` desse site (cole o `id` do Passo 1):
+
+```text
+POST https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+No separador **Request body**, cole o seguinte — defina `roles` como `["read"]` ou `["write"]` e utilize o **Application (client) ID** da sua aplicação:
+
+```json
+{
+  "roles": ["read"],
+  "grantedToIdentities": [
+    { "application": { "id": "your-client-id", "displayName": "PlaidCloud" } }
+  ]
+}
+```
+
+Execute a consulta. Em caso de êxito, é devolvido um objeto de permissão com um `id` e as suas `roles`. **Repita o Passo 2 para cada site** que pretende que o PlaidCloud alcance. Para rever o que um site concedeu:
+
+```text
+GET https://graph.microsoft.com/v1.0/sites/{site-id}/permissions
+```
+
+<Aside type="caution">
+`Sites.Selected` é concedido por **site**, não por pasta nem por biblioteca — conceder um site expõe tudo o que ele contém. Mantenha o conteúdo sensível em sites dedicados e separados, para que nunca seja incluído juntamente com conteúdo que pretende partilhar.
+</Aside>
+
+## Adicionar a conta no PlaidCloud
+
+1. Inicie sessão no PlaidCloud e selecione a área de trabalho onde ficará a conta.
+2. Aceda a `Document` → `Manage Accounts` → **+ New Account**.
+3. Escolha **OneDrive** como **Serviço**.
+4. Introduza um nome e uma descrição e escolha um **Modelo de segurança** (em caso de dúvida, deixe `Private`).
+5. Em **Credenciais de autenticação**, cole o **ID do cliente**, o **Segredo do cliente** e o **ID do inquilino do OneDrive** do registo da aplicação.
+6. Em **URL do site SharePoint**, cole o URL de um site ao qual a aplicação foi concedida (por exemplo, `https://contoso.sharepoint.com/sites/TeamName`). A lista **Unidade/Site** mostra então as bibliotecas de documentos desse site — escolha a que será a raiz da conta. Isto preenche o **Caminho inicial**.
+7. Selecione **Guardar**.
+
+<Aside type="note">
+É necessária uma unidade ou um site — a conta não pode ser guardada sem um. Sem isso, a conta listaria pastas, mas não ficheiros.
+</Aside>
+
+## Criar a conta com um assistente de IA
+
+Um assistente de IA ligado através do conector MCP do PlaidCloud pode criar ou atualizar a conta por si com a ferramenta `document_account_upsert`, depois de concluir os passos do Azure acima. Forneça-lhe os valores do registo da aplicação:
+
+| Campo da conta | Valor |
+|---|---|
+| `service_type` | `onedrive` |
+| `public_key` | Application (client) ID |
+| `private_key` | Segredo do cliente |
+| `tenant_id` | Directory (tenant) ID |
+| `start_path` | ID da unidade, opcionalmente seguido de `/folder` |
+
+As credenciais são apenas de escrita: `document_account_describe` oculta-as. A ferramenta está disponível na sua própria sessão MCP com sessão iniciada, não para passos de fluxo de trabalho nem para agentes na aplicação.

@@ -1,0 +1,281 @@
+---
+title: Przykłady zapytań NetSuite SuiteQL
+description: Gotowe do uruchomienia zapytania NetSuite SuiteQL dla PlaidCloud — zapisy dziennika, księga główna, zestawienie obrotów i sald, rachunek zysków i strat, bilans, otwarte należności, zamówienia sprzedaży, zamówienia zakupu i zapasy.
+sidebar:
+  label: Przykłady zapytań NetSuite
+  order: 6
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite-financial-queries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Gdy [połączenie NetSuite](/pl/guides/connections/netsuite/) już działa, ta strona pozwala szybko przejść do prawdziwego raportowania: zawiera gotowe do skopiowania zapytania SuiteQL dla danych finansowych i operacyjnych, od których zwykle zaczyna się pobieranie — zapisów dziennika, księgi głównej, zestawienia obrotów i sald, rachunku zysków i strat, bilansu, otwartych należności, otwartych zamówień i stanów magazynowych.
+
+Każdy przepis jest **punktem wyjścia**. Uruchom go, porównaj liczby z raportem w NetSuite, któremu ufasz, a następnie dostosuj filtry i kolumny do swojego konta.
+
+<Aside type="tip">
+Do typowych pobrań — zestawienia obrotów i sald, szczegółów księgi głównej lub list danych głównych, takich jak konta czy spółki zależne — prostszym rozwiązaniem są gotowe kroki importu NetSuite, które nie wymagają SuiteQL. Zobacz [Import danych finansowych z NetSuite](/pl/guides/connections/import-netsuite-financials/). Z poniższych zapytań skorzystaj wtedy, gdy potrzebujesz pobrania, którego te kroki nie obejmują.
+</Aside>
+
+## Jak uruchomić przepis
+
+<Steps>
+
+1. Dodaj [krok REST Request](/pl/guides/workflows/rest-request-step/) do przepływu pracy i ustaw **Połączenie** na swoje połączenie NetSuite, **Metoda** na `POST`, a **Punkt końcowy** na `/services/rest/query/v1/suiteql`.
+
+2. Umieść zapytanie w polu **Treść żądania** jako pojedynczy obiekt JSON — tekst zapytania trafia do `q`:
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 5"}
+   ```
+
+   Poniższe przepisy są pokazane jako czytelny kod SQL; wklejając któryś z nich do kroku, opakuj go jako `{"q": "…your query…"}`.
+
+3. Na karcie **Odpowiedź** pozostaw miejsce docelowe jako **Tabela** i **ustaw typ każdej kolumny** (zobacz uwagę „Typy kolumn” pod każdym przepisem). SuiteQL zwraca wszystko jako tekst, więc to typy sprawiają, że kwoty się sumują, a daty sortują.
+
+4. Kliknij **Wyślij żądanie testowe**, aby sprawdzić, czy zapytanie działa, a następnie uruchom krok.
+
+</Steps>
+
+<Aside type="caution">
+Te zapytania dotyczą standardowego schematu SuiteQL w NetSuite (`transaction`, `transactionaccountingline`, `account`, `item`). Dostępność tabel i pól, kody typów kont oraz kody stanów transakcji zależą od edycji NetSuite, włączonych funkcji i dostosowań konta — traktuj każdy przepis jako punkt wyjścia i przed poleganiem na nim zweryfikuj go z raportem NetSuite. Gdy coś się nie zgadza, zwrócony błąd wskazuje dokładną nazwę pola lub tabeli.
+</Aside>
+
+## Konwencje stosowane w każdym przepisie
+
+Kilka zasad obowiązuje we wszystkich przepisach finansowych:
+
+- **`transactionaccountingline` (TAL) to źródło prawdy dla księgi głównej.** Kwoty księgowań, obciążenia i uznania znajdują się tutaj, a nie w `transactionline`. Każdy przepis finansowy łączy dane przez tę tabelę.
+- **Tylko zapisy księgujące:** `tal.posting = 'T'` wyklucza wiersze niebędące księgowaniami.
+- **Podstawowa księga rachunkowa:** `tal.accountingbook = 1`. Zmieniaj to tylko wtedy, gdy używasz NetSuite Multi-Book.
+- **Znak kwoty:** NetSuite przechowuje kwoty księgowań jako **obciążenia dodatnie, uznania ujemne**. Przychód (uznanie) jest więc ujemną wartością `amount`. Przepisy rachunku zysków i strat oraz bilansu zmieniają znak tam, gdzie pożądana jest naturalna prezentacja z dodatnim przychodem, i każdy z nich o tym informuje.
+- **Deterministyczne `ORDER BY` jest wymagane** w każdym zapytaniu stronicowanym, w przeciwnym razie wiersze są po cichu duplikowane lub pomijane między stronami.
+- **Formatuj daty w zapytaniu:** `TO_CHAR(t.trandate, 'YYYY-MM-DD')` (w przeciwnym razie SuiteQL zwraca daty w formacie wyświetlania konta). Ustaw dla tych kolumn typ `Date`.
+
+<Aside type="caution">
+**Wiele spółek zależnych / wiele walut:** te przepisy odczytują kwoty własne każdej transakcji. Sumowanie danych ze spółek zależnych o różnych walutach jest **błędne z punktu widzenia konsolidacji** — przy raportowaniu obejmującym wiele spółek zależnych ogranicz dane do jednej spółki (`t.subsidiary = <id>`) albo wybierz kwoty skonsolidowane lub przeliczone po kursie walutowym.
+</Aside>
+
+## Przepisy finansowe
+
+### Zapisy dziennika
+
+Każdy wiersz księgowania zapisów dziennika w danym okresie, z kontem, obciążeniem i uznaniem.
+
+```sql
+SELECT
+    t.tranid                                AS entry_number,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS entry_date,
+    BUILTIN.DF(t.postingperiod)             AS period,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    tal.debit                               AS debit,
+    tal.credit                              AS credit,
+    tl.memo                                 AS line_memo
+FROM transaction t
+    JOIN transactionaccountingline tal ON tal.transaction = t.id
+    JOIN transactionline tl            ON tl.transaction = tal.transaction
+                                      AND tl.id = tal.transactionline
+    JOIN account a                     ON a.id = tal.account
+WHERE t.type = 'Journal'
+    AND tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY t.tranid, tl.id
+```
+
+**Typy kolumn:** `debit`, `credit` → `Currency`; `entry_date` → `Date`; wszystko inne → `Text`.
+
+### Szczegóły księgi głównej
+
+Ten sam kształt bez filtra `type = 'Journal'` — każdy wiersz księgowania we wszystkich typach transakcji, czyli księga główna za dany okres.
+
+```sql
+SELECT
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')       AS posting_date,
+    a.acctnumber                            AS account_number,
+    BUILTIN.DF(tal.account)                 AS account_name,
+    t.type                                  AS transaction_type,
+    t.tranid                                AS document_number,
+    BUILTIN.DF(t.entity)                    AS name,
+    tal.amount                              AS amount,
+    tl.memo                                 AS line_memo
+FROM transactionaccountingline tal
+    JOIN transaction t     ON t.id = tal.transaction
+    JOIN transactionline tl ON tl.transaction = tal.transaction
+                           AND tl.id = tal.transactionline
+    JOIN account a         ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+ORDER BY a.acctnumber, t.trandate, t.tranid, tl.id
+```
+
+**Typy kolumn:** `amount` → `Currency`; `posting_date` → `Date`; pozostałe → `Text`. Wartość `amount` ma obciążenia dodatnie, a uznania ujemne.
+
+### Zestawienie obrotów i sald
+
+Zmiana netto na każdym koncie w danym okresie. Gdy księgi się bilansują, suma dla wszystkich kont wynosi zero.
+
+```sql
+SELECT
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    a.accttype              AS account_type,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.acctnumber, BUILTIN.DF(a.id), a.accttype
+ORDER BY a.acctnumber
+```
+
+**Typy kolumn:** `balance` → `Currency`; pozostałe → `Text`.
+
+<Aside type="note">
+Aby dopasować dane do nazwanego okresu księgowego zamiast zakresu dat kalendarzowych, dołącz `accountingperiod` i filtruj według niego: `JOIN accountingperiod ap ON ap.id = t.postingperiod` … `WHERE ap.periodname = 'Jan 2026'`. Raportowanie według okresu i według dat kalendarzowych może dawać różne wyniki, gdy zapisy są księgowane do okresu w kolejności innej niż chronologiczna.
+</Aside>
+
+### Rachunek zysków i strat (sprawozdanie z wyniku)
+
+Zestawienie obrotów i sald ograniczone do kont przychodów i kosztów, ze zmienionym znakiem, tak aby przychody miały wartość dodatnią, a koszty ujemną — suma kolumny jest wtedy zyskiem netto.
+
+```sql
+SELECT
+    a.accttype                      AS account_type,
+    a.acctnumber                    AS account_number,
+    BUILTIN.DF(a.id)                AS account_name,
+    -SUM(tal.amount)                AS amount
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                       AND TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Typy kolumn:** `amount` → `Currency`; pozostałe → `Text`. W raporcie pogrupuj `account_type` jako Przychody (`Income`, `OthIncome`), Koszt własny sprzedaży (`COGS`) i Koszty (`Expense`, `OthExpense`); przychody minus koszt własny sprzedaży minus koszty to zysk netto.
+
+### Bilans
+
+Skumulowane salda kont **na dzień** — każdy wiersz księgowania od początku do dnia bilansowego, dla kont bilansowych (wszystkich, które nie są kontami rachunku zysków i strat).
+
+```sql
+SELECT
+    a.accttype              AS account_type,
+    a.acctnumber            AS account_number,
+    BUILTIN.DF(a.id)        AS account_name,
+    SUM(tal.amount)         AS balance
+FROM transactionaccountingline tal
+    JOIN transaction t ON t.id = tal.transaction
+    JOIN account a     ON a.id = tal.account
+WHERE tal.posting = 'T'
+    AND tal.accountingbook = 1
+    AND a.accttype NOT IN ('Income', 'COGS', 'Expense', 'OthIncome', 'OthExpense')
+    AND t.trandate <= TO_DATE('2026-01-31', 'YYYY-MM-DD')
+GROUP BY a.accttype, a.acctnumber, BUILTIN.DF(a.id)
+ORDER BY a.accttype, a.acctnumber
+```
+
+**Typy kolumn:** `balance` → `Currency`; pozostałe → `Text`. Aktywa mają wartość dodatnią (saldo normalne po stronie obciążeń); zobowiązania i kapitał własny mają wartość ujemną (saldo normalne po stronie uznań) — na potrzeby prezentacji zmień ich znak. Aktywa powinny być równe sumie zobowiązań i kapitału własnego.
+
+## Przepisy operacyjne
+
+### Otwarte należności (nieopłacone faktury klientów)
+
+Zaległe faktury klientów z kwotą pozostałą do zapłaty i terminem płatności — podstawa analizy wiekowej należności.
+
+```sql
+SELECT
+    t.tranid                            AS invoice_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+    TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+    t.foreigntotal                      AS invoice_total,
+    t.foreignamountunpaid               AS amount_unpaid
+FROM transaction t
+WHERE t.type = 'CustInvc'
+    AND t.foreignamountunpaid <> 0
+ORDER BY t.tranid
+```
+
+**Typy kolumn:** `invoice_total`, `amount_unpaid` → `Currency`; `invoice_date`, `due_date` → `Date`; pozostałe → `Text`. Przedziały wiekowe oblicz z `due_date` w kolejnym kroku.
+
+### Otwarte zamówienia sprzedaży
+
+Zamówienia sprzedaży, które nie zostały jeszcze w pełni zrealizowane, według klienta.
+
+```sql
+SELECT
+    t.tranid                            AS order_number,
+    BUILTIN.DF(t.entity)                AS customer,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS order_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS order_total
+FROM transaction t
+WHERE t.type = 'SalesOrd'
+    AND t.status IN ('SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E')
+ORDER BY t.tranid
+```
+
+**Typy kolumn:** `order_total` → `Currency`; `order_date` → `Date`; pozostałe → `Text`. Kody stanów `SalesOrd:*` (oczekuje na realizację, częściowo zrealizowane, oczekuje na fakturowanie) różnią się w zależności od konta — sprawdź, które z nich oznaczają u Ciebie „otwarte”, albo usuń filtr stanu i filtruj dane w dalszych krokach.
+
+### Otwarte zamówienia zakupu
+
+Zamówienia zakupu oczekujące na przyjęcie lub fakturowanie, według dostawcy.
+
+```sql
+SELECT
+    t.tranid                            AS po_number,
+    BUILTIN.DF(t.entity)                AS vendor,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS po_date,
+    BUILTIN.DF(t.status)                AS status,
+    t.foreigntotal                      AS po_total
+FROM transaction t
+WHERE t.type = 'PurchOrd'
+    AND t.status IN ('PurchOrd:B', 'PurchOrd:D', 'PurchOrd:E', 'PurchOrd:F')
+ORDER BY t.tranid
+```
+
+**Typy kolumn:** `po_total` → `Currency`; `po_date` → `Date`; pozostałe → `Text`. Podobnie jak w przypadku zamówień sprzedaży sprawdź, które kody stanów `PurchOrd:*` oznaczają „otwarte” na Twoim koncie.
+
+### Zapasy na stanie
+
+Ilość na stanie i dostępna w całej firmie dla pozycji magazynowych.
+
+```sql
+SELECT
+    i.itemid            AS item,
+    BUILTIN.DF(i.id)    AS description,
+    i.quantityonhand    AS on_hand,
+    i.quantityavailable AS available
+FROM item i
+WHERE i.itemtype = 'InvtPart'
+    AND i.isinactive = 'F'
+ORDER BY i.itemid
+```
+
+**Typy kolumn:** `on_hand`, `available` → `Decimal`; pozostałe → `Text`. Są to sumy dla całej firmy; ilości według lokalizacji pochodzą z danych NetSuite o lokalizacjach zapasów, które zależą od funkcji Multi-Location Inventory — sprawdź, co udostępnia Twoje konto.
+
+## Dostosowanie do swojego konta
+
+- **Ogranicz zakres na czas testów.** Dodaj `AND ROWNUM <= 100` (lub wąski zakres dat), aby pierwsze uruchomienie zwróciło wynik szybko, a następnie usuń to ograniczenie przy właściwym pobraniu.
+- **Szukaj przyczyny błędnej liczby w zapytaniu, a nie w łączniku.** Błąd konwersji wskazuje kolumnę i wartość; suma, która się nie zgadza, to prawie zawsze kwestia zakresu spółki zależnej lub waluty albo filtra księgowania lub okresu — sprawdź je najpierw.
+- **Każde pobranie w całości zastępuje tabelę.** Ogranicz klauzulę `WHERE` do potrzebnego wycinka (bieżący okres, tylko otwarte pozycje), zamiast przy każdym zaplanowanym uruchomieniu wyodrębniać całą historię.
+
+## Powiązane
+
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/) — najpierw skonfiguruj połączenie.
+- [Import danych finansowych z NetSuite](/pl/guides/connections/import-netsuite-financials/) — gotowe kroki importu sald, szczegółów księgi głównej i danych głównych, bez konieczności używania SuiteQL.
+- [Łącznik NetSuite REST](/pl/reference/connectors/rest/netsuite/) — dokumentacja pól i SuiteQL.
+- [Krok REST Request](/pl/guides/workflows/rest-request-step/) — krok, w którym uruchamiane są te zapytania.

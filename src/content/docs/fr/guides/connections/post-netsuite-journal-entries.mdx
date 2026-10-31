@@ -1,0 +1,146 @@
+---
+title: Comptabiliser des écritures de journal NetSuite
+description: Configurez l'étape Post NetSuite Journal Entry du workflow — mappez les champs d'en-tête et de ligne, prévisualisez et validez un lot, puis comptabilisez-le et consultez la table de résultat.
+sidebar:
+  label: Comptabiliser des écritures de journal NetSuite
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-netsuite-journal-entries.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Comptabilisez dans NetSuite des écritures de journal issues de tables de projet PlaidCloud avec l'étape de workflow **Post NetSuite Journal Entry**. Ce guide construit un lot à partir d'une table d'en-tête et d'une table de lignes, le prévisualise sans toucher à NetSuite, puis le comptabilise et relit le résultat.
+
+<Aside type="caution">
+Parcourez la section **Prévisualiser et valider** ci-dessous pour chaque lot avant de comptabiliser en réel, et rapprochez directement dans NetSuite quelques écritures la première fois que vous exécutez cette étape sur un compte réel.
+</Aside>
+
+## Prérequis
+
+- Une [connexion NetSuite](/fr/guides/connections/netsuite/) opérationnelle, avec un rôle autorisé à créer des écritures de journal (accès **Create** sur l'enregistrement Journal Entry, en plus de la configuration REST/OAuth décrite dans le guide de lecture).
+- Deux tables source dans votre projet :
+  - Une **table d'en-tête** avec une ligne par écriture de journal.
+  - Une **table de lignes** avec une ou plusieurs lignes de débit/crédit par écriture de journal.
+
+<Aside type="note">
+Les tables d'en-tête et de lignes peuvent provenir de n'importe où dans votre workflow : un import, une transformation préalable, un pivot. La seule exigence est que les deux comportent une colonne d'ID du journal reliant chaque ligne à sa ligne d'en-tête.
+</Aside>
+
+## Structurer vos tables d'en-tête et de lignes
+
+<Steps>
+
+1. Créez ou importez une **table d'en-tête** avec une ligne par écriture de journal. Elle doit au minimum contenir :
+
+   | Colonne | Correspond à | Obligatoire |
+   |---|---|---|
+   | Un identifiant de journal | ID du journal | Oui |
+   | La filiale NetSuite | Filiale | Oui |
+   | La date de l'écriture | Date de comptabilisation | Oui |
+   | La devise NetSuite | Devise | Non |
+   | Un mémo au niveau de l'écriture | Mémo | Non |
+   | Un ID externe fourni par l'appelant | ID externe | Non |
+
+2. Créez ou importez une **table de lignes** avec une ou plusieurs lignes par écriture de journal, partageant le même identifiant de journal que sa ligne d'en-tête :
+
+   | Colonne | Correspond à | Obligatoire |
+   |---|---|---|
+   | L'identifiant de journal | ID du journal | Oui |
+   | Le compte du grand livre | Compte | Oui |
+   | Le montant au débit (0 s'il n'y en a pas) | Débit | Oui |
+   | Le montant au crédit (0 s'il n'y en a pas) | Crédit | Oui |
+   | Un mémo au niveau de la ligne | Mémo | Non |
+   | Département, classe, emplacement, entité | Département / Classe / Emplacement / Entité | Non |
+
+   <Aside type="caution">
+   Les lignes de chaque écriture de journal doivent s'équilibrer : le total des débits doit être égal au total des crédits au centime près. Une écriture déséquilibrée n'est jamais envoyée à NetSuite ; elle est enregistrée comme une erreur (voir [Prévisualiser et valider](#prévisualiser-et-valider)).
+   </Aside>
+
+3. Regroupez les montants dans ces deux tables au niveau auquel vous comptabilisez (une écriture par jour, par document, par lot) à l'aide de vos [étapes de table](/fr/reference/workflow-steps/tables/) habituelles (un pivot, une agrégation avec regroupement ou une jointure). L'ID du journal est ce qui relie un ensemble de lignes à sa ligne d'en-tête : construisez-le comme une clé unique par écriture de journal et partagée par toutes les lignes qui en font partie.
+
+</Steps>
+
+## Configurer l'étape
+
+<Steps>
+
+1. Ajoutez une étape **Post NetSuite Journal Entry** à votre workflow.
+
+2. Dans l'onglet **Connexion**, définissez **Connexion NetSuite** sur votre connexion NetSuite et choisissez un **Environnement**.
+
+3. Dans l'onglet **Données** :
+
+   - Définissez **Table d'en-tête d'écriture de journal** et **Table de lignes d'écriture de journal** sur les tables que vous avez construites ci-dessus.
+   - Laissez **Test Only Mode** coché pour l'instant ; voir [Prévisualiser et valider](#prévisualiser-et-valider).
+   - Laissez **Continue posting remaining entries if one entry fails** coché, sauf si vous préférez qu'un lot s'arrête net à sa première écriture erronée.
+   - Laissez **Submit Asynchronously** désactivé, sauf si vous avez précisément besoin du mode d'acceptation asynchrone de NetSuite pour un lot à gros volume ; voir [Soumission asynchrone](#soumission-asynchrone) ci-dessous.
+   - Définissez **Table de résultat de comptabilisation** sur une table que PlaidCloud peut créer ou écraser. Vous en aurez besoin à chaque exécution, pas seulement la première ; voir [Lire la table de résultat](#lire-la-table-de-résultat).
+
+4. Dans l'onglet **Mappage des en-têtes**, mappez les colonnes de votre table d'en-tête à ID du journal, Filiale, Date de comptabilisation et, si vous les avez, Devise, Mémo et ID externe. Utilisez **Filtres des en-têtes** si vous souhaitez ne comptabiliser qu'un sous-ensemble des lignes d'en-tête.
+
+5. Dans l'onglet **Mappage des lignes**, mappez les colonnes de votre table de lignes à ID du journal, Compte, Débit, Crédit et, si vous les avez, Mémo, Département, Classe, Emplacement et Entité. Utilisez **Filtres des lignes** de la même façon.
+
+</Steps>
+
+<Aside type="note">
+Chaque champ d'ID interne (Filiale, Compte, Devise, Département, Classe, Emplacement, Entité) attend l'ID interne NetSuite, et non son nom d'affichage. Si vos données source contiennent plutôt le nom d'affichage, résolvez-le d'abord en ID interne (une recherche dans une petite table de référence extraite de NetSuite, ou une jointure avec une table que vous maintenez).
+</Aside>
+
+## Prévisualiser et valider
+
+Avec **Test Only Mode** coché, exécutez l'étape. PlaidCloud construit chaque écriture de journal à partir de vos données mappées et effectue les mêmes contrôles qu'avant une comptabilisation (débits et crédits équilibrés, champs obligatoires renseignés, date de comptabilisation valide), sans effectuer le moindre appel à NetSuite. Rien n'est comptabilisé.
+
+<Steps>
+
+1. Exécutez l'étape (voir [Exécuter une seule étape d'un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+2. Ouvrez la table de résultat et vérifiez que chaque ligne que vous comptiez comptabiliser affiche `status = validated`. Toute ligne indiquant `error` mentionne l'ID du journal de l'écriture et le problème, le plus souvent une écriture déséquilibrée, un compte manquant, ou une filiale ou une date de comptabilisation vide.
+
+3. Corrigez les données source (ou vos mappages et filtres) pour chaque ligne `error` et exécutez à nouveau jusqu'à ce que le lot soit validé sans erreur.
+
+</Steps>
+
+## Comptabiliser le lot
+
+Une fois qu'un lot est validé sans erreur, décochez **Test Only Mode** et exécutez à nouveau l'étape. Cette fois, PlaidCloud comptabilise réellement chaque écriture validée dans NetSuite.
+
+<Aside type="caution">
+Comptabiliser n'est pas la même chose que revalider : exécutez toujours à nouveau l'étape en Test Only Mode après toute modification de vos données source ou de vos mappages, et ne le désactivez que lorsque vous êtes sûr du résultat. Une étape planifiée pour s'exécuter sans surveillance doit être traitée comme n'importe quelle autre écriture automatisée dans vos livres comptables.
+</Aside>
+
+## Soumission asynchrone
+
+**Submit Asynchronously** envoie chaque écriture avec l'en-tête d'acceptation asynchrone de NetSuite, au lieu d'attendre une création suivie d'une relecture synchrones. NetSuite met l'écriture en file d'attente et répond immédiatement ; PlaidCloud l'enregistre comme `pending` avec une référence de soumission plutôt que comme `posted` ou `error`.
+
+<Aside type="caution">
+**Rien ne résout automatiquement une écriture en attente aujourd'hui.** C'est la réexécution de cette étape qui la résout : l'étape recherche une écriture en attente grâce à sa référence de soumission et enregistre son résultat désormais définitif (`posted` ou `error`). Si vous activez Submit Asynchronously, intégrez la réexécution de l'étape à votre workflow (une réexécution planifiée, ou une étape de suivi plus loin dans le même workflow) plutôt que de considérer chaque ligne `pending` comme terminée. Laissez cette option désactivée, sauf si vous en avez précisément besoin pour un lot à gros volume dont le mode synchrone est trop lent.
+</Aside>
+
+## Lire la table de résultat
+
+La table de résultat contient une ligne par écriture de journal tentée, quel que soit le mode dans lequel l'étape s'est exécutée :
+
+| Colonne | Description |
+|---|---|
+| journal_id | L'ID du journal issu de votre table d'en-tête. |
+| external_id | L'ID externe utilisé pour cette tentative de comptabilisation (voir ci-dessous). |
+| internal_id | L'ID interne NetSuite de l'écriture créée, ou la référence de soumission asynchrone tant qu'elle est `pending`. Vide en Test Only Mode et en cas d'erreur. |
+| status | `validated`, `posted`, `pending` (Submit Asynchronously a fait accepter l'écriture mais NetSuite ne l'a pas encore confirmée) ou `error`. |
+| message | Détail de l'erreur pour `error`. Vide pour `posted`/`validated`. |
+
+Construisez les étapes en aval (une notification sur toute ligne `error`, une jointure avec votre table d'en-tête pour enregistrer `internal_id`) à partir de cette table plutôt qu'à partir du statut d'exécution de l'étape elle-même, car une écriture erronée dans un gros lot ne fait pas échouer l'ensemble de l'étape lorsque **Continue posting remaining entries** est activé.
+
+## Réexécuter un lot en toute sécurité
+
+Chaque écriture est comptabilisée avec un ID externe déterministe construit à partir de votre projet, de la connexion, de l'ID du journal, de la date de comptabilisation et des montants de ses lignes. Réexécuter l'étape sur une écriture **inchangée** réutilise ce même ID externe, et la gestion native des ID externes de NetSuite évite de créer un doublon : réexécuter un workflow après un échec transitoire est donc sans risque pour les écritures qui n'ont pas changé.
+
+<Aside type="caution">
+Cette protection ne couvre que les écritures inchangées. Si vous modifiez les lignes d'une écriture (un montant différent, une ligne ajoutée ou supprimée) et réexécutez l'étape, PlaidCloud calcule un nouvel ID externe et NetSuite l'enregistre comme une **seconde** écriture de journal, et non comme une mise à jour de la première. Pour corriger une écriture déjà comptabilisée, corrigez-la directement dans NetSuite. Si vous avez besoin que les ID externes suivent votre propre schéma, renseigner votre propre valeur dans la colonne ID externe de la table d'en-tête remplace celle générée par PlaidCloud.
+</Aside>
+
+## Voir aussi
+
+- [Se connecter à NetSuite](/fr/guides/connections/netsuite/) : configurez la connexion par laquelle cette étape comptabilise
+- [Référence de Post NetSuite Journal Entry](/fr/reference/workflow-steps/netsuite/post-netsuite-journal-entry/) : référence complète des champs et de la configuration
+- [Exemples de requêtes SuiteQL NetSuite](/fr/guides/connections/netsuite-financial-queries/) : extrayez les filiales, comptes et dimensions dont vous aurez besoin sous forme d'ID internes
+- [Utilisation avancée du Data Mapper](/fr/reference/workflow-steps/common/advanced-data-mapper-usage/)

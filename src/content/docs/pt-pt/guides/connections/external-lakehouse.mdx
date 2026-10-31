@@ -1,0 +1,229 @@
+---
+title: Utilizar o seu próprio data warehouse
+description: Ligue o seu próprio warehouse Snowflake ou Databricks, guarde as tabelas de uma área de trabalho e execute aí os respetivos fluxos de trabalho, inicie sessão com a identidade do seu warehouse, gira vários data warehouses e veja quanto custa cada execução.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+As tabelas de um projeto residem normalmente no PlaidCloud Lakehouse integrado. Em alternativa, um administrador da área de trabalho pode ligar **o seu próprio warehouse Snowflake ou Databricks** a partir do PlaidCloud, sem ajuda do pessoal do PlaidCloud. Os fluxos de trabalho passam então a ler e escrever as tabelas do projeto diretamente no seu warehouse. Os dados permanecem na sua conta, sob a sua governação e faturação, enquanto o PlaidCloud conduz as transformações, os fluxos de trabalho e os painéis de controlo sobre eles.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 190" role="img" aria-label="Um projeto PlaidCloud executa fluxos de trabalho que leem e escrevem tabelas diretamente no lakehouse Snowflake ou Databricks do cliente, onde os dados permanecem." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="xl-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="66" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="90" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">projeto PlaidCloud</text>
+  <text x="91" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">fluxos de trabalho + painéis de controlo</text>
+  <path d="M166 88 L262 88" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <text x="214" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">leitura / escrita</text>
+  <rect x="264" y="60" width="180" height="70" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="354" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">ligação</text>
+  <text x="354" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Snowflake ou Databricks</text>
+  <path d="M444 95 L540 95" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <rect x="514" y="60" width="150" height="70" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="88" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">o seu lakehouse</text>
+  <text x="589" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">os dados ficam aqui</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">As tabelas do projeto residem no seu warehouse; o PlaidCloud lê-as e escreve-as no local, em vez de copiar os dados para o seu próprio armazenamento.</figcaption>
+</figure>
+
+## Ligar o seu data warehouse
+
+Apenas um administrador da área de trabalho pode ligar, alterar ou remover um data warehouse.
+
+1. Abra o menu do utilizador e escolha **Utilizar o seu próprio data warehouse**. Também pode escolher **Ligar** na linha **Utilize o seu data warehouse** da lista de verificação da página inicial, ou escolher **Utilizar este como o seu data warehouse** numa caixa de diálogo de ligação Snowflake ou Databricks.
+2. Escolha **Snowflake** ou **Databricks**.
+3. Ligue de uma de duas formas: **Sign in with Snowflake** ou **Sign in with Databricks** (a mais rápida, descrita em [Iniciar sessão com Snowflake ou Databricks](#iniciar-sessão-com-snowflake-ou-databricks)), ou execute o script de configuração e cole as credenciais que ele produz (abaixo).
+
+### 1. Executar primeiro o script de configuração
+
+<Aside type="caution">Execute o script de configuração antes de ligar. A verificação da ligação falha enquanto não o fizer.</Aside>
+
+A caixa de diálogo gera um script de configuração a partir dos nomes que escolher e atualiza-o à medida que escreve. Copie-o com **Copiar script** e execute-o na sua própria conta. O script nunca altera os seus warehouses existentes.
+
+| | Snowflake | Databricks |
+|---|---|---|
+| Executar como | `ACCOUNTADMIN` | Um administrador do espaço de trabalho e do metastore |
+| Cria | Um warehouse que é suspenso após 60 segundos de inatividade, com um limite mensal de créditos que notifica aos 90 por cento e suspende aos 100 por cento; uma base de dados; uma função; um utilizador de serviço | Um service principal; um SQL warehouse que para quando está inativo; o catálogo, caso ainda não exista |
+| Nomes que pode alterar | Armazém de dados, Tamanho, Limite mensal de créditos, Base de dados, Função de acesso, Utilizador de serviço | Nome do service principal, Nome do SQL warehouse, Tamanho, Parar após minutos de inatividade, Catálogo |
+| Valores predefinidos | `PLAIDCLOUD_WH` (`XSMALL`, 100 créditos por mês), `PLAIDCLOUD`, `PLAIDCLOUD_ROLE`, `PLAIDCLOUD_SVC` | `plaidcloud`, `PlaidCloud` (`2X-Small`, 10 minutos de inatividade), catálogo `plaidcloud` |
+| Autenticação | Par de chaves (o script mostra como gerar um) | Segredo OAuth do service principal |
+
+O script também configura o seguinte.
+
+- **Acesso à rede.** O PlaidCloud liga-se a partir do endereço `130.211.116.97/32`. O script do Snowflake cria uma política de rede que permite apenas esse endereço ao utilizador de serviço. No Databricks, se a sua área de trabalho já impõe listas de acesso por IP, o script inclui a instrução que o permite; adicione esse endereço a qualquer política de rede ou lista de acesso por IP que proteja a sua conta.
+- **As políticas mantêm-se.** No Snowflake, à função são concedidos os privilégios para aplicar políticas e etiquetas de acesso a linhas, de mascaramento, de projeção, de agregação e de junção, pelo que as suas políticas se mantêm quando o PlaidCloud reescreve uma tabela. No Databricks, conceda ao service principal `EXECUTE` em qualquer função de filtro de linhas ou de máscara de colunas que utilize.
+- **Custos das execuções.** A função do Snowflake recebe a função de base de dados `SNOWFLAKE.GOVERNANCE_VIEWER`, que permite ao PlaidCloud ler os créditos atribuídos a cada execução e também abrange [Última leitura](/pt-pt/guides/projects/managing-tables-and-views/#última-leitura). O Databricks recebe acesso de leitura ao histórico de consultas e aos tamanhos dos warehouses no catálogo `system`.
+- **Última leitura.** No Databricks, o script também concede `USE SCHEMA` em `system.access` e `SELECT` em `system.access.table_lineage`, de que necessita a informação de Última leitura da tabela. Consulte [Custo do warehouse por execução](#custo-do-warehouse-por-execução).
+
+### 2. Ligar
+
+| Campo | Motor | O que introduzir |
+|---|---|---|
+| URL da conta | Snowflake | O anfitrião da sua conta, por exemplo `myorg-myaccount.snowflakecomputing.com`. |
+| Chave privada | Snowflake | A chave privada (PEM) do utilizador de serviço. Um par de chaves nunca expira. |
+| URL da área de trabalho | Databricks | O anfitrião da sua área de trabalho, por exemplo `adb-1234567890123456.7.azuredatabricks.net`. |
+| Caminho HTTP do SQL warehouse | Databricks | Por exemplo `/sql/1.0/warehouses/abc123def456`. |
+| ID da aplicação | Databricks | O ID da aplicação (cliente) do service principal. |
+| Segredo OAuth | Databricks | O segredo OAuth do service principal. O PlaidCloud renova-o por si. |
+
+Em **Avançado**, pode utilizar um token de acesso programático do Snowflake ou um token de acesso pessoal do Databricks. Os tokens expiram: nessa data, o PlaidCloud deixa de aceder ao seu warehouse até que adicione um novo. Catorze dias antes e depois, um banner indica a data e oferece **Renovar**. Um par de chaves ou um segredo OAuth evita a expiração.
+
+O endereço tem de ser o URL público da sua conta, terminado em `.snowflakecomputing.com`, `.cloud.databricks.com`, `.azuredatabricks.net` ou `.gcp.databricks.com`. Os endpoints privados e personalizados não são suportados.
+
+### 3. Verificar e depois utilizar
+
+- **Verificar ligação** testa o endereço, o início de sessão e todos os privilégios de que o PlaidCloud necessita, e não guarda nada.
+- **Utilizar como o meu data warehouse** executa a mesma verificação, associa o warehouse, define-o como predefinido e aguarda enquanto a área de trabalho passa a utilizá-lo. Normalmente demora alguns minutos e pode fechar a janela. Os novos projetos da área de trabalho passam então a utilizar o seu warehouse.
+
+Uma verificação que falhe explica o problema e a solução em linguagem simples. Os privilégios obrigatórios em falta são listados como instruções `GRANT` prontas a executar, com um botão **Copiar**, um botão **Copiar tudo** e **Mostrar o script de configuração**. **Copiar para o suporte** copia o texto de erro do próprio warehouse para o suporte do PlaidCloud.
+
+A verificação lista também, em separado, as concessões em **Recomendado — ativa «Última leitura»**, cada uma com **Copiar**. Permitem que a informação de [Última leitura](/pt-pt/guides/projects/managing-tables-and-views/#última-leitura) da tabela leia o histórico do seu warehouse. Nunca o impedem de utilizar o warehouse: sem elas, este liga-se na mesma e a Última leitura mostra **Read history incomplete**.
+
+- **Snowflake:** `GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE <role>;` (`IMPORTED PRIVILEGES` na base de dados `SNOWFLAKE` também funciona). A Última leitura precisa do Access History, que a edição Standard do Snowflake não tem.
+- **Databricks:** `USE CATALOG` em `system`, `USE SCHEMA` em `system.access` e `SELECT` em `system.access.table_lineage` para o service principal.
+
+| O que vê | Solução |
+|---|---|
+| O utilizador de serviço não pode utilizar um objeto | Conceda à respetiva função o privilégio nesse objeto. O script de configuração contém todas as concessões. |
+| O seu warehouse está suspenso ou não existe | Verifique o nome do warehouse e se este consegue iniciar-se sozinho (`AUTO_RESUME` no Snowflake, um SQL warehouse em execução no Databricks). |
+| O seu warehouse esgotou a quota de créditos | Aumente a quota do monitor de recursos ou o orçamento, ou aguarde pela reposição. |
+| Uma política de rede está a bloquear o PlaidCloud | Permita `130.211.116.97/32` na política, como faz o script de configuração. |
+| O token ou a chave expirou ou deixou de ser válido | Crie um novo token ou mude para um par de chaves. |
+| O Unity Catalog negou o acesso ao service principal | Conceda `USE CATALOG`, `CREATE SCHEMA` e `USE SCHEMA` no catálogo. |
+| O PlaidCloud não conseguiu iniciar sessão | Verifique o utilizador ou service principal e a respetiva chave, token ou segredo. |
+| O PlaidCloud não conseguiu aceder ao seu warehouse | Verifique o URL e permita o endereço do PlaidCloud em qualquer política de rede ou lista de acesso por IP. |
+| Os endpoints privados ou personalizados não são suportados | Utilize o URL público da sua conta. |
+
+## Iniciar sessão com Snowflake ou Databricks
+
+Em vez de colar uma chave, um segredo ou um token, um administrador pode associar o warehouse iniciando sessão. Cada pessoa inicia então sessão com a sua própria identidade Snowflake ou Databricks, pelo que os painéis de controlo e as consultas são executados com as suas próprias permissões no seu warehouse.
+
+### O que um administrador configura primeiro
+
+Uma única vez, na sua própria conta, um administrador da conta regista o PlaidCloud como aplicação de início de sessão. A caixa de diálogo **Utilizar o seu próprio data warehouse** mostra o texto exato a utilizar, incluindo o URL de redirecionamento do PlaidCloud.
+
+- **Snowflake.** Execute a instrução `CREATE SECURITY INTEGRATION` apresentada na caixa de diálogo e, em seguida, copie `OAUTH_CLIENT_ID` do resultado da instrução `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS`.
+- **Databricks.** Na consola da conta, em **Settings > App connections**, adicione uma aplicação com o nome `PlaidCloud`. Atribua-lhe o URL de redirecionamento apresentado na caixa de diálogo e acesso a todas as APIs, deixe **Generate a client secret** desativado e copie o respetivo ID de cliente.
+
+### Associar o warehouse
+
+1. Em **Quickest: sign in with Snowflake** (ou Databricks), introduza o **URL da conta** (ou **URL da área de trabalho**) e o **ID do cliente**.
+2. No Snowflake, introduza a **Base de dados** e a **Função de dados para o PlaidCloud**. O **Armazém de dados** é opcional e, por omissão, é o seu. No Databricks, introduza o **Caminho HTTP do SQL warehouse**. O **Catálogo** é opcional e, por omissão, é o seu.
+3. Escolha **Sign in with Snowflake** ou **Sign in with Databricks**, inicie sessão na conta do seu fornecedor e aprove.
+
+O PlaidCloud cria na sua conta a sua própria identidade de serviço, dedicada a este warehouse. Os fluxos de trabalho, os agendamentos e tudo o resto que não tenha uma pessoa por trás são executados com essa identidade.
+
+- **Snowflake.** O PlaidCloud cria um novo utilizador de serviço com um par de chaves que detém apenas a função de dados que indicar. A função tem de ser uma função de dados simples. O PlaidCloud recusa uma função que seja aquela com que iniciou sessão, que seja ou herde `ACCOUNTADMIN`, `SECURITYADMIN`, `USERADMIN`, `SYSADMIN` ou `ORGADMIN`, ou que detenha `CREATE USER`, `CREATE ROLE`, `MANAGE GRANTS`, `CREATE INTEGRATION` ou `CREATE NETWORK POLICY`, ou que seja proprietária de um utilizador. A função pode deter as concessões `APPLY ROW ACCESS POLICY`, `APPLY MASKING POLICY`, `APPLY PROJECTION POLICY`, `APPLY AGGREGATION POLICY`, `APPLY JOIN POLICY` e `APPLY TAG` do script de configuração, de que as tabelas reconstruídas precisam para manter as respetivas políticas. O PlaidCloud também recusa reutilizar um utilizador Snowflake existente. A função com que inicia sessão tem de poder criar utilizadores e conceder a função de dados.
+- **Databricks.** O PlaidCloud cria um novo service principal apenas com acesso ao SQL warehouse e com os privilégios de dados do catálogo. Inicie sessão como administrador do espaço de trabalho para que o PlaidCloud o possa criar.
+
+Se lhe faltar um privilégio de que a identidade de serviço necessita, o warehouse é na mesma associado para as pessoas com sessão iniciada, com um aviso que o indica, e as execuções de fluxos de trabalho são recusadas com o mesmo motivo até que um administrador inicie sessão novamente.
+
+### Todos iniciam sessão
+
+Quando a área de trabalho tem um warehouse acedido por início de sessão, todos os membros veem **Iniciar sessão no seu warehouse** no menu do utilizador. Escolha-o e, em seguida, **Sign in with Snowflake** ou **Sign in with Databricks**. O PlaidCloud mantém a sua sessão iniciada. Um painel de controlo aberto sem início de sessão, ou depois de a sua sessão ter expirado, mostra *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.* (ou *Databricks*). Inicie sessão novamente a partir desse item do menu.
+
+Um painel de controlo num warehouse deste tipo é executado com as permissões do próprio visualizador nesse warehouse. Um visualizador que não tenha iniciado sessão recebe a mensagem: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
+
+## Gerir data warehouses
+
+Um administrador da área de trabalho abre o menu do utilizador e escolhe **Gerir data warehouses**. A janela **Os seus data warehouses** lista o **Nome**, o **Tipo**, a **Predefinição**, os **Projetos** e o **Estado** de cada warehouse.
+
+| Botão | O que faz |
+|---|---|
+| **Adicionar armazém de dados** | Abre o mesmo fluxo que a ligação, com o título **Adicionar um data warehouse**. O seu warehouse é adicionado e a predefinição para novos projetos não se altera. |
+| **Definir como predefinição** | Os novos projetos utilizam este warehouse. Os projetos já criados mantêm-se no warehouse em que foram criados. |
+| **Remover** | Desliga o warehouse. Só está disponível quando o warehouse não é o predefinido e nenhum projeto o utiliza. |
+
+<Aside type="note">Um warehouse recém-adicionado pode demorar vários minutos a aparecer na sua área de trabalho. Cada área de trabalho é executada isolada das outras e assimila por si as alterações de configuração, pelo que, até a alteração chegar, o warehouse não é listado e os projetos ainda não o podem utilizar. Se continuar sem aparecer passada uma hora, contacte o suporte do PlaidCloud.</Aside>
+
+Quando remove um warehouse, o PlaidCloud revoga a respetiva credencial na sua conta (incluindo todos os inícios de sessão e a identidade de serviço) e elimina a sua cópia. Os seus dados permanecem no seu warehouse. Se não for possível revogar a credencial, o PlaidCloud indica-lhe que a revogue você mesmo na sua conta.
+
+## Custo do warehouse por execução
+
+No seu próprio warehouse, o histórico de execuções de um fluxo de trabalho Alteryx convertido mostra uma coluna **Custo do warehouse**, e a janela [Comprove a sua migração](/pt-pt/guides/workflows/validate-converted-alteryx-workflows/#comprovar-a-sua-migração) mostra o custo da última execução e uma estimativa para a seguinte. Os custos são em créditos no Snowflake e em DBUs no Databricks.
+
+| Etiqueta | Significado |
+|---|---|
+| *attributed* | O Snowflake faturou estes créditos às consultas da execução, lidos através da concessão `GOVERNANCE_VIEWER`. A atribuição surge após o atraso de relatório do Snowflake. |
+| *estimated* | Calculado a partir do tempo de execução das consultas e do tamanho do warehouse, apresentado com um ≈ inicial. É sempre o caso no Databricks, e no Snowflake antes de a atribuição chegar ou sem a concessão. |
+
+O custo abrange os passos que o motor do PlaidCloud executou. Uma execução com preço parcial é marcada como *partial*, e uma execução cujo custo ainda não foi comunicado indica-o.
+
+## As suas políticas e descrições mantêm-se
+
+As descrições de esquemas, tabelas e colunas definidas no PlaidCloud são escritas como comentários no catálogo do seu próprio warehouse. As políticas de acesso a linhas, de mascaramento, de projeção, de agregação e de junção no Snowflake, e os filtros de linhas e as máscaras de colunas no Databricks, permanecem associados quando o PlaidCloud substitui, recria ou clona uma tabela. Se não for possível manter uma política, o PlaidCloud deixa a tabela como estava e a mensagem indica a política e o motivo.
+
+## Associar um projeto ao seu data warehouse
+
+Quando a sua área de trabalho tem um warehouse ligado, a caixa de diálogo **Novo projeto** (**Analyze > Projetos > Novo projeto**) oferece um seletor de lakehouse: escolha **Predefinição do inquilino** ou selecione um warehouse específico. A **Predefinição do inquilino** é o PlaidCloud Lakehouse integrado, a menos que um warehouse seja o predefinido, caso em que os novos projetos passam automaticamente para esse. Utilize **Utilizar como o meu data warehouse** ou **Definir como predefinição** em [Gerir data warehouses](#gerir-data-warehouses) para definir a predefinição. Afeta apenas os projetos criados depois; os projetos existentes mantêm o backend com que foram criados. A partir daí:
+
+- Todas as tabelas que os fluxos de trabalho do projeto criam, carregam ou transformam são criadas e escritas no seu lakehouse.
+- As leituras — em passos, vistas e painéis de controlo — são executadas como consultas ao seu warehouse.
+- Nada é copiado para o PlaidCloud Lakehouse; os dados permanecem na sua conta.
+
+Crie fluxos de trabalho exatamente como faria no lakehouse integrado — os passos de importação, transformação, junção e publicação funcionam todos da mesma forma. O backend é definido quando o projeto é criado e aplica-se a todo o projeto.
+
+## Importar ficheiros para um projeto associado a um lakehouse
+
+A importação de um ficheiro CSV, Parquet, XML ou Access para um projeto associado a um lakehouse carrega-o através do **caminho nativo de carregamento em massa em paralelo** do próprio warehouse: uma stage interna do Snowflake mais `COPY INTO` para o Snowflake, um volume gerido do Databricks mais `COPY INTO` para o Databricks — em vez de colocar o ficheiro numa stage através de um bucket de nuvem externo. Não há IAM de nuvem adicional para configurar, e funciona da mesma forma independentemente da nuvem em que o seu warehouse é executado.
+
+## Exportar resultados de consultas e tabelas
+
+A exportação de resultados de consultas ou tabelas de um projeto associado a um lakehouse entrega-os diretamente no armazenamento na nuvem, em vez de encaminhar todas as linhas de volta através do PlaidCloud:
+
+- **Snowflake** — a exportação é executada como um unload do lado do servidor do Snowflake (`COPY INTO` numa stage), pelo que o warehouse escreve os resultados diretamente no armazenamento. As exportações grandes são divididas automaticamente em vários ficheiros (anteriormente, uma exportação acima do limite de ficheiro único do Snowflake falhava).
+- **Databricks** — a exportação é executada como um unload do lado do servidor do Databricks (`INSERT OVERWRITE DIRECTORY` para um volume gerido do Unity Catalog), pelo que o warehouse escreve e codifica os próprios resultados e o PlaidCloud apenas retransmite os ficheiros terminados para o armazenamento. As exportações grandes distribuem-se automaticamente por vários ficheiros e o CSV pode ser entregue comprimido em gzip.
+
+## Painéis de controlo sobre dados do lakehouse
+
+Os painéis de controlo funcionam com ambos os motores.
+
+- **Databricks** — os painéis de controlo ligam-se através do driver do Databricks, com as credenciais OAuth do service principal (ou um token de acesso pessoal). Num warehouse associado por [início de sessão](#iniciar-sessão-com-snowflake-ou-databricks), o painel de controlo de cada visualizador é executado com a sua própria identidade Databricks.
+- **Snowflake** — os painéis de controlo ligam-se com o utilizador de serviço e o par de chaves do warehouse. Num warehouse associado por [início de sessão](#iniciar-sessão-com-snowflake-ou-databricks), o painel de controlo de cada visualizador é executado, em vez disso, com a sua própria identidade Snowflake. O painel de controlo de um projeto é configurado quando o projeto é criado ou publicado.
+
+## Pedir ao PlaidCloud que registe um data warehouse por si
+
+Não tem de ligar o data warehouse por si. Forneça ao seu contacto do PlaidCloud os detalhes abaixo para o motor que está a ligar, e um administrador regista-o em seu nome.
+
+### Snowflake
+
+| Campo | O que fornecer |
+|---|---|
+| Hostname | O anfitrião da sua conta Snowflake. |
+| Superuser | O utilizador Snowflake com o qual o PlaidCloud se autentica. |
+| Base de dados | A base de dados em que o PlaidCloud cria e gere os esquemas dos projetos. |
+| Armazém de dados | O warehouse de computação com o qual o PlaidCloud executa as consultas. |
+| Função de acesso | A função Snowflake que o PlaidCloud assume. |
+| Chave privada | A chave privada PEM **em bruto e sem encriptação** para autenticação por par de chaves — cole o texto da própria chave, não uma cópia codificada em base64. As chaves protegidas por frase-passe ainda não são suportadas. |
+
+Gere um par de chaves e atribua a chave pública ao superutilizador do Snowflake antes de entregar a chave privada. A função tem de poder criar, ler e escrever tabelas na base de dados de destino.
+
+### Databricks
+
+| Campo | O que fornecer |
+|---|---|
+| Hostname | O URL da sua área de trabalho Databricks. |
+| Caminho HTTP | O caminho HTTP do SQL warehouse em que o PlaidCloud executa as consultas. |
+| Unity Catalog | O catálogo do Unity Catalog em que o PlaidCloud cria e gere os esquemas dos projetos. |
+| Token de acesso pessoal | Um PAT do Databricks para autenticação. |
+
+A identidade do token tem de poder criar, ler e escrever tabelas nesse catálogo.
+
+Nenhum dos registos pede um esquema — cada projeto obtém o seu, derivado automaticamente do respetivo DSN quando o projeto é associado ao lakehouse.
+
+O formulário de registo tem um botão **Testar ligação** que abre uma ligação em direto com os detalhes introduzidos e comunica o êxito ou o motivo da falha, sem guardar nada — para que as credenciais possam ser verificadas antes de o lakehouse ser registado. Um teste do Snowflake precisa da chave privada PEM em bruto e sem encriptação (uma chave protegida por frase-passe é comunicada como não suportada); um teste do Databricks utiliza o PAT.
+
+Um warehouse registado não fica utilizável no momento em que é guardado. Pode demorar vários minutos a aparecer na área de trabalho, pelo mesmo motivo que um warehouse que adiciona por si (consulte **Gerir data warehouses**).
+
+<Aside type="note">A ligação a um catálogo Iceberg/Lakekeeper é registada em separado e é opcional — não é necessária para utilizar um warehouse Snowflake ou Databricks.</Aside>
+
+## Relacionado
+
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)
+- [Referência do conector Snowflake](/pt-pt/reference/connectors/databases/snowflake/)
+- [Referência do conector Azure Databricks](/pt-pt/reference/connectors/databases/azure-databricks/)
+- [Início de sessão único para a sua área de trabalho](/pt-pt/administration/control-plane/workspace-configuration/#início-de-sessão-único)
+- [Gerir projetos](/pt-pt/guides/projects/managing-projects/)

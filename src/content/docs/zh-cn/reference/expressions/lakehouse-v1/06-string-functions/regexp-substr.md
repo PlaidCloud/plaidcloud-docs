@@ -1,0 +1,70 @@
+---
+title: REGEXP_SUBSTR（Lakehouse v1）
+description: REGEXP_SUBSTR——返回字符串 expr 中与正则表达式匹配的子串。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/06-string-functions/regexp-substr.md
+---
+
+返回字符串 `expr` 中与模式 `pat` 指定的正则表达式匹配的子串，无匹配时返回 NULL。如果 expr 或 pat 为 NULL，则返回值为 NULL。
+
+## Analyze 语法
+
+```python
+func.regexp_substr(<expr>, <pat[, pos[, occurrence[, match_type]]]>)
+```
+
+## Analyze 示例
+
+```python
+func.regexp_substr('abc def ghi', '[a-z]+')
+┌─────────────────────────────────────────────┐
+│ func.regexp_substr('abc def ghi', '[a-z]+') │
+├─────────────────────────────────────────────┤
+│ abc                                         │
+└─────────────────────────────────────────────┘
+```
+
+## SQL 语法
+
+```sql
+REGEXP_SUBSTR(<expr>, <pat[, pos[, occurrence[, match_type]]]>)
+```
+
+## 参数
+
+| 参数  | 说明                                                                                               |
+|------------|-----------------------------------------------------------------------------------------------------------|
+| expr       | 待匹配的字符串 expr                                                                        |
+| pat        | 正则表达式                                                                                    |
+| pos        | 可选。expr 中开始搜索的位置。省略时默认为 1。                |
+| occurrence | 可选。要搜索第几次匹配。省略时默认为 1。                        |
+| match_type | 可选。指定匹配方式的字符串，含义与 REGEXP_LIKE() 中的说明相同。 |
+
+## 返回类型
+
+`VARCHAR`
+
+## SQL 示例
+
+```sql
+SELECT REGEXP_SUBSTR('abc def ghi', '[a-z]+');
+┌────────────────────────────────────────┐
+│ REGEXP_SUBSTR('abc def ghi', '[a-z]+') │
+├────────────────────────────────────────┤
+│ abc                                    │
+└────────────────────────────────────────┘
+
+SELECT REGEXP_SUBSTR('abc def ghi', '[a-z]+', 1, 3);
+┌──────────────────────────────────────────────┐
+│ REGEXP_SUBSTR('abc def ghi', '[a-z]+', 1, 3) │
+├──────────────────────────────────────────────┤
+│ ghi                                          │
+└──────────────────────────────────────────────┘
+
+SELECT REGEXP_SUBSTR('周 周周 周周周 周周周周', '周+', 2, 3);
+┌──────────────────────────────────────────────────────────────────┐
+│ REGEXP_SUBSTR('周 周周 周周周 周周周周', '周+', 2, 3)            │
+├──────────────────────────────────────────────────────────────────┤
+│ 周周周周                                                         │
+└──────────────────────────────────────────────────────────────────┘
+
+```

@@ -1,0 +1,137 @@
+---
+title: Acumatica에 연결
+description: PlaidCloud를 Acumatica에 연결하여 표준 엔터티 가져오기 단계로 마스터 및 트랜잭션 데이터를 가져온 다음, Acumatica 전기 단계로 분개, 청구서, 청구, 결제를 전기합니다.
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloud를 Acumatica의 계약 기반 REST API에 연결하면 OData를 직접 작성하지 않고도 참조 데이터와 트랜잭션 데이터를 가져오고, 분개 트랜잭션, 판매 청구서, 청구, 결제를 다시 전기할 수 있습니다. 이 가이드에서는 연결, 가져오기 단계, 전기 단계를 다룹니다.
+
+<Aside type="caution">
+모든 가져오기는 먼저 샌드박스 회사를 대상으로 실행하고, 실제로 전기하기 전에 모든 전기 배치에 대해 아래의 **미리 보기 및 검증**을 거치십시오.
+</Aside>
+
+## 사전 요구 사항
+
+Acumatica에서 다음이 필요합니다.
+
+- **인스턴스 기본 URL**(예: `https://yourcompany.acumatica.com`).
+- **회사** 이름(PlaidCloud가 로그인하는 정확한 회사 ID)과, 브랜치를 사용하는 경우 전기할 **브랜치**.
+- PlaidCloud 전용 **사용자 이름**과 **암호**. 읽을 엔터티와 전기할 문서 화면에 액세스할 수 있는 역할이 있어야 합니다.
+- 해당 사용자에 대해 활성화된 **계약 기반 REST API** 액세스(**System > Integration Preferences**, 최신 Acumatica 버전에서는 기본적으로 켜져 있음).
+
+<Aside type="note">
+Acumatica의 계약 기반 REST API는 토큰 기반이 아니라 **세션 기반**입니다. PlaidCloud는 모든 호출에서 인증하는 대신 제한된 작업 단위(가져오기 한 번, 전기 배치 한 번)마다 한 번 로그인하고 완료되면 로그아웃합니다. Acumatica 평가판 및 하위 티어 라이선스는 **동시** API 세션 수를 2개까지로 제한할 수 있으므로, 같은 연결로 여러 Acumatica 단계를 병렬로 실행하지 마십시오.
+</Aside>
+
+## 연결 만들기
+
+<Steps>
+
+1. **Tools > Connections**를 열고 `New Connection`을 클릭합니다.
+
+2. 메뉴에서 **Acumatica**를 선택합니다.
+
+3. 필드를 입력합니다.
+
+   | 필드 | 값 |
+   |---|---|
+   | 이름 | 알아보기 쉬운 이름(예: `Acumatica Prod`). |
+   | 인스턴스 기본 URL | 인스턴스 URL(예: `https://yourcompany.acumatica.com`). |
+   | 엔드포인트 이름 | 계약 엔드포인트 이름. 사용자 지정 엔드포인트를 게시하지 않았다면 `Default`입니다. |
+   | 엔드포인트 버전 | 선택 사항(예: `25.200.001`). 비워 두면 엔드포인트의 최신 게시 버전을 사용합니다. |
+   | 회사/테넌트 | 정확한 Acumatica 회사 ID. |
+   | 브랜치 | 선택 사항. 비워 두면 로그인 사용자의 기본 브랜치를 사용합니다. |
+   | 사용자 이름 | PlaidCloud API 사용자. |
+   | 암호 | PlaidCloud API 사용자의 암호. |
+
+4. `Create`를 클릭합니다.
+
+</Steps>
+
+## 연결 테스트
+
+<Steps>
+
+1. 워크플로에 **Import Acumatica Entity** 단계를 추가합니다.
+
+2. **Acumatica 연결**을 만든 연결로, **엔터티 유형**을 `account`로, **대상 테이블**을 임시 테이블로 설정합니다.
+
+3. 단계를 실행합니다([워크플로에서 단계 하나 실행](/ko/guides/workflows/running-one-step-in-a-workflow/) 참조).
+
+</Steps>
+
+대상 테이블에 데이터가 채워지면 로그인, 회사, 브랜치가 모두 올바른 것입니다. 오류가 발생하면 잘못된 자격 증명, 잘못된 회사, REST API 액세스 권한이 없는 역할 등 문제가 무엇인지 오류에 표시됩니다.
+
+## 데이터 가져오기
+
+<Steps>
+
+1. **Import Acumatica Entity** 단계를 추가하고 **Acumatica 연결**과 **대상 테이블**을 설정합니다.
+
+2. **엔터티 유형**을 원하는 레코드로 설정합니다. 마스터 데이터 및 참조 목록으로는 `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project`가 있고, 트랜잭션 엔터티로는 `sales_invoice`, `bill`, `sales_order`, `shipment`가 있습니다.
+
+3. 활성 플래그가 있는 엔터티에서 활성 레코드만 가져오려면 **활성만**을 선택한 상태로 둡니다.
+
+4. 해당 시점 이후에 변경된 행만 가져오려면 **업데이트 기준일**을 ISO 날짜 또는 날짜/시간으로 설정합니다(저장되는 증분 커서가 아니라 요청 측 필터이므로 실행할 때마다 기준 시점을 직접 지정합니다).
+
+5. 대량 가져오기의 범위를 제한하려면 **필터**를 추가합니다. 각 필터는 `{field, operator, value}` 절(`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) 또는 `{field, from, to}` 범위이며, 엔터티별로 Acumatica가 서버 측에서 실제로 필터링할 수 있는 필드로 제한됩니다. PlaidCloud는 해당 엔터티가 지원하지 않는 필터 필드를 조용히 무시하지 않고 거부합니다.
+
+6. 단계를 실행하고 대상 테이블을 확인합니다.
+
+</Steps>
+
+<Aside type="note">
+시산표, 총계정원장 트랜잭션 상세, 현재 재고, 예산, 내부 거래 데이터는 모두 위의 계약 기반 엔터티가 아니라 Acumatica Generic Inquiry(GI)에 있으며, PlaidCloud는 GI를 대신 생성하지 않습니다. 이러한 데이터가 필요하면 Acumatica에서 GI를 만들고 대신 [Generic REST 연결](/ko/reference/connectors/rest/generic-rest/)로 가져오십시오.
+</Aside>
+
+## 문서 전기
+
+**Acumatica Post** 단계는 모든 ERP 전기 단계가 사용하는 동일한 공유 쓰기 파이프라인을 통해 **JournalTransaction**, **SalesInvoice**, **Bill**, **Payment**의 네 가지 문서 유형을 전기합니다.
+
+<Steps>
+
+1. 문서당 한 행으로 구성된 **헤더 테이블**을 만들고, `ref`(문서 식별자), `doc_type`(`JournalTransaction`, `SalesInvoice`, `Bill` 또는 `Payment`), `posting_date`, `party_id`(문서 유형에 필요한 경우 고객/공급업체), `memo`, `due_date`, `branch_id` 열을 포함합니다. 하나의 배치에 여러 문서 유형을 섞을 수 있으며, PlaidCloud가 전기하기 전에 `doc_type`별로 나눕니다.
+
+2. `ref`당 한 개 이상의 행으로 구성된 **라인 테이블**을 문서 유형에 맞게 만듭니다.
+
+   | 문서 유형 | 라인 열 |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. **Acumatica Post** 단계를 추가하고 **Acumatica 연결**, **환경**, **헤더 테이블**, **라인 테이블**, **결과 테이블**을 설정합니다.
+
+4. **Validate Only**를 선택한 상태로 두고 단계를 실행합니다. PlaidCloud가 원장 클레임 없이, 아무것도 전기하지 않고 모든 문서를 만들고 검사합니다.
+
+5. 결과 테이블(문서당 한 행: `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`)을 검토합니다. `error` 행을 수정하고 다시 검증합니다.
+
+6. **Validate Only**를 선택 해제하고 다시 실행하여 실제로 전기합니다. 첫 번째 실패한 문서에서 배치가 즉시 중단되기를 원하지 않는다면 **Continue On Error**를 선택한 상태로 둡니다.
+
+</Steps>
+
+### 전기 방식
+
+Acumatica는 모든 문서를 **보류 상태**로 만든 다음, PlaidCloud가 릴리스 작업을 호출하며 이 작업은 비동기로 실행됩니다(`202` 응답을 받고 완료될 때까지 폴링한 다음, `204`로 릴리스가 확인됨). PlaidCloud는 릴리스가 **확인**된 후에만 문서를 `posted`로 보고합니다. 문서가 등록되었지만 릴리스가 확인되지 않으면 전기된 것으로 기록되지 않고 격리 상태로 남으므로, 보류 상태에 멈춘 문서가 조용히 성공으로 처리되는 일은 없습니다.
+
+### 기능 제한 — 실제 전기 전에 읽어 보십시오
+
+<Aside type="caution">
+- **기본 멱등성 키가 없습니다.** Acumatica의 쓰기 API에는 문서별 멱등성 필드가 없으므로, 재시도되거나 다시 실행된 배치에서 이중 전기를 막는 유일한 장치는 PlaidCloud 자체의 원장 클레임입니다. 같은 문서를 다른 방법으로 전기하여 이 단계의 원장을 우회하지 마십시오.
+- **역분개는 수동입니다.** Acumatica의 계약 기반 API에는 어떤 문서 유형에도 문서화된 무효화/역분개 작업이 없으므로 PlaidCloud는 이를 흉내 내지 않습니다. 전기된 문서는 이 단계에서 역분개할 수 없습니다. 잘못 전기된 문서는 Acumatica에서 직접 수정하십시오.
+- **결제는 신뢰할 수 있는 조회 방법이 없습니다.** Acumatica에는 모호한 결과(시간 초과, 응답 누락) 이후 결제를 PlaidCloud의 요청과 대조할 수 있는 문서화된 필드가 없습니다. 불확실한 결제는 추측하지 않고 격리되며, Acumatica에서 직접 확인하여 해결합니다.
+- **라인 항목 비용 센터 필터링은 서버 측에서 지원되지 않습니다.** Acumatica의 `$filter`는 문서의 라인 항목 차원까지 적용되지 않으므로, 헤더/엔터티 수준에서 필터링하고 라인 수준 범위 지정은 가져온 후 워크플로에서 수행하십시오.
+</Aside>
+
+## 관련 항목
+
+- [Acumatica REST 커넥터](/ko/reference/connectors/rest/acumatica/) — 필드 참조.
+- [Import Acumatica Entity 단계](/ko/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents 단계](/ko/reference/workflow-steps/acumatica/acumatica-post/)
+- [ERP 전기 이력 검토](/ko/guides/connections/erp-post-history/) — 모든 Acumatica 전기 시도와 현재 상태에 대한 상시 기록.
+- [연결 만들기 및 관리](/ko/guides/connections/create-connection/)

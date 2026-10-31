@@ -1,0 +1,50 @@
+---
+title: "D365 F&O: Post Journal Entryステップ"
+description: ヘッダーテーブルと明細テーブルから、Dynamics 365 Finance & Operationsに総勘定元帳の仕訳を転記します。何かを転記する前にすべての仕訳を検証するプレビューモードがあります。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dynamics-365-fo/dynamics-365-fo-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[D365 F&O接続](/ja/guides/connections/dynamics-365-fo/)を通じて、PlaidCloud共有のERP書き込みパイプライン経由で、Dynamics 365 Finance & Operationsに総勘定元帳の仕訳を転記します。このステップは、ヘッダーテーブル（仕訳1件につき1行）と明細テーブル（1件の仕訳につき1行以上の借方/貸方の行）を受け取り、各仕訳をD365 F&Oの非同期カスタムサービスによる仕訳転記アクションに送信します。**Validate Only**では、元帳の確保も転記も行わずに、すべての仕訳を構築して検証します。任意の結果テーブルには、各仕訳の結果が記録されます。
+
+<Aside type="caution">
+すべてのバッチは、まず**Validate Only**で実行し、結果テーブルを確認してください。また、このステップに本番の仕訳の無人転記を任せる前に、いくつかの転記をD365 F&O上で直接照合してください。
+</Aside>
+
+## 設定
+
+### 接続
+
+- **D365 F&O Connection** — 転記に使用するD365 F&O接続です。
+
+### データ
+
+- **ヘッダーテーブル** — 仕訳1件につき1行です。`journal_id`（仕訳の識別子、必須）、`journal_name`（転記先のD365 F&O仕訳名、必須）、`posting_date`、`description` があります。
+- **明細テーブル** — `journal_id` ごとに1行以上です。`account`、`debit`、`credit`、および元帳が必要とするディメンション列があります。
+- **結果テーブル** — 出力テーブルIDです。仕訳ごとに1行で、`journal_id`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message` を持ちます。
+- **Validate Only** — デフォルトでオンです。事前チェックのみを行い、元帳の確保も転記も行いません。このフィールドが完全に省略されたステップ設定（たとえば、REST API、MCP、ワークフローバンドルのインポートで作成されたもの）も、本番転記ではなく、Validate Onlyがデフォルトになります。
+- **Continue On Error** — デフォルトでオンです。1件が失敗した後も、残りの仕訳の転記を続けます。オフにすると、最初の失敗でバッチを停止します。
+
+## 転記の仕組み
+
+PlaidCloudは各仕訳をD365 F&Oの非同期カスタムサービス転記アクションに送信し、サービスがその仕訳の最終状態を報告するまでポーリングします。仕訳が `posted` として報告されるのは、その最終状態が**確認済み**になった場合のみです。受け付けられたものの最終状態が確定しない仕訳は、送信が受け付けられただけで成功として記録されることはなく、隔離されたままになります（転記済みとは報告されず、黙って破棄されることもありません）。
+
+## 転記済みの仕訳を訂正する
+
+このステップは、転記済みの仕訳を削除したり書き換えたりすることはありません。訂正するには、元の仕訳を直接編集するのではなく、元の仕訳と借方と貸方を入れ替えた新しい仕訳（転記済みの反対仕訳）を転記します。
+
+## 機能の制限
+
+| 制限事項 | 意味 |
+|---|---|| 取消は新しい仕訳であり、その場での編集ではない | 訂正では、借方と貸方を入れ替えた新しい反対仕訳が転記されます。転記済みの仕訳を無効にしたり削除したりすることはできません。 |
+| ディメンションの検証は元帳の設定に依存する | 勘定科目構成で無効な財務ディメンションの組み合わせは、D365 F&O自身の検証で失敗し、PlaidCloudで事前に検出されるのではなく、`error` の行として表示されます。 |
+
+## 関連項目
+
+- [Dynamics 365 Finance & Operationsに接続する](/ja/guides/connections/dynamics-365-fo/) — 設定、プレビュー、転記までを説明する完全なチュートリアル
+- [Dynamics 365 F&O RESTコネクタ](/ja/reference/connectors/rest/dynamics-365-fo/)
+- [D365 F&Oステップ](/ja/reference/workflow-steps/dynamics-365-fo/)
+- [ERP転記履歴を確認する](/ja/guides/connections/erp-post-history/)

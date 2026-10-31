@@ -15,7 +15,9 @@ Importing the kit also applies the PlaidCloud look to Plotly and Matplotlib char
 
 ## Start From a Template
 
-The kit includes a command that writes a working starter app. Run it from any folder, then edit the table and column names:
+In [Panel Studio](/guides/panel-apps/studio/), **New Studio App** starts from a blank app, a table or view, another Studio app, or an app in the [gallery](/guides/panel-apps/gallery/), with no command to run.
+
+For an app you keep in a git repository, the kit includes a command that writes a working starter app. Run it from any folder, then edit the table and column names:
 
 ```bash
 plaidcloud-panel new --layout dashboard --title "Sales" --table sales --filters region,year --measure amount
@@ -30,7 +32,7 @@ plaidcloud-panel new --layout dashboard --title "Sales" --table sales --filters 
 | `--measure` | The numeric column to total. |
 | `--dir` | Where to write `app.py` and `requirements.txt`. Defaults to the current folder. |
 
-The command stops without writing anything if `app.py` already exists. Commit the two files to your repository and [publish the app](/guides/panel-apps/creating/).
+The command stops without writing anything if `app.py` already exists. Commit the two files to your repository and [publish it as a server app](/guides/panel-apps/creating/#creating-a-server-app).
 
 ## An Example App
 

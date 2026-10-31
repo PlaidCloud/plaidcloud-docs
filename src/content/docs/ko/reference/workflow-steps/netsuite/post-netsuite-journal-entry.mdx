@@ -1,0 +1,99 @@
+---
+title: Post NetSuite Journal Entry 단계
+description: PlaidCloud의 헤더 및 라인 테이블에서 하나 이상의 분개 전표를 NetSuite에 전기합니다. 전기 전에 모든 전표를 검증하는 미리 보기 모드를 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/post-netsuite-journal-entry.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+[NetSuite 연결](/ko/guides/connections/netsuite/)을 통해 NetSuite에 분개 전표를 전기합니다. 이 단계는 분개 전표당 한 행인 헤더 테이블과 전표당 하나 이상의 차변/대변 행을 가진 라인 테이블, 두 개의 소스 테이블을 받아 라인을 분개 전표별로 그룹화하고 각 전표를 NetSuite에 전기합니다. **Test Only Mode**는 NetSuite를 호출하지 않고 모든 전표를 작성하고 검사하며, 선택 사항인 결과 테이블에는 각 전표의 결과가 기록됩니다.
+
+<Aside type="caution">
+이 단계로 실제 전표를 무인 전기하기 전에 모든 배치를 먼저 **Test Only Mode**로 실행하고, 결과 테이블을 검토하고, 몇 건의 전기 내용을 NetSuite에서 직접 대사하십시오.
+</Aside>
+
+## 구성
+
+### 연결
+
+- **NetSuite 연결** — 전기에 사용할 NetSuite 연결로, 유형이 NetSuite인 연결만 표시됩니다.
+- **환경** — 연결의 환경입니다.
+
+NetSuite 연결은 **Tools > Connections**에서 관리합니다. [NetSuite에 연결](/ko/guides/connections/netsuite/)을 참조하십시오.
+
+### 데이터
+
+- **분개 항목 헤더 테이블** — 분개 전표당 한 행입니다.
+- **분개 항목 줄 테이블** — 분개 전표당 하나 이상의 차변/대변 행이며, 분개 ID로 해당 헤더 행에 연결됩니다.
+- **Test Only Mode** — 기본적으로 선택되어 있습니다. 아래 검사에 따라 각 분개 전표를 검증하지만 NetSuite를 호출하지 않으므로 아무것도 전기되지 않습니다. 실제로 전기하려면 선택을 해제하십시오. 이 필드를 아예 생략한 단계 구성(예: REST API, MCP 또는 워크플로 번들 가져오기로 작성한 구성)도 실제 전기가 아니라 Test Only Mode가 기본값입니다.
+- **Continue posting remaining entries if one entry fails** — 기본적으로 선택되어 있습니다. 전표가 검사나 전기 자체에 실패하면 PlaidCloud는 해당 전표에 대한 오류를 기록하고 배치를 중단하지 않고 나머지를 계속 처리합니다.
+- **Submit Asynchronously** — 기본적으로 꺼져 있습니다. 동기 방식의 생성 후 다시 읽기 경로 대신 NetSuite의 비동기 `Prefer: respond-async` 헤더로 각 전표를 제출합니다. NetSuite가 작업을 큐에 넣고, PlaidCloud는 작업이 완료되기를 기다리지 않고 해당 전표를 제출 참조와 함께 `pending`으로 기록합니다. 이 설정은 연결 단위로 선택하는 것이므로, 특정 연결에서는 모든 실행에 같은 설정을 사용하고 혼용하지 마십시오. **현재 보류 중인 전표를 자동으로 해결하는 기능은 없으며, 단계를 다시 실행하면** 전표를 조회하여 확정된 결과를 기록하는 방식으로 해결됩니다. 이 옵션을 켜는 경우 `pending` 행을 완료된 것으로 간주하지 말고 단계를 다시 실행하거나 NetSuite를 직접 확인하십시오.
+- **전기 결과 테이블** — 선택 사항입니다. 설정하면 PlaidCloud가 분개 전표당 한 행으로 이 테이블을 (덮어)씁니다. [결과 테이블 열](#결과-테이블-열)을 참조하십시오.
+
+### 헤더 맵 / 헤더 필터
+
+[표준 데이터 매핑 및 필터 탭](/ko/reference/workflow-steps/common/advanced-data-mapper-usage/)을 사용하여 헤더 테이블의 열을 아래 분개 전표 필드에 매핑하고, 필요에 따라 전기할 헤더 행을 필터링합니다.
+
+| 필드 | 필수 | 참고 |
+|---|---|---|
+| 분개 ID | 예 | 헤더 행을 해당 라인에 연결합니다. 고유한 분개 ID마다 한 행입니다. |
+| 자회사 | 예 | NetSuite 자회사 내부 ID입니다. |
+| 전기 일자 | 예 | 전표의 거래 날짜입니다. |
+| 통화 | 아니요 | NetSuite 통화 내부 ID입니다. |
+| 메모 | 아니요 | 전표 수준 메모입니다. |
+| 외부 ID | 아니요 | PlaidCloud가 전표에 대해 생성하는 결정론적 외부 ID를 대체합니다. [재전기 및 중복 전표](#재전기-및-중복-전표)를 참조하십시오. |
+
+### 라인 맵 / 라인 필터
+
+라인 테이블의 열을 매핑하고, 필요에 따라 전기할 라인 행을 필터링합니다.
+
+| 필드 | 필수 | 참고 |
+|---|---|---|
+| 분개 ID | 예 | 헤더 행의 분개 ID와 일치합니다. |
+| 계정 | 예 | NetSuite 총계정원장 계정 내부 ID입니다. |
+| 차변 | 예 | 차변 금액이며, 대변 전용 라인은 0입니다. |
+| 대변 | 예 | 대변 금액이며, 차변 전용 라인은 0입니다. |
+| 메모 | 아니요 | 라인 수준 메모입니다. |
+| 부서 | 아니요 | NetSuite 부서 내부 ID입니다. |
+| 클래스 | 아니요 | NetSuite 클래스 내부 ID입니다. |
+| 위치 | 아니요 | NetSuite 위치 내부 ID입니다. |
+| 엔터티 | 아니요 | NetSuite 엔터티(고객 또는 공급업체) 내부 ID입니다. |
+
+## 전기 방식
+
+PlaidCloud는 라인 테이블을 분개 ID로 그룹화하여 헤더 행마다 NetSuite 분개 전표를 하나씩 작성합니다. 각 전표를 전기하기 전에, 또는 Test Only Mode에서는 검증됨으로 기록하기 전에 PlaidCloud는 다음을 검사합니다.
+
+- 전표에 라인이 하나 이상 있는지
+- 차변과 대변이 센트 단위까지 일치하는지
+- 모든 라인에 계정이 있는지
+- 헤더 행에 자회사가 있는지
+- 전기 일자가 유효한 날짜인지
+
+검사에 실패하면 해당 전표에 대한 오류 행이 기록되며, **Continue posting remaining entries if one entry fails**를 끄지 않은 경우 배치의 다음 전표로 넘어갑니다.
+
+### 재전기 및 중복 전표
+
+각 전표는 프로젝트, 연결, 분개 ID, 전기 일자, 라인 금액으로 구성된 결정론적 외부 ID와 함께 전기됩니다. 라인이 변경되지 않은 전표를 다시 전기하면 같은 외부 ID가 재사용되며, NetSuite 자체의 외부 ID 처리로 인해 중복 분개 전표가 생성되지 않습니다. 전표의 라인을 하나라도 변경하면(금액 변경, 라인 추가 또는 제거 등) PlaidCloud가 새 외부 ID를 계산하며, NetSuite는 이를 기존 전표의 업데이트가 아닌 새 전표로 받아들입니다. ID를 직접 제어하려면 헤더 테이블의 외부 ID 열에 값을 설정하십시오.
+
+<Aside type="caution">
+재전기는 NetSuite가 이미 가지고 있는 전표와 동일하다고 판단하는 전표만 중복 제거합니다. 전표의 라인을 수정한 뒤 단계를 다시 실행해도 NetSuite의 원래 전기 내용은 업데이트되지 않으며, 두 번째 전표가 생성됩니다. 전기된 전표는 변경된 데이터로 이 단계를 다시 실행하는 대신 NetSuite에서 직접 수정하십시오.
+</Aside>
+
+### 결과 테이블 열
+
+| 열 | 설명 |
+|---|---|
+| journal_id | 헤더 테이블의 분개 ID입니다. |
+| external_id | 이번 전기 시도에 사용된 외부 ID입니다. |
+| internal_id | 생성된 분개 전표의 NetSuite 내부 ID이며, `pending` 상태에서는 비동기 제출 참조입니다. Test Only Mode와 오류 시에는 비어 있습니다. |
+| status | `validated`(Test Only Mode), `posted`, `pending`(Submit Asynchronously가 전표를 접수했으나 NetSuite가 아직 확인하지 않음) 또는 `error`입니다. |
+| message | `error`일 때는 오류 상세 정보이고, `pending`일 때는 단계를 다시 실행하면 해결된다는 안내입니다. `posted`/`validated`일 때는 비어 있습니다. |
+
+## 관련 항목
+
+- [NetSuite에 연결](/ko/guides/connections/netsuite/)
+- [NetSuite 분개 전표 전기](/ko/guides/connections/post-netsuite-journal-entries/) — 구성, 미리 보기, 전기를 다루는 전체 안내
+- [NetSuite REST 커넥터](/ko/reference/connectors/rest/netsuite/)
+- [NetSuite 단계](/ko/reference/workflow-steps/netsuite/)

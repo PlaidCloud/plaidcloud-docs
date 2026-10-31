@@ -1,0 +1,136 @@
+---
+title: Crear un modelo de asignación
+description: Tutorial integral. Distribuya un conjunto de costos entre los consumidores mediante datos de inductores y una jerarquía.
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/build-an-allocation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Este tutorial explica cómo crear una asignación de costos completa en PlaidCloud. Al final tendrá un modelo funcional que distribuye un conjunto de costos entre una dimensión de destino mediante datos de inductores, la base del costeo basado en actividades, el cobro interno de TI y la distribución de servicios compartidos.
+
+Toma aproximadamente una hora. Las asignaciones son la función más distintiva de PlaidCloud; esta es la mejor forma de entender el modelo.
+
+## Lo que va a crear
+
+Distribuir el costo total del departamento de TI entre las unidades de negocio, ponderado por el número de usuarios de cada unidad.
+
+```text
+IT cost table  →  ┐
+                  ├→  Allocation step  →  results table
+User counts    →  ┤      (driver-based)
+                  ┘
+                  ↑
+        Business unit dimension
+```
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud ([inicie una prueba gratuita](https://app.plaidcloud.com) si no tiene uno)
+- Un proyecto que contenga o pueda importar:
+  - **Valores que asignar**: el costo de TI por mes, total o por subcategoría
+  - **Datos de inductores**: el número de usuarios por unidad de negocio
+  - **Una dimensión**: la jerarquía de unidades de negocio (unidades → divisiones → empresa)
+- Familiaridad con [Conceptos](/es/get-started/concepts/): espacio de trabajo, proyecto, flujo de trabajo, dimensión, asignación
+
+<Aside>
+Si aún no tiene los datos de origen, puede preparar archivos CSV pequeños y seguir [Cargar, transformar y publicar datos](/es/get-started/tutorials/load-and-transform-data/) para importarlos primero.
+</Aside>
+
+## Paso 1: Preparar las entradas
+
+Confirme que tiene estos tres elementos en su proyecto:
+
+| Objeto | Qué contiene |
+|---|---|
+| Tabla `it_cost` | El costo total de TI (por ejemplo, una fila por mes con el importe) |
+| Tabla `users_by_bu` | Una fila por unidad de negocio con una columna `user_count` |
+| Dimensión `business_units` | La jerarquía de unidades de negocio, con nodos hoja que coinciden con los nombres de las unidades de `users_by_bu` |
+
+Si falta algo, cárguelo mediante un flujo de trabajo antes de continuar.
+
+## Paso 2: Crear el flujo de trabajo de asignación
+
+<Steps>
+
+1. Abra el proyecto y cambie a la pestaña **Flujos de trabajo**.
+2. Haga clic en **Flujo de trabajo nuevo**. Asígnele el nombre “Asignación de costos de TI”.
+3. Abra el nuevo flujo de trabajo en el explorador de flujos de trabajo.
+
+</Steps>
+
+## Paso 3: Agregar el paso de asignación
+
+<Steps>
+
+1. Agregue un nuevo paso de la categoría **Asignaciones**. Elija **Allocation Rules**, la opción más flexible.
+2. Configure el origen:
+   - **Tabla de origen**: `it_cost`
+   - **Columna de importe de origen**: la columna con el importe en dólares
+3. Configure el inductor:
+   - **Tabla de inductores**: `users_by_bu`
+   - **Columna del valor del inductor**: `user_count`
+   - **Columna de coincidencia del inductor**: la columna con el nombre de la unidad de negocio
+4. Configure el destino:
+   - **Dimensión de destino**: `business_units`
+   - **Nivel de destino**: elija a qué nivel de la jerarquía se asigna (normalmente el nivel hoja)
+5. Configure la salida:
+   - **Tabla de resultados**: `it_cost_allocated`
+
+</Steps>
+
+## Paso 4: Ejecutar e inspeccionar
+
+<Steps>
+
+1. Ejecute el paso.
+2. Abra la pestaña **Tablas** y entre en `it_cost_allocated`.
+3. Cada fila representa una porción del costo que va a una unidad de negocio. Las columnas incluyen:
+   - El importe de origen (por ejemplo, el costo total de TI del mes)
+   - La unidad de negocio de destino
+   - El valor del inductor utilizado (el número de usuarios de esa unidad)
+   - La tasa de asignación (número de usuarios ÷ número total de usuarios de todas las unidades)
+   - El importe asignado (origen × tasa)
+
+</Steps>
+
+## Paso 5: Verificar las cifras
+
+Tres comprobaciones que toda asignación debe superar:
+
+1. **Conciliación del total**: la suma de los importes asignados es igual al total de origen (dentro de la tolerancia de redondeo)
+2. **Suma de tasas**: las tasas de asignación suman 1.0 (= 100 %) por cada fila de origen
+3. **Cobertura**: cada unidad de negocio de su dimensión que deba recibir una porción efectivamente la recibió
+
+La guía [Resultados de asignación](/es/guides/allocations/results/allocation-results/) incluye una lista de verificación completa.
+
+Si algo no cuadra, los problemas más comunes son:
+- **Faltan datos de inductores**: una unidad de negocio de la dimensión sin fila en `users_by_bu` no recibirá una asignación
+- **Nombres que no coinciden**: la tabla de inductores dice “Sales East” pero la dimensión dice “Sales-East” (un espaciado o uso de mayúsculas distinto no coincidirá)
+- **Inductores en cero o negativos**: producen asignaciones en cero o inesperadas
+
+## Paso 6: Usar los resultados
+
+La tabla de resultados es como cualquier otra tabla de PlaidCloud; se puede:
+
+- **Combinar** con otras tablas en pasos posteriores del flujo de trabajo (por ejemplo, para agregar una columna de costo totalmente cargado al libro mayor)
+- **Publicar** para paneles de control o consumidores externos
+- **Reasignar** como origen de la siguiente ronda de asignaciones (en modelos en cascada)
+
+## Variaciones que puede probar
+
+Cuando el modelo básico funcione, estas son las extensiones habituales:
+
+- **Varios conjuntos de costos**: reemplace la fila única `it_cost` por una fila por cada subcategoría de TI (cómputo, almacenamiento, licencias) y asigne cada una de forma independiente con inductores distintos
+- **Varios períodos**: particione el origen por mes y genere un resultado de asignación por período
+- **Asignaciones en capas**: asigne los gastos generales de la división a las unidades, luego los costos de las unidades a los productos y después los costos de los productos a los clientes. Cada capa es su propio paso de asignación
+- **Asignaciones recursivas**: cuando los servicios compartidos se consumen entre sí (TI atiende a RR. HH. y RR. HH. atiende a TI). Consulte [Asignaciones recursivas](/es/guides/allocations/setup/recursive-allocations/)
+- **Asignación basada en reglas**: cuando la distribución depende de más de un inductor y varía según el origen, cree una dimensión de asignación con el generador guiado en lugar de conectar una única tabla de inductores. Consulte [Crear una dimensión de asignación](/es/guides/dimensions/dimensions/#creación-de-una-dimensión-de-asignación)
+
+## Qué sigue
+
+- [Guía de asignaciones](/es/guides/allocations/): todas las opciones y decisiones de configuración
+- [Etiquetado basado en reglas](/es/guides/allocations/getting-started/rule-based-tagging/): reglas de asignación distintas para cada fila de origen
+- [Referencia de pasos de asignación](/es/reference/workflow-steps/allocation/): todos los pasos de flujo de trabajo de la categoría Asignaciones
+- [Guía de dimensiones](/es/guides/dimensions/): cómo crear las jerarquías a las que se dirigen las asignaciones

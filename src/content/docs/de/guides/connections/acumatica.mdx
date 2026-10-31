@@ -1,0 +1,137 @@
+---
+title: Mit Acumatica verbinden
+description: Verbinden Sie PlaidCloud mit Acumatica und rufen Sie Stamm- und Bewegungsdaten mit dem vorgefertigten Entitätsimport-Schritt ab. Buchen Sie anschließend Journalbuchungen, Rechnungen, Eingangsrechnungen und Zahlungen mit dem Acumatica-Buchungsschritt.
+sidebar:
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/acumatica.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Verbinden Sie PlaidCloud mit der vertragsbasierten REST-API von Acumatica, um Referenz- und Bewegungsdaten ohne handgeschriebenes OData abzurufen und Journaltransaktionen, Ausgangsrechnungen, Eingangsrechnungen und Zahlungen zurückzubuchen. Dieser Leitfaden behandelt die Verbindung, den Importschritt und den Buchungsschritt.
+
+<Aside type="caution">
+Führen Sie jeden Import zuerst gegen ein Sandbox-Unternehmen aus und arbeiten Sie bei jedem Buchungsstapel den Abschnitt **Preview and Validate** weiter unten durch, bevor Sie live buchen.
+</Aside>
+
+## Voraussetzungen
+
+In Acumatica benötigen Sie:
+
+- Eine **Basis-URL der Instanz** (zum Beispiel `https://yourcompany.acumatica.com`).
+- Einen **Unternehmensnamen** (die exakte Unternehmens-ID, mit der sich PlaidCloud anmeldet) und, wenn Sie Filialen verwenden, die **Filiale**, unter der gebucht wird.
+- Einen eigenen **Benutzernamen** und ein **Kennwort** für PlaidCloud, mit einer Rolle, die Zugriff auf die Entitäten hat, die Sie lesen, und auf die Belegmasken, in die Sie buchen.
+- Aktivierten Zugriff auf die **vertragsbasierte REST-API** für diesen Benutzer (**System > Integration Preferences**, in aktuellen Acumatica-Versionen standardmäßig aktiviert).
+
+<Aside type="note">
+Die vertragsbasierte REST-API von Acumatica ist **sitzungsbasiert**, nicht tokenbasiert — PlaidCloud meldet sich einmal pro abgegrenzter Arbeitseinheit an (ein Import-Abruf, ein Buchungsstapel) und danach wieder ab, statt sich bei jedem Aufruf zu authentifizieren. Acumatica-Testlizenzen und Lizenzen der unteren Stufen können **gleichzeitige** API-Sitzungen auf bis zu 2 begrenzen. Vermeiden Sie daher, viele Acumatica-Schritte parallel über dieselbe Verbindung auszuführen.
+</Aside>
+
+## Verbindung erstellen
+
+<Steps>
+
+1. Öffnen Sie **Tools > Connections** und klicken Sie auf `New Connection`.
+
+2. Wählen Sie im Menü **Acumatica** aus.
+
+3. Füllen Sie die Felder aus:
+
+   | Feld | Wert |
+   |---|---|
+   | Name | Ein sprechender Name, z. B. `Acumatica Prod`. |
+   | Basis-URL der Instanz | Die URL Ihrer Instanz, z. B. `https://yourcompany.acumatica.com`. |
+   | Endpunktname | Der Name des Vertragsendpunkts. `Default`, sofern kein benutzerdefinierter Endpunkt veröffentlicht wurde. |
+   | Endpunktversion | Optional, z. B. `25.200.001`. Leer lassen, um die neueste veröffentlichte Version des Endpunkts zu verwenden. |
+   | Unternehmen / Mandant | Die exakte Acumatica-Unternehmens-ID. |
+   | Filiale | Optional. Leer lassen, um die Standardfiliale des angemeldeten Benutzers zu verwenden. |
+   | Benutzername | Der PlaidCloud-API-Benutzer. |
+   | Kennwort | Das Kennwort des PlaidCloud-API-Benutzers. |
+
+4. Klicken Sie auf `Create`.
+
+</Steps>
+
+## Verbindung per Smoke-Test prüfen
+
+<Steps>
+
+1. Fügen Sie einem Workflow einen **Import Acumatica Entity**-Schritt hinzu.
+
+2. Legen Sie **Acumatica-Verbindung** auf Ihre Verbindung, **Entitätstyp** auf `account` und **Zieltabelle** auf eine Arbeitstabelle fest.
+
+3. Führen Sie den Schritt aus (siehe [Einen einzelnen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Eine befüllte Zieltabelle bestätigt, dass Anmeldung, Unternehmen und Filiale korrekt sind. Ein Fehler benennt das Problem — falsche Anmeldedaten, falsches Unternehmen oder eine Rolle ohne REST-API-Zugriff.
+
+## Daten importieren
+
+<Steps>
+
+1. Fügen Sie einen **Import Acumatica Entity**-Schritt hinzu und legen Sie **Acumatica-Verbindung** und **Zieltabelle** fest.
+
+2. Legen Sie **Entitätstyp** auf den gewünschten Datensatz fest. Stamm- und Referenzlisten — `account`, `subaccount`, `ledger`, `financial_period`, `branch`, `currency`, `currency_rate`, `customer`, `vendor`, `stock_item`, `warehouse`, `employee`, `tax_category`, `project` — und Bewegungsentitäten — `sales_invoice`, `bill`, `sales_order`, `shipment`.
+
+3. Lassen Sie **Nur aktive** aktiviert, um nur aktive Datensätze abzurufen, bei den Entitäten, die ein Active-Kennzeichen tragen.
+
+4. Legen Sie **Aktualisiert nach** auf ein ISO-Datum oder -Datum mit Uhrzeit fest, um nur Zeilen abzurufen, die sich seitdem geändert haben (ein anfrageseitiger Filter, kein gespeicherter inkrementeller Cursor — Sie geben bei jeder Ausführung den Stichtag vor).
+
+5. Fügen Sie **Filter** hinzu, um einen großen Abruf einzugrenzen — jeder ist eine Klausel `{field, operator, value}` (`eq`, `ne`, `gt`, `ge`, `lt`, `le`, `contains`) oder ein Bereich `{field, from, to}`, je Entität beschränkt auf die Felder, nach denen Acumatica serverseitig tatsächlich filtern kann. PlaidCloud lehnt ein Filterfeld ab, das die Entität nicht unterstützt, statt es stillschweigend zu verwerfen.
+
+6. Führen Sie den Schritt aus und prüfen Sie die Zieltabelle.
+
+</Steps>
+
+<Aside type="note">
+Saldenlisten, Hauptbuch-Transaktionsdetails, Lagerbestände, Budgets und konzerninterne Daten liegen alle hinter Acumatica Generic Inquiries und nicht in den oben genannten vertragsbasierten Entitäten, und PlaidCloud erzeugt keine GIs für Sie. Wenn Sie eines davon benötigen, erstellen Sie die GI in Acumatica und rufen Sie sie stattdessen über eine [generische REST-Verbindung](/de/reference/connectors/rest/generic-rest/) ab.
+</Aside>
+
+## Belege buchen
+
+Der Schritt **Acumatica Post** bucht vier Belegtypen über dieselbe gemeinsame Schreib-Pipeline, die jeder ERP-Buchungsschritt verwendet: **JournalTransaction**, **SalesInvoice**, **Bill** und **Payment**.
+
+<Steps>
+
+1. Erstellen Sie eine **Kopftabelle** — eine Zeile pro Beleg — mit Spalten für `ref` (Ihre Belegkennung), `doc_type` (`JournalTransaction`, `SalesInvoice`, `Bill` oder `Payment`), `posting_date`, `party_id` (Kunde/Lieferant, sofern der Belegtyp einen benötigt), `memo`, `due_date` und `branch_id`. Ein einzelner Stapel kann Belegtypen mischen — PlaidCloud teilt ihn vor dem Buchen nach `doc_type` auf.
+
+2. Erstellen Sie eine **Positionstabelle** — eine oder mehrere Zeilen pro `ref` — passend zum Belegtyp:
+
+   | Belegtyp | Positionsspalten |
+   |---|---|
+   | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+   | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+   | Bill | `account`, `amount` |
+   | Payment | `linked_txn_id`, `amount` |
+
+3. Fügen Sie einen **Acumatica Post**-Schritt hinzu und legen Sie **Acumatica-Verbindung**, **Umgebung**, **Kopftabelle**, **Positionstabelle** und eine **Ergebnistabelle** fest.
+
+4. Lassen Sie **Validate Only** aktiviert und führen Sie den Schritt aus — PlaidCloud erstellt und prüft jeden Beleg ohne Hauptbuch-Anspruch und ohne etwas zu buchen.
+
+5. Prüfen Sie die Ergebnistabelle (eine Zeile pro Beleg: `ref`, `doc_type`, `natural_key`, `confirmation_id`, `status`, `message`). Beheben Sie jede `error`-Zeile und validieren Sie erneut.
+
+6. Deaktivieren Sie **Validate Only** und führen Sie den Schritt erneut aus, um tatsächlich zu buchen. Lassen Sie **Continue On Error** aktiviert, es sei denn, ein Stapel soll beim ersten fehlgeschlagenen Beleg sofort anhalten.
+
+</Steps>
+
+### So funktioniert das Buchen
+
+Acumatica legt jeden Beleg **auf Hold** an, dann ruft PlaidCloud die Freigabeaktion auf, die asynchron läuft (eine Antwort `202`, die bis zum Abschluss abgefragt wird, dann bestätigt ein `204` die Freigabe). PlaidCloud meldet einen Beleg erst als `posted`, wenn die Freigabe **bestätigt** ist — ein Beleg, der angelegt wird, dessen Freigabe aber nie bestätigt wird, bleibt in Quarantäne, statt als gebucht erfasst zu werden, sodass ein hängender Hold nie stillschweigend als Erfolg durchgeht.
+
+### Funktionsgrenzen — vor dem Live-Buchen lesen
+
+<Aside type="caution">
+- **Kein nativer Idempotenzschlüssel.** Die Schreib-API von Acumatica hat kein Idempotenzfeld pro Beleg, daher ist der eigene Hauptbuch-Anspruch von PlaidCloud der **einzige** Schutz vor einer Doppelbuchung bei einem wiederholten oder erneut ausgeführten Stapel. Umgehen Sie das Hauptbuch dieses Schritts nicht, indem Sie denselben Beleg auf anderem Weg buchen.
+- **Storno ist manuell.** Für keinen Belegtyp gibt es in der vertragsbasierten API von Acumatica eine dokumentierte Storno- oder Aufhebungsaktion, daher täuscht PlaidCloud nie eine vor — ein gebuchter Beleg kann von diesem Schritt aus nicht storniert werden. Korrigieren Sie einen falsch gebuchten Beleg direkt in Acumatica.
+- **Payment hat keine verlässliche Abfrage.** Acumatica stellt kein dokumentiertes Feld bereit, mit dem sich eine Zahlung nach einem unklaren Ergebnis (Zeitüberschreitung, abgebrochene Antwort) der Anfrage von PlaidCloud zuordnen ließe. Eine ungeklärte Zahlung wird in Quarantäne gestellt, statt geraten zu werden — klären Sie sie, indem Sie direkt in Acumatica nachsehen.
+- **Kostenstellenfilter auf Positionsebene sind nicht serverseitig.** Der `$filter` von Acumatica greift nicht auf die Positionsdimensionen eines Belegs zu. Filtern Sie daher auf Kopf- bzw. Entitätsebene und grenzen Sie auf Positionsebene in Ihrem Workflow nach dem Abruf ein.
+</Aside>
+
+## Verwandte Themen
+
+- [Acumatica-REST-Connector](/de/reference/connectors/rest/acumatica/) — Feldreferenz.
+- [Import Acumatica Entity](/de/reference/workflow-steps/acumatica/import-acumatica-entity/)
+- [Acumatica: Post Documents](/de/reference/workflow-steps/acumatica/acumatica-post/)
+- [ERP-Buchungsverlauf prüfen](/de/guides/connections/erp-post-history/) — der dauerhafte Nachweis jedes Acumatica-Buchungsversuchs und seines aktuellen Status.
+- [Verbindung erstellen und verwalten](/de/guides/connections/create-connection/)

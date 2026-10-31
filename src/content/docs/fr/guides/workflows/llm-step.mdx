@@ -1,0 +1,72 @@
+---
+title: Étape LLM
+description: Exécutez une invite sur un LLM dans un workflow, avec un accès en lecture et/ou en écriture limité aux tables, dimensions et documents de votre projet, et laissez le modèle écrire directement ses résultats.
+sidebar:
+  order: 18
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/llm-step.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+L'**Étape LLM** exécute une invite sur un grand modèle de langage comme une étape d'un workflow. Vous donnez au modèle un accès limité à des tables, dimensions et documents précis de votre projet, en choisissant **Lecture**, **Écriture** ou les deux pour chacun. Le modèle lit les données dont il a besoin et, là où vous avez accordé l'accès en **Écriture**, écrit ses résultats directement dans l'objet que vous avez sélectionné. Il n'y a pas de format de sortie distinct à configurer : une liaison avec accès en écriture *est* la sortie de l'étape.
+
+Un cas d'usage courant consiste à résumer une table financière en commentaires par unité opérationnelle et à faire écrire ces commentaires par le modèle dans une table de résultats (ou sous forme de fichiers de documents) que vous avez liée avec un accès en écriture.
+
+<Aside type="note">L'accès limité aux données du projet (tables, dimensions, documents) est disponible avec les connexions LLM **Anthropic**, qui utilisent un connecteur sécurisé pour accéder aux outils MCP de PlaidCloud. Les autres fournisseurs peuvent toujours exécuter une invite et renvoyer du JSON structuré, mais ils n'obtiennent pas d'accès limité aux données : une étape dont les liaisons reposent sur l'une de leurs connexions est refusée à l'enregistrement, et un schéma de résultat est obligatoire.</Aside>
+
+## Avant de commencer
+
+Vous avez besoin de :
+
+* **Une connexion LLM.** L'étape exige une connexion de type **LLM** (par exemple, Anthropic). La connexion contient la clé d'API du fournisseur, un modèle par défaut facultatif et un niveau d'**Accès de l'agent**. Consultez [Connexions](/fr/guides/connections/).
+* **Un accès en écriture sur la connexion, uniquement si une liaison donne accès en écriture.** Une liaison ne peut écrire que si l'accès de l'agent de la connexion est **Lecture et écriture**. **Complet** est obsolète et sera supprimé le 15 janvier 2027. Une connexion en **lecture seule** rejette les liaisons en écriture lors de l'enregistrement.
+* **Les objets de destination déjà créés.** Le modèle écrit *dans* les objets que vous sélectionnez : une table, une dimension ou un compte de documents existants. Créez et liez d'abord la destination ; l'étape ne crée pas de nouveaux objets.
+
+## Ajouter une étape LLM
+
+1. Ouvrez le workflow et accédez à l'onglet **Analyze Steps**.
+2. Ajoutez une étape à la position voulue, comme vous ajouteriez une transformation standard.
+3. Choisissez **Étape LLM** comme type d'étape. L'éditeur s'ouvre avec trois sections : **Requête LLM**, **Bindings** et **Limites**.
+
+## Configurer la requête
+
+Dans le groupe **Requête LLM** :
+
+* **Connexion LLM** *(obligatoire)* : la connexion LLM utilisée par l'étape.
+* **Modèle** *(facultatif)* : un nom de modèle précis, tel que `claude-opus-4-7`. Laissez-le vide pour utiliser le modèle par défaut de la connexion.
+* **Invite** *(obligatoire)* : l'instruction envoyée au modèle. Vous pouvez référencer les objets liés en ligne avec `{{tables.NAME}}`, `{{dimensions.NAME}}` et `{{documents.NAME}}` ; chaque référence doit correspondre à une liaison que vous déclarez plus bas. Dites clairement au modèle ce qu'il doit écrire et où (par exemple, « écris une ligne par unité opérationnelle dans la table `summary` »).
+* **Result schema** *(facultatif pour les connexions Anthropic ; obligatoire pour les autres fournisseurs)* : un schéma JSON pour un résumé structuré de l'exécution, conservé pour mémoire. Si vous en fournissez un, sa racine doit être un objet JSON avec `"type": "object"`. Avec une connexion Anthropic, vous pouvez le laisser vide lorsque le vrai travail du modèle consiste en les écritures qu'il effectue via MCP ; les autres fournisseurs n'ont pas d'accès MCP, leur réponse structurée est donc leur seule sortie et un schéma est obligatoire.
+
+## Lier les données du projet
+
+La section **Bindings** est l'endroit où vous accordez l'accès et choisissez ce que l'étape peut lire et écrire. Elle comporte trois groupes, **Tables**, **Dimensions** et **Documents**, chacun avec un bouton **Ajouter**. Chaque ligne comprend :
+
+* Un **sélecteur** pour choisir l'objet : un sélecteur de table, un sélecteur de dimension ou (pour les documents) un navigateur de compte et de chemin. Plus besoin de saisir les identifiants à la main.
+* Un **Nom** : l'étiquette que vous référencez dans l'invite (`{{tables.NAME}}`).
+* Des cases à cocher **Lecture** et **Écriture**. Cochez **Lecture** pour permettre au modèle de lire l'objet, **Écriture** pour lui permettre d'écrire dans l'objet, ou les deux. Au moins une des deux est toujours définie.
+* Pour les documents, une indication de **Format** (par exemple `pdf`).
+
+Voici comment le modèle écrit dans chaque type d'objet, via les outils MCP :
+
+| Liaison | Le modèle écrit en… |
+|---------|----------------------|
+| **Table** (Écriture) | insérant des lignes, généralement via un `SELECT` qui produit les lignes à ajouter à la table liée. |
+| **Dimension** (Écriture) | ajoutant ou mettant à jour des nœuds dans la hiérarchie de la dimension liée. |
+| **Document** (Écriture) | téléversant un fichier vers le compte de documents et le chemin liés. |
+
+<Aside type="caution">L'accès est limité exactement aux objets que vous liez, case par case : le modèle ne peut lire que les objets liés en lecture et n'écrire que dans ceux liés en écriture. Il ne peut pas atteindre un objet que vous n'avez pas lié, ni écrire dans une liaison en lecture seule.</Aside>
+
+## Limites
+
+Le groupe **Limites** borne la requête :
+
+* **Nombre maximal de jetons de sortie** : la plus grande réponse que le modèle peut renvoyer (de 1 024 à 128 000 ; 16 000 par défaut).
+* **Durée de vie des identifiants (secondes)** : la durée pendant laquelle l'identifiant d'accès temporaire et limité de l'étape reste valide (de 60 à 3 600 ; 1 800 par défaut). Le travail de l'étape est borné par cette fenêtre ; définissez-la suffisamment longue pour que le modèle termine, mais pas plus que nécessaire.
+
+## Exécuter l'étape
+
+L'Étape LLM s'exécute comme n'importe quelle autre étape, dans le cadre d'une exécution complète du workflow ou isolément (consultez [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)). Lors de son exécution, l'étape génère un identifiant temporaire à portée limitée, envoie votre invite et les objets liés au modèle, et le modèle lit et écrit directement via les outils MCP. L'identifiant est révoqué dès la fin de l'étape. L'appel au modèle s'exécute dans son propre job ; une étape de longue durée n'immobilise donc pas l'exécuteur du workflow.
+
+<Aside type="caution">Chaque exécution effectue un appel réel et facturable à votre fournisseur de LLM et écrit dans vos objets liés. Traitez une liaison en écriture comme n'importe quelle autre cible de transformation, et testez sur une table de test avant de pointer l'étape vers des données de production.</Aside>

@@ -1,0 +1,108 @@
+---
+title: シングルサインオン用のOkta SAMLの設定
+description: PlaidCloudのシングルサインオン用にOktaをSAML IDプロバイダーとして構成し、メンバーのセキュアなフェデレーション認証を有効にします。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/administration/access/advanced/okta-saml-setup.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloudは、SAML 2.0によるシングルサインオン（SSO）をサポートしています。このガイドでは、組織のユーザーがPlaidCloudにアクセスする際にOktaで認証できるよう、OktaをSAML IDプロバイダーとして構成する手順を説明します。
+
+<Aside>PlaidCloud側の構成はPlaidCloudチームが行います。お客様の作業は、OktaでSAMLアプリケーションを設定し、**Identity Provider Metadata URL**をPlaidCloudに提供することです。残りの構成はPlaidCloudサポートが完了します。</Aside>
+
+## 前提条件
+
+- **Administrator**ロール（Super AdminまたはOrg Admin）を持つOktaアカウント
+- 設定の調整と構成値の交換のために、PlaidCloudサポートと連絡が取れること
+
+## 概要
+
+セットアップでは、2者がSAMLメタデータを交換します。
+
+1. **お客様側の作業：** OktaでSAMLアプリケーションを構成し、Identity Provider Metadata URLをPlaidCloudに提供します。
+2. **PlaidCloud側の作業：** Oktaアプリケーションの構成を完了するために必要なサービスプロバイダー（SP）のエンティティIDとシングルサインオンURL（ACS URL）を提供します。
+
+以下のステップ3を完了する前に、PlaidCloudサポートと調整してSPの値を入手してください。
+
+## ステップ1：新しいSAMLアプリケーションの作成
+
+1. [Okta Admin console](https://your-org.okta.com/admin)にサインインします。
+2. 左側のサイドバーで、**Applications** > **Applications**に移動します。
+3. **Create App Integration**をクリックします。
+4. サインイン方法として**SAML 2.0**を選択します。
+5. **次へ**をクリックします。
+6. アプリケーションの名前を入力します（例：`PlaidCloud SSO`）。必要に応じて、ロゴもアップロードします。
+7. **次へ**をクリックします。
+
+## ステップ2：SAML設定の構成
+
+<Aside>この手順を完了するには、PlaidCloudが提供する**SPエンティティID**と**シングルサインオンURL（ACS URL）** が必要です。これらの値はPlaidCloudサポートにお問い合わせのうえ入手してください。</Aside>
+
+1. **Single sign-on URL**フィールドに、PlaidCloudから提供されたACS URLを入力します。
+2. **Audience URI (SP Entity ID)** フィールドに、PlaidCloudから提供されたSPエンティティIDを入力します。
+3. PlaidCloudサポートから別途指示がない限り、**Default RelayState**は空白のままにします。
+4. **Name ID format**を**EmailAddress**に設定します。
+5. **Application username**を**メール**に設定します。
+6. **次へ**をクリックします。
+
+## ステップ3：属性ステートメントの構成
+
+同じSAML設定画面で属性ステートメントを追加し、PlaidCloudがSAMLアサーションでユーザー情報を受け取れるようにします。
+
+### ユーザー属性
+
+**Attribute Statements**セクションに、次の項目を追加します。
+
+| 名前 | 名前の形式 | 値 |
+|---|---|---|
+| `email` | Unspecified | `user.email` |
+| `firstName` | Unspecified | `user.firstName` |
+| `lastName` | Unspecified | `user.lastName` |
+
+### グループ属性（任意）
+
+PlaidCloudの構成でグループベースのセキュリティロール割り当てを使用する場合は、グループ属性ステートメントを追加して、アサーションでグループメンバーシップを渡します。
+
+**Group Attribute Statements**セクションに、次の項目を追加します。
+
+| 名前 | 名前の形式 | フィルター |
+|---|---|---|
+| `groups` | Unspecified | **Matches regex** — `.*`（含めるグループを絞り込む場合は、より具体的なパターン） |
+
+<Aside>PlaidCloudでグループベースのセキュリティロール割り当てが正しく機能するよう、想定されるグループ属性の名前とフィルターについてPlaidCloudサポートと相談してください。</Aside>
+
+**次へ**をクリックし、**I'm an Okta customer adding an internal app**を選択して**Finish**をクリックします。
+
+## ステップ4：Identity Provider Metadata URLの取得と送信
+
+アプリケーションを作成したら、メタデータURLを確認してPlaidCloudに送信し、連携を完了させます。
+
+1. アプリケーションの詳細ページで、**Sign On**タブを選択します。
+2. **SAML 2.0**セクションまでスクロールし、**More details**をクリックします。
+3. **Metadata URL**をコピーします（形式：`https://your-org.okta.com/app/your-app-id/sso/saml/metadata`）。
+
+**このメタデータURLをPlaidCloudサポートに送信してください。** これは、PlaidCloudがIDプロバイダー側の信頼関係を構成するために必要なEntity Descriptor URLです。PlaidCloudがこのURLを受け取ると、チームがKeycloakの構成を完了し、SSOをテストできる状態になったらお知らせします。
+
+## ステップ5：アプリケーションへのユーザーとグループの割り当て
+
+このSSO構成で認証できるのは、アプリケーションに割り当てられたユーザーとグループのみです。
+
+1. アプリケーションの詳細ページで、**Assignments**タブを選択します。
+2. **割り当て**をクリックし、**Assign to People**または**Assign to Groups**を選択します。
+3. PlaidCloudへのSSOアクセスを許可するユーザーまたはグループを選択し、**割り当て**をクリックします。
+4. **完了**をクリックします。
+
+## 連携のテスト
+
+PlaidCloudが構成の完了を確認したら、次の手順を行います。
+
+1. 組織のPlaidCloudワークスペース（例：`https://my-workspace.plaid.cloud`）に移動します。
+2. Oktaのサインインページにリダイレクトされます。
+3. Oktaの認証情報でサインインします。
+4. 認証に成功すると、PlaidCloudにリダイレクトされます。
+
+エラーが発生した場合は、次の点を確認してください。
+- ACS URLとSPエンティティIDが、PlaidCloudから提供された値と完全に一致している
+- ログインしようとしているユーザーが、Oktaでアプリケーションに割り当てられている
+- Name ID formatが**EmailAddress**に設定され、Application usernameが**メール**に設定されている
+- PlaidCloudに送信したメタデータURLにアクセスできる

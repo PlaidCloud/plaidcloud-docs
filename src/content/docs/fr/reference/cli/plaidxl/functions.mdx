@@ -1,0 +1,237 @@
+---
+title: Fonctions personnalisées PlaidXL
+description: "Référence de toutes les fonctions personnalisées PlaidXL dans Excel : lister les projets, les tables, les colonnes et les dimensions, lire une table, afficher et explorer une hiérarchie, et calculer des valeurs consolidées avec CELL et CELLS."
+sidebar:
+  label: Fonctions personnalisées
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/plaidxl/functions.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidXL ajoute à Excel des fonctions qui lisent les données PlaidCloud directement dans les cellules. Saisissez `=PLAIDXL.` dans une cellule : la saisie semi-automatique d'Excel les liste, avec une brève description de chaque argument.
+
+| Groupe | Fonctions | Utilisez-les pour |
+|---|---|---|
+| Listes | [`LIST_PROJECTS`](#list_projects), [`TABLE.TBL_LIST`](#tbl_list), [`TABLE.GET_COLUMNS`](#get_columns), [`DIMENSION.DIM_LIST`](#dim_list) | Voir ce que vous pouvez utiliser comme base |
+| Tables | [`TABLE.GET_TABLE`](#get_table) | Lire une table entière dans une plage |
+| Hiérarchies | [`DIMENSION.GET_DIMENSION`](#get_dimension), [`DRILL`](#drill) | Afficher les nœuds d'une dimension comme lignes de rapport |
+| Valeurs | [`CELL`](#cell), [`CELLS`](#cells) | Calculer une valeur consolidée pour toute combinaison de nœuds |
+| Éléments de base | [`REPR.TABLE_REPR`](#table_repr), [`REPR.MEASURE`](#measure), [`REPR.MEASURES`](#measures), [`REPR.MEASURE_TYPE`](#measure_type), [`REPR.DIMENSION_REPR`](#dimension_repr), [`REPR.DRILL_KEY`](#drill_key) | Décrire la table, la mesure, l'agrégation, les nœuds et la profondeur d'exploration qu'utilisent `CELL`, `CELLS` et `DRILL` |
+
+[Créer un rapport avec les fonctions personnalisées](/fr/reference/cli/plaidxl/build-a-report/) montre ces fonctions utilisées ensemble.
+
+## Fonctionnement des fonctions
+
+- **Connectez-vous d'abord.** Les fonctions lisent les données avec votre connexion PlaidCloud : [connectez-vous](/fr/reference/cli/plaidxl/connect/) depuis le volet des tâches avant de les utiliser.
+- **Elles lisent le projet sélectionné.** Chaque fonction lit le projet sélectionné dans le volet des tâches. `GET_TABLE`, `TBL_LIST` et `DIM_LIST` acceptent aussi un ID de projet facultatif, pour lire un autre projet sans modifier la sélection. La sélection est partagée par tous les classeurs que vous avez ouverts.
+- **Les résultats se déversent.** Une fonction qui renvoie une liste ou une table remplit les cellules situées en dessous (ou à droite). Laissez de la place pour les résultats ; si quelque chose gêne, Excel affiche une erreur `#SPILL!`.
+- **Recalculez pour prendre en compte les changements.** Une formule PlaidXL récupère de nouveau les données lorsque l'un de ses arguments change. Pour prendre en compte de nouvelles données dans PlaidCloud, ou un autre projet sélectionné dans le volet des tâches, forcez un recalcul complet : sous Windows, appuyez sur **Ctrl+Alt+F9**. **Refresh All Tables** actualise les tables récupérées, pas les formules.
+- **Utilisez les noms exacts.** Saisissez les noms de tables, de colonnes, de dimensions et de nœuds exactement tels qu'ils apparaissent dans PlaidCloud.
+
+Les arguments entre crochets sont facultatifs.
+
+## Listes
+
+### LIST_PROJECTS
+
+`=PLAIDXL.LIST_PROJECTS([horizontal])`
+
+Liste les noms des projets que vous pouvez ouvrir, triés par nom.
+
+- `horizontal` — `TRUE` pour lister sur une ligne. La valeur par défaut est `FALSE`, soit une colonne.
+
+### TBL_LIST
+
+`=PLAIDXL.TABLE.TBL_LIST([project_id], [horizontal])`
+
+Liste les noms des tables d'un projet, triés par nom.
+
+- `project_id` — le projet à lire. Par défaut, le projet sélectionné dans le volet des tâches.
+- `horizontal` — `TRUE` pour lister sur une ligne. La valeur par défaut est `FALSE`, soit une colonne.
+
+### GET_COLUMNS
+
+`=PLAIDXL.TABLE.GET_COLUMNS(table_name, [column_filter], [orientation])`
+
+Liste les noms des colonnes d'une table du projet sélectionné.
+
+- `table_name` — le nom de la table dans PlaidCloud.
+- `column_filter` — un type de données, tel que `"text"`, pour ne lister que les colonnes de ce type. Omettez-le pour lister toutes les colonnes.
+- `orientation` — `"vertical"` (valeur par défaut) pour une colonne, ou `"horizontal"` pour une ligne.
+
+### DIM_LIST
+
+`=PLAIDXL.DIMENSION.DIM_LIST([project_id], [horizontal])`
+
+Liste les noms des dimensions d'un projet.
+
+- `project_id` — le projet à lire. Par défaut, le projet sélectionné dans le volet des tâches.
+- `horizontal` — `TRUE` pour lister sur une ligne. La valeur par défaut est `FALSE`, soit une colonne.
+
+## Tables
+
+### GET_TABLE
+
+`=PLAIDXL.TABLE.GET_TABLE(table_name, [project_id], [limit])`
+
+Renvoie les lignes d'une table avec une ligne d'en-tête, déversées à partir de la cellule de la formule. Les valeurs vides sont renvoyées sous forme de cellules vides.
+
+- `table_name` — le nom de la table dans PlaidCloud.
+- `project_id` — le projet à lire. Par défaut, le projet sélectionné dans le volet des tâches.
+- `limit` — le nombre maximal de lignes à renvoyer. La valeur par défaut est 1 048 575, le maximum qu'une feuille de calcul peut contenir sous une ligne d'en-tête.
+
+`GET_TABLE` renvoie toutes les colonnes. Pour choisir des colonnes ou filtrer des lignes, [récupérez plutôt la table depuis le volet des tâches](/fr/reference/cli/plaidxl/retrieve/#récupérer-une-table).
+
+## Hiérarchies
+
+### GET_DIMENSION
+
+`=PLAIDXL.DIMENSION.GET_DIMENSION(dimension_name, start_node, [hierarchy], [orientation], [generation_limit])`
+
+Affiche les nœuds d'une dimension, en partant de `start_node` et en descendant à travers ses descendants. Chaque génération est décalée de quatre espaces de plus que son parent, et les groupes de plan d'Excel permettent de réduire et de développer chaque niveau.
+
+- `dimension_name` — le nom de la dimension, ou son chemin dans le projet.
+- `start_node` — le nœud de départ, par exemple la racine de la dimension.
+- `hierarchy` — la [hiérarchie alternative](/fr/guides/dimensions/dimensions/#hiérarchies-alternatives-dattributs) à suivre. La valeur par défaut est `"main"`.
+- `orientation` — `"vertical"` (valeur par défaut) pour lister les nœuds dans une colonne, ou `"horizontal"` pour les lister sur une ligne.
+- `generation_limit` — le nombre de générations à renvoyer, `start_node` comptant pour la première : `2` renvoie le nœud de départ et ses enfants. Omettez-le pour renvoyer toutes les générations.
+
+### DRILL
+
+`=PLAIDXL.DRILL(dimension_name, start_node, drill_key, [hierarchy])`
+
+Renvoie `start_node` et les nœuds situés en dessous que demande `drill_key`, dans une colonne, en retrait selon la génération et regroupés dans un plan Excel.
+
+- `dimension_name` — le nom de la dimension, ou son chemin dans le projet.
+- `start_node` — le nœud à partir duquel explorer.
+- `drill_key` — la profondeur d'exploration, issue de [`DRILL_KEY`](#drill_key) : tous les descendants, uniquement les feuilles, ou un nombre de niveaux.
+- `hierarchy` — la hiérarchie alternative à suivre. La valeur par défaut est `"main"`.
+
+Par exemple, `=PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("leaves"))` liste **Total** suivi de chaque région feuille située en dessous.
+
+Les [commandes d'exploration du ruban](/fr/reference/cli/plaidxl/ribbon/#drill-functions) font la même chose pour une dimension et un nœud que vous avez saisis dans deux cellules, sans écrire de formule.
+
+## Valeurs
+
+`CELL` et `CELLS` calculent une mesure (une colonne numérique d'une table) consolidée jusqu'aux nœuds que vous choisissez dans une ou plusieurs dimensions. Considérez chaque appel comme une intersection d'un rapport : le **chiffre d'affaires** pour **EMEA** en **FY2026**.
+
+Vous décrivez l'intersection avec les fonctions d'éléments de base ci-dessous, généralement dans leurs propres cellules, puis vous transmettez ces cellules à `CELL` ou `CELLS` dans n'importe quel ordre :
+
+| Argument | Créé avec | Obligatoire |
+|---|---|---|
+| La table à lire | [`TABLE_REPR`](#table_repr) | Exactement un |
+| La colonne à agréger | [`MEASURE`](#measure) pour `CELL`, [`MEASURES`](#measures) ou plusieurs cellules `MEASURE` pour `CELLS` | Oui |
+| Comment l'agréger | [`MEASURE_TYPE`](#measure_type) | Non — `sum` par défaut |
+| Un filtre sur une colonne | [`DIMENSION_REPR`](#dimension_repr) | Au moins un, un par colonne |
+
+Chaque filtre nomme une **colonne de la table** et une valeur. Lorsque cette colonne est liée à une dimension dans PlaidCloud, la valeur est un nœud, et le filtre inclut tout ce qui se consolide jusqu'à ce nœud dans la hiérarchie principale de la dimension : sur une colonne **Region** liée à une dimension géographique, le nœud **EMEA** couvre tous les pays situés en dessous. Sur une colonne qui n'est pas liée à une dimension, le filtre correspond exactement à la valeur.
+
+Les exemples de cette page utilisent une table dont les colonnes **Region** et **Period** sont liées à des dimensions. Utilisez les noms de colonnes de votre propre table.
+
+### CELL
+
+`=PLAIDXL.CELL(table, measure, [measure_type], node, [node], ...)`
+
+Renvoie un seul nombre : la mesure, agrégée sur les lignes qui relèvent de chaque nœud que vous transmettez.
+
+```text
+A1  =PLAIDXL.REPR.TABLE_REPR("Sales")
+A2  =PLAIDXL.REPR.MEASURE("revenue")
+A3  =PLAIDXL.REPR.MEASURE_TYPE("sum")
+A4  =PLAIDXL.REPR.DIMENSION_REPR("Region", "EMEA")
+A5  =PLAIDXL.REPR.DIMENSION_REPR("Period", "FY2026")
+B1  =PLAIDXL.CELL(A1, A2, A3, A4, A5)
+```
+
+`B1` affiche le chiffre d'affaires total pour EMEA en FY2026.
+
+### CELLS
+
+`=PLAIDXL.CELLS(table, measures, [measure_type], node, [node], ...)`
+
+Comme `CELL`, mais pour plusieurs mesures à la fois. Renvoie un nombre par mesure, dans une colonne, dans l'ordre où vous les avez listées.
+
+```text
+D1:F1  revenue | cost | units
+D2     =PLAIDXL.REPR.MEASURES(D1:F1)
+B2     =PLAIDXL.CELLS(A1, D2#, A3, A4, A5)
+```
+
+`D2#` transmet l'ensemble du résultat déversé de `MEASURES`. `B2:B4` affichent le chiffre d'affaires, le coût et les unités pour EMEA en FY2026.
+
+## Éléments de base
+
+Ces fonctions ne lisent pas elles-mêmes de données. Chacune renvoie un court texte qui décrit une partie d'un calcul, prêt à être transmis à `CELL`, `CELLS` ou `DRILL`. Placez-les dans des cellules que vous référencez, de sorte qu'un seul changement (une autre période, par exemple) mette à jour toutes les formules qui les utilisent.
+
+### TABLE_REPR
+
+`=PLAIDXL.REPR.TABLE_REPR(table_name)`
+
+La table que `CELL` et `CELLS` lisent, désignée par son nom dans le projet sélectionné.
+
+### MEASURE
+
+`=PLAIDXL.REPR.MEASURE(column_name)`
+
+La colonne numérique que `CELL` agrège.
+
+### MEASURES
+
+`=PLAIDXL.REPR.MEASURES(column_names)`
+
+Plusieurs colonnes de mesure pour `CELLS`, à partir d'une plage de cellules contenant des noms de colonnes. Le résultat se déverse à raison d'une cellule par colonne ; transmettez-le à `CELLS` avec l'opérateur de déversement, par exemple `D2#`.
+
+### MEASURE_TYPE
+
+`=PLAIDXL.REPR.MEASURE_TYPE(agg_function)`
+
+La manière d'agréger la mesure. `agg_function` est l'une des valeurs suivantes, en minuscules :
+
+| Valeur | Renvoie |
+|---|---|
+| `sum` | Le total (valeur par défaut lorsque vous ne transmettez aucun type de mesure) |
+| `mean` | La moyenne |
+| `median` | La valeur médiane |
+| `min` | La plus petite valeur |
+| `max` | La plus grande valeur |
+| `std` | L'écart type |
+| `var` | La variance |
+
+### DIMENSION_REPR
+
+`=PLAIDXL.REPR.DIMENSION_REPR(dimension_name, start_node)`
+
+Un filtre pour `CELL` et `CELLS`. Transmettez-en un pour chaque colonne que vous souhaitez filtrer.
+
+- `dimension_name` — le nom d'une **colonne de la table**, c'est-à-dire la colonne qui contient les valeurs de la dimension, par exemple `"Region"`. Il doit correspondre exactement au nom de la colonne ; une colonne absente de la table renvoie une erreur.
+- `start_node` — le nœud jusqu'auquel consolider, par exemple `"EMEA"`. Sur une colonne qui n'est pas liée à une dimension, la valeur à faire correspondre.
+
+Référencez une cellule pour le nœud afin de construire une grille : `=PLAIDXL.REPR.DIMENSION_REPR("Region", $A7)`. Les espaces de début et de fin sont ignorés : vous pouvez donc pointer vers les noms de nœuds en retrait que `DRILL` affiche.
+
+### DRILL_KEY
+
+`=PLAIDXL.REPR.DRILL_KEY(d_key)`
+
+La profondeur à laquelle [`DRILL`](#drill) descend sous son nœud de départ. `d_key` est du texte brut :
+
+| `d_key` | Explore jusqu'à |
+|---|---|
+| `"all"` | Tous les descendants |
+| `"leaves"` | Uniquement les feuilles, c'est-à-dire les nœuds sans enfants |
+| `"1 level"`, `"2 levels"`, … | Ce nombre de générations vers le bas |
+
+Écrivez le nombre en chiffres : `"2 levels"`, et non `"two levels"`. Un `drill` initial est ignoré : `"drill 2 levels"` fonctionne donc aussi.
+
+Avec deux niveaux ou plus, `DRILL` liste une génération à la fois (tous les enfants, puis tous les petits-enfants) plutôt que chaque nœud directement sous son parent. Pour une disposition imbriquée, utilisez `"all"`, ou [`GET_DIMENSION`](#get_dimension) avec un `generation_limit`.
+
+<Aside type="note">
+`CELL`, `CELLS` et `DRILL` attendent le résultat de ces fonctions d'éléments de base. Construisez chaque argument avec sa fonction plutôt que de saisir vous-même le texte.
+</Aside>
+
+## Voir aussi
+
+- [Créer un rapport avec les fonctions personnalisées](/fr/reference/cli/plaidxl/build-a-report/) — une hiérarchie sur le côté, des valeurs en haut
+- [Travailler avec les tables et les dimensions](/fr/reference/cli/plaidxl/retrieve/) — choisir le projet que lisent les fonctions
+- [Utiliser les dimensions](/fr/guides/dimensions/dimensions/) — hiérarchies principale et alternatives, et fonctionnement de la consolidation des nœuds
+- [Concevoir une hiérarchie de dimension](/fr/get-started/tutorials/design-a-dimension/) — créer la hiérarchie à travers laquelle votre rapport se consolide

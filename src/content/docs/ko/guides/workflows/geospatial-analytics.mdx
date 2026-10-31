@@ -1,0 +1,166 @@
+---
+title: 지리공간 분석
+description: 공간 파일을 로드하고, 지오메트리를 구축 및 재구성하고, 위치를 영역과 매칭하여 결과를 게시합니다. PlaidCloud 워크플로의 지리공간 경로입니다.
+sidebar:
+  order: 36
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/geospatial-analytics.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud는 지오메트리를 워크플로의 핵심 요소로 다룹니다. 공간 파일을 가져오고,
+좌표로 지오메트리를 만들고, 재구성하고 매칭하여 결과를 게시할 수 있으며,
+플랫폼을 벗어나거나 별도의 GIS 도구를 사용할 필요가 없습니다.
+
+이 가이드는 이러한 기능을 따라가는 경로입니다. 개별 단계의 자세한 참조는
+[지리공간 단계](/ko/reference/workflow-steps/spatial/)를 참조하십시오.
+
+## 지오메트리는 하나의 열일 뿐입니다
+
+모든 공간 단계는 지오메트리를 일반 텍스트 열의 **WKT**(well-known text)로 읽고 씁니다.
+여기에는 미리 알아 둘 만한 세 가지 결과가 있습니다.
+
+- **유형 선언이 없습니다.** 지오메트리 열은 텍스트 열입니다. 구성할 것도,
+  마이그레이션할 것도 없습니다.
+- **단계를 자유롭게 조합할 수 있습니다.** 어떤 공간 단계의 출력이든 다른 단계의 입력으로,
+  어떤 순서로든 사용할 수 있습니다.
+- **SQL과 지오메트리를 함께 사용할 수 있습니다.** 지오메트리 열이 측정값과 나란히 있으므로
+  같은 단계에서 두 가지를 모두 기준으로 필터링, 그룹화, 조인할 수 있습니다.
+
+## 1. 지오메트리를 테이블로 가져오기
+
+지오메트리의 출처에 따라 두 가지 경로가 있습니다.
+
+**공간 파일에서.**
+MapInfo `.TAB`, ESRI `.shp`, `.kml`, `.geojson`에는
+[공간 파일 가져오기](/ko/reference/workflow-steps/spatial/spatial-file-import/) 단계를 사용합니다.
+파일과 보조 파일을 같은 문서 폴더에 업로드하십시오. 단계가 함께 있는 파일
+(셰이프파일은 `.shx`/`.dbf`/`.prj`, `.TAB`은 `.dat`/`.map`/`.id`)을
+자동으로 읽습니다. 피처당 한 행이 출력되며, WKT 지오메트리 열과
+파일의 속성이 포함됩니다.
+
+**이미 가지고 있는 좌표에서.** 데이터에 경도와 위도 열이 있다면
+[Table Extract 단계 식](/ko/reference/workflow-steps/spatial/spatial-sql-recipes/)으로 점을 만듭니다.
+이는 데이터베이스 안에서 실행되므로 어떤 행도 웨어하우스를 벗어나지 않습니다.
+
+```python
+func.geom_as_wkt(
+    func.geom_point(
+        get_column(table, 'Longitude'),
+        get_column(table, 'Latitude'),
+    )
+)
+```
+
+<Aside type="tip" title="보조 파일을 함께 보관하십시오">
+  `.prj`가 없는 셰이프파일은 좌표 참조 없이 가져와지고, `.dat`가 없는
+  `.TAB`에는 속성이 없습니다. 가져오기를 실행하기 전에 전체 파일 그룹을 업로드하십시오.
+</Aside>
+
+**주소에서 — 지오코딩.** **geocode** 단계는 주소 열을 좌표로 변환(정방향)하고,
+**geocode reverse** 단계는 위도/경도 쌍을 다시 주소로 변환(역방향)하며,
+PlaidCloud의 지오코딩 서비스를 사용합니다. 정방향 지오코딩은 `GeocodeLat` /
+`GeocodeLon`(그리고 `GeocodeStatus`, `GeocodeConfidence`, 매칭된 레이블)을 추가하고,
+역방향은 확인된 주소 구성 요소를 추가합니다.
+
+### 위치 코드 보강
+
+두 지오코드 단계 모두 반환된 좌표에서 로컬로 계산한 간결한 **위치 코드**를
+각 행에 추가할 수 있습니다. 추가 서비스 호출이나 외부 종속성이 필요하지 않습니다.
+
+- **Geohash**(`GeocodeGeohash`) — **기본적으로** 출력됩니다. Geohash는
+  데이터 분석 분야의 관례(Elasticsearch, Redis, Lucene)입니다. **접두사
+  속성** 덕분에 같은 지점에 대해 짧은 코드가 긴 코드의 접두사가 되므로
+  `GROUP BY LEFT(GeocodeGeohash, n)`은 즉각적인 공간 버킷팅이 되고
+  접두사 조인은 저렴한 근접성 조인이 됩니다.
+- **Plus Code**(`GeocodePlusCode`) — 선택 사항이며 **기본적으로 꺼져 있습니다**.
+  [Open Location Code](https://maps.google.com/pluscodes/)는 Google 지도와 일부
+  정부 주소 체계에서 사용하는 사람이 공유하기 쉬운 주소 형식입니다.
+
+단계의 **`location_codes`** 설정으로 출력할 열을 제어합니다.
+
+| `location_codes` | 추가되는 열 |
+|---|---|
+| `none` | 위치 코드 없음 |
+| `geohash` *(기본값)* | `GeocodeGeohash` |
+| `geohash+pluscode` | `GeocodeGeohash` 및 `GeocodePlusCode` |
+
+두 가지 선택적 설정으로 코드를 조정할 수 있습니다. **`geohash_precision`**(기본값 `9` ≈
+4.8m 셀, 최대 `12`)과 **`pluscode_length`**(기본값 `10` ≈ 14m 셀)입니다.
+좌표로 확인되지 않은 정방향 행은 코드 열이 비어 있으며,
+역방향 행은 주소를 찾지 못해도 **조회한** 좌표를 인코딩합니다.
+
+## 2. 지오메트리 재구성
+
+지오메트리가 열에 있으면 실제로 필요한 질문에 답할 수 있도록 재구성합니다.
+
+| 질문 | 단계 |
+|---|---|
+| 각 매장에서 *n*마일 이내에는 무엇이 있습니까? | [Spatial Trade Area 단계](/ko/reference/workflow-steps/spatial/spatial-trade-area/) |
+| 이 도형에서 일정 거리 이내에는 무엇이 있습니까? | [Spatial Buffer 단계](/ko/reference/workflow-steps/spatial/spatial-buffer/) |
+| 각 지역의 합산 면적은 얼마입니까? | [공간 결합](/ko/reference/workflow-steps/spatial/spatial-combine/) 단계 |
+| 이 점들이 둘러싸는 면적은 얼마입니까? | [Spatial Poly-Build 단계](/ko/reference/workflow-steps/spatial/spatial-poly-build/) |
+| 이 두 영역은 어디에서 겹치거나 다릅니까? | [공간 처리](/ko/reference/workflow-steps/spatial/spatial-process/) 단계 |
+| 이 경계를 더 적은 비용으로 그리려면 어떻게 합니까? | [Spatial Generalize 단계](/ko/reference/workflow-steps/spatial/spatial-generalize/) |
+| 이 영역을 동일한 셀로 나누려면 어떻게 합니까? | [Spatial Make Grid 단계](/ko/reference/workflow-steps/spatial/spatial-make-grid/) |
+| 다각형을 구성 요소로 나누려면 어떻게 합니까? | [Spatial Poly-Split 단계](/ko/reference/workflow-steps/spatial/spatial-poly-split/) |
+
+소매 또는 서비스 영역 분석은 대개 Spatial Trade Area 단계에서 시작합니다. 위치 테이블과
+반경 집합을 입력하면 고객을 매칭할 수 있는 동심원 링을 반환합니다.
+
+## 3. 위치를 영역에 매칭
+
+두 매칭 단계는 서로 다른 질문에 답하며 서로 다른 경로로 실행됩니다.
+
+**각 고객은 어느 영역에 속합니까?**
+[공간 매치](/ko/reference/workflow-steps/spatial/spatial-match/) 단계를 사용합니다.
+데이터베이스에서 공간 조건자 조인으로 실행되므로 테이블 크기에 맞게 확장됩니다.
+관계(*intersects*, *within*, *contains*)를 선택하면 일치하는 쌍마다 한 행을 출력합니다.
+
+**각 고객에게 가장 가까운 매장은 어디입니까?**
+[Spatial Find Nearest](/ko/reference/workflow-steps/spatial/spatial-find-nearest/) 단계를 사용합니다.
+대상별로 가장 가까운 N개 행을 유지하고 선택한 단위로 계산된 거리 열을 추가합니다.
+이 역시 SQL 경로이므로 같은 방식으로 확장됩니다.
+
+**어떤 고객이 모든 영역 밖에 있습니까?**
+*Unmatched* 모드에서
+[Spatial Match (Intersect / Unmatched)](/ko/reference/workflow-steps/spatial/spatial-match-executor/) 단계를 사용합니다.
+쌍이 아니라 교차 영역 자체가 필요한 경우에는 같은 단계가 겹치는 지오메트리도 출력합니다.
+
+## 4. 측정
+
+[Spatial Info](/ko/reference/workflow-steps/spatial/spatial-info/) 단계는 면적,
+길이, 중심점, 경계 사각형 열을 추가합니다. 이는 **WGS84 측지** 측정값이므로
+제곱마일은 평면 근사가 아닌 실제 제곱마일입니다. 위도가 다른 영역을 비교하는 순간부터
+이 점이 중요해집니다.
+
+같은 행의 두 열 사이의 단순한 점 간 거리는
+[SQL 식](/ko/reference/workflow-steps/spatial/spatial-sql-recipes/)이
+단계보다 비용이 적게 듭니다.
+
+## 5. 게시
+
+테이블에만 머물러 있는 지오메트리는 누구도 바로 활용할 수 있는 답이 아닙니다.
+
+- [Report Map](/ko/reference/workflow-steps/reports/report-map/) 단계는 같은 워크플로의 차트 및 테이블과 함께
+  PDF 보고서에 지오메트리를 렌더링합니다.
+- 결과 테이블은 다른 테이블과 마찬가지로 [대시보드](/ko/guides/dashboards/)에 데이터를 제공합니다.
+  지오메트리 열도 함께 전달되며, 대부분의 대시보드가 실제로 차트로 표시하는 것은
+  그 옆의 측정값입니다.
+- 다운스트림 GIS 도구가 필요로 할 때 [내보내기 단계](/ko/reference/workflow-steps/export/)는 테이블을 CSV,
+  Excel 또는 외부 데이터베이스로 내보냅니다.
+
+## Alteryx에서 전환하는 경우
+
+모든 Alteryx 공간 도구에는 PlaidCloud 경로가 있습니다. 변환된 워크플로는 이를
+자동으로 선택합니다.
+[Alteryx 변환 매트릭스](/ko/reference/alteryx-conversion-matrix/)는
+도구별 매핑을 나열하며,
+[공간 Alteryx 워크플로 마이그레이션](/ko/guides/workflows/migrate-spatial-alteryx-workflows/)은
+파일 패키징과 결과 검증을 다룹니다.
+
+## 관련 가이드
+
+- [지리공간 단계](/ko/reference/workflow-steps/spatial/)
+- [공간 Alteryx 워크플로 마이그레이션](/ko/guides/workflows/migrate-spatial-alteryx-workflows/)
+- [고급 워크플로](/ko/guides/workflows/advanced-workflows/)

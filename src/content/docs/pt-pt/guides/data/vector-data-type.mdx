@@ -1,0 +1,134 @@
+---
+title: Tipo de dados Vetor
+description: "Armazene embeddings pré-calculados numa tabela de projeto com o tipo de dados de coluna Vetor, declare a largura esperada e encontre as linhas mais próximas de um vetor de consulta com um passo IA: Pesquisa vetorial."
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/vector-data-type.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+**Vetor** é um tipo de dados de coluna para embeddings pré-calculados. Uma coluna de vetores contém, em cada linha, uma matriz de números de vírgula flutuante — o resultado do modelo de embeddings que já utiliza — numa tabela de projeto normal, na mesma linha do texto, das chaves, dos montantes e das dimensões que a descrevem.
+Como é uma coluna normal numa tabela normal, associa-se às suas tabelas de factos e carrega-se através dos mesmos passos de importação e transformação que qualquer outra coluna. Não existe um repositório de vetores separado para aprovisionar, preencher ou manter sincronizado com o resto dos seus dados.
+
+Um passo **IA: Pesquisa vetorial** encontra então as linhas mais próximas de um ou mais vetores de consulta, pelo que uma pesquisa de semelhança é um passo do fluxo de trabalho como qualquer outro.
+
+<Aside type="caution">
+O Vetor requer o **Lakehouse v2 (StarRocks)**. Em qualquer outro motor, o tipo não é apresentado nas listas de tipos de dados e um pedido para criar uma coluna de vetores nesse motor é recusado, com indicação do nome.
+</Aside>
+
+<Aside type="note">
+O PlaidCloud armazena e pesquisa vetores, mas não os gera. Calcule os seus embeddings com o modelo da sua preferência e carregue as matrizes resultantes como quaisquer outros dados.
+</Aside>
+
+
+## Declarar uma coluna de vetores
+
+O **Vetor** aparece no grupo **Semiestruturado** das listas de tipos de dados, a par de JSON e Bitmap — no mapeamento de colunas de saída de um passo do fluxo de trabalho e nas propriedades de coluna de uma tabela. Não é oferecido como tipo de dados de *origem* de um passo de importação: os valores de um ficheiro chegam como uma lista de números e são colocados numa coluna que já tem o tipo Vetor. Também não é oferecido onde é necessário um único tipo escalar, como o tipo declarado de uma variável de fluxo de trabalho.
+
+O tipo em si não tem dimensão. Em vez de uma família de tipos, um por largura, existe um único tipo Vetor mais uma declaração, por coluna, da largura dos seus vetores.
+
+### Largura do vetor
+
+Abra o painel de detalhes das colunas de uma tabela, selecione a coluna de vetores e defina a **Largura do vetor** como o número de valores que cada embedding contém — 768, 1024, 1536, o que o seu modelo produzir. O campo aparece numa coluna de vetores de um projeto Lakehouse v2 (StarRocks) e em mais nenhum lado.
+
+A largura declarada é imposta em todos os caminhos de carregamento. Uma linha cujo vetor tenha um comprimento diferente é recusada antes de qualquer coisa ser guardada, e a recusa indica o ficheiro, a coluna, a linha, o comprimento encontrado e a largura declarada, para que saiba exatamente qual valor divergiu e em quanto — e, num carregamento de ficheiro, as linhas são contadas a partir de 1 ao longo do ficheiro. Assim, um ficheiro truncado ou uma troca de modelo de embeddings resulta numa execução falhada que pode ler.
+
+A verificação abrange todas as vias por onde chegam embeddings:
+
+* Uma **importação de Parquet**.
+* Um **conector REST** — incluindo QuickBooks, Xero, Sage e Monday.com.
+* Um **Singer tap**.
+* Uma **consulta a uma base de dados remota** executada diretamente na origem.
+* Um **passo de fluxo de trabalho que escreve uma frame** na tabela.
+* Uma **importação de arquivo** ou um **restauro de arquivo**, em que a recusa indica o ficheiro de arquivo.
+* Uma **importação de pacote de tabelas**. A exportação de um pacote escreve uma coluna de vetores como vetor verdadeiro, pelo que um ciclo completo de exportação e importação de pacote mantém a largura intacta.
+
+Duas situações ficam fora da verificação:
+
+* **Uma importação de CSV não é verificada e não pode ser.** A conversão transforma a matriz em texto antes de ser possível examinar a largura, pelo que o CSV é a única via que pode colocar na coluna uma largura estranha.
+* **As escritas ao nível da linha** — guardar linhas ou registos individuais e um conector com chave que coloca uma linha — são verificadas quando a escrita consegue ver que a coluna é um Vetor. Esse é o caso habitual, não uma garantia incondicional.
+
+Uma largura deixada numa coluna que a tabela já não define como Vetor não se aplica. Altere o tipo da coluna e a declaração deixa de governar o que nela é colocado.
+
+Isto é importante porque uma coluna cujas linhas têm larguras diferentes não pode ser pesquisada. Uma pesquisa vetorial sobre ela falha com um erro em bruto do motor subjacente, em vez de uma mensagem que indique a coluna. Por isso, se carregar embeddings em CSV, faça com que o ficheiro produza a largura que declarou — ou prepare a matriz como Parquet e importe-a, e a verificação é feita por si.
+
+Declare a largura antes de carregar. A Largura do vetor contém um número inteiro igual ou superior a 1 e não existe um valor vazio para regressar — esvaziar o campo repõe o que estava guardado —, por isso trate a declaração como parte da conceção da coluna.
+
+A largura é também aquilo de que uma pesquisa parte. Quando uma coluna não tem nenhuma declarada, a pesquisa tem de amostrar uma linha para descobrir a largura dos vetores guardados antes de poder verificar uma consulta em relação a eles.
+
+
+## Carregar vetores
+
+Carregue uma coluna de vetores com os passos normais de importação e transformação. Um ficheiro Parquet cuja coluna seja uma lista de números de vírgula flutuante de 32 bits é a via mais direta: o passo **Importar Parquet** coloca-a diretamente numa coluna de vetores.
+
+Um encadeamento típico de ponta a ponta, só com passos normais:
+
+1. **Importar Parquet** (ou qualquer outro passo de importação) — coloque os embeddings e as respetivas chaves de negócio numa tabela cuja coluna de embeddings tenha o tipo Vetor com a Largura do vetor declarada.
+2. **Table Inner Join** — associe essa tabela à tabela de factos ou de referência que os embeddings descrevem, pela chave de negócio.
+3. **IA: Pesquisa vetorial** — encontre as linhas mais próximas dos seus vetores de consulta e escreva as correspondências numa tabela de destino.
+4. **Table Lookup** — traga de volta para as linhas correspondentes as colunas descritivas que pretende apresentar.
+
+### De onde se pode ler um ficheiro
+
+Verificar a largura implica ler a coluna de vetores isoladamente, o que requer uma conta de documentos que possa ser lida coluna a coluna. O **S3**, o **Google Cloud Storage** e o **Azure Blob Storage** podem. Uma importação de Parquet a partir de qualquer outra conta de documentos para uma tabela que declare uma Largura do vetor é recusada em vez de carregada sem verificação; por isso, prepare o ficheiro no S3, no Google Cloud Storage ou no Azure Blob Storage e importe-o a partir daí. O mesmo se aplica ao restauro de um arquivo a partir dessa conta — um restauro é uma operação de recuperação, pelo que deve manter os seus arquivos numa conta que um restauro consiga ler. As tabelas sem Largura do vetor declarada não são afetadas, tal como todos os outros passos de importação.
+
+<Aside type="note">
+Quando uma tabela é registada como tabela externa, uma coluna de vetores de origem chega como Vetor num projeto Lakehouse v2 (StarRocks). Num projeto de qualquer outro motor, chega como Texto, porque não é possível criar aí uma coluna de vetores.
+</Aside>
+
+
+## Pesquisar as linhas mais próximas
+
+O passo **IA: Pesquisa vetorial** recebe uma tabela a pesquisar, um ou mais vetores de consulta e o número de correspondências a manter por consulta, e escreve as linhas mais próximas numa tabela de destino, juntamente com a distância que classificou cada uma.
+
+Estão disponíveis duas métricas de distância e, em ambas, uma distância menor significa uma linha mais próxima:
+
+* **Cosseno** — o ângulo entre dois vetores, ignorando as respetivas magnitudes. É a opção predefinida adequada para embeddings de texto.
+* **Euclidiana (L2)** — distância em linha reta, que tem em conta a magnitude.
+
+O produto interno não é oferecido de propósito. Em vetores que não estão normalizados, não é sequer uma distância — a distância de um vetor a si próprio resulta negativa — pelo que qualquer limiar que definisse sobre ele, e qualquer pontuação que o passo lhe mostrasse, seria desprovido de significado, mesmo que a classificação por acaso se mantivesse. Em embeddings normalizados, classificar por cosseno dá a mesma ordem que o produto interno daria, pelo que nada se perde.
+
+Para a lista completa de parâmetros, consulte
+[IA: Pesquisa vetorial](/pt-pt/reference/workflow-steps/general/vector-search/).
+
+### A pesquisa é exata, não aproximada
+
+O passo compara cada linha que passa o respetivo filtro com cada vetor de consulta. Não há índice vetorial nem aproximação: o resultado é o verdadeiro conjunto mais próximo, e o trabalho cresce com o número de linhas pesquisadas multiplicado pelo número de vetores de consulta.
+
+Dimensione em conformidade. Use o filtro do passo para restringir as linhas candidatas à fatia que interessa — uma entidade, um período, um conjunto de documentos — em vez de percorrer um corpus inteiro para responder a uma pergunta sobre uma parte dele. Dividir uma tabela de embeddings pela dimensão em que filtra sempre e pesquisar a tabela relevante é a medida isolada mais eficaz para reduzir o tempo de pesquisa.
+
+### As linhas não mensuráveis ficam de fora
+
+Uma linha cuja distância não possa ser medida é excluída das correspondências, em vez de ser devolvida como se fosse a mais próxima. Execute o fluxo de trabalho com o **Modo de diagnóstico** ativado e o registo indica quantas linhas cada consulta deixou de fora, ou informa que o passo mediu todas as linhas que pesquisou.
+
+Um vetor guardado com um valor em falta dentro da matriz é recusado em vez de ignorado: não é possível medir nenhuma distância relativamente a uma matriz que contenha um, pelo que a pesquisa pára e indica a coluna em vez de devolver uma resposta parcial.
+
+
+## O que uma coluna de vetores não pode fazer
+
+Um embedding é uma coordenada, não uma chave nem uma medida, pelo que uma coluna de vetores é recusada nas funções que a tratam como tal:
+
+* **Não é chave de junção.** Associe pela chave de negócio que está junto do vetor.
+* **Não é coluna de agrupamento.** Agrupar linhas pelo respetivo embedding em bruto coloca cada linha no seu próprio grupo.
+* **Não é alvo de agregação.** Não existe soma, média, mínimo ou máximo com significado de um embedding.
+
+Os três casos são recusados com uma mensagem que indica a coluna e a função — ao guardar o passo e novamente em tempo de execução para um passo que tenha sido guardado antes. Um fluxo de trabalho com um destes casos não é executado nem produz discretamente um número errado. Transportar um vetor através de um passo como coluna de saída normal não levanta problema, tal como contar linhas e contar valores distintos.
+
+Uma coluna de vetores é também deixada de fora da criação de perfis de colunas e das listas de valores do [Explorador de tabelas](/pt-pt/guides/data/table-explorer/), não pode ser representada num gráfico de um painel de controlo, é só de leitura no editor de dados e não pode ser ligada a uma dimensão. Um mínimo, uma média ou uma lista dos valores mais frequentes nada diz sobre um embedding, e um embedding não é membro de coisa alguma.
+
+
+## Ler os valores de um vetor
+
+Ler uma coluna de vetores inteira — numa pré-visualização, numa exportação ou através de um assistente de IA via MCP — devolve uma representação em texto da matriz e não números. Para obter números, leia os elementos individualmente.
+
+Numa grelha de dados, os valores são mostrados como uma pré-visualização curta que começa pela largura, como `1536-dim [0.013,-0.046,0.079, ...]`, para que uma coluna de embeddings se mantenha legível sem mil números por célula.
+
+
+## Relacionado
+
+* [IA: Pesquisa vetorial](/pt-pt/reference/workflow-steps/general/vector-search/) — a referência completa de parâmetros do passo
+* [Utilizar tabelas e vistas](/pt-pt/guides/data/tables-views/) — como as tabelas armazenam colunas e porque são importantes os tipos de dados
+* [Explorador de tabelas](/pt-pt/guides/data/table-explorer/) — inspecione o tipo de dados de cada coluna e defina os detalhes da coluna
+* [Importar Parquet](/pt-pt/reference/workflow-steps/import/import-parquet/) — carregue embeddings a partir de um ficheiro Parquet
+* [Tipo de dados Moeda](/pt-pt/guides/data/currency-data-type/) — o outro tipo de coluna criado de propósito, para valores monetários

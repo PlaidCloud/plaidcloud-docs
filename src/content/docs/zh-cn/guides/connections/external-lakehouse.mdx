@@ -1,0 +1,229 @@
+---
+title: 使用您自己的数据仓库
+description: 自行连接您自己的 Snowflake 或 Databricks 数据仓库，将工作区的表存储在其中并在其上运行工作流，使用您自己的数据仓库身份登录，管理多个数据仓库，并查看每次运行的成本。
+sidebar:
+  order: 2
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/external-lakehouse.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+项目的表通常存放在内置的 PlaidCloud Lakehouse 中。工作区管理员也可以在 PlaidCloud 内部自行连接**您自己的 Snowflake 或 Databricks 数据仓库**，无需 PlaidCloud 工作人员协助。之后，工作流会直接在您的数据仓库中读取和写入项目表。数据保留在您的账户中，受您的治理和计费管理，而 PlaidCloud 负责在其上驱动转换、工作流和仪表板。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 190" role="img" aria-label="PlaidCloud 项目运行工作流，直接在客户自己的 Snowflake 或 Databricks Lakehouse 中读取和写入表，数据保留在其中。" style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="xl-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="66" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="90" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">PlaidCloud 项目</text>
+  <text x="91" y="108" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">工作流 + 仪表板</text>
+  <path d="M166 88 L262 88" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <text x="214" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">读取 / 写入</text>
+  <rect x="264" y="60" width="180" height="70" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="354" y="88" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">连接</text>
+  <text x="354" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Snowflake 或 Databricks</text>
+  <path d="M444 95 L540 95" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#xl-arrow)" />
+  <rect x="514" y="60" width="150" height="70" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="589" y="88" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">您的 Lakehouse</text>
+  <text x="589" y="106" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">数据保留在此处</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">项目的表存放在您的数据仓库中；PlaidCloud 就地读取和写入，而不是将数据复制到自己的存储中。</figcaption>
+</figure>
+
+## 连接您的数据仓库
+
+只有工作区管理员可以连接、更改或移除数据仓库。
+
+1. 打开用户菜单并选择**使用您自己的数据仓库**。也可以在主页清单的**使用您的数据仓库**行上选择**连接**，或在 Snowflake 或 Databricks 连接对话框中选择**改用它作为您的数据仓库**。
+2. 选择 **Snowflake** 或 **Databricks**。
+3. 通过两种方式之一进行连接：**Sign in with Snowflake** 或 **Sign in with Databricks**（最快捷，详见[使用 Snowflake 或 Databricks 登录](#使用-snowflake-或-databricks-登录)），或者运行设置脚本并粘贴其生成的凭据（见下文）。
+
+### 1. 先运行设置脚本
+
+<Aside type="caution">请在连接之前运行设置脚本。在此之前，连接检查会失败。</Aside>
+
+对话框会根据您选择的名称生成设置脚本，并在您输入时随之更新。使用**复制脚本**将其复制，然后在您自己的账户中运行。该脚本不会更改您现有的数据仓库。
+
+| | Snowflake | Databricks |
+|---|---|---|
+| 运行身份 | `ACCOUNTADMIN` | 工作区和元存储管理员 |
+| 创建内容 | 一个空闲 60 秒后挂起的数据仓库，带有每月额度上限，达到 90% 时发送通知，达到 100% 时挂起；一个数据库；一个角色；一个服务用户 | 一个服务主体；一个空闲时停止的 SQL 仓库；目录（若尚不存在） |
+| 可更改的名称 | Warehouse、大小、每月额度上限、数据库、角色、服务用户 | 服务主体名称、SQL 仓库名称、大小、空闲多少分钟后停止、目录 |
+| 默认值 | `PLAIDCLOUD_WH`（`XSMALL`，每月 100 个额度）、`PLAIDCLOUD`、`PLAIDCLOUD_ROLE`、`PLAIDCLOUD_SVC` | `plaidcloud`、`PlaidCloud`（`2X-Small`，空闲 10 分钟）、目录 `plaidcloud` |
+| 身份验证 | 密钥对（脚本会说明如何生成） | 服务主体的 OAuth 密文 |
+
+脚本还会设置以下内容。
+
+- **网络访问。** PlaidCloud 从地址 `130.211.116.97/32` 发起连接。Snowflake 脚本会创建一个网络策略，仅允许该服务用户使用此地址。在 Databricks 上，如果您的工作区已强制执行 IP 访问列表，脚本会包含允许该地址的语句；请将该地址添加到保护您账户的任何网络策略或 IP 访问列表中。
+- **策略会延续。** 在 Snowflake 上，该角色会被授予应用行访问、掩码、投影、聚合和联接策略及标签的权限，因此 PlaidCloud 重写表时您的策略依然有效。在 Databricks 上，请为服务主体授予您所用的任何行筛选器或列掩码函数的 `EXECUTE` 权限。
+- **运行成本。** Snowflake 的角色会获得 `SNOWFLAKE.GOVERNANCE_VIEWER` 数据库角色，使 PlaidCloud 能读取每次运行所归属的额度，同时也涵盖[上次读取](/zh-cn/guides/projects/managing-tables-and-views/#最近读取)。Databricks 获得对 `system` 目录中查询历史记录和仓库大小的读取权限。
+- **上次读取。** 在 Databricks 上，脚本还会授予 `system.access` 的 `USE SCHEMA` 权限以及 `system.access.table_lineage` 的 `SELECT` 权限，这是表的“上次读取”信息所需要的。请参阅[每次运行的仓库成本](#每次运行的仓库成本)。
+
+### 2. 连接
+
+| 字段 | 引擎 | 填写内容 |
+|---|---|---|
+| 账户 URL | Snowflake | 您的账户主机，例如 `myorg-myaccount.snowflakecomputing.com`。 |
+| 私钥 | Snowflake | 服务用户的私钥（PEM）。密钥对永不过期。 |
+| 工作区 URL | Databricks | 您的工作区主机，例如 `adb-1234567890123456.7.azuredatabricks.net`。 |
+| SQL 仓库 HTTP 路径 | Databricks | 例如 `/sql/1.0/warehouses/abc123def456`。 |
+| 应用程序 ID | Databricks | 服务主体的应用程序（客户端）ID。 |
+| OAuth 密文 | Databricks | 服务主体的 OAuth 密文。PlaidCloud 会为您续期。 |
+
+在**高级**下，可以改用 Snowflake 程序化访问令牌或 Databricks 个人访问令牌。令牌会过期：到期当天，PlaidCloud 将无法访问您的数据仓库，直到您添加新令牌。到期前十四天以及到期后，横幅会告知日期并提供**续期**。使用密钥对或 OAuth 密文可避免过期。
+
+地址必须是账户的公共 URL，以 `.snowflakecomputing.com`、`.cloud.databricks.com`、`.azuredatabricks.net` 或 `.gcp.databricks.com` 结尾。不支持专用和自定义端点。
+
+### 3. 检查，然后使用
+
+- **检查连接**会测试地址、登录以及 PlaidCloud 所需的每项权限，且不会存储任何内容。
+- **用作我的数据仓库**会运行同样的检查，挂接数据仓库，将其设为默认，并在工作区切换期间等待。这通常需要几分钟，您可以关闭窗口。之后工作区中的新项目将使用您的数据仓库。
+
+检查失败时，会用通俗的语言说明问题和解决方法。缺少的必要权限会以可直接运行的 `GRANT` 语句列出，并带有**复制**按钮、**全部复制**按钮和**显示设置脚本**。**复制以供支持人员查看**会复制数据仓库自身的错误文本，供 PlaidCloud 支持人员查看。
+
+检查还会在**推荐 — 启用“上次读取”**下单独列出若干授权，每项都带有**复制**。它们让表的[上次读取](/zh-cn/guides/projects/managing-tables-and-views/#最近读取)信息能够读取您数据仓库的历史记录。它们不会阻止您使用数据仓库：没有它们也能正常连接，只是“上次读取”会显示**读取历史记录不完整**。
+
+- **Snowflake：** `GRANT DATABASE ROLE SNOWFLAKE.GOVERNANCE_VIEWER TO ROLE <role>;`（对 `SNOWFLAKE` 数据库授予 `IMPORTED PRIVILEGES` 同样可行）。“上次读取”需要 Access History，而 Snowflake Standard 版不具备此功能。
+- **Databricks：** 为服务主体授予 `system` 的 `USE CATALOG`、`system.access` 的 `USE SCHEMA`，以及 `system.access.table_lineage` 的 `SELECT`。
+
+| 您看到的情况 | 解决方法 |
+|---|---|
+| 服务用户无法使用某个对象 | 为其角色授予对该对象的权限。设置脚本包含所有授权。 |
+| 您的数据仓库已挂起或不存在 | 检查数据仓库名称，并确认其可以自行启动（Snowflake 上为 `AUTO_RESUME`，Databricks 上为运行中的 SQL 仓库）。 |
+| 您的数据仓库已用完额度配额 | 提高资源监视器的配额或预算，或等待其重置。 |
+| 网络策略正在阻止 PlaidCloud | 像设置脚本那样，在策略中允许 `130.211.116.97/32`。 |
+| 令牌或密钥已过期或不再有效 | 创建新令牌，或改用密钥对。 |
+| Unity Catalog 拒绝了服务主体的访问 | 为目录授予 `USE CATALOG`、`CREATE SCHEMA` 和 `USE SCHEMA`。 |
+| PlaidCloud 无法登录 | 检查用户或服务主体及其密钥、令牌或密文。 |
+| PlaidCloud 无法连接到您的数据仓库 | 检查 URL，并在任何网络策略或 IP 访问列表中允许 PlaidCloud 的地址。 |
+| 不支持专用或自定义端点 | 使用账户的公共 URL。 |
+
+## 使用 Snowflake 或 Databricks 登录
+
+管理员无需粘贴密钥、密文或令牌，也可以通过登录来挂接数据仓库。之后每个人都使用自己的 Snowflake 或 Databricks 身份登录，因此仪表板和查询会以其本人在您数据仓库中的权限运行。
+
+### 管理员需要先完成的设置
+
+在您自己的账户中，账户管理员需要一次性将 PlaidCloud 注册为登录应用程序。**使用您自己的数据仓库**对话框会显示要使用的确切文本，包括 PlaidCloud 的重定向 URL。
+
+- **Snowflake。** 运行对话框中显示的 `CREATE SECURITY INTEGRATION` 语句，然后从 `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS` 语句的结果中复制 `OAUTH_CLIENT_ID`。
+- **Databricks。** 在账户控制台的 **Settings > App connections** 下，添加一个名为 `PlaidCloud` 的应用。为其提供对话框中显示的重定向 URL 并授予对所有 API 的访问权限，保持 **Generate a client secret** 关闭，然后复制其客户端 ID。
+
+### 挂接数据仓库
+
+1. 在 **Quickest: sign in with Snowflake**（或 Databricks）中，输入**账户 URL**（或**工作区 URL**）和**客户端 ID**。
+2. 在 Snowflake 上，输入**数据库**和 **PlaidCloud 的数据角色**。**Warehouse** 为可选项，默认使用您自己的。在 Databricks 上，输入 **SQL 仓库 HTTP 路径**。**目录**为可选项，默认使用您自己的。
+3. 选择 **Sign in with Snowflake** 或 **Sign in with Databricks**，登录您的供应商账户并批准。
+
+PlaidCloud 会在您的账户中创建专用于此数据仓库的服务身份。工作流、计划以及其他没有具体人员参与的操作都以该身份运行。
+
+- **Snowflake。** PlaidCloud 会创建一个新的服务用户，带有密钥对，且仅持有您指定的数据角色。该角色必须是普通数据角色。PlaidCloud 会拒绝以下角色：与您登录所用角色相同的角色，是或继承了 `ACCOUNTADMIN`、`SECURITYADMIN`、`USERADMIN`、`SYSADMIN` 或 `ORGADMIN` 的角色，持有 `CREATE USER`、`CREATE ROLE`、`MANAGE GRANTS`、`CREATE INTEGRATION` 或 `CREATE NETWORK POLICY` 的角色，或拥有某个用户的角色。该角色可以持有设置脚本中的 `APPLY ROW ACCESS POLICY`、`APPLY MASKING POLICY`、`APPLY PROJECTION POLICY`、`APPLY AGGREGATION POLICY`、`APPLY JOIN POLICY` 和 `APPLY TAG` 授权，重建的表需要这些授权来保留其策略。PlaidCloud 也拒绝重用已有的 Snowflake 用户。您登录所用的角色必须能够创建用户并授予该数据角色。
+- **Databricks。** PlaidCloud 会创建一个新的服务主体，仅拥有对 SQL 仓库的访问权限以及目录的数据权限。请以工作区管理员身份登录，以便 PlaidCloud 创建它。
+
+如果您缺少服务身份所需的某项权限，数据仓库仍会为已登录的用户挂接，并显示指明该权限的警告，而工作流运行会因同样的原因被拒绝，直到管理员重新登录。
+
+### 每个人都要登录
+
+一旦工作区拥有通过登录接入的数据仓库，每位成员都会在用户菜单中看到**登录您的仓库**。选择它，然后选择 **Sign in with Snowflake** 或 **Sign in with Databricks**。PlaidCloud 会保持您的登录状态。未登录时或登录已过期后打开仪表板，会显示*Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*（或 *Databricks*）。请从该菜单项重新登录。
+
+此类数据仓库上的仪表板以查看者本人在其中的权限运行。尚未登录的查看者会看到提示：*Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
+
+## 管理数据仓库
+
+工作区管理员打开用户菜单并选择**管理数据仓库**。**您的数据仓库**窗口会列出每个数据仓库的**名称**、**类型**、**默认**、**项目**和**状态**。
+
+| 按钮 | 作用 |
+|---|---|
+| **添加 Warehouse** | 打开与连接相同的流程，标题为**添加数据仓库**。您的数据仓库会被添加，新项目的默认值不变。 |
+| **设为默认** | 新项目将使用此数据仓库。已创建的项目仍保留在其创建时所用的数据仓库上。 |
+| **移除** | 断开数据仓库。仅当该数据仓库不是默认且没有项目使用它时才可用。 |
+
+<Aside type="note">新添加的数据仓库可能需要几分钟才会出现在您的工作区中。每个工作区相互隔离运行，并自行获取配置更改，因此在更改到达之前，该数据仓库不会列出，项目也暂时无法使用它。如果一小时后仍未出现，请联系 PlaidCloud 支持人员。</Aside>
+
+移除数据仓库时，PlaidCloud 会撤销其在您账户中的凭据（包括所有登录和服务身份）并删除其副本。您的数据仍保留在您的数据仓库中。如果无法撤销凭据，PlaidCloud 会告知您自行在账户中撤销。
+
+## 每次运行的仓库成本
+
+在您自己的数据仓库上，已转换的 Alteryx 工作流的运行历史记录会显示**仓库成本**列，而[验证您的迁移](/zh-cn/guides/workflows/validate-converted-alteryx-workflows/#验证您的迁移)窗口会显示上次运行的成本以及对下次运行的估算。成本在 Snowflake 上以额度计，在 Databricks 上以 DBU 计。
+
+| 标签 | 含义 |
+|---|---|
+| *attributed* | Snowflake 已将这些额度计入该运行的查询，通过 `GOVERNANCE_VIEWER` 授权读取。归属数据会在 Snowflake 的报告延迟之后出现。 |
+| *estimated* | 根据查询运行时间和数据仓库大小计算得出，前面带有 ≈。在 Databricks 上始终如此；在 Snowflake 上，则出现于归属数据到达之前或没有该授权时。 |
+
+成本涵盖由 PlaidCloud 引擎运行的步骤。部分计价的运行会标记为 *partial*，而成本尚未报告的运行也会如实说明。
+
+## 您的策略和说明会延续
+
+在 PlaidCloud 中设置的架构、表和列说明会作为注释写入您数据仓库自己的目录。Snowflake 上的行访问、掩码、投影、聚合和联接策略，以及 Databricks 上的行筛选器和列掩码，在 PlaidCloud 替换、重新创建或克隆表时依然保持附加。如果某个策略无法延续，PlaidCloud 会保持表原样，并在消息中指明该策略及原因。
+
+## 将项目绑定到您的数据仓库
+
+工作区连接数据仓库后，**新建项目**对话框（**Analyze > 项目 > 新建项目**）会提供 Lakehouse 选择器：选择**租户默认值**，或选择特定的数据仓库。**租户默认值**是内置的 PlaidCloud Lakehouse，除非某个数据仓库被设为默认，此时新项目会自动落在该数据仓库上。使用[管理数据仓库](#管理数据仓库)中的**用作我的数据仓库**或**设为默认**来设置默认值。这只影响之后创建的项目；现有项目保留其创建时所用的后端。此后：
+
+- 项目的工作流所创建、加载或转换的每个表，都在您的 Lakehouse 中创建和写入。
+- 读取（在步骤、视图和仪表板中）均作为针对您数据仓库的查询运行。
+- 不会向 PlaidCloud Lakehouse 复制任何内容；数据保留在您的账户中。
+
+构建工作流的方式与在内置 Lakehouse 上完全相同——导入、转换、联接和发布步骤的工作方式都一样。后端在创建项目时设定，并适用于整个项目。
+
+## 向绑定了 Lakehouse 的项目导入文件
+
+向绑定了 Lakehouse 的项目导入 CSV、Parquet、XML 或 Access 文件时，会通过您数据仓库自身的**原生并行批量加载路径**加载：Snowflake 使用内部暂存区加 `COPY INTO`，Databricks 使用托管卷加 `COPY INTO`，而不是通过外部云存储桶暂存文件。无需配置额外的云 IAM，并且无论您的数据仓库运行在哪个云上，工作方式都相同。
+
+## 导出查询和表结果
+
+从绑定了 Lakehouse 的项目导出查询或表结果时，会直接交付到云存储，而不是让每一行都经由 PlaidCloud 回传：
+
+- **Snowflake** — 导出以 Snowflake 服务器端卸载（`COPY INTO` 到暂存区）的方式运行，由数据仓库直接将结果写入存储。大型导出会自动拆分为多个文件（此前超出 Snowflake 单文件上限的导出会失败）。
+- **Databricks** — 导出以 Databricks 服务器端卸载（`INSERT OVERWRITE DIRECTORY` 到 Unity Catalog 托管卷）的方式运行，由数据仓库自行写入并编码结果，PlaidCloud 只负责将完成的文件中继到存储。大型导出会自动滚动写入多个文件，CSV 可以以 gzip 压缩的形式交付。
+
+## 基于 Lakehouse 数据的仪表板
+
+仪表板可在两种引擎上使用。
+
+- **Databricks** — 仪表板通过 Databricks 驱动程序连接，使用服务主体的 OAuth 凭据（或个人访问令牌）。在通过[登录](#使用-snowflake-或-databricks-登录)挂接的数据仓库上，每位查看者的仪表板以其本人的 Databricks 身份运行。
+- **Snowflake** — 仪表板使用数据仓库的服务用户和密钥对连接。在通过[登录](#使用-snowflake-或-databricks-登录)挂接的数据仓库上，每位查看者的仪表板则改为以其本人的 Snowflake 身份运行。项目的仪表板在创建或发布项目时设置。
+
+## 让 PlaidCloud 为您注册数据仓库
+
+您不必自己连接数据仓库。请针对您要连接的引擎，将下列详细信息提供给您的 PlaidCloud 联系人，由管理员代您注册。
+
+### Snowflake
+
+| 字段 | 需要提供的内容 |
+|---|---|
+| 主机名 | 您的 Snowflake 账户主机。 |
+| 超级用户 | PlaidCloud 用于身份验证的 Snowflake 用户。 |
+| 数据库 | PlaidCloud 创建并管理项目架构的数据库。 |
+| Warehouse | PlaidCloud 运行查询所用的计算仓库。 |
+| 角色 | PlaidCloud 所扮演的 Snowflake 角色。 |
+| 私钥 | 用于密钥对身份验证的**原始、未加密** PEM 私钥——请粘贴密钥文本本身，而不是 base64 编码的副本。目前尚不支持受密码短语保护的密钥。 |
+
+在交出私钥之前，请生成密钥对并将公钥分配给 Snowflake 超级用户。该角色必须能够在目标数据库中创建、读取和写入表。
+
+### Databricks
+
+| 字段 | 需要提供的内容 |
+|---|---|
+| 主机名 | 您的 Databricks 工作区 URL。 |
+| HTTP 路径 | PlaidCloud 对其运行查询的 SQL 仓库的 HTTP 路径。 |
+| Unity Catalog | PlaidCloud 创建并管理项目架构的 Unity Catalog 目录。 |
+| 个人访问令牌 | 用于身份验证的 Databricks PAT。 |
+
+令牌所属的身份必须能够在该目录中创建、读取和写入表。
+
+两种注册都不要求提供架构——每个项目都有自己的架构，在项目绑定到 Lakehouse 时根据其 DSN 自动派生。
+
+注册表单带有**测试连接**按钮，它会使用输入的详细信息打开一个实时连接，并报告成功或失败原因，而不保存任何内容——因此可以在注册 Lakehouse 之前验证凭据。Snowflake 测试需要原始、未加密的 PEM 私钥（受密码短语保护的密钥会被报告为不受支持）；Databricks 测试使用 PAT。
+
+已注册的数据仓库并不会在保存的那一刻就可用。它可能需要几分钟才会出现在工作区中，原因与您自己添加的数据仓库相同（参见**管理数据仓库**）。
+
+<Aside type="note">Iceberg/Lakekeeper 目录连接需单独注册，且为可选项——使用 Snowflake 或 Databricks 数据仓库并不需要它。</Aside>
+
+## 相关内容
+
+- [创建和管理连接](/zh-cn/guides/connections/create-connection/)
+- [Snowflake 连接器参考](/zh-cn/reference/connectors/databases/snowflake/)
+- [Azure Databricks 连接器参考](/zh-cn/reference/connectors/databases/azure-databricks/)
+- [工作区的单点登录](/zh-cn/administration/control-plane/workspace-configuration/#单点登录)
+- [管理项目](/zh-cn/guides/projects/managing-projects/)

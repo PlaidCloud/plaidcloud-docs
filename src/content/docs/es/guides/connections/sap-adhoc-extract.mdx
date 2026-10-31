@@ -1,0 +1,202 @@
+---
+title: Extracciones ad hoc desde SAP ECC / S/4HANA
+description: Busque en SAP por tabla, código de transacción o consulta de SAP guardada, obtenga una vista previa y un plan de la extracción, y cargue el resultado en una tabla de PlaidCloud mediante un agente de PlaidLink.
+sidebar:
+  order: 22
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-adhoc-extract.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+{/* vale Google.Colons = NO */}
+{/* vale Google.Parens = NO */}
+
+Extraiga usted mismo datos de SAP ECC o S/4HANA, partiendo de lo que ya conoce: un nombre de tabla, un código de transacción o una consulta de SAP guardada. Usted elige el objeto desde una búsqueda, ve sus campos o su pantalla de selección, obtiene una vista previa de filas reales, revisa el plan y guarda un paso de flujo de trabajo que carga el resultado en una tabla.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 200" role="img" aria-label="Un paso de extracción de SAP envía su solicitud a través de un agente de PlaidLink a SAP, donde el paquete SAP de PlaidCloud lee los datos bajo las propias comprobaciones de autorización de SAP, y las filas regresan a través del agente a una tabla de destino." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="sx-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Paso de extracción de SAP</text>
+  <text x="91" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">buscar · vista previa · plan</text>
+  <rect x="265" y="36" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="340" y="61" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agente de PlaidLink</text>
+  <text x="340" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dentro de su red</text>
+  <rect x="514" y="36" width="150" height="58" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="589" y="61" text-anchor="middle" font-size="12" font-weight="700" fill="var(--sl-color-text)">SAP ECC / S/4HANA</text>
+  <text x="589" y="79" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Paquete SAP de PlaidCloud</text>
+  <text x="589" y="116" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">SAP comprueba al usuario RFC</text>
+  <path d="M166 52 L263 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M415 52 L512 52" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M514 80 L417 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <path d="M265 80 L168 80" stroke="var(--sl-color-gray-3)" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#sx-arrow)" />
+  <text x="465" y="100" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">filas</text>
+  <rect x="16" y="140" width="150" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="91" y="165" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabla de destino</text>
+  <path d="M91 94 L91 138" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sx-arrow)" />
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Toda extracción se ejecuta a través de su agente de PlaidLink y el paquete SAP de PlaidCloud, como el usuario RFC de la conexión, bajo las propias comprobaciones de autorización de SAP.</figcaption>
+</figure>
+
+## Requisitos previos
+
+- **Un agente de PlaidLink con acceso de red al sistema SAP.** Consulte [Instalar PlaidLink](/es/reference/cli/plaidlink/install/).
+- **Una conexión de instancia de SAP ECC / S/4HANA.** Consulte [Conector de SAP ECC y S/4HANA](/es/reference/connectors/erp/sap-ecc/). El usuario de SAP de esa conexión es el usuario RFC con el que se ejecuta cada extracción.
+- **El paquete SAP de PlaidCloud instalado en SAP.** Su equipo de Basis de SAP lo instala una vez por cada sistema SAP.
+- **Autorizaciones de SAP para el usuario RFC** sobre los objetos que extrae. Consulte [Autorizaciones de SAP](#autorizaciones-de-sap).
+
+## Elegir un paso
+
+Los tres pasos están en el menú de pasos del flujo de trabajo, en **SAP**.
+
+| Paso | Úselo para |
+|---|---|
+| **SAP: extracción ad hoc** | Leer una tabla de SAP, completa o de forma incremental. |
+| **SAP: ejecutar transacción / informe** | Ejecutar un código de transacción o un programa de informe ABAP y cargar su resultado. |
+| **SAP: ejecutar consulta (SQ01)** | Ejecutar una consulta de SAP guardada y cargar su resultado. |
+
+Todos los pasos comienzan con los mismos tres campos: **Agente**, **Conexión de SAP** y una **Tabla de destino** para el resultado.
+
+## Encontrar un objeto de SAP
+
+Con un agente y una conexión seleccionados, la búsqueda del paso muestra los objetos de SAP coincidentes: **Tablas**, **Transacciones** o **Consultas**, según el paso. Escriba un nombre, un código de transacción o palabras de la descripción. Los comodines `*` de SAP funcionan. Un objeto que SAP no atiende aparece de todos modos, atenuado, con el motivo.
+
+Al elegir una tabla se muestran sus campos con sus descripciones y se rellenan sus campos clave. Al elegir una transacción, un informe o una consulta se muestra su pantalla de selección en la pestaña **Filtros**, construida a partir de los campos que el propio SAP definió para ese objeto, sin necesidad de conocer los detalles internos de la tabla o del programa.
+
+## Extraer una tabla
+
+Use **SAP: extracción ad hoc**.
+
+<Steps>
+
+1. En la pestaña **Extracción de SAP**, busque la tabla y selecciónela.
+
+2. Introduzca la **Función de lectura RFC**: la función de lectura de tablas del paquete SAP de PlaidCloud, tal como la instaló su equipo de Basis.
+
+3. Revise las **Columnas clave**. PlaidCloud las rellena a partir del diccionario de datos de SAP con la clave primaria de la tabla, sin el campo de mandante. Marque la casilla que confirma que son exactamente la clave primaria. SAP rechaza cualquier otro conjunto de columnas.
+
+4. En la pestaña **Filtro de límite**, agregue filtros. Haga clic en una columna conocida para agregar una fila, elija **Incluir** o **Excluir**, seleccione un **Operador** (igual, distinto, mayor que, mayor o igual que, menor que, menor o igual que, entre, no entre, contiene patrón o no contiene patrón) y use la ayuda de valores para elegir valores válidos directamente desde SAP. Agregue varias filas para la misma columna para coincidir con cualquiera de un conjunto de valores, y agregue un rango para **Entre** o **No entre**. Una tabla grande de SAP necesita al menos un filtro, como un rango de fechas o un código de empresa.
+
+   <Aside type="note">
+   Excluir un rango, un filtro No entre, la coincidencia de patrones y más de una condición sobre la misma columna envían a SAP un predicado de filtro más complejo que requiere el paquete SAP de PlaidCloud actual en el sistema SAP del agente. Un paquete más antiguo sigue ejecutando filtros simples de igualdad, desigualdad y rango, ya sea en una fila Incluir o Excluir; pida a su equipo de Basis que actualice el paquete si un filtro más complejo no surte efecto.
+   </Aside>
+
+5. Para leer solo las filas nuevas y modificadas en cada ejecución, configure la pestaña **Incremental**. Consulte [Extracciones incrementales de tablas](#extracciones-incrementales-de-tablas).
+
+6. En la pestaña **Visibilidad y definición**, establezca la **Columna controlada**. Consulte [Columna controlada](#columna-controlada).
+
+</Steps>
+
+Una columna de importes `CURR` cuya clave de moneda está en la misma tabla se carga con su valor real. PlaidCloud desplaza cada importe según los decimales de su moneda, de modo que un importe en yenes japoneses se carga en yenes enteros. Una columna de importes sin su clave de moneda se carga tal como la almacena SAP, y la ejecución informa de una advertencia que nombra la columna.
+
+**Mandante de SAP (mandt)** y **Tamaño de porción** son opcionales. Deje el mandante en blanco para usar el mandante predeterminado de la conexión.
+
+## Ejecutar una transacción o un informe
+
+Use **SAP: ejecutar transacción / informe**.
+
+<Steps>
+
+1. En la pestaña **Ejecución de SAP**, busque una transacción y selecciónela, o escriba el nombre de un programa de informe en **Report/Program** y haga clic en **Buscar pantalla de selección**. Elija una u otra opción.
+
+2. En la pestaña **Filtros**, complete la pantalla de selección. El formulario la construye a partir de la propia pantalla de selección de SAP de la transacción o del informe. Un campo en blanco se ejecuta sin filtrar para ese campo.
+
+   Para partir en cambio de una variante de SAP guardada, elíjala en **Comenzar desde una variante de SAP**. PlaidCloud rellena el formulario de filtros con los valores almacenados de la variante y muestra junto al formulario los valores propios de la variante que no pudo trasladar; para esos, SAP usa el valor predeterminado del propio informe. Al elegir otra variante se reemplazan los valores del formulario; editar un campo después no cambia qué variante aparece como seleccionada.
+
+3. Establezca **Máximo de filas**: 10 000 de forma predeterminada, hasta 50 000. SAP ejecuta la transacción o el informe completos en cualquier caso, y el límite restringe las filas que PlaidCloud lee de vuelta.
+
+4. Para un informe de larga duración, marque **Run as a background job** y, opcionalmente, indique un **Nombre del trabajo (solo asíncrono)**.
+
+5. En la pestaña **Visibilidad y definición**, establezca la **Columna controlada**.
+
+</Steps>
+
+Un informe que necesita entrada interactiva, una ventana emergente o una pantalla no puede ejecutarse sin supervisión. SAP lo rechaza, no se carga nada y el paso informa del motivo de SAP. Ejecute ese informe en SAP GUI.
+
+## Ejecutar una consulta de SAP
+
+Use **SAP: ejecutar consulta (SQ01)**.
+
+<Steps>
+
+1. En la pestaña **Ejecución de SAP**, busque la consulta y selecciónela. Al elegir una consulta se rellenan **Espacio de trabajo**, **Grupo de usuarios** y **Nombre de la consulta**. También puede elegir el **Espacio de trabajo** y escribir directamente el **Grupo de usuarios** y el **Nombre de la consulta**.
+
+2. En la pestaña **Filtros**, complete la pantalla de selección propia de la consulta: los mismos parámetros y opciones de selección que configuró su autor en SQ01. Un campo en blanco se ejecuta sin filtrar para ese campo.
+
+3. Establezca **Máximo de filas**: 10 000 de forma predeterminada, hasta 50 000.
+
+4. En la pestaña **Visibilidad y definición**, establezca la **Columna controlada**.
+
+</Steps>
+
+Cambiar el **Espacio de trabajo**, el **Grupo de usuarios** o el **Nombre de la consulta** borra un formulario de filtros creado para otra consulta: vuelva a buscar la pantalla de selección después de cambiar.
+
+## Columna controlada
+
+Todo paso de extracción de SAP requiere una **Columna controlada**: una de las columnas que carga el paso, como `BUKRS` para el código de empresa. El paso no se guarda sin una, y una ejecución no carga ninguna fila a menos que esa columna esté entre las columnas cargadas.
+
+## Vista previa, plan y autorizaciones
+
+El grupo **Comprobación previa** de cada paso tiene tres botones. Ninguno impide guardar el paso.
+
+| Botón | Qué muestra |
+|---|---|
+| **Vista previa** | Filas de ejemplo. La vista previa de una tabla lee directamente las primeras filas. En una transacción, un informe o una consulta, la vista previa los ejecuta en SAP como una muestra independiente limitada a 100 filas, por lo que el formulario le pide confirmar primero. No se carga nada. |
+| **Plan** | Cómo se ejecuta la extracción (sus columnas clave, la estimación de filas y la selección enviada a SAP) y cualquier cosa que la detendría. Un rechazo del plan deshabilita **Crear y ejecutar** y **Guardar y ejecutar** hasta que cambie la configuración o llegue un plan nuevo sin problemas. Aun así puede guardar el paso. |
+| **Autorizaciones de SAP necesarias** | Las autorizaciones de SAP que necesita el objeto, para compartirlas con su equipo de Basis. Esta lista es informativa. |
+
+<Aside type="caution">
+Obtener la vista previa de una transacción, un informe o una consulta le cuesta a SAP casi lo mismo que una ejecución real, porque SAP ejecuta todo antes de devolver cualquier fila.
+</Aside>
+
+## Autorizaciones de SAP
+
+Las comprobaciones de autorización estándar de SAP se aplican al usuario RFC, exactamente igual que dentro de SAP.
+
+| Extracción | Autorización |
+|---|---|
+| Tabla | `S_TABU_NAM` o `S_TABU_DIS` visualización, actividad `03` |
+| Transacción | `S_TCODE` |
+| Informe | `S_PROGRAM` `SUBMIT` para el grupo de autorización del informe |
+
+Una autorización faltante hace fallar la ejecución con el error de no autorizado de SAP y una solución que enumera las concesiones anteriores. PlaidCloud no agrega comprobaciones de permisos propias y nunca bloquea un paso por la lista de **Autorizaciones de SAP necesarias**.
+
+## Extracciones incrementales de tablas
+
+En la pestaña **Incremental** de **SAP: extracción ad hoc**, marque **Run incrementally** e introduzca una **Columna de marca de agua**. Debe ser una de las siguientes:
+
+- Una columna de fecha, tipo SAP `DATS`
+- Una columna de marca de tiempo UTC, tipo SAP `TZNTSTMPS` o `TZNTSTMPL`
+
+Las columnas de marca de tiempo de tipo SAP `UTCL` no son compatibles, y la columna de marca de agua tampoco puede ser una columna del filtro de límite.
+
+La primera ejecución lee toda la tabla. Cada ejecución posterior lee solo las filas iguales o posteriores a la última marca de agua, menos el **Retroceso**, y las combina por las columnas clave. La marca de agua avanza solo después de que toda la ejecución se haya cargado. La fecha abierta de SAP `99991231` nunca se convierte en la marca de agua. Una fecha posterior en más de un día a la fecha de ejecución mantiene la marca de agua en la fecha de ejecución, y una marca de tiempo nunca la mueve más allá del inicio de la ejecución.
+
+## Cómo se cargan las columnas
+
+**SAP: extracción ad hoc** carga cada columna con su tipo real del diccionario de datos de SAP.
+
+| Tipo de SAP | Se carga como |
+|---|---|
+| Fecha (`DATS`) | Fecha. Las fechas en blanco, iniciales e inválidas se cargan vacías (`NULL`). Una fecha inválida termina el paso con una advertencia. |
+| Importe, cantidad, decimal (`CURR` / `QUAN` / `DEC`) | Decimal exacto. Cuando la columna de clave de moneda del importe está en la misma tabla y en la extracción, PlaidCloud desplaza el importe a los decimales reales de su moneda. De lo contrario, se carga tal como lo almacena SAP. Un decimal con más de 10 posiciones decimales, más de 28 dígitos enteros o sin posiciones decimales declaradas se carga como texto, y el paso termina con una advertencia que nombra la columna. |
+| Entero | Entero. |
+| Coma flotante (`FLTP`) | Doble. |
+| Flotante decimal (`DF16_*` / `DF34_*`) | Texto exacto. |
+| Marca de tiempo UTC corta (`TZNTSTMPS`) | Marca de tiempo, al segundo. |
+| Marca de tiempo UTC larga (`TZNTSTMPL`, `UTCL`) | Texto ISO UTC, como `2026-01-03T10:15:00.123456Z`; así se conserva la fracción que perdería una columna de marca de tiempo. |
+| Hora (`TIMS`), código (`NUMC`), texto (`CHAR`) | Texto exactamente como lo almacena SAP, con los ceros a la izquierda conservados. |
+
+Si cambia el tipo de SAP de una columna, la extracción reemplaza toda la tabla con el nuevo tipo de la columna, y el paso termina con una advertencia que nombra la columna. Una extracción incremental hace esto en la misma ejecución. Si esa lectura no se completa, las ejecuciones posteriores siguen leyendo toda la tabla, con la misma advertencia, hasta que una tenga éxito; entonces se reanudan las ejecuciones incrementales.
+
+**SAP: ejecutar transacción / informe** carga las columnas de importes como números. Todas las demás columnas se cargan como texto. **SAP: ejecutar consulta (SQ01)** carga las columnas de importes, enteros y fechas con esos tipos. Todas las demás columnas se cargan como texto. Convierta los tipos en un paso posterior donde los necesite.
+
+## Límites de ejecución
+
+Una sola ejecución de **SAP: extracción ad hoc** se pausa cuando ha leído 5 000 000 de filas o lleva 240 minutos en ejecución, después de terminar la porción en curso. El paso finaliza con una advertencia, no con un fallo, y la siguiente ejecución continúa donde se quedó sin perder ninguna fila.
+
+## Temas relacionados
+
+- [Conector de SAP ECC y S/4HANA](/es/reference/connectors/erp/sap-ecc/): los campos de la conexión.
+- [Pasos de SAP](/es/reference/workflow-steps/sap/): todos los pasos de flujo de trabajo de SAP.
+- [PlaidLink](/es/reference/cli/plaidlink/): instalación y actualización de agentes.

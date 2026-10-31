@@ -1,0 +1,111 @@
+---
+title: Conectar ao TM1
+description: Conecte o PlaidCloud a um servidor IBM TM1 / Planning Analytics e leia dados de cubos ou hierarquias de dimensões, diretamente da nuvem ou por meio de um agente PlaidLink local para um servidor que a nuvem não alcança diretamente.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/tm1.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte o PlaidCloud a um servidor IBM **TM1 / Planning Analytics** para que um fluxo de trabalho possa ler dados de cubos a partir de uma visão salva ou de uma consulta MDX, ou carregar uma hierarquia de dimensão como uma dimensão do PlaidCloud. Por padrão, a conexão alcança a própria API REST do TM1 **diretamente da nuvem**; para um servidor TM1 que só é acessível de dentro da sua própria rede, um [agente PlaidLink](/pt-br/reference/cli/plaidlink/) local o alcança no lugar: consulte [Ler o TM1 atrás de um firewall](#ler-o-tm1-atrás-de-um-firewall) abaixo. Este guia aborda a conexão, a execução de uma consulta direta da nuvem, o padrão de extração incremental para obter um período por vez e o caminho local.
+
+<Aside type="note">
+Este conector é somente leitura: sem gravação de volta no TM1 e sem execução de processos TI.
+</Aside>
+
+## Pré-requisitos
+
+Você precisa, do administrador do TM1, de:
+
+- O **host da API REST do TM1**, por exemplo, `https://tm1-prod.example.com:8010`, ou uma URL do PAaaS.
+- Uma **conta do TM1** (nome de usuário e senha) com acesso de leitura aos bancos de dados, cubos e visões que os seus fluxos de trabalho consultarão.
+- Se essa conta se autentica como **Native** (usuário/senha do TM1) ou **CAM** (SSO do Cognos Access Manager) e, no caso do CAM, o **namespace**.
+- O nome do **banco de dados (instância)** de onde os usuários lerão.
+
+## Criar a conexão
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **IBM Planning Analytics (TM1)** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo, `TM1 Prod`. |
+   | Host | O host da API REST do TM1, por exemplo, `https://tm1-prod.example.com:8010`. |
+   | Banco de dados padrão | Opcional. Um banco de dados do TM1 para preencher previamente o campo Banco de dados da etapa. |
+   | Modo de autenticação | `Native` ou `CAM`. |
+   | Nome de usuário | O nome de usuário da conta do TM1. |
+   | Senha | A senha da conta do TM1. |
+   | Namespace do CAM | Obrigatório somente quando o Modo de autenticação é CAM. |
+   | Verificar certificado SSL | Ativado por padrão. Desative somente para um certificado autoassinado conhecido em um servidor de teste. |
+   | Timeout (segundos) | O padrão é 30. |
+
+4. Clique em `Test Connection`. Um teste bem-sucedido informa a versão do produto do servidor.
+
+5. Clique em `Create`.
+
+</Steps>
+
+## Executar uma consulta
+
+<Steps>
+
+1. Adicione uma etapa **TM1: Consultar cubo** a um fluxo de trabalho (ela fica em **IBM TM1 / Planning Analytics** no menu de etapas).
+
+2. Em **Origem e destino**, defina **Conexão TM1**, **Ambiente**, **Banco de dados**, **Cube** e uma **Tabela de destino**. As opções de cubo são descobertas ao vivo a partir do banco de dados conectado assim que você escolhe um; digite um nome manualmente se a descoberta não o retornar.
+
+3. Em **Fatia**, escolha **Modo de origem**:
+
+   - **Por visão**: escolha uma visão salva do TM1. As opções de visão são descobertas ao vivo assim que você escolhe um cubo.
+   - **Por MDX**: escreva uma consulta MDX no cubo.
+
+4. Opcionalmente, em **Ponto de vista**, fixe membros de dimensão além do que a visão ou o MDX já fixa. Um ponto de vista só pode ser aplicado com `By MDX`.
+
+5. Clique em **Pré-visualização** para executar a fatia atual e ver as primeiras linhas e a contagem de células antes de salvar.
+
+</Steps>
+
+## Extrações incrementais por período
+
+O TM1 não rastreia alterações; portanto, não há chamada de "alterado desde" a fazer. Em vez disso, divida por **período** (ou versão) a cada execução: fixe `Period` no ponto de vista em uma variável de fluxo de trabalho `{period}` em vez de um nome de membro literal (os valores de membros do ponto de vista são substituídos pelas variáveis do próprio fluxo de trabalho em tempo de execução, como no campo MDX), de modo que cada execução obtenha o período que recebe em vez de reler o cubo inteiro. Coloque a etapa em um [fluxo de trabalho agendado](/pt-br/administration/scheduled-events/) com uma variável que avance a cada execução para construir o histórico um período por vez.
+
+## Opções
+
+- **Suprimir células zeradas/vazias**: desativado por padrão. Ele descarta células com valor zero somente **depois** de buscadas, o que não economiza largura de banda e, em um cubo de planejamento em que um `0` lançado é dado real, o descarta. Prefira suprimir os zeros na própria consulta, com `NON EMPTY` no MDX ou com a configuração de supressão da própria visão salva.
+- **Limite de linhas**: 250.000 por padrão. Um Limite de linhas não definido recorre a esse teto, e não a "ilimitado"; uma consulta que retorna mais células do que o limite efetivo é recusada em vez de ser truncada silenciosamente: restrinja a consulta ou aumente o Limite de linhas explicitamente para uma extração maior legítima.
+
+## Carregar uma hierarquia de dimensão
+
+A etapa [TM1: Ler dimensão](/pt-br/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/) lê os elementos, as arestas pai/filho e os atributos de uma hierarquia do TM1 e os carrega em uma dimensão do PlaidCloud, diretamente da nuvem, pela mesma conexão. É uma etapa separada de TM1: Consultar cubo: ela lê a estrutura da dimensão, não as células do cubo. Um elemento do TM1 sob duas consolidações em uma mesma hierarquia, ou um peso de consolidação que ela não consegue representar como um sinal simples `+`/`-`/`~`, é recusado ou sinalizado em vez de carregado incorretamente; consulte a referência da etapa para ver os dois limites.
+
+## Ler o TM1 atrás de um firewall
+
+Se o seu servidor TM1 não tiver um caminho de rede que o PlaidCloud consiga alcançar diretamente (sem endpoint público, sem IP na lista de permissões, sem VPN), leia-o por meio de um **agente PlaidLink** instalado. A etapa [TM1: Consultar cubo (agente)](/pt-br/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/) executa a mesma consulta de visão/MDX/ponto de vista descrita acima, mas a envia ao agente, que alcança o TM1 na sua própria rede.
+
+Você precisará de:
+
+<Steps>
+
+1. **Um agente PlaidLink instalado** com acesso de rede ao servidor TM1. Consulte [Instalar o PlaidLink](/pt-br/reference/cli/plaidlink/install/).
+
+2. **Uma versão do agente compatível com o TM1.** O PlaidCloud verifica os recursos anunciados por um agente antes de enviar; portanto, um agente existente instalado antes do lançamento do suporte ao TM1 precisa ser recompilado e reinstalado manualmente, pois o PlaidLink não se atualiza automaticamente. Consulte [Atualizar o PlaidLink](/pt-br/reference/cli/plaidlink/upgrade/).
+
+3. **A conexão TM1 compartilhada com esse agente**, a partir da lista `Actions > Agents` da conexão, além de qualquer acesso de membro ou grupo que ela já tenha. Consulte [Modelo de segurança](/pt-br/guides/connections/create-connection/#modelo-de-segurança).
+
+</Steps>
+
+Adicione uma etapa **TM1: Consultar cubo (agente)**, escolha o agente e preencha os mesmos campos de conexão, banco de dados, cubo e fatia de TM1: Consultar cubo. Não há descoberta ao vivo nem pré-visualização nesta etapa, porque um agente só é acessível durante uma execução, e não enquanto o formulário está aberto; por isso, o cubo, a visão e o MDX são digitados manualmente e validados quando a etapa é executada.
+
+## Relacionados
+
+- [TM1: Consultar cubo](/pt-br/reference/workflow-steps/ibm-planning-analytics/tm1-query/): leituras de cubos, referência dos campos da etapa.
+- [TM1: Consultar cubo (agente)](/pt-br/reference/workflow-steps/ibm-planning-analytics/tm1-query-remote/): leituras de cubos por meio de um agente local.
+- [TM1: Ler dimensão](/pt-br/reference/workflow-steps/ibm-planning-analytics/tm1-dimension-read/): carregue uma hierarquia do TM1 como uma dimensão do PlaidCloud.
+- [Conector TM1](/pt-br/reference/connectors/rest/tm1/): referência dos campos da conexão.
+- [PlaidLink](/pt-br/reference/cli/plaidlink/): instalação e atualização de agentes.
+- [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/)

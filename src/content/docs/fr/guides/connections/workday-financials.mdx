@@ -1,0 +1,127 @@
+---
+title: Se connecter à Workday Financials
+description: Connectez PlaidCloud à Workday Financial Management avec un utilisateur du système d'intégration, extrayez des données via un rapport Report-as-a-Service, puis comptabilisez des écritures de journal via SOAP.
+sidebar:
+  order: 14
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à Workday Financial Management à l'aide d'un utilisateur du système d'intégration (ISU) et d'un rapport Report-as-a-Service (RaaS) fourni par le client pour extraire des données financières, puis comptabilisez des journaux comptables en retour via l'API SOAP de Workday. Ce guide couvre la connexion, l'étape d'importation et l'étape de comptabilisation.
+
+<Aside type="caution">
+Exécutez chaque importation d'abord sur un tenant sandbox, et passez par **Validate Only** (voir ci-dessous) pour chaque lot à comptabiliser avant de comptabiliser en production.
+</Aside>
+
+<Aside type="note">
+Cette connexion est différente du [connecteur Workday REST](/fr/reference/connectors/rest/workday/) générique, qui cible l'API REST de Workday pour les données RH et de paie. Workday Financials utilise à la place les services web SOAP et les rapports RaaS de Workday ; utilisez ce connecteur pour les données financières et la comptabilisation d'écritures de journal.
+</Aside>
+
+## Prérequis
+
+Dans Workday, vous avez besoin des éléments suivants :
+
+- Un **utilisateur du système d'intégration (ISU)** dédié à PlaidCloud, avec un groupe de sécurité du système d'intégration lui donnant accès aux données financières et au processus métier Submit Accounting Journal.
+- L'**hôte du tenant** Workday (par exemple `wd5-impl.workday.com`) et le **nom du tenant**.
+- Un **rapport Report-as-a-Service (RaaS)** que vous avez créé dans Workday, qui renvoie les données à importer, publié avec l'accès **Web Service** afin que PlaidCloud puisse appeler directement son URL.
+
+<Aside type="note">
+Workday Financials n'expose pas un ensemble fixe d'entités prédéfinies comme NetSuite ou Business Central : vous construisez plutôt l'extraction sous forme de rapport RaaS dans Workday (avec le générateur de rapports de Workday) et vous donnez à PlaidCloud l'URL de ce rapport. Vous contrôlez ainsi précisément les champs et les lignes que renvoie l'importation.
+</Aside>
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Workday Financials** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom explicite, par exemple `Workday Financials Prod`. |
+   | Hôte du tenant | Votre hôte Workday, par exemple `wd5-impl.workday.com`. |
+   | Nom du tenant | Le nom de votre tenant Workday. |
+   | Nom d'utilisateur ISU | Le nom d'utilisateur de l'utilisateur du système d'intégration. |
+   | Mot de passe ISU | Le mot de passe de l'utilisateur du système d'intégration. |
+
+4. Cliquez sur `Create`.
+
+</Steps>
+
+## Tester rapidement la connexion
+
+<Steps>
+
+1. Créez un petit rapport RaaS dans Workday et publiez-le avec l'accès Web Service.
+
+2. Ajoutez une étape **Import Workday Entity** à un workflow, puis définissez **Connexion Workday** sur votre connexion, **RaaS Report URL** sur l'URL du rapport et **Table cible** sur une table temporaire.
+
+3. Exécutez l'étape (voir [Exécuter une seule étape dans un workflow](/fr/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Une table cible renseignée confirme que les informations d'identification de l'ISU, l'hôte du tenant et l'URL du rapport sont corrects. Une erreur désigne le problème : informations d'identification incorrectes, hôte de tenant erroné ou ISU sans accès au rapport.
+
+## Importer des données
+
+<Steps>
+
+1. Ajoutez une étape **Import Workday Entity** et définissez **Connexion Workday**, **RaaS Report URL** et **Table cible**.
+
+2. Ajoutez des **Filtres** pour délimiter l'extraction : `company`, `ledger`, `period`, `accounting_date` (plage), `ledger_account` (plage) et `cost_center` sont transmis comme paramètres du rapport lorsque votre rapport RaaS définit des invites correspondantes.
+
+3. Exécutez l'étape et vérifiez la table cible.
+
+</Steps>
+
+<Aside type="caution">
+Les filtres n'atteignent qu'un paramètre de rapport que votre rapport RaaS définit réellement comme invite. Si un filtre que vous définissez n'a aucune invite correspondante dans le rapport, PlaidCloud le rejette au lieu de l'ignorer en silence : ajoutez d'abord l'invite au rapport dans Workday.
+</Aside>
+
+## Comptabiliser des écritures de journal
+
+L'étape **Workday Financials: Post Journal Entry** comptabilise des journaux comptables via le pipeline d'écriture ERP partagé de PlaidCloud, en utilisant l'opération SOAP `Submit_Accounting_Journal` de Workday.
+
+<Steps>
+
+1. Créez une **table d'en-tête** (une ligne par écriture de journal) avec `journal_id` (l'identifiant de votre écriture), `company`, `ledger`, `accounting_date` et `memo`.
+
+2. Créez une **table des lignes** (une ou plusieurs lignes par `journal_id`) avec `ledger_account`, `debit`, `credit` et toutes les colonnes de worktag (centre de coûts, projet) requises par vos journaux.
+
+3. Ajoutez une étape **Workday Financials: Post Journal Entry**, puis définissez **Connexion Workday**, **Table d'en-tête**, **Table des lignes** et **Table de résultat**.
+
+4. Laissez **Validate Only** coché et exécutez l'étape : PlaidCloud construit et contrôle chaque écriture sans réservation dans le registre et sans rien comptabiliser.
+
+5. Examinez la table de résultat (une ligne par écriture : `journal_id`, `natural_key`, `confirmation_id`, `status`, `message`). Corrigez toute ligne `error` et validez à nouveau.
+
+6. Décochez **Validate Only** et exécutez à nouveau pour comptabiliser réellement. Laissez **Continue On Error** coché, sauf si vous voulez qu'un lot s'arrête net à la première écriture en échec.
+
+</Steps>
+
+### Fonctionnement de la comptabilisation
+
+PlaidCloud appelle `Submit_Accounting_Journal` pour chaque écriture de journal et, parce que la chaîne d'approbation du processus métier de Workday peut retenir un journal soumis avant sa comptabilisation effective, interroge l'état du processus métier de l'écriture jusqu'à ce qu'il atteigne un état final. Une écriture n'est signalée `posted` qu'une fois cet état final **Confirmé** : une écriture soumise mais bloquée à une étape d'approbation reste en quarantaine au lieu d'être enregistrée comme comptabilisée, de sorte qu'une approbation en attente ne passe jamais silencieusement pour un succès. La réservation dans le registre propre à PlaidCloud empêche de soumettre deux fois la même écriture lors d'une nouvelle tentative ou d'une réexécution du lot.
+
+### Corriger une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais un journal comptabilisé. Pour en corriger un, comptabilisez une nouvelle écriture avec les débits et les crédits inversés par rapport à l'originale (une **écriture d'extourne comptabilisée**) plutôt que de modifier l'originale sur place. Cela préserve la piste d'audit propre à Workday et correspond à la manière dont les corrections sont effectuées directement dans l'application.
+
+### Limites des fonctionnalités : à lire avant de comptabiliser en production
+
+<Aside type="caution">
+- **L'importation dépend entièrement du rapport RaaS que vous créez.** PlaidCloud n'a aucune entité Workday Financials prédéfinie : les champs, les invites et le contrôle d'accès du rapport sont tous définis dans Workday, et non par ce connecteur. Une modification du rapport dans Workday peut changer la forme de votre importation sans aucun changement côté PlaidCloud.
+- **L'approbation du processus métier ajoute de la latence.** Si votre processus métier Submit Accounting Journal passe par des étapes d'approbation, une écriture comptabilisée peut rester `pending` jusqu'à ce que quelqu'un l'approuve dans Workday ; l'interrogation de l'état final l'attend, de sorte qu'une comptabilisation peut prendre sensiblement plus de temps qu'un appel à un ERP sans chaîne d'approbation.
+- **Ce connecteur est distinct du [connecteur Workday REST](/fr/reference/connectors/rest/workday/) générique.** Ce dernier cible l'API REST de Workday (RH/paie) ; n'utilisez-le que si vous ne vous connectez pas à Workday Financials.
+</Aside>
+
+## Voir aussi
+
+- [Connecteur Workday Financials](/fr/reference/connectors/rest/workday-financials/) : référence des champs.
+- [Import Workday Entity](/fr/reference/workflow-steps/workday-financials/import-workday-entity/)
+- [Workday Financials: Post Journal Entry](/fr/reference/workflow-steps/workday-financials/workday-post/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/) : l'enregistrement permanent de chaque tentative de comptabilisation Workday Financials et de son état en direct.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

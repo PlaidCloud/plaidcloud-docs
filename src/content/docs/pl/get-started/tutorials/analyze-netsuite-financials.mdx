@@ -1,0 +1,230 @@
+---
+title: Analiza finansów z NetSuite — od połączenia do rachunku zysków i strat
+description: Kompletny samouczek NetSuite — połącz się, pobierz księgę główną za pomocą SuiteQL, przekształć ją w miesięczny rachunek zysków i strat oraz zestawienie wiekowania należności, umieść wyniki na pulpicie i zaplanuj odświeżanie.
+sidebar:
+  label: Analiza finansów z NetSuite
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-netsuite-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~45 minut · działające połączenie NetSuite, załadowana księga główna, miesięczny rachunek zysków i strat, zestawienie wiekowania należności i zaplanowane odświeżanie*
+
+To ścieżka na pierwszy dzień dla kontrolera finansowego lub analityka FP&A: na końcu pobierzesz **księgę główną** bezpośrednio z NetSuite, przekształcisz ją w **miesięczny rachunek zysków i strat**, który czyta się jak sprawozdanie, zbudujesz **zestawienie wiekowania należności**, umieścisz oba wyniki na pulpicie i ustawisz automatyczne odświeżanie całości. Bez eksportu do arkusza kalkulacyjnego i ręcznego przepisywania — liczby pochodzą z NetSuite i pozostają aktualne.
+
+Połączysz się raz, pobierzesz dane raz, a potem zajmiesz się tym, co naprawdę ważne: przekształcaniem surowych wierszy księgi głównej w zestawienia, które biznes czyta w poniedziałek rano.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Pięć etapów od lewej do prawej: NetSuite, krok Żądanie REST uruchamiający SuiteQL, załadowana tabela księgi głównej, krok Table Extract grupujący i sumujący oraz rachunek zysków i strat z pulpitem, zasilające zaplanowane odświeżanie." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="ns-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">NetSuite</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Pobranie SuiteQL</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabela KG</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Grupuj i sumuj</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#ns-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">RZiS</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Połącz się, jednorazowo pobierz księgę główną, a następnie przekształć ją w czytelne zestawienia — wszystko do ponownego uruchamiania według harmonogramu.</figcaption>
+</figure>
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud i projekt, w którym będziesz pracować ([rozpocznij okres próbny](https://app.plaidcloud.com), jeśli go potrzebujesz).
+- **Działające połączenie NetSuite.** Najpierw wykonaj instrukcje z artykułu [Połączenie z NetSuite](/pl/guides/connections/netsuite/) — potrzebujesz włączonych w NetSuite OAuth 2.0 i REST Web Services, identyfikatora klienta integracji, identyfikatora certyfikatu, identyfikatora konta oraz klucza prywatnego w formacie PEM. Zanim zaczniesz tutaj, upewnij się, że **Wyślij żądanie testowe** kończy się powodzeniem.
+- Do przekształcania danych nie jest potrzebny SQL — wykonasz je za pomocą standardowych kroków transformacji. Jedyny tekst zapytania to **pobranie** z NetSuite, a każde zapytanie pobierające jest podane. Miej w osobnej karcie otwarty artykuł [Przykłady zapytań NetSuite SuiteQL](/pl/guides/connections/netsuite-financial-queries/); ten samouczek z niego korzysta.
+
+<Aside type="note">
+Jedyne miejsce, w którym piszesz tekst zapytania, to **pobranie** z NetSuite — to **SuiteQL**, który działa *wewnątrz NetSuite*. Wszystko po nim — grupowanie księgi głównej w rachunek zysków i strat, dzielenie należności na przedziały — wykonujesz za pomocą kroków transformacji PlaidCloud obsługiwanych myszą, bez SQL. (Jeśli lubisz SQL, istnieje do tego krok Wyodrębnij SQL, ale tutaj nie będzie potrzebny.)
+</Aside>
+
+## Krok 1: utwórz przepływ pracy
+
+Przepływ pracy to potok, który pobiera i przekształca dane.
+
+<Steps>
+
+1. Otwórz projekt i przełącz się na kartę **Przepływy pracy**.
+2. Kliknij **Nowy przepływ pracy**, nadaj mu nazwę, na przykład `NetSuite Financials`, i otwórz go.
+
+</Steps>
+
+## Krok 2: pobierz księgę główną
+
+Jedno zapytanie SuiteQL zwraca rok aktywności księgowań — każde konto, każdy miesiąc — co wystarczy do zbudowania rachunku zysków i strat oraz, w dalszej kolejności, innych zestawień.
+
+<Steps>
+
+1. Dodaj [krok Żądanie REST](/pl/guides/workflows/rest-request-step/). Na karcie **Żądanie** ustaw **Połączenie** na swoje połączenie NetSuite, **Metoda** na `POST`, a **Punkt końcowy** na `/services/rest/query/v1/suiteql`.
+
+2. W polu **Treść żądania** wpisz poniższe zapytanie SuiteQL opakowane jako `{"q": "…"}`:
+
+   ```sql
+   SELECT
+       TO_CHAR(t.trandate, 'YYYY-MM')  AS period,
+       a.accttype                      AS account_type,
+       a.acctnumber                    AS account_number,
+       BUILTIN.DF(a.id)                AS account_name,
+       tal.amount                      AS amount
+   FROM transactionaccountingline tal
+       JOIN transaction t ON t.id = tal.transaction
+       JOIN account a     ON a.id = tal.account
+   WHERE tal.posting = 'T'
+       AND tal.accountingbook = 1
+       AND t.trandate BETWEEN TO_DATE('2026-01-01', 'YYYY-MM-DD')
+                          AND TO_DATE('2026-12-31', 'YYYY-MM-DD')
+   ORDER BY period, a.acctnumber
+   ```
+
+3. Na karcie **Odpowiedź** ustaw miejsce docelowe na **Tabela** — nazwij ją `netsuite_gl` — i ustaw typy kolumn: `amount` → **Waluta**, wszystkie pozostałe → **Tekst**. (SuiteQL zwraca liczby i daty jako tekst; to typ sprawia, że wartości `amount` można sumować.)
+
+4. Kliknij **Wyślij żądanie testowe**, aby potwierdzić, że zapytanie działa, a następnie uruchom krok. Masz teraz tabelę `netsuite_gl`: jeden wiersz na konto na miesiąc, ze znakowaną kwotą księgowania.
+
+</Steps>
+
+<Aside type="note">
+`amount` jest **dodatnie dla obciążeń i ujemne dla uznań** — to konwencja księgi głównej w NetSuite. To surowa prawda; następny krok zamienia ją w czytelne zestawienie. Jeśli Twoje księgi obejmują więcej niż jedną spółkę zależną lub walutę, ogranicz dane do jednej spółki zależnej (`t.subsidiary = <id>`) — zobacz ostrzeżenie o wielu walutach w [przykładach zapytań](/pl/guides/connections/netsuite-financial-queries/#konwencje-stosowane-w-każdym-przepisie).
+</Aside>
+
+## Krok 3: przekształć księgę główną w rachunek zysków i strat
+
+Teraz analiza, wykonana jednym krokiem transformacji obsługiwanym myszą — bez SQL. Rachunek zysków i strat to po prostu zsumowana księga główna: konta przychodów i kosztów, pogrupowane w kilka pozycji, ze zmienionym znakiem, tak aby przychody były dodatnie. [Krok Table Extract](/pl/reference/workflow-steps/tables/table-extract/) robi to wszystko na kartach **Wybór danych tabeli** i **Filtry danych**.
+
+<Steps>
+
+1. Dodaj krok **Table Extract**. Ustaw jego **Źródło** na `netsuite_gl`, a **Cel** na nową tabelę `netsuite_pnl`.
+
+2. Na karcie **Filtry danych** zachowaj tylko konta przychodów i kosztów (pomiń konta bilansowe): dodaj filtr, w którym **`account_type` jest jedną z** wartości `Income`, `OthIncome`, `COGS`, `Expense`, `OthExpense`.
+
+3. Na karcie **Wybór danych tabeli** kliknij **Podsumuj**, aby włączyć agregację, a następnie skonfiguruj trzy kolumny docelowe:
+
+   - **`period`** — mapowana bezpośrednio ze źródła. Podsumowanie: **Grupuj według**.
+   - **`pnl_line`** — **wyrażenie** (poniżej), które zamienia każdy typ konta na pozycję raportu. Podsumowanie: **Grupuj według**.
+   - **`amount`** — **wyrażenie** `netsuite_gl.amount * -1` (zmiana znaku). Podsumowanie: **Suma**.
+
+   Dla `pnl_line` kliknij dwukrotnie komórkę **wyrażenia** i wprowadź poniższy kod (edytor pozwala wybierać kolumny i funkcję `case` z grupy **Warunki** myszą):
+
+   ```python
+   case(
+       (netsuite_gl.account_type.in_(['Income', 'OthIncome']),  '1 - Revenue'),
+       (netsuite_gl.account_type == 'COGS',                     '2 - Cost of Goods Sold'),
+       (netsuite_gl.account_type.in_(['Expense', 'OthExpense']), '3 - Operating Expenses'),
+   )
+   ```
+
+4. Uruchom krok.
+
+</Steps>
+
+Wyrażenie `amount * -1` to jedyny zabieg księgowy: zmiana znaku kwoty dodatniej dla obciążeń sprawia, że **przychody są dodatnie, a koszty ujemne**, więc trzy pozycje każdego miesiąca *sumują się do zysku netto*. Następnie **Suma** z opcją **Grupuj według** dla `period` i `pnl_line` zwija wszystkie konta do tych trzech pozycji na miesiąc. Wyrażenia korzystają z edytora PlaidCloud obsługiwanego myszą — zobacz [Zaawansowane użycie Data Mapper](/pl/reference/workflow-steps/common/advanced-data-mapper-usage/) oraz [opis wyrażeń](/pl/reference/expressions/).
+
+<Aside type="tip">
+Pogrupowanie kilkudziesięciu kont w trzy pozycje jest na pierwszy raz celowo zgrubne. Aby rozbić koszty operacyjne na działy, dodaj `department` (przez `BUILTIN.DF(tl.department)`, ze złączeniem `transactionline`) do zapytania z kroku 2, a następnie dodaj `department` jako kolejną kolumnę **Grupuj według** w tym kroku.
+</Aside>
+
+## Krok 4: czytaj to jak finansista
+
+Otwórz tabelę `netsuite_pnl`. Dla każdego miesiąca masz trzy liczby:
+
+| okres | pnl_line | amount |
+|---|---|---|
+| 2026-01 | 1 - Revenue | 486,200.00 |
+| 2026-01 | 2 - Cost of Goods Sold | -190,540.00 |
+| 2026-01 | 3 - Operating Expenses | -212,880.00 |
+
+Odczytaj bezpośrednio z tabeli:
+
+- **Zysk brutto** = przychody + koszt własny sprzedaży (koszt własny sprzedaży jest już ujemny) → `486,200 − 190,540 = 295,660`.
+- **Zysk netto** = suma trzech pozycji → `82,780`.
+- **Marża brutto %** = zysk brutto ÷ przychody → ok. 61%.
+
+Najpierw trzeba **uzgodnić wyniki**: uruchom w NetSuite jego własny rachunek zysków i strat za ten sam miesiąc i sprawdź, czy przychody i zysk netto się zgadzają. Jeśli nie, prawie zawsze chodzi o różnicę zakresu — filtr spółki zależnej lub waluty albo niedopasowanie okresu księgowania do daty transakcji (zobacz [uwagę o okresach](/pl/guides/connections/netsuite-financial-queries/#zestawienie-obrotów-i-sald)). Zaufaj potokowi dopiero wtedy, gdy wyniki się zgadzają.
+
+<Aside type="tip">
+Chcesz klasyczny układ z miesiącami u góry? Dodaj [krok Table Pivot](/pl/reference/workflow-steps/tables/table-pivot/) odczytujący `netsuite_pnl`: przestaw `period` na kolumny, zachowaj `pnl_line` jako wiersz i zsumuj `amount`. Otrzymasz jedną kolumnę na miesiąc i jeden wiersz na pozycję rachunku zysków i strat — porównanie miesiąc do miesiąca na pierwszy rzut oka, bez SQL.
+</Aside>
+
+## Krok 5: zbuduj zestawienie wiekowania należności
+
+Drugi sukces pierwszego dnia, według tego samego schematu: połącz, pobierz, przekształć. Zacznij od przepisu na otwarte należności, a następnie podziel je na przedziały według tego, jak bardzo faktura jest przeterminowana.
+
+<Steps>
+
+1. Dodaj kolejny krok **Żądanie REST** (to samo połączenie, `POST`, punkt końcowy suiteql) z następującą treścią:
+
+   ```sql
+   SELECT
+       t.tranid                            AS invoice_number,
+       BUILTIN.DF(t.entity)                AS customer,
+       TO_CHAR(t.trandate, 'YYYY-MM-DD')   AS invoice_date,
+       TO_CHAR(t.duedate, 'YYYY-MM-DD')    AS due_date,
+       t.foreigntotal                      AS invoice_total,
+       t.foreignamountunpaid               AS amount_unpaid
+   FROM transaction t
+   WHERE t.type = 'CustInvc'
+       AND t.foreignamountunpaid <> 0
+   ORDER BY t.tranid
+   ```
+
+   Załaduj wynik jako `netsuite_open_ar`, ustawiając `invoice_total` i `amount_unpaid` → **Waluta**, `invoice_date` i `due_date` → **Data**, a pozostałe → **Tekst**.
+
+2. Dodaj krok **Table Extract** odczytujący `netsuite_open_ar` do nowej tabeli `netsuite_ar_aging`. Na karcie **Wybór danych tabeli** kliknij **Podsumuj** i skonfiguruj trzy kolumny docelowe:
+
+   - **`aging_bucket`** — **wyrażenie** (poniżej), które oznacza każdą fakturę etykietą według stopnia przeterminowania. Podsumowanie: **Grupuj według**.
+   - **`invoices`** — dowolna kolumna, np. `invoice_number`. Podsumowanie: **Liczba**.
+   - **`balance`** — mapowana z `amount_unpaid`. Podsumowanie: **Suma**.
+
+   Dla `aging_bucket` wprowadź to wyrażenie — mierzy ono liczbę dni po terminie płatności (różnica dat daje dni) i nadaje etykietę przedziału:
+
+   ```python
+   case(
+       ((func.today() - netsuite_open_ar.due_date) <= 0,  '0 - Current'),
+       ((func.today() - netsuite_open_ar.due_date) <= 30, '1 - 1-30 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 60, '2 - 31-60 days'),
+       ((func.today() - netsuite_open_ar.due_date) <= 90, '3 - 61-90 days'),
+       else_='4 - Over 90 days',
+   )
+   ```
+
+3. Uruchom krok. `netsuite_ar_aging` pokazuje teraz w pięciu wierszach, ile należności jest bieżących, a ile przeterminowanych o 30/60/90+ dni — to widok windykacyjny, który biznes czyta w pierwszej kolejności. (`due_date` musi mieć typ **Data**, aby odejmowanie dat działało — ustawiono to wyżej na karcie **Odpowiedź** kroku Żądanie REST.)
+
+</Steps>
+
+## Krok 6: umieść wyniki na pulpicie
+
+Liczby w tabeli są w porządku, ale to wykres wysyła się dyrektorowi finansowemu. [Opublikuj](/pl/get-started/tutorials/load-and-transform-data/#krok-7-opublikuj-wynik) `netsuite_pnl` i `netsuite_ar_aging`, a następnie wykonaj instrukcje z samouczka [Tworzenie pulpitu](/pl/get-started/tutorials/build-a-dashboard/), aby dodać:
+
+- **wykres słupkowy** zysku netto (lub przychodów) według `period` oraz
+- **wykres kołowy lub słupkowy** należności `balance` według `aging_bucket`.
+
+To działający na żywo pulpit finansowy z NetSuite — bez eksportu, odświeżany przy każdym uruchomieniu przepływu pracy.
+
+## Krok 7: zaplanuj odświeżanie
+
+<Steps>
+
+1. Uruchom cały przepływ pracy raz, od góry do dołu, aby potwierdzić, że każdy krok kończy się powodzeniem.
+2. [Zaplanuj przepływ pracy](/pl/get-started/tutorials/schedule-a-workflow/) — co miesiąc zgodnie z cyklem zamknięcia lub co noc, jeśli chcesz, aby zestawienie wiekowania należności było świeże każdego ranka.
+
+</Steps>
+
+Ponieważ każde pobranie w całości zastępuje tabelę, każde uruchomienie ponownie wyodrębnia wycinek zdefiniowany przez klauzulę `WHERE` — ogranicz go do potrzebnego okna (bieżący rok, tylko otwarte faktury) zamiast całej historii.
+
+## Co udało Ci się zbudować
+
+Zaczynając od pustego przepływu pracy, udało się pobrać dane księgi głównej i należności z NetSuite na żywo, przekształcić je w **miesięczny rachunek zysków i strat** oraz **zestawienie wiekowania należności** za pomocą dwóch standardowych kroków transformacji — bez SQL — umieścić je na pulpicie i ustawić ich odświeżanie. To podstawowa pętla raportowa zespołu finansowego, teraz zautomatyzowana.
+
+## Dokąd dalej
+
+- [Przykłady zapytań NetSuite SuiteQL](/pl/guides/connections/netsuite-financial-queries/) — zestawienie obrotów i sald, bilans, otwarte zamówienia sprzedaży, zamówienia zakupu i zapasy do dodania w tym samym przepływie pracy.
+- [Krok Table Extract](/pl/reference/workflow-steps/tables/table-extract/) oraz [Zaawansowane użycie Data Mapper](/pl/reference/workflow-steps/common/advanced-data-mapper-usage/) — grupowanie, filtrowanie i kolumny obliczeniowe do głębszej analizy.
+- [Projektowanie wymiaru](/pl/get-started/tutorials/design-a-dimension/) — zwiń plan kont do grup raportowych, które kontrolujesz.
+- [Tworzenie pulpitu](/pl/get-started/tutorials/build-a-dashboard/) — pełny przewodnik po pulpitach.

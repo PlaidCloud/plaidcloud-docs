@@ -1,16 +1,48 @@
 ---
 title: Creating a Panel App
-description: Publish a server-side HoloViz Panel app from a git repository (with a hello-world example), or a static WASM app from a file, in PlaidCloud.
+description: Create a Panel app in Panel Studio, from a blank app, a table, a view or the gallery, or publish a server app from git or a static WASM app for bespoke needs.
 sidebar:
   order: 2
 ---
 
-Open **My Panel Apps**. The toolbar offers two ways to publish, one per [runtime](/guides/panel-apps/):
+Start with Panel Studio. It needs no repository and no setup: you build the app in PlaidCloud, preview it, and publish it when you're ready. Choose a bespoke runtime only when Studio doesn't fit.
 
-- **New Server App** — build and run an app from a git repository.
+## Create a Studio App
+
+Open **My Panel Apps**. **New Studio App** is the first button in the toolbar. You can also choose **New Studio App** in the **Panel Apps** box on a project's **Home** tab, or [start from a table](#start-from-a-table).
+
+1. Choose **New Studio App**.
+2. Enter a **Name**. The **URL slug** fills in from it.
+3. Pick the **Project** that owns the app. You need edit access to the project.
+4. Under **Start from**, choose where the app begins:
+
+   | Start from | You get |
+   |---|---|
+   | **Blank app** | A minimal app with an `app.py` and a `requirements.txt`. |
+   | **From a table** | An app built on the table you pick. |
+   | **From a view** | The same, built on a project view. |
+   | **From another Studio app** | A copy of one of your Studio apps. |
+   | **From the gallery** | A copy of an app your workspace [listed in the gallery](#start-from-the-gallery). |
+
+5. Choose **Create**. Studio opens the new app. For a table or a view, Weave's prompt to build the first page is ready to send.
+
+See [Panel Studio](/guides/panel-apps/studio/) to edit, preview and publish the app.
+
+### Start From a Table
+
+You can also begin on the **Tables** tab of a project. Select one table or view, then choose **Create Panel App** from the **New** menu or the right-click menu. The **New Studio App** dialog opens with the project and the table already chosen. The command is available when you have edit access to the project and the project isn't read-only.
+
+### Start From the Gallery
+
+Choose **Gallery** in the **My Panel Apps** toolbar to browse the apps your workspace has listed, then **Create app from this…** to make your own copy. Or choose **From the gallery** in the **New Studio App** dialog. See [The App Gallery](/guides/panel-apps/gallery/), including how to list your own app.
+
+## Other Runtimes
+
+Studio apps cover most dashboards and tools. For a bespoke need, publish with one of the other [runtimes](/guides/panel-apps/) from the **My Panel Apps** toolbar:
+
 - **Add WASM App** — publish a static, in-browser app from a file.
-
-To write the app in PlaidCloud instead, with no repository to set up, use [Panel Studio](/guides/panel-apps/studio/).
+- **New Server App** — build and run an app from a git repository you manage, for example to reuse existing code or your own build process.
+- **New Dash App** — publish a Plotly Dash app. See [Dash Apps](/guides/dash-apps/).
 
 ## Creating a Server App
 

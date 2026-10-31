@@ -1,0 +1,83 @@
+---
+title: Se connecter à Oracle Essbase
+description: Connectez PlaidCloud à Oracle Essbase 21c ou Oracle Analytics Cloud et exécutez une requête MDX en direct sur un cube ou chargez le plan d'une dimension dans une dimension PlaidCloud, en accès direct au cloud, avec des libellés de membres déterministes et une limite stricte de taille d'extraction.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Connectez PlaidCloud à Oracle **Essbase** (21c ou ultérieur, ou Oracle Analytics Cloud) pour qu'un workflow puisse exécuter une requête MDX en direct sur un cube ou charger le plan d'une dimension comme dimension PlaidCloud. La connexion atteint l'API REST d'Essbase **en accès direct au cloud** : ces étapes n'utilisent aucun agent local. Ce guide couvre la connexion, l'exécution d'une requête, les options qui contrôlent les limites de lignes et les libellés, et le chargement d'une hiérarchie de dimension.
+
+<Aside type="note">
+Ce connecteur est en lecture seule : aucune écriture en retour dans Essbase.
+</Aside>
+
+## Prérequis
+
+Vous avez besoin des éléments suivants, auprès de votre administrateur Essbase :
+
+- L'**origine du serveur Essbase**, par exemple `https://your-host:9001`, sans chemin `/essbase/...` à la fin.
+- Un **compte de service** (nom d'utilisateur et mot de passe) avec un accès en lecture aux applications et aux cubes que vos workflows interrogeront.
+
+## Créer la connexion
+
+<Steps>
+
+1. Ouvrez **Tools > Connections** et cliquez sur `New Connection`.
+
+2. Choisissez **Oracle Essbase** dans le menu.
+
+3. Renseignez les champs :
+
+   | Champ | Valeur |
+   |---|---|
+   | Nom | Un nom convivial, par exemple `Essbase Prod`. |
+   | URL de base | L'origine du serveur Essbase, par exemple `https://your-host:9001`. |
+   | Application par défaut | Facultatif. Présélectionne cette application dans les formulaires d'étape. |
+   | Nom d'utilisateur | Le nom d'utilisateur du compte de service. |
+   | Mot de passe | Le mot de passe du compte de service. |
+   | Verify SSL | Activé par défaut. Désactivez-le uniquement pour un hôte dont le certificat est auto-signé ou autrement invérifiable. |
+
+4. Cliquez sur `Test Connection`. Un test réussi atteint le serveur Essbase, liste les applications que le compte de service peut voir et indique combien il en a trouvé, ce qui confirme l'URL de base et les identifiants avant que vous ne construisiez une requête.
+
+5. Cliquez sur `Create`.
+
+</Steps>
+
+## Exécuter une requête
+
+<Steps>
+
+1. Ajoutez une étape **Essbase : interroger un cube** à un workflow (elle se trouve sous **Oracle Essbase** dans le menu des étapes).
+
+2. Sous **Configuration**, définissez **Connexion**, **Application**, **Cube (Database)** et une **Table cible**.
+
+3. Construisez le **MDX** :
+
+   - **Sélection guidée des membres** : parcourez les dimensions et les membres du cube et choisissez ce qui va en colonnes et en lignes ; l'étape assemble le MDX pour vous.
+   - **MDX brut** : écrivez ou collez directement un `SELECT` MDX, pour tout ce que le sélecteur guidé ne couvre pas, comme les membres calculés ou les opérateurs d'ensembles.
+
+4. Exécutez l'étape. La grille renvoyée est chargée comme table cible, avec des colonnes déduites de la grille elle-même : il n'y a aucun schéma à déclarer au préalable.
+
+</Steps>
+
+## Options
+
+- **Les libellés de membres sont déterministes.** Les libellés de colonnes des membres proviennent de la table d'alias configurée sur la connexion, appliquée de la même façon à chaque exécution, et non de la valeur par défaut propre à la session d'Essbase, qui pourrait afficher un texte de libellé différent selon la personne connectée au moment de la requête.
+- **La limite de lignes est de 250 000 par défaut, et elle peut être relevée.** Une limite de lignes non définie retombe sur un plafond de 250 000 lignes, et non sur « illimité » : une requête qui renvoie plus de lignes que la limite effective est refusée, avec le nombre de lignes et le plafond, au lieu de s'exécuter sans borne ou de tronquer silencieusement la grille. Restreignez la requête, ou relevez explicitement la limite de lignes, pour faire passer une extraction plus volumineuse légitime.
+- **La suppression des zéros est facultative et destructrice.** Supprimer les cellules à valeur zéro est un filtre que vous activez délibérément, et c'est un filtre destructeur : il écarte les cellules qui contiennent un véritable `0` comptabilisé, ce qui est différent du marqueur `#Missing` d'Essbase pour une cellule sans aucune donnée. Dans un cube de planification, un zéro comptabilisé est significatif, car quelqu'un l'a saisi ; supprimer les zéros peut donc écarter de vraies données, et pas seulement une absence de données. Laissez cette option désactivée, sauf si vous voulez précisément exclure les zéros du résultat.
+
+## Charger une hiérarchie de dimension
+
+L'étape [Essbase : lire une dimension](/fr/reference/workflow-steps/essbase/essbase-dimension-read/) lit le plan d'une dimension Essbase et le charge dans la hiérarchie principale d'une dimension PlaidCloud, en accès direct au cloud, via la même connexion. C'est une étape distincte d'Essbase : interroger un cube : elle lit la structure du plan, pas les cellules du cube.
+
+L'étape refuse, en les nommant, tout ce qu'elle ne peut pas représenter plutôt que de le charger de travers : membres partagés, membres libellé seul, membres Dynamic Calc, dimensions d'attributs, opérateur de consolidation autre que `+`/`-` (les `*`, `/` et `%` d'Essbase n'ont aucun équivalent dans PlaidCloud) et plan comptant plus de 5 000 membres au total. Consultez la [référence de l'étape](/fr/reference/workflow-steps/essbase/essbase-dimension-read/#ce-que-cette-étape-ne-peut-pas-représenter) pour la liste complète et la signification de chaque refus.
+
+## Voir aussi
+
+- [Essbase : interroger un cube](/fr/reference/workflow-steps/essbase/essbase-query/) : référence des champs de l'étape.
+- [Essbase : lire une dimension](/fr/reference/workflow-steps/essbase/essbase-dimension-read/) : charger le plan d'une dimension comme dimension PlaidCloud.
+- [Connecteur Oracle Essbase](/fr/reference/connectors/erp/oracle-essbase/) : référence des champs de la connexion.
+- [Créer et gérer une connexion](/fr/guides/connections/create-connection/)

@@ -1,0 +1,53 @@
+---
+title: "Import Intacct Entity 단계"
+description: XML Gateway의 readByQuery/readMore 페이지 매김을 통해 Sage Intacct 개체를 프로젝트 테이블로 가져오며, ge/le 범위를 포함해 개체별로 허용되는 필드와 연산자 목록을 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/import-intacct-entity.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+Intacct XML Gateway의 `readByQuery`/`readMore` 작업을 사용하여 [Sage Intacct 연결](/ko/guides/connections/sage-intacct/)을 통해 Sage Intacct 개체 하나를 프로젝트 테이블로 가져오며, 전체 결과 집합을 자동으로 페이지 단위로 읽습니다. 연결, 개체, 필터를 선택하면 이 단계가 일치하는 레코드를 가져와 기록하므로 페이지 매김을 직접 관리할 필요가 없습니다.
+
+이 단계는 범용 기성 단계로, 하나의 단계 유형이 총계정원장 거래 및 잔액 상세(`GLDETAIL`, `GLACCOUNTBALANCE`, `GLENTRY`)부터 차원 마스터(`LOCATION`, `DEPARTMENT`, `CLASS`), 주문 문서(`SODOCUMENT`)까지 일곱 가지 개체를 다룹니다.
+
+<Aside type="note">
+이 단계는 범용 필드 선택기로 Intacct **모든** 개체를 대상으로 하는 [Import Sage Intacct Query](/ko/reference/workflow-steps/sage-intacct/import-intacct-query/) 단계와 다릅니다. `Import Intacct Entity`는 이 일곱 가지 개체 전용 네이티브 카탈로그 단계로, 개체별로 선별된 필터 허용 목록과 대용량 결과 집합(특히 총계정원장 상세는 Intacct API 한 페이지를 훨씬 넘길 수 있음)을 위한 자동 `readMore` 페이지 매김을 제공합니다.
+</Aside>
+
+## 구성
+
+| 필드 | 필수 | 참고 |
+|---|---|---|
+| Sage 연결 | 예 | 데이터를 읽을 Sage Intacct 연결입니다. |
+| 대상 테이블 | 예 | 결과를 기록할 프로젝트 테이블입니다. 실행할 때마다 전체 내용을 덮어씁니다. |
+| 개체 이름 | 예 | 가져올 Intacct 개체입니다. `GLDETAIL`, `GLACCOUNTBALANCE`, `GLENTRY`, `LOCATION`, `DEPARTMENT`, `CLASS`, `SODOCUMENT` 중 하나입니다. |
+| 필터 | 아니요 | `{field, operator, value}` 절의 배열입니다. 연산자로는 `eq`, `ne`, `gt`, `ge`, `lt`, `le`가 있습니다. 범위는 같은 필드에 대한 두 개의 절(`ge` 하나, `le` 하나)로 표현합니다. 각 개체는 자체 필드+연산자 허용 목록으로 필터를 제한하며, 지원되지 않는 필드나 연산자 조합은 조용히 무시되지 않고 거부됩니다. |
+
+### 개체와 일반적인 범위 필터
+
+| 개체 | 가져오는 내용 | 일반적인 범위 필터 |
+|---|---|---|
+| `GLDETAIL` | 총계정원장 거래 라인 상세 | 전기 날짜(`ge`/`le`), 금액(`ge`/`le`) |
+| `GLACCOUNTBALANCE` | 기간별 계정 잔액 | 기간 종료 날짜(`ge`/`le`) |
+| `GLENTRY` | 전기된 분개 전표 라인 | 전기 날짜(`ge`/`le`) |
+| `LOCATION` | 위치 차원 마스터 | — (동등 필터만 가능) |
+| `DEPARTMENT` | 부서 차원 마스터 | — (동등 필터만 가능) |
+| `CLASS` | 클래스 차원 마스터 | — (동등 필터만 가능) |
+| `SODOCUMENT` | 판매 주문 문서 | 문서 날짜(`ge`/`le`) |
+
+## 페이지 매김 방식
+
+Intacct의 XML Gateway는 결과를 한 번에 한 페이지씩 반환합니다. 이 단계는 처음에 `readByQuery`를 호출한 다음, 모든 페이지를 읽을 때까지 Intacct가 반환한 결과 집합 ID로 `readMore`를 호출합니다. 따라서 수만 개의 라인에 걸친 `GLDETAIL` 가져오기도 페이지 크기를 조정할 필요 없이 단계를 한 번 실행하는 것으로 완료됩니다.
+
+<Aside type="caution">
+`GLDETAIL` 또는 `GLENTRY`에 대해 필터 없이 범위를 매우 넓게 지정하면 전체를 페이지 단위로 읽는 데 여전히 오랜 시간이 걸릴 수 있습니다. 페이지 매김만으로 속도가 빨라지기를 기대하지 말고, 대용량 가져오기는 전기 날짜 범위로 제한하십시오.
+</Aside>
+
+## 관련 항목
+
+- [Sage Intacct 단계](/ko/reference/workflow-steps/sage-intacct/)
+- [Import Sage Intacct Query](/ko/reference/workflow-steps/sage-intacct/import-intacct-query/) 단계 — 모든 Intacct 개체에 대한 범용 쿼리
+- [Sage Intacct에 연결](/ko/guides/connections/sage-intacct/)
+- [Sage Intacct REST 커넥터](/ko/reference/connectors/rest/sage-intacct/)

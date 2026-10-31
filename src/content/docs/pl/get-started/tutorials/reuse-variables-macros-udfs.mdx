@@ -1,0 +1,141 @@
+---
+title: "Wykorzystaj swoją pracę ponownie: zmienne, makra i UDF-y"
+description: Zamień jednorazowe potoki w skalowalne zasoby — sparametryzuj je zmiennymi przepływu pracy, spakuj powtarzalną sekwencję jako makro i dodaj transformację zdefiniowaną przez użytkownika dla niestandardowej logiki.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/reuse-variables-macros-udfs.mdx
+---
+
+*~30 minut · zmienna, makro, transformacja zdefiniowana przez użytkownika*
+
+Pierwszy zbudowany przepływ pracy zwykle zawiera wszystko na sztywno — jeden region, jeden miesiąc, jedną nazwę tabeli. Działa raz. Ten samouczek to skok od *użytkownika* do *zaawansowanego użytkownika*: bierzesz jednorazowy potok i zamieniasz go w zasób, który możesz skierować na dowolny region, wywołać z dowolnego miejsca i rozszerzyć własnym kodem Pythona.
+
+Pracę wykonują trzy narzędzia i nakładają się one na siebie:
+
+| Narzędzie | Co eliminuje | Sięgnij po nie, gdy |
+|---|---|---|
+| **Zmienna przepływu pracy** | Wartości wpisane na sztywno, rozrzucone po krokach | Ta sama wartość (miesiąc, region, próg) pojawia się w więcej niż jednym kroku |
+| **Makro** | Kopiowane i wklejane sekwencje kroków | Sparametryzowana *sekwencja* uruchamia się wiele razy — na region, na miesiąc, na wiersz tabeli sterującej |
+| **User Defined Transform (UDF)** | Lukę, do której nie sięgają standardowe kroki | Żadna standardowa transformacja (ani ich kombinacja) nie robi tego, czego potrzebujesz, a możesz to napisać w Pythonie |
+
+Nie potrzebujesz wszystkich trzech w każdym przepływie pracy. Dodawaj każde z nich w chwili, gdy faktycznie pojawia się problem, który rozwiązuje.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 680 150" role="img" aria-label="Trzy narzędzia ponownego użycia ułożone od najmniejszego do największego zakresu. Zmienna przepływu pracy parametryzuje jedną wartość w wielu krokach; makro pakuje całą sparametryzowaną sekwencję kroków do ponownego użycia; User Defined Transform dodaje niestandardowy kod Pythona tam, gdzie standardowe kroki nie wystarczają." style="width:100%;max-width:680px;height:auto;">
+  <defs><marker id="rv-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="14" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="104" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Zmienna</text>
+  <text x="104" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">parametryzuje jedną wartość</text>
+  <path d="M194 75 L234 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="236" y="48" width="180" height="54" rx="10" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="326" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-text)">Makro</text>
+  <text x="326" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">pakuje sekwencję</text>
+  <path d="M416 75 L456 75" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#rv-arrow)" />
+  <rect x="458" y="48" width="208" height="54" rx="10" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="562" y="72" text-anchor="middle" font-size="13" font-weight="700" fill="var(--sl-color-accent)">UDF</text>
+  <text x="562" y="90" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">własny Python tam, gdzie kroki nie wystarczają</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Każde kolejne narzędzie obejmuje więcej niż poprzednie. Dodawaj je, gdy pojawi się potrzeba — nie wcześniej.</figcaption>
+</figure>
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud i projekt z już zbudowanym przepływem pracy — najlepiej tym z samouczka [Ładowanie, przekształcanie i publikowanie danych](/pl/get-started/tutorials/load-and-transform-data/).
+- Swoboda w dodawaniu i uruchamianiu kroków przepływu pracy. Jeśli to dla Ciebie nowość, zacznij od [przewodnika po przepływach pracy](/pl/guides/workflows/).
+
+## Krok 1: sparametryzuj za pomocą zmiennej przepływu pracy
+
+Zmienna to nazwana wartość, którą kroki odczytują zamiast literału. Zmień ją w jednym miejscu, a podążą za nią wszystkie kroki, które się do niej odwołują. PlaidCloud przechowuje zmienne w dwóch zakresach: zmienne **projektu** są współdzielone przez wszystkie przepływy pracy w projekcie; zmienne **przepływu pracy** należą do jednego przepływu pracy i są naturalnym sposobem przekazywania informacji między jego krokami.
+
+1. W hierarchii **Przepływy pracy** kliknij ikonę **zmienne**, aby otworzyć tabelę zmiennych.
+2. Dodaj zmienną — nadaj jej czytelną nazwę, np. `target_region`, i ustaw jej bieżącą wartość (na przykład `East`).
+3. W kroku, który obecnie ma tę wartość wpisaną na sztywno, odwołaj się do zmiennej zamiast wpisywać literał.
+4. Uruchom krok. Następnie zmień wartość zmiennej w tabeli i uruchom ponownie — ten sam krok przetwarza teraz inny wycinek, bez edycji samego kroku.
+
+W tabeli zmiennych możesz też przeglądać bieżące wartości, edytować je i usuwać zmienne, które nie są już potrzebne.
+
+> **Zakres projektu a zakres przepływu pracy.** Umieść wartość w zakresie **projektu**, gdy to samo ustawienie potrzebuje kilku przepływów pracy, a w zakresie **przepływu pracy**, gdy dotyczy tylko kroków jednego przepływu pracy. W razie wątpliwości zacznij wąsko — od zmiennej przepływu pracy — i awansuj ją do projektu dopiero wtedy, gdy potrzebuje jej drugi przepływ pracy.
+
+Pełny obraz tego, gdzie żyją zmienne i jak nimi zarządzać, znajdziesz w [Zarządzanie zmiennymi przepływu pracy](/pl/guides/workflows/manage-workflow-variables/).
+
+## Krok 2: spakuj sekwencję jako makro
+
+Zmienna parametryzuje jedną wartość. **Makro** parametryzuje całą *sekwencję* kroków. To wielokrotnego użytku zaawansowany przepływ pracy (DAG) z zadeklarowanym kontraktem wejścia/wyjścia — pomyśl o „przetworzeniu jednego miesiąca sprzedaży dla jednego regionu" — który wywołujesz z innego przepływu pracy raz na miesiąc, na region lub oba naraz. Każde wywołanie działa we własnym izolowanym schemacie roboczym, więc to samo makro może uruchamiać się wiele razy jednocześnie bez kolizji między uruchomieniami.
+
+> **Makra to funkcja wyłącznie zaawansowana.** Najpierw skonwertuj przepływ pracy na zaawansowany. Kroki wewnątrz makra muszą być bezpieczne dla makr — transformacje tabel, importy, eksporty, kroki zmiennych o zakresie uruchomienia i zagnieżdżone wywołania makr są dozwolone; importy wymiarów i kroki aktualizujące wymiary są odrzucane, ponieważ wymiary to stan globalny projektu.
+
+### Zamień przepływ pracy w makro
+
+1. Otwórz projekt i na karcie **Przepływy pracy** wybierz przepływ pracy, który chcesz wykorzystać ponownie.
+2. W panelu **Szczegóły przepływu pracy** potwierdź, że **Typ przepływu pracy** to **Zaawansowane** — jeśli jest standardowy, najpierw użyj **Konwertuj na zaawansowany**.
+3. W sekcji **Makro** kliknij **Konwertuj na makro…** i potwierdź. Pojawi się edytor portów.
+4. Kliknij **Dodaj port** dla każdego wejścia lub wyjścia, które makro przyjmuje lub tworzy. Dla każdego portu ustaw:
+   - **Nazwa** — identyfikator, z którym wiąże się wywołujący (na przykład `month`, `region_sales`).
+   - **Kierunek** — **Dane wejściowe** (dostarcza je wywołujący) lub **Dane wyjściowe** (tworzy je makro).
+   - **Rodzaj** — **Tabela**, **Skalar** (pojedynczy ciąg znaków / int / float / bool / data) lub **Wymiar**.
+   - **Wymagane** — wyczyść, jeśli makro może działać bez powiązania tego portu.
+   - **Notatka** — krótka uwaga wyświetlana autorom w formularzu powiązań po stronie wywołującego.
+5. Kliknij **Zapisz porty**.
+
+### Wywołaj je z innego przepływu pracy
+
+1. W przepływie pracy wywołującym dodaj krok **Makro: uruchom**.
+2. W polu **Makro do uruchomienia** wybierz projekt i przepływ pracy makra.
+3. **Input Port Bindings** — powiąż każdy port wejściowy. Porty skalarne i wymiarów często przyjmują zmienną przepływu pracy po stronie wywołującego (tę z kroku 1); porty tabel przyjmują tabelę źródłową, opcjonalnie z projekcją kolumn i filtrem.
+4. **Output Port Bindings** — wskaż dla każdego portu wyjściowego tabelę docelową po stronie wywołującego.
+5. Zapisz krok i uruchom przepływ pracy.
+
+Aby uruchomić makro raz dla każdego wiersza tabeli sterującej — na przykład jeden region na wiersz — użyj zamiast tego kroku **Makro: uruchomienie współbieżne** i ogranicz liczbę jednoczesnych uruchomień za pomocą **Uruchomienia równoległe**. Każdy wiersz dostaje własny schemat roboczy i miejsce docelowe.
+
+Pełny opis pole po polu, wraz z cyklem życia izolacji uruchomienia, znajduje się w [Tworzenie makra](/pl/guides/workflows/create-a-macro/).
+
+## Krok 3: dodaj niestandardową logikę za pomocą User Defined Transform
+
+Standardowe transformacje pokrywają niemal wszystko i są stale dostrajane pod kątem wydajności — sięgaj po nie w pierwszej kolejności. Ale gdy żaden standardowy krok (sam ani w kombinacji) nie robi tego, czego potrzebujesz, **User Defined Transform (UDF)** pozwala przejść do standardowego Pythona, z pełnym API PlaidCloud i pakietami takimi jak Pandas, NumPy i SciPy.
+
+UDF możesz tworzyć na dwa sposoby: pisać go i utrzymywać bezpośrednio w PlaidCloud albo wskazać plik w połączonym repozytorium Git (które automatycznie pobiera zmiany przy następnym uruchomieniu i obsługuje gałęzie oraz tagi do kontroli wydań).
+
+### Napisz funkcję
+
+1. Otwórz przepływ pracy, wybierz kartę **Zdefiniowane przez użytkownika** i kliknij **Add User Defined Function**.
+2. Nadaj UDF-owi **ID**, a następnie kliknij ikonę **Edit function logic**, aby otworzyć edytor.
+3. Napisz swoją logikę. Minimalny UDF łączy się, odczytuje źródło, przekształca w Pandas i zapisuje cel:
+
+   ```python
+   from plaidcloud.utilities.connect import PlaidConnection
+   from plaidcloud.utilities import frame_manager as fm
+
+   conn = PlaidConnection()
+
+   # Read a table configured as a source on the step
+   source = conn.udf.source_by_name('sales_clean')
+   df = conn.get_data(source)
+
+   # Custom logic the standard steps don't cover
+   df['margin_band'] = df['margin'].apply(
+       lambda m: 'high' if m > 0.4 else 'low'
+   )
+
+   # Write to a table configured as a target on the step.
+   # Sources are read by their configured name; fm.save writes to a table PATH (leading slash).
+   fm.save(df, name='/output/sales_scored', append=False)
+   ```
+
+### Dodaj go do przepływu pracy
+
+1. Na karcie **Analyze Steps** dodaj krok **User Defined Transform** tam, gdzie go potrzebujesz, tak jak zwykłą transformację.
+2. W konfiguracji kroku wybierz typ: **Analizuj UDF** (zapisana funkcja) lub **Zewnętrzne repozytorium kodu źródłowego** (Git — następnie wybierz połączenie, gałąź i **Ścieżka pliku**).
+3. Zdefiniuj **tabele źródłowe i docelowe**, których używa UDF. *Możesz* sięgać do tabel bezpośrednio w kodzie, ale zadeklarowanie ich tutaj rejestruje zależności i udostępnia je przez `conn.udf.source_by_name(...)` / `target_by_name(...)`.
+4. Opcjonalnie dodaj wartości specyficzne dla kroku w sekcji **Inne zmienne**, odczytywane przez `conn.udf.variable_by_name(...)`.
+
+> **Deklaruj tabele w konfiguracji, a nie tylko w kodzie.** UDF, który odczytuje tabelę bezpośrednio, nadal się uruchomi, ale PlaidCloud nie będzie wiedział, że tabela jest zależnością — więc pochodzenie danych i kolejność uruchamiania nie mogą jej uwzględnić. Wymienienie źródeł i celów w konfiguracji kroku utrzymuje graf zależności w zgodzie z rzeczywistością.
+
+Zmienne projektu i przepływu pracy z kroku 1 są dostępne także wewnątrz UDF-a, przez `conn.analyze.workflow.variable_values(...)` i `conn.analyze.project.variable_values(...)` — więc ten sam parametr steruje Twoimi standardowymi krokami i niestandardowym kodem. Pełne przykłady API znajdziesz w [dokumentacji User Defined Transform](/pl/reference/workflow-steps/general/user-defined-transform/).
+
+**To jest skok od użytkownika do zaawansowanego użytkownika.** Jednorazowy potok zamieniłeś w zasoby wielokrotnego użytku — wartość, którą możesz przekierować zmienną, całą sekwencję, którą wywołasz gdziekolwiek jako makro, i niestandardowy kod Pythona, który sięga tam, gdzie standardowe kroki nie dochodzą.
+
+## Dokąd dalej
+
+- [Zarządzanie zmiennymi przepływu pracy](/pl/guides/workflows/manage-workflow-variables/) — zakres projektu a zakres przepływu pracy oraz tabela zmiennych.
+- [Tworzenie makra](/pl/guides/workflows/create-a-macro/) — porty, izolacja uruchomień i uruchamianie jednego makra na wiersz.
+- [Dokumentacja User Defined Transform](/pl/reference/workflow-steps/general/user-defined-transform/) — pełna powierzchnia API dla niestandardowego Pythona.
+- [Przewodnik po przepływach pracy](/pl/guides/workflows/) — warunki, pętle i wszystko inne, co oferuje warstwa orkiestracji.
+- [Przekształcanie danych za pomocą SQL](/pl/get-started/tutorials/transform-with-sql/) — samouczek siostrzany, gdy odpowiedzią jest zapytanie, a nie kod.

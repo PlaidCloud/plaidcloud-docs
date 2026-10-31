@@ -1,0 +1,168 @@
+---
+title: Przekształcanie danych za pomocą SQL i wyrażeń
+description: Kształtuj dane w kroku tabeli przepływu pracy — wybieraj i filtruj za pomocą SQL, złącz dwie tabele, dodaj kolumnę obliczeniową za pomocą wyrażenia i obejrzyj wynik przed uruchomieniem.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/transform-with-sql.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+*~30 minut · filtr, złączenie, kolumna obliczeniowa*
+
+Większość pracy w [przepływie pracy](/pl/guides/workflows/) to jeden mały ruch powtarzany w kółko: weź tabelę, przekształć ją i zapisz wynik w nowej tabeli. Ten samouczek uczy tego ruchu — wybierania i filtrowania wierszy, złączania drugiej tabeli oraz dodawania kolumny obliczeniowej — za pomocą dwóch narzędzi, po które sięgasz najczęściej: **SQL** i **wyrażeń kolumn**. Gdy raz poznasz ten wzorzec, zastosujesz go w niemal każdym kroku transformacji, jaki zbudujesz.
+
+Celem jest tu *kształt* pracy i wiedza, gdzie szukać informacji — nie zapamiętywanie funkcji. PlaidCloud udostępnia ponad tysiąc funkcji SQL; będziesz przechodzić do ich dokumentacji referencyjnej, a nie jej powielać.
+
+## Co zbudujesz
+
+Pojedynczy krok tabeli, który odczytuje surową tabelę `orders`, zachowuje tylko zrealizowane zamówienia, łączy każde z nich z tabelą `customers`, aby pobrać region, i dodaje kolumnę obliczeniową `net_amount` — a wynik zapisuje w nowej tabeli `orders_clean`.
+
+```text
+orders     ─┐
+            ├─►  select · filter · join · calculated column  ─►  orders_clean
+customers  ─┘
+```
+
+Żadna tabela źródłowa nie zostaje zmieniona. Krok transformacji odczytuje dane z jednej lub kilku tabel źródłowych i zapisuje je do tabeli docelowej — oryginały pozostają dokładnie takie, jakie były, dzięki czemu przepływ pracy można bezpiecznie uruchamiać ponownie i poddawać audytowi.
+
+## Dwa sposoby kształtowania kolumny
+
+Zanim przejdziesz do kroków, warto zapamiętać jedno rozróżnienie:
+
+| Narzędzie | Czym jest | Gdzie je zapisujesz |
+|---|---|---|
+| **SQL** | Zapytanie, które wybiera, filtruje i łączy całe tabele | Edytor SQL kroku |
+| **Wyrażenie** | Pojedyncza formuła, która tworzy wartość jednej kolumny, wiersz po wierszu | Komórka wyrażenia w mapperze kolumn |
+
+SQL służy do ustalenia, *które wiersze i które tabele*. Wyrażenie służy do ustalenia, *co zawiera jedna kolumna*. Wiele kroków pozwala łączyć oba podejścia — krok SQL kształtuje zbiór, a komórki wyrażeń obliczają kolumny.
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud i projekt, w którym będziesz pracować ([rozpocznij bezpłatny okres próbny](https://app.plaidcloud.com), jeśli go potrzebujesz).
+- Dwie [tabele](/pl/guides/data/tables-views/) już w projekcie — samouczek zakłada tabelę `orders` (z kolumnami `order_id`, `customer_id`, `status`, `amount`, `tax`) i tabelę `customers` (z kolumnami `customer_id`, `region`). Jeśli ich nie masz, samouczek [Ładowanie, przekształcanie i publikowanie danych](/pl/get-started/tutorials/load-and-transform-data/) najpierw importuje tabele z plików CSV.
+- Przepływ pracy otwarty w **Workflow Explorer** — otwórz kartę **Przepływy pracy** projektu i kliknij dwukrotnie przepływ pracy. Jeśli jeszcze go nie masz, zobacz [Tworzenie przepływu pracy](/pl/guides/workflows/create-workflow/).
+
+## Krok 1: wybierz i przefiltruj dane za pomocą SQL
+
+Zacznij od wąskiego zakresu: pobierz tylko te kolumny i wiersze, które naprawdę chcesz mieć.
+
+<Steps>
+
+1. Dodaj krok transformacji tabeli i otwórz jego edytor SQL.
+2. Wskaż jako źródło kroku tabelę `orders`.
+3. Napisz zapytanie, które zachowuje tylko potrzebne kolumny i pomija niepotrzebne wiersze:
+
+   ```sql
+   SELECT
+       order_id,
+       customer_id,
+       amount,
+       tax
+   FROM orders
+   WHERE status = 'completed'
+     AND amount > 0
+   ```
+
+</Steps>
+
+Klauzula `WHERE` jest filtrem — wszystko, co nie jest zrealizowanym zamówieniem o wartości różnej od zera, nigdy nie trafia do tabeli docelowej. Wybranie tylko czterech kolumn zamiast `SELECT *` sprawia, że tabela dalej w przepływie pozostaje zwięzła, a jej przeznaczenie jest oczywiste.
+
+> **Pisz SQL tak, aby dało się go czytać.** Jedna klauzula w wierszu, jedna kolumna w wierszu, wyrównane `CASE` / `WHEN` — nigdy gęsta jednowierszowa forma. Przycisk **Upiększ** w edytorze (lub **Shift+Alt+F**, w systemie macOS **Shift+Option+F**) formatuje kod na miejscu, nie zmieniając jego działania. Zobacz [Upiększanie (formatowanie) kodu w edytorach](/pl/guides/workflows/prettify-code-in-editors/).
+
+## Krok 2: złącz drugą tabelę
+
+Złączenie dodaje obok siebie kolumny z drugiej tabeli, dopasowane po wspólnym kluczu. Tutaj potrzebujesz kolumny `region` każdego zamówienia, która znajduje się w tabeli `customers`.
+
+<Steps>
+
+1. Dodaj `customers` jako drugie źródło kroku.
+2. Rozszerz zapytanie, aby złączyć tabele po wspólnym kluczu i pobrać potrzebną kolumnę:
+
+   ```sql
+   SELECT
+       o.order_id,
+       o.customer_id,
+       o.amount,
+       o.tax,
+       c.region
+   FROM orders        AS o
+   INNER JOIN customers AS c
+       ON o.customer_id = c.customer_id
+   WHERE o.status = 'completed'
+     AND o.amount > 0
+   ```
+
+</Steps>
+
+`INNER JOIN` zachowuje tylko zamówienia, które mają pasującego klienta. Jeśli wolisz zachować każde zamówienie nawet wtedy, gdy nie ma pasującego klienta — z pustą wartością `region` — użyj zamiast tego `LEFT JOIN`. Niedopasowany lub błędny klucz złączenia to najczęstsza przyczyna złączenia zwracającego zbyt wiele lub zbyt mało wierszy, dlatego przed przejściem dalej sprawdź liczbę wierszy w podglądzie (następny krok).
+
+> **Nazwy tabel w zapytaniu.** Odwołuj się do każdego źródła przez nazwę, jaką nadaje mu krok. W domyślnych hurtowniach Lakehouse fizyczny identyfikator tabeli może zawierać myślniki — w takim przypadku ujmij go w odwrotne apostrofy (na przykład `` `analyzetable_9f3c...` ``), aby silnik odczytał go jako jeden identyfikator.
+
+## Krok 3: dodaj kolumnę obliczeniową za pomocą wyrażenia
+
+Teraz oblicz wartość, której nie ma w żadnym ze źródeł. Kolumna obliczeniowa (wyrażenie) wykonuje jedną formułę na wiersz i zapisuje wynik w nowej kolumnie. Dodaj `net_amount` — kwotę po odliczeniu podatku.
+
+<Steps>
+
+1. W mapperze kolumn kroku dodaj nową kolumnę docelową o nazwie `net_amount`.
+2. W jej komórce wyrażenia wpisz formułę:
+
+   ```python
+   amount - tax
+   ```
+
+3. W przypadku logiki warunkowej wyrażenia obsługują typowe konstrukcje. Na przykład flaga wysyłki:
+
+   ```python
+   (
+       "free"
+       if amount >= 100
+       else "standard"
+   )
+   ```
+
+</Steps>
+
+> **Komórka wyrażenia to pojedyncza formuła, a nie skrypt.** Jest oceniana jako jedno samodzielne wyrażenie, więc wyrażenie wielowierszowe musi mieć własne zewnętrzne nawiasy (jak powyżej) — w przeciwnym razie zakończy się błędem w czasie uruchomienia. Ogranicz każdą komórkę do wartości jednej kolumny; w przypadku wszystkiego, co obejmuje wiele wierszy lub tabel, użyj kroku SQL.
+
+To, czy dana funkcja istnieje i jak dokładnie zachowują się jej argumenty, zależy od generacji Lakehouse, na której działa Twój projekt — obie opierają się na innych silnikach bazowych. Nie zgaduj nazwy funkcji; sprawdź ją:
+
+| Lakehouse | Biblioteka funkcji |
+|---|---|
+| **v1** | Funkcje SQL Databend |
+| **v2** | Funkcje SQL StarRocks 4.1 |
+
+Punktem wyjścia jest [dokumentacja referencyjna wyrażeń](/pl/reference/expressions/) — operacje na tekście, obliczenia na datach, logika warunkowa, rzutowanie i agregacje — z odnośnikami do kanonicznej składni źródłowej dla każdej generacji. Traktuj ją jako miejsce, do którego wracasz w razie potrzeby, a nie lekturę do przeczytania od deski do deski.
+
+> **Przycisk Upiększ formatuje także komórki wyrażeń**, stosując standardowe odstępy i podziały wierszy znane z Pythona — przydatne przy długich wyrażeniach warunkowych.
+
+## Krok 4: obejrzyj podgląd przed uruchomieniem
+
+Nie musisz uruchamiać całego przepływu pracy, aby sprawdzić, czy krok zrobił to, co zamierzasz. **Szuflada Podglądu danych** pokazuje dane wyjściowe kroku — pierwsze 100 wierszy z kolumnami o określonych typach — bezpośrednio w Workflow Explorer.
+
+<Steps>
+
+1. Uruchom tylko ten krok, aby utworzył swoją tabelę wyjściową. (Dopóki nie zostanie uruchomiony choć raz, podgląd zgłasza *„No data yet — run the step to generate this table.”*)
+2. Otwórz podgląd: zaznacz krok i wybierz **Podgląd danych wyjściowych** (dostępne także w menu kontekstowym kroku).
+3. Potwierdź kształt danych: wybrane kolumny są obecne, `region` został przeniesiony przez złączenie, `net_amount` został obliczony poprawnie, a liczba wierszy odzwierciedla filtr.
+
+</Steps>
+
+Gdy szuflada jest otwarta, zaznaczenie dowolnego innego kroku przełącza podgląd na jego dane wyjściowe — możesz przejść przez łańcuch kroków i obserwować, jak dane zmieniają kształt na każdym etapie. Aby zobaczyć dane poza pierwszymi 100 wierszami lub je pociąć i filtrować, kliknij **Otwórz w Eksploratorze tabel**. Pełne omówienie znajdziesz w [Podgląd danych kroku](/pl/guides/workflows/preview-step-data/).
+
+## Wzorzec w ujęciu ogólnym
+
+Każdy z tych ruchów to ten sam element podstawowy:
+
+> **Odczytaj jedną lub więcej tabel źródłowych, przekształć je i zapisz nową tabelę docelową.** SQL decyduje o wierszach i tabelach; wyrażenia decydują o wartości każdej kolumny; podgląd potwierdza wynik, zanim zdecydujesz się na pełne uruchomienie. Połącz kilka takich kroków i otrzymasz potok — tabela docelowa każdego kroku staje się źródłem następnego.
+
+Zapisuj wyniki pośrednie w **tabelach**, gdy późniejszy krok lub pulpit potrzebuje zmaterializowanych danych, oraz w **[widokach](/pl/guides/data/tables-views/)**, gdy wolisz obliczać dane przy odczycie i oszczędzić miejsce — widok nie przechowuje własnych danych i aktualizuje się automatycznie, gdy zmieniają się jego źródła.
+
+Gdy transformacja całkowicie wykracza poza SQL i wyrażenia — własny kod Pythona, zewnętrzny pakiet, niestandardowa logika — sięgnij po [Zdefiniowane przez użytkownika przekształcenie](/pl/reference/workflow-steps/general/user-defined-transform/). To wyjątek, a nie codzienność; SQL i wyrażenia pokrywają zdecydowaną większość prac związanych z kształtowaniem danych.
+
+## Co dalej
+
+- [Dokumentacja referencyjna wyrażeń](/pl/reference/expressions/) — każda funkcja dostępna dla kolumn obliczeniowych, według generacji Lakehouse.
+- [Dokumentacja referencyjna kroków przepływu pracy](/pl/reference/workflow-steps/) — pełny katalog kroków transformacji, importu i eksportu.
+- [Przewodnik po przepływach pracy](/pl/guides/workflows/) — warunki, pętle, zmienne i obsługa błędów wokół Twoich kroków.
+- [Podgląd danych kroku](/pl/guides/workflows/preview-step-data/) — szuflada w pełnym omówieniu.
+- [Ładowanie, przekształcanie i publikowanie danych](/pl/get-started/tutorials/load-and-transform-data/) — kompletny potok, w który wpisuje się ten krok.

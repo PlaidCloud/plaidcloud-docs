@@ -1,0 +1,131 @@
+---
+title: "Salesforce: Objekt abfragen"
+description: Extrahieren Sie ein Salesforce-Objekt über die Bulk API 2.0 in eine Projekttabelle – wählen Sie Objekt und Felder aus der eigenen Beschreibung der Organisation, filtern Sie bei Salesforce und legen Sie jede Spalte mit dem Typ ab, den Salesforce dafür deklariert.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/salesforce/query-salesforce-object.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Liest ein Salesforce-Objekt – Standard- oder benutzerdefiniert – über die Bulk API 2.0 von Salesforce in eine Projekttabelle. Wählen Sie die [Salesforce-Verbindung](/de/guides/connections/salesforce/), das Objekt und die Felder; der Schritt erstellt die Abfrage, liest die gesamte Ergebnismenge seitenweise und legt jede Spalte mit dem Typ ab, den Salesforce dafür deklariert. Sie müssen keine Abfrage schreiben.
+
+Salesforce wird direkt in der Cloud über seine REST-API angesprochen, daher benötigt dieser Schritt keinen PlaidLink-Agent.
+
+## Konfiguration
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| Salesforce-Verbindung | Ja | Die Salesforce-Verbindung, über die gelesen wird. Verbindungen verwalten Sie unter **Tools > Connections**. |
+| Umgebung | Nein | Welche Umgebung der Verbindung gelesen wird – richten Sie eine Sandbox-Umgebung auf die Sandbox-Organisation und eine Produktionsumgebung auf die Produktion. Standard ist die Umgebung `default` der Verbindung. |
+| Objekt | Ja | Der API-Name des Objekts – `Account`, `Opportunity`, `Invoice__c`. Die Auswahl listet die Objekte auf, die der Run-As-Benutzer der Verbindung abfragen kann, und akzeptiert auch einen eingetippten Namen, sodass ein gespeicherter Schritt weiter funktioniert, während die Erkennung nicht verfügbar ist. |
+| Zieltabelle | Ja | Die Projekttabelle, in der die Zeilen abgelegt werden. |
+| Gelöschte und archivierte Datensätze einbeziehen | Nein | Liest auch Datensätze im Papierkorb und archivierte Aktivitäten, so wie es ein Salesforce-`queryAll` tut. |
+| Felder | Ja | Markieren Sie die Felder, die extrahiert werden sollen. Mindestens eines ist erforderlich: Die Bulk API 2.0 lehnt eine Auswahl des gesamten Objekts ab, daher wird die Spaltenliste immer ausdrücklich aufgezählt. |
+| Filter | Nein | Grenzt die Extraktion bei Salesforce ein. Siehe [Bei Salesforce filtern](#bei-salesforce-filtern). |
+| Fenster-Tag | Nein | Benennt das Extraktionsfenster. Siehe [Extraktionsfenster laufen einmal](#extraktionsfenster-laufen-einmal). |
+
+`Id` ist immer enthalten, unabhängig davon, ob Sie es markieren – es ist der Schlüssel, über den jede erneute Ausführung zusammenführt. Ein Währungsfeld ruft außerdem sein `CurrencyIsoCode` ab, sofern das Objekt eines hat.
+
+## So werden die Zeilen abgelegt
+
+Jede Ausführung liest das Objekt vollständig, vorbehaltlich Ihres Filters, und führt jede Seite über `Id` in die Zieltabelle zusammen. Eine Zeile, die bereits in der Tabelle steht, wird an Ort und Stelle ersetzt, sodass eine unterbrochene Ausführung, die fortgesetzt wird, nichts doppelt ablegt.
+
+<Aside type="caution">
+**Löschungen werden nicht nachverfolgt.** Die Tabelle spiegelt wider, was Salesforce zurückgegeben hat, und ein in Salesforce gelöschter Datensatz bleibt in der Zieltabelle – nichts entfernt ihn. Dies ist eine Extraktion, keine bidirektionale Synchronisierung: Zusammengeführte, gelöschte und archivierte Datensätze sind bewusst von dem ausgeschlossen, was der Schritt liest, sodass sie auch nie als Zeilen wieder auftauchen.
+</Aside>
+
+Die abgelegten Spalten verwenden die Typen, die Salesforce in seinen eigenen Feldmetadaten deklariert, und nie einen Typ, der anhand der ersten Datenseite erraten wurde. Die Spalte **Abgelegt als** in der Feldauswahl ist dieser deklarierte Typ, sodass die Struktur, die Sie im Formular bestätigen, die Struktur ist, die die Tabelle erhält.
+
+## Was als was abgelegt wird
+
+| Salesforce-Feldtyp | Abgelegt als |
+|---|---|
+| `id`, `reference`, `string`, `textarea`, `phone`, `url`, `email`, `picklist`, `multipicklist`, `combobox` | Text |
+| `boolean` | Boolean |
+| `date` | Datum |
+| `datetime` | Zeitstempel |
+| `time` | Uhrzeit |
+| `int` | Ganzzahl oder 64-Bit-Ganzzahl, wenn das Feld 10 oder mehr Stellen deklariert |
+| `double`, `currency`, `percent` | numerisch – eine breite Dezimalzahl mit 38 Stellen und 10 Nachkommastellen |
+
+Drei Konventionen ergeben sich aus dieser Tabelle und sind gut zu kennen, bevor Sie auf der Ausgabe aufbauen:
+
+- **Währung wird als Zahl abgelegt, nicht als Währungstyp.** Reale Organisationen deklarieren Währungsfelder mit 0, 2, 3 und 4 Nachkommastellen, daher landet jeder numerische Typ in einer Dezimalzahl, die breit genug für alle ist. Die Spalte hat kein Währungssymbol und keine Beschränkung der Nachkommastellen pro Feld. Wenn das Objekt `CurrencyIsoCode` führt, wird diese Spalte neben dem Währungsfeld mitgeliefert, damit der Betrag seine Währung behält; eine Organisation mit nur einer Währung hat kein solches Feld am Objekt, und es wird auch keines erfunden.
+- **Ein Prozentwert ist die ganze Zahl, die Salesforce meldet.** `20` bedeutet 20 Prozent, nicht `0.2`. Beim Einlesen wird nichts umskaliert.
+- **Ein leerer Wert wird als NULL abgelegt.** Bulk-Ergebnisse können einen echten Nullwert nicht von einer ausdrücklich leeren Zeichenfolge unterscheiden, daher werden beide als `NULL` abgelegt – in jeder Spalte, auch bei Text. Eine Spalte, die die Semantik der leeren Zeichenfolge behalten muss, benötigt ein Formelfeld auf der Salesforce-Seite.
+
+## Felder, die der Schritt ablehnt
+
+Einige Salesforce-Feldtypen lassen sich nicht korrekt ablegen, daher kennzeichnet die Feldauswahl sie als nicht verwendbar und nennt den Grund, statt Sie einen Schritt speichern zu lassen, der zur Laufzeit fehlschlägt. Jede Ablehnung nennt das Feld und seinen Salesforce-Typ.
+
+| Salesforce-Feldtyp | Warum | Was zu tun ist |
+|---|---|---|
+| `address`, `location` (zusammengesetzte Felder) | Ein zusammengesetztes Feld hat in einer Bulk-Abfrage keinen direkt lesbaren Wert. | Markieren Sie seine Komponentenfelder – `BillingStreet`, `BillingCity`, `BillingState`, `BillingPostalCode`, `BillingCountry` sowie Breiten- und Längengrad der Geolokation. Die Auswahl nennt die Komponenten für das Feld, das Sie vor sich haben. |
+| `base64` | Datei- und Blob-Inhalte werden nie inline zurückgegeben; sie benötigen einen separaten Binär-Download, den dieser Schritt nicht ausführt. | Lesen Sie die übrigen Felder des Datensatzes und behandeln Sie Anhänge separat. |
+| `encryptedstring` | Salesforce gibt einen maskierten Wert statt eines Fehlers zurück, wenn dem Run-As-Benutzer **View Encrypted Data** fehlt, und nichts unterscheidet maskierte von echten Daten. Zeilen aus Sternchen stillschweigend abzulegen ist schlimmer als eine Ablehnung. | Entscheiden Sie bewusst, ob die Daten Salesforce überhaupt verlassen sollen; mit diesem Schritt gibt es keinen unterstützten Weg, sie zu extrahieren. |
+| `anyType` | Der tatsächliche Typ kann sich von Zeile zu Zeile unterscheiden, und eine Tabellenspalte hat genau einen Typ. | Extrahieren Sie ein typisiertes Feld oder ein Formelfeld, das den Wert als Text ausgibt. |
+| Jeder Typ, den der Schritt nicht erkennt | Wird abgelehnt, statt als Text abgelegt zu werden, was die Bedeutung des Werts unbemerkt verändern würde. | Wenden Sie sich an den Support, damit der Typ eine Zuordnung erhält. |
+
+<Aside type="note">
+Die Sicherheit auf Feldebene gehört nicht zu diesen Ablehnungen, weil sie in den Feldmetadaten nicht sichtbar ist. Eine Abfrage, die ein Feld nennt, das der Run-As-Benutzer nicht lesen kann, schlägt vollständig fehl – siehe [Der Run-As-Benutzer bestimmt den gesamten Umfang](/de/guides/connections/salesforce/#der-run-as-benutzer-bestimmt-den-gesamten-umfang).
+</Aside>
+
+## Extraktionsfenster laufen einmal
+
+Der **Fenster-Tag** benennt das Datenfenster, das eine Ausführung lädt – eine Periode oder eine Stapelbezeichnung wie `2026-09`. Er akzeptiert Workflow-Variablen: Ein Tag `{period}` wird bei jeder Ausführung des Schritts zum Wert dieser Variablen aufgelöst.
+
+Ein Extraktionsfenster läuft einmal. Die erneute Ausführung eines Fensters, das bereits abgeschlossen wurde, geht **nicht** erneut zu Salesforce: Der Schritt meldet klar, dass er nicht erneut gelesen hat, und weist darauf hin, dass die angezeigte Zeilenzahl zur früheren Ausführung gehört. Das ist ein lautes No-op, kein stilles, und genau dieses Verhalten verhindert, dass eine erneute Ausführung eine zweite Kopie einer bereits abgelegten Ergebnismenge seitenweise abruft.
+
+Es gibt drei Möglichkeiten, den Schritt zu verwenden:
+
+- **Lassen Sie den Tag leer** und behandeln Sie den Schritt als einmaliges Laden. Die erste Ausführung liest; eine zweite Ausführung desselben Schritts wiederholt und meldet, dass nicht erneut gelesen wurde. Verwenden Sie das, um die Extraktion aufzubauen und zu validieren, und für eine Tabelle, die Sie nur einmal laden.
+- **Geben Sie einen Tag ein und ändern Sie ihn, wenn Sie das nächste Fenster laden** – `2026-09`, dann `2026-10`. Das Ändern des Tags startet ein neues Fenster, sodass ein monatliches Laden, das jemand von Hand fortschreibt, genau so funktioniert, wie es sich liest.
+- **Bauen Sie den Tag aus einer Workflow-Variablen** für einen unbeaufsichtigten, wiederkehrenden Abruf – zum Beispiel `{period}`, von einem früheren Schritt im Workflow auf die zu ladende Periode gesetzt. Jede geplante Ausführung benennt ihr eigenes Fenster, und eine erneute Ausführung innerhalb derselben Periode setzt dieses Fenster fort oder wiederholt es, statt ein weiteres zu starten.
+
+<Aside type="caution">
+Benennen Sie das Fenster, nicht die Ausführung. Ein Tag, der sich bei jeder Ausführung ändert – etwa einer, der aus `{date}` gebaut ist und die aktuelle Uhrzeit enthält –, startet jedes Mal ein neues Fenster, sodass eine unterbrochene Extraktion nie fortgesetzt werden kann und jeder Wiederholungsversuch eine neue Abfrage an Salesforce sendet. Verwenden Sie eine Variable, die die zu ladende Periode oder den Stapel enthält.
+</Aside>
+
+Ein Aufrufer der REST-API oder von MCP übergibt `extract_tag` direkt und liefert selbst pro Fenster einen eigenen Wert.
+
+Eine unterbrochene Ausführung setzt dasselbe Fenster fort. Halten Sie den Tag daher so lange konstant, wie dieses Fenster möglicherweise noch abgeschlossen werden muss. Das Ändern des Tags startet ein neues Fenster und eine neue Abfrage bei Salesforce. Ändern Sie den Tag, wann immer Sie den Filter oder die Felder ändern: Die Bearbeitung der Konfiguration unter einem Tag, der bereits gelaufen ist, wird als Konflikt abgelehnt.
+
+## Bei Salesforce filtern
+
+Grenzen Sie die Extraktion bei Salesforce ein, statt das ganze Objekt abzurufen und danach zu filtern. Jeder Filterterm besteht aus einem Feld, einem Operator und einem Wert; Terme werden mit AND verknüpft. Ein Wert kann eine Workflow-Variable verwenden, etwa `{region}`.
+
+| Operator | Hinweise |
+|---|---|
+| `=`, `!=`, `<`, `<=`, `>`, `>=` | Wird mit dem Wert verglichen, wie er eingegeben wurde. |
+| `LIKE` | Verwenden Sie `%` als Platzhalter, zum Beispiel `Acme%`. |
+| `IN`, `NOT IN` | Geben Sie eine durch Komma getrennte Liste von Werten an. |
+
+Sowohl das Feld als auch der Operator werden vor dem Erstellen der Abfrage gegen die Felder geprüft, die Sie ausgewählt haben, und es gibt keine frei formulierbare `WHERE`-Klausel – ein Filter kann also nicht über die Extraktion hinausgreifen. Filtern Sie nach einem Feld, das Sie ebenfalls markiert haben; ein Filter, der ein Feld nennt, das die Extraktion nicht auswählt, wird abgelehnt.
+
+Der Schritt bietet weder ein Zeilenlimit noch eine Sortierung. Die Bulk API 2.0 schaltet ihre interne Aufteilung in Blöcke ab, wenn eine Abfrage eines von beiden enthält, wodurch eine große Extraktion langsamer wird und eher in ein Timeout läuft. Selektive Filterkriterien sind das Mittel, das Salesforce selbst für eine zu große oder zu langsame Abfrage vorsieht.
+
+## Passung bei Volumen und Änderungsrate
+
+Diese Form – das Objekt nach Zeitplan vollständig lesen – eignet sich für Objekte mit mäßigem Volumen und mäßiger Änderungsrate: Accounts, Opportunities, Leads, Campaigns und benutzerdefinierte Objekte ähnlicher Größe.
+
+Für Objekte mit hohem Volumen und hoher Änderungsrate wie `Task`, `EmailMessage` oder ein großes benutzerdefiniertes Objekt mit Millionen täglich geänderter Zeilen ist es das falsche Werkzeug. Ein nächtlicher vollständiger Abruf dieser Objekte verbraucht Laufzeit und API-Kapazität, die eine inkrementelle Synchronisierung nicht benötigen würde. Ist das Objekt groß, aber nur ein Teil davon interessant, macht ein Filter, der die Extraktion eingrenzt – ein Datumsbereich, ein Datensatztyp, ein Besitzer –, daraus wieder einen Abruf mit mäßigem Volumen.
+
+## Wenn eine Ausführung nicht abgeschlossen wird
+
+| Was Sie sehen | Was passiert ist | Was zu tun ist |
+|---|---|---|
+| Eine Warnung, dass der Job nach 15 Minuten noch läuft | Der Schritt wartet im Vordergrund darauf, dass Salesforce die Abfrage beendet, und dieses Warten ist begrenzt. Nichts treibt den Job im Hintergrund voran. | Führen Sie den Schritt erneut aus. Er setzt das Warten auf **demselben** Salesforce-Job fort und übermittelt nie einen zweiten. Überschreitet er die Grenze weiterhin, grenzen Sie die Extraktion mit Filterkriterien ein. |
+| Eine Warnung, dass das Fenster bereits abgeschlossen war und nicht erneut gelesen wurde | Das Fenster ist schon einmal gelaufen. Die angezeigte Zeilenzahl stammt aus der früheren Ausführung. | Führen Sie die Extraktion mit einem anderen **Fenster-Tag** aus oder schreiben Sie die Variable fort, aus der der Tag gebaut wird – siehe [Extraktionsfenster laufen einmal](#extraktionsfenster-laufen-einmal). |
+| Ein Fehler, der einen fehlgeschlagenen oder abgebrochenen Job nennt | Ein fehlgeschlagener Bulk-Abfragejob liefert keine Teilergebnisse und kann nicht fortgesetzt werden. Das Fenster ist nun verbraucht. | Führen Sie den Schritt mit einem **anderen Fenster-Tag** erneut aus. Die erneute Ausführung desselben Fensters wiederholt den Fehler und übermittelt nichts, und das Bearbeiten der Konfiguration des Schritts unter demselben Tag wird als Konflikt abgelehnt. |
+| Eine Ablehnung, die das Anfragelimit von Salesforce nennt | Das rollierende 24-Stunden-Kontingent an API-Anfragen der Organisation ist ausgeschöpft. Salesforce dokumentiert dafür kein Retry-After. | Warten Sie, bis das Fenster abläuft, und führen Sie dann erneut aus – die Extraktion ist weiterhin fortsetzbar, nichts ist verloren gegangen. |
+| Eine Ablehnung, die ein Feld und seinen Salesforce-Typ nennt | Dieser Feldtyp kann nicht abgelegt werden, oder der Run-As-Benutzer kann das Feld nicht lesen. | Siehe [Felder, die der Schritt ablehnt](#felder-die-der-schritt-ablehnt) und die Sicherheit auf Feldebene des Run-As-Benutzers. |
+
+Salesforce hält die Ergebnisse eines abgeschlossenen Abfragejobs 7 Tage lang abrufbar, wodurch eine unterbrochene Extraktion fortsetzbar ist – und wodurch begrenzt wird, wie lange eine Fortsetzung warten kann, bevor die Ergebnisse weg sind. Jobs sind in Salesforce unter **Setup > Environments > Jobs > Bulk Data Load Jobs** sichtbar.
+
+## Verwandte Themen
+
+- [Salesforce-Schritte](/de/reference/workflow-steps/salesforce/)
+- [Mit Salesforce verbinden](/de/guides/connections/salesforce/) – die Einrichtung auf Seiten der Organisation, von Anfang bis Ende
+- [Salesforce REST Connector](/de/reference/connectors/rest/salesforce/) – Referenz der Verbindungsfelder
+- [Einen Schritt in einem Workflow ausführen](/de/guides/workflows/running-one-step-in-a-workflow/)

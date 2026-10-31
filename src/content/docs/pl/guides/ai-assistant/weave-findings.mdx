@@ -1,0 +1,947 @@
+---
+title: Co sprawdza Weave
+description: Weave odczytuje zapisaną konfigurację kroków i przepływów pracy, ostatnie uruchomienia przepływów pracy oraz ich zaplanowane zdarzenia, zgłasza znalezione problemy w jednolity sposób i wprost mówi, czego nie mógł sprawdzić, zamiast przedstawiać to jako poprawne.
+sidebar:
+  order: 4
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/ai-assistant/weave-findings.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Opis
+
+Weave odczytuje konfigurację, którą projekt już zapisał, oraz zapis tego, jak
+jego przepływy pracy działały w ciągu ostatnich 30 dni, i zgłasza to, co znajdzie:
+krok, którego alokacja nie ma czego alokować, przepływ pracy, którego zapisana
+struktura dwukrotnie wymienia ten sam krok, przepływ pracy, którego ostatnie
+uruchomienie zakończyło się niepowodzeniem, krok, którego wynik zawiera znacznie
+mniej wierszy niż zwykle. Weave tylko odczytuje — nic, co zgłasza, nie zmienia
+kroku i nigdy nie uruchamia przepływu pracy.
+
+Nie bierze w tym udziału żaden model AI. Każde sprawdzenie jest stałą regułą, a
+każde zdanie jest napisane z góry, więc przygotowanie raportu nic nie kosztuje,
+niezależnie od tego, jak często się o niego prosi.
+
+<Aside type="note">
+Ustalenia są dostępne przez API platformy, a
+[karta Weave](/pl/guides/ai-assistant/weave-tab/) projektu zawiera listę wszystkich ustaleń w projekcie.
+</Aside>
+
+## Trzy odpowiedzi, nie dwie
+
+Większość sprawdzeń w PlaidCloud ma dwie odpowiedzi: konfiguracja jest poprawna
+albo zostaje odrzucona. Weave ma trzecią i to ją warto zrozumieć.
+
+| Odpowiedź | Co oznacza |
+| --- | --- |
+| **Weave zauważył …** | Weave to sprawdził i znalazł problem. |
+| *(brak komunikatu)* | Weave to sprawdził i nie znalazł nic niepokojącego. |
+| **Weave nie sprawdził …** | Weave w ogóle nie mógł tego ocenić. |
+
+Trzecia odpowiedź istnieje, ponieważ milczenie jest niejednoznaczne. Podczas
+tworzenia kroku alokacji PlaidCloud pozwala go zapisać przed wypełnieniem
+mapowania kolumn — krok jest jeszcze w budowie, a odrzucenie zapisu
+uniemożliwiłoby pracę. Monitor odczytujący to samo puste mapowanie mógłby łatwo
+zgłosić krok jako poprawny. Krok nie jest poprawny; jest niedokończony i nikt go
+nie sprawdził.
+
+Dlatego Weave mówi to wprost. Krok, którego nie mógł ocenić, jest zgłaszany jako
+niesprawdzony, wraz z przyczyną, i nigdy nie jest liczony, sortowany ani
+oznaczany kolorem tak, jakby przeszedł sprawdzenie.
+
+Jest jeszcze czwarta rzecz, którą Weave może powiedzieć, i nie jest to w ogóle
+odpowiedź dotycząca kroku: **Weave nie ma reguły dla …**. Oznacza to, że Weave
+nie ma sprawdzenia dla tego rodzaju elementu i nigdy go nie ocenił. W
+przeciwieństwie do „nie sprawdził” żadna zmiana w kroku nie doprowadzi do
+werdyktu, więc warto odróżniać te dwa przypadki: po dokończeniu niesprawdzonego
+kroku Weave go oceni; krok, dla którego nie ma reguły, pozostaje nieoceniony
+niezależnie od wprowadzonych zmian.
+
+## Jak wygląda raport
+
+Raport zaczyna się od podsumowania, które podaje własny mianownik, dzięki czemu
+widać, jaką część projektu obejmuje:
+
+```
+Weave fully checked 3 of the 417 steps and workflows in "Cost Model", and found 1
+problem in the parts it could judge. 1 more it hasn't fully checked.
+Weave has no rule for 412 steps and 1 workflow it looked at, so they have not been
+judged either way.
+
+Weave noticed the step "Spread Overheads": No driver split value column found. One
+driver column must have the role "Split Value".
+Weave hasn't checked the step "Regional Split" — its column mapping is empty.
+```
+
+Jeśli projekt ma tabele zapisywane zgodnie z harmonogramem lub z ustawionym
+progiem aktualności, pierwszy wiersz liczy je osobno: *Weave w pełni sprawdził
+31 z 36 kroków i przepływów pracy oraz 3 z 4 tabel, które powinny być
+aktualizowane, w projekcie „Finance” i znalazł 2 problemy w częściach, które
+mógł ocenić.*
+
+Ułamek w pierwszym wierszu jest celowy. Trzy kroki sprawdzone i uznane za
+bezbłędne to nie to samo co bezbłędny projekt, a pierwszy wiersz podaje własną
+skalę, aby nie dało się go zacytować bez niej. Sformułowanie „w częściach, które
+mógł ocenić” pojawia się z tego samego powodu: jeśli coś zostało ocenione tylko
+częściowo, znalezionych problemów nie można przypisać krokom, które ten wiersz
+właśnie nazwał sprawdzonymi. Drugi wiersz wymienia to, dla czego Weave nie ma
+żadnej reguły, i mówi wprost, że te elementy nie zostały ocenione w żadną stronę
+— a nie, że sprawdzenie nie było potrzebne.
+
+## Skąd Weave to wie
+
+Pod każdym ustaleniem znajduje się łącze **Skąd Weave to wie**, które otwiera
+panel pokazujący, jak Weave doszedł do tego ustalenia:
+
+- **Sprawdzenie** — co testuje reguła, prostymi słowami, wraz z używanymi
+  limitami, na przykład z iloma wcześniejszymi uruchomieniami porównuje liczbę.
+- **Dowody** — wartości, których użyło sprawdzenie. W przypadku zmienionej
+  liczby wierszy jest to najnowsza liczba, średnia z wcześniejszych uruchomień,
+  typowa zmiana liczby między uruchomieniami oraz zakres, poza którym Weave ją
+  zgłasza.
+- **Skąd pochodzi** — uruchomienie, historia uruchomień, zapisane ustawienia
+  kroku, zaplanowane zdarzenie lub tabela, z których odczytano dowody. Element
+  pokazany jako łącze otwiera miejsce, w którym można go obejrzeć, na przykład
+  przepływ pracy lub Eksplorator tabel.
+- **Czego Weave nie sprawdził** — co reguła pomija. Ta sekcja nigdy nie jest
+  pusta: na przykład sprawdzenie, czy tabela została zapisana na czas, nie
+  bierze pod uwagę tego, co zostało zapisane.
+
+W przypadku ustalenia, którego Weave nie mógł sprawdzić, panel pokazuje
+sprawdzenie i przyczynę, dla której nie mogło zostać wykonane, bez dowodów.
+
+Panel wymienia tylko to, co widzisz. Krok, przepływ pracy lub tabela ukryte
+przez Twoją rolę są wymieniane jako element, którego nie możesz otworzyć, nigdy
+z nazwy, a jeśli ostatnie uruchomienie przepływu pracy zakończyło się
+niepowodzeniem w krokach, których nie możesz otworzyć, dowody podają liczbę tych
+kroków zamiast ich nazw. Przy tworzeniu panelu nie bierze udziału AI.
+
+Panel jest wyświetlany na [karcie Weave](/pl/guides/ai-assistant/weave-tab/) i w
+przeglądzie. Podsumowanie przeglądu napisane przez AI również go ma — panel
+informuje, że podsumowanie napisała AI, na podstawie ilu ustaleń i co Weave
+sprawdził przed jego wyświetleniem. Przegląd uruchomiony przez asystenta AI za
+pośrednictwem PlaidCloud MCP nie zawiera panelu.
+
+## Co Weave sprawdza dzisiaj
+
+**Mapowanie kolumn alokacji.** W przypadku kroku *Allocation with Dimension* lub
+*Allocation Split* — czy istnieje kolumna liczbowa do alokacji, liczbowa wartość
+klucza, według której ma być alokowana, hierarchia tam, gdzie jest potrzebna, oraz
+— w przypadku podziału — licznik i mianownik wskazujący kolumnę, którą tabela
+źródłowa rzeczywiście ma. Są to te same sprawdzenia, które są wykonywane podczas
+zapisywania kroku, z tą różnicą, że odczytują to, co już zostało zapisane.
+Zapisywanie sprawdza też sam wymiar przypisania — czy istnieje i czy ma dokładnie
+jedną właściwość klucza — czego Weave nie robi, więc krok odrzucony przy zapisie
+z tego powodu nie powoduje ustalenia Weave.
+
+**Wyrażenia kroków.** W przypadku każdego kroku, który je zawiera — czy każde
+wpisane wyrażenie, w kolumnie docelowej, w klauzuli Subset lub w klauzuli
+Secondary Filter, nadal się kompiluje. Ustalenie wskazuje kolumnę lub klauzulę,
+aby było wiadomo, co otworzyć, i podaje błąd, na przykład **Syntax error at line
+1, position 280**. Samo wyrażenie znajduje się w sekcji **Skąd Weave to wie**,
+więc długie wyrażenie nie przesłania błędu. Są to te same sprawdzenia, które są
+wykonywane podczas zapisywania kroku.
+
+Dwa przypadki, które Weave zgłasza jako niesprawdzone, zamiast je oceniać:
+
+- **Wyrażenie odczytujące zmienną.** Krok może należeć do więcej niż jednego
+  przepływu pracy, a każdy przepływ pracy może ustawić zmienną na inną wartość
+  — albo w ogóle jej nie ustawić. Kontrola przy zapisie wie, z którego przepływu
+  pracy zapisujesz krok; skanowanie tego nie wie. Zamiast wybrać jeden przepływ
+  i ryzykować uznanie działającego wyrażenia za błędne, Weave zgłasza krok jako
+  niesprawdzony tam, gdzie zmienna nie jest ustawiona wszędzie lub ma
+  rozbieżne wartości. Przepływ pracy, którego Twoja rola nie pokazuje, liczy się
+  tak samo: Weave również nie może odczytać jego zmiennych, więc nie stwierdzi,
+  że krok jest zgodny. Jeśli wszystkie przepływy pracy są zgodne, ocenia krok w
+  zwykły sposób.
+- **Filtry i listy kolumn, których to sprawdzenie nie odczytuje.** Niektóre typy
+  kroków przechowują filtr lub drugą listę kolumn w części formularza, której
+  sprawdzenie wyrażeń nigdy nie odczytywało — złączenia dwóch tabel i Lookup,
+  podziały alokacji, Generate Batch oraz SAP Post Journal Entry. Przy
+  zapisywaniu tych kroków te pola zawsze były pomijane, więc Weave nie uznaje
+  kroku za poprawny na podstawie połowy, którą może odczytać: zgłasza go jako
+  niesprawdzony. Kroki Złączenie wielu tabel i kroki usuwania są zgłaszane w ten
+  sam sposób, ponieważ ich konfiguracja nie ma postaci, którą to sprawdzenie
+  może skompilować.
+
+**Element wymieniony dwukrotnie w przepływie pracy.** Czy żaden krok ani żaden
+zagnieżdżony przepływ pracy nie występuje więcej niż raz w tym samym przepływie
+pracy oraz czy żadne dwa foldery o wspólnym folderze nadrzędnym nie mają tego
+samego identyfikatora.
+
+**Kroki, które mogą zostać uruchomione przed zapisaniem odczytywanej tabeli.** W
+zaawansowanym przepływie pracy — czy każdy krok odczytujący tabelę jest
+uruchamiany po kroku w tym samym przepływie pracy, który ją zapisuje, za
+pośrednictwem łączników na kanwie. Weave sprawdza to niezależnie od tego, czy
+przepływ pracy był kiedykolwiek uruchamiany. Ustalenie wskazuje jeden taki krok
+i krok, po którym powinien zostać uruchomiony, oraz podaje, ilu kroków to
+dotyczy; tabele są wymienione w sekcji **Skąd Weave to wie**. Krok, który kanwa
+już uruchamia zbyt wcześnie, jest zgłaszany osobno. Weave zgłasza przepływ pracy
+jako niesprawdzony, gdy krok uruchamia inny przepływ pracy lub używa tabel,
+których Weave nie może prześledzić, i nie ocenia tabeli, którą zapisuje również
+więcej niż jeden krok lub inny przepływ pracy. Aby przejrzeć i dodać brakujące
+łączniki, użyj na kanwie funkcji
+[Synchronizuj zależności](/pl/guides/workflows/sync-dependencies/). Jeśli krok ma
+odczytywać wynik poprzedniego uruchomienia,
+[oznacz ustalenie jako oczekiwane](/pl/guides/ai-assistant/weave-tab/#oznaczanie-ustalenia-jako-oczekiwanego).
+
+**Jak działały przepływy pracy.** Weave odczytuje uruchomienia każdego przepływu
+pracy z ostatnich 30 dni — do dwudziestu najnowszych uruchomień każdego
+przepływu pracy — i ocenia najnowsze w porównaniu z wcześniejszymi. Na potrzeby
+opisanych niżej porównań końca miesiąca i dni tygodnia odczytuje też kilka
+starszych uruchomień z ostatnich 180 dni. Każde porównanie dotyczy własnej
+historii przepływu pracy, nigdy historii innego przepływu pracy.
+
+- **Ostatnie uruchomienie zakończyło się niepowodzeniem.** Zgłaszany jest
+  przepływ pracy, którego najnowsze uruchomienie zakończyło się niepowodzeniem,
+  wraz z datą niepowodzenia oraz — jeśli wcześniejsze uruchomienia również się
+  nie powiodły — liczbą kolejnych niepowodzeń i datą, od której trwają.
+- **Uruchomienie wolniejsze niż zwykle.** Uruchomienie, które się zakończyło, ale
+  którego kroki trwały łącznie dłużej, niż pozwalają na to poprzednie zakończone
+  uruchomienia przepływu pracy — o ponad dwa odchylenia standardowe powyżej ich
+  średniej i co najmniej o 5% więcej od niej (nigdy mniej niż o sekundę, aby
+  szybki przepływ pracy nie był zgłaszany z powodu kilku milisekund). Czas jest
+  sumą czasów kroków, więc w przepływie pracy, który uruchamia kroki
+  równolegle, jest dłuższy niż czas zmierzony zegarem. Uruchomienie, które
+  zakończyło się szybciej, nie jest zgłaszane.
+- **Krok wolniejszy niż zwykle.** Krok, który w ostatnim zakończonym
+  uruchomieniu trwał dłużej niż we wcześniejszych zakończonych uruchomieniach w
+  tym przepływie pracy, według tej samej miary co wolne uruchomienie. W ten
+  sposób Weave wskazuje krok odpowiedzialny za wolne uruchomienie. Krok należący
+  do kilku przepływów pracy jest oceniany osobno w każdym z nich. Czas jest
+  liczony od rozpoczęcia do zakończenia kroku: Weave nie oddziela pracy samego
+  kroku od czasu oczekiwania, na przykład na obciążoną hurtownię danych.
+- **Uruchomienia stały się wolniejsze.** Spowolnienie, które się utrzymuje. Gdy
+  wolniejsze uruchomienia stanowią większość wcześniejszych uruchomień, z którymi
+  porównywane jest uruchomienie, wolne uruchomienie przestaje wyglądać na
+  nietypowe, więc to sprawdzenie porównuje połowy. Weave odczytuje 20 ostatnich
+  uruchomień przepływu pracy z ostatnich 30 dni, zachowuje te, które się
+  zakończyły, i dzieli je według czasu rozpoczęcia na starszą i nowszą połowę.
+  Zgłasza przepływ pracy, gdy
+  mediana czasu nowszej połowy jest co najmniej o 25% i co najmniej o 30 sekund
+  dłuższa niż starszej połowy, a nowsze uruchomienie trwało dłużej w co najmniej
+  85% par złożonych z nowszego i starszego uruchomienia. Czas jest sumą czasów
+  kroków, tak jak w przypadku wolnego uruchomienia. Weave potrzebuje co najmniej
+  12 zakończonych uruchomień rozłożonych na co najmniej 14 dni, więc przepływ
+  pracy uruchamiany częściej niż około 20 razy w ciągu dwóch tygodni nie jest
+  sprawdzany. Uruchomienia zakończone niepowodzeniem i zatrzymane nie są
+  liczone; uruchomienie, które kontynuowano po kroku zakończonym
+  niepowodzeniem, jest liczone. Ustalenie wymienia maksymalnie trzy kroki, które
+  możesz otworzyć i których mediana czasu wzrosła najbardziej, a jego treść
+  pozostaje taka sama, dopóki trwa spowolnienie, więc informacja nie powtarza się
+  po każdym uruchomieniu.
+- **Liczba wierszy docelowych inna niż w poprzednich uruchomieniach.** Krok,
+  którego tabele wyjściowe zawierały po ostatnim uruchomieniu znacznie więcej
+  lub znacznie mniej wierszy niż po poprzednich uruchomieniach w tym przepływie pracy, według tej samej miary (i co najmniej o jeden wiersz). Liczona jest zawartość tabel, więc krok,
+  który dołącza wiersze, jest oceniany na podstawie rosnącej sumy. Krok należący
+  do kilku przepływów pracy jest oceniany osobno w każdym z nich.
+- **Złączenie zduplikowało więcej wierszy niż zwykle.** Złączenie wewnętrzne,
+  lewe lub prawe, które zapisało więcej wierszy na każdy wiersz tabeli głównej
+  niż po wcześniejszych uruchomieniach w tym przepływie pracy — o ponad dwa
+  odchylenia standardowe powyżej ich średniej i co najmniej o 5% jej wartości.
+  Tabelą główną jest Tabela A w złączeniu wewnętrznym lub lewym i Tabela B w
+  złączeniu prawym. Więcej niż jeden wiersz zapisany na wiersz tabeli głównej
+  oznacza, że niektóre jej klucze złączenia występują w więcej niż jednym wierszu
+  drugiej tabeli, więc wiersze, które je zawierają, zostały zapisane więcej niż
+  raz. Weave zgłasza tylko wartość powyżej 1,00 i tylko wtedy, gdy przekracza
+  ona zwykły poziom złączenia, więc złączenie, które z założenia zapisuje kilka
+  wierszy na wiersz, jest zgłaszane tylko wtedy, gdy ta liczba wzrośnie. W
+  przypadku złączenia wewnętrznego widoczne są tylko klucze powtarzające się w
+  Tabeli B. Złączenie, które ma mniej niż cztery wcześniejsze uruchomienia z
+  zarejestrowaną liczbą wierszy tabeli głównej, jest zgłaszane jako
+  niesprawdzone.
+
+  Złączenie, które agreguje dane lub używa opcji **Unikalne**, ograniczania
+  (**Limit**) albo filtra Secondary Filter, jest zgłaszane jako niesprawdzone,
+  ponieważ każda z tych opcji sama zmienia liczbę wierszy. Tak samo jest ze
+  złączeniem, którego tabela główna nie ma zarejestrowanej liczby wierszy, na
+  przykład widokiem. Wiersze tabeli głównej to te zarejestrowane podczas jej
+  ostatniego zapisu, przed zastosowaniem do niej filtra kroku. Filtr, który przy
+  każdym uruchomieniu zachowuje inną część wierszy, również zmienia tę wartość i
+  może zostać zgłoszony. Zmiana wprowadzona w tabeli głównej w inny sposób lub
+  przez krok uruchomiony w tym samym czasie nie jest widoczna. Pełne złączenia
+  zewnętrzne, złączenia krzyżowe i złączenia wielu tabel nie są sprawdzane, a
+  Lookup nie może zapisać wiersza więcej niż raz.
+- **Puste wartości inne niż w poprzednich uruchomieniach.** Kolumna tabeli
+  wyjściowej kroku, która była pusta w znacznie większej lub mniejszej części
+  wierszy niż po poprzednich uruchomieniach kroku — o ponad dwa odchylenia
+  standardowe od zwykłego udziału i co najmniej o pięć punktów procentowych.
+  Każda tabela zapisywana przez krok jest oceniana na podstawie własnych
+  wierszy.
+- **Import nie znalazł plików.** Krok importu, którego najnowsze zakończone
+  uruchomienie nie znalazło żadnych plików w ścieżce, z której odczytuje dane.
+  Krok kończy się ostrzeżeniem, a nie niepowodzeniem, i tworzy pustą tabelę
+  docelową lub niczego nie ładuje, więc kolejne kroki nie mają z niego czego
+  odczytać. Ustalenie wskazuje przepływ pracy i ścieżkę, nie wymaga
+  wcześniejszych uruchomień i znika, gdy uruchomienie znajdzie pliki. Krok
+  należący do kilku przepływów pracy jest oceniany osobno w każdym z nich, a w
+  przepływie pracy, którego nie możesz otworzyć, ścieżka nie jest pokazywana.
+  Weave nie odróżnia folderu celowo pustego
+  od brakującego pliku: jeśli pusty folder jest w danym miejscu normalny,
+  Architekt projektu może
+  [oznaczyć ustalenie jako oczekiwane](/pl/guides/ai-assistant/weave-tab/#oznaczanie-ustalenia-jako-oczekiwanego),
+  a Weave przestanie je zgłaszać dla tego kroku w tym przepływie pracy, niezależnie od ścieżki. Uruchomienie zarejestrowane przed wprowadzeniem tego sprawdzenia nie zachowuje
+  treści ostrzeżenia, więc jego krok jest zgłaszany jako niesprawdzony do czasu kolejnego uruchomienia.
+
+**Koniec miesiąca i dni tygodnia.** W przypadku przepływu pracy lub kroku
+uruchamianego najwyżej raz dziennie uruchomienie, które te sprawdzenia by
+zgłosiły, jest pomijane, jeśli jest zgodne z co najmniej czterema wcześniejszymi
+uruchomieniami z tego samego rodzaju dnia z ostatnich 180 dni, które w stosunku
+do swojej wielkości wahają się nie bardziej niż jego wcześniejsze uruchomienia w
+inne dni. Rodzaje dni to ostatni dzień miesiąca,
+pierwszy dzień miesiąca, a w pozostałych przypadkach ten sam dzień tygodnia.
+Dlatego zawsze duże ładowanie na koniec miesiąca lub ładowanie, które w
+poniedziałki zawsze jest mniejsze, nie jest zgłaszane, jeśli te uruchomienia są
+w stosunku do swojej wielkości stabilniejsze niż w inne dni. Kalendarz może
+jedynie pominąć uruchomienie: nigdy nie zgłasza uruchomienia, które te
+sprawdzenia uznałyby za poprawne. Dni są liczone w strefie UTC, a święta
+państwowe i kalendarze dni roboczych nie są uwzględniane. Przepływ pracy lub
+krok uruchamiany więcej niż raz w ciągu dnia, wliczając uruchomienie zakończone
+niepowodzeniem i jego ponowienie, jest porównywany z wcześniejszymi
+uruchomieniami tak jak dotąd.
+
+Punkt odniesienia wymaga co najmniej czterech poprzednich uruchomień. Przy
+mniejszej liczbie przepływ pracy jest zgłaszany jako niesprawdzony pod względem
+czasu działania, a jego kroki jako niesprawdzone pod względem wierszy i pustych
+wartości — każdy z podaniem liczby zakończonych uruchomień — zamiast oceniać je na
+podstawie zbyt małej ilości danych. Krok, który zapisuje tabelę, ale którego
+zarejestrowane uruchomienia nie zawierają liczby pustych wartości, również jest
+zgłaszany jako niesprawdzony pod tym względem. Krok, który nie zapisuje tabeli,
+na przykład wysyła wiadomość e-mail lub eksportuje plik, nie jest sprawdzany pod
+względem wierszy ani pustych wartości.
+Przepływ pracy, który nie był uruchamiany w ciągu ostatnich 30 dni, jest
+zgłaszany jako niesprawdzony, podobnie jak przepływ pracy, którego historii
+uruchomień nie można odczytać — żaden z nich nie jest zgłaszany jako poprawny.
+W projekcie z zadeklarowanym mechanizmem Dostęp do wierszy sprawdzenia wierszy, złączeń, pustych wartości i rozkładu wartości nie dotyczą osób, których odczyty są filtrowane: każde z nich jest mierzone na całej tabeli, więc ustalenie informowałoby je o wierszach wykraczających poza ich uprawnienia. Zobacz [Liczby wierszy i rozmiary tabel](/pl/administration/access/managing-security-groups-and-assignments/#liczba-wierszy-i-rozmiary-tabel).
+
+**Co zmieniło ostatnie uruchomienie kroku.** W przypadku każdej tabeli zapisanej
+przez ostatnie uruchomienie kroku Weave porównuje tabelę w stanie, w jakim
+pozostawiło ją uruchomienie, z tabelą w stanie sprzed rozpoczęcia uruchomienia,
+więc nie potrzebuje historii wcześniejszych uruchomień.
+
+- **Rozkład wartości inny niż przed ostatnim uruchomieniem.** Kolumna, której
+  wartości po uruchomieniu rozkładają się w swoim zakresie zupełnie inaczej niż
+  przed nim. Ustalenie podaje wskaźnik przesunięcia: 0 oznacza, że rozkład się
+  nie zmienił, a 0,25 lub więcej to duża zmiana i wtedy Weave ją zgłasza.
+  Porównywane są tylko kolumny zawierające liczby dziesiętne. Kolumny liczb
+  całkowitych to zwykle kody, okresy lub flagi, na przykład numer konta lub
+  miesiąc, a ich rozkład zmienia się przy każdym załadowaniu nowych okresów.
+  Puste wartości nie są częścią rozkładu; obejmuje je opisane wyżej sprawdzenie
+  pustych wartości.
+
+„Przed uruchomieniem” oznacza ostatnią wersję tabeli, która zawierała wiersze.
+Wersja pozostawiona pusta przez uruchomienie, które zakończyło się
+niepowodzeniem w trakcie, jest pomijana, więc pierwsze udane uruchomienie po
+niepowodzeniu jest porównywane z ostatnimi poprawnymi danymi.
+
+Uruchomienie kroku jest zgłaszane jako niesprawdzone, wraz z przyczyną, gdy
+zapisana przez nie tabela:
+
+- ma w swoich kolumnach zadeklarowany mechanizm Dostęp do wierszy;
+- zawierała ponad 5 000 000 wierszy przed uruchomieniem lub po nim;
+- była porównywana dłużej niż 10 sekund;
+- nie przechowuje już wersji sprzed uruchomienia — niektóre lakehouse'y
+  przechowują wcześniejsze wersje tabeli przez 7 dni, więc tabela zapisywana
+  rzadziej niż raz w tygodniu nie ma z czym zostać porównana; lub
+- została wypełniona po raz pierwszy przez to uruchomienie.
+
+Projekt, którego lakehouse nie przechowuje historii wersji, w ogóle nie jest
+oceniany tym sprawdzeniem.
+
+**Wartości pozostawione puste przez konwersję typu.** Każda kolumna zapisywana
+przez krok Extract ma typ, na przykład tekst, liczbę całkowitą lub datę, a krok
+konwertuje każdą wartość na ten typ. W lakehousie StarRocks wartość, której nie
+można przekonwertować, na przykład `N/A` trafiająca do kolumny liczb
+całkowitych, jest zapisywana jako pusta, a uruchomienie kończy się bez błędu. Po uruchomieniu kroku Extract w StarRocks
+Weave liczy dla każdej kolumny, której konwersja może spowodować utratę
+wartości, wartości wejściowe, które nie były wcześniej puste, oraz ile z nich
+stało się pustych, i zgłasza każdą kolumnę, w której tak się stało. Ustalenie
+podaje tę liczbę i typ kolumny. Ocenia najnowsze zakończone uruchomienie kroku w
+każdym przepływie pracy, więc nie potrzebuje wcześniejszych uruchomień.
+
+- Wartości, które były puste już na wejściu, nie są liczone. Pusty tekst jest
+  liczony, ponieważ w kolumnie liczbowej lub kolumnie daty jest zapisywany jako
+  pusty.
+- Kolumna, której konwersja nie może spowodować utraty wartości, na przykład
+  liczby całkowite trafiające do kolumny dziesiętnej, nie jest liczona, podobnie
+  jak kolumna bez pustych wartości po uruchomieniu.
+- Jeśli liczenie trwa dłużej niż 30 sekund lub wiersze liczone przez Weave nie
+  zgadzają się z wierszami zapisanymi przez krok, uruchomienie jest zgłaszane
+  jako niesprawdzone, a Weave liczy ponownie przy następnym uruchomieniu kroku.
+- Sprawdzane są tylko kroki Extract w StarRocks. Krok, który używa filtra
+  Secondary Filter lub grupuje według wyrażenia, jest zgłaszany jako
+  niesprawdzony, podobnie jak krok, który używa opcji **Unikalne** lub
+  ograniczania (**Limit**), gdy kolumna może utracić wartości, ponieważ Weave
+  nie może ponownie policzyć jego wierszy bez konwersji.
+- Jeśli krok ma celowo pozostawiać te wartości puste, Architekt projektu może
+  [oznaczyć ustalenie jako oczekiwane](/pl/guides/ai-assistant/weave-tab/#oznaczanie-ustalenia-jako-oczekiwanego).
+- Podobnie jak sprawdzenia wierszy i pustych wartości, nie dotyczy osób, których
+  odczyty są filtrowane przez mechanizm Dostęp do wierszy.
+
+**Zaplanowane zdarzenia.** W przypadku przepływu pracy z [zaplanowanymi zdarzeniami](/pl/administration/scheduled-events/event-scheduler/)
+Weave porównuje każde zdarzenie z uruchomieniami, które rozpoczęło, oraz z
+zadaniem w klastrze, które je wyzwala. Każdy czas jest liczony w strefie
+czasowej zdarzenia, a wyzwolenie jest oceniane 15 minut po terminie, aby dać
+zadaniu czas na rozpoczęcie.
+
+- **Nieprawidłowy harmonogram zaplanowanego zdarzenia.** Włączone zdarzenie,
+  którego harmonogramu nie można odczytać.
+- **Zaplanowane uruchomienie się nie rozpoczęło.** Włączone zdarzenie, którego
+  termin nadszedł, ale które nie rozpoczęło uruchomienia — od czasu, gdy ostatnio
+  je rozpoczęło, lub od zapisania, jeśli nigdy tego nie zrobiło. Jeśli klaster
+  to umożliwia, Weave dodaje informację, czy klaster nigdy nie wyzwolił
+  zdarzenia, czy też wyzwolone przez nie zadanie zakończyło się
+  niepowodzeniem. Ustalenie wskazuje ostatnie uruchomienie rozpoczęte przez
+  zdarzenie lub czas jego zapisania, więc pozostaje jednym ustaleniem tak długo,
+  jak zdarzenie pozostaje uszkodzone w ten sam sposób. Zdarzenie zapisane po
+  terminie wyzwolenia nie jest oceniane pod kątem tego wyzwolenia.
+- **Termin zaplanowanego zdarzenia przypadł w trakcie uruchomienia.**
+  Zdarzenie, którego termin nadszedł, gdy przepływ pracy nadal działał, więc
+  żadne uruchomienie wtedy się nie rozpoczęło. Zaplanowane zdarzenie nigdy nie
+  rozpoczyna drugiego uruchomienia przepływu pracy, który już działa; jest to
+  zgłaszane jednokrotnie, aby harmonogram gęstszy niż czas uruchomień przepływu
+  pracy nie tracił wyzwoleń niezauważenie.
+- **Zaplanowane zdarzenie niezgodne z klastrem.** Zdarzenie i jego zadanie w
+  klastrze, które są ze sobą niezgodne: włączone zdarzenie bez zadania lub z
+  wstrzymanym zadaniem; wyłączone zdarzenie, którego zadanie nie jest
+  wstrzymane; albo zadanie ustawione na inny harmonogram lub strefę czasową niż
+  pokazuje zdarzenie. Jeśli nie można odczytać klastra, przepływ pracy jest
+  zgłaszany jako niesprawdzony pod względem zaplanowanych zdarzeń.
+
+Zdarzenie, które przestało rozpoczynać uruchomienia, nie ma zakończenia
+uruchomienia, które mogłoby o nim poinformować, więc jest wyświetlane na karcie
+Weave, a nie jako komunikat.
+
+**Tabele zapisywane zgodnie z harmonogramem.** W przypadku tabeli zapisywanej
+przez przepływ pracy z włączonym zaplanowanym zdarzeniem Weave sprawdza, czy
+tabela została zapisana od ostatniego terminu harmonogramu. Tabela jest uznawana
+za zapisaną, gdy zakończy się krok, który ją zapisuje. Weave nie analizuje
+danych tabeli, więc nie widzi ładowania wykonanego poza krokami projektu. Tak
+jak w przypadku sprawdzeń zaplanowanych zdarzeń, każdy harmonogram jest
+odczytywany w strefie czasowej jego zdarzenia i oceniany 15 minut po terminie.
+Weave sprawdza tylko tabele, które pozwala Ci zobaczyć Twoja rola; bez roli
+`analyze.table.read` nie sprawdza żadnych tabel, a jego pierwszy wiersz liczy
+tylko kroki i przepływy pracy.
+
+- **Tabela niezapisana zgodnie z harmonogramem.** Tabela, której żaden krok nie
+  zapisał od czasu, gdy nadszedł termin harmonogramu zapisującego ją przepływu
+  pracy. Liczy się zapis wykonany przez dowolny krok, w tym krok w innym
+  przepływie pracy lub w uruchomieniu rozpoczętym ręcznie. Ustalenie podaje czas
+  ostatniego zapisu, a nie to, ile czasu od niego minęło. Uruchomienie, które
+  zakończyło się niepowodzeniem, liczy się jako brak zapisu, więc tabele
+  zaplanowanego przepływu pracy kończącego się niepowodzeniem są zgłaszane
+  zarówno tutaj, jak i w ramach sprawdzenia **Ostatnie uruchomienie zakończyło się niepowodzeniem**.
+
+Weave zgłasza tabelę jako niesprawdzoną, wraz z przyczyną, zamiast jako
+niezapisaną, gdy:
+
+- zapisujący ją przepływ pracy jest uruchomiony, oczekuje w kolejce lub właśnie
+  się zakończył, a jego wyniki nie zostały jeszcze zarejestrowane;
+- zapisujący ją krok został pominięty w uruchomieniu od terminu harmonogramu
+  przez własne warunki lub dlatego, że nie miał nic do zrobienia, na przykład
+  import, którego pliki się nie zmieniły;
+- zapisujący ją krok może zostać pominięty bez rejestrowania pominięcia: znajduje
+  się w standardowym przepływie pracy z warunkiem przechodzącym do innego kroku,
+  w przepływie pracy typu Standardowy szeregowy z krokiem, który w razie
+  niepowodzenia przechodzi do innego kroku, albo w kontenerze z warunkami lub w
+  pętli, która może zostać wykonana zero razy;
+- przepływ pracy zakończył uruchomienie od terminu, ale brakuje zapisu kroku
+  zapisującego z tego uruchomienia;
+- krok w dowolnym miejscu projektu wybiera zapisywaną tabelę za pomocą zmiennej,
+  której wartości Weave nie może ustalić, więc może zapisywać tę tabelę;
+- harmonogram jest uruchamiany rzadziej niż co 180 dni, czyli rzadziej, niż
+  sięga historia uruchomień Weave; lub
+- harmonogram przepływu pracy jest nieprawidłowy albo nie można odczytać
+  historii uruchomień.
+
+Tabela w ogóle nie jest sprawdzana, gdy:
+
+- nie ma progu aktualności (opisanego niżej) i nie zapisuje jej żaden przepływ
+  pracy z własnym włączonym zaplanowanym zdarzeniem. Przepływ pracy
+  uruchamiany przez inny przepływ pracy — za pomocą kroku Run Workflow lub Macro
+  albo jako przepływ pracy umieszczony w nim — liczy się tylko przez własny
+  harmonogram;
+- jedyne zapisujące ją kroki są wyłączone, znajdują się w wyłączonym kontenerze
+  albo w punkcie przerwania lub po nim; lub
+- jest widokiem.
+
+Drugi z tych warunków nie dotyczy wykonywanej pętli: pętla wykonuje każdy krok,
+który się w niej znajduje, nawet wyłączony, umieszczony w wyłączonym kontenerze
+albo w punkcie przerwania lub po nim.
+
+Zaplanowane zdarzenie zapisane po swoim ostatnim terminie nie jest oceniane do
+czasu kolejnego terminu.
+
+Przepływ pracy, którego uruchomienia trwają dłużej niż interwał harmonogramu,
+pomija wyzwolenia, których termin przypada w trakcie działania, więc między
+uruchomieniami jego tabele mogą być zgłaszane jako niezapisane; przyczynę
+zgłasza sprawdzenie **Termin zaplanowanego zdarzenia przypadł w trakcie uruchomienia**.
+
+Jeśli krok, który ostatnio zapisał tabelę, jest krokiem, do którego nie masz
+dostępu, ustalenie mówi „krok, do którego nie masz dostępu” i nadal podaje czas
+zapisu. „180 dni” w ustaleniu oznacza, jak daleko wstecz sięga historia
+uruchomień Weave, a nie informację o tabeli.
+
+**Tabele z progiem aktualności.** Próg aktualności to maksymalna liczba godzin,
+jaka może upłynąć między zapisami tabeli, od 1 do 4320 (180 dni). Tabela z
+progiem jest oceniana według niego
+zamiast według harmonogramów zapisujących ją przepływów pracy. Pozwala to
+ustawić luźniejszy lub ściślejszy limit niż wynikający z harmonogramu oraz
+sprawdzać tabelę, której nie zapisuje żaden zaplanowany przepływ pracy. Tak jak
+w przypadku harmonogramów, tabela jest uznawana za zapisaną, gdy zakończy się
+krok, który ją zapisuje.
+
+- **Tabela niezapisana w ustawionym czasie.** Żaden krok nie zapisał tabeli przez
+  czas dłuższy niż jej próg. Ustalenie podaje czas ostatniego zapisu i próg.
+
+Weave zgłasza tabelę z progiem jako niesprawdzoną, wraz z przyczyną, zamiast
+jako niezapisaną, gdy:
+
+- zapisujący ją przepływ pracy jest uruchomiony, oczekuje w kolejce lub właśnie
+  się zakończył, a jego wyniki nie zostały jeszcze zarejestrowane;
+- zapisujący ją przepływ pracy rozpoczął uruchomienie po przekroczeniu progu i
+  je zakończył, ale brakuje zapisu kroku zapisującego z tego uruchomienia;
+- krok w dowolnym miejscu projektu wybiera zapisywaną tabelę za pomocą zmiennej,
+  której wartości Weave nie może ustalić, więc może zapisywać tę tabelę;
+- żaden krok w projekcie jej nie zapisuje, na przykład jest to tabela ładowana
+  ręcznie, więc Weave nie ma zapisu, od którego mógłby liczyć czas; lub
+- nie można odczytać historii uruchomień.
+
+Pominięty krok nie sprawia, że tabela z progiem staje się niesprawdzona: tabela
+nadal nie została zapisana przez czas dłuższy niż jej próg. Widok nie może mieć
+progu, a przekształcenie tabeli w widok usuwa jej próg. Kopia tabeli lub tabela
+utworzona z jednej z jej migawek nie ma progu.
+
+Aby ustawić próg, zaznacz tabelę na liście **Tabele** projektu i wybierz
+**Wyświetl/edytuj szczegóły tabeli**. W sekcji **Aktualność** zaznacz **Warn if this table
+isn't written for more than**, wprowadź liczbę godzin i kliknij **Update**.
+Wyczyść pole wyboru, aby usunąć próg. Gdy próg nie jest ustawiony, pole
+wymienia zaplanowane przepływy pracy, według których harmonogramów oceniana
+jest tabela, lub informuje, że żaden przepływ pracy, który możesz otworzyć, nie
+zapisuje jej zgodnie z harmonogramem. Sekcja **Aktualność** nie jest wyświetlana
+dla widoku, dla tworzonej tabeli ani bez roli `analyze.workflow.read`, a jej
+zmiana wymaga roli `analyze.table.write`.
+
+Możesz też poprosić asystenta AI połączonego przez PlaidCloud MCP o ustawienie
+progu aktualności tabeli (służy do tego narzędzie `table_upsert` z parametrem
+`freshness_max_age_hours`) lub wywołać API platformy:
+
+```
+PUT /rest/v1/analyze/weave/freshness
+{"project_id": "<project>", "table_id": "<table>", "freshness_max_age_hours": 24}
+```
+
+Wyślij `null` zamiast liczby, aby wyczyścić próg — tabela będzie wtedy znów
+oceniana według harmonogramów zapisujących ją przepływów pracy. `GET
+/rest/v1/analyze/weave/freshness?project_id=<project>&table_id=<table>` zwraca
+próg i `scheduled_writers`, czyli zaplanowane przepływy pracy, według których
+harmonogramów oceniana jest tabela bez progu. Odczyt progu wymaga ról
+`analyze.table.read` i `analyze.workflow.read`, a jego ustawienie — ról
+`analyze.table.write` i `analyze.workflow.read`. Próg można ustawić tylko dla
+tabeli, którą pozwala Ci zobaczyć Twoja rola, i nie wtedy, gdy projekt jest
+zablokowany.
+
+**Tabele odczytywane przez przepływ pracy, do których od tego czasu zapisano
+dane.** W przypadku przepływu pracy, który odczytuje tabelę zapisywaną przez
+inny przepływ pracy, Weave sprawdza, czy żaden inny przepływ pracy nie zapisał
+danych do tej tabeli od czasu, gdy przepływ pracy ostatnio ją odczytał. Tabela
+jest uznawana za odczytaną lub zapisaną przez krok, który wskazuje ją jako dane
+wejściowe lub wyjściowe i zakończył się w ramach uruchomienia. Weave odczytuje
+to, co rejestruje historia uruchomień, a nie dane tabeli.
+
+- **Odczytuje tabelę, do której zapisano dane od ostatniego odczytu.** Przepływ
+  pracy ostatnio odczytał tabelę w jednym ze swoich uruchomień, a od tego czasu
+  inny przepływ pracy zapisał do niej dane, więc jego wyniki mogą być
+  nieaktualne. Ustalenie wskazuje uruchomienie, które ostatnio odczytało tabelę,
+  oraz przepływy pracy, które do niej zapisały. Przepływ pracy z włączonym
+  zaplanowanym zdarzeniem lub uruchamiany przez inny przepływ pracy, który ma
+  takie zdarzenie, jest zgłaszany dopiero wtedy, gdy po zapisie nadejdzie termin
+  uruchamiającego go harmonogramu; przepływ pracy, którego nic nie uruchamia
+  zgodnie z harmonogramem, jest zgłaszany od razu.
+
+Za zapis od ostatniego odczytu nie są uznawane:
+
+- zapis wykonany przez sam przepływ pracy, w tym zapis wykonany w trakcie jego
+  uruchomienia przez przepływ pracy, który uruchamia za pomocą kroku Przepływ
+  pracy: uruchom, Przepływ pracy: pętla lub Przepływ pracy: uruchomienie
+  warunkowe;
+- tabela, którą przepływ pracy zapisuje w uruchomieniu, zanim odczyta ją
+  jakikolwiek krok tego uruchomienia, na przykład tabela przejściowa, chyba że
+  zapisu dokonał krok Tabela: dołącz lub Tabela: upsert albo krok Tabela: usuń w
+  miejscu z filtrem, które zachowują pozostałe wiersze tabeli; oraz
+- zapis wykonany przed ostatnim zapisaniem kroku, który go dokonał, ponieważ
+  krok mógł wtedy zapisywać do innej tabeli.
+
+Weave zgłasza przepływ pracy jako niesprawdzony, wraz z przyczyną, zamiast jako
+nieaktualny, gdy:
+
+- jest uruchomiony lub właśnie się zakończył, a jego wyniki nie zostały jeszcze
+  zarejestrowane;
+- krok odczytujący tabelę został pominięty w uruchomieniu po zapisie;
+- uruchamiający go harmonogram jest nieprawidłowy;
+- żadne z jego ostatnich uruchomień nie zakończyło odczytu tabeli, podczas gdy
+  inny przepływ pracy zapisał do niej dane lub mógł to zrobić;
+- krok odczytujący tabelę został zapisany od czasu rozpoczęcia jego ostatniego
+  udanego uruchomienia, więc Weave nie może stwierdzić, czy to uruchomienie ją
+  odczytało. Liczy się każde zapisanie, nawet takie, które nie zmienia niczego,
+  co krok odczytuje;
+- jeden z jego kroków odczytuje tabele, których Weave nie może ustalić na
+  podstawie ustawień kroku, na przykład krok AI: krok LLM, krok Report, krok
+  Uruchom: zdalny Python lub krok, który odczytuje kilka tabel i jedną z nich
+  znajduje przez wyszukiwanie, jak może to robić krok Tabela: suma zbiorów bez
+  duplikatów lub Tabela: suma wszystkich; wybiera tabelę za pomocą zmiennej;
+  wskazuje tabelę nazwą, którą ma więcej niż jedna tabela; odczytuje widok; lub
+  odczytuje tabelę w innym projekcie;
+- do odczytywanej przez niego tabeli zapisuje również makro, którego uruchomień
+  Weave nie widzi, albo krok w innym przepływie pracy, który od tego czasu był
+  uruchamiany i wybiera zapisywaną tabelę za pomocą zmiennej, wskazuje ją nazwą,
+  którą ma więcej niż jedna tabela, lub zapisuje tabele, których Weave nie może
+  ustalić; lub
+- nie można odczytać jego historii uruchomień.
+
+Przepływ pracy bez uruchomień w ciągu ostatnich 30 dni nie jest sprawdzany w ten
+sposób.
+
+Czego to sprawdzenie nie widzi:
+
+- odczytów i zapisów starszych niż historia uruchomień odczytywana przez Weave,
+  czyli ostatnie 30 dni i, w przypadku każdego przepływu pracy, jego ostatnie 20
+  uruchomień;
+- warunku kroku, który sprawdza tabelę — nie jest to uznawane za jej odczyt;
+- zapisu przez inny przepływ pracy do tabeli, do której przepływ pracy dodaje
+  wiersze, a następnie je odczytuje w tym samym uruchomieniu, chyba że dodaje je
+  za pomocą kroku Tabela: dołącz lub Tabela: upsert;
+- wcześniejszego odczytu przez jeden krok, jeśli inny krok przepływu pracy
+  odczytał tę samą tabelę później;
+- zapisu wewnątrz makra przez krok, który wybiera tabelę za pomocą zmiennej lub
+  zapisuje tabele, których Weave nie może ustalić; oraz
+- zapisów wykonanych przed ostatnim zapisaniem kroku zapisującego, nawet jeśli
+  zapisanie nie zmieniło niczego, co krok zapisuje, do czasu ponownego
+  uruchomienia jego przepływu pracy.
+
+Bez roli `analyze.table.read` żaden przepływ pracy nie jest sprawdzany w ten
+sposób. Jeśli przepływ pracy lub tabela, które zapisały lub zostały odczytane,
+są elementami, do których nie masz dostępu, ustalenie mówi „przepływ pracy, do
+którego nie masz dostępu” lub „tabela, do której nie masz dostępu”, bez podania
+ich liczby.
+
+Krok, dla którego typu Weave nie ma reguły, jest zgłaszany jako nieobjęty
+sprawdzeniami, a nie jako poprawny.
+
+**Tabele oparte na nieudanym uruchomieniu.** Jeśli ostatnie uruchomienie
+przepływu pracy zakończyło się niepowodzeniem, zanim zakończył się krok
+zapisujący tabelę, tabela nadal zawiera wcześniejsze dane lub tylko część nowych
+danych. Weave śledzi tabelę przez kroki, które ją odczytują, i tabele, które te
+kroki zapisują, we wszystkich przepływach pracy projektu i zgłasza to, co się na
+niej opiera:
+
+- **Odczytuje tabelę, której nieudane uruchomienie nie dokończyło.** Przepływ
+  pracy odczytuje tabelę lub tabelę zbudowaną na jej podstawie, niezależnie od
+  liczby kroków pośrednich. Ustalenie wskazuje odczytywaną tabelę, tabelę,
+  której nieudane uruchomienie nie dokończyło, oraz przepływ pracy, który
+  zakończył się niepowodzeniem, wraz z czasem rozpoczęcia tego uruchomienia.
+- **Pokazuje tabelę, której nieudane uruchomienie nie dokończyło.** Pulpit
+  zawiera wykres oparty na opublikowanej tabeli, która jest tą tabelą lub
+  została zbudowana na jej podstawie, albo na zbiorze danych SQL, który
+  odczytuje taką tabelę. Weave odczytuje logikę szablonu zbioru danych SQL bez
+  tagów, więc tabela w gałęzi, która nigdy nie jest wykonywana, może zostać
+  uwzględniona. Ustalenie dotyczy
+  pulpitu i jest wyświetlane na karcie **Weave** każdego projektu, którego
+  tabele pokazują jego wykresy.
+
+> Weave zauważył, że pulpit „Board Pack” pokazuje tabelę „Margin”, zbudowaną
+> na podstawie tabeli „Sales”, której zapisu przepływ pracy „Import Sales” nie
+> dokończył w ostatnim uruchomieniu, 27 paź 09:15 UTC, więc jego wykresy mogą
+> pokazywać stare lub niekompletne dane
+
+Każdy przepływ pracy zakończony niepowodzeniem jest osobnym ustaleniem, które
+znika, gdy ostatnie uruchomienie tego przepływu pracy przestanie kończyć się
+niepowodzeniem. Przepływ pracy, który zakończył się niepowodzeniem, nie jest tu
+informowany o własnym uruchomieniu; obejmuje to jego ustalenie **Ostatnie uruchomienie zakończyło się niepowodzeniem**.
+
+Za tabelę, której nieudane uruchomienie nie dokończyło, nie są uznawane:
+
+- tabela, której krok został celowo pominięty, na przykład krok, którego warunek
+  nie został spełniony, wyłączony krok lub import, który pominął już
+  załadowany plik;
+- tabela, której krok może zostać pominięty przez uruchomienie. W przepływie
+  pracy, który nie jest zaawansowany, przejście (goto) warunku lub przejście
+  kroku zakończonego niepowodzeniem w szeregowym przepływie pracy obejmuje
+  każdy krok. W zaawansowanym przepływie pracy obejmuje krok w kontenerze
+  wykonawczym sprawdzającym warunki lub po nim oraz krok w pętli;
+- tabela, którą inny przepływ pracy zastąpił w całości po rozpoczęciu
+  nieudanego uruchomienia, zamiast dodać do niej wiersze; oraz
+- w przypadku przepływu pracy — tabela, którą sam zastąpił przed jej odczytem w
+  ostatnim uruchomieniu, w którym ją odczytał.
+
+Uruchomiony przepływ pracy nie jest oceniany do zakończenia uruchomienia. Gdy nie
+można odczytać historii uruchomień, Weave zgłasza te elementy jako niesprawdzone,
+a nie jako poprawne.
+
+Czego to sprawdzenie nie widzi:
+
+- uruchomienia, które zakończyło się bez zarejestrowania niepowodzenia przez
+  żaden krok, na przykład takiego, którego serwer się zatrzymał, oraz
+  uruchomienia zatrzymanego przez kogoś;
+- tabeli, którą krok wybiera za pomocą zmiennej, wskazuje nazwą, którą ma więcej
+  niż jedna tabela, odczytuje przez widok lub odczytuje z innego projektu;
+- wykresu pulpitu opartego na zapisanym zapytaniu lub na zbiorze danych SQL,
+  którego kodu SQL Weave nie może odczytać po usunięciu logiki szablonu;
+- tabeli, której nazwę tworzy szablon;
+- tabeli, którą zbiór danych SQL wskazuje bez schematu, chyba że własnym
+  schematem zbioru danych jest schemat raportowania projektu;
+- żadnego zbioru danych SQL w projekcie korzystającym z hurtowni danych
+  Snowflake lub Databricks;
+- tabeli, która nie jest opublikowana, ani aplikacji Panel; oraz
+- uruchomień starszych niż historia uruchomień odczytywana przez Weave, czyli
+  ostatnie 30 dni i, w przypadku każdego przepływu pracy, jego ostatnie 20
+  uruchomień.
+
+Ustalenie dotyczące pulpitu widzisz tylko w przypadku pulpitu, który możesz
+otworzyć. Bez roli `analyze.table.read` żadne z tych sprawdzeń nie jest
+wykonywane.
+
+**Nietypowe sumy metryk.** Weave codziennie odczytuje metryki projektu i
+zgłasza metrykę, której ostatni zakończony okres znacznie odbiega od normy,
+wskazując element, na przykład klienta lub zakład, odpowiedzialny za zmianę.
+Zobacz [Nietypowe sumy metryk](/pl/guides/ai-assistant/weave-metric-insights/).
+
+## Przegląd jednego przepływu pracy
+
+Przegląd sprawdza jeden przepływ pracy, zanim zaczniesz na nim polegać.
+Wykonuje sprawdzenia Weave dla przepływu pracy i jego kroków, w tym kroków
+każdego uruchamianego przez niego przepływu pracy, oraz trzy dodatkowe
+sprawdzenia, które Weave wykonuje tylko w przeglądzie, ponieważ odczytują więcej,
+niż karta Weave może odczytywać przy każdym otwarciu:
+
+- **Alokacja zasilająca własne dane wejściowe.** W przypadku każdego kroku
+  alokacji uruchamianego przez przepływ pracy — czy to, co zapisuje, wraca —
+  przez dowolne kroki, w dowolnym przepływie pracy — do alokowanej tabeli lub
+  jej tabeli sterującej. Jeśli tak, to ile krok alokuje lub jak to rozkłada,
+  zależy od tego, co zaalokował we wcześniejszym uruchomieniu. Weave wymienia
+  kroki, przez które przechodzi pętla, i prosi o sprawdzenie, czy pętla jest
+  zamierzona. Pętla, która nie przechodzi przez żaden krok alokacji, na przykład
+  ładowanie przyrostowe odczytujące tabelę, do której dołącza dane, nie jest
+  zgłaszana.
+- **Tabele sterujące i kolumny alokacji.** Czy tabela sterująca używana przez
+  krok alokacji istnieje i ma każdą kolumnę, którą krok z niej odczytuje.
+  Kolumna klucza, którą krok wypełnia stałą lub wyrażeniem,
+  nie jest wyszukiwana. Tabela sterująca zbudowana w dowolnym innym miejscu jest
+  sprawdzana w obecnym stanie; jeśli buduje ją krok w tym przepływie pracy, jej
+  kolumny nie są znane, dopóki ten krok nie zostanie uruchomiony, więc Weave
+  zgłasza alokację jako niesprawdzoną, a nie jako poprawną. Zgłasza alokację
+  jako niesprawdzoną również wtedy, gdy krok wybiera tabelę sterującą za pomocą
+  zmiennej lub ścieżki folderu, gdy przepływ pracy jest makrem oraz gdy Twoja
+  rola nie pozwala zobaczyć tabeli.
+- **Zabezpieczenia na poziomie wierszy w kolumnie o zmienionej nazwie.** W
+  przypadku każdej tabeli zapisywanej przez przepływ pracy — czy ma kolumnę
+  oznaczoną wymiarem używanym przez atrybut zabezpieczeń na poziomie wierszy,
+  ale niemającą nazwy tego atrybutu. Zabezpieczenia na poziomie wierszy filtrują
+  tylko według kolumn o nazwach ich atrybutów, więc nie filtrują według tej
+  kolumny. To sprawdzenie wymaga roli Architekt w projekcie; dla pozostałych
+  osób przegląd informuje, że nie zostało wykonane, i tak samo w przypadku
+  tabeli, którą przepływ pracy wskazuje za pomocą zmiennej lub ścieżki folderu.
+
+Przegląd zaczyna się od informacji, co znalazł i jaką część przepływu pracy
+objął, i nigdy nie kończy się stwierdzeniem, że wszystko jest w porządku:
+
+```
+Weave found 2 problems in the workflow "Q3 Close". It couldn't finish checking 1
+of its 8 steps (listed below), so it may have missed problems in those. See below
+for what these checks don't cover.
+
+Weave noticed the step "Allocate rent": it uses the column "sq_ft" from its driver
+table "Floor space", which doesn't have that column. Pick a column the table has,
+or add "sq_ft" to it.
+Weave noticed the step "Allocate IT cost": its output flows back into its driver
+table "IT driver" through "Build IT driver", so how it spreads what it allocates
+depends on what it allocated on an earlier run. Check whether that loop is
+intended.
+Weave hasn't checked the step "Allocate IT cost" — whether its driver table
+"IT driver" has the columns it uses: the step "Build IT driver" builds that
+table, so its columns aren't known until that step runs.
+```
+
+Kroki, których Twoja rola nie pozwala zobaczyć, są wliczane do sumy, a przegląd
+informuje, że ich nie sprawdził.
+
+Przegląd wymienia to, czego nie sprawdza. Nie wykonuje sprawdzeń Weave
+dotyczących tabel — czy tabela zapisywana zgodnie z harmonogramem jest opóźniona
+oraz czy do tabeli odczytywanej przez przepływ pracy od tego czasu zapisano
+dane — które odczytują cały projekt i są wykonywane na karcie Weave. W przypadku
+przepływu pracy z krokami alokacji nie sprawdza, czy każda alokowana kwota
+znajduje pasujący wiersz klucza lub element wymiaru, czy tabele źródłowe i
+sterujące zawierają wartości na tym samym poziomie szczegółowości ani pętli
+przechodzących przez krok, który wskazuje swoją tabelę w kodzie SQL lub za
+pomocą zmiennej.
+
+Aby przejrzeć przepływ pracy, otwórz go na kanwie lub w siatce **Kroki** i
+wybierz **Sprawdź**. Przycisk jest dostępny dla osób, które mogą edytować
+przepływ pracy i odczytywać tabele projektu. Okno **Kontrola Weave** pokazuje
+kolejno:
+
+- początkowe wiersze przeglądu;
+- **Podsumowanie (napisane przez AI)**, jeśli przegląd ma podsumowanie;
+- **Problemy** wykryte w przeglądzie, a następnie to, czego **Nie można sprawdzić**.
+  Problem, na który wskazuje podsumowanie, jest oznaczony etykietą **W podsumowaniu**,
+  a przycisk **Przejdź do** obok ustalenia dotyczącego kroku zaznacza ten krok w
+  miejscu, w którym wybrano **Sprawdź**;
+- **Czego ta kontrola nie obejmuje**, zawsze na końcu.
+
+Ponowne wybranie **Sprawdź** uruchamia nowy przegląd w tym samym oknie.
+
+Możesz też poprosić asystenta AI połączonego przez [PlaidCloud MCP](/pl/integrations/ai-coding-agents/getting-started/)
+o przejrzenie przepływu pracy — służy do tego narzędzie `workflow_review` — lub
+wywołać API platformy. Przegląd wymaga uprawnień do odczytu kroków, przepływów
+pracy i tabel projektu. Trzy opisane wyżej sprawdzenia nie są wyświetlane na
+karcie Weave; Weave wykonuje je tylko w przeglądzie.
+
+W oknie **Kontrola Weave** i przez API platformy przegląd, który znajduje
+problemy, zawiera też podsumowanie
+w jednym lub dwóch zdaniach napisane przez wbudowaną AI PlaidCloud oraz maksymalnie
+trzy problemy, którymi warto zająć się najpierw. AI otrzymuje tylko problemy
+z przeglądu. Przed zwróceniem podsumowania problemy, na które wskazuje, muszą
+pochodzić z tego przeglądu, każda cytowana nazwa i każda zapisana cyfra muszą
+występować w tych problemach, a podsumowanie nie może zawierać sformułowań takich
+jak „brak innych problemów”. Podsumowanie, które nie spełnia tych warunków, jest
+odrzucane, a przegląd jest zwracany bez niego. Przegląd bez problemów nie ma
+podsumowania. Przegląd wykonany przez asystenta AI nie ma podsumowania; asystent
+sam odczytuje ustalenia.
+
+## Powiadamianie po zakończeniu uruchomienia
+
+Gdy uruchomienie przepływu pracy się kończy, Weave sprawdza ten przepływ pracy i
+informuje właściciela każdego problemu — zobacz [Przypisywanie właściciela ustaleniu](/pl/guides/ai-assistant/weave-tab/#przypisywanie-właściciela-ustaleniu)
+— o problemach dotyczących tego przepływu pracy, jego uruchomień i zapisanej
+konfiguracji jego kroków, których właściciel jeszcze nie przeczytał na
+[karcie Weave](/pl/guides/ai-assistant/weave-tab/) projektu, za pomocą komunikatu w
+aplikacji. Problem bez właściciela lub taki, którego właściciel nie może już
+zobaczyć, trafia do osoby, do której należy uruchomienie: osoby, która je
+rozpoczęła, a w przypadku zaplanowanego uruchomienia — osoby, która ostatnio
+zapisała harmonogram. Każdy problem jest wspominany raz. Dopóki nie przeczytasz
+go na karcie Weave, kolejne uruchomienia go nie powtarzają, więc krok Workflow Loop,
+który uruchamia wiele przepływów pracy, nie zasypuje ekranu powtórzeniami.
+Licznik na przycisku **Weave** uwzględnia go do czasu przeczytania.
+
+Komunikat pozostaje na ekranie przez 30 sekund i zawiera łącze **Otwórz Weave**,
+które otwiera kartę Weave projektu z ustaleniami dotyczącymi uruchomionego
+przepływu pracy. Kliknij w dowolnym innym miejscu komunikatu, aby go zamknąć.
+
+Gdy na ekranie jest wyświetlany komunikat Weave dotyczący projektu, nowy
+komunikat dotyczący tego samego projektu dołącza do niego, zamiast pojawiać się
+pod nim. Komunikat pokazuje najnowsze zdanie, a po nim wiersz taki jak *Plus 2 kolejne w tym projekcie.*, i pozostaje na
+ekranie przez 30 sekund od najnowszego. Gdy komunikaty dotyczą różnych przepływów pracy, łącze **Otwórz Weave**
+otwiera całą kartę Weave. Dzięki temu przepływy pracy, które kończą się
+niepowodzeniem w odstępie kilku chwil, generują jeden komunikat, a nie po jednym
+dla każdego. Przypomnienie o gotowości zawsze jest wyświetlane osobno.
+
+Po przeczytaniu problemu jest on wspominany ponownie tylko wtedy, gdy zmieni się
+jego treść. Ustalenie dotyczące uruchomienia opisuje uruchomienie, z którego
+pochodzi — jego datę, godzinę i liczby — więc przepływ pracy, który co noc kończy
+się niepowodzeniem, jest wspominany ponownie przy następnym niepowodzeniu po
+przeczytaniu poprzedniego. Problem z konfiguracją ma taką samą treść w kolejnych
+uruchomieniach, więc po jego przeczytaniu nie jest powtarzany przy każdym
+uruchomieniu.
+
+Zatrzymane uruchomienie nie wysyła niczego, niezależnie od tego, kto je
+zatrzymał. Przepływ pracy uruchomiony przez krok Macro Run lub Macro Concurrent
+nie wysyła własnych powiadomień, a takie wywołanie nie jest liczone jako jego
+uruchomienie; przepływ pracy rozpoczęty przez krok Run Workflow lub Workflow Loop
+jest uruchomieniem tego przepływu pracy jak każde inne. Elementy, których Weave
+nie mógł sprawdzić, nigdy nie są wysyłane w ten sposób, podobnie jak ustalenia
+dotyczące tabel zapisywanych zgodnie z harmonogramem lub tabel przepływu pracy,
+do których zapisano dane od czasu ich odczytu: o nich Weave informuje między
+uruchomieniami. Zobacz [Powiadamianie między uruchomieniami](#powiadamianie-między-uruchomieniami).
+
+Otrzymanie powiadomienia to nie to samo co przeczytanie: alert nie oznacza
+ustalenia jako przeczytanego na karcie Weave, podobnie jak kliknięcie jego łącza
+**Otwórz Weave**.
+
+Każdy problem, o którym informuje komunikat, jest dodawany do licznika na
+przycisku **Weave** w nagłówku. Zobacz
+[Przycisk Weave w nagłówku](/pl/guides/ai-assistant/weave-tab/#przycisk-weave-w-nagłówku).
+
+## Powiadamianie między uruchomieniami
+
+Niektóre problemy pojawiają się, gdy nic nie jest uruchomione: tabela, która nie
+została zapisana zgodnie z harmonogramem lub w ramach progu aktualności;
+zaplanowane uruchomienie, które się nie rozpoczęło lub którego termin nadszedł,
+gdy przepływ pracy nadal działał; przepływ pracy, do którego tabel inny przepływ
+pracy zapisał dane od czasu ich ostatniego odczytu; oraz przepływ pracy lub
+pulpit oparty na tabeli, której nieudane uruchomienie nie dokończyło. Zakończenie
+uruchomienia nie może o nich poinformować, więc co godzinę Weave sprawdza każdy
+projekt pod ich kątem i informuje właściciela każdego problemu — zobacz
+[Przypisywanie właściciela ustaleniu](/pl/guides/ai-assistant/weave-tab/#przypisywanie-właściciela-ustaleniu)
+— za pomocą komunikatu w aplikacji.
+
+Cogodzinne sprawdzenie informuje o każdym z tych problemów raz, niezależnie od
+tego, ile sprawdzeń go wykryje, a pierwsze sprawdzenie projektu informuje o
+problemach już istniejących, niezależnie od tego, jak długo trwają. Informuje
+ponownie dopiero wtedy, gdy problem zniknie i powróci albo gdy po jego
+przeczytaniu zmieni się jego treść, na przykład gdy kolejne zaplanowane
+uruchomienie również się nie rozpocznie. Problem z harmonogramem należy też do
+sprawdzeń samego przepływu pracy, ale gdy cogodzinne sprawdzenie już o nim
+poinformowało, komunikat po zakończeniu następnego uruchomienia przepływu pracy
+nie powtarza go, dopóki go nie przeczytasz — zobacz
+[Powiadamianie po zakończeniu uruchomienia](#powiadamianie-po-zakończeniu-uruchomienia). Kilka problemów
+w jednym projekcie trafia w jednym komunikacie, który podaje ich liczbę i cytuje
+pierwszy z nich:
+
+> Weave zauważył 3 problemy w projekcie „Finance Close”, począwszy od tabeli
+> „Sales Daily”: krok „Load Sales” ostatnio zapisał ją 14 paź 06:00 UTC, a
+> przepływ pracy „Nightly Load” powinien był zostać uruchomiony zgodnie z harmonogramem od tego czasu
+
+Tabela zapisywana przez więcej niż jeden przepływ pracy nie ma właściciela,
+dopóki ktoś go nie przypisze. Jeśli nie została zapisana zgodnie z
+harmonogramem, Weave informuje właściciela każdego przepływu pracy, który
+powinien był ją zapisać, a tego nie zrobił. Pozostałe problemy bez właściciela
+nie są wysyłane; są wymienione na karcie Weave projektu.
+
+Sprawdzenie jest wykonywane w imieniu każdego właściciela, więc komunikat
+wymienia tylko to, co pozwala Ci zobaczyć Twoja rola. Powiadomienia otrzymujesz
+tylko jako aktywny członek projektu, którego rola pozwala widzieć kroki i
+przepływy pracy, a informacje o tabelach — tylko wtedy, gdy możesz odczytywać
+tabele.
+
+Komunikat pozostaje na ekranie przez 30 sekund i zawiera łącze **Otwórz Weave**,
+które otwiera kartę Weave projektu — na danym przepływie pracy, jeśli wszystkie
+problemy w komunikacie go dotyczą. Komunikat jest wyświetlany tylko wtedy, gdy
+trwa Twoja sesja, ale każdy problem, o którym informuje, jest dodawany do
+licznika na przycisku **Weave** w nagłówku, więc pominięty komunikat nadal jest
+tam uwzględniony. Otrzymanie powiadomienia nie oznacza ustalenia jako
+przeczytanego.
+
+## Oznaczanie ustalenia jako przeczytanego
+
+Każde ustalenie ma identyfikator i można je oznaczyć jako przeczytane, aby
+przestało pojawiać się jako nowe — na karcie Weave projektu kliknij
+**Oznacz jako przeczytane** na jego karcie (zobacz
+[Oznaczanie ustaleń jako przeczytanych](/pl/guides/ai-assistant/weave-tab/#oznaczanie-ustaleń-jako-przeczytanych)). Identyfikator jest wyprowadzany z samego ustalenia, więc odrzucone ustalenie
+wraca jako nowe, jeśli zmieni się problem, którego dotyczy — krok oznaczony jako
+przeczytany po poprawieniu jednej kolumny pojawi się ponownie, jeśli później
+problem wystąpi w innej kolumnie.
+
+Stan przeczytania dotyczy tylko Ciebie. Oznaczenie ustalenia jako przeczytanego
+nie oznacza go jako przeczytanego dla nikogo innego w projekcie.
+
+Gdy przepływ pracy zapisujący opóźnioną tabelę jest uruchomiony, Weave zgłasza
+tabelę jako niesprawdzoną. Jeśli w tym czasie oznaczysz dowolne ustalenie jako
+przeczytane, a uruchomienie zakończy się bez zapisania tabeli, jej ustalenie
+wróci jako nowe.
+
+Dwa różne kroki wymienione dwukrotnie w jednym przepływie pracy to dwa
+ustalenia, więc oznaczenie jednego z nich jako przeczytanego pozostawia drugie
+nieprzeczytane. Przepływ pracy bez nazwy jest wyświetlany jako „unnamed
+workflow”, a sprawdzenie, którego nie można było wykonać, jest wskazywane przez
+swój tytuł, na przykład „Ostatnie uruchomienie zakończyło się niepowodzeniem”.
+
+## Zestawienie
+
+Zestawienie to ten sam raport ograniczony do tego, czego jeszcze nie
+przeczytano, w tym samym stylu. Można o nie poprosić w dowolnym momencie i
+otrzymywać je jako powiadomienie w aplikacji z łączem **Otwórz Weave** do karty
+Weave projektu.
+
+Ustalenia, których Weave nie mógł sprawdzić, są częścią zestawienia jak każde
+inne. Zestawienie, które po cichu by je pomijało, byłoby właśnie tym
+uspokajającym milczeniem, któremu ma zapobiegać trzecia odpowiedź.

@@ -1,0 +1,145 @@
+---
+title: Einen Workflow nach Zeitplan automatisieren
+description: Lassen Sie einen bereits erstellten Workflow von selbst laufen – planen Sie ihn mit dem Ereignisplaner, beobachten Sie Ausführungsverlauf und Protokolle und behandeln Sie den ersten Fehler.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/schedule-a-workflow.mdx
+---
+
+*~25 Minuten · eine geplante Ausführung, ein Ausführungsverlauf, ein behandelter Fehler*
+
+Sie haben bereits einen Workflow – etwa die Pipeline zur Umsatzbereinigung aus [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/). Derzeit läuft er, wenn Sie auf **Ausführen** klicken. Dieses Tutorial übergibt diese Aufgabe an PlaidCloud: Der Workflow läuft nach Kalender von selbst, und Sie lernen, ihn zu beobachten, nachzuweisen, dass er gelaufen ist, und ihn wiederherzustellen, wenn eine Ausführung fehlschlägt.
+
+Drei Dinge machen aus einer manuellen Pipeline eine automatisierte, und dieses Tutorial behandelt sie nacheinander:
+
+- **Ein Zeitplan** – eine Regel, die den Workflow zu den von Ihnen gewählten Zeiten startet.
+- **Ein Protokoll, dem Sie vertrauen können** – Ausführungsverlauf und Protokolle, die Ihnen sagen, was passiert ist, während Sie nicht zugesehen haben.
+- **Ein Fehlerplan** – denn ein unbeaufsichtigter Job stößt irgendwann auf fehlerhafte Daten und sollte nicht stillschweigend scheitern.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 640 132" role="img" aria-label="Der Automatisierungskreislauf: Ein Zeitplan startet den Workflow, die Ausführung erzeugt Ausführungsverlauf und Protokoll, und eine fehlgeschlagene Ausführung wird durch Fortsetzen wiederhergestellt, was in die Ausführung zurückführt." style="width:100%;max-width:640px;height:auto;">
+  <defs><marker id="sw-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="16" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="76" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Zeitplan</text>
+  <path d="M136 66 L176 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="178" y="46" width="120" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="238" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ausführung</text>
+  <path d="M298 66 L338 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="340" y="46" width="140" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="410" y="64" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Ausführungsverlauf</text>
+  <text x="410" y="79" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">+ Protokoll</text>
+  <path d="M480 66 L520 66" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#sw-arrow)" />
+  <rect x="522" y="46" width="102" height="40" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="573" y="70" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Wiederherstellen</text>
+  <path d="M573 46 L573 24 L238 24 L238 44" stroke="var(--sl-color-gray-3)" stroke-width="1.4" fill="none" stroke-dasharray="4 3" marker-end="url(#sw-arrow)" />
+  <text x="405" y="18" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">dort fortsetzen, wo sie gestoppt wurde</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Sobald ein Zeitplan die Ausführung übernimmt, zeigen Ihnen Verlauf und Protokoll, dass sie funktioniert hat – und mit Fortsetzen beheben Sie es, wenn nicht.</figcaption>
+</figure>
+
+## Voraussetzungen
+
+- Ein PlaidCloud-Workspace mit einem Workflow, der bereits korrekt läuft, wenn Sie ihn von Hand ausführen. Falls Sie keinen haben, erstellen Sie ihn zuerst mit [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/).
+- Zugriff auf **Analyze → Werkzeuge → Ereignisplaner** in diesem Workspace.
+
+> **Planen Sie einen Workflow, der bereits fehlerfrei durchläuft.** Die Automatisierung wiederholt alles, was der Workflow tut – auch seine Fehler, nun unbeaufsichtigt. Führen Sie ihn einmal manuell sauber bis zum Ende aus, bevor Sie ihn in einen Zeitplan aufnehmen.
+
+## Schritt 1: Bestätigen, dass er von Hand läuft
+
+Öffnen Sie Ihren Workflow und führen Sie ihn einmal manuell aus, damit Sie eine Vergleichsbasis haben.
+
+1. Öffnen Sie Ihr Projekt und wechseln Sie zur Hierarchie **Workflows**.
+2. Klicken Sie beim Workflow auf das Symbol **run**, oder öffnen Sie den Workflow und wählen Sie im Menü **Aktionen** den Eintrag **Run All**. (Die Schaltfläche **Toggle Start/Stop** oben in der Workflow-Tabelle tut dasselbe und stoppt eine laufende Ausführung.)
+3. Beobachten Sie die Statussymbole der Schritte, während die Ausführung voranschreitet. Jeder Schritt zeigt, wo er steht und wie lange er schon läuft – fahren Sie mit der Maus über ein Symbol, um die zugehörige Meldung zu sehen.
+
+Die Status, die Sie sehen werden, und was sie jeweils bedeuten:
+
+| Status | Bedeutung |
+|---|---|
+| Wartend | In der Warteschlange, noch nicht gestartet. |
+| Läuft | In Arbeit; die Dauer läuft hoch. |
+| Abgeschlossen | Erfolgreich beendet. |
+| Warnung | Beendet, aber mit einer Markierung, die im Protokoll lesenswert ist. |
+| Fehler | Der Schritt ist fehlgeschlagen – siehe [Schrittfehler verwalten](/de/guides/workflows/managing-step-errors/). |
+| Übersprungen | Übergangen – deaktiviert oder seine Ausführungsbedingungen waren nicht erfüllt. |
+| Fortgesetzt | Fehlgeschlagen, aber auf Fortfahren bei Fehler eingestellt, sodass die Ausführung weiterlief. |
+
+Eine saubere Ausführung endet damit, dass jeder Schritt **Abgeschlossen** ist. Das ist Ihre grüne Vergleichsbasis. Alle Details zu den Status finden Sie unter [Einen Workflow ausführen](/de/guides/workflows/run-a-workflow/).
+
+## Schritt 2: Den Zeitplan erstellen
+
+Übergeben Sie diese Ausführung nun an den Ereignisplaner.
+
+1. Öffnen Sie **Analyze**, wählen Sie **Werkzeuge** und klicken Sie auf **Ereignisplaner**. Die **Events Table** listet alle bereits für den Workspace konfigurierten Ereignisse auf.
+2. Klicken Sie auf **Geplantes Ereignis hinzufügen**.
+3. Füllen Sie die vom Formular markierten Pflichtfelder aus und richten Sie das Ereignis auf den Workflow, den Sie gerade ausgeführt haben (und sein Projekt).
+4. Öffnen Sie die Registerkarte **Event Schedule** und wählen Sie einen **Schedule type**:
+   - **Use Classic Schedule** – wählen Sie die konkreten Monate, Tage, Stunden und Minuten der Ausführung. Beginnen Sie mit etwas, das Sie bald erleben, etwa in ein paar Minuten ab jetzt.
+   - **Use Workday Schedule** – wählen Sie statt einer Uhrzeit einen Finanzarbeitstag. Arbeitstagspläne können auch Feiertagskalender berücksichtigen, sodass eine Ausführung auf den richtigen Geschäftstag fällt.
+5. Klicken Sie auf **Erstellen**.
+
+Die Events Table listet nun Ihr Ereignis auf, und ihre Beschreibungsspalte zeigt, ob es nach Monat, nach Tag/Stunde/Minute oder nach Arbeitstag geplant ist.
+
+> **Zeiten gelten als Londoner Zeit, sofern Sie nichts anderes angeben.** Neue Ereignisse verwenden standardmäßig **UTC +0**, was als Londoner Zeit gelesen wird, einschließlich der britischen Sommerzeit. Wenn „9 Uhr“ bei Ihnen vor Ort 9 Uhr bedeuten soll, legen Sie das Feld **Zeitzone** des Ereignisses fest – andernfalls kann eine geplante Ausführung um Stunden von Ihrer Erwartung abweichen. Die meisten anderen Offsets folgen ebenfalls der Ortszeit eines Ortes – siehe [Ereignisplaner](/de/administration/scheduled-events/event-scheduler/#zeitzone).
+
+> **Begrenzen Sie einen Testzeitplan, damit er nicht endlos läuft.** Der Abschnitt **Limit Running** führt ein Ereignis nur für einen festgelegten Zeitraum und eine festgelegte Anzahl von Malen aus. Bei einem Zeitplan, den Sie nur ausprobieren, vermeiden Sie so einen Job, der wochenlang unbemerkt alle paar Minuten startet.
+
+## Schritt 3: Vorschau, wann er läuft
+
+Bevor Sie dem Zeitplan vertrauen, sehen Sie sich an, was er tatsächlich tun wird.
+
+1. Öffnen Sie den **Kalender Bevorstehende Ausführungen**. Er ist eine schreibgeschützte Vorschau – er erweitert dieselben Zeitpläne, die die tatsächliche Ausführung steuern, sodass Sie sehen, was laufen wird, und das Ansehen nie etwas auslöst.
+2. Wechseln Sie zwischen den Ansichten **Monat**, **Woche** und **Agenda**; mit **Zurück**, **Weiter** und **Heute** bewegen Sie sich durch die Zeit, und mit **Aktualisieren** laden Sie den neuesten Stand.
+3. Prüfen Sie, dass Ihr Ereignis dann erscheint, wann Sie es erwarten. Jede Ausführung wird als Balken dargestellt, dessen Größe der typischen Dauer des Workflows entspricht.
+
+> **Nebeneinanderliegende Balken bedeuten eine Überschneidung.** Wenn die Balken zweier Ausführungen im selben Zeitfenster nebeneinander liegen, kollidieren diese Ausführungen – versetzen Sie ihre Zeitpläne, wenn sie um dieselben Daten oder Ressourcen konkurrieren. Ereignisgesteuerte Sensoren erscheinen hier nicht; sie haben keinen festen zukünftigen Zeitpunkt. Siehe [Kalender Bevorstehende Ausführungen](/de/administration/scheduled-events/upcoming-runs-calendar/).
+
+Wenn Sie nicht auf die Uhr warten möchten, wählen Sie das Ereignis in der Events Table aus und klicken Sie auf **Ausgewählte Ereignisse ausführen**, um es sofort zu starten – eine gute Möglichkeit, jetzt gleich nachzuweisen, dass der geplante Pfad durchgängig funktioniert.
+
+## Schritt 4: Ausführungsverlauf und Protokoll beobachten
+
+Eine automatisierte Ausführung findet statt, während Sie anderswo sind – daher ist die Aufzeichnung, die sie hinterlässt, das, worauf Sie sich tatsächlich verlassen.
+
+- Der **Ausführungsverlauf** gehört zum Workflow. Jede Ausführung ist ein eigener Eintrag. Eine fortgesetzte Ausführung wird als *neue* Ausführung aufgezeichnet, die nur die erneut ausgeführten Schritte enthält, und das Original behält seinen eigenen Eintrag – der Verlauf liest sich so als wahrheitsgetreue Abfolge dessen, was geschah, und nicht als eine einzelne Zeile, die überschrieben wird.
+- **Das Workflow-Protokoll** erfasst Ereignisse, während sie auftreten – laufende Schritte, ausgelöste Warnungen. Öffnen Sie es im Bereich **Projekt** auf der Registerkarte **Protokoll**; es fließt außerdem in das umfassendere Projektprotokoll ein, sodass Sie mehrere Workflows gleichzeitig beobachten können. Der Viewer sortiert und filtert, und Sie können jeden Eintrag für Details öffnen. Siehe [Workflow-Protokoll anzeigen](/de/guides/workflows/viewing-workflow-log/).
+- **Der Workflow-Bericht** dokumentiert den aktuellen Zustand des Workflows – seine Schritte, Funktionen und Variablen. Er wird bei Bedarf über das Symbol **Bericht** in der Hierarchie **Workflows** erzeugt, was praktisch ist, wenn jemand fragt, was ein automatisierter Job tatsächlich tut. Siehe [Workflow-Bericht anzeigen](/de/guides/workflows/view-workflow-report/).
+
+Öffnen Sie nach einer geplanten oder bedarfsgesteuerten Ausführung das Protokoll und bestätigen Sie, dass die erwartete Ausführung vorhanden ist und wie beabsichtigt beendet wurde.
+
+## Schritt 5: Einen Fehler behandeln
+
+Ein unbeaufsichtigter Job trifft irgendwann auf fehlerhafte Daten. Entscheiden Sie jetzt, was dann geschehen soll – PlaidCloud bietet drei Reaktionen, und die richtige hängt vom Schritt ab.
+
+| Auswahl | Was passiert | Wann Sie sie einsetzen |
+|---|---|---|
+| Den Workflow stoppen | Die Ausführung hält an; am Schritt und am Workflow erscheint eine Fehleranzeige. | Der Standard – die meisten Schritte sollten nach einem echten Fehler nicht weiterlaufen. |
+| Bei Fehler fortfahren | Der Schritt wird mit einem Fehler markiert, aber die Ausführung behandelt ihn als erledigt und läuft weiter. | Ein Schritt, der bei fehlenden Daten unbedenklich fehlschlagen darf. |
+| Behebungs-Workflow | Die fehlgeschlagene Ausführung stoppt und stattdessen startet ein zweiter Workflow. | Ein Fehler soll jemanden benachrichtigen oder eine automatische Korrektur versuchen. |
+
+Zwei Einstellungen prägen das, beide auf der Registerkarte **Allgemein** des Schrittformulars (klicken Sie in der Workflow-Tabelle auf das Zahnradsymbol des Schritts oder klicken Sie mit der rechten Maustaste darauf und wählen Sie **Schrittdetails bearbeiten**):
+
+- **Wiederholen** – ein fehlgeschlagener Schritt kann eine festgelegte Anzahl von Malen wiederholt werden, mit einer Verzögerung zwischen den Versuchen von Sekunden bis Stunden. Das allein rettet die meisten Fehler, die von einem kurzzeitig nicht verfügbaren Remote-System herrühren. Siehe [Schrittfehler verwalten](/de/guides/workflows/managing-step-errors/).
+- **Aktion bei einem Fehler** – wählen Sie **Fortfahren**, und der Fehler des Schritts stoppt den Workflow nicht. So eingestellte Schritte tragen in der Workflow-Tabelle eine besondere Anzeige. Siehe [Bei Fehler fortfahren](/de/guides/workflows/continue-on-error/).
+
+> **Bei Fehler fortfahren verbirgt den Fehler vor Ihrem Behebungsplan.** Ein Schritt, der zum Fortfahren markiert ist, stoppt den Workflow nie und löst daher auch nie einen Behebungs-Workflow aus – das tut nur ein Fehler, der die Ausführung sonst anhalten würde. Reservieren Sie „Bei Fehler fortfahren“ für Fehler, die Sie wirklich bedenkenlos ignorieren können.
+
+Wenn eine geplante Ausführung doch fehlschlägt, müssen Sie selten von vorn beginnen. **Fortsetzen** nimmt eine gestoppte oder fehlerhafte Ausführung dort wieder auf, wo sie aufgehört hat – es führt die Schritte, die nicht erfolgreich beendet wurden, erneut aus und lässt abgeschlossene unberührt. Fortsetzen ist verfügbar, sobald die letzte Ausführung eines Workflows pausiert, gestoppt oder mit einem Fehler endete.
+
+## Schritt 6: Bei Bedarf pausieren
+
+Eine Automatisierung, die Sie nicht abschalten können, ist ein Risiko. So nehmen Sie einen Zeitplan offline, ohne ihn zu löschen:
+
+1. Öffnen Sie **Analyze → Werkzeuge → Ereignisplaner** und klicken Sie beim Ereignis auf das Symbol **edit**.
+2. Deaktivieren Sie das Kontrollkästchen **Aktiv** und klicken Sie auf **Aktualisieren**.
+
+Das Ereignis startet nicht mehr nach seinem Zeitplan, bis Sie es wieder aktivieren – über denselben Bearbeitungsweg, nun mit wieder aktiviertem **Aktiv**. Um es endgültig zu entfernen, verwenden Sie stattdessen das Symbol **delete**. Ein aktives Ereignis zeigt in der Events Table das Symbol **Aktiv**, sodass ein Blick genügt, um zu sehen, was live ist.
+
+**Sie sind startklar.** Sie haben nun ein geplantes Ereignis, einen Ausführungsverlauf zum Beobachten und eine Möglichkeit, den ersten Fehler zu behandeln – und Sie können das Ganze pausieren, ohne es zu löschen.
+
+## Wie es weitergeht
+
+- [Ereignisplaner](/de/administration/scheduled-events/event-scheduler/) – jedes Feld eines geplanten Ereignisses, einschließlich Planung nach Arbeitstagen und Feiertagskalendern.
+- [Geplante Workflows](/de/administration/scheduled-events/) – Ausführungsfenster, Reihenfolge und bedingte Auslöser im gesamten Workspace.
+- [Kalender Bevorstehende Ausführungen](/de/administration/scheduled-events/upcoming-runs-calendar/) – kollidierende Ausführungsfenster erkennen, bevor sie konkurrieren.
+- [Einen Workflow ausführen](/de/guides/workflows/run-a-workflow/) – Pausieren, Stoppen und Fortsetzen im Detail sowie jeder Schrittstatus.
+- [Schrittfehler verwalten](/de/guides/workflows/managing-step-errors/) und [Bei Fehler fortfahren](/de/guides/workflows/continue-on-error/) – die Einstellungen zur Fehlerbehandlung im Detail.
+- [Workflows-Leitfaden](/de/guides/workflows/) – Bedingungen, Schleifen und Variablen für fortgeschrittenere Automatisierung.
+- [Daten laden, transformieren und veröffentlichen](/de/get-started/tutorials/load-and-transform-data/) – das Tutorial, das den Workflow erstellt, den dieses hier automatisiert.

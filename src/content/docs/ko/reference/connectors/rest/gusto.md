@@ -1,0 +1,41 @@
+---
+title: Gusto REST 커넥터
+description: PlaidCloud에서 Gusto REST API 연결을 설정하여 급여, 복리후생, HR 데이터를 분석 워크플로에 통합합니다.
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/connectors/rest/gusto.md
+---
+
+## API 문서
+[공급업체 API 참조](https://docs.gusto.com/app-integrations/reference/get-v1-token-info)에서 이 커넥터의 엔드포인트를 다룹니다.
+
+## 구성
+
+이 필드는 연결을 만들거나 편집할 때 나타납니다. 필수 여부는 사용하도록 설정한 인증 옵션에 따라 달라집니다.
+
+### 식별 정보
+
+| 필드 | 유형 | 설명 |
+|---|---|---|
+| 이름 | 텍스트 | 이 연결의 표시 이름입니다. |
+| 별칭 | 텍스트(여러 줄) | 연결에 대한 선택적 별칭 또는 메모입니다. |
+| 활성 여부 | 토글 | 연결의 사용 여부입니다. 삭제하지 않고 일시 중지하려면 비활성화합니다. |
+
+### 기타
+
+| 필드 | 유형 | 설명 |
+|---|---|---|
+| 호스트 | 텍스트 | — |
+| 인증 유형 | 선택 | — |
+| SSL 확인 사용 | 토글 | — |
+| 리디렉션 따르기 | 토글 | — |
+| 리디렉션 시 HTTP 따르기 | 토글 | — |
+| 리디렉션 시 인증 따르기 | 토글 | — |
+| 리디렉션 시 referer 제거 | 토글 | — |
+| 엄격한 HTTP | 토글 | — |
+| URL 인코딩 | 토글 | URL 엔드포인트입니다. |
+| 쿠키 저장소 사용 안 함 | 토글 | — |
+| 서버 암호 | 토글 | — |
+| 최대 리디렉션 횟수 | 숫자 | — |
+| 테스트 엔드포인트 | 텍스트 | — |
+| 테스트 메서드 | 선택 | — |

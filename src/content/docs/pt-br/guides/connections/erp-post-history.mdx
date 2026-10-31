@@ -1,0 +1,98 @@
+---
+title: Revisar o histórico de lançamentos do ERP
+description: Veja cada tentativa de lançamento em ERP feita pelo seu projeto e seu estado atual — lançada, rejeitada, em dúvida ou estornada — com o número do documento do ERP, filtrável por projeto, via REST ou pelas ferramentas MCP.
+sidebar:
+  label: Revisar o histórico de lançamentos do ERP
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Quando um fluxo de trabalho lança em um ERP — um lançamento contábil do Sage Intacct ou do NetSuite, um documento do Acumatica, do Business Central ou do Xero, um lançamento contábil do Dynamics 365 Finance & Operations, do Oracle Fusion, do Workday Financials ou do SAP S/4HANA Cloud, um documento do SAP —, o PlaidCloud registra cada tentativa de lançamento em um livro de controle durável, por tenant, para que o mesmo documento nunca seja lançado duas vezes. O **Histórico de lançamentos do ERP** é a visão somente leitura desse livro: cada tentativa e seu estado atual, com o número de documento e os carimbos de data e hora do próprio ERP, filtrável por projeto.
+
+Ele é complementar à tabela de resultado por execução que uma etapa de lançamento grava: a tabela de resultado reúne os resultados de uma execução, enquanto o Histórico de lançamentos é o registro permanente de todas as execuções e fluxos de trabalho, e acompanha cada lançamento por todo o seu ciclo de vida, em vez de congelá-lo no momento em que a execução terminou.
+
+<Aside type="note">
+O Histórico de lançamentos é **somente leitura** — ele nunca altera um lançamento nem o livro de controle. Está disponível pela API REST e como uma ferramenta MCP, restrito a um projeto ao qual você já tem acesso. Para uma tela em nível de tenant que revisa os lançamentos de todos os projetos e conexões que você tem permissão para ver, use o [Registro de lançamentos](/pt-br/guides/connections/posting-register/).
+</Aside>
+
+## O que cada lançamento mostra
+
+Cada linha é um documento lançado (ou com tentativa de lançamento) em um ambiente de ERP em uma conexão:
+
+| Campo | Significado |
+|---|---|
+| `project_id` | O projeto a partir do qual o lançamento foi feito. |
+| `connection_id` | A conexão de ERP usada. |
+| `environment_id` | O ambiente da conexão no qual se lançou (por exemplo, uma sandbox versus produção). |
+| `natural_key` | A chave de negócio do documento, conforme derivada pela etapa de lançamento. |
+| `state` | O estado atual do ciclo de vida do lançamento (veja abaixo). |
+| `confirmation_id` | O número de documento do próprio ERP, quando o ERP atribui um. Nunca definido em um lançamento simulado. |
+| `run_id` | A execução do fluxo de trabalho que fez o lançamento. |
+| `submitted_at`, `created_at`, `updated_at` | Quando o lançamento foi enviado, registrado pela primeira vez e alterado pela última vez. |
+
+Um lançamento feito no [modo de simulação](/pt-br/guides/workflows/run-a-workflow/#escolher-um-modo-de-lançamento) é sinalizado como simulado, distinguindo-o de um lançamento real à primeira vista — consulte [Lançamentos simulados](#lançamentos-simulados) abaixo.
+
+## Os estados do ciclo de vida
+
+Um lançamento passa por estes estados conforme o ERP o processa:
+
+| Estado | Significado |
+|---|---|
+| `preflighted` | Validado e reservado, ainda não enviado ao ERP. |
+| `submitted` | Enviado ao ERP; o resultado ainda não é conhecido. |
+| `pending` | Aceito para processamento assíncrono; aguardando um resultado final. |
+| `posted` | Lançamento confirmado; `confirmation_id` contém o número do documento do ERP. |
+| `rejected` | O ERP recusou o lançamento. |
+| `in_doubt` | Não foi possível confirmar o resultado — é preciso que uma pessoa verifique diretamente no ERP antes de qualquer nova tentativa. |
+| `reversed` | Um documento lançado anteriormente foi estornado. |
+
+<Aside type="caution">
+Um lançamento `in_doubt` é exatamente isso — desconhecido, não falho. Confirme-o no próprio ERP antes de decidir se deve agir sobre ele; nunca o execute novamente às cegas.
+
+O PlaidCloud registra um lançamento ou estorno como `in_doubt` sempre que não consegue saber o que o ERP fez — um tempo limite ou um erro de servidor que ele não consegue reler, ou um status que ele não reconhece. Ele não registra uma resposta assim como `rejected`, o que sugeriria que o documento não está no ERP quando pode estar.
+</Aside>
+
+## Lançamentos simulados
+
+Uma execução iniciada no [modo de simulação](/pt-br/guides/workflows/run-a-workflow/#escolher-um-modo-de-lançamento) valida o que uma etapa de lançamento enviaria, mas nunca contata o ERP. O que ela teria lançado ainda é registrado aqui, sinalizado como simulado, para que você o revise da mesma forma que revisa um lançamento real — incluindo seu `natural_key` e a solicitação que ele montou — sem um `confirmation_id`, já que nenhum ERP chegou a vê-lo.
+
+Uma entrada simulada nunca ocupa nem bloqueia o espaço que protege a gravação idempotente de um lançamento real. Se você executar o mesmo documento ao vivo depois, o lançamento real prossegue e substitui o registro simulado. Um espaço de trabalho sem livro de lançamentos configurado ainda valida normalmente uma execução simulada — apenas não registra nada aqui.
+
+Limpe as entradas simuladas de um projeto independentemente das reais com `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (opcionalmente restringido com `connection_id`), ou com a ferramenta MCP `erp_clear_simulated_postings` com os mesmos argumentos. De qualquer forma, somente as linhas simuladas são removidas — um lançamento real nunca é tocado — e a resposta informa tanto as linhas de histórico quanto as linhas do próprio armazenamento de simulação do [Registro de lançamentos](/pt-br/guides/connections/posting-register/) que foram limpas, já que uma única limpeza remove de ambos.
+
+<Aside type="note">
+As etapas de lançamento, anexo e RFC do SAP são ignoradas por completo na simulação, não executadas em teste, então nunca produzem uma entrada simulada. Consulte [Escolher um modo de lançamento](/pt-br/guides/workflows/run-a-workflow/#escolher-um-modo-de-lançamento).
+</Aside>
+
+## Ler o histórico
+
+Restrinja toda leitura a um projeto ao qual você tenha acesso. Você precisa de acesso de leitura a esse projeto — o mesmo acesso que o restante do seu trabalho no projeto exige.
+
+### Via REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Parâmetros de consulta opcionais restringem o resultado:
+
+| Parâmetro | Efeito |
+|---|---|
+| `connection_id` | Somente lançamentos feitos nesta conexão. |
+| `state` | Somente lançamentos neste estado (por exemplo, `state=in_doubt`). |
+| `limit` | Tamanho da página (padrão 100). |
+| `cursor` | O `next_cursor` da página anterior. |
+
+Os resultados vêm do mais recente para o mais antigo. Quando uma página atinge `limit`, a resposta traz um `next_cursor`; passe-o de volta como `cursor` para ler a próxima página e pare quando `next_cursor` for nulo.
+
+### Via MCP
+
+Chame a ferramenta `erp_post_history` com os mesmos argumentos — `project_id` (obrigatório) e, opcionalmente, `connection_id`, `state`, `limit` e `cursor`. Ela retorna as mesmas linhas, paginadas da mesma forma.
+
+## Revisões comuns
+
+- **Tudo o que ainda está em dúvida em um projeto:** `state=in_doubt` — os lançamentos a confirmar manualmente no ERP.
+- **O que uma execução específica lançou:** leia o histórico do projeto e filtre por `run_id`.
+- **Se um documento foi realmente lançado:** encontre a linha dele e leia `state` e `confirmation_id`.

@@ -1,0 +1,126 @@
+---
+title: AI_TO_SQL（Lakehouse v1）
+description: AI_TO_SQL — 最新のモデルを使用して、自然言語の指示をSQLクエリに変換します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/11-ai-functions/01-ai-to-sql.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+最新のモデル `text-davinci-003` を使用して、自然言語の指示をSQLクエリに変換します。
+
+PlaidCloud Lakehouseは、OLAPとAIを組み合わせて、SQLクエリを効率的に作成する手段を提供します。この関数を使用すると、自然言語で書かれた指示を、テーブルスキーマに沿ったSQLクエリ文に変換できます。たとえば、「Get all items that cost 10 dollars or less」という文を入力として渡すと、対応するSQLクエリ「SELECT * FROM items WHERE price &lt;= 10」が出力として生成されます。
+
+[アップストリームの実装](https://github.com/datafuselabs/databend/blob/1e93c5b562bd159ecb0f336bb88fd1b7f9dc4a62/src/query/service/src/table_functions/openai/ai_to_sql.rs)を参照してください。
+
+<Aside>生成されるSQLクエリ文はPostgreSQLの標準に準拠しているため、PlaidCloud Lakehouseの構文に合わせて手動で修正が必要になる場合があります。</Aside>
+
+<Aside>PlaidCloud Lakehouse v1.1.47以降、PlaidCloud Lakehouseは[Azure OpenAIサービス](https://azure.microsoft.com/en-au/products/cognitive-services/openai-service)をサポートしています。この統合により、データのプライバシーが向上します。Azure OpenAIを使用するには、`[query]` セクションに次の設定を追加します。 ```sql # Azure OpenAI openai_api_chat_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_embedding_base_url = "https://<name>.openai.azure.com/openai/deployments/<name>/" openai_api_version = "2023-03-15-preview" ```</Aside>
+
+<Aside type="caution">PlaidCloud Lakehouseは `AI_TO_SQL` に(Azure) OpenAIを利用しますが、(Azure) OpenAIに送信するのはテーブルスキーマのみで、データは送信しません。これらの関数は、PlaidCloud Lakehouseの設定に `openai_api_key` が含まれている場合にのみ動作し、含まれていない場合は無効です。この関数は、Azure OpenAIキーを使用するPlaidCloud Lakehouseでは、デフォルトで利用できます。これらを使用する場合、お客様のテーブルスキーマが当社によってAzure OpenAIに送信されることに同意したものとみなされます。</Aside>
+
+## Analyzeの構文
+
+```python
+func.ai_to_sql('<natural-language-instruction>')
+```
+
+## Analyzeの例
+
+この例では、AI_TO_SQL関数を使用して指示からSQLクエリ文を生成し、生成された文を実行してクエリ結果を取得します。
+
+```python
+func.ai_to_sql('List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022')
+```
+
+関数の出力として、次のSQL文が生成されます。
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+## SQLの構文
+
+```sql
+USE <your-database>;
+SELECT * FROM ai_to_sql('<natural-language-instruction>');
+```
+
+<Aside>OpenAI APIキーの取得と設定 - OpenAI APIキーを取得するには、https://platform.openai.com/account/api-keys にアクセスして新しいキーを生成します。 - **databend-query.toml** ファイルに openai_api_key の設定を追加します。 ```toml [query] ... ... openai_api_key = "<your-key>" ```</Aside>
+
+## SQLの例
+
+この例では、AI_TO_SQL関数を使用して指示からSQLクエリ文を生成し、生成された文を実行してクエリ結果を取得します。
+
+1. データを準備します。
+
+```sql
+CREATE DATABASE IF NOT EXISTS openai;
+USE openai;
+
+CREATE TABLE users(
+    id INT,
+    name VARCHAR,
+    age INT,
+    country VARCHAR
+);
+
+CREATE TABLE orders(
+    order_id INT,
+    user_id INT,
+    product_name VARCHAR,
+    price DECIMAL(10,2),
+    order_date DATE
+);
+
+-- Insert sample data into the users table
+INSERT INTO users VALUES (1, 'Alice', 31, 'USA'),
+                         (2, 'Bob', 32, 'USA'),
+                         (3, 'Charlie', 45, 'USA'),
+                         (4, 'Diana', 29, 'USA'),
+                         (5, 'Eva', 35, 'Canada');
+
+-- Insert sample data into the orders table
+INSERT INTO orders VALUES (1, 1, 'iPhone', 1000.00, '2022-03-05'),
+                          (2, 1, 'OpenAI Plus', 20.00, '2022-03-06'),
+                          (3, 2, 'OpenAI Plus', 20.00, '2022-03-07'),
+                          (4, 2, 'MacBook Pro', 2000.00, '2022-03-10'),
+                          (5, 3, 'iPad', 500.00, '2022-03-12'),
+                          (6, 3, 'AirPods', 200.00, '2022-03-14');
+```
+
+2. 英語で書いた指示を入力として、AI_TO_SQL関数を実行します。
+
+```sql
+SELECT * FROM ai_to_sql(
+    'List the total amount spent by users from the USA who are older than 30 years, grouped by their names, along with the number of orders they made in 2022');
+```
+
+関数の出力として、次のSQL文が生成されます。
+
+```sql
+*************************** 1. row ***************************
+     database: openai
+generated_sql: SELECT name, SUM(price) AS total_spent, COUNT(order_id) AS total_orders
+               FROM users
+                        JOIN orders ON users.id = orders.user_id
+               WHERE country = 'USA' AND age > 30 AND order_date BETWEEN '2022-01-01' AND '2022-12-31'
+               GROUP BY name;
+```
+
+3. 生成されたSQL文を実行して、クエリ結果を取得します。
+
+```sql
+┌─────────┬─────────────┬─────────────┐
+│ name    │ order_count │ total_spent │
+├─────────┼─────────────┼─────────────┤
+│ Bob     │           2 │     2020.00 │
+│ Alice   │           2 │     1020.00 │
+│ Charlie │           2 │      700.00 │
+└─────────┴─────────────┴─────────────┘
+```

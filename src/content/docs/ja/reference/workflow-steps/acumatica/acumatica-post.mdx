@@ -1,0 +1,58 @@
+---
+title: "Acumatica: Post Documents"
+description: ヘッダーテーブルと明細テーブルから、仕訳トランザクション、売上請求書、請求、支払をAcumaticaに転記します。プレビューモードでは、転記の前にすべてのドキュメントを検証します。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 説明
+
+[Acumatica接続](/ja/guides/connections/acumatica/)を通じて、PlaidCloudの共有ERP書き込みパイプライン経由でAcumaticaにドキュメントを転記します。このステップは、ヘッダーテーブル（1ドキュメントにつき1行）と明細テーブル（1ドキュメントにつき1行以上）を受け取り、各ドキュメントを**JournalTransaction**、**SalesInvoice**、**Bill**、**Payment**のいずれかとして転記します。**Validate Only**は、元帳の確保も転記も行わずに、すべてのドキュメントを構築して検証します。任意の結果テーブルには、各ドキュメントの結果が記録されます。
+
+<Aside type="caution">
+このステップに本番のドキュメントの無人転記を任せる前に、すべてのバッチをまず**Validate Only**で実行し、結果テーブルを確認して、いくつかの転記をAcumatica上で直接照合してください。
+</Aside>
+
+## 構成
+
+### 接続
+
+- **Acumatica接続** — 転記に使用するAcumatica接続です。
+- **環境** — 接続の環境です。
+
+### データ
+
+- **ヘッダーテーブル** — 1ドキュメントにつき1行: `ref`（ドキュメントの識別子、必須）、`doc_type`（`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`、必須）、`posting_date`、`party_id`（ドキュメントタイプで必要な場合の顧客/仕入先）、`memo`、`due_date`、`branch_id`。1つのバッチにドキュメントタイプを混在させることもできます。PlaidCloudは転記の前に`doc_type`で分割します。
+- **明細テーブル** — `ref`ごとに1行以上で、ドキュメントタイプに合わせた形式にします。
+
+  | ドキュメントタイプ | 明細の列 |
+  |---|---|
+  | JournalTransaction | `account`, `subaccount`, `branch`, `debit`, `credit` |
+  | SalesInvoice | `item`, `qty`, `unit_price`, `amount` |
+  | Bill | `account`, `amount` |
+  | Payment | `linked_txn_id`, `amount` |
+
+- **結果テーブル** — 出力テーブルのIDです。1ドキュメントにつき1行で、`ref`、`doc_type`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message`を含みます。
+- **Validate Only** — デフォルトでオンです。事前チェックのみで、元帳の確保も転記も行いません。このフィールドをまったく含まないステップ構成（たとえば、REST API、MCP、ワークフローバンドルのインポートで作成したもの）も、本番の転記ではなくValidate Onlyがデフォルトになります。
+- **エラー時に続行** — デフォルトでオンです。1つのドキュメントが失敗しても、残りのドキュメントの転記を続けます。オフにすると、最初の失敗でバッチが停止します。
+
+## 転記の仕組み
+
+Acumaticaはすべてのドキュメントを**保留中**の状態で作成し、その後PlaidCloudがリリースアクションを呼び出します。このアクションは非同期で実行され、`202`の受理レスポンスを完了までポーリングし、`204`でリリースが確認されます。PlaidCloudは、**ドキュメントの保留フラグを再読み込みしてfalseであることを確認**してはじめて、リリースが確認されたとして`posted`を報告します。ドキュメントは作成されたもののリリースが確認できない場合は、単にドキュメントが存在するというだけで成功として記録されることはなく、隔離されたままになります（転記済みとして報告されず、黙って破棄されることもありません）。
+
+## 機能の制限
+
+| 制限 | 意味 |
+|---|---|
+| ネイティブの冪等性キーがない | AcumaticaのPUTベースの書き込みAPIには、冪等性のフィールドがありません。再試行や再実行での二重転記を防ぐのは、Acumatica側のキーではなく、PlaidCloud独自の元帳の確保だけです。 |
+| 取消は手動 | コントラクトベースAPIには、どのドキュメントタイプにも、文書化された無効化/取消アクションがありません。`reversal_mode`はすべて`NONE`で、偽装せずに拒否されます。誤って転記されたドキュメントは、Acumatica上で直接修正してください。 |
+| 支払には信頼できる検索手段がない | あいまいな結果になった後で、支払をPlaidCloudのリクエストに結び付ける文書化されたフィールドはありません。結果が不明な支払は、推測せずに、手動での解決のために隔離されます。 |
+| 明細行のフィルターはサーバー側では行われない | （インポートステップの）サーバー側フィルターは、ドキュメントの明細行のディメンションには及びません。ヘッダー/エンティティのレベルでフィルターし、明細行の絞り込みはワークフローで行ってください。 |
+
+## 関連情報
+
+- [Acumaticaへの接続](/ja/guides/connections/acumatica/) — 構成、プレビュー、転記までを説明するウォークスルーです
+- [Acumatica RESTコネクター](/ja/reference/connectors/rest/acumatica/)
+- [Acumaticaステップ](/ja/reference/workflow-steps/acumatica/)
+- [ERP転記履歴の確認](/ja/guides/connections/erp-post-history/)

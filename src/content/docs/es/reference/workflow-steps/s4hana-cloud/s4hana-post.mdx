@@ -1,0 +1,51 @@
+---
+title: "S/4HANA: Post Journal Entry"
+description: Contabilice asientos de diario del libro mayor en SAP S/4HANA Cloud a partir de tablas de encabezados y de líneas mediante el servicio SOAP JournalEntryBulkCreateRequest_In, con un modo de vista previa que valida cada asiento antes de contabilizar nada.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/s4hana-cloud/s4hana-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+Contabiliza asientos de diario del libro mayor en SAP S/4HANA Cloud a través de su [conexión de S/4HANA Cloud](/es/guides/connections/s4hana-cloud/), mediante la canalización de escritura de ERP compartida de PlaidCloud. El paso toma una tabla de encabezados (una fila por asiento) y una tabla de líneas (una o más filas de débito/crédito por asiento), y envía cada asiento al servicio SOAP `JournalEntryBulkCreateRequest_In` de S/4HANA Cloud. **Validate Only** genera y comprueba cada asiento sin reservar el libro mayor y sin contabilizar; una tabla de resultados opcional registra el resultado de cada asiento.
+
+<Aside type="caution">
+Ejecute primero todos los lotes en **Validate Only**, revise la tabla de resultados y concilie algunas contabilizaciones directamente en S/4HANA antes de confiar en este paso para contabilizar asientos reales sin supervisión.
+</Aside>
+
+## Configuración
+
+### Conexión
+
+- **S/4HANA Connection**: la conexión de S/4HANA Cloud a través de la cual se contabiliza.
+
+### Datos
+
+- **Tabla de encabezados**: una fila por asiento: `journal_id` (el identificador de su asiento, obligatorio), `company_code` (obligatorio), `document_date`, `posting_date`, `fiscal_year`, `ledger`, `header_text`.
+- **Tabla de líneas**: una o más filas por `journal_id`: `gl_account`, `debit`, `credit` y las columnas de dimensión `cost_center`/`profit_center` que requiera su libro mayor.
+- **Tabla de resultados**: id de la tabla de salida: una fila por asiento con `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only**: marcada de forma predeterminada. Solo comprobación previa; sin reserva del libro mayor y sin contabilización. Una configuración de paso que omita este campo por completo, por ejemplo una creada mediante la API REST, MCP o la importación de un paquete de flujo de trabajo, también adopta Validate Only de forma predeterminada en lugar de una contabilización real.
+- **Continue On Error**: marcada de forma predeterminada. Sigue contabilizando los asientos restantes después de que uno falle; si se desmarca, el lote se detiene en el primer fallo.
+
+## Cómo funciona la contabilización
+
+PlaidCloud envía cada asiento mediante `JournalEntryBulkCreateRequest_In` y consulta el mensaje `JournalEntryBulkCreateConfirmation_Out` correspondiente, que informa del estado terminal de procesamiento del asiento. Un asiento solo se notifica como `posted` cuando esa confirmación se **recibe**: un asiento que se acepta pero cuya confirmación nunca llega permanece en cuarentena (no se notifica como contabilizado ni se descarta en silencio) en lugar de registrarse como correcto solo porque el envío fue aceptado.
+
+## Corrección de un asiento contabilizado
+
+Este paso nunca elimina ni reescribe un asiento contabilizado. Para corregir uno, contabilice un asiento nuevo con los débitos y créditos invertidos respecto al original (un asiento de reversión contabilizado) en lugar de editar el original.
+
+## Límites de la funcionalidad
+
+| Limitación | Qué significa |
+|---|---|| Latencia de confirmación | El servicio de creación masiva procesa las solicitudes de forma asíncrona; la consulta del estado terminal espera el mensaje de confirmación en lugar de recibir un resultado síncrono. |
+| La reversión es un asiento nuevo, no una edición en el lugar | Las correcciones contabilizan un nuevo asiento de reversión con débitos y créditos invertidos. No es posible anular ni eliminar un asiento ya contabilizado. |
+| La validación de dimensiones depende de la configuración de su libro mayor | Un objeto de costo o una combinación de dimensiones no válidos para su estructura de cuentas fallan en la validación propia de S/4HANA y se muestran como una fila `error`, en lugar de ser detectados antes por PlaidCloud. |
+
+## Temas relacionados
+
+- [Connect to SAP S/4HANA Cloud](/es/guides/connections/s4hana-cloud/): tutorial completo sobre configuración, vista previa y contabilización
+- [SAP S/4HANA Cloud REST Connector](/es/reference/connectors/rest/s4hana-cloud/)
+- [S/4HANA Cloud Steps](/es/reference/workflow-steps/s4hana-cloud/)
+- [Review ERP Post History](/es/guides/connections/erp-post-history/)

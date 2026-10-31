@@ -1,0 +1,224 @@
+---
+title: Kennzahldefinitionen
+description: Legen Sie einmal fest, wie eine Geschäftskennzahl berechnet wird, und der KI-Assistent von PlaidCloud – oder ein über MCP verbundener – berechnet sie jedes Mal so, unter dem Zeilenzugriff der jeweiligen Person.
+sidebar:
+  label: Kennzahldefinitionen
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/metric-definitions.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Eine **Kennzahldefinition** ist eine Geschäftskennzahl, deren Berechnung vereinbart und schriftlich festgehalten wurde: *Net Revenue*, *Headcount (FTE)*, *Units Shipped*. Sie legt fest, aus welcher Tabelle die Zahl stammt, wie die Zeilen aufsummiert werden, welche Zeilen zählen und nach welchen Spalten sie aufgeschlüsselt werden kann.
+
+Ohne Kennzahldefinition entscheidet ein KI-Assistent, der gefragt wird *„Wie hoch war der Nettoumsatz in EMEA im letzten Quartal?“*, selbst, welche Tabelle, Spalte und Filter er verwendet, und zwei Personen, die dieselbe Frage stellen, erhalten womöglich zwei verschiedene Zahlen. Eine Kennzahldefinition nimmt dem Assistenten diese Entscheidung ab. Ein Projekt-Architect schreibt die Definition einmal, und ab dem Moment, in dem sie gespeichert ist, berechnet der Assistent den Wert genau so, wie er festgelegt wurde.
+
+<Aside>
+Kennzahldefinitionen werden über einen per [MCP](../getting-started/) verbundenen KI-Assistenten oder über die REST-API verwaltet; in PlaidCloud gibt es dafür noch keinen Bildschirm. Kennzahlen stehen dem integrierten [KI-Assistenten](/de/guides/ai-assistant/weave-tab/#weave-ai-chat) von PlaidCloud und jedem über MCP verbundenen Assistenten zur Verfügung. Der integrierte Assistent kann Kennzahlen finden und berechnen, aber nicht erstellen, bearbeiten oder stilllegen.
+</Aside>
+
+**Architects**: Beginnen Sie bei [Kennzahl definieren](#kennzahl-definieren). **Analysten**: Beginnen Sie bei [Nach einer Kennzahl fragen](#nach-einer-kennzahl-fragen).
+
+Eine Kennzahldefinition ist ein Rezept, kein gespeichertes Ergebnis. Sie wird bei jeder Abfrage neu berechnet, und zwar unter dem Zeilenzugriff der fragenden Person: Wer nur EMEA sehen darf, erhält EMEA-Werte. Zwei Personen können aus derselben Definition unterschiedliche Summen erhalten, weil sie unterschiedliche Zeilen sehen; die Berechnung ist dieselbe.
+
+## Was eine Definition enthält
+
+| Bestandteil | Was er festlegt | Beispiel |
+|---|---|---|
+| **Name** | Wie die Zahl genannt wird. Bis zu 200 Zeichen. | *Net Revenue* |
+| **Synonyme** | Andere Wörter, die dafür verwendet werden, damit der Assistent die Frage erkennt. Bis zu 25. | *revenue*, *sales* |
+| **Beschreibung** (`memo` in der API) | Was die Zahl bedeutet und wann sie zu verwenden ist, für den Assistenten und für Menschen. Bis zu 1.000 Zeichen. | *Umsatz nach Retouren und Rabatten. Für alle Umsatzfragen verwenden.* |
+| **Quelltabelle** | Die Tabelle, aus der die Zeilen stammen. | `sales_fact` |
+| **Joins** | Nachschlagetabellen, die über übereinstimmende Spalten mit der Quelle verknüpft werden. Jede Nachschlagetabelle darf pro Schlüssel nur eine Zeile enthalten (z. B. eine Zeile pro Regionscode), sonst werden die zugeordneten Zeilen doppelt gezählt. | `region_lookup`, wobei `region_code` in der Quelle mit `code` in der Nachschlagetabelle abgeglichen wird |
+| **Messgröße** | Wie die Zeilen aufsummiert werden: `sum`, `count`, `count_distinct`, `min`, `max` oder `avg` einer Spalte, oder `weighted_avg` einer Spalte, gewichtet mit einer zweiten Spalte (`weight`): die Summe aus Wert mal Gewicht über die Zeilen, in denen beide gesetzt sind, geteilt durch die Summe dieser Gewichte; leer, wenn die Gewichte null ergeben. | `sum` von `net_amount`; `weighted_avg` von `unit_price` nach `units` |
+| **Filter** | Welche Zeilen immer zählen. Jeder Filter besteht aus einer Spalte, einem Operator (`eq`, `ne`, `in`, `not_in`, `lt`, `le`, `gt`, `ge`, `between`, `is_null`, `not_null`) und seinen Werten. | `status` `eq` *Posted* |
+| **Aufschlüsselungsspalten** (`grain` in der API) | Die Spalten, nach denen eine Person beim Fragen gruppieren und filtern darf. Filter sind fest vorgegeben; Aufschlüsselungsspalten wählt die fragende Person. | `region_lookup.region`, `product_line`, `fiscal_year` |
+| **Szenario** (optional) | Die Spalte, die Ist-Zeilen von Budgetzeilen trennt, und der jeweilige Wert. Die Kennzahl besteht aus ihren Ist-Zeilen; die Budgetzeilen werden nur für eine [Abweichung](#vergleichen-ordnen-und-anteil) gelesen. | `scenario`, Ist *Actual*, Budget *Budget* |
+| **Dimensionen** (optional, `dimensions` in der API) | Eine an eine Dimension gebundene Aufschlüsselungsspalte, sodass die Wörter einer Frage mit den Mitgliedern und Aliasen dieser Dimension abgeglichen und in die Werte der Spalte umgesetzt werden: siehe [Nach einer Kennzahl fragen](#nach-einer-kennzahl-fragen). Die Dimension muss im Projekt vorhanden sein. | `region_lookup.region`, gebunden an die Dimension *Region* |
+| **Zeitspalten** (optional, `time` in der API) | Eine Datumsspalte oder eine Spalte für das Geschäftsjahr und eine für die Periode, damit eine Frage eine Geschäftsperiode abfragen und [im Zeitverlauf vergleichen](#im-zeitverlauf-vergleichen) kann. | `fiscal_year` und `fiscal_period` |
+
+Eine Spalte aus einer Nachschlagetabelle wird als `<table>.<column>` geschrieben; der Assistent schreibt diese für Sie. Jede Tabelle und Spalte in einer Definition muss im Projekt vorhanden sein; eine Definition, die eine nicht vorhandene nennt, wird beim Speichern abgelehnt. Eine Kennzahl mit Szenario kann nicht nach der Szenario-Spalte filtern und sie auch nicht als Aufschlüsselungsspalte anbieten: Das Szenario bestimmt, welche Zeilen gelesen werden, daher gehört ein Filter wie `scenario` `eq` *Actual* in das Szenario und nicht in die Filter.
+
+Eine Kennzahl kann auch aus anderen Kennzahlen aufgebaut werden, als Verhältnis, Summe, Differenz oder Vielfaches: siehe [Kennzahl aus anderen ableiten](#kennzahl-aus-anderen-ableiten).
+
+Nichts hindert zwei Kennzahlen in einem Projekt daran, denselben Namen oder dasselbe Synonym zu tragen. Halten Sie sie unterscheidbar, sonst muss der Assistent raten, welche Sie meinen, oder nachfragen.
+
+## Wer was tun darf
+
+- **Projekt-Architects** schreiben, bearbeiten und legen Definitionen still. In einem öffentlichen Projekt hat jedes Mitglied die Rolle Architect nur dem Namen nach, und das zählt nicht: In einem öffentlichen Projekt kann niemand eine Kennzahl definieren. Halten Sie Kennzahlen daher in einem Projekt mit eigener Zugriffsliste.
+- **Jeder, der das Projekt lesen kann**, kann die Definitionen sehen und ausführen.
+- **Ein gesperrtes Projekt lehnt jede Änderung ab.** Definieren, Bearbeiten und Stilllegen warten, bis das Projekt entsperrt ist.
+
+## Kennzahl definieren
+
+Wenn Sie Projekt-Architect sind, bitten Sie Ihren verbundenen KI-Assistenten in natürlicher Sprache:
+
+> *„Definiere im Projekt **Sales** eine Kennzahl namens **Net Revenue** mit den Synonymen revenue und sales: die Summe von `net_amount` in `sales_fact`, per `region_code` mit `region_lookup` verknüpft, aufschlüsselbar nach `region` der Nachschlagetabelle, nach `product_line` und nach `fiscal_year`; ihre Ist-Zeilen haben `scenario` Actual und ihre Budgetzeilen `scenario` Budget.“*
+
+Der Assistent speichert sie und meldet Ihnen, wenn eine genannte Tabelle oder Spalte nicht existiert. Die Kennzahl ist live, sobald sie gespeichert ist. Jede Bearbeitung ist eine neue **Version** der Definition, geschrieben von der Person, die sie vorgenommen hat, und Leser erhalten die neue Version sofort. Ein Speichern ohne Änderung wird abgelehnt. Die zuletzt gespeicherte Version ist die **aktuelle Version** der Kennzahl.
+
+Für Entwickler sieht dieselbe Definition über die REST-API so aus:
+
+```json
+POST /rest/v1/analyze/metric/definition
+{
+  "project_id": "<project>",
+  "name": "Net Revenue",
+  "synonyms": ["revenue", "sales"],
+  "memo": "Revenue after returns and discounts. Use for all revenue questions.",
+  "definition": {
+    "source": "sales_fact",
+    "joins": [{"table_id": "region_lookup", "on": [["region_code", "code"]]}],
+    "measure": {"agg": "sum", "column": "net_amount"},
+    "filters": [],
+    "grain": ["region_lookup.region", "product_line", "fiscal_year"],
+    "scenario": {"column": "scenario", "actual": "Actual", "budget": "Budget"},
+    "time": {"year_column": "fiscal_year", "period_column": "fiscal_period"}
+  }
+}
+```
+
+Jedes Paar in `on` ist `[source column, lookup column]`. `time` ist entweder `{"year_column", "period_column"}` mit optionalem `periods_per_year` oder `{"column"}` für eine Datumsspalte mit optionalem `fiscal_year_start` und `fiscal_year_label`; siehe [Im Zeitverlauf vergleichen](#im-zeitverlauf-vergleichen).
+
+## Was beim Speichern geprüft wird
+
+Bei jedem Speichern laufen diese Prüfungen, und eine Definition, die eine davon nicht besteht, wird mit einer Meldung abgelehnt, die das Problem benennt:
+
+- **Jede Tabelle und Spalte existiert** im Projekt.
+- **Jede Nachschlagetabelle hat eine Zeile pro Schlüssel**, bezogen auf die Daten zu diesem Zeitpunkt. Eine Nachschlagetabelle mit zwei Zeilen für denselben Schlüssel würde die zugeordneten Quellzeilen verdoppeln; das Speichern wird daher abgelehnt und nennt die Tabelle. Eine Nachschlagezeile ohne Schlüsselwert wird von dieser Prüfung ignoriert, da sie nie zu einer Quellzeile passt.
+- **Die Eingaben einer abgeleiteten Kennzahl existieren** und sind weder stillgelegt noch selbst abgeleitet.
+
+<Aside type="caution" title="Die Prüfung der Nachschlagetabelle läuft bei jedem Speichern">
+Die Prüfung auf eine Zeile pro Schlüssel betrachtet die Daten der Nachschlagetabelle am Tag des Speicherns. Erhält diese Tabelle später eine zweite Zeile für einen Schlüssel, zählt die Kennzahl die Quellzeilen, die zu diesem Schlüssel passen, doppelt, und nichts warnt Sie davor. Um die Prüfung erneut auszuführen, speichern Sie die Kennzahl noch einmal (eine Änderung der Beschreibung genügt). Besser ist es, den Schlüssel der Nachschlagetabelle in dem Workflow eindeutig zu halten, der sie schreibt.
+</Aside>
+
+Jede Version hält fest, wer sie wann gespeichert hat. Das Bearbeiten einer Kennzahl speichert eine neue Version, die Leser sofort erhalten.
+
+## Kennzahl aus anderen ableiten
+
+Eine **abgeleitete Kennzahl** ist Arithmetik über bereits vorhandene Kennzahlen: *Net Revenue per FTE* ist *Net Revenue* geteilt durch *Headcount (FTE)*. Sie wird wie jede andere Kennzahl definiert, abgefragt und stillgelegt. Der Unterschied liegt in ihrer Definition, die statt einer Tabelle die Kennzahlen nennt, aus denen sie aufgebaut ist.
+
+| Operation | Was berechnet wird | Eingaben |
+|---|---|---|
+| `ratio` | die erste Eingabe geteilt durch die zweite | zwei Kennzahlen |
+| `add` | die erste Eingabe plus die zweite | zwei Kennzahlen |
+| `subtract` | die erste Eingabe minus die zweite | zwei Kennzahlen |
+| `scale` | die Eingabe multipliziert mit einem festen `factor` | eine Kennzahl und eine Zahl |
+
+Die Eingaben sind **Basiskennzahlen** desselben Projekts, also solche, die oben aus einer Tabelle definiert werden. Eine abgeleitete Kennzahl kann nicht aus einer anderen abgeleiteten Kennzahl aufgebaut werden und nicht dieselbe Eingabe zweimal verwenden.
+
+Fragen Sie den Assistenten:
+
+> *„Definiere im Projekt **Sales** eine Kennzahl namens **Net Revenue per FTE** als Verhältnis von **Net Revenue** zu **Headcount (FTE)**.“*
+
+Über die REST-API benennt die `definition` die Eingaben anhand ihrer IDs, die Ihnen `metric_find` oder die Liste der Definitionen liefert. Die Reihenfolge ist wichtig: Die erste ID ist der Zähler eines `ratio` und die Kennzahl, von der bei `subtract` abgezogen wird.
+
+```json
+{
+  "kind": "derived",
+  "op": "ratio",
+  "inputs": ["<Net Revenue metric_id>", "<Headcount (FTE) metric_id>"]
+}
+```
+
+`scale` nimmt eine Eingabe und einen `factor`: `{"kind": "derived", "op": "scale", "inputs": ["<Monthly Run Rate metric_id>"], "factor": 12}` rechnet einen Monatswert auf das Jahr hoch.
+
+**So wird sie berechnet.** Jede Eingabe wird für sich berechnet, in der von Ihnen gewünschten Aufschlüsselung und unter Ihrem Zeilenzugriff; die Ergebnisse werden dann für jeden Aufschlüsselungswert kombiniert. Dass jede Eingabe vor der Kombination summiert wird, hält ein Verhältnis aus zwei Tabellen korrekt: Würden die Zeilen zuerst verknüpft, würde jede Zeile so oft gezählt, wie sie auf der anderen Seite Gegenstücke findet. Hat eine Eingabe für einen Aufschlüsselungswert keine Zeilen, ist der abgeleitete Wert dafür leer, ebenso bei einem Verhältnis mit Nenner null; beides wird nicht als null ausgewiesen.
+
+**Aufschlüsselungsspalten werden berechnet, nicht deklariert.** Eine abgeleitete Kennzahl kann nur nach den Spalten aufgeschlüsselt werden, die *jede* Eingabe zulässt; diese Liste wird neben ihrer Definition angezeigt. Wenn Sie die abgeleitete Kennzahl nach Region abfragen möchten, geben Sie jeder Eingabe `region_lookup.region` in gleicher Schreibweise als Aufschlüsselungsspalte. Eingaben ohne gemeinsame Aufschlüsselungsspalte ergeben eine abgeleitete Kennzahl, die nur als Gesamtsumme antwortet. Eine Frage, die nach etwas anderem gruppiert oder filtert, wird wie bei jeder Kennzahl abgelehnt. Eine leere Liste neben einer abgeleiteten Kennzahl bedeutet, dass eine ihrer Eingaben nicht mehr verwendbar ist: stillgelegt oder fehlend.
+
+**Das Speichern prüft die Eingaben.** Eine abgeleitete Kennzahl kann nur gespeichert werden, wenn jede Eingabe existiert, nicht stillgelegt und nicht selbst abgeleitet ist. Leser und Architects erhalten stets die aktuelle Version jeder Eingabe und der abgeleiteten Kennzahl. Eine Eingabe ist nicht an eine Version gebunden: Wird eine spätere Version einer Eingabe gespeichert, ändern sich die Werte der abgeleiteten Kennzahl mit.
+
+**Eine Eingabe bleibt in Betrieb, solange eine abgeleitete Kennzahl sie verwendet.** Sie kann nicht stillgelegt und nicht in eine abgeleitete Kennzahl umgewandelt werden; die Ablehnung nennt die Kennzahl, die sie verwendet. Um eine Eingabe stillzulegen, legen Sie zuerst die abgeleitete Kennzahl still oder speichern Sie eine Version davon, die die Eingabe nicht verwendet.
+
+## Nach einer Kennzahl fragen
+
+Jeder, der das Projekt lesen kann, kann den integrierten KI-Assistenten von PlaidCloud oder einen über MCP verbundenen Assistenten fragen:
+
+> *„Wie hoch war der Nettoumsatz nach Region im Geschäftsjahr 2026?“*
+
+Der Assistent erkennt die Kennzahl an ihrem Namen oder einem ihrer Synonyme (die Suche ignoriert Groß- und Kleinschreibung und gleicht Namensteile ab, sodass *revenue* die Kennzahl *Net Revenue* findet), entnimmt Ihrer Frage die Aufschlüsselung und die Filter und führt die Definition aus. Eine Frage kann nur nach einer der Aufschlüsselungsspalten der Kennzahl gruppieren oder filtern; eine Frage nach etwas anderem wird abgelehnt, statt mit einer Vermutung beantwortet zu werden. Dasselbe gilt für eine Kennzahl, deren Tabelle seit dem Speichern eine Spalte verloren hat: Die Ablehnung nennt die Kennzahl und ihre Version, und ein Architect muss die Definition korrigieren.
+
+**Ihre Wörter werden über eine Dimension zu den Werten der Spalte.** Hat ein Architect eine Aufschlüsselungsspalte an eine Dimension gebunden, gleicht der Assistent die Wörter Ihrer Frage mit den Mitgliedsnamen und Aliasen dieser Dimension ab, ohne Groß- und Kleinschreibung zu beachten. Ein Wort, das ein Mitglied benennt, wird zu den Werten dieses Mitglieds: Ein Blatt ist sein eigener Wert, und ein übergeordnetes Mitglied wie *EMEA* wird zu jedem darunterliegenden Blatt erweitert, sodass „Nettoumsatz in EMEA“ nach allen Regionen von EMEA filtert. Ein Wort, das kein Mitglied oder mehr als eines benennt (*Seaboard* könnte Alias zweier Mitglieder sein), ohne dass eines davon genau Ihrer Schreibweise entspricht, kommt als Kandidatenliste zurück, nach der der Assistent Sie fragt; er wählt nie selbst eines für Sie aus. Für das Nachschlagen von Wörtern in einer Dimension ist die Berechtigung zum Lesen von Dimensionen nötig, wie überall sonst in PlaidCloud.
+
+Das Ergebnis, mit dem der Assistent arbeitet, nennt die Kennzahl und ihre Version und gibt an, ob der Zeilenzugriff angewendet wurde. Nennt eine Antwort nicht, welche Kennzahl sie verwendet hat, fragen Sie nach. Im integrierten KI-Assistenten von PlaidCloud erscheinen die Werte in einer eigenen Karte mit ✓; siehe [Werte aus einer Kennzahl](/de/guides/ai-assistant/weave-tab/#zahlen-aus-einer-kennzahl). Wie PlaidCloud KI-Antworten allgemein bewertet und mit Vorbehalten versieht, lesen Sie unter [Antworten, denen Sie vertrauen können](../honest-answers/).
+
+**Der Zeilenzugriff wird auf jede Tabelle angewendet, die die Kennzahl liest**, die Quelle ebenso wie jede Nachschlagetabelle. Ist eine Nachschlagezeile vor Ihnen verborgen, die Quellzeile, die sie beschriftet, aber nicht, zählt die Quellzeile trotzdem. Angenommen, Sie sehen die Nachschlagezeile für die Region *APAC* nicht, aber deren Umsätze: Diese Umsätze sind in Ihrer Summe enthalten, erscheinen in einer Aufschlüsselung nach Region unter einer leeren Region und werden meist weggelassen, wenn Sie nach Region filtern oder wenn die Kennzahl selbst nach einer Spalte der Nachschlagetabelle filtert.
+
+Der Zeilenzugriff prägt auch die Nachschlagetabelle: Wo die Aufschlüsselungsspalte gesteuert ist, werden Ihnen nur die Werte angeboten, die Ihr Zugriff erlaubt. Ein Mitglied, unter dem nichts liegt, was Sie sehen dürfen, wird nie angeboten, weder als Wert noch als Kandidat, und ein übergeordnetes Mitglied wird nur zu den Blättern erweitert, die Sie sehen dürfen. Ein Architect, der alle Zeilen liest, sieht jedes Mitglied.
+
+Architects lesen alle Zeilen, wie überall sonst im Projekt.
+
+## Vergleichen, ordnen und Anteil
+
+Eine Frage zu einer Kennzahl kann außerdem einen Vergleich, eine Rangfolge und einen Anteil an der Gesamtsumme verlangen. Jedes davon ist eine feste Berechnung über die eigenen Werte der Kennzahl, unter dem Zeilenzugriff der fragenden Person; nichts davon wird vom Assistenten selbst ausgerechnet.
+
+| Verlangt | Was zurückkommt | In der API |
+|---|---|---|
+| **Abweichung gegenüber Budget** | Für jeden Aufschlüsselungswert: den Ist-Wert, den Budgetwert, die Differenz (`value`) und die Differenz als Prozentsatz des Betrags des Budgets (`pct`), die das Vorzeichen der Differenz behält, wenn das Budget negativ ist. | `compare: "variance"` |
+| **Anteil an der Gesamtsumme** | Der Wert jeder Zeile geteilt durch die Summe über alle Zeilen der Aufschlüsselung (`share`) oder über die Zeilen, die die von Ihnen genannten `within`-Spalten teilen. | `share: {"within": ["region"]}`; `{}` für die Gesamtsumme |
+| **Top oder Bottom N** | Die N höchsten Werte oder mit `order: "asc"` die N niedrigsten, mit ihrem `rank`; pro Gruppe, wenn Sie `within`-Spalten nennen. Zeilen mit gleichem Wert teilen sich einen Rang und bleiben alle erhalten, es kann also mehr als N geben. Bei einer Kostenkennzahl ist *am stärksten über Budget* die Top N der Abweichung; bei einer Umsatzkennzahl die Bottom N. | `top: {"n": 10, "within": [], "order": "desc"}` |
+
+> *„Welche fünf Kostenstellen liegen im Projekt **Finance** am weitesten über dem Budget?“*
+>
+> *„Welchen Anteil an den Gesamtausgaben hat jede Region, und welche Region ist die größte?“*
+
+Eine Abweichung erfordert eine Kennzahl mit **Szenario**; eine Kennzahl ohne Szenario oder eine abgeleitete Kennzahl lehnt sie ab. Jede Seite wird für sich summiert, bevor beide verglichen werden: Ein Aufschlüsselungswert ohne Budgetzeile oder ohne Ist-Zeile zeigt eine leere Differenz statt null (die Ausnahme ist eine `count`-Kennzahl, die als einzelne Gesamtsumme abgefragt wird, bei der eine Seite ohne Zeilen null zählt), und ebenso ein Prozentsatz über einem Budget von null.
+
+Rangfolge und Anteil beziehen sich auf den Wert der Kennzahl oder, wenn eine Abweichung oder ein [Vergleich im Zeitverlauf](#im-zeitverlauf-vergleichen) verlangt wird, auf die Differenz. *„Welche Kostenstellen machen den Großteil der Überschreitung aus“* ist also eine Abweichung mit Anteil und Rangfolge. `pct` ist ein Prozentsatz, `12` bedeutet also 12 %, während `share` ein Bruchteil ist. Der Anteil wird über alle Zeilen der Aufschlüsselung berechnet, bevor eine Top-N einige davon behält, sodass die Anteile der zurückgegebenen Zeilen nicht zwingend eins ergeben. Ein leerer Wert steht unabhängig von der Sortierung an letzter Stelle und hat einen leeren Anteil; ebenso ein Anteil über einer Gesamtsumme von null.
+
+Ein Anteil bezieht sich auf das, was *Sie* sehen können. Wer durch seinen Zeilenzugriff auf EMEA beschränkt ist, erhält die Kostenstellen von EMEA als Anteile an der Gesamtsumme von EMEA, und das Ergebnis gibt an, dass der Zeilenzugriff angewendet wurde. Die `within`-Spalten eines Anteils oder einer Rangfolge müssen zu den Aufschlüsselungsspalten gehören, die Sie verlangt haben, und eine Frage, die nach einer Spalte gruppiert, die wie eine der Ergebnisspalten heißt (`value`, sowie `actual`, `budget`, `current`, `prior`, `pct`, `share`, `rank`, `year`, `period` oder `cumulative`, wenn der Operator, der sie erzeugt, verlangt wird), wird abgelehnt. Eine Frage mit zwei Vergleichen oder zwei Rangfolgen wird abgelehnt.
+
+## Im Zeitverlauf vergleichen
+
+Eine Kennzahl, deren Definition **Zeitspalten** (`time` in der API) enthält, kann für eine Geschäftsperiode abgefragt, mit der vorangehenden Periode verglichen und periodenweise kumuliert werden. Die Zeitspalten legen fest, wo jede Zeile im Geschäftskalender liegt, auf zwei Arten:
+
+- **Eine Datumsspalte** mit `fiscal_year_start`, dem Kalendermonat, in dem das Geschäftsjahr beginnt (`1` für Januar, der Standard). Ihre Perioden sind die Monate des Geschäftsjahres, ab dem Startmonat nummeriert: Bei einem Jahr, das im Oktober beginnt, ist Periode 1 der Oktober und Periode 7 der April. Ein Quartal besteht aus drei davon. Ein Geschäftsjahr, das nicht im Januar beginnt, wird standardmäßig nach dem Kalenderjahr benannt, in dem es **endet** (`fiscal_year_label` ist `ending`); setzen Sie `fiscal_year_label` auf `starting`, um es nach dem Jahr zu benennen, in dem es beginnt. Bei einem Oktober-Start sind die Monate von Oktober 2025 bis September 2026 standardmäßig FY2026 und mit `starting` FY2025. Zeilen werden über einen Datumsbereich gelesen, was die Abfrage auf einer großen Tabelle schnell hält.
+- **Eine Spalte für das Geschäftsjahr und eine Spalte für die Periode**, beide ganzzahlig, mit dem Geschäftsjahr (`2026`, nicht `26`) und der Periode darin, ab 1 nummeriert, sowie `periods_per_year`: standardmäßig `12`, `13` für einen Kalender mit 13 Perioden, `52` für Wochen, `4` für Quartale. Quartale gibt es nur, wenn sich die Perioden in vier teilen lassen. Ein Kalender mit 53-Wochen-Jahren kann `53` setzen, auf Kosten seiner Quartale. Das Speichern wird abgelehnt, wenn eine der beiden Spalten einen Wert enthält, der keine ganze Zahl ist, etwa *2024-01* oder *FY26*, und die Ablehnung nennt die Spalte und den Wert. Als Text gespeicherte Ziffern wie `07` werden akzeptiert, ebenso eine Periode außerhalb des Jahres, etwa Periode 0 oder 13 eines Hauptbuchs: Eine Frage zu einer Periode lässt diese Zeilen weg.
+
+Eine Frage nennt dann die **Periode**, um die es geht: ein Geschäftsjahr oder ein Quartal oder eine Periode davon. **Bis heute (To Date)** dehnt das bis zum Jahresanfang zurück aus, sodass *April kumuliert* die ersten Monate des Jahres bis einschließlich April bedeutet.
+
+> *„Wie hoch waren die Umsätze im ersten Quartal des Geschäftsjahres 2026 nach Region, und wie verhält sich das zum Vorquartal?“*
+>
+> *„Umsätze kumuliert bis April im Vergleich zu denselben Monaten des Vorjahres.“*
+>
+> *„Zeige mir die Umsätze des Geschäftsjahres 2026 nach Monat als laufende Summe.“*
+
+| Verlangt | Was zurückkommt | In der API |
+|---|---|---|
+| **Eine Periode** | Die Kennzahl allein über diese Periode, mit den üblichen Aufschlüsselungen, Anteilen und Rangfolgen; eine Abweichung gegenüber Budget liest dafür beide Szenarien. | `period: {"year": 2026}`; `{"year": 2026, "quarter": 1}`; `{"year": 2026, "period": 7}` |
+| **Vorjahresvergleich** | Für jeden Aufschlüsselungswert: den Wert der Periode (`current`), dieselbe Periode ein Jahr zuvor (`prior`), die Differenz (`value`) und `pct`. Die Antwort nennt die Vorperiode. | `compare: "yoy"` mit einer `period` |
+| **Quartal gegenüber Vorquartal** | Dasselbe, gegenüber dem vorangehenden Quartal. Das erste Quartal wird mit dem vierten des Vorjahres verglichen. | `compare: "qoq"`; die `period` muss ein `quarter` nennen |
+| **Periode gegenüber Vorperiode** | Dasselbe, gegenüber der vorangehenden Periode. Die erste Periode wird mit der letzten des Vorjahres verglichen. Bei einem Kalender mit 12 Perioden ist das der Vergleich Monat zu Monat, woher der Name stammt. | `compare: "mom"`; die `period` muss eine `period` nennen |
+| **Kumuliert im Jahr (Year to Date)** | Das Jahr von seinem Beginn bis zum Ende des genannten Quartals oder der genannten Periode, für sich allein oder mit `yoy` im Vergleich zu denselben Monaten des Vorjahres. Mit `qoq` oder `mom` abgelehnt. | `"to_date": true` in der `period` |
+| **Laufende Summe** | Eine Zeile für jedes Geschäftsjahr und jede Periode in der verlangten Periode, mit dem eigenen Wert der Periode (`value`) und der bisherigen Summe (`cumulative`). Ohne Periode läuft sie über die Jahre hinweg von der ersten bis zur letzten Zeile. Sie nimmt keinen Vergleich, Anteil oder Rang an. | `cumulative: true` |
+
+`pct` ist die Differenz als Prozentsatz des Betrags des Vorwerts und behält das Vorzeichen der Differenz, wenn der Vorwert negativ ist, wie bei einer Abweichung. Jede der beiden Perioden wird für sich summiert, und die beiden Summen werden nach Aufschlüsselungswert einander zugeordnet; nichts wird von einer Nachbarzeile abgelesen. Ein Monat ohne Zeilen im Vorjahr wird also als leer verglichen und nicht mit dem nächstgelegenen Monat, der Zeilen hatte, und ein Aufschlüsselungswert mit Zeilen in nur einer der beiden Perioden zeigt die andere, die Differenz und `pct` als leer statt null.
+
+Eine laufende Summe ist für `sum`- und `count`-Kennzahlen gedacht. Ein Durchschnitt, eine Anzahl eindeutiger Werte, ein Minimum oder ein Maximum lässt sich über die Zeit nicht addieren und wird abgelehnt. Eine Periode ohne Zeilen hat in einer laufenden Summe keine Zeile, und die Summe läuft darüber hinweg weiter.
+
+Die Zeitspalten können in einer Frage, die eine Periode nennt, im Zeitverlauf vergleicht oder eine laufende Summe verlangt, nicht gefiltert oder gruppiert werden: Sie bestimmen, welche Zeilen gelesen und wie sie eingeordnet werden. Eine Frage, die nichts davon tut, kann weiterhin wie bei jeder Aufschlüsselungsspalte danach filtern und gruppieren. Ebenfalls abgelehnt werden: eine Periode nach dem Jahresende (Periode 13 in einem Kalender mit 12 Perioden), ein Quartal in einem Kalender ohne Quartale, ein Zeitvergleich oder eine laufende Summe bei einer abgeleiteten Kennzahl sowie eine Frage, die die Art der Periode nicht nennt, die ihr Vergleich benötigt. Eine abgeleitete Kennzahl kann für eine Periode abgefragt werden, wenn jede ihrer Eingaben Zeitspalten im selben Geschäftskalender hat; dann kann auch nach keiner davon gefiltert oder gruppiert werden. Ein Zeitvergleich ist der eine Vergleich der Frage und lässt sich daher nicht mit einer Abweichung gegenüber Budget kombinieren, wohl aber mit einem Anteil und einer Rangfolge über die Differenz.
+
+## Kennzahl stilllegen
+
+Das Stilllegen nimmt eine Kennzahl endgültig außer Betrieb: Wer das Projekt liest, sieht sie nicht mehr, Architects sehen sie als stillgelegt markiert mit ihrem Verlauf, und sie kann nicht mehr bearbeitet oder ausgeführt werden. Ein Architect legt sie still, indem er den Assistenten darum bittet oder `POST /rest/v1/analyze/metric/retire` verwendet. Eine Kennzahl, aus der eine abgeleitete Kennzahl aufgebaut ist, kann nicht stillgelegt werden, bis diese abgeleitete Kennzahl stillgelegt oder eine Version davon gespeichert wird, die diese Eingabe nicht mehr verwendet. Um eine stillgelegte Kennzahl zu ersetzen, definieren Sie eine neue.
+
+## Über MCP und die REST-API
+
+| Aktion | MCP-Tool | REST |
+|---|---|---|
+| Kennzahlen eines Projekts mit jeweils vollständiger Definition auflisten; `q` behält die, deren Name oder ein Synonym es enthält | `metric_find` | `GET /rest/v1/analyze/metric/definitions?project_id=&q=` |
+| Die Wörter einer Frage in die Werte einer Aufschlüsselungsspalte auflösen | `metric_values` mit `column` und `words` | `GET /rest/v1/analyze/metric/values?project_id=&metric_id=&column=&words=` |
+| Eine Kennzahl lesen | | `GET /rest/v1/analyze/metric/definition?project_id=&metric_id=` |
+| Definieren oder bearbeiten | `metric_upsert` | `POST` / `PUT /rest/v1/analyze/metric/definition` |
+| Stilllegen | `metric_review` mit `action: retire` | `POST /rest/v1/analyze/metric/retire` |
+| Ausführen | `metric_run` mit `group_by`, `filters` und den optionalen `period`, `compare`, `share`, `top` und `cumulative` | `POST /rest/v1/analyze/metric/run` mit denselben Feldern |
+| Frühere Versionen (nur Architects) | | `GET /rest/v1/analyze/metric/flashback-versions` |
+
+`metric_upsert` nimmt eine `spec` aus `{name, memo, synonyms, definition}` entgegen und akzeptiert `dry_run`, um eine Definition zu prüfen, ohne sie zu speichern. Die `definition` einer Basiskennzahl ist `{source, joins, measure, filters, grain, dimensions, scenario, time}`, wobei `dimensions` als `{<breakdown column>: <dimension id>}`, `measure` als `{agg, column}` oder `{agg: "weighted_avg", column, weight}`, `scenario` als `{column, actual, budget}` und `time` als `{column, fiscal_year_start, fiscal_year_label}` oder `{year_column, period_column, periods_per_year}` angegeben wird. Die `definition` einer abgeleiteten Kennzahl ist `{kind, op, inputs, factor}`; ihre berechneten Aufschlüsselungsspalten kommen als `grain` neben der Definition zurück.
+
+## Siehe auch
+
+- [Analysepfade](../analysis-paths/) – benennen Sie die Tabellen, nach denen Personen fragen, und geben Sie Assistenten feste Filter und Terminologie für jede davon
+- [Antworten, denen Sie vertrauen können](../honest-answers/) – wie PlaidCloud jede KI-Antwort bewertet und mit Vorbehalten versieht
+- [Datenzugriff steuern](/de/get-started/tutorials/control-data-access/) – der Zeilenzugriff, unter dem eine Kennzahl läuft

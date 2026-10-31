@@ -1,0 +1,31 @@
+---
+title: Paso Import Singer Source
+description: Importe datos de un origen Singer (conectores de SaaS, API y bases de datos como Stripe, GitHub, Slack y BigQuery) a tablas de proyecto, con detección de flujos y sincronización de tabla completa o incremental.
+sidebar:
+  order: 25
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/import/import-singer.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descripción
+
+El paso **Import Singer Source** (que aparece como **Importar: origen Singer** en el selector de pasos) extrae uno o más flujos de un origen Singer a tablas de proyecto. Un origen Singer es una conexión de tipo **Origen Singer** que envuelve un *tap* de Singer: un conector para una aplicación SaaS, una API o una base de datos específicas, como Stripe, GitHub, Slack o BigQuery. El paso detecta los flujos disponibles del tap, usted elige cuáles importar y dónde se guarda cada uno, y el ejecutor extrae los datos y los carga en los destinos.
+
+Para ver un recorrido completo, consulte la [guía de orígenes Singer](/es/guides/connections/singer-sources/); para ver los orígenes disponibles y su documentación de configuración, consulte el [catálogo de orígenes Singer](/es/reference/connectors/singer-sources/).
+
+## Configuración
+
+* **Conexión** *(obligatoria)*: una conexión de tipo **Origen Singer**.
+* **Modo de sincronización** *(obligatorio)*: **Tabla completa (reemplaza en cada ejecución)**, **Incremental (anexa datos nuevos)** o **Upsert (combinar por clave)**. El modo incremental solo funciona con los flujos que el tap puede sincronizar de forma incremental (los que tienen una clave de replicación); el paso continúa desde la posición de la ejecución anterior. Upsert combina cada ejecución en el destino según las columnas clave del flujo.
+* **Detectar flujos**: ejecuta en el ejecutor la detección del catálogo del tap y enumera los flujos que ofrece.
+* **Flujos** *(al menos uno)*: para cada flujo detectado, **Importar este flujo** para incluirlo y una **Tabla de destino** donde se guarda. Todo flujo seleccionado necesita una tabla de destino. Cuando el modo de sincronización es **Upsert**, cada flujo seleccionado también necesita **Columnas clave** (un nombre de columna por línea), las columnas por las que se hace coincidir una fila; de forma predeterminada son la clave principal declarada por el tap.
+
+## Comportamiento
+
+* La detección se ejecuta como un trabajo independiente y puede tardar hasta unos tres minutos en un arranque en frío; el resultado se almacena en caché, por lo que las detecciones repetidas son instantáneas.
+* **Tabla completa** reemplaza la tabla de destino en cada ejecución; **incremental** anexa solo las filas nuevas desde la última ejecución, usando la clave de replicación del tap; **upsert** vuelve a extraer el flujo completo y lo combina en el destino según las columnas clave de cada flujo: las filas coincidentes se actualizan, las claves nuevas se insertan y las filas existentes sin coincidencia se conservan. El destino se crea en la primera ejecución. Las filas con una columna clave nula nunca coinciden y siempre se insertan, así que elija columnas clave que estén siempre presentes.
+* Los flujos seleccionados *son* el conjunto guardado: para cambiar la selección, vuelva a detectar. Los flujos que reaparecen conservan la tabla de destino y la selección que usted definió.
+* Las credenciales del origen se leen de la conexión en el momento de la ejecución, por lo que rotarlas en la conexión se aplica a todos los pasos que la usan, sin actualizaciones paso a paso.
+
+<Aside>Cada ejecución llama al origen externo a través del tap. En los flujos incrementales, anular la selección y volver a seleccionar, o cambiar a tabla completa, vuelve a extraer desde el principio.</Aside>

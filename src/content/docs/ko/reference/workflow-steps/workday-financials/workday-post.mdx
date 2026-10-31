@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry 단계"
+description: 헤더 및 라인 테이블에서 Submit_Accounting_Journal SOAP 작업을 통해 Workday Financials에 회계 분개를 전기하며, 전기 전에 모든 항목을 검증하는 미리 보기 모드를 제공합니다.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 설명
+
+[Workday Financials 연결](/ko/guides/connections/workday-financials/)을 통해 PlaidCloud의 공유 ERP 쓰기 파이프라인으로 Workday Financials에 회계 분개를 전기합니다. 이 단계는 헤더 테이블(분개 항목당 한 행)과 라인 테이블(항목당 차변/대변 행 하나 이상)을 받아 각 항목에 대해 Workday의 `Submit_Accounting_Journal` SOAP 작업을 호출합니다. **Validate Only**는 원장 점유와 전기 없이 모든 항목을 구성하고 검사하며, 선택 사항인 결과 테이블에 각 항목의 결과가 기록됩니다.
+
+<Aside type="caution">
+모든 배치를 먼저 **Validate Only**로 실행하고 결과 테이블을 검토하십시오. 그리고 이 단계가 실제 항목을 무인으로 전기하도록 의존하기 전에 몇 건의 전기를 Workday에서 직접 대사하십시오.
+</Aside>
+
+## 구성
+
+### 연결
+
+- **Workday 연결** — 전기에 사용할 Workday Financials 연결입니다.
+
+### 데이터
+
+- **헤더 테이블** — 분개 항목당 한 행입니다. `journal_id`(항목 식별자, 필수), `company`(필수), `ledger`(필수), `accounting_date`, `memo`입니다.
+- **라인 테이블** — `journal_id`당 하나 이상의 행입니다. `ledger_account`, `debit`, `credit`, 그리고 분개에 필요한 워크태그(코스트 센터, 프로젝트) 열입니다.
+- **결과 테이블** — 출력 테이블 ID입니다. 항목당 한 행이며 `journal_id`, `natural_key`, `confirmation_id`, `status`(`posted`/`validated`/`error`), `message`를 포함합니다.
+- **Validate Only** — 기본적으로 선택되어 있습니다. 사전 검사만 수행하며 원장 점유와 전기는 하지 않습니다. 이 필드가 전혀 없는 단계 구성(예: REST API, MCP 또는 워크플로 번들 가져오기로 작성한 구성)도 실제 전기 대신 Validate Only가 기본값입니다.
+- **Continue On Error** — 기본적으로 선택되어 있습니다. 한 항목이 실패한 뒤에도 나머지 항목을 계속 전기하며, 선택을 해제하면 첫 번째 실패에서 배치를 중지합니다.
+
+## 전기 동작 방식
+
+PlaidCloud는 각 항목에 대해 `Submit_Accounting_Journal`을 호출하고, 최종 상태에 도달할 때까지 Workday 비즈니스 프로세스 상태를 폴링합니다. 이는 항목이 실제로 전기되기 전에 승인 단계를 거치는 Submit Accounting Journal 비즈니스 프로세스를 고려한 것입니다. 항목은 최종 상태가 **확인된** 후에만 `posted`로 보고됩니다. 제출은 되었지만 승인 대기 상태에 머물러 있는 항목은 제출이 수락되었다는 이유만으로 성공으로 기록되지 않고, 전기된 것으로 보고되지도 조용히 누락되지도 않은 채 격리됩니다.
+
+## 전기된 항목 수정
+
+이 단계는 전기된 분개를 삭제하거나 다시 쓰지 않습니다. 분개를 수정하려면 원본을 제자리에서 편집하는 대신 원본과 차변 및 대변을 맞바꾼 새 항목, 즉 전기된 역분개를 전기하십시오.
+
+## 기능 제한
+
+| 제한 사항 | 의미 |
+|---|---|| 비즈니스 프로세스 승인으로 인한 지연 | 승인 단계를 거치는 항목은 Workday에서 승인될 때까지 `pending` 상태로 유지되며, 최종 상태 폴링은 이를 기다립니다. |
+| 되돌리기는 제자리 편집이 아니라 새 항목 | 수정은 차변/대변을 맞바꾼 새 역분개를 전기하는 방식입니다. 이미 전기된 항목을 무효화하거나 삭제할 수는 없습니다. |
+
+## 관련 항목
+
+- [Connect to Workday Financials](/ko/guides/connections/workday-financials/) — 구성, 미리 보기, 전기를 다루는 전체 안내
+- [Workday Financials Connector](/ko/reference/connectors/rest/workday-financials/)
+- [Workday Financials 단계](/ko/reference/workflow-steps/workday-financials/)
+- [Review ERP Post History](/ko/guides/connections/erp-post-history/)

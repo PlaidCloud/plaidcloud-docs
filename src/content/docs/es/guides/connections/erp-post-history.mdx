@@ -1,0 +1,98 @@
+---
+title: Revisar el historial de contabilizaciones de ERP
+description: Consulte todos los intentos de contabilización en un ERP que ha realizado su proyecto y su estado actual (contabilizado, rechazado, en duda o revertido), con el número de documento del ERP, filtrable por proyecto, mediante REST o las herramientas MCP.
+sidebar:
+  label: Revisar el historial de contabilizaciones de ERP
+  order: 9
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/erp-post-history.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Cuando un flujo de trabajo contabiliza en un ERP (un asiento de diario de Sage Intacct o NetSuite, un documento de Acumatica, Business Central o Xero, un asiento de diario de Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials o SAP S/4HANA Cloud, un documento de SAP), PlaidCloud registra cada intento de contabilización en un libro duradero por inquilino, de modo que el mismo documento nunca se contabilice dos veces. El **historial de contabilizaciones de ERP** es la vista de solo lectura sobre ese libro: cada intento y su estado actual, con el número de documento propio del ERP y las marcas de tiempo, filtrable por proyecto.
+
+Complementa la tabla de resultados por ejecución que escribe un paso de contabilización: la tabla de resultados recoge los resultados de una sola ejecución, mientras que el historial de contabilizaciones es el registro permanente de todas las ejecuciones y flujos de trabajo, y sigue cada contabilización durante todo su ciclo de vida en lugar de congelarla en el momento en que terminó la ejecución.
+
+<Aside type="note">
+El historial de contabilizaciones es de **solo lectura**: nunca modifica una contabilización ni el libro. Está disponible a través de la API REST y como herramienta MCP, limitado a un proyecto al que ya tiene acceso. Para una pantalla a nivel de inquilino que revise las contabilizaciones de todos los proyectos y conexiones que puede ver, use el [Registro de asientos](/es/guides/connections/posting-register/).
+</Aside>
+
+## Qué muestra cada contabilización
+
+Cada fila es un documento contabilizado (o con intento de contabilización) en un entorno de ERP de una conexión:
+
+| Campo | Significado |
+|---|---|
+| `project_id` | El proyecto desde el que se hizo la contabilización. |
+| `connection_id` | La conexión de ERP utilizada. |
+| `environment_id` | El entorno de la conexión en el que se contabilizó (por ejemplo, uno de pruebas frente a producción). |
+| `natural_key` | La clave de negocio del documento, tal como la derivó el paso de contabilización. |
+| `state` | El estado actual del ciclo de vida de la contabilización (vea más abajo). |
+| `confirmation_id` | El número de documento propio del ERP, una vez que el ERP lo asigna. Nunca se establece en una contabilización simulada. |
+| `run_id` | La ejecución del flujo de trabajo que hizo la contabilización. |
+| `submitted_at`, `created_at`, `updated_at` | Cuándo se envió la contabilización, cuándo se registró por primera vez y cuándo cambió por última vez. |
+
+Una contabilización hecha en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) se marca como simulada, lo que la distingue de una real a simple vista; consulte [Contabilizaciones simuladas](#contabilizaciones-simuladas) más abajo.
+
+## Los estados del ciclo de vida
+
+Una contabilización pasa por estos estados a medida que el ERP la procesa:
+
+| Estado | Significado |
+|---|---|
+| `preflighted` | Validada y reservada, aún no enviada al ERP. |
+| `submitted` | Enviada al ERP; el resultado aún no se conoce. |
+| `pending` | Aceptada para procesamiento asíncrono; a la espera de un resultado final. |
+| `posted` | Contabilización confirmada; `confirmation_id` contiene el número de documento del ERP. |
+| `rejected` | El ERP rechazó la contabilización. |
+| `in_doubt` | No se pudo confirmar el resultado: una persona debe comprobarlo directamente en el ERP antes de cualquier reintento. |
+| `reversed` | Un documento contabilizado previamente fue revertido. |
+
+<Aside type="caution">
+Una contabilización `in_doubt` es exactamente eso: desconocida, no fallida. Confírmela en el propio ERP antes de decidir si actuar sobre ella; nunca la vuelva a ejecutar a ciegas.
+
+PlaidCloud registra una contabilización o reversión como `in_doubt` siempre que no puede saber qué hizo el ERP: un tiempo de espera agotado o un error del servidor que no puede volver a leer, o un estado que no reconoce. No registra una respuesta así como `rejected`, lo que sugeriría que el documento no está en el ERP cuando podría estarlo.
+</Aside>
+
+## Contabilizaciones simuladas
+
+Una ejecución iniciada en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) valida lo que enviaría un paso de contabilización, pero nunca contacta con el ERP. Lo que habría contabilizado se registra igualmente aquí, marcado como simulado, para que pueda revisarlo del mismo modo que una contabilización real (incluidos su `natural_key` y la solicitud que construyó), sin un `confirmation_id`, ya que ningún ERP llegó a verlo.
+
+Una entrada simulada nunca ocupa ni bloquea el espacio que protege la escritura idempotente de una contabilización real. Si más tarde ejecuta el mismo documento en producción, la contabilización real continúa y sustituye el registro simulado. Un espacio de trabajo sin un libro de contabilizaciones configurado valida igualmente con normalidad una ejecución simulada; simplemente no registra nada aquí.
+
+Borre las entradas simuladas de un proyecto de forma independiente de las reales con `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (opcionalmente acotado con `connection_id`) o con la herramienta MCP `erp_clear_simulated_postings` con los mismos argumentos. En ambos casos solo se eliminan las filas simuladas (una contabilización real nunca se toca), y la respuesta informa tanto de las filas del historial como de las filas del propio almacén de simulación del [Registro de asientos](/es/guides/connections/posting-register/) que se borraron, ya que un solo borrado elimina de ambos.
+
+<Aside type="note">
+Los pasos de contabilización, de adjuntos y de RFC de SAP se omiten por completo en el modo de simulación, no se ejecutan en seco, por lo que nunca producen una entrada simulada. Consulte [Elegir un modo de contabilización](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización).
+</Aside>
+
+## Leer el historial
+
+Limite cada lectura a un proyecto al que pueda acceder. Necesita acceso de lectura a ese proyecto, el mismo acceso que requiere el resto de su trabajo en el proyecto.
+
+### Mediante REST
+
+```
+GET /rest/v1/analyze/erp/write/history?project_id=<project>
+```
+
+Los parámetros de consulta opcionales acotan el resultado:
+
+| Parámetro | Efecto |
+|---|---|
+| `connection_id` | Solo las contabilizaciones hechas en esta conexión. |
+| `state` | Solo las contabilizaciones en este estado (por ejemplo, `state=in_doubt`). |
+| `limit` | Tamaño de página (100 de forma predeterminada). |
+| `cursor` | El `next_cursor` de la página anterior. |
+
+Los resultados llegan de más reciente a más antiguo. Cuando una página se llena hasta `limit`, la respuesta incluye un `next_cursor`; páselo de vuelta como `cursor` para leer la página siguiente, y deténgase cuando `next_cursor` sea nulo.
+
+### Mediante MCP
+
+Llame a la herramienta `erp_post_history` con los mismos argumentos: `project_id` (obligatorio) y, opcionalmente, `connection_id`, `state`, `limit` y `cursor`. Devuelve las mismas filas, paginadas del mismo modo.
+
+## Revisiones habituales
+
+- **Todo lo que sigue en duda en un proyecto:** `state=in_doubt`: las contabilizaciones que debe confirmar a mano en el ERP.
+- **Qué contabilizó una ejecución concreta:** lea el historial del proyecto y haga coincidir por `run_id`.
+- **Si un documento realmente se contabilizó:** busque su fila y lea `state` y `confirmation_id`.

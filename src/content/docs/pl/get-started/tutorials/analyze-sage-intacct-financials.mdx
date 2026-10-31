@@ -1,0 +1,218 @@
+---
+title: Analiza finansów z Sage Intacct — od połączenia do zestawienia obrotów i sald
+description: Kompletny samouczek Sage Intacct — połącz się, pobierz salda kont według wymiarów krokiem Importuj Sage, przekształć je w zestawienie obrotów i sald oraz rachunek zysków i strat według działów, dodaj wskaźnik na pracownika z kont statystycznych, umieść wyniki na pulpicie i zaplanuj odświeżanie.
+sidebar:
+  label: Analiza finansów z Sage Intacct
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~40 minut · działające połączenie Sage Intacct, załadowane zestawienie obrotów i sald, rachunek zysków i strat według działów, pulpit i zaplanowane odświeżanie*
+
+To ścieżka na pierwszy dzień dla kontrolera finansowego lub analityka FP&A pracującego w Sage Intacct: na końcu pobierzesz **salda kont według wymiarów** bezpośrednio z Intacct, przekształcisz je w **zestawienie obrotów i sald oraz rachunek zysków i strat według działów**, który czyta się jak sprawozdanie, umieścisz go na pulpicie i ustawisz automatyczne odświeżanie całości. Bez eksportu gotowych raportów i ręcznego przepisywania — liczby pochodzą z Intacct i pozostają aktualne.
+
+Połączysz się raz, pobierzesz dane raz, a potem zajmiesz się tym, co naprawdę ważne: przekształcaniem surowych sald w zestawienia, które biznes czyta w poniedziałek rano.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Pięć etapów od lewej do prawej: Sage Intacct, krok Importuj Sage pobierający salda kont według wymiarów, załadowana tabela zestawienia obrotów i sald, krok Table Extract grupujący i sumujący oraz rachunek zysków i strat z pulpitem, zasilające zaplanowane odświeżanie." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Importuj Sage</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabela ZOiS</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Grupuj i sumuj</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">RZiS</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Połącz się, jednorazowo pobierz salda, a następnie przekształć je w czytelne zestawienia — wszystko do ponownego uruchamiania według harmonogramu.</figcaption>
+</figure>
+
+## Wymagania wstępne
+
+- Obszar roboczy PlaidCloud i projekt, w którym będziesz pracować ([rozpocznij okres próbny](https://app.plaidcloud.com), jeśli go potrzebujesz).
+- **Działające połączenie Sage Intacct.** Najpierw wykonaj instrukcje z artykułu [Połączenie z Sage Intacct](/pl/guides/connections/sage-intacct/) — potrzebujesz włączonych Web Services, użytkownika Web Services z uprawnieniami do obiektów, które będziesz odczytywać, oraz czterech pól danych uwierzytelniających połączenia: **Identyfikator klienta**, **Klucz tajny klienta**, **Nazwa użytkownika usługi internetowej** i **ID firmy**. Zanim zaczniesz tutaj, upewnij się, że połączenie działa.
+- Poznaj swoje **jednostki operacyjne** (identyfikatory jednostek, dla których raportujesz) oraz mniej więcej **zakres numerów kont**, w którym znajdują się konta rachunku zysków i strat (przychody i koszty). W poniższych przykładach użyto `201` i `301` dla jednostek oraz `4010`–`9999` dla zakresu rachunku zysków i strat — podstaw własne wartości.
+
+<Aside type="note">
+Wszystko po pobraniu danych wykonujesz myszą — bez SQL i bez kodu. Jedyny element specyficzny dla Intacct to krok **Importuj Sage**, który odczytuje *salda kont według wymiarów* z Intacct dla daty i zakresu kont. Zwraca jeden wiersz na konto na kombinację wymiarów, z saldem otwarcia, saldem okresu i saldem końcowym w każdym wierszu.
+</Aside>
+
+## Krok 1: utwórz przepływ pracy
+
+Przepływ pracy to potok, który pobiera i przekształca dane.
+
+<Steps>
+
+1. Otwórz projekt i przełącz się na kartę **Przepływy pracy**.
+2. Kliknij **Nowy przepływ pracy**, nadaj mu nazwę, na przykład `Intacct Financials`, i otwórz go.
+
+</Steps>
+
+## Krok 2: pobierz zestawienie obrotów i sald
+
+[Krok Importuj Sage](/pl/reference/workflow-steps/sage-intacct/import-sage/) pobiera salda kont dla zakresu dat i zakresu kont, przenosząc wybrane wymiary do każdego wiersza — to jest Twoje zestawienie obrotów i sald.
+
+<Steps>
+
+1. Dodaj krok **Importuj Sage**.
+
+2. W jego konfiguracji ustaw:
+
+   | Pole | Wartość |
+   |---|---|
+   | **Połączenie** | Twoje połączenie Sage Intacct |
+   | **Firma** | firma Intacct, z której odczytujesz dane |
+   | **Data początkowa** / **Data końcowa** | zamykany okres — np. pierwszy i ostatni dzień miesiąca |
+   | **Start account** / **End account** | zakres rachunku zysków i strat, np. od `4010` do `9999` |
+   | **Jednostki** | Twoje jednostki operacyjne, np. `201`, `301` |
+   | **Wymiary** | włącz te, według których raportujesz — zwykle **Lokalizacja**, **Dział**, **Pracownik** i **Klasa** |
+
+3. Ustaw **Cel** na nową tabelę o nazwie `intacct_trial_balance`.
+
+4. Uruchom krok. Masz teraz jeden wiersz na konto na kombinację wymiarów, z kolumnami `startbalance`, `periodbalance` i `endbalance` oraz parą identyfikator/nazwa dla każdego włączonego wymiaru (np. `departmentid` / `departmentname`, `locationname`).
+
+</Steps>
+
+<Aside type="caution">
+Intacct zwraca każdą kolumnę jako **tekst**, a pobrania z Sage są **jednożądaniowe** (bez stronicowania) — wyniki sald kont są niewielkie, więc tutaj to nie przeszkadza, ale nie używaj tego kroku do szczegółowych pozycji o dużej objętości. Właściwe typy kolumn ustawisz w następnym kroku, gdzie mają znaczenie.
+</Aside>
+
+<Aside type="note">
+Należy ustawić zarówno **Datę początkową**, jak i **Datę końcową** — samotna data początkowa lub końcowa jest ignorowana. Jeśli włączono wymiar, którego identyfikator i nazwa nie są potrzebne, możesz usunąć zbędną kolumnę w następnym kroku. (Pole wyboru wymiaru **Magazyn** nie ma żadnego efektu; jeśli potrzebujesz magazynu w danych wyjściowych, użyj opcji **Custom dimensions**.)
+</Aside>
+
+## Krok 3: przekształć salda w rachunek zysków i strat
+
+Teraz analiza, wykonana jednym krokiem transformacji obsługiwanym myszą — bez SQL. Zakres rachunku zysków i strat jest zwijany do kilku pozycji sprawozdania, według działów, ze zmienionym znakiem, tak aby przychody były dodatnie. [Krok Table Extract](/pl/reference/workflow-steps/tables/table-extract/) robi to wszystko na kartach **Wybór danych tabeli** i **Filtry danych**.
+
+<Steps>
+
+1. Dodaj krok **Table Extract**. Ustaw jego **Źródło** na `intacct_trial_balance`, a **Cel** na nową tabelę `intacct_pnl`.
+
+2. Na karcie **Wybór danych tabeli** kliknij **Podsumuj**, aby włączyć agregację, a następnie skonfiguruj trzy kolumny docelowe:
+
+   - **`departmentname`** — mapowana bezpośrednio ze źródła. Typ **Tekst**, podsumowanie **Grupuj według**.
+   - **`pnl_line`** — **wyrażenie** (poniżej), które zamienia numer konta na pozycję raportu. Typ **Tekst**, podsumowanie **Grupuj według**.
+   - **`amount`** — **wyrażenie** `func.to_float64(intacct_trial_balance.endbalance) * -1`, które konwertuje tekstowe saldo na liczbę i zmienia znak. Typ **Waluta**, podsumowanie **Suma**.
+
+   Ustawienie **Typu** kolumny docelowej `amount` na **Waluta** sprawia, że tekstowe saldo można sumować. Dla `pnl_line` kliknij dwukrotnie komórkę **wyrażenia** i wprowadź poniższy kod (kolumny i funkcję `case` z grupy **Warunki** wybierasz myszą):
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. Uruchom krok.
+
+</Steps>
+
+Zapis `* -1` to jedyny zabieg księgowy: Intacct przechowuje przychody jako uznania (wartości ujemne), a koszty jako obciążenia (wartości dodatnie), więc zmiana znaku salda końcowego sprawia, że **przychody są dodatnie, a koszty ujemne** — pozycje każdego działu *sumują się wtedy do zysku netto*. Dostosuj progi numerów kont w `case()` do swojego planu kont. Wyrażenia korzystają z edytora PlaidCloud obsługiwanego myszą — zobacz [Zaawansowane użycie Data Mapper](/pl/reference/workflow-steps/common/advanced-data-mapper-usage/) oraz [opis wyrażeń](/pl/reference/expressions/).
+
+<Aside type="tip">
+Chcesz rachunek zysków i strat dla całej firmy zamiast według działów? Usuń `departmentname` z kolumn docelowych i zostaw tylko `pnl_line` (Grupuj według) oraz `amount` (Suma).
+</Aside>
+
+## Krok 4: czytaj to jak finansista
+
+Otwórz tabelę `intacct_pnl`. Dla każdego działu masz trzy liczby:
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+Odczytaj bezpośrednio z tabeli:
+
+- **Zysk brutto** = przychody + koszt własny sprzedaży (koszt własny sprzedaży jest już ujemny) → `486,200 − 190,540 = 295,660`.
+- **Zysk netto** = suma trzech pozycji → `82,780`.
+- **Marża brutto %** = zysk brutto ÷ przychody → ok. 61%.
+
+Najpierw trzeba **uzgodnić wyniki**: uruchom w Intacct jego własny rachunek zysków i strat (Financial Reports) dla tego samego okresu i tych samych jednostek i sprawdź, czy przychody i zysk netto się zgadzają. Jeśli nie, prawie zawsze chodzi o różnicę zakresu — nieuwzględnioną jednostkę, zakres kont, który ucina część rachunku zysków i strat, lub niedopasowanie okresów. Zaufaj potokowi dopiero wtedy, gdy wyniki się zgadzają.
+
+<Aside type="tip">
+Chcesz klasyczny układ z okresami u góry? Dodaj [krok Table Pivot](/pl/reference/workflow-steps/tables/table-pivot/) odczytujący `intacct_pnl`: przestaw okres na kolumny, zachowaj `pnl_line` jako wiersz i zsumuj `amount`. Aby w ogóle mieć kolumnę okresu, dodaj w kroku 3 `end_date` jako kolumnę **Grupuj według**. Otrzymasz porównanie okres do okresu na pierwszy rzut oka, bez SQL.
+</Aside>
+
+## Krok 5: umieść wyniki na pulpicie
+
+Liczby w tabeli są w porządku, ale to wykres wysyła się dyrektorowi finansowemu. [Opublikuj](/pl/get-started/tutorials/load-and-transform-data/#krok-7-opublikuj-wynik) `intacct_pnl`, a następnie wykonaj instrukcje z samouczka [Tworzenie pulpitu](/pl/get-started/tutorials/build-a-dashboard/), aby dodać:
+
+- **wykres słupkowy** zysku netto (lub przychodów) według `departmentname` oraz
+- **wykres słupkowy** każdej pozycji `pnl_line`, aby struktura przychodów, kosztu własnego sprzedaży i kosztów operacyjnych była widoczna na pierwszy rzut oka.
+
+To działający na żywo pulpit finansowy z Sage Intacct — bez eksportu, odświeżany przy każdym uruchomieniu przepływu pracy.
+
+## Krok 6: zaplanuj odświeżanie
+
+<Steps>
+
+1. Uruchom cały przepływ pracy raz, od góry do dołu, aby potwierdzić, że każdy krok kończy się powodzeniem.
+2. [Zaplanuj przepływ pracy](/pl/get-started/tutorials/schedule-a-workflow/) — co miesiąc zgodnie z cyklem zamknięcia lub co tydzień, jeśli chcesz mieć świeże liczby w trakcie miesiąca.
+
+</Steps>
+
+Ponieważ pobranie w całości zastępuje tabelę, każde uruchomienie ponownie odczytuje salda dla ustawionego zakresu dat i kont — ogranicz go do potrzebnego okna (bieżący okres, konta rachunku zysków i strat) zamiast całej historii.
+
+## Krok 7: dodaj wskaźnik na pracownika z kont statystycznych
+
+Intacct śledzi także niepieniężne **konta statystyczne** — liczbę pracowników, powierzchnię, jednostki — obok planu kont finansowych. Pobierz je drugim krokiem **Importuj Sage** ustawionym w trybie statystycznym, a następnie złącz z rachunkiem zysków i strat, aby odczytać wskaźnik, taki jak koszty operacyjne na pracownika według działów. Trzy kolejne standardowe kroki, nadal bez SQL.
+
+<Steps>
+
+1. Dodaj drugi krok **Importuj Sage**. W jego konfiguracji ustaw:
+
+   | Pole | Wartość |
+   |---|---|
+   | **Połączenie** | Twoje połączenie Sage Intacct |
+   | **Firma** | firma Intacct, z której odczytujesz dane |
+   | **Data początkowa** / **Data końcowa** | ten sam okres co w kroku 2 |
+   | **Statystyczne** | **Tylko statystyczne** |
+   | **Start account** / **End account** | od `0000` do `9999` — konta statystyczne nie muszą mieścić się w numeracji Twojego planu kont finansowych, więc pobierz pełny zakres zamiast zakresu rachunku zysków i strat z kroku 2 |
+   | **Jednostki** | Twoje jednostki operacyjne, np. `201`, `301` |
+   | **Wymiary** | **Dział** — wymiar, według którego raportujesz na pracownika |
+
+2. Ustaw **Cel** na nową tabelę o nazwie `intacct_statistics`.
+
+3. Uruchom krok. Otrzymasz jeden wiersz na konto statystyczne na dział, w którym `endbalance` zawiera samą statystykę — np. liczbę pracowników działu na koniec okresu.
+
+</Steps>
+
+Teraz dołącz liczbę pracowników do rachunku zysków i strat i podziel — ale nie bezpośrednio z `intacct_statistics`. Ta tabela ma jeden wiersz *na konto statystyczne na dział* (liczba pracowników, powierzchnia, jednostki — cokolwiek śledzisz), więc złączenie wyłącznie po `departmentname` powieliłoby każdy wiersz rachunku zysków i strat tyle razy, ile jest kont statystycznych w tym dziale, a `amount_per_head` byłoby dzielone przez to konto statystyczne, które akurat trafiło do wiersza. Najpierw przefiltruj dane do liczby pracowników, aby złączenie dawało jeden wiersz na dział, a wskaźnik coś znaczył.
+
+<Steps>
+
+1. Dodaj krok **Table Extract**. Ustaw jego **Źródło** na `intacct_statistics`, a **Cel** na nową tabelę `intacct_headcount`. Na karcie **Wybór danych tabeli** przenieś wszystkie kolumny bez zmian — agregacja nie jest tu potrzebna. Na karcie **Filtry danych** dodaj filtr **Wybierz podzbiór danych** dla danych źródłowych: `intacct_statistics.glaccountno == '9000'` — zastąp `9000` własnym numerem konta statystycznego liczby pracowników (filtruj po kolumnie nazwy konta, jeśli właśnie ją zwraca Twoje pobranie; `glaccountno` nadal jest tekstem, więc porównuj go z ciągiem w cudzysłowie). Uruchom krok — `intacct_headcount` ma teraz dokładnie jeden wiersz na dział.
+
+2. Dodaj [krok Table Outer Join](/pl/reference/workflow-steps/tables/table-outer-join/). Ustaw **Table 1** na `intacct_pnl`, a **Table 2** na `intacct_headcount` i złącz po `departmentname` — teraz to czyste dopasowanie 1:1 na dział. Pozostaw **Typ złączenia** na wartości domyślnej **Left join** — wszystkie wiersze rachunku zysków i strat są zachowane, a liczba pracowników jest uzupełniana tam, gdzie dział pasuje. Ustaw jako cel nową tabelę `intacct_pnl_with_headcount` i przenieś wszystkie kolumny z obu tabel.
+
+3. Uruchom krok, a następnie dodaj krok **Table Extract** odczytujący `intacct_pnl_with_headcount` i zapisujący do nowej tabeli `intacct_pnl_per_head`. Na karcie **Wybór danych tabeli** przenieś istniejące kolumny, a następnie dodaj jeszcze jedną kolumnę docelową: `amount_per_head`, **wyrażenie** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, typ **Waluta**.
+
+4. Uruchom krok.
+
+</Steps>
+
+Odczytaj `amount_per_head` w wierszu **`3 - Operating Expenses`**, aby poznać koszty operacyjne na pracownika według działów — to ten sam odczyt co w kroku 4, tylko o jedną kolumnę głębiej. Dodaj go do pulpitu obok rachunku zysków i strat albo włącz do harmonogramu z kroku 6, aby odświeżał się razem z resztą.
+
+## Co udało Ci się zbudować
+
+Zaczynając od pustego przepływu pracy, udało się pobrać salda kont z Sage Intacct na żywo, przekształcić je w **rachunek zysków i strat według działów** jednym standardowym krokiem transformacji, dołączyć konta statystyczne dla wskaźnika na pracownika — bez SQL w całym potoku — umieścić wyniki na pulpicie i ustawić ich odświeżanie. To podstawowa pętla raportowa zespołu finansowego, teraz zautomatyzowana.
+
+## Dokąd dalej
+
+- [Połączenie z Sage Intacct](/pl/guides/connections/sage-intacct/) — konfiguracja połączenia i pozostałe kroki importu Sage (rachunki AP, pozycje AP, zapytania doraźne o obiekty).
+- [Import Sage Intacct Query](/pl/reference/workflow-steps/sage-intacct/import-intacct-query/) — pobierz dowolny obiekt Intacct (konta księgi głównej, klientów, projekty), aby wzbogacić swoje zestawienia.
+- [Krok Table Extract](/pl/reference/workflow-steps/tables/table-extract/) oraz [Zaawansowane użycie Data Mapper](/pl/reference/workflow-steps/common/advanced-data-mapper-usage/) — grupowanie, filtrowanie i kolumny obliczeniowe do głębszej analizy.
+- [Projektowanie hierarchii wymiaru](/pl/get-started/tutorials/design-a-dimension/) — zwiń plan kont do grup raportowych, które kontrolujesz.

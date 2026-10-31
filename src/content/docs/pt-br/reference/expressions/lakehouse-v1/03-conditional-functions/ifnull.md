@@ -1,0 +1,63 @@
+---
+title: IFNULL (Lakehouse v1)
+description: IFNULL — se <expr1> for NULL, retorna <expr2>; caso contrário, retorna <expr1>.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/expressions/lakehouse-v1/03-conditional-functions/ifnull.md
+---
+
+Se `<expr1>` for NULL, retorna `<expr2>`; caso contrário, retorna `<expr1>`.
+
+## Sintaxe do Analyze
+
+```python
+func.ifnull(<expr1>, <expr2>)
+```
+
+## Exemplos do Analyze
+
+```python
+func.ifnull(null, 'b'), func.ifnull('a', 'b')
+
+┌────────────────────────────────────────────────┐
+│ func.ifnull(null, 'b') │ func.ifnull('a', 'b') │
+├────────────────────────┼───────────────────────┤
+│ b                      │ a                     │
+└────────────────────────────────────────────────┘
+
+func.ifnull(null, 2), func.ifnull(1, 2)
+
+┌──────────────────────────────────────────┐
+│ func.ifnull(null, 2) │ func.ifnull(1, 2) │
+├──────────────────────┼───────────────────┤
+│                    2 │                 1 │
+└──────────────────────────────────────────┘
+```
+
+## Sintaxe SQL
+
+```sql
+IFNULL(<expr1>, <expr2>)
+```
+
+## Aliases
+
+- [NVL](../nvl)
+
+## Exemplos de SQL
+
+```sql
+SELECT IFNULL(NULL, 'b'), IFNULL('a', 'b');
+
+┌──────────────────────────────────────┐
+│ ifnull(null, 'b') │ ifnull('a', 'b') │
+├───────────────────┼──────────────────┤
+│ b                 │ a                │
+└──────────────────────────────────────┘
+
+SELECT IFNULL(NULL, 2), IFNULL(1, 2);
+
+┌────────────────────────────────┐
+│ ifnull(null, 2) │ ifnull(1, 2) │
+├─────────────────┼──────────────┤
+│               2 │            1 │
+└────────────────────────────────┘
+```

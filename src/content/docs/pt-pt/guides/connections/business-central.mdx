@@ -1,0 +1,132 @@
+---
+title: Ligar ao Business Central
+description: Ligue o PlaidCloud ao Microsoft Dynamics 365 Business Central com credenciais de cliente do Azure AD, extraia entidades OData com o passo de importação predefinido e lance linhas de diário geral.
+sidebar:
+  order: 11
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/business-central.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud à API REST OData v2.0 padrão do Business Central para extrair contas, movimentos contabilísticos, clientes, fornecedores, artigos e diários sem ter de escrever OData à mão, e lance de volta linhas de diário geral. Este guia abrange a ligação, o passo de importação e o passo de lançamento.
+
+<Aside type="caution">
+Execute sempre cada importação primeiro num ambiente de testes (sandbox) e percorra **Pré-visualizar e validar**, mais abaixo, em cada lote de lançamento antes de lançar em produção.
+</Aside>
+
+## Pré-requisitos
+
+Precisa, no Azure AD e no Business Central, de:
+
+- Um **registo de aplicação do Entra ID (Azure AD)** para o PlaidCloud com um **segredo do cliente**, com **permissões de API** concedidas para o Business Central (`Dynamics 365 Business Central > API.ReadWrite.All` ou a permissão mais restrita que o seu administrador emita).
+- O **ID do inquilino** do seu Azure AD.
+- O nome do **ambiente do Business Central** que o PlaidCloud deve chamar (por exemplo, `Production` ou um ambiente de testes).
+- A **empresa** em que o PlaidCloud lê e lança — o Business Central delimita tanto as leituras de entidades como os lançamentos de diário a uma empresa de cada vez.
+
+<Aside type="note">
+A ligação autentica-se como uma aplicação, não como um utilizador — fluxo de **credenciais de cliente (S2S)** do Entra ID, o mesmo mecanismo OAuth2 de credenciais de cliente que o PlaidCloud utiliza para outras ligações REST da Microsoft. Não existe início de sessão interativo.
+</Aside>
+
+## Criar a ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Business Central** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `BC Prod`. |
+   | ID do cliente | O ID da aplicação (cliente) do registo de aplicação do Entra. |
+   | Segredo do cliente | O segredo do cliente do registo de aplicação. |
+   | ID do inquilino | O ID do inquilino do seu Azure AD. |
+   | Ambiente | O nome do ambiente do Business Central, por exemplo `Production`. |
+   | Empresa | O ID da empresa do Business Central em que ler e lançar. |
+
+4. Clique em `Create`.
+
+</Steps>
+
+## Testar rapidamente a ligação
+
+<Steps>
+
+1. Adicione um passo **Import Business Central Entity** a um fluxo de trabalho.
+
+2. Defina **Ligação Business Central** com a sua ligação, **Tipo de entidade** como `accounts` e **Tabela de destino** com uma tabela de rascunho.
+
+3. Execute o passo (consulte [Executar um único passo num fluxo de trabalho](/pt-pt/guides/workflows/running-one-step-in-a-workflow/)).
+
+</Steps>
+
+Uma tabela de destino preenchida confirma que o inquilino, as credenciais, o ambiente e a empresa estão corretos. Um erro indica o problema — um segredo do cliente inválido, uma permissão de API não concedida ou um ambiente/empresa errado.
+
+## Importar dados
+
+<Steps>
+
+1. Adicione um passo **Import Business Central Entity** e defina **Ligação Business Central** e **Tabela de destino**.
+
+2. Defina **Tipo de entidade** como o registo pretendido: `accounts`, `generalLedgerEntries`, `customers`, `vendors`, `items` ou `journals`.
+
+3. Adicione **Filtros** — linhas `{field, operator, value}` combinadas por AND no `$filter` do pedido, verificadas contra a lista de campos consultáveis da própria entidade. Deixe em branco para extrair a entidade inteira.
+
+4. Execute o passo e verifique a tabela de destino.
+
+</Steps>
+
+<Aside type="note">
+**A empresa vem da ligação, não do passo.** O Business Central delimita todas as leituras a uma empresa, e a ligação transporta essa empresa juntamente com o ambiente — por isso o passo de importação não tem campo de empresa nem de ambiente. Para extrair a mesma entidade de uma segunda empresa, crie uma segunda ligação Business Central que aponte para ela.
+</Aside>
+
+<Aside type="note">
+`generalLedgerEntries` é o razão do Business Central, **apenas de leitura e apenas com lançamentos efetuados** — nunca mostra uma linha que ainda esteja num lote de diário por lançar, pelo que é a entidade a extrair para um balancete ou para o detalhe do razão geral, em vez de consultar diretamente um diário.
+</Aside>
+
+## Lançar linhas de diário geral
+
+O passo **Business Central Post** lança linhas num lote de diário geral **existente** e depois lança esse lote.
+
+<Steps>
+
+1. Construa uma **tabela de cabeçalho** — uma linha por `journal_id` — com o nome do lote de diário do Business Central em que as suas linhas são lançadas, mais `document_number`, `posting_date` e uma etiqueta de moeda.
+
+2. Construa uma **tabela de linhas** — uma ou mais linhas por `journal_id` — com um `amount` com sinal (positivo para um débito, negativo para um crédito), `account_id` ou `account_number`, `account_type` e `description`.
+
+3. Adicione um passo **Business Central Post**, defina **Ligação Business Central**, **Ambiente**, **Tabela de cabeçalho**, **Tabela de linhas** e uma **Tabela de resultados**.
+
+4. Deixe **Validate Only** assinalado e execute o passo — o PlaidCloud constrói e verifica todos os diários sem lançar nada.
+
+5. Reveja a tabela de resultados (uma linha por `journal_id`: `journal_id`, `external_id`, `internal_id`, `status`, `message`). Corrija qualquer linha `error` e valide novamente.
+
+6. Desassinale **Validate Only** e execute novamente para lançar a sério. Deixe **Continue On Error** assinalado, a menos que pretenda que um lote pare de imediato no primeiro diário com falha.
+
+</Steps>
+
+<Aside type="caution">
+**O lote de diário indicado em `journal_id` tem de já existir no Business Central** — este passo cria linhas dentro dele, não cria o próprio lote. Configure primeiro o lote de diário (nome, modelo de diário) no Business Central e depois aponte `journal_id` para ele.
+</Aside>
+
+### Como funciona o lançamento
+
+A ação `Microsoft.NAV.post` do Business Central lança o lote de diário **inteiro**, e não apenas as linhas que o PlaidCloud acabou de criar — por isso, antes de a chamar, o PlaidCloud volta a ler o lote e recusa lançar (registando um erro, sem nada lançado) se este contiver alguma linha que não esteja marcada com o número de documento deste pedido. Essa proteção existe especificamente para que uma linha perdida, deixada por uma falha parcial anterior, nunca seja arrastada para o razão geral por um lançamento posterior e não relacionado no mesmo lote.
+
+### Limites de capacidade — ler antes de lançar em produção
+
+<Aside type="caution">
+- **Um único tipo de documento de escrita.** Só é suportado o lançamento de linhas de diário geral. O fluxo de documentos em rascunho do Business Central (faturas de venda/compra a passar de Rascunho a Lançado) não é suportado — a ação de lançamento exata desse fluxo não está definida na documentação da Microsoft, e o PlaidCloud não adivinha um ponto de acesso não verificado para uma escrita que movimenta dinheiro.
+- **Lança apenas num lote existente.** Este passo nunca cria um lote de diário — crie-o primeiro no Business Central (veja acima).
+- **Ainda sem validação em produção.** Construído segundo o contrato OData v2.0 documentado do Business Central; trate o primeiro lote real como uma execução de validação e reconcilie-o diretamente no Business Central.
+- **Os lançamentos simultâneos no mesmo lote não são totalmente serializados.** A proteção de idempotência é delimitada pelo número de documento, não pelo lote de diário — dois números de documento diferentes lançados no mesmo lote ao mesmo tempo não têm garantia de serem serializados como duas chamadas com o mesmo número de documento. Evite executar lançamentos simultâneos para um mesmo lote de diário.
+</Aside>
+
+## Relacionado
+
+- [Conector REST Business Central](/pt-pt/reference/connectors/rest/business-central/) — referência de campos.
+- [Import Business Central Entity](/pt-pt/reference/workflow-steps/business-central/import-business-central-entity/)
+- [Business Central: Post General Journal Lines](/pt-pt/reference/workflow-steps/business-central/business-central-post/)
+- [Rever o histórico de lançamentos de ERP](/pt-pt/guides/connections/erp-post-history/) — o registo permanente de cada tentativa de lançamento no Business Central e do seu estado atual.
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)

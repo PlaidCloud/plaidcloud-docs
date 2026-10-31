@@ -1,0 +1,218 @@
+---
+title: Analisar as Finanças do Sage Intacct — da Ligação ao Balancete
+description: Tutorial completo do Sage Intacct — ligue, extraia os saldos de contas por dimensão com o passo Importar Sage, transforme-os num balancete e numa demonstração de resultados por departamento, adicione um indicador por funcionário a partir de contas estatísticas, coloque-o num painel de controlo e agende a atualização.
+sidebar:
+  label: Analisar as Finanças do Sage Intacct
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/analyze-sage-intacct-financials.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+*~40 minutos · uma ligação ativa ao Sage Intacct, um balancete carregado, uma demonstração de resultados por departamento, um painel de controlo e uma atualização agendada*
+
+Este é o percurso do primeiro dia para um controller ou analista de FP&A no Sage Intacct: no final, terá extraído os **saldos de contas por dimensão** diretamente do Intacct, transformado-os num **balancete e numa demonstração de resultados por departamento** que se leem como um relatório financeiro, colocado tudo num painel de controlo e configurado para se atualizar sozinho. Sem exportação de relatórios predefinidos, sem reintrodução manual — os números vêm do Intacct e mantêm-se atuais.
+
+Liga-se uma vez, extrai uma vez e depois faz a parte que realmente importa: transformar os saldos em bruto nos resumos que um responsável de negócio lê na manhã de segunda-feira.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 96" role="img" aria-label="Cinco fases da esquerda para a direita: Sage Intacct, um passo Importar Sage que extrai saldos de contas por dimensão, uma tabela de balancete carregada, um passo Table Extract que agrupa e resume, e uma demonstração de resultados com painel de controlo, alimentando uma atualização agendada." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="si-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="30" width="104" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="58" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sage Intacct</text>
+  <path d="M114 48 L146 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="150" y="30" width="128" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="214" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Importar Sage</text>
+  <path d="M282 48 L314 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="318" y="30" width="120" height="36" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="378" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Tabela do balancete</text>
+  <path d="M442 48 L474 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="478" y="30" width="120" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="538" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Agrupar &amp; somar</text>
+  <path d="M602 48 L634 48" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#si-arrow)" />
+  <rect x="638" y="30" width="76" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="676" y="52" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Resultados</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Ligue, extraia os saldos uma vez e transforme-os em demonstrações que pode ler — tudo reexecutável de forma agendada.</figcaption>
+</figure>
+
+## Pré-requisitos
+
+- Uma área de trabalho PlaidCloud e um projeto para trabalhar ([comece uma avaliação](https://app.plaidcloud.com) se precisar de uma).
+- **Uma ligação ao Sage Intacct a funcionar.** Siga primeiro [Ligar ao Sage Intacct](/pt-pt/guides/connections/sage-intacct/) — precisa dos Web Services ativados, de um utilizador de serviço Web com permissão sobre os objetos que vai ler e dos quatro campos de credenciais da ligação: **ID do cliente**, **Segredo do cliente**, **Nome de utilizador do utilizador de serviço Web** e **ID da empresa**. Confirme que a ligação funciona antes de começar aqui.
+- Conheça as suas **entidades operacionais** (os IDs das entidades sobre as quais reporta) e, aproximadamente, que **intervalo de números de conta** contém as suas contas de demonstração de resultados (receitas e gastos). Os exemplos abaixo usam `201` e `301` para as entidades e `4010`–`9999` para o intervalo da demonstração de resultados — substitua pelos seus.
+
+<Aside type="note">
+Tudo o que vem depois da extração é por apontar e clicar — sem SQL, sem código. O único elemento específico do Intacct é o passo **Importar Sage**, que lê os *saldos de contas por dimensão* do Intacct para uma data e um intervalo de contas. Devolve uma linha por conta e por combinação de dimensões, com um saldo inicial, do período e final em cada uma.
+</Aside>
+
+## Passo 1: Criar um Fluxo de Trabalho
+
+O fluxo de trabalho é o pipeline que extrai e transforma os dados.
+
+<Steps>
+
+1. Abra o seu projeto e mude para o separador **Fluxos de trabalho**.
+2. Clique em **Novo fluxo de trabalho**, dê-lhe um nome como `Intacct Financials` e abra-o.
+
+</Steps>
+
+## Passo 2: Extrair o Balancete
+
+O [passo Importar Sage](/pt-pt/reference/workflow-steps/sage-intacct/import-sage/) extrai os saldos de contas para um intervalo de datas e um intervalo de contas, transportando para cada linha as dimensões que escolher — esse é o seu balancete.
+
+<Steps>
+
+1. Adicione um passo **Importar Sage**.
+
+2. Na respetiva configuração, defina:
+
+   | Campo | Valor |
+   |---|---|
+   | **Ligação** | a sua ligação ao Sage Intacct |
+   | **Empresa** | a empresa do Intacct de onde ler |
+   | **Data de início** / **Data de fim** | o período que está a fechar — por exemplo, o primeiro e o último dia do mês |
+   | **Conta inicial** / **Conta final** | o seu intervalo da demonstração de resultados, por exemplo `4010` a `9999` |
+   | **Entidades** | as suas entidades operacionais, por exemplo `201`, `301` |
+   | **Dimensões** | ative aquelas por que reporta — normalmente **Localização**, **Departamento**, **Funcionário** e **Classe** |
+
+3. Defina o **Destino** como uma nova tabela com o nome `intacct_trial_balance`.
+
+4. Execute o passo. Passa a ter uma linha por conta e por combinação de dimensões, com as colunas `startbalance`, `periodbalance` e `endbalance`, além de um par ID/nome para cada dimensão ativada (por exemplo, `departmentid` / `departmentname`, `locationname`).
+
+</Steps>
+
+<Aside type="caution">
+O Intacct devolve todas as colunas como **texto** e as extrações do Sage são de **pedido único** (sem paginação) — os resultados de saldos de contas são pequenos, pelo que aqui não há problema, mas não use este passo para detalhe de linhas de grande volume. Os tipos de coluna reais serão definidos no passo seguinte, onde são relevantes.
+</Aside>
+
+<Aside type="note">
+A **Data de início** e a **Data de fim** têm de estar ambas definidas — uma data de início ou de fim isolada é ignorada. Se ativou uma dimensão cujo ID e nome não são necessários, pode eliminar a coluna a mais no passo seguinte. (A caixa de seleção da dimensão **Armazém de dados** não tem efeito; use **Dimensões personalizadas** se precisar do armazém na saída.)
+</Aside>
+
+## Passo 3: Transformar os Saldos numa Demonstração de Resultados
+
+Agora a análise, feita com uma única transformação por apontar e clicar — sem SQL. O seu intervalo da demonstração de resultados agrega-se em algumas linhas da demonstração, por departamento, com o sinal invertido para que a receita surja positiva. Um [passo Table Extract](/pt-pt/reference/workflow-steps/tables/table-extract/) faz tudo isto nos separadores **Seleção de dados da tabela** e **Filtros de dados**.
+
+<Steps>
+
+1. Adicione um passo **Table Extract**. Defina a **Origem** como `intacct_trial_balance` e o **Destino** como uma nova tabela, `intacct_pnl`.
+
+2. No separador **Seleção de dados da tabela**, clique em **Resumir** para ativar a agregação e, em seguida, configure três colunas de destino:
+
+   - **`departmentname`** — mapeada diretamente a partir da origem. Tipo **Texto**, resumir **Agrupar por**.
+   - **`pnl_line`** — uma **expressão** (abaixo) que transforma o número da conta numa linha do relatório. Tipo **Texto**, resumir **Agrupar por**.
+   - **`amount`** — uma **expressão** `func.to_float64(intacct_trial_balance.endbalance) * -1`, que converte o saldo em texto num número e inverte o sinal. Tipo **Moeda**, resumir **Soma**.
+
+   Definir o **Tipo** da coluna de destino `amount` como **Moeda** é o que permite somar o saldo em texto. Para `pnl_line`, faça duplo clique na respetiva célula de **expressão** e introduza (aponte e clique nas colunas e na função `case` do grupo **Condições**):
+
+   ```python
+   case(
+       (func.to_float64(intacct_trial_balance.glaccountno) < 5000, '1 - Revenue'),
+       (func.to_float64(intacct_trial_balance.glaccountno) < 6000, '2 - Cost of Goods Sold'),
+       else_='3 - Operating Expenses',
+   )
+   ```
+
+3. Execute o passo.
+
+</Steps>
+
+O `* -1` é o único movimento contabilístico: o Intacct regista a receita a crédito (negativa) e os gastos a débito (positivos), pelo que negar o saldo final faz com que a **receita surja positiva e os custos negativos** — as linhas de cada departamento *somam então o resultado líquido*. Ajuste os limites dos números de conta no `case()` ao seu plano de contas. As expressões usam o editor de apontar e clicar do PlaidCloud — consulte [Utilização avançada do Data Mapper](/pt-pt/reference/workflow-steps/common/advanced-data-mapper-usage/) e a [referência de expressões](/pt-pt/reference/expressions/).
+
+<Aside type="tip">
+Quer uma demonstração de resultados para toda a empresa em vez de por departamento? Retire `departmentname` das colunas de destino e mantenha apenas `pnl_line` (Agrupar por) e `amount` (Soma).
+</Aside>
+
+## Passo 4: Ler Como um Profissional de Finanças
+
+Abra a tabela `intacct_pnl`. Para cada departamento, tem três números:
+
+| departmentname | pnl_line | amount |
+|---|---|---|
+| Operations | 1 - Revenue | 486,200.00 |
+| Operations | 2 - Cost of Goods Sold | -190,540.00 |
+| Operations | 3 - Operating Expenses | -212,880.00 |
+
+Leia diretamente a partir dela:
+
+- **Lucro bruto** = Receita + Custo das mercadorias vendidas (o CMV já é negativo) → `486,200 − 190,540 = 295,660`.
+- **Resultado líquido** = a soma das três linhas → `82,780`.
+- **Margem bruta %** = lucro bruto ÷ receita → ~61%.
+
+A primeira coisa a fazer é **reconciliar**: execute a própria demonstração de resultados do Intacct (Financial Reports) para o mesmo período e as mesmas entidades, e confirme que a receita e o resultado líquido coincidem. Se não coincidirem, quase sempre se trata de uma diferença de âmbito — uma entidade que não incluiu, um intervalo de contas que corta parte da demonstração de resultados, ou um desalinhamento de período. Só confie no pipeline depois de reconciliar.
+
+<Aside type="tip">
+Quer o layout clássico com o período na parte superior? Adicione um [passo Table Pivot](/pt-pt/reference/workflow-steps/tables/table-pivot/) a ler `intacct_pnl`: transforme o período em colunas, mantenha `pnl_line` como linha e some `amount`. Para ter uma coluna de período logo à partida, adicione `end_date` como coluna de **Agrupar por** no Passo 3. Obtém a evolução mês a mês de relance, sem SQL.
+</Aside>
+
+## Passo 5: Colocá-lo num Painel de Controlo
+
+Os números numa tabela servem, mas um gráfico é o que se envia ao diretor financeiro. [Publique](/pt-pt/get-started/tutorials/load-and-transform-data/#passo-7-publicar-o-resultado) `intacct_pnl` e siga depois [Criar um painel de controlo](/pt-pt/get-started/tutorials/build-a-dashboard/) para adicionar:
+
+- um **gráfico de barras** do resultado líquido (ou da receita) por `departmentname`, e
+- um **gráfico de barras** de cada `pnl_line` para que a combinação receita / CMV / gastos operacionais fique visível de relance.
+
+Fica com um painel de controlo financeiro do Sage Intacct em direto — sem exportações, atualizado sempre que o fluxo de trabalho é executado.
+
+## Passo 6: Agendar a Atualização
+
+<Steps>
+
+1. Execute o fluxo de trabalho completo uma vez, do início ao fim, para confirmar que todos os passos estão a verde.
+2. [Agende o fluxo de trabalho](/pt-pt/get-started/tutorials/schedule-a-workflow/) — mensalmente, no ritmo do fecho, ou semanalmente se quiser os números atualizados ao longo do mês.
+
+</Steps>
+
+Como a extração substitui a tabela inteira, cada execução volta a ler os saldos para o intervalo de datas e de contas que definiu — limite-os à janela de que precisa (o período em curso, as suas contas de demonstração de resultados) em vez de todo o histórico.
+
+## Passo 7: Adicionar um Indicador por Funcionário com Contas Estatísticas
+
+O Intacct acompanha também **contas estatísticas** não monetárias — número de funcionários, metros quadrados, unidades — a par do seu plano de contas financeiro. Extraia-as com um segundo passo **Importar Sage** em modo estatístico e depois junte-as à demonstração de resultados para ler um indicador como os gastos operacionais por funcionário, por departamento. Mais três passos padrão, ainda sem SQL.
+
+<Steps>
+
+1. Adicione um segundo passo **Importar Sage**. Na respetiva configuração, defina:
+
+   | Campo | Valor |
+   |---|---|
+   | **Ligação** | a sua ligação ao Sage Intacct |
+   | **Empresa** | a empresa do Intacct de onde ler |
+   | **Data de início** / **Data de fim** | o mesmo período do Passo 2 |
+   | **Estatístico** | **Apenas estatístico** |
+   | **Conta inicial** / **Conta final** | `0000` a `9999` — não há garantia de que as contas estatísticas se enquadrem na numeração do seu plano de contas financeiro, por isso extraia o intervalo completo em vez do intervalo da demonstração de resultados do Passo 2 |
+   | **Entidades** | as suas entidades operacionais, por exemplo `201`, `301` |
+   | **Dimensões** | **Departamento** — a dimensão por que está a reportar por funcionário |
+
+2. Defina o **Destino** como uma nova tabela com o nome `intacct_statistics`.
+
+3. Execute o passo. Obtém uma linha por conta estatística e por departamento, com `endbalance` a conter a própria estatística — por exemplo, o número de funcionários desse departamento no final do período.
+
+</Steps>
+
+Agora traga o número de funcionários para a demonstração de resultados e divida — mas não diretamente a partir de `intacct_statistics`. Essa tabela tem uma linha *por conta estatística e por departamento* (número de funcionários, metros quadrados, unidades, o que acompanhar), pelo que uma junção apenas por `departmentname` multiplicaria cada linha da demonstração de resultados uma vez por cada conta estatística desse departamento, e `amount_per_head` dividiria por qualquer conta estatística que calhasse estar na linha. Filtre primeiro pelo número de funcionários para que a junção tenha uma linha por departamento e o rácio faça realmente sentido.
+
+<Steps>
+
+1. Adicione um passo **Table Extract**. Defina a **Origem** como `intacct_statistics` e o **Destino** como uma nova tabela, `intacct_headcount`. Em **Seleção de dados da tabela**, propague todas as colunas sem alterações — aqui não é necessária agregação. No separador **Filtros de dados**, adicione um filtro **Selecionar subconjunto de dados** sobre os dados de origem: `intacct_statistics.glaccountno == '9000'` — substitua `9000` pelo número da sua própria conta estatística de número de funcionários (filtre pela coluna do nome da conta se for isso que a sua extração devolve; `glaccountno` continua a ser texto, por isso compare-o com uma cadeia entre aspas). Execute o passo — `intacct_headcount` tem agora exatamente uma linha por departamento.
+
+2. Adicione um [passo Table Outer Join](/pt-pt/reference/workflow-steps/tables/table-outer-join/). Defina a **Tabela 1** como `intacct_pnl` e a **Tabela 2** como `intacct_headcount` e junte por `departmentname` — agora uma correspondência 1:1 limpa por departamento. Deixe o **Tipo de junção** no valor predefinido **Junção à esquerda** — todas as linhas da demonstração de resultados são mantidas, com o número de funcionários preenchido onde o departamento corresponde. Defina como destino uma nova tabela, `intacct_pnl_with_headcount`, e propague todas as colunas de ambas as tabelas.
+
+3. Execute o passo e adicione depois um passo **Table Extract** a ler `intacct_pnl_with_headcount` e com destino numa nova tabela, `intacct_pnl_per_head`. Em **Seleção de dados da tabela**, propague as colunas existentes e adicione mais uma coluna de destino: `amount_per_head`, uma **expressão** `intacct_pnl_with_headcount.amount / func.to_float64(intacct_pnl_with_headcount.endbalance)`, tipo **Moeda**.
+
+4. Execute o passo.
+
+</Steps>
+
+Leia o `amount_per_head` da linha **`3 - Operating Expenses`** para obter os gastos operacionais por funcionário, por departamento — a mesma leitura do Passo 4, uma coluna mais fundo. Adicione-o ao painel de controlo a par da demonstração de resultados ou inclua-o no agendamento do Passo 6 para que se atualize com tudo o resto.
+
+## O Que Construiu
+
+Partindo de um fluxo de trabalho vazio, extraiu saldos de contas do Sage Intacct em direto, transformou-os numa **demonstração de resultados por departamento** com um único passo de transformação padrão, juntou contas estatísticas para obter um indicador por funcionário — sem SQL em todo o pipeline —, colocou-o num painel de controlo e configurou-o para se atualizar — o ciclo de relatórios essencial de uma equipa financeira, agora automatizado.
+
+## Para Onde Ir a Seguir
+
+- [Ligar ao Sage Intacct](/pt-pt/guides/connections/sage-intacct/) — configuração da ligação e os restantes passos de importação do Sage (faturas AP, linhas AP, consultas ad hoc de objetos).
+- [Importar consulta Sage Intacct](/pt-pt/reference/workflow-steps/sage-intacct/import-intacct-query/) — extraia qualquer objeto do Intacct (contas do razão geral, clientes, projetos) para enriquecer as suas demonstrações.
+- [Passo Table Extract](/pt-pt/reference/workflow-steps/tables/table-extract/) e [Utilização avançada do Data Mapper](/pt-pt/reference/workflow-steps/common/advanced-data-mapper-usage/) — agrupamento, filtragem e colunas calculadas para uma análise mais aprofundada.
+- [Conceber uma hierarquia de dimensão](/pt-pt/get-started/tutorials/design-a-dimension/) — agregue o seu plano de contas em grupos de relatório que controla.

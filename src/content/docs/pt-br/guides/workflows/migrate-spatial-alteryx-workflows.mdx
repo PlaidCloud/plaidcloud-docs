@@ -1,0 +1,122 @@
+---
+title: Migrar fluxos de trabalho espaciais do Alteryx
+description: Empacote as dependências espaciais, importe um fluxo de trabalho espacial do Alteryx e valide a geometria convertida em relação às saídas originais.
+sidebar:
+  order: 37
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/migrate-spatial-alteryx-workflows.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+O PlaidCloud converte fluxos de trabalho espaciais do Alteryx em fluxos de trabalho avançados criados a partir de
+[etapas geoespaciais](/pt-br/reference/workflow-steps/spatial/). Todas as ferramentas da paleta
+Spatial do Alteryx têm um caminho de conversão — a
+[tabela de cobertura das ferramentas espaciais](/pt-br/reference/alteryx-conversion-matrix/#cobertura-das-ferramentas-espaciais)
+lista cada uma delas, junto com as lacunas conhecidas.
+
+Este guia aborda a parte prática: empacotar os arquivos, executar a importação e
+validar o resultado. Para saber o que as etapas fazem depois de convertidas, consulte
+[Análise geoespacial](/pt-br/guides/workflows/geospatial-analytics/).
+
+## Empacotar as entradas espaciais
+
+Reúna todas as dependências espaciais antes de importar. Um fluxo de trabalho convertido só pode
+ler os arquivos que você levou junto com ele.
+
+- Grupos de shapefile: `.shp` com `.shx`, `.dbf` e `.prj`.
+- Grupos do MapInfo: `.tab` com `.map`, `.id` e `.dat`.
+- Arquivos KML e GeoJSON.
+- Tabelas de consulta que relacionam registros espaciais e não espaciais.
+- As saídas espaciais esperadas, para validação.
+
+Mantenha os arquivos auxiliares de cada grupo na mesma pasta do arquivo principal —
+a etapa [Importar arquivo espacial](/pt-br/reference/workflow-steps/spatial/spatial-file-import/)
+os lê a partir dessa pasta.
+
+<Aside type="caution" title="O GeoFile .geo não é convertido">
+  O formato binário proprietário `.geo` do Alteryx não pode ser lido. A conversão
+  falha de forma segura nesse caso, em vez de gerar uma importação que falharia
+  durante a execução. Reexporte essas camadas como shapefile ou GeoJSON antes de importar.
+</Aside>
+
+## Como as ferramentas espaciais são convertidas
+
+A conversão escolhe o caminho mais simples que produz a resposta correta, e esse
+caminho determina como a etapa escala.
+
+**Caminho do banco de dados (SQL).** Create Points e Distance viram
+[expressões de Table Extract](/pt-br/reference/workflow-steps/spatial/spatial-sql-recipes/) (etapa);
+Spatial Match e Find Nearest viram as etapas
+[Correspondência espacial](/pt-br/reference/workflow-steps/spatial/spatial-match/) e
+[Spatial Find Nearest](/pt-br/reference/workflow-steps/spatial/spatial-find-nearest/) (etapa).
+Elas são executadas inteiramente no data warehouse, portanto escalam com o tamanho da tabela.
+
+**Caminho do mecanismo de fluxo de trabalho.** Tudo o que remodela a geometria — Buffer, Trade
+Area, Generalize, Smooth, Process, Poly-Build, Poly-Split, Make Grid, Combine,
+Spatial Info e a importação de arquivo espacial — é executado no mecanismo de fluxo de trabalho
+com Shapely e GDAL, porque esse trabalho não pode ser expresso em SQL de banco de dados.
+
+**Relatórios.** Map e Report Map viram etapas
+[Report Map](/pt-br/reference/workflow-steps/reports/report-map/) (etapa); as macros empacotadas Heat Map
+e Pie Wedge Trade Area viram
+[etapas de macro empacotada](/pt-br/reference/workflow-steps/macros/).
+
+Cada etapa convertida é um tipo de etapa nativo que você pode abrir, editar e recriar
+manualmente. Make Grid e Poly-Split são a exceção: elas são convertidas e executadas, mas
+por enquanto são configuradas pela API ou pelo MCP, e não por um formulário do designer. Consulte
+[Pré-requisitos espaciais conhecidos](/pt-br/reference/alteryx-conversion-matrix/#pré-requisitos-espaciais-conhecidos)
+para ver os pré-requisitos de entrada das ferramentas espaciais.
+
+## Validar a geometria
+
+Para a paridade da saída espacial, compare:
+
+1. Esquema de saída.
+2. Contagem de linhas.
+3. Valores dos campos de chave.
+4. Valores de geometria ou medições derivadas da geometria.
+5. Comportamento do sistema de referência de coordenadas.
+6. Distâncias, áreas e geometria simplificada, dentro de uma tolerância aceita.
+
+A ordem das linhas não precisa coincidir, a menos que o fluxo de trabalho dependa dela.
+
+<Aside type="note" title="Áreas e comprimentos podem diferir — em geral para melhor">
+  A etapa [Spatial Info](/pt-br/reference/workflow-steps/spatial/spatial-info/) mede
+  de forma geodésica no esferoide WGS84. Se você estiver comparando com uma
+  medição planar, espere uma diferença de aproximadamente 25% nas latitudes dos EUA; o valor
+  geodésico é o que corresponde ao Alteryx.
+</Aside>
+
+## Validar os artefatos espaciais
+
+Para mapas e mapas de relatório, confirme:
+
+1. As camadas do mapa contêm os registros esperados.
+2. Os rótulos e os recursos agrupados estão corretos.
+3. Limites, pontos e polígonos aparecem nos locais esperados.
+4. O artefato pode ser usado pelos revisores a jusante.
+5. Qualquer diferença intencional de artefato nativo da nuvem está registrada.
+
+Os renderizadores de relatório são uma aproximação da saída do Alteryx — valide a tabela
+por trás de um mapa antes de comparar o layout visual.
+
+## Problemas espaciais comuns
+
+| Sintoma | Verificação |
+| --- | --- |
+| A importação gera linhas com geometria vazia | Os arquivos auxiliares estão na mesma pasta |
+| As coordenadas caem no lugar errado | O arquivo de projeção (`.prj`) está presente; as coordenadas do Create Points são longitude/latitude em ponto flutuante ou inteiros (×1.000.000) — coordenadas projetadas precisam ser reprojetadas para WGS84 antes, a montante |
+| Áreas ou comprimentos diferem do original | Medição planar versus geodésica, conforme a observação acima |
+| Falta uma coluna do Spatial Info | A medida é a [chave de Peano](/pt-br/reference/alteryx-conversion-matrix/#pré-requisitos-espaciais-conhecidos), a única medida sem especificação pública; a conversão a indica em uma observação |
+| As áreas de influência têm o tamanho errado | O dimensionamento por tempo de deslocamento não é convertido — apenas o raio fixo |
+| Uma etapa Find Nearest recusa a distância | A etapa de distância mais próxima mede apenas em milhas, quilômetros, metros ou pés; jardas, milhas náuticas e tempo de deslocamento são recusados, assim como uma distância máxima que não seja um número |
+| Uma ferramenta espacial recusa a conversão e se identifica | O Geocoder não tem equivalente no PlaidCloud — ele exige um serviço de geocodificação e dados de referência que a plataforma não inclui; a recusa informa qual ferramenta e o motivo |
+| As contagens de linhas diferem | Os mesmos dados de origem foram usados nas duas execuções |
+
+## Guias relacionados
+
+- [Análise geoespacial](/pt-br/guides/workflows/geospatial-analytics/)
+- [Etapas geoespaciais](/pt-br/reference/workflow-steps/spatial/)
+- [Empacotar dependências do Alteryx](/pt-br/guides/workflows/package-alteryx-dependencies/)
+- [Validar relatórios e artefatos do Alteryx](/pt-br/guides/workflows/validate-alteryx-reports-and-artifacts/)
+- [Matriz de conversão do Alteryx](/pt-br/reference/alteryx-conversion-matrix/)

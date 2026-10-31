@@ -1,0 +1,139 @@
+---
+title: Cargar, transformar y publicar datos
+description: "Tutorial de principio a fin: importe un CSV, límpielo con pasos de tabla y publique el resultado para los consumidores posteriores."
+sidebar:
+  order: 1
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/load-and-transform-data.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Este tutorial dura aproximadamente una hora. Al final tendrá un flujo de trabajo funcional que importa un CSV, lo transforma mediante unos cuantos pasos de tabla y publica el resultado.
+
+## Qué construirá
+
+Un flujo de trabajo que toma un CSV de ventas sin procesar, lo limpia, lo combina con una tabla de referencia de productos, calcula columnas derivadas y publica el resultado como una tabla de hechos limpia.
+
+```text
+sales.csv  →  import  →  filter  →  join with products  →  add columns  →  publish
+                              ↓
+                       products.csv  →  import
+```
+
+## Requisitos previos
+
+- Un espacio de trabajo de PlaidCloud ([inicie una prueba gratuita](https://app.plaidcloud.com) si no tiene uno)
+- Un proyecto en el que trabajar (cree uno desde la pestaña **Proyectos** si es necesario)
+- Dos archivos CSV para importar: en este tutorial usaremos un archivo sencillo de transacciones de ventas y un archivo de catálogo de productos. Puede usar los suyos o generar datos de ejemplo con cualquier herramienta de hojas de cálculo
+
+## Paso 1: cree el flujo de trabajo
+
+<Steps>
+
+1. Abra su proyecto y cambie a la pestaña **Flujos de trabajo**.
+2. Haga clic en **Flujo de trabajo nuevo**. Asígnele un nombre descriptivo como “Sales Cleanup”.
+3. Haga clic en **Crear**. El flujo de trabajo vacío aparece en su lista.
+4. Haga doble clic en el flujo de trabajo para abrir el Workflow Explorer.
+
+</Steps>
+
+## Paso 2: importe el CSV de ventas
+
+<Steps>
+
+1. En el Workflow Explorer, agregue un paso nuevo.
+2. Elija **Import → CSV** (o el paso de importación que corresponda al formato de su origen).
+3. En la configuración del paso:
+   - **Archivo de origen**: indique su CSV de ventas (cárguelo o selecciónelo desde una cuenta de documentos conectada)
+   - **Tabla de destino**: asígnele el nombre `sales_raw`
+   - **Delimiter, quote character, header row**: ajústelos si su archivo no es estándar
+4. Ejecute el paso. El CSV se carga como una tabla nueva en su proyecto.
+
+</Steps>
+
+Revise la pestaña **Tablas** para ver `sales_raw`. Entre en ella para verificar que los datos se vean correctos: cantidad de columnas, filas de muestra, tipos de datos.
+
+## Paso 3: importe el catálogo de productos
+
+Repita el paso 2 con su CSV de productos, usando como destino una tabla llamada `products_raw`. Así tendrá las dos tablas de referencia necesarias para la combinación.
+
+## Paso 4: filtre las filas incorrectas
+
+Los datos de ventas reales tienen huecos: importes nulos, transacciones de prueba, reembolsos que no desea en la tabla de hechos principal. Agregue un paso de filtro para quitarlos.
+
+<Steps>
+
+1. Agregue un paso **Tables → Table Lookup** (o cualquier transformación de tabla que le permita filtrar).
+2. Configure:
+   - **Tabla de origen**: `sales_raw`
+   - **Tabla de destino**: `sales_clean`
+   - **Filter conditions**: por ejemplo, `amount > 0 AND status = 'completed'`
+3. Ejecute el paso. `sales_clean` debería tener menos filas que `sales_raw`.
+
+</Steps>
+
+<Aside>
+Los filtros se aplican a medida que los datos fluyen del origen al destino. La tabla de origen no cambia. Este es un patrón fundamental de PlaidCloud: cada paso lee de uno o más orígenes y escribe en uno o más destinos, dejando intactos los originales para fines de auditoría.
+</Aside>
+
+## Paso 5: combine con el catálogo de productos
+
+Ahora combine las filas de ventas limpias con los detalles de producto del catálogo.
+
+<Steps>
+
+1. Agregue un paso **Tables → Table Inner Join**.
+2. Configure:
+   - **Tabla izquierda**: `sales_clean`
+   - **Tabla derecha**: `products_raw`
+   - **Join keys**: la columna que vincula las dos tablas (por ejemplo, `product_id`)
+   - **Tabla de destino**: `sales_enriched`
+3. Ejecute el paso.
+
+</Steps>
+
+`sales_enriched` ahora tiene todas las columnas de ambas tablas. Probablemente quiera un subconjunto; eso viene a continuación.
+
+## Paso 6: seleccione y calcule columnas
+
+Limpiar normalmente implica descartar las columnas que no necesita y calcular otras derivadas. Agregue otro paso de tabla:
+
+<Steps>
+
+1. Agregue un paso **Tables → Table Lookup** (usado aquí para seleccionar y calcular columnas).
+2. Configure:
+   - **Origen**: `sales_enriched`
+   - **Destino**: `sales_final`
+   - **Columns to keep**: el subconjunto que importa a los consumidores posteriores
+   - **Computed columns**: por ejemplo, `revenue = amount * price`, `margin = revenue - cost`
+3. Ejecute el paso.
+
+</Steps>
+
+Para los cálculos a nivel de columna, la [referencia de expresiones](/es/reference/expressions/) cubre todas las funciones disponibles: operaciones con cadenas, aritmética de fechas, lógica condicional, agregaciones.
+
+## Paso 7: publique el resultado
+
+Haga que `sales_final` esté disponible para los paneles de control y los sistemas posteriores.
+
+<Steps>
+
+1. Agregue un paso **Data → Publish** (o use directamente la opción **Publicar** de la tabla).
+2. Configure quién puede leer la tabla publicada: normalmente, los demás miembros del espacio de trabajo y cualquier sistema externo que tenga acceso.
+3. Ejecute el paso.
+
+</Steps>
+
+La tabla publicada ahora está al alcance de los [paneles de control](/es/guides/dashboards/), las herramientas de BI y cualquier consumidor externo con los permisos adecuados.
+
+## Paso 8: ejecute todo el flujo de trabajo
+
+Haga clic en **Ejecutar** sobre el flujo de trabajo (no solo sobre un paso). Observe el registro mientras cada paso se ejecuta en orden. La canalización completa se ejecuta desde la importación del CSV hasta la publicación.
+
+Si algún paso da error, la guía [Administración de errores de pasos](/es/guides/workflows/managing-step-errors/) explica la depuración; los problemas más comunes son claves de combinación incorrectas (discrepancia entre tablas) y valores nulos inesperados en columnas calculadas.
+
+## Qué sigue
+
+- [Construya un modelo de asignación](/es/get-started/tutorials/build-an-allocation/): reparta costos entre consumidores usando datos de inductores
+- [Guía de flujos de trabajo](/es/guides/workflows/): manejo de errores, condiciones, bucles, variables
+- [Referencia de pasos de flujo de trabajo](/es/reference/workflow-steps/): todos los tipos de paso y lo que hace cada uno

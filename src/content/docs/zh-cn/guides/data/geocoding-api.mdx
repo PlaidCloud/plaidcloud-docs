@@ -1,0 +1,251 @@
+---
+title: 从 Google 或 Mapbox 地理编码迁移
+description: 将 Google Geocoding API 或 Mapbox Geocoding 集成迁移到 PlaidCloud 的 REST 地理编码端点，涵盖端点映射、响应信封、location_type 对应关系、身份验证、速率限制以及如实说明的覆盖范围限制。
+sidebar:
+  label: 地理编码 API
+  order: 10
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/data/geocoding-api.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud 在 `/rest/v1/analyze/geocode` 下以 REST 端点的形式提供正向地理编码、结构化地理编码、反向地理编码、自动补全和地点查找。这些端点代理 PlaidCloud 的地理编码服务，该服务基于权威的开放屋顶级地址和行政区划数据构建（包括遵循 ODbL 协议的 OpenStreetMap），并将每条结果包装在一个小型 `plaidcloud` 信封中，调用方无需直接解析服务的内部字段，即可了解匹配的精确程度。
+
+本指南面向正在将现有 Google Geocoding API 或 Mapbox Geocoding 集成迁移到 PlaidCloud 的用户，介绍请求结构中高度对应的部分，以及不对应的部分。
+
+<Aside type="caution" title="迁移前请先阅读">
+PlaidCloud 的地理编码器基于开放地理空间数据构建，数据来自权威的屋顶级地址和行政区划来源（包括 OpenStreetMap（ODbL）），而非获得许可的商业数据集。它并不能直接替代 Google 或 Mapbox 的所有使用场景。在将其用于任何对地址准确性要求严格的场景之前，请先参阅[覆盖范围与确定性](#覆盖范围与确定性请先阅读)。
+</Aside>
+
+## 身份验证与授权
+
+每次地理编码调用都需要：
+
+- 具有 **`analyze.table.read`** 角色的常规 PlaidCloud 会话或持有者令牌，该角色同样用于控制对项目数据的其他读取访问。没有专用于地理编码的角色。
+- 您的套餐包含地理编码，即您的租户已启用地理编码授权。套餐不包含该功能的租户，每次调用都会收到 `403`。
+
+## 速率限制
+
+地理编码端点的上限高于 PlaidCloud 默认的 REST 速率限制：**每个调用 IP 每分钟 1,200 个请求**，而大多数其他 `/rest/v1` 端点为每分钟 600 个。超出上限将返回 `429`，并附带 `Retry-After: 60` 标头。
+
+地理编码服务前面没有按请求的缓存，每次调用都是实时应答。如果预计会重复查询，请在您自己一侧缓存结果。
+
+## 端点映射
+
+| 您当前的调用 | PlaidCloud 端点 | 备注 |
+|---|---|---|
+| Google Geocoding API（地址 → 坐标） | `GET /rest/v1/analyze/geocode/search` | 自由文本查询 |
+| Google Geocoding API（结构化组件） | `GET /rest/v1/analyze/geocode/search/structured` | 逐字段 |
+| Google Reverse Geocoding | `GET /rest/v1/analyze/geocode/reverse` | 坐标到地点 |
+| Google Places Autocomplete | `GET /rest/v1/analyze/geocode/autocomplete` | 输入时联想。出现问题时降级为返回空结果，而不是返回错误，请参阅[自动补全会降级，而不是报错](#自动补全会降级而不是报错) |
+| Google Place Details（`place_id` 查找） | `GET /rest/v1/analyze/geocode/place/{gid}` | `gid` **不是**像 `place_id` 那样的永久标识符，请参阅[覆盖范围与确定性](#覆盖范围与确定性请先阅读) |
+| Mapbox Geocoding API（正向） | `GET /rest/v1/analyze/geocode/search` 或 `/search/structured` | |
+| Mapbox Geocoding API（反向） | `GET /rest/v1/analyze/geocode/reverse` | |
+
+### `search`：自由文本正向地理编码
+
+| 查询参数 | 类型 | 备注 |
+|---|---|---|
+| `text` | 字符串，必需 | 1–300 个字符 |
+| `focus.point.lat`, `focus.point.lon` | 浮点数 | 软性排序偏向，而非筛选条件 |
+| `boundary.country` | 字符串 | 硬性筛选条件，以逗号分隔的 ISO alpha-2 国家/地区代码，最多 300 个字符 |
+| `layers` | 字符串 | 以逗号分隔的、用于限定范围的地理编码图层，最多 300 个字符 |
+| `size` | 整数 | 1–40，默认 10 |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&size=5
+```
+
+### `search/structured`：逐字段正向地理编码
+
+| 查询参数 | 类型 | 备注 |
+|---|---|---|
+| `address` | 字符串 | 门牌号 + 街道 |
+| `neighbourhood`, `borough`, `county` | 字符串 | |
+| `locality` | 字符串 | 城市 |
+| `region` | 字符串 | 州/省 |
+| `postalcode` | 字符串 | |
+| `country` | 字符串 | ISO alpha-2/3 代码或完整国家/地区名称 |
+| `size` | 整数 | 1–40，默认 10 |
+
+上述所有字段均为可选，每个字段最多 300 个字符。提供您拥有的所有字段即可，并不要求全部提供。
+
+```
+GET /rest/v1/analyze/geocode/search/structured?address=350+5th+Ave&locality=New+York&region=NY&country=US
+```
+
+### `reverse`：坐标到最近地点
+
+| 查询参数 | 类型 | 备注 |
+|---|---|---|
+| `point.lat` | 浮点数，必需 | -90 到 90 |
+| `point.lon` | 浮点数，必需 | -180 到 180 |
+| `size` | 整数 | 1–40，默认 1 |
+| `layers` | 字符串 | 以逗号分隔的地理编码图层，最多 300 个字符 |
+
+```
+GET /rest/v1/analyze/geocode/reverse?point.lat=40.7484&point.lon=-73.9857
+```
+
+### `autocomplete`：输入时联想
+
+| 查询参数 | 类型 | 备注 |
+|---|---|---|
+| `text` | 字符串，必需 | 1–300 个字符，部分查询内容 |
+| `focus.point.lat`, `focus.point.lon` | 浮点数 | 软性排序偏向 |
+| `layers` | 字符串 | 以逗号分隔的地理编码图层，最多 300 个字符 |
+
+```
+GET /rest/v1/analyze/geocode/autocomplete?text=350+5th
+```
+
+### `place/{gid}`：解析地点记录
+
+| 路径参数 | 类型 | 备注 |
+|---|---|---|
+| `gid` | 字符串，必需 | 1–300 个字符，来自地理编码服务的全局 ID，取自先前结果的 `properties.gid` |
+
+```
+GET /rest/v1/analyze/geocode/place/openstreetmap:venue:node/61785451
+```
+
+## `plaidcloud` 响应信封
+
+每个端点都会原样返回地理编码服务的 GeoJSON `FeatureCollection`，并增加一项内容：附加在**每个要素**上的 `plaidcloud` 对象。
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+      "properties": {
+        "gid": "openstreetmap:venue:node/61785451",
+        "layer": "venue",
+        "name": "Empire State Building",
+        "confidence": 0.94,
+        "accuracy": "point",
+        "label": "Empire State Building, New York, NY, USA"
+      },
+      "plaidcloud": {
+        "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+        "location_type": "geometric_center",
+        "confidence": 0.94,
+        "match_type": "exact"
+      }
+    }
+  ]
+}
+```
+
+`plaidcloud` 内的字段：
+
+| 字段 | 类型 | 备注 |
+|---|---|---|
+| `attribution` | 字符串 | 固定的 OSM ODbL 署名字符串，请参阅下方的[署名](#署名不可省略) |
+| `location_type` | 字符串 | 请参阅 [`location_type` 映射](#location_type-与-google-分类的对应关系) |
+| `confidence` | 浮点数或 `null` | 地理编码服务自身的原始置信度分数，原样传递，PlaidCloud 不会重新校准，也不会说明其取值范围 |
+| `match_type` | `"exact"` \| `"partial"` | **仅限 `search`。** 当 `confidence >= 0.9` 时为 `"exact"`，否则为 `"partial"`。`search/structured`、`reverse`、`autocomplete` 或 `place` 的响应中不存在该字段 |
+| `geohash` | 字符串 | 除非 `location_codes=none`，否则存在。请参阅下方的 [`location_codes`](#location_codesgeohash-和-plus-code) |
+| `plus_code` | 字符串 | 仅在 `location_codes=geohash+pluscode` 时存在。请参阅下方的 [`location_codes`](#location_codesgeohash-和-plus-code) |
+
+**零匹配的查询返回 `200`，而不是错误。** 当地理编码服务没有返回任何要素时，响应中包含一个**空的 `features` 数组**，以及一个**顶层** `plaidcloud` 对象，而不是各要素自带的对象：
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "none"
+  }
+}
+```
+
+### `location_type` 与 Google 分类的对应关系
+
+服务的 `layer` 和 `accuracy` 字段被归并为四个取值的 `location_type`，其设计与 Google Geocoding 自身的 `location_type` 枚举相对应：
+
+| PlaidCloud `location_type` | 含义 | 最接近的 Google 对应值 |
+|---|---|---|
+| `rooftop` | 具有精确坐标点的地址级匹配 | `ROOFTOP` |
+| `interpolated` | 沿街道路段插值得到的地址匹配，而非直接地理编码得到的点，**v1 中不返回**（尚未启用地址范围插值） | `RANGE_INTERPOLATED` |
+| `geometric_center` | 场所或 POI 的中心点（建筑物、商家） | `GEOMETRIC_CENTER` |
+| `approximate` | 任何更粗略的结果，包括地方、地区、国家/地区级别，或 PlaidCloud 未另行分类的图层 | `APPROXIMATE` |
+| `none` | 没有匹配的要素 | *（无 Google 对应值，Google 完全不返回结果，而不是返回带类型的空结果）* |
+
+这是一种有意设计的粗粒度四值映射，而不是对服务自身图层分类的完整复制。它足以让调用方判断应在多大程度上信任匹配的精确度，但并不是精度保证。
+
+### `location_codes`：geohash 和 Plus Code
+
+每个端点都接受 `location_codes` 查询参数，使您可以在原始坐标之外，为每个匹配项一并获取紧凑且可计算的位置代码：
+
+| 值 | 含义 |
+|---|---|
+| `geohash` | **默认。** 在每个要素的 `plaidcloud` 信封中添加 `geohash`。 |
+| `geohash+pluscode` | 同时添加 `geohash` 和 `plus_code`。 |
+| `none` | 两者都省略，信封中仅包含 `attribution`、`location_type`、`confidence`，以及（在 `search` 上）`match_type`。 |
+
+```
+GET /rest/v1/analyze/geocode/search?text=350+5th+Ave%2C+New+York&location_codes=geohash+pluscode
+```
+
+这两种代码都是根据要素自身的坐标在本地计算的，无需额外查找，也不依赖外部服务，**geohash 精度为 9**，**Plus Code 长度为 10**，与[地理编码工作流步骤](/zh-cn/guides/workflows/geospatial-analytics/#位置编码扩充)在默认设置下生成的结果一致，因此对同一坐标对，通过 REST 计算的值与通过工作流步骤计算的值相同。
+
+```json
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-73.9857, 40.7484] },
+  "properties": { "gid": "openstreetmap:venue:node/61785451", "name": "Empire State Building" },
+  "plaidcloud": {
+    "attribution": "Basemap and geocoding data © OpenStreetMap contributors, licensed under ODbL (https://www.openstreetmap.org/copyright).",
+    "location_type": "geometric_center",
+    "confidence": 0.94,
+    "match_type": "exact",
+    "geohash": "dr5rsjhzz",
+    "plus_code": "87G7PX7V+XX"
+  }
+}
+```
+
+`geohash` 是 geohash 字符串，`plus_code` 是 Open Location Code（Plus Code）。查询没有匹配任何要素时，两者均不存在，空结果上的顶层 `plaidcloud` 对象仅包含 `attribution` 和 `location_type: "none"`。
+
+### 署名不可省略
+
+此 API 背后的地理编码和底图数据包含 OpenStreetMap 数据，遵循**开放数据库许可协议（ODbL）**。ODbL 要求任何使用该数据的行为都必须注明 OpenStreetMap。**如果您向最终用户展示地理编码结果（无论是在地图上、地址列表中还是其他任何位置），都必须在结果旁边显示 `attribution` 字符串**（或等效的 OSM 署名）。这是作为数据使用方的您所承担的许可义务，而不是 PlaidCloud 的风格建议。
+
+## 错误
+
+| 状态 | 含义 |
+|---|---|
+| `403` | 缺少 `analyze.table.read` 角色，或您的套餐不包含地理编码授权 |
+| `404` | `place/{gid}` 未找到该 ID 对应的记录，或 `reverse` 遇到了地理编码服务自身返回 404 的坐标 |
+| `422` | 查询参数未通过验证，例如 `text` 超过 300 个字符，或 `point.lat` 超出范围 |
+| `429` | 超出速率限制，请参阅[速率限制](#速率限制) |
+| `503 geocoding_unavailable` | 无法连接地理编码服务、请求超时，或服务返回了错误 |
+
+此处的 `503` 有意设计为永远不会是原始的 `5xx`，也不会无限期挂起：代理对地理编码服务的每次调用都设置了有限的超时（几秒），因此上游缓慢或挂起时会迅速以 `503` 的形式暴露出来，而不会让您的请求一直处于打开状态。
+
+### 自动补全会降级，而不是报错
+
+`autocomplete` 是上述 `503` 行为的唯一例外。由于它在每次按键时都会触发，此处出现的暂时性上游故障会返回**带有空结果集的 `200`**（与真正的零匹配查询形态相同，即 `location_type: "none"`），而不是 `503`。如果您从 Google Places Autocomplete 迁移而来（后端故障会以错误形式出现，客户端代码会据此分支处理），请注意：仅凭状态码，无法区分 PlaidCloud 自动补全的这种情况与“没有建议”。无论哪种情况，请围绕空建议列表构建您的 UI，而不要依赖此处的错误路径。
+
+## 覆盖范围与确定性：请先阅读
+
+在将生产流量指向此 API 之前，请如实了解它是什么：
+
+- **它基于开放地理空间数据构建，而不是获得许可的商业地址数据集。** 覆盖质量取决于某一区域被这些开放来源覆盖的程度，在北美、欧洲和其他测绘完善的城市地区通常表现出色，其他地区则参差不齐。PlaidCloud 不按国家/地区发布覆盖范围保证。
+- **屋顶级精度因地区而异。** 在开放来源提供了直接地理编码的点的地方，您会得到真正的 `rooftop` 结果；没有的地方，则回退为较粗略的街道级或地方级匹配。v1 中未启用地址范围**插值**，因此不会用估算的点填补空白，所以在覆盖较差的区域之外，`approximate` 结果很常见。
+- **没有公寓/套房/单元级别的详细信息。** 不返回子场所信息，最高只能得到建筑物级或街道级精度。
+- **没有深层的行政层次结构。** 如果您习惯于 Google 的多级 `address_components`（子地区层级、`administrative_area_level_1/2/3` 等），请预期此处的细分层级更浅。
+- **`gid` 不是永久标识符。** Google 的 `place_id` 是稳定、长期有效的引用，可以存储并在数月或数年后重新解析。地理编码服务的 `gid` 没有这样的保证，请将其视为仅在一次会话或短期工作流期间有效，而不要把它当作指向您自身数据的持久外键。
+- **结果不保证随时间保持确定。** 此 API 背后的 OpenStreetMap 及其他开放来源在持续进行众包编辑，同一查询今天运行和三个月后再次运行，可能返回不同的结果、不同的 `gid` 或不同的排序，因为底层地图数据本身发生了变化。如果您的迁移计划假设能像带版本的商业数据集那样得到逐字节可重现的地理编码结果，此 API 无法提供。
+- **v1 中没有响应缓存。** 每次调用都针对当前的地理编码索引实时应答，目前没有可依赖的 ETag 或 cache-control 机制。
+
+这些并不意味着该 API 不适用。对于地址规范化、地图显示或一般性的位置查找，它是合适的选择。但如果您需要永久性的地点标识符、各处都有保证的屋顶级精度，或随时间推移逐位可重现的结果，它就是不合适的工具。
+
+## 相关内容
+
+- [REST 请求步骤](/zh-cn/guides/workflows/rest-request-step/)：从工作流中调用这些端点
+- [通用 REST 连接](/zh-cn/reference/connectors/rest/generic-rest/)：如果您更愿意将地理编码配置为已保存的连接

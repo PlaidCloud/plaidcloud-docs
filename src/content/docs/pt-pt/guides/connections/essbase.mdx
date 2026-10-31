@@ -1,0 +1,83 @@
+---
+title: Ligar ao Oracle Essbase
+description: Ligue o PlaidCloud ao Oracle Essbase 21c ou ao Oracle Analytics Cloud e execute uma consulta MDX em direto sobre um cubo ou carregue o esboço de uma dimensão para uma dimensão do PlaidCloud — diretamente na cloud, com etiquetas de membros determinísticas e um limite rígido para o tamanho da extração.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/essbase.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud ao Oracle **Essbase** (21c ou posterior, ou Oracle Analytics Cloud) para que um fluxo de trabalho possa executar uma consulta MDX em direto sobre um cubo ou carregar o esboço de uma dimensão como uma dimensão do PlaidCloud. A ligação chega à própria API REST do Essbase **diretamente na cloud** — não existe um caminho por agente local para estes passos. Este guia abrange a ligação, a execução de uma consulta, as opções que controlam os limites de linhas e a etiquetagem, e o carregamento de uma hierarquia de dimensão.
+
+<Aside type="note">
+Este conector é apenas de leitura: não há escrita de retorno no Essbase.
+</Aside>
+
+## Pré-requisitos
+
+Precisa, junto do administrador do Essbase, de:
+
+- A **origem do servidor Essbase**, por exemplo `https://your-host:9001` — sem o caminho final `/essbase/...`.
+- Uma **conta de serviço** — nome de utilizador e palavra-passe — com acesso de leitura às aplicações e aos cubos que os seus fluxos de trabalho vão consultar.
+
+## Criar a ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`.
+
+2. Escolha **Oracle Essbase** no menu.
+
+3. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nome | Um nome amigável, por exemplo `Essbase Prod`. |
+   | URL base | A origem do servidor Essbase, por exemplo `https://your-host:9001`. |
+   | Aplicação predefinida | Opcional. Pré-seleciona esta aplicação nos formulários dos passos. |
+   | Nome de utilizador | O nome de utilizador da conta de serviço. |
+   | Palavra-passe | A palavra-passe da conta de serviço. |
+   | Verificar SSL | Ativado por predefinição. Desative apenas para um anfitrião com um certificado autoassinado ou de outra forma não verificável. |
+
+4. Clique em `Test Connection`. Um teste bem-sucedido chega ao servidor Essbase, lista as aplicações que a conta de serviço consegue ver e indica quantas encontrou — confirmando o URL base e as credenciais antes de construir uma consulta.
+
+5. Clique em `Create`.
+
+</Steps>
+
+## Executar uma consulta
+
+<Steps>
+
+1. Adicione um passo **Essbase: Consultar cubo** a um fluxo de trabalho (encontra-se em **Oracle Essbase** no menu de passos).
+
+2. Em **Configuração**, defina **Ligação**, **Aplicação**, **Cubo (base de dados)** e uma **Tabela de destino**.
+
+3. Construa o **MDX**:
+
+   - **Seleção guiada de membros** — navegue pelas dimensões e membros do cubo e escolha o que vai para as colunas e para as linhas; o passo monta o MDX por si.
+   - **MDX direto** — escreva ou cole um `SELECT` MDX diretamente, para tudo o que o seletor guiado não cubra, como membros calculados ou operadores de conjuntos.
+
+4. Execute o passo. A grelha devolvida fica como tabela de destino, com colunas derivadas da própria grelha — não há esquema a declarar antecipadamente.
+
+</Steps>
+
+## Opções
+
+- **As etiquetas dos membros são determinísticas.** As etiquetas de coluna dos membros provêm da tabela de aliases configurada na ligação, aplicada de forma consistente em todas as execuções — e não da predefinição por sessão do próprio Essbase, que poderia mostrar texto de etiqueta diferente consoante quem tinha sessão iniciada quando a consulta foi executada.
+- **O Limite de linhas é, por predefinição, 250 000, e pode ser aumentado.** Um Limite de linhas não definido recorre a um limite de 250 000 linhas, e não a "ilimitado" — uma consulta que devolva mais linhas do que o limite efetivo é recusada, indicando a contagem e o limite, em vez de ser executada sem limites ou de truncar silenciosamente a grelha. Restrinja a consulta, ou aumente explicitamente o Limite de linhas, para fazer passar uma extração maior legítima.
+- **A supressão de zeros é opcional e implica perdas.** Suprimir células de valor zero é um filtro que ativa deliberadamente, e é destrutivo: descarta células que contêm um `0` genuinamente lançado, o que é diferente do marcador `#Missing` do próprio Essbase para uma célula sem qualquer dado. Num cubo de planeamento, um zero lançado tem significado — alguém o introduziu — pelo que suprimir zeros pode eliminar dados reais, e não apenas a ausência de dados. Deixe-a desativada, a menos que pretenda especificamente excluir zeros do resultado.
+
+## Carregar uma hierarquia de dimensão
+
+O passo [Essbase: Ler dimensão](/pt-pt/reference/workflow-steps/essbase/essbase-dimension-read/) lê o esboço de uma dimensão do Essbase e carrega-o na hierarquia principal de uma dimensão do PlaidCloud — diretamente na cloud, através da mesma ligação. É um passo separado do Essbase: Consultar cubo: lê a estrutura do esboço, não as células do cubo.
+
+O passo recusa, indicando o nome, tudo o que não consegue representar em vez de o carregar incorretamente: membros partilhados, membros apenas de etiqueta, membros Dynamic Calc, dimensões de atributo, um operador de consolidação diferente de `+`/`-` (o `*`, `/` e `%` do Essbase não têm equivalente no PlaidCloud) e um esboço com mais de 5000 membros no total. Consulte a [referência do passo](/pt-pt/reference/workflow-steps/essbase/essbase-dimension-read/#o-que-este-passo-não-consegue-representar) para a lista completa e o significado de cada recusa.
+
+## Relacionado
+
+- [Essbase: Consultar cubo](/pt-pt/reference/workflow-steps/essbase/essbase-query/) — referência de campos do passo.
+- [Essbase: Ler dimensão](/pt-pt/reference/workflow-steps/essbase/essbase-dimension-read/) — carregar o esboço de uma dimensão como uma dimensão do PlaidCloud.
+- [Conector Oracle Essbase](/pt-pt/reference/connectors/erp/oracle-essbase/) — referência de campos da ligação.
+- [Criar e gerir uma ligação](/pt-pt/guides/connections/create-connection/)

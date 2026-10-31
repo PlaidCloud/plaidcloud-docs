@@ -1,0 +1,116 @@
+---
+title: Junção SCD-2 em data de referência
+description: Junte uma tabela fato a uma tabela de histórico SCD-2, retornando a versão de cada registro de dados mestres que estava em vigor na data do fato.
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Junta uma tabela fato a uma tabela de histórico do [Construtor de mestre SCD-2](/pt-br/reference/workflow-steps/dimensions/scd2-master-builder/) e retorna, para cada linha de fato, a versão dos dados mestres que estava **em vigor na data daquele fato** — e não a versão que está atual agora.
+
+É assim que você atribui cada transação à região, ao centro de custo, ao responsável ou ao preço que valia *quando ela ocorreu*. É uma `LEFT JOIN`, portanto toda linha de fato é preservada: uma chave sem versão correspondente (chave desconhecida ou data anterior à primeira versão da chave) retorna com colunas transportadas nulas, em vez de ser descartada.
+
+## Tabelas
+
+### Tabela fato
+
+As linhas que você quer enriquecer — transações, pedidos, eventos. Cada linha traz uma chave de negócio e uma data.
+
+### Tabela SCD-2
+
+Uma tabela de histórico produzida pelo [Construtor de mestre SCD-2](/pt-br/reference/workflow-steps/dimensions/scd2-master-builder/), com `valid_from`, `valid_to` e `is_current` ao lado dos atributos rastreados.
+
+### Tabela de saída
+
+Onde as linhas de fato enriquecidas são gravadas. Deve ser uma tabela, não uma visão. Todas as colunas originais do fato passam sem alteração; as colunas de dados mestres transportadas são anexadas.
+
+## Data de referência e opções
+
+A **data de referência** é o ponto no tempo em que cada linha de fato é resolvida. Informe-a de exatamente uma de duas maneiras:
+
+- **Coluna de data de referência do fato** — uma coluna de data na tabela fato (por exemplo, `txn_date`). Cada linha é resolvida na própria data.
+- **Data de referência literal** — uma única data `YYYY-MM-DD`, ou uma variável de fluxo de trabalho como `{report_date}`, aplicada a todas as linhas de fato (resolve a tabela fato inteira em uma única data de relatório). Uma variável é preenchida quando a etapa é executada.
+
+<Aside type="caution">Escolha uma, não ambas. Salvar a etapa é recusado quando ela especifica uma coluna do fato *e* uma data literal, ou nenhuma das duas, e a execução também é recusada.</Aside>
+
+As opções de renomeação evitam colisões quando uma coluna transportada tem o mesmo nome de uma coluna do fato:
+
+- **Prefixo transportado** / **Sufixo transportado** — adicionados ao nome de saída de cada coluna transportada (`prefix` + coluna + `suffix`). Se uma coluna transportada ainda colidir com uma coluna do fato ou com outra coluna transportada depois da renomeação, a execução falha em vez de sobrescrever silenciosamente.
+
+## Funções das colunas
+
+Use **Inspecionar SCD-2** para listar as colunas da tabela SCD-2 e depois marque cada coluna:
+
+| Função | Significado |
+|---|---|
+| **Chave de negócio** | A chave que liga o fato ao histórico (por exemplo, `customer_id`). Deve corresponder às colunas de chave do fato. É obrigatória pelo menos uma. |
+| **Coluna transportada** | Um atributo a ser levado para a linha do fato (por exemplo, `region`). É obrigatória pelo menos uma. |
+| **(ignorar)** | As colunas sem marcação não são transportadas. |
+
+## O que é verificado ao salvar
+
+Salvar a etapa é recusado, com uma mensagem que indica a coluna ou a data, quando:
+
+- Uma coluna é marcada como Chave de negócio, ou como Coluna transportada, mais de uma vez — *'region' is tagged as a Carry Column more than once.*
+- Uma coluna é ao mesmo tempo Chave de negócio e Coluna transportada — *customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- A **Data de referência literal** não é uma data real no formato `YYYY-MM-DD` — *The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* Uma data que indica uma variável de fluxo de trabalho é verificada quando a execução a preenche.
+
+## O limite semiaberto
+
+Uma linha de fato corresponde à única versão do histórico cujo intervalo contém a sua data de referência, usando uma comparação **semiaberta**:
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+O limite inferior é inclusivo e o superior é exclusivo. Isso importa no dia limite:
+
+- `as_of == valid_from` → **corresponde** a essa versão (ela entra em vigor na data de início).
+- `as_of == valid_to` → **não corresponde** a essa versão; cai na versão seguinte, cujo `valid_from` é igual a este `valid_to`.
+
+Como o [Construtor de mestre SCD-2](/pt-br/reference/workflow-steps/dimensions/scd2-master-builder/) grava versões consecutivas de modo que o `valid_to` de uma seja o `valid_from` da seguinte, toda data corresponde a exatamente uma versão — sem lacunas e sem sobreposições. Uma alteração datada de `2026-04-01` significa que o novo valor vale *a partir de* 1º de abril; uma transação em 31 de março continua recebendo o valor antigo.
+
+<Aside type="note">As linhas abertas (atuais) trazem a data alta sentinela `9999-12-31` em `valid_to`. Se alguma linha aberta tiver `valid_to` nulo, a etapa a trata como aberta (por meio da mesma sentinela), de modo que a versão atual nunca seja perdida silenciosamente.</Aside>
+
+## Exemplo prático
+
+Continuando a partir do [Construtor de mestre SCD-2](/pt-br/reference/workflow-steps/dimensions/scd2-master-builder/), atribua cada transação à região em vigor na sua data.
+
+**`customer_scd2` (a tabela de histórico):**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (a tabela fato):**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Configuração: **Tabela fato** = `transactions`, **Tabela SCD-2** = `customer_scd2`, **Tabela de saída** = `transactions_by_region`, **Coluna de data de referência do fato** = `txn_date`, Chave de negócio = `customer_id`, Coluna transportada = `region`.
+
+**`transactions_by_region`:**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(nulo)* |
+
+Observe o limite: **T2, em 2026-04-01, é resolvida como Central**, porque o intervalo semiaberto faz de 1º de abril o primeiro dia da versão Central, e não o último dia de West. **A chave `C9` de T4 é desconhecida**, por isso a linha é mantida com região nula em vez de ser descartada.
+
+## Relacionados
+
+- [Construtor de mestre SCD-2](/pt-br/reference/workflow-steps/dimensions/scd2-master-builder/) — crie a tabela de histórico que esta etapa lê.
+- [Dimension Load](/pt-br/reference/workflow-steps/dimensions/dimension-load/) — carregue uma hierarquia a partir de uma tabela.

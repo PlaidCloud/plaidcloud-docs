@@ -1,0 +1,116 @@
+---
+title: SCD-2-As-of-Join
+description: Verknüpft eine Faktentabelle mit einer SCD-2-Verlaufstabelle und liefert die Version jedes Stammdatensatzes, die am Datum des Fakts gültig war.
+sidebar:
+  order: 7
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/dimensions/scd2-asof-join.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Verknüpft eine Faktentabelle mit einer Verlaufstabelle des [SCD-2-Stammdaten-Builders](/de/reference/workflow-steps/dimensions/scd2-master-builder/) und liefert für jede Faktenzeile die Stammdatenversion, die **am Datum dieses Fakts gültig war** – nicht die Version, die jetzt aktuell ist.
+
+So ordnen Sie jede Transaktion der Region, der Kostenstelle, dem Verantwortlichen oder dem Preis zu, die galten, *als sie stattfand*. Es handelt sich um einen `LEFT JOIN`, sodass jede Faktenzeile erhalten bleibt: Ein Schlüssel ohne passende Version (unbekannter Schlüssel oder ein Datum vor der ersten Version des Schlüssels) liefert Übernahmespalten mit Nullwerten, statt verworfen zu werden.
+
+## Tabellen
+
+### Faktentabelle
+
+Die Zeilen, die Sie anreichern möchten – Transaktionen, Aufträge, Ereignisse. Jede Zeile enthält einen Geschäftsschlüssel und ein Datum.
+
+### SCD-2-Tabelle
+
+Eine vom [SCD-2-Stammdaten-Builder](/de/reference/workflow-steps/dimensions/scd2-master-builder/) erzeugte Verlaufstabelle, die neben den verfolgten Attributen `valid_from`, `valid_to` und `is_current` enthält.
+
+### Ausgabetabelle
+
+Hierhin werden die angereicherten Faktenzeilen geschrieben. Dies muss eine Tabelle sein, keine Ansicht. Jede ursprüngliche Faktenspalte wird unverändert durchgereicht; die übernommenen Stammdatenspalten werden angehängt.
+
+## Stichtag und Optionen
+
+Der **Stichtag** ist der Zeitpunkt, zu dem jede Faktenzeile aufgelöst wird. Geben Sie ihn auf genau eine von zwei Arten an:
+
+- **Stichtagsspalte der Fakten** – eine Datumsspalte in der Faktentabelle (z. B. `txn_date`). Jede Zeile wird zu ihrem eigenen Datum aufgelöst.
+- **Fester Stichtag** – ein einzelnes Datum im Format `YYYY-MM-DD` oder eine Workflow-Variable wie `{report_date}`, das bzw. die auf jede Faktenzeile angewendet wird (die gesamte Faktentabelle wird zu einem Berichtsdatum aufgelöst). Eine Variable wird beim Ausführen des Schritts eingesetzt.
+
+<Aside type="caution">Wählen Sie eines von beiden, nicht beide. Das Speichern des Schritts wird abgewiesen, wenn er eine Faktenspalte *und* ein festes Datum oder keines von beiden angibt – ebenso eine Ausführung.</Aside>
+
+Umbenennungsoptionen vermeiden Kollisionen, wenn eine übernommene Spalte denselben Namen wie eine Faktenspalte trägt:
+
+- **Übernahmepräfix** / **Übernahmesuffix** – werden dem Ausgabenamen jeder übernommenen Spalte hinzugefügt (`prefix` + Spalte + `suffix`). Kollidiert eine übernommene Spalte nach dem Umbenennen immer noch mit einer Faktenspalte oder einer anderen übernommenen Spalte, schlägt die Ausführung fehl, statt stillschweigend zu überschreiben.
+
+## Spaltenrollen
+
+Verwenden Sie **SCD-2 untersuchen**, um die Spalten der SCD-2-Tabelle aufzulisten, und kennzeichnen Sie dann jede Spalte:
+
+| Rolle | Bedeutung |
+|---|---|
+| **Geschäftsschlüssel** | Der Schlüssel, der Fakten und Verlauf verknüpft (z. B. `customer_id`). Muss zu den Schlüsselspalten des Fakts passen. Mindestens einer ist erforderlich. |
+| **Übernahmespalte** | Ein Attribut, das auf die Faktenzeile übernommen wird (z. B. `region`). Mindestens eine ist erforderlich. |
+| **(ignorieren)** | Nicht gekennzeichnete Spalten werden nicht übernommen. |
+
+## Was beim Speichern geprüft wird
+
+Das Speichern des Schritts wird abgewiesen, mit einer Meldung, die die Spalte oder das Datum nennt, wenn:
+
+- Eine Spalte mehr als einmal als Geschäftsschlüssel oder als Übernahmespalte gekennzeichnet ist – *'region' is tagged as a Carry Column more than once.*
+- Eine Spalte sowohl Geschäftsschlüssel als auch Übernahmespalte ist – *customer_id can't be both a Business Key and a Carry Column: the key columns already come from the fact table.*
+- Der **Feste Stichtag** kein echtes Datum im Format `YYYY-MM-DD` ist – *The Literal As-Of Date '2026-02-30' must be a date in YYYY-MM-DD form.* Ein Datum, das eine Workflow-Variable benennt, wird geprüft, wenn die Ausführung sie einsetzt.
+
+## Die halboffene Grenze
+
+Eine Faktenzeile entspricht genau der Verlaufsversion, deren Intervall ihren Stichtag enthält, mit einem **halboffenen** Vergleich:
+
+```text
+valid_from <= as_of  AND  as_of < valid_to
+```
+
+Die Untergrenze ist eingeschlossen, die Obergrenze ausgeschlossen. Das ist am Grenztag von Bedeutung:
+
+- `as_of == valid_from` → **entspricht** dieser Version (sie wird an ihrem Starttag wirksam).
+- `as_of == valid_to` → **entspricht nicht** dieser Version, sondern fällt auf die nächste Version, deren `valid_from` diesem `valid_to` entspricht.
+
+Da der [SCD-2-Stammdaten-Builder](/de/reference/workflow-steps/dimensions/scd2-master-builder/) aufeinanderfolgende Versionen so schreibt, dass das `valid_to` der einen das `valid_from` der nächsten ist, wird jedes Datum genau einer Version zugeordnet – ohne Lücken und ohne Überschneidungen. Eine Änderung mit dem Datum `2026-04-01` bedeutet, dass der neue Wert *am* 1. April gilt; eine Transaktion am 31. März erhält weiterhin den alten Wert.
+
+<Aside type="note">Offene (aktuelle) Zeilen tragen in `valid_to` das Sentinel-Enddatum `9999-12-31`. Sollte eine offene Zeile stattdessen ein `valid_to` mit Nullwert enthalten, behandelt der Schritt sie (über denselben Sentinel) als offen, sodass die aktuelle Version nie stillschweigend übersehen wird.</Aside>
+
+## Durchgerechnetes Beispiel
+
+In Fortsetzung des [SCD-2-Stammdaten-Builders](/de/reference/workflow-steps/dimensions/scd2-master-builder/) wird jede Transaktion der Region zugeordnet, die an ihrem Datum galt.
+
+**`customer_scd2` (die Verlaufstabelle):**
+
+| customer_id | region | valid_from | valid_to | is_current |
+|---|---|---|---|---|
+| C1 | West | 2026-01-01 | 2026-04-01 | false |
+| C1 | Central | 2026-04-01 | 9999-12-31 | true |
+| C2 | East | 2026-01-01 | 9999-12-31 | true |
+
+**`transactions` (die Faktentabelle):**
+
+| txn_id | customer_id | txn_date | amount |
+|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 |
+| T2 | C1 | 2026-04-01 | 200 |
+| T3 | C2 | 2026-05-10 | 150 |
+| T4 | C9 | 2026-05-10 | 90 |
+
+Konfiguration: **Faktentabelle** = `transactions`, **SCD-2-Tabelle** = `customer_scd2`, **Ausgabetabelle** = `transactions_by_region`, **Stichtagsspalte der Fakten** = `txn_date`, Geschäftsschlüssel = `customer_id`, Übernahmespalte = `region`.
+
+**`transactions_by_region`:**
+
+| txn_id | customer_id | txn_date | amount | region |
+|---|---|---|---|---|
+| T1 | C1 | 2026-03-15 | 100 | West |
+| T2 | C1 | 2026-04-01 | 200 | Central |
+| T3 | C2 | 2026-05-10 | 150 | East |
+| T4 | C9 | 2026-05-10 | 90 | *(null)* |
+
+Beachten Sie die Grenze: **T2 am 2026-04-01 wird zu Central aufgelöst**, weil das halboffene Intervall den 1. April zum ersten Tag der Version Central macht und nicht zum letzten Tag von West. **Der Schlüssel `C9` von T4 ist unbekannt**, daher bleibt die Zeile mit einer Nullregion erhalten, statt verworfen zu werden.
+
+## Verwandte Themen
+
+- [SCD-2-Stammdaten-Builder](/de/reference/workflow-steps/dimensions/scd2-master-builder/) – die Verlaufstabelle aufbauen, die dieser Schritt liest.
+- [Dimension Load](/de/reference/workflow-steps/dimensions/dimension-load/) – eine Hierarchie aus einer Tabelle laden.

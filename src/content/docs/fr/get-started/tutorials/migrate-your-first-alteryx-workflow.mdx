@@ -1,0 +1,121 @@
+---
+title: Migrer votre premier workflow Alteryx
+description: "Faites passer un fichier Alteryx .yxmd / .yxwz / .yxmc du contrôle de préparation à une exécution validée dans PlaidCloud, en passant par l'importation et la revue de la conversion : une première migration qui donne confiance."
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/migrate-your-first-alteryx-workflow.mdx
+---
+
+*~30 minutes · un contrôle de préparation, une importation, une exécution validée*
+
+Migrez un workflow Alteryx dans PlaidCloud de bout en bout : vérifiez qu'il est prêt, importez-le et convertissez-le, repérez ce qui a été converti sans problème et ce qui demande un examen, puis exécutez-le. Il s'agit d'une première migration destinée à donner confiance, et non d'une visite exhaustive. Choisissez un workflow que vous connaissez bien et, idéalement, dont vous disposez d'un résultat de référence fiable, afin de pouvoir vérifier que l'exécution convertie est correcte.
+
+L'importeur de PlaidCloud conserve le graphe du workflow, charge dans Document les fichiers référencés, génère les workflows de macro et associe chaque outil Alteryx à une étape de workflow native ou à un exécuteur managé. L'essentiel d'un workflow se convertit avec peu d'effort manuel ; la partie franche de ce tutoriel concerne le reste : certains outils demandent de l'attention, et PlaidCloud vous indique précisément lesquels pour que vous puissiez vous y rendre directement.
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 84" role="img" aria-label="Les quatre phases d'une première migration : contrôler la préparation, importer et convertir, examiner et valider, puis exécuter. Chacune alimente la suivante." style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="mig-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="24" width="150" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="81" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">1 · Contrôler la préparation</text>
+  <path d="M158 42 L188 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="190" y="24" width="150" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="265" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">2 · Importer + convertir</text>
+  <path d="M342 42 L372 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="374" y="18" width="164" height="48" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="456" y="40" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">3 · Examiner + valider</text>
+  <text x="456" y="55" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">converti ou signalé</text>
+  <path d="M540 42 L570 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="572" y="24" width="142" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="643" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">4 · Exécuter</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Toute la migration en quatre phases. C'est dans la phase d'examen que votre jugement est le plus sollicité.</figcaption>
+</figure>
+
+## Prérequis
+
+- Un espace de travail PlaidCloud et un projet dans lequel importer. Utilisez un projet de migration dédié pour que les dépendances restent faciles à auditer.
+- Un fichier de workflow Alteryx : `.yxmd` (workflow), `.yxwz` (application analytique) ou `.yxmc` (macro).
+- Les fichiers que ce workflow lit à l'exécution, conservés avec lui.
+- Un compte de documents et un dossier dans lesquels PlaidCloud peut stocker les fichiers importés.
+
+## Étape 1 : contrôler la préparation
+
+Une importation réussie commence par un package complet. Rassemblez tout ce que le workflow utilise avant d'ouvrir l'importeur :
+
+1. Le fichier de workflow lui-même, ainsi que toutes les macros qu'il appelle, y compris les macros imbriquées, sous forme de fichiers `.yxmc`.
+2. Les fichiers de données en entrée : CSV, TSV, Excel, Access, YXDB, XML, JSON et extractions de bases de données.
+3. Les fichiers annexes spatiaux conservés dans le même dossier : groupes de fichiers shapefile (`.shp`, `.shx`, `.dbf`, `.prj`), groupes MapInfo (`.tab`, `.map`, `.id`, `.dat`) et tous les fichiers de projection. L'absence de ces fichiers annexes est une source fréquente de différences spatiales.
+4. Les ressources de rapport référencées par le workflow : images, PDF, modèles et couches cartographiques.
+5. Pour une application analytique, les valeurs que les utilisateurs saisissent habituellement : texte, nombres, dates, sélections de fichiers et de dossiers, choix dans des listes déroulantes ou des cases à cocher. Elles deviennent des variables du workflow que vous définirez avant une exécution.
+
+Décidez ensuite de deux choses : le dossier Document qui contiendra les fichiers chargés, et si vous validerez ce workflow sur le plan structurel (est-il converti et s'exécute-t-il ?) ou par rapport à des résultats de référence (produit-il les mêmes résultats ?).
+
+> **Apportez le résultat de référence.** Si vous disposez d'un résultat fiable de l'exécution Alteryx, conservez-le avec le package. C'est lui qui transforme « il s'est exécuté » en « il est correct » à l'étape 4.
+
+La [liste de contrôle de préparation à la migration Alteryx](/fr/guides/workflows/alteryx-migration-readiness-checklist/) est la version complète de cette étape, pour le moment où vous passerez d'un workflow à un portefeuille.
+
+## Étape 2 : importer et convertir
+
+1. Ouvrez votre projet cible dans PlaidCloud.
+2. Ouvrez **Outils → Importer un workflow Alteryx**.
+3. Choisissez le projet cible et sélectionnez votre fichier `.yxmd`, `.yxwz` ou `.yxmc`.
+4. Si vous le souhaitez, définissez des préfixes pour les noms de workflow, d'étape et de table. Les noms de table sont déjà préfixés par le nom du workflow, un workflow seul n'a donc pas besoin de préfixe supplémentaire.
+5. Choisissez le compte de documents et le dossier des fichiers importés.
+6. Ajoutez les fichiers ou dossiers référencés dont le workflow a besoin à l'exécution.
+7. Lancez l'importation.
+
+Lorsque l'importation se termine, la fenêtre remplace son formulaire par un **rapport de conversion** : le nombre d'étapes associées avec un niveau de confiance élevé, le nombre d'étapes à examiner et, s'il y en a, un tableau nommant chaque étape à confiance plus faible, son opération, son niveau de confiance et des remarques. Ce rapport est le cœur de la migration. Chaque étape signalée porte aussi la même remarque dans son mémo d'étape sur le canevas, ce qui vous permet d'y accéder directement.
+
+PlaidCloud stocke les dépendances importées dans le dossier Document que vous avez choisi et fait pointer les étapes converties vers ces chemins, de sorte que le workflow s'exécute de façon reproductible sans système de fichiers de poste de travail.
+
+> **Les commentaires et les conteneurs sont repris.** Les zones de commentaire arrivent sous forme de notes et de zones de mise en évidence, et les Tool Containers deviennent des groupes : ils expliquent le workflow exactement comme dans Alteryx et n'ajoutent aucun travail à l'exécution. La barrière d'un **Control Container** est elle aussi conservée : ses étapes sont importées déjà configurées pour ne s'exécuter que lorsque les données qui la commandent contiennent des lignes.
+
+## Étape 3 : examiner ce qui a été converti et ce qui demande de l'attention
+
+Ouvrez le workflow avancé généré et parcourez le rapport de conversion de haut en bas. La plupart des étapes sont converties avec un niveau de confiance élevé et n'exigent rien de votre part. Ce sont les étapes signalées qui donnent sa valeur à une première migration : lisez chaque remarque et décidez.
+
+Voici à quoi ressemble concrètement une conversion partielle, et ce que signifie chaque cas :
+
+| Ce que vous voyez | Ce que cela signifie | Que faire |
+|---|---|---|
+| Étape à confiance élevée | Associée sans problème à une étape native ou à un exécuteur | Rien, vérifiez ponctuellement si vous le souhaitez |
+| Étape signalée pour examen | Convertie, mais avec une réserve à confirmer | Lisez la remarque ; vérifiez le résultat par rapport à vos attentes |
+| Étape marquée comme non convertie | L'importeur a refusé plutôt que de deviner à tort | Corrigez la cause dans Alteryx et réimportez, ou créez l'étape à la main |
+| Référence à une table qui n'existe pas encore | Un jeu de données Calgary ou construit en externe que le workflow n'a pas créé | Chargez la table indiquée avant l'exécution |
+
+Quelques signalements que vous êtes susceptible de rencontrer lors d'une première migration :
+
+- **L'échantillonnage aléatoire** (Create Samples, Random % Sample) reprend exactement les tailles et les proportions, mais PlaidCloud tire ses propres enregistrements : validez-les sur les effectifs et les proportions, pas sur les lignes retenues.
+- **Les modèles XGBoost** sont convertis en classifieur à gradient boosting de scikit-learn ; attendez-vous à une équivalence statistique, pas à des valeurs identiques, et consultez les remarques de l'étape.
+- **Une étape non convertie échoue volontairement** lorsque le workflow l'atteint, afin qu'une conversion comportant une barrière non résolue ou une table manquante ne puisse pas être exécutée comme si de rien n'était. Cette franchise est voulue : c'est l'importeur qui refuse de présenter un chiffre faux comme un chiffre juste.
+
+> **Une exécution réussie n'est pas forcément correcte.** Le rapport vous dit où regarder ; la validation de l'étape suivante vous dit si vous pouvez vous fier aux chiffres. Ne la sautez pas sur un workflow dont quelqu'un dépend du résultat.
+
+Pour le catalogue complet de la conversion de chaque famille d'outils, consultez la [matrice de conversion Alteryx](/fr/reference/alteryx-conversion-matrix/).
+
+## Étape 4 : définir les variables, exécuter et valider
+
+1. Sur le canevas du workflow converti, passez en revue les étapes et les branches générées.
+2. Définissez les **variables du workflow** : ce sont les questions de votre application et les paramètres d'exécution convertis. Faites pointer les variables de fichier et de dossier vers les chemins Document de l'étape 2, et reprenez les valeurs utilisées lors de l'exécution Alteryx.
+3. Cliquez sur **Exécuter** sur le workflow (et non sur une seule étape) et suivez le journal pendant que chaque étape s'exécute dans l'ordre.
+4. Examinez l'historique des exécutions, les sorties des étapes et les éventuelles remarques de préparation.
+
+Validez ensuite au niveau que vous avez choisi à l'étape 1 :
+
+- **Structurelle** : le workflow s'est ouvert, le graphe comporte les branches et les macros attendues, les entrées ont été chargées, les variables sont apparues et l'exécution s'est terminée. Cela suffit pour la préparation et l'inventaire.
+- **Parité des sorties** : comparez le schéma, le nombre de lignes et les valeurs des lignes avec votre résultat Alteryx fiable. L'ordre des lignes est ignoré, sauf si le workflow trie explicitement. Vérifiez aussi le traitement des valeurs nulles, la précision numérique, les dates et la géométrie lorsqu'ils s'appliquent.
+
+Si une comparaison diffère, examinez les causes dans l'ordre : fichiers d'entrée manquants ou différents, valeurs de variables différentes, instantanés de source différents, puis différences de valeurs nulles, de dates, d'arrondis ou de collation, enfin référence spatiale ou format de géométrie. Corrigez la cause, réexécutez et comparez de nouveau. Le [guide de validation](/fr/guides/workflows/validate-converted-alteryx-workflows/) contient la liste de contrôle complète.
+
+> **La réimportation est sans risque.** Si vous corrigez un package et l'importez de nouveau, il obtient son propre jeu de tables au lieu d'écraser la première importation : supprimez le workflow précédent et ses tables une fois satisfait du nouveau.
+
+## Vous avez migré un workflow
+
+Vous avez fait passer un workflow Alteryx d'un contrôle de préparation à une exécution PlaidCloud validée et, tout aussi important, vous savez désormais lire le rapport de conversion pour distinguer ce qui a été converti sans problème de ce qui mérite un examen. C'est toute la boucle. Répétez-la pour chaque workflow et, pour un portefeuille plus important, migrez par lots dans un projet dédié.
+
+## Pour aller plus loin
+
+- [Migrer des workflows Alteryx](/fr/guides/workflows/migrate-alteryx-workflows/) : la référence complète de la migration, y compris les macros, les rapports, le spatial et les bases Calgary.
+- [Liste de contrôle de préparation à la migration Alteryx](/fr/guides/workflows/alteryx-migration-readiness-checklist/) : la liste complète de préparation des packages pour les migrations de portefeuille.
+- [Valider les workflows Alteryx convertis](/fr/guides/workflows/validate-converted-alteryx-workflows/) : validation structurelle, de parité des sorties, des macros et des artefacts en détail.
+- [Utiliser les applications Alteryx converties](/fr/guides/workflows/use-converted-alteryx-apps/) : exécutez les applications analytiques converties avec des variables de workflow maîtrisées.
+- [Ajuster les importations Alteryx](/fr/guides/workflows/troubleshoot-alteryx-imports/) : complétez les dépendances, résolvez les macros et interprétez les écarts de validation.
+- [Charger, transformer et publier des données](/fr/get-started/tutorials/load-and-transform-data/) : créez un workflow PlaidCloud de zéro pour découvrir les briques natives.

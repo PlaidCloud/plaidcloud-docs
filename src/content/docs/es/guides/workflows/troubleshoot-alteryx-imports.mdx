@@ -1,0 +1,152 @@
+---
+title: Ajustar las importaciones de Alteryx
+description: Ajuste las migraciones de Alteryx con la finalización de dependencias, la resolución de macros, las variables, las comparaciones de validación y los ejecutores administrados.
+sidebar:
+  order: 35
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/workflows/troubleshoot-alteryx-imports.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+PlaidCloud importa los flujos de trabajo de Alteryx como flujos de trabajo avanzados e informa de los detalles de la conversión durante la importación. Use esta guía para completar rápidamente los paquetes de dependencias, revisar las macros generadas, ajustar las variables e interpretar las comparaciones de validación.
+
+<Aside type="note">
+  Empiece por el resumen de conversión. Destaca los elementos de dependencias, macros, variables, ejecutores y validación antes de que necesite inspeccionar pasos individuales.
+</Aside>
+
+## Completar los archivos de entrada
+
+Síntomas:
+
+- El informe de conversión enumera un archivo que falta.
+- Una ejecución termina con la advertencia "No files found at &lt;path&gt;; the target table was created empty."
+- La entrada dinámica no se resuelve en ningún archivo.
+- Los recuentos de filas de la validación son menores de lo esperado.
+
+Un flujo de trabajo se convierte aunque falte un archivo que lee, así que el informe es la forma más rápida de ver qué queda pendiente: indica la ruta de Document a la que cargar cada archivo que falta, la ruta original de Alteryx, las hojas esperadas y las herramientas que lo leen.
+
+Un archivo leído solo por una herramienta dentro de un contenedor de herramientas de Alteryx desactivado nunca aparece en esta lista, ya que esa herramienta tampoco se importa; consulte [Comentarios y contenedores de herramientas en el lienzo](/es/guides/workflows/migrate-alteryx-workflows/#comentarios-y-tool-containers-en-el-lienzo). Active el contenedor, o vuelva a importar con la opción que incorpora como pasos ordinarios las herramientas de un contenedor desactivado, si desea que se tenga en cuenta ese archivo.
+
+Acciones:
+
+1. Cargue cada archivo que enumera el informe en la ruta de Document que indica.
+2. En la mayoría de los archivos, vuelva a ejecutar el flujo de trabajo una vez cargados; no hace falta volver a importar.
+3. Si falta un diseño ASCII plano, una entrada con comodines, una plantilla de Dynamic Input o un origen de cambio de nombre FirstRow, importe el flujo de trabajo de nuevo en lugar de limitarse a volver a ejecutarlo: esos elementos se leen en el momento de la conversión.
+4. Confirme que los patrones de archivos dinámicos siguen coincidiendo después de la carga.
+
+## Completar los archivos auxiliares espaciales
+
+Síntomas:
+
+- La entrada espacial necesita un archivo complementario.
+- Los campos de geometría están vacíos.
+- La salida espacial difiere del resultado esperado.
+
+Acciones:
+
+1. Confirme que se incluyeron todos los archivos auxiliares de shapefile o MapInfo.
+2. Mantenga los archivos auxiliares en la misma carpeta de Document.
+3. Confirme que los archivos de proyección están presentes cuando el flujo de trabajo depende del comportamiento del sistema de referencia de coordenadas.
+4. Vuelva a ejecutar el flujo de trabajo después de corregir el paquete.
+
+## Completar o aclarar las macros
+
+Síntomas:
+
+- No se puede resolver una llamada a una macro.
+- Las entradas o salidas de la macro no están conectadas.
+- Un flujo de trabajo se importa estructuralmente y es necesario conectar la salida de una macro.
+
+Acciones:
+
+1. Incluya el archivo `.yxmc` de cada macro a la que se hace referencia.
+2. Incluya las macros anidadas a las que llaman esas macros.
+3. Evite nombres de macro duplicados, a menos que el paquete incluya intencionadamente macros con versiones.
+4. Confirme que la macro de PlaidCloud generada tiene pasos de entrada y de salida de macro.
+
+## Archivos .yxdb ilegibles
+
+Síntomas:
+
+- Un archivo `.yxdb` no se importa mientras que otros archivos del mismo paquete se importan sin problema.
+- Los primeros bytes del archivo dicen `Alteryx e2 Database file` en lugar de `Alteryx Database File`.
+
+El archivo lo escribió el motor AMP de Alteryx en un formato propietario que PlaidCloud no puede leer. Vuelva a escribirlo con Alteryx Designer mientras todavía lo tenga: guarde de nuevo los archivos de forma individual o convierta por lotes una carpeta entera a CSV con un flujo de trabajo descargable. Consulte [Convertir archivos .yxdb para importarlos](/es/guides/workflows/convert-yxdb-files-for-import/).
+
+## Bases de datos .cydb (Calgary) ilegibles
+
+Síntomas:
+
+- Un paso de Calgary convertido se detiene y nombra una tabla `calgary_<database>` que todavía no existe.
+- El origen es un archivo `.cydb`, a menudo una base de datos demográfica o de referencia con licencia que distribuye Alteryx (Experian, Census y similares).
+
+La base de datos Calgary de Alteryx es un almacén indexado propietario sin lector abierto, por lo que PlaidCloud no puede cargar un `.cydb` directamente. Las propias herramientas de Calgary sí se convierten: cada `.cydb` pasa a ser una [tabla sustituta](/es/guides/workflows/migrate-alteryx-workflows/#bases-de-datos-calgary) ordinaria llamada `calgary_<database>`, pero los datos de esa tabla los aporta usted:
+
+1. En Alteryx, agregue una entrada de Calgary que lea el `.cydb` y luego reexporte sus registros a un formato abierto: una herramienta **Output Data** a CSV o Parquet, o una tabla del warehouse.
+2. Importe ese archivo en PlaidCloud como la tabla `calgary_<database>` que espera el flujo de trabajo convertido.
+3. Para una lectura limitada por Skip Records o Max Records, incluya una columna de orden en la exportación: la tabla sustituta no tiene ningún orden de registros inherente.
+
+Para las bases de datos de referencia con licencia que no puede reexportar, aporte su propia copia con licencia de los mismos datos y cárguela en la tabla indicada.
+
+## Problemas con las variables del flujo de trabajo
+
+Síntomas:
+
+- Una entrada de aplicación convertida no está establecida.
+- Una condición se activa inesperadamente.
+- Una variable de archivo o carpeta apunta a una ruta del escritorio.
+
+Acciones:
+
+1. Revise las variables del flujo de trabajo antes de ejecutar.
+2. Establezca los valores obligatorios.
+3. Reemplace las rutas de archivo del escritorio por rutas de archivo o carpeta de Document.
+4. Confirme que las opciones controladas coinciden con la selección esperada de la aplicación.
+5. Vuelva a ejecutar el flujo de trabajo.
+
+## Diferencias de validación
+
+Síntomas:
+
+- El esquema difiere.
+- El recuento de filas difiere.
+- Los valores de las filas difieren.
+- La salida de un artefacto tiene una diferencia que revisar.
+
+Acciones:
+
+1. Confirme que se usaron los mismos datos de entrada en ambas ejecuciones.
+2. Confirme que los valores de las variables coinciden.
+3. Confirme que los sistemas de origen son de la misma fecha de instantánea.
+4. Revise el tratamiento de nulos, el tratamiento de fechas, la precisión numérica y la intercalación de cadenas.
+5. En las salidas espaciales, revise el formato de la geometría y el comportamiento del sistema de referencia de coordenadas.
+6. En los artefactos, confirme la salida nativa de la nube prevista y compare el contenido de negocio.
+
+## Notas sobre los ejecutores
+
+Las operaciones especializadas, como la coincidencia aproximada, el procesamiento espacial, la extracción de PDF, el OCR, el NLP y la generación de informes, pueden ejecutarse mediante ejecutores administrados. (Las canalizaciones de aprendizaje automático se convierten, en cambio, a los pasos nativos [ML: puntuar](/es/reference/workflow-steps/machine-learning/ml-score/) y [ML: entrenar modelo](/es/reference/workflow-steps/machine-learning/ml-train/).)
+
+Si un ejecutor informa de una nota:
+
+1. Abra los detalles de la ejecución del flujo de trabajo.
+2. Revise la nota del paso.
+3. Confirme que están presentes las entradas y los parámetros obligatorios.
+4. Confirme que las salidas esperadas están disponibles si se requiere validación de paridad.
+5. Vuelva a ejecutar después de corregir las entradas o la configuración.
+
+## Cuándo volver a importar
+
+Vuelva a importar cuando:
+
+- Se agregaron archivos o macros importantes después del paquete original.
+- Se seleccionó la ruta de Document equivocada.
+- Una versión más reciente del flujo de trabajo debe reemplazar la versión importada.
+- El paquete del flujo de trabajo necesita una distribución de dependencias más limpia.
+
+Si solo cambió el valor de una variable, una credencial o una ruta de Document, puede bastar con actualizar el flujo de trabajo convertido.
+
+## Guías relacionadas
+
+- [Empaquetar las dependencias de Alteryx](/es/guides/workflows/package-alteryx-dependencies/)
+- [Validar flujos de trabajo de Alteryx convertidos](/es/guides/workflows/validate-converted-alteryx-workflows/)
+- [Matriz de conversión de Alteryx](/es/reference/alteryx-conversion-matrix/)

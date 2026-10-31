@@ -1,0 +1,155 @@
+---
+title: NetSuite に接続する
+description: PlaidCloud を NetSuite に接続し、SuiteQL で財務データと業務データを取得します。前提条件、資格情報、接続、スモークテスト、スケジュールによる取得を説明します。
+sidebar:
+  order: 5
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/netsuite.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+SuiteQL を使って、NetSuite の財務データと業務データを PlaidCloud のテーブルに取り込みます。このガイドでは、空の NetSuite 統合から、スケジュールされた型付きの取得までを説明します。各フィールドの詳細は、[NetSuite REST コネクタ](/ja/reference/connectors/rest/netsuite/)を参照してください。
+
+## 前提条件
+
+NetSuite で、次のものが必要です。
+
+- 有効化された **OAuth 2.0** と **REST Web Services**（**Setup > Company > Enable Features > SuiteCloud**）。
+- **RSA キーペア**。公開証明書は NetSuite にアップロードし、秘密鍵は PlaidCloud 用に保管します。
+- **証明書 ID**（公開証明書のアップロードで得られる JWT の `kid`）、**クライアント ID**（統合レコードから取得）、**アカウント ID**（本番は `1234567`、サンドボックスは `1234567_SB1`）。
+- REST Web Services、**Log in using OAuth 2.0 Access Tokens**、SuiteAnalytics Workbook（クエリがアナリティクスにアクセスする場合）、および読み取るレコードの表示アクセス権を持つ**ロール**。
+
+キーペアの生成、証明書のアップロード、統合の作成といった NetSuite 側の手順は、リファレンスの [NetSuite 側のセットアップ](/ja/reference/connectors/rest/netsuite/#netsuite側のセットアップ)にすべて記載されています。先にそれらを完了してください。このガイドは、4 つの値が手元にあることを前提としています。
+
+<Aside type="caution">
+アカウント ID は、サンドボックスの `_SB1` サフィックスを**含め**、NetSuite に表示されるとおりに正確に入力してください。PlaidCloud はこれをもとに API ホストを導出するため、形式が誤っていると、取得が別のアカウントに向けられます。
+</Aside>
+
+## 接続を作成する
+
+<Steps>
+
+1. **Tools > Connections** を開き、`New Connection` をクリックします。
+
+2. メニューから **NetSuite** を選択します。
+
+   <Aside type="caution">汎用の **REST** タイプではなく、**NetSuite** を選択してください。NetSuite タイプのみが、アカウント ID から API ホストを導出し、SuiteQL のヘッダーとページングを自動的に挿入します。汎用 REST の接続は、認証なしで実行されて失敗します。</Aside>
+
+3. 各フィールドに入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | 名前 | 分かりやすい名前（例: `NetSuite Prod`）。 |
+   | クライアントID | 統合レコードのクライアント ID。 |
+   | 証明書ID | 公開証明書のアップロードで得られた証明書 ID（`kid`）。 |
+   | NetSuiteアカウントID | アカウント ID（例: `1234567` または `1234567_SB1`）。 |
+   | NetSuite秘密証明書 | 秘密鍵の PEM ブロック全体を、複数行のまま貼り付けたもの。 |
+
+4. `Create` をクリックします。
+
+</Steps>
+
+<Aside type="note">
+**NetSuite秘密証明書**フィールドは、貼り付けた鍵をマスクして表示します。保存された鍵は暗号化され、再表示されることはありません。接続を編集するとこのフィールドは空白になります。保存済みの鍵を維持するには空白のままにし、置き換えるには新しい鍵を貼り付けます。
+</Aside>
+
+<Aside type="tip">
+アカウント ID によって、接続が到達する NetSuite インスタンスが決まります。サンドボックスのアカウント ID には `_SB1` サフィックスを付けたままにしてください（例: `1234567_SB1`）。接続には、どのインスタンスを指しているかが分かる名前を付けるか、本番とサンドボックスのホストを 1 つの接続の下の 2 つの環境として保持します。
+</Aside>
+
+## 接続をスモークテストする
+
+その上に何かを構築する前に、資格情報が機能することを確認します。
+
+<Steps>
+
+1. ワークフローに [REST リクエストステップ](/ja/guides/workflows/rest-request-step/)を追加します。
+
+2. **リクエスト**タブで、**接続**に NetSuite 接続を、**メソッド**に `POST` を、**エンドポイント**に `/services/rest/query/v1/suiteql` を設定します。
+
+3. **本文**に、範囲を絞った小さなクエリを記述します。
+
+   ```json
+   {"q": "SELECT id FROM account WHERE ROWNUM <= 1"}
+   ```
+
+4. **テストリクエストを送信**をクリックします。
+
+</Steps>
+
+<Aside type="caution">
+プレビュータブではなく、**テストリクエストを送信**を使用してください。プレビュータブは接続のサービス構成を適用しないため、誤った結果が報告されます。テストリクエストの送信が緑色で完了すれば、JWT の署名、トークン交換、NetSuite からの応答が成功したことを意味します。エラーになった場合、メッセージに NetSuite 自身の詳細（通常はスコープ、ロール、クエリの問題）が含まれるため、その 1 点を修正して再テストしてください。
+</Aside>
+
+## 取得ステップを構築する
+
+スモークテストが成功したら、ステップを実際の取得に変えます。
+
+<Steps>
+
+1. **本文**に、決定的な `ORDER BY` を含む SuiteQL クエリを記述します。コピー＆ペーストで使える出発点（仕訳エントリ、試算表、損益計算書、貸借対照表、未回収売掛金、受注、発注、在庫）は、[NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/)を参照してください。
+
+   財務 — 期間内の GL 取引明細:
+
+   ```json
+   {"q": "SELECT tl.transaction AS transaction_id, TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date, a.acctnumber AS account_number, tl.subsidiary AS subsidiary_id, tl.foreignamount AS amount FROM transactionline tl JOIN transaction t ON t.id = tl.transaction JOIN account a ON a.id = tl.expenseaccount WHERE t.trandate BETWEEN TO_DATE('2026-01-01','YYYY-MM-DD') AND TO_DATE('2026-01-31','YYYY-MM-DD') ORDER BY tl.transaction, tl.id"}
+   ```
+
+   業務 — 顧客別の未処理の受注:
+
+   ```json
+   {"q": "SELECT so.tranid AS order_number, so.entity AS customer_id, TO_CHAR(so.trandate, 'YYYY-MM-DD') AS order_date, so.status AS order_status FROM transaction so WHERE so.type = 'SalesOrd' AND so.status = 'SalesOrd:B' ORDER BY so.id"}
+   ```
+
+2. **ページングと解析**のコントロールと、`Prefer`/`Content-Type` ヘッダーには**触れないでください**。NetSuite 接続がこれらを挿入します。
+
+3. **レスポンス**タブで、出力先を**テーブル**のままにし、**列を実際の型で定義します**。金額には `Currency`/`Decimal`、日付には `Date`/`Datetime`、`T`/`F` フラグには `Boolean` を使用します。SuiteQL はすべてを文字列として返すため、型付きの列によって、PlaidCloud にどのように変換するかを伝えます。
+
+   <Aside type="caution">
+   SuiteQL は日付を、**アカウントの表示形式**（多くは `M/D/YYYY`）のテキストとして返します。これは曖昧なため、PlaidCloud は推測しません。`Date`/`Datetime` として型を設定する列では、クエリ内で日付を整形するか（`TO_CHAR(trandate, 'YYYY-MM-DD') AS trandate`。日時の場合は `'YYYY-MM-DD HH24:MI:SS'`）、列を `Text` のままにしてください。数値と `T`/`F` フラグには、このような処理は不要です。値を変換できない場合、実行は失敗し、メッセージに列と値が示されます。
+   </Aside>
+
+</Steps>
+
+<Aside type="caution">
+`ORDER BY` がないと、オフセットページングではページをまたいで行が知らないうちに重複したり欠落したりします。これは、照合するまで気づかない財務上の不一致です。ページングされるすべての SuiteQL クエリには、`ORDER BY internalid` のような安定した並べ替えが必要です。
+</Aside>
+
+<Aside type="caution">
+**行数の上限:** NetSuite は、SuiteAnalytics Connect がない場合、1 回の SuiteQL クエリを約 100,000 行に制限しています。手書きのクエリがこの上限を超える場合は、結果が知らないうちに切り捨てられて返されるのではなく、日付範囲やその他のフィルターを絞り込むよう求めるメッセージとともに失敗します。広い範囲の取得は日付で区切ったリクエストに分割して上限内に収めるか、日付範囲を自動的にウィンドウ分割する定型の [NetSuite: 残高のインポート / GL明細のインポート](/ja/guides/connections/import-netsuite-financials/)ステップを使用してください。
+</Aside>
+
+<Aside type="caution">
+**複数通貨:** `transaction`/`transactionline` では、`amount` は各取引自身の通貨です。子会社をまたぐ `SUM(amount)` は**連結としては誤り**になります。子会社をまたいで合計する場合は、連結後または為替レート換算後のフィールドを選択してください。
+</Aside>
+
+## 確認とスケジュール
+
+<Steps>
+
+1. ステップを実行し（[ワークフロー内の単一ステップの実行](/ja/guides/workflows/running-one-step-in-a-workflow/)を参照）、ターゲットテーブルを確認します。行数と、金額/日付の列がテキストではなく型付きで取り込まれていることを確認してください。
+
+2. 継続的なフィードにするには、[ワークフローをスケジュール](/ja/get-started/tutorials/schedule-a-workflow/)します。
+
+</Steps>
+
+<Aside type="note">
+NetSuite のすべての取得は**テーブル全体の置き換え**です。増分で取得する方法はないため、スケジュールされた取得は実行のたびに全結果を再抽出します。実行のたびに全履歴を取得するのではなく、`WHERE` 句を実際に必要なスライス（たとえば、ローリングの日付ウィンドウ）に限定してください。
+</Aside>
+
+## トラブルシューティング
+
+| 症状 | 考えられる原因 |
+|---|---|
+| テストリクエストがスコープまたはロールに関するメッセージとともに 400 になる | ロールに REST Web Services / OAuth 2.0 ログイン / SuiteAnalytics がないか、スコープ配列が拒否されています。表示される詳細に該当箇所が示されます。 |
+| トークン交換が失敗する | アカウント ID の形式が誤っている（`_SB1` がない）、証明書 ID（`kid`）が誤っている、または秘密鍵がアップロードした公開証明書と一致していません。 |
+| インポート時の型/変換エラー（列と値が示される） | 型付きの列に、解析できない値が渡されました。多くの場合、SuiteQL がアカウントの表示形式で値を返した `Date`/`Datetime` 列が原因です。クエリでそのフィールドを `TO_CHAR(col, 'YYYY-MM-DD')` で囲むか、列の型を `Text` に設定してください。 |
+| 子会社をまたぐと合計が一致しない | `amount` は各取引自身の通貨です。連結後/換算後のフィールドを使用してください。 |
+| 大きな取得で行が重複または欠落する | オフセットでページングされるクエリに、決定的な `ORDER BY` がありません。 |
+
+## 関連情報
+
+- [NetSuite SuiteQL クエリの例](/ja/guides/connections/netsuite-financial-queries/) — 仕訳エントリ、試算表、損益計算書、未回収売掛金などに使える、すぐに実行できるクエリです。
+- [NetSuite REST コネクタ](/ja/reference/connectors/rest/netsuite/) — フィールドと SuiteQL のリファレンス。
+- [REST リクエストステップ](/ja/guides/workflows/rest-request-step/) — この取得の土台となるステップです。
+- [接続の作成と管理](/ja/guides/connections/create-connection/)

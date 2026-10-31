@@ -1,0 +1,121 @@
+---
+title: 迁移第一个 Alteryx 工作流
+description: 将一个 Alteryx .yxmd / .yxwz / .yxmc 文件从就绪状态检查，经过导入、转换审查，到在 PlaidCloud 中完成经过验证的运行，这是一次增强信心的首次迁移。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/get-started/tutorials/migrate-your-first-alteryx-workflow.mdx
+---
+
+*约 30 分钟 · 一次就绪状态检查、一次导入、一次经过验证的运行*
+
+将一个 Alteryx 工作流完整迁移到 PlaidCloud：检查其是否就绪，导入并转换，查看哪些已顺利转换、哪些需要关注，然后运行。这是一次旨在建立信心的首次迁移，而不是面面俱到的演示。请选择一个您非常熟悉的工作流，最好还有已知正确的输出，以便判断转换后的运行结果是否正确。
+
+PlaidCloud 的导入器会保留工作流图，将引用的文件上传到文档账户，生成宏工作流，并把每个 Alteryx 工具映射到原生工作流步骤或托管执行器。工作流的大部分内容只需很少的手动操作即可转换。本教程也会坦率说明其余部分：有些工具需要关注，而 PlaidCloud 会明确告诉您是哪些，方便您直接处理。
+
+<figure style="margin:1.5rem 0;text-align:center;">
+<svg viewBox="0 0 720 84" role="img" aria-label="首次迁移的四个阶段：检查就绪状态、导入并转换、审查并验证、运行。每个阶段都衔接下一个阶段。" style="width:100%;max-width:720px;height:auto;">
+  <defs><marker id="mig-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
+  <rect x="6" y="24" width="150" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="81" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">1 · 检查就绪状态</text>
+  <path d="M158 42 L188 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="190" y="24" width="150" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="265" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">2 · 导入并转换</text>
+  <path d="M342 42 L372 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="374" y="18" width="164" height="48" rx="8" fill="none" stroke="var(--sl-color-accent)" stroke-width="2" />
+  <text x="456" y="40" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">3 · 审查并验证</text>
+  <text x="456" y="55" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">已转换与已标记的内容</text>
+  <path d="M540 42 L570 42" stroke="var(--sl-color-gray-3)" stroke-width="1.6" fill="none" marker-end="url(#mig-arrow)" />
+  <rect x="572" y="24" width="142" height="36" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="643" y="46" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">4 · 运行</text>
+</svg>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">整个迁移分为四个阶段。审查阶段最需要您做出判断。</figcaption>
+</figure>
+
+## 前提条件
+
+- 一个 PlaidCloud 工作区，以及用于导入的项目。请使用专用的迁移项目，以便于审计依赖关系。
+- 一个 Alteryx 工作流文件：`.yxmd`（工作流）、`.yxwz`（分析应用）或 `.yxmc`（宏）。
+- 该工作流在运行时读取的文件，与工作流放在一起。
+- 一个文档账户和文件夹，供 PlaidCloud 存储导入的文件。
+
+## 步骤 1：检查就绪状态
+
+要顺利导入，需要一个完整的包。打开导入器之前，先收集工作流涉及的所有内容：
+
+1. 工作流文件本身，以及它调用的所有宏（包括嵌套宏），均为 `.yxmc` 文件。
+2. 输入数据文件：CSV、TSV、Excel、Access、YXDB、XML、JSON 以及数据库提取文件。
+3. 位于同一文件夹中的空间附属文件：shapefile 文件组（`.shp`、`.shx`、`.dbf`、`.prj`）、MapInfo 文件组（`.tab`、`.map`、`.id`、`.dat`）以及所有投影文件。缺少附属文件是导致空间数据差异的常见原因。
+4. 工作流引用的报表资源：图像、PDF、模板和地图图层。
+5. 对于分析应用，用户通常输入的值：文本、数字、日期、文件和文件夹选择，以及下拉列表或复选框的选择。这些会成为运行前需要设置的工作流变量。
+
+然后确定两件事：用于存放上传文件的文档文件夹，以及是对此工作流进行结构验证（能否转换并运行？），还是对照已知正确的输出进行验证（是否产生相同的结果？）。
+
+> **准备好已知正确的输出。** 如果有 Alteryx 运行得到的可信结果，请将其与包放在一起。在步骤 4 中，它能让“已运行”变成“结果正确”。
+
+当您从单个工作流扩展到整个工作流组合时，[Alteryx 迁移就绪检查清单](/zh-cn/guides/workflows/alteryx-migration-readiness-checklist/)是这一步的完整版本。
+
+## 步骤 2：导入并转换
+
+1. 在 PlaidCloud 中打开目标项目。
+2. 打开 **工具 → 导入 Alteryx 工作流**。
+3. 选择目标项目，并选择 `.yxmd`、`.yxwz` 或 `.yxmc` 文件。
+4. 可选：设置工作流、步骤和表名称前缀。表名称已带有工作流自身名称作为前缀，因此单个工作流无需再设置前缀。
+5. 为导入的文件选择文档账户和文件夹。
+6. 添加工作流在运行时需要的所有引用文件或文件夹。
+7. 开始导入。
+
+导入完成后，窗口会用**转换报告**替换原有表单：其中显示有多少步骤以高置信度完成映射，有多少需要审查；若有需要审查的步骤，还会显示一张表，列出每个低置信度步骤及其操作、置信度和备注。这份报告是整个迁移的核心。每个被标记的步骤在画布上的步骤备注中也带有同样的说明，可以直接跳转过去。
+
+PlaidCloud 会将导入的依赖项存储在您选择的文档文件夹中，并让转换后的步骤指向这些路径，因此工作流无需桌面文件系统即可重复运行。
+
+> **注释和容器会一并导入。** 注释框会成为备注和高亮框，Tool Container 会成为分组，它们对工作流的说明作用与在 Alteryx 中完全相同，且不增加任何运行工作。**Control Container** 的控制门也会保留：其中的步骤导入后已设置为仅在受控数据有行时才运行。
+
+## 步骤 3：查看已转换内容与需要关注的内容
+
+打开生成的高级工作流，从上到下处理转换报告。大多数步骤以高置信度完成转换，无需您做任何操作。被标记的步骤才是首次迁移建立信任的关键，请阅读每条备注并做出决定。
+
+下面是部分转换的真实情况，以及各种情形的含义：
+
+| 您看到的内容 | 含义 | 操作 |
+|---|---|---|
+| 高置信度步骤 | 已干净地映射到原生步骤或执行器 | 无需操作，也可以抽查 |
+| 标记为需要审查的步骤 | 已转换，但有需要确认的注意事项 | 阅读备注，对照预期验证结果 |
+| 标记为未转换的步骤 | 导入器拒绝转换，而不是猜错 | 在 Alteryx 中修复原因后重新导入，或手动构建该步骤 |
+| 引用了尚不存在的表 | 工作流并未创建的 Calgary 数据集或外部构建的数据集 | 运行前加载指定的表 |
+
+首次迁移中可能遇到的一些标记：
+
+- **随机抽样**（Create Samples、Random % Sample）会精确保留样本大小和比例，但 PlaidCloud 会自行抽取记录，因此请按数量和比例验证，而不要按具体落在哪些行验证。
+- **XGBoost 模型**会转换为 scikit-learn 梯度提升分类器；预期在统计上等价，而不是值完全相同，请查看该步骤的备注。
+- **未转换的步骤会在工作流运行到它时有意失败**，因此存在未解决的控制门或缺少表的转换结果，不会被当作一切正常而运行通过。这种坦率是有意为之：导入器拒绝把错误的数字当作正确的数字报告。
+
+> **运行成功不等于结果正确。** 报告告诉您该看哪里；下一步的验证则告诉您是否应该信任这些数字。如果工作流的输出有人依赖，请不要跳过验证。
+
+有关各类工具转换方式的完整目录，请参阅 [Alteryx 转换矩阵](/zh-cn/reference/alteryx-conversion-matrix/)。
+
+## 步骤 4：设置变量、运行并验证
+
+1. 在转换后的工作流画布上，查看生成的步骤和分支。
+2. 设置所有**工作流变量**，它们是转换后的应用问题和运行时参数。将文件和文件夹变量指向步骤 2 中的文档路径，并与在 Alteryx 运行中使用的值保持一致。
+3. 点击工作流上的**运行**（而不是单个步骤），并在日志中观察各步骤依次执行。
+4. 查看运行历史记录、步骤输出以及所有就绪状态备注。
+
+然后按步骤 1 中选择的级别进行验证：
+
+- **结构验证**：工作流已打开，图中有预期的分支和宏，输入已上传，变量已出现，运行已完成。足以用于就绪状态检查和盘点。
+- **输出一致性**：将架构、行数和行值与可信的 Alteryx 输出进行比较。除非工作流明确排序，否则忽略行顺序。在适用时，还要检查空值处理、数值精度、日期和几何图形。
+
+如果比较结果有差异，请按顺序排查原因：输入文件缺失或不同、变量值不同、源快照不同，然后是空值/日期/舍入/排序规则差异，最后是空间参考或几何格式。修正原因后重新运行并再次比较。[验证指南](/zh-cn/guides/workflows/validate-converted-alteryx-workflows/)提供了完整的检查清单。
+
+> **可以放心重新导入。** 修复包后再次导入，会生成独立的一组表，而不会覆盖第一次导入的结果。对新结果满意后，再删除之前的工作流及其表。
+
+## 您已迁移了一个工作流
+
+您已将一个 Alteryx 工作流从就绪状态检查推进到经过验证的 PlaidCloud 运行，同样重要的是，现在您可以通过转换报告分辨哪些内容已干净地转换、哪些需要查看。这就是完整的流程。对每个工作流重复这一流程；对于较大的工作流组合，请分批迁移到专用项目中。
+
+## 后续步骤
+
+- [迁移 Alteryx 工作流](/zh-cn/guides/workflows/migrate-alteryx-workflows/)：完整的迁移参考，包括宏、报表、空间数据和 Calgary 数据库。
+- [Alteryx 迁移就绪检查清单](/zh-cn/guides/workflows/alteryx-migration-readiness-checklist/)：面向工作流组合迁移的完整包准备检查清单。
+- [验证转换后的 Alteryx 工作流](/zh-cn/guides/workflows/validate-converted-alteryx-workflows/)：深入介绍结构、输出一致性、宏和构件验证。
+- [使用转换后的 Alteryx 应用](/zh-cn/guides/workflows/use-converted-alteryx-apps/)：使用受控的工作流变量运行转换后的分析应用。
+- [调优 Alteryx 导入](/zh-cn/guides/workflows/troubleshoot-alteryx-imports/)：补全依赖项、解析宏并解读验证差异。
+- [加载、转换和发布数据](/zh-cn/get-started/tutorials/load-and-transform-data/)：从零开始构建 PlaidCloud 工作流，了解原生构建模块。

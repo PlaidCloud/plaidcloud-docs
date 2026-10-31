@@ -1,0 +1,89 @@
+---
+title: Conectar con Anaplan
+description: Conecte PlaidCloud con Anaplan a través de su API de integración para leer una vista guardada, ejecutar una acción de exportación existente o leer listas en una dimensión de PlaidCloud; solo lectura, directo a la nube.
+sidebar:
+  order: 20
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/anaplan.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Conecte PlaidCloud con **Anaplan** para que un flujo de trabajo pueda leer una vista guardada mediante la ruta de solicitudes de lectura de gran volumen de Anaplan, ejecutar una acción de exportación existente o leer una o más listas de Anaplan en una dimensión de PlaidCloud. La conexión llega a la propia API de integración de Anaplan **directamente a la nube**: estos pasos no tienen una ruta mediante un agente local. Esta guía abarca la conexión, la autenticación, una breve introducción a cada uno de los tres pasos de lectura y las consideraciones sobre la programación.
+
+<Aside type="note">
+Este conector es de solo lectura. Nunca se escribe nada de vuelta en Anaplan: no hay ningún paso de escritura ni modo de aplicación parcial.
+</Aside>
+
+## Requisitos previos
+
+Necesita, de parte de su administrador del espacio de trabajo de Anaplan:
+
+- Un **nombre de usuario y una contraseña** de Anaplan, o bien un **certificado de CA y su clave privada** registrados por su administrador del espacio de trabajo a nombre de un usuario de Anaplan, con acceso de lectura al espacio de trabajo y a los modelos que leerán sus flujos de trabajo. Consulte [Autenticación](#autenticación) más abajo.
+- El **ID del espacio de trabajo** y el **ID del modelo** de los modelos que leerá, visibles en la configuración del modelo de Anaplan. Ambos también se pueden descubrir en directo desde la conexión una vez creada.
+- Para **Anaplan: leer vista**: una **vista guardada**, creada con exactamente la porción de filas, columnas y filtros que desea. Consulte [Anaplan: leer vista](#anaplan-leer-vista) más abajo.
+- Para **Anaplan: leer exportación**: una **acción de exportación que ya exista** en el modelo.
+- Para **Anaplan: leer lista**: las **listas** de Anaplan que forman la jerarquía que desea leer.
+
+## Autenticación
+
+La conexión tiene un **Modo de autenticación**: **Básica** (la predeterminada) o **Certificado**. Una conexión existente sigue funcionando sin cambios como Básica.
+
+- **Básica** inicia sesión con un nombre de usuario y una contraseña de Anaplan.
+- **Certificado** inicia sesión con un certificado emitido por una CA y su clave privada, ambos pegados como texto PEM. La clave privada debe ser **RSA y no estar cifrada**, y el certificado debe ser el que su administrador del espacio de trabajo de Anaplan ha registrado a nombre de su usuario de Anaplan, emitido por una CA en la que Anaplan confíe para su inquilino. PlaidCloud firma un desafío aleatorio con la clave y lo intercambia por un token de Anaplan, siguiendo el propio flujo de autenticación por certificado de Anaplan; no hay nada más que hacer una vez pegados el certificado y la clave, y la renovación del token funciona igual que en el modo Básica. Ambos campos enmascaran lo que pega, y ambos secretos se almacenan cifrados, igual que una contraseña Básica; además, cambiar de modo nunca envía las credenciales del otro modo: si cambia una conexión existente de Básica a Certificado, deberá pegar el certificado y la clave, ya que no se trasladan.
+
+La autenticación multifactor de Anaplan se aplica a los usuarios que inician sesión con correo electrónico y contraseña. La autenticación por certificado es la opción sin contraseña para una conexión automatizada y programada.
+
+El modo Certificado se rechaza antes de contactar con Anaplan si no se puede leer la clave o el certificado pegado, si la clave está cifrada o no es RSA, o si la clave no coincide con el certificado. Si es Anaplan quien rechaza el certificado, el error indica si ha caducado; las causas habituales son un certificado que no está registrado a nombre de un usuario de Anaplan o una CA en la que no se confía para su inquilino.
+
+## Crear la conexión
+
+<Steps>
+
+1. Abra **Tools > Connections** y haga clic en `New Connection`.
+
+2. Elija **Anaplan** en el menú.
+
+3. Complete los campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Nombre | Un nombre descriptivo, por ejemplo `Anaplan Prod`. |
+   | Host de la API | Opcional. Déjelo en blanco para usar el valor estándar de Anaplan, `https://api.anaplan.com`. |
+   | Host de autenticación | Opcional. Déjelo en blanco para usar el valor estándar de Anaplan, `https://auth.anaplan.com`. |
+   | Modo de autenticación | **Básica** (predeterminada) o **Certificado**. Consulte [Autenticación](#autenticación) más arriba. |
+   | Nombre de usuario | El nombre de usuario de la cuenta de Anaplan. Solo en modo Básica. |
+   | Contraseña | La contraseña de la cuenta de Anaplan. Solo en modo Básica. |
+   | Certificado de CA | Texto PEM del certificado X.509 registrado en Anaplan. Solo en modo Certificado. |
+   | Clave privada | Texto PEM de la clave privada RSA del certificado, sin cifrar. Solo en modo Certificado. |
+   | ID de espacio de trabajo predeterminado | Opcional. Un valor de relleno previo, por comodidad, para el campo Espacio de trabajo de un paso de lectura. |
+   | ID de modelo predeterminado | Opcional. Un valor de relleno previo, por comodidad, para el campo Modelo de un paso de lectura. |
+   | Tiempo de espera (segundos) | De forma predeterminada, 30. |
+
+4. Haga clic en `Test Connection`. Una prueba correcta informa del correo electrónico de la cuenta de Anaplan a la que corresponden las credenciales.
+
+5. Haga clic en `Create`.
+
+</Steps>
+
+## Anaplan: leer vista
+
+Agregue un paso **Anaplan: leer vista** para leer una vista guardada mediante la ruta de solicitudes de lectura de gran volumen de Anaplan. **La vista se lee exactamente como se guardó en Anaplan: este paso no permite seleccionar filas, columnas ni páginas.** Para leer otra porción, cree otra vista guardada en Anaplan; una combinación de un elemento de línea booleano y una vista guardada es la forma habitual de filtrar allí. Una columna de datos llega con el tipo de Anaplan declarado solo cuando la vista coloca los **elementos de línea en el eje de columnas**; si los elementos de línea están en las filas (una disposición normal de pérdidas y ganancias) o no figuran en la vista, todas las columnas llegan como texto, y el paso lo indica. Una vista cuyo filtro no coincide con nada genera una tabla vacía con una advertencia. Un valor Number que el paso no puede leer sin ambigüedad (casi siempre uno que podría ser igualmente un decimal simple o una representación de estilo europeo) se rechaza en lugar de adivinarse, salvo que otro valor de la misma columna determine qué lectura es la correcta; un valor que sí se interpreta llega con precisión completa, sin error de redondeo. Consulte [Anaplan: leer vista](/es/reference/workflow-steps/anaplan/anaplan-read-view/) para ver la referencia completa de campos y comportamiento.
+
+## Anaplan: leer exportación
+
+Agregue un paso **Anaplan: leer exportación** para ejecutar una acción de exportación de Anaplan **ya existente** y cargar el archivo que produce. La API no puede crear una acción de exportación: créela o edítela primero en Anaplan; y el paso no puede restringir lo que emite: llega exactamente lo que la acción esté configurada para exportar en Anaplan. **Todas las columnas llegan como texto.** Los números se solicitan con formato estadounidense; una columna que aun así llega con separadores de miles se carga sin cambios, como texto, con una advertencia con nombre en lugar de hacer fallar la ejecución. El paso se detiene en lugar de cargar una tabla cuando la exportación falla, se cancela, no produce datos, sigue en ejecución cuando se agota el presupuesto de sondeo del paso, o produce un archivo que no se puede vincular con la exportación o cuyo recuento de filas no coincide con el que informa la propia Anaplan. Consulte [Anaplan: leer exportación](/es/reference/workflow-steps/anaplan/anaplan-read-export/) para ver la referencia completa.
+
+## Anaplan: leer lista
+
+Agregue un paso **Anaplan: leer lista** para leer una o más listas de Anaplan en una dimensión de PlaidCloud. **Un solo paso lee una jerarquía compuesta completa**: indique todas las listas que abarca, empezando por la raíz (por ejemplo, Region, luego Country y luego Store), en lugar de dividirla en varios pasos; la tabla de ensayo se reemplaza en cada ejecución, por lo que varios pasos dirigidos a una misma tabla de ensayo borrarían cada uno las filas del anterior. Cada arista se agrega con un simple `+`, ya que las jerarquías de listas de Anaplan no tienen peso ni signo por arista que leer. Los controles de acceso a listas de Anaplan y la pertenencia a subconjuntos no se importan: son metadatos, no datos de la dimensión. Los ID de nodo duplicados, una referencia a un padre que no se puede resolver, las referencias a padres en conflicto y un nombre de propiedad que choca con los metadatos importados se rechazan antes de cargar nada. Consulte [Anaplan: leer lista](/es/reference/workflow-steps/anaplan/anaplan-read-list/) para ver la referencia completa.
+
+## Consideraciones sobre la programación
+
+El presupuesto de frecuencia de solicitudes de Anaplan se **comparte en todo el inquilino**: entre todas las integraciones que su organización ejecuta contra ese inquilino de Anaplan, no solo la de PlaidCloud; y PlaidCloud no coordina las programaciones entre ejecuciones simultáneas. Varios pasos de Anaplan que coincidan en el mismo minuto de cron pueden agotar ese presupuesto antes de que alguno termine. **Escalone las programaciones de sus flujos de trabajo de Anaplan** en lugar de ejecutarlos todos a la vez.
+
+## Temas relacionados
+
+- [Anaplan: leer vista](/es/reference/workflow-steps/anaplan/anaplan-read-view/): leer una vista guardada, referencia de campos.
+- [Anaplan: leer exportación](/es/reference/workflow-steps/anaplan/anaplan-read-export/): ejecutar una acción de exportación, referencia de campos.
+- [Anaplan: leer lista](/es/reference/workflow-steps/anaplan/anaplan-read-list/): leer listas en una dimensión, referencia de campos.
+- [Crear y administrar una conexión](/es/guides/connections/create-connection/)

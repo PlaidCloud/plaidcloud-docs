@@ -1,0 +1,58 @@
+---
+title: "Acumatica: Post Documents 步骤"
+description: 根据标题表和行表将日记账交易、销售发票、账单和付款过账到 Acumatica，并提供预览模式，在任何内容过账之前验证每份单据。
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/acumatica/acumatica-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## 说明
+
+通过您的 [Acumatica 连接](/zh-cn/guides/connections/acumatica/)，经由 PlaidCloud 共享的 ERP 写入管道将单据过账到 Acumatica。该步骤接收一个标题表（每份单据一行）和一个行表（每份单据一行或多行），并将每份单据过账为 **JournalTransaction**、**SalesInvoice**、**Bill** 或 **Payment**。**Validate Only** 会构建并检查每份单据，不占用总账声明，也不过账；可选的结果表会记录每份单据的结果。
+
+<Aside type="caution">
+请先在 **Validate Only** 模式下运行每个批次，查看结果表，并在直接于 Acumatica 中核对少量过账记录之后，再依赖此步骤无人值守地过账正式单据。
+</Aside>
+
+## 配置
+
+### 连接
+
+- **Acumatica 连接**：用于过账的 Acumatica 连接。
+- **环境**：该连接的环境。
+
+### 数据
+
+- **标题表**：每份单据一行：`ref`（您的单据标识符，必填）、`doc_type`（`JournalTransaction`/`SalesInvoice`/`Bill`/`Payment`，必填）、`posting_date`、`party_id`（客户/供应商，在单据类型需要时填写）、`memo`、`due_date`、`branch_id`。一个批次可以混合多种单据类型，PlaidCloud 会在过账前按 `doc_type` 分区。
+- **行表**：每个 `ref` 对应一行或多行，其结构与单据类型相符：
+
+  | 单据类型 | 行列 |
+  |---|---|
+  | JournalTransaction | `account`、`subaccount`、`branch`、`debit`、`credit` |
+  | SalesInvoice | `item`、`qty`、`unit_price`、`amount` |
+  | Bill | `account`、`amount` |
+  | Payment | `linked_txn_id`、`amount` |
+
+- **结果表**：输出表 ID：每份单据一行，包含 `ref`、`doc_type`、`natural_key`、`confirmation_id`、`status`（`posted`/`validated`/`error`）、`message`。
+- **Validate Only**：默认选中。仅做预检；不占用总账声明，不过账。完全省略此字段的步骤配置（例如通过 REST API、MCP 或工作流包导入创作的配置）同样默认为 Validate Only，而不是正式过账。
+- **出错时继续**：默认选中。某份单据失败后继续过账其余单据；取消选中则在第一次失败时停止批次。
+
+## 过账的工作方式
+
+Acumatica 会将每份单据创建为**挂起**状态，然后 PlaidCloud 调用释放操作，该操作以异步方式运行：先返回 `202` 已接受响应，轮询至完成，再由 `204` 确认释放。只有在**通过重新读取单据的挂起标志为 false 确认释放**之后，PlaidCloud 才会报告 `posted`。单据已落地但其释放始终未得到确认时，会保持隔离状态（不报告为已过账，也不会被悄悄丢弃），而不是仅凭单据存在就记录为成功。
+
+## 能力限制
+
+| 限制 | 含义 |
+|---|---|
+| 没有原生幂等键 | Acumatica 基于 PUT 的写入 API 没有幂等字段。在重试或重新运行时，防止重复过账的唯一保障是 PlaidCloud 自己的总账声明，而不是 Acumatica 端的键。 |
+| 冲销需手动进行 | 基于合约的 API 中，没有任何单据类型具备有文档记载的作废/冲销操作。`reversal_mode` 处处为 `NONE`：拒绝而不伪造。请直接在 Acumatica 中更正过账有误的单据。 |
+| 付款没有可靠的查找方式 | 没有任何有文档记载的字段可在结果不明确后，将付款关联回 PlaidCloud 的请求。存疑的付款会被隔离，等待人工处理，而不是靠猜测。 |
+| 行项目筛选不在服务器端进行 | （导入步骤上的）服务器端筛选器无法触及单据的行项目维度：请在标题/实体级别筛选，并在您的工作流中限定行的范围。 |
+
+## 相关内容
+
+- [连接到 Acumatica](/zh-cn/guides/connections/acumatica/)：涵盖配置、预览和过账的完整演练
+- [Acumatica REST 连接器](/zh-cn/reference/connectors/rest/acumatica/)
+- [Acumatica 步骤](/zh-cn/reference/workflow-steps/acumatica/)
+- [查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)

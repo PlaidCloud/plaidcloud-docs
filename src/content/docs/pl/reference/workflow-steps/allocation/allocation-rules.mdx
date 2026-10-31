@@ -1,0 +1,284 @@
+---
+title: Allocation By Assignment Dimension
+description: Definiuj reguły alokacji w krokach przepływu pracy PlaidCloud, aby określić, jak koszty są rozdzielane z rekordów źródłowych na docelowe.
+sidebar:
+  order: 12
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/allocation/allocation-rules.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import SnippetCommonAllocationSourceMap from '@snippets/pl/common-allocation-source-map.mdx';
+import SnippetCommonDataFilter from '@snippets/pl/common-data-filter.mdx';
+import SnippetCommonAllocationDriverMap from '@snippets/pl/common-allocation-driver-map.mdx';
+
+## Opis
+
+
+Alokuje wartości z tabeli źródłowej na cele na podstawie wymiaru przypisania i tabeli danych sterujących. Jest to najbardziej elastyczny krok alokacji — używaj go do rozdziału opartego na kluczu alokacji, gdzie miejsce docelowe każdego wiersza źródłowego wyznacza hierarchia, a wartości sterujące określają, *ile* trafia gdzie.
+
+Typowe wzorce: rozdzielenie sum centrów kosztów na linie produktów na podstawie godzin aktywności; rozdzielenie kosztów ogólnych IT między jednostki biznesowe na podstawie liczby pracowników; alokacja kosztów usług wspólnych za pomocą niestandardowego ważenia.
+
+
+## Ustawienia tabeli danych  
+### Hierarchia wymiaru przypisania
+
+![Hierarchia przypisania](/images/assignment-hierarchy.png)
+
+**Hierarchia wymiaru przypisania** daje możliwość wskazywania, klikania i filtrowania ***Tabeli wartości do alokacji***, ***Tabeli danych sterujących*** lub obu, aby tworzyć ukierunkowane alokacje. 
+**Hierarchia wymiaru przypisania** powstaje przez połączenie wymiarów, które odwołują się do ***Tabeli wartości do alokacji*** i ***Tabeli danych sterujących***.
+
+#### Tworzenie hierarchii wymiaru przypisania
+
+Aby utworzyć **Hierarchię wymiaru przypisania**, musisz najpierw utworzyć wymiary, których chcesz używać jako filtrów dla ***Tabeli wartości do alokacji*** i ***Tabeli danych sterujących***. Poniższe linki poprowadzą Cię przez tworzenie tych wymiarów.
+
+<Aside>W powyższej **Hierarchii wymiaru przypisania** ***Tabela wartości do alokacji*** ma kolumny Version, Period, Account i Original Cost Center. ***Tabela danych sterujących*** ma kolumny Resource Driver, Period, Version, Original Cost Center i Original Activity. Obie tabele mają dodatkowe kolumny, ale to te kolumny chcemy wykorzystać do utworzenia naszych reguł alokacji.</Aside>
+
+[Tworzenie wymiarów](https://docs.plaidcloud.com/docs/workflow-steps/dimensions/dimension-create/) 
+
+[Ładowanie wymiarów](https://docs.plaidcloud.com/docs/workflow-steps/dimensions/dimension-load/) 
+
+##### Tworzenie hierarchii głównej
+
+Po utworzeniu wymiarów dla ***Tabeli wartości do alokacji*** i ***Tabeli danych sterujących*** następnym krokiem jest zdecydowanie, który z wymiarów ***Tabeli wartości do alokacji*** posłuży jako ***Hierarchia główna*** dla **Hierarchii wymiaru przypisania**. 
+<Aside>Podczas alokacji wartości księgowych zwykle używa się wymiarów _Account_ lub _Cost Center_.</Aside>
+
+Skopiuj ten wymiar, przechodząc do karty Wymiary w PlaidCloud, klikając wymiar, a następnie wybierając ***Akcje*** i ***Kopiuj wymiar***.
+Po skopiowaniu wymiaru pojawi się okno z prośbą o wpisanie nazwy skopiowanego wymiaru. 
+
+<Aside>Nazwa **Hierarchii wymiaru przypisania** powinna wskazywać, jaka alokacja jest wykonywana, na przykład „Ledger to Activity”.</Aside>
+
+
+##### Dodawanie wymiarów do hierarchii przypisania
+
+
+Otwórz nowo utworzony **Wymiar przypisania**, kliknij strzałkę w dół obok pozycji ***Właściwości*** i wybierz ***Nowa właściwość***.
+
+![Właściwość hierarchii przypisania](/images/allocation_by_dimension_add_property.png)
+
+Otworzy to okno dialogowe ***Konfiguracja właściwości***:
+###### Konfiguracja właściwości
+
+![Konfiguracja właściwości hierarchii przypisania](/images/allocation_by_dimension_configure_property.png)
+
+- **Nazwa właściwości** - Zwykle jest to nazwa wymiaru dodawanego do hierarchii przypisania.
+- **Wyświetlanie właściwości** - Należy ustawić „Tag”.
+- **Typ właściwości** - Ta właściwość informuje krok alokacji, z którą tabelą — ***Tabelą wartości do alokacji*** czy ***Tabelą danych sterujących*** — wiąże się dany wymiar. 
+  - **Źródło** - Używane w połączeniu z ***Tabelą wartości do alokacji***.
+  - **Cel** - Używany w połączeniu z ***Tabelą danych sterujących***.
+  - **Driver** - Służy do filtrowania ***Tabeli danych sterujących*** po wybranym kluczu alokacji.
+  - **Kontekst** - Gdy ***Tabela wartości do alokacji*** i ***Tabela danych sterujących*** zawierają ten sam wymiar, kontekstu można użyć do określenia, jak wymiary mają się do siebie odnosić. Kontekst jest często używany, gdy obie tabele, ***Tabela wartości do alokacji*** i ***Tabela danych sterujących***, zawierają _Profit / Cost Centers_ lub _Geography_.
+    - **Pozostawione puste** - Węzeł bez własnego kontekstu przejmuje kontekst najbliższego przodka, który go ustawia, więc pusta komórka oznacza _dziedziczenie_, a nie _brak kontekstu_. Dopiero gdy żaden przodek też go nie ustawia, ***Tabela danych sterujących*** wraca do filtrowania według własnego ustawienia wymiaru docelowego.
+    - **Bieżące** - Działa jako przekazanie i filtruje ***Tabelę danych sterujących*** na podstawie ustawień wymiaru docelowego. Przykładowo, jeśli ***Kontekst*** opiera się na wymiarze _Profit Center_, a wymiar docelowy _Profit Center_ jest ustawiony na ***Wszystkie***, dane sterujące będą filtrowane po wszystkich _Profit Centers_. Ponieważ jest to wartość zapisana, zatrzymuje także dziedziczenie opisane powyżej, więc ***Bieżące*** to sposób, w jaki węzeł mówi „tutaj brak kontekstu”, gdy ustawia go przodek — wyczyszczenie komórki zamiast tego przekazałoby węzłowi kontekst jego przodka.
+    - **Nadrzędne** - Po wybraniu element nadrzędny _Profit Center_ z ***Tabeli wartości do alokacji*** będzie używany do filtrowania wartości sterujących w ***Tabeli danych sterujących***. Jest to przydatne, gdy wartości sterujące są czasem niedostępne dla konkretnego _Profit Center_, ale często są dostępne na poziomie nadrzędnym. 
+    - **Wszystkie** - Po wybraniu _Profit Center_ z ***Tabeli wartości do alokacji*** nie będzie filtrować wartości sterujących w ***Tabeli danych sterujących***; użyte zostaną wartości sterujące dla wszystkich _Profit Centers_.
+    - **Nieprzypisane** - Zamiast wierszy sterujących, które wybrałby wymiar docelowy, używane są tylko te, których _Profit Center_ nie ma żadnej wartości lub ma wartość `UNASSIGNED` (w dowolnej wielkości liter), a _Profit Center_ nie dzieli wyniku. Użyj tego dla reguły, która rozdziela koszty, których nie posiada żaden _Profit Center_. Dotyczy tylko reguły, która go ustawia — inna reguła pozostawiająca tę samą kolumnę pustą nie jest nim objęta.
+    <Aside>Gdy ***Kontekst*** jest ustawiony na ***Wszystkie***, ***Nadrzędne*** lub ***Nieprzypisane***, zastępuje ustawienie wymiaru docelowego. ***Bieżące*** go nie zastępuje — odwołuje się do niego, co robi także pusta komórka, gdy żaden przodek nie ustawił kontekstu.</Aside>
+- **Typ edytora** - Tę listę rozwijaną należy ustawić na ***Select Dimension***.
+
+Po wybraniu odpowiednich właściwości dla wymiaru dodawanego do hierarchii przypisania wybierz „Edytuj konfigurację”.
+###### Konfiguracja wymiaru
+
+![Konfiguracja hierarchii przypisania](/images/allocation_by_dimension_configure.png)
+
+- **Wymiar** - Użyj listy rozwijanej, aby wybrać wymiar.
+- **Hierarchia** - Jeśli wybrany wymiar ma hierarchie alternatywne, pojawią się one tutaj i będzie można je wybrać obok hierarchii głównej.
+- **Węzeł początkowy** - Jeśli nie chcesz, aby wymiar był wyświetlany od węzła najwyższego, możesz wybrać dowolny węzeł w hierarchii jako węzeł, od którego wymiar będzie wyświetlany.
+- **Zezwalaj na wielokrotny wybór** - Po zaznaczeniu użytkownik będzie mógł wybrać wiele węzłów w hierarchii.
+- **Przypadki szczególne** - Po zaznaczeniu przypadki szczególne będą dostępne do wyboru w liście rozwijanej wymiaru. Zwykle są używane w wymiarach ***Cel***.
+  - **Źródło** - Gdy wymiar jest ustawiony na _Źródło_, alokacja pominie ten wymiar podczas filtrowania ***Tabeli danych sterujących***, ale zaalokowane wyniki będą zawierać wartości z tego wymiaru.
+  - **Bieżące** - Może być używane, gdy wymiar jest współdzielony między _Źródło_ i _Cel_. Gdy wymiar _Cel_ jest ustawiony na ***Bieżące***, ***Tabela danych sterujących*** będzie filtrowana według bieżącej wartości wymiaru _Źródło_ w trakcie wykonywania alokacji. Przykładem jest sytuacja, gdy w ***Tabeli wartości do alokacji*** i ***Tabeli danych sterujących*** jest wiele okresów, ale chcesz alokować w obrębie okresów, a nie między nimi. Często używa się też ***Bieżące*** dla _Business Units_, _Cost Centers_ i _Geographies_.
+  - **Nieprzypisane** - Gdy wymiar jest ustawiony na _Nieprzypisane_, alokacja pominie ten wymiar podczas filtrowania ***Tabeli danych sterujących***, a wynik alokacji dla tego wymiaru będzie wartością _Null_.
+  - **Wszystkie** - Gdy wymiar jest ustawiony na _ALL_, alokacja użyje wszystkich wartości w wymiarze.
+
+
+**Tabelę wartości do alokacji**, **Tabelę danych sterujących** i **Tabelę wyników alokacji** można wybierać dynamicznie lub statycznie.
+
+#### Dynamiczny wybór tabeli
+Opcja dynamiczna pozwala określić tabelę za pomocą tekstu i zmiennych.  Jest to przydatne w przepływach pracy sterowanych zmiennymi, gdzie odwołania do tabeli lub widoku są względne wobec podanych zmiennych.
+
+Przykład, który używa zmiennej `current_month` do dynamicznego wskazania tabeli:
+
+```text
+legal_entity/inputs/{current_month}/ledger_values
+```
+
+#### Statyczny wybór tabeli
+Gdy jako źródło ma być użyta konkretna tabela, pozostaw niezaznaczone pole *Dynamiczna* i wybierz tabelę źródłową z listy rozwijanej.
+
+
+Eksplorator tabel jest zawsze dostępny przy każdym wyborze tabeli.  Kliknij przycisk Eksploratora tabel po prawej stronie wyboru tabeli, a otworzy się okno Eksploratora tabel.
+
+<Aside>**Tabela wyników alokacji** musi być tabelą, a nie widokiem.</Aside>
+
+### Tabela wartości do alokacji
+
+Jest to tabela zawierająca wartości, które mają być alokowane. Są to zwykle wartości kosztów lub przychodów.  
+
+
+### Tabela danych sterujących
+
+Tabela danych sterujących zawiera wartości, których krok alokacji użyje do alokacji kosztów. 
+
+
+Przykłady:
+
+- W łańcuchu dostaw, aby przypisać koszty klientom, możesz użyć danych o dostawach, z liczbą dostaw lub wagą dostaw jako kluczem alokacji.
+- Aby dział pomocy technicznej IT przypisał swoje koszty obsługiwanym działom, danymi sterującymi może być liczba zgłoszeń według centrum kosztów. 
+
+#### Reguła znaku danych sterujących
+Dane sterujące mogą zawierać zarówno wartości dodatnie, jak i ujemne. **Reguła znaku danych sterujących** pozwala zdecydować, jak będą obsługiwane sprzeczne znaki.
+- **Błąd przy sprzecznych znakach** - Krok alokacji zgłosi błąd i zatrzyma się, jeśli napotka sprzeczne znaki.
+- **Kontynuuj z ostrzeżeniem przy sprzecznych znakach** - Krok alokacji użyje zarówno ujemnych, jak i dodatnich wartości sterujących, ale wyświetli ostrzeżenie.
+- **Używaj tylko dodatnich wartości sterujących** - Krok alokacji użyje tylko dodatnich wartości sterujących i zignoruje wartości ujemne.
+- **Używaj tylko ujemnych wartości sterujących** - Krok alokacji użyje tylko ujemnych wartości sterujących i zignoruje wartości dodatnie.
+- **Używaj wartości bezwzględnych danych sterujących** - Krok alokacji użyje wartości bezwzględnych danych sterujących.
+
+### Dopasowanie rekordów do więcej niż jednej reguły
+
+Domyślnie rekord podlega tylko pierwszej regule, do której pasuje. Odznacz **Dopasuj rekordy tylko do jednej reguły**, a rekord podlega każdej regule, do której pasuje: pojawia się raz dla każdej z nich, a rekord, który nie pasuje do żadnej reguły, jest pomijany.
+
+Reguły można także podzielić na iteracje za pomocą właściwości wymiaru przypisania typu **Sekwencjonowanie**, której wartością jest iteracja, w której uruchamiana jest każda reguła. Krok z odznaczoną opcją **Dopasuj rekordy tylko do jednej reguły** nie może robić obu rzeczy: jeśli uruchamiane reguły przypadają na więcej niż jedną iterację, krok zatrzymuje się z komunikatem *Cannot apply rules when there are multiple iterations and records can match more than one rule*. Zaznacz tę opcję lub uruchom każdą iterację jako osobny krok.
+
+### Tabele pośrednie
+_Tabele pośrednie_ są tworzone przy każdym uruchomieniu kroku alokacji i zawierają podsumowanie przetwarzania alokacji. _Tabele pośrednie_ pokazują, jak przebiega proces alokacji, i służą do diagnozowania nieoczekiwanych wyników.
+
+- **Ścieżki** - Pokazuje liczbę unikatowych ścieżek alokacji podsumowanych z hierarchii przypisania.
+- **Mapowanie** - Pokazuje, jak każdy wiersz ***Tabeli wartości do alokacji*** jest mapowany na cele alokacji.
+- **Podsumowanie** - Pokazuje każdą regułę, wynikającą z hierarchii przypisania, oraz ile rekordów z ***Tabeli wartości do alokacji*** do niej pasuje.
+
+Gdy opcja **Dopasuj rekordy tylko do jednej reguły** jest zaznaczona, rekord, do którego nie pasuje żadna reguła, ma puste kolumny reguł w tabeli **Mapowanie** i jest liczony w wierszu **Podsumowanie**, który nie wskazuje żadnej reguły. Wartość pozostawiona przez regułę pustą jest również pusta. Puste oznacza null, nigdy pusty ciąg znaków, a trzy tabele mają te same kolumny i typy, niezależnie od tego, czy zaznaczono **Zastosuj reguły za pomocą SQL, nie Pandas**.
+### Tabela wyników alokacji
+
+
+
+#### Dołącz wyniki do tabeli docelowej
+Jeśli to pole jest zaznaczone, wyniki alokacji będą dołączane do tabeli wyników alokacji. 
+Jeśli to pole nie jest zaznaczone, tabela wyników alokacji będzie nadpisywana przy każdym uruchomieniu kroku alokacji.
+
+#### Oddzielne kolumny dla zaalokowanych wyników
+
+Jeśli to pole jest zaznaczone, tabela wyników pokaże kwotę każdego zaalokowanego rekordu oraz kwotę faktycznie zaalokowaną do każdego rekordu sterującego.
+
+#### Zmień nazwy węzłów wymiaru
+Jeśli to pole jest zaznaczone, podczas uruchamiania kroku alokacji zmieni on nazwę węzła wymiaru w wymiarze przypisania.  
+
+### Opcje zaawansowane
+
+#### Liczba wątków
+Ustawia liczbę współbieżnych operacji, których użyje krok alokacji.
+
+#### Rozmiar porcji
+Ustawia liczbę ścieżek alokacji w jednym wątku.
+
+<Aside type="danger">Ustawienie zbyt wysokiej wartości ***Liczby wątków***, ***Rozmiaru porcji*** lub obu spowolni przetwarzanie alokacji. Idealnym sposobem dostrojenia kroku alokacji jest powolne zwiększanie tych wartości i obserwowanie wydajności.</Aside>
+
+
+## Mapa źródła alokacji
+
+<SnippetCommonAllocationSourceMap />
+
+## Filtry źródła alokacji
+
+<SnippetCommonDataFilter />
+
+## Mapa danych sterujących
+
+<SnippetCommonAllocationDriverMap />
+
+## Filtry danych sterujących
+
+<SnippetCommonDataFilter />
+
+## Przykłady
+
+### Przykład 1
+
+**Tabela wartości do alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_source.png)
+
+
+**Tabela danych sterujących**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_driver.png)
+
+
+**Hierarchia wymiaru przypisania**
+
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_assignment.png)
+
+Ponieważ wymiar ***Target RC*** jest ustawiony na ***Bieżące***, dane sterujące będą filtrowane według wartości ***Source RC*** w ***Tabeli wartości do alokacji***. 
+Ponieważ jedyną wartością w ***Source RC*** jest **„A”**, w kroku alokacji zostaną użyte tylko rekordy wartości sterujących, w których **RC = A**.
+
+
+**Tabela wyników alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_result.png)
+
+### Przykład 2
+
+**Tabela wartości do alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_source.png)
+
+
+**Tabela danych sterujących**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_1_driver.png)
+
+
+**Hierarchia wymiaru przypisania**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_2_assignment.png)
+
+Ponieważ wymiar ***Target RC*** jest ustawiony na ***ALL***, dane sterujące będą obejmować wszystkie wartości **RC**, co widać w kolumnie **RC** w ***Tabeli wyników alokacji***. 
+
+**Tabela wyników alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_2_result.png)
+
+### Przykład 3
+
+**Tabela wartości do alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_source.png)
+
+
+**Tabela danych sterujących**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_driver.png)
+
+
+**Hierarchia wymiaru przypisania**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_assignment.png)
+
+Gdy ***Context RC*** jest ustawiony na ***ALL***, a ***Target RC*** na ***Source***, dane sterujące będą obejmować wszystkie ***RC*** w danych sterujących. ***Context RC*** zastąpi ustawienie ***Target RC***.
+
+**Tabela wyników alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_result.png)
+
+
+### Przykład 4
+
+**Tabela wartości do alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_source.png)
+
+
+**Tabela danych sterujących**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_3_driver.png)
+
+
+**Hierarchia wymiaru przypisania**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_4_assignment.png)
+
+Gdy ***Context RC*** jest ustawiony na ***ALL***, dane sterujące będą obejmować wszystkie ***RC*** w danych sterujących. 
+
+**Tabela wyników alokacji**
+
+![Alokacja według wymiaru](/images/allocation_by_dimension_example_4_result.png)

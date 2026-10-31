@@ -1,0 +1,99 @@
+---
+title: "Intacct: Lançar lançamento de diário"
+description: Lance lançamentos de diário de tabelas de projeto do PlaidCloud no Sage Intacct, como alternativa de pouco código a uma UDF de lançamento, com uma tabela de resultados por lançamento e validação em Preview.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sage-intacct/export-to-sage.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos de diário no Sage Intacct através de uma ligação Sage Intacct, utilizando a API REST v1 do Intacct. É uma alternativa nativa e de pouco código à escrita de uma função definida pelo utilizador (UDF) de lançamento — escolha a ligação, mapeie as colunas e o passo trata da autenticação, do processamento em lotes e do tratamento de erros por lançamento.
+
+O passo lê duas tabelas que já tenha preparado a montante — uma **tabela de cabeçalho** e uma **tabela de linhas** —, valida cada lançamento de diário e lança-o. Suporta o caso de lotes: muitos lançamentos de diário numa única execução, cada um lançado e acompanhado de forma independente.
+
+<Aside type="danger" title="Sem proteção contra duplicados — verifique a tabela de resultados antes de voltar a executar">
+Este passo **não** regista quais os lançamentos que já foram lançados. Voltar a executá-lo volta a lançar **todos** os lançamentos da tabela de cabeçalho, incluindo os que foram lançados com êxito da vez anterior — não há eliminação de duplicados. Antes de voltar a executar, abra a tabela de resultados da última execução e confirme quais os lançamentos que realmente precisam de ser lançados. Se uma execução anterior deixou lançamentos com `status` igual a `unknown`, consulte [Tabela de resultados](#tabela-de-resultados) mais abaixo antes de fazer qualquer outra coisa.
+</Aside>
+
+## Contrato da estrutura de dados
+
+O passo não deduz quais as linhas que pertencem a cada lançamento de diário — essa estrutura é criada a montante com passos padrão (uma expressão de atribuição, uma agregação) antes de este passo ser executado:
+
+- A **tabela de cabeçalho** tem **exatamente uma linha por lançamento de diário**, e essa linha inclui uma coluna **`entry_key`** — qualquer valor único por lançamento (um número de lote, uma concatenação de data e descrição, uma sequência gerada).
+- A **tabela de linhas** tem uma linha por linha de lançamento, e **todas as linhas incluem o mesmo valor de `entry_key`** da linha de cabeçalho a que pertencem.
+
+Um único lançamento de diário (sem lotes) também precisa desta estrutura — atribua a todas as linhas de ambas as tabelas o mesmo `entry_key` constante.
+
+O passo agrupa ambas as tabelas por `entry_key` antes de validar ou lançar, pelo que uma linha de cabeçalho sem linhas correspondentes, uma linha sem cabeçalho correspondente ou mais de uma linha de cabeçalho para a mesma chave falham todas a validação desse lançamento, em vez de produzirem um lançamento malformado.
+
+## Itens de configuração específicos
+
+### Ligação Sage
+
+A ligação **Sage Intacct** através da qual se lança. Aqui só são apresentadas ligações Sage Intacct — uma ligação REST genérica não é aceite, porque o lançamento exige a troca de tokens e a resolução de empresa/entidade específicas do Intacct, que só uma ligação Sage Intacct inclui.
+
+A mesma ligação é utilizada noutros locais para *ler* do Intacct (por exemplo, [Import Sage AP](/pt-pt/reference/workflow-steps/sage-intacct/import-sage-ap/) ou [Import Sage Intacct Query](/pt-pt/reference/workflow-steps/sage-intacct/import-intacct-query/)) — uma ligação serve nos dois sentidos. Consulte [Sage Intacct REST Connector](/pt-pt/reference/connectors/rest/sage-intacct/).
+
+### Entry Key
+
+O nome da coluna — presente nas colunas de origem do cabeçalho e das linhas — que agrupa as linhas de cabeçalho e de linhas num único lançamento de diário. Consulte o [Contrato da estrutura de dados](#contrato-da-estrutura-de-dados) acima.
+
+### Colunas de origem
+
+Dois mapeamentos de colunas distintos, um por separador — em cada um, mapeie uma coluna de origem para o campo do lançamento de diário que ela alimenta:
+
+- **Colunas do cabeçalho** — os campos ao nível do lançamento de diário: diário, data de lançamento, descrição, número de referência, um `base_location` opcional (a entidade/localização do Intacct sob a qual o lançamento é registado — omita-o numa empresa com uma única entidade), a coluna de correlação que indicou como **Entry Key** e outros detalhes ao nível do cabeçalho.
+- **Colunas das linhas** — os campos por linha de lançamento: conta do razão geral, montante de débito/crédito, descrição da linha, a mesma coluna **Entry Key** e dimensões (localização, departamento, colaborador, classe e semelhantes).
+
+Não precisa de mudar o nome das colunas de origem — mapeie-as, seja qual for o nome, para os nomes dos campos de destino acima.
+
+### Tabela de resultados
+
+A tabela de destino onde este passo grava uma linha por lançamento de diário, registando o desfecho da validação e (se não estiver em Preview) do lançamento. Consulte a [Tabela de resultados](#tabela-de-resultados) mais abaixo para ver as colunas e os valores de `status`.
+
+### Preview
+
+Uma caixa de seleção, **selecionada por predefinição**. Com Preview ativado, o passo valida todos os lançamentos de diário e grava a tabela de resultados exatamente como numa execução real, mas **não** se autentica no Intacct e **não** lança nada — em modo Preview não há qualquer chamada de rede ao Intacct. As linhas ficam na tabela de resultados com `status = preview`, mostrando quais os lançamentos que seriam lançados sem problemas e quais falhariam a validação, antes de qualquer coisa chegar ao seu razão geral.
+
+Tal como numa execução real, um Preview **substitui** a tabela de resultados pelas linhas desta execução — é o resultado do passo em cada execução, não um registo cumulativo —, pelo que um Preview depois de uma execução real substitui as linhas `posted` e `unknown` dessa execução. Abra e copie a tabela de resultados da última execução antes de voltar a executar (Preview ou real) se ainda precisar dela.
+
+O Preview não valida as suas **credenciais** do Intacct — como nunca se liga, uma ligação incorreta ou uma credencial expirada não surgirá aqui. Utilize a ação **Testar ligação** da ligação (em **Tools > Connections**) para confirmar as credenciais em separado.
+
+Uma configuração de passo que omita totalmente este campo — por exemplo, criada através da API REST, do MCP ou de uma importação de pacote de fluxo de trabalho — também assume por predefinição Preview, em vez de um lançamento real.
+
+Desmarque Preview apenas quando estiver pronto para um lançamento real. Recomendamos que execute primeiro com Preview ativado, reveja a tabela de resultados e só depois volte a executar com Preview desativado.
+
+## Tabela de resultados
+
+Todas as execuções — Preview ou reais — gravam uma linha por lançamento de diário na tabela de resultados:
+
+| Coluna | Descrição |
+|---|---|
+| `entry_key` | O lançamento de diário sobre o qual esta linha informa. |
+| `status` | Um de `preview`, `posted`, `failed`, `unknown` — veja abaixo. |
+| `intacct_key` | A chave atribuída pelo Intacct ao lançamento registado, quando disponível. |
+| `http_status` | O estado HTTP devolvido pelo Intacct na tentativa de lançamento, quando disponível. |
+| `error_message` | Uma descrição curta e higienizada do que correu mal, quando `status` é `failed` ou `unknown`. |
+| `line_count` | Número de linhas associadas a este lançamento. |
+| `posting_date` | A data de lançamento enviada (ou, em Preview, que seria enviada) ao Intacct. |
+
+### Valores de estado
+
+- **`preview`** — modo Preview; o lançamento foi validado e não foi registado.
+- **`posted`** — o lançamento foi registado com êxito no Intacct.
+- **`failed`** — o Intacct rejeitou definitivamente o lançamento (ou este falhou a validação antes de qualquer tentativa de lançamento). É seguro corrigir o problema subjacente e voltar a lançar apenas esse lançamento.
+- **`unknown`** — não foi possível determinar o desfecho — um tempo limite excedido, uma ligação interrompida ou um erro do servidor sem resposta definitiva do Intacct.
+
+<Aside type="danger" title="unknown não significa que falhou">
+Um lançamento `unknown` pode já ter sido registado com êxito no Intacct — o pedido pode ter sido recebido e confirmado antes de a ligação se perder ou de a resposta nunca ser devolvida. **Verifique o estado do lançamento diretamente no Intacct antes de voltar a executar este passo.** Voltar a lançar às cegas um lançamento `unknown` arrisca criar um lançamento de diário duplicado no seu razão geral.
+</Aside>
+
+Uma execução com linhas `failed` ou `unknown` comunica um aviso, para que seja visível sem abrir a tabela de resultados, mas a própria tabela de resultados é a fonte de verdade sobre o que fazer a seguir.
+
+## Ver também
+
+- [Export steps](/pt-pt/reference/workflow-steps/export/)
+- [Import Sage AP](/pt-pt/reference/workflow-steps/sage-intacct/import-sage-ap/)
+- [Import Sage Intacct Query](/pt-pt/reference/workflow-steps/sage-intacct/import-intacct-query/)
+- [Sage Intacct REST Connector](/pt-pt/reference/connectors/rest/sage-intacct/)

@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry"
+description: Lance lançamentos contábeis no Workday Financials a partir de tabelas de cabeçalho e de linhas pela operação SOAP Submit_Accounting_Journal, com um modo de prévia que valida cada lançamento antes de qualquer registro.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Descrição
+
+Lança lançamentos contábeis no Workday Financials pela sua [conexão com o Workday Financials](/pt-br/guides/connections/workday-financials/), encaminhados pelo pipeline compartilhado de gravação em ERP do PlaidCloud. A etapa recebe uma tabela de cabeçalho (uma linha por lançamento contábil) e uma tabela de linhas (uma ou mais linhas de débito/crédito por lançamento) e chama a operação SOAP `Submit_Accounting_Journal` do Workday para cada lançamento. **Validate Only** monta e verifica cada lançamento sem reserva no razão e sem lançar; uma tabela de resultado opcional registra o desfecho de cada lançamento.
+
+<Aside type="caution">
+Execute todo lote primeiro em **Validate Only**, revise a tabela de resultado e concilie alguns lançamentos diretamente no Workday antes de confiar que esta etapa lance entradas reais sem supervisão.
+</Aside>
+
+## Configuração
+
+### Conexão
+
+- **Conexão do Workday** — a conexão do Workday Financials pela qual lançar.
+
+### Dados
+
+- **Tabela de cabeçalho** — uma linha por lançamento contábil: `journal_id` (o identificador do seu lançamento, obrigatório), `company` (obrigatório), `ledger` (obrigatório), `accounting_date`, `memo`.
+- **Tabela de linhas** — uma ou mais linhas por `journal_id`: `ledger_account`, `debit`, `credit` e quaisquer colunas de worktag (centro de custo, projeto) que seus lançamentos exijam.
+- **Tabela de resultado** — id da tabela de saída: uma linha por lançamento com `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — marcado por padrão. Apenas verificação prévia; sem reserva no razão e sem lançamento. Uma configuração de etapa que omite totalmente este campo — por exemplo, uma criada pela API REST, pelo MCP ou pela importação de um pacote de fluxo de trabalho — também assume Validate Only por padrão, em vez de um lançamento real.
+- **Continue On Error** — marcado por padrão. Continua lançando os demais lançamentos depois que um falha; desmarcado, interrompe o lote na primeira falha.
+
+## Como o lançamento funciona
+
+O PlaidCloud chama `Submit_Accounting_Journal` para cada lançamento e consulta o status do processo de negócio do Workday até que ele chegue a um estado terminal, levando em conta um processo de negócio Submit Accounting Journal que passa por etapas de aprovação antes que o lançamento seja de fato registrado. Um lançamento só é informado como `posted` quando esse estado terminal é **confirmado**: um lançamento enviado, mas parado aguardando aprovação, fica em quarentena (não é informado como lançado nem descartado em silêncio), em vez de ser registrado como sucesso só porque o envio foi aceito.
+
+## Correção de um lançamento registrado
+
+Esta etapa nunca exclui nem reescreve um lançamento contábil registrado. Para corrigir um, lance uma nova entrada com débitos e créditos trocados em relação à original — um lançamento de estorno registrado — em vez de editar a original no local.
+
+## Limites de capacidade
+
+| Limitação | O que significa |
+|---|---|| A aprovação do processo de negócio acrescenta latência | Um lançamento encaminhado por uma etapa de aprovação permanece `pending` até ser aprovado no Workday; a consulta ao estado terminal aguarda isso. |
+| O estorno é um novo lançamento, não uma edição no local | As correções lançam um novo lançamento de estorno com débito e crédito trocados. Não há como anular nem excluir um lançamento já registrado. |
+
+## Relacionados
+
+- [Conectar ao Workday Financials](/pt-br/guides/connections/workday-financials/) — passo a passo completo, abrangendo configuração, prévia e lançamento
+- [Conector do Workday Financials](/pt-br/reference/connectors/rest/workday-financials/)
+- [Etapas do Workday Financials](/pt-br/reference/workflow-steps/workday-financials/)
+- [Revisar o histórico de lançamentos em ERP](/pt-br/guides/connections/erp-post-history/)

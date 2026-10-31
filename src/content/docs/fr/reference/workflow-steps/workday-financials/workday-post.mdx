@@ -1,0 +1,50 @@
+---
+title: "Workday Financials: Post Journal Entry"
+description: Comptabilisez des journaux comptables dans Workday Financials à partir de tables d'en-têtes et de lignes via l'opération SOAP Submit_Accounting_Journal, avec un mode d'aperçu qui valide chaque écriture avant toute comptabilisation.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/workday-financials/workday-post.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Description
+
+Comptabilise des journaux comptables dans Workday Financials via votre [connexion Workday Financials](/fr/guides/connections/workday-financials/), en passant par le pipeline d'écriture ERP partagé de PlaidCloud. L'étape prend une table d'en-têtes (une ligne par écriture de journal) et une table de lignes (une ou plusieurs lignes de débit/crédit par écriture), et appelle l'opération SOAP `Submit_Accounting_Journal` de Workday pour chaque écriture. **Validate Only** construit et vérifie chaque écriture sans réservation sur le grand livre et sans comptabilisation ; une table de résultat facultative consigne le résultat de chaque écriture.
+
+<Aside type="caution">
+Exécutez chaque lot d'abord en **Validate Only**, examinez la table de résultat et rapprochez quelques comptabilisations directement dans Workday avant de vous fier à cette étape pour comptabiliser des écritures réelles sans surveillance.
+</Aside>
+
+## Configuration
+
+### Connexion
+
+- **Connexion Workday** — la connexion Workday Financials à utiliser pour la comptabilisation.
+
+### Données
+
+- **Table d'en-tête** — une ligne par écriture de journal : `journal_id` (l'identifiant de votre écriture, obligatoire), `company` (obligatoire), `ledger` (obligatoire), `accounting_date`, `memo`.
+- **Table des lignes** — une ou plusieurs lignes par `journal_id` : `ledger_account`, `debit`, `credit`, ainsi que toutes les colonnes de worktag (centre de coûts, projet) que vos journaux exigent.
+- **Table de résultat** — identifiant de la table de sortie : une ligne par écriture avec `journal_id`, `natural_key`, `confirmation_id`, `status` (`posted`/`validated`/`error`), `message`.
+- **Validate Only** — coché par défaut. Contrôle préalable uniquement ; aucune réservation sur le grand livre, aucune comptabilisation. Une configuration d'étape qui omet entièrement ce champ, par exemple une configuration rédigée via l'API REST, MCP ou l'import d'un bundle de workflow, adopte aussi par défaut Validate Only plutôt qu'une comptabilisation réelle.
+- **Continue On Error** — coché par défaut. Continue de comptabiliser les écritures restantes après l'échec d'une écriture ; décoché, il arrête le lot au premier échec.
+
+## Fonctionnement de la comptabilisation
+
+PlaidCloud appelle `Submit_Accounting_Journal` pour chaque écriture et interroge l'état de son processus métier Workday jusqu'à ce qu'il atteigne un état terminal, afin de tenir compte d'un processus métier Submit Accounting Journal qui passe par des étapes d'approbation avant qu'une écriture soit réellement comptabilisée. Une écriture n'est signalée `posted` qu'une fois cet état terminal **confirmé** : une écriture soumise mais bloquée en attente d'approbation reste en quarantaine (ni signalée comme comptabilisée, ni abandonnée silencieusement), au lieu d'être enregistrée comme réussie sur la seule foi de l'acceptation de la soumission.
+
+## Correction d'une écriture comptabilisée
+
+Cette étape ne supprime ni ne réécrit jamais un journal comptabilisé. Pour en corriger un, comptabilisez une nouvelle écriture dont les débits et les crédits sont inversés par rapport à l'originale (une écriture d'extourne comptabilisée) plutôt que de modifier l'originale sur place.
+
+## Limites des capacités
+
+| Limite | Ce que cela signifie |
+|---|---|| L'approbation du processus métier ajoute de la latence | Une écriture acheminée par une étape d'approbation reste `pending` jusqu'à son approbation dans Workday ; l'interrogation de l'état terminal attend cette approbation. |
+| L'extourne est une nouvelle écriture, pas une modification sur place | Les corrections comptabilisent une nouvelle écriture d'extourne aux débits et crédits inversés. Il n'existe aucune annulation ni suppression d'une écriture déjà comptabilisée. |
+
+## Voir aussi
+
+- [Se connecter à Workday Financials](/fr/guides/connections/workday-financials/) — procédure complète couvrant la configuration, l'aperçu et la comptabilisation
+- [Connecteur Workday Financials](/fr/reference/connectors/rest/workday-financials/)
+- [Étapes Workday Financials](/fr/reference/workflow-steps/workday-financials/)
+- [Consulter l'historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/)

@@ -1,0 +1,113 @@
+---
+title: "NetSuite: SuiteQL-Abfrage importieren"
+description: Führen Sie Ihre eigene NetSuite-SuiteQL-Abfrage in einem Workflow aus und laden Sie das Ergebnis in eine typisierte Projekttabelle – Datumsfenster und Paging werden für Sie erledigt.
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/netsuite/import-suiteql-query.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Beschreibung
+
+Führt eine von Ihnen geschriebene SuiteQL-Abfrage über Ihre [NetSuite-Verbindung](/de/guides/connections/netsuite/) gegen NetSuite aus und lädt das Ergebnis in eine Projekttabelle. Verwenden Sie ihn für Daten, die die vorgefertigten Importschritte nicht abdecken – einen benutzerdefinierten Datensatz, einen Bericht im Stil einer gespeicherten Suche oder einen Join, der auf Ihr eigenes Modell zugeschnitten ist.
+
+Der Schritt liest über dieselbe Schicht wie die anderen [NetSuite-Importschritte](/de/reference/workflow-steps/netsuite/): Er erneuert das OAuth-Token, liest große Ergebnisse in Stapeln, wiederholt vorübergehende Fehler und teilt einen langen Datumsbereich in Fenster auf, sodass Sie nur die Abfrage schreiben. Der Load-Workflow von [Data Foundation](/de/guides/projects/data-foundation/) verwendet diesen Schritt für seine NetSuite-Lesezugriffe.
+
+## Konfiguration
+
+Der Schritt hat eine Registerkarte, **Importparameter**.
+
+### Quelle und Ziel
+
+| Feld | Erforderlich | Hinweise |
+|---|---|---|
+| NetSuite-Verbindung | Ja | Die NetSuite-Verbindung, über die gelesen wird. NetSuite-Verbindungen werden unter **Tools > Connections** verwaltet. |
+| Umgebung | Nein | Die zu verwendende Verbindungsumgebung, etwa Produktion oder Sandbox. |
+| Zieltabelle | Ja | Die Projekttabelle, in die das Ergebnis geschrieben wird. Sie wird bei jeder Ausführung überschrieben. |
+
+### SuiteQL-Abfrage
+
+Die auszuführende Abfrage. Sie kann vier Platzhalter verwenden, die jeweils durch den passenden Wert unter **Platzhalterwerte und Paging** ersetzt werden. PlaidCloud prüft jeden Wert und schreibt ihn als Literal der passenden Art in die Abfrage, sodass Sie weder Anführungszeichen noch ein `TO_DATE` um einen Platzhalter setzen müssen.
+
+| Platzhalter | Ersetzt durch | Geschrieben als |
+|---|---|---|
+| `{subsidiary_id}` | **Tochtergesellschafts-ID** | Eine ganze Zahl |
+| `{posting_period_id}` | **Buchungsperioden-ID** | Eine ganze Zahl |
+| `{start_date}` | **Startdatum** oder der Beginn des aktuellen Fensters | Ein Datum |
+| `{end_date}` | **Enddatum** oder das Ende des aktuellen Fensters | Ein Datum |
+
+Jedes andere Wort in geschweiften Klammern wird abgelehnt, ebenso ein Platzhalter, den die Abfrage verwendet, während sein Wert leer ist.
+
+Schreiben Sie die Abfrage so, dass sie:
+
+- **mit `ORDER BY` auf einen eindeutigen Schlüssel endet.** NetSuite liefert ein großes Ergebnis in Stapeln, und ohne stabile Sortierung können Stapel Zeilen überspringen oder wiederholen. Sortieren Sie nach einer internen ID oder einem anderen Schlüssel, der pro Zeile eindeutig ist. Eine Abfrage ohne `ORDER BY` bricht ab und fordert Sie auf, eines hinzuzufügen.
+- **Datumsangaben als Text zurückgibt**, mit `TO_CHAR(date, 'YYYY-MM-DD')`. SuiteQL gibt Datumsangaben andernfalls im Anzeigeformat des Kontos zurück.
+- **beim Lesen eines Datumsbereichs eine Datumsspalte zwischen `{start_date}` und `{end_date}` filtert.** Filtern Sie nach einer einzigen Datumsspalte, damit jede Zeile in genau ein Fenster fällt. Wenn Sie ein Startdatum oder Enddatum festlegen, muss die Abfrage den zugehörigen Platzhalter verwenden.
+
+```sql
+SELECT
+    tl.transaction AS transaction_id,
+    tl.id AS line_id,
+    TO_CHAR(t.trandate, 'YYYY-MM-DD') AS tran_date,
+    a.acctnumber AS account_number,
+    tl.subsidiary AS subsidiary_id,
+    tl.amount AS amount
+FROM transactionline tl
+    JOIN transaction t ON t.id = tl.transaction
+    JOIN account a ON a.id = tl.expenseaccount
+WHERE t.posting = 'T'
+    AND tl.subsidiary = {subsidiary_id}
+    AND t.trandate BETWEEN {start_date} AND {end_date}
+ORDER BY tl.transaction, tl.id
+```
+
+### Ergebnisspalten
+
+Benennen Sie jede Spalte, die die Abfrage zurückgibt, und weisen Sie ihr einen Typ zu. Die Namen werden ohne Beachtung der Groß-/Kleinschreibung den Spaltenaliasen der Abfrage zugeordnet. Verwalten Sie die Liste mit den Schaltflächen zum Hinzufügen und Entfernen über dem Raster.
+
+| Spalte | Hinweise |
+|---|---|
+| Spaltenname | Der Spaltenalias der Abfrage. Jede Ergebnisspalte braucht einen Namen. |
+| Typ | **Text** (Standard), **Ganzzahl**, **Big Integer**, **Small Integer**, **Tiny Integer**, **Serial**, **Big Serial**, **Decimal**, **Numerisch**, **Währung**, **Double**, **Float**, **Boolean**, **Datum**, **Zeitstempel** oder **UUID**. |
+
+Fügen Sie mindestens eine Ergebnisspalte hinzu. Die Spalten landen unter den hier vergebenen Namen in der Zieltabelle. SuiteQL gibt jeden Wert als Text zurück; der Typ teilt PlaidCloud mit, wie er gespeichert wird. Typisieren Sie Beträge als **Währung** oder **Decimal**, mit `TO_CHAR` zurückgegebene Datumsangaben als **Datum** oder **Zeitstempel** und `T`/`F`-Kennzeichen als **Boolean**.
+
+### Platzhalterwerte und Paging
+
+| Feld | Standard | Hinweise |
+|---|---|---|
+| Tochtergesellschafts-ID | leer | Die interne ID der NetSuite-Tochtergesellschaft, die für `{subsidiary_id}` verwendet wird. |
+| Buchungsperioden-ID | leer | Die interne ID der NetSuite-Buchungsperiode, die für `{posting_period_id}` verwendet wird. |
+| Startdatum | leer | `YYYY-MM-DD`. Wird für `{start_date}` verwendet. Darf nicht nach dem Enddatum liegen. |
+| Enddatum | leer | `YYYY-MM-DD`. Wird für `{end_date}` verwendet. |
+| Fenstertage | 90 | Sind Startdatum und Enddatum beide gesetzt, wird der Bereich in Fenstern dieser Anzahl von Tagen gelesen, von 1 bis 3650. Die Abfrage läuft einmal pro Fenster mit den Daten dieses Fensters, und die Ergebnisse werden zusammengeführt. |
+| Anfragen pro Minute | 0 | Taktet die Aufrufe des Schritts an NetSuite, um Raum für andere Integrationen desselben Kontos zu lassen. `0` bedeutet kein Limit. |
+
+Jeder dieser Werte kann eine Variable verwenden.
+
+## Validierung
+
+Der Schritt kann erst gespeichert werden, wenn Folgendes festgelegt ist:
+
+- **NetSuite-Verbindung** – „NetSuite connection is required."
+- **Zieltabelle** – „Target table is required."
+- **SuiteQL-Abfrage** – „A SuiteQL query is required."
+- **Ergebnisspalten** – „Add at least one result column." und „Every result column needs a name."
+
+## Hinweise
+
+- NetSuite begrenzt eine Abfrage auf etwa 100.000 Zeilen. Eine Abfrage oder ein Fenster, das darüber hinausgehen würde, bricht mit einer Meldung ab, die Sie auffordert, den Datumsbereich oder andere Filter einzugrenzen, statt ein abgeschnittenes Ergebnis zu laden. Verringern Sie **Fenstertage**, damit jedes Fenster unter dem Limit bleibt.
+- Der Schritt erneuert sein NetSuite-Token bei Bedarf und wiederholt eine gedrosselte oder fehlgeschlagene Anfrage nach einer Pause.
+- Die Zieltabelle wird bei jeder Ausführung vollständig ersetzt. Beschränken Sie die `WHERE`-Klausel auf den benötigten Ausschnitt, etwa ein gleitendes Datumsfenster, statt jedes Mal die gesamte Historie zu lesen.
+- Eine Abfrage, die keine Zeilen zurückgibt, endet mit einer Warnung und lässt die Zieltabelle leer, sodass die nachfolgenden Schritte weiterlaufen.
+- Fehlermeldungen von NetSuite werden ohne Anmeldedaten, Token und Schlüssel angezeigt, daher können sie weniger vom ursprünglichen Wortlaut von NetSuite enthalten.
+
+<Aside type="caution">
+Bei `transaction` und `transactionline` steht `amount` in der eigenen Währung der jeweiligen Transaktion. Eine Summe über Tochtergesellschaften mit unterschiedlichen Währungen ist kein konsolidierter Wert. Wählen Sie konsolidierte oder umgerechnete Beträge aus, wenn Sie über Tochtergesellschaften summieren.
+</Aside>
+
+## Verwandte Themen
+
+- [NetSuite-Schritte](/de/reference/workflow-steps/netsuite/)
+- [Mit NetSuite verbinden](/de/guides/connections/netsuite/)
+- [NetSuite-SuiteQL-Abfragebeispiele](/de/guides/connections/netsuite-financial-queries/)
+- [Data Foundation](/de/guides/projects/data-foundation/)

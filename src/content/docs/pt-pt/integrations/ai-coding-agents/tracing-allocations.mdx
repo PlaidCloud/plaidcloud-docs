@@ -1,0 +1,206 @@
+---
+title: Rastrear alocações com um agente de IA ligado por MCP
+description: Pergunte a um agente de IA ligado à sua área de trabalho por MCP porque mudou um resultado de alocação, o que o alimenta, onde é utilizado um indutor e o que faria uma alteração hipotética.
+sidebar:
+  label: Rastrear alocações
+  order: 8
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/tracing-allocations.mdx
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Depois de [ligar um agente de IA à sua área de trabalho através do Model Context Protocol (MCP)](../getting-started/), pode pedir-lhe, em linguagem natural, que rastreie os custos através dos seus passos de alocação. Não executa um relatório nem escreve SQL: faz uma pergunta e o agente chama as ferramentas de rastreio de alocações do PlaidCloud para encontrar o modelo, explicar uma alteração, percorrer a cadeia e responder a perguntas do tipo «e se».
+
+Isto funciona a partir de qualquer cliente ligado por MCP, seja um agente de conversação (Claude Desktop, ChatGPT) ou um agente de programação (Claude Code, Cursor), pois todos acedem às mesmas ferramentas através do [servidor MCP](../getting-started/).
+
+<Aside>
+Estas ferramentas leem a **configuração e os resultados** das suas alocações; não alteram nada. Pode perguntar à vontade: nada é escrito de volta no projeto.
+</Aside>
+
+## Pré-requisitos
+
+- Um projeto com passos de alocação (`allocation_split`, `allocation_rules` ou `allocation_dim`).
+- Um agente de IA ligado à sua área de trabalho por MCP; consulte [Primeiros passos com agentes de programação com IA](../getting-started/).
+
+## O que pode perguntar
+
+| Pergunte ao agente … | O que faz | Ferramenta subjacente |
+| --- | --- | --- |
+| «Que modelos de alocação existem neste projeto?» | Lista cada modelo, as suas fases e as tabelas de resultados que produz | `allocation_model_find` |
+| «Como é calculado `cost_line_rev`?» | Mostra o conjunto de custos que é repartido, o indutor pelo qual é repartido e a tabela de destino | `allocation_describe` |
+| «Porque mudou `cost_line_rev` de 2025 para 2026?» | Compara os dois períodos e atribui a alteração à dimensão do conjunto face à composição do indutor, com as principais contas contribuintes | `allocation_root_cause` |
+| «O que alimenta `cost_line_rev`?» | Percorre a cadeia a montante: indutores, conjuntos de origem e importações | `allocation_lineage` |
+| «Onde é utilizado `revenue_by_line` como indutor?» | Lista todas as alocações que repartem por essa tabela | `allocation_driver_usage` |
+| «O que acontece se a receita dos EUA subir 1 M$?» | Reparte a alteração por cada resultado afetado de acordo com a sua quota atual do conjunto: aditiva ao longo de uma ramificação, e não um pior cenário por tabela | `allocation_forward_impact` |
+| «E se o indutor de efetivos do centro de custo Assembly subisse 10?» | Volta a repartir o conjunto fixo com os novos pesos do indutor, mostrando que destinos ganham e quais perdem. Recusa-se quando a tabela de resultados é escrita por mais de um passo, em vez de repartir um conjunto que não é o da própria alocação, e quando o indutor já não corresponde à repartição que o seu modelo fez na última execução | `allocation_driver_scenario` |
+
+## Exemplo prático
+
+Um analista financeiro nota que uma linha de custo repartida por receita desceu de um ano para o outro e faz uma única pergunta. O agente responde-lhe de ponta a ponta, chamando várias ferramentas de alocação nos bastidores.
+
+> **Pergunta:** A nossa alocação de custos baseada na receita (`cost_line_rev`) parece estar em baixa em 2026 face a 2025. O que aconteceu, de que é constituída e o que faria uma variação de +1 M$ na receita dos EUA?
+
+> **O agente responde:**
+>
+> **O que é.** `cost_line_rev` é a fase do modelo de Activity-Based Costing (ABC) repartida pela receita. Toma um conjunto de custos (`group_amount`, limitado a um conjunto de contas da demonstração de resultados) e reparte-o pela **receita** de `revenue_by_line`, ponderada dentro de cada entidade, ano e mês.
+>
+> **Porque desceu (EUA, 2025 → 2026).** O custo alocado aos EUA desceu de **7,12 M$ para 2,99 M$, uma redução de 4,13 M$ (−58,0 %)**. **Não** se trata de uma alteração de composição: a quota dos EUA no conjunto manteve-se estável, em cerca de 23 %, nos dois anos. A causa é a **redução do conjunto total de custos**, concentrada em algumas contas:
+>
+> | Conta | 2025 | 2026 | Alteração |
+> | --- | --: | --: | --: |
+> | 700000 | 2,58 M$ | 1,09 M$ | **−1,49 M$** |
+> | 701000 | 1,85 M$ | 0,77 M$ | −1,08 M$ |
+> | 610000 | 1,71 M$ | 0,72 M$ | −0,99 M$ |
+> | 670000 | 0,68 M$ | 0,29 M$ | −0,39 M$ |
+> | 702000 | 0,30 M$ | 0,13 M$ | −0,18 M$ |
+>
+> Estas cinco contas explicam praticamente toda a variação.
+>
+> **O que a alimenta.** `cost_line_rev` é construída a partir de `revenue_by_line` (o indutor da repartição) e `gl_pool_entity` (o conjunto de custos).
+>
+> **Aviso: esse indutor é partilhado.** `revenue_by_line` também determina `cost_line_cs` e `cost_line_admin`, pelo que uma reformulação da receita se repercute nas três.
+>
+> **O seu cenário de +1 M$ nos EUA.** O 1 M$ é repartido pelos resultados que partilham este indutor de acordo com a **quota atual de cada um no conjunto**, pelo que as estimativas por tabela **somam** a alteração, em vez de cada uma repetir o 1 M$ completo: obtém um valor para `cost_line_rev`, `cost_line_cs` e `cost_line_admin` que pode totalizar. Se restringir a pergunta a um único destino, a estimativa é aplicada apenas a essa fatia.
+
+O analista obtém uma resposta completa (a dimensão da alteração, as contas que a explicam, a linhagem e o alcance de um cenário hipotético) sem abrir uma única tabela.
+
+## Até que ponto confiar numa resposta
+
+Uma resposta fluente não é automaticamente uma resposta correta. Cada resposta do tipo «porque mudou isto» vem agora acompanhada de uma avaliação em linguagem simples de **até que ponto confiar nela**, para que um número plausível mas frágil seja assinalado *antes* de agir com base nele e não fique diluído na prosa. Juntamente com a explicação, o agente indica:
+
+- **Um nível de confiança** (alto, médio ou baixo) que reflete até que ponto a alteração se decompõe de forma limpa. Uma alteração originada por uma causa clara tem confiança alta; uma em que várias causas se sobrepõem, ou em que os valores não reconciliam totalmente, tem confiança mais baixa. Quando um resultado é construído a partir de vários ramos de alocação, a confiança pondera cada ramo pela parte da alteração que explica, de modo que um ramo pequeno e frágil não degrada uma resposta de outro modo limpa; mas um ramo cujo número está ele próprio em dúvida (uma repartição não reconciliada, dados desatualizados ou algo que não pode ser atribuído) continua a puxar para baixo a confiança de toda a resposta.
+- **Ressalvas em linguagem simples**, por exemplo: a causa é uma combinação de fatores sobrepostos e não um só; a resposta assenta na hierarquia ou nos pesos do indutor *atuais*; parte de uma alteração pode ser um artefacto de completude dos dados (um período cujo carregamento não terminou) e não um movimento real; o conjunto ou o indutor que alimenta a alocação não é recarregado há algum tempo, pelo que o valor pode assentar em dados desatualizados; ou um valor hipotético não pode ser somado entre destinos.
+- **Uma comparação que não foi possível fazer, dita em voz alta.** A maioria das respostas mede a dimensão do movimento que comunica, face ao mesmo movimento um ano antes e face a períodos recentes, para que possa distinguir um ano normal de uma rutura de tendência. Nenhuma das duas é produzida para uma tabela escrita por um passo que aloca várias colunas de valores em simultâneo, porque cada uma foi concebida para uma resposta de coluna única. Isto era silencioso, pelo que a resposta parecia ter ido tão longe quanto os dados permitem quando, na realidade, parou por conceção. Agora é indicado entre os limites, juntamente com o motivo pelo qual não existe uma pergunta mais restrita a fazer em alternativa, e com o facto de nenhum valor da resposta ser retirado por isso: os montantes são exatos e é o contexto que falta.
+
+Quando o agente não consegue sustentar uma causa precisa, di-lo e indica o âmbito ou o filtro que lhe permitiria responder de forma limpa, em vez de inventar uma história confiante. E, como a confiança e as ressalvas fazem parte da resposta, acompanham-na: se pedir a outro agente que a resuma, os sinais de confiança não são discretamente descartados.
+
+<Aside type="note" title="A sinalização de dados desatualizados é opcional">
+A ressalva de atualidade (que baixa a confiança quando os dados subjacentes não são recarregados dentro de uma janela definida) está **desativada por predefinição** e é ativada por área de trabalho pelo administrador, que também define o que conta como recente (mais longo para dados que só são atualizados trimestral ou anualmente). Se a sua equipa trabalha deliberadamente com dados mais antigos, não interfere até que alguém a ative.
+
+Depois de ativada, alcança todas as respostas que leem o seu armazém: a explicação «porque mudou isto» e ambas as respostas hipotéticas, que é onde mais importa: uma resposta hipotética propaga ou repondera com base nas quotas que o seu modelo realizou na última execução, pelo que dados desatualizados são exatamente o caso em que a estimativa é menos fiável.
+
+Duas coisas limitam o que pode indicar-lhe, e aplicam-se a todas as respostas, não apenas às hipotéticas. Só pergunta a idade das tabelas **carregadas diretamente no PlaidCloud**: uma tabela construída por um passo de um fluxo de trabalho só pode informar quando esse passo foi executado pela última vez, o que é diferente de quando os dados chegaram, pelo que a pergunta é deliberadamente omitida em vez de respondida com o número errado. E indica a **tabela mais antiga de cada tipo** (um conjunto, um indutor), pelo que, quando uma resposta hipotética se ramifica por vários passos e mais de um indutor está desatualizado, é informado sobre um deles. Em nenhum dos casos uma tabela desatualizada é comunicada como atualizada.
+</Aside>
+
+<Aside type="tip" title="Leia a confiança, não apenas o número">
+Uma confiança **baixa** ou **média** não é uma falha: é o agente a ser honesto quanto ao facto de a alteração ter mais do que uma causa plausível, ou de algo (um indutor desatualizado, um período por concluir) poder estar a distorcê-la. Encare-a como um convite a acrescentar um período, um filtro ou uma dimensão de decomposição e a perguntar de novo.
+</Aside>
+
+<Aside type="caution" title="Quando um total de aspeto limpo esconde a história">
+Dois totais de conjunto completo podem parecer um crescimento limpo e induzir em erro, e o agente deteta agora ambos: quando grandes subidas e descidas se **compensam** numa pequena alteração líquida (o maior movimento individual é superior ao próprio valor principal), e quando a maior parte de uma alteração é **repassada**, isto é, custo que a alocação transporta diretamente sem o repartir pelo indutor, pelo que a parte realmente governada pelo indutor é apenas uma fração mínima. Em cada caso, baixa a confiança, indica quanto se moveu realmente o montante controlado pelo indutor e remete-o para a vista ao nível dos membros.
+</Aside>
+
+## Bom saber
+
+<Aside type="note" title="As alocações filtradas obtêm uma resposta limpa de conjunto completo">
+Quando as linhas de origem de uma alocação estão restringidas (por exemplo, a um conjunto de contas da demonstração de resultados), o agente aplica esse filtro automaticamente e continua a dar uma atribuição limpa de conjunto completo; não precisa de acrescentar nada.
+</Aside>
+
+<Aside type="note" title="Alocações por dimensão">
+Para uma alocação orientada por uma **hierarquia da dimensão** (por exemplo, repartir um centro de custo por uma estrutura de relato), o agente explica agora a alteração: ao nível do total global, atribui-a ao conjunto de entrada e, quando filtra para um destino específico, separa o **movimento do conjunto** da alteração da **quota** desse destino. A única coisa que ainda não consegue reconstruir é uma causa que dependa do **histórico da hierarquia num dado momento**, o que fica para uma versão posterior.
+</Aside>
+
+<Aside type="caution" title="As alocações em cascata precisam de uma fatia">
+Quando uma alocação alimenta outra (uma cascata), um «porquê» ao nível do projeto misturaria as linhas erradas, pelo que o agente pede-lhe que restrinja a pergunta a uma fatia (uma região, um produto ou um centro de custo específico) e só então a explica.
+</Aside>
+
+<Aside type="note" title="Resultados construídos por mais de um passo">
+Se uma tabela de resultados for produzida por **mais de um** passo de alocação, o agente não adivinha qual deles originou uma alteração: lista os passos candidatos e pede-lhe que indique o que pretende. Quando a sua pergunta se restringe a linhas que apenas um desses passos produziu (por exemplo, uma região que só esse passo aloca), o agente reconhece-o e rastreia esse passo automaticamente, informando-o de que o fez.
+
+**Indicar um passo diz ao agente que passo descrever, não que linhas medir.** A alteração que comunica é a da tabela completa e é exata; é a *repartição entre fatores* que não pode ser atribuída a um passo, pelo que, numa tabela com vários escritores, o agente retém essa repartição, indica que o valor abrange todos os passos que escrevem na tabela e propõe-se rastrear a tabela através de cada um dos outros, um de cada vez. Cada uma dessas novas execuções é uma medição separada: não é a quota desse passo na alteração que está a analisar, nem uma medição desse passo **isolado**: estes passos escrevem na mesma coluna, que é a razão pela qual a repartição foi retida, pelo que a alteração devolvida continua a abranger todos eles.
+
+Isto aplica-se **seja qual for o outro escritor**. Um passo que não é uma alocação (um que acrescenta linhas à tabela de resultados, por exemplo) nunca é candidato a rastreio e, por isso, nunca lhe pede que escolha, mas as suas linhas estão no total da mesma forma, e o agente di-lo agora em vez de incorporar o seu movimento na repartição.
+</Aside>
+
+<Aside type="note" title="Os cenários hipotéticos de alteração de valor usam as quotas de hoje">
+As respostas a «o que acontece se este conjunto subir …» repartem a alteração por uma ramificação de acordo com a **quota atual de cada destino no conjunto**, pelo que os valores por tabela **somam**, em vez de cada um ser um envelope de pior cenário. Refletem as quotas do modelo tal como estão hoje: uma estimativa bem delimitada de onde recai uma alteração, não uma previsão precisa. Se apontar uma pergunta destas para uma tabela de **indutor ou base** em vez do conjunto de entrada, é tratada como um cenário hipotético de *indutor* (abaixo), uma vez que alterar um indutor reorganiza uma repartição fixa em vez de acrescentar valor.
+
+**Indique explicitamente o período neste caso.** Ao contrário de uma pergunta «porque mudou isto» ou de um cenário hipotético de indutor, um cenário hipotético prospetivo *não* descobre sozinho a coluna do período. Se a omitir, a estimativa abrange **todos os períodos** e não a janela que tinha em mente.
+</Aside>
+
+<Aside type="caution" title="Um resultado que o cenário hipotético não conseguiu medir não apresenta valor">
+Um cenário hipotético prospetivo calcula a quota de cada destino consultando o passo que o escreve. Quando essa consulta falha (a tabela do passo não tem coluna de período, o armazém rejeita-a), esse destino indica agora **nenhuma estimativa**, juntamente com o motivo. Antes, indicava a alteração *completa* que o atingia, um máximo apresentado exatamente como uma resposta medida, e tudo o que estava abaixo desse passo era então estimado a partir dela, pelo que um ramo inteiro parecia constituído por valores normais.
+
+Daqui decorrem três consequências, e a resposta indica cada uma delas: os totais abrangem apenas os destinos que **foram** medidos; nada a jusante de um passo não medido é estimado a partir dele, pelo que esses destinos estão ausentes da resposta em vez de adivinhados; e um destino medido a partir de apenas *parte* do que o escreve di-lo e indica o passo que não pôde ser lido. Esse valor parcial é uma medição real do que foi possível ler, por isso mantém-se, mas não é o destino completo, e a parte em falta pode ser maior, menor ou de sinal contrário. Não o interprete como um mínimo.
+</Aside>
+
+<Aside type="note" title="Os cenários hipotéticos de indutor são calculados com exatidão">
+Pergunte o que faria uma alteração a um **indutor** («e se o indutor de efetivos do centro de custo Assembly subisse 10?») e o agente volta a repartir o conjunto fixo com os novos pesos, **com exatidão**, sem reexecutar o modelo. Mostra que destinos **ganham** e quais **perdem**, e os ganhos e as perdas **anulam-se** como verificação integrada. Limita-se ao que consegue calcular com exatidão: uma repartição simples e única com um indutor simples. Qualquer coisa mais complexa (uma alocação baseada em hierarquia ou filtrada/condicional, a adição de um membro de indutor totalmente novo ou uma alteração que esvazie um grupo) é **recusada com o motivo** em vez de estimada.
+
+**Indique a coluna tal como a tabela de indutores a escreve.** Quando um passo transporta uma coluna de indutor com outro nome, o nome da própria tabela de indutores é aquele com que deve perguntar, e é o que a resposta cita de volta se se enganar. Os resultados leem-se no sentido contrário: os centros de custo e os grupos que se moveram são indicados como a tabela de *resultados* os escreve, porque são os nomes pelos quais filtra e lê os resultados. Na maioria dos passos, os dois nomes são o mesmo.
+</Aside>
+
+<Aside type="note" title="A coluna do período é detetada por si">
+Numa pergunta «porque mudou isto» ou num cenário hipotético de indutor, normalmente não indica a coluna que contém o período: o agente descobre-a a partir da tabela. Se indicar uma explicitamente, é verificada primeiro na tabela: se essa coluna não existir, é imediatamente informado, juntamente com as colunas que *existem*, para a poder corrigir num só passo em vez de receber uma análise que não conseguiu totalizar nada. Se a tabela tiver duas colunas de período igualmente prováveis (um ano e um número de período, por exemplo), o agente pede-lhe que escolha uma em vez de adivinhar. Os cenários hipotéticos prospetivos são a exceção: nesses, indique o período por si, conforme referido acima.
+</Aside>
+
+<Aside type="note" title="Combinações de dimensões, quando ativadas">
+Perguntar o que originou uma alteração procura a dimensão individual que melhor a explica, em todas as áreas de trabalho. Quando a sua área de trabalho tem também ativada a pesquisa por **combinações**, testa igualmente combinações de dimensões (um movimento confinado a uma região *e* a uma linha de produto, por exemplo) e não apenas uma dimensão de cada vez. As combinações têm de superar um critério mais exigente do que uma dimensão isolada antes de serem comunicadas, e quando nada explica o movimento por si só, a resposta di-lo em vez de escolher qualquer coisa. A pesquisa por combinações está desativada por predefinição; pergunte ao administrador do PlaidCloud se está ativada para a sua área de trabalho.
+</Aside>
+
+<Aside type="note" title="Esta alteração é invulgar?">
+Juntamente com o «porquê», o agente avalia se uma alteração está fora do normal: compara o movimento deste período com o histórico do próprio modelo de **alterações de período para período** e classifica-o como normal, elevado ou extremo, para que uma variação de rotina e um pico genuíno sejam lidos de forma diferente.
+</Aside>
+
+<Aside type="note" title="As alterações concentradas são assinaladas">
+Quando a maior parte de uma alteração homóloga provém de um único grupo (uma entidade ou um cliente que explica a maior parte do movimento), o resumo do agente assinala-o explicitamente, para que uma alteração originada por um valor atípico não seja confundida com uma variação generalizada. Acrescente à sua pergunta uma dimensão de decomposição, como a entidade ou a conta, para o ver.
+</Aside>
+
+<Aside type="caution" title="Uma decomposição por um campo sem valores">
+Decompor uma alteração por um campo reúne as linhas que partilham um valor, e as linhas **sem** valor também se reúnem. Assim, um campo deixado em branco em todas as linhas dos períodos comparados produzia um único grupo com a alteração inteira, que parecia o resultado mais concentrado possível: um membro, todo o movimento, confiança total.
+
+O agente indica agora que o campo não está preenchido para essas linhas e **retém** os valores de concentração em vez de os comunicar como 100 %. Sugere um campo que esteja preenchido ou abandonar a decomposição por completo, caso em que encontra por si o campo que melhor explica a alteração. Quando um segundo campo de agrupamento *está* preenchido, a decomposição é genuína e é comunicada como habitualmente, sendo o campo em branco simplesmente assinalado. Os valores em branco aparecem como *(no value)* ou *(blank)*, e os dois são mantidos separados: um campo nunca preenchido e um campo explicitamente definido como nada são coisas diferentes.
+
+Apenas a decomposição foi alguma vez afetada. A alteração principal, os seus totais e a forma como foi atribuída estiveram corretos em todos os momentos.
+</Aside>
+
+<Aside type="caution" title="Quando são as linhas não atribuídas que se moveram">
+Quando não indica um campo, o agente escolhe o que melhor explica a alteração e, por vezes, a resposta são as linhas que **não têm** qualquer valor nesse campo. É uma constatação real, e não uma falha, pelo que é comunicada em vez de ocultada: um custo que deixou discretamente de ser etiquetado merece ser conhecido.
+
+Mas «as linhas não atribuídas cresceram» significa algo muito diferente num campo quase sempre preenchido e num campo quase sempre em branco. A resposta indica agora qual é o caso, na mesma frase: *«o corte vencedor são as linhas não atribuídas de `cost_centre`: `cost_centre` tem um valor em 12 % das linhas nos períodos comparados»*. Um campo preenchido em 12 % das linhas mal está em uso; um preenchido em 95 % tem uma lacuna genuína que vale a pena investigar. Campos muito esparsos e muito completos são apresentados como *menos de 1 %* e *mais de 99 %* e não como 0 % ou 100 %, nenhum dos quais poderia ser verdadeiro neste caso.
+</Aside>
+
+<Aside type="note" title="Quando a pesquisa não pode ser executada de todo">
+Antes de pesquisar, o agente faz uma pergunta rápida aos dados para excluir os campos que contêm um único valor em todas as linhas, ou que estão divididos de forma demasiado fina para constituírem um agrupamento. Quando essa pergunta não pode ser respondida (um tipo de coluna que o armazém não consegue medir, ou uma ligação que caiu), pesquisava todos os campos, levantando ambos os limites precisamente no momento em que algo já tinha corrido mal.
+
+Agora indica que a pesquisa não foi executada e di-lo pelas suas próprias palavras: é um limite da pesquisa, não uma constatação sobre os dados. Esta formulação difere da nota que recebe quando os períodos comparados são simplesmente demasiado grandes para pesquisar, porque também difere o que pode fazer a respeito: nesse caso, restrinja os períodos; aqui, indique o campo que pretende que seja examinado, o que funciona qualquer que seja a causa. Tentar de novo só ajuda se a falha tiver sido passageira.
+</Aside>
+
+<Aside type="caution" title="Uma decomposição por um campo que não existe na tabela">
+Peça uma decomposição por um campo que a tabela não tem e é agora informado disso, juntamente com os campos que ela *tem*, para poder corrigir a pergunta num só passo. Anteriormente, a resposta chegava completa e confiante com a decomposição simplesmente ausente, e nada indicava que uma tinha sido tentada; a sugestão «para ir mais longe» apontava para outro lado. Quatro perguntas consecutivas num modelo real chegaram assim.
+
+Mais acima na cadeia, a regra é deliberadamente diferente. Um campo acrescentado por uma alocação só existe nas tabelas a jusante, pelo que um campo que está na tabela sobre a qual perguntou está muitas vezes genuinamente ausente duas fases atrás. Aí, o rastreio **agrupa pelos campos que essa fase tem** em vez de perder a decomposição dessa fase, e indica quais deixou de fora.
+
+Essa nota refere-se à fase anterior e di-lo: *«a decomposição pedida não estava disponível nesta fase»*. **Não** se refere à tabela de membros que a resposta imprime: essa é a tabela sobre a qual perguntou, no agrupamento completo que pediu. O agrupamento mais grosseiro da fase anterior é aquele em que a sua própria métrica de concentração é medida, e os seus membros não são listados. A sugestão que o acompanha também nomeia essa fase: agrupe por um campo que todas as fases rastreadas tenham, se também quiser os respetivos membros. Até agosto de 2026, a nota dizia «is not in this answer» e explicava-se como *«so the members you see are grouped only by the rest»*, e a sugestão dizia que o campo não estava em «the traced table», o que apontava para a tabela impressa, a descrevia como algo que não era e aconselhava a abandonar um campo que estava a funcionar.
+
+E quando uma decomposição falta por qualquer outro motivo (uma falha passageira do armazém, por exemplo), a resposta di-lo da mesma forma, indicando a fase para a qual não conseguiu produzir uma: os totais estão medidos e não são afetados, e propõe uma nova tentativa. O pormenor está ausente, não errado.
+</Aside>
+
+<Aside type="caution" title="Um total que passou por zero são dois estados, não uma alteração">
+Quando um total passou de positivo a negativo entre os dois períodos (um centro de custo que era um encargo líquido e passou a crédito líquido, por exemplo), não existe forma significativa de dividir o movimento pelos fatores que o originaram, nem percentagem significativa: uma oscilação de um pequeno valor positivo para um grande valor negativo produz um valor como −10 013 %, que não mede nada.
+
+O agente recusa-se a repartir essa alteração, como sempre fez. O que faz agora é **dizê-lo** como motivo, em vez de abrir com uma nota geral sobre a forma como a medição é feita, que parecia ser a explicação e contradizia a linha impressa imediatamente abaixo. A percentagem deixou de ser apresentada para uma alteração que passou por zero; os montantes de cada lado e a própria alteração são exatos e não são afetados.
+
+Leia os dois períodos como valores separados: a resposta imprime agora ambos na linha que recusa, indicando se são a fatia que pediu ou a coluna inteira. Para ver o que se moveu, acrescente uma dimensão de decomposição: o total que passou por zero não pode ser dividido em causas, mas o movimento **por membro** que está por trás dele lê-se normalmente, e é geralmente aí que está a resposta.
+</Aside>
+
+<Aside type="note" title="Quando o rastreio pára, sugere um passo seguinte">
+Cada resposta termina com passos seguintes que pode executar. Duas situações não ofereciam nenhum, e eram precisamente aquelas em que estava mais bloqueado: um total que passou por zero e uma fase que o agente não conseguiu agregar de todo. Ambas incluem agora uma sugestão, a segunda indicando a tabela a verificar e a causa mais provável (uma coluna de período em falta na tabela dessa fase), para que a possa excluir antes de presumir uma falha passageira do armazém.
+
+Da mesma forma, uma resposta deixou de sugerir que **restrinja a um membro** quando já restringiu a pergunta a um. Esse conselho vinha de uma limitação registada mais acima na cadeia, e não da pergunta que fez, e era repetido entre os limites indicados como se se aplicasse aqui.
+
+Um caso continua a não oferecer passo seguinte: quando uma leitura independente da tabela de indutores discorda da repartição realizada, a resposta di-lo, mas não consegue sugerir uma nova execução que o resolva; a medida útil nesse caso é inspecionar diretamente a tabela de indutores, o que é um pedido diferente e não um ajuste a este.
+</Aside>
+
+## Sugestões
+
+- Refira-se às tabelas pelo seu **nome** (`cost_line_rev`) ou pelo seu id; ambos funcionam.
+- Numa pergunta sobre uma alteração, indique os **períodos** a comparar (por exemplo, 2025 face a 2026) e, quando útil, uma dimensão de **decomposição**, como a conta ou a entidade.
+- Comece de forma ampla («que modelos de alocação existem neste projeto?») e aprofunde; o agente mantém o fio da conversa, pelo que as perguntas seguintes assentam no mesmo modelo.
+- Existem **dois tipos de cenário hipotético**: uma alteração de **valor** («este conjunto sobe 1 M$») é estimada pelas quotas de hoje e soma-se entre destinos; uma alteração de **indutor** («alterar os pesos deste indutor») é repartida com exatidão e anula-se. Formule a pergunta para o tipo que pretende.
+
+## Ver também
+
+- [Primeiros passos com agentes de programação com IA](../getting-started/) — ligue um agente à sua área de trabalho por MCP
+- [Porque são úteis as alocações](/pt-pt/guides/allocations/getting-started/why-are-allocations-useful/) — conceitos de alocação
+- [Resolução de problemas](../troubleshooting/) — problemas de ligação e autenticação
