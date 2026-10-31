@@ -1,6 +1,6 @@
 ---
 title: Agenci AI (MCP)
-description: Połącz Claude, Cursor, GitHub Copilot, Gemini i innych agentów AI z Twoim tenantem PlaidCloud za pomocą serwera Model Context Protocol (MCP).
+description: Połącz Claude, Cursor, GitHub Copilot, Gemini i innych agentów AI ze swoim tenantem PlaidCloud za pomocą serwera Model Context Protocol (MCP).
 sidebar:
   label: Agenci AI (MCP)
   order: 13
@@ -16,6 +16,7 @@ Strony w tej sekcji opisują, co udostępnia serwer, jak się uwierzytelnić ora
 - **[Odpowiedzi, którym można zaufać](./honest-answers/)** — każda odpowiedź zawiera sygnał pewności i opisane prostym językiem zastrzeżenia, a PlaidCloud nigdy nie zmyśla liczb. Ta rzetelność pozwala działać na podstawie odpowiedzi AI bez ręcznego sprawdzania jej od nowa.
 - **[Śledzenie alokacji](./tracing-allocations/)** — pytaj prostym językiem, *dlaczego* zmienił się zaalokowany wynik, co go zasila i co przyniosłaby hipotetyczna zmiana.
 - **[Ścieżki analizy](./analysis-paths/)** — nadaj kluczowym tabelom przyjazne nazwy i ustaw domyślną, aby móc po prostu zapytać „dlaczego to wzrosło w zeszłym kwartale?”
+- **[Tworzenie pulpitów](./build-dashboards/)** — poproś o wykresy i pulpity na podstawie opublikowanych tabel i widoków, przez to samo połączenie z PlaidCloud.
 - **[Definicje metryk](./metric-definitions/)** — ustal raz, jak obliczana jest dana liczba biznesowa, aby każda odpowiedź, która jej używa, była liczona tak samo.
 
 ## Połącz swojego asystenta
