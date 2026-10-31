@@ -14,8 +14,9 @@ Las páginas de esta sección explican qué expone el servidor, cómo autenticar
 ## Qué distingue el análisis con IA de PlaidCloud
 
 - **[Respuestas en las que puede confiar](./honest-answers/)**: cada respuesta incluye una señal de confianza y advertencias en lenguaje claro, y PlaidCloud nunca inventa un número. Esta honestidad le permite actuar según una respuesta de IA sin volver a comprobarla manualmente.
-- **[Rastreo de asignaciones](./tracing-allocations/)**: pregunte en lenguaje natural por qué cambió un resultado asignado, qué lo alimenta y qué efecto tendría un cambio hipotético.
+- **[Rastreo de asignaciones](./tracing-allocations/)**: pregunte en lenguaje natural *por qué* cambió un resultado asignado, qué lo alimenta y qué efecto tendría un cambio hipotético.
 - **[Rutas de análisis](./analysis-paths/)**: asigne nombres descriptivos y un valor predeterminado a sus tablas clave para poder preguntar simplemente “¿por qué subió esto el trimestre pasado?”.
+- **[Crear paneles de control](./build-dashboards/)**: pida gráficos y paneles de control sobre sus tablas y vistas publicadas, a través de la misma conexión de PlaidCloud.
 - **[Definiciones de métricas](./metric-definitions/)**: acuerde una sola vez cómo se calcula un número del negocio, de modo que todas las respuestas que lo usen lo calculen igual.
 
 ## Conecte su asistente

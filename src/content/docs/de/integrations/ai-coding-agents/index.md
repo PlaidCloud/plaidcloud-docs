@@ -16,6 +16,7 @@ Die Seiten in diesem Abschnitt behandeln, was der Server bereitstellt, wie die A
 - **[Antworten, denen Sie vertrauen können](./honest-answers/)** – jede Antwort enthält ein Konfidenzsignal und Hinweise in verständlicher Sprache, und PlaidCloud erfindet nie eine Zahl. Diese Ehrlichkeit ermöglicht es Ihnen, auf eine KI-Antwort zu reagieren, ohne sie von Hand nachzuprüfen.
 - **[Umlagen nachverfolgen](./tracing-allocations/)** – fragen Sie in verständlicher Sprache, *warum* sich ein umgelegtes Ergebnis geändert hat, was darin einfließt und was eine hypothetische Änderung bewirken würde.
 - **[Analysepfade](./analysis-paths/)** – geben Sie Ihren wichtigsten Tabellen sprechende Namen und einen Standard, damit Sie einfach fragen können: „Warum ist das im letzten Quartal gestiegen?“
+- **[Dashboards erstellen](./build-dashboards/)** – lassen Sie sich Diagramme und Dashboards über Ihre veröffentlichten Tabellen und Ansichten erstellen, über dieselbe PlaidCloud-Verbindung.
 - **[Kennzahldefinitionen](./metric-definitions/)** – legen Sie einmal fest, wie eine Geschäftszahl berechnet wird, damit jede Antwort, die sie verwendet, auf dieselbe Weise berechnet wird.
 
 ## Ihren Assistenten verbinden

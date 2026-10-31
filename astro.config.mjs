@@ -582,6 +582,7 @@ export default defineConfig({
 							collapsed: true,
 							items: [{ autogenerate: { directory: 'guides/dashboards' } }],
 						},
+						'integrations/ai-coding-agents/build-dashboards',
 						'integrations/ai-coding-agents/metric-definitions',
 						'integrations/ai-coding-agents/analysis-paths',
 					],

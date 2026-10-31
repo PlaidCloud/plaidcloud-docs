@@ -15,7 +15,8 @@ Les pages de cette section décrivent ce que le serveur expose, comment s'authen
 
 - **[Des réponses fiables](./honest-answers/)** : chaque réponse s'accompagne d'un indicateur de confiance et de réserves en langage clair, et PlaidCloud n'invente jamais de chiffre. Cette honnêteté vous permet d'agir sur une réponse de l'IA sans la revérifier à la main.
 - **[Retracer les allocations](./tracing-allocations/)** : demandez *pourquoi* un résultat alloué a changé, ce qui l'alimente et ce qu'aurait pour effet une modification hypothétique, en langage naturel.
-- **[Chemins d'analyse](./analysis-paths/)** : donnez à vos tables clés des noms parlants et une valeur par défaut, pour pouvoir simplement demander « pourquoi cela a-t-il augmenté le trimestre dernier ? »
+- **[Chemins d'analyse](./analysis-paths/)** : donnez à vos tables clés des noms parlants et une valeur par défaut, pour pouvoir simplement demander « pourquoi cela a-t-il augmenté le trimestre dernier ? »
+- **[Créer des tableaux de bord](./build-dashboards/)** : demandez des graphiques et des tableaux de bord à partir de vos tables et vues publiées, via la même connexion PlaidCloud.
 - **[Définitions de métriques](./metric-definitions/)** : convenez une fois pour toutes de la façon dont un chiffre d'activité est calculé, pour que toutes les réponses qui l'utilisent le calculent de la même manière.
 
 ## Connecter votre assistant

@@ -15,6 +15,7 @@ The pages in this section cover what the server exposes, how to authenticate, an
 - **[Answers You Can Trust](./honest-answers/)** — every answer carries a confidence signal and plain-language caveats, and PlaidCloud never invents a number. This honesty is what lets you act on an AI answer without re-checking it by hand.
 - **[Tracing Allocations](./tracing-allocations/)** — ask *why* an allocated result changed, what feeds it, and what a hypothetical change would do — in plain language.
 - **[Analysis Paths](./analysis-paths/)** — give your key tables friendly names and a default, so you can just ask "why did this go up last quarter?"
+- **[Build Dashboards](./build-dashboards/)** — ask for charts and dashboards over your published tables and views, through the same PlaidCloud connection.
 - **[Metric Definitions](./metric-definitions/)** — agree once how a business number is calculated, so every answer that uses it is calculated the same way.
 
 ## Connect Your Assistant
