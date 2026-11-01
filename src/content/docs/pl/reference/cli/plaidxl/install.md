@@ -10,34 +10,34 @@ PlaidXL instaluje się raz na komputer, a nie raz na skoroszyt. Potem karta **Pl
 
 ## Zanim zaczniesz
 
-- Użyj Excela dla Microsoft 365 lub Excela 2021 albo nowszego, w systemie Windows lub Mac.
+- Użyj Excela dla Microsoft 365 albo Excela 2021 lub nowszego, w systemie Windows lub Mac.
 - Jeśli Twoja organizacja zarządza dodatkami pakietu Office centralnie, administrator Microsoft 365 może musieć wdrożyć PlaidXL za Ciebie. Jeśli nie możesz samodzielnie instalować dodatków, poproś go o dodanie dodatku **PlaidCloud**.
 
 ## Instalacja w systemie Windows
 
 1. W Excelu otwórz **Insert → Add-ins** (w niektórych wersjach **Home → Add-ins**).
 2. Wpisz `PlaidCloud` w polu wyszukiwania dodatków.
-3. Wybierz dodatek **PlaidCloud** i kliknij **Add**.
+3. Wybierz dodatek **PlaidCloud** i kliknij **Dodaj**.
 
 ## Instalacja na komputerze Mac
 
-1. W Excelu dla komputerów Mac otwórz **Insert → Add-ins**. W starszych wersjach menu to **Insert → Store**.
+1. W Excelu dla Maca otwórz **Insert → Add-ins**. W starszych wersjach menu to **Insert → Store**.
 2. Wpisz `PlaidCloud` w polu wyszukiwania dodatków.
-3. Wybierz dodatek **PlaidCloud** i kliknij **Add**.
+3. Wybierz dodatek **PlaidCloud** i kliknij **Dodaj**.
 
-## Otwieranie okienka zadań
+## Otwórz okienko zadań
 
 1. Kliknij kartę **PlaidCloud** na wstążce.
-2. W grupie **PlaidXL Controls** kliknij **Show Taskpane**.
+2. W grupie **Data** kliknij **Open PlaidXL**.
 
-Okienko zadań PlaidXL otwiera się po prawej stronie okna i prosi o zalogowanie. Przejdź dalej do [Logowanie](/pl/reference/cli/plaidxl/connect/).
+Okienko zadań PlaidXL otworzy się po prawej stronie okna i poprosi o zalogowanie. Przejdź do artykułu [Logowanie](/pl/reference/cli/plaidxl/connect/).
 
-Okienko zadań pozostaje zalogowane między sesjami, więc zwykle logujesz się raz, a potem tylko otwierasz okienko zadań, gdy jest potrzebne.
+Okienko zadań pozostaje zalogowane między sesjami, więc zwykle logujesz się raz, a potem po prostu otwierasz okienko zadań, gdy jest potrzebne.
 
 ## Jeśli PlaidXL się nie pojawia
 
-- Zamknij wszystkie okna Excela i uruchom Excela ponownie. Dodatek często nie pojawia się na wstążce, dopóki Excel nie zostanie uruchomiony ponownie.
-- Zajrzyj do **Insert → My Add-ins** (Windows) lub **Insert → Add-ins → My Add-ins** (Mac) i wybierz stamtąd **PlaidCloud**.
+- Zamknij wszystkie okna Excela i uruchom go ponownie. Dodatek często nie pojawia się na wstążce, dopóki Excel nie zostanie uruchomiony ponownie.
+- Sprawdź w **Insert → My Add-ins** (Windows) lub **Insert → Add-ins → My Add-ins** (Mac) i wybierz stamtąd **PlaidCloud**.
 - Jeśli Twoja organizacja blokuje dodatki ze sklepu, poproś administratora Microsoft 365 o ich wdrożenie.
 
 Więcej rozwiązań znajdziesz na stronie [Rozwiązywanie problemów](/pl/reference/cli/plaidxl/troubleshooting/).

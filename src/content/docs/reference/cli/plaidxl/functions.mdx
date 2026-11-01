@@ -8,7 +8,7 @@ sidebar:
 
 import { Aside } from '@astrojs/starlight/components';
 
-PlaidXL adds functions to Excel that read PlaidCloud data straight into cells. Type `=PLAIDXL.` in a cell and Excel's autocomplete lists them, with a short description of each argument.
+PlaidXL adds functions to Excel that read PlaidCloud data straight into cells. Type `=PLAIDXL.` in a cell and Excel's autocomplete lists them, with a short description of each argument. The **Formulas** tab of the task pane can also write one for you; see [Insert a Formula From the Task Pane](#insert-a-formula-from-the-task-pane).
 
 | Group | Functions | Use them to |
 |---|---|---|
@@ -23,9 +23,9 @@ PlaidXL adds functions to Excel that read PlaidCloud data straight into cells. T
 ## How the Functions Work
 
 - **Sign in first.** The functions read with your PlaidCloud sign-in, so [sign in](/reference/cli/plaidxl/connect/) from the task pane before you use them.
-- **They read from the selected project.** Every function reads from the project selected in the task pane. `GET_TABLE`, `TBL_LIST` and `DIM_LIST` also take an optional project ID, to read another project without changing the selection. The selection is shared by every workbook you have open.
+- **They read from the workbook's project.** Every function reads from the project linked to the workbook in the task pane. `GET_TABLE`, `TBL_LIST` and `DIM_LIST` also take an optional project ID, to read another project without changing the link. Each workbook has its own project, so two open workbooks can read from different projects.
 - **Results spill.** A function that returns a list or a table fills the cells below it (or to its right). Leave room for the results; if anything is in the way, Excel shows a `#SPILL!` error.
-- **Recalculate to pick up changes.** A PlaidXL formula fetches again when one of its arguments changes. To pick up new data in PlaidCloud, or a different project selected in the task pane, force a full recalculation — on Windows, press **Ctrl+Alt+F9**. **Refresh All Tables** refreshes retrieved tables, not formulas.
+- **Recalculate to pick up changes.** A PlaidXL formula fetches again when one of its arguments changes. To pick up new data in PlaidCloud, or a different project linked in the task pane, force a full recalculation — on Windows, press **Ctrl+Alt+F9**. **Refresh All Tables** refreshes retrieved tables, not formulas.
 - **Use exact names.** Type table, column, dimension and node names exactly as they appear in PlaidCloud.
 
 Arguments in square brackets are optional.
@@ -46,7 +46,7 @@ Lists the names of the projects you can open, sorted by name.
 
 Lists the names of the tables in a project, sorted by name.
 
-- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `project_id` — the project to read. Defaults to the workbook's project.
 - `horizontal` — `TRUE` to list across a row. Defaults to `FALSE`, a column.
 
 ### GET_COLUMNS
@@ -65,7 +65,7 @@ Lists the column names of a table in the selected project.
 
 Lists the names of the dimensions in a project.
 
-- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `project_id` — the project to read. Defaults to the workbook's project.
 - `horizontal` — `TRUE` to list across a row. Defaults to `FALSE`, a column.
 
 ## Tables
@@ -77,7 +77,7 @@ Lists the names of the dimensions in a project.
 Returns a table's rows with a header row, spilled from the formula's cell. Empty values come back as blank cells.
 
 - `table_name` — the table's name in PlaidCloud.
-- `project_id` — the project to read. Defaults to the project selected in the task pane.
+- `project_id` — the project to read. Defaults to the workbook's project.
 - `limit` — the most rows to return. Defaults to 1,048,575, the most a worksheet holds below a header row.
 
 `GET_TABLE` returns every column. To choose columns or filter rows, [retrieve the table from the task pane](/reference/cli/plaidxl/retrieve/#retrieve-a-table) instead.
@@ -104,12 +104,12 @@ Returns `start_node` and the nodes below it that `drill_key` asks for, down a co
 
 - `dimension_name` — the dimension's name, or its path in the project.
 - `start_node` — the node to drill from.
-- `drill_key` — how far to drill, from [`DRILL_KEY`](#drill_key): every descendant, only the leaves, or a number of levels.
+- `drill_key` — how far to drill, from [`DRILL_KEY`](#drill_key): every descendant, only the leaves, a number of levels, or a range of generations.
 - `hierarchy` — the alternate hierarchy to follow. Defaults to `"main"`.
 
 For example, `=PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("leaves"))` lists **Total** followed by every leaf region beneath it.
 
-The [drill commands on the ribbon](/reference/cli/plaidxl/ribbon/#drill-functions) do the same thing for a dimension and node you've typed in two cells, without writing a formula.
+The [expand commands on the ribbon](/reference/cli/plaidxl/ribbon/#drill-functions) do the same thing for a dimension and node you've typed in two cells, without writing a formula.
 
 ## Values
 
@@ -144,6 +144,8 @@ B1  =PLAIDXL.CELL(A1, A2, A3, A4, A5)
 ```
 
 `B1` shows total revenue for EMEA in FY2026.
+
+A sheet full of `CELL` formulas needs fewer lookups per cell, because PlaidXL reuses the table's column details for a short time instead of fetching them for every cell. If a value can't be calculated, the cell shows `#VALUE!` and hovering over it shows the reason as PlaidCloud reported it, such as a filter column that isn't in the table or a node with no members. `CELLS` shows the first reason for the whole result.
 
 ### CELLS
 
@@ -212,21 +214,58 @@ Reference a cell for the node to build a grid: `=PLAIDXL.REPR.DIMENSION_REPR("Re
 
 `=PLAIDXL.REPR.DRILL_KEY(d_key)`
 
-How far [`DRILL`](#drill) goes below its start node. `d_key` is plain text:
+How far [`DRILL`](#drill) goes below its start node. `d_key` is plain text, either a word form or a drill key written out:
 
 | `d_key` | Drills to |
 |---|---|
 | `"all"` | Every descendant |
-| `"leaves"` | Only the leaves — nodes with nothing below them |
+| `"leaves"` | Only the leaves, which are the nodes with nothing below them |
 | `"1 level"`, `"2 levels"`, … | That many generations down |
+| `">[...]"` | The drill key written out, as in the next table |
 
 Write the number as digits: `"2 levels"`, not `"two levels"`. A leading `drill` is ignored, so `"drill 2 levels"` also works.
 
-With two or more levels, `DRILL` lists a generation at a time — all the children, then all the grandchildren — rather than each node directly under its parent. For a nested layout, use `"all"`, or [`GET_DIMENSION`](#get_dimension) with a `generation_limit`.
+A written-out key counts generations down from the start node, which is generation 0 and is always included. Negative numbers count up from the leaves of each branch, so a ragged hierarchy works the way you'd expect.
+
+| Key | Includes |
+|---|---|
+| `>[*]` or `>[:]` | Every node |
+| `>[]` or `>[-1]` | Only the leaves |
+| `>[n]` | The start node and `n` generations below it. `>[0]` is the start node alone. |
+| `>[a:]` | The start node, then generation `a` and everything below it |
+| `>[a:b]` | The start node, then generations `a` up to `b - 1` |
+| `>[0:-k]` | The start node and every node that has at least `k` generations below it, so the last `k` generations of each branch are left off. `>[0:-1]` is every node except the leaves. |
+| `>[a:-k]` | The same, starting at generation `a` |
+
+For the hierarchy `A`, with children `B`, `C`, and `D`, where `B` has `B1` and `B2` and `C` has `C1`:
+
+| Key | Result |
+|---|---|
+| `>[1]` | `A`, `B`, `C`, `D` |
+| `>[2]` | `A`, `B`, `B1`, `B2`, `C`, `C1`, `D` |
+| `>[]` | `A`, `B1`, `B2`, `C1`, `D` |
+| `>[0:-1]` | `A`, `B`, `C` |
+| `>[2:]` | `A`, `B1`, `B2`, `C1` |
+
+Nodes are listed in hierarchy order, each one under its own parent, and the Excel outline groups follow the same order. Spaces inside a key are ignored. A key that doesn't match one of these forms returns an error that lists the valid forms.
+
+<Aside type="caution">
+`>[-1]` and `>[0:-1]` mean something different from earlier versions of PlaidXL, where they were backwards. `>[-1]` now returns only the leaves, and `>[0:-1]` everything except the leaves. Review any workbook that wrote a drill key out by hand. The word forms `"all"`, `"leaves"` and `"2 levels"` are unchanged.
+</Aside>
 
 <Aside type="note">
 `CELL`, `CELLS` and `DRILL` expect the output of these building-block functions. Build each argument with its function rather than typing the text yourself.
 </Aside>
+
+## Insert a Formula From the Task Pane
+
+The **Formulas** tab of the task pane writes a formula for you. Under **What do you want in the cell?**, choose one:
+
+- **A whole table** (`GET_TABLE`) — pick or type the table, and optionally a maximum number of rows.
+- **One number** (`CELL`) — pick or type the table, choose the **Column to total** and **How to combine the values**.
+- **A list of dimension nodes** (`DRILL`) — pick or type the dimension and the start node, choose **All levels**, **Lowest level only** or **Down** a number of **levels**, and optionally an **Alternate hierarchy**.
+
+The **Formula** preview shows the result as you fill in the fields. Click **Insert in active cell** to put it in the selected cell, or **Copy** to paste it yourself. Choosing a table on the **Tables** tab or a dimension on the **Dimensions** tab fills in the matching field.
 
 ## Related
 
