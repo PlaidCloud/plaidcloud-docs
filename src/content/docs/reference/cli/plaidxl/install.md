@@ -27,7 +27,7 @@ You install PlaidXL once per computer, not once per workbook. After that, the **
 ## Open the Task Pane
 
 1. Click the **PlaidCloud** tab on the ribbon.
-2. In the **PlaidXL Controls** group, click **Show Taskpane**.
+2. In the **Data** group, click **Open PlaidXL**.
 
 The PlaidXL task pane opens on the right side of the window and asks you to sign in. Continue with [Sign In](/reference/cli/plaidxl/connect/).
 
