@@ -28,7 +28,7 @@ PlaidXL 每台计算机只需安装一次，无需为每个工作簿分别安装
 ## 打开任务窗格
 
 1. 单击功能区上的 **PlaidCloud** 选项卡。
-2. 在**数据**组中，单击**打开 PlaidXL**。
+2. 在 **Data** 组中，单击 **Open PlaidXL**。
 
 PlaidXL 任务窗格会在窗口右侧打开，并要求您登录。请继续阅读[登录](/zh-cn/reference/cli/plaidxl/connect/)。
 

@@ -10,7 +10,7 @@ PlaidXL 是适用于 Microsoft Excel 的 PlaidCloud 加载项。它将工作簿�
 
 使用 PlaidXL 有两种方式，大多数工作簿会两种方式并用：
 
-- **任务窗格**——浏览项目，选择表或维度，选择列和筛选器，然后将数据检索到工作表中。**刷新所有表**会为您已检索的每个表提取最新数据，**保存到 PlaidCloud…** 会将编辑后的表写回。**公式**选项卡可为您生成 PlaidXL 公式。
+- **任务窗格**——浏览项目，选择表或维度，选择列和筛选器，然后将数据检索到工作表中。**Refresh All Tables** 会为您已检索的每个表提取最新数据，**Save to PlaidCloud…** 会将编辑后的表写回。**Formulas** 选项卡可为您生成 PlaidXL 公式。
 - **自定义函数**——诸如 `=PLAIDXL.TABLE.GET_TABLE("Sales")` 和 `=PLAIDXL.CELL(...)` 之类的公式，可将 PlaidCloud 数据直接读入单元格。可用它们列出表和维度、布置层次结构，并为报表计算汇总值。
 
 <figure style="margin:1.5rem 0;text-align:center;">
@@ -40,7 +40,7 @@ PlaidXL 是适用于 Microsoft Excel 的 PlaidCloud 加载项。它将工作簿�
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">任务窗格和自定义函数都使用您自己的 PlaidCloud 权限，从您选择的项目中读取数据。</figcaption>
 </figure>
 
-PlaidXL 从 PlaidCloud 读取数据，只有在您自己将项目表保存回去时才会更改它：编辑已检索的工作表，单击**保存到 PlaidCloud…**，然后确认。在此之前不会写入任何内容，并且会保留 7 天的还原点。
+PlaidXL 从 PlaidCloud 读取数据，只有在您自己将项目表保存回去时才会更改它：编辑已检索的工作表，单击 **Save to PlaidCloud…**，然后确认。在此之前不会写入任何内容，并且会保留 7 天的还原点。
 
 ## 要求
 

@@ -28,7 +28,7 @@ Você instala o PlaidXL uma vez por computador, não uma vez por pasta de trabal
 ## Abra o painel de tarefas
 
 1. Clique na guia **PlaidCloud** na faixa de opções.
-2. No grupo **Dados**, clique em **Open PlaidXL**.
+2. No grupo **Data**, clique em **Open PlaidXL**.
 
 O painel de tarefas do PlaidXL é aberto no lado direito da janela e pede que você faça login. Continue com [Login](/pt-br/reference/cli/plaidxl/connect/).
 

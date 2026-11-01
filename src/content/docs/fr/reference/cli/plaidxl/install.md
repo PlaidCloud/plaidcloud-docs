@@ -28,7 +28,7 @@ Vous installez PlaidXL une seule fois par ordinateur, et non une fois par classe
 ## Ouvrir le volet des tâches
 
 1. Cliquez sur l'onglet **PlaidCloud** du ruban.
-2. Dans le groupe **Données**, cliquez sur **Open PlaidXL**.
+2. Dans le groupe **Data**, cliquez sur **Open PlaidXL**.
 
 Le volet des tâches PlaidXL s'ouvre sur le côté droit de la fenêtre et vous invite à vous connecter. Poursuivez avec [Connexion](/fr/reference/cli/plaidxl/connect/).
 

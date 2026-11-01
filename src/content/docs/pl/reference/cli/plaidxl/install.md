@@ -28,7 +28,7 @@ PlaidXL instaluje się raz na komputer, a nie raz na skoroszyt. Potem karta **Pl
 ## Otwórz okienko zadań
 
 1. Kliknij kartę **PlaidCloud** na wstążce.
-2. W grupie **Dane** kliknij **Open PlaidXL**.
+2. W grupie **Data** kliknij **Open PlaidXL**.
 
 Okienko zadań PlaidXL otworzy się po prawej stronie okna i poprosi o zalogowanie. Przejdź do artykułu [Logowanie](/pl/reference/cli/plaidxl/connect/).
 

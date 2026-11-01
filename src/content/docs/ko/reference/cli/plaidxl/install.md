@@ -28,7 +28,7 @@ PlaidXL은 통합 문서마다가 아니라 컴퓨터마다 한 번만 설치합
 ## 작업 창 열기
 
 1. 리본에서 **PlaidCloud** 탭을 클릭합니다.
-2. **데이터** 그룹에서 **Open PlaidXL**을 클릭합니다.
+2. **Data** 그룹에서 **Open PlaidXL**을 클릭합니다.
 
 PlaidXL 작업 창이 창 오른쪽에 열리고 로그인하라는 메시지가 표시됩니다. [로그인](/ko/reference/cli/plaidxl/connect/)으로 계속 진행하십시오.
 

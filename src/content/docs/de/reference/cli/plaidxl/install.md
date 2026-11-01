@@ -28,7 +28,7 @@ Sie installieren PlaidXL einmal pro Computer, nicht einmal pro Arbeitsmappe. Dan
 ## Den Aufgabenbereich öffnen
 
 1. Klicken Sie im Menüband auf die Registerkarte **PlaidCloud**.
-2. Klicken Sie in der Gruppe **Daten** auf **Open PlaidXL**.
+2. Klicken Sie in der Gruppe **Data** auf **Open PlaidXL**.
 
 Der PlaidXL-Aufgabenbereich öffnet sich auf der rechten Seite des Fensters und fordert Sie zur Anmeldung auf. Weiter geht es mit [Anmelden](/de/reference/cli/plaidxl/connect/).
 

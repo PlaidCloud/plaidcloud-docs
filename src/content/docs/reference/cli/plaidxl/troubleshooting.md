@@ -64,8 +64,8 @@ After you switch workspace, the task pane says how many tracked tables belong to
 
 | What you see | What to do |
 |---|---|
-| Rows are empty inside the table | Two or more empty rows in a row, with data below them, stop a save. Delete the empty rows or fill them, then save again. |
-| The table changed since you retrieved it | Someone else saved the table in PlaidCloud. Retrieve it again and reapply your edits. |
+| Rows are empty inside the table | A single empty row is skipped. Two or more empty rows in a row, with data below them, stop a save. Delete the empty rows or fill them, then save again. |
+| The table changed since you retrieved it | Someone else saved the table in PlaidCloud. Retrieve it again and reapply your edits. (PlaidCloud can check this only on some table types; where it can't, the confirmation warns that others' changes will be overwritten.) |
 | A value can't be converted | Nothing is written and the rows are listed. Correct the values to match the column's data type. |
 | The sheet isn't linked to a table | Retrieve the table to the sheet first. **Save to PlaidCloud…** appears only for tables retrieved into the active sheet. |
 
