@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Ponieważ połączenie jest przeglądającym, zwraca ono tylko te wiersze, które przeglądający może zobaczyć, a jeśli nie ma on żadnego dostępu do projektu, zgłasza błąd uprawnień.
 
-> **Odczytuj tabele według nazwy, nie pisząc SQL.** W projekcie, w którym administrator włączył [Dostęp do wierszy](/pl/administration/access/managing-security-groups-and-assignments/#dostęp-do-wierszy-i-zapytania-pisane-samodzielnie), odczyt według nazwy stosuje uprawnienia do wierszy każdego przeglądającego, natomiast zapytanie skomponowane przez samą aplikację jest odrzucane dla każdego, kto nie jest Architektem projektu — nie ma bowiem jednej tabeli, którą uprawnienia mogłyby filtrować. Odczyt według nazwy sprawia, że aplikacja działa w obu przypadkach.
+> **Odczytuj tabele według nazwy, nie pisząc SQL.** W projekcie, w którym administrator włączył [Dostęp do wierszy](/pl/administration/access/managing-security-groups-and-assignments/#dostęp-do-wierszy-a-zapytania-pisane-samodzielnie), odczyt według nazwy stosuje uprawnienia do wierszy każdego przeglądającego, natomiast zapytanie skomponowane przez samą aplikację jest odrzucane dla każdego, kto nie jest Architektem projektu — nie ma bowiem jednej tabeli, którą uprawnienia mogłyby filtrować. Odczyt według nazwy sprawia, że aplikacja działa w obu przypadkach.
 
 ## Odczyt w callbacku, nigdy podczas importu ani w zakresie procesu
 
