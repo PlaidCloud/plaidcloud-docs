@@ -11,6 +11,10 @@ Executes SQL on a database that PlaidCloud can reach only through a PlaidLink Ag
 
 Use this for triggering remote stored procedures, refresh routines, or maintenance jobs as part of a PlaidCloud workflow without exposing the source database to the public internet.
 
+## Preview the Query
+
+In the **Remote Execute: SQL** step, **Preview** on the **Source** tab shows up to 100 rows without running the statement, so you can check a `SELECT` before you run it. Preview fills in variables the same way a run does, but it doesn't support variable formats such as `{x:>9}`. It only reads data: a statement that writes, or a function Preview can't check as read-only, is refused with *Preview only supports standard SQL functions. Run the step to see results.* Preview isn't available on a locked project, or for statements that use `:name` placeholders with a driver table. It isn't available for the Agent-based step this page describes, because only the Agent can reach those databases.
+
 ## Run a Statement Once per Row
 
 The **Remote Execute: SQL** step, which connects to the database directly rather than through an Agent, can run its statement once for each row of a table, such as to call a stored procedure for each input row. Set **Run the SQL** to **Once Per Row**, choose a **Driver Table**, and fill in **Parameters**. Write each value in the statement as a `:name` placeholder, such as `CALL load_region(:region, :period)`, and map each placeholder in **Parameter** to the **Driver Column** that supplies it. Each value is sent to the database as a bound parameter, never pasted into the statement text.

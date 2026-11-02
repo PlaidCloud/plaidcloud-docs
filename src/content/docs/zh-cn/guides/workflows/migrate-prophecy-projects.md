@@ -256,7 +256,7 @@ Prophecy 项目携带代码：Script gem、SQL 语句、宏、动态输入、存
 | 计划 | Prophecy 作业或 SQL 管道计划会成为已转换工作流上名为 `Prophecy <name>` 的[计划事件](/zh-cn/administration/scheduled-events/)，除非在 Prophecy 中被禁用，否则处于启用状态。运行一个已转换管道且没有配置覆盖或运行条件的 Spark 作业会以这种方式转换。 |
 | Script | Python 脚本放入 Python 步骤。脚本在 `Config` 上设置的值会成为后续步骤读取的工作流变量，并在每次运行开始时重置为管道的值，与 Prophecy 的 `Config` 一致。 |
 | REST API、REST API Enrich | [REST 请求](/zh-cn/reference/workflow-steps/general/rest-request/)步骤，每个输入行一个请求，并像 Prophecy 一样保留错误响应。Enrich 还会读取状态、原因和最终 URL。等待异步结果的请求会持续轮询，直到响应表明已完成。 |
-| Stored Procedure | 传递参数的 gem 会使用[远程执行：SQL](/zh-cn/reference/workflow-steps/agent/agent-remote-execution-of-sql/#对每行运行一次语句)为每个输入行调用其存储过程一次，每个参数从其列绑定为一个参数。不带参数的 gem 通过代理调用一次。请在已转换的步骤上选择连接或代理。 |
+| Stored Procedure | 传递参数的 gem 会使用[远程执行：SQL](/zh-cn/reference/workflow-steps/agent/agent-remote-execution-of-sql/#每行运行一次语句)为每个输入行调用其存储过程一次，每个参数从其列绑定为一个参数。不带参数的 gem 通过代理调用一次。请在已转换的步骤上选择连接或代理。 |
 | Email、Email Data | [Notify Via Email](/zh-cn/reference/workflow-steps/notifications/notify-via-email/)，支持抄送、密送、回复地址，且字段读取自某一列时每行一封邮件。 |
 | OpenAI、Bedrock、SageMaker Endpoint | 在您工作区的 LLM 连接上使用 [Text: NLP (AI)](/zh-cn/reference/workflow-steps/text-documents/nlp-ai/)。OpenAI 和 Bedrock 嵌入使用 Embed 任务，需要兼容 OpenAI 的连接或 Azure OpenAI 连接；Anthropic 连接会被拒绝。 |
 | Pinecone Lookup | 每行一个 REST 请求。 |

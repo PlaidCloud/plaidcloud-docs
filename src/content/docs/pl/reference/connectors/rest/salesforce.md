@@ -72,7 +72,7 @@ Nieudany test wskazuje przyczynę. Błędy uwierzytelniania zgłaszają status H
 
 - **Użytkownik Run As ogranicza zakres każdego odczytu na dwa różne sposoby.** Wiersze, których ten użytkownik nie widzi, są po prostu nieobecne — bez błędu i bez liczby. Pole, którego ten użytkownik nie może odczytać, powoduje niepowodzenie całego zapytania. Oba przypadki opisano w sekcji [Użytkownik Run As ogranicza zakres wszystkiego](/pl/guides/connections/salesforce/#użytkownik-run-as-ogranicza-wszystko).
 - **Tylko odczyt.** Ten konektor wyodrębnia dane; nie zapisuje rekordów z powrotem do Salesforce.
-- **Niektórych typów pól nie można wyodrębnić** — złożonych pól adresu i geolokalizacji, obiektów blob `base64`, `encryptedstring` i `anyType`. Selektor pól kroku oznacza każde z nich i podaje przyczynę. Zobacz [Pola odrzucane przez krok](/pl/reference/workflow-steps/salesforce/query-salesforce-object/#pola-odrzucane-przez-krok).
+- **Niektórych typów pól nie można wyodrębnić** — złożonych pól adresu i geolokalizacji, obiektów blob `base64`, `encryptedstring` i `anyType`. Selektor pól kroku oznacza każde z nich i podaje przyczynę. Zobacz [Pola odrzucane przez krok](/pl/reference/workflow-steps/salesforce/query-salesforce-object/#pola-które-krok-odrzuca).
 - **Wyodrębnienie nie jest synchronizacją.** Rekord usunięty w Salesforce pozostaje w tabeli docelowej.
 
 ## Powiązane

@@ -72,7 +72,7 @@ REST API 版本按连接固定，而不是浮动，因此组织升级不会悄�
 
 - **Run As 用户以两种不同方式限定每次读取的范围。** 该用户看不到的行会直接缺失，没有错误，也没有计数。该用户无法读取的字段会导致整个查询失败。两者均在[Run As 用户限定一切范围](/zh-cn/guides/connections/salesforce/#run-as-用户决定一切范围)中说明。
 - **仅限读取。** 此连接器提取数据，不会将记录写回 Salesforce。
-- **某些字段类型无法提取**，包括复合地址和地理位置字段、`base64` 二进制大对象、`encryptedstring` 和 `anyType`。步骤的字段选择器会标记每一种并说明原因。请参阅[步骤拒绝的字段](/zh-cn/reference/workflow-steps/salesforce/query-salesforce-object/#步骤拒绝的字段)。
+- **某些字段类型无法提取**，包括复合地址和地理位置字段、`base64` 二进制大对象、`encryptedstring` 和 `anyType`。步骤的字段选择器会标记每一种并说明原因。请参阅[步骤拒绝的字段](/zh-cn/reference/workflow-steps/salesforce/query-salesforce-object/#步骤会拒绝的字段)。
 - **提取不等于同步。** 在 Salesforce 中删除的记录会保留在目标表中。
 
 ## 相关内容
