@@ -15,9 +15,7 @@ For loading directly into a remote database, use the appropriate database export
 
 ## Preview
 
-**Preview** shows up to 100 rows of the query the step reads from the source table, without running it. Click **Preview** on the **Source** tab. If there are more rows, the preview says it shows the first rows and that you need to run the step to read them all. Preview fills in variables the same way a run does, but it doesn't support variable formats such as `{x:>9}`.
-
-Preview only reads data. If the query uses a function Preview can't check as read-only, it shows *Preview only supports standard SQL functions. Run the step to see results.* Run the step to see the result. Preview isn't available on a locked project.
+**Preview** on the **Source** tab shows up to 100 rows of the source table without running the step. If the table has more rows, the preview says it shows the first rows. If the source table doesn't exist yet, Preview says there is nothing to preview. Preview isn't available on a locked project.
 
 ## Additional Settings
 
