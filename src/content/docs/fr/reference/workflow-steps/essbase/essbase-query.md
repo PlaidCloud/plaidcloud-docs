@@ -68,7 +68,7 @@ Comme la forme du résultat suit la requête, modifier ce que le MDX place en co
 
 ## Accès aux lignes
 
-La [sécurité au niveau des lignes](/fr/administration/access/managing-security-groups-and-assignments/#gérer-laccès-aux-lignes) s'applique à la table obtenue exactement comme à toute autre table PlaidCloud. La gouvernance s'applique au résultat que l'étape écrit : un lecteur soumis à une restriction de lignes ne voit que les lignes que son groupe de sécurité autorise. La requête s'exécute avec le compte de service de la connexion, mais la table qu'elle produit est gouvernée comme le reste de vos données.
+La [sécurité au niveau des lignes](/fr/administration/access/managing-security-groups-and-assignments/#gestion-de-laccès-aux-lignes) s'applique à la table obtenue exactement comme à toute autre table PlaidCloud. La gouvernance s'applique au résultat que l'étape écrit : un lecteur soumis à une restriction de lignes ne voit que les lignes que son groupe de sécurité autorise. La requête s'exécute avec le compte de service de la connexion, mais la table qu'elle produit est gouvernée comme le reste de vos données.
 
 ## Exemple
 
