@@ -1,6 +1,6 @@
 ---
-title: Call SAP Financial Document Attachment (krok)
-description: Pobieraj załączniki dokumentów finansowych SAP z kroku przepływu pracy PlaidCloud, aby zautomatyzować wyodrębnianie i przetwarzanie dokumentów.
+title: Krok Call SAP Financial Document Attachment
+description: Pobieraj załączniki dokumentów finansowych SAP z kroku przepływu pracy PlaidCloud na potrzeby zautomatyzowanej ekstrakcji i przetwarzania dokumentów.
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/sap/call-sap-financial-document-attachment.md
 ---
 
@@ -8,16 +8,16 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 
-Dołącza plik do określonego dokumentu FI (Financial Accounting) w SAP ECC / S/4HANA za pomocą RFC (Remote Function Call). Przydatne do księgowania dokumentacji uzupełniającej — zeskanowanych faktur, przepływów zatwierdzania, kopii umów — obok zapisów finansowych, które ona potwierdza.
+Dołącza plik do określonego dokumentu FI (Financial Accounting) w SAP ECC / S/4HANA za pomocą RFC (Remote Function Call). Przydatne do księgowania dokumentacji uzupełniającej — zeskanowanych faktur, przepływów zatwierdzania, kopii umów — razem z zapisami finansowymi, które ona wspiera.
 
-Wymaga poświadczeń SAP RFC skonfigurowanych w konektorze SAP oraz numeru docelowego dokumentu FI (kod spółki, numer dokumentu, rok obrotowy).
+Wymaga poświadczeń SAP RFC skonfigurowanych w łączniku SAP oraz numeru docelowego dokumentu FI (kod spółki, numer dokumentu, rok obrotowy).
 
 
 ## Co jest sprawdzane przy zapisie
 
-Krok odczytuje ścieżkę każdego pliku z kolumny `relative_file_path` wśród kolumn wyjściowych na karcie **Wybór danych tabeli**, a ta kolumna musi być tekstowa. Zapis jest odrzucany, gdy jej brakuje — *The output columns must include relative_file_path, the path of each file to attach.* — lub gdy ma inny typ — *The relative_file_path column must be text, not integer.*
+Krok odczytuje ścieżkę każdego pliku z kolumny `relative_file_path` wśród kolumn wyjściowych na karcie **Kolumny** i ta kolumna musi być tekstowa. Zapis jest odrzucany, gdy jej brakuje — *Kolumny wyjściowe muszą zawierać relative_file_path, ścieżkę każdego pliku do dołączenia.* — lub gdy ma inny typ — *Kolumna relative_file_path musi być tekstowa, a nie integer.*
 
-Zapis z wybraną tabelą źródłową, ale bez kolumn źródłowych lub docelowych, wypełnia pustą stronę na podstawie źródła, tak jak zrobiłaby to opcja **Wypełnij obie tabele mapowania**.
+Zapis z wybraną tabelą źródłową, ale bez kolumn źródłowych lub docelowych, uzupełnia pustą stronę na podstawie źródła, tak jak zrobiłoby to **Wypełnij obie tabele mapowania**.
 
 
 ## Przykłady
@@ -26,8 +26,8 @@ Zapis z wybraną tabelą źródłową, ale bez kolumn źródłowych lub docelowy
 ### Parametry RFC
 
 
-Wybierz opcję Agent do użycia. Wybierz Katalog docelowy z listy rozwijanej i poniżej przejdź do właściwego folderu podrzędnego dla pliku. Następnie nadaj odpowiednią nazwę w polu „Target File Name”. W sekcji „Function Call Information” wprowadź funkcję i Parametr wartości zwracanej oraz wybierz parametry.
+Wybierz **Agent do użycia**. Wybierz **Katalog docelowy** z listy rozwijanej i poniżej wskaż właściwy podrzędny folder docelowy dla pliku. Następnie odpowiednio nazwij „Target File Name”. W sekcji „Function Call Information” wprowadź funkcję i **Parametr wartości zwracanej** oraz wybierz parametry.
 
 
 
-W sekcji parametrów możesz wybrać Wstaw wiersz lub Dołącz wiersz, a także nazwać parametry i nadać im wartości. Wybierz liczbę w polu Maks. liczba równoległych żądań i zaznacz opcję Wait for RFC to Complete. Kliknij „Zapisz i uruchom”.
+Możesz wybrać **Wstaw wiersz** lub **Dołącz wiersz** w sekcji Parametry, a także nazwać parametry i nadać im wartości. Wybierz liczbę w **Maks. liczba równoległych żądań** i zaznacz „Wait for RFC to Complete”. Zapisz i uruchom krok.

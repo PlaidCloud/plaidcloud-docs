@@ -72,7 +72,7 @@ Una prueba fallida indica la causa. Los errores de autenticación informan del e
 
 - **El usuario Run As limita todas las lecturas, de dos maneras distintas.** Las filas que ese usuario no puede ver simplemente no aparecen, sin error ni recuento. Un campo que ese usuario no puede leer hace fallar la consulta completa. Ambos casos se describen en [El usuario Run As limita todo](/es/guides/connections/salesforce/#el-usuario-de-run-as-limita-todo).
 - **Solo lecturas.** Este conector extrae datos; no escribe registros de vuelta en Salesforce.
-- **Algunos tipos de campo no se pueden extraer**: los campos compuestos de dirección y geolocalización, los blobs `base64`, `encryptedstring` y `anyType`. El selector de campos del paso marca cada uno e indica el motivo. Consulte [Campos que el paso rechaza](/es/reference/workflow-steps/salesforce/query-salesforce-object/#campos-que-rechaza-el-paso).
+- **Algunos tipos de campo no se pueden extraer**: los campos compuestos de dirección y geolocalización, los blobs `base64`, `encryptedstring` y `anyType`. El selector de campos del paso marca cada uno e indica el motivo. Consulte [Campos que el paso rechaza](/es/reference/workflow-steps/salesforce/query-salesforce-object/#campos-que-el-paso-rechaza).
 - **Una extracción no es una sincronización.** Un registro eliminado en Salesforce permanece en la tabla de destino.
 
 ## Temas relacionados
