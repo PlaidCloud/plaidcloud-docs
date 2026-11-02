@@ -34,7 +34,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Como la conexión es el visualizador, esto devuelve solo las filas que el visualizador puede ver, y genera un error de permisos si no tiene ningún acceso al proyecto.
 
-> **Lea las tablas por nombre, no escribiendo SQL.** En un proyecto donde un administrador ha activado el [acceso a filas](/es/administration/access/managing-security-groups-and-assignments/#acceso-a-filas-y-consultas-que-usted-escribe), la lectura por nombre aplica las concesiones de filas de cada visualizador, mientras que una consulta que su aplicación compone por sí misma se rechaza para cualquiera que no sea Arquitecto del proyecto: no existe una única tabla a la que se puedan aplicar los filtros de las concesiones. Leer por nombre mantiene su aplicación funcionando en ambos casos.
+> **Lea las tablas por nombre, no escribiendo SQL.** En un proyecto donde un administrador ha activado el [acceso a filas](/es/administration/access/managing-security-groups-and-assignments/#acceso-a-filas-y-las-consultas-que-usted-escribe), la lectura por nombre aplica las concesiones de filas de cada visualizador, mientras que una consulta que su aplicación compone por sí misma se rechaza para cualquiera que no sea Arquitecto del proyecto: no existe una única tabla a la que se puedan aplicar los filtros de las concesiones. Leer por nombre mantiene su aplicación funcionando en ambos casos.
 
 ## Identificar al visualizador
 
