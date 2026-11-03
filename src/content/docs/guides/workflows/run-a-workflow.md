@@ -81,9 +81,13 @@ If the server running a step is lost mid-run, PlaidCloud re-runs the step automa
 
 A step that can't be repeated safely isn't re-run. It fails once with an **interrupted** message, because running it a second time could duplicate what the first attempt already wrote. Steps that write outputs with `{date}` in the name or path count as not safe to repeat, since a re-run could land on a different date. To recover, check the step's target for what the first attempt wrote, clean it up if needed, then [re-run the step](/guides/workflows/running-one-step-in-a-workflow/) or **Resume** the run.
 
+### Steps That Never Start
+
+If no worker picks up an import or dimension step's job within about 40 minutes, the step fails instead of showing **Running** until the 24-hour timeout. If a worker started the job and then went away, the step also fails, with a message saying the worker stopped. Both messages say "Use Run from here to retry."
+
 ## Pause, Stop, and Resume
 
-While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running.
+While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace.
 
 **Resume** picks a paused, stopped, or failed run back up from where it left off instead of starting over. It is available whenever a workflow's last run ended in a paused, stopped, or error state.
 
