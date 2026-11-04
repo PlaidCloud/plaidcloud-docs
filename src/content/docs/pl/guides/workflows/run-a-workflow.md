@@ -48,7 +48,7 @@ Aby autoryzować projekt, otwórz jego stronę główną i wybierz **Autoryzacje
 - Wybranie wiersza w celu autoryzowania lub cofnięcia autoryzacji nie przeładowuje listy: pozycja przewijania i wybrane sortowanie kolumn pozostają bez zmian. Rozmiar okna można zmieniać, a uwaga o projektach publicznych jest zawijana w całości.
 - Aby autoryzować połączenie, potrzebujesz także uprawnień do zapisu w nim: jesteś jego właścicielem albo zostało Ci udostępnione imiennie lub przez jedną z Twoich grup zabezpieczeń. Połączenie ustawione na **Wszyscy członkowie obszaru roboczego** się nie liczy.
 - Projekt ustawiony na **Wszyscy członkowie obszaru roboczego** jest autoryzowany tak jak każdy inny. Każdy członek jest jego Architektem, więc każdy członek z uprawnieniami do zapisu w połączeniu może autoryzować projekt dla tego połączenia. Po autoryzacji każdy członek może księgować do tego połączenia z przepływów pracy projektu, a okno informuje o tym nad siatką.
-- Skopiowany projekt lub projekt utworzony z archiwum projektu zaczyna bez żadnych autoryzacji. Autoryzuj kopię, zanim będzie księgować.
+- Nowa kopia prywatna dla Ciebie, wykonana z danymi tabel lub elementami wymiarów, zachowuje te autoryzacje źródła, które możesz przyznać samodzielnie, a jeśli źródło działało w trybie Na żywo, kopia trafia w trybie Symulacja — zobacz [Autoryzacje zapisu ERP w kopii](/pl/guides/projects/managing-projects/#autoryzacje-zapisu-erp-w-kopii). Każda inna kopia oraz projekt utworzony z archiwum projektu zaczynają bez żadnych autoryzacji. Autoryzuj taki projekt, zanim zacznie księgować.
 
 ## Śledzenie stanu kroku
 
@@ -88,7 +88,7 @@ Jeśli żaden proces roboczy nie podejmie zadania kroku importu lub wymiaru w ci
 
 ## Wstrzymywanie, zatrzymywanie i wznawianie
 
-Gdy przepływ pracy działa, możesz go **Wstrzymaj**, aby kroki w toku się zakończyły, a nowe kroki czekały, albo **Zatrzymaj**, co anuluje kroki oczekujące w kolejce oraz wszystkie nadal działające zadania importu lub eksportu. Kroki importu i wymiarów, które nadal były w kolejce, są anulowane w czysty sposób, więc nie blokują późniejszych importów i ładowań wymiarów w obszarze roboczym.
+Gdy przepływ pracy działa, możesz kliknąć **Wstrzymaj**, aby kroki w toku się zakończyły, a nowe kroki czekały, albo **Zatrzymaj**, co anuluje kroki oczekujące w kolejce oraz wszystkie nadal działające zadania importu lub eksportu. Kroki importu i wymiarów, które nadal były w kolejce, są anulowane w czysty sposób, więc nie blokują późniejszych importów i ładowań wymiarów w obszarze roboczym.
 
 **Wznów** podejmuje wstrzymane, zatrzymane lub zakończone błędem uruchomienie od miejsca, w którym zostało przerwane, zamiast zaczynać od nowa. Jest dostępne zawsze, gdy ostatnie uruchomienie przepływu pracy zakończyło się stanem wstrzymania, zatrzymania lub błędu.
 

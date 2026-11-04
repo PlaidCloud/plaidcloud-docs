@@ -40,7 +40,7 @@ Uma etapa individual de lançamento no ERP também tem sua própria configuraç�
 
 ## Autorizar o projeto a lançar
 
-Uma execução de fluxo de trabalho lança em um ERP como o projeto, não como a pessoa que a iniciou. Antes que uma execução possa lançar, o projeto precisa de uma autorização para cada conexão e ambiente de ERP que suas etapas de lançamento usam. Sem ela, a etapa falha com "This project isn't authorized to post to connection …", informando a conexão e o ambiente. As etapas **Call SAP Financial Document Attachment**, **Call SAP Master Data Table RFC** e **Call SAP RFC** não precisam de autorização.
+Uma execução de fluxo de trabalho lança em um ERP como o projeto, não como a pessoa que a iniciou. Antes que uma execução possa lançar, o projeto precisa de uma autorização para cada conexão e ambiente de ERP que suas etapas de lançamento usam. Sem ela, a etapa falha com "Este projeto não está autorizado a lançar na conexão …", informando a conexão e o ambiente. As etapas **Call SAP Financial Document Attachment**, **Call SAP Master Data Table RFC** e **Call SAP RFC** não precisam de autorização.
 
 Para autorizar um projeto, abra a página inicial dele e selecione **Autorizações de gravação no ERP** em **Lançamento no ERP**. Cada linha é uma conexão em um ambiente. Marque **Autorizado** para permitir que o projeto lance ali, ou desmarque para impedir. **Autorizado por** e **Autorizado em** mostram quem autorizou por último e quando.
 
@@ -48,7 +48,7 @@ Para autorizar um projeto, abra a página inicial dele e selecione **Autorizaç�
 - Selecionar uma linha para autorizar ou limpar a autorização não recarrega a lista: a posição de rolagem e qualquer ordenação de coluna que você escolheu permanecem como estão. A janela pode ser redimensionada, e a observação sobre projetos públicos é quebrada em linhas para aparecer por inteiro.
 - Para autorizar uma conexão, você também precisa de acesso de gravação a ela: você é o proprietário, ou ela é compartilhada com você pelo nome ou por meio de um dos seus grupos de segurança. Uma conexão definida como **Todos os membros do espaço de trabalho** não conta.
 - Um projeto definido como **Todos os membros do espaço de trabalho** é autorizado como qualquer outro. Todo membro é Arquiteto dele, então qualquer membro com acesso de gravação a uma conexão pode autorizar o projeto para ela. Depois de autorizado, qualquer membro pode lançar nessa conexão a partir dos fluxos de trabalho do projeto, e a janela informa isso acima da grade.
-- Um projeto copiado, ou criado a partir de um arquivo de projeto, começa sem autorizações. Autorize a cópia antes que ela lance.
+- Uma nova cópia privada para você, feita com dados da tabela ou membros de dimensões, mantém as autorizações da origem que você mesmo poderia conceder e chega em Simular se a origem estava em Ao vivo — consulte [Autorizações de gravação no ERP na cópia](/pt-br/guides/projects/managing-projects/#autorizações-de-gravação-no-erp-na-cópia). Qualquer outra cópia, ou um projeto criado a partir de um arquivo de projeto, começa sem autorizações. Autorize-o antes que ele lance.
 
 ## Acompanhar o status de uma etapa
 
@@ -80,11 +80,11 @@ Para retomar o trabalho, [**Retome**](#pausar-parar-e-retomar) a execução — 
 
 Se o servidor que executa uma etapa for perdido no meio da execução, o PlaidCloud executa a etapa novamente de forma automática quando é seguro repeti-la: uma etapa que substitui sua saída termina com o mesmo resultado de uma única execução limpa, então você não precisa verificar nada.
 
-Uma etapa que não pode ser repetida com segurança não é executada novamente. Ela falha uma vez com uma mensagem de **interrompida**, porque executá-la uma segunda vez poderia duplicar o que a primeira tentativa já gravou. Etapas que gravam saídas com `{date}` no nome ou no caminho contam como não seguras para repetir, já que uma nova execução poderia cair em uma data diferente. Para se recuperar, verifique no destino da etapa o que a primeira tentativa gravou, limpe se necessário e então [execute a etapa novamente](/pt-br/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
+Uma etapa que não pode ser repetida com segurança não é executada novamente. Ela falha uma vez com uma mensagem de **interrompido**, porque executá-la uma segunda vez poderia duplicar o que a primeira tentativa já gravou. Etapas que gravam saídas com `{date}` no nome ou no caminho contam como não seguras para repetir, já que uma nova execução poderia cair em uma data diferente. Para se recuperar, verifique no destino da etapa o que a primeira tentativa gravou, limpe se necessário e então [execute a etapa novamente](/pt-br/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
 
 ### Etapas que nunca começam
 
-Se nenhum worker pegar o trabalho de uma etapa de importação ou de dimensão em cerca de 40 minutos, a etapa falha em vez de mostrar **Em execução** até o tempo limite de 24 horas. Se um worker iniciou o trabalho e depois desapareceu, a etapa também falha, com uma mensagem informando que o worker parou. Ambas as mensagens dizem "Use Run from here to retry."
+Se nenhum worker pegar o trabalho de uma etapa de importação ou de dimensão em cerca de 40 minutos, a etapa falha em vez de mostrar **Em execução** até o tempo limite de 24 horas. Se um worker iniciou o trabalho e depois desapareceu, a etapa também falha, com uma mensagem informando que o worker parou. Ambas as mensagens dizem "Use Executar a partir daqui para tentar novamente."
 
 ## Pausar, parar e retomar
 

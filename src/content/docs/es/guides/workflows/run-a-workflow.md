@@ -48,7 +48,7 @@ Para autorizar un proyecto, abra su página de inicio y seleccione **Autorizacio
 - Al seleccionar una fila para autorizarla o borrar su autorización no se recarga la lista: la posición de desplazamiento y cualquier orden de columnas que haya elegido se conservan. La ventana se puede redimensionar, y la nota sobre los proyectos públicos se ajusta para mostrarse completa.
 - Para autorizar una conexión, usted también necesita acceso de escritura a ella: es su propietario, o se compartió con usted por nombre o mediante uno de sus grupos de seguridad. Una conexión establecida en **Todos los miembros del espacio de trabajo** no cuenta.
 - Un proyecto establecido en **Todos los miembros del espacio de trabajo** se autoriza como cualquier otro. Todos los miembros son Arquitectos del proyecto, por lo que cualquier miembro con acceso de escritura a una conexión puede autorizar el proyecto para ella. Una vez autorizado, cualquier miembro puede contabilizar en esa conexión desde los flujos de trabajo del proyecto, y la ventana lo indica encima de la cuadrícula.
-- Un proyecto copiado, o uno creado a partir de un archivo de proyecto, comienza sin autorizaciones. Autorice la copia antes de que contabilice.
+- Una copia nueva que es privada para usted, realizada con datos de tabla o miembros de dimensión, conserva las autorizaciones del origen que usted podría conceder por sí mismo, y llega en modo Simular si el origen estaba En vivo; consulte [Autorizaciones de escritura en ERP en la copia](/es/guides/projects/managing-projects/#autorizaciones-de-escritura-en-erp-en-la-copia). Cualquier otra copia, o un proyecto creado a partir de un archivo de proyecto, comienza sin autorizaciones. Autorícelo antes de que contabilice.
 
 ## Seguir el estado de un paso
 
