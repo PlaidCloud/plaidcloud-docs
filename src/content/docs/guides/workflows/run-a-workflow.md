@@ -47,7 +47,7 @@ To authorize a project, open its home page and select **ERP Write Authorizations
 - Selecting a row to authorize or clear it doesn't reload the list: the scroll position and any column sort you chose stay where they are. The window can be resized, and the note about public projects wraps in full.
 - To authorize a connection, you also need write access to it yourself: you own it, or it is shared with you by name or through one of your security groups. A connection set to **All Workspace Members** doesn't count.
 - A project set to **All Workspace Members** is authorized like any other. Every member is an Architect of it, so any member with write access to a connection can authorize the project for it. Once it's authorized, any member can post to that connection from the project's workflows, and the window says so above the grid.
-- A copied project, or one created from a project archive, starts with no authorizations. Authorize the copy before it posts.
+- A new copy that is private to you, made with table data or dimension members, keeps the source's authorizations that you could grant yourself, and arrives in Simulate if the source was Live — see [ERP Write Authorizations in the Copy](/guides/projects/managing-projects/#erp-write-authorizations-in-the-copy). Any other copy, or a project created from a project archive, starts with no authorizations. Authorize it before it posts.
 
 ## Follow a Step's Status
 

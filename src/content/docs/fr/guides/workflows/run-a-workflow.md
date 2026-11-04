@@ -16,13 +16,13 @@ Si vous cliquez sur **Exécuter** pour un workflow déjà en cours d'exécution,
 
 ## Choisir un mode de comptabilisation
 
-Chaque exécution porte un mode de comptabilisation ERP. Pour en choisir un dans PlaidCloud, utilisez **Exécuter avec le mode d'écriture** dans le menu contextuel d'un workflow, ou le bouton de mode d'exécution sur le canevas du workflow. Les commandes **Démarrer le workflow** et **Exécuter le workflow** demandent le mode Live, toujours soumis au plafond du projet décrit ci-dessous. Vous pouvez aussi choisir le mode au démarrage d'une exécution via l'API d'exécution ou l'assistant.
+Chaque exécution porte un mode de comptabilisation ERP. Pour en choisir un dans PlaidCloud, utilisez **Exécuter avec le mode d'écriture** dans le menu contextuel d'un workflow, ou le bouton de mode d'exécution sur le canevas du workflow ; une simple commande **Démarrer le workflow** ou **Exécuter le workflow** demande le mode Live, toujours soumis au plafond du projet décrit ci-dessous. Vous pouvez aussi choisir le mode au démarrage d'une exécution via l'API d'exécution ou l'assistant.
 
 | Mode | Ce qui se passe |
 |---|---|
 | Live | Les étapes de comptabilisation comptabilisent exactement comme elles l'ont toujours fait. C'est le mode par défaut. |
 | Simulate | Chaque étape de comptabilisation ERP construit et valide exactement ce qu'elle comptabiliserait, puis ne valide rien et ne contacte jamais l'ERP. Les écritures qui auraient été comptabilisées sont consignées dans l'[historique des comptabilisations ERP](/fr/guides/connections/erp-post-history/), marquées comme simulées, afin que vous puissiez les examiner avant une exécution en mode Live. |
-| Off | Les étapes de comptabilisation sont ignorées complètement. |
+| Off | Les étapes de comptabilisation sont entièrement ignorées. |
 
 Un projet possède également son propre plafond de mode de comptabilisation, défini via l'API de projet ou l'assistant par tout membre disposant d'un accès en écriture à un projet déverrouillé. Le plafond ne peut que rendre une exécution plus sûre, jamais plus permissive : le mode effectif d'une exécution est le plus restrictif entre le mode que vous avez choisi et le plafond du projet. Un projet plafonné à Simulate reste donc simulé, même si vous démarrez l'exécution en mode Live.
 
@@ -31,7 +31,7 @@ Un [événement planifié](/fr/administration/scheduled-events/event-scheduler/#
 Le mode se propage à tout ce que l'exécution touche. Un sous-workflow, une macro, ainsi que les étapes **Run Model**, **Conditional Run Model** et **Loop Model** héritent tous du mode de l'exécution parente, tout comme une exécution que vous [reprenez](#suspendre-arrêter-et-reprendre) après un arrêt : une exécution simulée ne peut comptabiliser réellement nulle part en son sein.
 
 :::caution
-Les étapes de comptabilisation SAP, de pièce jointe SAP et de RFC SAP générique n'exécutent pas de simulation à blanc. Sous Simulate ou Off, elles sont purement et simplement ignorées, car les indicateurs de test propres à SAP ouvrent tout de même une connexion réelle à SAP : ignorer l'étape est le seul moyen pour qu'une exécution simulée n'atteigne jamais SAP.
+Les étapes de comptabilisation SAP, de pièce jointe SAP et de RFC SAP générique ne proposent pas de simulation à blanc. Sous Simulate ou Off, elles sont purement et simplement ignorées, car les indicateurs de test propres à SAP ouvrent tout de même une connexion réelle à SAP : ignorer l'étape est le seul moyen pour qu'une exécution simulée n'atteigne jamais SAP.
 :::
 
 :::note
@@ -48,7 +48,7 @@ Pour autoriser un projet, ouvrez sa page d'accueil et sélectionnez **Autorisati
 - Sélectionner une ligne pour autoriser ou retirer une autorisation ne recharge pas la liste : la position de défilement et le tri de colonne que vous avez choisi restent en place. La fenêtre peut être redimensionnée, et la remarque sur les projets publics s'affiche en entier.
 - Pour autoriser une connexion, vous devez également disposer vous-même d'un accès en écriture à celle-ci : vous en êtes propriétaire, ou elle est partagée avec vous nommément ou via l'un de vos groupes de sécurité. Une connexion définie sur **Tous les membres de l'espace de travail** ne compte pas.
 - Un projet défini sur **Tous les membres de l'espace de travail** s'autorise comme n'importe quel autre. Chaque membre en est Architecte ; tout membre disposant d'un accès en écriture à une connexion peut donc autoriser le projet pour celle-ci. Une fois le projet autorisé, n'importe quel membre peut comptabiliser sur cette connexion depuis les workflows du projet, et la fenêtre l'indique au-dessus de la grille.
-- Un projet copié, ou créé à partir d'une archive de projet, démarre sans aucune autorisation. Autorisez la copie avant qu'elle ne comptabilise.
+- Une nouvelle copie qui vous est privée, réalisée avec des données de table ou des membres de dimension, conserve celles des autorisations de la source que vous pourriez accorder vous-même, et arrive en mode Simulate si la source était en Live ; consultez [Autorisations d'écriture ERP dans la copie](/fr/guides/projects/managing-projects/#autorisations-décriture-erp-dans-la-copie). Toute autre copie, ou un projet créé à partir d'une archive de projet, démarre sans aucune autorisation. Autorisez-le avant qu'il ne comptabilise.
 
 ## Suivre l'état d'une étape
 
@@ -74,17 +74,17 @@ Une étape est marquée comme **abandonnée** lorsque ce qui l'exécutait a disp
 
 Une étape abandonnée ne s'est pas terminée et n'a produit aucune sortie. Ce n'est pas une étape lente, et ce n'est pas un problème lié à vos données ou à votre configuration.
 
-Pour reprendre le travail, vous pouvez soit [**Reprendre**](#suspendre-arrêter-et-reprendre) l'exécution (l'étape abandonnée s'exécute à nouveau), soit réexécuter l'ensemble du workflow. Les deux options sont sans risque.
+Pour reprendre le travail, vous pouvez soit utiliser [**Reprendre**](#suspendre-arrêter-et-reprendre) sur l'exécution (l'étape abandonnée s'exécute à nouveau), soit réexécuter l'ensemble du workflow. Les deux options sont sans risque.
 
 ### Étapes interrompues
 
 Si le serveur qui exécute une étape est perdu en cours d'exécution, PlaidCloud réexécute automatiquement l'étape lorsqu'il est sûr de la répéter : une étape qui remplace sa sortie aboutit au même résultat qu'une seule exécution propre, vous n'avez donc rien à vérifier.
 
-Une étape qui ne peut pas être répétée en toute sécurité n'est pas réexécutée. Elle échoue une seule fois avec un message **interrompu**, car l'exécuter une seconde fois pourrait dupliquer ce que la première tentative a déjà écrit. Les étapes qui écrivent des sorties dont le nom ou le chemin contient `{date}` sont considérées comme non sûres à répéter, car une nouvelle exécution pourrait tomber à une date différente. Pour récupérer, vérifiez dans la cible de l'étape ce que la première tentative a écrit, nettoyez-la si nécessaire, puis [réexécutez l'étape](/fr/guides/workflows/running-one-step-in-a-workflow/) ou **Reprendre** l'exécution.
+Une étape qui ne peut pas être répétée en toute sécurité n'est pas réexécutée. Elle échoue une seule fois avec un message **interrompu**, car l'exécuter une seconde fois pourrait dupliquer ce que la première tentative a déjà écrit. Les étapes qui écrivent des sorties dont le nom ou le chemin contient `{date}` sont considérées comme non sûres à répéter, car une nouvelle exécution pourrait tomber à une date différente. Pour récupérer, vérifiez dans la cible de l'étape ce que la première tentative a écrit, nettoyez-la si nécessaire, puis [réexécutez l'étape](/fr/guides/workflows/running-one-step-in-a-workflow/) ou utilisez **Reprendre** sur l'exécution.
 
 ### Étapes qui ne démarrent jamais
 
-Si aucun worker ne prend en charge le job d'une étape d'importation ou de dimension dans un délai d'environ 40 minutes, l'étape échoue au lieu d'afficher **En cours d'exécution** jusqu'au délai d'expiration de 24 heures. Si un worker a démarré le job puis a disparu, l'étape échoue également, avec un message indiquant que le worker s'est arrêté. Les deux messages indiquent « Use Run from here to retry. » (**Exécuter à partir d'ici** pour réessayer).
+Si aucun worker ne prend en charge le job d'une étape d'importation ou de dimension dans un délai d'environ 40 minutes, l'étape échoue au lieu d'afficher **En cours d'exécution** jusqu'au délai d'expiration de 24 heures. Si un worker a démarré le job puis a disparu, l'étape échoue également, avec un message indiquant que le worker s'est arrêté. Les deux messages indiquent « Use Run from here to retry. »
 
 ## Suspendre, arrêter et reprendre
 
