@@ -1,0 +1,92 @@
+---
+title: Operational Transfer Pricing
+description: Prüfen Sie das Gewinnniveau jeder Entität anhand der Bandbreiten Ihrer Verrechnungspreisrichtlinie, sehen Sie, welche Entitäten innerhalb, unterhalb oder oberhalb der Bandbreite liegen und welcher True-up sie zurückführt, auf Basis des Common Finance Model von Data Foundation.
+sidebar:
+  label: Operational Transfer Pricing
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Die Vorlage **Operational Transfer Pricing** prüft den Gewinnniveauindikator jeder getesteten Partei anhand der Bandbreite, die Ihre Richtlinie festlegt, und berechnet den True-up, der eine Entität außerhalb der Bandbreite auf den Zielwert zurückführt. Sie basiert auf dem [Common Finance Model](/de/guides/projects/data-foundation/) und enthält alles, was **Enterprise Profitability** aufbaut.
+
+<Aside type="note">
+Dies ist eine Management-Sicht, mit der Sie eine Richtlinie im Jahresverlauf überwachen. Sie ersetzt weder eine Verrechnungspreisstudie noch eine Einreichung.
+</Aside>
+
+## So funktioniert es
+
+Für jede Entität und Periode geht die Vorlage so vor:
+
+1. Sie erstellt die Gewinn- und Verlustrechnung der getesteten Partei in der **lokalen Währung** der Entität, weil die Entität in dieser Währung Bücher führt und ihren True-up bucht. Der Umsatz wird in Konzernumsatz und Drittumsatz aufgeteilt.
+2. Sie summiert ihn über das Geschäftsjahr bis zum aktuellen Stand. Anpassungsperioden zählen als Perioden ihres Jahres, sodass die letzte Zeile eines Jahres das gesamte Jahr ist.
+3. Sie ermittelt die für die Entität geltende Richtlinie.
+4. Sie berechnet den Gewinnniveauindikator in Prozent auf Basis des aktuellen Jahresstands und vergleicht ihn mit der Bandbreite.
+
+## Gewinnniveauindikatoren
+
+Sie wählen für jede Entität eine **Sicht** (lens):
+
+| Sicht | Definition |
+|---|---|
+| `ros` | Umsatzrendite (Return on Sales, ROS): EBIT ÷ Umsatz der getesteten Partei. |
+| `ncp` | Net Cost Plus: EBIT ÷ Gesamtkosten. |
+| `resale_minus` | Resale Minus: Rohertrag ÷ Umsatz. |
+
+Das EBIT ist der Umsatz abzüglich Herstellungskosten der verkauften Waren und Betriebsaufwand. Nicht operative Positionen sind darin nicht enthalten. Als Umsatz gilt der gesamte Umsatz der Entität, ob Dritt- oder Konzernumsatz, weil der Gewinn mit dem gesamten Umsatz erzielt wird.
+
+## Die Richtlinientabelle
+
+Ihre Bandbreiten stehen in der Tabelle `otp_policy_targets`, mit einer Zeile je Entität und je Periode, ab der die Richtlinie gilt. Sie bearbeiten die Tabelle selbst; das Modell schreibt nie hinein.
+
+| Spalte | Inhalt |
+|---|---|
+| `entity` | Die getestete Partei. |
+| `role` | Eine Bezeichnung für ihre Rolle, etwa Vertriebsgesellschaft mit eingeschränktem Risiko. |
+| `lens` | `ros`, `ncp` oder `resale_minus`. |
+| `low`, `target`, `high` | Die Bandbreite und der Zielwert in Prozent. `low <= target <= high`. |
+| `effective_from_period` | Der Monat, ab dem die Zeile gilt, als `YYYY-MM`. Sie gilt, bis die nächste Zeile der Entität beginnt. |
+
+Eine Entität hat jeweils eine Richtlinie. Eine geänderte Sicht oder Bandbreite ist eine neue Zeile mit einem späteren `effective_from_period`. Die Beispieldaten enthalten drei Beispielzeilen. Ersetzen Sie sie durch Ihre eigenen.
+
+Eine Zeile, die sich nicht beurteilen lässt, etwa wegen eines ungültigen Monats, einer leeren Sicht, eines leeren Werts bei low, target oder high oder einer Bandbreite in falscher Reihenfolge, macht die Ergebnisse dieser Entität **unvollständig**, statt sie zu schätzen.
+
+## Ergebnisse
+
+Für jede Entität und Periode zeigt die Ergebnistabelle den Indikator auf Basis des aktuellen Jahresstands und einen Status:
+
+| Status | Bedeutung |
+|---|---|
+| `in` | Innerhalb der Bandbreite, einschließlich der Grenzen. |
+| `below`, `above` | Außerhalb der Bandbreite. |
+| `n-a` | Die Bezugsgröße, Umsatz oder Kosten, ist nicht positiv. |
+| `incomplete` | Die Richtlinienzeile hat ein Problem, oder etwas für den Vergleich Erforderliches ist unbekannt. Ein leerer Wert gilt nie als `in`. |
+
+Liegt eine Entität außerhalb der Bandbreite, ist `true_up_ytd` der Gewinn, der der getesteten Partei für den aktuellen Jahresstand hinzuzufügen ist, um den Zielwert zu erreichen, oder der abzuziehen ist, wenn er negativ ist, in lokaler Währung. `true_up` ist die Änderung dieses Werts in der Periode, sodass sich die Perioden eines Jahres zum True-up des Jahres summieren. Der True-up wird auch in der Konzernwährung angegeben.
+
+Kennzahlen für den Assistenten und für Dashboards: **TP true-up**, **Tested-party EBIT**, **Tested-party sales**, **Third-party sales**, **Intercompany sales**, **Tested-party total cost**, **Return on sales**, **Net cost plus** und **CO-PA margin** nach Bewertung.
+
+## CO-PA-Marge
+
+Wenn Sie SAP CO-PA laden, zeigt die Vorlage zusätzlich dessen Marge nach Bewertung: rechtlich, Konzern oder Profit-Center. Eine Bewertung ist eine eigene Größe, addieren Sie Bewertungen also nie. Eine CO-PA-Datei enthält eine Bewertung, die Sie beim Hinzufügen bestätigen. Die Zuordnung einer CO-PA-Datei fragt immer **Are revenues shown as negative numbers?** Sind alle Beträge der Datei positiv, wie in einem kalkulationsbasierten Positionsbericht, wird **No, revenues are positive** für Sie ausgewählt. Wählen Sie andernfalls die Antwort, bevor Sie bestätigen.
+
+## Projekt starten
+
+<Steps>
+
+1. Öffnen Sie in Analyze **Projekte** und klicken Sie auf **Neues Projekt**.
+
+2. Wählen Sie unter **Starten mit** die Option **Operational Transfer Pricing (Vorlage)**. Aktivieren Sie **Mit Beispieldaten starten**, um zuerst ein durchgerechnetes Beispiel zu sehen.
+
+3. Verbinden Sie Ihre ERP-Systeme und führen Sie **Laden** aus. Siehe [Erste Schritte mit Data Foundation](/de/guides/projects/data-foundation-getting-started/).
+
+4. Bearbeiten Sie `otp_policy_targets` für Ihre getesteten Parteien und Bandbreiten und klicken Sie dann auf **Apply changes**.
+
+</Steps>
+
+Speichern Sie Ihre Richtlinientabelle mit dem Projekt über **Aktionen > Save as my template...**. Siehe [Als eigene Vorlage speichern](/de/guides/projects/data-foundation/#als-eigene-vorlage-speichern).
+
+## Verwandte Themen
+
+- [Data Foundation: Das Common Finance Model](/de/guides/projects/data-foundation/)
+- [Cost to Serve](/de/guides/projects/cost-to-serve/)

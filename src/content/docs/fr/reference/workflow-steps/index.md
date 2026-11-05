@@ -1,66 +1,67 @@
 ---
 title: Étapes de workflow
-description: "Tous les types d'étapes de workflow de PlaidCloud : importation, exportation, transformations, allocations, dimensions, documents, notifications, et plus encore."
+description: "Tous les types d'étapes de workflow de PlaidCloud : import, export, transformations, allocations, dimensions, documents, notifications, et plus encore."
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/index.md
 ---
 
-Les étapes de workflow sont les éléments de base de l'automatisation dans PlaidCloud. Chaque étape effectue une opération (importer un CSV, joindre deux tables, envoyer une notification), et les étapes sont assemblées en workflows qui s'exécutent de façon séquentielle, en parallèle, de manière conditionnelle ou en boucle.
+Les étapes de workflow sont les éléments de base de l'automatisation PlaidCloud. Chaque étape effectue une opération (importer un CSV, joindre deux tables, envoyer une notification), et les étapes sont assemblées en workflows qui s'exécutent de manière séquentielle, en parallèle, conditionnelle ou en boucle.
 
 ## Catégories
 
-### Mouvement des données
+### Déplacement des données
 
-- [Importation](/fr/reference/workflow-steps/import/) : récupérez des données depuis CSV, Excel, Parquet, JSON, ORC, Delta Lake, SQL, BigQuery, MongoDB, Kafka, SPSS, des sources Singer, et plus encore
-- [Exportation](/fr/reference/workflow-steps/export/) : envoyez des données vers CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, des archives de table, et plus encore
+- [Import](/fr/reference/workflow-steps/import/) : récupérez des données depuis CSV, Excel, Parquet, JSON, ORC, Delta Lake, SQL, BigQuery, MongoDB, Kafka, SPSS, des sources Singer, et plus encore
+- [Export](/fr/reference/workflow-steps/export/) : envoyez des données vers CSV, XML, SQL, Excel, Google Sheets, Parquet, ORC, MongoDB, Kafka, une archive de table, et plus encore
 
 ### Transformations de tables
 
-- [Tables](/fr/reference/workflow-steps/tables/) : jointures, unions, filtres, recherches, tableaux croisés, dépivotages, mises à jour ciblées, droits d'Accès aux lignes à partir d'une table source, restauration à un instant donné
-- [Opérations communes](/fr/reference/workflow-steps/common/) : modèles partagés de mappage et de filtrage des données
+- [Tables](/fr/reference/workflow-steps/tables/) : jointures, unions, filtres, recherches, pivots, fusions, mises à jour ciblées, attributions d'accès aux lignes à partir d'une table source, restauration à un instant donné
+- [Opérations courantes](/fr/reference/workflow-steps/common/) : modèles partagés de mappage et de filtrage des données
 
 ### Géospatial
 
-- [Géospatial](/fr/reference/workflow-steps/spatial/) : importation et exportation de fichiers spatiaux, tampon, correspondance, mesure, reprojection et construction de géométries ; couverture complète des outils spatiaux d'Alteryx
+- [Géospatial](/fr/reference/workflow-steps/spatial/) : importez et exportez des fichiers spatiaux, créez des zones tampons, faites des correspondances, mesurez, reprojetez et construisez des géométries ; couverture complète des outils spatiaux d'Alteryx
 
 ### Modélisation
 
-- [Allocation](/fr/reference/workflow-steps/allocation/) : répartition par inducteurs, allocations fractionnées, étiquetage par règles
-- [Dimensions](/fr/reference/workflow-steps/dimensions/) : chargement, tri, effacement, exportation et gestion des hiérarchies
-- [Optimisation](/fr/reference/workflow-steps/optimization/) : étapes de solveur linéaire et en nombres entiers mixtes
-- [Machine learning](/fr/reference/workflow-steps/machine-learning/) : entraînement de modèles, y compris XGBoost et les apprenants KNIME, et scoring de tables avec ces modèles
+- [Allocation](/fr/reference/workflow-steps/allocation/) : répartition par inducteur, allocations fractionnées, étiquetage par règles
+- [Dimensions](/fr/reference/workflow-steps/dimensions/) : chargez, triez, effacez, exportez et gérez des hiérarchies
+- [Optimisation](/fr/reference/workflow-steps/optimization/) : étapes de solveur linéaire et en nombres entiers mixtes
+- [Apprentissage automatique](/fr/reference/workflow-steps/machine-learning/) : entraînez des modèles, y compris des apprenants XGBoost et KNIME, et scorez des tables avec eux
 
 ### Documents et fichiers
 
-- [Document](/fr/reference/workflow-steps/document/) : opérations sur les fichiers, liste de répertoire, chiffrement, manipulation de PDF, traitement d'images, conversion d'encodage, mises à jour de cellules Excel
-- [Texte et documents](/fr/reference/workflow-steps/text-documents/) : extraction de texte de PDF, OCR d'images, lecture et écriture de blobs, analyse de sentiment, modélisation de sujets, nuages de mots
+- [Document](/fr/reference/workflow-steps/document/) : opérations sur les fichiers, liste de répertoire, chiffrement, manipulation de PDF, traitement d'images, conversion d'encodage, mises à jour de cellules Excel
+- [Texte et documents](/fr/reference/workflow-steps/text-documents/) : extraction de texte de PDF, OCR d'images, lecture et écriture de blobs, sentiment, modélisation de sujets, nuages de mots
 
 ### Communication
 
-- [Notifications](/fr/reference/workflow-steps/notifications/) : e-mail, Slack, Teams, SMS, webhook, Twitter, journal
-- [Rapports](/fr/reference/workflow-steps/reports/) : génération de rapports PDF uniques ou par lots à partir de modèles RML
+- [Notifications](/fr/reference/workflow-steps/notifications/) : e-mail, Slack, Teams, SMS, webhook, Twitter, journal
+- [Rapports](/fr/reference/workflow-steps/reports/) : produisez des rapports PDF uniques ou par lots à partir de modèles RML
 
 ### Contrôle du workflow
 
-- [Contrôle du workflow](/fr/reference/workflow-steps/workflow-control/) : variables, boucles, sous-workflows, macros, gestion des erreurs, vérification du nombre de lignes
-- [Général](/fr/reference/workflow-steps/general/) : étape LLM, pass, attente, transformation définie par l'utilisateur, exécution de Python à distance, exécuteur Alteryx
-- [Macros empaquetées](/fr/reference/workflow-steps/macros/) : équivalents des macros empaquetées Alteryx : Create Samples, DateTime Now, Heat Map, Pie Wedge Trade Area
+- [Contrôle du workflow](/fr/reference/workflow-steps/workflow-control/) : variables, boucles, sous-workflows, macros, gestion des erreurs, vérification du nombre de lignes
+- [Général](/fr/reference/workflow-steps/general/) : Étape LLM, Pass, Attendre, User Defined Transform, Run Remote Python, Exécuteur Alteryx
+- [Macros empaquetées](/fr/reference/workflow-steps/macros/) : équivalents des macros empaquetées d'Alteryx : Create Samples, DateTime Now, Heat Map, Pie Wedge Trade Area
 
 ### Intégrations d'entreprise
 
-- [Agent](/fr/reference/workflow-steps/agent/) : opérations de l'agent PlaidLink pour les ressources sur site
-- [NetSuite](/fr/reference/workflow-steps/netsuite/) : importation de soldes, du détail du grand livre, de données de base ou de votre propre [requête SuiteQL](/fr/reference/workflow-steps/netsuite/import-suiteql-query/) ; comptabilisation d'écritures de journal dans NetSuite
-- [Acumatica](/fr/reference/workflow-steps/acumatica/) : importation d'entités de données de base et transactionnelles ; comptabilisation de transactions de journal, de factures, de factures fournisseurs et de paiements
-- [Business Central](/fr/reference/workflow-steps/business-central/) : importation d'entités OData ; comptabilisation de lignes de journal général
-- [Xero](/fr/reference/workflow-steps/xero/) : importation d'entités de l'API Accounting ; comptabilisation d'écritures manuelles, de factures, de factures fournisseurs, de paiements et d'avoirs
-- [Dynamics 365 F&O](/fr/reference/workflow-steps/dynamics-365-fo/) : importation d'entités OData/DMF ; comptabilisation d'écritures de journal
-- [Oracle Fusion](/fr/reference/workflow-steps/oracle-fusion/) : importation de soldes du grand livre et de lots de journaux ; comptabilisation d'écritures de journal via FBDI
-- [Oracle EPM (HFM / FCCS)](/fr/reference/workflow-steps/oracle-epm/) : extraction en libre-service d'une tranche de données ad hoc depuis Oracle FCCS avec un sélecteur de point de vue ; chargement récurrent planifié facultatif
-- [Oracle Essbase](/fr/reference/workflow-steps/essbase/) : exécution d'une requête MDX en direct sur un cube, ou chargement d'un plan de dimension comme dimension PlaidCloud ; cloud direct
-- [IBM TM1 / Planning Analytics](/fr/reference/workflow-steps/ibm-planning-analytics/) : lecture d'un cube par vue enregistrée ou MDX, ou d'une hiérarchie de dimension ; cloud direct ou via un agent sur site
-- [Anaplan](/fr/reference/workflow-steps/anaplan/) : lecture d'une vue enregistrée, exécution d'une action d'export existante, ou chargement d'une ou plusieurs listes dans une dimension PlaidCloud ; cloud direct, en lecture seule
-- [Workday Financials](/fr/reference/workflow-steps/workday-financials/) : importation d'un rapport RaaS ; comptabilisation d'écritures comptables
-- [Salesforce](/fr/reference/workflow-steps/salesforce/) : extraction de tout objet CRM standard ou personnalisé dans une table de projet via Bulk API 2.0, l'objet et la liste des champs étant lus depuis l'organisation
-- [Sage Intacct](/fr/reference/workflow-steps/sage-intacct/) : importation de soldes, de factures fournisseurs, de requêtes ad hoc et d'objets du grand livre/de dimensions ; comptabilisation d'écritures de journal
-- [SAP S/4HANA Cloud](/fr/reference/workflow-steps/s4hana-cloud/) : importation de la balance générale et des lignes d'écritures de journal via OData ; comptabilisation d'écritures de journal via SOAP
-- [SAP](/fr/reference/workflow-steps/sap/) : appels RFC SAP ECC / S/4HANA
-- [SAP-PCM](/fr/reference/workflow-steps/sap-pcm/) : contrôle des modèles SAP Profitability and Cost Management
+- [Agent](/fr/reference/workflow-steps/agent/) : opérations de l'agent PlaidLink pour les ressources sur site
+- [NetSuite](/fr/reference/workflow-steps/netsuite/) : importez des soldes, le détail du grand livre, des données de base, ou votre propre [requête SuiteQL](/fr/reference/workflow-steps/netsuite/import-suiteql-query/) ; comptabilisez des écritures de journal dans NetSuite
+- [Acumatica](/fr/reference/workflow-steps/acumatica/) : importez des entités de base et transactionnelles ; comptabilisez des transactions de journal, des factures, des factures fournisseur et des paiements
+- [Business Central](/fr/reference/workflow-steps/business-central/) : importez des entités OData ; comptabilisez des lignes de journal général
+- [Xero](/fr/reference/workflow-steps/xero/) : importez des entités de l'API Accounting ; comptabilisez des journaux manuels, des factures, des factures fournisseur, des paiements et des avoirs
+- [Dynamics 365 F&O](/fr/reference/workflow-steps/dynamics-365-fo/) : importez des entités OData/DMF ; comptabilisez des écritures de journal
+- [Oracle Fusion](/fr/reference/workflow-steps/oracle-fusion/) : importez des soldes du grand livre et des lots de journaux ; comptabilisez des écritures de journal via FBDI
+- [Oracle EPM (HFM / FCCS)](/fr/reference/workflow-steps/oracle-epm/) : obtenez vous-même une tranche de données ad hoc depuis Oracle FCCS grâce à un sélecteur de point de vue ; chargement récurrent planifié en option
+- [Oracle Essbase](/fr/reference/workflow-steps/essbase/) : exécutez une requête MDX en direct sur un cube, ou chargez le plan d'une dimension comme dimension PlaidCloud ; accès direct au cloud
+- [IBM TM1 / Planning Analytics](/fr/reference/workflow-steps/ibm-planning-analytics/) : lisez un cube par vue enregistrée ou MDX, ou une hiérarchie de dimension ; accès direct au cloud ou via un agent sur site
+- [Anaplan](/fr/reference/workflow-steps/anaplan/) : lisez une vue enregistrée, exécutez une action d'export existante ou chargez une ou plusieurs listes dans une dimension PlaidCloud ; accès direct au cloud, en lecture seule
+- [OneStream](/fr/reference/workflow-steps/onestream/) : lisez un adaptateur de données, un appel par membre de consolidation, dans une table ; en lecture seule
+- [Workday Financials](/fr/reference/workflow-steps/workday-financials/) : importez un rapport RaaS ; comptabilisez des journaux comptables
+- [Salesforce](/fr/reference/workflow-steps/salesforce/) : extrayez n'importe quel objet CRM standard ou personnalisé dans une table de projet via Bulk API 2.0, la liste des objets et des champs étant lue depuis l'organisation
+- [Sage Intacct](/fr/reference/workflow-steps/sage-intacct/) : importez des soldes, des factures fournisseur, des requêtes ad hoc et des objets de grand livre et de dimensions ; comptabilisez des écritures de journal
+- [SAP S/4HANA Cloud](/fr/reference/workflow-steps/s4hana-cloud/) : importez la balance générale et les postes d'écritures de journal via OData ; comptabilisez des écritures de journal via SOAP
+- [SAP](/fr/reference/workflow-steps/sap/) : appels RFC SAP ECC / S/4HANA
+- [SAP-PCM](/fr/reference/workflow-steps/sap-pcm/) : contrôle des modèles SAP Profitability and Cost Management

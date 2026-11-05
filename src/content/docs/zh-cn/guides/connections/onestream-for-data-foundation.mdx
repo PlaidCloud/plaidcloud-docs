@@ -1,0 +1,92 @@
+---
+title: Data Foundation 的 OneStream
+description: 将 PlaidCloud 连接到 OneStream，让 Data Foundation 通过数据适配器读取您的合并结果，并将管理合并与之对账，包括 OneStream 管理员构建的适配器，以及描述其金额的设置。
+sidebar:
+  label: Data Foundation 的 OneStream
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/onestream-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+将 PlaidCloud 连接到 **OneStream**，让 Data Foundation 读取您的合并结果，并将其管理集团损益表与之对账。OneStream 通过其连接器获得支持：PlaidCloud 使用 OAuth 2.0 客户端凭据登录，并读取由 OneStream 管理员构建的数据适配器。它只读取。如果指定了 Data Management 序列，PlaidCloud 会先运行该序列以刷新适配器读取的内容，除此之外不运行任何其他内容。
+
+OneStream 是用于对账的结果来源，而不是分录行的来源：其行会作为模型预算表的 `Consolidated` 方案加载，版本为 `OneStream`。参见[与合并系统对账](/zh-cn/guides/projects/data-foundation/#与合并系统核对)。
+
+<Aside type="note">
+适配器的列是您与 OneStream 管理员商定的约定。按本页面构建适配器时，其行会按下文所述加载。请将首次加载的结果与您信任的 OneStream 报表进行比较。
+</Aside>
+
+## OneStream 管理员需要设置的内容
+
+**基础数据**选项卡会撰写一份访问请求供您发送。其中要求提供以下内容。
+
+1. 在 OneStream 的身份服务中为 PlaidCloud 创建一个使用**客户端凭据**授权的客户端，并配有一个服务用户，该用户可以运行适配器；如果希望 PlaidCloud 先刷新结果，还可以运行 Data Management 序列。
+
+2. 在您要报告的应用程序和工作区中，创建一个名为 **Foundation_Results** 的数据适配器，返回一个包含合并结果的表，且列与下面完全一致：
+
+   | 列 | 内容 |
+   |---|---|
+   | `entity` | 合并成员：实体、抵销成员或集团合计。 |
+   | `account` | 科目代码。仅限基础科目。 |
+   | `time` | 月份，格式为 `YYYY-MM`。 |
+   | `scenario` | 方案。 |
+   | `view` | `YTD` 或 `Periodic`。PlaidCloud 只读取您所选视图的行。 |
+   | `amount` | 数字，采用报表所显示的符号和比例。 |
+   | `currency` | 金额所用的货币：集团的报告货币。 |
+   | `flow`、`ud1`、`ud2`、`ud3`、`ud4` | 流量和用户定义维度。仅限基础成员。 |
+
+   请提供科目、流量和用户定义维度的基础成员。父级成员的行会使其子级被重复计算。适配器从替代变量 `Member` 读取合并成员，从 `View` 读取视图。
+
+3. 要读取的成员：实体、抵销成员和集团合计。
+
+## 创建连接
+
+<Steps>
+
+1. 打开 **Tools > Connections** 并单击 `New Connection`，然后选择 **REST - OneStream**。
+
+2. 填写各字段：
+
+   | 字段 | 值 |
+   |---|---|
+   | 主机 | OneStream 的基础 URL，以 `https://` 开头。 |
+   | 客户端 ID | PlaidCloud 客户端的客户端 ID。 |
+   | 客户端密钥 | 其密钥。加密存储，不会再次显示。 |
+   | Token URL | 留空则使用主机后接 `/identity/connect/token`。 |
+   | 默认应用程序 | 用于未指定应用程序的读取。 |
+   | 默认工作区 | 用于未指定工作区的读取。 |
+   | 超时（秒） | 默认为 120。 |
+
+3. 单击 `Create`。
+
+</Steps>
+
+也可以在添加源时于**基础数据**选项卡上创建连接：选择**创建新连接**，并填写 **API 主机 URL**、**客户端 ID**、**客户端密钥**、**Token URL**、**应用程序**和**工作区**，其含义与上述字段相同。
+
+## 将其添加到 Data Foundation 项目
+
+在**基础数据**选项卡上，像添加任何其他源一样添加该连接作为源（参见[连接您的 ERP](/zh-cn/guides/projects/data-foundation/#连接-erp)）。OneStream 不会列出可供勾选的成员，因此表单要求填写要读取的合并成员：在**名称**下输入。然后在 **System settings** 下描述适配器的金额。这些设置以下列名称显示：
+
+| 设置 | 含义 |
+|---|---|
+| `view` | 适配器的金额为年初至今时用 `ytd`（默认），否则用 `periodic`。年初至今的行会作为各期间金额加载。 |
+| `sign` | `natural`（默认）：每个科目采用其自身的符号，与 OneStream 报告的一致。`debit_positive`：借方为正。 |
+| `scale` | 换算为整货币单位的乘数：OneStream 以千为单位提供时为 `1000`。默认为 `1`。 |
+| `fy_start_month` | 财年开始的月份，从 `1` 到 `12`，用于将年初至今换算为各期间。默认为 `1`。 |
+| `application`、`workspace` | 覆盖连接中的设置。留空则使用连接中的设置。 |
+| `table` | 适配器数据集中的表名。默认为 `Results`。 |
+| `sequence` | 在读取之前运行的 Data Management 序列，用于刷新适配器读取的内容。 |
+
+使用适用于此源的代码映射文件，将 OneStream 成员映射到您的实体。参见[实体对照](/zh-cn/guides/projects/data-foundation/#实体对照表)。该源不读取历史窗口：由适配器自己的替代变量界定范围。
+
+适配器未返回任何行的加载会以警告而不是错误结束，并且表为空。
+
+## 在工作流中读取适配器
+
+要将适配器读取到您自己的表中，请使用 [OneStream: Read Adapter](/zh-cn/reference/workflow-steps/onestream/onestream-read-adapter/) 步骤。
+
+## 相关内容
+
+- [OneStream: Read Adapter](/zh-cn/reference/workflow-steps/onestream/onestream-read-adapter/) 步骤
+- [Data Foundation：Common Finance Model](/zh-cn/guides/projects/data-foundation/)
+- [连接到 Anaplan](/zh-cn/guides/connections/anaplan/)

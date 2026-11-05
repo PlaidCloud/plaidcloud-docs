@@ -1,0 +1,92 @@
+---
+title: Operational Transfer Pricing
+description: Data Foundation의 Common Finance Model을 기반으로 각 엔터티의 이익 수준을 이전가격 정책 범위와 비교하여, 어느 엔터티가 범위 내, 하회, 상회인지와 범위로 되돌리는 데 필요한 true-up을 확인합니다.
+sidebar:
+  label: Operational Transfer Pricing
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+**Operational Transfer Pricing** 템플릿은 각 검증 대상 법인(tested party)의 이익 수준 지표를 정책이 정한 범위와 비교하여 검증하고, 범위를 벗어난 엔터티를 목표로 되돌리는 데 필요한 true-up을 계산합니다. 이 템플릿은 [Common Finance Model](/ko/guides/projects/data-foundation/) 위에 구축되며 **Enterprise Profitability**가 구축하는 모든 것을 포함합니다.
+
+<Aside type="note">
+이 템플릿은 연중 정책을 모니터링하기 위한 관리용 보기입니다. 이전가격 연구나 신고 자료가 아닙니다.
+</Aside>
+
+## 작동 방식
+
+템플릿은 각 엔터티와 기간에 대해 다음을 수행합니다.
+
+1. 검증 대상 법인의 손익계산서를 엔터티의 **현지 통화**로 구축합니다. 엔터티가 해당 통화로 장부를 관리하고 true-up을 기록하기 때문입니다. 수익은 내부거래와 제3자로 구분됩니다.
+2. 이를 회계 연도 누계로 합산합니다. 조정 기간은 해당 연도의 기간으로 계산되므로 한 해의 마지막 행이 연간 전체입니다.
+3. 엔터티에 적용되는 정책을 찾습니다.
+4. 누계 기준으로 이익 수준 지표를 퍼센트로 계산하여 범위와 비교합니다.
+
+## 이익 수준 지표
+
+각 엔터티에 하나의 **렌즈**를 선택합니다.
+
+| 렌즈 | 정의 |
+|---|---|
+| `ros` | 매출수익률(ROS): EBIT ÷ 검증 대상 법인 매출. |
+| `ncp` | 순원가가산율(Net cost plus): EBIT ÷ 총비용. |
+| `resale_minus` | 재판매가격 차감(Resale minus): 매출총이익 ÷ 매출. |
+
+EBIT는 수익에서 매출원가와 영업비용을 뺀 값입니다. 영업외 라인은 포함되지 않습니다. 이익은 엔터티의 모든 수익에서 발생하므로 매출은 제3자와 내부거래를 포함한 엔터티의 모든 수익입니다.
+
+## 정책 테이블
+
+범위는 엔터티와 정책이 적용되는 기간마다 한 행씩 `otp_policy_targets` 테이블에 있습니다. 이 테이블은 사용자가 편집하며 모델은 여기에 쓰지 않습니다.
+
+| 열 | 내용 |
+|---|---|
+| `entity` | 검증 대상 법인입니다. |
+| `role` | 제한적 위험 유통업체처럼 해당 법인의 역할을 나타내는 레이블입니다. |
+| `lens` | `ros`, `ncp`, `resale_minus` 중 하나입니다. |
+| `low`, `target`, `high` | 범위와 목표이며 퍼센트로 표시합니다. `low <= target <= high`입니다. |
+| `effective_from_period` | 행이 적용되기 시작하는 월이며 `YYYY-MM` 형식입니다. 엔터티의 다음 행이 나올 때까지 유지됩니다. |
+
+엔터티는 한 번에 하나의 정책만 가집니다. 렌즈나 범위를 변경하려면 더 늦은 `effective_from_period`를 가진 새 행을 추가합니다. 샘플 데이터에는 예시 행이 세 개 있습니다. 이를 자신의 데이터로 바꾸십시오.
+
+잘못된 월, 비어 있는 렌즈, low, target, high, 순서가 맞지 않는 범위처럼 판단할 수 없는 행은 추측하지 않고 해당 엔터티의 결과를 **incomplete**로 만듭니다.
+
+## 결과
+
+결과 테이블에는 각 엔터티와 기간에 대해 누계 기준 지표와 상태가 표시됩니다.
+
+| 상태 | 의미 |
+|---|---|
+| `in` | 경계를 포함하여 범위 안에 있습니다. |
+| `below`, `above` | 범위 밖에 있습니다. |
+| `n-a` | 기준이 되는 매출 또는 비용이 양수가 아닙니다. |
+| `incomplete` | 정책 행에 문제가 있거나 비교에 필요한 값을 알 수 없습니다. 빈 값은 `in`으로 처리되지 않습니다. |
+
+엔터티가 범위를 벗어나면 `true_up_ytd`는 연초부터 누계 기준으로 목표에 도달하기 위해 검증 대상 법인에 더해야 할 이익(음수이면 차감해야 할 이익)이며 현지 통화로 표시됩니다. `true_up`은 그 값의 기간별 변동이므로 한 해의 기간들을 합하면 연간 true-up이 됩니다. true-up은 그룹 통화로도 표시됩니다.
+
+어시스턴트와 대시보드용 지표: **TP true-up**, **Tested-party EBIT**, **Tested-party sales**, **Third-party sales**, **Intercompany sales**, **Tested-party total cost**, **Return on sales**, **Net cost plus**, 그리고 평가 기준별 **CO-PA margin**.
+
+## CO-PA 마진
+
+SAP CO-PA를 로드하면 템플릿은 법정, 그룹, 이익 센터 같은 평가 기준별 마진도 표시합니다. 평가 기준은 각각 별도의 수치이므로 평가 기준끼리 합산하지 마십시오. CO-PA 파일에는 하나의 평가 기준이 담기며 파일을 추가할 때 이를 확정합니다. CO-PA 파일의 매핑에서는 항상 **Are revenues shown as negative numbers?** 질문을 합니다. 원가 기반 라인 항목 보고서처럼 파일의 모든 금액이 양수이면 **No, revenues are positive**가 자동으로 선택됩니다. 그렇지 않으면 확정하기 전에 답을 선택하십시오.
+
+## 프로젝트 시작
+
+<Steps>
+
+1. Analyze에서 **프로젝트**를 열고 **새 프로젝트**를 클릭합니다.
+
+2. **시작 기준**에서 **Operational Transfer Pricing (template)** 을 선택합니다. 먼저 작동 예제를 보려면 **샘플 데이터로 시작**을 선택합니다.
+
+3. ERP를 연결하고 **로드**를 실행합니다. [Data Foundation 시작하기](/ko/guides/projects/data-foundation-getting-started/)를 참조하십시오.
+
+4. 검증 대상 법인과 범위에 맞게 `otp_policy_targets`를 편집한 다음 **Apply changes**를 클릭합니다.
+
+</Steps>
+
+정책 테이블을 프로젝트와 함께 저장하려면 **작업 > Save as my template...** 메뉴를 사용합니다. [내 템플릿으로 저장](/ko/guides/projects/data-foundation/#내-템플릿으로-저장)을 참조하십시오.
+
+## 관련 항목
+
+- [Data Foundation: Common Finance Model](/ko/guides/projects/data-foundation/)
+- [Cost to Serve](/ko/guides/projects/cost-to-serve/)

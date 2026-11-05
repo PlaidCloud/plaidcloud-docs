@@ -1,0 +1,104 @@
+---
+title: Accès à SAP S/4HANA pour Data Foundation
+description: Ce qu'un administrateur SAP configure pour que PlaidCloud Data Foundation puisse lire directement SAP S/4HANA via PlaidLink (un utilisateur de communication en lecture seule et l'accès aux tables) et ce qu'il faut renvoyer.
+sidebar:
+  label: Accès à SAP S/4HANA pour Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-s4hana-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/fr/guides/projects/data-foundation/) rassemble dans un seul Common Finance Model les données de chaque système ERP et de chaque instance que vous connectez, et SAP S/4HANA fait partie des ERP qu'il lit directement. PlaidCloud atteint le système par l'intermédiaire d'un agent [PlaidLink](/fr/reference/cli/plaidlink/) installé sur votre propre réseau, via RFC. Cette page s'adresse à l'administrateur SAP qui effectue cette configuration, et à l'utilisateur PlaidCloud qui la lui demande.
+
+PlaidCloud ne fait que lire les données. Personne n'envoie de mot de passe par e-mail.
+
+## Envoyer la demande d'accès
+
+Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion** sous **Connexion SAP S/4HANA**. Le formulaire affiche la demande complète et un lien **How to set up PlaidLink**. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Read-only SAP S/4HANA access for PlaidCloud (through PlaidLink) ».
+
+## Ce que l'administrateur SAP configure
+
+<Steps>
+
+1. **Installez le package ABAP PlaidCloud** (groupe de fonctions de `Z_PLAIDCL_B5_READ_TABLE`) dans le mandant à partir duquel vous produisez des rapports, et installez un agent PlaidLink qui peut atteindre le système via RFC.
+
+2. **Créez un utilisateur de communication**, par exemple `PLAIDCLOUD_RFC`, avec un rôle contenant ces autorisations :
+
+   - `S_RFC` : exécuter le groupe de fonctions de `Z_PLAIDCL_B5_READ_TABLE`.
+   - `S_TABU_NAM` (affichage, `ACTVT` 03) pour les tables ci-dessous.
+
+   | Tables | Ce qu'elles contiennent |
+   |---|---|
+   | `T001` | Codes société |
+   | `T009`, `T009B`, `T001B` | Variantes d'exercice et périodes comptables |
+   | `SKA1`, `SKAT` | Comptes du grand livre |
+   | `FAGL_011PC`, `FAGL_011ZC` | Version de bilan et compte de résultat |
+   | `CSKS`, `CSKT` | Centres de coûts |
+   | `SETHEADER`, `SETNODE` | Groupes de centres de coûts et de centres de profit |
+   | `CEPC`, `CEPCT` | Centres de profit (facultatif) |
+   | `KNA1`, `KNVV`, `KNVH` | Clients et leur hiérarchie |
+   | `MARA`, `MAKT`, `T006A` | Articles et unités |
+   | `TCURR`, `TCURF`, `TCURX` | Taux de change et décimales des devises |
+   | `ACDOCA` | Écritures de journal du registre principal et son report à nouveau des soldes |
+   | `VBRK`, `VBRP`, `PRCD_ELEMENTS` | Documents de facturation et leurs conditions |
+   | `ACDOCP` | Données de planification |
+   | `COSR` | Chiffres clés statistiques |
+   | `T001K`, `MBEW`, `MBEWH` | Zones de valorisation et valeurs de stock des articles |
+
+3. **Répondez aux questions comptables** (voir ci-dessous).
+
+</Steps>
+
+### Questions auxquelles l'administrateur répond
+
+| L'administrateur vous indique | Vous le saisissez dans PlaidCloud sous Paramètres système |
+|---|---|
+| Le type de taux de change qui contient le taux moyen. PlaidCloud fait la moyenne des taux de ce type pour chaque mois. C'est souvent `M`. | `average_rate_type` |
+| Le type de taux de change qui contient le taux de clôture, c'est-à-dire son taux en fin de mois. Si vous n'en nommez aucun, le taux de clôture est le taux `M`. | `closing_rate_type` |
+| La version de bilan et compte de résultat qui présente le compte de résultat de gestion et le bilan | `fsv` |
+| Lesquels de ses nœuds sont les revenus, le coût des marchandises vendues, les charges d'exploitation, le hors exploitation, les actifs, les passifs, les capitaux propres et l'intersociétés | `intercompany_nodes` pour les nœuds intersociétés. Le formulaire n'a pas de champ pour les autres types de nœuds. |
+| Que le report à nouveau des soldes (`FAGLGVTR`) a été exécuté pour chaque exercice sur lequel vous produisez des rapports | Rien à saisir. Les soldes d'ouverture y sont lus. |
+
+## Ce qu'il faut renvoyer
+
+| L'administrateur envoie | Saisi dans PlaidCloud comme |
+|---|---|
+| L'ID du système et le serveur d'application (ou le serveur de messages et le groupe de connexion) | **Serveur d'application**, et **Numéro du système** |
+| Le mandant | **Client** |
+| Le nom de l'utilisateur de communication | **Utilisateur** |
+| Le mot de passe de l'utilisateur de communication, via votre gestionnaire de mots de passe | **Mot de passe**, que votre équipe colle elle-même |
+| Le nom de l'agent PlaidLink qui atteint le système | `agent` sous Paramètres système |
+| Les codes société que PlaidCloud peut lire | Sous **Codes société**, que le système ne peut pas lister avant un chargement : saisissez un code société sous **Nom**, ou laissez vide pour charger tous les codes société |
+
+<Aside type="caution">
+N'envoyez jamais le mot de passe par e-mail. **Mot de passe** est un secret : il est stocké dans la connexion et jamais affiché de nouveau.
+</Aside>
+
+## Vérifier l'accès
+
+De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+
+| Jeu de données | Tables qu'il lit |
+|---|---|
+| Entités | `T001` |
+| Calendrier fiscal | `T001`, `T009`, `T009B`, `T001B` |
+| Taux de change | `TCURR`, `TCURF` |
+| Plan comptable | `SKA1`, `SKAT`, `FAGL_011PC`, `FAGL_011ZC` |
+| Départements | `CSKS`, `CSKT`, `SETHEADER`, `SETNODE` |
+| Centres de profit | `CEPC`, `CEPCT`, `SETHEADER`, `SETNODE` |
+| Clients | `KNA1`, `KNVV`, `KNVH` |
+| Produits | `MARA`, `MAKT`, `T006A` |
+| Grand livre | `ACDOCA` |
+| Balance de vérification | Report à nouveau des soldes `ACDOCA` |
+| Lignes de vente | `VBRK`, `VBRP`, `PRCD_ELEMENTS` |
+| Budget | `ACDOCP` |
+| Inducteurs d'allocation | `COSR` |
+| Soldes de stock | `T001K`, `MBEW`, `MBEWH` |
+
+Lorsqu'un jeu de données affiche **Autorisation manquante**, demandez à l'administrateur d'ajouter la table au rôle, puis testez à nouveau. Les centres de profit, les lignes de vente, le budget, les inducteurs d'allocation et les soldes de stock sont facultatifs : un système qui n'en contient pas charge tout le reste.
+
+## Voir aussi
+
+- [Data Foundation](/fr/guides/projects/data-foundation/)
+- [Extraction ad hoc SAP](/fr/guides/connections/sap-adhoc-extract/)
+- [PlaidLink](/fr/reference/cli/plaidlink/)

@@ -1,0 +1,92 @@
+---
+title: OneStream para o Data Foundation
+description: Ligue o PlaidCloud ao OneStream para que o Data Foundation possa ler os seus resultados consolidados através de um adaptador de dados e reconciliar com eles a consolidação de gestão, com o adaptador que o seu administrador do OneStream constrói e as definições que descrevem os respetivos montantes.
+sidebar:
+  label: OneStream para o Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/onestream-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Ligue o PlaidCloud ao **OneStream** para que o Data Foundation possa ler os seus resultados consolidados e reconciliar com eles a demonstração de resultados de gestão do grupo. O OneStream é suportado através do seu conector: o PlaidCloud inicia sessão com credenciais de cliente OAuth 2.0 e lê um adaptador de dados que o seu administrador do OneStream constrói. Só lê. Se indicar uma sequência do Data Management, o PlaidCloud executa essa sequência primeiro para atualizar o que o adaptador lê, e não executa mais nada.
+
+O OneStream é uma origem de resultados com que reconciliar, não de linhas de razão: as suas linhas são carregadas como o cenário `Consolidated` da tabela de orçamento do modelo, versão `OneStream`. Consulte [Reconciliar com o seu sistema de consolidação](/pt-pt/guides/projects/data-foundation/#reconciliar-com-o-sistema-de-consolidação).
+
+<Aside type="note">
+As colunas do adaptador são um contrato que acorda com o seu administrador do OneStream. Quando o adaptador é construído de acordo com esta página, as suas linhas são carregadas conforme descrito abaixo. Compare os resultados do primeiro carregamento com um relatório do OneStream em que confie.
+</Aside>
+
+## O que o seu administrador do OneStream configura
+
+O separador **Base** escreve um pedido de acesso para que o envie. Esse pedido solicita o seguinte.
+
+1. Um cliente para o PlaidCloud no serviço de identidade do OneStream que utilize a concessão de **credenciais de cliente**, com um utilizador de serviço que possa executar o adaptador e, se pretender que o PlaidCloud atualize primeiro os resultados, a sequência do Data Management.
+
+2. Na aplicação e na área de trabalho sobre as quais reporta, um adaptador de dados com o nome **Foundation_Results** que devolva uma tabela dos resultados consolidados com exatamente estas colunas:
+
+   | Coluna | Contém |
+   |---|---|
+   | `entity` | O membro de consolidação: uma entidade, um membro de eliminação ou o total do grupo. |
+   | `account` | O código da conta. Apenas contas base. |
+   | `time` | O mês, no formato `YYYY-MM`. |
+   | `scenario` | O cenário. |
+   | `view` | `YTD` ou `Periodic`. O PlaidCloud só lê as linhas da vista que escolher. |
+   | `amount` | Um número, no sinal e na escala que os seus relatórios apresentam. |
+   | `currency` | A moeda em que o montante está expresso: a moeda de relato do seu grupo. |
+   | `flow`, `ud1`, `ud2`, `ud3`, `ud4` | Dimensões de fluxo e definidas pelo utilizador. Apenas membros base. |
+
+   Disponibilize membros base das dimensões de conta, de fluxo e definidas pelo utilizador. A linha de um membro superior contaria os seus filhos duas vezes. O adaptador lê o membro de consolidação a partir da variável de substituição `Member` e a vista a partir de `View`.
+
+3. Os membros a ler: as entidades, os membros de eliminação e o total do grupo.
+
+## Criar a ligação
+
+<Steps>
+
+1. Abra **Tools > Connections** e clique em `New Connection`, depois escolha **REST - OneStream**.
+
+2. Preencha os campos:
+
+   | Campo | Valor |
+   |---|---|
+   | Anfitrião | O URL base do OneStream, começando por `https://`. |
+   | ID do cliente | O ID do cliente do PlaidCloud. |
+   | Segredo do cliente | O respetivo segredo. Guardado cifrado e nunca mais apresentado. |
+   | Token URL | Deixe em branco para utilizar o Anfitrião seguido de `/identity/connect/token`. |
+   | Aplicação predefinida | Utilizada por uma leitura que deixe a aplicação em branco. |
+   | Área de trabalho predefinida | Utilizada por uma leitura que deixe a área de trabalho em branco. |
+   | Tempo limite (segundos) | Por predefinição, 120. |
+
+3. Clique em `Create`.
+
+</Steps>
+
+Também pode criar a ligação no separador **Base** quando adiciona a origem: escolha **Criar uma nova ligação** e preencha **URL do anfitrião da API**, **ID do cliente**, **Segredo do cliente**, **Token URL**, **Aplicação** e **Área de trabalho**, que têm o mesmo significado que os campos acima.
+
+## Adicioná-lo a um projeto do Data Foundation
+
+No separador **Base**, adicione a ligação como origem, como faria com qualquer outra (consulte [Ligar o seu ERP](/pt-pt/guides/projects/data-foundation/#ligar-o-erp)). O OneStream não lista membros para marcar, pelo que o formulário pede o membro de consolidação a ler: introduza-o em **Nome**. Depois, em **System settings**, descreva os montantes do adaptador. As definições apresentam-se com estes nomes:
+
+| Definição | O que significa |
+|---|---|
+| `view` | `ytd` (a predefinição) quando os montantes do adaptador são acumulados no ano, ou `periodic`. As linhas acumuladas no ano são carregadas como montantes periódicos. |
+| `sign` | `natural` (a predefinição): cada conta no seu próprio sinal, tal como o OneStream o comunica. `debit_positive`: débitos positivos. |
+| `scale` | O multiplicador para unidades monetárias inteiras: `1000` quando o OneStream disponibiliza milhares. Por predefinição, `1`. |
+| `fy_start_month` | O mês em que o seu ano fiscal começa, de `1` a `12`, para converter de acumulado no ano para periódico. Por predefinição, `1`. |
+| `application`, `workspace` | Substituem os da ligação. Deixe em branco para utilizar os da ligação. |
+| `table` | O nome da tabela dentro do conjunto de dados do adaptador. Por predefinição, `Results`. |
+| `sequence` | Uma sequência do Data Management executada antes da leitura para atualizar o que o adaptador lê. |
+
+Mapeie os membros do OneStream para as suas entidades com um ficheiro de mapeamento de códigos que se aplique a esta origem. Consulte [Correspondência de entidades](/pt-pt/guides/projects/data-foundation/#mapeamento-de-entidades). A origem não lê nenhuma janela de histórico: as variáveis de substituição do próprio adaptador delimitam-na.
+
+Um carregamento que não devolva linhas do adaptador termina com um aviso, não com um erro, e a tabela fica vazia.
+
+## Ler o adaptador num fluxo de trabalho
+
+Para ler o adaptador para uma tabela sua, utilize [OneStream: Read Adapter](/pt-pt/reference/workflow-steps/onestream/onestream-read-adapter/).
+
+## Relacionados
+
+- [OneStream: Read Adapter](/pt-pt/reference/workflow-steps/onestream/onestream-read-adapter/)
+- [Data Foundation: o Common Finance Model](/pt-pt/guides/projects/data-foundation/)
+- [Ligar ao Anaplan](/pt-pt/guides/connections/anaplan/)

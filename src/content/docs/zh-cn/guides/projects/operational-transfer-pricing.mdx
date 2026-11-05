@@ -1,0 +1,92 @@
+---
+title: Operational Transfer Pricing
+description: 在 Data Foundation 的 Common Finance Model 之上，对照转让定价政策区间测试每个实体的利润水平，查看哪些实体处于区间内、低于区间或高于区间，以及需要多少补差调整才能使其回到区间。
+sidebar:
+  label: Operational Transfer Pricing
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+**Operational Transfer Pricing** 模板将每个受测方的利润水平指标与您的政策设定的区间进行对比，并计算使区间外实体回到目标所需的补差调整。它构建在 [Common Finance Model](/zh-cn/guides/projects/data-foundation/) 之上，并包含 **Enterprise Profitability** 构建的全部内容。
+
+<Aside type="note">
+这是用于全年监控政策执行情况的管理视图，不是转让定价研究报告或申报文件。
+</Aside>
+
+## 工作原理
+
+对于每个实体和期间，模板会：
+
+1. 以实体的**本位币**构建受测方的损益表，因为这是它记账和记录补差调整所用的货币。收入分为公司间收入和第三方收入。
+2. 将其按会计年度累计。调整期间算作所属年度的期间，因此一年的最后一行就是全年。
+3. 查找适用于该实体的政策。
+4. 基于本年累计计算利润水平指标（以百分比表示），并与区间进行比较。
+
+## 利润水平指标
+
+您为每个实体选择一个**视角**：
+
+| 视角 | 定义 |
+|---|---|
+| `ros` | 销售回报率（ROS）：EBIT ÷ 受测方销售额。 |
+| `ncp` | 成本加成净额：EBIT ÷ 总成本。 |
+| `resale_minus` | 转售减价：毛利 ÷ 销售额。 |
+
+EBIT 为收入减去销货成本和运营费用，不包括非经营项目。销售额是实体的全部收入，包括第三方收入和公司间收入，因为利润来自这全部收入。
+
+## 政策表
+
+您的区间保存在表 `otp_policy_targets` 中，每个实体和政策生效的期间各占一行。由您编辑它，模型从不写入它。
+
+| 列 | 内容 |
+|---|---|
+| `entity` | 受测方。 |
+| `role` | 其角色的标签，例如有限风险分销商。 |
+| `lens` | `ros`、`ncp` 或 `resale_minus`。 |
+| `low`, `target`, `high` | 区间和目标，以百分比表示。`low <= target <= high`。 |
+| `effective_from_period` | 该行生效的月份，格式为 `YYYY-MM`。它会一直有效，直到该实体的下一行。 |
+
+一个实体同一时间只有一项政策。视角或区间的变更是带有更晚的 `effective_from_period` 的新一行。示例数据有三个示例行，请用您自己的数据替换。
+
+无法判断的行，例如无效的月份，空白的视角、下限、目标或上限，或顺序错误的区间，会使该实体的结果变为**不完整**，而不是靠猜测。
+
+## 结果
+
+对于每个实体和期间，结果表会显示本年累计的指标和状态：
+
+| 状态 | 含义 |
+|---|---|
+| `in` | 在区间内（含边界）。 |
+| `below`, `above` | 在区间之外。 |
+| `n-a` | 基数（销售额或成本）不是正数。 |
+| `incomplete` | 政策行有问题，或比较所需的某些内容未知。空白永远不会被判为 `in`。 |
+
+当实体超出区间时，`true_up_ytd` 是为使本年累计达到目标而需要加到受测方的利润（为负数时则需要扣除），以本位币列示。`true_up` 是其在该期间的变化量，因此一年中各期间之和等于该年的补差调整。补差调整也以集团货币列示。
+
+供助手和仪表板使用的指标：**TP true-up**、**Tested-party EBIT**、**Tested-party sales**、**Third-party sales**、**Intercompany sales**、**Tested-party total cost**、**Return on sales**、**Net cost plus**，以及按估值的 **CO-PA margin**。
+
+## CO-PA 利润率
+
+如果加载 SAP CO-PA，模板还会按估值显示其利润率：法律、集团或利润中心。每种估值是独立的数字，因此绝不要将不同估值相加。一个 CO-PA 文件只包含一种估值，添加时由您确认。CO-PA 文件的映射总会询问 **Are revenues shown as negative numbers?** 当文件中的所有金额均为正数时（如基于成本核算的行项目报表），会自动选择 **No, revenues are positive**。否则，请在确认之前选择答案。
+
+## 创建项目
+
+<Steps>
+
+1. 在 Analyze 中，打开**项目**并点击**新建项目**。
+
+2. 在**起始来源**下，选择 **Operational Transfer Pricing (template)**。勾选**从示例数据开始**可先查看一个完整示例。
+
+3. 连接 ERP 并运行**加载**。请参阅 [Data Foundation 入门](/zh-cn/guides/projects/data-foundation-getting-started/)。
+
+4. 根据您的受测方和区间编辑 `otp_policy_targets`，然后点击 **Apply changes**。
+
+</Steps>
+
+使用**操作 > Save as my template...** 将政策表与项目一起保存。请参阅[另存为我的模板](/zh-cn/guides/projects/data-foundation/#另存为我的模板)。
+
+## 相关内容
+
+- [Data Foundation：Common Finance Model](/zh-cn/guides/projects/data-foundation/)
+- [Cost to Serve](/zh-cn/guides/projects/cost-to-serve/)

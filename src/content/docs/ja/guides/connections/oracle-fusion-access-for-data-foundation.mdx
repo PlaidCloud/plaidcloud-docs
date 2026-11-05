@@ -1,0 +1,82 @@
+---
+title: Data Foundation 向け Oracle Fusion アクセス
+description: PlaidCloud Data Foundation が Oracle Fusion を直接読み取れるように Oracle Fusion Cloud ERP 管理者が設定する内容（統合ユーザー、OAuth 2.0 アプリケーション、9 つの BI Publisher レポート）と、返送する情報について説明します。
+sidebar:
+  label: Data Foundation 向け Oracle Fusion アクセス
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/)は、接続したすべての ERP システムとインスタンスのデータを 1 つの Common Finance Model に集約します。Oracle Fusion Cloud ERP は、Data Foundation が直接読み取る ERP の 1 つです。Oracle Fusion 接続では、OAuth 2.0 クライアント資格情報、読み取り専用の統合ユーザー、および少数の BI Publisher レポートを使用します。このページは、これを設定する Oracle Fusion 管理者と、管理者に依頼する PlaidCloud ユーザーを対象としています。
+
+PlaidCloud はデータを読み取るだけです。パスワードやクライアントシークレットをメールで送らないでください。
+
+## アクセス依頼を送信する
+
+プロジェクトの **Foundation** タブで、**Oracle Fusion接続**の下にある**新しい接続を作成**を選択します。フォームに依頼内容の全文が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「Read-only Oracle Fusion Cloud ERP access for PlaidCloud (OAuth 2.0 client credentials)」でメールプログラムに開きます。
+
+## Oracle Fusion 管理者が設定する内容
+
+<Steps>
+
+1. **統合ユーザーを作成**し、レポート対象のすべての元帳について、次の内容を表示できるジョブロールを付与します。
+
+   - 総勘定元帳: 元帳、会計カレンダーと期間ステータス、仕訳バッチ、仕訳、勘定残高（例: これらの元帳へのデータアクセスを持つ「General Accountant」）
+   - 通貨換算レート（日次レート）
+   - キーフレックスフィールドのセグメントラベル、値セット、およびその勘定科目階層（ツリー）
+   - 売掛金: 請求書とその配分、および顧客アカウント
+   - 在庫品目
+   - 手順 3 の BI Publisher レポートと ERP Integration Service（ESS ジョブ）の実行アクセス
+
+2. ID ドメイン（IAM）に、クライアント資格情報グラントと Fusion Applications REST API のスコープを持つ**機密アプリケーションを登録**します。そのクライアント ID とシークレットをコピーします。
+
+3. `/Custom/PlaidCloud/DataFoundation` に **9 つの BI Publisher レポートをデプロイ**します。それぞれ ESS ジョブとして、レポート名をジョブ定義にして実行され、依頼に記載された列を持つ CSV を返します。
+
+   | レポート | 返す内容 |
+   |---|---|
+   | `PlaidCloudKeyFlexLabels` | 総勘定元帳の各勘定科目表のセグメントごとに 1 行: その位置、ラベル、値セット |
+   | `PlaidCloudSegmentValues` | それらの値セットのすべての値。自然勘定科目タイプと値の階層を含む |
+   | `PlaidCloudCalendar` | すべての元帳の会計期間。元帳の期間平均と期間末のレートタイプを含む |
+   | `PlaidCloudCodeCombinations` | コード組み合わせとそのセグメント |
+   | `PlaidCloudBalances` | すべての元帳の期首残高 |
+   | `PlaidCloudJournalLines` | 仕訳明細。元帳、期間、残高セグメント値ごとに 1 つずつ読み取り |
+   | `PlaidCloudCustomers` | 顧客アカウントとその取引先名 |
+   | `PlaidCloudItems` | マスター在庫組織の品目 |
+   | `PlaidCloudSalesLines` | 売掛金請求書明細ごとに 1 行 |
+
+   各レポートの正確な列は、**Foundation** タブの依頼文に記載されています。レポート名は、表示されているとおりに指定してください。
+
+</Steps>
+
+## 返送する情報
+
+| 管理者が送る情報 | PlaidCloud での入力先 |
+|---|---|
+| `https://` を除いた、Fusion Applications URL のホスト | **Podホスト** |
+| ID ドメインのトークン URL | **Token URL** |
+| REST API アプリケーションのスコープ | **スコープ** |
+| 手順 2 のクライアント ID | **クライアントID** |
+| 手順 2 のクライアントシークレット | **クライアントシークレット** |
+| PlaidCloud が読み取りを許可される残高セグメント値 | **Balancing segment values** に入力します。Fusion は一覧表示できないため、**名前**に 1 つの値を入力するか、空白のままにしてすべてをロードします |
+
+依頼文の最後のリストでは、これらの値をまとめて尋ねています。クライアントシークレットは、メールではなくパスワードマネージャー経由で共有してください。PlaidCloud ユーザーのチームが、自分で PlaidCloud に貼り付けます。
+
+## アクセスを確認する
+
+PlaidCloud に戻って値を入力し、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 読み取り元 |
+|---|---|
+| エンティティ、会計カレンダー、勘定科目表、部門 | 元帳、およびキーフレックスフィールドのラベル、セグメント値、カレンダーのレポート |
+| 為替レート | 日次換算レート |
+| 総勘定元帳 | 仕訳バッチと仕訳明細レポート |
+| 試算表 | 残高とコード組み合わせのレポート |
+| 顧客、製品、売上明細 | 顧客、品目、売上明細のレポート（省略可） |
+
+データセットが不足している場合、テストにより、追加すべき権限が示されます。管理者にジョブロールへの追加を依頼して、もう一度テストしてください。顧客、製品、売上明細は省略可能です。これらを保持していない Fusion ポッドでも、ほかのすべてのデータは読み込まれます。
+
+## 関連項目
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [Oracle Fusion に接続する](/ja/guides/connections/oracle-fusion/)

@@ -1,0 +1,78 @@
+---
+title: Data Foundation 的 Dynamics 365 Finance and Operations 访问设置
+description: Dynamics 365 Finance and Operations 管理员需要进行哪些设置，才能让 PlaidCloud Data Foundation 直接读取该系统：Microsoft Entra ID 应用程序、只读角色和 Fabric Link SQL 登录，以及需要回传哪些内容。
+sidebar:
+  label: Data Foundation 的 Dynamics 365 F&O 访问设置
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/zh-cn/guides/projects/data-foundation/) 将您连接的每个 ERP 系统和实例的数据汇集到一个 Common Finance Model 中，Dynamics 365 Finance and Operations 是它可以直接读取的 ERP 之一。该连接使用带客户端密钥的 Microsoft Entra ID 应用程序读取主数据，并使用您的 Fabric (Synapse) Link SQL 终结点读取总账日记账。本页面面向进行这些设置的 Dynamics 365 管理员，也面向请求管理员进行设置的 PlaidCloud 用户。
+
+PlaidCloud 只读取数据。切勿通过电子邮件发送客户端密钥或 SQL 密码。
+
+## 发送访问请求
+
+在项目的**基础数据**选项卡上，在 **Dynamics 365 Finance and Operations connection** 下选择**创建新连接**。表单会显示完整的请求。单击**复制请求**可将其粘贴到您自己的邮件中，或单击**通过电子邮件发送请求**，在邮件程序中打开它，主题为“Read-only Dynamics 365 Finance and Operations access for PlaidCloud.”
+
+## Dynamics 365 管理员需要设置的内容
+
+<Steps>
+
+1. **在 Microsoft Entra ID 中为 PlaidCloud 注册应用程序**，并配置客户端密钥。记下其应用程序（客户端）ID、目录（租户）ID 和密钥。
+
+2. **将应用程序映射到用户**。在 Dynamics 365 的 **System administration > Setup > Microsoft Entra ID applications** 下，添加客户端 ID，并将其映射到某个用户，该用户的角色须能查看您要加载的每个法人实体的以下内容：
+
+   - 总账：法人实体、财务日历、主科目、财务维度值、汇率
+   - 应收账款：客户和客户发票行
+   - 产品信息管理：已发布产品
+   - 库存管理：现有库存和库存事务（可选）
+   - 预算：预算登记簿分录（可选）
+
+3. **为总账日记账设置 Fabric Link**。总账日记账行从您的 Fabric (Synapse) Link SQL 终结点读取，而不是从 OData 服务读取。请确认已为这些表启用 Fabric Link，并在该终结点上为 PlaidCloud 创建只读 SQL 登录：
+
+   - `generaljournalaccountentry`
+   - `generaljournalentry`
+   - `fiscalcalendarperiod`
+   - `dimensionattributelevelvalue`，每个财务维度组合的每个维度值各占一行，并附有其维度名称
+
+</Steps>
+
+## 需要回传的内容
+
+| 管理员发送 | 在 PlaidCloud 中输入为 |
+|---|---|
+| 环境 URL，`https://<name>.operations.dynamics.com` | **环境 URL** |
+| 目录（租户）ID | **Directory (tenant) ID** |
+| 应用程序（客户端）ID | **Application (client) ID** |
+| Fabric Link SQL 终结点、数据库和登录 | PlaidCloud 中的单独 SQL 连接，在系统设置 `fabric_connection_id` 中选择 |
+| 销货成本科目的主科目类别（PlaidCloud 默认为 `COGS`） | 系统设置 `cogs_categories` |
+| 非经营性科目的主科目类别：利息、所得税、汇兑损益、其他收入 | 系统设置 `non_operating_categories` |
+| 命名行的公司间伙伴的财务维度（PlaidCloud 默认为 `IntercompanyPartner`） | 系统设置 `ic_partner_dimension` |
+| PlaidCloud 可以读取的法人实体 | 在 PlaidCloud 的 **Legal entities** 下选择 |
+
+客户端密钥和 SQL 登录的密码切勿通过电子邮件发送。PlaidCloud 用户的团队自行将**客户端密钥**粘贴到 PlaidCloud 中，SQL 连接则保存 SQL 登录。属于合并实体的法人实体放在系统设置 `consolidation_companies` 下，这样其过账就不会被计为某个公司的活动。
+
+## 检查访问权限
+
+返回 PlaidCloud，输入各值并单击**测试连接**。每个数据集显示为**可读取**、**缺少权限**或**错误**：
+
+| 数据集 | 所需权限 |
+|---|---|
+| 实体 | 总账：查看法人实体 |
+| 财务日历 | 总账：查看财务日历 |
+| 会计科目表 | 总账：查看主科目 |
+| 部门 | 总账：查看财务维度值 |
+| 客户 | 应收账款：查看客户 |
+| 产品 | 产品信息管理：查看已发布产品 |
+| 汇率 | 总账：查看汇率 |
+| 试算平衡表、总账 | 查看总账（通过 Fabric Link 读取日记账） |
+| 销售明细行、库存余额、预算 | 可选 |
+
+当缺少某个数据集时，测试会指出需要添加的权限。请管理员将其添加到角色后重新测试。销售明细行、库存余额和预算是可选的：不包含它们的环境仍会加载其他所有内容。
+
+## 相关内容
+
+- [Data Foundation](/zh-cn/guides/projects/data-foundation/)
+- [连接到 Dynamics 365 Finance & Operations](/zh-cn/guides/connections/dynamics-365-fo/)

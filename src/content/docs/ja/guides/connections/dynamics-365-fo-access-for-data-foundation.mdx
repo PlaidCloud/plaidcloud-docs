@@ -1,0 +1,78 @@
+---
+title: Data Foundation 向け Dynamics 365 Finance and Operations アクセス
+description: PlaidCloud Data Foundation が Dynamics 365 Finance and Operations を直接読み取れるように管理者が設定する内容（Microsoft Entra ID アプリケーション、読み取り専用ロール、Fabric Link の SQL ログイン）と、返送する情報について説明します。
+sidebar:
+  label: Data Foundation 向け Dynamics 365 F&O アクセス
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/)は、接続したすべての ERP システムとインスタンスのデータを 1 つの Common Finance Model に集約します。Dynamics 365 Finance and Operations は、Data Foundation が直接読み取る ERP の 1 つです。この接続では、マスターデータにはクライアントシークレットを使用する Microsoft Entra ID アプリケーションを、総勘定仕訳帳には Fabric（Synapse）Link の SQL エンドポイントを使用します。このページは、これを設定する Dynamics 365 管理者と、管理者に依頼する PlaidCloud ユーザーを対象としています。
+
+PlaidCloud はデータを読み取るだけです。クライアントシークレットや SQL パスワードをメールで送らないでください。
+
+## アクセス依頼を送信する
+
+プロジェクトの **Foundation** タブで、**Dynamics 365 Finance and Operations接続**の下にある**新しい接続を作成**を選択します。フォームに依頼内容の全文が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「Read-only Dynamics 365 Finance and Operations access for PlaidCloud」でメールプログラムに開きます。
+
+## Dynamics 365 管理者が設定する内容
+
+<Steps>
+
+1. **Microsoft Entra ID にアプリケーションを登録します。** PlaidCloud 用に、クライアントシークレット付きで登録してください。アプリケーション（クライアント）ID、ディレクトリ（テナント）ID、シークレットを控えます。
+
+2. **アプリケーションをユーザーにマップします。** Dynamics 365 の **System administration > Setup > Microsoft Entra ID applications** でクライアント ID を追加し、読み込む法人ごとに次の内容を表示できるロールを持つユーザーにマップします。
+
+   - 総勘定元帳: 法人、会計カレンダー、主勘定、財務ディメンション値、為替レート
+   - 売掛金: 顧客と顧客請求書明細
+   - 製品情報管理: リリース済み製品
+   - 在庫管理: 手持在庫と在庫トランザクション（省略可）
+   - 予算管理: 予算登録エントリ（省略可）
+
+3. **総勘定仕訳帳用に Fabric Link を設定します。** 総勘定仕訳帳の明細は、OData サービスではなく、Fabric（Synapse）Link の SQL エンドポイントから読み取られます。次のテーブルで Fabric Link が有効になっていることを確認し、そのエンドポイントに PlaidCloud 用の読み取り専用 SQL ログインを作成します。
+
+   - `generaljournalaccountentry`
+   - `generaljournalentry`
+   - `fiscalcalendarperiod`
+   - `dimensionattributelevelvalue`。財務ディメンションの組み合わせごとのディメンション値 1 つにつき 1 行で、そのディメンション名を含みます
+
+</Steps>
+
+## 返送する情報
+
+| 管理者が送る情報 | PlaidCloud での入力先 |
+|---|---|
+| 環境 URL（`https://<name>.operations.dynamics.com`） | **環境URL** |
+| ディレクトリ（テナント）ID | **Directory (tenant) ID** |
+| アプリケーション（クライアント）ID | **Application (client) ID** |
+| Fabric Link の SQL エンドポイント、データベース、ログイン | PlaidCloud の個別の SQL 接続。システム設定 `fabric_connection_id` で選択します |
+| 売上原価勘定の主勘定カテゴリ（PlaidCloud は `COGS` を想定します） | システム設定 `cogs_categories` |
+| 営業外の勘定（利息、法人所得税、為替差損益、その他収益）の主勘定カテゴリ | システム設定 `non_operating_categories` |
+| 明細の会社間取引先を示す財務ディメンション（PlaidCloud は `IntercompanyPartner` を想定します） | システム設定 `ic_partner_dimension` |
+| PlaidCloud が読み取りを許可される法人 | PlaidCloud の **Legal entities** で選択 |
+
+クライアントシークレットと SQL ログインのパスワードは、メールで送らないでください。PlaidCloud ユーザーのチームが**クライアントシークレット**を PlaidCloud に自分で貼り付け、SQL ログインは SQL 接続が保持します。連結法人にあたる法人は、システム設定 `consolidation_companies` に指定します。これにより、それらの転記は 1 社の活動として計上されません。
+
+## アクセスを確認する
+
+PlaidCloud に戻って値を入力し、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 必要な権限 |
+|---|---|
+| エンティティ | 総勘定元帳: 法人の表示 |
+| 会計カレンダー | 総勘定元帳: 会計カレンダーの表示 |
+| 勘定科目表 | 総勘定元帳: 主勘定の表示 |
+| 部門 | 総勘定元帳: 財務ディメンション値の表示 |
+| 顧客 | 売掛金: 顧客の表示 |
+| 製品 | 製品情報管理: リリース済み製品の表示 |
+| 為替レート | 総勘定元帳: 為替レートの表示 |
+| 試算表、総勘定元帳 | 総勘定元帳の表示（Fabric Link 経由の仕訳帳） |
+| 売上明細、在庫残高、予算 | 省略可 |
+
+データセットが不足している場合、テストにより、追加すべき権限が示されます。管理者にロールへの追加を依頼して、もう一度テストしてください。売上明細、在庫残高、予算は省略可能です。これらを保持していない環境でも、ほかのすべてのデータは読み込まれます。
+
+## 関連項目
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [Dynamics 365 Finance & Operations に接続する](/ja/guides/connections/dynamics-365-fo/)

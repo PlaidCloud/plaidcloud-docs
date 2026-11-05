@@ -1,0 +1,96 @@
+---
+title: Workday-Zugriff für Data Foundation
+description: Was ein Workday-Administrator erstellt und freigibt, damit PlaidCloud Data Foundation Workday lesen kann – benutzerdefinierte Berichte, zwei Financial-Management-Webdienste und ein Integrationssystembenutzer – und was zurückzusenden ist.
+sidebar:
+  label: Workday-Zugriff für Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/de/guides/projects/data-foundation/) führt die Daten aller ERP-Systeme und Instanzen, die Sie verbinden, in einem Common Finance Model zusammen. Workday ist eines der Systeme, die es direkt liest. Workday hat keinen Webdienst für Journalzeilen oder Salden, daher richtet sich diese Seite an den Workday-Administrator, der die Berichte erstellt, die gelesen werden, und an den PlaidCloud-Benutzer, der ihn darum bittet.
+
+PlaidCloud liest Daten ausschließlich. Niemand sendet ein Kennwort per E-Mail.
+
+## Zugriffsanfrage senden
+
+Wählen Sie auf der Registerkarte **Foundation** des Projekts die Option **Neue Verbindung erstellen** und dann **Workday**. Das Formular zeigt die Berichtsspezifikation. Klicken Sie auf **Anfrage kopieren**, um sie in Ihre eigene Nachricht einzufügen, oder auf **Anfrage per E-Mail senden**, um sie in Ihrem E-Mail-Programm zu öffnen.
+
+## Was der Workday-Administrator einrichtet
+
+<Steps>
+
+1. **Erstellen Sie zehn benutzerdefinierte Berichte (RaaS)**, vier davon optional, und geben Sie sie für den Integrationssystembenutzer frei. Verwenden Sie die Spaltennamen genau: Data Foundation ordnet nach Namen zu, daher kann eine umbenannte Spalte nicht gelesen werden. Jede Codespalte enthält die Reference ID des Objekts, nicht eine Bezeichnung wie „C100 Acme US“. Das Ausgabeformat jedes Berichts ist JSON.
+
+2. **Erteilen Sie dem selben Benutzer die Financial_Management-Webdienste** `Get_Workday_Companies` und `Get_Currency_Conversion_Rates`.
+
+3. **Senden Sie die Berichts-URLs** und die Angaben des Integrationssystembenutzers.
+
+</Steps>
+
+| Bericht | Erforderlich | Inhalt |
+|---|---|---|
+| Journal Lines | Ja | Eine Zeile je gebuchter Journalzeile. Eingabeaufforderungen: Company (das Unternehmen der Zeile, als Reference ID) und Period (die Reference ID der Geschäftsperiode). Enthält die Worktags Region, Fund, Program und Project, den Intercompany-Partner, Beträge in Transaktions- und Ledger-Währung sowie das Buch |
+| Beginning Balances | Ja | Eine Zeile je Unternehmen, Geschäftsperiode und Ledger-Konto: der Saldo zu Beginn der Periode. Nur Konten der Typen Asset, Liability und Equity werden geladen |
+| Ledger Accounts | Ja | Konto, Name, Typ, Intercompany-Kennzeichen, optional Kategorie und übergeordnetes Konto |
+| Cost Centers | Ja | Kostenstelle, Name und übergeordnetes Element |
+| Fiscal Periods | Ja | Eine Zeile je Unternehmen und Geschäftsperiode, auch Anpassungsperioden, mit Beginn, Ende und Status |
+| Headcount | Optional | Aktive Mitarbeiter am Ende jeder Periode, nach Kostenstelle, mit FTE |
+| Worktag Values | Optional | Eine Zeile je Wert von Region, Fund, Program und Project, mit übergeordnetem Element |
+| Customers | Optional | Kunde, Name, übergeordnetes Element, Kategorie, Region und Land |
+| Sales Items | Optional | Artikel, Name, übergeordnetes Element, Gruppe und Mengeneinheit |
+| Sales Invoice Lines | Optional | Eine Zeile je Kundenrechnungsposition, mit Menge, Brutto-, Rabatt-, Netto- und Kostenbeträgen |
+
+Die vollständige Spaltenliste jedes Berichts steht in der Spezifikation auf der Registerkarte Foundation. Für das, was die Berichte liefern, gelten einige Regeln:
+
+- Es werden nur Journalzeilen mit dem Status Posted geladen, und nur das Actuals-Ledger. Die Ledger Commitment und Obligation werden nicht geladen.
+- Ein leerer Book_Code ist das primäre Buch. Eine leere Zeile zählt in jedem Buch ihres Unternehmens und ihrer Periode, und eine Zeile mit einem Book_Code gehört nur zu diesem Buch.
+- Das Unternehmen der Zeile hat Vorrang vor dem des Journals.
+- Ledger_Account_Type_ID ist Revenue, COGS, Opex, NonOperating, Asset, Liability oder Equity. Workday hat nur einen Typ Expense, der als Opex geladen wird. Um Herstellungskosten der verkauften Waren oder nicht betrieblichen Aufwand zu trennen, geben Sie ein berechnetes Feld aus, das COGS oder NonOperating liefert. Ein Konto ohne Typ wird nicht in die Gewinn- und Verlustrechnung geladen.
+- Rechnungen mit dem Status Draft, In Progress, Canceled und Denied werden nicht geladen.
+- Budgets werden aus Dateien geladen. Adaptive Planning ist nicht angebunden.
+
+## Was zurückzusenden ist
+
+| Der Administrator sendet | Eingabe in PlaidCloud als |
+|---|---|
+| Den Workday-Host | **Workday-Host** |
+| Den Mandantennamen | **Mandant** |
+| Den Namen des Integrationssystembenutzers | **Integrationssystembenutzer** |
+| Die URL jedes erforderlichen Berichts | **URL des Berichts Journal Lines**, **URL des Berichts Beginning Balances**, **URL des Berichts Ledger Accounts**, **URL des Berichts Cost Centers**, **URL des Berichts Fiscal Periods** |
+| Die URL jedes optionalen Berichts, den Sie erstellt haben | **URL des Berichts Headcount (optional)**, **URL des Berichts Worktag Values (optional)**, **URL des Berichts Customers (optional)**, **URL des Berichts Sales Items (optional)**, **URL des Berichts Sales Invoice Lines (optional)** |
+| Die Reference IDs der Unternehmen, die PlaidCloud lesen darf | Unter **Unternehmen** ausgewählt. Leer lassen, um jedes Unternehmen zu laden |
+
+Der PlaidCloud-Benutzer fügt das **Kennwort** des Integrationssystembenutzers selbst ein; es ist ein Geheimnis und wird nie per E-Mail gesendet.
+
+Unter **Systemeinstellungen** benennt **Konto für Gewinnrücklagen** das Eigenkapitalkonto, in das die Eröffnungs-Gewinn- und Verlustrechnung übergeht, wenn die Kontennamen das nicht bereits aussagen. Es ist optional.
+
+<Aside type="note">
+Der eine Typ Expense von Workday wird als Opex geladen, und die Bereitschaftsprüfung von Data Foundation weist darauf hin. Wenn Ihre Konten für Herstellungskosten der verkauften Waren oder nicht betrieblichen Aufwand unterscheidbar sein müssen, verwenden Sie das oben beschriebene berechnete Feld.
+</Aside>
+
+## Zugriff prüfen
+
+Klicken Sie in PlaidCloud auf **Verbindung testen**. Jedes Dataset wird als **Lesbar**, **Fehlende Berechtigung** oder **Fehler** angezeigt:
+
+| Dataset | Stammt aus |
+|---|---|
+| Entitäten | `Get_Workday_Companies` |
+| Kontenplan | Dem Bericht Ledger Accounts |
+| Abteilungen | Dem Bericht Cost Centers |
+| Geschäftskalender | Dem Bericht Fiscal Periods |
+| Wechselkurse | `Get_Currency_Conversion_Rates` |
+| Saldenliste | Dem Bericht Beginning Balances |
+| Hauptbuch | Dem Bericht Journal Lines |
+| Verteilungstreiber (optional) | Dem Bericht Headcount |
+| Segmentwerte (optional) | Dem Bericht Worktag Values |
+| Kunden (optional) | Dem Bericht Customers |
+| Produkte (optional) | Dem Bericht Sales Items |
+| Verkaufspositionen (optional) | Dem Bericht Sales Invoice Lines |
+
+Zeigt ein Dataset **Fehlende Berechtigung**, nennt der Test den Bericht oder Webdienst. Bitten Sie den Administrator, ihn für den Integrationssystembenutzer freizugeben, und testen Sie erneut. Ein Mandant ohne die optionalen Berichte lädt trotzdem alles andere.
+
+## Verwandte Themen
+
+- [Data Foundation](/de/guides/projects/data-foundation/)
+- [Mit Workday Financials verbinden](/de/guides/connections/workday-financials/)

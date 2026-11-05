@@ -1,0 +1,104 @@
+---
+title: Acceso a SAP S/4HANA para Data Foundation
+description: Qué configura un administrador de SAP para que PlaidCloud Data Foundation pueda leer SAP S/4HANA directamente mediante PlaidLink (un usuario de comunicación de solo lectura y acceso a tablas) y qué debe enviar de vuelta.
+sidebar:
+  label: Acceso a SAP S/4HANA para Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-s4hana-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/es/guides/projects/data-foundation/) reúne los datos de cada sistema ERP e instancia que usted conecta en un único Common Finance Model, y SAP S/4HANA es uno de los ERP que lee directamente. PlaidCloud llega al sistema mediante un agente de [PlaidLink](/es/reference/cli/plaidlink/) instalado en su propia red, a través de RFC. Esta página está dirigida al administrador de SAP que lo configura y al usuario de PlaidCloud que se lo solicita.
+
+PlaidCloud solo lee datos. Nadie envía una contraseña por correo electrónico.
+
+## Enviar la solicitud de acceso
+
+En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** en **Conexión de SAP S/4HANA**. El formulario muestra la solicitud completa y un enlace **How to set up PlaidLink**. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto "Read-only SAP S/4HANA access for PlaidCloud (through PlaidLink)."
+
+## Qué configura el administrador de SAP
+
+<Steps>
+
+1. **Instale el paquete ABAP de PlaidCloud** (grupo de funciones de `Z_PLAIDCL_B5_READ_TABLE`) en el mandante desde el que informa, e instale un agente de PlaidLink que pueda llegar al sistema mediante RFC.
+
+2. **Cree un usuario de comunicación**, por ejemplo `PLAIDCLOUD_RFC`, con un rol que contenga estas autorizaciones:
+
+   - `S_RFC`: ejecutar el grupo de funciones de `Z_PLAIDCL_B5_READ_TABLE`.
+   - `S_TABU_NAM` (visualizar, `ACTVT` 03) para las tablas siguientes.
+
+   | Tablas | Qué contienen |
+   |---|---|
+   | `T001` | Códigos de empresa |
+   | `T009`, `T009B`, `T001B` | Variantes de ejercicio fiscal y períodos de contabilización |
+   | `SKA1`, `SKAT` | Cuentas del libro mayor |
+   | `FAGL_011PC`, `FAGL_011ZC` | Versión de estado financiero |
+   | `CSKS`, `CSKT` | Centros de costos |
+   | `SETHEADER`, `SETNODE` | Grupos de centros de costos y de centros de beneficio |
+   | `CEPC`, `CEPCT` | Centros de beneficio (opcional) |
+   | `KNA1`, `KNVV`, `KNVH` | Clientes y su jerarquía |
+   | `MARA`, `MAKT`, `T006A` | Materiales y unidades |
+   | `TCURR`, `TCURF`, `TCURX` | Tipos de cambio y decimales de moneda |
+   | `ACDOCA` | Asientos del libro principal y su arrastre de saldos |
+   | `VBRK`, `VBRP`, `PRCD_ELEMENTS` | Documentos de facturación y sus condiciones |
+   | `ACDOCP` | Datos del plan |
+   | `COSR` | Cifras clave estadísticas |
+   | `T001K`, `MBEW`, `MBEWH` | Áreas de valoración y valores de existencias de materiales |
+
+3. **Responda las preguntas contables** (véase más abajo).
+
+</Steps>
+
+### Preguntas que responde el administrador
+
+| El administrador le indica | Usted lo introduce en PlaidCloud en la configuración del sistema |
+|---|---|
+| El tipo de tipo de cambio que contiene el tipo medio. PlaidCloud promedia los tipos de ese tipo de cada mes. Con frecuencia es `M`. | `average_rate_type` |
+| El tipo de tipo de cambio que contiene el tipo de cierre, su tipo al final del mes. Si no indica ninguno, el tipo de cierre es el tipo `M`. | `closing_rate_type` |
+| La versión de estado financiero que informa las pérdidas y ganancias de gestión y el balance general | `fsv` |
+| Cuáles de sus nodos son ingresos, costo de los productos vendidos, gastos operativos, no operativos, activos, pasivos, patrimonio e intercompañía | `intercompany_nodes` para los nodos intercompañía. El formulario no tiene campo para los demás tipos de nodo. |
+| Que el arrastre de saldos (`FAGLGVTR`) se ha ejecutado para cada ejercicio fiscal sobre el que informa | No hay nada que introducir. Los saldos iniciales se leen de él. |
+
+## Qué debe enviar de vuelta
+
+| El administrador envía | Se introduce en PlaidCloud como |
+|---|---|
+| El ID del sistema y el servidor de aplicaciones (o el servidor de mensajes y el grupo de inicio de sesión) | **Servidor de aplicaciones** y **Número de sistema** |
+| El mandante | **Cliente** |
+| El nombre del usuario de comunicación | **Usuario** |
+| La contraseña del usuario de comunicación, mediante su administrador de contraseñas | **Contraseña**, que su equipo pega por sí mismo |
+| El nombre del agente de PlaidLink que llega al sistema | `agent` en la configuración del sistema |
+| Los códigos de empresa que PlaidCloud puede leer | En **Códigos de empresa**, que el sistema no puede listar antes de una carga: introduzca un código de empresa en **Nombre**, o déjelo en blanco para cargar todos los códigos de empresa |
+
+<Aside type="caution">
+No envíe nunca la contraseña por correo electrónico. **Contraseña** es un secreto: se almacena en la conexión y no se vuelve a mostrar.
+</Aside>
+
+## Comprobar el acceso
+
+De vuelta en PlaidCloud, introduzca los valores y haga clic en **Probar conexión**. Cada conjunto de datos se muestra como **Legible**, **Falta un permiso** o **Error**:
+
+| Conjunto de datos | Tablas que lee |
+|---|---|
+| Entidades | `T001` |
+| Calendario fiscal | `T001`, `T009`, `T009B`, `T001B` |
+| Tipos de cambio | `TCURR`, `TCURF` |
+| Plan de cuentas | `SKA1`, `SKAT`, `FAGL_011PC`, `FAGL_011ZC` |
+| Departamentos | `CSKS`, `CSKT`, `SETHEADER`, `SETNODE` |
+| Centros de beneficio | `CEPC`, `CEPCT`, `SETHEADER`, `SETNODE` |
+| Clientes | `KNA1`, `KNVV`, `KNVH` |
+| Productos | `MARA`, `MAKT`, `T006A` |
+| Libro mayor | `ACDOCA` |
+| Balance de comprobación | Arrastre de saldos de `ACDOCA` |
+| Líneas de ventas | `VBRK`, `VBRP`, `PRCD_ELEMENTS` |
+| Presupuesto | `ACDOCP` |
+| Inductores de asignación | `COSR` |
+| Saldos de inventario | `T001K`, `MBEW`, `MBEWH` |
+
+Cuando un conjunto de datos muestra **Falta un permiso**, pida al administrador que agregue la tabla al rol y vuelva a probar. Los centros de beneficio, las líneas de ventas, el presupuesto, los inductores de asignación y los saldos de inventario son opcionales: un sistema que no contiene alguno de ellos carga igualmente todo lo demás.
+
+## Relacionado
+
+- [Data Foundation](/es/guides/projects/data-foundation/)
+- [Extracción ad hoc de SAP](/es/guides/connections/sap-adhoc-extract/)
+- [PlaidLink](/es/reference/cli/plaidlink/)
