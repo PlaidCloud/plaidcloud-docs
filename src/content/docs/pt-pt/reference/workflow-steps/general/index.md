@@ -1,10 +1,10 @@
 ---
 title: Passos gerais
-description: Passos de fluxo de trabalho de utilização geral que não se enquadram numa categoria específica.
+description: Passos de fluxo de trabalho de uso geral que não se enquadram numa categoria específica.
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/index.md
 ---
 
-Passos de fluxo de trabalho de utilização geral que não se enquadram numa categoria específica.
+Passos de fluxo de trabalho de uso geral que não se enquadram numa categoria específica.
 
 ## Passos
 
@@ -13,6 +13,7 @@ Passos de fluxo de trabalho de utilização geral que não se enquadram numa cat
 - [Deactivate Workspace Members](/pt-pt/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Previsão](/pt-pt/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/pt-pt/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/pt-pt/reference/workflow-steps/general/get-workspace-usage/)
 - [Passo LLM](/pt-pt/reference/workflow-steps/general/llm-step/)
 - [Pass](/pt-pt/reference/workflow-steps/general/pass/)
 - [Pedido REST](/pt-pt/reference/workflow-steps/general/rest-request/)
