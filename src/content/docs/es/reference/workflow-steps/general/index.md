@@ -13,6 +13,7 @@ Pasos de flujo de trabajo de uso general que no encajan en una categoría concre
 - [Deactivate Workspace Members](/es/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Pronóstico](/es/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/es/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/es/reference/workflow-steps/general/get-workspace-usage/)
 - [Paso LLM](/es/reference/workflow-steps/general/llm-step/)
 - [Pass](/es/reference/workflow-steps/general/pass/)
 - [Solicitud REST](/es/reference/workflow-steps/general/rest-request/)
