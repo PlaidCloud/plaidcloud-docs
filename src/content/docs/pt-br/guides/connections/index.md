@@ -7,9 +7,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 Uma **conexão** é uma configuração salva que permite ao PlaidCloud acessar um sistema externo — um banco de dados, uma conta de armazenamento em nuvem, um ERP ou uma API REST. As etapas de fluxo de trabalho que precisam ler ou gravar nesse sistema fazem referência à conexão, de modo que as credenciais e os detalhes do endpoint ficam em um só lugar.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 210" role="img" aria-label="Muitas etapas de fluxo de trabalho fazem referência a uma única conexão salva, que guarda as credenciais e o endpoint em um só lugar e alcança o sistema externo — um banco de dados, armazenamento em nuvem, ERP ou API REST." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 210" role="img" aria-label="Muitas etapas de fluxo de trabalho fazem referência a uma única conexão salva, que guarda as credenciais e o endpoint em um só lugar e acessa o sistema externo — um banco de dados, armazenamento em nuvem, ERP ou API REST." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="cn-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
-  <text x="76" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">etapas de fluxo de trabalho</text>
+  <text x="76" y="30" text-anchor="middle" font-size="11" font-weight="700" fill="var(--sl-color-gray-3)">etapas do fluxo de trabalho</text>
   <rect x="16" y="40" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="61" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Etapa de importação</text>
   <rect x="16" y="88" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="109" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Etapa de exportação</text>
   <rect x="16" y="136" width="120" height="34" rx="7" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" /><text x="76" y="157" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">Etapa de consulta</text>
@@ -30,31 +30,32 @@ Uma **conexão** é uma configuração salva que permite ao PlaidCloud acessar u
 ## Guias
 
 - [Criar e gerenciar uma conexão](/pt-br/guides/connections/create-connection/) — crie, edite, teste e controle o acesso a uma conexão, e configure-a por ambiente.
-- [Usar seu próprio data warehouse](/pt-br/guides/connections/external-lakehouse/) — conecte você mesmo seu próprio data warehouse Snowflake ou Databricks, entre com a sua própria identidade, gerencie vários data warehouses e veja quanto cada execução custa.
-- [Conexão PlaidCloud Git](/pt-br/guides/connections/plaidcloud-git/) — conecte-se ao servidor Git gerenciado do seu próprio espaço de trabalho, sem URL de servidor nem credenciais, e automatize a partir dele as compilações de aplicativos Panel.
+- [Use seu próprio data warehouse](/pt-br/guides/connections/external-lakehouse/) — conecte você mesmo seu próprio data warehouse Snowflake ou Databricks, faça login com sua própria identidade, gerencie vários data warehouses e veja o custo de cada execução.
+- [Conexão Git do PlaidCloud](/pt-br/guides/connections/plaidcloud-git/) — conecte-se ao servidor Git gerenciado do seu espaço de trabalho, sem URL de servidor nem credenciais, e automatize as compilações de aplicativos do Panel a partir dele.
 - [Clonar uma conexão](/pt-br/guides/connections/clone-connection/) — duplique uma conexão existente para um novo ambiente ou tenant.
 - [Data Foundation: o Common Finance Model](/pt-br/guides/projects/data-foundation/) — o Common Finance Model reúne dados de ERP de vários sistemas e instâncias de ERP em um único modelo, com um plano de contas, um conjunto de entidades e uma moeda de relatório, que relatórios, métricas e assistentes de IA leem.
-- [Fontes Singer](/pt-br/guides/connections/singer-sources/) — conecte-se a fontes como Stripe, GitHub, Slack e BigQuery com taps do Singer e depois importe os dados delas para tabelas de projeto.
-- [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/) — configure uma conexão do NetSuite e extraia dados financeiros e operacionais com SuiteQL.
-- [Acesso ao NetSuite para o Data Foundation](/pt-br/guides/connections/netsuite-access-for-data-foundation/) — o que o administrador do seu NetSuite configura para que o Data Foundation possa ler o NetSuite diretamente, e o que enviar de volta.
-- [Importar dados financeiros do NetSuite](/pt-br/guides/connections/import-netsuite-financials/) — extraia saldos, detalhes do razão geral e dados mestres com as etapas de importação prontas do NetSuite, sem escrever SuiteQL.
+- [Origens Singer](/pt-br/guides/connections/singer-sources/) — conecte-se a origens como Stripe, GitHub, Slack e BigQuery com taps Singer e depois importe os dados delas para tabelas do projeto.
+- [Conectar ao NetSuite](/pt-br/guides/connections/netsuite/) — configure uma conexão do NetSuite e obtenha dados financeiros e operacionais com SuiteQL.
+- [Acesso do NetSuite para o Data Foundation](/pt-br/guides/connections/netsuite-access-for-data-foundation/) — o que o administrador do NetSuite configura para que o Data Foundation possa ler o NetSuite diretamente, e o que enviar de volta.
+- [Importar dados financeiros do NetSuite](/pt-br/guides/connections/import-netsuite-financials/) — obtenha saldos, detalhes do razão geral e dados mestres com as etapas prontas de importação do NetSuite, sem escrever SuiteQL.
 - [Lançar um lançamento contábil no NetSuite](/pt-br/guides/connections/post-netsuite-journal-entries/) — mapeie as tabelas de cabeçalho e de linhas, visualize e lance lançamentos contábeis no NetSuite.
 - [Conectar ao Acumatica](/pt-br/guides/connections/acumatica/) — configure uma conexão do Acumatica, importe entidades e lance transações contábeis, faturas, contas a pagar e pagamentos.
-- [Conectar ao Business Central](/pt-br/guides/connections/business-central/) — configure uma conexão do Business Central com o Azure AD, importe entidades OData e lance linhas de diário geral.
+- [Conectar ao Business Central](/pt-br/guides/connections/business-central/) — configure uma conexão do Business Central com o Azure AD, importe entidades OData e lance linhas do diário geral.
 - [Conectar ao Dynamics 365 Finance & Operations](/pt-br/guides/connections/dynamics-365-fo/) — configure uma conexão do D365 F&O com o Azure AD, importe entidades OData/DMF e lance lançamentos contábeis.
-- [Conectar ao Oracle Fusion](/pt-br/guides/connections/oracle-fusion/) — configure uma conexão do Oracle Fusion, importe saldos do razão geral e lotes de lançamentos e lance diários por meio do FBDI.
+- [Conectar ao Oracle Fusion](/pt-br/guides/connections/oracle-fusion/) — configure uma conexão do Oracle Fusion, importe saldos do razão geral e lotes de lançamentos contábeis e lance os lançamentos por FBDI.
 - [Conectar ao Workday Financials](/pt-br/guides/connections/workday-financials/) — configure uma conexão do Workday Financials com um Usuário do sistema de integração, importe um relatório RaaS e lance lançamentos contábeis.
-- [Conectar ao SAP S/4HANA Cloud](/pt-br/guides/connections/s4hana-cloud/) — configure uma conexão direta com o S/4HANA Cloud usando OAuth2, importe o balancete e os itens de lançamentos contábeis e lance lançamentos contábeis via SOAP.
+- [Conectar ao SAP S/4HANA Cloud](/pt-br/guides/connections/s4hana-cloud/) — configure uma conexão direta com o S/4HANA Cloud usando OAuth2, importe o balancete e os itens de lançamento contábil e lance lançamentos por SOAP.
 - [Extrações ad hoc do SAP ECC / S/4HANA](/pt-br/guides/connections/sap-adhoc-extract/) — pesquise no SAP por tabela, código de transação ou SAP Query salva, visualize e planeje a extração e carregue-a em uma tabela por meio de um agente PlaidLink.
-- [Conectar ao Sage Intacct](/pt-br/guides/connections/sage-intacct/) — configure uma conexão do Sage Intacct e extraia dados financeiros e contábeis.
-- [Conectar ao Xero](/pt-br/guides/connections/xero/) — autorize uma organização do Xero com um clique, importe entidades da Accounting API e lance diários manuais, faturas, contas a pagar, pagamentos e notas de crédito.
-- [Conectar ao Salesforce](/pt-br/guides/connections/salesforce/) — configure um External Client App do Salesforce e um usuário Run As, e depois extraia objetos de CRM para tabelas de projeto.
-- [Extrair do HFM / FCCS (ad hoc)](/pt-br/guides/connections/hfm-fccs/) — conecte-se ao Oracle FCCS e obtenha por conta própria uma fatia de dados com um seletor de ponto de vista, sem abrir chamado para a equipe do HFM.
-- [Conectar ao TM1](/pt-br/guides/connections/tm1/) — conecte-se a um servidor IBM TM1 / Planning Analytics e leia dados de cubo por visão ou MDX, fatiados por período.
-- [Conectar ao Anaplan](/pt-br/guides/connections/anaplan/) — conecte-se ao Anaplan e leia uma visão salva, execute uma ação de exportação preexistente ou carregue listas em uma dimensão do PlaidCloud. Somente leitura.
+- [Conectar ao Sage Intacct](/pt-br/guides/connections/sage-intacct/) — configure uma conexão do Sage Intacct e obtenha dados financeiros e contábeis.
+- [Conectar ao Xero](/pt-br/guides/connections/xero/) — autorize uma organização do Xero com um clique, importe entidades da Accounting API e lance lançamentos manuais, faturas, contas a pagar, pagamentos e notas de crédito.
+- [Conectar ao Salesforce](/pt-br/guides/connections/salesforce/) — configure um External Client App do Salesforce e um usuário Run As e depois extraia objetos de CRM para tabelas do projeto.
+- [Extrair do HFM / FCCS (ad hoc)](/pt-br/guides/connections/hfm-fccs/) — conecte-se ao Oracle FCCS e obtenha por conta própria um recorte de dados com um seletor de ponto de vista, sem abrir chamado para a equipe do HFM.
+- [Conectar ao TM1](/pt-br/guides/connections/tm1/) — conecte-se a um servidor IBM TM1 / Planning Analytics e leia dados de cubo por visão ou MDX, recortados por período.
+- [Conectar ao Anaplan](/pt-br/guides/connections/anaplan/) — conecte-se ao Anaplan e leia uma visão salva, execute uma ação de exportação existente ou carregue listas em uma dimensão do PlaidCloud. Somente leitura.
+- [OneStream para o Data Foundation](/pt-br/guides/connections/onestream-for-data-foundation/) — o que o administrador do OneStream configura para que o Data Foundation possa ler resultados consolidados por meio de um adaptador de dados.
 - [Conectar ao QuickBooks](/pt-br/guides/connections/quickbooks/) — pré-requisitos e limitações atuais do QuickBooks Online.
-- [Revisar o Registro de lançamentos](/pt-br/guides/connections/posting-register/) — um console em nível de tenant para que finanças e contabilidade revisem os lançamentos de ERP em todos os projetos e conexões que podem ver.
+- [Revisar o Registro de lançamentos](/pt-br/guides/connections/posting-register/) — um console no nível do tenant para que as áreas financeira e contábil revisem os lançamentos de ERP em todos os projetos e conexões que podem ver.
 
 ## Relacionados
 
-- [Referência de conectores](/pt-br/reference/connectors/) — o catálogo completo de sistemas compatíveis e os campos de que cada um precisa.
+- [Referência de conectores](/pt-br/reference/connectors/) — o catálogo completo dos sistemas compatíveis e dos campos que cada um exige.

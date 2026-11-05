@@ -318,6 +318,7 @@ export default defineConfig({
 									collapsed: true,
 									items: [
 										'guides/connections/anaplan',
+										'guides/connections/onestream-for-data-foundation',
 										'guides/connections/essbase',
 										'guides/connections/hfm-fccs',
 										'guides/connections/tm1',
@@ -410,7 +411,10 @@ export default defineConfig({
 								'guides/projects/compare-and-merge-projects',
 								'guides/projects/export-to-portable-format',
 								'guides/projects/organizing-with-labels',
+								'guides/projects/data-foundation-getting-started',
 								'guides/projects/data-foundation',
+								'guides/projects/cost-to-serve',
+								'guides/projects/operational-transfer-pricing',
 							],
 						},
 						{

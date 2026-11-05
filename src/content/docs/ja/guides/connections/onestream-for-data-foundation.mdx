@@ -1,0 +1,91 @@
+---
+title: Data Foundation向けOneStream
+description: PlaidCloudをOneStreamに接続し、Data Foundationがデータアダプター経由で連結結果を読み取り、管理連結をそれと照合できるようにします。OneStream管理者が構築するアダプターと、その金額を説明する設定を扱います。
+sidebar:
+  label: Data Foundation向けOneStream
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/onestream-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+PlaidCloudを**OneStream**に接続すると、Data Foundationが連結結果を読み取り、管理用のグループ損益計算書をそれと照合できます。OneStreamはそのコネクターでサポートされています。PlaidCloudは、OAuth 2.0のクライアント認証情報でサインインし、OneStream管理者が構築するデータアダプターを読み取ります。読み取り専用です。Data Managementシーケンスを指定した場合、PlaidCloudはアダプターが読み取る内容を更新するために、まずそのシーケンスを実行します。それ以外は何も実行しません。
+
+OneStreamは、照合先となる結果のソースであり、元帳明細のソースではありません。その行は、モデルの予算テーブルの`Consolidated`シナリオ、バージョン`OneStream`として取り込まれます。[連結システムとの照合](/ja/guides/projects/data-foundation/#連結システムと照合する)を参照してください。
+
+<Aside type="note">
+アダプターの列は、お客様とOneStream管理者が合意する取り決めです。アダプターがこのページに従って構築されていれば、その行は以下の説明のとおりに取り込まれます。最初のロードの結果を、信頼できるOneStreamのレポートと比較してください。
+</Aside>
+
+## OneStream管理者が設定する内容
+
+**Foundation**タブに、送付用のアクセスリクエストが作成されます。リクエストでは次の内容を依頼します。
+
+1. OneStreamのIDサービスに、**クライアント認証情報**グラントを使用するPlaidCloud用のクライアントを作成します。アダプターを実行できるサービスユーザーを割り当てます。PlaidCloudに先に結果を更新させる場合は、Data Managementシーケンスも実行できるようにします。
+
+2. レポート対象のアプリケーションとワークスペースに、連結結果の1つのテーブルを返す**Foundation_Results**という名前のデータアダプターを作成します。列は次のとおりです。
+
+   | 列 | 内容 |
+   |---|---|
+   | `entity` | 連結メンバー：エンティティ、消去メンバー、またはグループ合計。 |
+   | `account` | 勘定科目コード。基本勘定科目のみ。 |
+   | `time` | 月（`YYYY-MM`形式）。 |
+   | `scenario` | シナリオ。 |
+   | `view` | `YTD`または`Periodic`。PlaidCloudは、選択したビューの行のみを読み取ります。 |
+   | `amount` | 数値。レポートに表示される符号と単位のままです。 |
+   | `currency` | 金額が表示される通貨：グループの報告通貨。 |
+   | `flow`、`ud1`、`ud2`、`ud3`、`ud4` | フローおよびユーザー定義のディメンション。基本メンバーのみ。 |
+
+   勘定科目、フロー、ユーザー定義ディメンションの基本メンバーを提供してください。親メンバーの行があると、その子の分が二重に計上されます。アダプターは、連結メンバーを置換変数`Member`から、ビューを`View`から読み取ります。
+
+3. 読み取るメンバー：エンティティ、消去メンバー、グループ合計。
+
+## 接続の作成
+
+<Steps>
+
+1. **Tools > Connections**を開き、`New Connection`をクリックして、**OneStream**を選択します。または、ソースを追加するときに**Foundation**タブから作成します。
+
+2. 次のフィールドを入力します。
+
+   | フィールド | 値 |
+   |---|---|
+   | ホスト | `https://`で始まるOneStreamのベースURL。 |
+   | クライアントID | PlaidCloudクライアントのクライアントID。 |
+   | クライアントシークレット | そのシークレット。暗号化して保存され、再表示されることはありません。 |
+   | トークンURL | 空白にすると、ホストの後に`/identity/connect/token`を付けたものが使用されます。 |
+   | デフォルトアプリケーション | アプリケーションを空白にした読み取りで使用されます。 |
+   | デフォルトワークスペース | ワークスペースを空白にした読み取りで使用されます。 |
+   | タイムアウト（秒） | デフォルトは120です。 |
+
+3. `Create`をクリックします。
+
+</Steps>
+
+## Data Foundationプロジェクトに追加する
+
+**Foundation**タブで、ほかのソースと同様に接続をソースとして追加し（[ERPを接続する](/ja/guides/projects/data-foundation/#erpを接続する)を参照）、読み取る連結メンバーを選択します。次に、アダプターの金額を説明する設定を指定します。
+
+| 設定 | 内容 |
+|---|---|
+| メンバー | 読み取る連結メンバー。メンバーごとにアダプターが1回呼び出されます。 |
+| ビュー | アダプターの金額が年初来（デフォルト）か期間別か。年初来の行は、期間別の金額として取り込まれます。 |
+| 符号 | **自然**：各勘定科目をOneStreamのレポートどおりの符号で扱います（デフォルト）。**借方を正**：借方を正とします。 |
+| 単位 | 通貨単位の整数への乗数：OneStreamが千単位で提供する場合は`1000`。 |
+| 会計年度の開始月 | 会計年度が始まる月。年初来を期間別に変換するために使用します。 |
+| アプリケーション、ワークスペース | 接続の設定を上書きします。 |
+| 置換変数 | アダプターが読み取る追加の変数（例：`Time=2026M1`）。 |
+| Data Managementシーケンス | アダプターが読み取る内容を更新するために、読み取りの前に実行されるシーケンス。 |
+
+このソースに適用されるコードマップファイルで、OneStreamのメンバーをエンティティにマッピングします。[エンティティクロスウォーク](/ja/guides/projects/data-foundation/#エンティティ対応表)を参照してください。このソースには履歴ウィンドウの読み取りはありません。範囲は、アダプター自体の置換変数で制限されます。
+
+アダプターから行が返されないロードは、エラーではなく警告付きで完了し、テーブルは空になります。
+
+## ワークフローでアダプターを読み取る
+
+アダプターを独自のテーブルに読み取るには、[OneStream: Read Adapterステップ](/ja/reference/workflow-steps/onestream/onestream-read-adapter/)を使用します。
+
+## 関連項目
+
+- [OneStream: Read Adapterステップ](/ja/reference/workflow-steps/onestream/onestream-read-adapter/)
+- [Data Foundation: Common Finance Model](/ja/guides/projects/data-foundation/)
+- [Anaplanに接続](/ja/guides/connections/anaplan/)

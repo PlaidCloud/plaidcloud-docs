@@ -1,0 +1,92 @@
+---
+title: Operational Transfer Pricing
+description: Prüfen Sie das Gewinnniveau jeder Entität gegen die Bereiche Ihrer Verrechnungspreisrichtlinie, sehen Sie, welche Entitäten im, unter oder über dem Bereich liegen und welche Ausgleichszahlung sie zurückführt – aufbauend auf dem Common Finance Model von Data Foundation.
+sidebar:
+  label: Operational Transfer Pricing
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Die Vorlage **Operational Transfer Pricing** prüft den Gewinnniveauindikator jeder getesteten Partei gegen den Bereich, den Ihre Richtlinie festlegt, und berechnet die Ausgleichszahlung, die eine Entität außerhalb des Bereichs auf den Zielwert zurückführt. Sie baut auf dem [Common Finance Model](/de/guides/projects/data-foundation/) auf und enthält alles, was **Enterprise Profitability** aufbaut.
+
+<Aside type="note">
+Dies ist eine Management-Sicht, um eine Richtlinie im Jahresverlauf zu überwachen. Sie ist weder eine Verrechnungspreisstudie noch eine Einreichung.
+</Aside>
+
+## So funktioniert es
+
+Für jede Entität und Periode geht die Vorlage so vor:
+
+1. Sie erstellt die Gewinn- und Verlustrechnung der getesteten Partei in der **Lokalwährung** der Entität, da sie darin ihre Bücher führt und ihre Ausgleichszahlung bucht. Der Umsatz wird in Intercompany- und Drittumsatz aufgeteilt.
+2. Sie summiert sie über das Geschäftsjahr bis zum aktuellen Stand. Anpassungsperioden zählen als Perioden ihres Jahres, sodass die letzte Zeile eines Jahres das volle Jahr ist.
+3. Sie ermittelt die für die Entität geltende Richtlinie.
+4. Sie berechnet den Gewinnniveauindikator in Prozent auf Basis des Jahres bis zum aktuellen Stand und vergleicht ihn mit dem Bereich.
+
+## Gewinnniveauindikatoren
+
+Sie wählen für jede Entität eine **Perspektive**:
+
+| Perspektive | Definition |
+|---|---|
+| `ros` | Umsatzrendite (ROS): EBIT ÷ Umsatz der getesteten Partei. |
+| `ncp` | Net Cost Plus: EBIT ÷ Gesamtkosten. |
+| `resale_minus` | Resale Minus: Bruttomarge ÷ Umsatz. |
+
+Das EBIT ist der Umsatz abzüglich Herstellkosten der verkauften Waren und Betriebsaufwand. Nicht operative Zeilen sind darin nicht enthalten. Der Umsatz ist der gesamte Umsatz der Entität, Dritte und Intercompany, da der Gewinn mit allem erzielt wird.
+
+## Die Richtlinientabelle
+
+Ihre Bereiche stehen in der Tabelle `otp_policy_targets`, eine Zeile je Entität und je Periode, ab der die Richtlinie gilt. Sie bearbeiten sie; das Modell schreibt nie hinein.
+
+| Spalte | Was sie enthält |
+|---|---|
+| `entity` | Die getestete Partei. |
+| `role` | Eine Bezeichnung ihrer Rolle, etwa Vertriebsgesellschaft mit begrenztem Risiko. |
+| `lens` | `ros`, `ncp` oder `resale_minus`. |
+| `low`, `target`, `high` | Der Bereich und der Zielwert in Prozent. `low <= target <= high`. |
+| `effective_from_period` | Der Monat, ab dem die Zeile gilt, im Format `YYYY-MM`. Sie bleibt bis zur nächsten Zeile der Entität gültig. |
+
+Eine Entität hat jeweils eine Richtlinie. Ein Wechsel der Perspektive oder des Bereichs ist eine neue Zeile mit einem späteren `effective_from_period`. Die Beispieldaten enthalten drei Beispielzeilen. Ersetzen Sie sie durch Ihre eigenen.
+
+Eine Zeile, die sich nicht beurteilen lässt, etwa wegen eines ungültigen Monats, einer leeren Perspektive, eines leeren Werts für low, target oder high oder eines Bereichs in falscher Reihenfolge, macht die Ergebnisse dieser Entität **unvollständig**, statt zu raten.
+
+## Ergebnisse
+
+Für jede Entität und Periode zeigt die Ergebnistabelle den Indikator auf Basis des Jahres bis zum aktuellen Stand sowie einen Status:
+
+| Status | Bedeutung |
+|---|---|
+| `in` | Innerhalb des Bereichs, Grenzen eingeschlossen. |
+| `below`, `above` | Außerhalb des Bereichs. |
+| `n-a` | Die Basis, Umsatz oder Kosten, ist nicht positiv. |
+| `incomplete` | Die Richtlinienzeile hat ein Problem, oder etwas für den Vergleich Nötiges ist unbekannt. Ein leerer Wert wird nie als `in` gelesen. |
+
+Liegt eine Entität außerhalb des Bereichs, ist `true_up_ytd` der Gewinn, der der getesteten Partei für das Jahr bis zum aktuellen Stand hinzuzufügen ist, um den Zielwert zu erreichen, oder bei negativem Wert abzuziehen ist, in Lokalwährung. `true_up` ist die Änderung darin in der Periode, sodass die Perioden eines Jahres sich zur Ausgleichszahlung des Jahres summieren. Die Ausgleichszahlung wird auch in der Konzernwährung angegeben.
+
+Kennzahlen für den Assistenten und für Dashboards: **TP true-up**, **Tested-party EBIT**, **Tested-party sales**, **Third-party sales**, **Intercompany sales**, **Tested-party total cost**, **Return on sales**, **Net cost plus** und **CO-PA margin** nach Bewertung.
+
+## CO-PA-Marge
+
+Wenn Sie SAP CO-PA laden, zeigt die Vorlage auch dessen Marge nach Bewertung: rechtlich, Konzern oder Profitcenter. Eine Bewertung ist eine eigene Zahl, addieren Sie Bewertungen daher nie. Eine CO-PA-Datei enthält eine Bewertung, die Sie beim Hinzufügen bestätigen. Wenn eine CO-PA-Datei nicht angibt, ob Erlöse positiv oder negativ sind, fragt die Zuordnung der Datei, welches Vorzeichen sie verwendet.
+
+## Ein Projekt starten
+
+<Steps>
+
+1. Öffnen Sie in Analyze **Projekte** und klicken Sie auf **Neues Projekt**.
+
+2. Wählen Sie unter **Starten mit** die Option **Operational Transfer Pricing (Vorlage)**. Aktivieren Sie **Mit Beispieldaten starten**, um zuerst ein durchgespieltes Beispiel zu sehen.
+
+3. Verbinden Sie Ihre ERPs und führen Sie **Laden** aus. Siehe [Erste Schritte mit Data Foundation](/de/guides/projects/data-foundation-getting-started/).
+
+4. Bearbeiten Sie `otp_policy_targets` für Ihre getesteten Parteien und Bereiche und klicken Sie dann auf **Apply changes**.
+
+</Steps>
+
+Speichern Sie Ihre Richtlinientabelle mit dem Projekt über **Aktionen > Save as my template...**. Siehe [Als meine Vorlage speichern](/de/guides/projects/data-foundation/#als-meine-vorlage-speichern).
+
+## Verwandte Themen
+
+- [Data Foundation: Das Common Finance Model](/de/guides/projects/data-foundation/)
+- [Cost to Serve](/de/guides/projects/cost-to-serve/)
