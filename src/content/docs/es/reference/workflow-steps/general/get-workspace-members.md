@@ -23,7 +23,7 @@ Desactivados de forma predeterminada:
 - **Incluir miembros desactivados**: amplía la salida más allá de los miembros activos.
 - **Modo de historial de inicio de sesión**: devuelve el historial de inicios de sesión en lugar de solo el último.
 
-## Registro De Seguridad
+## Registro de seguridad
 
 Cada ejecución escribe una entrada en el Registro de seguridad con las columnas escritas, la tabla de destino, el flujo de trabajo, el paso y la ejecución.
 

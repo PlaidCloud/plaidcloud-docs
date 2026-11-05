@@ -23,7 +23,7 @@ Désactivés par défaut :
 - **Inclure les membres désactivés** — élargit la sortie au-delà des membres actifs.
 - **Mode d'historique des connexions** — renvoie l'historique des connexions plutôt que la seule dernière connexion.
 
-## Journal De Sécurité
+## Journal de sécurité
 
 Chaque exécution écrit une entrée dans le journal de sécurité qui consigne les colonnes écrites, la table cible, le workflow, l'étape et l'exécution.
 

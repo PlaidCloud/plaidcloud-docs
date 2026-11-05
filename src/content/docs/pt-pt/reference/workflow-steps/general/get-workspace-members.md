@@ -23,7 +23,7 @@ Desativadas por predefinição:
 - **Incluir membros desativados** — alargar o resultado para além dos membros ativos.
 - **Modo de histórico de inícios de sessão** — devolver o histórico de inícios de sessão em vez de apenas o último início de sessão.
 
-## Registo De Segurança
+## Registo de segurança
 
 Cada execução grava uma entrada no Registo de segurança com as colunas escritas, a tabela de destino, o fluxo de trabalho, o passo e a execução.
 

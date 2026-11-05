@@ -23,7 +23,7 @@ Desativadas por padrão:
 - **Incluir membros desativados** — amplia a saída para além dos membros ativos.
 - **Modo de histórico de login** — retorna o histórico de logins, e não apenas o último login.
 
-## Log De Segurança
+## Log de segurança
 
 Cada execução grava uma entrada no Log de segurança com as colunas gravadas, a tabela de destino, o fluxo de trabalho, a etapa e a execução.
 
