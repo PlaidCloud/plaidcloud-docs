@@ -13,6 +13,7 @@ Allgemeine Workflow-Schritte, die in keine bestimmte Kategorie passen.
 - [Deactivate Workspace Members](/de/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Prognose](/de/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/de/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/de/reference/workflow-steps/general/get-workspace-usage/)
 - [LLM-Schritt](/de/reference/workflow-steps/general/llm-step/)
 - [Pass](/de/reference/workflow-steps/general/pass/)
 - [REST-Anfrage](/de/reference/workflow-steps/general/rest-request/)

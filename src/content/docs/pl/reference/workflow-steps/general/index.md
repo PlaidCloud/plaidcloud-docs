@@ -13,6 +13,7 @@ Kroki przepływu pracy ogólnego przeznaczenia, które nie pasują do żadnej ko
 - [Deactivate Workspace Members](/pl/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Prognoza](/pl/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/pl/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/pl/reference/workflow-steps/general/get-workspace-usage/)
 - [Krok LLM](/pl/reference/workflow-steps/general/llm-step/)
 - [Pass](/pl/reference/workflow-steps/general/pass/)
 - [Żądanie REST](/pl/reference/workflow-steps/general/rest-request/)

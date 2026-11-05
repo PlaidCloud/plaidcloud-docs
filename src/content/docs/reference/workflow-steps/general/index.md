@@ -12,6 +12,7 @@ General-purpose workflow steps that don't fit into a specific category.
 - [Deactivate Workspace Members](/reference/workflow-steps/general/deactivate-workspace-members/)
 - [Forecast](/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/reference/workflow-steps/general/get-workspace-usage/)
 - [LLM Step](/reference/workflow-steps/general/llm-step/)
 - [Pass](/reference/workflow-steps/general/pass/)
 - [REST Request](/reference/workflow-steps/general/rest-request/)

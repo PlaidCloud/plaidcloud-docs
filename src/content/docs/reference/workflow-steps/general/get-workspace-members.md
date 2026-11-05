@@ -22,8 +22,13 @@ Off by default:
 - **Include Deactivated Members** — widen the output beyond active members.
 - **Login History Mode** — return login history rather than only the last login.
 
+## Security Log
+
+Each run writes an entry to the Security Log recording the columns written, the target table, the workflow, step and run.
+
 ## Related
 
 - [General steps](/reference/workflow-steps/general/)
 - [Deactivate Workspace Members](/reference/workflow-steps/general/deactivate-workspace-members/)
+- [Get Workspace Usage](/reference/workflow-steps/general/get-workspace-usage/)
 - [Member management](/administration/access/)

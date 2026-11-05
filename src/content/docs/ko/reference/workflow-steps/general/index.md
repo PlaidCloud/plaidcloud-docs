@@ -13,6 +13,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Deactivate Workspace Members 단계](/ko/reference/workflow-steps/general/deactivate-workspace-members/)
 - [예측](/ko/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members 단계](/ko/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage 단계](/ko/reference/workflow-steps/general/get-workspace-usage/)
 - [LLM 단계](/ko/reference/workflow-steps/general/llm-step/)
 - [Pass 단계](/ko/reference/workflow-steps/general/pass/)
 - [REST 요청](/ko/reference/workflow-steps/general/rest-request/)

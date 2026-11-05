@@ -13,6 +13,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Deactivate Workspace Members](/zh-cn/reference/workflow-steps/general/deactivate-workspace-members/)
 - [预测](/zh-cn/reference/workflow-steps/general/forecast/)
 - [Get Workspace Members](/zh-cn/reference/workflow-steps/general/get-workspace-members/)
+- [Get Workspace Usage](/zh-cn/reference/workflow-steps/general/get-workspace-usage/)
 - [LLM 步骤](/zh-cn/reference/workflow-steps/general/llm-step/)
 - [Pass](/zh-cn/reference/workflow-steps/general/pass/)
 - [REST 请求](/zh-cn/reference/workflow-steps/general/rest-request/)
