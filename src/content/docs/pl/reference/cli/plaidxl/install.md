@@ -28,16 +28,16 @@ PlaidXL instaluje się raz na komputer, a nie raz na skoroszyt. Potem karta **Pl
 ## Otwórz okienko zadań
 
 1. Kliknij kartę **PlaidCloud** na wstążce.
-2. W grupie **Data** kliknij **Open PlaidXL**.
+2. W grupie **Połącz** kliknij **Open PlaidXL**.
 
-Okienko zadań PlaidXL otworzy się po prawej stronie okna i poprosi o zalogowanie. Przejdź do artykułu [Logowanie](/pl/reference/cli/plaidxl/connect/).
+Okienko zadań PlaidXL otwiera się po prawej stronie okna i prosi o zalogowanie. Przejdź dalej do [Logowanie](/pl/reference/cli/plaidxl/connect/).
 
-Okienko zadań pozostaje zalogowane między sesjami, więc zwykle logujesz się raz, a potem po prostu otwierasz okienko zadań, gdy jest potrzebne.
+Okienko zadań pozostaje zalogowane między sesjami, więc zwykle logujesz się raz, a potem tylko otwierasz okienko, gdy jest potrzebne.
 
 ## Jeśli PlaidXL się nie pojawia
 
-- Zamknij wszystkie okna Excela i uruchom go ponownie. Dodatek często nie pojawia się na wstążce, dopóki Excel nie zostanie uruchomiony ponownie.
-- Sprawdź w **Insert → My Add-ins** (Windows) lub **Insert → Add-ins → My Add-ins** (Mac) i wybierz stamtąd **PlaidCloud**.
+- Zamknij wszystkie okna Excela i uruchom go ponownie. Dodatek często nie pojawia się na wstążce, dopóki Excel nie zostanie uruchomiony od nowa.
+- Sprawdź w **Insert → My Add-ins** (Windows) lub **Insert → Add-ins → My Add-ins** (Mac) i stamtąd wybierz **PlaidCloud**.
 - Jeśli Twoja organizacja blokuje dodatki ze sklepu, poproś administratora Microsoft 365 o ich wdrożenie.
 
 Więcej rozwiązań znajdziesz na stronie [Rozwiązywanie problemów](/pl/reference/cli/plaidxl/troubleshooting/).

@@ -1,6 +1,6 @@
 ---
-title: Get Workspace Members
-description: 将工作区的成员写入项目表，并可选择包含哪些身份和活动字段。
+title: Get Workspace Members 步骤
+description: 将工作区的成员写入项目表，并可选择要包含的身份和活动字段。
 sidebar:
   order: 11
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/get-workspace-members.md
@@ -8,13 +8,13 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 说明
 
-将工作区的成员写入项目表。可用于报告访问情况、将成员列表与 HR 数据源进行核对，或根据当前拥有访问权限的人员驱动下游步骤。
+将工作区的成员写入项目表。可用于报告访问情况、将成员列表与人力资源数据源核对，或根据当前拥有访问权限的人员驱动下游步骤。
 
 ## 配置
 
 ### 要包含的信息
 
-默认开启：**姓**、**名**、**电子邮件**、**用户名**、**成员创建日期** 和 **上次登录时间戳**。
+默认开启：**姓**、**名**、**电子邮件**、**用户名**、**成员创建日期**和**上次登录时间戳**。
 
 ### 其他设置
 
@@ -30,6 +30,6 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 ## 相关内容
 
 - [常规步骤](/zh-cn/reference/workflow-steps/general/)
-- [Deactivate Workspace Members](/zh-cn/reference/workflow-steps/general/deactivate-workspace-members/) 步骤
-- [Get Workspace Usage](/zh-cn/reference/workflow-steps/general/get-workspace-usage/) 步骤
+- [Deactivate Workspace Members 步骤](/zh-cn/reference/workflow-steps/general/deactivate-workspace-members/)
+- [Get Workspace Usage 步骤](/zh-cn/reference/workflow-steps/general/get-workspace-usage/)
 - [成员管理](/zh-cn/administration/access/)

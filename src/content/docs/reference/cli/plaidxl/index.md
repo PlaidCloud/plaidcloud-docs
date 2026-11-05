@@ -1,16 +1,17 @@
 ---
 title: PlaidXL
-description: Use the PlaidXL Excel add-in to sign in to your PlaidCloud workspace, pull project tables and dimension hierarchies into worksheets, refresh them on demand, and build live reports with PlaidXL custom functions.
+description: Use the PlaidXL Excel add-in to sign in to your PlaidCloud workspace, pull project tables and dimension hierarchies into worksheets, build live reports, drill and explain numbers, read governed metrics, plan by typing values back into PlaidCloud, and ask Weave.
 sidebar:
   label: PlaidXL
 ---
 
 PlaidXL is the PlaidCloud add-in for Microsoft Excel. It connects a workbook to your PlaidCloud workspace so your models and reports read from authoritative project tables and dimensions, not from a copy that goes stale the next time a workflow runs.
 
-You can work with PlaidXL in two ways, and most workbooks use both:
+You can work with PlaidXL in three ways, and most workbooks use all of them:
 
-- **The task pane** — browse your projects, pick a table or dimension, choose columns and filters, and retrieve the data into a worksheet. **Refresh All Tables** pulls current data for every table you've retrieved, and **Save to PlaidCloud…** writes an edited table back. The **Formulas** tab builds a PlaidXL formula for you.
-- **Custom functions** — formulas such as `=PLAIDXL.TABLE.GET_TABLE("Sales")` and `=PLAIDXL.CELL(...)` that read PlaidCloud data straight into cells. Use them to list tables and dimensions, lay out a hierarchy, and calculate rolled-up values for a report.
+- **The task pane** — browse your projects, pick a table or dimension, choose columns and filters, and retrieve the data into a worksheet. Refresh keeps it current, and **Save to PlaidCloud** writes an edited table back. Other tabs build a formula or a whole report for you, explain where a number comes from, and let you ask Weave in plain words.
+- **Custom functions** — formulas such as `=PLAIDXL.TABLE.GET_TABLE("Sales")`, `=PLAIDXL.CELL(...)` and `=PLAIDXL.METRIC("Net Revenue")` that read PlaidCloud data straight into cells. Use them to list tables and dimensions, lay out a hierarchy, calculate rolled-up values for a report, and read governed metrics.
+- **The ribbon and the right-click menu** — drill a dimension from any cell, pick members, refresh, explain a number or show the rows behind it, with a keyboard shortcut for each.
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 660 230" role="img" aria-label="Excel holds the PlaidXL task pane and PlaidXL custom functions. Both send requests, signed in as you, to a project in your PlaidCloud workspace, which returns table rows, dimension hierarchies and rolled-up values into worksheet cells." style="width:100%;max-width:660px;height:auto;">
@@ -39,11 +40,11 @@ You can work with PlaidXL in two ways, and most workbooks use both:
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">The task pane and the custom functions both read from the project you select, with your own PlaidCloud permissions.</figcaption>
 </figure>
 
-PlaidXL reads from PlaidCloud, and it only changes a project table when you save it back yourself: edit a retrieved sheet, click **Save to PlaidCloud…**, and confirm. Nothing is written until you do, and a restore point is kept for 7 days.
+PlaidXL reads from PlaidCloud, and it changes a project table only when you write to it yourself: type a number over a `CELL` value, or save a retrieved sheet with **Save to PlaidCloud**. Either is written straight away, and **Undo last write** reverses it. See [Type Values Into PlaidCloud](/reference/cli/plaidxl/write-values/).
 
 ## Requirements
 
-- Excel for Microsoft 365, or Excel 2021 or later, on Windows or Mac. The PlaidCloud ribbon tab and the task pane run in desktop Excel.
+- Excel for Microsoft 365, or Excel 2021 or later, on Windows or Mac. The PlaidCloud ribbon tab, the right-click menu and the task pane run in desktop Excel.
 - A PlaidCloud account in at least one workspace, and access to the projects you want to read. PlaidXL shows only the projects, tables and dimensions your account can already see in PlaidCloud.
 
 ## Topics
@@ -52,8 +53,11 @@ PlaidXL reads from PlaidCloud, and it only changes a project table when you save
 - [Sign In](/reference/cli/plaidxl/connect/) — connect to your workspace, sign out, and switch workspaces
 - [Work With Tables and Dimensions](/reference/cli/plaidxl/retrieve/) — pick a project, filter a table, retrieve it into a sheet, refresh it, and save it back
 - [Custom Functions](/reference/cli/plaidxl/functions/) — every `PLAIDXL` function, its arguments, and what it returns
-- [Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/) — lay out a hierarchy and fill it with rolled-up values
-- [The PlaidCloud Ribbon](/reference/cli/plaidxl/ribbon/) — refresh, expand a hierarchy, and convert to values
+- [Build a Report](/reference/cli/plaidxl/build-a-report/) — lay out a live report from the task pane, or with formulas
+- [Drill, Pick Members and Explain Numbers](/reference/cli/plaidxl/drill/) — drill from a cell, pick members, explain a number and show its detail rows
+- [Type Values Into PlaidCloud](/reference/cli/plaidxl/write-values/) — plan by typing over report values, and undo any write
+- [Ask Weave in Excel](/reference/cli/plaidxl/weave/) — build, drill and fix from plain-language requests
+- [The PlaidCloud Ribbon](/reference/cli/plaidxl/ribbon/) — every command, the right-click menu and keyboard shortcuts
 - [Troubleshooting](/reference/cli/plaidxl/troubleshooting/) — fixes for the most common problems
 
 New to PlaidXL? The [Work in Excel With PlaidXL](/get-started/tutorials/excel-with-plaidxl/) tutorial takes you from installing the add-in to a first report in about 20 minutes.

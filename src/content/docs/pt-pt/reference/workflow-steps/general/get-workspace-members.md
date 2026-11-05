@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## Descrição
 
-Escreve os membros da área de trabalho numa tabela do projeto. Utilize-o para elaborar relatórios sobre o acesso, reconciliar uma lista de membros com um ficheiro de recursos humanos ou controlar um passo seguinte consoante quem tem atualmente acesso.
+Escreve os membros da área de trabalho numa tabela do projeto. Use-o para elaborar relatórios sobre acessos, reconciliar uma lista de membros com um ficheiro de recursos humanos ou controlar um passo posterior com base em quem tem atualmente acesso.
 
 ## Configuração
 
@@ -20,12 +20,12 @@ Ativados por predefinição: **Apelido**, **Nome próprio**, **Correio eletróni
 
 Desativadas por predefinição:
 
-- **Incluir membros desativados** — alargar o resultado para além dos membros ativos.
-- **Modo de histórico de inícios de sessão** — devolver o histórico de inícios de sessão em vez de apenas o último início de sessão.
+- **Incluir membros desativados** — alarga o resultado para além dos membros ativos.
+- **Modo de histórico de inícios de sessão** — devolve o histórico de inícios de sessão em vez de apenas o último início de sessão.
 
 ## Registo de segurança
 
-Cada execução grava uma entrada no Registo de segurança com as colunas escritas, a tabela de destino, o fluxo de trabalho, o passo e a execução.
+Cada execução escreve uma entrada no Registo de segurança que regista as colunas escritas, a tabela de destino, o fluxo de trabalho, o passo e a execução.
 
 ## Relacionados
 

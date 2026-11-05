@@ -1,6 +1,6 @@
 ---
-title: Get Workspace Members (krok)
-description: Zapisz członków obszaru roboczego w tabeli projektu, wybierając, które pola tożsamości i aktywności uwzględnić.
+title: Get Workspace Members
+description: Zapisz członków obszaru roboczego do tabeli projektu, wybierając pola tożsamości i aktywności do uwzględnienia.
 sidebar:
   order: 11
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/get-workspace-members.md
@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## Opis
 
-Zapisuje członków obszaru roboczego w tabeli projektu. Użyj go do raportowania dostępu, uzgadniania listy członków z danymi z systemu kadrowego lub sterowania krokiem następnym na podstawie tego, kto aktualnie ma dostęp.
+Zapisuje członków obszaru roboczego do tabeli projektu. Użyj tego kroku, aby raportować dostęp, uzgadniać listę członków z danymi z systemu kadrowego lub sterować kolejnym krokiem na podstawie tego, kto ma obecnie dostęp.
 
 ## Konfiguracja
 
@@ -21,15 +21,15 @@ Domyślnie włączone: **Nazwisko**, **Imię**, **E-mail**, **Nazwa użytkownika
 Domyślnie wyłączone:
 
 - **Uwzględnij dezaktywowane elementy** — rozszerza wynik poza aktywnych członków.
-- **Tryb historii logowania** — zwraca historię logowania, a nie tylko ostatnie logowanie.
+- **Tryb historii logowania** — zwraca historię logowania zamiast tylko ostatniego logowania.
 
-## Dziennik Zabezpieczeń
+## Dziennik zabezpieczeń
 
 Każde uruchomienie zapisuje w Dzienniku zabezpieczeń wpis z zapisanymi kolumnami, tabelą docelową, przepływem pracy, krokiem i uruchomieniem.
 
 ## Powiązane
 
 - [Kroki ogólne](/pl/reference/workflow-steps/general/)
-- [Deactivate Workspace Members (krok)](/pl/reference/workflow-steps/general/deactivate-workspace-members/)
-- [Get Workspace Usage (krok)](/pl/reference/workflow-steps/general/get-workspace-usage/)
+- [Deactivate Workspace Members](/pl/reference/workflow-steps/general/deactivate-workspace-members/)
+- [Get Workspace Usage](/pl/reference/workflow-steps/general/get-workspace-usage/)
 - [Zarządzanie członkami](/pl/administration/access/)

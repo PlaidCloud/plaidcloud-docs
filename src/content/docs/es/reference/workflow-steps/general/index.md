@@ -1,10 +1,10 @@
 ---
 title: Pasos generales
-description: Pasos de flujo de trabajo de uso general que no encajan en una categoría concreta.
+description: Pasos de flujo de trabajo de uso general que no encajan en una categoría específica.
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/index.md
 ---
 
-Pasos de flujo de trabajo de uso general que no encajan en una categoría concreta.
+Pasos de flujo de trabajo de uso general que no encajan en una categoría específica.
 
 ## Pasos
 
