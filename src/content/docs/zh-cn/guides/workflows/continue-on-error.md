@@ -15,3 +15,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 设置为出错时继续的步骤，在工作流步骤层次结构表中会有特殊标记。
+
+通过 REST API，或通过 AI 助手或 MCP 的 `workflow_run_status` 查看运行结果时，如果运行中仅有设置为出错时继续的步骤失败，该运行仍算作成功，但会在 `continued_step_ids` 中列出这些步骤，并在 `continued_step_count` 中给出其数量，因此越过错误继续执行的运行不会被报告为没有问题。

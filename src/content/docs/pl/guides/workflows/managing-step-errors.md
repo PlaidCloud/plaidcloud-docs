@@ -14,6 +14,8 @@ Krok, którego serwer zostanie utracony w trakcie uruchomienia, jest obsługiwan
 
 Gdy PlaidCloud odrzuca krok z przyczyny, którą można naprawić, na przykład z powodu brakującego uprawnienia lub nieprawidłowego ustawienia, dziennik kroku pokazuje ten komunikat zwykłymi słowami, a nie błąd serwera ze śladem stosu. Krok Model Loop, Model Run lub Macro Run, którego podrzędny przepływ pracy kończy się niepowodzeniem, pokazuje własny komunikat o błędzie przepływu podrzędnego, w postaci „Child workflow run failed:", po którym następuje treść komunikatu.
 
+Błąd kroku pokazuje własny komunikat. Błąd, którego PlaidCloud nie przewidział, ma postać „The step stopped on an unexpected error (*typ*): *komunikat*”, czyli podaje rodzaj błędu i jego treść, dzięki czemu można zareagować bez otwierania pełnego dziennika.
+
 Jeśli nie wybrano ponawiania lub przekroczono maksymalną liczbę ponowień, krok zostaje oznaczony jako błąd. PlaidCloud udostępnia w takim przypadku trzy poziomy obsługi błędów:
 
 

@@ -73,6 +73,8 @@ Desactivado de forma predeterminada: cada ejecución carga un segmento ad hoc qu
 
 Mientras se ejecuta el trabajo, el paso muestra un estado de sondeo. Cuando termina la carga, la tabla se crea a partir de las columnas de la cuadrícula: no hay que definir ningún esquema de antemano.
 
+El paso espera el trabajo de exportación durante un tiempo limitado. Si el trabajo no ha terminado para entonces, el paso falla, de modo que los pasos posteriores no se ejecutan sin el segmento. **Reanude** el flujo de trabajo o vuelva a ejecutar el paso, y este vuelve a comprobar el **mismo** trabajo de exportación en lugar de enviar uno nuevo.
+
 ## Almacenamiento en caché
 
 El mismo POV solicitado de nuevo se **sirve desde la tabla ya cargada**, al instante, en lugar de volver a enviar la exportación a FCCS. Una ejecución se identifica por la aplicación, la tabla de destino, el punto de vista y una etiqueta **as-of** (valor predeterminado `latest`); una repetición que se resuelve en un segmento ya cargado informa de que la tabla se dejó en su lugar en vez de reescribirla. Cambie la etiqueta as-of cuando quiera forzar una extracción nueva del mismo POV.

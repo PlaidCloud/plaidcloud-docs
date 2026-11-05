@@ -14,6 +14,8 @@ Um passo cujo servidor é perdido a meio da execução é tratado separadamente 
 
 Quando o PlaidCloud recusa um passo por um motivo que pode corrigir, como uma permissão em falta ou uma definição que não é válida, o registo do passo mostra essa mensagem em linguagem simples, em vez de um erro de servidor com um rastreio de pilha. Num passo Model Loop, Model Run ou Macro Run cujo fluxo de trabalho subordinado falha, é apresentada a mensagem de erro do próprio fluxo subordinado, como "Child workflow run failed:" seguida da mensagem.
 
+Um erro de passo mostra a mensagem do próprio erro. Um erro que o PlaidCloud não previu indica "The step stopped on an unexpected error (*type*): *message*", com o tipo de erro e o que este disse, para que possa agir sem abrir o registo completo.
+
 Se não for selecionada nenhuma repetição ou se o número máximo de repetições for excedido, o passo será marcado como erro. Nesse caso, o PlaidCloud oferece três níveis de tratamento de erros:
 
 

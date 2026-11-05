@@ -78,7 +78,7 @@ Para retomar o trabalho, [**Retome**](#pausar-parar-e-retomar) a execução — 
 
 ### Etapas interrompidas
 
-Se o servidor que executa uma etapa for perdido no meio da execução, o PlaidCloud executa a etapa novamente de forma automática quando é seguro repeti-la: uma etapa que substitui sua saída termina com o mesmo resultado de uma única execução limpa, então não há nada para verificar.
+Se o servidor que executa uma etapa for perdido no meio da execução, o PlaidCloud executa a etapa novamente de forma automática quando é seguro repeti-la: uma etapa que substitui sua saída termina com o mesmo resultado de uma única execução limpa, então não há nada para verificar. O log da etapa mostra um aviso no ponto em que a segunda tentativa começa: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
 Uma etapa que não pode ser repetida com segurança não é executada de novo. Ela falha uma vez com uma mensagem de **interrompida**, porque executá-la uma segunda vez poderia duplicar o que a primeira tentativa já gravou. Etapas que gravam saídas com `{date}` no nome ou no caminho contam como não seguras para repetir, já que uma nova execução poderia cair em outra data. Para se recuperar, verifique no destino da etapa o que a primeira tentativa gravou, limpe-o se necessário e então [execute a etapa novamente](/pt-br/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
 
@@ -98,9 +98,15 @@ Se o job de uma etapa nunca puder começar, a etapa falha com o motivo em vez de
 
 A mensagem de sincronização de conector informa a sincronização. Se um worker iniciou o job e depois desapareceu, a etapa também falha, com uma mensagem dizendo que o worker parou. As mensagens de importação e de dimensão dizem "Use Run from here to retry."
 
+### Execuções que param de responder
+
+Uma execução nunca permanece **Em execução** depois que o trabalho por trás dela deixou de existir. Se o servidor que executa o fluxo de trabalho for perdido, a execução termina como falha. Uma execução pode durar no máximo 12 horas: uma que ainda estiver em execução nesse momento falha com "Run failed: still running at the 12-hour limit. Re-run the workflow."
+
 ## Pausar, parar e retomar
 
 Enquanto um fluxo de trabalho está em execução, você pode **Pausar** para que as etapas em andamento terminem e as novas etapas aguardem, ou **Parar**, o que cancela as etapas que estavam na fila e quaisquer jobs de importação ou exportação ainda em execução. As etapas de importação e de dimensão que ainda estavam na fila são canceladas de forma limpa, para que não atrasem importações e cargas de dimensão posteriores no espaço de trabalho. Parar também interrompe as sincronizações de conector (Singer) do fluxo de trabalho que estavam na fila ou em execução, de modo que uma sincronização não continue rodando depois que o fluxo de trabalho parou.
+
+Uma macro pode estar em execução em vários lugares ao mesmo tempo, chamada por outros fluxos de trabalho ou por uma etapa **Macro: Execução simultânea**. Parar a macro interrompe todas as cópias dela em execução. Uma macro que está em execução apenas dentro de outros fluxos de trabalho aparece como **Em execução** na lista de fluxos de trabalho, com **Parar** disponível, e abri-la mostra o status, o horário de início e o de término de cada etapa na execução mais recente.
 
 **Retomar** recomeça uma execução pausada, parada ou com falha do ponto em que parou, em vez de começar do zero. Está disponível sempre que a última execução de um fluxo de trabalho terminou em estado pausado, parado ou de erro.
 
@@ -116,9 +122,9 @@ As etapas que chamam outro fluxo de trabalho — **Run Model**, **Conditional Ru
 
 Quando você retoma um fluxo de trabalho que foi executado como **filho aninhado** de outro — um que uma etapa **Run Model** em um pai invocou —, o PlaidCloud oferece **Retomar do início da cadeia**. Retomar o filho isoladamente não consegue continuar a orquestração do pai, então essa opção retoma o pai de nível superior — a raiz da cadeia — e continua a cadeia inteira do ponto em que parou. Retomar um fluxo de trabalho de nível superior permanece inalterado. O início da cadeia é resolvido dentro do mesmo projeto: uma cadeia que cruza para outro projeto é retomada a partir do início da parte dentro do projeto.
 
-Retomar sempre continua a execução **original**. Ele executa novamente todas as etapas dessa execução que não terminaram com sucesso — uma etapa que falhou ou foi abandonada é executada de novo, não tratada como concluída — e executar novamente uma etapa individual por conta própria nesse meio-tempo não muda o que Retomar pegará em seguida.
+Retomar sempre continua a execução **original**. Ele executa novamente todas as etapas dessa execução que não terminaram com sucesso — uma etapa que falhou ou foi abandonada é executada de novo, não tratada como concluída — e executar novamente uma etapa individual por conta própria nesse meio-tempo não muda o que Retomar pegará em seguida. Isso também vale para um fluxo de trabalho filho: se você executou novamente uma das etapas dele por conta própria, retomar o pai ainda executa tudo o que restava no filho, não apenas essa etapa.
 
-Uma execução retomada é registrada como uma **nova execução** no histórico de execuções do fluxo de trabalho, contendo apenas as etapas que ela executou novamente. A execução original mantém sua própria entrada no histórico.
+Uma execução retomada é registrada como uma **nova execução** no histórico de execuções do fluxo de trabalho, contendo apenas as etapas que ela executou novamente. A execução original mantém sua própria entrada no histórico. Quando uma execução chama o mesmo fluxo de trabalho filho mais de uma vez, cada chamada tem sua própria entrada no histórico de execuções do filho. As iterações de uma etapa de loop contam como uma única chamada.
 
 :::note
 Uma etapa de loop associa suas iterações concluídas pelos valores de variável delas. Se os dados sobre os quais o loop itera mudaram entre a execução original e a retomada, as iterações que ele não consegue mais associar são executadas novamente em vez de ignoradas.

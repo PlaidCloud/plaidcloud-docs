@@ -78,7 +78,7 @@ Pour reprendre le travail, vous pouvez soit [**Reprendre**](#suspendre-arrêter-
 
 ### Étapes interrompues
 
-Si le serveur qui exécute une étape est perdu en cours d'exécution, PlaidCloud réexécute automatiquement l'étape lorsqu'il est sûr de la répéter : une étape qui remplace sa sortie aboutit au même résultat qu'une seule exécution propre, et vous n'avez donc rien à vérifier.
+Si le serveur qui exécute une étape est perdu en cours d'exécution, PlaidCloud réexécute automatiquement l'étape lorsqu'il est sûr de la répéter : une étape qui remplace sa sortie aboutit au même résultat qu'une seule exécution propre, et vous n'avez donc rien à vérifier. Le journal de l'étape affiche un avertissement à l'endroit où commence la seconde tentative : « Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start. »
 
 Une étape qui ne peut pas être répétée sans risque n'est pas réexécutée. Elle échoue une seule fois avec un message **Interrompu**, car l'exécuter une seconde fois pourrait dupliquer ce que la première tentative a déjà écrit. Les étapes qui écrivent des sorties dont le nom ou le chemin contient `{date}` sont considérées comme non sûres à répéter, puisqu'une réexécution pourrait tomber à une autre date. Pour récupérer, vérifiez dans la cible de l'étape ce que la première tentative a écrit, nettoyez-la si nécessaire, puis [réexécutez l'étape](/fr/guides/workflows/running-one-step-in-a-workflow/) ou **Reprenez** l'exécution.
 
@@ -98,9 +98,15 @@ Si le job d'une étape ne peut jamais démarrer, l'étape échoue en indiquant l
 
 Le message de synchronisation de connecteur nomme la synchronisation. Si un worker a démarré le job puis a disparu, l'étape échoue également, avec un message indiquant que le worker s'est arrêté. Les messages d'importation et de dimension indiquent « Use Run from here to retry. »
 
+### Exécutions qui ne répondent plus
+
+Une exécution ne reste jamais **En cours d'exécution** une fois que le travail qui la sous-tend a disparu. Si le serveur qui exécute le workflow est perdu, l'exécution se termine en échec. Une exécution peut durer au plus 12 heures : une exécution encore en cours à ce moment-là échoue avec le message « Run failed: still running at the 12-hour limit. Re-run the workflow. »
+
 ## Suspendre, arrêter et reprendre
 
 Pendant l'exécution d'un workflow, vous pouvez le **Suspendre**, de sorte que les étapes en cours se terminent et que les nouvelles étapes attendent, ou l'**Arrêter**, ce qui annule les étapes en file d'attente ainsi que les jobs d'importation ou d'exportation encore en cours. Les étapes d'importation et de dimension encore en file d'attente sont annulées proprement, afin de ne pas retarder les importations et chargements de dimension suivants dans l'espace de travail. L'arrêt interrompt aussi les synchronisations de connecteur (Singer) du workflow, en file d'attente ou en cours, de sorte qu'une synchronisation ne continue pas de s'exécuter après l'arrêt du workflow.
+
+Une macro peut s'exécuter à plusieurs endroits à la fois, appelée par d'autres workflows ou par une étape **Macro : exécution parallèle**. Arrêter la macro arrête toutes ses copies en cours d'exécution. Une macro qui ne s'exécute qu'au sein d'autres workflows apparaît comme **En cours d'exécution** dans la liste des workflows, avec **Arrêter** disponible, et son ouverture affiche l'état, l'heure de début et l'heure de fin de chaque étape lors de sa dernière exécution.
 
 **Reprendre** relance une exécution suspendue, arrêtée ou en échec là où elle s'était interrompue, au lieu de repartir de zéro. L'action est disponible chaque fois que la dernière exécution d'un workflow s'est terminée à l'état suspendu, arrêté ou en erreur.
 
@@ -116,9 +122,9 @@ Les étapes qui appellent un autre workflow (**Run Model**, **Conditional Run Mo
 
 Lorsque vous reprenez un workflow qui s'est exécuté comme **enfant imbriqué** d'un autre (appelé par une étape **Run Model** d'un parent), PlaidCloud propose **Reprendre depuis le début de la chaîne**. Reprendre l'enfant seul ne peut pas poursuivre l'orchestration du parent. Cette option reprend donc le parent de niveau supérieur, c'est-à-dire la racine de la chaîne, et poursuit toute la chaîne là où elle s'était arrêtée. La reprise d'un workflow de niveau supérieur reste inchangée. Le début de la chaîne est déterminé au sein du même projet : une chaîne qui passe dans un autre projet reprend depuis le début de la portion située dans le projet.
 
-Reprendre poursuit toujours l'exécution **d'origine**. Il réexécute chaque étape de cette exécution qui ne s'est pas terminée avec succès (une étape en échec ou abandonnée est réexécutée, et non considérée comme terminée), et réexécuter entre-temps une étape individuelle seule ne change pas ce que Reprendre prendra en charge ensuite.
+Reprendre poursuit toujours l'exécution **d'origine**. Il réexécute chaque étape de cette exécution qui ne s'est pas terminée avec succès (une étape en échec ou abandonnée est réexécutée, et non considérée comme terminée), et réexécuter entre-temps une étape individuelle seule ne change pas ce que Reprendre prendra en charge ensuite. Cela vaut aussi pour un workflow enfant : si vous avez réexécuté seule l'une de ses étapes, la reprise du parent exécute quand même tout ce qu'il restait à l'enfant, et pas seulement cette étape.
 
-Une exécution reprise est enregistrée comme une **nouvelle exécution** dans l'historique des exécutions du workflow, et ne contient que les étapes qu'elle a réexécutées. L'exécution d'origine conserve sa propre entrée d'historique.
+Une exécution reprise est enregistrée comme une **nouvelle exécution** dans l'historique des exécutions du workflow, et ne contient que les étapes qu'elle a réexécutées. L'exécution d'origine conserve sa propre entrée d'historique. Lorsqu'une même exécution appelle plusieurs fois le même workflow enfant, chaque appel dispose de sa propre entrée dans l'historique des exécutions de l'enfant. Les itérations d'une étape de boucle comptent comme un seul appel.
 
 :::note
 Une étape de boucle fait correspondre ses itérations terminées selon les valeurs de leurs variables. Si les données sur lesquelles la boucle itère ont changé entre l'exécution d'origine et la reprise, les itérations qu'elle ne peut plus faire correspondre sont réexécutées au lieu d'être sautées.

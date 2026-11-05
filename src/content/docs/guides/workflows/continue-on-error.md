@@ -14,3 +14,5 @@ To set this option, open the step's form from the workflow table — click its g
 
 
 Steps that have been set to continue on error will have a special indicator in the workflow steps hierarchy table.
+
+When you check a run's outcome through the REST API, or through the AI assistant or MCP with `workflow_run_status`, a run whose only failures were in steps set to continue still counts as succeeded, and it lists those steps in `continued_step_ids`, with their number in `continued_step_count`, so a run that carried on past an error isn't reported as clean.

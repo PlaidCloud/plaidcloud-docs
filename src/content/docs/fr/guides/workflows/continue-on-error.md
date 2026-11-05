@@ -15,3 +15,5 @@ Pour définir cette option, ouvrez le formulaire de l'étape depuis la table du 
 
 
 Les étapes configurées pour continuer en cas d'erreur portent un indicateur spécial dans la table de hiérarchie des étapes du workflow.
+
+Lorsque vous consultez le résultat d'une exécution via l'API REST, ou via l'assistant IA ou MCP avec `workflow_run_status`, une exécution dont les seuls échecs proviennent d'étapes configurées pour continuer est tout de même considérée comme réussie, et elle liste ces étapes dans `continued_step_ids`, avec leur nombre dans `continued_step_count`, afin qu'une exécution qui a poursuivi malgré une erreur ne soit pas présentée comme exempte d'erreurs.

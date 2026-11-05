@@ -14,6 +14,8 @@ Une étape dont le serveur est perdu en cours d'exécution est traitée séparé
 
 Lorsque PlaidCloud refuse une étape pour une raison que vous pouvez corriger, comme une autorisation manquante ou un paramètre non valide, le journal de l'étape affiche ce message en langage clair plutôt qu'une erreur de serveur avec une trace de pile. Pour une étape Model Loop, Model Run ou Macro Run dont le workflow enfant échoue, le journal affiche le message d'erreur propre à l'enfant, sous la forme « Child workflow run failed: » suivie du message.
 
+Une erreur d'étape affiche le message propre à l'erreur. Une erreur que PlaidCloud n'avait pas prévue s'affiche sous la forme « The step stopped on an unexpected error (*type*): *message* », qui nomme le type d'erreur et ce qu'elle indique, afin que vous puissiez agir sans ouvrir le journal complet.
+
 Si aucune nouvelle tentative n'est sélectionnée ou si le nombre maximal de nouvelles tentatives est dépassé, l'étape est marquée en erreur. PlaidCloud propose alors trois niveaux de gestion des erreurs :
 
 
