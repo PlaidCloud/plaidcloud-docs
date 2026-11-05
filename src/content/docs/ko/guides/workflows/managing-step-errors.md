@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 
-실행 도중 서버를 잃은 단계는 재시도와는 별도로 처리됩니다. 반복해도 안전한 단계는 자동으로 다시 실행되고, 그렇지 않은 단계는 **중단됨** 메시지와 함께 한 번 실패합니다. [중단된 단계](/ko/guides/workflows/run-a-workflow/#중단된-단계)를 참조하십시오.
+실행 도중 서버를 잃은 단계는 재시도와는 별도로 처리됩니다. 반복해도 안전한 단계는 자동으로 다시 실행되고, 그렇지 않은 단계는 **중단됨** 메시지와 함께 한 번 실패합니다. [중단된 단계](/ko/guides/workflows/run-a-workflow/#인터럽트된-단계)를 참조하십시오.
 
 권한 누락이나 유효하지 않은 설정처럼 사용자가 해결할 수 있는 이유로 PlaidCloud가 단계를 거부하면, 단계 로그에는 스택 트레이스가 포함된 서버 오류 대신 쉬운 말로 된 메시지가 표시됩니다. 하위 워크플로가 실패한 Model Loop 단계, Model Run 단계 또는 Macro Run 단계에는 하위 워크플로 자체의 오류 메시지가 “Child workflow run failed:” 뒤에 이어서 표시됩니다.
 

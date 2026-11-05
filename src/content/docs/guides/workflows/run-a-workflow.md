@@ -83,11 +83,23 @@ A step that can't be repeated safely isn't re-run. It fails once with an **inter
 
 ### Steps That Never Start
 
-If no worker picks up an import or dimension step's job within about 40 minutes, the step fails instead of showing **Running** until the 24-hour timeout. If a worker started the job and then went away, the step also fails, with a message saying the worker stopped. Both messages say "Use Run from here to retry."
+While a step waits for a worker, its status message reads "Waiting for a worker… N min. No import worker has picked this step up yet." (the kind of worker matches the step, such as import or export). The message clears once the work starts.
+
+If a step's job can never start, the step fails with the reason instead of waiting forever:
+
+| Cause | Fails after about |
+|---|---|
+| No worker picks up an import or dimension step's job | 40 minutes |
+| The step's pod is stuck Pending | 20 minutes |
+| The step's image can't be pulled | 5 minutes |
+| No pod is created for the step | 20 minutes |
+| No runner picks up a connector (Singer) sync | 30 minutes |
+
+The connector sync message names the sync. If a worker started the job and then went away, the step also fails, with a message saying the worker stopped. The import and dimension messages say "Use Run from here to retry."
 
 ## Pause, Stop, and Resume
 
-While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace.
+While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace. Stop also stops the workflow's queued or running connector (Singer) syncs, so a sync doesn't keep running after the workflow has stopped.
 
 **Resume** picks a paused, stopped, or failed run back up from where it left off instead of starting over. It is available whenever a workflow's last run ended in a paused, stopped, or error state.
 
