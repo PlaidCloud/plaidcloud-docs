@@ -1,0 +1,78 @@
+---
+title: Accès à Dynamics 365 Finance and Operations pour Data Foundation
+description: Ce qu'un administrateur Dynamics 365 Finance and Operations configure pour que PlaidCloud Data Foundation puisse lire directement le système (une application Microsoft Entra ID, un rôle en lecture seule et un identifiant SQL Fabric Link) et ce qu'il faut renvoyer.
+sidebar:
+  label: Accès à Dynamics 365 F&O pour Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/fr/guides/projects/data-foundation/) rassemble dans un seul Common Finance Model les données de chaque système ERP et de chaque instance que vous connectez, et Dynamics 365 Finance and Operations fait partie des ERP qu'il lit directement. La connexion utilise une application Microsoft Entra ID avec un secret client pour les données de base, et le point de terminaison SQL de votre Fabric (Synapse) Link pour le journal général. Cette page s'adresse à l'administrateur Dynamics 365 qui effectue cette configuration, et à l'utilisateur PlaidCloud qui la lui demande.
+
+PlaidCloud ne fait que lire les données. Personne n'envoie de secret client ni de mot de passe SQL par e-mail.
+
+## Envoyer la demande d'accès
+
+Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion** sous **Connexion Dynamics 365 Finance and Operations**. Le formulaire affiche la demande complète. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Read-only Dynamics 365 Finance and Operations access for PlaidCloud ».
+
+## Ce que l'administrateur Dynamics 365 configure
+
+<Steps>
+
+1. **Enregistrez une application dans Microsoft Entra ID** pour PlaidCloud, avec un secret client. Notez son ID d'application (client), l'ID de l'annuaire (locataire) et le secret.
+
+2. **Associez l'application à un utilisateur.** Dans Dynamics 365, sous **System administration > Setup > Microsoft Entra ID applications**, ajoutez l'ID client et associez-le à un utilisateur disposant d'un rôle qui peut consulter, pour chaque entité juridique que vous voulez charger :
+
+   - Grand livre : entités juridiques, calendriers fiscaux, comptes principaux, valeurs de dimensions financières, taux de change
+   - Comptes clients : clients et lignes de facture client
+   - Gestion des informations produit : produits diffusés
+   - Gestion des stocks : stock disponible et transactions de stock (facultatif)
+   - Budgétisation : écritures du registre budgétaire (facultatif)
+
+3. **Configurez Fabric Link pour le journal général.** Les lignes du journal général sont lues depuis le point de terminaison SQL de votre Fabric (Synapse) Link, et non depuis le service OData. Vérifiez que Fabric Link est activé pour ces tables, et créez sur ce point de terminaison un identifiant SQL en lecture seule pour PlaidCloud :
+
+   - `generaljournalaccountentry`
+   - `generaljournalentry`
+   - `fiscalcalendarperiod`
+   - `dimensionattributelevelvalue`, avec une ligne par valeur de dimension pour chaque combinaison de dimensions financières, ainsi que le nom de sa dimension
+
+</Steps>
+
+## Ce qu'il faut renvoyer
+
+| L'administrateur envoie | Saisi dans PlaidCloud comme |
+|---|---|
+| L'URL de l'environnement, `https://<name>.operations.dynamics.com` | **URL de l'environnement** |
+| L'ID de l'annuaire (locataire) | **Directory (tenant) ID** |
+| L'ID de l'application (client) | **Application (client) ID** |
+| Le point de terminaison SQL Fabric Link, la base de données et l'identifiant | Une connexion SQL distincte dans PlaidCloud, choisie dans le paramètre système `fabric_connection_id` |
+| Les catégories de comptes principaux de vos comptes de coût des marchandises vendues (PlaidCloud suppose `COGS`) | Le paramètre système `cogs_categories` |
+| Les catégories de comptes principaux des comptes hors exploitation : intérêts, impôt sur le revenu, gains et pertes de change, autres produits | Le paramètre système `non_operating_categories` |
+| La dimension financière qui nomme le partenaire intersociétés d'une ligne (PlaidCloud suppose `IntercompanyPartner`) | Le paramètre système `ic_partner_dimension` |
+| Les entités juridiques que PlaidCloud peut lire | Choisies sous **Legal entities** dans PlaidCloud |
+
+Le secret client et le mot de passe de l'identifiant SQL ne passent jamais par e-mail. L'équipe de l'utilisateur PlaidCloud colle elle-même le **Secret client** dans PlaidCloud, et la connexion SQL conserve l'identifiant SQL. Les entités juridiques qui sont des entités de consolidation sont à renseigner dans le paramètre système `consolidation_companies`, afin que leurs écritures ne soient pas comptées comme l'activité d'une société.
+
+## Vérifier l'accès
+
+De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+
+| Jeu de données | Autorisation requise |
+|---|---|
+| Entités | Grand livre : consulter les entités juridiques |
+| Calendrier fiscal | Grand livre : consulter les calendriers fiscaux |
+| Plan comptable | Grand livre : consulter les comptes principaux |
+| Départements | Grand livre : consulter les valeurs de dimensions financières |
+| Clients | Comptes clients : consulter les clients |
+| Produits | Gestion des informations produit : consulter les produits diffusés |
+| Taux de change | Grand livre : consulter les taux de change |
+| Balance de vérification, Grand livre | Consulter le grand livre (le journal, via Fabric Link) |
+| Lignes de vente, Soldes de stock, Budget | Facultatif |
+
+Lorsqu'un jeu de données est manquant, le test nomme l'autorisation à ajouter. Demandez à l'administrateur de l'ajouter au rôle, puis testez à nouveau. Les lignes de vente, les soldes de stock et le budget sont facultatifs : un environnement qui ne les contient pas charge tout le reste.
+
+## Voir aussi
+
+- [Data Foundation](/fr/guides/projects/data-foundation/)
+- [Se connecter à Dynamics 365 Finance & Operations](/fr/guides/connections/dynamics-365-fo/)

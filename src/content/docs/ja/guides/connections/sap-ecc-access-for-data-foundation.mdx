@@ -1,0 +1,106 @@
+---
+title: Data Foundation 向け SAP ECC アクセス
+description: PlaidCloud Data Foundation が PlaidLink 経由で SAP ECC を直接読み取れるように SAP 管理者が設定する内容（読み取り専用の通信ユーザーとテーブルアクセス）と、返送する情報について説明します。
+sidebar:
+  label: Data Foundation 向け SAP ECC アクセス
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sap-ecc-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/)は、接続したすべての ERP システムとインスタンスのデータを 1 つの Common Finance Model に集約します。SAP ECC は、Data Foundation が直接読み取る ERP の 1 つです。PlaidCloud は、自社ネットワークにインストールされた [PlaidLink](/ja/reference/cli/plaidlink/) エージェント経由で、RFC を使用してシステムにアクセスします。このページは、これを設定する SAP 管理者と、管理者に依頼する PlaidCloud ユーザーを対象としています。
+
+PlaidCloud はデータを読み取るだけです。パスワードをメールで送らないでください。
+
+## アクセス依頼を送信する
+
+プロジェクトの **Foundation** タブで、**SAP ECC接続**の下にある**新しい接続を作成**を選択します。フォームに依頼内容の全文と、**How to set up PlaidLink** リンクが表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックして、件名「Read-only SAP ECC access for PlaidCloud (through PlaidLink)」でメールプログラムに開きます。
+
+## SAP 管理者が設定する内容
+
+<Steps>
+
+1. レポート元のクライアントに **PlaidCloud ABAP パッケージをインストール**し（`Z_PLAIDCL_B5_READ_TABLE` のファンクショングループ）、RFC でシステムにアクセスできる PlaidLink エージェントをインストールします。
+
+2. 次の権限を持つロールを割り当てた**通信ユーザーを作成**します（例: `PLAIDCLOUD_RFC`）。
+
+   - `S_RFC`: `Z_PLAIDCL_B5_READ_TABLE` のファンクショングループを実行します。
+   - 以下のテーブルに対する `S_TABU_NAM`（表示、`ACTVT` 03）。
+
+   | テーブル | 保持する内容 |
+   |---|---|
+   | `T001` | 会社コード |
+   | `T009`, `T009B`, `T001B` | 会計年度変式と転記期間 |
+   | `SKA1`, `SKAT` | G/L 勘定 |
+   | `FAGL_011PC`, `FAGL_011ZC` | 財務諸表バージョン |
+   | `CSKS`, `CSKT` | コストセンター |
+   | `SETHEADER`, `SETNODE` | コストセンターとプロフィットセンターのグループ |
+   | `CEPC`, `CEPCT` | プロフィットセンター（省略可） |
+   | `KNA1`, `KNVV`, `KNVH` | 顧客とその階層 |
+   | `MARA`, `MAKT`, `T006A` | 品目と単位 |
+   | `TCURR`, `TCURF`, `TCURX` | 為替レートと通貨の小数桁 |
+   | `BKPF`, `BSEG` | 会計伝票とその明細 |
+   | `FAGLFLEXT`、またはクラシック総勘定元帳の場合は `GLT0` | 総勘定元帳の合計 |
+   | `CSKB`, `CSKU`, `COEP` | 原価要素と管理会計の明細: 賦課と配賦 |
+   | `COSP`, `COSS`, `COSR` | コストセンターの計画と統計キー数値（省略可） |
+   | `VBRK`, `VBRP`, `KONV` | 請求伝票とその価格条件（省略可） |
+
+3. **会計に関する質問に回答します**（以下を参照）。
+
+</Steps>
+
+### 管理者が回答する質問
+
+| 管理者があなたに伝える内容 | PlaidCloud のシステム設定への入力先 |
+|---|---|
+| 平均レートを保持する為替レートタイプ。PlaidCloud は、そのタイプの各月のレートを平均します。多くの場合 `M` です。 | `average_rate_type` |
+| 期末レート（月末のレート）を保持する為替レートタイプ。指定しない場合、期末レートは `M` レートになります。 | `closing_rate_type` |
+| システムが新総勘定元帳（`FAGLFLEXT`）とクラシック総勘定元帳（`GLT0`）のどちらを実行しているか | `totals` |
+| 管理損益計算書と貸借対照表をレポートする財務諸表バージョン | `fsv` |
+| そのノードのうち、収益、売上原価、営業費用、営業外、資産、負債、資本、会社間にあたるもの | 会社間ノードは `intercompany_nodes`。ほかのノードタイプ用のフィールドはフォームにありません。 |
+| レポート対象の会計年度ごとに残高繰越が実行済みであること（`FAGLGVTR`、クラシック総勘定元帳では `F.16`） | 入力は不要です。期首残高は合計テーブルから読み取られます。 |
+
+## 返送する情報
+
+| 管理者が送る情報 | PlaidCloud での入力先 |
+|---|---|
+| システム ID とアプリケーションサーバー（またはメッセージサーバーとログオングループ） | **Application server**、および**システム番号** |
+| クライアント | **クライアント** |
+| 通信ユーザーの名前 | **ユーザー** |
+| 通信ユーザーのパスワード（パスワードマネージャー経由） | **パスワード**。チームが自分で貼り付けます |
+| システムにアクセスする PlaidLink エージェントの名前 | システム設定の `agent` |
+| PlaidCloud が読み取りを許可される会社コード | **会社コード**に入力します。ロード前にシステムが一覧表示できないため、**名前**に 1 つの会社コードを入力するか、空白のままにしてすべての会社コードをロードします |
+
+<Aside type="caution">
+パスワードをメールで送らないでください。**パスワード**はシークレットです。接続に保存され、再表示されません。
+</Aside>
+
+## アクセスを確認する
+
+PlaidCloud に戻って値を入力し、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 読み取るテーブル |
+|---|---|
+| エンティティ | `T001` |
+| 会計カレンダー | `T001`, `T009`, `T009B`, `T001B` |
+| 為替レート | `TCURR`, `TCURF` |
+| 勘定科目表 | `SKA1`, `SKAT`, `FAGL_011PC`, `FAGL_011ZC`, `CSKB`, `CSKU` |
+| 部門 | `CSKS`, `CSKT`, `SETHEADER`, `SETNODE` |
+| プロフィットセンター | `CEPC`, `CEPCT`, `SETHEADER`, `SETNODE` |
+| 顧客 | `KNA1`, `KNVV`, `KNVH` |
+| 製品 | `MARA`, `MAKT`, `T006A` |
+| 総勘定元帳 | `BKPF`, `BSEG`, `COEP` |
+| 試算表 | `FAGLFLEXT` または `GLT0` |
+| 売上明細 | `VBRK`, `VBRP`, `KONV` |
+| 予算 | `COSP`, `COSS` |
+| 配賦ドライバー | `COSR` |
+| 在庫残高 | `MBEW`, `MBEWH`, `T001K` |
+
+データセットが**権限が不足しています**と表示された場合は、管理者にロールへのテーブルの追加を依頼して、もう一度テストしてください。プロフィットセンター、売上明細、予算、配賦ドライバー、在庫残高は省略可能です。これらを保持していないシステムでも、ほかのすべてのデータは読み込まれます。
+
+## 関連項目
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [Data Foundation 向け SAP S/4HANA アクセス](/ja/guides/connections/sap-s4hana-access-for-data-foundation/)
+- [SAP アドホック抽出](/ja/guides/connections/sap-adhoc-extract/)
+- [PlaidLink](/ja/reference/cli/plaidlink/)

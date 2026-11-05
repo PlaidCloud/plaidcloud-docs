@@ -1,0 +1,86 @@
+---
+title: Acesso ao Oracle E-Business Suite para o Data Foundation
+description: O que um administrador do Oracle E-Business Suite configura para que o PlaidCloud Data Foundation possa ler diretamente o EBS através do PlaidLink — acesso SELECT às tabelas do razão geral e uma responsabilidade que vê todos os razões — e o que enviar de volta.
+sidebar:
+  label: Acesso ao Oracle E-Business Suite para o Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-ebs-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+O [Data Foundation](/pt-pt/guides/projects/data-foundation/) reúne os dados de todos os sistemas ERP e instâncias que ligar num único Common Finance Model, e o Oracle E-Business Suite é um dos ERP que lê diretamente. O PlaidCloud chega ao EBS através de um agente [PlaidLink](/pt-pt/reference/cli/plaidlink/) instalado dentro da sua rede, nunca diretamente. Esta página destina-se ao administrador do EBS que faz essa configuração e ao utilizador do PlaidCloud que lha pede.
+
+O PlaidCloud só lê dados. Ninguém envia uma palavra-passe por email.
+
+## Enviar o pedido de acesso
+
+No separador **Base** do projeto, escolha **Criar uma nova ligação** em **Ligação Oracle E-Business Suite**. O formulário mostra o pedido completo e uma ligação **How to set up PlaidLink**. Clique em **Copiar pedido** para o colar na sua própria mensagem, ou em **Enviar pedido por email** para o abrir no seu programa de correio com o assunto "Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink)."
+
+## O que o administrador do EBS configura
+
+<Steps>
+
+1. **Instalar o PlaidLink** num servidor que consiga chegar à base de dados do EBS e registá-lo no PlaidCloud.
+
+2. **Conceder SELECT** ao utilizador do esquema APPS do PlaidLink (ou a um utilizador de esquema só de leitura com sinónimos para os objetos APPS) sobre:
+
+   | Área | Objetos |
+   |---|---|
+   | Razão geral | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
+   | Vendas (opcional) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+
+3. **Indicar um utilizador da aplicação** (`FND_USER`) e uma responsabilidade que consiga ver todos os razões e todos os valores de segmento de balanceamento que pretende reportar.
+
+4. **Descrever o plano de contas.** Indique quais os segmentos que são o segmento de balanceamento, a conta natural, o centro de custo e o segmento intercompanhia (os respetivos qualificadores de segmento). O PlaidCloud classifica uma conta de gastos como custo das mercadorias vendidas quando ela, ou um valor superior da hierarquia, é descrita como custo das mercadorias vendidas, custo das vendas ou custo da receita. Classifica uma conta como não operacional quando uma delas menciona rendimentos ou gastos de juros, rendimentos ou custos financeiros, câmbio, gasto com imposto sobre o rendimento, ou outros rendimentos e gastos. Diga ao PlaidCloud se os seus valores superiores usarem outras palavras para estes conceitos.
+
+5. **Confirmar os tipos de taxa.** Cada razão principal indica os respetivos tipos de taxa de média do período e de fim de período, nas opções de conversão do razão. O PlaidCloud converte com as taxas diárias desses dois tipos.
+
+</Steps>
+
+<Aside type="caution">
+A responsabilidade errada devolve as linhas de outro razão sem qualquer erro. Confirme-a com o responsável pelo seu razão geral.
+</Aside>
+
+## O que enviar de volta
+
+| O administrador envia | Introduzido no PlaidCloud como |
+|---|---|
+| O anfitrião da base de dados | **Database host** |
+| A porta da base de dados | **Porta da base de dados** (1521, a menos que a altere) |
+| O nome do serviço | **Nome do serviço** |
+| O utilizador do esquema APPS | **APPS schema user** |
+| A palavra-passe do esquema APPS, através do formulário de ligação seguro | **APPS schema password**, que a sua equipa cola por si própria |
+| O `FND_USER` | **Application user (FND_USER)** |
+| A chave da responsabilidade | **Responsibility key** |
+| Os valores de segmento de balanceamento que o PlaidCloud pode ler | Em **Balancing segment values**, que o sistema não consegue listar antes de um carregamento: introduza um valor em **Nome**, ou deixe em branco para carregar todas as entidades do razão principal |
+
+O agente PlaidLink que chega à instância é escolhido em System settings como `agent`.
+
+<Aside type="caution">
+Nunca envie a palavra-passe por email. **APPS schema password** é um segredo: é guardado na ligação e nunca mais é apresentado.
+</Aside>
+
+## Verificar o acesso
+
+De volta ao PlaidCloud, introduza os valores e clique em **Testar ligação**. Cada conjunto de dados aparece como **Legível**, **Permissão em falta** ou **Erro**:
+
+| Conjunto de dados | Objetos que lê |
+|---|---|
+| Entidades | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS` |
+| Calendário fiscal | `GL_PERIODS`, `GL_PERIOD_STATUSES` |
+| Plano de contas | `GL_CODE_COMBINATIONS`, as tabelas de flexfields |
+| Departamentos | `GL_CODE_COMBINATIONS`, as tabelas de flexfields |
+| Taxas de câmbio | `GL_DAILY_RATES` |
+| Razão geral | `GL_JE_HEADERS`, `GL_JE_LINES` |
+| Balancete | `GL_BALANCES` |
+| Clientes | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (opcional) |
+| Produtos | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (opcional) |
+| Linhas de vendas | As tabelas `RA_CUSTOMER_TRX` (opcional) |
+
+Quando um conjunto de dados mostra **Permissão em falta**, peça ao administrador que conceda SELECT sobre os objetos e teste novamente. Os clientes, os produtos e as linhas de vendas são opcionais: uma instância que não os utilize carrega na mesma tudo o resto.
+
+## Relacionados
+
+- [Data Foundation](/pt-pt/guides/projects/data-foundation/)
+- [PlaidLink](/pt-pt/reference/cli/plaidlink/)
