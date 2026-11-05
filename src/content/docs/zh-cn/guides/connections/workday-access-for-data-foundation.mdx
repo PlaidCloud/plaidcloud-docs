@@ -1,0 +1,96 @@
+---
+title: Data Foundation 的 Workday 访问设置
+description: Workday 管理员需要构建和共享哪些内容，才能让 PlaidCloud Data Foundation 读取 Workday：自定义报表、两个 Financial Management Web 服务和集成系统用户，以及需要回传哪些内容。
+sidebar:
+  label: Data Foundation 的 Workday 访问设置
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/zh-cn/guides/projects/data-foundation/) 将您连接的每个 ERP 系统和实例的数据汇集到一个 Common Finance Model 中。Workday 是它可以直接读取的系统之一。Workday 没有用于日记账行或余额的 Web 服务，因此本页面面向构建其所读取报表的 Workday 管理员，也面向请求管理员进行设置的 PlaidCloud 用户。
+
+PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
+
+## 发送访问请求
+
+在项目的**基础数据**选项卡上，选择**创建新连接**并选取 **Workday**。表单会显示报表规范。单击**复制请求**可将其粘贴到您自己的邮件中，或单击**通过电子邮件发送请求**，在邮件程序中打开它。
+
+## Workday 管理员需要设置的内容
+
+<Steps>
+
+1. **构建十个自定义报表（RaaS）**，其中四个是可选的，并与集成系统用户共享。请完全按原样使用列名：Data Foundation 按名称映射，因此重命名的列无法读取。每个代码列都是对象的 Reference ID，而不是“C100 Acme US”这样的描述。每个报表的输出格式均为 JSON。
+
+2. **向同一用户授予 Financial_Management Web 服务** `Get_Workday_Companies` 和 `Get_Currency_Conversion_Rates`。
+
+3. **发送报表 URL** 以及集成系统用户的详细信息。
+
+</Steps>
+
+| 报表 | 是否必需 | 内容 |
+|---|---|---|
+| 日记账行 | 是 | 每个已过账日记账行一行。提示：公司（行所属的公司，作为 Reference ID）和期间（财务期间的 Reference ID）。包含工作标记 Region、Fund、Program 和 Project，公司间关联方，交易货币和账簿货币的金额，以及账簿 |
+| 期初余额 | 是 | 每个公司、财务期间和总账科目一行：期间开始时的余额。仅加载资产、负债和权益科目 |
+| 总账科目 | 是 | 科目、名称、类型、公司间标志、可选的类别和父级科目 |
+| 成本中心 | 是 | 成本中心、名称和父级 |
+| 财务期间 | 是 | 每个公司和财务期间一行，包括调整期间，附带开始、结束和状态 |
+| 员工人数 | 可选 | 每个期末按成本中心统计的在职员工，附带 FTE |
+| 工作标记值 | 可选 | 每个 Region、Fund、Program 和 Project 值一行，附带父级 |
+| 客户 | 可选 | 客户、名称、父级、类别、地区和国家/地区 |
+| 销售项目 | 可选 | 项目、名称、父级、分组和计量单位 |
+| 销售发票行 | 可选 | 每个客户发票行一行，附带数量、毛额、折扣、净额和成本金额 |
+
+每个报表的完整列清单见基础数据选项卡上的规范。以下规则适用于报表返回的内容：
+
+- 仅加载已过账（Posted）的日记账行，且仅加载 Actuals 账簿。Commitment 和 Obligation 账簿不加载。
+- 空白的 Book_Code 表示主账簿。空白行计入其公司和期间的每个账簿，带有 Book_Code 的行仅属于该账簿。
+- 以行的公司为准，而不是日记账的公司。
+- Ledger_Account_Type_ID 为 Revenue、COGS、Opex、NonOperating、Asset、Liability 或 Equity。Workday 只有一种 Expense 类型，它会作为 Opex 加载。要区分销货成本或非经营性费用，请打印一个返回 COGS 或 NonOperating 的计算字段。没有类型的科目不会加载到损益表中。
+- 草稿（Draft）、进行中（In Progress）、已取消（Canceled）和已拒绝（Denied）的发票不加载。
+- 预算从文件加载。不连接 Adaptive Planning。
+
+## 需要回传的内容
+
+| 管理员发送 | 在 PlaidCloud 中输入为 |
+|---|---|
+| Workday 主机 | **Workday 主机** |
+| 租户名称 | **租户** |
+| 集成系统用户的名称 | **集成系统用户** |
+| 每个必需报表的 URL | **Journal Lines report URL**、**Beginning Balances report URL**、**Ledger Accounts report URL**、**Cost Centers report URL**、**Fiscal Periods report URL** |
+| 您构建的每个可选报表的 URL | **Headcount report URL (optional)**、**Worktag Values report URL (optional)**、**Customers report URL (optional)**、**Sales Items report URL (optional)**、**Sales Invoice Lines report URL (optional)** |
+| PlaidCloud 可以读取的公司的 Reference ID | 在 **Companies** 下选择。留空则加载所有公司 |
+
+PlaidCloud 用户自行粘贴集成系统用户的**密码**；它是机密，切勿通过电子邮件发送。
+
+在 **System settings** 下，当科目名称尚未说明时，**Retained earnings account** 指定期初损益结转到的权益科目。它是可选的。
+
+<Aside type="note">
+Workday 唯一的 Expense 类型会作为 Opex 加载，Data Foundation 的就绪状态检查会标记这一点。如果需要区分销货成本或非经营性科目，请使用上文所述的计算字段。
+</Aside>
+
+## 检查访问权限
+
+返回 PlaidCloud，单击**测试连接**。每个数据集显示为**可读取**、**缺少权限**或**错误**：
+
+| 数据集 | 来源 |
+|---|---|
+| 实体 | `Get_Workday_Companies` |
+| 会计科目表 | 总账科目报表 |
+| 部门 | 成本中心报表 |
+| 财务日历 | 财务期间报表 |
+| 汇率 | `Get_Currency_Conversion_Rates` |
+| 试算平衡表 | 期初余额报表 |
+| 总账 | 日记账行报表 |
+| 分摊动因（可选） | 员工人数报表 |
+| 分部值（可选） | 工作标记值报表 |
+| 客户（可选） | 客户报表 |
+| 产品（可选） | 销售项目报表 |
+| 销售明细行（可选） | 销售发票行报表 |
+
+当数据集显示为**缺少权限**时，测试会指出报表或 Web 服务。请管理员将其与集成系统用户共享后重新测试。没有可选报表的租户仍会加载其他所有内容。
+
+## 相关内容
+
+- [Data Foundation](/zh-cn/guides/projects/data-foundation/)
+- [连接到 Workday Financials](/zh-cn/guides/connections/workday-financials/)

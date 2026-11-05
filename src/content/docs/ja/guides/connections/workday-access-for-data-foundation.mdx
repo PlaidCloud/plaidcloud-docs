@@ -1,0 +1,96 @@
+---
+title: Data Foundation 向け Workday アクセス
+description: PlaidCloud Data Foundation が Workday を読み取れるように Workday 管理者が作成して共有する内容（カスタムレポート、2 つの Financial Management Web サービス、統合システムユーザー）と、返送する情報について説明します。
+sidebar:
+  label: Data Foundation 向け Workday アクセス
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/)は、接続したすべての ERP システムとインスタンスのデータを 1 つの Common Finance Model に集約します。Workday は、Data Foundation が直接読み取るシステムの 1 つです。Workday には仕訳明細や残高用の Web サービスがないため、このページは、Data Foundation が読み取るレポートを作成する Workday 管理者と、管理者に依頼する PlaidCloud ユーザーを対象としています。
+
+PlaidCloud はデータを読み取るだけです。パスワードをメールで送らないでください。
+
+## アクセス依頼を送信する
+
+プロジェクトの **Foundation** タブで、**新しい接続を作成**を選択し、**Workday** を選びます。フォームにレポートの仕様が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックしてメールプログラムに開きます。
+
+## Workday 管理者が設定する内容
+
+<Steps>
+
+1. **10 個のカスタムレポート（RaaS）を作成**し（うち 4 つは省略可能）、統合システムユーザーと共有します。列名は正確にそのとおりに使用してください。Data Foundation は名前でマッピングするため、名前を変更した列は読み取れません。コード列はすべて、「C100 Acme US」のような記述ではなく、オブジェクトの Reference ID です。すべてのレポートの出力形式は JSON です。
+
+2. 同じユーザーに、**Financial_Management Web サービス** `Get_Workday_Companies` と `Get_Currency_Conversion_Rates` を**付与**します。
+
+3. **レポートの URL を送り**、統合システムユーザーの詳細も送ります。
+
+</Steps>
+
+| レポート | 必須 | 内容 |
+|---|---|---|
+| 仕訳明細 | はい | 転記済みの仕訳明細ごとに 1 行。プロンプト: Company（明細の会社。Reference ID）と Period（会計期間の Reference ID）。ワークタグの Region、Fund、Program、Project、会社間の関連会社、取引通貨と元帳通貨での金額、帳簿を含む |
+| 期首残高 | はい | 会社、会計期間、元帳勘定科目ごとに 1 行: 期間開始時点の残高。資産、負債、資本の勘定科目のみロードされます |
+| 元帳勘定科目 | はい | 勘定科目、名前、タイプ、会社間フラグ、任意のカテゴリと親勘定科目 |
+| コストセンター | はい | コストセンター、名前、親 |
+| 会計期間 | はい | 会社と会計期間ごとに 1 行（調整期間も含む）。開始、終了、ステータスを含む |
+| 人員数 | 省略可 | 各期間末のアクティブな従業員を、コストセンター別に、FTE とともに |
+| ワークタグ値 | 省略可 | Region、Fund、Program、Project の値ごとに 1 行。親を含む |
+| 顧客 | 省略可 | 顧客、名前、親、カテゴリ、地域、国 |
+| 販売品目 | 省略可 | 品目、名前、親、グループ、数量単位 |
+| 売上請求書明細 | 省略可 | 顧客請求書の明細ごとに 1 行。数量、総額、値引き、純額、コストの金額を含む |
+
+各レポートの全列リストは、Foundation タブの仕様に記載されています。レポートが返す内容には、次のルールが適用されます。
+
+- ロードされるのは、転記済み（Posted）の仕訳明細と Actuals 元帳のみです。Commitment 元帳と Obligation 元帳はロードされません。
+- Book_Code が空白の場合はプライマリ帳簿です。空白の明細は、その会社と期間のすべての帳簿に計上され、Book_Code を持つ明細は、その帳簿のみに属します。
+- 明細の会社が、仕訳の会社より優先されます。
+- Ledger_Account_Type_ID は、Revenue、COGS、Opex、NonOperating、Asset、Liability、Equity のいずれかです。Workday には Expense タイプが 1 つしかなく、Opex としてロードされます。売上原価や営業外費用を分けるには、COGS または NonOperating を返す計算フィールドを出力します。タイプのない勘定科目は、損益計算書にロードされません。
+- Draft、In Progress、Canceled、Denied の請求書はロードされません。
+- 予算はファイルからロードされます。Adaptive Planning は接続されていません。
+
+## 返送する情報
+
+| 管理者が送る情報 | PlaidCloud での入力先 |
+|---|---|
+| Workday のホスト | **Workdayホスト** |
+| テナント名 | **テナント** |
+| 統合システムユーザーの名前 | **統合システムユーザー** |
+| 必須レポートそれぞれの URL | **Journal Lines report URL**、**Beginning Balances report URL**、**Ledger Accounts report URL**、**Cost Centers report URL**、**Fiscal Periods report URL** |
+| 作成した省略可能レポートそれぞれの URL | **Headcount report URL (optional)**、**Worktag Values report URL (optional)**、**Customers report URL (optional)**、**Sales Items report URL (optional)**、**Sales Invoice Lines report URL (optional)** |
+| PlaidCloud が読み取りを許可される会社の Reference ID | **Companies** で選択します。すべての会社をロードする場合は空白のままにします |
+
+統合システムユーザーの**パスワード**は、PlaidCloud ユーザーが自分で貼り付けます。これはシークレットであり、メールでは送りません。
+
+**システム設定**の **Retained earnings account** には、勘定科目名からわからない場合に、期首の損益を繰り入れる資本勘定科目の名前を指定します。省略可能です。
+
+<Aside type="note">
+Workday の Expense タイプは 1 つだけで、Opex としてロードされ、Data Foundation の準備状況チェックで指摘されます。売上原価や営業外の勘定科目を区別する必要がある場合は、上記の計算フィールドを使用してください。
+</Aside>
+
+## アクセスを確認する
+
+PlaidCloud に戻って、**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 取得元 |
+|---|---|
+| エンティティ | `Get_Workday_Companies` |
+| 勘定科目表 | 元帳勘定科目レポート |
+| 部門 | コストセンターレポート |
+| 会計カレンダー | 会計期間レポート |
+| 為替レート | `Get_Currency_Conversion_Rates` |
+| 試算表 | 期首残高レポート |
+| 総勘定元帳 | 仕訳明細レポート |
+| 配賦ドライバー（省略可） | 人員数レポート |
+| セグメント値（省略可） | ワークタグ値レポート |
+| 顧客（省略可） | 顧客レポート |
+| 製品（省略可） | 販売品目レポート |
+| 売上明細（省略可） | 売上請求書明細レポート |
+
+データセットが**権限が不足しています**と表示された場合、テストにより、対象のレポートまたは Web サービスが示されます。管理者に統合システムユーザーとの共有を依頼して、もう一度テストしてください。省略可能なレポートがないテナントでも、ほかのすべてのデータは読み込まれます。
+
+## 関連項目
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [Workday Financials に接続する](/ja/guides/connections/workday-financials/)

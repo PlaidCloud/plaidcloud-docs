@@ -1,10 +1,10 @@
 ---
 title: Połączenia
-description: Konfiguruj połączenia PlaidCloud i zarządzaj nimi — zapisanymi konfiguracjami, dzięki którym przepływy pracy docierają do zewnętrznych baz danych, magazynów w chmurze, systemów ERP i interfejsów REST API.
+description: Konfiguruj połączenia PlaidCloud i zarządzaj nimi — zapisane konfiguracje, które umożliwiają przepływom pracy dostęp do zewnętrznych baz danych, magazynów w chmurze, systemów ERP i interfejsów REST API.
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/index.md
 ---
 
-**Połączenie** to zapisana konfiguracja, dzięki której PlaidCloud łączy się z systemem zewnętrznym — bazą danych, kontem magazynu w chmurze, systemem ERP lub interfejsem REST API. Kroki przepływu pracy, które muszą odczytywać dane z tego systemu lub zapisywać je w nim, odwołują się do połączenia, dzięki czemu poświadczenia i szczegóły punktu końcowego są przechowywane w jednym miejscu.
+**Połączenie** to zapisana konfiguracja, która umożliwia PlaidCloud dostęp do systemu zewnętrznego — bazy danych, konta magazynu w chmurze, systemu ERP lub interfejsu REST API. Kroki przepływu pracy, które muszą odczytywać dane z tego systemu lub zapisywać do niego, odwołują się do połączenia, dzięki czemu poświadczenia i szczegóły punktu końcowego znajdują się w jednym miejscu.
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 210" role="img" aria-label="Wiele kroków przepływu pracy odwołuje się do jednego zapisanego połączenia, które przechowuje poświadczenia i punkt końcowy w jednym miejscu i łączy się z systemem zewnętrznym — bazą danych, magazynem w chmurze, systemem ERP lub interfejsem REST API." style="width:100%;max-width:680px;height:auto;">
@@ -22,39 +22,39 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
   <path d="M430 109 L512 109" stroke="var(--sl-color-gray-3)" stroke-width="1.8" fill="none" marker-end="url(#cn-arrow)" />
   <rect x="514" y="80" width="150" height="58" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="589" y="104" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">system zewnętrzny</text>
-  <text x="589" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">baza · magazyn · ERP · REST</text>
+  <text x="589" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">baza danych · magazyn · ERP · REST</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Skonfiguruj połączenie raz; każdy krok, który odczytuje dane z systemu zewnętrznego lub zapisuje je w nim, wskazuje na to połączenie, więc poświadczenia i szczegóły punktu końcowego nie są powielane w krokach.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Skonfiguruj połączenie raz; każdy krok, który odczytuje dane z systemu zewnętrznego lub zapisuje do niego, wskazuje na to połączenie, więc poświadczenia i szczegóły punktu końcowego nie są powielane w krokach.</figcaption>
 </figure>
 
 ## Przewodniki
 
-- [Tworzenie połączeń i zarządzanie nimi](/pl/guides/connections/create-connection/) — tworzenie, edycja i testowanie połączenia, kontrola dostępu do niego oraz konfiguracja dla poszczególnych środowisk.
-- [Korzystanie z własnej hurtowni danych](/pl/guides/connections/external-lakehouse/) — samodzielne połączenie własnej hurtowni Snowflake lub Databricks, logowanie własną tożsamością, zarządzanie kilkoma hurtowniami i podgląd kosztu każdego uruchomienia.
-- [Połączenie PlaidCloud Git](/pl/guides/connections/plaidcloud-git/) — połączenie z zarządzanym serwerem Git Twojego obszaru roboczego bez adresu serwera i poświadczeń oraz automatyzacja budowania aplikacji Panel na jego podstawie.
+- [Tworzenie połączenia i zarządzanie nim](/pl/guides/connections/create-connection/) — tworzenie, edycja, testowanie i kontrola dostępu do połączenia oraz konfiguracja dla poszczególnych środowisk.
+- [Używanie własnej hurtowni danych](/pl/guides/connections/external-lakehouse/) — samodzielne podłączenie własnej hurtowni Snowflake lub Databricks, logowanie własną tożsamością, zarządzanie kilkoma hurtowniami i podgląd kosztu każdego uruchomienia.
+- [Połączenie PlaidCloud Git](/pl/guides/connections/plaidcloud-git/) — połączenie z własnym zarządzanym serwerem Git obszaru roboczego bez adresu serwera i poświadczeń oraz automatyzacja kompilacji aplikacji Panel na jego podstawie.
 - [Klonowanie połączenia](/pl/guides/connections/clone-connection/) — duplikowanie istniejącego połączenia dla nowego środowiska lub tenanta.
-- [Data Foundation: Common Finance Model](/pl/guides/projects/data-foundation/) — Common Finance Model łączy dane ERP z wielu systemów i instancji ERP w jeden model z jednym planem kont, jednym zestawem jednostek i jedną walutą raportowania, z którego korzystają raporty, metryki i asystenci AI.
-- [Źródła Singer](/pl/guides/connections/singer-sources/) — połącz się ze źródłami takimi jak Stripe, GitHub, Slack i BigQuery za pomocą tapów Singer, a następnie importuj ich dane do tabel projektu.
-- [Połączenie NetSuite](/pl/guides/connections/netsuite/) — skonfiguruj połączenie z NetSuite i pobieraj dane finansowe i operacyjne za pomocą SuiteQL.
-- [Dostęp do NetSuite dla Data Foundation](/pl/guides/connections/netsuite-access-for-data-foundation/) — co przygotowuje administrator NetSuite, aby Data Foundation mogło odczytywać NetSuite bezpośrednio, i co należy mu odesłać.
-- [Importowanie danych finansowych z NetSuite](/pl/guides/connections/import-netsuite-financials/) — pobieraj salda, szczegóły księgi głównej i dane główne za pomocą gotowych kroków importu NetSuite, bez pisania SuiteQL.
+- [Data Foundation: Common Finance Model](/pl/guides/projects/data-foundation/) — Common Finance Model łączy dane ERP z wielu systemów i instancji ERP w jeden model z jednym planem kont, jednym zestawem jednostek i jedną walutą raportowania, który odczytują raporty, metryki i asystenci AI.
+- Dostęp do Data Foundation, po jednej stronie dla każdego systemu, dla administratora, który przyznaje PlaidCloud dostęp do odczytu, wraz z informacją, co odesłać: [NetSuite](/pl/guides/connections/netsuite-access-for-data-foundation/), [SAP S/4HANA](/pl/guides/connections/sap-s4hana-access-for-data-foundation/), [SAP ECC](/pl/guides/connections/sap-ecc-access-for-data-foundation/), [SAP S/4HANA Cloud](/pl/guides/connections/s4hana-cloud-access-for-data-foundation/), [Oracle E-Business Suite](/pl/guides/connections/oracle-ebs-access-for-data-foundation/), [Oracle Fusion](/pl/guides/connections/oracle-fusion-access-for-data-foundation/), [Dynamics 365 Finance and Operations](/pl/guides/connections/dynamics-365-fo-access-for-data-foundation/), [Business Central](/pl/guides/connections/business-central-access-for-data-foundation/), [Sage Intacct](/pl/guides/connections/sage-intacct-access-for-data-foundation/), [QuickBooks](/pl/guides/connections/quickbooks-access-for-data-foundation/), [Xero](/pl/guides/connections/xero-access-for-data-foundation/), [Workday](/pl/guides/connections/workday-access-for-data-foundation/), [Salesforce](/pl/guides/connections/salesforce-access-for-data-foundation/). [Macierz pokrycia Data Foundation](/pl/reference/data-foundation-coverage-matrix/) pokazuje, które zbiory danych dostarcza każdy system.
+- [Źródła Singer](/pl/guides/connections/singer-sources/) — połączenie ze źródłami takimi jak Stripe, GitHub, Slack i BigQuery za pomocą tapów Singer, a następnie import ich danych do tabel projektu.
+- [Połączenie z NetSuite](/pl/guides/connections/netsuite/) — konfiguracja połączenia z NetSuite i pobieranie danych finansowych i operacyjnych za pomocą SuiteQL.
+- [Import danych finansowych z NetSuite](/pl/guides/connections/import-netsuite-financials/) — pobieranie sald, szczegółów księgi głównej i danych głównych za pomocą gotowych kroków importu NetSuite, bez pisania SuiteQL.
 - [Księgowanie zapisu dziennika w NetSuite](/pl/guides/connections/post-netsuite-journal-entries/) — mapowanie tabel nagłówków i pozycji, podgląd i księgowanie zapisów dziennika w NetSuite.
-- [Połącz z Acumatica](/pl/guides/connections/acumatica/) — skonfiguruj połączenie z Acumatica, importuj encje i księguj transakcje dziennika, faktury, rachunki i płatności.
-- [Połącz z Business Central](/pl/guides/connections/business-central/) — skonfiguruj połączenie z Business Central przez Azure AD, importuj encje OData i księguj pozycje dziennika głównego.
-- [Połącz z Dynamics 365 Finance & Operations](/pl/guides/connections/dynamics-365-fo/) — skonfiguruj połączenie z D365 F&O przez Azure AD, importuj encje OData/DMF i księguj zapisy dziennika.
-- [Połącz z Oracle Fusion](/pl/guides/connections/oracle-fusion/) — skonfiguruj połączenie z Oracle Fusion, importuj salda księgi głównej i partie zapisów dziennika oraz księguj dzienniki przez FBDI.
-- [Połącz z Workday Financials](/pl/guides/connections/workday-financials/) — skonfiguruj połączenie z Workday Financials z użytkownikiem systemu integracji, importuj raport RaaS i księguj zapisy dziennika.
-- [Połącz z SAP S/4HANA Cloud](/pl/guides/connections/s4hana-cloud/) — skonfiguruj bezpośrednie połączenie z S/4HANA Cloud przez OAuth2, importuj zestawienie obrotów i sald oraz pozycje zapisów dziennika i księguj zapisy dziennika przez SOAP.
-- [Doraźne wyodrębnianie danych z SAP ECC / S/4HANA](/pl/guides/connections/sap-adhoc-extract/) — wyszukuj w SAP według tabeli, kodu transakcji lub zapisanego zapytania SAP Query, wyświetl podgląd i zaplanuj wyodrębnienie oraz załaduj je do tabeli przez agenta PlaidLink.
-- [Połącz z Sage Intacct](/pl/guides/connections/sage-intacct/) — skonfiguruj połączenie z Sage Intacct i pobieraj dane finansowe i księgowe.
-- [Połącz z Xero](/pl/guides/connections/xero/) — autoryzuj organizację Xero jednym kliknięciem, importuj encje Accounting API i księguj dzienniki ręczne, faktury, rachunki, płatności i noty kredytowe.
-- [Połącz z Salesforce](/pl/guides/connections/salesforce/) — skonfiguruj Salesforce External Client App i użytkownika Run As, a następnie wyodrębniaj obiekty CRM do tabel projektu.
-- [Wyodrębnianie z HFM / FCCS (doraźne)](/pl/guides/connections/hfm-fccs/) — połącz się z Oracle FCCS i samodzielnie pobierz wycinek danych za pomocą selektora punktu widzenia, bez zgłoszenia do zespołu HFM.
-- [Połącz z TM1](/pl/guides/connections/tm1/) — połącz się z serwerem IBM TM1 / Planning Analytics i odczytuj dane kostki według widoku lub MDX, w podziale na okresy.
-- [Połącz z Anaplan](/pl/guides/connections/anaplan/) — połącz się z Anaplan i odczytaj zapisany widok, uruchom istniejącą akcję eksportu lub załaduj listy do wymiaru PlaidCloud. Tylko odczyt.
-- [OneStream dla Data Foundation](/pl/guides/connections/onestream-for-data-foundation/) — co przygotowuje administrator OneStream, aby Data Foundation mogło odczytywać skonsolidowane wyniki przez adapter danych.
-- [Połącz z QuickBooks](/pl/guides/connections/quickbooks/) — wymagania wstępne i obecne ograniczenia QuickBooks Online.
-- [Przegląd rejestru księgowań](/pl/guides/connections/posting-register/) — konsola na poziomie tenanta, w której dział finansów i księgowości przegląda księgowania ERP ze wszystkich widocznych dla niego projektów i połączeń.
+- [Połączenie z Acumatica](/pl/guides/connections/acumatica/) — konfiguracja połączenia z Acumatica, import encji oraz księgowanie transakcji dziennika, faktur, rachunków i płatności.
+- [Połączenie z Business Central](/pl/guides/connections/business-central/) — konfiguracja połączenia z Business Central przez Azure AD, import encji OData i księgowanie pozycji dziennika głównego.
+- [Połączenie z Dynamics 365 Finance & Operations](/pl/guides/connections/dynamics-365-fo/) — konfiguracja połączenia z D365 F&O przez Azure AD, import encji OData/DMF i księgowanie zapisów dziennika.
+- [Połączenie z Oracle Fusion](/pl/guides/connections/oracle-fusion/) — konfiguracja połączenia z Oracle Fusion, import sald księgi głównej i partii dziennika oraz księgowanie dzienników przez FBDI.
+- [Połączenie z Workday Financials](/pl/guides/connections/workday-financials/) — konfiguracja połączenia z Workday Financials z użytkownikiem systemu integracji, import raportu RaaS i księgowanie zapisów dziennika.
+- [Połączenie z SAP S/4HANA Cloud](/pl/guides/connections/s4hana-cloud/) — konfiguracja bezpośredniego połączenia z S/4HANA Cloud przez OAuth2, import zestawienia obrotów i sald oraz pozycji zapisów dziennika, a także księgowanie zapisów dziennika przez SOAP.
+- [Doraźne wyodrębnienia z SAP ECC / S/4HANA](/pl/guides/connections/sap-adhoc-extract/) — wyszukiwanie w SAP według tabeli, kodu transakcji lub zapisanego zapytania SAP Query, podgląd i planowanie wyodrębnienia oraz ładowanie go do tabeli przez agenta PlaidLink.
+- [Połączenie z Sage Intacct](/pl/guides/connections/sage-intacct/) — konfiguracja połączenia z Sage Intacct i pobieranie danych finansowych i księgowych.
+- [Połączenie z Xero](/pl/guides/connections/xero/) — autoryzacja organizacji Xero jednym kliknięciem, import encji Accounting API oraz księgowanie zapisów ręcznych, faktur, rachunków, płatności i not kredytowych.
+- [Połączenie z Salesforce](/pl/guides/connections/salesforce/) — konfiguracja External Client App i użytkownika Run As w Salesforce, a następnie wyodrębnianie obiektów CRM do tabel projektu.
+- [Wyodrębnianie z HFM / FCCS (ad hoc)](/pl/guides/connections/hfm-fccs/) — połączenie z Oracle FCCS i samodzielne pobieranie wycinka danych za pomocą selektora punktu widzenia, bez zgłoszenia do zespołu HFM.
+- [Połączenie z TM1](/pl/guides/connections/tm1/) — połączenie z serwerem IBM TM1 / Planning Analytics i odczyt danych kostki według widoku lub MDX, w podziale na okresy.
+- [Połączenie z Anaplan](/pl/guides/connections/anaplan/) — połączenie z Anaplan i odczyt zapisanego widoku, uruchomienie istniejącej akcji eksportu lub załadowanie list do wymiaru PlaidCloud. Wyłącznie do odczytu.
+- [OneStream dla Data Foundation](/pl/guides/connections/onestream-for-data-foundation/) — co konfiguruje administrator OneStream, aby Data Foundation mógł odczytywać skonsolidowane wyniki przez adapter danych.
+- [Połączenie z QuickBooks](/pl/guides/connections/quickbooks/) — wymagania wstępne i obecne ograniczenia dla QuickBooks Online.
+- [Przegląd Rejestru księgowań](/pl/guides/connections/posting-register/) — konsola na poziomie tenanta dla działów finansów i księgowości do przeglądania księgowań ERP we wszystkich projektach i połączeniach, które widzą.
 
 ## Powiązane
 

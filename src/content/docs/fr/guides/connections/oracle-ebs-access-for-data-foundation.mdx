@@ -1,0 +1,86 @@
+---
+title: Accès à Oracle E-Business Suite pour Data Foundation
+description: Ce qu'un administrateur Oracle E-Business Suite configure pour que PlaidCloud Data Foundation puisse lire EBS directement via PlaidLink (accès SELECT aux tables du grand livre et responsabilité qui voit tous les registres) et ce qu'il faut renvoyer.
+sidebar:
+  label: Accès à Oracle E-Business Suite pour Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-ebs-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/fr/guides/projects/data-foundation/) rassemble dans un seul Common Finance Model les données de chaque système ERP et de chaque instance que vous connectez, et Oracle E-Business Suite fait partie des ERP qu'il lit directement. PlaidCloud atteint EBS par l'intermédiaire d'un agent [PlaidLink](/fr/reference/cli/plaidlink/) installé dans votre réseau, jamais directement. Cette page s'adresse à l'administrateur EBS qui effectue cette configuration, et à l'utilisateur PlaidCloud qui la lui demande.
+
+PlaidCloud ne fait que lire les données. Personne n'envoie de mot de passe par e-mail.
+
+## Envoyer la demande d'accès
+
+Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion** sous **Connexion Oracle E-Business Suite**. Le formulaire affiche la demande complète et un lien **How to set up PlaidLink**. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie avec l'objet « Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink) ».
+
+## Ce que l'administrateur EBS configure
+
+<Steps>
+
+1. **Installez PlaidLink** sur un serveur qui peut atteindre la base de données EBS, et enregistrez-le dans PlaidCloud.
+
+2. **Accordez SELECT** à l'utilisateur du schéma APPS de PlaidLink (ou à un utilisateur de schéma en lecture seule disposant de synonymes vers les objets APPS) sur :
+
+   | Domaine | Objets |
+   |---|---|
+   | Grand livre | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS`, `GL_CODE_COMBINATIONS`, `GL_PERIODS`, `GL_PERIOD_STATUSES`, `GL_JE_HEADERS`, `GL_JE_LINES`, `GL_BALANCES`, `GL_DAILY_RATES` |
+   | Flexfields | `FND_ID_FLEX_SEGMENTS`, `FND_SEGMENT_ATTRIBUTE_VALUES`, `FND_FLEX_VALUES_VL`, `FND_FLEX_VALUE_NORM_HIERARCHY` |
+   | Ventes (facultatif) | `RA_CUSTOMER_TRX_ALL`, `RA_CUSTOMER_TRX_LINES_ALL`, `RA_CUST_TRX_TYPES_ALL`, `RA_CUST_TRX_LINE_GL_DIST_ALL`, `HZ_CUST_ACCOUNTS`, `HZ_PARTIES`, `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` |
+
+3. **Nommez un utilisateur d'application** (`FND_USER`) et une responsabilité qui peut voir tous les registres et toutes les valeurs de segment d'équilibrage que vous voulez inclure dans les rapports.
+
+4. **Décrivez le plan comptable.** Indiquez quels segments sont le segment d'équilibrage, le compte naturel, le centre de coûts et le segment intersociétés (leurs qualificatifs de segment). PlaidCloud classe un compte de charges comme coût des marchandises vendues lorsque lui-même ou une valeur parente au-dessus est décrit comme coût des marchandises vendues, coût des ventes ou coût des revenus. Il classe un compte comme hors exploitation lorsque l'un d'eux nomme des produits ou charges d'intérêts, des produits ou coûts financiers, le change, la charge d'impôt sur le revenu, ou d'autres produits et charges. Indiquez-le à PlaidCloud si vos valeurs parentes emploient d'autres termes pour ces notions.
+
+5. **Confirmez les types de taux.** Chaque registre principal nomme ses types de taux moyen de période et de fin de période, dans les options de conversion du registre. PlaidCloud effectue la conversion avec les taux journaliers de ces deux types.
+
+</Steps>
+
+<Aside type="caution">
+Une responsabilité inadaptée renvoie les lignes d'un autre registre sans aucune erreur. Confirmez-la avec le responsable de votre grand livre.
+</Aside>
+
+## Ce qu'il faut renvoyer
+
+| L'administrateur envoie | Saisi dans PlaidCloud comme |
+|---|---|
+| L'hôte de la base de données | **Hôte de la base de données** |
+| Le port de la base de données | **Port de la base de données** (1521 sauf modification) |
+| Le nom du service | **Nom du service** |
+| L'utilisateur du schéma APPS | **APPS schema user** |
+| Le mot de passe du schéma APPS, via le formulaire de connexion sécurisé | **APPS schema password**, que votre équipe colle elle-même |
+| Le `FND_USER` | **Application user (FND_USER)** |
+| La clé de responsabilité | **Responsibility key** |
+| Les valeurs de segment d'équilibrage que PlaidCloud peut lire | Sous **Balancing segment values**, que le système ne peut pas lister avant un chargement : saisissez une valeur sous **Nom**, ou laissez vide pour charger toutes les entités du registre principal |
+
+L'agent PlaidLink qui atteint l'instance se choisit dans les paramètres système sous `agent`.
+
+<Aside type="caution">
+N'envoyez jamais le mot de passe par e-mail. **APPS schema password** est un secret : il est stocké dans la connexion et jamais affiché de nouveau.
+</Aside>
+
+## Vérifier l'accès
+
+De retour dans PlaidCloud, saisissez les valeurs et cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+
+| Jeu de données | Objets qu'il lit |
+|---|---|
+| Entités | `GL_LEDGERS`, `GL_LEDGER_NORM_SEG_VALS` |
+| Calendrier fiscal | `GL_PERIODS`, `GL_PERIOD_STATUSES` |
+| Plan comptable | `GL_CODE_COMBINATIONS`, les tables de flexfields |
+| Départements | `GL_CODE_COMBINATIONS`, les tables de flexfields |
+| Taux de change | `GL_DAILY_RATES` |
+| Grand livre | `GL_JE_HEADERS`, `GL_JE_LINES` |
+| Balance de vérification | `GL_BALANCES` |
+| Clients | `HZ_CUST_ACCOUNTS`, `HZ_PARTIES` (facultatif) |
+| Produits | `MTL_PARAMETERS`, `MTL_SYSTEM_ITEMS_B` (facultatif) |
+| Lignes de vente | Les tables `RA_CUSTOMER_TRX` (facultatif) |
+
+Lorsqu'un jeu de données affiche **Autorisation manquante**, demandez à l'administrateur d'accorder SELECT sur les objets, puis testez à nouveau. Les clients, les produits et les lignes de vente sont facultatifs : une instance qui ne les utilise pas charge tout le reste.
+
+## Voir aussi
+
+- [Data Foundation](/fr/guides/projects/data-foundation/)
+- [PlaidLink](/fr/reference/cli/plaidlink/)

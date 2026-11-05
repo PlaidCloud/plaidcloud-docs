@@ -1,0 +1,82 @@
+---
+title: Acceso a Oracle Fusion para Data Foundation
+description: Qué configura un administrador de Oracle Fusion Cloud ERP para que PlaidCloud Data Foundation pueda leer Oracle Fusion directamente (un usuario de integración, una aplicación de OAuth 2.0 y nueve informes de BI Publisher) y qué debe enviar de vuelta.
+sidebar:
+  label: Acceso a Oracle Fusion para Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/es/guides/projects/data-foundation/) reúne los datos de cada sistema ERP e instancia que usted conecta en un único Common Finance Model, y Oracle Fusion Cloud ERP es uno de los ERP que lee directamente. La conexión de Oracle Fusion usa credenciales de cliente de OAuth 2.0, un usuario de integración de solo lectura y un pequeño conjunto de informes de BI Publisher. Esta página está dirigida al administrador de Oracle Fusion que lo configura y al usuario de PlaidCloud que se lo solicita.
+
+PlaidCloud solo lee datos. Nadie envía por correo electrónico una contraseña ni un secreto de cliente.
+
+## Enviar la solicitud de acceso
+
+En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** en **Conexión de Oracle Fusion**. El formulario muestra la solicitud completa. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto "Read-only Oracle Fusion Cloud ERP access for PlaidCloud (OAuth 2.0 client credentials)."
+
+## Qué configura el administrador de Oracle Fusion
+
+<Steps>
+
+1. **Cree un usuario de integración** y asígnele un rol de trabajo que pueda ver, para cada libro sobre el que informe:
+
+   - General Ledger: libros, calendarios contables y estados de períodos, lotes de diario, diarios y saldos de cuentas (por ejemplo, "General Accountant" con acceso a los datos de esos libros)
+   - Tipos de conversión de moneda (tipos de cambio diarios)
+   - Etiquetas de segmentos de key flexfield, conjuntos de valores y su jerarquía de cuentas (árboles)
+   - Cuentas por cobrar: facturas y sus distribuciones, y cuentas de clientes
+   - Artículos de inventario
+   - Acceso de ejecución a los informes de BI Publisher del paso 3 y al ERP Integration Service (trabajos de ESS)
+
+2. **Registre una aplicación confidencial** en el dominio de identidad (IAM) con la concesión de credenciales de cliente y el ámbito de la API REST de Fusion Applications. Copie su ID de cliente y su secreto.
+
+3. **Implemente nueve informes de BI Publisher** en `/Custom/PlaidCloud/DataFoundation`. Cada uno se ejecuta como un trabajo de ESS, con el nombre del informe como definición del trabajo, y devuelve un CSV con las columnas que se enumeran en la solicitud:
+
+   | Informe | Qué devuelve |
+   |---|---|
+   | `PlaidCloudKeyFlexLabels` | Una fila por cada segmento de cada plan de cuentas de General Ledger: su posición, su etiqueta y su conjunto de valores |
+   | `PlaidCloudSegmentValues` | Cada valor de esos conjuntos de valores, con el tipo de cuenta natural y la jerarquía de valores |
+   | `PlaidCloudCalendar` | Los períodos contables de cada libro, con los tipos de cambio de promedio del período y de cierre del período del libro |
+   | `PlaidCloudCodeCombinations` | Las combinaciones de código y sus segmentos |
+   | `PlaidCloudBalances` | Los saldos iniciales de cada libro |
+   | `PlaidCloudJournalLines` | Las líneas de diario, leídas de a un libro, período y valor del segmento de equilibrio |
+   | `PlaidCloudCustomers` | Las cuentas de clientes y los nombres de sus terceros |
+   | `PlaidCloudItems` | Los artículos de la organización de inventario maestra |
+   | `PlaidCloudSalesLines` | Una fila por cada línea de factura de Receivables |
+
+   Las columnas exactas de cada informe están en el texto de la solicitud de la pestaña **Foundation**. Indique los nombres de los informes exactamente como se muestran.
+
+</Steps>
+
+## Qué debe enviar de vuelta
+
+| El administrador envía | Se introduce en PlaidCloud como |
+|---|---|
+| El host de su URL de Fusion Applications, sin `https://` | **Host del pod** |
+| La URL del token del dominio de identidad | **Token URL** |
+| El ámbito de la aplicación de la API REST | **Ámbito** |
+| El ID de cliente del paso 2 | **ID de cliente** |
+| El secreto de cliente del paso 2 | **Secreto de cliente** |
+| Los valores del segmento de equilibrio que PlaidCloud puede leer | En **Balancing segment values**, que Fusion no puede listar: introduzca un valor en **Nombre**, o déjelo en blanco para cargarlos todos |
+
+La lista final de la solicitud pide estos valores juntos. Comparta el secreto de cliente mediante su administrador de contraseñas, no por correo electrónico. El equipo del usuario de PlaidCloud lo pega en PlaidCloud por sí mismo.
+
+## Comprobar el acceso
+
+De vuelta en PlaidCloud, introduzca los valores y haga clic en **Probar conexión**. Cada conjunto de datos se muestra como **Legible**, **Falta un permiso** o **Error**:
+
+| Conjunto de datos | Se lee de |
+|---|---|
+| Entidades, calendario fiscal, plan de cuentas, departamentos | Los libros, además de los informes de etiquetas de key flexfield, valores de segmentos y calendario |
+| Tipos de cambio | Tipos de conversión diarios |
+| Libro mayor | Lotes de diario y el informe de líneas de diario |
+| Balance de comprobación | Los informes de saldos y de combinaciones de código |
+| Clientes, productos, líneas de ventas | Los informes de clientes, artículos y líneas de ventas (opcional) |
+
+Cuando falta un conjunto de datos, la prueba indica qué permiso agregar. Pida al administrador que lo agregue al rol de trabajo y vuelva a probar. Los clientes, los productos y las líneas de ventas son opcionales: un pod de Fusion que no los contiene carga igualmente todo lo demás.
+
+## Relacionado
+
+- [Data Foundation](/es/guides/projects/data-foundation/)
+- [Conectar con Oracle Fusion](/es/guides/connections/oracle-fusion/)
