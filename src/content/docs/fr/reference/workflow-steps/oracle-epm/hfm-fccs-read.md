@@ -73,6 +73,8 @@ Désactivée par défaut : chaque exécution dépose une tranche ad hoc qui éc
 
 Pendant l'exécution du job, l'étape affiche un état d'interrogation. Lorsque le résultat est déposé, la table est créée à partir des colonnes de la grille : aucun schéma à définir au préalable.
 
+L'étape attend le job d'export pendant une durée limitée. Si le job n'est pas terminé à ce moment-là, l'étape échoue, de sorte que les étapes suivantes ne s'exécutent pas sans la tranche. **Reprenez** le workflow ou réexécutez l'étape : elle vérifie de nouveau le **même** job d'export au lieu d'en soumettre un nouveau.
+
 ## Mise en cache
 
 Le même POV demandé de nouveau est **servi à partir de la table déjà déposée**, instantanément, au lieu de soumettre à nouveau l'export à FCCS. Une exécution est identifiée par l'application, la table cible, le point de vue et une étiquette **as-of** (valeur par défaut `latest`) ; une répétition qui correspond à une tranche déjà déposée signale que la table a été laissée en place plutôt que réécrite. Modifiez l'étiquette as-of pour forcer une nouvelle extraction du même POV.

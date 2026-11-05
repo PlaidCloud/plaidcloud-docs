@@ -14,6 +14,8 @@ Uma etapa cujo servidor é perdido durante a execução é tratada separadamente
 
 Quando o PlaidCloud recusa uma etapa por um motivo que você pode corrigir, como uma permissão ausente ou uma configuração inválida, o log da etapa mostra essa mensagem em linguagem clara, em vez de um erro de servidor com um rastreamento de pilha. Em uma etapa Model Loop, Model Run ou Macro Run cujo fluxo de trabalho filho falha, é exibida a própria mensagem de erro do filho, como “Child workflow run failed:” seguida da mensagem.
 
+Um erro de etapa mostra a própria mensagem do erro. Um erro que o PlaidCloud não previu aparece como "The step stopped on an unexpected error (*type*): *message*", indicando o tipo de erro e o que ele dizia, para que você possa agir sem abrir o log completo.
+
 Se nenhuma nova tentativa for selecionada ou o número máximo de tentativas for excedido, a etapa será marcada como erro. Nesse caso, o PlaidCloud oferece três níveis de tratamento de erros:
 
 

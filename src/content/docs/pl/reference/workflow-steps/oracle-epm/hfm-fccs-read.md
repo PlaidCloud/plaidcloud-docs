@@ -73,6 +73,8 @@ Domyślnie wyłączone — każde uruchomienie ładuje wycinek ad hoc, który na
 
 Podczas działania zadania krok pokazuje status odpytywania. Po załadowaniu tabela jest tworzona na podstawie kolumn siatki — nie trzeba z góry definiować schematu.
 
+Krok czeka na zadanie eksportu przez ograniczony czas. Jeśli zadanie do tego czasu się nie zakończy, krok kończy się niepowodzeniem, aby kolejne kroki nie uruchamiały się bez tego wycinka. **Wznów** przepływ pracy lub uruchom krok ponownie, a krok ponownie sprawdzi **to samo** zadanie eksportu, zamiast przesyłać nowe.
+
 ## Buforowanie
 
 Ten sam POV zażądany ponownie jest **obsługiwany z już załadowanej tabeli**, natychmiast, zamiast ponownego przesyłania eksportu do FCCS. Uruchomienie jest identyfikowane kluczem złożonym z aplikacji, tabeli docelowej, punktu widzenia i znacznika **as-of** (domyślnie `latest`); powtórzenie, które trafia na już załadowany wycinek, zgłasza, że tabela została pozostawiona bez zmian, zamiast ją ponownie zapisywać. Zmień znacznik as-of, gdy chcesz wymusić świeże wyodrębnienie tego samego POV.

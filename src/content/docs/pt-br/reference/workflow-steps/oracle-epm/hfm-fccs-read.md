@@ -73,6 +73,8 @@ Desativado por padrão: cada execução traz uma fatia ad hoc que sobrescreve a 
 
 Enquanto o job é executado, a etapa mostra um status de consulta. Quando os dados chegam, a tabela é criada a partir das colunas da grade, sem esquema para definir antes.
 
+A etapa aguarda o job de exportação por um tempo limitado. Se o job não tiver terminado até lá, a etapa falha, para que as etapas seguintes não sejam executadas sem a fatia. **Retome** o fluxo de trabalho ou execute a etapa novamente, e ela verifica o **mesmo** job de exportação outra vez em vez de enviar um novo.
+
 ## Cache
 
 O mesmo POV solicitado novamente é **atendido a partir da tabela já gravada**, instantaneamente, em vez de reenviar a exportação ao FCCS. Uma execução é identificada pelo aplicativo, pela tabela de destino, pelo ponto de vista e por uma marca **as-of** (padrão `latest`); uma repetição que corresponda a uma fatia já gravada informa que a tabela foi mantida como estava, em vez de regravá-la. Altere a marca as-of quando quiser forçar uma nova extração do mesmo POV.

@@ -15,3 +15,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 오류 발생 시 계속하도록 설정된 단계는 워크플로 단계 계층 테이블에 특별한 표시가 나타납니다.
+
+오류 발생 시 계속하도록 설정된 단계에서만 실패가 발생한 실행은 REST API로 확인하든, AI 어시스턴트나 MCP의 `workflow_run_status`로 확인하든 여전히 성공한 것으로 간주됩니다. 다만 해당 단계는 `continued_step_ids`에, 그 개수는 `continued_step_count`에 표시되므로, 오류를 지나 계속 진행된 실행이 문제없는 실행으로 보고되지 않습니다.

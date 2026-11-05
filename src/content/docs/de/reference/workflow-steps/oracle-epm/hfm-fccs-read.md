@@ -73,6 +73,8 @@ Standardmäßig aus – jede Ausführung legt einen Ad-hoc-Ausschnitt ab, der di
 
 Während der Job läuft, zeigt der Schritt einen Abfragestatus. Sobald er abgelegt ist, wird die Tabelle aus den Spalten des Rasters erstellt – ein Schema muss nicht vorab definiert werden.
 
+Der Schritt wartet nur begrenzte Zeit auf den Exportjob. Ist der Job bis dahin nicht abgeschlossen, schlägt der Schritt fehl, sodass die nachfolgenden Schritte nicht ohne den Ausschnitt ausgeführt werden. Wählen Sie für den Workflow **Fortsetzen** oder führen Sie den Schritt erneut aus; er prüft dann **denselben** Exportjob erneut, statt einen neuen zu übermitteln.
+
 ## Caching
 
 Derselbe erneut angeforderte POV wird sofort **aus der bereits abgelegten Tabelle bedient**, statt den Export erneut an FCCS zu übermitteln. Eine Ausführung wird durch Anwendung, Zieltabelle, Betrachtungspunkt und ein **As-of**-Tag (Standard `latest`) identifiziert; eine Wiederholung, die auf einen bereits abgelegten Ausschnitt aufgelöst wird, meldet, dass die Tabelle unverändert gelassen wurde, statt sie neu zu schreiben. Ändern Sie das As-of-Tag, wenn Sie einen frischen Extrakt desselben POV erzwingen möchten.

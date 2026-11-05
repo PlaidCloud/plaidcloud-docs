@@ -73,6 +73,8 @@ Desativado por predefinição — cada execução grava um segmento ad hoc que s
 
 Enquanto a tarefa decorre, o passo mostra um estado de consulta periódica. Quando é gravada, a tabela é criada a partir das colunas da grelha — sem esquema para definir previamente.
 
+O passo aguarda a tarefa de exportação durante um tempo limitado. Se a tarefa não tiver terminado até lá, o passo falha, para que os passos seguintes não sejam executados sem o segmento. **Retome** o fluxo de trabalho ou volte a executar o passo, e este verifica novamente a **mesma** tarefa de exportação em vez de submeter uma nova.
+
 ## Cache
 
 O mesmo POV pedido novamente é **servido a partir da tabela já gravada**, de imediato, em vez de voltar a submeter a exportação ao FCCS. Uma execução é identificada pela aplicação, pela tabela de destino, pelo ponto de vista e por uma etiqueta **as-of** (predefinição `latest`); uma repetição que resulte num segmento já gravado indica que a tabela foi deixada como estava em vez de ser reescrita. Altere a etiqueta as-of quando quiser forçar uma nova extração do mesmo POV.

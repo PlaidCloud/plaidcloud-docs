@@ -78,7 +78,7 @@ Para retomar el trabajo, [**Reanude**](#pausar-detener-y-reanudar) la ejecución
 
 ### Pasos interrumpidos
 
-Si se pierde el servidor que ejecuta un paso a mitad de la ejecución, PlaidCloud vuelve a ejecutar el paso automáticamente cuando es seguro repetirlo: un paso que reemplaza su resultado termina con el mismo resultado que una sola ejecución limpia, por lo que no tiene nada que comprobar.
+Si se pierde el servidor que ejecuta un paso a mitad de la ejecución, PlaidCloud vuelve a ejecutar el paso automáticamente cuando es seguro repetirlo: un paso que reemplaza su resultado termina con el mismo resultado que una sola ejecución limpia, por lo que no tiene nada que comprobar. El registro del paso muestra una advertencia donde comienza el segundo intento: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
 Un paso que no se puede repetir de forma segura no se vuelve a ejecutar. Falla una sola vez con un mensaje de **interrumpido**, porque ejecutarlo por segunda vez podría duplicar lo que el primer intento ya escribió. Los pasos que escriben resultados con `{date}` en el nombre o la ruta se consideran no seguros de repetir, ya que una nueva ejecución podría caer en una fecha distinta. Para recuperarse, revise en el destino del paso lo que escribió el primer intento, límpielo si es necesario y luego [vuelva a ejecutar el paso](/es/guides/workflows/running-one-step-in-a-workflow/) o **Reanude** la ejecución.
 
@@ -98,9 +98,15 @@ Si el trabajo de un paso no puede iniciarse nunca, el paso falla con el motivo e
 
 El mensaje de la sincronización del conector nombra la sincronización. Si un trabajador inició el trabajo y luego desapareció, el paso también falla, con un mensaje que indica que el trabajador se detuvo. Los mensajes de importación y de dimensión dicen "Use Run from here to retry."
 
+### Ejecuciones que dejan de responder
+
+Una ejecución nunca permanece **En ejecución** después de que el trabajo que la respalda haya desaparecido. Si se pierde el servidor que ejecuta el flujo de trabajo, la ejecución termina como fallida. Una ejecución puede durar como máximo 12 horas: si sigue en ejecución en ese momento, falla con "Run failed: still running at the 12-hour limit. Re-run the workflow."
+
 ## Pausar, detener y reanudar
 
 Mientras un flujo de trabajo se está ejecutando, puede **Pausar**lo, de modo que los pasos en curso terminen y los nuevos esperen, o **Detener**lo, lo que cancela los pasos que estaban en cola y cualquier trabajo de importación o exportación que siga en ejecución. Los pasos de importación y de dimensión que seguían en cola se cancelan limpiamente, para que no retengan las importaciones y cargas de dimensiones posteriores del espacio de trabajo. Detener también detiene las sincronizaciones de conector (Singer) en cola o en ejecución del flujo de trabajo, para que una sincronización no siga ejecutándose después de que el flujo de trabajo se haya detenido.
+
+Una macro puede estar ejecutándose en varios lugares a la vez, llamada por otros flujos de trabajo o por un paso **Macro: ejecución simultánea**. Detener la macro detiene todas sus copias en ejecución. Una macro que solo se está ejecutando dentro de otros flujos de trabajo aparece como **En ejecución** en la lista de flujos de trabajo, con **Detener** disponible, y al abrirla se muestra el estado, la hora de inicio y la hora de fin de cada paso según su última ejecución.
 
 **Reanudar** retoma una ejecución pausada, detenida o fallida desde donde se quedó, en lugar de empezar de nuevo. Está disponible siempre que la última ejecución de un flujo de trabajo haya terminado en estado pausado, detenido o de error.
 
@@ -116,9 +122,9 @@ Los pasos que llaman a otro flujo de trabajo (**Run Model**, **Conditional Run M
 
 Cuando usted reanuda un flujo de trabajo que se ejecutó como **hijo anidado** de otro (uno invocado por un paso **Run Model** de un flujo principal), PlaidCloud ofrece **Reanudar desde el inicio de la cadena**. Reanudar el hijo por sí solo no puede continuar la orquestación del principal, así que esta opción reanuda el flujo principal de nivel superior (la raíz de la cadena) y continúa toda la cadena desde donde se detuvo. Reanudar un flujo de trabajo de nivel superior no cambia. El inicio de la cadena se resuelve dentro del mismo proyecto: una cadena que cruza a otro proyecto se reanuda desde el inicio de la parte que está dentro del proyecto.
 
-Reanudar siempre continúa la ejecución **original**. Vuelve a ejecutar cada paso de esa ejecución que no terminó correctamente (un paso que falló o fue abandonado se vuelve a ejecutar, no se trata como completado), y volver a ejecutar un paso individual por separado mientras tanto no cambia lo que Reanudar retomará a continuación.
+Reanudar siempre continúa la ejecución **original**. Vuelve a ejecutar cada paso de esa ejecución que no terminó correctamente (un paso que falló o fue abandonado se vuelve a ejecutar, no se trata como completado), y volver a ejecutar un paso individual por separado mientras tanto no cambia lo que Reanudar retomará a continuación. Esto también se aplica a un flujo de trabajo hijo: si volvió a ejecutar uno de sus pasos por separado, reanudar el flujo principal sigue ejecutando todo lo que le quedaba al hijo, no solo ese paso.
 
-Una ejecución reanudada se registra como una **ejecución nueva** en el historial de ejecuciones del flujo de trabajo, que contiene solo los pasos que volvió a ejecutar. La ejecución original conserva su propia entrada en el historial.
+Una ejecución reanudada se registra como una **ejecución nueva** en el historial de ejecuciones del flujo de trabajo, que contiene solo los pasos que volvió a ejecutar. La ejecución original conserva su propia entrada en el historial. Cuando una ejecución llama al mismo flujo de trabajo hijo más de una vez, cada llamada tiene su propia entrada en el historial de ejecuciones del hijo. Las iteraciones de un paso de bucle cuentan como una sola llamada.
 
 :::note
 Un paso de bucle hace coincidir sus iteraciones completadas por los valores de sus variables. Si los datos sobre los que itera el bucle cambiaron entre la ejecución original y la reanudación, las iteraciones que ya no puede hacer coincidir se vuelven a ejecutar en lugar de omitirse.

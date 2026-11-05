@@ -78,7 +78,7 @@ Um die Arbeit wieder aufzunehmen, [**setzen Sie die Ausführung fort**](#anhalte
 
 ### Unterbrochene Schritte
 
-Geht der Server, auf dem ein Schritt läuft, mitten in der Ausführung verloren, führt PlaidCloud den Schritt automatisch erneut aus, wenn eine Wiederholung sicher ist: Ein Schritt, der seine Ausgabe ersetzt, liefert dasselbe Ergebnis wie eine einzelne saubere Ausführung, sodass Sie nichts prüfen müssen.
+Geht der Server, auf dem ein Schritt läuft, mitten in der Ausführung verloren, führt PlaidCloud den Schritt automatisch erneut aus, wenn eine Wiederholung sicher ist: Ein Schritt, der seine Ausgabe ersetzt, liefert dasselbe Ergebnis wie eine einzelne saubere Ausführung, sodass Sie nichts prüfen müssen. Das Protokoll des Schritts zeigt an der Stelle, an der der zweite Versuch beginnt, eine Warnung: „Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start.“
 
 Ein Schritt, der nicht sicher wiederholt werden kann, wird nicht erneut ausgeführt. Er schlägt einmalig mit der Meldung **interrupted** (unterbrochen) fehl, weil eine zweite Ausführung das duplizieren könnte, was der erste Versuch bereits geschrieben hat. Schritte, die Ausgaben mit `{date}` im Namen oder Pfad schreiben, gelten als nicht sicher wiederholbar, da eine erneute Ausführung auf einem anderen Datum landen könnte. Zur Wiederherstellung prüfen Sie das Ziel des Schritts auf das, was der erste Versuch geschrieben hat, bereinigen es bei Bedarf und [führen den Schritt dann erneut aus](/de/guides/workflows/running-one-step-in-a-workflow/) oder wählen für die Ausführung **Fortsetzen**.
 
@@ -98,9 +98,15 @@ Wenn der Job eines Schritts nie starten kann, schlägt der Schritt mit der Angab
 
 Die Meldung zur Connector-Synchronisierung nennt die Synchronisierung. Wenn ein Worker den Job gestartet hat und dann weggefallen ist, schlägt der Schritt ebenfalls fehl, mit einer Meldung, dass der Worker beendet wurde. Die Meldungen zu Import und Dimension lauten „Use Run from here to retry.“
 
+### Ausführungen, die nicht mehr reagieren
+
+Eine Ausführung bleibt nie im Status **Wird ausgeführt**, wenn die Arbeit dahinter weggefallen ist. Geht der Server verloren, auf dem der Workflow läuft, endet die Ausführung als fehlgeschlagen. Eine Ausführung dauert höchstens 12 Stunden: Läuft sie zu diesem Zeitpunkt noch, schlägt sie mit „Run failed: still running at the 12-hour limit. Re-run the workflow.“ fehl.
+
 ## Anhalten, Beenden und Fortsetzen
 
 Während ein Workflow läuft, können Sie ihn **anhalten**, sodass laufende Schritte abgeschlossen werden und neue Schritte warten, oder **beenden**, wodurch die Schritte in der Warteschlange und alle noch laufenden Import- oder Export-Jobs abgebrochen werden. Import- und Dimensionsschritte, die noch in der Warteschlange standen, werden sauber abgebrochen, sodass sie spätere Importe und Dimensionsladevorgänge im Workspace nicht blockieren. Beenden stoppt außerdem die in der Warteschlange stehenden oder laufenden Connector-Synchronisierungen (Singer) des Workflows, sodass eine Synchronisierung nicht weiterläuft, nachdem der Workflow beendet wurde.
+
+Ein Makro kann an mehreren Stellen gleichzeitig laufen, aufgerufen von anderen Workflows oder von einem Schritt **Makro: Gleichzeitige Ausführung**. Das Beenden des Makros beendet jede laufende Instanz davon. Ein Makro, das nur innerhalb anderer Workflows läuft, wird in der Workflow-Liste als **Wird ausgeführt** angezeigt, wobei **Beenden** verfügbar ist, und wenn Sie es öffnen, sehen Sie für jeden Schritt den Status sowie die Start- und Endzeit aus seiner letzten Ausführung.
 
 **Fortsetzen** nimmt eine angehaltene, beendete oder fehlgeschlagene Ausführung dort wieder auf, wo sie aufgehört hat, anstatt von vorn zu beginnen. Die Option steht zur Verfügung, wenn die letzte Ausführung eines Workflows im Zustand angehalten, beendet oder Fehler endete.
 
@@ -116,9 +122,9 @@ Schritte, die einen anderen Workflow aufrufen — **Run Model**, **Conditional R
 
 Wenn Sie einen Workflow fortsetzen, der als **verschachtelter untergeordneter Workflow** eines anderen lief — einen, den ein **Run Model**-Schritt in einem übergeordneten Workflow aufgerufen hat —, bietet PlaidCloud **Von Kettenanfang fortsetzen** an. Das alleinige Fortsetzen des untergeordneten Workflows kann die Orchestrierung des übergeordneten nicht weiterführen; diese Option setzt daher stattdessen den übergeordneten Workflow der obersten Ebene fort — die Wurzel der Kette — und führt die gesamte Kette dort weiter, wo sie angehalten hat. Das Fortsetzen eines Workflows der obersten Ebene bleibt unverändert. Der Kettenanfang wird innerhalb desselben Projekts ermittelt: Eine Kette, die in ein anderes Projekt hineinreicht, wird vom Anfang des Teils innerhalb des Projekts aus fortgesetzt.
 
-Das Fortsetzen führt immer die **ursprüngliche** Ausführung weiter. Es führt jeden Schritt dieser Ausführung erneut aus, der nicht erfolgreich abgeschlossen wurde — ein fehlgeschlagener oder abgebrochener Schritt wird erneut ausgeführt und nicht als abgeschlossen behandelt —, und die zwischenzeitliche erneute Ausführung eines einzelnen Schritts ändert nicht, was das Fortsetzen als Nächstes aufnimmt.
+Das Fortsetzen führt immer die **ursprüngliche** Ausführung weiter. Es führt jeden Schritt dieser Ausführung erneut aus, der nicht erfolgreich abgeschlossen wurde — ein fehlgeschlagener oder abgebrochener Schritt wird erneut ausgeführt und nicht als abgeschlossen behandelt —, und die zwischenzeitliche erneute Ausführung eines einzelnen Schritts ändert nicht, was das Fortsetzen als Nächstes aufnimmt. Das gilt auch für einen untergeordneten Workflow: Wenn Sie einen seiner Schritte einzeln erneut ausgeführt haben, führt das Fortsetzen des übergeordneten Workflows trotzdem alles aus, was im untergeordneten Workflow noch offen war, nicht nur diesen Schritt.
 
-Eine fortgesetzte Ausführung wird als **neue Ausführung** im Ausführungsverlauf des Workflows erfasst und enthält nur die Schritte, die sie erneut ausgeführt hat. Die ursprüngliche Ausführung behält ihren eigenen Verlaufseintrag.
+Eine fortgesetzte Ausführung wird als **neue Ausführung** im Ausführungsverlauf des Workflows erfasst und enthält nur die Schritte, die sie erneut ausgeführt hat. Die ursprüngliche Ausführung behält ihren eigenen Verlaufseintrag. Ruft eine Ausführung denselben untergeordneten Workflow mehrmals auf, erhält jeder Aufruf einen eigenen Eintrag im Ausführungsverlauf des untergeordneten Workflows. Die Iterationen eines Schleifenschritts zählen als ein Aufruf.
 
 :::note
 Ein Schleifenschritt ordnet seine abgeschlossenen Iterationen anhand ihrer Variablenwerte zu. Haben sich die Daten, über die die Schleife iteriert, zwischen der ursprünglichen Ausführung und dem Fortsetzen geändert, werden Iterationen, die sich nicht mehr zuordnen lassen, erneut ausgeführt statt übersprungen.

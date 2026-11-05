@@ -14,6 +14,8 @@ Ein Schritt, dessen Server mitten in der Ausführung verloren geht, wird getrenn
 
 Lehnt PlaidCloud einen Schritt aus einem Grund ab, den Sie beheben können, etwa wegen einer fehlenden Berechtigung oder einer ungültigen Einstellung, zeigt das Schrittprotokoll diese Meldung in verständlichen Worten an statt eines Serverfehlers mit Stacktrace. Schlägt bei einem Schritt Model Loop, Model Run oder Macro Run der untergeordnete Workflow fehl, zeigt der Schritt die eigene Fehlermeldung des untergeordneten Workflows an, und zwar als „Child workflow run failed:“, gefolgt von der Meldung.
 
+Ein Schrittfehler zeigt die eigene Meldung des Fehlers an. Ein Fehler, den PlaidCloud nicht vorhergesehen hat, lautet „The step stopped on an unexpected error (*type*): *message*“ und nennt die Art des Fehlers und seine Meldung, sodass Sie darauf reagieren können, ohne das vollständige Protokoll zu öffnen.
+
 Wenn keine Wiederholung ausgewählt ist oder die maximale Anzahl an Wiederholungen überschritten wird, wird der Schritt als fehlerhaft markiert. PlaidCloud bietet für diesen Fall drei Ebenen der Fehlerbehandlung:
 
 

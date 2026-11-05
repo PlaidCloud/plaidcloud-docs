@@ -78,7 +78,7 @@ Para retomar o trabalho, [**Retome**](#pausar-parar-e-retomar) a execução — 
 
 ### Passos interrompidos
 
-Se o servidor que executa um passo for perdido a meio da execução, o PlaidCloud executa o passo novamente de forma automática quando é seguro repeti-lo: um passo que substitui o seu resultado acaba com o mesmo resultado que uma única execução limpa, pelo que não tem nada a verificar.
+Se o servidor que executa um passo for perdido a meio da execução, o PlaidCloud executa o passo novamente de forma automática quando é seguro repeti-lo: um passo que substitui o seu resultado acaba com o mesmo resultado que uma única execução limpa, pelo que não tem nada a verificar. O registo do passo mostra um aviso no ponto onde começa a segunda tentativa: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
 Um passo que não pode ser repetido em segurança não é executado novamente. Falha uma vez com uma mensagem de **interrompido**, porque executá-lo uma segunda vez poderia duplicar o que a primeira tentativa já escreveu. Os passos que escrevem resultados com `{date}` no nome ou no caminho contam como não seguros para repetição, uma vez que uma nova execução poderia cair numa data diferente. Para recuperar, verifique no destino do passo o que a primeira tentativa escreveu, limpe-o se necessário e depois [volte a executar o passo](/pt-pt/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
 
@@ -98,9 +98,15 @@ Se o trabalho de um passo nunca puder começar, o passo falha com o motivo em ve
 
 A mensagem da sincronização de conector indica o nome da sincronização. Se um trabalhador iniciou o trabalho e depois desapareceu, o passo também falha, com uma mensagem a indicar que o trabalhador parou. As mensagens de importação e de dimensão indicam "Use Run from here to retry."
 
+### Execuções que deixam de responder
+
+Uma execução nunca fica **Em execução** depois de o trabalho por trás dela ter desaparecido. Se o servidor que executa o fluxo de trabalho for perdido, a execução termina como falhada. Uma execução pode durar no máximo 12 horas: uma que ainda esteja em execução nesse momento falha com "Run failed: still running at the 12-hour limit. Re-run the workflow."
+
 ## Pausar, parar e retomar
 
 Enquanto um fluxo de trabalho está em execução, pode **Pausar** — os passos em curso terminam e os novos passos aguardam — ou **Parar**, o que cancela os passos que estavam em fila e quaisquer trabalhos de importação ou exportação ainda em execução. Os passos de importação e de dimensão que ainda estavam em fila são cancelados de forma limpa, para não atrasarem importações e cargas de dimensão posteriores na área de trabalho. Parar também interrompe as sincronizações de conector (Singer) em fila ou em execução do fluxo de trabalho, para que uma sincronização não continue a ser executada depois de o fluxo de trabalho ter parado.
+
+Uma macro pode estar em execução em vários sítios ao mesmo tempo, chamada por outros fluxos de trabalho ou por um passo **Macro: Execução em simultâneo**. Parar a macro interrompe todas as cópias dela que estão em execução. Uma macro que está em execução apenas dentro de outros fluxos de trabalho aparece como **Em execução** na lista de fluxos de trabalho, com **Parar** disponível, e abri-la mostra o estado, a hora de início e a hora de fim de cada passo na sua execução mais recente.
 
 **Retomar** recomeça uma execução pausada, parada ou falhada a partir do ponto onde ficou, em vez de começar de novo. Está disponível sempre que a última execução de um fluxo de trabalho terminou num estado de pausa, paragem ou erro.
 
@@ -116,9 +122,9 @@ Os passos que chamam outro fluxo de trabalho — **Run Model**, **Conditional Ru
 
 Quando retoma um fluxo de trabalho que foi executado como **filho aninhado** de outro — um invocado por um passo **Run Model** num fluxo principal — o PlaidCloud oferece **Retomar a partir do topo da cadeia**. Retomar o filho isoladamente não consegue continuar a orquestração do fluxo principal, pelo que esta opção retoma o fluxo principal de nível superior — a raiz da cadeia — e continua toda a cadeia a partir do ponto onde parou. Retomar um fluxo de trabalho de nível superior mantém-se inalterado. O topo da cadeia é resolvido dentro do mesmo projeto: uma cadeia que passa para outro projeto retoma a partir do topo da parte dentro do projeto.
 
-Retomar continua sempre a execução **original**. Volta a executar todos os passos dessa execução que não terminaram com êxito — um passo que falhou ou foi abandonado é executado novamente, não é tratado como concluído — e voltar a executar um passo individual isoladamente entretanto não altera o que Retomar recolhe a seguir.
+Retomar continua sempre a execução **original**. Volta a executar todos os passos dessa execução que não terminaram com êxito — um passo que falhou ou foi abandonado é executado novamente, não é tratado como concluído — e voltar a executar um passo individual isoladamente entretanto não altera o que Retomar recolhe a seguir. O mesmo se aplica a um fluxo de trabalho filho: se voltou a executar um dos seus passos isoladamente, retomar o fluxo principal continua a executar tudo o que faltava ao filho, e não apenas esse passo.
 
-Uma execução retomada é registada como uma **nova execução** no histórico de execuções do fluxo de trabalho, contendo apenas os passos que voltou a executar. A execução original mantém a sua própria entrada no histórico.
+Uma execução retomada é registada como uma **nova execução** no histórico de execuções do fluxo de trabalho, contendo apenas os passos que voltou a executar. A execução original mantém a sua própria entrada no histórico. Quando uma execução chama o mesmo fluxo de trabalho filho mais do que uma vez, cada chamada tem a sua própria entrada no histórico de execuções do filho. As iterações de um passo de ciclo contam como uma única chamada.
 
 :::note
 Um passo de ciclo faz corresponder as iterações concluídas pelos valores das respetivas variáveis. Se os dados sobre os quais o ciclo itera mudaram entre a execução original e a retoma, as iterações que já não consegue fazer corresponder são executadas novamente em vez de ignoradas.

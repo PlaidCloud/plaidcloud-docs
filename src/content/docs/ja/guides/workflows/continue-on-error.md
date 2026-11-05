@@ -15,3 +15,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 エラー時に続行するよう設定されたステップには、ワークフローのステップ階層テーブルに専用のインジケーターが表示されます。
+
+REST API、またはAIアシスタントやMCPの`workflow_run_status`で実行の結果を確認すると、続行するよう設定されたステップでのみ失敗した実行は、引き続き成功として扱われます。その際、それらのステップが`continued_step_ids`に、その数が`continued_step_count`に示されるため、エラーを越えて処理を続けた実行が問題なしとして報告されることはありません。

@@ -14,6 +14,8 @@ Un paso cuyo servidor se pierde a mitad de la ejecución se trata de forma indep
 
 Cuando PlaidCloud rechaza un paso por un motivo que usted puede corregir, como un permiso faltante o una configuración no válida, el registro del paso muestra ese mensaje en palabras sencillas en lugar de un error del servidor con un seguimiento de pila. Un paso Model Loop, Model Run o Macro Run cuyo flujo de trabajo secundario falla muestra el mensaje de error propio del flujo secundario, como “Child workflow run failed:” seguido del mensaje.
 
+Un error de paso muestra el mensaje propio del error. Un error que PlaidCloud no había previsto se muestra como “The step stopped on an unexpected error (*type*): *message*”, que indica el tipo de error y lo que dijo, para que pueda actuar sin abrir el registro completo.
+
 Si no se selecciona ningún reintento o se supera el número máximo de reintentos, el paso se marca como error. En ese caso, PlaidCloud ofrece tres niveles de manejo de errores:
 
 

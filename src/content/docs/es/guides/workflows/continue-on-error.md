@@ -15,3 +15,5 @@ Para establecer esta opción, abra el formulario del paso desde la tabla del flu
 
 
 Los pasos que se han configurado para continuar en caso de error tendrán un indicador especial en la tabla de jerarquía de pasos del flujo de trabajo.
+
+Cuando consulta el resultado de una ejecución mediante la API REST, o mediante el asistente de IA o MCP con `workflow_run_status`, una ejecución cuyos únicos fallos se produjeron en pasos configurados para continuar sigue contando como correcta, y enumera esos pasos en `continued_step_ids`, con su número en `continued_step_count`, para que una ejecución que siguió adelante tras un error no se notifique como limpia.

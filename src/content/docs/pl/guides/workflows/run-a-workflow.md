@@ -78,7 +78,7 @@ Aby wrócić do pracy, [**Wznów**](#wstrzymywanie-zatrzymywanie-i-wznawianie) u
 
 ### Przerwane kroki
 
-Jeśli serwer wykonujący krok zostanie utracony w trakcie uruchomienia, PlaidCloud automatycznie uruchamia krok ponownie, gdy bezpiecznie jest go powtórzyć: krok, który zastępuje swoje dane wyjściowe, kończy z takim samym wynikiem jak pojedyncze czyste uruchomienie, więc nie ma nic do sprawdzenia.
+Jeśli serwer wykonujący krok zostanie utracony w trakcie uruchomienia, PlaidCloud automatycznie uruchamia krok ponownie, gdy bezpiecznie jest go powtórzyć: krok, który zastępuje swoje dane wyjściowe, kończy z takim samym wynikiem jak pojedyncze czyste uruchomienie, więc nie ma nic do sprawdzenia. Dziennik kroku pokazuje ostrzeżenie w miejscu, w którym zaczyna się druga próba: „Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start.”
 
 Krok, którego nie można bezpiecznie powtórzyć, nie jest uruchamiany ponownie. Kończy się raz błędem z komunikatem **interrupted**, ponieważ drugie uruchomienie mogłoby zduplikować to, co zapisała już pierwsza próba. Kroki zapisujące dane wyjściowe z `{date}` w nazwie lub ścieżce są traktowane jako niebezpieczne do powtórzenia, ponieważ ponowne uruchomienie mogłoby przypaść na inną datę. Aby wyjść z sytuacji, sprawdź w celu kroku, co zapisała pierwsza próba, w razie potrzeby to wyczyść, a następnie [uruchom krok ponownie](/pl/guides/workflows/running-one-step-in-a-workflow/) lub **Wznów** uruchomienie.
 
@@ -98,9 +98,15 @@ Jeśli zadanie kroku nigdy nie może się rozpocząć, krok kończy się niepowo
 
 Komunikat o synchronizacji konektora wskazuje nazwę synchronizacji. Jeśli proces roboczy rozpoczął zadanie, a następnie zniknął, krok również kończy się niepowodzeniem z komunikatem, że proces roboczy został zatrzymany. Komunikaty dotyczące importu i wymiaru zawierają „Use Run from here to retry.”
 
+### Uruchomienia, które przestają odpowiadać
+
+Uruchomienie nigdy nie pozostaje w stanie **Uruchomiony** po zniknięciu pracy, która za nim stoi. Jeśli serwer wykonujący przepływ pracy zostanie utracony, uruchomienie kończy się niepowodzeniem. Uruchomienie może trwać najwyżej 12 godzin: takie, które w tym momencie nadal trwa, kończy się niepowodzeniem z komunikatem „Run failed: still running at the 12-hour limit. Re-run the workflow.”
+
 ## Wstrzymywanie, zatrzymywanie i wznawianie
 
 Gdy przepływ pracy jest uruchomiony, można użyć **Wstrzymaj**, aby kroki w toku się zakończyły, a nowe kroki czekały, lub **Zatrzymaj**, co anuluje kroki w kolejce oraz wszystkie nadal działające zadania importu lub eksportu. Kroki importu i wymiarów, które nadal były w kolejce, są anulowane w czysty sposób, więc nie blokują późniejszych importów i ładowań wymiarów w obszarze roboczym. Zatrzymanie zatrzymuje także oczekujące lub działające synchronizacje konektora (Singer) przepływu pracy, aby synchronizacja nie działała dalej po zatrzymaniu przepływu pracy.
+
+Makro może działać w kilku miejscach jednocześnie, wywoływane przez inne przepływy pracy lub przez krok **Makro: uruchomienie współbieżne**. Zatrzymanie makra zatrzymuje wszystkie jego działające kopie. Makro działające tylko wewnątrz innych przepływów pracy jest wyświetlane na liście przepływów pracy jako **Uruchomiony**, z dostępną opcją **Zatrzymaj**, a po jego otwarciu widać stan każdego kroku oraz czas rozpoczęcia i zakończenia z jego ostatniego uruchomienia.
 
 **Wznów** podejmuje wstrzymane, zatrzymane lub zakończone błędem uruchomienie od miejsca, w którym zostało przerwane, zamiast zaczynać od nowa. Jest dostępne zawsze, gdy ostatnie uruchomienie przepływu pracy zakończyło się w stanie wstrzymanym, zatrzymanym lub błędu.
 
@@ -116,9 +122,9 @@ Kroki wywołujące inny przepływ pracy — **Run Model**, **Conditional Run Mod
 
 Gdy wznawiasz przepływ pracy uruchomiony jako **zagnieżdżony element podrzędny** innego — wywołany przez krok **Run Model** w elemencie nadrzędnym — PlaidCloud oferuje **Wznów od początku łańcucha**. Wznowienie samego elementu podrzędnego nie może kontynuować orkiestracji elementu nadrzędnego, więc ta opcja wznawia element nadrzędny najwyższego poziomu — korzeń łańcucha — i kontynuuje cały łańcuch od miejsca, w którym się zatrzymał. Wznawianie przepływu pracy najwyższego poziomu pozostaje bez zmian. Początek łańcucha jest ustalany w obrębie tego samego projektu: łańcuch przekraczający granicę innego projektu jest wznawiany od początku części znajdującej się w projekcie.
 
-Wznawianie zawsze kontynuuje **oryginalne** uruchomienie. Uruchamia ponownie każdy krok z tego uruchomienia, który nie zakończył się pomyślnie — krok, który zakończył się błędem lub został porzucony, jest uruchamiany ponownie, a nie traktowany jako ukończony — a ponowne uruchomienie pojedynczego kroku w międzyczasie nie zmienia tego, co Wznów podejmie następnie.
+Wznawianie zawsze kontynuuje **oryginalne** uruchomienie. Uruchamia ponownie każdy krok z tego uruchomienia, który nie zakończył się pomyślnie — krok, który zakończył się błędem lub został porzucony, jest uruchamiany ponownie, a nie traktowany jako ukończony — a ponowne uruchomienie pojedynczego kroku w międzyczasie nie zmienia tego, co Wznów podejmie następnie. Dotyczy to również podrzędnego przepływu pracy: jeśli jeden z jego kroków uruchomiono ponownie osobno, wznowienie nadrzędnego przepływu pracy nadal uruchamia wszystko, co pozostało do wykonania w przepływie podrzędnym, a nie tylko ten krok.
 
-Wznowione uruchomienie jest zapisywane jako **nowe uruchomienie** w historii uruchomień przepływu pracy i zawiera tylko kroki, które ponownie uruchomiło. Oryginalne uruchomienie zachowuje własny wpis w historii.
+Wznowione uruchomienie jest zapisywane jako **nowe uruchomienie** w historii uruchomień przepływu pracy i zawiera tylko kroki, które ponownie uruchomiło. Oryginalne uruchomienie zachowuje własny wpis w historii. Gdy jedno uruchomienie wywołuje ten sam podrzędny przepływ pracy więcej niż raz, każde wywołanie ma własny wpis w historii uruchomień przepływu podrzędnego. Iteracje kroku pętli liczą się jako jedno wywołanie.
 
 :::note
 Krok pętli dopasowuje ukończone iteracje według wartości ich zmiennych. Jeśli dane, po których iteruje pętla, zmieniły się między oryginalnym uruchomieniem a wznowieniem, iteracje, których nie można już dopasować, są uruchamiane ponownie zamiast pomijane.

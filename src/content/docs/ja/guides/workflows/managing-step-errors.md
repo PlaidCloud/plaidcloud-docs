@@ -14,6 +14,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 権限の不足や無効な設定など、修正可能な理由でPlaidCloudがステップを拒否した場合、ステップログには、スタックトレース付きのサーバーエラーではなく、わかりやすい言葉でそのメッセージが表示されます。子ワークフローが失敗したModel Loop、Model Run、またはMacro Runステップには、子ワークフロー自身のエラーメッセージが、「Child workflow run failed:」に続けて表示されます。
 
+ステップのエラーには、そのエラー自体のメッセージが表示されます。PlaidCloudが想定していなかったエラーは「The step stopped on an unexpected error (*type*): *message*」と表示され、エラーの種類とその内容が示されるため、完全なログを開かなくても対処できます。
+
 再試行が選択されていない場合、または再試行の最大回数を超えた場合、ステップはエラーとしてマークされます。その場合、PlaidCloudは3段階のエラー処理を提供します。
 
 

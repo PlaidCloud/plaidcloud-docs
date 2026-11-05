@@ -77,7 +77,7 @@ To pick the work back up, either [**Resume**](#pause-stop-and-resume) the run �
 
 ### Interrupted Steps
 
-If the server running a step is lost mid-run, PlaidCloud re-runs the step automatically when it is safe to repeat: a step that replaces its output ends up with the same result as a single clean run, so you have nothing to check.
+If the server running a step is lost mid-run, PlaidCloud re-runs the step automatically when it is safe to repeat: a step that replaces its output ends up with the same result as a single clean run, so you have nothing to check. The step's log shows a warning where the second attempt starts: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
 A step that can't be repeated safely isn't re-run. It fails once with an **interrupted** message, because running it a second time could duplicate what the first attempt already wrote. Steps that write outputs with `{date}` in the name or path count as not safe to repeat, since a re-run could land on a different date. To recover, check the step's target for what the first attempt wrote, clean it up if needed, then [re-run the step](/guides/workflows/running-one-step-in-a-workflow/) or **Resume** the run.
 
@@ -97,9 +97,15 @@ If a step's job can never start, the step fails with the reason instead of waiti
 
 The connector sync message names the sync. If a worker started the job and then went away, the step also fails, with a message saying the worker stopped. The import and dimension messages say "Use Run from here to retry."
 
+### Runs That Stop Responding
+
+A run never stays **Running** after the work behind it has gone. If the server running the workflow is lost, the run ends as failed. A run can last at most 12 hours: one still running at that point fails with "Run failed: still running at the 12-hour limit. Re-run the workflow."
+
 ## Pause, Stop, and Resume
 
 While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace. Stop also stops the workflow's queued or running connector (Singer) syncs, so a sync doesn't keep running after the workflow has stopped.
+
+A macro can be running in several places at once, called by other workflows or by a **Macro: Concurrent Run** step. Stopping the macro stops every running copy of it. A macro that's running only inside other workflows shows as **Running** in the workflow list, with **Stop** available, and opening it shows each step's status, start and end time from its latest run.
 
 **Resume** picks a paused, stopped, or failed run back up from where it left off instead of starting over. It is available whenever a workflow's last run ended in a paused, stopped, or error state.
 
@@ -115,9 +121,9 @@ Steps that call another workflow — **Run Model**, **Conditional Run Model**, a
 
 When you Resume a workflow that ran as a **nested child** of another — one a **Run Model** step in a parent invoked — PlaidCloud offers **Resume from top of chain**. Resuming the child on its own cannot continue the parent's orchestration, so this option resumes the top-level parent instead — the root of the chain — and continues the whole chain from where it stopped. Resuming a top-level workflow is unchanged. The top of the chain is resolved within the same project: a chain that crosses into another project resumes from the top of the in-project portion.
 
-Resume always continues the **original** run. It re-runs every step from that run that did not finish successfully — a step that failed or was abandoned is re-run, not treated as complete — and re-running an individual step on its own in the meantime does not change what Resume picks up next.
+Resume always continues the **original** run. It re-runs every step from that run that did not finish successfully — a step that failed or was abandoned is re-run, not treated as complete — and re-running an individual step on its own in the meantime does not change what Resume picks up next. That holds for a child workflow too: if you re-ran one of its steps on its own, resuming the parent still runs everything the child had left, not just that step.
 
-A resumed run is recorded as a **new run** in the workflow's run history, containing only the steps it re-ran. The original run keeps its own history entry.
+A resumed run is recorded as a **new run** in the workflow's run history, containing only the steps it re-ran. The original run keeps its own history entry. When one run calls the same child workflow more than once, each call has its own entry in the child's run history. The iterations of a loop step count as one call.
 
 :::note
 A loop step matches its completed iterations by their variable values. If the data the loop iterates over changed between the original run and the resume, iterations it can no longer match are re-run rather than skipped.
