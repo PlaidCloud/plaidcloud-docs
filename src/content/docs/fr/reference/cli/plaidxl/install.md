@@ -11,7 +11,7 @@ Vous installez PlaidXL une seule fois par ordinateur, et non une fois par classe
 ## Avant de commencer
 
 - Utilisez Excel pour Microsoft 365, ou Excel 2021 ou version ultérieure, sous Windows ou Mac.
-- Si votre organisation gère les compléments Office de manière centralisée, votre administrateur Microsoft 365 devra peut-être déployer PlaidXL pour vous. Si vous ne pouvez pas installer vous-même des compléments, demandez-lui d'ajouter le complément **PlaidCloud**.
+- Si votre organisation gère les compléments Office de façon centralisée, votre administrateur Microsoft 365 devra peut-être déployer PlaidXL pour vous. Si vous ne pouvez pas installer de compléments vous-même, demandez-lui d'ajouter le complément **PlaidCloud**.
 
 ## Installer sous Windows
 
@@ -28,21 +28,21 @@ Vous installez PlaidXL une seule fois par ordinateur, et non une fois par classe
 ## Ouvrir le volet des tâches
 
 1. Cliquez sur l'onglet **PlaidCloud** du ruban.
-2. Dans le groupe **Data**, cliquez sur **Open PlaidXL**.
+2. Dans le groupe **Connecter**, cliquez sur **Open PlaidXL**.
 
-Le volet des tâches PlaidXL s'ouvre sur le côté droit de la fenêtre et vous invite à vous connecter. Poursuivez avec [Connexion](/fr/reference/cli/plaidxl/connect/).
+Le volet des tâches PlaidXL s'ouvre sur le côté droit de la fenêtre et vous invite à vous connecter. Poursuivez avec [Sign In](/fr/reference/cli/plaidxl/connect/).
 
-Le volet des tâches reste connecté d'une session à l'autre§T; en général, vous vous connectez donc une seule fois, puis vous ouvrez simplement le volet des tâches quand vous en avez besoin.
+Le volet des tâches reste connecté d'une session à l'autre : vous vous connecterez donc généralement une seule fois, puis vous n'aurez qu'à ouvrir le volet des tâches quand vous en avez besoin.
 
 ## Si PlaidXL n'apparaît pas
 
-- Fermez toutes les fenêtres Excel, puis rouvrez Excel. Un complément n'apparaît souvent dans le ruban qu'après le redémarrage d'Excel.
+- Fermez toutes les fenêtres Excel et rouvrez Excel. Un complément n'apparaît souvent dans le ruban qu'après le redémarrage d'Excel.
 - Regardez sous **Insert → My Add-ins** (Windows) ou **Insert → Add-ins → My Add-ins** (Mac) et sélectionnez-y **PlaidCloud**.
-- Si votre organisation bloque les compléments provenant du store, demandez à votre administrateur Microsoft 365 de le déployer.
+- Si votre organisation bloque les compléments du Store, demandez à votre administrateur Microsoft 365 de le déployer.
 
-Vous trouverez d'autres solutions sur la page [Dépannage](/fr/reference/cli/plaidxl/troubleshooting/).
+D'autres solutions figurent sur la page [Troubleshooting](/fr/reference/cli/plaidxl/troubleshooting/).
 
 ## Voir aussi
 
-- [Connexion](/fr/reference/cli/plaidxl/connect/) — connecter le complément à votre espace de travail
-- [Le ruban PlaidCloud](/fr/reference/cli/plaidxl/ribbon/) — toutes les commandes de l'onglet **PlaidCloud**
+- [Sign In](/fr/reference/cli/plaidxl/connect/) : connecter le complément à votre espace de travail
+- [The PlaidCloud Ribbon](/fr/reference/cli/plaidxl/ribbon/) : toutes les commandes de l'onglet **PlaidCloud**

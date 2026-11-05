@@ -1,6 +1,6 @@
 ---
 title: PlaidXL Custom Functions
-description: Reference for every PlaidXL custom function in Excel — list projects, tables, columns and dimensions, read a table, lay out and drill a hierarchy, and calculate rolled-up values with CELL and CELLS.
+description: Reference for every PlaidXL custom function in Excel — list projects, tables, columns and dimensions, read a table, lay out and drill a hierarchy, calculate rolled-up values with CELL and CELLS, and read governed business metrics with METRIC and METRIC_BREAKDOWN.
 sidebar:
   label: Custom Functions
   order: 4
@@ -16,16 +16,17 @@ PlaidXL adds functions to Excel that read PlaidCloud data straight into cells. T
 | Tables | [`TABLE.GET_TABLE`](#get_table) | Read a whole table into a range |
 | Hierarchies | [`DIMENSION.GET_DIMENSION`](#get_dimension), [`DRILL`](#drill) | Lay out a dimension's nodes as report rows |
 | Values | [`CELL`](#cell), [`CELLS`](#cells) | Calculate a rolled-up value for any combination of nodes |
+| Metrics | [`METRIC`](#metric), [`METRIC_BREAKDOWN`](#metric_breakdown) | Read a governed business metric, as dashboards show it |
 | Building blocks | [`REPR.TABLE_REPR`](#table_repr), [`REPR.MEASURE`](#measure), [`REPR.MEASURES`](#measures), [`REPR.MEASURE_TYPE`](#measure_type), [`REPR.DIMENSION_REPR`](#dimension_repr), [`REPR.DRILL_KEY`](#drill_key) | Describe the table, measure, aggregation, nodes and drill depth that `CELL`, `CELLS` and `DRILL` use |
 
-[Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/) shows these working together.
+[Build a Report](/reference/cli/plaidxl/build-a-report/) shows these working together.
 
 ## How the Functions Work
 
-- **Sign in first.** The functions read with your PlaidCloud sign-in, so [sign in](/reference/cli/plaidxl/connect/) from the task pane before you use them.
+- **Sign in first.** The functions read with your PlaidCloud sign-in and your permissions, so [sign in](/reference/cli/plaidxl/connect/) from the task pane before you use them.
 - **They read from the workbook's project.** Every function reads from the project linked to the workbook in the task pane. `GET_TABLE`, `TBL_LIST` and `DIM_LIST` also take an optional project ID, to read another project without changing the link. Each workbook has its own project, so two open workbooks can read from different projects.
 - **Results spill.** A function that returns a list or a table fills the cells below it (or to its right). Leave room for the results; if anything is in the way, Excel shows a `#SPILL!` error.
-- **Recalculate to pick up changes.** A PlaidXL formula fetches again when one of its arguments changes. To pick up new data in PlaidCloud, or a different project linked in the task pane, force a full recalculation — on Windows, press **Ctrl+Alt+F9**. **Refresh All Tables** refreshes retrieved tables, not formulas.
+- **Recalculate to pick up changes.** A PlaidXL formula fetches again when one of its arguments changes. To pick up new data in PlaidCloud, or a different project linked in the task pane, use the ribbon's **Refresh** menu: **Recalculate PlaidXL formulas** recalculates every PlaidXL formula in the workbook, and **Refresh this sheet** and **Refresh selection** recalculate the formulas they cover. **Refresh all tables** refreshes retrieved tables, not formulas. See [Refresh](/reference/cli/plaidxl/ribbon/#refresh).
 - **Use exact names.** Type table, column, dimension and node names exactly as they appear in PlaidCloud.
 
 Arguments in square brackets are optional.
@@ -98,18 +99,23 @@ Lays out a dimension's nodes, starting at `start_node` and working down through 
 
 ### DRILL
 
-`=PLAIDXL.DRILL(dimension_name, start_node, drill_key, [hierarchy])`
+`=PLAIDXL.DRILL(dimension_name, start_node, drill_key, [hierarchy], [exclude], [expand], [orientation])`
 
-Returns `start_node` and the nodes below it that `drill_key` asks for, down a column, indented by generation and grouped in an Excel outline.
+Returns `start_node` and the nodes below it that `drill_key` asks for, indented by generation and grouped in an Excel outline.
 
 - `dimension_name` — the dimension's name, or its path in the project.
-- `start_node` — the node to drill from.
+- `start_node` — the node to drill from. Leave it empty (`""`) to start from the dimension's top nodes.
 - `drill_key` — how far to drill, from [`DRILL_KEY`](#drill_key): every descendant, only the leaves, a number of levels, or a range of generations.
 - `hierarchy` — the alternate hierarchy to follow. Defaults to `"main"`.
+- `exclude` — nodes to leave out, with everything beneath them: a node, a list, or a range of cells. The start node is never left out.
+- `expand` — nodes whose children to show as well, even below the depth `drill_key` asks for: a node, a list, or a range of cells. Only nodes the drill shows are opened, so to open a grandchild, list its parent too.
+- `orientation` — `"vertical"` (the default) to list nodes down a column, or `"horizontal"` to list them across a row, without indentation and grouped by column.
+
+`exclude` and `expand` take node IDs as text or numbers; empty cells and errors in a range are ignored. Leave an argument empty (`""`) to skip it, as in `=PLAIDXL.DRILL("Period", "FY2026", PLAIDXL.REPR.DRILL_KEY("1 level"), "main", "", "", "horizontal")`.
 
 For example, `=PLAIDXL.DRILL("Region", "Total", PLAIDXL.REPR.DRILL_KEY("leaves"))` lists **Total** followed by every leaf region beneath it.
 
-The [expand commands on the ribbon](/reference/cli/plaidxl/ribbon/#drill-functions) do the same thing for a dimension and node you've typed in two cells, without writing a formula.
+The [drill commands](/reference/cli/plaidxl/drill/) write and edit `DRILL` formulas for you: select a node and drill down, drill up, keep or remove nodes.
 
 ## Values
 
@@ -124,7 +130,7 @@ You describe the intersection with the building-block functions below, usually i
 | How to aggregate it | [`MEASURE_TYPE`](#measure_type) | No — defaults to `sum` |
 | A filter on a column | [`DIMENSION_REPR`](#dimension_repr) | At least one, one per column |
 
-Each filter names a **column of the table** and a value. When that column is linked to a dimension in PlaidCloud, the value is a node, and the filter includes everything that rolls up to that node in the dimension's main hierarchy — on a **Region** column linked to a geography dimension, the node **EMEA** covers every country beneath it. On a column that isn't linked to a dimension, the filter matches the value exactly.
+Each filter names a **column of the table** and a value. When that column is linked to a dimension in PlaidCloud, the value is a node, and the filter includes everything that rolls up to that node in the dimension's main hierarchy, or the hierarchy you name — on a **Region** column linked to a geography dimension, the node **EMEA** covers every country beneath it. On a column that isn't linked to a dimension, the filter matches the value exactly.
 
 The examples on this page use a table whose **Region** and **Period** columns are linked to dimensions. Use your own table's column names.
 
@@ -145,7 +151,9 @@ B1  =PLAIDXL.CELL(A1, A2, A3, A4, A5)
 
 `B1` shows total revenue for EMEA in FY2026.
 
-A sheet full of `CELL` formulas needs fewer lookups per cell, because PlaidXL reuses the table's column details for a short time instead of fetching them for every cell. If a value can't be calculated, the cell shows `#VALUE!` and hovering over it shows the reason as PlaidCloud reported it, such as a filter column that isn't in the table or a node with no members. `CELLS` shows the first reason for the whole result.
+Type a number over a `CELL` to write it to PlaidCloud. See [Type Values Into PlaidCloud](/reference/cli/plaidxl/write-values/).
+
+A sheet full of `CELL` formulas calculates quickly: the `CELL` formulas that calculate together are sent to PlaidCloud in one request, up to 10,000 at a time, and PlaidXL reuses a table's column details for 30 seconds instead of fetching them for every cell. If a value can't be calculated, the cell shows `#VALUE!` and hovering over it shows the reason as PlaidCloud reported it, such as a filter column that isn't in the table or a node with no members. `CELLS` shows the first reason for the whole result.
 
 ### CELLS
 
@@ -160,6 +168,56 @@ B2     =PLAIDXL.CELLS(A1, D2#, A3, A4, A5)
 ```
 
 `D2#` passes the whole spilled result of `MEASURES`. `B2:B4` show revenue, cost and units for EMEA in FY2026.
+
+## Metrics
+
+`METRIC` and `METRIC_BREAKDOWN` read a [metric definition](/integrations/ai-coding-agents/metric-definitions/) from the workbook's project: a business number such as *Net Revenue* whose calculation is agreed and written down in PlaidCloud. The value is the one dashboards and Weave show, calculated under your own row access. **Metric...** on the ribbon lists the project's metrics with their current values and writes the formula for you; see [Insert a Metric](#insert-a-metric).
+
+Filters are [`DIMENSION_REPR`](#dimension_repr) values, as for `CELL`, except that the first argument can name either a column the metric can be broken down by or the dimension linked to it. A node includes everything beneath it. Pass a single filter, or a range or list of them; empty filters are ignored. One formula can use one alternate hierarchy.
+
+### METRIC
+
+`=PLAIDXL.METRIC(name, [filter], ...)`
+
+Returns one number: the metric, for the rows under every filter you pass.
+
+- `name` — the metric's name, one of its synonyms, or its ID. Case doesn't matter.
+- `filter` — a `DIMENSION_REPR` filter. Pass as many as you need.
+
+```text
+=PLAIDXL.METRIC("Net Revenue", PLAIDXL.REPR.DIMENSION_REPR("Region", "EMEA"))
+```
+
+When no rows match, `METRIC` returns `0`; when the metric has no value, the cell is blank.
+
+### METRIC_BREAKDOWN
+
+`=PLAIDXL.METRIC_BREAKDOWN(name, breakdown, [filter], ...)`
+
+Returns the metric split by one column: two columns, each member of `breakdown` beside its value, largest value first. Every member is listed, with no header row.
+
+- `name` — the metric's name, one of its synonyms, or its ID.
+- `breakdown` — the column to break the metric down by, one the metric can be broken down by.
+- `filter` — a `DIMENSION_REPR` filter. Pass as many as you need.
+
+```text
+=PLAIDXL.METRIC_BREAKDOWN("Net Revenue", "Region")
+```
+
+Members without a value come last, with a blank value. When no rows match, it returns one row: an empty member and `0`.
+
+### Metric Errors
+
+A metric that can't be calculated shows `#VALUE!`; hover over the cell for the reason:
+
+| Message | What to do |
+|---|---|
+| Unknown metric, or unknown column | Check the name. When there are close matches, the message lists them after **Did you mean**. |
+| The name matches more than one metric | Use the metric's full name or its ID. |
+| **Your PlaidCloud role doesn't allow reading metrics in this project.** | Ask a project owner for access. |
+| **This PlaidCloud workspace doesn't serve metrics to Excel yet.** | Ask your administrator to update the workspace. |
+| **PlaidCloud is busy; try again in** a number of seconds | PlaidXL has already retried. Recalculate after the time it gives. |
+| **Choose a project in the PlaidXL pane first.** | Link the workbook to a project. |
 
 ## Building Blocks
 
@@ -201,12 +259,13 @@ How to aggregate the measure. `agg_function` is one of these, in lowercase:
 
 ### DIMENSION_REPR
 
-`=PLAIDXL.REPR.DIMENSION_REPR(dimension_name, start_node)`
+`=PLAIDXL.REPR.DIMENSION_REPR(dimension_name, start_node, [hierarchy])`
 
-A filter for `CELL` and `CELLS`. Pass one for each column you want to filter by.
+A filter for `CELL`, `CELLS`, `METRIC` and `METRIC_BREAKDOWN`. Pass one for each column you want to filter by.
 
 - `dimension_name` — the name of a **column in the table** — the column that holds the dimension's values, such as `"Region"`. It must match the column name exactly; a column that isn't in the table returns an error.
 - `start_node` — the node to roll up to, such as `"EMEA"`. On a column that isn't linked to a dimension, the value to match.
+- `hierarchy` — the alternate hierarchy to roll the node up through. Defaults to `"main"`.
 
 Reference a cell for the node to build a grid: `=PLAIDXL.REPR.DIMENSION_REPR("Region", $A7)`. Leading and trailing spaces are ignored, so you can point it at the indented node names `DRILL` lays out.
 
@@ -259,17 +318,28 @@ Nodes are listed in hierarchy order, each one under its own parent, and the Exce
 
 ## Insert a Formula From the Task Pane
 
-The **Formulas** tab of the task pane writes a formula for you. Under **What do you want in the cell?**, choose one:
+The **Formulas** tab of the task pane writes a formula for you. Open it from the task pane, with **Formula...** on the ribbon, or with **Insert formula here...** on the **PlaidXL** right-click menu. Under **What do you want in the cell?**, choose one:
 
 - **A whole table** (`GET_TABLE`) — pick or type the table, and optionally a maximum number of rows.
 - **One number** (`CELL`) — pick or type the table, choose the **Column to total** and **How to combine the values**.
-- **A list of dimension nodes** (`DRILL`) — pick or type the dimension and the start node, choose **All levels**, **Lowest level only** or **Down** a number of **levels**, and optionally an **Alternate hierarchy**.
+- **A list of dimension nodes** (`DRILL`) — pick or type the dimension and the start node, choose how far to drill, and optionally an **Alternate hierarchy**, nodes to exclude and nodes to open. **Rows** previews the nodes the drill lists. See [Custom Drill](/reference/cli/plaidxl/drill/#custom-drill).
+- **A business metric** (`METRIC`) — see [Insert a Metric](#insert-a-metric).
 
-The **Formula** preview shows the result as you fill in the fields. Click **Insert in active cell** to put it in the selected cell, or **Copy** to paste it yourself. Choosing a table on the **Tables** tab or a dimension on the **Dimensions** tab fills in the matching field.
+The **Formula** preview shows the result as you fill in the fields. Click **Insert in active cell** (or press **Ctrl+Enter**) to put it in the selected cell, or **Copy** to paste it yourself. Choosing a table on the **Tables** tab or a dimension on the **Dimensions** tab fills in the matching field.
+
+### Insert a Metric
+
+Click **Metric...** in the **Insert** group of the ribbon, or choose **A business metric** on the **Formulas** tab.
+
+1. In **Metric**, type part of a metric's name or synonym, such as `revenue`. Each match shows its current value and description.
+2. Use the arrow keys or click to choose a metric.
+3. Optionally, add filters: choose a **Dimension**, type a **Node**, and click **Add filter**.
+4. Optionally, choose a column under **Breakdown by (optional)** to write `METRIC_BREAKDOWN` instead of a single number.
+5. Click **Insert in active cell**, or **Copy**.
 
 ## Related
 
-- [Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/) — a hierarchy down the side, values across the top
+- [Build a Report](/reference/cli/plaidxl/build-a-report/) — a hierarchy down the side, values across the top
 - [Work With Tables and Dimensions](/reference/cli/plaidxl/retrieve/) — choose the project the functions read from
 - [Using Dimensions](/guides/dimensions/dimensions/) — main and alternate hierarchies, and how nodes roll up
 - [Design a Dimension Hierarchy](/get-started/tutorials/design-a-dimension/) — build the hierarchy your report rolls up through

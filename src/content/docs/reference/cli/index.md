@@ -18,13 +18,16 @@ PlaidCloud provides three command-line and on-machine tools for working with wor
 
 ## PlaidXL
 
-[PlaidXL](/reference/cli/plaidxl/) is the PlaidCloud add-in for Microsoft Excel. It retrieves project tables and dimensions into worksheets, refreshes them on demand, and adds `PLAIDXL` formulas that calculate rolled-up values from PlaidCloud data.
+[PlaidXL](/reference/cli/plaidxl/) is the PlaidCloud add-in for Microsoft Excel. It retrieves project tables and dimensions into worksheets, refreshes them on demand, adds `PLAIDXL` formulas that calculate rolled-up values and governed metrics from PlaidCloud data, and writes planned values back.
 
 - [Install](/reference/cli/plaidxl/install/)
 - [Sign In](/reference/cli/plaidxl/connect/)
 - [Work With Tables and Dimensions](/reference/cli/plaidxl/retrieve/)
 - [Custom Functions](/reference/cli/plaidxl/functions/)
-- [Build a Report With Custom Functions](/reference/cli/plaidxl/build-a-report/)
+- [Build a Report](/reference/cli/plaidxl/build-a-report/)
+- [Drill, Pick Members and Explain Numbers](/reference/cli/plaidxl/drill/)
+- [Type Values Into PlaidCloud](/reference/cli/plaidxl/write-values/)
+- [Ask Weave in Excel](/reference/cli/plaidxl/weave/)
 - [The PlaidCloud Ribbon](/reference/cli/plaidxl/ribbon/)
 - [Troubleshooting](/reference/cli/plaidxl/troubleshooting/)
 

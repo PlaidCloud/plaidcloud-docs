@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting PlaidXL
-description: Fixes for common PlaidXL problems — the add-in missing from the ribbon, a sign-in pop-up that doesn't open, missing workspaces or projects, tables shown in red, slow retrieves, and errors in PlaidXL formulas.
+description: Fixes for common PlaidXL problems — the add-in missing from the ribbon, a sign-in pop-up that doesn't open, missing workspaces or projects, tables shown in red, slow retrieves, errors in PlaidXL formulas and metrics, typed values that aren't written, and saves that stop.
 sidebar:
   label: Troubleshooting
   order: 7
@@ -33,7 +33,7 @@ Folders in the project, table and dimension lists start collapsed. Type part of 
 
 ## A Table Shows in Red
 
-The table has more rows or columns than an Excel worksheet holds. Select **Advanced** to filter the rows, and clear the columns you don't need, until it fits. See [Tables Shown in Red](/reference/cli/plaidxl/retrieve/#tables-shown-in-red).
+The table has more rows or columns than an Excel worksheet holds, or PlaidCloud can't report its size. You can retrieve it, and rows that don't fit continue on further sheets, but a table split across sheets can't be saved. Select **Advanced** to filter the rows, and clear the columns you don't need, until it fits. See [Tables Shown in Red](/reference/cli/plaidxl/retrieve/#tables-shown-in-red).
 
 ## A Retrieve Is Slow
 
@@ -47,29 +47,46 @@ Excel is slowest with wide tables. Clear the check boxes of columns you don't ne
 | `#NAME?` | Excel doesn't recognize the function. Check that PlaidXL is installed — the **PlaidCloud** tab is on the ribbon — and check the spelling against [the function list](/reference/cli/plaidxl/functions/). |
 | An error from a `PLAIDXL` function | Check that you're signed in and the right project is selected, then check every table, column, dimension and node name against PlaidCloud — names must match exactly. |
 | `CELL` reports that a filter column isn't found | The first argument of `DIMENSION_REPR` is a column of the table, not a dimension. Use the table's column name exactly. See [Values](/reference/cli/plaidxl/functions/#values). |
+| `#VALUE!` from `METRIC` or `METRIC_BREAKDOWN` | Hover over the cell to read the reason. See [Metric Errors](/reference/cli/plaidxl/functions/#metric-errors). |
 | `#VALUE!` from `CELL` or `CELLS` | Hover over the cell to read the reason PlaidCloud gave, such as an unknown column, a node that doesn't exist or has no members, or a problem computing the value. Check the names against PlaidCloud. |
 | `CELL` returns an unexpected total | A node rolls up only on a column linked to its dimension; on any other column it must match a value exactly. Check each filter's column and node. |
-| Values don't change after the data or project changes | Force a full recalculation — on Windows, **Ctrl+Alt+F9**. |
+| Values don't change after the data or project changes | Click **Recalculate PlaidXL formulas** in the ribbon's **Refresh** menu. |
 | `MEASURE_TYPE` returns an error | Use one of `sum`, `mean`, `median`, `min`, `max`, `std` or `var`, in lowercase. |
 
 ## Formulas Return Another Project's Data
 
-PlaidXL functions read from the project linked to the workbook. Open the task pane in that workbook, choose the project the report was built for, then force a full recalculation. Each workbook has its own project, so choosing one in another workbook doesn't change this one. See [The Project Belongs to the Workbook](/reference/cli/plaidxl/retrieve/#the-project-belongs-to-the-workbook).
+PlaidXL functions read from the project linked to the workbook. Open the task pane in that workbook, choose the project the report was built for, then click **Recalculate PlaidXL formulas** in the ribbon's **Refresh** menu. Each workbook has its own project, so choosing one in another workbook doesn't change this one. See [The Project Belongs to the Workbook](/reference/cli/plaidxl/retrieve/#the-project-belongs-to-the-workbook).
 
 ## Tables From Another Workspace Are Skipped
 
-After you switch workspace, the task pane says how many tracked tables belong to another workspace and are skipped by **Refresh All Tables**. Retrieve each table again in the current workspace to link it.
+After you switch workspace, **Refresh All Tables** says that tables or dimensions from another workspace in this workbook were not refreshed, and they aren't listed under **On this sheet**. Retrieve each table again in the current workspace to link it.
 
-## A Save Is Refused or Stopped
+## A Typed Value Isn't Written
+
+When you type over a `CELL`, the task pane says what it wrote and lists anything it didn't, with the reason. See [Type Values Into PlaidCloud](/reference/cli/plaidxl/write-values/).
 
 | What you see | What to do |
 |---|---|
-| Rows are empty inside the table | A single empty row is skipped. Two or more empty rows in a row, with data below them, stop a save. Delete the empty rows or fill them, then save again. |
-| The table changed since you retrieved it | Someone else saved the table in PlaidCloud. Retrieve it again and reapply your edits. (PlaidCloud can check this only on some table types; where it can't, the confirmation warns that others' changes will be overwritten.) |
-| A value can't be converted | Nothing is written and the rows are listed. Correct the values to match the column's data type. |
-| The sheet isn't linked to a table | Retrieve the table to the sheet first. **Save to PlaidCloud…** appears only for tables retrieved into the active sheet. |
+| Only a cell holding just one `PLAIDXL.CELL` takes a typed value | Type over a cell whose formula is a single `CELL`, optionally multiplied, divided or negated. |
+| An argument can't be read here | The `CELL`'s arguments must be cells or text, not other calculations. |
+| A spread method, shape or hold applies to sums only | Codes such as `E1200`, `1200 like FY2025` and `H` work only on **sum** cells. Type a plain number on others. |
+| All members held | Release a hold with `H`, then type the value again. |
+| The workspace doesn't take values typed in Excel yet | Ask your administrator to update the workspace. |
 
-To undo a save, click **Restore previous version** in the confirmation message, or open the table in PlaidCloud and pick the version from before the save in the **As of** menu. The restore point is kept for 7 days. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).
+## A Save Is Refused or Stopped
+
+A save writes straight away and rarely stops. It does when:
+
+| What you see | What to do |
+|---|---|
+| The header row no longer matches the retrieved columns | Put the header back as it was retrieved, or retrieve the table again. |
+| A value can't be converted | Nothing is written and the rows are listed. Correct the values to match the column's data type. |
+| The table continues on other sheets | A table split across sheets can't be saved. Retrieve it with a filter so it fits on one sheet. |
+| The table was retrieved with a filter Save can't keep to | Retrieve it again with a filter of **equal** and **in** rules joined by **AND**, or none. |
+| Rows are outside your row access | Nothing is saved. Remove those rows, or ask a project Architect to save them. |
+| The sheet isn't linked to a table | Retrieve the table to the sheet first. Only tables retrieved into the active sheet are listed under **On this sheet**. |
+
+To undo a save, click **Undo** in the message or **Undo last write** on the ribbon. The restore point is kept for 7 days. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).
 
 ## Related
 
