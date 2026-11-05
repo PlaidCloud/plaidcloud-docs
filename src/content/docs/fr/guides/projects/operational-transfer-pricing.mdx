@@ -1,0 +1,92 @@
+---
+title: Prix de transfert opérationnels
+description: Testez le niveau de profit de chaque entité par rapport aux fourchettes de votre politique de prix de transfert, voyez quelles entités sont dans la fourchette, en dessous ou au-dessus, et quelle régularisation les y ramène, sur la base du Common Finance Model de Data Foundation.
+sidebar:
+  label: Prix de transfert opérationnels
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Le modèle de projet **Prix de transfert opérationnels** teste l'indicateur de niveau de profit de chaque partie testée par rapport à la fourchette que fixe votre politique, et calcule la régularisation qui ramène à la cible une entité hors fourchette. Il repose sur le [Common Finance Model](/fr/guides/projects/data-foundation/) et inclut tout ce que construit **Rentabilité de l'entreprise**.
+
+<Aside type="note">
+Il s'agit d'une vue de gestion pour suivre une politique au fil de l'année. Ce n'est ni une étude de prix de transfert ni une déclaration.
+</Aside>
+
+## Fonctionnement
+
+Pour chaque entité et chaque période, le modèle de projet :
+
+1. Construit le compte de résultat de la partie testée dans la **devise locale** de l'entité, car c'est la devise dans laquelle elle tient sa comptabilité et comptabilise sa régularisation. Le chiffre d'affaires est réparti entre intersociétés et tiers.
+2. Le cumule sur l'exercice fiscal depuis son début. Les périodes d'ajustement comptent comme des périodes de leur exercice ; la dernière ligne d'un exercice est donc l'exercice complet.
+3. Trouve la politique en vigueur pour l'entité.
+4. Calcule l'indicateur de niveau de profit, en pourcentage, sur le cumul depuis le début de l'exercice, et le compare à la fourchette.
+
+## Indicateurs de niveau de profit
+
+Vous choisissez un **angle** pour chaque entité :
+
+| Angle | Définition |
+|---|---|
+| `ros` | Rentabilité des ventes (ROS) : EBIT ÷ ventes de la partie testée. |
+| `ncp` | Majoration nette des coûts : EBIT ÷ coût total. |
+| `resale_minus` | Prix de revente moins : marge brute ÷ ventes. |
+
+L'EBIT est le chiffre d'affaires diminué du coût des marchandises vendues et des charges d'exploitation. Les postes hors exploitation n'y figurent pas. Les ventes sont la totalité du chiffre d'affaires de l'entité, avec les tiers et intersociétés, car le profit est réalisé sur l'ensemble.
+
+## La table des politiques
+
+Vos fourchettes se trouvent dans la table `otp_policy_targets`, avec une ligne pour chaque entité et la période à laquelle la politique prend effet. Vous la modifiez ; le modèle n'y écrit jamais.
+
+| Colonne | Contenu |
+|---|---|
+| `entity` | La partie testée. |
+| `role` | Un libellé pour son rôle, tel que distributeur à risque limité. |
+| `lens` | `ros`, `ncp` ou `resale_minus`. |
+| `low`, `target`, `high` | La fourchette et la cible, en pourcentage. `low <= target <= high`. |
+| `effective_from_period` | Le mois où la ligne prend effet, au format `YYYY-MM`. Elle reste en vigueur jusqu'à la ligne suivante de l'entité. |
+
+Une entité n'a qu'une politique à la fois. Un changement d'angle ou de fourchette est une nouvelle ligne avec un `effective_from_period` ultérieur. Les données d'exemple comportent trois lignes d'exemple. Remplacez-les par les vôtres.
+
+Une ligne qui ne peut pas être jugée, comme un mois invalide, un angle, un minimum, une cible ou un maximum vide, ou une fourchette dans le désordre, rend les résultats de cette entité **incomplets** plutôt que devinés.
+
+## Résultats
+
+Pour chaque entité et chaque période, la table de résultats affiche l'indicateur sur le cumul depuis le début de l'exercice et un état :
+
+| État | Signification |
+|---|---|
+| `in` | Dans la fourchette, bornes comprises. |
+| `below`, `above` | En dehors de la fourchette. |
+| `n-a` | La base, ventes ou coût, n'est pas positive. |
+| `incomplete` | La ligne de politique pose problème, ou un élément nécessaire à la comparaison est inconnu. Un vide ne se lit jamais comme `in`. |
+
+Lorsqu'une entité est hors fourchette, `true_up_ytd` est le profit à ajouter à la partie testée pour le cumul depuis le début de l'exercice afin d'atteindre la cible, ou à retirer s'il est négatif, en devise locale. `true_up` est la variation de ce montant sur la période ; les périodes d'un exercice totalisent donc la régularisation de l'exercice. La régularisation est aussi exprimée dans la devise du groupe.
+
+Métriques pour l'assistant et les tableaux de bord : **Régularisation PT**, **EBIT de la partie testée**, **Ventes de la partie testée**, **Ventes à des tiers**, **Ventes intersociétés**, **Coût total de la partie testée**, **Rentabilité des ventes**, **Majoration nette des coûts**, et **Marge CO-PA** par valorisation.
+
+## Marge CO-PA
+
+Si vous chargez SAP CO-PA, le modèle de projet affiche aussi sa marge par valorisation : légale, de groupe ou de centre de profit. Une valorisation est son propre chiffre ; n'additionnez donc jamais des valorisations. Un fichier CO-PA contient une valorisation, que vous confirmez lorsque vous l'ajoutez. Lorsqu'un fichier CO-PA n'indique pas si les chiffres d'affaires sont positifs ou négatifs, la correspondance du fichier demande quel signe il utilise.
+
+## Démarrer un projet
+
+<Steps>
+
+1. Dans Analyze, ouvrez **Projets** et cliquez sur **Nouveau projet**.
+
+2. Sous **Partir de**, choisissez **Prix de transfert opérationnels (modèle)**. Cochez **Commencer avec des données d'exemple** pour voir d'abord un exemple concret.
+
+3. Connectez vos ERP et lancez **Charger**. Voir [Démarrer avec Data Foundation](/fr/guides/projects/data-foundation-getting-started/).
+
+4. Modifiez `otp_policy_targets` pour vos parties testées et vos fourchettes, puis cliquez sur **Appliquer les modifications**.
+
+</Steps>
+
+Enregistrez votre table des politiques avec le projet en utilisant **Actions > Enregistrer comme mon modèle...**. Voir [Enregistrer comme mon modèle](/fr/guides/projects/data-foundation/#enregistrer-comme-mon-modèle).
+
+## Voir aussi
+
+- [Data Foundation : le Common Finance Model](/fr/guides/projects/data-foundation/)
+- [Coût de service](/fr/guides/projects/cost-to-serve/)

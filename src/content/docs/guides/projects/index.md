@@ -13,6 +13,9 @@ Most teams start with one project per analytical area: a project for headcount c
 
 - [Manage projects](/guides/projects/managing-projects/) — create, configure, and organize projects in your workspace
 - [Data Foundation: The Common Finance Model](/guides/projects/data-foundation/) — bring ERP data from multiple ERP systems and instances, through their direct connections, into one Common Finance Model that reports, metrics and AI assistants all read
+- [Get started with Data Foundation](/guides/projects/data-foundation-getting-started/) — the setup checklist from a new project to a loaded, checked, handed-over model
+- [Cost to Serve](/guides/projects/cost-to-serve/) — spread operating expense to customers by activity and see margin after the cost of serving them
+- [Operational Transfer Pricing](/guides/projects/operational-transfer-pricing/) — test each entity's profit level against your policy ranges and see the true-up
 - [View projects](/guides/projects/viewing-projects/) — find and open existing projects
 - [Manage hierarchies](/guides/projects/managing-hierarchies/) — folder structure for organizing many projects
 - [Manage tables and views](/guides/projects/managing-tables-and-views/) — the data layer inside a project

@@ -1,0 +1,91 @@
+---
+title: OneStream dla Data Foundation
+description: Połącz PlaidCloud z OneStream, aby Data Foundation mogło odczytywać skonsolidowane wyniki przez adapter danych i uzgadniać z nimi konsolidację zarządczą — z adapterem budowanym przez administratora OneStream i ustawieniami opisującymi jego kwoty.
+sidebar:
+  label: OneStream dla Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/onestream-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Połącz PlaidCloud z **OneStream**, aby Data Foundation mogło odczytywać Twoje skonsolidowane wyniki i uzgadniać z nimi zarządczy rachunek zysków i strat grupy. OneStream jest obsługiwany przez swój konektor: PlaidCloud loguje się za pomocą poświadczeń klienta OAuth 2.0 i odczytuje adapter danych budowany przez administratora OneStream. Konektor tylko odczytuje. Jeśli podasz sekwencję Data Management, PlaidCloud najpierw ją uruchomi, aby odświeżyć dane odczytywane przez adapter, i nie uruchomi niczego innego.
+
+OneStream jest źródłem wyników, z którymi się uzgadnia, a nie pozycji księgi: jego wiersze trafiają jako scenariusz `Consolidated` tabeli budżetu modelu, wersja `OneStream`. Zobacz [Uzgadnianie z systemem konsolidacji](/pl/guides/projects/data-foundation/#uzgadnianie-z-systemem-konsolidacji).
+
+<Aside type="note">
+Kolumny adaptera są kontraktem uzgadnianym między Tobą a administratorem OneStream. Gdy adapter jest zbudowany zgodnie z tą stroną, jego wiersze trafiają tak, jak opisano poniżej. Porównaj wyniki pierwszego ładowania z raportem OneStream, któremu ufasz.
+</Aside>
+
+## Co przygotowuje administrator OneStream
+
+Karta **Foundation** przygotowuje prośbę o dostęp, którą możesz wysłać. Zawiera ona następujące elementy.
+
+1. Klient dla PlaidCloud w usłudze tożsamości OneStream, korzystający z przyznania **client credentials**, z użytkownikiem usługi, który może uruchamiać adapter oraz — jeśli PlaidCloud ma najpierw odświeżać wyniki — sekwencję Data Management.
+
+2. W aplikacji i obszarze roboczym, dla których raportujesz, adapter danych o nazwie **Foundation_Results**, który zwraca jedną tabelę skonsolidowanych wyników z dokładnie tymi kolumnami:
+
+   | Kolumna | Zawiera |
+   |---|---|
+   | `entity` | Element konsolidacji: jednostkę, element eliminacji lub sumę grupy. |
+   | `account` | Kod konta. Tylko konta podstawowe. |
+   | `time` | Miesiąc w formacie `YYYY-MM`. |
+   | `scenario` | Scenariusz. |
+   | `view` | `YTD` lub `Periodic`. PlaidCloud odczytuje tylko wiersze wybranego widoku. |
+   | `amount` | Liczba, ze znakiem i w skali pokazywanymi w Twoich raportach. |
+   | `currency` | Waluta, w której podano kwotę: waluta raportowania Twojej grupy. |
+   | `flow`, `ud1`, `ud2`, `ud3`, `ud4` | Wymiary przepływu i wymiary zdefiniowane przez użytkownika. Tylko elementy podstawowe. |
+
+   Udostępniaj elementy podstawowe wymiarów kont, przepływu i zdefiniowanych przez użytkownika. Wiersz elementu nadrzędnego liczyłby jego elementy podrzędne dwukrotnie. Adapter odczytuje element konsolidacji ze zmiennej zastępczej `Member`, a widok z `View`.
+
+3. Elementy do odczytu: jednostki, elementy eliminacji i suma grupy.
+
+## Tworzenie połączenia
+
+<Steps>
+
+1. Otwórz **Tools > Connections** i kliknij `New Connection`, a następnie wybierz **OneStream**. Możesz też utworzyć je na karcie **Foundation** podczas dodawania źródła.
+
+2. Wypełnij pola:
+
+   | Pole | Wartość |
+   |---|---|
+   | Host | Podstawowy adres URL OneStream, zaczynający się od `https://`. |
+   | Identyfikator klienta | Identyfikator klienta PlaidCloud. |
+   | Klucz tajny klienta | Jego sekret. Przechowywany w postaci zaszyfrowanej i nigdy więcej nie wyświetlany. |
+   | Adres URL tokenu | Pozostaw puste, aby użyć hosta z dopisanym `/identity/connect/token`. |
+   | Aplikacja domyślna | Używana przez odczyt, który pozostawia aplikację pustą. |
+   | Domyślny obszar roboczy | Używany przez odczyt, który pozostawia obszar roboczy pusty. |
+   | Limit czasu (sekundy) | Domyślnie 120. |
+
+3. Kliknij `Create`.
+
+</Steps>
+
+## Dodawanie do projektu Data Foundation
+
+Na karcie **Foundation** dodaj połączenie jako źródło, tak jak każde inne (zobacz [Połącz swój ERP](/pl/guides/projects/data-foundation/#połącz-swój-erp)), i wybierz elementy konsolidacji do odczytu. Następnie odpowiedz na pytania opisujące kwoty adaptera:
+
+| Ustawienie | Znaczenie |
+|---|---|
+| Elementy | Elementy konsolidacji do odczytu, po jednym wywołaniu adaptera dla każdego. |
+| Widok | Czy kwoty adaptera są narastające od początku roku (domyślnie), czy okresowe. Wiersze narastające trafiają jako kwoty okresowe. |
+| Znak | **Naturalny**: każde konto w swoim znaku, tak jak raportuje je OneStream (domyślnie). **Debet dodatni**: debety dodatnie. |
+| Skala | Mnożnik do pełnych jednostek waluty: `1000`, gdy OneStream udostępnia tysiące. |
+| Miesiąc początku roku obrotowego | Miesiąc, w którym zaczyna się Twój rok obrotowy, do przeliczania wartości narastających na okresowe. |
+| Aplikacja, obszar roboczy | Zastępują wartości z połączenia. |
+| Zmienne zastępcze | Dodatkowe zmienne odczytywane przez adapter, na przykład `Time=2026M1`. |
+| Sekwencja Data Management | Sekwencja uruchamiana przed odczytem w celu odświeżenia danych odczytywanych przez adapter. |
+
+Przypisz elementy OneStream do swoich jednostek za pomocą pliku mapowania kodów, który dotyczy tego źródła. Zobacz [Tabela przypisań jednostek](/pl/guides/projects/data-foundation/#tabela-przypisań-jednostek). Źródło nie odczytuje okna historii: ogranicza je własne zmienne zastępcze adaptera.
+
+Ładowanie, w którym adapter nie zwraca żadnych wierszy, kończy się ostrzeżeniem, a nie błędem, a tabela jest pusta.
+
+## Odczyt adaptera w przepływie pracy
+
+Aby odczytać adapter do własnej tabeli, użyj kroku [OneStream: Read Adapter](/pl/reference/workflow-steps/onestream/onestream-read-adapter/).
+
+## Powiązane
+
+- Krok [OneStream: Read Adapter](/pl/reference/workflow-steps/onestream/onestream-read-adapter/)
+- [Data Foundation: Common Finance Model](/pl/guides/projects/data-foundation/)
+- [Połącz z Anaplan](/pl/guides/connections/anaplan/)
