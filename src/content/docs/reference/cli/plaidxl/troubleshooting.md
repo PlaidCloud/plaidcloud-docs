@@ -83,7 +83,7 @@ A save writes straight away and rarely stops. It does when:
 | A value can't be converted | Nothing is written and the rows are listed. Correct the values to match the column's data type. |
 | The table continues on other sheets | A table split across sheets can't be saved. Retrieve it with a filter so it fits on one sheet. |
 | The table was retrieved with a filter Save can't keep to | Retrieve it again with a filter of **equal** and **in** rules joined by **AND**, or none. |
-| Rows are outside your row access | Nothing is saved. Remove those rows, or ask a project Architect to save them. |
+| Rows are outside your row access | Nothing is saved. Remove those rows, then save again. |
 | The sheet isn't linked to a table | Retrieve the table to the sheet first. Only tables retrieved into the active sheet are listed under **On this sheet**. |
 
 To undo a save, click **Undo** in the message or **Undo last write** on the ribbon. The restore point is kept for 7 days. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).

@@ -28,7 +28,7 @@ To set up two-factor authentication or single sign-on for your account, see [Mem
 If you're signed in to Office with a work account from Microsoft Entra ID and PlaidXL has no saved sign-in, it finds your workspaces from that account, so you don't type your email:
 
 - **One workspace** — PlaidXL starts signing you in to it. Allow the pop-up if Excel asks; with single sign-on, it passes straight through. In Excel on the web, click **Continue as** your account first.
-- **Several workspaces** — choose one from **Select a workspace**. The workspace the workbook was last used with is already selected.
+- **Several workspaces** — if the workbook was last used with one of them, PlaidXL signs you in to that one. Otherwise choose one from **Select a workspace**.
 - **No workspace** — the email screen opens with your address filled in.
 
 If you sign in as a different email from your Office account, PlaidXL says which one. After you **Log out**, PlaidXL waits for you to sign in yourself.
