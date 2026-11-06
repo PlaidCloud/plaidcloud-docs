@@ -155,6 +155,9 @@ Selecting a table opens its details panel, which lists the workflow steps that t
 * **May Reference This Table** — steps that reach a table through a variable that cannot be resolved. This section only appears when there are such steps.
 
 
+Selecting another table clears these lists straight away. A step in another project that shares this project's data, such as an **Import: External Project Table** step reading this table, is listed too, without its name or workflow, because you may not have access to that project. Those steps can appear a moment after the rest.
+
+
 A step can name a table outright, or reach it through a path containing a variable, such as `/Periods/{period}/Sales`. Where that variable has a current value, the step appears in the first two lists with an information icon beside it. Hover the row to see the path as the step stores it.
 
 

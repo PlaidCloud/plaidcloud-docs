@@ -156,6 +156,9 @@ Zaznaczenie tabeli otwiera jej panel szczegółów, który wymienia kroki przep�
 * **Może odwoływać się do tej tabeli** — kroki, które docierają do tabeli przez zmienną, której nie można rozstrzygnąć. Ta sekcja pojawia się tylko wtedy, gdy są takie kroki.
 
 
+Wybranie innej tabeli od razu czyści te listy. Krok w innym projekcie, który współdzieli dane tego projektu, na przykład krok **Import: zewnętrzna tabela projektu** odczytujący tę tabelę, również jest wymieniony, ale bez nazwy i przepływu pracy, ponieważ możesz nie mieć dostępu do tego projektu. Takie kroki mogą pojawić się chwilę po pozostałych.
+
+
 Krok może nazwać tabelę wprost albo dotrzeć do niej przez ścieżkę zawierającą zmienną, taką jak `/Periods/{period}/Sales`. Gdy zmienna ma bieżącą wartość, krok pojawia się w pierwszych dwóch listach z ikoną informacji obok. Najedź na wiersz, aby zobaczyć ścieżkę w postaci, w jakiej przechowuje ją krok.
 
 

@@ -156,6 +156,9 @@ Ao selecionar uma tabela, seu painel de detalhes é aberto e lista as etapas de 
 * **Pode referenciar esta tabela** — etapas que alcançam uma tabela por meio de uma variável que não pode ser resolvida. Esta seção só aparece quando há essas etapas.
 
 
+Selecionar outra tabela limpa essas listas imediatamente. Uma etapa em outro projeto que compartilha os dados deste projeto, como uma etapa **Importar: Tabela de projeto externa** que lê esta tabela, também é listada, sem o nome ou o fluxo de trabalho, porque você pode não ter acesso a esse projeto. Essas etapas podem aparecer um instante depois das demais.
+
+
 Uma etapa pode nomear uma tabela diretamente ou alcançá-la por meio de um caminho que contém uma variável, como `/Periods/{period}/Sales`. Quando essa variável tem um valor atual, a etapa aparece nas duas primeiras listas com um ícone de informação ao lado. Passe o mouse sobre a linha para ver o caminho como a etapa o armazena.
 
 

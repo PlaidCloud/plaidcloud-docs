@@ -156,6 +156,9 @@ Ao selecionar uma tabela, abre-se o respetivo painel de detalhes, que lista os p
 * **Pode referenciar esta tabela** — passos que chegam a uma tabela através de uma variável que não pode ser resolvida. Esta secção só aparece quando existem tais passos.
 
 
+Ao selecionar outra tabela, estas listas são limpas de imediato. Um passo de outro projeto que partilha os dados deste projeto, como um passo **Importar: Tabela de projeto externa** que lê esta tabela, também é listado, sem o respetivo nome ou fluxo de trabalho, porque pode não ter acesso a esse projeto. Esses passos podem aparecer um instante depois dos restantes.
+
+
 Um passo pode indicar uma tabela diretamente ou chegar a ela através de um caminho que contém uma variável, como `/Periods/{period}/Sales`. Quando essa variável tem um valor atual, o passo aparece nas duas primeiras listas com um ícone de informação ao lado. Passe o rato sobre a linha para ver o caminho tal como o passo o guarda.
 
 
