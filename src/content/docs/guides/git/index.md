@@ -12,30 +12,34 @@ You sign in with your PlaidCloud account, so there's no separate username or pas
 
 ## Open Git
 
-Select **Git** in your workspace's app list. The **Git** tab shows your workspace's repositories with each one's name, description, default branch and when it was last updated, and a line at the top says what you can do. Select a repository to open it, or **View all in Git** to go to the Git web interface. Use **← Back to** your workspace in Git to return to PlaidCloud.
+Select **Git** in your workspace's app list. The **Git** tab opens with the workspace's host, your role, and a **Repositories** list. Use **View all in Git** to go to the Git web interface, **Manage who can push** (if you can manage groups) to open group management, and the refresh button to reload. Use **← Back to** your workspace in Git to return to PlaidCloud.
 
-To clone a repository, select **Copy clone URL** on its row. The first time, a hint shows what you need:
+A role indicator shows your level: **Administrator**, **Contributor** or **Viewer**, with a line saying what that lets you do. Each repository row shows its name, description (when it has one), **Updated** with the date, a read-only clone field with a copy button, and **Open**, which opens the repository in Git. Repositories you create privately are in Git directly, not in this list.
+
+## Clone a Repository
+
+Copy the repository's clone address from its row. The first time you copy, a **Set up Git on your computer** card appears with the steps below. Select **Dismiss** to hide it, and **How to clone** in the header to bring it back.
 
 1. Git must be installed on your computer.
-2. Create an access token in Git under **Settings → Applications**, with the **write:repository** permission. The hint links to that page.
-3. When Git asks for a password, paste the token, not your PlaidCloud password.
-4. Run the two `git config --global user.name` and `user.email` commands shown, which already hold your name and email.
+2. Create a token at **Settings → Applications** with the **write:repository** permission. The card links to that page.
+3. Tell Git who you are, using the two `git config --global user.name` and `user.email` commands shown, which already hold your name and email.
+4. Clone the repository with the `git clone` command shown. When Git asks for a password, paste that token, not your PlaidCloud password.
 
-See [Repositories](/guides/git/repositories/) for the full walkthrough. If you can't copy a clone URL, you have Read access; see below.
+Each command has its own copy button. See [Repositories](/guides/git/repositories/) for the full walkthrough. Copying needs push access and an activated Git account: if the copy button is disabled, open any repository once to activate your account, or, as a **Viewer**, ask for push access as described below.
 
 ## Access Levels
 
 Everyone with Git access can read the workspace's shared repositories. Two further levels let you push.
 
-| Level | What you can do | Granted by |
+| Role | What you can do | Granted by |
 |---|---|---|
-| **Read** | View and clone the shared repositories. | Default for every member. |
+| **Viewer** | View and clone the shared repositories. | Default for every member. |
 | **Contributor** | Everything in Read, and push to the `apps` repository, where [Panel](/guides/panel-apps/deploy-from-git/) and [Dash](/guides/dash-apps/deploy-from-git/) app code lives. | The **Git Contributors** security group. |
-| **Admin** | Everything in Contributor, and push to all repositories, including `udfs`, and create organizations. | The **Git Administration** security group. |
+| **Administrator** | Everything in Contributor, and push to all repositories, including `udfs`, and create organizations. | The **Git Administration** security group. |
 
 The `udfs` repository is limited to Admins because user-defined functions run under the identity of the workflow that calls them.
 
-If you have Read access, the **Git** tab names up to three workspace administrators you can ask to add you to **Git Contributors**.
+If you are a **Viewer**, the **Git** tab names up to three workspace administrators you can ask to add you to **Git Contributors**.
 
 ## Git From Apps and UDFs
 

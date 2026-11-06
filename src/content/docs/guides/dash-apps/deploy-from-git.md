@@ -67,7 +67,7 @@ That's a complete app. `dash`, `plotly`, `dash-mantine-components`, `dash-ag-gri
 
 Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it.
 
-Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with the **write:repository** permission, and use it as the password when Git prompts. Pushing to `apps` needs **Contributor** access; ask a workspace administrator to add you to **Git Contributors** if the **Git** tab says you have Read access. Select **Copy clone URL** on the repository in the **Git** tab, then:
+Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with the **write:repository** permission, and use it as the password when Git prompts. Pushing to `apps` needs **Contributor** access; ask a workspace administrator to add you to **Git Contributors** if the **Git** tab shows you as a **Viewer**. Use the copy button next to the repository's clone address in the **Git** tab, then:
 
 ```bash
 git clone <clone URL>
