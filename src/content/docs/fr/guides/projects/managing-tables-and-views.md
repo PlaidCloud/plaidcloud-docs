@@ -156,6 +156,9 @@ Sélectionner une table ouvre son panneau de détails, qui liste les étapes de 
 * **Peut référencer cette table** — les étapes qui atteignent une table via une variable qui ne peut pas être résolue. Cette section n'apparaît que s'il existe de telles étapes.
 
 
+Sélectionner une autre table efface aussitôt ces listes. Une étape d'un autre projet qui partage les données de ce projet, comme une étape **Importation : table de projet externe** qui lit cette table, est également listée, sans son nom ni son workflow, car vous n'avez peut-être pas accès à ce projet. Ces étapes peuvent apparaître un instant après les autres.
+
+
 Une étape peut nommer une table directement, ou l'atteindre par un chemin contenant une variable, tel que `/Periods/{period}/Sales`. Lorsque cette variable a une valeur actuelle, l'étape apparaît dans les deux premières listes avec une icône d'information à côté. Survolez la ligne pour voir le chemin tel que l'étape l'enregistre.
 
 

@@ -156,6 +156,9 @@ Wenn Sie eine Tabelle auswählen, öffnet sich ihr Detailbereich, der die Workfl
 * **Kann auf diese Tabelle verweisen** – Schritte, die eine Tabelle über eine Variable erreichen, die sich nicht auflösen lässt. Dieser Abschnitt erscheint nur, wenn es solche Schritte gibt.
 
 
+Wenn Sie eine andere Tabelle auswählen, werden diese Listen sofort geleert. Ein Schritt in einem anderen Projekt, das die Daten dieses Projekts gemeinsam nutzt, etwa ein Schritt **Import: Externe Projekttabelle**, der diese Tabelle liest, wird ebenfalls aufgeführt, jedoch ohne Namen oder Workflow, da Sie möglicherweise keinen Zugriff auf dieses Projekt haben. Diese Schritte können einen Moment nach den übrigen erscheinen.
+
+
 Ein Schritt kann eine Tabelle direkt benennen oder sie über einen Pfad erreichen, der eine Variable enthält, etwa `/Periods/{period}/Sales`. Wenn diese Variable einen aktuellen Wert hat, erscheint der Schritt in den ersten beiden Listen mit einem Informationssymbol daneben. Zeigen Sie auf die Zeile, um den Pfad zu sehen, wie der Schritt ihn speichert.
 
 

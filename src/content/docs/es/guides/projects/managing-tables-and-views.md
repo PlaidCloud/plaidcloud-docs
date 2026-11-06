@@ -156,6 +156,9 @@ Al seleccionar una tabla se abre su panel de detalles, que enumera los pasos de 
 * **Puede hacer referencia a esta tabla**: pasos que llegan a una tabla mediante una variable que no se puede resolver. Esta sección solo aparece cuando hay tales pasos.
 
 
+Al seleccionar otra tabla, estas listas se borran de inmediato. También se enumera un paso de otro proyecto que comparte los datos de este, como un paso **Importar: tabla externa del proyecto** que lee esta tabla, sin su nombre ni su flujo de trabajo, porque es posible que usted no tenga acceso a ese proyecto. Esos pasos pueden aparecer un momento después del resto.
+
+
 Un paso puede nombrar una tabla directamente o llegar a ella mediante una ruta que contiene una variable, como `/Periods/{period}/Sales`. Cuando esa variable tiene un valor actual, el paso aparece en las dos primeras listas con un icono de información junto a él. Pase el puntero sobre la fila para ver la ruta tal como la almacena el paso.
 
 
