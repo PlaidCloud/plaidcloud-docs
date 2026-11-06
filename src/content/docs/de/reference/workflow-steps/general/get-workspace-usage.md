@@ -26,7 +26,7 @@ Die Ausgabe enthält nur Summen. Keine Zeile nennt ein Mitglied, und Notebook-Pf
 
 `partial` ist wahr für einen Monat, den der Verlauf nicht vollständig abdeckt, und `coverage_start` ist das Datum, an dem die Erfassung begann.
 
-**Bereich** beschränkt die Zeilen auf einen Bereich: **PlaidCloud-App**, **Dashboards**, **Apps**, **App-Besuche** oder **Notebooks**. Belassen Sie die Einstellung auf **Alle Bereiche**, um alle einzuschließen.
+**Bereich** beschränkt die Zeilen auf einen Bereich: **PlaidCloud-App**, **Dashboards**, **Apps**, **App-Besuche**, **Notebook-Server** oder **Notebooks**. Belassen Sie die Einstellung auf **Alle Bereiche**, um alle einzuschließen.
 
 ### Datumsbereich
 

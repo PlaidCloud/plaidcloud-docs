@@ -25,7 +25,7 @@ The output holds totals only. No row names a member, and notebook paths are repl
 
 `partial` is true for a month that history doesn't cover in full, and `coverage_start` is the date collection began.
 
-**Area** limits the rows to one area: **PlaidCloud app**, **Dashboards**, **Apps**, **App visits** or **Notebooks**. Leave it on **All areas** to include all of them.
+**Area** limits the rows to one area: **PlaidCloud app**, **Dashboards**, **Apps**, **App visits**, **Notebook servers** or **Notebooks**. Leave it on **All areas** to include all of them.
 
 ### Date Range
 

@@ -17,6 +17,8 @@ Seleccione **Git** en la lista de aplicaciones de su espacio de trabajo. Se abre
 
 Un indicador de rol muestra su nivel: **Administrador**, **Colaborador** o **Visualizador**, con una línea que indica lo que ese nivel le permite hacer. Cada fila de repositorio muestra su nombre, su descripción (cuando la tiene), **Actualizado** con la fecha, un campo de clonación de solo lectura con un botón de copiar y **Abrir**, que abre el repositorio en Git. Los repositorios que usted crea como privados están directamente en Git, no en esta lista.
 
+Si Git no está configurado para su espacio de trabajo o no se puede acceder a él, la pestaña **Git** muestra **Git no está disponible** con el motivo, y **Intentar de nuevo** vuelve a comprobarlo.
+
 ## Clonar un repositorio
 
 Copie la dirección de clonación del repositorio desde su fila. La primera vez que copie, aparece una tarjeta **Set up Git on your computer** con los pasos siguientes. Seleccione **Descartar** para ocultarla y **How to clone** en el encabezado para volver a mostrarla.
