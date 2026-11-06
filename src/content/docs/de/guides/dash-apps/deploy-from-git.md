@@ -1,12 +1,12 @@
 ---
-title: Eine Dash-App aus PlaidCloud Git bereitstellen
-description: Der durchgängige Weg, eine Plotly-Dash-App in PlaidCloud bereitzustellen – Code in einem PlaidCloud-Git-Repository ablegen, mit einer verwalteten Verbindung ohne Zugangsdaten verknüpfen und live veröffentlichen.
+title: Dash-App aus PlaidCloud Git bereitstellen
+description: Der durchgängige Weg, eine Plotly-Dash-App in PlaidCloud bereitzustellen – legen Sie Ihren Code in einem PlaidCloud-Git-Repository ab, verbinden Sie es über eine verwaltete Verbindung ohne Zugangsdaten und veröffentlichen Sie die App.
 sidebar:
   order: 1
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/deploy-from-git.md
 ---
 
-Dies ist der vollständige Weg vom Dash-App-Code auf Ihrem Rechner zu einer Live-URL, mit **[PlaidCloud Git](/de/guides/git/)** – dem in Ihren Workspace integrierten, verwalteten Git-Dienst – als Quelle. Da PlaidCloud Git verwaltet wird, benötigt die Verbindung, aus der Ihre App bereitgestellt wird, **keine Server-URL, keinen Benutzernamen und kein Token**: PlaidCloud authentifiziert sich in Ihrem Namen.
+Dies ist der vollständige Weg vom Dash-App-Code auf Ihrem Rechner bis zu einer Live-URL. Als Quelle dient **[PlaidCloud Git](/de/guides/git/)**, der in Ihren Workspace integrierte, verwaltete Git-Dienst. Da PlaidCloud Git verwaltet wird, benötigt die Verbindung, aus der Ihre App bereitgestellt wird, **weder Server-URL noch Benutzernamen noch Token**: PlaidCloud authentifiziert sich in Ihrem Auftrag.
 
 Es sind fünf Schritte:
 
@@ -16,11 +16,11 @@ Es sind fünf Schritte:
 4. Veröffentlichen Sie eine Dash-App, die auf das Repository verweist.
 5. Öffnen Sie die bereitgestellte App – und lesen Sie die Build-Protokolle, falls sie nicht startet.
 
-Diese Anleitung ist der Anleitung [Eine Panel-App aus PlaidCloud Git bereitstellen](/de/guides/panel-apps/deploy-from-git/) fast identisch – beide sind serverseitige Python-Apps, die aus Git erstellt und auf dieselbe Weise bereitgestellt werden. Der Unterschied liegt im App-Code selbst und in einem Feld im Veröffentlichungsdialog.
+Diese Anleitung ist fast identisch mit [Panel-App aus PlaidCloud Git bereitstellen](/de/guides/panel-apps/deploy-from-git/) – beides sind serverseitige Python-Apps, die aus Git erstellt und auf dieselbe Weise bereitgestellt werden. Der Unterschied liegt im App-Code selbst und in einem Feld im Veröffentlichungsdialog.
 
-## Vorbereitung
+## Bevor Sie beginnen
 
-- Öffnen Sie **Git** in Ihrem Workspace, um zu prüfen, dass Sie PlaidCloud Git erreichen können. Standardmäßig enthält die Organisation Ihres Workspace ein Repository namens **`apps`** – die naheliegende Heimat auch für Dash-Apps.
+- Öffnen Sie **Git** in Ihrem Workspace, um zu prüfen, ob Sie PlaidCloud Git erreichen. Standardmäßig enthält die Organisation Ihres Workspace ein Repository namens **`apps`** – auch für Dash-Apps der naheliegende Ort.
 - Installieren Sie `git` lokal, wenn Sie Code von Ihrem Rechner pushen möchten (Sie können Dateien auch in der Git-Weboberfläche hinzufügen).
 
 ## 1. Eine minimale Dash-App schreiben
@@ -62,13 +62,13 @@ if __name__ == "__main__":
     app.run(debug=True)
 ```
 
-Das ist eine vollständige App. `dash`, `plotly`, `dash-mantine-components`, `dash-ag-grid` und die PlaidCloud-Clientbibliotheken (`plaidcloud-rpc`, `plaidcloud-utilities`) sind vorinstalliert, führen Sie in `requirements.txt` also nur *zusätzliche* Pakete auf. Übergeben Sie `requests_pathname_prefix` oder `url_base_pathname` nicht an `Dash(__name__)` – die Plattform setzt das URL-Präfix automatisch über `DASH_URL_BASE_PATHNAME`, und wenn Sie beides setzen, führt das beim Start zu einem Konfigurationsfehler. Den vollständigen App-Vertrag und die Hilfsfunktionen für den Datenzugriff finden Sie unter [Der App-Vertrag](/de/guides/dash-apps/#app-vertrag) und [Daten und den angemeldeten Benutzer in einer Dash-App lesen](/de/guides/dash-apps/accessing-data/).
+Das ist eine vollständige App. `dash`, `plotly`, `dash-mantine-components`, `dash-ag-grid` und die PlaidCloud-Clientbibliotheken (`plaidcloud-rpc`, `plaidcloud-utilities`) sind vorinstalliert, führen Sie in `requirements.txt` also nur *zusätzliche* Pakete auf. Übergeben Sie weder `requests_pathname_prefix` noch `url_base_pathname` an `Dash(__name__)` – die Plattform setzt das URL-Präfix automatisch über `DASH_URL_BASE_PATHNAME`, und wenn beides gesetzt ist, tritt beim Start ein Konfigurationsfehler auf. Den vollständigen App-Vertrag und die Hilfsfunktionen für den Datenzugriff finden Sie unter [Der App-Vertrag](/de/guides/dash-apps/#app-vertrag) und [Daten und angemeldeten Benutzer in einer Dash-App lesen](/de/guides/dash-apps/accessing-data/).
 
 ## 2. Ihre App in einem PlaidCloud-Git-Repository ablegen
 
 Verwenden Sie das vorhandene Repository **`apps`** Ihres Workspace oder [erstellen Sie ein neues](/de/guides/git/repositories/#ein-repository-erstellen). Bringen Sie anschließend Ihren Code hinein.
 
-Da Sie sich über PlaidCloud anmelden, hat Ihr Git-Konto kein eigenes Passwort – [erzeugen Sie ein persönliches Zugriffstoken](/de/guides/git/repositories/#ein-persönliches-zugriffstoken-erzeugen) (**Ihr Avatar → Einstellungen → Anwendungen**) mit der Berechtigung **write:repository** und verwenden Sie es als Passwort, wenn Git danach fragt. Zum Pushen in `apps` ist der Zugriff **Contributor** erforderlich; bitten Sie einen Workspace-Administrator, Sie zu **Git Contributors** hinzuzufügen, falls auf der Registerkarte **Git** steht, dass Sie nur Lesezugriff haben. Wählen Sie im Repository auf der Registerkarte **Git** die Option **Copy clone URL** und führen Sie dann Folgendes aus:
+Da Sie sich über PlaidCloud anmelden, hat Ihr Git-Konto kein eigenes Passwort – [erzeugen Sie ein persönliches Zugriffstoken](/de/guides/git/repositories/#ein-persönliches-zugriffstoken-erzeugen) (**Ihr Avatar → Einstellungen → Applications**) mit der Berechtigung **write:repository** und verwenden Sie es als Passwort, wenn Git danach fragt. Zum Pushen in `apps` ist der Zugriff **Contributor** erforderlich; bitten Sie einen Workspace-Administrator, Sie zu **Git Contributors** hinzuzufügen, wenn der Reiter **Git** Sie als **Viewer** ausweist. Verwenden Sie die Kopieren-Schaltfläche neben der Clone-Adresse des Repositorys im Reiter **Git** und führen Sie dann aus:
 
 ```bash
 git clone <clone URL>
@@ -79,13 +79,13 @@ git commit -m "Add hello dash app"
 git push
 ```
 
-Notieren Sie sich den Repository-Pfad – `<org>/apps` –, wobei `<org>` der Name der Organisation Ihres Workspace ist. Diesen Pfad geben Sie im nächsten Schritt ein. Alle Einzelheiten zu Klonen, Commit und Push finden Sie unter [Repositories](/de/guides/git/repositories/).
+Notieren Sie sich den Repository-Pfad – `<org>/apps` –, wobei `<org>` der Organisationsname Ihres Workspace ist. Diesen Pfad geben Sie im nächsten Schritt ein. Alle Details zu Clone, Commit und Push finden Sie unter [Repositories](/de/guides/git/repositories/).
 
-> **Das Token hier dient nur dazu, dass *Sie* Code pushen können.** Die Verbindung, die Sie als Nächstes erstellen, wird verwaltet und benötigt kein Token – verwechseln Sie die beiden nicht.
+> **Das Token dient hier nur dazu, dass *Sie* Code pushen können.** Die Verbindung, die Sie als Nächstes erstellen, wird verwaltet und benötigt kein Token – verwechseln Sie die beiden nicht.
 
 ## 3. Eine verwaltete PlaidCloud-Git-Verbindung erstellen
 
-Eine **Verbindung** teilt einer Dash-Bereitstellung mit, wo ihr Code liegt. Bei PlaidCloud Git wird die Verbindung *verwaltet* – PlaidCloud stellt Host und Zugangsdaten bereit, sodass Sie nur das Repository-Ziel angeben. Dies ist derselbe Verbindungstyp, den auch eine Server-Panel-App verwendet.
+Eine **Verbindung** teilt einer Dash-Bereitstellung mit, wo ihr Code liegt. Für PlaidCloud Git wird die Verbindung *verwaltet* – PlaidCloud stellt Host und Zugangsdaten bereit, sodass Sie nur das Repository-Ziel angeben. Das ist derselbe Verbindungstyp, den auch eine Server-Panel-App verwendet.
 
 1. Öffnen Sie **Tools > Connections**, klicken Sie auf **Neue Verbindung** und wählen Sie **PlaidCloud Git**.
 2. Geben Sie der Verbindung einen **Kontoname** (zum Beispiel `Apps Repo`).
@@ -96,30 +96,30 @@ Es gibt kein Feld für Server-URL, Benutzer, Passwort oder SSL/SSH – PlaidClou
 
 ## 4. Die Dash-App veröffentlichen
 
-Verweisen Sie nun eine Dash-Bereitstellung auf diese Verbindung.
+Lassen Sie nun eine Dash-Bereitstellung auf diese Verbindung verweisen.
 
 1. Öffnen Sie **Meine Panel-Apps** und klicken Sie auf **Neue Dash-App**.
 2. Legen Sie unter **Verzeichniseinstellungen** einen **App-Name** und einen **URL-Slug** fest – der Slug ist die URL und der interne Name der App. Verwenden Sie daher Kleinbuchstaben, Ziffern und Bindestriche, beginnen Sie mit einem Buchstaben und verwenden Sie höchstens 40 Zeichen (zum Beispiel `hello-dash`). Eine optionale **Notiz** beschreibt die App.
 3. Unter **Git-Verbindung und Veröffentlichungsüberwachung**:
    - **Git-Verbindung** – die PlaidCloud-Git-Verbindung, die Sie in Schritt 3 erstellt haben.
-   - **Branch** – `main`. Pushes in diesen Branch erstellen die App neu und stellen sie automatisch erneut bereit.
+   - **Branch** – `main`. Pushes auf diesen Branch erstellen die App neu und stellen sie automatisch erneut bereit.
    - **Einstiegspunkt** – `app.py`.
-4. Wählen Sie unter **Laufzeit** die Werte für **CPU**, **Arbeitsspeicher** und das Zeitfenster **Leerlauf (Minuten)**. Aktivieren Sie **Öffentlichen Zugriff zulassen** nur, wenn die App ohne Anmeldung erreichbar sein soll. Es gibt keine Einstellung **Design** – das ist eine Panel-spezifische Option.
-5. Unter **Erweitert (eingebettete Bereitstellung)** – optional. Lassen Sie das Feld leer, es sei denn, Sie betten die App in eine andere Website ein.
+4. Wählen Sie unter **Laufzeit** **CPU**, **Arbeitsspeicher** und das Zeitfenster **Leerlauf (Minuten)**. Aktivieren Sie **Öffentlichen Zugriff zulassen** nur, wenn die App ohne Anmeldung erreichbar sein soll. Eine Einstellung **Design** gibt es nicht – das ist eine Panel-spezifische Option.
+5. Unter **Erweitert (eingebettete Bereitstellung)** – optional. Lassen Sie den Bereich leer, es sei denn, Sie betten die App in eine andere Website ein.
 6. Klicken Sie auf **Veröffentlichen**.
 
 ## 5. Die App öffnen – und bei Startproblemen die Protokolle lesen
 
-Nach der Veröffentlichung wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` und erstellt ein Container-Image auf Basis des Images `platform-dash-base`. Der **Status** wird in der Liste **Meine Panel-Apps** angezeigt und aktualisiert sich automatisch.
+Nach dem Veröffentlichen wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` und erstellt aus dem Image `platform-dash-base` ein Container-Image. Der **Status** erscheint in der Liste **Meine Panel-Apps** und wird automatisch aktualisiert.
 
-- Wenn der Status **Bereit** lautet, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufphase startet sie und zeigt dabei kurz einen PlaidCloud-Ladebildschirm an.
-- Wenn der Build fehlschlägt, öffnen Sie die App und prüfen Sie ihre **Build**-Protokolle – eine fehlende Abhängigkeit oder ein Importfehler erscheint dort. Unter [Eine Dash-App verwenden](/de/guides/dash-apps/using/) erfahren Sie, was die einzelnen Status bedeuten, wie Sie Protokolle lesen und wie Sie einen Neuaufbau auslösen.
+- Wenn der Status **Bereit** lautet, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufzeit startet die App und zeigt dabei kurz einen PlaidCloud-Ladebildschirm.
+- Wenn die Erstellung fehlschlägt, öffnen Sie die App und prüfen Sie die **Erstellen**-Protokolle – eine fehlende Abhängigkeit oder ein Importfehler wird dort angezeigt. Unter [Eine Dash-App verwenden](/de/guides/dash-apps/using/) erfahren Sie, was die einzelnen Status bedeuten, wie Sie Protokolle lesen und wie Sie eine Neuerstellung auslösen.
 
-Ab jetzt **erstellt jeder Push in den Branch der Verbindung die App neu und stellt sie automatisch erneut bereit** – bearbeiten Sie `app.py`, führen Sie `git push` aus, und Ihre Änderung geht live. (Es sei denn, die App ist **gesperrt**; dann werden Pushes übersprungen, bis Sie sie entsperren – siehe [Eine Dash-App verwenden](/de/guides/dash-apps/using/#eine-app-sperren).)
+Ab jetzt **erstellt jeder Push auf den Branch der Verbindung die App neu und stellt sie automatisch erneut bereit** – ändern Sie `app.py`, führen Sie `git push` aus, und Ihre Änderung geht live. (Es sei denn, die App ist **gesperrt**; dann werden Pushes übersprungen, bis Sie sie entsperren – siehe [Eine Dash-App verwenden](/de/guides/dash-apps/using/#eine-app-sperren).)
 
 ## Nächste Schritte
 
-- [Daten und den angemeldeten Benutzer in einer Dash-App lesen](/de/guides/dash-apps/accessing-data/) – PlaidCloud-Daten als die Person abfragen, die die App ansieht.
+- [Daten und angemeldeten Benutzer in einer Dash-App lesen](/de/guides/dash-apps/accessing-data/) – fragen Sie PlaidCloud-Daten als die Person ab, die die App ansieht.
 - [Eine Dash-App verwenden](/de/guides/dash-apps/using/) – Build-Status, Protokolle, Sperren und Entfernen der App.
 - [PlaidCloud-Git-Verbindung](/de/guides/connections/plaidcloud-git/) – das vollständige Verbindungsformular, Verwendung und Sicherheitsmodell.
-- [Repositories](/de/guides/git/repositories/) – Branches, Token und Zusammenarbeit in PlaidCloud Git.
+- [Repositories](/de/guides/git/repositories/) – Branches, Tokens und Zusammenarbeit in PlaidCloud Git.
