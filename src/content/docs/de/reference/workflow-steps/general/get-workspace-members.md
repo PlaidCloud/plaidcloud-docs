@@ -1,6 +1,6 @@
 ---
-title: Get Workspace Members-Schritt
-description: Schreibt die Mitglieder des Workspace in eine Projekttabelle und ermöglicht die Auswahl der Identitäts- und Aktivitätsfelder, die enthalten sein sollen.
+title: Get Workspace Members
+description: Schreiben Sie die Mitglieder des Workspace in eine Projekttabelle und wählen Sie, welche Identitäts- und Aktivitätsfelder enthalten sein sollen.
 sidebar:
   order: 11
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/get-workspace-members.md
@@ -21,7 +21,7 @@ Standardmäßig aktiviert: **Nachname**, **Vorname**, **E-Mail**, **Benutzername
 Standardmäßig deaktiviert:
 
 - **Deaktivierte Mitglieder einschließen** — erweitert die Ausgabe über aktive Mitglieder hinaus.
-- **Modus für Anmeldeverlauf** — gibt den Anmeldeverlauf zurück statt nur der letzten Anmeldung.
+- **Modus für Anmeldeverlauf** — gibt den Anmeldeverlauf statt nur der letzten Anmeldung zurück.
 
 ## Sicherheitsprotokoll
 
@@ -30,6 +30,6 @@ Jede Ausführung schreibt einen Eintrag in das Sicherheitsprotokoll, der die ges
 ## Verwandte Themen
 
 - [Allgemeine Schritte](/de/reference/workflow-steps/general/)
-- [Deactivate Workspace Members-Schritt](/de/reference/workflow-steps/general/deactivate-workspace-members/)
-- [Get Workspace Usage-Schritt](/de/reference/workflow-steps/general/get-workspace-usage/)
+- [Deactivate Workspace Members](/de/reference/workflow-steps/general/deactivate-workspace-members/)
+- [Get Workspace Usage](/de/reference/workflow-steps/general/get-workspace-usage/)
 - [Mitgliederverwaltung](/de/administration/access/)

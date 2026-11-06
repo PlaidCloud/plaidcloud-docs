@@ -15,3 +15,5 @@ Aby ustawić tę opcję, otwórz formularz kroku z tabeli przepływu pracy — k
 
 
 Kroki ustawione na kontynuację po błędzie mają specjalny wskaźnik w tabeli hierarchii kroków przepływu pracy.
+
+Gdy wynik uruchomienia sprawdza się przez REST API albo przez asystenta AI lub MCP za pomocą `workflow_run_status`, uruchomienie, w którym błędy wystąpiły wyłącznie w krokach ustawionych na kontynuację, nadal liczy się jako zakończone powodzeniem, ale te kroki są wymienione w `continued_step_ids`, a ich liczba w `continued_step_count`, dzięki czemu uruchomienie, które przeszło dalej mimo błędu, nie jest zgłaszane jako bezbłędne.

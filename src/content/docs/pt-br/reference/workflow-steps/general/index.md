@@ -1,10 +1,10 @@
 ---
 title: Etapas gerais
-description: Etapas de fluxo de trabalho de uso geral que não se encaixam em uma categoria específica.
+description: Etapas de fluxo de trabalho de uso geral que não se enquadram em uma categoria específica.
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/index.md
 ---
 
-Etapas de fluxo de trabalho de uso geral que não se encaixam em uma categoria específica.
+Etapas de fluxo de trabalho de uso geral que não se enquadram em uma categoria específica.
 
 ## Etapas
 

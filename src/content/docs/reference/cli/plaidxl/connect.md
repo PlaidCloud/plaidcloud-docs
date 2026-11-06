@@ -10,7 +10,7 @@ PlaidXL signs you in as yourself, using the same sign-in you use for PlaidCloud 
 
 ## Sign In
 
-1. Open the task pane: **PlaidCloud → Open PlaidXL**.
+1. Open the task pane: **PlaidCloud → Open PlaidXL**, or **Account** in the **Connect** group.
 2. Under **Enter your email**, type the email address you use for PlaidCloud and click **Sign In**. PlaidXL remembers the address for next time.
 3. If your email belongs to more than one workspace, choose one from **Select a workspace** and click **Sign In**. PlaidXL remembers your choice. If you belong to one workspace, PlaidXL picks it for you. If no workspace is linked to the email, the pane says so; check the address and try again.
 4. Excel asks whether to allow a pop-up window. Allow it.
@@ -23,6 +23,20 @@ The task pane header now shows your workspace and the project linked to the work
 
 To set up two-factor authentication or single sign-on for your account, see [Member Authentication](/administration/access/member-authentication/).
 
+### Sign In With Your Office Account
+
+If you're signed in to Office with a work account from Microsoft Entra ID and PlaidXL has no saved sign-in, it finds your workspaces from that account, so you don't type your email:
+
+- **One workspace** — PlaidXL starts signing you in to it. Allow the pop-up if Excel asks; with single sign-on, it passes straight through. In Excel on the web, click **Continue as** your account first.
+- **Several workspaces** — if the workbook was last used with one of them, PlaidXL signs you in to that one. Otherwise choose one from **Select a workspace**.
+- **No workspace** — the email screen opens with your address filled in.
+
+If you sign in as a different email from your Office account, PlaidXL says which one. After you **Log out**, PlaidXL waits for you to sign in yourself.
+
+### Commands Before You Sign In
+
+You can click any PlaidXL command on the ribbon before you've signed in. PlaidXL opens the task pane to sign you in, or to pick a project, and then runs the command on the cell you started from.
+
 ## Staying Signed In
 
 PlaidXL keeps you signed in on this computer and renews your sign-in in the background while you work. When you open the task pane in a later session, it goes straight to your projects. If your sign-in has expired completely, PlaidXL asks for your email again. A brief network problem while renewing your sign-in doesn't sign you out; PlaidXL tries again.
@@ -33,10 +47,11 @@ PlaidXL reads with your permissions. You see the projects you can open in PlaidC
 
 ## Sign Out or Switch Workspaces
 
-Click the account menu (the three dots) at the top right of the task pane. It shows your name and workspace, with two commands:
+Click the account menu (the three dots) at the top right of the task pane. It shows your name and workspace, with three commands:
 
-- **Log out** clears your sign-in and returns to the email screen.
+- **Keyboard shortcuts** lists the PlaidXL shortcuts so you can change them. See [Keyboard Shortcuts](/reference/cli/plaidxl/ribbon/#keyboard-shortcuts).
 - **Switch workspace** signs you out and returns to the email screen, so you can choose another workspace under **Select a workspace**.
+- **Log out** clears your sign-in and returns to the email screen.
 
 Your sign-in is shared by every workbook you have open, but each workbook keeps its own project. A workbook's project belongs to a workspace, so after you switch, a workbook linked to a project in the old workspace has no project until you pick one. See [The Project Belongs to the Workbook](/reference/cli/plaidxl/retrieve/#the-project-belongs-to-the-workbook).
 

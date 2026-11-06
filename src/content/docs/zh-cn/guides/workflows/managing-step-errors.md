@@ -14,6 +14,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 当 PlaidCloud 因您可以自行修复的原因（例如缺少权限或设置无效）拒绝某个步骤时，步骤日志会用通俗的语言显示该消息，而不是带堆栈跟踪的服务器错误。如果 Model Loop、Model Run 或 Macro Run 步骤的子工作流失败，则会显示子工作流自己的错误消息，格式为“Child workflow run failed:”后跟该消息。
 
+步骤错误会显示错误自身的消息。PlaidCloud 未预料到的错误显示为“The step stopped on an unexpected error (*type*): *message*”，指明错误的类型及其内容，因此无需打开完整日志即可采取措施。
+
 如果未选择重试，或已超过最大重试次数，该步骤将被标记为错误。此时 PlaidCloud 提供三个级别的错误处理：
 
 

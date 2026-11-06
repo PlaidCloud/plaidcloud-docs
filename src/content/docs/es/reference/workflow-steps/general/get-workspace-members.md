@@ -1,6 +1,6 @@
 ---
 title: Get Workspace Members
-description: Escriba los miembros del espacio de trabajo en una tabla de proyecto y elija qué campos de identidad y de actividad incluir.
+description: Escriba los miembros del espacio de trabajo en una tabla del proyecto y elija qué campos de identidad y de actividad incluir.
 sidebar:
   order: 11
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/get-workspace-members.md
@@ -8,7 +8,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## Descripción
 
-Escribe los miembros del espacio de trabajo en una tabla de proyecto. Úselo para informar sobre los accesos, conciliar una lista de miembros con una fuente de RR. HH. o activar un paso posterior según quién tiene acceso en este momento.
+Escribe los miembros del espacio de trabajo en una tabla del proyecto. Úselo para informar sobre los accesos, conciliar una lista de miembros con un origen de datos de RR. HH. o impulsar un paso posterior a partir de quién tiene acceso actualmente.
 
 ## Configuración
 
@@ -21,13 +21,13 @@ Activados de forma predeterminada: **Apellido**, **Nombre**, **Correo electróni
 Desactivados de forma predeterminada:
 
 - **Incluir miembros desactivados**: amplía la salida más allá de los miembros activos.
-- **Modo de historial de inicio de sesión**: devuelve el historial de inicios de sesión en lugar de solo el último.
+- **Modo de historial de inicio de sesión**: devuelve el historial de inicios de sesión en lugar de solo el último inicio de sesión.
 
 ## Registro de seguridad
 
-Cada ejecución escribe una entrada en el Registro de seguridad con las columnas escritas, la tabla de destino, el flujo de trabajo, el paso y la ejecución.
+Cada ejecución escribe una entrada en el Registro de seguridad que registra las columnas escritas, la tabla de destino, el flujo de trabajo, el paso y la ejecución.
 
-## Relacionado
+## Temas relacionados
 
 - [Pasos generales](/es/reference/workflow-steps/general/)
 - [Deactivate Workspace Members](/es/reference/workflow-steps/general/deactivate-workspace-members/)

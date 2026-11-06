@@ -48,10 +48,10 @@ That's a complete app — the `.servable()` call is what PlaidCloud serves. `pan
 
 Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it.
 
-Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with repository **read** and **write** scopes, and use it as the password when Git prompts. Copy the repository's **HTTPS** clone URL from its **Code** button, then:
+Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with the **write:repository** permission, and use it as the password when Git prompts. Pushing to `apps` needs **Contributor** access; ask a workspace administrator to add you to **Git Contributors** if the **Git** tab shows you as a **Viewer**. Use the copy button next to the repository's clone address in the **Git** tab, then:
 
 ```bash
-git clone https://<your-git-host>/<org>/apps.git
+git clone <clone URL>
 cd apps
 # add app.py (and requirements.txt), then:
 git add app.py requirements.txt

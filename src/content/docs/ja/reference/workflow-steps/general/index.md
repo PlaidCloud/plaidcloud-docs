@@ -1,10 +1,10 @@
 ---
 title: 一般ステップ
-description: 特定のカテゴリーに当てはまらない、汎用のワークフローステップです。
+description: 特定のカテゴリーに当てはまらない汎用的なワークフローステップです。
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/workflow-steps/general/index.md
 ---
 
-特定のカテゴリーに当てはまらない、汎用のワークフローステップです。
+特定のカテゴリーに当てはまらない汎用的なワークフローステップです。
 
 ## ステップ
 

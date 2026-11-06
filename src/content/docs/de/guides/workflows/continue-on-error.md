@@ -15,3 +15,5 @@ Um diese Option festzulegen, öffnen Sie das Formular des Schritts in der Workfl
 
 
 Schritte, die auf „Bei Fehler fortfahren“ gesetzt wurden, haben in der Hierarchietabelle der Workflow-Schritte eine besondere Kennzeichnung.
+
+Wenn Sie das Ergebnis einer Ausführung über die REST-API oder über den KI-Assistenten bzw. MCP mit `workflow_run_status` prüfen, gilt eine Ausführung, deren einzige Fehler in Schritten mit „Bei Fehler fortfahren“ auftraten, weiterhin als erfolgreich. Sie listet diese Schritte jedoch in `continued_step_ids` und ihre Anzahl in `continued_step_count` auf, sodass eine Ausführung, die nach einem Fehler weitergelaufen ist, nicht als fehlerfrei gemeldet wird.

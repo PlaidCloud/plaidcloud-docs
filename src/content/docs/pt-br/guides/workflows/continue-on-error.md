@@ -15,3 +15,5 @@ Para definir essa opção, abra o formulário da etapa na tabela do fluxo de tra
 
 
 As etapas configuradas para continuar em caso de erro têm um indicador especial na tabela de hierarquia de etapas do fluxo de trabalho.
+
+Quando você verifica o resultado de uma execução pela API REST, ou pelo assistente de IA ou pelo MCP com `workflow_run_status`, uma execução cujas únicas falhas ocorreram em etapas configuradas para continuar ainda conta como bem-sucedida, e ela lista essas etapas em `continued_step_ids`, com a quantidade delas em `continued_step_count`, para que uma execução que seguiu adiante após um erro não seja informada como limpa.

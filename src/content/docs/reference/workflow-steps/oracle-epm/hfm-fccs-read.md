@@ -72,6 +72,8 @@ Off by default — each run lands an ad-hoc slice that overwrites the target tab
 
 While the job runs, the step shows a polling status. When it lands, the table is created from the grid's columns — no schema to define up front.
 
+The step waits for the export job for a limited time. If the job hasn't finished by then, the step fails, so the steps after it don't run without the slice. **Resume** the workflow or re-run the step, and it checks the **same** export job again instead of submitting a new one.
+
 ## Caching
 
 The same POV requested again is **served from the already-landed table**, instantly, instead of re-submitting the export to FCCS. A run is keyed by application, target table, point of view, and an **as-of** tag (default `latest`); a repeat that resolves to an already-landed slice reports that the table was left in place rather than re-writing it. Change the as-of tag when you want to force a fresh extract of the same POV.
