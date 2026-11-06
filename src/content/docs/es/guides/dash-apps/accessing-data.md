@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Como la conexión es el espectador, esto devuelve solo las filas que el espectador puede ver, y genera un error de permisos si no tiene ningún acceso al proyecto.
 
-> **Lea las tablas por nombre, no escribiendo SQL.** En un proyecto donde un administrador ha activado el [Acceso a filas](/es/administration/access/managing-security-groups-and-assignments/#acceso-a-filas-y-consultas-que-usted-escribe), leer por nombre aplica los permisos de fila de cada espectador, mientras que una consulta que su aplicación compone por sí misma se rechaza para cualquiera que no sea Arquitecto del proyecto, porque no existe una única tabla que los permisos puedan filtrar. Leer por nombre mantiene su aplicación funcionando en ambos casos.
+> **Lea las tablas por nombre, no escribiendo SQL.** En un proyecto donde un administrador ha activado el [Acceso a filas](/es/administration/access/managing-security-groups-and-assignments/#acceso-a-filas-y-las-consultas-que-usted-escribe), leer por nombre aplica los permisos de fila de cada espectador, mientras que una consulta que su aplicación compone por sí misma se rechaza para cualquiera que no sea Arquitecto del proyecto, porque no existe una única tabla que los permisos puedan filtrar. Leer por nombre mantiene su aplicación funcionando en ambos casos.
 
 ## Leer dentro de un callback, nunca en el ámbito de importación o de proceso
 
