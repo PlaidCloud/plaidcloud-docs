@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
 워크스페이스에 이미 있는 **`apps`** 리포지토리를 사용하거나 [새 리포지토리를 만드십시오](/ko/guides/git/repositories/#리포지토리-만들기). 그런 다음 코드를 리포지토리에 올립니다.
 
-PlaidCloud를 통해 로그인하기 때문에 Git 계정에는 별도의 비밀번호가 없습니다. **write:repository** 권한이 있는 [개인 액세스 토큰을 생성](/ko/guides/git/repositories/#개인-액세스-토큰-생성하기)(**아바타 → 설정 → 애플리케이션**)하고, Git이 묻을 때 이를 비밀번호로 사용하십시오. `apps`에 푸시하려면 **Contributor** 액세스가 필요합니다. **Git** 탭에 **뷰어**로 표시되면 워크스페이스 관리자에게 **Git Contributors**에 추가해 달라고 요청하십시오. **Git** 탭에서 리포지토리 클론 주소 옆의 복사 버튼을 사용한 다음 아래 명령을 실행합니다.
+PlaidCloud를 통해 로그인하기 때문에 Git 계정에는 별도의 비밀번호가 없습니다. **write:repository** 권한이 있는 [개인 액세스 토큰을 생성](/ko/guides/git/repositories/#개인용-액세스-토큰-생성)(**아바타 → 설정 → 애플리케이션**)하고, Git이 묻을 때 이를 비밀번호로 사용하십시오. `apps`에 푸시하려면 **Contributor** 액세스가 필요합니다. **Git** 탭에 **뷰어**로 표시되면 워크스페이스 관리자에게 **Git Contributors**에 추가해 달라고 요청하십시오. **Git** 탭에서 리포지토리 클론 주소 옆의 복사 버튼을 사용한 다음 아래 명령을 실행합니다.
 
 ```bash
 git clone <clone URL>

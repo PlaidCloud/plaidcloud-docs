@@ -1,74 +1,74 @@
 ---
 title: PlaidCloud Git
-description: Aloje, versione e colabore em repositórios Git dentro do PlaidCloud — com issues, pull requests, quadros de projeto, versões e wikis, e início de sessão único incorporado.
+description: Hospede, versione e colabore em repositórios Git dentro do PlaidCloud, com issues, pull requests, quadros de projeto, releases e wikis, e com início de sessão único integrado.
 sidebar:
   label: Visão geral
   order: 0
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/git/index.md
 ---
 
-O PlaidCloud Git é um serviço Git privado incorporado na sua área de trabalho. Cada área de trabalho tem o seu próprio servidor Git para guardar código, configuração, blocos de notas e quaisquer outros ficheiros versionados — juntamente com os issues, os pull requests e os quadros de projeto que a sua equipa utiliza para colaborar neles.
+O PlaidCloud Git é um serviço Git privado integrado na sua área de trabalho. Cada área de trabalho tem o seu próprio servidor Git para armazenar código, configuração, notebooks e quaisquer outros ficheiros versionados, junto com as issues, os pull requests e os quadros de projeto que a sua equipa usa para colaborar neles.
 
-Inicia sessão com a sua conta PlaidCloud, pelo que não há nome de utilizador nem palavra-passe separados a configurar. Os novos repositórios são privados por predefinição e só são visíveis para os membros a quem conceder acesso.
+Inicia sessão com a sua conta do PlaidCloud, pelo que não há nome de utilizador nem palavra-passe separados para configurar. Os novos repositórios são privados por predefinição e visíveis apenas para os membros a quem concede acesso.
 
 ## Abrir o Git
 
-Selecione **Git** na lista de aplicações da sua área de trabalho. O separador **Git** abre com o anfitrião da área de trabalho, a sua função e uma lista de **Repositórios**. Utilize **View all in Git** para aceder à interface web do Git, **Manage who can push** (se puder gerir grupos) para abrir a gestão de grupos e o botão de atualização para recarregar. Utilize **← Back to** a sua área de trabalho no Git para regressar ao PlaidCloud.
+Selecione **Git** na lista de aplicações da sua área de trabalho. O separador **Git** abre com o host da área de trabalho, a sua função e uma lista de **Repositories**. Use **View all in Git** para ir à interface web do Git, **Manage who can push** (se puder gerir grupos) para abrir a gestão de grupos e o botão de atualizar para recarregar. Use **← Back to** your workspace in Git para voltar ao PlaidCloud.
 
-Um indicador de função mostra o seu nível: **Administrator**, **Contributor** ou **Leitor**, com uma linha a explicar o que este lhe permite fazer. Cada linha de repositório mostra o respetivo nome, a descrição (quando existe), **Atualizado** com a data, um campo de clonagem só de leitura com um botão de cópia e **Abrir**, que abre o repositório no Git. Os repositórios que criar como privados encontram-se diretamente no Git, não nesta lista.
+Um indicador de função mostra o seu nível: **Administrador**, **Colaborador** ou **Leitor**, com uma linha a dizer o que isso permite que faça. Cada linha de repositório mostra o seu nome, a sua descrição (quando houver), **Atualizado** com a data, um campo de clone somente leitura com um botão de copiar e **Abrir**, que abre o repositório no Git. Os repositórios que cria como privados ficam diretamente no Git, não nesta lista.
 
 ## Clonar um repositório
 
-Copie o endereço de clonagem do repositório a partir da respetiva linha. Na primeira vez que copiar, aparece um cartão **Set up Git on your computer** com os passos abaixo. Selecione **Dispensar** para o ocultar e **How to clone** no cabeçalho para o voltar a apresentar.
+Copie o endereço de clone do repositório a partir da linha dele. Na primeira vez que copiar, aparece um cartão **Set up Git on your computer** com os passos abaixo. Selecione **Dispensar** para escondê-lo e **How to clone** no cabeçalho para apresentá-lo novamente.
 
 1. O Git tem de estar instalado no seu computador.
-2. Crie um token em **Definições → Aplicações** com a permissão **write:repository**. O cartão tem uma ligação para essa página.
-3. Indique ao Git quem é, com os dois comandos `git config --global user.name` e `user.email` apresentados, que já contêm o seu nome e o seu e-mail.
-4. Clone o repositório com o comando `git clone` apresentado. Quando o Git pedir uma palavra-passe, cole esse token, não a sua palavra-passe do PlaidCloud.
+2. Crie um token em **Configurações → Aplicações** com a permissão **write:repository**. O cartão tem um link para essa página.
+3. Indique ao Git quem é, usando os dois comandos `git config --global user.name` e `user.email` apresentados, que já contêm o seu nome e o seu e-mail.
+4. Clone o repositório com o comando `git clone` apresentado. Quando o Git pedir uma palavra-passe, cole esse token, não a palavra-passe do PlaidCloud.
 
-Cada comando tem o seu próprio botão de cópia. Consulte [Repositórios](/pt-pt/guides/git/repositories/) para o guia completo. Copiar exige acesso de envio e uma conta Git ativada: se o botão de cópia estiver desativado, abra qualquer repositório uma vez para ativar a sua conta ou, como **Leitor**, peça acesso de envio conforme descrito abaixo.
+Cada comando tem o seu próprio botão de copiar. Consulte [Repositórios](/pt-pt/guides/git/repositories/) para o passo a passo completo. Copiar exige acesso de push e uma conta Git ativada: se o botão de copiar estiver desativado, abra qualquer repositório uma vez para ativar a sua conta ou, como **Leitor**, peça acesso de push conforme descrito abaixo.
 
 ## Níveis de acesso
 
-Todos os que têm acesso ao Git podem ler os repositórios partilhados da área de trabalho. Mais dois níveis permitem enviar alterações.
+Todos os que têm acesso ao Git podem ler os repositórios partilhados da área de trabalho. Dois níveis adicionais permitem fazer push.
 
 | Função | O que pode fazer | Concedido por |
 |---|---|---|
-| **Leitor** | Ver e clonar os repositórios partilhados. | Predefinição para todos os membros. |
-| **Contributor** | Tudo o que o nível de leitura permite, e enviar para o repositório `apps`, onde reside o código das aplicações [Panel](/pt-pt/guides/panel-apps/deploy-from-git/) e [Dash](/pt-pt/guides/dash-apps/deploy-from-git/). | O grupo de segurança **Git Contributors**. |
-| **Administrator** | Tudo o que um Contributor pode fazer, e enviar para todos os repositórios, incluindo `udfs`, e criar organizações. | O grupo de segurança **Git Administration**. |
+| **Leitor** | Ver e clonar os repositórios partilhados. | Predefinido para todos os membros. |
+| **Colaborador** | Tudo o que a leitura permite e push para o repositório `apps`, onde fica o código de aplicações [Panel](/pt-pt/guides/panel-apps/deploy-from-git/) e [Dash](/pt-pt/guides/dash-apps/deploy-from-git/). | O grupo de segurança **Git Contributors**. |
+| **Administrador** | Tudo o que o Colaborador pode e push para todos os repositórios, incluindo `udfs`, além de criar organizações. | O grupo de segurança **Git Administration**. |
 
-O repositório `udfs` está limitado aos administradores porque as funções definidas pelo utilizador são executadas com a identidade do fluxo de trabalho que as chama.
+O repositório `udfs` é limitado aos administradores porque as funções definidas pelo utilizador são executadas com a identidade do fluxo de trabalho que as chama.
 
-Se for **Leitor**, o separador **Git** indica até três administradores da área de trabalho a quem pode pedir que o adicionem a **Git Contributors**.
+Se for **Leitor**, o separador **Git** indica até três administradores da área de trabalho a quem pode pedir para adicioná-lo a **Git Contributors**.
 
 ## Git a partir de aplicações e UDFs
 
-A janela de uma aplicação Panel ou Dash tem uma secção **Repository** que mostra o respetivo repositório, ramo e estado de compilação, com **Edit in browser** e **Copy clone URL** para os membros que podem enviar. A barra de ferramentas de uma UDF baseada em Git tem **Abrir**, que abre o repositório no respetivo ramo no Git, e **Edit in browser** para os administradores.
+A janela de uma aplicação Panel ou Dash tem uma secção **Repositório** que mostra o seu repositório, ramo e estado de build, com **Edit in browser** e **Copy clone URL** para os membros que podem fazer push. A barra de ferramentas de uma UDF baseada em Git tem **Abrir**, que abre o repositório no ramo dela no Git, e **Edit in browser** para administradores.
 
 ## Conceder acesso ao Git
 
 Os administradores da área de trabalho concedem acesso em **Identidade**, adicionando membros a um grupo de segurança ou adicionando a permissão a um grupo próprio.
 
-1. Adicione o membro a **Git Contributors** para lhe permitir enviar código de aplicações, ou a **Git Administration** para o tornar administrador do Git.
-2. Para dar a todos os novos membros acesso de envio ao código das aplicações, adicione **Git Contributors** aos seus grupos predefinidos. **Git Administration** não pode ser um grupo predefinido.
-3. Para verificar o que um membro pode fazer, abra o membro e selecione o separador **Git**. Este mostra o nome de utilizador Git do membro, o respetivo nível e o grupo que o concede.
+1. Adicione o membro a **Git Contributors** para que ele possa fazer push de código de aplicações, ou a **Git Administration** para torná-lo administrador do Git.
+2. Para dar a todo novo membro acesso de push ao código de aplicações, adicione **Git Contributors** aos seus grupos predefinidos. **Git Administration** não pode ser um grupo predefinido.
+3. Para verificar o que um membro pode fazer, abra o membro e selecione o separador **Git**. Mostra o nome de utilizador do Git do membro, o nível dele e o grupo que o concede.
 
-Uma alteração aplica-se da próxima vez que o membro iniciar sessão no Git ou abrir o separador **Git**. Desativar ou remover um membro bloqueia a sua conta Git, incluindo os tokens e as chaves SSH, e reativá-lo desbloqueia-a. O pessoal de suporte do PlaidCloud tem acesso de administrador automaticamente.
+Uma alteração aplica-se na próxima vez que o membro iniciar sessão no Git ou abrir o separador **Git**. A conta Git de um membro acompanha a participação dele no PlaidCloud. Desativar ou remover um membro bloqueia a conta Git dele, incluindo os seus tokens e chaves SSH, em cerca de uma hora, e reativá-lo a desbloqueia. Nada é eliminado: os repositórios e o histórico dele permanecem. Iniciar sessão no Git com início de sessão único sempre abre a conta do próprio membro; ela nunca é unida a outra conta que tenha o mesmo nome ou e-mail. A equipa de suporte do PlaidCloud tem acesso de administrador automaticamente.
 
-## O que contém esta secção
+## O que há nesta secção
 
-- [Repositórios](/pt-pt/guides/git/repositories/) — criar um repositório e, depois, clonar, fazer commit e enviar o seu trabalho
-- [Issues](/pt-pt/guides/git/issues/) — acompanhar tarefas, erros e ideias com etiquetas, marcos e responsáveis
-- [Pull requests](/pt-pt/guides/git/pull-requests/) — propor alterações num ramo e revê-las antes de serem integradas
-- [Quadros de projeto](/pt-pt/guides/git/projects/) — organizar issues e pull requests num quadro Kanban
-- [Versões e etiquetas](/pt-pt/guides/git/releases-and-tags/) — marcar e publicar instantâneos versionados de um repositório
-- [Wikis](/pt-pt/guides/git/wikis/) — manter documentação extensa junto do seu código
-- [Pacotes](/pt-pt/guides/git/packages/) — publicar e instalar artefactos de compilação a partir do registo do repositório
-- [Pesquisar código](/pt-pt/guides/git/searching-code/) — encontrar código, issues e pull requests nos seus repositórios
+- [Repositórios](/pt-pt/guides/git/repositories/) – crie um repositório e depois clone, faça commit e push do seu trabalho
+- [Issues](/pt-pt/guides/git/issues/) – acompanhe tarefas, bugs e ideias com etiquetas, marcos e responsáveis
+- [Pull requests](/pt-pt/guides/git/pull-requests/) – proponha alterações em um ramo e revise-as antes do merge
+- [Quadros de projeto](/pt-pt/guides/git/projects/) – organize issues e pull requests em um quadro Kanban
+- [Releases e tags](/pt-pt/guides/git/releases-and-tags/) – marque e publique instantâneos versionados de um repositório
+- [Wikis](/pt-pt/guides/git/wikis/) – mantenha documentação extensa ao lado do seu código
+- [Pacotes](/pt-pt/guides/git/packages/) – publique e instale artefatos de build a partir do registo do repositório
+- [Pesquisa de código](/pt-pt/guides/git/searching-code/) – encontre código, issues e pull requests em todos os seus repositórios
 
-## Relacionado
+## Relacionados
 
-- [Implementar uma aplicação Panel a partir do PlaidCloud Git](/pt-pt/guides/panel-apps/deploy-from-git/) — disponibilizar uma aplicação HoloViz Panel diretamente a partir de um repositório, com uma ligação gerida sem credenciais
-- [Implementar uma aplicação Dash a partir do PlaidCloud Git](/pt-pt/guides/dash-apps/deploy-from-git/) — disponibilizar uma aplicação Plotly Dash da mesma forma
-- [Gestão de acessos](/pt-pt/administration/access/) — como a participação na área de trabalho e os grupos de segurança determinam quem pode ver e editar repositórios
+- [Implementar uma aplicação Panel a partir do PlaidCloud Git](/pt-pt/guides/panel-apps/deploy-from-git/) – sirva uma aplicação HoloViz Panel diretamente de um repositório, com uma ligação gerida sem credenciais
+- [Implementar uma aplicação Dash a partir do PlaidCloud Git](/pt-pt/guides/dash-apps/deploy-from-git/) – sirva uma aplicação Plotly Dash da mesma forma
+- [Gestão de acesso](/pt-pt/administration/access/) – como a participação na área de trabalho e os grupos de segurança determinam quem pode ver e editar repositórios
