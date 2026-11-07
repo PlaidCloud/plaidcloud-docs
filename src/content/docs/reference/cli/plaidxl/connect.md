@@ -50,8 +50,10 @@ PlaidXL reads with your permissions. You see the projects you can open in PlaidC
 Click the account menu (the three dots) at the top right of the task pane. It shows your name and workspace, with three commands:
 
 - **Keyboard shortcuts** lists the PlaidXL shortcuts so you can change them. See [Keyboard Shortcuts](/reference/cli/plaidxl/ribbon/#keyboard-shortcuts).
-- **Switch workspace** signs you out and returns to the email screen, so you can choose another workspace under **Select a workspace**.
+- **Switch workspace** signs you out and returns to the email screen, so you can choose another workspace under **Select a workspace**. Sign in to the new workspace when asked. Switching back to a workspace you've already signed in to needs no new sign-in, and cancelling the sign-in keeps the workspace you were in.
 - **Log out** clears your sign-in and returns to the email screen.
+
+Each sign-in works only for the workspace it was made in. Everyone signs in once after this change. When you're signed out, **Save** says **Sign in to PlaidCloud to save.** and retrieving a dimension says **Sign in to PlaidCloud to retrieve a dimension.**
 
 Your sign-in is shared by every workbook you have open, but each workbook keeps its own project. A workbook's project belongs to a workspace, so after you switch, a workbook linked to a project in the old workspace has no project until you pick one. See [The Project Belongs to the Workbook](/reference/cli/plaidxl/retrieve/#the-project-belongs-to-the-workbook).
 
