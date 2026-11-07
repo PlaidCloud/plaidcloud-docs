@@ -98,7 +98,7 @@ Data Foundation 会直接读取您连接的每个 ERP 系统和实例，汇入�
 
 - [Data Foundation](/zh-cn/guides/projects/data-foundation/)
 - [Data Foundation 入门](/zh-cn/guides/projects/data-foundation-getting-started/)
-- [添加 ERP 之外的数据文件](/zh-cn/guides/projects/data-foundation/#添加-erp-之外的数据文件)
+- [添加 ERP 之外的数据文件](/zh-cn/guides/projects/data-foundation/#添加文件以补充-erp-之外的数据)
 - 连接访问指南：
   - [NetSuite](/zh-cn/guides/connections/netsuite-access-for-data-foundation/)
   - [Salesforce](/zh-cn/guides/connections/salesforce-access-for-data-foundation/)

@@ -98,7 +98,7 @@ Data Foundationは、接続したすべてのERPシステムとインスタン�
 
 - [Data Foundation](/ja/guides/projects/data-foundation/)
 - [Data Foundationを始める](/ja/guides/projects/data-foundation-getting-started/)
-- [ERP外のデータのファイルを追加する](/ja/guides/projects/data-foundation/#erp外のデータのファイルを追加する)
+- [ERP外のデータのファイルを追加する](/ja/guides/projects/data-foundation/#erp-以外のデータをファイルで追加する)
 - 接続のアクセスガイド：
   - [NetSuite](/ja/guides/connections/netsuite-access-for-data-foundation/)
   - [Salesforce](/ja/guides/connections/salesforce-access-for-data-foundation/)
