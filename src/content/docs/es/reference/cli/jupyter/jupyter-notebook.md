@@ -21,17 +21,15 @@ VS Code también ofrece una extensión que permite ejecutar cuadernos directamen
 
 
 ## Instalar las utilidades de PlaidCloud
-Aunque se puede acceder a PlaidCloud mediante solicitudes OAuth y JSON-RPC estándar, se recomienda usar nuestras bibliotecas prediseñadas para simplificar el acceso.  Además, la biblioteca de utilidades de PlaidCloud incluye prácticos ayudantes de datos para usar con los dataframes de Pandas.
+Aunque se puede acceder a PlaidCloud mediante solicitudes estándar de OAuth y de la API REST, se recomienda usar nuestras bibliotecas prediseñadas para simplificar el acceso. Además, la biblioteca PlaidCloud Utilities incluye prácticas utilidades de datos para trabajar con dataframes de Pandas.
 
 Para instalar las utilidades de PlaidCloud, ejecute las siguientes instalaciones con pip:
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0" plaidcloud-utilities
 ```
 
-```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
-```
+La versión 1.25.0 de `plaidcloud-rpc` es la primera que envía sus llamadas a la API REST. Las versiones anteriores usan JSON-RPC, que está obsoleto y se eliminará en una versión posterior.
 
 ## Obtención de un token OAuth
 

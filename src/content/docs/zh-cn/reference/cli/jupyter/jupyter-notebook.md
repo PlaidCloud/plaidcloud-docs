@@ -21,17 +21,15 @@ VS Code 也提供一个扩展，可让您直接在 VS Code 中运行笔记本。
 
 
 ## 安装 PlaidCloud 实用工具
-虽然可以使用标准 OAuth 和 JSON-RPC 请求访问 PlaidCloud，但建议使用我们预构建的库以简化访问。此外，PlaidCloud 实用工具库还包含便于配合 Pandas DataFrame 使用的数据辅助工具。
+虽然可以通过标准 OAuth 和 REST API 请求访问 PlaidCloud，但建议使用我们预先构建的库来简化访问。此外，PlaidCloud Utilities 库还包含便于处理 Pandas 数据框的实用数据工具。
 
 要安装 PlaidCloud 实用工具，请执行以下 pip 安装命令：
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0" plaidcloud-utilities
 ```
 
-```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
-```
+`plaidcloud-rpc` 1.25.0 是第一个将调用发送到 REST API 的版本。更早的版本使用 JSON-RPC，而 JSON-RPC 已弃用，并将在以后的版本中移除。
 
 ## 获取 OAuth 令牌
 

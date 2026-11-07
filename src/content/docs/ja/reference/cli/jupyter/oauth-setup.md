@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/oauth-setup.md
 ---
 
-PlaidCloudは標準的なJSON-RPCリクエストを使用しており、そのリクエストを実行できるあらゆるアプリケーションから利用できます。リクエストはOAuthトークンによって保護されます。
+PlaidCloud には、HTTP リクエストを送信できるあらゆるアプリケーションから利用できる REST API があります。リクエストは OAuth トークンで保護されます。JSON-RPC は非推奨です。[JSON-RPC は非推奨](/ja/reference/cli/jupyter/command-line/#json-rpc-は非推奨)を参照してください。
 
 
 ## OAuthトークンの取得
@@ -30,6 +30,17 @@ OAuthトークンは、PlaidCloud アプリで生成します。自分に割り�
 ノートブックのディレクトリ、またはコマンドラインで操作する予定の場所より1つ上の階層にディレクトリを作成します。ディレクトリの名前は `.plaid` にします。
 
 `.plaid` ディレクトリの中に `plaid.conf` というファイルを作成し、上でコピーした内容を貼り付けます。ファイルを保存すると、PlaidCloudユーティリティとrpcメソッドを使って接続できるようになります。
+
+
+## 登録済みシステムのシークレットを置き換える
+
+登録済みシステムのシークレットが漏洩した可能性がある場合は、その構成にあるクライアント ID を使用し、REST API で置き換えます。
+
+```text
+POST /rest/v1/analyze/oauth/client/rotate-secret?clientid=<client id>
+```
+
+登録済みシステムのシークレットを置き換えられるのは、そのシステムのオーナーだけです。レスポンスには新しいシークレットが含まれ、古いシークレットは直ちに使用できなくなります。そのシークレットを使用しているすべての `plaid.conf` ファイルを更新してください。
 
 
 ## 高度な使い方

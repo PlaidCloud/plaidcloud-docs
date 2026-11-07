@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/oauth-setup.md
 ---
 
-PlaidCloud 使用标准的 JSON-RPC 请求，任何能够发送此类请求的应用程序都可以使用它。请求通过 OAuth 令牌保护。
+PlaidCloud 提供 REST API，任何能够发送 HTTP 请求的应用程序都可以使用。请求通过 OAuth 令牌进行保护。JSON-RPC 已弃用；请参阅[JSON-RPC 已弃用](/zh-cn/reference/cli/jupyter/command-line/#json-rpc-已弃用)。
 
 
 ## 获取 OAuth 令牌
@@ -30,6 +30,17 @@ OAuth 令牌在 PlaidCloud 应用中生成。要查看分配给您的当前 OAut
 在笔记本目录的上一级目录，或计划使用命令行交互的位置的上一级目录中，创建一个名为 `.plaid` 的目录。
 
 在 `.plaid` 目录中创建一个名为 `plaid.conf` 的文件，并将上面复制的内容粘贴到该文件中。保存文件后，即可使用 PlaidCloud 实用工具和 rpc 方法进行连接。
+
+
+## 替换已注册系统的密钥
+
+如果已注册系统的密钥可能已经泄露，请使用其配置中的客户端 ID，通过 REST API 替换该密钥：
+
+```text
+POST /rest/v1/analyze/oauth/client/rotate-secret?clientid=<client id>
+```
+
+只有已注册系统的所有者才能替换其密钥。响应中包含新密钥，旧密钥会立即失效，因此请更新所有使用它的 `plaid.conf` 文件。
 
 
 ## 高级用法

@@ -6,10 +6,11 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/command-line.md
 ---
 
-O PlaidCloud utiliza pedidos JSON-RPC padrão e pode ser utilizado com qualquer aplicação capaz de efetuar esses pedidos.
+O PlaidCloud tem uma API REST que qualquer aplicação capaz de enviar pedidos HTTP pode utilizar. Para facilitar, o pacote Python `plaidcloud-rpc` trata por si dos detalhes da ligação e dos pedidos.
 
-
-Para facilitar, está disponível um pacote Python que simplifica o processo de ligação e de execução da API.
+:::caution[O JSON-RPC está obsoleto]
+O JSON-RPC está obsoleto e será removido numa versão futura. Utilize o `plaidcloud-rpc` 1.25.0 ou posterior, que envia as suas chamadas para a API REST, e escreva as novas integrações com base na API REST. Consulte [O JSON-RPC está obsoleto](#o-json-rpc-está-obsoleto).
+:::
 
 
 ## Instalação necessária
@@ -17,30 +18,53 @@ Para facilitar, está disponível um pacote Python que simplifica o processo de 
 Num terminal, execute o seguinte comando:
 
 ```bash
-pip install plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0"
 ```
 
 
-## Utilizar o objeto Simplerpc para fazer um pedido
+## Utilizar o objeto SimpleRPC para fazer um pedido
 
 Para fazer um pedido com o pacote `plaidcloud-rpc`, utilize o objeto `SimpleRPC`.
 
 ```python
-from plaidcloud.rpc.connection.jsonrpc import SimpleRPC  
-  
-auth_token = "Your PlaidCloud Auth Token" # See Obtaining Token below  
-endpoint_uri = "plaidcloud.com" # or plaidcloud.net  
+from plaidcloud.rpc.connection.jsonrpc import SimpleRPC
+
+auth_token = "Your PlaidCloud OAuth token"  # See Obtaining an OAuth Token below
+endpoint_uri = "https://<your-workspace>.plaid.cloud/json-rpc/"
 rpc = SimpleRPC(auth_token, endpoint_uri)
 ```
 
-Depois de instanciar o objeto `SimpleRPC`, pode emitir pedidos RPC ao PlaidCloud. Este exemplo pede os metadados de uma tabela.
+Depois de instanciar o objeto `SimpleRPC`, pode enviar pedidos ao PlaidCloud. Este exemplo pede os metadados de uma tabela.
 
 ```python
-table = rpc.analyze.table.table(  
-            project_id=project_id,  
-            table_id=table_id  
+table = rpc.analyze.table.table(
+            project_id=project_id,
+            table_id=table_id
         )
 ```
+
+O `SimpleRPC` envia cada chamada para a API REST em `/rest/v1/` no anfitrião da sua área de trabalho, com o mesmo token. Uma chamada que a API REST ainda não abrange, ou uma chamada para uma área de trabalho ainda numa versão anterior, utiliza o JSON-RPC, pelo que o mesmo código funciona em ambos os casos. Uma chamada falhada gera `RPCError` em ambos os casos.
+
+
+## Chamar diretamente a API REST
+
+O `call_rest` envia um pedido para qualquer endpoint da API REST com o mesmo token, as mesmas definições de TLS e as mesmas novas tentativas que o `SimpleRPC`. Indique o método HTTP, o caminho em `/rest/v1/` e, opcionalmente, `params` para a cadeia de consulta e `body` para um corpo de pedido JSON.
+
+```python
+dimensions = rpc.call_rest(
+    'GET',
+    'analyze/dimension/dimensions',
+    params={'project_id': project_id},
+)
+```
+
+Devolve a resposta JSON descodificada, ou `None` quando a resposta não tem corpo. Qualquer resposta que não seja de sucesso gera `RPCError`, com o estado HTTP como `code`.
+
+
+## O JSON-RPC está obsoleto
+
+O JSON-RPC está obsoleto e será removido numa versão futura. As versões do `plaidcloud-rpc` anteriores à 1.25.0 enviam todas as chamadas por JSON-RPC, pelo que deixarão de funcionar quando este for removido. Atualize para a 1.25.0 ou posterior; o seu código `SimpleRPC` não precisa de ser alterado. Escreva as novas integrações com base na API REST.
+
 
 ## Que APIs estão disponíveis?
 
