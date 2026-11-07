@@ -53,6 +53,8 @@ Un résumé est envoyé une fois par jour ou par semaine, lors de la première v
 
 Vous pouvez avoir jusqu'à 10 résumés à vous sur une même application, et 20 au total toutes applications confondues.
 
+Tant qu'un membre est désactivé, ses alertes et ses résumés ne vérifient ni n'envoient rien. Ils reprennent si le membre est réactivé.
+
 ## Canaux
 
 | Send by | Destination |
