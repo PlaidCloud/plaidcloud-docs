@@ -26,7 +26,7 @@ Wynik zawiera wyłącznie sumy. Żaden wiersz nie wskazuje członka, a ścieżki
 
 Wartość `partial` jest prawdziwa dla miesiąca, którego historia nie obejmuje w całości, a `coverage_start` to data rozpoczęcia zbierania danych.
 
-**Obszar** ogranicza wiersze do jednego obszaru: **Aplikacja PlaidCloud**, **Pulpity**, **Aplikacje**, **Wizyty w aplikacjach** lub **Notatniki**. Pozostaw **Wszystkie obszary**, aby uwzględnić wszystkie.
+**Obszar** ogranicza wiersze do jednego obszaru: **Aplikacja PlaidCloud**, **Pulpity**, **Aplikacje**, **Wizyty w aplikacjach**, **Serwery notebooków** lub **Notatniki**. Pozostaw **Wszystkie obszary**, aby uwzględnić wszystkie.
 
 ### Zakres dat
 

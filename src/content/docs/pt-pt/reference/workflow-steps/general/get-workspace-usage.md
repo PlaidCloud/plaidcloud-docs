@@ -26,7 +26,7 @@ O resultado contém apenas totais. Nenhuma linha identifica um membro, e os cami
 
 `partial` é verdadeiro para um mês que o histórico não cobre na totalidade, e `coverage_start` é a data em que a recolha começou.
 
-**Área** limita as linhas a uma área: **Aplicação PlaidCloud**, **Painéis de controlo**, **Aplicações**, **Visitas a aplicações** ou **Notebooks**. Deixe-a em **Todas as áreas** para incluir todas.
+**Área** limita as linhas a uma área: **Aplicação PlaidCloud**, **Painéis de controlo**, **Aplicações**, **Visitas a aplicações**, **Servidores de notebooks** ou **Notebooks**. Deixe-a em **Todas as áreas** para incluir todas.
 
 ### Intervalo de datas
 

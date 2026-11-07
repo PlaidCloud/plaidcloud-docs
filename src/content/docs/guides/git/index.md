@@ -16,6 +16,8 @@ Select **Git** in your workspace's app list. The **Git** tab opens with the work
 
 A role indicator shows your level: **Administrator**, **Contributor** or **Viewer**, with a line saying what that lets you do. Each repository row shows its name, description (when it has one), **Updated** with the date, a read-only clone field with a copy button, and **Open**, which opens the repository in Git. Repositories you create privately are in Git directly, not in this list.
 
+If Git is not set up for your workspace, or can't be reached, the **Git** tab shows **Git is not available** with the reason, and **Try again** checks again.
+
 ## Clone a Repository
 
 Copy the repository's clone address from its row. The first time you copy, a **Set up Git on your computer** card appears with the steps below. Select **Dismiss** to hide it, and **How to clone** in the header to bring it back.

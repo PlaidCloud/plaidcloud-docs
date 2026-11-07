@@ -26,7 +26,7 @@ La salida contiene solo totales. Ninguna fila nombra a un miembro, y las rutas d
 
 `partial` es verdadero para un mes que el historial no cubre por completo, y `coverage_start` es la fecha en que comenzó la recopilación.
 
-**Área** limita las filas a un área: **Aplicación PlaidCloud**, **Paneles de control**, **Aplicaciones**, **Visitas a aplicaciones** o **Notebooks**. Déjelo en **Todas las áreas** para incluirlas todas.
+**Área** limita las filas a un área: **Aplicación PlaidCloud**, **Paneles de control**, **Aplicaciones**, **Visitas a aplicaciones**, **Servidores de notebooks** o **Notebooks**. Déjelo en **Todas las áreas** para incluirlas todas.
 
 ### Intervalo de fechas
 

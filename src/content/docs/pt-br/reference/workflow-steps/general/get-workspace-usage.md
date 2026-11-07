@@ -26,7 +26,7 @@ A saída contém apenas totais. Nenhuma linha identifica um membro, e os caminho
 
 `partial` é verdadeiro para um mês que o histórico não cobre por completo, e `coverage_start` é a data em que a coleta começou.
 
-**Área** limita as linhas a uma área: **Aplicativo PlaidCloud**, **Painéis**, **Aplicativos**, **Visitas ao aplicativo** ou **Notebooks**. Deixe em **Todas as áreas** para incluir todas.
+**Área** limita as linhas a uma área: **Aplicativo PlaidCloud**, **Painéis**, **Aplicativos**, **Visitas ao aplicativo**, **Servidores de notebooks** ou **Notebooks**. Deixe em **Todas as áreas** para incluir todas.
 
 ### Intervalo de datas
 

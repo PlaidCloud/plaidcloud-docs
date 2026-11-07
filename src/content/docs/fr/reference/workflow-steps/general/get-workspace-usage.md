@@ -26,7 +26,7 @@ La sortie ne contient que des totaux. Aucune ligne ne nomme un membre, et les ch
 
 `partial` est vrai pour un mois que l'historique ne couvre pas entièrement, et `coverage_start` est la date à laquelle la collecte a commencé.
 
-**Domaine** limite les lignes à un domaine : **Application PlaidCloud**, **Tableaux de bord**, **Applications**, **Visites d'applications** ou **Notebooks**. Laissez **Tous les domaines** pour les inclure tous.
+**Domaine** limite les lignes à un domaine : **Application PlaidCloud**, **Tableaux de bord**, **Applications**, **Visites d'applications**, **Serveurs de notebooks** ou **Notebooks**. Laissez **Tous les domaines** pour les inclure tous.
 
 ### Plage de dates
 

@@ -17,6 +17,8 @@ Sélectionnez **Git** dans la liste des applications de votre espace de travail.
 
 Un indicateur de rôle affiche votre niveau (**Administrateur**, **Contributeur** ou **Lecteur**), avec une ligne précisant ce que cela vous permet de faire. Chaque ligne de dépôt affiche son nom, sa description (lorsqu'il en a une), **Mis à jour** avec la date, un champ de clonage en lecture seule avec un bouton de copie, et **Ouvrir**, qui ouvre le dépôt dans Git. Les dépôts que vous créez en privé se trouvent directement dans Git, pas dans cette liste.
 
+Si Git n’est pas configuré pour votre espace de travail ou est inaccessible, l'onglet **Git** affiche **Git n’est pas disponible** avec le motif, et **Réessayer** relance la vérification.
+
 ## Cloner un dépôt
 
 Copiez l'adresse de clonage du dépôt depuis sa ligne. La première fois que vous copiez, une carte **Set up Git on your computer** apparaît avec les étapes ci-dessous. Sélectionnez **Ignorer** pour la masquer, et **How to clone** dans l'en-tête pour la faire réapparaître.

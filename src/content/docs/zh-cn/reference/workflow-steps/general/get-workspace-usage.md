@@ -26,7 +26,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 对于历史记录未完整覆盖的月份，`partial` 为 true；`coverage_start` 是开始收集的日期。
 
-**区域**将行限制为某一个区域：**PlaidCloud 应用**、**仪表板**、**应用**、**应用访问**或**笔记本**。保持为**所有区域**则包含所有区域。
+**区域**将行限制为某一个区域：**PlaidCloud 应用**、**仪表板**、**应用**、**应用访问**、**笔记本服务器**或**笔记本**。保持为**所有区域**则包含所有区域。
 
 ### 日期范围
 
