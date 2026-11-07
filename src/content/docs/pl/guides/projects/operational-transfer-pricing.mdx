@@ -1,0 +1,92 @@
+---
+title: Operational Transfer Pricing
+description: Sprawdzaj poziom zysku każdej jednostki względem zakresów polityki cen transferowych, zobacz, które jednostki mieszczą się w zakresie, są poniżej lub powyżej, i jakie wyrównanie je przywraca, na bazie Common Finance Model z Data Foundation.
+sidebar:
+  label: Operational Transfer Pricing
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/operational-transfer-pricing.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Szablon **Operational Transfer Pricing** porównuje wskaźnik poziomu zysku każdej testowanej strony z zakresem ustalonym przez Twoją politykę i wylicza wyrównanie, które przywraca jednostkę spoza zakresu do wartości docelowej. Jest zbudowany na [Common Finance Model](/pl/guides/projects/data-foundation/) i zawiera wszystko, co buduje **Enterprise Profitability**.
+
+<Aside type="note">
+To widok zarządczy do monitorowania polityki w ciągu roku. Nie jest badaniem cen transferowych ani dokumentem składanym urzędowi.
+</Aside>
+
+## Jak to działa
+
+Dla każdej jednostki i okresu szablon:
+
+1. Buduje rachunek zysków i strat testowanej strony w **walucie lokalnej** jednostki, ponieważ w tej walucie prowadzi ona księgi i księguje wyrównanie. Przychody są podzielone na wewnątrzgrupowe i od stron trzecich.
+2. Sumuje go narastająco za rok fiskalny. Okresy korekt liczą się jako okresy swojego roku, więc ostatni wiersz roku to cały rok.
+3. Znajduje politykę obowiązującą dla jednostki.
+4. Oblicza wskaźnik poziomu zysku, w procentach, narastająco od początku roku i porównuje go z zakresem.
+
+## Wskaźniki poziomu zysku
+
+Dla każdej jednostki wybierasz jedną **soczewkę**:
+
+| Soczewka | Definicja |
+|---|---|
+| `ros` | Zwrot ze sprzedaży (ROS): EBIT ÷ sprzedaż testowanej strony. |
+| `ncp` | Narzut na koszt netto: EBIT ÷ koszt całkowity. |
+| `resale_minus` | Cena odsprzedaży pomniejszona o marżę: marża brutto ÷ sprzedaż. |
+
+EBIT to przychody pomniejszone o koszt własny sprzedaży i koszty operacyjne. Pozycje nieoperacyjne w nim nie występują. Sprzedaż to całość przychodów jednostki, od stron trzecich i wewnątrzgrupowych, ponieważ zysk jest osiągany na całości.
+
+## Tabela polityki
+
+Twoje zakresy znajdują się w tabeli `otp_policy_targets`, po jednym wierszu dla każdej jednostki i okresu, od którego polityka obowiązuje. Edytujesz ją Ty; model nigdy do niej nie zapisuje.
+
+| Kolumna | Co zawiera |
+|---|---|
+| `entity` | Testowaną stronę. |
+| `role` | Etykietę jej roli, na przykład dystrybutor o ograniczonym ryzyku. |
+| `lens` | `ros`, `ncp` lub `resale_minus`. |
+| `low`, `target`, `high` | Zakres i wartość docelową, w procentach. `low <= target <= high`. |
+| `effective_from_period` | Miesiąc, od którego wiersz obowiązuje, w formacie `YYYY-MM`. Obowiązuje do następnego wiersza jednostki. |
+
+Jednostka ma w danym momencie jedną politykę. Zmiana soczewki lub zakresu to nowy wiersz z późniejszą wartością `effective_from_period`. Dane przykładowe zawierają trzy przykładowe wiersze. Zastąp je własnymi.
+
+Wiersz, którego nie można ocenić, na przykład z nieprawidłowym miesiącem, pustą soczewką, pustą wartością low, target lub high albo zakresem w złej kolejności, powoduje, że wyniki tej jednostki są **incomplete**, zamiast być zgadywane.
+
+## Wyniki
+
+Dla każdej jednostki i okresu tabela wyników pokazuje wskaźnik narastająco od początku roku oraz status:
+
+| Status | Znaczenie |
+|---|---|
+| `in` | W zakresie, włącznie z granicami. |
+| `below`, `above` | Poza zakresem. |
+| `n-a` | Podstawa, sprzedaż lub koszt, nie jest dodatnia. |
+| `incomplete` | Wiersz polityki ma problem albo coś potrzebnego do porównania jest nieznane. Puste pole nigdy nie jest odczytywane jako `in`. |
+
+Gdy jednostka jest poza zakresem, `true_up_ytd` to zysk, który należy dodać testowanej stronie narastająco od początku roku, aby osiągnąć wartość docelową, lub odjąć, jeśli jest ujemny, w walucie lokalnej. `true_up` to zmiana tej wartości w okresie, więc okresy roku sumują się do wyrównania za rok. Wyrównanie jest podawane także w walucie grupy.
+
+Metryki dla asystenta i pulpitów: **TP true-up**, **Tested-party EBIT**, **Tested-party sales**, **Third-party sales**, **Intercompany sales**, **Tested-party total cost**, **Return on sales**, **Net cost plus** oraz **CO-PA margin** według wyceny.
+
+## Marża CO-PA
+
+Jeśli ładujesz SAP CO-PA, szablon pokazuje także jego marżę według wyceny: prawnej, grupowej lub ośrodka zysku. Wycena to osobna wartość, więc nigdy nie dodawaj wycen do siebie. Plik CO-PA zawiera jedną wycenę, którą potwierdzasz przy jego dodawaniu. Mapowanie pliku CO-PA zawsze pyta **Are revenues shown as negative numbers?** Gdy wszystkie kwoty w pliku są dodatnie, jak w raporcie pozycji opartym na kalkulacji kosztów, **No, revenues are positive** jest wybierane za Ciebie. W przeciwnym razie wybierz odpowiedź przed potwierdzeniem.
+
+## Rozpocznij projekt
+
+<Steps>
+
+1. W Analyze otwórz **Projekty** i kliknij **Nowy projekt**.
+
+2. W polu **Zacznij od** wybierz **Operational Transfer Pricing (template)**. Zaznacz **Zacznij od danych przykładowych**, aby najpierw zobaczyć przykład.
+
+3. Połącz swoje ERP i uruchom **Załaduj**. Zobacz [Rozpocznij pracę z Data Foundation](/pl/guides/projects/data-foundation-getting-started/).
+
+4. Edytuj `otp_policy_targets`, wpisując swoje testowane strony i zakresy, a następnie kliknij **Apply changes**.
+
+</Steps>
+
+Zapisz tabelę polityki razem z projektem za pomocą **Akcje > Zapisz jako mój szablon...**. Zobacz [Zapisz jako mój szablon](/pl/guides/projects/data-foundation/#zapisz-jako-mój-szablon).
+
+## Powiązane
+
+- [Data Foundation: Common Finance Model](/pl/guides/projects/data-foundation/)
+- [Cost to Serve](/pl/guides/projects/cost-to-serve/)

@@ -1,0 +1,78 @@
+---
+title: Dynamics-365-Finance-and-Operations-Zugriff für Data Foundation
+description: Was ein Dynamics-365-Finance-and-Operations-Administrator einrichtet, damit PlaidCloud Data Foundation das System direkt lesen kann – eine Microsoft-Entra-ID-Anwendung, eine schreibgeschützte Rolle und ein Fabric-Link-SQL-Login – und was zurückzusenden ist.
+sidebar:
+  label: Dynamics-365-F&O-Zugriff für Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/de/guides/projects/data-foundation/) führt die Daten aller ERP-Systeme und Instanzen, die Sie verbinden, in einem Common Finance Model zusammen, und Dynamics 365 Finance and Operations ist eines der ERP-Systeme, die es direkt liest. Die Verbindung nutzt für die Stammdaten eine Microsoft-Entra-ID-Anwendung mit Client-Secret und für das Hauptbuchjournal Ihren Fabric-(Synapse-)Link-SQL-Endpunkt. Diese Seite richtet sich an den Dynamics-365-Administrator, der das einrichtet, und an den PlaidCloud-Benutzer, der ihn darum bittet.
+
+PlaidCloud liest Daten ausschließlich. Niemand sendet ein Client-Secret oder ein SQL-Kennwort per E-Mail.
+
+## Zugriffsanfrage senden
+
+Wählen Sie auf der Registerkarte **Foundation** des Projekts unter **Dynamics-365-Finance-and-Operations-Verbindung** die Option **Neue Verbindung erstellen**. Das Formular zeigt die vollständige Anfrage. Klicken Sie auf **Anfrage kopieren**, um sie in Ihre eigene Nachricht einzufügen, oder auf **Anfrage per E-Mail senden**, um sie in Ihrem E-Mail-Programm mit dem Betreff „Read-only Dynamics 365 Finance and Operations access for PlaidCloud“ zu öffnen.
+
+## Was der Dynamics-365-Administrator einrichtet
+
+<Steps>
+
+1. **Registrieren Sie für PlaidCloud eine Anwendung in Microsoft Entra ID** mit einem Client-Secret. Notieren Sie die Anwendungs-ID (Client-ID), die Verzeichnis-ID (Mandanten-ID) und das Secret.
+
+2. **Ordnen Sie die Anwendung einem Benutzer zu.** Fügen Sie in Dynamics 365 unter **System administration > Setup > Microsoft Entra ID applications** die Client-ID hinzu und ordnen Sie sie einem Benutzer zu, dessen Rolle für jede zu ladende juristische Person Folgendes anzeigen darf:
+
+   - Hauptbuch: juristische Personen, Geschäftskalender, Hauptkonten, Werte der Finanzdimensionen, Wechselkurse
+   - Debitorenbuchhaltung: Kunden und Kundenrechnungspositionen
+   - Produktinformationsverwaltung: freigegebene Produkte
+   - Lagerverwaltung: Bestand und Lagertransaktionen (optional)
+   - Budgetierung: Budgetregistereinträge (optional)
+
+3. **Richten Sie Fabric Link für das Hauptbuchjournal ein.** Journalzeilen werden aus Ihrem Fabric-(Synapse-)Link-SQL-Endpunkt gelesen, nicht aus dem OData-Dienst. Stellen Sie sicher, dass Fabric Link für diese Tabellen aktiviert ist, und erstellen Sie auf diesem Endpunkt ein schreibgeschütztes SQL-Login für PlaidCloud:
+
+   - `generaljournalaccountentry`
+   - `generaljournalentry`
+   - `fiscalcalendarperiod`
+   - `dimensionattributelevelvalue`, mit einer Zeile je Dimensionswert jeder Finanzdimensionskombination und dem Namen der zugehörigen Dimension
+
+</Steps>
+
+## Was zurückzusenden ist
+
+| Der Administrator sendet | Eingabe in PlaidCloud als |
+|---|---|
+| Die Umgebungs-URL, `https://<name>.operations.dynamics.com` | **Umgebungs-URL** |
+| Die Verzeichnis-ID (Mandanten-ID) | **Verzeichnis-ID (Mandanten-ID)** |
+| Die Anwendungs-ID (Client-ID) | **Anwendungs-ID (Client-ID)** |
+| Den Fabric-Link-SQL-Endpunkt, die Datenbank und das Login | Eine separate SQL-Verbindung in PlaidCloud, ausgewählt in der Systemeinstellung `fabric_connection_id` |
+| Die Hauptkontenkategorien Ihrer Konten für die Herstellungskosten der verkauften Waren (PlaidCloud geht von `COGS` aus) | Die Systemeinstellung `cogs_categories` |
+| Die Hauptkontenkategorien der nicht betrieblichen Konten: Zinsen, Ertragsteuern, Fremdwährungsgewinne und -verluste, sonstige Erträge | Die Systemeinstellung `non_operating_categories` |
+| Die Finanzdimension, die den Intercompany-Partner einer Zeile benennt (PlaidCloud geht von `IntercompanyPartner` aus) | Die Systemeinstellung `ic_partner_dimension` |
+| Die juristischen Personen, die PlaidCloud lesen darf | In PlaidCloud unter **Juristische Personen** ausgewählt |
+
+Das Client-Secret und das Kennwort des SQL-Logins werden nie per E-Mail gesendet. Das Team des PlaidCloud-Benutzers fügt das **Client-Secret** selbst in PlaidCloud ein, und die SQL-Verbindung enthält das SQL-Login. Juristische Personen, die Konsolidierungseinheiten sind, kommen in die Systemeinstellung `consolidation_companies`, damit ihre Buchungen nicht als Aktivität eines Unternehmens gezählt werden.
+
+## Zugriff prüfen
+
+Geben Sie in PlaidCloud die Werte ein und klicken Sie auf **Verbindung testen**. Jedes Dataset wird als **Lesbar**, **Fehlende Berechtigung** oder **Fehler** angezeigt:
+
+| Dataset | Erforderliche Berechtigung |
+|---|---|
+| Entitäten | Hauptbuch: juristische Personen anzeigen |
+| Geschäftskalender | Hauptbuch: Geschäftskalender anzeigen |
+| Kontenplan | Hauptbuch: Hauptkonten anzeigen |
+| Abteilungen | Hauptbuch: Werte der Finanzdimensionen anzeigen |
+| Kunden | Debitorenbuchhaltung: Kunden anzeigen |
+| Produkte | Produktinformationsverwaltung: freigegebene Produkte anzeigen |
+| Wechselkurse | Hauptbuch: Wechselkurse anzeigen |
+| Saldenliste, Hauptbuch | Das Hauptbuch anzeigen (das Journal, über Fabric Link) |
+| Verkaufspositionen, Lagerbestände, Budget | Optional |
+
+Fehlt ein Dataset, nennt der Test die Berechtigung, die hinzuzufügen ist. Bitten Sie den Administrator, sie der Rolle hinzuzufügen, und testen Sie erneut. Verkaufspositionen, Lagerbestände und Budget sind optional: Eine Umgebung, die sie nicht enthält, lädt trotzdem alles andere.
+
+## Verwandte Themen
+
+- [Data Foundation](/de/guides/projects/data-foundation/)
+- [Mit Dynamics 365 Finance & Operations verbinden](/de/guides/connections/dynamics-365-fo/)

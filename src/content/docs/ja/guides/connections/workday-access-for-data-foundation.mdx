@@ -1,0 +1,96 @@
+---
+title: Data Foundation向けのWorkdayアクセス
+description: PlaidCloud Data FoundationがWorkdayを読み取れるように、Workday管理者が作成して共有する内容（カスタムレポート、2つのFinancial Management Webサービス、統合システムユーザー）と、返送する情報について説明します。
+sidebar:
+  label: Data Foundation向けのWorkdayアクセス
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/ja/guides/projects/data-foundation/)は、接続したすべてのERPシステムとインスタンスのデータを1つのCommon Finance Modelに集約します。Workdayは、Data Foundationが直接読み取るシステムの1つです。Workdayには仕訳明細や残高を取得するWebサービスがないため、Data Foundationはレポートを読み取ります。このページは、そのレポートを作成するWorkday管理者と、管理者に作成を依頼するPlaidCloudユーザーを対象としています。
+
+PlaidCloudはデータの読み取りのみを行います。パスワードをメールで送信することは決してありません。
+
+## アクセスリクエストの送信
+
+プロジェクトの**Foundation**タブで、**新しい接続を作成**を選択し、**Workday**を選びます。フォームにレポートの仕様が表示されます。**リクエストをコピー**をクリックして自分のメッセージに貼り付けるか、**リクエストをメールで送信**をクリックしてメールプログラムで開きます。
+
+## Workday管理者が設定する内容
+
+<Steps>
+
+1. **カスタムレポート（RaaS）を10個作成し**（うち4個は任意）、統合システムユーザーと共有します。列名は指定どおりに使用してください。Data Foundationは名前で列をマッピングするため、列名を変更すると読み取れなくなります。コードの列はすべて、「C100 Acme US」のような表示名ではなく、オブジェクトの参照IDです。すべてのレポートの出力形式はJSONです。
+
+2. **Financial_Managementの Webサービス**`Get_Workday_Companies`と`Get_Currency_Conversion_Rates`を、同じユーザーに付与します。
+
+3. **レポートのURLと**統合システムユーザーの詳細を送ります。
+
+</Steps>
+
+| レポート | 必須 | 内容 |
+|---|---|---|
+| 仕訳明細 | はい | 転記済みの仕訳明細1行につき1行。プロンプトは、会社（明細の会社を参照IDで指定）と期間（会計期間の参照ID）です。ワークタグのRegion、Fund、Program、Project、会社間取引の関連会社、取引通貨と元帳通貨の金額、会計帳簿を含みます |
+| 期首残高 | はい | 会社、会計期間、元帳勘定科目ごとに1行。期首時点の残高です。資産、負債、資本の勘定科目のみが読み込まれます |
+| 元帳勘定科目 | はい | 勘定科目、名称、タイプ、会社間取引フラグ、任意のカテゴリと親勘定科目 |
+| コストセンター | はい | コストセンター、名称、親 |
+| 会計期間 | はい | 会社と会計期間ごとに1行（調整期間も含む）。開始日、終了日、ステータスを含みます |
+| 人員数 | 任意 | 各期末時点の在籍人員（コストセンター別）とFTE |
+| ワークタグ値 | 任意 | Region、Fund、Program、Projectの値ごとに1行。親を含みます |
+| 顧客 | 任意 | 顧客、名称、親、カテゴリ、地域、国 |
+| 販売品目 | 任意 | 品目、名称、親、グループ、単位 |
+| 販売請求書明細 | 任意 | 顧客請求書の明細1行につき1行。数量、総額、値引き、純額、原価の金額を含みます |
+
+各レポートの全列のリストは、Foundationタブの仕様に記載されています。レポートが返す内容には、次のルールが適用されます。
+
+- 読み込まれるのは、転記済み（Posted）の仕訳明細と、Actualsの元帳のみです。CommitmentとObligationの元帳は読み込まれません。
+- Book_Codeが空白の場合は主要帳簿です。空白の明細は、その会社と期間のすべての帳簿に計上され、Book_Codeがある明細は、その帳簿にのみ属します。
+- 仕訳の会社よりも、明細の会社が優先されます。
+- Ledger_Account_Type_IDは、Revenue、COGS、Opex、NonOperating、Asset、Liability、Equityのいずれかです。Workdayの費用タイプは1つだけで、Opexとして読み込まれます。売上原価や営業外費用を区別するには、COGSまたはNonOperatingを返す計算フィールドを出力してください。タイプのない勘定科目は、損益計算書に読み込まれません。
+- ドラフト、処理中、取消済み、却下の請求書は読み込まれません。
+- 予算はファイルから読み込みます。Adaptive Planningには接続されていません。
+
+## 返送する情報
+
+| 管理者が送る情報 | PlaidCloudでの入力先 |
+|---|---|
+| Workdayホスト | **Workdayホスト** |
+| テナント名 | **テナント** |
+| 統合システムユーザーの名前 | **統合システムユーザー** |
+| 必須レポートそれぞれのURL | **Journal Lines report URL**、**Beginning Balances report URL**、**Ledger Accounts report URL**、**Cost Centers report URL**、**Fiscal Periods report URL** |
+| 作成した任意レポートそれぞれのURL | **Headcount report URL (optional)**、**Worktag Values report URL (optional)**、**Customers report URL (optional)**、**Sales Items report URL (optional)**、**Sales Invoice Lines report URL (optional)** |
+| PlaidCloudが読み取ってよい会社の参照ID | **Companies**で選択します。すべての会社を読み込む場合は空白のままにします |
+
+統合システムユーザーの**パスワード**は、PlaidCloudユーザーが自分で貼り付けます。パスワードは秘密情報であり、メールでは送信しません。
+
+**System settings**の**Retained earnings account**には、勘定科目名から判別できない場合に、期首の損益計算書を繰り越す資本勘定科目を指定します。任意です。
+
+<Aside type="note">
+Workdayの費用タイプは1つだけで、Opexとして読み込まれ、Data Foundationの準備状況チェックで指摘されます。売上原価や営業外費用の勘定科目を区別する必要がある場合は、前述の計算フィールドを使用してください。
+</Aside>
+
+## アクセスの確認
+
+PlaidCloudに戻って**接続をテスト**をクリックします。各データセットは、**読み取り可能**、**権限が不足しています**、**エラー**のいずれかで表示されます。
+
+| データセット | 取得元 |
+|---|---|
+| エンティティ | `Get_Workday_Companies` |
+| 勘定科目表 | 元帳勘定科目レポート |
+| 部門 | コストセンターレポート |
+| 会計カレンダー | 会計期間レポート |
+| 為替レート | `Get_Currency_Conversion_Rates` |
+| 試算表 | 期首残高レポート |
+| 総勘定元帳 | 仕訳明細レポート |
+| 配賦ドライバー（任意） | 人員数レポート |
+| セグメント値（任意） | ワークタグ値レポート |
+| 顧客（任意） | 顧客レポート |
+| 製品（任意） | 販売品目レポート |
+| 売上明細（任意） | 販売請求書明細レポート |
+
+データセットに**権限が不足しています**と表示された場合は、テスト結果にレポートまたはWebサービスの名前が表示されます。管理者に統合システムユーザーとの共有を依頼してから、もう一度テストしてください。任意のレポートがないテナントでも、それ以外のデータはすべて読み込まれます。
+
+## 関連項目
+
+- [Data Foundation](/ja/guides/projects/data-foundation/)
+- [Workday Financialsへの接続](/ja/guides/connections/workday-financials/)

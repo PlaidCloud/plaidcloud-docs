@@ -1,0 +1,96 @@
+---
+title: "Accès à Workday pour Data Foundation"
+description: "Ce qu'un administrateur Workday crée et partage pour que PlaidCloud Data Foundation puisse lire Workday (rapports personnalisés, deux services web Financial Management et un utilisateur du système d'intégration) et ce qu'il doit vous renvoyer."
+sidebar:
+  label: "Accès à Workday pour Data Foundation"
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/fr/guides/projects/data-foundation/) rassemble les données de chaque système ERP et de chaque instance que vous connectez dans un seul Common Finance Model. Workday fait partie des systèmes qu'il lit directement. Workday ne propose aucun service web pour les lignes d'écriture ni pour les soldes ; cette page s'adresse donc à l'administrateur Workday qui crée les rapports lus par Data Foundation, et à l'utilisateur PlaidCloud qui les lui demande.
+
+PlaidCloud lit uniquement les données. Personne n'envoie de mot de passe par e-mail.
+
+## Envoyer la demande d'accès
+
+Dans l'onglet **Foundation** du projet, choisissez **Créer une nouvelle connexion**, puis sélectionnez **Workday**. Le formulaire affiche la spécification des rapports. Cliquez sur **Copier la demande** pour la coller dans votre propre message, ou sur **Envoyer la demande par e-mail** pour l'ouvrir dans votre messagerie.
+
+## Ce que l'administrateur Workday configure
+
+<Steps>
+
+1. **Créez dix rapports personnalisés (RaaS)**, dont quatre facultatifs, et partagez-les avec l'utilisateur du système d'intégration. Utilisez exactement les noms de colonne : Data Foundation effectue le mappage par nom, donc une colonne renommée ne peut pas être lue. Chaque colonne de code contient l'ID de référence de l'objet, et non un libellé tel que « C100 Acme US ». Le format de sortie de chaque rapport est JSON.
+
+2. **Accordez les services web Financial_Management** `Get_Workday_Companies` et `Get_Currency_Conversion_Rates` au même utilisateur.
+
+3. **Envoyez les URL des rapports** et les informations de l'utilisateur du système d'intégration.
+
+</Steps>
+
+| Rapport | Obligatoire | Contenu |
+|---|---|---|
+| Journal Lines | Oui | Une ligne par ligne d'écriture comptabilisée. Invites : Company (la société de la ligne, sous forme d'ID de référence) et Period (l'ID de référence de la période fiscale). Inclut les worktags Region, Fund, Program et Project, le partenaire intersociétés, les montants en devise de transaction et en devise du registre, ainsi que le livre |
+| Beginning Balances | Oui | Une ligne par société, période fiscale et compte du registre : le solde au début de la période. Seuls les comptes Asset, Liability et Equity sont chargés |
+| Ledger Accounts | Oui | Compte, nom, type, indicateur intersociétés, catégorie et compte parent facultatifs |
+| Cost Centers | Oui | Centre de coûts, nom et parent |
+| Fiscal Periods | Oui | Une ligne par société et par période fiscale, y compris les périodes d'ajustement, avec début, fin et statut |
+| Headcount | Facultatif | Effectif actif à la fin de chaque période, par centre de coûts, avec ETP |
+| Worktag Values | Facultatif | Une ligne par valeur de Region, Fund, Program et Project, avec le parent |
+| Customers | Facultatif | Client, nom, parent, catégorie, région et pays |
+| Sales Items | Facultatif | Article, nom, parent, groupe et unité de mesure |
+| Sales Invoice Lines | Facultatif | Une ligne par ligne de facture client, avec quantité, montants bruts, remise, montants nets et coûts |
+
+La liste complète des colonnes de chaque rapport figure dans la spécification de l'onglet Foundation. Quelques règles s'appliquent à ce que les rapports renvoient :
+
+- Seules les lignes d'écriture Posted sont chargées, et uniquement celles du registre Actuals. Les registres Commitment et Obligation ne le sont pas.
+- Un Book_Code vide correspond au livre principal. Une ligne vide compte dans tous les livres de sa société et de sa période, tandis qu'une ligne dotée d'un Book_Code appartient à ce livre uniquement.
+- La société de la ligne l'emporte sur celle de l'écriture.
+- Ledger_Account_Type_ID vaut Revenue, COGS, Opex, NonOperating, Asset, Liability ou Equity. Workday n'a qu'un seul type Expense, qui est chargé comme Opex. Pour distinguer le coût des marchandises vendues ou les charges hors exploitation, imprimez un champ calculé qui renvoie COGS ou NonOperating. Un compte sans type n'est pas chargé dans le compte de résultat.
+- Les factures Draft, In Progress, Canceled et Denied ne sont pas chargées.
+- Les budgets sont chargés à partir de fichiers. Adaptive Planning n'est pas connecté.
+
+## Ce qu'il faut renvoyer
+
+| L'administrateur envoie | Saisi dans PlaidCloud comme |
+|---|---|
+| L'hôte Workday | **Hôte Workday** |
+| Le nom du locataire | **Locataire** |
+| Le nom de l'utilisateur du système d'intégration | **Utilisateur du système d'intégration** |
+| L'URL de chaque rapport obligatoire | **Journal Lines report URL**, **Beginning Balances report URL**, **Ledger Accounts report URL**, **Cost Centers report URL**, **Fiscal Periods report URL** |
+| L'URL de chaque rapport facultatif que vous avez créé | **Headcount report URL (optional)**, **Worktag Values report URL (optional)**, **Customers report URL (optional)**, **Sales Items report URL (optional)**, **Sales Invoice Lines report URL (optional)** |
+| Les ID de référence des sociétés que PlaidCloud peut lire | Sélectionnés sous **Companies**. Laissez le champ vide pour charger toutes les sociétés |
+
+L'utilisateur PlaidCloud colle lui-même le **Mot de passe** de l'utilisateur du système d'intégration ; il s'agit d'un secret, qui n'est jamais envoyé par e-mail.
+
+Sous **System settings**, **Retained earnings account** indique le compte Equity dans lequel le compte de résultat d'ouverture est reporté, lorsque les noms des comptes ne l'indiquent pas déjà. Ce paramètre est facultatif.
+
+<Aside type="note">
+Le type Expense unique de Workday est chargé comme Opex, et le contrôle de préparation de Data Foundation le signale. Si vous devez distinguer vos comptes de coût des marchandises vendues ou de charges hors exploitation, utilisez le champ calculé décrit plus haut.
+</Aside>
+
+## Vérifier l'accès
+
+De retour dans PlaidCloud, cliquez sur **Tester la connexion**. Chaque jeu de données s'affiche comme **Lisible**, **Autorisation manquante** ou **Erreur** :
+
+| Jeu de données | Provient de |
+|---|---|
+| Entités | `Get_Workday_Companies` |
+| Plan comptable | Le rapport Ledger Accounts |
+| Départements | Le rapport Cost Centers |
+| Calendrier fiscal | Le rapport Fiscal Periods |
+| Taux de change | `Get_Currency_Conversion_Rates` |
+| Balance de vérification | Le rapport Beginning Balances |
+| Grand livre | Le rapport Journal Lines |
+| Inducteurs d'allocation (facultatif) | Le rapport Headcount |
+| Valeurs de segment (facultatif) | Le rapport Worktag Values |
+| Clients (facultatif) | Le rapport Customers |
+| Produits (facultatif) | Le rapport Sales Items |
+| Lignes de vente (facultatif) | Le rapport Sales Invoice Lines |
+
+Lorsqu'un jeu de données affiche **Autorisation manquante**, le test indique le rapport ou le service web concerné. Demandez à l'administrateur de le partager avec l'utilisateur du système d'intégration, puis testez à nouveau. Un locataire sans les rapports facultatifs charge tout le reste.
+
+## Voir aussi
+
+- [Data Foundation](/fr/guides/projects/data-foundation/)
+- [Se connecter à Workday Financials](/fr/guides/connections/workday-financials/)

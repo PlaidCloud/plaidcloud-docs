@@ -1,0 +1,96 @@
+---
+title: Acceso a Workday para Data Foundation
+description: Qué crea y comparte un administrador de Workday para que PlaidCloud Data Foundation pueda leer Workday (informes personalizados, dos servicios web de Financial Management y un usuario del sistema de integración) y qué debe enviar de vuelta.
+sidebar:
+  label: Acceso a Workday para Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/es/guides/projects/data-foundation/) reúne los datos de cada sistema ERP e instancia que usted conecta en un único Common Finance Model. Workday es uno de los sistemas que lee directamente. Workday no tiene un servicio web para líneas de diario ni saldos, por lo que esta página está dirigida al administrador de Workday que crea los informes que se leen y al usuario de PlaidCloud que se lo solicita.
+
+PlaidCloud solo lee datos. Nadie envía una contraseña por correo electrónico.
+
+## Enviar la solicitud de acceso
+
+En la pestaña **Foundation** del proyecto, elija **Crear una conexión nueva** y seleccione **Workday**. El formulario muestra la especificación de los informes. Haga clic en **Copiar solicitud** para pegarla en su propio mensaje, o en **Enviar solicitud por correo** para abrirla en su programa de correo.
+
+## Qué configura el administrador de Workday
+
+<Steps>
+
+1. **Cree diez informes personalizados (RaaS)**, cuatro de ellos opcionales, y compártalos con el usuario del sistema de integración. Use los nombres de columna exactamente como se indican: Data Foundation asigna por nombre, por lo que una columna renombrada no se puede leer. Cada columna de código es el Reference ID del objeto, no un descriptor como “C100 Acme US”. El formato de salida de cada informe es JSON.
+
+2. **Conceda los servicios web de Financial_Management** `Get_Workday_Companies` y `Get_Currency_Conversion_Rates` al mismo usuario.
+
+3. **Envíe las URL de los informes** y los datos del usuario del sistema de integración.
+
+</Steps>
+
+| Informe | Obligatorio | Contenido |
+|---|---|---|
+| Journal Lines | Sí | Una fila por línea de diario contabilizada. Indicadores: Company (la compañía de la línea, como Reference ID) y Period (el Reference ID del período fiscal). Incluye las etiquetas de trabajo Region, Fund, Program y Project, la filial intercompañía, los importes en la moneda de transacción y del libro mayor, y el libro contable |
+| Beginning Balances | Sí | Una fila por compañía, período fiscal y cuenta del libro mayor: el saldo al inicio del período. Solo se cargan las cuentas de tipo Asset, Liability y Equity |
+| Ledger Accounts | Sí | Cuenta, nombre, tipo, indicador intercompañía, categoría opcional y cuenta superior |
+| Cost Centers | Sí | Centro de costo, nombre y superior |
+| Fiscal Periods | Sí | Una fila por compañía y período fiscal, incluidos los períodos de ajuste, con inicio, fin y estado |
+| Headcount | Opcional | Personal activo al cierre de cada período, por centro de costo, con FTE |
+| Worktag Values | Opcional | Una fila por valor de Region, Fund, Program y Project, con su superior |
+| Customers | Opcional | Cliente, nombre, superior, categoría, región y país |
+| Sales Items | Opcional | Artículo, nombre, superior, grupo y unidad de medida |
+| Sales Invoice Lines | Opcional | Una fila por línea de factura de cliente, con cantidad, importe bruto, descuento, importe neto y costo |
+
+La lista completa de columnas de cada informe está en la especificación de la pestaña Foundation. Se aplican algunas reglas a lo que devuelven los informes:
+
+- Solo se cargan las líneas de diario Posted y solo el libro mayor Actuals. Los libros mayores Commitment y Obligation no se cargan.
+- Un Book_Code en blanco es el libro principal. Una línea en blanco cuenta en todos los libros de su compañía y período, y una línea con un Book_Code pertenece únicamente a ese libro.
+- La compañía de la línea prevalece sobre la del diario.
+- Ledger_Account_Type_ID es Revenue, COGS, Opex, NonOperating, Asset, Liability o Equity. Workday tiene un único tipo Expense, que se carga como Opex. Para separar el costo de los productos vendidos o el gasto no operativo, imprima un campo calculado que devuelva COGS o NonOperating. Una cuenta sin tipo no se carga en el estado de pérdidas y ganancias.
+- Las facturas en estado Draft, In Progress, Canceled y Denied no se cargan.
+- Los presupuestos se cargan desde archivos. Adaptive Planning no está conectado.
+
+## Qué enviar de vuelta
+
+| El administrador envía | Se introduce en PlaidCloud como |
+|---|---|
+| El host de Workday | **Host de Workday** |
+| El nombre del inquilino | **Inquilino** |
+| El nombre del usuario del sistema de integración | **Usuario del sistema de integración** |
+| La URL de cada informe obligatorio | **Journal Lines report URL**, **Beginning Balances report URL**, **Ledger Accounts report URL**, **Cost Centers report URL**, **Fiscal Periods report URL** |
+| La URL de cada informe opcional que haya creado | **Headcount report URL (optional)**, **Worktag Values report URL (optional)**, **Customers report URL (optional)**, **Sales Items report URL (optional)**, **Sales Invoice Lines report URL (optional)** |
+| Los Reference ID de las compañías que PlaidCloud puede leer | Se eligen en **Companies**. Déjelo en blanco para cargar todas las compañías |
+
+El usuario de PlaidCloud pega personalmente la **Contraseña** del usuario del sistema de integración; es un secreto y nunca se envía por correo electrónico.
+
+En **System settings**, **Retained earnings account** indica la cuenta de tipo Equity en la que se acumulan las pérdidas y ganancias de apertura, cuando los nombres de las cuentas no lo indican ya. Es opcional.
+
+<Aside type="note">
+El único tipo Expense de Workday se carga como Opex, y la comprobación de preparación de Data Foundation lo señala. Si necesita distinguir las cuentas de costo de los productos vendidos o de gasto no operativo, use el campo calculado descrito anteriormente.
+</Aside>
+
+## Comprobar el acceso
+
+De vuelta en PlaidCloud, haga clic en **Probar conexión**. Cada conjunto de datos aparece como **Legible**, **Falta un permiso** o **Error**:
+
+| Conjunto de datos | Procede de |
+|---|---|
+| Entidades | `Get_Workday_Companies` |
+| Plan de cuentas | El informe Ledger Accounts |
+| Departamentos | El informe Cost Centers |
+| Calendario fiscal | El informe Fiscal Periods |
+| Tipos de cambio | `Get_Currency_Conversion_Rates` |
+| Balance de comprobación | El informe Beginning Balances |
+| Libro mayor | El informe Journal Lines |
+| Inductores de asignación (opcional) | El informe Headcount |
+| Valores de segmento (opcional) | El informe Worktag Values |
+| Clientes (opcional) | El informe Customers |
+| Productos (opcional) | El informe Sales Items |
+| Líneas de ventas (opcional) | El informe Sales Invoice Lines |
+
+Cuando un conjunto de datos aparece como **Falta un permiso**, la prueba indica el informe o el servicio web. Pida al administrador que lo comparta con el usuario del sistema de integración y pruebe de nuevo. Un inquilino sin los informes opcionales carga igualmente todo lo demás.
+
+## Contenido relacionado
+
+- [Data Foundation](/es/guides/projects/data-foundation/)
+- [Conectarse a Workday Financials](/es/guides/connections/workday-financials/)

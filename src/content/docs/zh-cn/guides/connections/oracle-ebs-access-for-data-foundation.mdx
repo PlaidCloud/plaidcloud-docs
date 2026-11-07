@@ -1,0 +1,86 @@
+---
+title: Data Foundation 的 Oracle E-Business Suite 访问设置
+description: Oracle E-Business Suite 管理员需要进行哪些设置，才能让 PlaidCloud Data Foundation 通过 PlaidLink 直接读取 EBS：对总账表的 SELECT 访问权限和可查看所有账簿的职责，以及需要回传哪些内容。
+sidebar:
+  label: Data Foundation 的 Oracle E-Business Suite 访问设置
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-ebs-access-for-data-foundation.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/zh-cn/guides/projects/data-foundation/) 将您连接的每个 ERP 系统和实例的数据汇集到一个 Common Finance Model 中，Oracle E-Business Suite 是它可以直接读取的 ERP 之一。PlaidCloud 通过安装在您网络内部的 [PlaidLink](/zh-cn/reference/cli/plaidlink/) 代理访问 EBS，绝不会直接访问。本页面面向进行这些设置的 EBS 管理员，也面向请求管理员进行设置的 PlaidCloud 用户。
+
+PlaidCloud 只读取数据。切勿通过电子邮件发送密码。
+
+## 发送访问请求
+
+在项目的**基础数据**选项卡上，在 **Oracle E-Business Suite 连接**下选择**创建新连接**。表单会显示完整的请求和 **How to set up PlaidLink** 链接。单击**复制请求**可将其粘贴到您自己的邮件中，或单击**通过电子邮件发送请求**，在邮件程序中打开它，主题为“Read-only Oracle E-Business Suite access for PlaidCloud (through PlaidLink).”
+
+## EBS 管理员需要设置的内容
+
+<Steps>
+
+1. **安装 PlaidLink**：在可以访问 EBS 数据库的服务器上安装，并在 PlaidCloud 中注册。
+
+2. **授予 SELECT 权限**：向 PlaidLink 的 APPS 架构用户（或对 APPS 对象具有同义词的只读架构用户）授予以下对象的 SELECT 权限：
+
+   | 区域 | 对象 |
+   |---|---|
+   | 总账 | `GL_LEDGERS`、`GL_LEDGER_NORM_SEG_VALS`、`GL_CODE_COMBINATIONS`、`GL_PERIODS`、`GL_PERIOD_STATUSES`、`GL_JE_HEADERS`、`GL_JE_LINES`、`GL_BALANCES`、`GL_DAILY_RATES` |
+   | 弹性域 | `FND_ID_FLEX_SEGMENTS`、`FND_SEGMENT_ATTRIBUTE_VALUES`、`FND_FLEX_VALUES_VL`、`FND_FLEX_VALUE_NORM_HIERARCHY` |
+   | 销售（可选） | `RA_CUSTOMER_TRX_ALL`、`RA_CUSTOMER_TRX_LINES_ALL`、`RA_CUST_TRX_TYPES_ALL`、`RA_CUST_TRX_LINE_GL_DIST_ALL`、`HZ_CUST_ACCOUNTS`、`HZ_PARTIES`、`MTL_PARAMETERS`、`MTL_SYSTEM_ITEMS_B` |
+
+3. **指定一个应用程序用户**（`FND_USER`）和一个职责，该职责须能查看您要报告的所有账簿和平衡段值。
+
+4. **描述会计科目表**。说明哪些段是平衡段、自然科目、成本中心和公司间段（它们的段限定符）。当某个费用科目或其上方的父级值被描述为销货成本、销售成本或收入成本时，PlaidCloud 会将该费用科目归类为销货成本。当其中某个值的名称指向利息收入或费用、融资收入或成本、外汇、所得税费用，或其他收入和费用时，PlaidCloud 会将该科目归类为非经营性。如果您的父级值对这些使用了其他措辞，请告知 PlaidCloud。
+
+5. **确认汇率类型**。每个主账簿在账簿的换算选项中指定其期间平均汇率类型和期末汇率类型。PlaidCloud 使用这两种类型的每日汇率进行换算。
+
+</Steps>
+
+<Aside type="caution">
+错误的职责会返回另一个账簿的行，而不会报错。请与总账负责人确认。
+</Aside>
+
+## 需要回传的内容
+
+| 管理员发送 | 在 PlaidCloud 中输入为 |
+|---|---|
+| 数据库主机 | **Database host** |
+| 数据库端口 | **数据库端口**（除非更改，否则为 1521） |
+| 服务名称 | **服务名称** |
+| APPS 架构用户 | **APPS schema user** |
+| APPS 架构密码，通过安全的连接表单提供 | **APPS schema password**，由您的团队自行粘贴 |
+| `FND_USER` | **Application user (FND_USER)** |
+| 职责键 | **Responsibility key** |
+| PlaidCloud 可以读取的平衡段值 | 在 **Balancing segment values** 下，系统在加载之前无法列出这些值：在**名称**下输入一个值，或留空以加载主账簿的所有实体 |
+
+访问该实例的 PlaidLink 代理在系统设置中选择，名为 `agent`。
+
+<Aside type="caution">
+切勿通过电子邮件发送密码。**APPS schema password** 是机密：它存储在连接上，不会再次显示。
+</Aside>
+
+## 检查访问权限
+
+返回 PlaidCloud，输入各值并单击**测试连接**。每个数据集显示为**可读取**、**缺少权限**或**错误**：
+
+| 数据集 | 读取的对象 |
+|---|---|
+| 实体 | `GL_LEDGERS`、`GL_LEDGER_NORM_SEG_VALS` |
+| 财务日历 | `GL_PERIODS`、`GL_PERIOD_STATUSES` |
+| 会计科目表 | `GL_CODE_COMBINATIONS`、弹性域表 |
+| 部门 | `GL_CODE_COMBINATIONS`、弹性域表 |
+| 汇率 | `GL_DAILY_RATES` |
+| 总账 | `GL_JE_HEADERS`、`GL_JE_LINES` |
+| 试算平衡表 | `GL_BALANCES` |
+| 客户 | `HZ_CUST_ACCOUNTS`、`HZ_PARTIES`（可选） |
+| 产品 | `MTL_PARAMETERS`、`MTL_SYSTEM_ITEMS_B`（可选） |
+| 销售明细行 | `RA_CUSTOMER_TRX` 表（可选） |
+
+当数据集显示为**缺少权限**时，请管理员授予对这些对象的 SELECT 权限后重新测试。客户、产品和销售明细行是可选的：不使用它们的实例仍会加载其他所有内容。
+
+## 相关内容
+
+- [Data Foundation](/zh-cn/guides/projects/data-foundation/)
+- [PlaidLink](/zh-cn/reference/cli/plaidlink/)

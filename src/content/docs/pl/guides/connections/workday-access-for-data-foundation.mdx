@@ -1,0 +1,96 @@
+---
+title: Dostęp do Workday dla Data Foundation
+description: Co administrator Workday buduje i udostępnia, aby PlaidCloud Data Foundation mogło odczytywać dane z Workday — raporty niestandardowe, dwie usługi sieci Web Financial Management oraz użytkownika systemu integracji — oraz co należy odesłać.
+sidebar:
+  label: Dostęp do Workday dla Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/workday-access-for-data-foundation.mdx
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+[Data Foundation](/pl/guides/projects/data-foundation/) łączy dane ze wszystkich podłączonych systemów ERP i ich instancji w jeden Common Finance Model. Workday to jeden z systemów, które odczytuje bezpośrednio. Workday nie udostępnia usługi sieci Web dla pozycji dziennika ani sald, dlatego ta strona jest przeznaczona dla administratora Workday, który buduje odczytywane raporty, oraz dla użytkownika PlaidCloud, który go o to prosi.
+
+PlaidCloud tylko odczytuje dane. Hasła nigdy nie wysyła się e-mailem.
+
+## Wysyłanie żądania dostępu
+
+Na karcie **Foundation** projektu wybierz **Utwórz nowe połączenie** i wskaż **Workday**. Formularz pokazuje specyfikację raportów. Kliknij **Kopiuj żądanie**, aby wkleić ją do własnej wiadomości, lub **Wyślij żądanie e-mailem**, aby otworzyć ją w programie pocztowym.
+
+## Co konfiguruje administrator Workday
+
+<Steps>
+
+1. **Zbuduj dziesięć raportów niestandardowych (RaaS)**, z których cztery są opcjonalne, i udostępnij je użytkownikowi systemu integracji. Użyj dokładnie podanych nazw kolumn: Data Foundation mapuje dane według nazw, więc kolumny ze zmienioną nazwą nie można odczytać. Każda kolumna z kodem zawiera identyfikator referencyjny (Reference ID) obiektu, a nie opis, taki jak „C100 Acme US”. Formatem wyjściowym każdego raportu jest JSON.
+
+2. **Nadaj usługi sieci Web Financial_Management** `Get_Workday_Companies` i `Get_Currency_Conversion_Rates` temu samemu użytkownikowi.
+
+3. **Prześlij adresy URL raportów** oraz dane użytkownika systemu integracji.
+
+</Steps>
+
+| Raport | Wymagany | Zawartość |
+|---|---|---|
+| Journal Lines | Tak | Jeden wiersz na zaksięgowaną pozycję dziennika. Monity: Company (firma pozycji, jako Reference ID) i Period (Reference ID okresu fiskalnego). Zawiera tagi robocze Region, Fund, Program i Project, partnera wewnątrzgrupowego (Intercompany affiliate), kwoty w walucie transakcji i walucie księgi oraz księgę |
+| Beginning Balances | Tak | Jeden wiersz na firmę, okres fiskalny i konto księgowe: saldo na początek okresu. Ładowane są tylko konta Asset, Liability i Equity |
+| Ledger Accounts | Tak | Konto, nazwa, typ, znacznik wewnątrzgrupowy, opcjonalnie kategoria i konto nadrzędne |
+| Cost Centers | Tak | Miejsce powstawania kosztów, nazwa i element nadrzędny |
+| Fiscal Periods | Tak | Jeden wiersz na firmę i okres fiskalny, także okresy korygujące, z datą początku, końca i statusem |
+| Headcount | Opcjonalny | Aktywni pracownicy na koniec każdego okresu, według miejsca powstawania kosztów, z ekwiwalentem pełnego etatu (FTE) |
+| Worktag Values | Opcjonalny | Jeden wiersz na wartość Region, Fund, Program i Project, z elementem nadrzędnym |
+| Customers | Opcjonalny | Klient, nazwa, element nadrzędny, kategoria, region i kraj |
+| Sales Items | Opcjonalny | Pozycja, nazwa, element nadrzędny, grupa i jednostka miary |
+| Sales Invoice Lines | Opcjonalny | Jeden wiersz na pozycję faktury sprzedaży, z ilością oraz kwotami brutto, rabatu, netto i kosztu |
+
+Pełna lista kolumn każdego raportu znajduje się w specyfikacji na karcie Foundation. Do danych zwracanych przez raporty stosuje się kilka reguł:
+
+- Ładowane są tylko pozycje dziennika o statusie Posted i tylko księga Actuals. Księgi Commitment i Obligation nie są ładowane.
+- Pusty Book_Code oznacza księgę podstawową. Pusta pozycja jest liczona w każdej księdze swojej firmy i okresu, a pozycja z wartością Book_Code należy wyłącznie do tej księgi.
+- Firma pozycji ma pierwszeństwo przed firmą dziennika.
+- Ledger_Account_Type_ID ma wartość Revenue, COGS, Opex, NonOperating, Asset, Liability lub Equity. Workday ma jeden typ Expense, który jest ładowany jako Opex. Aby oddzielić koszt sprzedanych towarów lub koszty nieoperacyjne, wydrukuj pole obliczane zwracające COGS lub NonOperating. Konto bez typu nie jest ładowane do rachunku zysków i strat.
+- Faktury o statusie Draft, In Progress, Canceled i Denied nie są ładowane.
+- Budżety są ładowane z plików. Adaptive Planning nie jest podłączone.
+
+## Co odesłać
+
+| Administrator przesyła | Wprowadzane w PlaidCloud jako |
+|---|---|
+| Host Workday | **Host Workday** |
+| Nazwę tenanta | **Tenant** |
+| Nazwę użytkownika systemu integracji | **Użytkownik systemu integracji** |
+| Adres URL każdego wymaganego raportu | **Journal Lines report URL**, **Beginning Balances report URL**, **Ledger Accounts report URL**, **Cost Centers report URL**, **Fiscal Periods report URL** |
+| Adres URL każdego zbudowanego raportu opcjonalnego | **Headcount report URL (optional)**, **Worktag Values report URL (optional)**, **Customers report URL (optional)**, **Sales Items report URL (optional)**, **Sales Invoice Lines report URL (optional)** |
+| Identyfikatory referencyjne firm, które PlaidCloud może odczytywać | Wybierane w sekcji **Companies**. Pozostaw puste, aby załadować wszystkie firmy |
+
+Użytkownik PlaidCloud sam wkleja **Hasło** użytkownika systemu integracji; jest to klucz tajny i nigdy nie jest wysyłane e-mailem.
+
+W sekcji **System settings** pole **Retained earnings account** wskazuje konto Equity, na które przenoszony jest początkowy rachunek zysków i strat, gdy nazwy kont tego nie określają. Jest opcjonalne.
+
+<Aside type="note">
+Jedyny typ Expense w Workday jest ładowany jako Opex, a sprawdzenie gotowości w Data Foundation to sygnalizuje. Jeśli konta kosztu sprzedanych towarów lub konta nieoperacyjne muszą być rozróżnione, użyj pola obliczanego opisanego powyżej.
+</Aside>
+
+## Sprawdzanie dostępu
+
+Po powrocie do PlaidCloud kliknij **Testuj połączenie**. Każdy zbiór danych jest oznaczony jako **Dostępne do odczytu**, **Brak uprawnienia** lub **Błąd**:
+
+| Zbiór danych | Pochodzi z |
+|---|---|
+| Jednostki | `Get_Workday_Companies` |
+| Plan kont | Raport Ledger Accounts |
+| Działy | Raport Cost Centers |
+| Kalendarz fiskalny | Raport Fiscal Periods |
+| Kursy walut | `Get_Currency_Conversion_Rates` |
+| Bilans próbny | Raport Beginning Balances |
+| Księga główna | Raport Journal Lines |
+| Klucze alokacji (opcjonalne) | Raport Headcount |
+| Wartości segmentów (opcjonalne) | Raport Worktag Values |
+| Klienci (opcjonalne) | Raport Customers |
+| Produkty (opcjonalne) | Raport Sales Items |
+| Pozycje sprzedaży (opcjonalne) | Raport Sales Invoice Lines |
+
+Gdy zbiór danych ma status **Brak uprawnienia**, test wskazuje nazwę raportu lub usługi sieci Web. Poproś administratora o udostępnienie jej użytkownikowi systemu integracji i przetestuj ponownie. Tenant bez raportów opcjonalnych nadal ładuje wszystko pozostałe.
+
+## Powiązane
+
+- [Data Foundation](/pl/guides/projects/data-foundation/)
+- [Połącz z Workday Financials](/pl/guides/connections/workday-financials/)

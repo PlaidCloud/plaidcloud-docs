@@ -1,0 +1,82 @@
+---
+title: Oracle-Fusion-Zugriff für Data Foundation
+description: Was ein Oracle-Fusion-Cloud-ERP-Administrator einrichtet, damit PlaidCloud Data Foundation Oracle Fusion direkt lesen kann – ein Integrationsbenutzer, eine OAuth-2.0-Anwendung und neun BI-Publisher-Berichte – und was zurückzusenden ist.
+sidebar:
+  label: Oracle-Fusion-Zugriff für Data Foundation
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/oracle-fusion-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/de/guides/projects/data-foundation/) führt die Daten aller ERP-Systeme und Instanzen, die Sie verbinden, in einem Common Finance Model zusammen, und Oracle Fusion Cloud ERP ist eines der ERP-Systeme, die es direkt liest. Die Oracle-Fusion-Verbindung nutzt OAuth-2.0-Client-Anmeldedaten, einen schreibgeschützten Integrationsbenutzer und eine kleine Gruppe von BI-Publisher-Berichten. Diese Seite richtet sich an den Oracle-Fusion-Administrator, der das einrichtet, und an den PlaidCloud-Benutzer, der ihn darum bittet.
+
+PlaidCloud liest Daten ausschließlich. Niemand sendet ein Kennwort oder ein Client-Secret per E-Mail.
+
+## Zugriffsanfrage senden
+
+Wählen Sie auf der Registerkarte **Foundation** des Projekts unter **Oracle-Fusion-Verbindung** die Option **Neue Verbindung erstellen**. Das Formular zeigt die vollständige Anfrage. Klicken Sie auf **Anfrage kopieren**, um sie in Ihre eigene Nachricht einzufügen, oder auf **Anfrage per E-Mail senden**, um sie in Ihrem E-Mail-Programm mit dem Betreff „Read-only Oracle Fusion Cloud ERP access for PlaidCloud (OAuth 2.0 client credentials)“ zu öffnen.
+
+## Was der Oracle-Fusion-Administrator einrichtet
+
+<Steps>
+
+1. **Erstellen Sie einen Integrationsbenutzer** und weisen Sie ihm eine Jobrolle zu, die für jedes Ledger, über das Sie berichten, Folgendes anzeigen darf:
+
+   - Hauptbuch: Ledger, Buchhaltungskalender und Periodenstatus, Journalstapel, Journale und Kontensalden (zum Beispiel „General Accountant“ mit Datenzugriff auf diese Ledger)
+   - Währungsumrechnungskurse (Tageskurse)
+   - Segmentbezeichnungen von Schlüssel-Flexfields, Wertesätze und ihre Kontenhierarchie (Bäume)
+   - Debitorenbuchhaltung: Rechnungen und ihre Verteilungen sowie Kundenkonten
+   - Lagerartikel
+   - Ausführungszugriff auf die BI-Publisher-Berichte aus Schritt 3 und den ERP Integration Service (ESS-Jobs)
+
+2. **Registrieren Sie eine vertrauliche Anwendung** in der Identitätsdomäne (IAM) mit dem Grant „Client Credentials“ und dem Bereich der Fusion-Applications-REST-API. Kopieren Sie deren Client-ID und Secret.
+
+3. **Stellen Sie neun BI-Publisher-Berichte bereit** unter `/Custom/PlaidCloud/DataFoundation`. Jeder läuft als ESS-Job mit dem Berichtsnamen als Jobdefinition und liefert eine CSV-Datei mit den in der Anfrage aufgeführten Spalten:
+
+   | Bericht | Was er liefert |
+   |---|---|
+   | `PlaidCloudKeyFlexLabels` | Eine Zeile je Segment jedes Hauptbuch-Kontenplans: seine Position, seine Bezeichnung und sein Wertesatz |
+   | `PlaidCloudSegmentValues` | Jeden Wert dieser Wertesätze, mit dem Typ des natürlichen Kontos und der Werthierarchie |
+   | `PlaidCloudCalendar` | Die Buchungsperioden jedes Ledgers, mit den Kurstypen des Ledgers für Periodendurchschnitt und Periodenende |
+   | `PlaidCloudCodeCombinations` | Die Codekombinationen und ihre Segmente |
+   | `PlaidCloudBalances` | Die Eröffnungssalden jedes Ledgers |
+   | `PlaidCloudJournalLines` | Die Journalzeilen, jeweils nach Ledger, Periode und Balancing-Segment-Wert gelesen |
+   | `PlaidCloudCustomers` | Die Kundenkonten und ihre Partynamen |
+   | `PlaidCloudItems` | Die Artikel der Master-Lagerorganisation |
+   | `PlaidCloudSalesLines` | Eine Zeile je Rechnungsposition der Debitorenbuchhaltung |
+
+   Die genauen Spalten jedes Berichts stehen im Anfragetext auf der Registerkarte **Foundation**. Verwenden Sie die Berichtsnamen genau wie angegeben.
+
+</Steps>
+
+## Was zurückzusenden ist
+
+| Der Administrator sendet | Eingabe in PlaidCloud als |
+|---|---|
+| Den Host Ihrer Fusion-Applications-URL, ohne `https://` | **Pod-Host** |
+| Die Token-URL der Identitätsdomäne | **Token-URL** |
+| Den Bereich der REST-API-Anwendung | **Bereich** |
+| Die Client-ID aus Schritt 2 | **Client-ID** |
+| Das Client-Secret aus Schritt 2 | **Client-Secret** |
+| Die Balancing-Segment-Werte, die PlaidCloud lesen darf | Unter **Balancing-Segment-Werte**, die Fusion nicht auflisten kann: Geben Sie unter **Name** einen Wert ein oder lassen Sie das Feld leer, um alle zu laden |
+
+Die abschließende Liste der Anfrage verlangt diese Werte gemeinsam. Geben Sie das Client-Secret über Ihren Kennwortmanager weiter, nicht per E-Mail. Das Team des PlaidCloud-Benutzers fügt es selbst in PlaidCloud ein.
+
+## Zugriff prüfen
+
+Geben Sie in PlaidCloud die Werte ein und klicken Sie auf **Verbindung testen**. Jedes Dataset wird als **Lesbar**, **Fehlende Berechtigung** oder **Fehler** angezeigt:
+
+| Dataset | Gelesen aus |
+|---|---|
+| Entitäten, Geschäftskalender, Kontenplan, Abteilungen | Den Ledgern sowie den Berichten zu Schlüssel-Flexfield-Bezeichnungen, Segmentwerten und Kalender |
+| Wechselkurse | Tagesumrechnungskursen |
+| Hauptbuch | Journalstapeln und dem Bericht zu den Journalzeilen |
+| Saldenliste | Den Berichten zu Salden und Codekombinationen |
+| Kunden, Produkte, Verkaufspositionen | Den Berichten zu Kunden, Artikeln und Verkaufspositionen (optional) |
+
+Fehlt ein Dataset, nennt der Test die Berechtigung, die hinzuzufügen ist. Bitten Sie den Administrator, sie der Jobrolle hinzuzufügen, und testen Sie erneut. Kunden, Produkte und Verkaufspositionen sind optional: Ein Fusion-Pod, der sie nicht enthält, lädt trotzdem alles andere.
+
+## Verwandte Themen
+
+- [Data Foundation](/de/guides/projects/data-foundation/)
+- [Mit Oracle Fusion verbinden](/de/guides/connections/oracle-fusion/)

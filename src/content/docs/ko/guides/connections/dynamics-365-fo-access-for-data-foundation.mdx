@@ -1,0 +1,78 @@
+---
+title: Data Foundation용 Dynamics 365 Finance and Operations 액세스
+description: PlaidCloud Data Foundation이 Dynamics 365 Finance and Operations를 직접 읽을 수 있도록 관리자가 설정하는 항목(Microsoft Entra ID 애플리케이션, 읽기 전용 역할, Fabric Link SQL 로그인)과 회신할 내용을 설명합니다.
+sidebar:
+  label: Data Foundation용 Dynamics 365 F&O 액세스
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/dynamics-365-fo-access-for-data-foundation.mdx
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+[Data Foundation](/ko/guides/projects/data-foundation/)은 연결한 모든 ERP 시스템과 인스턴스의 데이터를 하나의 Common Finance Model로 가져오며, Dynamics 365 Finance and Operations는 Data Foundation이 직접 읽는 ERP 중 하나입니다. 이 연결은 마스터 데이터에는 클라이언트 시크릿을 사용하는 Microsoft Entra ID 애플리케이션을, 일반 분개장에는 Fabric(Synapse) Link SQL 엔드포인트를 사용합니다. 이 페이지는 이를 설정하는 Dynamics 365 관리자와 관리자에게 요청하는 PlaidCloud 사용자를 위한 것입니다.
+
+PlaidCloud는 데이터를 읽기만 합니다. 클라이언트 시크릿이나 SQL 암호는 이메일로 보내지 마십시오.
+
+## 액세스 요청 보내기
+
+프로젝트의 **Foundation** 탭에서 **Dynamics 365 Finance and Operations 연결** 아래의 **새 연결 만들기**를 선택합니다. 양식에 전체 요청 내용이 표시됩니다. **요청 복사**를 클릭하면 직접 작성하는 메시지에 붙여 넣을 수 있고, **이메일 요청**을 클릭하면 "Read-only Dynamics 365 Finance and Operations access for PlaidCloud"라는 제목으로 메일 프로그램에서 열립니다.
+
+## Dynamics 365 관리자가 설정하는 항목
+
+<Steps>
+
+1. **PlaidCloud용 애플리케이션을 Microsoft Entra ID에 등록하고** 클라이언트 시크릿을 만듭니다. 애플리케이션(클라이언트) ID, 디렉터리(테넌트) ID, 시크릿을 기록해 둡니다.
+
+2. **애플리케이션을 사용자에게 매핑합니다.** Dynamics 365의 **System administration > Setup > Microsoft Entra ID applications**에서 클라이언트 ID를 추가하고, 로드할 모든 법인에 대해 다음 항목을 볼 수 있는 역할을 가진 사용자에게 매핑합니다.
+
+   - 총계정원장: 법인, 회계 달력, 주 계정, 재무 차원 값, 환율
+   - 매출채권: 고객 및 고객 송장 라인
+   - 제품 정보 관리: 릴리스된 제품
+   - 재고 관리: 현재 재고 및 재고 트랜잭션(선택 사항)
+   - 예산 편성: 예산 등록 항목(선택 사항)
+
+3. **일반 분개장용 Fabric Link를 설정합니다.** 일반 분개장 라인은 OData 서비스가 아니라 Fabric(Synapse) Link SQL 엔드포인트에서 읽습니다. 다음 테이블에 Fabric Link가 켜져 있는지 확인하고, 해당 엔드포인트에 PlaidCloud용 읽기 전용 SQL 로그인을 만듭니다.
+
+   - `generaljournalaccountentry`
+   - `generaljournalentry`
+   - `fiscalcalendarperiod`
+   - `dimensionattributelevelvalue`: 각 재무 차원 조합의 차원 값마다 한 행씩 있으며 해당 차원의 이름을 포함합니다
+
+</Steps>
+
+## 회신할 내용
+
+| 관리자가 보내는 내용 | PlaidCloud에 입력하는 위치 |
+|---|---|
+| 환경 URL, `https://<name>.operations.dynamics.com` | **환경 URL** |
+| 디렉터리(테넌트) ID | **Directory (tenant) ID** |
+| 애플리케이션(클라이언트) ID | **Application (client) ID** |
+| Fabric Link SQL 엔드포인트, 데이터베이스, 로그인 | PlaidCloud의 별도 SQL 연결이며, `fabric_connection_id` 시스템 설정에서 선택 |
+| 매출원가 계정의 주 계정 범주(PlaidCloud는 `COGS`로 가정함) | `cogs_categories` 시스템 설정 |
+| 영업 외 계정(이자, 법인세, 외환 손익, 기타 수익)의 주 계정 범주 | `non_operating_categories` 시스템 설정 |
+| 라인의 회사 간 거래 상대방을 지정하는 재무 차원(PlaidCloud는 `IntercompanyPartner`로 가정함) | `ic_partner_dimension` 시스템 설정 |
+| PlaidCloud가 읽을 수 있는 법인 | PlaidCloud의 **Legal entities**에서 선택 |
+
+클라이언트 시크릿과 SQL 로그인의 암호는 이메일로 보내지 않습니다. PlaidCloud 사용자의 팀이 **클라이언트 시크릿**을 PlaidCloud에 직접 붙여 넣으며, SQL 로그인은 SQL 연결에 저장됩니다. 연결 법인인 법인은 `consolidation_companies` 시스템 설정에 넣어, 해당 전기 내용이 한 회사의 활동으로 집계되지 않도록 합니다.
+
+## 액세스 확인
+
+PlaidCloud로 돌아가 값을 입력하고 **연결 테스트**를 클릭합니다. 각 데이터 세트는 **읽기 가능**, **권한 누락**, **오류** 중 하나로 표시됩니다.
+
+| 데이터 세트 | 필요한 권한 |
+|---|---|
+| 엔터티 | 총계정원장: 법인 보기 |
+| 회계 달력 | 총계정원장: 회계 달력 보기 |
+| 계정과목표 | 총계정원장: 주 계정 보기 |
+| 부서 | 총계정원장: 재무 차원 값 보기 |
+| 고객 | 매출채권: 고객 보기 |
+| 제품 | 제품 정보 관리: 릴리스된 제품 보기 |
+| 환율 | 총계정원장: 환율 보기 |
+| 시산표, 총계정원장 | 총계정원장 보기(Fabric Link를 통한 분개장) |
+| 판매 라인, 재고 잔액, 예산 | 선택 사항 |
+
+데이터 세트가 누락되면 테스트에서 추가해야 할 권한을 알려 줍니다. 관리자에게 역할에 추가해 달라고 요청한 후 다시 테스트하십시오. 판매 라인, 재고 잔액, 예산은 선택 사항이므로, 이를 보유하지 않은 환경도 나머지는 모두 로드됩니다.
+
+## 관련 문서
+
+- [Data Foundation](/ko/guides/projects/data-foundation/)
+- [Dynamics 365 Finance & Operations에 연결](/ko/guides/connections/dynamics-365-fo/)
