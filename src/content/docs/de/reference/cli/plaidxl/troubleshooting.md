@@ -87,7 +87,7 @@ Ein Speichern schreibt sofort und bricht selten ab. Es bricht ab, wenn:
 | Zeilen liegen außerhalb Ihres Zeilenzugriffs | Es wird nichts gespeichert. Entfernen Sie diese Zeilen und speichern Sie dann erneut. |
 | Das Blatt ist nicht mit einer Tabelle verknüpft | Rufen Sie die Tabelle zuerst auf das Blatt ab. Nur Tabellen, die in das aktive Blatt abgerufen wurden, werden unter **On this sheet** aufgelistet. |
 
-Um ein Speichern rückgängig zu machen, klicken Sie in der Meldung auf **Rückgängig** oder im Menüband auf **Undo last write**. Der Wiederherstellungspunkt wird 7 Tage lang aufbewahrt. Siehe [Eine Tabelle nach PlaidCloud speichern](/de/reference/cli/plaidxl/retrieve/#eine-tabelle-nach-plaidcloud-speichern).
+Um ein Speichern rückgängig zu machen, klicken Sie in der Meldung auf **Rückgängig** oder im Menüband auf **Undo last write**. Der Wiederherstellungspunkt wird 7 Tage lang aufbewahrt. Siehe [Eine Tabelle nach PlaidCloud speichern](/de/reference/cli/plaidxl/retrieve/#tabelle-in-plaidcloud-speichern).
 
 ## Verwandte Themen
 

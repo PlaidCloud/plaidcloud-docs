@@ -34,7 +34,7 @@ As pastas nas listas de projetos, tabelas e dimensões começam fechadas. Escrev
 
 ## Uma tabela aparece a vermelho
 
-A tabela tem mais linhas ou colunas do que uma folha de cálculo do Excel suporta, ou o PlaidCloud não consegue indicar o seu tamanho. Pode obtê-la, e as linhas que não cabem continuam noutras folhas, mas uma tabela dividida por várias folhas não pode ser guardada. Selecione **Avançado** para filtrar as linhas e desmarque as colunas de que não precisa, até caber. Consulte [Tabelas a vermelho](/pt-pt/reference/cli/plaidxl/retrieve/#tabelas-a-vermelho).
+A tabela tem mais linhas ou colunas do que uma folha de cálculo do Excel suporta, ou o PlaidCloud não consegue indicar o seu tamanho. Pode obtê-la, e as linhas que não cabem continuam noutras folhas, mas uma tabela dividida por várias folhas não pode ser guardada. Selecione **Avançado** para filtrar as linhas e desmarque as colunas de que não precisa, até caber. Consulte [Tabelas a vermelho](/pt-pt/reference/cli/plaidxl/retrieve/#tabelas-apresentadas-a-vermelho).
 
 ## Uma obtenção é lenta
 
