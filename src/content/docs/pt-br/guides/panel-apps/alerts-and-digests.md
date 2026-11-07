@@ -53,6 +53,8 @@ Um resumo é enviado uma vez por dia ou por semana, na primeira verificação ho
 
 Você pode ter até 10 resumos seus em um aplicativo e 20 no total entre aplicativos.
 
+Enquanto um membro está desativado, os alertas e resumos dele não fazem verificações nem envios. Eles voltam a funcionar se o membro for reativado.
+
 ## Canais
 
 | Send by | Para onde vai |

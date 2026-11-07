@@ -52,6 +52,8 @@ A digest goes out once per day or per week, in the first hourly check after the 
 
 You can have up to 10 of your own digests on one app and 20 in total across apps.
 
+While a member is deactivated, their alerts and digests don't check or send. They pick up again if the member is reactivated.
+
 ## Channels
 
 | Send by | Where it goes |

@@ -47,9 +47,9 @@ Das ist eine vollständige App – der Aufruf `.servable()` bestimmt, was PlaidC
 
 ## 2. Ihre App in einem PlaidCloud-Git-Repository ablegen
 
-Verwenden Sie das vorhandene Repository **`apps`** Ihres Workspace oder [erstellen Sie ein neues](/de/guides/git/repositories/#ein-repository-erstellen). Bringen Sie anschließend Ihren Code hinein.
+Verwenden Sie das vorhandene Repository **`apps`** Ihres Workspace oder [erstellen Sie ein neues](/de/guides/git/repositories/#repository-erstellen). Bringen Sie anschließend Ihren Code hinein.
 
-Da Sie sich über PlaidCloud anmelden, hat Ihr Git-Konto kein eigenes Passwort – [erzeugen Sie ein persönliches Zugriffstoken](/de/guides/git/repositories/#ein-persönliches-zugriffstoken-erzeugen) (**Ihr Avatar → Einstellungen → Applications**) mit der Berechtigung **write:repository** und verwenden Sie es als Passwort, wenn Git danach fragt. Zum Pushen in `apps` ist der Zugriff **Contributor** erforderlich; bitten Sie einen Workspace-Administrator, Sie zu **Git Contributors** hinzuzufügen, wenn der Reiter **Git** Sie als **Viewer** ausweist. Verwenden Sie die Kopieren-Schaltfläche neben der Clone-Adresse des Repositorys im Reiter **Git** und führen Sie dann aus:
+Da Sie sich über PlaidCloud anmelden, hat Ihr Git-Konto kein eigenes Passwort – [erzeugen Sie ein persönliches Zugriffstoken](/de/guides/git/repositories/#persönliches-zugriffstoken-erzeugen) (**Ihr Avatar → Einstellungen → Applications**) mit der Berechtigung **write:repository** und verwenden Sie es als Passwort, wenn Git danach fragt. Zum Pushen in `apps` ist der Zugriff **Contributor** erforderlich; bitten Sie einen Workspace-Administrator, Sie zu **Git Contributors** hinzuzufügen, wenn der Reiter **Git** Sie als **Viewer** ausweist. Verwenden Sie die Kopieren-Schaltfläche neben der Clone-Adresse des Repositorys im Reiter **Git** und führen Sie dann aus:
 
 ```bash
 git clone <clone URL>

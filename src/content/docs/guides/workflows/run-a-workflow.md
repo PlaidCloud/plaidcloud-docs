@@ -103,9 +103,9 @@ A run never stays **Running** after the work behind it has gone. If the server r
 
 ## Pause, Stop, and Resume
 
-While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace. Stop also stops the workflow's queued or running connector (Singer) syncs, so a sync doesn't keep running after the workflow has stopped.
+While a workflow is running you can **Pause** it, so that in-flight steps finish and new steps wait, or **Stop** it, which cancels the steps that were queued and any import or export jobs that are still running, along with the warehouse query an export was reading. Import and dimension steps that were still queued are cancelled cleanly, so they don't hold up later imports and dimension loads in the workspace. Stop also stops the workflow's queued or running connector (Singer) syncs, so a sync doesn't keep running after the workflow has stopped.
 
-A macro can be running in several places at once, called by other workflows or by a **Macro: Concurrent Run** step. Stopping the macro stops every running copy of it. A macro that's running only inside other workflows shows as **Running** in the workflow list, with **Stop** available, and opening it shows each step's status, start and end time from its latest run.
+A macro can be running in several places at once, called by other workflows or by a **Macro: Concurrent Run** step. Stopping the macro stops every running copy of it. Stopping one copy stops only that copy and what it started, and leaves the workflow that called it running, as does a **Macro Concurrent** step that gives up on a copy that stopped responding. A macro that's running only inside other workflows shows as **Running** in the workflow list, with **Stop** available, and opening it shows each step's status, start and end time from its latest run.
 
 **Resume** picks a paused, stopped, or failed run back up from where it left off instead of starting over. It is available whenever a workflow's last run ended in a paused, stopped, or error state.
 

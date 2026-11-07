@@ -53,6 +53,8 @@ Eine Zusammenfassung wird einmal pro Tag oder Woche versendet, bei der ersten st
 
 Sie können pro App bis zu 10 eigene Zusammenfassungen und insgesamt 20 über alle Apps hinweg haben.
 
+Solange ein Mitglied deaktiviert ist, werden seine Hinweise und Zusammenfassungen weder geprüft noch gesendet. Sie werden wieder aufgenommen, wenn das Mitglied reaktiviert wird.
+
 ## Kanäle
 
 | Senden per | Wohin es geht |

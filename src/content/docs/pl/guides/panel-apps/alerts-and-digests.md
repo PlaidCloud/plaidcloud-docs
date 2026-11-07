@@ -53,6 +53,8 @@ Podsumowanie jest wysyłane raz dziennie lub raz w tygodniu, podczas pierwszego 
 
 Do jednej aplikacji możesz mieć do 10 własnych podsumowań, a łącznie we wszystkich aplikacjach — 20.
 
+Gdy członek jest dezaktywowany, jego alerty i podsumowania nie są sprawdzane ani wysyłane. Wznawiają działanie, jeśli członek zostanie ponownie aktywowany.
+
 ## Kanały
 
 | Send by | Dokąd trafia |

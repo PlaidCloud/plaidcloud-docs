@@ -53,6 +53,8 @@ Un resumen se envía una vez al día o a la semana, en la primera comprobación 
 
 Puede tener hasta 10 resúmenes propios en una aplicación y 20 en total entre todas las aplicaciones.
 
+Mientras un miembro está desactivado, sus alertas y resúmenes no comprueban ni envían nada. Se reanudan si el miembro se reactiva.
+
 ## Canales
 
 | Send by | Adónde va |
