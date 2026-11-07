@@ -54,7 +54,7 @@ Os administradores da área de trabalho concedem acesso em **Identidade**, adici
 2. Para dar a todos os novos membros acesso de envio ao código das aplicações, adicione **Git Contributors** aos seus grupos predefinidos. **Git Administration** não pode ser um grupo predefinido.
 3. Para verificar o que um membro pode fazer, abra o membro e selecione o separador **Git**. Este mostra o nome de utilizador Git do membro, o respetivo nível e o grupo que o concede.
 
-Uma alteração aplica-se da próxima vez que o membro iniciar sessão no Git ou abrir o separador **Git**. O pessoal de suporte do PlaidCloud tem acesso de administrador automaticamente.
+Uma alteração aplica-se da próxima vez que o membro iniciar sessão no Git ou abrir o separador **Git**. Desativar ou remover um membro bloqueia a sua conta Git, incluindo os tokens e as chaves SSH, e reativá-lo desbloqueia-a. O pessoal de suporte do PlaidCloud tem acesso de administrador automaticamente.
 
 ## O que contém esta secção
 

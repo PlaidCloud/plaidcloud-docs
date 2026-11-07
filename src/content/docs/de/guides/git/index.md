@@ -54,7 +54,7 @@ Workspace-Administratoren gewähren Zugriff unter **Identität**, indem sie Mitg
 2. Damit jedes neue Mitglied Push-Zugriff auf App-Code erhält, fügen Sie **Git Contributors** zu Ihren Standardgruppen hinzu. **Git Administration** kann keine Standardgruppe sein.
 3. Um zu prüfen, was ein Mitglied tun kann, öffnen Sie das Mitglied und wählen Sie den Reiter **Git**. Er zeigt den Git-Benutzernamen des Mitglieds, seine Stufe und die Gruppe, die sie gewährt.
 
-Eine Änderung wirkt sich aus, sobald sich das Mitglied das nächste Mal bei Git anmeldet oder den Reiter **Git** öffnet. Mitarbeiter des PlaidCloud-Supports haben automatisch Administratorzugriff.
+Eine Änderung wirkt sich aus, sobald sich das Mitglied das nächste Mal bei Git anmeldet oder den Reiter **Git** öffnet. Das Deaktivieren oder Entfernen eines Mitglieds sperrt sein Git-Konto einschließlich seiner Tokens und SSH-Schlüssel, und eine Reaktivierung hebt die Sperre wieder auf. Mitarbeiter des PlaidCloud-Supports haben automatisch Administratorzugriff.
 
 ## Inhalt dieses Abschnitts
 
