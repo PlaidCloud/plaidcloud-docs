@@ -21,17 +21,15 @@ VS Code도 VS Code 안에서 노트북을 직접 실행할 수 있는 확장 기
 
 
 ## PlaidCloud 유틸리티 설치
-표준 OAuth 및 JSON-RPC 요청으로도 PlaidCloud에 접근할 수 있지만, 더 간편하게 접근할 수 있도록 미리 만들어진 라이브러리를 사용하시기를 권장합니다.  또한 PlaidCloud 유틸리티 라이브러리에는 Pandas 데이터프레임에서 쓸 수 있는 유용한 데이터 도우미가 포함되어 있습니다.
+표준 OAuth 및 REST API 요청으로 PlaidCloud에 액세스할 수 있지만, 액세스를 간단하게 하려면 미리 빌드된 라이브러리를 사용하는 것이 좋습니다. 또한 PlaidCloud Utilities 라이브러리에는 Pandas 데이터프레임에서 사용할 수 있는 편리한 데이터 도우미가 포함되어 있습니다.
 
 PlaidCloud 유틸리티를 설치하려면 다음 pip 설치를 수행하십시오.
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0" plaidcloud-utilities
 ```
 
-```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
-```
+`plaidcloud-rpc` 버전 1.25.0은 호출을 REST API로 보내는 첫 번째 버전입니다. 이전 버전은 JSON-RPC를 사용하며, JSON-RPC는 더 이상 사용되지 않고 향후 릴리스에서 제거됩니다.
 
 ## OAuth 토큰 얻기
 

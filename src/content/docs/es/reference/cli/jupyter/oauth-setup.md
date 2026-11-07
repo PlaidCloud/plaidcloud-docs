@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/oauth-setup.md
 ---
 
-PlaidCloud usa solicitudes JSON-RPC estándar y se puede utilizar con cualquier aplicación capaz de realizar esas solicitudes.  Las solicitudes están protegidas mediante tokens OAuth.
+PlaidCloud tiene una API REST que puede usar cualquier aplicación capaz de enviar solicitudes HTTP. Las solicitudes se protegen con tokens OAuth. JSON-RPC está obsoleto; consulte [JSON-RPC está obsoleto](/es/reference/cli/jupyter/command-line/#json-rpc-está-obsoleto).
 
 
 ## Obtención de un token OAuth
@@ -30,6 +30,17 @@ Copie este texto en un archivo plaid.conf ubicado en su sistema.  Colóquelo en 
 Cree un directorio un nivel por encima del directorio de su cuaderno o de donde piense usar la interacción por línea de comandos.  Asigne al directorio el nombre `.plaid`.
 
 Dentro del directorio `.plaid`, cree un archivo llamado `plaid.conf` y pegue en él el contenido que copió anteriormente.  Guarde el archivo y, con ello, podrá conectarse mediante las utilidades de PlaidCloud y los métodos rpc.
+
+
+## Sustituir el secreto de un sistema registrado
+
+Si el secreto de un sistema registrado puede haber quedado expuesto, sustitúyalo a través de la API REST, usando el ID de cliente de su configuración:
+
+```text
+POST /rest/v1/analyze/oauth/client/rotate-secret?clientid=<client id>
+```
+
+Solo el propietario del sistema registrado puede sustituir su secreto. La respuesta contiene el secreto nuevo, y el anterior deja de funcionar de inmediato, así que actualice todos los archivos `plaid.conf` que lo usen.
 
 
 ## Usos avanzados

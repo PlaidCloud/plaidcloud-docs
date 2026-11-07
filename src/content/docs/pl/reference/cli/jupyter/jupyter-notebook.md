@@ -21,17 +21,15 @@ VS Code udostępnia również rozszerzenie, które pozwala uruchamiać notebooki
 
 
 ## Instalacja narzędzi PlaidCloud Utilities
-Chociaż dostęp do PlaidCloud jest możliwy za pomocą standardowych żądań OAuth i JSON-RPC, zalecamy korzystanie z naszych gotowych bibliotek, które upraszczają dostęp.  Ponadto biblioteka PlaidCloud Utilities zawiera przydatne funkcje pomocnicze do pracy z ramkami danych Pandas.
+Chociaż do PlaidCloud można uzyskać dostęp za pomocą standardowych żądań OAuth i REST API, zalecamy korzystanie z naszych gotowych bibliotek, które upraszczają dostęp. Ponadto biblioteka PlaidCloud Utilities zawiera przydatne narzędzia do pracy z danymi w ramkach danych Pandas.
 
 Aby zainstalować PlaidCloud Utilities, wykonaj następujące instalacje pip:
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0" plaidcloud-utilities
 ```
 
-```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
-```
+Wersja 1.25.0 pakietu `plaidcloud-rpc` jest pierwszą, która wysyła wywołania do REST API. Wcześniejsze wersje korzystają z JSON-RPC, który jest przestarzały i zostanie usunięty w jednym z kolejnych wydań.
 
 ## Uzyskiwanie tokenu OAuth
 

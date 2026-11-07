@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/oauth-setup.md
 ---
 
-PlaidCloud는 표준 JSON-RPC 요청을 사용하므로, 해당 요청을 보낼 수 있는 모든 애플리케이션에서 사용할 수 있습니다.  요청은 OAuth 토큰으로 보호됩니다.
+PlaidCloud에는 HTTP 요청을 보낼 수 있는 모든 애플리케이션에서 사용할 수 있는 REST API가 있습니다. 요청은 OAuth 토큰으로 보호됩니다. JSON-RPC는 더 이상 사용되지 않습니다. [JSON-RPC는 더 이상 사용되지 않음](/ko/reference/cli/jupyter/command-line/#json-rpc는-더-이상-사용되지-않음)을 참조하십시오.
 
 
 ## OAuth 토큰 얻기
@@ -30,6 +30,17 @@ OAuth 토큰은 PlaidCloud 앱에서 생성합니다. 사용자에게 할당된 
 노트북 디렉터리보다 한 단계 위, 또는 명령줄을 사용할 위치보다 한 단계 위에 디렉터리를 만드십시오.  디렉터리 이름은 `.plaid`로 지정합니다.
 
 `.plaid` 디렉터리 안에 `plaid.conf` 파일을 만들고 위에서 복사한 내용을 붙여 넣으십시오.  파일을 저장하면 이제 PlaidCloud 유틸리티와 rpc 메서드를 사용하여 연결할 수 있습니다.
+
+
+## 등록된 시스템의 시크릿 교체
+
+등록된 시스템의 시크릿이 노출되었을 수 있는 경우, 해당 구성의 클라이언트 ID를 사용하여 REST API로 시크릿을 교체하십시오.
+
+```text
+POST /rest/v1/analyze/oauth/client/rotate-secret?clientid=<client id>
+```
+
+등록된 시스템의 소유자만 해당 시크릿을 교체할 수 있습니다. 응답에는 새 시크릿이 포함되며 이전 시크릿은 즉시 작동하지 않으므로, 이를 사용하는 모든 `plaid.conf` 파일을 업데이트하십시오.
 
 
 ## 고급 사용

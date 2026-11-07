@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/jupyter/oauth-setup.md
 ---
 
-PlaidCloud utilise des requêtes JSON-RPC standard et peut être utilisé avec toute application capable d'émettre ces requêtes.  Les requêtes sont sécurisées par des jetons OAuth.
+PlaidCloud dispose d'une API REST utilisable par toute application capable d'envoyer des requêtes HTTP. Les requêtes sont sécurisées par des jetons OAuth. JSON-RPC est obsolète ; consultez [JSON-RPC est obsolète](/fr/reference/cli/jupyter/command-line/#json-rpc-est-obsolète).
 
 
 ## Obtenir un jeton OAuth
@@ -30,6 +30,17 @@ Copiez ce texte dans un fichier plaid.conf situé sur votre système.  Placez-le
 Créez un répertoire un niveau au-dessus du répertoire de votre notebook, ou de l'endroit où vous prévoyez d'utiliser la ligne de commande.  Nommez ce répertoire `.plaid`.
 
 Dans le répertoire `.plaid`, créez un fichier nommé `plaid.conf` et collez-y le contenu copié précédemment.  Enregistrez le fichier : vous pourrez alors vous connecter à l'aide des utilitaires PlaidCloud et des méthodes RPC.
+
+
+## Remplacer le secret d'un système enregistré
+
+Si le secret d'un système enregistré a pu être exposé, remplacez-le via l'API REST, en utilisant l'ID client figurant dans sa configuration :
+
+```text
+POST /rest/v1/analyze/oauth/client/rotate-secret?clientid=<client id>
+```
+
+Seul le propriétaire du système enregistré peut remplacer son secret. La réponse contient le nouveau secret, et l'ancien cesse immédiatement de fonctionner : mettez donc à jour chaque fichier `plaid.conf` qui l'utilise.
 
 
 ## Utilisations avancées

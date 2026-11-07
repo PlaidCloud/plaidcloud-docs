@@ -21,17 +21,15 @@ O VS Code também disponibiliza uma extensão que permite executar blocos de not
 
 
 ## Instalar os utilitários do PlaidCloud
-Embora seja possível aceder ao PlaidCloud com pedidos OAuth e JSON-RPC padrão, recomenda-se a utilização das nossas bibliotecas pré-construídas para um acesso simplificado.  Além disso, a biblioteca de utilitários do PlaidCloud inclui auxiliares de dados práticos para utilizar com DataFrames do Pandas.
+Embora seja possível aceder ao PlaidCloud através de pedidos OAuth e da API REST padrão, recomendamos que utilize as nossas bibliotecas pré-construídas para simplificar o acesso. Além disso, a biblioteca PlaidCloud Utilities inclui utilitários de dados práticos para trabalhar com dataframes do Pandas.
 
 Para instalar os utilitários do PlaidCloud, execute as seguintes instalações com pip:
 
 ```bash
-pip install plaidcloud-rpc@git+https://github.com/PlaidCloud/plaid-rpc.git@v1.4.0#egg=plaidcloud-rpc
+pip install "plaidcloud-rpc>=1.25.0" plaidcloud-utilities
 ```
 
-```bash
-pip install plaidcloud-utilities@git+https://github.com/PlaidCloud/plaid-utilities.git@v1.5.2#egg=plaidcloud-utilities
-```
+A versão 1.25.0 do `plaidcloud-rpc` é a primeira a enviar as suas chamadas para a API REST. As versões anteriores utilizam o JSON-RPC, que está obsoleto e será removido numa versão futura.
 
 ## Obter um token OAuth
 
