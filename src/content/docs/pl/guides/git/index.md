@@ -54,7 +54,7 @@ Administratorzy obszaru roboczego przyznają dostęp w **Tożsamość**, dodają
 2. Aby każdy nowy członek miał dostęp do wypychania kodu aplikacji, dodaj **Git Contributors** do grup domyślnych. **Git Administration** nie może być grupą domyślną.
 3. Aby sprawdzić, co może zrobić członek, otwórz go i wybierz kartę **Git**. Pokazuje ona nazwę użytkownika Git członka, jego poziom i grupę, która go przyznaje.
 
-Zmiana obowiązuje od następnego logowania członka do Git lub otwarcia karty **Git**. Konto Git członka podąża za jego członkostwem w PlaidCloud. Dezaktywacja lub usunięcie członka blokuje jego konto Git, w tym tokeny i klucze SSH, w ciągu około godziny, a ponowna aktywacja je odblokowuje. Nic nie jest usuwane: repozytoria i historia pozostają. Logowanie do Git za pomocą logowania jednokrotnego zawsze otwiera własne konto członka; nigdy nie jest ono łączone z innym kontem o tej samej nazwie lub tym samym adresie e-mail. Pracownicy pomocy technicznej PlaidCloud automatycznie mają dostęp administratora.
+Zmiana obowiązuje od następnego logowania członka do Git lub otwarcia karty **Git**. Konto Git członka podąża za jego członkostwem w PlaidCloud. Dezaktywacja lub usunięcie członka blokuje jego konto Git, w tym tokeny i klucze SSH, w ciągu około godziny, a ponowna aktywacja je odblokowuje. Nic nie jest usuwane: repozytoria i historia pozostają. Logowanie do Git za pomocą logowania jednokrotnego otwiera własne konto członka. Pracownicy pomocy technicznej PlaidCloud automatycznie mają dostęp administratora.
 
 ## Zawartość tej sekcji
 

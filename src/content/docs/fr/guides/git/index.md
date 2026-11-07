@@ -54,7 +54,7 @@ Les administrateurs de l'espace de travail accordent l'accès dans **Identité**
 2. Pour donner à chaque nouveau membre un accès en écriture au code d'application, ajoutez **Git Contributors** à vos groupes par défaut. **Git Administration** ne peut pas être un groupe par défaut.
 3. Pour vérifier ce qu'un membre peut faire, ouvrez le membre et sélectionnez l'onglet **Git**. Il affiche le nom d'utilisateur Git du membre, son niveau et le groupe qui l'accorde.
 
-Une modification s'applique la prochaine fois que le membre se connecte à Git ou ouvre l'onglet **Git**. Le compte Git d'un membre suit son appartenance à PlaidCloud. Désactiver ou supprimer un membre bloque son compte Git, y compris ses jetons et ses clés SSH, en une heure environ, et le réactiver le débloque. Rien n'est supprimé : ses dépôts et son historique sont conservés. Se connecter à Git par authentification unique ouvre toujours le compte propre du membre ; il n'est jamais fusionné avec un autre compte qui porte le même nom ou la même adresse e-mail. Le personnel du support PlaidCloud dispose automatiquement d'un accès administrateur.
+Une modification s'applique la prochaine fois que le membre se connecte à Git ou ouvre l'onglet **Git**. Le compte Git d'un membre suit son appartenance à PlaidCloud. Désactiver ou supprimer un membre bloque son compte Git, y compris ses jetons et ses clés SSH, en une heure environ, et le réactiver le débloque. Rien n'est supprimé : ses dépôts et son historique sont conservés. Se connecter à Git par authentification unique ouvre le compte propre du membre. Le personnel du support PlaidCloud dispose automatiquement d'un accès administrateur.
 
 ## Contenu de cette section
 

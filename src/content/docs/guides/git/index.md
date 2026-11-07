@@ -53,7 +53,7 @@ Workspace administrators grant access in **Identity** by adding members to a sec
 2. To give every new member push access to app code, add **Git Contributors** to your default groups. **Git Administration** can't be a default group.
 3. To check what a member can do, open the member and select the **Git** tab. It shows the member's Git username, their level and which group grants it.
 
-A change applies the next time the member signs in to Git or opens the **Git** tab. A member's Git account follows their PlaidCloud membership. Deactivating or removing a member blocks their Git account, including their tokens and SSH keys, within about an hour, and reactivating them unblocks it. Nothing is deleted: their repositories and history stay. Signing in to Git with single sign-on always opens the member's own account; it is never joined to another account that shares a name or email. PlaidCloud support staff have Admin access automatically.
+A change applies the next time the member signs in to Git or opens the **Git** tab. A member's Git account follows their PlaidCloud membership. Deactivating or removing a member blocks their Git account, including their tokens and SSH keys, within about an hour, and reactivating them unblocks it. Nothing is deleted: their repositories and history stay. Signing in to Git with single sign-on opens the member's own account. PlaidCloud support staff have Admin access automatically.
 
 ## What's in This Section
 

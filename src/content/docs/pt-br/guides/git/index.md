@@ -54,7 +54,7 @@ Os administradores do espaço de trabalho concedem acesso em **Identidade**, adi
 2. Para dar a todo novo membro acesso de push ao código de aplicativos, adicione **Git Contributors** aos seus grupos padrão. **Git Administration** não pode ser um grupo padrão.
 3. Para verificar o que um membro pode fazer, abra o membro e selecione a guia **Git**. Ela mostra o nome de usuário do Git do membro, o nível dele e o grupo que o concede.
 
-Uma alteração se aplica na próxima vez que o membro entrar no Git ou abrir a guia **Git**. A conta Git de um membro acompanha a participação dele no PlaidCloud. Desativar ou remover um membro bloqueia a conta Git dele, incluindo seus tokens e chaves SSH, em cerca de uma hora, e reativá-lo a desbloqueia. Nada é excluído: os repositórios e o histórico dele permanecem. Entrar no Git com logon único sempre abre a conta do próprio membro; ela nunca é unida a outra conta que tenha o mesmo nome ou e-mail. A equipe de suporte do PlaidCloud tem acesso de administrador automaticamente.
+Uma alteração se aplica na próxima vez que o membro entrar no Git ou abrir a guia **Git**. A conta Git de um membro acompanha a participação dele no PlaidCloud. Desativar ou remover um membro bloqueia a conta Git dele, incluindo seus tokens e chaves SSH, em cerca de uma hora, e reativá-lo a desbloqueia. Nada é excluído: os repositórios e o histórico dele permanecem. Entrar no Git com logon único abre a conta do próprio membro. A equipe de suporte do PlaidCloud tem acesso de administrador automaticamente.
 
 ## O que há nesta seção
 
