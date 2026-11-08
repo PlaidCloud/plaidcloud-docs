@@ -49,6 +49,7 @@ O Excel é mais lento com tabelas largas. Desmarque as caixas das colunas de que
 | Um erro de uma função `PLAIDXL` | Verifique se tem sessão iniciada e se o projeto certo está selecionado, e depois confirme no PlaidCloud o nome de cada tabela, coluna, dimensão e nó — os nomes têm de coincidir exatamente. |
 | `CELL` indica que uma coluna de filtro não foi encontrada | O primeiro argumento de `DIMENSION_REPR` é uma coluna da tabela, não uma dimensão. Utilize exatamente o nome da coluna da tabela. Consulte [Valores](/pt-pt/reference/cli/plaidxl/functions/#valores). |
 | `#VALUE!` de `METRIC` ou `METRIC_BREAKDOWN` | Passe o rato sobre a célula para ler o motivo. Consulte [Erros de indicadores](/pt-pt/reference/cli/plaidxl/functions/#erros-de-indicadores). |
+| `#VALUE!` de um indicador: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | É necessário atualizar a área de trabalho para que um indicador possa combinar um membro de uma hierarquia alternativa com outros membros. Contacte o administrador. As outras células do mesmo recálculo continuam a responder. |
 | `#VALUE!` de `CELL` ou `CELLS` | Passe o rato sobre a célula para ler o motivo indicado pelo PlaidCloud, como uma coluna desconhecida, um nó que não existe ou não tem membros, ou um problema no cálculo do valor. Confirme os nomes no PlaidCloud. |
 | `CELL` devolve um total inesperado | Um nó só é agregado numa coluna associada à sua dimensão; em qualquer outra coluna tem de coincidir exatamente com um valor. Verifique a coluna e o nó de cada filtro. |
 | Os valores não mudam depois de os dados ou o projeto mudarem | Clique em **Recalculate PlaidXL formulas** no menu **Atualizar** do friso. |
@@ -87,7 +88,7 @@ Uma gravação escreve de imediato e raramente pára. Pára quando:
 | Há linhas fora do seu acesso a linhas | Nada é guardado. Remova essas linhas e guarde novamente. |
 | A folha não está associada a uma tabela | Obtenha primeiro a tabela para a folha. Só as tabelas obtidas para a folha ativa aparecem em **On this sheet**. |
 
-Para anular uma gravação, clique em **Anular** na mensagem ou em **Undo last write** no friso. O ponto de restauro é mantido durante 7 dias. Consulte [Guardar uma tabela no PlaidCloud](/pt-pt/reference/cli/plaidxl/retrieve/#guardar-uma-tabela-no-plaidcloud).
+Para anular uma gravação, clique em **Anular** na mensagem ou em **Undo last write** no friso. Cada gravação mantém o seu próprio ponto de restauro durante 7 dias, pelo que pode anular qualquer gravação até 7 dias depois de a ter feito. Consulte [Guardar uma tabela no PlaidCloud](/pt-pt/reference/cli/plaidxl/retrieve/#guardar-uma-tabela-no-plaidcloud).
 
 ## Ver também
 

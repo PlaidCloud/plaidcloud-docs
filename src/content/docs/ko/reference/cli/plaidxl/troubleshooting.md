@@ -49,6 +49,7 @@ Excel은 너비가 넓은 테이블에서 가장 느립니다. 필요하지 않�
 | `PLAIDXL` 함수의 오류 | 로그인되어 있고 올바른 프로젝트가 선택되었는지 확인한 다음, 모든 테이블, 열, 차원, 노드 이름을 PlaidCloud와 비교하십시오. 이름은 정확히 일치해야 합니다. |
 | `CELL`이 필터 열을 찾을 수 없다고 보고함 | `DIMENSION_REPR`의 첫 번째 인수는 차원이 아니라 테이블의 열입니다. 테이블의 열 이름을 정확히 사용하십시오. [값](/ko/reference/cli/plaidxl/functions/#값)을 참조하십시오. |
 | `METRIC` 또는 `METRIC_BREAKDOWN`의 `#VALUE!` | 셀 위에 마우스를 올려 이유를 확인하십시오. [지표 오류](/ko/reference/cli/plaidxl/functions/#지표-오류)를 참조하십시오. |
+| 지표의 `#VALUE!`: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | 지표가 대체 계층의 멤버를 다른 멤버와 함께 사용하려면 워크스페이스를 업데이트해야 합니다. 관리자에게 문의하십시오. 같은 재계산의 다른 셀은 계속 응답합니다. |
 | `CELL` 또는 `CELLS`의 `#VALUE!` | 셀 위에 마우스를 올려 PlaidCloud가 제공한 이유를 확인하십시오. 알 수 없는 열, 존재하지 않거나 멤버가 없는 노드, 값 계산 문제 등이 원인일 수 있습니다. 이름을 PlaidCloud와 비교하십시오. |
 | `CELL`이 예상과 다른 합계를 반환함 | 노드는 차원에 연결된 열에서만 롤업되며, 다른 열에서는 값과 정확히 일치해야 합니다. 각 필터의 열과 노드를 확인하십시오. |
 | 데이터나 프로젝트가 바뀐 후에도 값이 바뀌지 않음 | 리본의 **새로 고침** 메뉴에서 **Recalculate PlaidXL formulas**를 클릭하십시오. |
@@ -87,7 +88,7 @@ PlaidXL 함수는 워크북에 연결된 프로젝트에서 읽습니다. 해당
 | 행이 행 액세스 범위 밖에 있음 | 아무것도 저장되지 않습니다. 해당 행을 제거한 다음 다시 저장하십시오. |
 | 시트가 테이블에 연결되어 있지 않음 | 먼저 시트로 테이블을 가져오십시오. 활성 시트로 가져온 테이블만 **On this sheet** 아래에 나열됩니다. |
 
-저장을 취소하려면 메시지의 **실행 취소** 또는 리본의 **Undo last write**를 클릭하십시오. 복원 지점은 7일 동안 보관됩니다. [테이블을 PlaidCloud에 저장](/ko/reference/cli/plaidxl/retrieve/#테이블을-plaidcloud에-저장)을 참조하십시오.
+저장을 취소하려면 메시지의 **실행 취소** 또는 리본의 **Undo last write**를 클릭하십시오. 각 저장은 자체 복원 지점을 7일 동안 보관하므로, 어떤 저장이든 저장 후 최대 7일 동안 실행 취소할 수 있습니다. [테이블을 PlaidCloud에 저장](/ko/reference/cli/plaidxl/retrieve/#테이블을-plaidcloud에-저장)을 참조하십시오.
 
 ## 관련 항목
 

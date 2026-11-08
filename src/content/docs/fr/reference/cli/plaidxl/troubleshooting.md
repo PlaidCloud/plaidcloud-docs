@@ -49,6 +49,7 @@ Excel est le plus lent avec les tables larges. Décochez les colonnes dont vous 
 | Une erreur provenant d'une fonction `PLAIDXL` | Vérifiez que vous êtes connecté et que le bon projet est sélectionné, puis vérifiez chaque nom de table, de colonne, de dimension et de nœud dans PlaidCloud — les noms doivent correspondre exactement. |
 | `CELL` signale qu'une colonne de filtre est introuvable | Le premier argument de `DIMENSION_REPR` est une colonne de la table, pas une dimension. Utilisez exactement le nom de la colonne de la table. Consultez [Valeurs](/fr/reference/cli/plaidxl/functions/#valeurs). |
 | `#VALUE!` provenant de `METRIC` ou `METRIC_BREAKDOWN` | Survolez la cellule pour lire la raison. Consultez [Erreurs de métrique](/fr/reference/cli/plaidxl/functions/#erreurs-de-métrique). |
+| `#VALUE!` provenant d'une métrique : **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | L'espace de travail doit être mis à jour avant qu'une métrique puisse combiner un membre d'une hiérarchie alternative avec d'autres membres. Demandez à votre administrateur. Les autres cellules du même recalcul répondent quand même. |
 | `#VALUE!` provenant de `CELL` ou `CELLS` | Survolez la cellule pour lire la raison indiquée par PlaidCloud, par exemple une colonne inconnue, un nœud qui n'existe pas ou n'a pas de membres, ou un problème de calcul de la valeur. Vérifiez les noms dans PlaidCloud. |
 | `CELL` renvoie un total inattendu | Un nœud ne se consolide que sur une colonne liée à sa dimension ; sur toute autre colonne, il doit correspondre exactement à une valeur. Vérifiez la colonne et le nœud de chaque filtre. |
 | Les valeurs ne changent pas après une modification des données ou du projet | Cliquez sur **Recalculate PlaidXL formulas** dans le menu **Actualiser** du ruban. |
@@ -87,7 +88,7 @@ Un enregistrement écrit immédiatement et s'interrompt rarement. Il le fait dan
 | Des lignes sont en dehors de votre accès aux lignes | Rien n'est enregistré. Supprimez ces lignes, puis enregistrez de nouveau. |
 | La feuille n'est liée à aucune table | Récupérez d'abord la table dans la feuille. Seules les tables récupérées dans la feuille active sont répertoriées sous **On this sheet**. |
 
-Pour annuler un enregistrement, cliquez sur **Défaire** dans le message ou sur **Undo last write** sur le ruban. Le point de restauration est conservé pendant 7 jours. Consultez [Enregistrer une table dans PlaidCloud](/fr/reference/cli/plaidxl/retrieve/#enregistrer-une-table-dans-plaidcloud).
+Pour annuler un enregistrement, cliquez sur **Défaire** dans le message ou sur **Undo last write** sur le ruban. Chaque enregistrement conserve son propre point de restauration pendant 7 jours, vous pouvez donc annuler n'importe quel enregistrement jusqu'à 7 jours après l'avoir effectué. Consultez [Enregistrer une table dans PlaidCloud](/fr/reference/cli/plaidxl/retrieve/#enregistrer-une-table-dans-plaidcloud).
 
 ## Voir aussi
 
