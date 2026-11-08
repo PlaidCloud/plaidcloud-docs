@@ -49,6 +49,7 @@ Excel es más lento con las tablas anchas. Desactive las casillas de las columna
 | Un error de una función `PLAIDXL` | Compruebe que ha iniciado sesión y que está seleccionado el proyecto correcto, y después compruebe con PlaidCloud todos los nombres de tablas, columnas, dimensiones y nodos: los nombres deben coincidir exactamente. |
 | `CELL` indica que no se encuentra una columna de filtro | El primer argumento de `DIMENSION_REPR` es una columna de la tabla, no una dimensión. Use exactamente el nombre de la columna de la tabla. Consulte [Valores](/es/reference/cli/plaidxl/functions/#valores). |
 | `#VALUE!` de `METRIC` o `METRIC_BREAKDOWN` | Pase el puntero sobre la celda para leer el motivo. Consulte [Errores de métricas](/es/reference/cli/plaidxl/functions/#errores-de-métricas). |
+| `#VALUE!` de una métrica: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | El espacio de trabajo debe actualizarse para que una métrica pueda combinar un miembro de una jerarquía alternativa con otros miembros. Consulte a su administrador. Las demás celdas del mismo recálculo siguen respondiendo. |
 | `#VALUE!` de `CELL` o `CELLS` | Pase el puntero sobre la celda para leer el motivo que dio PlaidCloud, como una columna desconocida, un nodo que no existe o no tiene miembros, o un problema al calcular el valor. Compruebe los nombres con PlaidCloud. |
 | `CELL` devuelve un total inesperado | Un nodo se acumula solo en una columna vinculada a su dimensión; en cualquier otra columna debe coincidir exactamente con un valor. Compruebe la columna y el nodo de cada filtro. |
 | Los valores no cambian después de que cambien los datos o el proyecto | Haga clic en **Recalculate PlaidXL formulas** en el menú **Actualizar** de la cinta de opciones. |
@@ -87,7 +88,7 @@ Un guardado escribe de inmediato y rara vez se detiene. Se detiene cuando:
 | Hay filas fuera de su acceso a filas | No se guarda nada. Quite esas filas y después guarde de nuevo. |
 | La hoja no está vinculada a una tabla | Primero recupere la tabla en la hoja. Solo las tablas recuperadas en la hoja activa aparecen en **On this sheet**. |
 
-Para deshacer un guardado, haga clic en **Deshacer** en el mensaje o en **Undo last write** en la cinta de opciones. El punto de restauración se conserva durante 7 días. Consulte [Guardar una tabla en PlaidCloud](/es/reference/cli/plaidxl/retrieve/#guardar-una-tabla-en-plaidcloud).
+Para deshacer un guardado, haga clic en **Deshacer** en el mensaje o en **Undo last write** en la cinta de opciones. Cada guardado conserva su propio punto de restauración durante 7 días, así que puede deshacer cualquier guardado hasta 7 días después de haberlo hecho. Consulte [Guardar una tabla en PlaidCloud](/es/reference/cli/plaidxl/retrieve/#guardar-una-tabla-en-plaidcloud).
 
 ## Contenido relacionado
 

@@ -48,6 +48,7 @@ Excel is slowest with wide tables. Clear the check boxes of columns you don't ne
 | An error from a `PLAIDXL` function | Check that you're signed in and the right project is selected, then check every table, column, dimension and node name against PlaidCloud — names must match exactly. |
 | `CELL` reports that a filter column isn't found | The first argument of `DIMENSION_REPR` is a column of the table, not a dimension. Use the table's column name exactly. See [Values](/reference/cli/plaidxl/functions/#values). |
 | `#VALUE!` from `METRIC` or `METRIC_BREAKDOWN` | Hover over the cell to read the reason. See [Metric Errors](/reference/cli/plaidxl/functions/#metric-errors). |
+| `#VALUE!` from a metric: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | The workspace needs updating before a metric can mix an alternate-hierarchy member with other members. Ask your administrator. Other cells in the same recalculation still answer. |
 | `#VALUE!` from `CELL` or `CELLS` | Hover over the cell to read the reason PlaidCloud gave, such as an unknown column, a node that doesn't exist or has no members, or a problem computing the value. Check the names against PlaidCloud. |
 | `CELL` returns an unexpected total | A node rolls up only on a column linked to its dimension; on any other column it must match a value exactly. Check each filter's column and node. |
 | Values don't change after the data or project changes | Click **Recalculate PlaidXL formulas** in the ribbon's **Refresh** menu. |
@@ -86,7 +87,7 @@ A save writes straight away and rarely stops. It does when:
 | Rows are outside your row access | Nothing is saved. Remove those rows, then save again. |
 | The sheet isn't linked to a table | Retrieve the table to the sheet first. Only tables retrieved into the active sheet are listed under **On this sheet**. |
 
-To undo a save, click **Undo** in the message or **Undo last write** on the ribbon. The restore point is kept for 7 days. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).
+To undo a save, click **Undo** in the message or **Undo last write** on the ribbon. Each save keeps its own restore point for 7 days, so you can undo any save for up to 7 days after you made it. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).
 
 ## Related
 

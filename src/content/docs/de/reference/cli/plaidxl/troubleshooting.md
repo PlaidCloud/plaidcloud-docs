@@ -49,6 +49,7 @@ Excel ist bei breiten Tabellen am langsamsten. Deaktivieren Sie die Kontrollkäs
 | Ein Fehler von einer `PLAIDXL`-Funktion | Prüfen Sie, ob Sie angemeldet und das richtige Projekt ausgewählt ist, und prüfen Sie dann alle Namen von Tabellen, Spalten, Dimensionen und Knoten anhand von PlaidCloud — die Namen müssen exakt übereinstimmen. |
 | `CELL` meldet, dass eine Filterspalte nicht gefunden wurde | Das erste Argument von `DIMENSION_REPR` ist eine Spalte der Tabelle, keine Dimension. Verwenden Sie den Spaltennamen der Tabelle exakt. Siehe [Werte](/de/reference/cli/plaidxl/functions/#werte). |
 | `#VALUE!` von `METRIC` oder `METRIC_BREAKDOWN` | Zeigen Sie auf die Zelle, um den Grund zu lesen. Siehe [Kennzahlfehler](/de/reference/cli/plaidxl/functions/#kennzahlfehler). |
+| `#VALUE!` von einer Kennzahl: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | Der Workspace muss aktualisiert werden, bevor eine Kennzahl ein Mitglied einer Alternativhierarchie mit anderen Mitgliedern kombinieren kann. Wenden Sie sich an Ihren Administrator. Andere Zellen in derselben Neuberechnung liefern weiterhin Ergebnisse. |
 | `#VALUE!` von `CELL` oder `CELLS` | Zeigen Sie auf die Zelle, um den von PlaidCloud genannten Grund zu lesen, etwa eine unbekannte Spalte, ein Knoten, der nicht existiert oder keine Mitglieder hat, oder ein Problem bei der Berechnung des Werts. Prüfen Sie die Namen anhand von PlaidCloud. |
 | `CELL` gibt eine unerwartete Gesamtsumme zurück | Ein Knoten wird nur bei einer Spalte aggregiert, die mit seiner Dimension verknüpft ist; bei jeder anderen Spalte muss er exakt mit einem Wert übereinstimmen. Prüfen Sie Spalte und Knoten jedes Filters. |
 | Werte ändern sich nicht, nachdem sich die Daten oder das Projekt geändert haben | Klicken Sie im Menü **Aktualisieren** des Menübands auf **Recalculate PlaidXL formulas**. |
@@ -87,7 +88,7 @@ Ein Speichern schreibt sofort und bricht selten ab. Es bricht ab, wenn:
 | Zeilen liegen außerhalb Ihres Zeilenzugriffs | Es wird nichts gespeichert. Entfernen Sie diese Zeilen und speichern Sie dann erneut. |
 | Das Blatt ist nicht mit einer Tabelle verknüpft | Rufen Sie die Tabelle zuerst auf das Blatt ab. Nur Tabellen, die in das aktive Blatt abgerufen wurden, werden unter **On this sheet** aufgelistet. |
 
-Um ein Speichern rückgängig zu machen, klicken Sie in der Meldung auf **Rückgängig** oder im Menüband auf **Undo last write**. Der Wiederherstellungspunkt wird 7 Tage lang aufbewahrt. Siehe [Eine Tabelle nach PlaidCloud speichern](/de/reference/cli/plaidxl/retrieve/#tabelle-in-plaidcloud-speichern).
+Um ein Speichern rückgängig zu machen, klicken Sie in der Meldung auf **Rückgängig** oder im Menüband auf **Undo last write**. Jedes Speichern behält seinen eigenen Wiederherstellungspunkt 7 Tage lang, sodass Sie jedes Speichern bis zu 7 Tage nach seiner Ausführung rückgängig machen können. Siehe [Eine Tabelle nach PlaidCloud speichern](/de/reference/cli/plaidxl/retrieve/#tabelle-in-plaidcloud-speichern).
 
 ## Verwandte Themen
 

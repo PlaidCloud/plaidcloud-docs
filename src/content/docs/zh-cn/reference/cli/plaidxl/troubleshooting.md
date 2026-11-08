@@ -49,6 +49,7 @@ Excel 处理宽表时最慢。请取消勾选不需要的列，并使用**高级
 | `PLAIDXL` 函数返回的错误 | 确认您已登录并选择了正确的项目，然后对照 PlaidCloud 检查每个表、列、维度和节点名称，名称必须完全一致。 |
 | `CELL` 报告找不到筛选列 | `DIMENSION_REPR` 的第一个参数是表的列，而不是维度。请使用表的列名，且必须完全一致。请参阅[值](/zh-cn/reference/cli/plaidxl/functions/#值)。 |
 | `METRIC` 或 `METRIC_BREAKDOWN` 返回 `#VALUE!` | 将鼠标悬停在单元格上以查看原因。请参阅[指标错误](/zh-cn/reference/cli/plaidxl/functions/#指标错误)。 |
+| 指标返回 `#VALUE!`：**此 PlaidCloud 工作区暂时无法将备用层次结构与其他成员组合使用。请联系管理员更新工作区。** | 工作区需要更新后，指标才能将备用层次结构的成员与其他成员组合使用。请联系管理员。同一次重新计算中的其他单元格仍会返回结果。 |
 | `CELL` 或 `CELLS` 返回 `#VALUE!` | 将鼠标悬停在单元格上以查看 PlaidCloud 给出的原因，例如未知的列、不存在或没有成员的节点，或计算该值时出现问题。请对照 PlaidCloud 检查名称。 |
 | `CELL` 返回意外的总计 | 节点只会在与其维度关联的列上汇总；在任何其他列上，它必须与某个值完全匹配。请检查每个筛选器的列和节点。 |
 | 数据或项目更改后值没有变化 | 在功能区的**刷新**菜单中点击 **Recalculate PlaidXL formulas**。 |
@@ -87,7 +88,7 @@ PlaidXL 函数从与工作簿关联的项目读取数据。请在该工作簿中
 | 行超出了您的行访问权限 | 不会保存任何内容。请移除这些行，然后再次保存。 |
 | 工作表未关联到表 | 请先将表检索到该工作表。只有检索到活动工作表中的表才会列在 **On this sheet** 下。 |
 
-要撤消保存，请点击消息中的**撤消**，或功能区上的 **Undo last write**。还原点保留 7 天。请参阅[将表保存到 PlaidCloud](/zh-cn/reference/cli/plaidxl/retrieve/#将表保存到-plaidcloud)。
+要撤消保存，请点击消息中的**撤消**，或功能区上的 **Undo last write**。每次保存都会各自保留还原点 7 天，因此您可以在保存后的 7 天内撤消任意一次保存。请参阅[将表保存到 PlaidCloud](/zh-cn/reference/cli/plaidxl/retrieve/#将表保存到-plaidcloud)。
 
 ## 相关内容
 

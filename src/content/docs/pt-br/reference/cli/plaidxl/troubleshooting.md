@@ -49,6 +49,7 @@ O Excel é mais lento com tabelas largas. Desmarque as caixas de seleção das c
 | Um erro de uma função `PLAIDXL` | Verifique se você está conectado e se o projeto certo está selecionado e, em seguida, confira no PlaidCloud o nome de cada tabela, coluna, dimensão e nó — os nomes devem corresponder exatamente. |
 | `CELL` informa que uma coluna de filtro não foi encontrada | O primeiro argumento de `DIMENSION_REPR` é uma coluna da tabela, não uma dimensão. Use exatamente o nome da coluna da tabela. Consulte [Valores](/pt-br/reference/cli/plaidxl/functions/#valores). |
 | `#VALUE!` de `METRIC` ou `METRIC_BREAKDOWN` | Passe o mouse sobre a célula para ler o motivo. Consulte [Erros de métrica](/pt-br/reference/cli/plaidxl/functions/#erros-de-métrica). |
+| `#VALUE!` de uma métrica: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | O espaço de trabalho precisa ser atualizado para que uma métrica possa combinar um membro de hierarquia alternativa com outros membros. Fale com o administrador. As outras células do mesmo recálculo continuam respondendo. |
 | `#VALUE!` de `CELL` ou `CELLS` | Passe o mouse sobre a célula para ler o motivo informado pelo PlaidCloud, como uma coluna desconhecida, um nó que não existe ou não tem membros, ou um problema ao calcular o valor. Confira os nomes no PlaidCloud. |
 | `CELL` retorna um total inesperado | Um nó é consolidado apenas em uma coluna vinculada à sua dimensão; em qualquer outra coluna, ele deve corresponder exatamente a um valor. Confira a coluna e o nó de cada filtro. |
 | Os valores não mudam depois que os dados ou o projeto mudam | Clique em **Recalculate PlaidXL formulas** no menu **Atualizar** da faixa de opções. |
@@ -87,7 +88,7 @@ Um salvamento grava imediatamente e raramente é interrompido. Ele é interrompi
 | As linhas estão fora do seu acesso a linhas | Nada é salvo. Remova essas linhas e salve novamente. |
 | A planilha não está vinculada a uma tabela | Recupere primeiro a tabela na planilha. Somente as tabelas recuperadas na planilha ativa aparecem em **On this sheet**. |
 
-Para desfazer um salvamento, clique em **Desfazer** na mensagem ou em **Undo last write** na faixa de opções. O ponto de restauração é mantido por 7 dias. Consulte [Salvar uma tabela no PlaidCloud](/pt-br/reference/cli/plaidxl/retrieve/#salvar-uma-tabela-no-plaidcloud).
+Para desfazer um salvamento, clique em **Desfazer** na mensagem ou em **Undo last write** na faixa de opções. Cada salvamento mantém o próprio ponto de restauração por 7 dias, portanto você pode desfazer qualquer salvamento por até 7 dias depois de feito. Consulte [Salvar uma tabela no PlaidCloud](/pt-br/reference/cli/plaidxl/retrieve/#salvar-uma-tabela-no-plaidcloud).
 
 ## Relacionado
 

@@ -49,6 +49,7 @@ Excel jest najwolniejszy przy szerokich tabelach. Wyczyść pola wyboru kolumn, 
 | Błąd z funkcji `PLAIDXL` | Sprawdź, czy jesteś zalogowany i wybrano właściwy projekt, a następnie sprawdź w PlaidCloud każdą nazwę tabeli, kolumny, wymiaru i węzła — nazwy muszą dokładnie się zgadzać. |
 | `CELL` zgłasza, że nie znaleziono kolumny filtra | Pierwszym argumentem `DIMENSION_REPR` jest kolumna tabeli, a nie wymiar. Użyj dokładnej nazwy kolumny tabeli. Zobacz [Wartości](/pl/reference/cli/plaidxl/functions/#wartości). |
 | `#VALUE!` z `METRIC` lub `METRIC_BREAKDOWN` | Najedź wskaźnikiem na komórkę, aby przeczytać przyczynę. Zobacz [Błędy metryk](/pl/reference/cli/plaidxl/functions/#błędy-metryk). |
+| `#VALUE!` z metryki: **This PlaidCloud workspace can't combine an alternate hierarchy with other members yet. Ask your administrator to update the workspace.** | Obszar roboczy wymaga aktualizacji, zanim metryka będzie mogła łączyć członka hierarchii alternatywnej z innymi członkami. Skontaktuj się z administratorem. Pozostałe komórki w tym samym przeliczeniu nadal zwracają odpowiedź. |
 | `#VALUE!` z `CELL` lub `CELLS` | Najedź wskaźnikiem na komórkę, aby przeczytać przyczynę podaną przez PlaidCloud, taką jak nieznana kolumna, węzeł, który nie istnieje lub nie ma członków, albo problem z obliczeniem wartości. Sprawdź nazwy w PlaidCloud. |
 | `CELL` zwraca nieoczekiwaną sumę | Węzeł jest agregowany tylko w kolumnie powiązanej z jego wymiarem; w każdej innej kolumnie musi dokładnie pasować do wartości. Sprawdź kolumnę i węzeł każdego filtra. |
 | Wartości nie zmieniają się po zmianie danych lub projektu | Kliknij **Recalculate PlaidXL formulas** w menu **Odśwież** na wstążce. |
@@ -87,7 +88,7 @@ Zapis następuje od razu i rzadko się zatrzymuje. Zatrzymuje się, gdy:
 | Wiersze są poza Twoim dostępem do wierszy | Nic nie jest zapisywane. Usuń te wiersze, a następnie zapisz ponownie. |
 | Arkusz nie jest powiązany z tabelą | Najpierw pobierz tabelę do arkusza. W obszarze **On this sheet** wyświetlane są tylko tabele pobrane do aktywnego arkusza. |
 
-Aby cofnąć zapis, kliknij **Cofnij** w komunikacie lub **Undo last write** na wstążce. Punkt przywracania jest przechowywany przez 7 dni. Zobacz [Zapisywanie tabeli w PlaidCloud](/pl/reference/cli/plaidxl/retrieve/#zapisywanie-tabeli-w-plaidcloud).
+Aby cofnąć zapis, kliknij **Cofnij** w komunikacie lub **Undo last write** na wstążce. Każdy zapis przechowuje własny punkt przywracania przez 7 dni, więc możesz cofnąć dowolny zapis do 7 dni po jego wykonaniu. Zobacz [Zapisywanie tabeli w PlaidCloud](/pl/reference/cli/plaidxl/retrieve/#zapisywanie-tabeli-w-plaidcloud).
 
 ## Powiązane
 
