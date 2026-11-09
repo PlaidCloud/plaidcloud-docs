@@ -16,6 +16,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Get started with Data Foundation](/guides/projects/data-foundation-getting-started/) — the setup checklist from a new project to a loaded, checked, handed-over model
 - [Cost to Serve](/guides/projects/cost-to-serve/) — spread operating expense to customers by activity and see margin after the cost of serving them
 - [Operational Transfer Pricing](/guides/projects/operational-transfer-pricing/) — test each entity's profit level against your policy ranges and see the true-up
+- [Project home](/guides/projects/project-home/) — see a project at a glance and manage its variables, schedules, access, data defaults and apps
 - [View projects](/guides/projects/viewing-projects/) — find and open existing projects
 - [Manage hierarchies](/guides/projects/managing-hierarchies/) — folder structure for organizing many projects
 - [Manage tables and views](/guides/projects/managing-tables-and-views/) — the data layer inside a project
