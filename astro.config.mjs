@@ -424,6 +424,7 @@ export default defineConfig({
 							items: [
 								'guides/projects',
 								'guides/projects/viewing-projects',
+								'guides/projects/project-home',
 								'guides/projects/managing-projects',
 								'guides/projects/archive-a-project',
 								'guides/projects/viewing-the-project-log',
