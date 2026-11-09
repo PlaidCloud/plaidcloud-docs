@@ -17,17 +17,29 @@ Three datasets hold totals only: no row names a member, and notebook paths are r
 
 **Dataset** chooses what each row holds:
 
-| Dataset | One row for each | Holds identity |
-|---|---|---|
-| **Daily per item** | Day, area, event and subject | No |
-| **Monthly per item** | Month, area, event and subject | No |
-| **Monthly totals** (default) | Month and area | No |
-| **Members** | Person in the workspace | Yes |
-| **Daily per member** | Person, day and area | Yes |
-| **Content** | Dashboard, app or notebook | No |
-| **Content per member** | Person and item | Yes |
+| Dataset | Value | One row for each | Holds identity |
+|---|---|---|---|
+| **Daily per item** | `daily_item` | Day, area, event and subject | No |
+| **Monthly per item** | `monthly_item` | Month, area, event and subject | No |
+| **Monthly totals** (default) | `monthly_tenant` | Month and area | No |
+| **Members** | `members` | Person in the workspace | Yes |
+| **Daily per member** | `daily_user` | Person, day and area | Yes |
+| **Content** | `content` | Dashboard, app or notebook | No |
+| **Content per member** | `content_user` | Person and item | Yes |
 
-**Area** limits the rows to one area: **PlaidCloud app**, **Dashboards**, **Apps**, **App visits** or **Notebooks**. Leave it on **All areas** to include all of them.
+**Area** limits the rows to one area. Leave it on **All areas** to include all of them.
+
+| Area | Value |
+|---|---|
+| **All areas** (default) | `""` |
+| **PlaidCloud app** | `plaidclient` |
+| **Dashboards** | `superset` |
+| **Apps** | `panel` |
+| **App visits** | `panel_visit` |
+| **Notebook servers** | `jupyterhub` |
+| **Notebooks** | `jupyter` |
+
+The values are what a step holds when you create or edit it through the API or an AI assistant.
 
 ### Columns
 
@@ -43,7 +55,7 @@ Three datasets hold totals only: no row names a member, and notebook paths are r
 
 `month`, `source`, `active_users`, `coverage_start`, `partial`.
 
-`partial` is true for a month that history doesn't cover in full, and `coverage_start` is the date collection began. A month is included once it has closed and settled, which takes 3 days.
+`partial` is true for a month that history doesn't cover in full, and `coverage_start` is the date collection began. A month is included 3 days after it closes, once its figures have settled.
 
 #### Member Columns
 
@@ -67,7 +79,7 @@ The member columns, then:
 
 | Column | Holds |
 |---|---|
-| `first_seen` | The first day the member ever used PlaidCloud, whatever the date range. |
+| `first_seen` | The first day the member ever used PlaidCloud, whatever the date range. When you set an **Area**, it is the first day in that area. |
 | `last_seen` | The member's last day of activity within the range. |
 | `active_days` | Days with activity in the range. |
 | `events` | Activity events in the range. |
@@ -75,7 +87,7 @@ The member columns, then:
 | `session_minutes` | Minutes in sessions. |
 | `app_open_minutes` | Minutes the member had Panel apps open. |
 
-Every person in the workspace has a row. A member with no activity in the range has blank values after `groups`. Totals match [Usage Reports](/administration/access/usage-reports/), except for members deleted since.
+Every member has a row, except members whose usage was erased. Service accounts and agents aren't listed. A member with no activity in the range has blank values after `groups`. Totals match [Usage Reports](/administration/access/usage-reports/), except for members deleted since.
 
 #### Daily Per Member
 
@@ -117,10 +129,12 @@ The result is active minutes by department. Members who aren't in your org table
 
 **Range** chooses the days to read:
 
-- **Last number of days** (default 30) reads the most recent days, today included.
-- **Previous month** reads the last full calendar month.
-- **Month to date** reads from the first of this month to today.
-- **Between dates** reads from **Start Date** to **End Date**. Leave **End Date** empty to read to today.
+| Range | Value | Reads |
+|---|---|---|
+| **Last number of days** (default 30) | `last_days` | The most recent days, today included. |
+| **Previous month** | `previous_month` | The last full calendar month. |
+| **Month to date** | `month_to_date` | From the first of this month to today. |
+| **Between dates** | `dates` | From **Start Date** to **End Date**. Leave **End Date** empty to read to today. |
 
 Days and dates are UTC. **Days**, **Start Date** and **End Date** accept a [variable](/guides/workflows/manage-workflow-variables/) such as `{report_start}` as well as a number or a `YYYY-MM-DD` date. The start must not be after the end.
 
