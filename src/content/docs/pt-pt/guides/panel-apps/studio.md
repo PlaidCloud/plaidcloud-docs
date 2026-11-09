@@ -81,7 +81,7 @@ O separador **Criar** mostra o estado da compilação mais recente e atualiza-se
 
 Os erros e os avisos também são assinalados nas respetivas linhas no editor, para que veja o problema onde ele está.
 
-Para saber o que significa cada estado depois de a aplicação ser publicada, consulte [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/#estado-de-compilação-aplicações-de-servidor).
+Para saber o que significa cada estado depois de a aplicação ser publicada, consulte [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/#estado-da-compilação-aplicações-de-servidor).
 
 ## Histórico e restauro
 
