@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Da die Verbindung der Betrachter ist, werden nur die Zeilen zurückgegeben, die der Betrachter sehen darf; hat er keinen Zugriff auf das Projekt, wird ein Berechtigungsfehler ausgelöst.
 
-> **Lesen Sie Tabellen anhand des Namens, schreiben Sie keine SQL-Abfragen.** In einem Projekt, in dem ein Administrator [Zeilenzugriff](/de/administration/access/managing-security-groups-and-assignments/#zeilenzugriff-und-selbst-geschriebene-abfragen) aktiviert hat, wendet das Lesen per Namen die Zeilenberechtigungen des jeweiligen Betrachters an, während eine von Ihrer App selbst zusammengestellte Abfrage für alle abgelehnt wird, die nicht Projekt-Architect sind – es gibt keine einzelne Tabelle, auf die die Berechtigungen als Filter wirken könnten. Wenn Sie per Namen lesen, funktioniert Ihre App in beiden Fällen.
+> **Lesen Sie Tabellen anhand des Namens, schreiben Sie keine SQL-Abfragen.** In einem Projekt, in dem ein Administrator [Zeilenzugriff](/de/administration/access/managing-security-groups-and-assignments/#zeilenzugriff-und-selbst-geschriebene-abfragen) aktiviert hat, liefert das Lesen über den Namen die Zeilen des jeweiligen Betrachters, und das tut auch eine Abfrage, die Ihre App selbst zusammenstellt, auf einem StarRocks-, Databend-, Greenplum- oder Postgres-Warehouse. Eine Abfrage auf einem Snowflake- oder Databricks-Warehouse oder eine Abfrage, die nicht aus einem einzelnen SELECT über die Tabellen des Projekts besteht (ein Schreibvorgang oder mehrere Anweisungen), wird für alle abgelehnt, die nicht Architect des Projekts sind. Wenn Sie über den Namen lesen, funktioniert Ihre App in beiden Fällen.
 
 ## In einem Callback lesen, nie beim Import oder im Prozessbereich
 
