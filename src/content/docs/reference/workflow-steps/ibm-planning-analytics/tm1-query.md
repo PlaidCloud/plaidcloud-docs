@@ -18,7 +18,7 @@ The step reaches TM1 **cloud-direct** over its REST API — there is no on-premi
 | Field | Required | Notes |
 |---|---|---|
 | TM1 Connection | Yes | The [TM1 connection](/guides/connections/tm1/) to read through. |
-| Environment | Yes | The connection's environment. |
+| Environment | No | **Project environment** (the default) uses the project's connection environment. **Fixed environment** always uses the one you pick. See [Fixing a Step to One Environment](/guides/projects/managing-projects/#fixing-a-step-to-one-environment). |
 | Database | Yes | The TM1 database (instance) to query. Defaults to the connection's Default Database if one is set. |
 | Cube | Yes | The TM1 cube to query. Discovered live from the connected database, or typed by hand. |
 | Target Table | Yes | The project table the returned cellset lands in. |

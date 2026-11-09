@@ -28,7 +28,7 @@ Everything else — the connection, the database, the view/MDX choice, the point
 |---|---|---|
 | Agent | Yes | The PlaidLink agent to dispatch this read to. Its build must include the TM1 handler (see [Requirements](#requirements) below). |
 | TM1 Connection | Yes | The [TM1 connection](/guides/connections/tm1/) to read through. The connection picker is not filtered by the selected agent — share the connection with the agent separately (see below). |
-| Environment | Yes | The connection's environment. |
+| Environment | No | **Project environment** (the default) uses the project's connection environment. **Fixed environment** always uses the one you pick. See [Fixing a Step to One Environment](/guides/projects/managing-projects/#fixing-a-step-to-one-environment). |
 | Database | Yes | The TM1 database (instance) to query. |
 | Cube | Yes | The TM1 cube to query. Typed by hand — there is no live discovery on this step. |
 | Target Table | Yes | The project table the returned cellset lands in. |
