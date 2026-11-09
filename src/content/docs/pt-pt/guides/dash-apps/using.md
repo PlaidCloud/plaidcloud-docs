@@ -42,7 +42,7 @@ Uma aplicação Dash escala até zero quando está inativa para poupar recursos,
 
 ## Consultar os registos
 
-Clique no ícone **Ver registos** na linha de uma aplicação Dash para abrir o respetivo visualizador de registos, com os mesmos separadores **Tempo de execução** e **Compilação**, filtros, intervalo de tempo e painel de detalhe de uma aplicação Panel de servidor — consulte [Consultar os registos](/pt-pt/guides/panel-apps/using/#ver-registos-aplicações-de-servidor) para conhecer o funcionamento completo. Cada linha de registo de execução é identificada com o **utilizador** cuja sessão a produziu, tal como acontece nas de uma aplicação Panel de servidor.
+Clique no ícone **Ver registos** na linha de uma aplicação Dash para abrir o respetivo visualizador de registos, com os mesmos separadores **Tempo de execução** e **Compilação**, filtros, intervalo de tempo e painel de detalhe de uma aplicação Panel de servidor — consulte [Consultar os registos](/pt-pt/guides/panel-apps/using/#consultar-registos-aplicações-de-servidor) para conhecer o funcionamento completo. Cada linha de registo de execução é identificada com o **utilizador** cuja sessão a produziu, tal como acontece nas de uma aplicação Panel de servidor.
 
 **Usage Metrics não estão disponíveis para aplicações Dash nesta versão** — o ícone **Usage Metrics** que aparece na linha de uma aplicação Panel de servidor não aparece para as aplicações Dash, pelo que ainda não existe uma discriminação de utilizadores únicos/sessões para consultar.
 

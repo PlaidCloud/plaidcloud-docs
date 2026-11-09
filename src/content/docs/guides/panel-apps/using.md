@@ -41,7 +41,7 @@ The lock is a guard against accidents — a mistaken edit, an unintended delete,
 
 ## Opening an App
 
-Click the **Open** icon at the start of a ready app's row to launch it in a new tab.
+Click the **Open** icon at the start of a ready app's row to launch it in a new tab. **Open** is also the first item in the row's **⋯** menu. See [The Row Actions Menu](/guides/dashboards/using-dashboards/#the-row-actions-menu).
 
 - A server app is served at `https://<your-tenant-host>/serve/<slug>/`.
 - The **Open** icon appears only once a server app is **Ready**.

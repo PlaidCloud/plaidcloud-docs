@@ -42,7 +42,7 @@ Una aplicación Dash escala a cero cuando está inactiva para ahorrar recursos, 
 
 ## Ver registros
 
-Haga clic en el ícono **Ver registros** de la fila de una aplicación Dash para abrir su visor de registros, con las mismas pestañas **Tiempo de ejecución** y **Compilación**, filtros, intervalo de tiempo y panel de detalles que tiene una aplicación Panel de servidor; consulte [Ver registros](/es/guides/panel-apps/using/#visualización-de-registros-aplicaciones-de-servidor) para conocer todos los detalles. Cada línea de registro de ejecución se etiqueta con el **usuario** cuya sesión la produjo, igual que las de una aplicación Panel de servidor.
+Haga clic en el ícono **Ver registros** de la fila de una aplicación Dash para abrir su visor de registros, con las mismas pestañas **Tiempo de ejecución** y **Compilación**, filtros, intervalo de tiempo y panel de detalles que tiene una aplicación Panel de servidor; consulte [Ver registros](/es/guides/panel-apps/using/#consulta-de-los-registros-aplicaciones-de-servidor) para conocer todos los detalles. Cada línea de registro de ejecución se etiqueta con el **usuario** cuya sesión la produjo, igual que las de una aplicación Panel de servidor.
 
 **Usage Metrics no está disponible para las aplicaciones Dash en esta versión**: el ícono **Usage Metrics** que aparece en la fila de una aplicación Panel de servidor no aparece para las aplicaciones Dash, por lo que todavía no hay un desglose de usuarios únicos y sesiones que consultar.
 
