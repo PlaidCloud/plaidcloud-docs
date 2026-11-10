@@ -26,8 +26,8 @@ You should now have everything you need to add your Cloudflare R2 account to Pla
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `Cloudflare R2` as the Service Type
 6. Fill in a name and description
 7. Enter the **Start Path** as your R2 endpoint followed by the bucket name: `https://{account_id}.r2.cloudflarestorage.com/my-bucket`

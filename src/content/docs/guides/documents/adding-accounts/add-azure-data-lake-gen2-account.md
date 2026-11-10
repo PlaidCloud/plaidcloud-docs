@@ -22,8 +22,8 @@ You should now have everything you need to add your Azure Data Lake Gen2 account
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `Azure Data Lake Gen2` as the Service Type
 6. Fill in a name and description
 7. Enter the filesystem name and optional path prefix into the **Start Path** field (e.g. `my-filesystem/data`). The first path segment is the filesystem name.

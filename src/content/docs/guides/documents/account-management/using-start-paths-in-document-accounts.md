@@ -30,8 +30,8 @@ This provides the ability to restrict specific teams to lower levels of the tree
 ## Adding and Updating the Start Path
 
 
-1. Go to Document > Manage Accounts
-2. Select the account you wish to edit and enter the edit mode
+1. Go to `Document > Manage`
+2. Open the account you wish to edit and select **Edit**
 3. Add a Start Path in the Start Path text field
 4. Select the save button
 
