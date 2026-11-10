@@ -17,6 +17,8 @@ Wybierz **Git** na liście aplikacji obszaru roboczego. Otworzy się karta **Git
 
 Wskaźnik roli pokazuje Twój poziom: **Administrator**, **Współautor** lub **Przeglądający**, wraz z wierszem opisującym, co to umożliwia. Każdy wiersz repozytorium zawiera jego nazwę, opis (jeśli istnieje), **Zaktualizowano** z datą, pole klonowania tylko do odczytu z przyciskiem kopiowania oraz **Otwórz**, które otwiera repozytorium w Git. Repozytoria tworzone jako prywatne znajdziesz bezpośrednio w Git, a nie na tej liście.
 
+Jeśli Git nie jest skonfigurowany dla Twojego obszaru roboczego lub nie można się z nim połączyć, karta **Git** pokazuje **Git jest niedostępny** wraz z przyczyną, a **Spróbuj ponownie** sprawdza ponownie.
+
 ## Klonowanie repozytorium
 
 Skopiuj adres klonowania repozytorium z jego wiersza. Przy pierwszym kopiowaniu pojawia się karta **Set up Git on your computer** z poniższymi krokami. Wybierz **Odrzuć**, aby ją ukryć, a **How to clone** w nagłówku, aby ją ponownie wyświetlić.
