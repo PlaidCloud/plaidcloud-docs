@@ -19,7 +19,7 @@ Der Schritt erreicht TM1 **direkt aus der Cloud** über dessen REST-API — es i
 | Feld | Erforderlich | Hinweise |
 |---|---|---|
 | TM1-Verbindung | Ja | Die [TM1-Verbindung](/de/guides/connections/tm1/), über die gelesen wird. |
-| Umgebung | Ja | Die Umgebung der Verbindung. |
+| Umgebung | Nein | **Projektumgebung** (der Standard) verwendet die Verbindungsumgebung des Projekts. **Feste Umgebung** verwendet immer die Umgebung, die Sie auswählen. Siehe [Einen Schritt auf eine Umgebung festlegen](/de/guides/projects/managing-projects/#einen-schritt-auf-eine-umgebung-festlegen). |
 | Datenbank | Ja | Die TM1-Datenbank (Instanz), aus der gelesen wird. Standardmäßig die Standarddatenbank der Verbindung, falls eine festgelegt ist. |
 | TM1-Dimension | Ja | Die zu lesende TM1-Dimension. Wird live aus der verbundenen Datenbank ermittelt oder von Hand eingegeben. |
 | TM1-Hierarchie | Nein | Die Hierarchie innerhalb der Dimension. Wird live ermittelt, sobald eine Dimension gewählt ist, oder von Hand eingegeben. Lassen Sie das Feld leer, um die eigene (implizite) Hierarchie der Dimension zu lesen, die TM1 nach der Dimension benennt. |

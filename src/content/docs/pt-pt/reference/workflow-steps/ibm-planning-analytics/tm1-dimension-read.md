@@ -19,7 +19,7 @@ O passo acede ao TM1 **diretamente na nuvem** através da sua API REST — sem i
 | Campo | Obrigatório | Notas |
 |---|---|---|
 | Ligação TM1 | Sim | A [ligação TM1](/pt-pt/guides/connections/tm1/) através da qual ler. |
-| Ambiente | Sim | O ambiente da ligação. |
+| Ambiente | Não | **Ambiente do projeto** (a predefinição) utiliza o ambiente da ligação do projeto. **Ambiente fixo** utiliza sempre o que escolher. Consulte [Fixar um passo a um ambiente](/pt-pt/guides/projects/managing-projects/#fixar-um-passo-a-um-ambiente). |
 | Base de dados | Sim | A base de dados (instância) do TM1 de onde ler. Assume por predefinição a Base de dados predefinida da ligação, se estiver definida. |
 | Dimensão TM1 | Sim | A dimensão do TM1 a ler. Descoberta em direto a partir da base de dados ligada, ou escrita manualmente. |
 | Hierarquia TM1 | Não | A hierarquia dentro da dimensão. Descoberta em direto depois de escolhida uma dimensão, ou escrita manualmente. Deixe em branco para ler a hierarquia própria (implícita) da dimensão, que o TM1 designa com o nome da dimensão. |

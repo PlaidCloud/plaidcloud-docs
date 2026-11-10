@@ -29,7 +29,7 @@ Todo o resto — a conexão, o banco de dados, a escolha de visão/MDX, o recort
 |---|---|---|
 | Agente | Sim | O agente PlaidLink para o qual despachar esta leitura. Seu build deve incluir o handler do TM1 (consulte [Requisitos](#requisitos) abaixo). |
 | Conexão TM1 | Sim | A [conexão TM1](/pt-br/guides/connections/tm1/) pela qual ler. O seletor de conexões não é filtrado pelo agente selecionado — compartilhe a conexão com o agente separadamente (veja abaixo). |
-| Ambiente | Sim | O ambiente da conexão. |
+| Ambiente | Não | **Ambiente do projeto** (o padrão) usa o ambiente da conexão do projeto. **Ambiente fixo** sempre usa o que você escolher. Consulte [Fixar uma etapa em um ambiente](/pt-br/guides/projects/managing-projects/#fixar-uma-etapa-em-um-ambiente). |
 | Banco de dados | Sim | O banco de dados (instância) do TM1 a consultar. |
 | Cubo | Sim | O cubo do TM1 a consultar. Digitado manualmente — não há descoberta ao vivo nesta etapa. |
 | Tabela de destino | Sim | A tabela de projeto em que o cellset retornado é gravado. |

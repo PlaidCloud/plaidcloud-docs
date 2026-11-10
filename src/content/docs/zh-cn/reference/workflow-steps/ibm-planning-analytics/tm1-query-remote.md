@@ -29,7 +29,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 |---|---|---|
 | 代理 | 是 | 将此读取调度到的 PlaidLink 代理。其构建版本必须包含 TM1 处理程序（参见下文的[要求](#要求)）。 |
 | TM1 连接 | 是 | 用于读取的 [TM1 连接](/zh-cn/guides/connections/tm1/)。连接选择器不会按所选代理过滤——请另行将连接共享给代理（见下文）。 |
-| 环境 | 是 | 连接的环境。 |
+| 环境 | 否 | **项目环境**（默认）使用项目的连接环境。**固定环境**始终使用您选择的环境。请参阅[将步骤固定到单一环境](/zh-cn/guides/projects/managing-projects/#将步骤固定到单一环境)。 |
 | 数据库 | 是 | 要查询的 TM1 数据库（实例）。 |
 | 多维数据集 | 是 | 要查询的 TM1 多维数据集。手动输入——此步骤没有实时发现。 |
 | 目标表 | 是 | 返回的单元格集所写入的项目表。 |

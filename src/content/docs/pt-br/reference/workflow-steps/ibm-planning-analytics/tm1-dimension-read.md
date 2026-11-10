@@ -19,7 +19,7 @@ A etapa acessa o TM1 **diretamente da nuvem** por meio da API REST — nenhum ag
 | Campo | Obrigatório | Observações |
 |---|---|---|
 | Conexão TM1 | Sim | A [conexão TM1](/pt-br/guides/connections/tm1/) pela qual ler. |
-| Ambiente | Sim | O ambiente da conexão. |
+| Ambiente | Não | **Ambiente do projeto** (o padrão) usa o ambiente da conexão do projeto. **Ambiente fixo** sempre usa o que você escolher. Consulte [Fixar uma etapa em um ambiente](/pt-br/guides/projects/managing-projects/#fixar-uma-etapa-em-um-ambiente). |
 | Banco de dados | Sim | O banco de dados (instância) do TM1 do qual ler. Usa por padrão o Banco de dados padrão da conexão, se houver um definido. |
 | Dimensão TM1 | Sim | A dimensão do TM1 a ser lida. Descoberta ao vivo a partir do banco de dados conectado, ou digitada manualmente. |
 | Hierarquia TM1 | Não | A hierarquia dentro da dimensão. Descoberta ao vivo depois que uma dimensão é escolhida, ou digitada manualmente. Deixe em branco para ler a hierarquia própria (implícita) da dimensão, que o TM1 nomeia com o nome da dimensão. |

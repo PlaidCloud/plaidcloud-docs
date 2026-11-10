@@ -19,7 +19,7 @@ Krok łączy się z TM1 **bezpośrednio z chmury** przez jego REST API — bez u
 | Pole | Wymagane | Uwagi |
 |---|---|---|
 | Połączenie TM1 | Tak | [Połączenie TM1](/pl/guides/connections/tm1/), przez które odbywa się odczyt. |
-| Środowisko | Tak | Środowisko połączenia. |
+| Środowisko | Nie | **Środowisko projektu** (domyślne) używa środowiska połączenia projektu. **Stałe środowisko** zawsze używa wybranego przez Ciebie środowiska. Zobacz [Przypinanie kroku do jednego środowiska](/pl/guides/projects/managing-projects/#przypinanie-kroku-do-jednego-środowiska). |
 | Baza danych | Tak | Baza danych TM1 (instancja), z której odczytywane są dane. Domyślnie jest to Domyślna baza danych połączenia, jeśli jest ustawiona. |
 | Wymiar TM1 | Tak | Wymiar TM1 do odczytu. Wykrywany na żywo z połączonej bazy danych lub wpisywany ręcznie. |
 | Hierarchia TM1 | Nie | Hierarchia w obrębie wymiaru. Wykrywana na żywo po wybraniu wymiaru lub wpisywana ręcznie. Pozostaw puste, aby odczytać własną (niejawną) hierarchię wymiaru, którą TM1 nazywa tak jak wymiar. |

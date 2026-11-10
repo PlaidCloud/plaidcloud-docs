@@ -29,7 +29,7 @@ Tudo o resto — a ligação, a base de dados, a escolha entre vista/MDX, o cort
 |---|---|---|
 | Agente | Sim | O agente PlaidLink para o qual enviar esta leitura. A sua compilação tem de incluir o manipulador de TM1 (consulte [Requisitos](#requisitos) abaixo). |
 | Ligação TM1 | Sim | A [ligação TM1](/pt-pt/guides/connections/tm1/) através da qual ler. O seletor de ligações não é filtrado pelo agente selecionado — partilhe a ligação com o agente em separado (ver abaixo). |
-| Ambiente | Sim | O ambiente da ligação. |
+| Ambiente | Não | **Ambiente do projeto** (a predefinição) utiliza o ambiente da ligação do projeto. **Ambiente fixo** utiliza sempre o que escolher. Consulte [Fixar um passo a um ambiente](/pt-pt/guides/projects/managing-projects/#fixar-um-passo-a-um-ambiente). |
 | Base de dados | Sim | A base de dados (instância) do TM1 a consultar. |
 | Cubo | Sim | O cubo do TM1 a consultar. Escrito manualmente — neste passo não há descoberta em direto. |
 | Tabela de destino | Sim | A tabela de projeto onde o conjunto de células devolvido é colocado. |

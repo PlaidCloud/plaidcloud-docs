@@ -19,7 +19,7 @@ L'étape accède à TM1 **en accès direct au cloud** via son API REST — aucun
 | Champ | Obligatoire | Remarques |
 |---|---|---|
 | Connexion TM1 | Oui | La [connexion TM1](/fr/guides/connections/tm1/) à utiliser pour la lecture. |
-| Environnement | Oui | L'environnement de la connexion. |
+| Environnement | Non | **Environnement du projet** (par défaut) utilise l'environnement de connexion du projet. **Environnement fixe** utilise toujours celui que vous choisissez. Voir [Fixer une étape à un environnement](/fr/guides/projects/managing-projects/#fixer-une-étape-à-un-environnement). |
 | Base de données | Oui | La base de données TM1 (instance) à lire. Par défaut, la Base de données par défaut de la connexion si elle est définie. |
 | Dimension TM1 | Oui | La dimension TM1 à lire. Détectée en direct depuis la base de données connectée, ou saisie à la main. |
 | Hiérarchie TM1 | Non | La hiérarchie au sein de la dimension. Détectée en direct une fois la dimension choisie, ou saisie à la main. Laissez vide pour lire la hiérarchie propre (implicite) de la dimension, que TM1 nomme d'après la dimension. |
