@@ -17,6 +17,8 @@ Wählen Sie in der App-Liste Ihres Workspace **Git** aus. Die Registerkarte **Gi
 
 Eine Rollenanzeige zeigt Ihre Stufe an: **Administrator**, **Contributor** oder **Viewer**, mit einer Zeile dazu, was Sie damit tun können. Jede Repository-Zeile zeigt den Namen, die Beschreibung (sofern vorhanden), **Aktualisiert** mit dem Datum, ein schreibgeschütztes Feld mit der Clone-Adresse samt Kopierschaltfläche sowie **Öffnen**, womit das Repository in Git geöffnet wird. Repositories, die Sie privat anlegen, finden Sie direkt in Git und nicht in dieser Liste.
 
+Wenn Git für Ihren Workspace nicht eingerichtet ist oder nicht erreicht werden kann, zeigt die Registerkarte **Git** **Git ist nicht verfügbar** mit dem Grund an; mit **Erneut versuchen** wird erneut geprüft.
+
 ## Repository klonen
 
 Kopieren Sie die Clone-Adresse des Repositorys aus der zugehörigen Zeile. Beim ersten Kopieren erscheint eine Karte **Set up Git on your computer** mit den folgenden Schritten. Wählen Sie **Schließen**, um sie auszublenden, und **How to clone** in der Kopfzeile, um sie wieder einzublenden.
