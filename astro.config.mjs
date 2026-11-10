@@ -649,6 +649,7 @@ export default defineConfig({
 							items: [
 								'guides/ai-assistant/weave-activity',
 								'guides/ai-assistant/weave-ai-features',
+								'guides/ai-assistant/weave-email',
 							],
 						},
 					],
