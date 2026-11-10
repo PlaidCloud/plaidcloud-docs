@@ -22,8 +22,8 @@ You should now have everything you need to add your Azure Blob Storage account t
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `Azure Blob Storage` as the Service Type
 6. Fill in a name and description
 7. Enter the container name and optional path prefix into the **Start Path** field (e.g. `my-container/data`). The first path segment is the container name.

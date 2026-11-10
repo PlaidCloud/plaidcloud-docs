@@ -16,7 +16,7 @@ La opción Ruta de inicio de las cuentas de documentos es útil por los siguient
 * Para controlar el acceso a subdirectorios de equipos y grupos específicos
 * Para conceder acceso a un solo bucket
 
-Por ejemplo, establecer una ruta de inicio de *teams/team_1/* para la cuenta de documentos `Team 1` y *teams/team_2* para la cuenta de documentos `Team 2` proporciona puntos de partida distintos en una cuenta compartida. Cuando un miembro abre la cuenta de documentos Team 1, comienza la navegación de archivos dentro de *team/team_1*. No podrá subir por el árbol ni ver nada por encima de *teams/team_1*.
+Por ejemplo, establecer una ruta de inicio de *teams/team_1/* para la cuenta de documentos `Team 1` *y teams/team_2* para la cuenta de documentos `Team 2` proporciona puntos de partida distintos en una cuenta compartida. Cuando un miembro abre la cuenta de documentos Team 1, comienza la navegación de archivos dentro de *team/team_1*. No podrá subir por el árbol ni ver nada por encima de *teams/team_1*.
 
 
 
@@ -31,8 +31,8 @@ Esto permite restringir a equipos específicos a los niveles inferiores del árb
 ## Agregar y actualizar la ruta de inicio
 
 
-1. Vaya a Document > Manage Accounts
-2. Seleccione la cuenta que desea editar y entre en el modo de edición
+1. Vaya a `Document > Manage`
+2. Abra la cuenta que desea editar y seleccione **Editar**
 3. Agregue una ruta de inicio en el campo de texto Ruta de inicio
 4. Seleccione el botón Guardar
 

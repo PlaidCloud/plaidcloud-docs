@@ -55,7 +55,7 @@ Cada membro recebe no máximo 20 textos por dia, um espaço de trabalho envia no
 
 Todo texto vem do número de alerta. Responder **STOP** interrompe todos os textos do PlaidCloud para esse número, e **HELP** retorna informações de contato. Depois de STOP, o membro envia **START** por texto ao número de alerta para retomar e, em seguida, ativa novamente os alertas por texto em **Alertas por texto**. O formulário da etapa mostra **Inscrição cancelada - Envie START por mensagem de texto para o número de alerta** ao lado desse membro até que isso aconteça.
 
-Os administradores do espaço de trabalho podem ver o status de alerta por texto de cada membro, com o número mascarado, na guia **Informações do membro** da janela do membro. Os membros aceitam e cancelam o recebimento por conta própria; um administrador não pode fazer isso por eles.
+Os administradores do espaço de trabalho podem ver o status de alerta por texto de cada membro, com o número mascarado, no cartão **Perfil** da página do membro. Os membros aceitam e cancelam o recebimento por conta própria; um administrador não pode fazer isso por eles.
 
 ## Etapas que usavam um número digitado
 

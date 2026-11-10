@@ -14,8 +14,8 @@ Use un bucket administrado de PlaidCloud cuando quiera un lugar nuevo e independ
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `PlaidCloud Managed Bucket` como Tipo de servicio
 6. Complete un nombre y una descripción opcional
 7. Escriba un **Nombre del bucket**. Los nombres deben tener entre 3 y 63 caracteres, usar solo letras minúsculas, dígitos, puntos o guiones, y empezar y terminar con una letra o un dígito. El nombre debe ser **único a nivel global**: si ya está en uso, se le pedirá que elija otro

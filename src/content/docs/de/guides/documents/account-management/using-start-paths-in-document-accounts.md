@@ -16,7 +16,7 @@ Die Option „Startpfad“ in Dokumentenkonten ist aus folgenden Gründen nützl
 * Zur Steuerung des Zugriffs auf Unterverzeichnisse für bestimmte Teams und Gruppen
 * Zur Gewährung des Zugriffs auf nur einen Bucket
 
-Wenn Sie zum Beispiel den Startpfad *teams/team_1/* für das Dokumentenkonto `Team 1` und *teams/team_2* für das Dokumentenkonto `Team 2` festlegen, erhalten Sie verschiedene Startpunkte auf einem gemeinsamen Konto. Wenn ein Mitglied das Dokumentenkonto Team 1 öffnet, beginnt die Dateinavigation innerhalb von *team/team_1*. Es kann im Baum nicht nach oben gehen und nichts oberhalb von *teams/team_1* sehen.
+Wenn Sie zum Beispiel den Startpfad *teams/team_1/* für das Dokumentenkonto `Team 1` *und teams/team_2* für das Dokumentenkonto `Team 2` festlegen, erhalten Sie verschiedene Startpunkte auf einem gemeinsamen Konto. Wenn ein Mitglied das Dokumentenkonto Team 1 öffnet, beginnt die Dateinavigation innerhalb von *team/team_1*. Es kann im Baum nicht nach oben gehen und nichts oberhalb von *teams/team_1* sehen.
 
 
 
@@ -31,9 +31,9 @@ So lassen sich bestimmte Teams auf tiefere Ebenen des Baums beschränken, währe
 ## Den Startpfad hinzufügen und aktualisieren
 
 
-1. Gehen Sie zu Document > Manage Accounts
-2. Wählen Sie das Konto, das Sie bearbeiten möchten, und öffnen Sie den Bearbeitungsmodus
-3. Geben Sie im Textfeld „Start Path“ einen Startpfad ein
+1. Gehen Sie zu `Document > Manage`
+2. Öffnen Sie das Konto, das Sie bearbeiten möchten, und wählen Sie **Bearbeiten**
+3. Geben Sie im Textfeld „Startpfad“ einen Startpfad ein
 4. Klicken Sie auf die Schaltfläche „Speichern“
 
 ## Format des Startpfads

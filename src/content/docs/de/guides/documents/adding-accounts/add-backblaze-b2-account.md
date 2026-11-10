@@ -26,9 +26,9 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Backblaze-B2-Konto zu PlaidC
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `Backblaze B2` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `Backblaze B2` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie als **Startpfad** Ihren S3-kompatiblen Endpunkt gefolgt vom Bucket-Namen ein: `https://s3.us-west-004.backblazeb2.com/my-bucket`
 8. Geben Sie die **Region** Ihres Buckets ein (z. B. `us-west-004`)

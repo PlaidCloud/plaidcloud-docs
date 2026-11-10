@@ -23,8 +23,8 @@ Azure Data Lake Storage Gen2 は、階層型名前空間を有効にした Azure
 
 1. PlaidCloud にサインインします
 2. 新しいドキュメントアカウントを置くワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. **サービスタイプ**として `Azure Data Lake Gen2` を選択します
 6. 名前と説明を入力します
 7. **開始パス**フィールドに、ファイルシステム名と任意のパスプレフィックスを入力します（例: `my-filesystem/data`）。最初のパスセグメントがファイルシステム名です。

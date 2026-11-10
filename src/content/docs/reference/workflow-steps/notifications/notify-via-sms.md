@@ -54,7 +54,7 @@ Each member receives at most 20 texts per day, a workspace sends at most 500 tex
 
 Every text is from the alert number. Replying **STOP** stops all texts from PlaidCloud to that number, and **HELP** returns contact information. After STOP, a member text **START** to the alert number to resume, then turn text alerts back on in **Text alerts**. The step form shows **Opted out - Text START to the alert number** beside that member until they do.
 
-Workspace admins can see each member's text alert status, with the number masked, on the **Member Info** tab of the member window. Members opt in and out themselves; an admin can't do it for them.
+Workspace admins can see each member's text alert status, with the number masked, on the **Profile** card of the member page. Members opt in and out themselves; an admin can't do it for them.
 
 ## Steps That Typed a Number
 

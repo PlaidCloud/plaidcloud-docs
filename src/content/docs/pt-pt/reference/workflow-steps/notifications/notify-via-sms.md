@@ -55,7 +55,7 @@ Cada membro recebe no máximo 20 mensagens de texto por dia, uma área de trabal
 
 Todas as mensagens de texto provêm do número de alertas. Responder **STOP** pára todas as mensagens de texto do PlaidCloud para esse número, e **HELP** devolve as informações de contacto. Depois de STOP, um membro envia **START** por mensagem de texto para o número de alertas para retomar e, em seguida, volta a ativar os alertas por mensagem de texto em **Alertas por mensagem de texto**. O formulário do passo mostra **Optou por sair - Envie START por SMS para o número de alertas** junto a esse membro até que o faça.
 
-Os administradores da área de trabalho podem ver o estado dos alertas por mensagem de texto de cada membro, com o número mascarado, no separador **Informações do membro** da janela do membro. Os membros aderem e saem por si próprios; um administrador não o pode fazer por eles.
+Os administradores da área de trabalho podem ver o estado dos alertas por mensagem de texto de cada membro, com o número mascarado, no cartão **Perfil** da página do membro. Os membros aderem e saem por si próprios; um administrador não o pode fazer por eles.
 
 ## Passos que Tinham um Número Escrito
 

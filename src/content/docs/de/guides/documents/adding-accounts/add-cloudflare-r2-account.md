@@ -27,9 +27,9 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Cloudflare-R2-Konto zu Plaid
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `Cloudflare R2` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `Cloudflare R2` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie als **Startpfad** Ihren R2-Endpunkt gefolgt vom Bucket-Namen ein: `https://{account_id}.r2.cloudflarestorage.com/my-bucket`
 8. Das Feld **Region** kann auf `auto` gesetzt oder leer gelassen werden – R2 wählt automatisch die nächstgelegene Region

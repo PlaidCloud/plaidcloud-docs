@@ -26,8 +26,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloud にサインインします
 2. 新しいドキュメントアカウントを置くワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. **サービスタイプ**として `DigitalOcean Spaces` を選択します
 6. 名前と説明を入力します
 7. **開始パス**に、エンドポイント URL とそれに続く Space 名を入力します: `https://nyc3.digitaloceanspaces.com/my-space`

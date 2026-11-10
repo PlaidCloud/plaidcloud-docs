@@ -14,9 +14,9 @@ Verwenden Sie einen von PlaidCloud verwalteten Bucket, wenn Sie einen neuen, in 
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `PlaidCloud Managed Bucket` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `PlaidCloud Managed Bucket` als Diensttyp
 6. Geben Sie einen Namen und eine optionale Beschreibung ein
 7. Geben Sie einen **Bucket-Namen** ein. Namen müssen 3–63 Zeichen lang sein, dürfen nur Kleinbuchstaben, Ziffern, Punkte oder Bindestriche enthalten und müssen mit einem Buchstaben oder einer Ziffer beginnen und enden. Der Name muss **global eindeutig** sein – ist er bereits vergeben, werden Sie aufgefordert, einen anderen zu wählen
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`
