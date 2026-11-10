@@ -29,7 +29,7 @@ Wszystko inne — połączenie, baza danych, wybór widoku/MDX, wycinek punktu w
 |---|---|---|
 | Agent | Tak | Agent PlaidLink, do którego przekazywany jest ten odczyt. Jego kompilacja musi zawierać obsługę TM1 (zobacz [Wymagania](#wymagania) poniżej). |
 | Połączenie TM1 | Tak | [Połączenie TM1](/pl/guides/connections/tm1/), przez które odbywa się odczyt. Selektor połączeń nie jest filtrowany według wybranego agenta — udostępnij połączenie agentowi osobno (zobacz niżej). |
-| Środowisko | Tak | Środowisko połączenia. |
+| Środowisko | Nie | **Środowisko projektu** (domyślne) używa środowiska połączenia projektu. **Stałe środowisko** zawsze używa wybranego przez Ciebie środowiska. Zobacz [Przypinanie kroku do jednego środowiska](/pl/guides/projects/managing-projects/#przypinanie-kroku-do-jednego-środowiska). |
 | Baza danych | Tak | Baza danych TM1 (instancja) do odpytania. |
 | Kostka | Tak | Kostka TM1 do odpytania. Wpisywana ręcznie — ten krok nie ma wykrywania na żywo. |
 | Tabela docelowa | Tak | Tabela projektu, w której ląduje zwrócony zestaw komórek. |

@@ -393,15 +393,17 @@ for lc in ("de", "pl", "ja", "zh-cn"):
 results.append(ok("FOO_OF_BAR names and SQL keywords are not English prose",
                   t.wrong_language("de", "---\ntitle: T\ndescription: d\n---\n\n- [TO_START_OF_HOUR](x)\n- [TO_START_OF_THE_DAY](y)\n\nIS NOT NULL AND THE OF\n") == []))
 
-# ---- check-anchors resolves same-page and relative links on locale pages
+# ---- check-anchors resolves same-page and relative links, on English and locale pages alike
 tmp = Path(tempfile.mkdtemp())
 page_html = lambda ids, hrefs: "".join(f'<h2 id="{i}"></h2>' for i in ids) + "".join(f'<a href="{h}">x</a>' for h in hrefs)
 for path, ids, hrefs in (("de/guides/a", ["ok"], ["#ok", "#bad", "../b/#here", "../b/#gone", "/de/guides/b/#here", "https://x.com/de/y/#z"]),
-                         ("de/guides/b", ["here"], []), ("guides/a", [], ["#english-not-checked"])):
+                         ("de/guides/b", ["here"], []), ("guides/a", [], ["/guides/b/#there", "/guides/b/#english-gone"]),
+                         ("guides/b", ["there"], [])):
     (tmp / path).mkdir(parents=True); (tmp / path / "index.html").write_text(page_html(ids, hrefs))
 out = run_check(t.cmd_check_anchors, argparse.Namespace(dist=str(tmp)))
 results.append(ok(f"check-anchors: same-page + relative broken anchors caught {out.splitlines()}",
-                  "missing  /de/guides/a/#bad" in out and "missing  /de/guides/b/#gone" in out and "5 locale anchor links checked: 2 broken" in out))
+                  "missing  /de/guides/a/#bad" in out and "missing  /de/guides/b/#gone" in out
+                  and "missing  /guides/b/#english-gone" in out and "7 anchor links checked: 3 broken" in out))
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (all)")
 sys.exit(0 if all(results) else 1)

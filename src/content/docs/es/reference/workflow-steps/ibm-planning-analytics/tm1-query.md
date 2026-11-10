@@ -19,7 +19,7 @@ El paso se conecta a TM1 **directamente desde la nube** mediante su API REST: no
 | Campo | Obligatorio | Notas |
 |---|---|---|
 | Conexión de TM1 | Sí | La [conexión de TM1](/es/guides/connections/tm1/) a través de la cual se lee. |
-| Entorno | Sí | El entorno de la conexión. |
+| Entorno | No | **Entorno del proyecto** (el valor predeterminado) usa el entorno de la conexión del proyecto. **Entorno fijo** usa siempre el que usted elija. Consulte [Fijar un paso a un entorno](/es/guides/projects/managing-projects/#fijar-un-paso-a-un-entorno). |
 | Base de datos | Sí | La base de datos (instancia) de TM1 que se consulta. Si la conexión tiene una base de datos predeterminada, se usa esa de forma predeterminada. |
 | Cubo | Sí | El cubo de TM1 que se consulta. Se detecta en vivo desde la base de datos conectada o se escribe a mano. |
 | Tabla de destino | Sí | La tabla de proyecto en la que se guarda el conjunto de celdas devuelto. |

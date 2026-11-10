@@ -19,7 +19,7 @@ Krok łączy się z TM1 **bezpośrednio z chmury** przez jego interfejs REST —
 | Pole | Wymagane | Uwagi |
 |---|---|---|
 | Połączenie TM1 | Tak | [Połączenie TM1](/pl/guides/connections/tm1/), przez które odbywa się odczyt. |
-| Środowisko | Tak | Środowisko połączenia. |
+| Środowisko | Nie | **Środowisko projektu** (domyślne) używa środowiska połączenia projektu. **Stałe środowisko** zawsze używa wybranego przez Ciebie środowiska. Zobacz [Przypinanie kroku do jednego środowiska](/pl/guides/projects/managing-projects/#przypinanie-kroku-do-jednego-środowiska). |
 | Baza danych | Tak | Baza danych TM1 (instancja), której dotyczy zapytanie. Domyślnie jest to Domyślna baza danych połączenia, jeśli ją ustawiono. |
 | Kostka | Tak | Kostka TM1, której dotyczy zapytanie. Wykrywana na żywo w połączonej bazie danych lub wpisywana ręcznie. |
 | Tabela docelowa | Tak | Tabela projektu, do której trafia zwrócony zestaw komórek. |

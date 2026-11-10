@@ -29,7 +29,7 @@ Tout le reste — la connexion, la base de données, le choix vue/MDX, la tranch
 |---|---|---|
 | Agent | Oui | L'agent PlaidLink auquel envoyer cette lecture. Sa version doit inclure le gestionnaire TM1 (voir [Prérequis](#prérequis) ci-dessous). |
 | Connexion TM1 | Oui | La [connexion TM1](/fr/guides/connections/tm1/) à utiliser pour la lecture. Le sélecteur de connexion n'est pas filtré selon l'agent sélectionné — partagez la connexion avec l'agent séparément (voir ci-dessous). |
-| Environnement | Oui | L'environnement de la connexion. |
+| Environnement | Non | **Environnement du projet** (par défaut) utilise l'environnement de connexion du projet. **Environnement fixe** utilise toujours celui que vous choisissez. Voir [Fixer une étape à un environnement](/fr/guides/projects/managing-projects/#fixer-une-étape-à-un-environnement). |
 | Base de données | Oui | La base de données TM1 (instance) à interroger. |
 | Cube | Oui | Le cube TM1 à interroger. Saisi à la main — cette étape n'offre aucune détection en direct. |
 | Table cible | Oui | La table de projet dans laquelle arrive le jeu de cellules renvoyé. |
