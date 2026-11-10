@@ -99,7 +99,7 @@ Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, i
 - Cuando el Estado sea **Lista**, abra la aplicación en `https://<your-tenant-host>/serve/<slug>/`. La primera solicitud tras un período de inactividad la pone en marcha (unos 15 segundos).
 - Si la compilación falla, abra la aplicación y revise sus registros de **Compilación**: una dependencia faltante o un error de importación aparecen allí. Consulte [Uso de una aplicación Panel](/es/guides/panel-apps/using/) para saber qué significa cada estado, cómo leer los registros y cómo activar una recompilación.
 
-A partir de ese momento, **cada envío a la rama de la conexión recompila y vuelve a implementar la aplicación automáticamente**: edite `app.py`, ejecute `git push` y su cambio entra en vigor. (Salvo que la aplicación esté **bloqueada**, consulte [Bloqueo de una aplicación](/es/guides/panel-apps/using/#bloqueo-de-una-aplicación), en cuyo caso los envíos se omiten hasta que la desbloquee.)
+A partir de ese momento, **cada envío a la rama de la conexión recompila y vuelve a implementar la aplicación automáticamente**: edite `app.py`, ejecute `git push` y su cambio entra en vigor. (Salvo que la aplicación esté **bloqueada**, consulte [Bloqueo de una aplicación](/es/guides/panel-apps/using/#bloquear-una-aplicación), en cuyo caso los envíos se omiten hasta que la desbloquee.)
 
 ## Pasos siguientes
 

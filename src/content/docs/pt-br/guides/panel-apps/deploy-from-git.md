@@ -99,7 +99,7 @@ Depois de publicar, o aplicativo é **criado**: o PlaidCloud clona a branch, ins
 - Quando o Status for **Pronto**, abra o aplicativo em `https://<your-tenant-host>/serve/<slug>/`. A primeira solicitação depois de um período de inatividade inicia o aplicativo (cerca de 15 segundos).
 - Se a criação falhar, abra o aplicativo e confira os logs de build — uma dependência ausente ou um erro de importação aparece ali. Consulte [Usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para saber o que cada status significa, como ler os logs e como iniciar uma nova criação.
 
-A partir daí, **cada envio para a branch da conexão recria e reimplanta o aplicativo automaticamente** — edite o `app.py`, execute `git push` e sua alteração entra em operação. (A menos que o aplicativo esteja **bloqueado** — consulte [Bloquear um aplicativo](/pt-br/guides/panel-apps/using/#bloquear-um-aplicativo) —; nesse caso, os envios são ignorados até você desbloqueá-lo.)
+A partir daí, **cada envio para a branch da conexão recria e reimplanta o aplicativo automaticamente** — edite o `app.py`, execute `git push` e sua alteração entra em operação. (A menos que o aplicativo esteja **bloqueado** — consulte [Bloquear um aplicativo](/pt-br/guides/panel-apps/using/#como-bloquear-um-aplicativo) —; nesse caso, os envios são ignorados até você desbloqueá-lo.)
 
 ## Próximas etapas
 

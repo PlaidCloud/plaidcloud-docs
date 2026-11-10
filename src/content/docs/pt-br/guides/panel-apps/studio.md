@@ -81,7 +81,7 @@ A guia **Criar** mostra o status da compilação mais recente e é atualizada en
 
 Erros e avisos também são marcados nas respectivas linhas no editor, para que você veja o problema onde ele está.
 
-Para saber o que cada status significa depois que o aplicativo é publicado, consulte [Usar um aplicativo Panel](/pt-br/guides/panel-apps/using/#status-de-compilação-aplicativos-de-servidor).
+Para saber o que cada status significa depois que o aplicativo é publicado, consulte [Usar um aplicativo Panel](/pt-br/guides/panel-apps/using/#status-da-compilação-aplicativos-de-servidor).
 
 ## Histórico e restauração
 

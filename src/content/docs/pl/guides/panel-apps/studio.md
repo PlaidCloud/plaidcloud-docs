@@ -81,7 +81,7 @@ Karta **Zbuduj** pokazuje stan ostatniego budowania i aktualizuje się w trakcie
 
 Błędy i ostrzeżenia są też oznaczone w swoich wierszach w edytorze, więc widzisz problem tam, gdzie jest.
 
-Co oznacza każdy stan po opublikowaniu aplikacji, opisuje [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/#stan-kompilacji-aplikacje-serwerowe).
+Co oznacza każdy stan po opublikowaniu aplikacji, opisuje [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/#stan-budowania-aplikacje-serwerowe).
 
 ## Historia i przywracanie
 
