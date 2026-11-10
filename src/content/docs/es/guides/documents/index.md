@@ -39,9 +39,9 @@ PlaidCloud Documents: almacene, organice, busque y comparta archivos junto con s
 | **Examinar** | El explorador de archivos. Elija la cuenta en la lista del encabezado de la página. Consulte [Uso de las cuentas de documentos](/es/guides/documents/using-document/). |
 | **Compartidas** | Cuentas compartidas con usted. Haga doble clic en una fila para examinarla. |
 | **Mis privadas** | Cuentas que solo usted puede usar. Haga doble clic en una fila para examinarla. |
-| **Administrar** | Cuentas de las que es propietario, con **Nombre**, **Servicio**, **Tipo de seguridad**, **Estado** y **Descripción**. Un administrador del espacio de trabajo ve aquí todas las cuentas de documentos y puede administrar cualquiera de ellas. |
+| **Administrar** | Cuentas de las que es propietario, con **Nombre**, **Servicio**, **Tipo de seguridad**, **Estado** y **Descripción**. Un administrador del espacio de trabajo ve aquí todas las cuentas de documentos y puede administrar cualquier cuenta que de otro modo pueda administrar; las cuentas administradas por el sistema se rechazan y las cuentas de bucket administrado no se pueden clonar. |
 
-La barra lateral muestra un recuento junto a **Compartidas**, **Mis privadas** y **Administrar**. El Resumen tiene los botones **Examinar archivos** y **Nueva cuenta** para empezar rápidamente.
+La barra lateral muestra un recuento junto a **Compartidas**, **Mis privadas** y **Administrar**. Para un administrador del espacio de trabajo que tiene cuentas de las que no es propietario, **Administrar** muestra **admin** en lugar de un recuento. El Resumen tiene los botones **Examinar archivos** y **Nueva cuenta** para empezar rápidamente.
 
 ### Acciones de fila en Administrar
 

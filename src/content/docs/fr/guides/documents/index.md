@@ -39,7 +39,7 @@ PlaidCloud Documents — stockez, organisez, recherchez et partagez des fichiers
 | **Parcourir** | L'explorateur de fichiers. Choisissez le compte dans la liste de l'en-tête de la page. Consultez [Utiliser les comptes de documents](/fr/guides/documents/using-document/). |
 | **Partagés** | Les comptes partagés avec vous. Double-cliquez sur une ligne pour la parcourir. |
 | **Mes comptes privés** | Les comptes que vous seul pouvez utiliser. Double-cliquez sur une ligne pour la parcourir. |
-| **Gérer** | Les comptes dont vous êtes propriétaire, avec **Nom**, **Service**, **Type de sécurité**, **Statut** et **Description**. Un administrateur de l'espace de travail voit ici tous les comptes de documents et peut gérer chacun d'eux. |
+| **Gérer** | Les comptes dont vous êtes propriétaire, avec **Nom**, **Service**, **Type de sécurité**, **Statut** et **Description**. Un administrateur de l'espace de travail voit ici tous les comptes de documents et peut gérer tout compte qu'il peut par ailleurs gérer ; les comptes gérés par le système sont refusés et les comptes de bucket géré ne peuvent pas être clonés. |
 
 Le rail affiche un nombre à côté de **Partagés**, **Mes comptes privés** et **Gérer**. La vue d'ensemble propose les boutons **Parcourir les fichiers** et **Nouveau compte** pour démarrer rapidement.
 

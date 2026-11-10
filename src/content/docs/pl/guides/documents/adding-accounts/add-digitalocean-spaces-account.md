@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/adding-accounts/add-digitalocean-spaces-account.md
 ---
 
-## Konfiguracja DigitalOcean Spaces
+## Konfiguracja Digitalocean Spaces
 
 Te czynności należy wykonać w panelu sterowania DigitalOcean.
 
@@ -22,7 +22,7 @@ Te czynności należy wykonać w panelu sterowania DigitalOcean.
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto DigitalOcean Spaces do modułu PlaidCloud Document.
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

@@ -38,7 +38,7 @@ Ces étapes doivent être réalisées dans la console Google Cloud afin de crée
 4. Choisissez le format **JSON** et sélectionnez **Créer**
 5. Un fichier de clé JSON est téléchargé. Conservez ce fichier en lieu sûr : il contient les identifiants que PlaidCloud utilisera.
 
-### Partager du contenu Drive avec le compte de service
+### Partager le contenu de Drive avec le compte de service
 
 1. Copiez l'adresse e-mail du compte de service (par ex. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
 2. Dans Google Drive, partagez avec cette adresse e-mail le ou les dossiers auxquels PlaidCloud doit accéder, en accordant l'accès **Éditeur**

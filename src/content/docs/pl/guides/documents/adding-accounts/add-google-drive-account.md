@@ -38,7 +38,7 @@ Te czynności należy wykonać w konsoli Google Cloud, aby utworzyć konto usłu
 4. Wybierz format **JSON** i wybierz **Create**
 5. Zostanie pobrany plik klucza JSON. Przechowuj go w bezpiecznym miejscu — zawiera poświadczenia, których będzie używać PlaidCloud.
 
-### Udostępnianie zawartości dysku kontu usługi
+### Udostępnianie zawartości Dysku koncie usługi
 
 1. Skopiuj adres e-mail konta usługi (np. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
 2. W Google Drive udostępnij foldery, do których PlaidCloud ma mieć dostęp, temu adresowi e-mail, nadając dostęp **Editor**
@@ -46,7 +46,7 @@ Te czynności należy wykonać w konsoli Google Cloud, aby utworzyć konto usłu
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto Google Drive do modułu PlaidCloud Document.
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

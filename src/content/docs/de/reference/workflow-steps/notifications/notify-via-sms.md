@@ -55,7 +55,7 @@ Jedes Mitglied erhält höchstens 20 SMS pro Tag, ein Workspace sendet höchsten
 
 Jede SMS stammt von der Benachrichtigungsnummer. Die Antwort **STOP** beendet alle SMS von PlaidCloud an diese Nummer, und **HELP** liefert Kontaktinformationen. Nach STOP sendet ein Mitglied **START** per SMS an die Benachrichtigungsnummer, um fortzufahren, und aktiviert die Textbenachrichtigungen dann unter **Textbenachrichtigungen** erneut. Das Schrittformular zeigt neben diesem Mitglied **Abbestellt – Senden Sie START per SMS an die Benachrichtigungsnummer** an, bis es das getan hat.
 
-Workspace-Administratoren sehen den Status der Textbenachrichtigungen jedes Mitglieds, mit maskierter Nummer, auf der Registerkarte **Mitgliedsinformationen** des Mitgliedsfensters. Mitglieder melden sich selbst an und ab; ein Administrator kann das nicht für sie tun.
+Workspace-Administratoren sehen den Status der Textbenachrichtigungen jedes Mitglieds, mit maskierter Nummer, auf der Karte **Profil** der Mitgliedsseite. Mitglieder melden sich selbst an und ab; ein Administrator kann das nicht für sie tun.
 
 ## Schritte mit eingegebener Nummer
 

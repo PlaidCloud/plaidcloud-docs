@@ -20,7 +20,7 @@ Te czynności należy wykonać w konsoli MinIO lub za pomocą interfejsu wiersza
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto MinIO do modułu PlaidCloud Document.
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

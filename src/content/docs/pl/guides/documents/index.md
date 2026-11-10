@@ -39,9 +39,9 @@ Moduł **Dokument** otwiera się z paskiem bocznym po lewej stronie i wybraną s
 | **Przeglądaj** | Eksplorator plików. Wybierz konto z listy w nagłówku strony. Zobacz [Korzystanie z kont dokumentów](/pl/guides/documents/using-document/). |
 | **Udostępnione** | Konta udostępnione Tobie. Kliknij dwukrotnie wiersz, aby go przeglądać. |
 | **Moje prywatne** | Konta, z których możesz korzystać tylko Ty. Kliknij dwukrotnie wiersz, aby go przeglądać. |
-| **Zarządzanie** | Konta, których jesteś właścicielem, z kolumnami **Nazwa**, **Usługa**, **Typ zabezpieczeń**, **Stan** i **Opis**. Administrator obszaru roboczego widzi tu każde konto dokumentów i może zarządzać każdym z nich. |
+| **Zarządzanie** | Konta, których jesteś właścicielem, z kolumnami **Nazwa**, **Usługa**, **Typ zabezpieczeń**, **Stan** i **Opis**. Administrator obszaru roboczego widzi tu każde konto dokumentów i może zarządzać każdym kontem, którym może zarządzać także w inny sposób; konta zarządzane przez system są odrzucane, a kont zarządzanego zasobnika nie można klonować. |
 
-Pasek boczny pokazuje liczniki obok pozycji **Udostępnione**, **Moje prywatne** i **Zarządzanie**. Widok Przegląd zawiera przyciski **Przeglądaj pliki** i **Nowe konto** umożliwiające szybki start.
+Pasek boczny pokazuje liczniki obok pozycji **Udostępnione**, **Moje prywatne** i **Zarządzanie**. Dla administratora obszaru roboczego, który ma konta, których nie jest właścicielem, **Zarządzanie** pokazuje **admin** zamiast licznika. Widok Przegląd zawiera przyciski **Przeglądaj pliki** i **Nowe konto** umożliwiające szybki start.
 
 ### Akcje wiersza w widoku Zarządzanie
 
@@ -49,7 +49,7 @@ Otwórz menu **⋯** wiersza, kliknij wiersz prawym przyciskiem myszy lub użyj 
 
 - **Otwórz** i **Edytuj**, które otwierają stronę konta.
 - **Klonuj…**, **Historia wersji** i **Gdzie używane…**. Zobacz [Miejsca użycia i zmiana wskazania](/pl/guides/documents/account-management/document-account-used-by/).
-- **Who can use it**, z pozycjami **Członkowie**, **Grupy**, **Agenci** i **Właściciele**. Zobacz [Kontrola dostępu do konta dokumentów](/pl/guides/documents/account-management/control-document-account-access/).
+- **Kto może używać**, z pozycjami **Członkowie**, **Grupy**, **Agenci** i **Właściciele**. Zobacz [Kontrola dostępu do konta dokumentów](/pl/guides/documents/account-management/control-document-account-access/).
 - **Włącz** lub **Wyłącz** oraz **Usuń**.
 
 ### Strona konta

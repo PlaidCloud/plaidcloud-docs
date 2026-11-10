@@ -30,7 +30,7 @@ Masz teraz wszystko, czego potrzebujesz, aby dodać konto GCS do modułu PlaidCl
 
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

@@ -23,7 +23,7 @@ Te czynności należy wykonać w Linode Cloud Manager.
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto Linode Object Storage do modułu PlaidCloud Document.
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

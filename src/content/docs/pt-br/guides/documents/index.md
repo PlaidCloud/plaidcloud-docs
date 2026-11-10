@@ -39,9 +39,9 @@ PlaidCloud Documents: armazene, organize, pesquise e compartilhe arquivos junto 
 | **Procurar** | O explorador de arquivos. Escolha a conta na lista do cabeçalho da página. Consulte [Usar contas de documentos](/pt-br/guides/documents/using-document/). |
 | **Compartilhadas** | As contas compartilhadas com você. Clique duas vezes em uma linha para navegar por ela. |
 | **Minhas privadas** | As contas que somente você pode usar. Clique duas vezes em uma linha para navegar por ela. |
-| **Gerenciar** | As contas das quais você é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Status** e **Descrição**. Um administrador do espaço de trabalho vê todas as contas de documentos aqui e pode gerenciar qualquer uma delas. |
+| **Gerenciar** | As contas das quais você é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Status** e **Descrição**. Um administrador do espaço de trabalho vê todas as contas de documentos aqui e pode gerenciar qualquer conta que, de outra forma, possa gerenciar; as contas gerenciadas pelo sistema são recusadas e as contas de bucket gerenciado não podem ser clonadas. |
 
-A barra lateral mostra uma contagem ao lado de **Compartilhadas**, **Minhas privadas** e **Gerenciar**. A Visão geral tem os botões **Procurar arquivos** e **Nova conta** para começar rapidamente.
+A barra lateral mostra uma contagem ao lado de **Compartilhadas**, **Minhas privadas** e **Gerenciar**. Para um administrador do espaço de trabalho que tem contas que não são dele, **Gerenciar** mostra **admin** em vez de uma contagem. A Visão geral tem os botões **Procurar arquivos** e **Nova conta** para começar rapidamente.
 
 ### Ações de linha em Gerenciar
 

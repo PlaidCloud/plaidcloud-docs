@@ -39,9 +39,9 @@ PlaidCloud Documents: Speichern, organisieren, durchsuchen und teilen Sie Dateie
 | **Durchsuchen** | Der Datei-Explorer. Wählen Sie das Konto aus der Liste in der Kopfzeile der Seite. Siehe [Dokumentenkonten verwenden](/de/guides/documents/using-document/). |
 | **Freigegeben** | Konten, die für Sie freigegeben sind. Doppelklicken Sie auf eine Zeile, um sie zu durchsuchen. |
 | **Meine privaten** | Konten, die nur Sie verwenden können. Doppelklicken Sie auf eine Zeile, um sie zu durchsuchen. |
-| **Verwalten** | Konten, deren Eigentümer Sie sind, mit **Name**, **Dienst**, **Sicherheitstyp**, **Status** und **Beschreibung**. Ein Workspace-Administrator sieht hier jedes Dokumentenkonto und kann jedes davon verwalten. |
+| **Verwalten** | Konten, deren Eigentümer Sie sind, mit **Name**, **Dienst**, **Sicherheitstyp**, **Status** und **Beschreibung**. Ein Workspace-Administrator sieht hier jedes Dokumentenkonto und kann jedes Konto verwalten, das er auch sonst verwalten kann; systemverwaltete Konten werden abgelehnt, und Konten mit verwaltetem Bucket können nicht geklont werden. |
 
-Die Navigationsleiste zeigt neben **Freigegeben**, **Meine privaten** und **Verwalten** einen Zähler an. Die Übersicht bietet für einen schnellen Einstieg die Schaltflächen **Dateien durchsuchen** und **Neues Konto**.
+Die Navigationsleiste zeigt neben **Freigegeben**, **Meine privaten** und **Verwalten** einen Zähler an. Für einen Workspace-Administrator, der Konten hält, deren Eigentümer er nicht ist, zeigt **Verwalten** statt eines Zählers **Admin** an. Die Übersicht bietet für einen schnellen Einstieg die Schaltflächen **Dateien durchsuchen** und **Neues Konto**.
 
 ### Zeilenaktionen unter „Verwalten“
 
@@ -49,7 +49,7 @@ Die Navigationsleiste zeigt neben **Freigegeben**, **Meine privaten** und **Verw
 
 - **Öffnen** und **Bearbeiten**, die die Kontoseite öffnen.
 - **Klonen…**, **Versionsverlauf** und **Verwendungsnachweis…**. Siehe [Verwendungsnachweis und Umstellung](/de/guides/documents/account-management/document-account-used-by/).
-- **Who can use it**, mit **Mitglieder**, **Gruppen**, **Agenten** und **Eigentümer**. Siehe [Zugriff auf Dokumentenkonten steuern](/de/guides/documents/account-management/control-document-account-access/).
+- **Wer es verwenden kann**, mit **Mitglieder**, **Gruppen**, **Agenten** und **Eigentümer**. Siehe [Zugriff auf Dokumentenkonten steuern](/de/guides/documents/account-management/control-document-account-access/).
 - **Aktivieren** oder **Deaktivieren** sowie **Löschen**.
 
 ### Die Kontoseite

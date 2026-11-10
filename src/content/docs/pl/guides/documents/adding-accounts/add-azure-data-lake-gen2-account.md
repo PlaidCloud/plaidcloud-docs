@@ -19,7 +19,7 @@ Azure Data Lake Storage Gen2 jest zbudowany na bazie Azure Blob Storage z włąc
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto Azure Data Lake Gen2 do modułu PlaidCloud Document.
 
 
-## Konfiguracja w PlaidCloud Document
+## Konfiguracja PlaidCloud Document
 
 1. Zaloguj się do PlaidCloud
 2. Wybierz obszar roboczy, w którym ma się znaleźć nowe konto dokumentów

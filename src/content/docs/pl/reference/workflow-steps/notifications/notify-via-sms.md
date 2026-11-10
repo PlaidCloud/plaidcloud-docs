@@ -55,7 +55,7 @@ Każdy członek otrzymuje najwyżej 20 SMS-ów dziennie, obszar roboczy wysyła 
 
 Każdy SMS pochodzi z numeru alertów. Odpowiedź **STOP** zatrzymuje wszystkie SMS-y z PlaidCloud na ten numer, a **HELP** zwraca dane kontaktowe. Po STOP członek wysyła SMS-em **START** na numer alertów, aby wznowić, a następnie ponownie włącza alerty tekstowe w oknie **Alerty tekstowe**. Formularz kroku pokazuje **Zrezygnowano - wyślij SMS-em START na numer alertów** obok tego członka, dopóki tego nie zrobi.
 
-Administratorzy obszaru roboczego widzą status alertów tekstowych każdego członka, z zamaskowanym numerem, na karcie **Informacje o członku** w oknie członka. Członkowie wyrażają zgodę i rezygnują samodzielnie; administrator nie może tego zrobić za nich.
+Administratorzy obszaru roboczego widzą status alertów tekstowych każdego członka, z zamaskowanym numerem, na karcie **Profil** na stronie członka. Członkowie wyrażają zgodę i rezygnują samodzielnie; administrator nie może tego zrobić za nich.
 
 ## Kroki z wpisanym numerem
 

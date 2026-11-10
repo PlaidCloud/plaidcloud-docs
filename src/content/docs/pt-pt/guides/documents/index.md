@@ -39,9 +39,9 @@ PlaidCloud Documents — armazene, organize, pesquise e partilhe ficheiros junto
 | **Procurar** | O explorador de ficheiros. Escolha a conta na lista do cabeçalho da página. Consulte [Utilizar contas de documentos](/pt-pt/guides/documents/using-document/). |
 | **Partilhadas** | Contas partilhadas consigo. Faça duplo clique numa linha para a explorar. |
 | **As minhas privadas** | Contas que só podem ser utilizadas por si. Faça duplo clique numa linha para a explorar. |
-| **Gerir** | Contas de que é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Estado** e **Descrição**. Um administrador da área de trabalho vê aqui todas as contas de documentos e pode gerir qualquer uma delas. |
+| **Gerir** | Contas de que é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Estado** e **Descrição**. Um administrador da área de trabalho vê aqui todas as contas de documentos e pode gerir qualquer conta que, de outra forma, possa gerir; as contas geridas pelo sistema são recusadas e as contas de bucket gerido não podem ser clonadas. |
 
-A barra lateral mostra uma contagem junto a **Partilhadas**, **As minhas privadas** e **Gerir**. A Visão geral tem os botões **Procurar ficheiros** e **Nova conta** para um início rápido.
+A barra lateral mostra uma contagem junto a **Partilhadas**, **As minhas privadas** e **Gerir**. Para um administrador da área de trabalho que tem contas que não são suas, **Gerir** mostra **admin** em vez de uma contagem. A Visão geral tem os botões **Procurar ficheiros** e **Nova conta** para um início rápido.
 
 ### Ações de linha em Gerir
 
@@ -49,7 +49,7 @@ Abra o menu **⋯** de uma linha, clique com o botão direito na linha ou utiliz
 
 - **Abrir** e **Editar**, que abrem a página da conta.
 - **Clonar…**, **Histórico de versões** e **Onde é utilizado…**. Consulte [Onde é utilizado e redirecionamento](/pt-pt/guides/documents/account-management/document-account-used-by/).
-- **Quem a pode utilizar**, com **Membros**, **Grupos**, **Agentes** e **Proprietários**. Consulte [Controlar o acesso às contas de documentos](/pt-pt/guides/documents/account-management/control-document-account-access/).
+- **Quem a pode usar**, com **Membros**, **Grupos**, **Agentes** e **Proprietários**. Consulte [Controlar o acesso às contas de documentos](/pt-pt/guides/documents/account-management/control-document-account-access/).
 - **Ativar** ou **Desativar**, e **Eliminar**.
 
 ### A página da conta

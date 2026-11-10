@@ -30,7 +30,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 
-## PlaidCloud 文档 设置
+## PlaidCloud 文档设置
 
 1. 登录 PlaidCloud
 2. 选择新文档账户所在的工作区

@@ -38,9 +38,9 @@ PlaidCloud Documents — store, organize, search, and share files alongside your
 | **Browse** | The file explorer. Pick the account from the list in the page header. See [Using Document Accounts](/guides/documents/using-document/). |
 | **Shared** | Accounts shared with you. Double-click a row to browse it. |
 | **My private** | Accounts only you can use. Double-click a row to browse it. |
-| **Manage** | Accounts you own, with **Name**, **Service**, **Security type**, **Status** and **Description**. A workspace admin sees every document account here and can manage any of them. |
+| **Manage** | Accounts you own, with **Name**, **Service**, **Security type**, **Status** and **Description**. A workspace admin sees every document account here and can manage any account they can otherwise manage; system-managed accounts are refused and managed-bucket accounts can't be cloned. |
 
-The rail shows a count beside **Shared**, **My private** and **Manage**. The Overview has **Browse files** and **New account** buttons for a quick start.
+The rail shows a count beside **Shared**, **My private** and **Manage**. For a workspace admin who holds accounts they don't own, **Manage** shows **admin** instead of a count. The Overview has **Browse files** and **New account** buttons for a quick start.
 
 ### Row Actions in Manage
 
