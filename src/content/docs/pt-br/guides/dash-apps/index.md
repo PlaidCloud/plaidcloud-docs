@@ -17,7 +17,7 @@ Use um aplicativo Dash quando seu aplicativo for escrito com Plotly Dash em vez 
 Tudo o que um aplicativo Panel de servidor recebe, um aplicativo Dash também recebe:
 
 - **Identidade por usuário.** Cada visualizador entra com o logon único da plataforma, e toda chamada que o aplicativo faz para ler dados é executada como *aquele visualizador*, o mesmo modelo de [Leitura de dados e do usuário conectado](/pt-br/guides/panel-apps/accessing-data/), usando a API auxiliar própria do Dash. Consulte [Leitura de dados e do usuário conectado em um aplicativo Dash](/pt-br/guides/dash-apps/accessing-data/).
-- **Escalonamento a zero.** O aplicativo fica ocioso com zero réplicas após a janela de inatividade configurada e desperta na próxima solicitação, com uma breve tela de carregamento do PlaidCloud durante a inicialização a frio. Consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/#abrir-um-aplicativo-dash).
+- **Escalonamento a zero.** O aplicativo fica ocioso com zero réplicas após a janela de inatividade configurada e desperta na próxima solicitação, com uma breve tela de carregamento do PlaidCloud durante a inicialização a frio. Consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/#como-abrir-um-aplicativo-dash).
 - **Recompilações automáticas.** Cada push no branch conectado recompila e reimplanta o aplicativo.
 - **Logs de runtime e de compilação**, cada um identificado com o visualizador cuja sessão gerou a linha.
 

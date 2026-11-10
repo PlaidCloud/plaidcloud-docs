@@ -17,7 +17,7 @@ Recurra a una aplicación de Dash cuando su aplicación esté escrita con Plotly
 Todo lo que obtiene una aplicación de Panel de servidor, lo obtiene también una aplicación de Dash:
 
 - **Identidad por usuario.** Cada espectador inicia sesión con el inicio de sesión único de la plataforma, y cada llamada que la aplicación realiza para leer datos se ejecuta como *ese espectador*: el mismo modelo de [Lectura de datos y el usuario con sesión iniciada](/es/guides/panel-apps/accessing-data/), con la API auxiliar propia de Dash. Consulte [Lectura de datos y el usuario con sesión iniciada en una aplicación de Dash](/es/guides/dash-apps/accessing-data/).
-- **Escalado a cero.** La aplicación pasa a cero réplicas tras el período de inactividad configurado y se activa con la siguiente solicitud, con una breve pantalla de carga de PlaidCloud durante el arranque en frío; consulte [Uso de una aplicación de Dash](/es/guides/dash-apps/using/#abrir-una-aplicación-dash).
+- **Escalado a cero.** La aplicación pasa a cero réplicas tras el período de inactividad configurado y se activa con la siguiente solicitud, con una breve pantalla de carga de PlaidCloud durante el arranque en frío; consulte [Uso de una aplicación de Dash](/es/guides/dash-apps/using/#abrir-una-aplicación-de-dash).
 - **Recompilaciones automáticas.** Cada push a la rama conectada recompila y vuelve a implementar la aplicación.
 - **Registros de ejecución y de compilación**, cada uno etiquetado con el espectador cuya sesión generó una línea.
 

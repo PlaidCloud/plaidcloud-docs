@@ -81,7 +81,7 @@ L'onglet **Créer** affiche l'état de la dernière génération et se met à jo
 
 Les erreurs et les avertissements sont aussi signalés sur leurs lignes dans l'éditeur, de sorte que vous voyez un problème là où il se trouve.
 
-Pour la signification de chaque état une fois l'application publiée, consultez [Utiliser une application Panel](/fr/guides/panel-apps/using/#état-de-génération-applications-serveur).
+Pour la signification de chaque état une fois l'application publiée, consultez [Utiliser une application Panel](/fr/guides/panel-apps/using/#statut-de-génération-applications-serveur).
 
 ## Historique et restauration
 
