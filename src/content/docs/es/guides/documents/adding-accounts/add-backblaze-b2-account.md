@@ -26,8 +26,8 @@ Ahora debería tener todo lo necesario para agregar su cuenta de Backblaze B2 a 
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `Backblaze B2` como Tipo de servicio
 6. Complete un nombre y una descripción
 7. Escriba la **Ruta de inicio** como su punto de conexión compatible con S3 seguido del nombre del bucket: `https://s3.us-west-004.backblazeb2.com/my-bucket`

@@ -24,8 +24,8 @@ Ahora debería tener todo lo necesario para agregar su cuenta de MinIO a PlaidCl
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `MinIO` como Tipo de servicio
 6. Escriba un nombre y una descripción
 7. Escriba la **Ruta de inicio** como la URL del punto de conexión de MinIO seguida del nombre del bucket y un prefijo opcional: `https://minio.yourcompany.com/my-bucket/optional/prefix`

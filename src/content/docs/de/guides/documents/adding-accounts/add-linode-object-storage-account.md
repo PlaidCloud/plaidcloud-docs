@@ -27,9 +27,9 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Linode-Object-Storage-Konto 
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `Linode Object Storage` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `Linode Object Storage` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie als **Startpfad** die Endpunkt-URL gefolgt vom Bucket-Namen ein: `https://us-east-1.linodeobjects.com/my-bucket`
 8. Geben Sie die **Region** ein (z. B. `us-east-1`)

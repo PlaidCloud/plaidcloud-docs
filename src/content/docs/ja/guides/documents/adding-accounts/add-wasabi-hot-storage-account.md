@@ -31,8 +31,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloudにサインインします
 2. 新しいドキュメントアカウントを作成するワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. サービスタイプとして `Wasabi Hot Storage` を選択します
 6. 名前と説明を入力します
 7. バケット名と任意のパスプレフィックスを**開始パス**フィールドに入力します（例：`my-bucket` または `my-bucket/data`）。最初のパスセグメントがバケット名です。

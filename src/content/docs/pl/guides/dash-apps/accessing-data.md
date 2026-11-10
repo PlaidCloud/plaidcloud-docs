@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Ponieważ połączenie jest przeglądającym, zwraca ono tylko te wiersze, które przeglądający może zobaczyć, a jeśli nie ma on żadnego dostępu do projektu, zgłasza błąd uprawnień.
 
-> **Odczytuj tabele według nazwy, nie pisząc SQL.** W projekcie, w którym administrator włączył [Dostęp do wierszy](/pl/administration/access/managing-security-groups-and-assignments/#dostęp-do-wierszy-a-zapytania-pisane-samodzielnie), odczyt według nazwy zwraca wiersze każdego przeglądającego, podobnie jak zapytanie złożone przez samą aplikację w magazynie StarRocks, Databend, Greenplum lub Postgres. Zapytanie w magazynie Snowflake lub Databricks albo takie, które nie jest pojedynczym zapytaniem SELECT do tabel projektu (zapis lub kilka instrukcji), jest odrzucane dla każdego, kto nie jest Architektem projektu. Odczyt według nazwy sprawia, że aplikacja działa w obu przypadkach.
+> **Odczytuj tabele według nazwy, nie pisząc SQL.** W projekcie, w którym administrator włączył [Dostęp do wierszy](/pl/administration/access/managing-security-groups-and-assignments/#dostęp-do-wierszy-i-zapytania-pisane-samodzielnie), odczyt według nazwy zwraca wiersze każdego przeglądającego, podobnie jak zapytanie złożone przez samą aplikację w magazynie StarRocks, Databend, Greenplum lub Postgres. Zapytanie w magazynie Snowflake lub Databricks albo takie, które nie jest pojedynczym zapytaniem SELECT do tabel projektu (zapis lub kilka instrukcji), jest odrzucane dla każdego, kto nie jest Architektem projektu. Odczyt według nazwy sprawia, że aplikacja działa w obu przypadkach.
 
 ## Odczyt w callbacku, nigdy podczas importu ani w zakresie procesu
 

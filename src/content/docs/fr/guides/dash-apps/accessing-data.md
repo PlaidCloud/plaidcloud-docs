@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Comme la connexion est celle du lecteur, cet appel ne renvoie que les lignes que le lecteur est autorisé à voir, et lève une erreur d'autorisation s'il n'a aucun accès au projet.
 
-> **Lisez les tables par leur nom, sans écrire de SQL.** Sur un projet où un administrateur a activé l'[Accès aux lignes](/fr/administration/access/managing-security-groups-and-assignments/#accès-aux-lignes-et-requêtes-que-vous-écrivez-vous-même), la lecture par nom renvoie les lignes de chaque lecteur, et une requête composée par votre application renvoie aussi ses lignes sur un entrepôt StarRocks, Databend, Greenplum ou Postgres. Une requête sur un entrepôt Snowflake ou Databricks, ou qui n'est pas un unique SELECT sur les tables du projet (une écriture ou plusieurs instructions), est refusée pour toute personne qui n'est pas Architecte du projet. Lire par nom permet à votre application de fonctionner dans les deux cas.
+> **Lisez les tables par leur nom, sans écrire de SQL.** Sur un projet où un administrateur a activé l'[Accès aux lignes](/fr/administration/access/managing-security-groups-and-assignments/#laccès-aux-lignes-et-les-requêtes-que-vous-écrivez-vous-même), la lecture par nom renvoie les lignes de chaque lecteur, et une requête composée par votre application renvoie aussi ses lignes sur un entrepôt StarRocks, Databend, Greenplum ou Postgres. Une requête sur un entrepôt Snowflake ou Databricks, ou qui n'est pas un unique SELECT sur les tables du projet (une écriture ou plusieurs instructions), est refusée pour toute personne qui n'est pas Architecte du projet. Lire par nom permet à votre application de fonctionner dans les deux cas.
 
 ## Lire dans un rappel, jamais à l'import ni à l'échelle du processus
 

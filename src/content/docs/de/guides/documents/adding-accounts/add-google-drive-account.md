@@ -50,9 +50,9 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Google-Drive-Konto zu PlaidC
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `Google Drive` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `Google Drive` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie den Pfad des freigegebenen Ordners in das Feld **Startpfad** ein oder lassen Sie es leer, um auf alle freigegebenen Inhalte zuzugreifen
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`.

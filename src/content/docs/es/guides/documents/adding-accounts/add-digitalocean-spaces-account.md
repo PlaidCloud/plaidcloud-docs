@@ -26,8 +26,8 @@ Ahora debería tener todo lo necesario para agregar su cuenta de DigitalOcean Sp
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `DigitalOcean Spaces` como Tipo de servicio
 6. Complete un nombre y una descripción
 7. Escriba la **Ruta de inicio** como la URL del punto de conexión seguida del nombre del Space: `https://nyc3.digitaloceanspaces.com/my-space`

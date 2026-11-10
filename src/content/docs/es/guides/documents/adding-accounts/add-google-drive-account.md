@@ -50,8 +50,8 @@ Ahora debería tener todo lo necesario para agregar su cuenta de Google Drive a 
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `Google Drive` como Tipo de servicio
 6. Complete un nombre y una descripción
 7. Escriba la ruta de la carpeta compartida en el campo **Ruta de inicio**, o déjelo en blanco para acceder a todo el contenido compartido

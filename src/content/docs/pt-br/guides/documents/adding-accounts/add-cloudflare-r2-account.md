@@ -27,8 +27,8 @@ Agora você deve ter tudo o que precisa para adicionar sua conta do Cloudflare R
 
 1. Entre no PlaidCloud
 2. Selecione o espaço de trabalho em que a nova conta de documentos ficará
-3. Vá para `Document > Manage Accounts`
-4. Clique no botão `+ New Account`
+3. Vá para `Document > Manage`
+4. Clique no botão **Nova conta**
 5. Selecione `Cloudflare R2` como o Tipo de serviço
 6. Preencha um nome e uma descrição
 7. Informe o **Caminho inicial** como o seu endpoint do R2 seguido do nome do bucket: `https://{account_id}.r2.cloudflarestorage.com/my-bucket`

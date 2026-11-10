@@ -29,8 +29,8 @@ Neste momento, deverá ter tudo o que precisa para adicionar a sua conta S3 ao D
 
 1. Inicie sessão no PlaidCloud
 2. Selecione a área de trabalho em que a nova conta de documentos vai residir
-3. Aceda a `Document > Manage Accounts`
-4. Selecione o botão `+ New Account`
+3. Aceda a `Document > Manage`
+4. Selecione o botão **Nova conta**
 5. Selecione `Amazon S3` como Tipo de serviço
 6. Preencha um nome e uma descrição
 7. Introduza o nome do bucket e um prefixo de caminho opcional no campo **Caminho inicial** (p. ex. `my-bucket` ou `my-bucket/data`). O primeiro segmento do caminho é o nome do bucket.

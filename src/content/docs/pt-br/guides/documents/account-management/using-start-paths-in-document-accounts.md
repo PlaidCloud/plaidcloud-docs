@@ -31,8 +31,8 @@ Isso permite restringir equipes específicas a níveis mais baixos da árvore, e
 ## Adicionando e atualizando o caminho inicial
 
 
-1. Vá para Document > Manage Accounts
-2. Selecione a conta que deseja editar e entre no modo de edição
+1. Vá para `Document > Manage`
+2. Abra a conta que deseja editar e selecione **Editar**
 3. Adicione um caminho inicial no campo de texto Caminho inicial
 4. Clique no botão Salvar
 

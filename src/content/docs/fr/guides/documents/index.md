@@ -1,12 +1,12 @@
 ---
 title: Gestion des fichiers
-description: Gérez les comptes de stockage de fichiers dans PlaidCloud pour importer et exporter des données aux formats CSV, Excel, Parquet et autres.
+description: Gérez dans PlaidCloud les comptes de stockage de fichiers servant à importer et exporter des données aux formats CSV, Excel, Parquet et autres.
 sidebar:
   label: Vue d'ensemble
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/documents/index.md
 ---
 
-PlaidCloud Documents : stockez, organisez, recherchez et partagez des fichiers aux côtés de vos données et de vos workflows. Les documents peuvent provenir de n'importe quel compte de stockage connecté et être référencés dans les workflows.
+PlaidCloud Documents — stockez, organisez, recherchez et partagez des fichiers aux côtés de vos données et de vos workflows. Les documents peuvent provenir de n'importe quel compte de stockage connecté et être référencés dans les workflows.
 
 <figure style="margin:1.5rem 0;text-align:center;">
 <svg viewBox="0 0 680 200" role="img" aria-label="Des comptes de stockage connectés, tels que S3, Google Cloud Storage et OneDrive, alimentent PlaidCloud Documents, où les fichiers sont stockés, organisés, recherchés et partagés. Les étapes de workflow référencent ensuite ces fichiers pour importer et exporter des données." style="width:100%;max-width:680px;height:auto;">
@@ -26,5 +26,41 @@ PlaidCloud Documents : stockez, organisez, recherchez et partagez des fichiers 
   <text x="588" y="100" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">étapes de workflow</text>
   <text x="588" y="118" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">importer · exporter des fichiers</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Les fichiers arrivent dans Documents depuis n'importe quel compte de stockage connecté, où vous les stockez, les organisez, les recherchez et les partagez, puis vous les référencez depuis des étapes de workflow pour importer et exporter des données.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Les fichiers arrivent dans Documents depuis n'importe quel compte de stockage connecté, où vous les stockez, organisez, recherchez et partagez, puis vous les référencez dans des étapes de workflow pour importer et exporter des données.</figcaption>
 </figure>
+
+## L'espace Documents
+
+**Document** s'ouvre avec un rail à gauche et, à côté, la page que vous choisissez. Les membres qui ne peuvent pas ouvrir une page ne voient pas l'élément correspondant.
+
+| Élément du rail | Contenu affiché |
+|---|---|
+| **Vue d'ensemble** | Des vignettes pour vos comptes (**Comptes**, **Partagés**, **Privés pour vous**, **Buckets gérés**, **Services externes**, et **Désactivé** lorsqu'un compte nécessite une attention), les fichiers **Épinglés**, **Comptes par service** et **Qui peut les utiliser**. Sélectionnez un fichier épinglé pour ouvrir **Parcourir** dans son dossier, avec le fichier sélectionné. |
+| **Parcourir** | L'explorateur de fichiers. Choisissez le compte dans la liste de l'en-tête de la page. Consultez [Utiliser les comptes de documents](/fr/guides/documents/using-document/). |
+| **Partagés** | Les comptes partagés avec vous. Double-cliquez sur une ligne pour la parcourir. |
+| **Mes comptes privés** | Les comptes que vous seul pouvez utiliser. Double-cliquez sur une ligne pour la parcourir. |
+| **Gérer** | Les comptes dont vous êtes propriétaire, avec **Nom**, **Service**, **Type de sécurité**, **Statut** et **Description**. Un administrateur de l'espace de travail voit ici tous les comptes de documents et peut gérer chacun d'eux. |
+
+Le rail affiche un nombre à côté de **Partagés**, **Mes comptes privés** et **Gérer**. La vue d'ensemble propose les boutons **Parcourir les fichiers** et **Nouveau compte** pour démarrer rapidement.
+
+### Actions sur les lignes dans Gérer
+
+Ouvrez le menu **⋯** d'une ligne, cliquez avec le bouton droit sur la ligne ou utilisez le menu **Actions** de la barre d'outils pour accéder à :
+
+- **Ouvrir** et **Modifier**, qui ouvrent la page du compte.
+- **Cloner…**, **Historique des versions** et **Où utilisé…**. Consultez [Où utilisé et redirection](/fr/guides/documents/account-management/document-account-used-by/).
+- **Qui peut l'utiliser**, avec **Membres**, **Groupes**, **Agents** et **Propriétaires**. Consultez [Contrôler l'accès aux comptes de documents](/fr/guides/documents/account-management/control-document-account-access/).
+- **Activer** ou **Désactiver**, et **Supprimer**.
+
+### La page du compte
+
+**Nouveau compte**, **Ouvrir** et **Modifier** affichent le compte sous forme de page, avec **Gérer les comptes** en haut pour revenir en arrière. Elle comporte des cartes pour :
+
+- **Général** : le nom du compte, son service, son bucket et son chemin de départ.
+- **Accès** : le modèle de sécurité et les personnes autorisées à utiliser le compte. **Membres**, **Groupes**, **Agents** et **Propriétaires** disposent chacun d'un lien **Modifier** qui ouvre le même sélecteur que le menu de la ligne.
+- **Identifiants** : des champs en écriture seule pour le service choisi. Une mention **Identifiants enregistrés** indique que les identifiants sont définis ; les valeurs enregistrées ne sont jamais affichées. Laissez un champ vide pour conserver la valeur enregistrée. Les comptes SFTP disposent également de **Tester la connexion**.
+- **SSH** : les paramètres de clé, pour les comptes SFTP uniquement.
+
+L'en-tête comporte **Parcourir**, **Où utilisé** et un menu **Actions** avec **Cloner**, **Historique des versions**, **Activer** ou **Désactiver** et **Supprimer**. Si vous quittez une page dont les modifications ne sont pas enregistrées, PlaidCloud vous demande s'il faut les abandonner.
+
+Les anciens liens et favoris vers les écrans Document ouvrent toujours la page correspondante.
