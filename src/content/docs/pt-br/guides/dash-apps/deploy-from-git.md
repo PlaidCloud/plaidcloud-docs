@@ -115,7 +115,7 @@ Depois de publicar, o aplicativo é **criado**: o PlaidCloud clona a branch, ins
 - Quando o Status for **Pronto**, abra o aplicativo em `https://<your-tenant-host>/serve/<slug>/`. A primeira solicitação depois de um período de inatividade inicia o aplicativo, exibindo brevemente uma tela de carregamento do PlaidCloud.
 - Se a criação falhar, abra o aplicativo e confira os logs de build — uma dependência ausente ou um erro de importação aparece ali. Consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/) para saber o que cada status significa, como ler os logs e como iniciar uma nova criação.
 
-A partir daí, **cada envio para a branch da conexão recria e reimplanta o aplicativo automaticamente** — edite o `app.py`, execute `git push` e sua alteração entra em operação. (A menos que o aplicativo esteja **bloqueado**; nesse caso, os envios são ignorados até você desbloqueá-lo — consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/#bloquear-um-aplicativo).)
+A partir daí, **cada envio para a branch da conexão recria e reimplanta o aplicativo automaticamente** — edite o `app.py`, execute `git push` e sua alteração entra em operação. (A menos que o aplicativo esteja **bloqueado**; nesse caso, os envios são ignorados até você desbloqueá-lo — consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/#como-bloquear-um-aplicativo).)
 
 ## Próximas etapas
 
