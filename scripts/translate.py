@@ -15,7 +15,7 @@ Commands:
                              create batch(es) for the stale pairs; records i18n/batches/<id>.json
     collect <batch_id>       poll until the batch ends, post-process, validate, write translations
     check                    re-validate every translated file against its English source
-    check-anchors [--dist]   verify every /<locale>/…#anchor link in the built site hits an id
+    check-anchors [--dist]   verify every internal …#anchor link in the built site hits an id
     prepare [--locales ...] [--paths ...] [--force-paths ...] [--chunk-words N]
                              write worker chunks + per-locale prompts to i18n/jobs/ (see i18n/jobs/WORKER.md)
     ingest [--locales ...]   post-process + validate worker output from i18n/staging/, install valid files
@@ -1226,17 +1226,16 @@ def cmd_ingest(args):
 
 
 def cmd_check_anchors(args):
-    """Every #frag link into a /<locale>/ page of the built site (absolute, relative or same-page) must hit an id."""
+    """Every internal #frag link in the built site (absolute, relative or same-page) must hit an id."""
     dist = ROOT / args.dist
     ids, bad, total = {}, Counter(), 0
-    in_locale = re.compile(r"^/(?:" + "|".join(map(re.escape, LOCALES)) + r")/")
     for page in sorted(dist.rglob("index.html")):
         here = page.parent.relative_to(dist).as_posix()
         base = "/" if here == "." else f"/{here}/"
         for href, frag in re.findall(r'href="([^"#]*)#([^"]+)"', page.read_text()):
             # Same-page and relative links count too: resolve them against the page's own URL.
             path = urllib.parse.urlsplit(urllib.parse.urljoin(base, html.unescape(href))).path
-            if href.startswith(("http:", "https:", "//")) or not in_locale.match(path):
+            if href.startswith(("http:", "https:", "//")):
                 continue
             frag = urllib.parse.unquote(html.unescape(frag))
             target = dist / path.strip("/") / "index.html"
@@ -1247,7 +1246,7 @@ def cmd_check_anchors(args):
                 bad[(path, frag)] += 1
     for (path, frag), n in sorted(bad.items()):
         print(f"missing  {path}#{frag}  ({n} link{'s' if n > 1 else ''})")
-    print(f"{total} locale anchor links checked: {sum(bad.values())} broken ({len(bad)} distinct)")
+    print(f"{total} anchor links checked: {sum(bad.values())} broken ({len(bad)} distinct)")
     sys.exit(1 if bad else 0)
 
 
@@ -1307,7 +1306,7 @@ def main():
     p.add_argument("--poll", type=int, default=60)
     p.set_defaults(fn=cmd_collect)
     sub.add_parser("check").set_defaults(fn=cmd_check)
-    p = sub.add_parser("check-anchors", help="verify /<locale>/…#anchor links in the built dist/")
+    p = sub.add_parser("check-anchors", help="verify internal …#anchor links in the built dist/")
     p.add_argument("--dist", default="dist")
     p.set_defaults(fn=cmd_check_anchors)
     p = sub.add_parser("prepare", help="write chunked jobs for Claude Code worker subagents (no API)")
