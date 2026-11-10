@@ -46,9 +46,9 @@ Click the **Open** icon at the start of a ready app's row to launch it in a new 
 - A server app is served at `https://<your-tenant-host>/serve/<slug>/`.
 - The **Open** icon appears only once a server app is **Ready**.
 
-A server app scales to zero when idle to save resources, so the first open after an idle period has to spin it up. While that happens you see a **PlaidCloud loading screen** — your app's name, a progress indicator, and your workspace details — instead of a blank tab. The app appears on its own as soon as it is ready (usually a few seconds, up to about a minute on a cold start), and then responds normally until it next goes idle.
+A server app scales to zero when idle to save resources, so the first open after an idle period has to spin it up. While that happens you see a **PlaidCloud loading screen** instead of a blank tab: your app's name, its progress through **Starting**, **Preparing** and **Loading app**, and your workspace ID, in your light or dark theme. The app appears on its own as soon as it is ready (usually a few seconds, up to about a minute on a cold start), and then responds normally until it next goes idle.
 
-> If an app can't start, the loading screen turns into a **"This app didn't start"** message with a **Try Again** button rather than spinning forever. If that keeps happening, edit the app to check its entry point and branch and republish, or contact your PlaidCloud administrator.
+> If an app can't start, the loading screen turns into a message that the app didn't start and which step it stopped at, with a **Try again** button, rather than spinning forever. If that keeps happening, edit the app to check its entry point and branch and republish, or contact your PlaidCloud administrator.
 
 ### Appearance
 
