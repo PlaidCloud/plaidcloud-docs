@@ -49,8 +49,8 @@ You should now have everything you need to add your Google Drive account to Plai
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `Google Drive` as the Service Type
 6. Fill in a name and description
 7. Enter the shared folder path into the **Start Path** field, or leave it blank to access all shared content

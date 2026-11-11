@@ -23,8 +23,8 @@ Agora você deve ter tudo o que precisa para adicionar sua conta do Azure Data L
 
 1. Entre no PlaidCloud
 2. Selecione o espaço de trabalho em que a nova conta de documentos ficará
-3. Vá para `Document > Manage Accounts`
-4. Clique no botão `+ New Account`
+3. Vá para `Document > Manage`
+4. Clique no botão **Nova conta**
 5. Selecione `Azure Data Lake Gen2` como o Tipo de serviço
 6. Preencha um nome e uma descrição
 7. Informe o nome do sistema de arquivos e um prefixo de caminho opcional no campo **Caminho inicial** (por exemplo, `my-filesystem/data`). O primeiro segmento do caminho é o nome do sistema de arquivos.

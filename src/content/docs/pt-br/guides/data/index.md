@@ -15,6 +15,7 @@ A camada de dados do PlaidCloud é construída em torno de **tabelas** (dados es
 - [Tipo de dados Currency](/pt-br/guides/data/currency-data-type/) — um tipo de coluna exato, de meia largura, para valores monetários, e quando escolhê-lo em vez de Numeric
 - [Tipo de dados Vector](/pt-br/guides/data/vector-data-type/) — armazene embeddings pré-calculados em uma tabela de projeto, declare a largura esperada e pesquise as linhas mais próximas
 - [Instantâneos de tabela](/pt-br/guides/data/table-snapshots/) — navegue pelo histórico de instantâneos, veja os dados como estavam em um instantâneo anterior e reverta ou restaure uma tabela
+- [A janela Lakehouse](/pt-br/guides/data/lakehouse-window/) — acompanhe e analise o perfil de consultas, navegue por catálogos e tabelas com seus instantâneos e copie uma consulta de viagem no tempo
 - [Publicação de dados](/pt-br/guides/data/publish/) — disponibilize tabelas de projeto para painéis, ferramentas de BI e sistemas downstream, e consulte as orientações de desempenho
 - [Selecionando o registro mais recente em uma tabela de histórico grande](/pt-br/guides/data/selecting-latest-record-in-large-history-table/) — um padrão comum com uma solução que leva o desempenho em conta
 - [API de geocodificação](/pt-br/guides/data/geocoding-api/) — migre uma integração de geocodificação do Google ou do Mapbox para os endpoints REST de geocodificação do PlaidCloud

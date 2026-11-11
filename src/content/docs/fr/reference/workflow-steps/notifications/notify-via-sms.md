@@ -55,7 +55,7 @@ Chaque membre reçoit au plus 20 SMS par jour, un espace de travail envoie au pl
 
 Chaque SMS provient du numéro d'alerte. Répondre **STOP** arrête tous les SMS de PlaidCloud vers ce numéro, et **HELP** renvoie les coordonnées de contact. Après STOP, un membre envoie **START** par SMS au numéro d'alerte pour reprendre, puis réactive les alertes par SMS dans **Alertes par SMS**. Le formulaire de l'étape affiche **Désinscrit - Envoyez START par SMS au numéro d'alerte** à côté de ce membre tant qu'il ne l'a pas fait.
 
-Les administrateurs de l'espace de travail peuvent voir l'état des alertes par SMS de chaque membre, avec le numéro masqué, dans l'onglet **Informations sur le membre** de la fenêtre du membre. Les membres s'inscrivent et se désinscrivent eux-mêmes ; un administrateur ne peut pas le faire à leur place.
+Les administrateurs de l'espace de travail peuvent voir l'état des alertes par SMS de chaque membre, avec le numéro masqué, dans la carte **Profil** de la page du membre. Les membres s'inscrivent et se désinscrivent eux-mêmes ; un administrateur ne peut pas le faire à leur place.
 
 ## Étapes ayant saisi un numéro
 

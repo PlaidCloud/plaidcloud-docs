@@ -24,13 +24,13 @@ Sie haben nun alles, was Sie benötigen, um Ihr MinIO-Konto zu PlaidCloud Docume
 
 1. Melden Sie sich bei PlaidCloud an.
 2. Wählen Sie den Workspace aus, in dem sich das neue Dokumentenkonto befinden soll.
-3. Gehen Sie zu `Document > Manage Accounts`.
-4. Wählen Sie die Schaltfläche `+ New Account`.
-5. Wählen Sie `MinIO` als **Diensttyp**.
+3. Gehen Sie zu `Document > Manage`.
+4. Wählen Sie die Schaltfläche **Neues Konto**.
+5. Wählen Sie `MinIO` als Diensttyp.
 6. Geben Sie einen Namen und eine Beschreibung ein.
 7. Geben Sie als **Startpfad** die URL Ihres MinIO-Endpunkts gefolgt vom Bucket-Namen und einem optionalen Präfix ein: `https://minio.yourcompany.com/my-bucket/optional/prefix`
 8. Geben Sie die **Region** ein, falls Ihre MinIO-Bereitstellung Regionen verwendet; lassen Sie das Feld andernfalls leer.
 9. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Lassen Sie es auf `Private`, wenn Sie unsicher sind.
 10. Fügen Sie den **Access Key** unter Authentifizierungsdaten in das Feld Zugriffsschlüssel-ID ein.
 11. Fügen Sie den **Secret Key** unter Authentifizierungsdaten in das Feld Geheimer Zugriffsschlüssel ein.
-12. Wählen Sie die Schaltfläche Speichern, und Ihr neues Dokumentenkonto ist aktiv.
+12. Wählen Sie die Schaltfläche „Speichern“, und Ihr neues Dokumentenkonto ist aktiv.

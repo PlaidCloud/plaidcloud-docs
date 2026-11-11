@@ -34,8 +34,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloud에 로그인합니다
 2. 새 문서 계정을 둘 워크스페이스를 선택합니다
-3. `Document > Manage Accounts`로 이동합니다
-4. `+ New Account` 버튼을 선택합니다
+3. `Document > Manage`로 이동합니다
+4. **새 계정** 버튼을 선택합니다
 5. 서비스 유형으로 `Google Cloud Storage`를 선택합니다
 6. 이름과 설명을 입력합니다
 7. **시작 경로** 필드에 버킷 이름과 선택 사항인 경로 접두사를 입력합니다(예: `my-bucket` 또는 `my-bucket/data`). 첫 번째 경로 세그먼트가 버킷 이름입니다.

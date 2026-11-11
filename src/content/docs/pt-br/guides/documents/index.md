@@ -28,3 +28,39 @@ PlaidCloud Documents: armazene, organize, pesquise e compartilhe arquivos junto 
 </svg>
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Os arquivos chegam ao Documents a partir de qualquer conta de armazenamento conectada, onde você os armazena, organiza, pesquisa e compartilha, e depois os referencia em etapas de fluxo de trabalho para importar e exportar dados.</figcaption>
 </figure>
+
+## O espaço de trabalho do Documents
+
+**Documento** abre com uma barra lateral à esquerda e, ao lado dela, a página que você escolher. Os membros que não podem abrir uma página não veem o item dela.
+
+| Item da barra lateral | O que mostra |
+|---|---|
+| **Visão geral** | Blocos para as suas contas (**Contas**, **Compartilhadas**, **Privadas para você**, **Buckets gerenciados**, **Serviços externos** e **Desativado** quando uma conta precisa de atenção), arquivos **Fixados**, **Contas por serviço** e **Quem pode usá-las**. Selecione um arquivo fixado para abrir **Procurar** na pasta dele, com o arquivo selecionado. |
+| **Procurar** | O explorador de arquivos. Escolha a conta na lista do cabeçalho da página. Consulte [Usar contas de documentos](/pt-br/guides/documents/using-document/). |
+| **Compartilhadas** | As contas compartilhadas com você. Clique duas vezes em uma linha para navegar por ela. |
+| **Minhas privadas** | As contas que somente você pode usar. Clique duas vezes em uma linha para navegar por ela. |
+| **Gerenciar** | As contas das quais você é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Status** e **Descrição**. Um administrador do espaço de trabalho vê todas as contas de documentos aqui e pode gerenciar qualquer conta que, de outra forma, possa gerenciar; as contas gerenciadas pelo sistema são recusadas e as contas de bucket gerenciado não podem ser clonadas. |
+
+A barra lateral mostra uma contagem ao lado de **Compartilhadas**, **Minhas privadas** e **Gerenciar**. Para um administrador do espaço de trabalho que tem contas que não são dele, **Gerenciar** mostra **admin** em vez de uma contagem. A Visão geral tem os botões **Procurar arquivos** e **Nova conta** para começar rapidamente.
+
+### Ações de linha em Gerenciar
+
+Abra o menu **⋯** de uma linha, clique com o botão direito na linha ou use o menu **Ações** da barra de ferramentas para:
+
+- **Abrir** e **Editar**, que abrem a página da conta.
+- **Clonar…**, **Histórico de versões** e **Onde é usado…**. Consulte [Onde uma conta de documentos é usada e reapontamento](/pt-br/guides/documents/account-management/document-account-used-by/).
+- **Quem pode usá-la**, com **Membros**, **Grupos**, **Agentes** e **Proprietários**. Consulte [Controlar o acesso às contas de documentos](/pt-br/guides/documents/account-management/control-document-account-access/).
+- **Ativar** ou **Desativar**, e **Excluir**.
+
+### A página da conta
+
+**Nova conta**, **Abrir** e **Editar** mostram a conta como uma página, com **Gerenciar contas** no topo para voltar. Ela tem cartões para:
+
+- **Geral**: o nome, o serviço, o bucket e o caminho inicial da conta.
+- **Acesso**: o modelo de segurança e quem pode usar a conta. **Membros**, **Grupos**, **Agentes** e **Proprietários** têm, cada um, um link **Editar** que abre o mesmo seletor do menu da linha.
+- **Credenciais**: campos somente de gravação para o serviço que você escolheu. Uma observação **Credenciais salvas** mostra que as credenciais estão definidas, e os valores salvos nunca são exibidos. Deixe um campo em branco para manter o que está salvo. As contas SFTP também têm **Testar conexão**.
+- **SSH**: as configurações de chave, somente para contas SFTP.
+
+O cabeçalho tem **Procurar**, **Onde é usado** e um menu **Ações** com **Clonar**, **Histórico de versões**, **Ativar** ou **Desativar** e **Excluir**. Se você sair de uma página com alterações não salvas, o PlaidCloud pergunta se deve descartá-las.
+
+Links e favoritos antigos para as telas de documentos ainda abrem a página correspondente.

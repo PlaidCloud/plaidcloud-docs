@@ -29,9 +29,9 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr S3-Konto zu PlaidCloud Docum
 
 1. Melden Sie sich bei PlaidCloud an
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
-3. Gehen Sie zu `Document > Manage Accounts`
-4. Klicken Sie auf die Schaltfläche `+ New Account`
-5. Wählen Sie `Amazon S3` als **Diensttyp**
+3. Gehen Sie zu `Document > Manage`
+4. Klicken Sie auf die Schaltfläche **Neues Konto**
+5. Wählen Sie `Amazon S3` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie den Bucket-Namen und ein optionales Pfadpräfix in das Feld **Startpfad** ein (z. B. `my-bucket` oder `my-bucket/data`). Das erste Pfadsegment ist der Bucket-Name.
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`.

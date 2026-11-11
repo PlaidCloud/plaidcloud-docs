@@ -25,8 +25,8 @@ You should now have everything you need to add your Backblaze B2 account to Plai
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `Backblaze B2` as the Service Type
 6. Fill in a name and description
 7. Enter the **Start Path** as your S3-compatible endpoint followed by the bucket name: `https://s3.us-west-004.backblazeb2.com/my-bucket`

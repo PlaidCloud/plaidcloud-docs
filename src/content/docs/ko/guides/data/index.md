@@ -15,6 +15,7 @@ PlaidCloud의 데이터 계층은 **테이블**(행과 열로 구성된 정형 �
 - [Currency 데이터 유형](/ko/guides/data/currency-data-type/) — 금액 값에 사용하는 정확한 반각 열 유형과 Numeric 대신 선택해야 하는 경우
 - [Vector 데이터 유형](/ko/guides/data/vector-data-type/) — 미리 계산한 임베딩을 프로젝트 테이블에 저장하고, 예상 너비를 선언하고, 가장 가까운 행 검색
 - [테이블 스냅샷](/ko/guides/data/table-snapshots/) — 스냅샷 기록 탐색, 과거 스냅샷 시점의 데이터 보기, 테이블 되돌리기 및 복원
+- [Lakehouse 창](/ko/guides/data/lakehouse-window/) — 쿼리 모니터링 및 프로파일링, 카탈로그와 테이블 및 해당 스냅샷 찾아보기, 타임 트래블 쿼리 복사
 - [데이터 게시](/ko/guides/data/publish/) — 프로젝트 테이블을 대시보드, BI 도구, 다운스트림 시스템에서 사용할 수 있도록 하고 성능 지침 검토
 - [대용량 이력 테이블에서 최신 레코드 선택](/ko/guides/data/selecting-latest-record-in-large-history-table/) — 성능을 고려한 해결 방법이 있는 일반적인 패턴
 - [지오코딩 API](/ko/guides/data/geocoding-api/) — Google 또는 Mapbox 지오코딩 통합을 PlaidCloud의 REST 지오코딩 엔드포인트로 마이그레이션

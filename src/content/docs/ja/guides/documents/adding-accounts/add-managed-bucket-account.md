@@ -14,8 +14,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloud にサインインします
 2. 新しいドキュメントアカウントを置くワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. **サービスタイプ**として `PlaidCloud Managed Bucket` を選択します
 6. 名前と、任意で説明を入力します
 7. **バケット名**を入力します。名前は3～63文字で、小文字、数字、ドット、ハイフンのみを使用でき、先頭と末尾は文字または数字にする必要があります。名前は**グローバルに一意**である必要があります。すでに使用されている場合は、別の名前を選ぶよう求められます

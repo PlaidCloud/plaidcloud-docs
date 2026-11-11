@@ -27,3 +27,39 @@ PlaidCloud Documents — store, organize, search, and share files alongside your
 </svg>
 <figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Files land in Documents from any connected storage account, where you store, organize, search, and share them — then reference them from workflow steps to import and export data.</figcaption>
 </figure>
+
+## The Documents Workspace
+
+**Document** opens with a rail on the left and the page you pick beside it. Members who can't open a page don't see its item.
+
+| Rail item | What it shows |
+|---|---|
+| **Overview** | Tiles for your accounts (**Accounts**, **Shared**, **Private to you**, **Managed buckets**, **External services**, and **Disabled** when an account needs attention), **Pinned** files, **Accounts by service** and **Who can use them**. Select a pinned file to open **Browse** at its folder with the file selected. |
+| **Browse** | The file explorer. Pick the account from the list in the page header. See [Using Document Accounts](/guides/documents/using-document/). |
+| **Shared** | Accounts shared with you. Double-click a row to browse it. |
+| **My private** | Accounts only you can use. Double-click a row to browse it. |
+| **Manage** | Accounts you own, with **Name**, **Service**, **Security type**, **Status** and **Description**. A workspace admin sees every document account here and can manage any account they can otherwise manage; system-managed accounts are refused and managed-bucket accounts can't be cloned. |
+
+The rail shows a count beside **Shared**, **My private** and **Manage**. For a workspace admin who holds accounts they don't own, **Manage** shows **admin** instead of a count. The Overview has **Browse files** and **New account** buttons for a quick start.
+
+### Row Actions in Manage
+
+Open a row's **⋯** menu, right-click the row or use the toolbar **Actions** menu for:
+
+- **Open** and **Edit**, which open the account page.
+- **Clone…**, **Version history** and **Where used…**. See [Where Used and Re-Point](/guides/documents/account-management/document-account-used-by/).
+- **Who can use it**, with **Members**, **Groups**, **Agents** and **Owners**. See [Control Document Account Access](/guides/documents/account-management/control-document-account-access/).
+- **Enable** or **Disable**, and **Delete**.
+
+### The Account Page
+
+**New Account**, **Open** and **Edit** show the account as a page, with **Manage Accounts** at the top to go back. It has cards for:
+
+- **General**: the account's name, service, bucket and start path.
+- **Access**: the security model and who can use the account. **Members**, **Groups**, **Agents** and **Owners** each have an **Edit** link that opens the same picker as the row menu.
+- **Credentials**: write-only fields for the service you chose. A **Credentials saved** note shows the credentials are set, and saved values are never shown. Leave a field blank to keep what is saved. SFTP accounts also have **Test connection**.
+- **SSH**: the key settings for SFTP accounts only.
+
+The header has **Browse**, **Where used** and an **Actions** menu with **Clone**, **Version history**, **Enable** or **Disable** and **Delete**. If you leave a page with unsaved changes, PlaidCloud asks whether to discard them.
+
+Old links and bookmarks to document screens still open the matching page.

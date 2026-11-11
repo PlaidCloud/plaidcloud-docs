@@ -29,8 +29,8 @@ Ahora debería tener todo lo necesario para agregar su cuenta de S3 a PlaidCloud
 
 1. Inicie sesión en PlaidCloud
 2. Seleccione el espacio de trabajo en el que residirá la nueva cuenta de documentos
-3. Vaya a `Document > Manage Accounts`
-4. Seleccione el botón `+ New Account`
+3. Vaya a `Document > Manage`
+4. Seleccione el botón **Nueva cuenta**
 5. Seleccione `Amazon S3` como Tipo de servicio
 6. Complete un nombre y una descripción
 7. Escriba el nombre del bucket y el prefijo de ruta opcional en el campo **Ruta de inicio** (por ejemplo, `my-bucket` o `my-bucket/data`). El primer segmento de la ruta es el nombre del bucket.

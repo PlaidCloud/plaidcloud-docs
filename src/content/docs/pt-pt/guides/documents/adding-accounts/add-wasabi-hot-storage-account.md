@@ -31,8 +31,8 @@ Já deverá ter tudo o que é necessário para adicionar a sua conta Wasabi ao P
 
 1. Inicie sessão no PlaidCloud
 2. Selecione a área de trabalho onde ficará a nova conta de documentos
-3. Aceda a `Document > Manage Accounts`
-4. Selecione o botão `+ New Account`
+3. Aceda a `Document > Manage`
+4. Selecione o botão **Nova conta**
 5. Selecione `Wasabi Hot Storage` como Tipo de serviço
 6. Preencha um nome e uma descrição
 7. Introduza o nome do bucket e um prefixo de caminho opcional no campo **Caminho inicial** (por exemplo, `my-bucket` ou `my-bucket/data`). O primeiro segmento do caminho é o nome do bucket.

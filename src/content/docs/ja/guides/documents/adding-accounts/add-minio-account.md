@@ -24,8 +24,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloudにサインインします
 2. 新しいドキュメントアカウントを作成するワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. サービスタイプとして `MinIO` を選択します
 6. 名前と説明を入力します
 7. **開始パス**に、MinIOのエンドポイントURLに続けてバケット名と任意のプレフィックスを入力します：`https://minio.yourcompany.com/my-bucket/optional/prefix`

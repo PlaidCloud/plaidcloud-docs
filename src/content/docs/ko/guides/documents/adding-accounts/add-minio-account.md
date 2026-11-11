@@ -24,9 +24,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloud에 로그인합니다.
 2. 새 Document 계정을 둘 워크스페이스를 선택합니다.
-3. `Document > Manage Accounts`로 이동합니다.
-4. `+ New Account` 버튼을 선택합니다.
-5. **서비스 유형**으로 `MinIO`를 선택합니다.
+3. `Document > Manage`로 이동합니다.
+4. **새 계정** 버튼을 선택합니다.
+5. 서비스 유형으로 `MinIO`를 선택합니다.
 6. 이름과 설명을 입력합니다.
 7. **시작 경로**에 MinIO 엔드포인트 URL, 버킷 이름, 선택 사항인 접두사를 차례로 입력합니다: `https://minio.yourcompany.com/my-bucket/optional/prefix`
 8. MinIO 배포에서 리전을 사용하는 경우 **리전**을 입력하고, 그렇지 않으면 비워 둡니다.

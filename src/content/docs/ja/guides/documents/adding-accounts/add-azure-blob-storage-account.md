@@ -23,8 +23,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. PlaidCloud にサインインします
 2. 新しいドキュメントアカウントを置くワークスペースを選択します
-3. `Document > Manage Accounts` に移動します
-4. `+ New Account` ボタンを選択します
+3. `Document > Manage` に移動します
+4. **新しいアカウント**ボタンを選択します
 5. **サービスタイプ**として `Azure Blob Storage` を選択します
 6. 名前と説明を入力します
 7. **開始パス**フィールドに、コンテナー名と任意のパスプレフィックスを入力します（例: `my-container/data`）。最初のパスセグメントがコンテナー名です。

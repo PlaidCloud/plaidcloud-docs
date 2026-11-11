@@ -449,6 +449,7 @@ export default defineConfig({
 								'guides/projects/managing-data-editors',
 								'guides/data/publish',
 								'guides/data/table-snapshots',
+								'guides/data/lakehouse-window',
 								'guides/data/selecting-latest-record-in-large-history-table',
 								'guides/data/currency-data-type',
 								'guides/data/vector-data-type',
@@ -649,6 +650,7 @@ export default defineConfig({
 							items: [
 								'guides/ai-assistant/weave-activity',
 								'guides/ai-assistant/weave-ai-features',
+								'guides/ai-assistant/weave-email',
 							],
 						},
 					],

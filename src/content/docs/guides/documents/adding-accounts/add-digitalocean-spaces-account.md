@@ -25,8 +25,8 @@ You should now have everything you need to add your DigitalOcean Spaces account 
 
 1. Sign into PlaidCloud
 2. Select the workspace that the new Document account will reside
-3. Go to `Document > Manage Accounts`
-4. Select the `+ New Account` button
+3. Go to `Document > Manage`
+4. Select the **New Account** button
 5. Select `DigitalOcean Spaces` as the Service Type
 6. Fill in a name and description
 7. Enter the **Start Path** as the endpoint URL followed by the Space name: `https://nyc3.digitaloceanspaces.com/my-space`
