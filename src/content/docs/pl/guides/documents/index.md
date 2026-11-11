@@ -31,7 +31,7 @@ PlaidCloud Documents — przechowuj, porządkuj, wyszukuj i udostępniaj pliki r
 
 ## Obszar roboczy Dokument
 
-Moduł **Dokument** otwiera się z paskiem bocznym po lewej stronie i wybraną stroną obok niego. Członkowie, którzy nie mogą otworzyć danej strony, Pasek boczny grupuje strony w sekcje **Dokumenty** (**Przegląd** i **Przeglądaj**) oraz **Konta** (**Twoje konta** i **Zarządzanie**). Członkowie, którzy nie mogą otworzyć danej strony, nie widzą jej pozycji. Strony mają tytuł u góry, często z krótkim podtytułem, a ich akcje znajdują się w nagłówku obok niego.
+Moduł **Dokument** otwiera się z paskiem bocznym po lewej stronie i wybraną stroną obok niego. Pasek boczny grupuje strony w sekcje **Dokumenty** (**Przegląd** i **Przeglądaj**) oraz **Konta** (**Twoje konta** i **Zarządzanie**). Członkowie, którzy nie mogą otworzyć danej strony, nie widzą jej pozycji. Strony mają tytuł u góry, często z krótkim podtytułem, a ich akcje znajdują się w nagłówku obok niego.
 
 | Pozycja paska bocznego | Co pokazuje |
 |---|---|
