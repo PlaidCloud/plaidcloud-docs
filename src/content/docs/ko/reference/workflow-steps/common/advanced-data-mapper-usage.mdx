@@ -217,7 +217,7 @@ StarRocks에서는 다음과 같이 동작합니다.
 
 `sqlalchemy.literal_column`은 SQL 조각을 변경하지 않고 웨어하우스에 그대로 전달하며, 열, 계산, `CASE`, 함수 호출, 캐스트, 윈도 함수 같은 단일 값을 허용합니다. **서브쿼리**(`(SELECT ... FROM ...)`)를 담은 `literal_column`은 거부됩니다. 서브쿼리가 단계에서 선언하지 않은 테이블에 접근하기 때문입니다.
 
-이 절의 규칙은 식을 작성하는 모든 곳, 즉 여기 매퍼, 단계의 필터, 그리고 다른 곳에서 조립하여 플랫폼으로 보낸 쿼리에 적용됩니다. 단계를 저장할 때와 식을 SQL로 변환할 때 다시 검사됩니다.
+이 절의 규칙은 식을 작성하는 모든 곳, 즉 여기 매퍼, 단계의 필터, 테이블 탐색기의 필터, 그리고 다른 곳에서 조립하여 플랫폼으로 보낸 쿼리에 적용됩니다. 단계를 저장할 때와 식을 SQL로 변환할 때 다시 검사됩니다.
 
 대신 `sqlalchemy.select(...)`로 서브쿼리를 만드십시오. 열에 단일 값이 필요하면 `.scalar_subquery()`를, 서브쿼리에서 선택하려면 `.subquery()`를 사용합니다.
 
@@ -270,3 +270,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 `.op('...')`에서도 같은 두 표기가 거부됩니다.
 
 `literal_column`을 일반적으로 사용하는 나머지 용도는 영향을 받지 않습니다. `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")`, `func.count()`는 모두 이전처럼 동작합니다. 공백, 점, 따옴표가 포함된 열 이름도 영향을 받지 않으며, 웨어하우스가 대신 따옴표 처리를 해 줍니다.
+
+### 거부되는 함수와 연산자
+
+이 절의 규칙은 테이블 탐색기의 필터와 플랫폼으로 보낸 쿼리에 적용됩니다. 조인 또는 조회 단계에서는 **키 확인**이 단계의 필터에도 이 규칙을 적용합니다. 규칙 중 하나를 어기는 필터는 오류가 있다고 보고되며, 해당 테이블은 확인되지 않습니다.
+
+문자열에 담긴 SQL을 실행하거나, 서버의 파일을 읽거나, 세션이나 서버의 상태를 변경하거나, 서버를 대기시키는 함수의 호출은 `sqlalchemy.func`로 작성하든 `literal_column` 안에 작성하든 거부되며, 오류에 함수 이름이 표시됩니다. `query_to_xml`과 그 밖의 `_to_xml` 함수, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval`, `pg_sleep` 등이 여기에 해당합니다.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')`와 `.bool_op('...')`는 연산자만 받습니다. `->>`, `@>`, `-|-`처럼 최대 네 개의 문장 부호 문자이거나, 다음 단어 중 하나여야 합니다: `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF`, `SOUNDS LIKE`.
+
+`literal_column`에서는 유니코드 이스케이프를 사용한 따옴표(`U&'...'` 또는 `U&"..."`)를 사용할 수 없습니다. 이스케이프로 작성한 이름은 어떤 함수를 호출하는지 숨길 수 있기 때문입니다. 이름이나 텍스트를 그대로 작성하십시오.

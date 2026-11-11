@@ -218,7 +218,7 @@ On every warehouse, a value that cannot be converted, such as non-numeric text c
 
 `sqlalchemy.literal_column` passes a fragment of SQL through to the warehouse untouched, and it accepts a single value — a column, a calculation, a `CASE`, a function call, a cast, a window function. A `literal_column` holding a **subquery** (`(SELECT ... FROM ...)`) is refused, because a subquery reaches a table the step never declared.
 
-The rules in this section apply wherever the expression is written — here in the mapper, in a step's filter, and in a query assembled elsewhere and sent to the platform. They are checked when the step is saved and again when the expression is turned into SQL.
+The rules in this section apply wherever the expression is written — here in the mapper, in a step's filter, in a Table Explorer filter, and in a query assembled elsewhere and sent to the platform. They are checked when the step is saved and again when the expression is turned into SQL.
 
 Build the subquery with `sqlalchemy.select(...)` instead — `.scalar_subquery()` where you need a single value in a column, or `.subquery()` where you are selecting from it:
 
@@ -271,3 +271,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 The same two spellings are refused in `.op('...')`.
 
 Everything else `literal_column` is normally used for is unaffected — `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` and `func.count()` all work as before. Column names containing spaces, dots or quotation marks are unaffected too; the warehouse quotes them for you.
+
+### Functions and Operators That Are Refused
+
+The rules in this section apply in a Table Explorer filter and in a query sent to the platform. **Check Keys** on a join or lookup step applies them to the step's filter too: a filter that breaks one is reported as having an error, and that table isn't checked.
+
+A call to a function that runs SQL held in a string, reads the server's files, changes the session or the server's state, or makes the server wait is refused, whether it is written with `sqlalchemy.func` or inside a `literal_column`, and the error names the function. These include `query_to_xml` and the other `_to_xml` functions, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval` and `pg_sleep`.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` and `.bool_op('...')` accept an operator and nothing else: up to four punctuation characters, such as `->>`, `@>` or `-|-`, or one of these words: `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF` and `SOUNDS LIKE`.
+
+A `literal_column` can't use Unicode-escaped quoting, `U&'...'` or `U&"..."`, because a name spelled in escapes can hide which function it calls. Write the name or the text as it is.
