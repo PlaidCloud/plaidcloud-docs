@@ -217,7 +217,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 `sqlalchemy.literal_column` 会将一段 SQL 原样传递给数据仓库，并且只接受单个值：列、计算、`CASE`、函数调用、转换或窗口函数。包含**子查询**（`(SELECT ... FROM ...)`）的 `literal_column` 会被拒绝，因为子查询会访问步骤从未声明的表。
 
-本节中的规则适用于编写表达式的任何位置：此处的映射器、步骤的筛选器，以及在其他位置组装并发送到平台的查询。它们会在保存步骤时以及将表达式转换为 SQL 时再次检查。
+本节中的规则适用于编写表达式的任何位置：此处的映射器、步骤的筛选器、表资源管理器的筛选器，以及在其他位置组装并发送到平台的查询。它们会在保存步骤时以及将表达式转换为 SQL 时再次检查。
 
 请改用 `sqlalchemy.select(...)` 构建子查询：需要在列中得到单个值时使用 `.scalar_subquery()`，需要从中选择数据时使用 `.subquery()`：
 
@@ -270,3 +270,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 `.op('...')` 中同样会拒绝这两种写法。
 
 `literal_column` 的其他常规用法不受影响：`literal_column('current_date')`、`literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` 和 `func.count()` 都和以前一样可用。包含空格、点或引号的列名也不受影响，数据仓库会为您加上引号。
+
+### 会被拒绝的函数和运算符
+
+本节中的规则适用于表资源管理器的筛选器，以及发送到平台的查询。在联接或查找步骤中，**检查键**也会将这些规则应用于该步骤的筛选器：违反其中任一规则的筛选器会被报告为有错误，并且不会检查该表。使用**动态列**的 Table Extract 步骤在运行时，也会将这些规则应用于该步骤的筛选器和动态列的 `rows` 表达式（`key`、`label`、`where` 和 `order`）：违反其中任一规则的表达式会使该步骤失败。
+
+调用会执行字符串中的 SQL、读取服务器文件、更改会话或服务器状态，或让服务器等待的函数会被拒绝，无论是用 `sqlalchemy.func` 编写还是写在 `literal_column` 中，错误信息都会指出函数名。这类函数包括 `query_to_xml` 及其他 `_to_xml` 函数、`ts_rewrite`、`dblink`、`pg_read_file`、`pg_ls_dir`、`set_config`、`nextval` 和 `pg_sleep`。
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` 和 `.bool_op('...')` 只接受运算符：最多四个标点字符，例如 `->>`、`@>` 或 `-|-`，或以下词语之一：`LIKE`、`NOT LIKE`、`ILIKE`、`NOT ILIKE`、`SIMILAR TO`、`NOT SIMILAR TO`、`REGEXP`、`NOT REGEXP`、`RLIKE`、`NOT RLIKE`、`IS`、`IS NOT`、`IS DISTINCT FROM`、`IS NOT DISTINCT FROM`、`AT TIME ZONE`、`DIV`、`MOD`、`MEMBER OF` 或 `SOUNDS LIKE`。
+
+`literal_column` 不能使用 Unicode 转义的引号（`U&'...'` 或 `U&"..."`），因为用转义写成的名称可以隐藏它调用的是哪个函数。请直接写出名称或文本。

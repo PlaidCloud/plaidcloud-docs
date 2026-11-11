@@ -218,7 +218,7 @@ Auf jedem Warehouse wird ein Wert, der nicht umgewandelt werden kann, etwa nicht
 
 `sqlalchemy.literal_column` reicht ein SQL-Fragment unverändert an das Warehouse durch und akzeptiert einen einzelnen Wert – eine Spalte, eine Berechnung, ein `CASE`, einen Funktionsaufruf, eine Umwandlung, eine Fensterfunktion. Ein `literal_column`, das eine **Unterabfrage** enthält (`(SELECT ... FROM ...)`), wird abgelehnt, weil eine Unterabfrage auf eine Tabelle zugreift, die der Schritt nie deklariert hat.
 
-Die Regeln in diesem Abschnitt gelten überall dort, wo der Ausdruck geschrieben wird – hier im Mapper, im Filter eines Schritts und in einer Abfrage, die an anderer Stelle zusammengestellt und an die Plattform gesendet wird. Sie werden beim Speichern des Schritts und erneut beim Umwandeln des Ausdrucks in SQL geprüft.
+Die Regeln in diesem Abschnitt gelten überall dort, wo der Ausdruck geschrieben wird – hier im Mapper, im Filter eines Schritts, in einem Filter im Tabellen-Explorer und in einer Abfrage, die an anderer Stelle zusammengestellt und an die Plattform gesendet wird. Sie werden beim Speichern des Schritts und erneut beim Umwandeln des Ausdrucks in SQL geprüft.
 
 Erstellen Sie die Unterabfrage stattdessen mit `sqlalchemy.select(...)` – `.scalar_subquery()`, wenn Sie einen einzelnen Wert in einer Spalte benötigen, oder `.subquery()`, wenn Sie aus ihr auswählen:
 
@@ -271,3 +271,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 Dieselben beiden Schreibweisen werden auch in `.op('...')` abgelehnt.
 
 Alles andere, wofür `literal_column` üblicherweise verwendet wird, bleibt unberührt – `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` und `func.count()` funktionieren alle wie bisher. Auch Spaltennamen mit Leerzeichen, Punkten oder Anführungszeichen sind nicht betroffen; das Warehouse setzt sie für Sie in Anführungszeichen.
+
+### Funktionen und Operatoren, die abgelehnt werden
+
+Die Regeln in diesem Abschnitt gelten in einem Filter im Tabellen-Explorer und in einer Abfrage, die an die Plattform gesendet wird. **Schlüssel prüfen** wendet sie bei einem Join- oder Lookup-Schritt auch auf den Filter des Schritts an: Ein Filter, der gegen eine davon verstößt, wird als fehlerhaft gemeldet, und diese Tabelle wird nicht geprüft. Ein Table-Extract-Schritt, der **Dynamische Spalten** verwendet, wendet sie bei seiner Ausführung auf den Filter des Schritts und auf die `rows`-Ausdrücke der dynamischen Spalten (`key`, `label`, `where` und `order`) an: Ein Ausdruck, der gegen eine davon verstößt, lässt den Schritt fehlschlagen.
+
+Der Aufruf einer Funktion, die in einer Zeichenkette enthaltenes SQL ausführt, Dateien des Servers liest, die Sitzung oder den Zustand des Servers ändert oder den Server warten lässt, wird abgelehnt, ob er mit `sqlalchemy.func` oder in einem `literal_column` geschrieben ist, und die Fehlermeldung nennt die Funktion. Dazu gehören `query_to_xml` und die anderen `_to_xml`-Funktionen, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval` und `pg_sleep`.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` und `.bool_op('...')` akzeptieren einen Operator und sonst nichts: bis zu vier Satzzeichen wie `->>`, `@>` oder `-|-` oder eines dieser Wörter: `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF` und `SOUNDS LIKE`.
+
+Ein `literal_column` kann keine Anführungszeichen mit Unicode-Escapes verwenden, also weder `U&'...'` noch `U&"..."`, weil ein in Escapes geschriebener Name verbergen kann, welche Funktion er aufruft. Schreiben Sie den Namen oder den Text so, wie er ist.

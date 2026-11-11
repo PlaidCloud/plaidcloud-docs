@@ -217,7 +217,7 @@ Sur tous les entrepôts de données, une valeur qui ne peut pas être convertie,
 
 `sqlalchemy.literal_column` transmet tel quel un fragment de SQL à l'entrepôt de données, et accepte une valeur unique : une colonne, un calcul, un `CASE`, un appel de fonction, une conversion, une fonction de fenêtrage. Un `literal_column` contenant une **sous-requête** (`(SELECT ... FROM ...)`) est refusé, car une sous-requête accède à une table que l'étape n'a jamais déclarée.
 
-Les règles de cette section s'appliquent partout où l'expression est écrite : ici dans le mappeur, dans le filtre d'une étape, ainsi que dans une requête assemblée ailleurs et envoyée à la plateforme. Elles sont contrôlées à l'enregistrement de l'étape, puis de nouveau lorsque l'expression est transformée en SQL.
+Les règles de cette section s'appliquent partout où l'expression est écrite : ici dans le mappeur, dans le filtre d'une étape, dans un filtre de l'Explorateur de tables, ainsi que dans une requête assemblée ailleurs et envoyée à la plateforme. Elles sont contrôlées à l'enregistrement de l'étape, puis de nouveau lorsque l'expression est transformée en SQL.
 
 Construisez plutôt la sous-requête avec `sqlalchemy.select(...)` : `.scalar_subquery()` lorsque vous avez besoin d'une valeur unique dans une colonne, ou `.subquery()` lorsque vous sélectionnez à partir de celle-ci :
 
@@ -270,3 +270,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 Les deux mêmes écritures sont refusées dans `.op('...')`.
 
 Tout le reste de ce pour quoi `literal_column` est normalement utilisé n'est pas concerné : `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` et `func.count()` fonctionnent tous comme avant. Les noms de colonnes contenant des espaces, des points ou des guillemets ne sont pas concernés non plus ; l'entrepôt de données les met entre guillemets pour vous.
+
+### Fonctions et opérateurs refusés
+
+Les règles de cette section s'appliquent dans un filtre de l'Explorateur de tables et dans une requête envoyée à la plateforme. Sur une étape de jointure ou de recherche, **Vérifier les clés** les applique aussi au filtre de l'étape : un filtre qui en enfreint une est signalé comme comportant une erreur, et cette table n'est pas vérifiée. Une étape Table Extract avec des **Colonnes dynamiques** les applique, lorsqu'elle s'exécute, au filtre de l'étape et aux expressions `rows` des colonnes dynamiques (`key`, `label`, `where` et `order`) : une expression qui en enfreint une fait échouer l'étape.
+
+L'appel d'une fonction qui exécute du SQL contenu dans une chaîne, lit les fichiers du serveur, modifie la session ou l'état du serveur, ou fait attendre le serveur est refusé, qu'il soit écrit avec `sqlalchemy.func` ou dans un `literal_column`, et l'erreur nomme la fonction. Cela comprend `query_to_xml` et les autres fonctions `_to_xml`, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval` et `pg_sleep`.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` et `.bool_op('...')` acceptent un opérateur et rien d'autre : jusqu'à quatre caractères de ponctuation, comme `->>`, `@>` ou `-|-`, ou l'un de ces mots : `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF` et `SOUNDS LIKE`.
+
+Un `literal_column` ne peut pas utiliser de guillemets avec des échappements Unicode, `U&'...'` ou `U&"..."`, car un nom écrit avec des échappements peut masquer la fonction qu'il appelle. Écrivez le nom ou le texte tel quel.

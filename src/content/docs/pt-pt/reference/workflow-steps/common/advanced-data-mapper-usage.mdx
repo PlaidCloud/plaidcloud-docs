@@ -218,7 +218,7 @@ Em todos os armazéns, um valor que não possa ser convertido, como texto não n
 
 `sqlalchemy.literal_column` passa um fragmento de SQL para o armazém sem o alterar, e aceita um único valor — uma coluna, um cálculo, um `CASE`, uma chamada de função, uma conversão, uma função de janela. Um `literal_column` que contenha uma **subconsulta** (`(SELECT ... FROM ...)`) é recusado, porque uma subconsulta acede a uma tabela que o passo nunca declarou.
 
-As regras desta secção aplicam-se onde quer que a expressão seja escrita — aqui no mapeador, no filtro de um passo e numa consulta montada noutro local e enviada para a plataforma. São verificadas quando o passo é guardado e novamente quando a expressão é convertida em SQL.
+As regras desta secção aplicam-se onde quer que a expressão seja escrita — aqui no mapeador, no filtro de um passo, num filtro do Explorador de tabelas e numa consulta montada noutro local e enviada para a plataforma. São verificadas quando o passo é guardado e novamente quando a expressão é convertida em SQL.
 
 Construa antes a subconsulta com `sqlalchemy.select(...)` — `.scalar_subquery()` quando precisar de um único valor numa coluna, ou `.subquery()` quando selecionar a partir dela:
 
@@ -271,3 +271,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 As mesmas duas grafias são recusadas em `.op('...')`.
 
 Tudo o resto para que `literal_column` é normalmente usado não é afetado — `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` e `func.count()` funcionam todos como antes. Os nomes de coluna com espaços, pontos ou aspas também não são afetados; o armazém aplica-lhes as aspas por si.
+
+### Funções e operadores recusados
+
+As regras desta secção aplicam-se num filtro do Explorador de tabelas e numa consulta enviada para a plataforma. Num passo de junção ou de pesquisa, **Verificar chaves** também as aplica ao filtro do passo: um filtro que viole alguma delas é indicado como tendo um erro, e essa tabela não é verificada. Um passo Table Extract com **Colunas dinâmicas** aplica-as, quando é executado, ao filtro do passo e às expressões `rows` das colunas dinâmicas (`key`, `label`, `where` e `order`): uma expressão que viole alguma delas faz falhar o passo.
+
+A chamada a uma função que executa SQL contido numa cadeia de caracteres, lê ficheiros do servidor, altera a sessão ou o estado do servidor, ou faz o servidor esperar é recusada, quer seja escrita com `sqlalchemy.func` quer dentro de um `literal_column`, e o erro indica o nome da função. Entre elas estão `query_to_xml` e as outras funções `_to_xml`, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval` e `pg_sleep`.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` e `.bool_op('...')` aceitam um operador e nada mais: até quatro caracteres de pontuação, como `->>`, `@>` ou `-|-`, ou uma destas palavras: `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF` e `SOUNDS LIKE`.
+
+Um `literal_column` não pode usar aspas com escapes Unicode, `U&'...'` ou `U&"..."`, porque um nome escrito com escapes pode esconder a função que chama. Escreva o nome ou o texto tal como é.
