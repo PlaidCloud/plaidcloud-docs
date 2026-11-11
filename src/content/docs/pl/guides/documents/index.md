@@ -31,17 +31,16 @@ PlaidCloud Documents — przechowuj, porządkuj, wyszukuj i udostępniaj pliki r
 
 ## Obszar roboczy Dokument
 
-Moduł **Dokument** otwiera się z paskiem bocznym po lewej stronie i wybraną stroną obok niego. Członkowie, którzy nie mogą otworzyć danej strony, nie widzą jej pozycji.
+Moduł **Dokument** otwiera się z paskiem bocznym po lewej stronie i wybraną stroną obok niego. Członkowie, którzy nie mogą otworzyć danej strony, Pasek boczny grupuje strony w sekcje **Dokumenty** (**Przegląd** i **Przeglądaj**) oraz **Konta** (**Twoje konta** i **Zarządzanie**). Członkowie, którzy nie mogą otworzyć danej strony, nie widzą jej pozycji. Strony mają tytuł u góry, często z krótkim podtytułem, a ich akcje znajdują się w nagłówku obok niego.
 
 | Pozycja paska bocznego | Co pokazuje |
 |---|---|
-| **Przegląd** | Kafelki Twoich kont (**Konta**, **Udostępnione**, **Prywatne dla Ciebie**, **Zasobniki zarządzane**, **Usługi zewnętrzne** oraz **Wyłączone**, gdy konto wymaga uwagi), **Przypięte** pliki, **Konta według usługi** i **Kto może z nich korzystać**. Wybierz przypięty plik, aby otworzyć widok **Przeglądaj** w jego folderze z zaznaczonym plikiem. |
-| **Przeglądaj** | Eksplorator plików. Wybierz konto z listy w nagłówku strony. Zobacz [Korzystanie z kont dokumentów](/pl/guides/documents/using-document/). |
-| **Udostępnione** | Konta udostępnione Tobie. Kliknij dwukrotnie wiersz, aby go przeglądać. |
-| **Moje prywatne** | Konta, z których możesz korzystać tylko Ty. Kliknij dwukrotnie wiersz, aby go przeglądać. |
+| **Przegląd** | Kafelki Twoich kont (**Konta** — otwiera **Twoje konta**, **Zarządzane zasobniki**, **Usługi zewnętrzne** i **Wyłączone** — oznaczony jako **Wymaga uwagi** i otwierający **Zarządzanie**, gdy konto, którego jesteś właścicielem, jest wyłączone), **Przypięte** pliki, **Konta według usługi** i **Kto może z nich korzystać**. Wybierz przypięty plik, aby otworzyć widok **Przeglądaj** w jego folderze z zaznaczonym plikiem. |
+| **Przeglądaj** | Eksplorator plików. Otwiera Twoje ulubione konto (to, którego folder główny został przypięty) lub domyślne konto obszaru roboczego, a inne konto możesz wybrać z listy w nagłówku strony. Zobacz [Korzystanie z kont dokumentów](/pl/guides/documents/using-document/). |
+| **Twoje konta** | Każde konto, z którego możesz korzystać, na jednej liście. Plakietka **Udostępnione** lub **Prywatne** w każdym wierszu informuje, czy konto jest Ci udostępnione, czy należy tylko do Ciebie. Kliknij dwukrotnie wiersz, aby go przeglądać. |
 | **Zarządzanie** | Konta, których jesteś właścicielem, z kolumnami **Nazwa**, **Usługa**, **Typ zabezpieczeń**, **Stan** i **Opis**. Administrator obszaru roboczego widzi tu każde konto dokumentów i może zarządzać każdym kontem, którym może zarządzać także w inny sposób; konta zarządzane przez system są odrzucane, a kont zarządzanego zasobnika nie można klonować. |
 
-Pasek boczny pokazuje liczniki obok pozycji **Udostępnione**, **Moje prywatne** i **Zarządzanie**. Dla administratora obszaru roboczego, który ma konta, których nie jest właścicielem, **Zarządzanie** pokazuje **admin** zamiast licznika. Widok Przegląd zawiera przyciski **Przeglądaj pliki** i **Nowe konto** umożliwiające szybki start.
+Pasek boczny pokazuje licznik obok pozycji **Twoje konta**. Widok Przegląd zawiera przyciski **Przeglądaj pliki** i **Nowe konto** umożliwiające szybki start.
 
 ### Akcje wiersza w widoku Zarządzanie
 

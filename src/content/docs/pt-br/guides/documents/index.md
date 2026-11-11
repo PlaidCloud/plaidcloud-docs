@@ -31,17 +31,16 @@ PlaidCloud Documents: armazene, organize, pesquise e compartilhe arquivos junto 
 
 ## O espaço de trabalho do Documents
 
-**Documento** abre com uma barra lateral à esquerda e, ao lado dela, a página que você escolher. Os membros que não podem abrir uma página não veem o item dela.
+**Documento** abre com uma barra lateral à esquerda e, ao lado dela, a página que você escolher. A barra lateral agrupa suas páginas em **Documentos** (**Visão geral** e **Procurar**) e **Contas** (**Suas contas** e **Gerenciar**). Os membros que não podem abrir uma página não veem o item dela. As páginas têm um título no topo, muitas vezes com um breve subtítulo, e suas ações no cabeçalho ao lado dele.
 
 | Item da barra lateral | O que mostra |
 |---|---|
-| **Visão geral** | Blocos para as suas contas (**Contas**, **Compartilhadas**, **Privadas para você**, **Buckets gerenciados**, **Serviços externos** e **Desativado** quando uma conta precisa de atenção), arquivos **Fixados**, **Contas por serviço** e **Quem pode usá-las**. Selecione um arquivo fixado para abrir **Procurar** na pasta dele, com o arquivo selecionado. |
-| **Procurar** | O explorador de arquivos. Escolha a conta na lista do cabeçalho da página. Consulte [Usar contas de documentos](/pt-br/guides/documents/using-document/). |
-| **Compartilhadas** | As contas compartilhadas com você. Clique duas vezes em uma linha para navegar por ela. |
-| **Minhas privadas** | As contas que somente você pode usar. Clique duas vezes em uma linha para navegar por ela. |
+| **Visão geral** | Blocos para as suas contas (**Contas**, que abre **Suas contas**, **Buckets gerenciados**, **Serviços externos** e **Desativado**, marcado com **Requer atenção** e que abre **Gerenciar** quando uma conta sua está desativada), arquivos **Fixados**, **Contas por serviço** e **Quem pode usá-las**. Selecione um arquivo fixado para abrir **Procurar** na pasta dele, com o arquivo selecionado. |
+| **Procurar** | O explorador de arquivos. Ele abre a sua conta favorita (aquela cuja pasta de nível superior você fixou) ou a conta padrão do espaço de trabalho, e você pode escolher outra conta na lista do cabeçalho da página. Consulte [Usar contas de documentos](/pt-br/guides/documents/using-document/). |
+| **Suas contas** | Todas as contas que você pode usar, em uma só lista. Uma etiqueta **Compartilhadas** ou **Privado** em cada linha informa se a conta é compartilhada com você ou somente sua. Clique duas vezes em uma linha para navegar por ela. |
 | **Gerenciar** | As contas das quais você é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Status** e **Descrição**. Um administrador do espaço de trabalho vê todas as contas de documentos aqui e pode gerenciar qualquer conta que, de outra forma, possa gerenciar; as contas gerenciadas pelo sistema são recusadas e as contas de bucket gerenciado não podem ser clonadas. |
 
-A barra lateral mostra uma contagem ao lado de **Compartilhadas**, **Minhas privadas** e **Gerenciar**. Para um administrador do espaço de trabalho que tem contas que não são dele, **Gerenciar** mostra **admin** em vez de uma contagem. A Visão geral tem os botões **Procurar arquivos** e **Nova conta** para começar rapidamente.
+A barra lateral mostra uma contagem ao lado de **Suas contas**. A Visão geral tem os botões **Procurar arquivos** e **Nova conta** para começar rapidamente.
 
 ### Ações de linha em Gerenciar
 
