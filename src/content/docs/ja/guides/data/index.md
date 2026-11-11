@@ -10,15 +10,16 @@ PlaidCloud のデータレイヤーは、**テーブル**（行と列からな�
 
 ## このセクションの内容
 
-- [テーブルとビュー](/ja/guides/data/tables-views/) - それぞれの概要、使い分け、相互の関係
-- [テーブルエクスプローラー](/ja/guides/data/table-explorer/) - プロジェクト内のテーブルを参照して確認します
-- [Currency データ型](/ja/guides/data/currency-data-type/) - 金額の値に使う、正確で半角の列データ型と、Numeric よりもこちらを選ぶべき場面
-- [Vector データ型](/ja/guides/data/vector-data-type/) - 事前に計算した埋め込みをプロジェクトのテーブルに保存し、想定する幅を宣言して、最も近い行を検索します
-- [テーブルのスナップショット](/ja/guides/data/table-snapshots/) - スナップショットの履歴を参照し、過去のスナップショット時点のデータを表示して、テーブルを巻き戻しまたは復元します
-- [データの公開](/ja/guides/data/publish/) - プロジェクトのテーブルをダッシュボード、BI ツール、下流のシステムで利用できるようにし、パフォーマンスに関するガイダンスを確認します
-- [大規模な履歴テーブルから最新のレコードを選択する](/ja/guides/data/selecting-latest-record-in-large-history-table/) - パフォーマンスを考慮した解決方法がある、よくあるパターン
-- [ジオコーディング API](/ja/guides/data/geocoding-api/) - Google または Mapbox のジオコーディング連携を PlaidCloud の REST ジオコーディングエンドポイントに移行します
-- [ドライブタイムルーティング API](/ja/guides/data/drive-time-routing-api/) - オプトインのプレビュー：REST による、ドライブタイムの等時間圏と、ドライブタイム順の最寄り検索
+- [テーブルとビュー](/ja/guides/data/tables-views/) — それぞれの概要、使い分け、相互の関係
+- [テーブルエクスプローラー](/ja/guides/data/table-explorer/) — プロジェクト内のテーブルを参照して確認します
+- [Currency データ型](/ja/guides/data/currency-data-type/) — 金額の値に使う、正確で半角の列データ型と、Numeric よりもこちらを選ぶべき場面
+- [Vector データ型](/ja/guides/data/vector-data-type/) — 事前に計算した埋め込みをプロジェクトのテーブルに保存し、想定する幅を宣言して、最も近い行を検索します
+- [テーブルのスナップショット](/ja/guides/data/table-snapshots/) — スナップショットの履歴を参照し、過去のスナップショット時点のデータを表示して、テーブルを巻き戻しまたは復元します
+- [Lakehouse ウィンドウ](/ja/guides/data/lakehouse-window/) — クエリを監視してプロファイルし、カタログとテーブルをスナップショットとともに参照して、タイムトラベルクエリをコピーします
+- [データの公開](/ja/guides/data/publish/) — プロジェクトのテーブルをダッシュボード、BI ツール、下流のシステムで利用できるようにし、パフォーマンスに関するガイダンスを確認します
+- [大規模な履歴テーブルから最新のレコードを選択する](/ja/guides/data/selecting-latest-record-in-large-history-table/) — パフォーマンスを考慮した解決方法がある、よくあるパターン
+- [ジオコーディング API](/ja/guides/data/geocoding-api/) — Google または Mapbox のジオコーディング連携を PlaidCloud の REST ジオコーディングエンドポイントに移行します
+- [ドライブタイムルーティング API](/ja/guides/data/drive-time-routing-api/) — オプトインのプレビュー：REST による、ドライブタイムの等時間圏と、ドライブタイム順の最寄り検索
 
 ## データの入手元
 
@@ -28,6 +29,6 @@ PlaidCloud のデータレイヤーは、**テーブル**（行と列からな�
 
 ## 関連情報
 
-- [コンセプト](/ja/get-started/concepts/) - テーブルがワークフロー、ディメンション、より広いデータモデルとどのように関係するか
-- [プロジェクト](/ja/guides/projects/) - テーブルはプロジェクトが所有します。テーブルはプロジェクトの外には存在しません
-- [ダッシュボード](/ja/guides/dashboards/) - 公開されたテーブルを可視化に利用します
+- [コンセプト](/ja/get-started/concepts/) — テーブルがワークフロー、ディメンション、より広いデータモデルとどのように関係するか
+- [プロジェクト](/ja/guides/projects/) — テーブルはプロジェクトが所有します。テーブルはプロジェクトの外には存在しません
+- [ダッシュボード](/ja/guides/dashboards/) — 公開されたテーブルを可視化に利用します

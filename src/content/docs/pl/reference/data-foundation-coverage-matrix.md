@@ -98,7 +98,7 @@ Data Foundation odczytuje bezpośrednio każdy podłączony system ERP i każdą
 
 - [Data Foundation](/pl/guides/projects/data-foundation/)
 - [Rozpocznij pracę z Data Foundation](/pl/guides/projects/data-foundation-getting-started/)
-- [Dodaj pliki z danymi spoza ERP](/pl/guides/projects/data-foundation/#dodaj-pliki-z-danymi-spoza-erp)
+- [Dodaj pliki z danymi spoza ERP](/pl/guides/projects/data-foundation/#dodawanie-plików-z-danymi-spoza-systemu-erp)
 - Przewodniki po dostępie dla połączeń:
   - [NetSuite](/pl/guides/connections/netsuite-access-for-data-foundation/)
   - [Salesforce](/pl/guides/connections/salesforce-access-for-data-foundation/)

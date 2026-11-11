@@ -14,6 +14,7 @@ PlaidCloud's data layer is built around **tables** (structured row-and-column da
 - [Currency data type](/guides/data/currency-data-type/) — an exact, half-width column type for money values, and when to choose it over Numeric
 - [Vector data type](/guides/data/vector-data-type/) — store pre-computed embeddings in a project table, declare the width you expect, and search for the nearest rows
 - [Table snapshots](/guides/data/table-snapshots/) — browse snapshot history, view data as of a past snapshot, and revert or restore a table
+- [The Lakehouse window](/guides/data/lakehouse-window/) — watch and profile queries, browse catalogs and tables with their snapshots, and copy a time-travel query
 - [Publishing data](/guides/data/publish/) — make project tables available to dashboards, BI tools, and downstream systems, and review their performance guidance
 - [Selecting the latest record in a large history table](/guides/data/selecting-latest-record-in-large-history-table/) — a common pattern with a performance-aware solution
 - [Geocoding API](/guides/data/geocoding-api/) — migrate a Google or Mapbox geocoding integration to PlaidCloud's REST geocoding endpoints
