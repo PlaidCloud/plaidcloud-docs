@@ -449,6 +449,7 @@ export default defineConfig({
 								'guides/projects/managing-data-editors',
 								'guides/data/publish',
 								'guides/data/table-snapshots',
+								'guides/data/lakehouse-window',
 								'guides/data/selecting-latest-record-in-large-history-table',
 								'guides/data/currency-data-type',
 								'guides/data/vector-data-type',
