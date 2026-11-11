@@ -98,7 +98,7 @@ Data Foundation lee directamente cada sistema ERP e instancia que usted conecta 
 
 - [Data Foundation](/es/guides/projects/data-foundation/)
 - [Primeros pasos con Data Foundation](/es/guides/projects/data-foundation-getting-started/)
-- [Agregar archivos para datos que no están en su ERP](/es/guides/projects/data-foundation/#agregar-archivos-para-datos-que-no-están-en-su-erp)
+- [Agregar archivos para datos que no están en su ERP](/es/guides/projects/data-foundation/#agregar-archivos-para-datos-fuera-de-su-erp)
 - Guías de acceso de conexión:
   - [NetSuite](/es/guides/connections/netsuite-access-for-data-foundation/)
   - [Salesforce](/es/guides/connections/salesforce-access-for-data-foundation/)
