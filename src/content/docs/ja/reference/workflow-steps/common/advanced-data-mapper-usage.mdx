@@ -217,7 +217,7 @@ StarRocksでは、次のとおりです。
 
 `sqlalchemy.literal_column`は、SQLの断片をウェアハウスにそのまま渡します。受け付けるのは、列、計算、`CASE`、関数呼び出し、キャスト、ウィンドウ関数など、単一の値です。**サブクエリ**（`(SELECT ... FROM ...)`）を含む`literal_column`は、ステップが宣言していないテーブルにアクセスしてしまうため、拒否されます。
 
-このセクションのルールは、式がどこで記述されても適用されます。ここでのマッパー、ステップのフィルター、別の場所で組み立ててプラットフォームに送信されるクエリのいずれも対象です。ルールは、ステップの保存時と、式がSQLに変換される際に再度チェックされます。
+このセクションのルールは、式がどこで記述されても適用されます。ここでのマッパー、ステップのフィルター、テーブルエクスプローラーのフィルター、別の場所で組み立ててプラットフォームに送信されるクエリのいずれも対象です。ルールは、ステップの保存時と、式がSQLに変換される際に再度チェックされます。
 
 代わりに`sqlalchemy.select(...)`でサブクエリを構築してください。列に単一の値が必要な場合は`.scalar_subquery()`、サブクエリから選択する場合は`.subquery()`を使用します。
 
@@ -270,3 +270,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 `.op('...')`でも、同じ2つの記述が拒否されます。
 
 `literal_column`が通常使われるその他の用途には影響しません。`literal_column('current_date')`、`literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")`、`func.count()`は、これまでどおりすべて動作します。スペース、ドット、引用符を含む列名にも影響しません。ウェアハウスが自動的に引用符で囲みます。
+
+### 拒否される関数と演算子
+
+このセクションのルールは、テーブルエクスプローラーのフィルターと、プラットフォームに送信されるクエリに適用されます。結合またはルックアップのステップでは、**キーを確認**がステップのフィルターにもこれらのルールを適用します。いずれかに違反するフィルターはエラーがあると報告され、そのテーブルは確認されません。
+
+文字列に含まれるSQLを実行する関数、サーバーのファイルを読み取る関数、セッションやサーバーの状態を変更する関数、またはサーバーを待機させる関数の呼び出しは、`sqlalchemy.func`で記述しても`literal_column`の中に記述しても拒否され、エラーには関数名が示されます。`query_to_xml`とその他の`_to_xml`関数、`ts_rewrite`、`dblink`、`pg_read_file`、`pg_ls_dir`、`set_config`、`nextval`、`pg_sleep`などが該当します。
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')`と`.bool_op('...')`が受け付けるのは演算子だけです。`->>`、`@>`、`-|-`のような4文字以内の記号か、次のいずれかの語を指定します：`LIKE`、`NOT LIKE`、`ILIKE`、`NOT ILIKE`、`SIMILAR TO`、`NOT SIMILAR TO`、`REGEXP`、`NOT REGEXP`、`RLIKE`、`NOT RLIKE`、`IS`、`IS NOT`、`IS DISTINCT FROM`、`IS NOT DISTINCT FROM`、`AT TIME ZONE`、`DIV`、`MOD`、`MEMBER OF`、`SOUNDS LIKE`。
+
+`literal_column`では、Unicodeエスケープを使った引用符（`U&'...'`や`U&"..."`）は使用できません。エスケープで記述した名前は、どの関数を呼び出すかを隠すことができるためです。名前やテキストはそのまま記述してください。
