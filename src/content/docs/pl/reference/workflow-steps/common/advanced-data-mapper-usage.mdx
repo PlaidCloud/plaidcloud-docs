@@ -219,7 +219,7 @@ W każdej hurtowni danych wartość, której nie można przekonwertować, na prz
 
 `sqlalchemy.literal_column` przekazuje fragment SQL do hurtowni danych bez zmian i przyjmuje pojedynczą wartość — kolumnę, obliczenie, `CASE`, wywołanie funkcji, rzutowanie, funkcję okna. `literal_column` zawierający **podzapytanie** (`(SELECT ... FROM ...)`) jest odrzucany, ponieważ podzapytanie sięga do tabeli, której krok nigdy nie zadeklarował.
 
-Reguły z tej sekcji obowiązują wszędzie tam, gdzie pisane jest wyrażenie — tutaj w maperze, w filtrze kroku oraz w zapytaniu składanym gdzie indziej i wysyłanym do platformy. Są sprawdzane przy zapisywaniu kroku i ponownie, gdy wyrażenie jest zamieniane na SQL.
+Reguły z tej sekcji obowiązują wszędzie tam, gdzie pisane jest wyrażenie — tutaj w maperze, w filtrze kroku, w filtrze Eksploratora tabel oraz w zapytaniu składanym gdzie indziej i wysyłanym do platformy. Są sprawdzane przy zapisywaniu kroku i ponownie, gdy wyrażenie jest zamieniane na SQL.
 
 Zamiast tego zbuduj podzapytanie za pomocą `sqlalchemy.select(...)` — z `.scalar_subquery()`, gdy potrzebujesz pojedynczej wartości w kolumnie, lub z `.subquery()`, gdy z niego wybierasz:
 
@@ -272,3 +272,19 @@ sqlalchemy.func.concat(table.code, sqlalchemy.literal('#'))
 Te same dwa zapisy są odrzucane w `.op('...')`.
 
 Wszystko inne, do czego zwykle służy `literal_column`, pozostaje bez zmian — `literal_column('current_date')`, `literal_column("CASE WHEN amount > 0 THEN 'p' ELSE 'n' END")` i `func.count()` działają jak dotychczas. Nazwy kolumn zawierające spacje, kropki lub cudzysłowy również pozostają bez zmian; hurtownia danych ujmie je w cudzysłowy za Ciebie.
+
+### Odrzucane funkcje i operatory
+
+Reguły z tej sekcji obowiązują w filtrze Eksploratora tabel oraz w zapytaniu wysyłanym do platformy. W kroku złączenia lub wyszukiwania **Sprawdź klucze** stosuje je także do filtru kroku: filtr, który narusza którąś z nich, jest zgłaszany jako błędny, a ta tabela nie jest sprawdzana. Krok Table Extract, który ma **Kolumny dynamiczne**, stosuje je podczas uruchomienia do filtru kroku oraz do wyrażeń `rows` kolumn dynamicznych (`key`, `label`, `where` i `order`): wyrażenie, które narusza którąś z nich, powoduje niepowodzenie kroku.
+
+Wywołanie funkcji, która uruchamia SQL zapisany w ciągu znaków, odczytuje pliki serwera, zmienia sesję lub stan serwera albo każe serwerowi czekać, jest odrzucane niezależnie od tego, czy zapisano je za pomocą `sqlalchemy.func`, czy wewnątrz `literal_column`, a komunikat o błędzie podaje nazwę funkcji. Należą do nich `query_to_xml` i inne funkcje `_to_xml`, `ts_rewrite`, `dblink`, `pg_read_file`, `pg_ls_dir`, `set_config`, `nextval` i `pg_sleep`.
+
+```python
+# Refused
+sqlalchemy.func.query_to_xml('SELECT 1', True, False, '')
+sqlalchemy.literal_column("pg_read_file('postgresql.conf')")
+```
+
+`.op('...')` i `.bool_op('...')` przyjmują operator i nic więcej: do czterech znaków interpunkcyjnych, takich jak `->>`, `@>` lub `-|-`, albo jedno z tych słów: `LIKE`, `NOT LIKE`, `ILIKE`, `NOT ILIKE`, `SIMILAR TO`, `NOT SIMILAR TO`, `REGEXP`, `NOT REGEXP`, `RLIKE`, `NOT RLIKE`, `IS`, `IS NOT`, `IS DISTINCT FROM`, `IS NOT DISTINCT FROM`, `AT TIME ZONE`, `DIV`, `MOD`, `MEMBER OF` i `SOUNDS LIKE`.
+
+`literal_column` nie może używać cudzysłowów ze znakami ucieczki Unicode, `U&'...'` ani `U&"..."`, ponieważ nazwa zapisana za pomocą znaków ucieczki może ukryć, którą funkcję wywołuje. Zapisz nazwę lub tekst wprost.
