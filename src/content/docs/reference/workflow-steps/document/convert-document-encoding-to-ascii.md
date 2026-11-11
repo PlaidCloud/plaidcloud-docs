@@ -16,6 +16,7 @@ Rewrites a text file as plain ASCII. This is particularly useful if the source o
 - A line holding only a double quote is joined to the end of the line before it.
 - A file whose encoding cannot be detected fails the step, naming the file.
 - If the input path does not exist or has no files in it, the step finishes with a warning that names the path and processes nothing, and the workflow continues.
+- A compressed file — a zip, gzip or bzip2 file, say — is expanded first, and each file in it is converted.
 - For a folder, each file is converted and written into the destination under its own name. Tick **Keep Subfolders** to write a file from a subfolder into the matching subfolder of the destination instead; the contents of a compressed file then go into the subfolder the compressed file was in.
 - If two files would be written to the same place in the destination, the step fails before writing the second, rather than letting it replace the first. The message names both files, or the compressed file they both came from, and the place; if ticking **Keep Subfolders** would write them to separate places, it says so.
 

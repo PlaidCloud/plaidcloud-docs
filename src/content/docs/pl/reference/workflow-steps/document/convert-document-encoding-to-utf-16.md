@@ -12,7 +12,7 @@ Zapisuje plik tekstowy od nowa w UTF-16. Przydatne, gdy system docelowy wymaga U
 
 ## Dane wejściowe
 
-- **Plik lub katalog wejściowy** — plik tekstowy lub folder plików tekstowych do konwersji.
+- **Plik lub katalog wejściowy** — plik tekstowy lub plik skompresowany albo folder takich plików do konwersji.
 - **Miejsce docelowe** — miejsce, w którym zapisywany jest przekonwertowany plik.
 - **Kompresja** — Bez kompresji, Zip, GZip lub BZip2 dla danych wyjściowych.
 - **Zachowaj podfoldery** — w przypadku folderu zaznacz, aby zapisać każdy plik z podfolderu w odpowiadającym mu podfolderze miejsca docelowego.
@@ -25,6 +25,7 @@ Zapisuje plik tekstowy od nowa w UTF-16. Przydatne, gdy system docelowy wymaga U
 - Tekst jest zapisywany bez zmian — litery z akcentami, symbole i inne znaki są zachowane dokładnie tak, jak były.
 - Plik, którego kodowania nie można wykryć, powoduje niepowodzenie kroku z podaniem pliku.
 - Jeśli ścieżka wejściowa nie istnieje lub nie zawiera plików, krok kończy się ostrzeżeniem wskazującym ścieżkę, nic nie przetwarza, a przepływ pracy jest kontynuowany.
+- Plik skompresowany — na przykład plik zip, gzip lub bzip2 — jest najpierw rozpakowywany, a każdy znajdujący się w nim plik jest konwertowany.
 - W przypadku folderu każdy plik jest konwertowany i zapisywany w miejscu docelowym pod własną nazwą. Zaznacz **Zachowaj podfoldery**, aby zamiast tego zapisać plik z podfolderu w odpowiadającym mu podfolderze miejsca docelowego; zawartość pliku skompresowanego trafia wtedy do podfolderu, w którym znajdował się ten plik skompresowany.
 - Jeśli dwa pliki miałyby zostać zapisane w tym samym miejscu docelowym, krok kończy się niepowodzeniem przed zapisaniem drugiego, zamiast pozwolić mu zastąpić pierwszy. Komunikat podaje oba pliki, lub plik skompresowany, z którego pochodzą oba, oraz to miejsce; jeśli zaznaczenie **Zachowaj podfoldery** zapisałoby je w osobnych miejscach, komunikat o tym informuje.
 

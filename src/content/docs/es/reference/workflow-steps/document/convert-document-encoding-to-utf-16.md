@@ -12,7 +12,7 @@ Reescribe un archivo de texto en UTF-16. Resulta útil cuando un sistema posteri
 
 ## Entradas
 
-- **Archivo o directorio de entrada**: el archivo de texto, o la carpeta de archivos de texto, que se va a convertir.
+- **Archivo o directorio de entrada**: el archivo de texto o el archivo comprimido, o una carpeta de ellos, que se va a convertir.
 - **Destino**: dónde se escribe el archivo convertido.
 - **Compresión**: Sin compresión, Zip, GZip o BZip2 para la salida.
 - **Conservar subcarpetas**: para una carpeta, márquela para escribir cada archivo de una subcarpeta en la subcarpeta equivalente del destino.
@@ -25,6 +25,7 @@ Reescribe un archivo de texto en UTF-16. Resulta útil cuando un sistema posteri
 - El texto se escribe sin cambios: las letras acentuadas, los símbolos y los demás caracteres se conservan exactamente como estaban.
 - Un archivo cuya codificación no se puede detectar hace que el paso falle, indicando el archivo.
 - Si la ruta de entrada no existe o no contiene archivos, el paso termina con una advertencia que indica la ruta y no procesa nada, y el flujo de trabajo continúa.
+- Un archivo comprimido — por ejemplo, un archivo zip, gzip o bzip2 — se expande primero, y cada archivo que contiene se convierte.
 - En el caso de una carpeta, cada archivo se convierte y se escribe en el destino con su propio nombre. Marque **Conservar subcarpetas** para escribir en su lugar un archivo de una subcarpeta en la subcarpeta equivalente del destino; el contenido de un archivo comprimido va entonces a la subcarpeta en la que estaba el archivo comprimido.
 - Si dos archivos se escribieran en el mismo lugar del destino, el paso falla antes de escribir el segundo, en lugar de dejar que reemplace al primero. El mensaje nombra ambos archivos, o el archivo comprimido del que proceden los dos, y el lugar; si marcar **Conservar subcarpetas** los escribiría en lugares distintos, lo indica.
 

@@ -16,6 +16,7 @@ Reescribe un archivo de texto en UTF-8. Resulta especialmente útil si el origen
 - El texto se escribe sin cambios: las letras acentuadas, los símbolos y los demás caracteres se conservan exactamente como estaban.
 - Un archivo cuya codificación no se puede detectar hace que el paso falle, indicando el archivo.
 - Si la ruta de entrada no existe o no contiene archivos, el paso termina con una advertencia que indica la ruta y no procesa nada, y el flujo de trabajo continúa.
+- Un archivo comprimido — por ejemplo, un archivo zip, gzip o bzip2 — se expande primero, y cada archivo que contiene se convierte.
 - En el caso de una carpeta, cada archivo se convierte y se escribe en el destino con su propio nombre. Marque **Conservar subcarpetas** para escribir en su lugar un archivo de una subcarpeta en la subcarpeta equivalente del destino; el contenido de un archivo comprimido va entonces a la subcarpeta en la que estaba el archivo comprimido.
 - Si dos archivos se escribieran en el mismo lugar del destino, el paso falla antes de escribir el segundo, en lugar de dejar que reemplace al primero. El mensaje nombra ambos archivos, o el archivo comprimido del que proceden los dos, y el lugar; si marcar **Conservar subcarpetas** los escribiría en lugares distintos, lo indica.
 

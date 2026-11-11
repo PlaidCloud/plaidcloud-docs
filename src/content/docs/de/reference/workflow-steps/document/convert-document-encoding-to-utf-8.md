@@ -16,6 +16,7 @@ Schreibt eine Textdatei in UTF-8 neu. Das ist besonders nützlich, wenn die Info
 - Der Text wird unverändert geschrieben – Buchstaben mit Akzent, Symbole und andere Zeichen bleiben genau so erhalten, wie sie waren.
 - Eine Datei, deren Kodierung nicht erkannt werden kann, lässt den Schritt fehlschlagen, unter Nennung der Datei.
 - Wenn der Eingabepfad nicht existiert oder keine Dateien enthält, wird der Schritt mit einer Warnung beendet, die den Pfad nennt, und verarbeitet nichts; der Workflow wird fortgesetzt.
+- Eine komprimierte Datei – etwa eine Zip-, GZip- oder BZip2-Datei – wird zuerst entpackt, und jede darin enthaltene Datei wird konvertiert.
 - Bei einem Ordner wird jede Datei konvertiert und unter ihrem eigenen Namen in das Ziel geschrieben. Aktivieren Sie **Unterordner beibehalten**, um stattdessen eine Datei aus einem Unterordner in den entsprechenden Unterordner des Ziels zu schreiben; der Inhalt einer komprimierten Datei geht dann in den Unterordner, in dem die komprimierte Datei lag.
 - Würden zwei Dateien an dieselbe Stelle im Ziel geschrieben, schlägt der Schritt fehl, bevor er die zweite schreibt, statt sie die erste ersetzen zu lassen. Die Meldung nennt beide Dateien oder die komprimierte Datei, aus der beide stammen, sowie die Stelle; würde das Aktivieren von **Unterordner beibehalten** sie an getrennten Stellen ablegen, weist sie darauf hin.
 
