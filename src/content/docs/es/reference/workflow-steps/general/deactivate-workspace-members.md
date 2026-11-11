@@ -21,7 +21,7 @@ Combínelo con el paso [Get Workspace Members](/es/reference/workflow-steps/gene
 
 ## Administradores del espacio de trabajo en la lista
 
-[Solo un administrador del espacio de trabajo puede desactivar a otro administrador del espacio de trabajo](/es/administration/access/member-management/#cambiar-a-un-administrador-del-espacio-de-trabajo). Cuando el paso se ejecuta sin derechos de administrador del espacio de trabajo y su lista incluye administradores, deja activos a esos administradores, desactiva a todos los demás y finaliza con un error cuyo mensaje indica cuántos miembros desactivó y nombra a cada administrador que dejó activo. Los miembros que desactivó permanecen desactivados. Para desactivar a un administrador, pida a un administrador del espacio de trabajo que lo haga en Identity.
+[Solo un administrador del espacio de trabajo puede desactivar a otro administrador del espacio de trabajo](/es/administration/access/member-management/#cambio-de-un-administrador-del-espacio-de-trabajo). Cuando el paso se ejecuta sin derechos de administrador del espacio de trabajo y su lista incluye administradores, deja activos a esos administradores, desactiva a todos los demás y finaliza con un error cuyo mensaje indica cuántos miembros desactivó y nombra a cada administrador que dejó activo. Los miembros que desactivó permanecen desactivados. Para desactivar a un administrador, pida a un administrador del espacio de trabajo que lo haga en Identity.
 
 ## Configuración
 

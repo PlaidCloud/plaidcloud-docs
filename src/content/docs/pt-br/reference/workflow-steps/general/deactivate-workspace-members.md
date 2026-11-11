@@ -21,7 +21,7 @@ Use-a em conjunto com [Get Workspace Members (etapa)](/pt-br/reference/workflow-
 
 ## Administradores do espaço de trabalho na lista
 
-[Somente um administrador do espaço de trabalho pode desativar um administrador do espaço de trabalho](/pt-br/administration/access/member-management/#alterar-um-administrador-do-espaço-de-trabalho). Quando a etapa é executada sem direitos de administrador do espaço de trabalho e a lista inclui administradores, ela mantém esses administradores ativos, desativa todos os demais e termina com erro, com uma mensagem que informa quantos membros ela desativou e nomeia cada administrador que manteve ativo. Os membros que ela desativou continuam desativados. Para desativar um administrador, peça a um administrador do espaço de trabalho que faça isso no Identity.
+[Somente um administrador do espaço de trabalho pode desativar um administrador do espaço de trabalho](/pt-br/administration/access/member-management/#alteração-de-um-administrador-do-espaço-de-trabalho). Quando a etapa é executada sem direitos de administrador do espaço de trabalho e a lista inclui administradores, ela mantém esses administradores ativos, desativa todos os demais e termina com erro, com uma mensagem que informa quantos membros ela desativou e nomeia cada administrador que manteve ativo. Os membros que ela desativou continuam desativados. Para desativar um administrador, peça a um administrador do espaço de trabalho que faça isso no Identity.
 
 ## Configuração
 
