@@ -42,7 +42,7 @@ Die Sperre schützt vor Versehen – einer irrtümlichen Bearbeitung, einem unbe
 
 ## Eine App öffnen
 
-Klicken Sie am Anfang der Zeile einer bereiten App auf das Symbol **Öffnen**, um sie in einer neuen Registerkarte zu starten. **Öffnen** ist auch der erste Eintrag im Menü **⋯** der Zeile. Siehe [Das Zeilenaktionsmenü](/de/guides/dashboards/using-dashboards/#das-zeilenaktionsmenü).
+Klicken Sie am Anfang der Zeile einer bereiten App auf das Symbol **Öffnen**, um sie in einer neuen Registerkarte zu starten. **Öffnen** ist auch der erste Eintrag im Menü **⋯** der Zeile. Siehe [Das Zeilenaktionsmenü](/de/guides/dashboards/using-dashboards/#das-menü-der-zeilenaktionen).
 
 - Eine Server-App wird unter `https://<your-tenant-host>/serve/<slug>/` bereitgestellt.
 - Das Symbol **Öffnen** erscheint erst, wenn eine Server-App **Bereit** ist.

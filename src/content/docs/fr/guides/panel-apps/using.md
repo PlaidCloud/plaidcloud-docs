@@ -42,7 +42,7 @@ Le verrou est une protection contre les accidents — une modification par erreu
 
 ## Ouvrir une application
 
-Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-des-actions-de-ligne).
+Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-dactions-de-ligne).
 
 - Une application serveur est servie à l'adresse `https://<your-tenant-host>/serve/<slug>/`.
 - L'icône **Ouvrir** n'apparaît que lorsqu'une application serveur a le statut **Prêt**.
