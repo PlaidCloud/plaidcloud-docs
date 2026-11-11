@@ -214,6 +214,44 @@ On StarRocks:
 
 On every warehouse, a value that cannot be converted, such as non-numeric text cast to a number, becomes null instead of stopping the step.
 
+### Several Values Where One Is Expected
+
+A column's expression and a step's filter must each give one value, and so must every value they compare a column with or pass to a function. To match any of several values, list them inside `.in_([...])` or `.not_in([...])`.
+
+Commas and square brackets make a list of values, and an expression that gives a list where one value is expected is refused. The step form refuses it when you save the step. A step saved earlier with such an expression fails when it runs, and a Table Extract or Table Union All step fails before it empties its target table, so the table keeps its data. The message shows the expression and what to change.
+
+The most common cause is a trailing comma:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+This applies on every warehouse. Some warehouses ran such an expression, but not always as written, so a step that has been running without errors may now fail with this message.
+
+To match a column against any of several values, use `.in_([...])` rather than `==`, and `.not_in([...])` rather than `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Each value passed to a function is checked the same way, so check the brackets and commas around it:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Reading Another Table From an Expression
 
 `sqlalchemy.literal_column` passes a fragment of SQL through to the warehouse untouched, and it accepts a single value — a column, a calculation, a `CASE`, a function call, a cast, a window function. A `literal_column` holding a **subquery** (`(SELECT ... FROM ...)`) is refused, because a subquery reaches a table the step never declared.

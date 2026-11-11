@@ -214,6 +214,44 @@ Auf StarRocks gilt:
 
 Auf jedem Warehouse wird ein Wert, der nicht umgewandelt werden kann, etwa nicht numerischer Text, der in eine Zahl umgewandelt wird, zu Null, anstatt den Schritt anzuhalten.
 
+### Mehrere Werte, wo einer erwartet wird
+
+Der Ausdruck einer Spalte und der Filter eines Schritts müssen jeweils einen Wert liefern, ebenso jeder Wert, mit dem sie eine Spalte vergleichen oder den sie an eine Funktion übergeben. Um mit einem von mehreren Werten übereinzustimmen, listen Sie diese in `.in_([...])` oder `.not_in([...])` auf.
+
+Kommas und eckige Klammern bilden eine Liste von Werten, und ein Ausdruck, der eine Liste liefert, wo ein einzelner Wert erwartet wird, wird abgelehnt. Das Formular des Schritts lehnt ihn beim Speichern des Schritts ab. Ein früher mit einem solchen Ausdruck gespeicherter Schritt schlägt bei der Ausführung fehl, und ein Table-Extract- oder Table-Union-All-Schritt schlägt fehl, bevor er seine Zieltabelle leert, sodass die Tabelle ihre Daten behält. Die Meldung zeigt den Ausdruck und was zu ändern ist.
+
+Die häufigste Ursache ist ein abschließendes Komma:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Das gilt für jedes Warehouse. Einige Warehouses führten einen solchen Ausdruck aus, aber nicht immer so, wie er geschrieben war, sodass ein Schritt, der bisher fehlerfrei lief, jetzt mit dieser Meldung fehlschlagen kann.
+
+Um eine Spalte mit einem von mehreren Werten abzugleichen, verwenden Sie `.in_([...])` statt `==` und `.not_in([...])` statt `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Jeder an eine Funktion übergebene Wert wird auf dieselbe Weise geprüft, prüfen Sie also die Klammern und Kommas darum:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Eine andere Tabelle aus einem Ausdruck lesen
 
 `sqlalchemy.literal_column` reicht ein SQL-Fragment unverändert an das Warehouse durch und akzeptiert einen einzelnen Wert – eine Spalte, eine Berechnung, ein `CASE`, einen Funktionsaufruf, eine Umwandlung, eine Fensterfunktion. Ein `literal_column`, das eine **Unterabfrage** enthält (`(SELECT ... FROM ...)`), wird abgelehnt, weil eine Unterabfrage auf eine Tabelle zugreift, die der Schritt nie deklariert hat.
