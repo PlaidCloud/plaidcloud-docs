@@ -16,6 +16,8 @@ Quando o arquivo de origem não é UTF-8, sua codificação é determinada a par
 
 Um caractere que a codificação de destino não consegue representar faz a etapa falhar por padrão. Selecione **Substituir por ? os caracteres que a codificação de destino não suporta** para gravar um `?` no lugar dele, como faz um gravador Java, e a etapa termina normalmente.
 
+No caso de uma pasta, cada arquivo é gravado no destino com o próprio nome. Marque **Manter subpastas** para gravar um arquivo de uma subpasta na subpasta correspondente do destino. Se dois arquivos fossem gravados no mesmo local, a etapa falha antes de gravar o segundo, em vez de deixá-lo substituir o primeiro, e informa se marcar **Manter subpastas** os manteria separados.
+
 Escolha a codificação de destino na configuração da etapa. Para atalhos de codificações específicas, consulte as variantes [UTF-8](/pt-br/reference/workflow-steps/document/convert-document-encoding-to-utf-8/), [UTF-16](/pt-br/reference/workflow-steps/document/convert-document-encoding-to-utf-16/) e [ASCII](/pt-br/reference/workflow-steps/document/convert-document-encoding-to-ascii/).
 
 

@@ -17,6 +17,8 @@ Reescreve um ficheiro de texto como ASCII simples. É particularmente útil se a
 - Uma linha que contenha apenas aspas duplas é unida ao fim da linha anterior.
 - Um ficheiro cuja codificação não possa ser detetada faz o passo falhar, indicando o ficheiro.
 - Se o caminho de entrada não existir ou não tiver ficheiros, o passo termina com um aviso que indica o caminho e não processa nada, e o fluxo de trabalho continua.
+- No caso de uma pasta, cada ficheiro é convertido e escrito no destino com o seu próprio nome. Assinale **Manter subpastas** para escrever um ficheiro de uma subpasta na subpasta correspondente do destino; o conteúdo de um ficheiro comprimido passa então para a subpasta em que o ficheiro comprimido estava.
+- Se dois ficheiros fossem escritos no mesmo local do destino, o passo falha antes de escrever o segundo, em vez de permitir que substitua o primeiro. A mensagem indica os dois ficheiros, ou o ficheiro comprimido de que ambos provêm, e o local; se assinalar **Manter subpastas** os escrevesse em locais separados, a mensagem di-lo.
 
 ## Exemplos
 

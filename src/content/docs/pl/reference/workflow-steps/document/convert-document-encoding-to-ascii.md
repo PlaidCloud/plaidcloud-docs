@@ -17,6 +17,8 @@ Zapisuje plik tekstowy od nowa jako zwykły ASCII. Jest to szczególnie przydatn
 - Wiersz zawierający tylko cudzysłów jest dołączany do końca poprzedniego wiersza.
 - Plik, którego kodowania nie można wykryć, powoduje niepowodzenie kroku z podaniem pliku.
 - Jeśli ścieżka wejściowa nie istnieje lub nie zawiera plików, krok kończy się ostrzeżeniem wskazującym ścieżkę, nic nie przetwarza, a przepływ pracy jest kontynuowany.
+- W przypadku folderu każdy plik jest konwertowany i zapisywany w miejscu docelowym pod własną nazwą. Zaznacz **Zachowaj podfoldery**, aby zamiast tego zapisać plik z podfolderu w odpowiadającym mu podfolderze miejsca docelowego; zawartość pliku skompresowanego trafia wtedy do podfolderu, w którym znajdował się ten plik skompresowany.
+- Jeśli dwa pliki miałyby zostać zapisane w tym samym miejscu docelowym, krok kończy się niepowodzeniem przed zapisaniem drugiego, zamiast pozwolić mu zastąpić pierwszy. Komunikat podaje oba pliki, lub plik skompresowany, z którego pochodzą oba, oraz to miejsce; jeśli zaznaczenie **Zachowaj podfoldery** zapisałoby je w osobnych miejscach, komunikat o tym informuje.
 
 ## Przykłady
 

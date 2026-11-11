@@ -15,6 +15,7 @@ Schreibt eine Textdatei in UTF-16 neu. Nützlich, wenn ein nachgelagertes System
 - **Eingabedatei oder -verzeichnis** – die Textdatei oder ein Ordner mit Textdateien, die konvertiert werden sollen.
 - **Ziel** – hierhin wird die konvertierte Datei geschrieben.
 - **Komprimierung** – Keine Komprimierung, Zip, GZip oder BZip2 für die Ausgabe.
+- **Unterordner beibehalten** – bei einem Ordner aktivieren, um jede Datei aus einem Unterordner in den entsprechenden Unterordner des Ziels zu schreiben.
 - **Endianness (Byte-Reihenfolge)** – Little Endian oder Big Endian.
 - **Include BOM** – aktivieren, damit die Datei mit einer Byte-Order-Mark beginnt (`FF FE` für Little Endian, `FE FF` für Big Endian). Deaktiviert lassen für keine Markierung.
 
@@ -24,7 +25,8 @@ Schreibt eine Textdatei in UTF-16 neu. Nützlich, wenn ein nachgelagertes System
 - Der Text wird unverändert geschrieben – Buchstaben mit Akzent, Symbole und andere Zeichen bleiben genau so erhalten, wie sie waren.
 - Eine Datei, deren Kodierung nicht erkannt werden kann, lässt den Schritt fehlschlagen, unter Nennung der Datei.
 - Wenn der Eingabepfad nicht existiert oder keine Dateien enthält, wird der Schritt mit einer Warnung beendet, die den Pfad nennt, und verarbeitet nichts; der Workflow wird fortgesetzt.
-- Bei einem Ordner wird jede Datei konvertiert und unter ihrem eigenen Namen in das Ziel geschrieben. Dateien aus Unterordnern werden in das Ziel selbst geschrieben, nicht in entsprechende Unterordner.
+- Bei einem Ordner wird jede Datei konvertiert und unter ihrem eigenen Namen in das Ziel geschrieben. Aktivieren Sie **Unterordner beibehalten**, um stattdessen eine Datei aus einem Unterordner in den entsprechenden Unterordner des Ziels zu schreiben; der Inhalt einer komprimierten Datei geht dann in den Unterordner, in dem die komprimierte Datei lag.
+- Würden zwei Dateien an dieselbe Stelle im Ziel geschrieben, schlägt der Schritt fehl, bevor er die zweite schreibt, statt sie die erste ersetzen zu lassen. Die Meldung nennt beide Dateien oder die komprimierte Datei, aus der beide stammen, sowie die Stelle; würde das Aktivieren von **Unterordner beibehalten** sie an getrennten Stellen ablegen, weist sie darauf hin.
 
 ## Beispiele
 

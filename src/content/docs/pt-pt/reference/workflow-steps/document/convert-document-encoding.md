@@ -16,6 +16,8 @@ Quando o ficheiro de origem não é UTF-8, a sua codificação é determinada a 
 
 Um caráter que a codificação de destino não consiga representar faz o passo falhar por predefinição. Selecione **Substituir por ? os carateres que a codificação de destino não suporta** para escrever um `?` no seu lugar, como o faz um escritor Java, e o passo termina.
 
+No caso de uma pasta, cada ficheiro é escrito no destino com o seu próprio nome. Assinale **Manter subpastas** para escrever um ficheiro de uma subpasta na subpasta correspondente do destino. Se dois ficheiros fossem escritos no mesmo local, o passo falha antes de escrever o segundo, em vez de permitir que substitua o primeiro, e indica se assinalar **Manter subpastas** os manteria separados.
+
 Escolha a codificação de destino na configuração do passo. Para atalhos de codificações específicas, consulte as variantes [UTF-8](/pt-pt/reference/workflow-steps/document/convert-document-encoding-to-utf-8/), [UTF-16](/pt-pt/reference/workflow-steps/document/convert-document-encoding-to-utf-16/) e [ASCII](/pt-pt/reference/workflow-steps/document/convert-document-encoding-to-ascii/).
 
 

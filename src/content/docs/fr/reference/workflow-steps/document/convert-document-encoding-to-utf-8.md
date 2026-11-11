@@ -16,6 +16,8 @@ Réécrit un fichier texte en UTF-8. C'est particulièrement utile lorsque la so
 - Le texte est écrit tel quel : les lettres accentuées, les symboles et les autres caractères sont conservés exactement comme ils étaient.
 - Un fichier dont l'encodage ne peut pas être détecté fait échouer l'étape, en nommant le fichier.
 - Si le chemin d'entrée n'existe pas ou ne contient aucun fichier, l'étape se termine avec un avertissement qui nomme le chemin et ne traite rien, et le workflow se poursuit.
+- Pour un dossier, chaque fichier est converti et écrit dans la destination sous son propre nom. Cochez **Conserver les sous-dossiers** pour écrire à la place un fichier d'un sous-dossier dans le sous-dossier correspondant de la destination ; le contenu d'un fichier compressé va alors dans le sous-dossier où se trouvait le fichier compressé.
+- Si deux fichiers devaient être écrits au même endroit dans la destination, l'étape échoue avant d'écrire le second, au lieu de laisser celui-ci remplacer le premier. Le message nomme les deux fichiers, ou le fichier compressé dont ils proviennent tous deux, ainsi que l'emplacement ; si cocher **Conserver les sous-dossiers** les écrirait à des endroits distincts, il le précise.
 
 ## Exemples
 

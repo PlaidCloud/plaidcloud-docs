@@ -16,6 +16,8 @@ Gdy plik źródłowy nie jest w UTF-8, jego kodowanie jest ustalane na podstawie
 
 Znak, którego kodowanie docelowe nie może przechować, domyślnie powoduje niepowodzenie kroku. Zaznacz **Zastąp znakiem ? znaki, których kodowanie docelowe nie obsługuje**, aby zamiast tego zapisać w ich miejscu `?`, tak jak robi to moduł zapisu Javy, a krok zakończy się powodzeniem.
 
+W przypadku folderu każdy plik jest zapisywany w miejscu docelowym pod własną nazwą. Zaznacz **Zachowaj podfoldery**, aby zamiast tego zapisać plik z podfolderu w odpowiadającym mu podfolderze miejsca docelowego. Jeśli dwa pliki miałyby zostać zapisane w tym samym miejscu, krok kończy się niepowodzeniem przed zapisaniem drugiego, zamiast pozwolić mu zastąpić pierwszy, i informuje, czy zaznaczenie **Zachowaj podfoldery** pozwoliłoby je rozdzielić.
+
 Wybierz kodowanie docelowe w konfiguracji kroku. Skróty dla konkretnych kodowań znajdziesz w wariantach [UTF-8](/pl/reference/workflow-steps/document/convert-document-encoding-to-utf-8/), [UTF-16](/pl/reference/workflow-steps/document/convert-document-encoding-to-utf-16/) i [ASCII](/pl/reference/workflow-steps/document/convert-document-encoding-to-ascii/).
 
 
