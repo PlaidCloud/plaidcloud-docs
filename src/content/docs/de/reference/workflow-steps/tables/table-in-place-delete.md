@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Führt mit den angegebenen Filterbedingungen einen Löschvorgang auf der Tabelle aus. Der Vorgang wird direkt auf der angegebenen Tabelle ausgeführt, sodass keine zusätzlichen Tabellen erstellt werden. Es werden nur die Zeilen gelöscht, die die Filterkriterien erfüllen. Das kann ein wirksamer Ansatz sein, wenn die Datengröße ein Thema ist.
 
+Wenn der Schritt ausgeführt wird, prüft er seine Quelltabelle, bevor er etwas löscht, und stoppt mit einem Fehler, der jedes gefundene Problem nennt. Siehe [Wenn der Schritt ausgeführt wird](/de/reference/workflow-steps/tables/table-extract/#wenn-der-schritt-ausgeführt-wird).
+
 
 
 ## Löschparameter

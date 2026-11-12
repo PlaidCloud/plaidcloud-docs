@@ -10,6 +10,8 @@ sidebar:
 
 Performs a delete on the table using the specified filter conditions. The operation is performed on the designated table directly so no additional tables are created. Only the rows that meet the filter criteria are deleted. This may be an effective approach when encountering concerns related to data size.
 
+When the step runs, it checks its source table before it deletes anything, and stops with one error that names every problem it finds. See [When the Step Runs](/reference/workflow-steps/tables/table-extract/#when-the-step-runs).
+
 
 
 ## Delete Parameters
