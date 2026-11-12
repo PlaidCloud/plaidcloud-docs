@@ -619,6 +619,7 @@ export default defineConfig({
 					items: [
 						'guides/ai-assistant',
 						'guides/ai-assistant/weave-tab',
+						'guides/ai-assistant/weave-dock',
 						{
 							label: 'Review Findings',
 							translations: { de: 'Befunde prüfen', es: 'Revisar hallazgos', fr: 'Examiner les constatations', 'pt-BR': 'Revisar constatações', 'pt-PT': 'Rever descobertas', pl: 'Przegląd ustaleń', ja: '検出事項の確認', ko: '결과 항목 검토', 'zh-CN': '审核发现项' },
