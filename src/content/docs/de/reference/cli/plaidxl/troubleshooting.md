@@ -34,7 +34,7 @@ Ordner in den Listen der Projekte, Tabellen und Dimensionen sind zunächst einge
 
 ## Eine Tabelle wird rot angezeigt
 
-Die Tabelle hat mehr Zeilen oder Spalten, als ein Excel-Arbeitsblatt fasst, oder PlaidCloud kann ihre Größe nicht melden. Sie können sie abrufen, und Zeilen, die nicht passen, setzen sich auf weiteren Blättern fort, aber eine auf mehrere Blätter verteilte Tabelle kann nicht gespeichert werden. Wählen Sie **Erweitert**, um die Zeilen zu filtern, und deaktivieren Sie die nicht benötigten Spalten, bis die Tabelle passt. Siehe [Rot angezeigte Tabellen](/de/reference/cli/plaidxl/retrieve/#rot-angezeigte-tabellen).
+Die Tabelle hat mehr Zeilen oder Spalten, als ein Excel-Arbeitsblatt fasst, oder PlaidCloud kann ihre Größe nicht melden. Sie können sie abrufen, und Zeilen, die nicht passen, setzen sich auf weiteren Blättern fort, aber eine auf mehrere Blätter verteilte Tabelle kann nicht gespeichert werden. Wählen Sie **Erweitert**, um die Zeilen zu filtern, und deaktivieren Sie die nicht benötigten Spalten, bis die Tabelle passt. Siehe [Rot angezeigte Tabellen](/de/reference/cli/plaidxl/retrieve/#rot-dargestellte-tabellen).
 
 ## Ein Abruf ist langsam
 

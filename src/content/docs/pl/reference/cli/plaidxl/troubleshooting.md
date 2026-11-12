@@ -34,7 +34,7 @@ Foldery na listach projektów, tabel i wymiarów są początkowo zwinięte. Wpis
 
 ## Tabela jest pokazana na czerwono
 
-Tabela ma więcej wierszy lub kolumn, niż mieści arkusz programu Excel, albo PlaidCloud nie może podać jej rozmiaru. Możesz ją pobrać, a wiersze, które się nie mieszczą, są kontynuowane w kolejnych arkuszach, ale tabeli podzielonej na kilka arkuszy nie można zapisać. Wybierz **Zaawansowane**, aby przefiltrować wiersze, i wyczyść niepotrzebne kolumny, aż tabela się zmieści. Zobacz [Tabele wyświetlane na czerwono](/pl/reference/cli/plaidxl/retrieve/#tabele-pokazane-na-czerwono).
+Tabela ma więcej wierszy lub kolumn, niż mieści arkusz programu Excel, albo PlaidCloud nie może podać jej rozmiaru. Możesz ją pobrać, a wiersze, które się nie mieszczą, są kontynuowane w kolejnych arkuszach, ale tabeli podzielonej na kilka arkuszy nie można zapisać. Wybierz **Zaawansowane**, aby przefiltrować wiersze, i wyczyść niepotrzebne kolumny, aż tabela się zmieści. Zobacz [Tabele wyświetlane na czerwono](/pl/reference/cli/plaidxl/retrieve/#tabele-wyświetlane-na-czerwono).
 
 ## Pobieranie jest wolne
 

@@ -34,7 +34,7 @@ Las carpetas de las listas de proyectos, tablas y dimensiones comienzan contraí
 
 ## Una tabla se muestra en rojo
 
-La tabla tiene más filas o columnas de las que admite una hoja de cálculo de Excel, o PlaidCloud no puede informar de su tamaño. Puede recuperarla, y las filas que no caben continúan en hojas adicionales, pero una tabla dividida entre varias hojas no puede guardarse. Seleccione **Avanzado** para filtrar las filas y desactive las columnas que no necesite hasta que quepa. Consulte [Tablas mostradas en rojo](/es/reference/cli/plaidxl/retrieve/#tablas-que-se-muestran-en-rojo).
+La tabla tiene más filas o columnas de las que admite una hoja de cálculo de Excel, o PlaidCloud no puede informar de su tamaño. Puede recuperarla, y las filas que no caben continúan en hojas adicionales, pero una tabla dividida entre varias hojas no puede guardarse. Seleccione **Avanzado** para filtrar las filas y desactive las columnas que no necesite hasta que quepa. Consulte [Tablas mostradas en rojo](/es/reference/cli/plaidxl/retrieve/#tablas-mostradas-en-rojo).
 
 ## Una recuperación es lenta
 
