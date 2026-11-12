@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Effectue une suppression sur la table à l'aide des conditions de filtre indiquées. L'opération est réalisée directement sur la table désignée, aucune table supplémentaire n'est donc créée. Seules les lignes qui répondent aux critères du filtre sont supprimées. Cette approche peut être efficace lorsque la taille des données pose problème.
 
+Lorsqu'elle s'exécute, l'étape vérifie sa table source avant de supprimer quoi que ce soit, et s'arrête avec une seule erreur qui nomme chaque problème trouvé. Voir [Lorsque l'étape s'exécute](/fr/reference/workflow-steps/tables/table-extract/#lorsque-létape-sexécute).
+
 
 
 ## Paramètres de suppression
