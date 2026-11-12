@@ -213,6 +213,44 @@ import { Aside } from '@astrojs/starlight/components';
 
 在所有数据仓库上，无法转换的值（例如将非数字文本转换为数字）会变为 null，而不是使步骤停止。
 
+### 期望单个值时给出了多个值
+
+列的表达式和步骤的筛选器都必须给出一个值，它们用来与列比较的每个值、传给函数的每个值也一样。要匹配多个值中的任意一个，请将它们列在 `.in_([...])` 或 `.not_in([...])` 中。
+
+逗号和方括号会构成值的列表，在期望单个值的位置给出列表的表达式会被拒绝。保存步骤时，步骤表单会拒绝该表达式。此前保存的包含此类表达式的步骤会在运行时失败，而 Table Extract 或 Table Union All 步骤会在清空目标表之前失败，因此该表会保留其数据。消息会显示该表达式以及需要修改的内容。
+
+最常见的原因是末尾多了逗号：
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+这适用于所有数据仓库。有些数据仓库会运行这类表达式，但不一定按所写的方式执行，因此一直无错误运行的步骤现在可能会因这条消息而失败。
+
+要将列与多个值中的任意一个匹配，请使用 `.in_([...])` 而不是 `==`，使用 `.not_in([...])` 而不是 `!=`：
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+传给函数的每个值都会以同样的方式检查，因此请检查它周围的括号和逗号：
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### 通过表达式读取另一个表
 
 `sqlalchemy.literal_column` 会将一段 SQL 原样传递给数据仓库，并且只接受单个值：列、计算、`CASE`、函数调用、转换或窗口函数。包含**子查询**（`(SELECT ... FROM ...)`）的 `literal_column` 会被拒绝，因为子查询会访问步骤从未声明的表。
