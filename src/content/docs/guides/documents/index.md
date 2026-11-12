@@ -30,17 +30,16 @@ PlaidCloud Documents — store, organize, search, and share files alongside your
 
 ## The Documents Workspace
 
-**Document** opens with a rail on the left and the page you pick beside it. Members who can't open a page don't see its item.
+**Document** opens with a rail on the left and the page you pick beside it. The rail groups its pages under **Documents** (**Overview** and **Browse**) and **Accounts** (**Your accounts** and **Manage**). Members who can't open a page don't see its item. Pages have a title at the top, often with a short subtitle, and their actions in the header beside it.
 
 | Rail item | What it shows |
 |---|---|
-| **Overview** | Tiles for your accounts (**Accounts**, **Shared**, **Private to you**, **Managed buckets**, **External services**, and **Disabled** when an account needs attention), **Pinned** files, **Accounts by service** and **Who can use them**. Select a pinned file to open **Browse** at its folder with the file selected. |
-| **Browse** | The file explorer. Pick the account from the list in the page header. See [Using Document Accounts](/guides/documents/using-document/). |
-| **Shared** | Accounts shared with you. Double-click a row to browse it. |
-| **My private** | Accounts only you can use. Double-click a row to browse it. |
+| **Overview** | Tiles for your accounts (**Accounts**, which opens **Your accounts**, **Managed buckets**, **External services** and **Disabled**, which is tagged **Needs attention** and opens **Manage** when an account you own is disabled), **Pinned** files, **Accounts by service** and **Who can use them**. Select a pinned file to open **Browse** at its folder with the file selected. |
+| **Browse** | The file explorer. It opens your favorite account (the one whose top folder you pinned), or the workspace's default account, and you can pick another account from the list in the page header. See [Using Document Accounts](/guides/documents/using-document/). |
+| **Your accounts** | Every account you can use, in one list. A **Shared** or **Private** pill on each row says whether the account is shared with you or only yours. Double-click a row to browse it. |
 | **Manage** | Accounts you own, with **Name**, **Service**, **Security type**, **Status** and **Description**. A workspace admin sees every document account here and can manage any account they can otherwise manage; system-managed accounts are refused and managed-bucket accounts can't be cloned. |
 
-The rail shows a count beside **Shared**, **My private** and **Manage**. For a workspace admin who holds accounts they don't own, **Manage** shows **admin** instead of a count. The Overview has **Browse files** and **New account** buttons for a quick start.
+The rail shows a count beside **Your accounts**. The Overview has **Browse files** and **New account** buttons for a quick start.
 
 ### Row Actions in Manage
 

@@ -12,9 +12,10 @@ Reescreve um ficheiro de texto em UTF-16. É útil quando um sistema a jusante e
 
 ## Entradas
 
-- **Ficheiro ou diretório de entrada** — o ficheiro de texto, ou uma pasta de ficheiros de texto, a converter.
+- **Ficheiro ou diretório de entrada** — o ficheiro de texto ou ficheiro comprimido, ou uma pasta deles, a converter.
 - **Destino** — onde o ficheiro convertido é escrito.
 - **Compressão** — Sem compressão, Zip, GZip ou BZip2 para a saída.
+- **Manter subpastas** — no caso de uma pasta, assinale para escrever cada ficheiro de uma subpasta na subpasta correspondente do destino.
 - **Endianness (ordem dos bytes)** — Little Endian ou Big Endian.
 - **Include BOM** — assinale para iniciar o ficheiro com uma marca de ordem de bytes (`FF FE` para little-endian, `FE FF` para big-endian). Deixe desassinalado para não incluir marca.
 
@@ -24,7 +25,9 @@ Reescreve um ficheiro de texto em UTF-16. É útil quando um sistema a jusante e
 - O texto é escrito sem alterações — letras acentuadas, símbolos e outros carateres passam exatamente como estavam.
 - Um ficheiro cuja codificação não possa ser detetada faz o passo falhar, indicando o ficheiro.
 - Se o caminho de entrada não existir ou não tiver ficheiros, o passo termina com um aviso que indica o caminho e não processa nada, e o fluxo de trabalho continua.
-- No caso de uma pasta, cada ficheiro é convertido e escrito no destino com o seu próprio nome. Os ficheiros das subpastas são escritos no próprio destino, e não em subpastas correspondentes.
+- Um ficheiro comprimido — um ficheiro zip, gzip ou bzip2, por exemplo — é expandido primeiro, e cada ficheiro nele contido é convertido.
+- No caso de uma pasta, cada ficheiro é convertido e escrito no destino com o seu próprio nome. Assinale **Manter subpastas** para escrever um ficheiro de uma subpasta na subpasta correspondente do destino; o conteúdo de um ficheiro comprimido passa então para a subpasta em que o ficheiro comprimido estava.
+- Se dois ficheiros fossem escritos no mesmo local do destino, o passo falha antes de escrever o segundo, em vez de permitir que substitua o primeiro. A mensagem indica os dois ficheiros, ou o ficheiro comprimido de que ambos provêm, e o local; se assinalar **Manter subpastas** os escrevesse em locais separados, a mensagem di-lo.
 
 ## Exemplos
 

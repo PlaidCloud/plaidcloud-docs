@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 지정한 필터 조건을 사용해 테이블에서 삭제를 수행합니다. 이 작업은 지정한 테이블에서 직접 수행되므로 추가 테이블이 만들어지지 않습니다. 필터 조건에 맞는 행만 삭제됩니다. 데이터 크기와 관련된 문제가 있을 때 효과적인 방법일 수 있습니다.
 
+단계는 실행될 때 무엇이든 삭제하기 전에 소스 테이블을 검사하며, 발견한 모든 문제를 알려 주는 하나의 오류와 함께 중지됩니다. [단계 실행 시](/ko/reference/workflow-steps/tables/table-extract/#단계-실행-시)를 참조하십시오.
+
 
 
 ## 삭제 매개변수

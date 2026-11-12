@@ -16,6 +16,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 대상 인코딩으로 표현할 수 없는 문자가 있으면 기본적으로 단계가 실패합니다. **대상 인코딩에서 표현할 수 없는 문자를 ?로 바꾸기**를 선택하면 Java 라이터처럼 해당 문자 대신 `?`를 쓰고 단계가 완료됩니다.
 
+압축 파일은 먼저 압축이 풀리고, 그 안의 각 파일이 변환됩니다. 폴더의 경우 각 파일이 자신의 이름으로 대상 위치에 쓰입니다. **하위 폴더 유지**를 선택하면 하위 폴더의 파일이 대신 대상 위치의 일치하는 하위 폴더에 쓰이며, 압축 파일의 내용은 해당 압축 파일이 있던 하위 폴더에 들어갑니다. 같은 위치에 두 파일이 쓰이게 되면 단계는 두 번째 파일을 쓰기 전에 실패하며 첫 번째 파일을 대체하지 않고, **하위 폴더 유지**를 선택하면 두 파일이 서로 구분되는지 알려 줍니다.
+
 단계 구성에서 대상 인코딩을 선택합니다. 특정 인코딩용 바로 가기는 [UTF-8](/ko/reference/workflow-steps/document/convert-document-encoding-to-utf-8/), [UTF-16](/ko/reference/workflow-steps/document/convert-document-encoding-to-utf-16/), [ASCII](/ko/reference/workflow-steps/document/convert-document-encoding-to-ascii/) 변형을 참조하십시오.
 
 

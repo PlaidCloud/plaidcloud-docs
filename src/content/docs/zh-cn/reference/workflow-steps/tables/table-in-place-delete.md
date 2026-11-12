@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 使用指定的筛选条件对表执行删除。该操作直接在指定的表上执行，因此不会创建额外的表。只会删除满足筛选条件的行。当遇到与数据量有关的问题时，这可能是一种有效的方法。
 
+步骤运行时，会在删除任何内容之前检查其源表，并以一条列出所发现每个问题的错误停止。请参阅[步骤运行时](/zh-cn/reference/workflow-steps/tables/table-extract/#步骤运行时)。
+
 
 
 ## 删除参数

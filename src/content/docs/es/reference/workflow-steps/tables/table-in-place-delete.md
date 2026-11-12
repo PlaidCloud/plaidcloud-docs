@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Realiza una eliminación en la tabla con las condiciones de filtro especificadas. La operación se realiza directamente en la tabla designada, por lo que no se crean tablas adicionales. Solo se eliminan las filas que cumplen los criterios del filtro. Puede ser un enfoque eficaz cuando existen inquietudes relacionadas con el tamaño de los datos.
 
+Cuando se ejecuta, el paso comprueba su tabla de origen antes de eliminar nada y se detiene con un único error que nombra todos los problemas que encuentra. Consulte [Cuando se ejecuta el paso](/es/reference/workflow-steps/tables/table-extract/#cuando-se-ejecuta-el-paso).
+
 
 
 ## Parámetros de eliminación
