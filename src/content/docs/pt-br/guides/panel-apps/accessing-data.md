@@ -34,7 +34,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Como a conexão é o visualizador, isso retorna somente as linhas que ele tem permissão para ver e gera um erro de permissão se ele não tiver nenhum acesso ao projeto.
 
-> **Leia tabelas pelo nome, sem escrever SQL.** Em um projeto no qual um administrador ativou o [Acesso a linhas](/pt-br/administration/access/managing-security-groups-and-assignments/#acesso-a-linhas-e-consultas-que-você-mesmo-escreve), a leitura pelo nome retorna as linhas de cada visualizador, e uma consulta composta pelo próprio aplicativo também retorna, em um warehouse StarRocks, Databend, Greenplum ou Postgres. Uma consulta em um warehouse Snowflake ou Databricks, ou que não seja um único SELECT sobre as tabelas do projeto (uma gravação ou várias instruções), é recusada para qualquer pessoa que não seja Arquiteto do projeto. Ler pelo nome mantém seu aplicativo funcionando nos dois casos.
+> **Leia tabelas pelo nome, sem escrever SQL.** Em um projeto no qual um administrador ativou o [Acesso a linhas](/pt-br/administration/access/managing-security-groups-and-assignments/#acesso-a-linhas-e-as-consultas-que-você-mesmo-escreve), a leitura pelo nome retorna as linhas de cada visualizador, e uma consulta composta pelo próprio aplicativo também retorna, em um warehouse StarRocks, Databend, Greenplum ou Postgres. Uma consulta em um warehouse Snowflake ou Databricks, ou que não seja um único SELECT sobre as tabelas do projeto (uma gravação ou várias instruções), é recusada para qualquer pessoa que não seja Arquiteto do projeto. Ler pelo nome mantém seu aplicativo funcionando nos dois casos.
 
 ## Identificar o visualizador
 
