@@ -213,6 +213,44 @@ No StarRocks:
 
 Em todos os data warehouses, um valor que não pode ser convertido, como texto não numérico convertido para número, torna-se nulo em vez de interromper a etapa.
 
+### Vários valores onde se espera um
+
+A expressão de uma coluna e o filtro de uma etapa devem dar, cada um, um único valor, assim como cada valor com o qual comparam uma coluna ou que passam a uma função. Para corresponder a qualquer um de vários valores, liste-os dentro de `.in_([...])` ou `.not_in([...])`.
+
+Vírgulas e colchetes formam uma lista de valores, e uma expressão que dá uma lista onde se espera um único valor é recusada. O formulário da etapa a recusa quando você salva a etapa. Uma etapa salva antes com essa expressão falha quando é executada, e uma etapa Table Extract ou Table Union All falha antes de esvaziar sua tabela de destino, de modo que a tabela mantém seus dados. A mensagem mostra a expressão e o que alterar.
+
+A causa mais comum é uma vírgula no final:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Isso vale em todos os data warehouses. Alguns data warehouses executavam essa expressão, mas nem sempre como escrita, portanto uma etapa que vinha sendo executada sem erros pode agora falhar com essa mensagem.
+
+Para corresponder uma coluna a qualquer um de vários valores, use `.in_([...])` em vez de `==`, e `.not_in([...])` em vez de `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Cada valor passado a uma função é verificado da mesma forma, portanto confira os colchetes e as vírgulas ao redor dele:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Leitura de outra tabela a partir de uma expressão
 
 `sqlalchemy.literal_column` repassa um fragmento de SQL ao data warehouse sem alterações e aceita um único valor — uma coluna, um cálculo, um `CASE`, uma chamada de função, uma conversão, uma função de janela. Um `literal_column` que contenha uma **subconsulta** (`(SELECT ... FROM ...)`) é recusado, porque uma subconsulta alcança uma tabela que a etapa nunca declarou.

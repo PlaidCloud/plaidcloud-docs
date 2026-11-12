@@ -213,6 +213,44 @@ StarRocks에서는 다음과 같이 동작합니다.
 
 모든 웨어하우스에서, 숫자가 아닌 텍스트를 숫자로 캐스팅하는 경우처럼 변환할 수 없는 값은 단계를 중지시키지 않고 null이 됩니다.
 
+### 하나가 필요한 곳에 여러 값이 있는 경우
+
+열의 식과 단계의 필터는 각각 하나의 값을 제공해야 하며, 열과 비교하는 모든 값이나 함수에 전달하는 모든 값도 마찬가지입니다. 여러 값 중 하나와 일치시키려면 `.in_([...])` 또는 `.not_in([...])` 안에 값을 나열하십시오.
+
+쉼표와 대괄호는 값의 목록을 만들며, 하나의 값이 필요한 곳에 목록을 제공하는 식은 거부됩니다. 단계 양식은 단계를 저장할 때 이를 거부합니다. 이전에 이러한 식으로 저장된 단계는 실행될 때 실패하며, Table Extract 또는 Table Union All 단계는 대상 테이블을 비우기 전에 실패하므로 테이블이 데이터를 유지합니다. 메시지에는 해당 식과 무엇을 바꿔야 하는지 표시됩니다.
+
+가장 흔한 원인은 끝에 붙은 쉼표입니다.
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+이는 모든 웨어하우스에 적용됩니다. 일부 웨어하우스는 이러한 식을 실행했지만 작성한 그대로 실행하지는 않았으므로, 지금까지 오류 없이 실행되던 단계가 이제 이 메시지와 함께 실패할 수 있습니다.
+
+열을 여러 값 중 하나와 일치시키려면 `==` 대신 `.in_([...])`을, `!=` 대신 `.not_in([...])`을 사용하십시오.
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+함수에 전달하는 각 값도 같은 방식으로 검사되므로, 값 주변의 대괄호와 쉼표를 확인하십시오.
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### 식에서 다른 테이블 읽기
 
 `sqlalchemy.literal_column`은 SQL 조각을 변경하지 않고 웨어하우스에 그대로 전달하며, 열, 계산, `CASE`, 함수 호출, 캐스트, 윈도 함수 같은 단일 값을 허용합니다. **서브쿼리**(`(SELECT ... FROM ...)`)를 담은 `literal_column`은 거부됩니다. 서브쿼리가 단계에서 선언하지 않은 테이블에 접근하기 때문입니다.

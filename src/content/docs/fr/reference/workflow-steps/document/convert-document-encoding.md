@@ -16,6 +16,8 @@ Lorsque le fichier source n'est pas en UTF-8, son encodage est déduit du conten
 
 Un caractère que l'encodage cible ne peut pas représenter fait échouer l'étape par défaut. Sélectionnez **Remplacer par ? les caractères que l'encodage cible ne peut pas représenter** pour écrire un `?` à sa place, comme le fait un writer Java, et l'étape se termine.
 
+Un fichier compressé est d'abord décompressé, et chaque fichier qu'il contient est converti. Pour un dossier, chaque fichier est écrit dans la destination sous son propre nom. Cochez **Conserver les sous-dossiers** pour écrire à la place un fichier d'un sous-dossier dans le sous-dossier correspondant de la destination ; le contenu d'un fichier compressé va alors dans le sous-dossier où se trouvait le fichier compressé. Si deux fichiers devaient être écrits au même endroit, l'étape échoue avant d'écrire le second, au lieu de laisser celui-ci remplacer le premier, et indique si cocher **Conserver les sous-dossiers** permettrait de les séparer.
+
 Choisissez l'encodage cible dans la configuration de l'étape. Pour les raccourcis vers des encodages précis, consultez les variantes [UTF-8](/fr/reference/workflow-steps/document/convert-document-encoding-to-utf-8/), [UTF-16](/fr/reference/workflow-steps/document/convert-document-encoding-to-utf-16/) et [ASCII](/fr/reference/workflow-steps/document/convert-document-encoding-to-ascii/).
 
 

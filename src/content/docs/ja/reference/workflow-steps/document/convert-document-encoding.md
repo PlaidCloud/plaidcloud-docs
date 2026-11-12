@@ -16,6 +16,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ターゲットエンコードで表現できない文字があると、デフォルトではステップが失敗します。**ターゲットエンコードで表現できない文字を ? に置き換える**を選択すると、Javaのライターと同様に、その文字の代わりに`?`が書き込まれ、ステップは完了します。
 
+圧縮ファイルは最初に展開され、その中の各ファイルが変換されます。フォルダーの場合、各ファイルは元の名前のまま宛先に書き込まれます。**サブフォルダーを保持**をオンにすると、サブフォルダー内のファイルが宛先の対応するサブフォルダーに書き込まれます。圧縮ファイルの内容は、その圧縮ファイルがあったサブフォルダーに入ります。宛先の同じ場所に複数のファイルが書き込まれる場合、ステップは2番目のファイルを書き込む前に失敗し、最初のファイルが置き換えられることはなく、**サブフォルダーを保持**をオンにすれば別々の場所に書き込まれるかどうかも示されます。
+
 ステップの設定でターゲットエンコードを選択します。特定のエンコード用のショートカットについては、[UTF-8](/ja/reference/workflow-steps/document/convert-document-encoding-to-utf-8/)、[UTF-16](/ja/reference/workflow-steps/document/convert-document-encoding-to-utf-16/)、[ASCII](/ja/reference/workflow-steps/document/convert-document-encoding-to-ascii/)の各バリエーションを参照してください。
 
 
