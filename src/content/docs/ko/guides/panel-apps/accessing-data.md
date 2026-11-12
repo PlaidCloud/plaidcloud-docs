@@ -34,7 +34,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 연결이 곧 보는 사람이므로 보는 사람이 볼 수 있는 행만 반환되며, 프로젝트에 대한 액세스 권한이 전혀 없으면 권한 오류가 발생합니다.
 
-> **SQL을 작성하지 말고 이름으로 테이블을 읽으십시오.** 관리자가 [행 액세스](/ko/administration/access/managing-security-groups-and-assignments/#행-액세스와-직접-작성한-쿼리)를 켠 프로젝트에서는 이름으로 읽으면 각 보는 사람의 행이 반환되며, StarRocks, Databend, Greenplum, Postgres 웨어하우스에서는 앱이 직접 작성한 쿼리도 마찬가지입니다. Snowflake 또는 Databricks 웨어하우스의 쿼리이거나 프로젝트 테이블에 대한 단일 SELECT가 아닌 쿼리(쓰기 또는 여러 문)는 프로젝트 아키텍트가 아닌 사용자에게는 거부됩니다. 이름으로 읽으면 어느 경우든 앱이 계속 작동합니다.
+> **SQL을 작성하지 말고 이름으로 테이블을 읽으십시오.** 관리자가 [행 액세스](/ko/administration/access/managing-security-groups-and-assignments/#행-액세스와-직접-작성하는-쿼리)를 켠 프로젝트에서는 이름으로 읽으면 각 보는 사람의 행이 반환되며, StarRocks, Databend, Greenplum, Postgres 웨어하우스에서는 앱이 직접 작성한 쿼리도 마찬가지입니다. Snowflake 또는 Databricks 웨어하우스의 쿼리이거나 프로젝트 테이블에 대한 단일 SELECT가 아닌 쿼리(쓰기 또는 여러 문)는 프로젝트 아키텍트가 아닌 사용자에게는 거부됩니다. 이름으로 읽으면 어느 경우든 앱이 계속 작동합니다.
 
 ## 보는 사람 식별하기
 
