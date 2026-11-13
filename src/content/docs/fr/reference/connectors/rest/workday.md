@@ -30,4 +30,5 @@ Ces champs apparaissent lors de la création ou de la modification de cette conn
 | ID client OAuth2 | Texte | — |
 | Secret client OAuth2 | Texte | Identifiant secret, stocké chiffré. |
 | URL Workday | Texte | Point de terminaison de l'URL. |
-| Jeton d'actualisation OAuth2 | Texte | — |
+| Jeton d'actualisation OAuth2 | Texte | Facultatif. Sans jeton, les requêtes se connectent avec les identifiants client. |
+| Hôte de l'API | Texte | L'hôte auquel les requêtes REST sont envoyées, par exemple `api.example.com`. |

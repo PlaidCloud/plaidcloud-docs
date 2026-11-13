@@ -30,4 +30,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | Oauth2 client id | 텍스트 | — |
 | Oauth2 client secret | 텍스트 | 비밀 자격 증명이며 암호화되어 저장됩니다. |
 | Workday url | 텍스트 | URL 엔드포인트입니다. |
-| Oauth2 refresh token | 텍스트 | — |
+| Oauth2 refresh token | 텍스트 | 선택 사항입니다. 없으면 요청은 클라이언트 자격 증명으로 로그인합니다. |
+| API host | 텍스트 | REST 요청을 보내는 호스트입니다(예: `api.example.com`). |
