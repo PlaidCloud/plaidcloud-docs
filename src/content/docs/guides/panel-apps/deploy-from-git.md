@@ -80,7 +80,7 @@ There is no Server URL, User, Password, or SSL/SSH field — PlaidCloud Git is m
 
 Now point a server deployment at that connection.
 
-1. Open **My Panel Apps** and click **New Server App**.
+1. Open **Apps** and choose **New app** > **Server based**.
 2. Under **Directory Settings**, set an **App Name** and a **URL Slug** — the slug is the app's URL and internal name, so use lowercase letters, digits, and hyphens, starting with a letter, 40 characters or fewer (for example, `hello-panel`).
 3. Under **Git Connection and Publish Watcher**:
    - **Git Connection** — the PlaidCloud Git connection you created in step 3.

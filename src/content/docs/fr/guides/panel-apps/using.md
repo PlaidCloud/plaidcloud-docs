@@ -42,7 +42,7 @@ Le verrou est une protection contre les accidents — une modification par erreu
 
 ## Ouvrir une application
 
-Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-des-actions-de-ligne).
+Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-dactions-de-ligne).
 
 - Une application serveur est servie à l'adresse `https://<your-tenant-host>/serve/<slug>/`.
 - L'icône **Ouvrir** n'apparaît que lorsqu'une application serveur a le statut **Prêt**.
@@ -53,7 +53,7 @@ Une application serveur est ramenée à zéro lorsqu'elle est inactive afin d'é
 
 ### Apparence
 
-Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les personnes qui consultent l'application peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème-clair-sombre-ou-commutateur) dans le guide de création pour les approches possibles. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, gardez-la fixée sur le thème clair.
+Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les personnes qui consultent l'application peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème-clair-sombre-ou-commutable) dans le guide de création pour les approches possibles. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, gardez-la fixée sur le thème clair.
 
 ## Afficher les journaux (applications serveur)
 

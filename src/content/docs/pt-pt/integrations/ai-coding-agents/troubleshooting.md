@@ -86,7 +86,7 @@ Correção: verifique o envelope. Uma página limitada define `next_cursor` e um
 
 Sintoma: uma ferramenta devolveu `{"_fmt": "cols", "cols": [...], "rows": [[...]]}` em vez da lista de objetos que esperava.
 
-Esta é a forma pretendida para um resultado grande cujas linhas têm todas os mesmos campos: os nomes dos campos são enviados uma só vez, em vez de repetidos em cada linha. A linha *i* é `dict(zip(cols, rows[i]))`. Os agentes são informados disto quando se ligam e tratam-no sem necessidade de instruções; se estiver a ler estas respostas a partir do seu próprio código, descodifique as duas formas, porque os resultados pequenos e irregulares continuam a chegar como matrizes normais de objetos. Nada mais no envelope se altera e nenhum valor é modificado. Consulte [Primeiros passos com agentes de programação com IA](/pt-pt/integrations/ai-coding-agents/getting-started/#resultados-orientados-a-colunas).
+Esta é a forma pretendida para um resultado grande cujas linhas têm todas os mesmos campos: os nomes dos campos são enviados uma só vez, em vez de repetidos em cada linha. A linha *i* é `dict(zip(cols, rows[i]))`. Os agentes são informados disto quando se ligam e tratam-no sem necessidade de instruções; se estiver a ler estas respostas a partir do seu próprio código, descodifique as duas formas, porque os resultados pequenos e irregulares continuam a chegar como matrizes normais de objetos. Nada mais no envelope se altera e nenhum valor é modificado. Consulte [Primeiros passos com agentes de programação com IA](/pt-pt/integrations/ai-coding-agents/getting-started/#resultados-orientados-por-colunas).
 
 ## Obter ajuda
 

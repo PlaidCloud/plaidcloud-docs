@@ -46,7 +46,7 @@ PlaidCloud Git 是内置于工作区的私有 Git 服务。每个工作区都有
 
 ## 来自应用和 UDF 的 Git
 
-Panel 或 Dash 应用的窗口中有一个 **存储库** 部分，显示其存储库、分支和构建状态；能够推送的成员还可使用 **Edit in browser** 和 **Copy clone URL**。Panel Studio 应用以及使用托管 PlaidCloud Git 连接的 App Runner 应用都是 `apps` 存储库中的文件夹，因此其窗口显示的就是该存储库。请参阅[应用的存放位置](/zh-cn/guides/panel-apps/studio/#应用的存放位置)。由 Git 支持的 UDF，其工具栏上有 **打开**（在 Git 中打开该分支下的存储库），管理员还可使用 **Edit in browser**。
+Panel 或 Dash 应用的窗口中有一个 **存储库** 部分，显示其存储库、分支和构建状态；能够推送的成员还可使用 **Edit in browser** 和 **Copy clone URL**。Panel Studio 应用以及使用托管 PlaidCloud Git 连接的 App Runner 应用都是 `apps` 存储库中的文件夹，因此其窗口显示的就是该存储库。请参阅[应用的存放位置](/zh-cn/guides/panel-apps/studio/#应用存放位置)。由 Git 支持的 UDF，其工具栏上有 **打开**（在 Git 中打开该分支下的存储库），管理员还可使用 **Edit in browser**。
 
 ## 授予 Git 访问权限
 

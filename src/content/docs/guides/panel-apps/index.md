@@ -7,7 +7,7 @@ sidebar:
 
 Panel Apps let you publish interactive [HoloViz Panel](https://panel.holoviz.org/) applications — parameterized inputs, live charts, and embedded data tables — directly from PlaidCloud. You manage them from the **My Panel Apps** screen, which lists every app alongside its runtime, build status, and URL.
 
-Start in [Panel Studio](/guides/panel-apps/studio/): choose **New Studio App** to build an app in PlaidCloud from a blank app, a table, a view or the gallery, with no repository to set up. For bespoke needs, publish with one of the runtimes below, shown in the **Runtime** column:
+Start in [Panel Studio](/guides/panel-apps/studio/): choose **New app** > **Studio** to build an app in PlaidCloud from a blank app, a table, a view or the gallery, with no repository to set up. For bespoke needs, publish with one of the runtimes below, shown in the **Runtime** column:
 
 - **WASM** — a static app that runs entirely in the browser (Pyodide). You publish a pre-built HTML file from a document account. There is no server process and nothing to scale; it is served immediately.
 - **Server** — an app built from a git repository and run server-side. On publish, PlaidCloud builds your repository into a container that idles at zero replicas, wakes on the first request to its URL, serves (including live updates), and scales back to zero when idle. This is the right choice for apps that need a Python runtime, server-side compute, or libraries that can't run in the browser.

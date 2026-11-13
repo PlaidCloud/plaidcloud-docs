@@ -53,7 +53,7 @@ Uma aplicação de servidor é reduzida a zero quando está inativa para poupar 
 
 ### Aspeto
 
-As aplicações Panel de servidor utilizam por predefinição o design moderno **Fast** do PlaidCloud, mas a definição **Design** da aplicação pode repor o estilo **Predefinição** do Panel quando o CSS existente depende dele. O tema — claro, escuro ou um seletor claro/escuro que os visitantes podem alternar — é definido no modelo da aplicação. Consulte [Definir o tema](/pt-pt/guides/panel-apps/creating/#definir-o-tema-claro-escuro-ou-um-comutador) no guia de criação para conhecer os padrões. Se as tabelas ou o estilo personalizado da aplicação forem concebidos para um fundo claro, mantenha-a fixa no tema claro.
+As aplicações Panel de servidor utilizam por predefinição o design moderno **Fast** do PlaidCloud, mas a definição **Design** da aplicação pode repor o estilo **Predefinição** do Panel quando o CSS existente depende dele. O tema — claro, escuro ou um seletor claro/escuro que os visitantes podem alternar — é definido no modelo da aplicação. Consulte [Definir o tema](/pt-pt/guides/panel-apps/creating/#definir-o-tema-claro-escuro-ou-um-interruptor) no guia de criação para conhecer os padrões. Se as tabelas ou o estilo personalizado da aplicação forem concebidos para um fundo claro, mantenha-a fixa no tema claro.
 
 ## Consultar registos (aplicações de servidor)
 

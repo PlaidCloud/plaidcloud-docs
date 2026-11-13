@@ -27,7 +27,7 @@ PlaidCloud uses a path-based system to organize tables, like you would use to na
 ## Finding Tables
 
 
-Use the filter box in the lower left of the hierarchy to search table names and labels. The matches show in the hierarchy above.
+Use **Filter** at the bottom of the list, beside the row count, to search table names and labels. Press **/** or Ctrl/Cmd+F to jump to it. The same filter applies to the tree and to the flattened list. The **All | Published** switch beside the filter narrows the list to published tables; it is set to **All** by default and applies in both the tree and the flat list.
 
 
 ### By Workflow

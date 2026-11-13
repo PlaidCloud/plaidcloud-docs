@@ -46,7 +46,7 @@ Si es **Visualizador**, la pestaña **Git** nombra hasta tres administradores de
 
 ## Git desde aplicaciones y UDF
 
-La ventana de una aplicación de Panel o de Dash tiene una sección **Repositorio** que muestra su repositorio, su rama y el estado de la compilación, con **Edit in browser** y **Copy clone URL** para los miembros que pueden enviar cambios. Las aplicaciones de Panel Studio, y las aplicaciones de App Runner en la conexión administrada de PlaidCloud Git, son carpetas del repositorio `apps`, por lo que ese es el repositorio que muestra su ventana. Consulte [Dónde reside su aplicación](/es/guides/panel-apps/studio/#dónde-reside-su-aplicación). La barra de herramientas de una UDF respaldada por Git tiene **Abrir**, que abre el repositorio en su rama en Git, y **Edit in browser** para los administradores.
+La ventana de una aplicación de Panel o de Dash tiene una sección **Repositorio** que muestra su repositorio, su rama y el estado de la compilación, con **Edit in browser** y **Copy clone URL** para los miembros que pueden enviar cambios. Las aplicaciones de Panel Studio, y las aplicaciones de App Runner en la conexión administrada de PlaidCloud Git, son carpetas del repositorio `apps`, por lo que ese es el repositorio que muestra su ventana. Consulte [Dónde reside su aplicación](/es/guides/panel-apps/studio/#dónde-se-guarda-su-aplicación). La barra de herramientas de una UDF respaldada por Git tiene **Abrir**, que abre el repositorio en su rama en Git, y **Edit in browser** para los administradores.
 
 ## Conceder acceso a Git
 

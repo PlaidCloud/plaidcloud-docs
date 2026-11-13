@@ -15,7 +15,7 @@ Importing the kit also applies the PlaidCloud look to Plotly and Matplotlib char
 
 ## Start From a Template
 
-In [Panel Studio](/guides/panel-apps/studio/), **New Studio App** starts from a blank app, a table or view, another Studio app, or an app in the [gallery](/guides/panel-apps/gallery/), with no command to run.
+In [Panel Studio](/guides/panel-apps/studio/), **New app** > **Studio** starts from a blank app, a table or view, another Studio app, or an app in the [gallery](/guides/panel-apps/gallery/), with no command to run.
 
 For an app you keep in a git repository, the kit includes a command that writes a working starter app. Run it from any folder, then edit the table and column names:
 

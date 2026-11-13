@@ -26,7 +26,7 @@ Cada execução tem um modo de lançamento ERP. Para escolher um no PlaidCloud, 
 
 Um projeto tem também o seu próprio limite de modo de lançamento, definido através da API do projeto ou do assistente por qualquer membro com acesso de escrita a um projeto desbloqueado. O limite só torna uma execução mais segura, nunca mais permissiva: o modo efetivo de uma execução é o mais restritivo entre o modo escolhido e o limite do projeto, pelo que um projeto limitado a Simulate permanece simulado mesmo que a execução seja iniciada em Live.
 
-Um [evento agendado](/pt-pt/administration/scheduled-events/event-scheduler/#modo-de-lançamento-no-erp) mantém o seu próprio modo de lançamento, pelo que um agendamento definido como Simulate é executado em modo simulado sempre que é acionado.
+Um [evento agendado](/pt-pt/administration/scheduled-events/event-scheduler/#modo-de-lançamento-erp) mantém o seu próprio modo de lançamento, pelo que um agendamento definido como Simulate é executado em modo simulado sempre que é acionado.
 
 O modo estende-se a tudo o que a execução toca. Um subfluxo de trabalho, uma macro e um passo **Run Model**, **Conditional Run Model** ou **Loop Model** herdam todos o modo da execução principal, tal como uma execução que [retome](#pausar-parar-e-retomar) após uma paragem — uma execução simulada não pode lançar a sério em lado nenhum do seu interior.
 

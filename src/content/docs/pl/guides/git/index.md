@@ -46,7 +46,7 @@ Jeśli jesteś **Przeglądającym**, karta **Git** wskazuje do trzech administra
 
 ## Git w aplikacjach i UDF
 
-Okno aplikacji Panel lub Dash zawiera sekcję **Repozytorium** pokazującą jej repozytorium, gałąź i stan kompilacji, z przyciskami **Edit in browser** i **Copy clone URL** dla członków, którzy mogą wypychać zmiany. Aplikacje Panel Studio oraz aplikacje App Runner korzystające z zarządzanego połączenia PlaidCloud Git są folderami w repozytorium `apps`, więc właśnie to repozytorium pokazuje ich okno. Zobacz [Where Your App Lives](/pl/guides/panel-apps/studio/#gdzie-znajduje-się-twoja-aplikacja). Pasek narzędzi UDF opartej na Git zawiera przycisk **Otwórz**, który otwiera repozytorium na jego gałęzi w Git, oraz **Edit in browser** dla administratorów.
+Okno aplikacji Panel lub Dash zawiera sekcję **Repozytorium** pokazującą jej repozytorium, gałąź i stan kompilacji, z przyciskami **Edit in browser** i **Copy clone URL** dla członków, którzy mogą wypychać zmiany. Aplikacje Panel Studio oraz aplikacje App Runner korzystające z zarządzanego połączenia PlaidCloud Git są folderami w repozytorium `apps`, więc właśnie to repozytorium pokazuje ich okno. Zobacz [Where Your App Lives](/pl/guides/panel-apps/studio/#gdzie-znajduje-się-aplikacja). Pasek narzędzi UDF opartej na Git zawiera przycisk **Otwórz**, który otwiera repozytorium na jego gałęzi w Git, oraz **Edit in browser** dla administratorów.
 
 ## Przyznawanie dostępu do Git
 

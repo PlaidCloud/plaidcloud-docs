@@ -9,9 +9,9 @@ Start with Panel Studio. It needs no repository and no setup: you build the app 
 
 ## Create a Studio App
 
-Open **My Panel Apps**. **New Studio App** is the first button in the toolbar. You can also choose **New Studio App** in the **Panel Apps** box on a project's **Home** tab, or [start from a table](#start-from-a-table).
+Open **Apps** and open the **New app** menu. Under the **Panel app** heading, **Studio** writes and publishes the app in PlaidCloud's editor with the standard layout, and keeps the code for you. You can also choose **New Studio App** in the **Panel Apps** box on a project's **Home** tab, or [start from a table](#start-from-a-table).
 
-1. Choose **New Studio App**.
+1. Choose **New app** > **Studio**.
 2. Enter a **Name**. The **URL slug** fills in from it.
 3. Pick the **Project** that owns the app. You need edit access to the project.
 4. Under **Start from**, choose where the app begins:
@@ -34,15 +34,15 @@ You can also begin on the **Tables** tab of a project. Select one table or view,
 
 ### Start From the Gallery
 
-Choose **Gallery** in the **My Panel Apps** toolbar to browse the apps your workspace has listed, then **Create app from this…** to make your own copy. Or choose **From the gallery** in the **New Studio App** dialog. See [The App Gallery](/guides/panel-apps/gallery/), including how to list your own app.
+Choose **New app** > **From gallery…** to browse the apps your workspace has listed, then **Create app from this…** to make your own copy. Or choose **From the gallery** in the Studio **New app** dialog. See [The App Gallery](/guides/panel-apps/gallery/), including how to list your own app.
 
 ## Other Runtimes
 
-Studio apps cover most dashboards and tools. For a bespoke need, publish with one of the other [runtimes](/guides/panel-apps/) from the **My Panel Apps** toolbar:
+Studio apps cover most dashboards and tools. For a bespoke need, publish with one of the other [runtimes](/guides/panel-apps/) from the **New app** menu:
 
-- **Add WASM App** — publish a static, in-browser app from a file.
-- **New Server App** — build and run an app from a git repository you manage, for example to reuse existing code or your own build process.
-- **New Dash App** — publish a Plotly Dash app. See [Dash Apps](/guides/dash-apps/).
+- **Browser only** — your own repository; the app runs in the viewer's browser.
+- **Server based** — your own repository; the app runs on a PlaidCloud server, for example to reuse existing code or your own build process.
+- **Dash app** — publish a Plotly Dash app. See [Dash Apps](/guides/dash-apps/).
 
 ## Creating a Server App
 
@@ -177,7 +177,7 @@ Your repository must be reachable through a **git connection** in PlaidCloud. If
 
 ### Publish the App
 
-1. Click **New Server App** to open the **Publish Server Panel App** dialog. Its settings are grouped into sections.
+1. Choose **New app** > **Server based** to open the **Publish Server Panel App** dialog. Its settings are grouped into sections.
 2. Under **Directory Settings**:
    - **App Name** — the display name shown in the list.
    - **URL Slug** — both the app's URL and its internal name, so it must be a valid DNS label: lowercase letters, digits, and hyphens, starting with a letter, 40 characters or fewer (for example, `sales-dashboard`). The dialog checks this before you publish.
@@ -290,7 +290,7 @@ Use `PLAID_PANEL_DESIGN=fast` to match the default deployed look. To test the pu
 
 A WASM app runs in the browser from a pre-built HTML file.
 
-1. Click **Add WASM App** to open the **Publish Serverless Panel App** dialog.
+1. Choose **New app** > **Browser only** to open the **Publish Serverless Panel App** dialog.
 2. Enter an **App Name** and **Version**.
 3. Choose the **App HTML Location** — the HTML file in a document account.
 4. Enter an **App URL Slug** and an optional **Memo**.

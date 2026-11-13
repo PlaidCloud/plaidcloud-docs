@@ -46,7 +46,7 @@ Se for **Leitor**, o separador **Git** indica até três administradores da áre
 
 ## Git a partir de aplicações e UDFs
 
-A janela de uma aplicação Panel ou Dash tem uma secção **Repositório** que mostra o respetivo repositório, ramo e estado de compilação, com **Edit in browser** e **Copy clone URL** para os membros que podem escrever. As aplicações do Panel Studio e as aplicações do App Runner na ligação PlaidCloud Git gerida são pastas no repositório `apps`, pelo que é esse o repositório que a respetiva janela mostra. Consulte [Onde reside a sua aplicação](/pt-pt/guides/panel-apps/studio/#onde-reside-a-sua-aplicação). A barra de ferramentas de uma UDF suportada por Git tem **Abrir**, que abre o repositório no respetivo ramo no Git, e **Edit in browser** para os administradores.
+A janela de uma aplicação Panel ou Dash tem uma secção **Repositório** que mostra o respetivo repositório, ramo e estado de compilação, com **Edit in browser** e **Copy clone URL** para os membros que podem escrever. As aplicações do Panel Studio e as aplicações do App Runner na ligação PlaidCloud Git gerida são pastas no repositório `apps`, pelo que é esse o repositório que a respetiva janela mostra. Consulte [Onde reside a sua aplicação](/pt-pt/guides/panel-apps/studio/#onde-reside-a-aplicação). A barra de ferramentas de uma UDF suportada por Git tem **Abrir**, que abre o repositório no respetivo ramo no Git, e **Edit in browser** para os administradores.
 
 ## Conceder acesso ao Git
 

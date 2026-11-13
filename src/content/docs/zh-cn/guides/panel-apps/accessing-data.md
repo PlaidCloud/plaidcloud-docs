@@ -34,7 +34,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 由于连接就是查看者本人，因此它只返回查看者有权查看的行；如果查看者完全无权访问该项目，则会引发权限错误。
 
-> **按名称读取表，而不是编写 SQL。** 在管理员已启用[行访问](/zh-cn/administration/access/managing-security-groups-and-assignments/#行访问与您自己编写的查询)的项目中，按名称读取会返回每位查看者的行；在 StarRocks、Databend、Greenplum 或 Postgres 仓库上，应用自行组合的查询同样如此。在 Snowflake 或 Databricks 仓库上的查询，或不是针对项目表的单个 SELECT 的查询（写入或多条语句），会被拒绝，除非用户是项目架构师。按名称读取可让应用在两种情况下都正常工作。
+> **按名称读取表，而不是编写 SQL。** 在管理员已启用[行访问](/zh-cn/administration/access/managing-security-groups-and-assignments/#行访问和您自己编写的查询)的项目中，按名称读取会返回每位查看者的行；在 StarRocks、Databend、Greenplum 或 Postgres 仓库上，应用自行组合的查询同样如此。在 Snowflake 或 Databricks 仓库上的查询，或不是针对项目表的单个 SELECT 的查询（写入或多条语句），会被拒绝，除非用户是项目架构师。按名称读取可让应用在两种情况下都正常工作。
 
 ## 识别查看者
 
