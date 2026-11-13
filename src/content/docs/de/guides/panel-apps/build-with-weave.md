@@ -11,9 +11,12 @@ Weave kann Panel-Apps für Sie schreiben und ändern. Es arbeitet in [Panel Stud
 ## Weave fragen
 
 1. Öffnen Sie die App in Panel Studio.
-2. Wählen Sie **Ask Weave** und beschreiben Sie, was Sie möchten, zum Beispiel „Füge einen Regionsfilter und ein Diagramm des Umsatzes nach Monat hinzu.“
+2. Wählen Sie **Weave fragen**. Das [Weave-Dock](/de/guides/ai-assistant/weave-dock/) öffnet sich mit der Unterhaltung der App.
+3. Beschreiben Sie, was Sie möchten, zum Beispiel „Füge einen Regionsfilter und ein Diagramm des Umsatzes nach Monat hinzu.“
 
-Weave kennt die App, an der es arbeitet, bereits: ihre Dateien, ihren Build-Status und etwaige Build-Fehler sowie die Tabelle oder Ansicht, auf der sie basiert. Sie müssen weder Code noch Fehler in die Unterhaltung einfügen. Wenn ein Build fehlschlägt, bitten Sie Weave, ihn zu beheben.
+Weave kennt die App, an der es arbeitet, bereits: ihre Dateien, ihren Build-Status und etwaige Build-Fehler sowie die Tabelle oder Ansicht, auf der sie basiert. Sie müssen weder Code noch Fehler in die Unterhaltung einfügen. Wenn ein Build fehlschlägt, wählen Sie im Build-Status **Weave zu diesem Fehler fragen**: Das Dock öffnet sich mit dem Fehler im Eingabefeld, bereit zum Senden.
+
+Weave arbeitet an Apps, die zu einem Projekt gehören. Bei einer App, die zu keinem Projekt gehört, zeigt Panel Studio *Assign this app to a project to use Weave.*
 
 ## Die Änderung genehmigen
 
