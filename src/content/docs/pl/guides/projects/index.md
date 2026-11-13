@@ -18,6 +18,7 @@ Większość zespołów zaczyna od jednego projektu na obszar analityczny: proje
 - [Cost to Serve](/pl/guides/projects/cost-to-serve/) — rozdziel koszty operacyjne na klientów według działań i zobacz marżę po uwzględnieniu kosztu ich obsługi
 - [Operational Transfer Pricing](/pl/guides/projects/operational-transfer-pricing/) — porównaj poziom zysku każdej jednostki z zakresami określonymi w polityce i zobacz korektę wyrównującą
 - [Strona główna projektu](/pl/guides/projects/project-home/) — zobacz projekt w skrócie i zarządzaj jego zmiennymi, harmonogramami, dostępem, ustawieniami domyślnymi danych i aplikacjami
+- [Model danych i elementy projektu](/pl/guides/projects/data-model/) — opisz raz kolumnę wspólną dla tabel i zobacz, które tabele ją współdzielą
 - [Wyświetlanie projektów](/pl/guides/projects/viewing-projects/) — znajdowanie i otwieranie istniejących projektów
 - [Zarządzanie hierarchiami](/pl/guides/projects/managing-hierarchies/) — struktura folderów do porządkowania wielu projektów
 - [Zarządzanie tabelami i widokami](/pl/guides/projects/managing-tables-and-views/) — warstwa danych wewnątrz projektu

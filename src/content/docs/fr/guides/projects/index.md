@@ -18,6 +18,7 @@ La plupart des équipes commencent par un projet par domaine d'analyse : un pro
 - [Cost to Serve](/fr/guides/projects/cost-to-serve/) : répartissez les charges d'exploitation entre les clients par activité et consultez la marge après déduction du coût pour les servir
 - [Operational Transfer Pricing](/fr/guides/projects/operational-transfer-pricing/) : comparez le niveau de profit de chaque entité aux fourchettes de votre politique et consultez la régularisation
 - [Accueil du projet](/fr/guides/projects/project-home/) : consultez un projet d'un coup d'œil et gérez ses variables, planifications, accès, valeurs par défaut des données et applications
+- [Modèle de données et éléments de projet](/fr/guides/projects/data-model/) : décrivez une seule fois une colonne que vos tables partagent, et voyez quelles tables la partagent
 - [Consulter les projets](/fr/guides/projects/viewing-projects/) : recherchez et ouvrez des projets existants
 - [Gérer les hiérarchies](/fr/guides/projects/managing-hierarchies/) : structure de dossiers pour organiser de nombreux projets
 - [Gérer les tables et les vues](/fr/guides/projects/managing-tables-and-views/) : la couche de données au sein d'un projet

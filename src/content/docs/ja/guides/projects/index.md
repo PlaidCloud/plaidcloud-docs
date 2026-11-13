@@ -18,6 +18,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Cost to Serve](/ja/guides/projects/cost-to-serve/) — 営業費用を活動別に顧客へ配分し、顧客対応コストを差し引いた後のマージンを確認
 - [Operational Transfer Pricing](/ja/guides/projects/operational-transfer-pricing/) — 各エンティティの利益水準をポリシーの範囲と照らして検証し、真の調整額を確認
 - [プロジェクトホーム](/ja/guides/projects/project-home/) — プロジェクトの概要を一目で確認し、変数、スケジュール、アクセス、データのデフォルト、アプリを管理
+- [データモデルとプロジェクト要素](/ja/guides/projects/data-model/) — テーブルが共有する列を1回だけ記述し、どのテーブルがその列を共有しているかを確認
 - [プロジェクトを表示する](/ja/guides/projects/viewing-projects/) — 既存のプロジェクトの検索と表示
 - [階層を管理する](/ja/guides/projects/managing-hierarchies/) — 多数のプロジェクトを整理するためのフォルダー構造
 - [テーブルとビューを管理する](/ja/guides/projects/managing-tables-and-views/) — プロジェクト内のデータ層
