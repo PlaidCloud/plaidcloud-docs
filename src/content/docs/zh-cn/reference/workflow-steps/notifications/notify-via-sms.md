@@ -33,6 +33,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `{project_name}` | 项目的名称 |
 | `{run_url}` | 指向 PlaidCloud 中该运行的链接 |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | 现有变量 |
+| `{date_iso}` | 当前 UTC 时间的 ISO 8601 格式，例如 `2026-11-12T22:49:56+00:00`。`{date}` 为长格式，例如 `Wednesday, 11 November 2026 10:30PM UTC +0`。 |
 
 消息下方的计数器显示短信大致占用的字符数和分段数，包括 `PlaidCloud [workspace]:` 前缀和运行链接。超过 3 个分段的短信会被截断。来自公共链接缩短服务的链接会被拒绝。
 

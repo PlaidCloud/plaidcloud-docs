@@ -33,6 +33,7 @@ Escreva a **Mensagem**. As variáveis do projeto e as variáveis do fluxo de tra
 | `{project_name}` | O nome do projeto |
 | `{run_url}` | Um link para a execução no PlaidCloud |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | As variáveis existentes |
+| `{date_iso}` | A hora UTC atual no formato ISO 8601, como `2026-11-12T22:49:56+00:00`. `{date}` é a forma longa, como `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 
 O contador abaixo da mensagem mostra aproximadamente quantos caracteres e segmentos o texto ocupa, incluindo o prefixo `PlaidCloud [workspace]:` e o link da execução. Um texto é cortado após 3 segmentos. Links de encurtadores de links públicos são rejeitados.
 

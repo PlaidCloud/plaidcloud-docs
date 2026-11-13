@@ -56,21 +56,21 @@ Während ein Workflow läuft, zeigt jeder Schritt ein Statussymbol, das anzeigt,
 
 | Status | Bedeutung |
 |---|---|
-| Waiting | Der Schritt steht in der Warteschlange und hat noch nicht begonnen. |
-| Running | Der Schritt arbeitet, und seine Dauer läuft hoch. |
-| Completed | Der Schritt wurde erfolgreich abgeschlossen. |
-| Warning | Der Schritt wurde abgeschlossen, hat aber etwas gemeldet, das im [Workflow-Protokoll](/de/guides/workflows/viewing-workflow-log/) lesenswert ist. |
-| Error | Der Schritt ist fehlgeschlagen. Siehe [Schrittfehler verwalten](/de/guides/workflows/managing-step-errors/). |
-| Skipped | Der Schritt wurde übergangen — er ist deaktiviert, oder seine Ausführungsbedingungen waren nicht erfüllt. Siehe [Schritte in einem Workflow überspringen](/de/guides/workflows/skip-steps-in-a-workflow/). |
-| Continued | Der Schritt ist fehlgeschlagen, ist aber so eingestellt, dass er bei einem Fehler fortfährt, sodass der Workflow weitergelaufen ist. Siehe [Bei Fehler fortfahren](/de/guides/workflows/continue-on-error/). |
-| Stopped | Die Ausführung wurde beendet, bevor der Schritt abgeschlossen werden konnte. |
-| Abandoned | Die Ausführung des Schritts wurde unterbrochen, sodass er nie abgeschlossen wird. Setzen Sie die Ausführung fort, oder führen Sie den Workflow erneut aus. |
+| Wartend | Der Schritt steht in der Warteschlange und hat noch nicht begonnen. |
+| Wird ausgeführt | Der Schritt arbeitet, und seine Dauer läuft hoch. |
+| Abgeschlossen | Der Schritt wurde erfolgreich abgeschlossen. |
+| Warnung | Der Schritt wurde abgeschlossen, hat aber etwas gemeldet, das im [Workflow-Protokoll](/de/guides/workflows/viewing-workflow-log/) lesenswert ist. |
+| Fehler | Der Schritt ist fehlgeschlagen. Siehe [Schrittfehler verwalten](/de/guides/workflows/managing-step-errors/). |
+| Übersprungen | Der Schritt wurde übergangen — er ist deaktiviert, oder seine Ausführungsbedingungen waren nicht erfüllt. Siehe [Schritte in einem Workflow überspringen](/de/guides/workflows/skip-steps-in-a-workflow/). |
+| Fortgesetzt | Der Schritt ist fehlgeschlagen, ist aber so eingestellt, dass er bei einem Fehler fortfährt, sodass der Workflow weitergelaufen ist. Siehe [Bei Fehler fortfahren](/de/guides/workflows/continue-on-error/). |
+| Beendet | Die Ausführung wurde beendet, bevor der Schritt abgeschlossen werden konnte. |
+| Abgebrochen | Die Ausführung des Schritts wurde unterbrochen, sodass er nie abgeschlossen wird. Setzen Sie die Ausführung fort, oder führen Sie den Workflow erneut aus. |
 
 Eine geöffnete Workflow-Ansicht aktualisiert sich im Verlauf einer Ausführung von selbst, sodass die Status, die Sie sehen, aktuell bleiben, ohne dass Sie die Seite neu laden müssen.
 
 ### Abgebrochene Schritte
 
-Ein Schritt wird als **abandoned** (abgebrochen) markiert, wenn das, was ihn ausgeführt hat, mitten in der Ausführung weggefallen ist — meist weil jemand auf **Beenden** gedrückt hat oder weil eine Plattformwartung die Ausführung unterbrochen hat. Die Dauer des Schritts läuft nicht mehr weiter, und der QuickInfo-Text des Status erklärt, was geschehen ist.
+Ein Schritt wird als **abgebrochen** markiert, wenn das, was ihn ausgeführt hat, mitten in der Ausführung weggefallen ist — meist weil jemand auf **Beenden** gedrückt hat oder weil eine Plattformwartung die Ausführung unterbrochen hat. Die Dauer des Schritts läuft nicht mehr weiter, und der QuickInfo-Text des Status erklärt, was geschehen ist.
 
 Ein abgebrochener Schritt wurde nicht abgeschlossen und hat keine Ausgabe erzeugt. Er ist kein langsamer Schritt und auch kein Problem mit Ihren Daten oder Ihrer Konfiguration.
 
@@ -80,7 +80,7 @@ Um die Arbeit wieder aufzunehmen, [**setzen Sie die Ausführung fort**](#anhalte
 
 Geht der Server, auf dem ein Schritt läuft, mitten in der Ausführung verloren, führt PlaidCloud den Schritt automatisch erneut aus, wenn eine Wiederholung sicher ist: Ein Schritt, der seine Ausgabe ersetzt, liefert dasselbe Ergebnis wie eine einzelne saubere Ausführung, sodass Sie nichts prüfen müssen. Das Protokoll des Schritts zeigt an der Stelle, an der der zweite Versuch beginnt, eine Warnung: „Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start.“
 
-Ein Schritt, der nicht sicher wiederholt werden kann, wird nicht erneut ausgeführt. Er schlägt einmalig mit der Meldung **interrupted** (unterbrochen) fehl, weil eine zweite Ausführung das duplizieren könnte, was der erste Versuch bereits geschrieben hat. Schritte, die Ausgaben mit `{date}` im Namen oder Pfad schreiben, gelten als nicht sicher wiederholbar, da eine erneute Ausführung auf einem anderen Datum landen könnte. Zur Wiederherstellung prüfen Sie das Ziel des Schritts auf das, was der erste Versuch geschrieben hat, bereinigen es bei Bedarf und [führen den Schritt dann erneut aus](/de/guides/workflows/running-one-step-in-a-workflow/) oder wählen für die Ausführung **Fortsetzen**.
+Ein Schritt, der nicht sicher wiederholt werden kann, wird nicht erneut ausgeführt. Er schlägt einmalig mit der Meldung **unterbrochen** fehl, weil eine zweite Ausführung das duplizieren könnte, was der erste Versuch bereits geschrieben hat. Schritte, die Ausgaben mit `{date}` oder `{date_iso}` im Namen oder Pfad schreiben, gelten als nicht sicher wiederholbar, da eine erneute Ausführung auf einem anderen Datum landen könnte. Zur Wiederherstellung prüfen Sie das Ziel des Schritts auf das, was der erste Versuch geschrieben hat, bereinigen es bei Bedarf und [führen den Schritt dann erneut aus](/de/guides/workflows/running-one-step-in-a-workflow/) oder wählen für die Ausführung **Fortsetzen**.
 
 ### Schritte, die nie starten
 
@@ -114,9 +114,9 @@ Was „dort, wo sie aufgehört hat“ bedeutet, hängt davon ab, wie der Workflo
 
 | Ausführung | Beim Fortsetzen |
 |---|---|
-| Serial | Startet bei dem Schritt neu, der beim Ende der Ausführung lief, und läuft von dort weiter. Liegt dieser Schritt in einer Gruppe, nimmt Fortsetzen die gesamte Gruppe der obersten Ebene auf, die ihn enthält: Schritte der Gruppe, die bereits erfolgreich abgeschlossen wurden, bleiben unberührt, die übrigen werden ausgeführt, und die Ausführung läuft nach der Gruppe weiter. |
+| Seriell | Startet bei dem Schritt neu, der beim Ende der Ausführung lief, und läuft von dort weiter. Liegt dieser Schritt in einer Gruppe, nimmt Fortsetzen die gesamte Gruppe der obersten Ebene auf, die ihn enthält: Schritte der Gruppe, die bereits erfolgreich abgeschlossen wurden, bleiben unberührt, die übrigen werden ausgeführt, und die Ausführung läuft nach der Gruppe weiter. |
 | Parallel | Führt jeden Schritt erneut aus, der noch nicht erfolgreich abgeschlossen war, und lässt abgeschlossene Schritte unberührt. |
-| Advanced (graph) | Führt den fehlgeschlagenen Knoten und alles, was noch auf ihn wartet, erneut aus und lässt abgeschlossene Knoten unberührt. |
+| Erweitert (Graph) | Führt den fehlgeschlagenen Knoten und alles, was noch auf ihn wartet, erneut aus und lässt abgeschlossene Knoten unberührt. |
 
 Schritte, die einen anderen Workflow aufrufen — **Run Model**, **Conditional Run Model** und **Loop Model** — setzen den aufgerufenen Workflow fort, anstatt ihn neu zu starten, über beliebig viele Verschachtelungsebenen hinweg. Ein Schleifenschritt setzt die unterbrochene Iteration fort und überspringt die bereits abgeschlossenen Iterationen.
 
