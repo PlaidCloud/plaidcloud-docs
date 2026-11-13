@@ -11,9 +11,12 @@ O Weave pode escrever e alterar aplicações Panel por si. Trabalha no [Panel St
 ## Perguntar ao Weave
 
 1. Abra a aplicação no Panel Studio.
-2. Escolha **Ask Weave** e descreva o que pretende, por exemplo "Add a region filter and a chart of revenue by month."
+2. Escolha **Perguntar ao Weave**. O [painel lateral do Weave](/pt-pt/guides/ai-assistant/weave-dock/) abre-se na conversa da aplicação.
+3. Descreva o que pretende, por exemplo "Add a region filter and a chart of revenue by month."
 
-O Weave já conhece a aplicação em que está a trabalhar: os seus ficheiros, o estado da compilação e quaisquer erros de compilação, e a tabela ou vista em que se baseia. Não precisa de colar código nem erros na conversa. Se uma compilação falhar, peça ao Weave que a corrija.
+O Weave já conhece a aplicação em que está a trabalhar: os seus ficheiros, o estado da compilação e quaisquer erros de compilação, e a tabela ou vista em que se baseia. Não precisa de colar código nem erros na conversa. Se uma compilação falhar, escolha **Perguntar ao Weave sobre este erro** no estado da compilação: o painel lateral abre-se com o erro na caixa, pronto para enviar.
+
+O Weave trabalha em aplicações que pertencem a um projeto. Para uma aplicação que não pertence, o Panel Studio indica *Atribua esta aplicação a um projeto para utilizar o Weave.*
 
 ## Aprovar a alteração
 

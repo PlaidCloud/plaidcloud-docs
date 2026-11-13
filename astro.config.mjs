@@ -621,6 +621,8 @@ export default defineConfig({
 						'guides/ai-assistant',
 						'guides/ai-assistant/weave-tab',
 						'guides/ai-assistant/weave-dock',
+						'guides/ai-assistant/weave-requests',
+						'guides/ai-assistant/weave-team',
 						{
 							label: 'Review Findings',
 							translations: { de: 'Befunde prüfen', es: 'Revisar hallazgos', fr: 'Examiner les constatations', 'pt-BR': 'Revisar constatações', 'pt-PT': 'Rever descobertas', pl: 'Przegląd ustaleń', ja: '検出事項の確認', ko: '결과 항목 검토', 'zh-CN': '审核发现项' },
@@ -631,6 +633,7 @@ export default defineConfig({
 								'guides/ai-assistant/weave-readiness',
 								'guides/ai-assistant/weave-reconciliation',
 								'guides/ai-assistant/weave-monthly-summary',
+								'guides/ai-assistant/weave-numbers',
 							],
 						},
 						{
@@ -638,6 +641,8 @@ export default defineConfig({
 							translations: { de: 'Mit Weave erstellen', es: 'Crear con Weave', fr: 'Créer avec Weave', 'pt-BR': 'Criar com Weave', 'pt-PT': 'Criar com Weave', pl: 'Tworzenie z Weave', ja: 'Weaveで作成', ko: 'Weave로 만들기', 'zh-CN': '使用 Weave 构建' },
 							collapsed: true,
 							items: [
+								'guides/ai-assistant/weave-build',
+								'guides/ai-assistant/weave-editor',
 								'guides/ai-assistant/fixing-workflow-errors',
 								'guides/ai-assistant/generate-sql-extract',
 								'guides/ai-assistant/impact-preview',
