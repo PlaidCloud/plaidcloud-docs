@@ -24,7 +24,7 @@ Cliquez sur l'icône **Régénérer** de la ligne d'une application serveur pour
 
 Utilisez **Régénérer** après des modifications de dépendances, des mises à jour de l'image de base ou une génération en échec transitoire. Modifier puis enregistrer une application serveur la régénère aussi, mais une régénération ne nécessite pas d'ouvrir le formulaire de modification.
 
-Pour une application [App Runner](/fr/guides/workflows/use-converted-alteryx-apps/#maintenir-lapplication-à-jour) — le formulaire de saisie généré pour une application Alteryx convertie — **Régénérer** et l'enregistrement d'une modification commencent par actualiser ses fichiers générés vers la version actuelle d'App Runner, puis lancent la génération. PlaidCloud fait de même pour chaque application App Runner non verrouillée lorsque PlaidCloud lui-même est mis à jour ; une application verrouillée nécessite un **Régénérer** après son déverrouillage.
+Pour une application [App Runner](/fr/guides/workflows/use-converted-alteryx-apps/#garder-lapplication-à-jour) — le formulaire de saisie généré pour une application Alteryx convertie — **Régénérer** et l'enregistrement d'une modification commencent par actualiser ses fichiers générés vers la version actuelle d'App Runner, puis lancent la génération. PlaidCloud fait de même pour chaque application App Runner non verrouillée lorsque PlaidCloud lui-même est mis à jour ; une application verrouillée nécessite un **Régénérer** après son déverrouillage.
 
 ## Verrouiller une application
 

@@ -24,7 +24,7 @@ WASM 应用没有构建步骤，发布后即可使用。
 
 在依赖项变更、基础映像更新或构建偶发失败之后，请使用**重新构建**。编辑并保存服务器应用同样会重新构建它，但重新构建不需要打开编辑表单。
 
-对于 [App Runner](/zh-cn/guides/workflows/use-converted-alteryx-apps/#保持应用为最新) 应用（为转换后的 Alteryx 应用生成的输入表单），**重新构建**和保存编辑会先将其生成的文件刷新到当前的 App Runner 版本，然后再进行构建。PlaidCloud 自身更新时，也会对每个未锁定的 App Runner 应用执行同样的操作；已锁定的应用需要在解锁后执行**重新构建**。
+对于 [App Runner](/zh-cn/guides/workflows/use-converted-alteryx-apps/#保持应用最新) 应用（为转换后的 Alteryx 应用生成的输入表单），**重新构建**和保存编辑会先将其生成的文件刷新到当前的 App Runner 版本，然后再进行构建。PlaidCloud 自身更新时，也会对每个未锁定的 App Runner 应用执行同样的操作；已锁定的应用需要在解锁后执行**重新构建**。
 
 ## 锁定应用
 
