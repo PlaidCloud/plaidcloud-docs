@@ -18,7 +18,8 @@ As definições e as expressões dos passos podem usar estas variáveis incorpor
 
 | Variável | Valor |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Os nomes do projeto, do modelo e da área de trabalho. |
+| `{project}`, `{model}` | Os IDs do projeto e do fluxo de trabalho em que o passo é executado. |
+| `{cloud}` | O nome da área de trabalho. |
 | `{date}` | A hora UTC atual da execução em formato extenso, como `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | O mesmo momento em ISO 8601, como `2026-11-12T22:49:56+00:00`. |
 

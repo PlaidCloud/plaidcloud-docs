@@ -18,7 +18,8 @@ Les paramètres et expressions des étapes peuvent utiliser ces variables intég
 
 | Variable | Valeur |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Les noms du projet, du modèle et de l'espace de travail. |
+| `{project}`, `{model}` | Les ID du projet et du workflow dans lesquels l'étape s'exécute. |
+| `{cloud}` | Le nom de l'espace de travail. |
 | `{date}` | L'heure UTC actuelle de l'exécution, en format long, par exemple `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | Le même instant au format ISO 8601, par exemple `2026-11-12T22:49:56+00:00`. |
 

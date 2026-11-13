@@ -19,7 +19,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. **APIs & Services > Library**로 이동합니다
 2. **Google Drive API**를 검색합니다
-3. 이를 선택하고 **사용**을 클릭합니다
+3. 이를 선택하고 **Enable**을 클릭합니다
 
 ### 서비스 계정 만들기
 
@@ -27,15 +27,15 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 2. **+ Create Credentials > Service account**를 선택합니다
 3. 서비스 계정의 이름을 입력합니다(예: `plaidcloud-drive`)
 4. **Create and Continue**를 선택합니다
-5. 필요한 경우 역할을 부여합니다(읽기 전용은 **뷰어**, 읽기/쓰기는 **Editor** 등). **계속**을 선택합니다.
-6. **완료**를 선택합니다
+5. 필요한 경우 역할을 부여합니다(읽기 전용은 **Viewer**, 읽기/쓰기는 **Editor** 등). **Continue**를 선택합니다.
+6. **Done**을 선택합니다
 
 ### 서비스 계정 키 생성
 
 1. **Service Accounts** 목록에서 방금 만든 서비스 계정을 선택합니다
 2. **Keys** 탭으로 이동합니다
-3. **키 추가 > 새로 만들기**를 선택합니다
-4. **JSON** 형식을 선택하고 **만들기**를 선택합니다
+3. **Add Key > Create new key**를 선택합니다
+4. **JSON** 형식을 선택하고 **Create**를 선택합니다
 5. JSON 키 파일이 다운로드됩니다. 이 파일에는 PlaidCloud가 사용할 자격 증명이 들어 있으므로 안전하게 보관하십시오.
 
 ### 서비스 계정과 Drive 콘텐츠 공유

@@ -18,7 +18,8 @@ La configuración y las expresiones de los pasos pueden usar estas variables int
 
 | Variable | Valor |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Los nombres del proyecto, el modelo y el espacio de trabajo. |
+| `{project}`, `{model}` | Los ID del proyecto y del flujo de trabajo en el que se ejecuta el paso. |
+| `{cloud}` | El nombre del espacio de trabajo. |
 | `{date}` | La hora UTC actual de la ejecución en formato largo, como `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | El mismo instante en ISO 8601, como `2026-11-12T22:49:56+00:00`. |
 

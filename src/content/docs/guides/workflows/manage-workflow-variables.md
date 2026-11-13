@@ -17,7 +17,8 @@ Step settings and expressions can use these built-in variables without defining 
 
 | Variable | Value |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | The project, model and workspace names. |
+| `{project}`, `{model}` | The IDs of the project and the workflow the step runs in. |
+| `{cloud}` | The workspace name. |
 | `{date}` | The run's current UTC time in long form, such as `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | The same moment in ISO 8601, such as `2026-11-12T22:49:56+00:00`. |
 

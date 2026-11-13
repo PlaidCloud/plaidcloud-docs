@@ -18,7 +18,8 @@ Schritteinstellungen und Ausdrücke können diese integrierten Variablen verwend
 
 | Variable | Wert |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Die Namen von Projekt, Modell und Workspace. |
+| `{project}`, `{model}` | Die IDs von Projekt und Workflow, in dem der Schritt läuft. |
+| `{cloud}` | Der Name des Workspace. |
 | `{date}` | Die aktuelle UTC-Zeit der Ausführung in Langform, zum Beispiel `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | Derselbe Zeitpunkt nach ISO 8601, zum Beispiel `2026-11-12T22:49:56+00:00`. |
 

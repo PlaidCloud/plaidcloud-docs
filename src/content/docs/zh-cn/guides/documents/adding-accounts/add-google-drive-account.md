@@ -19,31 +19,31 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 1. 导航到 **APIs & Services > Library**
 2. 搜索 **Google Drive API**
-3. 选择它并点击 **启用**
+3. 选择它并点击 **Enable**
 
 ### 创建服务账户
 
 1. 导航到 **APIs & Services > Credentials**
 2. 选择 **+ Create Credentials > Service account**
 3. 输入服务账户的名称（例如 `plaidcloud-drive`）
-4. 选择 **创建并继续**
-5. 可选择授予角色（例如只读授予 **查看者**，读写授予 **编辑器**）。选择 **继续**。
-6. 选择 **完成**
+4. 选择 **Create and Continue**
+5. 可选择授予角色（例如只读授予 **Viewer**，读写授予 **Editor**）。选择 **Continue**。
+6. 选择 **Done**
 
 ### 生成服务账户密钥
 
 1. 在 **Service Accounts** 列表中，选择刚创建的服务账户
-2. 导航到 **键** 选项卡
-3. 选择 **添加键 > 新建键**
-4. 选择 **JSON 格式化** 并选择 **创建**
+2. 导航到 **Keys** 选项卡
+3. 选择 **Add Key > Create new key**
+4. 选择 **JSON** 格式并选择 **Create**
 5. 系统将下载一个 JSON 密钥文件。请妥善保存该文件，其中包含 PlaidCloud 将使用的凭据。
 
 ### 与服务账户共享 Drive 内容
 
 1. 复制服务账户的电子邮件地址（例如 `plaidcloud-drive@your-project.iam.gserviceaccount.com`）
-2. 在 Google Drive 中，将希望 PlaidCloud 访问的文件夹与该电子邮件地址共享，并授予 **编辑器** 访问权限。若要使用共享云端硬盘，请改为将服务账户添加为其成员。
+2. 在 Google Drive 中，将希望 PlaidCloud 访问的文件夹与该电子邮件地址共享，并授予 **Editor** 访问权限。若要使用共享云端硬盘，请改为将服务账户添加为其成员。
 
-现在，已具备将 Google Drive 账户添加到 PlaidCloud 文档所需的一切。
+现在，已具备将 Google Drive 账户添加到 PlaidCloud 文档 所需的一切。
 
 
 ## PlaidCloud 文档设置

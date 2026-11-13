@@ -18,7 +18,8 @@ Ustawienia kroków i wyrażenia mogą korzystać z tych zmiennych wbudowanych be
 
 | Zmienna | Wartość |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Nazwy projektu, modelu i obszaru roboczego. |
+| `{project}`, `{model}` | Identyfikatory projektu i przepływu pracy, w których działa krok. |
+| `{cloud}` | Nazwa obszaru roboczego. |
 | `{date}` | Bieżący czas UTC uruchomienia w formie długiej, na przykład `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | Ta sama chwila w formacie ISO 8601, na przykład `2026-11-12T22:49:56+00:00`. |
 

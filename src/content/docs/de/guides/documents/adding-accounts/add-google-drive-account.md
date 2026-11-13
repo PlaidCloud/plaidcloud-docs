@@ -34,7 +34,7 @@ Diese Schritte müssen in der Google Cloud Console durchgeführt werden, um ein 
 
 1. Wählen Sie in der Liste **Service Accounts** das soeben erstellte Dienstkonto aus
 2. Navigieren Sie zur Registerkarte **Keys**
-3. Wählen Sie **Schlüssel hinzufügen > Neu erstellen**
+3. Wählen Sie **Schlüssel hinzufügen > Neuen Schlüssel erstellen**
 4. Wählen Sie das Format **JSON** und klicken Sie auf **Erstellen**
 5. Eine JSON-Schlüsseldatei wird heruntergeladen. Speichern Sie diese Datei sicher – sie enthält die Zugangsdaten, die PlaidCloud verwendet.
 
@@ -52,7 +52,7 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Google-Drive-Konto zu PlaidC
 2. Wählen Sie den Workspace, in dem sich das neue Dokumentenkonto befinden soll
 3. Gehen Sie zu `Document > Manage`
 4. Klicken Sie auf die Schaltfläche **Neues Konto**
-5. Wählen Sie `Google Drive` als **Diensttyp**
+5. Wählen Sie `Google Drive` als Diensttyp
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie den Pfad des freigegebenen Ordners in das Feld **Startpfad** ein oder lassen Sie es leer, um auf alle freigegebenen Inhalte zuzugreifen
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`.

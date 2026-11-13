@@ -18,7 +18,8 @@ As configurações e expressões das etapas podem usar estas variáveis internas
 
 | Variável | Valor |
 |---|---|
-| `{project}`, `{model}`, `{cloud}` | Os nomes do projeto, do modelo e do espaço de trabalho. |
+| `{project}`, `{model}` | Os IDs do projeto e do fluxo de trabalho em que a etapa é executada. |
+| `{cloud}` | O nome do espaço de trabalho. |
 | `{date}` | A hora UTC atual da execução em formato longo, como `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 | `{date_iso}` | O mesmo instante no formato ISO 8601, como `2026-11-12T22:49:56+00:00`. |
 
