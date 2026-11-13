@@ -56,7 +56,7 @@ Agora você deve ter tudo o que precisa para adicionar sua conta do Google Drive
 6. Preencha um nome e uma descrição
 7. Informe o caminho da pasta compartilhada no campo **Caminho inicial** ou deixe-o em branco para acessar todo o conteúdo compartilhado
 8. Selecione um **Modelo de segurança** adequado ao seu caso de uso. Se estiver em dúvida, deixe como `Private`.
-9. Cole todo o conteúdo do arquivo de chave JSON da conta de serviço no campo de chave privada da conta, em Credenciais de autenticação
+9. Cole todo o conteúdo do arquivo de chave JSON no campo JSON de credenciais OAuth2, em Credenciais de autenticação
 10. Clique no botão Salvar e sua nova conta de documentos estará ativa
 
 ## Usar a conta em fluxos de trabalho

@@ -55,7 +55,7 @@ You should now have everything you need to add your Google Drive account to Plai
 6. Fill in a name and description
 7. Enter the shared folder path into the **Start Path** field, or leave it blank to access all shared content
 8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
-9. Paste the entire contents of the service account's JSON key file into the account's private key field under Auth Credentials
+9. Paste the entire contents of the JSON key file into the OAuth2 Credentials JSON field under Auth Credentials
 10. Select the Save button and your new Document account is live
 
 ## Using the Account in Workflows

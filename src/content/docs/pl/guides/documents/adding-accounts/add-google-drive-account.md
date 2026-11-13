@@ -56,7 +56,7 @@ Masz teraz wszystko, czego potrzebujesz, aby dodać konto Google Drive do moduł
 6. Wpisz nazwę i opis
 7. Wpisz ścieżkę udostępnionego folderu w polu **Ścieżka początkowa** lub pozostaw je puste, aby uzyskać dostęp do całej udostępnionej zawartości
 8. Wybierz odpowiedni **Model zabezpieczeń** dla danego zastosowania. W razie wątpliwości pozostaw wartość `Private`.
-9. Wklej całą zawartość pliku klucza JSON konta usługi w polu klucza prywatnego konta w sekcji Dane uwierzytelniające
+9. Wklej całą zawartość pliku klucza JSON w polu Poświadczenia OAuth2 JSON w sekcji Dane uwierzytelniające
 10. Wybierz przycisk Zapisz — nowe konto dokumentów jest aktywne
 
 ## Używanie konta w przepływach pracy

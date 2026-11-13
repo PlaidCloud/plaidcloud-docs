@@ -56,7 +56,7 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Google-Drive-Konto zu PlaidC
 6. Geben Sie einen Namen und eine Beschreibung ein
 7. Geben Sie den Pfad des freigegebenen Ordners in das Feld **Startpfad** ein oder lassen Sie es leer, um auf alle freigegebenen Inhalte zuzugreifen
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`.
-9. Fügen Sie den gesamten Inhalt der JSON-Schlüsseldatei des Dienstkontos unter Authentifizierungsdaten in das Feld für den privaten Schlüssel des Kontos ein
+9. Fügen Sie den gesamten Inhalt der JSON-Schlüsseldatei unter Authentifizierungsdaten in das Feld OAuth2-Anmeldeinformationen (JSON) ein
 10. Klicken Sie auf die Schaltfläche „Speichern“, und Ihr neues Dokumentenkonto ist aktiv
 
 ## Das Konto in Workflows verwenden

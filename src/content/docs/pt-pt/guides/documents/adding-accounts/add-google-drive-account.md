@@ -56,7 +56,7 @@ Neste momento, deverá ter tudo o que precisa para adicionar a sua conta Google 
 6. Preencha um nome e uma descrição
 7. Introduza o caminho da pasta partilhada no campo **Caminho inicial** ou deixe-o em branco para aceder a todo o conteúdo partilhado
 8. Selecione um **Modelo de segurança** adequado ao seu caso de utilização. Se tiver dúvidas, deixe `Private`.
-9. Cole todo o conteúdo do ficheiro de chave JSON da conta de serviço no campo de chave privada da conta, em Credenciais de autenticação
+9. Cole todo o conteúdo do ficheiro de chave JSON no campo JSON de credenciais OAuth2, em Credenciais de autenticação
 10. Selecione o botão Guardar e a sua nova conta de documentos fica ativa
 
 ## Utilizar a conta em fluxos de trabalho

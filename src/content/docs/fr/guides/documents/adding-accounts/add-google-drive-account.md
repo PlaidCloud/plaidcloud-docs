@@ -56,7 +56,7 @@ Vous disposez maintenant de tout le nécessaire pour ajouter votre compte Google
 6. Saisissez un nom et une description
 7. Saisissez le chemin du dossier partagé dans le champ **Chemin de départ**, ou laissez-le vide pour accéder à l'ensemble du contenu partagé
 8. Sélectionnez le **Modèle de sécurité** adapté à votre cas d'usage. En cas de doute, conservez `Private`.
-9. Collez l'intégralité du contenu du fichier de clé JSON dans le champ de clé privée du compte, sous Identifiants d'authentification
+9. Collez l'intégralité du contenu du fichier de clé JSON dans le champ Identifiants OAuth2 JSON, sous Identifiants d'authentification
 10. Sélectionnez le bouton Enregistrer : votre nouveau compte de documents est opérationnel
 
 ## Utiliser le compte dans les workflows
