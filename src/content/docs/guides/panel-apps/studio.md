@@ -28,6 +28,14 @@ The **New Studio App** dialog starts you from one of five places:
 
 Name the app, pick its **Project**, and choose **Create**. Studio opens the new app with its files listed on the left. For a table or a view, Weave's prompt to build the app's first page is ready to send. See [Creating a Panel App](/guides/panel-apps/creating/).
 
+## Where Your App Lives
+
+A Studio app is a folder named for the app (`<app-slug>/`) inside your workspace's `apps` repository in [PlaidCloud Git](/guides/git/), the same repository your other Panel apps live in. Studio doesn't create a repository of its own for the app, so you can find and edit its source in `apps` alongside your other apps.
+
+- **Draft branch.** Work that isn't live yet is kept on a branch named `studio-<app-slug>`. **Publish** copies the app's folder from that branch onto the main branch.
+- **Rebuilds.** A push to `apps` rebuilds an app only when that app's folder, or the repository's root `requirements.txt`, changed.
+- **Existing apps.** A Studio app that was in a repository of its own is moved into its folder automatically. The old repository is archived: it stays, read-only, and is never deleted.
+
 ## Edit
 
 Pick a file in the list to edit it in the editor. List your Python dependencies in `requirements.txt`, one package per line. They are installed when the app builds.

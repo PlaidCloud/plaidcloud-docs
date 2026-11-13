@@ -46,7 +46,7 @@ That's a complete app — the `.servable()` call is what PlaidCloud serves. `pan
 
 ## 2. Put Your App in a PlaidCloud Git Repository
 
-Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it.
+Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it. Apps you build in [Panel Studio](/guides/panel-apps/studio/#where-your-app-lives) are already folders in `apps`, so you'll find them there next to yours.
 
 Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with the **write:repository** permission, and use it as the password when Git prompts. Pushing to `apps` needs **Contributor** access; ask a workspace administrator to add you to **Git Contributors** if the **Git** tab shows you as a **Viewer**. Use the copy button next to the repository's clone address in the **Git** tab, then:
 
