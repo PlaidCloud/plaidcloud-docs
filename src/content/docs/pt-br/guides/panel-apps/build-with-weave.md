@@ -11,9 +11,12 @@ O Weave pode escrever e alterar aplicativos Panel para você. Ele trabalha no [P
 ## Pergunte ao Weave
 
 1. Abra o aplicativo no Panel Studio.
-2. Escolha **Ask Weave** e descreva o que você quer, por exemplo "Adicione um filtro de região e um gráfico de receita por mês."
+2. Escolha **Perguntar ao Weave**. O [dock do Weave](/pt-br/guides/ai-assistant/weave-dock/) abre na conversa do aplicativo.
+3. Descreva o que você quer, por exemplo "Adicione um filtro de região e um gráfico de receita por mês."
 
-O Weave já conhece o aplicativo em que está trabalhando: seus arquivos, o status de compilação e quaisquer erros de compilação, e a tabela ou visão em que ele se baseia. Você não precisa colar código nem erros na conversa. Se uma compilação falhar, peça ao Weave que a corrija.
+O Weave já conhece o aplicativo em que está trabalhando: seus arquivos, o status de compilação e quaisquer erros de compilação, e a tabela ou visão em que ele se baseia. Você não precisa colar código nem erros na conversa. Se uma compilação falhar, escolha **Perguntar ao Weave sobre este erro** no status de compilação: o dock abre com o erro na caixa, pronto para você enviar.
+
+O Weave trabalha em aplicativos que pertencem a um projeto. Para um aplicativo que não pertence, o Panel Studio diz *Atribua este aplicativo a um projeto para usar o Weave.*
 
 ## Aprove a alteração
 
