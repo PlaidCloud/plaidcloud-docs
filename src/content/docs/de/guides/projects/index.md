@@ -18,6 +18,7 @@ Die meisten Teams beginnen mit einem Projekt pro Analysebereich: ein Projekt fü
 - [Cost to Serve](/de/guides/projects/cost-to-serve/) – Betriebskosten nach Aktivität auf Kunden verteilen und die Marge nach Abzug der Servicekosten sehen
 - [Operational Transfer Pricing](/de/guides/projects/operational-transfer-pricing/) – das Gewinnniveau jeder Entität an Ihren Richtlinienbandbreiten testen und die Anpassung sehen
 - [Projektstartseite](/de/guides/projects/project-home/) – ein Projekt auf einen Blick sehen und seine Variablen, Zeitpläne, Zugriffe, Datenstandards und Apps verwalten
+- [Datenmodell und Projektelemente](/de/guides/projects/data-model/) – eine Spalte, die Ihre Tabellen gemeinsam verwenden, einmal beschreiben und sehen, welche Tabellen sie teilen
 - [Projekte anzeigen](/de/guides/projects/viewing-projects/) – vorhandene Projekte finden und öffnen
 - [Hierarchien verwalten](/de/guides/projects/managing-hierarchies/) – Ordnerstruktur zur Organisation vieler Projekte
 - [Tabellen und Ansichten verwalten](/de/guides/projects/managing-tables-and-views/) – die Datenebene innerhalb eines Projekts
