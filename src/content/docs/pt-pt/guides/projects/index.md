@@ -1,6 +1,6 @@
 ---
 title: Projetos
-description: Configure e giva projetos PlaidCloud para organizar fluxos de trabalho, tabelas, importações de dados e outros objetos de análise por finalidade.
+description: Configure e faça a gestão de projetos PlaidCloud para organizar fluxos de trabalho, tabelas, importações de dados e outros objetos de análise por finalidade.
 sidebar:
   label: Projetos
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/projects/index.md
@@ -17,7 +17,8 @@ A maioria das equipas começa com um projeto por área analítica: um projeto pa
 - [Introdução ao Data Foundation](/pt-pt/guides/projects/data-foundation-getting-started/) — a lista de verificação de configuração, desde um projeto novo até um modelo carregado, verificado e entregue
 - [Cost to Serve](/pt-pt/guides/projects/cost-to-serve/) — distribua as despesas operacionais pelos clientes por atividade e veja a margem após o custo de os servir
 - [Operational Transfer Pricing](/pt-pt/guides/projects/operational-transfer-pricing/) — teste o nível de lucro de cada entidade face aos intervalos da sua política e veja o acerto
-- [Página inicial do projeto](/pt-pt/guides/projects/project-home/) — veja um projeto num relance e giva as suas variáveis, agendamentos, acesso, predefinições de dados e aplicações
+- [Página inicial do projeto](/pt-pt/guides/projects/project-home/) — veja um projeto num relance e faça a gestão das suas variáveis, agendamentos, acesso, predefinições de dados e aplicações
+- [Modelo de dados e elementos do projeto](/pt-pt/guides/projects/data-model/) — descreva uma vez uma coluna que as suas tabelas partilham e veja que tabelas a partilham
 - [Ver projetos](/pt-pt/guides/projects/viewing-projects/) — encontrar e abrir projetos existentes
 - [Gerir hierarquias](/pt-pt/guides/projects/managing-hierarchies/) — estrutura de pastas para organizar muitos projetos
 - [Gerir tabelas e vistas](/pt-pt/guides/projects/managing-tables-and-views/) — a camada de dados dentro de um projeto
