@@ -64,6 +64,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 该步骤的正文以 **Jinja 模板**的形式编写，在一个或多个**框架**上渲染，生成内容丰富的 HTML 电子邮件。每个框架是一个具名的单表选择，包含**框架名称**、一个工作流表，以及可选的列选择、where 筛选器和聚合（不支持联接）。编辑器会直接打开此模板，包括框架列表、模板正文、实时预览和**向我发送测试**按钮，没有纯文本与模板之间的切换开关。**美化**按钮和插入面板（用于框架的 `render_table(...)`、`{{ cloud }}`、for 循环，以及货币/千位分隔/百分比/日期过滤器）有助于组织模板。
 
+没有列出任何列的框架会包含该表的所有列。
+
 在模板中以 `frames['<Frame Name>'].rows` 和 `frames['<Frame Name>'].columns` 引用每个框架；只有一个框架的模板可以使用顶层的 `rows` / `columns`，它们绑定到第一个框架。该模板使用独立的沙盒渲染引擎，只有 `cloud` 会解析为工作区值，旧版的 `{project}` / `{model}` / `{date}` 标记在其中不会解析。在引入 Jinja 编写之前创建的步骤，打开时其旧正文会自动转换；无法安全转换的正文会保留为纯文本回退，并继续使用旧版 `{token}` 替换来发送。有关可用的模板变量、`render_table` 辅助函数、能通过电子邮件清理程序保留的 HTML 标签和属性，以及现有正文的迁移方式，请参阅[发送模板化 HTML 电子邮件通知](/zh-cn/guides/workflows/notify-email-templates/)。
 
 

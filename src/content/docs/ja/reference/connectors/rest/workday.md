@@ -30,4 +30,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | OAuth2クライアントID | テキスト | — |
 | OAuth2クライアントシークレット | テキスト | 機密の認証情報です。暗号化して保存されます。 |
 | WorkdayのURL | テキスト | URLエンドポイントです。 |
-| OAuth2リフレッシュトークン | テキスト | — |
+| OAuth2リフレッシュトークン | テキスト | 任意です。指定しない場合、リクエストはクライアント資格情報でサインインします。 |
+| APIホスト | テキスト | REST リクエストの送信先ホストです（例: `api.example.com`）。 |

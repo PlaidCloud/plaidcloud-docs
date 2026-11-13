@@ -64,6 +64,8 @@ W sekcji **Więcej opcji e-mail** pole **Priorytet** (`priority`) oznacza wiadom
 
 Treść kroku jest tworzona jako **szablon Jinja** renderowany na podstawie jednej lub kilku **ramek**, co daje bogaty e-mail w formacie HTML. Każda ramka to nazwany wybór z jednej tabeli — Nazwa ramki, jedna tabela przepływu pracy oraz opcjonalny wybór kolumn, filtr where i agregacja (bez złączeń). Edytor otwiera się bezpośrednio w tym szablonie — lista ramek, treść szablonu, podgląd na żywo i przycisk **Wyślij test do mnie** — bez przełącznika między zwykłym tekstem a szablonem. Przycisk **Upiększ** oraz paleta wstawiania (`render_table(...)` dla ramki, `{{ cloud }}`, pętla for oraz filtry walut/tysięcy/procentów/dat) pomagają ukształtować szablon.
 
+Ramka bez wskazanych kolumn zawiera wszystkie kolumny tabeli.
+
 Odwołuj się do każdej ramki w szablonie jako `frames['<Frame Name>'].rows` i `frames['<Frame Name>'].columns`; szablon z jedną ramką może używać najwyższego poziomu `rows` / `columns`, powiązanych z pierwszą ramką. Szablon jest osobnym, izolowanym silnikiem renderowania — jako wartość obszaru roboczego rozwiązuje się tylko `cloud`, a starsze tokeny `{project}` / `{model}` / `{date}` w nim nie działają. Kroki utworzone przed wprowadzeniem Jinja otwierają się ze starą treścią automatycznie przekonwertowaną; treść, której nie da się bezpiecznie przekonwertować, pozostaje w zapasowym trybie zwykłego tekstu i nadal jest wysyłana ze starszym podstawianiem `{token}`. Zobacz [Wysyłanie powiadomień e-mail HTML opartych na szablonach](/pl/guides/workflows/notify-email-templates/), aby poznać dostępne zmienne szablonu, pomocnik `render_table`, znaczniki i atrybuty HTML, które przetrwają sanityzację wiadomości e-mail, oraz sposób migracji istniejących treści.
 
 

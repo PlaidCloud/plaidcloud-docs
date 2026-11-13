@@ -30,4 +30,5 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | Oauth2 客户端 ID | 文本 | — |
 | Oauth2 客户端密钥 | 文本 | 密钥凭据，加密存储。 |
 | Workday URL | 文本 | URL 端点。 |
-| Oauth2 刷新令牌 | 文本 | — |
+| Oauth2 刷新令牌 | 文本 | 可选。如果没有，请求将使用客户端凭据登录。 |
+| API 主机 | 文本 | REST 请求发送到的主机，例如 `api.example.com`。 |
