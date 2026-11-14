@@ -142,6 +142,8 @@ Aby dodać folder do istniejącego folderu:
 1. Kliknij folder prawym przyciskiem myszy
 2. Wybierz Nowy folder
 
+Gdy zaznaczenie znajduje się w folderze, okno z prośbą o nazwę nowego folderu zawiera także opcję **Utwórz na najwyższym poziomie**. Zaznacz ją, aby umieścić nowy folder na najwyższym poziomie projektu.
+
 
 ## Oznaczanie hierarchii dla ról przeglądających
 

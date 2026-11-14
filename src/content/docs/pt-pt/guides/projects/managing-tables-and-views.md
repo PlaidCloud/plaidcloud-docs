@@ -82,6 +82,8 @@ Só são aceites ficheiros terminados em `.csv`. É necessária permissão para 
 
 1. Arraste-a para a pasta onde pretende que fique localizada
 
+Para mover uma tabela para o nível superior do projeto, arraste-a para o espaço vazio abaixo da última linha. Nos seletores de pastas, `/` é o nível superior do projeto.
+
 ## Mudar o nome
 
 
@@ -188,6 +190,8 @@ Um passo que a sua função não pode ver continua a ser listado, para que saiba
 
 1. Clique com o botão direito do rato na pasta
 2. Selecione Nova pasta
+
+Quando a seleção está dentro de uma pasta, a caixa onde indica o nome da nova pasta também tem **Criar ao nível superior**. Assinale-a para colocar a nova pasta ao nível superior do projeto.
 
 
 ## Ver dados (Explorador de tabelas)

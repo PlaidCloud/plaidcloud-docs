@@ -82,6 +82,8 @@ Es werden nur Dateien mit der Endung `.csv` akzeptiert. Sie benötigen die Berec
 
 1. Ziehen Sie sie in den Ordner, in dem sie liegen soll
 
+Um eine Tabelle auf die oberste Ebene des Projekts zu verschieben, ziehen Sie sie auf die freie Fläche unter der letzten Zeile. In Ordnerauswahlen ist `/` die oberste Ebene des Projekts.
+
 ## Umbenennen
 
 
@@ -188,6 +190,8 @@ Ein Schritt, den Ihre Rolle nicht sehen kann, wird dennoch aufgelistet, damit Si
 
 1. Klicken Sie mit der rechten Maustaste auf den Ordner
 2. Wählen Sie „Neuer Ordner“
+
+Wenn die Auswahl in einem Ordner liegt, enthält die Eingabeaufforderung für den Namen des neuen Ordners außerdem **Auf oberster Ebene erstellen**. Aktivieren Sie das Kontrollkästchen, um den neuen Ordner stattdessen auf der obersten Ebene des Projekts anzulegen.
 
 
 ## Daten anzeigen (Tabellen-Explorer)

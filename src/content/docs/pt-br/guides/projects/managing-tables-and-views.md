@@ -82,6 +82,8 @@ Somente arquivos terminados em `.csv` são aceitos. Você precisa de permissão 
 
 1. Arraste-a para a pasta em que você quer que ela fique
 
+Para mover uma tabela para o nível superior do projeto, arraste-a para o espaço vazio abaixo da última linha. Nos seletores de pasta, `/` é o nível superior do projeto.
+
 ## Renomear
 
 
@@ -188,6 +190,8 @@ Uma etapa que sua função não pode ver ainda é listada, para que você saiba 
 
 1. Clique com o botão direito na pasta
 2. Selecione Nova pasta
+
+Quando a seleção está dentro de uma pasta, a caixa de diálogo em que você informa o nome da nova pasta também tem **Criar no nível superior**. Marque essa opção para colocar a nova pasta no nível superior do projeto.
 
 
 ## Ver dados (Explorador de tabelas)

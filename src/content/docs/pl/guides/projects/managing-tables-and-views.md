@@ -82,6 +82,8 @@ Akceptowane są tylko pliki z rozszerzeniem `.csv`. Potrzebujesz uprawnienia do 
 
 1. Przeciągnij ją do folderu, w którym ma się znajdować
 
+Aby przenieść tabelę na najwyższy poziom projektu, przeciągnij ją na puste miejsce pod ostatnim wierszem. W selektorach folderów `/` oznacza najwyższy poziom projektu.
+
 ## Zmiana nazwy
 
 
@@ -188,6 +190,8 @@ Krok, którego Twoja rola nie może zobaczyć, jest nadal wymieniony, abyś wied
 
 1. Kliknij folder prawym przyciskiem myszy
 2. Wybierz Nowy folder
+
+Gdy zaznaczenie znajduje się w folderze, okno z prośbą o nazwę nowego folderu zawiera także opcję **Utwórz na najwyższym poziomie**. Zaznacz ją, aby umieścić nowy folder na najwyższym poziomie projektu.
 
 
 ## Wyświetlanie danych (Eksplorator tabel)

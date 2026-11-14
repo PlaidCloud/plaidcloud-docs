@@ -142,6 +142,8 @@ Para adicionar uma pasta a uma pasta existente:
 1. Clique com o botão direito na pasta
 2. Selecione Nova pasta
 
+Quando a seleção está dentro de uma pasta, a caixa de diálogo em que você informa o nome da nova pasta também tem **Criar no nível superior**. Marque essa opção para colocar a nova pasta no nível superior do projeto.
+
 
 ## Marcar a hierarquia para funções de visualização
 

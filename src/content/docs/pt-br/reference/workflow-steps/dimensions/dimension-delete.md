@@ -29,3 +29,7 @@ Um exemplo que usa a variável `current_month` para excluir dinamicamente a dime
 ### Usar dimensão específica
 
 Use o menu suspenso para selecionar uma dimensão específica a ser excluída.
+
+### Dimensões correspondentes à pesquisa
+
+Com **Dimensões correspondentes à pesquisa**, a etapa não é salva com **Texto de pesquisa** vazio enquanto o **Caminho de pesquisa** for o nível superior do projeto (`/`), pois isso excluiria todas as dimensões do projeto. Informe um texto para corresponder ou escolha uma pasta.

@@ -82,6 +82,8 @@ Solo se aceptan archivos que terminan en `.csv`. Necesita permiso para crear tab
 
 1. Arrástrela a la carpeta donde desea ubicarla
 
+Para mover una tabla al nivel superior del proyecto, arrástrela al espacio vacío debajo de la última fila. En los selectores de carpeta, `/` es el nivel superior del proyecto.
+
 ## Cambiar el nombre
 
 
@@ -188,6 +190,8 @@ Un paso que su rol no puede ver también aparece en la lista, para que sepa que 
 
 1. Haga clic con el botón derecho en la carpeta
 2. Seleccione Carpeta nueva
+
+Cuando la selección está dentro de una carpeta, el aviso para el nombre de la carpeta nueva también tiene **Crear en el nivel superior**. Márquela para colocar la carpeta nueva en el nivel superior del proyecto.
 
 
 ## Ver datos (Explorador de tablas)

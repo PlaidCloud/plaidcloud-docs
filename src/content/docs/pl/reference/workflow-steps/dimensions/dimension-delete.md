@@ -29,3 +29,7 @@ Przykład z użyciem zmiennej `current_month` do dynamicznego usunięcia wymiaru
 ### Użyj określonego wymiaru
 
 Użyj listy rozwijanej, aby wybrać konkretny wymiar do usunięcia.
+
+### Wymiary pasujące do wyszukiwania
+
+Z opcją **Wymiary pasujące do wyszukiwania** krok nie zostanie zapisany z pustym polem **Tekst wyszukiwania**, gdy **Ścieżka wyszukiwania** wskazuje najwyższy poziom projektu (`/`), ponieważ usunęłoby to każdy wymiar w projekcie. Wpisz tekst do dopasowania lub wybierz folder.

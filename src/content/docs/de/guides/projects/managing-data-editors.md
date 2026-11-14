@@ -142,6 +142,8 @@ So fügen Sie einem vorhandenen Ordner einen Ordner hinzu:
 1. Klicken Sie mit der rechten Maustaste auf den Ordner
 2. Wählen Sie „Neuer Ordner“
 
+Wenn die Auswahl in einem Ordner liegt, enthält die Eingabeaufforderung für den Namen des neuen Ordners außerdem **Auf oberster Ebene erstellen**. Aktivieren Sie das Kontrollkästchen, um den neuen Ordner stattdessen auf der obersten Ebene des Projekts anzulegen.
+
 
 ## Hierarchie für Ansichtsrollen markieren
 

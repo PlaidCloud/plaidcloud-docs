@@ -81,6 +81,8 @@ Only files ending in `.csv` are accepted. You need permission to create tables a
 
 1. Drag it into the folder where you wish it to be located
 
+To move a table to the top level of the project, drag it onto the empty space below the last row. In folder pickers, `/` is the top level of the project.
+
 ## Rename
 
 
@@ -187,6 +189,8 @@ A step your role can't see is still listed, so you know the table is in use, but
 
 1. Right-click on the folder
 2. Select New Folder
+
+When the selection is inside a folder, the prompt for the new folder's name also has **Create at the top level**. Tick it to put the new folder at the top level of the project instead.
 
 
 ## View Data (table Explorer)

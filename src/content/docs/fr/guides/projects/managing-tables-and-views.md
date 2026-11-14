@@ -82,6 +82,8 @@ Seuls les fichiers se terminant par `.csv` sont acceptés. Vous devez avoir l’
 
 1. Faites-la glisser dans le dossier où vous souhaitez la placer
 
+Pour déplacer une table au niveau supérieur du projet, faites-la glisser sur l’espace vide sous la dernière ligne. Dans les sélecteurs de dossier, `/` correspond au niveau supérieur du projet.
+
 ## Renommer
 
 
@@ -188,6 +190,8 @@ Une étape que votre rôle ne peut pas voir est tout de même listée, pour que 
 
 1. Faites un clic droit sur le dossier
 2. Sélectionnez Nouveau dossier
+
+Lorsque la sélection se trouve dans un dossier, l’invite pour le nom du nouveau dossier propose aussi **Créer au niveau supérieur**. Cochez-la pour placer le nouveau dossier au niveau supérieur du projet.
 
 
 ## Afficher les données (Explorateur de tables)
