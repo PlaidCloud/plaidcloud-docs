@@ -23,6 +23,8 @@ Como as dimensões representam estruturas de dados hierárquicas, o processo de 
 
  Um carregamento de aliases, propriedades ou valores verifica o membro de todas as linhas antes de escrever seja o que for. Se alguma linha indicar um membro que a dimensão não contém, o carregamento falha e comunica esses nomes, e nada desse carregamento é guardado. Carregue primeiro a estrutura, ou inclua nela os membros em falta, e só depois carregue os atributos.
 
+ Num projeto com Acesso a linhas, uma dimensão só é carregada a partir de uma tabela por quem consegue ler todas as linhas dessa tabela, como um Arquiteto do projeto ou uma execução de fluxo de trabalho. Consulte [Carregar dados para uma tabela restringida](/pt-pt/administration/access/managing-security-groups-and-assignments/#carregar-dados-para-uma-tabela-restringida).
+
  Consulte o passo de fluxo de trabalho [Dimension Load](/pt-pt/reference/workflow-steps/dimensions/dimension-load) para mais informações.
 
 

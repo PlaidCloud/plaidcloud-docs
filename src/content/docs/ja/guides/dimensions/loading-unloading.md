@@ -23,6 +23,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
  エイリアス、プロパティ、値の読み込みでは、何かを書き込む前にすべての行のメンバーを確認します。ディメンションに存在しないメンバーを指定している行が1つでもあると、読み込みは失敗してそれらの名前が報告され、その読み込みの内容は何も保存されません。先に構造を読み込むか、不足しているメンバーを構造に含めてから、属性を読み込んでください。
 
+ 行アクセスのあるプロジェクトでは、テーブルからディメンションを読み込めるのは、そのテーブルのすべての行を読み取れるユーザー（プロジェクトのアーキテクトやワークフローの実行など）に限られます。[制限されたテーブルへのデータの読み込み](/ja/administration/access/managing-security-groups-and-assignments/#制限されたテーブルへのデータの読み込み)を参照してください。
+
  詳細については、[Dimension Load](/ja/reference/workflow-steps/dimensions/dimension-load)ワークフローのステップをご覧ください。
 
 
