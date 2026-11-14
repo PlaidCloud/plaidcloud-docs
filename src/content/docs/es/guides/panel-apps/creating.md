@@ -10,7 +10,7 @@ Comience con Panel Studio. No necesita repositorio ni configuración: usted crea
 
 ## Creación de una aplicación Studio
 
-Abra **Aplicaciones** y abra el menú **Nueva aplicación**. Bajo el encabezado **Aplicación Panel**, **Studio** escribe y publica la aplicación en el editor de PlaidCloud con el diseño estándar y conserva el código por usted. También puede elegir **Nueva aplicación Studio** en la fila **Aplicaciones Studio** de la tarjeta **Aplicaciones y marca** de la pestaña **Inicio** de un proyecto, o [comenzar desde una tabla](#comenzar-desde-una-tabla).
+Abra **Aplicaciones** y abra el menú **Nueva aplicación**. Bajo el encabezado **App Panel**, **Studio** escribe y publica la aplicación en el editor de PlaidCloud con el diseño estándar y conserva el código por usted. También puede elegir **Nueva aplicación Studio** en la fila **Aplicaciones Studio** de la tarjeta **Aplicaciones y marca** de la pestaña **Inicio** de un proyecto, o [comenzar desde una tabla](#comenzar-desde-una-tabla).
 
 1. Elija **Nueva aplicación** > **Studio**.
 2. Introduzca un **Nombre**. El **Slug de la URL** se completa a partir de él.
@@ -43,7 +43,7 @@ Las aplicaciones Studio cubren la mayoría de los paneles de control y herramien
 
 - **Solo navegador**: su propio repositorio; la aplicación se ejecuta en el navegador de quien la visualiza.
 - **Basada en servidor**: su propio repositorio; la aplicación se ejecuta en un servidor de PlaidCloud, por ejemplo para reutilizar código existente o su propio proceso de compilación.
-- **Aplicación de Dash**: publique una aplicación de Plotly Dash. Consulte [Aplicaciones de Dash](/es/guides/dash-apps/).
+- **App Dash**: publique una aplicación de Plotly Dash. Consulte [Aplicaciones de Dash](/es/guides/dash-apps/).
 
 ## Creación de una aplicación de servidor
 

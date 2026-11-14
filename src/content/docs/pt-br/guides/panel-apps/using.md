@@ -1,6 +1,6 @@
 ---
 title: Como usar um aplicativo Panel
-description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs e as métricas de uso, edite e remova aplicativos HoloViz Panel publicados na tela Aplicações do PlaidCloud.
+description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs e as métricas de uso, edite e remova aplicativos HoloViz Panel publicados na tela Aplicativos do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md

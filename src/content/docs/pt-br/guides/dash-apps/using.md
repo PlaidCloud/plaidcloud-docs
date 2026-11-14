@@ -1,6 +1,6 @@
 ---
 title: Como usar um aplicativo Dash
-description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Aplicações do PlaidCloud.
+description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Aplicativos do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
