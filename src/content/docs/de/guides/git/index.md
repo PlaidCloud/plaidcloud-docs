@@ -46,7 +46,7 @@ Wenn Sie **Viewer** sind, nennt die Registerkarte **Git** bis zu drei Workspace-
 
 ## Git aus Apps und UDFs
 
-Das Fenster einer Panel- oder Dash-App enthält einen Abschnitt **Repository**, der ihr Repository, den Branch und den Build-Status anzeigt, mit **Edit in browser** und **Copy clone URL** für Mitglieder, die pushen dürfen. Panel-Studio-Apps und App-Runner-Apps auf der verwalteten PlaidCloud-Git-Verbindung sind Ordner im Repository `apps`, daher zeigt ihr Fenster dieses Repository an. Siehe [Wo Ihre App liegt](/de/guides/panel-apps/studio/#wo-ihre-app-liegt). Die Symbolleiste einer Git-basierten UDF enthält **Öffnen**, womit das Repository an seinem Branch in Git geöffnet wird, sowie **Edit in browser** für Administratoren.
+Das Fenster einer Panel- oder Dash-App enthält einen Abschnitt **Repository**, der ihr Repository, den Branch und den Build-Status anzeigt, mit **Edit in browser** und **Copy clone URL** für Mitglieder, die pushen dürfen. Panel-Studio-Apps und App-Runner-Apps auf der verwalteten PlaidCloud-Git-Verbindung sind Ordner im Repository `apps`, daher zeigt ihr Fenster dieses Repository an. Siehe [Wo Ihre App liegt](/de/guides/panel-apps/studio/#wo-ihre-app-gespeichert-ist). Die Symbolleiste einer Git-basierten UDF enthält **Öffnen**, womit das Repository an seinem Branch in Git geöffnet wird, sowie **Edit in browser** für Administratoren.
 
 ## Git-Zugriff gewähren
 

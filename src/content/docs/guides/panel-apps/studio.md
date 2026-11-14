@@ -10,9 +10,9 @@ Panel Studio is the editor for Panel apps inside PlaidCloud. It shows the app's 
 ## Open Panel Studio
 
 - On a project's **Home** board, choose **Open in Studio** on a Panel app.
-- In **My Panel Apps**, choose **Studio** on an app's row.
+- In **Apps**, choose **Studio** on an app's row.
 
-To start a new app, choose **New Studio App**. It is the first button in the **My Panel Apps** toolbar, and it is in the **Panel Apps** box on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
+To start a new app, choose **New app** > **Studio**. It is also in the **Studio apps** row of the **Apps & branding** card on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
 
 ## Create an App
 
@@ -125,7 +125,7 @@ Choose **Pin to Home** to add the app to the project's **Home** board, and **Unp
 
 ## Delete an App
 
-Deleting a Panel app asks you to confirm first. In **My Panel Apps**, use the **minus** icon on the app's row. Unpublishing also asks you to confirm.
+Deleting a Panel app asks you to confirm first. In **Apps**, use the **minus** icon on the app's row. Unpublishing also asks you to confirm.
 
 ## Next Steps
 

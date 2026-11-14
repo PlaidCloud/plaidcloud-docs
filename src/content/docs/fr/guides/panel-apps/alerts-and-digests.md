@@ -10,7 +10,7 @@ Une **alerte** surveille un chiffre issu des données d'une application Panel et
 
 ## Ouvrir les alertes et les résumés
 
-1. Dans **Mes applications Panel** ou sur le tableau **Accueil** d'un projet, choisissez **Open in Studio** sur l'application.
+1. Dans **Applications** ou sur le tableau **Accueil** d'un projet, choisissez **Open in Studio** sur l'application.
 2. Choisissez **Alerts & Digests**.
 
 La fenêtre comporte un onglet **Alertes** et un onglet **Digests**. L'application doit être affectée à un projet, et ses tables sont celles de ce projet.

@@ -1,11 +1,11 @@
 ---
 title: Using a Dash App
-description: Track build status, open, rebuild, lock, view logs, edit, and remove published Plotly Dash apps from the My Panel Apps screen in PlaidCloud.
+description: Track build status, open, rebuild, lock, view logs, edit, and remove published Plotly Dash apps from the Apps screen in PlaidCloud.
 sidebar:
   order: 3
 ---
 
-Dash apps appear in the same **My Panel Apps** screen as your WASM and server Panel apps, with **Dash** shown in the **Runtime** column and their own icon so they're easy to tell apart. Everything on this page mirrors [Using a Panel App](/guides/panel-apps/using/) for a server app, with one exception called out below: Dash apps don't yet get **Usage Metrics**.
+Dash apps appear in the same **Apps** screen as your WASM and server Panel apps, with **Dash** shown in the **Runtime** column and their own icon so they're easy to tell apart. Everything on this page mirrors [Using a Panel App](/guides/panel-apps/using/) for a server app, with one exception called out below: Dash apps don't yet get **Usage Metrics**.
 
 ## Build Status
 

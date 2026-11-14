@@ -1,12 +1,12 @@
 ---
 title: Eine Panel-App verwenden
-description: Verfolgen Sie den Build-Status veröffentlichter HoloViz-Panel-Apps, öffnen, erstellen Sie sie neu, sperren Sie sie, zeigen Sie ihre Protokolle und Nutzungskennzahlen an, bearbeiten und entfernen Sie sie auf dem Bildschirm Meine Panel-Apps in PlaidCloud.
+description: Verfolgen Sie den Build-Status veröffentlichter HoloViz-Panel-Apps, öffnen, erstellen Sie sie neu, sperren Sie sie, zeigen Sie ihre Protokolle und Nutzungskennzahlen an, bearbeiten und entfernen Sie sie auf dem Bildschirm Apps in PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Jede veröffentlichte App erscheint auf dem Bildschirm **Meine Panel-Apps** mit ihrer **Laufzeit**, ihrem **Status**, ihrem **Slug** und ihren Zeitstempeln. Die Spalte ganz links öffnet die App; mit den übrigen Zeilensymbolen sperren Sie die App gegen versehentliche Änderungen, bearbeiten oder entfernen sie und – bei Server-Apps – erstellen sie neu, zeigen ihre Protokolle an und rufen ihre Nutzungskennzahlen auf. Das Symbol zum Öffnen spiegelt die Laufzeit der App wider, sodass sich WASM- und Server-Apps auf einen Blick unterscheiden lassen.
+Jede veröffentlichte App erscheint auf dem Bildschirm **Apps** mit ihrer **Laufzeit**, ihrem **Status**, ihrem **Slug** und ihren Zeitstempeln. Die Spalte ganz links öffnet die App; mit den übrigen Zeilensymbolen sperren Sie die App gegen versehentliche Änderungen, bearbeiten oder entfernen sie und – bei Server-Apps – erstellen sie neu, zeigen ihre Protokolle an und rufen ihre Nutzungskennzahlen auf. Das Symbol zum Öffnen spiegelt die Laufzeit der App wider, sodass sich WASM- und Server-Apps auf einen Blick unterscheiden lassen.
 
 ## Build-Status (Server-Apps)
 
@@ -42,7 +42,7 @@ Die Sperre schützt vor Versehen – einer irrtümlichen Bearbeitung, einem unbe
 
 ## Eine App öffnen
 
-Klicken Sie am Anfang der Zeile einer bereiten App auf das Symbol **Öffnen**, um sie in einer neuen Registerkarte zu starten. **Öffnen** ist auch der erste Eintrag im Menü **⋯** der Zeile. Siehe [Das Zeilenaktionsmenü](/de/guides/dashboards/using-dashboards/#das-zeilenaktionsmenü).
+Klicken Sie am Anfang der Zeile einer bereiten App auf das Symbol **Öffnen**, um sie in einer neuen Registerkarte zu starten. **Öffnen** ist auch der erste Eintrag im Menü **⋯** der Zeile. Siehe [Das Zeilenaktionsmenü](/de/guides/dashboards/using-dashboards/#das-menü-mit-den-zeilenaktionen).
 
 - Eine Server-App wird unter `https://<your-tenant-host>/serve/<slug>/` bereitgestellt.
 - Das Symbol **Öffnen** erscheint erst, wenn eine Server-App **Bereit** ist.
@@ -53,7 +53,7 @@ Eine Server-App skaliert im Leerlauf auf null, um Ressourcen zu sparen, daher mu
 
 ### Erscheinungsbild
 
-Server-Panel-Apps verwenden standardmäßig das moderne **Fast**-Design von PlaidCloud, mit der Einstellung **Design** der App können Sie jedoch auf das **Standard**-Styling von Panel zurückwechseln, wenn vorhandenes CSS davon abhängt. Das Theme – hell, dunkel oder ein Hell/Dunkel-Umschalter, den Betrachter bedienen können – legen Sie in der Vorlage Ihrer App fest. Die Muster dazu finden Sie unter [Das Theme festlegen](/de/guides/panel-apps/creating/#das-design-festlegen-hell-dunkel-oder-umschalter) im Leitfaden zum Erstellen. Wenn die Tabellen oder das benutzerdefinierte Styling Ihrer App für einen hellen Hintergrund gebaut sind, lassen Sie sie fest auf hell eingestellt.
+Server-Panel-Apps verwenden standardmäßig das moderne **Fast**-Design von PlaidCloud, mit der Einstellung **Design** der App können Sie jedoch auf das **Standard**-Styling von Panel zurückwechseln, wenn vorhandenes CSS davon abhängt. Das Theme – hell, dunkel oder ein Hell/Dunkel-Umschalter, den Betrachter bedienen können – legen Sie in der Vorlage Ihrer App fest. Die Muster dazu finden Sie unter [Das Theme festlegen](/de/guides/panel-apps/creating/#das-design-festlegen-hell-dunkel-oder-umschaltbar) im Leitfaden zum Erstellen. Wenn die Tabellen oder das benutzerdefinierte Styling Ihrer App für einen hellen Hintergrund gebaut sind, lassen Sie sie fest auf hell eingestellt.
 
 ## Protokolle anzeigen (Server-Apps)
 

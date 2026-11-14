@@ -98,7 +98,7 @@ Não existe nenhum campo de URL do servidor, utilizador, palavra-passe nem SSL/S
 
 Agora, faça uma implementação Dash apontar para essa ligação.
 
-1. Abra **As minhas aplicações Panel** e clique em **Nova aplicação Dash**.
+1. Abra **Aplicações** e escolha **Novo app** > **App Dash**.
 2. Em **Definições do diretório**, defina um **Nome da aplicação** e um **Slug de URL** — o slug é o URL e o nome interno da aplicação, pelo que deve utilizar letras minúsculas, algarismos e hífenes, começar por uma letra e ter 40 carateres ou menos (por exemplo, `hello-dash`). Um **Memorando** opcional descreve a aplicação.
 3. Em **Ligação Git e monitor de publicação**:
    - **Ligação Git** — a ligação PlaidCloud Git que criou no passo 3.
@@ -110,7 +110,7 @@ Agora, faça uma implementação Dash apontar para essa ligação.
 
 ## 5. Abrir a aplicação — e ler os registos se não arrancar
 
-Depois de publicar, a aplicação é **compilada**: o PlaidCloud clona o ramo, instala o seu `requirements.txt` e cria uma imagem de contentor a partir da imagem `platform-dash-base`. O respetivo **Estado** é apresentado na lista **As minhas aplicações Panel** e é atualizado automaticamente.
+Depois de publicar, a aplicação é **compilada**: o PlaidCloud clona o ramo, instala o seu `requirements.txt` e cria uma imagem de contentor a partir da imagem `platform-dash-base`. O respetivo **Estado** é apresentado na lista **Aplicações** e é atualizado automaticamente.
 
 - Quando o Estado for **Pronta**, abra a aplicação em `https://<your-tenant-host>/serve/<slug>/`. O primeiro pedido depois de um período de inatividade põe-na a funcionar e apresenta, entretanto, um breve ecrã de carregamento do PlaidCloud.
 - Se a compilação falhar, abra a aplicação e consulte os registos de **Compilação** — uma dependência em falta ou um erro de importação aparecem aí. Consulte [Utilizar uma aplicação Dash](/pt-pt/guides/dash-apps/using/) para saber o que significa cada estado, como ler os registos e como desencadear uma nova compilação.

@@ -19,7 +19,7 @@ L'étape accède à TM1 **en direct dans le cloud** via son API REST : aucun age
 | Champ | Obligatoire | Remarques |
 |---|---|---|
 | Connexion TM1 | Oui | La [connexion TM1](/fr/guides/connections/tm1/) à utiliser pour la lecture. |
-| Environnement | Non | **Environnement du projet** (par défaut) utilise l'environnement de connexion du projet. **Environnement fixe** utilise toujours celui que vous choisissez. Voir [Fixer une étape à un environnement](/fr/guides/projects/managing-projects/#fixer-une-étape-à-un-environnement). |
+| Environnement | Non | **Environnement du projet** (par défaut) utilise l'environnement de connexion du projet. **Environnement fixe** utilise toujours celui que vous choisissez. Voir [Fixer une étape à un environnement](/fr/guides/projects/managing-projects/#fixer-une-étape-sur-un-seul-environnement). |
 | Database | Oui | La base de données TM1 (instance) à interroger. Par défaut, la Base de données par défaut de la connexion si elle est définie. |
 | Cube | Oui | Le cube TM1 à interroger. Détecté en direct depuis la base de données connectée, ou saisi à la main. |
 | Table cible | Oui | La table de projet dans laquelle le jeu de cellules renvoyé est enregistré. |

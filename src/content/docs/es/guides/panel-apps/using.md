@@ -1,12 +1,12 @@
 ---
 title: Uso de una aplicación Panel
-description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros y las métricas de uso, edite y quite aplicaciones de HoloViz Panel publicadas desde la pantalla Mis aplicaciones Panel de PlaidCloud.
+description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros y las métricas de uso, edite y quite aplicaciones de HoloViz Panel publicadas desde la pantalla Aplicaciones de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Cada aplicación publicada aparece en la pantalla **Mis aplicaciones Panel** con su **Tiempo de ejecución**, **Estado**, **Slug** y marcas de tiempo. La columna situada más a la izquierda abre la aplicación; los demás iconos de la fila le permiten bloquearla frente a cambios accidentales, editarla, quitarla y, en el caso de las aplicaciones de servidor, recompilarla, consultar sus registros y ver sus métricas de uso. El icono para abrir refleja el tiempo de ejecución de la aplicación, por lo que las aplicaciones WASM y las de servidor se distinguen fácilmente de un vistazo.
+Cada aplicación publicada aparece en la pantalla **Aplicaciones** con su **Tiempo de ejecución**, **Estado**, **Slug** y marcas de tiempo. La columna situada más a la izquierda abre la aplicación; los demás iconos de la fila le permiten bloquearla frente a cambios accidentales, editarla, quitarla y, en el caso de las aplicaciones de servidor, recompilarla, consultar sus registros y ver sus métricas de uso. El icono para abrir refleja el tiempo de ejecución de la aplicación, por lo que las aplicaciones WASM y las de servidor se distinguen fácilmente de un vistazo.
 
 ## Estado de compilación (aplicaciones de servidor)
 
@@ -53,7 +53,7 @@ Una aplicación de servidor escala a cero cuando está inactiva para ahorrar rec
 
 ### Apariencia
 
-Las aplicaciones Panel de servidor usan de forma predeterminada el diseño moderno **Fast** de PlaidCloud, pero la opción **Diseño** de la aplicación puede volver al estilo **Predeterminado** de Panel cuando el CSS existente depende de él. El tema (claro, oscuro o un conmutador claro/oscuro que los usuarios pueden cambiar) se define en la plantilla de la aplicación. Consulte [Establecer el tema](/es/guides/panel-apps/creating/#definir-el-tema-claro-oscuro-o-con-interruptor) en la guía de creación para ver los patrones. Si las tablas o el estilo personalizado de su aplicación están pensados para un fondo claro, manténgala fijada en el tema claro.
+Las aplicaciones Panel de servidor usan de forma predeterminada el diseño moderno **Fast** de PlaidCloud, pero la opción **Diseño** de la aplicación puede volver al estilo **Predeterminado** de Panel cuando el CSS existente depende de él. El tema (claro, oscuro o un conmutador claro/oscuro que los usuarios pueden cambiar) se define en la plantilla de la aplicación. Consulte [Establecer el tema](/es/guides/panel-apps/creating/#definir-el-tema-claro-oscuro-o-un-interruptor) en la guía de creación para ver los patrones. Si las tablas o el estilo personalizado de su aplicación están pensados para un fondo claro, manténgala fijada en el tema claro.
 
 ## Consultar los registros (aplicaciones de servidor)
 

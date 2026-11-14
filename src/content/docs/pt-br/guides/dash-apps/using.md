@@ -1,12 +1,12 @@
 ---
 title: Como usar um aplicativo Dash
-description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Meus aplicativos Panel do PlaidCloud.
+description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Aplicativos do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Os aplicativos Dash aparecem na mesma tela **Meus aplicativos Panel** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
+Os aplicativos Dash aparecem na mesma tela **Aplicativos** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
 
 ## Status da compilação
 

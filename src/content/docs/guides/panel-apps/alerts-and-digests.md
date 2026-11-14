@@ -9,7 +9,7 @@ An **alert** watches one number from a Panel app's data and tells you the moment
 
 ## Open Alerts and Digests
 
-1. In **My Panel Apps** or a project's **Home** board, choose **Open in Studio** on the app.
+1. In **Apps** or a project's **Home** board, choose **Open in Studio** on the app.
 2. Choose **Alerts & Digests**.
 
 The window has an **Alerts** tab and a **Digests** tab. The app must be assigned to a project, and its tables are the ones in that project.

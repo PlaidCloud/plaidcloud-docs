@@ -1,12 +1,12 @@
 ---
 title: Korzystanie z aplikacji Dash
-description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki, edytuj i usuwaj opublikowane aplikacje Plotly Dash na ekranie Moje aplikacje Panel w PlaidCloud.
+description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki, edytuj i usuwaj opublikowane aplikacje Plotly Dash na ekranie Aplikacje w PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Aplikacje Dash są widoczne na tym samym ekranie **Moje aplikacje Panel** co aplikacje Panel WASM i serwerowe — w kolumnie **Środowisko uruchomieniowe** mają wartość **Dash** i własną ikonę, dzięki czemu łatwo je odróżnić. Wszystko, co opisano na tej stronie, odpowiada stronie [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/) w przypadku aplikacji serwerowej, z jednym wyjątkiem wskazanym poniżej: aplikacje Dash nie mają jeszcze funkcji **Usage Metrics**.
+Aplikacje Dash są widoczne na tym samym ekranie **Aplikacje** co aplikacje Panel WASM i serwerowe — w kolumnie **Środowisko uruchomieniowe** mają wartość **Dash** i własną ikonę, dzięki czemu łatwo je odróżnić. Wszystko, co opisano na tej stronie, odpowiada stronie [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/) w przypadku aplikacji serwerowej, z jednym wyjątkiem wskazanym poniżej: aplikacje Dash nie mają jeszcze funkcji **Usage Metrics**.
 
 ## Stan budowania
 

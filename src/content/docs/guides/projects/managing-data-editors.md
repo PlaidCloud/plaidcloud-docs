@@ -84,9 +84,9 @@ PlaidCloud adds a configured column for each column in the source table. It keep
 To search for data editors:
 
 
-1. Use the filter box in the lower left of the control hierarchy
+1. Use **Filter** at the bottom of the list, beside the row count (press **/** or Ctrl/Cmd+F to jump to it)
 
-The search filter will search data editors’ names and labels for matches and show the results in the control hierarchy above.
+The search filter will search data editors’ names and labels for matches and show the results in the hierarchy.
 
 
 

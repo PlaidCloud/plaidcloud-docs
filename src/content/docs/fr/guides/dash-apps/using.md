@@ -1,12 +1,12 @@
 ---
 title: Utiliser une application Dash
-description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux, modifiez et supprimez les applications Plotly Dash publiées depuis l'écran Mes applications Panel de PlaidCloud.
+description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux, modifiez et supprimez les applications Plotly Dash publiées depuis l'écran Applications de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Les applications Dash apparaissent dans le même écran **Mes applications Panel** que vos applications Panel WASM et serveur, avec **Dash** indiqué dans la colonne **Exécution** et leur propre icône pour les distinguer facilement. Tout ce qui figure sur cette page reprend [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour une application serveur, à une exception près signalée plus bas : les applications Dash n'ont pas encore de **Usage Metrics**.
+Les applications Dash apparaissent dans le même écran **Applications** que vos applications Panel WASM et serveur, avec **Dash** indiqué dans la colonne **Exécution** et leur propre icône pour les distinguer facilement. Tout ce qui figure sur cette page reprend [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour une application serveur, à une exception près signalée plus bas : les applications Dash n'ont pas encore de **Usage Metrics**.
 
 ## Statut de génération
 

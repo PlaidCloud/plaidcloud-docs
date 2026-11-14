@@ -1,12 +1,12 @@
 ---
 title: Eine Dash-App verwenden
-description: Verfolgen Sie den Build-Status veröffentlichter Plotly-Dash-Apps und öffnen, erstellen neu, sperren, protokollieren, bearbeiten und entfernen Sie sie auf dem Bildschirm „Meine Panel-Apps“ in PlaidCloud.
+description: Verfolgen Sie den Build-Status veröffentlichter Plotly-Dash-Apps und öffnen, erstellen neu, sperren, protokollieren, bearbeiten und entfernen Sie sie auf dem Bildschirm „Apps“ in PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Dash-Apps erscheinen auf demselben Bildschirm **Meine Panel-Apps** wie Ihre WASM- und Server-Panel-Apps, mit **Dash** in der Spalte **Laufzeit** und einem eigenen Symbol, damit sie leicht zu unterscheiden sind. Alles auf dieser Seite entspricht [Eine Panel-App verwenden](/de/guides/panel-apps/using/) für eine Server-App, mit einer unten erläuterten Ausnahme: Dash-Apps haben noch keine **Usage Metrics**.
+Dash-Apps erscheinen auf demselben Bildschirm **Apps** wie Ihre WASM- und Server-Panel-Apps, mit **Dash** in der Spalte **Laufzeit** und einem eigenen Symbol, damit sie leicht zu unterscheiden sind. Alles auf dieser Seite entspricht [Eine Panel-App verwenden](/de/guides/panel-apps/using/) für eine Server-App, mit einer unten erläuterten Ausnahme: Dash-Apps haben noch keine **Usage Metrics**.
 
 ## Build-Status
 

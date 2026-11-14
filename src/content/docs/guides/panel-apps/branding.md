@@ -57,13 +57,13 @@ An app published with a project reads that project's tables by default, so `tabl
 
 ### For Existing Apps
 
-1. Open **My Panel Apps**.
+1. Open **Apps**.
 2. Click the **Assign** icon on the row of the app you want to move.
 3. Choose the **Project** and click **Review**.
 4. Read the result. It lists the workspace members who can open the app today but are not members of the project.
 5. Click **Assign**.
 
-Review changes nothing. The **Project** column in **My Panel Apps** shows each app's project.
+Review changes nothing. The **Project** column in **Apps** shows each app's project.
 
 ### Access
 

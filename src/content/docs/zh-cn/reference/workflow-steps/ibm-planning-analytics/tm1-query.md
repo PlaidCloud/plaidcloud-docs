@@ -19,7 +19,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | 字段 | 必填 | 备注 |
 |---|---|---|
 | TM1 连接 | 是 | 用于读取的 [TM1 连接](/zh-cn/guides/connections/tm1/)。 |
-| 环境 | 否 | **项目环境**（默认）使用项目的连接环境。**固定环境**始终使用您选择的环境。请参阅[将步骤固定到单一环境](/zh-cn/guides/projects/managing-projects/#将步骤固定到单一环境)。 |
+| 环境 | 否 | **项目环境**（默认）使用项目的连接环境。**固定环境**始终使用您选择的环境。请参阅[将步骤固定到单一环境](/zh-cn/guides/projects/managing-projects/#将步骤固定到某一环境)。 |
 | 数据库 | 是 | 要查询的 TM1 数据库（实例）。如果设置了连接的默认数据库，则默认使用它。 |
 | 多维数据集 | 是 | 要查询的 TM1 多维数据集。从已连接的数据库实时发现，或手动输入。 |
 | 目标表 | 是 | 返回的单元集写入的项目表。 |

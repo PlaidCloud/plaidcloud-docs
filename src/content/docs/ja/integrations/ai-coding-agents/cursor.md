@@ -1,24 +1,24 @@
 ---
 title: Cursor
-description: Cursor IDEを設定して、組み込みのMCPサポートを通じてPlaidCloudのMCPツールを呼び出します。
+description: Cursor IDE を、組み込みの MCP サポートを通じて PlaidCloud の MCP ツールを呼び出すように構成します。
 sidebar:
   order: 4
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/cursor.md
 ---
 
-[Cursor](https://cursor.com)は、`mcp.json`設定ファイルを通じてMCPサーバーをサポートしています。形式はClaude Codeの`.mcp.json`と同じなので、同じベアラートークンのスニペットがどちらでも機能します。
+[Cursor](https://cursor.com) は、`mcp.json` 構成ファイルを通じて MCP サーバーをサポートしています。形式は Claude Code の `.mcp.json` と同じなので、同じベアラートークンのスニペットがどちらでも動作します。
 
-PlaidCloudのヘッダーツールバーにある**AIを接続**ウィンドウには、OAuthサインインを通じてサーバーを追加するワンクリックのリンク**Cursorにインストール**があり、設定ファイルは不要です。まずはこちらを試してください。以下のベアラートークンの設定は、このページで詳しく説明するセットアップであり、ワンクリックのリンクでサーバーが追加されない場合やCursorがインストールされていない場合のフォールバックです。
+PlaidCloud のアバター（ユーザー）メニューから開く **AIを接続**ウィンドウには、OAuth サインインでサーバーを追加するワンクリックリンク **Cursorにインストール**があり、構成ファイルは必要ありません。まずこちらをお試しください。以下のベアラートークンによる構成は、このページで詳しく説明しているセットアップ方法であり、ワンクリックリンクでサーバーが追加されない場合や、Cursor がインストールされていない場合の代替手段です。
 
 ## セットアップ
 
-1. PlaidCloudにサインインしているブラウザーで`https://<your-workspace>.plaid.cloud/mcp/setup/token`にアクセスして、ベアラートークンを取得します。
+1. PlaidCloud にサインインしているブラウザーで `https://<your-workspace>.plaid.cloud/mcp/setup/token` にアクセスし、ベアラートークンを取得します。
 
-2. CursorのMCP設定を開きます。
-   - **プロジェクト単位**：プロジェクトのルートに`.cursor/mcp.json`を作成します。
-   - **ユーザー単位（すべてのプロジェクト）**：ホームディレクトリに`~/.cursor/mcp.json`を作成します。
+2. Cursor の MCP 構成を開きます。
+   - **プロジェクトスコープ**: プロジェクトのルートに `.cursor/mcp.json` を作成します。
+   - **ユーザースコープ（すべてのプロジェクト）**: ホームディレクトリに `~/.cursor/mcp.json` を作成します。
 
-3. PlaidCloudサーバーを追加します。
+3. PlaidCloud サーバーを追加します。
 
     ```json
     {
@@ -33,19 +33,19 @@ PlaidCloudのヘッダーツールバーにある**AIを接続**ウィンドウ�
     }
     ```
 
-4. Cursorの**Settings → MCP**を開いて、サーバーが接続されていることを確認します。エラーが表示された場合は、[トラブルシューティング](../troubleshooting/)を参照してください。
+4. Cursor の **設定 → MCP** を開き、サーバーが接続されていることを確認します。エラーが表示された場合は、[トラブルシューティング](../troubleshooting/)を参照してください。
 
 ## ツールの使用
 
-CursorのComposerまたはチャットパネルで、エージェントに普通の言葉で依頼できます（「プロジェクト`Q4 Forecast`の構造を説明してください」など）。適切な`plaidcloud_*`ツールが選択されます。ツールの呼び出しと応答はインラインで表示されます。変更を伴う操作は、承認する前に確認してください。
+Cursor の Composer またはチャットパネルでは、エージェントに平易な日本語で指示できます（「プロジェクト `Q4 Forecast` の構造を説明して」など）。エージェントは適切な `plaidcloud_*` ツールを選びます。ツールの呼び出しと応答はインラインで表示されます。変更を伴う操作は、承認する前に確認してください。
 
 ## トークンの更新
 
-トークンの有効期限が切れたら、`https://<your-workspace>.plaid.cloud/mcp/setup/token`を再読み込みして、新しい値を`mcp.json`に貼り付けます。Cursorは完全に再起動しなくても変更を取り込みます。必要に応じて、**Settings → MCP**でサーバーのオンとオフを切り替えてください。
+トークンの有効期限が切れたら、`https://<your-workspace>.plaid.cloud/mcp/setup/token` を再読み込みして、新しい値を `mcp.json` に貼り付けます。Cursor は、完全に再起動しなくても変更を反映します。必要に応じて、**設定 → MCP** でサーバーをオフ、オンに切り替えてください。
 
 ## 複数のテナント
 
-別の名前で同じエントリを繰り返します。
+別の名前でエントリを繰り返します。
 
 ```json
 {

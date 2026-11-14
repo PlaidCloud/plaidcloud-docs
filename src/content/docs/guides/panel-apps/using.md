@@ -1,11 +1,11 @@
 ---
 title: Using a Panel App
-description: Track build status, open, rebuild, lock, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
+description: Track build status, open, rebuild, lock, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the Apps screen in PlaidCloud.
 sidebar:
   order: 3
 ---
 
-Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you lock it against accidental changes, edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
+Every published app appears on the **Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you lock it against accidental changes, edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
 
 ## Build Status (Server Apps)
 

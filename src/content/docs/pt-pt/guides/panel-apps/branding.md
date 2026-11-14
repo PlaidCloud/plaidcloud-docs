@@ -58,13 +58,13 @@ Uma aplicação publicada com um projeto lê por predefinição as tabelas desse
 
 ### Para aplicações existentes
 
-1. Abra **As minhas aplicações Panel**.
+1. Abra **Aplicações**.
 2. Clique no ícone **Atribuir** na linha da aplicação que pretende mover.
 3. Escolha o **Projeto** e clique em **Rever**.
 4. Leia o resultado. Lista os membros da área de trabalho que podem abrir hoje a aplicação mas não são membros do projeto.
 5. Clique em **Atribuir**.
 
-Rever não altera nada. A coluna **Projeto** em **As minhas aplicações Panel** mostra o projeto de cada aplicação.
+Rever não altera nada. A coluna **Projeto** em **Aplicações** mostra o projeto de cada aplicação.
 
 ### Acesso
 
