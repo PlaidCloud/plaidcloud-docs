@@ -11,8 +11,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 PlaidCloud konvertiert KNIME-Workflows (`.knwf`) und Workflow-Gruppen (`.knar`)
 in native erweiterte Workflows. Der Importer ordnet jeden KNIME-Node einem
 Workflow-Schritt, einer Projektvariablen oder einem Arbeitsflächenobjekt zu und
-löst Metanodes und Komponenten auf, sodass ein konvertierter Workflow
-Cloud-nativ ausgeführt wird.
+führt die Nodes in Metanodes und Komponenten als gewöhnliche Schritte aus, wobei
+jeder Metanode und jede Komponente, die Schritte enthält, als eingeklappte Gruppe erhalten bleibt, sodass
+ein konvertierter Workflow Cloud-nativ ausgeführt wird.
 
 98,5 % der KNIME-Node-Konfigurationen werden vollständig konvertiert, und 205 der 207 Kern-Node-Typen
 sind vollständig unterstützt. Wie Sie eine Konvertierung durchführen, lesen Sie unter

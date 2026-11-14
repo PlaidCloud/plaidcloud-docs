@@ -15,6 +15,8 @@ A conversão é um passo único. Converter novamente o mesmo projeto cria novos 
 ## O que o PlaidCloud cria
 
 - Cada gem do Prophecy torna-se o passo de fluxo de trabalho correspondente, com as relações a montante e a jusante preservadas.
+- Um Subgraph definido dentro do pipeline passa a ser um grupo que contém os passos dos seus gems. Um Subgraph aninhado noutro passa a ser um grupo próprio, com o nome do seu caminho, como "Exterior › Interior". Um Subgraph partilhado a que o pipeline se refere por ID chega sem grupo.
+- O fluxo de trabalho abre já arrumado: os passos ficam dispostos de forma limpa e os grupos da origem são mantidos. Isto acontece na primeira vez que alguém com acesso de edição o abre. Depois disso, a sua própria disposição é guardada e nunca é reorganizada. Se o fluxo de trabalho ou o projeto estiver bloqueado, vê a disposição arrumada, mas esta não é guardada.
 - Os parâmetros do Prophecy tornam-se variáveis de projeto, e as referências a eles nas definições dos gems são reescritas para a sintaxe de variáveis do PlaidCloud. Pode substituir os valores dos parâmetros na conversão.
 - Cada conjunto de dados que um gem lê torna-se um passo de importação, ou lê uma tabela ou um documento existente, consoante a forma como o associar.
 - Cada tarefa do Prophecy ou agendamento de pipeline SQL torna-se um [evento agendado](/pt-pt/administration/scheduled-events/) no fluxo de trabalho convertido, ativado se estiver ativado no Prophecy. Consulte [Agendamentos](#serviços-e-controlo).

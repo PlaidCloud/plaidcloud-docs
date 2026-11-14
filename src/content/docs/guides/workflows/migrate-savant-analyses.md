@@ -13,7 +13,8 @@ Conversion reads the export file you point it at and the headers of the files yo
 
 - Each Savant agent becomes the matching workflow step, with upstream and downstream relationships preserved. The [Savant Conversion Matrix](/reference/savant-conversion-matrix/) lists every agent and its mapping tier.
 - Savant analysis parameters become project variables, and references to them inside agent settings are rewritten to the PlaidCloud variable syntax.
-- Notes and groups arrive on the canvas as notes and groups.
+- Notes and groups arrive on the canvas as notes and groups. A group takes its name from the largest text inside it, or keeps its own name. A group nested inside another becomes a group of its own, named by its path, such as "Outer › Inner".
+- The workflow opens already tidied: steps are laid out cleanly, groups from the source are kept, and notes are moved to just above the flow, keeping their arrangement. This happens the first time someone with edit access opens it. After that, your own layout is saved and never rearranged. If the workflow or project is locked, you see the tidied layout but it isn't saved.
 - Each source becomes an import step, or reads an existing table, depending on how you bind it.
 - Every Savant agent type converts in full: each option has a mapping. A configuration Savant itself fails on or doesn't document arrives as a named placeholder step. See [Placeholders for Unconverted Configurations](#placeholders-for-unconverted-configurations).
 

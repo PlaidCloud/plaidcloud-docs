@@ -14,7 +14,8 @@ A conversão lê o ficheiro de exportação que indicar e os cabeçalhos dos fic
 
 - Cada agente do Savant torna-se o passo de fluxo de trabalho correspondente, com as relações a montante e a jusante preservadas. A [matriz de conversão do Savant](/pt-pt/reference/savant-conversion-matrix/) lista todos os agentes e o respetivo escalão de mapeamento.
 - Os parâmetros de análise do Savant tornam-se variáveis de projeto, e as referências a eles nas definições dos agentes são reescritas para a sintaxe de variáveis do PlaidCloud.
-- As notas e os grupos chegam à área de desenho como notas e grupos.
+- As notas e os grupos chegam à área de desenho como notas e grupos. Um grupo recebe o nome do maior texto no seu interior, ou mantém o seu próprio nome. Um grupo aninhado noutro passa a ser um grupo próprio, com o nome do seu caminho, como "Exterior › Interior".
+- O fluxo de trabalho abre já arrumado: os passos ficam dispostos de forma limpa, os grupos da origem são mantidos e as notas são movidas para logo acima do fluxo, mantendo a sua disposição. Isto acontece na primeira vez que alguém com acesso de edição o abre. Depois disso, a sua própria disposição é guardada e nunca é reorganizada. Se o fluxo de trabalho ou o projeto estiver bloqueado, vê a disposição arrumada, mas esta não é guardada.
 - Cada origem torna-se um passo de importação, ou lê uma tabela existente, consoante a forma como a associar.
 - Todos os tipos de agente do Savant são totalmente convertidos: cada opção tem um mapeamento. Uma configuração em que o próprio Savant falha, ou que não documenta, chega como um passo de marcador de posição com nome. Consulte [Marcadores de posição para configurações não convertidas](#marcadores-de-posição-para-configurações-não-convertidas).
 

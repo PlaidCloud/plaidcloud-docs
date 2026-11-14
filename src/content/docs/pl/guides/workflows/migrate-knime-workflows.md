@@ -15,7 +15,9 @@ Konwersja to czynność jednorazowa. Ponowna konwersja tego samego archiwum twor
 ## Co tworzy PlaidCloud
 
 - Jeden zaawansowany przepływ pracy dla każdego przepływu pracy KNIME. Plik `.knwf` daje jeden przepływ pracy, a plik `.knar` daje po jednym dla każdego przepływu pracy w grupie.
-- Każdy węzeł KNIME staje się odpowiednim krokiem przepływu pracy, zmienną projektu lub obiektem na kanwie, z zachowaniem zależności między elementami poprzedzającymi i następującymi. Metawęzły i komponenty są spłaszczane do przepływu pracy, więc ich węzły działają jako zwykłe kroki.
+- Każdy węzeł KNIME staje się odpowiednim krokiem przepływu pracy, zmienną projektu lub obiektem na kanwie, z zachowaniem zależności między elementami poprzedzającymi i następującymi. Metawęzły i komponenty, które zawierają kroki, trafiają jako zwinięte grupy, a ich węzły działają jako zwykłe kroki. Metawęzeł lub komponent zagnieżdżony w innym staje się osobną grupą, nazwaną według swojej ścieżki, na przykład „Zewnętrzny › Wewnętrzny”.
+- Adnotacje na najwyższym poziomie przepływu pracy stają się notatkami na kanwie.
+- Przepływ pracy otwiera się już uporządkowany: kroki są przejrzyście rozmieszczone, grupy ze źródła zachowane, a notatki przeniesione tuż nad przepływ, z zachowaniem ich układu. Dzieje się to przy pierwszym otwarciu przez osobę z uprawnieniami do edycji. Potem Twój własny układ jest zapisywany i nigdy nie jest przestawiany. Jeśli przepływ pracy lub projekt jest zablokowany, widzisz uporządkowany układ, ale nie jest on zapisywany.
 - Zmienne przepływu oraz węzły Configuration i Widget stają się zmiennymi projektu z wartościami domyślnymi. Przełączniki i pętle, których wartości są znane w chwili konwersji, są przycinane i rozwijane do kroków, które uruchamiają.
 - Języki wyrażeń KNIME — Expression, String Manipulation, Math Formula, Column Expressions i Rule Engine — konwertują się na wyrażenia PlaidCloud.
 - Pliki danych dostarczone w archiwum są przesyłane do folderu `knime/` w domyślnym koncie dokumentów projektu, po jednym folderze na przepływ pracy, a skonwertowane czytniki importują je stamtąd.

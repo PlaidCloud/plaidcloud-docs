@@ -10,8 +10,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 O PlaidCloud converte fluxos de trabalho do KNIME (`.knwf`) e grupos de fluxos de trabalho (`.knar`)
 em fluxos de trabalho avançados nativos. O importador mapeia cada nó do KNIME para um
-passo de fluxo de trabalho, uma variável de projeto ou um objeto da área de desenho, e aplana os metanós e
-os componentes, pelo que um fluxo de trabalho convertido é executado de forma nativa na nuvem.
+passo de fluxo de trabalho, uma variável de projeto ou um objeto da área de desenho, e executa os nós dentro de
+metanós e componentes como passos normais, mantendo cada metanó e componente que contém passos como um grupo
+recolhido, pelo que um fluxo de trabalho convertido é executado de forma nativa na nuvem.
 
 98,5 % das configurações de nós do KNIME são convertidas por completo, e 205 dos 207 tipos de nós
 principais têm o estado Completo. Para executar uma conversão, consulte
