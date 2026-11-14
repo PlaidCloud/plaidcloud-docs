@@ -33,6 +33,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `{project_name}` | プロジェクトの名前 |
 | `{run_url}` | PlaidCloud の実行へのリンク |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | 既存の変数 |
+| `{date_iso}` | 現在の UTC 時刻を ISO 8601 形式で表したもの。たとえば `2026-11-12T22:49:56+00:00` のようになります。`{date}` は長い形式で、たとえば `Wednesday, 11 November 2026 10:30PM UTC +0` のようになります。 |
 
 メッセージの下のカウンターには、`PlaidCloud [workspace]:` プレフィックスと実行リンクを含め、テキストメッセージが使用するおおよその文字数とセグメント数が表示されます。3 セグメントを超えるテキストメッセージは切り詰められます。一般公開されているリンク短縮サービスのリンクは拒否されます。
 

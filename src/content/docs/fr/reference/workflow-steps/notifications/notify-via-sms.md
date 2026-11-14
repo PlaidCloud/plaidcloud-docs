@@ -33,6 +33,7 @@ Rédigez le **Message**. Les variables du projet et les variables du workflow fo
 | `{project_name}` | Le nom du projet |
 | `{run_url}` | Un lien vers l'exécution dans PlaidCloud |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | Les variables existantes |
+| `{date_iso}` | L'heure UTC actuelle au format ISO 8601, par exemple `2026-11-12T22:49:56+00:00`. `{date}` en est la forme longue, par exemple `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 
 Le compteur sous le message indique approximativement le nombre de caractères et de segments que représente le SMS, préfixe `PlaidCloud [workspace]:` et lien d'exécution compris. Un SMS est tronqué au-delà de 3 segments. Les liens issus de raccourcisseurs de liens publics sont rejetés.
 

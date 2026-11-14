@@ -41,7 +41,7 @@ Estes passos têm de ser concluídos na Google Cloud Console para criar uma cont
 ### Partilhar o conteúdo do Drive com a conta de serviço
 
 1. Copie o endereço de correio eletrónico da conta de serviço (p. ex. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. No Google Drive, partilhe com este endereço de correio eletrónico a(s) pasta(s) a que pretende que o PlaidCloud aceda, concedendo acesso **Editor**
+2. No Google Drive, partilhe com este endereço de correio eletrónico a(s) pasta(s) a que pretende que o PlaidCloud aceda, concedendo acesso **Editor**. Para utilizar uma Drive partilhada, adicione antes a conta de serviço como membro da mesma.
 
 Neste momento, deverá ter tudo o que precisa para adicionar a sua conta Google Drive ao Document do PlaidCloud.
 
@@ -58,3 +58,13 @@ Neste momento, deverá ter tudo o que precisa para adicionar a sua conta Google 
 8. Selecione um **Modelo de segurança** adequado ao seu caso de utilização. Se tiver dúvidas, deixe `Private`.
 9. Cole todo o conteúdo do ficheiro de chave JSON no campo JSON de credenciais OAuth2, em Credenciais de autenticação
 10. Selecione o botão Guardar e a sua nova conta de documentos fica ativa
+
+## Utilizar a conta em fluxos de trabalho
+
+Uma conta Google Drive funciona em fluxos de trabalho, bem como no navegador do Document. Os passos podem listar, importar, exportar, copiar, mover, mudar o nome e eliminar ficheiros e criar pastas.
+
+- **Localizações.** As localizações de nível superior da conta são as pastas partilhadas com a conta de serviço e as Drives partilhadas de que esta é membro. Os caminhos são nomes de pastas, como `Finance/Reports/2026`. Se duas pastas partilhadas ou Drives partilhadas tiverem o mesmo nome, a conta recusa-se a abrir esse nome. Mude o nome ou anule a partilha de todas, exceto uma.
+- **Google Sheets.** Uma Google Sheet é lida como uma exportação `.xlsx` e aparece como `Name.xlsx`. Os outros ficheiros do Google Workspace, como Docs e Slides, não podem ser lidos.
+- **Novos ficheiros em My Drive.** Uma conta de serviço não tem armazenamento próprio, pelo que, numa pasta que se encontra no My Drive pessoal de alguém, pode substituir um ficheiro existente, mas não pode criar um novo. Crie primeiro o ficheiro nessa pasta ou utilize uma pasta numa Drive partilhada, que aceita novos ficheiros e pastas.
+- **Pastas inexistentes.** Uma pasta que não existe é listada como vazia, em vez de provocar um erro.
+- **Limitação de pedidos.** O PlaidCloud tenta novamente de forma automática quando a Google limita um pedido ou devolve um erro temporário.
