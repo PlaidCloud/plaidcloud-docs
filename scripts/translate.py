@@ -14,11 +14,18 @@ Commands:
     submit [--locales ...] [--paths GLOB ...] [--limit N]
                              create batch(es) for the stale pairs; records i18n/batches/<id>.json
     collect <batch_id>       poll until the batch ends, post-process, validate, write translations
-    check                    re-validate every translated file against its English source
+    check [--changed-since REF]
+                             re-validate every translated file against its English source; with a ref, also fail
+                             a changed locale file that gained mojibake, CJK bold-punctuation or untranslated catalog
+                             labels, or that rewrote most of the blocks whose English did not change
     check-anchors [--dist]   verify every internal …#anchor link in the built site hits an id
     prepare [--locales ...] [--paths ...] [--force-paths ...] [--chunk-words N]
-                             write worker chunks + per-locale prompts to i18n/jobs/ (see i18n/jobs/WORKER.md)
-    ingest [--locales ...]   post-process + validate worker output from i18n/staging/, install valid files
+                             rebuild the glossary (when $PLAIDCLIENT is a checkout), then write worker chunks +
+                             per-locale prompts to i18n/jobs/ (see i18n/jobs/WORKER.md). A page that already has a
+                             translation gets a delta job (edit the installed file where the English changed);
+                             new pages, --force-paths and unrecoverable old English get a full job
+    ingest [--locales ...]   post-process + validate worker output from i18n/staging/, install valid files; a delta
+                             result that changed a block whose English did not change is rejected
 
 Terminology: i18n/termbase/<locale>.json (curated concepts, whole list in every prompt) and the PlaidClient UI
 glossary with docs-side fixes from i18n/glossary_overrides/<locale>.json (null drops an entry). Catalog defects
@@ -42,8 +49,10 @@ import functools
 import hashlib
 import html
 import json
+import os
 import posixpath
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -63,7 +72,7 @@ GLOSSARY_DIR = I18N / "glossary"
 OVERRIDES_DIR = I18N / "glossary_overrides"
 TERMBASE_DIR = I18N / "termbase"
 BATCH_DIR = I18N / "batches"
-PLAIDCLIENT = Path.home() / "Projects/PlaidClient"
+PLAIDCLIENT = Path(os.environ.get("PLAIDCLIENT", Path.home() / "Projects/PlaidClient"))
 
 MODEL = "claude-opus-5-5"
 EFFORT = "low"
@@ -199,6 +208,24 @@ def stale_pairs(locales, keys):
     manifest = load_json(MANIFEST, {})
     hashes = {k: sha(src_path(k).read_text()) for k in keys}
     return [(lc, k, hashes[k]) for lc in locales for k in keys if manifest.get(mkey(lc, k)) != hashes[k]]
+
+
+def git(*args):
+    """stdout of a git command run in the repo, or None when it fails."""
+    r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+@functools.lru_cache(maxsize=None)
+def english_at(key, h):
+    """The English text of a unit whose sha256 is h (the manifest records only the hash), found by walking the
+    unit's git history; None when no recent commit has it."""
+    path = src_path(key).relative_to(ROOT).as_posix()
+    for c in (git("log", "--format=%H", "-n", "200", "--", path) or "").split():
+        text = git("show", f"{c}:{path}")
+        if text is not None and sha(text) == h:
+            return text
+    return None
 
 
 def prune_deleted():
@@ -907,10 +934,91 @@ def fix_bold_flanking(text):
     return text if fm is None else f"---\n{fm}\n---\n{fixed}"
 
 
+def postprocess(lc, key, src, raw):
+    return set_edit_url(localize_links(fix_bold_flanking(quote_frontmatter(clean_output(src, raw))), lc), key)
+
+
 def finalize(lc, key, src, raw):
     """Post-process a raw translation exactly as collect/ingest write it; returns (text, rejection reasons)."""
-    text = set_edit_url(localize_links(fix_bold_flanking(quote_frontmatter(clean_output(src, raw))), lc), key)
+    text = postprocess(lc, key, src, raw)
     return text, validate(key, src, text) + wrong_language(lc, text)
+
+
+# ---------------------------------------------------------------- delta guard + locale corruption
+#
+# A block starts at every heading, list item, table row, admonition marker and code fence: the lines whose counts
+# validate() holds equal to the English, so a valid translation has exactly its English's blocks, in order, and
+# block i of one lines up with block i of the other. Paragraph text belongs to the block above it, so the guard is
+# only as fine as one heading/list item/row plus its following prose, and blank-line or line-wrap differences are
+# invisible to it. Edge cases the validator counts differently (a list marker inside multi-line inline code) give
+# unequal block counts; the guard then cannot align the page and stays silent rather than guess.
+BLOCK_START_RE = re.compile(r"^(?:#{1,6}[ \t]|[ \t>]*(?:[-*+]|\d+[.)])[ \t]+|[ \t>]*\||[ \t>]*:::)")
+
+
+def blocks(text):
+    """[frontmatter, body text before the first block start, block, ...], trailing whitespace normalized."""
+    fm, body = split_frontmatter(text)
+    lines, i = [], 0
+    for m in FENCE_RE.finditer(body):
+        lines += body[i:m.start()].splitlines() + [m.group(0)]
+        i = m.end()
+    lines += body[i:].splitlines()
+    out = [[]]
+    for line in lines:
+        if "\n" in line or BLOCK_START_RE.match(INLINE_CODE_RE.sub(" ", line)):
+            out.append([])
+        out[-1].append(line)
+    return [(fm or "").strip()] + ["\n".join(l.rstrip() for l in b).strip() for b in out]
+
+
+def churn(old_en, new_en, base, out):
+    """Where translation `out` (of new_en) changed a block of `base` (the translation of old_en) that it should
+    have copied: ([(kind, block), ...], number of English blocks that did not change).
+
+    kind "block": the English block is unchanged, so the translated block must be byte for byte the base's.
+    kind "heading": the English block changed but its heading line did not, so the translated heading (and its
+    anchor) must stay. English blocks are matched old -> new with difflib; translated blocks line up by position.
+    """
+    ob, nb, bb, tb = map(blocks, (old_en, new_en, base, out))
+    if len(ob) != len(bb) or len(nb) != len(tb):
+        return [], 0
+    hits, same = [], 0
+    for op, i1, i2, j1, j2 in difflib.SequenceMatcher(None, ob, nb, autojunk=False).get_opcodes():
+        if op not in ("equal", "replace") or i2 - i1 != j2 - j1:
+            continue
+        for i, j in zip(range(i1, i2), range(j1, j2)):
+            if op == "equal":
+                same += 1
+                if bb[i] != tb[j]:
+                    hits.append(("block", tb[j]))
+            elif (nb[j].startswith("#") and ob[i].split("\n")[0] == nb[j].split("\n")[0]
+                  and bb[i].split("\n")[0] != tb[j].split("\n")[0]):
+                hits.append(("heading", tb[j].split("\n")[0]))
+    return hits, same
+
+
+def churn_reasons(hits):
+    say = lambda k, b: (f"block changed though its English did not: {(b.splitlines() or [''])[0][:70]!r}"
+                        if k == "block" else f"heading changed though its English did not: {b[:70]!r}")
+    return [say(k, b) for k, b in hits[:5]] + ([f"{len(hits) - 5} more changed blocks"] if len(hits) > 5 else [])
+
+
+MOJIBAKE_RE = re.compile(r"Ã[\x80-\xBF]")  # UTF-8 decoded as Latin-1: "Ações" became "AÃ§Ãµes"
+CJK_BOLD_PUNCT_RE = re.compile(r" \*\*[。，、]")  # the full stop pulled into the bold: "值 **。Label**"
+BOLD_RE = re.compile(r"\*\*([^*\n]+?)\*\*")
+
+
+def locale_issues(lc, text, glossary):
+    """{rule: [hits]} for corruption the structural validator cannot see."""
+    prose = strip_code(split_frontmatter(text)[1])
+    return {
+        "mojibake": MOJIBAKE_RE.findall(text),
+        "cjk bold punctuation": CJK_BOLD_PUNCT_RE.findall(prose) if lc in CJK else [],
+        # A bold span that is exactly an English UI string this locale's app catalog translates: the reader's UI
+        # shows the translation, not this. Product names stay English by rule.
+        "untranslated catalog label": [b for b in BOLD_RE.findall(prose)
+                                       if glossary.get(b, b) != b and b not in KEEP_ENGLISH],
+    }
 
 
 # ---------------------------------------------------------------- commands
@@ -1103,10 +1211,14 @@ You translate one chunk of PlaidCloud docs. Your task names a chunk file `i18n/j
 1. Read the chunk JSON, then read its `prompt_file` once. The prompt is your translator instructions; follow
    them exactly. Its per-file rules apply by extension (`.mdx` vs `.md`) and `kind` (`snippet`).
 2. For each item, in order:
-   - Read `source_file` (repo-relative).
-   - Translate it. The item's `glossary` is the <glossary> the prompt refers to; apply it and the prompt's
-     termbase exactly as the prompt's Terminology section says (UI labels anywhere, one term per concept).
-   - Write ONLY the complete translated file to `output_file` (create parent dirs): no preamble, no commentary,
+   - `mode: full` (a new page, or one forced): read `source_file` (repo-relative) and translate all of it.
+   - `mode: delta` (the page is already translated): follow the prompt's "Delta items" section. Read
+     `base_file`, `english_old`, `english_new` and `english_diff`; edit a copy of `base_file`, changing only the
+     blocks whose English changed and copying every other block byte for byte, headings and anchors included.
+     Never re-translate the page: ingest rejects a delta that changed a block whose English did not change.
+   - The item's `glossary` is the <glossary> the prompt refers to; apply it and the prompt's termbase exactly as
+     the prompt's Terminology section says (UI labels anywhere, one term per concept) to the text you write.
+   - Write ONLY the complete file to `output_file` (create parent dirs): no preamble, no commentary,
      no wrapping code fence. Overwrite if it exists.
 3. Touch nothing else: no other files, no git, no builds, no scripts.
 4. Finish with one line: `<chunk>: <written>/<total> written`, plus the paths of any item you could not finish.
@@ -1117,8 +1229,29 @@ def rel_or_abs(path):
     return path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
 
 
+DELTA_RULES = """## Delta items (`mode: delta`)
+The page is already translated and only part of its English changed. Do not translate the page again: this
+section replaces "Translate the whole page" above for these items.
+- Start from `base_file`, the installed translation. `english_old` is the English it was translated from,
+  `english_new` the English now; `english_diff` shows the change.
+- A block is a heading, list item, table row, admonition marker or code fence, plus the paragraph text that follows
+  it. Translate the blocks whose English was added or changed and delete the translated blocks whose English was
+  removed. Copy every other block byte for byte: wording, UI labels, punctuation, spacing and link anchors, even
+  where you would have translated it differently.
+- Keep every heading, and so its anchor, exactly as in `base_file` unless that heading's own English changed.
+- Apply the glossary and termbase to the text you write. Output the complete edited file.
+- ingest rejects a delta result in which a block whose English did not change differs from `base_file`.
+"""
+
+
 def cmd_prepare(args):
     out = ROOT / args.out
+    if PLAIDCLIENT.exists():  # the glossary must match the app the reader has, not the one of the last rebuild
+        if subprocess.run(["git", "-C", str(PLAIDCLIENT), "fetch", "-q", "origin", "master"]).returncode:
+            print(f"could not fetch {PLAIDCLIENT}; glossary built from its last fetched origin/master")
+        build_glossaries()
+    else:
+        print(f"no PlaidClient checkout at {PLAIDCLIENT} (set $PLAIDCLIENT); glossary not rebuilt")
     removed = prune_deleted()
     if removed:
         print(f"deleted {len(removed)} translations of removed pages")
@@ -1127,19 +1260,25 @@ def cmd_prepare(args):
         have = {(lc, k) for lc, k, _ in pairs}
         pairs += [(lc, k, sha(src_path(k).read_text())) for lc in args.locales
                   for k in select_units(args.force_paths) if (lc, k) not in have]
+    forced = set(select_units(args.force_paths)) if args.force_paths else set()
+    manifest = load_json(MANIFEST, {})
     glossaries = {lc: load_glossary(lc) for lc in args.locales}
     # "<lc>/<key>" -> English sha each queued unit was prepared from, whatever --out was; ingest trusts only this.
     prepared = load_json(STAGING / "_prepared.json", {})
+    # "<lc>/<key>" -> sha of the English the installed translation was made from, for units queued as deltas.
+    delta = load_json(STAGING / "_delta.json", {})
+    shutil.rmtree(out / "english_old", ignore_errors=True)
     rejects = load_json(STAGING / "_rejects.json", [])
     rejected, requeued = {(r["locale"], r["path"]) for r in rejects}, set()
     (out / "prompts").mkdir(parents=True, exist_ok=True)
     (out / "WORKER.md").write_text(WORKER_MD)
+    fallbacks = 0
     terms = {}
     for lc in args.locales:
         prompt_file = out / "prompts" / f"{lc}.md"
         prompt_file.write_text(system_prompt(lc) + "\n\n## Per-file rules\n"
                                f"- `.mdx` files: {MDX_RULE}\n- `.md` files: {MD_RULE}\n"
-                               f"- Snippets (`kind: snippet`):{SNIPPET_NOTE}\n")
+                               f"- Snippets (`kind: snippet`):{SNIPPET_NOTE}\n\n{DELTA_RULES}")
         for old in (out / lc).glob("*.json") if (out / lc).exists() else []:
             old.unlink()
         chunks, chunk, words, kept = [], [], 0, 0
@@ -1153,14 +1292,32 @@ def cmd_prepare(args):
             prepared[f"{lc}/{key}"] = h
             requeued.add((lc, key))
             src = src_path(key).read_text()
-            n = len(src.split())
+            item = {"path": key, "kind": "snippet" if key.startswith(SNIPPET) else "page", "sha": h,
+                    "mode": "full", "source_file": rel_or_abs(src_path(key))}
+            base, old_sha = out_path(lc, key), manifest.get(mkey(lc, key))
+            old = english_at(key, old_sha) if base.is_file() and old_sha and key not in forced else None
+            if base.is_file() and key not in forced and old is None:
+                fallbacks += 1
+                print(f"  {lc}/{key}: English it was translated from not found in git history; full translation")
+            if old is not None:
+                old_file = out / "english_old" / old_sha[:12] / key
+                old_file.parent.mkdir(parents=True, exist_ok=True)
+                old_file.write_text(old)
+                diff = "".join(difflib.unified_diff(old.splitlines(True), src.splitlines(True),
+                                                    "english_old", "english_new", n=1))
+                english_new = item.pop("source_file")
+                item.update(mode="delta", base_file=rel_or_abs(base), english_old=rel_or_abs(old_file),
+                            english_new=english_new, english_diff=diff)
+                delta[f"{lc}/{key}"] = old_sha
+                n = len(diff.split())
+            else:
+                delta.pop(f"{lc}/{key}", None)
+                n = len(src.split())
             if chunk and words + n > args.chunk_words:
                 chunks.append(chunk)
                 chunk, words = [], 0
             terms.setdefault(key, page_terms(src))
-            chunk.append({"path": key, "kind": "snippet" if key.startswith(SNIPPET) else "page", "sha": h, "words": n,
-                          "source_file": src_path(key).relative_to(ROOT).as_posix(),
-                          "glossary": page_glossary(terms[key], glossaries[lc]),
+            chunk.append({**item, "words": n, "glossary": page_glossary(terms[key], glossaries[lc]),
                           "output_file": (STAGING / lc / key).relative_to(ROOT).as_posix()})
             words += n
         if chunk:
@@ -1168,10 +1325,14 @@ def cmd_prepare(args):
         for i, items in enumerate(chunks, 1):
             save_json(out / lc / f"{i:03}.json", {"locale": lc, "prompt_file": rel_or_abs(prompt_file),
                                                    "items": items})
-        print(f"{lc}: {len(chunks)} chunks, {sum(map(len, chunks))} units, "
+        print(f"{lc}: {len(chunks)} chunks, {sum(map(len, chunks))} units "
+              f"({sum(i['mode'] == 'delta' for c in chunks for i in c)} delta), "
               f"{sum(i['words'] for c in chunks for i in c):,} words"
               + (f"; {kept} already staged, run ingest" if kept else ""))
+    if fallbacks:
+        print(f"{fallbacks} existing translations queued for full re-translation (old English not recoverable)")
     save_json(STAGING / "_prepared.json", prepared)
+    save_json(STAGING / "_delta.json", delta)
     if rejected & requeued:  # a stale rejection must not make the next prepare discard the fresh translation
         save_json(STAGING / "_rejects.json", [r for r in rejects if (r["locale"], r["path"]) not in requeued])
 
@@ -1179,6 +1340,7 @@ def cmd_prepare(args):
 def cmd_ingest(args):
     manifest = load_json(MANIFEST, {})
     prepared = load_json(STAGING / "_prepared.json", {})
+    delta = load_json(STAGING / "_delta.json", {})
     rejects_file = STAGING / "_rejects.json"
     rejects = load_json(rejects_file, [])
     passed, failed, why, touched = 0, 0, Counter(), set()
@@ -1194,6 +1356,14 @@ def cmd_ingest(args):
                     reasons.append("not in any prepare chunk")
                 elif prepared[f"{lc}/{key}"] != sha(src):
                     reasons.append("English source changed since prepare")
+                elif f"{lc}/{key}" in delta and out_path(lc, key).is_file():
+                    old = english_at(key, delta[f"{lc}/{key}"])
+                    if old is None:
+                        reasons.append("delta: the English the base translation was made from left git history")
+                    else:
+                        # The base goes through the same post-processing, so only the worker's edits can differ.
+                        base = postprocess(lc, key, src, out_path(lc, key).read_text())
+                        reasons += ["delta churn: " + r for r in churn_reasons(churn(old, src, base, text)[0])]
             if reasons:
                 failed += 1
                 why.update(re.sub(r" at #\d+", "", r.split(":")[0].split(" (")[0]) for r in reasons)
@@ -1207,11 +1377,13 @@ def cmd_ingest(args):
             manifest[mkey(lc, key)] = sha(src)
             f.unlink()
             prepared.pop(f"{lc}/{key}")
+            delta.pop(f"{lc}/{key}", None)
             rejects = [r for r in rejects if (r["locale"], r["path"]) != (lc, key)]
             passed += 1
             touched.add(lc)
     save_json(MANIFEST, manifest)
     save_json(STAGING / "_prepared.json", prepared)
+    save_json(STAGING / "_delta.json", delta)
     # prepare deletes staged files it re-queues; their old rejections no longer describe anything.
     rejects = [r for r in rejects if (STAGING / r["locale"] / r["path"]).is_file()]
     if rejects or rejects_file.exists():
@@ -1250,11 +1422,47 @@ def cmd_check_anchors(args):
     sys.exit(1 if bad else 0)
 
 
+def changed_reasons(lc, key, p, src, text, glossary, base, changed, english_kept):
+    """Checks on a locale file the branch changed, judged against the merge base so legacy content never fails.
+
+    Bold punctuation and untranslated catalog labels exist in older pages (8 and 1,159 on main when added), so a
+    file fails only when it has more than at the base. A file whose English also changed fails when it rewrote
+    most of the blocks whose English did not: a whole-page re-translation instead of a delta.
+    """
+    rel, eng_rel = p.relative_to(ROOT).as_posix(), src_path(key).relative_to(ROOT).as_posix()
+    if rel not in changed:
+        return []
+    old = git("show", f"{base}:{rel}")
+    reasons = []
+    for rule in ("cjk bold punctuation", "untranslated catalog label"):
+        count = lambda t: Counter(h for h in locale_issues(lc, t, glossary)[rule] if h not in english_kept)
+        gained = count(text) - (count(old) if old is not None else Counter())
+        if gained:
+            reasons.append(f"{rule} added: {sorted(gained)[:8]}")
+    old_en = git("show", f"{base}:{eng_rel}") if eng_rel in changed else None
+    if old is not None and old_en is not None:
+        hits, same = churn(old_en, src, old, text)
+        n = sum(k == "block" for k, _ in hits)
+        if same >= 4 and n > same / 2:
+            reasons.append(f"re-translated: {n} of the {same} blocks whose English did not change were rewritten; "
+                           "keep them and translate only the English delta")
+    return reasons
+
+
 def cmd_check(args):
     manifest = load_json(MANIFEST, {})
     english = set(english_units())
+    since = getattr(args, "changed_since", None)
+    base = changed = english_kept = None
+    if since:
+        base = (git("merge-base", "HEAD", since) or "").strip() or sys.exit(f"no merge base with {since}")
+        changed = set((git("diff", "--name-only", base) or "").splitlines())
+        # A commit-message line "labels-english: <label>" keeps a label English on purpose (another product's UI).
+        english_kept = set(re.findall(r"^labels-english:[ \t]*(.+?)[ \t]*$",
+                                      git("log", "--format=%B", f"{base}..HEAD") or "", re.M))
     bad = stale = total = 0
     for lc in LOCALES:
+        glossary = load_glossary(lc)
         for key, p in translated_units(lc):
             total += 1
             name = mkey(lc, key)
@@ -1273,6 +1481,10 @@ def cmd_check(args):
             reasons += wrong_language(lc, text)
             if not key.startswith(SNIPPET) and set_edit_url(text, key) != text:
                 reasons.append("editUrl missing")
+            mojibake = locale_issues(lc, text, {})["mojibake"]  # none on main when added, so checked everywhere
+            reasons += [f"mojibake (UTF-8 read as Latin-1): {mojibake[:5]}"] if mojibake else []
+            if base:
+                reasons += changed_reasons(lc, key, p, src, text, glossary, base, changed, english_kept)
             if reasons:
                 bad += 1
                 print(f"invalid  {name}: {'; '.join(reasons)}")
@@ -1305,7 +1517,10 @@ def main():
     p.add_argument("batch_id")
     p.add_argument("--poll", type=int, default=60)
     p.set_defaults(fn=cmd_collect)
-    sub.add_parser("check").set_defaults(fn=cmd_check)
+    p = sub.add_parser("check")
+    p.add_argument("--changed-since", metavar="REF",
+                   help="also run the changed-file rules on locale files changed since the merge base with REF")
+    p.set_defaults(fn=cmd_check)
     p = sub.add_parser("check-anchors", help="verify internal …#anchor links in the built dist/")
     p.add_argument("--dist", default="dist")
     p.set_defaults(fn=cmd_check_anchors)
