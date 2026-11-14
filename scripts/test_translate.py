@@ -8,8 +8,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / 'scripts'))
 import translate as t
+t.PLAIDCLIENT = Path("/nonexistent")  # prepare must not fetch PlaidClient or rewrite the real glossary
 
-ok = lambda name, cond: print(("PASS " if cond else "FAIL ") + name) or cond
+ok =lambda name, cond: print(("PASS " if cond else "FAIL ") + name) or cond
 results = []
 
 # ---- slugger (node github-slugger) + heading text extraction
@@ -404,6 +405,109 @@ out = run_check(t.cmd_check_anchors, argparse.Namespace(dist=str(tmp)))
 results.append(ok(f"check-anchors: same-page + relative broken anchors caught {out.splitlines()}",
                   "missing  /de/guides/a/#bad" in out and "missing  /de/guides/b/#gone" in out
                   and "missing  /guides/b/#english-gone" in out and "7 anchor links checked: 3 broken" in out))
+shutil.rmtree(tmp)
+
+# ---- delta translation: prepare queues an edit of the installed page, ingest rejects churn, check gates changed files
+import subprocess
+EN_OLD = ("---\ntitle: Page\ndescription: d\n---\n\nIntro text.\n\n## First Step\n\nClick **Save** to keep it.\n\n"
+          "## Second Step\n\nThe report opens in a new tab.\n\n- one item\n- two items\n")
+EN_NEW = EN_OLD.replace("a new tab", "a new window")
+DE_OLD = ("---\ntitle: Seite\ndescription: d\neditUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/p.md\n---\n\n"
+          "Einleitungstext.\n\n## Erster Schritt\n\nKlicken Sie auf **Speichern**, um es zu behalten.\n\n"
+          "## Zweiter Schritt\n\nDer Bericht wird in einem neuen Tab geöffnet.\n\n- ein Eintrag\n- zwei Einträge\n")
+DE_DELTA = DE_OLD.replace("neuen Tab", "neuen Fenster")
+DE_CHURN = DE_DELTA.replace("Einleitungstext.", "Ein einleitender Text.")
+DE_HEADING = DE_DELTA.replace("## Zweiter Schritt", "## Schritt zwei")
+results.append(ok("churn: delta that edits only the changed block passes", t.churn(EN_OLD, EN_NEW, DE_OLD, DE_DELTA) == ([], 5)))
+results.append(ok("churn: rewording a block whose English did not change is caught",
+                  [k for k, _ in t.churn(EN_OLD, EN_NEW, DE_OLD, DE_CHURN)[0]] == ["block"]))
+results.append(ok("churn: changing a heading whose English did not change is caught",
+                  t.churn(EN_OLD, EN_NEW, DE_OLD, DE_HEADING)[0] == [("heading", "## Schritt zwei")]))
+results.append(ok("churn: an added English list item may add a translated one",
+                  t.churn(EN_OLD, EN_OLD + "- three items\n", DE_OLD, DE_OLD + "- drei Einträge\n")[0] == []))
+
+tmp = Path(tempfile.mkdtemp())
+t.ROOT, t.DOCS, t.SNIPPETS, t.PAGE_URLS = tmp, tmp / "src/content/docs", tmp / "src/snippets", None
+t.I18N = tmp / "i18n"; t.MANIFEST, t.STAGING = t.I18N / "manifest.json", t.I18N / "staging"
+jobs = t.I18N / "jobs"
+gitc = lambda *a: subprocess.run(["git", "-C", str(tmp), "-c", "user.name=t", "-c", "user.email=t@t", *a],
+                                 check=True, capture_output=True, text=True).stdout
+(t.DOCS / "de/guides").mkdir(parents=True); (t.DOCS / "guides").mkdir(); t.SNIPPETS.mkdir(parents=True)
+(t.DOCS / "guides/p.md").write_text(EN_OLD); (t.DOCS / "de/guides/p.md").write_text(DE_OLD)
+(t.DOCS / "guides/new.md").write_text("---\ntitle: New\ndescription: d\n---\n\nNew page.\n")
+t.save_json(t.MANIFEST, {"de/guides/p.md": t.sha(EN_OLD)})
+gitc("init", "-q", "-b", "main"); gitc("add", "-A"); gitc("commit", "-qm", "base")
+(t.DOCS / "guides/p.md").write_text(EN_NEW)
+prep = lambda force=None: run_check(t.cmd_prepare, argparse.Namespace(locales=["de"], paths=None, chunk_words=2500, out="i18n/jobs", force_paths=force))
+item = lambda path: next(i for c in sorted((jobs / "de").glob("*.json")) for i in _json.loads(c.read_text())["items"] if i["path"] == path)
+prep(["guides/p.md"])
+results.append(ok("--force-paths gets a full job even with a translation", item("guides/p.md")["mode"] == "full"))
+out = prep()
+d = item("guides/p.md")
+results.append(ok("prepare: an existing translation gets a delta job", d["mode"] == "delta" and d["base_file"] == "src/content/docs/de/guides/p.md"
+                  and (tmp / d["english_old"]).read_text() == EN_OLD and d["english_new"] == "src/content/docs/guides/p.md"
+                  and "+The report opens in a new window." in d["english_diff"] and "source_file" not in d))
+results.append(ok("prepare: a new page gets a full job", item("guides/new.md")["mode"] == "full" and "(1 delta)" in out))
+results.append(ok("prepare: prompt and WORKER.md carry the delta rules", t.DELTA_RULES in (jobs / "prompts/de.md").read_text()
+                  and "mode: delta" in (jobs / "WORKER.md").read_text()))
+t.save_json(t.MANIFEST, {"de/guides/p.md": "0" * 64})
+out = prep()
+results.append(ok("prepare: unrecoverable old English falls back to a full job, logged",
+                  item("guides/p.md")["mode"] == "full" and "not found in git history; full translation" in out))
+t.save_json(t.MANIFEST, {"de/guides/p.md": t.sha(EN_OLD)})
+prep()
+staged = t.STAGING / "de/guides/p.md"
+staged.parent.mkdir(parents=True, exist_ok=True)
+for name, text, want in (("rewording an unchanged block", DE_CHURN, "delta churn: block changed"),
+                         ("renaming an unchanged heading", DE_HEADING, "delta churn: heading changed")):
+    staged.write_text(text)
+    out = run_check(t.cmd_ingest, argparse.Namespace(locales=["de"]))
+    results.append(ok(f"ingest rejects a delta {name}", want in out and (t.DOCS / "de/guides/p.md").read_text() == DE_OLD))
+staged.write_text(DE_DELTA)
+run_check(t.cmd_ingest, argparse.Namespace(locales=["de"]))
+results.append(ok("ingest installs a minimal delta", (t.DOCS / "de/guides/p.md").read_text() == DE_DELTA
+                  and t.load_json(t.MANIFEST, {})["de/guides/p.md"] == t.sha(EN_NEW) and "de/guides/p.md" not in t.load_json(t.STAGING / "_delta.json", {})))
+
+# check: mojibake everywhere; added labels / punctuation and whole-page re-translation only on changed files
+results.append(ok("CJK bold punctuation found in zh-cn only", t.locale_issues("zh-cn", "值 **。Label** 会", {})["cjk bold punctuation"] == [" **。"]
+                  and t.locale_issues("de", "值 **。Label** 会", {})["cjk bold punctuation"] == []))
+de_page = t.DOCS / "de/guides/p.md"
+de_page.write_text(DE_DELTA.replace("Einleitungstext.", "Einleitungstext mit **Run**."))  # a legacy untranslated label
+gitc("add", "-A"); gitc("commit", "-qm", "legacy"); gitc("checkout", "-qb", "work")
+de_page.write_text(DE_DELTA.replace("Einleitungstext.", "Einleitungstext mit **Run**.").replace("Bericht", "AÃ§Ãµes-Bericht"))
+out = run_check(t.cmd_check, None)
+results.append(ok("check flags mojibake without --changed-since", "invalid  de/guides/p.md: mojibake" in out))
+since = argparse.Namespace(changed_since="main")
+de_page.write_text(DE_DELTA.replace("Einleitungstext.", "Einleitungstext mit **Run**.").replace("Fenster", "**Run**"))
+gitc("commit", "-qam", "label")
+results.append(ok("check --changed-since flags an added untranslated catalog label, not the legacy one",
+                  "untranslated catalog label added: ['Run']" in run_check(t.cmd_check, since)))
+results.append(ok("check without --changed-since leaves legacy labels alone", "invalid  " not in run_check(t.cmd_check, None)))
+gitc("commit", "-q", "--allow-empty", "-m", "keep\n\nlabels-english: Run")
+results.append(ok("labels-english: in a commit message exempts the label", "untranslated catalog label" not in run_check(t.cmd_check, since)))
+(t.DOCS / "guides/p.md").write_text(EN_NEW.replace("one item", "first item"))
+de_page.write_text(DE_OLD.replace("Seite", "Die Seite").replace("Einleitungstext.", "Ein Einleitungstext.").replace("Klicken Sie", "Klicke")
+                   .replace("ein Eintrag", "erster Eintrag").replace("zwei Einträge", "zweiter Eintrag"))
+gitc("commit", "-qam", "retranslate")
+results.append(ok("check --changed-since flags a whole-page re-translation of a changed page", "re-translated: 5 of the 5 blocks" in run_check(t.cmd_check, since)))
+shutil.rmtree(tmp)
+
+# ---- check-removed-labels.py: a renamed label still on another English page fails unless kept
+tmp = Path(tempfile.mkdtemp())
+(tmp / "scripts").mkdir(); (tmp / "src/content/docs/guides").mkdir(parents=True); (tmp / "src/content/docs/de/guides").mkdir(parents=True)
+for f in ("translate.py", "check-removed-labels.py"):
+    shutil.copy(REPO / "scripts" / f, tmp / "scripts" / f)
+(tmp / "src/content/docs/guides/a.md").write_text("Click **Old Name**.\n")
+(tmp / "src/content/docs/guides/b.md").write_text("Then use **Old Name** again.\n")
+(tmp / "src/content/docs/de/guides/b.md").write_text("Dann **Old Name**.\n")
+gitc("init", "-q", "-b", "main"); gitc("add", "-A"); gitc("commit", "-qm", "base"); gitc("checkout", "-qb", "work")
+(tmp / "src/content/docs/guides/a.md").write_text("Click **New Name**.\n")
+gitc("commit", "-qam", "rename")
+removed_labels = lambda: subprocess.run([sys.executable, str(tmp / "scripts/check-removed-labels.py"), "main"], capture_output=True, text=True)
+r = removed_labels()
+results.append(ok("removed label still on another English page fails", r.returncode == 1 and "guides/b.md" in r.stdout and "/de/" not in r.stdout))
+gitc("commit", "-q", "--allow-empty", "-m", "keep\n\nlabels-kept: Old Name")
+results.append(ok("labels-kept: in a commit message passes it", removed_labels().returncode == 0))
 shutil.rmtree(tmp)
 print(f"\n{sum(results)}/{len(results)} passed (all)")
 sys.exit(0 if all(results) else 1)
