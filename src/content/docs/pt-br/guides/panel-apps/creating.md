@@ -10,7 +10,7 @@ Comece pelo Panel Studio. Ele não exige repositório nem configuração: você 
 
 ## Criar um aplicativo Studio
 
-Abra **Aplicações** e abra o menu **Novo app**. Sob o título **Aplicativo Panel**, **Studio** escreve e publica o aplicativo no editor do PlaidCloud com o layout padrão e guarda o código para você. Você também pode escolher **Nova aplicação Studio** na linha **Aplicações Studio** do cartão **Aplicações e identidade visual** na guia **Início** de um projeto ou [começar a partir de uma tabela](#começar-a-partir-de-uma-tabela).
+Abra **Aplicativos** e abra o menu **Novo app**. Sob o título **Aplicativo Panel**, **Studio** escreve e publica o aplicativo no editor do PlaidCloud com o layout padrão e guarda o código para você. Você também pode escolher **Novo aplicativo Studio** na linha **Aplicativos Studio** do cartão **Aplicativos e identidade visual** na guia **Início** de um projeto ou [começar a partir de uma tabela](#começar-a-partir-de-uma-tabela).
 
 1. Escolha **Novo app** > **Studio**.
 2. Informe um **Nome**. O **Slug da URL** é preenchido a partir dele.
@@ -31,18 +31,18 @@ Consulte o [Panel Studio](/pt-br/guides/panel-apps/studio/) para editar, visuali
 
 ### Começar a partir de uma tabela
 
-Você também pode começar na guia **Tabelas** de um projeto. Selecione uma tabela ou uma visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de contexto (clique com o botão direito). A caixa de diálogo **Nova aplicação Studio** é aberta com o projeto e a tabela já escolhidos. O comando fica disponível quando você tem acesso de edição ao projeto e o projeto não é somente leitura.
+Você também pode começar na guia **Tabelas** de um projeto. Selecione uma tabela ou uma visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de contexto (clique com o botão direito). A caixa de diálogo **Novo aplicativo Studio** é aberta com o projeto e a tabela já escolhidos. O comando fica disponível quando você tem acesso de edição ao projeto e o projeto não é somente leitura.
 
 ### Começar a partir da galeria
 
-Escolha **Novo app** > **Da galeria…** para navegar pelos aplicativos que seu espaço de trabalho listou e, em seguida, **Criar aplicativo a partir disto…** para criar sua própria cópia. Ou escolha **Da galeria** na caixa de diálogo **Nova aplicação Studio**. Consulte [A galeria de aplicativos](/pt-br/guides/panel-apps/gallery/), inclusive como listar seu próprio aplicativo.
+Escolha **Novo app** > **Da galeria…** para navegar pelos aplicativos que seu espaço de trabalho listou e, em seguida, **Criar aplicativo a partir disto…** para criar sua própria cópia. Ou escolha **Da galeria** na caixa de diálogo **Novo aplicativo Studio**. Consulte [A galeria de aplicativos](/pt-br/guides/panel-apps/gallery/), inclusive como listar seu próprio aplicativo.
 
 ## Outros tempos de execução
 
 Os aplicativos Studio cobrem a maioria dos painéis e ferramentas. Para uma necessidade específica, publique com um dos outros [tempos de execução](/pt-br/guides/panel-apps/) no menu **Novo app**:
 
 - **Somente navegador** — seu próprio repositório; o aplicativo é executado no navegador de quem o visualiza.
-- **Baseada em servidor** — seu próprio repositório; o aplicativo é executado em um servidor do PlaidCloud, por exemplo, para reutilizar código existente ou seu próprio processo de compilação.
+- **Baseado em servidor** — seu próprio repositório; o aplicativo é executado em um servidor do PlaidCloud, por exemplo, para reutilizar código existente ou seu próprio processo de compilação.
 - **Aplicativo Dash** — publique um aplicativo Plotly Dash. Consulte [Aplicativos Dash](/pt-br/guides/dash-apps/).
 
 ## Criar um aplicativo de servidor
@@ -178,7 +178,7 @@ Seu repositório precisa estar acessível por meio de uma **conexão git** no Pl
 
 ### Publique o aplicativo
 
-1. Escolha **Novo app** > **Baseada em servidor** para abrir a caixa de diálogo **Publicar aplicativo Panel de servidor**. As configurações dela são agrupadas em seções.
+1. Escolha **Novo app** > **Baseado em servidor** para abrir a caixa de diálogo **Publicar aplicativo Panel de servidor**. As configurações dela são agrupadas em seções.
 2. Em **Configurações do diretório**:
    - **Nome do aplicativo** — o nome de exibição mostrado na lista.
    - **Slug de URL** — é a URL do aplicativo e também o nome interno dele; portanto, deve ser um rótulo DNS válido: letras minúsculas, dígitos e hifens, começando com uma letra, com no máximo 40 caracteres (por exemplo, `sales-dashboard`). A caixa de diálogo verifica isso antes de você publicar.

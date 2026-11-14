@@ -41,8 +41,8 @@ Escolha **Novo app** > **Da galeria…** para navegar pelas aplicações que a s
 
 As aplicações Studio cobrem a maioria dos painéis de controlo e ferramentas. Para uma necessidade específica, publique com um dos outros [tempos de execução](/pt-pt/guides/panel-apps/) a partir do menu **Novo app**:
 
-- **Browser only** — o seu próprio repositório; a aplicação é executada no navegador do espectador.
-- **Server based** — o seu próprio repositório; a aplicação é executada num servidor do PlaidCloud, por exemplo para reutilizar código existente ou o seu próprio processo de compilação.
+- **Apenas navegador** — o seu próprio repositório; a aplicação é executada no navegador do espectador.
+- **Baseada em servidor** — o seu próprio repositório; a aplicação é executada num servidor do PlaidCloud, por exemplo para reutilizar código existente ou o seu próprio processo de compilação.
 - **Aplicação Dash** — publique uma aplicação Plotly Dash. Consulte [Aplicações Dash](/pt-pt/guides/dash-apps/).
 
 ## Criar uma aplicação de servidor
@@ -178,7 +178,7 @@ O seu repositório tem de estar acessível através de uma **ligação git** no 
 
 ### Publicar a aplicação
 
-1. Escolha **Novo app** > **Server based** para abrir a caixa de diálogo **Publicar aplicação Panel de servidor**. As suas definições estão agrupadas em secções.
+1. Escolha **Novo app** > **Baseada em servidor** para abrir a caixa de diálogo **Publicar aplicação Panel de servidor**. As suas definições estão agrupadas em secções.
 2. Em **Definições do diretório**:
    - **Nome da aplicação** — o nome de apresentação mostrado na lista.
    - **Slug do URL** — tanto o URL da aplicação como o seu nome interno, pelo que tem de ser uma etiqueta DNS válida: letras minúsculas, dígitos e hífenes, começando por uma letra, com 40 caracteres ou menos (por exemplo, `sales-dashboard`). A caixa de diálogo verifica-o antes de publicar.
@@ -291,7 +291,7 @@ Utilize `PLAID_PANEL_DESIGN=fast` para corresponder ao aspeto implementado por p
 
 Uma aplicação WASM é executada no navegador a partir de um ficheiro HTML pré-compilado.
 
-1. Escolha **Novo app** > **Browser only** para abrir a caixa de diálogo **Publicar aplicação Panel sem servidor**.
+1. Escolha **Novo app** > **Apenas navegador** para abrir a caixa de diálogo **Publicar aplicação Panel sem servidor**.
 2. Introduza um **Nome da aplicação** e uma **Versão**.
 3. Escolha a **Localização HTML da aplicação** — o ficheiro HTML numa conta de documentos.
 4. Introduza um **Slug de URL da aplicação** e um **Memorando** opcional.

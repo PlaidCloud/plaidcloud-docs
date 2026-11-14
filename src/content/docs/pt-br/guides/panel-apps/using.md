@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Todo aplicativo publicado aparece na tela **Aplicações** com seu **Tempo de execução**, **Status**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre o aplicativo; os demais ícones da linha permitem bloqueá-lo contra alterações acidentais, editá-lo, removê-lo e — para aplicativos de servidor — recompilá-lo, ver seus logs e ver as métricas de uso. O ícone de abertura reflete o tempo de execução do aplicativo, para que seja fácil distinguir rapidamente os aplicativos WASM dos de servidor.
+Todo aplicativo publicado aparece na tela **Aplicativos** com seu **Tempo de execução**, **Status**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre o aplicativo; os demais ícones da linha permitem bloqueá-lo contra alterações acidentais, editá-lo, removê-lo e — para aplicativos de servidor — recompilá-lo, ver seus logs e ver as métricas de uso. O ícone de abertura reflete o tempo de execução do aplicativo, para que seja fácil distinguir rapidamente os aplicativos WASM dos de servidor.
 
 ## Status da compilação (aplicativos de servidor)
 

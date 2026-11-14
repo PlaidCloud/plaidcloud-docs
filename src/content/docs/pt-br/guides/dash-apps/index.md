@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/index.md
 ---
 
-Os Aplicativos Dash permitem publicar aplicativos interativos [Plotly Dash](https://dash.plotly.com/), com callbacks, gráficos e grades de dados (`dash-ag-grid`, `dash-mantine-components`), diretamente do PlaidCloud. Você os gerencia na tela **Aplicações**, junto com seus aplicativos Panel, onde cada linha mostra o runtime, o status da compilação e a URL.
+Os Aplicativos Dash permitem publicar aplicativos interativos [Plotly Dash](https://dash.plotly.com/), com callbacks, gráficos e grades de dados (`dash-ag-grid`, `dash-mantine-components`), diretamente do PlaidCloud. Você os gerencia na tela **Aplicativos**, junto com seus aplicativos Panel, onde cada linha mostra o runtime, o status da compilação e a URL.
 
 ## Onde o Dash se encaixa
 

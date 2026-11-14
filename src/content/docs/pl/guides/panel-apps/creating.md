@@ -41,8 +41,8 @@ Wybierz **Nowa aplikacja** > **Z galerii…**, aby przeglądać aplikacje wystaw
 
 Aplikacje Studio obejmują większość pulpitów i narzędzi. Do indywidualnych potrzeb opublikuj za pomocą jednego z pozostałych [środowisk uruchomieniowych](/pl/guides/panel-apps/) z menu **Nowa aplikacja**:
 
-- **Browser only** — Twoje własne repozytorium; aplikacja działa w przeglądarce przeglądającego.
-- **Server based** — Twoje własne repozytorium; aplikacja działa na serwerze PlaidCloud, na przykład aby ponownie użyć istniejącego kodu lub własnego procesu kompilacji.
+- **Tylko przeglądarka** — Twoje własne repozytorium; aplikacja działa w przeglądarce przeglądającego.
+- **Oparta na serwerze** — Twoje własne repozytorium; aplikacja działa na serwerze PlaidCloud, na przykład aby ponownie użyć istniejącego kodu lub własnego procesu kompilacji.
 - **Aplikacja Dash** — opublikuj aplikację Plotly Dash. Zobacz [Aplikacje Dash](/pl/guides/dash-apps/).
 
 ## Tworzenie aplikacji serwerowej
@@ -178,7 +178,7 @@ Repozytorium musi być dostępne przez **połączenie git** w PlaidCloud. Jeśli
 
 ### Publikowanie aplikacji
 
-1. Wybierz **Nowa aplikacja** > **Server based**, aby otworzyć okno **Opublikuj serwerową aplikację Panel**. Jego ustawienia są pogrupowane w sekcje.
+1. Wybierz **Nowa aplikacja** > **Oparta na serwerze**, aby otworzyć okno **Opublikuj serwerową aplikację Panel**. Jego ustawienia są pogrupowane w sekcje.
 2. W sekcji **Ustawienia katalogu**:
    - **Nazwa aplikacji** — nazwa wyświetlana na liście.
    - **Slug URL** — zarówno adres URL aplikacji, jak i jej nazwa wewnętrzna, więc musi być prawidłową etykietą DNS: małe litery, cyfry i łączniki, zaczynająca się od litery, do 40 znaków (na przykład `sales-dashboard`). Okno sprawdza to przed publikacją.
@@ -291,7 +291,7 @@ Użyj `PLAID_PANEL_DESIGN=fast`, aby odtworzyć domyślny wygląd wdrożenia. Ab
 
 Aplikacja WASM działa w przeglądarce z gotowego pliku HTML.
 
-1. Wybierz **Nowa aplikacja** > **Browser only**, aby otworzyć okno **Opublikuj bezserwerową aplikację Panel**.
+1. Wybierz **Nowa aplikacja** > **Tylko przeglądarka**, aby otworzyć okno **Opublikuj bezserwerową aplikację Panel**.
 2. Wprowadź **Nazwa aplikacji** i **Wersja**.
 3. Wybierz **Lokalizacja HTML aplikacji** — plik HTML na koncie dokumentów.
 4. Wprowadź **Slug URL aplikacji** i opcjonalną **Notatka**.

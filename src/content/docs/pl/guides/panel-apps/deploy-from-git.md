@@ -81,7 +81,7 @@ Nie ma pola Adres URL serwera, User, Password ani SSL/SSH — PlaidCloud Git jes
 
 Teraz skieruj wdrożenie serwerowe na to połączenie.
 
-1. Otwórz **Aplikacje** i wybierz **Nowa aplikacja** > **Server based**.
+1. Otwórz **Aplikacje** i wybierz **Nowa aplikacja** > **Oparta na serwerze**.
 2. W sekcji **Ustawienia katalogu** ustaw **Nazwa aplikacji** i **Slug URL** — slug to adres URL aplikacji i jej nazwa wewnętrzna, więc użyj małych liter, cyfr i łączników, zaczynając od litery, do 40 znaków (na przykład `hello-panel`).
 3. W sekcji **Połączenie Git i obserwator publikacji**:
    - **Połączenie Git** — połączenie PlaidCloud Git utworzone w kroku 3.

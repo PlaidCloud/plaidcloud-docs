@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Os aplicativos Dash aparecem na mesma tela **Aplicações** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
+Os aplicativos Dash aparecem na mesma tela **Aplicativos** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
 
 ## Status da compilação
 

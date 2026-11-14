@@ -41,8 +41,8 @@ Elija **Nueva aplicación** > **Desde la galería…** para explorar las aplicac
 
 Las aplicaciones Studio cubren la mayoría de los paneles de control y herramientas. Para una necesidad a medida, publique con uno de los otros [tiempos de ejecución](/es/guides/panel-apps/) desde el menú **Nueva aplicación**:
 
-- **Browser only**: su propio repositorio; la aplicación se ejecuta en el navegador de quien la visualiza.
-- **Server based**: su propio repositorio; la aplicación se ejecuta en un servidor de PlaidCloud, por ejemplo para reutilizar código existente o su propio proceso de compilación.
+- **Solo navegador**: su propio repositorio; la aplicación se ejecuta en el navegador de quien la visualiza.
+- **Basada en servidor**: su propio repositorio; la aplicación se ejecuta en un servidor de PlaidCloud, por ejemplo para reutilizar código existente o su propio proceso de compilación.
 - **Aplicación de Dash**: publique una aplicación de Plotly Dash. Consulte [Aplicaciones de Dash](/es/guides/dash-apps/).
 
 ## Creación de una aplicación de servidor
@@ -178,7 +178,7 @@ Su repositorio debe ser accesible mediante una **conexión de git** en PlaidClou
 
 ### Publicación de la aplicación
 
-1. Elija **Nueva aplicación** > **Server based** para abrir el cuadro de diálogo **Publicar aplicación Panel de servidor**. Su configuración está agrupada en secciones.
+1. Elija **Nueva aplicación** > **Basada en servidor** para abrir el cuadro de diálogo **Publicar aplicación Panel de servidor**. Su configuración está agrupada en secciones.
 2. En **Configuración del directorio**:
    - **Nombre de la aplicación**: el nombre para mostrar que aparece en la lista.
    - **Slug de URL**: es tanto la URL de la aplicación como su nombre interno, por lo que debe ser una etiqueta DNS válida: letras minúsculas, dígitos y guiones, que empiece por una letra y tenga 40 caracteres o menos (por ejemplo, `sales-dashboard`). El cuadro de diálogo lo comprueba antes de que publique.
@@ -291,7 +291,7 @@ Utilice `PLAID_PANEL_DESIGN=fast` para reproducir el aspecto implementado predet
 
 Una aplicación WASM se ejecuta en el navegador a partir de un archivo HTML precompilado.
 
-1. Elija **Nueva aplicación** > **Browser only** para abrir el cuadro de diálogo **Publicar aplicación Panel sin servidor**.
+1. Elija **Nueva aplicación** > **Solo navegador** para abrir el cuadro de diálogo **Publicar aplicación Panel sin servidor**.
 2. Introduzca un **Nombre de la aplicación** y una **Versión**.
 3. Elija la **Ubicación HTML de la aplicación**: el archivo HTML de una cuenta de documentos.
 4. Introduzca un **Slug de URL de la aplicación** y una **Nota** opcional.

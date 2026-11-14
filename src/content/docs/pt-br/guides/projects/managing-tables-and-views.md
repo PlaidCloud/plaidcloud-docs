@@ -251,7 +251,7 @@ O número de linhas, colunas e o tamanho dos dados de cada tabela são mostrados
 ## Criar um aplicativo Panel a partir de uma tabela
 
 
-Selecione uma tabela ou visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de clique com o botão direito. A caixa de diálogo **Nova aplicação Studio** abre com o projeto e a tabela já escolhidos. O aplicativo recebe o nome da tabela; altere-o se quiser, depois escolha **Criar**, e o Panel Studio o abre com o Weave pronto para criar a primeira página. O comando está disponível quando você seleciona uma única tabela ou visão, tem acesso de edição ao projeto e o projeto não é somente leitura. Consulte [Criar um aplicativo Panel](/pt-br/guides/panel-apps/creating/#começar-a-partir-de-uma-tabela).
+Selecione uma tabela ou visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de clique com o botão direito. A caixa de diálogo **Novo aplicativo Studio** abre com o projeto e a tabela já escolhidos. O aplicativo recebe o nome da tabela; altere-o se quiser, depois escolha **Criar**, e o Panel Studio o abre com o Weave pronto para criar a primeira página. O comando está disponível quando você seleciona uma única tabela ou visão, tem acesso de edição ao projeto e o projeto não é somente leitura. Consulte [Criar um aplicativo Panel](/pt-br/guides/panel-apps/creating/#começar-a-partir-de-uma-tabela).
 
 
 ## Ver o que as tabelas armazenam

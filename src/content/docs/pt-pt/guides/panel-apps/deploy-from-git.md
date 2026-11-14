@@ -81,7 +81,7 @@ Não existe nenhum campo de URL do servidor, utilizador, palavra-passe ou SSL/SS
 
 Agora aponte uma implementação de servidor para essa ligação.
 
-1. Abra **Aplicações** e escolha **Novo app** > **Server based**.
+1. Abra **Aplicações** e escolha **Novo app** > **Baseada em servidor**.
 2. Em **Definições do diretório**, defina um **Nome da aplicação** e um **Slug de URL** — o slug é o URL e o nome interno da aplicação, pelo que deve usar letras minúsculas, dígitos e hífenes, começando por uma letra, com 40 caracteres ou menos (por exemplo, `hello-panel`).
 3. Em **Ligação Git e monitor de publicação**:
    - **Ligação Git** — a ligação PlaidCloud Git que criou no passo 3.

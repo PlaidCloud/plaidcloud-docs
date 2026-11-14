@@ -10,7 +10,7 @@ A galeria de aplicativos é a prateleira em que seu espaço de trabalho mantém 
 
 ## Criar um aplicativo a partir da galeria
 
-1. Em **Aplicações**, escolha **Novo app** > **Studio**.
+1. Em **Aplicativos**, escolha **Novo app** > **Studio**.
 2. Em **Começar de**, escolha **A partir da galeria**.
 3. Selecione um aplicativo em **Aplicativo da galeria**. A descrição dele aparece abaixo do seletor.
 4. Dê um nome ao seu aplicativo, escolha o **Projeto** e selecione **Criar**.
