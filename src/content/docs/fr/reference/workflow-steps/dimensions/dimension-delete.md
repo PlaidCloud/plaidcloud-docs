@@ -29,3 +29,7 @@ Exemple qui utilise la variable `current_month` pour supprimer dynamiquement la 
 ### Utiliser une dimension spécifique
 
 Utilisez la liste déroulante pour sélectionner la dimension spécifique à supprimer.
+
+### Dimensions correspondant à la recherche
+
+Avec **Dimensions correspondant à la recherche**, l'étape ne s'enregistre pas si **Texte recherché** est vide alors que **Chemin de recherche** est le niveau supérieur du projet (`/`), car cela supprimerait toutes les dimensions du projet. Saisissez un texte à rechercher, ou choisissez un dossier.

@@ -29,3 +29,7 @@ Um exemplo que usa a variável `current_month` para eliminar dinamicamente a dim
 ### Utilizar dimensão específica
 
 Use o menu pendente para selecionar uma dimensão específica a eliminar.
+
+### Dimensões que correspondem à pesquisa
+
+Com **Dimensões que correspondem à pesquisa**, o passo não é guardado com um **Texto a pesquisar** vazio enquanto o **Caminho de pesquisa** for o nível superior do projeto (`/`), porque isso eliminaria todas as dimensões do projeto. Introduza o texto a corresponder ou escolha uma pasta.

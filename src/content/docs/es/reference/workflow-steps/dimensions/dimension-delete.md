@@ -29,3 +29,7 @@ Un ejemplo que usa la variable `current_month` para eliminar de forma dinámica 
 ### Usar una dimensión específica
 
 Use el menú desplegable para seleccionar la dimensión específica que desea eliminar.
+
+### Dimensiones que coinciden con la búsqueda
+
+Con **Dimensiones que coinciden con la búsqueda**, el paso no se guardará con un **Texto de búsqueda** vacío mientras la **Ruta de búsqueda** sea el nivel superior del proyecto (`/`), porque eliminaría todas las dimensiones del proyecto. Introduzca el texto que debe coincidir o elija una carpeta.
