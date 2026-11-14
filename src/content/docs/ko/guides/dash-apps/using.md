@@ -1,12 +1,12 @@
 ---
 title: Dash 앱 사용
-description: PlaidCloud의 내 Panel 앱 화면에서 게시된 Plotly Dash 앱의 빌드 상태를 추적하고, 앱을 열고, 다시 빌드하고, 잠그고, 로그를 보고, 편집하고, 제거합니다.
+description: PlaidCloud의 앱 화면에서 게시된 Plotly Dash 앱의 빌드 상태를 추적하고, 앱을 열고, 다시 빌드하고, 잠그고, 로그를 보고, 편집하고, 제거합니다.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Dash 앱은 WASM 및 서버 Panel 앱과 같은 **내 Panel 앱** 화면에 표시되며, **런타임** 열에 **Dash**가 표시되고 고유한 아이콘이 있어 쉽게 구분할 수 있습니다. 이 페이지의 모든 내용은 서버 앱에 대한 [Panel 앱 사용](/ko/guides/panel-apps/using/)과 같으며, 아래에 따로 설명한 한 가지 예외가 있습니다. Dash 앱은 아직 **사용 지표**를 제공하지 않습니다.
+Dash 앱은 WASM 및 서버 Panel 앱과 같은 **앱** 화면에 표시되며, **런타임** 열에 **Dash**가 표시되고 고유한 아이콘이 있어 쉽게 구분할 수 있습니다. 이 페이지의 모든 내용은 서버 앱에 대한 [Panel 앱 사용](/ko/guides/panel-apps/using/)과 같으며, 아래에 따로 설명한 한 가지 예외가 있습니다. Dash 앱은 아직 **사용 지표**를 제공하지 않습니다.
 
 ## 빌드 상태
 

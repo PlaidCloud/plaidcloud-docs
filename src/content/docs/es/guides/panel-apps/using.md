@@ -1,12 +1,12 @@
 ---
 title: Uso de una aplicación Panel
-description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros y las métricas de uso, edite y quite aplicaciones de HoloViz Panel publicadas desde la pantalla Mis aplicaciones Panel de PlaidCloud.
+description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros y las métricas de uso, edite y quite aplicaciones de HoloViz Panel publicadas desde la pantalla Aplicaciones de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Cada aplicación publicada aparece en la pantalla **Mis aplicaciones Panel** con su **Tiempo de ejecución**, **Estado**, **Slug** y marcas de tiempo. La columna situada más a la izquierda abre la aplicación; los demás iconos de la fila le permiten bloquearla frente a cambios accidentales, editarla, quitarla y, en el caso de las aplicaciones de servidor, recompilarla, consultar sus registros y ver sus métricas de uso. El icono para abrir refleja el tiempo de ejecución de la aplicación, por lo que las aplicaciones WASM y las de servidor se distinguen fácilmente de un vistazo.
+Cada aplicación publicada aparece en la pantalla **Aplicaciones** con su **Tiempo de ejecución**, **Estado**, **Slug** y marcas de tiempo. La columna situada más a la izquierda abre la aplicación; los demás iconos de la fila le permiten bloquearla frente a cambios accidentales, editarla, quitarla y, en el caso de las aplicaciones de servidor, recompilarla, consultar sus registros y ver sus métricas de uso. El icono para abrir refleja el tiempo de ejecución de la aplicación, por lo que las aplicaciones WASM y las de servidor se distinguen fácilmente de un vistazo.
 
 ## Estado de compilación (aplicaciones de servidor)
 

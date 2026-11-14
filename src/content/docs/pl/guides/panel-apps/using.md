@@ -1,12 +1,12 @@
 ---
 title: Korzystanie z aplikacji Panel
-description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki i metryki użycia, edytuj i usuwaj opublikowane aplikacje HoloViz Panel na ekranie Moje aplikacje Panel w PlaidCloud.
+description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki i metryki użycia, edytuj i usuwaj opublikowane aplikacje HoloViz Panel na ekranie Aplikacje w PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Każda opublikowana aplikacja jest widoczna na ekranie **Moje aplikacje Panel** wraz z wartościami w kolumnach **Środowisko uruchomieniowe**, **Stan**, **Slug** oraz sygnaturami czasowymi. Kolumna położona najbardziej po lewej otwiera aplikację; pozostałe ikony w wierszu pozwalają zablokować ją przed przypadkowymi zmianami, edytować ją, usunąć, a — w przypadku aplikacji serwerowych — zbudować ją ponownie, przeglądać jej dzienniki i metryki użycia. Ikona otwierania odzwierciedla środowisko uruchomieniowe aplikacji, więc aplikacje WASM i serwerowe łatwo odróżnić na pierwszy rzut oka.
+Każda opublikowana aplikacja jest widoczna na ekranie **Aplikacje** wraz z wartościami w kolumnach **Środowisko uruchomieniowe**, **Stan**, **Slug** oraz sygnaturami czasowymi. Kolumna położona najbardziej po lewej otwiera aplikację; pozostałe ikony w wierszu pozwalają zablokować ją przed przypadkowymi zmianami, edytować ją, usunąć, a — w przypadku aplikacji serwerowych — zbudować ją ponownie, przeglądać jej dzienniki i metryki użycia. Ikona otwierania odzwierciedla środowisko uruchomieniowe aplikacji, więc aplikacje WASM i serwerowe łatwo odróżnić na pierwszy rzut oka.
 
 ## Stan budowania (aplikacje serwerowe)
 

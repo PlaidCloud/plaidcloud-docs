@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/index.md
 ---
 
-Les applications Dash vous permettent de publier des applications interactives [Plotly Dash](https://dash.plotly.com/) (callbacks, graphiques et grilles de données (`dash-ag-grid`, `dash-mantine-components`)) directement depuis PlaidCloud. Vous les gérez depuis l'écran **Mes applications Panel**, aux côtés de vos applications Panel, où chaque ligne indique son runtime, son état de build et son URL.
+Les applications Dash vous permettent de publier des applications interactives [Plotly Dash](https://dash.plotly.com/) (callbacks, graphiques et grilles de données (`dash-ag-grid`, `dash-mantine-components`)) directement depuis PlaidCloud. Vous les gérez depuis l'écran **Applications**, aux côtés de vos applications Panel, où chaque ligne indique son runtime, son état de build et son URL.
 
 ## Place de Dash
 

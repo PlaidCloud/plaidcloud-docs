@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 알림 및 다이제스트 열기
 
-1. **내 Panel 앱** 또는 프로젝트의 **홈** 보드에서 앱의 **Open in Studio**를 선택합니다.
+1. **앱** 또는 프로젝트의 **홈** 보드에서 앱의 **Open in Studio**를 선택합니다.
 2. **Alerts & Digests**를 선택합니다.
 
 창에는 **Alerts** 탭과 **Digests** 탭이 있습니다. 앱은 프로젝트에 할당되어 있어야 하며, 앱의 테이블은 해당 프로젝트의 테이블입니다.

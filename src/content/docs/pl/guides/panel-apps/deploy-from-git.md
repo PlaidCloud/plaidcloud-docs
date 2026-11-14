@@ -81,7 +81,7 @@ Nie ma pola Adres URL serwera, User, Password ani SSL/SSH — PlaidCloud Git jes
 
 Teraz skieruj wdrożenie serwerowe na to połączenie.
 
-1. Otwórz **Aplikacje** i wybierz **New app** > **Server based**.
+1. Otwórz **Aplikacje** i wybierz **Nowa aplikacja** > **Server based**.
 2. W sekcji **Ustawienia katalogu** ustaw **Nazwa aplikacji** i **Slug URL** — slug to adres URL aplikacji i jej nazwa wewnętrzna, więc użyj małych liter, cyfr i łączników, zaczynając od litery, do 40 znaków (na przykład `hello-panel`).
 3. W sekcji **Połączenie Git i obserwator publikacji**:
    - **Połączenie Git** — połączenie PlaidCloud Git utworzone w kroku 3.
@@ -94,7 +94,7 @@ Każde pole w tym oknie jest opisane w [Tworzenie aplikacji Panel](/pl/guides/pa
 
 ## 5. Otwórz aplikację — i przeczytaj dzienniki, jeśli się nie uruchomi
 
-Po opublikowaniu aplikacja jest **budowana**: PlaidCloud klonuje gałąź, instaluje Twój `requirements.txt` (z katalogu głównego repozytorium i z folderu aplikacji, jeśli istnieją) i buduje obraz kontenera. Jej **Stan** jest wyświetlany na liście **Moje aplikacje Panel** i aktualizuje się automatycznie.
+Po opublikowaniu aplikacja jest **budowana**: PlaidCloud klonuje gałąź, instaluje Twój `requirements.txt` (z katalogu głównego repozytorium i z folderu aplikacji, jeśli istnieją) i buduje obraz kontenera. Jej **Stan** jest wyświetlany na liście **Aplikacje** i aktualizuje się automatycznie.
 
 - Gdy Stan to **Gotowe**, otwórz aplikację pod adresem `https://<your-tenant-host>/serve/<slug>/`. Pierwsze żądanie po okresie bezczynności ją uruchamia (~15 sekund).
 - Jeśli kompilacja się nie powiedzie, otwórz aplikację i sprawdź jej dzienniki **Zbuduj** — brakująca zależność lub błąd importu pojawi się tam. Zobacz [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/), aby dowiedzieć się, co oznacza każdy stan, jak czytać dzienniki i jak wywołać przebudowę.

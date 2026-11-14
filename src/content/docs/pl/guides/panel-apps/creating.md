@@ -10,9 +10,9 @@ Zacznij od Panel Studio. Nie wymaga repozytorium ani konfiguracji: budujesz apli
 
 ## Tworzenie aplikacji Studio
 
-Otwórz **Aplikacje** i otwórz menu **New app**. Pod nagłówkiem **Aplikacja Panel** pozycja **Studio** pisze i publikuje aplikację w edytorze PlaidCloud ze standardowym układem oraz przechowuje dla Ciebie kod. Możesz też wybrać **Nowa aplikacja Studio** w polu **Aplikacje Panel** na karcie **Strona główna** projektu albo [zacząć od tabeli](#zacznij-od-tabeli).
+Otwórz **Aplikacje** i otwórz menu **Nowa aplikacja**. Pod nagłówkiem **Aplikacja Panel** pozycja **Studio** pisze i publikuje aplikację w edytorze PlaidCloud ze standardowym układem oraz przechowuje dla Ciebie kod. Możesz też wybrać **Nowa aplikacja Studio** w wierszu **Aplikacje Studio** karty **Aplikacje i marka** na karcie **Strona główna** projektu albo [zacząć od tabeli](#zacznij-od-tabeli).
 
-1. Wybierz **New app** > **Studio**.
+1. Wybierz **Nowa aplikacja** > **Studio**.
 2. Wprowadź **Nazwa**. **Identyfikator URL (slug)** zostanie z niej uzupełniony.
 3. Wybierz **Projekt**, do którego należy aplikacja. Potrzebujesz dostępu do edycji projektu.
 4. W polu **Zacznij od** wybierz, od czego aplikacja się zaczyna:
@@ -35,11 +35,11 @@ Możesz też zacząć na karcie **Tabele** projektu. Zaznacz jedną tabelę lub 
 
 ### Zacznij od galerii
 
-Wybierz **New app** > **From gallery…**, aby przeglądać aplikacje wystawione przez Twój obszar roboczy, a następnie **Utwórz aplikację na tej podstawie…**, aby utworzyć własną kopię. Możesz też wybrać **Z galerii** w oknie **New app** Studio. Zobacz [Galeria aplikacji](/pl/guides/panel-apps/gallery/), w tym jak wystawić własną aplikację.
+Wybierz **Nowa aplikacja** > **Z galerii…**, aby przeglądać aplikacje wystawione przez Twój obszar roboczy, a następnie **Utwórz aplikację na tej podstawie…**, aby utworzyć własną kopię. Możesz też wybrać **Z galerii** w oknie **Nowa aplikacja Studio**. Zobacz [Galeria aplikacji](/pl/guides/panel-apps/gallery/), w tym jak wystawić własną aplikację.
 
 ## Inne środowiska uruchomieniowe
 
-Aplikacje Studio obejmują większość pulpitów i narzędzi. Do indywidualnych potrzeb opublikuj za pomocą jednego z pozostałych [środowisk uruchomieniowych](/pl/guides/panel-apps/) z menu **New app**:
+Aplikacje Studio obejmują większość pulpitów i narzędzi. Do indywidualnych potrzeb opublikuj za pomocą jednego z pozostałych [środowisk uruchomieniowych](/pl/guides/panel-apps/) z menu **Nowa aplikacja**:
 
 - **Browser only** — Twoje własne repozytorium; aplikacja działa w przeglądarce przeglądającego.
 - **Server based** — Twoje własne repozytorium; aplikacja działa na serwerze PlaidCloud, na przykład aby ponownie użyć istniejącego kodu lub własnego procesu kompilacji.
@@ -178,7 +178,7 @@ Repozytorium musi być dostępne przez **połączenie git** w PlaidCloud. Jeśli
 
 ### Publikowanie aplikacji
 
-1. Wybierz **New app** > **Server based**, aby otworzyć okno **Opublikuj serwerową aplikację Panel**. Jego ustawienia są pogrupowane w sekcje.
+1. Wybierz **Nowa aplikacja** > **Server based**, aby otworzyć okno **Opublikuj serwerową aplikację Panel**. Jego ustawienia są pogrupowane w sekcje.
 2. W sekcji **Ustawienia katalogu**:
    - **Nazwa aplikacji** — nazwa wyświetlana na liście.
    - **Slug URL** — zarówno adres URL aplikacji, jak i jej nazwa wewnętrzna, więc musi być prawidłową etykietą DNS: małe litery, cyfry i łączniki, zaczynająca się od litery, do 40 znaków (na przykład `sales-dashboard`). Okno sprawdza to przed publikacją.
@@ -291,7 +291,7 @@ Użyj `PLAID_PANEL_DESIGN=fast`, aby odtworzyć domyślny wygląd wdrożenia. Ab
 
 Aplikacja WASM działa w przeglądarce z gotowego pliku HTML.
 
-1. Wybierz **New app** > **Browser only**, aby otworzyć okno **Opublikuj bezserwerową aplikację Panel**.
+1. Wybierz **Nowa aplikacja** > **Browser only**, aby otworzyć okno **Opublikuj bezserwerową aplikację Panel**.
 2. Wprowadź **Nazwa aplikacji** i **Wersja**.
 3. Wybierz **Lokalizacja HTML aplikacji** — plik HTML na koncie dokumentów.
 4. Wprowadź **Slug URL aplikacji** i opcjonalną **Notatka**.

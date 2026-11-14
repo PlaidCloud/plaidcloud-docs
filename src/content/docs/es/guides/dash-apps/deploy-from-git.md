@@ -98,7 +98,7 @@ No hay campo de URL del servidor, usuario, contraseña ni SSL/SSH: PlaidCloud Gi
 
 Ahora haga que una implementación de Dash apunte a esa conexión.
 
-1. Abra **Mis aplicaciones Panel** y haga clic en **Nueva aplicación Dash**.
+1. Abra **Aplicaciones** y elija **Nueva aplicación** > **App Dash**.
 2. En **Configuración del directorio**, establezca un **Nombre de la aplicación** y un **Slug de URL**: el slug es la URL de la aplicación y su nombre interno, así que use letras minúsculas, dígitos y guiones, comience con una letra y no supere los 40 caracteres (por ejemplo, `hello-dash`). Una **Nota** opcional describe la aplicación.
 3. En **Conexión de Git y observador de publicación**:
    - **Conexión de Git**: la conexión de PlaidCloud Git que creó en el paso 3.
@@ -110,7 +110,7 @@ Ahora haga que una implementación de Dash apunte a esa conexión.
 
 ## 5. Abrir la aplicación y leer los registros si no se inicia
 
-Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, instala su `requirements.txt` y crea una imagen de contenedor a partir de la imagen `platform-dash-base`. Su **Estado** aparece en la lista **Mis aplicaciones Panel** y se actualiza automáticamente.
+Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, instala su `requirements.txt` y crea una imagen de contenedor a partir de la imagen `platform-dash-base`. Su **Estado** aparece en la lista **Aplicaciones** y se actualiza automáticamente.
 
 - Cuando el Estado sea **Lista**, abra la aplicación en `https://<your-tenant-host>/serve/<slug>/`. La primera solicitud tras un período de inactividad la pone en marcha y muestra brevemente una pantalla de carga de PlaidCloud mientras lo hace.
 - Si la compilación falla, abra la aplicación y revise sus registros de **Compilación**: una dependencia faltante o un error de importación aparecen allí. Consulte [Uso de una aplicación Dash](/es/guides/dash-apps/using/) para saber qué significa cada estado, cómo leer los registros y cómo activar una recompilación.

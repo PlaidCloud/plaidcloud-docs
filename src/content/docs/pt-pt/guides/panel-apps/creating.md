@@ -10,9 +10,9 @@ Comece pelo Panel Studio. Não precisa de repositório nem de configuração: cr
 
 ## Criar uma aplicação Studio
 
-Abra **Aplicações** e abra o menu **New app**. Sob o título **Panel app**, **Studio** escreve e publica a aplicação no editor do PlaidCloud com a disposição padrão e guarda o código por si. Também pode escolher **Nova aplicação Studio** na caixa **Aplicações Panel** do separador **Início** de um projeto, ou [começar a partir de uma tabela](#começar-a-partir-de-uma-tabela).
+Abra **Aplicações** e abra o menu **Novo app**. Sob o título **Panel app**, **Studio** escreve e publica a aplicação no editor do PlaidCloud com a disposição padrão e guarda o código por si. Também pode escolher **Nova aplicação Studio** na linha **Aplicações Studio** do cartão **Aplicações e identidade visual** do separador **Início** de um projeto, ou [começar a partir de uma tabela](#começar-a-partir-de-uma-tabela).
 
-1. Escolha **New app** > **Studio**.
+1. Escolha **Novo app** > **Studio**.
 2. Introduza um **Nome**. O **Slug do URL** é preenchido a partir dele.
 3. Escolha o **Projeto** a que a aplicação pertence. Precisa de acesso de edição ao projeto.
 4. Em **Começar a partir de**, escolha onde a aplicação começa:
@@ -35,11 +35,11 @@ Também pode começar no separador **Tabelas** de um projeto. Selecione uma tabe
 
 ### Começar a partir da galeria
 
-Escolha **New app** > **From gallery…** para navegar pelas aplicações que a sua área de trabalho listou e, depois, **Criar aplicação a partir disto…** para fazer a sua própria cópia. Ou escolha **A partir da galeria** na caixa de diálogo **New app** do Studio. Consulte [A galeria de aplicações](/pt-pt/guides/panel-apps/gallery/), incluindo como listar a sua própria aplicação.
+Escolha **Novo app** > **Da galeria…** para navegar pelas aplicações que a sua área de trabalho listou e, depois, **Criar aplicação a partir disto…** para fazer a sua própria cópia. Ou escolha **A partir da galeria** na caixa de diálogo **Nova aplicação Studio**. Consulte [A galeria de aplicações](/pt-pt/guides/panel-apps/gallery/), incluindo como listar a sua própria aplicação.
 
 ## Outros tempos de execução
 
-As aplicações Studio cobrem a maioria dos painéis de controlo e ferramentas. Para uma necessidade específica, publique com um dos outros [tempos de execução](/pt-pt/guides/panel-apps/) a partir do menu **New app**:
+As aplicações Studio cobrem a maioria dos painéis de controlo e ferramentas. Para uma necessidade específica, publique com um dos outros [tempos de execução](/pt-pt/guides/panel-apps/) a partir do menu **Novo app**:
 
 - **Browser only** — o seu próprio repositório; a aplicação é executada no navegador do espectador.
 - **Server based** — o seu próprio repositório; a aplicação é executada num servidor do PlaidCloud, por exemplo para reutilizar código existente ou o seu próprio processo de compilação.
@@ -178,7 +178,7 @@ O seu repositório tem de estar acessível através de uma **ligação git** no 
 
 ### Publicar a aplicação
 
-1. Escolha **New app** > **Server based** para abrir a caixa de diálogo **Publicar aplicação Panel de servidor**. As suas definições estão agrupadas em secções.
+1. Escolha **Novo app** > **Server based** para abrir a caixa de diálogo **Publicar aplicação Panel de servidor**. As suas definições estão agrupadas em secções.
 2. Em **Definições do diretório**:
    - **Nome da aplicação** — o nome de apresentação mostrado na lista.
    - **Slug do URL** — tanto o URL da aplicação como o seu nome interno, pelo que tem de ser uma etiqueta DNS válida: letras minúsculas, dígitos e hífenes, começando por uma letra, com 40 caracteres ou menos (por exemplo, `sales-dashboard`). A caixa de diálogo verifica-o antes de publicar.
@@ -291,7 +291,7 @@ Utilize `PLAID_PANEL_DESIGN=fast` para corresponder ao aspeto implementado por p
 
 Uma aplicação WASM é executada no navegador a partir de um ficheiro HTML pré-compilado.
 
-1. Escolha **New app** > **Browser only** para abrir a caixa de diálogo **Publicar aplicação Panel sem servidor**.
+1. Escolha **Novo app** > **Browser only** para abrir a caixa de diálogo **Publicar aplicação Panel sem servidor**.
 2. Introduza um **Nome da aplicação** e uma **Versão**.
 3. Escolha a **Localização HTML da aplicação** — o ficheiro HTML numa conta de documentos.
 4. Introduza um **Slug de URL da aplicação** e um **Memorando** opcional.

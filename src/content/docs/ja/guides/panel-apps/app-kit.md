@@ -16,7 +16,7 @@ import plaidcloud_panel as pcp
 
 ## テンプレートから始める
 
-[Panel Studio](/ja/guides/panel-apps/studio/)では、**New app** > **Studio**から、空のアプリ、テーブルまたはビュー、別のStudioアプリ、[ギャラリー](/ja/guides/panel-apps/gallery/)のアプリのいずれかから、コマンドを実行することなく開始できます。
+[Panel Studio](/ja/guides/panel-apps/studio/)では、**新規アプリ** > **Studio**から、空のアプリ、テーブルまたはビュー、別のStudioアプリ、[ギャラリー](/ja/guides/panel-apps/gallery/)のアプリのいずれかから、コマンドを実行することなく開始できます。
 
 gitリポジトリで管理するアプリ向けに、キットには、動作するスターターアプリを書き出すコマンドが含まれています。任意のフォルダーから実行し、テーブル名と列名を編集してください。
 

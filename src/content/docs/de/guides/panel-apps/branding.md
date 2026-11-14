@@ -58,13 +58,13 @@ Eine App, die mit einem Projekt veröffentlicht wurde, liest standardmäßig die
 
 ### Für vorhandene Apps
 
-1. Öffnen Sie **Meine Panel-Apps**.
+1. Öffnen Sie **Apps**.
 2. Klicken Sie in der Zeile der App, die Sie verschieben möchten, auf das Symbol **Zuweisen**.
 3. Wählen Sie das **Projekt** und klicken Sie auf **Prüfen**.
 4. Lesen Sie das Ergebnis. Es listet die Workspace-Mitglieder auf, die die App heute öffnen können, aber keine Mitglieder des Projekts sind.
 5. Klicken Sie auf **Zuweisen**.
 
-Prüfen ändert nichts. Die Spalte **Projekt** in **Meine Panel-Apps** zeigt das Projekt jeder App.
+Prüfen ändert nichts. Die Spalte **Projekt** in **Apps** zeigt das Projekt jeder App.
 
 ### Zugriff
 

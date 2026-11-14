@@ -6,9 +6,9 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Os aplicativos Panel permitem publicar aplicativos interativos [HoloViz Panel](https://panel.holoviz.org/) — com entradas parametrizadas, gráficos ao vivo e tabelas de dados incorporadas — diretamente do PlaidCloud. Você os gerencia na tela **Meus aplicativos Panel**, que lista todos os aplicativos junto com o tempo de execução, o status da compilação e a URL.
+Os aplicativos Panel permitem publicar aplicativos interativos [HoloViz Panel](https://panel.holoviz.org/) — com entradas parametrizadas, gráficos ao vivo e tabelas de dados incorporadas — diretamente do PlaidCloud. Você os gerencia na tela **Aplicações**, que lista todos os aplicativos junto com o tempo de execução, o status da compilação e a URL.
 
-Comece no [Panel Studio](/pt-br/guides/panel-apps/studio/): escolha **Novo aplicativo** > **Studio** para criar um aplicativo no PlaidCloud a partir de um aplicativo em branco, de uma tabela, de uma visão ou da galeria, sem precisar configurar um repositório. Para necessidades específicas, publique com um dos tempos de execução abaixo, exibidos na coluna **Tempo de execução**:
+Comece no [Panel Studio](/pt-br/guides/panel-apps/studio/): escolha **Novo app** > **Studio** para criar um aplicativo no PlaidCloud a partir de um aplicativo em branco, de uma tabela, de uma visão ou da galeria, sem precisar configurar um repositório. Para necessidades específicas, publique com um dos tempos de execução abaixo, exibidos na coluna **Tempo de execução**:
 
 - **WASM** — um aplicativo estático executado inteiramente no navegador (Pyodide). Você publica um arquivo HTML já compilado a partir de uma conta de documentos. Não há processo de servidor nem nada para escalar; ele é servido imediatamente.
 - **Servidor** — um aplicativo criado a partir de um repositório git e executado no servidor. Ao publicar, o PlaidCloud compila seu repositório em um contêiner que fica ocioso com zero réplicas, é ativado na primeira solicitação à sua URL, atende (inclusive com atualizações ao vivo) e volta a zero réplicas quando fica ocioso. É a escolha certa para aplicativos que precisam de um ambiente Python, de computação no servidor ou de bibliotecas que não podem ser executadas no navegador.

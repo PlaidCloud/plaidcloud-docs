@@ -259,7 +259,7 @@ Sélectionnez une table ou une vue et choisissez **Créer une application Panel*
 
 La liste **Tables** affiche les colonnes **Données actuelles**, **Historique**, **Jours de Time Travel** et **Remarque** à côté de la taille de chaque table. **Jours de Time Travel** est le paramètre propre à la table ; **1** signifie qu’elle utilise la valeur par défaut du projet. La barre d’état sous la liste donne le total du projet : ce qu’il stocke, dont la part de données actuelles et la part d’historique. Les tailles marquées **Estimation** proviennent de la forme de la table jusqu’à ce que PlaidCloud la mesure.
 
-Choisissez **Stockage** dans la barre d’outils pour ouvrir la fenêtre **Stockage** du projet, avec des suggestions pour libérer de l’espace et les paramètres de Time Travel. Consultez [Gérer le stockage](/fr/guides/projects/managing-storage/#la-fenêtre-stockage-dun-projet).
+Choisissez **Stockage** dans le menu **Actions** pour ouvrir la fenêtre **Stockage** du projet, avec des suggestions pour libérer de l’espace et les paramètres de Time Travel. Consultez [Gérer le stockage](/fr/guides/projects/managing-storage/#la-fenêtre-stockage-dun-projet).
 
 
 ## Créer un éditeur de données à partir d’une table

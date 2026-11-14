@@ -9,7 +9,7 @@ Start with Panel Studio. It needs no repository and no setup: you build the app 
 
 ## Create a Studio App
 
-Open **Apps** and open the **New app** menu. Under the **Panel app** heading, **Studio** writes and publishes the app in PlaidCloud's editor with the standard layout, and keeps the code for you. You can also choose **New Studio App** in the **Panel Apps** box on a project's **Home** tab, or [start from a table](#start-from-a-table).
+Open **Apps** and open the **New app** menu. Under the **Panel app** heading, **Studio** writes and publishes the app in PlaidCloud's editor with the standard layout, and keeps the code for you. You can also choose **New studio app** in the **Studio apps** row of the **Apps & branding** card on a project's **Home** tab, or [start from a table](#start-from-a-table).
 
 1. Choose **New app** > **Studio**.
 2. Enter a **Name**. The **URL slug** fills in from it.
@@ -34,7 +34,7 @@ You can also begin on the **Tables** tab of a project. Select one table or view,
 
 ### Start From the Gallery
 
-Choose **New app** > **From gallery…** to browse the apps your workspace has listed, then **Create app from this…** to make your own copy. Or choose **From the gallery** in the Studio **New app** dialog. See [The App Gallery](/guides/panel-apps/gallery/), including how to list your own app.
+Choose **New app** > **From gallery…** to browse the apps your workspace has listed, then **Create app from this…** to make your own copy. Or choose **From the gallery** in the **New Studio App** dialog. See [The App Gallery](/guides/panel-apps/gallery/), including how to list your own app.
 
 ## Other Runtimes
 

@@ -10,9 +10,9 @@ Beginnen Sie mit Panel Studio. Es braucht kein Repository und keine Einrichtung:
 
 ## Eine Studio-App erstellen
 
-Öffnen Sie **Apps** und öffnen Sie das Menü **New app**. Unter der Überschrift **Panel-App** schreibt und veröffentlicht **Studio** die App im Editor von PlaidCloud mit dem Standardlayout und bewahrt den Code für Sie auf. Sie können auch **Neue Studio-App** im Feld **Panel-Apps** auf der Registerkarte **Startseite** eines Projekts wählen oder [mit einer Tabelle beginnen](#mit-einer-tabelle-beginnen).
+Öffnen Sie **Apps** und öffnen Sie das Menü **Neue App**. Unter der Überschrift **Panel-App** schreibt und veröffentlicht **Studio** die App im Editor von PlaidCloud mit dem Standardlayout und bewahrt den Code für Sie auf. Sie können auch **Neue Studio-App** in der Zeile **Studio-Apps** der Karte **Apps & Branding** auf der Registerkarte **Startseite** eines Projekts wählen oder [mit einer Tabelle beginnen](#mit-einer-tabelle-beginnen).
 
-1. Wählen Sie **New app** > **Studio**.
+1. Wählen Sie **Neue App** > **Studio**.
 2. Geben Sie einen **Namen** ein. Der **URL-Slug** wird daraus ausgefüllt.
 3. Wählen Sie das **Projekt**, dem die App gehört. Sie benötigen Bearbeitungszugriff auf das Projekt.
 4. Wählen Sie unter **Starten mit** aus, womit die App beginnt:
@@ -35,14 +35,14 @@ Sie können auch auf der Registerkarte **Tabellen** eines Projekts beginnen. Wä
 
 ### Mit der Galerie beginnen
 
-Wählen Sie **New app** > **From gallery…**, um die Apps zu durchsuchen, die Ihr Workspace aufgelistet hat, und dann **App daraus erstellen…**, um Ihre eigene Kopie anzulegen. Oder wählen Sie **Aus der Galerie** im Dialogfeld Studio **New app**. Siehe [Die App-Galerie](/de/guides/panel-apps/gallery/), einschließlich der Frage, wie Sie Ihre eigene App auflisten.
+Wählen Sie **Neue App** > **Aus der Galerie…**, um die Apps zu durchsuchen, die Ihr Workspace aufgelistet hat, und dann **App daraus erstellen…**, um Ihre eigene Kopie anzulegen. Oder wählen Sie **Aus der Galerie** im Dialogfeld **Neue Studio-App**. Siehe [Die App-Galerie](/de/guides/panel-apps/gallery/), einschließlich der Frage, wie Sie Ihre eigene App auflisten.
 
 ## Andere Laufzeiten
 
-Studio-Apps decken die meisten Dashboards und Tools ab. Für individuelle Anforderungen veröffentlichen Sie mit einer der anderen [Laufzeiten](/de/guides/panel-apps/) über das Menü **New app**:
+Studio-Apps decken die meisten Dashboards und Tools ab. Für individuelle Anforderungen veröffentlichen Sie mit einer der anderen [Laufzeiten](/de/guides/panel-apps/) über das Menü **Neue App**:
 
-- **Browser only** – Ihr eigenes Repository; die App läuft im Browser des Betrachters.
-- **Server based** – Ihr eigenes Repository; die App läuft auf einem PlaidCloud-Server, zum Beispiel um vorhandenen Code oder Ihren eigenen Build-Prozess wiederzuverwenden.
+- **Nur Browser** – Ihr eigenes Repository; die App läuft im Browser des Betrachters.
+- **Serverbasiert** – Ihr eigenes Repository; die App läuft auf einem PlaidCloud-Server, zum Beispiel um vorhandenen Code oder Ihren eigenen Build-Prozess wiederzuverwenden.
 - **Dash-App** – veröffentlichen Sie eine Plotly-Dash-App. Siehe [Dash-Apps](/de/guides/dash-apps/).
 
 ## Eine Server-App erstellen
@@ -178,7 +178,7 @@ Ihr Repository muss über eine **Git-Verbindung** in PlaidCloud erreichbar sein.
 
 ### Die App veröffentlichen
 
-1. Wählen Sie **New app** > **Server based**, um das Dialogfeld **Server-Panel-App veröffentlichen** zu öffnen. Seine Einstellungen sind in Abschnitte gegliedert.
+1. Wählen Sie **Neue App** > **Serverbasiert**, um das Dialogfeld **Server-Panel-App veröffentlichen** zu öffnen. Seine Einstellungen sind in Abschnitte gegliedert.
 2. Unter **Verzeichniseinstellungen**:
    - **App-Name** – der Anzeigename, der in der Liste erscheint.
    - **URL-Slug** – sowohl die URL der App als auch ihr interner Name, daher muss er ein gültiges DNS-Label sein: Kleinbuchstaben, Ziffern und Bindestriche, beginnend mit einem Buchstaben, höchstens 40 Zeichen (zum Beispiel `sales-dashboard`). Das Dialogfeld prüft dies vor der Veröffentlichung.
@@ -291,7 +291,7 @@ Verwenden Sie `PLAID_PANEL_DESIGN=fast`, um dem standardmäßig bereitgestellten
 
 Eine WASM-App läuft im Browser aus einer vorab erstellten HTML-Datei.
 
-1. Wählen Sie **New app** > **Browser only**, um das Dialogfeld **Serverlose Panel-App veröffentlichen** zu öffnen.
+1. Wählen Sie **Neue App** > **Nur Browser**, um das Dialogfeld **Serverlose Panel-App veröffentlichen** zu öffnen.
 2. Geben Sie einen **App-Namen** und eine **Version** ein.
 3. Wählen Sie den **HTML-Speicherort der App** – die HTML-Datei in einem Dokumentenkonto.
 4. Geben Sie einen **URL-Slug der App** und optional eine **Notiz** ein.

@@ -81,7 +81,7 @@ Es gibt kein Feld für Server-URL, Benutzer, Passwort oder SSL/SSH – PlaidClou
 
 Lassen Sie nun eine Server-Bereitstellung auf diese Verbindung verweisen.
 
-1. Öffnen Sie **Apps** und wählen Sie **New app** > **Server based**.
+1. Öffnen Sie **Apps** und wählen Sie **Neue App** > **Serverbasiert**.
 2. Legen Sie unter **Verzeichniseinstellungen** einen **App-Namen** und einen **URL-Slug** fest – der Slug ist die URL und der interne Name der App, verwenden Sie daher Kleinbuchstaben, Ziffern und Bindestriche, beginnend mit einem Buchstaben, höchstens 40 Zeichen (zum Beispiel `hello-panel`).
 3. Unter **Git-Verbindung und Veröffentlichungsüberwachung**:
    - **Git-Verbindung** – die PlaidCloud-Git-Verbindung, die Sie in Schritt 3 erstellt haben.
@@ -94,7 +94,7 @@ Jedes Feld in diesem Dialogfeld ist unter [Eine Panel-App erstellen](/de/guides/
 
 ## 5. Die App öffnen – und bei Startproblemen die Protokolle lesen
 
-Nach der Veröffentlichung wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` (die im Stammverzeichnis des Repositorys und die in Ihrem App-Ordner, falls vorhanden) und erstellt ein Container-Image. Ihr **Status** wird in der Liste **Meine Panel-Apps** angezeigt und aktualisiert sich automatisch.
+Nach der Veröffentlichung wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` (die im Stammverzeichnis des Repositorys und die in Ihrem App-Ordner, falls vorhanden) und erstellt ein Container-Image. Ihr **Status** wird in der Liste **Apps** angezeigt und aktualisiert sich automatisch.
 
 - Wenn der Status **Bereit** ist, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufzeit fährt sie hoch (~15 Sekunden).
 - Wenn der Build fehlschlägt, öffnen Sie die App und prüfen Sie ihre Protokolle unter **Erstellen** – eine fehlende Abhängigkeit oder ein Importfehler erscheint dort. Unter [Eine Panel-App verwenden](/de/guides/panel-apps/using/) erfahren Sie, was jeder Status bedeutet, wie Sie Protokolle lesen und wie Sie eine Neuerstellung auslösen.

@@ -16,7 +16,7 @@ Al importar el kit, también se aplica el aspecto de PlaidCloud a los gráficos 
 
 ## Comenzar desde una plantilla
 
-En [Panel Studio](/es/guides/panel-apps/studio/), **New app** > **Studio** parte de una aplicación en blanco, una tabla o vista, otra aplicación Studio o una aplicación de la [galería](/es/guides/panel-apps/gallery/), sin ningún comando que ejecutar.
+En [Panel Studio](/es/guides/panel-apps/studio/), **Nueva aplicación** > **Studio** parte de una aplicación en blanco, una tabla o vista, otra aplicación Studio o una aplicación de la [galería](/es/guides/panel-apps/gallery/), sin ningún comando que ejecutar.
 
 Para una aplicación que mantiene en un repositorio git, el kit incluye un comando que escribe una aplicación inicial funcional. Ejecútelo desde cualquier carpeta y luego edite los nombres de la tabla y de las columnas:
 

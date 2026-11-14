@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/index.md
 ---
 
-Dash 앱을 사용하면 콜백, 차트, 데이터 그리드(`dash-ag-grid`, `dash-mantine-components`)를 갖춘 대화형 [Plotly Dash](https://dash.plotly.com/) 애플리케이션을 PlaidCloud에서 바로 게시할 수 있습니다. **내 Panel 앱** 화면에서 Panel 앱과 함께 관리하며, 각 행에 런타임, 빌드 상태, URL이 표시됩니다.
+Dash 앱을 사용하면 콜백, 차트, 데이터 그리드(`dash-ag-grid`, `dash-mantine-components`)를 갖춘 대화형 [Plotly Dash](https://dash.plotly.com/) 애플리케이션을 PlaidCloud에서 바로 게시할 수 있습니다. **앱** 화면에서 Panel 앱과 함께 관리하며, 각 행에 런타임, 빌드 상태, URL이 표시됩니다.
 
 ## Dash의 위치
 

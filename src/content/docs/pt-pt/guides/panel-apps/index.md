@@ -6,9 +6,9 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-As aplicações Panel permitem publicar aplicações [HoloViz Panel](https://panel.holoviz.org/) interativas — entradas parametrizadas, gráficos em direto e tabelas de dados incorporadas — diretamente a partir do PlaidCloud. Gere-as no ecrã **As minhas aplicações Panel**, que lista todas as aplicações com o respetivo tempo de execução, estado de compilação e URL.
+As aplicações Panel permitem publicar aplicações [HoloViz Panel](https://panel.holoviz.org/) interativas — entradas parametrizadas, gráficos em direto e tabelas de dados incorporadas — diretamente a partir do PlaidCloud. Gere-as no ecrã **Aplicações**, que lista todas as aplicações com o respetivo tempo de execução, estado de compilação e URL.
 
-Comece no [Panel Studio](/pt-pt/guides/panel-apps/studio/): escolha **New app** > **Studio** para criar uma aplicação no PlaidCloud a partir de uma aplicação em branco, de uma tabela, de uma vista ou da galeria, sem repositório para configurar. Para necessidades específicas, publique com um dos tempos de execução abaixo, apresentados na coluna **Tempo de execução**:
+Comece no [Panel Studio](/pt-pt/guides/panel-apps/studio/): escolha **Novo app** > **Studio** para criar uma aplicação no PlaidCloud a partir de uma aplicação em branco, de uma tabela, de uma vista ou da galeria, sem repositório para configurar. Para necessidades específicas, publique com um dos tempos de execução abaixo, apresentados na coluna **Tempo de execução**:
 
 - **WASM** — uma aplicação estática que é executada inteiramente no navegador (Pyodide). Publica um ficheiro HTML pré-compilado a partir de uma conta de documentos. Não há processo de servidor nem nada para escalar; é disponibilizada imediatamente.
 - **Servidor** — uma aplicação criada a partir de um repositório git e executada no servidor. Ao publicar, o PlaidCloud compila o seu repositório num contentor que fica inativo com zero réplicas, acorda no primeiro pedido ao respetivo URL, disponibiliza a aplicação (incluindo atualizações em direto) e volta a escalar para zero quando está inativo. É a escolha certa para aplicações que precisam de um tempo de execução Python, de computação no servidor ou de bibliotecas que não podem ser executadas no navegador.

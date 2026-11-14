@@ -16,7 +16,7 @@ Importar o kit também aplica o aspeto do PlaidCloud aos gráficos Plotly e Matp
 
 ## Começar a partir de um modelo
 
-No [Panel Studio](/pt-pt/guides/panel-apps/studio/), **New app** > **Studio** começa a partir de uma aplicação em branco, de uma tabela ou vista, de outra aplicação Studio ou de uma aplicação da [galeria](/pt-pt/guides/panel-apps/gallery/), sem qualquer comando para executar.
+No [Panel Studio](/pt-pt/guides/panel-apps/studio/), **Novo app** > **Studio** começa a partir de uma aplicação em branco, de uma tabela ou vista, de outra aplicação Studio ou de uma aplicação da [galeria](/pt-pt/guides/panel-apps/gallery/), sem qualquer comando para executar.
 
 Para uma aplicação que mantém num repositório git, o kit inclui um comando que escreve uma aplicação inicial funcional. Execute-o a partir de qualquer pasta e depois edite os nomes da tabela e das colunas:
 

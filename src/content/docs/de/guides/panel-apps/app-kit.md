@@ -16,7 +16,7 @@ Das Importieren des Kits wendet den PlaidCloud-Look auch auf Plotly- und Matplot
 
 ## Mit einer Vorlage beginnen
 
-In [Panel Studio](/de/guides/panel-apps/studio/) startet **New app** > **Studio** mit einer leeren App, einer Tabelle oder Ansicht, einer anderen Studio-App oder einer App in der [Galerie](/de/guides/panel-apps/gallery/), ohne dass ein Befehl ausgeführt werden muss.
+In [Panel Studio](/de/guides/panel-apps/studio/) startet **Neue App** > **Studio** mit einer leeren App, einer Tabelle oder Ansicht, einer anderen Studio-App oder einer App in der [Galerie](/de/guides/panel-apps/gallery/), ohne dass ein Befehl ausgeführt werden muss.
 
 Für eine App, die Sie in einem Git-Repository halten, enthält das Kit einen Befehl, der eine funktionierende Starter-App schreibt. Führen Sie ihn in einem beliebigen Ordner aus und bearbeiten Sie dann die Tabellen- und Spaltennamen:
 

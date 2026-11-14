@@ -259,7 +259,7 @@ Seleccione una tabla o una vista y elija **Crear aplicación Panel** en el menú
 
 La lista **Tablas** muestra las columnas **Datos actuales**, **Historial**, **Días de viaje en el tiempo** y **Nota** junto al tamaño de cada tabla. **Días de viaje en el tiempo** es el valor propio de la tabla; **1** significa que usa el valor predeterminado del proyecto. La barra de estado situada debajo de la lista muestra el total del proyecto: cuánto almacena, y cuánto de eso son datos actuales y cuánto es historial. Los tamaños marcados como **Estimado** provienen de la forma de la tabla hasta que PlaidCloud la mide.
 
-Elija **Almacenamiento** en la barra de herramientas para abrir la ventana **Almacenamiento** del proyecto, con sugerencias para liberar espacio y los ajustes de time travel. Consulte [Administración del almacenamiento](/es/guides/projects/managing-storage/#la-ventana-almacenamiento-de-un-proyecto).
+Elija **Almacenamiento** en el menú **Acciones** para abrir la ventana **Almacenamiento** del proyecto, con sugerencias para liberar espacio y los ajustes de time travel. Consulte [Administración del almacenamiento](/es/guides/projects/managing-storage/#la-ventana-almacenamiento-de-un-proyecto).
 
 
 ## Crear un editor de datos a partir de una tabla

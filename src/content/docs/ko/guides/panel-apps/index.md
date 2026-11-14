@@ -6,9 +6,9 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Panel 앱을 사용하면 매개변수화된 입력, 라이브 차트, 포함된 데이터 테이블이 있는 대화형 [HoloViz Panel](https://panel.holoviz.org/) 애플리케이션을 PlaidCloud에서 바로 게시할 수 있습니다. **내 Panel 앱** 화면에서 관리하며, 이 화면에는 모든 앱이 런타임, 빌드 상태, URL과 함께 나열됩니다.
+Panel 앱을 사용하면 매개변수화된 입력, 라이브 차트, 포함된 데이터 테이블이 있는 대화형 [HoloViz Panel](https://panel.holoviz.org/) 애플리케이션을 PlaidCloud에서 바로 게시할 수 있습니다. **앱** 화면에서 관리하며, 이 화면에는 모든 앱이 런타임, 빌드 상태, URL과 함께 나열됩니다.
 
-[Panel Studio](/ko/guides/panel-apps/studio/)에서 시작하십시오. **New app** > **Studio**를 선택하면 리포지토리를 설정하지 않고도 빈 앱, 테이블, 뷰 또는 갤러리에서 PlaidCloud 안에서 앱을 빌드할 수 있습니다. 맞춤형 요구 사항이 있는 경우 **런타임** 열에 표시되는 아래 런타임 중 하나로 게시하십시오.
+[Panel Studio](/ko/guides/panel-apps/studio/)에서 시작하십시오. **새 앱** > **Studio**를 선택하면 리포지토리를 설정하지 않고도 빈 앱, 테이블, 뷰 또는 갤러리에서 PlaidCloud 안에서 앱을 빌드할 수 있습니다. 맞춤형 요구 사항이 있는 경우 **런타임** 열에 표시되는 아래 런타임 중 하나로 게시하십시오.
 
 - **WASM** — 브라우저에서 완전히 실행되는 정적 앱(Pyodide)입니다. 문서 계정에서 미리 빌드된 HTML 파일을 게시합니다. 서버 프로세스가 없고 확장할 것도 없으며, 즉시 제공됩니다.
 - **서버** — git 리포지토리에서 빌드하여 서버 측에서 실행되는 앱입니다. 게시하면 PlaidCloud가 리포지토리를 컨테이너로 빌드하며, 이 컨테이너는 복제본 0개로 유휴 상태에 있다가 URL에 대한 첫 요청에서 깨어나고, 서비스(라이브 업데이트 포함)를 제공하며, 유휴 상태가 되면 다시 0으로 축소됩니다. Python 런타임, 서버 측 계산 또는 브라우저에서 실행할 수 없는 라이브러리가 필요한 앱에 적합한 선택입니다.

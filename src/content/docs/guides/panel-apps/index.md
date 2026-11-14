@@ -5,7 +5,7 @@ sidebar:
   label: Panel Apps
 ---
 
-Panel Apps let you publish interactive [HoloViz Panel](https://panel.holoviz.org/) applications — parameterized inputs, live charts, and embedded data tables — directly from PlaidCloud. You manage them from the **My Panel Apps** screen, which lists every app alongside its runtime, build status, and URL.
+Panel Apps let you publish interactive [HoloViz Panel](https://panel.holoviz.org/) applications — parameterized inputs, live charts, and embedded data tables — directly from PlaidCloud. You manage them from the **Apps** screen, which lists every app alongside its runtime, build status, and URL.
 
 Start in [Panel Studio](/guides/panel-apps/studio/): choose **New app** > **Studio** to build an app in PlaidCloud from a blank app, a table, a view or the gallery, with no repository to set up. For bespoke needs, publish with one of the runtimes below, shown in the **Runtime** column:
 

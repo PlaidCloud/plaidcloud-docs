@@ -81,7 +81,7 @@ No hay ningún campo de URL del servidor, usuario, contraseña ni SSL/SSH: Plaid
 
 Ahora apunte una implementación de servidor a esa conexión.
 
-1. Abra **Aplicaciones** y elija **New app** > **Server based**.
+1. Abra **Aplicaciones** y elija **Nueva aplicación** > **Server based**.
 2. En **Configuración del directorio**, establezca un **Nombre de la aplicación** y un **Slug de URL**: el slug es la URL y el nombre interno de la aplicación, así que use letras minúsculas, dígitos y guiones, empezando por una letra, con 40 caracteres o menos (por ejemplo, `hello-panel`).
 3. En **Conexión de Git y observador de publicación**:
    - **Conexión de Git**: la conexión de PlaidCloud Git que creó en el paso 3.
@@ -94,7 +94,7 @@ Todos los campos de este cuadro de diálogo se describen en [Creación de una ap
 
 ## 5. Abrir la aplicación y leer los registros si no se inicia
 
-Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, instala su `requirements.txt` (el de la raíz del repositorio y el de la carpeta de su aplicación, si existen) y crea una imagen de contenedor. Su **Estado** aparece en la lista **Mis aplicaciones Panel** y se actualiza automáticamente.
+Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, instala su `requirements.txt` (el de la raíz del repositorio y el de la carpeta de su aplicación, si existen) y crea una imagen de contenedor. Su **Estado** aparece en la lista **Aplicaciones** y se actualiza automáticamente.
 
 - Cuando el estado es **Lista**, abra la aplicación en `https://<your-tenant-host>/serve/<slug>/`. La primera solicitud después de un período de inactividad la reactiva (unos 15 segundos).
 - Si la compilación falla, abra la aplicación y revise sus registros de **Build**: una dependencia que falta o un error de importación aparecen allí. Consulte [Uso de una aplicación de Panel](/es/guides/panel-apps/using/) para saber qué significa cada estado, cómo leer los registros y cómo activar una recompilación.

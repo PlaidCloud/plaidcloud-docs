@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Panel 应用可让您直接从 PlaidCloud 发布交互式 [HoloViz Panel](https://panel.holoviz.org/) 应用，包括参数化输入、实时图表和嵌入式数据表。您可以在**我的 Panel 应用**屏幕中管理它们，该屏幕会列出每个应用及其运行时、构建状态和 URL。
+Panel 应用可让您直接从 PlaidCloud 发布交互式 [HoloViz Panel](https://panel.holoviz.org/) 应用，包括参数化输入、实时图表和嵌入式数据表。您可以在**应用**屏幕中管理它们，该屏幕会列出每个应用及其运行时、构建状态和 URL。
 
 从 [Panel Studio](/zh-cn/guides/panel-apps/studio/) 开始：选择**新建应用** > **Studio**，即可在 PlaidCloud 中通过空白应用、表、视图或应用库构建应用，无需设置任何仓库。对于定制需求，请使用下面的某一种运行时发布，它们显示在**运行时**列中：
 

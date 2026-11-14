@@ -98,7 +98,7 @@ Nie ma pól Server URL, User, Password ani SSL/SSH — PlaidCloud Git jest zarz�
 
 Teraz wskaż wdrożeniu Dash to połączenie.
 
-1. Otwórz **Moje aplikacje Panel** i kliknij **Nowa aplikacja Dash**.
+1. Otwórz **Aplikacje** i wybierz **Nowa aplikacja** > **Aplikacja Dash**.
 2. W sekcji **Ustawienia katalogu** ustaw **Nazwę aplikacji** i **Slug URL** — slug to adres URL i wewnętrzna nazwa aplikacji, więc użyj małych liter, cyfr i myślników, zaczynając od litery, maksymalnie 40 znaków (na przykład `hello-dash`). Opcjonalna **Notatka** opisuje aplikację.
 3. W sekcji **Połączenie Git i obserwator publikacji**:
    - **Połączenie Git** — połączenie PlaidCloud Git utworzone w kroku 3.
@@ -110,7 +110,7 @@ Teraz wskaż wdrożeniu Dash to połączenie.
 
 ## 5. Otwórz aplikację — a jeśli się nie uruchomi, przejrzyj dzienniki
 
-Po opublikowaniu aplikacja jest **budowana**: PlaidCloud klonuje gałąź, instaluje pakiety z pliku `requirements.txt` i buduje obraz kontenera na podstawie obrazu `platform-dash-base`. Jej **Stan** jest widoczny na liście **Moje aplikacje Panel** i aktualizuje się automatycznie.
+Po opublikowaniu aplikacja jest **budowana**: PlaidCloud klonuje gałąź, instaluje pakiety z pliku `requirements.txt` i buduje obraz kontenera na podstawie obrazu `platform-dash-base`. Jej **Stan** jest widoczny na liście **Aplikacje** i aktualizuje się automatycznie.
 
 - Gdy Stan to **Gotowe**, otwórz aplikację pod adresem `https://<your-tenant-host>/serve/<slug>/`. Pierwsze żądanie po okresie bezczynności uruchamia aplikację, wyświetlając przy tym krótki ekran ładowania PlaidCloud.
 - Jeśli budowanie się nie powiedzie, otwórz aplikację i sprawdź jej dzienniki **Zbuduj** — brakująca zależność lub błąd importu będą tam widoczne. W sekcji [Korzystanie z aplikacji Dash](/pl/guides/dash-apps/using/) dowiesz się, co oznacza każdy stan, jak czytać dzienniki i jak wywołać ponowne budowanie.

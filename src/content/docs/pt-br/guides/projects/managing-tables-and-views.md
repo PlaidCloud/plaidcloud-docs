@@ -251,7 +251,7 @@ O número de linhas, colunas e o tamanho dos dados de cada tabela são mostrados
 ## Criar um aplicativo Panel a partir de uma tabela
 
 
-Selecione uma tabela ou visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de clique com o botão direito. A caixa de diálogo **Novo aplicativo Studio** abre com o projeto e a tabela já escolhidos. O aplicativo recebe o nome da tabela; altere-o se quiser, depois escolha **Criar**, e o Panel Studio o abre com o Weave pronto para criar a primeira página. O comando está disponível quando você seleciona uma única tabela ou visão, tem acesso de edição ao projeto e o projeto não é somente leitura. Consulte [Criar um aplicativo Panel](/pt-br/guides/panel-apps/creating/#começar-a-partir-de-uma-tabela).
+Selecione uma tabela ou visão e escolha **Criar aplicativo Panel** no menu **Novo** ou no menu de clique com o botão direito. A caixa de diálogo **Nova aplicação Studio** abre com o projeto e a tabela já escolhidos. O aplicativo recebe o nome da tabela; altere-o se quiser, depois escolha **Criar**, e o Panel Studio o abre com o Weave pronto para criar a primeira página. O comando está disponível quando você seleciona uma única tabela ou visão, tem acesso de edição ao projeto e o projeto não é somente leitura. Consulte [Criar um aplicativo Panel](/pt-br/guides/panel-apps/creating/#começar-a-partir-de-uma-tabela).
 
 
 ## Ver o que as tabelas armazenam
@@ -259,7 +259,7 @@ Selecione uma tabela ou visão e escolha **Criar aplicativo Panel** no menu **No
 
 A lista **Tabelas** mostra as colunas **Dados atuais**, **Histórico**, **Dias de Time Travel** e **Observação** ao lado do tamanho de cada tabela. **Dias de Time Travel** é a configuração da própria tabela; **1** significa que ela usa o padrão do projeto. A barra de status abaixo da lista mostra o total do projeto: quanto ele armazena e quanto disso são dados atuais e quanto é histórico. Os tamanhos marcados como **Estimado** vêm do formato da tabela até que o PlaidCloud o meça.
 
-Escolha **Armazenamento** na barra de ferramentas para abrir a janela **Armazenamento** do projeto, com sugestões para liberar espaço e as configurações de time travel. Consulte [Gerenciar o armazenamento](/pt-br/guides/projects/managing-storage/#a-janela-armazenamento-de-um-projeto).
+Escolha **Armazenamento** no menu **Ações** para abrir a janela **Armazenamento** do projeto, com sugestões para liberar espaço e as configurações de time travel. Consulte [Gerenciar o armazenamento](/pt-br/guides/projects/managing-storage/#a-janela-armazenamento-de-um-projeto).
 
 
 ## Criar um editor de dados a partir de uma tabela

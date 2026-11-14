@@ -10,7 +10,7 @@ Um **alerta** monitora um número dos dados de um aplicativo Panel e avisa você
 
 ## Abrir alertas e resumos
 
-1. Em **Meus aplicativos Panel** ou no quadro **Início** de um projeto, escolha **Open in Studio** no aplicativo.
+1. Em **Aplicações** ou no quadro **Início** de um projeto, escolha **Abrir no Studio** no aplicativo.
 2. Escolha **Alerts & Digests**.
 
 A janela tem uma guia **Alerts** e uma guia **Digests**. O aplicativo precisa estar atribuído a um projeto, e as tabelas dele são as desse projeto.

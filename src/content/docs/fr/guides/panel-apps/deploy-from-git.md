@@ -94,7 +94,7 @@ Chaque champ de cette boîte de dialogue est décrit dans [Créer une applicatio
 
 ## 5. Ouvrir l'application, et lire les journaux si elle ne démarre pas
 
-Après la publication, l'application est **construite** : PlaidCloud clone la branche, installe votre `requirements.txt` (celui de la racine du dépôt et celui du dossier de votre application, s'ils existent) et construit une image de conteneur. Son **Statut** s'affiche dans la liste **Mes applications Panel** et se met à jour automatiquement.
+Après la publication, l'application est **construite** : PlaidCloud clone la branche, installe votre `requirements.txt` (celui de la racine du dépôt et celui du dossier de votre application, s'ils existent) et construit une image de conteneur. Son **Statut** s'affiche dans la liste **Applications** et se met à jour automatiquement.
 
 - Lorsque le statut est **Prêt**, ouvrez l'application à l'adresse `https://<your-tenant-host>/serve/<slug>/`. La première requête après une période d'inactivité la relance (~15 secondes).
 - Si la construction échoue, ouvrez l'application et consultez ses journaux de **construction** : une dépendance manquante ou une erreur d'importation y apparaît. Voir [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour la signification de chaque statut, la façon de lire les journaux et celle de déclencher une reconstruction.

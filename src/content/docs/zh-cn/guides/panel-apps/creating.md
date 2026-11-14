@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 创建 Studio 应用
 
-打开**应用**，再打开**新建应用**菜单。在 **Panel 应用**标题下，**Studio** 会在 PlaidCloud 的编辑器中以标准布局编写并发布应用，并为您保留代码。您也可以在项目**主页**选项卡的 **Panel 应用**框中选择**新建 Studio 应用**，或者[从表开始](#从表开始)。
+打开**应用**，再打开**新建应用**菜单。在 **Panel 应用**标题下，**Studio** 会在 PlaidCloud 的编辑器中以标准布局编写并发布应用，并为您保留代码。您也可以在项目**主页**选项卡**应用与品牌设置**卡片的 **Studio 应用**行中选择**新建 Studio 应用**，或者[从表开始](#从表开始)。
 
 1. 选择**新建应用** > **Studio**。
 2. 输入**名称**。**URL 别名**会根据它自动填写。
@@ -35,7 +35,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### 从应用库开始
 
-选择**新建应用** > **从应用库…**，浏览您的工作区已列出的应用，然后选择**从此创建应用…** 来创建您自己的副本。或者在 Studio **新建应用**对话框中选择**来自应用库**。请参阅[应用库](/zh-cn/guides/panel-apps/gallery/)，包括如何列出您自己的应用。
+选择**新建应用** > **从应用库…**，浏览您的工作区已列出的应用，然后选择**从此创建应用…** 来创建您自己的副本。或者在**新建 Studio 应用**对话框中选择**来自应用库**。请参阅[应用库](/zh-cn/guides/panel-apps/gallery/)，包括如何列出您自己的应用。
 
 ## 其他运行时
 

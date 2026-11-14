@@ -16,7 +16,7 @@ import plaidcloud_panel as pcp
 
 ## 템플릿으로 시작
 
-[Panel Studio](/ko/guides/panel-apps/studio/)에서 **New app** > **Studio**를 선택하면 실행할 명령 없이 빈 앱, 테이블 또는 뷰, 다른 Studio 앱, [갤러리](/ko/guides/panel-apps/gallery/)의 앱 중에서 시작할 수 있습니다.
+[Panel Studio](/ko/guides/panel-apps/studio/)에서 **새 앱** > **Studio**를 선택하면 실행할 명령 없이 빈 앱, 테이블 또는 뷰, 다른 Studio 앱, [갤러리](/ko/guides/panel-apps/gallery/)의 앱 중에서 시작할 수 있습니다.
 
 git 리포지토리에 보관하는 앱의 경우, 키트에는 작동하는 시작 앱을 작성하는 명령이 포함되어 있습니다. 아무 폴더에서나 실행한 다음 테이블 이름과 열 이름을 편집하십시오.
 

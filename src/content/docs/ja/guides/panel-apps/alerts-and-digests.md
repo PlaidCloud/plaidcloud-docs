@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## アラートとダイジェストを開く
 
-1. **マイPanelアプリ**またはプロジェクトの**ホーム**ボードで、アプリの**Open in Studio**を選択します。
+1. **アプリ**またはプロジェクトの**ホーム**ボードで、アプリの**Open in Studio**を選択します。
 2. **Alerts & Digests**を選択します。
 
 ウィンドウには**Alerts**タブと**Digests**タブがあります。アプリはプロジェクトに割り当てられている必要があり、使えるテーブルはそのプロジェクト内のものです。

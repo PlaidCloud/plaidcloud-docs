@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Les applications Panel vous permettent de publier des applications [HoloViz Panel](https://panel.holoviz.org/) interactives (saisies paramétrées, graphiques en direct et tables de données intégrées) directement depuis PlaidCloud. Vous les gérez depuis l'écran **Mes applications Panel**, qui liste chaque application avec son environnement d'exécution, son état de construction et son URL.
+Les applications Panel vous permettent de publier des applications [HoloViz Panel](https://panel.holoviz.org/) interactives (saisies paramétrées, graphiques en direct et tables de données intégrées) directement depuis PlaidCloud. Vous les gérez depuis l'écran **Applications**, qui liste chaque application avec son environnement d'exécution, son état de construction et son URL.
 
 Commencez dans [Panel Studio](/fr/guides/panel-apps/studio/) : choisissez **Nouvelle application** > **Studio** pour créer une application dans PlaidCloud à partir d'une application vierge, d'une table, d'une vue ou de la galerie, sans dépôt à configurer. Pour des besoins sur mesure, publiez avec l'un des environnements d'exécution ci-dessous, indiqués dans la colonne **Exécution** :
 

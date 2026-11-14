@@ -11,9 +11,9 @@ Panel Studio es el editor de aplicaciones Panel dentro de PlaidCloud. Muestra lo
 ## Abrir Panel Studio
 
 - En el tablero **Inicio** de un proyecto, elija **Abrir en Studio** en una aplicación Panel.
-- En **Mis aplicaciones Panel**, elija **Studio** en la fila de una aplicación.
+- En **Aplicaciones**, elija **Studio** en la fila de una aplicación.
 
-Para iniciar una aplicación nueva, elija **New app** > **Studio**. También está en el cuadro **Aplicaciones Panel** de la pestaña **Inicio** de un proyecto. Para crear una aplicación a partir de una tabla, selecciónela en la pestaña **Tablas** del proyecto y elija **Crear aplicación Panel**.
+Para iniciar una aplicación nueva, elija **Nueva aplicación** > **Studio**. También está en la fila **Aplicaciones Studio** de la tarjeta **Aplicaciones y marca** de la pestaña **Inicio** de un proyecto. Para crear una aplicación a partir de una tabla, selecciónela en la pestaña **Tablas** del proyecto y elija **Crear aplicación Panel**.
 
 ## Crear una aplicación
 
@@ -126,7 +126,7 @@ Elija **Anclar a Inicio** para agregar la aplicación al tablero **Inicio** del 
 
 ## Eliminar una aplicación
 
-Eliminar una aplicación Panel le pide que lo confirme antes. En **Mis aplicaciones Panel**, use el icono **menos** en la fila de la aplicación. Anular la publicación también le pide confirmación.
+Eliminar una aplicación Panel le pide que lo confirme antes. En **Aplicaciones**, use el icono **menos** en la fila de la aplicación. Anular la publicación también le pide confirmación.
 
 ## Pasos siguientes
 

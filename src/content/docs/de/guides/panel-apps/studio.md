@@ -11,9 +11,9 @@ Panel Studio ist der Editor für Panel-Apps in PlaidCloud. Er zeigt die Dateien 
 ## Panel Studio öffnen
 
 - Wählen Sie auf der **Startseite** eines Projekts bei einer Panel-App **In Studio öffnen**.
-- Wählen Sie unter **Meine Panel-Apps** in der Zeile einer App **Studio**.
+- Wählen Sie unter **Apps** in der Zeile einer App **Studio**.
 
-Um eine neue App zu starten, wählen Sie **Neue App** > **Studio**. Die Option finden Sie auch im Feld **Panel-Apps** auf der Registerkarte **Startseite** eines Projekts. Um eine App auf Basis einer Tabelle zu erstellen, wählen Sie die Tabelle auf der Registerkarte **Tabellen** des Projekts aus und wählen Sie **Panel-App erstellen**.
+Um eine neue App zu starten, wählen Sie **Neue App** > **Studio**. Die Option finden Sie auch in der Zeile **Studio-Apps** der Karte **Apps & Branding** auf der Registerkarte **Startseite** eines Projekts. Um eine App auf Basis einer Tabelle zu erstellen, wählen Sie die Tabelle auf der Registerkarte **Tabellen** des Projekts aus und wählen Sie **Panel-App erstellen**.
 
 ## App erstellen
 
@@ -126,7 +126,7 @@ Wählen Sie **An Startseite anheften**, um die App zur **Startseite** des Projek
 
 ## App löschen
 
-Beim Löschen einer Panel-App werden Sie zuvor um Bestätigung gebeten. Verwenden Sie unter **Meine Panel-Apps** das **Minus**-Symbol in der Zeile der App. Auch das Aufheben der Veröffentlichung erfordert eine Bestätigung.
+Beim Löschen einer Panel-App werden Sie zuvor um Bestätigung gebeten. Verwenden Sie unter **Apps** das **Minus**-Symbol in der Zeile der App. Auch das Aufheben der Veröffentlichung erfordert eine Bestätigung.
 
 ## Nächste Schritte
 

@@ -1,12 +1,12 @@
 ---
 title: Utiliser une application Panel
-description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux et les métriques d'utilisation, modifiez et supprimez les applications HoloViz Panel publiées depuis l'écran Mes applications Panel de PlaidCloud.
+description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux et les métriques d'utilisation, modifiez et supprimez les applications HoloViz Panel publiées depuis l'écran Applications de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Chaque application publiée apparaît sur l'écran **Mes applications Panel** avec son **Exécution**, son **Statut**, son **Slug** et ses horodatages. La colonne la plus à gauche ouvre l'application ; les autres icônes de la ligne vous permettent de la verrouiller contre les modifications accidentelles, de la modifier, de la supprimer et — pour les applications serveur — de la régénérer, d'afficher ses journaux et d'afficher ses métriques d'utilisation. L'icône d'ouverture reflète l'exécution de l'application, ce qui permet de distinguer au premier coup d'œil les applications WASM des applications serveur.
+Chaque application publiée apparaît sur l'écran **Applications** avec son **Exécution**, son **Statut**, son **Slug** et ses horodatages. La colonne la plus à gauche ouvre l'application ; les autres icônes de la ligne vous permettent de la verrouiller contre les modifications accidentelles, de la modifier, de la supprimer et — pour les applications serveur — de la régénérer, d'afficher ses journaux et d'afficher ses métriques d'utilisation. L'icône d'ouverture reflète l'exécution de l'application, ce qui permet de distinguer au premier coup d'œil les applications WASM des applications serveur.
 
 ## Statut de génération (applications serveur)
 

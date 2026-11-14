@@ -1,12 +1,12 @@
 ---
 title: 使用 Dash 应用
-description: 在 PlaidCloud 的“我的 Panel 应用”屏幕中跟踪构建状态，并打开、重新构建、锁定、查看日志、编辑和移除已发布的 Plotly Dash 应用。
+description: 在 PlaidCloud 的“应用”屏幕中跟踪构建状态，并打开、重新构建、锁定、查看日志、编辑和移除已发布的 Plotly Dash 应用。
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Dash 应用与 WASM 和服务器 Panel 应用显示在同一个**我的 Panel 应用**屏幕中，其**运行时**列显示 **Dash**，并带有各自的图标，便于区分。本页内容与服务器应用的[使用 Panel 应用](/zh-cn/guides/panel-apps/using/)基本一致，只有一处例外（见下文）：Dash 应用暂不提供 **Usage Metrics**。
+Dash 应用与 WASM 和服务器 Panel 应用显示在同一个**应用**屏幕中，其**运行时**列显示 **Dash**，并带有各自的图标，便于区分。本页内容与服务器应用的[使用 Panel 应用](/zh-cn/guides/panel-apps/using/)基本一致，只有一处例外（见下文）：Dash 应用暂不提供 **Usage Metrics**。
 
 ## 构建状态
 

@@ -98,7 +98,7 @@ Es gibt kein Feld für Server-URL, Benutzer, Passwort oder SSL/SSH – PlaidClou
 
 Lassen Sie nun eine Dash-Bereitstellung auf diese Verbindung verweisen.
 
-1. Öffnen Sie **Meine Panel-Apps** und klicken Sie auf **Neue Dash-App**.
+1. Öffnen Sie **Apps** und wählen Sie **Neue App** > **Dash-App**.
 2. Legen Sie unter **Verzeichniseinstellungen** einen **App-Name** und einen **URL-Slug** fest – der Slug ist die URL und der interne Name der App. Verwenden Sie daher Kleinbuchstaben, Ziffern und Bindestriche, beginnen Sie mit einem Buchstaben und verwenden Sie höchstens 40 Zeichen (zum Beispiel `hello-dash`). Eine optionale **Notiz** beschreibt die App.
 3. Unter **Git-Verbindung und Veröffentlichungsüberwachung**:
    - **Git-Verbindung** – die PlaidCloud-Git-Verbindung, die Sie in Schritt 3 erstellt haben.
@@ -110,7 +110,7 @@ Lassen Sie nun eine Dash-Bereitstellung auf diese Verbindung verweisen.
 
 ## 5. Die App öffnen – und bei Startproblemen die Protokolle lesen
 
-Nach dem Veröffentlichen wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` und erstellt aus dem Image `platform-dash-base` ein Container-Image. Der **Status** erscheint in der Liste **Meine Panel-Apps** und wird automatisch aktualisiert.
+Nach dem Veröffentlichen wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` und erstellt aus dem Image `platform-dash-base` ein Container-Image. Der **Status** erscheint in der Liste **Apps** und wird automatisch aktualisiert.
 
 - Wenn der Status **Bereit** lautet, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufzeit startet die App und zeigt dabei kurz einen PlaidCloud-Ladebildschirm.
 - Wenn die Erstellung fehlschlägt, öffnen Sie die App und prüfen Sie die **Erstellen**-Protokolle – eine fehlende Abhängigkeit oder ein Importfehler wird dort angezeigt. Unter [Eine Dash-App verwenden](/de/guides/dash-apps/using/) erfahren Sie, was die einzelnen Status bedeuten, wie Sie Protokolle lesen und wie Sie eine Neuerstellung auslösen.

@@ -10,12 +10,12 @@ Die App-Galerie ist das Regal, in dem Ihr Workspace fertige Panel-Apps bereithä
 
 ## Eine App aus der Galerie erstellen
 
-1. Wählen Sie in **Apps** **New app** > **Studio**.
+1. Wählen Sie in **Apps** **Neue App** > **Studio**.
 2. Wählen Sie unter **Starten mit** **Aus der Galerie**.
 3. Wählen Sie unter **Galerie-App** eine App aus. Ihre Beschreibung erscheint unter der Auswahl.
 4. Benennen Sie Ihre App, wählen Sie ihr **Projekt** und wählen Sie **Erstellen**.
 
-Sie können auch **New app** > **From gallery…** wählen, um die Galerie für sich allein zu durchsuchen. Sie listet jede App mit ihrem Namen, ihrem Projekt und ihrer Beschreibung auf, dazu **App daraus erstellen…**. Die Galerie listet nur Apps in Projekten auf, die Sie ansehen können.
+Sie können auch **Neue App** > **Aus der Galerie…** wählen, um die Galerie für sich allein zu durchsuchen. Sie listet jede App mit ihrem Namen, ihrem Projekt und ihrer Beschreibung auf, dazu **App daraus erstellen…**. Die Galerie listet nur Apps in Projekten auf, die Sie ansehen können.
 
 Die neue App ist eine Kopie der Dateien der aufgelisteten App. Ihre Kopie und das Original sind getrennt: Eine Änderung an einer ändert nie die andere.
 

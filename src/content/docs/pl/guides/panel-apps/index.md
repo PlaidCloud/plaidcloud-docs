@@ -6,9 +6,9 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Aplikacje Panel pozwalają publikować interaktywne aplikacje [HoloViz Panel](https://panel.holoviz.org/) — z parametryzowanymi danymi wejściowymi, wykresami na żywo i osadzonymi tabelami danych — bezpośrednio z PlaidCloud. Zarządzasz nimi z ekranu **Moje aplikacje Panel**, który wyświetla każdą aplikację wraz z jej środowiskiem uruchomieniowym, stanem kompilacji i adresem URL.
+Aplikacje Panel pozwalają publikować interaktywne aplikacje [HoloViz Panel](https://panel.holoviz.org/) — z parametryzowanymi danymi wejściowymi, wykresami na żywo i osadzonymi tabelami danych — bezpośrednio z PlaidCloud. Zarządzasz nimi z ekranu **Aplikacje**, który wyświetla każdą aplikację wraz z jej środowiskiem uruchomieniowym, stanem kompilacji i adresem URL.
 
-Zacznij od [Panel Studio](/pl/guides/panel-apps/studio/): wybierz **New app** > **Studio**, aby zbudować aplikację w PlaidCloud z pustej aplikacji, tabeli, widoku lub galerii, bez konfigurowania repozytorium. W indywidualnych potrzebach opublikuj za pomocą jednego z poniższych środowisk uruchomieniowych, pokazanych w kolumnie **Środowisko uruchomieniowe**:
+Zacznij od [Panel Studio](/pl/guides/panel-apps/studio/): wybierz **Nowa aplikacja** > **Studio**, aby zbudować aplikację w PlaidCloud z pustej aplikacji, tabeli, widoku lub galerii, bez konfigurowania repozytorium. W indywidualnych potrzebach opublikuj za pomocą jednego z poniższych środowisk uruchomieniowych, pokazanych w kolumnie **Środowisko uruchomieniowe**:
 
 - **WASM** — statyczna aplikacja działająca w całości w przeglądarce (Pyodide). Publikujesz gotowy plik HTML z konta dokumentów. Nie ma procesu serwerowego i nic do skalowania; jest udostępniana natychmiast.
 - **Serwer** — aplikacja budowana z repozytorium git i uruchamiana po stronie serwera. Przy publikacji PlaidCloud buduje Twoje repozytorium w kontener, który pozostaje w stanie bezczynności z zerem replik, budzi się przy pierwszym żądaniu do swojego adresu URL, obsługuje ruch (w tym aktualizacje na żywo) i skaluje się z powrotem do zera, gdy jest bezczynny. To właściwy wybór dla aplikacji, które wymagają środowiska Python, obliczeń po stronie serwera lub bibliotek, które nie mogą działać w przeglądarce.

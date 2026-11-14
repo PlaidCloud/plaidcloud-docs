@@ -10,12 +10,12 @@ Galeria aplikacji to półka, na której Twój obszar roboczy przechowuje gotowe
 
 ## Tworzenie aplikacji z galerii
 
-1. W **Aplikacje** wybierz **New app** > **Studio**.
+1. W **Aplikacje** wybierz **Nowa aplikacja** > **Studio**.
 2. W polu **Zacznij od** wybierz **Z galerii**.
 3. Wybierz aplikację w polu **Aplikacja z galerii**. Jej opis jest wyświetlany pod selektorem.
 4. Nadaj aplikacji nazwę, wybierz jej **Projekt** i wybierz **Utwórz**.
 
-Możesz też wybrać **New app** > **From gallery…**, aby przeglądać samą galerię. Wyświetla każdą aplikację z jej nazwą, projektem i opisem oraz przyciskiem **Utwórz aplikację na tej podstawie…**. Galeria wyświetla tylko aplikacje w projektach, które możesz wyświetlać.
+Możesz też wybrać **Nowa aplikacja** > **Z galerii…**, aby przeglądać samą galerię. Wyświetla każdą aplikację z jej nazwą, projektem i opisem oraz przyciskiem **Utwórz aplikację na tej podstawie…**. Galeria wyświetla tylko aplikacje w projektach, które możesz wyświetlać.
 
 Nowa aplikacja jest kopią plików wystawionej aplikacji. Twoja kopia i oryginał są odrębne: zmiana jednej nigdy nie zmienia drugiej.
 

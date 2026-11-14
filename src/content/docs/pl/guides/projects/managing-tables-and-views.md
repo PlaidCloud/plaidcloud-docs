@@ -259,7 +259,7 @@ Zaznacz tabelę lub widok i wybierz **Utwórz aplikację Panel** z menu **Nowy**
 
 Lista **Tabele** pokazuje kolumny **Dane bieżące**, **Historia**, **Dni Time Travel** i **Uwaga** obok rozmiaru każdej tabeli. **Dni Time Travel** to własne ustawienie tabeli; **1** oznacza, że używa ustawienia domyślnego projektu. Pasek stanu pod listą podaje sumę dla projektu: ile przechowuje, w tym ile to dane bieżące, a ile historia. Rozmiary oznaczone jako **Szacunkowo** pochodzą z kształtu tabeli, dopóki PlaidCloud ich nie zmierzy.
 
-Wybierz **Magazyn** na pasku narzędzi, aby otworzyć okno **Magazyn** projektu z sugestiami zwolnienia miejsca i ustawieniami time travel. Zobacz [Zarządzanie magazynem](/pl/guides/projects/managing-storage/#okno-magazyn-dla-projektu).
+Wybierz **Magazyn** z menu **Akcje**, aby otworzyć okno **Magazyn** projektu z sugestiami zwolnienia miejsca i ustawieniami time travel. Zobacz [Zarządzanie magazynem](/pl/guides/projects/managing-storage/#okno-magazyn-dla-projektu).
 
 
 ## Tworzenie edytora danych z tabeli

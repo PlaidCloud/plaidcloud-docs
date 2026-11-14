@@ -10,7 +10,7 @@ Commencez par Panel Studio. Il ne demande ni dépôt ni configuration : vous cr
 
 ## Créer une application Studio
 
-Ouvrez **Applications** et ouvrez le menu **Nouvelle application**. Sous l'en-tête **Application Panel**, **Studio** écrit et publie l'application dans l'éditeur de PlaidCloud avec la mise en page standard, et conserve le code pour vous. Vous pouvez aussi choisir **Nouvelle application Studio** dans la zone **Applications Panel** de l'onglet **Accueil** d'un projet, ou [partir d'une table](#partir-dune-table).
+Ouvrez **Applications** et ouvrez le menu **Nouvelle application**. Sous l'en-tête **Application Panel**, **Studio** écrit et publie l'application dans l'éditeur de PlaidCloud avec la mise en page standard, et conserve le code pour vous. Vous pouvez aussi choisir **Nouvelle application Studio** dans la ligne **Applications Studio** de la carte **Applications et image de marque** de l'onglet **Accueil** d'un projet, ou [partir d'une table](#partir-dune-table).
 
 1. Choisissez **Nouvelle application** > **Studio**.
 2. Saisissez un **Nom**. Le **Slug d’URL** se remplit à partir de celui-ci.
@@ -35,7 +35,7 @@ Vous pouvez aussi commencer depuis l'onglet **Tables** d'un projet. Sélectionne
 
 ### Partir de la galerie
 
-Choisissez **Nouvelle application** > **Depuis la galerie…** pour parcourir les applications que votre espace de travail a listées, puis **Créer une application à partir de ceci…** pour en faire votre propre copie. Ou choisissez **À partir de la galerie** dans la boîte de dialogue **Nouvelle application** de Studio. Voir [La galerie d'applications](/fr/guides/panel-apps/gallery/), y compris pour savoir comment lister votre propre application.
+Choisissez **Nouvelle application** > **Depuis la galerie…** pour parcourir les applications que votre espace de travail a listées, puis **Créer une application à partir de ceci…** pour en faire votre propre copie. Ou choisissez **À partir de la galerie** dans la boîte de dialogue **Nouvelle application Studio**. Voir [La galerie d'applications](/fr/guides/panel-apps/gallery/), y compris pour savoir comment lister votre propre application.
 
 ## Autres environnements d'exécution
 

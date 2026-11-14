@@ -16,7 +16,7 @@ Zaimportowanie zestawu stosuje też wygląd PlaidCloud do wykresów Plotly i Mat
 
 ## Zacznij od szablonu
 
-W [Panel Studio](/pl/guides/panel-apps/studio/) **New app** > **Studio** zaczyna od pustej aplikacji, tabeli lub widoku, innej aplikacji Studio albo aplikacji z [galerii](/pl/guides/panel-apps/gallery/), bez polecenia do uruchomienia.
+W [Panel Studio](/pl/guides/panel-apps/studio/) **Nowa aplikacja** > **Studio** zaczyna od pustej aplikacji, tabeli lub widoku, innej aplikacji Studio albo aplikacji z [galerii](/pl/guides/panel-apps/gallery/), bez polecenia do uruchomienia.
 
 Dla aplikacji przechowywanej w repozytorium git zestaw zawiera polecenie, które zapisuje działającą aplikację startową. Uruchom je z dowolnego folderu, a następnie zmień nazwy tabel i kolumn:
 

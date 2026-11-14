@@ -1,12 +1,12 @@
 ---
 title: Dashアプリの使用
-description: PlaidCloud の「マイPanelアプリ」画面から、公開済みの Plotly Dash アプリのビルドステータスの確認、起動、再ビルド、ロック、ログの表示、編集、削除を行います。
+description: PlaidCloud の「アプリ」画面から、公開済みの Plotly Dash アプリのビルドステータスの確認、起動、再ビルド、ロック、ログの表示、編集、削除を行います。
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Dashアプリは、WASM やサーバー型の Panelアプリと同じ**マイPanelアプリ**画面に表示されます。**ランタイム**列には **Dash** と表示され、専用のアイコンで区別できます。このページの内容は、サーバーアプリ向けの[Panelアプリの使用](/ja/guides/panel-apps/using/)と同じです。ただし、Dashアプリでは **Usage Metrics** がまだ利用できない点が異なります。
+Dashアプリは、WASM やサーバー型の Panelアプリと同じ**アプリ**画面に表示されます。**ランタイム**列には **Dash** と表示され、専用のアイコンで区別できます。このページの内容は、サーバーアプリ向けの[Panelアプリの使用](/ja/guides/panel-apps/using/)と同じです。ただし、Dashアプリでは **Usage Metrics** がまだ利用できない点が異なります。
 
 ## ビルドステータス
 

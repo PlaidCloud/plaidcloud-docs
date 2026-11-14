@@ -6,9 +6,9 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/index.md
 ---
 
-Mit Panel-Apps veröffentlichen Sie interaktive [HoloViz-Panel](https://panel.holoviz.org/)-Anwendungen – parametrisierte Eingaben, Live-Diagramme und eingebettete Datentabellen – direkt aus PlaidCloud. Sie verwalten sie im Bildschirm **Meine Panel-Apps**, der jede App zusammen mit ihrer Laufzeit, ihrem Build-Status und ihrer URL auflistet.
+Mit Panel-Apps veröffentlichen Sie interaktive [HoloViz-Panel](https://panel.holoviz.org/)-Anwendungen – parametrisierte Eingaben, Live-Diagramme und eingebettete Datentabellen – direkt aus PlaidCloud. Sie verwalten sie im Bildschirm **Apps**, der jede App zusammen mit ihrer Laufzeit, ihrem Build-Status und ihrer URL auflistet.
 
-Beginnen Sie in [Panel Studio](/de/guides/panel-apps/studio/): Wählen Sie **New app** > **Studio**, um in PlaidCloud eine App aus einer leeren App, einer Tabelle, einer Ansicht oder der Galerie zu erstellen, ohne ein Repository einrichten zu müssen. Für individuelle Anforderungen veröffentlichen Sie mit einer der folgenden Laufzeiten, die in der Spalte **Laufzeit** angezeigt werden:
+Beginnen Sie in [Panel Studio](/de/guides/panel-apps/studio/): Wählen Sie **Neue App** > **Studio**, um in PlaidCloud eine App aus einer leeren App, einer Tabelle, einer Ansicht oder der Galerie zu erstellen, ohne ein Repository einrichten zu müssen. Für individuelle Anforderungen veröffentlichen Sie mit einer der folgenden Laufzeiten, die in der Spalte **Laufzeit** angezeigt werden:
 
 - **WASM** – eine statische App, die vollständig im Browser läuft (Pyodide). Sie veröffentlichen eine vorab erstellte HTML-Datei aus einem Dokumentenkonto. Es gibt keinen Serverprozess und nichts zu skalieren; die App wird sofort bereitgestellt.
 - **Server** – eine App, die aus einem Git-Repository erstellt und serverseitig ausgeführt wird. Bei der Veröffentlichung erstellt PlaidCloud aus Ihrem Repository einen Container, der ohne Replikate im Leerlauf bleibt, bei der ersten Anfrage an seine URL aufwacht, bereitstellt (einschließlich Live-Aktualisierungen) und im Leerlauf wieder auf null herunterskaliert. Das ist die richtige Wahl für Apps, die eine Python-Laufzeit, serverseitige Rechenleistung oder Bibliotheken benötigen, die nicht im Browser laufen können.

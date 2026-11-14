@@ -1,12 +1,12 @@
 ---
 title: Eine Panel-App verwenden
-description: Verfolgen Sie den Build-Status veröffentlichter HoloViz-Panel-Apps, öffnen, erstellen Sie sie neu, sperren Sie sie, zeigen Sie ihre Protokolle und Nutzungskennzahlen an, bearbeiten und entfernen Sie sie auf dem Bildschirm Meine Panel-Apps in PlaidCloud.
+description: Verfolgen Sie den Build-Status veröffentlichter HoloViz-Panel-Apps, öffnen, erstellen Sie sie neu, sperren Sie sie, zeigen Sie ihre Protokolle und Nutzungskennzahlen an, bearbeiten und entfernen Sie sie auf dem Bildschirm Apps in PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Jede veröffentlichte App erscheint auf dem Bildschirm **Meine Panel-Apps** mit ihrer **Laufzeit**, ihrem **Status**, ihrem **Slug** und ihren Zeitstempeln. Die Spalte ganz links öffnet die App; mit den übrigen Zeilensymbolen sperren Sie die App gegen versehentliche Änderungen, bearbeiten oder entfernen sie und – bei Server-Apps – erstellen sie neu, zeigen ihre Protokolle an und rufen ihre Nutzungskennzahlen auf. Das Symbol zum Öffnen spiegelt die Laufzeit der App wider, sodass sich WASM- und Server-Apps auf einen Blick unterscheiden lassen.
+Jede veröffentlichte App erscheint auf dem Bildschirm **Apps** mit ihrer **Laufzeit**, ihrem **Status**, ihrem **Slug** und ihren Zeitstempeln. Die Spalte ganz links öffnet die App; mit den übrigen Zeilensymbolen sperren Sie die App gegen versehentliche Änderungen, bearbeiten oder entfernen sie und – bei Server-Apps – erstellen sie neu, zeigen ihre Protokolle an und rufen ihre Nutzungskennzahlen auf. Das Symbol zum Öffnen spiegelt die Laufzeit der App wider, sodass sich WASM- und Server-Apps auf einen Blick unterscheiden lassen.
 
 ## Build-Status (Server-Apps)
 
