@@ -9,8 +9,9 @@ sidebar:
 
 PlaidCloud converts KNIME workflows (`.knwf`) and workflow groups (`.knar`)
 into native Advanced workflows. The importer maps each KNIME node to a
-workflow step, project variable, or canvas object, and flattens metanodes and
-components, so a converted workflow runs cloud-native.
+workflow step, project variable, or canvas object, and runs the nodes inside
+metanodes and components as ordinary steps, with each metanode and component
+that holds steps kept as a collapsed group, so a converted workflow runs cloud-native.
 
 98.5% of KNIME node configurations convert fully, and 205 of the 207 core
 node types are Full. To run a conversion, see

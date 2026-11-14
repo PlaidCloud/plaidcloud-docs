@@ -15,7 +15,9 @@ La conversión es un paso único. Si convierte el mismo archivo de nuevo, se cre
 ## Qué crea PlaidCloud
 
 - Un flujo de trabajo avanzado por cada flujo de trabajo de KNIME. Un `.knwf` genera un flujo de trabajo y un `.knar` genera uno por cada flujo de trabajo del grupo.
-- Cada nodo de KNIME se convierte en el paso, la variable de proyecto o el objeto de lienzo equivalente, con las relaciones ascendentes y descendentes conservadas. Los metanodos y los componentes se aplanan dentro del flujo de trabajo, de modo que sus nodos se ejecutan como pasos normales.
+- Cada nodo de KNIME se convierte en el paso, la variable de proyecto o el objeto de lienzo equivalente, con las relaciones ascendentes y descendentes conservadas. Los metanodos y los componentes que contienen pasos llegan como grupos contraídos, y sus nodos se ejecutan como pasos normales. Un metanodo o componente anidado dentro de otro se convierte en un grupo propio, con el nombre de su ruta, como "Exterior › Interior".
+- Las anotaciones del nivel superior del flujo de trabajo se convierten en notas en el lienzo.
+- El flujo de trabajo se abre ya ordenado: los pasos quedan organizados con claridad, se conservan los grupos del origen y las notas se mueven justo encima del flujo, conservando su disposición. Esto ocurre la primera vez que alguien con acceso de edición lo abre. Después, su propio diseño se guarda y nunca se reorganiza. Si el flujo de trabajo o el proyecto está bloqueado, verá el diseño ordenado, pero no se guarda.
 - Las variables de flujo y los nodos Configuration y Widget se convierten en variables de proyecto que contienen sus valores predeterminados. Los conmutadores y los bucles cuyos valores se conocen al convertir se podan y se expanden en los pasos que ejecutan.
 - Los lenguajes de expresiones de KNIME (Expression, String Manipulation, Math Formula, Column Expressions y Rule Engine) se convierten en expresiones de PlaidCloud.
 - Los archivos de datos incluidos en el archivo comprimido se cargan en una carpeta `knime/` de la cuenta de documentos predeterminada del proyecto, una carpeta por flujo de trabajo, y los lectores convertidos los importan desde allí.

@@ -10,8 +10,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 PlaidCloud convertit les workflows KNIME (`.knwf`) et les groupes de workflows (`.knar`)
 en workflows avancés natifs. L'importeur fait correspondre chaque nœud KNIME à une
-étape de workflow, une variable de projet ou un objet du canevas, et aplatit les métanœuds et
-les composants, de sorte qu'un workflow converti s'exécute en mode cloud natif.
+étape de workflow, une variable de projet ou un objet du canevas, et exécute les nœuds
+des métanœuds et des composants comme des étapes ordinaires, chaque métanœud et chaque
+composant contenant des étapes étant conservé comme un groupe replié, de sorte qu'un workflow converti s'exécute en mode cloud natif.
 
 98,5 % des configurations de nœuds KNIME sont converties intégralement, et 205 des 207 types
 de nœuds principaux sont au statut Complet. Pour lancer une conversion, consultez

@@ -15,7 +15,9 @@ A conversão é uma etapa única. Converter o mesmo arquivo novamente cria novos
 ## O que o PlaidCloud cria
 
 - Um fluxo de trabalho avançado para cada fluxo de trabalho do KNIME. Um `.knwf` gera um fluxo de trabalho, e um `.knar` gera um para cada fluxo de trabalho do grupo.
-- Cada nó do KNIME se torna a etapa de fluxo de trabalho, a variável de projeto ou o objeto de tela correspondente, com as relações a montante e a jusante preservadas. Metanós e componentes são nivelados no fluxo de trabalho, de modo que seus nós são executados como etapas comuns.
+- Cada nó do KNIME se torna a etapa de fluxo de trabalho, a variável de projeto ou o objeto de tela correspondente, com as relações a montante e a jusante preservadas. Metanós e componentes que contêm etapas chegam como grupos recolhidos, e seus nós são executados como etapas comuns. Um metanó ou componente aninhado dentro de outro se torna um grupo próprio, nomeado pelo seu caminho, como "Externo › Interno".
+- As anotações no nível superior do fluxo de trabalho se tornam notas na tela.
+- O fluxo de trabalho abre já organizado: as etapas ficam dispostas de forma limpa, os grupos da origem são mantidos e as notas são movidas para logo acima do fluxo, mantendo a disposição entre elas. Isso acontece na primeira vez que alguém com acesso de edição o abre. Depois disso, o seu próprio layout é salvo e nunca é reorganizado. Se o fluxo de trabalho ou o projeto estiver bloqueado, você vê o layout organizado, mas ele não é salvo.
 - Variáveis de fluxo e nós de Configuration e Widget se tornam variáveis de projeto com seus valores padrão. Switches e loops cujos valores são conhecidos no momento da conversão são podados e expandidos nas etapas que executam.
 - As linguagens de expressão do KNIME — Expression, String Manipulation, Math Formula, Column Expressions e Rule Engine — são convertidas em expressões do PlaidCloud.
 - Os arquivos de dados que acompanham o arquivo compactado são carregados em uma pasta `knime/` da conta de documentos padrão do projeto, uma pasta por fluxo de trabalho, e os leitores convertidos os importam de lá.

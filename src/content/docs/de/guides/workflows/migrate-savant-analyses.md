@@ -14,7 +14,8 @@ Die Konvertierung liest die Exportdatei, auf die Sie verweisen, und die Kopfzeil
 
 - Jeder Savant-Agent wird zum passenden Workflow-Schritt, wobei die Beziehungen zu vor- und nachgelagerten Schritten erhalten bleiben. Die [Savant-Konvertierungsmatrix](/de/reference/savant-conversion-matrix/) führt jeden Agenten und seine Zuordnungsstufe auf.
 - Savant-Analyseparameter werden zu Projektvariablen, und Verweise darauf in den Agenteneinstellungen werden in die PlaidCloud-Variablensyntax umgeschrieben.
-- Notizen und Gruppen erscheinen auf der Arbeitsfläche als Notizen und Gruppen.
+- Notizen und Gruppen erscheinen auf der Arbeitsfläche als Notizen und Gruppen. Eine Gruppe übernimmt ihren Namen vom größten Text in ihr oder behält ihren eigenen Namen. Eine in einer anderen verschachtelte Gruppe wird zu einer eigenen Gruppe, die nach ihrem Pfad benannt ist, etwa „Außen › Innen“.
+- Der Workflow öffnet sich bereits bereinigt: Die Schritte sind übersichtlich angeordnet, die Gruppen aus der Quelle bleiben erhalten, und Notizen werden direkt oberhalb des Ablaufs platziert, wobei ihre Anordnung erhalten bleibt. Das geschieht, wenn ihn zum ersten Mal jemand mit Bearbeitungsrechten öffnet. Danach wird Ihr eigenes Layout gespeichert und nie neu angeordnet. Ist der Workflow oder das Projekt gesperrt, sehen Sie das bereinigte Layout, es wird aber nicht gespeichert.
 - Jede Quelle wird zu einem Import-Schritt oder liest eine vorhandene Tabelle – je nachdem, wie Sie sie binden.
 - Jeder Savant-Agententyp wird vollständig konvertiert: Jede Option hat eine Zuordnung. Eine Konfiguration, an der Savant selbst scheitert oder die es nicht dokumentiert, erscheint als benannter Platzhalter-Schritt. Siehe [Platzhalter für nicht konvertierte Konfigurationen](#platzhalter-für-nicht-konvertierte-konfigurationen).
 
