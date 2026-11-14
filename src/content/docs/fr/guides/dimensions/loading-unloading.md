@@ -23,6 +23,8 @@ Les dimensions représentant des structures de données hiérarchiques, le proce
 
  Un chargement d'alias, de propriétés ou de valeurs vérifie le membre de chaque ligne avant d'écrire quoi que ce soit. Si une ligne désigne un membre que la dimension ne contient pas, le chargement échoue et signale ces noms, et rien de ce chargement n'est stocké. Chargez d'abord la structure, ou incluez-y les membres manquants, puis chargez les attributs.
 
+ Sur un projet avec accès aux lignes, une dimension n'est chargée à partir d'une table que par une personne qui peut lire toutes les lignes de cette table, comme un Architecte du projet ou une exécution de workflow. Consultez [Charger des données dans une table restreinte](/fr/administration/access/managing-security-groups-and-assignments/#charger-des-données-dans-une-table-restreinte).
+
  Consultez l'étape de workflow [Dimension Load](/fr/reference/workflow-steps/dimensions/dimension-load) pour plus d'informations.
 
 

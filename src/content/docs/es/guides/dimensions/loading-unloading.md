@@ -23,6 +23,8 @@ Como las dimensiones representan estructuras de datos jerárquicas, el proceso d
 
  Una carga de alias, propiedades o valores comprueba el miembro de cada fila antes de escribir nada. Si alguna fila nombra un miembro que la dimensión no contiene, la carga falla e informa de esos nombres, y no se almacena nada de esa carga. Cargue primero la estructura, o incluya en ella los miembros que faltan, y después cargue los atributos.
 
+ En un proyecto con acceso a filas, una dimensión se carga desde una tabla solo para quien puede leer todas las filas de esa tabla, como un Arquitecto del proyecto o una ejecución de flujo de trabajo. Consulte [Carga de datos en una tabla restringida](/es/administration/access/managing-security-groups-and-assignments/#carga-de-datos-en-una-tabla-restringida).
+
  Consulte el paso de flujo de trabajo [Dimension Load](/es/reference/workflow-steps/dimensions/dimension-load) para obtener más información.
 
 

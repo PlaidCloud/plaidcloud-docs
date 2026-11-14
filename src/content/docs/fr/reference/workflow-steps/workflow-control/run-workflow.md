@@ -12,6 +12,8 @@ Déclenche un autre workflow dans le cadre de l'exécution du workflow en cours.
 
 Le workflow appelé s'exécute de façon indépendante — il peut se trouver dans le même projet ou dans un autre. Par défaut, le workflow appelant continue sans attendre ; activez l'option **Attendre la fin du traitement** si les étapes suivantes de l'appelant dépendent de la fin du workflow appelé.
 
+Le workflow appelé peut utiliser les valeurs avec lesquelles l'exécution de l'appelant a été démarrée, comme les réponses données dans l'App Runner, pour toute variable que ni lui ni son projet ne définit. Ses propres variables de workflow et de projet ont priorité.
+
 
 
 ## Workflow à exécuter

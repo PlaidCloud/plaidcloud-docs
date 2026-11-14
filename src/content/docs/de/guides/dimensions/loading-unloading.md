@@ -23,6 +23,8 @@ Da Dimensionen hierarchische Datenstrukturen darstellen, muss der Ladevorgang di
 
  Ein Ladevorgang von Aliasen, Eigenschaften oder Werten prüft das Mitglied jeder Zeile, bevor irgendetwas geschrieben wird. Benennt eine Zeile ein Mitglied, das die Dimension nicht enthält, schlägt der Ladevorgang fehl und meldet diese Namen, und nichts aus diesem Ladevorgang wird gespeichert. Laden Sie zuerst die Struktur oder nehmen Sie die fehlenden Mitglieder darin auf und laden Sie dann die Attribute.
 
+ In einem Projekt mit Zeilenzugriff wird eine Dimension nur für jemanden aus einer Tabelle geladen, der jede Zeile dieser Tabelle lesen kann, etwa einen Projekt-Architect oder eine Workflow-Ausführung. Siehe [Daten in eine eingeschränkte Tabelle laden](/de/administration/access/managing-security-groups-and-assignments/#daten-in-eine-eingeschränkte-tabelle-laden).
+
  Weitere Informationen finden Sie beim Workflow-Schritt [Dimension Load](/de/reference/workflow-steps/dimensions/dimension-load).
 
 
