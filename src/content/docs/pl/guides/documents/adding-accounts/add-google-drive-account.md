@@ -41,7 +41,7 @@ Te czynności należy wykonać w konsoli Google Cloud, aby utworzyć konto usłu
 ### Udostępnianie zawartości Dysku koncie usługi
 
 1. Skopiuj adres e-mail konta usługi (np. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. W Google Drive udostępnij foldery, do których PlaidCloud ma mieć dostęp, temu adresowi e-mail, nadając dostęp **Editor**
+2. W Google Drive udostępnij foldery, do których PlaidCloud ma mieć dostęp, temu adresowi e-mail, nadając dostęp **Editor**. Aby użyć Dysku współdzielonego, dodaj konto usługi jako jego członka.
 
 Masz teraz wszystko, czego potrzebujesz, aby dodać konto Google Drive do modułu PlaidCloud Document.
 
@@ -58,3 +58,13 @@ Masz teraz wszystko, czego potrzebujesz, aby dodać konto Google Drive do moduł
 8. Wybierz odpowiedni **Model zabezpieczeń** dla danego zastosowania. W razie wątpliwości pozostaw wartość `Private`.
 9. Wklej całą zawartość pliku klucza JSON w polu Poświadczenia OAuth2 JSON w sekcji Dane uwierzytelniające
 10. Wybierz przycisk Zapisz — nowe konto dokumentów jest aktywne
+
+## Używanie konta w przepływach pracy
+
+Konto Google Drive działa w przepływach pracy tak samo jak w przeglądarce Document. Kroki mogą wyświetlać listę, importować, eksportować, kopiować, przenosić, zmieniać nazwę i usuwać pliki oraz tworzyć foldery.
+
+- **Lokalizacje.** Lokalizacje najwyższego poziomu konta to foldery udostępnione koncie usługi oraz Dyski współdzielone, których jest ono członkiem. Ścieżki składają się z nazw folderów, na przykład `Finance/Reports/2026`. Jeśli dwa udostępnione foldery lub Dyski współdzielone mają tę samą nazwę, konto odmawia otwarcia takiej nazwy. Zmień nazwę lub cofnij udostępnienie wszystkich oprócz jednego.
+- **Arkusze Google.** Arkusz Google jest odczytywany jako eksport `.xlsx` i pojawia się jako `Name.xlsx`. Innych plików Google Workspace, takich jak Dokumenty i Prezentacje, nie można odczytać.
+- **Nowe pliki w Moim dysku.** Konto usługi nie ma własnego miejsca w magazynie, więc w folderze znajdującym się na osobistym Moim dysku może nadpisać istniejący plik, ale nie może utworzyć nowego. Najpierw utwórz tam plik lub użyj folderu na Dysku współdzielonym, który przyjmuje nowe pliki i foldery.
+- **Brakujące foldery.** Folder, który nie istnieje, jest wyświetlany jako pusty zamiast powodować błąd.
+- **Ograniczanie przepustowości.** PlaidCloud automatycznie ponawia próbę, gdy Google ogranicza przepustowość żądania lub zwraca błąd tymczasowy.

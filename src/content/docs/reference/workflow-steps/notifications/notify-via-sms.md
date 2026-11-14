@@ -32,6 +32,7 @@ Write the **Message**. Project Variables and Workflow Variables work, and **Inse
 | `{project_name}` | The name of the project |
 | `{run_url}` | A link to the run in PlaidCloud |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | The existing variables |
+| `{date_iso}` | The current UTC time in ISO 8601, such as `2026-11-12T22:49:56+00:00`. `{date}` is the long form, such as `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 
 The counter under the message shows about how many characters and segments the text takes, including the `PlaidCloud [workspace]:` prefix and the run link. A text is cut short past 3 segments. Links from public link shorteners are rejected.
 

@@ -33,6 +33,7 @@ Napisz **Komunikat**. Zmienne projektu i zmienne przepływu pracy działają, a 
 | `{project_name}` | Nazwa projektu |
 | `{run_url}` | Link do uruchomienia w PlaidCloud |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | Istniejące zmienne |
+| `{date_iso}` | Bieżący czas UTC w formacie ISO 8601, na przykład `2026-11-12T22:49:56+00:00`. `{date}` to forma długa, na przykład `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 
 Licznik pod komunikatem pokazuje w przybliżeniu, ile znaków i segmentów zajmuje SMS, wliczając prefiks `PlaidCloud [workspace]:` i link do uruchomienia. SMS dłuższy niż 3 segmenty jest przycinany. Linki z publicznych skracaczy są odrzucane.
 

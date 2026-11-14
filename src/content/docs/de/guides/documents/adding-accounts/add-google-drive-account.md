@@ -41,7 +41,7 @@ Diese Schritte müssen in der Google Cloud Console durchgeführt werden, um ein 
 ### Drive-Inhalte für das Dienstkonto freigeben
 
 1. Kopieren Sie die E-Mail-Adresse des Dienstkontos (z. B. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. Geben Sie in Google Drive die Ordner, auf die PlaidCloud zugreifen soll, für diese E-Mail-Adresse frei und gewähren Sie dabei den Zugriff **Editor**
+2. Geben Sie in Google Drive die Ordner, auf die PlaidCloud zugreifen soll, für diese E-Mail-Adresse frei und gewähren Sie dabei den Zugriff **Editor**. Um ein Shared Drive zu verwenden, fügen Sie stattdessen das Dienstkonto als Mitglied dieses Shared Drive hinzu.
 
 Damit haben Sie nun alles, was Sie brauchen, um Ihr Google-Drive-Konto zu PlaidCloud Document hinzuzufügen.
 
@@ -58,3 +58,13 @@ Damit haben Sie nun alles, was Sie brauchen, um Ihr Google-Drive-Konto zu PlaidC
 8. Wählen Sie ein für Ihren Anwendungsfall geeignetes **Sicherheitsmodell**. Wenn Sie unsicher sind, belassen Sie es bei `Private`.
 9. Fügen Sie den gesamten Inhalt der JSON-Schlüsseldatei unter Authentifizierungsdaten in das Feld OAuth2-Anmeldeinformationen (JSON) ein
 10. Klicken Sie auf die Schaltfläche „Speichern“, und Ihr neues Dokumentenkonto ist aktiv
+
+## Das Konto in Workflows verwenden
+
+Ein Google-Drive-Konto funktioniert sowohl in Workflows als auch im Document-Browser. Schritte können Dateien auflisten, importieren, exportieren, kopieren, verschieben, umbenennen und löschen sowie Ordner erstellen.
+
+- **Speicherorte.** Die obersten Speicherorte des Kontos sind die für das Dienstkonto freigegebenen Ordner und die Shared Drives, in denen es Mitglied ist. Pfade bestehen aus Ordnernamen, zum Beispiel `Finance/Reports/2026`. Wenn zwei freigegebene Ordner oder Shared Drives denselben Namen haben, verweigert das Konto das Öffnen dieses Namens. Benennen Sie alle bis auf einen um oder heben Sie ihre Freigabe auf.
+- **Google Sheets.** Ein Google Sheet wird als `.xlsx`-Export gelesen und erscheint als `Name.xlsx`. Andere Google-Workspace-Dateien, etwa Docs und Slides, können nicht gelesen werden.
+- **Neue Dateien in My Drive.** Ein Dienstkonto hat keinen eigenen Speicherplatz. In einem Ordner, der im persönlichen My Drive einer Person liegt, kann es daher eine vorhandene Datei überschreiben, aber keine neue erstellen. Erstellen Sie die Datei dort zuerst selbst oder verwenden Sie einen Ordner in einem Shared Drive, der neue Dateien und Ordner akzeptiert.
+- **Fehlende Ordner.** Ein Ordner, der nicht existiert, wird als leer aufgelistet, statt einen Fehler zu verursachen.
+- **Drosselung.** PlaidCloud wiederholt Anfragen automatisch, wenn Google eine Anfrage drosselt oder einen vorübergehenden Fehler zurückgibt.

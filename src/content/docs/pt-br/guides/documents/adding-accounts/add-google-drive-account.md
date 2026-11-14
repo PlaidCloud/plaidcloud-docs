@@ -41,7 +41,7 @@ Estas etapas precisam ser concluídas no Google Cloud Console para criar uma con
 ### Compartilhe o conteúdo do Drive com a conta de serviço
 
 1. Copie o endereço de e-mail da conta de serviço (por exemplo, `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. No Google Drive, compartilhe com esse endereço de e-mail as pastas que você quer que o PlaidCloud acesse, concedendo acesso de **Editor**
+2. No Google Drive, compartilhe com esse endereço de e-mail as pastas que você quer que o PlaidCloud acesse, concedendo acesso de **Editor**. Para usar um Drive compartilhado, adicione a conta de serviço como membro dele.
 
 Agora você deve ter tudo o que precisa para adicionar sua conta do Google Drive ao PlaidCloud Document.
 
@@ -58,3 +58,13 @@ Agora você deve ter tudo o que precisa para adicionar sua conta do Google Drive
 8. Selecione um **Modelo de segurança** adequado ao seu caso de uso. Se estiver em dúvida, deixe como `Private`.
 9. Cole todo o conteúdo do arquivo de chave JSON no campo JSON de credenciais OAuth2, em Credenciais de autenticação
 10. Clique no botão Salvar e sua nova conta de documentos estará ativa
+
+## Usar a conta em fluxos de trabalho
+
+Uma conta do Google Drive funciona em fluxos de trabalho, além do navegador do Document. As etapas podem listar, importar, exportar, copiar, mover, renomear e excluir arquivos e criar pastas.
+
+- **Locais.** Os locais de nível superior da conta são as pastas compartilhadas com a conta de serviço e os Drives compartilhados dos quais ela é membro. Os caminhos são nomes de pastas, como `Finance/Reports/2026`. Se duas pastas compartilhadas ou Drives compartilhados tiverem o mesmo nome, a conta se recusa a abrir esse nome. Renomeie ou deixe de compartilhar todos, exceto um.
+- **Google Sheets.** Uma planilha do Google Sheets é lida como uma exportação `.xlsx` e aparece como `Name.xlsx`. Outros arquivos do Google Workspace, como Docs e Slides, não podem ser lidos.
+- **Novos arquivos no Meu Drive.** Uma conta de serviço não tem armazenamento próprio. Por isso, em uma pasta que fica no Meu Drive pessoal de alguém, ela pode sobrescrever um arquivo existente, mas não pode criar um novo. Crie o arquivo lá primeiro ou use uma pasta em um Drive compartilhado, que aceita novos arquivos e pastas.
+- **Pastas ausentes.** Uma pasta que não existe é listada como vazia, em vez de causar um erro.
+- **Limitação de taxa.** O PlaidCloud tenta novamente de forma automática quando o Google limita uma solicitação ou retorna um erro temporário.

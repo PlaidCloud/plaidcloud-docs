@@ -11,3 +11,16 @@ PlaidCloud umożliwia stosowanie zmiennych zarówno w zakresie projektu, jak i p
 
 
 W tabeli zmiennych możesz przeglądać zmienne i ich bieżące wartości oraz edytować te wartości. Możesz też dodawać nowe zmienne lub usuwać istniejące.
+
+## Zmienne wbudowane
+
+Ustawienia kroków i wyrażenia mogą korzystać z tych zmiennych wbudowanych bez ich definiowania:
+
+| Zmienna | Wartość |
+|---|---|
+| `{project}`, `{model}` | Identyfikatory projektu i przepływu pracy, w których działa krok. |
+| `{cloud}` | Nazwa obszaru roboczego. |
+| `{date}` | Bieżący czas UTC uruchomienia w formie długiej, na przykład `Wednesday, 11 November 2026 10:30PM UTC +0`. |
+| `{date_iso}` | Ta sama chwila w formacie ISO 8601, na przykład `2026-11-12T22:49:56+00:00`. |
+
+Użyj `{date_iso}`, gdy wyrażenie musi odczytać część daty. Pierwsze 7 znaków daje miesiąc (`2026-11`), a pierwsze 10 daje dzień (`2026-11-12`). `{date_iso}` działa wszędzie tam, gdzie `{date}`, w tym w szablonach wiadomości e-mail z powiadomieniami oraz w krokach Forecast, Parity i Solver.
