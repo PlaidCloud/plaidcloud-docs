@@ -142,6 +142,8 @@ Para agregar una carpeta a una carpeta existente:
 1. Haga clic con el botón derecho en la carpeta
 2. Seleccione Carpeta nueva
 
+Cuando la selección está dentro de una carpeta, el aviso para el nombre de la carpeta nueva también tiene **Crear en el nivel superior**. Márquela para colocar la carpeta nueva en el nivel superior del proyecto.
+
 
 ## Marcar la jerarquía para los roles de visualización
 
