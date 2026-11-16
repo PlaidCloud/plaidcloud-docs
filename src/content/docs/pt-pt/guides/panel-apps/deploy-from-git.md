@@ -96,7 +96,7 @@ Todos os campos desta caixa de diálogo são descritos em [Criar uma aplicação
 
 Depois de publicar, a aplicação é **compilada**: o PlaidCloud clona o ramo, instala o seu `requirements.txt` (o da raiz do repositório e o da pasta da aplicação, se existirem) e cria uma imagem de contentor. O seu **Estado** é mostrado na lista **Aplicações** e atualiza-se automaticamente.
 
-- Quando o Estado é **Pronta**, abra a aplicação em `https://<your-tenant-host>/serve/<slug>/`. O primeiro pedido depois de ter estado inativa arranca-a (~15 segundos).
+- Quando o Estado é **Pronta**, abra a aplicação em `https://<your-tenant-host>/serve/<slug>/`. O primeiro pedido depois de ter estado inativa põe-na a funcionar e apresenta, entretanto, um breve ecrã de carregamento do PlaidCloud.
 - Se a compilação falhar, abra a aplicação e consulte os registos de **Build** — uma dependência em falta ou um erro de importação aparece aí. Consulte [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/) para saber o que significa cada estado, como ler os registos e como desencadear uma recompilação.
 
 A partir daqui, **cada push para o ramo da ligação recompila e volta a implementar a aplicação automaticamente** — edite `app.py`, faça `git push` e a alteração entra em produção. (A menos que a aplicação esteja **bloqueada** — consulte [Bloquear uma aplicação](/pt-pt/guides/panel-apps/using/#bloquear-uma-aplicação) — caso em que os pushes são ignorados até a desbloquear.)

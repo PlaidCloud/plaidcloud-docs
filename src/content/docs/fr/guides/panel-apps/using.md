@@ -49,6 +49,8 @@ Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête p
 
 Une application serveur est ramenée à zéro lorsqu'elle est inactive afin d'économiser des ressources ; la première ouverture après une période d'inactivité doit donc la redémarrer. Pendant ce temps, vous voyez un **écran de chargement PlaidCloud** au lieu d'un onglet vide : le nom de votre application, sa progression à travers les étapes **Démarrage**, **Préparation** et **Chargement de l'application**, et l'ID de votre espace de travail, dans votre thème clair ou sombre. L'application s'affiche d'elle-même dès qu'elle est prête (généralement en quelques secondes, jusqu'à environ une minute lors d'un démarrage à froid), puis répond normalement jusqu'à sa prochaine période d'inactivité.
 
+L'écran de chargement s'affiche aussi pendant le réveil de l'application lorsque vous l'ouvrez depuis n'importe quel autre lien qui y mène, par exemple un lien copié depuis la barre d'adresse ou un lien figurant dans une alerte ou un message de résumé. Si vous êtes déconnecté et que vous l'ouvrez dans un onglet du navigateur, vous vous connectez d'abord.
+
 > Si une application ne peut pas démarrer, l'écran de chargement se transforme en un message indiquant que l'application n'a pas démarré et à quelle étape elle s'est arrêtée, accompagné d'un bouton **Réessayer**, au lieu de tourner indéfiniment. Si cela se reproduit, modifiez l'application pour vérifier son point d'entrée et sa branche, puis republiez-la, ou contactez votre administrateur PlaidCloud.
 
 ### Apparence

@@ -200,7 +200,7 @@ Your repository must be reachable through a **git connection** in PlaidCloud. If
 
 After you publish, the app **builds** — its **Status** shows in the list and updates automatically. See [Using a Panel App](/guides/panel-apps/using/) for what the statuses mean, how to open the app once it is ready, and how to trigger a rebuild without unpublishing.
 
-> The app's URL works only once its build status is **Ready**, and the first request after it has been idle spins it up (~15 seconds).
+> The app's URL works only once its build status is **Ready**, and the first request after it has been idle spins it up, showing a brief PlaidCloud loading screen while it does.
 
 ### Advanced: Match PlaidCloud Locally
 

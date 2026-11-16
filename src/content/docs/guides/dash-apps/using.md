@@ -37,6 +37,8 @@ Click the **Open** icon at the start of a ready app's row to launch it in a new 
 
 A Dash app scales to zero when idle to save resources, so the first open after an idle period has to spin it up. While that happens you see a **PlaidCloud loading screen** instead of a blank tab, showing the app's progress through **Starting**, **Preparing** and **Loading app**, and the app appears on its own once it's ready. If an app can't start, the loading screen turns into a message that the app didn't start and which step it stopped at, with a **Try again** button; if that keeps happening, edit the app to check its entry point and branch and republish.
 
+The loading screen also appears while the app wakes when you open it from any other link to it, such as a link copied from the address bar or one in an alert or digest message. If you're signed out and open it in a browser tab, you sign in first.
+
 > **A `dcc.Interval` (or any other always-on polling) defeats scale-to-zero while its tab stays open.** Scale-to-zero relies on the app going quiet — no requests in flight — once nobody is actively using it. A component that keeps making requests on a timer, such as `dcc.Interval`, holds the app awake for as long as that tab is open, even if the person looking at it has stepped away. If you want an app to scale down between visits, avoid always-on polling, or stop the interval once the page has been idle for a while.
 
 ## Viewing Logs

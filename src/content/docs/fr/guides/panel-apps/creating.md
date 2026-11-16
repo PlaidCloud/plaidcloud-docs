@@ -201,7 +201,7 @@ Votre dépôt doit être accessible via une **connexion git** dans PlaidCloud. S
 
 Après la publication, l'application est **construite** : son **Statut** s'affiche dans la liste et se met à jour automatiquement. Voir [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour la signification des statuts, la façon d'ouvrir l'application une fois qu'elle est prête et la façon de déclencher une reconstruction sans annuler la publication.
 
-> L'URL de l'application ne fonctionne qu'une fois son statut de construction **Prêt** ; la première requête après une période d'inactivité la relance (~15 secondes).
+> L'URL de l'application ne fonctionne qu'une fois son statut de construction **Prêt** ; la première requête après une période d'inactivité la relance, en affichant brièvement un écran de chargement PlaidCloud.
 
 ### Avancé : reproduire PlaidCloud en local
 

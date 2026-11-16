@@ -49,6 +49,8 @@ Clique no ícone **Abrir** no início da linha de uma aplicação pronta para a 
 
 Uma aplicação de servidor é reduzida a zero quando está inativa para poupar recursos, pelo que a primeira abertura após um período de inatividade tem de a iniciar. Enquanto isso acontece, é apresentado um **ecrã de carregamento do PlaidCloud** em vez de um separador em branco: o nome da aplicação, o respetivo progresso pelas fases **A iniciar**, **A preparar** e **A carregar a aplicação**, e o ID da área de trabalho, no tema claro ou escuro. A aplicação aparece automaticamente assim que estiver pronta (normalmente em poucos segundos, até cerca de um minuto num arranque a frio) e, a partir daí, responde normalmente até voltar a ficar inativa.
 
+O ecrã de carregamento também é apresentado enquanto a aplicação acorda, quando a abre a partir de qualquer outra ligação para a mesma, como uma ligação copiada da barra de endereço ou uma ligação numa mensagem de alerta ou de resumo. Se tiver terminado a sessão e a abrir num separador do navegador, inicia primeiro sessão.
+
 > Se uma aplicação não conseguir iniciar, o ecrã de carregamento passa a apresentar uma mensagem a indicar que a aplicação não iniciou e em que passo parou, com um botão **Tentar novamente**, em vez de ficar a carregar indefinidamente. Se isso continuar a acontecer, edite a aplicação para verificar o ponto de entrada e o ramo e volte a publicá-la, ou contacte o administrador do PlaidCloud.
 
 ### Aspeto

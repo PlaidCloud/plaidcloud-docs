@@ -14,7 +14,7 @@ Comece no [Panel Studio](/pt-pt/guides/panel-apps/studio/): escolha **Novo app**
 - **Servidor** — uma aplicação criada a partir de um repositório git e executada no servidor. Ao publicar, o PlaidCloud compila o seu repositório num contentor que fica inativo com zero réplicas, acorda no primeiro pedido ao respetivo URL, disponibiliza a aplicação (incluindo atualizações em direto) e volta a escalar para zero quando está inativo. É a escolha certa para aplicações que precisam de um tempo de execução Python, de computação no servidor ou de bibliotecas que não podem ser executadas no navegador.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="Os dois tempos de execução das aplicações Panel. Uma aplicação WASM é um ficheiro HTML pré-compilado servido diretamente ao navegador, sem servidor. Uma aplicação de servidor é criada a partir de um repositório git num contentor que fica inativo com zero réplicas, acorda no primeiro pedido em cerca de quinze segundos, disponibiliza a aplicação e volta a escalar para zero quando está inativo." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="Os dois tempos de execução das aplicações Panel. Uma aplicação WASM é um ficheiro HTML pré-compilado servido diretamente ao navegador, sem servidor. Uma aplicação de servidor é criada a partir de um repositório git num contentor que fica inativo com zero réplicas, acorda no primeiro pedido, disponibiliza a aplicação e volta a escalar para zero quando está inativo." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Comece no [Panel Studio](/pt-pt/guides/panel-apps/studio/): escolha **Novo app**
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">1.º pedido</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">a disponibilizar</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">acorda em ~15 s</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">acorda</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">volta a escalar para 0 quando inativo</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Dois tempos de execução: uma aplicação <strong>WASM</strong> é um ficheiro HTML pré-compilado servido diretamente ao navegador; uma aplicação de <strong>servidor</strong> é criada a partir do git, fica inativa a zero, acorda no primeiro pedido (~15 s), disponibiliza a aplicação e volta a escalar para zero.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Dois tempos de execução: uma aplicação <strong>WASM</strong> é um ficheiro HTML pré-compilado servido diretamente ao navegador; uma aplicação de <strong>servidor</strong> é criada a partir do git, fica inativa a zero, acorda no primeiro pedido, disponibiliza a aplicação e volta a escalar para zero.</figcaption>
 </figure>
 
 ## Escolher um tempo de execução
@@ -52,7 +52,7 @@ Comece no [Panel Studio](/pt-pt/guides/panel-apps/studio/): escolha **Novo app**
 | Origem | Um ficheiro HTML publicado | Um repositório git (ligação, ramo, ponto de entrada) |
 | Executa | No navegador | No servidor, com escala para zero |
 | Ideal para | Painéis de controlo leves e autónomos | Aplicações que precisam de computação no servidor ou de bibliotecas Python completas |
-| Arranque a frio | Nenhum | O primeiro pedido arranca a aplicação (~15 segundos) |
+| Arranque a frio | Nenhum | O primeiro pedido arranca a aplicação por trás de um ecrã de carregamento |
 
 ## Passos seguintes
 

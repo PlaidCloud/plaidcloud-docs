@@ -14,7 +14,7 @@ Panel 应用可让您直接从 PlaidCloud 发布交互式 [HoloViz Panel](https:
 - **服务器**：基于 git 仓库构建并在服务器端运行的应用。发布时，PlaidCloud 会将您的仓库构建为容器，该容器在零副本下空闲，在对其 URL 的首次请求时唤醒、提供服务（包括实时更新），并在空闲时缩减为零。对于需要 Python 运行时、服务器端计算或无法在浏览器中运行的库的应用，这是正确的选择。
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="Panel 应用的两种运行时。WASM 应用是预构建的 HTML 文件，无需服务器，直接提供给浏览器。服务器应用由 git 仓库构建为容器，在零副本下空闲，在首次请求时约十五秒内唤醒、提供服务，并在空闲时缩减为零。" style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="Panel 应用的两种运行时。WASM 应用是预构建的 HTML 文件，无需服务器，直接提供给浏览器。服务器应用由 git 仓库构建为容器，在零副本下空闲，在首次请求时唤醒、提供服务，并在空闲时缩减为零。" style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Panel 应用可让您直接从 PlaidCloud 发布交互式 [HoloViz Panel](https:
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">首次请求</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">提供服务</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">唤醒约 15 秒</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">唤醒</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">空闲时缩减为 0</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">两种运行时：<strong>WASM</strong> 应用是预构建的 HTML 文件，直接提供给浏览器；<strong>服务器</strong>应用由 git 构建，在零副本下空闲，在首次请求时唤醒（约 15 秒）、提供服务，并缩减为零。</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">两种运行时：<strong>WASM</strong> 应用是预构建的 HTML 文件，直接提供给浏览器；<strong>服务器</strong>应用由 git 构建，在零副本下空闲，在首次请求时唤醒、提供服务，并缩减为零。</figcaption>
 </figure>
 
 ## 选择运行时
@@ -52,7 +52,7 @@ Panel 应用可让您直接从 PlaidCloud 发布交互式 [HoloViz Panel](https:
 | 来源 | 已发布的 HTML 文件 | git 仓库（连接、分支、入口点） |
 | 运行位置 | 在浏览器中 | 服务器端，可缩减为零 |
 | 最适合 | 轻量级、自包含的仪表板 | 需要服务器计算或完整 Python 库的应用 |
-| 冷启动 | 无 | 首次请求会启动应用（约 15 秒） |
+| 冷启动 | 无 | 首次请求会在加载屏幕后启动应用 |
 
 ## 后续步骤
 

@@ -14,7 +14,7 @@ Panelアプリを使用すると、パラメーター化された入力、ライ
 - **サーバー** — gitリポジトリから構築され、サーバーサイドで実行されるアプリです。公開すると、PlaidCloudがリポジトリをコンテナーにビルドします。コンテナーはレプリカ数ゼロでアイドル状態になり、そのURLへの最初のリクエストで起動し、（ライブ更新を含めて）提供を行い、アイドル状態になるとゼロにスケールバックします。Pythonランタイム、サーバーサイドの計算、ブラウザーでは実行できないライブラリが必要なアプリに適しています。
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="Panelアプリの2つのランタイム。WASMアプリは、事前にビルドされたHTMLファイルで、サーバーなしでブラウザーに直接提供されます。サーバーアプリは、gitリポジトリからコンテナーにビルドされ、レプリカ数ゼロでアイドル状態になり、最初のリクエストで約15秒で起動し、提供を行い、アイドル状態になるとゼロにスケールバックします。" style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="Panelアプリの2つのランタイム。WASMアプリは、事前にビルドされたHTMLファイルで、サーバーなしでブラウザーに直接提供されます。サーバーアプリは、gitリポジトリからコンテナーにビルドされ、レプリカ数ゼロでアイドル状態になり、最初のリクエストで起動し、提供を行い、アイドル状態になるとゼロにスケールバックします。" style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Panelアプリを使用すると、パラメーター化された入力、ライ
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">最初のリクエスト</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">提供中</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">起動に約15秒</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">起動</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">アイドル時は0にスケールバック</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">2つのランタイム。<strong>WASM</strong>アプリは、事前にビルドされたHTMLファイルをブラウザーに直接提供します。<strong>サーバー</strong>アプリは、gitからビルドされ、ゼロでアイドル状態になり、最初のリクエスト（約15秒）で起動し、提供を行い、ゼロにスケールバックします。</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">2つのランタイム。<strong>WASM</strong>アプリは、事前にビルドされたHTMLファイルをブラウザーに直接提供します。<strong>サーバー</strong>アプリは、gitからビルドされ、ゼロでアイドル状態になり、最初のリクエストで起動し、提供を行い、ゼロにスケールバックします。</figcaption>
 </figure>
 
 ## ランタイムの選択
@@ -52,7 +52,7 @@ Panelアプリを使用すると、パラメーター化された入力、ライ
 | ソース | 公開されたHTMLファイル | gitリポジトリ（接続、ブランチ、エントリポイント） |
 | 実行場所 | ブラウザー内 | サーバーサイド、ゼロへのスケール |
 | 適した用途 | 軽量で自己完結型のダッシュボード | サーバーでの計算や、完全なPythonライブラリが必要なアプリ |
-| コールドスタート | なし | 最初のリクエストでアプリが起動（約15秒） |
+| コールドスタート | なし | 最初のリクエストで読み込み画面の背後でアプリが起動 |
 
 ## 次のステップ
 

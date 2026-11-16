@@ -49,6 +49,8 @@ Clique no ícone **Abrir** no início da linha de um aplicativo pronto para inic
 
 Um aplicativo de servidor é reduzido a zero quando ocioso para economizar recursos, então a primeira abertura após um período de inatividade precisa iniciá-lo. Enquanto isso acontece, você vê uma **tela de carregamento do PlaidCloud** em vez de uma guia em branco: o nome do seu aplicativo, o progresso dele pelas etapas **Iniciando**, **Preparando** e **Carregando aplicativo**, e o ID do seu espaço de trabalho, no seu tema claro ou escuro. O aplicativo aparece sozinho assim que estiver pronto (geralmente em alguns segundos, até cerca de um minuto em uma inicialização a frio) e, depois, responde normalmente até ficar ocioso novamente.
 
+A tela de carregamento também aparece enquanto o aplicativo é ativado quando você o abre por qualquer outro link para ele, como um link copiado da barra de endereços ou um link em um alerta ou em uma mensagem de resumo. Se você não estiver conectado e abrir o aplicativo em uma guia do navegador, primeiro faz login.
+
 > Se um aplicativo não conseguir iniciar, a tela de carregamento passa a exibir uma mensagem informando que o aplicativo não foi iniciado e em qual etapa ele parou, com um botão **Tentar novamente**, em vez de ficar carregando indefinidamente. Se isso continuar acontecendo, edite o aplicativo para verificar o ponto de entrada e o branch e publique-o novamente, ou entre em contato com o administrador do PlaidCloud.
 
 ### Aparência

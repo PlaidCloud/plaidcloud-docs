@@ -49,6 +49,8 @@ Klicken Sie am Anfang der Zeile einer bereiten App auf das Symbol **Öffnen**, u
 
 Eine Server-App skaliert im Leerlauf auf null, um Ressourcen zu sparen, daher muss das erste Öffnen nach einer Leerlaufzeit sie erst hochfahren. Währenddessen sehen Sie statt eines leeren Tabs einen **PlaidCloud-Ladebildschirm**: den Namen Ihrer App, ihren Fortschritt durch **Wird gestartet**, **Wird vorbereitet** und **App wird geladen** sowie Ihre Workspace-ID, in Ihrem hellen oder dunklen Theme. Die App erscheint von selbst, sobald sie bereit ist (meist nach wenigen Sekunden, bei einem Kaltstart bis zu etwa einer Minute), und reagiert dann normal, bis sie wieder in den Leerlauf geht.
 
+Der Ladebildschirm erscheint auch, während die App aufwacht, wenn Sie sie über einen anderen Link öffnen, etwa einen aus der Adressleiste kopierten Link oder einen Link in einem Hinweis oder einer Zusammenfassung. Wenn Sie abgemeldet sind und sie in einem Browser-Tab öffnen, melden Sie sich zuerst an.
+
 > Wenn eine App nicht starten kann, wird der Ladebildschirm zu einer Meldung, dass die App nicht gestartet ist und bei welchem Schritt sie angehalten hat, mit einer Schaltfläche **Erneut versuchen**, statt endlos zu drehen. Wenn das immer wieder passiert, bearbeiten Sie die App, prüfen Sie Einstiegspunkt und Branch und veröffentlichen Sie sie erneut, oder wenden Sie sich an Ihren PlaidCloud-Administrator.
 
 ### Erscheinungsbild
