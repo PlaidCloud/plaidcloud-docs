@@ -38,19 +38,42 @@ La carpeta **Por flujo de trabajo** al final de la pestaña **Tablas** agrupa la
 
 ### Por columna
 
-Escriba el nombre de una columna en el cuadro de búsqueda de columnas de la pestaña **Tablas** y pulse Intro, o seleccione la lupa que hay junto a él, para mostrar solo las tablas que tienen una columna con ese nombre. La búsqueda lee los nombres de las columnas, no los datos, por lo que es rápida. Seleccione **Contiene** para coincidir con parte del nombre de una columna en lugar del nombre completo. Borre el cuadro para volver a mostrar todas las tablas. Una búsqueda larga puede devolver los resultados por páginas, y la línea de estado indica cuándo aún está buscando o puede estar incompleta.
+Seleccione **Buscar columna** en la barra de herramientas de la pestaña **Tablas** para encontrar las tablas que tienen una columna con un nombre determinado. La búsqueda lee los nombres de las columnas, no los datos, por lo que es rápida, y solo encuentra tablas que ya se han creado. La ventana se abre con su última búsqueda en ese proyecto, si hizo alguna.
 
-Seleccione **Árbol de columnas** para buscar desde una ventana propia. Cada tabla que tiene la columna se abre con dos listas:
+Escriba al menos dos caracteres y los resultados se actualizan mientras escribe, o pulse Intro para buscar lo que ha escrito. Elija cómo se compara el nombre:
 
-* **Alimentada por**: las tablas que suministran la columna
-* **Alimenta a**: las tablas a las que la columna sigue alimentando
+* **Exacto**: el nombre completo de la columna, sin distinguir mayúsculas de minúsculas
+* **Contiene**: parte del nombre de la columna, sin distinguir mayúsculas de minúsculas. Es el valor predeterminado.
+* **Aproximado**: nombres parecidos, sin distinguir mayúsculas de minúsculas, espacios, guiones bajos ni otros separadores, y tolerando pequeñas erratas. Las coincidencias más cercanas aparecen primero.
 
-Un asistente de IA conectado mediante MCP encuentra las mismas tablas con `table_find(column=...)`, coincidiendo con el nombre completo o con una parte.
+La ventana recuerda en ese navegador el tipo de coincidencia que eligió por última vez. Mientras el cuadro de búsqueda está vacío, muestra sus últimas cinco búsquedas en el proyecto; seleccione una para ejecutarla de nuevo. Una búsqueda se añade a la lista cuando pulsa Intro o actúa sobre sus resultados.
+
+Cada tabla que coincide es una fila, con su nombre, su ruta y las tres primeras columnas coincidentes. La línea situada sobre los resultados cuenta las tablas encontradas hasta el momento mientras se ejecuta la búsqueda. Cuando no hay coincidencias con **Exacto** o **Contiene**, seleccione **¿Probar con Aproximado?** para buscar de nuevo con **Aproximado**. Si la búsqueda falla o se detiene antes de tiempo, seleccione **Reintentar**. Cuando no se pudieron leer las columnas de algunas tablas, los resultados indican que pueden estar incompletos.
+
+Cuando los resultados incluyen más de un nombre de columna, unos chips situados sobre la lista nombran cada uno con el número de tablas que lo tienen. Seleccione un chip para enumerar solo las tablas con esa columna y selecciónelo de nuevo para enumerarlas todas.
+
+Expanda una fila para ver:
+
+* **Columnas coincidentes**: cada columna coincidente, con su tipo cuando es texto, entero, número, fecha, marca de tiempo o booleano. Una columna mostrada en el color de advertencia tiene un tipo distinto en otras tablas de los resultados; pase el cursor sobre ella para ver los tipos.
+* **Alimentada por**: las tablas que leen los pasos que escriben esta tabla, cada una con el nombre del paso
+* **Alimenta a**: las tablas que escriben los pasos que leen esta tabla, cada una con el nombre del paso
+
+Solo se enumeran los pasos del mismo proyecto.
+
+Para actuar sobre los resultados:
+
+* Haga doble clic en una fila, o pulse Intro sobre ella, para cerrar la ventana y seleccionar esa tabla en la pestaña **Tablas**. Si una búsqueda de columnas mostrada en el árbol o el conmutador **Todos | Published** oculta la tabla, se borra y un mensaje se lo indica. Pulse Ctrl+Intro, o Cmd+Intro en un Mac, para abrir la tabla en el Explorador de tablas. Las teclas de flecha arriba y abajo del cuadro de búsqueda se desplazan entre las filas.
+* Seleccione **Mostrar en el árbol** para limitar el árbol y la lista aplanada a las tablas de los resultados, o a las del chip seleccionado, y abrir las carpetas del árbol que las contienen. Un chip situado sobre la lista nombra la búsqueda y cuenta sus tablas. Seleccione el chip para abrir la búsqueda de nuevo, o la × que contiene para mostrar todas las tablas. Al actualizar la pestaña **Tablas** se ejecuta la búsqueda de nuevo.
+* Seleccione **Copiar** para copiar las tablas enumeradas, una por línea, con el nombre, la ruta, las columnas coincidentes y sus tipos de cada tabla separados por tabuladores.
+
+**Mostrar en el árbol** y **Copiar** están disponibles cuando la búsqueda termina con al menos una tabla.
+
+Un asistente de IA conectado mediante MCP encuentra las mismas tablas con `table_find(column=...)`. Coincide con el nombre completo, con una parte, con su inicio o con su final, o con nombres parecidos mediante `column_match='fuzzy'`, y devuelve los tipos de las columnas coincidentes y, en una coincidencia aproximada, lo cerca que está la mejor columna.
 
 
 ### Buscar valores
 
-Para encontrar qué tablas contienen un valor, elija **Buscar valores en los datos… (lento)** en el menú **Acciones** de la pestaña **Tablas**, o haga clic con el botón derecho en una tabla y elíjalo para buscar solo en esa tabla. Escriba el valor, elija **Contiene** para coincidir con parte de un valor y seleccione **Buscar**. Cada tabla que contiene el valor se enumera con las columnas en las que aparece y algunos de los valores coincidentes. Haga doble clic en una tabla, o pulse Intro sobre ella, para abrirla en el Explorador de tablas. Una columna abre la tabla filtrada por las filas que coinciden. Si el cuadro de búsqueda de columnas contiene texto, rellena el valor que se va a buscar.
+Para encontrar qué tablas contienen un valor, elija **Buscar valores en los datos… (lento)** en el menú **Acciones** de la pestaña **Tablas**, o haga clic con el botón derecho en una tabla y elíjalo para buscar solo en esa tabla. Escriba el valor, elija **Contiene** para coincidir con parte de un valor y seleccione **Buscar**. Cada tabla que contiene el valor se enumera con las columnas en las que aparece y algunos de los valores coincidentes. Haga doble clic en una tabla, o pulse Intro sobre ella, para abrirla en el Explorador de tablas. Una columna abre la tabla filtrada por las filas que coinciden.
 
 Antes de buscar, tenga en cuenta que:
 

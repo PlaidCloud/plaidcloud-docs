@@ -38,19 +38,42 @@ A pasta **Por fluxo de trabalho** no final do separador **Tabelas** agrupa as ta
 
 ### Por coluna
 
-Escreva o nome de uma coluna na caixa de pesquisa de colunas no separador **Tabelas** e prima Enter, ou selecione a lupa junto a ela, para mostrar apenas as tabelas que têm uma coluna com esse nome. A pesquisa lê os nomes das colunas, não os dados, pelo que é rápida. Selecione **Contém** para corresponder a parte do nome de uma coluna em vez do nome completo. Limpe a caixa para voltar a mostrar todas as tabelas. Uma pesquisa longa pode devolver resultados em páginas e a linha de estado indica quando ainda está a pesquisar ou pode estar incompleta.
+Selecione **Procurar coluna** na barra de ferramentas do separador **Tabelas** para encontrar as tabelas que têm uma coluna com um determinado nome. A pesquisa lê os nomes das colunas, não os dados, pelo que é rápida, e só encontra tabelas que já foram criadas. A janela abre na sua última pesquisa nesse projeto, se tiver feito uma.
 
-Selecione **Árvore de colunas** para pesquisar a partir de uma janela própria. Cada tabela que tem a coluna abre-se em duas listas:
+Escreva pelo menos dois carateres e os resultados são atualizados à medida que escreve, ou prima Enter para pesquisar o que escreveu. Escolha como o nome é correspondido:
 
-* **Alimentada por** — as tabelas que fornecem a coluna
-* **Alimenta** — as tabelas que a coluna passa a alimentar
+* **Exato** — o nome completo da coluna, sem distinguir maiúsculas de minúsculas
+* **Contém** — parte do nome da coluna, sem distinguir maiúsculas de minúsculas. Esta é a predefinição.
+* **Aproximado** — nomes parecidos, ignorando maiúsculas e minúsculas, espaços, carateres de sublinhado e outros separadores, e tolerando pequenos erros de escrita. As correspondências mais próximas vêm primeiro.
 
-Um assistente de IA ligado através do MCP encontra as mesmas tabelas com `table_find(column=...)`, fazendo corresponder o nome completo ou parte dele.
+A janela memoriza a correspondência que escolheu por último nesse navegador. Enquanto a caixa de pesquisa está vazia, lista as suas últimas cinco pesquisas no projeto; selecione uma para a executar novamente. Uma pesquisa entra na lista quando prime Enter ou atua sobre os respetivos resultados.
+
+Cada tabela correspondente ocupa uma linha, com o seu nome, o seu caminho e as três primeiras colunas correspondentes. A linha acima dos resultados conta as tabelas encontradas até ao momento enquanto a pesquisa decorre. Quando nada corresponde com **Exato** ou **Contém**, selecione **Tentar Aproximado?** para pesquisar novamente com **Aproximado**. Se a pesquisa falhar ou parar antes do fim, selecione **Tentar novamente**. Quando não foi possível ler as colunas de algumas tabelas, os resultados indicam que podem estar incompletos.
+
+Quando os resultados incluem mais do que um nome de coluna, chips acima da lista indicam cada um deles com o número de tabelas que o têm. Selecione um chip para listar apenas as tabelas com essa coluna e selecione-o novamente para as listar todas.
+
+Expanda uma linha para ver:
+
+* **Colunas correspondentes** — cada coluna correspondente, com o seu tipo quando este é texto, inteiro, número, data, timestamp ou booleano. Uma coluna apresentada na cor de aviso tem um tipo diferente noutras tabelas dos resultados; passe o rato sobre ela para ver os tipos.
+* **Alimentada por** — as tabelas lidas pelos passos que gravam esta tabela, cada uma com o nome do passo
+* **Alimenta** — as tabelas gravadas pelos passos que leem esta tabela, cada uma com o nome do passo
+
+Só são listados os passos do mesmo projeto.
+
+Para atuar sobre os resultados:
+
+* Faça duplo clique numa linha, ou prima Enter sobre ela, para fechar a janela e selecionar essa tabela no separador **Tabelas**. Se uma pesquisa de colunas apresentada na árvore ou o seletor **All | Published** ocultar a tabela, é limpo e uma mensagem avisa-o. Prima Ctrl+Enter, ou Cmd+Enter num Mac, para abrir a tabela no Explorador de tabelas. As teclas de seta para cima e para baixo na caixa de pesquisa movem-se entre as linhas.
+* Selecione **Mostrar na árvore** para restringir a árvore e a lista simples às tabelas dos resultados, ou às tabelas do chip selecionado, e abrir as pastas da árvore que as contêm. Um chip acima da lista indica a pesquisa e conta as respetivas tabelas. Selecione o chip para abrir a pesquisa novamente, ou o × nele para mostrar todas as tabelas. Atualizar o separador **Tabelas** executa a pesquisa novamente.
+* Selecione **Copiar** para copiar as tabelas listadas, uma por linha, com o nome, o caminho, as colunas correspondentes e os respetivos tipos de cada tabela separados por tabulações.
+
+**Mostrar na árvore** e **Copiar** ficam disponíveis quando a pesquisa termina com pelo menos uma tabela.
+
+Um assistente de IA ligado através do MCP encontra as mesmas tabelas com `table_find(column=...)`. Faz corresponder o nome completo, parte dele, o início ou o fim, ou nomes parecidos com `column_match='fuzzy'`, e devolve os tipos das colunas correspondentes e, numa correspondência aproximada, quão próxima é a melhor coluna.
 
 
 ### Pesquisar valores
 
-Para descobrir que tabelas contêm um valor, escolha **Pesquisar valores nos dados… (lento)** no menu **Ações** do separador **Tabelas**, ou clique com o botão direito do rato numa tabela e escolha-o para procurar apenas nessa tabela. Introduza o valor, escolha **Contém** para corresponder a parte de um valor e selecione **Pesquisar**. Cada tabela que contém o valor é listada com as colunas em que aparece e alguns dos valores correspondentes. Faça duplo clique numa tabela, ou prima Enter sobre ela, para a abrir no Explorador de tabelas. Uma coluna abre a tabela filtrada pelas linhas correspondentes. Se a caixa de pesquisa de colunas tiver texto, preenche o valor a procurar.
+Para descobrir que tabelas contêm um valor, escolha **Pesquisar valores nos dados… (lento)** no menu **Ações** do separador **Tabelas**, ou clique com o botão direito do rato numa tabela e escolha-o para procurar apenas nessa tabela. Introduza o valor, escolha **Contém** para corresponder a parte de um valor e selecione **Pesquisar**. Cada tabela que contém o valor é listada com as colunas em que aparece e alguns dos valores correspondentes. Faça duplo clique numa tabela, ou prima Enter sobre ela, para a abrir no Explorador de tabelas. Uma coluna abre a tabela filtrada pelas linhas correspondentes.
 
 Antes de pesquisar, tenha em atenção que:
 

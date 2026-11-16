@@ -38,19 +38,42 @@ Le dossier **Par workflow**, à la fin de l’onglet **Tables**, regroupe les ta
 
 ### Par colonne
 
-Saisissez un nom de colonne dans la zone de recherche de colonnes de l’onglet **Tables** et appuyez sur Entrée, ou sélectionnez la loupe à côté, pour n’afficher que les tables qui possèdent une colonne portant ce nom. La recherche porte sur les noms de colonnes, pas sur les données ; elle est donc rapide. Sélectionnez **Contient** pour faire correspondre une partie d’un nom de colonne plutôt que le nom entier. Effacez la zone pour afficher de nouveau toutes les tables. Une recherche longue peut renvoyer ses résultats par pages, et la ligne d’état indique lorsqu’elle est encore en cours ou peut être incomplète.
+Sélectionnez **Rechercher une colonne** dans la barre d’outils de l’onglet **Tables** pour trouver les tables qui possèdent une colonne portant un nom donné. La recherche porte sur les noms de colonnes, pas sur les données ; elle est donc rapide. Elle ne trouve que les tables déjà générées. La fenêtre s’ouvre sur votre dernière recherche dans ce projet, si vous en avez effectué une.
 
-Sélectionnez **Arborescence des colonnes** pour rechercher depuis une fenêtre dédiée. Chaque table qui possède la colonne s’ouvre sur deux listes :
+Saisissez au moins deux caractères et les résultats se mettent à jour pendant la saisie, ou appuyez sur Entrée pour rechercher ce que vous avez saisi. Choisissez comment le nom est comparé :
 
-* **Alimentée par** : les tables qui fournissent la colonne
-* **Alimente** : les tables que la colonne va ensuite alimenter
+* **Exact** : le nom complet de la colonne, sans tenir compte de la casse
+* **Contient** : une partie du nom de la colonne, sans tenir compte de la casse. C’est le choix par défaut.
+* **Approximatif** : les noms proches, sans tenir compte de la casse, des espaces, des traits de soulignement et des autres séparateurs, et tolérant les petites fautes de frappe. Les correspondances les plus proches viennent en premier.
 
-Un assistant IA connecté via MCP trouve les mêmes tables avec `table_find(column=...)`, en faisant correspondre le nom entier ou une partie de celui-ci.
+La fenêtre mémorise dans ce navigateur le type de correspondance que vous avez choisi en dernier. Tant que la zone de recherche est vide, elle liste vos cinq dernières recherches dans le projet ; sélectionnez-en une pour la relancer. Une recherche rejoint la liste lorsque vous appuyez sur Entrée ou agissez sur ses résultats.
+
+Chaque table correspondante occupe une ligne, avec son nom, son chemin et les trois premières colonnes correspondantes. La ligne au-dessus des résultats compte les tables trouvées jusqu’ici pendant que la recherche se poursuit. Lorsque rien ne correspond avec **Exact** ou **Contient**, sélectionnez **Essayer Approximatif ?** pour relancer la recherche avec **Approximatif**. Si la recherche échoue ou s’arrête prématurément, sélectionnez **Réessayer**. Lorsque les colonnes de certaines tables n’ont pas pu être lues, les résultats indiquent qu’ils peuvent être incomplets.
+
+Lorsque les résultats comportent plus d’un nom de colonne, des pastilles au-dessus de la liste nomment chacun d’eux avec le nombre de tables qui le possèdent. Sélectionnez une pastille pour ne lister que les tables ayant cette colonne, et sélectionnez-la de nouveau pour les lister toutes.
+
+Développez une ligne pour voir :
+
+* **Colonnes correspondantes** : chaque colonne correspondante, avec son type lorsqu’il s’agit de texte, d’entier, de nombre, de date, d’horodatage ou de booléen. Une colonne affichée dans la couleur d’avertissement a un type différent dans d’autres tables des résultats ; survolez-la pour voir les types.
+* **Alimentée par** : les tables lues par les étapes qui écrivent cette table, chacune avec le nom de l’étape
+* **Alimente** : les tables écrites par les étapes qui lisent cette table, chacune avec le nom de l’étape
+
+Seules les étapes du même projet sont listées.
+
+Pour agir sur les résultats :
+
+* Double-cliquez sur une ligne, ou appuyez sur Entrée dessus, pour fermer la fenêtre et sélectionner cette table dans l’onglet **Tables**. Si une recherche de colonne affichée dans l’arborescence ou le commutateur **Tous | Published** masque la table, elle est effacée et un message vous l’indique. Appuyez sur Ctrl+Entrée, ou Cmd+Entrée sur un Mac, pour ouvrir plutôt la table dans l’Explorateur de tables. Les flèches Haut et Bas dans la zone de recherche permettent de passer d’une ligne à l’autre.
+* Sélectionnez **Afficher dans l'arborescence** pour restreindre l’arborescence et la liste aplatie aux tables des résultats, ou à celles de la pastille sélectionnée, et ouvrir les dossiers de l’arborescence qui les contiennent. Une pastille au-dessus de la liste nomme la recherche et compte ses tables. Sélectionnez la pastille pour rouvrir la recherche, ou le × qu’elle contient pour afficher toutes les tables. Actualiser l’onglet **Tables** relance la recherche.
+* Sélectionnez **Copier** pour copier les tables listées, une par ligne, avec le nom, le chemin, les colonnes correspondantes et leurs types de chaque table séparés par des tabulations.
+
+**Afficher dans l'arborescence** et **Copier** sont disponibles une fois la recherche terminée avec au moins une table.
+
+Un assistant IA connecté via MCP trouve les mêmes tables avec `table_find(column=...)`. Il fait correspondre le nom entier, une partie de celui-ci, son début ou sa fin, ou des noms proches avec `column_match='fuzzy'`, et renvoie les types des colonnes correspondantes et, pour une correspondance approximative, le degré de proximité de la meilleure colonne.
 
 
 ### Rechercher des valeurs
 
-Pour trouver quelles tables contiennent une valeur, choisissez **Rechercher des valeurs dans les données… (lent)** dans le menu **Actions** de l’onglet **Tables**, ou faites un clic droit sur une table et choisissez cette option pour ne chercher que dans cette table. Saisissez la valeur, choisissez **Contient** pour faire correspondre une partie d’une valeur, puis sélectionnez **Rechercher**. Chaque table qui contient la valeur est listée avec les colonnes dans lesquelles elle apparaît et quelques-unes des valeurs correspondantes. Double-cliquez sur une table, ou appuyez sur Entrée dessus, pour l’ouvrir dans l’Explorateur de tables. Une colonne ouvre la table filtrée sur les lignes correspondantes. Si la zone de recherche de colonnes contient du texte, elle renseigne la valeur à trouver.
+Pour trouver quelles tables contiennent une valeur, choisissez **Rechercher des valeurs dans les données… (lent)** dans le menu **Actions** de l’onglet **Tables**, ou faites un clic droit sur une table et choisissez cette option pour ne chercher que dans cette table. Saisissez la valeur, choisissez **Contient** pour faire correspondre une partie d’une valeur, puis sélectionnez **Rechercher**. Chaque table qui contient la valeur est listée avec les colonnes dans lesquelles elle apparaît et quelques-unes des valeurs correspondantes. Double-cliquez sur une table, ou appuyez sur Entrée dessus, pour l’ouvrir dans l’Explorateur de tables. Une colonne ouvre la table filtrée sur les lignes correspondantes.
 
 Avant de lancer une recherche, sachez que :
 
