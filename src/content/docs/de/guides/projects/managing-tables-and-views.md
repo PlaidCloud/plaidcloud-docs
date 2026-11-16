@@ -28,7 +28,7 @@ PlaidCloud organisiert Tabellen über ein pfadbasiertes System, ähnlich wie Sie
 ## Tabellen finden
 
 
-Verwenden Sie **Filter** am unteren Rand der Liste neben der Zeilenanzahl, um Tabellennamen und Beschriftungen zu durchsuchen. Drücken Sie **/** oder Strg/Cmd+F, um direkt dorthin zu springen. Derselbe Filter gilt für die Baumstruktur und für die flache Liste. Der Schalter **Alle | Published** neben dem Filter beschränkt die Liste auf veröffentlichte Tabellen; er steht standardmäßig auf **Alle** und gilt sowohl in der Baumstruktur als auch in der flachen Liste.
+Verwenden Sie **Filter** am unteren Rand der Liste neben der Zeilenanzahl, um Tabellennamen und Beschriftungen zu durchsuchen. Drücken Sie **/** oder Strg/Cmd+F, um direkt dorthin zu springen. Derselbe Filter gilt für die Baumstruktur und für die flache Liste. Der Schalter **Alle | Veröffentlicht** neben dem Filter beschränkt die Liste auf veröffentlichte Tabellen; er steht standardmäßig auf **Alle** und gilt sowohl in der Baumstruktur als auch in der flachen Liste.
 
 
 ### Nach Workflow
@@ -40,13 +40,13 @@ Der Ordner **Nach Workflow** am Ende der Registerkarte **Tabellen** gruppiert Ta
 
 Wählen Sie in der Symbolleiste der Registerkarte **Tabellen** die Option **Spalte suchen**, um die Tabellen zu finden, die eine Spalte mit einem bestimmten Namen haben. Die Suche liest Spaltennamen, nicht die Daten, und ist daher schnell. Sie findet nur Tabellen, die bereits erstellt wurden. Das Fenster öffnet sich mit der letzten Suche, die Sie in diesem Projekt durchgeführt haben, seit Sie das Projekt geöffnet haben, falls Sie eine durchgeführt haben.
 
-Geben Sie mindestens zwei Zeichen ein, dann werden die Ergebnisse während der Eingabe aktualisiert, oder drücken Sie die Eingabetaste, um nach dem Eingegebenen zu suchen. Legen Sie fest, wie der Name abgeglichen wird:
+Geben Sie mindestens zwei Zeichen ein, dann werden die Ergebnisse während der Eingabe aktualisiert, oder drücken Sie die Eingabetaste, um sofort zu suchen. Sobald die Ergebnisse für das Eingegebene angezeigt werden, wählt die Eingabetaste im Suchfeld die markierte Tabelle aus, wie in einer Zeile. Legen Sie fest, wie der Name abgeglichen wird:
 
 * **Exakt** – der vollständige Spaltenname, ohne Beachtung der Groß- und Kleinschreibung
 * **Enthält** – ein Teil des Spaltennamens, ohne Beachtung der Groß- und Kleinschreibung. Dies ist die Standardeinstellung.
 * **Unscharf** – ähnliche Namen, ohne Beachtung der Groß- und Kleinschreibung, von Leerzeichen, Unterstrichen und anderen Trennzeichen, und tolerant gegenüber kleinen Tippfehlern. Die ähnlichsten Treffer stehen zuerst.
 
-Das Fenster merkt sich die zuletzt gewählte Abgleichsart in diesem Browser. Solange das Suchfeld leer ist, listet es Ihre letzten fünf Suchen im Projekt auf; wählen Sie eine aus, um sie erneut auszuführen. Eine Suche gilt als ausgeführt und wird in die Liste aufgenommen, wenn Sie die Eingabetaste drücken, sie aus der Liste auswählen oder mit ihren Ergebnissen arbeiten.
+Das Fenster merkt sich die zuletzt gewählte Abgleichsart in diesem Browser. Solange das Suchfeld leer ist, listet es Ihre letzten fünf Suchen im Projekt in diesem Browser auf; wählen Sie eine aus, um sie erneut auszuführen. Eine Suche gilt als ausgeführt und wird in die Liste aufgenommen, wenn Sie die Eingabetaste drücken, sie aus der Liste auswählen oder mit ihren Ergebnissen arbeiten.
 
 Jede passende Tabelle ist eine Zeile mit ihrem Namen, ihrem Pfad und den ersten drei passenden Spalten. Die Zeile über den Ergebnissen zählt die bisher gefundenen Tabellen, während die Suche läuft. Wenn mit **Exakt** oder **Enthält** nichts gefunden wird, wählen Sie **Unscharf versuchen?**, um erneut mit **Unscharf** zu suchen. Wenn die Suche fehlschlägt oder vorzeitig endet, wählen Sie **Wiederholen**. Konnten die Spalten einiger Tabellen nicht gelesen werden, weisen die Ergebnisse darauf hin, dass sie unvollständig sein könnten.
 
@@ -62,7 +62,7 @@ Es werden nur Schritte im selben Projekt aufgeführt.
 
 So arbeiten Sie mit den Ergebnissen:
 
-* Doppelklicken Sie auf eine Zeile oder drücken Sie die Eingabetaste, um das Fenster zu schließen und die Tabelle auf der Registerkarte **Tabellen** auszuwählen. Wird die Tabelle durch eine im Baum angezeigte Spaltensuche oder durch den Schalter **Alle | Published** ausgeblendet, wird diese aufgehoben, und eine Meldung weist darauf hin. Drücken Sie Strg+Eingabe, auf dem Mac Cmd+Eingabe, um die Tabelle stattdessen im Tabellen-Explorer zu öffnen. Mit den Pfeiltasten Nach oben und Nach unten im Suchfeld wechseln Sie zwischen den Zeilen.
+* Doppelklicken Sie auf eine Zeile oder drücken Sie die Eingabetaste, um das Fenster zu schließen und die Tabelle auf der Registerkarte **Tabellen** auszuwählen. Wird die Tabelle durch eine im Baum angezeigte Spaltensuche oder durch den Schalter **Alle | Veröffentlicht** ausgeblendet, wird diese aufgehoben, und eine Meldung weist darauf hin. Drücken Sie Strg+Eingabe, auf dem Mac Cmd+Eingabe, um die Tabelle stattdessen im Tabellen-Explorer zu öffnen. Mit den Pfeiltasten Nach oben und Nach unten im Suchfeld wechseln Sie zwischen den Zeilen.
 * Wählen Sie **In Baum anzeigen**, um den Baum und die abgeflachte Liste auf die Tabellen der Ergebnisse oder des gewählten Chips einzugrenzen und die Ordner im Baum zu öffnen, die sie enthalten. Ein Chip über der Liste nennt die Suche und zählt ihre Tabellen. Wählen Sie den Chip, um die Suche erneut zu öffnen, oder das × darauf, um wieder alle Tabellen anzuzeigen. Beim Aktualisieren der Registerkarte **Tabellen** wird die Suche erneut ausgeführt.
 * Wählen Sie **Kopieren**, um die aufgelisteten Tabellen zu kopieren, eine pro Zeile, mit Name, Pfad, passenden Spalten und deren Typen der jeweiligen Tabelle, durch Tabulatoren getrennt.
 

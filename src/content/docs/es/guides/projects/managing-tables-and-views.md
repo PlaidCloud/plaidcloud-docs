@@ -28,7 +28,7 @@ PlaidCloud utiliza un sistema basado en rutas para organizar las tablas, como el
 ## Búsqueda de tablas
 
 
-Use **Filtro** en la parte inferior de la lista, junto al recuento de filas, para buscar en los nombres y las etiquetas de las tablas. Pulse **/** o Ctrl/Cmd+F para ir a él. El mismo filtro se aplica al árbol y a la lista plana. El interruptor **Todos | Published** junto al filtro limita la lista a las tablas publicadas; está establecido en **Todos** de forma predeterminada y se aplica tanto en el árbol como en la lista plana.
+Use **Filtro** en la parte inferior de la lista, junto al recuento de filas, para buscar en los nombres y las etiquetas de las tablas. Pulse **/** o Ctrl/Cmd+F para ir a él. El mismo filtro se aplica al árbol y a la lista plana. El interruptor **Todos | Publicado** junto al filtro limita la lista a las tablas publicadas; está establecido en **Todos** de forma predeterminada y se aplica tanto en el árbol como en la lista plana.
 
 
 ### Por flujo de trabajo
@@ -40,13 +40,13 @@ La carpeta **Por flujo de trabajo** al final de la pestaña **Tablas** agrupa la
 
 Seleccione **Buscar columna** en la barra de herramientas de la pestaña **Tablas** para encontrar las tablas que tienen una columna con un nombre determinado. La búsqueda lee los nombres de las columnas, no los datos, por lo que es rápida, y solo encuentra tablas que ya se han creado. La ventana se abre con la última búsqueda que ejecutó en ese proyecto desde que abrió el proyecto, si ejecutó alguna.
 
-Escriba al menos dos caracteres y los resultados se actualizan mientras escribe, o pulse Intro para buscar lo que ha escrito. Elija cómo se compara el nombre:
+Escriba al menos dos caracteres y los resultados se actualizan mientras escribe, o pulse Intro para buscar de inmediato. Cuando se muestran los resultados de lo que ha escrito, Intro en el cuadro de búsqueda selecciona la tabla resaltada, igual que en una fila. Elija cómo se compara el nombre:
 
 * **Exacto**: el nombre completo de la columna, sin distinguir mayúsculas de minúsculas
 * **Contiene**: parte del nombre de la columna, sin distinguir mayúsculas de minúsculas. Es el valor predeterminado.
 * **Aproximado**: nombres parecidos, sin distinguir mayúsculas de minúsculas, espacios, guiones bajos ni otros separadores, y tolerando pequeñas erratas. Las coincidencias más cercanas aparecen primero.
 
-La ventana recuerda en ese navegador el tipo de coincidencia que eligió por última vez. Mientras el cuadro de búsqueda está vacío, muestra sus últimas cinco búsquedas en el proyecto; seleccione una para ejecutarla de nuevo. Una búsqueda se considera ejecutada y se añade a la lista cuando pulsa Intro, la selecciona de la lista o actúa sobre sus resultados.
+La ventana recuerda en ese navegador el tipo de coincidencia que eligió por última vez. Mientras el cuadro de búsqueda está vacío, muestra sus últimas cinco búsquedas en el proyecto en ese navegador; seleccione una para ejecutarla de nuevo. Una búsqueda se considera ejecutada y se añade a la lista cuando pulsa Intro, la selecciona de la lista o actúa sobre sus resultados.
 
 Cada tabla que coincide es una fila, con su nombre, su ruta y las tres primeras columnas coincidentes. La línea situada sobre los resultados cuenta las tablas encontradas hasta el momento mientras se ejecuta la búsqueda. Cuando no hay coincidencias con **Exacto** o **Contiene**, seleccione **¿Probar con Aproximado?** para buscar de nuevo con **Aproximado**. Si la búsqueda falla o se detiene antes de tiempo, seleccione **Reintentar**. Cuando no se pudieron leer las columnas de algunas tablas, los resultados indican que pueden estar incompletos.
 
@@ -62,7 +62,7 @@ Solo se enumeran los pasos del mismo proyecto.
 
 Para actuar sobre los resultados:
 
-* Haga doble clic en una fila, o pulse Intro sobre ella, para cerrar la ventana y seleccionar esa tabla en la pestaña **Tablas**. Si una búsqueda de columnas mostrada en el árbol o el conmutador **Todos | Published** oculta la tabla, se borra y un mensaje se lo indica. Pulse Ctrl+Intro, o Cmd+Intro en un Mac, para abrir la tabla en el Explorador de tablas. Las teclas de flecha arriba y abajo del cuadro de búsqueda se desplazan entre las filas.
+* Haga doble clic en una fila, o pulse Intro sobre ella, para cerrar la ventana y seleccionar esa tabla en la pestaña **Tablas**. Si una búsqueda de columnas mostrada en el árbol o el conmutador **Todos | Publicado** oculta la tabla, se borra y un mensaje se lo indica. Pulse Ctrl+Intro, o Cmd+Intro en un Mac, para abrir la tabla en el Explorador de tablas. Las teclas de flecha arriba y abajo del cuadro de búsqueda se desplazan entre las filas.
 * Seleccione **Mostrar en el árbol** para limitar el árbol y la lista aplanada a las tablas de los resultados, o a las del chip seleccionado, y abrir las carpetas del árbol que las contienen. Un chip situado sobre la lista nombra la búsqueda y cuenta sus tablas. Seleccione el chip para abrir la búsqueda de nuevo, o la × que contiene para mostrar todas las tablas. Al actualizar la pestaña **Tablas** se ejecuta la búsqueda de nuevo.
 * Seleccione **Copiar** para copiar las tablas enumeradas, una por línea, con el nombre, la ruta, las columnas coincidentes y sus tipos de cada tabla separados por tabuladores.
 

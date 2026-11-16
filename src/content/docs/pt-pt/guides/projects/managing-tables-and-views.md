@@ -28,7 +28,7 @@ O PlaidCloud utiliza um sistema baseado em caminhos para organizar as tabelas, t
 ## Encontrar tabelas
 
 
-Utilize **Filtro** na parte inferior da lista, junto à contagem de linhas, para pesquisar nomes e etiquetas de tabelas. Prima **/** ou Ctrl/Cmd+F para ir diretamente para ele. O mesmo filtro aplica-se à árvore e à lista simplificada. O seletor **All | Published** junto ao filtro limita a lista às tabelas publicadas; está definido como **All** por predefinição e aplica-se tanto à árvore como à lista simples.
+Utilize **Filtro** na parte inferior da lista, junto à contagem de linhas, para pesquisar nomes e etiquetas de tabelas. Prima **/** ou Ctrl/Cmd+F para ir diretamente para ele. O mesmo filtro aplica-se à árvore e à lista simplificada. O seletor **Todos | Publicado** junto ao filtro limita a lista às tabelas publicadas; está definido como **Todos** por predefinição e aplica-se tanto à árvore como à lista simples.
 
 
 ### Por fluxo de trabalho
@@ -40,13 +40,13 @@ A pasta **Por fluxo de trabalho** no final do separador **Tabelas** agrupa as ta
 
 Selecione **Procurar coluna** na barra de ferramentas do separador **Tabelas** para encontrar as tabelas que têm uma coluna com um determinado nome. A pesquisa lê os nomes das colunas, não os dados, pelo que é rápida, e só encontra tabelas que já foram criadas. A janela abre na última pesquisa que executou nesse projeto desde que abriu o projeto, se tiver executado alguma.
 
-Escreva pelo menos dois carateres e os resultados são atualizados à medida que escreve, ou prima Enter para pesquisar o que escreveu. Escolha como o nome é correspondido:
+Escreva pelo menos dois carateres e os resultados são atualizados à medida que escreve, ou prima Enter para pesquisar de imediato. Quando os resultados do que escreveu estiverem a ser apresentados, Enter na caixa de pesquisa seleciona a tabela realçada, tal como numa linha. Escolha como o nome é correspondido:
 
 * **Exato** — o nome completo da coluna, sem distinguir maiúsculas de minúsculas
 * **Contém** — parte do nome da coluna, sem distinguir maiúsculas de minúsculas. Esta é a predefinição.
 * **Aproximado** — nomes parecidos, ignorando maiúsculas e minúsculas, espaços, carateres de sublinhado e outros separadores, e tolerando pequenos erros de escrita. As correspondências mais próximas vêm primeiro.
 
-A janela memoriza a correspondência que escolheu por último nesse navegador. Enquanto a caixa de pesquisa está vazia, lista as suas últimas cinco pesquisas no projeto; selecione uma para a executar novamente. Uma pesquisa conta como executada e entra na lista quando prime Enter, a seleciona na lista ou atua sobre os respetivos resultados.
+A janela memoriza a correspondência que escolheu por último nesse navegador. Enquanto a caixa de pesquisa está vazia, lista as suas últimas cinco pesquisas no projeto nesse navegador; selecione uma para a executar novamente. Uma pesquisa conta como executada e entra na lista quando prime Enter, a seleciona na lista ou atua sobre os respetivos resultados.
 
 Cada tabela correspondente ocupa uma linha, com o seu nome, o seu caminho e as três primeiras colunas correspondentes. A linha acima dos resultados conta as tabelas encontradas até ao momento enquanto a pesquisa decorre. Quando nada corresponde com **Exato** ou **Contém**, selecione **Tentar Aproximado?** para pesquisar novamente com **Aproximado**. Se a pesquisa falhar ou parar antes do fim, selecione **Tentar novamente**. Quando não foi possível ler as colunas de algumas tabelas, os resultados indicam que podem estar incompletos.
 
@@ -62,7 +62,7 @@ Só são listados os passos do mesmo projeto.
 
 Para atuar sobre os resultados:
 
-* Faça duplo clique numa linha, ou prima Enter sobre ela, para fechar a janela e selecionar essa tabela no separador **Tabelas**. Se uma pesquisa de colunas apresentada na árvore ou o seletor **All | Published** ocultar a tabela, é limpo e uma mensagem avisa-o. Prima Ctrl+Enter, ou Cmd+Enter num Mac, para abrir a tabela no Explorador de tabelas. As teclas de seta para cima e para baixo na caixa de pesquisa movem-se entre as linhas.
+* Faça duplo clique numa linha, ou prima Enter sobre ela, para fechar a janela e selecionar essa tabela no separador **Tabelas**. Se uma pesquisa de colunas apresentada na árvore ou o seletor **Todos | Publicado** ocultar a tabela, é limpo e uma mensagem avisa-o. Prima Ctrl+Enter, ou Cmd+Enter num Mac, para abrir a tabela no Explorador de tabelas. As teclas de seta para cima e para baixo na caixa de pesquisa movem-se entre as linhas.
 * Selecione **Mostrar na árvore** para restringir a árvore e a lista simples às tabelas dos resultados, ou às tabelas do chip selecionado, e abrir as pastas da árvore que as contêm. Um chip acima da lista indica a pesquisa e conta as respetivas tabelas. Selecione o chip para abrir a pesquisa novamente, ou o × nele para mostrar todas as tabelas. Atualizar o separador **Tabelas** executa a pesquisa novamente.
 * Selecione **Copiar** para copiar as tabelas listadas, uma por linha, com o nome, o caminho, as colunas correspondentes e os respetivos tipos de cada tabela separados por tabulações.
 

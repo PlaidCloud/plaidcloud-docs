@@ -28,7 +28,7 @@ PlaidCloud utilise un système basé sur des chemins pour organiser les tables, 
 ## Rechercher des tables
 
 
-Utilisez **Filtre** en bas de la liste, à côté du nombre de lignes, pour rechercher dans les noms et les libellés des tables. Appuyez sur **/** ou sur Ctrl/Cmd+F pour y accéder directement. Le même filtre s’applique à l’arborescence et à la liste à plat. Le commutateur **Tous | Published** à côté du filtre limite la liste aux tables publiées ; il est défini sur **Tous** par défaut et s’applique à la fois à l’arborescence et à la liste à plat.
+Utilisez **Filtre** en bas de la liste, à côté du nombre de lignes, pour rechercher dans les noms et les libellés des tables. Appuyez sur **/** ou sur Ctrl/Cmd+F pour y accéder directement. Le même filtre s’applique à l’arborescence et à la liste à plat. Le commutateur **Tous | Publié** à côté du filtre limite la liste aux tables publiées ; il est défini sur **Tous** par défaut et s’applique à la fois à l’arborescence et à la liste à plat.
 
 
 ### Par workflow
@@ -40,13 +40,13 @@ Le dossier **Par workflow**, à la fin de l’onglet **Tables**, regroupe les ta
 
 Sélectionnez **Rechercher une colonne** dans la barre d’outils de l’onglet **Tables** pour trouver les tables qui possèdent une colonne portant un nom donné. La recherche porte sur les noms de colonnes, pas sur les données ; elle est donc rapide. Elle ne trouve que les tables déjà générées. La fenêtre s’ouvre sur la dernière recherche que vous avez lancée dans ce projet depuis l’ouverture du projet, si vous en avez lancé une.
 
-Saisissez au moins deux caractères et les résultats se mettent à jour pendant la saisie, ou appuyez sur Entrée pour rechercher ce que vous avez saisi. Choisissez comment le nom est comparé :
+Saisissez au moins deux caractères et les résultats se mettent à jour pendant la saisie, ou appuyez sur Entrée pour rechercher aussitôt. Une fois les résultats de votre saisie affichés, Entrée dans la zone de recherche sélectionne la table en surbrillance, comme sur une ligne. Choisissez comment le nom est comparé :
 
 * **Exact** : le nom complet de la colonne, sans tenir compte de la casse
 * **Contient** : une partie du nom de la colonne, sans tenir compte de la casse. C’est le choix par défaut.
 * **Approximatif** : les noms proches, sans tenir compte de la casse, des espaces, des traits de soulignement et des autres séparateurs, et tolérant les petites fautes de frappe. Les correspondances les plus proches viennent en premier.
 
-La fenêtre mémorise dans ce navigateur le type de correspondance que vous avez choisi en dernier. Tant que la zone de recherche est vide, elle liste vos cinq dernières recherches dans le projet ; sélectionnez-en une pour la relancer. Une recherche est considérée comme lancée et rejoint la liste lorsque vous appuyez sur Entrée, la sélectionnez dans la liste ou agissez sur ses résultats.
+La fenêtre mémorise dans ce navigateur le type de correspondance que vous avez choisi en dernier. Tant que la zone de recherche est vide, elle liste vos cinq dernières recherches dans le projet dans ce navigateur ; sélectionnez-en une pour la relancer. Une recherche est considérée comme lancée et rejoint la liste lorsque vous appuyez sur Entrée, la sélectionnez dans la liste ou agissez sur ses résultats.
 
 Chaque table correspondante occupe une ligne, avec son nom, son chemin et les trois premières colonnes correspondantes. La ligne au-dessus des résultats compte les tables trouvées jusqu’ici pendant que la recherche se poursuit. Lorsque rien ne correspond avec **Exact** ou **Contient**, sélectionnez **Essayer Approximatif ?** pour relancer la recherche avec **Approximatif**. Si la recherche échoue ou s’arrête prématurément, sélectionnez **Réessayer**. Lorsque les colonnes de certaines tables n’ont pas pu être lues, les résultats indiquent qu’ils peuvent être incomplets.
 
@@ -62,7 +62,7 @@ Seules les étapes du même projet sont listées.
 
 Pour agir sur les résultats :
 
-* Double-cliquez sur une ligne, ou appuyez sur Entrée dessus, pour fermer la fenêtre et sélectionner cette table dans l’onglet **Tables**. Si une recherche de colonne affichée dans l’arborescence ou le commutateur **Tous | Published** masque la table, elle est effacée et un message vous l’indique. Appuyez sur Ctrl+Entrée, ou Cmd+Entrée sur un Mac, pour ouvrir plutôt la table dans l’Explorateur de tables. Les flèches Haut et Bas dans la zone de recherche permettent de passer d’une ligne à l’autre.
+* Double-cliquez sur une ligne, ou appuyez sur Entrée dessus, pour fermer la fenêtre et sélectionner cette table dans l’onglet **Tables**. Si une recherche de colonne affichée dans l’arborescence ou le commutateur **Tous | Publié** masque la table, elle est effacée et un message vous l’indique. Appuyez sur Ctrl+Entrée, ou Cmd+Entrée sur un Mac, pour ouvrir plutôt la table dans l’Explorateur de tables. Les flèches Haut et Bas dans la zone de recherche permettent de passer d’une ligne à l’autre.
 * Sélectionnez **Afficher dans l'arborescence** pour restreindre l’arborescence et la liste aplatie aux tables des résultats, ou à celles de la pastille sélectionnée, et ouvrir les dossiers de l’arborescence qui les contiennent. Une pastille au-dessus de la liste nomme la recherche et compte ses tables. Sélectionnez la pastille pour rouvrir la recherche, ou le × qu’elle contient pour afficher toutes les tables. Actualiser l’onglet **Tables** relance la recherche.
 * Sélectionnez **Copier** pour copier les tables listées, une par ligne, avec le nom, le chemin, les colonnes correspondantes et leurs types de chaque table séparés par des tabulations.
 
