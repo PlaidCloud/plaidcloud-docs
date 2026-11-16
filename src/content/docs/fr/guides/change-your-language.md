@@ -68,7 +68,7 @@ Si votre navigateur ou votre profil utilise une langue que PlaidCloud ne propose
 
 ## Ce qui reste en anglais
 
-- Les messages et journaux d'exécution des workflows et des étapes, ainsi que le flux d'activité. Beaucoup de personnes les lisent, et les conserver dans une seule langue les garde consultables et cohérents.
+- Les messages et journaux d'exécution des workflows et des étapes, y compris le texte des erreurs dans le panneau d'activité de la fenêtre Projets, et la description que ce panneau donne d'un événement pour lequel il n'a pas de libellé propre, comme une modification de l'accès aux lignes ou une exécution en pause. Beaucoup de personnes les lisent, et les conserver dans une seule langue les garde consultables et cohérents.
 - Le texte de l'assistant IA et des outils MCP.
 - Les e-mails que vous rédigez vous-même, y compris les modèles d'e-mail et les e-mails envoyés par les étapes de rapport.
 - La documentation OpenAPI.
