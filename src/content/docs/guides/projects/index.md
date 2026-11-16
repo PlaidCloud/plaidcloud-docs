@@ -18,7 +18,7 @@ Most teams start with one project per analytical area: a project for headcount c
 - [Operational Transfer Pricing](/guides/projects/operational-transfer-pricing/) — test each entity's profit level against your policy ranges and see the true-up
 - [Project home](/guides/projects/project-home/) — see a project at a glance and manage its variables, schedules, access, data defaults and apps
 - [Data model and project elements](/guides/projects/data-model/) — describe a column your tables share once, and see which tables share it
-- [View projects](/guides/projects/viewing-projects/) — find and open existing projects
+- [View projects](/guides/projects/viewing-projects/) — find and open existing projects, and follow what runs and changes in them
 - [Manage hierarchies](/guides/projects/managing-hierarchies/) — folder structure for organizing many projects
 - [Manage tables and views](/guides/projects/managing-tables-and-views/) — the data layer inside a project
 - [Manage data editors](/guides/projects/managing-data-editors/) — who can modify project data

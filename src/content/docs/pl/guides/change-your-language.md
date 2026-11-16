@@ -68,7 +68,7 @@ Jeśli Twoja przeglądarka lub profil używa języka, którego PlaidCloud nie of
 
 ## Co pozostaje po angielsku
 
-- Komunikaty i dzienniki uruchomień przepływów pracy i kroków oraz strumień aktywności. Czyta je wiele osób, a utrzymanie ich w jednym języku ułatwia wyszukiwanie i zapewnia spójność.
+- Komunikaty i dzienniki uruchomień przepływów pracy i kroków, w tym tekst błędów w panelu aktywności okna Projekty oraz opis zdarzenia, dla którego panel nie ma własnego sformułowania, na przykład zmiany dostępu do wierszy lub wstrzymanego uruchomienia. Czyta je wiele osób, a utrzymanie ich w jednym języku ułatwia wyszukiwanie i zapewnia spójność.
 - Tekst z asystenta AI i narzędzi MCP.
 - E-maile, które piszesz samodzielnie, w tym szablony e-maili i e-maile wysyłane przez kroki raportów.
 - Dokumentacja OpenAPI.

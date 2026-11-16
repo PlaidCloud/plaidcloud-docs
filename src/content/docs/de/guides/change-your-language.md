@@ -68,7 +68,7 @@ Wenn Ihr Browser oder Profil eine Sprache verwendet, die PlaidCloud nicht anbiet
 
 ## Was auf Englisch bleibt
 
-- Meldungen und Protokolle zu Ausführungen von Workflows und Schritten sowie der Aktivitätsstream. Viele Personen lesen diese, und die Beibehaltung einer Sprache hält sie durchsuchbar und einheitlich.
+- Meldungen und Protokolle zu Ausführungen von Workflows und Schritten, einschließlich des Fehlertexts im Aktivitätsbereich des Fensters „Projekte“ und der Beschreibung eines Ereignisses, für das dieser Bereich keinen eigenen Text hat, etwa einer Änderung des Zeilenzugriffs oder einer pausierten Ausführung. Viele Personen lesen diese, und die Beibehaltung einer Sprache hält sie durchsuchbar und einheitlich.
 - Texte des KI-Assistenten und der MCP-Tools.
 - E-Mails, die Sie selbst verfassen, einschließlich E-Mail-Vorlagen und E-Mails, die von Berichtsschritten gesendet werden.
 - Die OpenAPI-Dokumentation.

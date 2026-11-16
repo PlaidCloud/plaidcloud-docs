@@ -68,7 +68,7 @@ Se o seu navegador ou perfil usar um idioma que o PlaidCloud não oferece, o tex
 
 ## O que permanece em inglês
 
-- Mensagens e logs de execução de fluxos de trabalho e etapas, e o fluxo de atividades. Muitas pessoas leem esses textos, e mantê-los em um único idioma os torna pesquisáveis e consistentes.
+- Mensagens e logs de execução de fluxos de trabalho e etapas, incluindo o texto de erro no painel de atividade da janela Projetos e a descrição que esse painel dá a um evento para o qual não tem texto próprio, como uma alteração de Acesso a linhas ou uma execução pausada. Muitas pessoas leem esses textos, e mantê-los em um único idioma os torna pesquisáveis e consistentes.
 - Texto do assistente de IA e das ferramentas MCP.
 - E-mails que você mesmo escreve, incluindo modelos de e-mail e e-mails enviados por etapas de relatório.
 - A documentação OpenAPI.

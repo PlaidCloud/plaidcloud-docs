@@ -19,7 +19,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Operational Transfer Pricing](/zh-cn/guides/projects/operational-transfer-pricing/) — 对照政策区间检验各实体的利润水平，并查看补差结果
 - [数据模型与项目元素](/zh-cn/guides/projects/data-model/) — 将表共享的列一次性描述，并查看哪些表共享它
 - [项目主页](/zh-cn/guides/projects/project-home/) — 一览项目概况，并管理其变量、计划、访问权限、数据默认值和应用
-- [查看项目](/zh-cn/guides/projects/viewing-projects/) — 查找并打开现有项目
+- [查看项目](/zh-cn/guides/projects/viewing-projects/) — 查找并打开现有项目，并跟踪其中的运行和更改
 - [管理层次结构](/zh-cn/guides/projects/managing-hierarchies/) — 用于组织大量项目的文件夹结构
 - [管理表和视图](/zh-cn/guides/projects/managing-tables-and-views/) — 项目内部的数据层
 - [管理数据编辑器](/zh-cn/guides/projects/managing-data-editors/) — 谁可以修改项目数据

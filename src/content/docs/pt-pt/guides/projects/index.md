@@ -19,7 +19,7 @@ A maioria das equipas começa com um projeto por área analítica: um projeto pa
 - [Operational Transfer Pricing](/pt-pt/guides/projects/operational-transfer-pricing/) — teste o nível de lucro de cada entidade face aos intervalos da sua política e veja o acerto
 - [Página inicial do projeto](/pt-pt/guides/projects/project-home/) — veja um projeto num relance e faça a gestão das suas variáveis, agendamentos, acesso, predefinições de dados e aplicações
 - [Modelo de dados e elementos do projeto](/pt-pt/guides/projects/data-model/) — descreva uma vez uma coluna que as suas tabelas partilham e veja que tabelas a partilham
-- [Ver projetos](/pt-pt/guides/projects/viewing-projects/) — encontrar e abrir projetos existentes
+- [Ver projetos](/pt-pt/guides/projects/viewing-projects/) — encontrar e abrir projetos existentes, e acompanhar o que neles é executado e alterado
 - [Gerir hierarquias](/pt-pt/guides/projects/managing-hierarchies/) — estrutura de pastas para organizar muitos projetos
 - [Gerir tabelas e vistas](/pt-pt/guides/projects/managing-tables-and-views/) — a camada de dados dentro de um projeto
 - [Gerir editores de dados](/pt-pt/guides/projects/managing-data-editors/) — quem pode modificar os dados do projeto
