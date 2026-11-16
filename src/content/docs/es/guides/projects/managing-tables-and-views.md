@@ -38,7 +38,7 @@ La carpeta **Por flujo de trabajo** al final de la pestaña **Tablas** agrupa la
 
 ### Por columna
 
-Seleccione **Buscar columna** en la barra de herramientas de la pestaña **Tablas** para encontrar las tablas que tienen una columna con un nombre determinado. La búsqueda lee los nombres de las columnas, no los datos, por lo que es rápida, y solo encuentra tablas que ya se han creado. La ventana se abre con su última búsqueda en ese proyecto, si hizo alguna.
+Seleccione **Buscar columna** en la barra de herramientas de la pestaña **Tablas** para encontrar las tablas que tienen una columna con un nombre determinado. La búsqueda lee los nombres de las columnas, no los datos, por lo que es rápida, y solo encuentra tablas que ya se han creado. La ventana se abre con la última búsqueda que ejecutó en ese proyecto desde que abrió el proyecto, si ejecutó alguna.
 
 Escriba al menos dos caracteres y los resultados se actualizan mientras escribe, o pulse Intro para buscar lo que ha escrito. Elija cómo se compara el nombre:
 
@@ -46,11 +46,11 @@ Escriba al menos dos caracteres y los resultados se actualizan mientras escribe,
 * **Contiene**: parte del nombre de la columna, sin distinguir mayúsculas de minúsculas. Es el valor predeterminado.
 * **Aproximado**: nombres parecidos, sin distinguir mayúsculas de minúsculas, espacios, guiones bajos ni otros separadores, y tolerando pequeñas erratas. Las coincidencias más cercanas aparecen primero.
 
-La ventana recuerda en ese navegador el tipo de coincidencia que eligió por última vez. Mientras el cuadro de búsqueda está vacío, muestra sus últimas cinco búsquedas en el proyecto; seleccione una para ejecutarla de nuevo. Una búsqueda se añade a la lista cuando pulsa Intro o actúa sobre sus resultados.
+La ventana recuerda en ese navegador el tipo de coincidencia que eligió por última vez. Mientras el cuadro de búsqueda está vacío, muestra sus últimas cinco búsquedas en el proyecto; seleccione una para ejecutarla de nuevo. Una búsqueda se considera ejecutada y se añade a la lista cuando pulsa Intro, la selecciona de la lista o actúa sobre sus resultados.
 
 Cada tabla que coincide es una fila, con su nombre, su ruta y las tres primeras columnas coincidentes. La línea situada sobre los resultados cuenta las tablas encontradas hasta el momento mientras se ejecuta la búsqueda. Cuando no hay coincidencias con **Exacto** o **Contiene**, seleccione **¿Probar con Aproximado?** para buscar de nuevo con **Aproximado**. Si la búsqueda falla o se detiene antes de tiempo, seleccione **Reintentar**. Cuando no se pudieron leer las columnas de algunas tablas, los resultados indican que pueden estar incompletos.
 
-Cuando los resultados incluyen más de un nombre de columna, unos chips situados sobre la lista nombran cada uno con el número de tablas que lo tienen. Seleccione un chip para enumerar solo las tablas con esa columna y selecciónelo de nuevo para enumerarlas todas.
+Cuando los resultados incluyen más de un nombre de columna, unos chips situados sobre la lista nombran hasta 12 de ellos, los más frecuentes primero, cada uno con el número de tablas que lo tienen. Seleccione un chip para enumerar solo las tablas con esa columna y selecciónelo de nuevo para enumerarlas todas.
 
 Expanda una fila para ver:
 

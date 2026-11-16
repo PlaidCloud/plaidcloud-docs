@@ -38,7 +38,7 @@ Folder **Według przepływu pracy** na końcu karty **Tabele** grupuje tabele po
 
 ### Według kolumny
 
-Wybierz **Znajdź kolumnę** na pasku narzędzi karty **Tabele**, aby znaleźć tabele, które mają kolumnę o podanej nazwie. Wyszukiwanie obejmuje nazwy kolumn, a nie dane, więc jest szybkie, i znajduje tylko tabele, które zostały zbudowane. Okno otwiera się na Twoim ostatnim wyszukiwaniu w tym projekcie, jeśli je wykonano.
+Wybierz **Znajdź kolumnę** na pasku narzędzi karty **Tabele**, aby znaleźć tabele, które mają kolumnę o podanej nazwie. Wyszukiwanie obejmuje nazwy kolumn, a nie dane, więc jest szybkie, i znajduje tylko tabele, które zostały zbudowane. Okno otwiera się na ostatnim wyszukiwaniu uruchomionym w tym projekcie od jego otwarcia, jeśli jakieś uruchomiono.
 
 Wpisz co najmniej dwa znaki, a wyniki będą się aktualizować w trakcie pisania, albo naciśnij Enter, aby wyszukać wpisany tekst. Wybierz sposób dopasowania nazwy:
 
@@ -46,11 +46,11 @@ Wpisz co najmniej dwa znaki, a wyniki będą się aktualizować w trakcie pisani
 * **Zawiera** — część nazwy kolumny, bez rozróżniania wielkości liter. To ustawienie domyślne.
 * **Przybliżone** — nazwy zbliżone, bez rozróżniania wielkości liter, spacji, podkreślników i innych separatorów, z tolerancją drobnych literówek. Najlepsze dopasowania są na początku.
 
-Okno zapamiętuje ostatnio wybrany sposób dopasowania w tej przeglądarce. Gdy pole wyszukiwania jest puste, wyświetla Twoje pięć ostatnich wyszukiwań w projekcie; wybierz jedno, aby uruchomić je ponownie. Wyszukiwanie trafia na listę, gdy naciśniesz Enter lub wykonasz akcję na jego wynikach.
+Okno zapamiętuje ostatnio wybrany sposób dopasowania w tej przeglądarce. Gdy pole wyszukiwania jest puste, wyświetla Twoje pięć ostatnich wyszukiwań w projekcie; wybierz jedno, aby uruchomić je ponownie. Wyszukiwanie jest uznawane za uruchomione i trafia na listę, gdy naciśniesz Enter, wybierzesz je z listy lub wykonasz akcję na jego wynikach.
 
 Każda pasująca tabela to jeden wiersz z jej nazwą, ścieżką i pierwszymi trzema pasującymi kolumnami. Wiersz nad wynikami podaje liczbę dotychczas znalezionych tabel, gdy wyszukiwanie trwa. Gdy nic nie pasuje przy **Dokładnie** lub **Zawiera**, wybierz **Spróbować trybu Przybliżone?**, aby wyszukać ponownie w trybie **Przybliżone**. Jeśli wyszukiwanie się nie powiedzie lub zatrzyma się wcześniej, wybierz **Ponów**. Gdy nie udało się odczytać kolumn niektórych tabel, wyniki informują, że mogą być niekompletne.
 
-Gdy wyniki zawierają więcej niż jedną nazwę kolumny, znaczniki nad listą wymieniają każdą z nich wraz z liczbą tabel, które ją mają. Wybierz znacznik, aby wyświetlić tylko tabele z tą kolumną, i wybierz go ponownie, aby wyświetlić wszystkie.
+Gdy wyniki zawierają więcej niż jedną nazwę kolumny, znaczniki nad listą wymieniają do 12 z nich, najczęstsze jako pierwsze, każdą wraz z liczbą tabel, które ją mają. Wybierz znacznik, aby wyświetlić tylko tabele z tą kolumną, i wybierz go ponownie, aby wyświetlić wszystkie.
 
 Rozwiń wiersz, aby zobaczyć:
 

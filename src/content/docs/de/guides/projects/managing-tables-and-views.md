@@ -38,7 +38,7 @@ Der Ordner **Nach Workflow** am Ende der Registerkarte **Tabellen** gruppiert Ta
 
 ### Nach Spalte
 
-Wählen Sie in der Symbolleiste der Registerkarte **Tabellen** die Option **Spalte suchen**, um die Tabellen zu finden, die eine Spalte mit einem bestimmten Namen haben. Die Suche liest Spaltennamen, nicht die Daten, und ist daher schnell. Sie findet nur Tabellen, die bereits erstellt wurden. Das Fenster öffnet sich mit Ihrer letzten Suche in diesem Projekt, falls Sie bereits eine durchgeführt haben.
+Wählen Sie in der Symbolleiste der Registerkarte **Tabellen** die Option **Spalte suchen**, um die Tabellen zu finden, die eine Spalte mit einem bestimmten Namen haben. Die Suche liest Spaltennamen, nicht die Daten, und ist daher schnell. Sie findet nur Tabellen, die bereits erstellt wurden. Das Fenster öffnet sich mit der letzten Suche, die Sie in diesem Projekt durchgeführt haben, seit Sie das Projekt geöffnet haben, falls Sie eine durchgeführt haben.
 
 Geben Sie mindestens zwei Zeichen ein, dann werden die Ergebnisse während der Eingabe aktualisiert, oder drücken Sie die Eingabetaste, um nach dem Eingegebenen zu suchen. Legen Sie fest, wie der Name abgeglichen wird:
 
@@ -46,11 +46,11 @@ Geben Sie mindestens zwei Zeichen ein, dann werden die Ergebnisse während der E
 * **Enthält** – ein Teil des Spaltennamens, ohne Beachtung der Groß- und Kleinschreibung. Dies ist die Standardeinstellung.
 * **Unscharf** – ähnliche Namen, ohne Beachtung der Groß- und Kleinschreibung, von Leerzeichen, Unterstrichen und anderen Trennzeichen, und tolerant gegenüber kleinen Tippfehlern. Die ähnlichsten Treffer stehen zuerst.
 
-Das Fenster merkt sich die zuletzt gewählte Abgleichsart in diesem Browser. Solange das Suchfeld leer ist, listet es Ihre letzten fünf Suchen im Projekt auf; wählen Sie eine aus, um sie erneut auszuführen. Eine Suche wird in die Liste aufgenommen, wenn Sie die Eingabetaste drücken oder mit ihren Ergebnissen arbeiten.
+Das Fenster merkt sich die zuletzt gewählte Abgleichsart in diesem Browser. Solange das Suchfeld leer ist, listet es Ihre letzten fünf Suchen im Projekt auf; wählen Sie eine aus, um sie erneut auszuführen. Eine Suche gilt als ausgeführt und wird in die Liste aufgenommen, wenn Sie die Eingabetaste drücken, sie aus der Liste auswählen oder mit ihren Ergebnissen arbeiten.
 
 Jede passende Tabelle ist eine Zeile mit ihrem Namen, ihrem Pfad und den ersten drei passenden Spalten. Die Zeile über den Ergebnissen zählt die bisher gefundenen Tabellen, während die Suche läuft. Wenn mit **Exakt** oder **Enthält** nichts gefunden wird, wählen Sie **Unscharf versuchen?**, um erneut mit **Unscharf** zu suchen. Wenn die Suche fehlschlägt oder vorzeitig endet, wählen Sie **Wiederholen**. Konnten die Spalten einiger Tabellen nicht gelesen werden, weisen die Ergebnisse darauf hin, dass sie unvollständig sein könnten.
 
-Enthalten die Ergebnisse mehr als einen Spaltennamen, nennen Chips über der Liste jeden Namen mit der Anzahl der Tabellen, die ihn haben. Wählen Sie einen Chip, um nur die Tabellen mit dieser Spalte aufzulisten, und wählen Sie ihn erneut, um wieder alle aufzulisten.
+Enthalten die Ergebnisse mehr als einen Spaltennamen, nennen Chips über der Liste bis zu 12 davon, die häufigsten zuerst, jeweils mit der Anzahl der Tabellen, die ihn haben. Wählen Sie einen Chip, um nur die Tabellen mit dieser Spalte aufzulisten, und wählen Sie ihn erneut, um wieder alle aufzulisten.
 
 Erweitern Sie eine Zeile, um Folgendes zu sehen:
 

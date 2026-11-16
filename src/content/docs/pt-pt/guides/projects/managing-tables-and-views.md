@@ -38,7 +38,7 @@ A pasta **Por fluxo de trabalho** no final do separador **Tabelas** agrupa as ta
 
 ### Por coluna
 
-Selecione **Procurar coluna** na barra de ferramentas do separador **Tabelas** para encontrar as tabelas que têm uma coluna com um determinado nome. A pesquisa lê os nomes das colunas, não os dados, pelo que é rápida, e só encontra tabelas que já foram criadas. A janela abre na sua última pesquisa nesse projeto, se tiver feito uma.
+Selecione **Procurar coluna** na barra de ferramentas do separador **Tabelas** para encontrar as tabelas que têm uma coluna com um determinado nome. A pesquisa lê os nomes das colunas, não os dados, pelo que é rápida, e só encontra tabelas que já foram criadas. A janela abre na última pesquisa que executou nesse projeto desde que abriu o projeto, se tiver executado alguma.
 
 Escreva pelo menos dois carateres e os resultados são atualizados à medida que escreve, ou prima Enter para pesquisar o que escreveu. Escolha como o nome é correspondido:
 
@@ -46,11 +46,11 @@ Escreva pelo menos dois carateres e os resultados são atualizados à medida que
 * **Contém** — parte do nome da coluna, sem distinguir maiúsculas de minúsculas. Esta é a predefinição.
 * **Aproximado** — nomes parecidos, ignorando maiúsculas e minúsculas, espaços, carateres de sublinhado e outros separadores, e tolerando pequenos erros de escrita. As correspondências mais próximas vêm primeiro.
 
-A janela memoriza a correspondência que escolheu por último nesse navegador. Enquanto a caixa de pesquisa está vazia, lista as suas últimas cinco pesquisas no projeto; selecione uma para a executar novamente. Uma pesquisa entra na lista quando prime Enter ou atua sobre os respetivos resultados.
+A janela memoriza a correspondência que escolheu por último nesse navegador. Enquanto a caixa de pesquisa está vazia, lista as suas últimas cinco pesquisas no projeto; selecione uma para a executar novamente. Uma pesquisa conta como executada e entra na lista quando prime Enter, a seleciona na lista ou atua sobre os respetivos resultados.
 
 Cada tabela correspondente ocupa uma linha, com o seu nome, o seu caminho e as três primeiras colunas correspondentes. A linha acima dos resultados conta as tabelas encontradas até ao momento enquanto a pesquisa decorre. Quando nada corresponde com **Exato** ou **Contém**, selecione **Tentar Aproximado?** para pesquisar novamente com **Aproximado**. Se a pesquisa falhar ou parar antes do fim, selecione **Tentar novamente**. Quando não foi possível ler as colunas de algumas tabelas, os resultados indicam que podem estar incompletos.
 
-Quando os resultados incluem mais do que um nome de coluna, chips acima da lista indicam cada um deles com o número de tabelas que o têm. Selecione um chip para listar apenas as tabelas com essa coluna e selecione-o novamente para as listar todas.
+Quando os resultados incluem mais do que um nome de coluna, chips acima da lista indicam até 12 deles, os mais comuns primeiro, cada um com o número de tabelas que o têm. Selecione um chip para listar apenas as tabelas com essa coluna e selecione-o novamente para as listar todas.
 
 Expanda uma linha para ver:
 

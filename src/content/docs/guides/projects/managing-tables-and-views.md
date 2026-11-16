@@ -37,7 +37,7 @@ The **By Workflow** folder at the end of the **Tables** tab groups tables under 
 
 ### By Column
 
-Select **Find column** in the toolbar of the **Tables** tab to find the tables that have a column with a given name. The search reads column names, not the data, so it is fast, and it finds only tables that have been built. The window opens on your last search in that project, if you made one.
+Select **Find column** in the toolbar of the **Tables** tab to find the tables that have a column with a given name. The search reads column names, not the data, so it is fast, and it finds only tables that have been built. The window opens on the last search you ran in that project since you opened the project, if you ran one.
 
 Type at least two characters and the results update as you type, or press Enter to search for what you've typed. Choose how the name is matched:
 
@@ -45,11 +45,11 @@ Type at least two characters and the results update as you type, or press Enter 
 * **Contains** — part of the column name, ignoring case. This is the default.
 * **Fuzzy** — names that are close, ignoring case, spaces, underscores and other separators, and forgiving small typos. The closest matches come first.
 
-The window remembers the match you chose last in that browser. While the search box is empty, it lists your last five searches in the project; select one to run it again. A search joins the list when you press Enter or act on its results.
+The window remembers the match you chose last in that browser. While the search box is empty, it lists your last five searches in the project; select one to run it again. A search counts as run, and joins the list, when you press Enter, select it from the list or act on its results.
 
 Each table that matches is one row, with its name, its path and the first three matching columns. The line above the results counts the tables found so far while the search runs. When nothing matches with **Exact** or **Contains**, select **Try Fuzzy?** to search again with **Fuzzy**. If the search fails or stops early, select **Retry**. When the columns of some tables couldn't be read, the results say they may be incomplete.
 
-When the results include more than one column name, chips above the list name each one with the number of tables that have it. Select a chip to list only the tables with that column, and select it again to list them all.
+When the results include more than one column name, chips above the list name up to 12 of them, the most common first, each with the number of tables that have it. Select a chip to list only the tables with that column, and select it again to list them all.
 
 Expand a row to see:
 
