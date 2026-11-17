@@ -10,7 +10,7 @@ Ein **Hinweis** überwacht eine Zahl aus den Daten einer Panel-App und meldet Ih
 
 ## Hinweise und Zusammenfassungen öffnen
 
-1. Wählen Sie unter **Meine Panel-Apps** oder auf der Board **Startseite** eines Projekts bei der App **Open in Studio**.
+1. Wählen Sie unter **Apps** oder auf der Board **Startseite** eines Projekts bei der App **Open in Studio**.
 2. Wählen Sie **Alerts & Digests**.
 
 Das Fenster hat die Registerkarten **Alerts** und **Digests**. Die App muss einem Projekt zugewiesen sein, und ihre Tabellen sind die Tabellen in diesem Projekt.

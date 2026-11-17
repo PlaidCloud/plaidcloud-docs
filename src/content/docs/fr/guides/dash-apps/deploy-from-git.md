@@ -98,7 +98,7 @@ Il n'y a aucun champ URL du serveur, utilisateur, mot de passe ni SSL/SSH : Pla
 
 Faites maintenant pointer un déploiement Dash vers cette connexion.
 
-1. Ouvrez **Mes applications Panel** et cliquez sur **Nouvelle application Dash**.
+1. Ouvrez **Applications** et choisissez **Nouvelle application** > **Appli Dash**.
 2. Sous **Paramètres du répertoire**, définissez un **Nom de l'application** et un **Slug d'URL** : le slug constitue l'URL et le nom interne de l'application ; utilisez donc des lettres minuscules, des chiffres et des tirets, en commençant par une lettre, avec 40 caractères au maximum (par exemple, `hello-dash`). Un **Mémo** facultatif décrit l'application.
 3. Sous **Connexion Git et observateur de publication** :
    - **Connexion Git** : la connexion PlaidCloud Git que vous avez créée à l'étape 3.
@@ -110,7 +110,7 @@ Faites maintenant pointer un déploiement Dash vers cette connexion.
 
 ## 5. Ouvrir l'application, et lire les journaux si elle ne démarre pas
 
-Après la publication, l'application est **construite** : PlaidCloud clone la branche, installe votre `requirements.txt` et construit une image de conteneur à partir de l'image `platform-dash-base`. Son **Statut** s'affiche dans la liste **Mes applications Panel** et se met à jour automatiquement.
+Après la publication, l'application est **construite** : PlaidCloud clone la branche, installe votre `requirements.txt` et construit une image de conteneur à partir de l'image `platform-dash-base`. Son **Statut** s'affiche dans la liste **Applications** et se met à jour automatiquement.
 
 - Lorsque le statut est **Prêt**, ouvrez l'application à l'adresse `https://<your-tenant-host>/serve/<slug>/`. La première requête après une période d'inactivité la relance, en affichant brièvement un écran de chargement PlaidCloud.
 - Si la construction échoue, ouvrez l'application et consultez ses journaux de **build** : une dépendance manquante ou une erreur d'importation y apparaît. Consultez [Utiliser une application Dash](/fr/guides/dash-apps/using/) pour la signification de chaque statut, la lecture des journaux et le déclenchement d'une nouvelle construction.

@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Executa uma exclusão na tabela usando as condições de filtro especificadas. A operação é realizada diretamente na tabela designada, portanto nenhuma tabela adicional é criada. Somente as linhas que atendem aos critérios do filtro são excluídas. Essa pode ser uma abordagem eficaz quando há preocupações com o tamanho dos dados.
 
+Quando é executada, a etapa verifica sua tabela de origem antes de excluir qualquer coisa e para com um único erro que nomeia cada problema encontrado. Consulte [Quando a etapa é executada](/pt-br/reference/workflow-steps/tables/table-extract/#quando-a-etapa-é-executada).
+
 
 
 ## Parâmetros de exclusão

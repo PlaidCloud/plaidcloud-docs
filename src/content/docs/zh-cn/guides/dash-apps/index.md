@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/index.md
 ---
 
-Dash 应用可让您直接从 PlaidCloud 发布交互式 [Plotly Dash](https://dash.plotly.com/) 应用，包括回调、图表和数据网格（`dash-ag-grid`、`dash-mantine-components`）。您可以在**我的 Panel 应用**屏幕中管理它们，它们与 Panel 应用并列显示，每一行都显示其运行时、构建状态和 URL。
+Dash 应用可让您直接从 PlaidCloud 发布交互式 [Plotly Dash](https://dash.plotly.com/) 应用，包括回调、图表和数据网格（`dash-ag-grid`、`dash-mantine-components`）。您可以在**应用**屏幕中管理它们，它们与 Panel 应用并列显示，每一行都显示其运行时、构建状态和 URL。
 
 ## Dash 的定位
 

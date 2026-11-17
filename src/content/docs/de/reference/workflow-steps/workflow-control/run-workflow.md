@@ -12,6 +12,8 @@ Startet im Rahmen der Ausführung des aktuellen Workflows einen anderen Workflow
 
 Der aufgerufene Workflow läuft unabhängig – er kann im selben oder in einem anderen Projekt liegen. Standardmäßig fährt der aufrufende Workflow fort, ohne zu warten. Aktivieren Sie die Option **Wait until processing completes**, wenn die nächsten Schritte im Aufrufer davon abhängen, dass der aufgerufene Workflow zuerst abgeschlossen ist.
 
+Der aufgerufene Workflow kann die Werte verwenden, mit denen die Ausführung des Aufrufers gestartet wurde, etwa die im App Runner gegebenen Antworten, und zwar für jede Variable, die weder er noch sein Projekt definiert. Seine eigenen Workflow- und Projektvariablen haben Vorrang.
+
 
 
 ## Auszuführender Workflow

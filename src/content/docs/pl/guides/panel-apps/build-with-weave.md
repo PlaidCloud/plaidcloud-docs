@@ -11,9 +11,12 @@ Weave potrafi pisać i zmieniać aplikacje Panel za Ciebie. Działa w [Panel Stu
 ## Zapytaj Weave
 
 1. Otwórz aplikację w Panel Studio.
-2. Wybierz **Ask Weave** i opisz, czego potrzebujesz, na przykład „Dodaj filtr regionu i wykres przychodów według miesięcy”.
+2. Wybierz **Zapytaj Weave**. [Panel Weave](/pl/guides/ai-assistant/weave-dock/) otworzy się na rozmowie aplikacji.
+3. Opisz, czego potrzebujesz, na przykład „Dodaj filtr regionu i wykres przychodów według miesięcy”.
 
-Weave już zna aplikację, nad którą pracuje: jej pliki, stan kompilacji i ewentualne błędy kompilacji oraz tabelę lub widok, na których jest oparta. Nie musisz wklejać do rozmowy kodu ani błędów. Jeśli kompilacja się nie powiedzie, poproś Weave o jej naprawę.
+Weave już zna aplikację, nad którą pracuje: jej pliki, stan kompilacji i ewentualne błędy kompilacji oraz tabelę lub widok, na których jest oparta. Nie musisz wklejać do rozmowy kodu ani błędów. Jeśli kompilacja się nie powiedzie, wybierz **Zapytaj Weave o ten błąd** przy stanie kompilacji: panel otworzy się z błędem już wpisanym w pole, gotowym do wysłania.
+
+Weave pracuje z aplikacjami należącymi do projektu. W przypadku aplikacji, która nie należy do żadnego projektu, Panel Studio wyświetla komunikat *Assign this app to a project to use Weave.*
 
 ## Zatwierdzanie zmiany
 
@@ -22,7 +25,7 @@ Gdy Weave chce zmienić kod aplikacji, pokazuje kartę zatwierdzenia z pełną r
 1. Przeczytaj różnicę.
 2. Wybierz **Zatwierdź**, aby zapisać zmianę w wersji roboczej aplikacji, lub **Odrzuć**, aby ją odrzucić.
 
-Zatwierdzenie zapisuje wersję roboczą. Nie publikuje jej. Obejrzyj wynik w podglądzie, a gdy będziesz zadowolony, [opublikuj](/pl/guides/panel-apps/studio/#opublikuj) ją.
+Zatwierdzenie zapisuje wersję roboczą. Nie publikuje jej. Obejrzyj wynik w podglądzie, a gdy będziesz zadowolony, [opublikuj](/pl/guides/panel-apps/studio/#publikowanie) ją.
 
 ### Zatwierdzanie tylko w przeglądarce
 

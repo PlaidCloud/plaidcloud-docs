@@ -10,7 +10,7 @@ Una **alerta** vigila un número de los datos de una aplicación Panel y le avis
 
 ## Abrir alertas y resúmenes
 
-1. En **Mis aplicaciones Panel** o en el tablero **Inicio** de un proyecto, elija **Open in Studio** en la aplicación.
+1. En **Aplicaciones** o en el tablero **Inicio** de un proyecto, elija **Open in Studio** en la aplicación.
 2. Elija **Alerts & Digests**.
 
 La ventana tiene una pestaña **Alerts** y una pestaña **Digests**. La aplicación debe estar asignada a un proyecto, y sus tablas son las de ese proyecto.

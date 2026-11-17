@@ -19,7 +19,7 @@ O passo acede ao TM1 **diretamente na cloud** através da respetiva API REST —
 | Campo | Obrigatório | Notas |
 |---|---|---|
 | Ligação TM1 | Sim | A [ligação TM1](/pt-pt/guides/connections/tm1/) através da qual se faz a leitura. |
-| Ambiente | Não | **Ambiente do projeto** (a predefinição) utiliza o ambiente da ligação do projeto. **Ambiente fixo** utiliza sempre o que escolher. Consulte [Fixar um passo a um ambiente](/pt-pt/guides/projects/managing-projects/#fixar-um-passo-a-um-ambiente). |
+| Ambiente | Não | **Ambiente do projeto** (a predefinição) utiliza o ambiente da ligação do projeto. **Ambiente fixo** utiliza sempre o que escolher. Consulte [Fixar um passo a um ambiente](/pt-pt/guides/projects/managing-projects/#fixar-um-passo-num-único-ambiente). |
 | Base de dados | Sim | A base de dados (instância) TM1 a consultar. Assume por predefinição a Base de dados predefinida da ligação, caso esta esteja definida. |
 | Cubo | Sim | O cubo TM1 a consultar. É detetado em direto a partir da base de dados ligada ou escrito manualmente. |
 | Tabela de destino | Sim | A tabela do projeto onde o conjunto de células devolvido é colocado. |

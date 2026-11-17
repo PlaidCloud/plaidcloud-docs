@@ -30,4 +30,5 @@ Estes campos aparecem ao criar ou editar esta ligação. A obrigatoriedade de ca
 | ID de cliente OAuth2 | Texto | — |
 | Segredo de cliente OAuth2 | Texto | Credencial secreta, armazenada de forma cifrada. |
 | URL do Workday | Texto | Ponto de acesso por URL. |
-| Token de atualização OAuth2 | Texto | — |
+| Token de atualização OAuth2 | Texto | Opcional. Sem token, os pedidos iniciam sessão com credenciais de cliente. |
+| Anfitrião da API | Texto | O anfitrião para onde os pedidos REST são enviados, por exemplo `api.example.com`. |

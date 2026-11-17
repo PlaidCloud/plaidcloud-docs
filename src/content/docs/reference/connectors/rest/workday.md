@@ -29,4 +29,5 @@ These fields appear when creating or editing this connection. Required vs option
 | Oauth2 client id | Text | — |
 | Oauth2 client secret | Text | Secret credential — stored encrypted. |
 | Workday url | Text | URL endpoint. |
-| Oauth2 refresh token | Text | — |
+| Oauth2 refresh token | Text | Optional. Without one, requests sign in with client credentials. |
+| API host | Text | The host REST requests are sent to, for example `api.example.com`. |

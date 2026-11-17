@@ -67,7 +67,7 @@ If your browser or profile uses a language PlaidCloud doesn't offer, the text ap
 
 ## What Stays in English
 
-- Workflow and step run messages and logs, and the activity stream. Many people read these, and keeping them in one language keeps them searchable and consistent.
+- Workflow and step run messages and logs, including the error text in the Projects window's activity panel, and that panel's description of an event it has no wording of its own for, such as a Row Access change or a paused run. Many people read these, and keeping them in one language keeps them searchable and consistent.
 - Text from the AI assistant and MCP tools.
 - Emails you write yourself, including email templates and emails sent by report steps.
 - The OpenAPI documentation.

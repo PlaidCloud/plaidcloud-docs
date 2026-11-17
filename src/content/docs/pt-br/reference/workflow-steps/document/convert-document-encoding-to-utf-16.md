@@ -12,9 +12,10 @@ Reescreve um arquivo de texto em UTF-16. É útil quando um sistema downstream e
 
 ## Entradas
 
-- **Arquivo ou diretório de entrada** — o arquivo de texto, ou a pasta de arquivos de texto, a converter.
+- **Arquivo ou diretório de entrada** — o arquivo de texto ou arquivo compactado, ou uma pasta deles, a converter.
 - **Destino** — onde o arquivo convertido é gravado.
 - **Compactação** — Sem compactação, Zip, GZip ou BZip2 para a saída.
+- **Manter subpastas** — no caso de uma pasta, marque para gravar cada arquivo de uma subpasta na subpasta correspondente do destino.
 - **Endianness (ordem dos bytes)** — Little Endian ou Big Endian.
 - **Include BOM** — marque para iniciar o arquivo com uma marca de ordem de bytes (`FF FE` para little-endian, `FE FF` para big-endian). Deixe desmarcado para não incluir a marca.
 
@@ -24,7 +25,9 @@ Reescreve um arquivo de texto em UTF-16. É útil quando um sistema downstream e
 - O texto é gravado sem alterações — letras acentuadas, símbolos e outros caracteres passam exatamente como estavam.
 - Um arquivo cuja codificação não pode ser detectada faz a etapa falhar, informando o arquivo.
 - Se o caminho de entrada não existir ou não tiver arquivos, a etapa termina com um aviso que informa o caminho e não processa nada, e o fluxo de trabalho continua.
-- No caso de uma pasta, cada arquivo é convertido e gravado no destino com o próprio nome. Os arquivos de subpastas são gravados no próprio destino, e não em subpastas correspondentes.
+- Um arquivo compactado — um arquivo zip, gzip ou bzip2, por exemplo — é expandido primeiro, e cada arquivo dentro dele é convertido.
+- No caso de uma pasta, cada arquivo é convertido e gravado no destino com o próprio nome. Marque **Manter subpastas** para gravar um arquivo de uma subpasta na subpasta correspondente do destino; o conteúdo de um arquivo compactado vai então para a subpasta em que o arquivo compactado estava.
+- Se dois arquivos fossem gravados no mesmo local do destino, a etapa falha antes de gravar o segundo, em vez de deixá-lo substituir o primeiro. A mensagem informa os dois arquivos, ou o arquivo compactado de que ambos vieram, e o local; se marcar **Manter subpastas** gravasse os dois em locais separados, ela também informa isso.
 
 ## Exemplos
 

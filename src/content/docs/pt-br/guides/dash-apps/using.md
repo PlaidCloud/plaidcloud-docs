@@ -1,12 +1,12 @@
 ---
 title: Como usar um aplicativo Dash
-description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Meus aplicativos Panel do PlaidCloud.
+description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs, edite e remova aplicativos Plotly Dash publicados na tela Aplicativos do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Os aplicativos Dash aparecem na mesma tela **Meus aplicativos Panel** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
+Os aplicativos Dash aparecem na mesma tela **Aplicativos** que seus aplicativos Panel WASM e de servidor, com **Dash** exibido na coluna **Tempo de execução** e um ícone próprio, para que seja fácil distingui-los. Tudo nesta página espelha [Como usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para um aplicativo de servidor, com uma exceção destacada abaixo: os aplicativos Dash ainda não têm **Usage Metrics**.
 
 ## Status da compilação
 
@@ -37,6 +37,8 @@ Clique no ícone novamente para desbloquear. O ícone mostra o estado atual do a
 Clique no ícone **Abrir** no início da linha de um aplicativo pronto para iniciá-lo em uma nova guia, em `https://<your-tenant-host>/serve/<slug>/`. O ícone só aparece quando o aplicativo está **Pronto**.
 
 Um aplicativo Dash é reduzido a zero quando ocioso para economizar recursos, então a primeira abertura após um período de inatividade precisa iniciá-lo. Enquanto isso acontece, você vê uma **tela de carregamento do PlaidCloud** em vez de uma guia em branco, mostrando o progresso do aplicativo pelas etapas **Iniciando**, **Preparando** e **Carregando aplicativo**, e o aplicativo aparece sozinho assim que estiver pronto. Se um aplicativo não conseguir iniciar, a tela de carregamento passa a exibir uma mensagem informando que o aplicativo não foi iniciado e em qual etapa ele parou, com um botão **Tentar novamente**; se isso continuar acontecendo, edite o aplicativo para verificar o ponto de entrada e o branch e publique-o novamente.
+
+A tela de carregamento também aparece enquanto o aplicativo é ativado quando você o abre por qualquer outro link para ele, como um link copiado da barra de endereços ou um link em um alerta ou em uma mensagem de resumo. Se você não estiver conectado e abrir o aplicativo em uma guia do navegador, primeiro faz login.
 
 > **Um `dcc.Interval` (ou qualquer outra consulta periódica sempre ativa) impede a redução a zero enquanto a guia dele permanece aberta.** A redução a zero depende de o aplicativo ficar inativo — sem solicitações em andamento — quando ninguém o está usando ativamente. Um componente que continua fazendo solicitações em intervalos regulares, como `dcc.Interval`, mantém o aplicativo ativo enquanto essa guia estiver aberta, mesmo que a pessoa que o está vendo tenha se afastado. Se você quiser que um aplicativo seja reduzido entre as visitas, evite consultas periódicas sempre ativas ou interrompa o intervalo quando a página estiver ociosa por algum tempo.
 

@@ -16,6 +16,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 默认情况下，目标编码无法容纳的字符会使步骤失败。选择**将目标编码无法表示的字符替换为 ?**，则会改为在其位置写入 `?`（与 Java 写入器的做法相同），步骤即可完成。
 
+压缩文件会先被展开，其中的每个文件都会被转换。对于文件夹，每个文件都会以其自身的名称写入目标位置。勾选**保留子文件夹**，可将子文件夹中的文件改为写入目标位置中对应的子文件夹；压缩文件的内容随后会进入该压缩文件所在的子文件夹。如果两个文件会被写入同一位置，步骤会在写入第二个文件之前失败，而不是让它替换第一个文件，并说明勾选**保留子文件夹**是否能将它们分开。
+
 请在步骤配置中选择目标编码。若需特定编码的快捷方式，请参阅 [UTF-8](/zh-cn/reference/workflow-steps/document/convert-document-encoding-to-utf-8/)、[UTF-16](/zh-cn/reference/workflow-steps/document/convert-document-encoding-to-utf-16/) 和 [ASCII](/zh-cn/reference/workflow-steps/document/convert-document-encoding-to-ascii/) 变体。
 
 

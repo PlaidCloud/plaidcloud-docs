@@ -22,7 +22,7 @@ Kombinieren Sie ihn mit [Get Workspace Members](/de/reference/workflow-steps/gen
 
 ## Workspace-Admins in der Liste
 
-[Nur ein Workspace-Admin kann einen Workspace-Admin deaktivieren](/de/administration/access/member-management/#einen-workspace-administrator-ändern). Wenn der Schritt ohne Workspace-Admin-Rechte ausgeführt wird und seine Liste Admins enthält, lässt er diese Admins aktiv, deaktiviert alle anderen und endet dann mit einem Fehler. Die Fehlermeldung nennt, wie viele Mitglieder er deaktiviert hat, und führt jeden Admin auf, den er aktiv gelassen hat. Die deaktivierten Mitglieder bleiben deaktiviert. Um einen Admin zu deaktivieren, lassen Sie dies von einem Workspace-Admin in Identity vornehmen.
+[Nur ein Workspace-Admin kann einen Workspace-Admin deaktivieren](/de/administration/access/member-management/#workspace-administrator-ändern). Wenn der Schritt ohne Workspace-Admin-Rechte ausgeführt wird und seine Liste Admins enthält, lässt er diese Admins aktiv, deaktiviert alle anderen und endet dann mit einem Fehler. Die Fehlermeldung nennt, wie viele Mitglieder er deaktiviert hat, und führt jeden Admin auf, den er aktiv gelassen hat. Die deaktivierten Mitglieder bleiben deaktiviert. Um einen Admin zu deaktivieren, lassen Sie dies von einem Workspace-Admin in Identity vornehmen.
 
 ## Konfiguration
 

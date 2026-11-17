@@ -12,6 +12,8 @@ Uruchamia inny przepływ pracy w ramach wykonywania bieżącego przepływu pracy
 
 Wywołany przepływ pracy działa niezależnie — może znajdować się w tym samym projekcie lub w innym. Domyślnie wywołujący przepływ pracy jest kontynuowany bez oczekiwania; ustaw opcję **Wait until processing completes**, jeśli kolejne kroki w przepływie wywołującym zależą od zakończenia wywołanego przepływu pracy.
 
+Wywołany przepływ pracy może używać wartości, z którymi rozpoczęto uruchomienie wywołującego, takich jak odpowiedzi podane w App Runner, dla każdej zmiennej, której nie definiuje ani on sam, ani jego projekt. Pierwszeństwo mają jego własne zmienne przepływu pracy i projektu.
+
 
 
 ## Przepływ pracy do uruchomienia

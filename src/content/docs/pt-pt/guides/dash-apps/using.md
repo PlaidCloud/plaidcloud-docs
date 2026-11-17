@@ -1,12 +1,12 @@
 ---
 title: Utilizar uma aplicação Dash
-description: Acompanhe o estado da compilação, abra, recompile, bloqueie, consulte os registos, edite e remova aplicações Plotly Dash publicadas a partir do ecrã As minhas aplicações Panel do PlaidCloud.
+description: Acompanhe o estado da compilação, abra, recompile, bloqueie, consulte os registos, edite e remova aplicações Plotly Dash publicadas a partir do ecrã Aplicações do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-As aplicações Dash aparecem no mesmo ecrã **As minhas aplicações Panel** que as aplicações Panel WASM e de servidor, com **Dash** indicado na coluna **Tempo de execução** e um ícone próprio para que sejam fáceis de distinguir. Tudo o que esta página descreve corresponde ao que está em [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/) para uma aplicação de servidor, com uma exceção assinalada abaixo: as aplicações Dash ainda não dispõem de **Usage Metrics**.
+As aplicações Dash aparecem no mesmo ecrã **Aplicações** que as aplicações Panel WASM e de servidor, com **Dash** indicado na coluna **Tempo de execução** e um ícone próprio para que sejam fáceis de distinguir. Tudo o que esta página descreve corresponde ao que está em [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/) para uma aplicação de servidor, com uma exceção assinalada abaixo: as aplicações Dash ainda não dispõem de **Usage Metrics**.
 
 ## Estado da compilação
 
@@ -37,6 +37,8 @@ Clique novamente no ícone para desbloquear. O ícone mostra o estado atual da a
 Clique no ícone **Abrir** no início da linha de uma aplicação pronta para a iniciar num novo separador, em `https://<your-tenant-host>/serve/<slug>/`. O ícone só aparece quando a aplicação está **Pronta**.
 
 Uma aplicação Dash é reduzida a zero quando está inativa para poupar recursos, pelo que a primeira abertura após um período de inatividade tem de a iniciar. Enquanto isso acontece, é apresentado um **ecrã de carregamento do PlaidCloud** em vez de um separador em branco, que mostra o progresso da aplicação pelas fases **A iniciar**, **A preparar** e **A carregar a aplicação**, e a aplicação aparece automaticamente quando estiver pronta. Se uma aplicação não conseguir iniciar, o ecrã de carregamento passa a apresentar uma mensagem a indicar que a aplicação não iniciou e em que passo parou, com um botão **Tentar novamente**; se isso continuar a acontecer, edite a aplicação para verificar o ponto de entrada e o ramo e volte a publicá-la.
+
+O ecrã de carregamento também é apresentado enquanto a aplicação acorda, quando a abre a partir de qualquer outra ligação para a mesma, como uma ligação copiada da barra de endereço ou uma ligação numa mensagem de alerta ou de resumo. Se tiver terminado a sessão e a abrir num separador do navegador, inicia primeiro sessão.
 
 > **Um `dcc.Interval` (ou qualquer outra consulta periódica permanente) anula a redução a zero enquanto o respetivo separador estiver aberto.** A redução a zero depende de a aplicação ficar em silêncio — sem pedidos em curso — quando ninguém a está a utilizar ativamente. Um componente que continua a fazer pedidos com base num temporizador, como `dcc.Interval`, mantém a aplicação ativa enquanto esse separador estiver aberto, mesmo que a pessoa que a está a ver se tenha ausentado. Se pretender que uma aplicação seja reduzida entre visitas, evite consultas periódicas permanentes ou pare o intervalo quando a página estiver inativa durante algum tempo.
 

@@ -1,12 +1,12 @@
 ---
 title: Korzystanie z aplikacji Panel
-description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki i metryki użycia, edytuj i usuwaj opublikowane aplikacje HoloViz Panel na ekranie Moje aplikacje Panel w PlaidCloud.
+description: Śledź stan budowania, otwieraj, buduj ponownie, blokuj, przeglądaj dzienniki i metryki użycia, edytuj i usuwaj opublikowane aplikacje HoloViz Panel na ekranie Aplikacje w PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Każda opublikowana aplikacja jest widoczna na ekranie **Moje aplikacje Panel** wraz z wartościami w kolumnach **Środowisko uruchomieniowe**, **Stan**, **Slug** oraz sygnaturami czasowymi. Kolumna położona najbardziej po lewej otwiera aplikację; pozostałe ikony w wierszu pozwalają zablokować ją przed przypadkowymi zmianami, edytować ją, usunąć, a — w przypadku aplikacji serwerowych — zbudować ją ponownie, przeglądać jej dzienniki i metryki użycia. Ikona otwierania odzwierciedla środowisko uruchomieniowe aplikacji, więc aplikacje WASM i serwerowe łatwo odróżnić na pierwszy rzut oka.
+Każda opublikowana aplikacja jest widoczna na ekranie **Aplikacje** wraz z wartościami w kolumnach **Środowisko uruchomieniowe**, **Stan**, **Slug** oraz sygnaturami czasowymi. Kolumna położona najbardziej po lewej otwiera aplikację; pozostałe ikony w wierszu pozwalają zablokować ją przed przypadkowymi zmianami, edytować ją, usunąć, a — w przypadku aplikacji serwerowych — zbudować ją ponownie, przeglądać jej dzienniki i metryki użycia. Ikona otwierania odzwierciedla środowisko uruchomieniowe aplikacji, więc aplikacje WASM i serwerowe łatwo odróżnić na pierwszy rzut oka.
 
 ## Stan budowania (aplikacje serwerowe)
 
@@ -48,6 +48,8 @@ Kliknij ikonę **Otwórz** na początku wiersza gotowej aplikacji, aby uruchomi�
 - Ikona **Otwórz** pojawia się dopiero wtedy, gdy aplikacja serwerowa ma stan **Gotowe**.
 
 Bezczynna aplikacja serwerowa jest skalowana do zera, aby oszczędzać zasoby, więc pierwsze otwarcie po okresie bezczynności wymaga jej uruchomienia. W tym czasie zamiast pustej karty widać **ekran ładowania PlaidCloud**: nazwę aplikacji, jej postęp przez etapy **Uruchamianie**, **Przygotowywanie** i **Ładowanie aplikacji** oraz identyfikator obszaru roboczego — w jasnym lub ciemnym motywie, zgodnie z Twoim ustawieniem. Aplikacja pojawia się samoczynnie, gdy tylko będzie gotowa (zwykle po kilku sekundach, a przy zimnym starcie po maksymalnie około minucie), a następnie odpowiada normalnie, dopóki ponownie nie przejdzie w stan bezczynności.
+
+Ekran ładowania pojawia się także podczas budzenia aplikacji, gdy otwierasz ją z dowolnego innego prowadzącego do niej linku, na przykład skopiowanego z paska adresu lub z alertu albo wiadomości z podsumowaniem. Jeśli jesteś wylogowany i otwierasz ją na karcie przeglądarki, najpierw się logujesz.
 
 > Jeśli aplikacji nie można uruchomić, ekran ładowania zmienia się w komunikat, że aplikacja się nie uruchomiła, wraz z informacją, na którym etapie się zatrzymała, oraz przyciskiem **Spróbuj ponownie** — zamiast kręcić się bez końca. Jeśli sytuacja się powtarza, edytuj aplikację, sprawdź jej punkt wejścia i gałąź, a następnie opublikuj ją ponownie lub skontaktuj się z administratorem PlaidCloud.
 

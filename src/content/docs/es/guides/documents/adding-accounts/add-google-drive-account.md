@@ -41,7 +41,7 @@ Estos pasos deben completarse en Google Cloud Console para crear una cuenta de s
 ### Compartir el contenido de Drive con la cuenta de servicio
 
 1. Copie la dirección de correo electrónico de la cuenta de servicio (por ejemplo, `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. En Google Drive, comparta con esta dirección de correo electrónico las carpetas a las que desea que PlaidCloud tenga acceso, otorgando acceso de **Editor**
+2. En Google Drive, comparta con esta dirección de correo electrónico las carpetas a las que desea que PlaidCloud tenga acceso, otorgando acceso de **Editor**. Para usar una unidad compartida, agregue la cuenta de servicio como miembro de ella.
 
 Ahora debería tener todo lo necesario para agregar su cuenta de Google Drive a PlaidCloud Document.
 
@@ -58,3 +58,13 @@ Ahora debería tener todo lo necesario para agregar su cuenta de Google Drive a 
 8. Seleccione un **Modelo de seguridad** adecuado para su caso de uso. Déjelo en `Private` si no está seguro.
 9. Pegue todo el contenido del archivo de clave JSON en el campo JSON de credenciales de OAuth2, en Credenciales de autenticación
 10. Seleccione el botón Guardar y su nueva cuenta de documentos estará activa
+
+## Uso de la cuenta en flujos de trabajo
+
+Una cuenta de Google Drive funciona en flujos de trabajo además de en el explorador de Document. Los pasos pueden listar, importar, exportar, copiar, mover, cambiar el nombre y eliminar archivos, y crear carpetas.
+
+- **Ubicaciones.** Las ubicaciones de nivel superior de la cuenta son las carpetas compartidas con la cuenta de servicio y las unidades compartidas de las que es miembro. Las rutas son nombres de carpeta, como `Finance/Reports/2026`. Si dos carpetas compartidas o unidades compartidas tienen el mismo nombre, la cuenta se niega a abrir ese nombre. Cambie el nombre de todas menos una, o deje de compartirlas.
+- **Google Sheets.** Una hoja de cálculo de Google Sheets se lee como una exportación `.xlsx` y aparece como `Name.xlsx`. Otros archivos de Google Workspace, como Docs y Slides, no se pueden leer.
+- **Archivos nuevos en Mi unidad.** Una cuenta de servicio no tiene almacenamiento propio, por lo que en una carpeta que está en la unidad personal Mi unidad de otra persona puede sobrescribir un archivo existente, pero no puede crear uno nuevo. Cree primero el archivo allí, o use una carpeta de una unidad compartida, que acepta archivos y carpetas nuevos.
+- **Carpetas inexistentes.** Una carpeta que no existe se lista como vacía en lugar de causar un error.
+- **Limitación de solicitudes.** PlaidCloud reintenta automáticamente cuando Google limita una solicitud o devuelve un error temporal.

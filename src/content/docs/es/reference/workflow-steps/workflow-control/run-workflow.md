@@ -12,6 +12,8 @@ Activa otro flujo de trabajo como parte de la ejecución del flujo de trabajo ac
 
 El flujo de trabajo invocado se ejecuta de forma independiente y puede estar en el mismo proyecto o en otro. De forma predeterminada, el flujo de trabajo que llama continúa sin esperar; active la opción **Wait until processing completes** si los pasos siguientes del flujo de trabajo que llama dependen de que el flujo invocado termine primero.
 
+El flujo de trabajo invocado puede usar los valores con los que se inició la ejecución del flujo que llama, como las respuestas dadas en App Runner, para cualquier variable que ni él ni su proyecto definan. Sus propias variables de flujo de trabajo y de proyecto tienen prioridad.
+
 
 
 ## Flujo de trabajo que se va a ejecutar

@@ -11,6 +11,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Wykonuje usuwanie w tabeli przy użyciu podanych warunków filtru. Operacja jest wykonywana bezpośrednio na wskazanej tabeli, więc nie powstają żadne dodatkowe tabele. Usuwane są tylko wiersze spełniające kryteria filtru. Może to być skuteczne podejście, gdy istnieją obawy związane z rozmiarem danych.
 
+Podczas uruchomienia krok sprawdza swoją tabelę źródłową, zanim cokolwiek usunie, i zatrzymuje się jednym błędem, który wymienia każdy znaleziony problem. Zobacz [Kiedy krok jest uruchamiany](/pl/reference/workflow-steps/tables/table-extract/#kiedy-krok-jest-uruchamiany).
+
 
 
 ## Parametry usuwania

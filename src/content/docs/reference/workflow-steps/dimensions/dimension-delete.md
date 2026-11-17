@@ -28,3 +28,7 @@ An example that uses the `current_month` variable to dynamically delete the Mate
 ### Use Specific Dimension
 
 Use the dropdown menu to select a specific dimension to delete.
+
+### Dimensions Matching Search
+
+With **Dimensions Matching Search**, the step won't save with an empty **Search text** while the **Search path** is the project's top level (`/`), because that would delete every dimension in the project. Enter text to match, or choose a folder.

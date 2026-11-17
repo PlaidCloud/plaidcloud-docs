@@ -39,6 +39,12 @@ The table has more rows or columns than an Excel worksheet holds, or PlaidCloud 
 
 Excel is slowest with wide tables. Clear the check boxes of columns you don't need, and filter the rows with **Advanced**. Retrieving only the data you work with is faster and makes a smaller workbook.
 
+Large tables retrieve and refresh much faster in Excel on the web and in current desktop Excel. Older versions of Excel still work, just without the speed-up.
+
+If the pane says **PlaidXL was updated — reload the pane**, close the task pane, open it again, and retrieve again. After PlaidXL is updated, the pane picks up the new version the next time it loads.
+
+If a pull says **This PlaidCloud workspace needs an update for PlaidXL**, ask your administrator to update the workspace to a current PlaidCloud release.
+
 ## A Formula Shows an Error
 
 | What you see | What to check |
@@ -85,6 +91,8 @@ A save writes straight away and rarely stops. It does when:
 | The table continues on other sheets | A table split across sheets can't be saved. Retrieve it with a filter so it fits on one sheet. |
 | The table was retrieved with a filter Save can't keep to | Retrieve it again with a filter of **equal** and **in** rules joined by **AND**, or none. |
 | Rows are outside your row access | Nothing is saved. Remove those rows, then save again. |
+| Columns hold text longer than an Excel cell's 32,767 characters | Excel shows the text cut, and saving would cut it in PlaidCloud too, so Save is off for this table. Retrieve the table without those columns to save it. |
+| The table was only partly written | Excel refused part of the last refresh. Refresh the table, then save it. |
 | The sheet isn't linked to a table | Retrieve the table to the sheet first. Only tables retrieved into the active sheet are listed under **On this sheet**. |
 
 To undo a save, click **Undo** in the message or **Undo last write** on the ribbon. Each save keeps its own restore point for 7 days, so you can undo any save for up to 7 days after you made it. See [Save a Table to PlaidCloud](/reference/cli/plaidxl/retrieve/#save-a-table-to-plaidcloud).

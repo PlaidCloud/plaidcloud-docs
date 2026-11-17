@@ -33,6 +33,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | `{project_name}` | 프로젝트의 이름 |
 | `{run_url}` | PlaidCloud의 해당 실행에 대한 링크 |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | 기존 변수 |
+| `{date_iso}` | `2026-11-12T22:49:56+00:00`와 같이 ISO 8601 형식으로 표시한 현재 UTC 시간입니다. `{date}`는 `Wednesday, 11 November 2026 10:30PM UTC +0`와 같은 긴 형식입니다. |
 
 메시지 아래의 카운터는 `PlaidCloud [workspace]:` 접두사와 실행 링크를 포함하여 문자가 차지하는 대략적인 글자 수와 세그먼트 수를 보여 줍니다. 3세그먼트를 넘으면 문자가 잘립니다. 공개 링크 단축 서비스의 링크는 거부됩니다.
 

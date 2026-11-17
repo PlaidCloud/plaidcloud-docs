@@ -215,6 +215,44 @@ W StarRocks:
 
 W każdej hurtowni danych wartość, której nie można przekonwertować, na przykład tekst nienumeryczny rzutowany na liczbę, staje się wartością pustą (null) zamiast zatrzymywać krok.
 
+### Kilka wartości tam, gdzie oczekiwana jest jedna
+
+Wyrażenie kolumny i filtr kroku muszą zwracać po jednej wartości, tak samo jak każda wartość, z którą porównują kolumnę lub którą przekazują do funkcji. Aby dopasować dowolną z kilku wartości, wypisz je wewnątrz `.in_([...])` lub `.not_in([...])`.
+
+Przecinki i nawiasy kwadratowe tworzą listę wartości, a wyrażenie, które zwraca listę tam, gdzie oczekiwana jest jedna wartość, jest odrzucane. Formularz kroku odrzuca je przy zapisywaniu kroku. Krok zapisany wcześniej z takim wyrażeniem kończy się błędem podczas uruchomienia, a krok Table Extract lub Table Union All kończy się błędem, zanim opróżni swoją tabelę docelową, więc tabela zachowuje dane. Komunikat pokazuje wyrażenie i to, co zmienić.
+
+Najczęstszą przyczyną jest końcowy przecinek:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Dotyczy to każdej hurtowni danych. Niektóre hurtownie wykonywały takie wyrażenie, ale nie zawsze tak, jak je zapisano, więc krok, który dotąd działał bez błędów, może się teraz zakończyć błędem z tym komunikatem.
+
+Aby dopasować kolumnę do dowolnej z kilku wartości, użyj `.in_([...])` zamiast `==` oraz `.not_in([...])` zamiast `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Każda wartość przekazana do funkcji jest sprawdzana w ten sam sposób, więc sprawdź nawiasy i przecinki wokół niej:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Odczyt innej tabeli z wyrażenia
 
 `sqlalchemy.literal_column` przekazuje fragment SQL do hurtowni danych bez zmian i przyjmuje pojedynczą wartość — kolumnę, obliczenie, `CASE`, wywołanie funkcji, rzutowanie, funkcję okna. `literal_column` zawierający **podzapytanie** (`(SELECT ... FROM ...)`) jest odrzucany, ponieważ podzapytanie sięga do tabeli, której krok nigdy nie zadeklarował.

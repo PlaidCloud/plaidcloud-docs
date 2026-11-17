@@ -31,17 +31,16 @@ PlaidCloud Documents: Speichern, organisieren, durchsuchen und teilen Sie Dateie
 
 ## Der Arbeitsbereich „Documents“
 
-**Dokument** öffnet sich mit einer Navigationsleiste auf der linken Seite und der ausgewählten Seite daneben. Mitglieder, die eine Seite nicht öffnen können, sehen deren Eintrag nicht.
+**Dokument** öffnet sich mit einer Navigationsleiste auf der linken Seite und der ausgewählten Seite daneben. Die Navigationsleiste gruppiert ihre Seiten unter **Dokumente** (**Übersicht** und **Durchsuchen**) und **Konten** (**Ihre Konten** und **Verwalten**). Mitglieder, die eine Seite nicht öffnen können, sehen deren Eintrag nicht. Seiten haben oben einen Titel, oft mit einem kurzen Untertitel, und ihre Aktionen in der Kopfzeile daneben.
 
 | Eintrag der Navigationsleiste | Was er zeigt |
 |---|---|
-| **Übersicht** | Kacheln für Ihre Konten (**Konten**, **Freigegeben**, **Nur für Sie**, **Verwaltete Buckets**, **Externe Dienste** und **Deaktiviert**, wenn ein Konto Aufmerksamkeit erfordert), **Angeheftete** Dateien, **Konten nach Dienst** und **Wer sie verwenden kann**. Wählen Sie eine angeheftete Datei aus, um **Durchsuchen** in ihrem Ordner mit ausgewählter Datei zu öffnen. |
-| **Durchsuchen** | Der Datei-Explorer. Wählen Sie das Konto aus der Liste in der Kopfzeile der Seite. Siehe [Dokumentenkonten verwenden](/de/guides/documents/using-document/). |
-| **Freigegeben** | Konten, die für Sie freigegeben sind. Doppelklicken Sie auf eine Zeile, um sie zu durchsuchen. |
-| **Meine privaten** | Konten, die nur Sie verwenden können. Doppelklicken Sie auf eine Zeile, um sie zu durchsuchen. |
+| **Übersicht** | Kacheln für Ihre Konten (**Konten**, das **Ihre Konten** öffnet, **Verwaltete Buckets**, **Externe Dienste** und **Deaktiviert**, das mit **Erfordert Aufmerksamkeit** gekennzeichnet ist und **Verwalten** öffnet, wenn ein Konto, dessen Eigentümer Sie sind, deaktiviert ist), **Angeheftete** Dateien, **Konten nach Dienst** und **Wer sie verwenden kann**. Wählen Sie eine angeheftete Datei aus, um **Durchsuchen** in ihrem Ordner mit ausgewählter Datei zu öffnen. |
+| **Durchsuchen** | Der Datei-Explorer. Er öffnet Ihr Favoritenkonto (das Konto, dessen obersten Ordner Sie angeheftet haben) oder das Standardkonto des Workspace, und Sie können in der Liste in der Kopfzeile der Seite ein anderes Konto wählen. Siehe [Dokumentenkonten verwenden](/de/guides/documents/using-document/). |
+| **Ihre Konten** | Jedes Konto, das Sie verwenden können, in einer Liste. Ein Etikett **Geteilt** oder **Privat** in jeder Zeile zeigt, ob das Konto für Sie freigegeben oder nur für Sie bestimmt ist. Doppelklicken Sie auf eine Zeile, um sie zu durchsuchen. |
 | **Verwalten** | Konten, deren Eigentümer Sie sind, mit **Name**, **Dienst**, **Sicherheitstyp**, **Status** und **Beschreibung**. Ein Workspace-Administrator sieht hier jedes Dokumentenkonto und kann jedes Konto verwalten, das er auch sonst verwalten kann; systemverwaltete Konten werden abgelehnt, und Konten mit verwaltetem Bucket können nicht geklont werden. |
 
-Die Navigationsleiste zeigt neben **Freigegeben**, **Meine privaten** und **Verwalten** einen Zähler an. Für einen Workspace-Administrator, der Konten hält, deren Eigentümer er nicht ist, zeigt **Verwalten** statt eines Zählers **Admin** an. Die Übersicht bietet für einen schnellen Einstieg die Schaltflächen **Dateien durchsuchen** und **Neues Konto**.
+Die Navigationsleiste zeigt neben **Ihre Konten** einen Zähler an. Die Übersicht bietet für einen schnellen Einstieg die Schaltflächen **Dateien durchsuchen** und **Neues Konto**.
 
 ### Zeilenaktionen unter „Verwalten“
 

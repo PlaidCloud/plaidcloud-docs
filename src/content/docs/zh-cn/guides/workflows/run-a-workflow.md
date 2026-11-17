@@ -80,7 +80,7 @@ SAP 过账、SAP 附件和通用 SAP RFC 步骤不支持试运行。在模拟或
 
 如果运行步骤的服务器在运行中途丢失，PlaidCloud 会在可以安全重复时自动重新运行该步骤：替换其输出的步骤最终得到的结果与一次干净的运行相同，因此无需检查任何内容。步骤的日志会在第二次尝试开始处显示一条警告：“Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start.”
 
-无法安全重复的步骤不会被重新运行。它会失败一次，并给出**已中断**消息，因为再次运行可能会重复第一次尝试已写入的内容。输出名称或路径中包含 `{date}` 的步骤被视为不能安全重复，因为重新运行时日期可能不同。要恢复，请检查步骤的目标中第一次尝试写入了什么，必要时进行清理，然后[重新运行该步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)或**恢复**运行。
+无法安全重复的步骤不会被重新运行。它会失败一次，并给出**已中断**消息，因为再次运行可能会重复第一次尝试已写入的内容。输出名称或路径中包含 `{date}` 或 `{date_iso}` 的步骤被视为不能安全重复，因为重新运行时日期可能不同。要恢复，请检查步骤的目标中第一次尝试写入了什么，必要时进行清理，然后[重新运行该步骤](/zh-cn/guides/workflows/running-one-step-in-a-workflow/)或**恢复**运行。
 
 ### 永远无法启动的步骤
 

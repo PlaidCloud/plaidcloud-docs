@@ -30,4 +30,5 @@ Diese Felder erscheinen beim Erstellen oder Bearbeiten dieser Verbindung. Ob sie
 | OAuth2-Client-ID | Text | — |
 | OAuth2-Client-Secret | Text | Geheime Zugangsdaten – werden verschlüsselt gespeichert. |
 | Workday-URL | Text | URL-Endpunkt. |
-| OAuth2-Refresh-Token | Text | — |
+| OAuth2-Refresh-Token | Text | Optional. Ohne ihn melden sich Anfragen mit Client-Zugangsdaten an. |
+| API-Host | Text | Der Host, an den REST-Anfragen gesendet werden, zum Beispiel `api.example.com`. |

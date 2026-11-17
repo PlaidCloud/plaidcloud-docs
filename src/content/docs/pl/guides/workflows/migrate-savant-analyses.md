@@ -14,7 +14,8 @@ Konwersja odczytuje wyłącznie plik eksportu, który wskażesz, oraz nagłówki
 
 - Każdy agent Savant staje się odpowiednim krokiem przepływu pracy, z zachowaniem relacji nadrzędnych i podrzędnych. [Macierz konwersji Savant](/pl/reference/savant-conversion-matrix/) wymienia każdego agenta i jego poziom mapowania.
 - Parametry analizy Savant stają się zmiennymi projektu, a odwołania do nich w ustawieniach agentów są przepisywane na składnię zmiennych PlaidCloud.
-- Notatki i grupy trafiają na kanwę jako notatki i grupy.
+- Notatki i grupy trafiają na kanwę jako notatki i grupy. Grupa przejmuje nazwę od największego tekstu w swoim wnętrzu albo zachowuje własną nazwę. Grupa zagnieżdżona w innej staje się osobną grupą, nazwaną według swojej ścieżki, na przykład „Zewnętrzny › Wewnętrzny”.
+- Przepływ pracy otwiera się już uporządkowany: kroki są przejrzyście rozmieszczone, grupy ze źródła zachowane, a notatki przeniesione tuż nad przepływ, z zachowaniem ich układu. Dzieje się to przy pierwszym otwarciu przez osobę z uprawnieniami do edycji. Potem Twój własny układ jest zapisywany i nigdy nie jest przestawiany. Jeśli przepływ pracy lub projekt jest zablokowany, widzisz uporządkowany układ, ale nie jest on zapisywany.
 - Każde źródło staje się krokiem importu lub odczytuje istniejącą tabelę, zależnie od sposobu powiązania.
 - Każdy typ agenta Savant jest konwertowany w pełni: każda opcja ma swoje mapowanie. Konfiguracja, przy której zawodzi sam Savant lub która nie jest udokumentowana, trafia jako nazwany krok zastępczy. Zobacz [Kroki zastępcze dla niekonwertowanych konfiguracji](#kroki-zastępcze-dla-niekonwertowanych-konfiguracji).
 

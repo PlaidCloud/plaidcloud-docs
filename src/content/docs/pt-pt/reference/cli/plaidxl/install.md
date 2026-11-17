@@ -1,17 +1,18 @@
 ---
 title: Instalar o PlaidXL
-description: Adicione o suplemento PlaidXL ao Excel no Windows ou no Mac, encontre o separador PlaidCloud na faixa de opções e abra o painel de tarefas do PlaidXL.
+description: Adicione o suplemento PlaidXL ao Excel no Windows ou no Mac, localize o separador PlaidCloud no friso e abra o painel de tarefas do PlaidXL.
 sidebar:
   order: 1
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/plaidxl/install.md
 ---
 
-O PlaidXL é instalado uma vez por computador, não uma vez por livro. Depois disso, o separador **PlaidCloud** fica na faixa de opções do Excel em todos os livros que abrir.
+O PlaidXL instala-se uma vez por computador, e não uma vez por livro. Depois disso, o separador **PlaidCloud** fica disponível no friso do Excel em todos os livros que abrir.
 
 ## Antes de começar
 
 - Utilize o Excel para Microsoft 365, ou o Excel 2021 ou posterior, no Windows ou no Mac.
-- Se a sua organização gere os suplementos do Office de forma centralizada, o administrador do Microsoft 365 poderá ter de implementar o PlaidXL por si. Se não conseguir instalar suplementos por si, peça-lhe que adicione o suplemento **PlaidCloud**.
+- A sua área de trabalho PlaidCloud tem de estar numa versão atual. Numa área de trabalho mais antiga, as extrações apresentam a mensagem **This PlaidCloud workspace needs an update for PlaidXL**; peça ao seu administrador que a atualize.
+- Se a sua organização gere os suplementos do Office de forma centralizada, o administrador do Microsoft 365 pode ter de implementar o PlaidXL por si. Se não puder instalar suplementos, peça-lhe que adicione o suplemento **PlaidCloud**.
 
 ## Instalar no Windows
 
@@ -27,22 +28,22 @@ O PlaidXL é instalado uma vez por computador, não uma vez por livro. Depois di
 
 ## Abrir o painel de tarefas
 
-1. Clique no separador **PlaidCloud** na faixa de opções.
+1. Clique no separador **PlaidCloud** do friso.
 2. No grupo **Ligar**, clique em **Open PlaidXL**.
 
-O painel de tarefas do PlaidXL abre no lado direito da janela e pede-lhe que inicie sessão. Continue com [Iniciar sessão](/pt-pt/reference/cli/plaidxl/connect/).
+O painel de tarefas do PlaidXL abre-se no lado direito da janela e pede-lhe que inicie sessão. Continue com [Iniciar sessão](/pt-pt/reference/cli/plaidxl/connect/).
 
-O painel de tarefas mantém a sessão iniciada entre sessões de trabalho, pelo que, normalmente, inicia sessão uma vez e depois basta abrir o painel de tarefas quando precisar.
+O painel de tarefas mantém a sessão iniciada entre sessões de utilização, pelo que, normalmente, inicia sessão uma única vez e depois basta abrir o painel de tarefas quando necessitar dele.
 
 ## Se o PlaidXL não aparecer
 
-- Feche todas as janelas do Excel e volte a abrir o Excel. Muitas vezes, um suplemento não aparece na faixa de opções até o Excel ser reiniciado.
-- Procure em **Inserir → Os meus suplementos** (Windows) ou **Inserir → Suplementos → Os meus suplementos** (Mac) e selecione aí o **PlaidCloud**.
-- Se a sua organização bloquear suplementos da loja, peça ao administrador do Microsoft 365 que o implemente.
+- Feche todas as janelas do Excel e volte a abrir o Excel. Muitas vezes, um suplemento só aparece no friso depois de o Excel ser reiniciado.
+- Procure em **Inserir → Os meus suplementos** (Windows) ou **Inserir → Suplementos → Os meus suplementos** (Mac) e selecione aí **PlaidCloud**.
+- Se a sua organização bloqueia os suplementos da loja, peça ao administrador do Microsoft 365 que o implemente.
 
-Existem mais soluções na página [Resolução de problemas](/pt-pt/reference/cli/plaidxl/troubleshooting/).
+Encontra mais soluções na página [Resolução de problemas](/pt-pt/reference/cli/plaidxl/troubleshooting/).
 
 ## Relacionado
 
 - [Iniciar sessão](/pt-pt/reference/cli/plaidxl/connect/) — ligue o suplemento à sua área de trabalho
-- [A faixa de opções do PlaidCloud](/pt-pt/reference/cli/plaidxl/ribbon/) — todos os comandos do separador **PlaidCloud**
+- [O friso PlaidCloud](/pt-pt/reference/cli/plaidxl/ribbon/) — todos os comandos do separador **PlaidCloud**

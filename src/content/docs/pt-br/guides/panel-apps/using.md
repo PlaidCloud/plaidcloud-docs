@@ -1,12 +1,12 @@
 ---
 title: Como usar um aplicativo Panel
-description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs e as métricas de uso, edite e remova aplicativos HoloViz Panel publicados na tela Meus aplicativos Panel do PlaidCloud.
+description: Acompanhe o status da compilação, abra, recompile, bloqueie, veja os logs e as métricas de uso, edite e remova aplicativos HoloViz Panel publicados na tela Aplicativos do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Todo aplicativo publicado aparece na tela **Meus aplicativos Panel** com seu **Tempo de execução**, **Status**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre o aplicativo; os demais ícones da linha permitem bloqueá-lo contra alterações acidentais, editá-lo, removê-lo e — para aplicativos de servidor — recompilá-lo, ver seus logs e ver as métricas de uso. O ícone de abertura reflete o tempo de execução do aplicativo, para que seja fácil distinguir rapidamente os aplicativos WASM dos de servidor.
+Todo aplicativo publicado aparece na tela **Aplicativos** com seu **Tempo de execução**, **Status**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre o aplicativo; os demais ícones da linha permitem bloqueá-lo contra alterações acidentais, editá-lo, removê-lo e — para aplicativos de servidor — recompilá-lo, ver seus logs e ver as métricas de uso. O ícone de abertura reflete o tempo de execução do aplicativo, para que seja fácil distinguir rapidamente os aplicativos WASM dos de servidor.
 
 ## Status da compilação (aplicativos de servidor)
 
@@ -48,6 +48,8 @@ Clique no ícone **Abrir** no início da linha de um aplicativo pronto para inic
 - O ícone **Abrir** só aparece quando um aplicativo de servidor está **Pronto**.
 
 Um aplicativo de servidor é reduzido a zero quando ocioso para economizar recursos, então a primeira abertura após um período de inatividade precisa iniciá-lo. Enquanto isso acontece, você vê uma **tela de carregamento do PlaidCloud** em vez de uma guia em branco: o nome do seu aplicativo, o progresso dele pelas etapas **Iniciando**, **Preparando** e **Carregando aplicativo**, e o ID do seu espaço de trabalho, no seu tema claro ou escuro. O aplicativo aparece sozinho assim que estiver pronto (geralmente em alguns segundos, até cerca de um minuto em uma inicialização a frio) e, depois, responde normalmente até ficar ocioso novamente.
+
+A tela de carregamento também aparece enquanto o aplicativo é ativado quando você o abre por qualquer outro link para ele, como um link copiado da barra de endereços ou um link em um alerta ou em uma mensagem de resumo. Se você não estiver conectado e abrir o aplicativo em uma guia do navegador, primeiro faz login.
 
 > Se um aplicativo não conseguir iniciar, a tela de carregamento passa a exibir uma mensagem informando que o aplicativo não foi iniciado e em qual etapa ele parou, com um botão **Tentar novamente**, em vez de ficar carregando indefinidamente. Se isso continuar acontecendo, edite o aplicativo para verificar o ponto de entrada e o branch e publique-o novamente, ou entre em contato com o administrador do PlaidCloud.
 

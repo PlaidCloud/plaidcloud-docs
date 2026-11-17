@@ -23,6 +23,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
  别名、属性或值的加载会在写入任何内容之前检查每一行的成员。如果有任何行指定了维度中不存在的成员，加载将失败并报告这些名称，该次加载的任何内容都不会被存储。请先加载结构，或将缺失的成员包含在结构中，然后再加载特性。
 
+ 在设有行访问的项目中，只有能读取该表每一行的人（例如项目架构师或工作流运行）才能从表加载维度。请参阅[向受限表加载数据](/zh-cn/administration/access/managing-security-groups-and-assignments/#向受限表加载数据)。
+
  更多信息，请参阅 [Dimension Load](/zh-cn/reference/workflow-steps/dimensions/dimension-load) 工作流步骤。
 
 

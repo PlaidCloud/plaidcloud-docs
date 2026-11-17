@@ -14,7 +14,9 @@ Conversion is a one-time step. Converting the same archive again creates new wor
 ## What PlaidCloud Creates
 
 - One Advanced workflow for each KNIME workflow. A `.knwf` gives one workflow, and a `.knar` gives one for every workflow in the group.
-- Each KNIME node becomes the matching workflow step, project variable, or canvas object, with upstream and downstream relationships preserved. Metanodes and components are flattened into the workflow, so their nodes run as ordinary steps.
+- Each KNIME node becomes the matching workflow step, project variable, or canvas object, with upstream and downstream relationships preserved. Metanodes and components that hold steps arrive as collapsed groups, and their nodes run as ordinary steps. A metanode or component nested inside another becomes a group of its own, named by its path, such as "Outer › Inner".
+- Annotations on the top level of the workflow become notes on the canvas.
+- The workflow opens already tidied: steps are laid out cleanly, groups from the source are kept, and notes are moved to just above the flow, keeping their arrangement. This happens the first time someone with edit access opens it. After that, your own layout is saved and never rearranged. If the workflow or project is locked, you see the tidied layout but it isn't saved.
 - Flow variables, and Configuration and Widget nodes, become project variables holding their defaults. Switches and loops whose values are known when you convert are pruned and expanded into the steps they run.
 - The KNIME expression languages — Expression, String Manipulation, Math Formula, Column Expressions, and Rule Engine — convert to PlaidCloud expressions.
 - Data files that ship inside the archive are uploaded to a `knime/` folder in the project's default Document account, one folder per workflow, and the converted readers import them from there.

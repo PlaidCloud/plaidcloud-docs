@@ -30,4 +30,5 @@ Estes campos aparecem ao criar ou editar esta conexão. Se são obrigatórios ou
 | ID do cliente OAuth2 | Texto | — |
 | Segredo do cliente OAuth2 | Texto | Credencial secreta, armazenada com criptografia. |
 | URL do Workday | Texto | Endpoint de URL. |
-| Token de atualização OAuth2 | Texto | — |
+| Token de atualização OAuth2 | Texto | Opcional. Sem um token, as solicitações entram com credenciais de cliente. |
+| Host da API | Texto | O host para o qual as solicitações REST são enviadas, por exemplo `api.example.com`. |

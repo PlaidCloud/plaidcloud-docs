@@ -29,7 +29,7 @@ Todo lo demás (la conexión, la base de datos, la elección de vista o MDX, el 
 |---|---|---|
 | Agente | Sí | El agente de PlaidLink al que se envía esta lectura. Su compilación debe incluir el controlador de TM1 (consulte [Requisitos](#requisitos) más abajo). |
 | Conexión de TM1 | Sí | La [conexión de TM1](/es/guides/connections/tm1/) mediante la que se lee. El selector de conexión no se filtra según el agente seleccionado: comparta la conexión con el agente por separado (vea más abajo). |
-| Entorno | No | **Entorno del proyecto** (el valor predeterminado) usa el entorno de la conexión del proyecto. **Entorno fijo** usa siempre el que usted elija. Consulte [Fijar un paso a un entorno](/es/guides/projects/managing-projects/#fijar-un-paso-a-un-entorno). |
+| Entorno | No | **Entorno del proyecto** (el valor predeterminado) usa el entorno de la conexión del proyecto. **Entorno fijo** usa siempre el que usted elija. Consulte [Fijar un paso a un entorno](/es/guides/projects/managing-projects/#fijar-un-paso-a-un-solo-entorno). |
 | Base de datos | Sí | La base de datos (instancia) de TM1 que se consulta. |
 | Cubo | Sí | El cubo de TM1 que se consulta. Se escribe a mano: este paso no tiene detección en vivo. |
 | Tabla de destino | Sí | La tabla de proyecto en la que se almacena el conjunto de celdas devuelto. |

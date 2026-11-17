@@ -23,6 +23,8 @@ Ponieważ wymiary reprezentują hierarchiczne struktury danych, proces ładowani
 
  Ładowanie aliasów, właściwości lub wartości sprawdza członka z każdego wiersza przed zapisaniem czegokolwiek. Jeśli któryś wiersz wskazuje członka, którego wymiar nie zawiera, ładowanie kończy się niepowodzeniem i zgłasza te nazwy, a nic z tego ładowania nie zostaje zapisane. Załaduj najpierw strukturę lub uwzględnij brakujących członków w niej, a następnie załaduj atrybuty.
 
+ W projekcie z Dostępem do wierszy wymiar jest ładowany z tabeli tylko dla osoby, która może odczytać każdy wiersz tej tabeli, na przykład Architekta projektu lub uruchomienia przepływu pracy. Zobacz [Ładowanie danych do ograniczonej tabeli](/pl/administration/access/managing-security-groups-and-assignments/#ładowanie-danych-do-ograniczonej-tabeli).
+
  Więcej informacji zawiera krok przepływu pracy [Dimension Load](/pl/reference/workflow-steps/dimensions/dimension-load).
 
 

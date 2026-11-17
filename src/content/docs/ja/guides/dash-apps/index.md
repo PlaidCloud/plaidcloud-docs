@@ -6,7 +6,7 @@ sidebar:
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/index.md
 ---
 
-Dashアプリを使うと、インタラクティブな [Plotly Dash](https://dash.plotly.com/) アプリケーション（コールバック、チャート、データグリッド（`dash-ag-grid`、`dash-mantine-components`））を PlaidCloud から直接公開できます。Dashアプリは、Panel アプリと並んで**マイPanelアプリ**画面で管理します。各行には、ランタイム、ビルドステータス、URL が表示されます。
+Dashアプリを使うと、インタラクティブな [Plotly Dash](https://dash.plotly.com/) アプリケーション（コールバック、チャート、データグリッド（`dash-ag-grid`、`dash-mantine-components`））を PlaidCloud から直接公開できます。Dashアプリは、Panel アプリと並んで**アプリ**画面で管理します。各行には、ランタイム、ビルドステータス、URL が表示されます。
 
 ## Dashの位置づけ
 

@@ -1,17 +1,18 @@
 ---
 title: PlaidXLのインストール
-description: WindowsまたはMacのExcelにPlaidXLアドインを追加し、PlaidCloudリボンタブを見つけて、PlaidXLタスクペインを開きます。
+description: WindowsまたはMacのExcelにPlaidXLアドインを追加し、PlaidCloudリボンタブを見つけて、PlaidXLのタスクペインを開きます。
 sidebar:
   order: 1
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/reference/cli/plaidxl/install.md
 ---
 
-PlaidXLのインストールは、ブックごとではなくコンピューターごとに1回だけ行います。その後は、開くすべてのブックのExcelリボンに **PlaidCloud** タブが表示されます。
+PlaidXLのインストールは、ブックごとではなく、コンピューターごとに1回だけ行います。インストール後は、開くすべてのブックでExcelのリボンに **PlaidCloud** タブが表示されます。
 
 ## 始める前に
 
-- WindowsまたはMac上の、Microsoft 365版のExcel、またはExcel 2021以降を使用してください。
-- 組織でOfficeアドインを一元管理している場合は、Microsoft 365の管理者によるPlaidXLの配布が必要なことがあります。自分でアドインをインストールできない場合は、管理者に **PlaidCloud** アドインの追加を依頼してください。
+- WindowsまたはMac上で、Microsoft 365版のExcel、またはExcel 2021以降を使用してください。
+- PlaidCloudワークスペースが最新のリリースである必要があります。古いワークスペースでは、プル時に **This PlaidCloud workspace needs an update for PlaidXL** と表示されます。その場合は、管理者にワークスペースの更新を依頼してください。
+- 組織でOfficeアドインを一元管理している場合は、Microsoft 365の管理者がPlaidXLを配布する必要があることがあります。自分でアドインをインストールできない場合は、管理者に **PlaidCloud** アドインの追加を依頼してください。
 
 ## Windowsにインストールする
 
@@ -21,26 +22,26 @@ PlaidXLのインストールは、ブックごとではなくコンピュータ�
 
 ## Macにインストールする
 
-1. Mac版のExcelで **挿入 → アドイン** を開きます。古いバージョンでは、メニューは **挿入 → ストア** です。
+1. Excel for Macで **挿入 → アドイン** を開きます。古いバージョンでは、メニューは **挿入 → ストア** です。
 2. アドインの検索ボックスに `PlaidCloud` と入力します。
 3. **PlaidCloud** アドインを選択し、**追加** をクリックします。
 
 ## タスクペインを開く
 
 1. リボンの **PlaidCloud** タブをクリックします。
-2. **接続** グループで、**Open PlaidXL** をクリックします。
+2. **接続** グループで **Open PlaidXL** をクリックします。
 
-PlaidXLタスクペインがウィンドウの右側に開き、サインインを求められます。続いて[サインイン](/ja/reference/cli/plaidxl/connect/)に進みます。
+PlaidXLのタスクペインがウィンドウの右側に開き、サインインを求められます。[サインイン](/ja/reference/cli/plaidxl/connect/)に進んでください。
 
-タスクペインはセッションをまたいでサインインしたままなので、通常はサインインは1回だけで、必要なときにタスクペインを開くだけで済みます。
+タスクペインはセッションをまたいでサインインしたままになるため、通常はサインインを1回行えば、あとは必要なときにタスクペインを開くだけです。
 
 ## PlaidXLが表示されない場合
 
 - すべてのExcelウィンドウを閉じて、Excelを開き直します。アドインは、Excelを再起動するまでリボンに表示されないことがよくあります。
-- **挿入 → マイ アドイン**（Windows）または **挿入 → アドイン → マイ アドイン**（Mac）を確認し、そこから **PlaidCloud** を選択します。
-- 組織がストアからのアドインをブロックしている場合は、Microsoft 365の管理者に配布を依頼してください。
+- **挿入 → 個人用アドイン**（Windows）または **挿入 → アドイン → 個人用アドイン**（Mac）を確認し、そこから **PlaidCloud** を選択します。
+- 組織がストアからのアドインをブロックしている場合は、Microsoft 365の管理者にアドインの配布を依頼してください。
 
-その他の解決方法は、[トラブルシューティング](/ja/reference/cli/plaidxl/troubleshooting/)のページを参照してください。
+その他の対処方法は、[トラブルシューティング](/ja/reference/cli/plaidxl/troubleshooting/)ページにあります。
 
 ## 関連情報
 

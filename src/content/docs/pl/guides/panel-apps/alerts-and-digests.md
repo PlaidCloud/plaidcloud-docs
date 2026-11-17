@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## Otwieranie alertów i podsumowań
 
-1. W **Moje aplikacje Panel** lub na tablicy **Strona główna** projektu wybierz przy aplikacji **Open in Studio**.
+1. W **Aplikacje** lub na tablicy **Strona główna** projektu wybierz przy aplikacji **Open in Studio**.
 2. Wybierz **Alerts & Digests**.
 
 Okno ma kartę **Alerts** i kartę **Digests**. Aplikacja musi być przypisana do projektu, a jej tabele to tabele z tego projektu.

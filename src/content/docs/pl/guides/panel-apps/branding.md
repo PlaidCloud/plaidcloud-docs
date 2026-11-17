@@ -58,13 +58,13 @@ Aplikacja opublikowana z projektem domyślnie odczytuje tabele tego projektu, wi
 
 ### Dla istniejących aplikacji
 
-1. Otwórz **Moje aplikacje Panel**.
+1. Otwórz **Aplikacje**.
 2. Kliknij ikonę **Przypisz** w wierszu aplikacji, którą chcesz przenieść.
 3. Wybierz **Projekt** i kliknij **Przegląd**.
 4. Przeczytaj wynik. Wymienia on członków obszaru roboczego, którzy mogą dziś otworzyć aplikację, ale nie są członkami projektu.
 5. Kliknij **Przypisz**.
 
-Przegląd niczego nie zmienia. Kolumna **Projekt** w **Moje aplikacje Panel** pokazuje projekt każdej aplikacji.
+Przegląd niczego nie zmienia. Kolumna **Projekt** w **Aplikacje** pokazuje projekt każdej aplikacji.
 
 ### Dostęp
 

@@ -5,7 +5,7 @@ sidebar:
   label: Dash Apps
 ---
 
-Dash Apps let you publish interactive [Plotly Dash](https://dash.plotly.com/) applications — callbacks, charts, and data grids (`dash-ag-grid`, `dash-mantine-components`) — directly from PlaidCloud. You manage them from the **My Panel Apps** screen, alongside your Panel apps, where each row shows its runtime, build status, and URL.
+Dash Apps let you publish interactive [Plotly Dash](https://dash.plotly.com/) applications — callbacks, charts, and data grids (`dash-ag-grid`, `dash-mantine-components`) — directly from PlaidCloud. You manage them from the **Apps** screen, alongside your Panel apps, where each row shows its runtime, build status, and URL.
 
 ## Where Dash Fits
 

@@ -14,6 +14,8 @@ Conversion is a one-time step. Converting the same project again creates new wor
 ## What PlaidCloud Creates
 
 - Each Prophecy gem becomes the matching workflow step, with upstream and downstream relationships preserved.
+- A Subgraph defined inside the pipeline becomes a group holding the steps of its gems. A Subgraph nested inside another becomes a group of its own, named by its path, such as "Outer › Inner". A shared Subgraph the pipeline refers to by ID arrives without a group.
+- The workflow opens already tidied: steps are laid out cleanly, and groups from the source are kept. This happens the first time someone with edit access opens it. After that, your own layout is saved and never rearranged. If the workflow or project is locked, you see the tidied layout but it isn't saved.
 - Prophecy parameters become project variables, and references to them inside gem settings are rewritten to the PlaidCloud variable syntax. You can override parameter values at conversion.
 - Each dataset a gem reads becomes an import step, or reads an existing table or document, depending on how you bind it.
 - Each Prophecy job or SQL pipeline schedule becomes a [scheduled event](/administration/scheduled-events/) on the converted workflow, enabled when it is enabled in Prophecy. See [Schedules](#services-and-control).

@@ -10,8 +10,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 PlaidCloud konwertuje przepływy pracy KNIME (`.knwf`) i grupy przepływów pracy (`.knar`)
 na natywne zaawansowane przepływy pracy. Importer mapuje każdy węzeł KNIME na
-krok przepływu pracy, zmienną projektu lub obiekt kanwy oraz spłaszcza metawęzły i
-komponenty, dzięki czemu skonwertowany przepływ pracy działa natywnie w chmurze.
+krok przepływu pracy, zmienną projektu lub obiekt kanwy oraz uruchamia węzły
+wewnątrz metawęzłów i komponentów jako zwykłe kroki, a każdy metawęzeł i komponent, który zawiera kroki,
+zachowuje jako zwiniętą grupę, dzięki czemu skonwertowany przepływ pracy działa natywnie w chmurze.
 
 98,5% konfiguracji węzłów KNIME konwertuje się w pełni, a 205 z 207 podstawowych
 typów węzłów ma status Pełny. Aby przeprowadzić konwersję, zobacz

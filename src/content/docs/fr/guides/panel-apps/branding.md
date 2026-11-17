@@ -58,13 +58,13 @@ Une application publiée avec un projet lit par défaut les tables de ce projet 
 
 ### Pour les applications existantes
 
-1. Ouvrez **Mes applications Panel**.
+1. Ouvrez **Applications**.
 2. Cliquez sur l'icône **Affecter** sur la ligne de l'application à déplacer.
 3. Choisissez le **Projet** et cliquez sur **À examiner**.
 4. Lisez le résultat. Il énumère les membres de l'espace de travail qui peuvent ouvrir l'application aujourd'hui mais ne sont pas membres du projet.
 5. Cliquez sur **Affecter**.
 
-L'examen ne modifie rien. La colonne **Projet** de **Mes applications Panel** indique le projet de chaque application.
+L'examen ne modifie rien. La colonne **Projet** de **Applications** indique le projet de chaque application.
 
 ### Accès
 

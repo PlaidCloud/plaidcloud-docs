@@ -1,12 +1,12 @@
 ---
 title: Eine Dash-App verwenden
-description: Verfolgen Sie den Build-Status veröffentlichter Plotly-Dash-Apps und öffnen, erstellen neu, sperren, protokollieren, bearbeiten und entfernen Sie sie auf dem Bildschirm „Meine Panel-Apps“ in PlaidCloud.
+description: Verfolgen Sie den Build-Status veröffentlichter Plotly-Dash-Apps und öffnen, erstellen neu, sperren, protokollieren, bearbeiten und entfernen Sie sie auf dem Bildschirm „Apps“ in PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Dash-Apps erscheinen auf demselben Bildschirm **Meine Panel-Apps** wie Ihre WASM- und Server-Panel-Apps, mit **Dash** in der Spalte **Laufzeit** und einem eigenen Symbol, damit sie leicht zu unterscheiden sind. Alles auf dieser Seite entspricht [Eine Panel-App verwenden](/de/guides/panel-apps/using/) für eine Server-App, mit einer unten erläuterten Ausnahme: Dash-Apps haben noch keine **Usage Metrics**.
+Dash-Apps erscheinen auf demselben Bildschirm **Apps** wie Ihre WASM- und Server-Panel-Apps, mit **Dash** in der Spalte **Laufzeit** und einem eigenen Symbol, damit sie leicht zu unterscheiden sind. Alles auf dieser Seite entspricht [Eine Panel-App verwenden](/de/guides/panel-apps/using/) für eine Server-App, mit einer unten erläuterten Ausnahme: Dash-Apps haben noch keine **Usage Metrics**.
 
 ## Build-Status
 
@@ -37,6 +37,8 @@ Klicken Sie erneut auf das Symbol, um die Sperre aufzuheben. Das Symbol zeigt de
 Klicken Sie auf das Symbol **Öffnen** am Anfang der Zeile einer bereiten App, um sie in einem neuen Tab unter `https://<your-tenant-host>/serve/<slug>/` zu starten. Das Symbol erscheint erst, wenn die App **Bereit** ist.
 
 Eine Dash-App skaliert bei Leerlauf auf null, um Ressourcen zu sparen, sodass das erste Öffnen nach einer Leerlaufphase sie erst hochfahren muss. Währenddessen sehen Sie statt eines leeren Tabs einen **PlaidCloud-Ladebildschirm**, der den Fortschritt der App durch **Wird gestartet**, **Wird vorbereitet** und **App wird geladen** anzeigt, und die App erscheint von selbst, sobald sie bereit ist. Kann eine App nicht starten, wird aus dem Ladebildschirm eine Meldung, dass die App nicht gestartet ist und bei welchem Schritt sie angehalten hat, mit der Schaltfläche **Erneut versuchen**; tritt das wiederholt auf, bearbeiten Sie die App, prüfen Sie Einstiegspunkt und Branch und veröffentlichen Sie sie erneut.
+
+Der Ladebildschirm erscheint auch, während die App aufwacht, wenn Sie sie über einen anderen Link öffnen, etwa einen aus der Adressleiste kopierten Link oder einen Link in einem Hinweis oder einer Zusammenfassung. Wenn Sie abgemeldet sind und sie in einem Browser-Tab öffnen, melden Sie sich zuerst an.
 
 > **Ein `dcc.Interval` (oder jedes andere dauerhafte Polling) verhindert Scale-to-Zero, solange sein Tab geöffnet bleibt.** Scale-to-Zero setzt voraus, dass die App ruhig wird – keine laufenden Anfragen –, sobald sie niemand aktiv nutzt. Eine Komponente, die in einem Takt ständig Anfragen sendet, etwa `dcc.Interval`, hält die App wach, solange dieser Tab geöffnet ist, auch wenn die Person davor sich entfernt hat. Wenn eine App zwischen den Besuchen herunterskalieren soll, vermeiden Sie dauerhaftes Polling oder stoppen Sie das Intervall, nachdem die Seite eine Weile im Leerlauf war.
 

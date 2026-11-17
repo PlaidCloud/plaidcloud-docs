@@ -29,7 +29,7 @@ Alles Übrige — die Verbindung, die Datenbank, die Wahl zwischen Ansicht und M
 |---|---|---|
 | Agent | Ja | Der PlaidLink-Agent, an den dieses Lesen gesendet wird. Sein Build muss den TM1-Handler enthalten (siehe [Anforderungen](#anforderungen) unten). |
 | TM1-Verbindung | Ja | Die [TM1-Verbindung](/de/guides/connections/tm1/), über die gelesen wird. Die Verbindungsauswahl wird nicht nach dem gewählten Agent gefiltert — geben Sie die Verbindung separat für den Agent frei (siehe unten). |
-| Umgebung | Nein | **Projektumgebung** (der Standard) verwendet die Verbindungsumgebung des Projekts. **Feste Umgebung** verwendet immer die Umgebung, die Sie auswählen. Siehe [Einen Schritt auf eine Umgebung festlegen](/de/guides/projects/managing-projects/#einen-schritt-auf-eine-umgebung-festlegen). |
+| Umgebung | Nein | **Projektumgebung** (der Standard) verwendet die Verbindungsumgebung des Projekts. **Feste Umgebung** verwendet immer die Umgebung, die Sie auswählen. Siehe [Einen Schritt auf eine Umgebung festlegen](/de/guides/projects/managing-projects/#einen-schritt-an-eine-umgebung-binden). |
 | Datenbank | Ja | Die abzufragende TM1-Datenbank (Instanz). |
 | Cube | Ja | Der abzufragende TM1-Cube. Wird von Hand eingegeben — bei diesem Schritt gibt es keine Live-Ermittlung. |
 | Zieltabelle | Ja | Die Projekttabelle, in der das zurückgegebene Cellset landet. |

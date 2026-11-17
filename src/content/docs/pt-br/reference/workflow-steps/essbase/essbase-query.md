@@ -68,7 +68,7 @@ Como o formato acompanha a consulta, alterar o que o MDX coloca nas colunas muda
 
 ## Acesso a linhas
 
-A [segurança em nível de linha](/pt-br/administration/access/managing-security-groups-and-assignments/#gerenciamento-de-acesso-a-linhas) se aplica à tabela gravada exatamente como a qualquer outra tabela do PlaidCloud. A governança é imposta sobre o resultado que a etapa grava, de modo que um leitor com restrição de linhas vê apenas as linhas que seu grupo de segurança permite: a consulta é executada com a conta de serviço da conexão, mas a tabela que ela produz é governada como o restante dos seus dados.
+A [segurança em nível de linha](/pt-br/administration/access/managing-security-groups-and-assignments/#gerenciar-o-acesso-a-linhas) se aplica à tabela gravada exatamente como a qualquer outra tabela do PlaidCloud. A governança é imposta sobre o resultado que a etapa grava, de modo que um leitor com restrição de linhas vê apenas as linhas que seu grupo de segurança permite: a consulta é executada com a conta de serviço da conexão, mas a tabela que ela produz é governada como o restante dos seus dados.
 
 ## Exemplo
 

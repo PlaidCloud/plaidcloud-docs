@@ -14,7 +14,8 @@ La conversion lit le fichier d'export que vous lui indiquez ainsi que les en-tê
 
 - Chaque agent Savant devient l'étape de workflow correspondante, avec ses relations amont et aval préservées. La [matrice de conversion Savant](/fr/reference/savant-conversion-matrix/) répertorie chaque agent et son niveau de correspondance.
 - Les paramètres d'analyse Savant deviennent des variables de projet, et les références qui y sont faites dans les paramètres des agents sont réécrites selon la syntaxe de variable de PlaidCloud.
-- Les notes et les groupes arrivent sur le canevas sous forme de notes et de groupes.
+- Les notes et les groupes arrivent sur le canevas sous forme de notes et de groupes. Un groupe prend son nom du plus grand texte qu'il contient, ou conserve son propre nom. Un groupe imbriqué dans un autre devient un groupe à part entière, nommé d'après son chemin, par exemple « Extérieur › Intérieur ».
+- Le workflow s'ouvre déjà réorganisé : les étapes sont disposées proprement, les groupes de la source sont conservés et les notes sont déplacées juste au-dessus du flux, en conservant leur disposition. Cela se produit la première fois qu'une personne disposant d'un accès en modification l'ouvre. Ensuite, votre propre disposition est enregistrée et n'est jamais réarrangée. Si le workflow ou le projet est verrouillé, vous voyez la disposition réorganisée, mais elle n'est pas enregistrée.
 - Chaque source devient une étape d'importation, ou lit une table existante, selon la façon dont vous la liez.
 - Chaque type d'agent Savant se convertit intégralement : chaque option a une correspondance. Une configuration sur laquelle Savant lui-même échoue ou qu'il ne documente pas arrive sous forme d'étape d'espace réservé nommée. Consultez [Espaces réservés pour les configurations non converties](#espaces-réservés-pour-les-configurations-non-converties).
 

@@ -46,7 +46,7 @@ That's a complete app — the `.servable()` call is what PlaidCloud serves. `pan
 
 ## 2. Put Your App in a PlaidCloud Git Repository
 
-Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it.
+Use your workspace's existing **`apps`** repository, or [create a new one](/guides/git/repositories/#create-a-repository). Then get your code into it. Apps you build in [Panel Studio](/guides/panel-apps/studio/#where-your-app-lives) are already folders in `apps`, so you'll find them there next to yours.
 
 Because you sign in through PlaidCloud, your Git account has no separate password — [generate a personal access token](/guides/git/repositories/#generate-a-personal-access-token) (**your avatar → Settings → Applications**) with the **write:repository** permission, and use it as the password when Git prompts. Pushing to `apps` needs **Contributor** access; ask a workspace administrator to add you to **Git Contributors** if the **Git** tab shows you as a **Viewer**. Use the copy button next to the repository's clone address in the **Git** tab, then:
 
@@ -80,7 +80,7 @@ There is no Server URL, User, Password, or SSL/SSH field — PlaidCloud Git is m
 
 Now point a server deployment at that connection.
 
-1. Open **My Panel Apps** and click **New Server App**.
+1. Open **Apps** and choose **New app** > **Server based**.
 2. Under **Directory Settings**, set an **App Name** and a **URL Slug** — the slug is the app's URL and internal name, so use lowercase letters, digits, and hyphens, starting with a letter, 40 characters or fewer (for example, `hello-panel`).
 3. Under **Git Connection and Publish Watcher**:
    - **Git Connection** — the PlaidCloud Git connection you created in step 3.
@@ -93,9 +93,9 @@ Every field in this dialog is described in [Creating a Panel App](/guides/panel-
 
 ## 5. Open the App — and Read Logs if It Doesn't Start
 
-After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt` (the repository root's and your app folder's, if present), and builds a container image. Its **Status** shows in the **My Panel Apps** list and updates automatically.
+After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt` (the repository root's and your app folder's, if present), and builds a container image. Its **Status** shows in the **Apps** list and updates automatically.
 
-- When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up (~15 seconds).
+- When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up, showing a brief PlaidCloud loading screen while it does.
 - If the build fails, open the app and check its **Build** logs — a missing dependency or an import error shows up there. See [Using a Panel App](/guides/panel-apps/using/) for what each status means, how to read logs, and how to trigger a rebuild.
 
 From here on, **every push to the connection's branch rebuilds and redeploys the app automatically** — edit `app.py`, `git push`, and your change goes live. (Unless the app is **locked** — see [Locking an App](/guides/panel-apps/using/#locking-an-app) — in which case pushes are skipped until you unlock it.)

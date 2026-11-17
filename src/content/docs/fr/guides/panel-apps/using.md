@@ -1,12 +1,12 @@
 ---
 title: Utiliser une application Panel
-description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux et les métriques d'utilisation, modifiez et supprimez les applications HoloViz Panel publiées depuis l'écran Mes applications Panel de PlaidCloud.
+description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux et les métriques d'utilisation, modifiez et supprimez les applications HoloViz Panel publiées depuis l'écran Applications de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Chaque application publiée apparaît sur l'écran **Mes applications Panel** avec son **Exécution**, son **Statut**, son **Slug** et ses horodatages. La colonne la plus à gauche ouvre l'application ; les autres icônes de la ligne vous permettent de la verrouiller contre les modifications accidentelles, de la modifier, de la supprimer et — pour les applications serveur — de la régénérer, d'afficher ses journaux et d'afficher ses métriques d'utilisation. L'icône d'ouverture reflète l'exécution de l'application, ce qui permet de distinguer au premier coup d'œil les applications WASM des applications serveur.
+Chaque application publiée apparaît sur l'écran **Applications** avec son **Exécution**, son **Statut**, son **Slug** et ses horodatages. La colonne la plus à gauche ouvre l'application ; les autres icônes de la ligne vous permettent de la verrouiller contre les modifications accidentelles, de la modifier, de la supprimer et — pour les applications serveur — de la régénérer, d'afficher ses journaux et d'afficher ses métriques d'utilisation. L'icône d'ouverture reflète l'exécution de l'application, ce qui permet de distinguer au premier coup d'œil les applications WASM des applications serveur.
 
 ## Statut de génération (applications serveur)
 
@@ -24,7 +24,7 @@ Cliquez sur l'icône **Régénérer** de la ligne d'une application serveur pour
 
 Utilisez **Régénérer** après des modifications de dépendances, des mises à jour de l'image de base ou une génération en échec transitoire. Modifier puis enregistrer une application serveur la régénère aussi, mais une régénération ne nécessite pas d'ouvrir le formulaire de modification.
 
-Pour une application [App Runner](/fr/guides/workflows/use-converted-alteryx-apps/#maintenir-lapplication-à-jour) — le formulaire de saisie généré pour une application Alteryx convertie — **Régénérer** et l'enregistrement d'une modification commencent par actualiser ses fichiers générés vers la version actuelle d'App Runner, puis lancent la génération. PlaidCloud fait de même pour chaque application App Runner non verrouillée lorsque PlaidCloud lui-même est mis à jour ; une application verrouillée nécessite un **Régénérer** après son déverrouillage.
+Pour une application [App Runner](/fr/guides/workflows/use-converted-alteryx-apps/#garder-lapplication-à-jour) — le formulaire de saisie généré pour une application Alteryx convertie — **Régénérer** et l'enregistrement d'une modification commencent par actualiser ses fichiers générés vers la version actuelle d'App Runner, puis lancent la génération. PlaidCloud fait de même pour chaque application App Runner non verrouillée lorsque PlaidCloud lui-même est mis à jour ; une application verrouillée nécessite un **Régénérer** après son déverrouillage.
 
 ## Verrouiller une application
 
@@ -42,18 +42,20 @@ Le verrou est une protection contre les accidents — une modification par erreu
 
 ## Ouvrir une application
 
-Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-des-actions-de-ligne).
+Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet. **Ouvrir** est aussi le premier élément du menu **⋯** de la ligne. Consultez [Le menu des actions de ligne](/fr/guides/dashboards/using-dashboards/#le-menu-dactions-de-ligne).
 
 - Une application serveur est servie à l'adresse `https://<your-tenant-host>/serve/<slug>/`.
 - L'icône **Ouvrir** n'apparaît que lorsqu'une application serveur a le statut **Prêt**.
 
 Une application serveur est ramenée à zéro lorsqu'elle est inactive afin d'économiser des ressources ; la première ouverture après une période d'inactivité doit donc la redémarrer. Pendant ce temps, vous voyez un **écran de chargement PlaidCloud** au lieu d'un onglet vide : le nom de votre application, sa progression à travers les étapes **Démarrage**, **Préparation** et **Chargement de l'application**, et l'ID de votre espace de travail, dans votre thème clair ou sombre. L'application s'affiche d'elle-même dès qu'elle est prête (généralement en quelques secondes, jusqu'à environ une minute lors d'un démarrage à froid), puis répond normalement jusqu'à sa prochaine période d'inactivité.
 
+L'écran de chargement s'affiche aussi pendant le réveil de l'application lorsque vous l'ouvrez depuis n'importe quel autre lien qui y mène, par exemple un lien copié depuis la barre d'adresse ou un lien figurant dans une alerte ou un message de résumé. Si vous êtes déconnecté et que vous l'ouvrez dans un onglet du navigateur, vous vous connectez d'abord.
+
 > Si une application ne peut pas démarrer, l'écran de chargement se transforme en un message indiquant que l'application n'a pas démarré et à quelle étape elle s'est arrêtée, accompagné d'un bouton **Réessayer**, au lieu de tourner indéfiniment. Si cela se reproduit, modifiez l'application pour vérifier son point d'entrée et sa branche, puis republiez-la, ou contactez votre administrateur PlaidCloud.
 
 ### Apparence
 
-Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les personnes qui consultent l'application peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème-clair-sombre-ou-commutateur) dans le guide de création pour les approches possibles. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, gardez-la fixée sur le thème clair.
+Les applications Panel serveur utilisent par défaut le design moderne **FAST** de PlaidCloud, mais le paramètre **Conception** de l'application permet de revenir au style **Par défaut** de Panel lorsque du CSS existant en dépend. Le thème — clair, sombre, ou un commutateur clair/sombre que les personnes qui consultent l'application peuvent basculer — se définit dans le modèle de votre application. Consultez [Définir le thème](/fr/guides/panel-apps/creating/#définir-le-thème-clair-sombre-ou-commutable) dans le guide de création pour les approches possibles. Si les tables ou le style personnalisé de votre application sont conçus pour un fond clair, gardez-la fixée sur le thème clair.
 
 ## Afficher les journaux (applications serveur)
 

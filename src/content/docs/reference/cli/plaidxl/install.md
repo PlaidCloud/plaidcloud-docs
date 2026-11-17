@@ -10,6 +10,7 @@ You install PlaidXL once per computer, not once per workbook. After that, the **
 ## Before You Start
 
 - Use Excel for Microsoft 365, or Excel 2021 or later, on Windows or Mac.
+- Your PlaidCloud workspace needs to be on a current release. On an older workspace, pulls say **This PlaidCloud workspace needs an update for PlaidXL**; ask your administrator to update it.
 - If your organization manages Office add-ins centrally, your Microsoft 365 administrator may need to deploy PlaidXL for you. If you can't install add-ins yourself, ask them to add the **PlaidCloud** add-in.
 
 ## Install on Windows

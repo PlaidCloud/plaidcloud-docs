@@ -213,6 +213,44 @@ Sur StarRocks :
 
 Sur tous les entrepôts de données, une valeur qui ne peut pas être convertie, comme un texte non numérique converti en nombre, devient nulle au lieu d'interrompre l'étape.
 
+### Plusieurs valeurs là où une seule est attendue
+
+L'expression d'une colonne et le filtre d'une étape doivent chacun donner une seule valeur, de même que chaque valeur à laquelle ils comparent une colonne ou qu'ils transmettent à une fonction. Pour faire correspondre l'une de plusieurs valeurs, listez-les dans `.in_([...])` ou `.not_in([...])`.
+
+Les virgules et les crochets forment une liste de valeurs, et une expression qui donne une liste là où une seule valeur est attendue est refusée. Le formulaire de l'étape la refuse lorsque vous enregistrez l'étape. Une étape enregistrée auparavant avec une telle expression échoue à l'exécution, et une étape Table Extract ou Table Union All échoue avant de vider sa table cible, de sorte que la table conserve ses données. Le message indique l'expression et ce qu'il faut modifier.
+
+La cause la plus fréquente est une virgule finale :
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Cela s'applique sur tous les entrepôts de données. Certains entrepôts exécutaient une telle expression, mais pas toujours telle qu'elle était écrite ; une étape qui s'exécute sans erreur jusqu'ici peut donc désormais échouer avec ce message.
+
+Pour faire correspondre une colonne à l'une de plusieurs valeurs, utilisez `.in_([...])` plutôt que `==`, et `.not_in([...])` plutôt que `!=` :
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Chaque valeur transmise à une fonction est contrôlée de la même façon ; vérifiez donc les parenthèses et les virgules qui l'entourent :
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Lire une autre table depuis une expression
 
 `sqlalchemy.literal_column` transmet tel quel un fragment de SQL à l'entrepôt de données, et accepte une valeur unique : une colonne, un calcul, un `CASE`, un appel de fonction, une conversion, une fonction de fenêtrage. Un `literal_column` contenant une **sous-requête** (`(SELECT ... FROM ...)`) est refusé, car une sous-requête accède à une table que l'étape n'a jamais déclarée.

@@ -214,6 +214,44 @@ No StarRocks:
 
 Em todos os armazéns, um valor que não possa ser convertido, como texto não numérico convertido para número, passa a nulo em vez de interromper o passo.
 
+### Vários valores onde se espera um só
+
+A expressão de uma coluna e o filtro de um passo têm de devolver, cada um, um único valor, tal como cada valor com que comparam uma coluna ou que passam a uma função. Para corresponder a qualquer um de vários valores, indique-os dentro de `.in_([...])` ou `.not_in([...])`.
+
+As vírgulas e os parênteses retos formam uma lista de valores, e uma expressão que devolve uma lista onde se espera um só valor é recusada. O formulário do passo recusa-a quando o passo é guardado. Um passo guardado anteriormente com uma expressão deste tipo falha quando é executado, e um passo Table Extract ou Table Union All falha antes de esvaziar a tabela de destino, pelo que a tabela mantém os dados. A mensagem mostra a expressão e o que deve alterar.
+
+A causa mais comum é uma vírgula final:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Isto aplica-se a todos os armazéns de dados. Alguns armazéns de dados executavam essa expressão, mas nem sempre tal como estava escrita, pelo que um passo que tem sido executado sem erros pode agora falhar com esta mensagem.
+
+Para corresponder uma coluna a qualquer um de vários valores, utilize `.in_([...])` em vez de `==`, e `.not_in([...])` em vez de `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Cada valor passado a uma função é verificado da mesma forma, pelo que deve confirmar os parênteses e as vírgulas à sua volta:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Ler outra tabela a partir de uma expressão
 
 `sqlalchemy.literal_column` passa um fragmento de SQL para o armazém sem o alterar, e aceita um único valor — uma coluna, um cálculo, um `CASE`, uma chamada de função, uma conversão, uma função de janela. Um `literal_column` que contenha uma **subconsulta** (`(SELECT ... FROM ...)`) é recusado, porque uma subconsulta acede a uma tabela que o passo nunca declarou.

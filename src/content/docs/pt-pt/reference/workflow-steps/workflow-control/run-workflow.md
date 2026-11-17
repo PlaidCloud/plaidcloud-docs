@@ -12,6 +12,8 @@ Aciona outro fluxo de trabalho como parte da execução do fluxo de trabalho atu
 
 O fluxo de trabalho chamado é executado de forma independente — pode estar no mesmo projeto ou num diferente. Por predefinição, o fluxo de trabalho chamador continua sem esperar; ative a opção **Wait until processing completes** se os passos seguintes do chamador dependerem da conclusão do fluxo de trabalho chamado.
 
+O fluxo de trabalho chamado pode usar os valores com que a execução do chamador foi iniciada, como as respostas dadas no App Runner, para qualquer variável que nem ele nem o seu projeto definam. As suas próprias variáveis de fluxo de trabalho e de projeto têm prioridade.
+
 
 
 ## Fluxo de trabalho a executar

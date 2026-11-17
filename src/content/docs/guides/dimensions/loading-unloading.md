@@ -22,6 +22,8 @@ Since dimensions represent hierarchical data structures, the load process must c
 
  A load of aliases, properties or values checks every row's member before writing anything. If any row names a member the dimension does not hold, the load fails and reports those names, and nothing from that load is stored. Load the structure first, or include the missing members in it, then load the attributes.
 
+ On a project with Row Access, a dimension loads from a table only for someone who can read every row of that table, such as a project Architect or a workflow run. See [Loading Data Into a Restricted Table](/administration/access/managing-security-groups-and-assignments/#loading-data-into-a-restricted-table).
+
  See the Workflow Step for [Dimension Load](/reference/workflow-steps/dimensions/dimension-load) for more information.
 
 

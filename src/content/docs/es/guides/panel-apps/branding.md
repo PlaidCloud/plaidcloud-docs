@@ -58,13 +58,13 @@ Una aplicación publicada con un proyecto lee las tablas de ese proyecto de form
 
 ### Para aplicaciones existentes
 
-1. Abra **Mis aplicaciones Panel**.
+1. Abra **Aplicaciones**.
 2. Haga clic en el icono **Asignar** en la fila de la aplicación que desea mover.
 3. Elija el **Proyecto** y haga clic en **Revisar**.
 4. Lea el resultado. Enumera los miembros del espacio de trabajo que hoy pueden abrir la aplicación pero no son miembros del proyecto.
 5. Haga clic en **Asignar**.
 
-Revisar no cambia nada. La columna **Proyecto** de **Mis aplicaciones Panel** muestra el proyecto de cada aplicación.
+Revisar no cambia nada. La columna **Proyecto** de **Aplicaciones** muestra el proyecto de cada aplicación.
 
 ### Acceso
 

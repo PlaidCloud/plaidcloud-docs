@@ -1,12 +1,12 @@
 ---
 title: Uso de una aplicación de Dash
-description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros, edite y quite aplicaciones de Plotly Dash publicadas desde la pantalla Mis aplicaciones Panel de PlaidCloud.
+description: Supervise el estado de compilación y abra, recompile, bloquee, consulte los registros, edite y quite aplicaciones de Plotly Dash publicadas desde la pantalla Aplicaciones de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Las aplicaciones de Dash aparecen en la misma pantalla **Mis aplicaciones Panel** que sus aplicaciones Panel WASM y de servidor, con **Dash** en la columna **Tiempo de ejecución** y un icono propio para distinguirlas fácilmente. Todo lo que se describe en esta página es igual que en [Uso de una aplicación Panel](/es/guides/panel-apps/using/) para una aplicación de servidor, con una excepción que se indica más abajo: las aplicaciones de Dash todavía no disponen de **Usage Metrics**.
+Las aplicaciones de Dash aparecen en la misma pantalla **Aplicaciones** que sus aplicaciones Panel WASM y de servidor, con **Dash** en la columna **Tiempo de ejecución** y un icono propio para distinguirlas fácilmente. Todo lo que se describe en esta página es igual que en [Uso de una aplicación Panel](/es/guides/panel-apps/using/) para una aplicación de servidor, con una excepción que se indica más abajo: las aplicaciones de Dash todavía no disponen de **Usage Metrics**.
 
 ## Estado de compilación
 
@@ -37,6 +37,8 @@ Haga clic de nuevo en el icono para desbloquearla. El icono muestra el estado ac
 Haga clic en el icono **Abrir** al principio de la fila de una aplicación lista para iniciarla en una pestaña nueva, en `https://<your-tenant-host>/serve/<slug>/`. El icono solo aparece cuando la aplicación está **Lista**.
 
 Una aplicación de Dash escala a cero cuando está inactiva para ahorrar recursos, por lo que la primera vez que se abre tras un período de inactividad tiene que arrancar. Mientras tanto, verá una **pantalla de carga de PlaidCloud** en lugar de una pestaña en blanco, que muestra el progreso de la aplicación por las fases **Iniciando**, **Preparando** y **Cargando aplicación**, y la aplicación aparece sola en cuanto está lista. Si una aplicación no puede iniciarse, la pantalla de carga se convierte en un mensaje que indica que la aplicación no se inició y en qué fase se detuvo, con un botón **Intentar de nuevo**; si esto se repite, edite la aplicación para comprobar su punto de entrada y su rama, y vuelva a publicarla.
+
+La pantalla de carga también aparece mientras la aplicación se reactiva cuando abre la aplicación desde cualquier otro enlace a ella, como un enlace copiado de la barra de direcciones o uno incluido en una alerta o en un mensaje de resumen. Si ha cerrado la sesión y la abre en una pestaña del navegador, primero debe iniciar sesión.
 
 > **Un `dcc.Interval` (o cualquier otro sondeo permanente) impide el escalado a cero mientras su pestaña siga abierta.** El escalado a cero depende de que la aplicación quede en reposo, sin solicitudes en curso, cuando nadie la está usando activamente. Un componente que sigue enviando solicitudes con un temporizador, como `dcc.Interval`, mantiene la aplicación activa mientras esa pestaña esté abierta, aunque la persona que la estaba mirando se haya ausentado. Si quiere que una aplicación se reduzca entre visitas, evite los sondeos permanentes o detenga el intervalo cuando la página lleve un tiempo inactiva.
 

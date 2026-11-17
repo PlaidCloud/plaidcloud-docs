@@ -40,7 +40,7 @@ df = conn.get_dataframe("Sales Ledger")
 
 Como a ligação é o leitor, isto devolve apenas as linhas que o leitor pode ver e gera um erro de permissão se não tiver qualquer acesso ao projeto.
 
-> **Leia as tabelas pelo nome, não escrevendo SQL.** Num projeto em que um administrador ativou o [Acesso a linhas](/pt-pt/administration/access/managing-security-groups-and-assignments/#acesso-a-linhas-e-consultas-que-escreve-por-si), a leitura pelo nome devolve as linhas de cada visualizador, e uma consulta composta pela própria aplicação também as devolve, num warehouse StarRocks, Databend, Greenplum ou Postgres. Uma consulta num warehouse Snowflake ou Databricks, ou que não seja um único SELECT sobre as tabelas do projeto (uma escrita ou várias instruções), é recusada para quem não seja Arquiteto do projeto. Ler pelo nome mantém a sua aplicação a funcionar em ambos os casos.
+> **Leia as tabelas pelo nome, não escrevendo SQL.** Num projeto em que um administrador ativou o [Acesso a linhas](/pt-pt/administration/access/managing-security-groups-and-assignments/#acesso-a-linhas-e-as-consultas-que-escreve), a leitura pelo nome devolve as linhas de cada visualizador, e uma consulta composta pela própria aplicação também as devolve, num warehouse StarRocks, Databend, Greenplum ou Postgres. Uma consulta num warehouse Snowflake ou Databricks, ou que não seja um único SELECT sobre as tabelas do projeto (uma escrita ou várias instruções), é recusada para quem não seja Arquiteto do projeto. Ler pelo nome mantém a sua aplicação a funcionar em ambos os casos.
 
 ## Ler num callback, nunca na importação nem ao nível do processo
 

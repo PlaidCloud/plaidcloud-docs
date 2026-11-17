@@ -1,14 +1,14 @@
 ---
 title: Cursor
-description: Cursor IDE에서 내장 MCP 지원을 통해 PlaidCloud의 MCP 도구를 호출하도록 구성합니다.
+description: Cursor IDE가 기본 제공 MCP 지원을 통해 PlaidCloud의 MCP 도구를 호출하도록 구성합니다.
 sidebar:
   order: 4
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/integrations/ai-coding-agents/cursor.md
 ---
 
-[Cursor](https://cursor.com)는 `mcp.json` 구성 파일을 통해 MCP 서버를 지원합니다. 형식이 Claude Code의 `.mcp.json`과 같으므로 동일한 전달자 토큰 스니펫이 둘 다에서 작동합니다.
+[Cursor](https://cursor.com)는 `mcp.json` 구성 파일을 통해 MCP 서버를 지원합니다. 형식이 Claude Code의 `.mcp.json`과 같으므로 동일한 전달자 토큰 스니펫을 두 곳에서 모두 사용할 수 있습니다.
 
-PlaidCloud 헤더 도구 모음의 **AI 연결** 창에는 OAuth 로그인을 통해 서버를 추가하는 원클릭 링크인 **Cursor에 설치**가 있으며, 구성 파일은 필요하지 않습니다. 먼저 이를 시도하십시오. 아래의 전달자 토큰 구성은 이 페이지에서 전체를 설명하는 설정이며, 원클릭 링크로 서버가 추가되지 않거나 Cursor가 설치되어 있지 않을 때의 대체 방법입니다.
+PlaidCloud의 아바타(사용자) 메뉴에서 여는 **AI 연결** 창에는 OAuth 로그인으로 서버를 추가하는 **Cursor에 설치** 원클릭 링크가 있으며 구성 파일이 필요하지 않습니다. 먼저 이 방법을 시도하십시오. 아래의 전달자 토큰 구성은 이 페이지에서 자세히 설명하는 설정이며, 원클릭 링크로 서버가 추가되지 않거나 Cursor가 설치되어 있지 않을 때의 대안입니다.
 
 ## 설정
 
@@ -37,11 +37,11 @@ PlaidCloud 헤더 도구 모음의 **AI 연결** 창에는 OAuth 로그인을 �
 
 ## 도구 사용
 
-Cursor의 Composer 또는 채팅 패널에서 일반 언어로 에이전트에게 요청하면("프로젝트 `Q4 Forecast`의 구조를 설명해 줘") 적절한 `plaidcloud_*` 도구를 선택합니다. 도구 호출과 응답이 인라인으로 표시되며, 변경 작업은 승인하기 전에 검토하십시오.
+Cursor의 Composer 또는 채팅 패널에서 에이전트에게 일상적인 언어로 요청하면("프로젝트 `Q4 Forecast`의 구조를 설명해 줘") 적절한 `plaidcloud_*` 도구를 선택합니다. 도구 호출과 응답이 인라인으로 표시되므로, 변경 작업은 승인하기 전에 검토하십시오.
 
-## 토큰 새로 고침
+## 토큰 갱신
 
-토큰이 만료되면 `https://<your-workspace>.plaid.cloud/mcp/setup/token`을 다시 불러와서 새 값을 `mcp.json`에 붙여 넣으십시오. Cursor는 전체 재시작 없이 변경 사항을 반영합니다. 필요하면 **Settings → MCP**에서 서버를 껐다가 다시 켜십시오.
+토큰이 만료되면 `https://<your-workspace>.plaid.cloud/mcp/setup/token`을 다시 로드하고 새 값을 `mcp.json`에 붙여 넣으십시오. Cursor는 전체를 다시 시작하지 않아도 변경 사항을 반영합니다. 필요하면 **Settings → MCP**에서 서버를 껐다가 다시 켜십시오.
 
 ## 여러 테넌트
 

@@ -31,17 +31,16 @@ PlaidCloud Documents — armazene, organize, pesquise e partilhe ficheiros junto
 
 ## A aplicação Document
 
-**Document** abre com uma barra lateral à esquerda e, ao lado, a página que escolher. Os membros que não podem abrir uma página não veem o respetivo item.
+**Document** abre com uma barra lateral à esquerda e, ao lado, a página que escolher. A barra lateral agrupa as páginas em **Documentos** (**Visão geral** e **Procurar**) e **Contas** (**As suas contas** e **Gerir**). Os membros que não podem abrir uma página não veem o respetivo item. As páginas têm um título no topo, muitas vezes com um breve subtítulo, e as respetivas ações no cabeçalho ao lado.
 
 | Item da barra lateral | O que mostra |
 |---|---|
-| **Visão geral** | Mosaicos para as suas contas (**Contas**, **Partilhadas**, **Privadas para si**, **Buckets geridos**, **Serviços externos** e **Desativado** quando uma conta requer atenção), ficheiros **Afixados**, **Contas por serviço** e **Quem as pode utilizar**. Selecione um ficheiro afixado para abrir **Procurar** na respetiva pasta com o ficheiro selecionado. |
-| **Procurar** | O explorador de ficheiros. Escolha a conta na lista do cabeçalho da página. Consulte [Utilizar contas de documentos](/pt-pt/guides/documents/using-document/). |
-| **Partilhadas** | Contas partilhadas consigo. Faça duplo clique numa linha para a explorar. |
-| **As minhas privadas** | Contas que só podem ser utilizadas por si. Faça duplo clique numa linha para a explorar. |
+| **Visão geral** | Mosaicos para as suas contas (**Contas**, que abre **As suas contas**, **Buckets geridos**, **Serviços externos** e **Desativado**, que está assinalado com **Requer atenção** e abre **Gerir** quando uma conta de que é proprietário está desativada), ficheiros **Afixados**, **Contas por serviço** e **Quem as pode utilizar**. Selecione um ficheiro afixado para abrir **Procurar** na respetiva pasta com o ficheiro selecionado. |
+| **Procurar** | O explorador de ficheiros. Abre a sua conta favorita (aquela cuja pasta de topo afixou) ou a conta predefinida da área de trabalho, e pode escolher outra conta na lista do cabeçalho da página. Consulte [Utilizar contas de documentos](/pt-pt/guides/documents/using-document/). |
+| **As suas contas** | Todas as contas que pode utilizar, numa única lista. Uma etiqueta **Partilhadas** ou **Privado** em cada linha indica se a conta é partilhada consigo ou só sua. Faça duplo clique numa linha para a explorar. |
 | **Gerir** | Contas de que é proprietário, com **Nome**, **Serviço**, **Tipo de segurança**, **Estado** e **Descrição**. Um administrador da área de trabalho vê aqui todas as contas de documentos e pode gerir qualquer conta que, de outra forma, possa gerir; as contas geridas pelo sistema são recusadas e as contas de bucket gerido não podem ser clonadas. |
 
-A barra lateral mostra uma contagem junto a **Partilhadas**, **As minhas privadas** e **Gerir**. Para um administrador da área de trabalho que tem contas que não são suas, **Gerir** mostra **admin** em vez de uma contagem. A Visão geral tem os botões **Procurar ficheiros** e **Nova conta** para um início rápido.
+A barra lateral mostra uma contagem junto a **As suas contas**. A Visão geral tem os botões **Procurar ficheiros** e **Nova conta** para um início rápido.
 
 ### Ações de linha em Gerir
 

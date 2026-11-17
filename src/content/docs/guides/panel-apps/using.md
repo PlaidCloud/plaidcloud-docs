@@ -1,11 +1,11 @@
 ---
 title: Using a Panel App
-description: Track build status, open, rebuild, lock, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the My Panel Apps screen in PlaidCloud.
+description: Track build status, open, rebuild, lock, view logs and usage metrics for, edit, and remove published HoloViz Panel apps from the Apps screen in PlaidCloud.
 sidebar:
   order: 3
 ---
 
-Every published app appears on the **My Panel Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you lock it against accidental changes, edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
+Every published app appears on the **Apps** screen with its **Runtime**, **Status**, **Slug**, and timestamps. The leftmost column opens the app; the remaining row icons let you lock it against accidental changes, edit it, remove it, and — for server apps — rebuild it, view its logs, and view usage metrics. The open icon reflects the app's runtime, so WASM and server apps are easy to tell apart at a glance.
 
 ## Build Status (Server Apps)
 
@@ -47,6 +47,8 @@ Click the **Open** icon at the start of a ready app's row to launch it in a new 
 - The **Open** icon appears only once a server app is **Ready**.
 
 A server app scales to zero when idle to save resources, so the first open after an idle period has to spin it up. While that happens you see a **PlaidCloud loading screen** instead of a blank tab: your app's name, its progress through **Starting**, **Preparing** and **Loading app**, and your workspace ID, in your light or dark theme. The app appears on its own as soon as it is ready (usually a few seconds, up to about a minute on a cold start), and then responds normally until it next goes idle.
+
+The loading screen also appears while the app wakes when you open it from any other link to it, such as a link copied from the address bar or one in an alert or digest message. If you're signed out and open it in a browser tab, you sign in first.
 
 > If an app can't start, the loading screen turns into a message that the app didn't start and which step it stopped at, with a **Try again** button, rather than spinning forever. If that keeps happening, edit the app to check its entry point and branch and republish, or contact your PlaidCloud administrator.
 

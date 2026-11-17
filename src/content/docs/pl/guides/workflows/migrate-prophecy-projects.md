@@ -15,6 +15,8 @@ Konwersja jest jednorazowym krokiem. Ponowna konwersja tego samego projektu twor
 ## Co tworzy PlaidCloud
 
 - Każdy gem Prophecy staje się odpowiednim krokiem przepływu pracy, z zachowaniem relacji nadrzędnych i podrzędnych.
+- Subgraph zdefiniowany wewnątrz potoku staje się grupą zawierającą kroki jego gemów. Subgraph zagnieżdżony w innym staje się osobną grupą, nazwaną według swojej ścieżki, na przykład „Zewnętrzny › Wewnętrzny”. Współdzielony Subgraph, do którego potok odwołuje się przez identyfikator, trafia bez grupy.
+- Przepływ pracy otwiera się już uporządkowany: kroki są przejrzyście rozmieszczone, a grupy ze źródła zachowane. Dzieje się to przy pierwszym otwarciu przez osobę z uprawnieniami do edycji. Potem Twój własny układ jest zapisywany i nigdy nie jest przestawiany. Jeśli przepływ pracy lub projekt jest zablokowany, widzisz uporządkowany układ, ale nie jest on zapisywany.
 - Parametry Prophecy stają się zmiennymi projektu, a odwołania do nich w ustawieniach gemów są przepisywane na składnię zmiennych PlaidCloud. Wartości parametrów możesz nadpisać podczas konwersji.
 - Każdy zbiór danych odczytywany przez gem staje się krokiem importu lub odczytuje istniejącą tabelę albo dokument, zależnie od sposobu powiązania.
 - Każdy job Prophecy lub harmonogram potoku SQL staje się [zaplanowanym zdarzeniem](/pl/administration/scheduled-events/) w skonwertowanym przepływie pracy, włączonym, jeśli jest włączony w Prophecy. Zobacz [Harmonogramy](#usługi-i-sterowanie).

@@ -20,7 +20,7 @@ The pages in this section cover what the server exposes, how to authenticate, an
 
 ## Connect Your Assistant
 
-The quickest path is the **Connect Your AI** button in PlaidCloud's own header toolbar — pick your client and follow the steps it shows, MCP server URL included.
+The quickest path is the **Connect Your AI** item in PlaidCloud's own avatar (user) menu — pick your client and follow the steps it shows, MCP server URL included.
 
 - [Getting Started](./getting-started/) — what the MCP server exposes and how to authenticate.
 - [Microsoft 365 Copilot](/integrations/microsoft-365-copilot/) — bring PlaidCloud to your whole team in Teams and Outlook.

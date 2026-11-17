@@ -19,7 +19,7 @@ El paso accede a TM1 **de forma directa en la nube** mediante su API REST, sin i
 | Campo | Obligatorio | Notas |
 |---|---|---|
 | Conexión de TM1 | Sí | La [conexión de TM1](/es/guides/connections/tm1/) mediante la que se lee. |
-| Entorno | No | **Entorno del proyecto** (el valor predeterminado) usa el entorno de la conexión del proyecto. **Entorno fijo** usa siempre el que usted elija. Consulte [Fijar un paso a un entorno](/es/guides/projects/managing-projects/#fijar-un-paso-a-un-entorno). |
+| Entorno | No | **Entorno del proyecto** (el valor predeterminado) usa el entorno de la conexión del proyecto. **Entorno fijo** usa siempre el que usted elija. Consulte [Fijar un paso a un entorno](/es/guides/projects/managing-projects/#fijar-un-paso-a-un-solo-entorno). |
 | Base de datos | Sí | La base de datos (instancia) de TM1 de la que se lee. De forma predeterminada, es la Base de datos predeterminada de la conexión, si se ha definido una. |
 | Dimensión de TM1 | Sí | La dimensión de TM1 que se leerá. Se detecta en vivo desde la base de datos conectada o se escribe a mano. |
 | Jerarquía de TM1 | No | La jerarquía dentro de la dimensión. Se detecta en vivo una vez elegida una dimensión o se escribe a mano. Déjela en blanco para leer la jerarquía propia (implícita) de la dimensión, a la que TM1 da el nombre de la dimensión. |

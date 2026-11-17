@@ -10,9 +10,9 @@ Panel Studio is the editor for Panel apps inside PlaidCloud. It shows the app's 
 ## Open Panel Studio
 
 - On a project's **Home** board, choose **Open in Studio** on a Panel app.
-- In **My Panel Apps**, choose **Studio** on an app's row.
+- In **Apps**, choose **Studio** on an app's row.
 
-To start a new app, choose **New Studio App**. It is the first button in the **My Panel Apps** toolbar, and it is in the **Panel Apps** box on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
+To start a new app, choose **New app** > **Studio**. It is also in the **Studio apps** row of the **Apps & branding** card on a project's **Home** tab. To build on a table, select it on the project's **Tables** tab and choose **Create Panel App**.
 
 ## Create an App
 
@@ -27,6 +27,14 @@ The **New Studio App** dialog starts you from one of five places:
 | **From the gallery** | A copy of an app your workspace has listed in the [app gallery](/guides/panel-apps/gallery/). |
 
 Name the app, pick its **Project**, and choose **Create**. Studio opens the new app with its files listed on the left. For a table or a view, Weave's prompt to build the app's first page is ready to send. See [Creating a Panel App](/guides/panel-apps/creating/).
+
+## Where Your App Lives
+
+A Studio app is a folder named for the app (`<app-slug>/`) inside your workspace's `apps` repository in [PlaidCloud Git](/guides/git/), the same repository your other Panel apps live in. Studio doesn't create a repository of its own for the app, so you can find and edit its source in `apps` alongside your other apps.
+
+- **Draft branch.** Work that isn't live yet is kept on a branch named `studio-<app-slug>`. **Publish** copies the app's folder from that branch onto the main branch.
+- **Rebuilds.** A push to `apps` rebuilds an app only when that app's folder, or the repository's root `requirements.txt`, changed.
+- **Existing apps.** A Studio app that was in a repository of its own is moved into its folder automatically. The old repository is archived: it stays, read-only, and is never deleted.
 
 ## Edit
 
@@ -117,7 +125,7 @@ Choose **Pin to Home** to add the app to the project's **Home** board, and **Unp
 
 ## Delete an App
 
-Deleting a Panel app asks you to confirm first. In **My Panel Apps**, use the **minus** icon on the app's row. Unpublishing also asks you to confirm.
+Deleting a Panel app asks you to confirm first. In **Apps**, use the **minus** icon on the app's row. Unpublishing also asks you to confirm.
 
 ## Next Steps
 

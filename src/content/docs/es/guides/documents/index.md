@@ -31,17 +31,16 @@ PlaidCloud Documents: almacene, organice, busque y comparta archivos junto con s
 
 ## El espacio de Documentos
 
-**Documento** se abre con una barra lateral a la izquierda y, junto a ella, la página que usted elija. Los miembros que no pueden abrir una página no ven su elemento.
+**Documento** se abre con una barra lateral a la izquierda y, junto a ella, la página que usted elija. La barra lateral agrupa sus páginas en **Documentos** (**Resumen** y **Examinar**) y **Cuentas** (**Sus cuentas** y **Administrar**). Los miembros que no pueden abrir una página no ven su elemento. Las páginas tienen un título en la parte superior, a menudo con un breve subtítulo, y sus acciones en el encabezado, junto a él.
 
 | Elemento de la barra lateral | Qué muestra |
 |---|---|
-| **Resumen** | Mosaicos de sus cuentas (**Cuentas**, **Compartidas**, **Privadas para usted**, **Buckets administrados**, **Servicios externos** y **Deshabilitado** cuando una cuenta requiere atención), archivos **Anclados**, **Cuentas por servicio** y **Quién puede usarlas**. Seleccione un archivo anclado para abrir **Examinar** en su carpeta con el archivo seleccionado. |
-| **Examinar** | El explorador de archivos. Elija la cuenta en la lista del encabezado de la página. Consulte [Uso de las cuentas de documentos](/es/guides/documents/using-document/). |
-| **Compartidas** | Cuentas compartidas con usted. Haga doble clic en una fila para examinarla. |
-| **Mis privadas** | Cuentas que solo usted puede usar. Haga doble clic en una fila para examinarla. |
+| **Resumen** | Mosaicos de sus cuentas (**Cuentas**, que abre **Sus cuentas**, **Buckets administrados**, **Servicios externos** y **Deshabilitado**, que lleva la etiqueta **Requiere atención** y abre **Administrar** cuando una cuenta de la que es propietario está deshabilitada), archivos **Anclados**, **Cuentas por servicio** y **Quién puede usarlas**. Seleccione un archivo anclado para abrir **Examinar** en su carpeta con el archivo seleccionado. |
+| **Examinar** | El explorador de archivos. Abre su cuenta favorita (aquella cuya carpeta superior ancló) o la cuenta predeterminada del espacio de trabajo, y puede elegir otra cuenta en la lista del encabezado de la página. Consulte [Uso de las cuentas de documentos](/es/guides/documents/using-document/). |
+| **Sus cuentas** | Todas las cuentas que puede usar, en una sola lista. Una etiqueta **Compartidas** o **Privado** en cada fila indica si la cuenta está compartida con usted o es solo suya. Haga doble clic en una fila para examinarla. |
 | **Administrar** | Cuentas de las que es propietario, con **Nombre**, **Servicio**, **Tipo de seguridad**, **Estado** y **Descripción**. Un administrador del espacio de trabajo ve aquí todas las cuentas de documentos y puede administrar cualquier cuenta que de otro modo pueda administrar; las cuentas administradas por el sistema se rechazan y las cuentas de bucket administrado no se pueden clonar. |
 
-La barra lateral muestra un recuento junto a **Compartidas**, **Mis privadas** y **Administrar**. Para un administrador del espacio de trabajo que tiene cuentas de las que no es propietario, **Administrar** muestra **admin** en lugar de un recuento. El Resumen tiene los botones **Examinar archivos** y **Nueva cuenta** para empezar rápidamente.
+La barra lateral muestra un recuento junto a **Sus cuentas**. El Resumen tiene los botones **Explorar archivos** y **Nueva cuenta** para empezar rápidamente.
 
 ### Acciones de fila en Administrar
 

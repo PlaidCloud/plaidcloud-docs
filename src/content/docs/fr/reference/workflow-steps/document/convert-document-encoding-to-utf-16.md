@@ -12,9 +12,10 @@ Réécrit un fichier texte en UTF-16. Utile lorsqu'un système en aval exige de 
 
 ## Entrées
 
-- **Fichier ou répertoire d'entrée** : le fichier texte, ou le dossier de fichiers texte, à convertir.
+- **Fichier ou répertoire d'entrée** : le fichier texte ou le fichier compressé, ou un dossier de fichiers de ce type, à convertir.
 - **Destination** : l'emplacement où le fichier converti est écrit.
 - **Compression** : Aucune compression, Zip, GZip ou BZip2 pour la sortie.
+- **Conserver les sous-dossiers** : pour un dossier, cochez cette case pour écrire chaque fichier d'un sous-dossier dans le sous-dossier correspondant de la destination.
 - **Boutisme (ordre des octets)** : Petit-boutiste ou Gros-boutiste.
 - **Include BOM** : cochez cette case pour commencer le fichier par une marque d'ordre des octets (`FF FE` en petit-boutiste, `FE FF` en gros-boutiste). Laissez-la décochée pour n'avoir aucune marque.
 
@@ -24,7 +25,9 @@ Réécrit un fichier texte en UTF-16. Utile lorsqu'un système en aval exige de 
 - Le texte est écrit tel quel : les lettres accentuées, les symboles et les autres caractères sont conservés exactement comme ils étaient.
 - Un fichier dont l'encodage ne peut pas être détecté fait échouer l'étape, en nommant le fichier.
 - Si le chemin d'entrée n'existe pas ou ne contient aucun fichier, l'étape se termine avec un avertissement qui nomme le chemin et ne traite rien, et le workflow se poursuit.
-- Pour un dossier, chaque fichier est converti et écrit dans la destination sous son propre nom. Les fichiers des sous-dossiers sont écrits dans la destination elle-même, et non dans des sous-dossiers correspondants.
+- Un fichier compressé (un fichier zip, gzip ou bzip2, par exemple) est d'abord décompressé, et chaque fichier qu'il contient est converti.
+- Pour un dossier, chaque fichier est converti et écrit dans la destination sous son propre nom. Cochez **Conserver les sous-dossiers** pour écrire à la place un fichier d'un sous-dossier dans le sous-dossier correspondant de la destination ; le contenu d'un fichier compressé va alors dans le sous-dossier où se trouvait le fichier compressé.
+- Si deux fichiers devaient être écrits au même endroit dans la destination, l'étape échoue avant d'écrire le second, au lieu de laisser celui-ci remplacer le premier. Le message nomme les deux fichiers, ou le fichier compressé dont ils proviennent tous deux, ainsi que l'emplacement ; si cocher **Conserver les sous-dossiers** les écrirait à des endroits distincts, il le précise.
 
 ## Exemples
 

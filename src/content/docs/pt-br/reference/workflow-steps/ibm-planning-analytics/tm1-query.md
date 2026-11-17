@@ -19,7 +19,7 @@ A etapa acessa o TM1 **diretamente da nuvem** por meio da API REST — não há 
 | Campo | Obrigatório | Observações |
 |---|---|---|
 | Conexão TM1 | Sim | A [conexão TM1](/pt-br/guides/connections/tm1/) pela qual ler. |
-| Ambiente | Não | **Ambiente do projeto** (o padrão) usa o ambiente da conexão do projeto. **Ambiente fixo** sempre usa o que você escolher. Consulte [Fixar uma etapa em um ambiente](/pt-br/guides/projects/managing-projects/#fixar-uma-etapa-em-um-ambiente). |
+| Ambiente | Não | **Ambiente do projeto** (o padrão) usa o ambiente da conexão do projeto. **Ambiente fixo** sempre usa o que você escolher. Consulte [Fixar uma etapa em um ambiente](/pt-br/guides/projects/managing-projects/#fixar-uma-etapa-em-um-único-ambiente). |
 | Banco de dados | Sim | O banco de dados (instância) do TM1 a consultar. Usa por padrão o Banco de dados padrão da conexão, se houver um definido. |
 | Cubo | Sim | O cubo do TM1 a consultar. Descoberto ao vivo a partir do banco de dados conectado, ou digitado manualmente. |
 | Tabela de destino | Sim | A tabela do projeto em que o cellset retornado é gravado. |

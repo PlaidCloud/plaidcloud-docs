@@ -9,12 +9,12 @@ The app gallery is the shelf your workspace keeps of ready-made Panel apps. Anyo
 
 ## Create an App From the Gallery
 
-1. In **My Panel Apps**, choose **New Studio App**.
+1. In **Apps**, choose **New app** > **Studio**.
 2. Under **Start from**, choose **From the gallery**.
 3. Pick an app under **Gallery app**. Its description shows under the picker.
 4. Name your app, pick its **Project** and choose **Create**.
 
-You can also choose **Gallery** in the **My Panel Apps** toolbar to browse the gallery on its own. It lists each app with its name, project and description, and **Create app from this…**. The gallery lists only apps in projects you can view.
+You can also choose **New app** > **From gallery…** to browse the gallery on its own. It lists each app with its name, project and description, and **Create app from this…**. The gallery lists only apps in projects you can view.
 
 The new app is a copy of the listed app's files. Your copy and the original are separate: changing one never changes the other.
 

@@ -1,12 +1,12 @@
 ---
 title: Utiliser une application Dash
-description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux, modifiez et supprimez les applications Plotly Dash publiées depuis l'écran Mes applications Panel de PlaidCloud.
+description: Suivez le statut de génération, ouvrez, régénérez, verrouillez, consultez les journaux, modifiez et supprimez les applications Plotly Dash publiées depuis l'écran Applications de PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/dash-apps/using.md
 ---
 
-Les applications Dash apparaissent dans le même écran **Mes applications Panel** que vos applications Panel WASM et serveur, avec **Dash** indiqué dans la colonne **Exécution** et leur propre icône pour les distinguer facilement. Tout ce qui figure sur cette page reprend [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour une application serveur, à une exception près signalée plus bas : les applications Dash n'ont pas encore de **Usage Metrics**.
+Les applications Dash apparaissent dans le même écran **Applications** que vos applications Panel WASM et serveur, avec **Dash** indiqué dans la colonne **Exécution** et leur propre icône pour les distinguer facilement. Tout ce qui figure sur cette page reprend [Utiliser une application Panel](/fr/guides/panel-apps/using/) pour une application serveur, à une exception près signalée plus bas : les applications Dash n'ont pas encore de **Usage Metrics**.
 
 ## Statut de génération
 
@@ -37,6 +37,8 @@ Cliquez à nouveau sur l'icône pour déverrouiller. L'icône indique l'état ac
 Cliquez sur l'icône **Ouvrir** au début de la ligne d'une application prête pour la lancer dans un nouvel onglet, à l'adresse `https://<your-tenant-host>/serve/<slug>/`. L'icône n'apparaît que lorsque l'application a le statut **Prêt**.
 
 Une application Dash est ramenée à zéro lorsqu'elle est inactive afin d'économiser des ressources ; la première ouverture après une période d'inactivité doit donc la redémarrer. Pendant ce temps, vous voyez un **écran de chargement PlaidCloud** au lieu d'un onglet vide, qui affiche la progression de l'application à travers les étapes **Démarrage**, **Préparation** et **Chargement de l'application**, et l'application s'affiche d'elle-même dès qu'elle est prête. Si une application ne peut pas démarrer, l'écran de chargement se transforme en un message indiquant que l'application n'a pas démarré et à quelle étape elle s'est arrêtée, accompagné d'un bouton **Réessayer** ; si cela se reproduit, modifiez l'application pour vérifier son point d'entrée et sa branche, puis republiez-la.
+
+L'écran de chargement s'affiche aussi pendant le réveil de l'application lorsque vous l'ouvrez depuis n'importe quel autre lien qui y mène, par exemple un lien copié depuis la barre d'adresse ou un lien figurant dans une alerte ou un message de résumé. Si vous êtes déconnecté et que vous l'ouvrez dans un onglet du navigateur, vous vous connectez d'abord.
 
 > **Un `dcc.Interval` (ou toute autre interrogation permanente) empêche la mise à l'échelle à zéro tant que son onglet reste ouvert.** La mise à l'échelle à zéro suppose que l'application devienne silencieuse, sans requête en cours, dès que plus personne ne l'utilise activement. Un composant qui émet des requêtes en continu selon un minuteur, tel que `dcc.Interval`, maintient l'application éveillée tant que cet onglet est ouvert, même si la personne qui le regarde s'est absentée. Si vous voulez qu'une application soit réduite entre deux visites, évitez l'interrogation permanente, ou arrêtez l'intervalle une fois la page restée inactive un certain temps.
 

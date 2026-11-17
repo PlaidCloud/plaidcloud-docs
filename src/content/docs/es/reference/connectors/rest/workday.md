@@ -30,4 +30,5 @@ Estos campos aparecen al crear o editar esta conexión. Que sean obligatorios u 
 | Oauth2 client id | Texto | — |
 | Oauth2 client secret | Texto | Credencial secreta: se almacena cifrada. |
 | Workday url | Texto | Punto de conexión de URL. |
-| Oauth2 refresh token | Texto | — |
+| Oauth2 refresh token | Texto | Opcional. Sin él, las solicitudes inician sesión con credenciales de cliente. |
+| API host | Texto | El host al que se envían las solicitudes REST, por ejemplo `api.example.com`. |

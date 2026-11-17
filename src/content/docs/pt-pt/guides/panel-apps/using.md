@@ -1,12 +1,12 @@
 ---
 title: Utilizar uma aplicação Panel
-description: Acompanhe o estado da compilação, abra, recompile, bloqueie, consulte os registos e os indicadores de utilização, edite e remova aplicações HoloViz Panel publicadas a partir do ecrã As minhas aplicações Panel do PlaidCloud.
+description: Acompanhe o estado da compilação, abra, recompile, bloqueie, consulte os registos e os indicadores de utilização, edite e remova aplicações HoloViz Panel publicadas a partir do ecrã Aplicações do PlaidCloud.
 sidebar:
   order: 3
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/panel-apps/using.md
 ---
 
-Cada aplicação publicada aparece no ecrã **As minhas aplicações Panel** com o respetivo **Tempo de execução**, **Estado**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre a aplicação; os restantes ícones da linha permitem bloqueá-la contra alterações acidentais, editá-la, removê-la e — no caso das aplicações de servidor — recompilá-la, consultar os respetivos registos e consultar os indicadores de utilização. O ícone de abertura reflete o tempo de execução da aplicação, pelo que as aplicações WASM e de servidor são fáceis de distinguir num relance.
+Cada aplicação publicada aparece no ecrã **Aplicações** com o respetivo **Tempo de execução**, **Estado**, **Slug** e carimbos de data/hora. A coluna mais à esquerda abre a aplicação; os restantes ícones da linha permitem bloqueá-la contra alterações acidentais, editá-la, removê-la e — no caso das aplicações de servidor — recompilá-la, consultar os respetivos registos e consultar os indicadores de utilização. O ícone de abertura reflete o tempo de execução da aplicação, pelo que as aplicações WASM e de servidor são fáceis de distinguir num relance.
 
 ## Estado da compilação (aplicações de servidor)
 
@@ -49,11 +49,13 @@ Clique no ícone **Abrir** no início da linha de uma aplicação pronta para a 
 
 Uma aplicação de servidor é reduzida a zero quando está inativa para poupar recursos, pelo que a primeira abertura após um período de inatividade tem de a iniciar. Enquanto isso acontece, é apresentado um **ecrã de carregamento do PlaidCloud** em vez de um separador em branco: o nome da aplicação, o respetivo progresso pelas fases **A iniciar**, **A preparar** e **A carregar a aplicação**, e o ID da área de trabalho, no tema claro ou escuro. A aplicação aparece automaticamente assim que estiver pronta (normalmente em poucos segundos, até cerca de um minuto num arranque a frio) e, a partir daí, responde normalmente até voltar a ficar inativa.
 
+O ecrã de carregamento também é apresentado enquanto a aplicação acorda, quando a abre a partir de qualquer outra ligação para a mesma, como uma ligação copiada da barra de endereço ou uma ligação numa mensagem de alerta ou de resumo. Se tiver terminado a sessão e a abrir num separador do navegador, inicia primeiro sessão.
+
 > Se uma aplicação não conseguir iniciar, o ecrã de carregamento passa a apresentar uma mensagem a indicar que a aplicação não iniciou e em que passo parou, com um botão **Tentar novamente**, em vez de ficar a carregar indefinidamente. Se isso continuar a acontecer, edite a aplicação para verificar o ponto de entrada e o ramo e volte a publicá-la, ou contacte o administrador do PlaidCloud.
 
 ### Aspeto
 
-As aplicações Panel de servidor utilizam por predefinição o design moderno **Fast** do PlaidCloud, mas a definição **Design** da aplicação pode repor o estilo **Predefinição** do Panel quando o CSS existente depende dele. O tema — claro, escuro ou um seletor claro/escuro que os visitantes podem alternar — é definido no modelo da aplicação. Consulte [Definir o tema](/pt-pt/guides/panel-apps/creating/#definir-o-tema-claro-escuro-ou-um-comutador) no guia de criação para conhecer os padrões. Se as tabelas ou o estilo personalizado da aplicação forem concebidos para um fundo claro, mantenha-a fixa no tema claro.
+As aplicações Panel de servidor utilizam por predefinição o design moderno **Fast** do PlaidCloud, mas a definição **Design** da aplicação pode repor o estilo **Predefinição** do Panel quando o CSS existente depende dele. O tema — claro, escuro ou um seletor claro/escuro que os visitantes podem alternar — é definido no modelo da aplicação. Consulte [Definir o tema](/pt-pt/guides/panel-apps/creating/#definir-o-tema-claro-escuro-ou-um-interruptor) no guia de criação para conhecer os padrões. Se as tabelas ou o estilo personalizado da aplicação forem concebidos para um fundo claro, mantenha-a fixa no tema claro.
 
 ## Consultar registos (aplicações de servidor)
 

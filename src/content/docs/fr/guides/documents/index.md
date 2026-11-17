@@ -31,17 +31,16 @@ PlaidCloud Documents — stockez, organisez, recherchez et partagez des fichiers
 
 ## L'espace Documents
 
-**Document** s'ouvre avec un rail à gauche et, à côté, la page que vous choisissez. Les membres qui ne peuvent pas ouvrir une page ne voient pas l'élément correspondant.
+**Document** s'ouvre avec un rail à gauche et, à côté, la page que vous choisissez. Le rail regroupe ses pages sous **Documents** (**Vue d'ensemble** et **Parcourir**) et **Comptes** (**Vos comptes** et **Gérer**). Les membres qui ne peuvent pas ouvrir une page ne voient pas l'élément correspondant. Les pages ont un titre en haut, souvent accompagné d'un court sous-titre, et leurs actions dans l'en-tête à côté.
 
 | Élément du rail | Contenu affiché |
 |---|---|
-| **Vue d'ensemble** | Des vignettes pour vos comptes (**Comptes**, **Partagés**, **Privés pour vous**, **Buckets gérés**, **Services externes**, et **Désactivé** lorsqu'un compte nécessite une attention), les fichiers **Épinglés**, **Comptes par service** et **Qui peut les utiliser**. Sélectionnez un fichier épinglé pour ouvrir **Parcourir** dans son dossier, avec le fichier sélectionné. |
-| **Parcourir** | L'explorateur de fichiers. Choisissez le compte dans la liste de l'en-tête de la page. Consultez [Utiliser les comptes de documents](/fr/guides/documents/using-document/). |
-| **Partagés** | Les comptes partagés avec vous. Double-cliquez sur une ligne pour la parcourir. |
-| **Mes comptes privés** | Les comptes que vous seul pouvez utiliser. Double-cliquez sur une ligne pour la parcourir. |
+| **Vue d'ensemble** | Des vignettes pour vos comptes (**Comptes**, qui ouvre **Vos comptes**, **Buckets gérés**, **Services externes** et **Désactivé**, qui porte l'étiquette **Nécessite une attention** et ouvre **Gérer** lorsqu'un compte dont vous êtes propriétaire est désactivé), les fichiers **Épinglés**, **Comptes par service** et **Qui peut les utiliser**. Sélectionnez un fichier épinglé pour ouvrir **Parcourir** dans son dossier, avec le fichier sélectionné. |
+| **Parcourir** | L'explorateur de fichiers. Il ouvre votre compte favori (celui dont vous avez épinglé le dossier racine), ou le compte par défaut de l'espace de travail, et vous pouvez choisir un autre compte dans la liste de l'en-tête de la page. Consultez [Utiliser les comptes de documents](/fr/guides/documents/using-document/). |
+| **Vos comptes** | Tous les comptes que vous pouvez utiliser, dans une seule liste. Une pastille **Partagés** ou **Privé** sur chaque ligne indique si le compte est partagé avec vous ou s'il n'est qu'à vous. Double-cliquez sur une ligne pour la parcourir. |
 | **Gérer** | Les comptes dont vous êtes propriétaire, avec **Nom**, **Service**, **Type de sécurité**, **Statut** et **Description**. Un administrateur de l'espace de travail voit ici tous les comptes de documents et peut gérer tout compte qu'il peut par ailleurs gérer ; les comptes gérés par le système sont refusés et les comptes de bucket géré ne peuvent pas être clonés. |
 
-Le rail affiche un nombre à côté de **Partagés**, **Mes comptes privés** et **Gérer**. La vue d'ensemble propose les boutons **Parcourir les fichiers** et **Nouveau compte** pour démarrer rapidement.
+Le rail affiche un nombre à côté de **Vos comptes**. La vue d'ensemble propose les boutons **Parcourir les fichiers** et **Nouveau compte** pour démarrer rapidement.
 
 ### Actions sur les lignes dans Gérer
 

@@ -19,7 +19,7 @@ Der Schritt greift **cloud-direkt** über die REST-API auf TM1 zu – es ist kei
 | Feld | Erforderlich | Hinweise |
 |---|---|---|
 | TM1-Verbindung | Ja | Die [TM1-Verbindung](/de/guides/connections/tm1/), über die gelesen wird. |
-| Umgebung | Nein | **Projektumgebung** (der Standard) verwendet die Verbindungsumgebung des Projekts. **Feste Umgebung** verwendet immer die Umgebung, die Sie auswählen. Siehe [Einen Schritt auf eine Umgebung festlegen](/de/guides/projects/managing-projects/#einen-schritt-auf-eine-umgebung-festlegen). |
+| Umgebung | Nein | **Projektumgebung** (der Standard) verwendet die Verbindungsumgebung des Projekts. **Feste Umgebung** verwendet immer die Umgebung, die Sie auswählen. Siehe [Einen Schritt auf eine Umgebung festlegen](/de/guides/projects/managing-projects/#einen-schritt-an-eine-umgebung-binden). |
 | Datenbank | Ja | Die abzufragende TM1-Datenbank (Instanz). Standardmäßig die Standarddatenbank der Verbindung, sofern eine festgelegt ist. |
 | Cube | Ja | Der abzufragende TM1-Cube. Wird live von der verbundenen Datenbank ermittelt oder von Hand eingegeben. |
 | Zieltabelle | Ja | Die Projekttabelle, in der das zurückgegebene Cellset abgelegt wird. |

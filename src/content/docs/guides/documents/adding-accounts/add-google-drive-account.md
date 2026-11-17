@@ -40,7 +40,7 @@ These steps need to be completed within the Google Cloud Console to create a ser
 ### Share Drive Content With the Service Account
 
 1. Copy the service account's email address (e.g. `plaidcloud-drive@your-project.iam.gserviceaccount.com`)
-2. In Google Drive, share the folder(s) you want PlaidCloud to access with this email address, granting **Editor** access
+2. In Google Drive, share the folder(s) you want PlaidCloud to access with this email address, granting **Editor** access. To use a Shared Drive, add the service account as a member of it instead.
 
 You should now have everything you need to add your Google Drive account to PlaidCloud Document.
 
@@ -57,3 +57,13 @@ You should now have everything you need to add your Google Drive account to Plai
 8. Select an appropriate **Security Model** for your use case. Leave it `Private` if unsure.
 9. Paste the entire contents of the JSON key file into the OAuth2 Credentials JSON field under Auth Credentials
 10. Select the Save button and your new Document account is live
+
+## Using the Account in Workflows
+
+A Google Drive account works in workflows as well as in the Document browser. Steps can list, import, export, copy, move, rename and delete files and create folders.
+
+- **Locations.** The account's top-level locations are the folders shared with the service account and the Shared Drives it is a member of. Paths are folder names, such as `Finance/Reports/2026`. If two shared folders or Shared Drives have the same name, the account refuses to open that name. Rename or unshare all but one.
+- **Google Sheets.** A Google Sheet reads as an `.xlsx` export and appears as `Name.xlsx`. Other Google Workspace files, such as Docs and Slides, can't be read.
+- **New files in My Drive.** A service account has no storage of its own, so in a folder that lives in someone's personal My Drive it can overwrite an existing file but can't create a new one. Create the file there first, or use a folder in a Shared Drive, which accepts new files and folders.
+- **Missing folders.** A folder that doesn't exist lists as empty instead of causing an error.
+- **Throttling.** PlaidCloud retries automatically when Google throttles a request or returns a temporary error.

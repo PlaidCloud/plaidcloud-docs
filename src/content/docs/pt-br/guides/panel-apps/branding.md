@@ -58,13 +58,13 @@ Um aplicativo publicado com um projeto lê as tabelas desse projeto por padrão,
 
 ### Para aplicativos existentes
 
-1. Abra **Meus aplicativos Panel**.
+1. Abra **Aplicativos**.
 2. Clique no ícone **Atribuir** na linha do aplicativo que você quer mover.
 3. Escolha o **Projeto** e clique em **Revisar**.
 4. Leia o resultado. Ele lista os membros do espaço de trabalho que hoje conseguem abrir o aplicativo, mas não são membros do projeto.
 5. Clique em **Atribuir**.
 
-Revisar não altera nada. A coluna **Projeto** em **Meus aplicativos Panel** mostra o projeto de cada aplicativo.
+Revisar não altera nada. A coluna **Projeto** em **Aplicativos** mostra o projeto de cada aplicativo.
 
 ### Acesso
 

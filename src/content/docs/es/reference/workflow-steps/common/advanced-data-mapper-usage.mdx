@@ -215,6 +215,44 @@ En StarRocks:
 
 En todos los almacenes de datos, un valor que no se puede convertir, como un texto no numérico convertido a número, pasa a ser nulo en lugar de detener el paso.
 
+### Varios valores donde se espera uno
+
+La expresión de una columna y el filtro de un paso deben dar cada uno un solo valor, igual que cada valor con el que comparan una columna o que pasan a una función. Para que coincida cualquiera de varios valores, enumérelos dentro de `.in_([...])` o `.not_in([...])`.
+
+Las comas y los corchetes forman una lista de valores, y se rechaza una expresión que da una lista donde se espera un solo valor. El formulario del paso la rechaza al guardarlo. Un paso guardado antes con una expresión así falla al ejecutarse, y un paso Table Extract o Table Union All falla antes de vaciar su tabla de destino, de modo que la tabla conserva sus datos. El mensaje muestra la expresión y qué cambiar.
+
+La causa más habitual es una coma final:
+
+```python
+# Refused — the trailing comma turns the value into a list
+table.amount,
+
+# Supported
+table.amount
+```
+
+Esto se aplica en todos los almacenes de datos. Algunos almacenes de datos ejecutaban una expresión así, aunque no siempre tal como estaba escrita, de modo que un paso que se ha estado ejecutando sin errores ahora puede fallar con este mensaje.
+
+Para comparar una columna con cualquiera de varios valores, use `.in_([...])` en lugar de `==`, y `.not_in([...])` en lugar de `!=`:
+
+```python
+# Refused
+table.region == ('EU', 'US')
+
+# Supported
+table.region.in_(['EU', 'US'])
+```
+
+Cada valor que se pasa a una función se comprueba del mismo modo, así que revise los corchetes y las comas que lo rodean:
+
+```python
+# Refused — the extra brackets pass coalesce one group of values instead of two values
+func.coalesce((table.region, 'Unknown'))
+
+# Supported
+func.coalesce(table.region, 'Unknown')
+```
+
 ### Lectura de otra tabla desde una expresión
 
 `sqlalchemy.literal_column` pasa un fragmento de SQL al almacén de datos sin modificarlo y acepta un único valor: una columna, un cálculo, un `CASE`, una llamada a función, una conversión, una función de ventana. Un `literal_column` que contenga una **subconsulta** (`(SELECT ... FROM ...)`) se rechaza, porque una subconsulta accede a una tabla que el paso nunca declaró.

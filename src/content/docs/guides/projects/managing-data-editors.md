@@ -84,9 +84,9 @@ PlaidCloud adds a configured column for each column in the source table. It keep
 To search for data editors:
 
 
-1. Use the filter box in the lower left of the control hierarchy
+1. Use **Filter** at the bottom of the list, beside the row count (press **/** or Ctrl/Cmd+F to jump to it)
 
-The search filter will search data editors’ names and labels for matches and show the results in the control hierarchy above.
+The search filter will search data editors’ names and labels for matches and show the results in the hierarchy.
 
 
 
@@ -140,6 +140,8 @@ To add a folder to an existing folder:
 
 1. Right-click on the folder
 2. Select New Folder
+
+When the selection is inside a folder, the prompt for the new folder's name also has **Create at the top level**. Tick it to put the new folder at the top level of the project instead.
 
 
 ## Mark Hierarchy for Viewing Roles

@@ -97,7 +97,7 @@ There is no Server URL, User, Password, or SSL/SSH field — PlaidCloud Git is m
 
 Now point a Dash deployment at that connection.
 
-1. Open **My Panel Apps** and click **New Dash App**.
+1. Open **Apps** and choose **New app** > **Dash app**.
 2. Under **Directory Settings**, set an **App Name** and a **URL Slug** — the slug is the app's URL and internal name, so use lowercase letters, digits, and hyphens, starting with a letter, 40 characters or fewer (for example, `hello-dash`). An optional **Memo** describes the app.
 3. Under **Git Connection and Publish Watcher**:
    - **Git Connection** — the PlaidCloud Git connection you created in step 3.
@@ -109,7 +109,7 @@ Now point a Dash deployment at that connection.
 
 ## 5. Open the App — and Read Logs if It Doesn't Start
 
-After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt`, and builds a container image from the `platform-dash-base` image. Its **Status** shows in the **My Panel Apps** list and updates automatically.
+After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt`, and builds a container image from the `platform-dash-base` image. Its **Status** shows in the **Apps** list and updates automatically.
 
 - When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up, showing a brief PlaidCloud loading screen while it does.
 - If the build fails, open the app and check its **Build** logs — a missing dependency or an import error shows up there. See [Using a Dash App](/guides/dash-apps/using/) for what each status means, how to read logs, and how to trigger a rebuild.

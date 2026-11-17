@@ -45,7 +45,7 @@ If you are a **Viewer**, the **Git** tab names up to three workspace administrat
 
 ## Git From Apps and UDFs
 
-A Panel or Dash app's window has a **Repository** section showing its repository, branch and build status, with **Edit in browser** and **Copy clone URL** for members who can push. A Git-backed UDF's toolbar has **Open**, which opens the repository at its branch in Git, and **Edit in browser** for Admins.
+A Panel or Dash app's window has a **Repository** section showing its repository, branch and build status, with **Edit in browser** and **Copy clone URL** for members who can push. Panel Studio apps, and App Runner apps on the managed PlaidCloud Git connection, are folders in the `apps` repository, so that is the repository their window shows. See [Where Your App Lives](/guides/panel-apps/studio/#where-your-app-lives). A Git-backed UDF's toolbar has **Open**, which opens the repository at its branch in Git, and **Edit in browser** for Admins.
 
 ## Granting Git Access
 

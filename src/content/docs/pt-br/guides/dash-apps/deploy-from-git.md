@@ -98,7 +98,7 @@ Não há campo de URL do servidor, usuário, senha nem SSL/SSH — o PlaidCloud 
 
 Agora aponte uma implantação do Dash para essa conexão.
 
-1. Abra **Meus aplicativos Panel** e clique em **Novo aplicativo Dash**.
+1. Abra **Aplicativos** e escolha **Novo app** > **App Dash**.
 2. Em **Configurações do diretório**, defina um **Nome do aplicativo** e um **Slug de URL** — o slug é a URL e o nome interno do aplicativo, então use letras minúsculas, dígitos e hifens, começando com uma letra, com no máximo 40 caracteres (por exemplo, `hello-dash`). Um **Memorando** opcional descreve o aplicativo.
 3. Em **Conexão Git e monitor de publicação**:
    - **Conexão Git** — a conexão do PlaidCloud Git que você criou na etapa 3.
@@ -110,7 +110,7 @@ Agora aponte uma implantação do Dash para essa conexão.
 
 ## 5. Abra o aplicativo — e leia os logs se ele não iniciar
 
-Depois de publicar, o aplicativo é **criado**: o PlaidCloud clona a branch, instala o seu `requirements.txt` e cria uma imagem de contêiner a partir da imagem `platform-dash-base`. O **Status** dele aparece na lista **Meus aplicativos Panel** e é atualizado automaticamente.
+Depois de publicar, o aplicativo é **criado**: o PlaidCloud clona a branch, instala o seu `requirements.txt` e cria uma imagem de contêiner a partir da imagem `platform-dash-base`. O **Status** dele aparece na lista **Aplicativos** e é atualizado automaticamente.
 
 - Quando o Status for **Pronto**, abra o aplicativo em `https://<your-tenant-host>/serve/<slug>/`. A primeira solicitação depois de um período de inatividade inicia o aplicativo, exibindo brevemente uma tela de carregamento do PlaidCloud.
 - Se a criação falhar, abra o aplicativo e confira os logs de build — uma dependência ausente ou um erro de importação aparece ali. Consulte [Usar um aplicativo Dash](/pt-br/guides/dash-apps/using/) para saber o que cada status significa, como ler os logs e como iniciar uma nova criação.

@@ -18,7 +18,8 @@ La mayoría de los equipos empiezan con un proyecto por área de análisis: un p
 - [Cost to Serve](/es/guides/projects/cost-to-serve/): distribuya los gastos operativos entre los clientes por actividad y vea el margen después del costo de atenderlos
 - [Operational Transfer Pricing](/es/guides/projects/operational-transfer-pricing/): compare el nivel de beneficio de cada entidad con los rangos de su política y vea el ajuste
 - [Inicio del proyecto](/es/guides/projects/project-home/): vea un proyecto de un vistazo y administre sus variables, programaciones, acceso, valores predeterminados de datos y aplicaciones
-- [Ver proyectos](/es/guides/projects/viewing-projects/): busque y abra proyectos existentes
+- [Modelo de datos y elementos de proyecto](/es/guides/projects/data-model/): describa una sola vez una columna que comparten sus tablas y vea qué tablas la comparten
+- [Ver proyectos](/es/guides/projects/viewing-projects/): busque y abra proyectos existentes, y siga lo que se ejecuta y cambia en ellos
 - [Administrar jerarquías](/es/guides/projects/managing-hierarchies/): estructura de carpetas para organizar muchos proyectos
 - [Administrar tablas y vistas](/es/guides/projects/managing-tables-and-views/): la capa de datos dentro de un proyecto
 - [Administrar editores de datos](/es/guides/projects/managing-data-editors/): quién puede modificar los datos del proyecto

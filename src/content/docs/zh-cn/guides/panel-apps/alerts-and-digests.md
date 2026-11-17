@@ -10,7 +10,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ## 打开警报和摘要
 
-1. 在 **我的 Panel 应用** 或项目的 **主页** 看板中，选择应用上的 **Open in Studio**。
+1. 在 **应用** 或项目的 **主页** 看板中，选择应用上的 **Open in Studio**。
 2. 选择 **Alerts & Digests**。
 
 该窗口包含 **警报** 选项卡和 **Digests** 选项卡。应用必须已分配到某个项目，其可用的表就是该项目中的表。

@@ -23,6 +23,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
  별칭, 속성 또는 값 로드는 아무것도 쓰기 전에 모든 행의 멤버를 확인합니다. 어떤 행이든 차원에 없는 멤버를 지정하면 로드가 실패하고 해당 이름을 보고하며, 해당 로드의 어떤 내용도 저장되지 않습니다. 구조를 먼저 로드하거나 누락된 멤버를 구조에 포함한 다음, 특성을 로드하십시오.
 
+ 행 액세스가 있는 프로젝트에서는 프로젝트 아키텍트나 워크플로 실행처럼 해당 테이블의 모든 행을 읽을 수 있는 사용자만 테이블에서 차원을 로드할 수 있습니다. [제한된 테이블에 데이터 로드](/ko/administration/access/managing-security-groups-and-assignments/#제한된-테이블에-데이터-로드)를 참조하십시오.
+
  자세한 내용은 [Dimension Load](/ko/reference/workflow-steps/dimensions/dimension-load) 워크플로 단계를 참조하십시오.
 
 

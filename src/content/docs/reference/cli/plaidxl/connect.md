@@ -59,11 +59,15 @@ Your sign-in is shared by every workbook you have open, but each workbook keeps 
 
 ## Light and Dark Theme
 
-The task pane follows your Office theme and changes when you change it.
+The task pane matches the PlaidCloud web app, with brand blue, rail-style tabs and lists, and tables, dimensions, projects and columns in bounded scrolling cards. It follows your Office theme and changes when you change it. In a narrow pane the tabs sit three across and two down; from 560 pixels wide they sit in one row.
 
 ## Keyboard and Screen Readers
 
-Rows in the project, table and dimension lists take keyboard focus and respond to **Enter** and **Space**. A selected row is announced by a screen reader, and selected and warning states carry an icon as well as a color.
+Rows in the project, table and dimension lists take keyboard focus and respond to **Enter** and **Space**. A selected row is announced by a screen reader, and selected and warning states carry an icon as well as a color, and the control with keyboard focus has a clear focus ring.
+
+## Numbers
+
+Every number the task pane shows, such as row and column counts and refresh, recalculation, Explain, Formulas, Report and planning messages, follows Excel's display language. German Excel shows 4.812.233, for example. Values written to cells don't change.
 
 ## Related
 

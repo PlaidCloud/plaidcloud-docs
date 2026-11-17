@@ -29,3 +29,7 @@ Ein Beispiel, das die Variable `current_month` verwendet, um die Dimension Mater
 ### Bestimmte Dimension verwenden
 
 Wählen Sie im Dropdown-Menü eine bestimmte Dimension aus, die gelöscht werden soll.
+
+### Dimensionen, die der Suche entsprechen
+
+Bei **Dimensionen, die der Suche entsprechen** lässt sich der Schritt nicht mit leerem **Suchtext** speichern, solange der **Suchpfad** die oberste Ebene des Projekts (`/`) ist, weil dadurch jede Dimension im Projekt gelöscht würde. Geben Sie einen passenden Text ein oder wählen Sie einen Ordner.

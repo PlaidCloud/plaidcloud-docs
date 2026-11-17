@@ -79,7 +79,7 @@ To pick the work back up, either [**Resume**](#pause-stop-and-resume) the run â€
 
 If the server running a step is lost mid-run, PlaidCloud re-runs the step automatically when it is safe to repeat: a step that replaces its output ends up with the same result as a single clean run, so you have nothing to check. The step's log shows a warning where the second attempt starts: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
-A step that can't be repeated safely isn't re-run. It fails once with an **interrupted** message, because running it a second time could duplicate what the first attempt already wrote. Steps that write outputs with `{date}` in the name or path count as not safe to repeat, since a re-run could land on a different date. To recover, check the step's target for what the first attempt wrote, clean it up if needed, then [re-run the step](/guides/workflows/running-one-step-in-a-workflow/) or **Resume** the run.
+A step that can't be repeated safely isn't re-run. It fails once with an **interrupted** message, because running it a second time could duplicate what the first attempt already wrote. Steps that write outputs with `{date}` or `{date_iso}` in the name or path count as not safe to repeat, since a re-run could land on a different date. To recover, check the step's target for what the first attempt wrote, clean it up if needed, then [re-run the step](/guides/workflows/running-one-step-in-a-workflow/) or **Resume** the run.
 
 ### Steps That Never Start
 

@@ -11,6 +11,8 @@ Triggers another workflow as part of the current workflow's execution. Use this 
 
 The called workflow runs independently — it can be in the same project or a different one. By default the calling workflow continues without waiting; set the **Wait until processing completes** option if the next steps in the caller depend on the called workflow finishing first.
 
+The called workflow can use the values the caller's run was started with, such as the answers given in the App Runner, for any variable that neither it nor its project defines. Its own workflow and project variables come first.
+
 
 
 ## Workflow to Run

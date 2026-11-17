@@ -33,6 +33,7 @@ Escreva a **Mensagem**. As variáveis do projeto e as variáveis do fluxo de tra
 | `{project_name}` | O nome do projeto |
 | `{run_url}` | Uma ligação para a execução no PlaidCloud |
 | `{project}`, `{model}`, `{cloud}`, `{date}` | As variáveis existentes |
+| `{date_iso}` | A hora UTC atual em ISO 8601, como `2026-11-12T22:49:56+00:00`. `{date}` é o formato extenso, como `Wednesday, 11 November 2026 10:30PM UTC +0`. |
 
 O contador sob a mensagem mostra aproximadamente quantos carateres e segmentos a mensagem de texto ocupa, incluindo o prefixo `PlaidCloud [workspace]:` e a ligação da execução. Uma mensagem de texto é truncada para além de 3 segmentos. As ligações de encurtadores de ligações públicos são rejeitadas.
 
@@ -47,17 +48,17 @@ O contador sob a mensagem mostra aproximadamente quantos carateres e segmentos a
 
 Cada membro recebe no máximo 20 mensagens de texto por dia, uma área de trabalho envia no máximo 500 mensagens de texto e correios eletrónicos alternativos por dia, e um passo envia mensagens de texto a no máximo 50 membros de cada vez.
 
-## Enviar Teste para Mim
+## Enviar teste para mim
 
 **Enviar teste para mim** envia uma mensagem de texto de teste para o seu próprio número e mostra o resultado junto ao botão. Se não tiver aderido, a janela **Alertas por mensagem de texto** abre-se para que o possa fazer.
 
-## O que os Destinatários Veem
+## O que os destinatários veem
 
 Todas as mensagens de texto provêm do número de alertas. Responder **STOP** pára todas as mensagens de texto do PlaidCloud para esse número, e **HELP** devolve as informações de contacto. Depois de STOP, um membro envia **START** por mensagem de texto para o número de alertas para retomar e, em seguida, volta a ativar os alertas por mensagem de texto em **Alertas por mensagem de texto**. O formulário do passo mostra **Optou por sair - Envie START por SMS para o número de alertas** junto a esse membro até que o faça.
 
 Os administradores da área de trabalho podem ver o estado dos alertas por mensagem de texto de cada membro, com o número mascarado, no cartão **Perfil** da página do membro. Os membros aderem e saem por si próprios; um administrador não o pode fazer por eles.
 
-## Passos que Tinham um Número Escrito
+## Passos que tinham um número escrito
 
 Uma versão anterior deste passo aceitava um fornecedor móvel e um número de telefone escrito. Um passo ainda guardado dessa forma não faz falhar o fluxo de trabalho e não envia qualquer mensagem de texto para o número escrito.
 

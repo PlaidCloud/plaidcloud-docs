@@ -30,4 +30,5 @@ Te pola są widoczne podczas tworzenia lub edycji tego połączenia. To, które 
 | Oauth2 client id | Tekst | — |
 | Oauth2 client secret | Tekst | Poświadczenie tajne — przechowywane w postaci zaszyfrowanej. |
 | Workday url | Tekst | Adres URL punktu końcowego. |
-| Oauth2 refresh token | Tekst | — |
+| Oauth2 refresh token | Tekst | Opcjonalny. Bez niego żądania logują się za pomocą poświadczeń klienta. |
+| API host | Tekst | Host, do którego wysyłane są żądania REST, na przykład `api.example.com`. |

@@ -26,7 +26,7 @@ Cada execução tem um modo de lançamento ERP. Para escolher um no PlaidCloud, 
 
 Um projeto tem também o seu próprio limite de modo de lançamento, definido através da API do projeto ou do assistente por qualquer membro com acesso de escrita a um projeto desbloqueado. O limite só torna uma execução mais segura, nunca mais permissiva: o modo efetivo de uma execução é o mais restritivo entre o modo escolhido e o limite do projeto, pelo que um projeto limitado a Simulate permanece simulado mesmo que a execução seja iniciada em Live.
 
-Um [evento agendado](/pt-pt/administration/scheduled-events/event-scheduler/#modo-de-lançamento-no-erp) mantém o seu próprio modo de lançamento, pelo que um agendamento definido como Simulate é executado em modo simulado sempre que é acionado.
+Um [evento agendado](/pt-pt/administration/scheduled-events/event-scheduler/#modo-de-lançamento-erp) mantém o seu próprio modo de lançamento, pelo que um agendamento definido como Simulate é executado em modo simulado sempre que é acionado.
 
 O modo estende-se a tudo o que a execução toca. Um subfluxo de trabalho, uma macro e um passo **Run Model**, **Conditional Run Model** ou **Loop Model** herdam todos o modo da execução principal, tal como uma execução que [retome](#pausar-parar-e-retomar) após uma paragem — uma execução simulada não pode lançar a sério em lado nenhum do seu interior.
 
@@ -80,7 +80,7 @@ Para retomar o trabalho, [**Retome**](#pausar-parar-e-retomar) a execução — 
 
 Se o servidor que executa um passo for perdido a meio da execução, o PlaidCloud executa o passo novamente de forma automática quando é seguro repeti-lo: um passo que substitui o seu resultado acaba com o mesmo resultado que uma única execução limpa, pelo que não tem nada a verificar. O registo do passo mostra um aviso no ponto onde começa a segunda tentativa: "Restarted: the server running this step stopped before it finished (e.g. out of memory or a restart); running it again from the start."
 
-Um passo que não pode ser repetido em segurança não é executado novamente. Falha uma vez com uma mensagem de **interrompido**, porque executá-lo uma segunda vez poderia duplicar o que a primeira tentativa já escreveu. Os passos que escrevem resultados com `{date}` no nome ou no caminho contam como não seguros para repetição, uma vez que uma nova execução poderia cair numa data diferente. Para recuperar, verifique no destino do passo o que a primeira tentativa escreveu, limpe-o se necessário e depois [volte a executar o passo](/pt-pt/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
+Um passo que não pode ser repetido em segurança não é executado novamente. Falha uma vez com uma mensagem de **interrompido**, porque executá-lo uma segunda vez poderia duplicar o que a primeira tentativa já escreveu. Os passos que escrevem resultados com `{date}` ou `{date_iso}` no nome ou no caminho contam como não seguros para repetição, uma vez que uma nova execução poderia cair numa data diferente. Para recuperar, verifique no destino do passo o que a primeira tentativa escreveu, limpe-o se necessário e depois [volte a executar o passo](/pt-pt/guides/workflows/running-one-step-in-a-workflow/) ou **Retome** a execução.
 
 ### Passos que nunca começam
 
