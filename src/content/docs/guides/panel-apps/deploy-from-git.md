@@ -95,7 +95,7 @@ Every field in this dialog is described in [Creating a Panel App](/guides/panel-
 
 After you publish, the app **builds**: PlaidCloud clones the branch, installs your `requirements.txt` (the repository root's and your app folder's, if present), and builds a container image. Its **Status** shows in the **Apps** list and updates automatically.
 
-- When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up (~15 seconds).
+- When Status is **Ready**, open the app at `https://<your-tenant-host>/serve/<slug>/`. The first request after it has been idle spins it up, showing a brief PlaidCloud loading screen while it does.
 - If the build fails, open the app and check its **Build** logs — a missing dependency or an import error shows up there. See [Using a Panel App](/guides/panel-apps/using/) for what each status means, how to read logs, and how to trigger a rebuild.
 
 From here on, **every push to the connection's branch rebuilds and redeploys the app automatically** — edit `app.py`, `git push`, and your change goes live. (Unless the app is **locked** — see [Locking an App](/guides/panel-apps/using/#locking-an-app) — in which case pushes are skipped until you unlock it.)

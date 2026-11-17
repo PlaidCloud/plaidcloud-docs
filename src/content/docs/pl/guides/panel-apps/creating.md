@@ -201,7 +201,7 @@ Repozytorium musi być dostępne przez **połączenie git** w PlaidCloud. Jeśli
 
 Po opublikowaniu aplikacja jest **budowana** — jej **Stan** jest wyświetlany na liście i aktualizuje się automatycznie. Zobacz [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/), aby dowiedzieć się, co oznaczają stany, jak otworzyć aplikację, gdy jest gotowa, i jak wywołać przebudowę bez cofania publikacji.
 
-> Adres URL aplikacji działa dopiero wtedy, gdy jej stan kompilacji to **Gotowe**, a pierwsze żądanie po okresie bezczynności ją uruchamia (~15 sekund).
+> Adres URL aplikacji działa dopiero wtedy, gdy jej stan kompilacji to **Gotowe**, a pierwsze żądanie po okresie bezczynności ją uruchamia, wyświetlając przy tym krótki ekran ładowania PlaidCloud.
 
 ### Zaawansowane: odtwórz PlaidCloud lokalnie
 

@@ -49,6 +49,8 @@ Kliknij ikonę **Otwórz** na początku wiersza gotowej aplikacji, aby uruchomi�
 
 Bezczynna aplikacja serwerowa jest skalowana do zera, aby oszczędzać zasoby, więc pierwsze otwarcie po okresie bezczynności wymaga jej uruchomienia. W tym czasie zamiast pustej karty widać **ekran ładowania PlaidCloud**: nazwę aplikacji, jej postęp przez etapy **Uruchamianie**, **Przygotowywanie** i **Ładowanie aplikacji** oraz identyfikator obszaru roboczego — w jasnym lub ciemnym motywie, zgodnie z Twoim ustawieniem. Aplikacja pojawia się samoczynnie, gdy tylko będzie gotowa (zwykle po kilku sekundach, a przy zimnym starcie po maksymalnie około minucie), a następnie odpowiada normalnie, dopóki ponownie nie przejdzie w stan bezczynności.
 
+Ekran ładowania pojawia się także podczas budzenia aplikacji, gdy otwierasz ją z dowolnego innego prowadzącego do niej linku, na przykład skopiowanego z paska adresu lub z alertu albo wiadomości z podsumowaniem. Jeśli jesteś wylogowany i otwierasz ją na karcie przeglądarki, najpierw się logujesz.
+
 > Jeśli aplikacji nie można uruchomić, ekran ładowania zmienia się w komunikat, że aplikacja się nie uruchomiła, wraz z informacją, na którym etapie się zatrzymała, oraz przyciskiem **Spróbuj ponownie** — zamiast kręcić się bez końca. Jeśli sytuacja się powtarza, edytuj aplikację, sprawdź jej punkt wejścia i gałąź, a następnie opublikuj ją ponownie lub skontaktuj się z administratorem PlaidCloud.
 
 ### Wygląd

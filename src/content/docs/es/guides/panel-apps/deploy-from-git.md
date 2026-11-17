@@ -96,7 +96,7 @@ Todos los campos de este cuadro de diálogo se describen en [Creación de una ap
 
 Después de publicar, la aplicación se **compila**: PlaidCloud clona la rama, instala su `requirements.txt` (el de la raíz del repositorio y el de la carpeta de su aplicación, si existen) y crea una imagen de contenedor. Su **Estado** aparece en la lista **Aplicaciones** y se actualiza automáticamente.
 
-- Cuando el estado es **Lista**, abra la aplicación en `https://<your-tenant-host>/serve/<slug>/`. La primera solicitud después de un período de inactividad la reactiva (unos 15 segundos).
+- Cuando el estado es **Lista**, abra la aplicación en `https://<your-tenant-host>/serve/<slug>/`. La primera solicitud tras un período de inactividad la pone en marcha y muestra brevemente una pantalla de carga de PlaidCloud mientras lo hace.
 - Si la compilación falla, abra la aplicación y revise sus registros de **Build**: una dependencia que falta o un error de importación aparecen allí. Consulte [Uso de una aplicación de Panel](/es/guides/panel-apps/using/) para saber qué significa cada estado, cómo leer los registros y cómo activar una recompilación.
 
 A partir de aquí, **cada envío a la rama de la conexión vuelve a compilar y a implementar la aplicación automáticamente**: edite `app.py`, ejecute `git push` y su cambio se publica en vivo. (A menos que la aplicación esté **bloqueada**, consulte [Bloqueo de una aplicación](/es/guides/panel-apps/using/#bloquear-una-aplicación), en cuyo caso los envíos se omiten hasta que la desbloquee.)

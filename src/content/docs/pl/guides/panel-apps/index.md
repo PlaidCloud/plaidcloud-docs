@@ -14,7 +14,7 @@ Zacznij od [Panel Studio](/pl/guides/panel-apps/studio/): wybierz **Nowa aplikac
 - **Serwer** — aplikacja budowana z repozytorium git i uruchamiana po stronie serwera. Przy publikacji PlaidCloud buduje Twoje repozytorium w kontener, który pozostaje w stanie bezczynności z zerem replik, budzi się przy pierwszym żądaniu do swojego adresu URL, obsługuje ruch (w tym aktualizacje na żywo) i skaluje się z powrotem do zera, gdy jest bezczynny. To właściwy wybór dla aplikacji, które wymagają środowiska Python, obliczeń po stronie serwera lub bibliotek, które nie mogą działać w przeglądarce.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="Dwa środowiska uruchomieniowe aplikacji Panel. Aplikacja WASM to gotowy plik HTML udostępniany bezpośrednio przeglądarce bez serwera. Aplikacja serwerowa jest budowana z repozytorium git w kontener, który pozostaje bezczynny z zerem replik, budzi się przy pierwszym żądaniu w około piętnaście sekund, obsługuje ruch i skaluje się z powrotem do zera, gdy jest bezczynny." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="Dwa środowiska uruchomieniowe aplikacji Panel. Aplikacja WASM to gotowy plik HTML udostępniany bezpośrednio przeglądarce bez serwera. Aplikacja serwerowa jest budowana z repozytorium git w kontener, który pozostaje bezczynny z zerem replik, budzi się przy pierwszym żądaniu, obsługuje ruch i skaluje się z powrotem do zera, gdy jest bezczynny." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Zacznij od [Panel Studio](/pl/guides/panel-apps/studio/): wybierz **Nowa aplikac
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">1. żądanie</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">obsługa ruchu</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">budzi się ~15 s</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">budzi się</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">skaluje się z powrotem do 0, gdy jest bezczynny</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Dwa środowiska uruchomieniowe: aplikacja <strong>WASM</strong> to gotowy plik HTML udostępniany bezpośrednio przeglądarce; aplikacja <strong>serwerowa</strong> jest budowana z git, pozostaje bezczynna na zerze, budzi się przy pierwszym żądaniu (~15 s), obsługuje ruch i skaluje się z powrotem do zera.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Dwa środowiska uruchomieniowe: aplikacja <strong>WASM</strong> to gotowy plik HTML udostępniany bezpośrednio przeglądarce; aplikacja <strong>serwerowa</strong> jest budowana z git, pozostaje bezczynna na zerze, budzi się przy pierwszym żądaniu, obsługuje ruch i skaluje się z powrotem do zera.</figcaption>
 </figure>
 
 ## Wybór środowiska uruchomieniowego
@@ -52,7 +52,7 @@ Zacznij od [Panel Studio](/pl/guides/panel-apps/studio/): wybierz **Nowa aplikac
 | Źródło | Opublikowany plik HTML | Repozytorium git (połączenie, gałąź, punkt wejścia) |
 | Działa | W przeglądarce | Po stronie serwera, skalowanie do zera |
 | Najlepsze dla | Lekkich, samodzielnych pulpitów | Aplikacji wymagających obliczeń serwerowych lub pełnych bibliotek Python |
-| Zimny start | Brak | Pierwsze żądanie uruchamia aplikację (~15 sekund) |
+| Zimny start | Brak | Pierwsze żądanie uruchamia aplikację za ekranem ładowania |
 
 ## Następne kroki
 

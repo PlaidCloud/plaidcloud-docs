@@ -14,7 +14,7 @@ Commencez dans [Panel Studio](/fr/guides/panel-apps/studio/) : choisissez **Nou
 - **Serveur** : une application construite à partir d'un dépôt git et exécutée côté serveur. À la publication, PlaidCloud construit votre dépôt dans un conteneur qui reste en veille à zéro réplique, se réveille à la première requête vers son URL, sert l'application (mises à jour en direct comprises) et revient à zéro lorsqu'il est inactif. C'est le bon choix pour les applications qui ont besoin d'un environnement d'exécution Python, de calcul côté serveur ou de bibliothèques qui ne peuvent pas s'exécuter dans le navigateur.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="Les deux environnements d'exécution des applications Panel. Une application WASM est un fichier HTML préconstruit servi directement au navigateur, sans serveur. Une application serveur est construite à partir d'un dépôt git dans un conteneur qui reste en veille à zéro réplique, se réveille à la première requête en une quinzaine de secondes, sert l'application et revient à zéro lorsqu'il est inactif." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="Les deux environnements d'exécution des applications Panel. Une application WASM est un fichier HTML préconstruit servi directement au navigateur, sans serveur. Une application serveur est construite à partir d'un dépôt git dans un conteneur qui reste en veille à zéro réplique, se réveille à la première requête, sert l'application et revient à zéro lorsqu'il est inactif." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Commencez dans [Panel Studio](/fr/guides/panel-apps/studio/) : choisissez **Nou
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">1re req.</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">serving</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">réveil ~15 s</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">réveil</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">retour à 0 en cas d'inactivité</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Deux environnements d'exécution : une application <strong>WASM</strong> est un fichier HTML préconstruit servi directement au navigateur ; une application <strong>Serveur</strong> est construite à partir de git, reste en veille à zéro, se réveille à la première requête (~15 s), sert l'application et revient à zéro.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Deux environnements d'exécution : une application <strong>WASM</strong> est un fichier HTML préconstruit servi directement au navigateur ; une application <strong>Serveur</strong> est construite à partir de git, reste en veille à zéro, se réveille à la première requête, sert l'application et revient à zéro.</figcaption>
 </figure>
 
 ## Choisir un environnement d'exécution
@@ -52,7 +52,7 @@ Commencez dans [Panel Studio](/fr/guides/panel-apps/studio/) : choisissez **Nou
 | Source | Un fichier HTML publié | Un dépôt git (connexion, branche, point d'entrée) |
 | S'exécute | Dans le navigateur | Côté serveur, avec réduction à zéro |
 | Idéal pour | Des tableaux de bord légers et autonomes | Des applications qui nécessitent du calcul côté serveur ou toutes les bibliothèques Python |
-| Démarrage à froid | Aucun | La première requête relance l'application (~15 secondes) |
+| Démarrage à froid | Aucun | La première requête relance l'application derrière un écran de chargement |
 
 ## Étapes suivantes
 

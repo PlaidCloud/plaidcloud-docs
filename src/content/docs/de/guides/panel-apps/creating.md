@@ -201,7 +201,7 @@ Ihr Repository muss über eine **Git-Verbindung** in PlaidCloud erreichbar sein.
 
 Nach der Veröffentlichung wird die App **erstellt** – ihr **Status** wird in der Liste angezeigt und aktualisiert sich automatisch. Unter [Eine Panel-App verwenden](/de/guides/panel-apps/using/) erfahren Sie, was die Status bedeuten, wie Sie die App öffnen, sobald sie bereit ist, und wie Sie eine Neuerstellung auslösen, ohne die Veröffentlichung aufzuheben.
 
-> Die URL der App funktioniert erst, wenn ihr Build-Status **Bereit** ist, und die erste Anfrage nach einer Leerlaufzeit fährt sie hoch (~15 Sekunden).
+> Die URL der App funktioniert erst, wenn ihr Build-Status **Bereit** ist, und die erste Anfrage nach einer Leerlaufzeit startet sie und zeigt dabei kurz einen PlaidCloud-Ladebildschirm.
 
 ### Fortgeschritten: PlaidCloud lokal nachbilden
 

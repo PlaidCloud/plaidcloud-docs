@@ -96,7 +96,7 @@ Jedes Feld in diesem Dialogfeld ist unter [Eine Panel-App erstellen](/de/guides/
 
 Nach der Veröffentlichung wird die App **erstellt**: PlaidCloud klont den Branch, installiert Ihre `requirements.txt` (die im Stammverzeichnis des Repositorys und die in Ihrem App-Ordner, falls vorhanden) und erstellt ein Container-Image. Ihr **Status** wird in der Liste **Apps** angezeigt und aktualisiert sich automatisch.
 
-- Wenn der Status **Bereit** ist, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufzeit fährt sie hoch (~15 Sekunden).
+- Wenn der Status **Bereit** ist, öffnen Sie die App unter `https://<your-tenant-host>/serve/<slug>/`. Die erste Anfrage nach einer Leerlaufzeit startet die App und zeigt dabei kurz einen PlaidCloud-Ladebildschirm.
 - Wenn der Build fehlschlägt, öffnen Sie die App und prüfen Sie ihre Protokolle unter **Erstellen** – eine fehlende Abhängigkeit oder ein Importfehler erscheint dort. Unter [Eine Panel-App verwenden](/de/guides/panel-apps/using/) erfahren Sie, was jeder Status bedeutet, wie Sie Protokolle lesen und wie Sie eine Neuerstellung auslösen.
 
 Von nun an **erstellt jeder Push in den Branch der Verbindung die App automatisch neu und stellt sie erneut bereit** – bearbeiten Sie `app.py`, führen Sie `git push` aus, und Ihre Änderung geht live. (Es sei denn, die App ist **gesperrt** – siehe [Eine App sperren](/de/guides/panel-apps/using/#eine-app-sperren) –, dann werden Pushes übersprungen, bis Sie sie entsperren.)

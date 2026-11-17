@@ -201,7 +201,7 @@ O seu repositório tem de estar acessível através de uma **ligação git** no 
 
 Depois de publicar, a aplicação é **compilada** — o seu **Estado** é mostrado na lista e atualiza-se automaticamente. Consulte [Utilizar uma aplicação Panel](/pt-pt/guides/panel-apps/using/) para saber o que significam os estados, como abrir a aplicação quando estiver pronta e como desencadear uma recompilação sem anular a publicação.
 
-> O URL da aplicação só funciona quando o estado da compilação for **Pronta**, e o primeiro pedido depois de ter estado inativa arranca-a (~15 segundos).
+> O URL da aplicação só funciona quando o estado da compilação for **Pronta**, e o primeiro pedido depois de ter estado inativa arranca-a e apresenta, entretanto, um breve ecrã de carregamento do PlaidCloud.
 
 ### Avançado: reproduzir o PlaidCloud localmente
 

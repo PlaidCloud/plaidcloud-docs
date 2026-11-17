@@ -13,7 +13,7 @@ Start in [Panel Studio](/guides/panel-apps/studio/): choose **New app** > **Stud
 - **Server** — an app built from a git repository and run server-side. On publish, PlaidCloud builds your repository into a container that idles at zero replicas, wakes on the first request to its URL, serves (including live updates), and scales back to zero when idle. This is the right choice for apps that need a Python runtime, server-side compute, or libraries that can't run in the browser.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="The two Panel App runtimes. A WASM app is a prebuilt HTML file served straight to the browser with no server. A Server app is built from a git repository into a container that idles at zero replicas, wakes on the first request in about fifteen seconds, serves, and scales back to zero when idle." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="The two Panel App runtimes. A WASM app is a prebuilt HTML file served straight to the browser with no server. A Server app is built from a git repository into a container that idles at zero replicas, wakes on the first request, serves, and scales back to zero when idle." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -37,11 +37,11 @@ Start in [Panel Studio](/guides/panel-apps/studio/): choose **New app** > **Stud
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">1st req</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">serving</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wakes ~15s</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">wakes</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">scales back to 0 when idle</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Two runtimes: a <strong>WASM</strong> app is a prebuilt HTML file served straight to the browser; a <strong>Server</strong> app is built from git, idles at zero, wakes on the first request (~15s), serves, and scales back to zero.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">Two runtimes: a <strong>WASM</strong> app is a prebuilt HTML file served straight to the browser; a <strong>Server</strong> app is built from git, idles at zero, wakes on the first request, serves, and scales back to zero.</figcaption>
 </figure>
 
 ## Choosing a Runtime
@@ -51,7 +51,7 @@ Start in [Panel Studio](/guides/panel-apps/studio/): choose **New app** > **Stud
 | Source | A published HTML file | A git repository (connection, branch, entry point) |
 | Runs | In the browser | Server-side, scale-to-zero |
 | Best for | Lightweight, self-contained dashboards | Apps needing server compute or full Python libraries |
-| Cold start | None | First request spins the app up (~15 seconds) |
+| Cold start | None | First request spins the app up behind a loading screen |
 
 ## Next Steps
 

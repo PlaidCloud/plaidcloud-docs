@@ -96,7 +96,7 @@ Każde pole w tym oknie jest opisane w [Tworzenie aplikacji Panel](/pl/guides/pa
 
 Po opublikowaniu aplikacja jest **budowana**: PlaidCloud klonuje gałąź, instaluje Twój `requirements.txt` (z katalogu głównego repozytorium i z folderu aplikacji, jeśli istnieją) i buduje obraz kontenera. Jej **Stan** jest wyświetlany na liście **Aplikacje** i aktualizuje się automatycznie.
 
-- Gdy Stan to **Gotowe**, otwórz aplikację pod adresem `https://<your-tenant-host>/serve/<slug>/`. Pierwsze żądanie po okresie bezczynności ją uruchamia (~15 sekund).
+- Gdy Stan to **Gotowe**, otwórz aplikację pod adresem `https://<your-tenant-host>/serve/<slug>/`. Pierwsze żądanie po okresie bezczynności uruchamia aplikację, wyświetlając przy tym krótki ekran ładowania PlaidCloud.
 - Jeśli kompilacja się nie powiedzie, otwórz aplikację i sprawdź jej dzienniki **Zbuduj** — brakująca zależność lub błąd importu pojawi się tam. Zobacz [Korzystanie z aplikacji Panel](/pl/guides/panel-apps/using/), aby dowiedzieć się, co oznacza każdy stan, jak czytać dzienniki i jak wywołać przebudowę.
 
 Od tej chwili **każde wypchnięcie do gałęzi połączenia automatycznie przebudowuje i ponownie wdraża aplikację** — edytuj `app.py`, wykonaj `git push`, a Twoja zmiana wchodzi na żywo. (Chyba że aplikacja jest **zablokowana** — zobacz [Blokowanie aplikacji](/pl/guides/panel-apps/using/#blokowanie-aplikacji) — w takim przypadku wypchnięcia są pomijane do czasu odblokowania.)

@@ -201,7 +201,7 @@ Su repositorio debe ser accesible mediante una **conexión de git** en PlaidClou
 
 Después de publicar, la aplicación se **compila**: su **Estado** aparece en la lista y se actualiza automáticamente. Consulte [Uso de una aplicación de Panel](/es/guides/panel-apps/using/) para saber qué significan los estados, cómo abrir la aplicación cuando esté lista y cómo activar una recompilación sin anular la publicación.
 
-> La URL de la aplicación solo funciona cuando su estado de compilación es **Lista**, y la primera solicitud después de un período de inactividad la reactiva (unos 15 segundos).
+> La URL de la aplicación solo funciona cuando su estado de compilación es **Lista**, y la primera solicitud después de un período de inactividad la reactiva y muestra brevemente una pantalla de carga de PlaidCloud mientras lo hace.
 
 ### Avanzado: reproducir PlaidCloud en local
 

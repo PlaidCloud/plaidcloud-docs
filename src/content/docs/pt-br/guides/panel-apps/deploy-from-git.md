@@ -96,7 +96,7 @@ Todos os campos desta caixa de diálogo estão descritos em [Criar um aplicativo
 
 Depois de publicar, o aplicativo é **compilado**: o PlaidCloud clona o branch, instala seu `requirements.txt` (o da raiz do repositório e o da pasta do aplicativo, se existirem) e compila uma imagem de contêiner. O **Status** dele aparece na lista **Aplicativos** e é atualizado automaticamente.
 
-- Quando o Status for **Pronto**, abra o aplicativo em `https://<your-tenant-host>/serve/<slug>/`. A primeira solicitação depois de um período de inatividade ativa o aplicativo (~15 segundos).
+- Quando o Status for **Pronto**, abra o aplicativo em `https://<your-tenant-host>/serve/<slug>/`. A primeira solicitação depois de um período de inatividade inicia o aplicativo, exibindo brevemente uma tela de carregamento do PlaidCloud.
 - Se a compilação falhar, abra o aplicativo e verifique os logs de **Compilação** — uma dependência ausente ou um erro de importação aparece ali. Consulte [Usar um aplicativo Panel](/pt-br/guides/panel-apps/using/) para saber o que significa cada status, como ler os logs e como acionar uma recompilação.
 
 A partir daí, **cada push no branch da conexão recompila e reimplanta o aplicativo automaticamente** — edite o `app.py`, execute `git push` e sua alteração entra no ar. (A menos que o aplicativo esteja **bloqueado** — consulte [Bloquear um aplicativo](/pt-br/guides/panel-apps/using/#como-bloquear-um-aplicativo) —, caso em que os pushes são ignorados até você desbloqueá-lo.)

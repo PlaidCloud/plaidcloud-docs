@@ -49,6 +49,8 @@ Haga clic en el icono **Abrir** al principio de la fila de una aplicación lista
 
 Una aplicación de servidor escala a cero cuando está inactiva para ahorrar recursos, por lo que la primera vez que se abre tras un período de inactividad tiene que arrancar. Mientras tanto, verá una **pantalla de carga de PlaidCloud** en lugar de una pestaña en blanco: el nombre de su aplicación, su progreso por las fases **Iniciando**, **Preparando** y **Cargando aplicación**, y el ID de su espacio de trabajo, con su tema claro u oscuro. La aplicación aparece sola en cuanto está lista (normalmente en unos segundos y hasta aproximadamente un minuto en un arranque en frío) y, a partir de ahí, responde con normalidad hasta que vuelve a quedar inactiva.
 
+La pantalla de carga también aparece mientras la aplicación se reactiva cuando abre la aplicación desde cualquier otro enlace a ella, como un enlace copiado de la barra de direcciones o uno incluido en una alerta o en un mensaje de resumen. Si ha cerrado la sesión y la abre en una pestaña del navegador, primero debe iniciar sesión.
+
 > Si una aplicación no puede iniciarse, la pantalla de carga se convierte en un mensaje que indica que la aplicación no se inició y en qué fase se detuvo, con un botón **Intentar de nuevo**, en lugar de quedarse cargando indefinidamente. Si esto se repite, edite la aplicación para comprobar su punto de entrada y su rama y vuelva a publicarla, o póngase en contacto con su administrador de PlaidCloud.
 
 ### Apariencia

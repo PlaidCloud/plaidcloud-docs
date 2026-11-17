@@ -14,7 +14,7 @@ Panel 앱을 사용하면 매개변수화된 입력, 라이브 차트, 포함된
 - **서버** — git 리포지토리에서 빌드하여 서버 측에서 실행되는 앱입니다. 게시하면 PlaidCloud가 리포지토리를 컨테이너로 빌드하며, 이 컨테이너는 복제본 0개로 유휴 상태에 있다가 URL에 대한 첫 요청에서 깨어나고, 서비스(라이브 업데이트 포함)를 제공하며, 유휴 상태가 되면 다시 0으로 축소됩니다. Python 런타임, 서버 측 계산 또는 브라우저에서 실행할 수 없는 라이브러리가 필요한 앱에 적합한 선택입니다.
 
 <figure style="margin:1.5rem 0;text-align:center;">
-<svg viewBox="0 0 680 250" role="img" aria-label="두 가지 Panel 앱 런타임. WASM 앱은 서버 없이 브라우저로 직접 제공되는 미리 빌드된 HTML 파일입니다. 서버 앱은 git 리포지토리에서 컨테이너로 빌드되며, 이 컨테이너는 복제본 0개로 유휴 상태에 있다가 첫 요청에서 약 15초 후에 깨어나 서비스를 제공하고 유휴 상태가 되면 다시 0으로 축소됩니다." style="width:100%;max-width:680px;height:auto;">
+<svg viewBox="0 0 680 250" role="img" aria-label="두 가지 Panel 앱 런타임. WASM 앱은 서버 없이 브라우저로 직접 제공되는 미리 빌드된 HTML 파일입니다. 서버 앱은 git 리포지토리에서 컨테이너로 빌드되며, 이 컨테이너는 복제본 0개로 유휴 상태에 있다가 첫 요청에서 깨어나 서비스를 제공하고 유휴 상태가 되면 다시 0으로 축소됩니다." style="width:100%;max-width:680px;height:auto;">
   <defs><marker id="pa-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker></defs>
   <text x="14" y="40" font-size="12" font-weight="700" fill="var(--sl-color-accent)">WASM</text>
   <rect x="70" y="24" width="150" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
@@ -38,11 +38,11 @@ Panel 앱을 사용하면 매개변수화된 입력, 라이브 차트, 포함된
   <text x="457" y="140" text-anchor="middle" font-size="9" fill="var(--sl-color-gray-3)">첫 요청</text>
   <rect x="476" y="128" width="120" height="42" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
   <text x="536" y="147" text-anchor="middle" font-size="11" fill="var(--sl-color-text)">서비스 중</text>
-  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">약 15초 후 시작</text>
+  <text x="536" y="162" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">시작</text>
   <path d="M536 170 C536 212 380 212 380 174" stroke="var(--sl-color-gray-3)" stroke-width="1.3" fill="none" stroke-dasharray="5 4" marker-end="url(#pa-arrow)" />
   <text x="458" y="206" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">유휴 상태가 되면 0으로 축소</text>
 </svg>
-<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">두 가지 런타임: <strong>WASM</strong> 앱은 브라우저로 직접 제공되는 미리 빌드된 HTML 파일이고, <strong>서버</strong> 앱은 git에서 빌드되어 0으로 유휴 상태에 있다가 첫 요청(약 15초)에서 깨어나 서비스를 제공하고 다시 0으로 축소됩니다.</figcaption>
+<figcaption style="font-size:0.85em;color:var(--sl-color-gray-3);margin-top:0.5rem;">두 가지 런타임: <strong>WASM</strong> 앱은 브라우저로 직접 제공되는 미리 빌드된 HTML 파일이고, <strong>서버</strong> 앱은 git에서 빌드되어 0으로 유휴 상태에 있다가 첫 요청에서 깨어나 서비스를 제공하고 다시 0으로 축소됩니다.</figcaption>
 </figure>
 
 ## 런타임 선택
@@ -52,7 +52,7 @@ Panel 앱을 사용하면 매개변수화된 입력, 라이브 차트, 포함된
 | 소스 | 게시된 HTML 파일 | git 리포지토리(연결, 브랜치, 진입점) |
 | 실행 위치 | 브라우저 | 서버 측, 0으로 축소 |
 | 적합한 용도 | 가볍고 독립적인 대시보드 | 서버 계산이나 전체 Python 라이브러리가 필요한 앱 |
-| 콜드 스타트 | 없음 | 첫 요청에서 앱이 시작됨(약 15초) |
+| 콜드 스타트 | 없음 | 첫 요청 시 앱이 로딩 화면 뒤에서 시작됨 |
 
 ## 다음 단계
 
