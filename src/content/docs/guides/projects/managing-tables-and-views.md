@@ -37,19 +37,42 @@ The **By Workflow** folder at the end of the **Tables** tab groups tables under 
 
 ### By Column
 
-Type a column name in the column search box on the **Tables** tab and press Enter, or select the magnifier beside it, to show only the tables that have a column with that name. The search reads column names, not the data, so it is fast. Select **Contains** to match part of a column name instead of the whole name. Clear the box to show every table again. A long search can return in pages and the status line says when it is still searching or may be incomplete.
+Select **Find column** in the toolbar of the **Tables** tab to find the tables that have a column with a given name. The search reads column names, not the data, so it is fast, and it finds only tables that have been built. The window opens on the last search you ran in that project since you opened the project, if you ran one.
 
-Select **Column Tree** to search from a window of its own. Each table that has the column opens to two lists:
+Type at least two characters and the results update as you type, or press Enter to search at once. Once the results for what you typed are showing, Enter in the search box selects the highlighted table, as it does on a row. Choose how the name is matched:
 
-* **Fed by** — the tables that supply the column
-* **Feeds** — the tables the column goes on to feed
+* **Exact** — the whole column name, ignoring case
+* **Contains** — part of the column name, ignoring case. This is the default.
+* **Fuzzy** — names that are close, ignoring case, spaces, underscores and other separators, and forgiving small typos. The closest matches come first.
 
-An AI assistant connected over MCP finds the same tables with `table_find(column=...)`, matching the whole name or part of it.
+The window remembers the match you chose last in that browser. While the search box is empty, it lists your last five searches in the project in that browser; select one to run it again. A search counts as run, and joins the list, when you press Enter, select it from the list or act on its results.
+
+Each table that matches is one row, with its name, its path and the first three matching columns. The line above the results counts the tables found so far while the search runs. When nothing matches with **Exact** or **Contains**, select **Try Fuzzy?** to search again with **Fuzzy**. If the search fails or stops early, select **Retry**. When the columns of some tables couldn't be read, the results say they may be incomplete.
+
+When the results include more than one column name, chips above the list name up to 12 of them, the most common first, each with the number of tables that have it. Select a chip to list only the tables with that column, and select it again to list them all.
+
+Expand a row to see:
+
+* **Matched columns** — each matching column, with its type when that is text, integer, number, date, timestamp or boolean. A column shown in the warning color has a different type in other tables in the results; hover over it to see the types.
+* **Fed by** — the tables read by the steps that write this table, each with the step's name
+* **Feeds** — the tables written by the steps that read this table, each with the step's name
+
+Only steps in the same project are listed.
+
+To act on the results:
+
+* Double-click a row, or press Enter on it, to close the window and select that table on the **Tables** tab. If a column search shown in the tree or the **All | Published** switch hides the table, it is cleared and a message tells you so. Press Ctrl+Enter, or Cmd+Enter on a Mac, to open the table in the Table Explorer instead. The Up and Down arrow keys in the search box move between rows.
+* Select **Show in tree** to narrow the tree and the flattened list to the tables in the results, or to the tables of the chip you selected, and open the folders in the tree that hold them. A chip above the list names the search and counts its tables. Select the chip to open the search again, or the × on it to show every table. Refreshing the **Tables** tab runs the search again.
+* Select **Copy** to copy the listed tables, one per line, with each table's name, path, matching columns and their types separated by tabs.
+
+**Show in tree** and **Copy** are available once the search finishes with at least one table.
+
+An AI assistant connected over MCP finds the same tables with `table_find(column=...)`. It matches the whole name, part of it, its start or its end, or close names with `column_match='fuzzy'`, and returns the types of the matching columns and, for a fuzzy match, how close the best column is.
 
 
 ### Search Values
 
-To find which tables hold a value, choose **Search values in data… (slow)** from the **Actions** menu on the **Tables** tab, or right-click a table and choose it to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values. Double-click a table, or press Enter on it, to open it in the Table Explorer. A column opens the table filtered to the rows that match. If the column search box holds text, it fills in the value to find.
+To find which tables hold a value, choose **Search values in data… (slow)** from the **Actions** menu on the **Tables** tab, or right-click a table and choose it to look in that table only. Enter the value, choose **Contains** to match part of a value, and select **Search**. Each table that holds the value is listed with the columns it appears in and a few of the matching values. Double-click a table, or press Enter on it, to open it in the Table Explorer. A column opens the table filtered to the rows that match.
 
 Before you search, know that:
 

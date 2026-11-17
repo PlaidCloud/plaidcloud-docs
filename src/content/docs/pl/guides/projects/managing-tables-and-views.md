@@ -38,19 +38,42 @@ Folder **Według przepływu pracy** na końcu karty **Tabele** grupuje tabele po
 
 ### Według kolumny
 
-Wpisz nazwę kolumny w polu wyszukiwania kolumn na karcie **Tabele** i naciśnij Enter lub wybierz lupę obok pola, aby pokazać tylko tabele, które mają kolumnę o tej nazwie. Wyszukiwanie obejmuje nazwy kolumn, a nie dane, więc jest szybkie. Wybierz **Zawiera**, aby dopasować część nazwy kolumny zamiast całej nazwy. Wyczyść pole, aby ponownie pokazać wszystkie tabele. Długie wyszukiwanie może zwracać wyniki stronami, a wiersz stanu informuje, kiedy wyszukiwanie jeszcze trwa lub może być niekompletne.
+Wybierz **Znajdź kolumnę** na pasku narzędzi karty **Tabele**, aby znaleźć tabele, które mają kolumnę o podanej nazwie. Wyszukiwanie obejmuje nazwy kolumn, a nie dane, więc jest szybkie, i znajduje tylko tabele, które zostały zbudowane. Okno otwiera się na ostatnim wyszukiwaniu uruchomionym w tym projekcie od jego otwarcia, jeśli jakieś uruchomiono.
 
-Wybierz **Drzewo kolumn**, aby wyszukiwać z osobnego okna. Każda tabela, która ma daną kolumnę, otwiera się z dwiema listami:
+Wpisz co najmniej dwa znaki, a wyniki będą się aktualizować w trakcie pisania, albo naciśnij Enter, aby wyszukać od razu. Gdy wyświetlane są wyniki dla wpisanego tekstu, Enter w polu wyszukiwania zaznacza podświetloną tabelę, tak jak w wierszu. Wybierz sposób dopasowania nazwy:
 
-* **Zasilana przez** — tabele, które dostarczają kolumnę
-* **Zasila** — tabele, które kolumna dalej zasila
+* **Dokładnie** — cała nazwa kolumny, bez rozróżniania wielkości liter
+* **Zawiera** — część nazwy kolumny, bez rozróżniania wielkości liter. To ustawienie domyślne.
+* **Przybliżone** — nazwy zbliżone, bez rozróżniania wielkości liter, spacji, podkreślników i innych separatorów, z tolerancją drobnych literówek. Najlepsze dopasowania są na początku.
 
-Asystent AI połączony przez MCP znajduje te same tabele za pomocą `table_find(column=...)`, dopasowując całą nazwę lub jej część.
+Okno zapamiętuje ostatnio wybrany sposób dopasowania w tej przeglądarce. Gdy pole wyszukiwania jest puste, wyświetla Twoje pięć ostatnich wyszukiwań w projekcie w tej przeglądarce; wybierz jedno, aby uruchomić je ponownie. Wyszukiwanie jest uznawane za uruchomione i trafia na listę, gdy naciśniesz Enter, wybierzesz je z listy lub wykonasz akcję na jego wynikach.
+
+Każda pasująca tabela to jeden wiersz z jej nazwą, ścieżką i pierwszymi trzema pasującymi kolumnami. Wiersz nad wynikami podaje liczbę dotychczas znalezionych tabel, gdy wyszukiwanie trwa. Gdy nic nie pasuje przy **Dokładnie** lub **Zawiera**, wybierz **Spróbować trybu Przybliżone?**, aby wyszukać ponownie w trybie **Przybliżone**. Jeśli wyszukiwanie się nie powiedzie lub zatrzyma się wcześniej, wybierz **Ponów**. Gdy nie udało się odczytać kolumn niektórych tabel, wyniki informują, że mogą być niekompletne.
+
+Gdy wyniki zawierają więcej niż jedną nazwę kolumny, znaczniki nad listą wymieniają do 12 z nich, najczęstsze jako pierwsze, każdą wraz z liczbą tabel, które ją mają. Wybierz znacznik, aby wyświetlić tylko tabele z tą kolumną, i wybierz go ponownie, aby wyświetlić wszystkie.
+
+Rozwiń wiersz, aby zobaczyć:
+
+* **Pasujące kolumny** — każda pasująca kolumna wraz z jej typem, gdy jest to tekst, liczba całkowita, liczba, data, znacznik czasu lub wartość logiczna. Kolumna wyświetlona w kolorze ostrzeżenia ma inny typ w innych tabelach wyników; najedź na nią, aby zobaczyć typy.
+* **Zasilana przez** — tabele odczytywane przez kroki, które zapisują tę tabelę, każda z nazwą kroku
+* **Zasila** — tabele zapisywane przez kroki, które odczytują tę tabelę, każda z nazwą kroku
+
+Wymienione są tylko kroki z tego samego projektu.
+
+Aby działać na wynikach:
+
+* Kliknij wiersz dwukrotnie lub naciśnij na nim Enter, aby zamknąć okno i zaznaczyć tę tabelę na karcie **Tabele**. Jeśli wyszukiwanie kolumn widoczne w drzewie lub przełącznik **Wszystkie | Opublikowane** ukrywa tabelę, zostaje ono wyczyszczone, a komunikat o tym informuje. Naciśnij Ctrl+Enter, a na komputerze Mac Cmd+Enter, aby zamiast tego otworzyć tabelę w Eksploratorze tabel. Klawisze strzałek w górę i w dół w polu wyszukiwania przechodzą między wierszami.
+* Wybierz **Pokaż w drzewie**, aby zawęzić drzewo i spłaszczoną listę do tabel z wyników lub do tabel wybranego znacznika oraz otworzyć foldery drzewa, które je zawierają. Znacznik nad listą nazywa wyszukiwanie i podaje liczbę jego tabel. Wybierz znacznik, aby ponownie otworzyć wyszukiwanie, lub × na nim, aby pokazać wszystkie tabele. Odświeżenie karty **Tabele** uruchamia wyszukiwanie ponownie.
+* Wybierz **Kopiuj**, aby skopiować wyświetlone tabele, po jednej w wierszu, z nazwą, ścieżką, pasującymi kolumnami i ich typami każdej tabeli rozdzielonymi tabulatorami.
+
+**Pokaż w drzewie** i **Kopiuj** są dostępne, gdy wyszukiwanie zakończy się z co najmniej jedną tabelą.
+
+Asystent AI połączony przez MCP znajduje te same tabele za pomocą `table_find(column=...)`. Dopasowuje całą nazwę, jej część, początek lub koniec albo zbliżone nazwy za pomocą `column_match='fuzzy'` i zwraca typy pasujących kolumn oraz, przy dopasowaniu przybliżonym, jak bliska jest najlepsza kolumna.
 
 
 ### Szukaj wartości
 
-Aby sprawdzić, które tabele zawierają wartość, wybierz **Szukaj wartości w danych… (wolne)** z menu **Akcje** na karcie **Tabele** albo kliknij tabelę prawym przyciskiem myszy i wybierz tę opcję, aby przeszukać tylko tę tabelę. Wpisz wartość, wybierz **Zawiera**, aby dopasować część wartości, i kliknij **Szukaj**. Każda tabela zawierająca wartość jest wyświetlana wraz z kolumnami, w których występuje, i kilkoma pasującymi wartościami. Kliknij tabelę dwukrotnie lub naciśnij na niej Enter, aby otworzyć ją w **Eksplorator tabel**. Kolumna otwiera tabelę przefiltrowaną do pasujących wierszy. Jeśli pole wyszukiwania kolumn zawiera tekst, wypełnia ono wartość do wyszukania.
+Aby sprawdzić, które tabele zawierają wartość, wybierz **Szukaj wartości w danych… (wolne)** z menu **Akcje** na karcie **Tabele** albo kliknij tabelę prawym przyciskiem myszy i wybierz tę opcję, aby przeszukać tylko tę tabelę. Wpisz wartość, wybierz **Zawiera**, aby dopasować część wartości, i kliknij **Szukaj**. Każda tabela zawierająca wartość jest wyświetlana wraz z kolumnami, w których występuje, i kilkoma pasującymi wartościami. Kliknij tabelę dwukrotnie lub naciśnij na niej Enter, aby otworzyć ją w **Eksplorator tabel**. Kolumna otwiera tabelę przefiltrowaną do pasujących wierszy.
 
 Przed wyszukiwaniem warto wiedzieć, że:
 

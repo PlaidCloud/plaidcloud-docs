@@ -28,7 +28,7 @@ PlaidCloud organisiert Tabellen über ein pfadbasiertes System, ähnlich wie Sie
 ## Tabellen finden
 
 
-Verwenden Sie **Filter** am unteren Rand der Liste neben der Zeilenanzahl, um Tabellennamen und Beschriftungen zu durchsuchen. Drücken Sie **/** oder Strg/Cmd+F, um direkt dorthin zu springen. Derselbe Filter gilt für die Baumstruktur und für die flache Liste. Der Schalter **Alle | Published** neben dem Filter beschränkt die Liste auf veröffentlichte Tabellen; er steht standardmäßig auf **Alle** und gilt sowohl in der Baumstruktur als auch in der flachen Liste.
+Verwenden Sie **Filter** am unteren Rand der Liste neben der Zeilenanzahl, um Tabellennamen und Beschriftungen zu durchsuchen. Drücken Sie **/** oder Strg/Cmd+F, um direkt dorthin zu springen. Derselbe Filter gilt für die Baumstruktur und für die flache Liste. Der Schalter **Alle | Veröffentlicht** neben dem Filter beschränkt die Liste auf veröffentlichte Tabellen; er steht standardmäßig auf **Alle** und gilt sowohl in der Baumstruktur als auch in der flachen Liste.
 
 
 ### Nach Workflow
@@ -38,19 +38,42 @@ Der Ordner **Nach Workflow** am Ende der Registerkarte **Tabellen** gruppiert Ta
 
 ### Nach Spalte
 
-Geben Sie auf der Registerkarte **Tabellen** einen Spaltennamen in das Suchfeld für Spalten ein und drücken Sie die Eingabetaste oder wählen Sie die Lupe daneben, um nur die Tabellen anzuzeigen, die eine Spalte mit diesem Namen haben. Die Suche liest Spaltennamen, nicht die Daten, und ist daher schnell. Wählen Sie **Enthält**, um einen Teil eines Spaltennamens statt des ganzen Namens abzugleichen. Leeren Sie das Feld, um wieder alle Tabellen anzuzeigen. Eine lange Suche kann seitenweise Ergebnisse liefern, und die Statuszeile zeigt an, wenn die Suche noch läuft oder unvollständig sein könnte.
+Wählen Sie in der Symbolleiste der Registerkarte **Tabellen** die Option **Spalte suchen**, um die Tabellen zu finden, die eine Spalte mit einem bestimmten Namen haben. Die Suche liest Spaltennamen, nicht die Daten, und ist daher schnell. Sie findet nur Tabellen, die bereits erstellt wurden. Das Fenster öffnet sich mit der letzten Suche, die Sie in diesem Projekt durchgeführt haben, seit Sie das Projekt geöffnet haben, falls Sie eine durchgeführt haben.
 
-Wählen Sie **Spaltenbaum**, um in einem eigenen Fenster zu suchen. Jede Tabelle mit der Spalte öffnet sich zu zwei Listen:
+Geben Sie mindestens zwei Zeichen ein, dann werden die Ergebnisse während der Eingabe aktualisiert, oder drücken Sie die Eingabetaste, um sofort zu suchen. Sobald die Ergebnisse für das Eingegebene angezeigt werden, wählt die Eingabetaste im Suchfeld die markierte Tabelle aus, wie in einer Zeile. Legen Sie fest, wie der Name abgeglichen wird:
 
-* **Gespeist von** – die Tabellen, die die Spalte liefern
-* **Speist** – die Tabellen, die die Spalte anschließend speist
+* **Exakt** – der vollständige Spaltenname, ohne Beachtung der Groß- und Kleinschreibung
+* **Enthält** – ein Teil des Spaltennamens, ohne Beachtung der Groß- und Kleinschreibung. Dies ist die Standardeinstellung.
+* **Unscharf** – ähnliche Namen, ohne Beachtung der Groß- und Kleinschreibung, von Leerzeichen, Unterstrichen und anderen Trennzeichen, und tolerant gegenüber kleinen Tippfehlern. Die ähnlichsten Treffer stehen zuerst.
 
-Ein über MCP verbundener KI-Assistent findet dieselben Tabellen mit `table_find(column=...)`, wobei der gesamte Name oder ein Teil davon abgeglichen wird.
+Das Fenster merkt sich die zuletzt gewählte Abgleichsart in diesem Browser. Solange das Suchfeld leer ist, listet es Ihre letzten fünf Suchen im Projekt in diesem Browser auf; wählen Sie eine aus, um sie erneut auszuführen. Eine Suche gilt als ausgeführt und wird in die Liste aufgenommen, wenn Sie die Eingabetaste drücken, sie aus der Liste auswählen oder mit ihren Ergebnissen arbeiten.
+
+Jede passende Tabelle ist eine Zeile mit ihrem Namen, ihrem Pfad und den ersten drei passenden Spalten. Die Zeile über den Ergebnissen zählt die bisher gefundenen Tabellen, während die Suche läuft. Wenn mit **Exakt** oder **Enthält** nichts gefunden wird, wählen Sie **Unscharf versuchen?**, um erneut mit **Unscharf** zu suchen. Wenn die Suche fehlschlägt oder vorzeitig endet, wählen Sie **Wiederholen**. Konnten die Spalten einiger Tabellen nicht gelesen werden, weisen die Ergebnisse darauf hin, dass sie unvollständig sein könnten.
+
+Enthalten die Ergebnisse mehr als einen Spaltennamen, nennen Chips über der Liste bis zu 12 davon, die häufigsten zuerst, jeweils mit der Anzahl der Tabellen, die ihn haben. Wählen Sie einen Chip, um nur die Tabellen mit dieser Spalte aufzulisten, und wählen Sie ihn erneut, um wieder alle aufzulisten.
+
+Erweitern Sie eine Zeile, um Folgendes zu sehen:
+
+* **Passende Spalten** – jede passende Spalte, mit ihrem Typ, wenn dieser Text, Ganzzahl, Zahl, Datum, Zeitstempel oder Boolean ist. Eine Spalte in der Warnfarbe hat in anderen Tabellen der Ergebnisse einen anderen Typ; zeigen Sie mit der Maus darauf, um die Typen zu sehen.
+* **Gespeist von** – die Tabellen, die von den Schritten gelesen werden, die diese Tabelle schreiben, jeweils mit dem Namen des Schritts
+* **Speist** – die Tabellen, die von den Schritten geschrieben werden, die diese Tabelle lesen, jeweils mit dem Namen des Schritts
+
+Es werden nur Schritte im selben Projekt aufgeführt.
+
+So arbeiten Sie mit den Ergebnissen:
+
+* Doppelklicken Sie auf eine Zeile oder drücken Sie die Eingabetaste, um das Fenster zu schließen und die Tabelle auf der Registerkarte **Tabellen** auszuwählen. Wird die Tabelle durch eine im Baum angezeigte Spaltensuche oder durch den Schalter **Alle | Veröffentlicht** ausgeblendet, wird diese aufgehoben, und eine Meldung weist darauf hin. Drücken Sie Strg+Eingabe, auf dem Mac Cmd+Eingabe, um die Tabelle stattdessen im Tabellen-Explorer zu öffnen. Mit den Pfeiltasten Nach oben und Nach unten im Suchfeld wechseln Sie zwischen den Zeilen.
+* Wählen Sie **In Baum anzeigen**, um den Baum und die abgeflachte Liste auf die Tabellen der Ergebnisse oder des gewählten Chips einzugrenzen und die Ordner im Baum zu öffnen, die sie enthalten. Ein Chip über der Liste nennt die Suche und zählt ihre Tabellen. Wählen Sie den Chip, um die Suche erneut zu öffnen, oder das × darauf, um wieder alle Tabellen anzuzeigen. Beim Aktualisieren der Registerkarte **Tabellen** wird die Suche erneut ausgeführt.
+* Wählen Sie **Kopieren**, um die aufgelisteten Tabellen zu kopieren, eine pro Zeile, mit Name, Pfad, passenden Spalten und deren Typen der jeweiligen Tabelle, durch Tabulatoren getrennt.
+
+**In Baum anzeigen** und **Kopieren** sind verfügbar, sobald die Suche mit mindestens einer Tabelle abgeschlossen ist.
+
+Ein über MCP verbundener KI-Assistent findet dieselben Tabellen mit `table_find(column=...)`. Er gleicht den gesamten Namen, einen Teil davon, den Anfang oder das Ende ab, oder mit `column_match='fuzzy'` ähnliche Namen, und gibt die Typen der passenden Spalten zurück und bei einem unscharfen Abgleich, wie ähnlich die beste Spalte ist.
 
 
 ### Werte suchen
 
-Um herauszufinden, welche Tabellen einen Wert enthalten, wählen Sie im Menü **Aktionen** auf der Registerkarte **Tabellen** die Option **Werte in Daten suchen… (langsam)** oder klicken Sie mit der rechten Maustaste auf eine Tabelle und wählen Sie sie dort, um nur in dieser Tabelle zu suchen. Geben Sie den Wert ein, wählen Sie **Enthält**, um einen Teil eines Werts abzugleichen, und wählen Sie **Suchen**. Jede Tabelle, die den Wert enthält, wird mit den Spalten, in denen er vorkommt, und einigen der passenden Werte aufgelistet. Doppelklicken Sie auf eine Tabelle oder drücken Sie die Eingabetaste, um sie im Tabellen-Explorer zu öffnen. Eine Spalte öffnet die Tabelle gefiltert nach den passenden Zeilen. Enthält das Suchfeld für Spalten Text, wird damit der zu suchende Wert vorausgefüllt.
+Um herauszufinden, welche Tabellen einen Wert enthalten, wählen Sie im Menü **Aktionen** auf der Registerkarte **Tabellen** die Option **Werte in Daten suchen… (langsam)** oder klicken Sie mit der rechten Maustaste auf eine Tabelle und wählen Sie sie dort, um nur in dieser Tabelle zu suchen. Geben Sie den Wert ein, wählen Sie **Enthält**, um einen Teil eines Werts abzugleichen, und wählen Sie **Suchen**. Jede Tabelle, die den Wert enthält, wird mit den Spalten, in denen er vorkommt, und einigen der passenden Werte aufgelistet. Doppelklicken Sie auf eine Tabelle oder drücken Sie die Eingabetaste, um sie im Tabellen-Explorer zu öffnen. Eine Spalte öffnet die Tabelle gefiltert nach den passenden Zeilen.
 
 Beachten Sie vor der Suche Folgendes:
 
