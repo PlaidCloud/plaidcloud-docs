@@ -88,6 +88,10 @@ Objaw: narzędzie zwróciło `{"_fmt": "cols", "cols": [...], "rows": [[...]]}` 
 
 To zamierzony kształt dla dużego wyniku, w którym wszystkie wiersze mają te same pola: nazwy pól są wysyłane raz, a nie powtarzane w każdym wierszu. Wiersz *i* to `dict(zip(cols, rows[i]))`. Agenci są o tym informowani przy połączeniu i obsługują to bez dodatkowych poleceń. Jeśli czytasz te odpowiedzi we własnym kodzie, obsłuż oba kształty, ponieważ małe i nieregularne wyniki nadal przychodzą jako zwykłe tablice obiektów. Nic innego w kopercie się nie zmienia i żadna wartość nie jest modyfikowana. Zobacz [Pierwsze kroki z agentami do kodowania z AI](/pl/integrations/ai-coding-agents/getting-started/#wyniki-zorientowane-kolumnowo).
 
+## Zapytanie jest odrzucane jako zbyt długie
+
+PlaidCloud odrzuca SQL, który sprawdza przed uruchomieniem, gdy ma on więcej niż 65 536 znaków, i nie uruchamia z niego nic. Komunikat podaje długość zapytania oraz o ile przekracza ono limit, wliczając komentarze, białe znaki i wszystkie uzupełnione parametry. Najpierw usuń komentarze i zbędne białe znaki. Jeśli zapytanie nadal jest zbyt długie, podziel je na mniejsze zapytania tylko wtedy, gdy ich wyniki łączą się w tę samą odpowiedź; w przeciwnym razie poproś agenta, aby Ci o tym powiedział, zamiast zmieniać to, o co pyta zapytanie.
+
 ## Uzyskiwanie pomocy
 
 W przypadku problemów po stronie serwera — błędów uwierzytelniania, narzędzi zwracających błędy bez oczywistej przyczyny, brakujących narzędzi — najpierw sprawdź kopertę `error` w odpowiedzi. Każda awaria zawiera `code`, `retryable`, `message`, a często także `hint`. Jeśli wskazówka nie wystarcza, skontaktuj się z administratorem PlaidCloud lub otwórz zgłoszenie do pomocy technicznej, podając identyfikator żądania (zwracany w nagłówku odpowiedzi `X-Request-Id`).

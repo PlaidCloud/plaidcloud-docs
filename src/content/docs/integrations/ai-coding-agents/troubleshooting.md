@@ -87,6 +87,10 @@ Symptom: a tool returned `{"_fmt": "cols", "cols": [...], "rows": [[...]]}` inst
 
 That is the intended shape for a large result whose rows all carry the same fields — the field names are sent once rather than repeated on every row. Row *i* is `dict(zip(cols, rows[i]))`. Agents are told about this when they connect and handle it without prompting; if you are reading these responses from your own code, decode both shapes, because small and ragged results still arrive as ordinary arrays of objects. Nothing else about the envelope changes and no value is altered. See [Getting Started with AI Coding Agents](/integrations/ai-coding-agents/getting-started/#column-oriented-results).
 
+## A Query Is Refused as Too Long
+
+PlaidCloud refuses SQL it checks before running when it is longer than 65,536 characters, and runs none of it. The message gives the query's length and how far over the limit it is, counting comments, whitespace and any filled-in parameters. Remove comments and unneeded whitespace first. If the query is still too long, split it into smaller queries only where their results combine to the same answer; otherwise, ask your agent to tell you rather than change what the query asks.
+
 ## Getting Help
 
 For server-side issues — auth failures, tools returning errors with no obvious cause, missing tools — check the response's `error` envelope first. Every failure includes `code`, `retryable`, `message`, and often a `hint`. If the hint isn't enough, contact your PlaidCloud administrator or open a support ticket with the request ID (returned in the `X-Request-Id` response header).

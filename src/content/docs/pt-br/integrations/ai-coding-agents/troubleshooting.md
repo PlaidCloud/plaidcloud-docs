@@ -88,6 +88,10 @@ Sintoma: uma ferramenta retornou `{"_fmt": "cols", "cols": [...], "rows": [[...]
 
 Esse é o formato pretendido para um resultado grande cujas linhas têm todas os mesmos campos: os nomes dos campos são enviados uma única vez, em vez de repetidos em cada linha. A linha *i* é `dict(zip(cols, rows[i]))`. Os agentes são informados sobre isso quando se conectam e lidam com o formato sem precisar de instruções; se você estiver lendo essas respostas a partir do seu próprio código, decodifique os dois formatos, pois resultados pequenos e irregulares ainda chegam como arrays comuns de objetos. Nada mais no envelope muda e nenhum valor é alterado. Consulte [Introdução aos agentes de codificação com IA](/pt-br/integrations/ai-coding-agents/getting-started/#resultados-orientados-a-colunas).
 
+## Uma consulta é recusada por ser longa demais
+
+O PlaidCloud recusa o SQL que verifica antes de executar quando ele tem mais de 65.536 caracteres, e não executa nada dele. A mensagem informa o tamanho da consulta e quanto ela excede o limite, contando comentários, espaços em branco e quaisquer parâmetros preenchidos. Remova primeiro os comentários e os espaços em branco desnecessários. Se a consulta continuar longa demais, divida-a em consultas menores somente quando os resultados delas se combinarem no mesmo resultado; caso contrário, peça ao agente que avise você em vez de alterar o que a consulta pede.
+
 ## Como obter ajuda
 
 Para problemas do lado do servidor, como falhas de autenticação, ferramentas que retornam erros sem causa óbvia ou ferramentas ausentes, verifique primeiro o envelope `error` da resposta. Toda falha inclui `code`, `retryable`, `message` e, muitas vezes, um `hint`. Se a dica não for suficiente, entre em contato com o administrador do PlaidCloud ou abra um chamado de suporte com o ID da requisição (retornado no cabeçalho de resposta `X-Request-Id`).
