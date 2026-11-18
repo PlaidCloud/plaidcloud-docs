@@ -11,8 +11,10 @@ Posts journal entries into Sage Intacct over a Sage Intacct connection, using In
 
 The step reads two tables you've already shaped upstream — a **header table** and a **lines table** — validates each journal entry, and posts it. It handles the batch case: many journal entries in a single run, each posted and tracked independently.
 
-<Aside type="danger" title="No duplicate protection — check the result table before re-running">
-This step does **not** track which entries have already posted. Re-running it re-posts **every** entry in the header table, including ones that posted successfully last time — there is no dedupe. Before you re-run, open the result table from the last run and confirm which entries actually need posting. If a prior run left any entries with a `status` of `unknown`, see [Result Table](#result-table) below before you do anything else.
+Every entry goes through PlaidCloud's posting ledger, the same record the other ERP posting steps use, so a live post appears in the [Posting Register](/guides/connections/posting-register/) and in [ERP Post History](/guides/connections/erp-post-history/). A live post also needs the project to be [authorized to post](/guides/workflows/run-a-workflow/#authorize-the-project-to-post) to the connection.
+
+<Aside type="note" title="A re-run never posts an entry twice">
+Each entry is claimed in the ledger under its `entry_key` and posting month before it is sent, and Intacct's reference number for it is built from the same key. Re-running the step doesn't post an entry that already posted — its row comes back `posted` again. An entry whose content changed since it posted is refused rather than posted a second time, and an entry that was reversed isn't posted again either: post a correction under a new `entry_key`. An entry whose posting date moves to another month is a new entry.
 </Aside>
 
 ## Data-Shape Contract
@@ -42,7 +44,7 @@ The name of the column — present in both the header and lines source columns �
 
 Two separate column mappings, one per tab — for each, map a source column onto the journal-entry field it feeds:
 
-- **Header columns** — the journal-entry-level fields: journal, posting date, description, reference number, an optional `base_location` (the Intacct entity/location the entry posts under — omit it for a single-entity company), the correlation column you named as the **Entry Key**, and similar header-level detail.
+- **Header columns** — the journal-entry-level fields: journal, posting date, description, reference number, an optional `base_location` (the Intacct entity/location the entry posts under — omit it for a single-entity company), the correlation column you named as the **Entry Key**, and similar header-level detail. A `reference_number` you map is kept for display only: the reference number sent to Intacct is always built from the entry key and posting month.
 - **Lines columns** — the per-posting fields: GL account, debit/credit amount, line description, the same **Entry Key** column, and dimensions (location, department, employee, class, and similar).
 
 You don't have to rename your source columns — map whatever they're called onto the target field names above.
@@ -53,7 +55,7 @@ The target table this step writes one row to per journal entry, recording the ou
 
 ### Preview
 
-A checkbox, **checked by default**. With Preview on, the step validates every journal entry and writes the result table exactly as a real run would, but it does **not** authenticate to Intacct and does **not** post anything — there's no network call to Intacct at all in Preview mode. Rows land in the result table with `status = preview`, showing you which entries would post cleanly and which would fail validation, before anything reaches your GL.
+A checkbox, **checked by default**. With Preview on, the step validates every journal entry and writes the result table exactly as a real run would, but it does **not** authenticate to Intacct and does **not** post anything — there's no network call to Intacct at all in Preview mode. Rows land in the result table with `status = preview`, showing you which entries would post cleanly and which would fail validation, before anything reaches your GL. What each entry would post is also recorded as simulated, in ERP Post History and the Posting Register; a simulated entry never blocks the later real post.
 
 Like a real run, a Preview **replaces** the result table with this run's rows — it is the step's per-run output, not a running log — so a Preview after a real run overwrites that run's `posted` and `unknown` rows. Open and copy the last run's result table before re-running (Preview or real) if you still need it.
 
@@ -72,7 +74,7 @@ Every run — Preview or real — writes one row per journal entry to the result
 | `entry_key` | The journal entry this row reports on. |
 | `status` | One of `preview`, `posted`, `failed`, `unknown` — see below. |
 | `intacct_key` | The Intacct-assigned key for the posted entry, when available. |
-| `http_status` | The HTTP status Intacct returned for the post attempt, when available. |
+| `http_status` | Left empty; `status` and `error_message` carry the outcome. |
 | `error_message` | A short, sanitized description of what went wrong, when `status` is `failed` or `unknown`. |
 | `line_count` | Number of lines matched to this entry. |
 | `posting_date` | The posting date sent to (or, in Preview, that would be sent to) Intacct. |
@@ -80,19 +82,20 @@ Every run — Preview or real — writes one row per journal entry to the result
 ### Status Values
 
 - **`preview`** — Preview mode; the entry validated and was not posted.
-- **`posted`** — the entry posted to Intacct successfully.
-- **`failed`** — Intacct definitively rejected the entry (or it failed validation before any post was attempted). Safe to fix the underlying issue and re-post just that entry.
-- **`unknown`** — the outcome couldn't be determined — a timeout, a dropped connection, or a server error with no definitive response from Intacct.
+- **`posted`** — the entry posted to Intacct successfully, now or in an earlier run.
+- **`failed`** — the entry failed validation before anything was sent, or Intacct rejected it. Fix a validation failure and re-run. An entry Intacct rejected isn't sent again under the same `entry_key` and posting month, so post the corrected entry under a new `entry_key`.
+- **`unknown`** — the outcome couldn't be confirmed — a timeout, a dropped connection, or a server error with no definitive response from Intacct.
 
-<Aside type="danger" title="unknown does not mean it failed">
-An `unknown` entry may already have posted successfully at Intacct — the request could have been received and committed before the connection was lost or the response was never returned. **Verify the entry's status directly in Intacct before re-running this step.** Blindly re-posting an `unknown` entry risks creating a duplicate journal entry in your GL.
+<Aside type="caution" title="unknown does not mean it failed">
+An `unknown` entry may already have posted at Intacct. When you re-run the step, PlaidCloud first looks the entry up in Intacct by its reference number and records it as `posted` if Intacct has it, without sending it again. An entry Intacct doesn't show is never re-sent automatically, because it may still have committed — check it in Intacct before you act on it.
 </Aside>
 
-A run with any `failed` or `unknown` rows reports a warning so it's visible without opening the result table, but the result table itself is the source of truth for what to do next.
+A run with any `failed` or `unknown` rows, or whose posted totals don't tie back to the source, ends the step in error, so it's visible without opening the result table. The result table and the [Posting Register](/guides/connections/posting-register/) show what to do next.
 
 ## Related
 
 - [Export steps](/reference/workflow-steps/export/)
+- [Post Documents](/reference/workflow-steps/export/post-documents/) — post journal entries and invoices to Sage Intacct and your other ERP systems from one step
 - [Import Sage AP](/reference/workflow-steps/sage-intacct/import-sage-ap/)
 - [Import Sage Intacct Query](/reference/workflow-steps/sage-intacct/import-intacct-query/)
 - [Sage Intacct REST Connector](/reference/connectors/rest/sage-intacct/)

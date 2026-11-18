@@ -1,0 +1,341 @@
+---
+title: Contabilizar documentos en sistemas ERP
+description: Contabilice los documentos de una tabla en el sistema ERP en el que contabiliza cada entidad, con comprobaciones antes de enviar nada, Simular y En vivo, una página para cada ejecución, volver a ejecutar, contabilizar desde un archivo o una asignación, y convertir un paso de contabilización de SAP.
+sidebar:
+  label: Contabilizar documentos
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+El paso **Contabilizar documentos** contabiliza los documentos de una tabla en sus sistemas ERP. El paso no nombra ningún sistema: cada documento va al sistema en el que contabiliza su entidad, de modo que un solo paso puede contabilizar a la vez en varios sistemas y en varias instancias del mismo ERP. Todas las formas de contabilizar (el paso, un archivo, la API REST y las herramientas MCP) pasan por las mismas comprobaciones y se registran como una ejecución con su propia [página de la ejecución](#la-página-de-la-ejecución).
+
+Esta página abarca el paso, su tabla y su configuración, Simular y En vivo, la página de la ejecución, volver a ejecutar, contabilizar desde un archivo o una asignación, y convertir un paso de contabilización de SAP. La configuración de los sistemas en sí (qué entidad contabiliza dónde, pasar a producción, las reglas de retención y lo que admite cada ERP) está en [Sistemas ERP](/es/guides/connections/erp-systems/). Revisar, aprobar, revertir y resolver las contabilizaciones después está en el [Registro de asientos](/es/guides/connections/posting-register/).
+
+## Antes de empezar
+
+- Cada ERP en el que contabiliza es una conexión en la que PlaidCloud puede contabilizar, configurada como un sistema con las entidades que contabilizan en él. Consulte [Sistemas ERP](/es/guides/connections/erp-systems/).
+- Para contabilizar de verdad, la ejecución debe estar En vivo y el sistema de cada documento debe estar En vivo para el proyecto. Hasta entonces, todo se comprueba y se muestra como **Se contabilizaría**, y no se envía nada. Consulte [Simular y En vivo](#simular-y-en-vivo).
+
+## Cómo se contabiliza un documento
+
+Las filas que comparten una entidad y un `doc_number` son un documento. Cuando empieza una ejecución, los documentos se congelan: todo lo que ocurre después en la ejecución (**Contabilizar estos**, un reintento, una aprobación) envía exactamente esos documentos. Cada documento pasa después por las mismas etapas, y se detiene en la primera que lo indique, con su motivo:
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="Un documento se comprueba por equilibrio y lotes, se dirige al sistema de su entidad, se comprueba con ese sistema, se retiene si una regla lo indica y después se envía cuando está En vivo o se registra como Se contabilizaría cuando no." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Equilibrio</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">y lotes</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Dirigir</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">entidad al sistema</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Comprobar</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">con el sistema</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">¿Retener?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Requiere aprobación</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">En vivo: enviado</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">En espera y Contabilizado</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simular</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Se contabilizaría, sin envío</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">Un documento detenido en cualquier etapa queda No contabilizado, con su motivo</text>
+</svg>
+<figcaption>Todas las formas de contabilizar pasan por las mismas etapas. Un documento va a un sistema solo cuando la ejecución y su sistema están En vivo.</figcaption>
+</figure>
+
+1. Equilibrio y lotes: un diario debe cuadrar en cada moneda que usa, y un lote debe cuadrar en conjunto. Consulte [Lotes](#lotes) y la opción de redondeo en [Configuración del paso](#configuración-del-paso).
+2. Dirigir: la entidad del documento decide su sistema, según lo definido en [Sistemas ERP](/es/guides/connections/erp-systems/). Un documento cuya entidad no tiene sistema queda No contabilizado.
+3. Comprobar: las [cinco comprobaciones](#las-cinco-comprobaciones) se ejecutan con lo que PlaidCloud sabe del sistema.
+4. Retener: una regla de retención del sistema, o la retención propia del paso, mantiene el documento como **Requiere aprobación** hasta que una persona lo apruebe en el [Registro de asientos](/es/guides/connections/posting-register/).
+5. Enviar: el documento se pone en el formato propio del sistema y se envía, o se registra como **Se contabilizaría** cuando la ejecución o su sistema están en Simular.
+
+Qué significa cada estado, y qué hacer en cada caso, está en el [Registro de asientos](/es/guides/connections/posting-register/).
+
+## Agregar el paso
+
+Agregue un paso **Contabilizar documentos** a un flujo de trabajo: está en **Sistemas externos** en el menú de pasos, y en la carpeta **Sistemas externos** de la paleta de pasos. Su formulario tiene tres secciones, y después un enlace **Más ▸** para la configuración del paso.
+
+1. **1 · La tabla**: elija la **Tabla** de documentos, una fila por línea. Una vez construido el primer documento, la sección muestra cuántas líneas y documentos leyó de la tabla.
+2. **2 · Coincidencias de columnas**: lo que el paso reconoció en cada columna de su tabla. Una columna cuyo nombre es un campo de contabilización **Coincide por nombre**; una cuyo nombre es una alternativa conocida **Coincide por un nombre alternativo**. Una columna que el paso no puede reconocer recibe una lista: elija el campo que contiene en **¿Qué es esta columna?**, y aparece como **Lo eligió usted**. Solo se guardan con el paso las columnas para las que usted elige. Dos columnas nunca toman el mismo campo: la primera lo conserva.
+3. **3 · El primer documento, tal como lo recibirá su sistema**: el primer documento de la tabla, dirigido y puesto en el formato de su sistema, con sus líneas. Cuando todavía no se puede construir, la sección dice por qué, con las mismas palabras que un motivo de No contabilizado.
+
+El paso necesita una **Tabla**. Si marca un importe de retención, el importe debe ser un número, y si agrega una línea de redondeo, necesita una cuenta.
+
+## La tabla
+
+La tabla usa los nombres de columna de Data Foundation. Un diario con la forma de Data Foundation se contabiliza sin nada que hacer coincidir; una tabla de líneas de venta facturadas se contabiliza en cuanto agrega `account` y `document_type`. Una fila es una línea; las filas con la misma `entity` y `doc_number` son un documento.
+
+| Columna | Qué contiene |
+|---|---|
+| `doc_number` | La referencia del documento. Obligatoria: una tabla sin columna para ella detiene el paso. No puede contener `~`, que PlaidCloud reserva para numerar versiones. |
+| `entity` | La entidad a la que pertenece el documento. Decide el sistema. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Fechas y período del documento. |
+| `account` | La cuenta de la línea. |
+| `amount_txn` y `currency_txn` | El importe de la línea y su moneda. Una tabla solo en moneda local puede usar `amount_local` y `currency_local` en su lugar, y se aceptan `debit` y `credit` en lugar de un importe. |
+| `description`, `line_number`, `quantity`, `unit` | Texto, orden y cantidad de la línea. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` a `segment_10` | Las dimensiones de la línea. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Impuestos y retenciones. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Detalles de la factura. |
+| `document_type` | `journal` (cuando se deja en blanco), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` o `payment`. Lo que admite cada sistema está en [Sistemas ERP](/es/guides/connections/erp-systems/). |
+| `set` | El nombre de un lote: los documentos que comparten uno se contabilizan juntos o no se contabilizan. Consulte [Lotes](#lotes). |
+
+También se reconocen estos nombres alternativos, sin distinguir mayúsculas de minúsculas: `invoice_number`, `reference` y `journal id` para `doc_number`, `invoice_date` para `posting_date`, `net_amount_local` para `amount_local`, `memo` para `description`, `cost center` para `department` y `vendor` para `supplier`. Una columna que no es ninguna de estas (una dimensión propia, por ejemplo) se transporta en el documento y sus líneas, para un formato de sistema que la asigne.
+
+Algunas columnas son propias de la contabilización y todavía no están disponibles: una fila cuya `action` sea distinta de `post`, o una que establezca `reverse_on`, queda No contabilizada. La página de la ejecución dice “Esto todavía no está disponible.”; la tabla de resultados y la respuesta REST llevan el mensaje “por ahora solo está disponible contabilizar” o “por ahora no está disponible una fecha de reversión”. Para revertir, abonar o corregir una contabilización, use el [Registro de asientos](/es/guides/connections/posting-register/).
+
+Un documento se identifica por su tipo, su entidad y su referencia, no por su mes, así que un documento movido a otro mes sigue siendo el mismo documento.
+
+### Lotes
+
+Los documentos que comparten un valor de `set` se contabilizan juntos o no se contabilizan:
+
+- El lote debe cuadrar en conjunto, con el límite de redondeo como tolerancia. Si no cuadra, todos sus miembros quedan No contabilizados con la diferencia.
+- Si una comprobación detiene a algún miembro, el resto del lote también queda No contabilizado: “otro documento del lote … no se contabilizó”. Si algún miembro se retiene para aprobación, todo el lote espera como **Requiere aprobación**.
+- Si el sistema de algún miembro no está En vivo, todo el lote queda **Se contabilizaría**, de modo que ninguna parte se envía de verdad.
+
+## Configuración del paso
+
+**Más ▸** abre las cuatro opciones del paso. Cada una tiene un valor inicial, y la mayoría de los pasos nunca las cambian.
+
+| Opción | Valor inicial | Qué hace |
+|---|---|---|
+| **Retener para una persona** | No se retiene nada | Retiene documentos para su aprobación cuando se cumplen las condiciones que marca. |
+| **A quién se avisa** | **Quien inició la ejecución** | A quién se alerta cuando una ejecución termina con documentos que requieren atención. |
+| **Cuenta de redondeo y límite** | Sin redondeo | Agrega una línea de redondeo a un documento descuadrado en no más del límite. |
+| **Cuando un documento contabilizado vuelve modificado** | Preguntar | Qué hace una ejecución posterior con un documento que cambió desde que se contabilizó. |
+
+### Retener para una persona
+
+Marque las condiciones que retienen un documento para que una persona lo apruebe:
+
+- **El importe supera**: un importe. Se compara con el importe del documento en la propia moneda del documento.
+- **Se contabilizó desde un archivo**
+- **Es una reversión, un abono o una corrección**
+- **Está marcado como inusual**
+- **Siempre**
+
+Si marca más de una, un documento se retiene solo cuando todas se cumplen. Si no marca ninguna, el paso no agrega ninguna retención propia; las reglas de retención de su sistema, y la segunda persona que puede necesitar una reversión, un abono o una corrección, siguen reteniendo documentos. Una retención en el paso solo se suma a las reglas de retención que su sistema ya tiene. Un documento retenido retiene al resto de su lote. La persona cuyo envío retuvo un documento, y la persona que inició su ejecución, no pueden aprobarlo; las aprobaciones y los aprobadores están en el [Registro de asientos](/es/guides/connections/posting-register/) y en [Sistemas ERP](/es/guides/connections/erp-systems/).
+
+### A quién se avisa
+
+**Quien inició la ejecución** es el valor inicial. Elija **Una lista de personas…** para nombrar en su lugar a los miembros a quienes alertar. Se les alerta cuando la ejecución termina con documentos que requieren atención.
+
+### Cuenta de redondeo y límite
+
+Marque **Agregar una línea de redondeo a un documento descuadrado** y después indique la **Cuenta** y el **Límite**. Un diario que está descuadrado en una moneda en no más del límite recibe una línea a esa cuenta, descrita como “Redondeo”, y pasa; una diferencia mayor, o una diferencia en más de una moneda, lo detiene como descuadrado con la diferencia. El límite es también la tolerancia de un lote en conjunto. Con la opción desmarcada, no se redondea nada.
+
+### Cuando un documento contabilizado vuelve modificado
+
+| Opción | Qué hace una ejecución posterior con un documento modificado |
+|---|---|
+| **Preguntar (valor inicial). Pasa a «Requiere atención» con dos opciones.** | El documento modificado queda No contabilizado, “El origen cambió después de contabilizarlo.”, y espera a que una persona elija **Corregir con esta versión** o **Conservar el contabilizado** en la [página de la ejecución](#documentos-modificados). |
+| **Corregir. Revertirlo y contabilizar la nueva versión, para un paso que se vuelve a ejecutar cada período.** | En una ejecución En vivo, el documento contabilizado se revierte y el documento modificado se envía como su versión siguiente. |
+
+## Simular y En vivo
+
+Un documento se envía a su sistema solo cuando se cumplen ambas condiciones:
+
+- La ejecución está En vivo: una ejecución de flujo de trabajo lleva un modo de contabilización, limitado por el propio modo del proyecto, como se describe en [Elegir un modo de contabilización](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización). Una ejecución en Simular no envía nada, y una ejecución en Desactivado omite el paso.
+- El sistema del documento está En vivo para el proyecto: es la autorización de escritura del proyecto para la conexión y el entorno del sistema, con el modo del proyecto en En vivo; consulte [Autorizar al proyecto para contabilizar](/es/guides/workflows/run-a-workflow/#autorizar-al-proyecto-para-contabilizar) y pasar a producción en [Sistemas ERP](/es/guides/connections/erp-systems/).
+
+En caso contrario, el documento se comprueba y se registra como **Se contabilizaría**, y no se envía nada. Simular nunca contacta con un sistema: en una ejecución en Simular, ni siquiera se hacen las comprobaciones que tendrían que preguntar al sistema. El paso no tiene una opción de simulación propia. La única excepción es un paso convertido de un paso de contabilización de SAP que estaba configurado para probar contabilizaciones: sigue ejecutándose siempre en Simular, y sus documentos se contabilizan solo mediante **Contabilizar estos** en la página de su ejecución.
+
+Una ejecución en Simular es la forma de ver exactamente qué se contabilizaría. Cuando todo parece correcto, **Contabilizar estos** en su [página de la ejecución](#contabilizar-estos) envía los mismos documentos congelados.
+
+## Las cinco comprobaciones
+
+Antes de enviar nada, cada documento pasa por cinco comprobaciones. La página de la ejecución muestra cada una como superada, fallida o sin comprobar:
+
+| Comprobación | Qué detiene un documento |
+|---|---|
+| Balanced | Débitos y créditos que no coinciden, más allá del límite de redondeo. |
+| Period open | Una fecha de contabilización en un período que está cerrado en el sistema. |
+| Accounts exist | Una cuenta que el sistema no tiene, un código sin correspondencia, un valor vacío que el sistema necesita, una factura que no está abierta, otra empresa o una moneda que el sistema no contabiliza. |
+| Not posted before | Una referencia ya contabilizada en otro sistema, o ya usada en este sistema. |
+| Sets agree | Un lote al que le falta un miembro, o cuyos documentos no suman. |
+
+**Period open** y **Accounts exist** usan las listas que PlaidCloud lee del sistema cuando empieza una ejecución En vivo en un sistema En vivo. En una ejecución en Simular, o cuando la lectura de una lista es parcial, está vacía o llega tarde, figuran como sin comprobar. La copia de las listas que mantiene **Actualizar ahora** en [Sistemas ERP](/es/guides/connections/erp-systems/) es para consultarla: no alimenta ninguna comprobación. Una ejecución En vivo en un sistema En vivo también hace las comprobaciones propias del sistema, cuando su formato las tiene; una ejecución en Simular no.
+
+Una comprobación que no se ejecutó en un documento cuenta como sin comprobar, nunca como superada. La página de la ejecución muestra los cinco nombres de las comprobaciones en inglés en todos los idiomas.
+
+## Cuándo se ejecuta el paso
+
+- El paso espera hasta 10 minutos a que respondan los sistemas. Un documento que sigue sin respuesta continúa entonces en el registro, y su página de la ejecución se completa cuando llega la respuesta.
+- El registro de la ejecución recibe una línea, “Contabilizados n de m · k requieren atención”. Cuando algún documento requiere atención, el paso termina con una advertencia, “k de m documentos requieren atención”, y se alerta a las personas de **A quién se avisa**. El resto del flujo de trabajo continúa.
+- Una tabla que no existe, no tiene columnas o no tiene filas es una advertencia, y no se contabiliza nada. Una tabla sin columna para `doc_number` detiene el paso con un error.
+- Cuando la configuración del paso nombra una tabla de resultados, el paso escribe en ella una fila por documento: `doc_number`, `action`, `state`, `source_system` (el sistema en el que se contabilizó), `source_doc` (el número que dio el sistema) y `message`.
+
+## La página de la ejecución
+
+Cada ejecución tiene una página: la ejecución de un paso, la de un archivo, una iniciada mediante la API REST o MCP, un reintento, una reversión. Ábrala desde **Ejecuciones** en el [Registro de asientos](/es/guides/connections/posting-register/) con **Abrir**. La página muestra solo los documentos que usted puede ver; cuando no tiene ninguno para usted, dice “Esta ejecución no recibió ningún documento que usted pueda ver.”
+
+La parte superior de la página indica cómo está la ejecución:
+
+- En Simular: “Esta ejecución está en Simular. No se ha enviado nada a ningún sistema. Contabilizar estos envía los mismos documentos congelados.”
+- En vivo y todavía en curso: no hay nada que pulsar para contabilizar. La página se completa a medida que responden los sistemas e indica cuántos documentos aún no se han enviado. Vuelve a leer la ejecución por sí sola mientras algo siga en curso o en espera.
+- En vivo y terminada: “En vivo. Todos los sistemas respondieron.”
+- Detenida: “Esta ejecución se detuvo. Lo que no se había enviado queda No contabilizado.”
+
+El **Resumen** que hay sobre los documentos se puede abrir y cerrar, y se queda como usted lo dejó; empieza cerrado cuando una ejecución tiene documentos. Contiene:
+
+- Para la ejecución de un paso, primero la comparación, por ejemplo “121 sin cambios, 19 modificados, 2 nuevos.” Consulte [Volver a ejecutar](#volver-a-ejecutar).
+- Los documentos, lotes, sistemas e importes de la ejecución, y cuántos hay en cada estado.
+- Las [cinco comprobaciones](#las-cinco-comprobaciones), cada una con una marca de verificación, una cruz o un guion cuando no llegó nada a ella. Una comprobación fallida indica cuántos no la superaron.
+- **Por sistema**: una línea por sistema con su recuento en cada estado y su importe, y el **Total**. Un sistema cuyo modo difiere del de la ejecución se marca como Simular o En vivo. Cada recuento abre esos documentos.
+- El total propio de la tabla junto al total de los documentos: “Iguales. No se dejó fuera ninguna fila de la tabla.” o “Difieren. Se dejó fuera o se contó dos veces una fila de la tabla.” Si solo puede ver algunas entidades, los totales son de lo que puede ver.
+- La antigüedad de la copia que cada sistema tiene de sus períodos y cuentas, o que todavía no hay copia.
+
+Debajo, la lista **Documentos** pone primero lo que necesita a una persona. Cada fila tiene la referencia (con su versión, como `JE-1001~2`), la entidad, el sistema, el lote, el importe, el estado y **Por qué, y qué sigue**. **Agrupar por** agrupa los documentos por **Entidad**, **Tipo**, **Lote** o **Sistema**. Seleccione un documento para leer su motivo y su siguiente paso completos y, cuando los hay, **Qué cambió**, **Cómo corregir el rechazo** e **Inusual**. Cada fila abre su contabilización en el [Registro de asientos](/es/guides/connections/posting-register/) con **Abrir contabilización**, muestra su lote con **Mostrar su lote** y ofrece **Reintentar** cuando un reintento puede ayudar.
+
+### Contabilizar estos
+
+Una ejecución con documentos en **Se contabilizaría** ofrece **Contabilizar estos** con su recuento, junto a “Contabilizar estos envía exactamente los documentos mostrados.” Envía esos documentos, comprobados una vez más a fecha de ahora: el proyecto debe permitir En vivo, la referencia no debe haberse contabilizado desde la ejecución simulada, y las comprobaciones propias del sistema se ejecutan de nuevo. Un documento en un sistema que sigue en Simular se queda en **Se contabilizaría**. La ejecución pasa a En vivo, y la página le indica cuántos se enviaron y cuántos se comprobaron de nuevo y no se contabilizaron.
+
+- Cuando algunos de los sistemas aún no están En vivo, el botón dice **Poner en producción y contabilizar estos** o nombra los sistemas que pasa a En vivo. Primero los pone En vivo para el proyecto, y si alguno no puede pasar a En vivo, no se envía nada. Solo lo ve quien puede pasar un sistema a En vivo; el resto contabiliza en los sistemas tal como están. Consulte [Sistemas ERP](/es/guides/connections/erp-systems/).
+- Un documento que retiene una regla de retención se vuelve a retener para este envío. La persona que pulsó **Contabilizar estos** y la persona que inició la ejecución no pueden aprobarlo.
+- Solo se envían los documentos que usted puede ver. Un documento cuya copia almacenada ha caducado queda No contabilizado: la página de la ejecución dice “Esto todavía no está disponible.”, y la respuesta REST lleva el mensaje “El documento almacenado ha caducado; vuelva a ejecutar.”
+
+### Detener una ejecución
+
+Una ejecución En vivo que sigue en curso, con documentos aún sin enviar, ofrece **Detener ejecución**. Los documentos aún sin enviar pasan a No contabilizado, y la página de la ejecución dice “La ejecución se detuvo antes de enviarlo.” Los documentos ya enviados se dejan como están, y la página le indica cuántos se detuvieron y cuántos ya se habían enviado. Mientras una ejecución En vivo está en medio de su envío, antes de que se registre ningún documento, todavía no se puede detener.
+
+### Reintentar
+
+**Reintentar** en una fila, o **Reintentar el resto** en un lote, vuelve a enviar un documento que no se contabilizó, tal como se congeló, como una ejecución nueva bajo el modo de contabilización del proyecto. Los documentos que ya se contabilizaron no se vuelven a enviar. Reintentar se ofrece para un documento cuya causa fue externa a él: un aprobador lo rechazó, se detuvo la ejecución, el agente estaba sin conexión, el sistema lo rechazó, no se encontró en el plazo, no se envió o su entidad no tenía sistema. Un documento detenido por una comprobación necesita que se corrija su origen y se vuelva a ejecutar el paso.
+
+### Lotes que necesitan a una persona
+
+**Lotes que necesitan a una persona** enumera un lote que solo se contabilizó en parte, o que no envió nada porque un miembro no superó las comprobaciones. **Mostrar el lote** filtra los documentos a ese lote. Para un lote contabilizado en parte, **Reintentar el resto** reintenta lo que no se contabilizó, y **Revertir lo contabilizado** muestra qué se revertirá y en qué sistemas, y después lo revierte con el motivo de que una parte del lote se contabilizó y el resto no. Una reversión que necesita a una segunda persona espera como **Requiere aprobación**, y la página enlaza a la propia ejecución de la reversión con **Abrir la ejecución de reversión**.
+
+### Documentos modificados
+
+Cuando el paso está configurado en Preguntar y una ejecución encuentra documentos que cambiaron desde que se contabilizaron, la página indica cuántos esperan su elección:
+
+- **Corregir todos**, o **Corregir con esta versión** para los documentos seleccionados, revierte el contabilizado y contabiliza el modificado como una versión nueva de su referencia.
+- **Conservar todos**, o **Conservar el contabilizado** para los documentos seleccionados, conserva la versión contabilizada y descarta la modificada.
+
+Cada opción le pide confirmar primero.
+
+## Ejecuciones
+
+**Ejecuciones** en el Registro de asientos enumera cada ejecución de un paso de contabilización o de un archivo de contabilización, de la más reciente a la más antigua, con su **Modo**, quién la inició y su resultado; **Abrir** abre la página de la ejecución.
+
+Sobre la lista, el último mes de un vistazo: una línea por sistema, como cuántos documentos se contabilizaron de cuántos, el importe, cuántos están en los libros propios del sistema y cuántas contabilizaciones requieren atención. Un paso que contabilizó en un sistema el mes anterior a ese y no se ha ejecutado para ese mes aparece nombrado debajo. **Abrir** en una línea abre las contabilizaciones de ese sistema del mes y, cuando el mes no está completo, **Abrir Requiere atención** le lleva a lo que queda. El vistazo cuenta las ejecuciones En vivo de pasos.
+
+## Volver a ejecutar
+
+Una referencia se contabiliza una vez. Cuando una ejecución tiene un documento que ya está en el registro:
+
+- Uno sin cambios se deja como está.
+- Uno modificado sigue la opción [Cuando un documento contabilizado vuelve modificado](#cuando-un-documento-contabilizado-vuelve-modificado) del paso: Preguntar o Corregir. Una corrección contabiliza la versión siguiente de la referencia, como `JE-1001~2`, y el sistema también ve la versión.
+- Uno cuya versión anterior sigue sin respuesta del sistema queda No contabilizado: “Una versión anterior de esta referencia aún no tiene respuesta del sistema. Vuelva a ejecutar cuando la tenga.”
+
+En un sistema cuya clave incluye la entidad, la misma referencia de otra entidad es un documento distinto. En cualquier otro sistema se rechaza: “Esta referencia ya se usa en este sistema.”
+
+Un documento que el paso contabilizó antes y que esta vez no produjo se deja como está. Para revertirlo, llame a `POST /rest/v1/analyze/erp/reverse/these` con la ejecución; revierte lo que el paso de la ejecución contabilizó antes y no produjo, o solo las de ellas que usted nombre, como una ejecución nueva. Todavía no hay un botón para esto en la página de la ejecución.
+
+Para un paso que se vuelve a ejecutar cada período, como uno que contabiliza una asignación, establezca **Cuando un documento contabilizado vuelve modificado** en Corregir una sola vez.
+
+## Contabilizar desde un archivo
+
+Para un puñado de diarios en una hoja de cálculo, puede contabilizar un archivo sin ningún flujo de trabajo, mediante la API REST o las herramientas MCP. Todavía no hay una página para ello en la aplicación.
+
+1. `GET /erp/file-post/starter`, con un `connection_id`, un `document_type` y un `format` (`xlsx` o `csv`), descarga los encabezados de columna correctos para ese tipo de documento en ese sistema, con una fila de ejemplo. Un tipo de documento que el sistema no admite se rechaza.
+2. `POST /erp/file-post` recibe la hoja de cálculo (`.xlsx` o `.csv`) como `file`, con el `project_id`. Cualquier archivo más enviado como `attachments` se conserva con la ejecución como archivos de apoyo, pero todavía no se envía al sistema. La herramienta MCP `erp_file_post` toma en su lugar un archivo de los documentos de PlaidCloud, por su `account_id` y su `path`.
+3. La ejecución se abre en Simular y no se envía nada. Revísela en su [página de la ejecución](#la-página-de-la-ejecución) y contabilícela con **Contabilizar estos**.
+
+- Cada documento va al sistema en el que contabiliza su entidad, como en cualquier otra ejecución.
+- Un archivo sin columna `doc_number` no prepara nada y responde `ask: one_journal`. Envíelo de nuevo con `one_journal` en true para contabilizar todo el archivo como un solo diario, con el nombre del archivo como referencia, o en false para contabilizar cada fila como un diario propio, numerado a partir del nombre del archivo.
+- En un archivo que tiene una columna `doc_number`, las filas sin ella se dejan fuera, con una advertencia. Los encabezados que no son columnas de contabilización se ignoran, y las advertencias los nombran.
+- Un archivo vacío, o sin filas, no prepara nada y lo indica. Lo mismo ocurre con un proyecto cuya contabilización está Desactivada.
+
+### Contabilizar de nuevo
+
+Contabilizar de nuevo vuelve a contabilizar los documentos de la ejecución de un archivo con una fecha de contabilización nueva y referencias nuevas, para un diario que se repite cada mes: `POST /erp/file-post/{run_id}/again`, o la herramienta MCP `erp_file_post_again`.
+
+- El `posting_date` es una fecha ISO, o uno de `today`, `first_of_month`, `last_of_month`, `first_of_next_month` y `last_of_prev_month`, o un desplazamiento como `+1m` o `-7d` respecto de la fecha de contabilización propia de cada documento.
+- `references` establecido en `suffix` da a cada referencia un sufijo para el mes nuevo, como `JE-1001-202612`, para que la repetición no se rechace por ya contabilizada; mediante REST puede, en su lugar, asignar cada referencia a su nueva referencia. La herramienta MCP siempre agrega el sufijo.
+- La fecha del documento se mueve con la fecha de contabilización, una fecha de vencimiento se mueve tantos días, y las columnas de período se descartan para que el sistema tome el período de la fecha nueva.
+- La ejecución nueva se abre en Simular salvo que pida En vivo con `live`, y nunca por encima del modo de contabilización del proyecto. Solo se vuelven a contabilizar los documentos de las entidades que usted puede ver.
+
+`POST /erp/file-post/{run_id}/schedule` pone Contabilizar de nuevo en una programación, con un `cron` y su `timezone`, un `posting_date` calculado cada vez que se ejecuta y `references` establecido en `suffix`. Se ejecuta como usted y contabiliza solo las entidades que usted puede ver. Contabiliza En vivo solo cuando alguien ya ha contabilizado En vivo los documentos de este archivo, y nunca por encima del modo de contabilización del proyecto. Una programación no tiene herramienta MCP.
+
+Los documentos de una ejecución se conservan 30 días cuando se simulan y 90 después de una respuesta; pasado ese tiempo, Contabilizar de nuevo no tiene nada que preparar y lo indica.
+
+### Registrar como ya contabilizado
+
+Para documentos contabilizados en el sistema antes de que se usara PlaidCloud, `POST /erp/record-posted` los registra como Contabilizados sin contactar con el sistema, de modo que una ejecución que los tenga después se niega a volver a contabilizarlos. Envíe la hoja de cálculo como `file`, con el `connection_id` y el `environment_id` del sistema. Necesita las columnas `reference` y `system_document`, y opcionalmente `entity`, `posting_date` y `document_type` (un diario cuando se omite). Todavía no hay página ni herramienta MCP para ello.
+
+- Un documento que PlaidCloud ya tiene como contabilizado, uno que aún espera una respuesta, o una referencia que tiene como un documento de sistema distinto se enumera como no registrado, con el motivo.
+- Un documento Sin confirmar del archivo se resuelve como Contabilizado solo para quien tenga el rol de Aprobador del Registro de asientos; cualquier otra persona lo recibe de vuelta como no registrado.
+
+## Contabilizar desde una asignación
+
+Un paso **Asignación: dividir mediante dimensión** también puede escribir su resultado como una tabla de documentos para que la contabilice un paso Contabilizar documentos, mediante su opción `post_documents` en la configuración del paso. La opción nombra la `table` de documentos que se escribe, y las columnas del resultado para `rule`, `account`, `source_account`, `amount` y `posting_date` (todas necesarias), y opcionalmente `entity` y `currency_txn`; `set` da a los documentos un nombre de lote fijo.
+
+- Cada regla es un documento al mes, con la referencia formada por la regla y el mes (por ejemplo `RENT-202611`). Cada fila del resultado es una línea a su cuenta con una línea compensatoria a la cuenta de origen, de modo que cada documento cuadra.
+- Una fila sin regla, o con importe cero, no genera ninguna línea. Una fila cuyo importe no es un número se deja fuera, con una advertencia que nombra las filas. Cuando no queda nada por contabilizar, el paso avisa y vacía la tabla de documentos.
+- Volver a ejecutar la asignación del mismo mes da las mismas referencias, así que establezca la opción [Cuando un documento contabilizado vuelve modificado](#cuando-un-documento-contabilizado-vuelve-modificado) del paso de contabilización en Corregir.
+
+## Convertir un paso de contabilización de SAP
+
+Un paso de contabilización de SAP existente puede pasar a ser un paso Contabilizar documentos. Nada se convierte por sí solo: haga clic con el botón derecho en el paso del lienzo y elija **Convertir a Contabilizar documentos…**, o use **Convertir a Contabilizar documentos…** en el formulario del paso. PlaidCloud primero muestra lo que se convertirá (las columnas asociadas a campos del documento, las entidades dirigidas a sus sistemas, si sigue contabilizando como antes o empieza en Simular, y cualquier advertencia) y usted confirma con **Convertir**. La configuración anterior se conserva en las versiones del paso.
+
+- Solo se convierten los pasos de contabilización de SAP. Un paso sin función o sin columnas de encabezado definidas, o cuya clave de documento no es una sociedad y un número de documento, no se convierte, y PlaidCloud dice por qué.
+- Las entidades del filtro del paso se sugieren como rutas a su conexión. Cuando el filtro no nombra ninguna, defina el enrutamiento en [Sistemas ERP](/es/guides/connections/erp-systems/) antes de que contabilice.
+- Hasta que defina una tabla en el paso convertido, este lee por sí mismo las tablas de encabezado, de líneas, de IVA y de retenciones del paso anterior.
+- El paso convertido conserva el registro de lo que contabilizó el paso anterior, de modo que un período que el paso anterior ya contabilizó no se vuelve a contabilizar.
+- Un paso que estaba configurado para probar contabilizaciones sigue ejecutándose en Simular. Consulte [Simular y En vivo](#simular-y-en-vivo).
+
+## Mediante REST y MCP
+
+La misma contabilización está disponible mediante la API REST, en `/rest/v1/analyze/erp`, y como herramientas MCP:
+
+| Para | REST | MCP |
+|---|---|---|
+| Ver el primer documento de una tabla, tal como lo recibirá su sistema | `POST /erp/post/preview` | `erp_post_preview` |
+| Contabilizar una tabla o una lista de documentos | `POST /erp/post` | `erp_post_documents` |
+| Leer ejecuciones y la página de una ejecución | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Contabilizar estos, o detener una ejecución | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Responder a Preguntar para documentos modificados | `POST /erp/ask` | `erp_ask_answer` |
+| Reintentar documentos | `POST /erp/retry` | `erp_retry` |
+| Descargar un archivo de ejemplo | `GET /erp/file-post/starter` | — |
+| Contabilizar desde un archivo y volver a contabilizarlo | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Volver a contabilizarlo con una programación | `POST /erp/file-post/{run_id}/schedule` | — |
+| Registrar como ya contabilizado | `POST /erp/record-posted` | — |
+| Convertir un paso de contabilización de SAP | `POST /erp/convert` | `erp_convert_step` |
+
+- Una contabilización mediante REST o MCP se ejecuta en Simular salvo que pida En vivo, y nunca por encima del modo de contabilización del proyecto.
+- Una contabilización de una tabla mediante REST lee como máximo 100 000 filas; una tabla más larga se rechaza entera y se contabiliza con el paso en su lugar.
+- `erp_file_post` toma un archivo de los documentos de PlaidCloud; un archivo que no está allí es una advertencia, y no se prepara nada.
+- Convertir y reintentar son simulaciones salvo que se indique lo contrario.
+- A un asistente de IA que actúa en su nombre se le rechaza una contabilización En vivo, **Contabilizar estos**, Corregir, un reintento real, una conversión real y Contabilizar de nuevo: eso lo hace una persona.
+
+## Quién puede hacer qué
+
+| Para | Necesita |
+|---|---|
+| Crear el paso y obtener una vista previa de su primer documento | `analyze.step.write` |
+| Contabilizar mediante REST o MCP | `analyze.workflow.write` y acceso de escritura al proyecto |
+| Descargar un archivo de ejemplo | `analyze.connection.read` |
+| Contabilizar desde un archivo | `analyze.workflow.write` y acceso al proyecto |
+| Abrir la página de una ejecución | `analyze.project.read`; usted ve los documentos de las entidades que puede ver |
+| Ver **Ejecuciones** en el Registro de asientos | `erp.register.view` |
+| **Contabilizar estos**, **Detener ejecución**, Corregir o Conservar, Contabilizar de nuevo y su programación, revertir lo que una ejecución no produjo | `analyze.workflow.write`, y Arquitecto o Gerente en el proyecto desbloqueado |
+| Pasar un sistema a En vivo al contabilizar | Arquitecto en el proyecto desbloqueado, con acceso de escritura a la conexión usted mismo |
+| **Reintentar** | `analyze.workflow.write`, y Arquitecto o Gerente en el proyecto desbloqueado, con acceso de escritura a la conexión del documento usted mismo |
+| **Revertir lo contabilizado** | `erp.register.view` y `erp.register.operate` |
+| Registrar como ya contabilizado | `erp.register.view` y `erp.register.operate`, con acceso de escritura a la conexión usted mismo; resolver documentos Sin confirmar requiere además `erp.register.approve` |
+| Convertir un paso de contabilización de SAP | `analyze.step.write`, con acceso de escritura al proyecto |
+
+Todas las rutas aplican la misma regla: la interfaz, la API REST y las herramientas MCP llaman a las mismas comprobaciones.

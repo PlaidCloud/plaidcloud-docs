@@ -54,7 +54,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Anaplan에 연결](/ko/guides/connections/anaplan/) — Anaplan에 연결하여 저장된 뷰를 읽거나, 기존 내보내기 작업을 실행하거나, 목록을 PlaidCloud 차원으로 로드합니다. 읽기 전용입니다.
 - [Data Foundation용 OneStream](/ko/guides/connections/onestream-for-data-foundation/) — Data Foundation이 데이터 어댑터를 통해 연결 결과를 읽을 수 있도록 OneStream 관리자가 설정하는 항목입니다.
 - [QuickBooks에 연결](/ko/guides/connections/quickbooks/) — QuickBooks Online의 사전 요구 사항과 현재 제한 사항입니다.
-- [전기 등록부 검토](/ko/guides/connections/posting-register/) — 재무 및 회계 담당자가 볼 수 있는 모든 프로젝트와 연결의 ERP 전기 내역을 검토하는 테넌트 수준 콘솔입니다.
+- [ERP 시스템에 문서 전기](/ko/guides/connections/post-documents/) — 분개, 송장 및 기타 문서 테이블을 연결된 모든 ERP 시스템에 하나의 단계로 시뮬레이션 또는 라이브 모드로 전기합니다.
+- [ERP 시스템 설정](/ko/guides/connections/erp-systems/) — 문서 전기 단계가 전기하는 시스템, 어느 엔터티가 어느 시스템으로 가는지, 보류 규칙, 각 ERP가 지원하는 기능입니다.
+- [전기 등록부 검토](/ko/guides/connections/posting-register/) — 볼 수 있는 모든 프로젝트와 시스템의 ERP 전기를 검토하고 조치합니다. 조치 필요 항목, 모든 전기, 모든 실행을 확인할 수 있습니다.
 
 ## 관련 문서
 

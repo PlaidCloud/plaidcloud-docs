@@ -29,6 +29,7 @@ Pasos de flujo de trabajo que escriben tablas de proyecto en destinos externos: 
 - [Export to PDF](/es/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/es/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/es/reference/workflow-steps/export/export-to-xml/)
+- [Contabilizar documentos](/es/reference/workflow-steps/export/post-documents/) — contabilice una tabla de documentos en cualquier sistema ERP que haya configurado
 - [Exportación de archivo espacial](/es/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/es/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/es/reference/workflow-steps/export/export-hyper/)

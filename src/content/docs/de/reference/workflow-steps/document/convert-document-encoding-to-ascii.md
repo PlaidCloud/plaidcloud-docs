@@ -12,7 +12,7 @@ Schreibt eine Textdatei als reinen ASCII-Text neu. Das ist besonders nützlich, 
 
 ## Funktionsweise
 
-- Die Kodierung der Quelle wird erkannt. Eine UTF-8-Datei wird als UTF-8 gelesen, und Windows-Zeichen, die in eine solche Datei eingefügt wurden – etwa typografische Anführungszeichen aus Word oder Excel –, bleiben unabhängig von ihrer Anzahl intakt. Eine Datei in einer anderen Kodierung wird in der Kodierung gelesen, die anhand ihres ersten Abschnitts erkannt wird, der kein gültiges UTF-8 ist.
+- Die Kodierung der Quelle wird erkannt. Eine UTF-8-Datei wird als UTF-8 gelesen, und Windows-Zeichen, die in eine solche Datei eingefügt wurden – etwa typografische Anführungszeichen aus Word oder Excel –, bleiben unabhängig von ihrer Anzahl intakt. Eine Datei, die bis auf wenige Windows-Zeichen – Gedankenstriche, typografische Anführungszeichen oder Buchstaben mit Akzent, nicht mehr als zwei nebeneinander und weniger als 1 % des Texts um das erste von ihnen – reines ASCII ist, wird als Windows-1252 gelesen, an welcher Stelle der Datei sie auch stehen. Eine Datei in einer anderen Kodierung wird in der Kodierung gelesen, die anhand ihres ersten Abschnitts erkannt wird, der kein gültiges UTF-8 ist.
 - Buchstaben mit Akzent behalten ihren Grundbuchstaben (`café` wird zu `cafe`), und Zeichen ohne ASCII-Form werden verworfen.
 - Eine Zeile, die nur ein doppeltes Anführungszeichen enthält, wird an das Ende der vorhergehenden Zeile angehängt.
 - Eine Datei, deren Kodierung nicht erkannt werden kann, lässt den Schritt fehlschlagen, unter Nennung der Datei.

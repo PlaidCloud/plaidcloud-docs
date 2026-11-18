@@ -9,12 +9,12 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 import { Aside } from '@astrojs/starlight/components';
 
-Cuando un flujo de trabajo contabiliza en un ERP (un asiento de diario o un cheque manual de Sage 100, un asiento de diario de Sage Intacct o NetSuite, un documento de Acumatica, Business Central o Xero, un asiento de diario de Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials o SAP S/4HANA Cloud, un documento de SAP), PlaidCloud registra cada intento de contabilización en un libro duradero por inquilino, de modo que el mismo documento nunca se contabilice dos veces. El **historial de contabilizaciones de ERP** es la vista de solo lectura sobre ese libro: cada intento y su estado actual, con el número de documento propio del ERP y las marcas de tiempo, filtrable por proyecto.
+Cuando un flujo de trabajo contabiliza en un ERP (mediante el paso **Contabilizar documentos**, consulte [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/), o mediante el paso de contabilización propio de un sistema, como un asiento de diario o un cheque manual de Sage 100, un asiento de diario de Sage Intacct o NetSuite, un documento de Acumatica, Business Central o Xero, un asiento de diario de Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials o SAP S/4HANA Cloud, o un documento de SAP), PlaidCloud registra cada intento de contabilización en un libro duradero por inquilino, de modo que el mismo documento nunca se contabilice dos veces. El **historial de contabilizaciones de ERP** es la vista de solo lectura sobre ese libro: cada intento y su estado actual, con el número de documento propio del ERP y las marcas de tiempo, filtrable por proyecto.
 
 Complementa la tabla de resultados por ejecución que escribe un paso de contabilización: la tabla de resultados recoge los resultados de una sola ejecución, mientras que el historial de contabilizaciones es el registro permanente de todas las ejecuciones y flujos de trabajo, y sigue cada contabilización durante todo su ciclo de vida en lugar de congelarla en el momento en que terminó la ejecución.
 
 <Aside type="note">
-El historial de contabilizaciones es de **solo lectura**: nunca modifica una contabilización ni el libro. Está disponible a través de la API REST y como herramienta MCP, limitado a un proyecto al que ya tiene acceso. Para una pantalla a nivel de inquilino que revise las contabilizaciones de todos los proyectos y conexiones que puede ver, use el [Registro de asientos](/es/guides/connections/posting-register/).
+El historial de contabilizaciones es de **solo lectura**: nunca modifica una contabilización ni el libro. Está disponible a través de la API REST y como herramienta MCP, limitado a un proyecto al que ya tiene acceso. Para revisar y gestionar las contabilizaciones de todos los proyectos y sistemas que puede ver, use el [Registro de asientos](/es/guides/connections/posting-register/).
 </Aside>
 
 ## Qué muestra cada contabilización
@@ -23,16 +23,18 @@ Cada fila es un documento contabilizado (o con intento de contabilización) en u
 
 | Campo | Significado |
 |---|---|
+| `ledger_id` | El id de la fila en el libro. |
 | `project_id` | El proyecto desde el que se hizo la contabilización. |
 | `connection_id` | La conexión de ERP utilizada. |
 | `environment_id` | El entorno de la conexión en el que se contabilizó (por ejemplo, uno de pruebas frente a producción). |
 | `natural_key` | La clave de negocio del documento, tal como la derivó el paso de contabilización. |
+| `mode` | `live` para una contabilización real, `simulate` para lo que habría contabilizado una ejecución simulada. |
 | `state` | El estado actual del ciclo de vida de la contabilización (vea más abajo). |
 | `confirmation_id` | El número de documento propio del ERP, una vez que el ERP lo asigna. Nunca se establece en una contabilización simulada. |
 | `run_id` | La ejecución del flujo de trabajo que hizo la contabilización. |
 | `submitted_at`, `created_at`, `updated_at` | Cuándo se envió la contabilización, cuándo se registró por primera vez y cuándo cambió por última vez. |
 
-Una contabilización hecha en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) se marca como simulada, lo que la distingue de una real a simple vista; consulte [Contabilizaciones simuladas](#contabilizaciones-simuladas) más abajo.
+Una contabilización hecha en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) lleva `mode` `simulate`, lo que la distingue de una real a simple vista; consulte [Contabilizaciones simuladas](#contabilizaciones-simuladas) más abajo.
 
 ## Los estados del ciclo de vida
 
@@ -48,6 +50,8 @@ Una contabilización pasa por estos estados a medida que el ERP la procesa:
 | `in_doubt` | No se pudo confirmar el resultado: una persona debe comprobarlo directamente en el ERP antes de cualquier reintento. |
 | `reversed` | Un documento contabilizado previamente fue revertido. |
 
+El [Registro de asientos](/es/guides/connections/posting-register/) muestra las mismas contabilizaciones con su propio conjunto de estados, más sencillo.
+
 <Aside type="caution">
 Una contabilización `in_doubt` es exactamente eso: desconocida, no fallida. Confírmela en el propio ERP antes de decidir si actuar sobre ella; nunca la vuelva a ejecutar a ciegas.
 
@@ -56,11 +60,13 @@ PlaidCloud registra una contabilización o reversión como `in_doubt` siempre qu
 
 ## Contabilizaciones simuladas
 
-Una ejecución iniciada en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) valida lo que enviaría un paso de contabilización, pero nunca contacta con el ERP. Lo que habría contabilizado se registra igualmente aquí, marcado como simulado, para que pueda revisarlo del mismo modo que una contabilización real (incluidos su `natural_key` y la solicitud que construyó), sin un `confirmation_id`, ya que ningún ERP llegó a verlo.
+Una ejecución iniciada en [modo de simulación](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización) valida lo que enviaría un paso de contabilización, pero nunca contacta con el ERP. Lo que habría contabilizado un paso de contabilización se registra igualmente aquí, con `mode` `simulate`, para que pueda revisarlo del mismo modo que una contabilización real (incluido su `natural_key`), sin un `confirmation_id`, ya que ningún ERP llegó a verlo.
+
+Los documentos simulados de un paso **Contabilizar documentos** también se registran aquí, con `mode` `simulate`, salvo los de un sistema contabilizado a través del agente de PlaidCloud (como SAP local y Sage 100), que aparecen solo en el [Registro de asientos](/es/guides/connections/posting-register/) como **Se contabilizaría**.
 
 Una entrada simulada nunca ocupa ni bloquea el espacio que protege la escritura idempotente de una contabilización real. Si más tarde ejecuta el mismo documento en producción, la contabilización real continúa y sustituye el registro simulado. Un espacio de trabajo sin un libro de contabilizaciones configurado valida igualmente con normalidad una ejecución simulada; simplemente no registra nada aquí.
 
-Borre las entradas simuladas de un proyecto de forma independiente de las reales con `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (opcionalmente acotado con `connection_id`) o con la herramienta MCP `erp_clear_simulated_postings` con los mismos argumentos. En ambos casos solo se eliminan las filas simuladas (una contabilización real nunca se toca), y la respuesta informa tanto de las filas del historial como de las filas del propio almacén de simulación del [Registro de asientos](/es/guides/connections/posting-register/) que se borraron, ya que un solo borrado elimina de ambos.
+Borre las entradas simuladas de un proyecto de forma independiente de las reales con `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (opcionalmente acotado con `connection_id`) o con la herramienta MCP `erp_clear_simulated_postings` con los mismos argumentos. En ambos casos solo se eliminan las filas simuladas (una contabilización real nunca se toca). El mismo borrado elimina también los documentos de las ejecuciones **Contabilizar documentos** del proyecto que se ejecutaron en simulación, y las copias propias del [Registro de asientos](/es/guides/connections/posting-register/) de las contabilizaciones simuladas. La respuesta informa de `cleared` (filas del historial y documentos de ejecuciones simuladas) y de `sims_cleared` (las copias del Registro).
 
 <Aside type="note">
 Los pasos de contabilización, de adjuntos y de RFC de SAP se omiten por completo en el modo de simulación, no se ejecutan en seco, por lo que nunca producen una entrada simulada. Consulte [Elegir un modo de contabilización](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización).
@@ -82,6 +88,7 @@ Los parámetros de consulta opcionales acotan el resultado:
 |---|---|
 | `connection_id` | Solo las contabilizaciones hechas en esta conexión. |
 | `state` | Solo las contabilizaciones en este estado (por ejemplo, `state=in_doubt`). |
+| `mode` | `live` o `simulate`. Sin él, las contabilizaciones reales y simuladas se muestran juntas. |
 | `limit` | Tamaño de página (100 de forma predeterminada). |
 | `cursor` | El `next_cursor` de la página anterior. |
 
@@ -89,7 +96,7 @@ Los resultados llegan de más reciente a más antiguo. Cuando una página se lle
 
 ### Mediante MCP
 
-Llame a la herramienta `erp_post_history` con los mismos argumentos: `project_id` (obligatorio) y, opcionalmente, `connection_id`, `state`, `limit` y `cursor`. Devuelve las mismas filas, paginadas del mismo modo.
+Llame a la herramienta `erp_post_history` con los mismos argumentos: `project_id` (obligatorio) y, opcionalmente, `connection_id`, `state`, `mode`, `limit` y `cursor`. Devuelve las mismas filas, paginadas del mismo modo.
 
 ## Revisiones habituales
 

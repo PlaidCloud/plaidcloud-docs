@@ -12,7 +12,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Kodiert eine Textdatei von einer Zeichenkodierung in eine andere um. Nützlich, wenn Quelldateien in Legacy-Kodierungen (Windows-1252, ISO-8859-1) eintreffen, nachgelagerte Tools aber UTF-8 benötigen, oder umgekehrt.
 
-Wenn die Quelldatei nicht UTF-8 ist, wird ihre Kodierung aus dem Inhalt der Datei ermittelt. Eine sehr kurze oder stark repetitive Datei liefert zu wenig Anhaltspunkte und kann falsch gelesen werden; prüfen Sie daher bei einer solchen Datei die konvertierte Ausgabe.
+Wenn die Quelldatei nicht UTF-8 ist, wird ihre Kodierung aus dem Inhalt der Datei ermittelt. Eine Datei, die bis auf wenige Windows-Zeichen – Gedankenstriche, typografische Anführungszeichen oder Buchstaben mit Akzent, nicht mehr als zwei nebeneinander und weniger als 1 % des Texts um das erste von ihnen – reines ASCII ist, wird als Windows-1252 gelesen, an welcher Stelle der Datei sie auch stehen. Eine sehr kurze oder stark repetitive Datei liefert zu wenig Anhaltspunkte und kann falsch gelesen werden; prüfen Sie daher bei einer solchen Datei die konvertierte Ausgabe.
 
 Ein Zeichen, das die Zielkodierung nicht darstellen kann, lässt den Schritt standardmäßig fehlschlagen. Wählen Sie **Zeichen, die die Zielkodierung nicht darstellen kann, durch ? ersetzen**, um stattdessen ein `?` an seine Stelle zu schreiben, wie es ein Java-Writer tut, und der Schritt wird beendet.
 

@@ -21,7 +21,7 @@ Cada execução tem um modo de lançamento ERP. Para escolher um no PlaidCloud, 
 | Modo | O que acontece |
 |---|---|
 | Live | Os passos de lançamento lançam exatamente como sempre o fizeram. É o valor predefinido. |
-| Simulate | Cada passo de lançamento ERP constrói e valida exatamente o que lançaria, não confirma nada e nunca contacta o ERP. Os lançamentos que seriam efetuados ficam registados no [Histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/), marcados como simulados, para que possa revê-los antes de executar em modo Live. |
+| Simulate | Cada passo de lançamento ERP constrói e valida exatamente o que lançaria, não confirma nada e nunca contacta o ERP. Os lançamentos que seriam efetuados ficam registados para que possa revê-los antes de executar em modo Live: os de um passo **Contabilizar documentos** no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) como **Seria lançado** (consulte [Contabilizar documentos em sistemas ERP](/pt-pt/guides/connections/post-documents/)), e os do passo de lançamento próprio de um sistema no [Histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/), marcados como simulados. |
 | Off | Os passos de lançamento são ignorados por completo. |
 
 Um projeto tem também o seu próprio limite de modo de lançamento, definido através da API do projeto ou do assistente por qualquer membro com acesso de escrita a um projeto desbloqueado. O limite só torna uma execução mais segura, nunca mais permissiva: o modo efetivo de uma execução é o mais restritivo entre o modo escolhido e o limite do projeto, pelo que um projeto limitado a Simulate permanece simulado mesmo que a execução seja iniciada em Live.
@@ -35,7 +35,7 @@ Os passos de lançamento SAP, de anexos SAP e de RFC SAP genéricas não fazem s
 :::
 
 :::note
-Um passo individual de lançamento ERP tem também a sua própria definição Validate Only (designada Preview ou Test Only Mode em alguns passos), independente do modo de lançamento da execução acima. O editor de passos guarda sempre esta definição de forma explícita. Uma configuração de passo escrita por outra via — a API REST, o MCP ou a importação de um pacote de fluxo de trabalho — que omita totalmente a definição passa agora também a ter por predefinição uma pré-visualização em vez de um lançamento real.
+Um passo individual de lançamento ERP tem também a sua própria definição Validate Only (designada Preview ou Test Only Mode em alguns passos), independente do modo de lançamento da execução acima. O editor de passos guarda sempre esta definição de forma explícita. Uma configuração de passo escrita por outra via — a API REST, o MCP ou a importação de um pacote de fluxo de trabalho — que omita totalmente a definição passa agora também a ter por predefinição uma pré-visualização em vez de um lançamento real. O passo **Contabilizar documentos** não tem uma definição deste tipo: o modo da execução e o modo do próprio sistema decidem se lança — consulte [Contabilizar documentos em sistemas ERP](/pt-pt/guides/connections/post-documents/).
 :::
 
 ## Autorizar o projeto a lançar

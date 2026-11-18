@@ -47,6 +47,7 @@ As etapas de fluxo de trabalho são os blocos de construção da automação do 
 
 ### Integrações corporativas
 
+- [Lançar documentos](/pt-br/reference/workflow-steps/export/post-documents/) — lance uma tabela de lançamentos contábeis, faturas, notas e pagamentos em qualquer sistema ERP que você tenha configurado, a partir de uma única etapa
 - [Agente](/pt-br/reference/workflow-steps/agent/) — operações do agente PlaidLink para recursos locais
 - [NetSuite](/pt-br/reference/workflow-steps/netsuite/) — importe saldos, detalhes do razão geral, dados mestres ou sua própria [consulta SuiteQL](/pt-br/reference/workflow-steps/netsuite/import-suiteql-query/); lance lançamentos contábeis no NetSuite
 - [Acumatica](/pt-br/reference/workflow-steps/acumatica/) — importe entidades mestres e transacionais; lance transações contábeis, faturas, contas a pagar e pagamentos

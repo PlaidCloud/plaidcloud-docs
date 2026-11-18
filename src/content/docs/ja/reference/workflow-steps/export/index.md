@@ -29,6 +29,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Export to PDF ステップ](/ja/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive ステップ](/ja/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML ステップ](/ja/reference/workflow-steps/export/export-to-xml/)
+- [伝票を転記 ステップ](/ja/reference/workflow-steps/export/post-documents/) — テーブルのドキュメントを、設定済みの任意のERPシステムに転記します
 - [空間ファイルのエクスポート](/ja/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau ステップ](/ja/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export ステップ](/ja/reference/workflow-steps/export/export-hyper/)

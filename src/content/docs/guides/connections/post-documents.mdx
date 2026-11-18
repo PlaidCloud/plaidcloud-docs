@@ -1,0 +1,340 @@
+---
+title: Post Documents to ERP Systems
+description: Post the documents in a table to the ERP system each entity posts to, with checks before anything is sent, Simulate and Live, a run page for every run, running again, posting from a file or an allocation, and converting an SAP posting step.
+sidebar:
+  label: Post Documents
+  order: 15
+---
+
+The **Post Documents** step posts the documents in one table to your ERP systems. The step names no system: each document goes to the system its entity posts to, so one step can post to several systems and several instances of the same ERP at once. Every way of posting — the step, a file, the REST API and the MCP tools — goes through the same checks and is recorded as a run with its own [run page](#the-run-page).
+
+This page covers the step, its table and settings, Simulate and Live, the run page, running again, posting from a file or an allocation, and converting an SAP posting step. Setting up the systems themselves — which entity posts where, going Live, hold rules and what each ERP supports — is on [ERP Systems](/guides/connections/erp-systems/). Reviewing, approving, reversing and settling postings afterwards is on the [Posting Register](/guides/connections/posting-register/).
+
+## Before You Start
+
+- Each ERP you post to is a connection that PlaidCloud can post to, set up as a system with the entities that post to it. See [ERP Systems](/guides/connections/erp-systems/).
+- To post for real, the run must be Live and each document's system must be Live for the project. Until then, everything is checked and shown as **Would post**, and nothing is sent. See [Simulate and Live](#simulate-and-live).
+
+## How a Document Is Posted
+
+Rows that share an entity and a `doc_number` are one document. When a run starts, the documents are frozen: everything later in the run — **Post these**, a retry, an approval — sends exactly those documents. Each document then goes through the same stages, and stops at the first one that says so, with its reason:
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="A document is checked for balance and sets, routed to its entity's system, checked against that system, held if a rule says so, then sent when Live or recorded as Would post when not." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Balance</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">and sets</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Route</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">entity to system</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Check</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">against the system</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Hold?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Needs approval</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Live: sent</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Waiting, then Posted</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simulate</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Would post, not sent</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">A document stopped at any stage is Not posted, with its reason</text>
+</svg>
+<figcaption>Every way of posting runs the same stages. A document goes to a system only when the run and its system are both Live.</figcaption>
+</figure>
+
+1. Balance and sets: A journal must balance in each currency it uses, and a set must balance as a whole. See [Sets](#sets) and the rounding setting under [Step Settings](#step-settings).
+2. Route: The document's entity decides its system, as set on [ERP Systems](/guides/connections/erp-systems/). A document whose entity has no system is Not posted.
+3. Check: The [five checks](#the-five-checks) run against what PlaidCloud knows of the system.
+4. Hold: A hold rule on the system, or the step's own hold, keeps the document as **Needs approval** until a person approves it in the [Posting Register](/guides/connections/posting-register/).
+5. Send: The document is put in the system's own format and sent, or recorded as **Would post** when the run or its system is in Simulate.
+
+What each state means, and what to do about each one, is on the [Posting Register](/guides/connections/posting-register/).
+
+## Add the Step
+
+Add a **Post Documents** step to a workflow: it is under **External Systems** in the step menu, and in the **External Systems** folder of the step palette. Its form has three sections, then a **More ▸** link for the step's settings.
+
+1. **1 · The table** — choose the **Table** of documents, one row per line. Once the first document is built, the section shows how many lines and documents it read from the table.
+2. **2 · Column matches** — what the step recognized in each column of your table. A column whose name is a posting field is **Matched by name**; one whose name is a known alternative is **Matched by an alternative name**. A column the step cannot recognize gets a list: pick the field it holds from **What is this column?**, and it shows as **You chose this**. Only the columns you choose for are saved with the step. Two columns never take the same field: the first one keeps it.
+3. **3 · The first document, as its system will receive it** — the table's first document, routed and put in its system's format, with its lines. When it cannot be built yet, the section says why, in the same words as a Not posted reason.
+
+The step needs a **Table**. If you tick a hold amount, the amount must be a number, and if you add a rounding line, it needs an account.
+
+## The Table
+
+The table uses the Data Foundation's column names. A journal in the Data Foundation's shape posts with nothing to match; an invoiced sales-line table posts once you add `account` and `document_type`. One row is one line; rows with the same `entity` and `doc_number` are one document.
+
+| Column | What it holds |
+|---|---|
+| `doc_number` | The document's reference. Required: a table with no column for it stops the step. It may not contain `~`, which PlaidCloud keeps for numbering versions. |
+| `entity` | The entity the document belongs to. It decides the system. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Dates and period of the document. |
+| `account` | The line's account. |
+| `amount_txn` and `currency_txn` | The line's amount and its currency. A table in local currency only can use `amount_local` and `currency_local` instead, and `debit` and `credit` are accepted in place of an amount. |
+| `description`, `line_number`, `quantity`, `unit` | Line text, order and quantity. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` to `segment_10` | The line's dimensions. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Tax and withholding. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Invoice details. |
+| `document_type` | `journal` (when left blank), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` or `payment`. What each system takes is on [ERP Systems](/guides/connections/erp-systems/). |
+| `set` | A set name: documents that share one post together or not at all. See [Sets](#sets). |
+
+These alternative names are matched too, with case ignored: `invoice_number` and `reference` and `journal id` for `doc_number`, `invoice_date` for `posting_date`, `net_amount_local` for `amount_local`, `memo` for `description`, `cost center` for `department`, and `vendor` for `supplier`. A column that is none of these — one of your own dimensions, say — is carried on the document and its lines, for a system format that maps it.
+
+A few columns are posting's own and are not available yet: a row whose `action` is anything but `post`, or one that sets `reverse_on`, is Not posted. The run page reads "This is not available yet."; the result table and the REST answer carry the message "only posting is available yet" or "a date to reverse on is not available yet". To reverse, credit or correct a posting, use the [Posting Register](/guides/connections/posting-register/).
+
+A document is known by its type, entity and reference, not its month, so a document moved to another month is still the same document.
+
+### Sets
+
+Documents that share a `set` value are posted together or not at all:
+
+- The set must balance as a whole, with the rounding limit as its tolerance. If it does not, every member is Not posted with the difference.
+- If any member is stopped by a check, the rest of the set is Not posted too, "another document in set … was not posted". If any member is held for approval, the whole set waits as **Needs approval**.
+- If any member's system is not Live, the whole set is **Would post**, so no part of it is sent for real.
+
+## Step Settings
+
+**More ▸** opens the step's four settings. Each has a starting value, and most steps never change them.
+
+| Setting | Starting value | What it does |
+|---|---|---|
+| **Hold for a person** | Nothing is held | Holds documents for approval when the conditions you tick are met. |
+| **Who is told** | **Whoever started the run** | Who is alerted when a run ends with documents that need attention. |
+| **Rounding account and limit** | No rounding | Adds a rounding line to a document that is out of balance by no more than the limit. |
+| **When a posted document comes back changed** | Ask | What a later run does with a document that changed since it posted. |
+
+### Hold for a Person
+
+Tick the conditions that hold a document for a person to approve:
+
+- **The amount is above** — an amount. It is compared with the document's amount in the document's own currency.
+- **It was posted from a file**
+- **It is a reversal, credit or correction**
+- **It is flagged as unusual**
+- **Always**
+
+When you tick more than one, a document is held only when all of them are true. With nothing ticked, the step adds no hold of its own; its system's hold rules, and the second person a reversal, credit or correction can need, still hold documents. A hold on the step only adds to the hold rules its system already has. A held document holds the rest of its set. The person whose send held a document, and the person who started its run, cannot approve it; approvals and approvers are on the [Posting Register](/guides/connections/posting-register/) and [ERP Systems](/guides/connections/erp-systems/).
+
+### Who Is Told
+
+**Whoever started the run** is the starting value. Choose **A list of people…** to name the members to alert instead. They are alerted when the run finishes with documents that need attention.
+
+### Rounding Account and Limit
+
+Tick **Add a rounding line to an unbalanced document**, then give the **Account** and the **Limit**. A journal that is out of balance in one currency by no more than the limit gets a line to that account, described "Rounding", and passes; a bigger difference, or a difference in more than one currency, stops it as unbalanced with the difference. The limit is also the tolerance for a set as a whole. With the setting unticked, nothing is rounded.
+
+### When a Posted Document Comes Back Changed
+
+| Choice | What a later run does with a changed document |
+|---|---|
+| **Ask (the starting value). It goes under Needs attention with two choices.** | The changed document is Not posted, "The source changed after this was posted.", and waits for a person to choose **Correct with this version** or **Keep the posted one** on the [run page](#changed-documents). |
+| **Correct. Reverse it and post the new version, for a step that re-runs every period.** | In a Live run, the posted one is reversed and the changed document is sent as its next version. |
+
+## Simulate and Live
+
+A document is sent to its system only when both of these are true:
+
+- The run is Live: A workflow run carries a posting mode, capped by the project's own mode, as described in [Choose a Posting Mode](/guides/workflows/run-a-workflow/#choose-a-posting-mode). A run in Simulate sends nothing, and a run in Off skips the step.
+- The document's system is Live for the project: That is the project's write authorization for the system's connection and environment, with the project's mode at Live — see [Authorize the Project to Post](/guides/workflows/run-a-workflow/#authorize-the-project-to-post) and going Live on [ERP Systems](/guides/connections/erp-systems/).
+
+Otherwise the document is checked and recorded as **Would post**, and nothing is sent. Simulate never contacts a system: in a Simulate run, even the checks that would have to ask the system are not made. The step has no dry-run setting of its own. The one exception is a step converted from an SAP posting step that was set to test postings: it keeps running in Simulate every time, and its documents post only through **Post these** on its run page.
+
+A run in Simulate is how you see exactly what would post. When it looks right, **Post these** on its [run page](#post-these) sends the same frozen documents.
+
+## The Five Checks
+
+Before anything is sent, every document goes through five checks. The run page shows each one passed, failed, or not checked:
+
+| Check | What stops a document |
+|---|---|
+| Balanced | Debits and credits that do not match, beyond the rounding limit. |
+| Period open | A posting date in a period that is closed in the system. |
+| Accounts exist | An account the system does not have, a code with no match, an empty value the system needs, an invoice that is not open, another company, or a currency the system does not book. |
+| Not posted before | A reference already posted to another system, or already used on this system. |
+| Sets agree | A set with a member missing, or whose documents do not add up. |
+
+**Period open** and **Accounts exist** use the lists PlaidCloud reads from the system when a Live run to a Live system starts. In a Simulate run, or when a list's read is partial, empty or late, they read not checked. The copy of the lists that **Refresh now** keeps on [ERP Systems](/guides/connections/erp-systems/) is for viewing: it does not feed a check. A Live run to a Live system also makes the system's own checks, where its format has them; a Simulate run does not.
+
+A check that did not run on a document counts as not checked, never as passed. The run page shows the five check names in English in every language.
+
+## When the Step Runs
+
+- The step waits up to 10 minutes for the systems to answer. A document still without an answer then carries on in the record, and its run page fills in when the answer comes.
+- The run log gets one line, "Posted n of m · k need attention". When any document needs attention, the step finishes with a warning, "k of m documents need attention", and the people in **Who is told** are alerted. The rest of the workflow carries on.
+- A table that does not exist, has no columns or has no rows is a warning, and nothing is posted. A table with no column for `doc_number` stops the step with an error.
+- When the step's configuration names a result table, the step writes one row per document to it: `doc_number`, `action`, `state`, `source_system` (the system posted to), `source_doc` (the number the system gave) and `message`.
+
+## The Run Page
+
+Every run has a page: a step's run, a file's, one started over the REST API or MCP, a retry, a reversal. Open it from **Runs** in the [Posting Register](/guides/connections/posting-register/) with **Open**. The page shows only the documents you may see; when it has none for you, it says "This run was not given any document you may see."
+
+The top of the page says how the run stands:
+
+- In Simulate: "This run is in Simulate. Nothing has been sent to any system. Post these sends the same frozen documents."
+- Live and still running: there is nothing to press to post. The page fills in as systems answer and says how many documents have not been sent yet. It reads the run again on its own while anything is still running or waiting.
+- Live and done: "Live. Every system answered."
+- Stopped: "This run was stopped. What had not been sent is Not posted."
+
+The **Summary** above the documents can be opened and closed, and stays as you left it; it starts closed once a run has documents. It holds:
+
+- For a step's run, the comparison first, for example "121 unchanged, 19 changed, 2 new." See [Running Again](#running-again).
+- The run's documents, sets, systems and amounts, and how many are in each state.
+- The [five checks](#the-five-checks), each with a tick, a cross, or a dash when nothing reached it. A failed check says how many did not pass.
+- **By system**: one line per system with its count in each state and its amount, and the **Total**. A system whose mode differs from the run's is marked Simulate or Live. Each count opens those documents.
+- The table's own total beside the documents' total: "Equal. No row of the table was left out." or "They differ. A row of the table was left out or counted twice." If you may see only some entities, the totals are of what you may see.
+- How old each system's copy of its periods and accounts is, or that there is no copy yet.
+
+Below, the **Documents** list puts what needs a person first. Each row has the reference (with its version, such as `JE-1001~2`), entity, system, set, amount, state, and **Why, and what next**. **Group by** groups the documents by **Entity**, **Type**, **Set** or **System**. Select one document to read its reason and next step in full, and, where there is one, **What changed**, **How to fix the rejection** and **Unusual**. Each row opens its posting in the [Posting Register](/guides/connections/posting-register/) with **Open posting**, shows its set with **Show its set**, and offers **Retry** where a retry can help.
+
+### Post These
+
+A run with documents in **Would post** offers **Post these** with their count, beside "Post these sends exactly the documents shown." It sends those documents, checked once more as of now: the project must allow Live, the reference must not have posted since the simulated run, and the system's own checks run again. A document on a system that is still in Simulate stays **Would post**. The run becomes Live, and the page tells you how many were sent and how many were checked again and not posted.
+
+- When some of the systems are not Live yet, the button reads **Go live and post these** or names the systems it takes Live. It makes them Live for the project first, and if any cannot go Live, nothing is sent. Only someone who can take a system Live sees this; anyone else posts to the systems as they are. See [ERP Systems](/guides/connections/erp-systems/).
+- A document that a hold rule holds is held again for this send. The person who pressed **Post these** and the person who started the run cannot approve it.
+- Only documents you may see are sent. A document whose stored copy has expired is Not posted: the run page reads "This is not available yet.", and the REST answer carries the message "The stored document has expired; run again."
+
+### Stop a Run
+
+A Live run that is still running, with documents not sent yet, offers **Stop run**. Documents not sent yet become Not posted, and the run page reads "The run was stopped before this was sent." Documents already sent are left as they are, and the page tells you how many were stopped and how many had already been sent. While a Live run is in the middle of its send, before any document is recorded, it cannot be stopped yet.
+
+### Retry
+
+**Retry** on a row, or **Retry the rest** for a set, sends a document that did not post again, as it was frozen, as a new run under the project's posting mode. Documents that already posted are not sent again. Retry is offered for a document whose cause was outside it — an approver declined, the run was stopped, the agent was offline, the system rejected it, it was not found at the deadline, it was not sent, or its entity had no system. A document stopped by a check needs its source fixed and the step run again.
+
+### Sets That Need a Person
+
+**Sets that need a person** lists a set that only partly posted, or that sent nothing because a member did not pass. **Show the set** filters the documents to it. For a part-posted set, **Retry the rest** retries what did not post, and **Reverse what posted** shows what will be reversed and in which systems, then reverses it with the reason that part of the set posted and the rest did not. A reversal that needs a second person waits as **Needs approval**, and the page links to the reversal's own run with **Open the reversal run**.
+
+### Changed Documents
+
+When the step is set to Ask and a run finds documents that changed since they posted, the page says how many are waiting for your choice:
+
+- **Correct all**, or **Correct with this version** for the selected documents, reverses the posted one and posts the changed one as a new version of its reference.
+- **Keep all**, or **Keep the posted one** for the selected documents, keeps the posted version and drops the changed one.
+
+Each asks you to confirm first.
+
+## Runs
+
+**Runs** in the Posting Register lists every run of a posting step or a posting file, newest first, with its **Mode**, who started it, and its result; **Open** opens its run page.
+
+Above the list, last month at a glance: one line per system, such as how many documents posted of how many, the amount, how many are in the system's own books, and how many postings need attention. A step that posted to a system the month before that and has not run for that month is named under it. **Open** on a line opens that system's postings for the month, and when the month is not complete, **Open Needs attention** takes you to what is left. The glance counts Live runs of steps.
+
+## Running Again
+
+A reference is posted once. When a run has a document that is already in the record:
+
+- An unchanged one is left alone.
+- A changed one follows the step's [When a Posted Document Comes Back Changed](#when-a-posted-document-comes-back-changed) setting: Ask, or Correct. A correction posts the next version of the reference, such as `JE-1001~2`, and the system sees the version too.
+- One whose earlier version still has no answer from the system is Not posted: "An earlier version of this reference has no answer from the system yet. Run again once it has one."
+
+On a system whose key carries the entity, the same reference for another entity is a different document. On any other system it is refused: "This reference is already used on this system."
+
+A document the step posted before that it did not produce this time is left alone. To reverse it, call `POST /rest/v1/analyze/erp/reverse/these` with the run; it reverses what the run's step posted before and did not produce, or only those of them you name, as a new run. There is no button for this on the run page yet.
+
+For a step that re-runs every period, such as one posting an allocation, set **When a posted document comes back changed** to Correct once.
+
+## Post From a File
+
+For a handful of journals in a spreadsheet, you can post a file with no workflow at all, through the REST API or the MCP tools. There is no page for it in the app yet.
+
+1. `GET /erp/file-post/starter`, with a `connection_id`, a `document_type` and a `format` (`xlsx` or `csv`), downloads the right column headings for that kind of document on that system, with an example row. A kind of document the system does not take is refused.
+2. `POST /erp/file-post` takes the spreadsheet (`.xlsx` or `.csv`) as `file`, with the `project_id`. Any more files sent as `attachments` are kept with the run as supporting files, but are not sent to the system yet. The MCP tool `erp_file_post` takes a file from PlaidCloud documents instead, by its `account_id` and `path`.
+3. The run opens in Simulate, and nothing is sent. Review it on its [run page](#the-run-page), and post it with **Post these**.
+
+- Each document goes to the system its entity posts to, like any other run.
+- A file with no `doc_number` column prepares nothing and answers `ask: one_journal`. Send it again with `one_journal` set to true to post the whole file as one journal, with the file's name as its reference, or false to post each row as its own journal, numbered after the file's name.
+- In a file that has a `doc_number` column, rows without one are left out, with a warning. Headings that are not posting columns are ignored, and the warnings name them.
+- An empty file, or one with no rows, prepares nothing and says so. So does a project whose posting is Off.
+
+### Post Again
+
+Post again posts a file run's documents again with a new posting date and new references, for a journal that recurs each month: `POST /erp/file-post/{run_id}/again`, or the MCP tool `erp_file_post_again`.
+
+- The `posting_date` is an ISO date, or one of `today`, `first_of_month`, `last_of_month`, `first_of_next_month` and `last_of_prev_month`, or a shift such as `+1m` or `-7d` from each document's own posting date.
+- `references` set to `suffix` gives each reference a suffix for the new month, such as `JE-1001-202612`, so the repeat is not refused as already posted; over REST you can instead map each reference to its new one. The MCP tool always adds the suffix.
+- The document date moves with the posting date, a due date moves by as many days, and the period columns are dropped so the system takes the period from the new date.
+- The new run opens in Simulate unless you ask for Live with `live`, and never beyond the project's posting mode. Only the documents of the entities you may see are posted again.
+
+`POST /erp/file-post/{run_id}/schedule` puts Post again on a schedule, with a `cron` and its `timezone`, a `posting_date` worked out each time it runs, and `references` set to `suffix`. It runs as you, and posts only the entities you may see. It posts Live only when someone has already posted this file's documents Live, and never beyond the project's posting mode. A schedule has no MCP tool.
+
+A run's documents are kept for 30 days when simulated and 90 after an answer; after that, Post again has nothing to prepare and says so.
+
+### Record as Already Posted
+
+For documents posted in the system before PlaidCloud was in use, `POST /erp/record-posted` records them as Posted without contacting the system, so a run that has them later refuses to post them again. Send the spreadsheet as `file`, with the `connection_id` and `environment_id` of the system. It needs the columns `reference` and `system_document`, and optionally `entity`, `posting_date` and `document_type` (a journal when left out). There is no page or MCP tool for it yet.
+
+- A document PlaidCloud already holds as posted, one still waiting for an answer, or a reference it holds as a different system document is listed as not recorded, with why.
+- An Unconfirmed document in the file is settled as Posted only for someone with the Posting Register Approver role; anyone else gets it back as not recorded.
+
+## Post From an Allocation
+
+An **Allocation: Split using Dimension** step can also write its result as a table of documents for a Post Documents step to post, through its `post_documents` setting in the step's configuration. The setting names the documents `table` to write, and the result's columns for `rule`, `account`, `source_account`, `amount` and `posting_date` (all needed), and optionally `entity` and `currency_txn`; `set` gives the documents a fixed set name.
+
+- Each rule is one document a month, referenced as the rule and the month (for example `RENT-202611`). Each result row is a line to its account with an offsetting line to the source account, so every document balances.
+- A row with no rule, or a zero amount, makes no line. A row whose amount is not a number is left out, with a warning naming the rows. When nothing is left to post, the step warns and empties the documents table.
+- Re-running the allocation for the same month gives the same references, so set the posting step's [When a Posted Document Comes Back Changed](#when-a-posted-document-comes-back-changed) to Correct.
+
+## Convert an SAP Posting Step
+
+An existing SAP posting step can become a Post Documents step. Nothing converts on its own: right-click the step on the canvas and choose **Convert to Post documents…**, or use **Convert to Post documents…** on the step's form. PlaidCloud first shows what will convert — the columns matched to document fields, the entities routed to their systems, whether it keeps posting as it did or starts in Simulate, and any warnings — and you confirm with **Convert**. The old settings stay in the step's versions.
+
+- Only SAP posting steps convert. A step with no function or header columns set, or whose document key is not a company code and one document number, does not convert, and PlaidCloud says why.
+- The entities in the step's filter are suggested as routes to its connection. When the filter names none, set the routing on [ERP Systems](/guides/connections/erp-systems/) before it posts.
+- Until you set a table on the converted step, it reads the old step's header, line, VAT and withholding tables itself.
+- The converted step keeps the old step's record of what it posted, so a period the old step already posted is not posted again.
+- A step that was set to test postings keeps running in Simulate. See [Simulate and Live](#simulate-and-live).
+
+## Over REST and MCP
+
+The same posting is available over the REST API, under `/rest/v1/analyze/erp`, and as MCP tools:
+
+| To | REST | MCP |
+|---|---|---|
+| See the first document of a table, as its system will receive it | `POST /erp/post/preview` | `erp_post_preview` |
+| Post a table or a list of documents | `POST /erp/post` | `erp_post_documents` |
+| Read runs and a run page | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Post these, or stop a run | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Answer Ask for changed documents | `POST /erp/ask` | `erp_ask_answer` |
+| Retry documents | `POST /erp/retry` | `erp_retry` |
+| Download a starter file | `GET /erp/file-post/starter` | — |
+| Post from a file, and post it again | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Post it again on a schedule | `POST /erp/file-post/{run_id}/schedule` | — |
+| Record as already posted | `POST /erp/record-posted` | — |
+| Convert an SAP posting step | `POST /erp/convert` | `erp_convert_step` |
+
+- A REST or MCP post runs in Simulate unless you ask for Live, and never beyond the project's posting mode.
+- A REST post of a table reads at most 100,000 rows; a longer table is refused whole, and posts with the step instead.
+- `erp_file_post` takes a file from PlaidCloud documents; a file that is not there is a warning, and nothing is prepared.
+- Convert and retry are dry runs unless you say otherwise.
+- An AI assistant acting for you is refused a Live post, **Post these**, Correct, a real retry, a real conversion and Post again: a person does those.
+
+## Who Can Do What
+
+| To | You need |
+|---|---|
+| Build the step and preview its first document | `analyze.step.write` |
+| Post over REST or MCP | `analyze.workflow.write` and write access to the project |
+| Download a starter file | `analyze.connection.read` |
+| Post from a file | `analyze.workflow.write` and access to the project |
+| Open a run page | `analyze.project.read`; you see the documents of the entities you may see |
+| See **Runs** in the Posting Register | `erp.register.view` |
+| **Post these**, **Stop run**, Correct or Keep, Post again and its schedule, reverse what a run did not produce | `analyze.workflow.write`, and Architect or Manager on the unlocked project |
+| Take a system Live while posting | Architect on the unlocked project, with write access to the connection yourself |
+| **Retry** | `analyze.workflow.write`, and Architect or Manager on the unlocked project, with write access to the document's connection yourself |
+| **Reverse what posted** | `erp.register.view` and `erp.register.operate` |
+| Record as already posted | `erp.register.view` and `erp.register.operate`, with write access to the connection yourself; settling Unconfirmed documents also needs `erp.register.approve` |
+| Convert an SAP posting step | `analyze.step.write`, with write access to the project |
+
+Every path enforces the same rule: the UI, the REST API and the MCP tools call the same checks.

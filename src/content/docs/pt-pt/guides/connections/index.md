@@ -54,7 +54,9 @@ Uma **ligação** é uma configuração guardada que permite ao PlaidCloud chega
 - [Ligar ao Anaplan](/pt-pt/guides/connections/anaplan/) — ligar ao Anaplan e ler uma vista guardada, executar uma ação de exportação já existente ou carregar listas para uma dimensão do PlaidCloud. Só de leitura.
 - [OneStream para o Data Foundation](/pt-pt/guides/connections/onestream-for-data-foundation/) — o que o seu administrador do OneStream configura para que o Data Foundation possa ler resultados consolidados através de um adaptador de dados.
 - [Ligar ao QuickBooks](/pt-pt/guides/connections/quickbooks/) — pré-requisitos e limitações atuais do QuickBooks Online.
-- [Rever o Registo de lançamentos](/pt-pt/guides/connections/posting-register/) — uma consola ao nível do inquilino para a área financeira e contabilística rever os lançamentos de ERP em todos os projetos e ligações que consegue ver.
+- [Contabilizar documentos em sistemas ERP](/pt-pt/guides/connections/post-documents/) — lance uma tabela de diários, faturas e outros documentos em qualquer sistema ERP ligado a partir de um só passo, em modo de simulação ou real.
+- [Configurar sistemas ERP](/pt-pt/guides/connections/erp-systems/) — os sistemas para onde o passo Contabilizar documentos lança, que entidade vai para que sistema, regras de retenção e o que cada ERP suporta.
+- [Rever o Registo de lançamentos](/pt-pt/guides/connections/posting-register/) — reveja e atue sobre os lançamentos de ERP em todos os projetos e sistemas que consegue ver: o que requer atenção, cada lançamento e cada execução.
 
 ## Relacionados
 

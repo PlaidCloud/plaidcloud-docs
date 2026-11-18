@@ -9,12 +9,12 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 import { Aside } from '@astrojs/starlight/components';
 
-Wenn ein Workflow in ein ERP bucht — eine Journalbuchung oder einen manuellen Scheck in Sage 100, eine Journalbuchung in Sage Intacct oder NetSuite, einen Beleg in Acumatica, Business Central oder Xero, eine Journalbuchung in Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials oder SAP S/4HANA Cloud, einen SAP-Beleg —, erfasst PlaidCloud jeden Buchungsversuch in einem dauerhaften Hauptbuch pro Mandant, sodass derselbe Beleg nie zweimal gebucht wird. Der **ERP-Buchungsverlauf** ist die schreibgeschützte Sicht auf dieses Hauptbuch: jeder Versuch und sein aktueller Status, mit der eigenen Belegnummer und den Zeitstempeln des ERP, nach Projekt filterbar.
+Wenn ein Workflow in ein ERP bucht — über den Schritt **Belege buchen** (siehe [Belege in ERP-Systemen buchen](/de/guides/connections/post-documents/)) oder über den eigenen Buchungsschritt eines Systems, etwa eine Journalbuchung oder einen manuellen Scheck in Sage 100, eine Journalbuchung in Sage Intacct oder NetSuite, einen Beleg in Acumatica, Business Central oder Xero, eine Journalbuchung in Dynamics 365 Finance & Operations, Oracle Fusion, Workday Financials oder SAP S/4HANA Cloud oder einen SAP-Beleg —, erfasst PlaidCloud jeden Buchungsversuch in einem dauerhaften Hauptbuch pro Mandant, sodass derselbe Beleg nie zweimal gebucht wird. Der **ERP-Buchungsverlauf** ist die schreibgeschützte Sicht auf dieses Hauptbuch: jeder Versuch und sein aktueller Status, mit der eigenen Belegnummer und den Zeitstempeln des ERP, nach Projekt filterbar.
 
 Er ergänzt die Ergebnistabelle pro Ausführung, die ein Buchungsschritt schreibt: Die Ergebnistabelle zeigt die Ergebnisse einer Ausführung, während der Buchungsverlauf der dauerhafte Nachweis über alle Ausführungen und Workflows hinweg ist und jede Buchung durch ihren gesamten Lebenszyklus verfolgt, statt sie im Moment des Ausführungsendes einzufrieren.
 
 <Aside type="note">
-Der Buchungsverlauf ist **schreibgeschützt** — er ändert nie eine Buchung oder das Hauptbuch. Er ist über die REST-API und als MCP-Tool verfügbar, begrenzt auf ein Projekt, auf das Sie bereits Zugriff haben. Für eine mandantenweite Ansicht, die Buchungen über alle Projekte und Verbindungen prüft, die Sie sehen dürfen, verwenden Sie das [Buchungsregister](/de/guides/connections/posting-register/).
+Der Buchungsverlauf ist **schreibgeschützt** — er ändert nie eine Buchung oder das Hauptbuch. Er ist über die REST-API und als MCP-Tool verfügbar, begrenzt auf ein Projekt, auf das Sie bereits Zugriff haben. Um Buchungen über alle Projekte und Systeme, die Sie sehen dürfen, zu prüfen und darauf zu reagieren, verwenden Sie das [Buchungsregister](/de/guides/connections/posting-register/).
 </Aside>
 
 ## Was jede Buchung zeigt
@@ -23,16 +23,18 @@ Jede Zeile ist ein Beleg, der in eine ERP-Umgebung über eine Verbindung gebucht
 
 | Feld | Bedeutung |
 |---|---|
+| `ledger_id` | Die ID der Zeile im Hauptbuch. |
 | `project_id` | Das Projekt, aus dem gebucht wurde. |
 | `connection_id` | Die verwendete ERP-Verbindung. |
 | `environment_id` | Die Verbindungsumgebung, in die gebucht wurde (zum Beispiel Sandbox oder Produktion). |
 | `natural_key` | Der fachliche Schlüssel des Belegs, wie ihn der Buchungsschritt abgeleitet hat. |
+| `mode` | `live` für eine echte Buchung, `simulate` für das, was eine simulierte Ausführung gebucht hätte. |
 | `state` | Der aktuelle Lebenszyklusstatus der Buchung (siehe unten). |
 | `confirmation_id` | Die eigene Belegnummer des ERP, sobald das ERP eine vergibt. Wird bei einer simulierten Buchung nie gesetzt. |
 | `run_id` | Die Workflow-Ausführung, die die Buchung vorgenommen hat. |
 | `submitted_at`, `created_at`, `updated_at` | Wann die Buchung übermittelt, erstmals erfasst und zuletzt geändert wurde. |
 
-Eine Buchung im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) ist als simuliert gekennzeichnet, sodass sie sich auf einen Blick von einer echten Buchung unterscheidet — siehe [Simulierte Buchungen](#simulierte-buchungen) weiter unten.
+Eine Buchung im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) trägt `mode` `simulate`, sodass sie sich auf einen Blick von einer echten Buchung unterscheidet — siehe [Simulierte Buchungen](#simulierte-buchungen) weiter unten.
 
 ## Die Lebenszyklusstatus
 
@@ -48,6 +50,8 @@ Eine Buchung durchläuft diese Status, während das ERP sie verarbeitet:
 | `in_doubt` | Das Ergebnis konnte nicht bestätigt werden — ein Mensch muss vor jedem erneuten Versuch direkt im ERP nachsehen. |
 | `reversed` | Ein zuvor gebuchter Beleg wurde storniert. |
 
+Das [Buchungsregister](/de/guides/connections/posting-register/) zeigt dieselben Buchungen in seinen eigenen, einfacheren Status.
+
 <Aside type="caution">
 Eine `in_doubt`-Buchung ist genau das — unbekannt, nicht fehlgeschlagen. Bestätigen Sie sie im ERP selbst, bevor Sie entscheiden, ob Sie darauf reagieren; führen Sie sie nie blind erneut aus.
 
@@ -56,11 +60,13 @@ PlaidCloud erfasst eine Buchung oder Stornierung als `in_doubt`, wenn es nicht f
 
 ## Simulierte Buchungen
 
-Eine im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) gestartete Ausführung validiert, was ein Buchungsschritt senden würde, kontaktiert das ERP aber nie. Was gebucht worden wäre, wird hier dennoch als simuliert gekennzeichnet erfasst, sodass Sie es genauso prüfen können wie eine echte Buchung — einschließlich ihres `natural_key` und der erstellten Anfrage —, jedoch ohne `confirmation_id`, da kein ERP sie je gesehen hat.
+Eine im [Simulationsmodus](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) gestartete Ausführung validiert, was ein Buchungsschritt senden würde, kontaktiert das ERP aber nie. Was ein Buchungsschritt gebucht hätte, wird hier dennoch mit `mode` `simulate` erfasst, sodass Sie es genauso prüfen können wie eine echte Buchung — einschließlich ihres `natural_key` —, jedoch ohne `confirmation_id`, da kein ERP sie je gesehen hat.
+
+Die simulierten Belege eines Schritts **Belege buchen** werden hier ebenfalls mit `mode` `simulate` erfasst, mit Ausnahme der Belege für ein System, das über den PlaidCloud-Agent gebucht wird (etwa SAP lokal installiert und Sage 100); diese erscheinen nur im [Buchungsregister](/de/guides/connections/posting-register/) als **Würde gebucht**.
 
 Ein simulierter Eintrag belegt oder blockiert nie den Platz, der den idempotenten Schreibvorgang einer echten Buchung schützt. Führen Sie denselben Beleg später live aus, wird die echte Buchung durchgeführt und ersetzt den simulierten Eintrag. Ein Workspace ohne konfiguriertes Buchungshauptbuch validiert eine simulierte Ausführung weiterhin normal — er erfasst hier lediglich nichts.
 
-Leeren Sie die simulierten Einträge eines Projekts unabhängig von echten mit `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (optional eingegrenzt mit `connection_id`) oder mit dem MCP-Tool `erp_clear_simulated_postings` mit denselben Argumenten. In beiden Fällen werden nur simulierte Zeilen entfernt — eine echte Buchung wird nie angetastet —, und die Antwort meldet sowohl die geleerten Verlaufszeilen als auch die geleerten Zeilen des Simulationsspeichers des [Buchungsregisters](/de/guides/connections/posting-register/), da ein Leeren aus beiden entfernt.
+Leeren Sie die simulierten Einträge eines Projekts unabhängig von echten mit `DELETE /rest/v1/analyze/erp/write/history/simulated?project_id=<project>` (optional eingegrenzt mit `connection_id`) oder mit dem MCP-Tool `erp_clear_simulated_postings` mit denselben Argumenten. In beiden Fällen werden nur simulierte Zeilen entfernt — eine echte Buchung wird nie angetastet. Dasselbe Leeren entfernt auch die Belege der Ausführungen von **Belege buchen** des Projekts, die unter Simulate liefen, und die eigenen Kopien simulierter Buchungen im [Buchungsregister](/de/guides/connections/posting-register/). Die Antwort meldet `cleared` (Verlaufszeilen und Belege von Simulate-Ausführungen) und `sims_cleared` (die Kopien des Registers).
 
 <Aside type="note">
 SAP-Buchungs-, Anhangs- und RFC-Schritte werden unter Simulate ganz übersprungen, nicht im Probelauf ausgeführt, und erzeugen daher nie einen simulierten Eintrag. Siehe [Buchungsmodus wählen](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen).
@@ -82,6 +88,7 @@ Optionale Abfrageparameter grenzen das Ergebnis ein:
 |---|---|
 | `connection_id` | Nur Buchungen über diese Verbindung. |
 | `state` | Nur Buchungen in diesem Status (zum Beispiel `state=in_doubt`). |
+| `mode` | `live` oder `simulate`. Ohne Angabe erscheinen echte und simulierte Buchungen zusammen. |
 | `limit` | Seitengröße (Standard 100). |
 | `cursor` | Der `next_cursor` der vorherigen Seite. |
 
@@ -89,7 +96,7 @@ Die Ergebnisse kommen neueste zuerst. Füllt sich eine Seite bis `limit`, enthä
 
 ### Über MCP
 
-Rufen Sie das Tool `erp_post_history` mit denselben Argumenten auf — `project_id` (erforderlich) und optional `connection_id`, `state`, `limit` und `cursor`. Es liefert dieselben Zeilen, auf dieselbe Weise seitenweise.
+Rufen Sie das Tool `erp_post_history` mit denselben Argumenten auf — `project_id` (erforderlich) und optional `connection_id`, `state`, `mode`, `limit` und `cursor`. Es liefert dieselben Zeilen, auf dieselbe Weise seitenweise.
 
 ## Häufige Prüfungen
 

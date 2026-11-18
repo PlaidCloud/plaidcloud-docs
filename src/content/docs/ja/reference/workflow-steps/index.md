@@ -47,6 +47,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### エンタープライズ統合
 
+- [伝票を転記 ステップ](/ja/reference/workflow-steps/export/post-documents/) — 仕訳、請求書、メモ、支払のテーブルを、設定済みの任意のERPシステムに、1つのステップで転記します
 - [エージェント](/ja/reference/workflow-steps/agent/) — オンプレミスリソース向けのPlaidLinkエージェント操作
 - [NetSuite](/ja/reference/workflow-steps/netsuite/) — 残高、GL明細、マスターデータ、または独自の[SuiteQLクエリ](/ja/reference/workflow-steps/netsuite/import-suiteql-query/)をインポートし、仕訳をNetSuiteに転記します
 - [Acumatica](/ja/reference/workflow-steps/acumatica/) — マスターエンティティとトランザクションエンティティをインポートし、仕訳トランザクション、請求書、買掛金、支払を転記します

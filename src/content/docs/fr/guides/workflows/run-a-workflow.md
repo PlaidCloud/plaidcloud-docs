@@ -21,7 +21,7 @@ Chaque exécution porte un mode d'écriture ERP. Pour en choisir un dans PlaidCl
 | Mode | Ce qui se passe |
 |---|---|
 | Réel | Les étapes d'écriture comptabilisent exactement comme elles l'ont toujours fait. C'est le mode par défaut. |
-| Simulation | Chaque étape d'écriture ERP construit et valide exactement ce qu'elle comptabiliserait, puis ne valide rien et ne contacte jamais l'ERP. Les écritures qui auraient été comptabilisées sont enregistrées dans l'[historique des écritures ERP](/fr/guides/connections/erp-post-history/), marquées comme simulées, afin que vous puissiez les examiner avant d'exécuter en mode Réel. |
+| Simulation | Chaque étape d'écriture ERP construit et valide exactement ce qu'elle comptabiliserait, puis ne valide rien et ne contacte jamais l'ERP. Les écritures qui auraient été comptabilisées sont enregistrées pour que vous puissiez les examiner avant d'exécuter en mode Réel : celles d'une étape **Comptabiliser des documents** dans le [Registre des écritures](/fr/guides/connections/posting-register/) sous **Serait comptabilisé** (consultez [Comptabiliser des documents dans les systèmes ERP](/fr/guides/connections/post-documents/)), celles de l'étape de comptabilisation propre à un système dans l'[historique des écritures ERP](/fr/guides/connections/erp-post-history/), marquées comme simulées. |
 | Désactivé | Les étapes d'écriture sont ignorées en totalité. |
 
 Un projet porte également son propre plafond de mode d'écriture, défini via l'API du projet ou l'assistant par tout membre disposant d'un accès en écriture à un projet déverrouillé. Le plafond ne peut que rendre une exécution plus sûre, jamais plus permissive : le mode effectif d'une exécution est le plus restrictif entre le mode que vous avez choisi et le plafond du projet. Un projet plafonné à Simulation reste donc simulé, même si vous lancez l'exécution en mode Réel.
@@ -35,7 +35,7 @@ Les étapes d'écriture SAP, de pièce jointe SAP et d'appel RFC SAP générique
 :::
 
 :::note
-Chaque étape d'écriture ERP porte également son propre paramètre Validate Only (intitulé Aperçu ou Test Only Mode sur certaines étapes), indépendant du mode d'écriture de l'exécution décrit ci-dessus. L'éditeur d'étape l'enregistre toujours explicitement. Une configuration d'étape rédigée autrement (API REST, MCP ou import d'un bundle de workflow) qui omet entièrement ce paramètre prend désormais aussi par défaut un aperçu plutôt qu'une écriture réelle.
+Chaque étape d'écriture ERP porte également son propre paramètre Validate Only (intitulé Aperçu ou Test Only Mode sur certaines étapes), indépendant du mode d'écriture de l'exécution décrit ci-dessus. L'éditeur d'étape l'enregistre toujours explicitement. Une configuration d'étape rédigée autrement (API REST, MCP ou import d'un bundle de workflow) qui omet entièrement ce paramètre prend désormais aussi par défaut un aperçu plutôt qu'une écriture réelle. L'étape **Comptabiliser des documents** n'a pas de tel paramètre : le mode de l'exécution et le mode propre à son système décident si elle comptabilise : consultez [Comptabiliser des documents dans les systèmes ERP](/fr/guides/connections/post-documents/).
 :::
 
 ## Autoriser le projet à comptabiliser

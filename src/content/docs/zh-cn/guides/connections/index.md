@@ -54,7 +54,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [连接到 Anaplan](/zh-cn/guides/connections/anaplan/)：连接到 Anaplan，读取已保存的视图、运行现有的导出操作，或将列表加载到 PlaidCloud 维度中。仅限读取。
 - [Data Foundation 的 OneStream](/zh-cn/guides/connections/onestream-for-data-foundation/)：OneStream 管理员需要进行哪些设置，才能让 Data Foundation 通过数据适配器读取合并结果。
 - [连接到 QuickBooks](/zh-cn/guides/connections/quickbooks/)：QuickBooks Online 的前提条件和当前限制。
-- [查看过账登记簿](/zh-cn/guides/connections/posting-register/)：租户级控制台，供财务和会计人员查看其可见的所有项目和连接中的 ERP 过账。
+- [向 ERP 系统过账凭证](/zh-cn/guides/connections/post-documents/)：通过一个步骤，以“模拟”或“实时”模式将日记账、发票等凭证表过账到任何已连接的 ERP 系统。
+- [设置 ERP 系统](/zh-cn/guides/connections/erp-systems/)：过账凭证所过账到的系统、各实体对应的系统、暂挂规则，以及各 ERP 的支持情况。
+- [查看过账登记簿](/zh-cn/guides/connections/posting-register/)：查看并处理您可见的所有项目和系统中的 ERP 过账：需要关注的内容、所有过账以及所有运行。
 
 ## 相关内容
 

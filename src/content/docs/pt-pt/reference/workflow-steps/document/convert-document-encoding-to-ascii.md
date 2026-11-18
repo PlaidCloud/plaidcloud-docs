@@ -12,7 +12,7 @@ Reescreve um ficheiro de texto como ASCII simples. É particularmente útil se a
 
 ## Como funciona
 
-- A codificação da origem é detetada. Um ficheiro UTF-8 é lido como UTF-8, e os carateres do Windows colados num ficheiro desses — aspas curvas do Word ou do Excel, por exemplo — passam intactos, por muitos que sejam. Um ficheiro noutra codificação é lido na codificação detetada a partir da primeira parte que não é UTF-8 válido.
+- A codificação da origem é detetada. Um ficheiro UTF-8 é lido como UTF-8, e os carateres do Windows colados num ficheiro desses — aspas curvas do Word ou do Excel, por exemplo — passam intactos, por muitos que sejam. Um ficheiro que seja ASCII simples, exceto alguns carateres do Windows — travessões, aspas curvas ou letras acentuadas, no máximo dois seguidos e que representem menos de 1% do texto à volta do primeiro deles — é lido como Windows-1252, onde quer que estejam no ficheiro. Um ficheiro noutra codificação é lido na codificação detetada a partir da primeira parte que não é UTF-8 válido.
 - As letras acentuadas mantêm a letra de base (`café` passa a `cafe`) e os carateres sem forma ASCII são descartados.
 - Uma linha que contenha apenas aspas duplas é unida ao fim da linha anterior.
 - Um ficheiro cuja codificação não possa ser detetada faz o passo falhar, indicando o ficheiro.

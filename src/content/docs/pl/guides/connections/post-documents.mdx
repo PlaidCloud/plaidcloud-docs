@@ -1,0 +1,341 @@
+---
+title: Księgowanie dokumentów w systemach ERP
+description: Księguj dokumenty z tabeli w systemie ERP, do którego księguje dana jednostka, ze sprawdzeniami przed wysłaniem, trybami Simulate i Live, stroną każdego uruchomienia, ponownym uruchamianiem, księgowaniem z pliku lub z alokacji oraz konwersją kroku księgowania SAP.
+sidebar:
+  label: Księgowanie dokumentów
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+Krok **Księgowanie dokumentów** księguje dokumenty z jednej tabeli w Twoich systemach ERP. Krok nie wskazuje żadnego systemu: każdy dokument trafia do systemu, do którego księguje jego jednostka, więc jeden krok może księgować jednocześnie w kilku systemach i kilku instancjach tego samego ERP. Każdy sposób księgowania — krok, plik, REST API i narzędzia MCP — przechodzi przez te same sprawdzenia i jest zapisywany jako uruchomienie z własną [stroną uruchomienia](#strona-uruchomienia).
+
+Ta strona opisuje krok, jego tabelę i ustawienia, tryby Simulate i Live, stronę uruchomienia, ponowne uruchamianie, księgowanie z pliku lub z alokacji oraz konwersję kroku księgowania SAP. Konfiguracja samych systemów — która jednostka księguje gdzie, uruchomienie produkcyjne, reguły wstrzymania i to, co obsługuje każdy ERP — znajduje się w [Systemy ERP](/pl/guides/connections/erp-systems/). Przeglądanie, zatwierdzanie, odwracanie i rozstrzyganie księgowań po fakcie opisano w [Rejestrze księgowań](/pl/guides/connections/posting-register/).
+
+## Zanim zaczniesz
+
+- Każdy ERP, do którego księgujesz, to połączenie, do którego PlaidCloud może księgować, skonfigurowane jako system wraz z jednostkami, które do niego księgują. Zobacz [Systemy ERP](/pl/guides/connections/erp-systems/).
+- Aby księgować naprawdę, uruchomienie musi być w trybie Live, a system każdego dokumentu musi być rzeczywisty dla projektu. Do tego czasu wszystko jest sprawdzane i wyświetlane jako **Zostałby zaksięgowany**, a nic nie jest wysyłane. Zobacz [Simulate i Live](#simulate-i-live).
+
+## Jak księgowany jest dokument
+
+Wiersze o tej samej jednostce i `doc_number` tworzą jeden dokument. Gdy uruchomienie się rozpoczyna, dokumenty są zamrażane: wszystko, co dzieje się później w uruchomieniu — **Zaksięgować te**, ponowienie, zatwierdzenie — wysyła dokładnie te dokumenty. Każdy dokument przechodzi następnie przez te same etapy i zatrzymuje się na pierwszym, który tak zdecyduje, z podaniem powodu:
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="Dokument jest sprawdzany pod kątem salda i zestawów, kierowany do systemu swojej jednostki, sprawdzany względem tego systemu, wstrzymywany, jeśli tak stanowi reguła, a następnie wysyłany w trybie Live lub zapisywany jako Zostałby zaksięgowany w przeciwnym razie." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Saldo</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">i zestawy</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Trasowanie</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">jednostka do systemu</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Sprawdzenie</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">względem systemu</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Wstrzymać?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Wymaga zatwierdzenia</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Live: wysłano</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Oczekuje → Zaksięgowany</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simulate</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Zostałby zaksięgowany</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">Dokument zatrzymany na dowolnym etapie jest Niezaksięgowany, z podaniem powodu</text>
+</svg>
+<figcaption>Każdy sposób księgowania przechodzi przez te same etapy. Dokument trafia do systemu tylko wtedy, gdy zarówno uruchomienie, jak i jego system są w trybie Live.</figcaption>
+</figure>
+
+1. Saldo i zestawy: Zapis dziennika musi się bilansować w każdej używanej przez siebie walucie, a zestaw musi się bilansować jako całość. Zobacz [Zestawy](#zestawy) oraz ustawienie zaokrąglenia w sekcji [Ustawienia kroku](#ustawienia-kroku).
+2. Trasowanie: O systemie dokumentu decyduje jego jednostka, zgodnie z ustawieniami w [Systemy ERP](/pl/guides/connections/erp-systems/). Dokument, którego jednostka nie ma systemu, jest Niezaksięgowany.
+3. Sprawdzenie: [Pięć sprawdzeń](#pięć-sprawdzeń) działa na podstawie tego, co PlaidCloud wie o systemie.
+4. Wstrzymanie: Reguła wstrzymania w systemie lub własne wstrzymanie kroku utrzymuje dokument jako **Wymaga zatwierdzenia**, dopóki osoba nie zatwierdzi go w [Rejestrze księgowań](/pl/guides/connections/posting-register/).
+5. Wysłanie: Dokument jest przekształcany do własnego formatu systemu i wysyłany albo zapisywany jako **Zostałby zaksięgowany**, gdy uruchomienie lub jego system jest w trybie Simulate.
+
+Co oznacza każdy stan i co z każdym zrobić, opisano w [Rejestrze księgowań](/pl/guides/connections/posting-register/).
+
+## Dodawanie kroku
+
+Dodaj do przepływu pracy krok **Księgowanie dokumentów**: znajduje się w sekcji **Systemy zewnętrzne** w menu kroków oraz w folderze **Systemy zewnętrzne** na palecie kroków. Jego formularz ma trzy sekcje, a następnie link **Więcej ▸** do ustawień kroku.
+
+1. **1 · Tabela** — wybierz **Tabelę** z dokumentami, jeden wiersz na pozycję. Po zbudowaniu pierwszego dokumentu sekcja pokazuje, ile pozycji i dokumentów odczytano z tabeli.
+2. **2 · Dopasowanie kolumn** — co krok rozpoznał w każdej kolumnie Twojej tabeli. Kolumna, której nazwa jest polem księgowania, jest **Dopasowano według nazwy**; ta, której nazwa jest znaną nazwą alternatywną, jest **Dopasowano według nazwy alternatywnej**. Dla kolumny, której krok nie rozpoznaje, wyświetlana jest lista: wybierz pole, które zawiera, z **Czym jest ta kolumna?**, a zostanie oznaczone jako **Wybrano to**. Z krokiem zapisywane są tylko kolumny, dla których dokonasz wyboru. Dwie kolumny nigdy nie przyjmują tego samego pola: zachowuje je pierwsza.
+3. **3 · Pierwszy dokument w postaci, w jakiej otrzyma go system** — pierwszy dokument tabeli, skierowany do systemu i przekształcony do jego formatu, wraz z pozycjami. Gdy nie można go jeszcze zbudować, sekcja podaje powód, tymi samymi słowami co powód Niezaksięgowany.
+
+Krok wymaga **Tabeli**. Jeśli zaznaczysz kwotę wstrzymania, musi ona być liczbą, a jeśli dodasz wiersz zaokrąglenia, potrzebuje konta.
+
+## Tabela
+
+Tabela używa nazw kolumn Data Foundation. Zapis dziennika w kształcie Data Foundation jest księgowany bez żadnego dopasowywania; tabela zafakturowanych pozycji sprzedaży jest księgowana po dodaniu `account` i `document_type`. Jeden wiersz to jedna pozycja; wiersze o tym samym `entity` i `doc_number` tworzą jeden dokument.
+
+| Kolumna | Co zawiera |
+|---|---|
+| `doc_number` | Odniesienie dokumentu. Wymagane: tabela bez kolumny dla niego zatrzymuje krok. Nie może zawierać `~`, który PlaidCloud zachowuje do numerowania wersji. |
+| `entity` | Jednostka, do której należy dokument. Decyduje o systemie. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Daty i okres dokumentu. |
+| `account` | Konto pozycji. |
+| `amount_txn` i `currency_txn` | Kwota pozycji i jej waluta. Tabela tylko w walucie lokalnej może zamiast tego używać `amount_local` i `currency_local`, a `debit` i `credit` są akceptowane zamiast kwoty. |
+| `description`, `line_number`, `quantity`, `unit` | Tekst pozycji, kolejność i ilość. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` do `segment_10` | Wymiary pozycji. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Podatek i podatek u źródła. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Szczegóły faktury. |
+| `document_type` | `journal` (gdy puste), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` lub `payment`. To, co przyjmuje każdy system, opisano w [Systemy ERP](/pl/guides/connections/erp-systems/). |
+| `set` | Nazwa zestawu: dokumenty, które ją współdzielą, są księgowane razem albo wcale. Zobacz [Zestawy](#zestawy). |
+
+Dopasowywane są także te nazwy alternatywne, bez rozróżniania wielkości liter: `invoice_number`, `reference` i `journal id` dla `doc_number`, `invoice_date` dla `posting_date`, `net_amount_local` dla `amount_local`, `memo` dla `description`, `cost center` dla `department` oraz `vendor` dla `supplier`. Kolumna, która nie jest żadną z nich — na przykład jeden z Twoich własnych wymiarów — jest przenoszona w dokumencie i jego pozycjach, dla formatu systemu, który ją mapuje.
+
+Kilka kolumn należy do samego księgowania i nie jest jeszcze dostępnych: wiersz, w którym `action` ma wartość inną niż `post`, lub taki, który ustawia `reverse_on`, jest Niezaksięgowany. Strona uruchomienia wyświetla „To nie jest jeszcze dostępne.”; tabela wyników i odpowiedź REST zawierają komunikat „only posting is available yet” lub „a date to reverse on is not available yet”. Aby odwrócić, uznać lub skorygować księgowanie, użyj [Rejestru księgowań](/pl/guides/connections/posting-register/).
+
+Dokument jest rozpoznawany po swoim typie, jednostce i odniesieniu, a nie po miesiącu, więc dokument przeniesiony do innego miesiąca jest nadal tym samym dokumentem.
+
+### Zestawy
+
+Dokumenty, które mają tę samą wartość `set`, są księgowane razem albo wcale:
+
+- Zestaw musi się bilansować jako całość, z limitem zaokrąglenia jako tolerancją. Jeśli się nie bilansuje, każdy jego członek jest Niezaksięgowany z podaniem różnicy.
+- Jeśli którykolwiek członek zostanie zatrzymany przez sprawdzenie, reszta zestawu też jest Niezaksięgowana: „another document in set … was not posted”. Jeśli którykolwiek członek jest wstrzymany do zatwierdzenia, cały zestaw czeka jako **Wymaga zatwierdzenia**.
+- Jeśli system któregokolwiek członka nie jest rzeczywisty, cały zestaw jest **Zostałby zaksięgowany**, więc żadna jego część nie jest wysyłana naprawdę.
+
+## Ustawienia kroku
+
+**Więcej ▸** otwiera cztery ustawienia kroku. Każde ma wartość początkową, a większość kroków nigdy ich nie zmienia.
+
+| Ustawienie | Wartość początkowa | Co robi |
+|---|---|---|
+| **Wstrzymaj do decyzji osoby** | Nic nie jest wstrzymane | Wstrzymuje dokumenty do zatwierdzenia, gdy spełnione są zaznaczone przez Ciebie warunki. |
+| **Kto otrzymuje powiadomienie** | **Osoba, która rozpoczęła uruchomienie** | Kto otrzymuje alert, gdy uruchomienie kończy się dokumentami wymagającymi uwagi. |
+| **Konto zaokrągleń i limit** | Bez zaokrągleń | Dodaje wiersz zaokrąglenia do dokumentu, który jest niezbilansowany o nie więcej niż limit. |
+| **Gdy zaksięgowany dokument wraca zmieniony** | Zapytaj | Co robi późniejsze uruchomienie z dokumentem, który zmienił się od zaksięgowania. |
+
+### Wstrzymaj do decyzji osoby
+
+Zaznacz warunki, które wstrzymują dokument do zatwierdzenia przez osobę:
+
+- **Kwota jest wyższa niż** — kwota. Jest porównywana z kwotą dokumentu we własnej walucie dokumentu.
+- **Został zaksięgowany z pliku**
+- **To jest storno, korekta lub nota kredytowa**
+- **Jest oznaczony jako nietypowy**
+- **Zawsze**
+
+Gdy zaznaczysz więcej niż jeden, dokument jest wstrzymywany tylko wtedy, gdy spełnione są wszystkie. Gdy nic nie zaznaczono, krok nie dodaje własnego wstrzymania; reguły wstrzymania jego systemu oraz druga osoba, której może wymagać storno, uznanie lub korekta, nadal wstrzymują dokumenty. Wstrzymanie w kroku tylko uzupełnia reguły wstrzymania, które ma już jego system. Wstrzymany dokument wstrzymuje resztę swojego zestawu. Osoba, której wysłanie wstrzymało dokument, i osoba, która rozpoczęła jego uruchomienie, nie mogą go zatwierdzić; zatwierdzenia i zatwierdzających opisano w [Rejestrze księgowań](/pl/guides/connections/posting-register/) i [Systemy ERP](/pl/guides/connections/erp-systems/).
+
+### Kto otrzymuje powiadomienie
+
+**Osoba, która rozpoczęła uruchomienie** to wartość początkowa. Wybierz **Lista osób…**, aby zamiast tego wskazać członków do powiadomienia. Są powiadamiani, gdy uruchomienie kończy się dokumentami wymagającymi uwagi.
+
+### Konto zaokrągleń i limit
+
+Zaznacz **Dodaj wiersz zaokrąglenia do niezbilansowanego dokumentu**, a następnie podaj **Konto** i **Limit**. Zapis dziennika, który jest niezbilansowany w jednej walucie o nie więcej niż limit, otrzymuje wiersz na to konto, opisany jako „Rounding”, i przechodzi dalej; większa różnica lub różnica w więcej niż jednej walucie zatrzymuje go jako niezbilansowany z podaniem różnicy. Limit jest też tolerancją dla zestawu jako całości. Gdy ustawienie jest odznaczone, nic nie jest zaokrąglane.
+
+### Gdy zaksięgowany dokument wraca zmieniony
+
+| Wybór | Co późniejsze uruchomienie robi ze zmienionym dokumentem |
+|---|---|
+| **Zapytaj (wartość początkowa). Trafia do sekcji Wymaga uwagi z dwiema opcjami.** | Zmieniony dokument jest Niezaksięgowany: „Źródło zmieniło się po zaksięgowaniu.”, i czeka, aż osoba wybierze **Poprawić tą wersją** lub **Zachować zaksięgowany** na [stronie uruchomienia](#zmienione-dokumenty). |
+| **Popraw. Odwróć go i zaksięguj nową wersję, dla kroku uruchamianego ponownie co okres.** | W uruchomieniu Live zaksięgowany dokument jest odwracany, a zmieniony dokument jest wysyłany jako jego następna wersja. |
+
+## Simulate i Live
+
+Dokument jest wysyłany do swojego systemu tylko wtedy, gdy spełnione są oba te warunki:
+
+- Uruchomienie jest w trybie Live: Uruchomienie przepływu pracy niesie tryb księgowania, ograniczony własnym trybem projektu, zgodnie z opisem w [Wybór trybu księgowania](/pl/guides/workflows/run-a-workflow/#wybór-trybu-księgowania). Uruchomienie w trybie Simulate niczego nie wysyła, a uruchomienie w trybie Off pomija krok.
+- System dokumentu jest rzeczywisty dla projektu: Jest to autoryzacja zapisu projektu dla połączenia i środowiska systemu, z trybem projektu ustawionym na Live — zobacz [Autoryzacja projektu do księgowania](/pl/guides/workflows/run-a-workflow/#autoryzowanie-projektu-do-księgowania) oraz uruchomienie produkcyjne w [Systemy ERP](/pl/guides/connections/erp-systems/).
+
+W przeciwnym razie dokument jest sprawdzany i zapisywany jako **Zostałby zaksięgowany**, a nic nie jest wysyłane. Simulate nigdy nie kontaktuje się z systemem: w uruchomieniu Simulate nie są wykonywane nawet te sprawdzenia, które musiałyby zapytać system. Krok nie ma własnego ustawienia próbnego uruchomienia. Jedynym wyjątkiem jest krok przekonwertowany z kroku księgowania SAP, który był ustawiony na testowanie księgowań: za każdym razem działa w trybie Simulate, a jego dokumenty są księgowane tylko przez **Zaksięgować te** na jego stronie uruchomienia.
+
+Uruchomienie w trybie Simulate to sposób na zobaczenie dokładnie tego, co zostałoby zaksięgowane. Gdy wygląda dobrze, **Zaksięgować te** na jego [stronie uruchomienia](#zaksięgować-te) wysyła te same zamrożone dokumenty.
+
+## Pięć sprawdzeń
+
+Zanim cokolwiek zostanie wysłane, każdy dokument przechodzi pięć sprawdzeń. Strona uruchomienia pokazuje każde z nich jako zaliczone, niezaliczone lub niesprawdzone:
+
+| Sprawdzenie | Co zatrzymuje dokument |
+|---|---|
+| Balanced | Debety i kredyty, które się nie zgadzają, powyżej limitu zaokrąglenia. |
+| Period open | Data księgowania w okresie zamkniętym w systemie. |
+| Accounts exist | Konto, którego system nie ma, kod bez dopasowania, pusta wartość, której potrzebuje system, faktura, która nie jest otwarta, inna spółka lub waluta, której system nie księguje. |
+| Not posted before | Odniesienie już zaksięgowane w innym systemie lub już użyte w tym systemie. |
+| Sets agree | Zestaw, w którym brakuje członka lub którego dokumenty nie sumują się. |
+
+**Period open** i **Accounts exist** korzystają z list, które PlaidCloud odczytuje z systemu na początku uruchomienia Live do systemu rzeczywistego. W uruchomieniu Simulate lub gdy odczyt listy jest częściowy, pusty albo spóźniony, są wyświetlane jako nie sprawdzone. Kopia list, którą **Odśwież teraz** przechowuje w [Systemy ERP](/pl/guides/connections/erp-systems/), służy do wyświetlania: nie zasila sprawdzenia. Uruchomienie Live do systemu rzeczywistego wykonuje także własne sprawdzenia systemu, jeśli jego format je ma; uruchomienie Simulate ich nie wykonuje.
+
+Sprawdzenie, które nie zostało wykonane dla dokumentu, liczy się jako niesprawdzone, nigdy jako zaliczone. Strona uruchomienia pokazuje pięć nazw sprawdzeń po angielsku w każdym języku.
+
+## Kiedy działa krok
+
+- Krok czeka do 10 minut na odpowiedź systemów. Dokument, który nadal nie ma odpowiedzi, jest następnie kontynuowany w rejestrze, a jego strona uruchomienia uzupełnia się, gdy odpowiedź nadejdzie.
+- Dziennik uruchomienia otrzymuje jedną linię: „Posted n of m · k need attention”. Gdy jakikolwiek dokument wymaga uwagi, krok kończy się ostrzeżeniem „k of m documents need attention”, a osoby wskazane w **Kto otrzymuje powiadomienie** są powiadamiane. Reszta przepływu pracy toczy się dalej.
+- Tabela, która nie istnieje, nie ma kolumn lub nie ma wierszy, jest ostrzeżeniem i nic nie jest księgowane. Tabela bez kolumny dla `doc_number` zatrzymuje krok błędem.
+- Gdy konfiguracja kroku wskazuje tabelę wyników, krok zapisuje w niej jeden wiersz na dokument: `doc_number`, `action`, `state`, `source_system` (system, do którego zaksięgowano), `source_doc` (numer nadany przez system) i `message`.
+
+## Strona uruchomienia
+
+Każde uruchomienie ma stronę: uruchomienie kroku, pliku, rozpoczęte przez REST API lub MCP, ponowienie, odwrócenie. Otwórz ją z **Uruchomienia** w [Rejestrze księgowań](/pl/guides/connections/posting-register/) przyciskiem **Otwórz**. Strona pokazuje tylko dokumenty, które możesz widzieć; gdy nie ma dla Ciebie żadnego, wyświetla „To uruchomienie nie otrzymało żadnego dokumentu, który możesz widzieć.”
+
+Góra strony mówi, jak wygląda uruchomienie:
+
+- W trybie Simulate: „To uruchomienie jest w trybie Simulate. Nic nie zostało wysłane do żadnego systemu. Zaksięgować te wysyła te same zamrożone dokumenty.”
+- Live i nadal trwa: nie ma nic do naciśnięcia, aby zaksięgować. Strona uzupełnia się w miarę odpowiedzi systemów i podaje, ile dokumentów nie zostało jeszcze wysłanych. Odczytuje uruchomienie ponownie samodzielnie, dopóki cokolwiek trwa lub oczekuje.
+- Live i zakończone: „Live. Każdy system odpowiedział.”
+- Zatrzymane: „To uruchomienie zostało zatrzymane. To, co nie zostało wysłane, jest Niezaksięgowane.”
+
+**Podsumowanie** nad dokumentami można otwierać i zamykać, a pozostaje tak, jak je zostawisz; domyślnie jest zamknięte, gdy uruchomienie ma dokumenty. Zawiera:
+
+- Dla uruchomienia kroku najpierw porównanie, na przykład „121 bez zmian, 19 zmienionych, 2 nowe.” Zobacz [Ponowne uruchamianie](#ponowne-uruchamianie).
+- Dokumenty, zestawy, systemy i kwoty uruchomienia oraz liczbę w każdym stanie.
+- [Pięć sprawdzeń](#pięć-sprawdzeń), każde z ptaszkiem, krzyżykiem lub kreską, gdy nic do niego nie dotarło. Niezaliczone sprawdzenie podaje, ile dokumentów go nie przeszło.
+- **Według systemu**: jedna linia na system z liczbą w każdym stanie i kwotą oraz **Razem**. System, którego tryb różni się od trybu uruchomienia, jest oznaczony jako Simulate lub Live. Każda liczba otwiera te dokumenty.
+- Własną sumę tabeli obok sumy dokumentów: „Równe. Żaden wiersz tabeli nie został pominięty.” lub „Różnią się. Wiersz tabeli został pominięty lub policzony dwukrotnie.” Jeśli możesz widzieć tylko niektóre jednostki, sumy dotyczą tego, co możesz widzieć.
+- Jak stara jest kopia okresów i kont każdego systemu lub informację, że kopii jeszcze nie ma.
+
+Poniżej lista **Dokumenty** stawia na początku to, co wymaga człowieka. Każdy wiersz ma odniesienie (z wersją, na przykład `JE-1001~2`), jednostkę, system, zestaw, kwotę, stan i **Dlaczego i co dalej**. **Grupuj według** grupuje dokumenty według **Jednostka**, **Typ**, **Zestaw** lub **System**. Zaznacz jeden dokument, aby przeczytać pełny powód i następny krok oraz, jeśli są, **Co się zmieniło**, **Jak naprawić odrzucenie** i **Nietypowe**. Każdy wiersz otwiera swoje księgowanie w [Rejestrze księgowań](/pl/guides/connections/posting-register/) przyciskiem **Otwórz księgowanie**, pokazuje swój zestaw przyciskiem **Pokaż jego zestaw** i oferuje **Ponów**, gdzie ponowienie może pomóc.
+
+### Zaksięgować te
+
+Uruchomienie z dokumentami w stanie **Zostałby zaksięgowany** oferuje **Zaksięgować te** z ich liczbą, obok tekstu „Zaksięgować te wysyła dokładnie pokazane dokumenty.” Wysyła te dokumenty, sprawdzone jeszcze raz według stanu na teraz: projekt musi dopuszczać Live, odniesienie nie może zostać zaksięgowane od czasu uruchomienia symulowanego, a własne sprawdzenia systemu są wykonywane ponownie. Dokument w systemie, który nadal jest w trybie Simulate, pozostaje **Zostałby zaksięgowany**. Uruchomienie staje się Live, a strona informuje, ile wysłano i ile sprawdzono ponownie i nie zaksięgowano.
+
+- Gdy niektóre systemy nie są jeszcze rzeczywiste, przycisk brzmi **Uruchomić i zaksięgować** lub wymienia systemy, które uruchamia produkcyjnie. Najpierw czyni je rzeczywistymi dla projektu, a jeśli któregokolwiek nie można uruchomić produkcyjnie, nic nie jest wysyłane. Widzi to tylko ten, kto może uruchomić system produkcyjnie; pozostali księgują do systemów w ich obecnym stanie. Zobacz [Systemy ERP](/pl/guides/connections/erp-systems/).
+- Dokument, który wstrzymuje reguła wstrzymania, jest wstrzymywany ponownie dla tego wysłania. Osoba, która nacisnęła **Zaksięgować te**, i osoba, która rozpoczęła uruchomienie, nie mogą go zatwierdzić.
+- Wysyłane są tylko dokumenty, które możesz widzieć. Dokument, którego przechowywana kopia wygasła, jest Niezaksięgowany: strona uruchomienia wyświetla „This is not available yet.”, a odpowiedź REST zawiera komunikat „The stored document has expired; run again.”
+
+### Zatrzymanie uruchomienia
+
+Uruchomienie Live, które nadal trwa i ma jeszcze niewysłane dokumenty, oferuje **Zatrzymaj uruchomienie**. Dokumenty jeszcze niewysłane stają się Niezaksięgowane, a strona wyświetla „Uruchomienie zostało zatrzymane przed wysłaniem tego dokumentu.” Dokumenty już wysłane pozostają bez zmian, a strona informuje, ile zatrzymano i ile zostało już wysłanych. Gdy uruchomienie Live jest w trakcie wysyłania, zanim zapisano jakikolwiek dokument, nie można go jeszcze zatrzymać.
+
+### Ponów
+
+**Ponów** w wierszu lub **Ponów resztę** dla zestawu wysyła ponownie dokument, który nie został zaksięgowany, w postaci, w jakiej został zamrożony, jako nowe uruchomienie w trybie księgowania projektu. Dokumenty, które już zostały zaksięgowane, nie są wysyłane ponownie. Ponowienie jest oferowane dla dokumentu, którego przyczyna leżała poza nim — zatwierdzający odmówił, uruchomienie zatrzymano, agent był offline, system go odrzucił, nie znaleziono go w terminie, nie został wysłany lub jego jednostka nie miała systemu. Dokument zatrzymany przez sprawdzenie wymaga poprawienia źródła i ponownego uruchomienia kroku.
+
+### Zestawy wymagające człowieka
+
+**Zestawy wymagające człowieka** wymieniają zestaw, który został zaksięgowany tylko częściowo lub w którym nic nie wysłano, bo jeden z członków nie przeszedł. **Pokaż zestaw** filtruje dokumenty do niego. Dla zestawu zaksięgowanego częściowo **Ponów resztę** ponawia to, co nie zostało zaksięgowane, a **Odwróć to, co zaksięgowano** pokazuje, co zostanie odwrócone i w których systemach, a następnie odwraca to z powodem, że część zestawu została zaksięgowana, a reszta nie. Storno wymagające drugiej osoby czeka jako **Wymaga zatwierdzenia**, a strona łączy z własnym uruchomieniem storna przez **Otwórz przebieg odwrócenia**.
+
+### Zmienione dokumenty
+
+Gdy krok jest ustawiony na Zapytaj, a uruchomienie znajduje dokumenty, które zmieniły się od zaksięgowania, strona podaje, ile czeka na Twój wybór:
+
+- **Popraw wszystkie** lub **Poprawić tą wersją** dla zaznaczonych dokumentów odwraca zaksięgowany dokument i księguje zmieniony jako nową wersję jego odniesienia.
+- **Zachowaj wszystkie** lub **Zachować zaksięgowany** dla zaznaczonych dokumentów zachowuje zaksięgowaną wersję i odrzuca zmienioną.
+
+Każda z tych opcji najpierw prosi o potwierdzenie.
+
+## Uruchomienia
+
+**Uruchomienia** w Rejestrze księgowań wymieniają każde uruchomienie kroku księgowania lub pliku księgowania, od najnowszego, z jego **Trybem**, osobą, która je rozpoczęła, i wynikiem; **Otwórz** otwiera jego stronę uruchomienia.
+
+Nad listą widać w skrócie ostatni miesiąc: jedna linia na system, na przykład ile dokumentów zaksięgowano z ilu, kwota, ile jest w księgach samego systemu i ile księgowań wymaga uwagi. Krok, który księgował do systemu w miesiącu wcześniejszym i nie był uruchamiany w tamtym miesiącu, jest wymieniony pod spodem. **Otwórz** w linii otwiera księgowania tego systemu za miesiąc, a gdy miesiąc nie jest zakończony, **Otwórz Wymaga uwagi** prowadzi do tego, co zostało. Zestawienie liczy uruchomienia Live kroków.
+
+## Ponowne uruchamianie
+
+Odniesienie jest księgowane raz. Gdy uruchomienie ma dokument, który jest już w rejestrze:
+
+- Dokument bez zmian jest pozostawiany w spokoju.
+- Zmieniony dokument podlega ustawieniu kroku [Gdy zaksięgowany dokument wraca zmieniony](#gdy-zaksięgowany-dokument-wraca-zmieniony): Zapytaj lub Popraw. Korekta księguje następną wersję odniesienia, na przykład `JE-1001~2`, a system widzi także wersję.
+- Dokument, którego wcześniejsza wersja nadal nie ma odpowiedzi od systemu, jest Niezaksięgowany: „Wcześniejsza wersja tego odniesienia nie ma jeszcze odpowiedzi od systemu. Uruchom ponownie, gdy ją otrzyma.”
+
+W systemie, którego klucz zawiera jednostkę, to samo odniesienie dla innej jednostki jest innym dokumentem. W każdym innym systemie jest odrzucane: „To odniesienie jest już użyte w tym systemie.”
+
+Dokument, który krok zaksięgował wcześniej, a którego tym razem nie wytworzył, jest pozostawiany w spokoju. Aby go odwrócić, wywołaj `POST /rest/v1/analyze/erp/reverse/these` z uruchomieniem; odwraca on to, co krok uruchomienia zaksięgował wcześniej i czego nie wytworzył, lub tylko te z nich, które wskażesz, jako nowe uruchomienie. Na stronie uruchomienia nie ma jeszcze do tego przycisku.
+
+Dla kroku uruchamianego ponownie co okres, na przykład księgującego alokację, ustaw **Gdy zaksięgowany dokument wraca zmieniony** na Popraw tylko raz.
+
+## Księgowanie z pliku
+
+Dla kilku zapisów dziennika w arkuszu możesz zaksięgować plik bez żadnego przepływu pracy, przez REST API lub narzędzia MCP. W aplikacji nie ma jeszcze na to strony.
+
+1. `GET /erp/file-post/starter`, z `connection_id`, `document_type` i `format` (`xlsx` lub `csv`), pobiera właściwe nagłówki kolumn dla tego rodzaju dokumentu w tym systemie, z przykładowym wierszem. Rodzaj dokumentu, którego system nie przyjmuje, jest odrzucany.
+2. `POST /erp/file-post` przyjmuje arkusz (`.xlsx` lub `.csv`) jako `file`, z `project_id`. Wszelkie dodatkowe pliki wysłane jako `attachments` są przechowywane z uruchomieniem jako pliki pomocnicze, ale nie są jeszcze wysyłane do systemu. Narzędzie MCP `erp_file_post` przyjmuje natomiast plik z dokumentów PlaidCloud, według jego `account_id` i `path`.
+3. Uruchomienie otwiera się w trybie Simulate i nic nie jest wysyłane. Przejrzyj je na jego [stronie uruchomienia](#strona-uruchomienia) i zaksięguj przez **Zaksięgować te**.
+
+- Każdy dokument trafia do systemu, do którego księguje jego jednostka, jak w każdym innym uruchomieniu.
+- Plik bez kolumny `doc_number` niczego nie przygotowuje i odpowiada `ask: one_journal`. Wyślij go ponownie z `one_journal` ustawionym na true, aby zaksięgować cały plik jako jeden zapis dziennika z nazwą pliku jako odniesieniem, lub na false, aby zaksięgować każdy wiersz jako osobny zapis dziennika, numerowany według nazwy pliku.
+- W pliku, który ma kolumnę `doc_number`, wiersze bez niej są pomijane, z ostrzeżeniem. Nagłówki, które nie są kolumnami księgowania, są ignorowane, a ostrzeżenia je wymieniają.
+- Pusty plik lub taki bez wierszy niczego nie przygotowuje i informuje o tym. Tak samo działa projekt, w którym księgowanie jest wyłączone (Off).
+
+### Zaksięguj ponownie
+
+Zaksięguj ponownie księguje dokumenty uruchomienia z pliku jeszcze raz z nową datą księgowania i nowymi odniesieniami, dla zapisu dziennika powtarzającego się co miesiąc: `POST /erp/file-post/{run_id}/again` lub narzędzie MCP `erp_file_post_again`.
+
+- `posting_date` to data ISO albo jedna z wartości `today`, `first_of_month`, `last_of_month`, `first_of_next_month` i `last_of_prev_month`, albo przesunięcie, takie jak `+1m` lub `-7d`, od własnej daty księgowania każdego dokumentu.
+- `references` ustawione na `suffix` nadaje każdemu odniesieniu sufiks dla nowego miesiąca, na przykład `JE-1001-202612`, aby powtórzenie nie zostało odrzucone jako już zaksięgowane; przez REST możesz zamiast tego zmapować każde odniesienie na jego nowe. Narzędzie MCP zawsze dodaje sufiks.
+- Data dokumentu przesuwa się wraz z datą księgowania, termin płatności przesuwa się o tyle samo dni, a kolumny okresu są usuwane, aby system przyjął okres z nowej daty.
+- Nowe uruchomienie otwiera się w trybie Simulate, chyba że zażądasz Live przez `live`, i nigdy powyżej trybu księgowania projektu. Księgowane ponownie są tylko dokumenty jednostek, które możesz widzieć.
+
+`POST /erp/file-post/{run_id}/schedule` wprowadza Zaksięguj ponownie do harmonogramu, z `cron` i jego `timezone`, `posting_date` obliczaną przy każdym uruchomieniu oraz `references` ustawionym na `suffix`. Działa jako Ty i księguje tylko jednostki, które możesz widzieć. Księguje w trybie Live tylko wtedy, gdy ktoś już zaksięgował dokumenty tego pliku w trybie Live, i nigdy powyżej trybu księgowania projektu. Harmonogram nie ma narzędzia MCP.
+
+Dokumenty uruchomienia są przechowywane przez 30 dni, gdy zostały zasymulowane, i 90 dni po odpowiedzi; po tym czasie Zaksięguj ponownie nie ma czego przygotować i informuje o tym.
+
+### Zarejestruj jako już zaksięgowane
+
+Dla dokumentów zaksięgowanych w systemie, zanim zaczęto używać PlaidCloud, `POST /erp/record-posted` rejestruje je jako Zaksięgowane bez kontaktu z systemem, dzięki czemu uruchomienie, które je później zawiera, odmawia ich ponownego zaksięgowania. Wyślij arkusz jako `file`, z `connection_id` i `environment_id` systemu. Wymaga kolumn `reference` i `system_document` oraz opcjonalnie `entity`, `posting_date` i `document_type` (zapis dziennika, gdy pominięto). Nie ma jeszcze na to strony ani narzędzia MCP.
+
+- Dokument, który PlaidCloud już ma jako zaksięgowany, który nadal oczekuje na odpowiedź, lub odniesienie, które ma jako inny dokument systemu, jest wymieniany jako niezarejestrowany, z powodem.
+- Dokument Niepotwierdzone w pliku jest rozstrzygany jako Zaksięgowany tylko dla osoby z rolą Zatwierdzającego Rejestru księgowań; pozostali otrzymują go z powrotem jako niezarejestrowany.
+
+## Księgowanie z alokacji
+
+Krok **Alokacja: podział z użyciem wymiaru** może też zapisać swój wynik jako tabelę dokumentów, którą zaksięguje krok Księgowanie dokumentów, przez ustawienie `post_documents` w konfiguracji kroku. Ustawienie wskazuje `table` dokumentów do zapisania oraz kolumny wyniku dla `rule`, `account`, `source_account`, `amount` i `posting_date` (wszystkie potrzebne), a opcjonalnie `entity` i `currency_txn`; `set` nadaje dokumentom stałą nazwę zestawu.
+
+- Każda reguła to jeden dokument na miesiąc, z odniesieniem złożonym z reguły i miesiąca (na przykład `RENT-202611`). Każdy wiersz wyniku to pozycja na jego konto z równoważącą pozycją na konto źródłowe, więc każdy dokument się bilansuje.
+- Wiersz bez reguły lub z zerową kwotą nie tworzy pozycji. Wiersz, którego kwota nie jest liczbą, jest pomijany, z ostrzeżeniem wymieniającym wiersze. Gdy nie zostaje nic do zaksięgowania, krok ostrzega i opróżnia tabelę dokumentów.
+- Ponowne uruchomienie alokacji dla tego samego miesiąca daje te same odniesienia, więc ustaw w kroku księgowania [Gdy zaksięgowany dokument wraca zmieniony](#gdy-zaksięgowany-dokument-wraca-zmieniony) na Popraw.
+
+## Konwersja kroku księgowania SAP
+
+Istniejący krok księgowania SAP może stać się krokiem Księgowanie dokumentów. Nic nie jest konwertowane samo: kliknij krok prawym przyciskiem myszy na kanwie i wybierz **Konwertuj na Księgowanie dokumentów…** albo użyj **Konwertuj na Księgowanie dokumentów…** w formularzu kroku. PlaidCloud najpierw pokazuje, co zostanie przekonwertowane — kolumny dopasowane do pól dokumentu, jednostki skierowane do swoich systemów, czy krok nadal księguje tak jak dotąd, czy zaczyna w trybie Simulate, oraz wszelkie ostrzeżenia — a Ty potwierdzasz przyciskiem **Konwertuj**. Stare ustawienia pozostają w wersjach kroku.
+
+- Konwertowane są tylko kroki księgowania SAP. Krok bez ustawionej funkcji lub kolumn nagłówka albo taki, którego klucz dokumentu nie jest kodem spółki i jednym numerem dokumentu, nie jest konwertowany, a PlaidCloud podaje powód.
+- Jednostki z filtra kroku są sugerowane jako trasy do jego połączenia. Gdy filtr żadnej nie wskazuje, ustaw trasowanie w [Systemy ERP](/pl/guides/connections/erp-systems/), zanim krok zacznie księgować.
+- Dopóki nie ustawisz tabeli w przekonwertowanym kroku, sam odczytuje tabele nagłówka, pozycji, VAT i podatku u źródła starego kroku.
+- Przekonwertowany krok zachowuje rejestr tego, co zaksięgował stary krok, więc okres, który stary krok już zaksięgował, nie jest księgowany ponownie.
+- Krok, który był ustawiony na testowanie księgowań, nadal działa w trybie Simulate. Zobacz [Simulate i Live](#simulate-i-live).
+
+## Przez REST i MCP
+
+To samo księgowanie jest dostępne przez REST API, pod `/rest/v1/analyze/erp`, oraz jako narzędzia MCP:
+
+| Aby | REST | MCP |
+|---|---|---|
+| Zobaczyć pierwszy dokument tabeli w postaci, w jakiej otrzyma go system | `POST /erp/post/preview` | `erp_post_preview` |
+| Zaksięgować tabelę lub listę dokumentów | `POST /erp/post` | `erp_post_documents` |
+| Odczytać uruchomienia i stronę uruchomienia | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Zaksięgować te lub zatrzymać uruchomienie | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Odpowiedzieć na Zapytaj dla zmienionych dokumentów | `POST /erp/ask` | `erp_ask_answer` |
+| Ponowić dokumenty | `POST /erp/retry` | `erp_retry` |
+| Pobrać plik startowy | `GET /erp/file-post/starter` | — |
+| Księgować z pliku i księgować go ponownie | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Księgować go ponownie według harmonogramu | `POST /erp/file-post/{run_id}/schedule` | — |
+| Zarejestrować jako już zaksięgowane | `POST /erp/record-posted` | — |
+| Skonwertować krok księgowania SAP | `POST /erp/convert` | `erp_convert_step` |
+
+- Księgowanie przez REST lub MCP działa w trybie Simulate, chyba że zażądasz Live, i nigdy powyżej trybu księgowania projektu.
+- Księgowanie tabeli przez REST odczytuje co najwyżej 100 000 wierszy; dłuższa tabela jest odrzucana w całości i zamiast tego księguje się ją krokiem.
+- `erp_file_post` przyjmuje plik z dokumentów PlaidCloud; plik, którego tam nie ma, jest ostrzeżeniem i nic nie jest przygotowywane.
+- Konwersja i ponowienie są uruchomieniami próbnymi, chyba że powiesz inaczej.
+- Asystent AI działający w Twoim imieniu otrzymuje odmowę dla księgowania Live, **Zaksięgować te**, Popraw, prawdziwego ponowienia, prawdziwej konwersji i Zaksięguj ponownie: te czynności wykonuje człowiek.
+
+## Kto co może robić
+
+| Aby | Potrzebujesz |
+|---|---|
+| Zbudować krok i wyświetlić podgląd jego pierwszego dokumentu | `analyze.step.write` |
+| Księgować przez REST lub MCP | `analyze.workflow.write` i dostęp do zapisu w projekcie |
+| Pobrać plik startowy | `analyze.connection.read` |
+| Księgować z pliku | `analyze.workflow.write` i dostęp do projektu |
+| Otworzyć stronę uruchomienia | `analyze.project.read`; widzisz dokumenty jednostek, które możesz widzieć |
+| Zobaczyć **Uruchomienia** w Rejestrze księgowań | `erp.register.view` |
+| **Zaksięgować te**, **Zatrzymaj uruchomienie**, Popraw lub Zachowaj, Zaksięguj ponownie i jego harmonogram, odwrócić to, czego uruchomienie nie wytworzyło | `analyze.workflow.write` oraz Architekt lub Menedżer w niezablokowanym projekcie |
+| Uruchomić system produkcyjnie podczas księgowania | Architekt w niezablokowanym projekcie, z własnym dostępem do zapisu do połączenia |
+| **Ponów** | `analyze.workflow.write` oraz Architekt lub Menedżer w niezablokowanym projekcie, z własnym dostępem do zapisu do połączenia dokumentu |
+| **Odwróć to, co zaksięgowano** | `erp.register.view` i `erp.register.operate` |
+| Zarejestrować jako już zaksięgowane | `erp.register.view` i `erp.register.operate`, z własnym dostępem do zapisu do połączenia; rozstrzyganie dokumentów Niepotwierdzone wymaga też `erp.register.approve` |
+| Skonwertować krok księgowania SAP | `analyze.step.write`, z dostępem do zapisu w projekcie |
+
+Każda ścieżka egzekwuje tę samą regułę: interfejs, REST API i narzędzia MCP wywołują te same sprawdzenia.

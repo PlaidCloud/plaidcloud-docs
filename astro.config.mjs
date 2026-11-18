@@ -358,6 +358,8 @@ export default defineConfig({
 									translations: { de: 'Zurückschreiben', es: 'Escritura de retorno', fr: 'Réécriture', 'pt-BR': 'Gravação de retorno', 'pt-PT': 'Escrita de retorno', pl: 'Zapis zwrotny', ja: '書き戻し', ko: '다시 쓰기', 'zh-CN': '回写' },
 									collapsed: true,
 									items: [
+										'guides/connections/post-documents',
+										'guides/connections/erp-systems',
 										'guides/connections/posting-register',
 										'guides/connections/erp-post-history',
 									],

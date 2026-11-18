@@ -20,3 +20,8 @@ Select Agent to Use. Select Target Directory from the drop down bar, and browse 
 
 
 You can choose to Insert Row or Append Row under the Parameters section, as well as name the parameters and give them values. Choose the Max Concurrent Requests number, and select Wait for RFC to Complete. Save and Run Step.
+
+
+## Convert to Post Documents
+
+A saved step has a **Convert to Post documents…** button. It first shows what would convert — how many columns are matched to document fields and how many entities are routed to their systems — and, once you confirm, changes the step into a **Post Documents** step (see [Post Documents to ERP Systems](/guides/connections/post-documents/)). The old settings stay in the step's versions.

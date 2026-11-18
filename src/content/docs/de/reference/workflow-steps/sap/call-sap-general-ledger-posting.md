@@ -21,3 +21,8 @@ Wählen Sie den **Zu verwendender Agent** aus. Wählen Sie in der Dropdown-Liste
 
 
 Im Abschnitt „Parameters“ können Sie **Zeile einfügen** oder **Zeile anhängen** wählen sowie die Parameter benennen und mit Werten versehen. Legen Sie die Anzahl für **Max. gleichzeitige Anfragen** fest und wählen Sie „Wait for RFC to Complete“. Speichern und führen Sie den Schritt aus.
+
+
+## In „Belege buchen“ konvertieren
+
+Ein gespeicherter Schritt hat eine Schaltfläche **In Beleg-Buchung konvertieren…**. Sie zeigt zuerst, was konvertiert würde – wie viele Spalten Belegfeldern zugeordnet sind und wie viele Entitäten ihren Systemen zugeordnet sind – und verwandelt den Schritt nach Ihrer Bestätigung in einen Schritt **Belege buchen** (siehe [Belege in ERP-Systemen buchen](/de/guides/connections/post-documents/)). Die alten Einstellungen bleiben in den Versionen des Schritts.

@@ -12,7 +12,7 @@ Reescribe un archivo de texto como ASCII simple. Resulta especialmente útil si 
 
 ## Cómo funciona
 
-- Se detecta la codificación del origen. Un archivo UTF-8 se lee como UTF-8, y los caracteres de Windows pegados en él (por ejemplo, las comillas tipográficas de Word o Excel) se conservan intactos, sean cuantos sean. Un archivo en otra codificación se lee con la codificación detectada a partir de su primera parte que no es UTF-8 válido.
+- Se detecta la codificación del origen. Un archivo UTF-8 se lee como UTF-8, y los caracteres de Windows pegados en él (por ejemplo, las comillas tipográficas de Word o Excel) se conservan intactos, sean cuantos sean. Un archivo que es ASCII puro salvo por unos pocos caracteres de Windows (guiones, comillas tipográficas o letras acentuadas, no más de dos seguidos y que suman menos del 1 % del texto que rodea al primero de ellos) se lee como Windows-1252, estén donde estén en el archivo. Un archivo en otra codificación se lee con la codificación detectada a partir de su primera parte que no es UTF-8 válido.
 - Las letras acentuadas conservan su letra base (`café` pasa a ser `cafe`), y los caracteres sin forma ASCII se descartan.
 - Una línea que contiene solo unas comillas dobles se une al final de la línea anterior.
 - Un archivo cuya codificación no se puede detectar hace que el paso falle, indicando el archivo.

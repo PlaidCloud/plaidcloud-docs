@@ -46,6 +46,7 @@ Workflow steps are the building blocks of PlaidCloud automation. Each step perfo
 
 ### Enterprise Integrations
 
+- [Post Documents](/reference/workflow-steps/export/post-documents/) — post a table of journals, invoices, memos and payments to any ERP system you have set up, from one step
 - [Agent](/reference/workflow-steps/agent/) — PlaidLink Agent operations for on-premises resources
 - [NetSuite](/reference/workflow-steps/netsuite/) — import balances, GL detail, master data, or your own [SuiteQL query](/reference/workflow-steps/netsuite/import-suiteql-query/); post journal entries to NetSuite
 - [Acumatica](/reference/workflow-steps/acumatica/) — import master and transactional entities; post journal transactions, invoices, bills, and payments
