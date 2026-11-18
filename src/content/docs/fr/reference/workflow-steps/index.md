@@ -47,6 +47,7 @@ Les étapes de workflow sont les éléments de base de l'automatisation PlaidClo
 
 ### Intégrations d'entreprise
 
+- [Comptabiliser des documents](/fr/reference/workflow-steps/export/post-documents/) : comptabilisez une table d'écritures de journal, de factures, de notes et de paiements dans n'importe quel système ERP que vous avez configuré, à partir d'une seule étape
 - [Agent](/fr/reference/workflow-steps/agent/) : opérations de l'agent PlaidLink pour les ressources sur site
 - [NetSuite](/fr/reference/workflow-steps/netsuite/) : importez des soldes, le détail du grand livre, des données de base, ou votre propre [requête SuiteQL](/fr/reference/workflow-steps/netsuite/import-suiteql-query/) ; comptabilisez des écritures de journal dans NetSuite
 - [Acumatica](/fr/reference/workflow-steps/acumatica/) : importez des entités de base et transactionnelles ; comptabilisez des transactions de journal, des factures, des factures fournisseur et des paiements

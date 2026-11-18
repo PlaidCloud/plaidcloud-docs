@@ -21,3 +21,8 @@ Selecione o **Agente a utilizar**. Selecione o **Diretório de destino** na list
 
 
 Pode optar por **Inserir linha** ou **Acrescentar linha** na secção de parâmetros, bem como dar nome aos parâmetros e atribuir-lhes valores. Escolha o número em **Máximo de pedidos simultâneos** e selecione "Aguardar a conclusão da RFC". **Guardar e executar passo**.
+
+
+## Converter em Lançar documentos
+
+Um passo guardado tem um botão **Converter em Lançar documentos…**. Mostra primeiro o que seria convertido — quantas colunas estão associadas a campos do documento e quantas entidades estão encaminhadas para os seus sistemas — e, depois de confirmar, transforma o passo num passo **Contabilizar documentos** (consulte [Contabilizar documentos em sistemas ERP](/pt-pt/guides/connections/post-documents/)). As definições antigas ficam nas versões do passo.

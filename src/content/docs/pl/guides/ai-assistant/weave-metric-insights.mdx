@@ -1,6 +1,6 @@
 ---
 title: Nietypowe sumy metryk
-description: Codziennie Weave odczytuje metryki projektu i powiadamia osobę, która ostatnio zapisała metrykę, gdy suma z jej ostatniego zakończonego okresu znacznie odbiega od typowej, a zmianę powoduje jedna pozycja, na przykład klient lub zakład.
+description: Codziennie Weave odczytuje metryki projektu i powiadamia osobę, która ostatnio zapisała metrykę, gdy suma z jej ostatniego zakończonego okresu znacznie odbiega od typowej z powodu jednej pozycji, gdy pozycja, na przykład klient lub zakład, zaczęła lub przestała wpływać na tę sumę, albo gdy udział pozycji w niej zmienił się i utrzymał.
 sidebar:
   order: 5
 editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/ai-assistant/weave-metric-insights.mdx
@@ -81,7 +81,7 @@ którego okresy dzielą się na kwartały, nie jest ona zgłaszana również wte
 jest zgodna z okresami zajmującymi to samo miejsce we wcześniejszych kwartałach, na przykład z
 miesiącem pięciotygodniowym.
 
-**Pozycja, która się zmieniła.** Weave rozbija sumę według maksymalnie pięciu
+**Pozycja, która się zmieniła.** Weave rozbija sumę według maksymalnie 15
 kolumn podziału, zaczynając od tych powiązanych z wymiarem, i wskazuje pozycję
 tylko wtedy, gdy jej udział w zmianie jest znacznie większy niż jej zwykły udział
 w sumie. Ustalenie zaczyna się od pozycji, która zmieniła się najbardziej pod
@@ -93,12 +93,129 @@ pozostają takie, jak przy pierwszym odczycie, dopóki późniejsze odczyty mies
 się w granicach pół procenta od nich, więc niewielka późna korekta nie powoduje
 ponownego zgłoszenia go jako nowego.
 
+## Pozycje, które się rozpoczęły lub zatrzymały
+
+Codziennie Weave rozbija też każdą metrykę według jej kolumn podziału i zgłasza
+pozycję, która **zaczęła** lub **przestała** wpływać na metrykę, na przykład nowy
+zakład albo klienta, którego zamówienia się skończyły. Każda pozycja jest osobnym
+ustaleniem, zgłaszanym raz, gdy zmiana utrzymuje się przez 3 okresy.
+
+```
+Weave noticed the metric "Net Revenue": "Plant 12" (by plant) first had figures
+in September 2024, after nothing in any of the 8 months on record before it. In
+the 3 months to November 2024 it added an average of 4.1M a month, 3.2% of the
+metric's total in those months.
+```
+
+```
+Weave noticed the metric "Net Revenue": "Plant 4" (by plant) has had nothing
+above 0.1% of the metric's total in any of the 3 months after November 2026, to
+February 2027. In the 12 months on record to November 2026 it added an average of 3.1M a
+month, 2.9% of the metric's total in those months.
+```
+
+- **Rozpoczęto.** Pozycja nie miała więcej niż 0,1% sumy w żadnym wcześniejszym
+  okresie, z co najmniej 6 okresami w historii, a w każdym z ostatnich 3 miała co
+  najmniej 2% sumy. Rozpoczęcie jest zgłaszane tylko w ciągu pierwszych 12 okresów
+  pozycji w historii, a ustalenie jest datowane na jej pierwszy okres powyżej 0,1%,
+  nawet jeśli pozycja rosła powoli, zanim osiągnęła 2%.
+- **Zatrzymano.** Pozycja miała więcej niż 0,1% sumy w każdym ze swoich ostatnich 12
+  okresów w historii przed zatrzymaniem, albo w każdym, jeśli jest ich mniej, lecz co
+  najmniej 6, z co najmniej 2% sumy w co najmniej połowie z nich, a w każdym z 3
+  okresów od tego czasu nie miała więcej niż 0,1%. Ustalenie jest datowane na jej
+  ostatni okres powyżej 0,1%.
+
+Udział pozycji jest liczony względem łącznych liczb wszystkich pozycji, więc koszt
+zapisany jako wartość ujemna albo uznanie, które zmniejsza sumę, nie sprawia, że
+pozycja wygląda na większą, niż jest. Okres bez żadnych liczb, na przykład sprzed
+początku danych, nie liczy się w żadną stronę, podobnie jak okres 0 i okresy
+korygujące.
+
+**Ta sama pozycja w kilku metrykach.** Gdy Weave stwierdza, że pozycja rozpoczęła się
+lub zatrzymała w kilku metrykach w tym samym kalendarzu, w tym samym ostatnim zakończonym okresie, na
+przykład zakład, który zamknięto, widoczny zarówno w przychodach, jak i w kosztach,
+zgłasza ją tylko raz, przy jednej z tych metryk, i wymienia każdą z pozostałych wraz
+z jej własnym miesiącem:
+
+```
+... It also started in "Gross Revenue" and "Gross Profit" in September 2024, and
+"Cost to Serve" in October 2024.
+```
+
+Ta sama pozycja oznacza tę samą kolumnę podziału i tę samą pozycję w niej.
+
+**Skąd Weave to wie** pokazuje oceniany okres i pozycję wraz z informacją, kiedy
+się rozpoczęła lub zatrzymała, oraz wszystkie inne metryki, w których również się rozpoczęła lub zatrzymała. **Przejdź do metryki** pokazuje pozycję w okresie, w
+którym się rozpoczęła, lub w jej ostatnim okresie powyżej 0,1%.
+
+### Czego to sprawdzenie nie zgłasza
+
+- Pozycji z więcej niż 0,1% sumy w którymkolwiek wcześniejszym okresie jako
+  rozpoczynającej się, niezależnie od długości przerwy; ani pozycji z 0,1% lub mniej
+  w którymkolwiek z jej ostatnich 12 okresów w historii przed zatrzymaniem, na
+  przykład pozycji sezonowej, jako zatrzymującej się.
+- Pozycji mniejszej niż 2% sumy.
+- Tej samej pozycji rozpoczynającej się lub zatrzymującej się w metryce w innym kalendarzu
+  albo znalezionej tam dla innego ostatniego zakończonego okresu: tam również otrzymuje własne ustalenie.
+- Podziału, w którym jedna pozycja naraz ma całą sumę, na przykład kwartał
+  finansowy lub rok finansowy. Weave pomija taki podział w obu sprawdzeniach, ale
+  nadal wlicza się on do 15 kolumn podziału odczytywanych przez Weave.
+- Tego, czy ostatnie okresy są w pełni zaksięgowane: późne załadowanie lub
+  niezakończone zamknięcie może wyglądać jak zatrzymanie się pozycji.
+
+## Pozycje, których udział się zmienił
+
+Codziennie Weave zgłasza też pozycję, której **udział** w sumie metryki zmienił się i pozostał zmieniony, na przykład zakład, który przejmuje większą część wolumenu, podczas gdy suma się nie zmienia. Każda pozycja jest osobnym ustaleniem, zgłaszanym raz, gdy zmiana się rozpoczęła.
+
+```
+Weave noticed the metric "Net Revenue": "Whey Based" (by product line) rose to an
+average of 7.9% of the metric's total in September to December 2026, from a usual
+5.2% in the 12 months from August 2025 to July 2026, and was above that in each of
+those 4 months. August 2026 was still in line, so the shift began in September
+2026. It came to an average of 41.3M a month in those 4 months, against a usual
+26.0M.
+```
+
+Pozycja jest zgłaszana, gdy w każdym z ostatnich 4 okresów:
+
+- jej udział w sumie odsunął się od typowego udziału, średnio o co najmniej 2 punkty;
+- jej własna liczba zmieniła się w tę samą stronę, więc udział, który wzrósł tylko
+  dlatego, że coś innego spadło, nie jest dla niej zgłaszany; oraz
+- okres poprzedzający te 4 był jeszcze typowy, co wyznacza datę zmiany.
+
+Typowy udział i typowa liczba to wartość środkowa z maksymalnie 12 wcześniejszych
+okresów, przy czym potrzeba co najmniej 6; to, jak daleko zmiana się liczy, wynika
+z tego, jak bardzo te okresy się różniły. Pozycja musi mieć ponad 0,1% sumy w każdym
+porównywanym okresie oraz co najmniej 2% sumy przed zmianą lub po niej.
+
+Ta sama zmiana tej samej pozycji w tę samą stronę nie jest zgłaszana ponownie w ciągu
+12 okresów lub w ciągu roku w kalendarzu z większą liczbą okresów. Dotyczy to także zmiany, która rozpoczęła się w tym samym punkcie rok
+wcześniej i którą Weave traktuje jako sezonową. Pozycja, która zmienia się w tę samą
+stronę w kilku metrykach dla tego samego ostatniego zakończonego okresu, jest jednym
+ustaleniem, tak jak w przypadku pozycji, które się rozpoczęły lub zatrzymały.
+
+**Skąd Weave to wie** pokazuje pozycję, jej udział w sumie i jej liczbę, każde dla 4
+okresów oraz jako typowe. **Przejdź do metryki** pokazuje pozycję w okresie, w którym
+zmiana się rozpoczęła.
+
+### Czego to sprawdzenie nie zgłasza
+
+- Pozycji, która zaczyna od zera lub całkowicie przestaje; zobacz
+  [Pozycje, które się rozpoczęły lub zatrzymały](#pozycje-które-się-rozpoczęły-lub-zatrzymały).
+- Zmiany mniejszej niż 2 punkty sumy ani pozycji poniżej 2% sumy zarówno przed zmianą,
+  jak i po niej.
+- Powolnego dryfu przez wiele okresów ani skoku w jednym okresie.
+- Podziału, którego pozycje sumują się do więcej niż suma, na przykład przychodów
+  i kosztów, które po zsaldowaniu dają zysk. Weave wskazuje taki podział z nazwy i go
+  nie ocenia.
+
 ## Czego Weave nie sprawdza
 
 - Sumy spoza typowego zakresu, gdy żadna pozycja się nie wyróżnia.
-- Zmiany udziału jednej pozycji, gdy suma pozostaje w typowym zakresie.
-- Kolumn podziału poza pierwszymi pięcioma ani kolumny z ponad 50 000 liczb
+- Kolumn podziału poza pierwszymi 15 ani kolumny z ponad 50 000 liczb
   w jej pozycjach i okresach.
+- Podziału, w którym jedna pozycja naraz ma całą sumę, na przykład kwartał
+  finansowy lub rok finansowy.
 - Tego, czy zmiana jest błędem, czy realnym zdarzeniem biznesowym.
 - Wcześniejszych okresów, które służą wyłącznie do porównania.
 
@@ -141,8 +258,22 @@ odnośników, której wierszy sama tabela źródłowa nie pokazuje.
 
 <Aside type="note">
 Nowo zapisana metryka jest odczytywana w ciągu doby, chyba że projekt ma już 50
-metryk. Do tego czasu jest wymieniona jako metryka, której Weave jeszcze nie odczytał.
+metryk. Do tego czasu jest wymieniona jako metryka, której Weave jeszcze nie odczytał,
+a Architekt może [sprawdzić ją teraz](#sprawdzanie-metryk-teraz).
 </Aside>
+
+## Sprawdzanie metryk teraz
+
+Metryka, której Weave jeszcze nie odczytał lub której ostatni odczyt jest
+nieaktualny, udostępnia Architektom projektu przycisk **Sprawdź teraz wszystkie
+metryki**. Odczytuje on metryki projektu od razu, tak samo jak codzienne
+sprawdzenie, więc nowo zapisana metryka nie czeka do następnego dnia. Gdy
+sprawdzenie trwa, ustalenie pokazuje **Sprawdzanie…**, a karta Weave aktualizuje
+się po jego zakończeniu.
+
+Sprawdzenie można rozpocząć raz na 15 minut w każdym projekcie, i to nie wtedy,
+gdy trwa inne sprawdzenie projektu, w tym codzienne. Weave informuje, kiedy
+można rozpocząć następne. Nie jest ono dostępne w zablokowanym projekcie.
 
 ## Gdy Weave nie sprawdził metryki
 
@@ -159,6 +290,11 @@ metryk. Do tego czasu jest wymieniona jako metryka, której Weave jeszcze nie od
 | Odczyt trwał dłużej niż 2 minuty | Weave ponawia próbę następnego dnia. |
 | Każdy z jej podziałów ma ponad 50 000 liczb | Weave nie sprawdza jej, dopóki tak jest. |
 | Jej suma jest poza typowym zakresem, ale jeden z podziałów ma ponad 50 000 liczb | Weave nie może stwierdzić, czy zmianę spowodowała jedna pozycja w tym podziale. Przeanalizuj ten podział samodzielnie lub usuń go z kolumn podziału metryki. |
+| Jej suma jest poza typowym zakresem, ale w każdym podziale jedna pozycja naraz ma całą sumę | Dodaj podział, na przykład według klienta lub zakładu; kwartał lub rok finansowy nie pokażą, która pozycja się zmieniła. |
+| Ma zbyt mało okresów z liczbami, aby stwierdzić, czy pozycja się rozpoczęła lub zatrzymała | Poczekaj: Weave potrzebuje 9 okresów, z ostatnimi 3 bez przerwy. |
+| Nie ma jeszcze liczb w każdym z ostatnich 5 okresów ani w 6 z 12 poprzedzających je | Poczekaj: Weave potrzebuje ich, aby stwierdzić, czy udział pozycji się zmienił. |
+| Jej podziały mają pozycje, które sumują się do więcej niż suma | Dodaj podział, w którym wszystkie pozycje sumują się do sumy, na przykład według zakładu lub klienta. |
+| Jej suma wynosi zero lub mniej w co najmniej jednym z porównywanych okresów | Nic; udział w takiej sumie nie mówi, co wniosła dana pozycja. |
 | Projekt ma ponad 50 metryk | Wycofaj metryki, z których nikt nie korzysta; najwcześniej zapisane są sprawdzane w pierwszej kolejności. |
 | Weave nie mógł odczytać jej bieżącej wersji | Weave ponawia próbę następnego dnia. |
-| Codzienne sprawdzenie Weave ostatnio uruchomiło się kilka dni temu | Skontaktuj się z administratorem PlaidCloud. |
+| Codzienne sprawdzenie Weave ostatnio uruchomiło się kilka dni temu | Skontaktuj się z administratorem PlaidCloud. Architekt może też [sprawdzić metryki teraz](#sprawdzanie-metryk-teraz). |

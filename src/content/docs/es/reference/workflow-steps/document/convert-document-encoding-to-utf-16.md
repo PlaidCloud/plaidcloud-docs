@@ -21,7 +21,7 @@ Reescribe un archivo de texto en UTF-16. Resulta útil cuando un sistema posteri
 
 ## Cómo funciona
 
-- Se detecta la codificación del origen. Un archivo UTF-8 se lee como UTF-8, y los caracteres de Windows pegados en él (por ejemplo, las comillas tipográficas de Word o Excel) se conservan intactos, sean cuantos sean. Un archivo en otra codificación se lee con la codificación detectada a partir de su primera parte que no es UTF-8 válido.
+- Se detecta la codificación del origen. Un archivo UTF-8 se lee como UTF-8, y los caracteres de Windows pegados en él (por ejemplo, las comillas tipográficas de Word o Excel) se conservan intactos, sean cuantos sean. Un archivo que es ASCII puro salvo por unos pocos caracteres de Windows (guiones, comillas tipográficas o letras acentuadas, no más de dos seguidos y que suman menos del 1 % del texto que rodea al primero de ellos) se lee como Windows-1252, estén donde estén en el archivo. Un archivo en otra codificación se lee con la codificación detectada a partir de su primera parte que no es UTF-8 válido.
 - El texto se escribe sin cambios: las letras acentuadas, los símbolos y los demás caracteres se conservan exactamente como estaban.
 - Un archivo cuya codificación no se puede detectar hace que el paso falle, indicando el archivo.
 - Si la ruta de entrada no existe o no contiene archivos, el paso termina con una advertencia que indica la ruta y no procesa nada, y el flujo de trabajo continúa.

@@ -12,8 +12,10 @@ Lança lançamentos de diário no Sage Intacct através de uma ligação Sage In
 
 O passo lê duas tabelas que já tenha preparado a montante — uma **tabela de cabeçalho** e uma **tabela de linhas** —, valida cada lançamento de diário e lança-o. Suporta o caso de lotes: muitos lançamentos de diário numa única execução, cada um lançado e acompanhado de forma independente.
 
-<Aside type="danger" title="Sem proteção contra duplicados — verifique a tabela de resultados antes de voltar a executar">
-Este passo **não** regista quais os lançamentos que já foram lançados. Voltar a executá-lo volta a lançar **todos** os lançamentos da tabela de cabeçalho, incluindo os que foram lançados com êxito da vez anterior — não há eliminação de duplicados. Antes de voltar a executar, abra a tabela de resultados da última execução e confirme quais os lançamentos que realmente precisam de ser lançados. Se uma execução anterior deixou lançamentos com `status` igual a `unknown`, consulte [Tabela de resultados](#tabela-de-resultados) mais abaixo antes de fazer qualquer outra coisa.
+Cada lançamento passa pelo registo de lançamentos do PlaidCloud, o mesmo registo que os outros passos de lançamento ERP utilizam, pelo que um lançamento real aparece no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) e no [Histórico de lançamentos ERP](/pt-pt/guides/connections/erp-post-history/). Um lançamento real exige também que o projeto esteja [autorizado a lançar](/pt-pt/guides/workflows/run-a-workflow/#autorizar-o-projeto-a-lançar) na ligação.
+
+<Aside type="note" title="Uma nova execução nunca lança um lançamento duas vezes">
+Cada lançamento é reservado no registo com o seu `entry_key` e o mês de lançamento antes de ser enviado, e o número de referência do Intacct para ele é construído a partir da mesma chave. Voltar a executar o passo não lança um lançamento que já foi lançado — a sua linha volta a ser `posted`. Um lançamento cujo conteúdo mudou desde que foi lançado é recusado em vez de lançado uma segunda vez, e um lançamento que foi estornado também não é lançado de novo: lance uma correção com um novo `entry_key`. Um lançamento cuja data de lançamento passa para outro mês é um novo lançamento.
 </Aside>
 
 ## Contrato da estrutura de dados
@@ -43,7 +45,7 @@ O nome da coluna — presente nas colunas de origem do cabeçalho e das linhas �
 
 Dois mapeamentos de colunas distintos, um por separador — em cada um, mapeie uma coluna de origem para o campo do lançamento de diário que ela alimenta:
 
-- **Colunas do cabeçalho** — os campos ao nível do lançamento de diário: diário, data de lançamento, descrição, número de referência, um `base_location` opcional (a entidade/localização do Intacct sob a qual o lançamento é registado — omita-o numa empresa com uma única entidade), a coluna de correlação que indicou como **Entry Key** e outros detalhes ao nível do cabeçalho.
+- **Colunas do cabeçalho** — os campos ao nível do lançamento de diário: diário, data de lançamento, descrição, número de referência, um `base_location` opcional (a entidade/localização do Intacct sob a qual o lançamento é registado — omita-o numa empresa com uma única entidade), a coluna de correlação que indicou como **Entry Key** e outros detalhes ao nível do cabeçalho. Um `reference_number` que mapeie é mantido apenas para apresentação: o número de referência enviado ao Intacct é sempre construído a partir da chave do lançamento e do mês de lançamento.
 - **Colunas das linhas** — os campos por linha de lançamento: conta do razão geral, montante de débito/crédito, descrição da linha, a mesma coluna **Entry Key** e dimensões (localização, departamento, colaborador, classe e semelhantes).
 
 Não precisa de mudar o nome das colunas de origem — mapeie-as, seja qual for o nome, para os nomes dos campos de destino acima.
@@ -54,7 +56,7 @@ A tabela de destino onde este passo grava uma linha por lançamento de diário, 
 
 ### Preview
 
-Uma caixa de seleção, **selecionada por predefinição**. Com Preview ativado, o passo valida todos os lançamentos de diário e grava a tabela de resultados exatamente como numa execução real, mas **não** se autentica no Intacct e **não** lança nada — em modo Preview não há qualquer chamada de rede ao Intacct. As linhas ficam na tabela de resultados com `status = preview`, mostrando quais os lançamentos que seriam lançados sem problemas e quais falhariam a validação, antes de qualquer coisa chegar ao seu razão geral.
+Uma caixa de seleção, **selecionada por predefinição**. Com Preview ativado, o passo valida todos os lançamentos de diário e grava a tabela de resultados exatamente como numa execução real, mas **não** se autentica no Intacct e **não** lança nada — em modo Preview não há qualquer chamada de rede ao Intacct. As linhas ficam na tabela de resultados com `status = preview`, mostrando quais os lançamentos que seriam lançados sem problemas e quais falhariam a validação, antes de qualquer coisa chegar ao seu razão geral. O que cada lançamento seria lançado fica também registado como simulado, no Histórico de lançamentos ERP e no Registo de lançamentos; um lançamento simulado nunca bloqueia o lançamento real posterior.
 
 Tal como numa execução real, um Preview **substitui** a tabela de resultados pelas linhas desta execução — é o resultado do passo em cada execução, não um registo cumulativo —, pelo que um Preview depois de uma execução real substitui as linhas `posted` e `unknown` dessa execução. Abra e copie a tabela de resultados da última execução antes de voltar a executar (Preview ou real) se ainda precisar dela.
 
@@ -73,7 +75,7 @@ Todas as execuções — Preview ou reais — gravam uma linha por lançamento d
 | `entry_key` | O lançamento de diário sobre o qual esta linha informa. |
 | `status` | Um de `preview`, `posted`, `failed`, `unknown` — veja abaixo. |
 | `intacct_key` | A chave atribuída pelo Intacct ao lançamento registado, quando disponível. |
-| `http_status` | O estado HTTP devolvido pelo Intacct na tentativa de lançamento, quando disponível. |
+| `http_status` | Deixado vazio; `status` e `error_message` indicam o desfecho. |
 | `error_message` | Uma descrição curta e higienizada do que correu mal, quando `status` é `failed` ou `unknown`. |
 | `line_count` | Número de linhas associadas a este lançamento. |
 | `posting_date` | A data de lançamento enviada (ou, em Preview, que seria enviada) ao Intacct. |
@@ -81,19 +83,20 @@ Todas as execuções — Preview ou reais — gravam uma linha por lançamento d
 ### Valores de estado
 
 - **`preview`** — modo Preview; o lançamento foi validado e não foi registado.
-- **`posted`** — o lançamento foi registado com êxito no Intacct.
-- **`failed`** — o Intacct rejeitou definitivamente o lançamento (ou este falhou a validação antes de qualquer tentativa de lançamento). É seguro corrigir o problema subjacente e voltar a lançar apenas esse lançamento.
-- **`unknown`** — não foi possível determinar o desfecho — um tempo limite excedido, uma ligação interrompida ou um erro do servidor sem resposta definitiva do Intacct.
+- **`posted`** — o lançamento foi registado com êxito no Intacct, agora ou numa execução anterior.
+- **`failed`** — o lançamento falhou a validação antes de qualquer envio, ou o Intacct rejeitou-o. Corrija uma falha de validação e execute novamente. Um lançamento que o Intacct rejeitou não é enviado novamente com o mesmo `entry_key` e mês de lançamento, pelo que deve lançar o lançamento corrigido com um novo `entry_key`.
+- **`unknown`** — não foi possível confirmar o desfecho — um tempo limite excedido, uma ligação interrompida ou um erro do servidor sem resposta definitiva do Intacct.
 
-<Aside type="danger" title="unknown não significa que falhou">
-Um lançamento `unknown` pode já ter sido registado com êxito no Intacct — o pedido pode ter sido recebido e confirmado antes de a ligação se perder ou de a resposta nunca ser devolvida. **Verifique o estado do lançamento diretamente no Intacct antes de voltar a executar este passo.** Voltar a lançar às cegas um lançamento `unknown` arrisca criar um lançamento de diário duplicado no seu razão geral.
+<Aside type="caution" title="unknown não significa que falhou">
+Um lançamento `unknown` pode já ter sido lançado no Intacct. Quando volta a executar o passo, o PlaidCloud procura primeiro o lançamento no Intacct pelo seu número de referência e regista-o como `posted` se o Intacct o tiver, sem o enviar novamente. Um lançamento que o Intacct não mostra nunca é reenviado automaticamente, porque pode ter sido confirmado na mesma — verifique-o no Intacct antes de agir sobre ele.
 </Aside>
 
-Uma execução com linhas `failed` ou `unknown` comunica um aviso, para que seja visível sem abrir a tabela de resultados, mas a própria tabela de resultados é a fonte de verdade sobre o que fazer a seguir.
+Uma execução com linhas `failed` ou `unknown`, ou cujos totais lançados não coincidem com a origem, termina o passo com erro, para que seja visível sem abrir a tabela de resultados. A tabela de resultados e o [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) mostram o que fazer a seguir.
 
 ## Ver também
 
 - [Export steps](/pt-pt/reference/workflow-steps/export/)
+- [Contabilizar documentos](/pt-pt/reference/workflow-steps/export/post-documents/) — lance lançamentos de diário e faturas no Sage Intacct e nos seus outros sistemas ERP a partir de um só passo
 - [Import Sage AP](/pt-pt/reference/workflow-steps/sage-intacct/import-sage-ap/)
 - [Import Sage Intacct Query](/pt-pt/reference/workflow-steps/sage-intacct/import-intacct-query/)
 - [Sage Intacct REST Connector](/pt-pt/reference/connectors/rest/sage-intacct/)

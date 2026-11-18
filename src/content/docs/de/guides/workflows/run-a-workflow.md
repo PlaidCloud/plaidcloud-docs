@@ -21,7 +21,7 @@ Jede Ausführung hat einen ERP-Buchungsmodus. Um in PlaidCloud einen Modus zu w�
 | Modus | Was geschieht |
 |---|---|
 | Live | Buchungsschritte buchen genau so, wie sie es immer getan haben. Dies ist der Standard. |
-| Simulate | Jeder ERP-Buchungsschritt erstellt und validiert genau das, was er buchen würde, schreibt dann aber nichts fest und kontaktiert das ERP nie. Die Buchungen, die gebucht würden, werden als simuliert gekennzeichnet in der [ERP-Buchungshistorie](/de/guides/connections/erp-post-history/) erfasst, sodass Sie sie prüfen können, bevor Sie live ausführen. |
+| Simulate | Jeder ERP-Buchungsschritt erstellt und validiert genau das, was er buchen würde, schreibt dann aber nichts fest und kontaktiert das ERP nie. Die Buchungen, die gebucht würden, werden erfasst, sodass Sie sie prüfen können, bevor Sie live ausführen: die eines Schritts **Belege buchen** im [Buchungsregister](/de/guides/connections/posting-register/) als **Würde gebucht** (siehe [Belege in ERP-Systemen buchen](/de/guides/connections/post-documents/)), die des eigenen Buchungsschritts eines Systems in der [ERP-Buchungshistorie](/de/guides/connections/erp-post-history/), als simuliert gekennzeichnet. |
 | Off | Buchungsschritte werden vollständig übersprungen. |
 
 Ein Projekt hat außerdem eine eigene Obergrenze für den Buchungsmodus. Sie wird über die Projekt-API oder den Assistenten von jedem Mitglied mit Schreibzugriff auf ein entsperrtes Projekt festgelegt. Die Obergrenze macht eine Ausführung immer nur sicherer, nie freizügiger: Der wirksame Modus einer Ausführung ist der restriktivere aus dem von Ihnen gewählten Modus und der Obergrenze des Projekts. Ein Projekt mit der Obergrenze Simulate bleibt also simuliert, auch wenn Sie die Ausführung als Live starten.
@@ -35,7 +35,7 @@ SAP-Buchungsschritte, SAP-Anhangsschritte und generische SAP-RFC-Schritte führe
 :::
 
 :::note
-Ein einzelner ERP-Buchungsschritt hat außerdem eine eigene Einstellung „Validate Only“ (bei manchen Schritten als „Preview“ oder „Test Only Mode“ bezeichnet), unabhängig vom oben beschriebenen Buchungsmodus der Ausführung. Der Schritt-Editor speichert diese Einstellung immer explizit. Eine Schrittkonfiguration, die auf andere Weise geschrieben wird — über die REST-API, MCP oder einen Workflow-Bundle-Import — und die Einstellung ganz weglässt, verwendet jetzt ebenfalls standardmäßig eine Vorschau statt einer Live-Buchung.
+Ein einzelner ERP-Buchungsschritt hat außerdem eine eigene Einstellung „Validate Only“ (bei manchen Schritten als „Preview“ oder „Test Only Mode“ bezeichnet), unabhängig vom oben beschriebenen Buchungsmodus der Ausführung. Der Schritt-Editor speichert diese Einstellung immer explizit. Eine Schrittkonfiguration, die auf andere Weise geschrieben wird — über die REST-API, MCP oder einen Workflow-Bundle-Import — und die Einstellung ganz weglässt, verwendet jetzt ebenfalls standardmäßig eine Vorschau statt einer Live-Buchung. Der Schritt **Belege buchen** hat keine solche Einstellung: Der Modus der Ausführung und der eigene Modus seines Systems entscheiden, ob er bucht – siehe [Belege in ERP-Systemen buchen](/de/guides/connections/post-documents/).
 :::
 
 ## Das Projekt zum Buchen autorisieren

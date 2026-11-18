@@ -21,3 +21,8 @@ Selecione o Agente a usar. Selecione Diretório de destino na lista suspensa e n
 
 
 Você pode optar por Inserir linha ou Anexar linha na seção de parâmetros, além de nomear os parâmetros e atribuir valores a eles. Escolha o número de Máx. de solicitações simultâneas e selecione Wait for RFC to Complete. Clique em Salvar e executar etapa.
+
+
+## Converter em Lançar documentos
+
+Uma etapa salva tem um botão **Converter em Lançar documentos…**. Ele primeiro mostra o que seria convertido — quantas colunas são correspondidas a campos de documento e quantas entidades são roteadas para os seus sistemas — e, depois que você confirma, transforma a etapa em uma etapa **Lançar documentos** (consulte [Lançar documentos em sistemas ERP](/pt-br/guides/connections/post-documents/)). As configurações antigas permanecem nas versões da etapa.

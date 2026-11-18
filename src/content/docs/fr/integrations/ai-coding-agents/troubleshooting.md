@@ -88,6 +88,10 @@ Symptôme : un outil a renvoyé `{"_fmt": "cols", "cols": [...], "rows": [[...]
 
 C'est la forme voulue pour un gros résultat dont toutes les lignes portent les mêmes champs : les noms de champs sont envoyés une seule fois au lieu d'être répétés sur chaque ligne. La ligne *i* est `dict(zip(cols, rows[i]))`. Les agents en sont informés à la connexion et la gèrent sans qu'il soit nécessaire de le leur demander ; si vous lisez ces réponses depuis votre propre code, décodez les deux formes, car les résultats petits ou irréguliers arrivent toujours sous forme de tableaux d'objets ordinaires. Rien d'autre ne change dans l'enveloppe et aucune valeur n'est modifiée. Consultez [Premiers pas avec les agents de codage IA](/fr/integrations/ai-coding-agents/getting-started/#résultats-orientés-colonnes).
 
+## Une requête est refusée car trop longue
+
+PlaidCloud refuse le SQL qu'il vérifie avant de l'exécuter lorsqu'il dépasse 65 536 caractères, et n'en exécute rien. Le message indique la longueur de la requête et de combien elle dépasse la limite, en comptant les commentaires, les espaces et tous les paramètres déjà renseignés. Supprimez d'abord les commentaires et les espaces inutiles. Si la requête reste trop longue, ne la scindez en requêtes plus petites que lorsque leurs résultats se combinent pour donner la même réponse ; sinon, demandez à votre agent de vous le dire plutôt que de modifier ce que demande la requête.
+
 ## Obtenir de l'aide
 
 Pour les problèmes côté serveur (échecs d'authentification, outils renvoyant des erreurs sans cause évidente, outils manquants), examinez d'abord l'enveloppe `error` de la réponse. Chaque échec inclut `code`, `retryable`, `message` et souvent un `hint`. Si l'indication ne suffit pas, contactez votre administrateur PlaidCloud ou ouvrez un ticket de support avec l'ID de la requête (renvoyé dans l'en-tête de réponse `X-Request-Id`).

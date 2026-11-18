@@ -1,0 +1,122 @@
+---
+title: Sage 100 (local)
+description: "Conecte PlaidCloud a una empresa de Sage 100 local mediante PlaidLink: qué configura el administrador de Sage 100, cómo lee Data Foundation la empresa y cómo se contabilizan de vuelta los diarios y los cheques manuales."
+sidebar:
+  label: Sage 100 (local)
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sage-100.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Sage 100 se instala en sus propios servidores y no tiene API web, por lo que PlaidCloud llega a él mediante un agente de [PlaidLink](/es/reference/cli/plaidlink/) que se ejecuta en un equipo Windows de su red. [Data Foundation](/es/guides/projects/data-foundation/) lee mediante ese agente el plan de cuentas, el calendario fiscal, los diarios y los saldos por período de una empresa de Sage 100, como en cualquier otro sistema ERP que conecta. Un flujo de trabajo también puede contabilizar en la empresa asientos de diario del libro mayor y cheques manuales de cuentas por pagar.
+
+Esta página explica qué configura el administrador de Sage 100, cómo conectar la empresa, qué lee Data Foundation y cómo se comporta la contabilización.
+
+## Qué configura el administrador de Sage 100
+
+Todo lo siguiente se hace en el único equipo que ejecuta el agente de PlaidLink.
+
+<Steps>
+
+1. **Instale y registre PlaidLink** en el equipo, use PlaidLink 1.2.36 o posterior y ejecute el agente con una cuenta de Windows dedicada, no con una cuenta del sistema (LocalSystem, LocalService o NetworkService). Una cuenta dedicada permite que PlaidLink cierre una sesión de Sage 100 que se haya bloqueado; con una cuenta del sistema no puede hacerlo.
+
+2. **Instale el controlador ODBC de 64 bits de Sage y cree un DSN de sistema de 64 bits.** El agente es un programa de 64 bits y no puede usar un controlador ni un origen de datos de 32 bits. El origen de datos suele llamarse `SOTAMAS90` y se incluye con Sage 100 Standard y Advanced. Sage 100 Premium lee de SQL Server y necesita en su lugar el controlador ODBC de Microsoft para SQL Server. Compruebe que su licencia de Sage 100 cubre el controlador ODBC y la estación de trabajo.
+
+3. **Cree un usuario de Sage para PlaidCloud** y asígnele estas tareas en Role Maintenance.
+
+   | Para | Tareas |
+   |---|---|
+   | Leer | General Ledger: Chart of Accounts, Account Inquiry, Journal Entry inquiry, Fiscal Year and Period inquiry. Library Master: Company Maintenance inquiry. |
+   | Contabilizar, con derecho a agregar asientos y no solo a verlos | General Ledger: Journal Entry. Accounts Payable: Manual Check Entry. |
+
+   En Premium, conceda también al usuario acceso de lectura a la base de datos de Sage 100 en SQL Server.
+
+4. **Instale Sage 100 en el mismo equipo como estación de trabajo.** El origen de datos lo necesita para abrir los archivos de la empresa, y la contabilización pasa por la Business Object Interface (BOI) de Sage, que proporciona la instalación de estación de trabajo. La contabilización usa una licencia de estación de trabajo de Sage 100 mientras se ejecuta. Anote la carpeta en la que está instalado Sage 100 y la moneda en la que la empresa lleva su contabilidad.
+
+5. **Proporcione a PlaidCloud una empresa de prueba**, o una copia de la empresa, a la que conectarse primero.
+
+6. **Permita el agente de PlaidLink en su antivirus y en Windows SmartScreen**, para que la primera instalación no se bloquee.
+
+</Steps>
+
+Un origen de datos Standard o Advanced inicia sesión en una sola empresa. Una conexión Premium nombra una empresa de una base de datos. Conecte cada empresa por separado.
+
+<Aside type="caution">
+Nunca envíe por correo la contraseña de Sage. **Sage password** es un secreto: se almacena en la conexión y no se vuelve a mostrar.
+</Aside>
+
+### Enviar la solicitud de acceso
+
+En la pestaña **Foundation** del proyecto, elija **Sage 100 — on-premises** en **Conectar un sistema** y luego **Crear una conexión nueva**. El formulario muestra esta solicitud completa, un enlace **Cómo configurar PlaidLink**, **Copiar solicitud** para pegarla en su propio mensaje y **Enviar solicitud por correo** para abrirla en su programa de correo con el asunto "Sage 100 access for PlaidCloud".
+
+## Conectar la empresa
+
+En la pestaña **Foundation**, abra **Orígenes**, elija **Sage 100 — on-premises** en **Conectar un sistema** (**Conectar otro sistema** cuando el proyecto ya tiene un origen) y elija **Crear una conexión nueva**. Escriba un **Nombre de la conexión**, elija el **Entorno** y complete estos valores:
+
+| Valor | Qué escribir |
+|---|---|
+| **Sage 100 edition** | Premium, Standard o Advanced. |
+| **Company code** | El código de la empresa de Sage 100, de 1 a 10 letras y dígitos. |
+| **Company currency** | El código de tres letras de la moneda en la que la empresa lleva su contabilidad, como `USD`. Obligatorio: PlaidCloud nunca da una por supuesta. |
+| **Sage user** | El usuario de Sage que creó para PlaidCloud. |
+| **Sage password** | La contraseña de ese usuario. |
+| **Sage 100 install folder on the agent machine** | La carpeta en la que está instalado Sage 100. La contabilización la necesita; la lectura no. |
+| **Accounts Payable division** | La división en la que se contabilizan los cheques manuales. Es `00` de forma predeterminada. |
+| **SQL Server (Premium)** y **SQL Server database (Premium)** | Para Premium: el SQL Server y la base de datos de la instalación de Sage 100. |
+| **ODBC data source (Standard and Advanced)** | Para Standard y Advanced: el DSN de sistema del equipo del agente. Es `SOTAMAS90` de forma predeterminada. |
+
+En **Ajustes del sistema**, elija el agente de PlaidLink en **PlaidLink agent** y establezca allí **Company currency** con el mismo código. Las filas se cargan en esa moneda, que es `USD` hasta que la cambie. **Document account for the agent's reads** guarda los archivos que el agente escribe mientras lee y, de forma predeterminada, es la del proyecto. **Account mask** es el formato de cuenta de Sage 100, donde `#` es un carácter y cualquier otro símbolo un separador: `####-###` es una cuenta principal de cuatro caracteres, un separador y un departamento de tres caracteres. Es `####` hasta que lo cambie.
+
+Haga clic en **Probar conexión**. En Sage 100 esto comprueba que la conexión tiene todos los valores necesarios y no inicia sesión en Sage 100: el agente lee las tablas cuando usted hace clic en **Cargar**. Después establezca **Meses de historial** y agregue el sistema como se describe en [Conectar su ERP](/es/guides/projects/data-foundation/#conectar-su-erp). La única empresa es la única entidad que ofrece la conexión.
+
+## Qué lee Data Foundation
+
+| Conjunto de datos | Qué se lee de Sage 100 |
+|---|---|
+| Entidades | La empresa. |
+| Calendario fiscal | Los ejercicios fiscales y sus períodos, hasta 13 al año. Un período cuya fecha de fin es la misma que la del anterior es un período de ajuste. |
+| Plan de cuentas | Las cuentas del libro mayor, divididas en segmentos según la máscara de cuenta. |
+| Departamentos | El segmento de departamento de la cuenta, cuando la máscara tiene uno. |
+| Libro mayor | El detalle de contabilización del libro mayor, por ejercicio fiscal y período. |
+| Balance de comprobación | El historial de contabilización por período: los débitos y créditos de cada cuenta por período, con un saldo inicial para el primer período leído. |
+
+Sage 100 no aporta productos, clientes, líneas de ventas, tipos de cambio ni otros conjuntos de datos: agréguelos como archivos. Lleva su contabilidad en una sola moneda, por lo que no hay tipos de cambio que leer. Consulte la [matriz de cobertura de Data Foundation](/es/reference/data-foundation-coverage-matrix/).
+
+Una tabla que el agente no puede leer, o que no tiene filas, es una advertencia y no un error: lo que una carga anterior incorporó de ella permanece como estaba, se cargan los conjuntos de datos que pueden cargarse y **Preparación** nombra la tabla.
+
+## Contabilizar en Sage 100
+
+El paso **Contabilizar documentos** contabiliza en una conexión de Sage 100 a partir de la misma tabla de documentos que en cualquier otro ERP, y los mismos [modos de contabilización](/es/guides/workflows/run-a-workflow/#elegir-un-modo-de-contabilización): **Simular** crea y comprueba cada documento sin comunicarse con Sage 100. Un sistema contabiliza en vivo solo cuando la ejecución es en vivo y el proyecto tiene la autorización de escritura de hoy para él. Consulte [Revisar el Registro de asientos](/es/guides/connections/posting-register/) para seguir las contabilizaciones y [Revisar el historial de contabilizaciones de ERP](/es/guides/connections/erp-post-history/) para ver el libro que las respalda.
+
+Sage 100 admite dos tipos de documento:
+
+| Documento | Qué se contabiliza | Qué necesita |
+|---|---|---|
+| `journal` | Un asiento de diario del libro mayor. | Una fecha de contabilización y una cuenta en cada línea. Las líneas deben cuadrar al centavo, y la referencia, que se convierte en la descripción del diario, tiene como máximo 30 caracteres. |
+| `payment` | Un cheque manual de cuentas por pagar que registra un pago hecho fuera de Sage 100 contra las facturas abiertas del proveedor. | Una fecha de contabilización, un proveedor en el conjunto de sus líneas, un `invoice_no` y un importe positivo en cada línea, un código de banco y una referencia de 7 caracteres como máximo, que se convierte en el número de cheque. El código de banco es una columna `bank_code`, o un valor obligatorio guardado en el sistema Sage 100. |
+
+Antes de enviar nada, un documento se detiene, con el motivo, cuando:
+
+- sus líneas están en una moneda distinta de la **Company currency** de la conexión;
+- su columna `company` nombra una empresa distinta del **Company code** de la conexión;
+- un diario tiene fecha en un período que Sage 100 ha cerrado, o un pago paga una factura que no está abierta por ese importe, cuando el agente puede saberlo (estas dos comprobaciones se ejecutan solo en las contabilizaciones en vivo);
+
+Cada documento se introduce en un lote de Sage 100 y PlaidCloud lo vuelve a leer antes de considerarlo contabilizado. Lo que verá:
+
+- **Contabilizado** solo cuando la relectura encuentra el documento en las tablas contabilizadas de Sage 100.
+- **En espera**, con el mensaje "Entered in Sage, batch *n*", cuando el documento está en el lote y espera el Update de Sage 100. Mientras el agente está en línea, PlaidCloud vuelve a consultar a Sage 100 por cada uno de esos documentos aproximadamente cada hora y lo registra como contabilizado cuando aparece. Un documento que sigue introducido después de 7 días pasa a estar sin confirmar.
+- **Sin confirmar** cuando PlaidCloud no puede saber si Sage 100 lo contiene. Nunca se reenvía por suposición, así que compruebe Sage 100 antes de resolverlo.
+- **No contabilizado** cuando Sage 100 rechaza el documento, o el agente nunca lo recibió, por ejemplo porque está sin conexión. Un documento rechazado puede enviarse de nuevo después de corregirlo.
+
+Un documento contabilizado nunca se contabiliza dos veces: al ejecutar de nuevo el mismo documento, se reconoce por su referencia.
+
+<Aside type="note">
+PlaidLink abre una sola sesión de Sage 100 por agente a la vez, por lo que las contabilizaciones de un mismo agente se ejecutan una tras otra. Una contabilización espera hasta un minuto la sesión antes de rechazarse por no estar disponible. La reversión de una contabilización no está disponible para Sage 100.
+</Aside>
+
+## Temas relacionados
+
+- [Primeros pasos con Data Foundation](/es/guides/projects/data-foundation-getting-started/)
+- [Matriz de cobertura de Data Foundation](/es/reference/data-foundation-coverage-matrix/)
+- [PlaidLink](/es/reference/cli/plaidlink/)
+- [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/): contabilice en Sage 100 y en sus demás sistemas ERP desde un solo paso, con revisión en el [Registro de asientos](/es/guides/connections/posting-register/).

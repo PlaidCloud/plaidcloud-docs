@@ -47,6 +47,7 @@ Workflow-Schritte sind die Bausteine der PlaidCloud-Automatisierung. Jeder Schri
 
 ### Unternehmensintegrationen
 
+- [Belege buchen](/de/reference/workflow-steps/export/post-documents/) – eine Tabelle mit Journalen, Rechnungen, Memos und Zahlungen mit einem Schritt in ein beliebiges eingerichtetes ERP-System buchen
 - [Agent](/de/reference/workflow-steps/agent/) – PlaidLink-Agent-Operationen für lokale Ressourcen
 - [NetSuite](/de/reference/workflow-steps/netsuite/) – Salden, Hauptbuchdetails, Stammdaten oder Ihre eigene [SuiteQL-Abfrage](/de/reference/workflow-steps/netsuite/import-suiteql-query/) importieren; Journalbuchungen in NetSuite buchen
 - [Acumatica](/de/reference/workflow-steps/acumatica/) – Stamm- und Bewegungsentitäten importieren; Journaltransaktionen, Rechnungen, Eingangsrechnungen und Zahlungen buchen

@@ -40,25 +40,25 @@ Data Foundation lee directamente cada sistema ERP e instancia que usted conecta 
 
 ## Sistemas financieros de mercado medio y en la nube
 
-| Conjunto de datos | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| Entidades | Completo | Completo | Completo | Completo | Completo | Completo |
-| Calendario fiscal | Completo | Completo | Completo | Completo | Completo | Completo |
-| Plan de cuentas | Completo | Completo | Completo | Completo | Completo | Completo |
-| Departamentos | Completo | Completo | Completo¹ | Completo | Completo | Completo |
-| Centros de beneficio | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
-| Productos | Completo | Completo | Completo¹ | Completo | Completo¹ | Completo |
-| Clientes | Completo | Completo | Completo¹ | Completo | Completo¹ | Completo |
-| Libro mayor | Completo | Completo | Completo | Completo | Completo | Completo |
-| Balance de comprobación | Completo | Completo | Completo | Completo | Completo | Completo |
-| Líneas de ventas | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo |
-| Pipeline | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
-| Saldos de inventario | Archivo | Archivo | Completo¹ | Archivo | Archivo | Completo¹ |
-| Presupuesto | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Archivo | Completo¹ |
-| Inductores de asignación | Completo¹ | Completo¹ | Archivo | Archivo | Completo¹ | Completo |
-| Tipos de cambio | Completo | Completo | Completo¹ | Archivo | Completo | Completo¹ |
-| Valores de segmento | Archivo | Archivo | Archivo | Archivo | Completo¹ | Completo |
-| CO-PA por valoración | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
+| Conjunto de datos | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Entidades | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Calendario fiscal | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Plan de cuentas | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Departamentos | Completo | Completo¹ | Completo | Completo¹ | Completo | Completo | Completo |
+| Centros de beneficio | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
+| Productos | Completo | Archivo | Completo | Completo¹ | Completo | Completo¹ | Completo |
+| Clientes | Completo | Archivo | Completo | Completo¹ | Completo | Completo¹ | Completo |
+| Libro mayor | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Balance de comprobación | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Líneas de ventas | Completo¹ | Archivo | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo |
+| Pipeline | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
+| Saldos de inventario | Archivo | Archivo | Archivo | Completo¹ | Archivo | Archivo | Completo¹ |
+| Presupuesto | Completo¹ | Archivo | Completo¹ | Completo¹ | Completo¹ | Archivo | Completo¹ |
+| Inductores de asignación | Completo¹ | Archivo | Completo¹ | Archivo | Archivo | Completo¹ | Completo |
+| Tipos de cambio | Completo | Archivo | Completo | Completo¹ | Archivo | Completo | Completo¹ |
+| Valores de segmento | Archivo | Archivo | Archivo | Archivo | Archivo | Completo¹ | Completo |
+| CO-PA por valoración | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo | Archivo |
 
 ## Orígenes de CRM, consolidación y planificación
 
@@ -90,6 +90,7 @@ Data Foundation lee directamente cada sistema ERP e instancia que usted conecta 
 - **SAP S/4HANA y SAP ECC** leen los mismos datos maestros. ECC lee su libro mayor a partir de las partidas de contabilidad financiera y de controlling, y sus totales a partir de las tablas de totales del libro mayor. Los centros de beneficio se leen cuando el sistema los contiene. Las líneas de ventas son documentos de facturación, no CO-PA.
 - **CO-PA por valoración** no se lee directamente de ningún sistema. Agréguelo como archivo.
 - **Workday** no tiene un servicio directo de asientos ni de saldos. Data Foundation le proporciona los informes que debe crear y los lee. Los valores de segmento (worktags), los clientes, los productos, las líneas de ventas y los inductores de plantilla de personal provienen de informes opcionales. Los presupuestos siguen siendo archivos.
+- **Sage 100** se lee mediante un agente de PlaidLink, una empresa por conexión. Lleva su contabilidad en una sola moneda, por lo que no aporta tipos de cambio, y Data Foundation no lee sus productos, clientes ni líneas de ventas. Los departamentos se leen del segmento de departamento de la cuenta cuando la máscara de cuenta tiene uno.
 - **Xero** no aporta tipos de cambio. Agréguelos como archivo si sus entidades usan más de una moneda.
 - **QuickBooks Online** lee departamentos, clientes, productos, tipos de cambio, presupuestos, inventario y líneas de ventas cuando el archivo de la empresa los contiene.
 - **NetSuite** lee los segmentos personalizados como valores de segmento. Los tipos de cambio y el inventario se leen cuando la cuenta los ofrece, y los presupuestos cuando la cuenta usa NetSuite Budgets y el rol puede leerlos.
@@ -109,6 +110,7 @@ Data Foundation lee directamente cada sistema ERP e instancia que usted conecta 
   - [Oracle Fusion](/es/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/es/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/es/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/es/guides/connections/sage-100/)
   - [Sage Intacct](/es/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/es/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/es/guides/connections/xero-access-for-data-foundation/)

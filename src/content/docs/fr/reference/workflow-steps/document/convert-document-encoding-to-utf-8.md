@@ -12,7 +12,7 @@ Réécrit un fichier texte en UTF-8. C'est particulièrement utile lorsque la so
 
 ## Fonctionnement
 
-- L'encodage de la source est détecté. Un fichier UTF-8 est lu en UTF-8, et les caractères Windows qui y ont été collés (par exemple les guillemets typographiques de Word ou d'Excel) sont conservés intacts, quel qu'en soit le nombre. Un fichier dans un autre encodage est lu dans l'encodage détecté à partir de sa première partie qui n'est pas du UTF-8 valide.
+- L'encodage de la source est détecté. Un fichier UTF-8 est lu en UTF-8, et les caractères Windows qui y ont été collés (par exemple les guillemets typographiques de Word ou d'Excel) sont conservés intacts, quel qu'en soit le nombre. Un fichier en ASCII pur, à l'exception de quelques caractères Windows (tirets, guillemets typographiques ou lettres accentuées, au plus deux côte à côte et représentant moins de 1 % du texte autour du premier d'entre eux), est lu en Windows-1252, où que ces caractères se trouvent dans le fichier. Un fichier dans un autre encodage est lu dans l'encodage détecté à partir de sa première partie qui n'est pas du UTF-8 valide.
 - Le texte est écrit tel quel : les lettres accentuées, les symboles et les autres caractères sont conservés exactement comme ils étaient.
 - Un fichier dont l'encodage ne peut pas être détecté fait échouer l'étape, en nommant le fichier.
 - Si le chemin d'entrée n'existe pas ou ne contient aucun fichier, l'étape se termine avec un avertissement qui nomme le chemin et ne traite rien, et le workflow se poursuit.

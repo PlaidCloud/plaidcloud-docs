@@ -29,6 +29,7 @@ Workflow-Schritte, die Projekttabellen in externe Ziele schreiben — Dateiforma
 - [Export to PDF](/de/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/de/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/de/reference/workflow-steps/export/export-to-xml/)
+- [Belege buchen](/de/reference/workflow-steps/export/post-documents/) – eine Tabelle mit Belegen in ein beliebiges eingerichtetes ERP-System buchen
 - [Geodatei-Export](/de/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/de/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/de/reference/workflow-steps/export/export-hyper/)

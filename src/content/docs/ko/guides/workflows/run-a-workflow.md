@@ -21,7 +21,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | 모드 | 동작 |
 |---|---|
 | Live | 전기 단계가 기존과 똑같이 전기됩니다. 기본값입니다. |
-| Simulate | 모든 ERP 전기 단계가 전기할 내용을 그대로 빌드하고 검증한 다음, 아무것도 커밋하지 않으며 ERP에 연결하지도 않습니다. 전기될 항목은 시뮬레이션으로 표시되어 [ERP 전기 기록](/ko/guides/connections/erp-post-history/)에 기록되므로 Live로 실행하기 전에 검토할 수 있습니다. |
+| Simulate | 모든 ERP 전기 단계가 전기할 내용을 그대로 빌드하고 검증한 다음, 아무것도 커밋하지 않으며 ERP에 연결하지도 않습니다. 전기될 항목은 Live로 실행하기 전에 검토할 수 있도록 기록됩니다. **문서 전기** 단계의 항목은 [전기 등록부](/ko/guides/connections/posting-register/)에 **전기 예정**으로 기록되며([ERP 시스템에 문서 전기](/ko/guides/connections/post-documents/) 참조), 시스템 자체 전기 단계의 항목은 [ERP 전기 기록](/ko/guides/connections/erp-post-history/)에 시뮬레이션으로 표시되어 기록됩니다. |
 | Off | 전기 단계를 완전히 건너뜁니다. |
 
 프로젝트에도 자체 전기 모드 상한이 있으며, 잠기지 않은 프로젝트에 대한 쓰기 권한이 있는 모든 멤버가 프로젝트 API 또는 어시스턴트를 통해 설정합니다. 상한은 실행을 더 안전하게 만들 뿐 더 허용적으로 만들지는 않습니다. 실행의 유효 모드는 사용자가 선택한 모드와 프로젝트 상한 중 더 제한적인 모드이므로, Simulate로 제한된 프로젝트는 Live로 실행을 시작하더라도 시뮬레이션 상태를 유지합니다.
@@ -35,7 +35,7 @@ SAP 전기, SAP 첨부, 일반 SAP RFC 단계는 드라이 런을 지원하지 �
 :::
 
 :::note
-개별 ERP 전기 단계에는 위의 실행 전기 모드와 별개로 자체 Validate Only 설정(일부 단계에서는 Preview 또는 Test Only Mode로 표시)이 있습니다. 단계 편집기는 이 설정을 항상 명시적으로 저장합니다. REST API, MCP, 워크플로 번들 가져오기 등 다른 방식으로 작성된 단계 구성에서 이 설정을 완전히 생략하면 이제 기본값이 실제 전기가 아니라 미리 보기가 됩니다.
+개별 ERP 전기 단계에는 위의 실행 전기 모드와 별개로 자체 Validate Only 설정(일부 단계에서는 Preview 또는 Test Only Mode로 표시)이 있습니다. 단계 편집기는 이 설정을 항상 명시적으로 저장합니다. REST API, MCP, 워크플로 번들 가져오기 등 다른 방식으로 작성된 단계 구성에서 이 설정을 완전히 생략하면 이제 기본값이 실제 전기가 아니라 미리 보기가 됩니다. **문서 전기** 단계에는 이런 설정이 없으며, 실행의 모드와 해당 시스템 자체의 모드가 전기 여부를 결정합니다. [ERP 시스템에 문서 전기](/ko/guides/connections/post-documents/)를 참조하십시오.
 :::
 
 ## 프로젝트에 전기 권한 부여

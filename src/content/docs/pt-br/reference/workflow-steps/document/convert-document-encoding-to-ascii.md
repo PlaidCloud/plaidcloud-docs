@@ -12,7 +12,7 @@ Reescreve um arquivo de texto como ASCII simples. É particularmente útil se a 
 
 ## Como funciona
 
-- A codificação da origem é detectada. Um arquivo UTF-8 é lido como UTF-8, e caracteres do Windows colados nele — aspas curvas do Word ou do Excel, por exemplo — passam intactos, em qualquer quantidade. Um arquivo em outra codificação é lido na codificação detectada a partir da primeira parte dele que não é UTF-8 válido.
+- A codificação da origem é detectada. Um arquivo UTF-8 é lido como UTF-8, e caracteres do Windows colados nele — aspas curvas do Word ou do Excel, por exemplo — passam intactos, em qualquer quantidade. Um arquivo que é ASCII puro, exceto por alguns caracteres do Windows — travessões, aspas curvas ou letras acentuadas, no máximo dois lado a lado e somando menos de 1% do texto em torno do primeiro deles — é lido como Windows-1252, onde quer que estejam no arquivo. Um arquivo em outra codificação é lido na codificação detectada a partir da primeira parte dele que não é UTF-8 válido.
 - As letras acentuadas mantêm a letra base (`café` vira `cafe`), e os caracteres sem forma em ASCII são descartados.
 - Uma linha que contém apenas aspas duplas é unida ao final da linha anterior.
 - Um arquivo cuja codificação não pode ser detectada faz a etapa falhar, informando o arquivo.

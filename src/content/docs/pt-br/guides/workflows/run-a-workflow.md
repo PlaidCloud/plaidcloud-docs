@@ -21,7 +21,7 @@ Toda execução tem um modo de lançamento no ERP. Para escolher um no PlaidClou
 | Modo | O que acontece |
 |---|---|
 | Real | As etapas de lançamento lançam exatamente como sempre fizeram. Este é o padrão. |
-| Simulação | Cada etapa de lançamento no ERP monta e valida exatamente o que lançaria, depois não confirma nada e nunca entra em contato com o ERP. Os lançamentos simulados são registrados no [Histórico de lançamentos no ERP](/pt-br/guides/connections/erp-post-history/), marcados como simulados, para que você possa revisá-los antes de executar em modo real. |
+| Simulação | Cada etapa de lançamento no ERP monta e valida exatamente o que lançaria, depois não confirma nada e nunca entra em contato com o ERP. Os lançamentos simulados são registrados para que você possa revisá-los antes de executar em modo real: os de uma etapa **Lançar documentos** no [Registro de lançamentos](/pt-br/guides/connections/posting-register/) como **Seria lançado** (consulte [Lançar documentos em sistemas ERP](/pt-br/guides/connections/post-documents/)), e os de uma etapa de lançamento própria de um sistema no [Histórico de lançamentos no ERP](/pt-br/guides/connections/erp-post-history/), marcados como simulados. |
 | Desativado | As etapas de lançamento são ignoradas por completo. |
 
 Um projeto também tem seu próprio limite de modo de lançamento, definido pela API do projeto ou pelo assistente por qualquer membro com acesso de gravação a um projeto desbloqueado. O limite só torna uma execução mais segura, nunca mais permissiva: o modo efetivo de uma execução é o mais restritivo entre o modo que você escolheu e o limite do projeto, então um projeto limitado a Simulação continua simulado mesmo que você inicie a execução em modo Real.
@@ -35,7 +35,7 @@ As etapas de lançamento SAP, de anexo SAP e de RFC SAP genérico não fazem exe
 :::
 
 :::note
-Uma etapa individual de lançamento no ERP também tem sua própria configuração Validate Only (chamada de Pré-visualização ou Test Only Mode em algumas etapas), independente do modo de lançamento da execução acima. O editor de etapas sempre a salva explicitamente. Uma configuração de etapa gravada de outra forma — a API REST, o MCP ou uma importação de pacote de fluxo de trabalho — que omita totalmente essa configuração agora também assume como padrão uma pré-visualização em vez de um lançamento real.
+Uma etapa individual de lançamento no ERP também tem sua própria configuração Validate Only (chamada de Pré-visualização ou Test Only Mode em algumas etapas), independente do modo de lançamento da execução acima. O editor de etapas sempre a salva explicitamente. Uma configuração de etapa gravada de outra forma — a API REST, o MCP ou uma importação de pacote de fluxo de trabalho — que omita totalmente essa configuração agora também assume como padrão uma pré-visualização em vez de um lançamento real. A etapa **Lançar documentos** não tem essa configuração: o modo da execução e o modo do seu sistema decidem se ela lança — consulte [Lançar documentos em sistemas ERP](/pt-br/guides/connections/post-documents/).
 :::
 
 ## Autorizar o projeto a lançar

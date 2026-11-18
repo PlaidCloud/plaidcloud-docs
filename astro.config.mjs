@@ -314,6 +314,7 @@ export default defineConfig({
 										'guides/connections/oracle-fusion-access-for-data-foundation',
 										'guides/connections/dynamics-365-fo-access-for-data-foundation',
 										'guides/connections/business-central-access-for-data-foundation',
+										'guides/connections/sage-100',
 										'guides/connections/sage-intacct-access-for-data-foundation',
 										'guides/connections/quickbooks-access-for-data-foundation',
 										'guides/connections/xero-access-for-data-foundation',
@@ -357,6 +358,8 @@ export default defineConfig({
 									translations: { de: 'Zurückschreiben', es: 'Escritura de retorno', fr: 'Réécriture', 'pt-BR': 'Gravação de retorno', 'pt-PT': 'Escrita de retorno', pl: 'Zapis zwrotny', ja: '書き戻し', ko: '다시 쓰기', 'zh-CN': '回写' },
 									collapsed: true,
 									items: [
+										'guides/connections/post-documents',
+										'guides/connections/erp-systems',
 										'guides/connections/posting-register',
 										'guides/connections/erp-post-history',
 									],

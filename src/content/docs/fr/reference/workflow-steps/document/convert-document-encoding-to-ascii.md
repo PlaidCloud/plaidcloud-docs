@@ -12,7 +12,7 @@ Réécrit un fichier texte en ASCII pur. C'est particulièrement utile lorsque l
 
 ## Fonctionnement
 
-- L'encodage de la source est détecté. Un fichier UTF-8 est lu en UTF-8, et les caractères Windows qui y ont été collés (par exemple les guillemets typographiques de Word ou d'Excel) sont conservés intacts, quel qu'en soit le nombre. Un fichier dans un autre encodage est lu dans l'encodage détecté à partir de sa première partie qui n'est pas du UTF-8 valide.
+- L'encodage de la source est détecté. Un fichier UTF-8 est lu en UTF-8, et les caractères Windows qui y ont été collés (par exemple les guillemets typographiques de Word ou d'Excel) sont conservés intacts, quel qu'en soit le nombre. Un fichier en ASCII pur, à l'exception de quelques caractères Windows (tirets, guillemets typographiques ou lettres accentuées, au plus deux côte à côte et représentant moins de 1 % du texte autour du premier d'entre eux), est lu en Windows-1252, où que ces caractères se trouvent dans le fichier. Un fichier dans un autre encodage est lu dans l'encodage détecté à partir de sa première partie qui n'est pas du UTF-8 valide.
 - Les lettres accentuées conservent leur lettre de base (`café` devient `cafe`), et les caractères sans équivalent ASCII sont supprimés.
 - Une ligne qui ne contient qu'un guillemet double est rattachée à la fin de la ligne qui la précède.
 - Un fichier dont l'encodage ne peut pas être détecté fait échouer l'étape, en nommant le fichier.

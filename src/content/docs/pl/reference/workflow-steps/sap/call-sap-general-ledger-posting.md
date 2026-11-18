@@ -21,3 +21,8 @@ Wybierz opcję Agent do użycia. Wybierz Katalog docelowy z listy rozwijanej i p
 
 
 W sekcji parametrów możesz wybrać Wstaw wiersz lub Dołącz wiersz, a także nazwać parametry i nadać im wartości. Wybierz liczbę w polu Maks. liczba równoległych żądań i zaznacz opcję Wait for RFC to Complete. Kliknij „Zapisz i uruchom”.
+
+
+## Konwersja na Księgowanie dokumentów
+
+Zapisany krok ma przycisk **Konwertuj na Księgowanie dokumentów…**. Najpierw pokazuje, co zostałoby przekonwertowane — ile kolumn jest dopasowanych do pól dokumentu i ile jednostek jest skierowanych do swoich systemów — a po potwierdzeniu zmienia krok w krok **Księgowanie dokumentów** (zobacz [Księgowanie dokumentów w systemach ERP](/pl/guides/connections/post-documents/)). Stare ustawienia pozostają w wersjach kroku.

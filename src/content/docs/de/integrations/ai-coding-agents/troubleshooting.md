@@ -88,6 +88,10 @@ Symptom: Ein Tool lieferte `{"_fmt": "cols", "cols": [...], "rows": [[...]]}` st
 
 Das ist die vorgesehene Form für ein großes Ergebnis, dessen Zeilen alle dieselben Felder tragen – die Feldnamen werden einmal gesendet, statt in jeder Zeile wiederholt zu werden. Zeile *i* ist `dict(zip(cols, rows[i]))`. Agents werden beim Verbinden darüber informiert und verarbeiten dies ohne Aufforderung; wenn Sie diese Antworten in Ihrem eigenen Code lesen, dekodieren Sie beide Formen, da kleine und unregelmäßige Ergebnisse weiterhin als gewöhnliche Arrays von Objekten ankommen. Am Envelope ändert sich sonst nichts, und kein Wert wird verändert. Siehe [Erste Schritte mit KI-Coding-Agents](/de/integrations/ai-coding-agents/getting-started/#spaltenorientierte-ergebnisse).
 
+## Eine Abfrage wird als zu lang abgelehnt
+
+PlaidCloud lehnt SQL, das es vor der Ausführung prüft, ab, wenn es länger als 65.536 Zeichen ist, und führt nichts davon aus. Die Meldung nennt die Länge der Abfrage und um wie viel sie das Limit überschreitet, wobei Kommentare, Leerraum und alle eingesetzten Parameter mitgezählt werden. Entfernen Sie zuerst Kommentare und unnötigen Leerraum. Ist die Abfrage danach immer noch zu lang, teilen Sie sie nur dann in kleinere Abfragen auf, wenn sich deren Ergebnisse zu derselben Antwort zusammensetzen lassen; andernfalls bitten Sie Ihren Agent, es Ihnen zu sagen, statt zu ändern, was die Abfrage fragt.
+
 ## Hilfe erhalten
 
 Prüfen Sie bei serverseitigen Problemen – Authentifizierungsfehlern, Tools, die ohne erkennbare Ursache Fehler liefern, fehlenden Tools – zuerst den `error`-Envelope der Antwort. Jeder Fehler enthält `code`, `retryable`, `message` und oft einen `hint`. Reicht der Hinweis nicht aus, wenden Sie sich an Ihren PlaidCloud-Administrator oder eröffnen Sie ein Support-Ticket mit der Request-ID (zurückgegeben im Antwort-Header `X-Request-Id`).
