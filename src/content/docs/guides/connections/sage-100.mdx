@@ -17,7 +17,7 @@ Everything below is on the one computer that runs the PlaidLink agent.
 
 <Steps>
 
-1. **Install and register PlaidLink** on the computer, and run the agent under a dedicated Windows account, not a system account (LocalSystem, LocalService or NetworkService). A dedicated account lets PlaidLink clear a Sage 100 session that hangs; under a system account it doesn't.
+1. **Install and register PlaidLink** on the computer, and use PlaidLink 1.2.36 or later, and run the agent under a dedicated Windows account, not a system account (LocalSystem, LocalService or NetworkService). A dedicated account lets PlaidLink clear a Sage 100 session that hangs; under a system account it doesn't.
 
 2. **Install Sage's 64-bit ODBC driver and create a 64-bit System DSN.** The agent is a 64-bit program and can't use a 32-bit driver or data source. The data source is usually named `SOTAMAS90`, and it comes with Sage 100 Standard and Advanced. Sage 100 Premium reads from SQL Server and needs the Microsoft ODBC Driver for SQL Server instead. Check that your Sage 100 license covers the ODBC driver and the workstation.
 
@@ -50,7 +50,7 @@ On the project's **Foundation** tab, choose **Sage 100 — on-premises** under *
 
 ## Connect the Company
 
-On the **Foundation** tab, open **Sources**, choose **Sage 100 — on-premises** in **Connect a system**, and choose **Create a new connection**. Enter a **Connection name**, choose the **Environment**, and fill in these settings:
+On the **Foundation** tab, open **Sources**, choose **Sage 100 — on-premises** in **Connect a system** (**Connect another system** once the project has a source), and choose **Create a new connection**. Enter a **Connection name**, choose the **Environment**, and fill in these settings:
 
 | Setting | What to enter |
 |---|---|
@@ -64,9 +64,9 @@ On the **Foundation** tab, open **Sources**, choose **Sage 100 — on-premises**
 | **SQL Server (Premium)** and **SQL Server database (Premium)** | For Premium: the SQL Server and database of the Sage 100 install. |
 | **ODBC data source (Standard and Advanced)** | For Standard and Advanced: the System DSN on the agent's computer. Defaults to `SOTAMAS90`. |
 
-Under **System settings**, choose the PlaidLink agent in **PlaidLink agent**, and set **Company currency** there to the same code. Rows load in that currency, and it is `USD` until you change it. Choose a folder account in **Document account for the agent's reads** to hold the files the agent writes while it reads. **Account mask** is Sage 100's account format, where `#` is a character and anything else a separator: `####-###` is a four-character main account, a separator and a three-character department. It is `####` until you change it.
+Under **System settings**, choose the PlaidLink agent in **PlaidLink agent**, and set **Company currency** there to the same code. Rows load in that currency, and it is `USD` until you change it. **Document account for the agent's reads** holds the files the agent writes while it reads, and defaults to the project's. **Account mask** is Sage 100's account format, where `#` is a character and anything else a separator: `####-###` is a four-character main account, a separator and a three-character department. It is `####` until you change it.
 
-Click **Test connection**. For Sage 100 this checks that the connection has every value it needs, and it doesn't sign in to Sage 100: the agent reads the tables when you click **Load**. Then set **Months of history** and add the system as described in [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp). The one company is the only entity the connection offers, so there are none to tick.
+Click **Test connection**. For Sage 100 this checks that the connection has every value it needs, and it doesn't sign in to Sage 100: the agent reads the tables when you click **Load**. Then set **Months of history** and add the system as described in [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp). The one company is the only entity the connection offers.
 
 ## What Data Foundation Reads
 
@@ -85,33 +85,32 @@ A table the agent can't read, or one with no rows, is a warning and not an error
 
 ## Post to Sage 100
 
-Posting to a Sage 100 connection takes the same table of documents as posting to any other ERP, and the same [posting modes](/guides/workflows/run-a-workflow/#choose-a-posting-mode): **Simulate** builds and checks each document without contacting Sage 100. See [Review the Posting Register](/guides/connections/posting-register/) to follow postings and [Review ERP Post History](/guides/connections/erp-post-history/) for the ledger behind them.
+The **Post Documents** step posts to a Sage 100 connection from the same table of documents as for any other ERP, and the same [posting modes](/guides/workflows/run-a-workflow/#choose-a-posting-mode): **Simulate** builds and checks each document without contacting Sage 100. A system posts Live only when the run is Live and the project holds today's write authorization for it. See [Review the Posting Register](/guides/connections/posting-register/) to follow postings and [Review ERP Post History](/guides/connections/erp-post-history/) for the ledger behind them.
 
 Sage 100 takes two kinds of document:
 
 | Document | What is posted | What it needs |
 |---|---|---|
 | `journal` | A General Ledger journal entry. | A posting date, and an account on every line. The lines must balance to the cent, and the reference, which becomes the journal's description, is at most 30 characters. |
-| `payment` | An Accounts Payable manual check that records a payment made outside Sage 100 against the supplier's open invoices. | A posting date, one supplier on every line, an `invoice_no` and a positive amount on each line, a bank code, and a reference of at most 7 characters, which becomes the check number. The bank code is a `bank_code` column, or a required value saved on the Sage 100 system. |
+| `payment` | An Accounts Payable manual check that records a payment made outside Sage 100 against the supplier's open invoices. | A posting date, one supplier across its lines, an `invoice_no` and a positive amount on each line, a bank code, and a reference of at most 7 characters, which becomes the check number. The bank code is a `bank_code` column, or a required value saved on the Sage 100 system. |
 
 Before anything is sent, a document is stopped, with the reason, when:
 
 - its lines are in a currency other than the connection's **Company currency**;
-- its entity names a different company from the connection's;
-- a journal is dated in a period Sage 100 has closed, or a payment pays an invoice that isn't open for that amount, when the agent can say so;
-- another document of the same run uses its reference.
+- its `company` column names a company other than the connection's **Company code**;
+- a journal is dated in a period Sage 100 has closed, or a payment pays an invoice that isn't open for that amount, when the agent can say so (these two checks run on Live posts only);
 
 Each document is entered in a batch in Sage 100, and PlaidCloud reads it back before calling it posted. What you see:
 
 - **Posted** only when the read-back finds the document in Sage 100's posted tables.
-- **Waiting**, with the message "Entered in Sage, batch *n*", when the document sits in the batch and is waiting for Sage 100's Update. PlaidCloud asks Sage 100 again about each such document every hour, and records it as posted once it appears. A document still entered after 7 days becomes unconfirmed.
+- **Waiting**, with the message "Entered in Sage, batch *n*", when the document sits in the batch and is waiting for Sage 100's Update. While the agent is online, PlaidCloud asks Sage 100 again about each such document about every hour, and records it as posted once it appears. A document still entered after 7 days becomes unconfirmed.
 - **Unconfirmed** when PlaidCloud can't tell whether Sage 100 holds it. It is never re-sent on a guess, so check Sage 100 before you resolve it.
 - **Not posted** when Sage 100 refuses the document, or the agent never took it, for example when it is offline. A refused document can be sent again after you fix it.
 
 A posted document is never posted twice: running the same document again is recognized by its reference.
 
 <Aside type="note">
-Sage 100 allows one session per agent at a time, so posts from one agent run one after another. A post waits up to a minute for the session before it is refused as unavailable. Reversing a posting isn't available for Sage 100.
+PlaidLink opens one Sage 100 session per agent at a time, so posts from one agent run one after another. A post waits up to a minute for the session before it is refused as unavailable. Reversing a posting isn't available for Sage 100.
 </Aside>
 
 ## Related

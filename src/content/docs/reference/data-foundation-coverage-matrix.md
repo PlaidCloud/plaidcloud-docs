@@ -89,7 +89,7 @@ Data Foundation reads every ERP system and instance you connect, directly, into 
 - **SAP S/4HANA and SAP ECC** read the same master data. ECC reads its ledger from financial accounting and controlling line items, and its totals from the general ledger totals tables. Profit centers are read when the system holds them. Sales lines are billing documents, not CO-PA.
 - **CO-PA by valuation** isn't read directly from any system. Add it as a file.
 - **Workday** has no direct journal or balance service. Data Foundation gives you the reports to build and reads them. Segment values (worktags), customers, products, sales lines, and headcount drivers come from optional reports. Budgets stay files.
-- **Sage 100** is read through a PlaidLink agent, one company per connection. It keeps its books in one currency, so it supplies no currency rates, and it has no products, customers or sales lines to read. Departments are read from the account's department segment when the account mask has one.
+- **Sage 100** is read through a PlaidLink agent, one company per connection. It keeps its books in one currency, so it supplies no currency rates, and Data Foundation doesn't read its products, customers or sales lines. Departments are read from the account's department segment when the account mask has one.
 - **Xero** doesn't supply currency rates. Add them as a file if your entities use more than one currency.
 - **QuickBooks Online** reads departments, customers, products, currency rates, budgets, inventory, and sales lines when the company file holds them.
 - **NetSuite** reads custom segments as segment values. Currency rates and inventory are read when the account offers them, and budgets when the account uses NetSuite Budgets and the role can read them.
