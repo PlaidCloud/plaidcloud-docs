@@ -40,25 +40,25 @@ Data Foundation 会直接读取您连接的每个 ERP 系统和实例，汇入�
 
 ## 中端市场和云财务系统
 
-| 数据集 | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| 实体 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
-| 财务日历 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
-| 会计科目表 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
-| 部门 | 完整 | 完整 | 完整¹ | 完整 | 完整 | 完整 |
-| 利润中心 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
-| 产品 | 完整 | 完整 | 完整¹ | 完整 | 完整¹ | 完整 |
-| 客户 | 完整 | 完整 | 完整¹ | 完整 | 完整¹ | 完整 |
-| 总账 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
-| 试算平衡表 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
-| 销售明细行 | 完整¹ | 完整¹ | 完整¹ | 完整¹ | 完整¹ | 完整 |
-| 销售管道 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
-| 库存余额 | 文件 | 文件 | 完整¹ | 文件 | 文件 | 完整¹ |
-| 预算 | 完整¹ | 完整¹ | 完整¹ | 完整¹ | 文件 | 完整¹ |
-| 分摊动因 | 完整¹ | 完整¹ | 文件 | 文件 | 完整¹ | 完整 |
-| 汇率 | 完整 | 完整 | 完整¹ | 文件 | 完整 | 完整¹ |
-| 分部值 | 文件 | 文件 | 文件 | 文件 | 完整¹ | 完整 |
-| 按估值的 CO-PA | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
+| 数据集 | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 实体 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
+| 财务日历 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
+| 会计科目表 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
+| 部门 | 完整 | 完整¹ | 完整 | 完整¹ | 完整 | 完整 | 完整 |
+| 利润中心 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
+| 产品 | 完整 | 文件 | 完整 | 完整¹ | 完整 | 完整¹ | 完整 |
+| 客户 | 完整 | 文件 | 完整 | 完整¹ | 完整 | 完整¹ | 完整 |
+| 总账 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
+| 试算平衡表 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 | 完整 |
+| 销售明细行 | 完整¹ | 文件 | 完整¹ | 完整¹ | 完整¹ | 完整¹ | 完整 |
+| 销售管道 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
+| 库存余额 | 文件 | 文件 | 文件 | 完整¹ | 文件 | 文件 | 完整¹ |
+| 预算 | 完整¹ | 文件 | 完整¹ | 完整¹ | 完整¹ | 文件 | 完整¹ |
+| 分摊动因 | 完整¹ | 文件 | 完整¹ | 文件 | 文件 | 完整¹ | 完整 |
+| 汇率 | 完整 | 文件 | 完整 | 完整¹ | 文件 | 完整 | 完整¹ |
+| 分部值 | 文件 | 文件 | 文件 | 文件 | 文件 | 完整¹ | 完整 |
+| 按估值的 CO-PA | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 | 文件 |
 
 ## CRM、合并和计划来源
 
@@ -90,6 +90,7 @@ Data Foundation 会直接读取您连接的每个 ERP 系统和实例，汇入�
 - **SAP S/4HANA 和 SAP ECC** 读取相同的主数据。ECC 从财务会计和管理会计行项目读取其账务，从总账汇总表读取其合计。系统持有利润中心时会读取。销售明细行是开票凭证，而不是 CO-PA。
 - **按估值的 CO-PA** 不会直接从任何系统读取。请以文件方式添加。
 - **Workday** 没有直接的日记账或余额服务。Data Foundation 会提供需要您构建的报表并读取它们。分部值（worktags）、客户、产品、销售明细行和人数动因来自可选报表。预算仍使用文件。
+- **Sage 100** 通过 PlaidLink 代理读取，每个连接对应一个公司。它的账簿使用单一货币，因此不提供汇率，也没有可读取的产品、客户或销售明细行。当科目掩码包含部门段时，部门会从该账户的部门段中读取。
 - **Xero** 不提供汇率。如果您的实体使用多种货币，请以文件方式添加。
 - **QuickBooks Online** 在公司文件中持有部门、客户、产品、汇率、预算、库存和销售明细行时会读取它们。
 - **NetSuite** 将自定义分部读取为分部值。账户提供汇率和库存时会读取它们；账户使用 NetSuite Budgets 且角色可以读取时会读取预算。
@@ -109,6 +110,7 @@ Data Foundation 会直接读取您连接的每个 ERP 系统和实例，汇入�
   - [Oracle Fusion](/zh-cn/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/zh-cn/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/zh-cn/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/zh-cn/guides/connections/sage-100/)
   - [Sage Intacct](/zh-cn/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/zh-cn/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/zh-cn/guides/connections/xero-access-for-data-foundation/)

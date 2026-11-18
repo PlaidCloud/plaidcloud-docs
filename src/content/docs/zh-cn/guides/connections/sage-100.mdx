@@ -1,0 +1,122 @@
+---
+title: Sage 100（本地部署）
+description: 通过 PlaidLink 将 PlaidCloud 连接到本地部署的 Sage 100 公司：Sage 100 管理员需要完成的设置、Data Foundation 如何读取该公司，以及日记账和手工支票如何回写过账。
+sidebar:
+  label: Sage 100（本地部署）
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sage-100.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Sage 100 安装在您自己的服务器上，没有 Web API，因此 PlaidCloud 通过运行在您网络内一台 Windows 计算机上的 [PlaidLink](/zh-cn/reference/cli/plaidlink/) 代理来访问它。[Data Foundation](/zh-cn/guides/projects/data-foundation/) 通过该代理读取一个 Sage 100 公司的会计科目表、财务日历、日记账和期间余额，与它连接的其他 ERP 系统一样。工作流还可以把总账日记账分录和应付账款手工支票回写过账到该公司。
+
+本页介绍 Sage 100 管理员需要完成的设置、如何连接公司、Data Foundation 读取哪些内容，以及过账的行为。
+
+## Sage 100 管理员需要完成的设置
+
+以下所有操作都在运行 PlaidLink 代理的那一台计算机上进行。
+
+<Steps>
+
+1. **在该计算机上安装并注册 PlaidLink**，并使用专用的 Windows 账户运行代理，而不是系统账户（LocalSystem、LocalService 或 NetworkService）。专用账户可让 PlaidLink 清除卡住的 Sage 100 会话；使用系统账户则无法清除。
+
+2. **安装 Sage 的 64 位 ODBC 驱动程序，并创建 64 位系统 DSN。** 代理是 64 位程序，无法使用 32 位驱动程序或数据源。数据源通常命名为 `SOTAMAS90`，随 Sage 100 Standard 和 Advanced 一起提供。Sage 100 Premium 从 SQL Server 读取，需要改用 Microsoft ODBC Driver for SQL Server。请确认您的 Sage 100 许可证涵盖 ODBC 驱动程序和工作站。
+
+3. **为 PlaidCloud 创建一个 Sage 用户**，并在 Role Maintenance 中授予它以下任务。
+
+   | 用途 | 任务 |
+   |---|---|
+   | 读取 | General Ledger：Chart of Accounts、Account Inquiry、Journal Entry inquiry、Fiscal Year and Period inquiry。Library Master：Company Maintenance inquiry。 |
+   | 过账，需具有添加条目而不仅是查看的权限 | General Ledger：Journal Entry。Accounts Payable：Manual Check Entry。 |
+
+   对于 Premium，还需授予该用户对 SQL Server 中 Sage 100 数据库的读取权限。
+
+4. **在同一台计算机上将 Sage 100 安装为工作站。** 数据源需要它来打开公司文件，而过账通过 Sage 的 Business Object Interface（BOI）进行，该接口由工作站安装提供。过账运行期间会占用一个 Sage 100 工作站许可证。请记下 Sage 100 的安装文件夹以及公司记账所用的货币。
+
+5. **提供一个测试公司**，或公司的一个副本，供 PlaidCloud 首先连接。
+
+6. **允许 PlaidLink 代理通过您的杀毒软件和 Windows SmartScreen**，以免首次安装被拦截。
+
+</Steps>
+
+Standard 或 Advanced 数据源登录一个公司。Premium 连接指定一个数据库中的一个公司。请分别连接每个公司。
+
+<Aside type="caution">
+切勿通过电子邮件发送 Sage 密码。**Sage password** 是机密：它存储在连接上，之后不会再显示。
+</Aside>
+
+### 发送访问请求
+
+在项目的**基础数据**选项卡上，在**连接系统**下选择 **Sage 100 — on-premises**，然后选择**创建新连接**。表单会完整显示此请求，并提供**如何设置 PlaidLink**链接、用于粘贴到您自己邮件中的**复制请求**，以及用于在邮件程序中打开它的**通过电子邮件发送请求**，邮件主题为“Sage 100 access for PlaidCloud”。
+
+## 连接公司
+
+在**基础数据**选项卡上，打开**源**，在**连接系统**中选择 **Sage 100 — on-premises**，然后选择**创建新连接**。输入**连接名称**，选择**环境**，并填写以下设置：
+
+| 设置 | 输入内容 |
+|---|---|
+| **Sage 100 edition** | Premium、Standard 或 Advanced。 |
+| **公司代码** | Sage 100 公司的代码，由 1 到 10 个字母和数字组成。 |
+| **Company currency** | 公司记账所用货币的三字母代码，例如 `USD`。必填：PlaidCloud 绝不会自行假定货币。 |
+| **Sage user** | 您为 PlaidCloud 创建的 Sage 用户。 |
+| **Sage password** | 该用户的密码。 |
+| **Sage 100 install folder on the agent machine** | Sage 100 的安装文件夹。过账需要它，读取则不需要。 |
+| **Accounts Payable division** | 手工支票过账到的分部。默认为 `00`。 |
+| **SQL Server (Premium)** 和 **SQL Server database (Premium)** | 适用于 Premium：Sage 100 安装所用的 SQL Server 和数据库。 |
+| **ODBC data source (Standard and Advanced)** | 适用于 Standard 和 Advanced：代理所在计算机上的系统 DSN。默认为 `SOTAMAS90`。 |
+
+在**系统设置**下，于 **PlaidLink agent** 中选择 PlaidLink 代理，并在其中将 **Company currency** 设置为相同的代码。行数据以该货币加载，在您更改之前为 `USD`。在 **Document account for the agent's reads** 中选择一个文件夹账户，用于存放代理在读取时写入的文件。**Account mask** 是 Sage 100 的科目格式，其中 `#` 表示一个字符，其他字符表示分隔符：`####-###` 表示四个字符的主科目、一个分隔符和三个字符的部门。在您更改之前为 `####`。
+
+点击**测试连接**。对于 Sage 100，此操作检查连接是否具备所需的全部值，并不会登录 Sage 100：代理在您点击**加载**时读取各表。然后设置**历史月数**，并按[连接您的 ERP](/zh-cn/guides/projects/data-foundation/#连接-erp)中的说明添加该系统。该连接只提供这一个公司作为实体，因此没有需要勾选的实体。
+
+## Data Foundation 读取的内容
+
+| 数据集 | 从 Sage 100 读取的内容 |
+|---|---|
+| 实体 | 该公司。 |
+| 财务日历 | 各会计年度及其期间，每年最多 13 个。结束日期与前一期间相同的期间为调整期间。 |
+| 会计科目表 | 总账科目，按科目掩码拆分为各段。 |
+| 部门 | 科目的部门段（当掩码包含部门段时）。 |
+| 总账 | 总账过账明细，按会计年度和期间划分。 |
+| 试算平衡表 | 期间过账历史：每个科目各期间的借方和贷方，并附有所读取的第一个期间的期初余额。 |
+
+Sage 100 不提供产品、客户、销售明细行、汇率或其他数据集：请以文件方式添加这些数据。它的账簿使用单一货币，因此没有可读取的汇率。请参阅 [Data Foundation 覆盖矩阵](/zh-cn/reference/data-foundation-coverage-matrix/)。
+
+代理无法读取的表或没有行的表只会产生警告，而不是错误：此前加载时从中获取的数据保持不变，能够加载的数据集照常加载，并且**就绪状态**会列出该表。
+
+## 过账到 Sage 100
+
+向 Sage 100 连接过账所使用的单据表与向其他任何 ERP 过账相同，[过账模式](/zh-cn/guides/workflows/run-a-workflow/#选择过账模式)也相同：**模拟**会构建并检查每份单据，但不会联系 Sage 100。要跟踪过账，请参阅[查看过账登记簿](/zh-cn/guides/connections/posting-register/)；其背后的分类账请参阅[查看 ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)。
+
+Sage 100 接受两种单据：
+
+| 单据 | 过账内容 | 所需内容 |
+|---|---|---|
+| `journal` | 一笔总账日记账分录。 | 过账日期，以及每行都有科目。各行必须精确到分平衡，并且参考号（将成为日记账的说明）最多 30 个字符。 |
+| `payment` | 一张应付账款手工支票，用于对照供应商的未结发票记录在 Sage 100 之外支付的款项。 | 过账日期，每行有一个供应商，每行有 `invoice_no` 和正数金额，一个银行代码，以及最多 7 个字符的参考号（将成为支票号码）。银行代码可来自 `bank_code` 列，或保存在 Sage 100 系统上的必填值。 |
+
+在发送任何内容之前，如果出现以下情况，单据会被拦截并给出原因：
+
+- 其各行使用的货币不是该连接的 **Company currency**；
+- 其实体指向的公司与该连接的公司不同；
+- 日记账的日期落在 Sage 100 已关闭的期间内，或者付款所付的发票未结且金额不符（在代理能够判断时）；
+- 同一次运行中的另一份单据使用了相同的参考号。
+
+每份单据都会录入 Sage 100 的一个批次，PlaidCloud 在将其视为已过账之前会先读回确认。您会看到：
+
+- 仅当读回时在 Sage 100 的已过账表中找到该单据，才显示**已过账**。
+- **等待中**，并附消息“Entered in Sage, batch *n*”：表示单据位于批次中，正等待 Sage 100 的 Update。PlaidCloud 每小时就每份此类单据再次询问 Sage 100，一旦出现便记录为已过账。仍处于已录入状态超过 7 天的单据会变为未确认。
+- 当 PlaidCloud 无法判断 Sage 100 是否持有该单据时为**未确认**。系统绝不会凭猜测重新发送，因此请在处理之前先检查 Sage 100。
+- 当 Sage 100 拒绝该单据，或代理从未接收它（例如代理离线）时为**未过账**。被拒绝的单据可在修正后重新发送。
+
+已过账的单据绝不会被重复过账：再次运行同一单据时，会根据其参考号识别出来。
+
+<Aside type="note">
+Sage 100 每个代理一次只允许一个会话，因此来自同一代理的过账会依次运行。过账最多会等待会话一分钟，之后因不可用而被拒绝。Sage 100 不支持冲销过账。
+</Aside>
+
+## 相关内容
+
+- [Data Foundation 入门](/zh-cn/guides/projects/data-foundation-getting-started/)
+- [Data Foundation 覆盖矩阵](/zh-cn/reference/data-foundation-coverage-matrix/)
+- [PlaidLink](/zh-cn/reference/cli/plaidlink/)

@@ -40,25 +40,25 @@ Data Foundation liest jedes ERP-System und jede Instanz, die Sie verbinden, dire
 
 ## Mid-Market- und Cloud-Finanzsysteme
 
-| Datensatz | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| Entitäten | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
-| Geschäftskalender | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
-| Kontenplan | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
-| Abteilungen | Vollständig | Vollständig | Vollständig¹ | Vollständig | Vollständig | Vollständig |
-| Profit-Center | Datei | Datei | Datei | Datei | Datei | Datei |
-| Produkte | Vollständig | Vollständig | Vollständig¹ | Vollständig | Vollständig¹ | Vollständig |
-| Kunden | Vollständig | Vollständig | Vollständig¹ | Vollständig | Vollständig¹ | Vollständig |
-| Hauptbuch | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
-| Saldenliste | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
-| Verkaufspositionen | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig |
-| Pipeline | Datei | Datei | Datei | Datei | Datei | Datei |
-| Lagerbestände | Datei | Datei | Vollständig¹ | Datei | Datei | Vollständig¹ |
-| Budget | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig¹ | Datei | Vollständig¹ |
-| Verteilungstreiber | Vollständig¹ | Vollständig¹ | Datei | Datei | Vollständig¹ | Vollständig |
-| Wechselkurse | Vollständig | Vollständig | Vollständig¹ | Datei | Vollständig | Vollständig¹ |
-| Segmentwerte | Datei | Datei | Datei | Datei | Vollständig¹ | Vollständig |
-| CO-PA nach Bewertung | Datei | Datei | Datei | Datei | Datei | Datei |
+| Datensatz | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Entitäten | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
+| Geschäftskalender | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
+| Kontenplan | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
+| Abteilungen | Vollständig | Vollständig¹ | Vollständig | Vollständig¹ | Vollständig | Vollständig | Vollständig |
+| Profit-Center | Datei | Datei | Datei | Datei | Datei | Datei | Datei |
+| Produkte | Vollständig | Datei | Vollständig | Vollständig¹ | Vollständig | Vollständig¹ | Vollständig |
+| Kunden | Vollständig | Datei | Vollständig | Vollständig¹ | Vollständig | Vollständig¹ | Vollständig |
+| Hauptbuch | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
+| Saldenliste | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig | Vollständig |
+| Verkaufspositionen | Vollständig¹ | Datei | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig¹ | Vollständig |
+| Pipeline | Datei | Datei | Datei | Datei | Datei | Datei | Datei |
+| Lagerbestände | Datei | Datei | Datei | Vollständig¹ | Datei | Datei | Vollständig¹ |
+| Budget | Vollständig¹ | Datei | Vollständig¹ | Vollständig¹ | Vollständig¹ | Datei | Vollständig¹ |
+| Verteilungstreiber | Vollständig¹ | Datei | Vollständig¹ | Datei | Datei | Vollständig¹ | Vollständig |
+| Wechselkurse | Vollständig | Datei | Vollständig | Vollständig¹ | Datei | Vollständig | Vollständig¹ |
+| Segmentwerte | Datei | Datei | Datei | Datei | Datei | Vollständig¹ | Vollständig |
+| CO-PA nach Bewertung | Datei | Datei | Datei | Datei | Datei | Datei | Datei |
 
 ## CRM-, Konsolidierungs- und Planungsquellen
 
@@ -90,6 +90,7 @@ Data Foundation liest jedes ERP-System und jede Instanz, die Sie verbinden, dire
 - **SAP S/4HANA und SAP ECC** lesen dieselben Stammdaten. ECC liest sein Hauptbuch aus den Positionen der Finanzbuchhaltung und des Controllings und seine Summen aus den Summentabellen des Hauptbuchs. Profit-Center werden gelesen, wenn das System sie enthält. Verkaufspositionen sind Fakturabelege, nicht CO-PA.
 - **CO-PA nach Bewertung** wird aus keinem System direkt gelesen. Fügen Sie es als Datei hinzu.
 - **Workday** hat keinen direkten Journal- oder Saldendienst. Data Foundation stellt Ihnen die zu erstellenden Berichte bereit und liest sie. Segmentwerte (Worktags), Kunden, Produkte, Verkaufspositionen und Headcount-Treiber stammen aus optionalen Berichten. Budgets bleiben Dateien.
+- **Sage 100** wird über einen PlaidLink-Agent gelesen, ein Unternehmen pro Verbindung. Es führt seine Bücher in einer Währung, liefert daher keine Wechselkurse und hat keine Produkte, Kunden oder Verkaufspositionen, die gelesen werden könnten. Abteilungen werden aus dem Abteilungssegment des Kontos gelesen, wenn die Kontomaske eines hat.
 - **Xero** liefert keine Wechselkurse. Fügen Sie sie als Datei hinzu, wenn Ihre Entitäten mehr als eine Währung verwenden.
 - **QuickBooks Online** liest Abteilungen, Kunden, Produkte, Wechselkurse, Budgets, Lagerbestände und Verkaufspositionen, wenn die Unternehmensdatei sie enthält.
 - **NetSuite** liest benutzerdefinierte Segmente als Segmentwerte. Wechselkurse und Lagerbestände werden gelesen, wenn das Konto sie anbietet, und Budgets, wenn das Konto NetSuite Budgets verwendet und die Rolle sie lesen kann.
@@ -109,6 +110,7 @@ Data Foundation liest jedes ERP-System und jede Instanz, die Sie verbinden, dire
   - [Oracle Fusion](/de/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/de/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/de/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/de/guides/connections/sage-100/)
   - [Sage Intacct](/de/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/de/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/de/guides/connections/xero-access-for-data-foundation/)

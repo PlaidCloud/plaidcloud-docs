@@ -40,25 +40,25 @@ Data Foundation odczytuje bezpośrednio każdy podłączony system ERP i każdą
 
 ## Systemy finansowe średniej wielkości i chmurowe
 
-| Zbiór danych | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| Jednostki | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
-| Kalendarz fiskalny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
-| Plan kont | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
-| Działy | Pełny | Pełny | Pełny¹ | Pełny | Pełny | Pełny |
-| Centra zysku | Plik | Plik | Plik | Plik | Plik | Plik |
-| Produkty | Pełny | Pełny | Pełny¹ | Pełny | Pełny¹ | Pełny |
-| Klienci | Pełny | Pełny | Pełny¹ | Pełny | Pełny¹ | Pełny |
-| Księga główna | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
-| Bilans próbny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
-| Pozycje sprzedaży | Pełny¹ | Pełny¹ | Pełny¹ | Pełny¹ | Pełny¹ | Pełny |
-| Lejek sprzedaży | Plik | Plik | Plik | Plik | Plik | Plik |
-| Stany magazynowe | Plik | Plik | Pełny¹ | Plik | Plik | Pełny¹ |
-| Budżet | Pełny¹ | Pełny¹ | Pełny¹ | Pełny¹ | Plik | Pełny¹ |
-| Klucze alokacji | Pełny¹ | Pełny¹ | Plik | Plik | Pełny¹ | Pełny |
-| Kursy walut | Pełny | Pełny | Pełny¹ | Plik | Pełny | Pełny¹ |
-| Wartości segmentów | Plik | Plik | Plik | Plik | Pełny¹ | Pełny |
-| CO-PA według wyceny | Plik | Plik | Plik | Plik | Plik | Plik |
+| Zbiór danych | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Jednostki | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
+| Kalendarz fiskalny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
+| Plan kont | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
+| Działy | Pełny | Pełny¹ | Pełny | Pełny¹ | Pełny | Pełny | Pełny |
+| Centra zysku | Plik | Plik | Plik | Plik | Plik | Plik | Plik |
+| Produkty | Pełny | Plik | Pełny | Pełny¹ | Pełny | Pełny¹ | Pełny |
+| Klienci | Pełny | Plik | Pełny | Pełny¹ | Pełny | Pełny¹ | Pełny |
+| Księga główna | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
+| Bilans próbny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny | Pełny |
+| Pozycje sprzedaży | Pełny¹ | Plik | Pełny¹ | Pełny¹ | Pełny¹ | Pełny¹ | Pełny |
+| Lejek sprzedaży | Plik | Plik | Plik | Plik | Plik | Plik | Plik |
+| Stany magazynowe | Plik | Plik | Plik | Pełny¹ | Plik | Plik | Pełny¹ |
+| Budżet | Pełny¹ | Plik | Pełny¹ | Pełny¹ | Pełny¹ | Plik | Pełny¹ |
+| Klucze alokacji | Pełny¹ | Plik | Pełny¹ | Plik | Plik | Pełny¹ | Pełny |
+| Kursy walut | Pełny | Plik | Pełny | Pełny¹ | Plik | Pełny | Pełny¹ |
+| Wartości segmentów | Plik | Plik | Plik | Plik | Plik | Pełny¹ | Pełny |
+| CO-PA według wyceny | Plik | Plik | Plik | Plik | Plik | Plik | Plik |
 
 ## Źródła CRM, konsolidacji i planowania
 
@@ -90,6 +90,7 @@ Data Foundation odczytuje bezpośrednio każdy podłączony system ERP i każdą
 - **SAP S/4HANA i SAP ECC** odczytują te same dane główne. ECC odczytuje księgę z pozycji księgowości finansowej i controllingu, a obroty z tabel sum księgi głównej. Centra zysku są odczytywane, gdy system je przechowuje. Pozycje sprzedaży to dokumenty rozliczeniowe, a nie CO-PA.
 - **CO-PA według wyceny** nie jest odczytywane bezpośrednio z żadnego systemu. Dodaj je jako plik.
 - **Workday** nie ma bezpośredniej usługi dziennika ani sald. Data Foundation udostępnia raporty do zbudowania i je odczytuje. Wartości segmentów (worktagi), klienci, produkty, pozycje sprzedaży i klucze dotyczące liczby pracowników pochodzą z opcjonalnych raportów. Budżety pozostają plikami.
+- **Sage 100** jest odczytywany przez agenta PlaidLink, jedna firma na połączenie. Prowadzi księgi w jednej walucie, więc nie dostarcza kursów walut, a nie ma produktów, klientów ani pozycji sprzedaży do odczytu. Działy są odczytywane z segmentu działu konta, gdy maska konta go zawiera.
 - **Xero** nie dostarcza kursów walut. Dodaj je jako plik, jeśli Twoje jednostki używają więcej niż jednej waluty.
 - **QuickBooks Online** odczytuje działy, klientów, produkty, kursy walut, budżety, stany magazynowe i pozycje sprzedaży, gdy plik firmy je zawiera.
 - **NetSuite** odczytuje segmenty niestandardowe jako wartości segmentów. Kursy walut i stany magazynowe są odczytywane, gdy konto je oferuje, a budżety, gdy konto używa NetSuite Budgets, a rola może je odczytać.
@@ -109,6 +110,7 @@ Data Foundation odczytuje bezpośrednio każdy podłączony system ERP i każdą
   - [Oracle Fusion](/pl/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/pl/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/pl/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/pl/guides/connections/sage-100/)
   - [Sage Intacct](/pl/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/pl/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/pl/guides/connections/xero-access-for-data-foundation/)
