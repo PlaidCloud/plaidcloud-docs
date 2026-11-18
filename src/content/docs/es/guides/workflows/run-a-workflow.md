@@ -21,7 +21,7 @@ Cada ejecución lleva un modo de contabilización en ERP. Para elegir uno en Pla
 | Modo | Qué sucede |
 |---|---|
 | Live | Los pasos de contabilización contabilizan exactamente como siempre. Es el modo predeterminado. |
-| Simulate | Cada paso de contabilización en ERP genera y valida exactamente lo que contabilizaría, pero no confirma nada y nunca se comunica con el ERP. Los asientos que se contabilizarían se registran en el [historial de contabilización en ERP](/es/guides/connections/erp-post-history/), marcados como simulados, para que pueda revisarlos antes de ejecutar en modo Live. |
+| Simulate | Cada paso de contabilización en ERP genera y valida exactamente lo que contabilizaría, pero no confirma nada y nunca se comunica con el ERP. Los asientos que se contabilizarían se registran para que pueda revisarlos antes de ejecutar en modo Live: los de un paso **Contabilizar documentos**, en el [Registro de asientos](/es/guides/connections/posting-register/) como **Se contabilizaría** (consulte [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/)), y los del propio paso de contabilización de un sistema, en el [historial de contabilización en ERP](/es/guides/connections/erp-post-history/), marcados como simulados. |
 | Off | Los pasos de contabilización se omiten por completo. |
 
 Un proyecto también tiene su propio límite de modo de contabilización, que cualquier miembro con acceso de escritura a un proyecto desbloqueado establece mediante la API del proyecto o el asistente. El límite solo hace que una ejecución sea más segura, nunca más permisiva: el modo efectivo de una ejecución es el más restrictivo entre el modo que usted eligió y el límite del proyecto, de modo que un proyecto limitado a Simulate sigue simulado aunque inicie la ejecución en modo Live.
@@ -35,7 +35,7 @@ Los pasos de contabilización de SAP, de adjuntos de SAP y de RFC genéricos de 
 :::
 
 :::note
-Cada paso individual de contabilización en ERP también tiene su propia opción Validate Only (con la etiqueta Vista previa o Test Only Mode en algunos pasos), independiente del modo de contabilización de la ejecución descrito arriba. El editor de pasos siempre la guarda de forma explícita. Una configuración de paso escrita de otra manera (la API REST, MCP o una importación de paquete de flujo de trabajo) que omita por completo esta opción ahora también adopta de forma predeterminada una vista previa en lugar de una contabilización real.
+Cada paso individual de contabilización en ERP también tiene su propia opción Validate Only (con la etiqueta Vista previa o Test Only Mode en algunos pasos), independiente del modo de contabilización de la ejecución descrito arriba. El editor de pasos siempre la guarda de forma explícita. Una configuración de paso escrita de otra manera (la API REST, MCP o una importación de paquete de flujo de trabajo) que omita por completo esta opción ahora también adopta de forma predeterminada una vista previa en lugar de una contabilización real. El paso **Contabilizar documentos** no tiene esa opción: el modo de la ejecución y el modo propio de su sistema deciden si contabiliza; consulte [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/).
 :::
 
 ## Autorizar al proyecto para contabilizar

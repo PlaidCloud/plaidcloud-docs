@@ -54,7 +54,9 @@ Eine **Verbindung** ist eine gespeicherte Konfiguration, über die PlaidCloud ei
 - [Mit Anaplan verbinden](/de/guides/connections/anaplan/) – eine Verbindung zu Anaplan herstellen und eine gespeicherte Ansicht lesen, eine vorhandene Exportaktion ausführen oder Listen in eine PlaidCloud-Dimension laden. Schreibgeschützt.
 - [OneStream für Data Foundation](/de/guides/connections/onestream-for-data-foundation/) – was Ihr OneStream-Administrator einrichtet, damit Data Foundation konsolidierte Ergebnisse über einen Datenadapter lesen kann.
 - [Mit QuickBooks verbinden](/de/guides/connections/quickbooks/) – Voraussetzungen und aktuelle Einschränkungen für QuickBooks Online.
-- [Buchungsregister prüfen](/de/guides/connections/posting-register/) – eine mandantenweite Konsole für Finanzen und Rechnungswesen, um ERP-Buchungen über alle Projekte und Verbindungen zu prüfen, die sie sehen können.
+- [Belege in ERP-Systemen buchen](/de/guides/connections/post-documents/) – eine Tabelle mit Journalen, Rechnungen und anderen Belegen mit einem Schritt in jedem verbundenen ERP-System buchen, in Simulate oder Live.
+- [ERP-Systeme einrichten](/de/guides/connections/erp-systems/) – die Systeme, in die der Schritt „Belege buchen“ bucht, welche Entität in welches System bucht, Halteregeln und was jedes ERP unterstützt.
+- [Buchungsregister prüfen](/de/guides/connections/posting-register/) – ERP-Buchungen über alle Projekte und Systeme, die Sie sehen können, prüfen und darauf reagieren: was Aufmerksamkeit erfordert, jede Buchung und jede Ausführung.
 
 ## Verwandte Themen
 

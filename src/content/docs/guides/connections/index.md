@@ -53,7 +53,9 @@ A **connection** is a saved configuration that lets PlaidCloud reach an external
 - [Connect to Anaplan](/guides/connections/anaplan/) — connect to Anaplan and read a saved view, run a pre-existing export action, or load lists into a PlaidCloud dimension. Read-only.
 - [OneStream for Data Foundation](/guides/connections/onestream-for-data-foundation/) — what your OneStream administrator sets up so Data Foundation can read consolidated results through a data adapter.
 - [Connect to QuickBooks](/guides/connections/quickbooks/) — prerequisites and current limitations for QuickBooks Online.
-- [Review the Posting Register](/guides/connections/posting-register/) — a tenant-level console for finance and accounting to review ERP postings across every project and connection they can see.
+- [Post Documents to ERP Systems](/guides/connections/post-documents/) — post a table of journals, invoices and other documents to any connected ERP system from one step, in Simulate or Live.
+- [Set Up ERP Systems](/guides/connections/erp-systems/) — the systems Post Documents posts to, which entity goes to which system, hold rules, and what each ERP supports.
+- [Review the Posting Register](/guides/connections/posting-register/) — review and act on ERP postings across every project and system you can see: what needs attention, every posting, and every run.
 
 ## Related
 

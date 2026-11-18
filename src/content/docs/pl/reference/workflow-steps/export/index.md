@@ -29,6 +29,7 @@ Kroki przepływu pracy, które zapisują tabele projektu w zewnętrznych miejsca
 - [Export to PDF](/pl/reference/workflow-steps/export/export-to-pdf/)
 - [Export to Table Archive](/pl/reference/workflow-steps/export/export-to-table-archive/)
 - [Export to XML](/pl/reference/workflow-steps/export/export-to-xml/)
+- [Księgowanie dokumentów](/pl/reference/workflow-steps/export/post-documents/) — księgowanie tabeli dokumentów w dowolnym skonfigurowanym systemie ERP
 - [Eksport pliku przestrzennego](/pl/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/pl/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/pl/reference/workflow-steps/export/export-hyper/)

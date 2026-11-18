@@ -47,6 +47,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### 企业集成
 
+- [过账凭证](/zh-cn/reference/workflow-steps/export/post-documents/)——从一个步骤将日记账、发票、通知单和付款表过账到您已设置的任何 ERP 系统
 - [代理](/zh-cn/reference/workflow-steps/agent/)——用于本地资源的 PlaidLink 代理操作
 - [NetSuite](/zh-cn/reference/workflow-steps/netsuite/)——导入余额、总账明细、主数据或您自己的 [SuiteQL 查询](/zh-cn/reference/workflow-steps/netsuite/import-suiteql-query/)；向 NetSuite 过账日记账分录
 - [Acumatica](/zh-cn/reference/workflow-steps/acumatica/)——导入主数据和交易实体；过账日记账交易、发票、账单和付款

@@ -54,7 +54,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Anaplan に接続する](/ja/guides/connections/anaplan/) — Anaplan に接続し、保存済みビューの読み取り、既存のエクスポートアクションの実行、リストの PlaidCloud ディメンションへの読み込みを行います。読み取り専用です。
 - [Data Foundation 向け OneStream](/ja/guides/connections/onestream-for-data-foundation/) — Data Foundation がデータアダプター経由で連結結果を読み取れるように、OneStream 管理者が設定する内容。
 - [QuickBooks に接続する](/ja/guides/connections/quickbooks/) — QuickBooks Online の前提条件と現在の制限事項。
-- [転記レジスターを確認する](/ja/guides/connections/posting-register/) — 財務・会計担当者が、閲覧できるすべてのプロジェクトと接続にわたる ERP の転記を確認するための、テナントレベルのコンソール。
+- [ERPシステムに伝票を転記する](/ja/guides/connections/post-documents/) — 転記するテーブルの仕訳、請求書などのドキュメントを、1つのステップで接続済みの任意のERPシステムに、シミュレートまたは本番で転記します。
+- [ERPシステムを設定する](/ja/guides/connections/erp-systems/) — 伝票を転記するシステム、どのエンティティをどのシステムに転記するか、保留ルール、各ERPが対応する内容を説明します。
+- [転記レジスターを確認する](/ja/guides/connections/posting-register/) — 閲覧できるすべてのプロジェクトとシステムにわたるERP転記を確認し、対応します。要対応の項目、すべての転記、すべての実行を確認できます。
 
 ## 関連項目
 

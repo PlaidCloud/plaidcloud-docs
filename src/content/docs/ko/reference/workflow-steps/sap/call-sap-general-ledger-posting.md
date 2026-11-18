@@ -21,3 +21,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 Parameters 섹션에서 행 삽입 또는 행 추가를 선택할 수 있으며, 매개변수의 이름과 값을 지정할 수도 있습니다. 최대 동시 요청 수를 선택하고 Wait for RFC to Complete를 선택합니다. 저장 및 실행을 클릭합니다.
+
+
+## 문서 전기로 변환
+
+저장된 단계에는 **문서 전기로 변환…** 버튼이 있습니다. 이 버튼은 먼저 변환될 내용, 즉 문서 필드에 매칭된 열의 수와 시스템으로 라우팅된 엔터티의 수를 보여 주며, 확인하면 단계를 **문서 전기** 단계로 바꿉니다([ERP 시스템에 문서 전기](/ko/guides/connections/post-documents/) 참조). 이전 설정은 단계의 버전에 남습니다.

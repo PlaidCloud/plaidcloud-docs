@@ -54,7 +54,9 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Połączenie z Anaplan](/pl/guides/connections/anaplan/) — połączenie z Anaplan i odczyt zapisanego widoku, uruchomienie istniejącej akcji eksportu lub załadowanie list do wymiaru PlaidCloud. Wyłącznie do odczytu.
 - [OneStream dla Data Foundation](/pl/guides/connections/onestream-for-data-foundation/) — co konfiguruje administrator OneStream, aby Data Foundation mógł odczytywać skonsolidowane wyniki przez adapter danych.
 - [Połączenie z QuickBooks](/pl/guides/connections/quickbooks/) — wymagania wstępne i obecne ograniczenia dla QuickBooks Online.
-- [Przegląd Rejestru księgowań](/pl/guides/connections/posting-register/) — konsola na poziomie tenanta dla działów finansów i księgowości do przeglądania księgowań ERP we wszystkich projektach i połączeniach, które widzą.
+- [Księgowanie dokumentów w systemach ERP](/pl/guides/connections/post-documents/) — księgowanie tabeli zapisów dziennika, faktur i innych dokumentów w dowolnym połączonym systemie ERP jednym krokiem, w trybie Simulate lub Live.
+- [Konfiguracja systemów ERP](/pl/guides/connections/erp-systems/) — systemy, w których księguje krok Księgowanie dokumentów, przypisanie jednostek do systemów, reguły wstrzymania i możliwości poszczególnych systemów ERP.
+- [Przegląd Rejestru księgowań](/pl/guides/connections/posting-register/) — przeglądanie księgowań ERP i działanie na ich podstawie we wszystkich projektach i systemach, które widzisz: co wymaga uwagi, wszystkie księgowania i wszystkie uruchomienia.
 
 ## Powiązane
 

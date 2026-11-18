@@ -21,3 +21,8 @@ Seleccione Agente que usar. Seleccione Directorio de destino en la lista despleg
 
 
 Puede elegir Insertar fila o Anexar fila en la sección Parámetros, así como nombrar los parámetros y asignarles valores. Elija el número de Máx. de solicitudes simultáneas y seleccione Wait for RFC to Complete. Haga clic en Guardar y ejecutar.
+
+
+## Convertir a Contabilizar documentos
+
+Un paso guardado tiene un botón **Convertir a Contabilizar documentos…**. Primero muestra lo que se convertiría (cuántas columnas se asocian a campos del documento y cuántas entidades se dirigen a sus sistemas) y, una vez que usted confirma, convierte el paso en un paso **Contabilizar documentos** (consulte [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/)). La configuración anterior se conserva en las versiones del paso.

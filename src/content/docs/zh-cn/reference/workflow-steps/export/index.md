@@ -29,6 +29,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Export to PDF](/zh-cn/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/zh-cn/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/zh-cn/reference/workflow-steps/export/export-to-xml/)
+- [过账凭证](/zh-cn/reference/workflow-steps/export/post-documents/)——将一个凭证表过账到您已设置的任何 ERP 系统
 - [空间文件导出](/zh-cn/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/zh-cn/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/zh-cn/reference/workflow-steps/export/export-hyper/)

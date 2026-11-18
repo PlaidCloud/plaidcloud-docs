@@ -47,6 +47,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 ### 엔터프라이즈 통합
 
+- [문서 전기](/ko/reference/workflow-steps/export/post-documents/) — 설정한 모든 ERP 시스템에 분개, 송장, 메모, 결제 테이블을 하나의 단계로 전기합니다
 - [에이전트](/ko/reference/workflow-steps/agent/) — 온프레미스 리소스를 위한 PlaidLink 에이전트 작업
 - [NetSuite](/ko/reference/workflow-steps/netsuite/) — 잔액, 총계정원장 상세, 마스터 데이터 또는 사용자 고유의 [SuiteQL 쿼리](/ko/reference/workflow-steps/netsuite/import-suiteql-query/)를 가져오고 NetSuite에 분개 전표를 전기합니다
 - [Acumatica](/ko/reference/workflow-steps/acumatica/) — 마스터 및 트랜잭션 엔터티를 가져오고 분개 거래, 송장, 청구서, 지급을 전기합니다

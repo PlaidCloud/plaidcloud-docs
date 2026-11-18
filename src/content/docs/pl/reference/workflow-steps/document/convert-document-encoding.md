@@ -12,7 +12,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Zmienia kodowanie znaków pliku tekstowego z jednego na inne. Przydatne, gdy pliki źródłowe docierają w starszych kodowaniach (Windows-1252, ISO-8859-1), a narzędzia docelowe potrzebują UTF-8, lub odwrotnie.
 
-Gdy plik źródłowy nie jest w UTF-8, jego kodowanie jest ustalane na podstawie zawartości pliku. Bardzo krótki lub silnie powtarzalny plik dostarcza zbyt mało informacji i może zostać odczytany błędnie, więc sprawdź przekonwertowane dane wyjściowe takiego pliku.
+Gdy plik źródłowy nie jest w UTF-8, jego kodowanie jest ustalane na podstawie zawartości pliku. Plik, który jest czystym ASCII poza kilkoma znakami Windows — myślnikami, zakrzywionymi cudzysłowami lub literami z akcentami, nie więcej niż dwa obok siebie i poniżej 1% tekstu wokół pierwszego z nich — jest odczytywany jako Windows-1252, w dowolnym miejscu pliku. Bardzo krótki lub silnie powtarzalny plik dostarcza zbyt mało informacji i może zostać odczytany błędnie, więc sprawdź przekonwertowane dane wyjściowe takiego pliku.
 
 Znak, którego kodowanie docelowe nie może przechować, domyślnie powoduje niepowodzenie kroku. Zaznacz **Zastąp znakiem ? znaki, których kodowanie docelowe nie obsługuje**, aby zamiast tego zapisać w ich miejscu `?`, tak jak robi to moduł zapisu Javy, a krok zakończy się powodzeniem.
 

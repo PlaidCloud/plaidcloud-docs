@@ -29,6 +29,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Export to PDF 단계](/ko/reference/workflow-steps/export/export-to-pdf/)
 - [Export to Table Archive 단계](/ko/reference/workflow-steps/export/export-to-table-archive/)
 - [Export to XML 단계](/ko/reference/workflow-steps/export/export-to-xml/)
+- [문서 전기](/ko/reference/workflow-steps/export/post-documents/) — 설정한 모든 ERP 시스템에 문서 테이블을 전기합니다
 - [공간 파일 내보내기](/ko/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau 단계](/ko/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export 단계](/ko/reference/workflow-steps/export/export-hyper/)

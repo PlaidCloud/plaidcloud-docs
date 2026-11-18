@@ -1,0 +1,341 @@
+---
+title: 向 ERP 系统过账凭证
+description: 将表中的凭证过账到各实体对应的 ERP 系统：发送前先检查，支持模拟和实时，每次运行都有运行页面，可再次运行，可从文件或分摊过账，并可转换 SAP 过账步骤。
+sidebar:
+  label: 过账凭证
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+**过账凭证**步骤将一个表中的凭证过账到您的 ERP 系统。该步骤不指定任何系统：每张凭证都发送到其实体所对应的系统，因此一个步骤可以同时过账到多个系统，以及同一种 ERP 的多个实例。所有过账方式（步骤、文件、REST API 和 MCP 工具）都经过相同的检查，并作为一次运行记录下来，且有各自的[运行页面](#运行页面)。
+
+本页介绍该步骤、它的表和设置、模拟和实时、运行页面、再次运行、从文件或分摊过账，以及转换 SAP 过账步骤。系统本身的设置（哪个实体向何处过账、上线、暂挂规则以及各 ERP 的支持情况）见 [ERP 系统](/zh-cn/guides/connections/erp-systems/)。过账之后的审阅、批准、冲销和处理见[过账登记簿](/zh-cn/guides/connections/posting-register/)。
+
+## 开始之前
+
+- 您要过账到的每个 ERP 都是 PlaidCloud 可以向其过账的连接，并已设置为系统，且已指定向其过账的实体。请参阅 [ERP 系统](/zh-cn/guides/connections/erp-systems/)。
+- 要真实过账，运行必须是实时的，且每张凭证的系统必须对该项目是实时的。在此之前，所有内容都会被检查并显示为**将过账**，不会发送任何内容。请参阅[模拟和实时](#模拟和实时)。
+
+## 凭证如何过账
+
+共用同一实体和 `doc_number` 的行是一张凭证。运行开始时，凭证会被冻结：运行中之后的所有操作（**过账这些**、重试、批准）发送的都正是这些凭证。随后每张凭证都会经过相同的阶段，并在第一个给出停止结论的阶段停下，同时给出原因：
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="凭证先检查借贷平衡和批次，再路由到其实体对应的系统，接着对照该系统检查，如果规则要求则暂挂，然后在实时时发送，否则记录为“将过账”。" style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">平衡</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">和批次</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">路由</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">实体到系统</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">检查</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">对照系统</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">暂挂？</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">需要审批</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">实时：发送</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">等待中，然后已过账</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">模拟</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">将过账，不发送</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">在任何阶段被停止的凭证为“未过账”，并附原因</text>
+</svg>
+<figcaption>所有过账方式都运行相同的阶段。只有当运行及其系统都是实时的，凭证才会发送到系统。</figcaption>
+</figure>
+
+1. 平衡和批次：日记账在其使用的每种货币中都必须平衡，批次作为一个整体也必须平衡。请参阅[批次](#批次)以及[步骤设置](#步骤设置)下的舍入设置。
+2. 路由：凭证的实体决定其系统，如 [ERP 系统](/zh-cn/guides/connections/erp-systems/)中所设置。实体没有系统的凭证为“未过账”。
+3. 检查：[五项检查](#五项检查)会对照 PlaidCloud 所了解的系统情况运行。
+4. 暂挂：系统上的暂挂规则或步骤自己的暂挂，会使凭证保持为**需要审批**，直到有人在[过账登记簿](/zh-cn/guides/connections/posting-register/)中批准它。
+5. 发送：凭证被转换为系统自己的格式并发送；当运行或其系统处于“模拟”时，则记录为**将过账**。
+
+每种状态的含义以及应对方法，见[过账登记簿](/zh-cn/guides/connections/posting-register/)。
+
+## 添加步骤
+
+向工作流添加**过账凭证**步骤：它位于步骤菜单的**外部系统**下，以及步骤面板的**外部系统**文件夹中。其表单有三个部分，之后是用于步骤设置的**更多 ▸** 链接。
+
+1. **1 · 数据表**：选择凭证所在的**表**，每行一条明细。第一张凭证构建完成后，该部分会显示从表中读取了多少行明细和多少张凭证。
+2. **2 · 列匹配**：步骤在您表的每一列中识别出的内容。名称就是某个过账字段的列显示为**按名称匹配**；名称是已知别名的列显示为**按别名匹配**。步骤无法识别的列会提供一个列表：从**这一列是什么？** 中选择它所含的字段，它随后显示为**这是您选择的**。只有您为其做出选择的列才会随步骤保存。两列绝不会使用同一个字段：第一列保留它。
+3. **3 · 第一张凭证（系统接收到的样子）**：表中的第一张凭证，已路由并转换为其系统的格式，带有其明细。当它暂时无法构建时，该部分会用与“未过账”原因相同的措辞说明原因。
+
+步骤需要一个**表**。如果勾选了暂挂金额，则金额必须是数字；如果添加了舍入行，则需要一个科目。
+
+## 表
+
+该表使用 Data Foundation 的列名。符合 Data Foundation 结构的日记账无需匹配即可过账；已开票的销售明细表在您添加 `account` 和 `document_type` 后即可过账。一行是一条明细；具有相同 `entity` 和 `doc_number` 的行是一张凭证。
+
+| 列 | 内容 |
+|---|---|
+| `doc_number` | 凭证的引用。必填：没有对应列的表会使步骤停止。它不能包含 `~`，PlaidCloud 将其保留用于为版本编号。 |
+| `entity` | 凭证所属的实体。它决定系统。 |
+| `posting_date`、`document_date`、`period`、`fiscal_year`、`fiscal_period`、`period_type`、`ledger`、`journal_type` | 凭证的日期和期间。 |
+| `account` | 明细的科目。 |
+| `amount_txn` 和 `currency_txn` | 明细的金额及其货币。仅使用本币的表可以改用 `amount_local` 和 `currency_local`，也可以用 `debit` 和 `credit` 代替金额。 |
+| `description`、`line_number`、`quantity`、`unit` | 明细的文本、顺序和数量。 |
+| `department`、`profit_center`、`product`、`customer`、`supplier`、`project`、`site`、`trading_partner`、`segment_1` 至 `segment_10` | 明细的维度。 |
+| `tax_code`、`tax_amount_local`、`withholding_code`、`withholding_amount_local` | 税和预扣税。 |
+| `due_date`、`payment_terms`、`supplier_invoice_number`、`purchase_order_number`、`invoice_no` | 发票详情。 |
+| `document_type` | `journal`（留空时）、`customer_invoice`、`supplier_invoice`、`credit_memo`、`debit_memo` 或 `payment`。各系统可处理的类型见 [ERP 系统](/zh-cn/guides/connections/erp-systems/)。 |
+| `set` | 批次名称：共用同一批次的凭证要么一起过账，要么都不过账。请参阅[批次](#批次)。 |
+
+下列别名也会被匹配，且不区分大小写：`invoice_number`、`reference` 和 `journal id` 对应 `doc_number`，`invoice_date` 对应 `posting_date`，`net_amount_local` 对应 `amount_local`，`memo` 对应 `description`，`cost center` 对应 `department`，`vendor` 对应 `supplier`。不属于以上任何一种的列（例如您自己的维度）会随凭证及其明细一并携带，供需要映射它的系统格式使用。
+
+有少数列属于过账自身，目前尚不可用：`action` 不是 `post` 的行，或设置了 `reverse_on` 的行，为“未过账”。运行页面显示“目前尚不可用。”；结果表和 REST 响应带有消息“only posting is available yet”或“a date to reverse on is not available yet”。若要冲销、贷记或更正过账，请使用[过账登记簿](/zh-cn/guides/connections/posting-register/)。
+
+凭证由其类型、实体和引用识别，而不是由其月份识别，因此移到另一个月的凭证仍是同一张凭证。
+
+### 批次
+
+共用同一个 `set` 值的凭证要么一起过账，要么都不过账：
+
+- 批次作为一个整体必须平衡，以舍入限额作为容差。如果不平衡，每个成员都为“未过账”，并附差额。
+- 如果任何成员被某项检查阻止，该批次的其余成员也为“未过账”，并提示“another document in set … was not posted”。如果任何成员被暂挂等待批准，整个批次都以**需要审批**状态等待。
+- 如果任何成员的系统不是实时的，整个批次为**将过账**，因此不会真实发送其中任何部分。
+
+## 步骤设置
+
+**更多 ▸** 会打开步骤的四项设置。每项都有初始值，大多数步骤从不更改它们。
+
+| 设置 | 初始值 | 作用 |
+|---|---|---|
+| **交由人工处理** | 没有暂挂内容 | 当您勾选的条件满足时，暂挂凭证等待批准。 |
+| **通知对象** | **启动运行的人** | 当运行结束时有凭证需要关注，通知谁。 |
+| **舍入科目和限额** | 不舍入 | 为失衡不超过限额的凭证添加一条舍入行。 |
+| **已过账凭证被更改时** | 询问 | 之后的运行如何处理在过账后发生更改的凭证。 |
+
+### 交由人工处理
+
+勾选会使凭证暂挂等待人工批准的条件：
+
+- **金额高于**：一个金额。它与凭证以其自身货币计的金额比较。
+- **它是从文件过账的**
+- **属于冲销、贷项或更正**
+- **它被标记为异常**
+- **始终**
+
+勾选多个时，只有全部为真，凭证才会被暂挂。什么都不勾选时，步骤不添加自己的暂挂；其系统的暂挂规则，以及冲销、贷项或更正可能需要的第二个人，仍会暂挂凭证。步骤上的暂挂只是在其系统已有的暂挂规则之外增加条件。被暂挂的凭证会使其批次的其余凭证一并暂挂。发送导致凭证被暂挂的人，以及启动其运行的人，都不能批准它；批准和批准人见[过账登记簿](/zh-cn/guides/connections/posting-register/)和 [ERP 系统](/zh-cn/guides/connections/erp-systems/)。
+
+### 通知对象
+
+**启动运行的人**是初始值。选择**指定人员列表…** 可改为指定要通知的成员。当运行结束时有凭证需要关注，会通知他们。
+
+### 舍入科目和限额
+
+勾选**为借贷不平衡的凭证添加舍入行**，然后填写**科目**和**限额**。在某一种货币中失衡不超过限额的日记账，会得到一条记入该科目、描述为“Rounding”的行，并予以通过；差额更大，或差额涉及多种货币，则会被作为不平衡阻止，并附差额。该限额也是整个批次的容差。取消勾选该设置时，不做任何舍入。
+
+### 已过账凭证被更改时
+
+| 选择 | 之后的运行如何处理已更改的凭证 |
+|---|---|
+| **询问（初始值）。该凭证将列入“需要关注”，并提供两个选项。** | 已更改的凭证为“未过账”，提示“The source changed after this was posted.”，并等待人员在[运行页面](#已更改的凭证)上选择**用此版本更正**或**保留已过账的**。 |
+| **更正。冲销并过账新版本，适用于每个期间都重新运行的步骤。** | 在实时运行中，已过账的凭证会被冲销，已更改的凭证作为其下一个版本发送。 |
+
+## 模拟和实时
+
+只有同时满足以下两个条件，凭证才会发送到其系统：
+
+- 运行是实时的：工作流运行带有过账模式，受项目自身模式的限制，如[选择过账模式](/zh-cn/guides/workflows/run-a-workflow/#选择过账模式)所述。“模拟”下的运行不发送任何内容，“关闭”下的运行会跳过该步骤。
+- 凭证的系统对该项目是实时的：即项目对该系统的连接和环境的写入授权，且项目的模式为“实时”，请参阅[授权项目过账](/zh-cn/guides/workflows/run-a-workflow/#授权项目过账)以及 [ERP 系统](/zh-cn/guides/connections/erp-systems/)上的上线。
+
+否则，凭证会被检查并记录为**将过账**，不会发送任何内容。“模拟”从不联系系统：在“模拟”运行中，即使是需要询问系统的检查也不会进行。该步骤本身没有试运行设置。唯一的例外是由设置为测试过账的 SAP 过账步骤转换而来的步骤：它每次都在“模拟”中运行，其凭证只能通过其运行页面上的**过账这些**过账。
+
+“模拟”运行是查看究竟会过账什么的方式。确认无误后，其[运行页面](#过账这些)上的**过账这些**会发送相同的已冻结凭证。
+
+## 五项检查
+
+在发送任何内容之前，每张凭证都会经过五项检查。运行页面显示每项检查是通过、失败还是未检查：
+
+| 检查 | 什么会阻止凭证 |
+|---|---|
+| Balanced（平衡） | 借方与贷方不一致，且超出舍入限额。 |
+| Period open（期间未结） | 过账日期所在期间在系统中已关闭。 |
+| Accounts exist（科目存在） | 系统中没有的科目、没有匹配的代码、系统所需的空值、未结的发票以外的发票、另一家公司，或系统不记账的货币。 |
+| Not posted before（此前未过账） | 引用已过账到另一个系统，或已在此系统上使用。 |
+| Sets agree（批次一致） | 缺少成员的批次，或凭证合计不一致的批次。 |
+
+**Period open** 和 **Accounts exist** 使用 PlaidCloud 在对实时系统的实时运行开始时从系统读取的列表。在“模拟”运行中，或者当列表的读取不完整、为空或延迟时，它们显示为未检查。**立即刷新**在 [ERP 系统](/zh-cn/guides/connections/erp-systems/)上保存的列表副本仅供查看：它不会用于检查。对实时系统的实时运行还会进行系统自己的检查（如果其格式有这些检查）；“模拟”运行则不会。
+
+未对凭证运行的检查视为未检查，绝不视为通过。运行页面以英文显示这五项检查的名称，所有语言均如此。
+
+## 步骤运行时
+
+- 步骤最多等待 10 分钟，让各系统答复。此时仍未得到答复的凭证会在记录中继续保留，答复到来时其运行页面会随之更新。
+- 运行日志会得到一行：“Posted n of m · k need attention”。当任何凭证需要关注时，步骤以警告“k of m documents need attention”结束，并通知**通知对象**中的人员。工作流的其余部分继续运行。
+- 不存在的表、没有列的表或没有行的表属于警告，不会过账任何内容。没有 `doc_number` 列的表会使步骤因错误而停止。
+- 当步骤的配置指定了结果表时，步骤会向其中为每张凭证写入一行：`doc_number`、`action`、`state`、`source_system`（过账到的系统）、`source_doc`（系统给出的编号）和 `message`。
+
+## 运行页面
+
+每次运行都有一个页面：步骤的运行、文件的运行、通过 REST 或 MCP 启动的运行、重试、冲销。从[过账登记簿](/zh-cn/guides/connections/posting-register/)的**运行次数**中用**打开**打开它。页面只显示您可以看到的凭证；如果没有您可以看到的凭证，则显示“This run was not given any document you may see.”
+
+页面顶部说明运行的状态：
+
+- 在“模拟”中：“This run is in Simulate. Nothing has been sent to any system. Post these sends the same frozen documents.”
+- 实时且仍在运行：没有可按的过账按钮。页面会随着各系统的答复而更新，并说明还有多少张凭证尚未发送。只要仍有内容在运行或等待，它就会自动重新读取该运行。
+- 实时且已完成：“Live. Every system answered.”
+- 已停止：“This run was stopped. What had not been sent is Not posted.”
+
+凭证上方的**摘要**可以展开和收起，并保持您离开时的状态；一旦运行有凭证，它起初为收起状态。它包含：
+
+- 对于步骤的运行，首先是比较，例如“121 unchanged, 19 changed, 2 new.”请参阅[再次运行](#再次运行)。
+- 运行的凭证、批次、系统和金额，以及处于每种状态的数量。
+- [五项检查](#五项检查)，每项用对勾、叉号表示，无内容到达时用短横线表示。失败的检查会说明有多少未通过。
+- **按系统**：每个系统一行，包含处于各状态的数量及其金额，以及**总计**。模式与运行不同的系统会标记为“模拟”或“实时”。每个数量都可打开对应的凭证。
+- 表自身的合计与凭证合计并排显示：“Equal. No row of the table was left out.”或“They differ. A row of the table was left out or counted twice.”如果您只能看到部分实体，则合计为您可见内容的合计。
+- 每个系统的期间和科目副本有多旧，或者尚无副本。
+
+下方的**文档**列表把需要人工处理的内容排在最前。每行包含引用（含其版本，如 `JE-1001~2`）、实体、系统、批次、金额、状态以及**原因及后续操作**。**分组依据**按**实体**、**类型**、**批次**或**系统**对凭证分组。选择一张凭证可完整阅读其原因和后续步骤，并在有的情况下查看**变更内容**、**如何处理被拒绝的凭证**和**异常**。每一行可通过**打开过账**在[过账登记簿](/zh-cn/guides/connections/posting-register/)中打开其过账，通过**显示其所在批次**显示其批次，并在重试有帮助时提供**重试**。
+
+### 过账这些
+
+包含**将过账**凭证的运行会提供**过账这些**，并显示其数量，旁边写有“Post these sends exactly the documents shown.”它会发送这些凭证，并按当前状态再检查一次：项目必须允许实时，该引用自模拟运行以来不得已过账，并且系统自己的检查会再次运行。仍处于“模拟”的系统上的凭证保持为**将过账**。运行变为实时，页面会告诉您发送了多少张，以及有多少张被再次检查但未过账。
+
+- 当部分系统尚未实时时，按钮显示为**上线并过账**，或写明它会使其上线的系统。它会先使这些系统对项目实时，如果有任何系统无法上线，则不会发送任何内容。只有能使系统上线的人才会看到此按钮；其他人则按系统当前状态过账。请参阅 [ERP 系统](/zh-cn/guides/connections/erp-systems/)。
+- 被暂挂规则暂挂的凭证在此次发送时会再次被暂挂。按下**过账这些**的人和启动运行的人都不能批准它。
+- 只会发送您可以看到的凭证。已存副本过期的凭证为“未过账”：运行页面显示“这尚不可用。”，REST 响应则带有消息“The stored document has expired; run again.”
+
+### 停止运行
+
+仍在运行且有凭证尚未发送的实时运行会提供**停止运行**。尚未发送的凭证变为“未过账”，运行页面显示“The run was stopped before this was sent.”已发送的凭证保持原样，页面会告诉您有多少被停止、有多少已经发送。当实时运行正处于发送过程中、尚未记录任何凭证时，暂时无法停止。
+
+### 重试
+
+行上的**重试**，或批次的**重试其余部分**，会将未能过账的凭证按其冻结时的样子重新发送，作为项目过账模式下的一次新运行。已经过账的凭证不会再次发送。当凭证的原因在其自身之外时会提供重试：批准人拒绝了、运行被停止、代理离线、系统拒绝了它、截止时未找到它、未被发送，或其实体没有系统。被检查阻止的凭证需要修正其源数据并重新运行步骤。
+
+### 需要人工处理的批次
+
+**需要人工处理的批次**列出只有部分过账的批次，或因某个成员未通过而未发送任何内容的批次。**显示该批次**会把凭证筛选为该批次。对于部分过账的批次，**重试其余部分**会重试未过账的内容，**冲销已过账的内容**会显示将冲销什么以及在哪些系统中冲销，然后以该批次部分已过账、其余未过账为原因进行冲销。需要第二个人的冲销会以**需要审批**状态等待，页面通过**打开冲销运行**链接到该冲销自己的运行。
+
+### 已更改的凭证
+
+当步骤设置为“询问”，且某次运行发现有凭证在过账后发生了更改时，页面会说明有多少等待您的选择：
+
+- **全部更正**，或对所选凭证使用**用此版本更正**，会冲销已过账的凭证，并将已更改的凭证作为其引用的新版本过账。
+- **全部保留**，或对所选凭证使用**保留已过账的**，会保留已过账的版本并丢弃已更改的凭证。
+
+每项操作都会先请您确认。
+
+## 运行
+
+过账登记簿中的**运行次数**按时间由新到旧列出过账步骤或过账文件的每次运行，包含其**模式**、启动者及其结果；**打开**会打开其运行页面。
+
+列表上方是上个月的概览：每个系统一行，例如在多少张凭证中有多少张已过账、金额、有多少张在系统自己的账簿中，以及有多少笔过账需要关注。如果某个步骤在前一个月向某系统过账过，而该月尚未运行，会在其下列出名称。一行上的**打开**会打开该系统当月的过账，月份未结束时，**打开“需要关注”** 会带您查看剩余内容。该概览统计步骤的实时运行。
+
+## 再次运行
+
+一个引用只过账一次。当运行中有凭证已经在记录中时：
+
+- 未更改的会保持不动。
+- 已更改的按步骤的[已过账凭证被更改时](#已过账凭证被更改时)设置处理：询问或更正。更正会过账该引用的下一个版本，例如 `JE-1001~2`，系统也能看到该版本。
+- 其先前版本仍没有系统答复的凭证为“未过账”：“An earlier version of this reference has no answer from the system yet. Run again once it has one.”
+
+在键中包含实体的系统上，另一个实体的相同引用是不同的凭证。在其他任何系统上则会被拒绝：“This reference is already used on this system.”
+
+步骤此前过账过、而这次没有产生的凭证会保持不动。若要冲销它，请使用该运行调用 `POST /rest/v1/analyze/erp/reverse/these`；它会冲销该运行的步骤此前过账过而未产生的内容，或其中仅您指定的过账，并作为一次新运行。运行页面上目前还没有对应的按钮。
+
+对于每个期间都重新运行的步骤，例如过账分摊的步骤，请将**已过账凭证被更改时**设置为“更正”一次。
+
+## 从文件过账
+
+对于电子表格中的少量日记账，您可以不经过任何工作流，直接通过 REST API 或 MCP 工具过账文件。应用中目前还没有对应的页面。
+
+1. `GET /erp/file-post/starter`，附带 `connection_id`、`document_type` 和 `format`（`xlsx` 或 `csv`），会下载该系统上该类凭证对应的正确列标题以及一行示例。系统不接受的凭证类型会被拒绝。
+2. `POST /erp/file-post` 接收电子表格（`.xlsx` 或 `.csv`）作为 `file`，并附带 `project_id`。作为 `attachments` 发送的更多文件会作为支持文件随运行保存，但目前不会发送到系统。MCP 工具 `erp_file_post` 则改为按 `account_id` 和 `path` 从 PlaidCloud 文档中获取文件。
+3. 运行以“模拟”打开，不发送任何内容。在其[运行页面](#运行页面)上审阅，并用**过账这些**过账。
+
+- 每张凭证都发送到其实体所对应的系统，与其他运行相同。
+- 没有 `doc_number` 列的文件不会准备任何内容，并返回 `ask: one_journal`。请将 `one_journal` 设为 true 后重新发送，以便把整个文件作为一个日记账过账，并以文件名作为其引用；设为 false 则把每一行作为各自的日记账过账，并按文件名编号。
+- 在有 `doc_number` 列的文件中，没有该值的行会被排除，并给出警告。不是过账列的标题会被忽略，警告中会指明它们。
+- 空文件或没有行的文件不会准备任何内容，并会说明这一点。过账为“关闭”的项目也是如此。
+
+### 重新过账
+
+重新过账会用新的过账日期和新的引用再次过账文件运行的凭证，适用于每月重复的日记账：`POST /erp/file-post/{run_id}/again`，或 MCP 工具 `erp_file_post_again`。
+
+- `posting_date` 是一个 ISO 日期，或 `today`、`first_of_month`、`last_of_month`、`first_of_next_month` 和 `last_of_prev_month` 之一，或相对于每张凭证自身过账日期的偏移，例如 `+1m` 或 `-7d`。
+- 将 `references` 设为 `suffix` 会给每个引用加上新月份的后缀，例如 `JE-1001-202612`，这样重复过账就不会因已过账而被拒绝；通过 REST 还可以改为将每个引用映射到其新引用。MCP 工具总是添加后缀。
+- 凭证日期随过账日期一起移动，到期日移动相同的天数，期间列会被丢弃，以便系统根据新日期确定期间。
+- 除非您用 `live` 要求实时，否则新运行以“模拟”打开，并且绝不超出项目的过账模式。只会重新过账您可以看到的实体的凭证。
+
+`POST /erp/file-post/{run_id}/schedule` 会为重新过账设定计划，包含 `cron` 及其 `timezone`、每次运行时计算的 `posting_date`，以及设为 `suffix` 的 `references`。它以您的身份运行，只过账您可以看到的实体。只有在已有人实时过账过该文件的凭证时，它才会实时过账，并且绝不超出项目的过账模式。计划没有对应的 MCP 工具。
+
+运行的凭证在模拟后保留 30 天，收到答复后保留 90 天；在此之后，重新过账没有可准备的内容，并会说明这一点。
+
+### 记录为已过账
+
+对于在使用 PlaidCloud 之前已在系统中过账的凭证，`POST /erp/record-posted` 会将它们记录为已过账，而不联系系统，因此之后包含它们的运行会拒绝再次过账。将电子表格作为 `file` 发送，并附上系统的 `connection_id` 和 `environment_id`。它需要列 `reference` 和 `system_document`，以及可选的 `entity`、`posting_date` 和 `document_type`（省略时为日记账）。目前没有对应的页面或 MCP 工具。
+
+- PlaidCloud 已将其记录为已过账的凭证、仍在等待答复的凭证，或其引用已记录为不同系统凭证的凭证，会被列为未记录，并说明原因。
+- 文件中的“未确认”凭证，只有具有过账登记簿批准人角色的人才能将其处理为已过账；其他人会得到它的未记录结果。
+
+## 从分摊过账
+
+**分摊：按维度拆分**步骤还可以通过步骤配置中的 `post_documents` 设置，将其结果写成凭证表，供“过账凭证”步骤过账。该设置指定要写入的凭证 `table`，以及结果中 `rule`、`account`、`source_account`、`amount` 和 `posting_date` 的列（均为必需），以及可选的 `entity` 和 `currency_txn`；`set` 为凭证指定固定的批次名称。
+
+- 每条规则每月生成一张凭证，其引用为规则加月份（例如 `RENT-202611`）。每个结果行是记入其科目的一条明细，并带有一条记入来源科目的对冲明细，因此每张凭证都平衡。
+- 没有规则的行，或金额为零的行，不生成明细。金额不是数字的行会被排除，并给出指明这些行的警告。当没有任何内容可过账时，步骤会发出警告并清空凭证表。
+- 对同一个月重新运行分摊会得到相同的引用，因此请将过账步骤的[已过账凭证被更改时](#已过账凭证被更改时)设置为“更正”。
+
+## 转换 SAP 过账步骤
+
+现有的 SAP 过账步骤可以变为“过账凭证”步骤。不会自动转换：在画布上右键单击该步骤并选择**转换为过账凭证…**，或使用步骤表单上的**转换为过账凭证…**。PlaidCloud 会先显示将转换的内容：与凭证字段匹配的列、路由到其系统的实体、它是继续按原样过账还是从“模拟”开始，以及任何警告，然后您用**转换**确认。旧设置会保留在该步骤的版本中。
+
+- 只有 SAP 过账步骤可以转换。未设置函数或标题列的步骤，或其凭证键不是公司代码加一个凭证编号的步骤，不会转换，PlaidCloud 会说明原因。
+- 步骤筛选器中的实体会被建议为到其连接的路由。当筛选器没有指定任何实体时，请在过账之前于 [ERP 系统](/zh-cn/guides/connections/erp-systems/)上设置路由。
+- 在您为转换后的步骤设置表之前，它会自行读取旧步骤的标题表、行表、增值税表和预扣税表。
+- 转换后的步骤保留旧步骤已过账内容的记录，因此旧步骤已过账的期间不会再次过账。
+- 设置为测试过账的步骤会继续在“模拟”中运行。请参阅[模拟和实时](#模拟和实时)。
+
+## 通过 REST 和 MCP
+
+相同的过账也可通过 `/rest/v1/analyze/erp` 下的 REST API 以及 MCP 工具使用：
+
+| 操作 | REST | MCP |
+|---|---|---|
+| 查看表的第一张凭证（系统接收到的样子） | `POST /erp/post/preview` | `erp_post_preview` |
+| 过账一个表或一组凭证 | `POST /erp/post` | `erp_post_documents` |
+| 读取运行和运行页面 | `GET /erp/runs`、`GET /erp/runs/{run_id}` | `erp_run_find`、`erp_run_describe` |
+| 过账这些，或停止运行 | `POST /erp/runs/{run_id}/post`、`POST /erp/runs/{run_id}/stop` | `erp_run_post`、`erp_run_stop` |
+| 回答已更改凭证的“询问” | `POST /erp/ask` | `erp_ask_answer` |
+| 重试凭证 | `POST /erp/retry` | `erp_retry` |
+| 下载起始文件 | `GET /erp/file-post/starter` | — |
+| 从文件过账，以及重新过账 | `POST /erp/file-post`、`POST /erp/file-post/{run_id}/again` | `erp_file_post`、`erp_file_post_again` |
+| 按计划重新过账 | `POST /erp/file-post/{run_id}/schedule` | — |
+| 记录为已过账 | `POST /erp/record-posted` | — |
+| 转换 SAP 过账步骤 | `POST /erp/convert` | `erp_convert_step` |
+
+- 除非您要求实时，否则通过 REST 或 MCP 的过账以“模拟”运行，并且绝不超出项目的过账模式。
+- 通过 REST 过账表时最多读取 100,000 行；更长的表会被整体拒绝，请改用步骤过账。
+- `erp_file_post` 从 PlaidCloud 文档中获取文件；文件不存在时会给出警告，不会准备任何内容。
+- 除非另有说明，转换和重试都是试运行。
+- 代表您操作的 AI 助手会被拒绝执行实时过账、**过账这些**、更正、真实重试、真实转换和重新过账：这些由人来完成。
+
+## 谁可以做什么
+
+| 要做的事 | 您需要 |
+|---|---|
+| 构建步骤并预览其第一张凭证 | `analyze.step.write` |
+| 通过 REST 或 MCP 过账 | `analyze.workflow.write` 和对项目的写入权限 |
+| 下载起始文件 | `analyze.connection.read` |
+| 从文件过账 | `analyze.workflow.write` 和对项目的访问权限 |
+| 打开运行页面 | `analyze.project.read`；您能看到您可见实体的凭证 |
+| 在过账登记簿中查看**运行次数** | `erp.register.view` |
+| **过账这些**、**停止运行**、更正或保留、重新过账及其计划、冲销运行未产生的内容 | `analyze.workflow.write`，以及未锁定项目的架构师或管理者 |
+| 过账时使系统上线 | 未锁定项目的架构师，且您自己对该连接具有写入权限 |
+| **重试** | `analyze.workflow.write`，以及未锁定项目的架构师或管理者，且您自己对凭证所在连接具有写入权限 |
+| **冲销已过账的内容** | `erp.register.view` 和 `erp.register.operate` |
+| 记录为已过账 | `erp.register.view` 和 `erp.register.operate`，且您自己对该连接具有写入权限；处理“未确认”的凭证还需要 `erp.register.approve` |
+| 转换 SAP 过账步骤 | `analyze.step.write`，以及对项目的写入权限 |
+
+每条路径都执行相同的规则：UI、REST API 和 MCP 工具调用的是同一套检查。

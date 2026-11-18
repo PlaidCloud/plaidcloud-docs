@@ -54,7 +54,9 @@ Una **conexión** es una configuración guardada que permite a PlaidCloud accede
 - [Conectar con Anaplan](/es/guides/connections/anaplan/): conéctese a Anaplan y lea una vista guardada, ejecute una acción de exportación existente o cargue listas en una dimensión de PlaidCloud. Solo lectura.
 - [OneStream para Data Foundation](/es/guides/connections/onestream-for-data-foundation/): qué configura su administrador de OneStream para que Data Foundation pueda leer resultados consolidados mediante un adaptador de datos.
 - [Conectar con QuickBooks](/es/guides/connections/quickbooks/): requisitos previos y limitaciones actuales de QuickBooks Online.
-- [Revisar el registro de asientos](/es/guides/connections/posting-register/): una consola a nivel de inquilino para que finanzas y contabilidad revisen las contabilizaciones de ERP en todos los proyectos y conexiones que pueden ver.
+- [Contabilizar documentos en sistemas ERP](/es/guides/connections/post-documents/): contabilice una tabla de diarios, facturas y otros documentos en cualquier sistema ERP conectado desde un solo paso, en modo Simular o En vivo.
+- [Configurar sistemas ERP](/es/guides/connections/erp-systems/): los sistemas en los que contabiliza Contabilizar documentos, qué entidad va a qué sistema, las reglas de retención y lo que admite cada ERP.
+- [Revisar el registro de asientos](/es/guides/connections/posting-register/): revise y gestione las contabilizaciones de ERP en todos los proyectos y sistemas que puede ver: lo que requiere atención, cada contabilización y cada ejecución.
 
 ## Relacionado
 

@@ -12,7 +12,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Recodifica um arquivo de texto de uma codificação de caracteres para outra. É útil quando os arquivos de origem chegam em codificações legadas (Windows-1252, ISO-8859-1), mas as ferramentas downstream precisam de UTF-8, ou vice-versa.
 
-Quando o arquivo de origem não é UTF-8, sua codificação é determinada a partir do conteúdo do arquivo. Um arquivo muito curto ou muito repetitivo oferece pouca informação e pode ser lido incorretamente, portanto confira a saída convertida de um arquivo assim.
+Quando o arquivo de origem não é UTF-8, sua codificação é determinada a partir do conteúdo do arquivo. Um arquivo que é ASCII puro, exceto por alguns caracteres do Windows — travessões, aspas curvas ou letras acentuadas, no máximo dois lado a lado e somando menos de 1% do texto em torno do primeiro deles — é lido como Windows-1252, onde quer que estejam no arquivo. Um arquivo muito curto ou muito repetitivo oferece pouca informação e pode ser lido incorretamente, portanto confira a saída convertida de um arquivo assim.
 
 Um caractere que a codificação de destino não consegue representar faz a etapa falhar por padrão. Selecione **Substituir por ? os caracteres que a codificação de destino não suporta** para gravar um `?` no lugar dele, como faz um gravador Java, e a etapa termina normalmente.
 

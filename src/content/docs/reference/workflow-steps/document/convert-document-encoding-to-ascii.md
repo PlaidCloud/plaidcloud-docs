@@ -11,7 +11,7 @@ Rewrites a text file as plain ASCII. This is particularly useful if the source o
 
 ## How It Works
 
-- The source's encoding is detected. A UTF-8 file is read as UTF-8, and Windows characters pasted into one — curly quotes from Word or Excel, say — come through intact, however many. A file in another encoding is read in the encoding detected from its first part that isn't valid UTF-8.
+- The source's encoding is detected. A UTF-8 file is read as UTF-8, and Windows characters pasted into one — curly quotes from Word or Excel, say — come through intact, however many. A file that is plain ASCII apart from a few Windows characters — dashes, curly quotes or accented letters, no more than two side by side and under 1% of the text around the first of them — is read as Windows-1252, wherever in the file they are. A file in another encoding is read in the encoding detected from its first part that isn't valid UTF-8.
 - Accented letters keep their base letter (`café` becomes `cafe`), and characters with no ASCII form are dropped.
 - A line holding only a double quote is joined to the end of the line before it.
 - A file whose encoding cannot be detected fails the step, naming the file.

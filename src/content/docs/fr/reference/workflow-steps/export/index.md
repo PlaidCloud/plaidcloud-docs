@@ -29,6 +29,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 - [Export to PDF](/fr/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/fr/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/fr/reference/workflow-steps/export/export-to-xml/)
+- [Comptabiliser des documents](/fr/reference/workflow-steps/export/post-documents/) : comptabilisez une table de documents dans n'importe quel système ERP que vous avez configuré
 - [Export de fichier spatial](/fr/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/fr/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/fr/reference/workflow-steps/export/export-hyper/)

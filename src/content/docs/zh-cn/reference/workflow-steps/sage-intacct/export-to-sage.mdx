@@ -12,8 +12,10 @@ import { Aside } from '@astrojs/starlight/components';
 
 该步骤读取您已在上游整理好的两个表，即**标题表**和**行表**，验证每条日记账分录并将其过账。它支持批量场景：一次运行中包含多条日记账分录，每条分录独立过账和跟踪。
 
-<Aside type="danger" title="无重复保护：重新运行前请检查结果表">
-此步骤**不会**跟踪哪些分录已经过账。重新运行会重新过账标题表中的**每一条**分录，包括上次已成功过账的分录，没有任何去重机制。重新运行之前，请打开上次运行的结果表，确认哪些分录确实需要过账。如果上次运行留下了 `status` 为 `unknown` 的分录，请先参阅下面的[结果表](#结果表)，再进行其他操作。
+每条分录都通过 PlaidCloud 的过账分类账（与其他 ERP 过账步骤使用的是同一份记录），因此实时过账会出现在[过账登记簿](/zh-cn/guides/connections/posting-register/)和 [ERP 过账历史](/zh-cn/guides/connections/erp-post-history/)中。实时过账还要求项目已[获得授权](/zh-cn/guides/workflows/run-a-workflow/#授权项目过账)向该连接过账。
+
+<Aside type="note" title="重新运行绝不会重复过账分录">
+每条分录在发送之前，都会以其 `entry_key` 和过账月份在分类账中被认领，Intacct 中对应的参考编号也由同一个键构建。重新运行步骤不会重复过账已经过账的分录，其行会再次返回为 `posted`。自过账以来内容发生更改的分录会被拒绝，而不是第二次过账；已被冲销的分录也不会再次过账：请以新的 `entry_key` 过账更正分录。过账日期移到另一个月的分录是一条新分录。
 </Aside>
 
 ## 数据结构约定
@@ -43,7 +45,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 两个独立的列映射，每个选项卡一个：对每个映射，将一个源列映射到它所提供数据的日记账分录字段：
 
-- **标题列**：日记账分录级别的字段，包括日记账、过账日期、描述、参考编号、可选的 `base_location`（分录所过账的 Intacct 实体/位置，单实体公司可省略）、您指定为**条目键**的关联列，以及类似的标题级详细信息。
+- **标题列**：日记账分录级别的字段，包括日记账、过账日期、描述、参考编号、可选的 `base_location`（分录所过账的 Intacct 实体/位置，单实体公司可省略）、您指定为**条目键**的关联列，以及类似的标题级详细信息。您映射的 `reference_number` 仅用于显示：发送到 Intacct 的参考编号始终由条目键和过账月份构建。
 - **行列**：每个过账行的字段，包括总账科目、借/贷金额、行描述、相同的**条目键**列，以及维度（位置、部门、员工、类别等）。
 
 无需重命名您的源列，只需把它们的现有名称映射到上述目标字段名即可。
@@ -54,7 +56,7 @@ import { Aside } from '@astrojs/starlight/components';
 
 ### 预览
 
-一个复选框，**默认勾选**。启用预览时，步骤会像正式运行一样验证每条日记账分录并写入结果表，但**不会**向 Intacct 进行身份验证，也**不会**过账任何内容，预览模式下完全没有对 Intacct 的网络调用。各行会以 `status = preview` 写入结果表，让您在任何内容进入总账之前，看到哪些分录可以顺利过账，哪些会验证失败。
+一个复选框，**默认勾选**。启用预览时，步骤会像正式运行一样验证每条日记账分录并写入结果表，但**不会**向 Intacct 进行身份验证，也**不会**过账任何内容，预览模式下完全没有对 Intacct 的网络调用。各行会以 `status = preview` 写入结果表，让您在任何内容进入总账之前，看到哪些分录可以顺利过账，哪些会验证失败。每条分录本应过账的内容还会在 ERP 过账历史和过账登记簿中记录为模拟；模拟分录绝不会阻止之后的真实过账。
 
 与正式运行一样，预览会用本次运行的行**替换**结果表，它是步骤每次运行的输出，而不是持续累积的日志，因此在一次正式运行之后再进行预览，会覆盖该次运行的 `posted` 和 `unknown` 行。如果仍需要上次运行的结果表，请在重新运行（无论预览还是正式）之前将其打开并复制。
 
@@ -73,7 +75,7 @@ import { Aside } from '@astrojs/starlight/components';
 | `entry_key` | 此行所报告的日记账分录。 |
 | `status` | `preview`、`posted`、`failed`、`unknown` 之一，详见下文。 |
 | `intacct_key` | 已过账分录的 Intacct 分配键（如果有）。 |
-| `http_status` | Intacct 为该过账尝试返回的 HTTP 状态（如果有）。 |
+| `http_status` | 留空；结果由 `status` 和 `error_message` 说明。 |
 | `error_message` | 当 `status` 为 `failed` 或 `unknown` 时，对出错原因的简短、经过净化的描述。 |
 | `line_count` | 与此分录匹配的行数。 |
 | `posting_date` | 发送给 Intacct 的过账日期（预览模式下为将会发送的过账日期）。 |
@@ -81,19 +83,20 @@ import { Aside } from '@astrojs/starlight/components';
 ### 状态值
 
 - **`preview`**：预览模式；分录已通过验证，但未过账。
-- **`posted`**：分录已成功过账到 Intacct。
-- **`failed`**：Intacct 明确拒绝了该分录（或在尝试过账之前验证就已失败）。可以放心修复根本问题，并仅重新过账该分录。
-- **`unknown`**：无法确定结果，原因可能是超时、连接中断，或 Intacct 没有给出明确响应的服务器错误。
+- **`posted`**：分录已成功过账到 Intacct，无论是本次还是更早的运行。
+- **`failed`**：分录在发送任何内容之前验证失败，或被 Intacct 拒绝。请修复验证失败后重新运行。被 Intacct 拒绝的分录不会在相同的 `entry_key` 和过账月份下再次发送，因此请以新的 `entry_key` 过账更正后的分录。
+- **`unknown`**：无法确认结果，原因可能是超时、连接中断，或 Intacct 没有给出明确响应的服务器错误。
 
-<Aside type="danger" title="unknown 并不意味着失败">
-`unknown` 分录可能已在 Intacct 成功过账，请求可能在连接中断或响应未返回之前就已被接收并提交。**重新运行此步骤之前，请直接在 Intacct 中核实该分录的状态。**盲目重新过账 `unknown` 分录，可能会在您的总账中产生重复的日记账分录。
+<Aside type="caution" title="unknown 并不意味着失败">
+`unknown` 分录可能已在 Intacct 过账。重新运行步骤时，PlaidCloud 会先按其参考编号在 Intacct 中查找该分录，如果 Intacct 中有，就将其记录为 `posted`，而不再发送。Intacct 中查不到的分录绝不会被自动重新发送，因为它仍可能已提交：请先在 Intacct 中核实，再采取行动。
 </Aside>
 
-只要有任何 `failed` 或 `unknown` 行，运行就会报告一条警告，无需打开结果表即可看到，但下一步该怎么做，仍以结果表本身为准。
+只要有任何 `failed` 或 `unknown` 行，或已过账的合计与源数据对不上，步骤就会以错误结束，无需打开结果表即可看到。结果表和[过账登记簿](/zh-cn/guides/connections/posting-register/)会说明下一步该怎么做。
 
 ## 相关内容
 
 - [导出步骤](/zh-cn/reference/workflow-steps/export/)
+- [过账凭证](/zh-cn/reference/workflow-steps/export/post-documents/)——从一个步骤向 Sage Intacct 及您的其他 ERP 系统过账日记账分录和发票
 - [Import Sage AP 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-sage-ap/)
 - [Import Sage Intacct Query 步骤](/zh-cn/reference/workflow-steps/sage-intacct/import-intacct-query/)
 - [Sage Intacct REST 连接器](/zh-cn/reference/connectors/rest/sage-intacct/)

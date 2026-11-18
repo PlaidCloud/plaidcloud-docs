@@ -28,6 +28,7 @@ Workflow steps that write project tables to external destinations — file forma
 - [Export to PDF](/reference/workflow-steps/export/export-to-pdf/)
 - [Export To Table Archive](/reference/workflow-steps/export/export-to-table-archive/)
 - [Export To XML](/reference/workflow-steps/export/export-to-xml/)
+- [Post Documents](/reference/workflow-steps/export/post-documents/) — post a table of documents to any ERP system you have set up
 - [Spatial File Export](/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau](/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export](/reference/workflow-steps/export/export-hyper/)

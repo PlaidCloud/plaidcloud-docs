@@ -21,7 +21,7 @@ Każde uruchomienie ma tryb księgowania ERP. Aby wybrać tryb w PlaidCloud, uż
 | Tryb | Co się dzieje |
 |---|---|
 | Live | Kroki księgowania księgują dokładnie tak jak zawsze. Jest to ustawienie domyślne. |
-| Simulate | Każdy krok księgowania ERP buduje i sprawdza dokładnie to, co zaksięguje, po czym niczego nie zatwierdza i nigdy nie łączy się z ERP. Wpisy, które zostałyby zaksięgowane, są zapisywane w [historii księgowań ERP](/pl/guides/connections/erp-post-history/) i oznaczane jako symulowane, dzięki czemu można je przejrzeć przed uruchomieniem na żywo. |
+| Simulate | Każdy krok księgowania ERP buduje i sprawdza dokładnie to, co zaksięguje, po czym niczego nie zatwierdza i nigdy nie łączy się z ERP. Wpisy, które zostałyby zaksięgowane, są zapisywane, dzięki czemu można je przejrzeć przed uruchomieniem na żywo: wpisy kroku **Księgowanie dokumentów** w [Rejestrze księgowań](/pl/guides/connections/posting-register/) jako **Zostałby zaksięgowany** (zobacz [Księgowanie dokumentów w systemach ERP](/pl/guides/connections/post-documents/)), a wpisy własnego kroku księgowania danego systemu w [historii księgowań ERP](/pl/guides/connections/erp-post-history/), oznaczone jako symulowane. |
 | Off | Kroki księgowania są całkowicie pomijane. |
 
 Projekt ma również własny limit trybu księgowania, ustawiany za pomocą interfejsu API projektu lub asystenta przez dowolnego członka z uprawnieniami do zapisu w odblokowanym projekcie. Limit może jedynie zwiększać bezpieczeństwo uruchomienia, nigdy je zmniejszać: efektywny tryb uruchomienia to bardziej restrykcyjny z wybranego trybu i limitu projektu, więc projekt z limitem Simulate pozostaje symulowany, nawet jeśli uruchomienie rozpoczęto jako Live.
@@ -35,7 +35,7 @@ Kroki księgowania SAP, załączników SAP i ogólne kroki SAP RFC nie wykonują
 :::
 
 :::note
-Pojedynczy krok księgowania ERP ma także własne ustawienie Validate Only (w niektórych krokach oznaczone jako Preview lub Test Only Mode), niezależne od trybu księgowania uruchomienia opisanego powyżej. Edytor kroku zawsze zapisuje je jawnie. Konfiguracja kroku zapisana w inny sposób — przez REST API, MCP lub import pakietu przepływu pracy — która całkowicie pomija to ustawienie, teraz również domyślnie wykonuje podgląd zamiast księgowania na żywo.
+Pojedynczy krok księgowania ERP ma także własne ustawienie Validate Only (w niektórych krokach oznaczone jako Preview lub Test Only Mode), niezależne od trybu księgowania uruchomienia opisanego powyżej. Edytor kroku zawsze zapisuje je jawnie. Konfiguracja kroku zapisana w inny sposób — przez REST API, MCP lub import pakietu przepływu pracy — która całkowicie pomija to ustawienie, teraz również domyślnie wykonuje podgląd zamiast księgowania na żywo. Krok **Księgowanie dokumentów** nie ma takiego ustawienia: o tym, czy księguje, decydują tryb uruchomienia i tryb jego systemu — zobacz [Księgowanie dokumentów w systemach ERP](/pl/guides/connections/post-documents/).
 :::
 
 ## Autoryzowanie projektu do księgowania

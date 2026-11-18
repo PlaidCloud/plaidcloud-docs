@@ -29,6 +29,7 @@ Etapas de fluxo de trabalho que gravam tabelas de projeto em destinos externos �
 - [Export to PDF (etapa)](/pt-br/reference/workflow-steps/export/export-to-pdf/)
 - [Export to Table Archive (etapa)](/pt-br/reference/workflow-steps/export/export-to-table-archive/)
 - [Export to XML (etapa)](/pt-br/reference/workflow-steps/export/export-to-xml/)
+- [Lançar documentos](/pt-br/reference/workflow-steps/export/post-documents/) — lance uma tabela de documentos em qualquer sistema ERP que você tenha configurado
 - [Exportação de arquivo espacial](/pt-br/reference/workflow-steps/spatial/spatial-file-export/)
 - [Publish to Tableau (etapa)](/pt-br/reference/workflow-steps/export/export-to-tableau/)
 - [Tableau Hyper Export (etapa)](/pt-br/reference/workflow-steps/export/export-hyper/)

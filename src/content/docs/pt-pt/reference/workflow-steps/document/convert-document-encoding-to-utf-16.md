@@ -21,7 +21,7 @@ Reescreve um ficheiro de texto em UTF-16. É útil quando um sistema a jusante e
 
 ## Como funciona
 
-- A codificação da origem é detetada. Um ficheiro UTF-8 é lido como UTF-8, e os carateres do Windows colados num ficheiro desses — aspas curvas do Word ou do Excel, por exemplo — passam intactos, por muitos que sejam. Um ficheiro noutra codificação é lido na codificação detetada a partir da primeira parte que não é UTF-8 válido.
+- A codificação da origem é detetada. Um ficheiro UTF-8 é lido como UTF-8, e os carateres do Windows colados num ficheiro desses — aspas curvas do Word ou do Excel, por exemplo — passam intactos, por muitos que sejam. Um ficheiro que seja ASCII simples, exceto alguns carateres do Windows — travessões, aspas curvas ou letras acentuadas, no máximo dois seguidos e que representem menos de 1% do texto à volta do primeiro deles — é lido como Windows-1252, onde quer que estejam no ficheiro. Um ficheiro noutra codificação é lido na codificação detetada a partir da primeira parte que não é UTF-8 válido.
 - O texto é escrito sem alterações — letras acentuadas, símbolos e outros carateres passam exatamente como estavam.
 - Um ficheiro cuja codificação não possa ser detetada faz o passo falhar, indicando o ficheiro.
 - Se o caminho de entrada não existir ou não tiver ficheiros, o passo termina com um aviso que indica o caminho e não processa nada, e o fluxo de trabalho continua.

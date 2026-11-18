@@ -47,6 +47,7 @@ Os passos de fluxo de trabalho são os blocos de construção da automação do 
 
 ### Integrações empresariais
 
+- [Contabilizar documentos](/pt-pt/reference/workflow-steps/export/post-documents/) — lance uma tabela de diários, faturas, notas e pagamentos em qualquer sistema ERP que tenha configurado, a partir de um só passo
 - [Agente](/pt-pt/reference/workflow-steps/agent/) — operações do agente PlaidLink para recursos locais
 - [NetSuite](/pt-pt/reference/workflow-steps/netsuite/) — importar saldos, detalhe do razão geral, dados mestre ou a sua própria [consulta SuiteQL](/pt-pt/reference/workflow-steps/netsuite/import-suiteql-query/); lançar lançamentos de diário no NetSuite
 - [Acumatica](/pt-pt/reference/workflow-steps/acumatica/) — importar entidades mestre e transacionais; lançar transações de diário, faturas, contas a pagar e pagamentos

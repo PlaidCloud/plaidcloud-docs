@@ -20,7 +20,7 @@ Every run carries an ERP posting mode. To choose one in PlaidCloud, use **Run Wi
 | Mode | What happens |
 |---|---|
 | Live | Posting steps post exactly as they always have. This is the default. |
-| Simulate | Every ERP posting step builds and validates exactly what it would post, then commits nothing and never contacts the ERP. The would-post entries are recorded in [ERP Post History](/guides/connections/erp-post-history/), marked simulated, so you can review them before running live. |
+| Simulate | Every ERP posting step builds and validates exactly what it would post, then commits nothing and never contacts the ERP. The would-post entries are recorded so you can review them before running live: a **Post Documents** step's in the [Posting Register](/guides/connections/posting-register/) as **Would post** (see [Post Documents to ERP Systems](/guides/connections/post-documents/)), a system's own posting step's in [ERP Post History](/guides/connections/erp-post-history/), marked simulated. |
 | Off | Posting steps are skipped entirely. |
 
 A project also carries its own posting mode cap, set through the project API or the assistant by any member with write access to an unlocked project. The cap only ever makes a run safer, never more permissive: a run's effective mode is the more restrictive of the mode you chose and the project's cap, so a project capped to Simulate stays simulated even if you start the run as Live.
@@ -34,7 +34,7 @@ SAP posting, SAP attachment, and generic SAP RFC steps don't dry-run. Under Simu
 :::
 
 :::note
-An individual ERP posting step also carries its own Validate Only setting (labeled Preview or Test Only Mode on some steps), independent of the run's posting mode above. The step editor always saves this explicitly. A step configuration written another way — the REST API, MCP, or a workflow bundle import — that leaves the setting out entirely now also defaults to a preview rather than a live post.
+An individual ERP posting step also carries its own Validate Only setting (labeled Preview or Test Only Mode on some steps), independent of the run's posting mode above. The step editor always saves this explicitly. A step configuration written another way — the REST API, MCP, or a workflow bundle import — that leaves the setting out entirely now also defaults to a preview rather than a live post. The **Post Documents** step has no such setting: the run's mode and its system's own mode decide whether it posts — see [Post Documents to ERP Systems](/guides/connections/post-documents/).
 :::
 
 ## Authorize the Project to Post
