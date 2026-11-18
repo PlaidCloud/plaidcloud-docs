@@ -1,0 +1,121 @@
+---
+title: Sage 100 (local)
+description: "Conecte o PlaidCloud a uma empresa do Sage 100 instalada localmente por meio do PlaidLink: o que o administrador do Sage 100 configura, como o Data Foundation lê a empresa e como diários e cheques manuais são lançados de volta."
+sidebar:
+  label: Sage 100 (local)
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/sage-100.mdx
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+O Sage 100 é instalado nos seus próprios servidores e não tem API web, então o PlaidCloud o alcança por meio de um agente [PlaidLink](/pt-br/reference/cli/plaidlink/) executado em um computador Windows da sua rede. O [Data Foundation](/pt-br/guides/projects/data-foundation/) lê, por meio desse agente, o plano de contas, o calendário fiscal, os diários e os saldos por período de uma empresa do Sage 100, como em qualquer outro sistema ERP ao qual ele se conecta. Um fluxo de trabalho também pode lançar na empresa lançamentos de diário do razão geral (General Ledger) e cheques manuais de contas a pagar (Accounts Payable).
+
+Esta página aborda o que o administrador do Sage 100 configura, como conectar a empresa, o que o Data Foundation lê e como o lançamento se comporta.
+
+## O que o administrador do Sage 100 configura
+
+Tudo abaixo é feito no único computador que executa o agente PlaidLink.
+
+<Steps>
+
+1. **Instale e registre o PlaidLink** no computador, use o PlaidLink 1.2.36 ou posterior e execute o agente sob uma conta dedicada do Windows, não uma conta de sistema (LocalSystem, LocalService ou NetworkService). Uma conta dedicada permite que o PlaidLink encerre uma sessão do Sage 100 que travou; sob uma conta de sistema, isso não é possível.
+
+2. **Instale o driver ODBC de 64 bits da Sage e crie um System DSN de 64 bits.** O agente é um programa de 64 bits e não consegue usar um driver ou uma fonte de dados de 32 bits. A fonte de dados normalmente se chama `SOTAMAS90` e acompanha o Sage 100 Standard e Advanced. O Sage 100 Premium lê do SQL Server e precisa, em vez disso, do Microsoft ODBC Driver for SQL Server. Verifique se a sua licença do Sage 100 cobre o driver ODBC e a estação de trabalho.
+
+3. **Crie um usuário Sage para o PlaidCloud** e atribua a ele estas tarefas em Role Maintenance.
+
+   | Para | Tarefas |
+   |---|---|
+   | Ler | General Ledger: Chart of Accounts, Account Inquiry, Journal Entry inquiry, Fiscal Year and Period inquiry. Library Master: Company Maintenance inquiry. |
+   | Lançar, com o direito de adicionar lançamentos e não apenas de visualizá-los | General Ledger: Journal Entry. Accounts Payable: Manual Check Entry. |
+
+   No Premium, conceda também ao usuário acesso de leitura ao banco de dados do Sage 100 no SQL Server.
+
+4. **Instale o Sage 100 no mesmo computador como uma estação de trabalho.** A fonte de dados precisa dele para abrir os arquivos da empresa, e o lançamento passa pela Business Object Interface (BOI) da Sage, que a instalação da estação de trabalho fornece. O lançamento usa uma licença de estação de trabalho do Sage 100 enquanto é executado. Anote a pasta em que o Sage 100 está instalado e a moeda em que a empresa registra a contabilidade.
+
+5. **Forneça ao PlaidCloud uma empresa de teste**, ou uma cópia da empresa, para conectar primeiro.
+
+6. **Permita o agente PlaidLink no seu antivírus e no Windows SmartScreen**, para que a primeira instalação não seja bloqueada.
+
+</Steps>
+
+Uma fonte de dados Standard ou Advanced entra em uma única empresa. Uma conexão Premium indica uma empresa em um banco de dados. Conecte cada empresa separadamente.
+
+<Aside type="caution">
+Nunca envie a senha do Sage por e-mail. **Sage password** é um segredo: ela é armazenada na conexão e nunca mais é exibida.
+</Aside>
+
+### Enviar a solicitação de acesso
+
+Na guia **Foundation** do projeto, escolha **Sage 100 — on-premises** em **Conectar um sistema** e, em seguida, **Criar uma nova conexão**. O formulário mostra esta solicitação completa, um link **Como configurar o PlaidLink**, **Copiar solicitação** para colá-la na sua própria mensagem e **Enviar solicitação por e-mail** para abri-la no seu programa de e-mail com o assunto "Sage 100 access for PlaidCloud".
+
+## Conectar a empresa
+
+Na guia **Foundation**, abra **Origens**, escolha **Sage 100 — on-premises** em **Conectar um sistema** (**Conectar outro sistema** quando o projeto já tem uma origem) e escolha **Criar uma nova conexão**. Informe um **Nome da conexão**, escolha o **Ambiente** e preencha estas configurações:
+
+| Configuração | O que informar |
+|---|---|
+| **Sage 100 edition** | Premium, Standard ou Advanced. |
+| **Company code** | O código da empresa do Sage 100, de 1 a 10 letras e dígitos. |
+| **Company currency** | O código de três letras da moeda em que a empresa registra a contabilidade, como `USD`. Obrigatório: o PlaidCloud nunca presume uma. |
+| **Sage user** | O usuário Sage que você criou para o PlaidCloud. |
+| **Sage password** | A senha desse usuário. |
+| **Sage 100 install folder on the agent machine** | A pasta em que o Sage 100 está instalado. O lançamento precisa dela; a leitura não. |
+| **Accounts Payable division** | A divisão em que os cheques manuais são lançados. O padrão é `00`. |
+| **SQL Server (Premium)** e **SQL Server database (Premium)** | No Premium: o SQL Server e o banco de dados da instalação do Sage 100. |
+| **ODBC data source (Standard and Advanced)** | No Standard e no Advanced: o System DSN no computador do agente. O padrão é `SOTAMAS90`. |
+
+Em **Configurações do sistema**, escolha o agente PlaidLink em **PlaidLink agent** e defina ali **Company currency** com o mesmo código. As linhas são carregadas nessa moeda, que é `USD` até você alterá-la. **Document account for the agent's reads** guarda os arquivos que o agente grava enquanto lê e, por padrão, é a do projeto. **Account mask** é o formato de conta do Sage 100, em que `#` é um caractere e qualquer outro símbolo é um separador: `####-###` é uma conta principal de quatro caracteres, um separador e um departamento de três caracteres. Ela é `####` até você alterá-la.
+
+Clique em **Testar conexão**. Para o Sage 100, isso verifica se a conexão tem todos os valores de que precisa e não entra no Sage 100: o agente lê as tabelas quando você clica em **Carregar**. Depois, defina **Meses de histórico** e adicione o sistema conforme descrito em [Conectar seu ERP](/pt-br/guides/projects/data-foundation/#conectar-seu-erp). A única empresa é a única entidade que a conexão oferece.
+
+## O que o Data Foundation lê
+
+| Dataset | Lido do Sage 100 |
+|---|---|
+| Entidades | A empresa. |
+| Calendário fiscal | Os anos fiscais e seus períodos, até 13 por ano. Um período cuja data final é igual à do anterior é um período de ajuste. |
+| Plano de contas | As contas do razão geral (General Ledger), divididas em segmentos pela máscara de conta. |
+| Departamentos | O segmento de departamento da conta, quando a máscara tem um. |
+| Razão geral | O detalhe de lançamentos do razão geral (General Ledger), por ano fiscal e período. |
+| Balancete | O histórico de lançamentos por período: os débitos e créditos de cada conta por período, com um saldo inicial para o primeiro período lido. |
+
+O Sage 100 não fornece produtos, clientes, linhas de vendas, taxas de câmbio nem outros datasets: adicione-os como arquivos. Ele mantém sua contabilidade em uma única moeda, então não há taxas para ler. Consulte a [Matriz de cobertura do Data Foundation](/pt-br/reference/data-foundation-coverage-matrix/).
+
+Uma tabela que o agente não consegue ler, ou uma sem linhas, é um aviso e não um erro: o que uma carga anterior trouxe dela permanece como estava, os datasets que podem ser carregados são carregados, e **Prontidão** indica a tabela.
+
+## Lançar no Sage 100
+
+A etapa **Lançar documentos** lança em uma conexão do Sage 100 a partir da mesma tabela de documentos usada para qualquer outro ERP, e os mesmos [modos de lançamento](/pt-br/guides/workflows/run-a-workflow/#escolher-um-modo-de-lançamento): **Simular** cria e verifica cada documento sem contatar o Sage 100. Um sistema só lança ao vivo quando a execução é ao vivo e o projeto tem a autorização de gravação de hoje para ele. Consulte [Revisar o Registro de lançamentos](/pt-br/guides/connections/posting-register/) para acompanhar os lançamentos e [Revisar o histórico de lançamentos do ERP](/pt-br/guides/connections/erp-post-history/) para o livro de controle por trás deles.
+
+O Sage 100 aceita dois tipos de documento:
+
+| Documento | O que é lançado | O que precisa |
+|---|---|---|
+| `journal` | Um lançamento de diário do razão geral (General Ledger). | Uma data de lançamento e uma conta em cada linha. As linhas devem fechar ao centavo, e a referência, que se torna a descrição do diário, tem no máximo 30 caracteres. |
+| `payment` | Um cheque manual de contas a pagar (Accounts Payable) que registra um pagamento feito fora do Sage 100 contra as faturas em aberto do fornecedor. | Uma data de lançamento, um fornecedor em todas as suas linhas, um `invoice_no` e um valor positivo em cada linha, um código de banco e uma referência de no máximo 7 caracteres, que se torna o número do cheque. O código de banco é uma coluna `bank_code`, ou um valor obrigatório salvo no sistema Sage 100. |
+
+Antes de qualquer envio, um documento é interrompido, com o motivo, quando:
+
+- suas linhas estão em uma moeda diferente de **Company currency** da conexão;
+- sua coluna `company` indica uma empresa diferente do **Company code** da conexão;
+- um diário tem data em um período que o Sage 100 fechou, ou um pagamento quita uma fatura que não está em aberto por esse valor, quando o agente consegue informar isso (essas duas verificações só são executadas em lançamentos ao vivo);
+
+Cada documento é inserido em um lote no Sage 100, e o PlaidCloud o lê de volta antes de considerá-lo lançado. O que você vê:
+
+- **Lançado** somente quando a leitura de volta encontra o documento nas tabelas de lançamentos do Sage 100.
+- **Aguardando**, com a mensagem "Entered in Sage, batch *n*", quando o documento está no lote e aguarda o Update do Sage 100. Enquanto o agente está online, o PlaidCloud consulta o Sage 100 novamente sobre cada um desses documentos cerca de uma vez por hora e o registra como lançado assim que ele aparece. Um documento que continua inserido após 7 dias passa a ser não confirmado.
+- **Não confirmado** quando o PlaidCloud não consegue saber se o Sage 100 o contém. Ele nunca é reenviado por suposição, então verifique o Sage 100 antes de resolvê-lo.
+- **Não lançado** quando o Sage 100 recusa o documento, ou o agente nunca o recebeu, por exemplo quando está offline. Um documento recusado pode ser enviado novamente depois que você o corrigir.
+
+Um documento lançado nunca é lançado duas vezes: executar o mesmo documento novamente é reconhecido pela sua referência.
+
+<Aside type="note">
+O PlaidLink abre uma sessão do Sage 100 por agente de cada vez, então os lançamentos de um agente são executados um após o outro. Um lançamento espera até um minuto pela sessão antes de ser recusado como indisponível. O estorno de um lançamento não está disponível para o Sage 100.
+</Aside>
+
+## Relacionados
+
+- [Primeiros passos com o Data Foundation](/pt-br/guides/projects/data-foundation-getting-started/)
+- [Matriz de cobertura do Data Foundation](/pt-br/reference/data-foundation-coverage-matrix/)
+- [PlaidLink](/pt-br/reference/cli/plaidlink/)

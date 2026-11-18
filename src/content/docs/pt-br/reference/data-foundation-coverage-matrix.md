@@ -40,25 +40,25 @@ O Data Foundation lê diretamente cada sistema ERP e cada instância que você c
 
 ## Sistemas financeiros de médio porte e em nuvem
 
-| Dataset | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| Entidades | Completo | Completo | Completo | Completo | Completo | Completo |
-| Calendário fiscal | Completo | Completo | Completo | Completo | Completo | Completo |
-| Plano de contas | Completo | Completo | Completo | Completo | Completo | Completo |
-| Departamentos | Completo | Completo | Completo¹ | Completo | Completo | Completo |
-| Centros de lucro | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
-| Produtos | Completo | Completo | Completo¹ | Completo | Completo¹ | Completo |
-| Clientes | Completo | Completo | Completo¹ | Completo | Completo¹ | Completo |
-| Razão geral | Completo | Completo | Completo | Completo | Completo | Completo |
-| Balancete | Completo | Completo | Completo | Completo | Completo | Completo |
-| Linhas de vendas | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo |
-| Pipeline | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
-| Saldos de estoque | Arquivo | Arquivo | Completo¹ | Arquivo | Arquivo | Completo¹ |
-| Orçamento | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Arquivo | Completo¹ |
-| Direcionadores de alocação | Completo¹ | Completo¹ | Arquivo | Arquivo | Completo¹ | Completo |
-| Taxas de câmbio | Completo | Completo | Completo¹ | Arquivo | Completo | Completo¹ |
-| Valores de segmento | Arquivo | Arquivo | Arquivo | Arquivo | Completo¹ | Completo |
-| CO-PA por avaliação | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
+| Dataset | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Entidades | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Calendário fiscal | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Plano de contas | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Departamentos | Completo | Completo¹ | Completo | Completo¹ | Completo | Completo | Completo |
+| Centros de lucro | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
+| Produtos | Completo | Arquivo | Completo | Completo¹ | Completo | Completo¹ | Completo |
+| Clientes | Completo | Arquivo | Completo | Completo¹ | Completo | Completo¹ | Completo |
+| Razão geral | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Balancete | Completo | Completo | Completo | Completo | Completo | Completo | Completo |
+| Linhas de vendas | Completo¹ | Arquivo | Completo¹ | Completo¹ | Completo¹ | Completo¹ | Completo |
+| Pipeline | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
+| Saldos de estoque | Arquivo | Arquivo | Arquivo | Completo¹ | Arquivo | Arquivo | Completo¹ |
+| Orçamento | Completo¹ | Arquivo | Completo¹ | Completo¹ | Completo¹ | Arquivo | Completo¹ |
+| Direcionadores de alocação | Completo¹ | Arquivo | Completo¹ | Arquivo | Arquivo | Completo¹ | Completo |
+| Taxas de câmbio | Completo | Arquivo | Completo | Completo¹ | Arquivo | Completo | Completo¹ |
+| Valores de segmento | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Completo¹ | Completo |
+| CO-PA por avaliação | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo | Arquivo |
 
 ## Fontes de CRM, consolidação e planejamento
 
@@ -90,6 +90,7 @@ O Data Foundation lê diretamente cada sistema ERP e cada instância que você c
 - **SAP S/4HANA e SAP ECC** leem os mesmos dados mestres. O ECC lê seu razão a partir das linhas de lançamento de contabilidade financeira e de controladoria, e seus totais a partir das tabelas de totais do razão geral. Os centros de lucro são lidos quando o sistema os possui. As linhas de vendas são documentos de faturamento, não CO-PA.
 - **CO-PA por avaliação** não é lido diretamente de nenhum sistema. Adicione-o como arquivo.
 - O **Workday** não tem um serviço direto de lançamentos ou saldos. O Data Foundation fornece os relatórios a criar e os lê. Os valores de segmento (worktags), clientes, produtos, linhas de vendas e direcionadores de quantidade de funcionários vêm de relatórios opcionais. Os orçamentos continuam sendo arquivos.
+- O **Sage 100** é lido por meio de um agente PlaidLink, uma empresa por conexão. Ele mantém sua contabilidade em uma única moeda, então não fornece taxas de câmbio, e o Data Foundation não lê seus produtos, clientes nem linhas de vendas. Os departamentos são lidos do segmento de departamento da conta quando a máscara da conta tem um.
 - O **Xero** não fornece taxas de câmbio. Adicione-as como arquivo se suas entidades usam mais de uma moeda.
 - O **QuickBooks Online** lê departamentos, clientes, produtos, taxas de câmbio, orçamentos, estoque e linhas de vendas quando o arquivo da empresa os possui.
 - O **NetSuite** lê segmentos personalizados como valores de segmento. As taxas de câmbio e o estoque são lidos quando a conta os oferece, e os orçamentos quando a conta usa o NetSuite Budgets e a função pode lê-los.
@@ -109,6 +110,7 @@ O Data Foundation lê diretamente cada sistema ERP e cada instância que você c
   - [Oracle Fusion](/pt-br/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/pt-br/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/pt-br/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/pt-br/guides/connections/sage-100/)
   - [Sage Intacct](/pt-br/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/pt-br/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/pt-br/guides/connections/xero-access-for-data-foundation/)

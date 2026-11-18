@@ -40,25 +40,25 @@ Data Foundation lit directement chaque système ERP et chaque instance que vous 
 
 ## Systèmes financiers pour le marché intermédiaire et dans le cloud
 
-| Jeu de données | Business Central | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
-| --- | --- | --- | --- | --- | --- | --- |
-| Entités | Complet | Complet | Complet | Complet | Complet | Complet |
-| Calendrier fiscal | Complet | Complet | Complet | Complet | Complet | Complet |
-| Plan comptable | Complet | Complet | Complet | Complet | Complet | Complet |
-| Départements | Complet | Complet | Complet¹ | Complet | Complet | Complet |
-| Centres de profit | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
-| Produits | Complet | Complet | Complet¹ | Complet | Complet¹ | Complet |
-| Clients | Complet | Complet | Complet¹ | Complet | Complet¹ | Complet |
-| Grand livre | Complet | Complet | Complet | Complet | Complet | Complet |
-| Balance de vérification | Complet | Complet | Complet | Complet | Complet | Complet |
-| Lignes de vente | Complet¹ | Complet¹ | Complet¹ | Complet¹ | Complet¹ | Complet |
-| Pipeline | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
-| Soldes de stock | Fichier | Fichier | Complet¹ | Fichier | Fichier | Complet¹ |
-| Budget | Complet¹ | Complet¹ | Complet¹ | Complet¹ | Fichier | Complet¹ |
-| Inducteurs d'allocation | Complet¹ | Complet¹ | Fichier | Fichier | Complet¹ | Complet |
-| Taux de change | Complet | Complet | Complet¹ | Fichier | Complet | Complet¹ |
-| Valeurs de segment | Fichier | Fichier | Fichier | Fichier | Complet¹ | Complet |
-| CO-PA par valorisation | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
+| Jeu de données | Business Central | Sage 100 | Sage Intacct | QuickBooks Online | Xero | Workday | NetSuite |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Entités | Complet | Complet | Complet | Complet | Complet | Complet | Complet |
+| Calendrier fiscal | Complet | Complet | Complet | Complet | Complet | Complet | Complet |
+| Plan comptable | Complet | Complet | Complet | Complet | Complet | Complet | Complet |
+| Départements | Complet | Complet¹ | Complet | Complet¹ | Complet | Complet | Complet |
+| Centres de profit | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
+| Produits | Complet | Fichier | Complet | Complet¹ | Complet | Complet¹ | Complet |
+| Clients | Complet | Fichier | Complet | Complet¹ | Complet | Complet¹ | Complet |
+| Grand livre | Complet | Complet | Complet | Complet | Complet | Complet | Complet |
+| Balance de vérification | Complet | Complet | Complet | Complet | Complet | Complet | Complet |
+| Lignes de vente | Complet¹ | Fichier | Complet¹ | Complet¹ | Complet¹ | Complet¹ | Complet |
+| Pipeline | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
+| Soldes de stock | Fichier | Fichier | Fichier | Complet¹ | Fichier | Fichier | Complet¹ |
+| Budget | Complet¹ | Fichier | Complet¹ | Complet¹ | Complet¹ | Fichier | Complet¹ |
+| Inducteurs d'allocation | Complet¹ | Fichier | Complet¹ | Fichier | Fichier | Complet¹ | Complet |
+| Taux de change | Complet | Fichier | Complet | Complet¹ | Fichier | Complet | Complet¹ |
+| Valeurs de segment | Fichier | Fichier | Fichier | Fichier | Fichier | Complet¹ | Complet |
+| CO-PA par valorisation | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier | Fichier |
 
 ## Sources CRM, de consolidation et de planification
 
@@ -90,6 +90,7 @@ Data Foundation lit directement chaque système ERP et chaque instance que vous 
 - **SAP S/4HANA et SAP ECC** lisent les mêmes données de base. ECC lit son grand livre à partir des postes de la comptabilité financière et du contrôle de gestion, et ses totaux à partir des tables de totaux du grand livre. Les centres de profit sont lus lorsque le système les contient. Les lignes de vente sont des documents de facturation, et non du CO-PA.
 - **CO-PA par valorisation** n'est lu directement depuis aucun système. Ajoutez-le sous forme de fichier.
 - **Workday** n'a pas de service direct de journaux ou de soldes. Data Foundation vous fournit les rapports à créer et les lit. Les valeurs de segment (worktags), les clients, les produits, les lignes de vente et les inducteurs d'effectifs proviennent de rapports facultatifs. Les budgets restent des fichiers.
+- **Sage 100** est lu par l'intermédiaire d'un agent PlaidLink, une société par connexion. Il tient ses livres dans une seule devise : il ne fournit donc pas de taux de change, et Data Foundation ne lit ni ses produits, ni ses clients, ni ses lignes de vente. Les départements sont lus à partir du segment de département du compte lorsque le masque de compte en comporte un.
 - **Xero** ne fournit pas de taux de change. Ajoutez-les sous forme de fichier si vos entités utilisent plusieurs devises.
 - **QuickBooks Online** lit les départements, les clients, les produits, les taux de change, les budgets, les stocks et les lignes de vente lorsque le fichier de la société les contient.
 - **NetSuite** lit les segments personnalisés comme des valeurs de segment. Les taux de change et les stocks sont lus lorsque le compte les propose, et les budgets lorsque le compte utilise NetSuite Budgets et que le rôle peut les lire.
@@ -109,6 +110,7 @@ Data Foundation lit directement chaque système ERP et chaque instance que vous 
   - [Oracle Fusion](/fr/guides/connections/oracle-fusion-access-for-data-foundation/)
   - [Dynamics 365 Finance and Operations](/fr/guides/connections/dynamics-365-fo-access-for-data-foundation/)
   - [Business Central](/fr/guides/connections/business-central-access-for-data-foundation/)
+  - [Sage 100](/fr/guides/connections/sage-100/)
   - [Sage Intacct](/fr/guides/connections/sage-intacct-access-for-data-foundation/)
   - [QuickBooks Online](/fr/guides/connections/quickbooks-access-for-data-foundation/)
   - [Xero](/fr/guides/connections/xero-access-for-data-foundation/)

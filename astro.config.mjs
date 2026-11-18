@@ -314,6 +314,7 @@ export default defineConfig({
 										'guides/connections/oracle-fusion-access-for-data-foundation',
 										'guides/connections/dynamics-365-fo-access-for-data-foundation',
 										'guides/connections/business-central-access-for-data-foundation',
+										'guides/connections/sage-100',
 										'guides/connections/sage-intacct-access-for-data-foundation',
 										'guides/connections/quickbooks-access-for-data-foundation',
 										'guides/connections/xero-access-for-data-foundation',
