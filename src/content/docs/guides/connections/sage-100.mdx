@@ -1,0 +1,121 @@
+---
+title: Sage 100 (On-Premises)
+description: Connect PlaidCloud to an on-premises Sage 100 company through PlaidLink — what the Sage 100 administrator sets up, how Data Foundation reads the company, and how journals and manual checks are posted back.
+sidebar:
+  label: Sage 100 (On-Premises)
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Sage 100 is installed on your own servers and has no web API, so PlaidCloud reaches it through a [PlaidLink](/reference/cli/plaidlink/) agent that runs on a Windows computer in your network. [Data Foundation](/guides/projects/data-foundation/) reads one Sage 100 company's chart of accounts, fiscal calendar, journals and period balances through that agent, like any other ERP system it connects. A workflow can also post General Ledger journal entries and Accounts Payable manual checks back to the company.
+
+This page covers what the Sage 100 administrator sets up, how to connect the company, what Data Foundation reads, and how posting behaves.
+
+## What the Sage 100 Administrator Sets Up
+
+Everything below is on the one computer that runs the PlaidLink agent.
+
+<Steps>
+
+1. **Install and register PlaidLink** on the computer, and run the agent under a dedicated Windows account, not a system account (LocalSystem, LocalService or NetworkService). A dedicated account lets PlaidLink clear a Sage 100 session that hangs; under a system account it doesn't.
+
+2. **Install Sage's 64-bit ODBC driver and create a 64-bit System DSN.** The agent is a 64-bit program and can't use a 32-bit driver or data source. The data source is usually named `SOTAMAS90`, and it comes with Sage 100 Standard and Advanced. Sage 100 Premium reads from SQL Server and needs the Microsoft ODBC Driver for SQL Server instead. Check that your Sage 100 license covers the ODBC driver and the workstation.
+
+3. **Create a Sage user for PlaidCloud** and give it these tasks in Role Maintenance.
+
+   | To | Tasks |
+   |---|---|
+   | Read | General Ledger: Chart of Accounts, Account Inquiry, Journal Entry inquiry, Fiscal Year and Period inquiry. Library Master: Company Maintenance inquiry. |
+   | Post, with the right to add entries and not only view them | General Ledger: Journal Entry. Accounts Payable: Manual Check Entry. |
+
+   For Premium, also give the user read access to the Sage 100 database in SQL Server.
+
+4. **Install Sage 100 on the same computer as a workstation.** The data source needs it to open the company files, and posting goes through Sage's Business Object Interface (BOI), which the workstation install provides. Posting uses one Sage 100 workstation license while it runs. Note the folder Sage 100 is installed in and the currency the company books in.
+
+5. **Give PlaidCloud a test company**, or a copy of the company, to connect to first.
+
+6. **Allow the PlaidLink agent through your antivirus and Windows SmartScreen**, so the first install isn't blocked.
+
+</Steps>
+
+A Standard or Advanced data source signs in to one company. A Premium connection names one company in one database. Connect each company separately.
+
+<Aside type="caution">
+Never email the Sage password. **Sage password** is a secret: it is stored on the connection and never shown again.
+</Aside>
+
+### Send the Access Request
+
+On the project's **Foundation** tab, choose **Sage 100 — on-premises** under **Connect a system**, then **Create a new connection**. The form shows this request in full, a **How to set up PlaidLink** link, **Copy request** to paste it into your own message, and **Email request** to open it in your mail program with the subject "Sage 100 access for PlaidCloud."
+
+## Connect the Company
+
+On the **Foundation** tab, open **Sources**, choose **Sage 100 — on-premises** in **Connect a system**, and choose **Create a new connection**. Enter a **Connection name**, choose the **Environment**, and fill in these settings:
+
+| Setting | What to enter |
+|---|---|
+| **Sage 100 edition** | Premium, Standard or Advanced. |
+| **Company code** | The Sage 100 company's code, 1 to 10 letters and digits. |
+| **Company currency** | The three-letter code of the currency the company books in, such as `USD`. Required: PlaidCloud never assumes one. |
+| **Sage user** | The Sage user you created for PlaidCloud. |
+| **Sage password** | That user's password. |
+| **Sage 100 install folder on the agent machine** | The folder Sage 100 is installed in. Posting needs it; reading doesn't. |
+| **Accounts Payable division** | The division manual checks post to. Defaults to `00`. |
+| **SQL Server (Premium)** and **SQL Server database (Premium)** | For Premium: the SQL Server and database of the Sage 100 install. |
+| **ODBC data source (Standard and Advanced)** | For Standard and Advanced: the System DSN on the agent's computer. Defaults to `SOTAMAS90`. |
+
+Under **System settings**, choose the PlaidLink agent in **PlaidLink agent**, and set **Company currency** there to the same code. Rows load in that currency, and it is `USD` until you change it. Choose a folder account in **Document account for the agent's reads** to hold the files the agent writes while it reads. **Account mask** is Sage 100's account format, where `#` is a character and anything else a separator: `####-###` is a four-character main account, a separator and a three-character department. It is `####` until you change it.
+
+Click **Test connection**. For Sage 100 this checks that the connection has every value it needs, and it doesn't sign in to Sage 100: the agent reads the tables when you click **Load**. Then set **Months of history** and add the system as described in [Connect Your ERP](/guides/projects/data-foundation/#connect-your-erp). The one company is the only entity the connection offers, so there are none to tick.
+
+## What Data Foundation Reads
+
+| Dataset | Read from Sage 100 |
+|---|---|
+| Entities | The company. |
+| Fiscal calendar | The fiscal years and their periods, up to 13 a year. A period whose end date is the same as the one before it is an adjustment period. |
+| Chart of accounts | The General Ledger accounts, split into segments by the account mask. |
+| Departments | The department segment of the account, when the mask has one. |
+| General ledger | The General Ledger posting detail, by fiscal year and period. |
+| Trial balance | The period posting history: each account's debits and credits per period, with an opening balance for the first period read. |
+
+Sage 100 supplies no products, customers, sales lines, currency rates or other datasets: add those as files. It keeps its books in one currency, so there are no rates to read. See the [Data Foundation Coverage Matrix](/reference/data-foundation-coverage-matrix/).
+
+A table the agent can't read, or one with no rows, is a warning and not an error: what an earlier load landed from it stays as it was, the datasets that can load do, and **Readiness** names the table.
+
+## Post to Sage 100
+
+Posting to a Sage 100 connection takes the same table of documents as posting to any other ERP, and the same [posting modes](/guides/workflows/run-a-workflow/#choose-a-posting-mode): **Simulate** builds and checks each document without contacting Sage 100. See [Review the Posting Register](/guides/connections/posting-register/) to follow postings and [Review ERP Post History](/guides/connections/erp-post-history/) for the ledger behind them.
+
+Sage 100 takes two kinds of document:
+
+| Document | What is posted | What it needs |
+|---|---|---|
+| `journal` | A General Ledger journal entry. | A posting date, and an account on every line. The lines must balance to the cent, and the reference, which becomes the journal's description, is at most 30 characters. |
+| `payment` | An Accounts Payable manual check that records a payment made outside Sage 100 against the supplier's open invoices. | A posting date, one supplier on every line, an `invoice_no` and a positive amount on each line, a bank code, and a reference of at most 7 characters, which becomes the check number. The bank code is a `bank_code` column, or a required value saved on the Sage 100 system. |
+
+Before anything is sent, a document is stopped, with the reason, when:
+
+- its lines are in a currency other than the connection's **Company currency**;
+- its entity names a different company from the connection's;
+- a journal is dated in a period Sage 100 has closed, or a payment pays an invoice that isn't open for that amount, when the agent can say so;
+- another document of the same run uses its reference.
+
+Each document is entered in a batch in Sage 100, and PlaidCloud reads it back before calling it posted. What you see:
+
+- **Posted** only when the read-back finds the document in Sage 100's posted tables.
+- **Waiting**, with the message "Entered in Sage, batch *n*", when the document sits in the batch and is waiting for Sage 100's Update. PlaidCloud asks Sage 100 again about each such document every hour, and records it as posted once it appears. A document still entered after 7 days becomes unconfirmed.
+- **Unconfirmed** when PlaidCloud can't tell whether Sage 100 holds it. It is never re-sent on a guess, so check Sage 100 before you resolve it.
+- **Not posted** when Sage 100 refuses the document, or the agent never took it, for example when it is offline. A refused document can be sent again after you fix it.
+
+A posted document is never posted twice: running the same document again is recognized by its reference.
+
+<Aside type="note">
+Sage 100 allows one session per agent at a time, so posts from one agent run one after another. A post waits up to a minute for the session before it is refused as unavailable. Reversing a posting isn't available for Sage 100.
+</Aside>
+
+## Related
+
+- [Get Started With Data Foundation](/guides/projects/data-foundation-getting-started/)
+- [Data Foundation Coverage Matrix](/reference/data-foundation-coverage-matrix/)
+- [PlaidLink](/reference/cli/plaidlink/)
