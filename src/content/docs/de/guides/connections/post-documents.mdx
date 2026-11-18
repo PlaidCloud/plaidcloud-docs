@@ -1,0 +1,341 @@
+---
+title: Belege in ERP-Systemen buchen
+description: Buchen Sie die Belege einer Tabelle in das ERP-System, in das jede Entität bucht, mit Prüfungen vor dem Senden, Simulieren und Live, einer Seite für jede Ausführung, erneutem Ausführen, Buchen aus einer Datei oder einer Umlage und dem Konvertieren eines SAP-Buchungsschritts.
+sidebar:
+  label: Belege buchen
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+Der Schritt **Belege buchen** bucht die Belege einer Tabelle in Ihre ERP-Systeme. Der Schritt nennt kein System: Jeder Beleg geht an das System, in das seine Entität bucht, sodass ein Schritt gleichzeitig in mehrere Systeme und mehrere Instanzen desselben ERP buchen kann. Jeder Buchungsweg — der Schritt, eine Datei, die REST-API und die MCP-Tools — durchläuft dieselben Prüfungen und wird als Ausführung mit einer eigenen [Seite der Ausführung](#die-seite-der-ausführung) erfasst.
+
+Diese Seite behandelt den Schritt, seine Tabelle und Einstellungen, Simulieren und Live, die Seite der Ausführung, erneutes Ausführen, das Buchen aus einer Datei oder einer Umlage und das Konvertieren eines SAP-Buchungsschritts. Das Einrichten der Systeme selbst — welche Entität wohin bucht, Live schalten, Halteregeln und was jedes ERP unterstützt — steht unter [ERP-Systeme](/de/guides/connections/erp-systems/). Das anschließende Prüfen, Freigeben, Stornieren und Klären von Buchungen steht im [Buchungsregister](/de/guides/connections/posting-register/).
+
+## Bevor Sie beginnen
+
+- Jedes ERP, in das Sie buchen, ist eine Verbindung, in die PlaidCloud buchen kann, eingerichtet als System mit den Entitäten, die darin buchen. Siehe [ERP-Systeme](/de/guides/connections/erp-systems/).
+- Um tatsächlich zu buchen, muss die Ausführung Live sein und das System jedes Belegs für das Projekt Live sein. Bis dahin wird alles geprüft und als **Würde gebucht** angezeigt, und nichts wird gesendet. Siehe [Simulieren und Live](#simulieren-und-live).
+
+## So wird ein Beleg gebucht
+
+Zeilen mit derselben Entität und demselben `doc_number` bilden einen Beleg. Wenn eine Ausführung startet, werden die Belege eingefroren: Alles, was später in der Ausführung geschieht — **Diese buchen**, eine Wiederholung, eine Freigabe —, sendet genau diese Belege. Jeder Beleg durchläuft dann dieselben Phasen und hält bei der ersten an, die das verlangt, mit ihrem Grund:
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="Ein Beleg wird auf Ausgleich und Gruppen geprüft, dem System seiner Entität zugeordnet, gegen dieses System geprüft, bei Bedarf angehalten, wenn eine Regel es verlangt, und dann bei Live gesendet oder bei Nicht-Live als Würde gebucht erfasst." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Ausgleich</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">und Gruppen</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Zuordnen</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Entität zu System</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Prüfen</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">gegen das System</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Anhalten?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Freigabe erforderlich</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Live: gesendet</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Wartend, dann Gebucht</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simulieren</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Würde gebucht, ungesendet</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">Ein in einer beliebigen Phase angehaltener Beleg ist Nicht gebucht, mit seinem Grund</text>
+</svg>
+<figcaption>Jeder Buchungsweg durchläuft dieselben Phasen. Ein Beleg geht nur dann an ein System, wenn die Ausführung und ihr System beide Live sind.</figcaption>
+</figure>
+
+1. Ausgleich und Gruppen: Ein Journal muss in jeder verwendeten Währung ausgeglichen sein, und eine Gruppe muss als Ganzes ausgeglichen sein. Siehe [Gruppen](#gruppen) und die Rundungseinstellung unter [Schritteinstellungen](#schritteinstellungen).
+2. Zuordnen: Die Entität des Belegs bestimmt sein System, wie unter [ERP-Systeme](/de/guides/connections/erp-systems/) festgelegt. Ein Beleg, dessen Entität kein System hat, ist Nicht gebucht.
+3. Prüfen: Die [fünf Prüfungen](#die-fünf-prüfungen) laufen gegen das, was PlaidCloud über das System weiß.
+4. Anhalten: Eine Halteregel des Systems oder die eigene Haltefunktion des Schritts hält den Beleg als **Freigabe erforderlich** zurück, bis eine Person ihn im [Buchungsregister](/de/guides/connections/posting-register/) freigibt.
+5. Senden: Der Beleg wird in das eigene Format des Systems gebracht und gesendet, oder als **Würde gebucht** erfasst, wenn die Ausführung oder ihr System auf Simulieren steht.
+
+Was jeder Status bedeutet und was jeweils zu tun ist, steht im [Buchungsregister](/de/guides/connections/posting-register/).
+
+## Den Schritt hinzufügen
+
+Fügen Sie einem Workflow einen Schritt **Belege buchen** hinzu: Er steht im Schrittmenü unter **Externe Systeme** und in der Schrittpalette im Ordner **Externe Systeme**. Sein Formular hat drei Abschnitte, dann einen Link **Mehr ▸** für die Einstellungen des Schritts.
+
+1. **1 · Die Tabelle** — wählen Sie die **Tabelle** mit den Belegen, eine Zeile pro Position. Sobald der erste Beleg aufgebaut ist, zeigt der Abschnitt, wie viele Positionen und Belege er aus der Tabelle gelesen hat.
+2. **2 · Spaltenzuordnung** — was der Schritt in jeder Spalte Ihrer Tabelle erkannt hat. Eine Spalte, deren Name ein Buchungsfeld ist, ist **Über den Namen zugeordnet**; eine, deren Name eine bekannte Alternative ist, ist **Über einen alternativen Namen zugeordnet**. Für eine Spalte, die der Schritt nicht erkennt, gibt es eine Liste: Wählen Sie unter **Was ist diese Spalte?** das Feld, das sie enthält, und sie erscheint als **Von Ihnen gewählt**. Nur die Spalten, für die Sie eine Auswahl treffen, werden mit dem Schritt gespeichert. Zwei Spalten nehmen nie dasselbe Feld: Die erste behält es.
+3. **3 · Der erste Beleg, so wie ihn sein System erhält** — der erste Beleg der Tabelle, zugeordnet und in das Format seines Systems gebracht, mit seinen Positionen. Kann er noch nicht aufgebaut werden, nennt der Abschnitt den Grund, mit denselben Worten wie ein Grund für Nicht gebucht.
+
+Der Schritt benötigt eine **Tabelle**. Wenn Sie einen Haltebetrag ankreuzen, muss der Betrag eine Zahl sein, und wenn Sie eine Rundungszeile hinzufügen, benötigt sie ein Konto.
+
+## Die Tabelle
+
+Die Tabelle verwendet die Spaltennamen der Data Foundation. Ein Journal in der Form der Data Foundation bucht ohne Zuordnung; eine Tabelle mit fakturierten Verkaufspositionen bucht, sobald Sie `account` und `document_type` hinzufügen. Eine Zeile ist eine Position; Zeilen mit derselben `entity` und `doc_number` bilden einen Beleg.
+
+| Spalte | Was sie enthält |
+|---|---|
+| `doc_number` | Die Referenz des Belegs. Erforderlich: Eine Tabelle ohne Spalte dafür stoppt den Schritt. Sie darf kein `~` enthalten, das PlaidCloud für die Nummerierung von Versionen reserviert. |
+| `entity` | Die Entität, zu der der Beleg gehört. Sie bestimmt das System. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Daten und Periode des Belegs. |
+| `account` | Das Konto der Position. |
+| `amount_txn` und `currency_txn` | Der Betrag der Position und seine Währung. Eine Tabelle nur in lokaler Währung kann stattdessen `amount_local` und `currency_local` verwenden, und `debit` und `credit` werden anstelle eines Betrags akzeptiert. |
+| `description`, `line_number`, `quantity`, `unit` | Positionstext, Reihenfolge und Menge. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` bis `segment_10` | Die Dimensionen der Position. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Steuer und Quellensteuer. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Rechnungsangaben. |
+| `document_type` | `journal` (wenn leer), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` oder `payment`. Was jedes System aufnimmt, steht unter [ERP-Systeme](/de/guides/connections/erp-systems/). |
+| `set` | Ein Gruppenname: Belege, die einen teilen, werden zusammen oder gar nicht gebucht. Siehe [Gruppen](#gruppen). |
+
+Diese alternativen Namen werden ebenfalls zugeordnet, ohne Beachtung der Groß-/Kleinschreibung: `invoice_number` und `reference` und `journal id` für `doc_number`, `invoice_date` für `posting_date`, `net_amount_local` für `amount_local`, `memo` für `description`, `cost center` für `department` und `vendor` für `supplier`. Eine Spalte, die keine davon ist — etwa eine eigene Dimension von Ihnen —, wird am Beleg und seinen Positionen mitgeführt, für ein Systemformat, das sie zuordnet.
+
+Einige Spalten gehören zum Buchen selbst und sind noch nicht verfügbar: Eine Zeile, deren `action` etwas anderes als `post` ist, oder eine, die `reverse_on` setzt, ist Nicht gebucht. Die Seite der Ausführung meldet „Das ist noch nicht verfügbar.“; die Ergebnistabelle und die REST-Antwort tragen die Meldung „only posting is available yet“ oder „a date to reverse on is not available yet“. Um eine Buchung zu stornieren, gutzuschreiben oder zu korrigieren, verwenden Sie das [Buchungsregister](/de/guides/connections/posting-register/).
+
+Ein Beleg wird an seiner Art, Entität und Referenz erkannt, nicht an seinem Monat, sodass ein in einen anderen Monat verschobener Beleg derselbe Beleg bleibt.
+
+### Gruppen
+
+Belege, die einen `set`-Wert teilen, werden zusammen oder gar nicht gebucht:
+
+- Die Gruppe muss als Ganzes ausgeglichen sein, mit dem Rundungsgrenzwert als Toleranz. Ist sie es nicht, ist jedes Mitglied Nicht gebucht, mit der Differenz.
+- Wird ein Mitglied von einer Prüfung angehalten, ist der Rest der Gruppe ebenfalls Nicht gebucht, „another document in set … was not posted“. Wird ein Mitglied zur Freigabe angehalten, wartet die ganze Gruppe als **Freigabe erforderlich**.
+- Ist das System eines Mitglieds nicht Live, ist die ganze Gruppe **Würde gebucht**, sodass kein Teil davon tatsächlich gesendet wird.
+
+## Schritteinstellungen
+
+**Mehr ▸** öffnet die vier Einstellungen des Schritts. Jede hat einen Startwert, und die meisten Schritte ändern sie nie.
+
+| Einstellung | Startwert | Was sie bewirkt |
+|---|---|---|
+| **Für eine Person zurückhalten** | Nichts ist angehalten | Hält Belege zur Freigabe an, wenn die angekreuzten Bedingungen erfüllt sind. |
+| **Wer benachrichtigt wird** | **Wer den Lauf gestartet hat** | Wer benachrichtigt wird, wenn eine Ausführung mit Belegen endet, die Aufmerksamkeit erfordern. |
+| **Rundungskonto und Grenzwert** | Keine Rundung | Fügt einem Beleg, der um höchstens den Grenzwert aus dem Gleichgewicht ist, eine Rundungszeile hinzu. |
+| **Wenn ein gebuchter Beleg geändert zurückkommt** | Nachfragen | Was eine spätere Ausführung mit einem Beleg tut, der sich seit dem Buchen geändert hat. |
+
+### Für eine Person zurückhalten
+
+Kreuzen Sie die Bedingungen an, die einen Beleg für die Freigabe durch eine Person anhalten:
+
+- **Der Betrag liegt über** — ein Betrag. Er wird mit dem Betrag des Belegs in der eigenen Währung des Belegs verglichen.
+- **Er wurde aus einer Datei gebucht**
+- **Es ist eine Stornierung, Gutschrift oder Korrektur**
+- **Er ist als ungewöhnlich markiert**
+- **Immer**
+
+Kreuzen Sie mehrere an, wird ein Beleg nur angehalten, wenn alle zutreffen. Ohne Häkchen fügt der Schritt keine eigene Haltefunktion hinzu; die Halteregeln seines Systems und die zweite Person, die eine Stornierung, Gutschrift oder Korrektur benötigen kann, halten Belege weiterhin an. Eine Haltefunktion am Schritt ergänzt nur die Halteregeln, die sein System bereits hat. Ein angehaltener Beleg hält den Rest seiner Gruppe an. Die Person, deren Senden einen Beleg angehalten hat, und die Person, die seine Ausführung gestartet hat, können ihn nicht freigeben; Freigaben und Freigeber stehen im [Buchungsregister](/de/guides/connections/posting-register/) und unter [ERP-Systeme](/de/guides/connections/erp-systems/).
+
+### Wer benachrichtigt wird
+
+**Wer den Lauf gestartet hat** ist der Startwert. Wählen Sie **Eine Liste von Personen…**, um stattdessen die zu benachrichtigenden Mitglieder zu nennen. Sie werden benachrichtigt, wenn die Ausführung mit Belegen endet, die Aufmerksamkeit erfordern.
+
+### Rundungskonto und Grenzwert
+
+Kreuzen Sie **Rundungszeile zu einem nicht ausgeglichenen Beleg hinzufügen** an und geben Sie dann das **Konto** und den **Grenzwert** an. Ein Journal, das in einer Währung um höchstens den Grenzwert aus dem Gleichgewicht ist, erhält eine Zeile auf dieses Konto, beschrieben als „Rounding“, und besteht; eine größere Differenz oder eine Differenz in mehr als einer Währung hält es als nicht ausgeglichen an, mit der Differenz. Der Grenzwert ist auch die Toleranz für eine Gruppe als Ganzes. Ist die Einstellung nicht angekreuzt, wird nichts gerundet.
+
+### Wenn ein gebuchter Beleg geändert zurückkommt
+
+| Auswahl | Was eine spätere Ausführung mit einem geänderten Beleg tut |
+|---|---|
+| **Nachfragen (Startwert). Der Beleg erscheint unter „Aufmerksamkeit erforderlich“ mit zwei Optionen.** | Der geänderte Beleg ist Nicht gebucht, „Die Quelle hat sich nach dem Buchen geändert.“, und wartet darauf, dass eine Person auf der [Seite der Ausführung](#geänderte-belege) **Mit dieser Version korrigieren** oder **Die gebuchte Version behalten** wählt. |
+| **Korrigieren. Stornieren und die neue Version buchen, für einen Schritt, der jede Periode neu läuft.** | In einer Live-Ausführung wird der gebuchte Beleg storniert und der geänderte Beleg als seine nächste Version gesendet. |
+
+## Simulieren und Live
+
+Ein Beleg wird nur dann an sein System gesendet, wenn beides zutrifft:
+
+- Die Ausführung ist Live: Eine Workflow-Ausführung trägt einen Buchungsmodus, begrenzt durch den eigenen Modus des Projekts, wie unter [Einen Buchungsmodus wählen](/de/guides/workflows/run-a-workflow/#einen-buchungsmodus-wählen) beschrieben. Eine Ausführung in Simulieren sendet nichts, und eine Ausführung in Aus überspringt den Schritt.
+- Das System des Belegs ist für das Projekt Live: Das ist die Schreibautorisierung des Projekts für die Verbindung und Umgebung des Systems, mit dem Modus des Projekts auf Live — siehe [Das Projekt zum Buchen autorisieren](/de/guides/workflows/run-a-workflow/#das-projekt-zum-buchen-autorisieren) und das Live-Schalten unter [ERP-Systeme](/de/guides/connections/erp-systems/).
+
+Andernfalls wird der Beleg geprüft und als **Würde gebucht** erfasst, und nichts wird gesendet. Simulieren kontaktiert nie ein System: In einer Ausführung in Simulieren werden selbst die Prüfungen nicht vorgenommen, die das System fragen müssten. Der Schritt hat keine eigene Probelauf-Einstellung. Die eine Ausnahme ist ein Schritt, der aus einem SAP-Buchungsschritt konvertiert wurde, der auf Testbuchungen eingestellt war: Er läuft jedes Mal weiter in Simulieren, und seine Belege werden nur über **Diese buchen** auf seiner Seite der Ausführung gebucht.
+
+Eine Ausführung in Simulieren zeigt Ihnen genau, was gebucht würde. Sieht es richtig aus, sendet **Diese buchen** auf ihrer [Seite der Ausführung](#diese-buchen) dieselben eingefrorenen Belege.
+
+## Die fünf Prüfungen
+
+Bevor etwas gesendet wird, durchläuft jeder Beleg fünf Prüfungen. Die Seite der Ausführung zeigt jede als bestanden, fehlgeschlagen oder nicht geprüft:
+
+| Prüfung | Was einen Beleg anhält |
+|---|---|
+| Balanced | Soll und Haben, die nicht übereinstimmen, über den Rundungsgrenzwert hinaus. |
+| Period open | Ein Buchungsdatum in einer Periode, die im System geschlossen ist. |
+| Accounts exist | Ein Konto, das das System nicht hat, ein Code ohne Zuordnung, ein leerer Wert, den das System braucht, eine Rechnung, die nicht offen ist, eine andere Gesellschaft oder eine Währung, die das System nicht bucht. |
+| Not posted before | Eine Referenz, die bereits in ein anderes System gebucht wurde oder in diesem System bereits verwendet wird. |
+| Sets agree | Eine Gruppe, in der ein Mitglied fehlt oder deren Belege sich nicht summieren. |
+
+**Period open** und **Accounts exist** verwenden die Listen, die PlaidCloud aus dem System liest, wenn eine Live-Ausführung in ein Live-System startet. In einer Ausführung in Simulieren oder wenn das Lesen einer Liste nur teilweise, leer oder zu spät erfolgt, gelten sie als nicht geprüft. Die Kopie der Listen, die **Jetzt aktualisieren** unter [ERP-Systeme](/de/guides/connections/erp-systems/) pflegt, dient der Ansicht: Sie speist keine Prüfung. Eine Live-Ausführung in ein Live-System nimmt außerdem die eigenen Prüfungen des Systems vor, soweit sein Format welche hat; eine Ausführung in Simulieren nicht.
+
+Eine Prüfung, die bei einem Beleg nicht lief, gilt als nicht geprüft, nie als bestanden. Die Seite der Ausführung zeigt die fünf Prüfungsnamen in jeder Sprache auf Englisch.
+
+## Wenn der Schritt läuft
+
+- Der Schritt wartet bis zu 10 Minuten darauf, dass die Systeme antworten. Ein Beleg, der dann noch keine Antwort hat, läuft im Datensatz weiter, und die Seite seiner Ausführung füllt sich, wenn die Antwort kommt.
+- Das Ausführungsprotokoll erhält eine Zeile, „n von m gebucht · k erfordern Aufmerksamkeit“. Erfordert ein Beleg Aufmerksamkeit, endet der Schritt mit einer Warnung, „k von m Belegen erfordern Aufmerksamkeit“, und die Personen unter **Wer benachrichtigt wird** werden benachrichtigt. Der Rest des Workflows läuft weiter.
+- Eine Tabelle, die nicht existiert, keine Spalten oder keine Zeilen hat, ist eine Warnung, und nichts wird gebucht. Eine Tabelle ohne Spalte für `doc_number` stoppt den Schritt mit einem Fehler.
+- Nennt die Konfiguration des Schritts eine Ergebnistabelle, schreibt der Schritt eine Zeile pro Beleg hinein: `doc_number`, `action`, `state`, `source_system` (das System, in das gebucht wurde), `source_doc` (die Nummer, die das System vergeben hat) und `message`.
+
+## Die Seite der Ausführung
+
+Jede Ausführung hat eine Seite: die Ausführung eines Schritts, einer Datei, eine über die REST-API oder MCP gestartete, eine Wiederholung, eine Stornierung. Öffnen Sie sie über **Ausführungen** im [Buchungsregister](/de/guides/connections/posting-register/) mit **Öffnen**. Die Seite zeigt nur die Belege, die Sie sehen dürfen; hat sie für Sie keine, steht dort „Diese Ausführung hat keinen Beleg erhalten, den Sie sehen dürfen.“
+
+Der obere Teil der Seite sagt, wie die Ausführung steht:
+
+- In Simulieren: „Diese Ausführung steht auf Simulieren. Es wurde nichts an ein System gesendet. Diese buchen sendet dieselben eingefrorenen Belege.“
+- Live und noch laufend: Es gibt nichts zu drücken, um zu buchen. Die Seite füllt sich, wenn Systeme antworten, und sagt, wie viele Belege noch nicht gesendet wurden. Sie liest die Ausführung von selbst erneut, solange noch etwas läuft oder wartet.
+- Live und fertig: „Live. Jedes System hat geantwortet.“
+- Gestoppt: „Diese Ausführung wurde gestoppt. Was nicht gesendet wurde, ist Nicht gebucht.“
+
+Die **Zusammenfassung** über den Belegen kann geöffnet und geschlossen werden und bleibt so, wie Sie sie verlassen haben; sie ist anfangs geschlossen, sobald eine Ausführung Belege hat. Sie enthält:
+
+- Bei der Ausführung eines Schritts zuerst den Vergleich, zum Beispiel „121 unverändert, 19 geändert, 2 neu.“ Siehe [Erneut ausführen](#erneut-ausführen).
+- Die Belege, Gruppen, Systeme und Beträge der Ausführung und wie viele in jedem Status sind.
+- Die [fünf Prüfungen](#die-fünf-prüfungen), jeweils mit einem Häkchen, einem Kreuz oder einem Strich, wenn nichts sie erreichte. Eine fehlgeschlagene Prüfung sagt, wie viele nicht bestanden haben.
+- **Nach System**: eine Zeile pro System mit seiner Anzahl in jedem Status und seinem Betrag sowie die **Gesamt**-Zeile. Ein System, dessen Modus vom Modus der Ausführung abweicht, ist als Simulieren oder Live gekennzeichnet. Jede Anzahl öffnet diese Belege.
+- Die eigene Summe der Tabelle neben der Summe der Belege: „Gleich. Keine Zeile der Tabelle wurde ausgelassen.“ oder „Sie unterscheiden sich. Eine Zeile der Tabelle wurde ausgelassen oder doppelt gezählt.“ Dürfen Sie nur einige Entitäten sehen, sind die Summen die dessen, was Sie sehen dürfen.
+- Wie alt die Kopie der Perioden und Konten jedes Systems ist, oder dass es noch keine Kopie gibt.
+
+Darunter stellt die Liste **Dokumente** das, was eine Person braucht, an den Anfang. Jede Zeile hat die Referenz (mit ihrer Version, etwa `JE-1001~2`), Entität, System, Gruppe, Betrag, Status und **Warum, und wie geht es weiter**. **Gruppieren nach** gruppiert die Belege nach **Entität**, **Typ**, **Gruppe** oder **System**. Wählen Sie einen Beleg, um seinen Grund und den nächsten Schritt vollständig zu lesen und, wo vorhanden, **Was sich geändert hat**, **So beheben Sie die Ablehnung** und **Ungewöhnlich**. Jede Zeile öffnet ihre Buchung im [Buchungsregister](/de/guides/connections/posting-register/) mit **Buchung öffnen**, zeigt ihre Gruppe mit **Seine Gruppe anzeigen** und bietet **Wiederholen** an, wo eine Wiederholung helfen kann.
+
+### Diese buchen
+
+Eine Ausführung mit Belegen in **Würde gebucht** bietet **Diese buchen** mit ihrer Anzahl an, neben „Diese buchen sendet genau die angezeigten Belege.“ Es sendet diese Belege, noch einmal mit Stand jetzt geprüft: Das Projekt muss Live erlauben, die Referenz darf seit der simulierten Ausführung nicht gebucht worden sein, und die eigenen Prüfungen des Systems laufen erneut. Ein Beleg in einem System, das noch auf Simulieren steht, bleibt **Würde gebucht**. Die Ausführung wird Live, und die Seite sagt Ihnen, wie viele gesendet und wie viele erneut geprüft und nicht gebucht wurden.
+
+- Sind einige der Systeme noch nicht Live, lautet die Schaltfläche **Live gehen und diese buchen** oder nennt die Systeme, die sie live schaltet. Sie schaltet sie zuerst für das Projekt live, und kann eines nicht live gehen, wird nichts gesendet. Das sieht nur, wer ein System live schalten kann; alle anderen buchen in die Systeme, wie sie sind. Siehe [ERP-Systeme](/de/guides/connections/erp-systems/).
+- Ein Beleg, den eine Halteregel anhält, wird für dieses Senden erneut angehalten. Die Person, die **Diese buchen** gedrückt hat, und die Person, die die Ausführung gestartet hat, können ihn nicht freigeben.
+- Es werden nur Belege gesendet, die Sie sehen dürfen. Ein Beleg, dessen gespeicherte Kopie abgelaufen ist, ist Nicht gebucht: Die Seite der Ausführung zeigt „This is not available yet.“, und die REST-Antwort enthält die Meldung „Der gespeicherte Beleg ist abgelaufen; führen Sie erneut aus.“
+
+### Eine Ausführung stoppen
+
+Eine Live-Ausführung, die noch läuft und Belege hat, die noch nicht gesendet wurden, bietet **Ausführung stoppen** an. Noch nicht gesendete Belege werden Nicht gebucht, und die Seite der Ausführung meldet „Die Ausführung wurde gestoppt, bevor dies gesendet wurde.“ Bereits gesendete Belege bleiben, wie sie sind, und die Seite sagt Ihnen, wie viele gestoppt wurden und wie viele schon gesendet waren. Solange eine Live-Ausführung mitten im Senden ist, bevor ein Beleg erfasst wurde, kann sie noch nicht gestoppt werden.
+
+### Wiederholen
+
+**Wiederholen** in einer Zeile oder **Rest wiederholen** für eine Gruppe sendet einen Beleg, der nicht gebucht wurde, erneut, so wie er eingefroren wurde, als neue Ausführung unter dem Buchungsmodus des Projekts. Bereits gebuchte Belege werden nicht erneut gesendet. Wiederholen wird bei einem Beleg angeboten, dessen Ursache außerhalb von ihm lag — ein Freigeber hat abgelehnt, die Ausführung wurde gestoppt, der Agent war offline, das System hat ihn abgelehnt, er wurde zur Frist nicht gefunden, er wurde nicht gesendet oder seine Entität hatte kein System. Ein Beleg, den eine Prüfung angehalten hat, erfordert, dass seine Quelle korrigiert und der Schritt erneut ausgeführt wird.
+
+### Gruppen, die eine Person brauchen
+
+**Gruppen, die eine Person brauchen** listet eine Gruppe auf, die nur teilweise gebucht wurde oder bei der nichts gesendet wurde, weil ein Mitglied nicht bestand. **Die Gruppe anzeigen** filtert die Belege auf sie. Bei einer teilweise gebuchten Gruppe wiederholt **Rest wiederholen**, was nicht gebucht wurde, und **Gebuchtes stornieren** zeigt, was in welchen Systemen storniert wird, und storniert es dann mit dem Grund, dass ein Teil der Gruppe gebucht wurde und der Rest nicht. Eine Stornierung, die eine zweite Person braucht, wartet als **Freigabe erforderlich**, und die Seite verlinkt mit **Stornierungslauf öffnen** auf die eigene Ausführung der Stornierung.
+
+### Geänderte Belege
+
+Ist der Schritt auf Nachfragen eingestellt und eine Ausführung findet Belege, die sich seit dem Buchen geändert haben, sagt die Seite, wie viele auf Ihre Entscheidung warten:
+
+- **Alle korrigieren** oder **Mit dieser Version korrigieren** für die ausgewählten Belege storniert den gebuchten Beleg und bucht den geänderten als neue Version seiner Referenz.
+- **Alle behalten** oder **Die gebuchte Version behalten** für die ausgewählten Belege behält die gebuchte Version bei und verwirft den geänderten Beleg.
+
+Jede fragt zuerst nach Bestätigung.
+
+## Ausführungen
+
+**Ausführungen** im Buchungsregister listet jede Ausführung eines Buchungsschritts oder einer Buchungsdatei auf, neueste zuerst, mit ihrem **Modus**, wer sie gestartet hat, und ihrem Ergebnis; **Öffnen** öffnet ihre Seite der Ausführung.
+
+Über der Liste der letzte Monat auf einen Blick: eine Zeile pro System, etwa wie viele Belege von wie vielen gebucht wurden, der Betrag, wie viele in den eigenen Büchern des Systems stehen und wie viele Buchungen Aufmerksamkeit erfordern. Ein Schritt, der im Monat davor in ein System gebucht hat und für jenen Monat nicht gelaufen ist, wird darunter genannt. **Öffnen** in einer Zeile öffnet die Buchungen dieses Systems für den Monat, und ist der Monat nicht vollständig, führt **„Erfordert Aufmerksamkeit“ öffnen** zu dem, was übrig ist. Der Überblick zählt Live-Ausführungen von Schritten.
+
+## Erneut ausführen
+
+Eine Referenz wird einmal gebucht. Hat eine Ausführung einen Beleg, der bereits im Datensatz ist:
+
+- Ein unveränderter wird in Ruhe gelassen.
+- Ein geänderter folgt der Einstellung [Wenn ein gebuchter Beleg geändert zurückkommt](#wenn-ein-gebuchter-beleg-geändert-zurückkommt) des Schritts: Nachfragen oder Korrigieren. Eine Korrektur bucht die nächste Version der Referenz, etwa `JE-1001~2`, und das System sieht die Version ebenfalls.
+- Einer, dessen frühere Version noch keine Antwort des Systems hat, ist Nicht gebucht: „Für eine frühere Version dieser Referenz liegt noch keine Antwort des Systems vor. Führen Sie erneut aus, sobald eine vorliegt.“
+
+Bei einem System, dessen Schlüssel die Entität enthält, ist dieselbe Referenz für eine andere Entität ein anderer Beleg. Bei jedem anderen System wird sie abgelehnt: „Diese Referenz wird in diesem System bereits verwendet.“
+
+Ein Beleg, den der Schritt zuvor gebucht und diesmal nicht erzeugt hat, wird in Ruhe gelassen. Um ihn zu stornieren, rufen Sie `POST /rest/v1/analyze/erp/reverse/these` mit der Ausführung auf; es storniert, was der Schritt der Ausführung zuvor gebucht und nicht erzeugt hat, oder nur die davon, die Sie nennen, als neue Ausführung. Auf der Seite der Ausführung gibt es dafür noch keine Schaltfläche.
+
+Stellen Sie bei einem Schritt, der jede Periode neu läuft, etwa einem, der eine Umlage bucht, **Wenn ein gebuchter Beleg geändert zurückkommt** einmal auf Korrigieren.
+
+## Aus Datei buchen
+
+Für eine Handvoll Journale in einer Tabellenkalkulation können Sie über die REST-API oder die MCP-Tools eine Datei ganz ohne Workflow buchen. In der App gibt es dafür noch keine Seite.
+
+1. `GET /erp/file-post/starter`, mit einer `connection_id`, einem `document_type` und einem `format` (`xlsx` oder `csv`), lädt die passenden Spaltenüberschriften für diese Belegart in diesem System herunter, mit einer Beispielzeile. Eine Belegart, die das System nicht aufnimmt, wird abgelehnt.
+2. `POST /erp/file-post` nimmt die Tabellenkalkulation (`.xlsx` oder `.csv`) als `file` entgegen, mit der `project_id`. Weitere als `attachments` gesendete Dateien werden mit der Ausführung als Begleitdateien aufbewahrt, aber noch nicht an das System gesendet. Das MCP-Tool `erp_file_post` nimmt stattdessen eine Datei aus PlaidCloud-Dokumenten entgegen, über ihre `account_id` und ihren `path`.
+3. Die Ausführung öffnet sich in Simulieren, und nichts wird gesendet. Prüfen Sie sie auf ihrer [Seite der Ausführung](#die-seite-der-ausführung) und buchen Sie sie mit **Diese buchen**.
+
+- Jeder Beleg geht an das System, in das seine Entität bucht, wie bei jeder anderen Ausführung.
+- Eine Datei ohne Spalte `doc_number` bereitet nichts vor und antwortet mit `ask: one_journal`. Senden Sie sie erneut mit `one_journal` auf true, um die ganze Datei als ein Journal zu buchen, mit dem Namen der Datei als Referenz, oder auf false, um jede Zeile als eigenes Journal zu buchen, nummeriert nach dem Namen der Datei.
+- In einer Datei mit einer Spalte `doc_number` werden Zeilen ohne eine solche mit einer Warnung ausgelassen. Überschriften, die keine Buchungsspalten sind, werden ignoriert, und die Warnungen nennen sie.
+- Eine leere Datei oder eine ohne Zeilen bereitet nichts vor und sagt das. Ebenso ein Projekt, dessen Buchen auf Aus steht.
+
+### Erneut buchen
+
+Erneut buchen bucht die Belege einer Datei-Ausführung noch einmal mit einem neuen Buchungsdatum und neuen Referenzen, für ein Journal, das sich jeden Monat wiederholt: `POST /erp/file-post/{run_id}/again` oder das MCP-Tool `erp_file_post_again`.
+
+- Das `posting_date` ist ein ISO-Datum oder eines von `today`, `first_of_month`, `last_of_month`, `first_of_next_month` und `last_of_prev_month` oder eine Verschiebung wie `+1m` oder `-7d` vom eigenen Buchungsdatum jedes Belegs.
+- `references` auf `suffix` gesetzt gibt jeder Referenz ein Suffix für den neuen Monat, etwa `JE-1001-202612`, damit die Wiederholung nicht als bereits gebucht abgelehnt wird; über REST können Sie stattdessen jede Referenz ihrer neuen zuordnen. Das MCP-Tool fügt das Suffix immer hinzu.
+- Das Belegdatum wandert mit dem Buchungsdatum, ein Fälligkeitsdatum verschiebt sich um ebenso viele Tage, und die Periodenspalten werden entfernt, sodass das System die Periode aus dem neuen Datum nimmt.
+- Die neue Ausführung öffnet sich in Simulieren, sofern Sie nicht mit `live` Live verlangen, und nie über den Buchungsmodus des Projekts hinaus. Es werden nur die Belege der Entitäten erneut gebucht, die Sie sehen dürfen.
+
+`POST /erp/file-post/{run_id}/schedule` legt Erneut buchen auf einen Zeitplan, mit einem `cron` und seiner `timezone`, einem `posting_date`, das bei jeder Ausführung neu berechnet wird, und `references` auf `suffix`. Es läuft als Sie und bucht nur die Entitäten, die Sie sehen dürfen. Es bucht nur dann Live, wenn bereits jemand die Belege dieser Datei Live gebucht hat, und nie über den Buchungsmodus des Projekts hinaus. Für einen Zeitplan gibt es kein MCP-Tool.
+
+Die Belege einer Ausführung werden 30 Tage lang aufbewahrt, wenn simuliert, und 90 nach einer Antwort; danach hat Erneut buchen nichts mehr vorzubereiten und sagt das.
+
+### Als bereits gebucht erfassen
+
+Für Belege, die im System gebucht wurden, bevor PlaidCloud im Einsatz war, erfasst `POST /erp/record-posted` sie als Gebucht, ohne das System zu kontaktieren, sodass eine Ausführung, die sie später enthält, sie nicht erneut bucht. Senden Sie die Tabellenkalkulation als `file`, mit der `connection_id` und `environment_id` des Systems. Sie benötigt die Spalten `reference` und `system_document` und optional `entity`, `posting_date` und `document_type` (ein Journal, wenn weggelassen). Dafür gibt es noch keine Seite und kein MCP-Tool.
+
+- Ein Beleg, den PlaidCloud bereits als gebucht führt, einer, der noch auf eine Antwort wartet, oder eine Referenz, die es als anderen Systembeleg führt, wird mit Begründung als nicht erfasst aufgeführt.
+- Ein Unbestätigt-Beleg in der Datei wird nur für jemanden mit der Rolle Posting Register Approver als Gebucht geklärt; alle anderen erhalten ihn als nicht erfasst zurück.
+
+## Aus einer Umlage buchen
+
+Ein Schritt **Umlage: Aufteilung mit Dimension** kann sein Ergebnis auch als Tabelle von Belegen schreiben, die ein Schritt Belege buchen bucht, über seine Einstellung `post_documents` in der Konfiguration des Schritts. Die Einstellung nennt die Belege-`table`, die geschrieben werden soll, und die Spalten des Ergebnisses für `rule`, `account`, `source_account`, `amount` und `posting_date` (alle erforderlich) und optional `entity` und `currency_txn`; `set` gibt den Belegen einen festen Gruppennamen.
+
+- Jede Regel ist ein Beleg pro Monat, referenziert als die Regel und der Monat (zum Beispiel `RENT-202611`). Jede Ergebniszeile ist eine Position auf ihr Konto mit einer Gegenposition auf das Quellkonto, sodass jeder Beleg ausgeglichen ist.
+- Eine Zeile ohne Regel oder mit einem Betrag von null erzeugt keine Position. Eine Zeile, deren Betrag keine Zahl ist, wird mit einer Warnung ausgelassen, die die Zeilen nennt. Bleibt nichts zu buchen übrig, warnt der Schritt und leert die Belegtabelle.
+- Das erneute Ausführen der Umlage für denselben Monat ergibt dieselben Referenzen, daher stellen Sie [Wenn ein gebuchter Beleg geändert zurückkommt](#wenn-ein-gebuchter-beleg-geändert-zurückkommt) des Buchungsschritts auf Korrigieren.
+
+## Einen SAP-Buchungsschritt konvertieren
+
+Ein vorhandener SAP-Buchungsschritt kann zu einem Schritt Belege buchen werden. Nichts wird von selbst konvertiert: Klicken Sie mit der rechten Maustaste auf den Schritt auf der Arbeitsfläche und wählen Sie **In Beleg-Buchung konvertieren…**, oder verwenden Sie **In Beleg-Buchung konvertieren…** im Formular des Schritts. PlaidCloud zeigt zuerst, was konvertiert wird — die den Belegfeldern zugeordneten Spalten, die ihren Systemen zugeordneten Entitäten, ob er weiter wie bisher bucht oder in Simulieren startet, und eventuelle Warnungen —, und Sie bestätigen mit **Konvertieren**. Die alten Einstellungen bleiben in den Versionen des Schritts.
+
+- Es werden nur SAP-Buchungsschritte konvertiert. Ein Schritt ohne festgelegte Funktion oder Kopfspalten oder dessen Belegschlüssel nicht aus einem Buchungskreis und einer Belegnummer besteht, wird nicht konvertiert, und PlaidCloud sagt, warum.
+- Die Entitäten im Filter des Schritts werden als Zuordnungen zu seiner Verbindung vorgeschlagen. Nennt der Filter keine, legen Sie die Zuordnung unter [ERP-Systeme](/de/guides/connections/erp-systems/) fest, bevor er bucht.
+- Bis Sie eine Tabelle für den konvertierten Schritt festlegen, liest er die Kopf-, Positions-, USt.- und Quellensteuertabellen des alten Schritts selbst.
+- Der konvertierte Schritt behält den Datensatz des alten Schritts darüber, was er gebucht hat, sodass eine Periode, die der alte Schritt bereits gebucht hat, nicht erneut gebucht wird.
+- Ein Schritt, der auf Testbuchungen eingestellt war, läuft weiter in Simulieren. Siehe [Simulieren und Live](#simulieren-und-live).
+
+## Über REST und MCP
+
+Dasselbe Buchen steht über die REST-API unter `/rest/v1/analyze/erp` und als MCP-Tools zur Verfügung:
+
+| Aktion | REST | MCP |
+|---|---|---|
+| Den ersten Beleg einer Tabelle sehen, so wie sein System ihn erhält | `POST /erp/post/preview` | `erp_post_preview` |
+| Eine Tabelle oder eine Liste von Belegen buchen | `POST /erp/post` | `erp_post_documents` |
+| Ausführungen und eine Seite der Ausführung lesen | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Diese buchen oder eine Ausführung stoppen | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Nachfragen für geänderte Belege beantworten | `POST /erp/ask` | `erp_ask_answer` |
+| Belege wiederholen | `POST /erp/retry` | `erp_retry` |
+| Eine Startdatei herunterladen | `GET /erp/file-post/starter` | — |
+| Aus einer Datei buchen und erneut buchen | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Es nach Zeitplan erneut buchen | `POST /erp/file-post/{run_id}/schedule` | — |
+| Als bereits gebucht erfassen | `POST /erp/record-posted` | — |
+| Einen SAP-Buchungsschritt konvertieren | `POST /erp/convert` | `erp_convert_step` |
+
+- Ein Buchen über REST oder MCP läuft in Simulieren, sofern Sie nicht Live verlangen, und nie über den Buchungsmodus des Projekts hinaus.
+- Ein Buchen einer Tabelle über REST liest höchstens 100.000 Zeilen; eine längere Tabelle wird ganz abgelehnt und stattdessen mit dem Schritt gebucht.
+- `erp_file_post` nimmt eine Datei aus PlaidCloud-Dokumenten entgegen; eine Datei, die nicht vorhanden ist, ist eine Warnung, und nichts wird vorbereitet.
+- Konvertieren und Wiederholen sind Probeläufe, sofern Sie nichts anderes sagen.
+- Einem KI-Assistenten, der für Sie handelt, werden ein Live-Buchen, **Diese buchen**, Korrigieren, ein echtes Wiederholen, ein echtes Konvertieren und Erneut buchen verweigert: Das tut eine Person.
+
+## Wer was tun darf
+
+| Aktion | Sie benötigen |
+|---|---|
+| Den Schritt erstellen und seinen ersten Beleg in der Vorschau ansehen | `analyze.step.write` |
+| Über REST oder MCP buchen | `analyze.workflow.write` und Schreibzugriff auf das Projekt |
+| Eine Startdatei herunterladen | `analyze.connection.read` |
+| Aus einer Datei buchen | `analyze.workflow.write` und Zugriff auf das Projekt |
+| Eine Seite der Ausführung öffnen | `analyze.project.read`; Sie sehen die Belege der Entitäten, die Sie sehen dürfen |
+| **Ausführungen** im Buchungsregister sehen | `erp.register.view` |
+| **Diese buchen**, **Ausführung stoppen**, Korrigieren oder Behalten, Erneut buchen und sein Zeitplan, stornieren, was eine Ausführung nicht erzeugt hat | `analyze.workflow.write` und Architect oder Manager im nicht gesperrten Projekt |
+| Beim Buchen ein System live schalten | Architect im nicht gesperrten Projekt, mit eigenem Schreibzugriff auf die Verbindung |
+| **Wiederholen** | `analyze.workflow.write` und Architect oder Manager im nicht gesperrten Projekt, mit eigenem Schreibzugriff auf die Verbindung des Belegs |
+| **Gebuchtes stornieren** | `erp.register.view` und `erp.register.operate` |
+| Als bereits gebucht erfassen | `erp.register.view` und `erp.register.operate`, mit eigenem Schreibzugriff auf die Verbindung; das Klären von Unbestätigt-Belegen erfordert außerdem `erp.register.approve` |
+| Einen SAP-Buchungsschritt konvertieren | `analyze.step.write`, mit Schreibzugriff auf das Projekt |
+
+Jeder Weg erzwingt dieselbe Regel: Die Oberfläche, die REST-API und die MCP-Tools rufen dieselben Prüfungen auf.

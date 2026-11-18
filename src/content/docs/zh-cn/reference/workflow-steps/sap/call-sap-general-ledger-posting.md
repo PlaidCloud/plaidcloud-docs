@@ -21,3 +21,8 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 
 您可以在“Parameters”部分选择“插入行”或“追加行”，并为参数命名和赋值。选择“最大并发请求数”，然后选择 Wait for RFC to Complete。保存并运行步骤。
+
+
+## 转换为过账凭证
+
+已保存的步骤带有**转换为过账凭证…**按钮。它会先显示将转换的内容：有多少列与凭证字段匹配，以及有多少个实体路由到其系统；在您确认后，它会把该步骤变为**过账凭证**步骤（请参阅[向 ERP 系统过账凭证](/zh-cn/guides/connections/post-documents/)）。旧设置会保留在该步骤的版本中。

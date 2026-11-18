@@ -21,7 +21,7 @@ Zapisuje plik tekstowy od nowa w UTF-16. Przydatne, gdy system docelowy wymaga U
 
 ## Jak to działa
 
-- Wykrywane jest kodowanie źródła. Plik UTF-8 jest odczytywany jako UTF-8, a znaki Windows wklejone do takiego pliku — na przykład zakrzywione cudzysłowy z Worda lub Excela — są zachowywane bez zmian, niezależnie od ich liczby. Plik w innym kodowaniu jest odczytywany w kodowaniu wykrytym na podstawie jego pierwszej części, która nie jest poprawnym UTF-8.
+- Wykrywane jest kodowanie źródła. Plik UTF-8 jest odczytywany jako UTF-8, a znaki Windows wklejone do takiego pliku — na przykład zakrzywione cudzysłowy z Worda lub Excela — są zachowywane bez zmian, niezależnie od ich liczby. Plik, który jest czystym ASCII poza kilkoma znakami Windows — myślnikami, zakrzywionymi cudzysłowami lub literami z akcentami, nie więcej niż dwa obok siebie i poniżej 1% tekstu wokół pierwszego z nich — jest odczytywany jako Windows-1252, w dowolnym miejscu pliku. Plik w innym kodowaniu jest odczytywany w kodowaniu wykrytym na podstawie jego pierwszej części, która nie jest poprawnym UTF-8.
 - Tekst jest zapisywany bez zmian — litery z akcentami, symbole i inne znaki są zachowane dokładnie tak, jak były.
 - Plik, którego kodowania nie można wykryć, powoduje niepowodzenie kroku z podaniem pliku.
 - Jeśli ścieżka wejściowa nie istnieje lub nie zawiera plików, krok kończy się ostrzeżeniem wskazującym ścieżkę, nic nie przetwarza, a przepływ pracy jest kontynuowany.

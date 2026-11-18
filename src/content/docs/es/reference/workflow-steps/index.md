@@ -47,6 +47,7 @@ Los pasos de flujo de trabajo son los bloques de construcción de la automatizac
 
 ### Integraciones empresariales
 
+- [Contabilizar documentos](/es/reference/workflow-steps/export/post-documents/): contabilice desde un solo paso una tabla de diarios, facturas, notas y pagos en cualquier sistema ERP que haya configurado
 - [Agente](/es/reference/workflow-steps/agent/): operaciones del agente de PlaidLink para recursos locales
 - [NetSuite](/es/reference/workflow-steps/netsuite/): importe saldos, detalle del libro mayor, datos maestros o su propia [consulta SuiteQL](/es/reference/workflow-steps/netsuite/import-suiteql-query/); contabilice asientos de diario en NetSuite
 - [Acumatica](/es/reference/workflow-steps/acumatica/): importe entidades maestras y transaccionales; contabilice transacciones de diario, facturas, facturas de proveedor y pagos

@@ -1,0 +1,341 @@
+---
+title: Comptabiliser des documents dans les systèmes ERP
+description: Comptabilisez les documents d'une table dans le système ERP vers lequel chaque entité comptabilise, avec des contrôles avant tout envoi, les modes Simuler et Réel, une page pour chaque exécution, la ré-exécution, la comptabilisation depuis un fichier ou une allocation, et la conversion d'une étape de comptabilisation SAP.
+sidebar:
+  label: Comptabiliser des documents
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+L'étape **Comptabiliser des documents** comptabilise les documents d'une table dans vos systèmes ERP. L'étape ne nomme aucun système : chaque document va vers le système dans lequel son entité comptabilise, de sorte qu'une seule étape peut comptabiliser dans plusieurs systèmes, et dans plusieurs instances du même ERP, à la fois. Tous les moyens de comptabiliser (l'étape, un fichier, l'API REST et les outils MCP) passent par les mêmes contrôles et sont enregistrés comme une exécution avec sa propre [page d'exécution](#la-page-dexécution).
+
+Cette page couvre l'étape, sa table et ses paramètres, les modes Simuler et Réel, la page d'exécution, la ré-exécution, la comptabilisation depuis un fichier ou une allocation, et la conversion d'une étape de comptabilisation SAP. La configuration des systèmes eux-mêmes (quelle entité comptabilise où, la mise en production, les règles de blocage et ce que prend en charge chaque ERP) figure dans [Systèmes ERP](/fr/guides/connections/erp-systems/). La consultation, l'approbation, l'extourne et le règlement des écritures ensuite se font dans le [Registre des écritures](/fr/guides/connections/posting-register/).
+
+## Avant de commencer
+
+- Chaque ERP dans lequel vous comptabilisez est une connexion dans laquelle PlaidCloud peut comptabiliser, configurée comme un système avec les entités qui y comptabilisent. Consultez [Systèmes ERP](/fr/guides/connections/erp-systems/).
+- Pour comptabiliser réellement, l'exécution doit être en mode Réel et le système de chaque document doit être en production pour le projet. Jusque-là, tout est contrôlé et affiché comme **Serait comptabilisé**, et rien n'est envoyé. Consultez [Simuler et Réel](#simuler-et-réel).
+
+## Comment un document est comptabilisé
+
+Les lignes qui partagent une entité et un `doc_number` forment un seul document. Au démarrage d'une exécution, les documents sont figés : tout ce qui suit dans l'exécution (**Comptabiliser ces documents**, une nouvelle tentative, une approbation) envoie exactement ces documents. Chaque document traverse ensuite les mêmes étapes, et s'arrête à la première qui le décide, avec sa raison :
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="Un document est contrôlé pour l'équilibre et les lots, acheminé vers le système de son entité, contrôlé par rapport à ce système, retenu si une règle l'impose, puis envoyé en mode Réel ou enregistré comme Serait comptabilisé dans le cas contraire." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Équilibre</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">et lots</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Acheminer</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">entité vers système</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Contrôler</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">par rapport au système</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Retenir ?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Approbation requise</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Réel : envoyé</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">En attente, puis comptabilisé</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simuler</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Serait comptabilisé, non envoyé</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">Un document arrêté à n'importe quelle étape est Non comptabilisé, avec sa raison</text>
+</svg>
+<figcaption>Tous les moyens de comptabiliser suivent les mêmes étapes. Un document n'est envoyé à un système que si l'exécution et son système sont tous deux en mode Réel.</figcaption>
+</figure>
+
+1. Équilibre et lots : un journal doit être équilibré dans chaque devise qu'il utilise, et un lot doit être équilibré dans son ensemble. Consultez [Lots](#lots) et le paramètre d'arrondi sous [Paramètres de l'étape](#paramètres-de-létape).
+2. Acheminement : l'entité du document détermine son système, comme défini dans [Systèmes ERP](/fr/guides/connections/erp-systems/). Un document dont l'entité n'a aucun système est Non comptabilisé.
+3. Contrôle : les [cinq contrôles](#les-cinq-contrôles) s'exécutent par rapport à ce que PlaidCloud sait du système.
+4. Blocage : une règle de blocage du système, ou le blocage propre à l'étape, retient le document en **Approbation requise** jusqu'à ce qu'une personne l'approuve dans le [Registre des écritures](/fr/guides/connections/posting-register/).
+5. Envoi : le document est mis dans le format propre au système et envoyé, ou enregistré comme **Serait comptabilisé** lorsque l'exécution ou son système est en mode Simuler.
+
+La signification de chaque état, et ce qu'il faut faire pour chacun, figure dans le [Registre des écritures](/fr/guides/connections/posting-register/).
+
+## Ajouter l'étape
+
+Ajoutez une étape **Comptabiliser des documents** à un workflow : elle se trouve sous **Systèmes externes** dans le menu des étapes, et dans le dossier **Systèmes externes** de la palette d'étapes. Son formulaire comporte trois sections, puis un lien **Plus ▸** pour les paramètres de l'étape.
+
+1. **1 · La table** : choisissez la **Table** des documents, une ligne par ligne de document. Dès que le premier document est construit, la section indique combien de lignes et de documents elle a lus dans la table.
+2. **2 · Correspondance des colonnes** : ce que l'étape a reconnu dans chaque colonne de votre table. Une colonne dont le nom est un champ de comptabilisation est **Reconnue par son nom** ; une colonne dont le nom est une variante connue est **Reconnue par un autre nom**. Une colonne que l'étape ne reconnaît pas reçoit une liste : choisissez le champ qu'elle contient dans **Que représente cette colonne ?**, et elle s'affiche comme **Vous l'avez choisie**. Seules les colonnes pour lesquelles vous faites un choix sont enregistrées avec l'étape. Deux colonnes ne reçoivent jamais le même champ : la première le conserve.
+3. **3 · Le premier document, tel que son système le recevra** : le premier document de la table, acheminé et mis au format de son système, avec ses lignes. Lorsqu'il ne peut pas encore être construit, la section en donne la raison, dans les mêmes termes qu'une raison Non comptabilisé.
+
+L'étape a besoin d'une **Table**. Si vous cochez un montant de blocage, ce montant doit être un nombre, et si vous ajoutez une ligne d'arrondi, elle a besoin d'un compte.
+
+## La table
+
+La table utilise les noms de colonnes de Data Foundation. Un journal dans la forme de Data Foundation se comptabilise sans rien à faire correspondre ; une table de lignes de vente facturées se comptabilise une fois que vous ajoutez `account` et `document_type`. Une ligne correspond à une ligne de document ; les lignes ayant les mêmes `entity` et `doc_number` forment un seul document.
+
+| Colonne | Ce qu'elle contient |
+|---|---|
+| `doc_number` | La référence du document. Obligatoire : une table sans colonne pour elle arrête l'étape. Elle ne peut pas contenir `~`, que PlaidCloud réserve à la numérotation des versions. |
+| `entity` | L'entité à laquelle appartient le document. Elle détermine le système. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Dates et période du document. |
+| `account` | Le compte de la ligne. |
+| `amount_txn` et `currency_txn` | Le montant de la ligne et sa devise. Une table en devise locale uniquement peut utiliser `amount_local` et `currency_local` à la place, et `debit` et `credit` sont acceptés à la place d'un montant. |
+| `description`, `line_number`, `quantity`, `unit` | Texte, ordre et quantité de la ligne. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` à `segment_10` | Les dimensions de la ligne. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Taxe et retenue à la source. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Détails de la facture. |
+| `document_type` | `journal` (lorsqu'elle est laissée vide), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` ou `payment`. Ce que chaque système accepte figure dans [Systèmes ERP](/fr/guides/connections/erp-systems/). |
+| `set` | Un nom de lot : les documents qui en partagent un sont comptabilisés ensemble ou pas du tout. Consultez [Lots](#lots). |
+
+Ces autres noms sont également reconnus, sans tenir compte de la casse : `invoice_number`, `reference` et `journal id` pour `doc_number`, `invoice_date` pour `posting_date`, `net_amount_local` pour `amount_local`, `memo` pour `description`, `cost center` pour `department` et `vendor` pour `supplier`. Une colonne qui ne correspond à aucun de ces noms (l'une de vos propres dimensions, par exemple) est transportée sur le document et ses lignes, pour un format de système qui la met en correspondance.
+
+Quelques colonnes sont propres à la comptabilisation et ne sont pas encore disponibles : une ligne dont `action` n'est pas `post`, ou qui définit `reverse_on`, est Non comptabilisée. La page de l'exécution indique « Cette fonction n'est pas encore disponible. » ; la table de résultat et la réponse REST portent le message « seule la comptabilisation est disponible pour l'instant » ou « une date d'extourne n'est pas encore disponible ». Pour extourner, créditer ou corriger une écriture, utilisez le [Registre des écritures](/fr/guides/connections/posting-register/).
+
+Un document est identifié par son type, son entité et sa référence, et non par son mois : un document déplacé vers un autre mois reste donc le même document.
+
+### Lots
+
+Les documents qui partagent une valeur de `set` sont comptabilisés ensemble ou pas du tout :
+
+- Le lot doit être équilibré dans son ensemble, avec la limite d'arrondi comme tolérance. Dans le cas contraire, chaque membre est Non comptabilisé avec l'écart.
+- Si un membre est arrêté par un contrôle, le reste du lot est lui aussi Non comptabilisé : « un autre document du lot … n'a pas été comptabilisé ». Si un membre est retenu pour approbation, tout le lot attend en **Approbation requise**.
+- Si le système d'un membre n'est pas en mode Réel, tout le lot est **Serait comptabilisé** : aucune partie n'est donc envoyée réellement.
+
+## Paramètres de l'étape
+
+**Plus ▸** ouvre les quatre paramètres de l'étape. Chacun a une valeur initiale, et la plupart des étapes ne les modifient jamais.
+
+| Paramètre | Valeur initiale | Ce qu'il fait |
+|---|---|---|
+| **Mettre en attente pour une personne** | Rien n'est retenu | Retient des documents pour approbation lorsque les conditions que vous cochez sont remplies. |
+| **Qui est prévenu** | **La personne qui a lancé l'exécution** | Qui est alerté lorsqu'une exécution se termine avec des documents qui demandent une attention. |
+| **Compte d'arrondi et limite** | Aucun arrondi | Ajoute une ligne d'arrondi à un document dont le déséquilibre ne dépasse pas la limite. |
+| **Quand un document comptabilisé revient modifié** | Demander | Ce que fait une exécution ultérieure d'un document qui a changé depuis sa comptabilisation. |
+
+### Mettre en attente pour une personne
+
+Cochez les conditions qui retiennent un document pour qu'une personne l'approuve :
+
+- **Le montant est supérieur à** : un montant. Il est comparé au montant du document dans la devise propre du document.
+- **Il a été comptabilisé depuis un fichier**
+- **C'est une extourne, un avoir ou une correction**
+- **Il est signalé comme inhabituel**
+- **Toujours**
+
+Lorsque vous en cochez plusieurs, un document n'est retenu que si toutes sont vraies. Si rien n'est coché, l'étape n'ajoute aucun blocage propre ; les règles de blocage de son système, et la seconde personne qu'une extourne, un avoir ou une correction peut exiger, retiennent toujours des documents. Un blocage sur l'étape s'ajoute seulement aux règles de blocage que son système possède déjà. Un document retenu retient le reste de son lot. La personne dont l'envoi a retenu un document, et celle qui a lancé son exécution, ne peuvent pas l'approuver ; les approbations et les approbateurs sont décrits dans le [Registre des écritures](/fr/guides/connections/posting-register/) et dans [Systèmes ERP](/fr/guides/connections/erp-systems/).
+
+### Qui est prévenu
+
+**La personne qui a lancé l'exécution** est la valeur initiale. Choisissez **Une liste de personnes…** pour nommer à la place les membres à alerter. Ils sont alertés lorsque l'exécution se termine avec des documents qui demandent une attention.
+
+### Compte d'arrondi et limite
+
+Cochez **Ajouter une ligne d'arrondi à un document déséquilibré**, puis indiquez le **Compte** et la **Limite**. Un journal dont le déséquilibre dans une devise ne dépasse pas la limite reçoit une ligne vers ce compte, décrite comme « Arrondi », et passe ; un écart plus important, ou un écart dans plus d'une devise, l'arrête comme déséquilibré avec l'écart. La limite est aussi la tolérance pour un lot dans son ensemble. Lorsque le paramètre est décoché, rien n'est arrondi.
+
+### Quand un document comptabilisé revient modifié
+
+| Choix | Ce que fait une exécution ultérieure d'un document modifié |
+|---|---|
+| **Demander (valeur initiale). Le document passe dans À traiter avec deux choix.** | Le document modifié est Non comptabilisé, « La source a changé après la comptabilisation. », et attend qu'une personne choisisse **Corriger avec cette version** ou **Conserver la version comptabilisée** sur la [page d'exécution](#documents-modifiés). |
+| **Corriger. L'extourner et comptabiliser la nouvelle version, pour une étape qui s'exécute à chaque période.** | Dans une exécution Réel, le document comptabilisé est extourné et le document modifié est envoyé comme sa version suivante. |
+
+## Simuler et Réel
+
+Un document n'est envoyé à son système que si ces deux conditions sont réunies :
+
+- L'exécution est en mode Réel : une exécution de workflow porte un mode de comptabilisation, plafonné par le propre mode du projet, comme décrit dans [Choisir un mode de comptabilisation](/fr/guides/workflows/run-a-workflow/#choisir-un-mode-décriture). Une exécution en mode Simuler n'envoie rien, et une exécution en mode Désactivé ignore l'étape.
+- Le système du document est en production pour le projet : il s'agit de l'autorisation d'écriture du projet pour la connexion et l'environnement du système, avec le mode du projet sur Réel. Consultez [Autoriser le projet à comptabiliser](/fr/guides/workflows/run-a-workflow/#autoriser-le-projet-à-comptabiliser) et la mise en production dans [Systèmes ERP](/fr/guides/connections/erp-systems/).
+
+Sinon, le document est contrôlé et enregistré comme **Serait comptabilisé**, et rien n'est envoyé. Le mode Simuler ne contacte jamais un système : dans une exécution Simuler, même les contrôles qui devraient interroger le système ne sont pas effectués. L'étape n'a pas de paramètre d'essai à blanc propre. La seule exception est une étape convertie à partir d'une étape de comptabilisation SAP qui était réglée pour tester les comptabilisations : elle continue de s'exécuter en mode Simuler à chaque fois, et ses documents ne sont comptabilisés que par **Comptabiliser ces documents** sur sa page d'exécution.
+
+Une exécution en mode Simuler est le moyen de voir exactement ce qui serait comptabilisé. Lorsque le résultat vous convient, **Comptabiliser ces documents** sur sa [page d'exécution](#comptabiliser-ces-documents) envoie les mêmes documents figés.
+
+## Les cinq contrôles
+
+Avant tout envoi, chaque document passe par cinq contrôles. La page de l'exécution montre chacun d'eux comme réussi, échoué ou non vérifié :
+
+| Contrôle | Ce qui arrête un document |
+|---|---|
+| Balanced (équilibré) | Des débits et des crédits qui ne correspondent pas, au-delà de la limite d'arrondi. |
+| Period open (période ouverte) | Une date de comptabilisation dans une période clôturée dans le système. |
+| Accounts exist (les comptes existent) | Un compte que le système n'a pas, un code sans correspondance, une valeur vide dont le système a besoin, une facture qui n'est pas ouverte, une autre société, ou une devise que le système ne comptabilise pas. |
+| Not posted before (non comptabilisé auparavant) | Une référence déjà comptabilisée dans un autre système, ou déjà utilisée sur ce système. |
+| Sets agree (lots cohérents) | Un lot dont un membre manque, ou dont les documents ne s'additionnent pas. |
+
+**Period open** et **Accounts exist** utilisent les listes que PlaidCloud lit dans le système au démarrage d'une exécution Réel vers un système en production. Dans une exécution Simuler, ou lorsque la lecture d'une liste est partielle, vide ou tardive, ils sont non vérifiés. La copie des listes que **Actualiser maintenant** conserve dans [Systèmes ERP](/fr/guides/connections/erp-systems/) sert à la consultation : elle n'alimente aucun contrôle. Une exécution Réel vers un système en production effectue aussi les contrôles propres au système, lorsque son format en comporte ; une exécution Simuler ne le fait pas.
+
+Un contrôle qui ne s'est pas exécuté sur un document compte comme non vérifié, jamais comme réussi. La page d'exécution affiche les cinq noms de contrôle en anglais dans toutes les langues.
+
+## Quand l'étape s'exécute
+
+- L'étape attend jusqu'à 10 minutes que les systèmes répondent. Un document qui n'a toujours pas de réponse poursuit alors son chemin dans l'enregistrement, et la page de son exécution se complète à l'arrivée de la réponse.
+- Le journal d'exécution reçoit une ligne, « Comptabilisés n sur m · k demandent une attention ». Lorsqu'un document demande une attention, l'étape se termine avec un avertissement, « k documents sur m demandent une attention », et les personnes de **Qui est prévenu** sont alertées. Le reste du workflow se poursuit.
+- Une table qui n'existe pas, n'a aucune colonne ou n'a aucune ligne est un avertissement, et rien n'est comptabilisé. Une table sans colonne pour `doc_number` arrête l'étape avec une erreur.
+- Lorsque la configuration de l'étape nomme une table de résultat, l'étape y écrit une ligne par document : `doc_number`, `action`, `state`, `source_system` (le système dans lequel la comptabilisation a eu lieu), `source_doc` (le numéro attribué par le système) et `message`.
+
+## La page d'exécution
+
+Chaque exécution a une page : l'exécution d'une étape, celle d'un fichier, une exécution lancée via l'API REST ou MCP, une nouvelle tentative, une extourne. Ouvrez-la depuis **Exécutions** dans le [Registre des écritures](/fr/guides/connections/posting-register/) avec **Ouvrir**. La page n'affiche que les documents que vous pouvez voir ; lorsqu'elle n'en a aucun pour vous, elle indique « Cette exécution ne contenait aucun document que vous puissiez voir. »
+
+Le haut de la page indique où en est l'exécution :
+
+- En mode Simuler : « Cette exécution est en mode Simuler. Rien n'a été envoyé à aucun système. Comptabiliser ces documents envoie les mêmes documents figés. »
+- En mode Réel et toujours en cours : il n'y a rien sur quoi appuyer pour comptabiliser. La page se complète à mesure que les systèmes répondent et indique combien de documents n'ont pas encore été envoyés. Elle relit l'exécution d'elle-même tant que quelque chose est en cours ou en attente.
+- En mode Réel et terminée : « Réel. Chaque système a répondu. »
+- Arrêtée : « Cette exécution a été arrêtée. Ce qui n'avait pas été envoyé est Non comptabilisé. »
+
+Le **Résumé** situé au-dessus des documents peut être ouvert et fermé, et reste tel que vous l'avez laissé ; il démarre fermé dès qu'une exécution contient des documents. Il contient :
+
+- Pour l'exécution d'une étape, d'abord la comparaison, par exemple « 121 inchangés, 19 modifiés, 2 nouveaux. » Consultez [Ré-exécuter](#ré-exécuter).
+- Les documents, lots, systèmes et montants de l'exécution, et combien sont dans chaque état.
+- Les [cinq contrôles](#les-cinq-contrôles), chacun avec une coche, une croix, ou un tiret lorsque rien ne l'a atteint. Un contrôle échoué indique combien de documents ne l'ont pas réussi.
+- **Par système** : une ligne par système avec son nombre dans chaque état et son montant, et le **Total**. Un système dont le mode diffère de celui de l'exécution est marqué Simuler ou Réel. Chaque nombre ouvre les documents correspondants.
+- Le total propre à la table à côté du total des documents : « Égaux. Aucune ligne de la table n'a été omise. » ou « Ils diffèrent. Une ligne de la table a été omise ou comptée deux fois. » Si vous ne pouvez voir que certaines entités, les totaux portent sur ce que vous pouvez voir.
+- L'ancienneté de la copie des périodes et des comptes de chaque système, ou l'absence de copie pour l'instant.
+
+En dessous, la liste **Documents** place en premier ce qui nécessite une personne. Chaque ligne comporte la référence (avec sa version, comme `JE-1001~2`), l'entité, le système, le lot, le montant, l'état et **Pourquoi, et la suite**. **Regrouper par** regroupe les documents par **Entité**, **Type**, **Lot** ou **Système**. Sélectionnez un document pour lire en entier sa raison et la suite à donner et, lorsqu'ils existent, **Ce qui a changé**, **Comment corriger le rejet** et **Inhabituel**. Chaque ligne ouvre son écriture dans le [Registre des écritures](/fr/guides/connections/posting-register/) avec **Ouvrir l'écriture**, affiche son lot avec **Afficher son lot**, et propose **Réessayer** lorsqu'une nouvelle tentative peut aider.
+
+### Comptabiliser ces documents
+
+Une exécution contenant des documents en **Serait comptabilisé** propose **Comptabiliser ces documents** avec leur nombre, à côté de « Comptabiliser ces documents envoie exactement les documents affichés. » Cette action envoie ces documents, contrôlés une fois de plus à l'instant : le projet doit autoriser le mode Réel, la référence ne doit pas avoir été comptabilisée depuis l'exécution simulée, et les contrôles propres au système s'exécutent à nouveau. Un document sur un système encore en mode Simuler reste **Serait comptabilisé**. L'exécution passe en mode Réel, et la page vous indique combien ont été envoyés et combien ont été contrôlés à nouveau et non comptabilisés.
+
+- Lorsque certains systèmes ne sont pas encore en production, le bouton indique **Passer en production et comptabiliser ces documents** ou nomme les systèmes qu'il met en production. Il les met d'abord en production pour le projet, et si l'un d'eux ne peut pas passer en production, rien n'est envoyé. Seule une personne qui peut mettre un système en production voit ce bouton ; toute autre personne comptabilise dans les systèmes tels qu'ils sont. Consultez [Systèmes ERP](/fr/guides/connections/erp-systems/).
+- Un document qu'une règle de blocage retient est retenu de nouveau pour cet envoi. La personne qui a appuyé sur **Comptabiliser ces documents** et celle qui a lancé l'exécution ne peuvent pas l'approuver.
+- Seuls les documents que vous pouvez voir sont envoyés. Un document dont la copie stockée a expiré est Non comptabilisé : la page d'exécution indique « Ce n'est pas encore disponible. », et la réponse REST porte le message « Le document stocké a expiré ; exécutez de nouveau. »
+
+### Arrêter une exécution
+
+Une exécution Réel toujours en cours, avec des documents pas encore envoyés, propose **Arrêter l'exécution**. Les documents pas encore envoyés deviennent Non comptabilisés, et la page d'exécution indique « L'exécution a été arrêtée avant l'envoi de ce document. » Les documents déjà envoyés sont laissés tels quels, et la page vous indique combien ont été arrêtés et combien avaient déjà été envoyés. Tant qu'une exécution Réel est en plein envoi, avant l'enregistrement du moindre document, elle ne peut pas encore être arrêtée.
+
+### Réessayer
+
+**Réessayer** sur une ligne, ou **Réessayer le reste** pour un lot, renvoie un document qui n'a pas été comptabilisé, tel qu'il avait été figé, comme une nouvelle exécution sous le mode de comptabilisation du projet. Les documents déjà comptabilisés ne sont pas renvoyés. Une nouvelle tentative est proposée pour un document dont la cause lui était extérieure : un approbateur l'a refusé, l'exécution a été arrêtée, l'agent était hors ligne, le système l'a rejeté, il n'a pas été trouvé à l'échéance, il n'a pas été envoyé, ou son entité n'avait pas de système. Un document arrêté par un contrôle nécessite que sa source soit corrigée et que l'étape soit exécutée de nouveau.
+
+### Lots nécessitant une personne
+
+**Lots nécessitant une personne** liste un lot qui n'a été que partiellement comptabilisé, ou qui n'a rien envoyé parce qu'un membre n'a pas réussi les contrôles. **Afficher le lot** y filtre les documents. Pour un lot partiellement comptabilisé, **Réessayer le reste** réessaie ce qui n'a pas été comptabilisé, et **Inverser ce qui a été comptabilisé** montre ce qui sera extourné et dans quels systèmes, puis l'extourne avec la raison qu'une partie du lot a été comptabilisée et pas le reste. Une extourne qui nécessite une seconde personne attend en **Approbation requise**, et la page renvoie vers l'exécution propre à l'extourne avec **Ouvrir l'exécution d'inversion**.
+
+### Documents modifiés
+
+Lorsque l'étape est réglée sur Demander et qu'une exécution trouve des documents modifiés depuis leur comptabilisation, la page indique combien attendent votre choix :
+
+- **Tout corriger**, ou **Corriger avec cette version** pour les documents sélectionnés, extourne le document comptabilisé et comptabilise le document modifié comme une nouvelle version de sa référence.
+- **Tout conserver**, ou **Conserver la version comptabilisée** pour les documents sélectionnés, conserve la version comptabilisée et abandonne le document modifié.
+
+Chacune demande d'abord une confirmation.
+
+## Exécutions
+
+**Exécutions** dans le Registre des écritures liste chaque exécution d'une étape de comptabilisation ou d'un fichier de comptabilisation, de la plus récente à la plus ancienne, avec son **Mode**, la personne qui l'a lancée et son résultat ; **Ouvrir** ouvre sa page d'exécution.
+
+Au-dessus de la liste, le mois dernier en un coup d'œil : une ligne par système, par exemple combien de documents ont été comptabilisés sur combien, le montant, combien figurent dans les livres propres du système, et combien d'écritures demandent une attention. Une étape qui a comptabilisé dans un système le mois précédent et ne s'est pas exécutée pour ce mois-là est nommée en dessous. **Ouvrir** sur une ligne ouvre les écritures de ce système pour le mois, et lorsque le mois n'est pas terminé, **Ouvrir Nécessite une attention** vous mène à ce qui reste. Ce coup d'œil compte les exécutions Réel des étapes.
+
+## Ré-exécuter
+
+Une référence n'est comptabilisée qu'une fois. Lorsqu'une exécution contient un document déjà présent dans l'enregistrement :
+
+- Un document inchangé est laissé tel quel.
+- Un document modifié suit le paramètre [Quand un document comptabilisé revient modifié](#quand-un-document-comptabilisé-revient-modifié) de l'étape : Demander, ou Corriger. Une correction comptabilise la version suivante de la référence, comme `JE-1001~2`, et le système voit aussi la version.
+- Un document dont la version antérieure n'a toujours pas de réponse du système est Non comptabilisé : « Une version antérieure de cette référence n'a pas encore de réponse du système. Exécutez de nouveau lorsqu'il en aura une. »
+
+Sur un système dont la clé porte l'entité, la même référence pour une autre entité est un document différent. Sur tout autre système, elle est refusée : « Cette référence est déjà utilisée sur ce système. »
+
+Un document que l'étape a comptabilisé auparavant et qu'elle n'a pas produit cette fois est laissé tel quel. Pour l'extourner, appelez `POST /rest/v1/analyze/erp/reverse/these` avec l'exécution ; cet appel extourne ce que l'étape de l'exécution a comptabilisé auparavant et n'a pas produit, ou seulement celles d'entre elles que vous nommez, comme une nouvelle exécution. Il n'existe pas encore de bouton pour cela sur la page d'exécution.
+
+Pour une étape qui s'exécute à chaque période, comme celle qui comptabilise une allocation, réglez **Quand un document comptabilisé revient modifié** sur Corriger une fois pour toutes.
+
+## Comptabiliser à partir d'un fichier
+
+Pour quelques journaux dans une feuille de calcul, vous pouvez comptabiliser un fichier sans aucun workflow, via l'API REST ou les outils MCP. Il n'existe pas encore de page pour cela dans l'application.
+
+1. `GET /erp/file-post/starter`, avec un `connection_id`, un `document_type` et un `format` (`xlsx` ou `csv`), télécharge les bons en-têtes de colonnes pour ce type de document sur ce système, avec une ligne d'exemple. Un type de document que le système n'accepte pas est refusé.
+2. `POST /erp/file-post` prend la feuille de calcul (`.xlsx` ou `.csv`) comme `file`, avec le `project_id`. Les autres fichiers envoyés comme `attachments` sont conservés avec l'exécution comme fichiers justificatifs, mais ne sont pas encore envoyés au système. L'outil MCP `erp_file_post` prend à la place un fichier des documents PlaidCloud, par son `account_id` et son `path`.
+3. L'exécution s'ouvre en mode Simuler, et rien n'est envoyé. Examinez-la sur sa [page d'exécution](#la-page-dexécution), puis comptabilisez-la avec **Comptabiliser ces documents**.
+
+- Chaque document va vers le système dans lequel son entité comptabilise, comme pour toute autre exécution.
+- Un fichier sans colonne `doc_number` ne prépare rien et répond `ask: one_journal`. Renvoyez-le avec `one_journal` à true pour comptabiliser tout le fichier comme un seul journal, avec le nom du fichier comme référence, ou à false pour comptabiliser chaque ligne comme son propre journal, numéroté d'après le nom du fichier.
+- Dans un fichier qui a une colonne `doc_number`, les lignes qui n'en ont pas sont omises, avec un avertissement. Les en-têtes qui ne sont pas des colonnes de comptabilisation sont ignorés, et les avertissements les nomment.
+- Un fichier vide, ou sans ligne, ne prépare rien et le dit. Il en va de même pour un projet dont la comptabilisation est Désactivée.
+
+### Comptabiliser à nouveau
+
+Comptabiliser à nouveau comptabilise de nouveau les documents de l'exécution d'un fichier avec une nouvelle date de comptabilisation et de nouvelles références, pour un journal qui revient chaque mois : `POST /erp/file-post/{run_id}/again`, ou l'outil MCP `erp_file_post_again`.
+
+- La `posting_date` est une date ISO, ou l'une des valeurs `today`, `first_of_month`, `last_of_month`, `first_of_next_month` et `last_of_prev_month`, ou un décalage tel que `+1m` ou `-7d` par rapport à la propre date de comptabilisation de chaque document.
+- `references` défini sur `suffix` donne à chaque référence un suffixe pour le nouveau mois, comme `JE-1001-202612`, afin que la répétition ne soit pas refusée comme déjà comptabilisée ; via REST, vous pouvez à la place faire correspondre chaque référence à sa nouvelle référence. L'outil MCP ajoute toujours le suffixe.
+- La date du document se déplace avec la date de comptabilisation, une date d'échéance se déplace d'autant de jours, et les colonnes de période sont supprimées afin que le système déduise la période de la nouvelle date.
+- La nouvelle exécution s'ouvre en mode Simuler sauf si vous demandez Réel avec `live`, et jamais au-delà du mode de comptabilisation du projet. Seuls les documents des entités que vous pouvez voir sont comptabilisés à nouveau.
+
+`POST /erp/file-post/{run_id}/schedule` place Comptabiliser à nouveau sur une planification, avec un `cron` et son `timezone`, une `posting_date` calculée à chaque exécution, et `references` défini sur `suffix`. Elle s'exécute sous votre identité, et ne comptabilise que les entités que vous pouvez voir. Elle ne comptabilise en Réel que si quelqu'un a déjà comptabilisé les documents de ce fichier en Réel, et jamais au-delà du mode de comptabilisation du projet. Une planification n'a pas d'outil MCP.
+
+Les documents d'une exécution sont conservés 30 jours lorsqu'ils sont simulés et 90 jours après une réponse ; passé ce délai, Comptabiliser à nouveau n'a rien à préparer et le dit.
+
+### Enregistrer comme déjà comptabilisé
+
+Pour des documents comptabilisés dans le système avant l'utilisation de PlaidCloud, `POST /erp/record-posted` les enregistre comme Comptabilisés sans contacter le système, de sorte qu'une exécution qui les contient refuse ensuite de les comptabiliser de nouveau. Envoyez la feuille de calcul comme `file`, avec le `connection_id` et le `environment_id` du système. Elle nécessite les colonnes `reference` et `system_document`, et facultativement `entity`, `posting_date` et `document_type` (un journal lorsqu'elle est omise). Il n'existe pas encore de page ni d'outil MCP pour cela.
+
+- Un document que PlaidCloud détient déjà comme comptabilisé, un document qui attend encore une réponse, ou une référence qu'il détient comme un autre document du système est listé comme non enregistré, avec la raison.
+- Un document Non confirmé du fichier n'est réglé comme Comptabilisé que pour une personne ayant le rôle Approbateur du registre des écritures ; toute autre personne le récupère comme non enregistré.
+
+## Comptabiliser depuis une allocation
+
+Une étape **Allocation : fractionnement selon la dimension** peut aussi écrire son résultat sous forme de table de documents qu'une étape Comptabiliser des documents comptabilisera, par son paramètre `post_documents` dans la configuration de l'étape. Le paramètre nomme la `table` de documents à écrire, ainsi que les colonnes du résultat pour `rule`, `account`, `source_account`, `amount` et `posting_date` (toutes nécessaires), et facultativement `entity` et `currency_txn` ; `set` donne aux documents un nom de lot fixe.
+
+- Chaque règle est un document par mois, référencé par la règle et le mois (par exemple `RENT-202611`). Chaque ligne du résultat est une ligne vers son compte avec une ligne de contrepartie vers le compte source, de sorte que chaque document est équilibré.
+- Une ligne sans règle, ou avec un montant nul, ne produit aucune ligne. Une ligne dont le montant n'est pas un nombre est omise, avec un avertissement qui nomme les lignes. Lorsqu'il ne reste rien à comptabiliser, l'étape avertit et vide la table de documents.
+- Ré-exécuter l'allocation pour le même mois donne les mêmes références ; réglez donc [Quand un document comptabilisé revient modifié](#quand-un-document-comptabilisé-revient-modifié) de l'étape de comptabilisation sur Corriger.
+
+## Convertir une étape de comptabilisation SAP
+
+Une étape de comptabilisation SAP existante peut devenir une étape Comptabiliser des documents. Rien ne se convertit de lui-même : faites un clic droit sur l'étape dans le canevas et choisissez **Convertir en Comptabiliser des documents…**, ou utilisez **Convertir en Comptabiliser des documents…** dans le formulaire de l'étape. PlaidCloud montre d'abord ce qui sera converti (les colonnes mises en correspondance avec les champs du document, les entités acheminées vers leurs systèmes, si l'étape continue de comptabiliser comme avant ou démarre en mode Simuler, et les éventuels avertissements), et vous confirmez avec **Convertir**. Les anciens paramètres restent dans les versions de l'étape.
+
+- Seules les étapes de comptabilisation SAP se convertissent. Une étape sans fonction ni colonnes d'en-tête définies, ou dont la clé de document n'est pas un code société et un numéro de document, ne se convertit pas, et PlaidCloud en donne la raison.
+- Les entités du filtre de l'étape sont suggérées comme acheminements vers sa connexion. Lorsque le filtre n'en nomme aucune, définissez l'acheminement dans [Systèmes ERP](/fr/guides/connections/erp-systems/) avant qu'elle ne comptabilise.
+- Tant que vous n'avez pas défini de table sur l'étape convertie, elle lit elle-même les tables d'en-tête, de lignes, de TVA et de retenue à la source de l'ancienne étape.
+- L'étape convertie conserve l'enregistrement de l'ancienne étape de ce qu'elle a comptabilisé : une période que l'ancienne étape a déjà comptabilisée n'est donc pas comptabilisée à nouveau.
+- Une étape qui était réglée pour tester les comptabilisations continue de s'exécuter en mode Simuler. Consultez [Simuler et Réel](#simuler-et-réel).
+
+## Via REST et MCP
+
+La même comptabilisation est disponible via l'API REST, sous `/rest/v1/analyze/erp`, et sous forme d'outils MCP :
+
+| Pour | REST | MCP |
+|---|---|---|
+| Voir le premier document d'une table, tel que son système le recevra | `POST /erp/post/preview` | `erp_post_preview` |
+| Comptabiliser une table ou une liste de documents | `POST /erp/post` | `erp_post_documents` |
+| Lire les exécutions et la page d'une exécution | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Comptabiliser ces documents, ou arrêter une exécution | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Répondre à Demander pour les documents modifiés | `POST /erp/ask` | `erp_ask_answer` |
+| Réessayer des documents | `POST /erp/retry` | `erp_retry` |
+| Télécharger un fichier de départ | `GET /erp/file-post/starter` | — |
+| Comptabiliser depuis un fichier, et le comptabiliser à nouveau | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Le comptabiliser à nouveau selon une planification | `POST /erp/file-post/{run_id}/schedule` | — |
+| Enregistrer comme déjà comptabilisé | `POST /erp/record-posted` | — |
+| Convertir une étape de comptabilisation SAP | `POST /erp/convert` | `erp_convert_step` |
+
+- Une comptabilisation REST ou MCP s'exécute en mode Simuler sauf si vous demandez Réel, et jamais au-delà du mode de comptabilisation du projet.
+- Une comptabilisation REST d'une table lit au plus 100 000 lignes ; une table plus longue est refusée en entier, et se comptabilise avec l'étape à la place.
+- `erp_file_post` prend un fichier des documents PlaidCloud ; un fichier absent est un avertissement, et rien n'est préparé.
+- La conversion et la nouvelle tentative sont des essais à blanc sauf indication contraire.
+- Un assistant IA agissant pour vous se voit refuser une comptabilisation Réel, **Comptabiliser ces documents**, Corriger, une véritable nouvelle tentative, une véritable conversion et Comptabiliser à nouveau : une personne les effectue.
+
+## Qui peut faire quoi
+
+| Pour | Vous avez besoin de |
+|---|---|
+| Construire l'étape et prévisualiser son premier document | `analyze.step.write` |
+| Comptabiliser via REST ou MCP | `analyze.workflow.write` et l'accès en écriture au projet |
+| Télécharger un fichier de départ | `analyze.connection.read` |
+| Comptabiliser depuis un fichier | `analyze.workflow.write` et l'accès au projet |
+| Ouvrir une page d'exécution | `analyze.project.read` ; vous voyez les documents des entités que vous pouvez voir |
+| Voir **Exécutions** dans le Registre des écritures | `erp.register.view` |
+| **Comptabiliser ces documents**, **Arrêter l'exécution**, Corriger ou Conserver, Comptabiliser à nouveau et sa planification, extourner ce qu'une exécution n'a pas produit | `analyze.workflow.write`, et Architecte ou Gestionnaire sur le projet non verrouillé |
+| Mettre un système en production pendant la comptabilisation | Architecte sur le projet non verrouillé, avec votre propre accès en écriture à la connexion |
+| **Réessayer** | `analyze.workflow.write`, et Architecte ou Gestionnaire sur le projet non verrouillé, avec votre propre accès en écriture à la connexion du document |
+| **Inverser ce qui a été comptabilisé** | `erp.register.view` et `erp.register.operate` |
+| Enregistrer comme déjà comptabilisé | `erp.register.view` et `erp.register.operate`, avec votre propre accès en écriture à la connexion ; le règlement de documents Non confirmés nécessite aussi `erp.register.approve` |
+| Convertir une étape de comptabilisation SAP | `analyze.step.write`, avec l'accès en écriture au projet |
+
+Chaque chemin applique la même règle : l'interface, l'API REST et les outils MCP appellent les mêmes contrôles.

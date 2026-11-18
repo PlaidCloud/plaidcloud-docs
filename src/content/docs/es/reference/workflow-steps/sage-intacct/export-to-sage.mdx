@@ -12,8 +12,10 @@ Contabiliza asientos de diario en Sage Intacct mediante una conexión de Sage In
 
 El paso lee dos tablas que usted ya ha preparado en pasos anteriores, una **tabla de encabezados** y una **tabla de líneas**, valida cada asiento de diario y lo contabiliza. Admite el caso por lotes: muchos asientos de diario en una sola ejecución, cada uno contabilizado y seguido de forma independiente.
 
-<Aside type="danger" title="Sin protección contra duplicados: revise la tabla de resultados antes de volver a ejecutar">
-Este paso **no** registra qué asientos ya se han contabilizado. Volver a ejecutarlo vuelve a contabilizar **todos** los asientos de la tabla de encabezados, incluidos los que se contabilizaron correctamente la vez anterior; no hay eliminación de duplicados. Antes de volver a ejecutarlo, abra la tabla de resultados de la última ejecución y confirme qué asientos necesitan realmente contabilizarse. Si una ejecución anterior dejó asientos con un `status` de `unknown`, consulte [Tabla de resultados](#tabla-de-resultados) más abajo antes de hacer cualquier otra cosa.
+Cada asiento pasa por el libro de contabilizaciones de PlaidCloud, el mismo registro que usan los demás pasos de contabilización en ERP, de modo que una contabilización en vivo aparece en el [Registro de asientos](/es/guides/connections/posting-register/) y en el [historial de contabilización en ERP](/es/guides/connections/erp-post-history/). Una contabilización en vivo también necesita que el proyecto esté [autorizado para contabilizar](/es/guides/workflows/run-a-workflow/#autorizar-al-proyecto-para-contabilizar) en la conexión.
+
+<Aside type="note" title="Volver a ejecutar nunca contabiliza un asiento dos veces">
+Cada asiento se reserva en el libro con su `entry_key` y el mes de contabilización antes de enviarse, y el número de referencia de Intacct para él se construye con la misma clave. Volver a ejecutar el paso no contabiliza un asiento que ya se contabilizó: su fila vuelve a salir como `posted`. Se rechaza un asiento cuyo contenido cambió desde que se contabilizó en lugar de contabilizarlo por segunda vez, y tampoco se vuelve a contabilizar un asiento que se revirtió: contabilice una corrección con un nuevo `entry_key`. Un asiento cuya fecha de contabilización pasa a otro mes es un asiento nuevo.
 </Aside>
 
 ## Contrato de la estructura de datos
@@ -43,7 +45,7 @@ El nombre de la columna, presente tanto en las columnas de origen del encabezado
 
 Dos asignaciones de columnas independientes, una por pestaña; en cada una, asigne una columna de origen al campo del asiento de diario al que alimenta:
 
-- **Columnas de encabezado**: los campos del nivel de asiento de diario: diario, fecha de contabilización, descripción, número de referencia, un `base_location` opcional (la entidad o ubicación de Intacct bajo la que se contabiliza el asiento; omítalo en una empresa de una sola entidad), la columna de correlación que nombró como **Entry Key** y detalles similares del encabezado.
+- **Columnas de encabezado**: los campos del nivel de asiento de diario: diario, fecha de contabilización, descripción, número de referencia, un `base_location` opcional (la entidad o ubicación de Intacct bajo la que se contabiliza el asiento; omítalo en una empresa de una sola entidad), la columna de correlación que nombró como **Entry Key** y detalles similares del encabezado. Un `reference_number` que usted asigne se conserva solo para mostrarlo: el número de referencia que se envía a Intacct siempre se construye con la clave del asiento y el mes de contabilización.
 - **Columnas de líneas**: los campos por contabilización: cuenta del libro mayor, importe de débito/crédito, descripción de la línea, la misma columna **Entry Key** y dimensiones (ubicación, departamento, empleado, clase y similares).
 
 No es necesario cambiar el nombre de sus columnas de origen: asigne a los nombres de campo de destino anteriores las columnas, sea cual sea su nombre.
@@ -54,7 +56,7 @@ La tabla de destino en la que este paso escribe una fila por asiento de diario, 
 
 ### Preview
 
-Una casilla, **marcada de forma predeterminada**. Con Preview activado, el paso valida cada asiento de diario y escribe la tabla de resultados exactamente como lo haría una ejecución real, pero **no** se autentica en Intacct y **no** contabiliza nada: en el modo Preview no hay ninguna llamada de red a Intacct. Las filas llegan a la tabla de resultados con `status = preview`, y muestran qué asientos se contabilizarían sin problemas y cuáles fallarían en la validación, antes de que nada llegue a su libro mayor.
+Una casilla, **marcada de forma predeterminada**. Con Preview activado, el paso valida cada asiento de diario y escribe la tabla de resultados exactamente como lo haría una ejecución real, pero **no** se autentica en Intacct y **no** contabiliza nada: en el modo Preview no hay ninguna llamada de red a Intacct. Las filas llegan a la tabla de resultados con `status = preview`, y muestran qué asientos se contabilizarían sin problemas y cuáles fallarían en la validación, antes de que nada llegue a su libro mayor. Lo que contabilizaría cada asiento también se registra como simulado, en el historial de contabilización en ERP y en el Registro de asientos; un asiento simulado nunca bloquea la contabilización real posterior.
 
 Como una ejecución real, una ejecución en Preview **reemplaza** la tabla de resultados con las filas de esta ejecución: es la salida de cada ejecución del paso, no un registro acumulado, de modo que una ejecución en Preview posterior a una ejecución real sobrescribe las filas `posted` y `unknown` de esa ejecución. Abra y copie la tabla de resultados de la última ejecución antes de volver a ejecutar (en Preview o real) si todavía la necesita.
 
@@ -73,7 +75,7 @@ Cada ejecución, ya sea en Preview o real, escribe en la tabla de resultados una
 | `entry_key` | El asiento de diario sobre el que informa esta fila. |
 | `status` | Uno de `preview`, `posted`, `failed`, `unknown`; véase más abajo. |
 | `intacct_key` | La clave que Intacct asignó al asiento contabilizado, cuando está disponible. |
-| `http_status` | El estado HTTP que Intacct devolvió para el intento de contabilización, cuando está disponible. |
+| `http_status` | Se deja vacío; `status` y `error_message` indican el resultado. |
 | `error_message` | Una descripción breve y depurada de lo que falló, cuando `status` es `failed` o `unknown`. |
 | `line_count` | Número de líneas asociadas a este asiento. |
 | `posting_date` | La fecha de contabilización enviada a Intacct (o, en Preview, que se enviaría). |
@@ -81,19 +83,20 @@ Cada ejecución, ya sea en Preview o real, escribe en la tabla de resultados una
 ### Valores de status
 
 - **`preview`**: modo Preview; el asiento se validó y no se contabilizó.
-- **`posted`**: el asiento se contabilizó correctamente en Intacct.
-- **`failed`**: Intacct rechazó el asiento de forma definitiva (o falló la validación antes de intentar contabilizar). Puede corregir el problema de fondo y volver a contabilizar solo ese asiento sin riesgo.
-- **`unknown`**: no se pudo determinar el resultado: un tiempo de espera agotado, una conexión interrumpida o un error del servidor sin respuesta definitiva de Intacct.
+- **`posted`**: el asiento se contabilizó correctamente en Intacct, ahora o en una ejecución anterior.
+- **`failed`**: el asiento falló la validación antes de enviar nada, o Intacct lo rechazó. Corrija un fallo de validación y vuelva a ejecutar. Un asiento que Intacct rechazó no se vuelve a enviar con el mismo `entry_key` y mes de contabilización, así que contabilice el asiento corregido con un nuevo `entry_key`.
+- **`unknown`**: no se pudo confirmar el resultado: un tiempo de espera agotado, una conexión interrumpida o un error del servidor sin respuesta definitiva de Intacct.
 
-<Aside type="danger" title="unknown no significa que haya fallado">
-Un asiento `unknown` puede haberse contabilizado ya correctamente en Intacct: la solicitud pudo haberse recibido y confirmado antes de que se perdiera la conexión o de que la respuesta llegara a devolverse. **Verifique el estado del asiento directamente en Intacct antes de volver a ejecutar este paso.** Volver a contabilizar a ciegas un asiento `unknown` supone el riesgo de crear un asiento de diario duplicado en su libro mayor.
+<Aside type="caution" title="unknown no significa que haya fallado">
+Un asiento `unknown` puede haberse contabilizado ya en Intacct. Cuando vuelve a ejecutar el paso, PlaidCloud primero busca el asiento en Intacct por su número de referencia y lo registra como `posted` si Intacct lo tiene, sin volver a enviarlo. Un asiento que Intacct no muestra nunca se vuelve a enviar automáticamente, porque aún podría haberse confirmado: compruébelo en Intacct antes de actuar.
 </Aside>
 
-Una ejecución con filas `failed` o `unknown` informa de una advertencia para que sea visible sin abrir la tabla de resultados, pero la propia tabla de resultados es la fuente de verdad sobre qué hacer a continuación.
+Una ejecución con filas `failed` o `unknown`, o cuyos totales contabilizados no cuadran con el origen, termina el paso con error, de modo que sea visible sin abrir la tabla de resultados. La tabla de resultados y el [Registro de asientos](/es/guides/connections/posting-register/) indican qué hacer a continuación.
 
 ## Temas relacionados
 
 - [Pasos de exportación](/es/reference/workflow-steps/export/)
+- [Contabilizar documentos](/es/reference/workflow-steps/export/post-documents/) — contabilice asientos de diario y facturas en Sage Intacct y en sus demás sistemas ERP desde un solo paso
 - [Import Sage AP](/es/reference/workflow-steps/sage-intacct/import-sage-ap/)
 - [Import Sage Intacct Query](/es/reference/workflow-steps/sage-intacct/import-intacct-query/)
 - [Sage Intacct REST Connector](/es/reference/connectors/rest/sage-intacct/)

@@ -12,7 +12,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 
 Réencode un fichier texte d'un encodage de caractères à un autre. Utile lorsque les fichiers source arrivent dans des encodages hérités (Windows-1252, ISO-8859-1) alors que les outils en aval ont besoin d'UTF-8, ou inversement.
 
-Lorsque le fichier source n'est pas en UTF-8, son encodage est déduit du contenu du fichier. Un fichier très court ou très répétitif fournit trop peu d'éléments et peut être mal lu ; vérifiez donc la sortie convertie d'un tel fichier.
+Lorsque le fichier source n'est pas en UTF-8, son encodage est déduit du contenu du fichier. Un fichier en ASCII pur, à l'exception de quelques caractères Windows (tirets, guillemets typographiques ou lettres accentuées, au plus deux côte à côte et représentant moins de 1 % du texte autour du premier d'entre eux), est lu en Windows-1252, où que ces caractères se trouvent dans le fichier. Un fichier très court ou très répétitif fournit trop peu d'éléments et peut être mal lu ; vérifiez donc la sortie convertie d'un tel fichier.
 
 Un caractère que l'encodage cible ne peut pas représenter fait échouer l'étape par défaut. Sélectionnez **Remplacer par ? les caractères que l'encodage cible ne peut pas représenter** pour écrire un `?` à sa place, comme le fait un writer Java, et l'étape se termine.
 

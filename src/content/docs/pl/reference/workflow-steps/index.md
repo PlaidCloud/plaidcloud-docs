@@ -47,6 +47,7 @@ Kroki przepływu pracy to elementy składowe automatyzacji w PlaidCloud. Każdy 
 
 ### Integracje korporacyjne
 
+- [Księgowanie dokumentów](/pl/reference/workflow-steps/export/post-documents/) — księgowanie tabeli zapisów dziennika, faktur, not i płatności w dowolnym skonfigurowanym systemie ERP, z jednego kroku
 - [Agent](/pl/reference/workflow-steps/agent/) — operacje agenta PlaidLink dla zasobów lokalnych
 - [NetSuite](/pl/reference/workflow-steps/netsuite/) — import sald, szczegółów księgi głównej, danych głównych lub własnego [zapytania SuiteQL](/pl/reference/workflow-steps/netsuite/import-suiteql-query/); księgowanie zapisów dziennika w NetSuite
 - [Acumatica](/pl/reference/workflow-steps/acumatica/) — import encji głównych i transakcyjnych; księgowanie transakcji dziennika, faktur, rachunków i płatności

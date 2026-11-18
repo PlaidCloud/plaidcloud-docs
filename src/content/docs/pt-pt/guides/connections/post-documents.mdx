@@ -1,0 +1,341 @@
+---
+title: Contabilizar documentos em sistemas ERP
+description: Lance os documentos de uma tabela no sistema ERP onde cada entidade lança, com verificações antes de qualquer envio, Simular e Real, uma página de execução para cada execução, nova execução, lançamento a partir de um ficheiro ou de uma alocação, e conversão de um passo de lançamento SAP.
+sidebar:
+  label: Contabilizar documentos
+  order: 15
+editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/docs/guides/connections/post-documents.mdx
+---
+
+O passo **Contabilizar documentos** lança os documentos de uma tabela nos seus sistemas ERP. O passo não indica nenhum sistema: cada documento vai para o sistema onde a sua entidade lança, pelo que um só passo pode lançar em vários sistemas e em várias instâncias do mesmo ERP ao mesmo tempo. Todas as formas de lançar — o passo, um ficheiro, a API REST e as ferramentas MCP — passam pelas mesmas verificações e ficam registadas como uma execução com a sua própria [página de execução](#a-página-de-execução).
+
+Esta página abrange o passo, a sua tabela e definições, Simular e Real, a página de execução, a nova execução, o lançamento a partir de um ficheiro ou de uma alocação, e a conversão de um passo de lançamento SAP. A configuração dos próprios sistemas — que entidade lança onde, entrar em produção, regras de retenção e o que cada ERP suporta — encontra-se em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/). Rever, aprovar, estornar e resolver lançamentos depois encontra-se no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/).
+
+## Antes de começar
+
+- Cada ERP em que lança é uma ligação em que o PlaidCloud pode lançar, configurada como um sistema com as entidades que lançam nele. Consulte [Sistemas ERP](/pt-pt/guides/connections/erp-systems/).
+- Para lançar a sério, a execução tem de ser Real e o sistema de cada documento tem de estar em produção para o projeto. Até lá, tudo é verificado e apresentado como **Seria lançado**, e nada é enviado. Consulte [Simular e Real](#simular-e-real).
+
+## Como um documento é lançado
+
+As linhas que partilham uma entidade e um `doc_number` são um documento. Quando uma execução começa, os documentos ficam congelados: tudo o que vem depois na execução — **Lançar estes**, uma nova tentativa, uma aprovação — envia exatamente esses documentos. Cada documento passa depois pelas mesmas fases e pára na primeira que o determinar, com o respetivo motivo:
+
+<figure>
+<svg viewBox="0 0 700 190" role="img" aria-label="Um documento é verificado quanto ao equilíbrio e aos conjuntos, encaminhado para o sistema da sua entidade, verificado face a esse sistema, retido se uma regra o determinar, e depois enviado quando é Real ou registado como Seria lançado quando não é." style="width:100%;max-width:700px;height:auto;">
+  <defs>
+    <marker id="pd-arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L8,4.5 L0,9 z" fill="var(--sl-color-gray-3)" /></marker>
+  </defs>
+  <rect x="10" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="60" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Equilíbrio</text>
+  <text x="60" y="80" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">e conjuntos</text>
+  <line x1="110" y1="68" x2="134" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="138" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="188" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Encaminhar</text>
+  <text x="188" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">entidade para sistema</text>
+  <line x1="238" y1="68" x2="262" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="266" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="316" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Verificar</text>
+  <text x="316" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">face ao sistema</text>
+  <line x1="366" y1="68" x2="390" y2="68" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="394" y="40" width="100" height="56" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="444" y="64" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Reter?</text>
+  <text x="444" y="80" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Requer aprovação</text>
+  <line x1="494" y1="60" x2="560" y2="36" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <line x1="494" y1="76" x2="560" y2="110" stroke="var(--sl-color-gray-3)" stroke-width="1.5" marker-end="url(#pd-arrow)" />
+  <rect x="564" y="12" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-accent)" stroke-width="1.6" />
+  <text x="627" y="32" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Real: enviado</text>
+  <text x="627" y="48" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Em espera, depois Lançado</text>
+  <rect x="564" y="86" width="126" height="48" rx="8" fill="var(--sl-color-gray-6)" stroke="var(--sl-color-gray-5)" />
+  <text x="627" y="106" text-anchor="middle" font-size="12" fill="var(--sl-color-text)">Simular</text>
+  <text x="627" y="122" text-anchor="middle" font-size="10" fill="var(--sl-color-gray-3)">Seria lançado, não enviado</text>
+  <text x="250" y="150" text-anchor="middle" font-size="11" fill="var(--sl-color-gray-3)">Um documento impedido em qualquer fase fica Não lançado, com o respetivo motivo</text>
+</svg>
+<figcaption>Todas as formas de lançar executam as mesmas fases. Um documento só vai para um sistema quando a execução e o seu sistema são ambos Reais.</figcaption>
+</figure>
+
+1. Equilíbrio e conjuntos: um diário tem de ficar equilibrado em cada moeda que utiliza, e um conjunto tem de ficar equilibrado como um todo. Consulte [Conjuntos](#conjuntos) e a definição de arredondamento em [Definições do passo](#definições-do-passo).
+2. Encaminhar: a entidade do documento decide o seu sistema, tal como definido em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/). Um documento cuja entidade não tem sistema fica Não lançado.
+3. Verificar: as [cinco verificações](#as-cinco-verificações) são executadas face ao que o PlaidCloud sabe do sistema.
+4. Reter: uma regra de retenção do sistema, ou a retenção própria do passo, mantém o documento como **Requer aprovação** até uma pessoa o aprovar no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/).
+5. Enviar: o documento é colocado no formato próprio do sistema e enviado, ou registado como **Seria lançado** quando a execução ou o seu sistema está em Simular.
+
+O que significa cada estado, e o que fazer em cada um, encontra-se no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/).
+
+## Adicionar o passo
+
+Adicione um passo **Contabilizar documentos** a um fluxo de trabalho: encontra-se em **Sistemas externos** no menu de passos, e na pasta **Sistemas externos** da paleta de passos. O seu formulário tem três secções e depois uma ligação **Mais ▸** para as definições do passo.
+
+1. **1 · A tabela** — escolha a **Tabela** de documentos, uma linha por linha de documento. Depois de construído o primeiro documento, a secção mostra quantas linhas e documentos leu da tabela.
+2. **2 · Correspondência das colunas** — o que o passo reconheceu em cada coluna da sua tabela. Uma coluna cujo nome é um campo de lançamento é **Correspondida pelo nome**; uma cujo nome é uma alternativa conhecida é **Correspondida por um nome alternativo**. Uma coluna que o passo não consegue reconhecer recebe uma lista: escolha o campo que contém em **O que é esta coluna?**, e passa a aparecer como **Escolheu esta**. Só as colunas que escolher são guardadas com o passo. Duas colunas nunca ficam com o mesmo campo: a primeira mantém-no.
+3. **3 · O primeiro documento, tal como o seu sistema o receberá** — o primeiro documento da tabela, encaminhado e colocado no formato do seu sistema, com as suas linhas. Quando ainda não pode ser construído, a secção indica porquê, com as mesmas palavras de um motivo de Não lançado.
+
+O passo precisa de uma **Tabela**. Se marcar um montante de retenção, o montante tem de ser um número, e se adicionar uma linha de arredondamento, esta precisa de uma conta.
+
+## A tabela
+
+A tabela utiliza os nomes de colunas do Data Foundation, Um diário com a forma do Data Foundation é lançado sem nada a corresponder; uma tabela de linhas de vendas faturadas é lançada depois de lhe adicionar `account` e `document_type`. Uma linha é uma linha de documento; as linhas com a mesma `entity` e `doc_number` são um documento.
+
+| Coluna | O que contém |
+|---|---|
+| `doc_number` | A referência do documento. Obrigatória: uma tabela sem coluna para ela interrompe o passo. Não pode conter `~`, que o PlaidCloud reserva para numerar versões. |
+| `entity` | A entidade a que o documento pertence. Decide o sistema. |
+| `posting_date`, `document_date`, `period`, `fiscal_year`, `fiscal_period`, `period_type`, `ledger`, `journal_type` | Datas e período do documento. |
+| `account` | A conta da linha. |
+| `amount_txn` e `currency_txn` | O montante da linha e a sua moeda. Uma tabela apenas em moeda local pode utilizar `amount_local` e `currency_local`, e `debit` e `credit` são aceites em vez de um montante. |
+| `description`, `line_number`, `quantity`, `unit` | Texto, ordem e quantidade da linha. |
+| `department`, `profit_center`, `product`, `customer`, `supplier`, `project`, `site`, `trading_partner`, `segment_1` a `segment_10` | As dimensões da linha. |
+| `tax_code`, `tax_amount_local`, `withholding_code`, `withholding_amount_local` | Imposto e retenção na fonte. |
+| `due_date`, `payment_terms`, `supplier_invoice_number`, `purchase_order_number`, `invoice_no` | Dados da fatura. |
+| `document_type` | `journal` (quando em branco), `customer_invoice`, `supplier_invoice`, `credit_memo`, `debit_memo` ou `payment`. O que cada sistema aceita encontra-se em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/). |
+| `set` | Um nome de conjunto: os documentos que partilham um são lançados em conjunto ou de todo não são lançados. Consulte [Conjuntos](#conjuntos). |
+
+Também são reconhecidos estes nomes alternativos, sem distinção de maiúsculas e minúsculas: `invoice_number`, `reference` e `journal id` para `doc_number`, `invoice_date` para `posting_date`, `net_amount_local` para `amount_local`, `memo` para `description`, `cost center` para `department` e `vendor` para `supplier`. Uma coluna que não seja nenhuma destas — uma das suas próprias dimensões, por exemplo — acompanha o documento e as suas linhas, para um formato de sistema que a mapeie.
+
+Algumas colunas são próprias do lançamento e ainda não estão disponíveis: uma linha cuja `action` seja diferente de `post`, ou que defina `reverse_on`, fica Não lançada. A página de execução indica "Isto ainda não está disponível."; a tabela de resultados e a resposta REST trazem a mensagem "only posting is available yet" ou "a date to reverse on is not available yet". Para estornar, creditar ou corrigir um lançamento, utilize o [Registo de lançamentos](/pt-pt/guides/connections/posting-register/).
+
+Um documento é identificado pelo seu tipo, entidade e referência, não pelo seu mês, pelo que um documento movido para outro mês continua a ser o mesmo documento.
+
+### Conjuntos
+
+Os documentos que partilham um valor de `set` são lançados em conjunto ou de todo não são lançados:
+
+- O conjunto tem de ficar equilibrado como um todo, com o limite de arredondamento como tolerância. Se não ficar, todos os membros ficam Não lançados com a diferença.
+- Se algum membro for impedido por uma verificação, os restantes do conjunto ficam também Não lançados, "another document in set … was not posted". Se algum membro ficar retido para aprovação, todo o conjunto aguarda como **Requer aprovação**.
+- Se o sistema de algum membro não estiver em produção, todo o conjunto fica **Seria lançado**, pelo que nenhuma parte dele é enviada a sério.
+
+## Definições do passo
+
+**Mais ▸** abre as quatro definições do passo. Cada uma tem um valor inicial, e a maioria dos passos nunca as altera.
+
+| Definição | Valor inicial | O que faz |
+|---|---|---|
+| **Reter para uma pessoa** | Nada fica retido | Retém documentos para aprovação quando as condições que marcar se verificam. |
+| **Quem é notificado** | **Quem iniciou a execução** | Quem é alertado quando uma execução termina com documentos que requerem atenção. |
+| **Conta de arredondamento e limite** | Sem arredondamento | Adiciona uma linha de arredondamento a um documento que está desequilibrado em não mais do que o limite. |
+| **Quando um documento contabilizado volta alterado** | Perguntar | O que uma execução posterior faz com um documento que mudou desde que foi lançado. |
+
+### Reter para uma pessoa
+
+Marque as condições que retêm um documento para uma pessoa aprovar:
+
+- **O montante é superior a** — um montante. É comparado com o montante do documento na moeda do próprio documento.
+- **Foi lançado a partir de um ficheiro**
+- **É um estorno, crédito ou correção**
+- **É assinalado como invulgar**
+- **Sempre**
+
+Quando marca mais do que uma, um documento só fica retido quando todas se verificam. Sem nada marcado, o passo não acrescenta nenhuma retenção própria; as regras de retenção do seu sistema, e a segunda pessoa de que um estorno, crédito ou correção pode precisar, continuam a reter documentos. Uma retenção no passo apenas se soma às regras de retenção que o seu sistema já tem. Um documento retido retém o resto do seu conjunto. A pessoa cujo envio reteve um documento, e a pessoa que iniciou a sua execução, não o podem aprovar; as aprovações e os aprovadores encontram-se no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) e em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/).
+
+### Quem é notificado
+
+**Quem iniciou a execução** é o valor inicial. Escolha **Uma lista de pessoas…** para indicar, em vez disso, os membros a alertar. São alertados quando a execução termina com documentos que requerem atenção.
+
+### Conta de arredondamento e limite
+
+Marque **Adicionar uma linha de arredondamento a um documento desequilibrado** e indique depois a **Conta** e o **Limite**. Um diário que está desequilibrado numa moeda em não mais do que o limite recebe uma linha para essa conta, descrita como "Rounding", e passa; uma diferença maior, ou uma diferença em mais do que uma moeda, impede-o por estar desequilibrado, com a diferença. O limite é também a tolerância para um conjunto como um todo. Com a definição desmarcada, nada é arredondado.
+
+### Quando um documento contabilizado volta alterado
+
+| Escolha | O que uma execução posterior faz com um documento alterado |
+|---|---|
+| **Perguntar (valor inicial). Fica em Requer atenção com duas opções.** | O documento alterado fica Não lançado, "The source changed after this was posted.", e aguarda que uma pessoa escolha **Corrigir com esta versão** ou **Manter o lançado** na [página de execução](#documentos-alterados). |
+| **Corrigir. Estorná-lo e lançar a nova versão, para um passo que é executado de novo em cada período.** | Numa execução Real, o documento lançado é estornado e o documento alterado é enviado como a sua versão seguinte. |
+
+## Simular e Real
+
+Um documento só é enviado para o seu sistema quando ambas as condições se verificam:
+
+- A execução é Real: uma execução de fluxo de trabalho tem um modo de lançamento, limitado pelo próprio modo do projeto, tal como descrito em [Escolher um modo de lançamento](/pt-pt/guides/workflows/run-a-workflow/#escolher-um-modo-de-lançamento). Uma execução em Simular não envia nada, e uma execução em Desligado ignora o passo.
+- O sistema do documento está em produção para o projeto: isto é a autorização de escrita do projeto para a ligação e o ambiente do sistema, com o modo do projeto em Real — consulte [Autorizar o projeto a lançar](/pt-pt/guides/workflows/run-a-workflow/#autorizar-o-projeto-a-lançar) e entrar em produção em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/).
+
+Caso contrário, o documento é verificado e registado como **Seria lançado**, e nada é enviado. Simular nunca contacta um sistema: numa execução Simular, nem sequer são feitas as verificações que teriam de perguntar ao sistema. O passo não tem uma definição de ensaio própria. A única exceção é um passo convertido de um passo de lançamento SAP que estava definido para testar lançamentos: continua a executar-se em Simular de cada vez, e os seus documentos só são lançados através de **Lançar estes** na sua página de execução.
+
+Uma execução em Simular é a forma de ver exatamente o que seria lançado. Quando parece correto, **Lançar estes** na sua [página de execução](#lançar-estes) envia os mesmos documentos congelados.
+
+## As cinco verificações
+
+Antes de qualquer envio, cada documento passa por cinco verificações. A página de execução mostra cada uma como aprovada, falhada ou não verificada:
+
+| Verificação | O que impede um documento |
+|---|---|
+| Balanced | Débitos e créditos que não coincidem, além do limite de arredondamento. |
+| Period open | Uma data de lançamento num período que está fechado no sistema. |
+| Accounts exist | Uma conta que o sistema não tem, um código sem correspondência, um valor vazio de que o sistema precisa, uma fatura que não está em aberto, outra empresa, ou uma moeda que o sistema não regista. |
+| Not posted before | Uma referência já lançada noutro sistema, ou já utilizada neste sistema. |
+| Sets agree | Um conjunto com um membro em falta, ou cujos documentos não somam corretamente. |
+
+**Period open** e **Accounts exist** utilizam as listas que o PlaidCloud lê do sistema quando começa uma execução Real num sistema em produção. Numa execução Simular, ou quando a leitura de uma lista é parcial, vazia ou tardia, ficam não verificadas. A cópia das listas que **Atualizar agora** mantém em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/) serve para consulta: não alimenta nenhuma verificação. Uma execução Real num sistema em produção faz também as verificações do próprio sistema, quando o seu formato as tem; uma execução Simular não.
+
+Uma verificação que não foi executada num documento conta como não verificada, nunca como aprovada. A página de execução apresenta os cinco nomes das verificações em inglês em todos os idiomas.
+
+## Quando o passo é executado
+
+- O passo aguarda até 10 minutos pela resposta dos sistemas. Um documento ainda sem resposta continua então no registo, e a sua página de execução é preenchida quando a resposta chega.
+- O registo de execução recebe uma linha, "Posted n of m · k need attention". Quando algum documento requer atenção, o passo termina com um aviso, "k of m documents need attention", e as pessoas em **Quem é notificado** são alertadas. O resto do fluxo de trabalho continua.
+- Uma tabela que não existe, não tem colunas ou não tem linhas é um aviso, e nada é lançado. Uma tabela sem coluna para `doc_number` interrompe o passo com um erro.
+- Quando a configuração do passo indica uma tabela de resultados, o passo escreve nela uma linha por documento: `doc_number`, `action`, `state`, `source_system` (o sistema em que lançou), `source_doc` (o número que o sistema atribuiu) e `message`.
+
+## A página de execução
+
+Cada execução tem uma página: a execução de um passo, a de um ficheiro, uma iniciada através da API REST ou MCP, uma nova tentativa, um estorno. Abra-a a partir de **Execuções** no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) com **Abrir**. A página mostra apenas os documentos que pode ver; quando não tem nenhum para si, indica "This run was not given any document you may see."
+
+O topo da página indica em que ponto está a execução:
+
+- Em Simular: "This run is in Simulate. Nothing has been sent to any system. Post these sends the same frozen documents."
+- Real e ainda em execução: não há nada a premir para lançar. A página é preenchida à medida que os sistemas respondem e indica quantos documentos ainda não foram enviados. Lê a execução novamente por si própria enquanto algo ainda estiver em execução ou em espera.
+- Real e concluída: "Live. Every system answered."
+- Parada: "This run was stopped. What had not been sent is Not posted."
+
+O **Resumo** acima dos documentos pode ser aberto e fechado, e mantém-se como o deixou; começa fechado quando uma execução tem documentos. Contém:
+
+- Para a execução de um passo, primeiro a comparação, por exemplo "121 unchanged, 19 changed, 2 new." Consulte [Executar novamente](#executar-novamente).
+- Os documentos, conjuntos, sistemas e montantes da execução, e quantos estão em cada estado.
+- As [cinco verificações](#as-cinco-verificações), cada uma com um visto, uma cruz, ou um traço quando nada chegou até ela. Uma verificação falhada indica quantos não passaram.
+- **Por sistema**: uma linha por sistema com a sua contagem em cada estado e o seu montante, e o **Total**. Um sistema cujo modo difere do da execução é marcado como Simular ou Real. Cada contagem abre esses documentos.
+- O total da própria tabela ao lado do total dos documentos: "Equal. No row of the table was left out." ou "They differ. A row of the table was left out or counted twice." Se só puder ver algumas entidades, os totais são do que pode ver.
+- A idade da cópia de cada sistema dos seus períodos e contas, ou que ainda não existe cópia.
+
+Por baixo, a lista **Documentos** coloca primeiro o que precisa de uma pessoa. Cada linha tem a referência (com a sua versão, como `JE-1001~2`), entidade, sistema, conjunto, montante, estado e **Porquê, e o que fazer a seguir**. **Agrupar por** agrupa os documentos por **Entidade**, **Tipo**, **Conjunto** ou **Sistema**. Selecione um documento para ler na íntegra o seu motivo e o passo seguinte e, quando existam, **O que mudou**, **Como corrigir a rejeição** e **Invulgar**. Cada linha abre o seu lançamento no [Registo de lançamentos](/pt-pt/guides/connections/posting-register/) com **Abrir lançamento**, mostra o seu conjunto com **Mostrar o seu conjunto**, e oferece **Tentar novamente** quando uma nova tentativa pode ajudar.
+
+### Lançar estes
+
+Uma execução com documentos em **Seria lançado** oferece **Lançar estes** com a respetiva contagem, ao lado de "Post these sends exactly the documents shown." Envia esses documentos, verificados mais uma vez à data de agora: o projeto tem de permitir Real, a referência não pode ter sido lançada desde a execução simulada, e as verificações do próprio sistema são executadas novamente. Um documento num sistema que ainda está em Simular continua **Seria lançado**. A execução passa a Real, e a página indica quantos foram enviados e quantos foram verificados novamente e não lançados.
+
+- Quando alguns dos sistemas ainda não estão em produção, o botão indica **Ativar e lançar estes** ou nomeia os sistemas que põe em produção. Põe-nos primeiro em produção para o projeto e, se algum não puder entrar em produção, nada é enviado. Só quem pode pôr um sistema em produção vê isto; as outras pessoas lançam nos sistemas como estão. Consulte [Sistemas ERP](/pt-pt/guides/connections/erp-systems/).
+- Um documento que uma regra de retenção retém fica novamente retido neste envio. A pessoa que premiu **Lançar estes** e a pessoa que iniciou a execução não o podem aprovar.
+- Só são enviados os documentos que pode ver. Um documento cuja cópia guardada expirou fica Não lançado: a página de execução indica "This is not available yet." e a resposta REST traz a mensagem "The stored document has expired; run again."
+
+### Parar uma execução
+
+Uma execução Real que ainda está em execução, com documentos ainda não enviados, oferece **Parar execução**. Os documentos ainda não enviados passam a Não lançados, e a página de execução indica "The run was stopped before this was sent." Os documentos já enviados ficam como estão, e a página indica quantos foram parados e quantos já tinham sido enviados. Enquanto uma execução Real está a meio do seu envio, antes de qualquer documento ser registado, ainda não pode ser parada.
+
+### Tentar novamente
+
+**Tentar novamente** numa linha, ou **Tentar novamente o resto** para um conjunto, volta a enviar um documento que não foi lançado, tal como foi congelado, como uma nova execução sob o modo de lançamento do projeto. Os documentos que já foram lançados não são enviados novamente. A nova tentativa é oferecida para um documento cuja causa foi externa a ele — um aprovador recusou-o, a execução foi parada, o agente estava offline, o sistema rejeitou-o, não foi encontrado no prazo, não foi enviado, ou a sua entidade não tinha sistema. Um documento impedido por uma verificação precisa que a sua origem seja corrigida e o passo executado novamente.
+
+### Conjuntos que precisam de uma pessoa
+
+**Conjuntos que precisam de uma pessoa** lista um conjunto que só foi lançado em parte, ou que não enviou nada porque um membro não passou. **Mostrar o conjunto** filtra os documentos para ele. Para um conjunto lançado em parte, **Tentar novamente o resto** repete o que não foi lançado, e **Estornar o que foi lançado** mostra o que será estornado e em que sistemas, e estorna-o depois com o motivo de que uma parte do conjunto foi lançada e o resto não. Um estorno que precisa de uma segunda pessoa aguarda como **Requer aprovação**, e a página liga à execução do próprio estorno com **Abrir a execução de estorno**.
+
+### Documentos alterados
+
+Quando o passo está definido como Perguntar e uma execução encontra documentos que mudaram desde que foram lançados, a página indica quantos aguardam a sua escolha:
+
+- **Corrigir todos**, ou **Corrigir com esta versão** para os documentos selecionados, estorna o lançado e lança o alterado como uma nova versão da sua referência.
+- **Manter todos**, ou **Manter o lançado** para os documentos selecionados, mantém a versão lançada e descarta a alterada.
+
+Cada uma pede primeiro confirmação.
+
+## Execuções
+
+**Execuções** no Registo de lançamentos lista todas as execuções de um passo de lançamento ou de um ficheiro de lançamento, das mais recentes para as mais antigas, com o seu **Modo**, quem a iniciou e o seu resultado; **Abrir** abre a sua página de execução.
+
+Acima da lista, o último mês num relance: uma linha por sistema, como quantos documentos foram lançados em quantos, o montante, quantos estão nos próprios livros do sistema e quantos lançamentos requerem atenção. Um passo que lançou num sistema no mês anterior a esse e não foi executado nesse mês é nomeado por baixo. **Abrir** numa linha abre os lançamentos desse sistema para o mês e, quando o mês não está completo, **Abrir Requer atenção** leva-o ao que falta. O relance conta as execuções Reais de passos.
+
+## Executar novamente
+
+Uma referência é lançada uma vez. Quando uma execução tem um documento que já está no registo:
+
+- Um inalterado é deixado como está.
+- Um alterado segue a definição [Quando um documento contabilizado volta alterado](#quando-um-documento-contabilizado-volta-alterado) do passo: Perguntar ou Corrigir. Uma correção lança a versão seguinte da referência, como `JE-1001~2`, e o sistema vê também a versão.
+- Um cuja versão anterior ainda não tem resposta do sistema fica Não lançado: "An earlier version of this reference has no answer from the system yet. Run again once it has one."
+
+Num sistema cuja chave inclui a entidade, a mesma referência para outra entidade é um documento diferente. Em qualquer outro sistema é recusada: "This reference is already used on this system."
+
+Um documento que o passo lançou antes e que não produziu desta vez é deixado como está. Para o estornar, chame `POST /rest/v1/analyze/erp/reverse/these` com a execução; estorna o que o passo da execução lançou antes e não produziu, ou apenas aqueles de entre eles que indicar, como uma nova execução. Ainda não existe botão para isto na página de execução.
+
+Para um passo que é executado de novo em cada período, como um que lança uma alocação, defina **Quando um documento contabilizado volta alterado** como Corrigir uma vez.
+
+## Contabilizar a partir de um ficheiro
+
+Para um punhado de diários numa folha de cálculo, pode lançar um ficheiro sem qualquer fluxo de trabalho, através da API REST ou das ferramentas MCP. Ainda não existe uma página para isto na aplicação.
+
+1. `GET /erp/file-post/starter`, com um `connection_id`, um `document_type` e um `format` (`xlsx` ou `csv`), transfere os cabeçalhos de coluna corretos para esse tipo de documento nesse sistema, com uma linha de exemplo. Um tipo de documento que o sistema não aceita é recusado.
+2. `POST /erp/file-post` recebe a folha de cálculo (`.xlsx` ou `.csv`) como `file`, com o `project_id`. Quaisquer outros ficheiros enviados como `attachments` ficam guardados com a execução como ficheiros de apoio, mas ainda não são enviados ao sistema. A ferramenta MCP `erp_file_post` recebe, em vez disso, um ficheiro dos documentos do PlaidCloud, pelo seu `account_id` e `path`.
+3. A execução abre em Simular, e nada é enviado. Reveja-a na sua [página de execução](#a-página-de-execução) e lance-a com **Lançar estes**.
+
+- Cada documento vai para o sistema onde a sua entidade lança, como em qualquer outra execução.
+- Um ficheiro sem coluna `doc_number` não prepara nada e responde `ask: one_journal`. Envie-o novamente com `one_journal` definido como true para lançar todo o ficheiro como um só diário, com o nome do ficheiro como referência, ou false para lançar cada linha como um diário próprio, numerado a partir do nome do ficheiro.
+- Num ficheiro que tem uma coluna `doc_number`, as linhas sem ela são excluídas, com um aviso. Os cabeçalhos que não são colunas de lançamento são ignorados, e os avisos nomeiam-nos.
+- Um ficheiro vazio, ou sem linhas, não prepara nada e indica-o. O mesmo acontece com um projeto cujo lançamento está Desligado.
+
+### Contabilizar novamente
+
+Contabilizar novamente lança outra vez os documentos de uma execução de ficheiro com uma nova data de lançamento e novas referências, para um diário que se repete todos os meses: `POST /erp/file-post/{run_id}/again`, ou a ferramenta MCP `erp_file_post_again`.
+
+- O `posting_date` é uma data ISO, ou um de `today`, `first_of_month`, `last_of_month`, `first_of_next_month` e `last_of_prev_month`, ou um deslocamento como `+1m` ou `-7d` a partir da data de lançamento de cada documento.
+- `references` definido como `suffix` dá a cada referência um sufixo para o novo mês, como `JE-1001-202612`, para que a repetição não seja recusada por já estar lançada; através de REST pode, em alternativa, mapear cada referência para a sua nova. A ferramenta MCP acrescenta sempre o sufixo.
+- A data do documento acompanha a data de lançamento, uma data de vencimento move-se no mesmo número de dias, e as colunas de período são descartadas para que o sistema obtenha o período a partir da nova data.
+- A nova execução abre em Simular, a menos que peça Real com `live`, e nunca além do modo de lançamento do projeto. Só são lançados novamente os documentos das entidades que pode ver.
+
+`POST /erp/file-post/{run_id}/schedule` coloca Contabilizar novamente num agendamento, com um `cron` e o seu `timezone`, um `posting_date` calculado de cada vez que é executado, e `references` definido como `suffix`. Executa-se como o utilizador que o criou e lança apenas as entidades que essa pessoa pode ver. Só lança em modo Real quando alguém já lançou em modo Real os documentos deste ficheiro, e nunca além do modo de lançamento do projeto. Um agendamento não tem ferramenta MCP.
+
+Os documentos de uma execução são guardados durante 30 dias quando simulados e 90 depois de uma resposta; passado esse prazo, Contabilizar novamente não tem nada a preparar e indica-o.
+
+### Registar como já contabilizado
+
+Para documentos lançados no sistema antes de o PlaidCloud estar em utilização, `POST /erp/record-posted` regista-os como Lançados sem contactar o sistema, para que uma execução que os tenha mais tarde recuse lançá-los novamente. Envie a folha de cálculo como `file`, com o `connection_id` e o `environment_id` do sistema. Precisa das colunas `reference` e `system_document` e, opcionalmente, `entity`, `posting_date` e `document_type` (um diário quando omitido). Ainda não existe página nem ferramenta MCP para isto.
+
+- Um documento que o PlaidCloud já tem como lançado, um que ainda aguarda resposta, ou uma referência que tem como um documento de sistema diferente, é listado como não registado, com o motivo.
+- Um documento Não confirmado no ficheiro só é resolvido como Lançado para quem tem a função de Aprovador do Registo de lançamentos; as outras pessoas recebem-no de volta como não registado.
+
+## Lançar a partir de uma alocação
+
+Um passo **Alocação: Dividir por dimensão** pode também escrever o seu resultado como uma tabela de documentos para um passo Contabilizar documentos lançar, através da sua definição `post_documents` na configuração do passo. A definição indica a `table` de documentos a escrever, e as colunas do resultado para `rule`, `account`, `source_account`, `amount` e `posting_date` (todas necessárias) e, opcionalmente, `entity` e `currency_txn`; `set` dá aos documentos um nome de conjunto fixo.
+
+- Cada regra é um documento por mês, com referência da regra e do mês (por exemplo `RENT-202611`). Cada linha do resultado é uma linha para a sua conta com uma linha de contrapartida para a conta de origem, pelo que todos os documentos ficam equilibrados.
+- Uma linha sem regra, ou com montante zero, não gera linha. Uma linha cujo montante não é um número é excluída, com um aviso que nomeia as linhas. Quando não resta nada para lançar, o passo avisa e esvazia a tabela de documentos.
+- Executar novamente a alocação para o mesmo mês dá as mesmas referências, pelo que deve definir [Quando um documento contabilizado volta alterado](#quando-um-documento-contabilizado-volta-alterado) do passo de lançamento como Corrigir.
+
+## Converter um passo de lançamento SAP
+
+Um passo de lançamento SAP existente pode tornar-se um passo Contabilizar documentos. Nada é convertido por si próprio: clique com o botão direito no passo na área de desenho e escolha **Converter em Lançar documentos…**, ou utilize **Converter em Lançar documentos…** no formulário do passo. O PlaidCloud mostra primeiro o que vai ser convertido — as colunas associadas aos campos do documento, as entidades encaminhadas para os seus sistemas, se continua a lançar como antes ou começa em Simular, e quaisquer avisos — e confirma com **Converter**. As definições antigas ficam nas versões do passo.
+
+- Só os passos de lançamento SAP são convertidos. Um passo sem função ou colunas de cabeçalho definidas, ou cuja chave de documento não seja um código de empresa e um número de documento, não é convertido, e o PlaidCloud diz porquê.
+- As entidades no filtro do passo são sugeridas como encaminhamentos para a sua ligação. Quando o filtro não indica nenhuma, defina o encaminhamento em [Sistemas ERP](/pt-pt/guides/connections/erp-systems/) antes de lançar.
+- Até definir uma tabela no passo convertido, este lê por si as tabelas de cabeçalho, linhas, IVA e retenção na fonte do passo antigo.
+- O passo convertido mantém o registo do que o passo antigo lançou, pelo que um período que o passo antigo já lançou não é lançado novamente.
+- Um passo que estava definido para testar lançamentos continua a executar-se em Simular. Consulte [Simular e Real](#simular-e-real).
+
+## Através de REST e MCP
+
+O mesmo lançamento está disponível através da API REST, em `/rest/v1/analyze/erp`, e como ferramentas MCP:
+
+| Para | REST | MCP |
+|---|---|---|
+| Ver o primeiro documento de uma tabela, tal como o seu sistema o receberá | `POST /erp/post/preview` | `erp_post_preview` |
+| Lançar uma tabela ou uma lista de documentos | `POST /erp/post` | `erp_post_documents` |
+| Ler execuções e uma página de execução | `GET /erp/runs`, `GET /erp/runs/{run_id}` | `erp_run_find`, `erp_run_describe` |
+| Lançar estes, ou parar uma execução | `POST /erp/runs/{run_id}/post`, `POST /erp/runs/{run_id}/stop` | `erp_run_post`, `erp_run_stop` |
+| Responder a Perguntar para documentos alterados | `POST /erp/ask` | `erp_ask_answer` |
+| Tentar novamente documentos | `POST /erp/retry` | `erp_retry` |
+| Transferir um ficheiro inicial | `GET /erp/file-post/starter` | — |
+| Lançar a partir de um ficheiro, e lançá-lo novamente | `POST /erp/file-post`, `POST /erp/file-post/{run_id}/again` | `erp_file_post`, `erp_file_post_again` |
+| Lançá-lo novamente num agendamento | `POST /erp/file-post/{run_id}/schedule` | — |
+| Registar como já contabilizado | `POST /erp/record-posted` | — |
+| Converter um passo de lançamento SAP | `POST /erp/convert` | `erp_convert_step` |
+
+- Um lançamento por REST ou MCP é executado em Simular a menos que peça Real, e nunca além do modo de lançamento do projeto.
+- Um lançamento de uma tabela por REST lê no máximo 100 000 linhas; uma tabela mais longa é recusada por inteiro, e é lançada com o passo.
+- `erp_file_post` recebe um ficheiro dos documentos do PlaidCloud; um ficheiro que não existe é um aviso, e nada é preparado.
+- Converter e tentar novamente são ensaios, a menos que indique o contrário.
+- A um assistente de IA que atue em seu nome é recusado um lançamento Real, **Lançar estes**, Corrigir, uma nova tentativa real, uma conversão real e Contabilizar novamente: é uma pessoa que os faz.
+
+## Quem pode fazer o quê
+
+| Para | É necessário |
+|---|---|
+| Construir o passo e pré-visualizar o seu primeiro documento | `analyze.step.write` |
+| Lançar por REST ou MCP | `analyze.workflow.write` e acesso de escrita ao projeto |
+| Transferir um ficheiro inicial | `analyze.connection.read` |
+| Lançar a partir de um ficheiro | `analyze.workflow.write` e acesso ao projeto |
+| Abrir uma página de execução | `analyze.project.read`; vê os documentos das entidades que pode ver |
+| Ver **Execuções** no Registo de lançamentos | `erp.register.view` |
+| **Lançar estes**, **Parar execução**, Corrigir ou Manter, Contabilizar novamente e o seu agendamento, estornar o que uma execução não produziu | `analyze.workflow.write`, e Arquiteto ou Gestor no projeto desbloqueado |
+| Pôr um sistema em produção ao lançar | Arquiteto no projeto desbloqueado, com acesso de escrita à ligação por si próprio |
+| **Tentar novamente** | `analyze.workflow.write`, e Arquiteto ou Gestor no projeto desbloqueado, com acesso de escrita à ligação do documento por si próprio |
+| **Estornar o que foi lançado** | `erp.register.view` e `erp.register.operate` |
+| Registar como já contabilizado | `erp.register.view` e `erp.register.operate`, com acesso de escrita à ligação por si próprio; resolver documentos Não confirmados exige também `erp.register.approve` |
+| Converter um passo de lançamento SAP | `analyze.step.write`, com acesso de escrita ao projeto |
+
+Todos os caminhos aplicam a mesma regra: a interface, a API REST e as ferramentas MCP chamam as mesmas verificações.

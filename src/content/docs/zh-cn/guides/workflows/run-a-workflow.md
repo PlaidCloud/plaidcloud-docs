@@ -21,7 +21,7 @@ editUrl: https://github.com/PlaidCloud/plaidcloud-docs/edit/main/src/content/doc
 | 模式 | 效果 |
 |---|---|
 | 实时 | 过账步骤按以往方式正常过账。这是默认模式。 |
-| 模拟 | 每个 ERP 过账步骤都会构建并验证其将要过账的内容，然后不提交任何内容，也从不连接 ERP。将要过账的分录会记录在 [ERP 过账历史记录](/zh-cn/guides/connections/erp-post-history/)中并标记为模拟，以便在实时运行之前进行审阅。 |
+| 模拟 | 每个 ERP 过账步骤都会构建并验证其将要过账的内容，然后不提交任何内容，也从不连接 ERP。将要过账的分录会被记录下来，以便在实时运行之前进行审阅：**过账凭证**步骤的记录在[过账登记簿](/zh-cn/guides/connections/posting-register/)中显示为**将过账**（请参阅[向 ERP 系统过账凭证](/zh-cn/guides/connections/post-documents/)），系统自己的过账步骤的记录在 [ERP 过账历史记录](/zh-cn/guides/connections/erp-post-history/)中并标记为模拟。 |
 | 关闭 | 完全跳过过账步骤。 |
 
 项目也有自己的过账模式上限，具有写入权限的任何成员都可以通过项目 API 或助手为未锁定的项目设置。该上限只会让运行更安全，绝不会更宽松：运行的有效模式取您所选模式与项目上限中限制更严格的一个，因此即使以实时模式启动运行，上限为模拟的项目仍保持模拟。
@@ -35,7 +35,7 @@ SAP 过账、SAP 附件和通用 SAP RFC 步骤不支持试运行。在模拟或
 :::
 
 :::note
-每个 ERP 过账步骤还有自己的 Validate Only 设置（在某些步骤上标为 Preview 或 Test Only Mode），独立于上述运行的过账模式。步骤编辑器始终会显式保存此设置。通过其他方式（REST API、MCP 或工作流包导入）写入的步骤配置如果完全省略该设置，现在同样默认为预览而不是实际过账。
+每个 ERP 过账步骤还有自己的 Validate Only 设置（在某些步骤上标为 Preview 或 Test Only Mode），独立于上述运行的过账模式。步骤编辑器始终会显式保存此设置。通过其他方式（REST API、MCP 或工作流包导入）写入的步骤配置如果完全省略该设置，现在同样默认为预览而不是实际过账。**过账凭证**步骤没有这样的设置：是否过账由运行的模式及其系统自己的模式决定，请参阅[向 ERP 系统过账凭证](/zh-cn/guides/connections/post-documents/)。
 :::
 
 ## 授权项目过账

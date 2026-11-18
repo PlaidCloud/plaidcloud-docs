@@ -21,3 +21,8 @@ Sélectionnez l'agent dans Agent à utiliser. Sélectionnez le Répertoire cible
 
 
 Vous pouvez choisir Insérer une ligne ou Ajouter une ligne dans la section Paramètres, nommer les paramètres et leur attribuer des valeurs. Choisissez le Nombre max. de requêtes simultanées, puis sélectionnez Wait for RFC to Complete. Enregistrez et exécutez l'étape (Enregistrer et exécuter).
+
+
+## Convertir en Comptabiliser des documents
+
+Une étape enregistrée comporte un bouton **Convertir en Comptabiliser des documents…**. Il montre d'abord ce qui serait converti (le nombre de colonnes mises en correspondance avec les champs du document et le nombre d'entités acheminées vers leurs systèmes) et, une fois que vous confirmez, transforme l'étape en étape **Comptabiliser des documents** (consultez [Comptabiliser des documents dans les systèmes ERP](/fr/guides/connections/post-documents/)). Les anciens paramètres restent dans les versions de l'étape.
