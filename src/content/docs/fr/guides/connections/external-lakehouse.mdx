@@ -127,6 +127,73 @@ Dès que l'espace de travail dispose d'un entrepôt joint par connexion, chaque 
 
 Un tableau de bord sur un tel entrepôt s'exécute avec les propres autorisations du lecteur dans cet entrepôt. Un lecteur qui ne s'est pas connecté voit ce message : *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
 
+## Prérequis Databricks
+
+- **Un espace de travail accessible à une URL publique.** Consultez la règle sur l'adresse sous [Connecter](#2-se-connecter).
+- **Unity Catalog** avec un catalogue dans lequel PlaidCloud peut créer des schémas. Un catalogue sans stockage géré refuse `CREATE SCHEMA`, et aucun privilège n'y remédie. Le catalogue historique `hive_metastore` n'a pas de volumes : les importations de fichiers dans un projet y échouent, et un envoi vers une connexion Databricks y s'exécute ligne par ligne.
+- **Un SQL warehouse.** Nous recommandons un SQL warehouse **serverless**. Un SQL warehouse classique arrêté met plusieurs minutes à démarrer, et la première vérification de connexion ou requête après son arrêt l'attend, alors qu'un SQL warehouse serverless est prêt bien plus tôt.
+- **Un administrateur de l'espace de travail et du metastore** pour exécuter le script de configuration, ou un administrateur du compte pour ajouter la connexion d'application et un administrateur de l'espace de travail pour se connecter.
+
+PlaidCloud s'identifie auprès de Databricks avec le User-Agent `PlaidCloud_Lakehouse` pour votre entrepôt de données et ses tableaux de bord, et `PlaidCloud_Connector` pour une connexion Databricks utilisée par des workflows. Il n'inclut jamais le nom d'un locataire, d'une organisation ou d'un utilisateur.
+
+## Méthodes de connexion à Databricks
+
+PlaidCloud accède à Databricks de l'une de trois façons. Chacune est choisie lorsque vous ajoutez l'entrepôt de données.
+
+| Méthode | À utiliser quand | Renouvellement |
+|---|---|---|
+| Sign in with Databricks (OAuth U2M) | Vous voulez que les tableaux de bord et les requêtes de chaque personne s'exécutent avec ses propres autorisations Databricks | PlaidCloud maintient la connexion à jour |
+| Secret OAuth d'un service principal (OAuth M2M) | Les workflows et les tableaux de bord doivent s'exécuter sous un seul service principal | PlaidCloud génère un nouveau jeton d'accès avant l'expiration de l'ancien |
+| Jeton d'accès personnel | Vous ne pouvez utiliser aucune des deux méthodes OAuth | Le jeton expire à sa date, et vous en ajoutez un nouveau |
+
+### Se connecter avec Databricks
+
+PlaidCloud se connecte avec le flux OAuth par code d'autorisation et PKCE.
+
+1. En tant qu'administrateur du compte, ouvrez **Account console > Settings > App connections** et ajoutez une application nommée `PlaidCloud`. Donnez-lui l'URL de redirection affichée dans la fenêtre de connexion et l'accès à toutes les API, et laissez **Generate a client secret** désactivé. L'accès à toutes les API est obligatoire : PlaidCloud utilise la connexion de l'administrateur pour créer son service principal, et les personnes qui se connectent ensuite n'obtiennent que la portée `sql`.
+2. Copiez l'ID client de l'application.
+3. Dans PlaidCloud, ouvrez votre menu utilisateur, choisissez **Gérer les entrepôts de données**, puis **Ajouter un entrepôt de données**, et choisissez **Databricks**.
+4. Sous **Le plus rapide : se connecter avec Databricks**, saisissez **URL de l'espace de travail**, **ID client** et **Chemin HTTP du SQL warehouse**. **Catalogue** est facultatif.
+5. Choisissez **Se connecter avec Databricks**, connectez-vous en tant qu'administrateur de l'espace de travail Databricks, et approuvez. PlaidCloud crée son propre service principal pour les workflows. Consultez [Rattacher l'entrepôt](#rattacher-lentrepôt).
+
+### Secret OAuth d'un service principal
+
+1. Dans PlaidCloud, ouvrez **Gérer les entrepôts de données**, choisissez **Ajouter un entrepôt de données**, puis choisissez **Databricks**.
+2. En tant qu'administrateur de l'espace de travail et du metastore, exécutez le script de configuration depuis la fenêtre (voir [Exécuter d'abord le script de configuration](#1-exécuter-dabord-le-script-de-configuration)). Il crée le service principal, le SQL warehouse et le catalogue. Ou créez vous-même un service principal, générez-lui un secret OAuth dans Databricks et accordez-lui les privilèges de [Privilèges minimaux Databricks](#privilèges-minimaux-databricks).
+3. Sous **2. Connecter**, saisissez **URL de l'espace de travail**, **Chemin HTTP du SQL warehouse**, **ID d'application** (l'ID d'application du service principal) et **Secret OAuth**.
+4. Choisissez **Tester la connexion**, puis **Utiliser comme mon entrepôt de données**.
+
+PlaidCloud demande la portée `all-apis` lorsqu'il génère un jeton.
+
+### Jeton d'accès personnel
+
+1. Dans Databricks, créez un jeton d'accès personnel pour un utilisateur ou un service principal qui dispose des privilèges de [Privilèges minimaux Databricks](#privilèges-minimaux-databricks).
+2. Dans PlaidCloud, ouvrez **Gérer les entrepôts de données**, choisissez **Ajouter un entrepôt de données**, puis choisissez **Databricks**.
+3. Sous **2. Connecter**, saisissez **URL de l'espace de travail** et **Chemin HTTP du SQL warehouse**.
+4. Sélectionnez **Avancé : utiliser plutôt un jeton d'accès personnel** et collez le jeton dans **Jeton**. **ID d'application** et **Secret OAuth** ne sont pas nécessaires.
+5. Choisissez **Tester la connexion**, puis **Utiliser comme mon entrepôt de données**.
+
+Un jeton expire à sa date, et PlaidCloud n'accède plus à votre entrepôt de données tant que vous n'en ajoutez pas un nouveau. Consultez [Connecter](#2-se-connecter) pour la bannière de renouvellement.
+
+## Privilèges minimaux Databricks
+
+Accordez-les au service principal, ou à l'utilisateur dans le cas d'un jeton d'accès personnel. **Tester la connexion** vérifie les privilèges nécessaires pour rattacher l'entrepôt de données et liste ceux qui manquent sous forme d'instructions `GRANT` prêtes à exécuter. Un privilège manquant sur un volume n'apparaît qu'au moment d'une importation ou d'un envoi.
+
+| Pour | Accorder |
+|---|---|
+| Rattacher l'entrepôt de données | `USE CATALOG`, `CREATE SCHEMA` et `USE SCHEMA` sur le catalogue, et `CAN_USE` sur le SQL warehouse |
+| Interroger et écrire des tables | `USE SCHEMA`, `SELECT`, `MODIFY` et `CREATE TABLE` sur le schéma du projet, et `CAN_USE` sur le SQL warehouse |
+| Importer des fichiers et des documents (le volume `plaid_import` dans le schéma du projet) | `CREATE VOLUME` sur le schéma, ou `READ VOLUME` et `WRITE VOLUME` sur un volume `plaid_import` créé par un administrateur |
+| Pousser une table depuis un workflow vers une connexion Databricks (le volume `plaid_export` dans le schéma cible) | `USE CATALOG` et `USE SCHEMA` sur la cible, `MODIFY` sur la table cible (et `CREATE TABLE` sur le schéma lorsque l'étape la crée), et `CREATE VOLUME` sur le schéma, ou `READ VOLUME` et `WRITE VOLUME` sur un volume `plaid_export` créé par un administrateur |
+
+Un envoi place chaque lot dans un fichier Parquet du volume et le charge avec `COPY INTO`, avec le mode ANSI activé : une valeur qui ne tient pas dans sa colonne fait donc échouer l'étape au lieu de devenir `NULL`. Sans les privilèges sur les volumes, l'envoi se replie sur des instructions `INSERT` ligne par ligne, bien plus lentes, et l'étape émet un avertissement qui nomme les privilèges à ajouter. Sur le catalogue `hive_metastore`, l'envoi s'exécute toujours ligne par ligne, sans avertissement.
+
+## Comportements Databricks à connaître
+
+- **L'importation de fichiers et de documents nécessite le service principal.** Sur un entrepôt de données rattaché par connexion sans service principal (un rattachement SQL uniquement), une importation s'arrête et indique qu'un administrateur de l'espace de travail doit se reconnecter avec Databricks pour en ajouter un.
+- **Les tableaux de bord se réenregistrent une fois après la mise à niveau.** Chaque connexion de tableau de bord Databricks est enregistrée de nouveau une fois avec le User-Agent PlaidCloud. Vous n'avez rien à faire.
+- **Supprimer un entrepôt de données ne peut pas révoquer une connexion chez Databricks.** Databricks ne documente aucun moyen de révoquer le jeton de connexion que PlaidCloud détient pour une personne. PlaidCloud supprime sa copie et, lorsque chacun est le seul, le secret du service principal et un jeton d'accès personnel, mais un jeton de connexion lui-même reste valide chez Databricks. PlaidCloud ne supprime pas le service principal qu'il a créé ; supprimez-le dans Databricks. Pour mettre fin aux connexions, supprimez la connexion d'application `PlaidCloud` sous **Account console > Settings > App connections**.
+
 ## Gérer les entrepôts de données
 
 Un administrateur de l'espace de travail ouvre le menu utilisateur et choisit **Gérer les entrepôts de données**. La fenêtre **Vos entrepôts de données** liste pour chaque entrepôt son **Nom**, son **Type**, **Par défaut**, **Projets** et son **Statut**.
@@ -139,7 +206,7 @@ Un administrateur de l'espace de travail ouvre le menu utilisateur et choisit **
 
 <Aside type="note">L'apparition d'un entrepôt nouvellement ajouté dans votre espace de travail peut prendre plusieurs minutes. Chaque espace de travail s'exécute de façon isolée des autres et prend en compte seul les changements de configuration ; tant que le changement n'est pas arrivé, l'entrepôt n'est pas listé et les projets ne peuvent pas encore l'utiliser. S'il n'est toujours pas apparu après une heure, contactez l'assistance PlaidCloud.</Aside>
 
-Lorsque vous supprimez un entrepôt, PlaidCloud révoque son identifiant dans votre compte (y compris toutes les connexions et l'identité de service) et en supprime sa copie. Vos données restent dans votre entrepôt. Si l'identifiant ne peut pas être révoqué, PlaidCloud vous indique de le révoquer vous-même dans votre compte.
+Lorsque vous supprimez un entrepôt, PlaidCloud révoque son identifiant dans votre compte et en supprime sa copie. Sur Snowflake, cela comprend toutes les connexions et l'identité de service. Sur Databricks, cela comprend le secret du service principal, mais pas les connexions des personnes (voir [Comportements Databricks à connaître](#comportements-databricks-à-connaître)). Vos données restent dans votre entrepôt. Si l'identifiant ne peut pas être révoqué, PlaidCloud vous indique de le révoquer vous-même dans votre compte.
 
 ## Coût de l'entrepôt par exécution
 
@@ -168,7 +235,7 @@ Créez vos workflows exactement comme sur le lakehouse intégré : les étapes d
 
 ## Importer des fichiers dans un projet lié à un lakehouse
 
-L'importation d'un fichier CSV, Parquet, XML ou Access dans un projet lié à un lakehouse le charge via le **chemin de chargement en masse natif et parallèle** de votre entrepôt : une zone de transit interne Snowflake plus `COPY INTO` pour Snowflake, un volume géré Databricks plus `COPY INTO` pour Databricks — au lieu de transiter le fichier par un bucket cloud externe. Aucun IAM cloud supplémentaire n'est à configurer, et le fonctionnement est identique quel que soit le cloud sur lequel s'exécute votre entrepôt.
+L'importation d'un fichier CSV, Parquet, XML ou Access dans un projet lié à un lakehouse le charge via le **chemin de chargement en masse natif et parallèle** de votre entrepôt : une zone de transit interne Snowflake plus `COPY INTO` pour Snowflake, un volume géré Databricks plus `COPY INTO` pour Databricks (voir [Privilèges minimaux Databricks](#privilèges-minimaux-databricks)) — au lieu de transiter le fichier par un bucket cloud externe. Aucun IAM cloud supplémentaire n'est à configurer, et le fonctionnement est identique quel que soit le cloud sur lequel s'exécute votre entrepôt.
 
 ## Exporter les résultats de requêtes et de tables
 
