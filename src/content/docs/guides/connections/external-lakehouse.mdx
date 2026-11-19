@@ -126,6 +126,73 @@ Once the workspace has a warehouse reached by sign-in, every member sees **Sign 
 
 A dashboard on such a warehouse runs with the viewer's own permissions there. A viewer who hasn't signed in is told: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
 
+## Databricks Requirements
+
+- **A workspace at a public URL.** See the address rule under [Connect](#2-connect).
+- **Unity Catalog** with a catalog PlaidCloud can create schemas in. A catalog with no managed storage refuses `CREATE SCHEMA`, and no grant fixes that. The legacy `hive_metastore` catalog has no volumes, so file imports into a project there fail, and a push to a Databricks connection there runs row by row.
+- **A SQL warehouse.** We recommend a **serverless** SQL warehouse. A stopped classic SQL warehouse takes minutes to start, and the first connection check or query after it stops waits for it, while a serverless warehouse is ready much sooner.
+- **A workspace and metastore admin** to run the setup script, or an account admin to add the app connection and a workspace admin to sign in.
+
+PlaidCloud identifies itself to Databricks with the User-Agent `PlaidCloud_Lakehouse` for your warehouse and its dashboards, and `PlaidCloud_Connector` for a Databricks connection used by workflows. It never includes a tenant, organization, or user name.
+
+## Databricks Sign-In Methods
+
+PlaidCloud reaches Databricks in one of three ways. Each is chosen when you add the warehouse.
+
+| Method | Use it when | Renewal |
+|---|---|---|
+| Sign in with Databricks (OAuth U2M) | You want each person's dashboards and queries to run with their own Databricks permissions | PlaidCloud keeps the sign-in refreshed |
+| OAuth secret for a service principal (OAuth M2M) | Workflows and dashboards should run as one service principal | PlaidCloud mints a new access token before the old one expires |
+| Personal access token | You can't use either OAuth method | The token expires on its date, and you add a new one |
+
+### Sign In With Databricks
+
+PlaidCloud signs in with the OAuth authorization-code flow and PKCE.
+
+1. As an account admin, open **Account console > Settings > App connections** and add an app named `PlaidCloud`. Give it the redirect URL shown in the connection dialog and access to all APIs, and leave **Generate a client secret** off. Access to all APIs is required: PlaidCloud uses the admin's sign-in to create its service principal, and people who sign in later get only the `sql` scope.
+2. Copy the app's client ID.
+3. In PlaidCloud, open your user menu, choose **Manage warehouses**, then **Add warehouse**, and choose **Databricks**.
+4. Under **Quickest: sign in with Databricks**, enter **Workspace URL**, **Client ID**, and **SQL warehouse HTTP path**. **Catalog** is optional.
+5. Choose **Sign in with Databricks**, sign in as a Databricks workspace admin, and approve. PlaidCloud creates its own service principal for workflows. See [Attach the Warehouse](#attach-the-warehouse).
+
+### OAuth Secret for a Service Principal
+
+1. In PlaidCloud, open **Manage warehouses**, choose **Add warehouse**, and choose **Databricks**.
+2. As a workspace and metastore admin, run the setup script from the dialog (see [Run the Setup Script First](#1-run-the-setup-script-first)). It creates the service principal, the SQL warehouse, and the catalog. Or create a service principal yourself, generate an OAuth secret for it in Databricks, and give it the privileges in [Databricks Minimum Privileges](#databricks-minimum-privileges).
+3. Under **2. Connect**, enter **Workspace URL**, **SQL warehouse HTTP path**, **Application ID** (the service principal's application ID), and **OAuth secret**.
+4. Choose **Test connection**, then **Use as my warehouse**.
+
+PlaidCloud requests the `all-apis` scope when it mints a token.
+
+### Personal Access Token
+
+1. In Databricks, create a personal access token for a user or service principal that holds the privileges in [Databricks Minimum Privileges](#databricks-minimum-privileges).
+2. In PlaidCloud, open **Manage warehouses**, choose **Add warehouse**, and choose **Databricks**.
+3. Under **2. Connect**, enter **Workspace URL** and **SQL warehouse HTTP path**.
+4. Select **Advanced: use a personal access token instead** and paste the token into **Token**. **Application ID** and **OAuth secret** aren't needed.
+5. Choose **Test connection**, then **Use as my warehouse**.
+
+A token expires on its date, and PlaidCloud stops reaching your warehouse until you add a new one. See [Connect](#2-connect) for the renewal banner.
+
+## Databricks Minimum Privileges
+
+Grant these to the service principal, or to the user for a personal access token. **Test connection** checks the privileges to attach the warehouse and lists any that are missing as ready-to-run `GRANT` statements. A missing volume grant shows up only when an import or push runs.
+
+| To | Grant |
+|---|---|
+| Attach the warehouse | `USE CATALOG`, `CREATE SCHEMA`, and `USE SCHEMA` on the catalog, and `CAN_USE` on the SQL warehouse |
+| Query and write tables | `USE SCHEMA`, `SELECT`, `MODIFY`, and `CREATE TABLE` on the project's schema, and `CAN_USE` on the SQL warehouse |
+| Import files and documents (the `plaid_import` volume in the project's schema) | `CREATE VOLUME` on the schema, or `READ VOLUME` and `WRITE VOLUME` on a `plaid_import` volume an admin created |
+| Push a table from a workflow to a Databricks connection (the `plaid_export` volume in the target schema) | `USE CATALOG` and `USE SCHEMA` on the target, `MODIFY` on the target table (and `CREATE TABLE` on the schema when the step creates it), and `CREATE VOLUME` on the schema, or `READ VOLUME` and `WRITE VOLUME` on a `plaid_export` volume an admin created |
+
+A push stages each batch as a Parquet file in the volume and loads it with `COPY INTO`, with ANSI mode on, so a value that doesn't fit its column fails the step instead of becoming `NULL`. Without the volume grants, the push falls back to row-by-row `INSERT` statements, which are far slower, and the step warns and names the grants to add. On the `hive_metastore` catalog the push always runs row by row, with no warning.
+
+## Databricks Behaviors to Know
+
+- **Importing files and documents needs the service principal.** On a warehouse attached by sign-in with no service principal (a SQL-only attach), an import stops and says a workspace admin needs to sign in with Databricks again to add one.
+- **Dashboards re-register once after the upgrade.** Each Databricks dashboard connection is registered again once with the PlaidCloud User-Agent. You don't need to do anything.
+- **Removing a warehouse can't revoke a sign-in at Databricks.** Databricks documents no way to revoke the sign-in token PlaidCloud holds for a person. PlaidCloud deletes its copy and, when each is the only one, the service principal's secret and a personal access token, but a sign-in token itself stays valid at Databricks. PlaidCloud doesn't delete the service principal it created; delete it in Databricks. To end sign-ins, remove the `PlaidCloud` app connection under **Account console > Settings > App connections**.
+
 ## Manage Warehouses
 
 A workspace administrator opens the user menu and chooses **Manage warehouses**. The **Your warehouses** window lists each warehouse's **Name**, **Type**, **Default**, **Projects**, and **Status**.
@@ -138,7 +205,7 @@ A workspace administrator opens the user menu and chooses **Manage warehouses**.
 
 <Aside type="note">A newly added warehouse can take several minutes to appear in your workspace. Each workspace runs isolated from the others and picks up configuration changes on its own, so until the change arrives the warehouse isn't listed and projects can't use it yet. If it still hasn't appeared after an hour, contact PlaidCloud support.</Aside>
 
-When you remove a warehouse, PlaidCloud revokes its credential in your account (including every sign-in and the service identity) and deletes its copy. Your data stays in your warehouse. If the credential can't be revoked, PlaidCloud tells you to revoke it in your account yourself.
+When you remove a warehouse, PlaidCloud revokes its credential in your account and deletes its copy. On Snowflake that includes every sign-in and the service identity. On Databricks it includes the service principal's secret, but not people's sign-ins (see [Databricks Behaviors to Know](#databricks-behaviors-to-know)). Your data stays in your warehouse. If the credential can't be revoked, PlaidCloud tells you to revoke it in your account yourself.
 
 ## Warehouse Cost per Run
 
@@ -167,7 +234,7 @@ Build workflows exactly as you would on the built-in lakehouse — import, trans
 
 ## Importing Files Into a Lakehouse-Bound Project
 
-Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
+Importing a CSV, Parquet, XML, or Access file into a lakehouse-bound project loads it through your warehouse's own **native, parallel bulk-load path**: a Snowflake internal stage plus `COPY INTO` for Snowflake, a Databricks managed volume plus `COPY INTO` for Databricks (see [Databricks Minimum Privileges](#databricks-minimum-privileges)) — instead of staging the file through an external cloud bucket. There's no extra cloud IAM to configure, and it works the same way regardless of which cloud your warehouse runs on.
 
 ## Exporting Query and Table Results
 

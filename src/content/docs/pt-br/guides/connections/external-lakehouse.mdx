@@ -127,6 +127,73 @@ Quando o espaço de trabalho tem um data warehouse acessado por login, todo memb
 
 Um painel em um data warehouse desse tipo é executado com as permissões do próprio visualizador nele. Um visualizador que não entrou recebe a mensagem: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
 
+## Requisitos do Databricks
+
+- **Um espaço de trabalho em uma URL pública.** Consulte a regra de endereço em [Conectar](#2-conectar).
+- **Unity Catalog** com um catálogo em que o PlaidCloud possa criar esquemas. Um catálogo sem armazenamento gerenciado recusa `CREATE SCHEMA`, e nenhuma concessão resolve isso. O catálogo legado `hive_metastore` não tem volumes, então as importações de arquivos em um projeto ali falham, e um envio para uma conexão do Databricks ali é executado linha por linha.
+- **Um SQL warehouse.** Recomendamos um SQL warehouse **serverless**. Um SQL warehouse clássico parado leva minutos para iniciar, e a primeira verificação de conexão ou consulta depois que ele para fica esperando por ele, enquanto um SQL warehouse serverless fica pronto bem mais rápido.
+- **Um administrador do espaço de trabalho e do metastore** para executar o script de configuração, ou um administrador da conta para adicionar a conexão do aplicativo e um administrador do espaço de trabalho para fazer login.
+
+O PlaidCloud se identifica para o Databricks com o User-Agent `PlaidCloud_Lakehouse` para o seu data warehouse e os painéis dele, e `PlaidCloud_Connector` para uma conexão do Databricks usada por fluxos de trabalho. Ele nunca inclui o nome de um tenant, de uma organização ou de um usuário.
+
+## Métodos de login do Databricks
+
+O PlaidCloud acessa o Databricks de uma de três maneiras. Cada uma é escolhida quando você adiciona o data warehouse.
+
+| Método | Use quando | Renovação |
+|---|---|---|
+| Entrar com o Databricks (OAuth U2M) | Você quer que os painéis e as consultas de cada pessoa sejam executados com as próprias permissões dela no Databricks | O PlaidCloud mantém o login atualizado |
+| Segredo OAuth de um service principal (OAuth M2M) | Os fluxos de trabalho e os painéis devem ser executados como um único service principal | O PlaidCloud gera um novo token de acesso antes de o anterior expirar |
+| Token de acesso pessoal | Você não pode usar nenhum dos dois métodos OAuth | O token expira na data dele, e você adiciona um novo |
+
+### Entrar com o Databricks
+
+O PlaidCloud entra com o fluxo de código de autorização do OAuth e PKCE.
+
+1. Como administrador da conta, abra **Account console > Settings > App connections** e adicione um aplicativo chamado `PlaidCloud`. Informe a URL de redirecionamento mostrada na caixa de diálogo de conexão e acesso a todas as APIs, e deixe **Generate a client secret** desativado. O acesso a todas as APIs é obrigatório: o PlaidCloud usa o login do administrador para criar o service principal dele, e as pessoas que entram depois recebem apenas o escopo `sql`.
+2. Copie o ID do cliente do aplicativo.
+3. No PlaidCloud, abra o menu do usuário, escolha **Gerenciar data warehouses**, depois **Adicionar data warehouse** e escolha **Databricks**.
+4. Em **Mais rápido: entrar com Databricks**, informe a **URL do espaço de trabalho**, o **ID do cliente** e o **Caminho HTTP do SQL warehouse**. **Catálogo** é opcional.
+5. Escolha **Entrar com Databricks**, entre como administrador do espaço de trabalho do Databricks e aprove. O PlaidCloud cria o próprio service principal para os fluxos de trabalho. Consulte [Anexar o data warehouse](#anexar-o-data-warehouse).
+
+### Segredo OAuth de um service principal
+
+1. No PlaidCloud, abra **Gerenciar data warehouses**, escolha **Adicionar data warehouse** e escolha **Databricks**.
+2. Como administrador do espaço de trabalho e do metastore, execute o script de configuração da caixa de diálogo (consulte [Execute primeiro o script de configuração](#1-execute-primeiro-o-script-de-configuração)). Ele cria o service principal, o SQL warehouse e o catálogo. Ou crie você mesmo um service principal, gere um segredo OAuth para ele no Databricks e conceda a ele os privilégios de [Privilégios mínimos do Databricks](#privilégios-mínimos-do-databricks).
+3. Em **2. Conectar**, informe a **URL do espaço de trabalho**, o **Caminho HTTP do SQL warehouse**, o **ID do aplicativo** (o ID do aplicativo do service principal) e o **Segredo OAuth**.
+4. Escolha **Testar conexão** e depois **Usar como meu data warehouse**.
+
+O PlaidCloud solicita o escopo `all-apis` ao gerar um token.
+
+### Token de acesso pessoal
+
+1. No Databricks, crie um token de acesso pessoal para um usuário ou service principal que tenha os privilégios de [Privilégios mínimos do Databricks](#privilégios-mínimos-do-databricks).
+2. No PlaidCloud, abra **Gerenciar data warehouses**, escolha **Adicionar data warehouse** e escolha **Databricks**.
+3. Em **2. Conectar**, informe a **URL do espaço de trabalho** e o **Caminho HTTP do SQL warehouse**.
+4. Selecione **Avançado: usar um token de acesso pessoal** e cole o token em **Token**. O **ID do aplicativo** e o **Segredo OAuth** não são necessários.
+5. Escolha **Testar conexão** e depois **Usar como meu data warehouse**.
+
+Um token expira na data dele, e o PlaidCloud deixa de acessar seu data warehouse até que você adicione um novo. Consulte [Conectar](#2-conectar) para ver o banner de renovação.
+
+## Privilégios mínimos do Databricks
+
+Conceda estes ao service principal, ou ao usuário no caso de um token de acesso pessoal. **Testar conexão** verifica os privilégios para anexar o data warehouse e lista os que estiverem ausentes como instruções `GRANT` prontas para execução. Uma concessão de volume ausente só aparece quando uma importação ou um envio é executado.
+
+| Para | Conceder |
+|---|---|
+| Anexar o data warehouse | `USE CATALOG`, `CREATE SCHEMA` e `USE SCHEMA` no catálogo, e `CAN_USE` no SQL warehouse |
+| Consultar e gravar tabelas | `USE SCHEMA`, `SELECT`, `MODIFY` e `CREATE TABLE` no esquema do projeto, e `CAN_USE` no SQL warehouse |
+| Importar arquivos e documentos (o volume `plaid_import` no esquema do projeto) | `CREATE VOLUME` no esquema, ou `READ VOLUME` e `WRITE VOLUME` em um volume `plaid_import` criado por um administrador |
+| Enviar uma tabela de um fluxo de trabalho para uma conexão do Databricks (o volume `plaid_export` no esquema de destino) | `USE CATALOG` e `USE SCHEMA` no destino, `MODIFY` na tabela de destino (e `CREATE TABLE` no esquema quando a etapa a cria) e `CREATE VOLUME` no esquema, ou `READ VOLUME` e `WRITE VOLUME` em um volume `plaid_export` criado por um administrador |
+
+Um envio coloca cada lote em um arquivo Parquet no volume e o carrega com `COPY INTO`, com o modo ANSI ativado, de modo que um valor que não cabe na coluna faz a etapa falhar em vez de se tornar `NULL`. Sem as concessões de volume, o envio recorre a instruções `INSERT` linha por linha, que são muito mais lentas, e a etapa emite um aviso e nomeia as concessões a adicionar. No catálogo `hive_metastore`, o envio sempre é executado linha por linha, sem aviso.
+
+## Comportamentos do Databricks que você deve conhecer
+
+- **Importar arquivos e documentos exige o service principal.** Em um data warehouse anexado por login sem service principal (um anexo somente de SQL), uma importação é interrompida e informa que um administrador do espaço de trabalho precisa entrar novamente com o Databricks para adicionar um.
+- **Os painéis são registrados novamente uma vez após a atualização.** Cada conexão de painel do Databricks é registrada novamente uma vez com o User-Agent do PlaidCloud. Você não precisa fazer nada.
+- **Remover um data warehouse não revoga um login no Databricks.** O Databricks não documenta nenhuma forma de revogar o token de login que o PlaidCloud mantém para uma pessoa. O PlaidCloud exclui a cópia que mantém e, quando cada um é o único, o segredo do service principal e um token de acesso pessoal, mas um token de login em si continua válido no Databricks. O PlaidCloud não exclui o service principal que criou; exclua-o no Databricks. Para encerrar os logins, remova a conexão do aplicativo `PlaidCloud` em **Account console > Settings > App connections**.
+
 ## Gerenciar data warehouses
 
 Um administrador do espaço de trabalho abre o menu do usuário e escolhe **Gerenciar data warehouses**. A janela **Seus data warehouses** lista **Nome**, **Tipo**, **Padrão**, **Projetos** e **Status** de cada data warehouse.
@@ -139,7 +206,7 @@ Um administrador do espaço de trabalho abre o menu do usuário e escolhe **Gere
 
 <Aside type="note">Um data warehouse recém-adicionado pode levar vários minutos para aparecer no seu espaço de trabalho. Cada espaço de trabalho é executado isolado dos demais e recebe as alterações de configuração por conta própria; até que a alteração chegue, o data warehouse não é listado e os projetos ainda não podem usá-lo. Se ele ainda não tiver aparecido depois de uma hora, entre em contato com o suporte do PlaidCloud.</Aside>
 
-Quando você remove um data warehouse, o PlaidCloud revoga a credencial dele na sua conta (incluindo todos os logins e a identidade de serviço) e exclui a cópia que mantém. Seus dados permanecem no seu data warehouse. Se a credencial não puder ser revogada, o PlaidCloud orienta você a revogá-la você mesmo na sua conta.
+Quando você remove um data warehouse, o PlaidCloud revoga a credencial dele na sua conta e exclui a cópia que mantém. No Snowflake, isso inclui todos os logins e a identidade de serviço. No Databricks, inclui o segredo do service principal, mas não os logins das pessoas (consulte [Comportamentos do Databricks que você deve conhecer](#comportamentos-do-databricks-que-você-deve-conhecer)). Seus dados permanecem no seu data warehouse. Se a credencial não puder ser revogada, o PlaidCloud orienta você a revogá-la você mesmo na sua conta.
 
 ## Custo do warehouse por execução
 
@@ -168,7 +235,7 @@ Crie fluxos de trabalho exatamente como faria no lakehouse integrado — as etap
 
 ## Importar arquivos para um projeto vinculado a um lakehouse
 
-A importação de um arquivo CSV, Parquet, XML ou Access para um projeto vinculado a um lakehouse o carrega pelo **caminho nativo de carga em massa paralela** do próprio data warehouse: um stage interno do Snowflake mais `COPY INTO` no Snowflake, um volume gerenciado do Databricks mais `COPY INTO` no Databricks — em vez de passar o arquivo por um bucket de nuvem externo. Não há IAM de nuvem adicional para configurar, e funciona da mesma maneira, independentemente da nuvem em que o seu data warehouse é executado.
+A importação de um arquivo CSV, Parquet, XML ou Access para um projeto vinculado a um lakehouse o carrega pelo **caminho nativo de carga em massa paralela** do próprio data warehouse: um stage interno do Snowflake mais `COPY INTO` no Snowflake, um volume gerenciado do Databricks mais `COPY INTO` no Databricks (consulte [Privilégios mínimos do Databricks](#privilégios-mínimos-do-databricks)) — em vez de passar o arquivo por um bucket de nuvem externo. Não há IAM de nuvem adicional para configurar, e funciona da mesma maneira, independentemente da nuvem em que o seu data warehouse é executado.
 
 ## Exportar resultados de consultas e tabelas
 

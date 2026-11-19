@@ -127,6 +127,73 @@ PlaidCloud 会在您的账户中创建专用于此数据仓库的服务身份。
 
 此类数据仓库上的仪表板以查看者本人在其中的权限运行。尚未登录的查看者会看到提示：*Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
 
+## Databricks 要求
+
+- **位于公共 URL 的工作区。** 请参阅[连接](#2-连接)中的地址规则。
+- **Unity Catalog**，并带有 PlaidCloud 可在其中创建架构的目录。没有托管存储的目录会拒绝 `CREATE SCHEMA`，任何授权都无法解决。旧版 `hive_metastore` 目录没有卷，因此向其中的项目导入文件会失败，向其中的 Databricks 连接推送则会逐行运行。
+- **SQL 仓库。** 我们建议使用**无服务器** SQL 仓库。已停止的经典 SQL 仓库需要几分钟才能启动，停止后的首次连接检查或查询会等待它启动，而无服务器仓库会快得多就绪。
+- **工作区和元存储管理员**，用于运行设置脚本；或账户管理员，用于添加应用连接，并由工作区管理员登录。
+
+PlaidCloud 向 Databricks 表明身份时，对您的数据仓库及其仪表板使用 User-Agent `PlaidCloud_Lakehouse`，对工作流所用的 Databricks 连接使用 `PlaidCloud_Connector`。其中绝不包含租户、组织或用户名称。
+
+## Databricks 登录方式
+
+PlaidCloud 通过以下三种方式之一访问 Databricks，在添加数据仓库时选择。
+
+| 方式 | 适用情形 | 续期 |
+|---|---|---|
+| 使用 Databricks 登录（OAuth U2M） | 希望每个人的仪表板和查询以其本人的 Databricks 权限运行 | PlaidCloud 会保持登录状态 |
+| 服务主体的 OAuth 密文（OAuth M2M） | 工作流和仪表板应以同一个服务主体运行 | PlaidCloud 会在旧访问令牌过期前签发新令牌 |
+| 个人访问令牌 | 无法使用上述两种 OAuth 方式 | 令牌在到期日过期，需要您添加新令牌 |
+
+### 使用 Databricks 登录
+
+PlaidCloud 使用 OAuth 授权码流程和 PKCE 登录。
+
+1. 以账户管理员身份打开 **Account console > Settings > App connections**，添加一个名为 `PlaidCloud` 的应用。为其提供连接对话框中显示的重定向 URL 并授予对所有 API 的访问权限，保持 **Generate a client secret** 关闭。必须授予对所有 API 的访问权限：PlaidCloud 会使用管理员的登录来创建其服务主体，而之后登录的人只会获得 `sql` 范围。
+2. 复制该应用的客户端 ID。
+3. 在 PlaidCloud 中打开用户菜单，选择**管理数据仓库**，然后选择**添加 Warehouse**，再选择 **Databricks**。
+4. 在 **最快方式：使用 Databricks 登录** 下，输入**工作区 URL**、**客户端 ID** 和 **SQL 仓库 HTTP 路径**。**目录**为可选项。
+5. 选择**使用 Databricks 登录**，以 Databricks 工作区管理员身份登录并批准。PlaidCloud 会为工作流创建其自己的服务主体。请参阅[挂接数据仓库](#挂接数据仓库)。
+
+### 服务主体的 OAuth 密文
+
+1. 在 PlaidCloud 中打开**管理数据仓库**，选择**添加 Warehouse**，然后选择 **Databricks**。
+2. 以工作区和元存储管理员身份运行对话框中的设置脚本（请参阅[先运行设置脚本](#1-先运行设置脚本)）。它会创建服务主体、SQL 仓库和目录。也可以自行创建服务主体，在 Databricks 中为其生成 OAuth 密文，并授予其 [Databricks 最低权限](#databricks-最低权限)中列出的权限。
+3. 在 **2. 连接**下，输入**工作区 URL**、**SQL 仓库 HTTP 路径**、**应用程序 ID**（服务主体的应用程序 ID）和 **OAuth 密文**。
+4. 选择**测试连接**，然后选择**用作我的数据仓库**。
+
+PlaidCloud 在签发令牌时会请求 `all-apis` 范围。
+
+### 个人访问令牌
+
+1. 在 Databricks 中，为拥有 [Databricks 最低权限](#databricks-最低权限)中所列权限的用户或服务主体创建个人访问令牌。
+2. 在 PlaidCloud 中打开**管理数据仓库**，选择**添加 Warehouse**，然后选择 **Databricks**。
+3. 在 **2. 连接**下，输入**工作区 URL** 和 **SQL 仓库 HTTP 路径**。
+4. 选择**高级：改用个人访问令牌**，并将令牌粘贴到**令牌**中。无需**应用程序 ID** 和 **OAuth 密文**。
+5. 选择**测试连接**，然后选择**用作我的数据仓库**。
+
+令牌在到期日过期，之后 PlaidCloud 将无法访问您的数据仓库，直到您添加新令牌。有关续期横幅，请参阅[连接](#2-连接)。
+
+## Databricks 最低权限
+
+将这些权限授予服务主体，使用个人访问令牌时则授予该用户。**测试连接**会检查挂接数据仓库所需的权限，并将缺少的权限列为可直接运行的 `GRANT` 语句。卷授权缺失只会在导入或推送运行时才显现。
+
+| 用途 | 授予 |
+|---|---|
+| 挂接数据仓库 | 目录上的 `USE CATALOG`、`CREATE SCHEMA` 和 `USE SCHEMA`，以及 SQL 仓库上的 `CAN_USE` |
+| 查询和写入表 | 项目架构上的 `USE SCHEMA`、`SELECT`、`MODIFY` 和 `CREATE TABLE`，以及 SQL 仓库上的 `CAN_USE` |
+| 导入文件和文档（项目架构中的 `plaid_import` 卷） | 架构上的 `CREATE VOLUME`，或管理员创建的 `plaid_import` 卷上的 `READ VOLUME` 和 `WRITE VOLUME` |
+| 将表从工作流推送到 Databricks 连接（目标架构中的 `plaid_export` 卷） | 目标上的 `USE CATALOG` 和 `USE SCHEMA`，目标表上的 `MODIFY`（步骤创建该表时还需架构上的 `CREATE TABLE`），以及架构上的 `CREATE VOLUME`，或管理员创建的 `plaid_export` 卷上的 `READ VOLUME` 和 `WRITE VOLUME` |
+
+推送会将每个批次作为 Parquet 文件暂存到卷中，并在开启 ANSI 模式的情况下用 `COPY INTO` 加载，因此无法放入其列的值会使步骤失败，而不是变成 `NULL`。没有卷授权时，推送会退回到逐行 `INSERT` 语句，速度要慢得多，步骤会发出警告并指明需要添加的授权。在 `hive_metastore` 目录上，推送始终逐行运行，且不会发出警告。
+
+## Databricks 须知事项
+
+- **导入文件和文档需要服务主体。** 在通过登录挂接且没有服务主体的数据仓库（仅 SQL 挂接）上，导入会停止，并提示需要工作区管理员再次使用 Databricks 登录以添加服务主体。
+- **仪表板会在升级后重新注册一次。** 每个 Databricks 仪表板连接会使用 PlaidCloud 的 User-Agent 重新注册一次。您无需执行任何操作。
+- **移除数据仓库无法在 Databricks 撤销登录。** Databricks 没有文档说明如何撤销 PlaidCloud 为某人持有的登录令牌。PlaidCloud 会删除其副本，并在各自为唯一时删除服务主体的密文和个人访问令牌，但登录令牌本身在 Databricks 仍然有效。PlaidCloud 不会删除其创建的服务主体，请在 Databricks 中删除。要终止登录，请在 **Account console > Settings > App connections** 下移除 `PlaidCloud` 应用连接。
+
 ## 管理数据仓库
 
 工作区管理员打开用户菜单并选择**管理数据仓库**。**您的数据仓库**窗口会列出每个数据仓库的**名称**、**类型**、**默认**、**项目**和**状态**。
@@ -139,7 +206,7 @@ PlaidCloud 会在您的账户中创建专用于此数据仓库的服务身份。
 
 <Aside type="note">新添加的数据仓库可能需要几分钟才会出现在您的工作区中。每个工作区相互隔离运行，并自行获取配置更改，因此在更改到达之前，该数据仓库不会列出，项目也暂时无法使用它。如果一小时后仍未出现，请联系 PlaidCloud 支持人员。</Aside>
 
-移除数据仓库时，PlaidCloud 会撤销其在您账户中的凭据（包括所有登录和服务身份）并删除其副本。您的数据仍保留在您的数据仓库中。如果无法撤销凭据，PlaidCloud 会告知您自行在账户中撤销。
+移除数据仓库时，PlaidCloud 会撤销其在您账户中的凭据并删除其副本。在 Snowflake 上，这包括所有登录和服务身份。在 Databricks 上，这包括服务主体的密文，但不包括人员的登录（请参阅 [Databricks 须知事项](#databricks-须知事项)）。您的数据仍保留在您的数据仓库中。如果无法撤销凭据，PlaidCloud 会告知您自行在账户中撤销。
 
 ## 每次运行的仓库成本
 
@@ -168,7 +235,7 @@ PlaidCloud 会在您的账户中创建专用于此数据仓库的服务身份。
 
 ## 向绑定了 Lakehouse 的项目导入文件
 
-向绑定了 Lakehouse 的项目导入 CSV、Parquet、XML 或 Access 文件时，会通过您数据仓库自身的**原生并行批量加载路径**加载：Snowflake 使用内部暂存区加 `COPY INTO`，Databricks 使用托管卷加 `COPY INTO`，而不是通过外部云存储桶暂存文件。无需配置额外的云 IAM，并且无论您的数据仓库运行在哪个云上，工作方式都相同。
+向绑定了 Lakehouse 的项目导入 CSV、Parquet、XML 或 Access 文件时，会通过您数据仓库自身的**原生并行批量加载路径**加载：Snowflake 使用内部暂存区加 `COPY INTO`，Databricks 使用托管卷加 `COPY INTO`（请参阅 [Databricks 最低权限](#databricks-最低权限)），而不是通过外部云存储桶暂存文件。无需配置额外的云 IAM，并且无论您的数据仓库运行在哪个云上，工作方式都相同。
 
 ## 导出查询和表结果
 

@@ -127,6 +127,73 @@ Gdy obszar roboczy ma hurtownię danych dostępną przez logowanie, każdy czło
 
 Pulpit w takiej hurtowni danych działa z własnymi uprawnieniami przeglądającego w tej hurtowni. Przeglądający, który się nie zalogował, widzi komunikat: *Sign in with Snowflake to view this dashboard: in PlaidCloud, open your user menu and choose Sign in to your warehouse.*
 
+## Wymagania Databricks
+
+- **Obszar roboczy pod publicznym adresem URL.** Zobacz regułę dotyczącą adresu w sekcji [Połącz](#2-połącz).
+- **Unity Catalog** z katalogiem, w którym PlaidCloud może tworzyć schematy. Katalog bez zarządzanego magazynu odrzuca `CREATE SCHEMA` i żadne uprawnienie tego nie naprawia. Starszy katalog `hive_metastore` nie ma wolumenów, więc importy plików do projektu kończą się tam niepowodzeniem, a wypychanie do połączenia Databricks działa tam wiersz po wierszu.
+- **SQL warehouse.** Zalecamy **bezserwerowy** SQL warehouse. Zatrzymany klasyczny SQL warehouse uruchamia się kilka minut, a pierwsze sprawdzenie połączenia lub zapytanie po jego zatrzymaniu czeka na to uruchomienie, podczas gdy bezserwerowy SQL warehouse jest gotowy znacznie szybciej.
+- **Administrator obszaru roboczego i metastore**, który uruchomi skrypt konfiguracyjny, albo administrator konta, który doda połączenie aplikacji, oraz administrator obszaru roboczego, który się zaloguje.
+
+PlaidCloud przedstawia się Databricks jako User-Agent `PlaidCloud_Lakehouse` w przypadku Twojej hurtowni danych i jej pulpitów oraz `PlaidCloud_Connector` w przypadku połączenia Databricks używanego przez przepływy pracy. Nigdy nie zawiera nazwy tenanta, organizacji ani użytkownika.
+
+## Metody logowania do Databricks
+
+PlaidCloud łączy się z Databricks na jeden z trzech sposobów. Każdy z nich wybierasz podczas dodawania hurtowni danych.
+
+| Metoda | Kiedy jej użyć | Odnawianie |
+|---|---|---|
+| Sign in with Databricks (OAuth U2M) | Chcesz, aby pulpity i zapytania każdej osoby działały z jej własnymi uprawnieniami Databricks | PlaidCloud utrzymuje odświeżone logowanie |
+| Sekret OAuth dla service principal (OAuth M2M) | Przepływy pracy i pulpity mają działać jako jeden service principal | PlaidCloud tworzy nowy token dostępu, zanim stary wygaśnie |
+| Osobisty token dostępu | Nie możesz użyć żadnej z metod OAuth | Token wygasa w swojej dacie i trzeba dodać nowy |
+
+### Zaloguj się przez Databricks
+
+PlaidCloud loguje się przez przepływ OAuth z kodem autoryzacji i PKCE.
+
+1. Jako administrator konta otwórz **Account console > Settings > App connections** i dodaj aplikację o nazwie `PlaidCloud`. Podaj adres URL przekierowania widoczny w oknie połączenia, nadaj jej dostęp do wszystkich interfejsów API i pozostaw **Generate a client secret** wyłączone. Dostęp do wszystkich interfejsów API jest wymagany: PlaidCloud używa logowania administratora do utworzenia swojego service principal, a osoby logujące się później otrzymują tylko zakres `sql`.
+2. Skopiuj identyfikator klienta aplikacji.
+3. W PlaidCloud otwórz menu użytkownika, wybierz **Zarządzaj hurtowniami danych**, a następnie **Dodaj warehouse** i wybierz **Databricks**.
+4. W sekcji **Najszybciej: zaloguj się przez Databricks** wprowadź **Adres URL obszaru roboczego**, **Identyfikator klienta** i **Ścieżka HTTP SQL warehouse**. Pole **Katalog** jest opcjonalne.
+5. Wybierz **Zaloguj się przez Databricks**, zaloguj się jako administrator obszaru roboczego Databricks i zatwierdź. PlaidCloud tworzy własny service principal dla przepływów pracy. Zobacz [Dołącz hurtownię danych](#dołącz-hurtownię-danych).
+
+### Sekret OAuth dla service principal
+
+1. W PlaidCloud otwórz **Zarządzaj hurtowniami danych**, wybierz **Dodaj warehouse** i wybierz **Databricks**.
+2. Jako administrator obszaru roboczego i metastore uruchom skrypt konfiguracyjny z okna (zobacz [Najpierw uruchom skrypt konfiguracyjny](#1-najpierw-uruchom-skrypt-konfiguracyjny)). Tworzy on service principal, SQL warehouse i katalog. Możesz też samodzielnie utworzyć service principal, wygenerować dla niego sekret OAuth w Databricks i nadać mu uprawnienia opisane w sekcji [Minimalne uprawnienia Databricks](#minimalne-uprawnienia-databricks).
+3. W sekcji **2. Połącz** wprowadź **Adres URL obszaru roboczego**, **Ścieżka HTTP SQL warehouse**, **Identyfikator aplikacji** (identyfikator aplikacji service principal) i **Sekret OAuth**.
+4. Wybierz **Testuj połączenie**, a następnie **Użyj jako mojej hurtowni danych**.
+
+PlaidCloud żąda zakresu `all-apis` podczas tworzenia tokenu.
+
+### Osobisty token dostępu
+
+1. W Databricks utwórz osobisty token dostępu dla użytkownika lub service principal, który ma uprawnienia opisane w sekcji [Minimalne uprawnienia Databricks](#minimalne-uprawnienia-databricks).
+2. W PlaidCloud otwórz **Zarządzaj hurtowniami danych**, wybierz **Dodaj warehouse** i wybierz **Databricks**.
+3. W sekcji **2. Połącz** wprowadź **Adres URL obszaru roboczego** i **Ścieżka HTTP SQL warehouse**.
+4. Zaznacz **Zaawansowane: użyj zamiast tego osobistego tokenu dostępu** i wklej token w polu **Token**. **Identyfikator aplikacji** i **Sekret OAuth** nie są potrzebne.
+5. Wybierz **Testuj połączenie**, a następnie **Użyj jako mojej hurtowni danych**.
+
+Token wygasa w swojej dacie, a PlaidCloud przestaje mieć dostęp do Twojej hurtowni danych, dopóki nie dodasz nowego. Baner odnowienia opisano w sekcji [Połącz](#2-połącz).
+
+## Minimalne uprawnienia Databricks
+
+Nadaj je service principal albo, w przypadku osobistego tokenu dostępu, użytkownikowi. **Testuj połączenie** sprawdza uprawnienia potrzebne do dołączenia hurtowni danych i wymienia brakujące jako gotowe do uruchomienia instrukcje `GRANT`. Brakujące uprawnienie do wolumenu ujawnia się dopiero podczas importu lub wypychania.
+
+| Aby | Nadaj |
+|---|---|
+| Dołączyć hurtownię danych | `USE CATALOG`, `CREATE SCHEMA` i `USE SCHEMA` w katalogu oraz `CAN_USE` w SQL warehouse |
+| Wykonywać zapytania i zapisywać tabele | `USE SCHEMA`, `SELECT`, `MODIFY` i `CREATE TABLE` w schemacie projektu oraz `CAN_USE` w SQL warehouse |
+| Importować pliki i dokumenty (wolumen `plaid_import` w schemacie projektu) | `CREATE VOLUME` w schemacie albo `READ VOLUME` i `WRITE VOLUME` w wolumenie `plaid_import` utworzonym przez administratora |
+| Wypychać tabelę z przepływu pracy do połączenia Databricks (wolumen `plaid_export` w schemacie docelowym) | `USE CATALOG` i `USE SCHEMA` w miejscu docelowym, `MODIFY` w tabeli docelowej (oraz `CREATE TABLE` w schemacie, gdy krok ją tworzy) oraz `CREATE VOLUME` w schemacie albo `READ VOLUME` i `WRITE VOLUME` w wolumenie `plaid_export` utworzonym przez administratora |
+
+Wypychanie przygotowuje każdą partię jako plik Parquet w wolumenie i ładuje ją przez `COPY INTO` z włączonym trybem ANSI, więc wartość, która nie mieści się w kolumnie, powoduje niepowodzenie kroku zamiast zamiany na `NULL`. Bez uprawnień do wolumenów wypychanie przechodzi na instrukcje `INSERT` wiersz po wierszu, które są znacznie wolniejsze, a krok ostrzega i wskazuje uprawnienia do dodania. W katalogu `hive_metastore` wypychanie zawsze działa wiersz po wierszu, bez ostrzeżenia.
+
+## Co warto wiedzieć o działaniu Databricks
+
+- **Import plików i dokumentów wymaga service principal.** W hurtowni danych dołączonej przez logowanie bez service principal (dołączenie wyłącznie SQL) import zatrzymuje się i informuje, że administrator obszaru roboczego musi ponownie zalogować się przez Databricks, aby go dodać.
+- **Pulpity rejestrują się ponownie jednorazowo po aktualizacji.** Każde połączenie pulpitu Databricks jest rejestrowane ponownie jednorazowo z User-Agent PlaidCloud. Nie musisz nic robić.
+- **Usunięcie hurtowni danych nie może unieważnić logowania w Databricks.** Databricks nie dokumentuje sposobu unieważnienia tokenu logowania, który PlaidCloud przechowuje dla danej osoby. PlaidCloud usuwa swoją kopię oraz, gdy każdy z nich jest jedynym, sekret service principal i osobisty token dostępu, ale sam token logowania pozostaje ważny w Databricks. PlaidCloud nie usuwa utworzonego przez siebie service principal; usuń go w Databricks. Aby zakończyć logowania, usuń połączenie aplikacji `PlaidCloud` w **Account console > Settings > App connections**.
+
 ## Zarządzanie hurtowniami danych
 
 Administrator obszaru roboczego otwiera menu użytkownika i wybiera **Zarządzaj hurtowniami danych**. Okno **Twoje hurtownie danych** wyświetla dla każdej hurtowni **Nazwa**, **Typ**, **Domyślny**, **Projekty** i **Stan**.
@@ -139,7 +206,7 @@ Administrator obszaru roboczego otwiera menu użytkownika i wybiera **Zarządzaj
 
 <Aside type="note">Dodanie nowej hurtowni danych do Twojego obszaru roboczego może potrwać kilka minut. Każdy obszar roboczy działa w izolacji od pozostałych i samodzielnie pobiera zmiany konfiguracji, więc dopóki zmiana nie dotrze, hurtownia nie jest wymieniona, a projekty nie mogą jeszcze z niej korzystać. Jeśli po godzinie nadal się nie pojawi, skontaktuj się z pomocą techniczną PlaidCloud.</Aside>
 
-Po usunięciu hurtowni danych PlaidCloud unieważnia jej dane uwierzytelniające na Twoim koncie (w tym każde logowanie i tożsamość usługi) i usuwa swoją kopię. Twoje dane pozostają w Twojej hurtowni danych. Jeśli nie można unieważnić danych uwierzytelniających, PlaidCloud prosi o samodzielne ich unieważnienie na Twoim koncie.
+Po usunięciu hurtowni danych PlaidCloud unieważnia jej dane uwierzytelniające na Twoim koncie i usuwa swoją kopię. W Snowflake obejmuje to każde logowanie i tożsamość usługi. W Databricks obejmuje to sekret service principal, ale nie logowania osób (zobacz [Co warto wiedzieć o działaniu Databricks](#co-warto-wiedzieć-o-działaniu-databricks)). Twoje dane pozostają w Twojej hurtowni danych. Jeśli nie można unieważnić danych uwierzytelniających, PlaidCloud prosi o samodzielne ich unieważnienie na Twoim koncie.
 
 ## Koszt hurtowni danych na uruchomienie
 
@@ -168,7 +235,7 @@ Twórz przepływy pracy dokładnie tak samo jak we wbudowanym lakehouse — krok
 
 ## Import plików do projektu powiązanego z lakehouse
 
-Import pliku CSV, Parquet, XML lub Access do projektu powiązanego z lakehouse ładuje go przez **natywną, równoległą ścieżkę masowego ładowania** Twojej hurtowni danych: wewnętrzny obszar tymczasowy Snowflake plus `COPY INTO` dla Snowflake, zarządzany wolumen Databricks plus `COPY INTO` dla Databricks — zamiast pośredniego umieszczania pliku w zewnętrznym zasobniku w chmurze. Nie trzeba konfigurować dodatkowego IAM w chmurze, a całość działa tak samo niezależnie od tego, w jakiej chmurze działa Twoja hurtownia danych.
+Import pliku CSV, Parquet, XML lub Access do projektu powiązanego z lakehouse ładuje go przez **natywną, równoległą ścieżkę masowego ładowania** Twojej hurtowni danych: wewnętrzny obszar tymczasowy Snowflake plus `COPY INTO` dla Snowflake, zarządzany wolumen Databricks plus `COPY INTO` dla Databricks (zobacz [Minimalne uprawnienia Databricks](#minimalne-uprawnienia-databricks)) — zamiast pośredniego umieszczania pliku w zewnętrznym zasobniku w chmurze. Nie trzeba konfigurować dodatkowego IAM w chmurze, a całość działa tak samo niezależnie od tego, w jakiej chmurze działa Twoja hurtownia danych.
 
 ## Eksport wyników zapytań i tabel
 
