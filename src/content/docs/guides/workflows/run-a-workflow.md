@@ -113,29 +113,29 @@ Run Insight shows where one run of a workflow spent its time, and which steps to
 - In the run history dialog, pick a run in the **Runs** table with **Open in Insight**, or open its row.
 - In an in-app Weave message about a slow run, click **Open the run**. See [Being told when a run ends](/guides/ai-assistant/weave-findings/#being-told-when-a-run-ends).
 
-The dialog is titled **Run History** followed by the workflow's name. Its **Insight** and **Runs** buttons switch between this view and the table of past runs. A step's own run history, opened from the Inspector, shows only the table.
+The dialog is titled **Run History** followed by the workflow's name. Its **Insight** | **Runs** switch changes between this view and the table of past runs. A step's own run history, opened from the Inspector, shows only the table.
 
 ### Read the Headline and the Attention List
 
 The headline gives the run's outcome in one line: **Took** *time*, **Running for** *time* while it runs, **Stopped after** *time* for a latest run that was stopped, or **Failed in** the workflow where it failed. A sentence under it says what stands out, such as the steps that ran slower than usual, time spent waiting, or that every step with history ran within its usual range. Below that come the start time and the number of workflows and steps, and, when some steps have too little history to judge, how many. When anything needs a look, a count marked **to look at** appears beside the headline.
 
-A strip of recent runs sits beside the headline. Click a run in the strip to open it. A failed run is marked, and so is a run that ran fewer steps than most recent runs, because it can't be compared with a full run.
+A strip of recent runs sits beside the headline, with a caption above it. Each bar is a run, as tall as it took, and the day is labelled only where the day changes. Click a run in the strip to open it. A red cap and an ✕ mark a failed run, and a dashed outline marks a run that ran fewer steps than most recent runs, because it can't be compared with a full run.
 
-**What needs attention** lists, in this order, failures first, then time beyond the usual, then waiting. Click an item to select it in the view.
+**What needs attention** lists, in this order, failures first, then time beyond the usual, then waiting. Each item is a card with its name, the time it lost or **Failed**, where it sits, and a bar of its time in which grey is within the usual and amber beyond it, and a failure's bar is red. A step saved since its last run carries a **Saved** tag with the date. Click a card to select it in the view; the selected card is highlighted.
 
 ### Flow, Timeline, and Table
 
-Choose a view from the **View** menu.
+The header above the view holds the workflow's name, then **Compare to**, then **View**, whose **Flow**, **Timeline** and **Table** buttons choose the view, and the Refresh button at the right.
 
 | View | What it shows |
 |---|---|
-| **Flow** | Blocks whose height is time. Amber is time beyond a step's usual. Where a step called other workflows, a **Call overhead** slice is the step's own time outside those workflows. Where no step was running, a **Waiting** slice shows the gap; a workflow that ran in parallel doesn't draw one. |
+| **Flow** | Blocks whose height is time. Amber is time beyond a step's usual. A block that is not opened but holds a failure shows ✕ and a red outline. A failed or selected block too short to name is drawn taller, and the legend says it is then not to scale. Where a step called other workflows, a **Call overhead** slice is the step's own time outside those workflows. Where no step was running, a **Waiting** slice shows the gap; a workflow that ran in parallel doesn't draw one. |
 | **Timeline** | Clock time from the start of the run. A dashed outline is how long the block took in the compared run. |
 | **Table** | Everything in call order, with the columns **Name**, **This run**, **Usually**, **Extra**, **Compared run** and **Status**. |
 
-A workflow that called other workflows shows them inside it. Double-click a workflow block, or choose **Zoom in**, to work inside it, and use the trail above the view or **Zoom out** in the **Actions** menu to come back. When several on-pace steps sit together, **Flow** folds them into one **N on pace** block; click it, or choose **Show all blocks** in the **Actions** menu, to open them. **Fold on-pace blocks** folds them again.
+A workflow that called other workflows shows them inside it. Double-click a workflow block, or choose **Zoom in**, to work inside it, and use the trail above the view to come back. When several on-pace steps sit together, **Flow** folds them into one **N on pace** block; click it, or click **Show all** *count* **blocks** at the right of the trail, to open them; the count is every block in the view. **Fold on-pace blocks** folds them again, and the button appears only when something can fold.
 
-Select a block to see its detail panel, with whichever of **This run**, **Usually**, **History**, **Beyond the usual** and **Compared run** apply, and with **Show in its workflow**, **Show its steps** or **Zoom in**, **Open workflow** and **View run log**. **Open workflow** opens the workflow on the canvas and **View run log** opens its [log](/guides/workflows/viewing-workflow-log/).
+Select a block to see its detail panel. It shows the block's name and place, a status pill with one of the marks below, and rows for whichever of **This run**, **Usually**, **History**, **Beyond the usual** and **Compared run** apply. A trend line follows: for the run's own workflow, its recent complete runs, with this run as a dot when it completed; for a step with a usual range, that range as a band with this run as a dot. Notes explain the mark, and the buttons are **Show in its workflow**, **Show its steps** or **Zoom in**, **Open workflow** and **View run log**. **Open workflow** opens the workflow on the canvas and **View run log** opens its [log](/guides/workflows/viewing-workflow-log/).
 
 ### What the Marks Mean
 
@@ -158,7 +158,7 @@ The panel can also explain a mark. **Waiting** is time when no step was running,
 
 ### Compare To
 
-**Compare to** sets what a run is measured against, and its button reads **Compare to: Usual**, **Compare to: Previous run** or **Compare to: Chosen run**. **Usual** uses each step's recent runs. **Usual + previous run** and **Usual + a chosen run** also add that run's time for each step, which the **Timeline** outlines and the **Table** shows under **Compared run**. The chosen run is picked from the recent runs.
+**Compare to** sets what a run is measured against. Its menu button shows the choice: **Usual**, **Usual + previous run**, or **Usual + run of** the chosen run's start time. **Usual** uses each step's recent runs. **Usual + previous run** and **Usual + a chosen run** also add that run's time for each step, which the **Timeline** outlines and the **Table** shows under **Compared run**. **Usual + a chosen run** opens a list of the recent runs to pick from.
 
 ### One Workflow Inside a Larger Run
 
@@ -166,7 +166,7 @@ When you open a workflow that another workflow called, Insight shows only that w
 
 ### Live Runs
 
-A run that is still going is read again every 30 seconds while the dialog is visible. Your zoom, selection and view stay as they are. Leaving Insight for **Runs** stops the updates, and returning to Insight reads the run again and resumes. The Refresh button, the circular arrows at the right of the toolbar, reloads the run from scratch, resets the zoom and selection, and folds on-pace blocks again.
+A run that is still going is read again every 30 seconds while the dialog is visible. Your zoom, selection and view stay as they are. Leaving Insight for **Runs** stops the updates, and returning to Insight reads the run again and resumes. The Refresh button, the circular arrows at the right of the header, reloads the run from scratch, resets the zoom and selection, and folds on-pace blocks again.
 
 ### For AI Assistants and the REST API
 

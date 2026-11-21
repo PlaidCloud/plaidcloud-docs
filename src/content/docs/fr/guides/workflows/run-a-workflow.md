@@ -114,29 +114,29 @@ Run Insight montre où une exécution d'un workflow a passé son temps, et quell
 - Dans la boîte de dialogue de l'historique des exécutions, choisissez une exécution dans la table **Exécutions** avec **Ouvrir dans Insight**, ou ouvrez sa ligne.
 - Dans un message Weave intégré à l'application concernant une exécution lente, cliquez sur **Ouvrir l'exécution**. Voir [Être prévenu à la fin d'une exécution](/fr/guides/ai-assistant/weave-findings/#être-prévenu-à-la-fin-dune-exécution).
 
-La boîte de dialogue s'intitule **Historique des exécutions** — nom du workflow. Ses boutons **Insight** et **Exécutions** basculent entre cette vue et la table des exécutions passées. L'historique d'exécution d'une étape, ouvert depuis l'Inspecteur, n'affiche que la table.
+La boîte de dialogue s'intitule **Historique des exécutions** — nom du workflow. Son commutateur **Insight** | **Exécutions** bascule entre cette vue et la table des exécutions passées. L'historique d'exécution d'une étape, ouvert depuis l'Inspecteur, n'affiche que la table.
 
 ### Lire le titre et la liste d'attention
 
-Le titre donne le résultat de l'exécution en une ligne : **Durée :** *durée*, **En cours depuis** *durée* tant qu'elle s'exécute, **Arrêté après** *durée* pour une dernière exécution arrêtée, ou **Échec en** *workflow*, le workflow où elle a échoué. Une phrase en dessous dit ce qui ressort, comme les étapes plus lentes que d'habitude, le temps passé à attendre, ou le fait que chaque étape ayant un historique s'est exécutée dans sa plage habituelle. En dessous viennent l'heure de début, le nombre de workflows et d'étapes et, lorsque l'historique de certaines étapes est trop court pour être jugé, leur nombre. Lorsque quelque chose mérite un coup d'œil, *N* **à examiner** apparaît à côté du titre.
+Le titre donne le résultat de l'exécution en une ligne : **Durée :** *durée*, **En cours depuis** *durée* tant qu'elle s'exécute, **Arrêté après** *durée* pour une dernière exécution arrêtée, ou **Échec dans** *workflow*, le workflow où elle a échoué. Une phrase en dessous dit ce qui ressort, comme les étapes plus lentes que d'habitude, le temps passé à attendre, ou le fait que chaque étape ayant un historique s'est exécutée dans sa plage habituelle. En dessous viennent l'heure de début, le nombre de workflows et d'étapes et, lorsque l'historique de certaines étapes est trop court pour être jugé, leur nombre. Lorsque quelque chose mérite un coup d'œil, *N* **à examiner** apparaît à côté du titre.
 
-Une bande des exécutions récentes se trouve à côté du titre. Cliquez sur une exécution de la bande pour l'ouvrir. Une exécution échouée est marquée, de même qu'une exécution qui a exécuté moins d'étapes que la plupart des exécutions récentes, car elle ne peut pas être comparée à une exécution complète.
+Une bande des exécutions récentes se trouve à côté du titre, avec une légende au-dessus. Chaque barre est une exécution, aussi haute que sa durée, et le jour n'est indiqué que là où il change. Cliquez sur une exécution de la bande pour l'ouvrir. Un chapeau rouge et un ✕ marquent une exécution échouée, et un contour en pointillés marque une exécution qui a exécuté moins d'étapes que la plupart des exécutions récentes, car elle ne peut pas être comparée à une exécution complète.
 
-**Points d'attention** liste, dans cet ordre, d'abord les échecs, puis le temps au-delà de l'habituel, puis l'attente. Cliquez sur un élément pour le sélectionner dans la vue.
+**Points d'attention** liste, dans cet ordre, d'abord les échecs, puis le temps au-delà de l'habituel, puis l'attente. Chaque élément est une carte avec son nom, le temps perdu ou **Échec**, son emplacement, et une barre de son temps où le gris est dans l'habituel et l'ambre au-delà, et la barre d'un échec est rouge. Une étape enregistrée depuis sa dernière exécution porte une étiquette **Enregistré le** *date*. Cliquez sur une carte pour la sélectionner dans la vue ; la carte sélectionnée est mise en évidence.
 
 ### Flux, chronologie et table
 
-Choisissez une vue dans le menu **Vue**.
+L'en-tête au-dessus de la vue contient le nom du workflow, puis **Comparer à**, puis **Vue**, dont les boutons **Flux**, **Chronologie** et **Table** choisissent la vue, et le bouton Actualiser à droite.
 
 | Vue | Ce qu'elle montre |
 |---|---|
-| **Flux** | Des blocs dont la hauteur est le temps. L'ambre est le temps au-delà de l'habituel d'une étape. Lorsqu'une étape a appelé d'autres workflows, une tranche **Surcoût d'appel** est le temps propre de l'étape en dehors de ces workflows. Lorsqu'aucune étape ne s'exécutait, une tranche **En attente** montre l'écart ; un workflow exécuté en parallèle n'en dessine pas. |
+| **Flux** | Des blocs dont la hauteur est le temps. L'ambre est le temps au-delà de l'habituel d'une étape. Un bloc non ouvert qui contient un échec affiche ✕ et un contour rouge. Un bloc échoué ou sélectionné trop court pour être nommé est dessiné plus haut, et la légende indique qu'il n'est alors pas à l'échelle. Lorsqu'une étape a appelé d'autres workflows, une tranche **Surcoût d'appel** est le temps propre de l'étape en dehors de ces workflows. Lorsqu'aucune étape ne s'exécutait, une tranche **En attente** montre l'écart ; un workflow exécuté en parallèle n'en dessine pas. |
 | **Chronologie** | L'heure de l'horloge depuis le début de l'exécution. Un contour en pointillés indique la durée du bloc dans l'exécution comparée. |
 | **Table** | Tout dans l'ordre des appels, avec les colonnes **Nom**, **Cette exécution**, **Habituellement**, **Supplément**, **Exécution comparée** et **Statut**. |
 
-Un workflow qui a appelé d'autres workflows les affiche à l'intérieur de lui. Double-cliquez sur un bloc de workflow, ou choisissez **Zoom avant**, pour travailler à l'intérieur, et utilisez le fil d'Ariane au-dessus de la vue ou **Zoom arrière** dans le menu **Actions** pour revenir. Lorsque plusieurs étapes dans les temps sont côte à côte, **Flux** les replie en un seul bloc *N* **dans les temps** ; cliquez dessus, ou choisissez **Afficher tous les blocs** dans le menu **Actions**, pour les ouvrir. **Replier les blocs dans les temps** les replie de nouveau.
+Un workflow qui a appelé d'autres workflows les affiche à l'intérieur de lui. Double-cliquez sur un bloc de workflow, ou choisissez **Zoom avant**, pour travailler à l'intérieur, et utilisez le fil d'Ariane au-dessus de la vue pour revenir. Lorsque plusieurs étapes dans les temps sont côte à côte, **Flux** les replie en un seul bloc *N* **dans les temps** ; cliquez dessus, ou cliquez sur **Afficher les** *nombre* **blocs** à droite du fil d'Ariane, pour les ouvrir ; le nombre est celui de tous les blocs de la vue. **Replier les blocs dans les temps** les replie de nouveau, et le bouton n'apparaît que lorsque quelque chose peut se replier.
 
-Sélectionnez un bloc pour voir son panneau de détail, avec ce qui s'applique parmi **Cette exécution**, **Habituellement**, **Historique**, **Au-delà de l'habituel** et **Exécution comparée**, et avec **Afficher dans son workflow**, **Afficher ses étapes** ou **Zoom avant**, **Ouvrir le workflow** et **Afficher le journal d'exécution**. **Ouvrir le workflow** ouvre le workflow sur le canevas et **Afficher le journal d'exécution** ouvre son [journal](/fr/guides/workflows/viewing-workflow-log/).
+Sélectionnez un bloc pour voir son panneau de détail. Il affiche le nom et l'emplacement du bloc, une pastille de statut avec l'une des marques ci-dessous, et des lignes pour ce qui s'applique parmi **Cette exécution**, **Habituellement**, **Historique**, **Au-delà de l'habituel** et **Exécution comparée**. Une courbe de tendance suit : pour le workflow propre à l'exécution, ses dernières exécutions complètes, avec cette exécution en point lorsqu'elle s'est terminée ; pour une étape ayant une plage habituelle, cette plage sous forme de bande avec cette exécution en point. Des notes expliquent la marque, et les boutons sont **Afficher dans son workflow**, **Afficher ses étapes** ou **Zoom avant**, **Ouvrir le workflow** et **Afficher le journal d'exécution**. **Ouvrir le workflow** ouvre le workflow sur le canevas et **Afficher le journal d'exécution** ouvre son [journal](/fr/guides/workflows/viewing-workflow-log/).
 
 ### Ce que signifient les marques
 
@@ -159,7 +159,7 @@ Le panneau peut aussi expliquer une marque. **En attente** est le temps pendant 
 
 ### Comparer à
 
-**Comparer à** définit ce par rapport à quoi une exécution est mesurée, et son bouton affiche **Comparer à : Habituel**, **Comparer à : Exécution précédente** ou **Comparer à : Exécution choisie**. **Habituel** utilise les exécutions récentes de chaque étape. **Habituel + exécution précédente** et **Habituel + une exécution choisie** ajoutent aussi le temps de cette exécution pour chaque étape, que la **Chronologie** contourne et que la **Table** affiche sous **Exécution comparée**. L'exécution choisie est sélectionnée parmi les exécutions récentes.
+**Comparer à** définit ce par rapport à quoi une exécution est mesurée. Son bouton de menu affiche le choix : **Habituel**, **Habituel + exécution précédente** ou **Habituel + exécution du** suivi de l'heure de début de l'exécution choisie. **Habituel** utilise les exécutions récentes de chaque étape. **Habituel + exécution précédente** et **Habituel + une exécution choisie** ajoutent aussi le temps de cette exécution pour chaque étape, que la **Chronologie** contourne et que la **Table** affiche sous **Exécution comparée**. **Habituel + une exécution choisie** ouvre une liste des exécutions récentes où choisir.
 
 ### Un workflow à l'intérieur d'une exécution plus grande
 
@@ -167,7 +167,7 @@ Lorsque vous ouvrez un workflow qu'un autre workflow a appelé, Insight n'affich
 
 ### Exécutions en cours
 
-Une exécution encore en cours est relue toutes les 30 secondes tant que la boîte de dialogue est visible. Votre zoom, votre sélection et votre vue restent inchangés. Quitter Insight pour **Exécutions** arrête les mises à jour, et revenir à Insight relit l'exécution et les reprend. Le bouton Actualiser, les flèches circulaires à droite de la barre d'outils, recharge l'exécution depuis zéro, réinitialise le zoom et la sélection, et replie de nouveau les blocs dans les temps.
+Une exécution encore en cours est relue toutes les 30 secondes tant que la boîte de dialogue est visible. Votre zoom, votre sélection et votre vue restent inchangés. Quitter Insight pour **Exécutions** arrête les mises à jour, et revenir à Insight relit l'exécution et les reprend. Le bouton Actualiser, les flèches circulaires à droite de l'en-tête, recharge l'exécution depuis zéro, réinitialise le zoom et la sélection, et replie de nouveau les blocs dans les temps.
 
 ### Pour les assistants IA et l'API REST
 
